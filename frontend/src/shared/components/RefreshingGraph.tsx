@@ -262,7 +262,8 @@ class RefreshingGraph extends Component<Props> {
                         return this.StaticGraph(
                           timeSeriesInfluxQL,
                           timeSeriesFlux,
-                          loading
+                          loading,
+                          uuid
                         )
                       default:
                         return this.lineGraph(
@@ -519,7 +520,8 @@ class RefreshingGraph extends Component<Props> {
   private StaticGraph = (
     influxQLData: TimeSeriesServerResponse[],
     fluxData: FluxTable[],
-    loading: RemoteDataState
+    loading: RemoteDataState,
+    uuid: string
   ): JSX.Element => {
     const {
       axes,
@@ -533,27 +535,50 @@ class RefreshingGraph extends Component<Props> {
       manualRefresh,
       tableOptions,
       fieldOptions,
+      timeFormat,
+      onUpdateFieldOptions,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
 
     return (
-      <StaticGraph
-        data={data}
-        type={type}
-        axes={axes}
-        cellID={cellID}
-        colors={colors}
-        queries={queries}
-        loading={loading}
+      <TableGraphTransform
+        data={data as TimeSeriesServerResponse[]}
+        uuid={uuid}
         dataType={dataType}
-        key={manualRefresh}
-        tableOptions={tableOptions}
-        fieldOptions={fieldOptions}
-        staticLegend={staticLegend}
-        staticLegendPosition={staticLegendPosition}
-        decimalPlaces={decimalPlaces}
-      />
+      >
+        {(transformedData, nextUUID) => (
+          <TableGraphFormat
+            data={transformedData}
+            uuid={nextUUID}
+            dataType={dataType}
+            tableOptions={tableOptions}
+            fieldOptions={fieldOptions}
+            timeFormat={timeFormat}
+            decimalPlaces={decimalPlaces}
+          >
+            {(formattedData, sort, computedFieldOptions, onSort) => (
+              <StaticGraph
+                data={data}
+                type={type}
+                axes={axes}
+                cellID={cellID}
+                colors={colors}
+                queries={queries}
+                loading={loading}
+                dataType={dataType}
+                key={manualRefresh}
+                tableOptions={tableOptions}
+                fieldOptions={computedFieldOptions}
+                staticLegend={staticLegend}
+                staticLegendPosition={staticLegendPosition}
+                decimalPlaces={decimalPlaces}
+                onUpdateFieldOptions={onUpdateFieldOptions}
+              />
+            )}
+          </TableGraphFormat>
+        )}
+      </TableGraphTransform>
     )
   }
 

@@ -111,6 +111,10 @@ function getRolesForUser(roles, user) {
   return buildRoles(userRoles)
 }
 
+export const getFirstGroupByTag = queryConfig => {
+  return _.get(queryConfig[0], 'groupBy.tags[0]', '')
+}
+
 export const buildDefaultXLabel = queryConfig => {
   const groupByTag = _.get(queryConfig, 'groupBy.tags', [])
 

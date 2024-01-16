@@ -23,7 +23,11 @@ import {HANDLE_VERTICAL} from 'src/shared/constants'
 import {DEFAULT_AXES} from 'src/dashboards/constants/cellEditor'
 
 // Types
-import {buildDefaultXLabel, buildDefaultYLabel} from 'src/shared/presenters'
+import {
+  buildDefaultXLabel,
+  buildDefaultYLabel,
+  getFirstGroupByTag,
+} from 'src/shared/presenters'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Axes, QueryConfig, CellType, QueryUpdateState} from 'src/types'
 import {
@@ -36,6 +40,7 @@ import {
 } from 'src/types/dashboards'
 import {ColorNumber, ColorString} from 'src/types/colors'
 import HistogramOptions from 'src/dashboards/components/HistogramOptions'
+import BarChartOptions from 'src/dashboards/components/BarChartOptions'
 
 interface ConnectedProps {
   type: CellType
@@ -249,13 +254,35 @@ class DisplayOptions extends Component<Props, State> {
             onUpdateThresholdsListType={onUpdateThresholdsListType}
           />
         )
+      case CellType.StaticBar:
+      case CellType.StaticStackedBar:
+        return (
+          <BarChartOptions
+            axes={this.axes}
+            fieldOptions={fieldOptions}
+            firstGroupByTag={this.firstGroupByTag}
+            tableOptions={tableOptions}
+            type={type}
+            lineColors={lineColors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            defaultXLabel={defaultXLabel}
+            defaultYLabel={defaultYLabel}
+            decimalPlaces={decimalPlaces}
+            onUpdateAxes={onUpdateAxes}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
+            onUpdateLineColors={onUpdateLineColors}
+            onUpdateDecimalPlaces={onUpdateDecimalPlaces}
+            onUpdateFieldOptions={onUpdateFieldOptions}
+            onUpdateTableOptions={onUpdateTableOptions}
+          />
+        )
       case CellType.StaticPie:
       case CellType.StaticDoughnut:
       case CellType.StaticScatter:
       case CellType.StaticRadar:
-      case CellType.StaticStackedBar:
       case CellType.StaticLineChart:
-      case CellType.StaticBar:
         return (
           <HistogramOptions
             axes={this.axes}
@@ -293,6 +320,12 @@ class DisplayOptions extends Component<Props, State> {
 
   private get axes(): Axes {
     return this.props.axes || DEFAULT_AXES
+  }
+
+  private get firstGroupByTag(): string {
+    const {queryConfigs} = this.props
+
+    return getFirstGroupByTag(queryConfigs)
   }
 
   private get defaultXLabel(): string {

@@ -2,6 +2,7 @@
 import React, {PureComponent, CSSProperties} from 'react'
 import {withRouter, RouteComponentProps} from 'react-router'
 import {Chart as ChartJS} from 'chart.js'
+import _ from 'lodash'
 
 // Components
 import {ErrorHandlingWith} from 'src/shared/decorators/errors'
@@ -47,6 +48,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
 }
 
 type StaticGraphProps = Props & RouteComponentProps<any, any>
@@ -66,6 +68,27 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
     this.state = {
       staticLegendHeight: 0,
+    }
+  }
+  public componentDidMount() {
+    const {fieldOptions} = this.props
+
+    this.handleUpdateFieldOptions(fieldOptions)
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    const {fieldOptions} = this.props
+
+    if (!_.isEqual(fieldOptions, prevProps.fieldOptions)) {
+      this.handleUpdateFieldOptions(fieldOptions)
+    }
+  }
+
+  private handleUpdateFieldOptions = (fieldOptions: FieldOption[]): void => {
+    const {onUpdateFieldOptions} = this.props
+
+    if (onUpdateFieldOptions) {
+      onUpdateFieldOptions(fieldOptions)
     }
   }
 
@@ -125,6 +148,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             axes={axes}
             cellID={cellID}
             staticGraphStyle={this.staticGraphStyle}
+            xAxisTitle={xAxisTitle}
+            yAxisTitle={yAxisTitle}
             data={data}
             colors={colors}
             staticLegend={staticLegend}

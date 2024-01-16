@@ -29,6 +29,13 @@ export interface TimeField {
   direction?: '' | 'asc' | 'desc'
 }
 
+export const DEFAULT_STATISTICAL_TIME_FIELD: TimeField = {
+  internalName: '',
+  displayName: '',
+  visible: true,
+  direction: 'asc',
+}
+
 export const DEFAULT_INFLUXQL_TIME_FIELD: TimeField = {
   internalName: 'time',
   displayName: '',
