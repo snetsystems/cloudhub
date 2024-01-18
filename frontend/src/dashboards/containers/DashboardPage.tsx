@@ -362,6 +362,7 @@ class DashboardPage extends Component<Props, State> {
             onCloneCell={this.handleCloneCell}
             templatesIncludingDashTime={templatesIncludingDashTime}
             onSummonOverlayTechnologies={this.handleShowCellEditorOverlay}
+            onPickTemplate={this.handlePickTemplate}
           />
         ) : null}
         <AnnotationEditorContainer />
@@ -527,9 +528,11 @@ class DashboardPage extends Component<Props, State> {
       templateVariableLocalSelected,
       rehydrateTemplatesAsync,
     } = this.props
-
-    templateVariableLocalSelected(dashboard.id, template.id, value)
-    rehydrateTemplatesAsync(dashboard.id, source, sources)
+    
+    if(template !== undefined) {
+      templateVariableLocalSelected(dashboard.id, template.id, value)
+      rehydrateTemplatesAsync(dashboard.id, source, sources)
+    }
   }
 
   private handleSaveTemplateVariables = async (

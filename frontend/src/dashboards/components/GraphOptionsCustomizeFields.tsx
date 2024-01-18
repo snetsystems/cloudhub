@@ -9,6 +9,7 @@ interface RenamableField {
   displayName: string
   visible: boolean
   direction?: '' | 'asc' | 'desc'
+  tempVar?: string
 }
 
 interface Props {
@@ -36,6 +37,7 @@ class GraphOptionsCustomizeFields extends PureComponent<Props> {
               onFieldUpdate={onFieldUpdate}
               moveField={moveField}
               direction={field.direction}
+              tempVar={field.tempVar}
             />
           ))}
         </div>

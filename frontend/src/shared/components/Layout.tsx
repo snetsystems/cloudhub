@@ -18,7 +18,7 @@ import {
 } from 'src/shared/constants'
 
 // Types
-import {TimeRange, Cell, Template, Source, QueryType} from 'src/types'
+import {TimeRange, Cell, Template, Source, QueryType, TemplateValue} from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {GrabDataForDownloadHandler} from 'src/types/layout'
@@ -38,6 +38,7 @@ interface Props {
   onCloneCell: () => void
   onSummonOverlayTechnologies: () => void
   instance?: object
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
 }
 
 interface State {
@@ -98,6 +99,7 @@ class Layout extends Component<Props, State> {
       manualRefresh,
       templates,
       source,
+      onPickTemplate
     } = this.props
     const {cellFluxData, visType} = this.state
     const showRawFluxData = visType === VisType.Table
@@ -128,6 +130,7 @@ class Layout extends Component<Props, State> {
         rawData={cellFluxData}
         showRawFluxData={showRawFluxData}
         visType={this.visType}
+        onPickTemplate={onPickTemplate}
       />
     )
   }
@@ -143,6 +146,7 @@ class Layout extends Component<Props, State> {
       manualRefresh,
       templates,
       instance,
+      onPickTemplate,
     } = this.props
 
     if (cell.isWidget) {
@@ -171,6 +175,7 @@ class Layout extends Component<Props, State> {
         source={this.getSource(cell, source, sources, source)}
         cellNote={cell.note}
         cellNoteVisibility={cell.noteVisibility}
+        onPickTemplate={onPickTemplate}
       />
     )
   }

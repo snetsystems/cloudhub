@@ -27,6 +27,7 @@ export interface TimeField {
   displayName: string
   visible: boolean
   direction?: '' | 'asc' | 'desc'
+  tempVar?: ''
 }
 
 export const DEFAULT_STATISTICAL_TIME_FIELD: TimeField = {
@@ -41,6 +42,7 @@ export const DEFAULT_INFLUXQL_TIME_FIELD: TimeField = {
   displayName: '',
   visible: true,
   direction: 'asc',
+  tempVar: '',
 }
 
 export const DEFAULT_FLUX_TIME_FIELD: TimeField = {
@@ -48,6 +50,7 @@ export const DEFAULT_FLUX_TIME_FIELD: TimeField = {
   displayName: '',
   visible: true,
   direction: 'asc',
+  tempVar: '',
 }
 
 export const DEFAULT_TABLE_OPTIONS = {

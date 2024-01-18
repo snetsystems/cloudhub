@@ -22,7 +22,7 @@ import {
 } from 'src/shared/constants'
 
 // Types
-import {TimeRange, Cell, Template, Source} from 'src/types'
+import {TimeRange, Cell, Template, Source, TemplateValue} from 'src/types'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -43,6 +43,7 @@ interface Props {
   onSummonOverlayTechnologies?: () => void
   onPositionChange?: (cells: Cell[]) => void
   instance?: object
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
 }
 
 interface State {
@@ -74,6 +75,7 @@ class LayoutRenderer extends Component<Props, State> {
       onCloneCell,
       onSummonOverlayTechnologies,
       instance,
+      onPickTemplate
     } = this.props
 
     const {rowHeight} = this.state
@@ -123,6 +125,7 @@ class LayoutRenderer extends Component<Props, State> {
                   manualRefresh={manualRefresh}
                   onSummonOverlayTechnologies={onSummonOverlayTechnologies}
                   instance={instance}
+                  onPickTemplate={onPickTemplate}
                 />
               </Authorized>
             </div>

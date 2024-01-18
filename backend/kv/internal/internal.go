@@ -293,6 +293,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			DisplayName:  c.TableOptions.SortBy.DisplayName,
 			Visible:      c.TableOptions.SortBy.Visible,
 			Direction:    c.TableOptions.SortBy.Direction,
+			TempVar:      c.TableOptions.SortBy.TempVar,
 		}
 
 		tableOptions := &TableOptions{
@@ -314,6 +315,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				DisplayName:  field.DisplayName,
 				Visible:      field.Visible,
 				Direction:    field.Direction,
+				TempVar:      field.TempVar,
 			}
 		}
 
@@ -477,6 +479,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 				sortBy.DisplayName = c.TableOptions.SortBy.DisplayName
 				sortBy.Visible = c.TableOptions.SortBy.Visible
 				sortBy.Direction = c.TableOptions.SortBy.Direction
+				sortBy.TempVar = c.TableOptions.SortBy.TempVar
 			}
 			tableOptions.SortBy = sortBy
 			tableOptions.VerticalTimeAxis = c.TableOptions.VerticalTimeAxis
@@ -491,6 +494,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			fieldOptions[i].DisplayName = field.DisplayName
 			fieldOptions[i].Visible = field.Visible
 			fieldOptions[i].Direction = field.Direction
+			fieldOptions[i].TempVar = field.TempVar
 		}
 
 		decimalPlaces := cloudhub.DecimalPlaces{}
