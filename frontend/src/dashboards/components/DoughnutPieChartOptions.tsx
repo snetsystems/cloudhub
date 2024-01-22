@@ -75,7 +75,7 @@ interface State {
 }
 
 @ErrorHandling
-class BarChartOptions extends PureComponent<Props, State> {
+class DoughnutPieChartOptions extends PureComponent<Props, State> {
   public static defaultProps: Partial<Props> = {
     axes: {
       y: {
@@ -589,4 +589,4 @@ class BarChartOptions extends PureComponent<Props, State> {
   }
 }
 
-export default BarChartOptions
+export default DoughnutPieChartOptions

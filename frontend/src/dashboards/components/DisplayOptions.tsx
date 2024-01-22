@@ -11,6 +11,9 @@ import TableOptions from 'src/dashboards/components/TableOptions'
 import NoteOptions from 'src/dashboards/components/NoteOptions'
 import CellNoteEditor from 'src/shared/components/TimeMachine/CellNoteEditor'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import HistogramOptions from 'src/dashboards/components/HistogramOptions'
+import BarChartOptions from 'src/dashboards/components/BarChartOptions'
+import DoughnutPieChartOptions from 'src/dashboards/components/DoughnutPieChartOptions'
 
 // Utils
 import {
@@ -39,8 +42,6 @@ import {
   StaticLegendPositionType,
 } from 'src/types/dashboards'
 import {ColorNumber, ColorString} from 'src/types/colors'
-import HistogramOptions from 'src/dashboards/components/HistogramOptions'
-import BarChartOptions from 'src/dashboards/components/BarChartOptions'
 
 interface ConnectedProps {
   type: CellType
@@ -268,18 +269,36 @@ class DisplayOptions extends Component<Props, State> {
             staticLegendPosition={staticLegendPosition}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
-            decimalPlaces={decimalPlaces}
             onUpdateAxes={onUpdateAxes}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
-            onUpdateDecimalPlaces={onUpdateDecimalPlaces}
             onUpdateFieldOptions={onUpdateFieldOptions}
             onUpdateTableOptions={onUpdateTableOptions}
           />
         )
       case CellType.StaticPie:
       case CellType.StaticDoughnut:
+        return (
+          <DoughnutPieChartOptions
+            axes={this.axes}
+            fieldOptions={fieldOptions}
+            firstGroupByTag={this.firstGroupByTag}
+            tableOptions={tableOptions}
+            type={type}
+            lineColors={lineColors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            defaultXLabel={defaultXLabel}
+            defaultYLabel={defaultYLabel}
+            onUpdateAxes={onUpdateAxes}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
+            onUpdateLineColors={onUpdateLineColors}
+            onUpdateFieldOptions={onUpdateFieldOptions}
+            onUpdateTableOptions={onUpdateTableOptions}
+          />
+        )
       case CellType.StaticScatter:
       case CellType.StaticRadar:
       case CellType.StaticLineChart:
