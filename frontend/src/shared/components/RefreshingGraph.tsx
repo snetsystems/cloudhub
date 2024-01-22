@@ -59,6 +59,7 @@ import {
 import {GrabDataForDownloadHandler} from 'src/types/layout'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import StaticGraph from 'src/shared/components/static_graph/StaticGraph'
+import StaticGraphFormat from 'src/shared/components/static_graph/StaticGraphFormat'
 
 interface TypeAndData {
   dataType: DataType
@@ -541,50 +542,38 @@ class RefreshingGraph extends Component<Props> {
       manualRefresh,
       tableOptions,
       fieldOptions,
-      timeFormat,
       onUpdateFieldOptions,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
 
     return (
-      <TableGraphTransform
+      <StaticGraphFormat
         data={data as TimeSeriesServerResponse[]}
-        uuid={uuid}
         dataType={dataType}
+        fieldOptions={fieldOptions}
+        uuid={uuid}
       >
-        {(transformedData, nextUUID) => (
-          <TableGraphFormat
-            data={transformedData}
-            uuid={nextUUID}
+        {computedFieldOptions => (
+          <StaticGraph
+            data={data}
+            type={type}
+            axes={axes}
+            cellID={cellID}
+            colors={colors}
+            queries={queries}
+            loading={loading}
             dataType={dataType}
+            key={manualRefresh}
             tableOptions={tableOptions}
-            fieldOptions={fieldOptions}
-            timeFormat={timeFormat}
+            fieldOptions={computedFieldOptions}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
             decimalPlaces={decimalPlaces}
-          >
-            {(formattedData, sort, computedFieldOptions, onSort) => (
-              <StaticGraph
-                data={data}
-                type={type}
-                axes={axes}
-                cellID={cellID}
-                colors={colors}
-                queries={queries}
-                loading={loading}
-                dataType={dataType}
-                key={manualRefresh}
-                tableOptions={tableOptions}
-                fieldOptions={computedFieldOptions}
-                staticLegend={staticLegend}
-                staticLegendPosition={staticLegendPosition}
-                decimalPlaces={decimalPlaces}
-                onUpdateFieldOptions={onUpdateFieldOptions}
-              />
-            )}
-          </TableGraphFormat>
+            onUpdateFieldOptions={onUpdateFieldOptions}
+          />
         )}
-      </TableGraphTransform>
+      </StaticGraphFormat>
     )
   }
 

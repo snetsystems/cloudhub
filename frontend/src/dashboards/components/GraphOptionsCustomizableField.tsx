@@ -151,7 +151,7 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
     return connectDragPreview(
       connectDropTarget(
         <div className={fieldClass}>
-          <div className={labelClass}>
+          <div className={labelClass} style={{width: '50%'}}>
             {connectDragSource(
               <div className="customizable-field--drag">
                 <span className="hamburger" />
@@ -176,6 +176,11 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
             onChange={this.handleFieldRename}
             placeholder={`Rename ${internalName}`}
             disabled={!visible}
+            style={
+              internalName === 'time'
+                ? {width: 'calc(50% - 4px)'}
+                : {width: 'calc(25% - 4px)'}
+            }
           />
           <input
             className="form-control input-sm customizable-field--input"
@@ -187,7 +192,11 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
             onChange={this.handleTemplateVariable}
             placeholder={`Template Variables`}
             disabled={!visible}
-            style={internalName === 'time' ? {visibility: 'hidden'} : null}
+            style={
+              internalName === 'time'
+                ? {display: 'none'}
+                : {width: 'calc(25% - 4px)'}
+            }
           />
         </div>
       )
@@ -195,13 +204,19 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
   }
 
   private handleFieldRename(e: ChangeEvent<HTMLInputElement>) {
-    const {onFieldUpdate, internalName, visible, direction, tempVar} = this.props
+    const {
+      onFieldUpdate,
+      internalName,
+      visible,
+      direction,
+      tempVar,
+    } = this.props
     onFieldUpdate({
       internalName,
       displayName: e.target.value,
       visible,
       direction,
-      tempVar
+      tempVar,
     })
   }
 
@@ -214,7 +229,13 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
       direction,
       tempVar,
     } = this.props
-    onFieldUpdate({internalName, displayName, visible: !visible, direction, tempVar,})
+    onFieldUpdate({
+      internalName,
+      displayName,
+      visible: !visible,
+      direction,
+      tempVar,
+    })
   }
 
   private handleTemplateVariable(e: ChangeEvent<HTMLInputElement>) {
