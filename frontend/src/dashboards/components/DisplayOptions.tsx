@@ -15,6 +15,7 @@ import HistogramOptions from 'src/dashboards/components/HistogramOptions'
 import BarChartOptions from 'src/dashboards/components/BarChartOptions'
 import DoughnutPieChartOptions from 'src/dashboards/components/DoughnutPieChartOptions'
 import LineChartOptions from 'src/dashboards/components/LineChartOptions'
+import RadarChartOptions from 'src/dashboards/components/RadarChartOptions'
 
 // Utils
 import {
@@ -318,8 +319,21 @@ class DisplayOptions extends Component<Props, State> {
             onUpdateTableOptions={onUpdateTableOptions}
           />
         )
-      case CellType.StaticScatter:
       case CellType.StaticRadar:
+        return (
+          <RadarChartOptions
+            axes={this.axes}
+            type={type}
+            lineColors={lineColors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            onUpdateAxes={onUpdateAxes}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
+            onUpdateLineColors={onUpdateLineColors}
+          />
+        )
+      case CellType.StaticScatter:
         return (
           <HistogramOptions
             axes={this.axes}

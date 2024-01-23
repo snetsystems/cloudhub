@@ -1,7 +1,11 @@
 export const CHART_GRID_COLOR = '#383846'
+export const RADAR_CHART_GRID_COLOR = 'rgba(255, 99, 132, 0.5)'
+export const RADAR_CHART_ANGLE_LINE_COLOR = 'rgba(255, 99, 132, 0.3)'
 export const CHART_TITLE_COLOR = '#999dab'
 export const CHART_TITLE_FONT_SIZE = 11
 export const CHART_TITLE_FONT_WEIGHT = '600'
+export const RADAR_CHART_LABEL_FONT_SIZE = 9
+export const RADAR_CHART_LABEL_FONT_WEIGHT = '400'
 export const CHART_LABEL_FONT_SIZE = 11
 export const CHART_LABEL_FONT_WEIGHT = '600'
 export const LEGEND_FONT_SIZE_FONT_FAMILY = '11px Roboto'
@@ -53,6 +57,22 @@ export const STATIC_GRAPH_OPTIONS = {
   },
 
   scales: {
+    r: {
+      angleLines: {
+        color: RADAR_CHART_ANGLE_LINE_COLOR,
+        display: true,
+      },
+      grid: {
+        color: RADAR_CHART_GRID_COLOR,
+      },
+      ticks: {
+        backdropColor: 'transparent',
+        font: {
+          size: RADAR_CHART_LABEL_FONT_SIZE,
+          weight: RADAR_CHART_LABEL_FONT_WEIGHT,
+        },
+      },
+    },
     x: {
       title: {
         color: CHART_TITLE_COLOR,

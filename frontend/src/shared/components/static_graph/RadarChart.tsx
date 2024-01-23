@@ -11,7 +11,6 @@ import {
   PointElement,
   RadialLinearScale,
 } from 'chart.js'
-import zoomPlugin from 'chartjs-plugin-zoom'
 import _ from 'lodash'
 
 // Types
@@ -21,25 +20,20 @@ import {
   StaticLegendPositionType,
   StatisticalGraphBoundsType,
   StatisticalGraphMinMaxValueType,
-  StatisticalGraphScaleType,
 } from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
 
 // Utils
 import {fastMap} from 'src/utils/fast'
-import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
-
 import {
   convertToStaticGraphMinMaxValue,
   formatStaticGraphValue,
 } from 'src/shared/utils/staticGraph'
 
 // Constants
+import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
 import {
-  CHART_GRID_COLOR,
-  CHART_LABEL_FONT_SIZE,
-  CHART_LABEL_FONT_WEIGHT,
   LEGEND_POSITION,
   STATIC_GRAPH_OPTIONS,
 } from 'src/shared/constants/staticGraph'
@@ -65,8 +59,6 @@ interface Props {
   staticGraphStyle: React.CSSProperties
   data: TimeSeriesServerResponse[] | FluxTable[]
   colors: ColorString[]
-  xAxisTitle?: string
-  yAxisTitle?: string
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
 }
@@ -76,8 +68,6 @@ const RadarChart = ({
   staticGraphStyle,
   data,
   colors,
-  xAxisTitle,
-  yAxisTitle,
   staticLegend,
   staticLegendPosition,
 }: Props) => {
@@ -130,23 +120,14 @@ const RadarChart = ({
     },
     scales: {
       r: {
+        ...STATIC_GRAPH_OPTIONS.scales?.r,
         min: min,
         max: max,
-        angleLines: {
-          display: false,
-        },
-
         ticks: {
-          display: false,
-          backdropColor: 'transparent',
-          color: '#fff',
-          font: {
-            size: CHART_LABEL_FONT_SIZE,
-            weight: CHART_LABEL_FONT_WEIGHT,
+          ...STATIC_GRAPH_OPTIONS.scales?.r?.ticks,
+          callback: function (value) {
+            return formatStaticGraphValue(axes, value)
           },
-        },
-        grid: {
-          color: 'rgba(255, 99, 132, 0.5)',
         },
       },
     },
