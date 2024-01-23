@@ -47,7 +47,7 @@ interface TableOptionsInterface {
 }
 
 interface Props {
-  firstGroupByTag: string
+  groupByTag: string[]
   tableOptions: TableOptionsInterface
   fieldOptions: RenamableField[]
   type: string
@@ -112,7 +112,7 @@ class LineChartOptions extends PureComponent<Props, State> {
       axes: {
         y: {bounds, label},
       },
-      firstGroupByTag,
+      groupByTag,
       type,
       lineColors,
       defaultXLabel,
@@ -145,9 +145,24 @@ class LineChartOptions extends PureComponent<Props, State> {
           tableSortByOption?.key === tableOptions?.sortBy?.internalName
       )
 
+    const firstGroupByTag = groupByTag[0]
+    const selectedSortFieldByFirstGroupBy =
+      _.get(
+        _.find(fieldOptions, {internalName: firstGroupByTag}),
+        'displayName'
+      ) || firstGroupByTag
+
+    const selectedSortFieldByFristField =
+      _.get(
+        _.find(fieldOptions, {internalName: defaultYLabel}),
+        'displayName'
+      ) || defaultYLabel
     const defaultStatisticalTimeField: RenamableField = {
       ...DEFAULT_STATISTICAL_TIME_FIELD,
-      internalName: firstGroupByTag === '' ? 'None' : firstGroupByTag,
+      internalName:
+        firstGroupByTag === undefined
+          ? selectedSortFieldByFristField
+          : selectedSortFieldByFirstGroupBy,
     }
 
     return (

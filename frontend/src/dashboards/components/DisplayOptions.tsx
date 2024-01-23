@@ -30,7 +30,7 @@ import {DEFAULT_AXES} from 'src/dashboards/constants/cellEditor'
 import {
   buildDefaultXLabel,
   buildDefaultYLabel,
-  getFirstGroupByTag,
+  getGroupByTag,
 } from 'src/shared/presenters'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Axes, QueryConfig, CellType, QueryUpdateState} from 'src/types'
@@ -262,7 +262,7 @@ class DisplayOptions extends Component<Props, State> {
           <BarChartOptions
             axes={this.axes}
             fieldOptions={fieldOptions}
-            firstGroupByTag={this.firstGroupByTag}
+            groupByTag={this.groupByTag}
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
@@ -284,7 +284,7 @@ class DisplayOptions extends Component<Props, State> {
           <DoughnutPieChartOptions
             axes={this.axes}
             fieldOptions={fieldOptions}
-            firstGroupByTag={this.firstGroupByTag}
+            groupByTag={this.groupByTag}
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
@@ -305,7 +305,7 @@ class DisplayOptions extends Component<Props, State> {
           <LineChartOptions
             axes={this.axes}
             fieldOptions={fieldOptions}
-            firstGroupByTag={this.firstGroupByTag}
+            groupByTag={this.groupByTag}
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
@@ -362,10 +362,13 @@ class DisplayOptions extends Component<Props, State> {
     return this.props.axes || DEFAULT_AXES
   }
 
-  private get firstGroupByTag(): string {
+  private get groupByTag(): string[] {
     const {queryConfigs} = this.props
 
-    return getFirstGroupByTag(queryConfigs)
+    if (queryConfigs.length) {
+      return getGroupByTag(queryConfigs[0])
+    }
+    return []
   }
 
   private get defaultXLabel(): string {
