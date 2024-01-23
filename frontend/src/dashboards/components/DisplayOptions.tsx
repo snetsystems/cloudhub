@@ -14,6 +14,7 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import HistogramOptions from 'src/dashboards/components/HistogramOptions'
 import BarChartOptions from 'src/dashboards/components/BarChartOptions'
 import DoughnutPieChartOptions from 'src/dashboards/components/DoughnutPieChartOptions'
+import LineChartOptions from 'src/dashboards/components/LineChartOptions'
 
 // Utils
 import {
@@ -299,9 +300,29 @@ class DisplayOptions extends Component<Props, State> {
             onUpdateTableOptions={onUpdateTableOptions}
           />
         )
+      case CellType.StaticLineChart:
+        return (
+          <LineChartOptions
+            axes={this.axes}
+            fieldOptions={fieldOptions}
+            firstGroupByTag={this.firstGroupByTag}
+            tableOptions={tableOptions}
+            type={type}
+            lineColors={lineColors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            defaultXLabel={defaultXLabel}
+            defaultYLabel={defaultYLabel}
+            onUpdateAxes={onUpdateAxes}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
+            onUpdateLineColors={onUpdateLineColors}
+            onUpdateFieldOptions={onUpdateFieldOptions}
+            onUpdateTableOptions={onUpdateTableOptions}
+          />
+        )
       case CellType.StaticScatter:
       case CellType.StaticRadar:
-      case CellType.StaticLineChart:
         return (
           <HistogramOptions
             axes={this.axes}
