@@ -13,7 +13,7 @@ import {
 import _ from 'lodash'
 
 // Types
-import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
+import {FluxTable, StaticLegendPositionType} from 'src/types'
 import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
 
@@ -31,13 +31,10 @@ import {staticGraphDatasets} from 'src/shared/utils/staticGraph'
 
 ChartJS.register(CategoryScale, LinearScale, ArcElement, Title, Tooltip, Legend)
 interface Props {
-  axes: Axes
   cellID: string
   staticGraphStyle: React.CSSProperties
   data: TimeSeriesServerResponse[] | FluxTable[]
   colors: ColorString[]
-  xAxisTitle?: string
-  yAxisTitle?: string
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions

@@ -172,7 +172,6 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       case CellType.StaticPie:
         return (
           <PieChart
-            axes={axes}
             cellID={cellID}
             staticGraphStyle={this.staticGraphStyle}
             data={data}

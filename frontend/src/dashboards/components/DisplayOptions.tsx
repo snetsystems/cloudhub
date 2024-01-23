@@ -282,7 +282,6 @@ class DisplayOptions extends Component<Props, State> {
       case CellType.StaticDoughnut:
         return (
           <DoughnutPieChartOptions
-            axes={this.axes}
             fieldOptions={fieldOptions}
             groupByTag={this.groupByTag}
             tableOptions={tableOptions}
@@ -290,9 +289,7 @@ class DisplayOptions extends Component<Props, State> {
             lineColors={lineColors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
-            defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
-            onUpdateAxes={onUpdateAxes}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
