@@ -28,6 +28,24 @@ import {
 } from 'src/types/series'
 import {FieldOption} from 'src/types/dashboards'
 
+interface FormatProperties {
+  fieldOptions: FieldOption[]
+  uuid: string
+}
+
+const areFormatPropertiesEqual = (
+  prevProperties: FormatProperties,
+  newProperties: FormatProperties
+) => {
+  const formatProps = ['uuid', 'fieldOptions']
+
+  const areEqual = formatProps.every(k =>
+    _.isEqual(prevProperties[k], newProperties[k])
+  )
+
+  return areEqual
+}
+
 interface Props {
   data: TimeSeriesServerResponse[]
   dataType: DataType
@@ -76,7 +94,7 @@ class StaticGraphFormat extends PureComponent<Props, State> {
   }
 
   public componentDidUpdate(prevProps: Props) {
-    if (prevProps.uuid !== this.props.uuid) {
+    if (!areFormatPropertiesEqual(prevProps, this.props)) {
       this.formatStaticGraphData()
     }
   }
