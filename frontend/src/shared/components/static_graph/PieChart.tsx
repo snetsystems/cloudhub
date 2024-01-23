@@ -72,7 +72,7 @@ const PieChart = ({
         tableOptions,
         colors,
       }),
-    [data]
+    [data, tableOptions, fieldOptions]
   )
 
   const dynamicOption = {

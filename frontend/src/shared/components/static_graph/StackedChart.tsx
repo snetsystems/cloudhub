@@ -101,7 +101,7 @@ const StackedChart = ({
         tableOptions,
         colors,
       }),
-    [data]
+    [data, tableOptions, fieldOptions]
   )
 
   const type: StatisticalGraphScaleType =

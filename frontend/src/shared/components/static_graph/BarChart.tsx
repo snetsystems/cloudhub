@@ -42,7 +42,8 @@ import {
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {CellType, FieldOption, TableOptions} from 'src/types/dashboards'
+import {CellType, TableOptions} from 'src/types/dashboards'
+import {StatisticalGraphFieldOption} from 'src/types/statisticalgraph'
 
 ChartJS.register(
   CategoryScale,
@@ -66,7 +67,7 @@ interface Props {
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
-  fieldOptions: FieldOption[]
+  fieldOptions: StatisticalGraphFieldOption[]
 }
 
 const BarChart = ({
@@ -101,7 +102,7 @@ const BarChart = ({
         tableOptions,
         colors,
       }),
-    [data]
+    [data, tableOptions, fieldOptions]
   )
 
   const type: StatisticalGraphScaleType =

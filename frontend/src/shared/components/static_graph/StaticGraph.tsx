@@ -2,7 +2,6 @@
 import React, {PureComponent, CSSProperties} from 'react'
 import {withRouter, RouteComponentProps} from 'react-router'
 import {Chart as ChartJS} from 'chart.js'
-import _ from 'lodash'
 
 // Components
 import {ErrorHandlingWith} from 'src/shared/decorators/errors'
@@ -29,6 +28,9 @@ import {Query, Axes, RemoteDataState, CellType, FluxTable} from 'src/types'
 import {DataType} from 'src/shared/constants'
 import {getDeep} from 'src/utils/wrappers'
 import {buildDefaultXLabel, buildDefaultYLabel} from 'src/shared/presenters'
+import {fastMap} from 'src/utils/fast'
+import {StatisticalGraphFieldOption} from 'src/types/statisticalgraph'
+import _ from 'lodash'
 
 ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#999dab'
@@ -47,7 +49,7 @@ interface Props {
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
-  fieldOptions: FieldOption[]
+  fieldOptions: StatisticalGraphFieldOption[]
   onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
 }
 
@@ -96,7 +98,10 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
     const {loading, data} = this.props
     if (
       data.length > 1 ||
-      data[0]['response']['results'][0]['series'][0]['values'].length > 1
+      !data[0]['response']['results'][0]['series'][0].hasOwnProperty(
+        'values'
+      ) ||
+      data[0]['response']['results'][0]['series'][0]?.['values']?.length > 1
     ) {
       return <InvalidQuery />
     }
@@ -122,6 +127,12 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       tableOptions,
       fieldOptions,
     } = this.props
+
+    const fieldOptionsWithGroupByTag = this.getFieldOptionsWithGroupByTags(
+      queries,
+      fieldOptions
+    )
+
     const xAxisTitle = this.getAxisTitle('x', axes, queries)
     const yAxisTitle = this.getAxisTitle('y', axes, queries)
 
@@ -139,7 +150,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
-            fieldOptions={fieldOptions}
+            fieldOptions={fieldOptionsWithGroupByTag}
           />
         )
       case CellType.StaticStackedBar:
@@ -155,7 +166,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
-            fieldOptions={fieldOptions}
+            fieldOptions={fieldOptionsWithGroupByTag}
           />
         )
       case CellType.StaticPie:
@@ -169,7 +180,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
-            fieldOptions={fieldOptions}
+            fieldOptions={fieldOptionsWithGroupByTag}
           />
         )
       case CellType.StaticDoughnut:
@@ -183,7 +194,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
-            fieldOptions={fieldOptions}
+            fieldOptions={fieldOptionsWithGroupByTag}
           />
         )
       case CellType.StaticScatter:
@@ -222,7 +233,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
-            fieldOptions={fieldOptions}
+            fieldOptions={fieldOptionsWithGroupByTag}
           />
         )
       default:
@@ -275,6 +286,19 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
     return axis === 'x'
       ? buildDefaultXLabel(queryConfig)
       : buildDefaultYLabel(queryConfig)
+  }
+
+  private getFieldOptionsWithGroupByTags = (
+    queries: Query[],
+    fieldOptions: StatisticalGraphFieldOption[]
+  ): StatisticalGraphFieldOption[] => {
+    const groupByTags = queries[0].queryConfig.groupBy.tags
+    return fastMap(fieldOptions, fieldOption => {
+      const isGroupByTag = groupByTags.indexOf(fieldOption.internalName)
+      return isGroupByTag !== -1
+        ? {...fieldOption, groupByTagOrder: isGroupByTag}
+        : fieldOption
+    })
   }
 }
 
