@@ -100,7 +100,7 @@ const LineChart = ({
         tableOptions,
         colors,
       }),
-    [data]
+      [data, tableOptions, fieldOptions]
   )
 
   const type: StatisticalGraphScaleType =

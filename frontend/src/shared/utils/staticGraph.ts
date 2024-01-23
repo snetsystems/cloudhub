@@ -349,7 +349,7 @@ const createBarChartDatasets = ({
           ),
           backgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
           borderColor: getcolors[colIndex],
-          borderWidth: 0,
+          borderWidth: 1,
         })
       }
       return acc
