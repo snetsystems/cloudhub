@@ -7,6 +7,7 @@ import StaticLegendItem from 'src/shared/components/StaticLegendItem'
 
 // Utilities
 import {removeMeasurement} from 'src/shared/graphs/helpers'
+import {getMaxContentLength} from 'src/shared/utils/staticGraph'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -24,6 +25,7 @@ interface Props {
 interface State {
   visibilities: boolean[]
   clickStatus: boolean
+  maxContent: null | number
 }
 
 @ErrorHandling
@@ -38,16 +40,24 @@ class StaticLegend extends Component<Props, State> {
     this.state = {
       visibilities: [],
       clickStatus: false,
+      maxContent: null,
     }
   }
 
   public componentDidMount() {
     const {height} = this.staticLegendRef.current.getBoundingClientRect()
     this.props.onUpdateHeight(height)
+
+    this.setState({maxContent: getMaxContentLength(this.labels)})
   }
 
-  public componentDidUpdate(prevProps) {
+  public componentDidUpdate(prevProps, prevState) {
     const {height} = this.staticLegendRef.current.getBoundingClientRect()
+
+    const maxLegendLength = getMaxContentLength(this.labels)
+    if (prevState.maxContent !== maxLegendLength) {
+      this.setState({maxContent: maxLegendLength})
+    }
 
     if (prevProps.height === height) {
       return
@@ -61,21 +71,30 @@ class StaticLegend extends Component<Props, State> {
   }
 
   public render() {
-    const {visibilities} = this.state
+    const {visibilities, maxContent} = this.state
 
     return (
       <div className="static-legend" ref={this.staticLegendRef}>
-        {_.map(this.labels, (v, i) => (
-          <StaticLegendItem
-            index={i}
-            onMouseDown={this.handleMouseDown}
-            hoverEnabled={this.multipleLabelsExist}
-            color={this.labelColors[i]}
-            label={removeMeasurement(v)}
-            key={`static-legend--${i}-${removeMeasurement(v)}`}
-            enabled={visibilities[i]}
-          />
-        ))}
+        <div
+          className="static-graph-static-legend"
+          style={{
+            maxHeight: '50%',
+            minWidth: '100px',
+            gridTemplateColumns: `repeat(auto-fill, minmax(${maxContent}px, 1fr))`,
+          }}
+        >
+          {_.map(this.labels, (v, i) => (
+            <StaticLegendItem
+              index={i}
+              onMouseDown={this.handleMouseDown}
+              hoverEnabled={this.multipleLabelsExist}
+              color={this.labelColors[i]}
+              label={removeMeasurement(v)}
+              key={`static-legend--${i}-${removeMeasurement(v)}`}
+              enabled={visibilities[i]}
+            />
+          ))}
+        </div>
       </div>
     )
   }
