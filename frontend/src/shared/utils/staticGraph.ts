@@ -121,6 +121,18 @@ export const getMaxContentLength = (arr: any[], findKey?: string) => {
   return textWidthCanvas + LEGEND_MIN_MARGIN_WIDTH
 }
 
+const sortObjectByKey = (
+  obj: {[key: string]: string},
+  selectedKey: string
+): string => {
+  const selectedValue = obj[selectedKey]
+  const sortedKeys = Object.keys(obj)
+    .filter(key => key !== selectedKey)
+    .sort()
+
+  return [selectedValue, ...sortedKeys.map(key => obj[key])].join('.')
+}
+
 export const sortedStaticGraphData = (
   rawData: TimeSeriesSeries[],
   {
@@ -176,7 +188,10 @@ export const sortedStaticGraphData = (
   }
 
   const getSortedLabelsAndDataWithXAxis = (sortedIndex: number) => {
-    const XAxisData = fastMap(rawData, item => item.tags[fields[sortedIndex]])
+    const XAxisData = fastMap(rawData, item =>
+      sortObjectByKey(item.tags, fields[sortedIndex])
+    )
+
     const sortedXAxisData = [...XAxisData].sort((current, next) =>
       order === ASCENDING
         ? current.localeCompare(next)
@@ -248,6 +263,7 @@ const getChartFields = (
     },
     []
   )
+
   const sortFields = {
     fields: fastMap(filteredFields, field => field.internalName),
     sortKey: tableOptions.sortBy.internalName,
