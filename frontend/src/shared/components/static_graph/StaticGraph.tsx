@@ -206,6 +206,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            xAxisTitle={xAxisTitle}
+            yAxisTitle={yAxisTitle}
           />
         )
       case CellType.StaticRadar:
@@ -233,6 +235,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
+            xAxisTitle={xAxisTitle}
+            yAxisTitle={yAxisTitle}
           />
         )
       default:
