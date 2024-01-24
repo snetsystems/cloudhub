@@ -83,9 +83,15 @@ class DoughnutPieChartOptions extends PureComponent<Props> {
         text: field.displayName || field.internalName,
       }))
       .filter(field => field?.key !== 'time')
-    const customizeFieldOptions = fieldOptions.filter(
-      fieldOption => fieldOption?.internalName !== 'time'
-    )
+    const customizeFieldOptions = fieldOptions.filter(fieldOption => {
+      if (
+        fieldOption.internalName === 'time' ||
+        groupByTag.includes(fieldOption.internalName)
+      ) {
+        return false
+      }
+      return true
+    })
     const isValidSelectedSortField =
       tableOptions?.sortBy?.internalName !== 'time' &&
       tableOptions?.sortBy?.internalName !== '' &&
@@ -255,26 +261,44 @@ class DoughnutPieChartOptions extends PureComponent<Props> {
     onUpdateFieldOptions(updatedFieldOptions)
   }
 
+  private filterExcludedFields(fieldOption) {
+    const {groupByTag} = this.props
+
+    if (
+      fieldOption.internalName === 'time' ||
+      groupByTag.includes(fieldOption?.internalName)
+    ) {
+      return false
+    }
+    return true
+  }
+
+  private findActualIndex(filteredFieldOptions, filteredIndex) {
+    return _.get(filteredFieldOptions, `[${filteredIndex}].originalIndex`, 0)
+  }
+
   private moveField(dragIndex, hoverIndex) {
     const {onUpdateFieldOptions, fieldOptions} = this.props
 
-    const dragIndexExcludingTime = dragIndex + 1
-    const hoverIndexExcludingTime = hoverIndex + 1
+    const filteredFieldOptions = fieldOptions
+      .map((field, index) => ({field, originalIndex: index}))
+      .filter(item => this.filterExcludedFields(item.field))
 
-    const draggedField = fieldOptions[dragIndexExcludingTime]
-
-    const fieldOptionsRemoved = _.concat(
-      _.slice(fieldOptions, 0, dragIndexExcludingTime),
-      _.slice(fieldOptions, dragIndexExcludingTime + 1)
+    const actualDragIndex = this.findActualIndex(
+      filteredFieldOptions,
+      dragIndex
     )
-
-    const fieldOptionsAdded = _.concat(
-      _.slice(fieldOptionsRemoved, 0, hoverIndexExcludingTime),
-      [draggedField],
-      _.slice(fieldOptionsRemoved, hoverIndexExcludingTime)
+    const actualHoverIndex = this.findActualIndex(
+      filteredFieldOptions,
+      hoverIndex
     )
+    const draggedField = fieldOptions[actualDragIndex]
+    let newFieldOptions = [...fieldOptions]
 
-    onUpdateFieldOptions(fieldOptionsAdded)
+    newFieldOptions.splice(actualDragIndex, 1)
+    newFieldOptions.splice(actualHoverIndex, 0, draggedField)
+
+    onUpdateFieldOptions(newFieldOptions)
   }
 
   private handleChooseSortBy = (option: DropdownOption) => {
