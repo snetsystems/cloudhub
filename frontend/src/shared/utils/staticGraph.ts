@@ -145,23 +145,20 @@ export const sortedStaticGraphData = (
     sortKey: string
     order?: Direction
     groupByIndex: number
-  }
+  },
+  sortingBasisField: string[]
 ) => {
   const fieldIndex = fields.indexOf(sortKey)
   const hasGroupByTags = rawData[0].tags ? true : false
   const groupByTagIndex = hasGroupByTags
     ? fields.indexOf(_.keys(rawData[0].tags)[groupByIndex])
     : 0
-  const sortKeyWithoutTags = hasGroupByTags
-    ? _.filter(fields, field => _.keys(rawData[0].tags).indexOf(field) === -1)
-    : fields
 
-  const YAxisIndex = sortKeyWithoutTags.indexOf(sortKey)
+  const YAxisIndex = sortingBasisField.indexOf(sortKey)
   const XAxisIndex = fieldIndex === -1 ? groupByTagIndex : fieldIndex
 
   const isSortedWithXAxis =
     hasGroupByTags && _.keys(rawData[0].tags).indexOf(fields[XAxisIndex]) !== -1
-
   const YAxisData = fastMap(rawData, item =>
     item.values[0].slice(1).map((value: number) => value)
   )
@@ -183,7 +180,6 @@ export const sortedStaticGraphData = (
       sortedData.map(item => indexMap[item[sortedIndex]]),
       index => _.values(rawData[index].tags).join('/')
     )
-
     return {labels, sortedData}
   }
 
@@ -287,7 +283,7 @@ const getChartFields = (
       )
     : filteredFields
   const excludeTagsFields = fastMap(excludeTags, field => field.internalName)
-  const originOrder = rawData[0].columns
+  const sortingBasisField = rawData[0].columns
     .slice(1)
     .map(value => `${rawData[0].name}.${value}`)
 
@@ -295,7 +291,7 @@ const getChartFields = (
     excludeTagsFields,
     excludeTags,
     sortFields,
-    originOrder,
+    sortingBasisField,
   }
 }
 
@@ -305,12 +301,16 @@ const createPieChartDatasets = ({
   tableOptions,
   colors,
 }: StatisticalGraphDatasetConfigType) => {
-  const {excludeTags, sortFields, originOrder} = getChartFields(
+  const {excludeTags, sortFields, sortingBasisField} = getChartFields(
     fieldOptions,
     tableOptions,
     rawData
   )
-  const {sortedData, labels} = sortedStaticGraphData(rawData, sortFields)
+  const {sortedData, labels} = sortedStaticGraphData(
+    rawData,
+    sortFields,
+    sortingBasisField
+  )
   const getColors = getLineColorsHexes(colors, labels.length)
 
   const datasets = fastReduce(
@@ -321,7 +321,7 @@ const createPieChartDatasets = ({
           label: col.displayName !== '' ? col.displayName : col.internalName,
           data: fastMap(
             sortedData,
-            item => item[originOrder.indexOf(col.internalName)]
+            item => item[sortingBasisField.indexOf(col.internalName)]
           ),
           backgroundColor: changeColorsOpacity(getColors, 0.5),
           borderColor: getColors,
@@ -348,9 +348,14 @@ const createBarChartDatasets = ({
     excludeTags,
     excludeTagsFields,
     sortFields,
-    originOrder,
+    sortingBasisField,
   } = getChartFields(fieldOptions, tableOptions, rawData)
-  const {sortedData, labels} = sortedStaticGraphData(rawData, sortFields)
+
+  const {sortedData, labels} = sortedStaticGraphData(
+    rawData,
+    sortFields,
+    sortingBasisField
+  )
   const getcolors = getLineColorsHexes(colors, excludeTagsFields.length)
 
   const datasets = fastReduce(
@@ -361,7 +366,7 @@ const createBarChartDatasets = ({
           label: col.displayName !== '' ? col.displayName : col.internalName,
           data: fastMap(
             sortedData,
-            item => item[originOrder.indexOf(col.internalName)]
+            item => item[sortingBasisField.indexOf(col.internalName)]
           ),
           backgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
           borderColor: getcolors[colIndex],
