@@ -271,7 +271,7 @@ class RadarChartOptions extends PureComponent<Props, State> {
       ...axes,
       y: {
         ...axes.y,
-        rPrefix,
+        prefix: rPrefix,
       },
     }
 
@@ -286,7 +286,7 @@ class RadarChartOptions extends PureComponent<Props, State> {
       ...axes,
       y: {
         ...axes.y,
-        rSuffix,
+        suffix: rSuffix,
       },
     }
     this.setState({rSuffix: rSuffix}, () => onUpdateAxes(newAxes))
