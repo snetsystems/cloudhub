@@ -37,6 +37,7 @@ interface Props {
   connectDragPreview?: ConnectDragPreview
   moveField: (dragIndex: number, hoverIndex: number) => void
   direction: '' | 'asc' | 'desc'
+  isUsingTempVar: boolean
   tempVar: string
 }
 
@@ -135,6 +136,7 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
       connectDropTarget,
       visible,
       tempVar,
+      isUsingTempVar,
     } = this.props
 
     const fieldClass = `customizable-field${isDragging ? ' dragging' : ''}`
@@ -151,7 +153,10 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
     return connectDragPreview(
       connectDropTarget(
         <div className={fieldClass}>
-          <div className={labelClass} style={{width: '50%'}}>
+          <div
+            className={labelClass}
+            style={isUsingTempVar ? {width: '50%'} : null}
+          >
             {connectDragSource(
               <div className="customizable-field--drag">
                 <span className="hamburger" />
@@ -177,9 +182,11 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
             placeholder={`Rename ${internalName}`}
             disabled={!visible}
             style={
-              internalName === 'time'
-                ? {width: 'calc(50% - 4px)'}
-                : {width: 'calc(25% - 4px)'}
+              isUsingTempVar
+                ? internalName === 'time'
+                  ? {width: 'calc(50% - 4px)'}
+                  : {width: 'calc(25% - 4px)'}
+                : null
             }
           />
           <input
@@ -193,7 +200,7 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
             placeholder={`Template Variables`}
             disabled={!visible}
             style={
-              internalName === 'time'
+              !isUsingTempVar || internalName === 'time'
                 ? {display: 'none'}
                 : {width: 'calc(25% - 4px)'}
             }

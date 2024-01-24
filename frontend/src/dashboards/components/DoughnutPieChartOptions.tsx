@@ -138,6 +138,7 @@ class DoughnutPieChartOptions extends PureComponent<Props> {
                 fields={customizeFieldOptions}
                 onFieldUpdate={this.handleFieldUpdate}
                 moveField={this.moveField}
+                isUsingTempVar={false}
               />
             </div>
             <LineGraphColorSelector

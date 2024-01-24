@@ -189,6 +189,7 @@ class BarChartOptions extends PureComponent<Props, State> {
                 fields={customizeFieldOptions}
                 onFieldUpdate={this.handleFieldUpdate}
                 moveField={this.moveField}
+                isUsingTempVar={false}
               />
             </div>
             <div className="form-group col-sm-12">
