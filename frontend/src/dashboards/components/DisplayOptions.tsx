@@ -11,11 +11,11 @@ import TableOptions from 'src/dashboards/components/TableOptions'
 import NoteOptions from 'src/dashboards/components/NoteOptions'
 import CellNoteEditor from 'src/shared/components/TimeMachine/CellNoteEditor'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import HistogramOptions from 'src/dashboards/components/HistogramOptions'
 import BarChartOptions from 'src/dashboards/components/BarChartOptions'
 import DoughnutPieChartOptions from 'src/dashboards/components/DoughnutPieChartOptions'
 import LineChartOptions from 'src/dashboards/components/LineChartOptions'
 import RadarChartOptions from 'src/dashboards/components/RadarChartOptions'
+import ScatterChartOptions from 'src/dashboards/components/ScatterChartOptions'
 
 // Utils
 import {
@@ -283,6 +283,7 @@ class DisplayOptions extends Component<Props, State> {
       case CellType.StaticDoughnut:
         return (
           <DoughnutPieChartOptions
+            axes={this.axes}
             fieldOptions={fieldOptions}
             groupByTag={this.groupByTag}
             tableOptions={tableOptions}
@@ -291,6 +292,7 @@ class DisplayOptions extends Component<Props, State> {
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             defaultYLabel={defaultYLabel}
+            onUpdateAxes={onUpdateAxes}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
@@ -335,7 +337,7 @@ class DisplayOptions extends Component<Props, State> {
         )
       case CellType.StaticScatter:
         return (
-          <HistogramOptions
+          <ScatterChartOptions
             axes={this.axes}
             type={type}
             lineColors={lineColors}

@@ -51,7 +51,7 @@ interface State {
 }
 
 @ErrorHandling
-class HistorgramOptions extends PureComponent<Props, State> {
+class ScatterChartOptions extends PureComponent<Props, State> {
   public static defaultProps: Partial<Props> = {
     axes: {
       y: {
@@ -472,4 +472,4 @@ class HistorgramOptions extends PureComponent<Props, State> {
   }
 }
 
-export default HistorgramOptions
+export default ScatterChartOptions
