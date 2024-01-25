@@ -168,16 +168,19 @@ export const sortedStaticGraphData = (
   sortingBasisField: string[]
 ) => {
   const fieldIndex = fields.indexOf(sortKey)
+  const isFoundSortKey = fieldIndex !== -1
+
   const hasGroupByTags = rawData[0].tags ? true : false
-  const groupByTagIndex = hasGroupByTags
-    ? fields.indexOf(_.keys(rawData[0].tags)[groupByIndex])
-    : 0
+  const groupByTagIndex = hasGroupByTags ? groupByIndex : 0
 
   const YAxisIndex = sortingBasisField.indexOf(sortKey)
-  const XAxisIndex = fieldIndex === -1 ? groupByTagIndex : fieldIndex
+
+  const XAxisIndex =
+    !isFoundSortKey || sortingBasisField[fieldIndex] ? groupByTagIndex : 0
 
   const isSortedWithXAxis =
-    hasGroupByTags && _.keys(rawData[0].tags).indexOf(fields[XAxisIndex]) !== -1
+    !isFoundSortKey || _.keys(rawData[0].tags).indexOf(sortKey) !== -1
+
   const YAxisData = fastMap(rawData, item =>
     item.values[0].slice(1).map((value: number) => value)
   )
@@ -187,18 +190,25 @@ export const sortedStaticGraphData = (
     sortedIndex: number
   ) => {
     const indexMap = currentData.reduce((acc, item, index) => {
-      acc[item[sortedIndex]] = index
+      const key = item[sortedIndex]
+      if (!acc[key]) {
+        acc[key] = []
+      }
+      acc[key].push(index)
       return acc
-    }, {})
+    }, {} as Record<number, number[]>)
+
     const sortedData = [...currentData].sort((current, next) =>
       order === ASCENDING
         ? current[sortedIndex] - next[sortedIndex]
         : next[sortedIndex] - current[sortedIndex]
     )
-    const labels = fastMap(
-      sortedData.map(item => indexMap[item[sortedIndex]]),
-      index => _.values(rawData[index].tags).join('/')
-    )
+    const labels = sortedData.map(item => {
+      const indexes = indexMap[item[sortedIndex]]
+      const index = indexes.shift()
+      return _.values(rawData[index].tags).join('/')
+    })
+
     return {labels, sortedData}
   }
 
@@ -215,6 +225,7 @@ export const sortedStaticGraphData = (
     const sortedIndexListWithXAxis = sortedXAxisData.map(data =>
       XAxisData.indexOf(data)
     )
+
     const sortedData = sortedIndexListWithXAxis.map(data => YAxisData[data])
     const labels = fastMap(sortedIndexListWithXAxis, index =>
       _.values(rawData[index].tags).join('/')
