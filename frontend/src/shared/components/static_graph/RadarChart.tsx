@@ -1,5 +1,5 @@
 // Libraries
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {Radar} from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -14,29 +14,17 @@ import {
 import _ from 'lodash'
 
 // Types
-import {
-  Axes,
-  FluxTable,
-  StaticLegendPositionType,
-  StatisticalGraphBoundsType,
-  StatisticalGraphMinMaxValueType,
-} from 'src/types'
+import {Axes, CellType, FluxTable, StaticLegendPositionType} from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
 
 // Utils
 import {fastMap} from 'src/utils/fast'
-import {
-  convertToStaticGraphMinMaxValue,
-  formatStaticGraphValue,
-} from 'src/shared/utils/staticGraph'
+import {staticGraphOptions} from 'src/shared/utils/staticGraph'
 
 // Constants
 import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
-import {
-  LEGEND_POSITION,
-  STATIC_GRAPH_OPTIONS,
-} from 'src/shared/constants/staticGraph'
+import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
@@ -99,39 +87,13 @@ const RadarChart = ({
     datasets,
   }
 
-  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
-  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[0]
+  const dynamicOption = useMemo(
+    () =>
+      staticGraphOptions[CellType.StaticRadar]({
+        axes,
+      }),
+    [data]
   )
-  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[1]
-  )
-
-  const dynamicOption = {
-    ...STATIC_GRAPH_OPTIONS,
-    plugins: {
-      ...STATIC_GRAPH_OPTIONS.plugins,
-      zoom: {},
-    },
-    elements: {
-      line: {
-        borderWidth: 3,
-      },
-    },
-    scales: {
-      r: {
-        ...STATIC_GRAPH_OPTIONS.scales?.r,
-        min: min,
-        max: max,
-        ticks: {
-          ...STATIC_GRAPH_OPTIONS.scales?.r?.ticks,
-          callback: function (value) {
-            return formatStaticGraphValue(axes, value)
-          },
-        },
-      },
-    },
-  }
 
   useEffect(() => {
     chartRef.current.resize()

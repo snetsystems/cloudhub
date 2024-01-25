@@ -586,7 +586,7 @@ const createPieOptions = ({axes}: {axes: Axes}) => {
           },
           label: function (context) {
             return [
-              ` ${context.dataset.label}:${formatStaticGraphValue(
+              ` ${context.dataset.label}: ${formatStaticGraphValue(
                 axes,
                 context.raw
               )}`,
@@ -600,6 +600,42 @@ const createPieOptions = ({axes}: {axes: Axes}) => {
 
   return dynamicOption
 }
+const createStaticRadarOptions = ({axes}: {axes: Axes}) => {
+  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
+  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[0]
+  )
+  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[1]
+  )
+  const dynamicOption = {
+    ...STATIC_GRAPH_OPTIONS,
+    plugins: {
+      ...STATIC_GRAPH_OPTIONS.plugins,
+      zoom: {},
+    },
+    elements: {
+      line: {
+        borderWidth: 3,
+      },
+    },
+    scales: {
+      r: {
+        ...STATIC_GRAPH_OPTIONS.scales?.r,
+        min: min,
+        max: max,
+        ticks: {
+          ...STATIC_GRAPH_OPTIONS.scales?.r?.ticks,
+          callback: function (value) {
+            return formatStaticGraphValue(axes, value)
+          },
+        },
+      },
+    },
+  }
+  return dynamicOption
+}
+
 export const staticGraphDatasets = (cellType: CellType) => {
   switch (cellType) {
     case CellType.StaticStackedBar:
@@ -644,4 +680,5 @@ export const staticGraphOptions = {
   [CellType.StaticPie]: createPieOptions,
   [CellType.StaticDoughnut]: createPieOptions,
   [CellType.StaticScatter]: createScatterChartOptions,
+  [CellType.StaticRadar]: createStaticRadarOptions,
 }
