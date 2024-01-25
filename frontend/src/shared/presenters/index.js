@@ -142,3 +142,47 @@ export const buildDefaultYLabel = queryConfig => {
 
   return `${measurement}.${values.join('_')}`
 }
+
+export const buildScatterChartDefaultXLabel = queryConfig => {
+  const {measurement} = queryConfig
+  const fields = _.get(queryConfig, ['fields', '0'], [])
+  const isEmpty = !measurement && !fields.length
+
+  if (isEmpty) {
+    return ''
+  }
+
+  const walkZerothArgs = f => {
+    if (f.type === 'field') {
+      return f.value
+    }
+
+    return `${f.value}${_.get(f, ['0', 'args', 'value'], '')}`
+  }
+
+  const values = fieldWalk([fields], walkZerothArgs)
+
+  return `${measurement}.${values.join('_')}`
+}
+
+export const buildScatterChartDefaultYLabel = queryConfig => {
+  const {measurement} = queryConfig
+  const fields = _.get(queryConfig, ['fields', '1'], [])
+  const isEmpty = !measurement && !fields.length
+
+  if (isEmpty) {
+    return ''
+  }
+
+  const walkZerothArgs = f => {
+    if (f.type === 'field') {
+      return f.value
+    }
+
+    return `${f.value}${_.get(f, ['0', 'args', 'value'], '')}`
+  }
+
+  const values = fieldWalk([fields], walkZerothArgs)
+
+  return `${measurement}.${values.join('_')}`
+}
