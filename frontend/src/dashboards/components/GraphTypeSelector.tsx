@@ -71,7 +71,7 @@ class GraphTypeSelector extends Component<Props> {
           </div>
           <div
             className="graph-type-selector--title"
-            style={{paddingTop: '5%'}}
+            style={{paddingTop: '5%', borderBottom: 'none'}}
           >
             <h5 style={{borderBottom: '2px solid #383846'}}>OTHERS</h5>
             {OTHERS_GRAPH_TYPES.map(graphType => (
