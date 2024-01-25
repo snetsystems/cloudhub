@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {Scatter} from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -25,19 +25,14 @@ import {changeColorsOpacity} from 'src/shared/graphs/helpers'
 
 // Constants
 import {ColorString} from 'src/types/colors'
-import {
-  LEGEND_POSITION,
-  STATIC_GRAPH_OPTIONS,
-} from 'src/shared/constants/staticGraph'
+import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 
 // Components
 import InvalidQuery from 'src/shared/components/InvalidQuery'
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {
-  convertToStaticGraphMinMaxValue,
-  formatStaticGraphValue,
-} from 'src/shared/utils/staticGraph'
+import {staticGraphOptions} from 'src/shared/utils/staticGraph'
+import {CellType} from 'src/types/dashboards'
 
 ChartJS.register(
   LineElement,
@@ -60,9 +55,6 @@ interface Props {
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
 }
-type ScaleType = 'logarithmic' | undefined
-type BoundsType = [string, string] | undefined
-type MinMaxValueType = number | undefined
 
 const ScatterChart = ({
   axes,
@@ -121,68 +113,16 @@ const ScatterChart = ({
     labels: axesX,
     datasets: scatterData,
   }
-  const type: ScaleType = axes?.y?.scale === 'log' ? 'logarithmic' : undefined
-  const bounds: BoundsType = axes?.y?.bounds
-  const min: MinMaxValueType = convertToStaticGraphMinMaxValue(bounds[0])
-  const max: MinMaxValueType = convertToStaticGraphMinMaxValue(bounds[1])
 
-  const isValidValue = value => {
-    return value !== undefined && value !== ''
-  }
-  const dynamicOption = {
-    ...STATIC_GRAPH_OPTIONS,
-    plugins: {
-      ...STATIC_GRAPH_OPTIONS.plugins,
-      tooltip: {
-        ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
-        callbacks: {
-          ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
-          label: function (context) {
-            let label = context.dataset.label || ''
-            if (label) {
-              const {x, y} = context.dataset.data[0] ?? {x: '0', y: '0'}
-              label += `: (${x} , ${y})`
-            }
-            return label
-          },
-        },
-      },
-    },
-    scales: {
-      ...STATIC_GRAPH_OPTIONS.scales,
-      x: {
-        ...STATIC_GRAPH_OPTIONS.scales?.x,
-        title: {
-          ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
-          text: xAxisTitle,
-        },
-        ticks: {
-          ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
-          callback: function (value) {
-            return (
-              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
-            )
-          },
-        },
-      },
-      y: {
-        ...STATIC_GRAPH_OPTIONS.scales?.y,
-        ...(type && {type}),
-        ...(isValidValue(min) && {min}),
-        ...(isValidValue(max) && {max}),
-        title: {
-          ...STATIC_GRAPH_OPTIONS.scales?.y?.title,
-          text: yAxisTitle,
-        },
-        ticks: {
-          ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
-          callback: function (value) {
-            return formatStaticGraphValue(axes, value)
-          },
-        },
-      },
-    },
-  }
+  const dynamicOption = useMemo(
+    () =>
+      staticGraphOptions[CellType.StaticScatter]({
+        axes,
+        xAxisTitle,
+        yAxisTitle,
+      }),
+    [data, axes, xAxisTitle, yAxisTitle]
+  )
 
   useEffect(() => {
     chartRef.current.resize()
@@ -197,12 +137,7 @@ const ScatterChart = ({
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
-        <div
-          className="static-graph-container"
-          style={{
-            ...container,
-          }}
-        >
+        <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
             <Scatter ref={chartRef} options={dynamicOption} data={chartData} />
           </ChartContainer>

@@ -19,13 +19,13 @@ import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
 
 // Utilities
-import {staticGraphDatasets} from 'src/shared/utils/staticGraph'
+import {
+  staticGraphDatasets,
+  staticGraphOptions,
+} from 'src/shared/utils/staticGraph'
 
 // Constants
-import {
-  LEGEND_POSITION,
-  STATIC_GRAPH_OPTIONS,
-} from 'src/shared/constants/staticGraph'
+import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
@@ -39,8 +39,6 @@ interface Props {
   staticGraphStyle: React.CSSProperties
   data: TimeSeriesServerResponse[] | FluxTable[]
   colors: ColorString[]
-  xAxisTitle?: string
-  yAxisTitle?: string
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
@@ -48,6 +46,7 @@ interface Props {
 }
 
 const DoughnutChart = ({
+  axes,
   staticGraphStyle,
   data,
   colors,
@@ -78,14 +77,13 @@ const DoughnutChart = ({
     [data, tableOptions, fieldOptions]
   )
 
-  const dynamicOption = {
-    ...STATIC_GRAPH_OPTIONS,
-    plugins: {
-      ...STATIC_GRAPH_OPTIONS.plugins,
-      zoom: {},
-    },
-    scales: {},
-  }
+  const dynamicOption = useMemo(
+    () =>
+      staticGraphOptions[CellType.StaticDoughnut]({
+        axes,
+      }),
+    [data, tableOptions, fieldOptions]
+  )
   useEffect(() => {
     chartRef.current.resize()
   }, [staticLegend, staticLegendPosition])

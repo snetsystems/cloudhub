@@ -37,10 +37,12 @@ export const STATIC_GRAPH_OPTIONS = {
       },
     },
     tooltip: {
+      borderWidth: 0,
+      cornerRadius: 4,
       pointStyle: 'circle',
       usePointStyle: true,
-      boxWidth: 8,
-      boxHeight: 8,
+      boxWidth: 10,
+      boxHeight: 10,
       animation: false as any,
       callbacks: {
         labelPointStyle: function () {

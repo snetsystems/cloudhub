@@ -18,19 +18,20 @@ import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
 
 // Constants
-import {
-  LEGEND_POSITION,
-  STATIC_GRAPH_OPTIONS,
-} from 'src/shared/constants/staticGraph'
+import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {CellType, FieldOption, TableOptions} from 'src/types/dashboards'
-import {staticGraphDatasets} from 'src/shared/utils/staticGraph'
+import {Axes, CellType, FieldOption, TableOptions} from 'src/types/dashboards'
+import {
+  staticGraphDatasets,
+  staticGraphOptions,
+} from 'src/shared/utils/staticGraph'
 
 ChartJS.register(CategoryScale, LinearScale, ArcElement, Title, Tooltip, Legend)
 interface Props {
+  axes: Axes
   cellID: string
   staticGraphStyle: React.CSSProperties
   data: TimeSeriesServerResponse[] | FluxTable[]
@@ -42,6 +43,7 @@ interface Props {
 }
 
 const PieChart = ({
+  axes,
   staticGraphStyle,
   data,
   colors,
@@ -72,14 +74,13 @@ const PieChart = ({
     [data, tableOptions, fieldOptions]
   )
 
-  const dynamicOption = {
-    ...STATIC_GRAPH_OPTIONS,
-    plugins: {
-      ...STATIC_GRAPH_OPTIONS.plugins,
-      zoom: {},
-    },
-    scales: {},
-  }
+  const dynamicOption = useMemo(
+    () =>
+      staticGraphOptions[CellType.StaticPie]({
+        axes,
+      }),
+    [data, tableOptions, fieldOptions]
+  )
 
   useEffect(() => {
     chartRef.current.resize()

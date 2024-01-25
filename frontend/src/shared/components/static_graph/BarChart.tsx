@@ -15,29 +15,18 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 import _ from 'lodash'
 
 // Types
-import {
-  Axes,
-  FluxTable,
-  StaticLegendPositionType,
-  StatisticalGraphBoundsType,
-  StatisticalGraphMinMaxValueType,
-  StatisticalGraphScaleType,
-} from 'src/types'
+import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
 import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
 
 // Utilities
 import {
-  convertToStaticGraphMinMaxValue,
-  formatStaticGraphValue,
   staticGraphDatasets,
+  staticGraphOptions,
 } from 'src/shared/utils/staticGraph'
 
 // Constants
-import {
-  LEGEND_POSITION,
-  STATIC_GRAPH_OPTIONS,
-} from 'src/shared/constants/staticGraph'
+import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
@@ -104,61 +93,15 @@ const BarChart = ({
       }),
     [data, tableOptions, fieldOptions]
   )
-
-  const type: StatisticalGraphScaleType =
-    axes?.y?.scale === 'log' ? 'logarithmic' : undefined
-  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
-  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[0]
+  const dynamicOption = useMemo(
+    () =>
+      staticGraphOptions[CellType.StaticBar]({
+        axes,
+        xAxisTitle,
+        yAxisTitle,
+      }),
+    [data, tableOptions, fieldOptions]
   )
-  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[1]
-  )
-
-  const isValidValue = value => {
-    return value !== undefined && value !== ''
-  }
-
-  const dynamicOption = {
-    ...STATIC_GRAPH_OPTIONS,
-    plugins: {
-      ...STATIC_GRAPH_OPTIONS.plugins,
-    },
-    scales: {
-      ...STATIC_GRAPH_OPTIONS.scales,
-      x: {
-        ...STATIC_GRAPH_OPTIONS.scales?.x,
-        title: {
-          ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
-          text: xAxisTitle,
-        },
-        ticks: {
-          ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
-          callback: function (value) {
-            return (
-              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
-            )
-          },
-        },
-      },
-      y: {
-        ...STATIC_GRAPH_OPTIONS.scales?.y,
-        ...(type && {type}),
-        ...(isValidValue(min) && {min}),
-        ...(isValidValue(max) && {max}),
-        title: {
-          ...STATIC_GRAPH_OPTIONS.scales?.y?.title,
-          text: yAxisTitle,
-        },
-        ticks: {
-          ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
-          callback: function (value) {
-            return formatStaticGraphValue(axes, value)
-          },
-        },
-      },
-    },
-  }
 
   useEffect(() => {
     chartRef.current.resize()

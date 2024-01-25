@@ -7,8 +7,11 @@ import {CellType} from 'src/types/dashboards'
 import {TimeSeriesSeries} from 'src/types/series'
 import {
   Direction,
+  StatisticalGraphBoundsType,
   StatisticalGraphDatasetConfigType,
   StatisticalGraphFieldOption,
+  StatisticalGraphMinMaxValueType,
+  StatisticalGraphScaleType,
   StatisticalGraphTableOptions,
 } from 'src/types/statisticalgraph'
 
@@ -16,6 +19,7 @@ import {
 import {
   LEGEND_FONT_SIZE_FONT_FAMILY,
   LEGEND_MIN_MARGIN_WIDTH,
+  STATIC_GRAPH_OPTIONS,
 } from 'src/shared/constants/staticGraph'
 
 import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
@@ -31,7 +35,11 @@ export const convertToStaticGraphMinMaxValue = (value: string) => {
     : undefined
 }
 
-export const formatStaticGraphValue = (axes: Axes, value: number) => {
+export const formatStaticGraphValue = (
+  axes: Axes,
+  value: number,
+  axesType = 'y'
+) => {
   let formattedValue
 
   switch (axes?.y?.base) {
@@ -67,9 +75,20 @@ export const formatStaticGraphValue = (axes: Axes, value: number) => {
       break
   }
 
-  const prefix = axes?.y?.prefix ? axes.y.prefix : ''
-  const suffix = axes?.y?.suffix ? axes.y.suffix : ''
-  return prefix + formattedValue + suffix
+  switch (axesType) {
+    case 'x': {
+      const prefix = axes?.x?.prefix ? axes.x.prefix : ''
+      const suffix = axes?.x?.suffix ? axes.x.suffix : ''
+      return prefix + formattedValue + suffix
+    }
+
+    case 'y':
+    default: {
+      const prefix = axes?.y?.prefix ? axes.y.prefix : ''
+      const suffix = axes?.y?.suffix ? axes.y.suffix : ''
+      return prefix + formattedValue + suffix
+    }
+  }
 }
 
 export const findLongestString = (arr: any[], findKey?: string) => {
@@ -332,6 +351,7 @@ const createPieChartDatasets = ({
     },
     []
   )
+
   return {
     labels,
     datasets,
@@ -384,6 +404,202 @@ const createBarChartDatasets = ({
   }
 }
 
+const isValidValue = value => {
+  return value !== undefined && value !== ''
+}
+
+const createBarChartOptions = ({
+  axes,
+  xAxisTitle,
+  yAxisTitle,
+  barChartType,
+}: {
+  axes: Axes
+  xAxisTitle?: string
+  yAxisTitle?: string
+  barChartType: CellType
+}) => {
+  const type: StatisticalGraphScaleType =
+    axes?.y?.scale === 'log' ? 'logarithmic' : undefined
+  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
+  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[0]
+  )
+  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[1]
+  )
+
+  const dynamicOption = {
+    ...STATIC_GRAPH_OPTIONS,
+    plugins: {
+      ...STATIC_GRAPH_OPTIONS.plugins,
+      tooltip: {
+        ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
+        callbacks: {
+          ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
+          title: function (tooltipItems) {
+            return tooltipItems[0].label
+          },
+          label: function (context) {
+            return [
+              ` ${context.dataset.label}:${formatStaticGraphValue(
+                axes,
+                context.raw
+              )}`,
+            ]
+          },
+        },
+      },
+    },
+    scales: {
+      ...STATIC_GRAPH_OPTIONS.scales,
+      x: {
+        ...STATIC_GRAPH_OPTIONS.scales?.x,
+        title: {
+          ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
+          text: xAxisTitle,
+        },
+        stacked: barChartType === CellType.StaticStackedBar,
+        ticks: {
+          ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
+          callback: function (value) {
+            return (
+              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
+            )
+          },
+        },
+      },
+      y: {
+        ...STATIC_GRAPH_OPTIONS.scales?.y,
+        ...(type && {type}),
+        ...(isValidValue(min) && {min}),
+        ...(isValidValue(max) && {max}),
+        title: {
+          ...STATIC_GRAPH_OPTIONS.scales?.y?.title,
+          text: yAxisTitle,
+        },
+        stacked: barChartType === CellType.StaticStackedBar,
+        ticks: {
+          ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
+          callback: function (value) {
+            return formatStaticGraphValue(axes, value)
+          },
+        },
+      },
+    },
+  }
+
+  return dynamicOption
+}
+
+const createScatterChartOptions = ({
+  axes,
+  xAxisTitle,
+  yAxisTitle,
+}: {
+  axes: Axes
+  xAxisTitle?: string
+  yAxisTitle?: string
+}) => {
+  const type: StatisticalGraphScaleType =
+    axes?.y?.scale === 'log' ? 'logarithmic' : undefined
+  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
+  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[0]
+  )
+  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[1]
+  )
+
+  const dynamicOption = {
+    ...STATIC_GRAPH_OPTIONS,
+    plugins: {
+      ...STATIC_GRAPH_OPTIONS.plugins,
+      tooltip: {
+        ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
+        callbacks: {
+          ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
+          label: function (context) {
+            let label = context.dataset.label || ''
+            if (label) {
+              const {x, y} = context.dataset.data[0] ?? {x: '0', y: '0'}
+              label += `: (${formatStaticGraphValue(
+                axes,
+                x,
+                'x'
+              )} , ${formatStaticGraphValue(axes, y, 'y')})`
+            }
+            return label
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        ...STATIC_GRAPH_OPTIONS.scales?.x,
+        title: {
+          ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
+          text: xAxisTitle,
+        },
+        ticks: {
+          ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
+          callback: function (value) {
+            return (
+              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
+            )
+          },
+        },
+      },
+      y: {
+        ...STATIC_GRAPH_OPTIONS.scales?.y,
+        ...(type && {type}),
+        ...(isValidValue(min) && {min}),
+        ...(isValidValue(max) && {max}),
+        title: {
+          ...STATIC_GRAPH_OPTIONS.scales?.y?.title,
+          text: yAxisTitle,
+        },
+        ticks: {
+          ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
+          callback: function (value) {
+            return formatStaticGraphValue(axes, value)
+          },
+        },
+      },
+    },
+  }
+  return dynamicOption
+}
+
+const createPieOptions = ({axes}: {axes: Axes}) => {
+  const dynamicOption = {
+    ...STATIC_GRAPH_OPTIONS,
+    plugins: {
+      ...STATIC_GRAPH_OPTIONS.plugins,
+      zoom: {},
+      tooltip: {
+        ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
+        callbacks: {
+          ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
+          title: function (tooltipItems) {
+            return tooltipItems[0].label
+          },
+          label: function (context) {
+            return [
+              ` ${context.dataset.label}:${formatStaticGraphValue(
+                axes,
+                context.raw
+              )}`,
+            ]
+          },
+        },
+      },
+    },
+    scales: {},
+  }
+
+  return dynamicOption
+}
 export const staticGraphDatasets = (cellType: CellType) => {
   switch (cellType) {
     case CellType.StaticStackedBar:
@@ -401,4 +617,31 @@ export const staticGraphDatasets = (cellType: CellType) => {
     default:
       return null
   }
+}
+
+export const staticGraphOptions = {
+  [CellType.StaticStackedBar]: ({axes, xAxisTitle, yAxisTitle}) =>
+    createBarChartOptions({
+      axes,
+      xAxisTitle,
+      yAxisTitle,
+      barChartType: CellType.StaticStackedBar,
+    }),
+  [CellType.StaticLineChart]: ({axes, xAxisTitle, yAxisTitle}) =>
+    createBarChartOptions({
+      axes,
+      xAxisTitle,
+      yAxisTitle,
+      barChartType: CellType.StaticLineChart,
+    }),
+  [CellType.StaticBar]: ({axes, xAxisTitle, yAxisTitle}) =>
+    createBarChartOptions({
+      axes,
+      xAxisTitle,
+      yAxisTitle,
+      barChartType: CellType.StaticBar,
+    }),
+  [CellType.StaticPie]: createPieOptions,
+  [CellType.StaticDoughnut]: createPieOptions,
+  [CellType.StaticScatter]: createScatterChartOptions,
 }

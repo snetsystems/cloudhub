@@ -9,11 +9,12 @@ import InvalidData from 'src/shared/components/InvalidData'
 import BarChart from 'src/shared/components/static_graph/BarChart'
 import InvalidQuery from 'src/shared/components/InvalidQuery'
 import PieChart from 'src/shared/components/static_graph/PieChart'
-import DoughnutChart from 'src/shared/components/static_graph/Doughnut'
-import ScatterChart from 'src/shared/components/static_graph/Scatter'
+import DoughnutChart from 'src/shared/components/static_graph/DoughnutChart'
+
 import RadarChart from 'src/shared/components/static_graph/RadarChart'
 import StackedChart from 'src/shared/components/static_graph/StackedChart'
 import LineChart from 'src/shared/components/static_graph/LineChart'
+import ScatterChart from 'src/shared/components/static_graph/ScatterChart'
 
 // Types
 import {ColorString} from 'src/types/colors'
@@ -172,6 +173,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       case CellType.StaticPie:
         return (
           <PieChart
+            axes={axes}
             cellID={cellID}
             staticGraphStyle={this.staticGraphStyle}
             data={data}
