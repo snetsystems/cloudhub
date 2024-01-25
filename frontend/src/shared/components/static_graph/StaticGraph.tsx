@@ -24,7 +24,7 @@ import {
   StaticLegendPositionType,
   TableOptions,
 } from 'src/types/dashboards'
-import {TimeSeriesServerResponse} from 'src/types/series'
+import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 import {Query, Axes, RemoteDataState, CellType, FluxTable} from 'src/types'
 import {DataType} from 'src/shared/constants'
 import {getDeep} from 'src/utils/wrappers'
@@ -214,6 +214,27 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
           />
         )
       case CellType.StaticScatter:
+        const convertData: TimeSeriesSeries[] =
+          data[0]['response']['results'][0]['series']
+        const selectedFieldsLength = convertData[0].columns.filter(
+          key => !_.keys(convertData[0].tags).indexOf(key) || key !== 'time'
+        )
+        if (selectedFieldsLength.length < 2) {
+          return (
+            <InvalidQuery
+              message={'Please select two fields for the Scatter Chart.'}
+            />
+          )
+        }
+        if (convertData.length > 3000) {
+          return (
+            <InvalidQuery
+              message={
+                'The results of the `group by` clause are too numerous to display. Please modify your query.'
+              }
+            />
+          )
+        }
         return (
           <ScatterChart
             axes={axes}
