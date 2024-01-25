@@ -151,6 +151,7 @@ class LineChartOptions extends PureComponent<Props, State> {
           tableSortByOption?.key === tableOptions?.sortBy?.internalName
       )
 
+    const selectedGraphOptionSortField = this.getSelectedGraphOptionSortField()
     const firstGroupByTag = groupByTag[0]
     const selectedSortFieldByFirstGroupBy =
       _.get(
@@ -179,7 +180,7 @@ class LineChartOptions extends PureComponent<Props, State> {
             <GraphOptionsSortBy
               selected={
                 isValidSelectedSortField
-                  ? tableOptions.sortBy
+                  ? selectedGraphOptionSortField
                   : defaultStatisticalTimeField
               }
               selectedDirection={tableOptions?.sortBy?.direction || 'asc'}
@@ -276,6 +277,23 @@ class LineChartOptions extends PureComponent<Props, State> {
         </div>
       </FancyScrollbar>
     )
+  }
+
+  private getSelectedGraphOptionSortField(): RenamableField {
+    const {fieldOptions, tableOptions} = this.props
+
+    const matchedFieldOption = _.find(fieldOptions, {
+      internalName: tableOptions?.sortBy?.internalName,
+    })
+
+    if (
+      matchedFieldOption &&
+      matchedFieldOption?.displayName !== tableOptions?.sortBy?.displayName
+    ) {
+      return matchedFieldOption
+    }
+
+    return tableOptions?.sortBy
   }
 
   private get staticLegendTabs(): JSX.Element {
