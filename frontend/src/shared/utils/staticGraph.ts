@@ -530,17 +530,23 @@ const createScatterChartOptions = ({
         ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
         callbacks: {
           ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
+          title: function (tooltipItems) {
+            return tooltipItems[0].dataset.label || ''
+          },
           label: function (context) {
-            let label = context.dataset.label || ''
-            if (label) {
-              const {x, y} = context.dataset.data[0] ?? {x: '0', y: '0'}
-              label += `: (${formatStaticGraphValue(
+            const label = ` ${axes?.x?.label || xAxisTitle}, ${
+              axes?.y?.label || yAxisTitle
+            }`
+            const {x, y} = context.dataset.data[0] ?? {x: '0', y: '0'}
+
+            return [
+              label,
+              `(${formatStaticGraphValue(
                 axes,
                 x,
                 'x'
-              )} , ${formatStaticGraphValue(axes, y, 'y')})`
-            }
-            return label
+              )} , ${formatStaticGraphValue(axes, y, 'y')})`,
+            ]
           },
         },
       },
@@ -624,6 +630,23 @@ const createStaticRadarOptions = ({axes}: {axes: Axes}) => {
     plugins: {
       ...STATIC_GRAPH_OPTIONS.plugins,
       zoom: {},
+      tooltip: {
+        ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
+        callbacks: {
+          ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
+          title: function (tooltipItems) {
+            return tooltipItems[0].label
+          },
+          label: function (context) {
+            return [
+              ` ${context.dataset.label}: ${formatStaticGraphValue(
+                axes,
+                context.raw
+              )}`,
+            ]
+          },
+        },
+      },
     },
     elements: {
       line: {

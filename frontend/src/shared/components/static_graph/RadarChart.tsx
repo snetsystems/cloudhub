@@ -92,7 +92,7 @@ const RadarChart = ({
       staticGraphOptions[CellType.StaticRadar]({
         axes,
       }),
-    [data]
+    [data, axes]
   )
 
   useEffect(() => {
