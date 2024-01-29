@@ -154,7 +154,9 @@ const sortObjectByKey = (
 
 export const truncateLabelsWithEllipsis = (str: string) => {
   const strLength = str.length
-  return str.slice(0, 3) + '...' + str.slice(strLength - 3, strLength)
+  return strLength < 10
+    ? str
+    : str.slice(0, 3) + '...' + str.slice(strLength - 3, strLength)
 }
 
 export const sortedStaticGraphData = (
