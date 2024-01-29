@@ -42,7 +42,8 @@ export const formatStaticGraphValue = (
 ) => {
   let formattedValue
 
-  switch (axes?.y?.base) {
+  let axesBase = axesType === 'x' ? axes?.x?.base : axes?.y?.base
+  switch (axesBase) {
     case 'raw':
       if (value >= 1e5) {
         formattedValue = value.toExponential(2)
@@ -521,14 +522,23 @@ const createScatterChartOptions = ({
   xAxisTitle?: string
   yAxisTitle?: string
 }) => {
-  const type: StatisticalGraphScaleType =
+  const xType: StatisticalGraphScaleType =
+    axes?.x?.scale === 'log' ? 'logarithmic' : undefined
+  const yType: StatisticalGraphScaleType =
     axes?.y?.scale === 'log' ? 'logarithmic' : undefined
-  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
-  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[0]
+  const xBounds: StatisticalGraphBoundsType = axes?.x?.bounds
+  const xMin: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    xBounds[0]
   )
-  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[1]
+  const xMax: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    xBounds[1]
+  )
+  const yBounds: StatisticalGraphBoundsType = axes?.y?.bounds
+  const yMin: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    yBounds[0]
+  )
+  const yMax: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    yBounds[1]
   )
 
   const dynamicOption = {
@@ -563,6 +573,9 @@ const createScatterChartOptions = ({
     scales: {
       x: {
         ...STATIC_GRAPH_OPTIONS.scales?.x,
+        ...(xType && {type: xType}),
+        ...(isValidValue(xMin) && {min: xMin}),
+        ...(isValidValue(xMax) && {max: xMax}),
         title: {
           ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
           text: xAxisTitle,
@@ -570,17 +583,15 @@ const createScatterChartOptions = ({
         ticks: {
           ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
           callback: function (value) {
-            return (
-              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
-            )
+            return formatStaticGraphValue(axes, value, 'x')
           },
         },
       },
       y: {
         ...STATIC_GRAPH_OPTIONS.scales?.y,
-        ...(type && {type}),
-        ...(isValidValue(min) && {min}),
-        ...(isValidValue(max) && {max}),
+        ...(yType && {type: yType}),
+        ...(isValidValue(yMin) && {min: yMin}),
+        ...(isValidValue(yMax) && {max: yMax}),
         title: {
           ...STATIC_GRAPH_OPTIONS.scales?.y?.title,
           text: yAxisTitle,

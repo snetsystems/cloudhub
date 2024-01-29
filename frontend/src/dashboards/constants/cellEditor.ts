@@ -25,7 +25,7 @@ type DefaultAxis = Pick<Axis, Exclude<keyof Axis, 'bounds'>>
 export const DEFAULT_AXIS: DefaultAxis = {
   prefix: '',
   suffix: '',
-  base: AXES_SCALE_OPTIONS.BASE_10,
+  base: AXES_SCALE_OPTIONS.BASE_RAW,
   scale: AXES_SCALE_OPTIONS.LINEAR,
   label: '',
 }
