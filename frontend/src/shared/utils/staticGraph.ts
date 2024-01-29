@@ -152,6 +152,11 @@ const sortObjectByKey = (
   return [selectedValue, ...sortedKeys.map(key => obj[key])].join('.')
 }
 
+export const truncateLabelsWithEllipsis = (str: string) => {
+  const strLength = str.length
+  return str.slice(0, 3) + '...' + str.slice(strLength - 3, strLength)
+}
+
 export const sortedStaticGraphData = (
   rawData: TimeSeriesSeries[],
   {
@@ -475,7 +480,9 @@ const createBarChartOptions = ({
           ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
           callback: function (value) {
             return (
-              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
+              axes?.x?.prefix +
+              truncateLabelsWithEllipsis(this.getLabelForValue(value)) +
+              axes?.x?.suffix
             )
           },
         },
