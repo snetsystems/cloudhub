@@ -48,7 +48,7 @@ export const formatStaticGraphValue = (
       if (value >= 1e5) {
         formattedValue = value.toExponential(2)
       } else {
-        formattedValue = value
+        formattedValue = formatNumberForGraphWithPrecision(value)
       }
       break
     case '10':
@@ -59,7 +59,7 @@ export const formatStaticGraphValue = (
       } else if (value >= 1e3) {
         formattedValue = (value / 1e3).toFixed(2) + ' K'
       } else {
-        formattedValue = value
+        formattedValue = formatNumberForGraphWithPrecision(value)
       }
       break
     case '2':
@@ -71,7 +71,7 @@ export const formatStaticGraphValue = (
       } else if (value >= 1024) {
         formattedValue = (value / 1024).toFixed(2) + ' KB'
       } else {
-        formattedValue = value + ' B'
+        formattedValue = formatNumberForGraphWithPrecision(value) + ' B'
       }
       break
   }
@@ -158,6 +158,19 @@ export const truncateLabelsWithEllipsis = (str: string) => {
   return strLength < 10
     ? str
     : str.slice(0, 3) + '...' + str.slice(strLength - 3, strLength)
+}
+
+export const formatNumberForGraphWithPrecision = (
+  value: number,
+  decimalPlaces: number = 2,
+  minValueForExponential: number = 0.01
+): string => {
+  if (Math.abs(value) === 0) {
+    return value.toString()
+  }
+  return Math.abs(value) < minValueForExponential
+    ? value.toExponential(decimalPlaces)
+    : value.toFixed(decimalPlaces)
 }
 
 export const sortedStaticGraphData = (
