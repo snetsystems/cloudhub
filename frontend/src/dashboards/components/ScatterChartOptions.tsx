@@ -82,14 +82,8 @@ class ScatterChartOptions extends PureComponent<Props, State> {
   public render() {
     const {
       axes: {
-        x: {
-          bounds: [xBounds],
-          label: xLabel,
-        },
-        y: {
-          bounds: [yBounds],
-          label: yLabel,
-        },
+        x: {bounds: xBounds, label: xLabel},
+        y: {bounds: yBounds, label: yLabel},
       },
       type,
       lineColors,

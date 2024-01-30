@@ -110,7 +110,8 @@ class LineChartOptions extends PureComponent<Props, State> {
   public render() {
     const {
       axes: {
-        y: {bounds, label},
+        x: {label: xLabel},
+        y: {bounds, label: yLabel},
       },
       groupByTag,
       type,
@@ -203,7 +204,7 @@ class LineChartOptions extends PureComponent<Props, State> {
               <label>X-Axis Title</label>
               <OptIn
                 type="text"
-                customValue={label}
+                customValue={xLabel}
                 onSetValue={this.handleSetXAxisLabel}
                 customPlaceholder={defaultXLabel || 'x-axis title'}
               />
@@ -226,7 +227,7 @@ class LineChartOptions extends PureComponent<Props, State> {
               <label>Y-Axis Title</label>
               <OptIn
                 type="text"
-                customValue={label}
+                customValue={yLabel}
                 onSetValue={this.handleSetYAxisLabel}
                 customPlaceholder={defaultYLabel || 'y-axis title'}
               />
