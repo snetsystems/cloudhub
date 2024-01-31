@@ -484,7 +484,6 @@ const createBarChartOptions = ({
       },
     },
     scales: {
-      ...STATIC_GRAPH_OPTIONS.scales,
       x: {
         ...STATIC_GRAPH_OPTIONS.scales?.x,
         title: {
