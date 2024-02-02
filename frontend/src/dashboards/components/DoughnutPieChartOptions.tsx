@@ -77,7 +77,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
         bounds: ['', ''],
         prefix: '',
         suffix: '',
-        base: BASE_10,
+        base: BASE_RAW,
         scale: LINEAR,
         label: '',
       },
@@ -85,7 +85,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
         bounds: ['', ''],
         prefix: '',
         suffix: '',
-        base: BASE_10,
+        base: BASE_RAW,
         scale: LINEAR,
         label: '',
       },
@@ -139,6 +139,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
           tableSortByOption?.key === tableOptions?.sortBy?.internalName
       )
 
+    const selectedGraphOptionSortField = this.getSelectedGraphOptionSortField()
     const firstGroupByTag = groupByTag[0]
     const selectedSortFieldByFirstGroupBy =
       _.get(
@@ -167,7 +168,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
             <GraphOptionsSortBy
               selected={
                 isValidSelectedSortField
-                  ? tableOptions.sortBy
+                  ? selectedGraphOptionSortField
                   : defaultStatisticalTimeField
               }
               selectedDirection={tableOptions?.sortBy?.direction || 'asc'}
@@ -370,6 +371,23 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
     const updatedSortBy = {...sortBy, direction: direction}
 
     onUpdateTableOptions({...tableOptions, sortBy: updatedSortBy})
+  }
+
+  private getSelectedGraphOptionSortField(): RenamableField {
+    const {fieldOptions, tableOptions} = this.props
+
+    const matchedFieldOption = _.find(fieldOptions, {
+      internalName: tableOptions?.sortBy?.internalName,
+    })
+
+    if (
+      matchedFieldOption &&
+      matchedFieldOption?.displayName !== tableOptions?.sortBy?.displayName
+    ) {
+      return matchedFieldOption
+    }
+
+    return tableOptions?.sortBy
   }
 
   private get valuesFormatTabs(): JSX.Element {

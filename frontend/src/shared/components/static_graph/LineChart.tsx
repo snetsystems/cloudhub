@@ -112,12 +112,23 @@ const LineChart = ({
     }
   }, [chartRef.current])
 
+  const onResetZoom = () => {
+    if (chartRef && chartRef.current) {
+      chartRef.current.resetZoom()
+    }
+  }
+
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
         <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
-            <Line ref={chartRef} options={dynamicOption} data={chartData} />
+            <Line
+              ref={chartRef}
+              options={dynamicOption}
+              data={chartData}
+              onDoubleClick={onResetZoom}
+            />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend

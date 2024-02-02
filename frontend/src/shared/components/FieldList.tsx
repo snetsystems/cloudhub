@@ -287,6 +287,7 @@ class FieldList extends PureComponent<Props, State> {
       removeFuncs,
       applyFuncsToField,
       initialGroupByTime: time,
+      type,
     } = this.props
     const {groupBy, fields} = query
     const {funcs} = fieldFunc
@@ -294,6 +295,18 @@ class FieldList extends PureComponent<Props, State> {
     // If one field has no funcs, all fields must have no funcs
     if (!_.size(funcs)) {
       return removeFuncs(fields)
+    }
+
+    if (
+      type === CellType.StaticBar ||
+      type === CellType.StaticPie ||
+      type === CellType.StaticDoughnut ||
+      type === CellType.StaticScatter ||
+      type === CellType.StaticRadar ||
+      type === CellType.StaticStackedBar ||
+      type === CellType.StaticLineChart
+    ) {
+      return applyFuncsToField(fieldFunc, groupBy)
     }
 
     // If there is no groupBy time, set one

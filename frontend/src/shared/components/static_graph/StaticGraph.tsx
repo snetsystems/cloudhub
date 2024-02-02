@@ -24,11 +24,16 @@ import {
   StaticLegendPositionType,
   TableOptions,
 } from 'src/types/dashboards'
-import {TimeSeriesServerResponse} from 'src/types/series'
+import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 import {Query, Axes, RemoteDataState, CellType, FluxTable} from 'src/types'
 import {DataType} from 'src/shared/constants'
 import {getDeep} from 'src/utils/wrappers'
-import {buildDefaultXLabel, buildDefaultYLabel} from 'src/shared/presenters'
+import {
+  buildDefaultXLabel,
+  buildDefaultYLabel,
+  buildScatterChartDefaultXLabel,
+  buildScatterChartDefaultYLabel,
+} from 'src/shared/presenters'
 import {fastMap} from 'src/utils/fast'
 import {StatisticalGraphFieldOption} from 'src/types/statisticalgraph'
 import _ from 'lodash'
@@ -136,6 +141,16 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
     const xAxisTitle = this.getAxisTitle('x', axes, queries)
     const yAxisTitle = this.getAxisTitle('y', axes, queries)
+    const xAxisTitleForScatterChart = this.getAxisTitleForScatterChart(
+      'x',
+      axes,
+      queries
+    )
+    const yAxisTitleForScatterChart = this.getAxisTitleForScatterChart(
+      'y',
+      axes,
+      queries
+    )
 
     switch (type) {
       case CellType.StaticBar:
@@ -199,6 +214,27 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
           />
         )
       case CellType.StaticScatter:
+        const convertData: TimeSeriesSeries[] =
+          data[0]['response']['results'][0]['series']
+        const selectedFieldsLength = convertData[0].columns.filter(
+          key => !_.keys(convertData[0].tags).indexOf(key) || key !== 'time'
+        )
+        if (selectedFieldsLength.length < 2) {
+          return (
+            <InvalidQuery
+              message={'Please select two fields for the Scatter Chart.'}
+            />
+          )
+        }
+        if (convertData.length > 3000) {
+          return (
+            <InvalidQuery
+              message={
+                'The results of the `group by` clause are too numerous to display. Please modify your query.'
+              }
+            />
+          )
+        }
         return (
           <ScatterChart
             axes={axes}
@@ -208,8 +244,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
-            xAxisTitle={xAxisTitle}
-            yAxisTitle={yAxisTitle}
+            xAxisTitle={xAxisTitleForScatterChart}
+            yAxisTitle={yAxisTitleForScatterChart}
           />
         )
       case CellType.StaticRadar:
@@ -274,6 +310,23 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
     }
 
     return {...this.containerStyle, zIndex: 2}
+  }
+
+  private getAxisTitleForScatterChart = (
+    axis: string,
+    axes: Axes,
+    queries: Query[]
+  ): string => {
+    const label = getDeep<string>(axes, `${axis}.label`, '') || ''
+    const queryConfig = getDeep(queries, '0.queryConfig', false)
+
+    if (label || !queryConfig) {
+      return label
+    }
+
+    return axis === 'x'
+      ? buildScatterChartDefaultXLabel(queryConfig)
+      : buildScatterChartDefaultYLabel(queryConfig)
   }
 
   private getAxisTitle = (

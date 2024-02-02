@@ -82,7 +82,7 @@ class BarChartOptions extends PureComponent<Props, State> {
         bounds: ['', ''],
         prefix: '',
         suffix: '',
-        base: BASE_10,
+        base: BASE_RAW,
         scale: LINEAR,
         label: '',
       },
@@ -90,7 +90,7 @@ class BarChartOptions extends PureComponent<Props, State> {
         bounds: ['', ''],
         prefix: '',
         suffix: '',
-        base: BASE_10,
+        base: BASE_RAW,
         scale: LINEAR,
         label: '',
       },
@@ -110,7 +110,8 @@ class BarChartOptions extends PureComponent<Props, State> {
   public render() {
     const {
       axes: {
-        y: {bounds, label},
+        x: {label: xLabel},
+        y: {bounds, label: yLabel},
       },
       groupByTag,
       type,
@@ -150,7 +151,7 @@ class BarChartOptions extends PureComponent<Props, State> {
         tableSortByOption =>
           tableSortByOption?.key === tableOptions?.sortBy?.internalName
       )
-
+    const selectedGraphOptionSortField = this.getSelectedGraphOptionSortField()
     const firstGroupByTag = groupByTag[0]
     const selectedSortFieldByFirstGroupBy =
       _.get(
@@ -179,7 +180,7 @@ class BarChartOptions extends PureComponent<Props, State> {
             <GraphOptionsSortBy
               selected={
                 isValidSelectedSortField
-                  ? tableOptions.sortBy
+                  ? selectedGraphOptionSortField
                   : defaultStatisticalTimeField
               }
               selectedDirection={tableOptions?.sortBy?.direction || 'asc'}
@@ -202,7 +203,7 @@ class BarChartOptions extends PureComponent<Props, State> {
               <label>X-Axis Title</label>
               <OptIn
                 type="text"
-                customValue={label}
+                customValue={xLabel}
                 onSetValue={this.handleSetXAxisLabel}
                 customPlaceholder={defaultXLabel || 'x-axis title'}
               />
@@ -225,7 +226,7 @@ class BarChartOptions extends PureComponent<Props, State> {
               <label>Y-Axis Title</label>
               <OptIn
                 type="text"
-                customValue={label}
+                customValue={yLabel}
                 onSetValue={this.handleSetYAxisLabel}
                 customPlaceholder={defaultYLabel || 'y-axis title'}
               />
@@ -276,6 +277,23 @@ class BarChartOptions extends PureComponent<Props, State> {
         </div>
       </FancyScrollbar>
     )
+  }
+
+  private getSelectedGraphOptionSortField(): RenamableField {
+    const {fieldOptions, tableOptions} = this.props
+
+    const matchedFieldOption = _.find(fieldOptions, {
+      internalName: tableOptions?.sortBy?.internalName,
+    })
+
+    if (
+      matchedFieldOption &&
+      matchedFieldOption?.displayName !== tableOptions?.sortBy?.displayName
+    ) {
+      return matchedFieldOption
+    }
+
+    return tableOptions?.sortBy
   }
 
   private get staticLegendTabs(): JSX.Element {

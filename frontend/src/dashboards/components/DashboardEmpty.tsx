@@ -43,7 +43,7 @@ class DashboardEmpty extends Component<Props> {
   public render() {
     return (
       <div className="dashboard-empty">
-        <p style={{paddingTop: '10%'}}>
+        <p>
           This Dashboard doesn't have any <strong>Cells</strong>,<br />
           why not add one?
         </p>

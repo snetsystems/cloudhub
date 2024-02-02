@@ -16,7 +16,7 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 
 // Types
 import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
-import {TimeSeriesServerResponse} from 'src/types/series'
+import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 
 // Utils
 import {fastMap} from 'src/utils/fast'
@@ -28,7 +28,6 @@ import {ColorString} from 'src/types/colors'
 import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 
 // Components
-import InvalidQuery from 'src/shared/components/InvalidQuery'
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
 import {staticGraphOptions} from 'src/shared/utils/staticGraph'
@@ -74,19 +73,10 @@ const ScatterChart = ({
   >(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
 
-  const convertData = data[0]['response']['results'][0]['series']
+  const convertData: TimeSeriesSeries[] =
+    data[0]['response']['results'][0]['series']
   const axesX = fastMap(convertData, item => _.values(item.tags)[0]) as string[]
   const getcolors = getLineColorsHexes(colors, convertData.length)
-
-  if (convertData.length > 3000) {
-    return (
-      <InvalidQuery
-        message={
-          'The results of the `group by` clause are too numerous to display. Please modify your query.'
-        }
-      />
-    )
-  }
 
   const scatterData = fastMap(convertData, (item, colIndex) => {
     return {
@@ -134,12 +124,23 @@ const ScatterChart = ({
     }
   }, [chartRef.current])
 
+  const onResetZoom = () => {
+    if (chartRef && chartRef.current) {
+      chartRef.current.resetZoom()
+    }
+  }
+
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
         <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
-            <Scatter ref={chartRef} options={dynamicOption} data={chartData} />
+            <Scatter
+              ref={chartRef}
+              options={dynamicOption}
+              data={chartData}
+              onDoubleClick={onResetZoom}
+            />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend

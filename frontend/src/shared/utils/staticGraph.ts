@@ -42,12 +42,13 @@ export const formatStaticGraphValue = (
 ) => {
   let formattedValue
 
-  switch (axes?.y?.base) {
+  let axesBase = axesType === 'x' ? axes?.x?.base : axes?.y?.base
+  switch (axesBase) {
     case 'raw':
       if (value >= 1e5) {
         formattedValue = value.toExponential(2)
       } else {
-        formattedValue = value
+        formattedValue = formatNumberForGraphWithPrecision(value)
       }
       break
     case '10':
@@ -58,7 +59,7 @@ export const formatStaticGraphValue = (
       } else if (value >= 1e3) {
         formattedValue = (value / 1e3).toFixed(2) + ' K'
       } else {
-        formattedValue = value
+        formattedValue = formatNumberForGraphWithPrecision(value)
       }
       break
     case '2':
@@ -70,7 +71,7 @@ export const formatStaticGraphValue = (
       } else if (value >= 1024) {
         formattedValue = (value / 1024).toFixed(2) + ' KB'
       } else {
-        formattedValue = value + ' B'
+        formattedValue = formatNumberForGraphWithPrecision(value) + ' B'
       }
       break
   }
@@ -152,6 +153,26 @@ const sortObjectByKey = (
   return [selectedValue, ...sortedKeys.map(key => obj[key])].join('.')
 }
 
+export const truncateLabelsWithEllipsis = (str: string) => {
+  const strLength = str.length
+  return strLength < 10
+    ? str
+    : str.slice(0, 3) + '...' + str.slice(strLength - 3, strLength)
+}
+
+export const formatNumberForGraphWithPrecision = (
+  value: number,
+  decimalPlaces: number = 2,
+  minValueForExponential: number = 0.01
+): string => {
+  if (Math.abs(value) === 0) {
+    return value.toString()
+  }
+  return Math.abs(value) < minValueForExponential
+    ? value.toExponential(decimalPlaces)
+    : value.toFixed(decimalPlaces)
+}
+
 export const sortedStaticGraphData = (
   rawData: TimeSeriesSeries[],
   {
@@ -168,16 +189,19 @@ export const sortedStaticGraphData = (
   sortingBasisField: string[]
 ) => {
   const fieldIndex = fields.indexOf(sortKey)
+  const isFoundSortKey = fieldIndex !== -1
+
   const hasGroupByTags = rawData[0].tags ? true : false
-  const groupByTagIndex = hasGroupByTags
-    ? fields.indexOf(_.keys(rawData[0].tags)[groupByIndex])
-    : 0
+  const groupByTagIndex = hasGroupByTags ? groupByIndex : 0
 
   const YAxisIndex = sortingBasisField.indexOf(sortKey)
-  const XAxisIndex = fieldIndex === -1 ? groupByTagIndex : fieldIndex
+
+  const XAxisIndex =
+    !isFoundSortKey || sortingBasisField[fieldIndex] ? groupByTagIndex : 0
 
   const isSortedWithXAxis =
-    hasGroupByTags && _.keys(rawData[0].tags).indexOf(fields[XAxisIndex]) !== -1
+    !isFoundSortKey || _.keys(rawData[0].tags).indexOf(sortKey) !== -1
+
   const YAxisData = fastMap(rawData, item =>
     item.values[0].slice(1).map((value: number) => value)
   )
@@ -187,18 +211,25 @@ export const sortedStaticGraphData = (
     sortedIndex: number
   ) => {
     const indexMap = currentData.reduce((acc, item, index) => {
-      acc[item[sortedIndex]] = index
+      const key = item[sortedIndex]
+      if (!acc[key]) {
+        acc[key] = []
+      }
+      acc[key].push(index)
       return acc
-    }, {})
+    }, {} as Record<number, number[]>)
+
     const sortedData = [...currentData].sort((current, next) =>
       order === ASCENDING
         ? current[sortedIndex] - next[sortedIndex]
         : next[sortedIndex] - current[sortedIndex]
     )
-    const labels = fastMap(
-      sortedData.map(item => indexMap[item[sortedIndex]]),
-      index => _.values(rawData[index].tags).join('/')
-    )
+    const labels = sortedData.map(item => {
+      const indexes = indexMap[item[sortedIndex]]
+      const index = indexes.shift()
+      return _.values(rawData[index].tags).join('/')
+    })
+
     return {labels, sortedData}
   }
 
@@ -215,6 +246,7 @@ export const sortedStaticGraphData = (
     const sortedIndexListWithXAxis = sortedXAxisData.map(data =>
       XAxisData.indexOf(data)
     )
+
     const sortedData = sortedIndexListWithXAxis.map(data => YAxisData[data])
     const labels = fastMap(sortedIndexListWithXAxis, index =>
       _.values(rawData[index].tags).join('/')
@@ -452,7 +484,6 @@ const createBarChartOptions = ({
       },
     },
     scales: {
-      ...STATIC_GRAPH_OPTIONS.scales,
       x: {
         ...STATIC_GRAPH_OPTIONS.scales?.x,
         title: {
@@ -464,7 +495,9 @@ const createBarChartOptions = ({
           ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
           callback: function (value) {
             return (
-              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
+              axes?.x?.prefix +
+              truncateLabelsWithEllipsis(this.getLabelForValue(value)) +
+              axes?.x?.suffix
             )
           },
         },
@@ -501,14 +534,23 @@ const createScatterChartOptions = ({
   xAxisTitle?: string
   yAxisTitle?: string
 }) => {
-  const type: StatisticalGraphScaleType =
+  const xType: StatisticalGraphScaleType =
+    axes?.x?.scale === 'log' ? 'logarithmic' : undefined
+  const yType: StatisticalGraphScaleType =
     axes?.y?.scale === 'log' ? 'logarithmic' : undefined
-  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
-  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[0]
+  const xBounds: StatisticalGraphBoundsType = axes?.x?.bounds
+  const xMin: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    xBounds[0]
   )
-  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[1]
+  const xMax: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    xBounds[1]
+  )
+  const yBounds: StatisticalGraphBoundsType = axes?.y?.bounds
+  const yMin: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    yBounds[0]
+  )
+  const yMax: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    yBounds[1]
   )
 
   const dynamicOption = {
@@ -519,17 +561,23 @@ const createScatterChartOptions = ({
         ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
         callbacks: {
           ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
+          title: function (tooltipItems) {
+            return tooltipItems[0].dataset.label || ''
+          },
           label: function (context) {
-            let label = context.dataset.label || ''
-            if (label) {
-              const {x, y} = context.dataset.data[0] ?? {x: '0', y: '0'}
-              label += `: (${formatStaticGraphValue(
+            const label = ` ${axes?.x?.label || xAxisTitle}, ${
+              axes?.y?.label || yAxisTitle
+            }`
+            const {x, y} = context.dataset.data[0] ?? {x: '0', y: '0'}
+
+            return [
+              label,
+              `(${formatStaticGraphValue(
                 axes,
                 x,
                 'x'
-              )} , ${formatStaticGraphValue(axes, y, 'y')})`
-            }
-            return label
+              )} , ${formatStaticGraphValue(axes, y, 'y')})`,
+            ]
           },
         },
       },
@@ -537,6 +585,9 @@ const createScatterChartOptions = ({
     scales: {
       x: {
         ...STATIC_GRAPH_OPTIONS.scales?.x,
+        ...(xType && {type: xType}),
+        ...(isValidValue(xMin) && {min: xMin}),
+        ...(isValidValue(xMax) && {max: xMax}),
         title: {
           ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
           text: xAxisTitle,
@@ -544,17 +595,15 @@ const createScatterChartOptions = ({
         ticks: {
           ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
           callback: function (value) {
-            return (
-              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
-            )
+            return formatStaticGraphValue(axes, value, 'x')
           },
         },
       },
       y: {
         ...STATIC_GRAPH_OPTIONS.scales?.y,
-        ...(type && {type}),
-        ...(isValidValue(min) && {min}),
-        ...(isValidValue(max) && {max}),
+        ...(yType && {type: yType}),
+        ...(isValidValue(yMin) && {min: yMin}),
+        ...(isValidValue(yMax) && {max: yMax}),
         title: {
           ...STATIC_GRAPH_OPTIONS.scales?.y?.title,
           text: yAxisTitle,
@@ -613,6 +662,23 @@ const createStaticRadarOptions = ({axes}: {axes: Axes}) => {
     plugins: {
       ...STATIC_GRAPH_OPTIONS.plugins,
       zoom: {},
+      tooltip: {
+        ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
+        callbacks: {
+          ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
+          title: function (tooltipItems) {
+            return tooltipItems[0].label
+          },
+          label: function (context) {
+            return [
+              ` ${context.dataset.label}: ${formatStaticGraphValue(
+                axes,
+                context.raw
+              )}`,
+            ]
+          },
+        },
+      },
     },
     elements: {
       line: {

@@ -8,7 +8,6 @@ import Input from 'src/dashboards/components/DisplayOptionsInput'
 import {Radio, ButtonShape} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LineGraphColorSelector from 'src/shared/components/LineGraphColorSelector'
-import GraphOptionsDecimalPlaces from 'src/dashboards/components/GraphOptionsDecimalPlaces'
 
 // Constants
 import {AXES_SCALE_OPTIONS} from 'src/dashboards/constants/cellEditor'
@@ -18,8 +17,8 @@ import {STATISTICAL_GRAPH_TYPES} from 'src/dashboards/graphics/graph'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // Types
-import {Axes, CellType} from 'src/types'
-import {DecimalPlaces, StaticLegendPositionType} from 'src/types/dashboards'
+import {Axes} from 'src/types'
+import {StaticLegendPositionType} from 'src/types/dashboards'
 import {ColorString} from 'src/types/colors'
 
 const {LINEAR, LOG, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
@@ -33,14 +32,12 @@ interface Props {
   defaultXLabel: string
   defaultYLabel: string
   lineColors: ColorString[]
-  decimalPlaces: DecimalPlaces
   onUpdateAxes: (axes: Axes) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
   onToggleStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
   ) => void
   onUpdateLineColors: (colors: ColorString[]) => void
-  onUpdateDecimalPlaces: (decimalPlaces: DecimalPlaces) => void
 }
 
 interface State {
@@ -58,7 +55,7 @@ class ScatterChartOptions extends PureComponent<Props, State> {
         bounds: ['', ''],
         prefix: '',
         suffix: '',
-        base: BASE_10,
+        base: BASE_RAW,
         scale: LINEAR,
         label: '',
       },
@@ -66,7 +63,7 @@ class ScatterChartOptions extends PureComponent<Props, State> {
         bounds: ['', ''],
         prefix: '',
         suffix: '',
-        base: BASE_10,
+        base: BASE_RAW,
         scale: LINEAR,
         label: '',
       },
@@ -85,7 +82,8 @@ class ScatterChartOptions extends PureComponent<Props, State> {
   public render() {
     const {
       axes: {
-        y: {bounds, label},
+        x: {bounds: xBounds, label: xLabel},
+        y: {bounds: yBounds, label: yLabel},
       },
       type,
       lineColors,
@@ -95,7 +93,8 @@ class ScatterChartOptions extends PureComponent<Props, State> {
     } = this.props
     const {xPrefix, xSuffix, yPrefix, ySuffix} = this.state
 
-    const [min, max] = bounds
+    const [xMin, xMax] = xBounds
+    const [yMin, yMax] = yBounds
     const {menuOption} = STATISTICAL_GRAPH_TYPES.find(
       graph => graph.type === type
     )
@@ -109,7 +108,7 @@ class ScatterChartOptions extends PureComponent<Props, State> {
               <label>X-Axis Title</label>
               <OptIn
                 type="text"
-                customValue={label}
+                customValue={xLabel}
                 onSetValue={this.handleSetXAxisLabel}
                 customPlaceholder={defaultXLabel || 'x-axis title'}
               />
@@ -132,7 +131,7 @@ class ScatterChartOptions extends PureComponent<Props, State> {
               <label>Y-Axis Title</label>
               <OptIn
                 type="text"
-                customValue={label}
+                customValue={yLabel}
                 onSetValue={this.handleSetYAxisLabel}
                 customPlaceholder={defaultYLabel || 'y-axis title'}
               />
@@ -156,28 +155,49 @@ class ScatterChartOptions extends PureComponent<Props, State> {
               lineColors={lineColors}
             />
             <div className="form-group col-sm-6">
-              <label htmlFor="min">Min</label>
+              <label htmlFor="min">X-Value's Min</label>
               <OptIn
-                customPlaceholder={'min'}
-                customValue={min}
+                customPlaceholder={'x value min'}
+                customValue={xMin}
+                onSetValue={this.handleSetXAxisBoundMin}
+                type="number"
+                min={getInputMin()}
+              />
+            </div>
+            <div className="form-group col-sm-6">
+              <label htmlFor="max">X-Value's Max</label>
+              <OptIn
+                customPlaceholder="x value max"
+                customValue={xMax}
+                onSetValue={this.handleSetXAxisBoundMax}
+                type="number"
+                min={getInputMin()}
+              />
+            </div>
+            <div className="form-group col-sm-6">
+              <label htmlFor="min">Y-Value's Min</label>
+              <OptIn
+                customPlaceholder={'y value min'}
+                customValue={yMin}
                 onSetValue={this.handleSetYAxisBoundMin}
                 type="number"
                 min={getInputMin()}
               />
             </div>
             <div className="form-group col-sm-6">
-              <label htmlFor="max">Max</label>
+              <label htmlFor="max">Y-Value's Max</label>
               <OptIn
-                customPlaceholder="max"
-                customValue={max}
+                customPlaceholder="y value max"
+                customValue={yMax}
                 onSetValue={this.handleSetYAxisBoundMax}
                 type="number"
                 min={getInputMin()}
               />
             </div>
+            {this.xValuesFormatTabs}
             {this.yValuesFormatTabs}
-            {this.scaleTabs}
-            {this.decimalPlaces}
+            {this.xScaleTabs}
+            {this.yScaleTabs}
             {this.staticLegendTabs}
             {this.staticLegendPositionTabs}
           </form>
@@ -264,7 +284,7 @@ class ScatterChartOptions extends PureComponent<Props, State> {
     )
   }
 
-  private get scaleTabs(): JSX.Element {
+  private get xScaleTabs(): JSX.Element {
     const {
       axes: {
         y: {scale},
@@ -273,14 +293,48 @@ class ScatterChartOptions extends PureComponent<Props, State> {
 
     return (
       <div className="form-group col-sm-6">
-        <label>Scale</label>
+        <label>X-Value's Scale</label>
+        <Radio shape={ButtonShape.StretchToFit}>
+          <Radio.Button
+            id="x-scale-tab--linear"
+            value={LINEAR}
+            active={scale === LINEAR || scale === ''}
+            titleText="Set X-Axis to Linear Scale"
+            onClick={this.handleSetXScale}
+          >
+            Linear
+          </Radio.Button>
+          <Radio.Button
+            id="x-scale-tab--logarithmic"
+            value={LOG}
+            active={scale === LOG}
+            titleText="Set X-Axis to Logarithmic Scale"
+            onClick={this.handleSetXScale}
+          >
+            Logarithmic
+          </Radio.Button>
+        </Radio>
+      </div>
+    )
+  }
+
+  private get yScaleTabs(): JSX.Element {
+    const {
+      axes: {
+        y: {scale},
+      },
+    } = this.props
+
+    return (
+      <div className="form-group col-sm-6">
+        <label>Y-Value's Scale</label>
         <Radio shape={ButtonShape.StretchToFit}>
           <Radio.Button
             id="y-scale-tab--linear"
             value={LINEAR}
             active={scale === LINEAR || scale === ''}
             titleText="Set Y-Axis to Linear Scale"
-            onClick={this.handleSetScale}
+            onClick={this.handleSetYScale}
           >
             Linear
           </Radio.Button>
@@ -289,9 +343,52 @@ class ScatterChartOptions extends PureComponent<Props, State> {
             value={LOG}
             active={scale === LOG}
             titleText="Set Y-Axis to Logarithmic Scale"
-            onClick={this.handleSetScale}
+            onClick={this.handleSetYScale}
           >
             Logarithmic
+          </Radio.Button>
+        </Radio>
+      </div>
+    )
+  }
+
+  private get xValuesFormatTabs(): JSX.Element {
+    const {
+      axes: {
+        x: {base},
+      },
+    } = this.props
+
+    return (
+      <div className="form-group col-sm-6">
+        <label>X-Value's Format</label>
+        <Radio shape={ButtonShape.StretchToFit}>
+          <Radio.Button
+            id="x-values-format-tab--raw"
+            value={BASE_RAW}
+            active={base === '' || base === BASE_RAW}
+            titleText="Don't format values"
+            onClick={this.handleSetXBase}
+          >
+            Raw
+          </Radio.Button>
+          <Radio.Button
+            id="x-values-format-tab--kmb"
+            value={BASE_10}
+            active={base === BASE_10}
+            titleText="Thousand / Million / Billion"
+            onClick={this.handleSetXBase}
+          >
+            K/M/B
+          </Radio.Button>
+          <Radio.Button
+            id="x-values-format-tab--kmg"
+            value={BASE_2}
+            active={base === BASE_2}
+            titleText="Kilo / Mega / Giga"
+            onClick={this.handleSetXBase}
+          >
+            K/M/G
           </Radio.Button>
         </Radio>
       </div>
@@ -314,7 +411,7 @@ class ScatterChartOptions extends PureComponent<Props, State> {
             value={BASE_RAW}
             active={base === '' || base === BASE_RAW}
             titleText="Don't format values"
-            onClick={this.handleSetBase}
+            onClick={this.handleSetYBase}
           >
             Raw
           </Radio.Button>
@@ -323,7 +420,7 @@ class ScatterChartOptions extends PureComponent<Props, State> {
             value={BASE_10}
             active={base === BASE_10}
             titleText="Thousand / Million / Billion"
-            onClick={this.handleSetBase}
+            onClick={this.handleSetYBase}
           >
             K/M/B
           </Radio.Button>
@@ -332,28 +429,12 @@ class ScatterChartOptions extends PureComponent<Props, State> {
             value={BASE_2}
             active={base === BASE_2}
             titleText="Kilo / Mega / Giga"
-            onClick={this.handleSetBase}
+            onClick={this.handleSetYBase}
           >
             K/M/G
           </Radio.Button>
         </Radio>
       </div>
-    )
-  }
-
-  private get decimalPlaces(): JSX.Element {
-    const {onUpdateDecimalPlaces, decimalPlaces, type} = this.props
-
-    if (type !== CellType.LinePlusSingleStat) {
-      return null
-    }
-
-    return (
-      <GraphOptionsDecimalPlaces
-        digits={decimalPlaces.digits}
-        isEnforced={decimalPlaces.isEnforced}
-        onDecimalPlacesChange={onUpdateDecimalPlaces}
-      />
     )
   }
 
@@ -415,6 +496,34 @@ class ScatterChartOptions extends PureComponent<Props, State> {
     this.setState({ySuffix: suffix}, () => onUpdateAxes(newAxes))
   }
 
+  private handleSetXAxisBoundMin = (min: string): void => {
+    const {onUpdateAxes, axes} = this.props
+    const {
+      x: {
+        bounds: [, max],
+      },
+    } = this.props.axes
+
+    const bounds: [string, string] = [min, max]
+    const newAxes = {...axes, x: {...axes.x, bounds}}
+
+    onUpdateAxes(newAxes)
+  }
+
+  private handleSetXAxisBoundMax = (max: string): void => {
+    const {onUpdateAxes, axes} = this.props
+    const {
+      x: {
+        bounds: [min],
+      },
+    } = axes
+
+    const bounds: [string, string] = [min, max]
+    const newAxes = {...axes, x: {...axes.x, bounds}}
+
+    onUpdateAxes(newAxes)
+  }
+
   private handleSetYAxisBoundMin = (min: string): void => {
     const {onUpdateAxes, axes} = this.props
     const {
@@ -457,14 +566,28 @@ class ScatterChartOptions extends PureComponent<Props, State> {
     onUpdateAxes(newAxes)
   }
 
-  private handleSetScale = (scale: string): void => {
+  private handleSetXScale = (scale: string): void => {
+    const {onUpdateAxes, axes} = this.props
+    const newAxes = {...axes, x: {...axes.x, scale}}
+
+    onUpdateAxes(newAxes)
+  }
+
+  private handleSetYScale = (scale: string): void => {
     const {onUpdateAxes, axes} = this.props
     const newAxes = {...axes, y: {...axes.y, scale}}
 
     onUpdateAxes(newAxes)
   }
 
-  private handleSetBase = (base: string): void => {
+  private handleSetXBase = (base: string): void => {
+    const {onUpdateAxes, axes} = this.props
+    const newAxes = {...axes, x: {...axes.x, base}}
+
+    onUpdateAxes(newAxes)
+  }
+
+  private handleSetYBase = (base: string): void => {
     const {onUpdateAxes, axes} = this.props
     const newAxes = {...axes, y: {...axes.y, base}}
 

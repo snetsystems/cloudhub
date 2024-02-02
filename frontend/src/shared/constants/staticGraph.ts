@@ -28,7 +28,7 @@ export const STATIC_GRAPH_OPTIONS = {
           enabled: true,
         },
         wheel: {
-          enabled: true,
+          enabled: false,
         },
         pinch: {
           enabled: true,

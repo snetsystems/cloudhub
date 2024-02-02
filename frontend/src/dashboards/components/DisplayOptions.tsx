@@ -345,12 +345,10 @@ class DisplayOptions extends Component<Props, State> {
             staticLegendPosition={staticLegendPosition}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
-            decimalPlaces={decimalPlaces}
             onUpdateAxes={onUpdateAxes}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
-            onUpdateDecimalPlaces={onUpdateDecimalPlaces}
           />
         )
       default:
