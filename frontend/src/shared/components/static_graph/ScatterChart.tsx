@@ -124,12 +124,23 @@ const ScatterChart = ({
     }
   }, [chartRef.current])
 
+  const onResetZoom = () => {
+    if (chartRef && chartRef.current) {
+      chartRef.current.resetZoom()
+    }
+  }
+
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
         <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
-            <Scatter ref={chartRef} options={dynamicOption} data={chartData} />
+            <Scatter
+              ref={chartRef}
+              options={dynamicOption}
+              data={chartData}
+              onDoubleClick={onResetZoom}
+            />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend
