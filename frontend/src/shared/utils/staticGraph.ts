@@ -436,6 +436,36 @@ const createBarChartDatasets = ({
   }
 }
 
+const createRadarChartDatasets = ({
+  rawData,
+
+  colors,
+}: StatisticalGraphDatasetConfigType) => {
+  const convertData = rawData
+  const columns = convertData[0].columns
+  const processedData = fastMap(convertData, item =>
+    item.values[0].slice(1).map(value => value)
+  )
+  const axesX = fastMap(convertData, item => _.values(item.tags))
+  const getcolors = getLineColorsHexes(colors, columns.length - 1)
+  const datasets = columns.slice(1).map((col, colIndex) => ({
+    label: col,
+    data: fastMap(processedData, data => data[colIndex]),
+    backgroundColor: changeColorsOpacity(getcolors, 0.2)[colIndex],
+    borderColor: getcolors[colIndex],
+    borderWidth: 1,
+    pointBackgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
+    pointBorderColor: getcolors[colIndex],
+    pointHoverBackgroundColor: '#fff',
+    pointHoverBorderColor: getcolors[colIndex],
+  }))
+
+  return {
+    labels: axesX,
+    datasets,
+  }
+}
+
 const isValidValue = value => {
   return value !== undefined && value !== ''
 }
@@ -703,22 +733,17 @@ const createStaticRadarOptions = ({axes}: {axes: Axes}) => {
 }
 
 export const staticGraphDatasets = (cellType: CellType) => {
-  switch (cellType) {
-    case CellType.StaticStackedBar:
-    case CellType.StaticLineChart:
-    case CellType.StaticBar: {
-      return createBarChartDatasets
-    }
-    case CellType.StaticPie:
-    case CellType.StaticDoughnut: {
-      return createPieChartDatasets
-    }
-    case CellType.StaticScatter: {
-      return createScatterChartDatasets
-    }
-    default:
-      return null
+  const datasetCreators = {
+    [CellType.StaticStackedBar]: createBarChartDatasets,
+    [CellType.StaticLineChart]: createBarChartDatasets,
+    [CellType.StaticBar]: createBarChartDatasets,
+    [CellType.StaticPie]: createPieChartDatasets,
+    [CellType.StaticDoughnut]: createPieChartDatasets,
+    [CellType.StaticScatter]: createScatterChartDatasets,
+    [CellType.StaticRadar]: createRadarChartDatasets,
   }
+
+  return datasetCreators[cellType] || null
 }
 
 export const staticGraphOptions = {

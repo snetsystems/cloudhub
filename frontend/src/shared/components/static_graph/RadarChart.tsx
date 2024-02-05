@@ -15,21 +15,22 @@ import _ from 'lodash'
 
 // Types
 import {Axes, CellType, FluxTable, StaticLegendPositionType} from 'src/types'
-import {TimeSeriesServerResponse} from 'src/types/series'
+import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
 
 // Utils
-import {fastMap} from 'src/utils/fast'
-import {staticGraphOptions} from 'src/shared/utils/staticGraph'
+import {
+  staticGraphDatasets,
+  staticGraphOptions,
+} from 'src/shared/utils/staticGraph'
+import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
 
 // Constants
-import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
 import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {changeColorsOpacity} from 'src/shared/graphs/helpers'
 
 ChartJS.register(
   RadialLinearScale,
@@ -64,29 +65,22 @@ const RadarChart = ({
     ChartJS<'radar', [], unknown>
   >(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
-  const convertData = data[0]['response']['results'][0]['series']
-  const axesX = fastMap(convertData, item => _.values(item.tags))
-  const columns = convertData[0].columns
-  const processedData = fastMap(convertData, item =>
-    item.values[0].slice(1).map(value => value)
+  const rawData: TimeSeriesSeries[] = _.get(
+    data,
+    ['0', 'response', 'results', '0', 'series'],
+    []
   )
-  const getcolors = getLineColorsHexes(colors, columns.length - 1)
-  const datasets = columns.slice(1).map((col, colIndex) => ({
-    label: col,
-    data: fastMap(processedData, data => data[colIndex]),
-    backgroundColor: changeColorsOpacity(getcolors, 0.2)[colIndex],
-    borderColor: getcolors[colIndex],
-    borderWidth: 1,
-    pointBackgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
-    pointBorderColor: getcolors[colIndex],
-    pointHoverBackgroundColor: '#fff',
-    pointHoverBorderColor: getcolors[colIndex],
-  }))
-  const chartData = {
-    labels: axesX,
-    datasets,
-  }
+  const queryKey = _.get(data, ['0', 'response', 'uuid'], [])
+  const isUpdated = useIsUpdated({queryKey, colors})
 
+  const chartData = useMemo(
+    () =>
+      staticGraphDatasets(CellType.StaticRadar)({
+        rawData,
+        colors,
+      }),
+    [isUpdated]
+  )
   const dynamicOption = useMemo(
     () =>
       staticGraphOptions[CellType.StaticRadar]({
@@ -96,7 +90,9 @@ const RadarChart = ({
   )
 
   useEffect(() => {
-    chartRef.current.resize()
+    if (chartInstance && chartRef.current) {
+      chartRef.current.resize()
+    }
   }, [staticLegend, staticLegendPosition])
 
   useEffect(() => {
