@@ -52,12 +52,18 @@ interface Props {
   fieldOptions: RenamableField[]
   type: string
   axes: Axes
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   defaultXLabel: string
   defaultYLabel: string
   lineColors: ColorString[]
   onUpdateAxes: (axes: Axes) => void
+  onToggleFillGraphArea: (fillGraphArea: boolean) => void
+  onToggleShowGraphLine: (showGraphLine: boolean) => void
+  onToggleShowGraphPoint: (showGraphPoint: boolean) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
   onToggleStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
@@ -274,6 +280,9 @@ class LineChartOptions extends PureComponent<Props, State> {
             {this.scaleTabs}
             {this.staticLegendTabs}
             {this.staticLegendPositionTabs}
+            {this.chartAreaTabs}
+            {this.chartLineTabs}
+            {this.chartPointTabs}
           </form>
         </div>
       </FancyScrollbar>
@@ -645,6 +654,96 @@ class LineChartOptions extends PureComponent<Props, State> {
     const updatedSortBy = {...sortBy, direction: direction}
 
     onUpdateTableOptions({...tableOptions, sortBy: updatedSortBy})
+  }
+
+  private get chartAreaTabs(): JSX.Element {
+    const {fillGraphArea, onToggleFillGraphArea} = this.props
+
+    return (
+      <div className="form-group col-sm-6">
+        <label>Chart Area</label>
+        <Radio shape={ButtonShape.StretchToFit}>
+          <Radio.Button
+            id="chart-area--fill"
+            value={true}
+            active={fillGraphArea === true}
+            titleText="Fill Chart Area"
+            onClick={onToggleFillGraphArea}
+          >
+            Fill
+          </Radio.Button>
+          <Radio.Button
+            id="chart-area--clear"
+            value={false}
+            active={fillGraphArea === false}
+            titleText="Clear Chart Area"
+            onClick={onToggleFillGraphArea}
+          >
+            Clear
+          </Radio.Button>
+        </Radio>
+      </div>
+    )
+  }
+
+  private get chartLineTabs(): JSX.Element {
+    const {showGraphLine, onToggleShowGraphLine} = this.props
+
+    return (
+      <div className="form-group col-sm-6">
+        <label>Chart Line</label>
+        <Radio shape={ButtonShape.StretchToFit}>
+          <Radio.Button
+            id="chart-line--show"
+            value={true}
+            active={showGraphLine === true}
+            titleText="Show chart line"
+            onClick={onToggleShowGraphLine}
+          >
+            Show
+          </Radio.Button>
+          <Radio.Button
+            id="chart-line--hide"
+            value={false}
+            active={showGraphLine === false}
+            titleText="Hide chart line"
+            onClick={onToggleShowGraphLine}
+          >
+            Hide
+          </Radio.Button>
+        </Radio>
+      </div>
+    )
+  }
+
+  private get chartPointTabs(): JSX.Element {
+    const {showGraphPoint, onToggleShowGraphPoint} = this.props
+
+    return (
+      <div className="form-group col-sm-6">
+        <label>Chart Point</label>
+        <Radio shape={ButtonShape.StretchToFit}>
+          <Radio.Button
+            id="chart-point--show"
+            value={true}
+            active={showGraphPoint === true}
+            titleText="Show chart point"
+            onClick={onToggleShowGraphPoint}
+          >
+            Show
+          </Radio.Button>
+          <Radio.Button
+            id="chart-point--hide"
+            value={false}
+            active={showGraphPoint === false}
+            titleText="Hide chart point"
+            onClick={onToggleShowGraphPoint}
+          >
+            Hide
+          </Radio.Button>
+        </Radio>
+      </div>
+    )
   }
 }
 

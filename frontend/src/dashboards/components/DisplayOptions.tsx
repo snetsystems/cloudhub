@@ -74,10 +74,16 @@ interface ConnectedProps {
 
 interface PassedProps {
   queryConfigs: QueryConfig[]
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   stateToUpdate: QueryUpdateState
   onResetFocus: () => void
+  onToggleFillGraphArea: (fillGraphArea: boolean) => void
+  onToggleShowGraphLine: (showGraphLine: boolean) => void
+  onToggleShowGraphPoint: (showGraphPoint: boolean) => void
   onToggleStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
   ) => void
@@ -184,9 +190,15 @@ class DisplayOptions extends Component<Props, State> {
       type,
       decimalPlaces,
       lineColors,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
       gaugeColors,
       staticLegend,
       staticLegendPosition,
+      onToggleFillGraphArea,
+      onToggleShowGraphLine,
+      onToggleShowGraphPoint,
       onToggleStaticLegend,
       onToggleStaticLegendPosition,
       onResetFocus,
@@ -309,11 +321,17 @@ class DisplayOptions extends Component<Props, State> {
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
+            fillGraphArea={fillGraphArea}
+            showGraphLine={showGraphLine}
+            showGraphPoint={showGraphPoint}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
             onUpdateAxes={onUpdateAxes}
+            onToggleFillGraphArea={onToggleFillGraphArea}
+            onToggleShowGraphLine={onToggleShowGraphLine}
+            onToggleShowGraphPoint={onToggleShowGraphPoint}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}

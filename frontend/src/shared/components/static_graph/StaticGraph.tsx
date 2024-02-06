@@ -52,6 +52,9 @@ interface Props {
   data: TimeSeriesServerResponse[] | FluxTable[]
   dataType: DataType
   cellID: string
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
@@ -128,6 +131,9 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       cellID,
       queries,
       type,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
       staticLegend,
       staticLegendPosition,
       tableOptions,
@@ -269,6 +275,9 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticGraphStyle={this.staticGraphStyle}
             data={data}
             colors={colors}
+            fillGraphArea={fillGraphArea}
+            showGraphLine={showGraphLine}
+            showGraphPoint={showGraphPoint}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}

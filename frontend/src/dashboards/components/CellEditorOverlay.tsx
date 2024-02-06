@@ -23,6 +23,9 @@ import {getCellTypeColors} from 'src/dashboards/constants/cellEditor'
 import {
   GET_STATIC_LEGEND_POSITION,
   IS_STATIC_LEGEND,
+  DEFAULT_FILL_GRAPH_AREA,
+  DEFAULT_SHOW_GRAPH_LINE,
+  DEFAULT_SHOW_GRAPH_POINT,
 } from 'src/shared/constants'
 import {STATIC_LEGEND} from 'src/dashboards/constants/cellEditor'
 
@@ -105,6 +108,9 @@ interface State {
   scriptStatus: ScriptStatus
   draftCellName: string
   staticLegendPosition: StaticLegendPositionType
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
 }
 
 @ErrorHandling
@@ -121,6 +127,9 @@ class CellEditorOverlay extends Component<Props, State> {
       scriptStatus: {type: 'none', text: ''},
       draftCellName: props.cell.name,
       staticLegendPosition: GET_STATIC_LEGEND_POSITION(legend),
+      fillGraphArea: DEFAULT_FILL_GRAPH_AREA,
+      showGraphLine: DEFAULT_SHOW_GRAPH_LINE,
+      showGraphPoint: DEFAULT_SHOW_GRAPH_POINT,
     }
   }
 
@@ -157,7 +166,13 @@ class CellEditorOverlay extends Component<Props, State> {
       dashboardRefresh,
     } = this.props
 
-    const {isStaticLegend, staticLegendPosition} = this.state
+    const {
+      isStaticLegend,
+      staticLegendPosition,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
+    } = this.state
 
     return (
       <div
@@ -176,9 +191,15 @@ class CellEditorOverlay extends Component<Props, State> {
           editQueryStatus={editQueryStatus}
           onResetFocus={this.handleResetFocus}
           onToggleStaticLegend={this.handleToggleStaticLegend}
+          onToggleFillGraphArea={this.handleFillGraphArea}
+          onToggleShowGraphLine={this.handleShowGraphLine}
+          onToggleShowGraphPoint={this.handleShowGraphPoint}
           onToggleStaticLegendPosition={this.handleToggleStaticLegendPosition}
           isStaticLegend={isStaticLegend}
           staticLegendPosition={staticLegendPosition}
+          fillGraphArea={fillGraphArea}
+          showGraphLine={showGraphLine}
+          showGraphPoint={showGraphPoint}
           queryStatus={queryStatus}
           onUpdateScriptStatus={this.handleUpdateScriptStatus}
           me={me}
@@ -359,6 +380,18 @@ class CellEditorOverlay extends Component<Props, State> {
 
   private handleToggleStaticLegend = (isStaticLegend: boolean): void => {
     this.setState({isStaticLegend})
+  }
+
+  private handleFillGraphArea = (fillGraphArea: boolean): void => {
+    this.setState({fillGraphArea})
+  }
+
+  private handleShowGraphLine = (showGraphLine: boolean): void => {
+    this.setState({showGraphLine})
+  }
+
+  private handleShowGraphPoint = (showGraphPoint: boolean): void => {
+    this.setState({showGraphPoint})
   }
 
   private handleResetFocus = () => {

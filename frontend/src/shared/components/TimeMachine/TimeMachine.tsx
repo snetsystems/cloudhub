@@ -81,6 +81,9 @@ interface PassedProps {
   isInCEO: boolean
   templates: Template[]
   isStaticLegend: boolean
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   staticLegendPosition: StaticLegendPositionType
   onResetFocus: () => void
   updateSourceLink?: typeof updateSourceLinkAction
@@ -90,6 +93,9 @@ interface PassedProps {
     status: Status,
     stateToUpdate: QueryUpdateState
   ) => void
+  onToggleFillGraphArea: (fillGraphArea: boolean) => void
+  onToggleShowGraphLine: (showGraphLine: boolean) => void
+  onToggleShowGraphPoint: (showGraphPoint: boolean) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
   onToggleStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
@@ -230,11 +236,17 @@ class TimeMachine extends PureComponent<Props, State> {
       isStaticLegend,
       staticLegendPosition,
       manualRefresh,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
     } = this.props
     const {autoRefresher, isViewingRawData} = this.state
 
     return (
       <TimeMachineVisualization
+        fillGraphArea={fillGraphArea}
+        showGraphLine={showGraphLine}
+        showGraphPoint={showGraphPoint}
         source={this.source}
         templates={templates}
         queries={this.queriesForVis}
@@ -256,8 +268,14 @@ class TimeMachine extends PureComponent<Props, State> {
   private get editorTab() {
     const {
       onResetFocus,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
       isStaticLegend,
       staticLegendPosition,
+      onToggleFillGraphArea,
+      onToggleShowGraphLine,
+      onToggleShowGraphPoint,
       onToggleStaticLegend,
       onToggleStaticLegendPosition,
     } = this.props
@@ -276,6 +294,12 @@ class TimeMachine extends PureComponent<Props, State> {
         queryConfigs={this.queriesWorkingDraft}
         onToggleStaticLegendPosition={onToggleStaticLegendPosition}
         onToggleStaticLegend={onToggleStaticLegend}
+        onToggleFillGraphArea={onToggleFillGraphArea}
+        onToggleShowGraphLine={onToggleShowGraphLine}
+        onToggleShowGraphPoint={onToggleShowGraphPoint}
+        fillGraphArea={fillGraphArea}
+        showGraphLine={showGraphLine}
+        showGraphPoint={showGraphPoint}
         staticLegend={isStaticLegend}
         staticLegendPosition={staticLegendPosition}
         onResetFocus={onResetFocus}

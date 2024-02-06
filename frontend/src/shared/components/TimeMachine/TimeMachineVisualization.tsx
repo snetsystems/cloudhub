@@ -55,6 +55,9 @@ interface PassedProps {
   queries: Query[]
   templates: Template[]
   onEditQueryStatus: (queryID: string, status: Status) => void
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   manualRefresh: number
@@ -84,6 +87,9 @@ const TimeMachineVisualization: FunctionComponent<Props> = props => {
             queries={props.queries}
             templates={props.templates}
             editQueryStatus={props.onEditQueryStatus}
+            fillGraphArea={props.fillGraphArea}
+            showGraphLine={props.showGraphLine}
+            showGraphPoint={props.showGraphPoint}
             staticLegendPosition={props.staticLegendPosition}
             staticLegend={props.staticLegend}
             timeRange={props.timeRange}

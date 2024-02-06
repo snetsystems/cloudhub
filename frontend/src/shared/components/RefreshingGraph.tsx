@@ -24,7 +24,13 @@ import {
   DEFAULT_TIME_FORMAT,
   DEFAULT_DECIMAL_PLACES,
 } from 'src/dashboards/constants'
-import {DEFAULT_STATIC_LEGEND_POSITION, DataType} from 'src/shared/constants'
+import {
+  DEFAULT_FILL_GRAPH_AREA,
+  DEFAULT_SHOW_GRAPH_LINE,
+  DEFAULT_SHOW_GRAPH_POINT,
+  DEFAULT_STATIC_LEGEND_POSITION,
+  DataType,
+} from 'src/shared/constants'
 
 // Utils
 import {AutoRefresher, GlobalAutoRefresher} from 'src/utils/AutoRefresher'
@@ -83,6 +89,9 @@ interface Props {
   inView: boolean
   timeFormat: string
   cellHeight: number
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   autoRefresher: AutoRefresher
@@ -113,6 +122,9 @@ class RefreshingGraph extends Component<Props> {
     decimalPlaces: DEFAULT_DECIMAL_PLACES,
     autoRefresher: GlobalAutoRefresher,
     staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
+    fillGraphArea: DEFAULT_FILL_GRAPH_AREA,
+    showGraphLine: DEFAULT_SHOW_GRAPH_LINE,
+    showGraphPoint: DEFAULT_SHOW_GRAPH_POINT,
   }
 
   public shouldComponentUpdate(nextProps: Props) {
@@ -325,6 +337,9 @@ class RefreshingGraph extends Component<Props> {
       'inView',
       'staticLegend',
       'staticLegendPosition',
+      'fillGraphArea',
+      'showGraphLine',
+      'showGraphPoint',
     ]
 
     const prevVisValues = _.pick(prevProps, visProps)
@@ -537,6 +552,9 @@ class RefreshingGraph extends Component<Props> {
       cellID,
       queries,
       decimalPlaces,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
       staticLegend,
       staticLegendPosition,
       manualRefresh,
@@ -567,6 +585,9 @@ class RefreshingGraph extends Component<Props> {
             key={manualRefresh}
             tableOptions={tableOptions}
             fieldOptions={computedFieldOptions}
+            fillGraphArea={fillGraphArea}
+            showGraphLine={showGraphLine}
+            showGraphPoint={showGraphPoint}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             decimalPlaces={decimalPlaces}
