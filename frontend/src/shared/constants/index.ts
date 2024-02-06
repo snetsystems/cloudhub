@@ -491,7 +491,7 @@ export const GET_STATIC_LEGEND_POSITION = legend =>
 export const DEFAULT_STATIC_LEGEND_POSITION = 'bottom'
 export const DEFAULT_FILL_GRAPH_AREA = true
 export const DEFAULT_SHOW_GRAPH_LINE = true
-export const DEFAULT_SHOW_GRAPH_POINT = true
+export const DEFAULT_SHOW_GRAPH_POINT = false
 
 export const linksLink = '/cloudhub/v1'
 

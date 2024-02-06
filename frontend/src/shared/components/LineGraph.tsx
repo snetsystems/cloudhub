@@ -49,6 +49,9 @@ interface Props {
   dataType: DataType
   cellID: string
   cellHeight: number
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   staticLegend: boolean
   onZoom: () => void
   handleSetHoverTime: () => void
@@ -148,6 +151,9 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       dataType,
       timeRange,
       cellHeight,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
       staticLegend,
       decimalPlaces,
       handleSetHoverTime,
@@ -163,7 +169,6 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       rightGap: 0,
       yRangePad: 10,
       labelsKMB: true,
-      fillGraph: true,
       axisLabelWidth: 60,
       animatedZooms: true,
       drawAxesAtZero: true,
@@ -172,6 +177,10 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       connectSeparatedPoints: true,
       stepPlot: type === 'line-stepplot',
       stackedGraph: type === 'line-stacked',
+      fillGraph: fillGraphArea,
+      pointSize: showGraphPoint ? 3 : 0,
+      drawPoints: showGraphPoint,
+      strokeWidth: showGraphLine ? 1 : 0,
     }
 
     return (

@@ -509,6 +509,9 @@ class RefreshingGraph extends Component<Props> {
       timeRange,
       cellHeight,
       decimalPlaces,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
       staticLegend,
       manualRefresh,
       onUpdateVisType,
@@ -531,6 +534,9 @@ class RefreshingGraph extends Component<Props> {
         key={manualRefresh}
         timeRange={timeRange}
         cellHeight={cellHeight}
+        fillGraphArea={fillGraphArea}
+        showGraphLine={showGraphLine}
+        showGraphPoint={showGraphPoint}
         staticLegend={staticLegend}
         decimalPlaces={decimalPlaces}
         onUpdateVisType={onUpdateVisType}

@@ -375,10 +375,16 @@ class DisplayOptions extends Component<Props, State> {
             axes={this.axes}
             type={type}
             lineColors={lineColors}
+            fillGraphArea={fillGraphArea}
+            showGraphLine={showGraphLine}
+            showGraphPoint={showGraphPoint}
             staticLegend={staticLegend}
             defaultYLabel={defaultYLabel}
             decimalPlaces={decimalPlaces}
             onUpdateAxes={onUpdateAxes}
+            onToggleFillGraphArea={onToggleFillGraphArea}
+            onToggleShowGraphLine={onToggleShowGraphLine}
+            onToggleShowGraphPoint={onToggleShowGraphPoint}
             onToggleStaticLegend={onToggleStaticLegend}
             onUpdateLineColors={onUpdateLineColors}
             onUpdateDecimalPlaces={onUpdateDecimalPlaces}
