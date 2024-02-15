@@ -58,6 +58,9 @@ interface PassedProps {
     dashboard: Dashboard,
     newCell: Partial<Cell>
   ) => Promise<{success: boolean; dashboard: Dashboard}>
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   isStaticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   handleGetDashboards: () => Dashboard[]
@@ -359,6 +362,9 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       source,
       onCancel,
       visualizationOptions,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
       isStaticLegend,
       staticLegendPosition,
       queryDrafts,
@@ -457,6 +463,9 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
           noteVisibility,
           fieldOptions,
           tableOptions,
+          fillGraphArea,
+          showGraphLine,
+          showGraphPoint,
         }
         return sendDashboardCell(dashboard, newCell)
       })

@@ -539,7 +539,7 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 					}
 				  }
 				  `))),
-			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user","args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
+			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user","args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","fillGraphArea":false,"showGraphLine":false,"showGraphPoint":false,"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
 `,
 		},
 		{
@@ -1150,6 +1150,40 @@ func TestHasCorrectQueryType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := HasCorrectQueryType(tt.c); (err != nil) != tt.wantErr {
 				t.Errorf("HasCorrectQueryType() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateGraphSettings(t *testing.T) {
+	tests := []struct {
+		name    string
+		c       *cloudhub.DashboardCell
+		wantErr bool
+	}{
+		{
+			name: "all boolean fields are true",
+			c: &cloudhub.DashboardCell{
+				FillGraphArea:  true,
+				ShowGraphLine:  true,
+				ShowGraphPoint: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "all boolean fields are false",
+			c: &cloudhub.DashboardCell{
+				FillGraphArea:  false,
+				ShowGraphLine:  false,
+				ShowGraphPoint: false,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ValidateGraphSettings(tt.c); (err != nil) != tt.wantErr {
+				t.Errorf("ValidateGraphSettings() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

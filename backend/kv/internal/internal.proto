@@ -47,6 +47,10 @@ message DashboardCell {
 	string noteVisibility                = 17; // config option for showing note
 	int32 minW                           = 18; // Min Width of Cell in the Dashboard
 	int32 minH                           = 19; // Min Height of Cell in the Dashboard
+	bool fillGraphArea 		             = 20; // Whether to fill graph area in Graph
+	bool showGraphLine 		             = 21; // Whether to show graph lines in Graph
+	bool showGraphPoint 		         = 22; // Whether to show graph points in Graph
+	string showGraphCount 		         = 23; // showGraphCount is referencing the numeric value of the Template Variable indicating the number of Graphs to show
 }
 
 

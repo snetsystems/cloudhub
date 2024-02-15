@@ -94,6 +94,9 @@ export interface Cell {
   inView: boolean
   note: string
   noteVisibility: NoteVisibility
+  fillGraphArea?: boolean
+  showGraphLine?: boolean
+  showGraphPoint?: boolean
 }
 
 export enum CellType {

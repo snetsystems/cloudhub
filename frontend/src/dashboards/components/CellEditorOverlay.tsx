@@ -23,9 +23,6 @@ import {getCellTypeColors} from 'src/dashboards/constants/cellEditor'
 import {
   GET_STATIC_LEGEND_POSITION,
   IS_STATIC_LEGEND,
-  DEFAULT_FILL_GRAPH_AREA,
-  DEFAULT_SHOW_GRAPH_LINE,
-  DEFAULT_SHOW_GRAPH_POINT,
 } from 'src/shared/constants'
 import {STATIC_LEGEND} from 'src/dashboards/constants/cellEditor'
 
@@ -121,15 +118,18 @@ class CellEditorOverlay extends Component<Props, State> {
     super(props)
 
     const legend = getDeep<Legend | null>(props, 'cell.legend', null)
+    const fillGraphArea = getDeep<boolean>(props, 'cell.fillGraphArea', true)
+    const showGraphLine = getDeep<boolean>(props, 'cell.showGraphLine', true)
+    const showGraphPoint = getDeep<boolean>(props, 'cell.showGraphPoint', false)
 
     this.state = {
       isStaticLegend: IS_STATIC_LEGEND(legend),
       scriptStatus: {type: 'none', text: ''},
       draftCellName: props.cell.name,
       staticLegendPosition: GET_STATIC_LEGEND_POSITION(legend),
-      fillGraphArea: DEFAULT_FILL_GRAPH_AREA,
-      showGraphLine: DEFAULT_SHOW_GRAPH_LINE,
-      showGraphPoint: DEFAULT_SHOW_GRAPH_POINT,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
     }
   }
 
@@ -284,7 +284,14 @@ class CellEditorOverlay extends Component<Props, State> {
       gaugeColors,
       lineColors,
     } = this.props
-    const {isStaticLegend, staticLegendPosition, draftCellName} = this.state
+    const {
+      isStaticLegend,
+      staticLegendPosition,
+      draftCellName,
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
+    } = this.state
 
     let queries: CellQuery[] = queryDrafts
 
@@ -322,6 +329,9 @@ class CellEditorOverlay extends Component<Props, State> {
       legend: isStaticLegend
         ? {...STATIC_LEGEND, orientation: staticLegendPosition}
         : {orientation: staticLegendPosition},
+      fillGraphArea,
+      showGraphLine,
+      showGraphPoint,
     }
 
     return newCell

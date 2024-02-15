@@ -345,6 +345,9 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			DecimalPlaces:  decimalPlaces,
 			Note:           note,
 			NoteVisibility: noteVisibility,
+			FillGraphArea:  c.FillGraphArea,
+			ShowGraphLine:  c.ShowGraphLine,
+			ShowGraphPoint: c.ShowGraphPoint,
 		}
 	}
 	templates := make([]*Template, len(d.Templates))
@@ -536,6 +539,9 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			DecimalPlaces:  decimalPlaces,
 			Note:           note,
 			NoteVisibility: noteVisibility,
+			FillGraphArea:  c.FillGraphArea,
+			ShowGraphLine:  c.ShowGraphLine,
+			ShowGraphPoint: c.ShowGraphPoint,
 		}
 	}
 

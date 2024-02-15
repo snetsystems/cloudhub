@@ -696,6 +696,9 @@ type DashboardCell struct {
 	DecimalPlaces  DecimalPlaces    `json:"decimalPlaces"`
 	Note           string           `json:"note"`
 	NoteVisibility string           `json:"noteVisibility"`
+	FillGraphArea  bool             `json:"fillGraphArea"`
+	ShowGraphLine  bool             `json:"showGraphLine"`
+	ShowGraphPoint bool             `json:"showGraphPoint"`
 }
 
 // RenamableField is a column/row field in a DashboardCell of type Table

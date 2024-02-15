@@ -1,4 +1,9 @@
 import {
+  DEFAULT_FILL_GRAPH_AREA,
+  DEFAULT_SHOW_GRAPH_LINE,
+  DEFAULT_SHOW_GRAPH_POINT,
+} from 'src/shared/constants'
+import {
   DEFAULT_VERTICAL_TIME_AXIS,
   DEFAULT_FIX_FIRST_COLUMN,
 } from 'src/shared/constants/tableGraph'
@@ -95,6 +100,9 @@ export const NEW_DEFAULT_DASHBOARD_CELL: NewDefaultCell = {
   inView: true,
   note: '',
   noteVisibility: NoteVisibility.Default,
+  fillGraphArea: DEFAULT_FILL_GRAPH_AREA,
+  showGraphLine: DEFAULT_SHOW_GRAPH_LINE,
+  showGraphPoint: DEFAULT_SHOW_GRAPH_POINT,
 }
 
 interface EmptyDefaultDashboardCell {

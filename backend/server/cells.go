@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/bouk/httprouter"
 	"github.com/microcosm-cc/bluemonday"
@@ -84,6 +85,10 @@ func newCellResponses(dID cloudhub.DashboardID, dcells []cloudhub.DashboardCell)
 func ValidDashboardCellRequest(c *cloudhub.DashboardCell) error {
 	if c == nil {
 		return fmt.Errorf("CloudHub dashboard cell was nil")
+	}
+
+	if err := ValidateGraphSettings(c); err != nil {
+		return err
 	}
 
 	if err := ValidateNote(c); err != nil {
@@ -217,6 +222,21 @@ func AddQueryConfig(c *cloudhub.DashboardCell) {
 		q.QueryConfig = qc
 		c.Queries[i] = q
 	}
+}
+
+// ValidateGraphSettings checks if graph settings in a DashboardCell are boolean.
+func ValidateGraphSettings(c *cloudhub.DashboardCell) error {
+	if reflect.TypeOf(c.FillGraphArea).Kind() != reflect.Bool {
+		return fmt.Errorf("FillGraphArea value must be boolean type")
+	}
+	if reflect.TypeOf(c.ShowGraphLine).Kind() != reflect.Bool {
+		return fmt.Errorf("ShowGraphLine value must be boolean type")
+	}
+	if reflect.TypeOf(c.ShowGraphPoint).Kind() != reflect.Bool {
+		return fmt.Errorf("ShowGraphPoint value must be boolean type ")
+	}
+
+	return nil
 }
 
 // ValidateNote sanitizes note html against XSS attacks and validates note visibility
