@@ -6840,6 +6840,18 @@
             }
           }
         },
+        "fillGraphArea": {
+          "description": "Whether to fill graph area in Graph",
+          "type": "boolean"
+        },
+        "showGraphLine": {
+          "description": "Whether to show graph lines in Graph",
+          "type": "boolean"
+        },
+        "showGraphPoint": {
+          "description": "Whether to show graph points in Graph",
+          "type": "boolean"
+        },
         "links": {
           "type": "object",
           "properties": {
