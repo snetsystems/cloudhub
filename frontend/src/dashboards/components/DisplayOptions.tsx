@@ -58,6 +58,12 @@ interface ConnectedProps {
   thresholdsListType: ThresholdType
   gaugeColors: ColorNumber[]
   lineColors: ColorString[]
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
+  onToggleFillGraphArea: (fillGraphArea: boolean) => void
+  onToggleShowGraphLine: (showGraphLine: boolean) => void
+  onToggleShowGraphPoint: (showGraphPoint: boolean) => void
   onUpdateDecimalPlaces: TimeMachineContainer['handleUpdateDecimalPlaces']
   onUpdateGaugeColors: TimeMachineContainer['handleUpdateGaugeColors']
   onUpdateAxes: TimeMachineContainer['handleUpdateAxes']
@@ -74,16 +80,11 @@ interface ConnectedProps {
 
 interface PassedProps {
   queryConfigs: QueryConfig[]
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   stateToUpdate: QueryUpdateState
   onResetFocus: () => void
-  onToggleFillGraphArea: (fillGraphArea: boolean) => void
-  onToggleShowGraphLine: (showGraphLine: boolean) => void
-  onToggleShowGraphPoint: (showGraphPoint: boolean) => void
+
   onToggleStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
   ) => void
@@ -433,6 +434,9 @@ const ConnectedDisplayOptions = (props: PassedProps) => {
       {(timeMachineContainer: TimeMachineContainer) => (
         <DisplayOptions
           {...props}
+          fillGraphArea={timeMachineContainer.state.fillGraphArea}
+          showGraphLine={timeMachineContainer.state.showGraphLine}
+          showGraphPoint={timeMachineContainer.state.showGraphPoint}
           type={timeMachineContainer.state.type}
           axes={timeMachineContainer.state.axes}
           tableOptions={timeMachineContainer.state.tableOptions}
@@ -445,6 +449,11 @@ const ConnectedDisplayOptions = (props: PassedProps) => {
           thresholdsListType={timeMachineContainer.state.thresholdsListType}
           gaugeColors={timeMachineContainer.state.gaugeColors}
           lineColors={timeMachineContainer.state.lineColors}
+          onToggleFillGraphArea={timeMachineContainer.handleToggleFillGraphArea}
+          onToggleShowGraphLine={timeMachineContainer.handleToggleShowGraphLine}
+          onToggleShowGraphPoint={
+            timeMachineContainer.handleToggleShowGraphPoint
+          }
           onUpdateType={timeMachineContainer.handleUpdateType}
           onUpdateAxes={timeMachineContainer.handleUpdateAxes}
           onUpdateTableOptions={timeMachineContainer.handleUpdateTableOptions}

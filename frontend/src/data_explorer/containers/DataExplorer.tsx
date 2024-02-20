@@ -46,9 +46,6 @@ import {
   TEMPLATES,
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
-  DEFAULT_FILL_GRAPH_AREA,
-  DEFAULT_SHOW_GRAPH_LINE,
-  DEFAULT_SHOW_GRAPH_POINT,
 } from 'src/shared/constants'
 
 // Types
@@ -126,9 +123,6 @@ interface State {
   isComponentMounted: boolean
   activeQueryIndex: number
   staticLegendPosition: StaticLegendPositionType
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
 }
 
 @ErrorHandling
@@ -143,9 +137,6 @@ export class DataExplorer extends PureComponent<Props, State> {
       isComponentMounted: false,
       activeQueryIndex: 0,
       staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
-      fillGraphArea: DEFAULT_FILL_GRAPH_AREA,
-      showGraphLine: DEFAULT_SHOW_GRAPH_LINE,
-      showGraphPoint: DEFAULT_SHOW_GRAPH_POINT,
     }
 
     props.onResetTimeMachine()
@@ -198,9 +189,6 @@ export class DataExplorer extends PureComponent<Props, State> {
     } = this.props
 
     const {
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
       isStaticLegend,
       staticLegendPosition,
       isComponentMounted,
@@ -224,16 +212,10 @@ export class DataExplorer extends PureComponent<Props, State> {
             templates={this.templates}
             queryStatus={queryStatus}
             isStaticLegend={isStaticLegend}
-            fillGraphArea={fillGraphArea}
-            showGraphLine={showGraphLine}
-            showGraphPoint={showGraphPoint}
             staticLegendPosition={staticLegendPosition}
             editQueryStatus={editQueryStatus}
             updateSourceLink={updateSourceLink}
             onResetFocus={this.handleResetFocus}
-            onToggleFillGraphArea={this.handleFillGraphArea}
-            onToggleShowGraphLine={this.handleShowGraphLine}
-            onToggleShowGraphPoint={this.handleShowGraphPoint}
             onToggleStaticLegend={this.handleToggleStaticLegend}
             onToggleStaticLegendPosition={this.handleToggleStaticLegendPosition}
             onActiveQueryIndexChange={this.onActiveQueryIndexChange}
@@ -374,9 +356,6 @@ export class DataExplorer extends PureComponent<Props, State> {
       isStaticLegend,
       staticLegendPosition,
       activeQueryIndex,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
     } = this.state
     return (
       <Authorized requiredRole={EDITOR_ROLE}>
@@ -391,9 +370,6 @@ export class DataExplorer extends PureComponent<Props, State> {
             sendDashboardCell={sendDashboardCell}
             isStaticLegend={isStaticLegend}
             staticLegendPosition={staticLegendPosition}
-            fillGraphArea={fillGraphArea}
-            showGraphLine={showGraphLine}
-            showGraphPoint={showGraphPoint}
           />
         </OverlayTechnology>
       </Authorized>
@@ -473,18 +449,6 @@ export class DataExplorer extends PureComponent<Props, State> {
     staticLegendPosition: StaticLegendPositionType
   ): void => {
     this.setState({staticLegendPosition})
-  }
-
-  private handleFillGraphArea = (fillGraphArea: boolean): void => {
-    this.setState({fillGraphArea})
-  }
-
-  private handleShowGraphLine = (showGraphLine: boolean): void => {
-    this.setState({showGraphLine})
-  }
-
-  private handleShowGraphPoint = (showGraphPoint: boolean): void => {
-    this.setState({showGraphPoint})
   }
 
   private handleToggleStaticLegend = (isStaticLegend: boolean): void => {

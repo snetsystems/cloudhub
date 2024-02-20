@@ -75,6 +75,9 @@ interface ConnectedProps {
   lineColors: ColorString[]
   onResetTimeMachine: TimeMachineContainer['reset']
   ceoTimeRange: TimeRange
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
 }
 
 interface PassedProps {
@@ -105,9 +108,6 @@ interface State {
   scriptStatus: ScriptStatus
   draftCellName: string
   staticLegendPosition: StaticLegendPositionType
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
 }
 
 @ErrorHandling
@@ -118,18 +118,12 @@ class CellEditorOverlay extends Component<Props, State> {
     super(props)
 
     const legend = getDeep<Legend | null>(props, 'cell.legend', null)
-    const fillGraphArea = getDeep<boolean>(props, 'cell.fillGraphArea', true)
-    const showGraphLine = getDeep<boolean>(props, 'cell.showGraphLine', true)
-    const showGraphPoint = getDeep<boolean>(props, 'cell.showGraphPoint', false)
 
     this.state = {
       isStaticLegend: IS_STATIC_LEGEND(legend),
       scriptStatus: {type: 'none', text: ''},
       draftCellName: props.cell.name,
       staticLegendPosition: GET_STATIC_LEGEND_POSITION(legend),
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
     }
   }
 
@@ -166,13 +160,7 @@ class CellEditorOverlay extends Component<Props, State> {
       dashboardRefresh,
     } = this.props
 
-    const {
-      isStaticLegend,
-      staticLegendPosition,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
-    } = this.state
+    const {isStaticLegend, staticLegendPosition} = this.state
 
     return (
       <div
@@ -191,15 +179,9 @@ class CellEditorOverlay extends Component<Props, State> {
           editQueryStatus={editQueryStatus}
           onResetFocus={this.handleResetFocus}
           onToggleStaticLegend={this.handleToggleStaticLegend}
-          onToggleFillGraphArea={this.handleFillGraphArea}
-          onToggleShowGraphLine={this.handleShowGraphLine}
-          onToggleShowGraphPoint={this.handleShowGraphPoint}
           onToggleStaticLegendPosition={this.handleToggleStaticLegendPosition}
           isStaticLegend={isStaticLegend}
           staticLegendPosition={staticLegendPosition}
-          fillGraphArea={fillGraphArea}
-          showGraphLine={showGraphLine}
-          showGraphPoint={showGraphPoint}
           queryStatus={queryStatus}
           onUpdateScriptStatus={this.handleUpdateScriptStatus}
           me={me}
@@ -283,15 +265,11 @@ class CellEditorOverlay extends Component<Props, State> {
       thresholdsListColors,
       gaugeColors,
       lineColors,
-    } = this.props
-    const {
-      isStaticLegend,
-      staticLegendPosition,
-      draftCellName,
       fillGraphArea,
       showGraphLine,
       showGraphPoint,
-    } = this.state
+    } = this.props
+    const {isStaticLegend, staticLegendPosition, draftCellName} = this.state
 
     let queries: CellQuery[] = queryDrafts
 
@@ -392,18 +370,6 @@ class CellEditorOverlay extends Component<Props, State> {
     this.setState({isStaticLegend})
   }
 
-  private handleFillGraphArea = (fillGraphArea: boolean): void => {
-    this.setState({fillGraphArea})
-  }
-
-  private handleShowGraphLine = (showGraphLine: boolean): void => {
-    this.setState({showGraphLine})
-  }
-
-  private handleShowGraphPoint = (showGraphPoint: boolean): void => {
-    this.setState({showGraphPoint})
-  }
-
   private handleResetFocus = () => {
     if (this.overlayRef.current) {
       this.overlayRef.current.focus()
@@ -419,6 +385,9 @@ const ConnectedCellEditorOverlay = (props: PassedProps & Auth) => {
         return (
           <CellEditorOverlay
             {...props}
+            fillGraphArea={state.fillGraphArea}
+            showGraphLine={state.showGraphLine}
+            showGraphPoint={state.showGraphPoint}
             queryType={state.queryType}
             queryDrafts={state.queryDrafts}
             script={state.script}

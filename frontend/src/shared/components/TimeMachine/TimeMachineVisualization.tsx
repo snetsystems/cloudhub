@@ -31,6 +31,9 @@ import {
 import {AutoRefresher} from 'src/utils/AutoRefresher'
 
 interface ConnectedProps {
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   timeRange: TimeRange
   queryType: QueryType
   onUpdateFieldOptions: (fieldOptions: FieldOption[]) => Promise<void>
@@ -55,9 +58,6 @@ interface PassedProps {
   queries: Query[]
   templates: Template[]
   onEditQueryStatus: (queryID: string, status: Status) => void
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   manualRefresh: number
@@ -137,6 +137,9 @@ const ConnectedTimeMachineVisualization = (props: PassedProps) => (
           lineColors={state.lineColors}
           note={state.note}
           noteVisibility={state.noteVisibility}
+          fillGraphArea={state.fillGraphArea}
+          showGraphLine={state.showGraphLine}
+          showGraphPoint={state.showGraphPoint}
           onUpdateFieldOptions={container.handleUpdateFieldOptions}
           onUpdateVisType={container.handleUpdateType}
         />

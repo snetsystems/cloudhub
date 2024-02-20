@@ -36,6 +36,9 @@ export function initialStateFromCell(
     decimalPlaces: cell.decimalPlaces,
     note: cell.note,
     noteVisibility: cell.noteVisibility,
+    fillGraphArea: cell.fillGraphArea,
+    showGraphLine: cell.showGraphLine,
+    showGraphPoint: cell.showGraphPoint,
   }
 
   if (get(cell, 'queries.0.type') === QueryType.Flux) {

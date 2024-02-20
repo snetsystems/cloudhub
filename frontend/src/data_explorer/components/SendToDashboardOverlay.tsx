@@ -58,9 +58,6 @@ interface PassedProps {
     dashboard: Dashboard,
     newCell: Partial<Cell>
   ) => Promise<{success: boolean; dashboard: Dashboard}>
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
   isStaticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   handleGetDashboards: () => Dashboard[]
@@ -69,6 +66,9 @@ interface PassedProps {
 }
 
 interface ConnectedProps {
+  fillGraphArea: boolean
+  showGraphLine: boolean
+  showGraphPoint: boolean
   queryType: QueryType
   queryDrafts: CellQuery[]
   timeRange: TimeRange
@@ -496,6 +496,9 @@ const ConnectedSendToDashboardOverlay = (props: PassedProps) => {
           queryDrafts,
           timeRange,
           draftScript,
+          fillGraphArea,
+          showGraphLine,
+          showGraphPoint,
         } = timeMachineContainer.state
 
         const visualizationOptions = {
@@ -516,6 +519,9 @@ const ConnectedSendToDashboardOverlay = (props: PassedProps) => {
         return (
           <SendToDashboardOverlay
             {...props}
+            fillGraphArea={fillGraphArea}
+            showGraphLine={showGraphLine}
+            showGraphPoint={showGraphPoint}
             queryType={queryType}
             queryDrafts={queryDrafts}
             timeRange={timeRange}
