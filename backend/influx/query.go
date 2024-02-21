@@ -532,6 +532,7 @@ var supportedFuncs = map[string]bool{
 	"percentile": true,
 	"top":        true,
 	"bottom":     true,
+	"derivative": true,
 }
 
 // shortDur converts duration into the queryConfig duration format

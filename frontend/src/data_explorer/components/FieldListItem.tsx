@@ -140,6 +140,7 @@ class FieldListItem extends PureComponent<Props, State> {
   }
 
   private handleApplyFunctions = (selectedFuncs: string[]) => {
+    //apply function control jhyun
     const {onApplyFuncsToField, fieldName} = this.props
     const field: Field = {value: fieldName, type: 'field'}
 

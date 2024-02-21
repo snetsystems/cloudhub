@@ -117,4 +117,8 @@ export interface TimeRangeOption extends TimeRange {
   menuOption: string
 }
 
+export interface SubFunction {
+  [key: string]: string[]
+}
+
 export type DashTimeV1Range = TimeRangeOption & {dashboardID: string}

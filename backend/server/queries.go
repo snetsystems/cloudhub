@@ -22,7 +22,7 @@ type QueryRequest struct {
 // QueriesRequest converts all queries to queryConfigs with the help
 // of the template variables
 type QueriesRequest struct {
-	Queries      []QueryRequest    `json:"queries"`
+	Queries      []QueryRequest         `json:"queries"`
 	TemplateVars []cloudhub.TemplateVar `json:"tempVars,omitempty"`
 }
 
@@ -32,7 +32,7 @@ type QueryResponse struct {
 	Duration       int64                    `json:"durationMs"`
 	ID             string                   `json:"id"`
 	Query          string                   `json:"query"`
-	QueryConfig    cloudhub.QueryConfig          `json:"queryConfig"`
+	QueryConfig    cloudhub.QueryConfig     `json:"queryConfig"`
 	QueryAST       *queries.SelectStatement `json:"queryAST,omitempty"`
 	QueryTemplated *string                  `json:"queryTemplated,omitempty"`
 }
@@ -95,8 +95,8 @@ func (s *Service) Queries(w http.ResponseWriter, r *http.Request) {
 
 		qr.QueryConfig.ID = q.ID
 		res.Queries[i] = qr
-	}
 
+	}
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 

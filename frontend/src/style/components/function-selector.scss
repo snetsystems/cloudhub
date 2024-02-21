@@ -12,9 +12,10 @@ $function-selector--item-hover: $g4-onyx;
 $function-selector--text-hover: $g15-platinum;
 $function-selector--item-active: $s-orange;
 $function-selector--text-active: $g20-white;
+$function-selector--subitem-active: $s-oragne2;
 
 .function-selector {
-  padding: 4px 11px 8px 32px;
+  padding: 4px 11px 28px 32px;
   background-color: $g4-onyx;
 }
 .function-selector--header {
@@ -39,7 +40,14 @@ $function-selector--text-active: $g20-white;
 .function-selector--header + .function-selector--grid {
   padding-top: 0;
 }
+
+.function-selector--hide {
+  display: none;
+  height: 0;
+}
+
 .function-selector--item {
+  position: relative;
   @include no-user-select();
   border-radius: $radius;
   font-size: 12px;
@@ -58,9 +66,54 @@ $function-selector--text-active: $g20-white;
     background-color: $function-selector--item-hover;
     color: $function-selector--text-hover;
     cursor: pointer;
+    margin-bottom: 0;
   }
+
   &.active {
     background-color: $function-selector--item-active;
     color: $function-selector--text-active;
   }
+
+  .function-selector--subitem {
+    position: absolute;
+    display: flex;
+    height: $function-selector--size + 1px;
+    top: $function-selector--size;
+    width: 200%;
+    padding-top: 1px;
+    padding-bottom: 1px;
+
+    &.hidden {
+      display: none;
+    }
+    .function-selector--item {
+      flex: 0 0 calc(50% - 1px);
+      outline: 1px solid $function-selector--subitem-active;
+      margin-right: 2px;
+
+      &.active {
+        background-color: $function-selector--subitem-active;
+        color: $function-selector--text-active;
+      }
+    }
+
+    &.left {
+      left: 0;
+    }
+    &.right {
+      right: 0;
+    }
+    animation: subfunction-animation 0.2s 0.1s forwards;
+  }
+}
+
+.function-selector--extraline {
+  position: block;
+  flex-wrap: wrap;
+  flex: 0 0 100%;
+  padding: $function-selector--gutter;
+  background-color: $function-selector--bg;
+  border-radius: 0 0 $radius $radius;
+  height: $function-selector--size + 2;
+  transition: all;
 }
