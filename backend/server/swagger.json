@@ -6840,17 +6840,25 @@
             }
           }
         },
-        "fillGraphArea": {
-          "description": "Whether to fill graph area in Graph",
-          "type": "boolean"
-        },
-        "showGraphLine": {
-          "description": "Whether to show graph lines in Graph",
-          "type": "boolean"
-        },
-        "showGraphPoint": {
-          "description": "Whether to show graph points in Graph",
-          "type": "boolean"
+        "graphOptions": {
+          "type": "object",
+          "properties": {
+            "fillArea": {
+              "description": "Whether to fill graph area in Graph",
+              "type": "boolean"
+            },
+            "showLine": {
+              "description": "Whether to show graph lines in Graph",
+              "type": "boolean"
+            },
+            "showPoint": {
+              "description": "Whether to show graph points in Graph",
+              "type": "boolean"
+            },
+            "showTempVarCount": {
+              "type": "string"
+            }
+          }
         },
         "links": {
           "type": "object",

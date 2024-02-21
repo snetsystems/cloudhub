@@ -25,7 +25,7 @@ import {
 
 // Types
 import {ColorString} from 'src/types/colors'
-import {DecimalPlaces} from 'src/types/dashboards'
+import {DecimalPlaces, GraphOptions} from 'src/types/dashboards'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {
   Query,
@@ -49,9 +49,7 @@ interface Props {
   dataType: DataType
   cellID: string
   cellHeight: number
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
+  graphOptions: GraphOptions
   staticLegend: boolean
   onZoom: () => void
   handleSetHoverTime: () => void
@@ -151,13 +149,12 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       dataType,
       timeRange,
       cellHeight,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
+      graphOptions,
       staticLegend,
       decimalPlaces,
       handleSetHoverTime,
     } = this.props
+    const {fillArea, showLine, showPoint} = graphOptions
 
     if (!this.state.timeSeries) {
       return <h3 className="graph-spinner" />
@@ -177,10 +174,10 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       connectSeparatedPoints: true,
       stepPlot: type === 'line-stepplot',
       stackedGraph: type === 'line-stacked',
-      fillGraph: fillGraphArea,
-      pointSize: showGraphPoint ? 3 : 0,
-      drawPoints: showGraphPoint,
-      strokeWidth: showGraphLine ? 1 : 0,
+      fillGraph: fillArea,
+      pointSize: showPoint ? 3 : 0,
+      drawPoints: showPoint,
+      strokeWidth: showLine ? 1 : 0,
     }
 
     return (

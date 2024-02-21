@@ -50,6 +50,7 @@ import {
   NoteVisibility,
   Axes,
   StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {Links, ScriptStatus} from 'src/types/flux'
 import {ColorString, ColorNumber} from 'src/types/colors'
@@ -75,9 +76,7 @@ interface ConnectedProps {
   lineColors: ColorString[]
   onResetTimeMachine: TimeMachineContainer['reset']
   ceoTimeRange: TimeRange
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
+  graphOptions: GraphOptions
 }
 
 interface PassedProps {
@@ -265,9 +264,7 @@ class CellEditorOverlay extends Component<Props, State> {
       thresholdsListColors,
       gaugeColors,
       lineColors,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
+      graphOptions,
     } = this.props
     const {isStaticLegend, staticLegendPosition, draftCellName} = this.state
 
@@ -307,9 +304,7 @@ class CellEditorOverlay extends Component<Props, State> {
       legend: isStaticLegend
         ? {...STATIC_LEGEND, orientation: staticLegendPosition}
         : {orientation: staticLegendPosition},
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
+      graphOptions,
     }
 
     return newCell
@@ -385,9 +380,7 @@ const ConnectedCellEditorOverlay = (props: PassedProps & Auth) => {
         return (
           <CellEditorOverlay
             {...props}
-            fillGraphArea={state.fillGraphArea}
-            showGraphLine={state.showGraphLine}
-            showGraphPoint={state.showGraphPoint}
+            graphOptions={state.graphOptions}
             queryType={state.queryType}
             queryDrafts={state.queryDrafts}
             script={state.script}

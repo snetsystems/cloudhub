@@ -138,9 +138,7 @@ class Layout extends Component<Props, State> {
         showRawFluxData={showRawFluxData}
         visType={this.visType}
         onPickTemplate={onPickTemplate}
-        fillGraphArea={cell.fillGraphArea}
-        showGraphLine={cell.showGraphLine}
-        showGraphPoint={cell.showGraphPoint}
+        graphOptions={cell.graphOptions}
       />
     )
   }
@@ -186,9 +184,7 @@ class Layout extends Component<Props, State> {
         cellNote={cell.note}
         cellNoteVisibility={cell.noteVisibility}
         onPickTemplate={onPickTemplate}
-        fillGraphArea={cell.fillGraphArea}
-        showGraphLine={cell.showGraphLine}
-        showGraphPoint={cell.showGraphPoint}
+        graphOptions={cell.graphOptions}
       />
     )
   }

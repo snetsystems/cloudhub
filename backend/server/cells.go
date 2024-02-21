@@ -226,14 +226,14 @@ func AddQueryConfig(c *cloudhub.DashboardCell) {
 
 // ValidateGraphSettings checks if graph settings in a DashboardCell are boolean.
 func ValidateGraphSettings(c *cloudhub.DashboardCell) error {
-	if reflect.TypeOf(c.FillGraphArea).Kind() != reflect.Bool {
-		return fmt.Errorf("FillGraphArea value must be boolean type")
+	if reflect.TypeOf(c.GraphOptions.FillArea).Kind() != reflect.Bool {
+		return fmt.Errorf("FillArea value must be boolean type")
 	}
-	if reflect.TypeOf(c.ShowGraphLine).Kind() != reflect.Bool {
-		return fmt.Errorf("ShowGraphLine value must be boolean type")
+	if reflect.TypeOf(c.GraphOptions.ShowLine).Kind() != reflect.Bool {
+		return fmt.Errorf("ShowLine value must be boolean type")
 	}
-	if reflect.TypeOf(c.ShowGraphPoint).Kind() != reflect.Bool {
-		return fmt.Errorf("ShowGraphPoint value must be boolean type ")
+	if reflect.TypeOf(c.GraphOptions.ShowPoint).Kind() != reflect.Bool {
+		return fmt.Errorf("ShowPoint value must be boolean type ")
 	}
 
 	return nil

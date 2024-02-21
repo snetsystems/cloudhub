@@ -25,9 +25,7 @@ import {
   DEFAULT_DECIMAL_PLACES,
 } from 'src/dashboards/constants'
 import {
-  DEFAULT_FILL_GRAPH_AREA,
-  DEFAULT_SHOW_GRAPH_LINE,
-  DEFAULT_SHOW_GRAPH_POINT,
+  DEFAULT_GRAPH_OPTIONS,
   DEFAULT_STATIC_LEGEND_POSITION,
   DataType,
 } from 'src/shared/constants'
@@ -61,6 +59,7 @@ import {
   DecimalPlaces,
   NoteVisibility,
   StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {GrabDataForDownloadHandler} from 'src/types/layout'
 import {TimeSeriesServerResponse} from 'src/types/series'
@@ -89,9 +88,7 @@ interface Props {
   inView: boolean
   timeFormat: string
   cellHeight: number
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
+  graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   autoRefresher: AutoRefresher
@@ -122,9 +119,7 @@ class RefreshingGraph extends Component<Props> {
     decimalPlaces: DEFAULT_DECIMAL_PLACES,
     autoRefresher: GlobalAutoRefresher,
     staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
-    fillGraphArea: DEFAULT_FILL_GRAPH_AREA,
-    showGraphLine: DEFAULT_SHOW_GRAPH_LINE,
-    showGraphPoint: DEFAULT_SHOW_GRAPH_POINT,
+    graphOptions: DEFAULT_GRAPH_OPTIONS,
   }
 
   public shouldComponentUpdate(nextProps: Props) {
@@ -337,9 +332,7 @@ class RefreshingGraph extends Component<Props> {
       'inView',
       'staticLegend',
       'staticLegendPosition',
-      'fillGraphArea',
-      'showGraphLine',
-      'showGraphPoint',
+      'graphOptions',
     ]
 
     const prevVisValues = _.pick(prevProps, visProps)
@@ -509,9 +502,7 @@ class RefreshingGraph extends Component<Props> {
       timeRange,
       cellHeight,
       decimalPlaces,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
+      graphOptions,
       staticLegend,
       manualRefresh,
       onUpdateVisType,
@@ -534,9 +525,7 @@ class RefreshingGraph extends Component<Props> {
         key={manualRefresh}
         timeRange={timeRange}
         cellHeight={cellHeight}
-        fillGraphArea={fillGraphArea}
-        showGraphLine={showGraphLine}
-        showGraphPoint={showGraphPoint}
+        graphOptions={graphOptions}
         staticLegend={staticLegend}
         decimalPlaces={decimalPlaces}
         onUpdateVisType={onUpdateVisType}
@@ -558,9 +547,7 @@ class RefreshingGraph extends Component<Props> {
       cellID,
       queries,
       decimalPlaces,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
+      graphOptions,
       staticLegend,
       staticLegendPosition,
       manualRefresh,
@@ -591,9 +578,7 @@ class RefreshingGraph extends Component<Props> {
             key={manualRefresh}
             tableOptions={tableOptions}
             fieldOptions={computedFieldOptions}
-            fillGraphArea={fillGraphArea}
-            showGraphLine={showGraphLine}
-            showGraphPoint={showGraphPoint}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             decimalPlaces={decimalPlaces}

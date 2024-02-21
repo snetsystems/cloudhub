@@ -21,6 +21,7 @@ import {ColorString} from 'src/types/colors'
 import {
   DecimalPlaces,
   FieldOption,
+  GraphOptions,
   StaticLegendPositionType,
   TableOptions,
 } from 'src/types/dashboards'
@@ -52,9 +53,7 @@ interface Props {
   data: TimeSeriesServerResponse[] | FluxTable[]
   dataType: DataType
   cellID: string
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
+  graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
@@ -131,14 +130,13 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       cellID,
       queries,
       type,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
+      graphOptions,
       staticLegend,
       staticLegendPosition,
       tableOptions,
       fieldOptions,
     } = this.props
+    const {fillArea, showLine, showPoint} = graphOptions
 
     const fieldOptionsWithGroupByTag = this.getFieldOptionsWithGroupByTags(
       queries,
@@ -275,9 +273,9 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticGraphStyle={this.staticGraphStyle}
             data={data}
             colors={colors}
-            fillGraphArea={fillGraphArea}
-            showGraphLine={showGraphLine}
-            showGraphPoint={showGraphPoint}
+            fillArea={fillArea}
+            showLine={showLine}
+            showPoint={showPoint}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}

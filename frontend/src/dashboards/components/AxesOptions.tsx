@@ -19,7 +19,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // Types
 import {Axes, CellType} from 'src/types'
-import {DecimalPlaces} from 'src/types/dashboards'
+import {DecimalPlaces, GraphOptions} from 'src/types/dashboards'
 import {ColorString} from 'src/types/colors'
 
 const {LINEAR, LOG, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
@@ -28,17 +28,13 @@ const getInputMin = () => (-Infinity).toString()
 interface Props {
   type: string
   axes: Axes
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
+  graphOptions: GraphOptions
   staticLegend: boolean
   defaultYLabel: string
   lineColors: ColorString[]
   decimalPlaces: DecimalPlaces
   onUpdateAxes: (axes: Axes) => void
-  onToggleFillGraphArea: (fillGraphArea: boolean) => void
-  onToggleShowGraphLine: (showGraphLine: boolean) => void
-  onToggleShowGraphPoint: (showGraphPoint: boolean) => void
+  onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
   onUpdateLineColors: (colors: ColorString[]) => void
   onUpdateDecimalPlaces: (decimalPlaces: DecimalPlaces) => void
@@ -190,8 +186,16 @@ class AxesOptions extends PureComponent<Props, State> {
     )
   }
 
+  private handleUpdateFillArea = (fillArea: boolean): void => {
+    const {onUpdateGraphOptions, graphOptions} = this.props
+    const newGraphOptions = {...graphOptions, fillArea}
+
+    onUpdateGraphOptions(newGraphOptions)
+  }
+
   private get graphAreaTabs(): JSX.Element {
-    const {fillGraphArea, onToggleFillGraphArea} = this.props
+    const {graphOptions} = this.props
+    const {fillArea} = graphOptions
 
     return (
       <div className="form-group col-sm-6">
@@ -200,18 +204,18 @@ class AxesOptions extends PureComponent<Props, State> {
           <Radio.Button
             id="graph-area--fill"
             value={true}
-            active={fillGraphArea === true}
+            active={fillArea === true}
             titleText="Fill Graph Area"
-            onClick={onToggleFillGraphArea}
+            onClick={this.handleUpdateFillArea}
           >
             Fill
           </Radio.Button>
           <Radio.Button
             id="graph-area--clear"
             value={false}
-            active={fillGraphArea === false}
+            active={fillArea === false}
             titleText="Clear Graph Area"
-            onClick={onToggleFillGraphArea}
+            onClick={this.handleUpdateFillArea}
           >
             Clear
           </Radio.Button>
@@ -220,8 +224,16 @@ class AxesOptions extends PureComponent<Props, State> {
     )
   }
 
+  private handleUpdateShowLine = (showLine: boolean): void => {
+    const {onUpdateGraphOptions, graphOptions} = this.props
+    const newGraphOptions = {...graphOptions, showLine}
+
+    onUpdateGraphOptions(newGraphOptions)
+  }
+
   private get graphLineTabs(): JSX.Element {
-    const {showGraphLine, onToggleShowGraphLine} = this.props
+    const {graphOptions} = this.props
+    const {showLine} = graphOptions
 
     return (
       <div className="form-group col-sm-6">
@@ -230,18 +242,18 @@ class AxesOptions extends PureComponent<Props, State> {
           <Radio.Button
             id="graph-line--show"
             value={true}
-            active={showGraphLine === true}
+            active={showLine === true}
             titleText="Show graph line"
-            onClick={onToggleShowGraphLine}
+            onClick={this.handleUpdateShowLine}
           >
             Show
           </Radio.Button>
           <Radio.Button
             id="graph-line--hide"
             value={false}
-            active={showGraphLine === false}
+            active={showLine === false}
             titleText="Hide Graph line"
-            onClick={onToggleShowGraphLine}
+            onClick={this.handleUpdateShowLine}
           >
             Hide
           </Radio.Button>
@@ -250,8 +262,16 @@ class AxesOptions extends PureComponent<Props, State> {
     )
   }
 
+  private handleUpdateShowPoint = (showPoint: boolean): void => {
+    const {onUpdateGraphOptions, graphOptions} = this.props
+    const newGraphOptions = {...graphOptions, showPoint}
+
+    onUpdateGraphOptions(newGraphOptions)
+  }
+
   private get graphPointTabs(): JSX.Element {
-    const {showGraphPoint, onToggleShowGraphPoint} = this.props
+    const {graphOptions} = this.props
+    const {showPoint} = graphOptions
 
     return (
       <div className="form-group col-sm-6">
@@ -260,18 +280,18 @@ class AxesOptions extends PureComponent<Props, State> {
           <Radio.Button
             id="graph-point--show"
             value={true}
-            active={showGraphPoint === true}
+            active={showPoint === true}
             titleText="Show graph point"
-            onClick={onToggleShowGraphPoint}
+            onClick={this.handleUpdateShowPoint}
           >
             Show
           </Radio.Button>
           <Radio.Button
             id="graph-point--hide"
             value={false}
-            active={showGraphPoint === false}
+            active={showPoint === false}
             titleText="Hide graph point"
-            onClick={onToggleShowGraphPoint}
+            onClick={this.handleUpdateShowPoint}
           >
             Hide
           </Radio.Button>

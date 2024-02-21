@@ -218,9 +218,12 @@ export const cell: Cell = {
   inView: true,
   note: 'I am a note!',
   noteVisibility: NoteVisibility.Default,
-  fillGraphArea: false,
-  showGraphLine: false,
-  showGraphPoint: false,
+  graphOptions: {
+    fillArea: false,
+    showLine: false,
+    showPoint: false,
+    showTempVarCount: '',
+  },
 }
 
 export const fullTimeRange = {

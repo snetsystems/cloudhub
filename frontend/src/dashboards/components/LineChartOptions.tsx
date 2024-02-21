@@ -22,7 +22,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // Types
 import {Axes} from 'src/types'
-import {StaticLegendPositionType} from 'src/types/dashboards'
+import {GraphOptions, StaticLegendPositionType} from 'src/types/dashboards'
 import {ColorString} from 'src/types/colors'
 
 const {LINEAR, LOG, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
@@ -52,18 +52,14 @@ interface Props {
   fieldOptions: RenamableField[]
   type: string
   axes: Axes
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
+  graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   defaultXLabel: string
   defaultYLabel: string
   lineColors: ColorString[]
   onUpdateAxes: (axes: Axes) => void
-  onToggleFillGraphArea: (fillGraphArea: boolean) => void
-  onToggleShowGraphLine: (showGraphLine: boolean) => void
-  onToggleShowGraphPoint: (showGraphPoint: boolean) => void
+  onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
   onToggleStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
@@ -656,8 +652,16 @@ class LineChartOptions extends PureComponent<Props, State> {
     onUpdateTableOptions({...tableOptions, sortBy: updatedSortBy})
   }
 
+  private handleUpdateFillArea = (fillArea: boolean): void => {
+    const {onUpdateGraphOptions, graphOptions} = this.props
+    const newGraphOptions = {...graphOptions, fillArea}
+
+    onUpdateGraphOptions(newGraphOptions)
+  }
+
   private get chartAreaTabs(): JSX.Element {
-    const {fillGraphArea, onToggleFillGraphArea} = this.props
+    const {graphOptions} = this.props
+    const {fillArea} = graphOptions
 
     return (
       <div className="form-group col-sm-6">
@@ -666,18 +670,18 @@ class LineChartOptions extends PureComponent<Props, State> {
           <Radio.Button
             id="chart-area--fill"
             value={true}
-            active={fillGraphArea === true}
+            active={fillArea === true}
             titleText="Fill Chart Area"
-            onClick={onToggleFillGraphArea}
+            onClick={this.handleUpdateFillArea}
           >
             Fill
           </Radio.Button>
           <Radio.Button
             id="chart-area--clear"
             value={false}
-            active={fillGraphArea === false}
+            active={fillArea === false}
             titleText="Clear Chart Area"
-            onClick={onToggleFillGraphArea}
+            onClick={this.handleUpdateFillArea}
           >
             Clear
           </Radio.Button>
@@ -686,8 +690,16 @@ class LineChartOptions extends PureComponent<Props, State> {
     )
   }
 
+  private handleUpdateShowLine = (showLine: boolean): void => {
+    const {onUpdateGraphOptions, graphOptions} = this.props
+    const newGraphOptions = {...graphOptions, showLine}
+
+    onUpdateGraphOptions(newGraphOptions)
+  }
+
   private get chartLineTabs(): JSX.Element {
-    const {showGraphLine, onToggleShowGraphLine} = this.props
+    const {graphOptions} = this.props
+    const {showLine} = graphOptions
 
     return (
       <div className="form-group col-sm-6">
@@ -696,18 +708,18 @@ class LineChartOptions extends PureComponent<Props, State> {
           <Radio.Button
             id="chart-line--show"
             value={true}
-            active={showGraphLine === true}
+            active={showLine === true}
             titleText="Show chart line"
-            onClick={onToggleShowGraphLine}
+            onClick={this.handleUpdateShowLine}
           >
             Show
           </Radio.Button>
           <Radio.Button
             id="chart-line--hide"
             value={false}
-            active={showGraphLine === false}
+            active={showLine === false}
             titleText="Hide chart line"
-            onClick={onToggleShowGraphLine}
+            onClick={this.handleUpdateShowLine}
           >
             Hide
           </Radio.Button>
@@ -716,8 +728,16 @@ class LineChartOptions extends PureComponent<Props, State> {
     )
   }
 
+  private handleUpdateShowPoint = (showPoint: boolean): void => {
+    const {onUpdateGraphOptions, graphOptions} = this.props
+    const newGraphOptions = {...graphOptions, showPoint}
+
+    onUpdateGraphOptions(newGraphOptions)
+  }
+
   private get chartPointTabs(): JSX.Element {
-    const {showGraphPoint, onToggleShowGraphPoint} = this.props
+    const {graphOptions} = this.props
+    const {showPoint} = graphOptions
 
     return (
       <div className="form-group col-sm-6">
@@ -726,18 +746,18 @@ class LineChartOptions extends PureComponent<Props, State> {
           <Radio.Button
             id="chart-point--show"
             value={true}
-            active={showGraphPoint === true}
+            active={showPoint === true}
             titleText="Show chart point"
-            onClick={onToggleShowGraphPoint}
+            onClick={this.handleUpdateShowPoint}
           >
             Show
           </Radio.Button>
           <Radio.Button
             id="chart-point--hide"
             value={false}
-            active={showGraphPoint === false}
+            active={showPoint === false}
             titleText="Hide chart point"
-            onClick={onToggleShowGraphPoint}
+            onClick={this.handleUpdateShowPoint}
           >
             Hide
           </Radio.Button>

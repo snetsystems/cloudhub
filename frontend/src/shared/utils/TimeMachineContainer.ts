@@ -43,11 +43,7 @@ import {
   DEFAULT_FIELD_OPTIONS,
 } from 'src/dashboards/constants'
 import {DEFAULT_TIME_RANGE} from 'src/data_explorer/constants'
-import {
-  DEFAULT_FILL_GRAPH_AREA,
-  DEFAULT_SHOW_GRAPH_LINE,
-  DEFAULT_SHOW_GRAPH_POINT,
-} from 'src/shared/constants'
+import {DEFAULT_GRAPH_OPTIONS} from 'src/shared/constants'
 
 // Types
 import {
@@ -70,6 +66,7 @@ import {
   TableOptions,
   NoteVisibility,
   Axes,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {ColorString, ColorNumber} from 'src/types/colors'
 import recordProperty from 'src/flux/helpers/recordProperty'
@@ -97,9 +94,7 @@ const DEFAULT_STATE = (): TimeMachineState => ({
   fieldOptions: DEFAULT_FIELD_OPTIONS,
   fluxProportions: [0.2, 0.6, 0.2],
   timeMachineProportions: [0.33, 0.67],
-  fillGraphArea: DEFAULT_FILL_GRAPH_AREA,
-  showGraphLine: DEFAULT_SHOW_GRAPH_LINE,
-  showGraphPoint: DEFAULT_SHOW_GRAPH_POINT,
+  graphOptions: DEFAULT_GRAPH_OPTIONS,
 })
 
 export interface TimeMachineState {
@@ -122,9 +117,7 @@ export interface TimeMachineState {
   lineColors: ColorString[]
   fluxProportions: number[]
   timeMachineProportions: number[]
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
+  graphOptions: GraphOptions
 }
 
 export class TimeMachineContainer {
@@ -390,16 +383,8 @@ export class TimeMachineContainer {
     return this.setAndPersistState({fieldOptions})
   }
 
-  public handleToggleFillGraphArea = (fillGraphArea: boolean) => {
-    return this.setAndPersistState({fillGraphArea})
-  }
-
-  public handleToggleShowGraphLine = (showGraphLine: boolean) => {
-    return this.setAndPersistState({showGraphLine})
-  }
-
-  public handleToggleShowGraphPoint = (showGraphPoint: boolean) => {
-    return this.setAndPersistState({showGraphPoint})
+  public handleUpdateGraphOptions = (graphOptions: GraphOptions) => {
+    return this.setAndPersistState({graphOptions})
   }
 
   private updateQueryDrafts = (

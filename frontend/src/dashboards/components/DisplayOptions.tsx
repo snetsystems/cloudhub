@@ -42,6 +42,7 @@ import {
   ThresholdType,
   TableOptions as TableOptionsInterface,
   StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {ColorNumber, ColorString} from 'src/types/colors'
 
@@ -58,12 +59,8 @@ interface ConnectedProps {
   thresholdsListType: ThresholdType
   gaugeColors: ColorNumber[]
   lineColors: ColorString[]
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
-  onToggleFillGraphArea: (fillGraphArea: boolean) => void
-  onToggleShowGraphLine: (showGraphLine: boolean) => void
-  onToggleShowGraphPoint: (showGraphPoint: boolean) => void
+  graphOptions: GraphOptions
+  onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onUpdateDecimalPlaces: TimeMachineContainer['handleUpdateDecimalPlaces']
   onUpdateGaugeColors: TimeMachineContainer['handleUpdateGaugeColors']
   onUpdateAxes: TimeMachineContainer['handleUpdateAxes']
@@ -191,15 +188,9 @@ class DisplayOptions extends Component<Props, State> {
       type,
       decimalPlaces,
       lineColors,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
       gaugeColors,
       staticLegend,
       staticLegendPosition,
-      onToggleFillGraphArea,
-      onToggleShowGraphLine,
-      onToggleShowGraphPoint,
       onToggleStaticLegend,
       onToggleStaticLegendPosition,
       onResetFocus,
@@ -209,6 +200,8 @@ class DisplayOptions extends Component<Props, State> {
       timeFormat,
       tableOptions,
       fieldOptions,
+      graphOptions,
+      onUpdateGraphOptions,
       onUpdateAxes,
       onUpdateDecimalPlaces,
       onUpdateGaugeColors,
@@ -322,17 +315,13 @@ class DisplayOptions extends Component<Props, State> {
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
-            fillGraphArea={fillGraphArea}
-            showGraphLine={showGraphLine}
-            showGraphPoint={showGraphPoint}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
             onUpdateAxes={onUpdateAxes}
-            onToggleFillGraphArea={onToggleFillGraphArea}
-            onToggleShowGraphLine={onToggleShowGraphLine}
-            onToggleShowGraphPoint={onToggleShowGraphPoint}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
@@ -376,16 +365,12 @@ class DisplayOptions extends Component<Props, State> {
             axes={this.axes}
             type={type}
             lineColors={lineColors}
-            fillGraphArea={fillGraphArea}
-            showGraphLine={showGraphLine}
-            showGraphPoint={showGraphPoint}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             defaultYLabel={defaultYLabel}
             decimalPlaces={decimalPlaces}
             onUpdateAxes={onUpdateAxes}
-            onToggleFillGraphArea={onToggleFillGraphArea}
-            onToggleShowGraphLine={onToggleShowGraphLine}
-            onToggleShowGraphPoint={onToggleShowGraphPoint}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
             onUpdateLineColors={onUpdateLineColors}
             onUpdateDecimalPlaces={onUpdateDecimalPlaces}
@@ -434,9 +419,6 @@ const ConnectedDisplayOptions = (props: PassedProps) => {
       {(timeMachineContainer: TimeMachineContainer) => (
         <DisplayOptions
           {...props}
-          fillGraphArea={timeMachineContainer.state.fillGraphArea}
-          showGraphLine={timeMachineContainer.state.showGraphLine}
-          showGraphPoint={timeMachineContainer.state.showGraphPoint}
           type={timeMachineContainer.state.type}
           axes={timeMachineContainer.state.axes}
           tableOptions={timeMachineContainer.state.tableOptions}
@@ -449,11 +431,8 @@ const ConnectedDisplayOptions = (props: PassedProps) => {
           thresholdsListType={timeMachineContainer.state.thresholdsListType}
           gaugeColors={timeMachineContainer.state.gaugeColors}
           lineColors={timeMachineContainer.state.lineColors}
-          onToggleFillGraphArea={timeMachineContainer.handleToggleFillGraphArea}
-          onToggleShowGraphLine={timeMachineContainer.handleToggleShowGraphLine}
-          onToggleShowGraphPoint={
-            timeMachineContainer.handleToggleShowGraphPoint
-          }
+          graphOptions={timeMachineContainer.state.graphOptions}
+          onUpdateGraphOptions={timeMachineContainer.handleUpdateGraphOptions}
           onUpdateType={timeMachineContainer.handleUpdateType}
           onUpdateAxes={timeMachineContainer.handleUpdateAxes}
           onUpdateTableOptions={timeMachineContainer.handleUpdateTableOptions}

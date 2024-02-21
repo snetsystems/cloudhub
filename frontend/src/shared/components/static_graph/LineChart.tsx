@@ -59,9 +59,9 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
+  fillArea: boolean
+  showLine: boolean
+  showPoint: boolean
 }
 
 const LineChart = ({
@@ -75,9 +75,9 @@ const LineChart = ({
   staticLegendPosition,
   tableOptions,
   fieldOptions,
-  fillGraphArea,
-  showGraphLine,
-  showGraphPoint,
+  fillArea,
+  showLine,
+  showPoint,
 }: Props) => {
   const chartRef = useRef<ChartJS<'line', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -109,19 +109,11 @@ const LineChart = ({
         axes,
         xAxisTitle,
         yAxisTitle,
-        fillGraphArea,
-        showGraphLine,
-        showGraphPoint,
+        fillArea,
+        showLine,
+        showPoint,
       }),
-    [
-      isUpdated,
-      xAxisTitle,
-      yAxisTitle,
-      axes,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
-    ]
+    [isUpdated, xAxisTitle, yAxisTitle, axes, fillArea, showLine, showPoint]
   )
 
   useEffect(() => {

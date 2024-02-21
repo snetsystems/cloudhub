@@ -27,13 +27,11 @@ import {
   NoteVisibility,
   ThresholdType,
   StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {AutoRefresher} from 'src/utils/AutoRefresher'
 
 interface ConnectedProps {
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
   timeRange: TimeRange
   queryType: QueryType
   onUpdateFieldOptions: (fieldOptions: FieldOption[]) => Promise<void>
@@ -50,6 +48,7 @@ interface ConnectedProps {
   thresholdsListType: ThresholdType
   gaugeColors: ColorNumber[]
   lineColors: ColorString[]
+  graphOptions: GraphOptions
 }
 
 interface PassedProps {
@@ -87,9 +86,7 @@ const TimeMachineVisualization: FunctionComponent<Props> = props => {
             queries={props.queries}
             templates={props.templates}
             editQueryStatus={props.onEditQueryStatus}
-            fillGraphArea={props.fillGraphArea}
-            showGraphLine={props.showGraphLine}
-            showGraphPoint={props.showGraphPoint}
+            graphOptions={props.graphOptions}
             staticLegendPosition={props.staticLegendPosition}
             staticLegend={props.staticLegend}
             timeRange={props.timeRange}
@@ -137,9 +134,7 @@ const ConnectedTimeMachineVisualization = (props: PassedProps) => (
           lineColors={state.lineColors}
           note={state.note}
           noteVisibility={state.noteVisibility}
-          fillGraphArea={state.fillGraphArea}
-          showGraphLine={state.showGraphLine}
-          showGraphPoint={state.showGraphPoint}
+          graphOptions={state.graphOptions}
           onUpdateFieldOptions={container.handleUpdateFieldOptions}
           onUpdateVisType={container.handleUpdateType}
         />

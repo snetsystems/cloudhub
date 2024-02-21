@@ -27,6 +27,13 @@ export interface TableOptions {
   fixFirstColumn: boolean
 }
 
+export interface GraphOptions {
+  fillArea: boolean
+  showLine: boolean
+  showPoint: boolean
+  showTempVarCount: string
+}
+
 export interface Sort {
   field: string
   direction: string
@@ -94,9 +101,7 @@ export interface Cell {
   inView: boolean
   note: string
   noteVisibility: NoteVisibility
-  fillGraphArea?: boolean
-  showGraphLine?: boolean
-  showGraphPoint?: boolean
+  graphOptions?: GraphOptions
 }
 
 export enum CellType {

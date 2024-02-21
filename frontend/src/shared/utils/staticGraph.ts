@@ -559,16 +559,16 @@ const createLineChartOptions = ({
   axes,
   xAxisTitle,
   yAxisTitle,
-  fillGraphArea,
-  showGraphLine,
-  showGraphPoint,
+  fillArea,
+  showLine,
+  showPoint,
 }: {
   axes: Axes
   xAxisTitle?: string
   yAxisTitle?: string
-  fillGraphArea: boolean
-  showGraphLine: boolean
-  showGraphPoint: boolean
+  fillArea: boolean
+  showLine: boolean
+  showPoint: boolean
 }) => {
   const type: StatisticalGraphScaleType =
     axes?.y?.scale === 'log' ? 'logarithmic' : undefined
@@ -582,9 +582,9 @@ const createLineChartOptions = ({
 
   const dynamicOption = {
     ...STATIC_GRAPH_OPTIONS,
-    fill: fillGraphArea,
-    showLine: showGraphLine,
-    pointRadius: showGraphPoint === true ? 3 : 0,
+    fill: fillArea,
+    showLine: showLine,
+    pointRadius: showPoint === true ? 3 : 0,
     plugins: {
       ...STATIC_GRAPH_OPTIONS.plugins,
       tooltip: {
@@ -848,17 +848,17 @@ export const staticGraphOptions = {
     axes,
     xAxisTitle,
     yAxisTitle,
-    fillGraphArea,
-    showGraphLine,
-    showGraphPoint,
+    fillArea,
+    showLine,
+    showPoint,
   }) =>
     createLineChartOptions({
       axes,
       xAxisTitle,
       yAxisTitle,
-      fillGraphArea,
-      showGraphLine,
-      showGraphPoint,
+      fillArea,
+      showLine,
+      showPoint,
     }),
   [CellType.StaticBar]: ({axes, xAxisTitle, yAxisTitle}) =>
     createBarChartOptions({
