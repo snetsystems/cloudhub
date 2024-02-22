@@ -265,6 +265,7 @@ export const sortedStaticGraphData = (
 const createScatterChartDatasets = ({
   rawData,
   colors,
+  showCount,
 }: StatisticalGraphDatasetConfigType) => {
   const convertData = rawData
   const getColors = getLineColorsHexes(colors, convertData.length)
@@ -288,10 +289,14 @@ const createScatterChartDatasets = ({
       borderWidth: 1,
     }
   })
+  const labels = fastMap(
+    convertData,
+    item => _.values(item.tags)[0]
+  ) as string[]
 
   return {
-    labels: fastMap(convertData, item => _.values(item.tags)[0]) as string[],
-    datasets: scatterData,
+    labels: showCount ? labels.splice(0, showCount) : labels,
+    datasets: showCount ? scatterData.splice(0, showCount) : scatterData,
   }
 }
 
@@ -351,6 +356,7 @@ const createPieChartDatasets = ({
   fieldOptions,
   tableOptions,
   colors,
+  showCount,
 }: StatisticalGraphDatasetConfigType) => {
   const {excludeTags, sortFields, sortingBasisField} = getChartFields(
     fieldOptions,
@@ -383,10 +389,19 @@ const createPieChartDatasets = ({
     },
     []
   )
-
+  if (showCount === 0) {
+    return {labels: [], datasets: []}
+  }
   return {
-    labels,
-    datasets,
+    labels: showCount ? labels.splice(0, showCount) : labels,
+    datasets: showCount
+      ? datasets.map(chart => ({
+          ...chart,
+          data: chart?.data.slice(0, showCount),
+          backgroundColor: chart?.backgroundColor.slice(0, showCount),
+          borderColor: chart?.borderColor.slice(0, showCount),
+        }))
+      : datasets,
   }
 }
 
@@ -395,6 +410,7 @@ const createBarChartDatasets = ({
   fieldOptions,
   tableOptions,
   colors,
+  showCount,
 }: StatisticalGraphDatasetConfigType) => {
   const {
     excludeTags,
@@ -429,17 +445,24 @@ const createBarChartDatasets = ({
     },
     []
   )
-
+  if (showCount === 0) {
+    return {labels: [], datasets: []}
+  }
   return {
-    labels,
-    datasets,
+    labels: showCount ? labels.splice(0, showCount) : labels,
+    datasets: showCount
+      ? datasets.map(chart => ({
+          ...chart,
+          data: chart?.data.slice(0, showCount),
+        }))
+      : datasets,
   }
 }
 
 const createRadarChartDatasets = ({
   rawData,
-
   colors,
+  showCount,
 }: StatisticalGraphDatasetConfigType) => {
   const convertData = rawData
   const columns = convertData[0].columns
@@ -460,9 +483,18 @@ const createRadarChartDatasets = ({
     pointHoverBorderColor: getcolors[colIndex],
   }))
 
+  if (showCount === 0) {
+    return {labels: [], datasets: []}
+  }
+
   return {
-    labels: axesX,
-    datasets,
+    labels: showCount ? axesX.splice(0, showCount) : axesX,
+    datasets: showCount
+      ? datasets.map(chart => ({
+          ...chart,
+          data: chart?.data.slice(0, showCount),
+        }))
+      : datasets,
   }
 }
 
@@ -871,4 +903,14 @@ export const staticGraphOptions = {
   [CellType.StaticDoughnut]: createPieOptions,
   [CellType.StaticScatter]: createScatterChartOptions,
   [CellType.StaticRadar]: createStaticRadarOptions,
+}
+
+export const parseIfPositiveNumber = (str: string): number | null => {
+  if (/^\d+$/.test(str)) {
+    let num = parseInt(str, 10)
+    if (num >= 0) {
+      return num
+    }
+  }
+  return null
 }

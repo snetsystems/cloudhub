@@ -157,6 +157,7 @@ class CellEditorOverlay extends Component<Props, State> {
       me,
       isUsingAuth,
       dashboardRefresh,
+      dashboardTemplates,
     } = this.props
 
     const {isStaticLegend, staticLegendPosition} = this.state
@@ -175,6 +176,7 @@ class CellEditorOverlay extends Component<Props, State> {
           sources={sources}
           fluxLinks={fluxLinks}
           templates={this.ceoTemplates}
+          dashboardTemplates={dashboardTemplates}
           editQueryStatus={editQueryStatus}
           onResetFocus={this.handleResetFocus}
           onToggleStaticLegend={this.handleToggleStaticLegend}

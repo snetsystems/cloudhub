@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent, ChangeEvent} from 'react'
 import {getDeep} from 'src/utils/wrappers'
+import _ from 'lodash'
 
 // Components
 import OptIn from 'src/shared/components/OptIn'
@@ -8,6 +9,7 @@ import Input from 'src/dashboards/components/DisplayOptionsInput'
 import {Radio, ButtonShape} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LineGraphColorSelector from 'src/shared/components/LineGraphColorSelector'
+import Dropdown from 'src/shared/components/Dropdown'
 
 // Constants
 import {AXES_SCALE_OPTIONS} from 'src/dashboards/constants/cellEditor'
@@ -17,8 +19,8 @@ import {STATISTICAL_GRAPH_TYPES} from 'src/dashboards/graphics/graph'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // Types
-import {Axes} from 'src/types'
-import {StaticLegendPositionType} from 'src/types/dashboards'
+import {Axes, DropdownItem, Template} from 'src/types'
+import {GraphOptions, StaticLegendPositionType} from 'src/types/dashboards'
 import {ColorString} from 'src/types/colors'
 
 const {LINEAR, LOG, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
@@ -27,12 +29,15 @@ const getInputMin = () => (-Infinity).toString()
 interface Props {
   type: string
   axes: Axes
+  graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   defaultXLabel: string
   defaultYLabel: string
+  dashboardTemplates?: Template[]
   lineColors: ColorString[]
   onUpdateAxes: (axes: Axes) => void
+  onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
   onToggleStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
@@ -200,6 +205,7 @@ class ScatterChartOptions extends PureComponent<Props, State> {
             {this.yScaleTabs}
             {this.staticLegendTabs}
             {this.staticLegendPositionTabs}
+            {this.showCount}
           </form>
         </div>
       </FancyScrollbar>
@@ -232,6 +238,25 @@ class ScatterChartOptions extends PureComponent<Props, State> {
             Hide
           </Radio.Button>
         </Radio>
+      </div>
+    )
+  }
+  private get showCount(): JSX.Element {
+    const selectedShowCount = this.getSelectedShowTemplateVariable()
+    const showCountItems = this.getShowTemplateVariable()
+    return (
+      <div className="form-group col-sm-6">
+        <label>Show Count </label>
+        <div className="show-count-field">
+          <Dropdown
+            items={showCountItems}
+            selected={selectedShowCount}
+            buttonColor="btn-default"
+            buttonSize="btn-sm"
+            className="dropdown-stretch"
+            onChoose={this.handleUpdateShowCount}
+          />
+        </div>
       </div>
     )
   }
@@ -592,6 +617,35 @@ class ScatterChartOptions extends PureComponent<Props, State> {
     const newAxes = {...axes, y: {...axes.y, base}}
 
     onUpdateAxes(newAxes)
+  }
+
+  private handleUpdateShowCount = (item: DropdownItem): void => {
+    const {onUpdateGraphOptions, graphOptions} = this.props
+    const newGraphOptions = {...graphOptions, showTempVarCount: item.text}
+
+    onUpdateGraphOptions(newGraphOptions)
+  }
+
+  private getSelectedShowTemplateVariable = () => {
+    const {graphOptions} = this.props
+    const selectedVariable =
+      graphOptions?.showTempVarCount || 'Choose Template Variable'
+    return selectedVariable
+  }
+
+  private getShowTemplateVariable = () => {
+    const {dashboardTemplates} = this.props
+
+    return _.reduce(
+      dashboardTemplates,
+      (acc: string[], template) => {
+        if (template.type === 'text' && template.tempVar) {
+          acc.push(template.tempVar)
+        }
+        return acc
+      },
+      []
+    )
   }
 }
 

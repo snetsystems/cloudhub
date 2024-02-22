@@ -60,6 +60,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: StatisticalGraphFieldOption[]
+  showCount?: number | null
 }
 
 const BarChart = ({
@@ -73,6 +74,7 @@ const BarChart = ({
   staticLegendPosition,
   tableOptions,
   fieldOptions,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -87,6 +89,7 @@ const BarChart = ({
   )
   const queryKey = _.get(data, ['0', 'response', 'uuid'], [])
   const isUpdated = useIsUpdated({queryKey, tableOptions, fieldOptions, colors})
+
   const chartData = useMemo(
     () =>
       staticGraphDatasets(CellType.StaticBar)({
@@ -94,9 +97,11 @@ const BarChart = ({
         fieldOptions,
         tableOptions,
         colors,
+        showCount,
       }),
-    [isUpdated]
+    [isUpdated, showCount]
   )
+
   const dynamicOption = useMemo(
     () =>
       staticGraphOptions[CellType.StaticBar]({

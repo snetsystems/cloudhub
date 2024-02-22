@@ -11,6 +11,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LineGraphColorSelector from 'src/shared/components/LineGraphColorSelector'
 import GraphOptionsSortBy from 'src/dashboards/components/GraphOptionsSortBy'
 import GraphOptionsCustomizeFields from 'src/dashboards/components/GraphOptionsCustomizeFields'
+import Dropdown from 'src/shared/components/Dropdown'
 
 // Constants
 import {AXES_SCALE_OPTIONS} from 'src/dashboards/constants/cellEditor'
@@ -21,8 +22,8 @@ import {DEFAULT_STATISTICAL_TIME_FIELD} from 'src/dashboards/constants/'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // Types
-import {Axes} from 'src/types'
-import {StaticLegendPositionType} from 'src/types/dashboards'
+import {Axes, DropdownItem, Template} from 'src/types'
+import {GraphOptions, StaticLegendPositionType} from 'src/types/dashboards'
 import {ColorString} from 'src/types/colors'
 
 const {LINEAR, LOG, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
@@ -52,12 +53,15 @@ interface Props {
   fieldOptions: RenamableField[]
   type: string
   axes: Axes
+  graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   defaultXLabel: string
   defaultYLabel: string
+  dashboardTemplates?: Template[]
   lineColors: ColorString[]
   onUpdateAxes: (axes: Axes) => void
+  onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
   onToggleStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
@@ -159,7 +163,7 @@ class BarChartOptions extends PureComponent<Props, State> {
         'displayName'
       ) || firstGroupByTag
 
-    const selectedSortFieldByFristField =
+    const selectedSortFieldByFirstField =
       _.get(
         _.find(fieldOptions, {internalName: defaultYLabel}),
         'displayName'
@@ -168,7 +172,7 @@ class BarChartOptions extends PureComponent<Props, State> {
       ...DEFAULT_STATISTICAL_TIME_FIELD,
       internalName:
         firstGroupByTag === undefined
-          ? selectedSortFieldByFristField
+          ? selectedSortFieldByFirstField
           : selectedSortFieldByFirstGroupBy,
     }
 
@@ -273,6 +277,7 @@ class BarChartOptions extends PureComponent<Props, State> {
             {this.scaleTabs}
             {this.staticLegendTabs}
             {this.staticLegendPositionTabs}
+            {this.showCount}
           </form>
         </div>
       </FancyScrollbar>
@@ -370,6 +375,26 @@ class BarChartOptions extends PureComponent<Props, State> {
             Right
           </Radio.Button>
         </Radio>
+      </div>
+    )
+  }
+
+  private get showCount(): JSX.Element {
+    const selectedShowCount = this.getSelectedShowTemplateVariable()
+    const showCountItems = this.getShowTemplateVariable()
+    return (
+      <div className="form-group col-sm-6">
+        <label>Show Count </label>
+        <div className="show-count-field">
+          <Dropdown
+            items={showCountItems}
+            selected={selectedShowCount}
+            buttonColor="btn-default"
+            buttonSize="btn-sm"
+            className="dropdown-stretch"
+            onChoose={this.handleUpdateShowCount}
+          />
+        </div>
       </div>
     )
   }
@@ -644,6 +669,35 @@ class BarChartOptions extends PureComponent<Props, State> {
     const updatedSortBy = {...sortBy, direction: direction}
 
     onUpdateTableOptions({...tableOptions, sortBy: updatedSortBy})
+  }
+
+  private handleUpdateShowCount = (item: DropdownItem): void => {
+    const {onUpdateGraphOptions, graphOptions} = this.props
+    const newGraphOptions = {...graphOptions, showTempVarCount: item.text}
+
+    onUpdateGraphOptions(newGraphOptions)
+  }
+
+  private getSelectedShowTemplateVariable = () => {
+    const {graphOptions} = this.props
+    const selectedVariable =
+      graphOptions?.showTempVarCount || 'Choose Template Variable'
+    return selectedVariable
+  }
+
+  private getShowTemplateVariable = () => {
+    const {dashboardTemplates} = this.props
+
+    return _.reduce(
+      dashboardTemplates,
+      (acc: string[], template) => {
+        if (template.type === 'text' && template.tempVar) {
+          acc.push(template.tempVar)
+        }
+        return acc
+      },
+      []
+    )
   }
 }
 

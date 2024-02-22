@@ -553,7 +553,9 @@ class RefreshingGraph extends Component<Props> {
       manualRefresh,
       tableOptions,
       fieldOptions,
+      templates,
       onUpdateFieldOptions,
+      onPickTemplate,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
@@ -583,6 +585,8 @@ class RefreshingGraph extends Component<Props> {
             staticLegendPosition={staticLegendPosition}
             decimalPlaces={decimalPlaces}
             onUpdateFieldOptions={onUpdateFieldOptions}
+            onPickTemplate={onPickTemplate}
+            templates={templates}
           />
         )}
       </StaticGraphFormat>

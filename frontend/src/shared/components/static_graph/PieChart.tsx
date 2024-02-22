@@ -43,6 +43,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  showCount?: number | null
 }
 
 const PieChart = ({
@@ -54,6 +55,7 @@ const PieChart = ({
   staticLegendPosition,
   tableOptions,
   fieldOptions,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'pie', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -75,8 +77,9 @@ const PieChart = ({
         fieldOptions,
         tableOptions,
         colors,
+        showCount,
       }),
-    [isUpdated]
+    [isUpdated, showCount]
   )
 
   const dynamicOption = useMemo(

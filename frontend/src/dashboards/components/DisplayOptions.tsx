@@ -34,7 +34,13 @@ import {
   getGroupByTag,
 } from 'src/shared/presenters'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {Axes, QueryConfig, CellType, QueryUpdateState} from 'src/types'
+import {
+  Axes,
+  QueryConfig,
+  CellType,
+  QueryUpdateState,
+  Template,
+} from 'src/types'
 import {
   FieldOption,
   DecimalPlaces,
@@ -59,6 +65,7 @@ interface ConnectedProps {
   thresholdsListType: ThresholdType
   gaugeColors: ColorNumber[]
   lineColors: ColorString[]
+  dashboardTemplates: Template[]
   graphOptions: GraphOptions
   onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onUpdateDecimalPlaces: TimeMachineContainer['handleUpdateDecimalPlaces']
@@ -80,6 +87,7 @@ interface PassedProps {
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   stateToUpdate: QueryUpdateState
+  dashboardTemplates: Template[]
   onResetFocus: () => void
 
   onToggleStaticLegendPosition: (
@@ -201,6 +209,7 @@ class DisplayOptions extends Component<Props, State> {
       tableOptions,
       fieldOptions,
       graphOptions,
+      dashboardTemplates,
       onUpdateGraphOptions,
       onUpdateAxes,
       onUpdateDecimalPlaces,
@@ -273,11 +282,14 @@ class DisplayOptions extends Component<Props, State> {
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
+            dashboardTemplates={dashboardTemplates}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
@@ -295,10 +307,13 @@ class DisplayOptions extends Component<Props, State> {
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             defaultYLabel={defaultYLabel}
+            dashboardTemplates={dashboardTemplates}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
@@ -320,6 +335,7 @@ class DisplayOptions extends Component<Props, State> {
             staticLegendPosition={staticLegendPosition}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
+            dashboardTemplates={dashboardTemplates}
             onUpdateAxes={onUpdateAxes}
             onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
@@ -335,9 +351,12 @@ class DisplayOptions extends Component<Props, State> {
             axes={this.axes}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            dashboardTemplates={dashboardTemplates}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
@@ -349,11 +368,14 @@ class DisplayOptions extends Component<Props, State> {
             axes={this.axes}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            dashboardTemplates={dashboardTemplates}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
             onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}

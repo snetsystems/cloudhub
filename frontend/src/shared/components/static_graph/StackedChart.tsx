@@ -58,6 +58,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  showCount?: number | null
 }
 
 const StackedChart = ({
@@ -71,6 +72,7 @@ const StackedChart = ({
   staticLegendPosition,
   tableOptions,
   fieldOptions,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -93,8 +95,9 @@ const StackedChart = ({
         fieldOptions,
         tableOptions,
         colors,
+        showCount,
       }),
-    [isUpdated]
+    [isUpdated, showCount]
   )
 
   const dynamicOption = useMemo(

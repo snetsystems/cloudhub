@@ -80,6 +80,7 @@ interface PassedProps {
   sources: Source[]
   isInCEO: boolean
   templates: Template[]
+  dashboardTemplates?: Template[]
   isStaticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   onResetFocus: () => void
@@ -262,7 +263,7 @@ class TimeMachine extends PureComponent<Props, State> {
       onToggleStaticLegendPosition,
     } = this.props
     const {activeEditorTab} = this.state
-
+    const {dashboardTemplates} = this.props
     if (activeEditorTab === CEOTabs.Queries) {
       if (this.isFluxSelected) {
         return this.fluxBuilder
@@ -273,6 +274,7 @@ class TimeMachine extends PureComponent<Props, State> {
 
     return (
       <DisplayOptions
+        dashboardTemplates={dashboardTemplates}
         queryConfigs={this.queriesWorkingDraft}
         onToggleStaticLegendPosition={onToggleStaticLegendPosition}
         onToggleStaticLegend={onToggleStaticLegend}

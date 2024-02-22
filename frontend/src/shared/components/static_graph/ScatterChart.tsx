@@ -54,6 +54,7 @@ interface Props {
   yAxisTitle?: string
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  showCount?: number | null
 }
 
 const ScatterChart = ({
@@ -65,6 +66,7 @@ const ScatterChart = ({
   yAxisTitle,
   staticLegend,
   staticLegendPosition,
+  showCount,
 }: Props) => {
   const chartRef = useRef<
     ChartJS<'scatter', DefaultDataPoint<'scatter'>[], unknown>
@@ -86,8 +88,9 @@ const ScatterChart = ({
       staticGraphDatasets(CellType.StaticScatter)({
         rawData,
         colors,
+        showCount,
       }),
-    [isUpdated]
+    [isUpdated, showCount]
   )
   const dynamicOption = useMemo(
     () =>

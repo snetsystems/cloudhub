@@ -26,8 +26,18 @@ import {
   TableOptions,
 } from 'src/types/dashboards'
 import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
-import {Query, Axes, RemoteDataState, CellType, FluxTable} from 'src/types'
+import {
+  Query,
+  Axes,
+  RemoteDataState,
+  CellType,
+  FluxTable,
+  TemplateValue,
+  Template,
+} from 'src/types'
 import {DataType} from 'src/shared/constants'
+
+// Utils
 import {getDeep} from 'src/utils/wrappers'
 import {
   buildDefaultXLabel,
@@ -38,6 +48,7 @@ import {
 import {fastMap} from 'src/utils/fast'
 import {StatisticalGraphFieldOption} from 'src/types/statisticalgraph'
 import _ from 'lodash'
+import {parseIfPositiveNumber} from 'src/shared/utils/staticGraph'
 
 ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#999dab'
@@ -58,6 +69,8 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: StatisticalGraphFieldOption[]
+  templates?: Template[]
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
   onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
 }
 
@@ -135,6 +148,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       staticLegendPosition,
       tableOptions,
       fieldOptions,
+      templates,
     } = this.props
     const {fillArea, showLine, showPoint} = graphOptions
 
@@ -156,6 +170,13 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       queries
     )
 
+    const showCount = parseIfPositiveNumber(
+      _.filter(
+        templates,
+        template => template?.tempVar === graphOptions.showTempVarCount
+      )?.[0]?.values[0]?.value
+    )
+
     switch (type) {
       case CellType.StaticBar:
         return (
@@ -171,6 +192,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
+            showCount={showCount}
           />
         )
       case CellType.StaticStackedBar:
@@ -187,6 +209,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
+            showCount={showCount}
           />
         )
       case CellType.StaticPie:
@@ -201,6 +224,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
+            showCount={showCount}
           />
         )
       case CellType.StaticDoughnut:
@@ -215,6 +239,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
+            showCount={showCount}
           />
         )
       case CellType.StaticScatter:
@@ -250,6 +275,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             xAxisTitle={xAxisTitleForScatterChart}
             yAxisTitle={yAxisTitleForScatterChart}
+            showCount={showCount}
           />
         )
       case CellType.StaticRadar:
@@ -262,6 +288,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            showCount={showCount}
           />
         )
 
@@ -282,6 +309,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             fieldOptions={fieldOptionsWithGroupByTag}
             xAxisTitle={xAxisTitle}
             yAxisTitle={yAxisTitle}
+            showCount={showCount}
           />
         )
       default:

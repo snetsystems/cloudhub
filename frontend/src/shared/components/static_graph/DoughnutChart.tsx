@@ -45,6 +45,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  showCount?: number | null
 }
 
 const DoughnutChart = ({
@@ -56,6 +57,7 @@ const DoughnutChart = ({
   staticLegendPosition,
   tableOptions,
   fieldOptions,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'doughnut', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -77,8 +79,9 @@ const DoughnutChart = ({
         fieldOptions,
         tableOptions,
         colors,
+        showCount,
       }),
-    [isUpdated]
+    [isUpdated, showCount]
   )
 
   const dynamicOption = useMemo(

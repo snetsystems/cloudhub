@@ -50,6 +50,7 @@ interface Props {
   colors: ColorString[]
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  showCount?: number | null
 }
 
 const RadarChart = ({
@@ -59,6 +60,7 @@ const RadarChart = ({
   colors,
   staticLegend,
   staticLegendPosition,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'radar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -78,8 +80,9 @@ const RadarChart = ({
       staticGraphDatasets(CellType.StaticRadar)({
         rawData,
         colors,
+        showCount,
       }),
-    [isUpdated]
+    [isUpdated, showCount]
   )
   const dynamicOption = useMemo(
     () =>

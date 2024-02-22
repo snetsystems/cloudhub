@@ -62,6 +62,7 @@ interface Props {
   fillArea: boolean
   showLine: boolean
   showPoint: boolean
+  showCount?: number | null
 }
 
 const LineChart = ({
@@ -78,6 +79,7 @@ const LineChart = ({
   fillArea,
   showLine,
   showPoint,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'line', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -99,8 +101,9 @@ const LineChart = ({
         fieldOptions,
         tableOptions,
         colors,
+        showCount,
       }),
-    [isUpdated]
+    [isUpdated, showCount]
   )
 
   const dynamicOption = useMemo(

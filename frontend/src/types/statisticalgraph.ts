@@ -23,6 +23,7 @@ export type StatisticalGraphDatasetConfigType = {
   tableOptions?: StatisticalGraphTableOptions
   fieldOptions?: StatisticalGraphFieldOption[]
   colors: ColorString[]
+  showCount?: number | null
 }
 
 export type StatisticalGraphSortOption = {
