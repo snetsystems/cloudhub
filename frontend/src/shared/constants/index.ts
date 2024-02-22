@@ -492,7 +492,7 @@ export const DEFAULT_STATIC_LEGEND_POSITION = 'bottom'
 export const DEFAULT_GRAPH_OPTIONS = {
   fillArea: true,
   showLine: true,
-  showPoint: true,
+  showPoint: false,
   showTempVarCount: '',
 }
 
