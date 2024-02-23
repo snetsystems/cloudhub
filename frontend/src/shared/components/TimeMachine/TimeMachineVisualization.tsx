@@ -49,6 +49,8 @@ interface ConnectedProps {
   gaugeColors: ColorNumber[]
   lineColors: ColorString[]
   graphOptions: GraphOptions
+  staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
 }
 
 interface PassedProps {
@@ -57,8 +59,6 @@ interface PassedProps {
   queries: Query[]
   templates: Template[]
   onEditQueryStatus: (queryID: string, status: Status) => void
-  staticLegend: boolean
-  staticLegendPosition: StaticLegendPositionType
   manualRefresh: number
   editorLocation?: QueryUpdateState
   showRawFluxData?: boolean
@@ -135,6 +135,8 @@ const ConnectedTimeMachineVisualization = (props: PassedProps) => (
           note={state.note}
           noteVisibility={state.noteVisibility}
           graphOptions={state.graphOptions}
+          staticLegend={state.isStaticLegend}
+          staticLegendPosition={state.staticLegendPosition}
           onUpdateFieldOptions={container.handleUpdateFieldOptions}
           onUpdateVisType={container.handleUpdateType}
         />

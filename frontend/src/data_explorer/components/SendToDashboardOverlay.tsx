@@ -59,14 +59,14 @@ interface PassedProps {
     dashboard: Dashboard,
     newCell: Partial<Cell>
   ) => Promise<{success: boolean; dashboard: Dashboard}>
-  isStaticLegend: boolean
-  staticLegendPosition: StaticLegendPositionType
   handleGetDashboards: () => Dashboard[]
   notify: (message: Notification) => void
   activeQueryIndex: number
 }
 
 interface ConnectedProps {
+  isStaticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
   graphOptions: GraphOptions
   queryType: QueryType
   queryDrafts: CellQuery[]
@@ -492,6 +492,8 @@ const ConnectedSendToDashboardOverlay = (props: PassedProps) => {
           timeRange,
           draftScript,
           graphOptions,
+          isStaticLegend,
+          staticLegendPosition,
         } = timeMachineContainer.state
 
         const visualizationOptions = {
@@ -518,6 +520,8 @@ const ConnectedSendToDashboardOverlay = (props: PassedProps) => {
             timeRange={timeRange}
             script={draftScript}
             visualizationOptions={visualizationOptions}
+            isStaticLegend={isStaticLegend}
+            staticLegendPosition={staticLegendPosition}
           />
         )
       }}

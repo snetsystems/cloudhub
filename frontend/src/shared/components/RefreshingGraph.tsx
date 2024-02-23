@@ -26,6 +26,7 @@ import {
 } from 'src/dashboards/constants'
 import {
   DEFAULT_GRAPH_OPTIONS,
+  DEFAULT_SHOW_STATIC_LEGEND,
   DEFAULT_STATIC_LEGEND_POSITION,
   DataType,
 } from 'src/shared/constants'
@@ -114,10 +115,10 @@ class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
     inView: true,
     manualRefresh: 0,
-    staticLegend: false,
     timeFormat: DEFAULT_TIME_FORMAT,
     decimalPlaces: DEFAULT_DECIMAL_PLACES,
     autoRefresher: GlobalAutoRefresher,
+    staticLegend: DEFAULT_SHOW_STATIC_LEGEND,
     staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
     graphOptions: DEFAULT_GRAPH_OPTIONS,
   }
