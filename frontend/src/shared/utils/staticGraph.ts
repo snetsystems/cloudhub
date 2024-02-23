@@ -965,3 +965,7 @@ export const getShowTemplateVariable = (dashboardTemplates: Template[]) => {
     ? []
     : [...dashboardsTemplatesItems, 'No Variable']
 }
+
+export const isStaticGraphType = (cellType: CellType) => {
+  return cellType.toString().toLowerCase().startsWith('static')
+}

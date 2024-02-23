@@ -29,6 +29,7 @@ import {
 } from 'src/shared/reducers/helpers/fields'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import QueryBuilderFilter from './QueryBuilderFilter'
+import {isStaticGraphType} from 'src/shared/utils/staticGraph'
 
 interface GroupByOption extends GroupBy {
   menuOption: string
@@ -118,17 +119,19 @@ class FieldList extends PureComponent<Props, State> {
       query: {database, measurement, fields = [], groupBy, fill, shifts},
       isQuerySupportedByExplorer,
       isKapacitorRule,
+      type,
     } = this.props
 
     const hasAggregates = numFunctions(fields) > 0
     const noDBorMeas = !database || !measurement
     const isDisabled = !isKapacitorRule && !isQuerySupportedByExplorer
+    const isStaticalGraph = isStaticGraphType(type)
 
     return (
       <div className="query-builder--column">
         <div className="query-builder--heading">
           <span>Fields</span>
-          {hasAggregates ? (
+          {hasAggregates && !isStaticalGraph ? (
             <QueryOptions
               fill={fill}
               shift={_.first(shifts)}
@@ -261,16 +264,9 @@ class FieldList extends PureComponent<Props, State> {
       return
     }
 
-    const initialGroupBy =
-      type === CellType.StaticBar ||
-      type === CellType.StaticPie ||
-      type === CellType.StaticDoughnut ||
-      type === CellType.StaticScatter ||
-      type === CellType.StaticRadar ||
-      type === CellType.StaticStackedBar ||
-      type === CellType.StaticLineChart
-        ? {...groupBy}
-        : {...groupBy, time}
+    const initialGroupBy = isStaticGraphType(type)
+      ? {...groupBy}
+      : {...groupBy, time}
 
     if (!_.size(fields)) {
       return isKapacitorRule
