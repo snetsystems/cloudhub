@@ -2,8 +2,8 @@
 import _ from 'lodash'
 
 // Types
-import {Axes} from 'src/types'
-import {CellType} from 'src/types/dashboards'
+import {Axes, Template, TemplateValue} from 'src/types'
+import {CellType, GraphOptions} from 'src/types/dashboards'
 import {TimeSeriesSeries} from 'src/types/series'
 import {
   Direction,
@@ -905,12 +905,63 @@ export const staticGraphOptions = {
   [CellType.StaticRadar]: createStaticRadarOptions,
 }
 
-export const parseIfPositiveNumber = (str: string): number | null => {
-  if (/^\d+$/.test(str)) {
-    let num = parseInt(str, 10)
+export const parseIfPositiveNumber = (
+  templates: Template[],
+  graphOptions
+): number | null => {
+  const matchedTempVar = _.find(
+    templates,
+    template => template?.tempVar === graphOptions.showTempVarCount
+  )
+  if (!matchedTempVar) {
+    return null
+  }
+
+  const selectedTempVarValue = _.reduce(
+    matchedTempVar.values,
+    (acc, item: TemplateValue) => {
+      if (item.localSelected) {
+        return item.value
+      }
+      return acc
+    },
+    ''
+  )
+
+  if (/^\d+$/.test(selectedTempVarValue)) {
+    let num = parseInt(selectedTempVarValue, 10)
     if (num >= 0) {
       return num
     }
   }
   return null
+}
+
+export const getSelectedShowTemplateVariable = (graphOptions: GraphOptions) => {
+  const selectedVariable =
+    graphOptions?.showTempVarCount || 'Choose Template Variable'
+  return selectedVariable === 'No Variable'
+    ? 'Choose Template Variable'
+    : selectedVariable
+}
+
+export const getShowTemplateVariable = (dashboardTemplates: Template[]) => {
+  const dashboardsTemplatesItems = _.reduce(
+    dashboardTemplates,
+    (acc: string[], template) => {
+      if (
+        (template.type === 'text' ||
+          template.type === 'csv' ||
+          template.type === 'map') &&
+        template.tempVar
+      ) {
+        acc.push(template.tempVar)
+      }
+      return acc
+    },
+    []
+  )
+  return dashboardsTemplatesItems.length < 1
+    ? []
+    : [...dashboardsTemplatesItems, 'No Variable']
 }

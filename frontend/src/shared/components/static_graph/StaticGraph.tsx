@@ -170,12 +170,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       queries
     )
 
-    const showCount = parseIfPositiveNumber(
-      _.filter(
-        templates,
-        template => template?.tempVar === graphOptions.showTempVarCount
-      )?.[0]?.values[0]?.value
-    )
+    const showCount = parseIfPositiveNumber(templates, graphOptions)
 
     switch (type) {
       case CellType.StaticBar:

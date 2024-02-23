@@ -23,6 +23,12 @@ import {Axes, DropdownItem, Template} from 'src/types'
 import {GraphOptions, StaticLegendPositionType} from 'src/types/dashboards'
 import {ColorString} from 'src/types/colors'
 
+// Utils
+import {
+  getSelectedShowTemplateVariable,
+  getShowTemplateVariable,
+} from 'src/shared/utils/staticGraph'
+
 const {LINEAR, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
 const getInputMin = () => (-Infinity).toString()
 
@@ -180,11 +186,12 @@ class RadarChartOptions extends PureComponent<Props, State> {
   }
 
   private get showCount(): JSX.Element {
-    const selectedShowCount = this.getSelectedShowTemplateVariable()
-    const showCountItems = this.getShowTemplateVariable()
+    const {graphOptions, dashboardTemplates} = this.props
+    const selectedShowCount = getSelectedShowTemplateVariable(graphOptions)
+    const showCountItems = getShowTemplateVariable(dashboardTemplates)
     return (
       <div className="form-group col-sm-6">
-        <label>Show Count </label>
+        <label>Show Count</label>
         <div className="show-count-field">
           <Dropdown
             items={showCountItems}
@@ -358,28 +365,6 @@ class RadarChartOptions extends PureComponent<Props, State> {
     const newGraphOptions = {...graphOptions, showTempVarCount: item.text}
 
     onUpdateGraphOptions(newGraphOptions)
-  }
-
-  private getSelectedShowTemplateVariable = () => {
-    const {graphOptions} = this.props
-    const selectedVariable =
-      graphOptions?.showTempVarCount || 'Choose Template Variable'
-    return selectedVariable
-  }
-
-  private getShowTemplateVariable = () => {
-    const {dashboardTemplates} = this.props
-
-    return _.reduce(
-      dashboardTemplates,
-      (acc: string[], template) => {
-        if (template.type === 'text' && template.tempVar) {
-          acc.push(template.tempVar)
-        }
-        return acc
-      },
-      []
-    )
   }
 }
 
