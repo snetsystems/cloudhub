@@ -69,7 +69,7 @@ interface Props {
   onUpdateAxes: (axes: Axes) => void
   onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
-  onToggleStaticLegendPosition: (
+  onUpdateStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
   ) => void
   onUpdateLineColors: (colors: ColorString[]) => void
@@ -338,7 +338,7 @@ class BarChartOptions extends PureComponent<Props, State> {
   }
 
   private get staticLegendPositionTabs(): JSX.Element {
-    const {staticLegendPosition, onToggleStaticLegendPosition} = this.props
+    const {staticLegendPosition, onUpdateStaticLegendPosition} = this.props
 
     return (
       <div className="form-group col-sm-6">
@@ -349,7 +349,7 @@ class BarChartOptions extends PureComponent<Props, State> {
             value={true}
             active={staticLegendPosition === 'top'}
             titleText="Show static legend on the top side"
-            onClick={() => onToggleStaticLegendPosition('top')}
+            onClick={() => onUpdateStaticLegendPosition('top')}
           >
             Top
           </Radio.Button>
@@ -358,7 +358,7 @@ class BarChartOptions extends PureComponent<Props, State> {
             value={false}
             active={staticLegendPosition === 'bottom'}
             titleText="Show static legend on the bottom side"
-            onClick={() => onToggleStaticLegendPosition('bottom')}
+            onClick={() => onUpdateStaticLegendPosition('bottom')}
           >
             Bottom
           </Radio.Button>
@@ -367,7 +367,7 @@ class BarChartOptions extends PureComponent<Props, State> {
             value={false}
             active={staticLegendPosition === 'left'}
             titleText="Show static legend on the left side"
-            onClick={() => onToggleStaticLegendPosition('left')}
+            onClick={() => onUpdateStaticLegendPosition('left')}
           >
             Left
           </Radio.Button>
@@ -376,7 +376,7 @@ class BarChartOptions extends PureComponent<Props, State> {
             value={false}
             active={staticLegendPosition === 'right'}
             titleText="Show static legend on the right side"
-            onClick={() => onToggleStaticLegendPosition('right')}
+            onClick={() => onUpdateStaticLegendPosition('right')}
           >
             Right
           </Radio.Button>
