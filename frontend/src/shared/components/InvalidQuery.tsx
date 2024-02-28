@@ -17,8 +17,8 @@ class InvalidQuery extends PureComponent<Props> {
     return (
       <>
         <p>
-          In Static Graphs, including 'time' in the last 'GROUP BY' clause of a
-          query is not supported.
+          The data returned from the query can't be visualized with this graph
+          type.
         </p>
       </>
     )
