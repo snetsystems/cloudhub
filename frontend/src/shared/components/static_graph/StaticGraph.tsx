@@ -117,6 +117,14 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
   public render() {
     const {loading, data} = this.props
+
+    if (data.length > 1) {
+      return (
+        <InvalidQuery
+          message={'Only one query maker tab is supported in this graph type.'}
+        />
+      )
+    }
     if (
       data.length > 1 ||
       !data[0]['response']['results'][0]['series'][0].hasOwnProperty(
@@ -254,7 +262,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
           return (
             <InvalidQuery
               message={
-                'The results of the `group by` clause are too numerous to display. Please modify your query.'
+                'The results of the query clause are too numerous to display. Please modify your query.'
               }
             />
           )
