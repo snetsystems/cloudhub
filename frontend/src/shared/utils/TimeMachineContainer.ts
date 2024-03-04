@@ -387,13 +387,11 @@ export class TimeMachineContainer {
     const updatedQueryDrafts = queryDrafts.map(query => {
       if (query.id === queryID) {
         const nextQueryConfig = nextQueryConfigFn(query.queryConfig)
-
         const queryText = buildQuery(
           TYPE_QUERY_CONFIG,
           getTimeRange(nextQueryConfig),
           nextQueryConfig
         )
-
         return {
           ...query,
           query: queryText,
@@ -407,7 +405,6 @@ export class TimeMachineContainer {
 
       return query
     })
-
     return this.setAndPersistState({queryDrafts: updatedQueryDrafts})
   }
 

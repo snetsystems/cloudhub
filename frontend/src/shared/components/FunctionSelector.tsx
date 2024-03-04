@@ -10,7 +10,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {SubFunction} from 'src/types'
 
 interface Props {
-  onApply: (item: string[]) => void
+  onApply: (item: string[], subItem: SubFunction | null) => void
   selectedItems: string[]
   singleSelect: boolean
 }
@@ -173,10 +173,10 @@ class FunctionSelector extends PureComponent<Props, State> {
     this.onClickMouseEvent(item)
 
     if (item === this.state.localSelectedItems[0]) {
-      this.props.onApply([])
+      this.props.onApply([], null)
       this.setState({localSelectedItems: []})
     } else {
-      this.props.onApply([item])
+      this.props.onApply([item], null)
       this.setState({localSelectedItems: [item]})
     }
   }
@@ -269,7 +269,10 @@ class FunctionSelector extends PureComponent<Props, State> {
 
   private handleApplyFunctions = (e: MouseEvent<HTMLDivElement>): void => {
     e.stopPropagation()
-    this.props.onApply(this.state.localSelectedItems)
+    this.props.onApply(
+      this.state.localSelectedItems,
+      this.state.localSelectedSubItems
+    )
   }
 
   // Calculate index that mouse over for make another line

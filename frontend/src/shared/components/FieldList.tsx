@@ -29,6 +29,7 @@ import {
 } from 'src/shared/reducers/helpers/fields'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import QueryBuilderFilter from './QueryBuilderFilter'
+import {INFLUXQL_DERIVATIVE} from 'src/data_explorer/constants'
 
 interface GroupByOption extends GroupBy {
   menuOption: string
@@ -307,6 +308,14 @@ class FieldList extends PureComponent<Props, State> {
       type === CellType.StaticLineChart
     ) {
       return applyFuncsToField(fieldFunc, groupBy)
+    }
+
+    if (
+      !!fieldFunc.funcs.find(i => {
+        return i.value === INFLUXQL_DERIVATIVE
+      })
+    ) {
+      return applyFuncsToField(fieldFunc, {...groupBy, time: ''})
     }
 
     // If there is no groupBy time, set one

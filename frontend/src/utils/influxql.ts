@@ -1,6 +1,10 @@
 import _ from 'lodash'
 
-import {TEMP_VAR_INTERVAL, AUTO_GROUP_BY} from 'src/shared/constants'
+import {
+  TEMP_VAR_INTERVAL,
+  AUTO_GROUP_BY,
+  INITIAL_UNIT_TIME,
+} from 'src/shared/constants'
 import {NULL_STRING} from 'src/shared/constants/queryFillOptions'
 import {
   TYPE_QUERY_CONFIG,
@@ -54,6 +58,7 @@ export function buildSelect(
   const fieldsClause = buildFields(fields, shift).join(', ')
   const fullyQualifiedMeasurement = `"${database}".${rpSegment}."${measurement}"`
   const statement = `SELECT ${fieldsClause} FROM ${fullyQualifiedMeasurement}`
+
   return statement
 }
 
@@ -128,6 +133,26 @@ function buildFields(
         const args = buildFields(f.args, '', false)
         const alias = f.alias ? ` AS "${f.alias}"` : ''
         return `${args[0]}${f.value}${args[1]}${alias}`
+      }
+
+      //select clause
+      case 'subFunc': {
+        const args = buildFields(f.args, '', false)
+
+        if (!f.subFuns[f.value]) {
+          const alias = f.alias ? ` AS "${f.alias}${shift}"` : ''
+          return `${f.value}(${args.join(', ')})${alias}`
+        } else {
+          //todo: redux
+          return f.subFuns[f.value]
+            ?.map(item => {
+              const alias = f.alias ? ` AS "${item}_${f.alias}${shift}"` : ''
+              return `${item}(${f.value}(${args.join(
+                ', '
+              )}),${INITIAL_UNIT_TIME})${alias}`
+            })
+            .join(',')
+        }
       }
     }
   })

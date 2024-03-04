@@ -428,6 +428,7 @@ export const PREDEFINED_TEMP_VARS = [
 ]
 export const INITIAL_GROUP_BY_TIME = '10s'
 export const AUTO_GROUP_BY = 'auto'
+export const INITIAL_UNIT_TIME = '1s'
 
 export const DEFAULT_HOME_PAGE = 'status'
 

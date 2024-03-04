@@ -5,7 +5,13 @@ import _ from 'lodash'
 import FunctionSelector from 'src/shared/components/FunctionSelector'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {ApplyFuncsToFieldArgs, Field, FieldFunc, FuncArg} from 'src/types'
+import {
+  ApplyFuncsToFieldArgs,
+  Field,
+  FieldFunc,
+  FuncArg,
+  SubFunction,
+} from 'src/types'
 
 interface Props {
   fieldName: string
@@ -139,22 +145,37 @@ class FieldListItem extends PureComponent<Props, State> {
     this.close()
   }
 
-  private handleApplyFunctions = (selectedFuncs: string[]) => {
-    //apply function control jhyun
+  private handleApplyFunctions = (
+    selectedFuncs: string[],
+    selectedSubFunc: SubFunction | null
+  ) => {
     const {onApplyFuncsToField, fieldName} = this.props
     const field: Field = {value: fieldName, type: 'field'}
 
     onApplyFuncsToField({
       field,
-      funcs: selectedFuncs.map(val => this.makeFuncArg(val)),
+      funcs: selectedFuncs.map(val => this.makeFuncArg(val, selectedSubFunc)),
+      subFuns: selectedSubFunc,
     })
+
     this.close()
   }
 
-  private makeFuncArg = (value: string): FuncArg => ({
-    value,
-    type: 'func',
-  })
+  private makeFuncArg = (
+    value: string,
+    selectedSubFunc: SubFunction
+  ): FuncArg => {
+    if (!!selectedSubFunc) {
+      return {
+        value,
+        type: 'subFunc',
+      }
+    }
+    return {
+      value,
+      type: 'func',
+    }
+  }
 
   private getFieldDesc = (): string => {
     const {fieldFuncs} = this.props

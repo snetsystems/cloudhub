@@ -19,7 +19,7 @@ export const INFLUXQL_DERIVATIVE: string = 'derivative'
 // 중첩 function option
 export const INFLUXQL_NESTED_FUNCTIONS: string[] = [
   'derivative',
-  'non-derivative',
+  'non_negative_derivative',
 ]
 
 interface MinHeights {
