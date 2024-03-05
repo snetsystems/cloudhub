@@ -330,7 +330,12 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       ),
       d3ModNod => {
         node
-          .select(`circle[data-label=${d3ModNod['name']}]`)
+          .select(
+            `circle[data-label=${String(d3ModNod['name']).replace(
+              /[.:*+?^${}()|[\]\\]/g,
+              '\\$&'
+            )}]`
+          )
           .attr('fill', 'gray')
       }
     )
@@ -345,7 +350,14 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           ).includes(f['name'])
       ),
       d3ModPod => {
-        node.select(`path[data-label=${d3ModPod['name']}]`).attr('fill', 'gray')
+        node
+          .select(
+            `path[data-label=${String(d3ModPod['name']).replace(
+              /[.:*+?^${}()|[\]\\]/g,
+              '\\$&'
+            )}]`
+          )
+          .attr('fill', 'gray')
       }
     )
 
@@ -361,7 +373,12 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (parseFloat(m['cpu']) /
               parseFloat(
                 node
-                  .select(`circle[data-label=${m['name']}]`)
+                  .select(
+                    `circle[data-label=${String(m['name']).replace(
+                      /[.:*+?^${}()|[\]\\]/g,
+                      '\\$&'
+                    )}]`
+                  )
                   .attr('data-limit-cpu')
               )) *
             100
@@ -369,16 +386,31 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (parseFloat(m['memory']) /
               parseFloat(
                 node
-                  .select(`circle[data-label=${m['name']}]`)
+                  .select(
+                    `circle[data-label=${String(m['name']).replace(
+                      /[.:*+?^${}()|[\]\\]/g,
+                      '\\$&'
+                    )}]`
+                  )
                   .attr('data-limit-memory')
               )) *
             100
           const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
           node
-            .select(`circle[data-label=${m['name']}]`)
+            .select(
+              `circle[data-label=${String(m['name']).replace(
+                /[.:*+?^${}()|[\]\\]/g,
+                '\\$&'
+              )}]`
+            )
             .attr('data-cpu', `${cpuUsage}`)
           node
-            .select(`circle[data-label=${m['name']}]`)
+            .select(
+              `circle[data-label=${String(m['name']).replace(
+                /[.:*+?^${}()|[\]\\]/g,
+                '\\$&'
+              )}]`
+            )
             .attr('data-memory', `${memoryUsage}`)
             .attr('fill', kubernetesStatusColor(pick / 100))
         }
@@ -393,7 +425,12 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (parseFloat(m['cpu']) /
               parseFloat(
                 node
-                  .select(`path[data-label=${m['name']}]`)
+                  .select(
+                    `path[data-label=${String(m['name']).replace(
+                      /[.:*+?^${}()|[\]\\]/g,
+                      '\\$&'
+                    )}]`
+                  )
                   .attr('data-limit-cpu')
               )) *
             100
@@ -401,17 +438,32 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (parseFloat(m['memory']) /
               parseFloat(
                 node
-                  .select(`path[data-label=${m['name']}]`)
+                  .select(
+                    `path[data-label=${String(m['name']).replace(
+                      /[.:*+?^${}()|[\]\\]/g,
+                      '\\$&'
+                    )}]`
+                  )
                   .attr('data-limit-memory')
               )) *
             100
 
           const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
           node
-            .select(`path[data-label=${m['name']}]`)
+            .select(
+              `path[data-label=${String(m['name']).replace(
+                /[.:*+?^${}()|[\]\\]/g,
+                '\\$&'
+              )}]`
+            )
             .attr('data-cpu', `${cpuUsage}`)
           node
-            .select(`path[data-label=${m['name']}]`)
+            .select(
+              `path[data-label=${String(m['name']).replace(
+                /[.:*+?^${}()|[\]\\]/g,
+                '\\$&'
+              )}]`
+            )
             .attr('data-memory', `${memoryUsage}`)
             .attr('fill', kubernetesStatusColor(pick / 100))
         }
