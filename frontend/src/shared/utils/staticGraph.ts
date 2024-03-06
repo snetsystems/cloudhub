@@ -465,6 +465,7 @@ const createLineChartDatasets = ({
   tableOptions,
   colors,
   showCount,
+  fillArea,
 }: StatisticalGraphDatasetConfigType) => {
   const {
     excludeTags,
@@ -490,7 +491,7 @@ const createLineChartDatasets = ({
             sortedData,
             item => item[sortingBasisField.indexOf(col.internalName)]
           ),
-          fill: true,
+          fill: fillArea,
           backgroundColor: changeColorsOpacity(getcolors, 0.28)[colIndex],
           borderColor: getcolors[colIndex],
           borderWidth: 1,
@@ -646,14 +647,12 @@ const createLineChartOptions = ({
   axes,
   xAxisTitle,
   yAxisTitle,
-  fillArea,
   showLine,
   showPoint,
 }: {
   axes: Axes
   xAxisTitle?: string
   yAxisTitle?: string
-  fillArea: boolean
   showLine: boolean
   showPoint: boolean
 }) => {
@@ -669,7 +668,6 @@ const createLineChartOptions = ({
 
   const dynamicOption = {
     ...STATIC_GRAPH_OPTIONS,
-    fill: fillArea,
     showLine: showLine,
     pointRadius: showPoint === true ? 3 : 0,
     plugins: {
@@ -935,7 +933,6 @@ export const staticGraphOptions = {
     axes,
     xAxisTitle,
     yAxisTitle,
-    fillArea,
     showLine,
     showPoint,
   }) =>
@@ -943,7 +940,6 @@ export const staticGraphOptions = {
       axes,
       xAxisTitle,
       yAxisTitle,
-      fillArea,
       showLine,
       showPoint,
     }),
