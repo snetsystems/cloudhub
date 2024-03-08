@@ -459,6 +459,62 @@ const createBarChartDatasets = ({
   }
 }
 
+const createLineChartDatasets = ({
+  rawData,
+  fieldOptions,
+  tableOptions,
+  colors,
+  showCount,
+  fillArea,
+}: StatisticalGraphDatasetConfigType) => {
+  const {
+    excludeTags,
+    excludeTagsFields,
+    sortFields,
+    sortingBasisField,
+  } = getChartFields(fieldOptions, tableOptions, rawData)
+
+  const {sortedData, labels} = sortedStaticGraphData(
+    rawData,
+    sortFields,
+    sortingBasisField
+  )
+  const getcolors = getLineColorsHexes(colors, excludeTagsFields.length)
+
+  const datasets = fastReduce(
+    excludeTags,
+    (acc, col, colIndex) => {
+      if (col.visible) {
+        acc.push({
+          label: col.displayName !== '' ? col.displayName : col.internalName,
+          data: fastMap(
+            sortedData,
+            item => item[sortingBasisField.indexOf(col.internalName)]
+          ),
+          fill: fillArea,
+          backgroundColor: changeColorsOpacity(getcolors, 0.28)[colIndex],
+          borderColor: getcolors[colIndex],
+          borderWidth: 1,
+        })
+      }
+      return acc
+    },
+    []
+  )
+  if (showCount === 0) {
+    return {labels: [], datasets: []}
+  }
+  return {
+    labels: showCount ? labels.splice(0, showCount) : labels,
+    datasets: showCount
+      ? datasets.map(chart => ({
+          ...chart,
+          data: chart?.data.slice(0, showCount),
+        }))
+      : datasets,
+  }
+}
+
 const createRadarChartDatasets = ({
   rawData,
   colors,
@@ -591,14 +647,12 @@ const createLineChartOptions = ({
   axes,
   xAxisTitle,
   yAxisTitle,
-  fillArea,
   showLine,
   showPoint,
 }: {
   axes: Axes
   xAxisTitle?: string
   yAxisTitle?: string
-  fillArea: boolean
   showLine: boolean
   showPoint: boolean
 }) => {
@@ -614,7 +668,6 @@ const createLineChartOptions = ({
 
   const dynamicOption = {
     ...STATIC_GRAPH_OPTIONS,
-    fill: fillArea,
     showLine: showLine,
     pointRadius: showPoint === true ? 3 : 0,
     plugins: {
@@ -857,7 +910,7 @@ const createStaticRadarOptions = ({axes}: {axes: Axes}) => {
 export const staticGraphDatasets = (cellType: CellType) => {
   const datasetCreators = {
     [CellType.StaticStackedBar]: createBarChartDatasets,
-    [CellType.StaticLineChart]: createBarChartDatasets,
+    [CellType.StaticLineChart]: createLineChartDatasets,
     [CellType.StaticBar]: createBarChartDatasets,
     [CellType.StaticPie]: createPieChartDatasets,
     [CellType.StaticDoughnut]: createPieChartDatasets,
@@ -880,7 +933,6 @@ export const staticGraphOptions = {
     axes,
     xAxisTitle,
     yAxisTitle,
-    fillArea,
     showLine,
     showPoint,
   }) =>
@@ -888,7 +940,6 @@ export const staticGraphOptions = {
       axes,
       xAxisTitle,
       yAxisTitle,
-      fillArea,
       showLine,
       showPoint,
     }),

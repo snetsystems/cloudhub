@@ -102,8 +102,9 @@ const LineChart = ({
         tableOptions,
         colors,
         showCount,
+        fillArea,
       }),
-    [isUpdated, showCount]
+    [isUpdated, showCount, fillArea]
   )
 
   const dynamicOption = useMemo(
@@ -112,11 +113,10 @@ const LineChart = ({
         axes,
         xAxisTitle,
         yAxisTitle,
-        fillArea,
         showLine,
         showPoint,
       }),
-    [isUpdated, xAxisTitle, yAxisTitle, axes, fillArea, showLine, showPoint]
+    [isUpdated, xAxisTitle, yAxisTitle, axes, showLine, showPoint]
   )
 
   useEffect(() => {
