@@ -147,9 +147,13 @@ class AxesOptions extends PureComponent<Props, State> {
             {this.scaleTabs}
             {this.decimalPlaces}
             {this.staticLegendTabs}
-            {this.graphAreaTabs}
-            {this.graphLineTabs}
-            {this.graphPointTabs}
+            {type !== 'bar' && (
+              <>
+                {this.graphAreaTabs}
+                {this.graphLineTabs}
+                {this.graphPointTabs}
+              </>
+            )}
           </form>
         </div>
       </FancyScrollbar>

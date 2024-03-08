@@ -162,6 +162,7 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
 
     const {labels, timeSeries, dygraphSeries} = this.state.timeSeries
 
+    const isBarType = type === 'bar'
     const options = {
       rightGap: 0,
       yRangePad: 10,
@@ -174,10 +175,10 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       connectSeparatedPoints: true,
       stepPlot: type === 'line-stepplot',
       stackedGraph: type === 'line-stacked',
-      fillGraph: fillArea,
-      pointSize: showPoint ? 3 : 0,
-      drawPoints: showPoint,
-      strokeWidth: showLine ? 1 : 0,
+      fillGraph: isBarType ? false : fillArea,
+      pointSize: isBarType ? 0 : showPoint ? 3 : 0,
+      drawPoints: isBarType ? false : showPoint,
+      strokeWidth: isBarType ? 0 : showLine ? 1 : 0,
     }
 
     return (
