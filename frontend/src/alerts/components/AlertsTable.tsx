@@ -207,7 +207,7 @@ class AlertsTable extends PureComponent<Props, State> {
             className={this.sortableClasses('host')}
             style={{width: colHost}}
           >
-            Host <span className="icon caret-up" />
+            Source <span className="icon caret-up" />
           </div>
           <div
             onClick={this.changeSort('value')}
