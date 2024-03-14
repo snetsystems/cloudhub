@@ -29,6 +29,9 @@ import {
   staticGraphOptions,
 } from 'src/shared/utils/staticGraph'
 
+// Utils
+import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
+
 ChartJS.register(CategoryScale, LinearScale, ArcElement, Title, Tooltip, Legend)
 interface Props {
   axes: Axes
@@ -40,6 +43,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  showCount?: number | null
 }
 
 const PieChart = ({
@@ -51,6 +55,7 @@ const PieChart = ({
   staticLegendPosition,
   tableOptions,
   fieldOptions,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'pie', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -62,6 +67,8 @@ const PieChart = ({
     ['0', 'response', 'results', '0', 'series'],
     []
   )
+  const queryKey = _.get(data, ['0', 'response', 'uuid'], [])
+  const isUpdated = useIsUpdated({queryKey, tableOptions, fieldOptions, colors})
 
   const chartData = useMemo(
     () =>
@@ -70,8 +77,9 @@ const PieChart = ({
         fieldOptions,
         tableOptions,
         colors,
+        showCount,
       }),
-    [data, tableOptions, fieldOptions]
+    [isUpdated, showCount]
   )
 
   const dynamicOption = useMemo(
@@ -79,11 +87,13 @@ const PieChart = ({
       staticGraphOptions[CellType.StaticPie]({
         axes,
       }),
-    [data, tableOptions, fieldOptions]
+    [isUpdated, axes]
   )
 
   useEffect(() => {
-    chartRef.current.resize()
+    if (chartInstance && chartRef.current) {
+      chartRef.current.resize()
+    }
   }, [staticLegend, staticLegendPosition])
 
   useEffect(() => {

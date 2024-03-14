@@ -42,7 +42,6 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Constants
 import {
-  DEFAULT_STATIC_LEGEND_POSITION,
   TEMPLATES,
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
@@ -64,7 +63,6 @@ import {
   TimeRange,
   TimeZones,
   Me,
-  StaticLegendPositionType,
 } from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Links} from 'src/types/flux'
@@ -119,10 +117,8 @@ type Props = PassedProps & ConnectedProps & Auth
 interface State {
   isWriteFormVisible: boolean
   isSendToDashboardVisible: boolean
-  isStaticLegend: boolean
   isComponentMounted: boolean
   activeQueryIndex: number
-  staticLegendPosition: StaticLegendPositionType
 }
 
 @ErrorHandling
@@ -133,10 +129,8 @@ export class DataExplorer extends PureComponent<Props, State> {
     this.state = {
       isWriteFormVisible: false,
       isSendToDashboardVisible: false,
-      isStaticLegend: false,
       isComponentMounted: false,
       activeQueryIndex: 0,
-      staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
     }
 
     props.onResetTimeMachine()
@@ -188,11 +182,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       autoRefresh,
     } = this.props
 
-    const {
-      isStaticLegend,
-      staticLegendPosition,
-      isComponentMounted,
-    } = this.state
+    const {isComponentMounted} = this.state
 
     if (!isComponentMounted) {
       return <PageSpinner />
@@ -211,13 +201,9 @@ export class DataExplorer extends PureComponent<Props, State> {
             fluxLinks={fluxLinks}
             templates={this.templates}
             queryStatus={queryStatus}
-            isStaticLegend={isStaticLegend}
-            staticLegendPosition={staticLegendPosition}
             editQueryStatus={editQueryStatus}
             updateSourceLink={updateSourceLink}
             onResetFocus={this.handleResetFocus}
-            onToggleStaticLegend={this.handleToggleStaticLegend}
-            onToggleStaticLegendPosition={this.handleToggleStaticLegendPosition}
             onActiveQueryIndexChange={this.onActiveQueryIndexChange}
             me={me}
             isUsingAuth={isUsingAuth}
@@ -351,12 +337,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       notify,
     } = this.props
 
-    const {
-      isSendToDashboardVisible,
-      isStaticLegend,
-      staticLegendPosition,
-      activeQueryIndex,
-    } = this.state
+    const {isSendToDashboardVisible, activeQueryIndex} = this.state
     return (
       <Authorized requiredRole={EDITOR_ROLE}>
         <OverlayTechnology visible={isSendToDashboardVisible}>
@@ -368,8 +349,6 @@ export class DataExplorer extends PureComponent<Props, State> {
             activeQueryIndex={activeQueryIndex}
             handleGetDashboards={handleGetDashboards}
             sendDashboardCell={sendDashboardCell}
-            isStaticLegend={isStaticLegend}
-            staticLegendPosition={staticLegendPosition}
           />
         </OverlayTechnology>
       </Authorized>
@@ -443,16 +422,6 @@ export class DataExplorer extends PureComponent<Props, State> {
     this.setState({
       isSendToDashboardVisible: !this.state.isSendToDashboardVisible,
     })
-  }
-
-  private handleToggleStaticLegendPosition = (
-    staticLegendPosition: StaticLegendPositionType
-  ): void => {
-    this.setState({staticLegendPosition})
-  }
-
-  private handleToggleStaticLegend = (isStaticLegend: boolean): void => {
-    this.setState({isStaticLegend})
   }
 
   private onActiveQueryIndexChange = (activeQueryIndex: number): void => {

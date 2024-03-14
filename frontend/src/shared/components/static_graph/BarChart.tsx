@@ -34,6 +34,9 @@ import {StaticGraphLegend} from 'src/shared/components/static_graph/common/Stati
 import {CellType, TableOptions} from 'src/types/dashboards'
 import {StatisticalGraphFieldOption} from 'src/types/statisticalgraph'
 
+// Utils
+import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -57,6 +60,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: StatisticalGraphFieldOption[]
+  showCount?: number | null
 }
 
 const BarChart = ({
@@ -70,6 +74,7 @@ const BarChart = ({
   staticLegendPosition,
   tableOptions,
   fieldOptions,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -82,6 +87,8 @@ const BarChart = ({
     ['0', 'response', 'results', '0', 'series'],
     []
   )
+  const queryKey = _.get(data, ['0', 'response', 'uuid'], [])
+  const isUpdated = useIsUpdated({queryKey, tableOptions, fieldOptions, colors})
 
   const chartData = useMemo(
     () =>
@@ -90,9 +97,11 @@ const BarChart = ({
         fieldOptions,
         tableOptions,
         colors,
+        showCount,
       }),
-    [data, tableOptions, fieldOptions]
+    [isUpdated, showCount]
   )
+
   const dynamicOption = useMemo(
     () =>
       staticGraphOptions[CellType.StaticBar]({
@@ -100,11 +109,13 @@ const BarChart = ({
         xAxisTitle,
         yAxisTitle,
       }),
-    [data, tableOptions, fieldOptions]
+    [isUpdated, xAxisTitle, yAxisTitle, axes]
   )
 
   useEffect(() => {
-    chartRef.current.resize()
+    if (chartInstance && chartRef.current) {
+      chartRef.current.resize()
+    }
   }, [staticLegend, staticLegendPosition])
 
   useEffect(() => {

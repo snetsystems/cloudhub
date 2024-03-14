@@ -24,7 +24,12 @@ import {
   DEFAULT_TIME_FORMAT,
   DEFAULT_DECIMAL_PLACES,
 } from 'src/dashboards/constants'
-import {DEFAULT_STATIC_LEGEND_POSITION, DataType} from 'src/shared/constants'
+import {
+  DEFAULT_GRAPH_OPTIONS,
+  DEFAULT_SHOW_STATIC_LEGEND,
+  DEFAULT_STATIC_LEGEND_POSITION,
+  DataType,
+} from 'src/shared/constants'
 
 // Utils
 import {AutoRefresher, GlobalAutoRefresher} from 'src/utils/AutoRefresher'
@@ -55,6 +60,7 @@ import {
   DecimalPlaces,
   NoteVisibility,
   StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {GrabDataForDownloadHandler} from 'src/types/layout'
 import {TimeSeriesServerResponse} from 'src/types/series'
@@ -83,6 +89,7 @@ interface Props {
   inView: boolean
   timeFormat: string
   cellHeight: number
+  graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   autoRefresher: AutoRefresher
@@ -108,11 +115,12 @@ class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
     inView: true,
     manualRefresh: 0,
-    staticLegend: false,
     timeFormat: DEFAULT_TIME_FORMAT,
     decimalPlaces: DEFAULT_DECIMAL_PLACES,
     autoRefresher: GlobalAutoRefresher,
+    staticLegend: DEFAULT_SHOW_STATIC_LEGEND,
     staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
+    graphOptions: DEFAULT_GRAPH_OPTIONS,
   }
 
   public shouldComponentUpdate(nextProps: Props) {
@@ -325,6 +333,7 @@ class RefreshingGraph extends Component<Props> {
       'inView',
       'staticLegend',
       'staticLegendPosition',
+      'graphOptions',
     ]
 
     const prevVisValues = _.pick(prevProps, visProps)
@@ -494,6 +503,7 @@ class RefreshingGraph extends Component<Props> {
       timeRange,
       cellHeight,
       decimalPlaces,
+      graphOptions,
       staticLegend,
       manualRefresh,
       onUpdateVisType,
@@ -516,6 +526,7 @@ class RefreshingGraph extends Component<Props> {
         key={manualRefresh}
         timeRange={timeRange}
         cellHeight={cellHeight}
+        graphOptions={graphOptions}
         staticLegend={staticLegend}
         decimalPlaces={decimalPlaces}
         onUpdateVisType={onUpdateVisType}
@@ -537,12 +548,15 @@ class RefreshingGraph extends Component<Props> {
       cellID,
       queries,
       decimalPlaces,
+      graphOptions,
       staticLegend,
       staticLegendPosition,
       manualRefresh,
       tableOptions,
       fieldOptions,
+      templates,
       onUpdateFieldOptions,
+      onPickTemplate,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
@@ -567,10 +581,13 @@ class RefreshingGraph extends Component<Props> {
             key={manualRefresh}
             tableOptions={tableOptions}
             fieldOptions={computedFieldOptions}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             decimalPlaces={decimalPlaces}
             onUpdateFieldOptions={onUpdateFieldOptions}
+            onPickTemplate={onPickTemplate}
+            templates={templates}
           />
         )}
       </StaticGraphFormat>

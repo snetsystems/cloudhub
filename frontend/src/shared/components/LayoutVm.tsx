@@ -134,6 +134,7 @@ class LayoutVm extends Component<Props, State> {
         rawData={cellFluxData}
         showRawFluxData={showRawFluxData}
         visType={this.visType}
+        graphOptions={cell.graphOptions}
       />
     )
   }
@@ -184,6 +185,7 @@ class LayoutVm extends Component<Props, State> {
         source={this.getSource(cell, source, sources, source)}
         cellNote={cell.note}
         cellNoteVisibility={cell.noteVisibility}
+        graphOptions={cell.graphOptions}
       />
     )
   }

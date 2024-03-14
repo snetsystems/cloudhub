@@ -319,6 +319,13 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			}
 		}
 
+		graphOptions := &GraphOptions{
+			FillArea:         c.GraphOptions.FillArea,
+			ShowLine:         c.GraphOptions.ShowLine,
+			ShowPoint:        c.GraphOptions.ShowPoint,
+			ShowTempVarCount: c.GraphOptions.ShowTempVarCount,
+		}
+
 		note := c.Note
 		noteVisibility := c.NoteVisibility
 
@@ -345,6 +352,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			DecimalPlaces:  decimalPlaces,
 			Note:           note,
 			NoteVisibility: noteVisibility,
+			GraphOptions:   graphOptions,
 		}
 	}
 	templates := make([]*Template, len(d.Templates))
@@ -506,6 +514,19 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			decimalPlaces.Digits = 2
 		}
 
+		graphOptions := cloudhub.GraphOptions{}
+		if c.GraphOptions != nil {
+			graphOptions.FillArea = c.GraphOptions.FillArea
+			graphOptions.ShowLine = c.GraphOptions.ShowLine
+			graphOptions.ShowPoint = c.GraphOptions.ShowPoint
+			graphOptions.ShowTempVarCount = c.GraphOptions.ShowTempVarCount
+		} else {
+			graphOptions.FillArea = true
+			graphOptions.ShowLine = true
+			graphOptions.ShowPoint = false
+			graphOptions.ShowTempVarCount = ""
+		}
+
 		note := c.Note
 		noteVisibility := c.NoteVisibility
 
@@ -536,6 +557,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			DecimalPlaces:  decimalPlaces,
 			Note:           note,
 			NoteVisibility: noteVisibility,
+			GraphOptions:   graphOptions,
 		}
 	}
 

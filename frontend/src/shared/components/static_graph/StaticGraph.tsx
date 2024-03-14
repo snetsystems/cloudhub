@@ -21,12 +21,23 @@ import {ColorString} from 'src/types/colors'
 import {
   DecimalPlaces,
   FieldOption,
+  GraphOptions,
   StaticLegendPositionType,
   TableOptions,
 } from 'src/types/dashboards'
 import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
-import {Query, Axes, RemoteDataState, CellType, FluxTable} from 'src/types'
+import {
+  Query,
+  Axes,
+  RemoteDataState,
+  CellType,
+  FluxTable,
+  TemplateValue,
+  Template,
+} from 'src/types'
 import {DataType} from 'src/shared/constants'
+
+// Utils
 import {getDeep} from 'src/utils/wrappers'
 import {
   buildDefaultXLabel,
@@ -37,6 +48,7 @@ import {
 import {fastMap} from 'src/utils/fast'
 import {StatisticalGraphFieldOption} from 'src/types/statisticalgraph'
 import _ from 'lodash'
+import {parseIfPositiveNumber} from 'src/shared/utils/staticGraph'
 
 ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#999dab'
@@ -52,10 +64,13 @@ interface Props {
   data: TimeSeriesServerResponse[] | FluxTable[]
   dataType: DataType
   cellID: string
+  graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: StatisticalGraphFieldOption[]
+  templates?: Template[]
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
   onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
 }
 
@@ -102,6 +117,14 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
   public render() {
     const {loading, data} = this.props
+
+    if (data.length > 1) {
+      return (
+        <InvalidQuery
+          message={'Only one query maker tab is supported in this graph type.'}
+        />
+      )
+    }
     if (
       data.length > 1 ||
       !data[0]['response']['results'][0]['series'][0].hasOwnProperty(
@@ -128,11 +151,14 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       cellID,
       queries,
       type,
+      graphOptions,
       staticLegend,
       staticLegendPosition,
       tableOptions,
       fieldOptions,
+      templates,
     } = this.props
+    const {fillArea, showLine, showPoint} = graphOptions
 
     const fieldOptionsWithGroupByTag = this.getFieldOptionsWithGroupByTags(
       queries,
@@ -152,6 +178,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       queries
     )
 
+    const showCount = parseIfPositiveNumber(templates, graphOptions)
+
     switch (type) {
       case CellType.StaticBar:
         return (
@@ -167,6 +195,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
+            showCount={showCount}
           />
         )
       case CellType.StaticStackedBar:
@@ -183,6 +212,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
+            showCount={showCount}
           />
         )
       case CellType.StaticPie:
@@ -197,6 +227,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
+            showCount={showCount}
           />
         )
       case CellType.StaticDoughnut:
@@ -211,6 +242,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
+            showCount={showCount}
           />
         )
       case CellType.StaticScatter:
@@ -230,7 +262,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
           return (
             <InvalidQuery
               message={
-                'The results of the `group by` clause are too numerous to display. Please modify your query.'
+                'The results of the query clause are too numerous to display. Please modify your query.'
               }
             />
           )
@@ -246,6 +278,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
             xAxisTitle={xAxisTitleForScatterChart}
             yAxisTitle={yAxisTitleForScatterChart}
+            showCount={showCount}
           />
         )
       case CellType.StaticRadar:
@@ -258,6 +291,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            showCount={showCount}
           />
         )
 
@@ -269,12 +303,16 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticGraphStyle={this.staticGraphStyle}
             data={data}
             colors={colors}
+            fillArea={fillArea}
+            showLine={showLine}
+            showPoint={showPoint}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
             xAxisTitle={xAxisTitle}
             yAxisTitle={yAxisTitle}
+            showCount={showCount}
           />
         )
       default:

@@ -18,7 +18,14 @@ import {
 } from 'src/shared/constants'
 
 // Types
-import {TimeRange, Cell, Template, Source, QueryType, TemplateValue} from 'src/types'
+import {
+  TimeRange,
+  Cell,
+  Template,
+  Source,
+  QueryType,
+  TemplateValue,
+} from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {GrabDataForDownloadHandler} from 'src/types/layout'
@@ -99,7 +106,7 @@ class Layout extends Component<Props, State> {
       manualRefresh,
       templates,
       source,
-      onPickTemplate
+      onPickTemplate,
     } = this.props
     const {cellFluxData, visType} = this.state
     const showRawFluxData = visType === VisType.Table
@@ -131,6 +138,7 @@ class Layout extends Component<Props, State> {
         showRawFluxData={showRawFluxData}
         visType={this.visType}
         onPickTemplate={onPickTemplate}
+        graphOptions={cell.graphOptions}
       />
     )
   }
@@ -176,6 +184,7 @@ class Layout extends Component<Props, State> {
         cellNote={cell.note}
         cellNoteVisibility={cell.noteVisibility}
         onPickTemplate={onPickTemplate}
+        graphOptions={cell.graphOptions}
       />
     )
   }

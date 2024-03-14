@@ -696,6 +696,7 @@ type DashboardCell struct {
 	DecimalPlaces  DecimalPlaces    `json:"decimalPlaces"`
 	Note           string           `json:"note"`
 	NoteVisibility string           `json:"noteVisibility"`
+	GraphOptions   GraphOptions     `json:"graphOptions"`
 }
 
 // RenamableField is a column/row field in a DashboardCell of type Table
@@ -705,6 +706,14 @@ type RenamableField struct {
 	Visible      bool   `json:"visible"`
 	Direction    string `json:"direction"`
 	TempVar      string `json:"tempVar"`
+}
+
+// GraphOptions is a type of options for a DashboardCell for graph
+type GraphOptions struct {
+	FillArea         bool   `json:"fillArea"`
+	ShowLine         bool   `json:"showLine"`
+	ShowPoint        bool   `json:"showPoint"`
+	ShowTempVarCount string `json:"showTempVarCount"`
 }
 
 // TableOptions is a type of options for a DashboardCell with type Table
@@ -799,6 +808,7 @@ type ProtoboardCell struct {
 	DecimalPlaces  DecimalPlaces    `json:"decimalPlaces"`
 	Note           string           `json:"note"`
 	NoteVisibility string           `json:"noteVisibility"`
+	GraphOptions   GraphOptions     `json:"graphOptions"`
 }
 
 // ProtoboardData is the data of a Protoboard that can be instantiated into a dashboard, including a collection of cells

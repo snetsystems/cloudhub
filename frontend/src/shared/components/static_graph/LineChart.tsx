@@ -33,6 +33,9 @@ import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
 
+// Utils
+import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -56,6 +59,10 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  fillArea: boolean
+  showLine: boolean
+  showPoint: boolean
+  showCount?: number | null
 }
 
 const LineChart = ({
@@ -69,6 +76,10 @@ const LineChart = ({
   staticLegendPosition,
   tableOptions,
   fieldOptions,
+  fillArea,
+  showLine,
+  showPoint,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'line', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -80,6 +91,8 @@ const LineChart = ({
     ['0', 'response', 'results', '0', 'series'],
     []
   )
+  const queryKey = _.get(data, ['0', 'response', 'uuid'], [])
+  const isUpdated = useIsUpdated({queryKey, tableOptions, fieldOptions, colors})
 
   const chartData = useMemo(
     () =>
@@ -88,22 +101,28 @@ const LineChart = ({
         fieldOptions,
         tableOptions,
         colors,
+        showCount,
+        fillArea,
       }),
-    [data, tableOptions, fieldOptions]
+    [isUpdated, showCount, fillArea]
   )
 
   const dynamicOption = useMemo(
     () =>
-      staticGraphOptions[CellType.StaticBar]({
+      staticGraphOptions[CellType.StaticLineChart]({
         axes,
         xAxisTitle,
         yAxisTitle,
+        showLine,
+        showPoint,
       }),
-    [data, tableOptions, fieldOptions]
+    [isUpdated, xAxisTitle, yAxisTitle, axes, showLine, showPoint]
   )
 
   useEffect(() => {
-    chartRef.current.resize()
+    if (chartInstance && chartRef.current) {
+      chartRef.current.resize()
+    }
   }, [staticLegend, staticLegendPosition])
 
   useEffect(() => {

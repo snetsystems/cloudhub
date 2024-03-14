@@ -18,11 +18,6 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
 import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 
-// Utils
-import {fastMap} from 'src/utils/fast'
-import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
-import {changeColorsOpacity} from 'src/shared/graphs/helpers'
-
 // Constants
 import {ColorString} from 'src/types/colors'
 import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
@@ -30,8 +25,14 @@ import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {staticGraphOptions} from 'src/shared/utils/staticGraph'
+import {
+  staticGraphDatasets,
+  staticGraphOptions,
+} from 'src/shared/utils/staticGraph'
 import {CellType} from 'src/types/dashboards'
+
+// Utils
+import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
 
 ChartJS.register(
   LineElement,
@@ -53,6 +54,7 @@ interface Props {
   yAxisTitle?: string
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  showCount?: number | null
 }
 
 const ScatterChart = ({
@@ -64,6 +66,7 @@ const ScatterChart = ({
   yAxisTitle,
   staticLegend,
   staticLegendPosition,
+  showCount,
 }: Props) => {
   const chartRef = useRef<
     ChartJS<'scatter', DefaultDataPoint<'scatter'>[], unknown>
@@ -73,37 +76,22 @@ const ScatterChart = ({
   >(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
 
-  const convertData: TimeSeriesSeries[] =
-    data[0]['response']['results'][0]['series']
-  const axesX = fastMap(convertData, item => _.values(item.tags)[0]) as string[]
-  const getcolors = getLineColorsHexes(colors, convertData.length)
-
-  const scatterData = fastMap(convertData, (item, colIndex) => {
-    return {
-      label: _.values(item.tags).join('/'),
-      data: _.reduce(
-        item.values,
-        (acc: any[], value: any) => {
-          if (!(value[1] ?? false) && !(value[2] ?? false)) {
-            return acc
-          }
-
-          acc.push({x: value[1], y: value[2]})
-          return acc
-        },
-        []
-      ),
-      backgroundColor: changeColorsOpacity([getcolors[colIndex]], 0.8)[0],
-      borderColor: getcolors[colIndex],
-      borderWidth: 1,
-    }
-  })
-
-  const chartData = {
-    labels: axesX,
-    datasets: scatterData,
-  }
-
+  const rawData: TimeSeriesSeries[] = _.get(
+    data,
+    ['0', 'response', 'results', '0', 'series'],
+    []
+  )
+  const queryKey = _.get(data, ['0', 'response', 'uuid'], [])
+  const isUpdated = useIsUpdated({queryKey, colors})
+  const chartData = useMemo(
+    () =>
+      staticGraphDatasets(CellType.StaticScatter)({
+        rawData,
+        colors,
+        showCount,
+      }),
+    [isUpdated, showCount]
+  )
   const dynamicOption = useMemo(
     () =>
       staticGraphOptions[CellType.StaticScatter]({
@@ -111,11 +99,13 @@ const ScatterChart = ({
         xAxisTitle,
         yAxisTitle,
       }),
-    [data, axes, xAxisTitle, yAxisTitle]
+    [isUpdated, axes, xAxisTitle, yAxisTitle]
   )
 
   useEffect(() => {
-    chartRef.current.resize()
+    if (chartInstance && chartRef.current) {
+      chartRef.current.resize()
+    }
   }, [staticLegend, staticLegendPosition])
 
   useEffect(() => {

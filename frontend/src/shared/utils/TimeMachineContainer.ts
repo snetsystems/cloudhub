@@ -43,6 +43,11 @@ import {
   DEFAULT_FIELD_OPTIONS,
 } from 'src/dashboards/constants'
 import {DEFAULT_TIME_RANGE} from 'src/data_explorer/constants'
+import {
+  DEFAULT_GRAPH_OPTIONS,
+  DEFAULT_SHOW_STATIC_LEGEND,
+  DEFAULT_STATIC_LEGEND_POSITION,
+} from 'src/shared/constants'
 
 // Types
 import {
@@ -65,6 +70,8 @@ import {
   TableOptions,
   NoteVisibility,
   Axes,
+  GraphOptions,
+  StaticLegendPositionType,
 } from 'src/types/dashboards'
 import {ColorString, ColorNumber} from 'src/types/colors'
 import recordProperty from 'src/flux/helpers/recordProperty'
@@ -92,6 +99,9 @@ const DEFAULT_STATE = (): TimeMachineState => ({
   fieldOptions: DEFAULT_FIELD_OPTIONS,
   fluxProportions: [0.2, 0.6, 0.2],
   timeMachineProportions: [0.33, 0.67],
+  graphOptions: DEFAULT_GRAPH_OPTIONS,
+  isStaticLegend: DEFAULT_SHOW_STATIC_LEGEND,
+  staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
 })
 
 export interface TimeMachineState {
@@ -114,6 +124,9 @@ export interface TimeMachineState {
   lineColors: ColorString[]
   fluxProportions: number[]
   timeMachineProportions: number[]
+  graphOptions: GraphOptions
+  isStaticLegend?: boolean
+  staticLegendPosition?: StaticLegendPositionType
 }
 
 export class TimeMachineContainer {
@@ -377,6 +390,20 @@ export class TimeMachineContainer {
 
   public handleUpdateFieldOptions = (fieldOptions: FieldOption[]) => {
     return this.setAndPersistState({fieldOptions})
+  }
+
+  public handleUpdateGraphOptions = (graphOptions: GraphOptions) => {
+    return this.setAndPersistState({graphOptions})
+  }
+
+  public handleToggleStaticLegend = (isStaticLegend: boolean) => {
+    return this.setAndPersistState({isStaticLegend})
+  }
+
+  public handleUpdateStaticLegendPosition = (
+    staticLegendPosition: StaticLegendPositionType
+  ) => {
+    return this.setAndPersistState({staticLegendPosition})
   }
 
   private updateQueryDrafts = (

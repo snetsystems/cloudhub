@@ -30,8 +30,10 @@ import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-
 import {CellType, FieldOption, TableOptions} from 'src/types/dashboards'
+
+// Utils
+import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
 
 ChartJS.register(
   CategoryScale,
@@ -56,6 +58,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  showCount?: number | null
 }
 
 const StackedChart = ({
@@ -69,6 +72,7 @@ const StackedChart = ({
   staticLegendPosition,
   tableOptions,
   fieldOptions,
+  showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -82,6 +86,8 @@ const StackedChart = ({
     []
   )
 
+  const queryKey = _.get(data, ['0', 'response', 'uuid'], [])
+  const isUpdated = useIsUpdated({queryKey, tableOptions, fieldOptions, colors})
   const chartData = useMemo(
     () =>
       staticGraphDatasets(CellType.StaticStackedBar)({
@@ -89,8 +95,9 @@ const StackedChart = ({
         fieldOptions,
         tableOptions,
         colors,
+        showCount,
       }),
-    [data, tableOptions, fieldOptions]
+    [isUpdated, showCount]
   )
 
   const dynamicOption = useMemo(
@@ -100,11 +107,13 @@ const StackedChart = ({
         xAxisTitle,
         yAxisTitle,
       }),
-    [data, tableOptions, fieldOptions]
+    [isUpdated, xAxisTitle, yAxisTitle, axes]
   )
 
   useEffect(() => {
-    chartRef.current.resize()
+    if (chartInstance && chartRef.current) {
+      chartRef.current.resize()
+    }
   }, [staticLegend, staticLegendPosition])
 
   useEffect(() => {

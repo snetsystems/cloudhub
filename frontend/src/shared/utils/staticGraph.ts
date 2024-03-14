@@ -2,8 +2,8 @@
 import _ from 'lodash'
 
 // Types
-import {Axes} from 'src/types'
-import {CellType} from 'src/types/dashboards'
+import {Axes, Template, TemplateValue} from 'src/types'
+import {CellType, GraphOptions} from 'src/types/dashboards'
 import {TimeSeriesSeries} from 'src/types/series'
 import {
   Direction,
@@ -265,6 +265,7 @@ export const sortedStaticGraphData = (
 const createScatterChartDatasets = ({
   rawData,
   colors,
+  showCount,
 }: StatisticalGraphDatasetConfigType) => {
   const convertData = rawData
   const getColors = getLineColorsHexes(colors, convertData.length)
@@ -288,10 +289,14 @@ const createScatterChartDatasets = ({
       borderWidth: 1,
     }
   })
+  const labels = fastMap(
+    convertData,
+    item => _.values(item.tags)[0]
+  ) as string[]
 
   return {
-    labels: fastMap(convertData, item => _.values(item.tags)[0]) as string[],
-    datasets: scatterData,
+    labels: showCount ? labels.splice(0, showCount) : labels,
+    datasets: showCount ? scatterData.splice(0, showCount) : scatterData,
   }
 }
 
@@ -351,6 +356,7 @@ const createPieChartDatasets = ({
   fieldOptions,
   tableOptions,
   colors,
+  showCount,
 }: StatisticalGraphDatasetConfigType) => {
   const {excludeTags, sortFields, sortingBasisField} = getChartFields(
     fieldOptions,
@@ -383,10 +389,19 @@ const createPieChartDatasets = ({
     },
     []
   )
-
+  if (showCount === 0) {
+    return {labels: [], datasets: []}
+  }
   return {
-    labels,
-    datasets,
+    labels: showCount ? labels.splice(0, showCount) : labels,
+    datasets: showCount
+      ? datasets.map(chart => ({
+          ...chart,
+          data: chart?.data.slice(0, showCount),
+          backgroundColor: chart?.backgroundColor.slice(0, showCount),
+          borderColor: chart?.borderColor.slice(0, showCount),
+        }))
+      : datasets,
   }
 }
 
@@ -395,6 +410,7 @@ const createBarChartDatasets = ({
   fieldOptions,
   tableOptions,
   colors,
+  showCount,
 }: StatisticalGraphDatasetConfigType) => {
   const {
     excludeTags,
@@ -429,10 +445,112 @@ const createBarChartDatasets = ({
     },
     []
   )
+  if (showCount === 0) {
+    return {labels: [], datasets: []}
+  }
+  return {
+    labels: showCount ? labels.splice(0, showCount) : labels,
+    datasets: showCount
+      ? datasets.map(chart => ({
+          ...chart,
+          data: chart?.data.slice(0, showCount),
+        }))
+      : datasets,
+  }
+}
+
+const createLineChartDatasets = ({
+  rawData,
+  fieldOptions,
+  tableOptions,
+  colors,
+  showCount,
+  fillArea,
+}: StatisticalGraphDatasetConfigType) => {
+  const {
+    excludeTags,
+    excludeTagsFields,
+    sortFields,
+    sortingBasisField,
+  } = getChartFields(fieldOptions, tableOptions, rawData)
+
+  const {sortedData, labels} = sortedStaticGraphData(
+    rawData,
+    sortFields,
+    sortingBasisField
+  )
+  const getcolors = getLineColorsHexes(colors, excludeTagsFields.length)
+
+  const datasets = fastReduce(
+    excludeTags,
+    (acc, col, colIndex) => {
+      if (col.visible) {
+        acc.push({
+          label: col.displayName !== '' ? col.displayName : col.internalName,
+          data: fastMap(
+            sortedData,
+            item => item[sortingBasisField.indexOf(col.internalName)]
+          ),
+          fill: fillArea,
+          backgroundColor: changeColorsOpacity(getcolors, 0.28)[colIndex],
+          borderColor: getcolors[colIndex],
+          borderWidth: 1,
+        })
+      }
+      return acc
+    },
+    []
+  )
+  if (showCount === 0) {
+    return {labels: [], datasets: []}
+  }
+  return {
+    labels: showCount ? labels.splice(0, showCount) : labels,
+    datasets: showCount
+      ? datasets.map(chart => ({
+          ...chart,
+          data: chart?.data.slice(0, showCount),
+        }))
+      : datasets,
+  }
+}
+
+const createRadarChartDatasets = ({
+  rawData,
+  colors,
+  showCount,
+}: StatisticalGraphDatasetConfigType) => {
+  const convertData = rawData
+  const columns = convertData[0].columns
+  const processedData = fastMap(convertData, item =>
+    item.values[0].slice(1).map(value => value)
+  )
+  const axesX = fastMap(convertData, item => _.values(item.tags))
+  const getcolors = getLineColorsHexes(colors, columns.length - 1)
+  const datasets = columns.slice(1).map((col, colIndex) => ({
+    label: col,
+    data: fastMap(processedData, data => data[colIndex]),
+    backgroundColor: changeColorsOpacity(getcolors, 0.2)[colIndex],
+    borderColor: getcolors[colIndex],
+    borderWidth: 1,
+    pointBackgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
+    pointBorderColor: getcolors[colIndex],
+    pointHoverBackgroundColor: '#fff',
+    pointHoverBorderColor: getcolors[colIndex],
+  }))
+
+  if (showCount === 0) {
+    return {labels: [], datasets: []}
+  }
 
   return {
-    labels,
-    datasets,
+    labels: showCount ? axesX.splice(0, showCount) : axesX,
+    datasets: showCount
+      ? datasets.map(chart => ({
+          ...chart,
+          data: chart?.data.slice(0, showCount),
+        }))
+      : datasets,
   }
 }
 
@@ -512,6 +630,93 @@ const createBarChartOptions = ({
           text: yAxisTitle,
         },
         stacked: barChartType === CellType.StaticStackedBar,
+        ticks: {
+          ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
+          callback: function (value) {
+            return formatStaticGraphValue(axes, value)
+          },
+        },
+      },
+    },
+  }
+
+  return dynamicOption
+}
+
+const createLineChartOptions = ({
+  axes,
+  xAxisTitle,
+  yAxisTitle,
+  showLine,
+  showPoint,
+}: {
+  axes: Axes
+  xAxisTitle?: string
+  yAxisTitle?: string
+  showLine: boolean
+  showPoint: boolean
+}) => {
+  const type: StatisticalGraphScaleType =
+    axes?.y?.scale === 'log' ? 'logarithmic' : undefined
+  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
+  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[0]
+  )
+  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[1]
+  )
+
+  const dynamicOption = {
+    ...STATIC_GRAPH_OPTIONS,
+    showLine: showLine,
+    pointRadius: showPoint === true ? 3 : 0,
+    plugins: {
+      ...STATIC_GRAPH_OPTIONS.plugins,
+      tooltip: {
+        ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
+        callbacks: {
+          ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
+          title: function (tooltipItems) {
+            return tooltipItems[0].label
+          },
+          label: function (context) {
+            return [
+              ` ${context.dataset.label}:${formatStaticGraphValue(
+                axes,
+                context.raw
+              )}`,
+            ]
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        ...STATIC_GRAPH_OPTIONS.scales?.x,
+        title: {
+          ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
+          text: xAxisTitle,
+        },
+        ticks: {
+          ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
+          callback: function (value) {
+            return (
+              axes?.x?.prefix +
+              truncateLabelsWithEllipsis(this.getLabelForValue(value)) +
+              axes?.x?.suffix
+            )
+          },
+        },
+      },
+      y: {
+        ...STATIC_GRAPH_OPTIONS.scales?.y,
+        ...(type && {type}),
+        ...(isValidValue(min) && {min}),
+        ...(isValidValue(max) && {max}),
+        title: {
+          ...STATIC_GRAPH_OPTIONS.scales?.y?.title,
+          text: yAxisTitle,
+        },
         ticks: {
           ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
           callback: function (value) {
@@ -703,22 +908,17 @@ const createStaticRadarOptions = ({axes}: {axes: Axes}) => {
 }
 
 export const staticGraphDatasets = (cellType: CellType) => {
-  switch (cellType) {
-    case CellType.StaticStackedBar:
-    case CellType.StaticLineChart:
-    case CellType.StaticBar: {
-      return createBarChartDatasets
-    }
-    case CellType.StaticPie:
-    case CellType.StaticDoughnut: {
-      return createPieChartDatasets
-    }
-    case CellType.StaticScatter: {
-      return createScatterChartDatasets
-    }
-    default:
-      return null
+  const datasetCreators = {
+    [CellType.StaticStackedBar]: createBarChartDatasets,
+    [CellType.StaticLineChart]: createLineChartDatasets,
+    [CellType.StaticBar]: createBarChartDatasets,
+    [CellType.StaticPie]: createPieChartDatasets,
+    [CellType.StaticDoughnut]: createPieChartDatasets,
+    [CellType.StaticScatter]: createScatterChartDatasets,
+    [CellType.StaticRadar]: createRadarChartDatasets,
   }
+
+  return datasetCreators[cellType] || null
 }
 
 export const staticGraphOptions = {
@@ -729,12 +929,19 @@ export const staticGraphOptions = {
       yAxisTitle,
       barChartType: CellType.StaticStackedBar,
     }),
-  [CellType.StaticLineChart]: ({axes, xAxisTitle, yAxisTitle}) =>
-    createBarChartOptions({
+  [CellType.StaticLineChart]: ({
+    axes,
+    xAxisTitle,
+    yAxisTitle,
+    showLine,
+    showPoint,
+  }) =>
+    createLineChartOptions({
       axes,
       xAxisTitle,
       yAxisTitle,
-      barChartType: CellType.StaticLineChart,
+      showLine,
+      showPoint,
     }),
   [CellType.StaticBar]: ({axes, xAxisTitle, yAxisTitle}) =>
     createBarChartOptions({
@@ -747,4 +954,69 @@ export const staticGraphOptions = {
   [CellType.StaticDoughnut]: createPieOptions,
   [CellType.StaticScatter]: createScatterChartOptions,
   [CellType.StaticRadar]: createStaticRadarOptions,
+}
+
+export const parseIfPositiveNumber = (
+  templates: Template[],
+  graphOptions
+): number | null => {
+  const matchedTempVar = _.find(
+    templates,
+    template => template?.tempVar === graphOptions.showTempVarCount
+  )
+  if (!matchedTempVar) {
+    return null
+  }
+
+  const selectedTempVarValue = _.reduce(
+    matchedTempVar.values,
+    (acc, item: TemplateValue) => {
+      if (item.localSelected) {
+        return item.value
+      }
+      return acc
+    },
+    ''
+  )
+
+  if (/^\d+$/.test(selectedTempVarValue)) {
+    let num = parseInt(selectedTempVarValue, 10)
+    if (num >= 0) {
+      return num
+    }
+  }
+  return null
+}
+
+export const getSelectedShowTemplateVariable = (graphOptions: GraphOptions) => {
+  const selectedVariable =
+    graphOptions?.showTempVarCount || 'Choose Template Variable'
+  return selectedVariable === 'No Variable'
+    ? 'Choose Template Variable'
+    : selectedVariable
+}
+
+export const getShowTemplateVariable = (dashboardTemplates: Template[]) => {
+  const dashboardsTemplatesItems = _.reduce(
+    dashboardTemplates,
+    (acc: string[], template) => {
+      if (
+        (template.type === 'text' ||
+          template.type === 'csv' ||
+          template.type === 'map') &&
+        template.tempVar
+      ) {
+        acc.push(template.tempVar)
+      }
+      return acc
+    },
+    []
+  )
+  return dashboardsTemplatesItems.length < 1
+    ? []
+    : [...dashboardsTemplatesItems, 'No Variable']
+}
+
+export const isStaticGraphType = (cellType: CellType) => {
+  return cellType?.toString().toLowerCase().startsWith('static') || false
 }

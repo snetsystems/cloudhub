@@ -20,10 +20,6 @@ import {editCellQueryStatus} from 'src/dashboards/actions'
 
 // Constants
 import {getCellTypeColors} from 'src/dashboards/constants/cellEditor'
-import {
-  GET_STATIC_LEGEND_POSITION,
-  IS_STATIC_LEGEND,
-} from 'src/shared/constants'
 import {STATIC_LEGEND} from 'src/dashboards/constants/cellEditor'
 
 // Types
@@ -39,7 +35,6 @@ import {
 import {Template} from 'src/types/tempVars'
 import {
   Cell,
-  Legend,
   CellQuery,
   NewDefaultCell,
   QueryType,
@@ -50,6 +45,7 @@ import {
   NoteVisibility,
   Axes,
   StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {Links, ScriptStatus} from 'src/types/flux'
 import {ColorString, ColorNumber} from 'src/types/colors'
@@ -75,6 +71,9 @@ interface ConnectedProps {
   lineColors: ColorString[]
   onResetTimeMachine: TimeMachineContainer['reset']
   ceoTimeRange: TimeRange
+  graphOptions: GraphOptions
+  isStaticLegend?: boolean
+  staticLegendPosition: StaticLegendPositionType
 }
 
 interface PassedProps {
@@ -101,10 +100,8 @@ interface Auth {
 type Props = PassedProps & ConnectedProps & Auth
 
 interface State {
-  isStaticLegend: boolean
   scriptStatus: ScriptStatus
   draftCellName: string
-  staticLegendPosition: StaticLegendPositionType
 }
 
 @ErrorHandling
@@ -114,13 +111,9 @@ class CellEditorOverlay extends Component<Props, State> {
   public constructor(props: Props) {
     super(props)
 
-    const legend = getDeep<Legend | null>(props, 'cell.legend', null)
-
     this.state = {
-      isStaticLegend: IS_STATIC_LEGEND(legend),
       scriptStatus: {type: 'none', text: ''},
       draftCellName: props.cell.name,
-      staticLegendPosition: GET_STATIC_LEGEND_POSITION(legend),
     }
   }
 
@@ -155,9 +148,8 @@ class CellEditorOverlay extends Component<Props, State> {
       me,
       isUsingAuth,
       dashboardRefresh,
+      dashboardTemplates,
     } = this.props
-
-    const {isStaticLegend, staticLegendPosition} = this.state
 
     return (
       <div
@@ -173,12 +165,9 @@ class CellEditorOverlay extends Component<Props, State> {
           sources={sources}
           fluxLinks={fluxLinks}
           templates={this.ceoTemplates}
+          dashboardTemplates={dashboardTemplates}
           editQueryStatus={editQueryStatus}
           onResetFocus={this.handleResetFocus}
-          onToggleStaticLegend={this.handleToggleStaticLegend}
-          onToggleStaticLegendPosition={this.handleToggleStaticLegendPosition}
-          isStaticLegend={isStaticLegend}
-          staticLegendPosition={staticLegendPosition}
           queryStatus={queryStatus}
           onUpdateScriptStatus={this.handleUpdateScriptStatus}
           me={me}
@@ -262,8 +251,11 @@ class CellEditorOverlay extends Component<Props, State> {
       thresholdsListColors,
       gaugeColors,
       lineColors,
+      graphOptions,
+      isStaticLegend,
+      staticLegendPosition,
     } = this.props
-    const {isStaticLegend, staticLegendPosition, draftCellName} = this.state
+    const {draftCellName} = this.state
 
     let queries: CellQuery[] = queryDrafts
 
@@ -301,6 +293,7 @@ class CellEditorOverlay extends Component<Props, State> {
       legend: isStaticLegend
         ? {...STATIC_LEGEND, orientation: staticLegendPosition}
         : {orientation: staticLegendPosition},
+      graphOptions,
     }
 
     return newCell
@@ -351,16 +344,6 @@ class CellEditorOverlay extends Component<Props, State> {
     }
   }
 
-  private handleToggleStaticLegendPosition = (
-    staticLegendPosition: StaticLegendPositionType
-  ): void => {
-    this.setState({staticLegendPosition})
-  }
-
-  private handleToggleStaticLegend = (isStaticLegend: boolean): void => {
-    this.setState({isStaticLegend})
-  }
-
   private handleResetFocus = () => {
     if (this.overlayRef.current) {
       this.overlayRef.current.focus()
@@ -376,6 +359,7 @@ const ConnectedCellEditorOverlay = (props: PassedProps & Auth) => {
         return (
           <CellEditorOverlay
             {...props}
+            graphOptions={state.graphOptions}
             queryType={state.queryType}
             queryDrafts={state.queryDrafts}
             script={state.script}
@@ -395,6 +379,8 @@ const ConnectedCellEditorOverlay = (props: PassedProps & Auth) => {
             lineColors={state.lineColors}
             onResetTimeMachine={container.reset}
             ceoTimeRange={state.timeRange}
+            isStaticLegend={state.isStaticLegend}
+            staticLegendPosition={state.staticLegendPosition}
           />
         )
       }}

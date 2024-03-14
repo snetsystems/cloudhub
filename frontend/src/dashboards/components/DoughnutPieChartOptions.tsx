@@ -9,6 +9,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LineGraphColorSelector from 'src/shared/components/LineGraphColorSelector'
 import GraphOptionsSortBy from 'src/dashboards/components/GraphOptionsSortBy'
 import GraphOptionsCustomizeFields from 'src/dashboards/components/GraphOptionsCustomizeFields'
+import Dropdown from 'src/shared/components/Dropdown'
 
 // Constants
 import {AXES_SCALE_OPTIONS} from 'src/dashboards/constants/cellEditor'
@@ -19,10 +20,16 @@ import {DEFAULT_STATISTICAL_TIME_FIELD} from 'src/dashboards/constants/'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // Types
-import {Axes} from 'src/types'
-import {StaticLegendPositionType} from 'src/types/dashboards'
+import {Axes, DropdownItem, Template} from 'src/types'
+import {GraphOptions, StaticLegendPositionType} from 'src/types/dashboards'
 import {ColorString} from 'src/types/colors'
 import {getDeep} from 'src/utils/wrappers'
+
+// Utils
+import {
+  getSelectedShowTemplateVariable,
+  getShowTemplateVariable,
+} from 'src/shared/utils/staticGraph'
 
 const {LINEAR, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
 
@@ -46,6 +53,7 @@ interface TableOptionsInterface {
 
 interface Props {
   axes: Axes
+  graphOptions: GraphOptions
   groupByTag: string[]
   tableOptions: TableOptionsInterface
   fieldOptions: RenamableField[]
@@ -53,10 +61,12 @@ interface Props {
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   defaultYLabel: string
+  dashboardTemplates?: Template[]
   lineColors: ColorString[]
   onUpdateAxes: (axes: Axes) => void
+  onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
-  onToggleStaticLegendPosition: (
+  onUpdateStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
   ) => void
   onUpdateLineColors: (colors: ColorString[]) => void
@@ -147,7 +157,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
         'displayName'
       ) || firstGroupByTag
 
-    const selectedSortFieldByFristField =
+    const selectedSortFieldByFirstField =
       _.get(
         _.find(fieldOptions, {internalName: defaultYLabel}),
         'displayName'
@@ -156,7 +166,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
       ...DEFAULT_STATISTICAL_TIME_FIELD,
       internalName:
         firstGroupByTag === undefined
-          ? selectedSortFieldByFristField
+          ? selectedSortFieldByFirstField
           : selectedSortFieldByFirstGroupBy,
     }
 
@@ -208,9 +218,30 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
             {this.valuesFormatTabs}
             {this.staticLegendTabs}
             {this.staticLegendPositionTabs}
+            {this.showCount}
           </form>
         </div>
       </FancyScrollbar>
+    )
+  }
+  private get showCount(): JSX.Element {
+    const {graphOptions, dashboardTemplates} = this.props
+    const selectedShowCount = getSelectedShowTemplateVariable(graphOptions)
+    const showCountItems = getShowTemplateVariable(dashboardTemplates)
+    return (
+      <div className="form-group col-sm-6">
+        <label>Show Count</label>
+        <div className="show-count-field">
+          <Dropdown
+            items={showCountItems}
+            selected={selectedShowCount}
+            buttonColor="btn-default"
+            buttonSize="btn-sm"
+            className="dropdown-stretch"
+            onChoose={this.handleUpdateShowCount}
+          />
+        </div>
+      </div>
     )
   }
 
@@ -245,7 +276,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
   }
 
   private get staticLegendPositionTabs(): JSX.Element {
-    const {staticLegendPosition, onToggleStaticLegendPosition} = this.props
+    const {staticLegendPosition, onUpdateStaticLegendPosition} = this.props
 
     return (
       <div className="form-group col-sm-6">
@@ -256,7 +287,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
             value={true}
             active={staticLegendPosition === 'top'}
             titleText="Show static legend on the top side"
-            onClick={() => onToggleStaticLegendPosition('top')}
+            onClick={() => onUpdateStaticLegendPosition('top')}
           >
             Top
           </Radio.Button>
@@ -265,7 +296,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
             value={false}
             active={staticLegendPosition === 'bottom'}
             titleText="Show static legend on the bottom side"
-            onClick={() => onToggleStaticLegendPosition('bottom')}
+            onClick={() => onUpdateStaticLegendPosition('bottom')}
           >
             Bottom
           </Radio.Button>
@@ -274,7 +305,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
             value={false}
             active={staticLegendPosition === 'left'}
             titleText="Show static legend on the left side"
-            onClick={() => onToggleStaticLegendPosition('left')}
+            onClick={() => onUpdateStaticLegendPosition('left')}
           >
             Left
           </Radio.Button>
@@ -283,7 +314,7 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
             value={false}
             active={staticLegendPosition === 'right'}
             titleText="Show static legend on the right side"
-            onClick={() => onToggleStaticLegendPosition('right')}
+            onClick={() => onUpdateStaticLegendPosition('right')}
           >
             Right
           </Radio.Button>
@@ -371,6 +402,13 @@ class DoughnutPieChartOptions extends PureComponent<Props, State> {
     const updatedSortBy = {...sortBy, direction: direction}
 
     onUpdateTableOptions({...tableOptions, sortBy: updatedSortBy})
+  }
+
+  private handleUpdateShowCount = (item: DropdownItem): void => {
+    const {onUpdateGraphOptions, graphOptions} = this.props
+    const newGraphOptions = {...graphOptions, showTempVarCount: item.text}
+
+    onUpdateGraphOptions(newGraphOptions)
   }
 
   private getSelectedGraphOptionSortField(): RenamableField {

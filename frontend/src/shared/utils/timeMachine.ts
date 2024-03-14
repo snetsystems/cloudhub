@@ -2,19 +2,25 @@
 import uuid from 'uuid'
 import {get} from 'lodash'
 
-// Utils
-import defaultQueryConfig from 'src/utils/defaultQueryConfig'
-import {getDeep} from 'src/utils/wrappers'
+// Constants
 import {getLineColors} from 'src/shared/constants/graphColorPalettes'
 import {
   getThresholdsListColors,
   getGaugeColors,
 } from 'src/shared/constants/thresholds'
-import {GIT_SHA} from 'src/shared/constants'
+import {
+  GET_STATIC_LEGEND_POSITION,
+  GIT_SHA,
+  IS_STATIC_LEGEND,
+} from 'src/shared/constants'
+
+// Utils
+import defaultQueryConfig from 'src/utils/defaultQueryConfig'
+import {getDeep} from 'src/utils/wrappers'
 import {getTimeRange} from 'src/dashboards/utils/cellGetters'
 
 // Types
-import {Cell, NewDefaultCell, CellQuery, QueryType} from 'src/types'
+import {Cell, NewDefaultCell, CellQuery, QueryType, Legend} from 'src/types'
 import {TimeMachineState} from 'src/shared/utils/TimeMachineContainer'
 
 export function initialStateFromCell(
@@ -27,6 +33,10 @@ export function initialStateFromCell(
     QueryType.InfluxQL
   )
 
+  const legend = getDeep<Legend | null>(cell, 'legend', null)
+  const isStaticLegend = IS_STATIC_LEGEND(legend)
+  const staticLegendPosition = GET_STATIC_LEGEND_POSITION(legend)
+
   const initialState: Partial<TimeMachineState> = {
     queryDrafts,
     type: cell.type,
@@ -36,6 +46,9 @@ export function initialStateFromCell(
     decimalPlaces: cell.decimalPlaces,
     note: cell.note,
     noteVisibility: cell.noteVisibility,
+    graphOptions: cell.graphOptions,
+    isStaticLegend,
+    staticLegendPosition,
   }
 
   if (get(cell, 'queries.0.type') === QueryType.Flux) {

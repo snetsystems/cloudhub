@@ -52,7 +52,6 @@ import {
   QueryUpdateState,
   Me,
   TimeZones,
-  StaticLegendPositionType,
 } from 'src/types'
 import {SourceOption} from 'src/types/sources'
 import {Links, ScriptStatus} from 'src/types/flux'
@@ -80,8 +79,7 @@ interface PassedProps {
   sources: Source[]
   isInCEO: boolean
   templates: Template[]
-  isStaticLegend: boolean
-  staticLegendPosition: StaticLegendPositionType
+  dashboardTemplates?: Template[]
   onResetFocus: () => void
   updateSourceLink?: typeof updateSourceLinkAction
   notify: NotificationAction
@@ -89,10 +87,6 @@ interface PassedProps {
     queryID: string,
     status: Status,
     stateToUpdate: QueryUpdateState
-  ) => void
-  onToggleStaticLegend: (isStaticLegend: boolean) => void
-  onToggleStaticLegendPosition: (
-    staticLegendPosition: StaticLegendPositionType
   ) => void
   children: (
     activeEditorTab: CEOTabs,
@@ -225,12 +219,7 @@ class TimeMachine extends PureComponent<Props, State> {
   }
 
   private renderVisualization = () => {
-    const {
-      templates,
-      isStaticLegend,
-      staticLegendPosition,
-      manualRefresh,
-    } = this.props
+    const {templates, manualRefresh} = this.props
     const {autoRefresher, isViewingRawData} = this.state
 
     return (
@@ -239,8 +228,6 @@ class TimeMachine extends PureComponent<Props, State> {
         templates={templates}
         queries={this.queriesForVis}
         autoRefresher={autoRefresher}
-        staticLegend={isStaticLegend}
-        staticLegendPosition={staticLegendPosition}
         manualRefresh={manualRefresh}
         editorLocation={this.stateToUpdate}
         showRawFluxData={isViewingRawData}
@@ -254,15 +241,9 @@ class TimeMachine extends PureComponent<Props, State> {
   }
 
   private get editorTab() {
-    const {
-      onResetFocus,
-      isStaticLegend,
-      staticLegendPosition,
-      onToggleStaticLegend,
-      onToggleStaticLegendPosition,
-    } = this.props
+    const {onResetFocus} = this.props
     const {activeEditorTab} = this.state
-
+    const {dashboardTemplates} = this.props
     if (activeEditorTab === CEOTabs.Queries) {
       if (this.isFluxSelected) {
         return this.fluxBuilder
@@ -273,11 +254,8 @@ class TimeMachine extends PureComponent<Props, State> {
 
     return (
       <DisplayOptions
+        dashboardTemplates={dashboardTemplates}
         queryConfigs={this.queriesWorkingDraft}
-        onToggleStaticLegendPosition={onToggleStaticLegendPosition}
-        onToggleStaticLegend={onToggleStaticLegend}
-        staticLegend={isStaticLegend}
-        staticLegendPosition={staticLegendPosition}
         onResetFocus={onResetFocus}
         stateToUpdate={this.stateToUpdate}
       />

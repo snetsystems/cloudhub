@@ -34,7 +34,13 @@ import {
   getGroupByTag,
 } from 'src/shared/presenters'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {Axes, QueryConfig, CellType, QueryUpdateState} from 'src/types'
+import {
+  Axes,
+  QueryConfig,
+  CellType,
+  QueryUpdateState,
+  Template,
+} from 'src/types'
 import {
   FieldOption,
   DecimalPlaces,
@@ -42,6 +48,7 @@ import {
   ThresholdType,
   TableOptions as TableOptionsInterface,
   StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {ColorNumber, ColorString} from 'src/types/colors'
 
@@ -58,6 +65,15 @@ interface ConnectedProps {
   thresholdsListType: ThresholdType
   gaugeColors: ColorNumber[]
   lineColors: ColorString[]
+  dashboardTemplates: Template[]
+  graphOptions: GraphOptions
+  staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
+  onUpdateStaticLegendPosition: (
+    staticLegendPosition: StaticLegendPositionType
+  ) => void
+  onToggleStaticLegend: (isStaticLegend: boolean) => void
+  onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onUpdateDecimalPlaces: TimeMachineContainer['handleUpdateDecimalPlaces']
   onUpdateGaugeColors: TimeMachineContainer['handleUpdateGaugeColors']
   onUpdateAxes: TimeMachineContainer['handleUpdateAxes']
@@ -74,14 +90,9 @@ interface ConnectedProps {
 
 interface PassedProps {
   queryConfigs: QueryConfig[]
-  staticLegend: boolean
-  staticLegendPosition: StaticLegendPositionType
   stateToUpdate: QueryUpdateState
+  dashboardTemplates: Template[]
   onResetFocus: () => void
-  onToggleStaticLegendPosition: (
-    staticLegendPosition: StaticLegendPositionType
-  ) => void
-  onToggleStaticLegend: (isStaticLegend: boolean) => void
 }
 
 type Props = PassedProps & ConnectedProps
@@ -188,7 +199,7 @@ class DisplayOptions extends Component<Props, State> {
       staticLegend,
       staticLegendPosition,
       onToggleStaticLegend,
-      onToggleStaticLegendPosition,
+      onUpdateStaticLegendPosition,
       onResetFocus,
       queryConfigs,
       thresholdsListType,
@@ -196,6 +207,9 @@ class DisplayOptions extends Component<Props, State> {
       timeFormat,
       tableOptions,
       fieldOptions,
+      graphOptions,
+      dashboardTemplates,
+      onUpdateGraphOptions,
       onUpdateAxes,
       onUpdateDecimalPlaces,
       onUpdateGaugeColors,
@@ -267,13 +281,16 @@ class DisplayOptions extends Component<Props, State> {
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
+            dashboardTemplates={dashboardTemplates}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
-            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
             onUpdateFieldOptions={onUpdateFieldOptions}
             onUpdateTableOptions={onUpdateTableOptions}
@@ -289,12 +306,15 @@ class DisplayOptions extends Component<Props, State> {
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             defaultYLabel={defaultYLabel}
+            dashboardTemplates={dashboardTemplates}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
-            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
             onUpdateFieldOptions={onUpdateFieldOptions}
             onUpdateTableOptions={onUpdateTableOptions}
@@ -309,13 +329,16 @@ class DisplayOptions extends Component<Props, State> {
             tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
+            dashboardTemplates={dashboardTemplates}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
-            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
             onUpdateFieldOptions={onUpdateFieldOptions}
             onUpdateTableOptions={onUpdateTableOptions}
@@ -327,11 +350,14 @@ class DisplayOptions extends Component<Props, State> {
             axes={this.axes}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            dashboardTemplates={dashboardTemplates}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
-            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
           />
         )
@@ -341,13 +367,16 @@ class DisplayOptions extends Component<Props, State> {
             axes={this.axes}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            dashboardTemplates={dashboardTemplates}
             defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
-            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
           />
         )
@@ -357,10 +386,12 @@ class DisplayOptions extends Component<Props, State> {
             axes={this.axes}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             defaultYLabel={defaultYLabel}
             decimalPlaces={decimalPlaces}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
             onUpdateLineColors={onUpdateLineColors}
             onUpdateDecimalPlaces={onUpdateDecimalPlaces}
@@ -421,6 +452,14 @@ const ConnectedDisplayOptions = (props: PassedProps) => {
           thresholdsListType={timeMachineContainer.state.thresholdsListType}
           gaugeColors={timeMachineContainer.state.gaugeColors}
           lineColors={timeMachineContainer.state.lineColors}
+          graphOptions={timeMachineContainer.state.graphOptions}
+          staticLegend={timeMachineContainer.state.isStaticLegend}
+          staticLegendPosition={timeMachineContainer.state.staticLegendPosition}
+          onUpdateStaticLegendPosition={
+            timeMachineContainer.handleUpdateStaticLegendPosition
+          }
+          onToggleStaticLegend={timeMachineContainer.handleToggleStaticLegend}
+          onUpdateGraphOptions={timeMachineContainer.handleUpdateGraphOptions}
           onUpdateType={timeMachineContainer.handleUpdateType}
           onUpdateAxes={timeMachineContainer.handleUpdateAxes}
           onUpdateTableOptions={timeMachineContainer.handleUpdateTableOptions}

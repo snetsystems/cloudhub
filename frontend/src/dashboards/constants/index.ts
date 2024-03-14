@@ -1,3 +1,4 @@
+import {DEFAULT_GRAPH_OPTIONS} from 'src/shared/constants'
 import {
   DEFAULT_VERTICAL_TIME_AXIS,
   DEFAULT_FIX_FIRST_COLUMN,
@@ -95,6 +96,7 @@ export const NEW_DEFAULT_DASHBOARD_CELL: NewDefaultCell = {
   inView: true,
   note: '',
   noteVisibility: NoteVisibility.Default,
+  graphOptions: DEFAULT_GRAPH_OPTIONS,
 }
 
 interface EmptyDefaultDashboardCell {
