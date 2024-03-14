@@ -21,6 +21,7 @@ interface Props {
   onApplyFuncsToField: (args: ApplyFuncsToFieldArgs) => void
   isKapacitorRule: boolean
   funcs: string[]
+  subFuncs: SubFunction | null
   isDisabled: boolean
 }
 
@@ -47,6 +48,7 @@ class FieldListItem extends PureComponent<Props, State> {
       fieldName,
       funcs,
       isDisabled,
+      subFuncs,
     } = this.props
     const {isOpen} = this.state
 
@@ -99,6 +101,7 @@ class FieldListItem extends PureComponent<Props, State> {
           <FunctionSelector
             onApply={this.handleApplyFunctions}
             selectedItems={funcs}
+            selectedSubItems={subFuncs}
             singleSelect={isKapacitorRule}
           />
         ) : null}
@@ -120,9 +123,11 @@ class FieldListItem extends PureComponent<Props, State> {
     e.stopPropagation()
     const {isDisabled} = this.props
     if (isDisabled) {
+      console.log('isDisabled: ', isDisabled)
       return
     }
 
+    console.log('isOpen: ', this.state.isOpen)
     this.setState({isOpen: !this.state.isOpen})
   }
 
@@ -154,23 +159,14 @@ class FieldListItem extends PureComponent<Props, State> {
 
     onApplyFuncsToField({
       field,
-      funcs: selectedFuncs.map(val => this.makeFuncArg(val, selectedSubFunc)),
-      subFuns: selectedSubFunc,
+      funcs: selectedFuncs.map(val => this.makeFuncArg(val)),
+      subFunc: selectedSubFunc,
     })
 
     this.close()
   }
 
-  private makeFuncArg = (
-    value: string,
-    selectedSubFunc: SubFunction
-  ): FuncArg => {
-    if (!!selectedSubFunc) {
-      return {
-        value,
-        type: 'subFunc',
-      }
-    }
+  private makeFuncArg = (value: string): FuncArg => {
     return {
       value,
       type: 'func',

@@ -384,6 +384,7 @@ export class TimeMachineContainer {
     nextQueryConfigFn: (q: QueryConfig) => QueryConfig
   ) => {
     const {queryDrafts} = this.state
+
     const updatedQueryDrafts = queryDrafts.map(query => {
       if (query.id === queryID) {
         const nextQueryConfig = nextQueryConfigFn(query.queryConfig)

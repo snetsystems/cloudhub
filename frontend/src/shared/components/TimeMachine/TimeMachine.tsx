@@ -519,7 +519,6 @@ class TimeMachine extends PureComponent<Props, State> {
     type: QueryType
   ): void => {
     const {updateSourceLink} = this.props
-
     if (updateSourceLink) {
       updateSourceLink(getDeep<string>(selectedSource, 'links.self', ''))
     }

@@ -9,6 +9,7 @@ import {
   GroupBy,
   QueryConfig,
   Source,
+  SubFunction,
   TimeShift,
 } from 'src/types'
 
@@ -177,6 +178,7 @@ class FieldList extends PureComponent<Props, State> {
                   fieldFunc.value,
                   fields
                 )
+
                 const fieldFuncs = selectedFields.length
                   ? [this.addDesc(_.head(selectedFields), fieldFunc.desc)]
                   : [fieldFunc]
@@ -190,6 +192,7 @@ class FieldList extends PureComponent<Props, State> {
                     fieldName={fieldName}
                     fieldFuncs={fieldFuncs}
                     funcs={functionNames(funcs)}
+                    subFuncs={this.getSubFuncs(fields, fieldFunc)}
                     isKapacitorRule={isKapacitorRule}
                     isDisabled={isDisabled}
                   />
@@ -354,6 +357,20 @@ class FieldList extends PureComponent<Props, State> {
         fields: _.uniqBy(newFields, 'value'), // do not duplicate items
       })
     })
+  }
+
+  private getSubFuncs = (fields: Field[], fieldFunc: Field) => {
+    const temp = fields
+      .filter(item => {
+        return !!item.subFunc
+      })
+      .filter(item => {
+        return item.args[0].value === fieldFunc.value
+      })
+
+    const result: SubFunction | null = temp?.[0]?.subFunc ?? null
+
+    return result
   }
 }
 

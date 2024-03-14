@@ -13,6 +13,7 @@ interface Props {
   onApply: (item: string[], subItem: SubFunction | null) => void
   selectedItems: string[]
   singleSelect: boolean
+  selectedSubItems: SubFunction | null
 }
 
 interface State {
@@ -29,7 +30,7 @@ class FunctionSelector extends PureComponent<Props, State> {
 
     this.state = {
       localSelectedItems: this.props.selectedItems,
-      localSelectedSubItems: null,
+      localSelectedSubItems: this.props.selectedSubItems,
       isMouseOver: false,
       mouseNum: null,
     }

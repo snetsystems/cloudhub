@@ -157,7 +157,7 @@ export const removeFuncs = (
 
 export const applyFuncsToField = (
   query: QueryConfig,
-  {field, funcs = [], subFuns}: ApplyFuncsToFieldArgs,
+  {field, funcs = [], subFunc}: ApplyFuncsToFieldArgs,
   groupBy: GroupBy
 ): QueryConfig => {
   const nextFields = query.fields.reduce((acc, f) => {
@@ -197,7 +197,7 @@ export const applyFuncsToField = (
             ...func,
             args: [field],
             alias: `${func.value}_${field.value}`,
-            subFuns: subFuns,
+            subFunc: subFunc,
           },
         ]
       }, [])

@@ -40,7 +40,7 @@ export interface Field {
   alias?: string
   args?: FieldArg[]
   desc?: string
-  subFuns?: SubFunction
+  subFunc?: SubFunction
 }
 
 export interface FieldArg {
@@ -62,7 +62,7 @@ export interface FuncArg {
 export interface ApplyFuncsToFieldArgs {
   field: Field
   funcs: FuncArg[]
-  subFuns?: SubFunction
+  subFunc?: SubFunction
 }
 
 export interface Tag {
