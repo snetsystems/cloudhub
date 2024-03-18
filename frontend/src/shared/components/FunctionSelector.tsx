@@ -101,7 +101,6 @@ class FunctionSelector extends PureComponent<Props, State> {
                               e.stopPropagation()
                               this.onSubFuncSelect(f, subf)
                             }}
-                            onMouseOver={() => {}}
                             key={idx}
                             className={classnames(`function-selector--item`, {
                               active: this.isSubFuncSelected(f, subf),
@@ -259,9 +258,9 @@ class FunctionSelector extends PureComponent<Props, State> {
   private isSubFuncSelected = (item: string, subItem: string): boolean => {
     if (
       this.state.localSelectedSubItems !== null &&
-      !!this.state.localSelectedSubItems[item]
+      !!this.state.localSelectedSubItems?.[item]
     ) {
-      return !!this.state.localSelectedSubItems[item].find(
+      return !!this.state.localSelectedSubItems[item]?.find(
         text => text === subItem
       )
     }

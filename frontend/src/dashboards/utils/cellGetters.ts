@@ -13,10 +13,6 @@ import {TEMPLATE_RANGE} from 'src/tempVars/constants'
 
 const MAX_COLUMNS = 96
 
-interface ParseSelectResult {
-  function: string
-  argument: string
-}
 // Types
 import {Cell, CellType, Dashboard, NewDefaultCell} from 'src/types/dashboards'
 import {QueryConfig, DurationRange, SubFunction} from 'src/types/queries'
@@ -187,16 +183,8 @@ export const getConfig = async (
     {query: renderedQuery, id},
   ])
   const {queryConfig} = queries.find(q => q.id === id)
-  //jhyun query config setting
 
   const range = getRangeForOriginalQuery(query, queryConfig.range)
-
-  console.log('result : ', {
-    ...queryConfig,
-    ...queryConfigParser(renderedQuery),
-    originalQuery: query,
-    range,
-  })
 
   if (
     queryConfig.database === '' &&
@@ -252,8 +240,9 @@ export const queryConfigParser = (query: string) => {
 
 export const parseSelectClause = (input: string) => {
   const modifiedString = input
-    .replace(/\"|\s*\b\w+s\b\s*/g, '')
-    .split(/,(?![^(]*\))/)
+    .replace(/ AS /g, '') // AS remove
+    .replace(/\"|\s*\s*/g, '') // space remove
+    .split(/,(?![^(]*\))/) // string to array
 
   const modifiedArray = modifiedString.map(i =>
     i.split(/AS\s+"|,\s*|\)\s*|\(\s*|\\+"/).filter(i => !!i)
@@ -267,28 +256,28 @@ export const parseSelectClause = (input: string) => {
     const arg = []
     if (item.length > 3) {
       arg[0] = {
-        value: item[2].replaceAll(' ', ''),
+        value: item[2]?.replaceAll(' ', ''),
         type: 'field',
         alias: '',
       }
       return {
         type: 'func',
         args: arg,
-        value: item[1].replaceAll(' ', ''),
-        alias: item[3].replace('AS ', ''),
+        value: item[1]?.replaceAll(' ', ''),
+        alias: item[3]?.replace('AS ', ''),
         subFunc: !!subFunc?.[item[1]] ? subFunc : null,
       }
     } else {
       arg[0] = {
-        value: item[1].replaceAll(' ', ''),
+        value: item[1]?.replaceAll(' ', ''),
         type: 'field',
         alias: '',
       }
       return {
         type: 'func',
         args: arg,
-        value: item[0].replaceAll(' ', ''),
-        alias: item[2].replace('AS ', ''),
+        value: item[0]?.replaceAll(' ', ''),
+        alias: item[2]?.replace('AS ', ''),
       }
     }
   })
@@ -336,12 +325,12 @@ export const parseWhereNegTag = (whereAry: string[]) => {
 
   whereAry.forEach(input => {
     input
-      .replace(/["()'! ]/g, '') // 특수 문자 제거
-      .split('AND') // AND를 기준으로 분할
+      .replace(/["()'! ]/g, '')
+      .split('AND')
       .forEach(item => {
         let [key, value] = item.split('=')
-        key = key?.replace(/['"]/g, '') // 작은 따옴표 또는 큰 따옴표 제거
-        value = value?.replace(/['"]/g, '') // 작은 따옴표 또는 큰 따옴표 제거
+        key = key?.replace(/['"]/g, '')
+        value = value?.replace(/['"]/g, '')
         if (!keyValuePairs[key]) {
           keyValuePairs[key] = []
         }
