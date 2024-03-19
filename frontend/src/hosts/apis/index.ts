@@ -1551,10 +1551,10 @@ export const getHostsInfoWithIpmi = async (
        /inlet_temp|mb_cpu_in_temp|temp_mb_inlet/
      )}) GROUP BY hostname ) GROUP BY hostname;
      SELECT max("inside") AS "inside", "name" as "cpu_count" FROM ( SELECT last("value") AS "inside"  FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "hostname" != '' AND time > now() - 10m AND ("name" =~ ${new RegExp(
-       /cpu\d+_temp|cpu_temp_\d+|cpu_dimmg\d+_temp|temp_cpu\d+/
+       /cpu_temp|cpu\d+_temp|cpu_temp_\d+|cpu_dimmg\d+_temp|temp_cpu\d+/
      )}) GROUP BY hostname, "name" ) GROUP BY hostname;
      SELECT max("outlet") AS "outlet" FROM ( SELECT last("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "hostname" != '' AND time > now() - 10m AND ("name" =~ ${new RegExp(
-       /exhaust_temp|outlet_temp|mb_cpu_out_temp|temp_mb_outlet/
+       /system_temp|exhaust_temp|outlet_temp|mb_cpu_out_temp|temp_mb_outlet/
      )}) GROUP BY hostname ) GROUP BY hostname;
      SELECT last(value) as "ipmi_ip" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m GROUP BY  "hostname", "server" FILL(null);
      `,

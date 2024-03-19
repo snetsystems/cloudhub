@@ -66,6 +66,7 @@ class AlertsTableRow extends PureComponent<Props> {
             className={classnames(
               'table-dot',
               {'dot-critical': level === 'CRITICAL'},
+              {'dot-warning': level === 'WARNING'},
               {'dot-success': level === 'OK'}
             )}
           />
