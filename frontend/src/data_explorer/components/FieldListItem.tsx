@@ -10,7 +10,7 @@ import {
   Field,
   FieldFunc,
   FuncArg,
-  SubFunction,
+  SelectedSubFunction,
 } from 'src/types'
 
 interface Props {
@@ -21,7 +21,7 @@ interface Props {
   onApplyFuncsToField: (args: ApplyFuncsToFieldArgs) => void
   isKapacitorRule: boolean
   funcs: string[]
-  subFuncs: SubFunction | null
+  subFuncs: SelectedSubFunction | null
   isDisabled: boolean
 }
 
@@ -101,6 +101,7 @@ class FieldListItem extends PureComponent<Props, State> {
           <FunctionSelector
             onApply={this.handleApplyFunctions}
             selectedItems={funcs}
+            //jhyun object로  Sync 작업
             selectedSubItems={subFuncs}
             singleSelect={isKapacitorRule}
           />
@@ -123,11 +124,9 @@ class FieldListItem extends PureComponent<Props, State> {
     e.stopPropagation()
     const {isDisabled} = this.props
     if (isDisabled) {
-      console.log('isDisabled: ', isDisabled)
       return
     }
 
-    console.log('isOpen: ', this.state.isOpen)
     this.setState({isOpen: !this.state.isOpen})
   }
 
@@ -147,15 +146,18 @@ class FieldListItem extends PureComponent<Props, State> {
     const {onToggleField, fieldName} = this.props
 
     onToggleField({value: fieldName, type: 'field'})
+
     this.close()
   }
 
   private handleApplyFunctions = (
     selectedFuncs: string[],
-    selectedSubFunc: SubFunction | null
+    selectedSubFunc: SelectedSubFunction | null
   ) => {
     const {onApplyFuncsToField, fieldName} = this.props
     const field: Field = {value: fieldName, type: 'field'}
+
+    console.log('apply: ', selectedSubFunc)
 
     onApplyFuncsToField({
       field,

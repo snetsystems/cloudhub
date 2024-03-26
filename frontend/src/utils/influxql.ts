@@ -53,7 +53,6 @@ export function buildSelect(
   if (!database || !measurement || _.isEmpty(fields)) {
     return null
   }
-
   const rpSegment = retentionPolicy ? `"${retentionPolicy}"` : ''
   const fieldsClause = buildFields(fields, shift).join(', ')
   const fullyQualifiedMeasurement = `"${database}".${rpSegment}."${measurement}"`
@@ -127,48 +126,29 @@ function buildFields(
       case 'func': {
         const args = buildFields(f.args, '', false)
 
-        if (!f.subFunc?.[f.value]) {
+        if (f.value === 'derivative' || f.value === 'non_negative_derivative') {
           const alias = f.alias ? ` AS "${f.alias}${shift}"` : ''
-          return `${f.value}(${args.join(', ')})${alias}`
-        } else {
-          //todo: redux
-          return f.subFunc[f.value]
-            ?.map(item => {
-              const alias = f.alias ? ` AS "${item}_${f.alias}${shift}"` : ''
-              return `${item}(${f.value}(${args.join(
-                ', '
-              )}),${INITIAL_UNIT_TIME})${alias}`
-            })
-            .join(',')
+          return `${f.value}(${args.join(', ')} , :interval:)${alias}`
         }
+        // console.log('influxQL: ', args, fieldFuncs)
+        //   return `${f.value}(${args.join(', ')})${alias}`
+        else if (!!f.subFunc) {
+          const alias = ` AS "${f.alias}${shift}"`
 
-        // const args = buildFields(f.args, '', false)
-        // const alias = f.alias ? ` AS "${f.alias}${shift}"` : ''
+          return `${f.subFunc}(${f.value}(${args.join(
+            ', '
+          )}),${INITIAL_UNIT_TIME})${alias}`
+        }
+        //todo: redux
+
+        const alias = f.alias ? ` AS "${f.alias}${shift}"` : ''
+
+        return `${f.value}(${args.join(', ')})${alias}`
       }
       case 'infixfunc': {
         const args = buildFields(f.args, '', false)
         const alias = f.alias ? ` AS "${f.alias}"` : ''
         return `${args[0]}${f.value}${args[1]}${alias}`
-      }
-
-      //select clause
-      case 'subFunc': {
-        const args = buildFields(f.args, '', false)
-
-        if (!f.subFunc?.[f.value]) {
-          const alias = f.alias ? ` AS "${f.alias}${shift}"` : ''
-          return `${f.value}(${args.join(', ')})${alias}`
-        } else {
-          //todo: redux
-          return f.subFunc[f.value]
-            ?.map(item => {
-              const alias = f.alias ? ` AS "${item}_${f.alias}${shift}"` : ''
-              return `${item}(${f.value}(${args.join(
-                ', '
-              )}),${INITIAL_UNIT_TIME})${alias}`
-            })
-            .join(',')
-        }
       }
     }
   })

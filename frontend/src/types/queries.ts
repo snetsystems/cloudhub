@@ -40,7 +40,7 @@ export interface Field {
   alias?: string
   args?: FieldArg[]
   desc?: string
-  subFunc?: SubFunction
+  subFunc?: string
 }
 
 export interface FieldArg {
@@ -62,7 +62,8 @@ export interface FuncArg {
 export interface ApplyFuncsToFieldArgs {
   field: Field
   funcs: FuncArg[]
-  subFunc?: SubFunction
+  //jhyun
+  subFunc?: SelectedSubFunction
 }
 
 export interface Tag {
@@ -119,7 +120,7 @@ export interface TimeRangeOption extends TimeRange {
   menuOption: string
 }
 
-export interface SubFunction {
+export interface SelectedSubFunction {
   [key: string]: string[]
 }
 

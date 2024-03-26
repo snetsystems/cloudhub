@@ -420,6 +420,7 @@ export class TimeMachineContainer {
           getTimeRange(nextQueryConfig),
           nextQueryConfig
         )
+
         return {
           ...query,
           query: queryText,

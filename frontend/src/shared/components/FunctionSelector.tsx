@@ -7,18 +7,18 @@ import {
   INFLUXQL_NESTED_FUNCTIONS,
 } from 'src/data_explorer/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {SubFunction} from 'src/types'
+import {SelectedSubFunction} from 'src/types'
 
 interface Props {
-  onApply: (item: string[], subItem: SubFunction | null) => void
+  onApply: (item: string[], subItem: SelectedSubFunction | null) => void
   selectedItems: string[]
   singleSelect: boolean
-  selectedSubItems: SubFunction | null
+  selectedSubItems: SelectedSubFunction | null
 }
 
 interface State {
   localSelectedItems: string[]
-  localSelectedSubItems: SubFunction | null
+  localSelectedSubItems: SelectedSubFunction | null
   isMouseOver: boolean
   mouseNum: number | null
 }
@@ -194,7 +194,7 @@ class FunctionSelector extends PureComponent<Props, State> {
           this.onOneSubFuncDelete(item, subItem)
         } else {
           // func O, subfunc x
-          const tempObj: SubFunction = subFunc
+          const tempObj: SelectedSubFunction = subFunc
           tempObj[item] = [...tempObj[item], subItem]
 
           this.setState({
@@ -203,7 +203,7 @@ class FunctionSelector extends PureComponent<Props, State> {
         }
       } else {
         // subfunc x
-        const tempObj: SubFunction = subFunc
+        const tempObj: SelectedSubFunction = subFunc
         tempObj[item] = [subItem]
         this.setState({localSelectedSubItems: {...tempObj}})
       }
@@ -212,7 +212,7 @@ class FunctionSelector extends PureComponent<Props, State> {
 
   private onOneSubFuncDelete = (item: string, subItem: string) => {
     const subFunc = this.state.localSelectedSubItems
-    const tempObj: SubFunction = subFunc
+    const tempObj: SelectedSubFunction = subFunc
 
     if (!subFunc?.[item]) {
       return
@@ -222,7 +222,7 @@ class FunctionSelector extends PureComponent<Props, State> {
     )
     if (tempObj[item]?.length === 0) {
       const keyAry = Object.keys(tempObj)
-      const temp: SubFunction = {}
+      const temp: SelectedSubFunction = {}
       keyAry.forEach(element => {
         if (element !== item) {
           temp[element] = tempObj[element]

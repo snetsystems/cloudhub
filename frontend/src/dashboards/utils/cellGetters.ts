@@ -15,7 +15,7 @@ const MAX_COLUMNS = 96
 
 // Types
 import {Cell, CellType, Dashboard, NewDefaultCell} from 'src/types/dashboards'
-import {QueryConfig, DurationRange, SubFunction} from 'src/types/queries'
+import {QueryConfig, DurationRange} from 'src/types/queries'
 import {Template} from 'src/types'
 
 const getMostCommonValue = (values: number[]): number => {
@@ -186,10 +186,19 @@ export const getConfig = async (
 
   const range = getRangeForOriginalQuery(query, queryConfig.range)
 
+  // const regex = /(derivative|non-negative-derivative)\(\w+\("\w+"\),\w+\)/
+  console.log('result: ', {
+    ...queryConfig,
+    ...queryConfigParser(renderedQuery),
+    originalQuery: query,
+    range,
+  })
+
   if (
     queryConfig.database === '' &&
     queryConfig.measurement === '' &&
     queryConfigParser !== null
+    // regex.test(queryConfig.rawText?.replaceAll(' ', ''))
   ) {
     return {
       ...queryConfig,
@@ -220,10 +229,15 @@ export const queryConfigParser = (query: string) => {
   const frontSplitQuery = frontQuery[1]?.split('FROM')
 
   const selectClause = frontSplitQuery[0]
+
   const fromClause = frontSplitQuery[1].replaceAll(' ', '').replaceAll(`\"`, '')
+
   const backQuerySplit = backQuery.split('FILL')
+
   const whereClause = backQuerySplit[0].split('GROUP BY')[0]
+
   const groupByClause = backQuerySplit[0].split('GROUP BY')[1]
+
   const fillClause = backQuerySplit[1]
 
   const areTagsAccepted: boolean = !whereClause.includes('!=')
@@ -248,24 +262,22 @@ export const parseSelectClause = (input: string) => {
     i.split(/AS\s+"|,\s*|\)\s*|\(\s*|\\+"/).filter(i => !!i)
   )
 
-  const subFunc: SubFunction = {}
-
-  subFuncHandler(modifiedArray, subFunc)
-
+  // const tempSubFunc = subFuncHandler(modifiedArray)
   const result = modifiedArray.map(item => {
     const arg = []
-    if (item.length > 3) {
+    if (item.length > 4) {
       arg[0] = {
         value: item[2]?.replaceAll(' ', ''),
         type: 'field',
         alias: '',
       }
+
       return {
         type: 'func',
         args: arg,
         value: item[1]?.replaceAll(' ', ''),
-        alias: item[3]?.replace('AS ', ''),
-        subFunc: !!subFunc?.[item[1]] ? subFunc : null,
+        alias: item[item.length - 1]?.replace('AS ', ''),
+        subFunc: item[0],
       }
     } else {
       arg[0] = {
@@ -281,20 +293,30 @@ export const parseSelectClause = (input: string) => {
       }
     }
   })
+
   return result
 }
 
-export const subFuncHandler = (
-  modifiedArray: string[][],
-  subFunc: SubFunction
-) => {
+export const subFuncHandler = (modifiedArray: string[][]) => {
+  const tempSubFunc = new Map()
+  const result = {}
+
   modifiedArray.forEach(i => {
     if (i.length > 3) {
-      subFunc[i[1]] = !!subFunc[i[1]]
-        ? [...subFunc[i[1]], i[0].replaceAll(' ', '')]
-        : [i[0].replaceAll(' ', '')]
+      tempSubFunc.set(
+        i[2],
+        !!tempSubFunc.get(i[2])
+          ? [...(tempSubFunc.get(i[2]) ?? null), i[0]]
+          : [i[0]]
+      )
     }
   })
+
+  for (const [key, value] of tempSubFunc) {
+    result[key] = value
+  }
+
+  return result
 }
 
 export const parseFromClause = (input: string) => {
@@ -363,11 +385,11 @@ export const parseWhereAccTag = (whereAry: string[]) => {
   return keyValuePairs
 }
 
-export const parseGroupByClause = (input: string) => {
+export const parseGroupByClause = (input: string | null) => {
   let time = ''
   const tags = input
-    .split(',')
-    .map(i => {
+    ?.split(',')
+    ?.map(i => {
       if (i.includes('time')) {
         let regex = /(time|[^a-zA-Z0-9:]+)/g
         if (i.replaceAll(regex, '') === ':interval:') {
@@ -383,12 +405,12 @@ export const parseGroupByClause = (input: string) => {
     .filter(i => !!i)
 
   return {
-    tags: tags,
+    tags: tags ?? [],
     time: time,
   }
 }
-export const parseFillClause = (input: string) => {
+export const parseFillClause = (input: string | null) => {
   let regex = /([^a-zA-Z0-9:]+)/g
 
-  return input.replace(regex, '')
+  return input?.replace(regex, '')
 }

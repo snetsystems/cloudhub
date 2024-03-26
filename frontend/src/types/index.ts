@@ -50,7 +50,7 @@ import {
   Tag,
   Tags,
   TagValues,
-  SubFunction,
+  SelectedSubFunction,
 } from './queries'
 import {
   NewSource,
@@ -166,5 +166,5 @@ export {
   StatisticalGraphBoundsType,
   StatisticalGraphMinMaxValueType,
   StatisticalGraphScaleType,
-  SubFunction,
+  SelectedSubFunction,
 }

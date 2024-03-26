@@ -9,7 +9,6 @@ import {
   GroupBy,
   QueryConfig,
   Source,
-  SubFunction,
   TimeShift,
 } from 'src/types'
 
@@ -261,6 +260,7 @@ class FieldList extends PureComponent<Props, State> {
       isQuerySupportedByExplorer,
       type,
     } = this.props
+
     const {fields, groupBy} = query
     const isDisabled = !isKapacitorRule && !isQuerySupportedByExplorer
 
@@ -364,9 +364,15 @@ class FieldList extends PureComponent<Props, State> {
         return item.args[0].value === fieldFunc.value
       })
 
-    const result: SubFunction | null = temp?.[0]?.subFunc ?? null
+    const obj = {}
+    temp?.forEach(
+      i =>
+        (obj[i.value] = !!obj?.[i.value]
+          ? [...obj[i.value], i.subFunc]
+          : [i.subFunc])
+    )
 
-    return result
+    return obj
   }
 }
 
