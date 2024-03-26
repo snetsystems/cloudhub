@@ -89,7 +89,7 @@ $function-selector--subitem-active: $s-oragne2;
     .function-selector--item {
       flex: 0 0 calc(50% - 1px);
       outline: 1px solid $function-selector--subitem-active;
-      margin-right: 2px;
+      margin-right: 3px;
       padding: 0 3px;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -106,6 +106,7 @@ $function-selector--subitem-active: $s-oragne2;
     }
     &.right {
       right: 0;
+      margin-right: 2px;
     }
     animation: subfunction-animation 0.2s 0.1s forwards;
   }

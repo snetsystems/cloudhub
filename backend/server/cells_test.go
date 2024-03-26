@@ -476,7 +476,8 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 							  "value": "mean",
 							  "type": "func",
 							  "alias": "mean_usage_user",
-							  "args": [{"value": "usage_user", "type": "field", "alias": ""}]
+							  "args": [{"value": "usage_user", "type": "field", "alias": ""}],
+							  "subFunc": "derivative"
 							}
 						  ],
 						  "tags": {"cpu": ["ChristohersMBP2.lan"]},
@@ -490,6 +491,188 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 						},
 						"query":
 						  "SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)",
+						"source": null,
+						"type": "influxql"
+					  }
+					],
+					"axes": {
+					  "x": {
+						"bounds": ["",""],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "",
+						"scale": ""
+					  },
+					  "y": {
+						"bounds": ["",""],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "",
+						"scale": ""
+					  },
+					  "y2": {
+						"bounds": ["",""],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "",
+						"scale": ""
+					  }
+					},
+					"type": "line",
+					"colors": [
+					  {"type": "min", "hex": "#00C9FF", "id": "0", "name": "laser", "value": "0"},
+					  {
+						"type": "max",
+						"hex": "#9394FF",
+						"id": "1",
+						"name": "comet",
+						"value": "100"
+					  }
+					],
+					"note": "",
+					"noteVisibility": "default",
+					"graphOptions": {
+						"fillArea":true,
+						"showLine":true,
+						"showPoint":true,
+						"showTempVarCount":":top_count:"
+					},
+					"links": {
+					  "self":
+						"/cloudhub/v1/dashboards/6/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"
+					}
+				  }
+				  `))),
+			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user",args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","graphOptions":{"fillArea":true,"showLine":true,"showPoint":true,"showTempVarCount":":top_count:"},"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
+`,
+		},
+		{
+			name: "add subfunction",
+			ID:   "1",
+			CID:  "3c5c4102-fa40-4585-a8f9-917c77e37192",
+			DashboardsStore: &mocks.DashboardsStore{
+				UpdateF: func(ctx context.Context, target cloudhub.Dashboard) error {
+					return nil
+				},
+				GetF: func(ctx context.Context, ID cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+					return cloudhub.Dashboard{
+						ID: ID,
+						Cells: []cloudhub.DashboardCell{
+							{
+								ID:   "3c5c4102-fa40-4585-a8f9-917c77e37192",
+								W:    4,
+								H:    4,
+								Name: "Untitled Cell",
+								Queries: []cloudhub.DashboardQuery{
+									{
+										Command: "SELECT derivative(mean(\"cached\"),1s) AS \"derivative_mean_cached\" FROM \"Default\".\"autogen\".\"mem\" WHERE time > :dashboardTime: AND  time < :upperDashboardTime: GROUP BY :interval: FILL(null)",
+										QueryConfig: cloudhub.QueryConfig{
+											ID:              "3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e",
+											Database:        "Default",
+											Measurement:     "mem",
+											RetentionPolicy: "autogen",
+											Fields: []cloudhub.Field{
+												{
+													Value: "mean",
+													Type:  "func",
+													Alias: "derivative_mean_cached",
+													Args: []cloudhub.Field{
+														{
+															Value: "cached",
+															Type:  "field",
+														},
+													},
+													SubFunc: "derivative",
+												},
+											},
+
+											GroupBy: cloudhub.GroupBy{
+												Time: "2s",
+												Tags: []string{},
+											},
+											AreTagsAccepted: true,
+											Fill:            "null",
+											RawText:         strPtr("SELECT derivative(mean(\"cached\"),1s) AS \"derivative_mean_cached\" FROM \"Default\".\"autogen\".\"mem\" WHERE time > :dashboardTime: AND  time < :upperDashboardTime: GROUP BY :interval: FILL(null)"),
+											Range: &cloudhub.DurationRange{
+												Lower: "now() - 15m"},
+											Shifts: []cloudhub.TimeShift{},
+										},
+										Type: "influxql",
+									},
+								},
+								Axes: map[string]cloudhub.Axis{
+									"x": {
+										Bounds: []string{"", ""},
+									},
+									"y": {
+										Bounds: []string{"", ""},
+									},
+									"y2": {
+										Bounds: []string{"", ""},
+									},
+								},
+								Type: "line",
+								CellColors: []cloudhub.CellColor{
+									{
+										ID:    "0",
+										Type:  "min",
+										Hex:   "#00C9FF",
+										Name:  "laser",
+										Value: "0",
+									},
+									{
+										ID:    "1",
+										Type:  "max",
+										Hex:   "#9394FF",
+										Name:  "comet",
+										Value: "100",
+									},
+								},
+								NoteVisibility: "default",
+							},
+						},
+					}, nil
+				},
+			},
+			w: httptest.NewRecorder(),
+			r: httptest.NewRequest("POST", "/queries", bytes.NewReader([]byte(`
+				{
+					"i": "3c5c4102-fa40-4585-a8f9-917c77e37192",
+					"x": 0,
+					"y": 0,
+					"w": 4,
+					"h": 4,
+					"name": "Untitled Cell",
+					"queries": [
+					  {
+						"queryConfig": {
+						  "id": "3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e",
+						  "database": "telegraf",
+						  "measurement": "cpu",
+						  "retentionPolicy": "autogen",
+						  "fields": [
+							{
+							  "value": "mean",
+							  "type": "func",
+							  "alias": "mean_usage_user",
+							  "args": [{"value": "usage_user", "type": "field", "alias": ""}],
+							  "subFunc": "derivative"
+							}
+						  ],
+						  "tags": {"cpu": ["ChristohersMBP2.lan"]},
+						  "groupBy": {"time": "2s", "tags": []},
+						  "areTagsAccepted": true,
+						  "fill": "null",
+						  "rawText":
+							"SELECT derivative(mean(\"cached\"),1s) AS \"derivative_mean_cached\" FROM \"Default\".\"autogen\".\"mem\" WHERE time > :dashboardTime: AND  time < :upperDashboardTime: GROUP BY :interval: FILL(null)",
+						  "range": {"upper": "", "lower": "now() - 15m"},
+						  "shifts": []
+						},
+						"query":
+						  "SELECT derivative(mean(\"cached\"),1s) AS \"derivative_mean_cached\" FROM \"Default\".\"autogen\".\"mem\" WHERE time > :dashboardTime: AND  time < :upperDashboardTime: GROUP BY :interval: FILL(null)",
 						"source": null,
 						"type": "influxql"
 					  }
@@ -742,6 +925,232 @@ func Test_newCellResponses(t *testing.T) {
 									},
 								},
 								Tags: map[string][]string{"cpu": {"ChristohersMBP2.lan"}},
+								GroupBy: cloudhub.GroupBy{
+									Time: "2s",
+								},
+								AreTagsAccepted: true,
+								Fill:            "null",
+								RawText:         strPtr("SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)"),
+								Range: &cloudhub.DurationRange{
+									Lower: "now() - 15m",
+								},
+							},
+							Source: "",
+							Type:   "influxql",
+						},
+					},
+					Axes: map[string]cloudhub.Axis{
+						"x": {
+							Bounds: []string{"", ""},
+						},
+						"y": {
+							Bounds: []string{"", ""},
+						},
+						"y2": {
+							Bounds: []string{"", ""},
+						},
+					},
+					Type: "line",
+					CellColors: []cloudhub.CellColor{
+						{ID: "0", Type: "min", Hex: "#00C9FF", Name: "laser", Value: "0"},
+						{ID: "1", Type: "max", Hex: "#9394FF", Name: "comet", Value: "100"},
+					},
+					Legend: cloudhub.Legend{
+						Type:        "static",
+						Orientation: "bottom",
+					},
+					Note:           "",
+					NoteVisibility: "showWhenNoData",
+					GraphOptions: cloudhub.GraphOptions{
+						FillArea:         true,
+						ShowLine:         true,
+						ShowPoint:        true,
+						ShowTempVarCount: ":top_count:",
+					},
+				},
+			},
+			want: []dashboardCellResponse{
+				{
+					DashboardCell: cloudhub.DashboardCell{
+						ID:   "445f8dc0-4d73-4168-8477-f628690d18a3",
+						W:    4,
+						H:    4,
+						Name: "Untitled Cell",
+						Queries: []cloudhub.DashboardQuery{
+							{
+								Command: "SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)",
+								QueryConfig: cloudhub.QueryConfig{
+									ID:              "8d5ec6da-13a5-423e-9026-7bc45649766c",
+									Database:        "telegraf",
+									Measurement:     "cpu",
+									RetentionPolicy: "autogen",
+									Fields: []cloudhub.Field{
+										{
+											Value: "mean",
+											Type:  "func",
+											Alias: "mean_usage_user",
+											Args: []cloudhub.Field{
+												{
+													Value: "usage_user",
+													Type:  "field",
+												},
+											},
+										},
+									},
+									Tags: map[string][]string{"cpu": {"ChristohersMBP2.lan"}},
+									GroupBy: cloudhub.GroupBy{
+										Time: "2s",
+									},
+									AreTagsAccepted: true,
+									Fill:            "null",
+									RawText:         strPtr("SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)"),
+									Range: &cloudhub.DurationRange{
+										Lower: "now() - 15m",
+									},
+								},
+								Type: "influxql",
+							},
+						},
+						Axes: map[string]cloudhub.Axis{
+							"x": {
+								Bounds: []string{"", ""},
+							},
+							"y": {
+								Bounds: []string{"", ""},
+							},
+							"y2": {
+								Bounds: []string{"", ""},
+							},
+						},
+						Type: "line",
+						CellColors: []cloudhub.CellColor{
+							{
+								ID:    "0",
+								Type:  "min",
+								Hex:   "#00C9FF",
+								Name:  "laser",
+								Value: "0",
+							},
+							{
+								ID:    "1",
+								Type:  "max",
+								Hex:   "#9394FF",
+								Name:  "comet",
+								Value: "100",
+							},
+						},
+						Legend: cloudhub.Legend{
+							Type:        "static",
+							Orientation: "bottom",
+						},
+						Note:           "",
+						NoteVisibility: "showWhenNoData",
+						GraphOptions: cloudhub.GraphOptions{
+							FillArea:         true,
+							ShowLine:         true,
+							ShowPoint:        true,
+							ShowTempVarCount: ":top_count:",
+						},
+					},
+					Links: dashboardCellLinks{
+						Self: "/cloudhub/v1/dashboards/1/cells/445f8dc0-4d73-4168-8477-f628690d18a3"},
+				},
+			},
+		},
+		{
+			name: "nothing set",
+			dID:  cloudhub.DashboardID(1),
+			dcells: []cloudhub.DashboardCell{
+				{
+					ID:   "445f8dc0-4d73-4168-8477-f628690d18a3",
+					X:    0,
+					Y:    0,
+					W:    4,
+					H:    4,
+					Name: "Untitled Cell",
+				},
+			},
+			want: []dashboardCellResponse{
+				{
+					DashboardCell: cloudhub.DashboardCell{
+						ID:      "445f8dc0-4d73-4168-8477-f628690d18a3",
+						W:       4,
+						H:       4,
+						Name:    "Untitled Cell",
+						Queries: []cloudhub.DashboardQuery{},
+						Axes: map[string]cloudhub.Axis{
+							"x": {
+								Bounds: []string{"", ""},
+							},
+							"y": {
+								Bounds: []string{"", ""},
+							},
+							"y2": {
+								Bounds: []string{"", ""},
+							},
+						},
+						CellColors:     []cloudhub.CellColor{},
+						Legend:         cloudhub.Legend{},
+						Note:           "",
+						NoteVisibility: "default",
+					},
+					Links: dashboardCellLinks{
+						Self: "/cloudhub/v1/dashboards/1/cells/445f8dc0-4d73-4168-8477-f628690d18a3"},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newCellResponses(tt.dID, tt.dcells); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newCellResponses() = got-/want+ %s", gocmp.Diff(got, tt.want))
+			}
+		})
+	}
+}
+
+func Test_newAddSubFunc(t *testing.T) {
+	tests := []struct {
+		name   string
+		dID    cloudhub.DashboardID
+		dcells []cloudhub.DashboardCell
+		want   []dashboardCellResponse
+	}{
+		{
+			name: "add subFunc",
+			dID:  cloudhub.DashboardID(1),
+			dcells: []cloudhub.DashboardCell{
+				{
+					ID:   "445f8dc0-4d73-4168-8477-f628690d18a3",
+					X:    0,
+					Y:    0,
+					W:    4,
+					H:    4,
+					Name: "Untitled Cell",
+					Queries: []cloudhub.DashboardQuery{
+						{
+							Command: "SELECT derivative(mean(\"cached\"),1s) AS \"derivative_mean_cached\" FROM \"Default\".\"autogen\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: GROUP BY :interval: FILL(null)",
+							Label:   "",
+							QueryConfig: cloudhub.QueryConfig{
+								ID:              "8d5ec6da-13a5-423e-9026-7bc45649766c",
+								Database:        "Default",
+								Measurement:     "mem",
+								RetentionPolicy: "autogen",
+								Fields: []cloudhub.Field{
+									{
+										Value: "mean",
+										Type:  "func",
+										Alias: "derivative_mean_cached",
+										Args: []cloudhub.Field{
+											{
+												Value: "cached",
+												Type:  "field",
+												Alias: "",
+											},
+										},
+									},
+								},
+
 								GroupBy: cloudhub.GroupBy{
 									Time: "2s",
 								},

@@ -62,7 +62,6 @@ export interface FuncArg {
 export interface ApplyFuncsToFieldArgs {
   field: Field
   funcs: FuncArg[]
-  //jhyun
   subFunc?: SelectedSubFunction
 }
 

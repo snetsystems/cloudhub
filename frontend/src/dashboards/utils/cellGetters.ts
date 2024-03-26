@@ -186,13 +186,7 @@ export const getConfig = async (
 
   const range = getRangeForOriginalQuery(query, queryConfig.range)
 
-  // const regex = /(derivative|non-negative-derivative)\(\w+\("\w+"\),\w+\)/
-  console.log('result: ', {
-    ...queryConfig,
-    ...queryConfigParser(renderedQuery),
-    originalQuery: query,
-    range,
-  })
+  // const regex = /(derivative|non_negative_derivative)\(\w+\("\w+"\),\w+\)/
 
   if (
     queryConfig.database === '' &&
@@ -221,6 +215,7 @@ export const queryConfigParser = (query: string) => {
   const backQuery = splitQuery[1]
 
   const frontQuery = splitQuery[0].split('SELECT')
+
   if (frontQuery.length > 2) {
     //subquery filter
     return null
@@ -247,7 +242,7 @@ export const queryConfigParser = (query: string) => {
     fields: parseSelectClause(selectClause),
     areTagsAccepted: areTagsAccepted,
     groupBy: parseGroupByClause(groupByClause) ?? null,
-    tags: parseWhereClause(whereClause, areTagsAccepted) ?? '',
+    tags: parseWhereClause(whereClause, areTagsAccepted) ?? {},
     fill: parseFillClause(fillClause) ?? 'null',
   }
 }
@@ -275,9 +270,21 @@ export const parseSelectClause = (input: string) => {
       return {
         type: 'func',
         args: arg,
-        value: item[1]?.replaceAll(' ', ''),
-        alias: item[item.length - 1]?.replace('AS ', ''),
+        value: item[1]?.replaceAll(' ', '') ?? '',
+        alias: item[item.length - 1]?.replace('AS ', '') ?? '',
         subFunc: item[0],
+      }
+    } else if (item[0] === 'derivative' || 'non_negative_derivative') {
+      arg[0] = {
+        value: item[1]?.replaceAll(' ', ''),
+        type: 'field',
+        alias: '',
+      }
+      return {
+        type: 'func',
+        args: arg,
+        value: item[0]?.replaceAll(' ', '') ?? '',
+        alias: item[item.length - 1]?.replace('AS ', '') ?? '',
       }
     } else {
       arg[0] = {
@@ -288,8 +295,8 @@ export const parseSelectClause = (input: string) => {
       return {
         type: 'func',
         args: arg,
-        value: item[0]?.replaceAll(' ', ''),
-        alias: item[2]?.replace('AS ', ''),
+        value: item[0]?.replaceAll(' ', '') ?? '',
+        alias: item[2]?.replace('AS ', '') ?? '',
       }
     }
   })

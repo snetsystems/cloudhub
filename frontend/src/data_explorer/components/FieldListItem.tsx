@@ -101,7 +101,6 @@ class FieldListItem extends PureComponent<Props, State> {
           <FunctionSelector
             onApply={this.handleApplyFunctions}
             selectedItems={funcs}
-            //jhyun object로  Sync 작업
             selectedSubItems={subFuncs}
             singleSelect={isKapacitorRule}
           />
@@ -156,8 +155,6 @@ class FieldListItem extends PureComponent<Props, State> {
   ) => {
     const {onApplyFuncsToField, fieldName} = this.props
     const field: Field = {value: fieldName, type: 'field'}
-
-    console.log('apply: ', selectedSubFunc)
 
     onApplyFuncsToField({
       field,

@@ -319,10 +319,11 @@ type TriggerValues struct {
 
 // Field represent influxql fields and functions from the UI
 type Field struct {
-	Value interface{} `json:"value"`
-	Type  string      `json:"type"`
-	Alias string      `json:"alias"`
-	Args  []Field     `json:"args,omitempty"`
+	Value   interface{} `json:"value"`
+	Type    string      `json:"type"`
+	Alias   string      `json:"alias"`
+	Args    []Field     `json:"args,omitempty"`
+	SubFunc string      `json:"subFunc,omitempty"`
 }
 
 // GroupBy represents influxql group by tags from the UI
