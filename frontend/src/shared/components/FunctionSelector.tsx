@@ -5,6 +5,7 @@ import {
   INFLUXQL_DERIVATIVE,
   INFLUXQL_FUNCTIONS,
   INFLUXQL_NESTED_FUNCTIONS,
+  INFLUXQL_NON_DERIVATIVE,
 } from 'src/data_explorer/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {SelectedSubFunction} from 'src/types'
@@ -66,7 +67,7 @@ class FunctionSelector extends PureComponent<Props, State> {
                 <div
                   key={i}
                   onMouseOver={() => {
-                    if (this.isSelected(f)) {
+                    if (this.isSelected(f) && !this.isDerivative(f)) {
                       this.setState({isMouseOver: true})
                     }
                     this.setState({mouseNum: i})
@@ -77,6 +78,7 @@ class FunctionSelector extends PureComponent<Props, State> {
                   }}
                   className={classnames('function-selector--item', {
                     active: this.isSelected(f),
+                    longName: f === INFLUXQL_NON_DERIVATIVE,
                   })}
                   onClick={_.wrap(
                     f,
@@ -85,7 +87,6 @@ class FunctionSelector extends PureComponent<Props, State> {
                   data-test={`function-selector-item-${f}`}
                 >
                   <div>{f}</div>
-
                   {this.state.isMouseOver && i === this.state.mouseNum && (
                     <div
                       className={classnames(`function-selector--subitem`, {
@@ -149,24 +150,46 @@ class FunctionSelector extends PureComponent<Props, State> {
 
     let nextItems
 
-    if (item === INFLUXQL_DERIVATIVE) {
-      nextItems =
-        localSelectedItems.filter(i => i === item).length > 0 ? [] : [item]
+    if (this.isDerivative(item)) {
+      if (this.isSelectedDerivative()) {
+        nextItems = this.manageFnState(item, this.state.localSelectedItems)
+      } else {
+        nextItems =
+          localSelectedItems.filter(i => i === item).length > 0 ? [] : [item]
+      }
+      this.onDerivativeClick()
+    } else if (this.isSelectedDerivative() && item !== INFLUXQL_DERIVATIVE) {
+      nextItems = [item]
       this.onDerivativeClick()
     } else if (this.isSelected(item)) {
       nextItems = localSelectedItems?.filter(i => i !== item)
       this.onOneSubFuncDelete(item, '*')
-    } else if (
-      this.isSelected(INFLUXQL_DERIVATIVE) &&
-      item !== INFLUXQL_DERIVATIVE
-    ) {
-      nextItems = [item]
-      this.onDerivativeClick()
     } else {
       nextItems = [...localSelectedItems, item]
     }
 
     this.setState({localSelectedItems: nextItems})
+  }
+
+  private manageFnState = (item: string, ary: string[]): string[] => {
+    let result = []
+    if (this.isSelected(item)) {
+      result = ary.filter(i => i !== item)
+    } else {
+      result = [...ary, item]
+    }
+    return result
+  }
+
+  private isSelectedDerivative = (): boolean => {
+    return (
+      this.isSelected(INFLUXQL_DERIVATIVE) ||
+      this.isSelected(INFLUXQL_NON_DERIVATIVE)
+    )
+  }
+
+  private isDerivative = (item: string) => {
+    return item === INFLUXQL_DERIVATIVE || item === INFLUXQL_NON_DERIVATIVE
   }
 
   private onSingleSelect = (item: string): void => {
@@ -244,7 +267,7 @@ class FunctionSelector extends PureComponent<Props, State> {
 
   // When you click func btn, subfunc window hover make open
   private onClickMouseEvent = (item: string) => {
-    if (!this.isSelected(item)) {
+    if (!this.isSelected(item) && !this.isDerivative(item)) {
       this.setState({isMouseOver: true})
     } else {
       this.setState({isMouseOver: false})

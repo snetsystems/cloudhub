@@ -69,6 +69,17 @@ $function-selector--subitem-active: $s-oragne2;
     margin-bottom: 0;
   }
 
+  &.longName {
+    max-width: calc(25% - 2px);
+    div {
+      flex: 0 0 calc(90%);
+      padding: 0 4px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+  }
+
   &.active {
     background-color: $function-selector--item-active;
     color: $function-selector--text-active;
@@ -87,7 +98,7 @@ $function-selector--subitem-active: $s-oragne2;
       display: none;
     }
     .function-selector--item {
-      flex: 0 0 calc(50% - 1px);
+      flex: 0 0 calc(50% - 2px);
       outline: 1px solid $function-selector--subitem-active;
       margin-right: 3px;
       padding: 0 3px;

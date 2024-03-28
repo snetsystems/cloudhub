@@ -29,7 +29,10 @@ import {
 } from 'src/shared/reducers/helpers/fields'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import QueryBuilderFilter from './QueryBuilderFilter'
-import {INFLUXQL_DERIVATIVE} from 'src/data_explorer/constants'
+import {
+  INFLUXQL_DERIVATIVE,
+  INFLUXQL_NON_DERIVATIVE,
+} from 'src/data_explorer/constants'
 import {isStaticGraphType} from 'src/shared/utils/staticGraph'
 
 interface GroupByOption extends GroupBy {
@@ -311,7 +314,9 @@ class FieldList extends PureComponent<Props, State> {
 
     if (
       !!fieldFunc.funcs.find(i => {
-        return i.value === INFLUXQL_DERIVATIVE
+        return (
+          i.value === INFLUXQL_DERIVATIVE || i.value === INFLUXQL_NON_DERIVATIVE
+        )
       })
     ) {
       return applyFuncsToField(fieldFunc, {...groupBy, time: ''})

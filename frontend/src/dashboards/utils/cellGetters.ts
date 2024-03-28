@@ -187,12 +187,14 @@ export const getConfig = async (
   const range = getRangeForOriginalQuery(query, queryConfig.range)
 
   // const regex = /(derivative|non_negative_derivative)\(\w+\("\w+"\),\w+\)/
+  separateGroupByClause(renderedQuery)
 
   if (
     queryConfig.database === '' &&
     queryConfig.measurement === '' &&
-    queryConfigParser !== null
-    // regex.test(queryConfig.rawText?.replaceAll(' ', ''))
+    queryConfigParser !== null &&
+    (renderedQuery.includes('derivative') ||
+      renderedQuery.includes('non_negative_derivative'))
   ) {
     return {
       ...queryConfig,
@@ -236,6 +238,11 @@ export const queryConfigParser = (query: string) => {
   const fillClause = backQuerySplit[1]
 
   const areTagsAccepted: boolean = !whereClause.includes('!=')
+
+  const calcRegex = /([\+\-\*\/]+)/g
+  if (calcRegex.test(selectClause)) {
+    return null
+  }
 
   return {
     ...parseFromClause(fromClause),
@@ -394,10 +401,12 @@ export const parseWhereAccTag = (whereAry: string[]) => {
 
 export const parseGroupByClause = (input: string | null) => {
   let time = ''
-  const tags = input
+  const temp = groupByTagPick(input.toUpperCase())
+  const tags = temp
+    .toLowerCase()
     ?.split(',')
     ?.map(i => {
-      if (i.includes('time')) {
+      if (i.includes('time(')) {
         let regex = /(time|[^a-zA-Z0-9:]+)/g
         if (i.replaceAll(regex, '') === ':interval:') {
           time = 'auto'
@@ -405,7 +414,7 @@ export const parseGroupByClause = (input: string | null) => {
           time = i.replaceAll(regex, '')
         }
       } else {
-        let regex = /([^a-zA-Z0-9:]+)/g
+        let regex = /([\"\'\s]+)/g
         return i.replaceAll(regex, '')
       }
     })
@@ -416,8 +425,30 @@ export const parseGroupByClause = (input: string | null) => {
     time: time,
   }
 }
+
 export const parseFillClause = (input: string | null) => {
   let regex = /([^a-zA-Z0-9:]+)/g
 
   return input?.replace(regex, '')
+}
+
+//return GroupBy Clause tag ary
+export const separateGroupByClause = (input: string) => {
+  const reg = /\(([^()]+)\)/g
+  const seperate = input.toUpperCase().split('GROUP BY')
+  if (seperate[seperate.length - 1].replaceAll(reg, '').includes(')')) {
+    return parseGroupByClause(null)
+  } else {
+    return parseGroupByClause(groupByTagPick(seperate[seperate.length - 1]))
+  }
+}
+
+export const groupByTagPick = (input: string) => {
+  const soffset = input?.split('SOFFSET') ?? ''
+  const slimit = soffset[0].split('SLIMIT')
+  const offset = slimit[0].split('OFFSET')
+  const limit = offset[0].split('LIMIT')
+  const oderby = limit[0].split('ORDER BY')
+  const fill = oderby[0].split('FILL')[0]
+  return fill.toLowerCase()
 }
