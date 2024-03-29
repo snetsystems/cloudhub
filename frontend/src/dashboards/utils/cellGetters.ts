@@ -196,6 +196,12 @@ export const getConfig = async (
     (renderedQuery.includes('derivative') ||
       renderedQuery.includes('non_negative_derivative'))
   ) {
+    console.log('result: ', {
+      ...queryConfig,
+      ...queryConfigParser(renderedQuery),
+      originalQuery: query,
+      range,
+    })
     return {
       ...queryConfig,
       ...queryConfigParser(renderedQuery),
@@ -429,7 +435,7 @@ export const parseGroupByClause = (input: string | null) => {
 export const parseFillClause = (input: string | null) => {
   let regex = /([^a-zA-Z0-9:]+)/g
 
-  return input?.replace(regex, '')
+  return groupByTagPick(input?.replace(regex, ''))
 }
 
 //return GroupBy Clause tag ary
