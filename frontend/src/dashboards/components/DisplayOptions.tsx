@@ -22,6 +22,7 @@ import {
   TimeMachineContainer,
   TimeMachineContextConsumer,
 } from 'src/shared/utils/TimeMachineContext'
+import {separateGroupByClause} from 'src/dashboards/utils/cellGetters'
 
 // Constants
 import {HANDLE_VERTICAL} from 'src/shared/constants'
@@ -408,7 +409,11 @@ class DisplayOptions extends Component<Props, State> {
     const {queryConfigs} = this.props
 
     if (queryConfigs.length) {
-      return getGroupByTag(queryConfigs[0])
+      const tags = getGroupByTag(queryConfigs[0])
+      if (tags.length === 0 && queryConfigs?.[0]?.rawText) {
+        return separateGroupByClause(queryConfigs?.[0]?.rawText)?.tags
+      }
+      return tags
     }
     return []
   }
