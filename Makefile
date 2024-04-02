@@ -1,4 +1,4 @@
-VERSION = 1.4.7
+VERSION = 1.4.8
 ifeq ($(OS), Windows_NT)
 	GOBINDATA := $(shell go-bindata.exe --version 2>nil)
 else
