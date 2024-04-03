@@ -196,12 +196,6 @@ export const getConfig = async (
     (renderedQuery.includes('derivative') ||
       renderedQuery.includes('non_negative_derivative'))
   ) {
-    console.log('result: ', {
-      ...queryConfig,
-      ...queryConfigParser(renderedQuery),
-      originalQuery: query,
-      range,
-    })
     return {
       ...queryConfig,
       ...queryConfigParser(renderedQuery),
