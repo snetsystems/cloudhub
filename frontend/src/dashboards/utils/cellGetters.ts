@@ -186,7 +186,6 @@ export const getConfig = async (
 
   const range = getRangeForOriginalQuery(query, queryConfig.range)
 
-  // const regex = /(derivative|non_negative_derivative)\(\w+\("\w+"\),\w+\)/
   separateGroupByClause(renderedQuery)
 
   if (
@@ -197,8 +196,8 @@ export const getConfig = async (
       renderedQuery.includes('non_negative_derivative'))
   ) {
     return {
-      ...queryConfig,
       ...queryConfigParser(renderedQuery),
+      ...queryConfig,
       originalQuery: query,
       range,
     }
@@ -401,6 +400,13 @@ export const parseWhereAccTag = (whereAry: string[]) => {
 
 export const parseGroupByClause = (input: string | null) => {
   let time = ''
+  if (input === null) {
+    return {
+      tags: [],
+      time: time,
+    }
+  }
+
   const temp = groupByTagPick(input.toUpperCase())
   const tags = temp
     .toLowerCase()
@@ -428,8 +434,7 @@ export const parseGroupByClause = (input: string | null) => {
 
 export const parseFillClause = (input: string | null) => {
   let regex = /([^a-zA-Z0-9:]+)/g
-
-  return input?.replace(regex, '')
+  return groupByTagPick(input?.replace(regex, ''))
 }
 
 //return GroupBy Clause tag ary
@@ -450,5 +455,5 @@ export const groupByTagPick = (input: string) => {
   const limit = offset[0].split('LIMIT')
   const oderby = limit[0].split('ORDER BY')
   const fill = oderby[0].split('FILL')[0]
-  return fill.toLowerCase()
+  return fill?.toLowerCase()
 }
