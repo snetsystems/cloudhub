@@ -110,7 +110,6 @@ export const getCpuAndLoadForHosts = async (
       SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;
       SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m GROUP BY host;
       SELECT max("diskUsed") AS "diskUsed", "path" AS "diskPath" FROM (SELECT last("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host, path) GROUP BY host;
-      SELECT max("winDiskUsed") AS "winDiskUsed", instance FROM (SELECT 100 - last("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY host, instance) GROUP BY host;
       `,
     tempVars
   )
@@ -132,7 +131,6 @@ export const getCpuAndLoadForHosts = async (
   const allHostsSeries = getDeep<Series[]>(data, 'results.[6].series', [])
   const memUsedSeries = getDeep<Series[]>(data, 'results.[7].series', [])
   const diskUsadSeries = getDeep<Series[]>(data, 'results.[8].series', [])
-  const winDiskUsadSeries = getDeep<Series[]>(data, 'results.[9].series', [])
 
   allHostsSeries.forEach(s => {
     const hostnameIndex = s.columns.findIndex(col => col === 'value')
@@ -197,14 +195,6 @@ export const getCpuAndLoadForHosts = async (
   diskUsadSeries.forEach(s => {
     const meanIndex = s.columns.findIndex(col => col === 'diskUsed')
     const diskPathIndex = s.columns.findIndex(col => col === 'diskPath')
-    hosts[s.tags.host].disk =
-      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
-    hosts[s.tags.host].extraTag = {diskPath: s.values[0][diskPathIndex]}
-  })
-
-  winDiskUsadSeries.forEach(s => {
-    const meanIndex = s.columns.findIndex(col => col === 'winDiskUsed')
-    const diskPathIndex = s.columns.findIndex(col => col === 'instance')
     hosts[s.tags.host].disk =
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
     hosts[s.tags.host].extraTag = {diskPath: s.values[0][diskPathIndex]}
