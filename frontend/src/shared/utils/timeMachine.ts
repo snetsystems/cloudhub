@@ -7,6 +7,7 @@ import {getLineColors} from 'src/shared/constants/graphColorPalettes'
 import {
   getThresholdsListColors,
   getGaugeColors,
+  getThresholdsListType,
 } from 'src/shared/constants/thresholds'
 import {
   GET_STATIC_LEGEND_POSITION,
@@ -70,6 +71,7 @@ export function initialStateFromCell(
   if (colors) {
     initialState.gaugeColors = getGaugeColors(colors)
     initialState.thresholdsListColors = getThresholdsListColors(colors)
+    initialState.thresholdsListType = getThresholdsListType(colors)
     initialState.lineColors = getLineColors(colors)
   }
 

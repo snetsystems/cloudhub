@@ -161,7 +161,7 @@ export const getThresholdsListColors = colors => {
   return containsBaseColor ? formattedColors : formattedColorsWithBase
 }
 
-const getThresholdsListType = colors => {
+export const getThresholdsListType = colors => {
   const type = _.get(colors, ['0', 'type'], false)
 
   if (type && _.includes([THRESHOLD_TYPE_TEXT, THRESHOLD_TYPE_BG], type)) {
