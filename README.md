@@ -31,6 +31,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
 
 ## Key Differences against _Chronograf_ at this point(version).
 
+- Add **Statistic graphs** for data visualization.
 - Add a Basic(id/pw) authentication and management feature.
   - Regarding to above, an activity log is added.
 - Add **multi-tenant** feature across Users-Roles-Groups-DataSources.
@@ -56,6 +57,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
   - SWAN Router & SDPlex(Oncue) Features.
   - Bare-metal Server Remote Management via **IPMI**
   <p align="center">
+    <img src="./docs/images/dashboard.png"/>
     <img src="./docs/images/infrastructure.png"/>
     <img src="./docs/images/topology_map.png"/>
     <img src="./docs/images/VMWare.png"/>
@@ -122,7 +124,7 @@ Version >= v1.3.0: [Projects(Newly)](https://github.com/snetsystems?tab=projects
 
 ### Preparing dependencies
 
-- CloudHub works with **go 1.16.x**, **node 12.x**, and **yarn 1.15.x ~ 1.22.x**. Thus, you have to install that according to each offcial guide.<br>
+- CloudHub works with **go 1.16.x**, **node 12.x ~ node 14.x**, and **yarn 1.15.x ~ 1.22.x**. Thus, you have to install that according to each offcial guide.<br>
   - Yarn install example:
     ```bash
     $ npm install --global yarn@1.22.18
