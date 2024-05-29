@@ -31,7 +31,6 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
 
 ## Key Differences against _Chronograf_ at this point(version).
 
-- Add **Statistic graphs** for data visualization.
 - Add a Basic(id/pw) authentication and management feature.
   - Regarding to above, an activity log is added.
 - Add **multi-tenant** feature across Users-Roles-Groups-DataSources.
@@ -46,6 +45,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
   - Telegraf agent management and configuration editing and deploying remotely via **_SaltStack_ Rest API**.
 - Web SSH Terminal Console feature.
   - Connection to hosts using ssh protocol via CloudHub WebSocket Proxy.
+- Add **Statistic graphs** for data visualization.
 - Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
     - via **_VSphere_** API and **_Salt_**
@@ -57,10 +57,10 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
   - SWAN Router & SDPlex(Oncue) Features.
   - Bare-metal Server Remote Management via **IPMI**
   <p align="center">
-    <img src="./docs/images/dashboard.png"/>
     <img src="./docs/images/infrastructure.png"/>
     <img src="./docs/images/topology_map.png"/>
     <img src="./docs/images/VMWare.png"/>
+    <img src="./docs/images/dashboard.png"/>
     <img src="./docs/images/osp.png"/>
     <img src="./docs/images/k8s.png"/>
     <img src="./docs/images/AWS_01.png"/>
