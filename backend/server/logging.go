@@ -117,6 +117,11 @@ const (
 	MsgCSPCreated  = logMessage("Providor %s has been created.")
 	MsgCSPModified = logMessage("Providor %s has been modified.")
 	MsgCSPDeleted  = logMessage("Providor %s has been deleted.")
+
+	// Network Device
+	MsgNetWorkDeviceCreated  = logMessage("NetWorkDevice %s has been created.")
+	MsgNetWorkDeviceModified = logMessage("NetWorkDevice %s has been modified.")
+	MsgNetWorkDeviceDeleted  = logMessage("NetWorkDevice %s has been deleted.")
 )
 
 type proxyLogRequest struct {

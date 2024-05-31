@@ -887,6 +887,7 @@ func openService(
 			VspheresStore:           svc.VspheresStore(),
 			TopologiesStore:         svc.TopologiesStore(),
 			CSPStore:                svc.CSPStore(),
+			NetworkDeviceStore:      svc.NetworkDeviceStore(),
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,
