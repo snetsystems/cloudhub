@@ -54,14 +54,7 @@ const sections = (isUsingAuth, me, notify, organizations) => {
       url: 'prediction',
       name: 'Prediction',
       enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
-      component: (
-        <PredictionPage
-          me={me}
-          isUsingAuth={isUsingAuth}
-          notify={notify}
-          organizations={organizations}
-        />
-      ),
+      component: <PredictionPage />,
     },
   ]
 
@@ -80,10 +73,6 @@ const AiRoutePage = (props: Props) => {
     timeZone,
     onSetTimeZone,
   } = props
-
-  useEffect(() => {
-    console.log(props)
-  }, [])
 
   let providers = []
 

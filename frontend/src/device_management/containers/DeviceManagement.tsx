@@ -5,7 +5,6 @@ import {bindActionCreators} from 'redux'
 import Papa from 'papaparse'
 
 // Components
-import {Page} from 'src/reusable_ui'
 import AddDevicePage from 'src/device_management/components/AddDevicePage'
 import ImportDevicePage from 'src/device_management/components/ImportDevicePage'
 
@@ -16,7 +15,6 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {StepStatusKey} from 'src/reusable_ui/constants/wizard'
 import {DEFAULT_DEVICE_DATA, columns} from 'src/device_management/constants'
-import dummy from '../constants/dummy.json'
 
 // Type
 import {
@@ -182,7 +180,7 @@ class DeviceManagement extends PureComponent<Props, State> {
     )
   }
 
-  private data = dummy
+  private data = []
 
   private column = columns
 
