@@ -11,7 +11,11 @@ import {getNewDashboardCell} from 'src/dashboards/utils/cellGetters'
 import {Dashboard} from 'src/types'
 import {addDashboardCellAsync} from 'src/dashboards/actions'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {GRAPH_TYPES} from 'src/dashboards/graphics/graph'
+import {
+  OTHERS_GRAPH_TYPES,
+  GRAPH_TYPES,
+  STATISTICAL_GRAPH_TYPES,
+} from 'src/dashboards/graphics/graph'
 import {NewDefaultCell} from 'src/types/dashboards'
 
 // Constants
@@ -45,7 +49,32 @@ class DashboardEmpty extends Component<Props> {
         </p>
         <Authorized requiredRole={EDITOR_ROLE}>
           <div className="dashboard-empty--menu">
+            <h5 className="dashboard-empty--menu-title">TIME SERIES GRAPH</h5>
             {GRAPH_TYPES.map(graphType => (
+              <div
+                key={graphType.type}
+                className="dashboard-empty--menu-option"
+              >
+                <div onClick={this.handleAddCell(graphType.type)}>
+                  {graphType.graphic}
+                  <p>{graphType.menuOption}</p>
+                </div>
+              </div>
+            ))}
+            <h5 className="dashboard-empty--menu-title">STATISTICAL GRAPH</h5>
+            {STATISTICAL_GRAPH_TYPES.map(graphType => (
+              <div
+                key={graphType.type}
+                className="dashboard-empty--menu-option"
+              >
+                <div onClick={this.handleAddCell(graphType.type)}>
+                  {graphType.graphic}
+                  <p>{graphType.menuOption}</p>
+                </div>
+              </div>
+            ))}
+            <h5 className="dashboard-empty--menu-title">OTHERS</h5>
+            {OTHERS_GRAPH_TYPES.map(graphType => (
               <div
                 key={graphType.type}
                 className="dashboard-empty--menu-option"

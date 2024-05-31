@@ -111,9 +111,63 @@ function getRolesForUser(roles, user) {
   return buildRoles(userRoles)
 }
 
+export const getGroupByTag = queryConfig => {
+  return _.get(queryConfig, 'groupBy.tags', [])
+}
+
+export const buildDefaultXLabel = queryConfig => {
+  const groupByTag = _.get(queryConfig, 'groupBy.tags', [])
+
+  return _.join(groupByTag, ', ')
+}
+
 export const buildDefaultYLabel = queryConfig => {
   const {measurement} = queryConfig
   const fields = _.get(queryConfig, ['fields', '0'], [])
+  const isEmpty = !measurement && !fields.length
+
+  if (isEmpty) {
+    return ''
+  }
+
+  const walkZerothArgs = f => {
+    if (f.type === 'field') {
+      return f.value
+    }
+
+    return `${f.value}${_.get(f, ['0', 'args', 'value'], '')}`
+  }
+
+  const values = fieldWalk([fields], walkZerothArgs)
+
+  return `${measurement}.${values.join('_')}`
+}
+
+export const buildScatterChartDefaultXLabel = queryConfig => {
+  const {measurement} = queryConfig
+  const fields = _.get(queryConfig, ['fields', '0'], [])
+  const isEmpty = !measurement && !fields.length
+
+  if (isEmpty) {
+    return ''
+  }
+
+  const walkZerothArgs = f => {
+    if (f.type === 'field') {
+      return f.value
+    }
+
+    return `${f.value}${_.get(f, ['0', 'args', 'value'], '')}`
+  }
+
+  const values = fieldWalk([fields], walkZerothArgs)
+
+  return `${measurement}.${values.join('_')}`
+}
+
+export const buildScatterChartDefaultYLabel = queryConfig => {
+  const {measurement} = queryConfig
+  const fields = _.get(queryConfig, ['fields', '1'], [])
   const isEmpty = !measurement && !fields.length
 
   if (isEmpty) {

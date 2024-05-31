@@ -149,7 +149,7 @@ func HasCorrectLegend(c *cloudhub.DashboardCell) error {
 		return nil
 	}
 
-	if c.Legend.Type == "" || c.Legend.Orientation == "" {
+	if c.Legend.Orientation == "" {
 		return cloudhub.ErrInvalidLegend
 	}
 	if !oneOf(c.Legend.Orientation, "top", "bottom", "right", "left") {
@@ -157,7 +157,7 @@ func HasCorrectLegend(c *cloudhub.DashboardCell) error {
 	}
 
 	// Remember! if we add other types, update ErrInvalidLegendType
-	if !oneOf(c.Legend.Type, "static") {
+	if !oneOf(c.Legend.Type, "static", "") {
 		return cloudhub.ErrInvalidLegendType
 	}
 	return nil

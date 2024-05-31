@@ -17,6 +17,7 @@ export interface FieldOption {
   displayName: string
   visible: boolean
   direction?: '' | 'asc' | 'desc'
+  tempVar?: string
 }
 
 export interface TableOptions {
@@ -24,6 +25,13 @@ export interface TableOptions {
   sortBy: FieldOption
   wrapping?: string
   fixFirstColumn: boolean
+}
+
+export interface GraphOptions {
+  fillArea: boolean
+  showLine: boolean
+  showPoint: boolean
+  showTempVarCount: string
 }
 
 export interface Sort {
@@ -93,6 +101,7 @@ export interface Cell {
   inView: boolean
   note: string
   noteVisibility: NoteVisibility
+  graphOptions?: GraphOptions
 }
 
 export enum CellType {
@@ -108,6 +117,13 @@ export enum CellType {
   News = 'news',
   Guide = 'guide',
   Note = 'note',
+  StaticBar = 'staticBar',
+  StaticPie = 'staticPie',
+  StaticDoughnut = 'staticDoughnut',
+  StaticScatter = 'staticScatter',
+  StaticRadar = 'staticRadar',
+  StaticStackedBar = 'staticStackedBar',
+  StaticLineChart = 'staticLineChart',
 }
 
 interface DashboardLinks {
@@ -244,3 +260,5 @@ export interface Protoboard {
 }
 
 export type RefreshRate = number | null | undefined
+
+export type StaticLegendPositionType = 'top' | 'left' | 'bottom' | 'right'

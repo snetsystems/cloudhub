@@ -3,7 +3,7 @@
   "info": {
     "title": "CloudHub",
     "description": "API endpoints for CloudHub",
-    "version": "1.4.6"
+    "version": "1.5.0"
   },
   "schemes": ["http"],
   "basePath": "/cloudhub/v1",
@@ -6837,6 +6837,26 @@
             "digits": {
               "description": "The number of digits after decimal to display",
               "type": "integer"
+            }
+          }
+        },
+        "graphOptions": {
+          "type": "object",
+          "properties": {
+            "fillArea": {
+              "description": "Whether to fill graph area in Graph",
+              "type": "boolean"
+            },
+            "showLine": {
+              "description": "Whether to show graph lines in Graph",
+              "type": "boolean"
+            },
+            "showPoint": {
+              "description": "Whether to show graph points in Graph",
+              "type": "boolean"
+            },
+            "showTempVarCount": {
+              "type": "string"
             }
           }
         },

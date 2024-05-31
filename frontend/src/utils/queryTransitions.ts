@@ -93,6 +93,7 @@ export const toggleField = (
   if (isSelected) {
     // if list is all fields, remove that field
     // if list is all funcs, remove all funcs that match
+
     const newFields = removeField(value, fields)
     if (!newFields.length) {
       return {
@@ -157,7 +158,7 @@ export const removeFuncs = (
 
 export const applyFuncsToField = (
   query: QueryConfig,
-  {field, funcs = []}: ApplyFuncsToFieldArgs,
+  {field, funcs = [], subFunc}: ApplyFuncsToFieldArgs,
   groupBy: GroupBy
 ): QueryConfig => {
   const nextFields = query.fields.reduce((acc, f) => {
@@ -183,7 +184,12 @@ export const applyFuncsToField = (
     const fieldToChange = f.args.find(a => a.value === field.value)
     // Apply new funcs to field
     if (fieldToChange) {
-      const newFuncs = funcs.reduce((acc2, func) => {
+      const map = new Map()
+      funcs.forEach(i => {
+        map.set(JSON.stringify(i), i)
+      })
+
+      const newFuncs = Array.from(map.values()).reduce((acc2, func) => {
         const funcsToChange = getFuncsByFieldName(fieldToChange.value, acc)
         const dup = funcsToChange.find(a => a.value === func.value)
 
@@ -193,11 +199,22 @@ export const applyFuncsToField = (
 
         return [
           ...acc2,
-          {
-            ...func,
-            args: [field],
-            alias: `${func.value}_${field.value}`,
-          },
+          ...(!!subFunc?.[func.value]
+            ? subFunc[func.value].map(i => {
+                return {
+                  ...func,
+                  args: [field],
+                  alias: `${i}_${func.value}_${field.value}`,
+                  subFunc: i,
+                }
+              })
+            : [
+                {
+                  ...func,
+                  args: [field],
+                  alias: `${func.value}_${field.value}`,
+                },
+              ]),
         ]
       }, [])
 

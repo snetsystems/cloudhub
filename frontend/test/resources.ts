@@ -637,4 +637,10 @@ export const cell: Cell = {
   inView: true,
   note: 'I am the greatest cell!',
   noteVisibility: NoteVisibility.Default,
+  graphOptions: {
+    fillArea: false,
+    showLine: false,
+    showPoint: false,
+    showTempVarCount: '',
+  },
 }

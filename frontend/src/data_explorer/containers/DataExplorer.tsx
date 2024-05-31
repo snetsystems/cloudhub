@@ -117,7 +117,6 @@ type Props = PassedProps & ConnectedProps & Auth
 interface State {
   isWriteFormVisible: boolean
   isSendToDashboardVisible: boolean
-  isStaticLegend: boolean
   isComponentMounted: boolean
   activeQueryIndex: number
 }
@@ -130,7 +129,6 @@ export class DataExplorer extends PureComponent<Props, State> {
     this.state = {
       isWriteFormVisible: false,
       isSendToDashboardVisible: false,
-      isStaticLegend: false,
       isComponentMounted: false,
       activeQueryIndex: 0,
     }
@@ -184,7 +182,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       autoRefresh,
     } = this.props
 
-    const {isStaticLegend, isComponentMounted} = this.state
+    const {isComponentMounted} = this.state
 
     if (!isComponentMounted) {
       return <PageSpinner />
@@ -203,11 +201,9 @@ export class DataExplorer extends PureComponent<Props, State> {
             fluxLinks={fluxLinks}
             templates={this.templates}
             queryStatus={queryStatus}
-            isStaticLegend={isStaticLegend}
             editQueryStatus={editQueryStatus}
             updateSourceLink={updateSourceLink}
             onResetFocus={this.handleResetFocus}
-            onToggleStaticLegend={this.handleToggleStaticLegend}
             onActiveQueryIndexChange={this.onActiveQueryIndexChange}
             me={me}
             isUsingAuth={isUsingAuth}
@@ -341,11 +337,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       notify,
     } = this.props
 
-    const {
-      isSendToDashboardVisible,
-      isStaticLegend,
-      activeQueryIndex,
-    } = this.state
+    const {isSendToDashboardVisible, activeQueryIndex} = this.state
     return (
       <Authorized requiredRole={EDITOR_ROLE}>
         <OverlayTechnology visible={isSendToDashboardVisible}>
@@ -357,7 +349,6 @@ export class DataExplorer extends PureComponent<Props, State> {
             activeQueryIndex={activeQueryIndex}
             handleGetDashboards={handleGetDashboards}
             sendDashboardCell={sendDashboardCell}
-            isStaticLegend={isStaticLegend}
           />
         </OverlayTechnology>
       </Authorized>
@@ -431,10 +422,6 @@ export class DataExplorer extends PureComponent<Props, State> {
     this.setState({
       isSendToDashboardVisible: !this.state.isSendToDashboardVisible,
     })
-  }
-
-  private handleToggleStaticLegend = (isStaticLegend: boolean): void => {
-    this.setState({isStaticLegend})
   }
 
   private onActiveQueryIndexChange = (activeQueryIndex: number): void => {

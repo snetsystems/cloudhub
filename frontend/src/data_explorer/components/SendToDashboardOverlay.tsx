@@ -45,9 +45,11 @@ import {
   Cell,
   QueryType,
   Notification,
+  StaticLegendPositionType,
 } from 'src/types'
 import {VisualizationOptions} from 'src/types/dataExplorer'
 import {ColorString} from 'src/types/colors'
+import {GraphOptions} from 'src/types/dashboards'
 
 interface PassedProps {
   dashboards: Dashboard[]
@@ -57,13 +59,15 @@ interface PassedProps {
     dashboard: Dashboard,
     newCell: Partial<Cell>
   ) => Promise<{success: boolean; dashboard: Dashboard}>
-  isStaticLegend: boolean
   handleGetDashboards: () => Dashboard[]
   notify: (message: Notification) => void
   activeQueryIndex: number
 }
 
 interface ConnectedProps {
+  isStaticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
+  graphOptions: GraphOptions
   queryType: QueryType
   queryDrafts: CellQuery[]
   timeRange: TimeRange
@@ -357,7 +361,9 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       source,
       onCancel,
       visualizationOptions,
+      graphOptions,
       isStaticLegend,
+      staticLegendPosition,
       queryDrafts,
     } = this.props
     const {
@@ -415,7 +421,9 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       lineColors,
     })
 
-    const legend = isStaticLegend ? STATIC_LEGEND : {}
+    const legend = isStaticLegend
+      ? {...STATIC_LEGEND, orientation: staticLegendPosition}
+      : {orientation: staticLegendPosition}
 
     let selectedDashboards = this.selectedDashboards
 
@@ -452,6 +460,7 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
           noteVisibility,
           fieldOptions,
           tableOptions,
+          graphOptions,
         }
         return sendDashboardCell(dashboard, newCell)
       })
@@ -482,6 +491,9 @@ const ConnectedSendToDashboardOverlay = (props: PassedProps) => {
           queryDrafts,
           timeRange,
           draftScript,
+          graphOptions,
+          isStaticLegend,
+          staticLegendPosition,
         } = timeMachineContainer.state
 
         const visualizationOptions = {
@@ -502,11 +514,14 @@ const ConnectedSendToDashboardOverlay = (props: PassedProps) => {
         return (
           <SendToDashboardOverlay
             {...props}
+            graphOptions={graphOptions}
             queryType={queryType}
             queryDrafts={queryDrafts}
             timeRange={timeRange}
             script={draftScript}
             visualizationOptions={visualizationOptions}
+            isStaticLegend={isStaticLegend}
+            staticLegendPosition={staticLegendPosition}
           />
         )
       }}

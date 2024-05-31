@@ -24,7 +24,12 @@ import {
   DEFAULT_TIME_FORMAT,
   DEFAULT_DECIMAL_PLACES,
 } from 'src/dashboards/constants'
-import {DataType} from 'src/shared/constants'
+import {
+  DEFAULT_GRAPH_OPTIONS,
+  DEFAULT_SHOW_STATIC_LEGEND,
+  DEFAULT_STATIC_LEGEND_POSITION,
+  DataType,
+} from 'src/shared/constants'
 
 // Utils
 import {AutoRefresher, GlobalAutoRefresher} from 'src/utils/AutoRefresher'
@@ -47,15 +52,20 @@ import {
   RemoteDataState,
   QueryUpdateState,
   QueryType,
+  TemplateValue,
 } from 'src/types'
 import {
   TableOptions,
   FieldOption,
   DecimalPlaces,
   NoteVisibility,
+  StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {GrabDataForDownloadHandler} from 'src/types/layout'
 import {TimeSeriesServerResponse} from 'src/types/series'
+import StaticGraph from 'src/shared/components/static_graph/StaticGraph'
+import StaticGraphFormat from 'src/shared/components/static_graph/StaticGraphFormat'
 
 interface TypeAndData {
   dataType: DataType
@@ -79,7 +89,9 @@ interface Props {
   inView: boolean
   timeFormat: string
   cellHeight: number
+  graphOptions: GraphOptions
   staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
   autoRefresher: AutoRefresher
   manualRefresh: number
   resizerTopHeight: number
@@ -97,16 +109,18 @@ interface Props {
   onUpdateCellColors?: (bgColor: string, textColor: string) => void
   onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
   onUpdateVisType?: (type: CellType) => Promise<void>
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
 }
-
 class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
     inView: true,
     manualRefresh: 0,
-    staticLegend: false,
     timeFormat: DEFAULT_TIME_FORMAT,
     decimalPlaces: DEFAULT_DECIMAL_PLACES,
     autoRefresher: GlobalAutoRefresher,
+    staticLegend: DEFAULT_SHOW_STATIC_LEGEND,
+    staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
+    graphOptions: DEFAULT_GRAPH_OPTIONS,
   }
 
   public shouldComponentUpdate(nextProps: Props) {
@@ -249,6 +263,19 @@ class RefreshingGraph extends Component<Props> {
                         )
                       case CellType.Gauge:
                         return this.gauge(timeSeriesInfluxQL, timeSeriesFlux)
+                      case CellType.StaticBar:
+                      case CellType.StaticPie:
+                      case CellType.StaticDoughnut:
+                      case CellType.StaticScatter:
+                      case CellType.StaticRadar:
+                      case CellType.StaticStackedBar:
+                      case CellType.StaticLineChart:
+                        return this.StaticGraph(
+                          timeSeriesInfluxQL,
+                          timeSeriesFlux,
+                          loading,
+                          uuid
+                        )
                       default:
                         return this.lineGraph(
                           timeSeriesInfluxQL,
@@ -304,6 +331,9 @@ class RefreshingGraph extends Component<Props> {
       'manualRefresh',
       'timeRange',
       'inView',
+      'staticLegend',
+      'staticLegendPosition',
+      'graphOptions',
     ]
 
     const prevVisValues = _.pick(prevProps, visProps)
@@ -360,6 +390,8 @@ class RefreshingGraph extends Component<Props> {
       handleSetHoverTime,
       editorLocation,
       onUpdateFieldOptions,
+      templates,
+      onPickTemplate,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
@@ -415,6 +447,8 @@ class RefreshingGraph extends Component<Props> {
                 editorLocation={editorLocation}
                 handleSetHoverTime={handleSetHoverTime}
                 onUpdateFieldOptions={onUpdateFieldOptions}
+                onPickTemplate={onPickTemplate}
+                templates={templates}
               />
             )}
           </TableGraphFormat>
@@ -469,6 +503,7 @@ class RefreshingGraph extends Component<Props> {
       timeRange,
       cellHeight,
       decimalPlaces,
+      graphOptions,
       staticLegend,
       manualRefresh,
       onUpdateVisType,
@@ -491,11 +526,71 @@ class RefreshingGraph extends Component<Props> {
         key={manualRefresh}
         timeRange={timeRange}
         cellHeight={cellHeight}
+        graphOptions={graphOptions}
         staticLegend={staticLegend}
         decimalPlaces={decimalPlaces}
         onUpdateVisType={onUpdateVisType}
         handleSetHoverTime={handleSetHoverTime}
       />
+    )
+  }
+
+  private StaticGraph = (
+    influxQLData: TimeSeriesServerResponse[],
+    fluxData: FluxTable[],
+    loading: RemoteDataState,
+    uuid: string
+  ): JSX.Element => {
+    const {
+      axes,
+      type,
+      colors,
+      cellID,
+      queries,
+      decimalPlaces,
+      graphOptions,
+      staticLegend,
+      staticLegendPosition,
+      manualRefresh,
+      tableOptions,
+      fieldOptions,
+      templates,
+      onUpdateFieldOptions,
+      onPickTemplate,
+    } = this.props
+
+    const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
+
+    return (
+      <StaticGraphFormat
+        data={data as TimeSeriesServerResponse[]}
+        dataType={dataType}
+        fieldOptions={fieldOptions}
+        uuid={uuid}
+      >
+        {computedFieldOptions => (
+          <StaticGraph
+            data={data}
+            type={type}
+            axes={axes}
+            cellID={cellID}
+            colors={colors}
+            queries={queries}
+            loading={loading}
+            dataType={dataType}
+            key={manualRefresh}
+            tableOptions={tableOptions}
+            fieldOptions={computedFieldOptions}
+            graphOptions={graphOptions}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            decimalPlaces={decimalPlaces}
+            onUpdateFieldOptions={onUpdateFieldOptions}
+            onPickTemplate={onPickTemplate}
+            templates={templates}
+          />
+        )}
+      </StaticGraphFormat>
     )
   }
 

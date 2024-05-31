@@ -110,7 +110,6 @@ export const getCpuAndLoadForHosts = async (
       SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;
       SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m GROUP BY host;
       SELECT max("diskUsed") AS "diskUsed", "path" AS "diskPath" FROM (SELECT last("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host, path) GROUP BY host;
-      SELECT max("winDiskUsed") AS "winDiskUsed", instance FROM (SELECT 100 - last("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY host, instance) GROUP BY host;
       `,
     tempVars
   )
@@ -132,7 +131,6 @@ export const getCpuAndLoadForHosts = async (
   const allHostsSeries = getDeep<Series[]>(data, 'results.[6].series', [])
   const memUsedSeries = getDeep<Series[]>(data, 'results.[7].series', [])
   const diskUsadSeries = getDeep<Series[]>(data, 'results.[8].series', [])
-  const winDiskUsadSeries = getDeep<Series[]>(data, 'results.[9].series', [])
 
   allHostsSeries.forEach(s => {
     const hostnameIndex = s.columns.findIndex(col => col === 'value')
@@ -197,14 +195,6 @@ export const getCpuAndLoadForHosts = async (
   diskUsadSeries.forEach(s => {
     const meanIndex = s.columns.findIndex(col => col === 'diskUsed')
     const diskPathIndex = s.columns.findIndex(col => col === 'diskPath')
-    hosts[s.tags.host].disk =
-      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
-    hosts[s.tags.host].extraTag = {diskPath: s.values[0][diskPathIndex]}
-  })
-
-  winDiskUsadSeries.forEach(s => {
-    const meanIndex = s.columns.findIndex(col => col === 'winDiskUsed')
-    const diskPathIndex = s.columns.findIndex(col => col === 'instance')
     hosts[s.tags.host].disk =
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
     hosts[s.tags.host].extraTag = {diskPath: s.values[0][diskPathIndex]}
@@ -1551,10 +1541,10 @@ export const getHostsInfoWithIpmi = async (
        /inlet_temp|mb_cpu_in_temp|temp_mb_inlet/
      )}) GROUP BY hostname ) GROUP BY hostname;
      SELECT max("inside") AS "inside", "name" as "cpu_count" FROM ( SELECT last("value") AS "inside"  FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "hostname" != '' AND time > now() - 10m AND ("name" =~ ${new RegExp(
-       /cpu\d+_temp|cpu_temp_\d+|cpu_dimmg\d+_temp|temp_cpu\d+/
+       /cpu_temp|cpu\d+_temp|cpu_temp_\d+|cpu_dimmg\d+_temp|temp_cpu\d+/
      )}) GROUP BY hostname, "name" ) GROUP BY hostname;
      SELECT max("outlet") AS "outlet" FROM ( SELECT last("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "hostname" != '' AND time > now() - 10m AND ("name" =~ ${new RegExp(
-       /exhaust_temp|outlet_temp|mb_cpu_out_temp|temp_mb_outlet/
+       /system_temp|exhaust_temp|outlet_temp|mb_cpu_out_temp|temp_mb_outlet/
      )}) GROUP BY hostname ) GROUP BY hostname;
      SELECT last(value) as "ipmi_ip" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m GROUP BY  "hostname", "server" FILL(null);
      `,

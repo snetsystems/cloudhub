@@ -34,6 +34,7 @@ interface RenamableField {
   displayName: string
   visible: boolean
   direction?: '' | 'asc' | 'desc'
+  tempVar?: string
 }
 
 interface TableOptionsInterface {

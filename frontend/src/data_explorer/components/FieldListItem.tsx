@@ -5,7 +5,13 @@ import _ from 'lodash'
 import FunctionSelector from 'src/shared/components/FunctionSelector'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {ApplyFuncsToFieldArgs, Field, FieldFunc, FuncArg} from 'src/types'
+import {
+  ApplyFuncsToFieldArgs,
+  Field,
+  FieldFunc,
+  FuncArg,
+  SelectedSubFunction,
+} from 'src/types'
 
 interface Props {
   fieldName: string
@@ -15,6 +21,7 @@ interface Props {
   onApplyFuncsToField: (args: ApplyFuncsToFieldArgs) => void
   isKapacitorRule: boolean
   funcs: string[]
+  subFuncs: SelectedSubFunction | null
   isDisabled: boolean
 }
 
@@ -41,6 +48,7 @@ class FieldListItem extends PureComponent<Props, State> {
       fieldName,
       funcs,
       isDisabled,
+      subFuncs,
     } = this.props
     const {isOpen} = this.state
 
@@ -93,6 +101,7 @@ class FieldListItem extends PureComponent<Props, State> {
           <FunctionSelector
             onApply={this.handleApplyFunctions}
             selectedItems={funcs}
+            selectedSubItems={subFuncs}
             singleSelect={isKapacitorRule}
           />
         ) : null}
@@ -136,24 +145,32 @@ class FieldListItem extends PureComponent<Props, State> {
     const {onToggleField, fieldName} = this.props
 
     onToggleField({value: fieldName, type: 'field'})
+
     this.close()
   }
 
-  private handleApplyFunctions = (selectedFuncs: string[]) => {
+  private handleApplyFunctions = (
+    selectedFuncs: string[],
+    selectedSubFunc: SelectedSubFunction | null
+  ) => {
     const {onApplyFuncsToField, fieldName} = this.props
     const field: Field = {value: fieldName, type: 'field'}
 
     onApplyFuncsToField({
       field,
       funcs: selectedFuncs.map(val => this.makeFuncArg(val)),
+      subFunc: selectedSubFunc,
     })
+
     this.close()
   }
 
-  private makeFuncArg = (value: string): FuncArg => ({
-    value,
-    type: 'func',
-  })
+  private makeFuncArg = (value: string): FuncArg => {
+    return {
+      value,
+      type: 'func',
+    }
+  }
 
   private getFieldDesc = (): string => {
     const {fieldFuncs} = this.props

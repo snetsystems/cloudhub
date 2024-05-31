@@ -3,6 +3,7 @@ import _ from 'lodash'
 
 import {
   ApplyFuncsToFieldArgs,
+  CellType,
   Field,
   FieldFunc,
   GroupBy,
@@ -28,6 +29,11 @@ import {
 } from 'src/shared/reducers/helpers/fields'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import QueryBuilderFilter from './QueryBuilderFilter'
+import {
+  INFLUXQL_DERIVATIVE,
+  INFLUXQL_NON_DERIVATIVE,
+} from 'src/data_explorer/constants'
+import {isStaticGraphType} from 'src/shared/utils/staticGraph'
 
 interface GroupByOption extends GroupBy {
   menuOption: string
@@ -56,6 +62,7 @@ interface Props {
   initialGroupByTime?: string | null
   isQuerySupportedByExplorer?: boolean
   source: Source
+  type?: CellType
 }
 
 interface State {
@@ -116,17 +123,19 @@ class FieldList extends PureComponent<Props, State> {
       query: {database, measurement, fields = [], groupBy, fill, shifts},
       isQuerySupportedByExplorer,
       isKapacitorRule,
+      type,
     } = this.props
 
     const hasAggregates = numFunctions(fields) > 0
     const noDBorMeas = !database || !measurement
     const isDisabled = !isKapacitorRule && !isQuerySupportedByExplorer
+    const isStaticalGraph = isStaticGraphType(type)
 
     return (
       <div className="query-builder--column">
         <div className="query-builder--heading">
           <span>Fields</span>
-          {hasAggregates ? (
+          {hasAggregates && !isStaticalGraph ? (
             <QueryOptions
               fill={fill}
               shift={_.first(shifts)}
@@ -174,6 +183,7 @@ class FieldList extends PureComponent<Props, State> {
                   fieldFunc.value,
                   fields
                 )
+
                 const fieldFuncs = selectedFields.length
                   ? [this.addDesc(_.head(selectedFields), fieldFunc.desc)]
                   : [fieldFunc]
@@ -187,6 +197,7 @@ class FieldList extends PureComponent<Props, State> {
                     fieldName={fieldName}
                     fieldFuncs={fieldFuncs}
                     funcs={functionNames(funcs)}
+                    subFuncs={this.getSubFuncs(fields, fieldFunc)}
                     isKapacitorRule={isKapacitorRule}
                     isDisabled={isDisabled}
                   />
@@ -250,14 +261,19 @@ class FieldList extends PureComponent<Props, State> {
       initialGroupByTime: time,
       isKapacitorRule,
       isQuerySupportedByExplorer,
+      type,
     } = this.props
+
     const {fields, groupBy} = query
     const isDisabled = !isKapacitorRule && !isQuerySupportedByExplorer
 
     if (isDisabled) {
       return
     }
-    const initialGroupBy = {...groupBy, time}
+
+    const initialGroupBy = isStaticGraphType(type)
+      ? {...groupBy}
+      : {...groupBy, time}
 
     if (!_.size(fields)) {
       return isKapacitorRule
@@ -274,6 +290,7 @@ class FieldList extends PureComponent<Props, State> {
       removeFuncs,
       applyFuncsToField,
       initialGroupByTime: time,
+      type,
     } = this.props
     const {groupBy, fields} = query
     const {funcs} = fieldFunc
@@ -281,6 +298,28 @@ class FieldList extends PureComponent<Props, State> {
     // If one field has no funcs, all fields must have no funcs
     if (!_.size(funcs)) {
       return removeFuncs(fields)
+    }
+
+    if (
+      type === CellType.StaticBar ||
+      type === CellType.StaticPie ||
+      type === CellType.StaticDoughnut ||
+      type === CellType.StaticScatter ||
+      type === CellType.StaticRadar ||
+      type === CellType.StaticStackedBar ||
+      type === CellType.StaticLineChart
+    ) {
+      return applyFuncsToField(fieldFunc, groupBy)
+    }
+
+    if (
+      !!fieldFunc.funcs.find(i => {
+        return (
+          i.value === INFLUXQL_DERIVATIVE || i.value === INFLUXQL_NON_DERIVATIVE
+        )
+      })
+    ) {
+      return applyFuncsToField(fieldFunc, {...groupBy, time: ''})
     }
 
     // If there is no groupBy time, set one
@@ -319,6 +358,26 @@ class FieldList extends PureComponent<Props, State> {
         fields: _.uniqBy(newFields, 'value'), // do not duplicate items
       })
     })
+  }
+
+  private getSubFuncs = (fields: Field[], fieldFunc: Field) => {
+    const temp = fields
+      .filter(item => {
+        return !!item.subFunc
+      })
+      .filter(item => {
+        return item.args[0].value === fieldFunc.value
+      })
+
+    const obj = {}
+    temp?.forEach(
+      i =>
+        (obj[i.value] = !!obj?.[i.value]
+          ? [...obj[i.value], i.subFunc]
+          : [i.subFunc])
+    )
+
+    return obj
   }
 }
 

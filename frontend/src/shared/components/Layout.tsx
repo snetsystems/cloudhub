@@ -12,10 +12,20 @@ import {buildQueriesForLayouts} from 'src/utils/buildQueriesForLayouts'
 import {getDeep} from 'src/utils/wrappers'
 
 // Constants
-import {IS_STATIC_LEGEND} from 'src/shared/constants'
+import {
+  GET_STATIC_LEGEND_POSITION,
+  IS_STATIC_LEGEND,
+} from 'src/shared/constants'
 
 // Types
-import {TimeRange, Cell, Template, Source, QueryType} from 'src/types'
+import {
+  TimeRange,
+  Cell,
+  Template,
+  Source,
+  QueryType,
+  TemplateValue,
+} from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {GrabDataForDownloadHandler} from 'src/types/layout'
@@ -35,6 +45,7 @@ interface Props {
   onCloneCell: () => void
   onSummonOverlayTechnologies: () => void
   instance?: object
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
 }
 
 interface State {
@@ -95,6 +106,7 @@ class Layout extends Component<Props, State> {
       manualRefresh,
       templates,
       source,
+      onPickTemplate,
     } = this.props
     const {cellFluxData, visType} = this.state
     const showRawFluxData = visType === VisType.Table
@@ -115,6 +127,7 @@ class Layout extends Component<Props, State> {
         templates={templates}
         manualRefresh={manualRefresh}
         staticLegend={IS_STATIC_LEGEND(cell.legend)}
+        staticLegendPosition={GET_STATIC_LEGEND_POSITION(cell.legend)}
         grabDataForDownload={this.grabDataForDownload}
         grabFluxData={this.grabFluxData}
         queries={cell.queries}
@@ -124,6 +137,8 @@ class Layout extends Component<Props, State> {
         rawData={cellFluxData}
         showRawFluxData={showRawFluxData}
         visType={this.visType}
+        onPickTemplate={onPickTemplate}
+        graphOptions={cell.graphOptions}
       />
     )
   }
@@ -139,6 +154,7 @@ class Layout extends Component<Props, State> {
       manualRefresh,
       templates,
       instance,
+      onPickTemplate,
     } = this.props
 
     if (cell.isWidget) {
@@ -161,11 +177,14 @@ class Layout extends Component<Props, State> {
         templates={templates}
         manualRefresh={manualRefresh}
         staticLegend={IS_STATIC_LEGEND(cell.legend)}
+        staticLegendPosition={GET_STATIC_LEGEND_POSITION(cell.legend)}
         grabDataForDownload={this.grabDataForDownload}
         queries={buildQueriesForLayouts(cell, timeRange, host, instance)}
         source={this.getSource(cell, source, sources, source)}
         cellNote={cell.note}
         cellNoteVisibility={cell.noteVisibility}
+        onPickTemplate={onPickTemplate}
+        graphOptions={cell.graphOptions}
       />
     )
   }

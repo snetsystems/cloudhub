@@ -1,6 +1,10 @@
 import _ from 'lodash'
 
-import {TEMP_VAR_INTERVAL, AUTO_GROUP_BY} from 'src/shared/constants'
+import {
+  TEMP_VAR_INTERVAL,
+  AUTO_GROUP_BY,
+  INITIAL_UNIT_TIME,
+} from 'src/shared/constants'
 import {NULL_STRING} from 'src/shared/constants/queryFillOptions'
 import {
   TYPE_QUERY_CONFIG,
@@ -49,11 +53,11 @@ export function buildSelect(
   if (!database || !measurement || _.isEmpty(fields)) {
     return null
   }
-
   const rpSegment = retentionPolicy ? `"${retentionPolicy}"` : ''
   const fieldsClause = buildFields(fields, shift).join(', ')
   const fullyQualifiedMeasurement = `"${database}".${rpSegment}."${measurement}"`
   const statement = `SELECT ${fieldsClause} FROM ${fullyQualifiedMeasurement}`
+
   return statement
 }
 
@@ -121,7 +125,24 @@ function buildFields(
       }
       case 'func': {
         const args = buildFields(f.args, '', false)
+
+        if (f.value === 'derivative' || f.value === 'non_negative_derivative') {
+          const alias = f.alias ? ` AS "${f.alias}${shift}"` : ''
+          return `${f.value}(${args.join(', ')} , :interval:)${alias}`
+        }
+        // console.log('influxQL: ', args, fieldFuncs)
+        //   return `${f.value}(${args.join(', ')})${alias}`
+        else if (!!f.subFunc) {
+          const alias = ` AS "${f.alias}${shift}"`
+
+          return `${f.subFunc}(${f.value}(${args.join(
+            ', '
+          )}),${INITIAL_UNIT_TIME})${alias}`
+        }
+        //todo: redux
+
         const alias = f.alias ? ` AS "${f.alias}${shift}"` : ''
+
         return `${f.value}(${args.join(', ')})${alias}`
       }
       case 'infixfunc': {

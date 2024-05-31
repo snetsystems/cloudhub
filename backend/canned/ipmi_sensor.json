@@ -240,11 +240,11 @@
       "name": "Power Consumption - IPMI",
       "queries": [
         {
-          "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
+          "query": "SELECT mean(\"value\") AS \"mean_power_consumption\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
           "label": "Power Consumption",
           "groupbys": ["\"name\""],
           "wheres": [
-            "(\"name\" = 'total_power' OR \"name\" = 'pwr_consumption' OR \"name\" = 'pwr_system' OR (\"name\" =~ /^psu\\d+_pwr_in$/) )"
+            "(\"name\" = 'total_power' OR \"name\" = 'pwr_consumption' OR \"name\" = 'pw_consumption' OR \"name\" = 'pwr_system' OR (\"name\" =~ /^psu\\d+_pwr_in$/) )"
           ]
         }
       ],

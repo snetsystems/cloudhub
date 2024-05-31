@@ -365,7 +365,7 @@ interface State {
   isPinned: boolean
   layouts: Layout[]
   filteredLayouts: Layout[]
-  isDetectedHost: boolean
+  isDetectedServer: boolean
   focusedHost: string
   activeEditorTab: string
   activeDetailsTab: string
@@ -489,7 +489,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       selectItem: 'Host',
       layouts: [],
       filteredLayouts: [],
-      isDetectedHost: false,
+      isDetectedServer: false,
       focusedHost: '',
       activeEditorTab: 'monitoring',
       activeDetailsTab: 'details',
@@ -651,7 +651,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       cloudAccessInfos,
       selectItem,
       hostsObject,
-      isDetectedHost,
+      isDetectedServer,
       activeEditorTab,
     } = this.state
 
@@ -660,7 +660,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         (prevState.focusedHost !== focusedHost && focusedHost) ||
         (prevState.selected !== selected && focusedHost)
       ) {
-        const {filteredLayouts} = isDetectedHost
+        const {filteredLayouts} = isDetectedServer
           ? await this.getLayoutsforHost(layouts, focusedHost)
           : await this.getLayoutsforEtc(layouts, focusedHost)
         this.setState({filteredLayouts})
@@ -1773,19 +1773,19 @@ export class InventoryTopology extends PureComponent<Props, State> {
         })
       } else {
         const containerElement = getContainerElement(selectionCells[0].value)
-        const isDetectedHost = !_.isEmpty(
-          containerElement.getAttribute('data-detected')
+        const isDetectedServer = !_.isEmpty(
+          containerElement.getAttribute('data-type')
         )
-          ? containerElement.getAttribute('data-detected') === 'true'
-            ? true
-            : false
+          ? containerElement.getAttribute('data-type') !== 'Server'
+            ? false
+            : true
           : false
 
         const focusedHost = getFocusedHost(containerElement)
 
         this.setState({
           focusedInstance: null,
-          isDetectedHost,
+          isDetectedServer,
           focusedHost: focusedHost,
           activeEditorTab: activeEditorTab,
         })
@@ -3638,7 +3638,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const hostname = container.getAttribute('data-name')
     const dataGatherType = container.getAttribute('data-status')
 
-    if (isTooltipActiveHost === cellId) {
+    if (isTooltipActiveHost === cellId || dataGatherType === 'false') {
       return
     }
 

@@ -45,6 +45,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
   - Telegraf agent management and configuration editing and deploying remotely via **_SaltStack_ Rest API**.
 - Web SSH Terminal Console feature.
   - Connection to hosts using ssh protocol via CloudHub WebSocket Proxy.
+- Add **Statistic graphs** for data visualization.
 - Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
     - via **_VSphere_** API and **_Salt_**
@@ -59,6 +60,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
     <img src="./docs/images/infrastructure.png"/>
     <img src="./docs/images/topology_map.png"/>
     <img src="./docs/images/VMWare.png"/>
+    <img src="./docs/images/dashboard.png"/>
     <img src="./docs/images/osp.png"/>
     <img src="./docs/images/k8s.png"/>
     <img src="./docs/images/AWS_01.png"/>
@@ -122,7 +124,7 @@ Version >= v1.3.0: [Projects(Newly)](https://github.com/snetsystems?tab=projects
 
 ### Preparing dependencies
 
-- CloudHub works with **go 1.16.x**, **node 12.x**, and **yarn 1.15.x ~ 1.22.x**. Thus, you have to install that according to each offcial guide.<br>
+- CloudHub works with **go 1.16.x**, **node 12.x ~ node 14.x**, and **yarn 1.15.x ~ 1.22.x**. Thus, you have to install that according to each offcial guide.<br>
   - Yarn install example:
     ```bash
     $ npm install --global yarn@1.22.18

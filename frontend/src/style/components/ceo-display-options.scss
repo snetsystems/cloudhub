@@ -117,6 +117,7 @@ button.btn.btn-primary.btn-sm.gauge-controls--add-threshold {
   ------------------------------------------------------------------------------
 */
 .sort-field {
+  vertical-align: top;
   width: 48.9%;
   display: inline-block;
 }
@@ -124,4 +125,10 @@ button.btn.btn-primary.btn-sm.gauge-controls--add-threshold {
 .sort-direction {
   padding-left: 2.2%;
   width: 51.1% !important;
+}
+
+.show-count-field {
+  vertical-align: top;
+  width: 100%;
+  display: inline-block;
 }

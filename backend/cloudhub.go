@@ -30,8 +30,8 @@ const (
 	ErrInvalidAxis                     = Error("Unexpected axis in cell. Valid axes are 'x', 'y', and 'y2'")
 	ErrInvalidColorType                = Error("Invalid color type. Valid color types are 'min', 'max', 'threshold', 'text', and 'background'")
 	ErrInvalidColor                    = Error("Invalid color. Accepted color format is #RRGGBB")
-	ErrInvalidLegend                   = Error("Invalid legend. Both type and orientation must be set")
-	ErrInvalidLegendType               = Error("Invalid legend type. Valid legend type is 'static'")
+	ErrInvalidLegend                   = Error("Invalid legend. Orientation must be set")
+	ErrInvalidLegendType               = Error("Invalid legend type. Valid legend type must be 'static'")
 	ErrInvalidLegendOrient             = Error("Invalid orientation type. Valid orientation types are 'top', 'bottom', 'right', 'left'")
 	ErrUserAlreadyExists               = Error("user already exists")
 	ErrOrganizationNotFound            = Error("organization not found")
@@ -319,10 +319,11 @@ type TriggerValues struct {
 
 // Field represent influxql fields and functions from the UI
 type Field struct {
-	Value interface{} `json:"value"`
-	Type  string      `json:"type"`
-	Alias string      `json:"alias"`
-	Args  []Field     `json:"args,omitempty"`
+	Value   interface{} `json:"value"`
+	Type    string      `json:"type"`
+	Alias   string      `json:"alias"`
+	Args    []Field     `json:"args,omitempty"`
+	SubFunc string      `json:"subFunc,omitempty"`
 }
 
 // GroupBy represents influxql group by tags from the UI
@@ -696,6 +697,7 @@ type DashboardCell struct {
 	DecimalPlaces  DecimalPlaces    `json:"decimalPlaces"`
 	Note           string           `json:"note"`
 	NoteVisibility string           `json:"noteVisibility"`
+	GraphOptions   GraphOptions     `json:"graphOptions"`
 }
 
 // RenamableField is a column/row field in a DashboardCell of type Table
@@ -704,6 +706,15 @@ type RenamableField struct {
 	DisplayName  string `json:"displayName"`
 	Visible      bool   `json:"visible"`
 	Direction    string `json:"direction"`
+	TempVar      string `json:"tempVar"`
+}
+
+// GraphOptions is a type of options for a DashboardCell for graph
+type GraphOptions struct {
+	FillArea         bool   `json:"fillArea"`
+	ShowLine         bool   `json:"showLine"`
+	ShowPoint        bool   `json:"showPoint"`
+	ShowTempVarCount string `json:"showTempVarCount"`
 }
 
 // TableOptions is a type of options for a DashboardCell with type Table
@@ -798,6 +809,7 @@ type ProtoboardCell struct {
 	DecimalPlaces  DecimalPlaces    `json:"decimalPlaces"`
 	Note           string           `json:"note"`
 	NoteVisibility string           `json:"noteVisibility"`
+	GraphOptions   GraphOptions     `json:"graphOptions"`
 }
 
 // ProtoboardData is the data of a Protoboard that can be instantiated into a dashboard, including a collection of cells

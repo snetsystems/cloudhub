@@ -40,6 +40,7 @@ export interface Field {
   alias?: string
   args?: FieldArg[]
   desc?: string
+  subFunc?: string
 }
 
 export interface FieldArg {
@@ -61,6 +62,7 @@ export interface FuncArg {
 export interface ApplyFuncsToFieldArgs {
   field: Field
   funcs: FuncArg[]
+  subFunc?: SelectedSubFunction
 }
 
 export interface Tag {
@@ -115,6 +117,10 @@ export interface TimeRangeOption extends TimeRange {
   seconds: number
   inputValue: string
   menuOption: string
+}
+
+export interface SelectedSubFunction {
+  [key: string]: string[]
 }
 
 export type DashTimeV1Range = TimeRangeOption & {dashboardID: string}

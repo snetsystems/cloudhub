@@ -26,6 +26,8 @@ import {
   DecimalPlaces,
   NoteVisibility,
   ThresholdType,
+  StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {AutoRefresher} from 'src/utils/AutoRefresher'
 
@@ -46,6 +48,9 @@ interface ConnectedProps {
   thresholdsListType: ThresholdType
   gaugeColors: ColorNumber[]
   lineColors: ColorString[]
+  graphOptions: GraphOptions
+  staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
 }
 
 interface PassedProps {
@@ -54,7 +59,6 @@ interface PassedProps {
   queries: Query[]
   templates: Template[]
   onEditQueryStatus: (queryID: string, status: Status) => void
-  staticLegend: boolean
   manualRefresh: number
   editorLocation?: QueryUpdateState
   showRawFluxData?: boolean
@@ -82,6 +86,8 @@ const TimeMachineVisualization: FunctionComponent<Props> = props => {
             queries={props.queries}
             templates={props.templates}
             editQueryStatus={props.onEditQueryStatus}
+            graphOptions={props.graphOptions}
+            staticLegendPosition={props.staticLegendPosition}
             staticLegend={props.staticLegend}
             timeRange={props.timeRange}
             manualRefresh={props.manualRefresh}
@@ -128,6 +134,9 @@ const ConnectedTimeMachineVisualization = (props: PassedProps) => (
           lineColors={state.lineColors}
           note={state.note}
           noteVisibility={state.noteVisibility}
+          graphOptions={state.graphOptions}
+          staticLegend={state.isStaticLegend}
+          staticLegendPosition={state.staticLegendPosition}
           onUpdateFieldOptions={container.handleUpdateFieldOptions}
           onUpdateVisType={container.handleUpdateType}
         />

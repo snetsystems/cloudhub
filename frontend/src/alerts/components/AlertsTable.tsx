@@ -9,9 +9,8 @@ import {Link} from 'react-router'
 
 // Components
 import AlertsTableRow from 'src/alerts/components/AlertsTableRow'
-import InfiniteScroll from 'src/shared/components/InfiniteScroll'
 import SearchBar from 'src/alerts/components/SearchBar'
-
+import {Scrollbars} from 'react-custom-scrollbars'
 // Constants
 import {ALERTS_TABLE} from 'src/alerts/constants/tableSizing'
 
@@ -157,6 +156,16 @@ class AlertsTable extends PureComponent<Props, State> {
     }
   }
 
+  private handleMakeDiv = className => props => {
+    if (className === 'view') {
+      const customStyle = {...props}
+      customStyle.style.marginBottom = customStyle.style.marginBottom - 1
+      customStyle.style.marginRight = customStyle.style.marginRight - 1
+      return <div {...customStyle} className={`fancy-scroll--${className}`} />
+    } else {
+      return <div {...props} className={`fancy-scroll--${className}`} />
+    }
+  }
   private renderTable(): JSX.Element {
     const {
       source: {id},
@@ -168,6 +177,7 @@ class AlertsTable extends PureComponent<Props, State> {
       this.state.sortDirection
     )
     const {colName, colLevel, colTime, colHost, colValue} = ALERTS_TABLE
+
     return this.props.alerts.length ? (
       <div className="alert-history-table">
         <div className="alert-history-table--thead">
@@ -197,7 +207,7 @@ class AlertsTable extends PureComponent<Props, State> {
             className={this.sortableClasses('host')}
             style={{width: colHost}}
           >
-            Host <span className="icon caret-up" />
+            Source <span className="icon caret-up" />
           </div>
           <div
             onClick={this.changeSort('value')}
@@ -207,15 +217,27 @@ class AlertsTable extends PureComponent<Props, State> {
             Value <span className="icon caret-up" />
           </div>
         </div>
-        <InfiniteScroll
-          className="alert-history-table--tbody"
-          itemHeight={25}
-          items={alerts.map(alert => (
+        <Scrollbars
+          className={'alert-history-table--tbody fancy-scroll--container'}
+          autoHide={true}
+          autoHideTimeout={1000}
+          autoHideDuration={250}
+          autoHeight={false}
+          renderTrackHorizontal={this.handleMakeDiv('track-h')}
+          renderTrackVertical={this.handleMakeDiv('track-v')}
+          renderThumbHorizontal={this.handleMakeDiv('thumb-h')}
+          renderThumbVertical={this.handleMakeDiv('thumb-v')}
+          renderView={this.handleMakeDiv('view')}
+          key={window.innerHeight}
+        >
+          <div />
+          {alerts.map(alert => (
             <div className="alert-history-table--tr" key={uuid.v4()}>
               <AlertsTableRow sourceID={id} {...alert} timeZone={timeZone} />
             </div>
           ))}
-        />
+          <div />
+        </Scrollbars>
       </div>
     ) : (
       this.renderTableEmpty()
