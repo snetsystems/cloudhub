@@ -4869,6 +4869,220 @@
           }
         }
       }
+    },
+    "/ai/network/managements/devices": {
+      "get": {
+        "tags": ["Device Management"],
+        "summary": "Get all devices",
+        "description": "Retrieve a list of all devices.",
+        "responses": {
+          "200": {
+            "description": "A list of devices.",
+            "schema": {
+              "$ref": "#/definitions/DevicesResponse"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Device Management"],
+        "summary": "Create new devices",
+        "description": "Add new devices to the network.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DeviceRequest"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Devices created successfully",
+            "schema": {
+              "$ref": "#/definitions/CreateDevicesResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/devices/{id}": {
+      "get": {
+        "tags": ["Device Management"],
+        "summary": "Get a device by ID",
+        "description": "Retrieve the details of a specific device by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Device ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device details retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceResponse"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Device Management"],
+        "summary": "Delete a device by ID",
+        "description": "Remove a specific device by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Device ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Device deleted successfully"
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "patch": {
+          "tags": ["Device Management"],
+          "summary": "Update a device by ID",
+          "description": "Update the details of a specific device by ID.",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Device ID"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "required": true,
+              "schema": {
+                "$ref": "#/definitions/UpdateDeviceRequest"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Device updated successfully",
+              "schema": {
+                "$ref": "#/definitions/DeviceResponse"
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "schema": {
+                "$ref": "#/definitions/Error"
+              }
+            },
+            "404": {
+              "description": "Device not found",
+              "schema": {
+                "$ref": "#/definitions/Error"
+              }
+            },
+            "default": {
+              "description": "Internal server error",
+              "schema": {
+                "$ref": "#/definitions/Error"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snmp/validation": {
+      "post": {
+        "tags": ["SNMP Management"],
+        "summary": "Validate SNMP connection",
+        "description": "Perform a bulk test to validate SNMP connections.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SNMPConfig"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SNMP validation successful",
+            "schema": {
+              "$ref": "#/definitions/SNMPValidationResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
 
@@ -8366,6 +8580,412 @@
         "minion": "minion01",
         "links": {
           "self": "/cloudhub/v1/csp/1"
+        }
+      }
+    },
+    "DeviceRequest": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "description": "The organization to which the device belongs",
+          "example": "organization1"
+        },
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "hostname": {
+          "type": "string",
+          "description": "The hostname of the device",
+          "example": "device1"
+        },
+        "device_type": {
+          "type": "string",
+          "description": "The type of the device",
+          "example": "router"
+        },
+        "device_category": {
+          "type": "string",
+          "description": "The category of the device",
+          "example": "network"
+        },
+        "device_os": {
+          "type": "string",
+          "description": "The operating system of the device",
+          "example": "ios"
+        },
+        "ssh_config": {
+          "$ref": "#/definitions/SSHConfig",
+          "description": "The SSH configuration for the device"
+        },
+        "snmp_config": {
+          "$ref": "#/definitions/SNMPConfig",
+          "description": "The SNMP configuration for the device"
+        },
+        "device_vendor": {
+          "type": "string",
+          "description": "The vendor of the device",
+          "example": "Cisco"
+        }
+      },
+      "required": [
+        "organization",
+        "device_ip",
+        "hostname",
+        "device_type",
+        "device_category",
+        "device_os",
+        "ssh_config",
+        "snmp_config"
+      ]
+    },
+    "UpdateDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "organization": {
+          "type": "string",
+          "description": "The organization to which the device belongs",
+          "example": "organization1"
+        },
+        "hostname": {
+          "type": "string",
+          "description": "The hostname of the device",
+          "example": "device1"
+        },
+        "device_category": {
+          "type": "string",
+          "description": "The category of the device",
+          "example": "network"
+        },
+        "device_os": {
+          "type": "string",
+          "description": "The operating system of the device",
+          "example": "ios"
+        },
+        "ssh_config": {
+          "$ref": "#/definitions/SSHConfig",
+          "description": "The SSH configuration for the device"
+        },
+        "snmp_config": {
+          "$ref": "#/definitions/SNMPConfig",
+          "description": "The SNMP configuration for the device"
+        },
+        "device_vendor": {
+          "type": "string",
+          "description": "The vendor of the device",
+          "example": "Cisco"
+        }
+      },
+      "required": ["snmp_config"]
+    },
+    "DeviceResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier representing a device resource",
+          "example": "12345"
+        },
+        "organization": {
+          "type": "string",
+          "description": "The organization to which the device belongs",
+          "example": "organization1"
+        },
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "hostname": {
+          "type": "string",
+          "description": "The hostname of the device",
+          "example": "device1"
+        },
+        "device_type": {
+          "type": "string",
+          "description": "The type of the device",
+          "example": "router"
+        },
+        "device_category": {
+          "type": "string",
+          "description": "The category of the device",
+          "example": "network"
+        },
+        "device_os": {
+          "type": "string",
+          "description": "The operating system of the device",
+          "example": "ios"
+        },
+        "ssh_config": {
+          "$ref": "#/definitions/SSHConfig",
+          "description": "The SSH configuration for the device"
+        },
+        "snmp_config": {
+          "$ref": "#/definitions/SNMPConfig",
+          "description": "The SNMP configuration for the device"
+        },
+        "device_vendor": {
+          "type": "string",
+          "description": "The vendor of the device",
+          "example": "Cisco"
+        },
+        "links": {
+          "$ref": "#/definitions/SelfLinks",
+          "description": "Links to the resource"
+        }
+      }
+    },
+    "DevicesResponse": {
+      "type": "object",
+      "properties": {
+        "links": {
+          "$ref": "#/definitions/SelfLinks",
+          "description": "Links to the resource"
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeviceResponse"
+          }
+        }
+      }
+    },
+    "CreateDevicesResponse": {
+      "type": "object",
+      "properties": {
+        "failed_devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "description": "Index of the device in the request array"
+              },
+              "device_ip": {
+                "type": "string",
+                "description": "IP address of the device"
+              },
+              "errorMessage": {
+                "type": "string",
+                "description": "Error message for the failed device"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SNMPValidationRequest": {
+      "type": "object",
+      "properties": {
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of target devices for SNMP validation",
+          "example": ["192.168.0.1", "192.168.0.2"]
+        },
+        "community": {
+          "type": "string",
+          "description": "SNMP community string",
+          "example": "public"
+        },
+        "device_ip": {
+          "type": "string",
+          "description": "Device IP address",
+          "example": "192.168.0.1"
+        },
+        "port": {
+          "type": "integer",
+          "description": "SNMP UDP port",
+          "example": 161
+        },
+        "version": {
+          "type": "string",
+          "description": "SNMP version",
+          "example": "v2c"
+        },
+        "username": {
+          "type": "string",
+          "description": "SNMP user name (for SNMP v3)",
+          "example": "snmp_user"
+        },
+        "auth_password": {
+          "type": "string",
+          "description": "SNMP authentication password (for SNMP v3)",
+          "example": "auth_pass"
+        },
+        "auth_protocol": {
+          "type": "string",
+          "description": "SNMP authentication protocol (for SNMP v3)",
+          "example": "MD5"
+        },
+        "priv_password": {
+          "type": "string",
+          "description": "SNMP privacy password (for SNMP v3)",
+          "example": "priv_pass"
+        },
+        "priv_protocol": {
+          "type": "string",
+          "description": "SNMP privacy protocol (for SNMP v3)",
+          "example": "DES"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "SNMP protocol",
+          "example": "udp"
+        }
+      },
+      "required": ["community", "device_ip", "port", "version"]
+    },
+    "SNMPValidationResponse": {
+      "type": "object",
+      "properties": {
+        "failed_requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "description": "Index of the request in the array"
+              },
+              "device_ip": {
+                "type": "string",
+                "description": "Device IP address"
+              },
+              "errorMessage": {
+                "type": "string",
+                "description": "Error message for the failed request"
+              }
+            }
+          },
+          "description": "List of failed requests"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "DeviceType": {
+                "type": "string",
+                "description": "The type of the device"
+              },
+              "Hostname": {
+                "type": "string",
+                "description": "The hostname of the device"
+              },
+              "DeviceOS": {
+                "type": "string",
+                "description": "The operating system of the device"
+              }
+            }
+          },
+          "description": "List of SNMP validation results"
+        }
+      }
+    },
+    "SSHConfig": {
+      "type": "object",
+      "properties": {
+        "ssh_user_name": {
+          "type": "string",
+          "description": "SSH username",
+          "example": "admin"
+        },
+        "ssh_password": {
+          "type": "string",
+          "description": "SSH password",
+          "example": "password123"
+        },
+        "ssh_en_password": {
+          "type": "string",
+          "description": "SSH enable password",
+          "example": "enable_password"
+        },
+        "ssh_port": {
+          "type": "integer",
+          "description": "SSH port",
+          "example": 22
+        }
+      }
+    },
+    "SNMPConfig": {
+      "type": "object",
+      "properties": {
+        "snmp_community": {
+          "type": "string",
+          "description": "SNMP community string",
+          "example": "public"
+        },
+        "device_ip": {
+          "type": "string",
+          "description": "Device IP address",
+          "example": "192.168.0.1"
+        },
+        "snmp_udp_port": {
+          "type": "integer",
+          "description": "SNMP UDP port",
+          "example": 161
+        },
+        "snmp_version": {
+          "type": "string",
+          "description": "SNMP version",
+          "example": "v2c"
+        },
+        "snmp_user": {
+          "type": "string",
+          "description": "SNMP user name (for SNMP v3)",
+          "example": "snmp_user"
+        },
+        "snmp_auth_password": {
+          "type": "string",
+          "description": "SNMP authentication password (for SNMP v3)",
+          "example": "auth_pass"
+        },
+        "snmp_v3_auth_protocol": {
+          "type": "string",
+          "description": "SNMP authentication protocol (for SNMP v3)",
+          "example": "MD5"
+        },
+        "snmp_private_password": {
+          "type": "string",
+          "description": "SNMP privacy password (for SNMP v3)",
+          "example": "priv_pass"
+        },
+        "snmp_v3_private_protocol": {
+          "type": "string",
+          "description": "SNMP privacy protocol (for SNMP v3)",
+          "example": "DES"
+        },
+        "snmp_protocol": {
+          "type": "string",
+          "description": "SNMP protocol",
+          "example": "udp"
+        }
+      },
+      "required": [
+        "snmp_community",
+        "device_ip",
+        "snmp_udp_port",
+        "snmp_version"
+      ]
+    },
+    "SelfLinks": {
+      "type": "object",
+      "properties": {
+        "self": {
+          "type": "string",
+          "description": "Self link",
+          "example": "/cloudhub/v1/ai/network/managements/devices/12345"
         }
       }
     }
