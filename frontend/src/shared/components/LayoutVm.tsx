@@ -12,7 +12,10 @@ import {buildQueriesForVMLayouts} from 'src/utils/buildQueriesForVMLayouts'
 import {getDeep} from 'src/utils/wrappers'
 
 // Constants
-import {IS_STATIC_LEGEND} from 'src/shared/constants'
+import {
+  GET_STATIC_LEGEND_POSITION,
+  IS_STATIC_LEGEND,
+} from 'src/shared/constants'
 
 // Types
 import {TimeRange, Cell, Template, Source, QueryType} from 'src/types'
@@ -121,6 +124,7 @@ class LayoutVm extends Component<Props, State> {
         templates={templates}
         manualRefresh={manualRefresh}
         staticLegend={IS_STATIC_LEGEND(cell.legend)}
+        staticLegendPosition={GET_STATIC_LEGEND_POSITION(cell.legend)}
         grabDataForDownload={this.grabDataForDownload}
         grabFluxData={this.grabFluxData}
         queries={cell.queries}
@@ -130,6 +134,7 @@ class LayoutVm extends Component<Props, State> {
         rawData={cellFluxData}
         showRawFluxData={showRawFluxData}
         visType={this.visType}
+        graphOptions={cell.graphOptions}
       />
     )
   }
@@ -168,6 +173,7 @@ class LayoutVm extends Component<Props, State> {
         templates={templates}
         manualRefresh={manualRefresh}
         staticLegend={IS_STATIC_LEGEND(cell.legend)}
+        staticLegendPosition={GET_STATIC_LEGEND_POSITION(cell.legend)}
         grabDataForDownload={this.grabDataForDownload}
         queries={buildQueriesForVMLayouts(
           cell,
@@ -179,6 +185,7 @@ class LayoutVm extends Component<Props, State> {
         source={this.getSource(cell, source, sources, source)}
         cellNote={cell.note}
         cellNoteVisibility={cell.noteVisibility}
+        graphOptions={cell.graphOptions}
       />
     )
   }

@@ -79,7 +79,7 @@ interface PassedProps {
   sources: Source[]
   isInCEO: boolean
   templates: Template[]
-  isStaticLegend: boolean
+  dashboardTemplates?: Template[]
   onResetFocus: () => void
   updateSourceLink?: typeof updateSourceLinkAction
   notify: NotificationAction
@@ -88,7 +88,6 @@ interface PassedProps {
     status: Status,
     stateToUpdate: QueryUpdateState
   ) => void
-  onToggleStaticLegend: (isStaticLegend: boolean) => void
   children: (
     activeEditorTab: CEOTabs,
     onSetActiveEditorTab: (activeEditorTab: CEOTabs) => void
@@ -220,7 +219,7 @@ class TimeMachine extends PureComponent<Props, State> {
   }
 
   private renderVisualization = () => {
-    const {templates, isStaticLegend, manualRefresh} = this.props
+    const {templates, manualRefresh} = this.props
     const {autoRefresher, isViewingRawData} = this.state
 
     return (
@@ -229,7 +228,6 @@ class TimeMachine extends PureComponent<Props, State> {
         templates={templates}
         queries={this.queriesForVis}
         autoRefresher={autoRefresher}
-        staticLegend={isStaticLegend}
         manualRefresh={manualRefresh}
         editorLocation={this.stateToUpdate}
         showRawFluxData={isViewingRawData}
@@ -243,9 +241,9 @@ class TimeMachine extends PureComponent<Props, State> {
   }
 
   private get editorTab() {
-    const {onResetFocus, isStaticLegend, onToggleStaticLegend} = this.props
+    const {onResetFocus} = this.props
     const {activeEditorTab} = this.state
-
+    const {dashboardTemplates} = this.props
     if (activeEditorTab === CEOTabs.Queries) {
       if (this.isFluxSelected) {
         return this.fluxBuilder
@@ -256,9 +254,8 @@ class TimeMachine extends PureComponent<Props, State> {
 
     return (
       <DisplayOptions
+        dashboardTemplates={dashboardTemplates}
         queryConfigs={this.queriesWorkingDraft}
-        onToggleStaticLegend={onToggleStaticLegend}
-        staticLegend={isStaticLegend}
         onResetFocus={onResetFocus}
         stateToUpdate={this.stateToUpdate}
       />
@@ -500,7 +497,6 @@ class TimeMachine extends PureComponent<Props, State> {
     type: QueryType
   ): void => {
     const {updateSourceLink} = this.props
-
     if (updateSourceLink) {
       updateSourceLink(getDeep<string>(selectedSource, 'links.self', ''))
     }

@@ -19,7 +19,7 @@ import {TYPE_QUERY_CONFIG} from 'src/dashboards/constants'
 import {AUTO_GROUP_BY} from 'src/shared/constants'
 
 // Types
-import {QueryConfig, Source, TimeRange, Template, Me} from 'src/types'
+import {QueryConfig, Source, TimeRange, Template, Me, CellType} from 'src/types'
 
 const buildText = (q: QueryConfig): string => {
   return q.rawText || buildQuery(TYPE_QUERY_CONFIG, q.range, q) || ''
@@ -52,6 +52,7 @@ interface PassedProps {
   onDeleteQuery: (index: number) => void
   onEditRawText: (text: string) => Promise<void>
   onMetaQuerySelected: () => void
+  type?: CellType
 }
 
 interface Auth {
@@ -87,6 +88,7 @@ const QueryMaker: FunctionComponent<Props> = ({
   me,
   isUsingAuth,
   onMetaQuerySelected,
+  type,
 }) => {
   if (!activeQuery || !activeQuery.id) {
     return (
@@ -138,6 +140,7 @@ const QueryMaker: FunctionComponent<Props> = ({
             onToggleTagAcceptance={onToggleTagAcceptance}
             me={me}
             isUsingAuth={isUsingAuth}
+            type={type}
           />
         </div>
       </div>
@@ -163,6 +166,7 @@ const ConnectedQueryMaker = (props: PassedProps & Auth) => (
         onChooseMeasurement={container.handleChooseMeasurement}
         onApplyFuncsToField={container.handleApplyFuncsToField}
         onToggleTagAcceptance={container.handleToggleTagAcceptance}
+        type={container.state.type}
       />
     )}
   </TimeMachineContextConsumer>

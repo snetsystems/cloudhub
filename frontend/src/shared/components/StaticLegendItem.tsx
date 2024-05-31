@@ -25,7 +25,13 @@ class StaticLegend extends Component<Props> {
 
     return (
       <div className={this.className} onMouseDown={this.handleMouseDown}>
-        <span style={{color}}>{label}</span>
+        <div
+          style={{
+            backgroundColor: color as string,
+          }}
+          className="static-graph-static-legend--item--maker"
+        />
+        <span>{label}</span>
       </div>
     )
   }
@@ -39,7 +45,7 @@ class StaticLegend extends Component<Props> {
   private get className(): string {
     const {enabled, hoverEnabled} = this.props
 
-    return classnames('', {
+    return classnames('static-graph-static-legend--item', {
       disabled: !enabled,
       'static-legend--item': hoverEnabled,
       'static-legend--single': !hoverEnabled,

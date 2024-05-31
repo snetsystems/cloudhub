@@ -38,7 +38,7 @@ import {
   DecimalPlaces,
   Sort,
 } from 'src/types/dashboards'
-import {QueryUpdateState, TimeZones} from 'src/types'
+import {QueryUpdateState, TimeZones, Template, TemplateValue} from 'src/types'
 
 import {FormattedTableData} from 'src/shared/components/TableGraphFormat'
 
@@ -74,6 +74,8 @@ interface Props {
   colors: ColorString[]
   editorLocation?: QueryUpdateState
   onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
+  templates?: Template[]
 }
 
 interface State {
@@ -503,6 +505,19 @@ class TableGraph extends PureComponent<Props, State> {
     return timeIndex - hiddenBeforeTime
   }
 
+  private handleClickCell = (
+    tempVar: string,
+    isTempVarData: TimeSeriesValue
+  ) => async (): Promise<void> => {
+    const {templates, onPickTemplate} = this.props
+    const temp = templates && templates.find(f => f.tempVar === tempVar)
+    const val = temp && temp.values.find(f => f.value === isTempVarData)
+
+    if (typeof onPickTemplate === 'function' && temp !== undefined) {
+      onPickTemplate(temp, val)
+    }
+  }
+
   private cellRenderer = ({
     columnIndex,
     rowIndex,
@@ -517,7 +532,11 @@ class TableGraph extends PureComponent<Props, State> {
     } = this.props
 
     const {fieldOptions = [this.defaultTimeField], colors} = this.props
+    const foundVisible = fieldOptions.filter(m => m.visible === true)
+    const tempVar = foundVisible[columnIndex].tempVar
     const cellData = transformedData[rowIndex][columnIndex]
+    const tempVarData = rowIndex > 0 && tempVar !== '' ? cellData : ''
+    const isTempVar = tempVarData !== ''
     const isSorted = sort.field === cellData
     const isAscending = sort.direction === ASCENDING
     const isFirstRow = rowIndex === 0
@@ -575,6 +594,7 @@ class TableGraph extends PureComponent<Props, State> {
       'table-graph-cell__field-name': isFieldName,
       'table-graph-cell__sort-asc': isFieldName && isSorted && isAscending,
       'table-graph-cell__sort-desc': isFieldName && isSorted && !isAscending,
+      'table-graph-cell__template-variable': isTempVar,
     })
 
     const cellContents = this.createCellContents(
@@ -592,6 +612,8 @@ class TableGraph extends PureComponent<Props, State> {
         onClick={
           isFieldName && _.isString(cellData)
             ? this.handleClickFieldName(cellData)
+            : isTempVar
+            ? this.handleClickCell(tempVar, tempVarData)
             : null
         }
         data-column-index={columnIndex}

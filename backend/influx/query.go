@@ -519,19 +519,21 @@ func isTagFilter(exp influxql.Expr) (tagFilter, bool) {
 }
 
 var supportedFuncs = map[string]bool{
-	"mean":       true,
-	"median":     true,
-	"count":      true,
-	"min":        true,
-	"max":        true,
-	"sum":        true,
-	"first":      true,
-	"last":       true,
-	"spread":     true,
-	"stddev":     true,
-	"percentile": true,
-	"top":        true,
-	"bottom":     true,
+	"mean":                    true,
+	"median":                  true,
+	"count":                   true,
+	"min":                     true,
+	"max":                     true,
+	"sum":                     true,
+	"first":                   true,
+	"last":                    true,
+	"spread":                  true,
+	"stddev":                  true,
+	"percentile":              true,
+	"top":                     true,
+	"bottom":                  true,
+	"derivative":              true,
+	"non_negative_derivative": true,
 }
 
 // shortDur converts duration into the queryConfig duration format

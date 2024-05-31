@@ -11,27 +11,45 @@ import TableOptions from 'src/dashboards/components/TableOptions'
 import NoteOptions from 'src/dashboards/components/NoteOptions'
 import CellNoteEditor from 'src/shared/components/TimeMachine/CellNoteEditor'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import BarChartOptions from 'src/dashboards/components/BarChartOptions'
+import DoughnutPieChartOptions from 'src/dashboards/components/DoughnutPieChartOptions'
+import LineChartOptions from 'src/dashboards/components/LineChartOptions'
+import RadarChartOptions from 'src/dashboards/components/RadarChartOptions'
+import ScatterChartOptions from 'src/dashboards/components/ScatterChartOptions'
 
 // Utils
 import {
   TimeMachineContainer,
   TimeMachineContextConsumer,
 } from 'src/shared/utils/TimeMachineContext'
+import {separateGroupByClause} from 'src/dashboards/utils/cellGetters'
 
 // Constants
 import {HANDLE_VERTICAL} from 'src/shared/constants'
 import {DEFAULT_AXES} from 'src/dashboards/constants/cellEditor'
 
 // Types
-import {buildDefaultYLabel} from 'src/shared/presenters'
+import {
+  buildDefaultXLabel,
+  buildDefaultYLabel,
+  getGroupByTag,
+} from 'src/shared/presenters'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {Axes, QueryConfig, CellType, QueryUpdateState} from 'src/types'
+import {
+  Axes,
+  QueryConfig,
+  CellType,
+  QueryUpdateState,
+  Template,
+} from 'src/types'
 import {
   FieldOption,
   DecimalPlaces,
   NoteVisibility,
   ThresholdType,
   TableOptions as TableOptionsInterface,
+  StaticLegendPositionType,
+  GraphOptions,
 } from 'src/types/dashboards'
 import {ColorNumber, ColorString} from 'src/types/colors'
 
@@ -48,6 +66,15 @@ interface ConnectedProps {
   thresholdsListType: ThresholdType
   gaugeColors: ColorNumber[]
   lineColors: ColorString[]
+  dashboardTemplates: Template[]
+  graphOptions: GraphOptions
+  staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
+  onUpdateStaticLegendPosition: (
+    staticLegendPosition: StaticLegendPositionType
+  ) => void
+  onToggleStaticLegend: (isStaticLegend: boolean) => void
+  onUpdateGraphOptions: (graphOptions: GraphOptions) => void
   onUpdateDecimalPlaces: TimeMachineContainer['handleUpdateDecimalPlaces']
   onUpdateGaugeColors: TimeMachineContainer['handleUpdateGaugeColors']
   onUpdateAxes: TimeMachineContainer['handleUpdateAxes']
@@ -64,15 +91,15 @@ interface ConnectedProps {
 
 interface PassedProps {
   queryConfigs: QueryConfig[]
-  staticLegend: boolean
   stateToUpdate: QueryUpdateState
+  dashboardTemplates: Template[]
   onResetFocus: () => void
-  onToggleStaticLegend: (isStaticLegend: boolean) => void
 }
 
 type Props = PassedProps & ConnectedProps
 
 interface State {
+  defaultXLabel: string
   defaultYLabel: string
   proportions: number[]
 }
@@ -83,6 +110,7 @@ class DisplayOptions extends Component<Props, State> {
     super(props)
 
     this.state = {
+      defaultXLabel: this.defaultXLabel,
       defaultYLabel: this.defaultYLabel,
       proportions: [undefined, undefined, undefined],
     }
@@ -92,7 +120,10 @@ class DisplayOptions extends Component<Props, State> {
     const {queryConfigs} = prevProps
 
     if (!_.isEqual(queryConfigs[0], this.props.queryConfigs[0])) {
-      this.setState({defaultYLabel: this.defaultYLabel})
+      this.setState({
+        defaultXLabel: this.defaultXLabel,
+        defaultYLabel: this.defaultYLabel,
+      })
     }
   }
 
@@ -167,7 +198,9 @@ class DisplayOptions extends Component<Props, State> {
       lineColors,
       gaugeColors,
       staticLegend,
+      staticLegendPosition,
       onToggleStaticLegend,
+      onUpdateStaticLegendPosition,
       onResetFocus,
       queryConfigs,
       thresholdsListType,
@@ -175,6 +208,9 @@ class DisplayOptions extends Component<Props, State> {
       timeFormat,
       tableOptions,
       fieldOptions,
+      graphOptions,
+      dashboardTemplates,
+      onUpdateGraphOptions,
       onUpdateAxes,
       onUpdateDecimalPlaces,
       onUpdateGaugeColors,
@@ -186,7 +222,7 @@ class DisplayOptions extends Component<Props, State> {
       onUpdateTimeFormat,
     } = this.props
 
-    const {defaultYLabel} = this.state
+    const {defaultXLabel, defaultYLabel} = this.state
 
     switch (type) {
       case CellType.Gauge:
@@ -236,16 +272,127 @@ class DisplayOptions extends Component<Props, State> {
             onUpdateThresholdsListType={onUpdateThresholdsListType}
           />
         )
+      case CellType.StaticBar:
+      case CellType.StaticStackedBar:
+        return (
+          <BarChartOptions
+            axes={this.axes}
+            fieldOptions={fieldOptions}
+            groupByTag={this.groupByTag}
+            tableOptions={tableOptions}
+            type={type}
+            lineColors={lineColors}
+            graphOptions={graphOptions}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            defaultXLabel={defaultXLabel}
+            defaultYLabel={defaultYLabel}
+            dashboardTemplates={dashboardTemplates}
+            onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
+            onUpdateLineColors={onUpdateLineColors}
+            onUpdateFieldOptions={onUpdateFieldOptions}
+            onUpdateTableOptions={onUpdateTableOptions}
+          />
+        )
+      case CellType.StaticPie:
+      case CellType.StaticDoughnut:
+        return (
+          <DoughnutPieChartOptions
+            axes={this.axes}
+            fieldOptions={fieldOptions}
+            groupByTag={this.groupByTag}
+            tableOptions={tableOptions}
+            type={type}
+            lineColors={lineColors}
+            graphOptions={graphOptions}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            defaultYLabel={defaultYLabel}
+            dashboardTemplates={dashboardTemplates}
+            onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
+            onUpdateLineColors={onUpdateLineColors}
+            onUpdateFieldOptions={onUpdateFieldOptions}
+            onUpdateTableOptions={onUpdateTableOptions}
+          />
+        )
+      case CellType.StaticLineChart:
+        return (
+          <LineChartOptions
+            axes={this.axes}
+            fieldOptions={fieldOptions}
+            groupByTag={this.groupByTag}
+            tableOptions={tableOptions}
+            type={type}
+            lineColors={lineColors}
+            graphOptions={graphOptions}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            defaultXLabel={defaultXLabel}
+            defaultYLabel={defaultYLabel}
+            dashboardTemplates={dashboardTemplates}
+            onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
+            onUpdateLineColors={onUpdateLineColors}
+            onUpdateFieldOptions={onUpdateFieldOptions}
+            onUpdateTableOptions={onUpdateTableOptions}
+          />
+        )
+      case CellType.StaticRadar:
+        return (
+          <RadarChartOptions
+            axes={this.axes}
+            type={type}
+            lineColors={lineColors}
+            graphOptions={graphOptions}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            dashboardTemplates={dashboardTemplates}
+            onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
+            onUpdateLineColors={onUpdateLineColors}
+          />
+        )
+      case CellType.StaticScatter:
+        return (
+          <ScatterChartOptions
+            axes={this.axes}
+            type={type}
+            lineColors={lineColors}
+            graphOptions={graphOptions}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            dashboardTemplates={dashboardTemplates}
+            defaultXLabel={defaultXLabel}
+            defaultYLabel={defaultYLabel}
+            onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
+            onUpdateLineColors={onUpdateLineColors}
+          />
+        )
       default:
         return (
           <AxesOptions
             axes={this.axes}
             type={type}
             lineColors={lineColors}
+            graphOptions={graphOptions}
             staticLegend={staticLegend}
             defaultYLabel={defaultYLabel}
             decimalPlaces={decimalPlaces}
             onUpdateAxes={onUpdateAxes}
+            onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
             onUpdateLineColors={onUpdateLineColors}
             onUpdateDecimalPlaces={onUpdateDecimalPlaces}
@@ -256,6 +403,28 @@ class DisplayOptions extends Component<Props, State> {
 
   private get axes(): Axes {
     return this.props.axes || DEFAULT_AXES
+  }
+
+  private get groupByTag(): string[] {
+    const {queryConfigs} = this.props
+
+    if (queryConfigs.length) {
+      const tags = getGroupByTag(queryConfigs[0])
+      if (tags.length === 0 && queryConfigs?.[0]?.rawText) {
+        return separateGroupByClause(queryConfigs?.[0]?.rawText)?.tags
+      }
+      return tags
+    }
+    return []
+  }
+
+  private get defaultXLabel(): string {
+    const {queryConfigs} = this.props
+    if (queryConfigs.length) {
+      return buildDefaultXLabel(queryConfigs[0])
+    }
+
+    return ''
   }
 
   private get defaultYLabel(): string {
@@ -288,6 +457,14 @@ const ConnectedDisplayOptions = (props: PassedProps) => {
           thresholdsListType={timeMachineContainer.state.thresholdsListType}
           gaugeColors={timeMachineContainer.state.gaugeColors}
           lineColors={timeMachineContainer.state.lineColors}
+          graphOptions={timeMachineContainer.state.graphOptions}
+          staticLegend={timeMachineContainer.state.isStaticLegend}
+          staticLegendPosition={timeMachineContainer.state.staticLegendPosition}
+          onUpdateStaticLegendPosition={
+            timeMachineContainer.handleUpdateStaticLegendPosition
+          }
+          onToggleStaticLegend={timeMachineContainer.handleToggleStaticLegend}
+          onUpdateGraphOptions={timeMachineContainer.handleUpdateGraphOptions}
           onUpdateType={timeMachineContainer.handleUpdateType}
           onUpdateAxes={timeMachineContainer.handleUpdateAxes}
           onUpdateTableOptions={timeMachineContainer.handleUpdateTableOptions}

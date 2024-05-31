@@ -20,6 +20,7 @@ const Dashboard = ({
   onSummonOverlayTechnologies,
   setScrollTop,
   inView,
+  onPickTemplate,
 }) => {
   const cells = dashboard.cells.map(cell => {
     const dashboardCell = {
@@ -61,6 +62,7 @@ const Dashboard = ({
             onPositionChange={onPositionChange}
             templates={templatesIncludingDashTime}
             onSummonOverlayTechnologies={onSummonOverlayTechnologies}
+            onPickTemplate={onPickTemplate}
           />
         ) : (
           <DashboardEmpty dashboard={dashboard} />
@@ -100,6 +102,7 @@ Dashboard.propTypes = {
   onDeleteCell: func,
   onCloneCell: func,
   onSummonOverlayTechnologies: func,
+  onPickTemplate: func,
   source: shape({
     links: shape({
       proxy: string,

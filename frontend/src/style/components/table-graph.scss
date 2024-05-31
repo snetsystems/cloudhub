@@ -104,6 +104,17 @@
   &__sort-desc:before {
     transform: translateY(-50%) rotate(0deg);
   }
+  &__template-variable {
+    transition: color 0.25s ease;
+    color: $s-brown;
+    cursor: pointer;
+
+    &.focused,
+    &:hover,
+    &:active {
+      color: $s-orange;
+    }
+  }
 }
 
 .ReactVirtualized__Grid {

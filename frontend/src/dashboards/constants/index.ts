@@ -1,3 +1,4 @@
+import {DEFAULT_GRAPH_OPTIONS} from 'src/shared/constants'
 import {
   DEFAULT_VERTICAL_TIME_AXIS,
   DEFAULT_FIX_FIRST_COLUMN,
@@ -27,6 +28,14 @@ export interface TimeField {
   displayName: string
   visible: boolean
   direction?: '' | 'asc' | 'desc'
+  tempVar?: ''
+}
+
+export const DEFAULT_STATISTICAL_TIME_FIELD: TimeField = {
+  internalName: '',
+  displayName: '',
+  visible: true,
+  direction: 'asc',
 }
 
 export const DEFAULT_INFLUXQL_TIME_FIELD: TimeField = {
@@ -34,6 +43,7 @@ export const DEFAULT_INFLUXQL_TIME_FIELD: TimeField = {
   displayName: '',
   visible: true,
   direction: 'asc',
+  tempVar: '',
 }
 
 export const DEFAULT_FLUX_TIME_FIELD: TimeField = {
@@ -41,6 +51,7 @@ export const DEFAULT_FLUX_TIME_FIELD: TimeField = {
   displayName: '',
   visible: true,
   direction: 'asc',
+  tempVar: '',
 }
 
 export const DEFAULT_TABLE_OPTIONS = {
@@ -85,6 +96,7 @@ export const NEW_DEFAULT_DASHBOARD_CELL: NewDefaultCell = {
   inView: true,
   note: '',
   noteVisibility: NoteVisibility.Default,
+  graphOptions: DEFAULT_GRAPH_OPTIONS,
 }
 
 interface EmptyDefaultDashboardCell {

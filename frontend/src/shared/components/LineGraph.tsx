@@ -25,7 +25,7 @@ import {
 
 // Types
 import {ColorString} from 'src/types/colors'
-import {DecimalPlaces} from 'src/types/dashboards'
+import {DecimalPlaces, GraphOptions} from 'src/types/dashboards'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {
   Query,
@@ -49,6 +49,7 @@ interface Props {
   dataType: DataType
   cellID: string
   cellHeight: number
+  graphOptions: GraphOptions
   staticLegend: boolean
   onZoom: () => void
   handleSetHoverTime: () => void
@@ -148,10 +149,12 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       dataType,
       timeRange,
       cellHeight,
+      graphOptions,
       staticLegend,
       decimalPlaces,
       handleSetHoverTime,
     } = this.props
+    const {fillArea, showLine, showPoint} = graphOptions
 
     if (!this.state.timeSeries) {
       return <h3 className="graph-spinner" />
@@ -159,11 +162,11 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
 
     const {labels, timeSeries, dygraphSeries} = this.state.timeSeries
 
+    const isBarType = type === 'bar'
     const options = {
       rightGap: 0,
       yRangePad: 10,
       labelsKMB: true,
-      fillGraph: true,
       axisLabelWidth: 60,
       animatedZooms: true,
       drawAxesAtZero: true,
@@ -172,6 +175,10 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       connectSeparatedPoints: true,
       stepPlot: type === 'line-stepplot',
       stackedGraph: type === 'line-stacked',
+      fillGraph: isBarType ? false : fillArea,
+      pointSize: isBarType ? 0 : showPoint ? 3 : 0,
+      drawPoints: isBarType ? false : showPoint,
+      strokeWidth: isBarType ? 0 : showLine ? 1 : 0,
     }
 
     return (

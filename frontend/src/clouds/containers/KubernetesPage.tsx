@@ -1197,7 +1197,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     const relation = _.map(_.unionBy(findData), (name: string): string =>
-      name.replace(/\:/g, '\\:').replace(/\./g, '\\.')
+      name.replace(/[.:*+?^${}()|[\]\\]/g, '\\$&')
     )
 
     return relation
@@ -2722,7 +2722,14 @@ class KubernetesPage extends PureComponent<Props, State> {
           ).includes(f['name'])
       ),
       d3ModNod => {
-        node.select(`circle[label=${d3ModNod['name']}]`).attr('fill', 'gray')
+        node
+          .select(
+            `circle[data-label=${String(d3ModNod['name']).replace(
+              /[.:*+?^${}()|[\]\\]/g,
+              '\\$&'
+            )}]`
+          )
+          .attr('fill', 'gray')
       }
     )
 
@@ -2736,7 +2743,14 @@ class KubernetesPage extends PureComponent<Props, State> {
           ).includes(f['name'])
       ),
       d3ModPod => {
-        node.select(`path[label=${d3ModPod['name']}]`).attr('fill', 'gray')
+        node
+          .select(
+            `path[data-label=${String(d3ModPod['name']).replace(
+              /[.:*+?^${}()|[\]\\]/g,
+              '\\$&'
+            )}]`
+          )
+          .attr('fill', 'gray')
       }
     )
     try {
@@ -2752,7 +2766,12 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['cpu']) /
                 parseFloat(
                   node
-                    .select(`circle[data-label=${m['name']}]`)
+                    .select(
+                      `circle[data-label=${String(m['name']).replace(
+                        /[.:*+?^${}()|[\]\\]/g,
+                        '\\$&'
+                      )}]`
+                    )
                     .attr('data-limit-cpu')
                 )) *
               100
@@ -2760,20 +2779,40 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['memory']) /
                 parseFloat(
                   node
-                    .select(`circle[data-label=${m['name']}]`)
+                    .select(
+                      `circle[data-label=${String(m['name']).replace(
+                        /[.:*+?^${}()|[\]\\]/g,
+                        '\\$&'
+                      )}]`
+                    )
                     .attr('data-limit-memory')
                 )) *
               100
 
             node
-              .select(`circle[data-label=${m['name']}]`)
+              .select(
+                `circle[data-label=${String(m['name']).replace(
+                  /[.:*+?^${}()|[\]\\]/g,
+                  '\\$&'
+                )}]`
+              )
               .attr('data-cpu', `${cpuUsage}`)
             node
-              .select(`circle[data-label=${m['name']}]`)
+              .select(
+                `circle[data-label=${String(m['name']).replace(
+                  /[.:*+?^${}()|[\]\\]/g,
+                  '\\$&'
+                )}]`
+              )
               .attr('data-memory', `${memoryUsage}`)
             const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
             node
-              .select(`circle[data-label=${m['name']}]`)
+              .select(
+                `circle[data-label=${String(m['name']).replace(
+                  /[.:*+?^${}()|[\]\\]/g,
+                  '\\$&'
+                )}]`
+              )
               .attr('fill', kubernetesStatusColor(pick / 100))
           }
         } else {
@@ -2787,7 +2826,12 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['cpu']) /
                 parseFloat(
                   node
-                    .select(`path[data-label=${m['name']}]`)
+                    .select(
+                      `path[data-label=${String(m['name']).replace(
+                        /[.:*+?^${}()|[\]\\]/g,
+                        '\\$&'
+                      )}]`
+                    )
                     .attr('data-limit-cpu')
                 )) *
               100
@@ -2795,21 +2839,41 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['memory']) /
                 parseFloat(
                   node
-                    .select(`path[data-label=${m['name']}]`)
+                    .select(
+                      `path[data-label=${String(m['name']).replace(
+                        /[.:*+?^${}()|[\]\\]/g,
+                        '\\$&'
+                      )}]`
+                    )
                     .attr('data-limit-memory')
                 )) *
               100
 
             node
-              .select(`path[data-label=${m['name']}]`)
+              .select(
+                `path[data-label=${String(m['name']).replace(
+                  /[.:*+?^${}()|[\]\\]/g,
+                  '\\$&'
+                )}]`
+              )
               .attr('data-cpu', `${cpuUsage}`)
             node
-              .select(`path[data-label=${m['name']}]`)
+              .select(
+                `path[data-label=${String(m['name']).replace(
+                  /[.:*+?^${}()|[\]\\]/g,
+                  '\\$&'
+                )}]`
+              )
               .attr('data-memory', `${memoryUsage}`)
 
             const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
             node
-              .select(`path[data-label=${m['name']}]`)
+              .select(
+                `path[data-label=${String(m['name']).replace(
+                  /[.:*+?^${}()|[\]\\]/g,
+                  '\\$&'
+                )}]`
+              )
               .attr('fill', kubernetesStatusColor(pick / 100))
           }
         }
@@ -3338,7 +3402,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     if (focuseNodeName) {
       this.setState({
         focuseNode: {
-          name: focuseNodeName.replace(/\:/g, '\\:').replace(/\./g, '\\.'),
+          name: focuseNodeName.replace(/[.:*+?^${}()|[\]\\]/g, '\\$&'),
           label: focuseNodeLabel,
           type: k8sNodeTypeAttrs?.[focuseNodeType]?.name,
         },

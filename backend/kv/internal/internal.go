@@ -293,6 +293,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			DisplayName:  c.TableOptions.SortBy.DisplayName,
 			Visible:      c.TableOptions.SortBy.Visible,
 			Direction:    c.TableOptions.SortBy.Direction,
+			TempVar:      c.TableOptions.SortBy.TempVar,
 		}
 
 		tableOptions := &TableOptions{
@@ -314,7 +315,15 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				DisplayName:  field.DisplayName,
 				Visible:      field.Visible,
 				Direction:    field.Direction,
+				TempVar:      field.TempVar,
 			}
+		}
+
+		graphOptions := &GraphOptions{
+			FillArea:         c.GraphOptions.FillArea,
+			ShowLine:         c.GraphOptions.ShowLine,
+			ShowPoint:        c.GraphOptions.ShowPoint,
+			ShowTempVarCount: c.GraphOptions.ShowTempVarCount,
 		}
 
 		note := c.Note
@@ -343,6 +352,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			DecimalPlaces:  decimalPlaces,
 			Note:           note,
 			NoteVisibility: noteVisibility,
+			GraphOptions:   graphOptions,
 		}
 	}
 	templates := make([]*Template, len(d.Templates))
@@ -477,6 +487,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 				sortBy.DisplayName = c.TableOptions.SortBy.DisplayName
 				sortBy.Visible = c.TableOptions.SortBy.Visible
 				sortBy.Direction = c.TableOptions.SortBy.Direction
+				sortBy.TempVar = c.TableOptions.SortBy.TempVar
 			}
 			tableOptions.SortBy = sortBy
 			tableOptions.VerticalTimeAxis = c.TableOptions.VerticalTimeAxis
@@ -491,6 +502,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			fieldOptions[i].DisplayName = field.DisplayName
 			fieldOptions[i].Visible = field.Visible
 			fieldOptions[i].Direction = field.Direction
+			fieldOptions[i].TempVar = field.TempVar
 		}
 
 		decimalPlaces := cloudhub.DecimalPlaces{}
@@ -500,6 +512,19 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 		} else {
 			decimalPlaces.IsEnforced = true
 			decimalPlaces.Digits = 2
+		}
+
+		graphOptions := cloudhub.GraphOptions{}
+		if c.GraphOptions != nil {
+			graphOptions.FillArea = c.GraphOptions.FillArea
+			graphOptions.ShowLine = c.GraphOptions.ShowLine
+			graphOptions.ShowPoint = c.GraphOptions.ShowPoint
+			graphOptions.ShowTempVarCount = c.GraphOptions.ShowTempVarCount
+		} else {
+			graphOptions.FillArea = true
+			graphOptions.ShowLine = true
+			graphOptions.ShowPoint = false
+			graphOptions.ShowTempVarCount = ""
 		}
 
 		note := c.Note
@@ -532,6 +557,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			DecimalPlaces:  decimalPlaces,
 			Note:           note,
 			NoteVisibility: noteVisibility,
+			GraphOptions:   graphOptions,
 		}
 	}
 

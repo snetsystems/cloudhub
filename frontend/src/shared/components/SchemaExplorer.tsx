@@ -10,7 +10,7 @@ import FieldList from 'src/shared/components/FieldList'
 import {TimeMachineContainer} from 'src/shared/utils/TimeMachineContainer'
 
 // Types
-import {QueryConfig, Source, Me} from 'src/types'
+import {QueryConfig, Source, Me, CellType} from 'src/types'
 
 const actionBinder = (id, action) => (...args) => {
   return action(id, ...args)
@@ -35,6 +35,7 @@ interface Props {
   onToggleTagAcceptance: TimeMachineContainer['handleToggleTagAcceptance']
   me: Me
   isUsingAuth: boolean
+  type?: CellType
 }
 
 const SchemaExplorer: FunctionComponent<Props> = ({
@@ -56,6 +57,7 @@ const SchemaExplorer: FunctionComponent<Props> = ({
   isQuerySupportedByExplorer = true,
   me,
   isUsingAuth,
+  type,
 }) => {
   const {id} = query
 
@@ -90,6 +92,7 @@ const SchemaExplorer: FunctionComponent<Props> = ({
         addInitialField={actionBinder(id, onAddInitialField)}
         applyFuncsToField={actionBinder(id, onApplyFuncsToField)}
         isQuerySupportedByExplorer={isQuerySupportedByExplorer}
+        type={type}
       />
     </div>
   )

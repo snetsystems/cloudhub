@@ -23,6 +23,7 @@ import {
   Protoboard,
   QueryType,
   RefreshRate,
+  StaticLegendPositionType,
 } from './dashboards'
 import {
   Template,
@@ -49,6 +50,7 @@ import {
   Tag,
   Tags,
   TagValues,
+  SelectedSubFunction,
 } from './queries'
 import {
   NewSource,
@@ -76,6 +78,11 @@ import {WriteDataMode, QueryUpdateState} from './dataExplorer'
 import {Host, Layout, Ipmi, IpmiCell, CloudHost, CloudHosts} from './hosts'
 import {Env} from './env'
 import {Shells, ShellInfo, ShellLoad} from './shell'
+import {
+  StatisticalGraphBoundsType,
+  StatisticalGraphMinMaxValueType,
+  StatisticalGraphScaleType,
+} from './statisticalgraph'
 
 export {
   Me,
@@ -155,4 +162,9 @@ export {
   ShellLoad,
   CloudHost,
   CloudHosts,
+  StaticLegendPositionType,
+  StatisticalGraphBoundsType,
+  StatisticalGraphMinMaxValueType,
+  StatisticalGraphScaleType,
+  SelectedSubFunction,
 }

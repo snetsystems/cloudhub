@@ -25,7 +25,7 @@ type DefaultAxis = Pick<Axis, Exclude<keyof Axis, 'bounds'>>
 export const DEFAULT_AXIS: DefaultAxis = {
   prefix: '',
   suffix: '',
-  base: AXES_SCALE_OPTIONS.BASE_10,
+  base: AXES_SCALE_OPTIONS.BASE_RAW,
   scale: AXES_SCALE_OPTIONS.LINEAR,
   label: '',
 }
@@ -65,6 +65,13 @@ export const getCellTypeColors = ({
     case CellType.Line:
     case CellType.LinePlusSingleStat:
     case CellType.Stacked:
+    case CellType.StaticPie:
+    case CellType.StaticDoughnut:
+    case CellType.StaticScatter:
+    case CellType.StaticRadar:
+    case CellType.StaticStackedBar:
+    case CellType.StaticLineChart:
+    case CellType.StaticBar:
     case CellType.StepPlot: {
       return stringifyColorValues(lineColors)
     }

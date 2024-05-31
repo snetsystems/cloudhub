@@ -16,6 +16,10 @@ $graph-type--graphic: 150px;
   padding: 30px;
 }
 
+.graph-type-selector--title {
+  border-bottom: 2px solid #383846;
+}
+
 .graph-type-selector--grid {
   width: 100%;
   display: inline-block;
@@ -89,6 +93,64 @@ $graph-type--graphic: 150px;
     height: 100%;
   }
 }
+.graph-type-selector--graphic-circle-line {
+  stroke-width: 1px;
+  fill: none;
+
+  &.graphic-line-a {
+    stroke: $g11-sidewalk;
+    opacity: 0.8;
+    stroke-width: 30;
+  }
+
+  &.graphic-line-b {
+    stroke: $g9-mountain;
+    stroke-dasharray: 40 100;
+    stroke-width: 30;
+    opacity: 1;
+  }
+  &.graphic-line-c {
+    stroke: $g7-graphite;
+    stroke-dasharray: 35 100;
+    stroke-width: 30;
+    opacity: 0.6;
+  }
+  &.graphic-line-d {
+    stroke: $g13-mist;
+    stroke-dasharray: 15 100;
+    stroke-width: 30;
+    opacity: 0.9;
+  }
+}
+
+.graph-type-selector--option.active .graph-type-selector--graphic {
+  .graph-type-selector--graphic-circle-line {
+    &.graphic-line-a {
+      stroke: $c-pool;
+      opacity: 1;
+    }
+
+    &.graphic-line-b {
+      stroke: $c-dreamsicle;
+      stroke-dasharray: 40 100;
+      stroke-width: 30;
+      opacity: 1;
+    }
+    &.graphic-line-c {
+      stroke: $c-rainforest;
+      stroke-dasharray: 35 100;
+      stroke-width: 30;
+      opacity: 0.6;
+    }
+    &.graphic-line-d {
+      stroke: $g17-whisper;
+      stroke-dasharray: 15 100;
+      stroke-width: 30;
+      opacity: 0.9;
+    }
+  }
+}
+
 .graph-type-selector--graphic-line {
   stroke-width: 1px;
   fill: none;
@@ -106,6 +168,11 @@ $graph-type--graphic: 150px;
   }
   &.graphic-line-d {
     stroke: $g13-mist;
+  }
+  &.graphic-line-e {
+    stroke-width: 0.5px;
+    stroke: $g13-mist;
+    opacity: 0.4;
   }
 }
 .graph-type-selector--graphic-fill {

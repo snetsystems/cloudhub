@@ -9,17 +9,23 @@ interface RenamableField {
   displayName: string
   visible: boolean
   direction?: '' | 'asc' | 'desc'
+  tempVar?: string
 }
 
 interface Props {
+  isUsingTempVar?: boolean
   fields: RenamableField[]
   onFieldUpdate: (field: RenamableField) => void
   moveField: (dragIndex: number, hoverIndex: number) => void
 }
 
 class GraphOptionsCustomizeFields extends PureComponent<Props> {
+  public static defaultProps: Partial<Props> = {
+    isUsingTempVar: true,
+  }
+
   public render() {
-    const {fields, onFieldUpdate, moveField} = this.props
+    const {isUsingTempVar, fields, onFieldUpdate, moveField} = this.props
 
     return (
       <div className="graph-options-group">
@@ -36,6 +42,8 @@ class GraphOptionsCustomizeFields extends PureComponent<Props> {
               onFieldUpdate={onFieldUpdate}
               moveField={moveField}
               direction={field.direction}
+              tempVar={field.tempVar}
+              isUsingTempVar={isUsingTempVar}
             />
           ))}
         </div>

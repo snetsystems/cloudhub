@@ -428,6 +428,7 @@ export const PREDEFINED_TEMP_VARS = [
 ]
 export const INITIAL_GROUP_BY_TIME = '10s'
 export const AUTO_GROUP_BY = 'auto'
+export const INITIAL_UNIT_TIME = '1s'
 
 export const DEFAULT_HOME_PAGE = 'status'
 
@@ -484,6 +485,18 @@ export const TEMPLATES: Template[] = [interval]
 
 export const IS_STATIC_LEGEND = legend =>
   _.get(legend, 'type', false) === 'static'
+
+export const GET_STATIC_LEGEND_POSITION = legend =>
+  _.get(legend, 'orientation', 'bottom')
+
+export const DEFAULT_SHOW_STATIC_LEGEND = false
+export const DEFAULT_STATIC_LEGEND_POSITION = 'bottom'
+export const DEFAULT_GRAPH_OPTIONS = {
+  fillArea: true,
+  showLine: true,
+  showPoint: false,
+  showTempVarCount: '',
+}
 
 export const linksLink = '/cloudhub/v1'
 
