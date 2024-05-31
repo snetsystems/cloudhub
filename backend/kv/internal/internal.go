@@ -1046,3 +1046,67 @@ func UnmarshalCSP(data []byte, t *cloudhub.CSP) error {
 
 	return nil
 }
+
+// MarshalNetworkDevice encodes a Device struct to binary protobuf format.
+func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
+	return proto.Marshal(&NetworkDevice{
+		ID:                  t.ID,
+		Organization:        t.Organization,
+		DeviceIP:            t.DeviceIP,
+		Hostname:            t.Hostname,
+		DeviceType:          t.DeviceType,
+		DeviceCategory:      t.DeviceCategory,
+		DeviceOS:            t.DeviceOS,
+		IsMonitoringEnabled: t.IsMonitoringEnabled,
+		IsModelingGenerated: t.IsModelingGenerated,
+		SSHConfig: &SSHConfig{
+			SSHUserName:   t.SSHConfig.SSHUserName,
+			SSHPassword:   t.SSHConfig.SSHPassword,
+			SSHEnPassword: t.SSHConfig.SSHEnPassword,
+			SSHPort:       int32(t.SSHConfig.SSHPort),
+		},
+		SNMPConfig: &SNMPConfig{
+			SNMPCommunity: t.SNMPConfig.SNMPCommunity,
+			SNMPVersion:   t.SNMPConfig.SNMPVersion,
+			SNMPUDPPort:   int32(t.SNMPConfig.SNMPUDPPort),
+			SNMPProtocol:  t.SNMPConfig.SNMPProtocol,
+		},
+		LearnSettingGroupID: int32(t.LearnSettingGroupID),
+		LearnRatio:          t.LearnRatio,
+		DeviceVendor:        t.DeviceVendor,
+	})
+}
+
+// UnmarshalNetworkDevice decodes a Device from binary protobuf data.
+func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
+	var pb NetworkDevice
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	t.ID = pb.ID
+	t.Organization = pb.Organization
+	t.DeviceIP = pb.DeviceIP
+	t.Hostname = pb.Hostname
+	t.DeviceType = pb.DeviceType
+	t.DeviceCategory = pb.DeviceCategory
+	t.DeviceOS = pb.DeviceOS
+	t.IsMonitoringEnabled = pb.IsMonitoringEnabled
+	t.IsModelingGenerated = pb.IsModelingGenerated
+	t.SSHConfig = cloudhub.SSHConfig{
+		SSHUserName:   pb.SSHConfig.SSHUserName,
+		SSHPassword:   pb.SSHConfig.SSHPassword,
+		SSHEnPassword: pb.SSHConfig.SSHEnPassword,
+		SSHPort:       int(pb.SSHConfig.SSHPort),
+	}
+	t.SNMPConfig = cloudhub.SNMPConfig{
+		SNMPCommunity: pb.SNMPConfig.SNMPCommunity,
+		SNMPVersion:   pb.SNMPConfig.SNMPVersion,
+		SNMPUDPPort:   int(pb.SNMPConfig.SNMPUDPPort),
+		SNMPProtocol:  pb.SNMPConfig.SNMPProtocol,
+	}
+	t.LearnSettingGroupID = int(pb.LearnSettingGroupID)
+	t.LearnRatio = pb.LearnRatio
+	t.DeviceVendor = pb.DeviceVendor
+
+	return nil
+}

@@ -50,6 +50,7 @@ const (
 	ErrTopologyAlreadyExists           = Error("topology already exists")
 	ErrCSPNotFound                     = Error("CSP not found")
 	ErrCSPAlreadyExists                = Error("CSP already exists")
+	ErrDeviceNotFound                  = Error("Network Device not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -1130,4 +1131,69 @@ type KVClient interface {
 	TopologiesStore() TopologiesStore
 	// CSPStore returns the kv's CSPStore type.
 	CSPStore() CSPStore
+	// NetworkDeviceStore returns the kv's NetworkDeviceStore type.
+	NetworkDeviceStore() NetworkDeviceStore
+}
+
+// DeviceCategoryMap maps device category keys to their corresponding category names.
+var DeviceCategoryMap = map[string]string{
+	"server":  "server",
+	"network": "network",
+}
+
+// NetworkDeviceQuery represents the attributes that a NetworkDevice may be retrieved by.
+// It is predominantly used in the NetworkDeviceStore.Get method.
+//
+// It is expected that only one of ID or Organization will be
+// specified, but all are provided NetworkDeviceStore should prefer ID.
+type NetworkDeviceQuery struct {
+	ID           *string
+	Organization *string
+}
+
+// NetworkDevice represents the information of a network device
+type NetworkDevice struct {
+	ID                  string     `json:"id,string,omitempty"`
+	Organization        string     `json:"organization"`
+	DeviceIP            string     `json:"device_ip"`
+	Hostname            string     `json:"hostname"`
+	DeviceType          string     `json:"device_type"`
+	DeviceCategory      string     `json:"device_category"`
+	DeviceOS            string     `json:"device_os"`
+	IsMonitoringEnabled bool       `json:"is_monitoring_enabled"`
+	IsModelingGenerated bool       `json:"is_modeling_generated"`
+	SSHConfig           SSHConfig  `json:"ssh_config"`
+	SNMPConfig          SNMPConfig `json:"snmp_config"`
+	LearnSettingGroupID int        `json:"learn_setting_group_id"`
+	LearnRatio          float64    `json:"learn_ratio"`
+	DeviceVendor        string     `json:"device_vendor"`
+}
+
+// SSHConfig is Connection Config
+type SSHConfig struct {
+	SSHUserName   string `json:"ssh_user_name"`
+	SSHPassword   string `json:"ssh_password"`
+	SSHEnPassword string `json:"ssh_en_password"`
+	SSHPort       int    `json:"ssh_port"`
+}
+
+// SNMPConfig is Connection Config
+type SNMPConfig struct {
+	SNMPCommunity string `json:"snmp_community"`
+	SNMPVersion   string `json:"snmp_version"`
+	SNMPUDPPort   int    `json:"snmp_udp_port"`
+	SNMPProtocol  string `json:"snmp_protocol"`
+}
+
+// NetworkDeviceStore is the Storage and retrieval of information
+type NetworkDeviceStore interface {
+	All(context.Context) ([]NetworkDevice, error)
+
+	Add(context.Context, *NetworkDevice) (*NetworkDevice, error)
+
+	Delete(context.Context, *NetworkDevice) error
+
+	Get(ctx context.Context, q NetworkDeviceQuery) (*NetworkDevice, error)
+
+	Update(context.Context, *NetworkDevice) error
 }

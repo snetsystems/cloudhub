@@ -558,3 +558,42 @@ func TestMarshalCSP(t *testing.T) {
 		t.Fatalf("source protobuf copy error: got %#v, expected %#v", vv, v)
 	}
 }
+
+func TestMarshalDevice(t *testing.T) {
+	v := cloudhub.NetworkDevice{
+		ID:                  "123",
+		Organization:        "Default",
+		DeviceIP:            "192.168.1.1",
+		Hostname:            "device01",
+		DeviceType:          "Router",
+		DeviceCategory:      "Network",
+		DeviceOS:            "Cisco IOS",
+		IsMonitoringEnabled: true,
+		IsModelingGenerated: false,
+		SSHConfig: cloudhub.SSHConfig{
+			SSHUserName:   "admin",
+			SSHPassword:   "admin123",
+			SSHEnPassword: "secret123",
+			SSHPort:       22,
+		},
+		SNMPConfig: cloudhub.SNMPConfig{
+			SNMPCommunity: "public",
+			SNMPVersion:   "2c",
+			SNMPUDPPort:   161,
+			SNMPProtocol:  "udp",
+		},
+		LearnSettingGroupID: 101,
+		LearnRatio:          0.2,
+		DeviceVendor:        "Cisco",
+	}
+
+	var vv cloudhub.NetworkDevice
+
+	if buf, err := internal.MarshalNetworkDevice(&v); err != nil {
+		t.Fatal("Marshal failed:", err)
+	} else if err := internal.UnmarshalNetworkDevice(buf, &vv); err != nil {
+		t.Fatal("Unmarshal failed:", err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("Mismatch in original and copied NetworkDevice struct: got %#v, want %#v", vv, v)
+	}
+}

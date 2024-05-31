@@ -294,6 +294,39 @@ message CSP {
 	string Minion           = 10; // Minion is the vsphere connect salt minion
 }
 
+message SSHConfig {
+  string SSHUserName   = 1; // SSHUserName is the username used for SSH connection
+  string SSHPassword   = 2; // SSHPassword is the password used for SSH connection
+  string SSHEnPassword = 3; // SSHEnPassword is the enable password for devices that require it
+  int32 SSHPort        = 4; // SSHPort is the port number used for SSH connection
+}
+
+message SNMPConfig {
+  string SNMPCommunity = 1; // SNMPCommunity is the community string for SNMP
+  string SNMPVersion   = 2; // SNMPVersion is the version of SNMP used
+  int32 SNMPUDPPort    = 3; // SNMPUDPPort is the port number used for SNMP
+  string SNMPProtocol  = 4; // SNMPProtocol is protocol to use udp or tcp
+}
+
+message NetworkDevice { 
+  string ID                 = 1;  // ID is the unique identifier of the device
+  string Organization       = 2;  // Organization is the organization ID that device belongs to
+  string DeviceIP           = 3;  // DeviceIP is the IP address of the device
+  string Hostname           = 4;  // Hostname is the network name of the device
+  string DeviceType         = 5;  // DeviceType is the type of the device, such as switch or router
+  string DeviceCategory     = 6;  // DeviceCategory is the category of the device, such as Server or Network
+  string DeviceOS           = 7;  // DeviceOS is the operating system running on the device
+  bool IsMonitoringEnabled  = 8;  // IsMonitoringEnabled indicates if monitoring is enabled for the device
+  bool IsModelingGenerated  = 9;  // IsModelingGenerated indicates if a model has been generated for the device
+  SSHConfig SSHConfig       = 10; // SSHConfig contains the SSH configuration for the device
+  SNMPConfig SNMPConfig     = 11; // SNMPConfig contains the SNMP configuration for the device
+  int32 LearnSettingGroupID = 12; // LearnSettingGroupID is the ID of the learning settings group
+  double LearnRatio         = 13; // LearnRatio is the learning ratio for the device
+  string DeviceVendor       = 14; // DeviceVendor is the vendor of the device
+}
+
+
+
 // The following is a vim modeline, it autoconfigures vim to have the
 // appropriate tabbing and whitespace management to edit this file
 //
