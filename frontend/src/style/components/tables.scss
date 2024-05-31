@@ -326,3 +326,87 @@ $wordBreak: break-word;
     word-break: $wordBreak;
   }
 }
+
+/*
+    table-wrapper
+    ----------------------------------------------
+*/
+
+.table-accordian {
+  .table-accordian-tr {
+    transition: transform 0.2s ease;
+    transform: (0, 100%);
+    column-span: all;
+    background-color: #31313d;
+
+    .table-accordian-td {
+      padding: 10px;
+    }
+  }
+}
+
+.table-top {
+  display: flex;
+  align-items: center;
+  > * {
+    margin-left: 0.5rem;
+
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+  .panel-title {
+    white-space: nowrap;
+  }
+}
+
+.table-top.left {
+  width: 100%;
+}
+
+.table-top.right {
+  justify-content: end;
+  margin-left: 0.5rem;
+}
+
+.hover-pointer-cursor {
+  :hover {
+    cursor: pointer;
+  }
+}
+
+.table-accordion-div {
+  transition: calc(height) 0.3s, padding 0.3s;
+}
+
+.padding-left-5 {
+  padding: 0 20px;
+}
+
+// device-management
+.device-management-top.left {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  > * {
+    margin-left: 0.5rem;
+
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+
+  .space-x {
+    display: flex;
+
+    > * {
+      margin-left: 0.5rem;
+
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+  }
+}
