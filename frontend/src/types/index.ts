@@ -83,6 +83,18 @@ import {
   StatisticalGraphMinMaxValueType,
   StatisticalGraphScaleType,
 } from './statisticalgraph'
+import {
+  SortType,
+  AlignType,
+  ColumnBaseInfo,
+  ColumnInfoOptions,
+  ColumnInfo,
+  DataTableObject,
+  DataTableOptions,
+  RowInfo,
+  SortInfo,
+} from './tableType'
+import {DeviceData, ImportDevicePageStatus} from './deviceManagement'
 
 export {
   Me,
@@ -167,4 +179,15 @@ export {
   StatisticalGraphMinMaxValueType,
   StatisticalGraphScaleType,
   SelectedSubFunction,
+  SortType,
+  AlignType,
+  ColumnBaseInfo,
+  ColumnInfoOptions,
+  ColumnInfo,
+  DataTableObject,
+  DataTableOptions,
+  RowInfo,
+  SortInfo,
+  DeviceData,
+  ImportDevicePageStatus,
 }

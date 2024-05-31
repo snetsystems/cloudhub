@@ -83,6 +83,16 @@ import {setCustomAutoRefreshOptions} from './shared/components/dropdown_auto_ref
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
 import {reducerVSphere, ResponseVSphere} from './clouds/types'
+import PatternFly from './chart_test/containers/PatternFly'
+import ObservablePlotScatterWithDynamicThreshold from './chart_test/containers/ObservablePlotScatterWithDynamicThreshold'
+import ReactScatter from './chart_test/containers/ReactScatter'
+import EcChart from './chart_test/containers/EcChart'
+import HexagonComponent from './chart_test/containers/Hexbin'
+import Hexagon from './chart_test/containers/Hexagon'
+import DivHexagon from './chart_test/containers/DivHexagon'
+import PredictionPage from './device_management/containers/PredictionPage'
+import DeviceManagement from './device_management/containers/DeviceManagement'
+import AiRoutePage from './device_management/containers/AiRoutePage'
 
 const errorsQueue = []
 
@@ -239,6 +249,8 @@ class Root extends PureComponent<Record<string, never>, State> {
               component={UserIsAuthenticated(App)}
             >
               <Route component={CheckSources}>
+                <Route path="ai/:tab" component={AiRoutePage} />
+
                 <Route path="status" component={StatusPage} />
                 <Route path="visualize" component={DataExplorerPage} />
                 <Route path="dashboards" component={DashboardsPage} />

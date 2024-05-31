@@ -119,6 +119,13 @@ export const notifyCSVDownloadFailed = (): Notification => ({
   message: 'Unable to download .CSV file',
 })
 
+export const notifyCSVUploadFailedWithMessage = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: errorMessage,
+})
+
 export const notifyCSVUploadFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: 'Please upload a .csv file',
