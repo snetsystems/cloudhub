@@ -57,7 +57,7 @@ interface State {
   deviceDataRawFromCSV: string
   deviceDataParsedFromCSV: Array<any>
   importDevicePageStatus: ImportDevicePageStatus
-  deviceConnectionStatus: StepStatusKey
+  deviceSNMPConnectionStatus: StepStatusKey
   setupCompleteStatus: StepStatusKey
   sshConnectionStatus: StepStatusKey
   checkedArray: string[]
@@ -76,7 +76,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       deviceDataRawFromCSV: '',
       deviceDataParsedFromCSV: [],
       importDevicePageStatus: 'UploadCSV',
-      deviceConnectionStatus: 'Incomplete',
+      deviceSNMPConnectionStatus: 'Incomplete',
       setupCompleteStatus: 'Incomplete',
       sshConnectionStatus: 'Incomplete',
       checkedArray: [],
@@ -91,7 +91,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       deviceDataRawFromCSV,
       importDevicePageStatus,
       importDeviceWizardVisibility,
-      deviceConnectionStatus,
+      deviceSNMPConnectionStatus,
       setupCompleteStatus,
       sshConnectionStatus,
     } = this.state
@@ -164,7 +164,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           onCompleteSetup={this.handleCompleteSetup}
           onResetWizard={this.handleResetWizard}
           deviceData={deviceData[0]}
-          deviceConnectionStatus={deviceConnectionStatus}
+          deviceSNMPConnectionStatus={deviceSNMPConnectionStatus}
           sshConnectionStatus={sshConnectionStatus}
           setupCompleteStatus={setupCompleteStatus}
           isUsingAuth={isUsingAuth}
@@ -364,7 +364,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       deviceData: [DEFAULT_DEVICE_DATA],
       deviceDataRawFromCSV: '',
       deviceDataParsedFromCSV: [],
-      deviceConnectionStatus: 'Incomplete',
+      deviceSNMPConnectionStatus: 'Incomplete',
       sshConnectionStatus: 'Incomplete',
       setupCompleteStatus: 'Incomplete',
     })
@@ -373,11 +373,11 @@ class DeviceManagement extends PureComponent<Props, State> {
   private handleConnectDevice = () => {
     // TODO Call Connect Device API
 
-    this.setState({deviceConnectionStatus: 'Complete'})
+    this.setState({deviceSNMPConnectionStatus: 'Complete'})
     return {error: false, payload: {}}
 
     // TODO Connect Device API Error Handing
-    // this.setState({deviceConnectionStatus: 'Error'})
+    // this.setState({deviceSNMPConnectionStatus: 'Error'})
     // return {error: true, payload: {}}
   }
 

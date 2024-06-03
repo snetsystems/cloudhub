@@ -47,13 +47,13 @@ export default class SSHConnectionStep extends PureComponent<Props, State> {
 
         <WizardTextInput
           value={`${deviceData?.ssh_config?.ssh_port}`}
-          label={'SSH Port'}
+          label={'Port (Default: 22)'}
           type={'number'}
           onChange={onChangeDeviceData('ssh_port')}
         />
         <WizardTextInput
           value={`${deviceData?.ssh_config?.ssh_en_password}`}
-          label={'SSH Enable Password'}
+          label={'Enable Password (Optional)'}
           type={'password'}
           onChange={onChangeDeviceData('ssh_en_password')}
         />

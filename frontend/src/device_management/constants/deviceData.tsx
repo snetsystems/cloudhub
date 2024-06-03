@@ -2,7 +2,7 @@ import {DropdownItem, DeviceData, SNMPConfig, SSHConfig} from 'src/types'
 
 export const DEFAULT_SNMP_CONFIG: SNMPConfig = {
   snmp_community: '',
-  snmp_port: 162,
+  snmp_port: 161,
   snmp_version: '1',
   snmp_protocol: 'udp',
 }

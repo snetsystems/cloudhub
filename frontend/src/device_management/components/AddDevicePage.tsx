@@ -31,7 +31,7 @@ interface Props {
   me: Me
   organizations: Organization[]
   deviceData: DeviceData
-  deviceConnectionStatus: StepStatusKey
+  deviceSNMPConnectionStatus: StepStatusKey
   setupCompleteStatus: StepStatusKey
   sshConnectionStatus: StepStatusKey
   onChangeDeviceData: (
@@ -62,7 +62,7 @@ class AddDevicePage extends PureComponent<Props, State> {
       me,
       organizations,
       deviceData,
-      deviceConnectionStatus,
+      deviceSNMPConnectionStatus,
       setupCompleteStatus,
       sshConnectionStatus,
       onChangeDeviceData,
@@ -84,10 +84,9 @@ class AddDevicePage extends PureComponent<Props, State> {
         maxWidth={800}
       >
         <WizardStep
-          title="Device Connection"
-          tipText="Device Connection"
-          isComplete={() => this.isStatusComplete(deviceConnectionStatus)}
-          isErrored={this.isStatusError(deviceConnectionStatus)}
+          title="Device SNMP Connection"
+          isComplete={() => this.isStatusComplete(deviceSNMPConnectionStatus)}
+          isErrored={this.isStatusError(deviceSNMPConnectionStatus)}
           isSkippableStep={false}
           onNext={onConnectDevice}
           nextLabel={'Next'}
@@ -103,7 +102,6 @@ class AddDevicePage extends PureComponent<Props, State> {
         </WizardStep>
         <WizardStep
           title="SSH Connection"
-          tipText="SSH Connection"
           isComplete={() => this.isStatusComplete(sshConnectionStatus)}
           isSkippableStep={false}
           isErrored={this.isStatusError(sshConnectionStatus)}

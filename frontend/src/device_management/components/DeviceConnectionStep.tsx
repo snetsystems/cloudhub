@@ -83,7 +83,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
         />
         <WizardTextInput
           value={deviceData?.snmp_config?.snmp_community}
-          label="SNMP Community"
+          label="Community"
           onChange={onChangeDeviceData('snmp_community')}
         />
         <div className="form-group col-xs-6">
@@ -96,7 +96,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
           />
         </div>
         <div className="form-group col-xs-6">
-          <label>SNMP Version</label>
+          <label>Version</label>
           <Dropdown
             items={SNMP_VERSION}
             onChoose={onChooseDeviceDataDropdown('snmp_version')}
@@ -115,7 +115,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
         </div>
         <WizardTextInput
           value={`${deviceData.snmp_config.snmp_port}`}
-          label={'SNMP Port'}
+          label={'Port (Default: 161)'}
           type={'number'}
           onChange={onChangeDeviceData('snmp_port')}
         />
