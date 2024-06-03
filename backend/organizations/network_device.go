@@ -78,8 +78,6 @@ func (s *NetworkDeviceStore) Add(ctx context.Context, t *cloudhub.NetworkDevice)
 		return nil, err
 	}
 
-	t.Organization = s.organization
-
 	return s.store.Add(ctx, t)
 }
 

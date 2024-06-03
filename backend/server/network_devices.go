@@ -168,6 +168,10 @@ func (s *Service) processDevice(ctx context.Context, req deviceRequest) (*cloudh
 		return nil, err
 	}
 
+	if err := s.OrganizationExists(ctx, device.Organization); err != nil {
+		return nil, err
+	}
+
 	res, err := s.Store.NetworkDevice(ctx).Add(ctx, device)
 	msg := fmt.Sprintf(MsgNetWorkDeviceCreated.String(), res.ID)
 	s.logRegistration(ctx, "NetWorkDevice", msg)
@@ -307,6 +311,10 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			}()
 
 			device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
+			if err := s.OrganizationExists(ctx, device.Organization); err != nil {
+				Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+				return
+			}
 			if err != nil {
 				mu.Lock()
 				failedDevices = append(failedDevices, map[string]interface{}{
@@ -435,6 +443,11 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 
 	if req.DeviceVendor != nil {
 		device.DeviceVendor = *req.DeviceVendor
+	}
+
+	if err := s.OrganizationExists(ctx, *req.Organization); err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
 	}
 
 	if err := s.Store.NetworkDevice(ctx).Update(ctx, device); err != nil {
