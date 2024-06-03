@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/bouk/httprouter"
@@ -156,7 +157,7 @@ func TestDeviceID(t *testing.T) {
 							SNMPConfig: cloudhub.SNMPConfig{
 								SNMPCommunity: "@1234",
 								SNMPVersion:   "1",
-								SNMPUDPPort:   623,
+								SNMPPort:      623,
 								SNMPProtocol:  "udp",
 							},
 							LearnSettingGroupID: 1,
@@ -186,10 +187,12 @@ func TestDeviceID(t *testing.T) {
 				"snmp_config": {
 				  "snmp_community": "@1234",
 				  "snmp_version": "1",
-				  "snmp_udp_port": 623,
+				  "snmp_port": 623,
 				  "snmp_protocol": "udp"
 				},
 				"learn_setting_group_id": 1,
+				"learn_ratio": 0,
+				"device_vendor": "",
 				"links": {
 				  "self": "/cloudhub/v1/device/547"
 				}
@@ -236,7 +239,7 @@ func TestDeviceID(t *testing.T) {
 	}
 }
 
-func TestRemoveDevice(t *testing.T) {
+func TestRemoveDevices(t *testing.T) {
 	type fields struct {
 		NetworkDeviceStore cloudhub.NetworkDeviceStore
 		Logger             cloudhub.Logger
@@ -249,17 +252,17 @@ func TestRemoveDevice(t *testing.T) {
 		name       string
 		fields     fields
 		args       args
-		id         string
+		request    interface{}
 		wantStatus int
 	}{
 		{
-			name: "Successfully Remove Device",
+			name: "Successfully Remove Devices",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"DELETE",
 					"http://any.url",
-					nil,
+					strings.NewReader(`{"devices_id": ["547", "548"]}`),
 				),
 			},
 			fields: fields{
@@ -281,11 +284,22 @@ func TestRemoveDevice(t *testing.T) {
 								IsModelingGenerated: false,
 							}, nil
 						}
+						if *q.ID == "548" {
+							return &cloudhub.NetworkDevice{
+								ID:                  "548",
+								DeviceIP:            "192.168.1.1",
+								Organization:        "76",
+								Hostname:            "SWITCH_02",
+								DeviceType:          "switch",
+								DeviceOS:            "IOS",
+								IsMonitoringEnabled: true,
+								IsModelingGenerated: false,
+							}, nil
+						}
 						return nil, cloudhub.ErrDeviceNotFound
 					},
 				},
 			},
-			id:         "547",
 			wantStatus: http.StatusNoContent,
 		},
 		{
@@ -295,7 +309,7 @@ func TestRemoveDevice(t *testing.T) {
 				r: httptest.NewRequest(
 					"DELETE",
 					"http://any.url",
-					nil,
+					strings.NewReader(`{"devices_id": ["999"]}`),
 				),
 			},
 			fields: fields{
@@ -309,8 +323,7 @@ func TestRemoveDevice(t *testing.T) {
 					},
 				},
 			},
-			id:         "999",
-			wantStatus: http.StatusNotFound,
+			wantStatus: http.StatusMultiStatus,
 		},
 		{
 			name: "Deletion Error",
@@ -319,7 +332,7 @@ func TestRemoveDevice(t *testing.T) {
 				r: httptest.NewRequest(
 					"DELETE",
 					"http://any.url",
-					nil,
+					strings.NewReader(`{"devices_id": ["548"]}`),
 				),
 			},
 			fields: fields{
@@ -345,8 +358,7 @@ func TestRemoveDevice(t *testing.T) {
 					},
 				},
 			},
-			id:         "548",
-			wantStatus: http.StatusInternalServerError,
+			wantStatus: http.StatusMultiStatus,
 		},
 	}
 
@@ -359,20 +371,11 @@ func TestRemoveDevice(t *testing.T) {
 				Logger: tt.fields.Logger,
 			}
 
-			tt.args.r = tt.args.r.WithContext(httprouter.WithParams(
-				context.Background(),
-				httprouter.Params{
-					{
-						Key:   "id",
-						Value: tt.id,
-					},
-				}))
-
-			s.RemoveDevice(tt.args.w, tt.args.r)
+			s.RemoveDevices(tt.args.w, tt.args.r)
 
 			resp := tt.args.w.Result()
 			if resp.StatusCode != tt.wantStatus {
-				t.Errorf("%q. RemoveDevice() got = %v, want %v", tt.name, resp.StatusCode, tt.wantStatus)
+				t.Errorf("%q. RemoveDevices() got = %v, want %v", tt.name, resp.StatusCode, tt.wantStatus)
 			}
 		})
 	}
@@ -404,7 +407,7 @@ func MockDeviceStoreSetup(mockData []deviceRequest) *mocks.NetworkDeviceStore {
 					DeviceIP:  req.DeviceIP,
 					Community: req.SNMPConfig.SNMPCommunity,
 					Version:   req.SNMPConfig.SNMPVersion,
-					Port:      uint16(req.SNMPConfig.SNMPUDPPort),
+					Port:      uint16(req.SNMPConfig.SNMPPort),
 					Protocol:  req.SNMPConfig.SNMPProtocol,
 				},
 				SNMP: mockConn,
@@ -474,7 +477,7 @@ func NewMockData() *MockData {
 				SNMPConfig: cloudhub.SNMPConfig{
 					SNMPCommunity: "@1234",
 					SNMPVersion:   "1",
-					SNMPUDPPort:   623,
+					SNMPPort:      623,
 					SNMPProtocol:  "udp"},
 				DeviceVendor: "cisco",
 			},
@@ -489,7 +492,7 @@ func NewMockData() *MockData {
 				SNMPConfig: cloudhub.SNMPConfig{
 					SNMPCommunity: "public",
 					SNMPVersion:   "2c",
-					SNMPUDPPort:   161,
+					SNMPPort:      161,
 					SNMPProtocol:  "tcp"},
 				DeviceVendor: "cisco",
 			},
@@ -503,7 +506,7 @@ func NewMockData() *MockData {
 				SNMPConfig: cloudhub.SNMPConfig{
 					SNMPCommunity: "@1234",
 					SNMPVersion:   "1",
-					SNMPUDPPort:   623},
+					SNMPPort:      623},
 			},
 		},
 	}

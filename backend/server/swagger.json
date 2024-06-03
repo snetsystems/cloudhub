@@ -4927,54 +4927,20 @@
             }
           }
         }
-      }
-    },
-    "/ai/network/managements/devices/{id}": {
-      "get": {
-        "tags": ["Device Management"],
-        "summary": "Get a device by ID",
-        "description": "Retrieve the details of a specific device by ID.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "Device ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Device details retrieved successfully",
-            "schema": {
-              "$ref": "#/definitions/DeviceResponse"
-            }
-          },
-          "404": {
-            "description": "Device not found",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "default": {
-            "description": "Internal server error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
       },
       "delete": {
         "tags": ["Device Management"],
-        "summary": "Delete a device by ID",
-        "description": "Remove a specific device by ID.",
+        "summary": "Delete a device by IDs",
+        "description": "Remove a specific device by IDs.",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
+            "name": "devices_id",
+            "in": "body",
             "required": true,
-            "type": "string",
-            "description": "Device ID"
+
+            "schema": {
+              "$ref": "#/definitions/DeleteDeviceRequest"
+            }
           }
         ],
         "responses": {
@@ -5039,6 +5005,42 @@
               "schema": {
                 "$ref": "#/definitions/Error"
               }
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/devices/{id}": {
+      "get": {
+        "tags": ["Device Management"],
+        "summary": "Get a device by ID",
+        "description": "Retrieve the details of a specific device by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Device ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device details retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceResponse"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
             }
           }
         }
@@ -8637,7 +8639,6 @@
         "device_type",
         "device_category",
         "device_os",
-        "ssh_config",
         "snmp_config"
       ]
     },
@@ -8684,6 +8685,20 @@
         }
       },
       "required": ["snmp_config"]
+    },
+    "DeleteDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "devices_ip": {
+          "type": "array",
+          "description": "The IDs of the devices",
+          "items": {
+            "type": "string"
+          },
+          "example": ["1", "2"]
+        }
+      },
+      "required": ["devices_ip"]
     },
     "DeviceResponse": {
       "type": "object",
@@ -8735,20 +8750,12 @@
           "type": "string",
           "description": "The vendor of the device",
           "example": "Cisco"
-        },
-        "links": {
-          "$ref": "#/definitions/SelfLinks",
-          "description": "Links to the resource"
         }
       }
     },
     "DevicesResponse": {
       "type": "object",
       "properties": {
-        "links": {
-          "$ref": "#/definitions/SelfLinks",
-          "description": "Links to the resource"
-        },
         "devices": {
           "type": "array",
           "items": {
@@ -8805,7 +8812,7 @@
         },
         "port": {
           "type": "integer",
-          "description": "SNMP UDP port",
+          "description": "SNMP port",
           "example": 161
         },
         "version": {
@@ -8926,45 +8933,15 @@
           "description": "SNMP community string",
           "example": "public"
         },
-        "device_ip": {
-          "type": "string",
-          "description": "Device IP address",
-          "example": "192.168.0.1"
-        },
-        "snmp_udp_port": {
+        "snmp_port": {
           "type": "integer",
-          "description": "SNMP UDP port",
+          "description": "SNMP port",
           "example": 161
         },
         "snmp_version": {
           "type": "string",
           "description": "SNMP version",
           "example": "v2c"
-        },
-        "snmp_user": {
-          "type": "string",
-          "description": "SNMP user name (for SNMP v3)",
-          "example": "snmp_user"
-        },
-        "snmp_auth_password": {
-          "type": "string",
-          "description": "SNMP authentication password (for SNMP v3)",
-          "example": "auth_pass"
-        },
-        "snmp_v3_auth_protocol": {
-          "type": "string",
-          "description": "SNMP authentication protocol (for SNMP v3)",
-          "example": "MD5"
-        },
-        "snmp_private_password": {
-          "type": "string",
-          "description": "SNMP privacy password (for SNMP v3)",
-          "example": "priv_pass"
-        },
-        "snmp_v3_private_protocol": {
-          "type": "string",
-          "description": "SNMP privacy protocol (for SNMP v3)",
-          "example": "DES"
         },
         "snmp_protocol": {
           "type": "string",

@@ -399,7 +399,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v1/ai/network/managements/devices", EnsureViewer(service.AllDevices))
 	router.GET("/cloudhub/v1//ai/network/managements/devices/:id", EnsureViewer(service.DeviceID))
 	router.POST("/cloudhub/v1/ai/network/managements/devices", EnsureAdmin(service.NewDevices))
-	router.DELETE("/cloudhub/v1/ai/network/managements/devices/:id", EnsureAdmin(service.RemoveDevice))
+	router.DELETE("/cloudhub/v1/ai/network/managements/devices", EnsureAdmin(service.RemoveDevices))
 	router.PATCH("/cloudhub/v1/ai/network/managements/device/:id", EnsureAdmin(service.UpdateNetworkDevice))
 
 	// SNMP Management

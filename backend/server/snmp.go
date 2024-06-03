@@ -252,9 +252,11 @@ func collectSNMPData(snmpConfig *SNMPConfig, queries []SNMPQuery) (map[string]st
 
 // SNMPResponse is SNMP Connection after Response
 type SNMPResponse struct {
-	DeviceType string
-	Hostname   string
-	DeviceOS   string
+	DeviceIP   string `json:"device_ip"`
+	Index      int    `json:"index"`
+	DeviceType string `json:"device_type"`
+	Hostname   string `json:"hostname"`
+	DeviceOS   string `json:"device_os"`
 }
 
 // SNMPConnTestBulk handles the SNMP connections test request.
@@ -293,7 +295,7 @@ func (s *Service) SNMPConnTestBulk(w http.ResponseWriter, r *http.Request) {
 				}
 				<-sem
 			}()
-			snmpResult, err := s.testSNMP(ctx, config)
+			snmpResult, err := s.testSNMP(ctx, config, index)
 			if err != nil {
 				mu.Lock()
 				failedRequests = append(failedRequests, map[string]interface{}{
@@ -323,7 +325,7 @@ func (s *Service) SNMPConnTestBulk(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, response, s.Logger)
 }
 
-func (s *Service) testSNMP(ctx context.Context, config SNMPConfig) (SNMPResponse, error) {
+func (s *Service) testSNMP(ctx context.Context, config SNMPConfig, i int) (SNMPResponse, error) {
 	queries := []SNMPQuery{
 		{Oid: "1.3.6.1.2.1.1.5", Key: "hostname", Process: processHostname},
 		{Oid: "1.3.6.1.2.1.1.7", Key: "deviceType", Process: processDeviceType},
@@ -334,6 +336,8 @@ func (s *Service) testSNMP(ctx context.Context, config SNMPConfig) (SNMPResponse
 		return SNMPResponse{}, err
 	}
 	return SNMPResponse{
+		DeviceIP:   config.DeviceIP,
+		Index:      i,
 		DeviceType: results["deviceType"],
 		Hostname:   results["hostname"],
 		DeviceOS:   results["deviceOS"],

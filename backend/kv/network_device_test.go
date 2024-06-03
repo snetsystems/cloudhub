@@ -38,7 +38,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 			SNMPConfig: cloudhub.SNMPConfig{
 				SNMPCommunity: "public",
 				SNMPVersion:   "2c",
-				SNMPUDPPort:   161,
+				SNMPPort:      161,
 				SNMPProtocol:  "udp",
 			},
 			LearnSettingGroupID: 101,
@@ -61,7 +61,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 			SNMPConfig: cloudhub.SNMPConfig{
 				SNMPCommunity: "private",
 				SNMPVersion:   "3",
-				SNMPUDPPort:   162,
+				SNMPPort:      162,
 				SNMPProtocol:  "udp",
 			},
 			LearnSettingGroupID: 102,

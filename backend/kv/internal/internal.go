@@ -1068,7 +1068,7 @@ func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
 		SNMPConfig: &SNMPConfig{
 			SNMPCommunity: t.SNMPConfig.SNMPCommunity,
 			SNMPVersion:   t.SNMPConfig.SNMPVersion,
-			SNMPUDPPort:   int32(t.SNMPConfig.SNMPUDPPort),
+			SNMPPort:      int32(t.SNMPConfig.SNMPPort),
 			SNMPProtocol:  t.SNMPConfig.SNMPProtocol,
 		},
 		LearnSettingGroupID: int32(t.LearnSettingGroupID),
@@ -1101,7 +1101,7 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 	t.SNMPConfig = cloudhub.SNMPConfig{
 		SNMPCommunity: pb.SNMPConfig.SNMPCommunity,
 		SNMPVersion:   pb.SNMPConfig.SNMPVersion,
-		SNMPUDPPort:   int(pb.SNMPConfig.SNMPUDPPort),
+		SNMPPort:      int(pb.SNMPConfig.SNMPPort),
 		SNMPProtocol:  pb.SNMPConfig.SNMPProtocol,
 	}
 	t.LearnSettingGroupID = int(pb.LearnSettingGroupID)

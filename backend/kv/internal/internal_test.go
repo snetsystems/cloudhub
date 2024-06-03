@@ -579,7 +579,7 @@ func TestMarshalDevice(t *testing.T) {
 		SNMPConfig: cloudhub.SNMPConfig{
 			SNMPCommunity: "public",
 			SNMPVersion:   "2c",
-			SNMPUDPPort:   161,
+			SNMPPort:      161,
 			SNMPProtocol:  "udp",
 		},
 		LearnSettingGroupID: 101,

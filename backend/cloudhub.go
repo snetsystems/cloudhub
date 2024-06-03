@@ -1181,7 +1181,7 @@ type SSHConfig struct {
 type SNMPConfig struct {
 	SNMPCommunity string `json:"snmp_community"`
 	SNMPVersion   string `json:"snmp_version"`
-	SNMPUDPPort   int    `json:"snmp_udp_port"`
+	SNMPPort      int    `json:"snmp_port"`
 	SNMPProtocol  string `json:"snmp_protocol"`
 }
 

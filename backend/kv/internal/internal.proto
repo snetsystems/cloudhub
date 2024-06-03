@@ -304,7 +304,7 @@ message SSHConfig {
 message SNMPConfig {
   string SNMPCommunity = 1; // SNMPCommunity is the community string for SNMP
   string SNMPVersion   = 2; // SNMPVersion is the version of SNMP used
-  int32 SNMPUDPPort    = 3; // SNMPUDPPort is the port number used for SNMP
+  int32 SNMPPort       = 3; // SNMPPort is the port number used for SNMP
   string SNMPProtocol  = 4; // SNMPProtocol is protocol to use udp or tcp
 }
 

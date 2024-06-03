@@ -19,7 +19,7 @@ type deviceRequest struct {
 	DeviceType     string              `json:"device_type"`
 	DeviceCategory string              `json:"device_category"`
 	DeviceOS       string              `json:"device_os"`
-	SSHConfig      cloudhub.SSHConfig  `json:"ssh_config"`
+	SSHConfig      cloudhub.SSHConfig  `json:"ssh_config,omitempty"`
 	SNMPConfig     cloudhub.SNMPConfig `json:"snmp_config"`
 	DeviceVendor   string              `json:"device_vendor"`
 }
@@ -79,7 +79,7 @@ func newDeviceResponse(device *cloudhub.NetworkDevice) *deviceResponse {
 		SNMPConfig: cloudhub.SNMPConfig{
 			SNMPCommunity: device.SNMPConfig.SNMPCommunity,
 			SNMPVersion:   device.SNMPConfig.SNMPVersion,
-			SNMPUDPPort:   device.SNMPConfig.SNMPUDPPort,
+			SNMPPort:      device.SNMPConfig.SNMPPort,
 			SNMPProtocol:  device.SNMPConfig.SNMPProtocol,
 		},
 		LearnSettingGroupID: device.LearnSettingGroupID,
@@ -102,13 +102,8 @@ func newDevicesResponse(devices []cloudhub.NetworkDevice) *devicesResponse {
 		devicesResp[i] = newDeviceResponse(&device)
 	}
 
-	selfLink := "/cloudhub/v1/ai/network/managements/devices"
-
 	return &devicesResponse{
 		Devices: devicesResp,
-		Links: selfLinks{
-			Self: selfLink,
-		},
 	}
 }
 
@@ -280,30 +275,82 @@ func (s *Service) DeviceID(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-// RemoveDevice deletes a specified Device
-func (s *Service) RemoveDevice(w http.ResponseWriter, r *http.Request) {
-	id, err := paramStr("id", r)
-	if err != nil {
-		invalidData(w, err, s.Logger)
+// RemoveDevices deletes specified Devices
+func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		DeviceIDs []string `json:"devices_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request data", http.StatusBadRequest)
 		return
 	}
 
 	ctx := r.Context()
-	device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
-	if err != nil {
-		notFound(w, id, s.Logger)
-		return
+	workerLimit := 10
+	sem := make(chan struct{}, workerLimit)
+
+	var wg sync.WaitGroup
+	failedDevices := []map[string]interface{}{}
+	var mu sync.Mutex
+
+	for i, id := range request.DeviceIDs {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(ctx context.Context, i int, id string) {
+			defer wg.Done()
+			defer func() {
+				if rec := recover(); rec != nil {
+					s.Logger.Error("Recovered from panic: %v", rec)
+					mu.Lock()
+					failedDevices = append(failedDevices, map[string]interface{}{
+						"index":        i,
+						"device_id":    id,
+						"errorMessage": "internal server error",
+					})
+					mu.Unlock()
+				}
+				<-sem
+			}()
+
+			device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
+			if err != nil {
+				mu.Lock()
+				failedDevices = append(failedDevices, map[string]interface{}{
+					"index":        i,
+					"device_id":    id,
+					"errorMessage": "device not found",
+				})
+				mu.Unlock()
+				return
+			}
+
+			err = s.Store.NetworkDevice(ctx).Delete(ctx, device)
+			if err != nil {
+				mu.Lock()
+				failedDevices = append(failedDevices, map[string]interface{}{
+					"index":        i,
+					"device_id":    id,
+					"errorMessage": err.Error(),
+				})
+				mu.Unlock()
+				return
+			}
+
+			msg := fmt.Sprintf(MsgNetWorkDeviceDeleted.String(), id)
+			s.logRegistration(ctx, "NetWorkDevice", msg)
+		}(ctx, i, id)
 	}
 
-	err = s.Store.NetworkDevice(ctx).Delete(ctx, device)
-	if err != nil {
-		unknownErrorWithMessage(w, err, s.Logger)
-		return
-	}
+	wg.Wait()
 
-	msg := fmt.Sprintf(MsgNetWorkDeviceDeleted.String(), id)
-	s.logRegistration(ctx, "NetWorkDevice", msg)
-	w.WriteHeader(http.StatusNoContent)
+	response := map[string]interface{}{
+		"failed_devices": failedDevices,
+	}
+	if len(failedDevices) > 0 {
+		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+	} else {
+		w.WriteHeader(http.StatusNoContent)
+	}
 }
 
 // UpdateNetworkDevice completely updates either the Device
@@ -376,8 +423,8 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		if req.SNMPConfig.SNMPVersion != "" {
 			device.SNMPConfig.SNMPVersion = req.SNMPConfig.SNMPVersion
 		}
-		if req.SNMPConfig.SNMPUDPPort != 0 {
-			device.SNMPConfig.SNMPUDPPort = req.SNMPConfig.SNMPUDPPort
+		if req.SNMPConfig.SNMPPort != 0 {
+			device.SNMPConfig.SNMPPort = req.SNMPConfig.SNMPPort
 		}
 		if req.SNMPConfig.SNMPProtocol != "" {
 			device.SNMPConfig.SNMPProtocol = req.SNMPConfig.SNMPProtocol
@@ -437,8 +484,8 @@ func updateSNMPConfig(target, source *cloudhub.SNMPConfig) {
 		if !isZeroOfUnderlyingType(source.SNMPVersion) {
 			target.SNMPVersion = source.SNMPVersion
 		}
-		if !isZeroOfUnderlyingType(source.SNMPUDPPort) {
-			target.SNMPUDPPort = source.SNMPUDPPort
+		if !isZeroOfUnderlyingType(source.SNMPPort) {
+			target.SNMPPort = source.SNMPPort
 		}
 		if !isZeroOfUnderlyingType(source.SNMPProtocol) {
 			target.SNMPProtocol = source.SNMPProtocol
