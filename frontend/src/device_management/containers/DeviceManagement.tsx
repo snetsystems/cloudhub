@@ -14,7 +14,11 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 // Constants
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {StepStatusKey} from 'src/reusable_ui/constants/wizard'
-import {DEFAULT_DEVICE_DATA, columns} from 'src/device_management/constants'
+import {
+  DEFAULT_DEVICE_DATA,
+  IMPORT_DEVICE_CSV_Template,
+  columns,
+} from 'src/device_management/constants'
 
 // Type
 import {
@@ -24,6 +28,8 @@ import {
   DeviceData,
   ImportDevicePageStatus,
   DropdownItem,
+  SNMPConfig,
+  SSHConfig,
 } from 'src/types'
 
 // Util
@@ -47,9 +53,9 @@ interface Props {
 interface State {
   addDeviceWizardVisibility: boolean
   importDeviceWizardVisibility: boolean
-  deviceInformationForAddDevice: DeviceData
-  deviceInformationForImportDevice: string
-  refinedDeviceInformationForImportDevice: Array<any>
+  deviceData: DeviceData[]
+  deviceDataRawFromCSV: string
+  deviceDataParsedFromCSV: Array<any>
   importDevicePageStatus: ImportDevicePageStatus
   deviceConnectionStatus: StepStatusKey
   setupCompleteStatus: StepStatusKey
@@ -66,9 +72,9 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.state = {
       addDeviceWizardVisibility: false,
       importDeviceWizardVisibility: false,
-      deviceInformationForAddDevice: DEFAULT_DEVICE_DATA,
-      deviceInformationForImportDevice: '',
-      refinedDeviceInformationForImportDevice: [],
+      deviceData: [DEFAULT_DEVICE_DATA],
+      deviceDataRawFromCSV: '',
+      deviceDataParsedFromCSV: [],
       importDevicePageStatus: 'UploadCSV',
       deviceConnectionStatus: 'Incomplete',
       setupCompleteStatus: 'Incomplete',
@@ -81,8 +87,8 @@ class DeviceManagement extends PureComponent<Props, State> {
     const {me, organizations, isUsingAuth} = this.props
     const {
       addDeviceWizardVisibility,
-      deviceInformationForAddDevice,
-      deviceInformationForImportDevice,
+      deviceData,
+      deviceDataRawFromCSV,
       importDevicePageStatus,
       importDeviceWizardVisibility,
       deviceConnectionStatus,
@@ -157,7 +163,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           onConnectSSH={this.handleConnectSSH}
           onCompleteSetup={this.handleCompleteSetup}
           onResetWizard={this.handleResetWizard}
-          deviceInformationForAddDevice={deviceInformationForAddDevice}
+          deviceData={deviceData[0]}
           deviceConnectionStatus={deviceConnectionStatus}
           sshConnectionStatus={sshConnectionStatus}
           setupCompleteStatus={setupCompleteStatus}
@@ -166,7 +172,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           toggleVisibility={this.addDevice}
         />
         <ImportDevicePage
-          deviceInformation={deviceInformationForImportDevice}
+          deviceDataRawFromCSV={deviceDataRawFromCSV}
           importDevicePageStatus={importDevicePageStatus}
           isVisible={importDeviceWizardVisibility}
           onDismissOverlay={this.handleDismissImportDeviceModalOverlay}
@@ -196,20 +202,43 @@ class DeviceManagement extends PureComponent<Props, State> {
     })
   }
 
-  private handleChooseDeviceDataDropdown = (key: keyof DeviceData) => (
-    value: DropdownItem
-  ) => {
+  private handleChooseDeviceDataDropdown = (
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
+  ) => (value: DropdownItem) => {
     this.setState(prevState => ({
-      deviceInformationForAddDevice: {
-        ...prevState.deviceInformationForAddDevice,
-        [key]: value.text,
-      },
+      deviceData: prevState.deviceData.map((device, index) => {
+        if (index === 0) {
+          if (key in device.snmp_config) {
+            return {
+              ...device,
+              snmp_config: {
+                ...device.snmp_config,
+                [key]: value.text,
+              },
+            }
+          } else if (device.ssh_config && key in device.ssh_config) {
+            return {
+              ...device,
+              ssh_config: {
+                ...device.ssh_config,
+                [key]: value.text,
+              },
+            }
+          } else {
+            return {
+              ...device,
+              [key]: value.text,
+            }
+          }
+        }
+        return device
+      }),
     }))
   }
 
-  private handleChangeDeviceData = (key: keyof DeviceData) => (
-    value: string
-  ) => {
+  private handleChangeDeviceData = (
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
+  ) => (value: string) => {
     let newValue: string | number = value
 
     if (key === 'snmp_port' || key === 'ssh_port') {
@@ -217,25 +246,47 @@ class DeviceManagement extends PureComponent<Props, State> {
     }
 
     this.setState(prevState => ({
-      deviceInformationForAddDevice: {
-        ...prevState.deviceInformationForAddDevice,
-        [key]: newValue,
-      },
+      deviceData: prevState.deviceData.map((device, index) => {
+        if (index === 0) {
+          if (key in device.snmp_config) {
+            return {
+              ...device,
+              snmp_config: {
+                ...device.snmp_config,
+                [key]: newValue,
+              },
+            }
+          } else if (device.ssh_config && key in device.ssh_config) {
+            return {
+              ...device,
+              ssh_config: {
+                ...device.ssh_config,
+                [key]: newValue,
+              },
+            }
+          } else {
+            return {
+              ...device,
+              [key]: newValue,
+            }
+          }
+        }
+        return device
+      }),
     }))
   }
 
   private handleDismissImportDeviceModalOverlay = (): void => {
     this.setState({
-      deviceInformationForImportDevice: '',
-      refinedDeviceInformationForImportDevice: [],
+      deviceDataRawFromCSV: '',
+      deviceDataParsedFromCSV: [],
       importDevicePageStatus: 'UploadCSV',
       importDeviceWizardVisibility: false,
     })
   }
 
   private handleDownloadCSVDeviceTemplate = (): void => {
-    const deciceManagementTemplate =
-      'dev_ip,ssh_user,ssh_pwd,enable,ssh_port,snmp_str,group,snmp_ver,snmp_port,organization'
+    const deciceManagementTemplate = IMPORT_DEVICE_CSV_Template
 
     try {
       downloadCSV(deciceManagementTemplate, 'Device_Management_Template')
@@ -246,8 +297,8 @@ class DeviceManagement extends PureComponent<Props, State> {
 
   private handleGoBackImportedDeviceFile = () => {
     this.setState({
-      deviceInformationForImportDevice: '',
-      refinedDeviceInformationForImportDevice: [],
+      deviceDataRawFromCSV: '',
+      deviceDataParsedFromCSV: [],
       importDevicePageStatus: 'UploadCSV',
     })
   }
@@ -270,7 +321,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       return
     }
 
-    this.setState({deviceInformationForImportDevice: uploadContent})
+    this.setState({deviceDataRawFromCSV: uploadContent})
 
     this.getRefinedDeviceInformation(uploadContent)
   }
@@ -279,10 +330,10 @@ class DeviceManagement extends PureComponent<Props, State> {
     return '.csv'
   }
 
-  private getRefinedDeviceInformation(deviceInformationForImportDevice) {
+  private getRefinedDeviceInformation(deviceDataRawFromCSV) {
     const {notify} = this.props
 
-    Papa.parse(deviceInformationForImportDevice, {
+    Papa.parse(deviceDataRawFromCSV, {
       header: true,
       dynamicTyping: true,
       skipEmptyLines: true,
@@ -299,9 +350,8 @@ class DeviceManagement extends PureComponent<Props, State> {
         return value.trim()
       },
       complete: result => {
-        this.setState({refinedDeviceInformationForImportDevice: result?.data})
+        this.setState({deviceDataParsedFromCSV: result?.data})
       },
-      // TODO Add Error Message
       error: error => {
         notify(notifyCSVUploadFailedWithMessage(error.message))
       },
@@ -311,8 +361,9 @@ class DeviceManagement extends PureComponent<Props, State> {
   private handleResetWizard = () => {
     // TODO Reset Wizard
     this.setState({
-      deviceInformationForImportDevice: '',
-      refinedDeviceInformationForImportDevice: [],
+      deviceData: [DEFAULT_DEVICE_DATA],
+      deviceDataRawFromCSV: '',
+      deviceDataParsedFromCSV: [],
       deviceConnectionStatus: 'Incomplete',
       sshConnectionStatus: 'Incomplete',
       setupCompleteStatus: 'Incomplete',

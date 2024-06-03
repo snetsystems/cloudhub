@@ -94,7 +94,12 @@ import {
   RowInfo,
   SortInfo,
 } from './tableType'
-import {DeviceData, ImportDevicePageStatus} from './deviceManagement'
+import {
+  DeviceData,
+  ImportDevicePageStatus,
+  SNMPConfig,
+  SSHConfig,
+} from './deviceManagement'
 
 export {
   Me,
@@ -190,4 +195,6 @@ export {
   SortInfo,
   DeviceData,
   ImportDevicePageStatus,
+  SNMPConfig,
+  SSHConfig,
 }

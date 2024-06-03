@@ -1,6 +1,5 @@
 // Libraries
 import React, {PureComponent} from 'react'
-import {withRouter, WithRouterProps} from 'react-router'
 import _ from 'lodash'
 
 // Components
@@ -11,7 +10,14 @@ import SSHConnectionStep from 'src/device_management/components/SSHConnectionSte
 import DeviceManagementCompletionStep from 'src/device_management/components/DeviceManagementCompletionStep'
 
 // Types
-import {DeviceData, DropdownItem, Me, Organization} from 'src/types'
+import {
+  DeviceData,
+  DropdownItem,
+  Me,
+  Organization,
+  SNMPConfig,
+  SSHConfig,
+} from 'src/types'
 import {NextReturn, ToggleWizard} from 'src/types/wizard'
 
 // Constants
@@ -24,13 +30,15 @@ interface Props {
   isVisible: boolean
   me: Me
   organizations: Organization[]
-  deviceInformationForAddDevice: DeviceData
+  deviceData: DeviceData
   deviceConnectionStatus: StepStatusKey
   setupCompleteStatus: StepStatusKey
   sshConnectionStatus: StepStatusKey
-  onChangeDeviceData: (key: keyof DeviceData) => (value: string) => void
+  onChangeDeviceData: (
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
+  ) => (value: string) => void
   onChooseDeviceDataDropdown: (
-    key: keyof DeviceData
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
   ) => (value: DropdownItem) => void
   onCompleteSetup: () => NextReturn
   onConnectDevice: () => NextReturn
@@ -42,8 +50,8 @@ interface Props {
 interface State {}
 
 @ErrorHandling
-class AddDevicePage extends PureComponent<Props & WithRouterProps, State> {
-  constructor(props: Props & WithRouterProps) {
+class AddDevicePage extends PureComponent<Props, State> {
+  constructor(props: Props) {
     super(props)
   }
 
@@ -53,7 +61,7 @@ class AddDevicePage extends PureComponent<Props & WithRouterProps, State> {
       isVisible,
       me,
       organizations,
-      deviceInformationForAddDevice,
+      deviceData,
       deviceConnectionStatus,
       setupCompleteStatus,
       sshConnectionStatus,
@@ -84,17 +92,8 @@ class AddDevicePage extends PureComponent<Props & WithRouterProps, State> {
           onNext={onConnectDevice}
           nextLabel={'Next'}
         >
-          {/* TODO Consider SourceStep Props */}
-          {/* <SourceStep
-            ref={c => (this.sourceStepRef = c)}
-            setError={this.handleSetSourceError}
-            source={source}
-            me={me}
-            organizations={organizations}
-            isUsingAuth={isUsingAuth}
-          /> */}
           <DeviceConnectionStep
-            deviceInformationForAddDevice={deviceInformationForAddDevice}
+            deviceData={deviceData}
             me={me}
             organizations={organizations}
             isUsingAuth={isUsingAuth}
@@ -114,7 +113,7 @@ class AddDevicePage extends PureComponent<Props & WithRouterProps, State> {
           lastStep={true}
         >
           <SSHConnectionStep
-            deviceInformationForAddDevice={deviceInformationForAddDevice}
+            deviceData={deviceData}
             onChangeDeviceData={onChangeDeviceData}
           />
         </WizardStep>
@@ -143,4 +142,4 @@ class AddDevicePage extends PureComponent<Props & WithRouterProps, State> {
   }
 }
 
-export default withRouter(AddDevicePage)
+export default AddDevicePage

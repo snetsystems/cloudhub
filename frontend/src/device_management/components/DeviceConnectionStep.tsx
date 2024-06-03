@@ -7,21 +7,31 @@ import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
 import Dropdown from 'src/shared/components/Dropdown'
 
 // Constants
-import {SNMP_VERSION} from 'src/device_management/constants/'
+import {SNMP_VERSION, SNMP_PROTOCOL} from 'src/device_management/constants/'
 
 // Types
-import {Source, Me, Organization, DeviceData, DropdownItem} from 'src/types'
+import {
+  Source,
+  Me,
+  Organization,
+  DeviceData,
+  DropdownItem,
+  SNMPConfig,
+  SSHConfig,
+} from 'src/types'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  deviceInformationForAddDevice: DeviceData
+  deviceData: DeviceData
   isUsingAuth: boolean
   me: Me
   organizations: Organization[]
-  onChangeDeviceData: (key: keyof DeviceData) => (value: string) => void
+  onChangeDeviceData: (
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
+  ) => (value: string) => void
   onChooseDeviceDataDropdown: (
-    key: keyof DeviceData
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
   ) => (value: DropdownItem) => void
 }
 
@@ -38,7 +48,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
 
   public render() {
     const {
-      deviceInformationForAddDevice,
+      deviceData,
       me,
       organizations,
       isUsingAuth,
@@ -67,21 +77,21 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
     return (
       <>
         <WizardTextInput
-          value={deviceInformationForAddDevice.device_ip}
+          value={deviceData?.device_ip}
           label="Device IP"
           onChange={onChangeDeviceData('device_ip')}
         />
         <WizardTextInput
-          value={deviceInformationForAddDevice.snmp_str}
+          value={deviceData?.snmp_config?.snmp_community}
           label="SNMP Community"
-          onChange={onChangeDeviceData('snmp_str')}
+          onChange={onChangeDeviceData('snmp_community')}
         />
         <div className="form-group col-xs-6">
           <label>Organization</label>
           <Dropdown
             items={!isUsingAuth || me.superAdmin ? dropdownOrg : dropdownCurOrg}
             onChoose={onChooseDeviceDataDropdown('organization')}
-            selected={deviceInformationForAddDevice.organization}
+            selected={deviceData?.organization}
             className="dropdown-stretch"
           />
         </div>
@@ -89,13 +99,22 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
           <label>SNMP Version</label>
           <Dropdown
             items={SNMP_VERSION}
-            onChoose={onChooseDeviceDataDropdown('snmp_ver')}
-            selected={deviceInformationForAddDevice.snmp_ver}
+            onChoose={onChooseDeviceDataDropdown('snmp_version')}
+            selected={deviceData?.snmp_config?.snmp_version}
+            className="dropdown-stretch"
+          />
+        </div>
+        <div className="form-group col-xs-6">
+          <label>Protocol</label>
+          <Dropdown
+            items={SNMP_PROTOCOL}
+            onChoose={onChooseDeviceDataDropdown('snmp_protocol')}
+            selected={deviceData?.snmp_config?.snmp_protocol}
             className="dropdown-stretch"
           />
         </div>
         <WizardTextInput
-          value={`${deviceInformationForAddDevice.snmp_port}`}
+          value={`${deviceData.snmp_config.snmp_port}`}
           label={'SNMP Port'}
           type={'number'}
           onChange={onChangeDeviceData('snmp_port')}

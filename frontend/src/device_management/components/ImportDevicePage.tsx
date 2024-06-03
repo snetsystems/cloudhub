@@ -21,7 +21,7 @@ import {ImportDevicePageStatus} from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  deviceInformation: string
+  deviceDataRawFromCSV: string
   importDevicePageStatus: ImportDevicePageStatus
   isVisible: boolean
   onDismissOverlay: () => void
@@ -59,7 +59,7 @@ class ImportDevicePage extends PureComponent<Props> {
 
   private get UploadCSV(): JSX.Element {
     const {
-      deviceInformation,
+      deviceDataRawFromCSV,
       onDismissOverlay,
       onGoNextImportedDeviceFile,
       onUploadImportedDeviceFile,
@@ -92,7 +92,7 @@ class ImportDevicePage extends PureComponent<Props> {
             <Form.Footer>
               <Button
                 status={
-                  deviceInformation === ''
+                  deviceDataRawFromCSV === ''
                     ? ComponentStatus.Disabled
                     : ComponentStatus.Default
                 }

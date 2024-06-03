@@ -6,13 +6,15 @@ import _ from 'lodash'
 import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
 
 // Types
-import {Source, DeviceData} from 'src/types'
+import {Source, DeviceData, SNMPConfig, SSHConfig} from 'src/types'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  deviceInformationForAddDevice: DeviceData
-  onChangeDeviceData: (key: keyof DeviceData) => (value: string) => void
+  deviceData: DeviceData
+  onChangeDeviceData: (
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
+  ) => (value: string) => void
 }
 
 interface State {
@@ -27,30 +29,30 @@ export default class SSHConnectionStep extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {deviceInformationForAddDevice, onChangeDeviceData} = this.props
+    const {deviceData, onChangeDeviceData} = this.props
 
     return (
       <>
         <WizardTextInput
-          value={deviceInformationForAddDevice.ssh_user_name}
+          value={deviceData?.ssh_config?.ssh_user_name}
           label="Username"
           onChange={onChangeDeviceData('ssh_user_name')}
         />
         <WizardTextInput
-          value={deviceInformationForAddDevice.ssh_password}
+          value={deviceData?.ssh_config?.ssh_password}
           label="Password"
           onChange={onChangeDeviceData('ssh_password')}
           type={'password'}
         />
 
         <WizardTextInput
-          value={`${deviceInformationForAddDevice.ssh_port}`}
+          value={`${deviceData?.ssh_config?.ssh_port}`}
           label={'SSH Port'}
           type={'number'}
           onChange={onChangeDeviceData('ssh_port')}
         />
         <WizardTextInput
-          value={`${deviceInformationForAddDevice.ssh_en_password}`}
+          value={`${deviceData?.ssh_config?.ssh_en_password}`}
           label={'SSH Enable Password'}
           type={'password'}
           onChange={onChangeDeviceData('ssh_en_password')}
