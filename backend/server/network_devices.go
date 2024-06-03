@@ -128,12 +128,6 @@ func (r *updateDeviceRequest) validUpdate() error {
 	switch {
 	case r.DeviceIP == nil:
 		return fmt.Errorf("device_ip required in device request body")
-	case r.DeviceCategory != nil:
-		if _, ok := cloudhub.DeviceCategoryMap[*r.DeviceCategory]; !ok {
-			return fmt.Errorf("invalid device_category: %s", *r.DeviceCategory)
-		}
-	case r.Organization == nil:
-		return fmt.Errorf("organization required in device request body")
 	}
 
 	return nil

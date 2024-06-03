@@ -239,6 +239,217 @@ func TestDeviceID(t *testing.T) {
 	}
 }
 
+func TestUpdateNetworkDevice(t *testing.T) {
+	type fields struct {
+		NetworkDeviceStore cloudhub.NetworkDeviceStore
+		Logger             cloudhub.Logger
+	}
+	type args struct {
+		w       *httptest.ResponseRecorder
+		r       *http.Request
+		request updateDeviceRequest
+	}
+	tests := []struct {
+		name       string
+		fields     fields
+		args       args
+		id         string
+		wantStatus int
+		wantBody   string
+	}{
+		{
+			name: "Successfully Update Device",
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest(
+					"PUT",
+					"http://any.url",
+					nil,
+				),
+				request: updateDeviceRequest{
+					DeviceIP:            ptr("192.168.1.2"),
+					Hostname:            ptr("UPDATED_SWITCH_01"),
+					IsMonitoringEnabled: ptr(true),
+				},
+			},
+			fields: fields{
+				Logger: log.New(log.DebugLevel),
+				NetworkDeviceStore: &mocks.NetworkDeviceStore{
+					UpdateF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
+						return nil
+					},
+					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
+						if *q.ID == "547" {
+							return &cloudhub.NetworkDevice{
+								ID:                  "547",
+								DeviceIP:            "172.16.11.168",
+								Organization:        "76",
+								Hostname:            "SWITCH_01",
+								DeviceType:          "switch",
+								DeviceOS:            "IOS",
+								IsMonitoringEnabled: true,
+								IsModelingGenerated: false,
+							}, nil
+						}
+						return nil, cloudhub.ErrDeviceNotFound
+					},
+				},
+			},
+			id:         "547",
+			wantStatus: http.StatusOK,
+			wantBody: `{
+				"id": "547",
+				"organization": "76",
+				"device_ip": "192.168.1.2",
+				"hostname": "UPDATED_SWITCH_01",
+				"device_type": "switch",
+				"device_category": "",
+				"device_os": "IOS",
+				"is_monitoring_enabled": true,
+				"is_modeling_generated": false,
+				"ssh_conn": {
+				  "ssh_user_name": "",
+				  "ssh_password": "",
+				  "ssh_en_password": "",
+				  "ssh_port": 0
+				},
+				"snmp_config": {
+				  "snmp_community": "",
+				  "snmp_version": "",
+				  "snmp_port": 0,
+				  "snmp_protocol": ""
+				},
+				"learn_setting_group_id": 0,
+				"learn_ratio": 0,
+				"device_vendor": "",
+				"links": {
+				  "self": "/cloudhub/v1/device/547"
+				}
+			  }`,
+		},
+		{
+			name: "Device Not Found",
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest(
+					"PUT",
+					"http://any.url",
+					nil,
+				),
+				request: updateDeviceRequest{
+					DeviceIP: ptr("192.168.1.2"),
+				},
+			},
+			fields: fields{
+				Logger: log.New(log.DebugLevel),
+				NetworkDeviceStore: &mocks.NetworkDeviceStore{
+					UpdateF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
+						return nil
+					},
+					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
+						return nil, cloudhub.ErrDeviceNotFound
+					},
+				},
+			},
+			id:         "999",
+			wantStatus: http.StatusNotFound,
+			wantBody:   `{"code": 404,"message": "ID 999 not found"}`,
+		},
+		{
+			name: "empty device_ip in Request Body",
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest(
+					"PUT",
+					"http://any.url",
+					strings.NewReader(`invalid json`),
+				),
+				request: updateDeviceRequest{},
+			},
+			fields: fields{
+				Logger:             log.New(log.DebugLevel),
+				NetworkDeviceStore: &mocks.NetworkDeviceStore{},
+			},
+			id:         "547",
+			wantStatus: http.StatusUnprocessableEntity,
+			wantBody:   `{"code": 422,"message": "device_ip required in device request body"}`,
+		},
+		{
+			name: "Internal Server Error",
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest(
+					"PUT",
+					"http://any.url",
+					nil,
+				),
+				request: updateDeviceRequest{
+					DeviceIP: ptr("192.168.1.2"),
+				},
+			},
+			fields: fields{
+				Logger: log.New(log.DebugLevel),
+				NetworkDeviceStore: &mocks.NetworkDeviceStore{
+					UpdateF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
+						return errors.New("update failed")
+					},
+					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
+						return &cloudhub.NetworkDevice{
+							ID:                  "547",
+							DeviceIP:            "172.16.11.168",
+							Organization:        "76",
+							Hostname:            "SWITCH_01",
+							DeviceType:          "switch",
+							DeviceOS:            "IOS",
+							IsMonitoringEnabled: true,
+							IsModelingGenerated: false,
+						}, nil
+					},
+				},
+			},
+			id:         "547",
+			wantStatus: http.StatusInternalServerError,
+			wantBody:   `{"code": 500,"message": "Error updating Device ID 547: update failed"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Service{
+				Store: &mocks.Store{
+					NetworkDeviceStore: tt.fields.NetworkDeviceStore,
+				},
+				Logger: tt.fields.Logger,
+			}
+
+			buf, _ := json.Marshal(tt.args.request)
+			tt.args.r.Body = io.NopCloser(bytes.NewReader(buf))
+			tt.args.r = tt.args.r.WithContext(httprouter.WithParams(
+				context.Background(),
+				httprouter.Params{
+					{
+						Key:   "id",
+						Value: tt.id,
+					},
+				}))
+
+			s.UpdateNetworkDevice(tt.args.w, tt.args.r)
+
+			resp := tt.args.w.Result()
+			body, _ := io.ReadAll(resp.Body)
+
+			if resp.StatusCode != tt.wantStatus {
+				t.Errorf("%q. UpdateNetworkDevice() = %v, want %v", tt.name, resp.StatusCode, tt.wantStatus)
+			}
+			if eq, _ := jsonEqual(string(body), tt.wantBody); tt.wantBody != "" && !eq {
+				formattedBody, _ := FormatTestResultJSON(string(body))
+				formattedWantBody, _ := FormatTestResultJSON(tt.wantBody)
+				t.Errorf("%q. UpdateNetworkDevice() = \n***%v***\n,\nwant\n***%v***", tt.name, formattedBody, formattedWantBody)
+			}
+		})
+	}
+}
+
 func TestRemoveDevices(t *testing.T) {
 	type fields struct {
 		NetworkDeviceStore cloudhub.NetworkDeviceStore
@@ -382,6 +593,10 @@ func TestRemoveDevices(t *testing.T) {
 }
 
 const MockOrganizationID = "76"
+
+func ptr[T any](v T) *T {
+	return &v
+}
 
 func MockDeviceStoreSetup(mockData []deviceRequest) *mocks.NetworkDeviceStore {
 	index := 0
