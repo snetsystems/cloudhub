@@ -5059,7 +5059,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/SNMPConfig"
+                "$ref": "#/definitions/Device_SNMPConfig"
               }
             }
           }
@@ -8951,9 +8951,46 @@
       },
       "required": [
         "snmp_community",
+        "snmp_port",
+        "snmp_version",
+        "snmp_protocol"
+      ]
+    },
+    "Device_SNMPConfig": {
+      "type": "object",
+      "properties": {
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "snmp_community": {
+          "type": "string",
+          "description": "SNMP community string",
+          "example": "public"
+        },
+        "snmp_port": {
+          "type": "integer",
+          "description": "SNMP port",
+          "example": 161
+        },
+        "snmp_version": {
+          "type": "string",
+          "description": "SNMP version",
+          "example": "v2c"
+        },
+        "snmp_protocol": {
+          "type": "string",
+          "description": "SNMP protocol",
+          "example": "udp"
+        }
+      },
+      "required": [
+        "snmp_community",
         "device_ip",
-        "snmp_udp_port",
-        "snmp_version"
+        "snmp_port",
+        "snmp_version",
+        "snmp_protocol"
       ]
     },
     "SelfLinks": {

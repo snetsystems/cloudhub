@@ -29,7 +29,7 @@ type SNMPManager struct {
 type SNMPConfig struct {
 	Community    string                    `json:"snmp_community"`
 	DeviceIP     string                    `json:"device_ip"`
-	Port         uint16                    `json:"snmp_udp_port"`
+	Port         uint16                    `json:"snmp_port"`
 	Version      string                    `json:"snmp_version"`
 	Username     string                    `json:"snmp_user"`
 	AuthPassword string                    `json:"snmp_auth_password"`
