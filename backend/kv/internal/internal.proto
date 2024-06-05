@@ -325,6 +325,16 @@ message NetworkDevice {
   string DeviceVendor       = 14; // DeviceVendor is the vendor of the device
 }
 
+message NetworkDeviceGroup {
+  string organization_id = 1;   // organization_id is the organization ID for the network device group
+  string algorithm = 2;         // algorithm is the algorithm used for network device grouping
+  int32 begin_duration = 3;     // begin_duration is the duration to start the network device grouping
+  int32 learn_cycle = 4;        // learn_cycle is the cycle duration for learning the network device grouping
+  repeated string devices_id = 5; // devices_id is a list of device IDs included in the network device group
+  string collector_server = 6;  // collector_server is the server used to collect network data
+}
+
+
 
 
 // The following is a vim modeline, it autoconfigures vim to have the

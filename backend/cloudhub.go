@@ -1197,3 +1197,35 @@ type NetworkDeviceStore interface {
 
 	Update(context.Context, *NetworkDevice) error
 }
+
+// NetworkDeviceGroupQuery represents the attributes that a NetworkDeviceGroup may be retrieved by.
+// It is predominantly used in the NetworkDeviceGroupStore.Get method.
+//
+// It is expected that only one of Organization ID will be
+// specified, but all are provided NetworkDeviceGroupStore should prefer ID.
+type NetworkDeviceGroupQuery struct {
+	ID *string
+}
+
+// NetworkDeviceGroup represents the information of a network device group
+type NetworkDeviceGroup struct {
+	OrganizationID  string   `json:"Organization_id"`
+	Algorithm       string   `json:"algorithm"`
+	BeginDuration   int      `json:"begin_duration"`
+	LearnCycle      int      `json:"learn_cycle"`
+	DevicesID       []string `json:"devices_id"`
+	CollectorServer string   `json:"collector_server"`
+}
+
+// NetworkDeviceGroupStore is the Storage and retrieval of information
+type NetworkDeviceGroupStore interface {
+	All(context.Context) ([]NetworkDeviceGroup, error)
+
+	Add(context.Context, *NetworkDeviceGroup) (*NetworkDeviceGroup, error)
+
+	Delete(context.Context, *NetworkDeviceGroup) error
+
+	Get(ctx context.Context, q NetworkDeviceQuery) (*NetworkDeviceGroup, error)
+
+	Update(context.Context, *NetworkDeviceGroup) error
+}

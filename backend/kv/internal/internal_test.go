@@ -597,3 +597,23 @@ func TestMarshalDevice(t *testing.T) {
 		t.Fatalf("Mismatch in original and copied NetworkDevice struct: got %#v, want %#v", vv, v)
 	}
 }
+
+func TestMarshalNetworkDeviceGroup(t *testing.T) {
+	v := cloudhub.NetworkDeviceGroup{
+		OrganizationID:  "1",
+		Algorithm:       "RoundRobin",
+		BeginDuration:   100,
+		LearnCycle:      200,
+		DevicesID:       []string{"device1", "device2", "device3"},
+		CollectorServer: "collector.server.io",
+	}
+
+	var vv cloudhub.NetworkDeviceGroup
+	if buf, err := internal.MarshalNetworkDeviceGroup(&v); err != nil {
+		t.Fatal("Marshal failed:", err)
+	} else if err := internal.UnmarshalNetworkDeviceGroup(buf, &vv); err != nil {
+		t.Fatal("Unmarshal failed:", err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("Mismatch in original and copied NetworkDeviceGroup struct: got %#v, want %#v", vv, v)
+	}
+}

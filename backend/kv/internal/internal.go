@@ -1110,3 +1110,31 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 
 	return nil
 }
+
+// MarshalNetworkDeviceGroup encodes a NetworkDeviceGroup struct to binary protobuf format.
+func MarshalNetworkDeviceGroup(t *cloudhub.NetworkDeviceGroup) ([]byte, error) {
+	return proto.Marshal(&NetworkDeviceGroup{
+		OrganizationId:  t.OrganizationID,
+		Algorithm:       t.Algorithm,
+		BeginDuration:   int32(t.BeginDuration),
+		LearnCycle:      int32(t.LearnCycle),
+		DevicesId:       t.DevicesID,
+		CollectorServer: t.CollectorServer,
+	})
+}
+
+// UnmarshalNetworkDeviceGroup decodes a NetworkDeviceGroup from binary protobuf data.
+func UnmarshalNetworkDeviceGroup(data []byte, t *cloudhub.NetworkDeviceGroup) error {
+	var pb NetworkDeviceGroup
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	t.OrganizationID = pb.OrganizationId
+	t.Algorithm = pb.Algorithm
+	t.BeginDuration = int(pb.BeginDuration)
+	t.LearnCycle = int(pb.LearnCycle)
+	t.DevicesID = pb.DevicesId
+	t.CollectorServer = pb.CollectorServer
+
+	return nil
+}
