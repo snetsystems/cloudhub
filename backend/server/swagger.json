@@ -8689,7 +8689,7 @@
     "DeleteDeviceRequest": {
       "type": "object",
       "properties": {
-        "devices_ip": {
+        "devices_id": {
           "type": "array",
           "description": "The IDs of the devices",
           "items": {
@@ -8698,7 +8698,7 @@
           "example": ["1", "2"]
         }
       },
-      "required": ["devices_ip"]
+      "required": ["devices_id"]
     },
     "DeviceResponse": {
       "type": "object",
