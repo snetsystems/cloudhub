@@ -1,116 +1,42 @@
 import React, {useEffect, useState} from 'react'
 import TableComponent from '../components/TableComponent'
-import {ColumnInfo} from 'src/types'
+import {DeviceData} from 'src/types'
 
 //dummy
 import {AccordionTableColumns} from '../constants/AccordionTableColumn'
 
 // redux
 import {connect} from 'react-redux'
+import {getDeviceList} from '../apis'
+import {predictionColumn} from '../constants'
 
 function PredictionPage() {
   const [checkdList, setCheckedList] = useState<string[]>([])
+  const [dataList, setDataList] = useState<DeviceData[]>([])
 
   useEffect(() => {
-    console.log('checkdList: ', checkdList)
-  }, [checkdList])
+    getDeviceAJAX()
+  }, [])
 
-  const data = []
-
-  const columns: ColumnInfo[] = [
-    {key: 'device_ip', name: '', options: {checkbox: true}},
-    {
-      key: 'organization',
-      name: 'Organization',
-      options: {
-        sorting: true,
-      },
-    },
-    {
-      key: 'device_ip',
-      name: 'Device Ip',
-      options: {
-        sorting: true,
-      },
-      render: item => {
-        return (
-          <div>
-            <a
-              onClick={e => {
-                e.stopPropagation()
-              }}
-            >
-              {item}
-            </a>
-          </div>
-        )
-      },
-    },
-    {
-      key: 'hostname',
-      name: 'Hostname',
-      options: {
-        sorting: true,
-      },
-    },
-    {
-      key: 'device_type',
-      name: 'Device Type',
-      options: {
-        sorting: true,
-      },
-    },
-    {
-      key: 'device_os',
-      name: 'Device OS',
-      options: {
-        sorting: true,
-      },
-    },
-    {
-      key: 'algorithm',
-      name: 'Algorithm',
-      options: {
-        sorting: true,
-      },
-    },
-    {
-      key: 'epsilon',
-      name: 'epsilon',
-      options: {
-        sorting: true,
-      },
-    },
-    {
-      key: 'learning_state',
-      name: 'State',
-      options: {
-        sorting: true,
-      },
-    },
-
-    {
-      key: 'device_id',
-      name: 'Device Id',
-      options: {
-        isAccordion: true,
-      },
-    },
-  ]
+  const getDeviceAJAX = async () => {
+    const {data} = await getDeviceList()
+    setDataList(data.Devices)
+  }
 
   return (
     <TableComponent
       tableTitle={`${
-        data.length
-          ? data.length === 1
+        dataList.length
+          ? dataList.length === 1
             ? '1 Device'
-            : data.length + ' ' + 'Devices'
+            : dataList.length + ' ' + 'Devices'
           : '0 Device'
       } list`}
-      data={data}
-      columns={columns}
+      data={dataList || []}
+      columns={predictionColumn}
       isAccordion={true}
       accordionColumns={AccordionTableColumns}
+      checkedArray={checkdList}
       setCheckedArray={setCheckedList}
     />
   )

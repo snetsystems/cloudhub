@@ -185,6 +185,10 @@ function TableBase({
                     if (isAccordionRow) {
                       e.stopPropagation()
                       openAccordian(rowIndex)
+                    } else if (!!options?.tbodyRow?.onClick) {
+                      options?.tbodyRow?.onClick?.(item, rowIndex)
+                    } else {
+                      null
                     }
                   }}
                   className={`hightlight ${
@@ -232,7 +236,11 @@ function TableBase({
                     className="table-accordian-tr"
                   >
                     <td className="table-accordian-td" colSpan={keys.length}>
-                      <div className="table-accordion-div panel-body">
+                      <div
+                        className={`table-accordion-div panel-body ${
+                          rowIndex === openRowAccor ? 'open' : 'close'
+                        }`}
+                      >
                         <AccordionTable
                           tableData={
                             getValue(item, accordianKey) as DataTableObject[]

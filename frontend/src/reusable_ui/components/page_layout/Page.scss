@@ -38,6 +38,20 @@
   &.full-width {
     max-width: 100%;
   }
+
+  .loading-box {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 95px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 3 !important;
+    z-index: 3;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
 }
 
 .template-control-bar + .page-contents,

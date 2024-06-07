@@ -30,6 +30,9 @@ import {
   DropdownItem,
   SNMPConfig,
   SSHConfig,
+  DataTableOptions,
+  DevicesInfo,
+  PatchDeviceParams,
 } from 'src/types'
 
 // Util
@@ -42,6 +45,8 @@ import {
   notifyCSVUploadFailedWithMessage,
 } from 'src/shared/copy/notifications'
 import TableComponent from '../components/TableComponent'
+import {deleteDevice, getDeviceList, patchDevice} from '../apis'
+import LoadingSpinner from 'src/reusable_ui/components/spinners/LoadingSpinner'
 
 interface Props {
   isUsingAuth: boolean
@@ -51,6 +56,8 @@ interface Props {
 }
 
 interface State {
+  isLiading: boolean
+  data: DevicesInfo[]
   addDeviceWizardVisibility: boolean
   importDeviceWizardVisibility: boolean
   deviceData: DeviceData[]
@@ -70,9 +77,11 @@ class DeviceManagement extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
+      data: [],
+      isLiading: false,
       addDeviceWizardVisibility: false,
       importDeviceWizardVisibility: false,
-      deviceData: [DEFAULT_DEVICE_DATA],
+      deviceData: [DEFAULT_DEVICE_DATA as DeviceData],
       deviceDataRawFromCSV: '',
       deviceDataParsedFromCSV: [],
       importDevicePageStatus: 'UploadCSV',
@@ -80,6 +89,15 @@ class DeviceManagement extends PureComponent<Props, State> {
       setupCompleteStatus: 'Incomplete',
       sshConnectionStatus: 'Incomplete',
       checkedArray: [],
+    }
+  }
+
+  public componentDidMount(): void {
+    try {
+      this.getDeviceAJAX()
+    } catch (error) {
+      console.error(error)
+      throw error
     }
   }
 
@@ -100,43 +118,52 @@ class DeviceManagement extends PureComponent<Props, State> {
       <>
         <TableComponent
           tableTitle={`${
-            this.data.length
-              ? this.data.length === 1
+            this.state.data.length
+              ? this.state.data.length === 1
                 ? '1 Device'
-                : this.data.length + ' ' + 'Devices'
+                : this.state.data.length + ' ' + 'Devices'
               : '0 Device'
           } list`}
-          data={this.data}
+          data={this.state.data}
           columns={this.column}
+          checkedArray={this.state.checkedArray}
           setCheckedArray={(value: string[]) =>
             this.setState({checkedArray: value})
           }
+          options={this.options}
           topLeftRender={
             <div className="device-management-top left">
               <div className="space-x">
                 <Authorized requiredRole={EDITOR_ROLE}>
-                  <div
-                    onClick={this.addDevice(true)}
-                    className="btn btn-sm btn-primary"
+                  <button
+                    onClick={() => {
+                      this.setState({isLiading: true})
+                      this.deleteDevicesAJAX(this.state.checkedArray)
+                    }}
+                    className="btn button btn-sm btn-primary"
+                    disabled={this.state.checkedArray.length === 0}
                   >
-                    <span className="icon plus" /> Add Device
-                  </div>
+                    <span className="icon trash" /> Delete Device
+                  </button>
                 </Authorized>
                 {/* TODO Consder requiredRole */}
                 <Authorized requiredRole={EDITOR_ROLE}>
-                  <div
-                    onClick={this.importDevice}
-                    className="btn btn-sm btn-primary"
+                  <button
+                    onClick={() => {
+                      console.log('checked array: ', this.state.checkedArray)
+                    }}
+                    className="btn button btn-sm btn-primary"
+                    // disabled={this.state.checkedArray.length === 0}
                   >
-                    <span className="icon import" /> Import Device
-                  </div>
+                    <span className="icon import" /> Apply Monitoring
+                  </button>
                 </Authorized>
               </div>
               <div className="space-x">
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <div
                     onClick={this.addDevice(true)}
-                    className="btn btn-sm btn-primary"
+                    className="btn button btn-sm btn-primary"
                   >
                     <span className="icon plus" /> Add Device
                   </div>
@@ -145,7 +172,7 @@ class DeviceManagement extends PureComponent<Props, State> {
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <div
                     onClick={this.importDevice}
-                    className="btn btn-sm btn-primary"
+                    className="btn button btn-sm btn-primary"
                   >
                     <span className="icon import" /> Import Device
                   </div>
@@ -154,6 +181,7 @@ class DeviceManagement extends PureComponent<Props, State> {
             </div>
           }
         />
+
         <AddDevicePage
           me={me}
           organizations={organizations}
@@ -182,13 +210,42 @@ class DeviceManagement extends PureComponent<Props, State> {
           onSaveImportedDeviceFile={this.handleSaveImportedDeviceFile}
           onUploadImportedDeviceFile={this.handleUploadImportedDeviceFile}
         />
+
+        {this.state.isLiading && (
+          <div className="loading-box">
+            <LoadingSpinner />
+          </div>
+        )}
       </>
     )
   }
 
-  private data = []
-
   private column = columns
+
+  private getDeviceAJAX = async () => {
+    const {data} = await getDeviceList()
+    this.setState({data: data.Devices})
+  }
+
+  //patch api
+  private patchDevicesAJAX = async (params: PatchDeviceParams) => {
+    const {data} = await patchDevice(params)
+  }
+
+  private options: DataTableOptions = {
+    tbodyRow: {
+      onClick: item => {
+        this.addDevice(true)
+        console.log(item)
+      },
+    },
+  }
+
+  private deleteDevicesAJAX = async (idList: string[]) => {
+    await deleteDevice({devices_id: idList})
+    this.getDeviceAJAX()
+    this.setState({checkedArray: [], isLiading: false})
+  }
 
   private addDevice = isAddDeviceModalVisible => () => {
     this.setState({
@@ -361,7 +418,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   private handleResetWizard = () => {
     // TODO Reset Wizard
     this.setState({
-      deviceData: [DEFAULT_DEVICE_DATA],
+      deviceData: [DEFAULT_DEVICE_DATA as DeviceData],
       deviceDataRawFromCSV: '',
       deviceDataParsedFromCSV: [],
       deviceSNMPConnectionStatus: 'Incomplete',

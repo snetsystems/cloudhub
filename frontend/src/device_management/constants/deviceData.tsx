@@ -1,4 +1,4 @@
-import {DropdownItem, DeviceData, SNMPConfig, SSHConfig} from 'src/types'
+import {DropdownItem, SNMPConfig, SSHConfig, DefaultDeviceData} from 'src/types'
 
 export const DEFAULT_SNMP_CONFIG: SNMPConfig = {
   snmp_community: '',
@@ -13,7 +13,7 @@ export const DEFAULT_SSH_CONFIG: SSHConfig = {
   ssh_en_password: '',
   ssh_port: 22,
 }
-export const DEFAULT_DEVICE_DATA: DeviceData = {
+export const DEFAULT_DEVICE_DATA: DefaultDeviceData = {
   device_ip: '',
   organization: 'Default',
   snmp_config: DEFAULT_SNMP_CONFIG,

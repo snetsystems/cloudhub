@@ -1,18 +1,28 @@
 export interface DeviceData {
-  device_ip: string
+  id: string
   organization: string
+  device_ip: string
   hostname?: string
   device_type?: string
+  device_category: string
   device_os?: string
-  snmp_config: SNMPConfig
   ssh_config?: SSHConfig
+  snmp_config: SNMPConfig
+  device_vendor: string
+}
+
+export interface DefaultDeviceData {
+  organization?: string
+  device_ip?: string
+  ssh_config?: SSHConfig
+  snmp_config: SNMPConfig
 }
 
 export interface SNMPConfig {
-  snmp_community?: string
-  snmp_port?: number
-  snmp_version?: string
-  snmp_protocol?: string
+  snmp_community: string
+  snmp_port: number
+  snmp_version: string
+  snmp_protocol: string
 }
 
 export interface SSHConfig {
@@ -20,6 +30,42 @@ export interface SSHConfig {
   ssh_password?: string
   ssh_en_password?: string
   ssh_port?: number
+}
+
+export interface GetDeviceListRsponse {
+  Devices?: DevicesInfo[] | null
+}
+
+export interface DevicesInfo {
+  id: string
+  organization: string
+  device_ip: string
+  hostname: string
+  device_type: string
+  device_category: string
+  device_os: string
+  ssh_config: SSHConfig
+  snmp_config: SNMPConfig
+  device_vendor: string
+}
+
+export interface PatchDeviceResponse {
+  isSuccess: boolean
+}
+
+//device update api
+export interface PatchDeviceParams {
+  id: string
+  deviceData: DevicesInfo
+}
+
+export interface DeleteDeviceResponse {
+  code: number
+  message: string
+}
+
+export interface DeleteDeviceParams {
+  devices_id: string[]
 }
 
 export type ImportDevicePageStatus = 'UploadCSV' | 'DeviceStatus'
