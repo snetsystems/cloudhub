@@ -1,23 +1,15 @@
 export interface DeviceData {
-  id: string
+  id?: string
   organization: string
   device_ip: string
   hostname?: string
   device_type?: string
-  device_category: string
+  device_category?: string
   device_os?: string
   ssh_config?: SSHConfig
   snmp_config: SNMPConfig
-  device_vendor: string
+  device_vendor?: string
 }
-
-export interface DefaultDeviceData {
-  organization?: string
-  device_ip?: string
-  ssh_config?: SSHConfig
-  snmp_config: SNMPConfig
-}
-
 export interface SNMPConfig {
   snmp_community: string
   snmp_port: number
@@ -51,6 +43,15 @@ export interface DevicesInfo {
 
 export interface PatchDeviceResponse {
   isSuccess: boolean
+}
+
+// SNMP Connection API
+export interface SNMPConnectionRequest {
+  device_ip: string
+  snmp_community?: string
+  snmp_port?: number
+  snmp_version?: string
+  snmp_protocol?: string
 }
 
 //device update api

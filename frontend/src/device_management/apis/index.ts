@@ -6,9 +6,45 @@ import {
   DeleteDeviceParams,
   PatchDeviceParams,
 } from 'src/types'
-import {DeleteDeviceResponse} from 'src/types/deviceManagement'
+import {
+  DeleteDeviceResponse,
+  DeviceData,
+  SNMPConnectionRequest,
+} from 'src/types/deviceManagement'
+
+export const validateSNMPConnection = async (
+  url,
+  snmpConfig: SNMPConnectionRequest[]
+) => {
+  try {
+    const {data} = await AJAX({
+      method: 'POST',
+      url,
+      data: snmpConfig,
+    })
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
 
 //get device list api
+export const createDevices = async (url, deviceData: DeviceData[]) => {
+  try {
+    const {data} = await AJAX({
+      method: 'POST',
+      url,
+      data: deviceData,
+    })
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
 export const getDeviceList = () => {
   try {
     return AJAX<GetDeviceListRsponse>({

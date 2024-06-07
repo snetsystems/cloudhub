@@ -96,7 +96,6 @@ import {
 } from './tableType'
 import {
   DeviceData,
-  DefaultDeviceData,
   SNMPConfig,
   SSHConfig,
   GetDeviceListRsponse,
@@ -105,6 +104,7 @@ import {
   PatchDeviceResponse,
   PatchDeviceParams,
   DeleteDeviceParams,
+  SNMPConnectionRequest,
 } from './deviceManagement'
 
 export {
@@ -203,10 +203,10 @@ export {
   ImportDevicePageStatus,
   SNMPConfig,
   SSHConfig,
-  DefaultDeviceData,
   GetDeviceListRsponse,
   DevicesInfo,
   PatchDeviceResponse,
   PatchDeviceParams,
   DeleteDeviceParams,
+  SNMPConnectionRequest,
 }

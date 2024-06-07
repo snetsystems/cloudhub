@@ -7,13 +7,14 @@ import Papa from 'papaparse'
 // Components
 import AddDevicePage from 'src/device_management/components/AddDevicePage'
 import ImportDevicePage from 'src/device_management/components/ImportDevicePage'
+import TableComponent from 'src/device_management/components/TableComponent'
+import LoadingSpinner from 'src/reusable_ui/components/spinners/LoadingSpinner'
 
 // Actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Constants
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
-import {StepStatusKey} from 'src/reusable_ui/constants/wizard'
 import {
   DEFAULT_DEVICE_DATA,
   IMPORT_DEVICE_CSV_Template,
@@ -27,9 +28,6 @@ import {
   Organization,
   DeviceData,
   ImportDevicePageStatus,
-  DropdownItem,
-  SNMPConfig,
-  SSHConfig,
   DataTableOptions,
   DevicesInfo,
   PatchDeviceParams,
@@ -38,15 +36,19 @@ import {
 // Util
 import {downloadCSV} from 'src/shared/utils/downloadTimeseriesCSV'
 
+// API
+import {
+  deleteDevice,
+  getDeviceList,
+  patchDevice,
+} from 'src/device_management/apis'
+
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {
   csvExportFailed,
   notifyCSVUploadFailed,
   notifyCSVUploadFailedWithMessage,
 } from 'src/shared/copy/notifications'
-import TableComponent from '../components/TableComponent'
-import {deleteDevice, getDeviceList, patchDevice} from '../apis'
-import LoadingSpinner from 'src/reusable_ui/components/spinners/LoadingSpinner'
 
 interface Props {
   isUsingAuth: boolean
@@ -64,9 +66,6 @@ interface State {
   deviceDataRawFromCSV: string
   deviceDataParsedFromCSV: Array<any>
   importDevicePageStatus: ImportDevicePageStatus
-  deviceSNMPConnectionStatus: StepStatusKey
-  setupCompleteStatus: StepStatusKey
-  sshConnectionStatus: StepStatusKey
   checkedArray: string[]
 }
 
@@ -85,9 +84,6 @@ class DeviceManagement extends PureComponent<Props, State> {
       deviceDataRawFromCSV: '',
       deviceDataParsedFromCSV: [],
       importDevicePageStatus: 'UploadCSV',
-      deviceSNMPConnectionStatus: 'Incomplete',
-      setupCompleteStatus: 'Incomplete',
-      sshConnectionStatus: 'Incomplete',
       checkedArray: [],
     }
   }
@@ -105,13 +101,9 @@ class DeviceManagement extends PureComponent<Props, State> {
     const {me, organizations, isUsingAuth} = this.props
     const {
       addDeviceWizardVisibility,
-      deviceData,
       deviceDataRawFromCSV,
       importDevicePageStatus,
       importDeviceWizardVisibility,
-      deviceSNMPConnectionStatus,
-      setupCompleteStatus,
-      sshConnectionStatus,
     } = this.state
 
     return (
@@ -183,18 +175,9 @@ class DeviceManagement extends PureComponent<Props, State> {
         />
 
         <AddDevicePage
+          notify={this.props.notify}
           me={me}
           organizations={organizations}
-          onChangeDeviceData={this.handleChangeDeviceData}
-          onChooseDeviceDataDropdown={this.handleChooseDeviceDataDropdown}
-          onConnectDevice={this.handleConnectDevice}
-          onConnectSSH={this.handleConnectSSH}
-          onCompleteSetup={this.handleCompleteSetup}
-          onResetWizard={this.handleResetWizard}
-          deviceData={deviceData[0]}
-          deviceSNMPConnectionStatus={deviceSNMPConnectionStatus}
-          sshConnectionStatus={sshConnectionStatus}
-          setupCompleteStatus={setupCompleteStatus}
           isUsingAuth={isUsingAuth}
           isVisible={addDeviceWizardVisibility}
           toggleVisibility={this.addDevice}
@@ -257,80 +240,6 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({
       importDeviceWizardVisibility: true,
     })
-  }
-
-  private handleChooseDeviceDataDropdown = (
-    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
-  ) => (value: DropdownItem) => {
-    this.setState(prevState => ({
-      deviceData: prevState.deviceData.map((device, index) => {
-        if (index === 0) {
-          if (key in device.snmp_config) {
-            return {
-              ...device,
-              snmp_config: {
-                ...device.snmp_config,
-                [key]: value.text,
-              },
-            }
-          } else if (device.ssh_config && key in device.ssh_config) {
-            return {
-              ...device,
-              ssh_config: {
-                ...device.ssh_config,
-                [key]: value.text,
-              },
-            }
-          } else {
-            return {
-              ...device,
-              [key]: value.text,
-            }
-          }
-        }
-        return device
-      }),
-    }))
-  }
-
-  private handleChangeDeviceData = (
-    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
-  ) => (value: string) => {
-    let newValue: string | number = value
-
-    if (key === 'snmp_port' || key === 'ssh_port') {
-      newValue = Number(value)
-    }
-
-    this.setState(prevState => ({
-      deviceData: prevState.deviceData.map((device, index) => {
-        if (index === 0) {
-          if (key in device.snmp_config) {
-            return {
-              ...device,
-              snmp_config: {
-                ...device.snmp_config,
-                [key]: newValue,
-              },
-            }
-          } else if (device.ssh_config && key in device.ssh_config) {
-            return {
-              ...device,
-              ssh_config: {
-                ...device.ssh_config,
-                [key]: newValue,
-              },
-            }
-          } else {
-            return {
-              ...device,
-              [key]: newValue,
-            }
-          }
-        }
-        return device
-      }),
-    }))
   }
 
   private handleDismissImportDeviceModalOverlay = (): void => {
@@ -413,49 +322,6 @@ class DeviceManagement extends PureComponent<Props, State> {
         notify(notifyCSVUploadFailedWithMessage(error.message))
       },
     })
-  }
-
-  private handleResetWizard = () => {
-    // TODO Reset Wizard
-    this.setState({
-      deviceData: [DEFAULT_DEVICE_DATA as DeviceData],
-      deviceDataRawFromCSV: '',
-      deviceDataParsedFromCSV: [],
-      deviceSNMPConnectionStatus: 'Incomplete',
-      sshConnectionStatus: 'Incomplete',
-      setupCompleteStatus: 'Incomplete',
-    })
-  }
-
-  private handleConnectDevice = () => {
-    // TODO Call Connect Device API
-
-    this.setState({deviceSNMPConnectionStatus: 'Complete'})
-    return {error: false, payload: {}}
-
-    // TODO Connect Device API Error Handing
-    // this.setState({deviceSNMPConnectionStatus: 'Error'})
-    // return {error: true, payload: {}}
-  }
-
-  private handleConnectSSH = () => {
-    // TODO Call Connect SSH Device API
-    this.setState({sshConnectionStatus: 'Complete'})
-    return {error: false, payload: {}}
-
-    // TODO Connect Device API Error Handing
-    // this.setState({sshConnectionStatus: 'Error'})
-    // return {error: true, payload: {}}
-  }
-
-  private handleCompleteSetup = () => {
-    // TODO Call Compete Setup API
-    this.setState({setupCompleteStatus: 'Complete'})
-    return {error: false, payload: {}}
-
-    // TODO Connect Device API Error Handing
-    // this.setState({setupCompleteStatus: 'Error'})
-    // return {error: true, payload: {}}
   }
 }
 
