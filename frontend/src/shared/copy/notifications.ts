@@ -1439,3 +1439,23 @@ export const notifyGetDetectedHostStatusFailed = (
   duration: INFINITE,
   message: `Failed to Get Detected Host Status : ${errorMessage}`,
 })
+
+export const notifySNMPConnectSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Connected to SNMP successfully.`,
+})
+
+export const notifySNMPConnectFailed = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `SNMP Connection Failed, ${error}`,
+})
+
+export const notifyCreateDevicesFailed = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Create Devices, ${error}`,
+})
+
+export const notifyCreateDevicesSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Devices created successfully.`,
+})

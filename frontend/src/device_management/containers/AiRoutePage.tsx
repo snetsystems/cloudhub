@@ -18,10 +18,8 @@ import DeviceManagement from './DeviceManagement'
 
 //action
 import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import * as appActions from 'src/shared/actions/app'
-import {setTimeZone} from 'src/shared/actions/app'
 
 interface Props {
   me: Me
@@ -31,11 +29,16 @@ interface Props {
   notify: (n: Notification) => void
   organizations: Organization[]
   timeZone: TimeZones
-  onSetTimeZone: typeof setTimeZone
+  setTimeZone: typeof appActions.setTimeZone
   params: {tab: string}
 }
 
-const sections = (isUsingAuth, me, notify, organizations) => {
+const sections = (
+  isUsingAuth: boolean,
+  me: Me,
+  notify,
+  organizations: Organization[]
+) => {
   let sections = [
     {
       url: 'device-management',
@@ -71,7 +74,8 @@ const AiRoutePage = (props: Props) => {
     notify,
     organizations,
     timeZone,
-    onSetTimeZone,
+    // onSetTimeZone,
+    setTimeZone,
   } = props
 
   let providers = []
@@ -93,7 +97,7 @@ const AiRoutePage = (props: Props) => {
           <Page.Title title="CloudHub Admin" />
         </Page.Header.Left>
         <Page.Header.Right>
-          <TimeZoneToggle timeZone={timeZone} onSetTimeZone={onSetTimeZone} />
+          <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
         </Page.Header.Right>
       </Page.Header>
       <Page.Contents fullWidth={true}>
@@ -125,9 +129,9 @@ const mstp = ({
   }
 }
 
-const mdtp = (dispatch: any) => ({
-  notify: bindActionCreators(notifyAction, dispatch),
+const mdtp = {
+  notify: notifyAction,
   setTimeZone: appActions.setTimeZone,
-})
+}
 
 export default connect(mstp, mdtp, null)(AiRoutePage)

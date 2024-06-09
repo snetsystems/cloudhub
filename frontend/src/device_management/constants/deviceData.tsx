@@ -1,4 +1,4 @@
-import {DropdownItem, DeviceData, SNMPConfig, SSHConfig} from 'src/types'
+import {DeviceData, DropdownItem, SNMPConfig, SSHConfig} from 'src/types'
 
 export const DEFAULT_SNMP_CONFIG: SNMPConfig = {
   snmp_community: '',
@@ -16,6 +16,8 @@ export const DEFAULT_SSH_CONFIG: SSHConfig = {
 export const DEFAULT_DEVICE_DATA: DeviceData = {
   device_ip: '',
   organization: 'Default',
+  device_category: 'network',
+  device_vendor: 'cisco',
   snmp_config: DEFAULT_SNMP_CONFIG,
   ssh_config: DEFAULT_SSH_CONFIG,
 }
@@ -33,3 +35,8 @@ export const SNMP_PROTOCOL: DropdownItem[] = [
 
 export const IMPORT_DEVICE_CSV_Template =
   'dev_ip,ssh_user,ssh_pwd,enable,ssh_port,snmp_str,group,snmp_ver,snmp_port,organization'
+
+export const SNMP_CONNECTION_URL = '/cloudhub/v1/snmp/validation'
+
+export const DEVICE_MANAGEMENT_URL =
+  '/cloudhub/v1//ai/network/managements/devices'

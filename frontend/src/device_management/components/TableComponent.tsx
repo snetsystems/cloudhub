@@ -5,7 +5,12 @@ import React, {
   useMemo,
   useState,
 } from 'react'
-import {ColumnInfo, SortInfo, DataTableObject} from 'src/types'
+import {
+  ColumnInfo,
+  SortInfo,
+  DataTableObject,
+  DataTableOptions,
+} from 'src/types'
 import TableBase from './TableBase'
 import SearchBar from 'src/hosts/components/SearchBar'
 
@@ -14,12 +19,14 @@ interface Props {
   toprightRender?: ReactNode
   isAccordion?: boolean
   accordionColumns?: ColumnInfo[]
+  checkedArray?: string[]
   setCheckedArray?: (value: string[]) => void
   isCheckInit?: boolean
   isMultiSelect?: boolean
   columns: ColumnInfo[]
   data: DataTableObject[]
   tableTitle?: string
+  options?: DataTableOptions
 }
 
 function TableComponent({
@@ -28,25 +35,25 @@ function TableComponent({
   isAccordion,
   isMultiSelect = true,
   accordionColumns,
+  checkedArray,
   setCheckedArray,
   isCheckInit,
   columns,
   data,
   tableTitle,
+  options,
 }: Props) {
-  const [checkedTargets, setCheckedTargets] = useState<string[]>([])
-
   const [keyword, setKeyword] = useState('')
 
   const [sortTarget, setSortTarget] = useState<SortInfo | null>(null)
 
   useEffect(() => {
-    setCheckedTargets([])
+    setCheckedArray([])
   }, [isCheckInit])
 
   useEffect(() => {
-    !!setCheckedArray && setCheckedArray(checkedTargets)
-  }, [checkedTargets])
+    !!setCheckedArray && setCheckedArray(checkedArray)
+  }, [checkedArray])
 
   const filterData = useMemo(() => {
     const keys = columns.map(item => item.key)
@@ -172,10 +179,11 @@ function TableComponent({
           data={sortedData}
           accordionColumns={isAccordion ? accordionColumns : null}
           isMultiSelect={isMultiSelect}
-          onCheck={setCheckedTargets}
+          onCheck={setCheckedArray}
           onSort={onSort}
-          checkedTargets={checkedTargets}
+          checkedTargets={checkedArray}
           sortTarget={sortTarget}
+          options={options}
         />
       </div>
     </div>

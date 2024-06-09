@@ -34,7 +34,7 @@ export interface ColumnInfo extends ColumnBaseInfo {
 }
 
 export interface DataTableObject {
-  [key: string]: number | string | boolean | DataTableObject
+  [key: string]: number | string | boolean | DataTableObject | any
 }
 
 export interface DataTableOptions {

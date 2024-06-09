@@ -339,6 +339,14 @@ $wordBreak: break-word;
     column-span: all;
     background-color: #31313d;
 
+    .table-accordian-tr.open {
+      height: 100%;
+    }
+
+    .table-accordian-tr.close {
+      height: 0;
+    }
+
     .table-accordian-td {
       padding: 10px;
     }
@@ -375,8 +383,15 @@ $wordBreak: break-word;
   }
 }
 
-.table-accordion-div {
-  transition: calc(height) 0.3s, padding 0.3s;
+.subsection .panel.panel-solid .panel-body .table-accordion-div {
+  transition-property: height;
+  transition-duration: 0.5s;
+}
+.subsection .panel.panel-solid .panel-body .table-accordion-div.close {
+  height: 0;
+}
+.subsection .panel.panel-solid .panel-body .table-accordion-div.open {
+  height: 100%;
 }
 
 .padding-left-5 {

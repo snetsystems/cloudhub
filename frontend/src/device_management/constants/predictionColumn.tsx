@@ -1,7 +1,7 @@
 import React from 'react'
 import {ColumnInfo} from 'src/types'
 
-export const columns: ColumnInfo[] = [
+export const predictionColumn: ColumnInfo[] = [
   {key: 'id', name: '', options: {checkbox: true}},
   {
     key: 'organization',
@@ -47,6 +47,27 @@ export const columns: ColumnInfo[] = [
   {
     key: 'device_os',
     name: 'Device OS',
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'algorithm',
+    name: 'Algorithm',
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'epsilon',
+    name: 'epsilon',
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'learning_state',
+    name: 'State',
     options: {
       sorting: true,
     },
