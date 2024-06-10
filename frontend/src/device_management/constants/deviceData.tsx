@@ -1,4 +1,10 @@
-import {DeviceData, DropdownItem, SNMPConfig, SSHConfig} from 'src/types'
+import {
+  DeviceData,
+  DevicesInfo,
+  DropdownItem,
+  SNMPConfig,
+  SSHConfig,
+} from 'src/types'
 
 export const DEFAULT_SNMP_CONFIG: SNMPConfig = {
   snmp_community: '',
@@ -15,9 +21,21 @@ export const DEFAULT_SSH_CONFIG: SSHConfig = {
 }
 export const DEFAULT_DEVICE_DATA: DeviceData = {
   device_ip: '',
-  organization: 'Default',
   device_category: 'network',
   device_vendor: 'cisco',
+  organization: 'Default',
+  snmp_config: DEFAULT_SNMP_CONFIG,
+  ssh_config: DEFAULT_SSH_CONFIG,
+}
+
+export const DEFAULT_DEVICE_INFO: DevicesInfo = {
+  device_ip: '',
+  device_category: 'network',
+  device_vendor: 'cisco',
+  device_type: '',
+  device_os: '',
+  hostname: '',
+  organization: 'Default',
   snmp_config: DEFAULT_SNMP_CONFIG,
   ssh_config: DEFAULT_SSH_CONFIG,
 }

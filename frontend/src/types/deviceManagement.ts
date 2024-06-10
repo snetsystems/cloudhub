@@ -23,13 +23,8 @@ export interface SSHConfig {
   ssh_en_password?: string
   ssh_port?: number
 }
-
-export interface GetDeviceListRsponse {
-  Devices?: DevicesInfo[] | null
-}
-
 export interface DevicesInfo {
-  id: string
+  id?: string
   organization: string
   device_ip: string
   hostname: string
@@ -39,10 +34,13 @@ export interface DevicesInfo {
   ssh_config: SSHConfig
   snmp_config: SNMPConfig
   device_vendor: string
-}
-
-export interface PatchDeviceResponse {
-  isSuccess: boolean
+  links?: {
+    self: string
+  }
+  is_modeling_generated?: boolean
+  is_monitoring_enabled?: boolean
+  learn_ratio?: number
+  learn_setting_group_id?: number
 }
 
 // SNMP Connection API
@@ -54,10 +52,48 @@ export interface SNMPConnectionRequest {
   snmp_protocol?: string
 }
 
-//device update api
-export interface PatchDeviceParams {
+export interface SNMPConnectionResponse {
+  data: {
+    failed_requests: SNMPConnectionFailedDevice[]
+    results: SNMPConnectionSuccessDevice[]
+  }
+}
+
+export interface SNMPConnectionFailedDevice {
+  index: number
+  device_ip: string
+  errorMessage: string
+}
+
+export interface SNMPConnectionSuccessDevice {
+  device_type: string
+  hostname: string
+  device_os: string
+}
+
+export type CreateDeviceListRequest = DevicesInfo[]
+
+export interface CreateDeviceListResponse {
+  data: {failed_devices: FailedDevice[]}
+}
+
+export interface FailedDevice {
+  index: number
+  device_ip: string
+  errorMessage: string
+}
+
+export interface GetDeviceListRsponse {
+  Devices?: DevicesInfo[] | null
+}
+
+export interface UpdateDeviceRequest {
   id: string
-  deviceData: DevicesInfo
+  devicesInfo: DevicesInfo
+}
+
+export interface UpdateDeviceResponse {
+  data: {failed_devices: FailedDevice[]}
 }
 
 export interface DeleteDeviceResponse {
@@ -70,3 +106,5 @@ export interface DeleteDeviceParams {
 }
 
 export type ImportDevicePageStatus = 'UploadCSV' | 'DeviceStatus'
+
+export type DeviceConnectionStatus = 'None' | 'Creating' | 'Updating'

@@ -5,10 +5,10 @@ import {bindActionCreators} from 'redux'
 import Papa from 'papaparse'
 
 // Components
-import AddDevicePage from 'src/device_management/components/AddDevicePage'
 import ImportDevicePage from 'src/device_management/components/ImportDevicePage'
 import TableComponent from 'src/device_management/components/TableComponent'
 import LoadingSpinner from 'src/reusable_ui/components/spinners/LoadingSpinner'
+import DeviceConnection from 'src/device_management/components/DeviceConnection'
 
 // Actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -17,6 +17,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {
   DEFAULT_DEVICE_DATA,
+  DEFAULT_DEVICE_INFO,
   IMPORT_DEVICE_CSV_Template,
   columns,
 } from 'src/device_management/constants'
@@ -30,18 +31,14 @@ import {
   ImportDevicePageStatus,
   DataTableOptions,
   DevicesInfo,
-  PatchDeviceParams,
+  DeviceConnectionStatus,
 } from 'src/types'
 
 // Util
 import {downloadCSV} from 'src/shared/utils/downloadTimeseriesCSV'
 
 // API
-import {
-  deleteDevice,
-  getDeviceList,
-  patchDevice,
-} from 'src/device_management/apis'
+import {deleteDevice, getDeviceList} from 'src/device_management/apis'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {
@@ -60,9 +57,11 @@ interface Props {
 interface State {
   isLiading: boolean
   data: DevicesInfo[]
-  addDeviceWizardVisibility: boolean
+  deviceConnectionVisibility: boolean
+  deviceConnectionStatus: DeviceConnectionStatus
   importDeviceWizardVisibility: boolean
   deviceData: DeviceData[]
+  selectedDeviceData: DevicesInfo
   deviceDataRawFromCSV: string
   deviceDataParsedFromCSV: Array<any>
   importDevicePageStatus: ImportDevicePageStatus
@@ -73,19 +72,31 @@ const VERSION = process.env.npm_package_version
 
 @ErrorHandling
 class DeviceManagement extends PureComponent<Props, State> {
+  private isComponentMounted: boolean = true
+
   constructor(props: Props) {
     super(props)
     this.state = {
       data: [],
       isLiading: false,
-      addDeviceWizardVisibility: false,
+      deviceConnectionVisibility: false,
+      deviceConnectionStatus: 'None',
       importDeviceWizardVisibility: false,
       deviceData: [DEFAULT_DEVICE_DATA as DeviceData],
+      selectedDeviceData: DEFAULT_DEVICE_INFO,
       deviceDataRawFromCSV: '',
       deviceDataParsedFromCSV: [],
       importDevicePageStatus: 'UploadCSV',
       checkedArray: [],
     }
+
+    this.setState = (args, callback) => {
+      if (!this.isComponentMounted) return
+      PureComponent.prototype.setState.bind(this)(args, callback)
+    }
+
+    this.connectDevice = this.connectDevice.bind(this)
+    this.handleRowClick = this.handleRowClick.bind(this)
   }
 
   public componentDidMount(): void {
@@ -97,13 +108,19 @@ class DeviceManagement extends PureComponent<Props, State> {
     }
   }
 
+  public componentWillUnmount() {
+    this.isComponentMounted = false
+  }
+
   public render() {
     const {me, organizations, isUsingAuth} = this.props
     const {
-      addDeviceWizardVisibility,
+      deviceConnectionVisibility,
+      deviceConnectionStatus,
       deviceDataRawFromCSV,
       importDevicePageStatus,
       importDeviceWizardVisibility,
+      selectedDeviceData,
     } = this.state
 
     return (
@@ -154,7 +171,7 @@ class DeviceManagement extends PureComponent<Props, State> {
               <div className="space-x">
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <div
-                    onClick={this.addDevice(true)}
+                    onClick={this.connectDevice('Creating')}
                     className="btn button btn-sm btn-primary"
                   >
                     <span className="icon plus" /> Add Device
@@ -174,13 +191,15 @@ class DeviceManagement extends PureComponent<Props, State> {
           }
         />
 
-        <AddDevicePage
+        <DeviceConnection
+          deviceConnectionStatus={deviceConnectionStatus}
+          isVisible={deviceConnectionVisibility}
           notify={this.props.notify}
           me={me}
           organizations={organizations}
+          selectedDeviceData={selectedDeviceData}
           isUsingAuth={isUsingAuth}
-          isVisible={addDeviceWizardVisibility}
-          toggleVisibility={this.addDevice}
+          toggleVisibility={this.handleToggleDeviceConnectionModal}
         />
         <ImportDevicePage
           deviceDataRawFromCSV={deviceDataRawFromCSV}
@@ -210,17 +229,14 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({data: data.Devices})
   }
 
-  //patch api
-  private patchDevicesAJAX = async (params: PatchDeviceParams) => {
-    const {data} = await patchDevice(params)
+  private handleRowClick = selectedDeviceData => {
+    this.connectDevice('Updating')()
+    this.setState({selectedDeviceData: selectedDeviceData})
   }
 
   private options: DataTableOptions = {
     tbodyRow: {
-      onClick: item => {
-        this.addDevice(true)
-        console.log(item)
-      },
+      onClick: this.handleRowClick,
     },
   }
 
@@ -230,9 +246,21 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({checkedArray: [], isLiading: false})
   }
 
-  private addDevice = isAddDeviceModalVisible => () => {
+  private connectDevice = (
+    deviceConnectionStatus?: DeviceConnectionStatus
+  ) => () => {
     this.setState({
-      addDeviceWizardVisibility: isAddDeviceModalVisible,
+      deviceConnectionVisibility: true,
+      deviceConnectionStatus: deviceConnectionStatus,
+    })
+  }
+
+  private handleToggleDeviceConnectionModal = deviceConnectionVisibility => () => {
+    this.setState({
+      deviceConnectionVisibility: deviceConnectionVisibility,
+      deviceConnectionStatus: deviceConnectionVisibility
+        ? this.state.deviceConnectionStatus
+        : 'None',
     })
   }
 

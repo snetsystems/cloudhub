@@ -1,5 +1,6 @@
 import {
   DEFAULT_DEVICE_DATA,
+  DEFAULT_DEVICE_INFO,
   SNMP_VERSION,
   SNMP_PROTOCOL,
   IMPORT_DEVICE_CSV_Template,
@@ -10,6 +11,7 @@ import {columns} from './deviceManagementColumn'
 import {predictionColumn} from './predictionColumn'
 export {
   DEFAULT_DEVICE_DATA,
+  DEFAULT_DEVICE_INFO,
   SNMP_VERSION,
   SNMP_PROTOCOL,
   IMPORT_DEVICE_CSV_Template,
