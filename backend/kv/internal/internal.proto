@@ -219,7 +219,7 @@ message Role {
 message Mapping {
 	string Provider              = 1; // Provider is the provider that certifies and issues this user's authentication, e.g. GitHub
 	string Scheme                = 2; // Scheme is the scheme used to perform this user's authentication, e.g. OAuth2 or LDAP
-	string ProviderOrganization  = 3; // ProviderOrganization is the group or organizations that you are a part of in an auth provider
+	string ProviderOrganization  = 3; // ProviderOrganization is the organization or organizations that you are a part of in an auth provider
 	string ID                    = 4; // ID is the unique ID for the mapping
 	string Organization          = 5; // Organization is the organization ID that resource belongs to
 }
@@ -295,7 +295,7 @@ message CSP {
 }
 
 message SSHConfig {
-  string SSHUserName   = 1; // SSHUserName is the username used for SSH connection
+  string SSHUserID   = 1; // SSHUserID is the username used for SSH connection
   string SSHPassword   = 2; // SSHPassword is the password used for SSH connection
   string SSHEnPassword = 3; // SSHEnPassword is the enable password for devices that require it
   int32 SSHPort        = 4; // SSHPort is the port number used for SSH connection
@@ -309,32 +309,29 @@ message SNMPConfig {
 }
 
 message NetworkDevice { 
-  string ID                 = 1;  // ID is the unique identifier of the device
-  string Organization       = 2;  // Organization is the organization ID that device belongs to
-  string DeviceIP           = 3;  // DeviceIP is the IP address of the device
-  string Hostname           = 4;  // Hostname is the network name of the device
-  string DeviceType         = 5;  // DeviceType is the type of the device, such as switch or router
-  string DeviceCategory     = 6;  // DeviceCategory is the category of the device, such as Server or Network
-  string DeviceOS           = 7;  // DeviceOS is the operating system running on the device
-  bool IsMonitoringEnabled  = 8;  // IsMonitoringEnabled indicates if monitoring is enabled for the device
-  bool IsModelingGenerated  = 9;  // IsModelingGenerated indicates if a model has been generated for the device
-  SSHConfig SSHConfig       = 10; // SSHConfig contains the SSH configuration for the device
-  SNMPConfig SNMPConfig     = 11; // SNMPConfig contains the SNMP configuration for the device
-  int32 LearnSettingGroupID = 12; // LearnSettingGroupID is the ID of the learning settings group
-  double LearnRatio         = 13; // LearnRatio is the learning ratio for the device
-  string DeviceVendor       = 14; // DeviceVendor is the vendor of the device
-}
-
-message NetworkDeviceGroup {
-  string organization_id = 1;   // organization_id is the organization ID for the network device group
-  string algorithm = 2;         // algorithm is the algorithm used for network device grouping
-  int32 begin_duration = 3;     // begin_duration is the duration to start the network device grouping
-  int32 learn_cycle = 4;        // learn_cycle is the cycle duration for learning the network device grouping
-  repeated string devices_id = 5; // devices_id is a list of device IDs included in the network device group
-  string collector_server = 6;  // collector_server is the server used to collect network data
+  uint64 ID                 = 1;  // unique identifier of the device
+  string Organization       = 2;  // organization ID that device belongs to
+  string DeviceIP           = 3;  // IP address of the device
+  string Hostname           = 4;  // network name of the device
+  string DeviceType         = 5;  // type of the device, such as switch or router
+  string DeviceCategory     = 6;  // category of the device, such as Server or Network
+  string DeviceOS           = 7;  // operating system running on the device
+  bool IsConfigWritten      = 8;  // logstash config written status
+  bool IsModelingGenerated  = 9;  // indicates if a model has been generated for the device
+  SSHConfig SSHConfig       = 10; // contains the SSH configuration for the device
+  SNMPConfig SNMPConfig     = 11; // contains the SNMP configuration for the device
+  float Sensitivity         = 12; // Sensitivity throttle ratio
+  string DeviceVendor       = 13; // DeviceVendor is the vendor of the device
 }
 
 
+message networkDeviceOrg {
+  string algorithm           = 1; // ML Learning Threshold Decision Algorithm
+  int32 data_duration        = 2; // data_duration for learning
+  int32 learn_cycle          = 3; // learning_cycle (day[s])
+  repeated string devices_id = 4; // the list of device IDs included in the network device group
+  string collector_server    = 5; // the server(minion_id) used to collect network data
+}
 
 
 // The following is a vim modeline, it autoconfigures vim to have the

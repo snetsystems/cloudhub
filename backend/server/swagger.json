@@ -4959,52 +4959,52 @@
               "$ref": "#/definitions/Error"
             }
           }
-        },
-        "patch": {
-          "tags": ["Device Management"],
-          "summary": "Update a device by ID",
-          "description": "Update the details of a specific device by ID.",
-          "parameters": [
-            {
-              "name": "id",
-              "in": "path",
-              "required": true,
-              "type": "string",
-              "description": "Device ID"
-            },
-            {
-              "name": "body",
-              "in": "body",
-              "required": true,
-              "schema": {
-                "$ref": "#/definitions/UpdateDeviceRequest"
-              }
+        }
+      },
+      "patch": {
+        "tags": ["Device Management"],
+        "summary": "Update a device by ID",
+        "description": "Update the details of a specific device by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Device ID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDeviceRequest"
             }
-          ],
-          "responses": {
-            "200": {
-              "description": "Device updated successfully",
-              "schema": {
-                "$ref": "#/definitions/DeviceResponse"
-              }
-            },
-            "400": {
-              "description": "Invalid input",
-              "schema": {
-                "$ref": "#/definitions/Error"
-              }
-            },
-            "404": {
-              "description": "Device not found",
-              "schema": {
-                "$ref": "#/definitions/Error"
-              }
-            },
-            "default": {
-              "description": "Internal server error",
-              "schema": {
-                "$ref": "#/definitions/Error"
-              }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device updated successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
             }
           }
         }
@@ -8588,15 +8588,15 @@
     "DeviceRequest": {
       "type": "object",
       "properties": {
-        "organization": {
-          "type": "string",
-          "description": "The organization to which the device belongs",
-          "example": "organization1"
-        },
         "device_ip": {
           "type": "string",
           "description": "The IP address of the device",
           "example": "192.168.0.1"
+        },
+        "organization": {
+          "type": "string",
+          "description": "The organization ID to which the device belongs",
+          "example": "default"
         },
         "hostname": {
           "type": "string",
@@ -8653,17 +8653,17 @@
         "organization": {
           "type": "string",
           "description": "The organization to which the device belongs",
-          "example": "organization1"
+          "example": "default"
         },
         "hostname": {
           "type": "string",
           "description": "The hostname of the device",
-          "example": "device1"
+          "example": "root"
         },
-        "device_category": {
+        "device_type": {
           "type": "string",
-          "description": "The category of the device",
-          "example": "network"
+          "description": "The type of the device",
+          "example": "swtich"
         },
         "device_os": {
           "type": "string",
@@ -8684,7 +8684,7 @@
           "example": "Cisco"
         }
       },
-      "required": ["snmp_config"]
+      "required": []
     },
     "DeleteDeviceRequest": {
       "type": "object",
@@ -8693,9 +8693,9 @@
           "type": "array",
           "description": "The IDs of the devices",
           "items": {
-            "type": "string"
+            "type": "uint64"
           },
-          "example": ["1", "2"]
+          "example": [1, 2]
         }
       },
       "required": ["devices_id"]
@@ -8704,14 +8704,19 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
+          "type": "uint64",
           "description": "Unique identifier representing a device resource",
           "example": "12345"
         },
         "organization": {
           "type": "string",
-          "description": "The organization to which the device belongs",
-          "example": "organization1"
+          "description": "The organization ID to which the device belongs",
+          "example": "default"
+        },
+        "organization_name": {
+          "type": "string",
+          "description": "The organization Name to which the device belongs",
+          "example": "Default"
         },
         "device_ip": {
           "type": "string",
@@ -8738,6 +8743,16 @@
           "description": "The operating system of the device",
           "example": "ios"
         },
+        "is_config_written": {
+          "type": "bool",
+          "description": "Creation of Logstash configuration",
+          "example": "false"
+        },
+        "is_modeling_generated": {
+          "type": "bool",
+          "description": "Creation of Learning model",
+          "example": "false"
+        },
         "ssh_config": {
           "$ref": "#/definitions/SSHConfig",
           "description": "The SSH configuration for the device"
@@ -8745,6 +8760,11 @@
         "snmp_config": {
           "$ref": "#/definitions/SNMPConfig",
           "description": "The SNMP configuration for the device"
+        },
+        "sensitivity": {
+          "type": "flaot",
+          "description": "Sensitivity throttle ratio",
+          "example": "1.0"
         },
         "device_vendor": {
           "type": "string",
@@ -8774,15 +8794,18 @@
             "properties": {
               "index": {
                 "type": "integer",
-                "description": "Index of the device in the request array"
+                "description": "Index of the device in the request array",
+                "example": "0"
               },
               "device_ip": {
                 "type": "string",
-                "description": "IP address of the device"
+                "description": "IP address of the device",
+                "example": "192.168.0.1"
               },
               "errorMessage": {
                 "type": "string",
-                "description": "Error message for the failed device"
+                "description": "Error message for the failed device",
+                "example": "organization does not exist"
               }
             }
           }
@@ -8882,17 +8905,30 @@
           "items": {
             "type": "object",
             "properties": {
-              "DeviceType": {
+              "device_ip": {
                 "type": "string",
-                "description": "The type of the device"
+                "description": "IP address of the device",
+                "example": "192.168.0.1"
               },
-              "Hostname": {
-                "type": "string",
-                "description": "The hostname of the device"
+              "index": {
+                "type": "integer",
+                "description": "Index of the request in the array",
+                "example": "0"
               },
-              "DeviceOS": {
+              "device_type": {
                 "type": "string",
-                "description": "The operating system of the device"
+                "description": "The type of the device",
+                "example": "switch"
+              },
+              "hostname": {
+                "type": "string",
+                "description": "The hostname of the device",
+                "example": "root"
+              },
+              "device_os": {
+                "type": "string",
+                "description": "The operating system of the device",
+                "example": "ios"
               }
             }
           },
@@ -8903,9 +8939,9 @@
     "SSHConfig": {
       "type": "object",
       "properties": {
-        "ssh_user_name": {
+        "ssh_user_id": {
           "type": "string",
-          "description": "SSH username",
+          "description": "SSH id",
           "example": "admin"
         },
         "ssh_password": {

@@ -1057,10 +1057,10 @@ func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
 		DeviceType:          t.DeviceType,
 		DeviceCategory:      t.DeviceCategory,
 		DeviceOS:            t.DeviceOS,
-		IsMonitoringEnabled: t.IsMonitoringEnabled,
+		IsConfigWritten:     t.IsConfigWritten,
 		IsModelingGenerated: t.IsModelingGenerated,
 		SSHConfig: &SSHConfig{
-			SSHUserName:   t.SSHConfig.SSHUserName,
+			SSHUserID:     t.SSHConfig.SSHUserID,
 			SSHPassword:   t.SSHConfig.SSHPassword,
 			SSHEnPassword: t.SSHConfig.SSHEnPassword,
 			SSHPort:       int32(t.SSHConfig.SSHPort),
@@ -1071,9 +1071,8 @@ func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
 			SNMPPort:      int32(t.SNMPConfig.SNMPPort),
 			SNMPProtocol:  t.SNMPConfig.SNMPProtocol,
 		},
-		LearnSettingGroupID: int32(t.LearnSettingGroupID),
-		LearnRatio:          t.LearnRatio,
-		DeviceVendor:        t.DeviceVendor,
+		Sensitivity:  float32(t.Sensitivity),
+		DeviceVendor: t.DeviceVendor,
 	})
 }
 
@@ -1090,10 +1089,10 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 	t.DeviceType = pb.DeviceType
 	t.DeviceCategory = pb.DeviceCategory
 	t.DeviceOS = pb.DeviceOS
-	t.IsMonitoringEnabled = pb.IsMonitoringEnabled
+	t.IsConfigWritten = pb.IsConfigWritten
 	t.IsModelingGenerated = pb.IsModelingGenerated
 	t.SSHConfig = cloudhub.SSHConfig{
-		SSHUserName:   pb.SSHConfig.SSHUserName,
+		SSHUserID:     pb.SSHConfig.SSHUserID,
 		SSHPassword:   pb.SSHConfig.SSHPassword,
 		SSHEnPassword: pb.SSHConfig.SSHEnPassword,
 		SSHPort:       int(pb.SSHConfig.SSHPort),
@@ -1104,34 +1103,31 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 		SNMPPort:      int(pb.SNMPConfig.SNMPPort),
 		SNMPProtocol:  pb.SNMPConfig.SNMPProtocol,
 	}
-	t.LearnSettingGroupID = int(pb.LearnSettingGroupID)
-	t.LearnRatio = pb.LearnRatio
+	t.Sensitivity = pb.Sensitivity
 	t.DeviceVendor = pb.DeviceVendor
 
 	return nil
 }
 
-// MarshalNetworkDeviceGroup encodes a NetworkDeviceGroup struct to binary protobuf format.
-func MarshalNetworkDeviceGroup(t *cloudhub.NetworkDeviceGroup) ([]byte, error) {
-	return proto.Marshal(&NetworkDeviceGroup{
-		OrganizationId:  t.OrganizationID,
+// MarshalNetworkDeviceOrg encodes a networkDeviceOrg struct to binary protobuf format.
+func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
+	return proto.Marshal(&NetworkDeviceOrg{
 		Algorithm:       t.Algorithm,
-		BeginDuration:   int32(t.BeginDuration),
+		DataDuration:    int32(t.DataDuration),
 		LearnCycle:      int32(t.LearnCycle),
 		DevicesId:       t.DevicesID,
 		CollectorServer: t.CollectorServer,
 	})
 }
 
-// UnmarshalNetworkDeviceGroup decodes a NetworkDeviceGroup from binary protobuf data.
-func UnmarshalNetworkDeviceGroup(data []byte, t *cloudhub.NetworkDeviceGroup) error {
-	var pb NetworkDeviceGroup
+// UnmarshalNetworkDeviceOrg decodes a networkDeviceOrg from binary protobuf data.
+func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error {
+	var pb NetworkDeviceOrg
 	if err := proto.Unmarshal(data, &pb); err != nil {
 		return err
 	}
-	t.OrganizationID = pb.OrganizationId
 	t.Algorithm = pb.Algorithm
-	t.BeginDuration = int(pb.BeginDuration)
+	t.DataDuration = int(pb.DataDuration)
 	t.LearnCycle = int(pb.LearnCycle)
 	t.DevicesID = pb.DevicesId
 	t.CollectorServer = pb.CollectorServer

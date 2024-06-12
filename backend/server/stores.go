@@ -97,6 +97,7 @@ type DataStore interface {
 	Topologies(ctx context.Context) cloudhub.TopologiesStore
 	CSP(ctx context.Context) cloudhub.CSPStore
 	NetworkDevice(ctx context.Context) cloudhub.NetworkDeviceStore
+	NetworkDeviceOrg(ctx context.Context) cloudhub.NetworkDeviceOrgStore
 }
 
 // ensure that Store implements a DataStore
@@ -118,6 +119,7 @@ type Store struct {
 	TopologiesStore         cloudhub.TopologiesStore
 	CSPStore                cloudhub.CSPStore
 	NetworkDeviceStore      cloudhub.NetworkDeviceStore
+	NetworkDeviceOrgStore   cloudhub.NetworkDeviceOrgStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -283,4 +285,17 @@ func (s *Store) NetworkDevice(ctx context.Context) cloudhub.NetworkDeviceStore {
 	}
 
 	return &noop.NetworkDeviceStore{}
+}
+
+// NetworkDeviceOrg returns a noop.NetworkDeviceOrg if the context has no organization specified
+// and an organization.NetworkDeviceOrg otherwise.
+func (s *Store) NetworkDeviceOrg(ctx context.Context) cloudhub.NetworkDeviceOrgStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.NetworkDeviceOrgStore
+	}
+	if org, ok := hasOrganizationContext(ctx); ok {
+		return organizations.NewNetworkDeviceOrgStore(s.NetworkDeviceOrgStore, org)
+	}
+
+	return &noop.NetworkDeviceOrgStore{}
 }

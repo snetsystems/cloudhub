@@ -3,7 +3,6 @@ package kv
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv/internal"
@@ -25,11 +24,11 @@ func (s *NetworkDeviceStore) Add(ctx context.Context, device *cloudhub.NetworkDe
 		if err != nil {
 			return err
 		}
-		device.ID = strconv.FormatUint(seq, 10)
+		device.ID = seq
 
 		if v, err := internal.MarshalNetworkDevice(device); err != nil {
 			return err
-		} else if err := b.Put([]byte(device.ID), v); err != nil {
+		} else if err := b.Put([]byte(u64tob(seq)), v); err != nil {
 			return err
 		}
 		return nil
@@ -50,10 +49,10 @@ func (s *NetworkDeviceStore) Get(ctx context.Context, q cloudhub.NetworkDeviceQu
 }
 
 // Get searches the deviceStore for a Network Device with the given id.
-func (s *NetworkDeviceStore) get(ctx context.Context, id string) (*cloudhub.NetworkDevice, error) {
+func (s *NetworkDeviceStore) get(ctx context.Context, id uint64) (*cloudhub.NetworkDevice, error) {
 	var device cloudhub.NetworkDevice
 	err := s.client.kv.View(ctx, func(tx Tx) error {
-		v, err := tx.Bucket(networkDeviceBucket).Get([]byte(id))
+		v, err := tx.Bucket(networkDeviceBucket).Get([]byte(u64tob(id)))
 		if v == nil || err != nil {
 			return cloudhub.ErrDeviceNotFound
 		}
@@ -75,7 +74,7 @@ func (s *NetworkDeviceStore) Delete(ctx context.Context, device *cloudhub.Networ
 			return cloudhub.ErrDeviceNotFound
 		}
 
-		if err := tx.Bucket(networkDeviceBucket).Delete([]byte(device.ID)); err != nil {
+		if err := tx.Bucket(networkDeviceBucket).Delete([]byte(u64tob(device.ID))); err != nil {
 			return err
 		}
 		return nil
@@ -97,7 +96,7 @@ func (s *NetworkDeviceStore) Update(ctx context.Context, device *cloudhub.Networ
 
 		if v, err := internal.MarshalNetworkDevice(device); err != nil {
 			return err
-		} else if err := tx.Bucket(networkDeviceBucket).Put([]byte(device.ID), v); err != nil {
+		} else if err := tx.Bucket(networkDeviceBucket).Put([]byte(u64tob(device.ID)), v); err != nil {
 			return err
 		}
 		return nil

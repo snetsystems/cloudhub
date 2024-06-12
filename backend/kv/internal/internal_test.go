@@ -561,17 +561,17 @@ func TestMarshalCSP(t *testing.T) {
 
 func TestMarshalDevice(t *testing.T) {
 	v := cloudhub.NetworkDevice{
-		ID:                  "123",
-		Organization:        "Default",
+		ID:                  123,
+		Organization:        "default",
 		DeviceIP:            "192.168.1.1",
 		Hostname:            "device01",
 		DeviceType:          "Router",
 		DeviceCategory:      "Network",
 		DeviceOS:            "Cisco IOS",
-		IsMonitoringEnabled: true,
+		IsConfigWritten:     false,
 		IsModelingGenerated: false,
 		SSHConfig: cloudhub.SSHConfig{
-			SSHUserName:   "admin",
+			SSHUserID:     "admin",
 			SSHPassword:   "admin123",
 			SSHEnPassword: "secret123",
 			SSHPort:       22,
@@ -582,9 +582,8 @@ func TestMarshalDevice(t *testing.T) {
 			SNMPPort:      161,
 			SNMPProtocol:  "udp",
 		},
-		LearnSettingGroupID: 101,
-		LearnRatio:          0.2,
-		DeviceVendor:        "Cisco",
+		Sensitivity:  0.2,
+		DeviceVendor: "Cisco",
 	}
 
 	var vv cloudhub.NetworkDevice
@@ -599,19 +598,18 @@ func TestMarshalDevice(t *testing.T) {
 }
 
 func TestMarshalNetworkDeviceGroup(t *testing.T) {
-	v := cloudhub.NetworkDeviceGroup{
-		OrganizationID:  "1",
+	v := cloudhub.NetworkDeviceOrg{
 		Algorithm:       "RoundRobin",
-		BeginDuration:   100,
+		DataDuration:    100,
 		LearnCycle:      200,
 		DevicesID:       []string{"device1", "device2", "device3"},
-		CollectorServer: "collector.server.io",
+		CollectorServer: "ch-collector-1",
 	}
 
-	var vv cloudhub.NetworkDeviceGroup
-	if buf, err := internal.MarshalNetworkDeviceGroup(&v); err != nil {
+	var vv cloudhub.NetworkDeviceOrg
+	if buf, err := internal.MarshalNetworkDeviceOrg(&v); err != nil {
 		t.Fatal("Marshal failed:", err)
-	} else if err := internal.UnmarshalNetworkDeviceGroup(buf, &vv); err != nil {
+	} else if err := internal.UnmarshalNetworkDeviceOrg(buf, &vv); err != nil {
 		t.Fatal("Unmarshal failed:", err)
 	} else if !reflect.DeepEqual(v, vv) {
 		t.Fatalf("Mismatch in original and copied NetworkDeviceGroup struct: got %#v, want %#v", vv, v)

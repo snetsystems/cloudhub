@@ -888,6 +888,7 @@ func openService(
 			TopologiesStore:         svc.TopologiesStore(),
 			CSPStore:                svc.CSPStore(),
 			NetworkDeviceStore:      svc.NetworkDeviceStore(),
+			NetworkDeviceOrgStore:   svc.NetworkDeviceOrgStore(),
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,

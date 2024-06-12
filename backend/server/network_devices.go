@@ -7,21 +7,21 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 	"sync"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type deviceRequest struct {
-	Organization   string              `json:"organization"`
-	DeviceIP       string              `json:"device_ip"`
-	Hostname       string              `json:"hostname"`
-	DeviceType     string              `json:"device_type"`
-	DeviceCategory string              `json:"device_category"`
-	DeviceOS       string              `json:"device_os"`
-	SSHConfig      cloudhub.SSHConfig  `json:"ssh_config,omitempty"`
-	SNMPConfig     cloudhub.SNMPConfig `json:"snmp_config"`
-	DeviceVendor   string              `json:"device_vendor"`
+	DeviceIP     string              `json:"device_ip"`
+	Organization string              `json:"organization"`
+	Hostname     string              `json:"hostname"`
+	DeviceType   string              `json:"device_type"`
+	DeviceOS     string              `json:"device_os"`
+	SSHConfig    cloudhub.SSHConfig  `json:"ssh_config,omitempty"`
+	SNMPConfig   cloudhub.SNMPConfig `json:"snmp_config"`
+	DeviceVendor string              `json:"device_vendor,omitempty"`
 }
 
 type updateDeviceRequest struct {
@@ -30,48 +30,52 @@ type updateDeviceRequest struct {
 	Hostname            *string              `json:"hostname,omitempty"`
 	DeviceCategory      *string              `json:"device_category"`
 	DeviceOS            *string              `json:"device_os,omitempty"`
-	IsMonitoringEnabled *bool                `json:"is_monitoring_enabled,omitempty"`
+	IsConfigWritten     *bool                `json:"is_monitoring_enabled,omitempty"`
 	IsModelingGenerated *bool                `json:"is_modeling_generated,omitempty"`
-	SSHConfig           *cloudhub.SSHConfig  `json:"ssh_conn"`
+	SSHConfig           *cloudhub.SSHConfig  `json:"ssh_config"`
 	SNMPConfig          *cloudhub.SNMPConfig `json:"snmp_config"`
-	LearnSettingGroupID *int                 `json:"learn_setting_group_id,omitempty"`
-	LearnRatio          *float64             `json:"learn_ratio,omitempty"`
+	Sensitivity         *float32             `json:"sensitivity,omitempty"`
 	DeviceVendor        *string              `json:"device_vendor,omitempty"`
 }
 
 type deviceResponse struct {
-	ID                  string              `json:"id"`
+	ID                  uint64              `json:"id"`
 	Organization        string              `json:"organization"`
+	OrganizationName    string              `json:"organization_name"`
 	DeviceIP            string              `json:"device_ip"`
 	Hostname            string              `json:"hostname"`
 	DeviceType          string              `json:"device_type"`
 	DeviceCategory      string              `json:"device_category"`
 	DeviceOS            string              `json:"device_os"`
-	IsMonitoringEnabled bool                `json:"is_monitoring_enabled"`
+	IsConfigWritten     bool                `json:"is_config_written"`
 	IsModelingGenerated bool                `json:"is_modeling_generated"`
-	SSHConfig           cloudhub.SSHConfig  `json:"ssh_conn"`
+	SSHConfig           cloudhub.SSHConfig  `json:"ssh_config"`
 	SNMPConfig          cloudhub.SNMPConfig `json:"snmp_config"`
-	LearnSettingGroupID int                 `json:"learn_setting_group_id"`
-	LearnRatio          float64             `json:"learn_ratio"`
+	Sensitivity         float32             `json:"sensitivity,omitempty"`
 	DeviceVendor        string              `json:"device_vendor"`
-	Links               selfLinks           `json:"links"`
 }
 
-func newDeviceResponse(device *cloudhub.NetworkDevice) *deviceResponse {
-	selfLink := fmt.Sprintf("/cloudhub/v1/device/%s", device.ID)
+func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
+
+	orgName, err := s.OrganizationNameByID(ctx, device.Organization)
+
+	if err != nil {
+		return nil, err
+	}
 
 	resData := &deviceResponse{
 		ID:                  device.ID,
 		Organization:        device.Organization,
+		OrganizationName:    orgName,
 		DeviceIP:            device.DeviceIP,
 		Hostname:            device.Hostname,
 		DeviceType:          device.DeviceType,
 		DeviceCategory:      device.DeviceCategory,
 		DeviceOS:            device.DeviceOS,
-		IsMonitoringEnabled: device.IsMonitoringEnabled,
+		IsConfigWritten:     device.IsConfigWritten,
 		IsModelingGenerated: device.IsModelingGenerated,
 		SSHConfig: cloudhub.SSHConfig{
-			SSHUserName:   device.SSHConfig.SSHUserName,
+			SSHUserID:     device.SSHConfig.SSHUserID,
 			SSHPassword:   device.SSHConfig.SSHPassword,
 			SSHEnPassword: device.SSHConfig.SSHEnPassword,
 			SSHPort:       device.SSHConfig.SSHPort,
@@ -82,28 +86,37 @@ func newDeviceResponse(device *cloudhub.NetworkDevice) *deviceResponse {
 			SNMPPort:      device.SNMPConfig.SNMPPort,
 			SNMPProtocol:  device.SNMPConfig.SNMPProtocol,
 		},
-		LearnSettingGroupID: device.LearnSettingGroupID,
-		LearnRatio:          device.LearnRatio,
-		DeviceVendor:        device.DeviceVendor,
-		Links:               selfLinks{Self: selfLink},
+		Sensitivity:  device.Sensitivity,
+		DeviceVendor: device.DeviceVendor,
 	}
 
-	return resData
+	return resData, nil
 }
 
 type devicesResponse struct {
-	Links   selfLinks         `json:"links"`
-	Devices []*deviceResponse `json:"Devices"`
+	Devices       []*deviceResponse        `json:"Devices"`
+	FailedDevices []map[string]interface{} `json:"failed_devices"`
 }
 
-func newDevicesResponse(devices []cloudhub.NetworkDevice) *devicesResponse {
-	devicesResp := make([]*deviceResponse, len(devices))
+func newDevicesResponse(ctx context.Context, s *Service, devices []cloudhub.NetworkDevice) *devicesResponse {
+	devicesResp := []*deviceResponse{}
+	failedDevices := []map[string]interface{}{}
 	for i, device := range devices {
-		devicesResp[i] = newDeviceResponse(&device)
+		data, err := newDeviceResponse(ctx, s, &device)
+		if err != nil {
+			failedDevices = append(failedDevices, map[string]interface{}{
+				"index":        i,
+				"device_ip":    device.DeviceIP,
+				"errorMessage": err.Error(),
+			})
+		} else {
+			devicesResp = append(devicesResp, data)
+		}
 	}
 
 	return &devicesResponse{
-		Devices: devicesResp,
+		Devices:       devicesResp,
+		FailedDevices: failedDevices,
 	}
 }
 
@@ -111,25 +124,15 @@ func (r *deviceRequest) validCreate() error {
 	switch {
 	case r.DeviceIP == "":
 		return fmt.Errorf("device_ip required in device request body")
-	case r.DeviceCategory == "":
-		return fmt.Errorf("device_type required in device request body")
+
 	case r.Organization == "":
 		return fmt.Errorf("organization required in device request body")
-	}
-
-	if _, ok := cloudhub.DeviceCategoryMap[r.DeviceCategory]; !ok {
-		return fmt.Errorf("invalid device_type: %s", r.DeviceCategory)
 	}
 
 	return nil
 }
 
 func (r *updateDeviceRequest) validUpdate() error {
-	switch {
-	case r.DeviceIP == nil:
-		return fmt.Errorf("device_ip required in device request body")
-	}
-
 	return nil
 }
 
@@ -137,19 +140,19 @@ func (r *deviceRequest) CreateDeviceFromRequest() (*cloudhub.NetworkDevice, erro
 	if r == nil {
 		return nil, errors.New("deviceRequest is nil")
 	}
+
 	return &cloudhub.NetworkDevice{
 		Organization:        r.Organization,
 		DeviceIP:            r.DeviceIP,
 		Hostname:            r.Hostname,
 		DeviceType:          r.DeviceType,
-		DeviceCategory:      r.DeviceCategory,
+		DeviceCategory:      cloudhub.DeviceCategoryMap["network"],
 		DeviceOS:            r.DeviceOS,
-		IsMonitoringEnabled: false,
+		IsConfigWritten:     false,
 		IsModelingGenerated: false,
 		SSHConfig:           r.SSHConfig,
 		SNMPConfig:          r.SNMPConfig,
-		LearnSettingGroupID: 1,
-		LearnRatio:          0.0,
+		Sensitivity:         1.0,
 		DeviceVendor:        r.DeviceVendor,
 	}, nil
 }
@@ -168,7 +171,7 @@ func (s *Service) processDevice(ctx context.Context, req deviceRequest) (*cloudh
 		return nil, err
 	}
 
-	if err := s.OrganizationExists(ctx, device.Organization); err != nil {
+	if err := s.OrganizationExists(ctx, req.Organization); err != nil {
 		return nil, err
 	}
 
@@ -250,13 +253,20 @@ func (s *Service) AllDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := newDevicesResponse(devices)
+	res := newDevicesResponse(ctx, s, devices)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
 // DeviceID returns a single specified Device
 func (s *Service) DeviceID(w http.ResponseWriter, r *http.Request) {
-	id, err := paramStr("id", r)
+	defer func() {
+		if rec := recover(); rec != nil {
+			s.Logger.Error("Recovered from panic: %v", rec)
+			Error(w, http.StatusInternalServerError, fmt.Sprintf("recovered from panic: %v", rec), s.Logger)
+		}
+	}()
+
+	id, err := parseID(r)
 	if err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
 		return
@@ -269,14 +279,19 @@ func (s *Service) DeviceID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := newDeviceResponse(device)
+	res, err := newDeviceResponse(ctx, s, device)
+	if err != nil {
+		notFound(w, id, s.Logger)
+		return
+	}
+
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
 // RemoveDevices deletes specified Devices
 func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	var request struct {
-		DeviceIDs []string `json:"devices_id"`
+		DeviceIDs []uint64 `json:"devices_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request data", http.StatusBadRequest)
@@ -294,7 +309,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	for i, id := range request.DeviceIDs {
 		wg.Add(1)
 		sem <- struct{}{}
-		go func(ctx context.Context, i int, id string) {
+		go func(ctx context.Context, i int, id uint64) {
 			defer wg.Done()
 			defer func() {
 				if rec := recover(); rec != nil {
@@ -357,7 +372,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 
 // UpdateNetworkDevice completely updates either the Device
 func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
-	id, err := paramStr("id", r)
+	id, err := parseID(r)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -396,16 +411,16 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	if req.DeviceOS != nil {
 		device.DeviceOS = *req.DeviceOS
 	}
-	if req.IsMonitoringEnabled != nil {
-		device.IsMonitoringEnabled = *req.IsMonitoringEnabled
+	if req.IsConfigWritten != nil {
+		device.IsConfigWritten = *req.IsConfigWritten
 	}
 	if req.IsModelingGenerated != nil {
 		device.IsModelingGenerated = *req.IsModelingGenerated
 	}
 
 	if req.SSHConfig != nil {
-		if req.SSHConfig.SSHUserName != "" {
-			device.SSHConfig.SSHUserName = req.SSHConfig.SSHUserName
+		if req.SSHConfig.SSHUserID != "" {
+			device.SSHConfig.SSHUserID = req.SSHConfig.SSHUserID
 		}
 		if req.SSHConfig.SSHPassword != "" {
 			device.SSHConfig.SSHPassword = req.SSHConfig.SSHPassword
@@ -433,32 +448,33 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if req.LearnSettingGroupID != nil {
-		device.LearnSettingGroupID = *req.LearnSettingGroupID
-	}
-
-	if req.LearnRatio != nil {
-		device.LearnRatio = *req.LearnRatio
+	if req.Sensitivity != nil {
+		device.Sensitivity = *req.Sensitivity
 	}
 
 	if req.DeviceVendor != nil {
 		device.DeviceVendor = *req.DeviceVendor
 	}
 
-	if err := s.OrganizationExists(ctx, *req.Organization); err != nil {
+	if err := s.OrganizationExists(ctx, device.Organization); err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
 		return
 	}
 
 	if err := s.Store.NetworkDevice(ctx).Update(ctx, device); err != nil {
-		msg := fmt.Sprintf("Error updating Device ID %s: %v", id, err)
+		msg := fmt.Sprintf("Error updating Device ID %s: %v", strconv.FormatUint(id, 10), err)
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
-	msg := fmt.Sprintf(MsgNetWorkDeviceModified.String(), device.ID)
+	msg := fmt.Sprintf(MsgNetWorkDeviceModified.String(), strconv.FormatUint(device.ID, 10))
 	s.logRegistration(ctx, "NetWorkDevice", msg)
 
-	res := newDeviceResponse(device)
+	res, err := newDeviceResponse(ctx, s, device)
+	if err != nil {
+		notFound(w, id, s.Logger)
+		return
+	}
+
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
@@ -468,8 +484,8 @@ func isZeroOfUnderlyingType(x interface{}) bool {
 
 func updateSSHConfig(target, source *cloudhub.SSHConfig) {
 	if source != nil {
-		if !isZeroOfUnderlyingType(source.SSHUserName) {
-			target.SSHUserName = source.SSHUserName
+		if !isZeroOfUnderlyingType(source.SSHUserID) {
+			target.SSHUserID = source.SSHUserID
 		}
 		if !isZeroOfUnderlyingType(source.SSHPassword) {
 			target.SSHPassword = source.SSHPassword
@@ -498,4 +514,18 @@ func updateSNMPConfig(target, source *cloudhub.SNMPConfig) {
 			target.SNMPProtocol = source.SNMPProtocol
 		}
 	}
+}
+
+func parseID(r *http.Request) (uint64, error) {
+	idStr, err := paramStr("id", r)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }

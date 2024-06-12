@@ -22,6 +22,7 @@ type Store struct {
 	TopologiesStore         cloudhub.TopologiesStore
 	CSPStore                cloudhub.CSPStore
 	NetworkDeviceStore      cloudhub.NetworkDeviceStore
+	NetworkDeviceOrgStore   cloudhub.NetworkDeviceOrgStore
 }
 
 // Sources ...
@@ -92,4 +93,9 @@ func (s *Store) CSP(ctx context.Context) cloudhub.CSPStore {
 // NetworkDevice ...
 func (s *Store) NetworkDevice(ctx context.Context) cloudhub.NetworkDeviceStore {
 	return s.NetworkDeviceStore
+}
+
+// NetworkDeviceOrg ...
+func (s *Store) NetworkDeviceOrg(ctx context.Context) cloudhub.NetworkDeviceOrgStore {
+	return s.NetworkDeviceOrgStore
 }

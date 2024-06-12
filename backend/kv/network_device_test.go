@@ -21,16 +21,16 @@ func TestNetworkDeviceStore(t *testing.T) {
 
 	devices := []cloudhub.NetworkDevice{
 		{
-			ID:                  "",
-			Organization:        "Default",
+			ID:                  uint64(547),
+			Organization:        "default",
 			DeviceIP:            "192.168.1.1",
 			Hostname:            "device01",
 			DeviceType:          "Router",
 			DeviceOS:            "Cisco IOS",
-			IsMonitoringEnabled: true,
+			IsConfigWritten:     false,
 			IsModelingGenerated: false,
 			SSHConfig: cloudhub.SSHConfig{
-				SSHUserName:   "admin",
+				SSHUserID:     "admin",
 				SSHPassword:   "admin123",
 				SSHEnPassword: "secret123",
 				SSHPort:       22,
@@ -41,19 +41,18 @@ func TestNetworkDeviceStore(t *testing.T) {
 				SNMPPort:      161,
 				SNMPProtocol:  "udp",
 			},
-			LearnSettingGroupID: 101,
 		},
 		{
-			ID:                  "",
-			Organization:        "BetaCorp",
+			ID:                  uint64(547),
+			Organization:        "1",
 			DeviceIP:            "192.168.1.2",
 			Hostname:            "device02",
 			DeviceType:          "Switch",
 			DeviceOS:            "JunOS",
-			IsMonitoringEnabled: false,
+			IsConfigWritten:     false,
 			IsModelingGenerated: true,
 			SSHConfig: cloudhub.SSHConfig{
-				SSHUserName:   "root",
+				SSHUserID:     "root",
 				SSHPassword:   "root123",
 				SSHEnPassword: "enable123",
 				SSHPort:       2222,
@@ -64,7 +63,6 @@ func TestNetworkDeviceStore(t *testing.T) {
 				SNMPPort:      162,
 				SNMPProtocol:  "udp",
 			},
-			LearnSettingGroupID: 102,
 		},
 	}
 
@@ -110,7 +108,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 	}
 
 	// Getting test for a wrong id.
-	id := "1000"
+	id := uint64(1000)
 	empty_device, err := s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
 	fmt.Println(empty_device)
 	if err == nil {

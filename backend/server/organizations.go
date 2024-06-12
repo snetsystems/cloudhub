@@ -244,10 +244,19 @@ func (s *Service) RemoveOrganization(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// OrganizationExists checks if an organization with the given organization name exists in the store.
-func (s *Service) OrganizationExists(ctx context.Context, orgName string) error {
-	if _, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgName}); err != nil {
+// OrganizationExists checks if an organization with the given organization ID exists in the store.
+func (s *Service) OrganizationExists(ctx context.Context, orgID string) error {
+	if _, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID}); err != nil {
 		return fmt.Errorf("organization does not exist")
 	}
 	return nil
+}
+
+// OrganizationNameByID retrieves the name of the organization given its ID.
+func (s *Service) OrganizationNameByID(ctx context.Context, orgID string) (string, error) {
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
+	if err != nil {
+		return "", fmt.Errorf("organization does not exist")
+	}
+	return org.Name, nil
 }

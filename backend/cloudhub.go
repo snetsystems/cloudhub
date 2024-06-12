@@ -1147,31 +1147,30 @@ var DeviceCategoryMap = map[string]string{
 // It is expected that only one of ID or Organization will be
 // specified, but all are provided NetworkDeviceStore should prefer ID.
 type NetworkDeviceQuery struct {
-	ID           *string
+	ID           *uint64
 	Organization *string
 }
 
 // NetworkDevice represents the information of a network device
 type NetworkDevice struct {
-	ID                  string     `json:"id,string,omitempty"`
+	ID                  uint64     `json:"id,string,omitempty"`
 	Organization        string     `json:"organization"`
 	DeviceIP            string     `json:"device_ip"`
 	Hostname            string     `json:"hostname"`
 	DeviceType          string     `json:"device_type"`
 	DeviceCategory      string     `json:"device_category"`
 	DeviceOS            string     `json:"device_os"`
-	IsMonitoringEnabled bool       `json:"is_monitoring_enabled"`
+	IsConfigWritten     bool       `json:"is_monitoring_enabled"`
 	IsModelingGenerated bool       `json:"is_modeling_generated"`
 	SSHConfig           SSHConfig  `json:"ssh_config"`
 	SNMPConfig          SNMPConfig `json:"snmp_config"`
-	LearnSettingGroupID int        `json:"learn_setting_group_id"`
-	LearnRatio          float64    `json:"learn_ratio"`
+	Sensitivity         float32    `json:"sensitivity"`
 	DeviceVendor        string     `json:"device_vendor"`
 }
 
 // SSHConfig is Connection Config
 type SSHConfig struct {
-	SSHUserName   string `json:"ssh_user_name"`
+	SSHUserID     string `json:"ssh_user_name"`
 	SSHPassword   string `json:"ssh_password"`
 	SSHEnPassword string `json:"ssh_en_password"`
 	SSHPort       int    `json:"ssh_port"`
@@ -1198,34 +1197,33 @@ type NetworkDeviceStore interface {
 	Update(context.Context, *NetworkDevice) error
 }
 
-// NetworkDeviceGroupQuery represents the attributes that a NetworkDeviceGroup may be retrieved by.
-// It is predominantly used in the NetworkDeviceGroupStore.Get method.
+// NetworkDeviceOrgQuery represents the attributes that a networkDeviceOrg may be retrieved by.
+// It is predominantly used in the networkDeviceOrgStore.Get method.
 //
 // It is expected that only one of Organization ID will be
-// specified, but all are provided NetworkDeviceGroupStore should prefer ID.
-type NetworkDeviceGroupQuery struct {
+// specified, but all are provided networkDeviceOrgStore should prefer ID.
+type NetworkDeviceOrgQuery struct {
 	ID *string
 }
 
-// NetworkDeviceGroup represents the information of a network device group
-type NetworkDeviceGroup struct {
-	OrganizationID  string   `json:"Organization_id"`
+// NetworkDeviceOrg represents the information of a network device group
+type NetworkDeviceOrg struct {
 	Algorithm       string   `json:"algorithm"`
-	BeginDuration   int      `json:"begin_duration"`
+	DataDuration    int      `json:"data_duration"`
 	LearnCycle      int      `json:"learn_cycle"`
 	DevicesID       []string `json:"devices_id"`
 	CollectorServer string   `json:"collector_server"`
 }
 
-// NetworkDeviceGroupStore is the Storage and retrieval of information
-type NetworkDeviceGroupStore interface {
-	All(context.Context) ([]NetworkDeviceGroup, error)
+// NetworkDeviceOrgStore is the Storage and retrieval of information
+type NetworkDeviceOrgStore interface {
+	All(context.Context, NetworkDeviceOrgQuery) ([]NetworkDeviceOrg, error)
 
-	Add(context.Context, *NetworkDeviceGroup) (*NetworkDeviceGroup, error)
+	Add(context.Context, *NetworkDeviceOrg, NetworkDeviceOrgQuery) (*NetworkDeviceOrg, error)
 
-	Delete(context.Context, *NetworkDeviceGroup) error
+	Delete(context.Context, *NetworkDeviceOrg, NetworkDeviceOrgQuery) error
 
-	Get(ctx context.Context, q NetworkDeviceQuery) (*NetworkDeviceGroup, error)
+	Get(ctx context.Context, q NetworkDeviceOrgQuery) (*NetworkDeviceOrg, error)
 
-	Update(context.Context, *NetworkDeviceGroup) error
+	Update(context.Context, *NetworkDeviceOrg, NetworkDeviceOrgQuery) error
 }
