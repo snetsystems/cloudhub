@@ -157,15 +157,20 @@ func (r *deviceRequest) CreateDeviceFromRequest() (*cloudhub.NetworkDevice, erro
 	}, nil
 }
 
-func (s *Service) processDevice(ctx context.Context, req deviceRequest) (*cloudhub.NetworkDevice, error) {
+func (s *Service) processDevice(ctx context.Context, req deviceRequest, allDevices []cloudhub.NetworkDevice) (*cloudhub.NetworkDevice, error) {
 	if s == nil || s.Store == nil {
 		return nil, errors.New("Service or Store is nil")
+	}
+
+	for _, device := range allDevices {
+		if device.DeviceIP == req.DeviceIP {
+			return nil, fmt.Errorf("duplicate IP in existing devices: %s", req.DeviceIP)
+		}
 	}
 
 	if err := req.validCreate(); err != nil {
 		return nil, err
 	}
-
 	device, err := req.CreateDeviceFromRequest()
 	if err != nil {
 		return nil, err
@@ -176,12 +181,12 @@ func (s *Service) processDevice(ctx context.Context, req deviceRequest) (*cloudh
 	}
 
 	res, err := s.Store.NetworkDevice(ctx).Add(ctx, device)
-	msg := fmt.Sprintf(MsgNetWorkDeviceCreated.String(), res.ID)
-	s.logRegistration(ctx, "NetWorkDevice", msg)
-
 	if err != nil {
 		return nil, err
 	}
+	msg := fmt.Sprintf(MsgNetWorkDeviceCreated.String(), res.ID)
+	s.logRegistration(ctx, "NetWorkDevice", msg)
+
 	return res, nil
 }
 
@@ -194,14 +199,39 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 
+	allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
+	if err != nil {
+		http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
+		return
+	}
+
+	ipCount := make(map[string]int)
+	for _, req := range reqs {
+		ipCount[req.DeviceIP]++
+	}
+
+	var failedDevices []map[string]interface{}
+	var uniqueReqs []deviceRequest
+
+	for i, req := range reqs {
+		if ipCount[req.DeviceIP] > 1 {
+			failedDevices = append(failedDevices, map[string]interface{}{
+				"index":        i,
+				"device_ip":    req.DeviceIP,
+				"errorMessage": "duplicate IP in request",
+			})
+		} else {
+			uniqueReqs = append(uniqueReqs, req)
+		}
+	}
+
 	workerLimit := 10
 	sem := make(chan struct{}, workerLimit)
 
 	var wg sync.WaitGroup
-	failedDevices := []map[string]interface{}{}
 	var mu sync.Mutex
 
-	for i, req := range reqs {
+	for i, req := range uniqueReqs {
 		wg.Add(1)
 		sem <- struct{}{}
 		go func(ctx context.Context, i int, req deviceRequest) {
@@ -219,7 +249,7 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 				}
 				<-sem
 			}()
-			_, err := s.processDevice(ctx, req)
+			_, err := s.processDevice(ctx, req, allDevices)
 			if err != nil {
 				mu.Lock()
 				failedDevices = append(failedDevices, map[string]interface{}{

@@ -672,7 +672,6 @@ func MockDeviceStoreSetup(mockData []deviceRequest) *mocks.NetworkDeviceStore {
 				IsModelingGenerated: false,
 				SSHConfig:           req.SSHConfig,
 				SNMPConfig:          req.SNMPConfig,
-				DeviceCategory:      req.DeviceCategory,
 				DeviceVendor:        req.DeviceVendor,
 				Sensitivity:         1.0,
 			}
@@ -712,10 +711,9 @@ func NewMockData() *MockData {
 	return &MockData{
 		Devices: []deviceRequest{
 			{
-				DeviceIP:       "172.16.11.168",
-				Organization:   "76",
-				Hostname:       "test01",
-				DeviceCategory: "network",
+				DeviceIP:     "172.16.11.168",
+				Organization: "76",
+				Hostname:     "test01",
 				SSHConfig: cloudhub.SSHConfig{
 					SSHUserID:   "host",
 					SSHPassword: "@1234", SSHPort: 22},
@@ -727,10 +725,9 @@ func NewMockData() *MockData {
 				DeviceVendor: "cisco",
 			},
 			{
-				DeviceIP:       "192.168.1.101",
-				Organization:   "76",
-				Hostname:       "test01",
-				DeviceCategory: "network",
+				DeviceIP:     "192.168.1.101",
+				Organization: "76",
+				Hostname:     "test01",
 				SSHConfig: cloudhub.SSHConfig{
 					SSHUserID:   "admin",
 					SSHPassword: "admin123", SSHPort: 22},
@@ -744,10 +741,9 @@ func NewMockData() *MockData {
 		},
 		DevicesFailures: []deviceRequest{
 			{
-				DeviceIP:       "",
-				Organization:   "76",
-				DeviceCategory: "network",
-				SSHConfig:      cloudhub.SSHConfig{SSHUserID: "", SSHPassword: "", SSHPort: 22},
+				DeviceIP:     "",
+				Organization: "76",
+				SSHConfig:    cloudhub.SSHConfig{SSHUserID: "", SSHPassword: "", SSHPort: 22},
 				SNMPConfig: cloudhub.SNMPConfig{
 					SNMPCommunity: "@1234",
 					SNMPVersion:   "1",
