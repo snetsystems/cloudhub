@@ -16,7 +16,6 @@ export const DEFAULT_SSH_CONFIG: SSHConfig = {
 
 export const DEFAULT_NETWORK_DEVICE_DATA: DeviceData = {
   device_ip: '',
-  device_category: 'network',
   organization: 'Default',
   snmp_config: DEFAULT_SNMP_CONFIG,
   ssh_config: DEFAULT_SSH_CONFIG,

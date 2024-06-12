@@ -1,21 +1,21 @@
 export interface DeviceData {
   id?: number
   organization: string
+  organization_name?: string
   device_ip: string
   hostname?: string
   device_type?: string
   device_category?: string
   device_os?: string
   device_vendor?: string
+  sensitivity?: number
   ssh_config?: SSHConfig
   snmp_config: SNMPConfig
   links?: {
     self: string
   }
   is_modeling_generated?: boolean
-  is_monitoring_enabled?: boolean
-  learn_ratio?: number
-  learn_setting_group_id?: number
+  is_config_written?: boolean
 }
 export interface SNMPConfig {
   snmp_community: string

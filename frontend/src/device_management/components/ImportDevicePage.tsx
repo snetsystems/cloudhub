@@ -33,10 +33,12 @@ import {
   SNMPConnectionSuccessDevice,
   FailedDevice,
   SNMPConnectionFailedDevice,
+  Organization,
 } from 'src/types'
 
 // Utils
 import {downloadCSV} from 'src/shared/utils/downloadTimeseriesCSV'
+import {convertDeviceDataOrganizationNameToID} from 'src/device_management/utils'
 
 // API
 import {createDevices, validateSNMPConnection} from 'src/device_management/apis'
@@ -54,6 +56,7 @@ import {
 
 interface Props {
   isVisible: boolean
+  organizations: Organization[]
   notify: (n: Notification) => void
   onDismissOverlay: () => void
 }
@@ -65,6 +68,7 @@ interface State {
   isDeviceDataSaveButtonEnabled: boolean
   importDevicePageStatus: ImportDevicePageStatus
   devicesData: [] | DeviceData[]
+  deviceStatusMessageJSXElement: JSX.Element
 }
 
 @ErrorHandling
@@ -79,6 +83,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
       importDevicePageStatus: 'UploadCSV',
       isDeviceDataSaveButtonEnabled: false,
       devicesData: [],
+      deviceStatusMessageJSXElement: <></>,
     }
   }
 
@@ -259,11 +264,16 @@ class ImportDevicePage extends PureComponent<Props, State> {
       snmpConnectionSuccessDevices
     )
 
+    const deviceStatusMessageJSXElement = this.generateDeviceStatusMessageJSXElement(
+      failed_requests,
+      snmpConnectionSuccessDevices
+    )
     this.setState({
       importDevicePageStatus: 'DeviceStatus',
       isDeviceDataSaveButtonEnabled: isDeviceDataSaveButtonEnabled,
       deviceStatusTableData: deviceStatusTableData,
       devicesData: devicesData,
+      deviceStatusMessageJSXElement: deviceStatusMessageJSXElement,
     })
   }
 
@@ -282,7 +292,6 @@ class ImportDevicePage extends PureComponent<Props, State> {
         device_ip: deviceData?.device_ip || '',
         hostname: result?.hostname || '',
         device_type: result?.device_type || '',
-        device_category: 'network',
         device_os: result?.device_os || '',
         ssh_config: {
           ssh_user_name: deviceData?.ssh_user_name || '',
@@ -329,6 +338,53 @@ class ImportDevicePage extends PureComponent<Props, State> {
     return [..._failedDevices, ...successDevices]
   }
 
+  private generateDeviceStatusMessageJSXElement = (
+    failedDevices: SNMPConnectionFailedDevice[],
+    snmpConnectionSuccessDevices: SNMPConnectionSuccessDevice[]
+  ): JSX.Element => {
+    if (failedDevices.length === 0 && snmpConnectionSuccessDevices === null) {
+      return (
+        <>
+          There is <label className="label-warning">0 device </label>to create.
+        </>
+      )
+    } else if (
+      snmpConnectionSuccessDevices === null &&
+      failedDevices.length > 0
+    ) {
+      return (
+        <>
+          <label className="label-warning">No device </label> succeeded in SNMP
+          Connection
+        </>
+      )
+    } else if (
+      snmpConnectionSuccessDevices.length > 0 &&
+      failedDevices.length === 0
+    ) {
+      return (
+        <>
+          Devices will be created when you click the
+          <label className="label-info--save"> Save button.</label>
+        </>
+      )
+    } else if (
+      snmpConnectionSuccessDevices.length > 0 &&
+      failedDevices.length > 0
+    ) {
+      return (
+        <>
+          <label className="label-warning">
+            Only devices that succeeded in SNMP Connection{' '}
+          </label>
+          will be created when you click the
+          <label className="label-info--save"> Save button.</label>
+        </>
+      )
+    }
+    return <></>
+  }
+
   private shouldEnableDeviceSaveButton = (
     snmpConnectionSuccessDevices: SNMPConnectionSuccessDevice[]
   ): boolean => {
@@ -343,7 +399,11 @@ class ImportDevicePage extends PureComponent<Props, State> {
 
   private get deviceStatus(): JSX.Element {
     const {onDismissOverlay} = this.props
-    const {deviceStatusTableData, isDeviceDataSaveButtonEnabled} = this.state
+    const {
+      deviceStatusTableData,
+      isDeviceDataSaveButtonEnabled,
+      deviceStatusMessageJSXElement,
+    } = this.state
     const importFileDeviceStatusColums = IMPORT_FILE_DEVICE_STATUS_COLUMNS
 
     return (
@@ -356,10 +416,16 @@ class ImportDevicePage extends PureComponent<Props, State> {
           <Form>
             <Form.Element>
               <>
+                <label className="device-status--header">
+                  SNMP Connection Result
+                </label>
                 <TableComponent
                   columns={importFileDeviceStatusColums}
                   data={deviceStatusTableData}
                 />
+                <label className="device-management-message">
+                  {deviceStatusMessageJSXElement}
+                </label>
               </>
             </Form.Element>
             <Form.Footer>
@@ -393,6 +459,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
       importDevicePageStatus: 'UploadCSV',
       isDeviceDataSaveButtonEnabled: false,
       devicesData: [],
+      deviceStatusMessageJSXElement: <></>,
     })
   }
 
@@ -405,9 +472,15 @@ class ImportDevicePage extends PureComponent<Props, State> {
   }
 
   private createDevices = async () => {
+    const {organizations} = this.props
     const {devicesData} = this.state
+
     try {
-      const {failed_devices} = await createDevices(devicesData)
+      const convertedDeviceData = convertDeviceDataOrganizationNameToID(
+        devicesData,
+        organizations
+      ) as DeviceData[]
+      const {failed_devices} = await createDevices(convertedDeviceData)
 
       if (failed_devices && failed_devices.length > 0) {
         return this.handleCreateDevicesErrorWithFailedDevices(failed_devices)
@@ -431,16 +504,27 @@ class ImportDevicePage extends PureComponent<Props, State> {
     failedDevices: FailedDevice[]
   ) => {
     const {onDismissOverlay} = this.props
-    const failedMessage = this.getFailedDevicesString(failedDevices)
+    const failedMessage = this.getFailedDevicesErrorMessage(failedDevices)
 
     this.props.notify(notifyCreateDevicesFailed(failedMessage))
     this.initializeComponentState()
     onDismissOverlay()
   }
 
-  private getFailedDevicesString = (failedDevices: FailedDevice[]): string => {
-    const deviceIps = failedDevices.map(device => device.device_ip).join(', ')
-    return `Failed Devices: ${deviceIps}`
+  private getFailedDevicesErrorMessage = (
+    failedDevices: FailedDevice[]
+  ): string => {
+    const limit = 5
+    let messages = failedDevices
+      .slice(0, limit)
+      .map(device => `${device.device_ip}: ${device.errorMessage}`)
+      .join('.')
+
+    if (failedDevices.length > limit) {
+      messages += `Total ${failedDevices.length} devices failed`
+    }
+
+    return `${messages}`
   }
 
   private handleCreateDevicesSuccess = () => {

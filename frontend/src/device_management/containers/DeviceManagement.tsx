@@ -33,6 +33,9 @@ import {
 // API
 import {deleteDevice, getDeviceList} from 'src/device_management/apis'
 
+// Utils
+import {convertDeviceDataOrganizationIDToName} from 'src/device_management/utils'
+
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
@@ -185,6 +188,7 @@ class DeviceManagement extends PureComponent<Props, State> {
         />
         <ImportDevicePage
           isVisible={importDeviceWizardVisibility}
+          organizations={organizations}
           onDismissOverlay={this.handleDismissImportDeviceModalOverlay}
           notify={this.props.notify}
         />
@@ -199,8 +203,14 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 
   private getDeviceAJAX = async () => {
+    const {organizations} = this.props
     const {data} = await getDeviceList()
-    this.setState({data: data.Devices})
+    const convertedDeviceData = convertDeviceDataOrganizationIDToName(
+      data.Devices,
+      organizations
+    ) as DeviceData[]
+
+    this.setState({data: convertedDeviceData})
   }
 
   private onClickShellModalOpen = (shell: ShellInfo) => {

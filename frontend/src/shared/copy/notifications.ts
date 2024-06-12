@@ -1447,7 +1447,8 @@ export const notifySNMPConnectSucceeded = (): Notification => ({
 
 export const notifySNMPConnectFailed = (error: string): Notification => ({
   ...defaultErrorNotification,
-  message: `SNMP Connection Failed, ${error}`,
+  duration: INFINITE,
+  message: `SNMP Connection Failed. ${error}`,
 })
 
 export const notifyCreateDeviceSucceeded = (): Notification => ({
@@ -1459,7 +1460,8 @@ export const notifyCreateDeviceFailed = (
   errorMessage: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `Failed to Create Device, ${errorMessage}`,
+  duration: INFINITE,
+  message: `Failed to Create Device. ${errorMessage}`,
 })
 
 export const notifyCreateDevicesSucceeded = (): Notification => ({
@@ -1471,7 +1473,8 @@ export const notifyCreateDevicesFailed = (
   errorMessage: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `Failed to Create Devices, ${errorMessage}`,
+  duration: INFINITE,
+  message: `Failed to Create Devices. ${errorMessage}`,
 })
 
 export const notifyUpdateDeviceSucceeded = (): Notification => ({
@@ -1482,6 +1485,7 @@ export const notifyUpdateDeviceSucceeded = (): Notification => ({
 export const notifyUpdateDeviceFailed = (
   errorMessage: string
 ): Notification => ({
-  ...defaultSuccessNotification,
-  message: `Failed to update Device: ${errorMessage}`,
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to update Device. ${errorMessage}`,
 })

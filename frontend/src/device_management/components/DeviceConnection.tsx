@@ -28,12 +28,15 @@ import {NextReturn, ToggleWizard} from 'src/types/wizard'
 import {StepStatusKey} from 'src/reusable_ui/constants/wizard'
 import {DEFAULT_NETWORK_DEVICE_DATA} from 'src/device_management/constants'
 
-// APIS
+// API
 import {
   createDevices,
   updateDevice,
   validateSNMPConnection,
 } from 'src/device_management/apis/'
+
+// Utils
+import {convertDeviceDataOrganizationNameToID} from 'src/device_management/utils'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {
@@ -254,9 +257,15 @@ class DeviceConnection extends PureComponent<Props, State> {
   }
 
   private createDevice = async (): Promise<NextReturn> => {
+    const {organizations} = this.props
     const {deviceData} = this.state
+
     try {
-      const {failed_devices} = await createDevices([deviceData])
+      const convertedDeviceData = convertDeviceDataOrganizationNameToID(
+        [deviceData],
+        organizations
+      ) as DeviceData[]
+      const {failed_devices} = await createDevices(convertedDeviceData)
 
       if (failed_devices && failed_devices.length > 0) {
         return this.handleCreateDevicesError(failed_devices?.[0].errorMessage)
@@ -281,11 +290,19 @@ class DeviceConnection extends PureComponent<Props, State> {
   }
 
   private patchDevice = async (): Promise<NextReturn> => {
+    const {organizations} = this.props
     const {deviceData} = this.state
     const {id} = deviceData
 
     try {
-      const {failed_devices} = await updateDevice({id, deviceData: deviceData})
+      const convertedDeviceData = convertDeviceDataOrganizationNameToID(
+        deviceData,
+        organizations
+      ) as DeviceData
+      const {failed_devices} = await updateDevice({
+        id,
+        deviceData: convertedDeviceData,
+      })
 
       if (failed_devices && failed_devices.length > 0) {
         return this.handleUpdateDevicesError(failed_devices?.[0].errorMessage)
@@ -300,12 +317,16 @@ class DeviceConnection extends PureComponent<Props, State> {
   private handleUpdateDevicesSuccess = (): NextReturn => {
     this.props.notify(notifyUpdateDeviceSucceeded())
     this.setState({setupCompleteStatus: 'Complete'})
+
     return {error: false, payload: {}}
   }
 
   private handleUpdateDevicesError = (errorMessage: string): NextReturn => {
+    const _errorMessage = errorMessage ? errorMessage : ''
+
     this.setState({setupCompleteStatus: 'Error'})
-    this.props.notify(notifyUpdateDeviceFailed(errorMessage))
+    this.props.notify(notifyUpdateDeviceFailed(_errorMessage))
+
     return {error: true, payload: {}}
   }
 
