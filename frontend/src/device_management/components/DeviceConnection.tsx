@@ -12,7 +12,7 @@ import DeviceManagementCompletionStep from 'src/device_management/components/Dev
 // Types
 import {
   DeviceConnectionStatus,
-  DevicesInfo,
+  DeviceData,
   DropdownItem,
   Me,
   Notification,
@@ -26,7 +26,7 @@ import {NextReturn, ToggleWizard} from 'src/types/wizard'
 
 // Constants
 import {StepStatusKey} from 'src/reusable_ui/constants/wizard'
-import {DEFAULT_DEVICE_INFO} from 'src/device_management/constants'
+import {DEFAULT_NETWORK_DEVICE_DATA} from 'src/device_management/constants'
 
 // APIS
 import {
@@ -51,13 +51,13 @@ interface Props {
   isVisible: boolean
   me: Me
   organizations: Organization[]
-  selectedDeviceData: DevicesInfo
+  selectedDeviceData: DeviceData
   notify: (n: Notification) => void
   toggleVisibility: ToggleWizard
 }
 
 interface State {
-  deviceData: DevicesInfo
+  deviceData: DeviceData
   deviceSNMPConnectionStatus: StepStatusKey
   setupCompleteStatus: StepStatusKey
   sshConnectionStatus: StepStatusKey
@@ -71,7 +71,7 @@ class DeviceConnection extends PureComponent<Props, State> {
       deviceData:
         props.deviceConnectionStatus == 'Updating'
           ? props.selectedDeviceData
-          : DEFAULT_DEVICE_INFO,
+          : DEFAULT_NETWORK_DEVICE_DATA,
       deviceSNMPConnectionStatus: 'Incomplete',
       setupCompleteStatus: 'Incomplete',
       sshConnectionStatus: 'Incomplete',
@@ -85,7 +85,7 @@ class DeviceConnection extends PureComponent<Props, State> {
       if (this.props.deviceConnectionStatus === 'Updating') {
         this.setState({deviceData: this.props.selectedDeviceData})
       } else {
-        this.setState({deviceData: DEFAULT_DEVICE_INFO})
+        this.setState({deviceData: DEFAULT_NETWORK_DEVICE_DATA})
       }
     }
   }
@@ -168,7 +168,7 @@ class DeviceConnection extends PureComponent<Props, State> {
       deviceData:
         deviceConnectionStatus == 'Updating'
           ? selectedDeviceData
-          : DEFAULT_DEVICE_INFO,
+          : DEFAULT_NETWORK_DEVICE_DATA,
       deviceSNMPConnectionStatus: 'Incomplete',
       sshConnectionStatus: 'Incomplete',
       setupCompleteStatus: 'Incomplete',
@@ -195,7 +195,7 @@ class DeviceConnection extends PureComponent<Props, State> {
   }
 
   private generateSNMPConfig = (
-    deviceData: DevicesInfo
+    deviceData: DeviceData
   ): SNMPConnectionRequest[] => {
     const {device_ip, snmp_config} = deviceData
     const {snmp_community, snmp_port, snmp_version, snmp_protocol} = snmp_config
@@ -285,7 +285,7 @@ class DeviceConnection extends PureComponent<Props, State> {
     const {id} = deviceData
 
     try {
-      const {failed_devices} = await updateDevice({id, devicesInfo: deviceData})
+      const {failed_devices} = await updateDevice({id, deviceData: deviceData})
 
       if (failed_devices && failed_devices.length > 0) {
         return this.handleUpdateDevicesError(failed_devices?.[0].errorMessage)
@@ -310,7 +310,7 @@ class DeviceConnection extends PureComponent<Props, State> {
   }
 
   private handleChooseDeviceDataDropdown = (
-    key: keyof DevicesInfo | keyof SNMPConfig | keyof SSHConfig
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
   ) => (value: DropdownItem) => {
     this.setState(prevState => {
       const device = prevState.deviceData
@@ -347,7 +347,7 @@ class DeviceConnection extends PureComponent<Props, State> {
   }
 
   private handleChangeDeviceData = (
-    key: keyof DevicesInfo | keyof SNMPConfig | keyof SSHConfig
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
   ) => (value: string) => {
     let newValue: string | number = value
 

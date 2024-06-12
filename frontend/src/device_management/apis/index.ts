@@ -62,10 +62,10 @@ export const getDeviceList = () => {
   }
 }
 
-export const updateDevice = async ({id, devicesInfo}: UpdateDeviceRequest) => {
+export const updateDevice = async ({id, deviceData}: UpdateDeviceRequest) => {
   try {
     const response = await AJAX({
-      data: devicesInfo,
+      data: deviceData,
       url: `${DEVICE_MANAGEMENT_URL}/${id}`,
       method: 'PATCH',
     })

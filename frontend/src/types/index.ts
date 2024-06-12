@@ -99,9 +99,9 @@ import {
   SNMPConfig,
   SSHConfig,
   ImportDevicePageStatus,
-  DevicesInfo,
   CreateDeviceListRequest,
   CreateDeviceListResponse,
+  FailedDevice,
   GetDeviceListRsponse,
   UpdateDeviceRequest,
   UpdateDeviceResponse,
@@ -110,6 +110,7 @@ import {
   SNMPConnectionRequest,
   SNMPConnectionResponse,
   SNMPConnectionSuccessDevice,
+  SNMPConnectionFailedDevice,
   DeviceConnectionStatus,
 } from './deviceManagement'
 
@@ -209,9 +210,9 @@ export {
   ImportDevicePageStatus,
   SNMPConfig,
   SSHConfig,
-  DevicesInfo,
   CreateDeviceListRequest,
   CreateDeviceListResponse,
+  FailedDevice,
   GetDeviceListRsponse,
   UpdateDeviceRequest,
   UpdateDeviceResponse,
@@ -220,5 +221,6 @@ export {
   SNMPConnectionRequest,
   SNMPConnectionResponse,
   SNMPConnectionSuccessDevice,
+  SNMPConnectionFailedDevice,
   DeviceConnectionStatus,
 }

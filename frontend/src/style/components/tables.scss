@@ -425,3 +425,11 @@ $wordBreak: break-word;
     }
   }
 }
+
+.device-management-import--success {
+  color: $c-rainforest;
+}
+
+.device-management-import--fail {
+  color: $c-topaz;
+}

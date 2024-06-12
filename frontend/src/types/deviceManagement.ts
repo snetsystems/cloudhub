@@ -1,14 +1,21 @@
 export interface DeviceData {
-  id?: string
+  id?: number
   organization: string
   device_ip: string
   hostname?: string
   device_type?: string
   device_category?: string
   device_os?: string
+  device_vendor?: string
   ssh_config?: SSHConfig
   snmp_config: SNMPConfig
-  device_vendor?: string
+  links?: {
+    self: string
+  }
+  is_modeling_generated?: boolean
+  is_monitoring_enabled?: boolean
+  learn_ratio?: number
+  learn_setting_group_id?: number
 }
 export interface SNMPConfig {
   snmp_community: string
@@ -23,27 +30,7 @@ export interface SSHConfig {
   ssh_en_password?: string
   ssh_port?: number
 }
-export interface DevicesInfo {
-  id?: string
-  organization: string
-  device_ip: string
-  hostname: string
-  device_type: string
-  device_category: string
-  device_os: string
-  ssh_config: SSHConfig
-  snmp_config: SNMPConfig
-  device_vendor: string
-  links?: {
-    self: string
-  }
-  is_modeling_generated?: boolean
-  is_monitoring_enabled?: boolean
-  learn_ratio?: number
-  learn_setting_group_id?: number
-}
 
-// SNMP Connection API
 export interface SNMPConnectionRequest {
   device_ip: string
   snmp_community?: string
@@ -55,7 +42,7 @@ export interface SNMPConnectionRequest {
 export interface SNMPConnectionResponse {
   data: {
     failed_requests: SNMPConnectionFailedDevice[]
-    results: SNMPConnectionSuccessDevice[]
+    results: SNMPConnectionSuccessDevice[] | null
   }
 }
 
@@ -66,12 +53,14 @@ export interface SNMPConnectionFailedDevice {
 }
 
 export interface SNMPConnectionSuccessDevice {
+  index: number
+  device_ip: string
+  device_os: string
   device_type: string
   hostname: string
-  device_os: string
 }
 
-export type CreateDeviceListRequest = DevicesInfo[]
+export type CreateDeviceListRequest = DeviceData[]
 
 export interface CreateDeviceListResponse {
   data: {failed_devices: FailedDevice[]}
@@ -84,12 +73,12 @@ export interface FailedDevice {
 }
 
 export interface GetDeviceListRsponse {
-  Devices?: DevicesInfo[] | null
+  Devices?: DeviceData[] | null
 }
 
 export interface UpdateDeviceRequest {
-  id: string
-  devicesInfo: DevicesInfo
+  id: number
+  deviceData: DeviceData
 }
 
 export interface UpdateDeviceResponse {
