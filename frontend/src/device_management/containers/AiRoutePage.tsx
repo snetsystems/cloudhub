@@ -53,12 +53,12 @@ const sections = (
         />
       ),
     },
-    {
-      url: 'prediction',
-      name: 'Prediction',
-      enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
-      component: <PredictionPage />,
-    },
+    // {
+    //   url: 'prediction',
+    //   name: 'Prediction',
+    //   enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+    //   component: <PredictionPage />,
+    // },
   ]
 
   return sections
