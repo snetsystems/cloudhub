@@ -30,6 +30,9 @@ export interface ShellProps {
   isNewEditor?: boolean
   isExistInLinks?: boolean
   tabkey?: number
+  sshId?: string
+  sshPw?: string
+  port?: string
   handleShellUpdate: (shell: ShellInfo) => void
   handleShellRemove: (nodename: ShellInfo['nodename']) => void
   onTabNameRefresh: () => void
@@ -68,9 +71,9 @@ const Shell = (props: Props) => {
   const [preHost, setPreHost] = useState(props.nodename ? props.nodename : '')
   const [host, setHost] = useState(props.nodename ? props.nodename : '')
   const [addr, setAddr] = useState(props.addr ? props.addr : '')
-  const [user, setUser] = useState('')
-  const [pwd, setPwd] = useState('')
-  const [port, setPort] = useState('22')
+  const [user, setUser] = useState(props.sshId ?? '')
+  const [pwd, setPwd] = useState(props.sshPw ?? '')
+  const [port, setPort] = useState(props.port ?? '22')
   const [getIP, setGetIP] = useState(null)
   const [socket, setSocket] = useState<WebSocket>(null)
   const [term, setTerm] = useState<Terminal>(null)

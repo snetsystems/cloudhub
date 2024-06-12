@@ -138,7 +138,7 @@ class DeviceManagement extends PureComponent<Props, State> {
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <button
                     className="btn button btn-sm btn-primary"
-                    // disabled={this.state.checkedArray.length === 0}
+                    disabled={this.state.checkedArray.length === 0}
                   >
                     <span className="icon import" /> Apply Monitoring
                   </button>
@@ -224,7 +224,8 @@ class DeviceManagement extends PureComponent<Props, State> {
   // }
 
   private deleteDevicesAJAX = async (idList: string[]) => {
-    await deleteDevice({devices_id: idList})
+    const numIdList = idList.map(i => Number(i))
+    await deleteDevice({devices_id: numIdList})
     this.getDeviceAJAX()
     this.setState({checkedArray: [], isLoading: false})
   }
