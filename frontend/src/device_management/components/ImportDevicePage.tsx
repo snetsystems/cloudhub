@@ -385,7 +385,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     )
   }
 
-  private handleGoBackImportedDeviceFile = () => {
+  private initializeComponentState = () => {
     this.setState({
       deviceDataRawFromCSV: '',
       devicesDataParsedFromCSV: [],
@@ -394,6 +394,10 @@ class ImportDevicePage extends PureComponent<Props, State> {
       isDeviceDataSaveButtonEnabled: false,
       devicesData: [],
     })
+  }
+
+  private handleGoBackImportedDeviceFile = () => {
+    this.initializeComponentState()
   }
 
   private handleSaveImportedDeviceFile = () => {
@@ -419,6 +423,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     const {onDismissOverlay} = this.props
 
     this.props.notify(notifyCreateDevicesFailed(errorMessage))
+    this.initializeComponentState()
     onDismissOverlay()
   }
 
@@ -429,6 +434,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     const failedMessage = this.getFailedDevicesString(failedDevices)
 
     this.props.notify(notifyCreateDevicesFailed(failedMessage))
+    this.initializeComponentState()
     onDismissOverlay()
   }
 
@@ -441,6 +447,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     const {onDismissOverlay} = this.props
 
     this.props.notify(notifyCreateDevicesSucceeded())
+    this.initializeComponentState()
     onDismissOverlay()
   }
 }

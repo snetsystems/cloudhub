@@ -11,6 +11,7 @@ import DeviceConnection from 'src/device_management/components/DeviceConnection'
 
 // Actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {openShell} from 'src/shared/actions/shell'
 
 // Constants
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
@@ -25,8 +26,8 @@ import {
   Notification,
   Organization,
   DeviceData,
-  DataTableOptions,
   DeviceConnectionStatus,
+  ShellInfo,
 } from 'src/types'
 
 // API
@@ -39,6 +40,7 @@ interface Props {
   me: Me
   organizations: Organization[]
   notify: (n: Notification) => void
+  openShell: (shell: ShellInfo) => void
 }
 
 interface State {
@@ -116,7 +118,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           setCheckedArray={(value: string[]) =>
             this.setState({checkedArray: value})
           }
-          options={this.options}
+          // options={this.options}
           topLeftRender={
             <div className="device-management-top left">
               <div className="space-x">
@@ -135,9 +137,6 @@ class DeviceManagement extends PureComponent<Props, State> {
                 {/* TODO Consder requiredRole */}
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <button
-                    onClick={() => {
-                      console.log('checked array: ', this.state.checkedArray)
-                    }}
                     className="btn button btn-sm btn-primary"
                     // disabled={this.state.checkedArray.length === 0}
                   >
@@ -146,6 +145,12 @@ class DeviceManagement extends PureComponent<Props, State> {
                 </Authorized>
               </div>
               <div className="space-x">
+                <Authorized requiredRole={EDITOR_ROLE}>
+                  <div className="btn button btn-sm btn-primary">
+                    <span className="icon computer-desktop" /> Learning Setting
+                  </div>
+                </Authorized>
+
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <div
                     onClick={this.connectDevice('Creating')}
@@ -193,11 +198,13 @@ class DeviceManagement extends PureComponent<Props, State> {
     )
   }
 
-  private column = columns
-
   private getDeviceAJAX = async () => {
     const {data} = await getDeviceList()
     this.setState({data: data.Devices})
+  }
+
+  private onClickShellModalOpen = (shell: ShellInfo) => {
+    this.props.openShell(shell)
   }
 
   private handleRowClick = selectedDeviceData => {
@@ -205,11 +212,16 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({selectedDeviceData: selectedDeviceData})
   }
 
-  private options: DataTableOptions = {
-    tbodyRow: {
-      onClick: this.handleRowClick,
-    },
-  }
+  private column = columns({
+    onEditClick: this.handleRowClick,
+    onConsoleClick: this.onClickShellModalOpen,
+  })
+
+  // private options: DataTableOptions = {
+  //   tbodyRow: {
+  //     onClick: this.handleRowClick,
+  //   },
+  // }
 
   private deleteDevicesAJAX = async (idList: string[]) => {
     await deleteDevice({devices_id: idList})
@@ -258,6 +270,7 @@ const mstp = ({adminCloudHub: {organizations}, auth: {isUsingAuth, me}}) => ({
 
 const mdtp = (dispatch: any) => ({
   notify: bindActionCreators(notifyAction, dispatch),
+  openShell: bindActionCreators(openShell, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(DeviceManagement)
