@@ -1450,12 +1450,38 @@ export const notifySNMPConnectFailed = (error: string): Notification => ({
   message: `SNMP Connection Failed, ${error}`,
 })
 
-export const notifyCreateDevicesFailed = (error: string): Notification => ({
+export const notifyCreateDeviceSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Device created successfully.`,
+})
+
+export const notifyCreateDeviceFailed = (
+  errorMessage: string
+): Notification => ({
   ...defaultErrorNotification,
-  message: `Failed to Create Devices, ${error}`,
+  message: `Failed to Create Device, ${errorMessage}`,
 })
 
 export const notifyCreateDevicesSucceeded = (): Notification => ({
   ...defaultSuccessNotification,
   message: `Devices created successfully.`,
+})
+
+export const notifyCreateDevicesFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Create Devices, ${errorMessage}`,
+})
+
+export const notifyUpdateDeviceSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Device updated successfully.`,
+})
+
+export const notifyUpdateDeviceFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Failed to update Device: ${errorMessage}`,
 })

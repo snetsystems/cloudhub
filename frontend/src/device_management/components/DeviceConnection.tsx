@@ -11,6 +11,7 @@ import DeviceManagementCompletionStep from 'src/device_management/components/Dev
 
 // Types
 import {
+  DeviceConnectionStatus,
   DeviceData,
   DropdownItem,
   Me,
@@ -19,36 +20,38 @@ import {
   SNMPConfig,
   SNMPConnectionRequest,
   SSHConfig,
+  SNMPConnectionSuccessDevice,
 } from 'src/types'
 import {NextReturn, ToggleWizard} from 'src/types/wizard'
 
 // Constants
 import {StepStatusKey} from 'src/reusable_ui/constants/wizard'
-import {
-  DEFAULT_DEVICE_DATA,
-  DEVICE_MANAGEMENT_URL,
-  SNMP_CONNECTION_URL,
-} from 'src/device_management/constants/'
+import {DEFAULT_NETWORK_DEVICE_DATA} from 'src/device_management/constants'
 
 // APIS
 import {
   createDevices,
+  updateDevice,
   validateSNMPConnection,
 } from 'src/device_management/apis/'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {
-  notifyCreateDevicesFailed,
-  notifyCreateDevicesSucceeded,
+  notifyCreateDeviceFailed,
+  notifyCreateDeviceSucceeded,
   notifySNMPConnectFailed,
   notifySNMPConnectSucceeded,
+  notifyUpdateDeviceFailed,
+  notifyUpdateDeviceSucceeded,
 } from 'src/shared/copy/notifications'
 
 interface Props {
+  deviceConnectionStatus: DeviceConnectionStatus
   isUsingAuth: boolean
   isVisible: boolean
   me: Me
   organizations: Organization[]
+  selectedDeviceData: DeviceData
   notify: (n: Notification) => void
   toggleVisibility: ToggleWizard
 }
@@ -61,14 +64,29 @@ interface State {
 }
 
 @ErrorHandling
-class AddDevicePage extends PureComponent<Props, State> {
+class DeviceConnection extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      deviceData: DEFAULT_DEVICE_DATA,
+      deviceData:
+        props.deviceConnectionStatus == 'Updating'
+          ? props.selectedDeviceData
+          : DEFAULT_NETWORK_DEVICE_DATA,
       deviceSNMPConnectionStatus: 'Incomplete',
       setupCompleteStatus: 'Incomplete',
       sshConnectionStatus: 'Incomplete',
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    if (
+      prevProps.deviceConnectionStatus !== this.props.deviceConnectionStatus
+    ) {
+      if (this.props.deviceConnectionStatus === 'Updating') {
+        this.setState({deviceData: this.props.selectedDeviceData})
+      } else {
+        this.setState({deviceData: DEFAULT_NETWORK_DEVICE_DATA})
+      }
     }
   }
 
@@ -119,7 +137,7 @@ class AddDevicePage extends PureComponent<Props, State> {
           isErrored={this.isStatusError(sshConnectionStatus)}
           nextLabel={'Next'}
           onNext={this.handleConnectSSH}
-          previousLabel="Go Bac\k"
+          previousLabel="Go Back"
           lastStep={true}
         >
           <SSHConnectionStep
@@ -145,8 +163,12 @@ class AddDevicePage extends PureComponent<Props, State> {
   }
 
   private handleResetWizard = () => {
+    const {deviceConnectionStatus, selectedDeviceData} = this.props
     this.setState({
-      deviceData: DEFAULT_DEVICE_DATA,
+      deviceData:
+        deviceConnectionStatus == 'Updating'
+          ? selectedDeviceData
+          : DEFAULT_NETWORK_DEVICE_DATA,
       deviceSNMPConnectionStatus: 'Incomplete',
       sshConnectionStatus: 'Incomplete',
       setupCompleteStatus: 'Incomplete',
@@ -155,10 +177,10 @@ class AddDevicePage extends PureComponent<Props, State> {
 
   private handleValidateSNMPConnection = async (): Promise<NextReturn> => {
     const {deviceData} = this.state
+
     try {
       const snmpConfigData = this.generateSNMPConfig(deviceData)
       const {failed_requests, results} = await validateSNMPConnection(
-        SNMP_CONNECTION_URL,
         snmpConfigData
       )
 
@@ -195,7 +217,9 @@ class AddDevicePage extends PureComponent<Props, State> {
     return {error: true, payload: {}}
   }
 
-  private handleSNMPConnectionSuccess = (results: any[]): NextReturn => {
+  private handleSNMPConnectionSuccess = (
+    results: SNMPConnectionSuccessDevice[]
+  ): NextReturn => {
     const {device_type, hostname, device_os} = results[0]
 
     this.props.notify(notifySNMPConnectSucceeded())
@@ -222,12 +246,17 @@ class AddDevicePage extends PureComponent<Props, State> {
     // return {error: true, payload: {}}
   }
 
-  private handleCompleteSetup = async (): Promise<NextReturn> => {
+  private handleCompleteSetup = (): Promise<NextReturn> => {
+    const {deviceConnectionStatus} = this.props
+
+    if (deviceConnectionStatus === 'Creating') return this.createDevice()
+    if (deviceConnectionStatus === 'Updating') return this.patchDevice()
+  }
+
+  private createDevice = async (): Promise<NextReturn> => {
     const {deviceData} = this.state
     try {
-      const {failed_devices} = await createDevices(DEVICE_MANAGEMENT_URL, [
-        deviceData,
-      ])
+      const {failed_devices} = await createDevices([deviceData])
 
       if (failed_devices && failed_devices.length > 0) {
         return this.handleCreateDevicesError(failed_devices?.[0].errorMessage)
@@ -241,14 +270,43 @@ class AddDevicePage extends PureComponent<Props, State> {
 
   private handleCreateDevicesError = (errorMessage: string): NextReturn => {
     this.setState({setupCompleteStatus: 'Error'})
-    this.props.notify(notifyCreateDevicesFailed(errorMessage))
+    this.props.notify(notifyCreateDeviceFailed(errorMessage))
     return {error: true, payload: {}}
   }
 
   private handleCreateDevicesSuccess = (): NextReturn => {
-    this.props.notify(notifyCreateDevicesSucceeded())
+    this.props.notify(notifyCreateDeviceSucceeded())
     this.setState({setupCompleteStatus: 'Complete'})
     return {error: false, payload: {}}
+  }
+
+  private patchDevice = async (): Promise<NextReturn> => {
+    const {deviceData} = this.state
+    const {id} = deviceData
+
+    try {
+      const {failed_devices} = await updateDevice({id, deviceData: deviceData})
+
+      if (failed_devices && failed_devices.length > 0) {
+        return this.handleUpdateDevicesError(failed_devices?.[0].errorMessage)
+      }
+
+      return this.handleUpdateDevicesSuccess()
+    } catch (error) {
+      return this.handleUpdateDevicesError(error.message)
+    }
+  }
+
+  private handleUpdateDevicesSuccess = (): NextReturn => {
+    this.props.notify(notifyUpdateDeviceSucceeded())
+    this.setState({setupCompleteStatus: 'Complete'})
+    return {error: false, payload: {}}
+  }
+
+  private handleUpdateDevicesError = (errorMessage: string): NextReturn => {
+    this.setState({setupCompleteStatus: 'Error'})
+    this.props.notify(notifyUpdateDeviceFailed(errorMessage))
+    return {error: true, payload: {}}
   }
 
   private handleChooseDeviceDataDropdown = (
@@ -339,4 +397,4 @@ class AddDevicePage extends PureComponent<Props, State> {
   }
 }
 
-export default AddDevicePage
+export default DeviceConnection

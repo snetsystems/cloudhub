@@ -2,13 +2,12 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
-import Papa from 'papaparse'
 
 // Components
-import AddDevicePage from 'src/device_management/components/AddDevicePage'
 import ImportDevicePage from 'src/device_management/components/ImportDevicePage'
 import TableComponent from 'src/device_management/components/TableComponent'
 import LoadingSpinner from 'src/reusable_ui/components/spinners/LoadingSpinner'
+import DeviceConnection from 'src/device_management/components/DeviceConnection'
 
 // Actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -16,8 +15,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 // Constants
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {
-  DEFAULT_DEVICE_DATA,
-  IMPORT_DEVICE_CSV_Template,
+  DEFAULT_NETWORK_DEVICE_DATA,
   columns,
 } from 'src/device_management/constants'
 
@@ -27,28 +25,14 @@ import {
   Notification,
   Organization,
   DeviceData,
-  ImportDevicePageStatus,
   DataTableOptions,
-  DevicesInfo,
-  PatchDeviceParams,
+  DeviceConnectionStatus,
 } from 'src/types'
 
-// Util
-import {downloadCSV} from 'src/shared/utils/downloadTimeseriesCSV'
-
 // API
-import {
-  deleteDevice,
-  getDeviceList,
-  patchDevice,
-} from 'src/device_management/apis'
+import {deleteDevice, getDeviceList} from 'src/device_management/apis'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {
-  csvExportFailed,
-  notifyCSVUploadFailed,
-  notifyCSVUploadFailedWithMessage,
-} from 'src/shared/copy/notifications'
 
 interface Props {
   isUsingAuth: boolean
@@ -58,34 +42,40 @@ interface Props {
 }
 
 interface State {
-  isLiading: boolean
-  data: DevicesInfo[]
-  addDeviceWizardVisibility: boolean
+  isLoading: boolean
+  data: DeviceData[]
+  deviceConnectionVisibility: boolean
+  deviceConnectionStatus: DeviceConnectionStatus
   importDeviceWizardVisibility: boolean
   deviceData: DeviceData[]
-  deviceDataRawFromCSV: string
-  deviceDataParsedFromCSV: Array<any>
-  importDevicePageStatus: ImportDevicePageStatus
+  selectedDeviceData: DeviceData
   checkedArray: string[]
 }
 
-const VERSION = process.env.npm_package_version
-
 @ErrorHandling
 class DeviceManagement extends PureComponent<Props, State> {
+  private isComponentMounted: boolean = true
+
   constructor(props: Props) {
     super(props)
     this.state = {
       data: [],
-      isLiading: false,
-      addDeviceWizardVisibility: false,
+      isLoading: false,
+      deviceConnectionVisibility: false,
+      deviceConnectionStatus: 'None',
       importDeviceWizardVisibility: false,
-      deviceData: [DEFAULT_DEVICE_DATA as DeviceData],
-      deviceDataRawFromCSV: '',
-      deviceDataParsedFromCSV: [],
-      importDevicePageStatus: 'UploadCSV',
+      deviceData: [DEFAULT_NETWORK_DEVICE_DATA as DeviceData],
+      selectedDeviceData: DEFAULT_NETWORK_DEVICE_DATA,
       checkedArray: [],
     }
+
+    this.setState = (args, callback) => {
+      if (!this.isComponentMounted) return
+      PureComponent.prototype.setState.bind(this)(args, callback)
+    }
+
+    this.connectDevice = this.connectDevice.bind(this)
+    this.handleRowClick = this.handleRowClick.bind(this)
   }
 
   public componentDidMount(): void {
@@ -97,13 +87,17 @@ class DeviceManagement extends PureComponent<Props, State> {
     }
   }
 
+  public componentWillUnmount() {
+    this.isComponentMounted = false
+  }
+
   public render() {
     const {me, organizations, isUsingAuth} = this.props
     const {
-      addDeviceWizardVisibility,
-      deviceDataRawFromCSV,
-      importDevicePageStatus,
+      deviceConnectionVisibility,
+      deviceConnectionStatus,
       importDeviceWizardVisibility,
+      selectedDeviceData,
     } = this.state
 
     return (
@@ -129,7 +123,7 @@ class DeviceManagement extends PureComponent<Props, State> {
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <button
                     onClick={() => {
-                      this.setState({isLiading: true})
+                      this.setState({isLoading: true})
                       this.deleteDevicesAJAX(this.state.checkedArray)
                     }}
                     className="btn button btn-sm btn-primary"
@@ -154,7 +148,7 @@ class DeviceManagement extends PureComponent<Props, State> {
               <div className="space-x">
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <div
-                    onClick={this.addDevice(true)}
+                    onClick={this.connectDevice('Creating')}
                     className="btn button btn-sm btn-primary"
                   >
                     <span className="icon plus" /> Add Device
@@ -174,27 +168,23 @@ class DeviceManagement extends PureComponent<Props, State> {
           }
         />
 
-        <AddDevicePage
+        <DeviceConnection
+          deviceConnectionStatus={deviceConnectionStatus}
+          isVisible={deviceConnectionVisibility}
           notify={this.props.notify}
           me={me}
           organizations={organizations}
+          selectedDeviceData={selectedDeviceData}
           isUsingAuth={isUsingAuth}
-          isVisible={addDeviceWizardVisibility}
-          toggleVisibility={this.addDevice}
+          toggleVisibility={this.handleToggleDeviceConnectionModal}
         />
         <ImportDevicePage
-          deviceDataRawFromCSV={deviceDataRawFromCSV}
-          importDevicePageStatus={importDevicePageStatus}
           isVisible={importDeviceWizardVisibility}
           onDismissOverlay={this.handleDismissImportDeviceModalOverlay}
-          onDownloadCSVDeviceTemplate={this.handleDownloadCSVDeviceTemplate}
-          onGoBackImportedDeviceFile={this.handleGoBackImportedDeviceFile}
-          onGoNextImportedDeviceFile={this.handleGoNextImportedDeviceFile}
-          onSaveImportedDeviceFile={this.handleSaveImportedDeviceFile}
-          onUploadImportedDeviceFile={this.handleUploadImportedDeviceFile}
+          notify={this.props.notify}
         />
 
-        {this.state.isLiading && (
+        {this.state.isLoading && (
           <div className="loading-box">
             <LoadingSpinner />
           </div>
@@ -210,29 +200,39 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({data: data.Devices})
   }
 
-  //patch api
-  private patchDevicesAJAX = async (params: PatchDeviceParams) => {
-    const {data} = await patchDevice(params)
+  private handleRowClick = selectedDeviceData => {
+    this.connectDevice('Updating')()
+    this.setState({selectedDeviceData: selectedDeviceData})
   }
 
   private options: DataTableOptions = {
     tbodyRow: {
-      onClick: item => {
-        this.addDevice(true)
-        console.log(item)
-      },
+      onClick: this.handleRowClick,
     },
   }
 
   private deleteDevicesAJAX = async (idList: string[]) => {
     await deleteDevice({devices_id: idList})
     this.getDeviceAJAX()
-    this.setState({checkedArray: [], isLiading: false})
+    this.setState({checkedArray: [], isLoading: false})
   }
 
-  private addDevice = isAddDeviceModalVisible => () => {
+  private connectDevice = (
+    deviceConnectionStatus?: DeviceConnectionStatus
+  ) => () => {
     this.setState({
-      addDeviceWizardVisibility: isAddDeviceModalVisible,
+      deviceConnectionVisibility: true,
+      deviceConnectionStatus: deviceConnectionStatus,
+    })
+  }
+
+  private handleToggleDeviceConnectionModal = deviceConnectionVisibility => () => {
+    this.getDeviceAJAX()
+    this.setState({
+      deviceConnectionVisibility: deviceConnectionVisibility,
+      deviceConnectionStatus: deviceConnectionVisibility
+        ? this.state.deviceConnectionStatus
+        : 'None',
     })
   }
 
@@ -243,84 +243,9 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 
   private handleDismissImportDeviceModalOverlay = (): void => {
+    this.getDeviceAJAX()
     this.setState({
-      deviceDataRawFromCSV: '',
-      deviceDataParsedFromCSV: [],
-      importDevicePageStatus: 'UploadCSV',
       importDeviceWizardVisibility: false,
-    })
-  }
-
-  private handleDownloadCSVDeviceTemplate = (): void => {
-    const deciceManagementTemplate = IMPORT_DEVICE_CSV_Template
-
-    try {
-      downloadCSV(deciceManagementTemplate, 'Device_Management_Template')
-    } catch {
-      this.props.notify(csvExportFailed)
-    }
-  }
-
-  private handleGoBackImportedDeviceFile = () => {
-    this.setState({
-      deviceDataRawFromCSV: '',
-      deviceDataParsedFromCSV: [],
-      importDevicePageStatus: 'UploadCSV',
-    })
-  }
-
-  private handleGoNextImportedDeviceFile = () => {
-    this.setState({importDevicePageStatus: 'DeviceStatus'})
-  }
-
-  private handleSaveImportedDeviceFile = () => {
-    // TODO Call Save Device File API
-  }
-
-  private handleUploadImportedDeviceFile = (
-    uploadContent: string,
-    fileName: string
-  ): void => {
-    const fileExtensionRegex = new RegExp(`${this.validFileExtension}$`)
-    if (!fileName.match(fileExtensionRegex)) {
-      this.props.notify(notifyCSVUploadFailed())
-      return
-    }
-
-    this.setState({deviceDataRawFromCSV: uploadContent})
-
-    this.getRefinedDeviceInformation(uploadContent)
-  }
-
-  private get validFileExtension(): string {
-    return '.csv'
-  }
-
-  private getRefinedDeviceInformation(deviceDataRawFromCSV) {
-    const {notify} = this.props
-
-    Papa.parse(deviceDataRawFromCSV, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      beforeFirstChunk: chunk => {
-        const rows = chunk.split(/\r\n|\r|\n/)
-        const headers = rows[0]
-        rows[0] = headers
-          .split(',')
-          .map(header => header.trim())
-          .join(',')
-        return rows.join('\n')
-      },
-      transform: value => {
-        return value.trim()
-      },
-      complete: result => {
-        this.setState({deviceDataParsedFromCSV: result?.data})
-      },
-      error: error => {
-        notify(notifyCSVUploadFailedWithMessage(error.message))
-      },
     })
   }
 }

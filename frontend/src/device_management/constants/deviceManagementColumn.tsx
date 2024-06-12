@@ -60,3 +60,60 @@ export const columns: ColumnInfo[] = [
     },
   },
 ]
+
+export const IMPORT_FILE_DEVICE_STATUS_COLUMNS: ColumnInfo[] = [
+  {
+    key: 'index',
+    name: 'Index',
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'ip',
+    name: 'IP',
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'status',
+    name: 'Status',
+    options: {
+      sorting: true,
+    },
+    render: value => {
+      return (
+        <div
+          className={`${
+            value === 'OK'
+              ? 'device-management-import--success'
+              : 'device-management-import--fail'
+          }`}
+        >
+          {value}
+        </div>
+      )
+    },
+  },
+  {
+    key: 'message',
+    name: 'Message',
+    options: {
+      sorting: true,
+    },
+    render: value => {
+      return (
+        <div
+          className={`${
+            value === 'Success'
+              ? 'device-management-import--success'
+              : 'device-management-import--fail'
+          }`}
+        >
+          {value}
+        </div>
+      )
+    },
+  },
+]

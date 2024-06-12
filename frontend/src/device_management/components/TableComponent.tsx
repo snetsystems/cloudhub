@@ -48,7 +48,7 @@ function TableComponent({
   const [sortTarget, setSortTarget] = useState<SortInfo | null>(null)
 
   useEffect(() => {
-    setCheckedArray([])
+    !!setCheckedArray && setCheckedArray([])
   }, [isCheckInit])
 
   useEffect(() => {

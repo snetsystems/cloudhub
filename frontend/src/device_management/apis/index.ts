@@ -1,27 +1,31 @@
 import AJAX from 'src/utils/ajax'
 import {AxiosResponse} from 'axios'
 import {
+  SNMPConnectionRequest,
+  SNMPConnectionResponse,
+  CreateDeviceListRequest,
+  CreateDeviceListResponse,
   GetDeviceListRsponse,
-  PatchDeviceResponse,
   DeleteDeviceParams,
-  PatchDeviceParams,
+  DeleteDeviceResponse,
+  UpdateDeviceResponse,
+  UpdateDeviceRequest,
 } from 'src/types'
 import {
-  DeleteDeviceResponse,
-  DeviceData,
-  SNMPConnectionRequest,
-} from 'src/types/deviceManagement'
+  DEVICE_MANAGEMENT_URL,
+  SNMP_CONNECTION_URL,
+} from 'src/device_management/constants'
 
 export const validateSNMPConnection = async (
-  url,
   snmpConfig: SNMPConnectionRequest[]
 ) => {
   try {
-    const {data} = await AJAX({
-      method: 'POST',
-      url,
+    const response = await AJAX({
       data: snmpConfig,
+      url: SNMP_CONNECTION_URL,
+      method: 'POST',
     })
+    const {data} = response as SNMPConnectionResponse
 
     return data
   } catch (error) {
@@ -31,13 +35,14 @@ export const validateSNMPConnection = async (
 }
 
 //get device list api
-export const createDevices = async (url, deviceData: DeviceData[]) => {
+export const createDevices = async (devicesInfo: CreateDeviceListRequest) => {
   try {
-    const {data} = await AJAX({
+    const response = await AJAX({
+      data: devicesInfo,
+      url: DEVICE_MANAGEMENT_URL,
       method: 'POST',
-      url,
-      data: deviceData,
     })
+    const {data} = response as CreateDeviceListResponse
 
     return data
   } catch (error) {
@@ -48,7 +53,7 @@ export const createDevices = async (url, deviceData: DeviceData[]) => {
 export const getDeviceList = () => {
   try {
     return AJAX<GetDeviceListRsponse>({
-      url: '/cloudhub/v1/ai/network/managements/devices',
+      url: DEVICE_MANAGEMENT_URL,
       method: 'GET',
     }) as Promise<AxiosResponse<GetDeviceListRsponse>>
   } catch (error) {
@@ -57,13 +62,16 @@ export const getDeviceList = () => {
   }
 }
 
-export const patchDevice = ({id, deviceData}: PatchDeviceParams) => {
+export const updateDevice = async ({id, deviceData}: UpdateDeviceRequest) => {
   try {
-    return AJAX<PatchDeviceResponse>({
-      url: `/cloudhub/v1/ai/network/managements/devices/${id}`,
-      method: 'PATCH',
+    const response = await AJAX({
       data: deviceData,
-    }) as Promise<AxiosResponse<PatchDeviceResponse>>
+      url: `${DEVICE_MANAGEMENT_URL}/${id}`,
+      method: 'PATCH',
+    })
+    const {data} = response as UpdateDeviceResponse
+
+    return data
   } catch (error) {
     console.error(error)
     throw error
@@ -73,9 +81,9 @@ export const patchDevice = ({id, deviceData}: PatchDeviceParams) => {
 export const deleteDevice = (parmas: DeleteDeviceParams) => {
   try {
     return AJAX<DeleteDeviceResponse>({
-      url: `/cloudhub/v1/ai/network/managements/devices`,
-      method: 'DELETE',
       data: parmas,
+      url: DEVICE_MANAGEMENT_URL,
+      method: 'DELETE',
     }) as Promise<AxiosResponse<DeleteDeviceResponse>>
   } catch (error) {
     console.error(error)
