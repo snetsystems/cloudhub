@@ -50,21 +50,6 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
         sorting: true,
       },
     },
-
-    {
-      key: 'device_id',
-      name: 'Device Id',
-      options: {
-        isAccordion: true,
-      },
-    },
-    {
-      key: 'device_id',
-      name: 'Device Id',
-      options: {
-        sorting: true,
-      },
-    },
     {
       key: 'device_type',
       name: 'Monitorting',
@@ -80,7 +65,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       },
     },
     {
-      key: 'device_id',
+      key: '',
       name: 'Algorithm',
       options: {
         sorting: true,
@@ -92,7 +77,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       options: {
         sorting: true,
       },
-      render: (_, rowData) => {
+      render: (_, rowData: DeviceData) => {
         return (
           <button
             className={`btn btn-default btn-xs btn-square`}
@@ -121,6 +106,10 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
             onConsoleClick({
               isNewEditor: false,
               addr: rowData.device_ip,
+              nodename: rowData.hostname,
+              sshId: rowData.ssh_config.ssh_user_name,
+              sshPw: rowData.ssh_config.ssh_password,
+              port: `${rowData.ssh_config.ssh_port}`,
             })
           }}
         ></button>

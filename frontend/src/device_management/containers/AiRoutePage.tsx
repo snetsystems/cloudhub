@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react'
+import React from 'react'
 import _ from 'lodash'
 import {Page} from 'src/reusable_ui'
 import SubSections from 'src/shared/components/SubSections'
@@ -6,20 +6,15 @@ import {Me, Organization, TimeZones} from 'src/types'
 import * as SourcesModels from 'src/types/sources'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import {LOGIN_AUTH_TYPE} from 'src/auth/constants'
-import {
-  isUserAuthorized,
-  ADMIN_ROLE,
-  SUPERADMIN_ROLE,
-} from 'src/auth/Authorized'
+import {isUserAuthorized, ADMIN_ROLE} from 'src/auth/Authorized'
 
 //page
-import PredictionPage from './PredictionPage'
 import DeviceManagement from './DeviceManagement'
 
 //action
 import {connect} from 'react-redux'
-import {notify as notifyAction} from 'src/shared/actions/notifications'
 import * as appActions from 'src/shared/actions/app'
+import {openShell} from 'src/shared/actions/shell'
 
 interface Props {
   me: Me
@@ -36,7 +31,6 @@ interface Props {
 const sections = (
   isUsingAuth: boolean,
   me: Me,
-  notify,
   organizations: Organization[]
 ) => {
   let sections = [
@@ -48,17 +42,10 @@ const sections = (
         <DeviceManagement
           me={me}
           isUsingAuth={isUsingAuth}
-          notify={notify}
           organizations={organizations}
         />
       ),
     },
-    // {
-    //   url: 'prediction',
-    //   name: 'Prediction',
-    //   enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
-    //   component: <PredictionPage />,
-    // },
   ]
 
   return sections
@@ -71,10 +58,8 @@ const AiRoutePage = (props: Props) => {
     params: {tab},
     links: {auth, loginAuthType},
     isUsingAuth,
-    notify,
     organizations,
     timeZone,
-    // onSetTimeZone,
     setTimeZone,
   } = props
 
@@ -103,7 +88,7 @@ const AiRoutePage = (props: Props) => {
       <Page.Contents fullWidth={true}>
         <div className="container-fluid">
           <SubSections
-            sections={sections(isUsingAuth, me, notify, organizations)}
+            sections={sections(isUsingAuth, me, organizations)}
             activeSection={tab}
             parentUrl="ai"
             sourceID={source.id}
@@ -130,8 +115,8 @@ const mstp = ({
 }
 
 const mdtp = {
-  notify: notifyAction,
   setTimeZone: appActions.setTimeZone,
+  openShell: openShell,
 }
 
 export default connect(mstp, mdtp, null)(AiRoutePage)

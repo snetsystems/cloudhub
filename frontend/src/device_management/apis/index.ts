@@ -5,7 +5,7 @@ import {
   SNMPConnectionResponse,
   CreateDeviceListRequest,
   CreateDeviceListResponse,
-  GetDeviceListRsponse,
+  GetDeviceListResponse,
   DeleteDeviceParams,
   DeleteDeviceResponse,
   UpdateDeviceResponse,
@@ -52,10 +52,10 @@ export const createDevices = async (devicesInfo: CreateDeviceListRequest) => {
 }
 export const getDeviceList = () => {
   try {
-    return AJAX<GetDeviceListRsponse>({
+    return AJAX<GetDeviceListResponse>({
       url: DEVICE_MANAGEMENT_URL,
       method: 'GET',
-    }) as Promise<AxiosResponse<GetDeviceListRsponse>>
+    }) as Promise<AxiosResponse<GetDeviceListResponse>>
   } catch (error) {
     console.error(error)
     throw error
@@ -78,10 +78,10 @@ export const updateDevice = async ({id, deviceData}: UpdateDeviceRequest) => {
   }
 }
 
-export const deleteDevice = (parmas: DeleteDeviceParams) => {
+export const deleteDevice = (params: DeleteDeviceParams) => {
   try {
     return AJAX<DeleteDeviceResponse>({
-      data: parmas,
+      data: params,
       url: DEVICE_MANAGEMENT_URL,
       method: 'DELETE',
     }) as Promise<AxiosResponse<DeleteDeviceResponse>>

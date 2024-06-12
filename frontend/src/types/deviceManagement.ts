@@ -72,7 +72,7 @@ export interface FailedDevice {
   errorMessage: string
 }
 
-export interface GetDeviceListRsponse {
+export interface GetDeviceListResponse {
   Devices?: DeviceData[] | null
 }
 
@@ -91,7 +91,7 @@ export interface DeleteDeviceResponse {
 }
 
 export interface DeleteDeviceParams {
-  devices_id: string[]
+  devices_id: number[]
 }
 
 export type ImportDevicePageStatus = 'UploadCSV' | 'DeviceStatus'
