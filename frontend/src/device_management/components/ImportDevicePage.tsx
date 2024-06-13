@@ -104,21 +104,19 @@ class ImportDevicePage extends PureComponent<Props, State> {
   }
 
   private get UploadCSV(): JSX.Element {
-    const {onDismissOverlay} = this.props
     const {deviceDataRawFromCSV} = this.state
 
     return (
       <>
         <OverlayHeading
           title={'Import Device File'}
-          onDismiss={onDismissOverlay}
+          onDismiss={this.dismissOverlayAndinitializeComponentState}
         />
         <OverlayBody>
           <Form>
             <Form.Element>
               <>
                 <div className="form-group col-xs-12">
-                  <label style={{fontSize: '13px'}}>Upload a CSV File</label>
                   {this.csvDeviceTemplateExporter}
                   <DragAndDrop
                     submitText="Preview"
@@ -151,13 +149,10 @@ class ImportDevicePage extends PureComponent<Props, State> {
 
   private get csvDeviceTemplateExporter(): JSX.Element {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          paddingBottom: '1%',
-        }}
-      >
+      <div className="device-management-import">
+        <label className="device-management-import--header">
+          Upload a CSV File
+        </label>
         <CSVDeviceTemplateExporter
           onDownloadCSVDeviceTemplate={this.handleDownloadCSVDeviceTemplate}
         />
@@ -189,7 +184,9 @@ class ImportDevicePage extends PureComponent<Props, State> {
       return
     }
 
-    this.setState({deviceDataRawFromCSV: uploadContent})
+    this.setState({
+      deviceDataRawFromCSV: uploadContent,
+    })
 
     this.getRefinedDeviceInformation(uploadContent)
   }
@@ -398,7 +395,6 @@ class ImportDevicePage extends PureComponent<Props, State> {
   }
 
   private get deviceStatus(): JSX.Element {
-    const {onDismissOverlay} = this.props
     const {
       deviceStatusTableData,
       isDeviceDataSaveButtonEnabled,
@@ -410,7 +406,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
       <>
         <OverlayHeading
           title={'Import Device File'}
-          onDismiss={onDismissOverlay}
+          onDismiss={this.dismissOverlayAndinitializeComponentState}
         />
         <OverlayBody>
           <Form>
@@ -451,7 +447,14 @@ class ImportDevicePage extends PureComponent<Props, State> {
     )
   }
 
-  private initializeComponentState = () => {
+  private dismissOverlayAndinitializeComponentState = () => {
+    const {onDismissOverlay} = this.props
+
+    this.initializeComponentState()
+    onDismissOverlay()
+  }
+
+  private initializeComponentState() {
     this.setState({
       deviceDataRawFromCSV: '',
       devicesDataParsedFromCSV: [],

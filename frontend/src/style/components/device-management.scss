@@ -1,0 +1,40 @@
+.device-management-message {
+  text-align: center;
+  font-weight: 400;
+
+  .label-info--save {
+    color: $c-rainforest;
+    font-weight: 600;
+  }
+  .label-warning {
+    color: $c-topaz;
+    font-weight: 600;
+  }
+}
+
+.device-management-import {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 1%;
+}
+
+.device-management-import--header {
+  font-size: 14px;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.device-management-import--success {
+  color: $c-rainforest;
+}
+
+.device-management-import--fail {
+  color: $c-topaz;
+}
+
+.device-status--header {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  padding: 10px 0;
+}

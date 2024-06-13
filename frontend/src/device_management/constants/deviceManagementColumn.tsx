@@ -1,5 +1,5 @@
 import React from 'react'
-import {ColumnInfo, DeviceData, ShellInfo} from 'src/types'
+import {ColumnInfo, DeviceData, ShellInfo, SortType} from 'src/types'
 
 interface Props {
   onEditClick: (deviceData: DeviceData) => void
@@ -123,6 +123,7 @@ export const IMPORT_FILE_DEVICE_STATUS_COLUMNS: ColumnInfo[] = [
     name: 'Index',
     options: {
       sorting: true,
+      thead: {sort: SortType.DESC},
     },
   },
   {
