@@ -1170,7 +1170,7 @@ type NetworkDevice struct {
 
 // SSHConfig is Connection Config
 type SSHConfig struct {
-	SSHUserID     string `json:"ssh_user_name"`
+	SSHUserID     string `json:"ssh_user_id"`
 	SSHPassword   string `json:"ssh_password"`
 	SSHEnPassword string `json:"ssh_en_password"`
 	SSHPort       int    `json:"ssh_port"`
@@ -1208,10 +1208,10 @@ type NetworkDeviceOrgQuery struct {
 
 // NetworkDeviceOrg represents the information of a network device group
 type NetworkDeviceOrg struct {
-	Algorithm       string   `json:"algorithm"`
+	MLFunction      string   `json:"ml_function"`
 	DataDuration    int      `json:"data_duration"`
 	LearnCycle      int      `json:"learn_cycle"`
-	DevicesID       []string `json:"devices_id"`
+	DevicesIDs      []uint64 `json:"devices_id"`
 	CollectorServer string   `json:"collector_server"`
 }
 

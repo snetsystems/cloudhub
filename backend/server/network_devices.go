@@ -429,14 +429,6 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
-	for _, device := range allDevices {
-		if device.DeviceIP == *req.DeviceIP {
-			message := fmt.Errorf("duplicate IP in existing devices: %s", req.DeviceIP)
-			http.Error(w, message.Error(), http.StatusInternalServerError)
-		}
-	}
-
 	if err != nil {
 		http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
 		return
@@ -446,6 +438,21 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
+	}
+
+	if device.DeviceIP != *req.DeviceIP {
+		allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
+		if err != nil {
+			http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
+			return
+		}
+		for _, device := range allDevices {
+			if device.DeviceIP == *req.DeviceIP {
+				message := fmt.Sprintf("duplicate IP in existing devices: %s", *req.DeviceIP)
+				http.Error(w, message, http.StatusBadRequest)
+				return
+			}
+		}
 	}
 
 	if req.DeviceIP != nil {
