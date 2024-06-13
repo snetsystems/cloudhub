@@ -294,18 +294,29 @@ message CSP {
 	string Minion           = 10; // Minion is the vsphere connect salt minion
 }
 
+
+message NetworkDeviceOrg {
+  string ID                   = 1; // Org ID
+  string LoadModule           = 2; // Currently fixed by learn.ch_nx_load
+  string MLFunction           = 3; // ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']
+  int32 DataDuration          = 4; // data_duration for learning
+  int32 LearnCycle            = 5; // learning_cycle (day[s]). Using in kapacitor cron method
+  repeated uint64 DevicesIDs  = 6; // the list of device IDs included in the network device group
+  string CollectorServer      = 7; // the server(minion_id) used to collect network data
+}
+
 message SSHConfig {
-  string SSHUserID   = 1; // SSHUserID is the username used for SSH connection
-  string SSHPassword   = 2; // SSHPassword is the password used for SSH connection
-  string SSHEnPassword = 3; // SSHEnPassword is the enable password for devices that require it
-  int32 SSHPort        = 4; // SSHPort is the port number used for SSH connection
+  string SSHUserID     = 1; // user id used for SSH connection
+  string SSHPassword   = 2; // the password used for SSH connection
+  string SSHEnPassword = 3; // enable password for devices that require it
+  int32 SSHPort        = 4; // port number used for SSH connection
 }
 
 message SNMPConfig {
-  string SNMPCommunity = 1; // SNMPCommunity is the community string for SNMP
-  string SNMPVersion   = 2; // SNMPVersion is the version of SNMP used
-  int32 SNMPPort       = 3; // SNMPPort is the port number used for SNMP
-  string SNMPProtocol  = 4; // SNMPProtocol is protocol to use udp or tcp
+  string SNMPCommunity = 1; // community string for SNMP
+  string SNMPVersion   = 2; // version of SNMP used
+  int32 SNMPPort       = 3; // port number used for SNMP
+  string SNMPProtocol  = 4; // protocol to use udp or tcp
 }
 
 message NetworkDevice { 
@@ -324,13 +335,17 @@ message NetworkDevice {
   string DeviceVendor       = 13; // DeviceVendor is the vendor of the device
 }
 
-
-message networkDeviceOrg {
-  string algorithm           = 1; // ML Learning Threshold Decision Algorithm
-  int32 data_duration        = 2; // data_duration for learning
-  int32 learn_cycle          = 3; // learning_cycle (day[s])
-  repeated string devices_id = 4; // the list of device IDs included in the network device group
-  string collector_server    = 5; // the server(minion_id) used to collect network data
+message MLNxRst {
+  uint64 ID                       = 1;  // unique identifier of the device
+  string DeviceIP                 = 2;  // IP address of the device
+  double Epsilon                  = 3;  // ML Result value
+  float K                         = 4;
+  float mean                      = 5;
+  float MDThreshold               = 6;  // MDThreshold = mean * K * Sensitivity
+  repeated float MDMatrix         = 7;  // Mahalanobis distance array(1 dimension)
+  repeated float CPUMatrix        = 8;  // Use later
+  repeated float TrafficMatrix    = 9;  // Use later
+  repeated float GaussianMatrix   = 10; // Use later
 }
 
 

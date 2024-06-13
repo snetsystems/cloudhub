@@ -1112,10 +1112,10 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 // MarshalNetworkDeviceOrg encodes a networkDeviceOrg struct to binary protobuf format.
 func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
 	return proto.Marshal(&NetworkDeviceOrg{
-		Algorithm:       t.Algorithm,
+		MLFunction:      t.MLFunction,
 		DataDuration:    int32(t.DataDuration),
 		LearnCycle:      int32(t.LearnCycle),
-		DevicesId:       t.DevicesID,
+		DevicesIDs:      t.DevicesIDs,
 		CollectorServer: t.CollectorServer,
 	})
 }
@@ -1126,10 +1126,10 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 	if err := proto.Unmarshal(data, &pb); err != nil {
 		return err
 	}
-	t.Algorithm = pb.Algorithm
+	t.MLFunction = pb.MLFunction
 	t.DataDuration = int(pb.DataDuration)
 	t.LearnCycle = int(pb.LearnCycle)
-	t.DevicesID = pb.DevicesId
+	t.DevicesIDs = pb.DevicesIDs
 	t.CollectorServer = pb.CollectorServer
 
 	return nil
