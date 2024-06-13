@@ -95,9 +95,9 @@ func NewSNMPManager(config *SNMPConfig) (*SNMPManager, error) {
 		Retries:   3,
 	}
 
-	switch strings.ToLower(config.Protocol) {
+	switch protocol := strings.ToLower(config.Protocol); protocol {
 	case "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
-		snmp.Transport = config.Protocol
+		snmp.Transport = protocol
 	default:
 		return nil, fmt.Errorf("unsupported protocol: %s", config.Protocol)
 	}
