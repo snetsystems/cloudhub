@@ -28,6 +28,7 @@ import {
   DeviceData,
   DeviceConnectionStatus,
   ShellInfo,
+  AiModal,
 } from 'src/types'
 
 // API
@@ -37,6 +38,10 @@ import {deleteDevice, getDeviceList} from 'src/device_management/apis'
 import {convertDeviceDataOrganizationIDToName} from 'src/device_management/utils'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {DELETE_MODAL_INFO, MONITORING_MODAL_INFO} from '../constants/deviceData'
+import {closeModal, openModal} from 'src/shared/actions/aiModal'
+import {ComponentColor} from 'src/reusable_ui'
+import {DEVICE_INFO_SELECTED_MONITORING} from '../constants/deviceManagementColumn'
 
 interface Props {
   isUsingAuth: boolean
@@ -44,6 +49,8 @@ interface Props {
   organizations: Organization[]
   notify: (n: Notification) => void
   openShell: (shell: ShellInfo) => void
+  openModal: (aiModal: AiModal) => void
+  closeModal: () => void
 }
 
 interface State {
@@ -128,8 +135,7 @@ class DeviceManagement extends PureComponent<Props, State> {
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <button
                     onClick={() => {
-                      this.setState({isLoading: true})
-                      this.deleteDevicesAJAX(this.state.checkedArray)
+                      this.onClickDelete(this.state.checkedArray)
                     }}
                     className="btn button btn-sm btn-primary"
                     disabled={this.state.checkedArray.length === 0}
@@ -140,6 +146,9 @@ class DeviceManagement extends PureComponent<Props, State> {
                 {/* TODO Consder requiredRole */}
                 <Authorized requiredRole={EDITOR_ROLE}>
                   <button
+                    onClick={() => {
+                      this.onClickMonitoring(this.state.checkedArray)
+                    }}
                     className="btn button btn-sm btn-primary"
                     disabled={this.state.checkedArray.length === 0}
                   >
@@ -227,17 +236,61 @@ class DeviceManagement extends PureComponent<Props, State> {
     onConsoleClick: this.onClickShellModalOpen,
   })
 
-  // private options: DataTableOptions = {
-  //   tbodyRow: {
-  //     onClick: this.handleRowClick,
-  //   },
-  // }
+  private onClickDelete = (checkedArray: string[]) => {
+    this.props.openModal({
+      title: 'Delete Device',
+      isVisible: true,
+      message: DELETE_MODAL_INFO.message,
+      confirmText: 'Delete',
+      btnColor: ComponentColor.Danger,
+      onConfirm: () => {
+        this.deleteDevicesAJAX(checkedArray)
+        this.props.closeModal()
+      },
+      cancelText: 'Cancel',
+    })
+  }
 
   private deleteDevicesAJAX = async (idList: string[]) => {
     const numIdList = idList.map(i => Number(i))
+    this.setState({isLoading: true})
     await deleteDevice({devices_id: numIdList})
+
     this.getDeviceAJAX()
     this.setState({checkedArray: [], isLoading: false})
+  }
+
+  private onClickMonitoring = (checkedArray: string[]) => {
+    const validArray = this.state.data.filter(
+      i => checkedArray.includes(`${i.id}`)
+      //create monitoring sql is_modeling_generated=> is_monitoring
+    )
+
+    this.props.openModal({
+      isVisible: true,
+      // message: MONITORING_MODAL_INFO.workHeader,
+      message: '',
+      btnColor: ComponentColor.Warning,
+      onConfirm: () => {
+        this.props.closeModal()
+      },
+      confirmText: 'Confirm',
+      cancelText: 'Cancel',
+      childNode: (
+        <div className="device-modal--childNode">
+          <TableComponent
+            data={validArray}
+            tableTitle="Selected Device List"
+            columns={DEVICE_INFO_SELECTED_MONITORING}
+            isSearchDisplay={false}
+          />
+
+          {MONITORING_MODAL_INFO.workMessage}
+        </div>
+      ),
+    })
+
+    //Apply Monitoring Process -> close Modal
   }
 
   private connectDevice = (
@@ -282,6 +335,8 @@ const mstp = ({adminCloudHub: {organizations}, auth: {isUsingAuth, me}}) => ({
 const mdtp = (dispatch: any) => ({
   notify: bindActionCreators(notifyAction, dispatch),
   openShell: bindActionCreators(openShell, dispatch),
+  openModal: bindActionCreators(openModal, dispatch),
+  closeModal: bindActionCreators(closeModal, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(DeviceManagement)

@@ -15,16 +15,17 @@ import TableBase from './TableBase'
 import SearchBar from 'src/hosts/components/SearchBar'
 
 interface Props {
+  data: DataTableObject[]
+  columns: ColumnInfo[]
   topLeftRender?: ReactNode
   toprightRender?: ReactNode
-  isAccordion?: boolean
-  accordionColumns?: ColumnInfo[]
   checkedArray?: string[]
   setCheckedArray?: (value: string[]) => void
+  isAccordion?: boolean
+  accordionColumns?: ColumnInfo[]
   isCheckInit?: boolean
   isMultiSelect?: boolean
-  columns: ColumnInfo[]
-  data: DataTableObject[]
+  isSearchDisplay?: boolean
   tableTitle?: string
   options?: DataTableOptions
 }
@@ -42,6 +43,7 @@ function TableComponent({
   data,
   tableTitle,
   options,
+  isSearchDisplay = true,
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
@@ -168,7 +170,12 @@ function TableComponent({
           {topLeftRender}
         </div>
         <div className="table-top right">
-          <SearchBar placeholder="Filter by Host..." onSearch={searchHandler} />
+          {isSearchDisplay && (
+            <SearchBar
+              placeholder="Filter by Host..."
+              onSearch={searchHandler}
+            />
+          )}
           {/* right custom node */}
           {toprightRender}
         </div>

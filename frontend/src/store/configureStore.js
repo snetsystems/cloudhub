@@ -21,6 +21,7 @@ import servicesReducer from 'src/shared/reducers/services'
 import envReducer from 'src/shared/reducers/env'
 import {vspheres} from 'src/clouds/reducers'
 import source from 'src/sources/reducers'
+import aiModal from 'src/shared/reducers/aiModal'
 
 // eslint-disable-next-line no-unused-vars
 function lastAction(state = {}, action) {
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
   vspheres,
   lastAction,
   source,
+  aiModal,
 })
 
 const composeEnhancers =

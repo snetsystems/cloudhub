@@ -39,3 +39,14 @@ export const SNMP_CONNECTION_URL = '/cloudhub/v1/snmp/validation'
 
 export const DEVICE_MANAGEMENT_URL =
   '/cloudhub/v1//ai/network/managements/devices'
+
+export const DELETE_MODAL_INFO = {
+  message: `Are you sure you want to delete this?`,
+}
+
+export const MONITORING_MODAL_INFO = {
+  returnMessage: `The monitoring process for the requested device has been initiated.`,
+  workHeader: `Here is the Device List you requested.`,
+  workMessage: `Proceeding with the operation will pause data collection for approximately 1 min. 
+Would you like to continue?`,
+}
