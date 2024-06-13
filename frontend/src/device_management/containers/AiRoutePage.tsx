@@ -15,6 +15,7 @@ import DeviceManagement from './DeviceManagement'
 import {connect} from 'react-redux'
 import * as appActions from 'src/shared/actions/app'
 import {openShell} from 'src/shared/actions/shell'
+import DeviceManagementModal from '../components/DeviceManagementModal'
 
 interface Props {
   me: Me
@@ -95,6 +96,7 @@ const AiRoutePage = (props: Props) => {
           />
         </div>
       </Page.Contents>
+      <DeviceManagementModal />
     </Page>
   )
 }

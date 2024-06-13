@@ -51,18 +51,51 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       },
     },
     {
-      key: 'device_type',
-      name: 'Monitorting',
+      key: 'id',
+      name: 'Monitoring',
       options: {
         sorting: true,
       },
+      render: value => (
+        <div
+          className={`table-dot ${
+            value % 2 === 0 ? 'dot-success' : 'dot-danger'
+          }`}
+        ></div>
+      ),
     },
     {
-      key: 'device_os',
-      name: 'Modeling',
+      key: '',
+      name: 'Learning State',
       options: {
         sorting: true,
       },
+      render: value => (
+        <div
+          className={`agent--indicator ${
+            !!value ? 'indicator--primary' : 'indicator--fail'
+          }`}
+        >
+          {value ?? 'ready'}
+        </div>
+      ),
+    },
+    {
+      key: '',
+      name: 'Date',
+      options: {
+        sorting: true,
+      },
+      render: value => (
+        <div
+          className={`agent--indicator ${
+            !!value ? 'indicator--primary' : 'indicator--fail'
+          } `}
+        >
+          <div>{value ?? `2024-06-13`}</div>
+          <div>{`16:45:00`}</div>
+        </div>
+      ),
     },
     {
       key: '',
@@ -171,6 +204,30 @@ export const IMPORT_FILE_DEVICE_STATUS_COLUMNS: ColumnInfo[] = [
           {value}
         </div>
       )
+    },
+  },
+]
+
+export const DEVICE_INFO_SELECTED_MONITORING: ColumnInfo[] = [
+  {
+    key: 'organization',
+    name: 'Organization',
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'device_ip',
+    name: 'IP',
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'hostname',
+    name: 'Hostname',
+    options: {
+      sorting: true,
     },
   },
 ]
