@@ -38,3 +38,15 @@
   text-align: center;
   padding: 10px 0;
 }
+
+.device-modal--childNode {
+  white-space: pre-wrap;
+
+  > * {
+    margin-top: 4px;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+}

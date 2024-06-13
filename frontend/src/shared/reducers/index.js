@@ -8,6 +8,7 @@ import {notifications} from './notifications'
 import sources from './sources'
 import annotations from './annotations'
 import shell from './shell'
+import aiModal from './aiModal'
 
 export default {
   app,
@@ -20,4 +21,5 @@ export default {
   annotations,
   notifications,
   shell,
+  aiModal,
 }
