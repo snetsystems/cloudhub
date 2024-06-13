@@ -54,6 +54,12 @@ type deviceResponse struct {
 	Sensitivity         float32             `json:"sensitivity,omitempty"`
 	DeviceVendor        string              `json:"device_vendor"`
 }
+type deviceError struct {
+	Index        int    `json:"index"`
+	DeviceIP     string `json:"device_ip, omitempty"`
+	DeviceID     uint64 `json:"device_id, omitempty"`
+	ErrorMessage string `json:"errorMessage"`
+}
 
 func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
 
@@ -94,20 +100,20 @@ func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.Network
 }
 
 type devicesResponse struct {
-	Devices       []*deviceResponse        `json:"Devices"`
-	FailedDevices []map[string]interface{} `json:"failed_devices"`
+	Devices       []*deviceResponse `json:"Devices"`
+	FailedDevices []deviceError     `json:"failed_devices"`
 }
 
 func newDevicesResponse(ctx context.Context, s *Service, devices []cloudhub.NetworkDevice) *devicesResponse {
 	devicesResp := []*deviceResponse{}
-	failedDevices := []map[string]interface{}{}
+	failedDevices := []deviceError{}
 	for i, device := range devices {
 		data, err := newDeviceResponse(ctx, s, &device)
 		if err != nil {
-			failedDevices = append(failedDevices, map[string]interface{}{
-				"index":        i,
-				"device_ip":    device.DeviceIP,
-				"errorMessage": err.Error(),
+			failedDevices = append(failedDevices, deviceError{
+				Index:        i,
+				DeviceIP:     device.DeviceIP,
+				ErrorMessage: err.Error(),
 			})
 		} else {
 			devicesResp = append(devicesResp, data)
@@ -200,6 +206,7 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
+
 	if err != nil {
 		http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
 		return
@@ -210,15 +217,15 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 		ipCount[req.DeviceIP]++
 	}
 
-	var failedDevices []map[string]interface{}
+	var failedDevices []deviceError
 	var uniqueReqs []deviceRequest
 
 	for i, req := range reqs {
 		if ipCount[req.DeviceIP] > 1 {
-			failedDevices = append(failedDevices, map[string]interface{}{
-				"index":        i,
-				"device_ip":    req.DeviceIP,
-				"errorMessage": "duplicate IP in request",
+			failedDevices = append(failedDevices, deviceError{
+				Index:        i,
+				DeviceIP:     req.DeviceIP,
+				ErrorMessage: "duplicate IP in request",
 			})
 		} else {
 			uniqueReqs = append(uniqueReqs, req)
@@ -240,10 +247,10 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 				if rec := recover(); rec != nil {
 					s.Logger.Error("Recovered from panic: %v", rec)
 					mu.Lock()
-					failedDevices = append(failedDevices, map[string]interface{}{
-						"index":        i,
-						"device_ip":    req.DeviceIP,
-						"errorMessage": "internal server error",
+					failedDevices = append(failedDevices, deviceError{
+						Index:        i,
+						DeviceIP:     req.DeviceIP,
+						ErrorMessage: "internal server error",
 					})
 					mu.Unlock()
 				}
@@ -252,10 +259,10 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 			_, err := s.processDevice(ctx, req, allDevices)
 			if err != nil {
 				mu.Lock()
-				failedDevices = append(failedDevices, map[string]interface{}{
-					"index":        i,
-					"device_ip":    req.DeviceIP,
-					"errorMessage": err.Error(),
+				failedDevices = append(failedDevices, deviceError{
+					Index:        i,
+					DeviceIP:     req.DeviceIP,
+					ErrorMessage: err.Error(),
 				})
 				mu.Unlock()
 			}
@@ -333,7 +340,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	sem := make(chan struct{}, workerLimit)
 
 	var wg sync.WaitGroup
-	failedDevices := []map[string]interface{}{}
+	failedDevices := []deviceError{}
 	var mu sync.Mutex
 
 	for i, id := range request.DeviceIDs {
@@ -345,10 +352,10 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 				if rec := recover(); rec != nil {
 					s.Logger.Error("Recovered from panic: %v", rec)
 					mu.Lock()
-					failedDevices = append(failedDevices, map[string]interface{}{
-						"index":        i,
-						"device_id":    id,
-						"errorMessage": "internal server error",
+					failedDevices = append(failedDevices, deviceError{
+						Index:        i,
+						DeviceID:     id,
+						ErrorMessage: "internal server error",
 					})
 					mu.Unlock()
 				}
@@ -362,10 +369,10 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			}
 			if err != nil {
 				mu.Lock()
-				failedDevices = append(failedDevices, map[string]interface{}{
-					"index":        i,
-					"device_id":    id,
-					"errorMessage": "device not found",
+				failedDevices = append(failedDevices, deviceError{
+					Index:        i,
+					DeviceID:     id,
+					ErrorMessage: "device not found",
 				})
 				mu.Unlock()
 				return
@@ -374,10 +381,10 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			err = s.Store.NetworkDevice(ctx).Delete(ctx, device)
 			if err != nil {
 				mu.Lock()
-				failedDevices = append(failedDevices, map[string]interface{}{
-					"index":        i,
-					"device_id":    id,
-					"errorMessage": err.Error(),
+				failedDevices = append(failedDevices, deviceError{
+					Index:        i,
+					DeviceID:     id,
+					ErrorMessage: err.Error(),
 				})
 				mu.Unlock()
 				return
@@ -396,7 +403,8 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	if len(failedDevices) > 0 {
 		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 	} else {
-		w.WriteHeader(http.StatusNoContent)
+		encodeJSON(w, http.StatusNoContent, response, s.Logger)
+
 	}
 }
 
@@ -420,6 +428,20 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+
+	allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
+	for _, device := range allDevices {
+		if device.DeviceIP == *req.DeviceIP {
+			message := fmt.Errorf("duplicate IP in existing devices: %s", req.DeviceIP)
+			http.Error(w, message.Error(), http.StatusInternalServerError)
+		}
+	}
+
+	if err != nil {
+		http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
+		return
+	}
+
 	device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
 	if err != nil {
 		notFound(w, id, s.Logger)
