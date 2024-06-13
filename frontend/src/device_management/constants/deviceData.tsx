@@ -4,7 +4,7 @@ export const DEFAULT_SNMP_CONFIG: SNMPConfig = {
   snmp_community: '',
   snmp_port: 161,
   snmp_version: '1',
-  snmp_protocol: 'udp',
+  snmp_protocol: 'UDP',
 }
 
 export const DEFAULT_SSH_CONFIG: SSHConfig = {
@@ -24,12 +24,12 @@ export const DEFAULT_NETWORK_DEVICE_DATA: DeviceData = {
 export const SNMP_VERSION: DropdownItem[] = [{text: '1'}, {text: '2c'}]
 
 export const SNMP_PROTOCOL: DropdownItem[] = [
-  {text: 'udp'},
-  {text: 'udp4'},
-  {text: 'udp6'},
-  {text: 'tcp'},
-  {text: 'tcp4'},
-  {text: 'tcp6'},
+  {text: 'UDP'},
+  {text: 'UDP4'},
+  {text: 'UDP6'},
+  {text: 'TCP'},
+  {text: 'TCP4'},
+  {text: 'TCP6'},
 ]
 
 export const IMPORT_DEVICE_CSV_Template =
