@@ -8,7 +8,7 @@ export const DEFAULT_SNMP_CONFIG: SNMPConfig = {
 }
 
 export const DEFAULT_SSH_CONFIG: SSHConfig = {
-  ssh_user_name: '',
+  ssh_user_id: '',
   ssh_password: '',
   ssh_en_password: '',
   ssh_port: 22,
@@ -33,7 +33,7 @@ export const SNMP_PROTOCOL: DropdownItem[] = [
 ]
 
 export const IMPORT_DEVICE_CSV_Template =
-  'device_ip,organization,snmp_community,snmp_port,snmp_version,snmp_protocol,ssh_user_name,ssh_password,ssh_en_password,ssh_port'
+  'device_ip,organization,snmp_community,snmp_port,snmp_version,snmp_protocol,ssh_user_id,ssh_password,ssh_en_password,ssh_port'
 
 export const SNMP_CONNECTION_URL = '/cloudhub/v1/snmp/validation'
 

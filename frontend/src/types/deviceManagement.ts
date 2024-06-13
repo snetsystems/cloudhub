@@ -25,7 +25,7 @@ export interface SNMPConfig {
 }
 
 export interface SSHConfig {
-  ssh_user_name?: string
+  ssh_user_id?: string
   ssh_password?: string
   ssh_en_password?: string
   ssh_port?: number

@@ -109,7 +109,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
           <Dropdown
             items={SNMP_PROTOCOL}
             onChoose={onChooseDeviceDataDropdown('snmp_protocol')}
-            selected={deviceData?.snmp_config?.snmp_protocol}
+            selected={deviceData?.snmp_config?.snmp_protocol.toUpperCase()}
             className="dropdown-stretch"
           />
         </div>

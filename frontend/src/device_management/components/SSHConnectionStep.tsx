@@ -34,9 +34,9 @@ export default class SSHConnectionStep extends PureComponent<Props, State> {
     return (
       <>
         <WizardTextInput
-          value={deviceData?.ssh_config?.ssh_user_name}
-          label="Username"
-          onChange={onChangeDeviceData('ssh_user_name')}
+          value={deviceData?.ssh_config?.ssh_user_id}
+          label="User ID"
+          onChange={onChangeDeviceData('ssh_user_id')}
         />
         <WizardTextInput
           value={deviceData?.ssh_config?.ssh_password}

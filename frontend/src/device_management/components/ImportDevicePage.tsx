@@ -291,7 +291,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
         device_type: result?.device_type || '',
         device_os: result?.device_os || '',
         ssh_config: {
-          ssh_user_name: deviceData?.ssh_user_name || '',
+          ssh_user_id: deviceData?.ssh_user_id || '',
           ssh_password: deviceData?.ssh_password || '',
           ssh_en_password: deviceData?.ssh_en_password || '',
           ssh_port: deviceData?.ssh_port || 22,
