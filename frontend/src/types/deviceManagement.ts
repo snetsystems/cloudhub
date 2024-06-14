@@ -98,3 +98,10 @@ export interface DeleteDeviceParams {
 export type ImportDevicePageStatus = 'UploadCSV' | 'DeviceStatus'
 
 export type DeviceConnectionStatus = 'None' | 'Creating' | 'Updating'
+
+interface deviceMonitoringStatusData {
+  uptime?: number
+}
+export interface DeviceMonitoringStatus {
+  [x: string]: deviceMonitoringStatusData
+}

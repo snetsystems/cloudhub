@@ -1,5 +1,9 @@
+// Library
 import AJAX from 'src/utils/ajax'
 import {AxiosResponse} from 'axios'
+import _ from 'lodash'
+
+// Types
 import {
   SNMPConnectionRequest,
   SNMPConnectionResponse,
@@ -10,11 +14,72 @@ import {
   DeleteDeviceResponse,
   UpdateDeviceResponse,
   UpdateDeviceRequest,
+  Template,
+  DeviceMonitoringStatus,
 } from 'src/types'
+
+// Constants
 import {
   DEVICE_MANAGEMENT_URL,
   SNMP_CONNECTION_URL,
 } from 'src/device_management/constants'
+
+// Utils
+import {proxy} from 'src/utils/queryUrlGenerator'
+import replaceTemplate from 'src/tempVars/utils/replace'
+import {getDeep} from 'src/utils/wrappers'
+
+interface Series {
+  name: string
+  columns: string[]
+  values: string[]
+  tags: {
+    agent_host: string
+  }
+}
+
+export const fetchDeviceMonitoringStatus = async (
+  proxyLink: string,
+  telegrafDB: string,
+  telegrafSystemInterval: string,
+  tempVars: Template[]
+): Promise<DeviceMonitoringStatus> => {
+  const query = replaceTemplate(
+    `SELECT non_negative_derivative(mean(uptime)) AS Uptime FROM \":db:\".\":rp:\".\"snmp_nx\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY agent_host, time(${telegrafSystemInterval}) fill(0);`,
+    tempVars
+  )
+  const {data} = await proxy({
+    source: proxyLink,
+    query,
+    db: telegrafDB,
+  })
+  const deviceMonitoringStatus: DeviceMonitoringStatus = {}
+  const uptimeSeries = getDeep<Series[]>(data, 'results.[0].series', [])
+
+  _.forEach(uptimeSeries, s => {
+    const deviceIP = _.get(s, 'tags.agent_host')
+    if (deviceIP) {
+      _.set(
+        deviceMonitoringStatus,
+        [deviceIP, 'uptime'],
+        _.get(deviceMonitoringStatus, [deviceIP, 'uptime'], 0)
+      )
+      const uptimeIndex = _.findIndex(s.columns, col => col === 'Uptime')
+      if (uptimeIndex !== -1) {
+        const latestValue = _.last(s.values)
+        if (_.isArray(latestValue) && latestValue.length > uptimeIndex) {
+          _.set(
+            deviceMonitoringStatus,
+            [deviceIP, 'uptime'],
+            Number(latestValue[uptimeIndex])
+          )
+        }
+      }
+    }
+  })
+
+  return deviceMonitoringStatus
+}
 
 export const validateSNMPConnection = async (
   snmpConfig: SNMPConnectionRequest[]

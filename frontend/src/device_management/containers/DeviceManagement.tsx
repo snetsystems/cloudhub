@@ -2,6 +2,7 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
+import _ from 'lodash'
 
 // Components
 import ImportDevicePage from 'src/device_management/components/ImportDevicePage'
@@ -29,21 +30,39 @@ import {
   DeviceConnectionStatus,
   ShellInfo,
   AiModal,
+  Source,
+  Links,
+  DeviceMonitoringStatus,
 } from 'src/types'
 
 // API
-import {deleteDevice, getDeviceList} from 'src/device_management/apis'
+import {
+  deleteDevice,
+  fetchDeviceMonitoringStatus,
+  getDeviceList,
+} from 'src/device_management/apis'
+import {getEnv} from 'src/shared/apis/env'
 
 // Utils
 import {convertDeviceDataOrganizationIDToName} from 'src/device_management/utils'
+import {getDeep} from 'src/utils/wrappers'
+import {generateForHosts} from 'src/utils/tempVars'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {DELETE_MODAL_INFO, MONITORING_MODAL_INFO} from '../constants/deviceData'
 import {closeModal, openModal} from 'src/shared/actions/aiModal'
 import {ComponentColor} from 'src/reusable_ui'
 import {DEVICE_INFO_SELECTED_MONITORING} from '../constants/deviceManagementColumn'
+import {notifyFetchDeviceMonitoringStatusFailed} from 'src/shared/copy/notifications'
+
+interface Auth {
+  me: Me
+}
 
 interface Props {
+  auth: Auth
+  source: Source
+  links: Links
   isUsingAuth: boolean
   me: Me
   organizations: Organization[]
@@ -58,6 +77,7 @@ interface State {
   data: DeviceData[]
   deviceConnectionVisibility: boolean
   deviceConnectionStatus: DeviceConnectionStatus
+  deviceMonitoringStatus: DeviceMonitoringStatus
   importDeviceWizardVisibility: boolean
   deviceData: DeviceData[]
   selectedDeviceData: DeviceData
@@ -75,6 +95,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       isLoading: false,
       deviceConnectionVisibility: false,
       deviceConnectionStatus: 'None',
+      deviceMonitoringStatus: {},
       importDeviceWizardVisibility: false,
       deviceData: [DEFAULT_NETWORK_DEVICE_DATA as DeviceData],
       selectedDeviceData: DEFAULT_NETWORK_DEVICE_DATA,
@@ -93,6 +114,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   public componentDidMount(): void {
     try {
       this.getDeviceAJAX()
+      this.fetchDeviceMonitoringStatus()
     } catch (error) {
       console.error(error)
       throw error
@@ -106,11 +128,17 @@ class DeviceManagement extends PureComponent<Props, State> {
   public render() {
     const {me, organizations, isUsingAuth} = this.props
     const {
+      data,
+      deviceMonitoringStatus,
       deviceConnectionVisibility,
       deviceConnectionStatus,
       importDeviceWizardVisibility,
       selectedDeviceData,
     } = this.state
+    const updatedDeviceData = this.getDeviceMonitoringStatus(
+      data,
+      deviceMonitoringStatus
+    )
 
     return (
       <>
@@ -122,7 +150,7 @@ class DeviceManagement extends PureComponent<Props, State> {
                 : this.state.data.length + ' ' + 'Devices'
               : '0 Device'
           } list`}
-          data={this.state.data}
+          data={updatedDeviceData}
           columns={this.column}
           checkedArray={this.state.checkedArray}
           setCheckedArray={(value: string[]) =>
@@ -220,6 +248,46 @@ class DeviceManagement extends PureComponent<Props, State> {
     ) as DeviceData[]
 
     this.setState({data: convertedDeviceData})
+  }
+
+  private fetchDeviceMonitoringStatus = async () => {
+    try {
+      const {source, links} = this.props
+      const envVars = await getEnv(links.environment)
+      const telegrafSystemInterval = getDeep<string>(
+        envVars,
+        'telegrafSystemInterval',
+        ''
+      )
+      const tempVars = generateForHosts(source)
+      const deviceMonitoringStatus = await fetchDeviceMonitoringStatus(
+        source.links.proxy,
+        source.telegraf,
+        telegrafSystemInterval,
+        tempVars
+      )
+
+      this.setState({
+        deviceMonitoringStatus,
+      })
+    } catch (error) {
+      this.props.notify(notifyFetchDeviceMonitoringStatusFailed(error.message))
+    }
+  }
+
+  private getDeviceMonitoringStatus(
+    devicesData: DeviceData[],
+    deviceMonitoringStatus: DeviceMonitoringStatus
+  ) {
+    return devicesData.map(device => {
+      const {device_ip} = device
+      const uptime = deviceMonitoringStatus?.[device_ip]?.uptime || 0
+      const isMonitoring = uptime !== 0
+      return {
+        ...device,
+        isMonitoring,
+      }
+    })
   }
 
   private onClickShellModalOpen = (shell: ShellInfo) => {
@@ -326,10 +394,12 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 }
 
-const mstp = ({adminCloudHub: {organizations}, auth: {isUsingAuth, me}}) => ({
+const mstp = ({adminCloudHub: {organizations}, auth, links}) => ({
   organizations,
-  isUsingAuth,
-  me,
+  isUsingAuth: auth.isUsingAuth,
+  auth,
+  me: auth.me,
+  links,
 })
 
 const mdtp = (dispatch: any) => ({

@@ -332,22 +332,22 @@ $wordBreak: break-word;
     ----------------------------------------------
 */
 
-.table-accordian {
-  .table-accordian-tr {
+.table-accordion {
+  .table-accordion-tr {
     transition: transform 0.2s ease;
     transform: (0, 100%);
     column-span: all;
     background-color: #31313d;
 
-    .table-accordian-tr.open {
+    .table-accordion-tr.open {
       height: 100%;
     }
 
-    .table-accordian-tr.close {
+    .table-accordion-tr.close {
       height: 0;
     }
 
-    .table-accordian-td {
+    .table-accordion-td {
       padding: 10px;
     }
   }
@@ -423,5 +423,42 @@ $wordBreak: break-word;
         margin-left: 0;
       }
     }
+  }
+}
+
+.table > thead > tr,
+.table > tbody > tr {
+  > .align-left {
+    text-align: left;
+  }
+  > .align-right {
+    text-align: right;
+  }
+  > .align-center {
+    text-align: center;
+  }
+
+  //for custom render
+  > .flex-left {
+    width: 100%;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+  }
+  > .flex-right {
+    width: 100%;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+  }
+  > .flex-centers {
+    width: 100%;
+    display: flex;
+    justify-content: cne;
+    align-items: center;
+  }
+
+  > .checkbox {
+    width: 30px;
   }
 }

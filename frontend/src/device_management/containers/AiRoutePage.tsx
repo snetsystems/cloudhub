@@ -32,7 +32,8 @@ interface Props {
 const sections = (
   isUsingAuth: boolean,
   me: Me,
-  organizations: Organization[]
+  organizations: Organization[],
+  source: SourcesModels.Source
 ) => {
   let sections = [
     {
@@ -41,6 +42,7 @@ const sections = (
       enabled: isUserAuthorized(me.role, ADMIN_ROLE),
       component: (
         <DeviceManagement
+          source={source}
           me={me}
           isUsingAuth={isUsingAuth}
           organizations={organizations}
@@ -89,7 +91,7 @@ const AiRoutePage = (props: Props) => {
       <Page.Contents fullWidth={true}>
         <div className="container-fluid">
           <SubSections
-            sections={sections(isUsingAuth, me, organizations)}
+            sections={sections(isUsingAuth, me, organizations, source)}
             activeSection={tab}
             parentUrl="ai"
             sourceID={source.id}

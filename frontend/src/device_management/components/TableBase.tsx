@@ -1,5 +1,6 @@
 import React, {ReactNode, useEffect, useMemo, useState} from 'react'
 import {
+  AlignType,
   ColumnInfo,
   DataTableObject,
   DataTableOptions,
@@ -43,7 +44,7 @@ function TableBase({
     ?.filter(column => !column?.options?.isAccordion)
     ?.map(item => item.key)
 
-  const accordianKey = useMemo(() => {
+  const accordionKey = useMemo(() => {
     return columns?.find(column => !!column?.options?.isAccordion)?.key || ''
   }, [columns])
 
@@ -74,7 +75,7 @@ function TableBase({
     }
   }
 
-  const openAccordian = rowIndex => {
+  const openAccordion = rowIndex => {
     if (openRowAccor === rowIndex) {
       setOpenRowAccor(null)
     } else {
@@ -122,19 +123,39 @@ function TableBase({
     }
   }
 
+  //left align default
+  const getAlignClassName = (align?: AlignType) => {
+    switch (align) {
+      case AlignType.CENTER:
+        return 'text-center justify-center'
+      case AlignType.LEFT:
+        return 'text-left justify-start'
+      case AlignType.RIGHT:
+        return 'text-right justify-end'
+      default:
+        return 'text-left justify-start'
+    }
+  }
+
   return (
     <div>
-      <table className="table v-center margin-bottom-zero table-highlight table-accordian">
+      <table className="table v-center margin-bottom-zero table-highlight table-accordion">
         <thead>
-          <tr>
+          <tr className="highlight">
             {columns
               ?.filter(column => {
-                // render no arcodian
+                // render no accordion
                 return !column.options?.isAccordion
               })
               ?.map((column, index) => {
                 return (
-                  <th key={index} onClick={() => onClickTh(column)}>
+                  <th
+                    className={`${getAlignClassName(column?.align)} ${
+                      options?.theadRow?.className ?? ''
+                    } ${column.options.checkbox ? 'checkbox' : ''}`}
+                    key={index}
+                    onClick={() => onClickTh(column)}
+                  >
                     {column.options?.checkbox ? (
                       <>
                         {isMultiSelect ? (
@@ -184,16 +205,14 @@ function TableBase({
                   onClick={e => {
                     if (isAccordionRow) {
                       e.stopPropagation()
-                      openAccordian(rowIndex)
+                      openAccordion(rowIndex)
                     } else if (!!options?.tbodyRow?.onClick) {
                       options?.tbodyRow?.onClick?.(item, rowIndex)
                     } else {
                       null
                     }
                   }}
-                  className={`hightlight ${
-                    isAccordionRow ? 'hover-pointer-cursor' : ''
-                  }`}
+                  className={`${isAccordionRow ? 'hover-pointer-cursor' : ''}`}
                 >
                   {keys.map((key, columnIndex) => {
                     const column = columns[columnIndex]
@@ -201,6 +220,9 @@ function TableBase({
                       <td
                         key={columnIndex}
                         onClick={() => columns[columnIndex].onClick}
+                        className={`${
+                          column.options?.thead?.className ?? ''
+                        } ${getAlignClassName(column?.align)}`}
                       >
                         {column?.options?.checkbox ? (
                           <div className="dark-checkbox">
@@ -233,9 +255,9 @@ function TableBase({
                 {isAccordionRow && rowIndex === openRowAccor && (
                   <tr
                     key={`${rowIndex}-accordion`}
-                    className="table-accordian-tr"
+                    className="table-accordion-tr"
                   >
-                    <td className="table-accordian-td" colSpan={keys.length}>
+                    <td className="table-accordion-td" colSpan={keys.length}>
                       <div
                         className={`table-accordion-div panel-body ${
                           rowIndex === openRowAccor ? 'open' : 'close'
@@ -243,7 +265,7 @@ function TableBase({
                       >
                         <AccordionTable
                           tableData={
-                            getValue(item, accordianKey) as DataTableObject[]
+                            getValue(item, accordionKey) as DataTableObject[]
                           }
                           accordionColumns={accordionColumns}
                         />

@@ -1,0 +1,32 @@
+.prediction-form {
+  position: fixed;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+  background-color: $g2-kevlar;
+  width: 550px;
+  max-height: 800px;
+  //   padding: 10px;
+  overflow-y: auto;
+  right: 0;
+  top: 100px;
+  border: 1px solid $g6-smoke;
+  &:hover {
+    border: 1px solid $s-deepOrange2;
+  }
+
+  &.open {
+    right: 0;
+  }
+
+  &.close {
+    right: -550px;
+  }
+}
+
+.prediction-chart-wrap {
+  padding: 0 auto;
+  width: 500px;
+  height: 300px;
+  background-color: $g2-kevlar;
+}
