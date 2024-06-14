@@ -28,6 +28,7 @@ interface Props {
   isSearchDisplay?: boolean
   tableTitle?: string
   options?: DataTableOptions
+  initSort?: SortInfo
 }
 
 function TableComponent({
@@ -44,10 +45,11 @@ function TableComponent({
   tableTitle,
   options,
   isSearchDisplay = true,
+  initSort = null,
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
-  const [sortTarget, setSortTarget] = useState<SortInfo | null>(null)
+  const [sortTarget, setSortTarget] = useState<SortInfo | null>(initSort)
 
   useEffect(() => {
     !!setCheckedArray && setCheckedArray([])

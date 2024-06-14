@@ -160,6 +160,7 @@ export const IMPORT_FILE_DEVICE_STATUS_COLUMNS: ColumnInfo[] = [
       sorting: true,
       thead: {sort: SortType.DESC},
     },
+    align: AlignType.CENTER,
   },
   {
     key: 'ip',
@@ -167,6 +168,7 @@ export const IMPORT_FILE_DEVICE_STATUS_COLUMNS: ColumnInfo[] = [
     options: {
       sorting: true,
     },
+    align: AlignType.CENTER,
   },
   {
     key: 'status',
@@ -174,6 +176,7 @@ export const IMPORT_FILE_DEVICE_STATUS_COLUMNS: ColumnInfo[] = [
     options: {
       sorting: true,
     },
+    align: AlignType.CENTER,
     render: value => {
       return (
         <div
@@ -194,6 +197,7 @@ export const IMPORT_FILE_DEVICE_STATUS_COLUMNS: ColumnInfo[] = [
     options: {
       sorting: true,
     },
+    align: AlignType.CENTER,
     render: value => {
       return (
         <div

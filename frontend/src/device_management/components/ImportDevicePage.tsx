@@ -16,6 +16,7 @@ import {
 } from 'src/reusable_ui'
 import CSVDeviceTemplateExporter from 'src/device_management/components/CSVDeviceTemplateExporter'
 import TableComponent from 'src/device_management/components/TableComponent'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Constants
 import {
@@ -394,6 +395,8 @@ class ImportDevicePage extends PureComponent<Props, State> {
     this.props.notify(notifySNMPConnectFailed(errorMessage))
   }
 
+  private scrollMaxHeight = window.innerHeight * 0.45
+
   private get deviceStatus(): JSX.Element {
     const {
       deviceStatusTableData,
@@ -415,14 +418,29 @@ class ImportDevicePage extends PureComponent<Props, State> {
                 <label className="device-status--header">
                   SNMP Connection Result
                 </label>
-                <TableComponent
-                  columns={importFileDeviceStatusColums}
-                  data={deviceStatusTableData}
-                />
-                <label className="device-management-message">
-                  {deviceStatusMessageJSXElement}
-                </label>
+                <FancyScrollbar
+                  autoHeight={true}
+                  maxHeight={this.scrollMaxHeight}
+                  children={
+                    <TableComponent
+                      columns={importFileDeviceStatusColums}
+                      data={deviceStatusTableData}
+                      initSort={{
+                        key: 'index',
+                        isDesc: false,
+                      }}
+                    />
+                  }
+                ></FancyScrollbar>
               </>
+            </Form.Element>
+            <Form.Element>
+              <div
+                className="device-management-message"
+                style={{paddingTop: '5px'}}
+              >
+                <label>{deviceStatusMessageJSXElement}</label>
+              </div>
             </Form.Element>
             <Form.Footer>
               <Button
