@@ -1,5 +1,5 @@
 import React from 'react'
-import {ColumnInfo, DeviceData, ShellInfo, SortType} from 'src/types'
+import {AlignType, ColumnInfo, DeviceData, ShellInfo, SortType} from 'src/types'
 
 interface Props {
   onEditClick: (deviceData: DeviceData) => void
@@ -21,6 +21,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       options: {
         sorting: true,
       },
+      align: AlignType.RIGHT,
       render: item => {
         return (
           <div>
@@ -56,11 +57,12 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       options: {
         sorting: true,
       },
+      align: AlignType.CENTER,
       render: value => (
         <div
           className={`table-dot ${
             value % 2 === 0 ? 'dot-success' : 'dot-danger'
-          }`}
+          } flex-center`}
         ></div>
       ),
     },
