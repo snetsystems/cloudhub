@@ -1153,19 +1153,20 @@ type NetworkDeviceQuery struct {
 
 // NetworkDevice represents the information of a network device
 type NetworkDevice struct {
-	ID                  uint64     `json:"id,string,omitempty"`
-	Organization        string     `json:"organization"`
-	DeviceIP            string     `json:"device_ip"`
-	Hostname            string     `json:"hostname"`
-	DeviceType          string     `json:"device_type"`
-	DeviceCategory      string     `json:"device_category"`
-	DeviceOS            string     `json:"device_os"`
-	IsConfigWritten     bool       `json:"is_monitoring_enabled"`
-	IsModelingGenerated bool       `json:"is_modeling_generated"`
-	SSHConfig           SSHConfig  `json:"ssh_config"`
-	SNMPConfig          SNMPConfig `json:"snmp_config"`
-	Sensitivity         float32    `json:"sensitivity"`
-	DeviceVendor        string     `json:"device_vendor"`
+	ID                 uint64     `json:"id,string,omitempty"`
+	Organization       string     `json:"organization"`
+	DeviceIP           string     `json:"device_ip"`
+	Hostname           string     `json:"hostname"`
+	DeviceType         string     `json:"device_type"`
+	DeviceCategory     string     `json:"device_category"`
+	DeviceOS           string     `json:"device_os"`
+	IsConfigWritten    bool       `json:"is_config_written"`
+	SSHConfig          SSHConfig  `json:"ssh_config"`
+	SNMPConfig         SNMPConfig `json:"snmp_config"`
+	Sensitivity        float32    `json:"sensitivity"`
+	DeviceVendor       string     `json:"device_vendor"`
+	LearningState      string     `json:"learning_state"`
+	LearningUpdateDate string     `json:"learning_update_date"`
 }
 
 // SSHConfig is Connection Config
@@ -1208,6 +1209,8 @@ type NetworkDeviceOrgQuery struct {
 
 // NetworkDeviceOrg represents the information of a network device group
 type NetworkDeviceOrg struct {
+	ID              string   `json:"organization"`
+	LoadModule      string   `json:"load_module"`
 	MLFunction      string   `json:"ml_function"`
 	DataDuration    int      `json:"data_duration"`
 	LearnCycle      int      `json:"learn_cycle"`
@@ -1217,13 +1220,13 @@ type NetworkDeviceOrg struct {
 
 // NetworkDeviceOrgStore is the Storage and retrieval of information
 type NetworkDeviceOrgStore interface {
-	All(context.Context, NetworkDeviceOrgQuery) ([]NetworkDeviceOrg, error)
+	All(context.Context) ([]NetworkDeviceOrg, error)
 
-	Add(context.Context, *NetworkDeviceOrg, NetworkDeviceOrgQuery) (*NetworkDeviceOrg, error)
+	Add(context.Context, *NetworkDeviceOrg) (*NetworkDeviceOrg, error)
 
-	Delete(context.Context, *NetworkDeviceOrg, NetworkDeviceOrgQuery) error
+	Delete(context.Context, *NetworkDeviceOrg) error
 
 	Get(ctx context.Context, q NetworkDeviceOrgQuery) (*NetworkDeviceOrg, error)
 
-	Update(context.Context, *NetworkDeviceOrg, NetworkDeviceOrgQuery) error
+	Update(context.Context, *NetworkDeviceOrg) error
 }

@@ -6,10 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 
+	"github.com/pelletier/go-toml/v2"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
@@ -25,40 +28,47 @@ type deviceRequest struct {
 }
 
 type updateDeviceRequest struct {
-	DeviceIP            *string              `json:"device_ip,omitempty"`
-	Organization        *string              `json:"organization,omitempty"`
-	Hostname            *string              `json:"hostname,omitempty"`
-	DeviceCategory      *string              `json:"device_category"`
-	DeviceOS            *string              `json:"device_os,omitempty"`
-	IsConfigWritten     *bool                `json:"is_monitoring_enabled,omitempty"`
-	IsModelingGenerated *bool                `json:"is_modeling_generated,omitempty"`
-	SSHConfig           *cloudhub.SSHConfig  `json:"ssh_config"`
-	SNMPConfig          *cloudhub.SNMPConfig `json:"snmp_config"`
-	Sensitivity         *float32             `json:"sensitivity,omitempty"`
-	DeviceVendor        *string              `json:"device_vendor,omitempty"`
+	DeviceIP           *string              `json:"device_ip,omitempty"`
+	Organization       *string              `json:"organization,omitempty"`
+	Hostname           *string              `json:"hostname,omitempty"`
+	DeviceCategory     *string              `json:"device_category"`
+	DeviceOS           *string              `json:"device_os,omitempty"`
+	IsConfigWritten    *bool                `json:"is_monitoring_enabled,omitempty"`
+	SSHConfig          *cloudhub.SSHConfig  `json:"ssh_config"`
+	SNMPConfig         *cloudhub.SNMPConfig `json:"snmp_config"`
+	Sensitivity        *float32             `json:"sensitivity,omitempty"`
+	DeviceVendor       *string              `json:"device_vendor,omitempty"`
+	LearningState      *string              `json:"learning_state"`
+	LearningUpdateDate *string              `json:"learning_update_date,omitempty"`
 }
 
 type deviceResponse struct {
-	ID                  uint64              `json:"id"`
-	Organization        string              `json:"organization"`
-	OrganizationName    string              `json:"organization_name"`
-	DeviceIP            string              `json:"device_ip"`
-	Hostname            string              `json:"hostname"`
-	DeviceType          string              `json:"device_type"`
-	DeviceCategory      string              `json:"device_category"`
-	DeviceOS            string              `json:"device_os"`
-	IsConfigWritten     bool                `json:"is_config_written"`
-	IsModelingGenerated bool                `json:"is_modeling_generated"`
-	SSHConfig           cloudhub.SSHConfig  `json:"ssh_config"`
-	SNMPConfig          cloudhub.SNMPConfig `json:"snmp_config"`
-	Sensitivity         float32             `json:"sensitivity,omitempty"`
-	DeviceVendor        string              `json:"device_vendor"`
+	ID                 uint64              `json:"id"`
+	Organization       string              `json:"organization"`
+	OrganizationName   string              `json:"organization_name"`
+	DeviceIP           string              `json:"device_ip"`
+	Hostname           string              `json:"hostname"`
+	DeviceType         string              `json:"device_type"`
+	DeviceCategory     string              `json:"device_category"`
+	DeviceOS           string              `json:"device_os"`
+	IsConfigWritten    bool                `json:"is_config_written"`
+	SSHConfig          cloudhub.SSHConfig  `json:"ssh_config"`
+	SNMPConfig         cloudhub.SNMPConfig `json:"snmp_config"`
+	Sensitivity        float32             `json:"sensitivity,omitempty"`
+	DeviceVendor       string              `json:"device_vendor"`
+	LearningState      string              `json:"learning_state"`
+	LearningUpdateDate string              `json:"learning_update_date,omitempty"`
 }
 type deviceError struct {
 	Index        int    `json:"index"`
-	DeviceIP     string `json:"device_ip, omitempty"`
-	DeviceID     uint64 `json:"device_id, omitempty"`
+	DeviceIP     string `json:"device_ip,omitempty"`
+	DeviceID     uint64 `json:"device_id,omitempty"`
 	ErrorMessage string `json:"errorMessage"`
+}
+
+type deviceMapByOrg struct {
+	SavedCollectorDevices []uint64
+	AllDevices            []uint64
 }
 
 func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
@@ -70,16 +80,15 @@ func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.Network
 	}
 
 	resData := &deviceResponse{
-		ID:                  device.ID,
-		Organization:        device.Organization,
-		OrganizationName:    orgName,
-		DeviceIP:            device.DeviceIP,
-		Hostname:            device.Hostname,
-		DeviceType:          device.DeviceType,
-		DeviceCategory:      device.DeviceCategory,
-		DeviceOS:            device.DeviceOS,
-		IsConfigWritten:     device.IsConfigWritten,
-		IsModelingGenerated: device.IsModelingGenerated,
+		ID:               device.ID,
+		Organization:     device.Organization,
+		OrganizationName: orgName,
+		DeviceIP:         device.DeviceIP,
+		Hostname:         device.Hostname,
+		DeviceType:       device.DeviceType,
+		DeviceCategory:   device.DeviceCategory,
+		DeviceOS:         device.DeviceOS,
+		IsConfigWritten:  device.IsConfigWritten,
 		SSHConfig: cloudhub.SSHConfig{
 			SSHUserID:     device.SSHConfig.SSHUserID,
 			SSHPassword:   device.SSHConfig.SSHPassword,
@@ -92,8 +101,9 @@ func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.Network
 			SNMPPort:      device.SNMPConfig.SNMPPort,
 			SNMPProtocol:  device.SNMPConfig.SNMPProtocol,
 		},
-		Sensitivity:  device.Sensitivity,
-		DeviceVendor: device.DeviceVendor,
+		Sensitivity:   device.Sensitivity,
+		DeviceVendor:  device.DeviceVendor,
+		LearningState: device.LearningState,
 	}
 
 	return resData, nil
@@ -148,18 +158,18 @@ func (r *deviceRequest) CreateDeviceFromRequest() (*cloudhub.NetworkDevice, erro
 	}
 
 	return &cloudhub.NetworkDevice{
-		Organization:        r.Organization,
-		DeviceIP:            r.DeviceIP,
-		Hostname:            r.Hostname,
-		DeviceType:          r.DeviceType,
-		DeviceCategory:      cloudhub.DeviceCategoryMap["network"],
-		DeviceOS:            r.DeviceOS,
-		IsConfigWritten:     false,
-		IsModelingGenerated: false,
-		SSHConfig:           r.SSHConfig,
-		SNMPConfig:          r.SNMPConfig,
-		Sensitivity:         1.0,
-		DeviceVendor:        r.DeviceVendor,
+		Organization:    r.Organization,
+		DeviceIP:        r.DeviceIP,
+		Hostname:        r.Hostname,
+		DeviceType:      r.DeviceType,
+		DeviceCategory:  cloudhub.DeviceCategoryMap["network"],
+		DeviceOS:        r.DeviceOS,
+		IsConfigWritten: false,
+		LearningState:   "ready",
+		SSHConfig:       r.SSHConfig,
+		SNMPConfig:      r.SNMPConfig,
+		Sensitivity:     1.0,
+		DeviceVendor:    r.DeviceVendor,
 	}, nil
 }
 
@@ -473,8 +483,11 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	if req.IsConfigWritten != nil {
 		device.IsConfigWritten = *req.IsConfigWritten
 	}
-	if req.IsModelingGenerated != nil {
-		device.IsModelingGenerated = *req.IsModelingGenerated
+	if req.LearningState != nil {
+		device.LearningState = *req.LearningState
+	}
+	if req.LearningUpdateDate != nil {
+		device.LearningUpdateDate = *req.LearningUpdateDate
 	}
 
 	if req.SSHConfig != nil {
@@ -537,6 +550,184 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
+//MonitoringConfigManagement is LogStash Config Management
+func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		DeviceIDs []uint64 `json:"devices_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request data", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	failedDevices := []deviceError{}
+
+	deviceListGroupByOrg := make(map[string][]uint64)
+
+	for i, id := range request.DeviceIDs {
+		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
+		if err != nil {
+			failedDevices = append(failedDevices, deviceError{Index: i, DeviceID: id, ErrorMessage: err.Error()})
+		} else {
+			deviceListGroupByOrg[device.Organization] = append(deviceListGroupByOrg[device.Organization], device.ID)
+		}
+
+	}
+	if len(deviceListGroupByOrg) < 1 {
+		response := map[string]interface{}{
+			"failed_devices": failedDevices,
+		}
+		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+		return
+
+	}
+	fmt.Println(deviceListGroupByOrg)
+	collectorKeys, err := s.getCollectorServers()
+
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).All(ctx)
+
+	selectedNetDeviceOrgStore := addOrUpdateDevicesInStore(deviceOrg, deviceListGroupByOrg, collectorKeys)
+	for _, v := range selectedNetDeviceOrgStore {
+		statusCode, resp, err := s.generateLogstashConfigGroupByOrg(ctx, &v)
+		if err != nil {
+			unknownErrorWithMessage(w, err, s.Logger)
+			return
+		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			Error(w, statusCode, string(resp), s.Logger)
+			return
+		}
+
+		org, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &v.ID})
+
+		if org != nil {
+			s.Store.NetworkDeviceOrg(ctx).Update(ctx, &v)
+			msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), v.ID)
+			s.logRegistration(ctx, "NetWorkDeviceOrg conf", msg)
+
+		} else {
+			s.Store.NetworkDeviceOrg(ctx).Add(ctx, &v)
+			msg := fmt.Sprintf(MsgNetWorkDeviceOrgCreated.String(), v.ID)
+			s.logRegistration(ctx, "NetWorkDeviceOrg conf", msg)
+		}
+
+	}
+	response := map[string]interface{}{
+		"failed_devices": failedDevices,
+	}
+	encodeJSON(w, http.StatusCreated, response, s.Logger)
+
+}
+
+func removeDevices(devices, devicesToRemove []uint64) []uint64 {
+	deviceMap := make(map[uint64]bool)
+	for _, device := range devicesToRemove {
+		deviceMap[device] = true
+	}
+
+	var updatedDevices []uint64
+	for _, device := range devices {
+		if !deviceMap[device] {
+			updatedDevices = append(updatedDevices, device)
+		}
+	}
+	return updatedDevices
+}
+
+func addOrUpdateDevicesInStore(stores []cloudhub.NetworkDeviceOrg, orgDevices map[string][]uint64, collectors []string) []cloudhub.NetworkDeviceOrg {
+	for _, deviceIDs := range orgDevices {
+		for _, deviceID := range deviceIDs {
+			for i, store := range stores {
+				if contains(store.DevicesIDs, deviceID) {
+					stores[i].DevicesIDs = removeDevices(stores[i].DevicesIDs, []uint64{deviceID})
+					break
+				}
+			}
+		}
+	}
+
+	for org, deviceIDs := range orgDevices {
+		storeFound := false
+		for i, store := range stores {
+			if store.ID == org {
+				leastLoadedServer := findLeastLoadedCollectorServer(stores, collectors)
+				stores[i].DevicesIDs = appendUnique(stores[i].DevicesIDs, deviceIDs...)
+				stores[i].CollectorServer = leastLoadedServer
+				storeFound = true
+				break
+			}
+		}
+		if !storeFound {
+			leastLoadedServer := findLeastLoadedCollectorServer(stores, collectors)
+			newStore := cloudhub.NetworkDeviceOrg{
+				ID:              org,
+				DevicesIDs:      deviceIDs,
+				LoadModule:      "learn.ch_nx_load",
+				MLFunction:      "ml_multiplied",
+				DataDuration:    15,
+				LearnCycle:      15,
+				CollectorServer: leastLoadedServer,
+			}
+			stores = append(stores, newStore)
+		}
+	}
+
+	return stores
+}
+
+func contains(devices []uint64, deviceID uint64) bool {
+	for _, d := range devices {
+		if d == deviceID {
+			return true
+		}
+	}
+	return false
+}
+
+func appendUnique(devices []uint64, newDevices ...uint64) []uint64 {
+	deviceSet := make(map[uint64]bool)
+	for _, device := range devices {
+		deviceSet[device] = true
+	}
+
+	for _, device := range newDevices {
+		if !deviceSet[device] {
+			devices = append(devices, device)
+			deviceSet[device] = true
+		}
+	}
+
+	return devices
+}
+func findLeastLoadedCollectorServer(stores []cloudhub.NetworkDeviceOrg, collectors []string) string {
+	usedServers := make(map[string]bool)
+	for _, store := range stores {
+		usedServers[store.CollectorServer] = true
+	}
+	for _, server := range collectors {
+		if !usedServers[server] {
+			return server
+		}
+	}
+	serverLoad := make(map[string]int)
+	for _, store := range stores {
+		serverLoad[store.CollectorServer] += len(store.DevicesIDs)
+	}
+
+	leastLoadedServer := collectors[0]
+	for _, server := range collectors {
+		if serverLoad[server] < serverLoad[leastLoadedServer] {
+			leastLoadedServer = server
+		}
+	}
+	return leastLoadedServer
+}
+
 func isZeroOfUnderlyingType(x interface{}) bool {
 	return x == reflect.Zero(reflect.TypeOf(x)).Interface()
 }
@@ -587,4 +778,108 @@ func parseID(r *http.Request) (uint64, error) {
 	}
 
 	return id, nil
+}
+
+func (s *Service) getCollectorServers() ([]string, error) {
+	status, responseBody, err := s.GetWheelKeyAcceptedListAll()
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to retrieve keys, status code: %d", status)
+	}
+
+	var response struct {
+		Return []struct {
+			Data struct {
+				Return struct {
+					Minions []string `json:"minions"`
+				} `json:"return"`
+			} `json:"data"`
+		} `json:"return"`
+	}
+
+	err = json.Unmarshal(responseBody, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
+	}
+
+	var collectorKeys []string
+	for _, minion := range response.Return[0].Data.Return.Minions {
+		if strings.HasPrefix(minion, "ch-collector") {
+			collectorKeys = append(collectorKeys, minion)
+		}
+	}
+
+	return collectorKeys, nil
+}
+
+func (s *Service) generateLogstashConfigGroupByOrg(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg) (int, []byte, error) {
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &devOrg.ID})
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	fileName := fmt.Sprintf("%s.conf", org.Name)
+	dirPath := "/etc/logstash/pipeline"
+	filePath := path.Join(dirPath, fileName)
+	var statusCode int
+	var resp []byte
+
+	if statusCode, resp, err := s.DirectoryExistsWithLocalClient(dirPath, devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return statusCode, nil, err
+	} else if resp != nil {
+		r := &struct {
+			Return []map[string]bool `json:"return"`
+		}{}
+
+		if err := json.Unmarshal(resp, r); err != nil {
+			return http.StatusInternalServerError, nil, err
+		}
+
+		if !r.Return[0][devOrg.CollectorServer] {
+			if statusCode, _, err := s.MkdirWithLocalClient(dirPath, devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+				return statusCode, nil, err
+			}
+		}
+	} else {
+		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error ocuured at DirectoryExists() func")
+	}
+
+	telegrafConfig := "test Message"
+	b, _ := toml.Marshal(telegrafConfig)
+
+	statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{string(b)}, devOrg.CollectorServer)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return statusCode, resp, err
+	}
+	return http.StatusOK, nil, nil
+}
+
+func (s *Service) removeLogstashConfigGroupByOrg(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg) (int, []byte, error) {
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &devOrg.ID})
+	fileName := fmt.Sprintf("%s.conf", org.Name)
+	dirPath := "/etc/logstash/pipeline"
+	filePath := path.Join(dirPath, fileName)
+
+	var statusCode int
+	var resp []byte
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	statusCode, resp, err = s.RemoveFileWithLocalClient(filePath, devOrg.CollectorServer)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return statusCode, resp, err
+	}
+
+	return http.StatusOK, nil, nil
 }

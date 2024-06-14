@@ -10,26 +10,26 @@ var _ cloudhub.NetworkDeviceOrgStore = &NetworkDeviceOrgStore{}
 
 // NetworkDeviceOrgStore mock allows all functions to be set for testing
 type NetworkDeviceOrgStore struct {
-	AllF    func(context.Context, cloudhub.NetworkDeviceOrgQuery) ([]cloudhub.NetworkDeviceOrg, error)
-	AddF    func(context.Context, *cloudhub.NetworkDeviceOrg, cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error)
-	DeleteF func(context.Context, *cloudhub.NetworkDeviceOrg, cloudhub.NetworkDeviceOrgQuery) error
+	AllF    func(context.Context) ([]cloudhub.NetworkDeviceOrg, error)
+	AddF    func(context.Context, *cloudhub.NetworkDeviceOrg) (*cloudhub.NetworkDeviceOrg, error)
+	DeleteF func(context.Context, *cloudhub.NetworkDeviceOrg) error
 	GetF    func(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error)
-	UpdateF func(context.Context, *cloudhub.NetworkDeviceOrg, cloudhub.NetworkDeviceOrgQuery) error
+	UpdateF func(context.Context, *cloudhub.NetworkDeviceOrg) error
 }
 
 // All ...
-func (s *NetworkDeviceOrgStore) All(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) ([]cloudhub.NetworkDeviceOrg, error) {
-	return s.AllF(ctx, q)
+func (s *NetworkDeviceOrgStore) All(ctx context.Context) ([]cloudhub.NetworkDeviceOrg, error) {
+	return s.AllF(ctx)
 }
 
 // Add ...
-func (s *NetworkDeviceOrgStore) Add(ctx context.Context, DeviceOrg *cloudhub.NetworkDeviceOrg, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error) {
-	return s.AddF(ctx, DeviceOrg, q)
+func (s *NetworkDeviceOrgStore) Add(ctx context.Context, DeviceOrg *cloudhub.NetworkDeviceOrg) (*cloudhub.NetworkDeviceOrg, error) {
+	return s.AddF(ctx, DeviceOrg)
 }
 
 // Delete ...
-func (s *NetworkDeviceOrgStore) Delete(ctx context.Context, DeviceOrg *cloudhub.NetworkDeviceOrg, q cloudhub.NetworkDeviceOrgQuery) error {
-	return s.DeleteF(ctx, DeviceOrg, q)
+func (s *NetworkDeviceOrgStore) Delete(ctx context.Context, DeviceOrg *cloudhub.NetworkDeviceOrg) error {
+	return s.DeleteF(ctx, DeviceOrg)
 }
 
 // Get ...
@@ -38,6 +38,6 @@ func (s *NetworkDeviceOrgStore) Get(ctx context.Context, q cloudhub.NetworkDevic
 }
 
 // Update ...
-func (s *NetworkDeviceOrgStore) Update(ctx context.Context, DeviceOrg *cloudhub.NetworkDeviceOrg, q cloudhub.NetworkDeviceOrgQuery) error {
-	return s.UpdateF(ctx, DeviceOrg, q)
+func (s *NetworkDeviceOrgStore) Update(ctx context.Context, DeviceOrg *cloudhub.NetworkDeviceOrg) error {
+	return s.UpdateF(ctx, DeviceOrg)
 }

@@ -25,7 +25,6 @@ func (s *NetworkDeviceStore) Add(ctx context.Context, device *cloudhub.NetworkDe
 			return err
 		}
 		device.ID = seq
-
 		if v, err := internal.MarshalNetworkDevice(device); err != nil {
 			return err
 		} else if err := b.Put([]byte(u64tob(seq)), v); err != nil {

@@ -21,14 +21,13 @@ func TestNetworkDeviceStore(t *testing.T) {
 
 	devices := []cloudhub.NetworkDevice{
 		{
-			ID:                  uint64(547),
-			Organization:        "default",
-			DeviceIP:            "192.168.1.1",
-			Hostname:            "device01",
-			DeviceType:          "Router",
-			DeviceOS:            "Cisco IOS",
-			IsConfigWritten:     false,
-			IsModelingGenerated: false,
+			ID:              uint64(547),
+			Organization:    "default",
+			DeviceIP:        "192.168.1.1",
+			Hostname:        "device01",
+			DeviceType:      "Router",
+			DeviceOS:        "Cisco IOS",
+			IsConfigWritten: false,
 			SSHConfig: cloudhub.SSHConfig{
 				SSHUserID:     "admin",
 				SSHPassword:   "admin123",
@@ -43,14 +42,13 @@ func TestNetworkDeviceStore(t *testing.T) {
 			},
 		},
 		{
-			ID:                  uint64(547),
-			Organization:        "1",
-			DeviceIP:            "192.168.1.2",
-			Hostname:            "device02",
-			DeviceType:          "Switch",
-			DeviceOS:            "JunOS",
-			IsConfigWritten:     false,
-			IsModelingGenerated: true,
+			ID:              uint64(547),
+			Organization:    "1",
+			DeviceIP:        "192.168.1.2",
+			Hostname:        "device02",
+			DeviceType:      "Switch",
+			DeviceOS:        "JunOS",
+			IsConfigWritten: false,
 			SSHConfig: cloudhub.SSHConfig{
 				SSHUserID:     "root",
 				SSHPassword:   "root123",

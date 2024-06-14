@@ -295,6 +295,7 @@ message CSP {
 }
 
 
+// Key: Organization ID
 message NetworkDeviceOrg {
   string ID                   = 1; // Org ID
   string LoadModule           = 2; // Currently fixed by learn.ch_nx_load
@@ -304,14 +305,12 @@ message NetworkDeviceOrg {
   repeated uint64 DevicesIDs  = 6; // the list of device IDs included in the network device group
   string CollectorServer      = 7; // the server(minion_id) used to collect network data
 }
-
 message SSHConfig {
   string SSHUserID     = 1; // user id used for SSH connection
   string SSHPassword   = 2; // the password used for SSH connection
   string SSHEnPassword = 3; // enable password for devices that require it
   int32 SSHPort        = 4; // port number used for SSH connection
 }
-
 message SNMPConfig {
   string SNMPCommunity = 1; // community string for SNMP
   string SNMPVersion   = 2; // version of SNMP used
@@ -319,6 +318,7 @@ message SNMPConfig {
   string SNMPProtocol  = 4; // protocol to use udp or tcp
 }
 
+// Key: unique identifier of the device
 message NetworkDevice { 
   uint64 ID                 = 1;  // unique identifier of the device
   string Organization       = 2;  // organization ID that device belongs to
@@ -328,26 +328,28 @@ message NetworkDevice {
   string DeviceCategory     = 6;  // category of the device, such as Server or Network
   string DeviceOS           = 7;  // operating system running on the device
   bool IsConfigWritten      = 8;  // logstash config written status
-  bool IsModelingGenerated  = 9;  // indicates if a model has been generated for the device
-  SSHConfig SSHConfig       = 10; // contains the SSH configuration for the device
-  SNMPConfig SNMPConfig     = 11; // contains the SNMP configuration for the device
-  float Sensitivity         = 12; // Sensitivity throttle ratio
-  string DeviceVendor       = 13; // DeviceVendor is the vendor of the device
+  SSHConfig SSHConfig       = 9;  // contains the SSH configuration for the device
+  SNMPConfig SNMPConfig     = 10; // contains the SNMP configuration for the device
+  float Sensitivity         = 11; // Sensitivity throttle ratio
+  string DeviceVendor       = 12; // DeviceVendor is the vendor of the device
+  string LearningState      = 13; // Indicates the status of model for the device
+  string learningUpdateDate = 14; // Indicates the timestamp when the learning data was last updated
 }
 
+// Key: device IP (Afer adding device ID tag from logstash to influxdb, this key will be device ID)
 message MLNxRst {
-  uint64 ID                       = 1;  // unique identifier of the device
-  string DeviceIP                 = 2;  // IP address of the device
-  double Epsilon                  = 3;  // ML Result value
-  float K                         = 4;
-  float mean                      = 5;
-  float MDThreshold               = 6;  // MDThreshold = mean * K * Sensitivity
-  repeated float MDMatrix         = 7;  // Mahalanobis distance array(1 dimension)
-  repeated float CPUMatrix        = 8;  // Use later
-  repeated float TrafficMatrix    = 9;  // Use later
-  repeated float GaussianMatrix   = 10; // Use later
+  string DeviceIP                   = 1;  // IP address of the device
+  double Epsilon                    = 2;  // ML Result value
+  string MeanMatrix                 = 3;  // 1x2 mean numpy matrix
+  string CovarianceMatrix           = 4;  // 2x2 covariance numpy matrix
+  float K                           = 5;
+  float Mean                        = 6;  // Mean value by whole elements
+  float MDThreshold                 = 7;  // MDThreshold = mean * K * Sensitivity
+  repeated float MDArray            = 8;  // Mahalanobis distance array (Use later)
+  repeated float CPUArray           = 9;  // (Use later)
+  repeated float TrafficArray       = 10; // (Use later)
+  repeated float GaussianArray      = 11; // (Use later)
 }
-
 
 // The following is a vim modeline, it autoconfigures vim to have the
 // appropriate tabbing and whitespace management to edit this file

@@ -27,24 +27,16 @@ func NewNetworkDeviceOrgStore(s cloudhub.NetworkDeviceOrgStore, org string) *Net
 
 // All retrieves all org from the underlying NetworkDeviceOrgStore and filters them
 // by organization.
-func (s *NetworkDeviceOrgStore) All(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) ([]cloudhub.NetworkDeviceOrg, error) {
+func (s *NetworkDeviceOrgStore) All(ctx context.Context) ([]cloudhub.NetworkDeviceOrg, error) {
 	err := validOrganization(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	allOrg, err := s.store.All(ctx, q)
+	orgs, err := s.store.All(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	orgs := allOrg[:0]
-	for _, d := range allOrg {
-		if *q.ID == s.organization {
-			orgs = append(orgs, d)
-		}
-	}
-
 	return orgs, nil
 }
 
@@ -67,42 +59,42 @@ func (s *NetworkDeviceOrgStore) Get(ctx context.Context, q cloudhub.NetworkDevic
 
 // Add creates a new Device in the NetworkDeviceOrgStore with NetworkDeviceOrg.Organization set to be the
 // organization from the Device store.
-func (s *NetworkDeviceOrgStore) Add(ctx context.Context, t *cloudhub.NetworkDeviceOrg, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error) {
+func (s *NetworkDeviceOrgStore) Add(ctx context.Context, t *cloudhub.NetworkDeviceOrg) (*cloudhub.NetworkDeviceOrg, error) {
 
 	err := validOrganization(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.store.Add(ctx, t, cloudhub.NetworkDeviceOrgQuery{ID: q.ID})
+	return s.store.Add(ctx, t)
 }
 
 // Delete the Device from NetworkDeviceOrgStore
-func (s *NetworkDeviceOrgStore) Delete(ctx context.Context, t *cloudhub.NetworkDeviceOrg, q cloudhub.NetworkDeviceOrgQuery) error {
+func (s *NetworkDeviceOrgStore) Delete(ctx context.Context, t *cloudhub.NetworkDeviceOrg) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.store.Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: q.ID})
+	_, err = s.store.Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &t.ID})
 	if err != nil {
 		return err
 	}
 
-	return s.store.Delete(ctx, t, cloudhub.NetworkDeviceOrgQuery{ID: q.ID})
+	return s.store.Delete(ctx, t)
 }
 
 // Update the Device in NetworkDeviceOrgStore.
-func (s *NetworkDeviceOrgStore) Update(ctx context.Context, t *cloudhub.NetworkDeviceOrg, q cloudhub.NetworkDeviceOrgQuery) error {
+func (s *NetworkDeviceOrgStore) Update(ctx context.Context, t *cloudhub.NetworkDeviceOrg) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.store.Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: q.ID})
+	_, err = s.store.Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &t.ID})
 	if err != nil {
 		return err
 	}
 
-	return s.store.Update(ctx, t, cloudhub.NetworkDeviceOrgQuery{ID: q.ID})
+	return s.store.Update(ctx, t)
 }

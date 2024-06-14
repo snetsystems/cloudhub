@@ -402,6 +402,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/ai/network/managements/devices", EnsureAdmin(service.RemoveDevices))
 	router.PATCH("/cloudhub/v1/ai/network/managements/devices/:id", EnsureAdmin(service.UpdateNetworkDevice))
 
+	// Device Management Monitoring
+	router.POST("/cloudhub/v1/ai/network/managements/monitoring/config", EnsureAdmin(service.MonitoringConfigManagement))
+
 	// SNMP Management
 	router.POST("/cloudhub/v1/snmp/validation", EnsureViewer(service.SNMPConnTestBulk))
 

@@ -108,6 +108,7 @@ func TestNewDevices(t *testing.T) {
 }
 
 func TestDeviceID(t *testing.T) {
+
 	type fields struct {
 		NetworkDeviceStore cloudhub.NetworkDeviceStore
 		OrganizationsStore cloudhub.OrganizationsStore
@@ -117,6 +118,7 @@ func TestDeviceID(t *testing.T) {
 		w *httptest.ResponseRecorder
 		r *http.Request
 	}
+
 	tests := []struct {
 		name            string
 		fields          fields
@@ -137,34 +139,8 @@ func TestDeviceID(t *testing.T) {
 				),
 			},
 			fields: fields{
-				Logger: log.New(log.DebugLevel),
-				NetworkDeviceStore: &mocks.NetworkDeviceStore{
-					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
-						return &cloudhub.NetworkDevice{
-							ID:                  547,
-							DeviceIP:            "172.16.11.168",
-							Organization:        "76",
-							Hostname:            "SWITCH_01",
-							DeviceType:          "switch",
-							DeviceCategory:      "network",
-							DeviceOS:            "IOS",
-							IsConfigWritten:     false,
-							IsModelingGenerated: false,
-							SSHConfig: cloudhub.SSHConfig{
-								SSHUserID:   "host",
-								SSHPassword: "@1234",
-								SSHPort:     22,
-							},
-							SNMPConfig: cloudhub.SNMPConfig{
-								SNMPCommunity: "@1234",
-								SNMPVersion:   "1",
-								SNMPPort:      623,
-								SNMPProtocol:  "udp",
-							},
-							Sensitivity: 1.0,
-						}, nil
-					},
-				},
+				Logger:             log.New(log.DebugLevel),
+				NetworkDeviceStore: MockNetworkDeviceStoreSetup(),
 				OrganizationsStore: MockOrganizationsStoreSetup(),
 			},
 			id:              "547",
@@ -179,10 +155,10 @@ func TestDeviceID(t *testing.T) {
 				"device_type": "switch",
 				"device_category": "network",
 				"device_os": "IOS",
-				"is_monitoring_enabled": false,
+				"is_config_written": false,
 				"is_modeling_generated": false,
 				"ssh_config": {
-				  "ssh_user_name": "host",
+				  "ssh_user_id": "host",
 				  "ssh_password": "@1234",
 				  "ssh_en_password": "",
 				  "ssh_port": 22
@@ -288,14 +264,14 @@ func TestUpdateNetworkDevice(t *testing.T) {
 					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
 						if *q.ID == 547 {
 							return &cloudhub.NetworkDevice{
-								ID:                  547,
-								DeviceIP:            "172.16.11.168",
-								Organization:        "76",
-								Hostname:            "SWITCH_01",
-								DeviceType:          "switch",
-								DeviceOS:            "IOS",
-								IsConfigWritten:     false,
-								IsModelingGenerated: false,
+								ID:              547,
+								DeviceIP:        "172.16.11.168",
+								Organization:    "76",
+								Hostname:        "SWITCH_01",
+								DeviceType:      "switch",
+								DeviceOS:        "IOS",
+								IsConfigWritten: false,
+								LearningState:   "ready",
 							}, nil
 						}
 						return nil, cloudhub.ErrDeviceNotFound
@@ -317,7 +293,7 @@ func TestUpdateNetworkDevice(t *testing.T) {
 				"is_monitoring_enabled": false,
 				"is_modeling_generated": false,
 				"ssh_config": {
-				  "ssh_user_name": "",
+				  "ssh_user_id": "",
 				  "ssh_password": "",
 				  "ssh_en_password": "",
 				  "ssh_port": 0
@@ -401,14 +377,14 @@ func TestUpdateNetworkDevice(t *testing.T) {
 					},
 					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
 						return &cloudhub.NetworkDevice{
-							ID:                  547,
-							DeviceIP:            "172.16.11.168",
-							Organization:        "76",
-							Hostname:            "SWITCH_01",
-							DeviceType:          "switch",
-							DeviceOS:            "IOS",
-							IsConfigWritten:     false,
-							IsModelingGenerated: false,
+							ID:              547,
+							DeviceIP:        "172.16.11.168",
+							Organization:    "76",
+							Hostname:        "SWITCH_01",
+							DeviceType:      "switch",
+							DeviceOS:        "IOS",
+							IsConfigWritten: false,
+							LearningState:   "ready",
 						}, nil
 					},
 				},
@@ -500,31 +476,32 @@ func TestRemoveDevices(t *testing.T) {
 					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
 						if *q.ID == 547 {
 							return &cloudhub.NetworkDevice{
-								ID:                  547,
-								DeviceIP:            "172.16.11.168",
-								Organization:        "76",
-								Hostname:            "SWITCH_01",
-								DeviceType:          "switch",
-								DeviceOS:            "IOS",
-								IsConfigWritten:     false,
-								IsModelingGenerated: false,
+								ID:              547,
+								DeviceIP:        "172.16.11.168",
+								Organization:    "76",
+								Hostname:        "SWITCH_01",
+								DeviceType:      "switch",
+								DeviceOS:        "IOS",
+								IsConfigWritten: false,
+								LearningState:   "Ready",
 							}, nil
 						}
 						if *q.ID == 548 {
 							return &cloudhub.NetworkDevice{
-								ID:                  548,
-								DeviceIP:            "192.168.1.1",
-								Organization:        "76",
-								Hostname:            "SWITCH_02",
-								DeviceType:          "switch",
-								DeviceOS:            "IOS",
-								IsConfigWritten:     false,
-								IsModelingGenerated: false,
+								ID:              548,
+								DeviceIP:        "192.168.1.1",
+								Organization:    "76",
+								Hostname:        "SWITCH_02",
+								DeviceType:      "switch",
+								DeviceOS:        "IOS",
+								IsConfigWritten: false,
+								LearningState:   "Ready",
 							}, nil
 						}
 						return nil, cloudhub.ErrDeviceNotFound
 					},
 				},
+
 				OrganizationsStore: MockOrganizationsStoreSetup(),
 			},
 			wantStatus: http.StatusNoContent,
@@ -572,14 +549,14 @@ func TestRemoveDevices(t *testing.T) {
 					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
 						if *q.ID == 548 {
 							return &cloudhub.NetworkDevice{
-								ID:                  548,
-								DeviceIP:            "192.168.1.1",
-								Organization:        "76",
-								Hostname:            "SWITCH_02",
-								DeviceType:          "switch",
-								DeviceOS:            "IOS",
-								IsConfigWritten:     false,
-								IsModelingGenerated: false,
+								ID:              548,
+								DeviceIP:        "192.168.1.1",
+								Organization:    "76",
+								Hostname:        "SWITCH_02",
+								DeviceType:      "switch",
+								DeviceOS:        "IOS",
+								IsConfigWritten: false,
+								LearningState:   "Ready",
 							}, nil
 						}
 						return nil, cloudhub.ErrDeviceNotFound
@@ -611,7 +588,75 @@ func TestRemoveDevices(t *testing.T) {
 	}
 }
 
+func TestSelectCollectorServer(t *testing.T) {
+	type fields struct {
+		NetworkDeviceStore    cloudhub.NetworkDeviceStore
+		OrganizationsStore    cloudhub.OrganizationsStore
+		NetworkDeviceOrgStore cloudhub.NetworkDeviceOrgStore
+		Logger                cloudhub.Logger
+	}
+	type args struct {
+		w *httptest.ResponseRecorder
+		r *http.Request
+	}
+
+	tests := []struct {
+		name       string
+		fields     fields
+		args       args
+		request    interface{}
+		wantStatus int
+	}{
+		{
+			name: "Manage Logstash Conf",
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest(
+					"GET",
+					"http://any.url",
+					strings.NewReader(`{"devices_id": [547, 548,549,550]}`),
+				),
+			},
+			fields: fields{
+				Logger:                log.New(log.DebugLevel),
+				NetworkDeviceStore:    MockNetworkDeviceStoreSetup(),
+				OrganizationsStore:    MockOrganizationsStoreSetup(),
+				NetworkDeviceOrgStore: MockNetworkDeviceOrgStoreSetup(),
+			},
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Service{
+				Store: &mocks.Store{
+					OrganizationsStore:    tt.fields.OrganizationsStore,
+					NetworkDeviceStore:    tt.fields.NetworkDeviceStore,
+					NetworkDeviceOrgStore: tt.fields.NetworkDeviceOrgStore,
+				},
+				Logger: tt.fields.Logger,
+			}
+
+			s.MonitoringConfigManagement(tt.args.w, tt.args.r)
+
+			resp := tt.args.w.Result()
+			if resp.StatusCode != tt.wantStatus {
+				t.Errorf("%q. RemoveDevices() got = %v, want %v", tt.name, resp.StatusCode, tt.wantStatus)
+			}
+		})
+	}
+}
+
+func TestCreateLogstashConfig(t *testing.T) {
+	// 테스트 구현
+}
+func TestRestartLogstash(t *testing.T) {
+	// 테스트 구현
+}
+
 const MockOrganizationID = "76"
+const MockOrganizationCompareID = "77"
 
 func ptr[T any](v T) *T {
 	return &v
@@ -662,18 +707,18 @@ func MockDeviceStoreSetup(mockData []deviceRequest) *mocks.NetworkDeviceStore {
 			}
 
 			response := &cloudhub.NetworkDevice{
-				ID:                  uint64(547 + index),
-				Organization:        req.Organization,
-				DeviceIP:            req.DeviceIP,
-				Hostname:            snmp["hostname"],
-				DeviceType:          snmp["deviceType"],
-				DeviceOS:            snmp["deviceOS"],
-				IsConfigWritten:     false,
-				IsModelingGenerated: false,
-				SSHConfig:           req.SSHConfig,
-				SNMPConfig:          req.SNMPConfig,
-				DeviceVendor:        req.DeviceVendor,
-				Sensitivity:         1.0,
+				ID:              uint64(547 + index),
+				Organization:    req.Organization,
+				DeviceIP:        req.DeviceIP,
+				Hostname:        snmp["hostname"],
+				DeviceType:      snmp["deviceType"],
+				DeviceOS:        snmp["deviceOS"],
+				IsConfigWritten: false,
+				LearningState:   "Ready",
+				SSHConfig:       req.SSHConfig,
+				SNMPConfig:      req.SNMPConfig,
+				DeviceVendor:    req.DeviceVendor,
+				Sensitivity:     1.0,
 			}
 			index++
 			return response, nil
@@ -698,6 +743,114 @@ func MockOrganizationsStoreSetup() *mocks.OrganizationsStore {
 				ID:   MockOrganizationID,
 				Name: "snet_org",
 			}, nil
+		},
+	}
+}
+
+func MockNetworkDeviceStoreSetup() *mocks.NetworkDeviceStore {
+	return &mocks.NetworkDeviceStore{
+		GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
+			if *q.ID == 547 {
+				return &cloudhub.NetworkDevice{
+					ID:              547,
+					DeviceIP:        "172.16.11.168",
+					Organization:    "76",
+					Hostname:        "SWITCH_01",
+					DeviceType:      "switch",
+					DeviceCategory:  "network",
+					DeviceOS:        "IOS",
+					IsConfigWritten: false,
+					LearningState:   "Ready",
+					SSHConfig: cloudhub.SSHConfig{
+						SSHUserID:   "host",
+						SSHPassword: "@1234",
+						SSHPort:     22,
+					},
+					SNMPConfig: cloudhub.SNMPConfig{
+						SNMPCommunity: "@1234",
+						SNMPVersion:   "1",
+						SNMPPort:      623,
+						SNMPProtocol:  "udp",
+					},
+					Sensitivity: 1.0,
+				}, nil
+			}
+			if *q.ID == 548 {
+				return &cloudhub.NetworkDevice{
+					ID:              548,
+					DeviceIP:        "172.16.11.169",
+					Organization:    "76",
+					Hostname:        "SWITCH_01",
+					DeviceType:      "switch",
+					DeviceCategory:  "network",
+					DeviceOS:        "IOS",
+					IsConfigWritten: false,
+					LearningState:   "Ready",
+					SSHConfig: cloudhub.SSHConfig{
+						SSHUserID:   "host",
+						SSHPassword: "@1234",
+						SSHPort:     22,
+					},
+					SNMPConfig: cloudhub.SNMPConfig{
+						SNMPCommunity: "@1234",
+						SNMPVersion:   "1",
+						SNMPPort:      623,
+						SNMPProtocol:  "udp",
+					},
+					Sensitivity: 1.0,
+				}, nil
+			}
+			if *q.ID == 549 {
+				return &cloudhub.NetworkDevice{
+					ID:              549,
+					DeviceIP:        "172.16.11.170",
+					Organization:    "77",
+					Hostname:        "SWITCH_01",
+					DeviceType:      "switch",
+					DeviceCategory:  "network",
+					DeviceOS:        "IOS",
+					IsConfigWritten: false,
+					LearningState:   "Ready",
+					SSHConfig: cloudhub.SSHConfig{
+						SSHUserID:   "host",
+						SSHPassword: "@1234",
+						SSHPort:     22,
+					},
+					SNMPConfig: cloudhub.SNMPConfig{
+						SNMPCommunity: "@1234",
+						SNMPVersion:   "1",
+						SNMPPort:      623,
+						SNMPProtocol:  "udp",
+					},
+					Sensitivity: 1.0,
+				}, nil
+			}
+			if *q.ID == 550 {
+				return &cloudhub.NetworkDevice{
+					ID:              550,
+					DeviceIP:        "172.16.11.171",
+					Organization:    "77",
+					Hostname:        "SWITCH_01",
+					DeviceType:      "switch",
+					DeviceCategory:  "network",
+					DeviceOS:        "IOS",
+					IsConfigWritten: false,
+					LearningState:   "Ready",
+					SSHConfig: cloudhub.SSHConfig{
+						SSHUserID:   "host",
+						SSHPassword: "@1234",
+						SSHPort:     22,
+					},
+					SNMPConfig: cloudhub.SNMPConfig{
+						SNMPCommunity: "@1234",
+						SNMPVersion:   "1",
+						SNMPPort:      623,
+						SNMPProtocol:  "udp",
+					},
+					Sensitivity: 1.0,
+				}, nil
+			}
+			return &cloudhub.NetworkDevice{}, nil
 		},
 	}
 }
@@ -751,4 +904,43 @@ func NewMockData() *MockData {
 			},
 		},
 	}
+}
+
+func MockNetworkDeviceOrgStoreSetup() *mocks.NetworkDeviceOrgStore {
+	return &mocks.NetworkDeviceOrgStore{
+		AllF: func(ctx context.Context) ([]cloudhub.NetworkDeviceOrg, error) {
+			return []cloudhub.NetworkDeviceOrg{
+				{
+					ID:              "default",
+					MLFunction:      "ml_multiplied",
+					DataDuration:    1,
+					LearnCycle:      2,
+					DevicesIDs:      []uint64{1, 2, 3},
+					CollectorServer: "ch-collector-2",
+				},
+			}, nil
+		},
+	}
+}
+func equalMaps(a, b map[string][]int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for k, v := range a {
+		if !equalSlices(v, b[k]) {
+			return false
+		}
+	}
+	return true
+}
+func equalSlices(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }

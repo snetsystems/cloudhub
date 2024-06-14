@@ -561,15 +561,14 @@ func TestMarshalCSP(t *testing.T) {
 
 func TestMarshalDevice(t *testing.T) {
 	v := cloudhub.NetworkDevice{
-		ID:                  123,
-		Organization:        "default",
-		DeviceIP:            "192.168.1.1",
-		Hostname:            "device01",
-		DeviceType:          "Router",
-		DeviceCategory:      "Network",
-		DeviceOS:            "Cisco IOS",
-		IsConfigWritten:     false,
-		IsModelingGenerated: false,
+		ID:              123,
+		Organization:    "default",
+		DeviceIP:        "192.168.1.1",
+		Hostname:        "device01",
+		DeviceType:      "Router",
+		DeviceCategory:  "Network",
+		DeviceOS:        "Cisco IOS",
+		IsConfigWritten: false,
 		SSHConfig: cloudhub.SSHConfig{
 			SSHUserID:     "admin",
 			SSHPassword:   "admin123",
@@ -582,8 +581,10 @@ func TestMarshalDevice(t *testing.T) {
 			SNMPPort:      161,
 			SNMPProtocol:  "udp",
 		},
-		Sensitivity:  0.2,
-		DeviceVendor: "Cisco",
+		Sensitivity:        0.2,
+		DeviceVendor:       "Cisco",
+		LearningState:      "ready",
+		LearningUpdateDate: "2024-06-13T15:30:00.000Z",
 	}
 
 	var vv cloudhub.NetworkDevice
@@ -599,10 +600,12 @@ func TestMarshalDevice(t *testing.T) {
 
 func TestMarshalNetworkDeviceGroup(t *testing.T) {
 	v := cloudhub.NetworkDeviceOrg{
-		Algorithm:       "RoundRobin",
-		DataDuration:    100,
-		LearnCycle:      200,
-		DevicesID:       []string{"device1", "device2", "device3"},
+		ID:              "default",
+		LoadModule:      "learn.ch_nx_load",
+		MLFunction:      "ml_multiplied",
+		DataDuration:    1,
+		LearnCycle:      2,
+		DevicesIDs:      []uint64{1, 2, 3},
 		CollectorServer: "ch-collector-1",
 	}
 

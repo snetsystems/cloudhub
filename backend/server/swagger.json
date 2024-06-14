@@ -5046,6 +5046,46 @@
         }
       }
     },
+    "/ai/network/managements/monitoring/config": {
+      "post": {
+        "tags": ["Device Management Apply Monitoring"],
+        "summary": "Device Management Apply Monitoring for Logstash Config",
+        "description": "Managing Logstash configuration by Organization",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ApplyMonitoringDeviceRequest"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devices created successfully",
+            "schema": {
+              "$ref": "#/definitions/LogstashResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/snmp/validation": {
       "post": {
         "tags": ["SNMP Management"],
@@ -8700,6 +8740,20 @@
       },
       "required": ["devices_id"]
     },
+    "ApplyMonitoringDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "devices_id": {
+          "type": "array",
+          "description": "The IDs of the devices",
+          "items": {
+            "type": "uint64"
+          },
+          "example": [1, 2]
+        }
+      },
+      "required": ["devices_id"]
+    },
     "DeviceResponse": {
       "type": "object",
       "properties": {
@@ -8801,6 +8855,34 @@
                 "type": "string",
                 "description": "IP address of the device",
                 "example": "192.168.0.1"
+              },
+              "errorMessage": {
+                "type": "string",
+                "description": "Error message for the failed device",
+                "example": "organization does not exist"
+              }
+            }
+          }
+        }
+      }
+    },
+    "LogstashResponse": {
+      "type": "object",
+      "properties": {
+        "failed_devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "description": "Index of the device in the request array",
+                "example": "0"
+              },
+              "device_id": {
+                "type": "integer",
+                "description": "ID of the device",
+                "example": "1"
               },
               "errorMessage": {
                 "type": "string",

@@ -17,17 +17,13 @@ type NetworkDeviceOrgStore struct {
 }
 
 // Add creates a new Device in the deviceStore
-func (s *NetworkDeviceOrgStore) Add(ctx context.Context, org *cloudhub.NetworkDeviceOrg, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error) {
+func (s *NetworkDeviceOrgStore) Add(ctx context.Context, org *cloudhub.NetworkDeviceOrg) (*cloudhub.NetworkDeviceOrg, error) {
 	if err := s.client.kv.Update(ctx, func(tx Tx) error {
 		b := tx.Bucket(networkDeviceOrgBucket)
 
-		if q.ID == nil {
-			return fmt.Errorf("must specify either ID in Network Device Org Query")
-		}
-
 		if v, err := internal.MarshalNetworkDeviceOrg(org); err != nil {
 			return err
-		} else if err := b.Put([]byte(*q.ID), v); err != nil {
+		} else if err := b.Put([]byte(org.ID), v); err != nil {
 			return err
 		}
 		return nil
@@ -66,17 +62,15 @@ func (s *NetworkDeviceOrgStore) get(ctx context.Context, id string) (*cloudhub.N
 }
 
 // Delete removes the Device from the deviceStore.
-func (s *NetworkDeviceOrgStore) Delete(ctx context.Context, org *cloudhub.NetworkDeviceOrg, q cloudhub.NetworkDeviceOrgQuery) error {
+func (s *NetworkDeviceOrgStore) Delete(ctx context.Context, org *cloudhub.NetworkDeviceOrg) error {
 	if err := s.client.kv.Update(ctx, func(tx Tx) error {
-		if q.ID == nil {
-			return fmt.Errorf("must specify either ID in Network Device Org Query")
-		}
-		_, err := s.get(ctx, *q.ID)
+
+		_, err := s.get(ctx, org.ID)
 		if err != nil {
 			return cloudhub.ErrDeviceNotFound
 		}
 
-		if err := tx.Bucket(networkDeviceOrgBucket).Delete([]byte(*q.ID)); err != nil {
+		if err := tx.Bucket(networkDeviceOrgBucket).Delete([]byte(org.ID)); err != nil {
 			return err
 		}
 		return nil
@@ -88,20 +82,18 @@ func (s *NetworkDeviceOrgStore) Delete(ctx context.Context, org *cloudhub.Networ
 }
 
 // Update modifies an existing Device in the deviceStore.
-func (s *NetworkDeviceOrgStore) Update(ctx context.Context, org *cloudhub.NetworkDeviceOrg, q cloudhub.NetworkDeviceOrgQuery) error {
+func (s *NetworkDeviceOrgStore) Update(ctx context.Context, org *cloudhub.NetworkDeviceOrg) error {
 	if err := s.client.kv.Update(ctx, func(tx Tx) error {
-		if q.ID == nil {
-			return fmt.Errorf("must specify either ID in Network Device Org Query")
-		}
+
 		// Get an existing Device with the same ID.
-		_, err := s.get(ctx, *q.ID)
+		_, err := s.get(ctx, org.ID)
 		if err != nil {
 			return cloudhub.ErrDeviceNotFound
 		}
 
 		if v, err := internal.MarshalNetworkDeviceOrg(org); err != nil {
 			return err
-		} else if err := tx.Bucket(networkDeviceOrgBucket).Put([]byte(*q.ID), v); err != nil {
+		} else if err := tx.Bucket(networkDeviceOrgBucket).Put([]byte(org.ID), v); err != nil {
 			return err
 		}
 		return nil
@@ -113,7 +105,7 @@ func (s *NetworkDeviceOrgStore) Update(ctx context.Context, org *cloudhub.Networ
 }
 
 // All returns all known Network Device Groups.
-func (s *NetworkDeviceOrgStore) All(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) ([]cloudhub.NetworkDeviceOrg, error) {
+func (s *NetworkDeviceOrgStore) All(ctx context.Context) ([]cloudhub.NetworkDeviceOrg, error) {
 	var orgs []cloudhub.NetworkDeviceOrg
 	err := s.each(ctx, func(o *cloudhub.NetworkDeviceOrg) {
 		orgs = append(orgs, *o)

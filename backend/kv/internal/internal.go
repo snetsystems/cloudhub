@@ -1050,15 +1050,14 @@ func UnmarshalCSP(data []byte, t *cloudhub.CSP) error {
 // MarshalNetworkDevice encodes a Device struct to binary protobuf format.
 func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
 	return proto.Marshal(&NetworkDevice{
-		ID:                  t.ID,
-		Organization:        t.Organization,
-		DeviceIP:            t.DeviceIP,
-		Hostname:            t.Hostname,
-		DeviceType:          t.DeviceType,
-		DeviceCategory:      t.DeviceCategory,
-		DeviceOS:            t.DeviceOS,
-		IsConfigWritten:     t.IsConfigWritten,
-		IsModelingGenerated: t.IsModelingGenerated,
+		ID:              t.ID,
+		Organization:    t.Organization,
+		DeviceIP:        t.DeviceIP,
+		Hostname:        t.Hostname,
+		DeviceType:      t.DeviceType,
+		DeviceCategory:  t.DeviceCategory,
+		DeviceOS:        t.DeviceOS,
+		IsConfigWritten: t.IsConfigWritten,
 		SSHConfig: &SSHConfig{
 			SSHUserID:     t.SSHConfig.SSHUserID,
 			SSHPassword:   t.SSHConfig.SSHPassword,
@@ -1071,8 +1070,10 @@ func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
 			SNMPPort:      int32(t.SNMPConfig.SNMPPort),
 			SNMPProtocol:  t.SNMPConfig.SNMPProtocol,
 		},
-		Sensitivity:  float32(t.Sensitivity),
-		DeviceVendor: t.DeviceVendor,
+		Sensitivity:        float32(t.Sensitivity),
+		DeviceVendor:       t.DeviceVendor,
+		LearningState:      t.LearningState,
+		LearningUpdateDate: t.LearningUpdateDate,
 	})
 }
 
@@ -1090,7 +1091,6 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 	t.DeviceCategory = pb.DeviceCategory
 	t.DeviceOS = pb.DeviceOS
 	t.IsConfigWritten = pb.IsConfigWritten
-	t.IsModelingGenerated = pb.IsModelingGenerated
 	t.SSHConfig = cloudhub.SSHConfig{
 		SSHUserID:     pb.SSHConfig.SSHUserID,
 		SSHPassword:   pb.SSHConfig.SSHPassword,
@@ -1105,6 +1105,8 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 	}
 	t.Sensitivity = pb.Sensitivity
 	t.DeviceVendor = pb.DeviceVendor
+	t.LearningState = pb.LearningState
+	t.LearningUpdateDate = pb.LearningUpdateDate
 
 	return nil
 }
@@ -1112,6 +1114,8 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 // MarshalNetworkDeviceOrg encodes a networkDeviceOrg struct to binary protobuf format.
 func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
 	return proto.Marshal(&NetworkDeviceOrg{
+		ID:              t.ID,
+		LoadModule:      t.LoadModule,
 		MLFunction:      t.MLFunction,
 		DataDuration:    int32(t.DataDuration),
 		LearnCycle:      int32(t.LearnCycle),
@@ -1126,6 +1130,8 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 	if err := proto.Unmarshal(data, &pb); err != nil {
 		return err
 	}
+	t.ID = pb.ID
+	t.LoadModule = pb.LoadModule
 	t.MLFunction = pb.MLFunction
 	t.DataDuration = int(pb.DataDuration)
 	t.LearnCycle = int(pb.LearnCycle)
