@@ -1489,3 +1489,11 @@ export const notifyUpdateDeviceFailed = (
   duration: INFINITE,
   message: `Failed to update Device. ${errorMessage}`,
 })
+
+export const notifyFetchDeviceMonitoringStatusFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to fetch device monitoring status: ${errorMessage}`,
+})

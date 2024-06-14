@@ -52,7 +52,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       },
     },
     {
-      key: 'id',
+      key: 'isMonitoring',
       name: 'Monitoring',
       options: {
         sorting: true,
@@ -61,7 +61,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       render: value => (
         <div
           className={`table-dot ${
-            value % 2 === 0 ? 'dot-success' : 'dot-danger'
+            value ? 'dot-success' : 'dot-critical'
           } flex-center`}
         ></div>
       ),
