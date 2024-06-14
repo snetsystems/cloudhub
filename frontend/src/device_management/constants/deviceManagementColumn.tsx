@@ -65,8 +65,8 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       ),
     },
     {
-      key: 'is_modeling_generated',
-      name: 'Modeling',
+      key: '',
+      name: 'Learning State',
       options: {
         sorting: true,
       },
@@ -76,7 +76,24 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
             !!value ? 'indicator--primary' : 'indicator--fail'
           }`}
         >
-          {value ? 'generate' : 'non-generate'}
+          {value ?? 'ready'}
+        </div>
+      ),
+    },
+    {
+      key: '',
+      name: 'Date',
+      options: {
+        sorting: true,
+      },
+      render: value => (
+        <div
+          className={`agent--indicator ${
+            !!value ? 'indicator--primary' : 'indicator--fail'
+          } `}
+        >
+          <div>{value ?? `2024-06-13`}</div>
+          <div>{`16:45:00`}</div>
         </div>
       ),
     },

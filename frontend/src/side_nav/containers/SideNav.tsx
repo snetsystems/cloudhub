@@ -157,15 +157,17 @@ class SideNav extends PureComponent<Props> {
           </NavBlock>
         )}
         <NavBlock
-          highlightWhen={['applications']}
+          highlightWhen={['AI']}
           icon="_snet--application"
-          link={`${sourcePrefix}/applications`}
+          link={`${sourcePrefix}/ai/device-management`}
           location={location}
         >
-          <NavHeader
-            link={`${sourcePrefix}/applications`}
-            title="Applications"
-          />
+          <NavHeader link={`${sourcePrefix}/ai/device-management`} title="AI" />
+          {isUsingVMware && (
+            <NavListItem link={`${sourcePrefix}/ai/device-management`}>
+              Device Management
+            </NavListItem>
+          )}
         </NavBlock>
         <NavBlock
           highlightWhen={['alerts', 'alert-rules', 'tickscript']}

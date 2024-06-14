@@ -17,6 +17,7 @@ export interface DeviceData {
   is_modeling_generated?: boolean
   is_config_written?: boolean
 }
+
 export interface SNMPConfig {
   snmp_community: string
   snmp_port: number
