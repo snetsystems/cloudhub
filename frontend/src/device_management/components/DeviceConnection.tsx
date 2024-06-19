@@ -56,6 +56,7 @@ interface Props {
   organizations: Organization[]
   selectedDeviceData: DeviceData
   notify: (n: Notification) => void
+  setDeviceManagementIsLoading: (isLoading: boolean) => void
   toggleVisibility: ToggleWizard
 }
 
@@ -86,9 +87,19 @@ class DeviceConnection extends PureComponent<Props, State> {
       prevProps.deviceConnectionStatus !== this.props.deviceConnectionStatus
     ) {
       if (this.props.deviceConnectionStatus === 'Updating') {
-        this.setState({deviceData: this.props.selectedDeviceData})
+        this.setState({
+          deviceData: this.props.selectedDeviceData,
+          deviceSNMPConnectionStatus: 'Incomplete',
+          setupCompleteStatus: 'Incomplete',
+          sshConnectionStatus: 'Incomplete',
+        })
       } else {
-        this.setState({deviceData: DEFAULT_NETWORK_DEVICE_DATA})
+        this.setState({
+          deviceData: DEFAULT_NETWORK_DEVICE_DATA,
+          deviceSNMPConnectionStatus: 'Incomplete',
+          setupCompleteStatus: 'Incomplete',
+          sshConnectionStatus: 'Incomplete',
+        })
       }
     }
   }
@@ -183,6 +194,8 @@ class DeviceConnection extends PureComponent<Props, State> {
 
     try {
       const snmpConfigData = this.generateSNMPConfig(deviceData)
+
+      this.props.setDeviceManagementIsLoading(true)
       const {failed_requests, results} = await validateSNMPConnection(
         snmpConfigData
       )
@@ -217,6 +230,8 @@ class DeviceConnection extends PureComponent<Props, State> {
   private handleSNMPConnectionError = (errorMessage: string): NextReturn => {
     this.setState({deviceSNMPConnectionStatus: 'Error'})
     this.props.notify(notifySNMPConnectFailed(errorMessage))
+    this.props.setDeviceManagementIsLoading(false)
+
     return {error: true, payload: {}}
   }
 
@@ -225,7 +240,6 @@ class DeviceConnection extends PureComponent<Props, State> {
   ): NextReturn => {
     const {device_type, hostname, device_os} = results[0]
 
-    this.props.notify(notifySNMPConnectSucceeded())
     this.setState(prevState => ({
       deviceData: {
         ...prevState.deviceData,
@@ -235,6 +249,8 @@ class DeviceConnection extends PureComponent<Props, State> {
       },
       deviceSNMPConnectionStatus: 'Complete',
     }))
+    this.props.notify(notifySNMPConnectSucceeded())
+    this.props.setDeviceManagementIsLoading(false)
 
     return {error: false, payload: {}}
   }
@@ -265,6 +281,7 @@ class DeviceConnection extends PureComponent<Props, State> {
         [deviceData],
         organizations
       ) as DeviceData[]
+      this.props.setDeviceManagementIsLoading(true)
       const {failed_devices} = await createDevices(convertedDeviceData)
 
       if (failed_devices && failed_devices.length > 0) {
@@ -280,12 +297,16 @@ class DeviceConnection extends PureComponent<Props, State> {
   private handleCreateDevicesError = (errorMessage: string): NextReturn => {
     this.setState({setupCompleteStatus: 'Error'})
     this.props.notify(notifyCreateDeviceFailed(errorMessage))
+    this.props.setDeviceManagementIsLoading(false)
+
     return {error: true, payload: {}}
   }
 
   private handleCreateDevicesSuccess = (): NextReturn => {
-    this.props.notify(notifyCreateDeviceSucceeded())
     this.setState({setupCompleteStatus: 'Complete'})
+    this.props.notify(notifyCreateDeviceSucceeded())
+    this.props.setDeviceManagementIsLoading(false)
+
     return {error: false, payload: {}}
   }
 
@@ -299,6 +320,7 @@ class DeviceConnection extends PureComponent<Props, State> {
         deviceData,
         organizations
       ) as DeviceData
+      this.props.setDeviceManagementIsLoading(true)
       const {failed_devices} = await updateDevice({
         id,
         deviceData: convertedDeviceData,
@@ -315,8 +337,9 @@ class DeviceConnection extends PureComponent<Props, State> {
   }
 
   private handleUpdateDevicesSuccess = (): NextReturn => {
-    this.props.notify(notifyUpdateDeviceSucceeded())
     this.setState({setupCompleteStatus: 'Complete'})
+    this.props.notify(notifyUpdateDeviceSucceeded())
+    this.props.setDeviceManagementIsLoading(false)
 
     return {error: false, payload: {}}
   }
@@ -326,6 +349,7 @@ class DeviceConnection extends PureComponent<Props, State> {
 
     this.setState({setupCompleteStatus: 'Error'})
     this.props.notify(notifyUpdateDeviceFailed(_errorMessage))
+    this.props.setDeviceManagementIsLoading(false)
 
     return {error: true, payload: {}}
   }

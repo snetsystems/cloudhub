@@ -222,12 +222,14 @@ class DeviceManagement extends PureComponent<Props, State> {
           selectedDeviceData={selectedDeviceData}
           isUsingAuth={isUsingAuth}
           toggleVisibility={this.handleToggleDeviceConnectionModal}
+          setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
         />
         <ImportDevicePage
           isVisible={importDeviceWizardVisibility}
           organizations={organizations}
           onDismissOverlay={this.handleDismissImportDeviceModalOverlay}
           notify={this.props.notify}
+          setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
         />
 
         {this.state.isLoading && (
@@ -271,7 +273,9 @@ class DeviceManagement extends PureComponent<Props, State> {
         deviceMonitoringStatus,
       })
     } catch (error) {
-      this.props.notify(notifyFetchDeviceMonitoringStatusFailed(error.message))
+      this.props.notify(
+        notifyFetchDeviceMonitoringStatusFailed(error.message || '')
+      )
     }
   }
 
@@ -391,6 +395,10 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({
       importDeviceWizardVisibility: false,
     })
+  }
+
+  private setDeviceManagementIsLoading = (isLoading: boolean) => {
+    this.setState({isLoading})
   }
 }
 

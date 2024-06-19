@@ -60,6 +60,7 @@ interface Props {
   organizations: Organization[]
   notify: (n: Notification) => void
   onDismissOverlay: () => void
+  setDeviceManagementIsLoading: (isLoading: boolean) => void
 }
 
 interface State {
@@ -85,6 +86,12 @@ class ImportDevicePage extends PureComponent<Props, State> {
       isDeviceDataSaveButtonEnabled: false,
       devicesData: [],
       deviceStatusMessageJSXElement: <></>,
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.isVisible !== this.props.isVisible) {
+      this.initializeComponentState()
     }
   }
 
@@ -225,8 +232,11 @@ class ImportDevicePage extends PureComponent<Props, State> {
   }
 
   private handleValidateSNMPConnection = async () => {
+    const {setDeviceManagementIsLoading} = this.props
+
     try {
       const snmpConfigs = this.generateSNMPConfigs()
+      setDeviceManagementIsLoading(true)
       const {failed_requests, results} = await validateSNMPConnection(
         snmpConfigs
       )
@@ -266,6 +276,8 @@ class ImportDevicePage extends PureComponent<Props, State> {
       failed_requests,
       snmpConnectionSuccessDevices
     )
+
+    this.props.setDeviceManagementIsLoading(false)
     this.setState({
       importDevicePageStatus: 'DeviceStatus',
       isDeviceDataSaveButtonEnabled: isDeviceDataSaveButtonEnabled,
@@ -393,6 +405,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
 
   private handleSNMPConnectionError = (errorMessage: string) => {
     this.props.notify(notifySNMPConnectFailed(errorMessage))
+    this.props.setDeviceManagementIsLoading(false)
   }
 
   private scrollMaxHeight = window.innerHeight * 0.45
@@ -501,6 +514,8 @@ class ImportDevicePage extends PureComponent<Props, State> {
         devicesData,
         organizations
       ) as DeviceData[]
+
+      this.props.setDeviceManagementIsLoading(true)
       const {failed_devices} = await createDevices(convertedDeviceData)
 
       if (failed_devices && failed_devices.length > 0) {
@@ -517,6 +532,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     const {onDismissOverlay} = this.props
 
     this.props.notify(notifyCreateDevicesFailed(errorMessage))
+    this.props.setDeviceManagementIsLoading(false)
     this.initializeComponentState()
     onDismissOverlay()
   }
@@ -528,6 +544,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     const failedMessage = this.getFailedDevicesErrorMessage(failedDevices)
 
     this.props.notify(notifyCreateDevicesFailed(failedMessage))
+    this.props.setDeviceManagementIsLoading(false)
     this.initializeComponentState()
     onDismissOverlay()
   }
@@ -552,6 +569,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     const {onDismissOverlay} = this.props
 
     this.props.notify(notifyCreateDevicesSucceeded())
+    this.props.setDeviceManagementIsLoading(false)
     this.initializeComponentState()
     onDismissOverlay()
   }
