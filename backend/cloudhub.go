@@ -51,6 +51,7 @@ const (
 	ErrCSPNotFound                     = Error("CSP not found")
 	ErrCSPAlreadyExists                = Error("CSP already exists")
 	ErrDeviceNotFound                  = Error("Network Device not found")
+	ErrDeviceOrgNotFound               = Error("Network Device organization not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -1135,6 +1136,42 @@ type KVClient interface {
 	NetworkDeviceStore() NetworkDeviceStore
 }
 
+// NetworkDeviceOrgQuery represents the attributes that a networkDeviceOrg may be retrieved by.
+// It is predominantly used in the networkDeviceOrgStore.Get method.
+//
+// It is expected that only one of Organization ID will be
+// specified, but all are provided networkDeviceOrgStore should prefer ID.
+type NetworkDeviceOrgQuery struct {
+	ID *string
+}
+
+// NetworkDeviceOrg represents the information of a network device group
+type NetworkDeviceOrg struct {
+	ID                  string   `json:"organization"`
+	LoadModule          string   `json:"load_module"`
+	MLFunction          string   `json:"ml_function"`
+	DataDuration        int      `json:"data_duration"`
+	LearnCycle          int      `json:"learn_cycle"`
+	LearnedDevicesIDs   []uint64 `json:"learned_devices_ids"`
+	CollectorServer     string   `json:"collector_server"`
+	PredictionMode      string   `json:"prediction_mode"`
+	IsPredictionActive  bool     `json:"is_prediction_active"`
+	CollectedDevicesIDs []uint64 `json:"collected_devices_ids"`
+}
+
+// NetworkDeviceOrgStore is the Storage and retrieval of information
+type NetworkDeviceOrgStore interface {
+	All(context.Context) ([]NetworkDeviceOrg, error)
+
+	Add(context.Context, *NetworkDeviceOrg) (*NetworkDeviceOrg, error)
+
+	Delete(context.Context, *NetworkDeviceOrg) error
+
+	Get(ctx context.Context, q NetworkDeviceOrgQuery) (*NetworkDeviceOrg, error)
+
+	Update(context.Context, *NetworkDeviceOrg) error
+}
+
 // DeviceCategoryMap maps device category keys to their corresponding category names.
 var DeviceCategoryMap = map[string]string{
 	"server":  "server",
@@ -1151,38 +1188,40 @@ type NetworkDeviceQuery struct {
 	Organization *string
 }
 
-// NetworkDevice represents the information of a network device
-type NetworkDevice struct {
-	ID                 uint64     `json:"id,string,omitempty"`
-	Organization       string     `json:"organization"`
-	DeviceIP           string     `json:"device_ip"`
-	Hostname           string     `json:"hostname"`
-	DeviceType         string     `json:"device_type"`
-	DeviceCategory     string     `json:"device_category"`
-	DeviceOS           string     `json:"device_os"`
-	IsConfigWritten    bool       `json:"is_config_written"`
-	SSHConfig          SSHConfig  `json:"ssh_config"`
-	SNMPConfig         SNMPConfig `json:"snmp_config"`
-	Sensitivity        float32    `json:"sensitivity"`
-	DeviceVendor       string     `json:"device_vendor"`
-	LearningState      string     `json:"learning_state"`
-	LearningUpdateDate string     `json:"learning_update_date"`
-}
-
 // SSHConfig is Connection Config
 type SSHConfig struct {
-	SSHUserID     string `json:"ssh_user_id"`
-	SSHPassword   string `json:"ssh_password"`
-	SSHEnPassword string `json:"ssh_en_password"`
-	SSHPort       int    `json:"ssh_port"`
+	UserID     string `json:"user_id"`
+	Password   string `json:"password"`
+	EnPassword string `json:"en_password"`
+	Port       int    `json:"port"`
 }
 
 // SNMPConfig is Connection Config
 type SNMPConfig struct {
-	SNMPCommunity string `json:"snmp_community"`
-	SNMPVersion   string `json:"snmp_version"`
-	SNMPPort      int    `json:"snmp_port"`
-	SNMPProtocol  string `json:"snmp_protocol"`
+	Community string `json:"community"`
+	Version   string `json:"version"`
+	Port      int    `json:"port"`
+	Protocol  string `json:"protocol"`
+}
+
+// NetworkDevice represents the information of a network device
+type NetworkDevice struct {
+	ID                     uint64     `json:"id,omitempty"`
+	Organization           string     `json:"organization"`
+	DeviceIP               string     `json:"device_ip"`
+	Hostname               string     `json:"hostname"`
+	DeviceType             string     `json:"device_type"`
+	DeviceCategory         string     `json:"device_category"`
+	DeviceOS               string     `json:"device_os"`
+	IsCollectingCfgWritten bool       `json:"is_collector_cfg_written"`
+	SSHConfig              SSHConfig  `json:"ssh_config"`
+	SNMPConfig             SNMPConfig `json:"snmp_config"`
+	Sensitivity            float32    `json:"sensitivity"`
+	DeviceVendor           string     `json:"device_vendor"`
+	LearningState          string     `json:"learning_state"`
+	LearningBeginDatetime  string     `json:"learning_begin_datetime"`
+	LearningFinishDatetime string     `json:"learning_finish_datetime"`
+	IsLearning             bool       `json:"is_learning"`
 }
 
 // NetworkDeviceStore is the Storage and retrieval of information
@@ -1196,37 +1235,4 @@ type NetworkDeviceStore interface {
 	Get(ctx context.Context, q NetworkDeviceQuery) (*NetworkDevice, error)
 
 	Update(context.Context, *NetworkDevice) error
-}
-
-// NetworkDeviceOrgQuery represents the attributes that a networkDeviceOrg may be retrieved by.
-// It is predominantly used in the networkDeviceOrgStore.Get method.
-//
-// It is expected that only one of Organization ID will be
-// specified, but all are provided networkDeviceOrgStore should prefer ID.
-type NetworkDeviceOrgQuery struct {
-	ID *string
-}
-
-// NetworkDeviceOrg represents the information of a network device group
-type NetworkDeviceOrg struct {
-	ID              string   `json:"organization"`
-	LoadModule      string   `json:"load_module"`
-	MLFunction      string   `json:"ml_function"`
-	DataDuration    int      `json:"data_duration"`
-	LearnCycle      int      `json:"learn_cycle"`
-	DevicesIDs      []uint64 `json:"devices_id"`
-	CollectorServer string   `json:"collector_server"`
-}
-
-// NetworkDeviceOrgStore is the Storage and retrieval of information
-type NetworkDeviceOrgStore interface {
-	All(context.Context) ([]NetworkDeviceOrg, error)
-
-	Add(context.Context, *NetworkDeviceOrg) (*NetworkDeviceOrg, error)
-
-	Delete(context.Context, *NetworkDeviceOrg) error
-
-	Get(ctx context.Context, q NetworkDeviceOrgQuery) (*NetworkDeviceOrg, error)
-
-	Update(context.Context, *NetworkDeviceOrg) error
 }

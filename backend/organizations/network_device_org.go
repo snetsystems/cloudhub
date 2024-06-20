@@ -51,7 +51,7 @@ func (s *NetworkDeviceOrgStore) Get(ctx context.Context, q cloudhub.NetworkDevic
 		return nil, err
 	}
 	if *q.ID != s.organization {
-		return nil, cloudhub.ErrDeviceNotFound
+		return nil, cloudhub.ErrDeviceOrgNotFound
 	}
 
 	return t, nil

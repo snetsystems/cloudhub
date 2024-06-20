@@ -294,63 +294,72 @@ message CSP {
 	string Minion           = 10; // Minion is the vsphere connect salt minion
 }
 
-
 // Key: Organization ID
 message NetworkDeviceOrg {
-  string ID                   = 1; // Org ID
-  string LoadModule           = 2; // Currently fixed by learn.ch_nx_load
-  string MLFunction           = 3; // ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']
-  int32 DataDuration          = 4; // data_duration for learning
-  int32 LearnCycle            = 5; // learning_cycle (day[s]). Using in kapacitor cron method
-  repeated uint64 DevicesIDs  = 6; // the list of device IDs included in the network device group
-  string CollectorServer      = 7; // the server(minion_id) used to collect network data
+  string ID                           = 1;  // Org ID
+  string LoadModule                   = 2;  // Currently fixed by learn.ch_nx_load
+  string MLFunction                   = 3;  // ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']
+  int32 DataDuration                  = 4;  // data_duration for learning
+  int32 LearnCycle                    = 5;  // learning_cycle (day[s]). Using in kapacitor cron method
+  repeated uint64 LearnedDevicesIDs   = 6;  // the list of device IDs what will be learing included in the network device org
+  string CollectorServer              = 7;  // the server(minion_id) used to collect network data
+  string PredictionMode               = 8;  // This is selected PredictionMode. It can be "ML", "DL" or "Ensemble(ML + DL)".
+  bool IsPredictionActive             = 9;  // Indicates whether AI prediction is active
+  repeated uint64 CollectedDevicesIDs = 10; // the list of device IDs included in Logstash Config
 }
 message SSHConfig {
-  string SSHUserID     = 1; // user id used for SSH connection
-  string SSHPassword   = 2; // the password used for SSH connection
-  string SSHEnPassword = 3; // enable password for devices that require it
-  int32 SSHPort        = 4; // port number used for SSH connection
+  string UserID     = 1; // user id used for SSH connection
+  string Password   = 2; // the password used for SSH connection
+  string EnPassword = 3; // enable password for devices that require it
+  int32 Port        = 4; // port number used for SSH connection
 }
 message SNMPConfig {
-  string SNMPCommunity = 1; // community string for SNMP
-  string SNMPVersion   = 2; // version of SNMP used
-  int32 SNMPPort       = 3; // port number used for SNMP
-  string SNMPProtocol  = 4; // protocol to use udp or tcp
+  string Community = 1; // community string for SNMP
+  string Version   = 2; // version of SNMP used
+  int32 Port       = 3; // port number used for SNMP
+  string Protocol  = 4; // protocol to use udp or tcp
 }
-
 // Key: unique identifier of the device
 message NetworkDevice { 
-  uint64 ID                 = 1;  // unique identifier of the device
-  string Organization       = 2;  // organization ID that device belongs to
-  string DeviceIP           = 3;  // IP address of the device
-  string Hostname           = 4;  // network name of the device
-  string DeviceType         = 5;  // type of the device, such as switch or router
-  string DeviceCategory     = 6;  // category of the device, such as Server or Network
-  string DeviceOS           = 7;  // operating system running on the device
-  bool IsConfigWritten      = 8;  // logstash config written status
-  SSHConfig SSHConfig       = 9;  // contains the SSH configuration for the device
-  SNMPConfig SNMPConfig     = 10; // contains the SNMP configuration for the device
-  float Sensitivity         = 11; // Sensitivity throttle ratio
-  string DeviceVendor       = 12; // DeviceVendor is the vendor of the device
-  string LearningState      = 13; // Indicates the status of model for the device
-  string learningUpdateDate = 14; // Indicates the timestamp when the learning data was last updated
+  uint64 ID                     = 1;  // unique identifier of the device
+  string Organization           = 2;  // organization ID that device belongs to
+  string DeviceIP               = 3;  // IP address of the device
+  string Hostname               = 4;  // network name of the device
+  string DeviceType             = 5;  // type of the device, such as switch or router
+  string DeviceCategory         = 6;  // category of the device, such as Server or Network
+  string DeviceOS               = 7;  // operating system running on the device
+  bool IsCollectingCfgWritten   = 8;  // collecting config written status
+  SSHConfig SSHConfig           = 9;  // contains the SSH configuration for the device
+  SNMPConfig SNMPConfig         = 10; // contains the SNMP configuration for the device
+  float Sensitivity             = 11; // Sensitivity throttle ratio
+  string DeviceVendor           = 12; // DeviceVendor is the vendor of the device
+  string LearningState          = 13; // Indicates the status of model for the device
+  string LearningBeginDatetime  = 14; // TZ=UTC, Format=RFC3339
+  string LearningFinishDatetime = 15; // TZ=UTC, Format=RFC3339
+  bool IsLearning               = 16; //  Indicates whether to create a learning model
 }
-
 // Key: device IP (Afer adding device ID tag from logstash to influxdb, this key will be device ID)
 message MLNxRst {
-  string DeviceIP                   = 1;  // IP address of the device
+  string Device                     = 1;  // IP address or ID of the device
   double Epsilon                    = 2;  // ML Result value
   string MeanMatrix                 = 3;  // 1x2 mean numpy matrix
   string CovarianceMatrix           = 4;  // 2x2 covariance numpy matrix
-  float K                           = 5;
+  float K                           = 5;  // Dicision coefficient for determination of threshold
   float Mean                        = 6;  // Mean value by whole elements
   float MDThreshold                 = 7;  // MDThreshold = mean * K * Sensitivity
   repeated float MDArray            = 8;  // Mahalanobis distance array (Use later)
   repeated float CPUArray           = 9;  // (Use later)
   repeated float TrafficArray       = 10; // (Use later)
   repeated float GaussianArray      = 11; // (Use later)
+  string LearningFinishDatetime     = 12; // TZ=UTC, Format=RFC3339
 }
-
+// Key: device IP (Afer adding device ID tag from logstash to influxdb, this key will be device ID)
+message DLNxRst {
+  string Device                 = 1;  // IP address or ID of the device
+  bytes Scaler                  = 2;
+  bytes Model                   = 3;
+  string LearningFinishDatetime = 4;  // TZ=UTC, Format=RFC3339
+}
 // The following is a vim modeline, it autoconfigures vim to have the
 // appropriate tabbing and whitespace management to edit this file
 //

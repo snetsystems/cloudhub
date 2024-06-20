@@ -561,30 +561,32 @@ func TestMarshalCSP(t *testing.T) {
 
 func TestMarshalDevice(t *testing.T) {
 	v := cloudhub.NetworkDevice{
-		ID:              123,
-		Organization:    "default",
-		DeviceIP:        "192.168.1.1",
-		Hostname:        "device01",
-		DeviceType:      "Router",
-		DeviceCategory:  "Network",
-		DeviceOS:        "Cisco IOS",
-		IsConfigWritten: false,
+		ID:                     123,
+		Organization:           "default",
+		DeviceIP:               "192.168.1.1",
+		Hostname:               "device01",
+		DeviceType:             "Router",
+		DeviceCategory:         "Network",
+		DeviceOS:               "Cisco IOS",
+		IsCollectingCfgWritten: false,
 		SSHConfig: cloudhub.SSHConfig{
-			SSHUserID:     "admin",
-			SSHPassword:   "admin123",
-			SSHEnPassword: "secret123",
-			SSHPort:       22,
+			UserID:     "admin",
+			Password:   "admin123",
+			EnPassword: "secret123",
+			Port:       22,
 		},
 		SNMPConfig: cloudhub.SNMPConfig{
-			SNMPCommunity: "public",
-			SNMPVersion:   "2c",
-			SNMPPort:      161,
-			SNMPProtocol:  "udp",
+			Community: "public",
+			Version:   "2c",
+			Port:      161,
+			Protocol:  "udp",
 		},
-		Sensitivity:        0.2,
-		DeviceVendor:       "Cisco",
-		LearningState:      "ready",
-		LearningUpdateDate: "2024-06-13T15:30:00.000Z",
+		Sensitivity:            0.2,
+		DeviceVendor:           "Cisco",
+		LearningState:          "ready",
+		LearningBeginDatetime:  "2024-06-19T08:45:30.123Z",
+		LearningFinishDatetime: "2024-06-19T08:45:30.123Z",
+		IsLearning:             false,
 	}
 
 	var vv cloudhub.NetworkDevice
@@ -598,15 +600,18 @@ func TestMarshalDevice(t *testing.T) {
 	}
 }
 
-func TestMarshalNetworkDeviceGroup(t *testing.T) {
+func TestMarshalNetworkDeviceOrg(t *testing.T) {
 	v := cloudhub.NetworkDeviceOrg{
-		ID:              "default",
-		LoadModule:      "learn.ch_nx_load",
-		MLFunction:      "ml_multiplied",
-		DataDuration:    1,
-		LearnCycle:      2,
-		DevicesIDs:      []uint64{1, 2, 3},
-		CollectorServer: "ch-collector-1",
+		ID:                  "default",
+		LoadModule:          "learn.ch_nx_load",
+		MLFunction:          "ml_multiplied",
+		DataDuration:        1,
+		LearnCycle:          2,
+		LearnedDevicesIDs:   []uint64{1, 2, 3},
+		CollectorServer:     "ch-collector-1",
+		PredictionMode:      "ML",
+		CollectedDevicesIDs: []uint64{1, 2, 3},
+		IsPredictionActive:  false,
 	}
 
 	var vv cloudhub.NetworkDeviceOrg

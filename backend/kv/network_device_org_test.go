@@ -21,22 +21,22 @@ func TestNetworkDeviceOrgStore(t *testing.T) {
 
 	orgs := []cloudhub.NetworkDeviceOrg{
 		{
-			ID:              "default",
-			LoadModule:      "earn.ch_nx_load",
-			MLFunction:      "Algorithm_1",
-			DataDuration:    1,
-			LearnCycle:      2,
-			DevicesIDs:      []uint64{1, 2},
-			CollectorServer: "ch-collector-1",
+			ID:                "default",
+			LoadModule:        "earn.ch_nx_load",
+			MLFunction:        "Algorithm_1",
+			DataDuration:      1,
+			LearnCycle:        2,
+			LearnedDevicesIDs: []uint64{1, 2},
+			CollectorServer:   "ch-collector-1",
 		},
 		{
-			ID:              "1",
-			LoadModule:      "earn.ch_nx_load",
-			MLFunction:      "Algorithm_2",
-			DataDuration:    2,
-			LearnCycle:      3,
-			DevicesIDs:      []uint64{3, 4},
-			CollectorServer: "ch-collector-2"},
+			ID:                "1",
+			LoadModule:        "earn.ch_nx_load",
+			MLFunction:        "Algorithm_2",
+			DataDuration:      2,
+			LearnCycle:        3,
+			LearnedDevicesIDs: []uint64{3, 4},
+			CollectorServer:   "ch-collector-2"},
 	}
 
 	// Create an array to store the IDs and queries

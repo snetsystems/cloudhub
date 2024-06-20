@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestParseSNMPVersion tests the parseSNMPVersion function.
-func TestParseSNMPVersion(t *testing.T) {
+// TestParseVersion tests the parseSNMPVersion function.
+func TestParseVersion(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected gosnmp.SnmpVersion

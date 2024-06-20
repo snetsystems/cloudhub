@@ -27,16 +27,16 @@ type SNMPManager struct {
 
 // SNMPConfig holds the SNMP configuration.
 type SNMPConfig struct {
-	Community    string                    `json:"snmp_community"`
+	Community    string                    `json:"community"`
 	DeviceIP     string                    `json:"device_ip"`
-	Port         uint16                    `json:"snmp_port"`
-	Version      string                    `json:"snmp_version"`
+	Port         uint16                    `json:"port"`
+	Version      string                    `json:"version"`
 	Username     string                    `json:"snmp_user"`
 	AuthPassword string                    `json:"snmp_auth_password"`
 	AuthProtocol gosnmp.SnmpV3AuthProtocol `json:"snmp_v3_auth_protocol"`
 	PrivPassword string                    `json:"snmp_private_password"`
 	PrivProtocol gosnmp.SnmpV3PrivProtocol `json:"snmp_v3_private_protocol"`
-	Protocol     string                    `json:"snmp_protocol"` // "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6"
+	Protocol     string                    `json:"protocol"` // "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6"
 }
 
 // SNMPInterface defines the required methods for interacting with SNMP.

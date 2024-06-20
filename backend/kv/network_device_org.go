@@ -49,7 +49,7 @@ func (s *NetworkDeviceOrgStore) get(ctx context.Context, id string) (*cloudhub.N
 	err := s.client.kv.View(ctx, func(tx Tx) error {
 		v, err := tx.Bucket(networkDeviceOrgBucket).Get([]byte(id))
 		if v == nil || err != nil {
-			return cloudhub.ErrDeviceNotFound
+			return cloudhub.ErrDeviceOrgNotFound
 		}
 		return internal.UnmarshalNetworkDeviceOrg(v, &org)
 	})
@@ -67,7 +67,7 @@ func (s *NetworkDeviceOrgStore) Delete(ctx context.Context, org *cloudhub.Networ
 
 		_, err := s.get(ctx, org.ID)
 		if err != nil {
-			return cloudhub.ErrDeviceNotFound
+			return cloudhub.ErrDeviceOrgNotFound
 		}
 
 		if err := tx.Bucket(networkDeviceOrgBucket).Delete([]byte(org.ID)); err != nil {
@@ -88,7 +88,7 @@ func (s *NetworkDeviceOrgStore) Update(ctx context.Context, org *cloudhub.Networ
 		// Get an existing Device with the same ID.
 		_, err := s.get(ctx, org.ID)
 		if err != nil {
-			return cloudhub.ErrDeviceNotFound
+			return cloudhub.ErrDeviceOrgNotFound
 		}
 
 		if v, err := internal.MarshalNetworkDeviceOrg(org); err != nil {

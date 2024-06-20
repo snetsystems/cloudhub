@@ -6,13 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/pelletier/go-toml/v2"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
@@ -28,40 +29,49 @@ type deviceRequest struct {
 }
 
 type updateDeviceRequest struct {
-	DeviceIP           *string              `json:"device_ip,omitempty"`
-	Organization       *string              `json:"organization,omitempty"`
-	Hostname           *string              `json:"hostname,omitempty"`
-	DeviceCategory     *string              `json:"device_category"`
-	DeviceOS           *string              `json:"device_os,omitempty"`
-	IsConfigWritten    *bool                `json:"is_monitoring_enabled,omitempty"`
-	SSHConfig          *cloudhub.SSHConfig  `json:"ssh_config"`
-	SNMPConfig         *cloudhub.SNMPConfig `json:"snmp_config"`
-	Sensitivity        *float32             `json:"sensitivity,omitempty"`
-	DeviceVendor       *string              `json:"device_vendor,omitempty"`
-	LearningState      *string              `json:"learning_state"`
-	LearningUpdateDate *string              `json:"learning_update_date,omitempty"`
+	Organization           *string              `json:"organization,omitempty"`
+	DeviceIP               *string              `json:"device_ip,omitempty"`
+	Hostname               *string              `json:"hostname,omitempty"`
+	DeviceType             *string              `json:"device_type,omitempty"`
+	DeviceCategory         *string              `json:"device_category,omitempty"`
+	DeviceOS               *string              `json:"device_os,omitempty"`
+	IsCollectingCfgWritten *bool                `json:"is_collecting_cfg_written,omitempty"`
+	SSHConfig              *cloudhub.SSHConfig  `json:"ssh_config,omitempty"`
+	SNMPConfig             *cloudhub.SNMPConfig `json:"snmp_config,omitempty"`
+	Sensitivity            *float32             `json:"sensitivity,omitempty"`
+	DeviceVendor           *string              `json:"device_vendor,omitempty"`
+	IsLearning             *bool                `json:"is_learning, omitempty"`
+}
+type deleteDevicesRequest struct {
+	LearnedDevicesIDs []uint64 `json:"learned_devices_ids"`
 }
 
 type deviceResponse struct {
-	ID                 uint64              `json:"id"`
-	Organization       string              `json:"organization"`
-	OrganizationName   string              `json:"organization_name"`
-	DeviceIP           string              `json:"device_ip"`
-	Hostname           string              `json:"hostname"`
-	DeviceType         string              `json:"device_type"`
-	DeviceCategory     string              `json:"device_category"`
-	DeviceOS           string              `json:"device_os"`
-	IsConfigWritten    bool                `json:"is_config_written"`
-	SSHConfig          cloudhub.SSHConfig  `json:"ssh_config"`
-	SNMPConfig         cloudhub.SNMPConfig `json:"snmp_config"`
-	Sensitivity        float32             `json:"sensitivity,omitempty"`
-	DeviceVendor       string              `json:"device_vendor"`
-	LearningState      string              `json:"learning_state"`
-	LearningUpdateDate string              `json:"learning_update_date,omitempty"`
+	ID                     uint64              `json:"id"`
+	Organization           string              `json:"organization"`
+	DeviceIP               string              `json:"device_ip"`
+	Hostname               string              `json:"hostname"`
+	DeviceType             string              `json:"device_type"`
+	DeviceCategory         string              `json:"device_category"`
+	DeviceOS               string              `json:"device_os"`
+	IsCollectingCfgWritten bool                `json:"is_collector_cfg_written"`
+	SSHConfig              cloudhub.SSHConfig  `json:"ssh_config"`
+	SNMPConfig             cloudhub.SNMPConfig `json:"snmp_config"`
+	Sensitivity            float32             `json:"sensitivity"`
+	DeviceVendor           string              `json:"device_vendor"`
+	LearningState          string              `json:"learning_state"`
+	LearningBeginDatetime  string              `json:"learning_update_date"`
+	LearningFinishDatetime string              `json:"learning_finish_datetime"`
+	IsLearning             bool                `json:"is_learning"`
+	MLFunction             string              `json:"ml_function"`
 }
-type deviceError struct {
+type createDeviceError struct {
 	Index        int    `json:"index"`
 	DeviceIP     string `json:"device_ip,omitempty"`
+	DeviceID     uint64 `json:"device_id,omitempty"`
+	ErrorMessage string `json:"errorMessage"`
+}
+type deviceError struct {
 	DeviceID     uint64 `json:"device_id,omitempty"`
 	ErrorMessage string `json:"errorMessage"`
 }
@@ -71,56 +81,72 @@ type deviceMapByOrg struct {
 	AllDevices            []uint64
 }
 
-func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
+// State type definition
+type State string
 
-	orgName, err := s.OrganizationNameByID(ctx, device.Organization)
+// Define constants for the learn states
+const (
+	Ready        string = "ready"
+	MlInProgress string = "ML in Progress"
+	DlInProgress string = "DL in Progress"
+	MlComplete   string = "ML Complete"
+	DlComplete   string = "DL Complete"
+	MlFail       string = "ML Fail"
+	DlFail       string = "DL Fail"
+)
+
+func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
+	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
 
 	if err != nil {
 		return nil, err
 	}
 
 	resData := &deviceResponse{
-		ID:               device.ID,
-		Organization:     device.Organization,
-		OrganizationName: orgName,
-		DeviceIP:         device.DeviceIP,
-		Hostname:         device.Hostname,
-		DeviceType:       device.DeviceType,
-		DeviceCategory:   device.DeviceCategory,
-		DeviceOS:         device.DeviceOS,
-		IsConfigWritten:  device.IsConfigWritten,
+		ID:                     device.ID,
+		Organization:           device.Organization,
+		DeviceIP:               device.DeviceIP,
+		Hostname:               device.Hostname,
+		DeviceType:             device.DeviceType,
+		DeviceCategory:         device.DeviceCategory,
+		DeviceOS:               device.DeviceOS,
+		IsCollectingCfgWritten: device.IsCollectingCfgWritten,
 		SSHConfig: cloudhub.SSHConfig{
-			SSHUserID:     device.SSHConfig.SSHUserID,
-			SSHPassword:   device.SSHConfig.SSHPassword,
-			SSHEnPassword: device.SSHConfig.SSHEnPassword,
-			SSHPort:       device.SSHConfig.SSHPort,
+			UserID:     device.SSHConfig.UserID,
+			Password:   device.SSHConfig.Password,
+			EnPassword: device.SSHConfig.EnPassword,
+			Port:       device.SSHConfig.Port,
 		},
 		SNMPConfig: cloudhub.SNMPConfig{
-			SNMPCommunity: device.SNMPConfig.SNMPCommunity,
-			SNMPVersion:   device.SNMPConfig.SNMPVersion,
-			SNMPPort:      device.SNMPConfig.SNMPPort,
-			SNMPProtocol:  device.SNMPConfig.SNMPProtocol,
+			Community: device.SNMPConfig.Community,
+			Version:   device.SNMPConfig.Version,
+			Port:      device.SNMPConfig.Port,
+			Protocol:  device.SNMPConfig.Protocol,
 		},
-		Sensitivity:   device.Sensitivity,
-		DeviceVendor:  device.DeviceVendor,
-		LearningState: device.LearningState,
+		Sensitivity:            device.Sensitivity,
+		DeviceVendor:           device.DeviceVendor,
+		LearningState:          device.LearningState,
+		LearningBeginDatetime:  device.LearningBeginDatetime,
+		LearningFinishDatetime: device.LearningFinishDatetime,
+		IsLearning:             device.IsLearning,
+		MLFunction:             deviceOrg.MLFunction,
 	}
 
 	return resData, nil
 }
 
 type devicesResponse struct {
-	Devices       []*deviceResponse `json:"Devices"`
-	FailedDevices []deviceError     `json:"failed_devices"`
+	Devices       []*deviceResponse   `json:"Devices"`
+	FailedDevices []createDeviceError `json:"failed_devices"`
 }
 
 func newDevicesResponse(ctx context.Context, s *Service, devices []cloudhub.NetworkDevice) *devicesResponse {
 	devicesResp := []*deviceResponse{}
-	failedDevices := []deviceError{}
+	failedDevices := []createDeviceError{}
 	for i, device := range devices {
 		data, err := newDeviceResponse(ctx, s, &device)
 		if err != nil {
-			failedDevices = append(failedDevices, deviceError{
+			failedDevices = append(failedDevices, createDeviceError{
 				Index:        i,
 				DeviceIP:     device.DeviceIP,
 				ErrorMessage: err.Error(),
@@ -158,18 +184,21 @@ func (r *deviceRequest) CreateDeviceFromRequest() (*cloudhub.NetworkDevice, erro
 	}
 
 	return &cloudhub.NetworkDevice{
-		Organization:    r.Organization,
-		DeviceIP:        r.DeviceIP,
-		Hostname:        r.Hostname,
-		DeviceType:      r.DeviceType,
-		DeviceCategory:  cloudhub.DeviceCategoryMap["network"],
-		DeviceOS:        r.DeviceOS,
-		IsConfigWritten: false,
-		LearningState:   "ready",
-		SSHConfig:       r.SSHConfig,
-		SNMPConfig:      r.SNMPConfig,
-		Sensitivity:     1.0,
-		DeviceVendor:    r.DeviceVendor,
+		Organization:           r.Organization,
+		DeviceIP:               r.DeviceIP,
+		Hostname:               r.Hostname,
+		DeviceType:             r.DeviceType,
+		DeviceCategory:         cloudhub.DeviceCategoryMap["network"],
+		DeviceOS:               r.DeviceOS,
+		IsCollectingCfgWritten: false,
+		SSHConfig:              r.SSHConfig,
+		SNMPConfig:             r.SNMPConfig,
+		Sensitivity:            1.0,
+		DeviceVendor:           r.DeviceVendor,
+		LearningState:          "",
+		LearningBeginDatetime:  "",
+		LearningFinishDatetime: "",
+		IsLearning:             false,
 	}, nil
 }
 
@@ -227,12 +256,12 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 		ipCount[req.DeviceIP]++
 	}
 
-	var failedDevices []deviceError
+	var failedDevices []createDeviceError
 	var uniqueReqs []deviceRequest
 
 	for i, req := range reqs {
 		if ipCount[req.DeviceIP] > 1 {
-			failedDevices = append(failedDevices, deviceError{
+			failedDevices = append(failedDevices, createDeviceError{
 				Index:        i,
 				DeviceIP:     req.DeviceIP,
 				ErrorMessage: "duplicate IP in request",
@@ -257,7 +286,7 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 				if rec := recover(); rec != nil {
 					s.Logger.Error("Recovered from panic: %v", rec)
 					mu.Lock()
-					failedDevices = append(failedDevices, deviceError{
+					failedDevices = append(failedDevices, createDeviceError{
 						Index:        i,
 						DeviceIP:     req.DeviceIP,
 						ErrorMessage: "internal server error",
@@ -269,7 +298,7 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 			_, err := s.processDevice(ctx, req, allDevices)
 			if err != nil {
 				mu.Lock()
-				failedDevices = append(failedDevices, deviceError{
+				failedDevices = append(failedDevices, createDeviceError{
 					Index:        i,
 					DeviceIP:     req.DeviceIP,
 					ErrorMessage: err.Error(),
@@ -337,23 +366,78 @@ func (s *Service) DeviceID(w http.ResponseWriter, r *http.Request) {
 
 // RemoveDevices deletes specified Devices
 func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
-	var request struct {
-		DeviceIDs []uint64 `json:"devices_id"`
-	}
+	var request deleteDevicesRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request data", http.StatusBadRequest)
 		return
 	}
 
 	ctx := r.Context()
+
+	failedDevices := []deviceError{}
+	deviceListGroupByOrg := make(map[string][]uint64)
+
+	_, activeCollectorKeys, err := s.getCollectorServers()
+	if err != nil {
+		fmt.Println("internal server error:", err)
+		return
+	}
+
+	for _, deviceID := range request.LearnedDevicesIDs {
+		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
+		if err != nil {
+			failedDevices = append(failedDevices, deviceError{DeviceID: deviceID, ErrorMessage: err.Error()})
+		} else {
+			deviceListGroupByOrg[device.Organization] = append(deviceListGroupByOrg[device.Organization], device.ID)
+		}
+	}
+
+	previousLearnedDevicesIDs := []uint64{}
+	previousCollectedDevicesIDs := []uint64{}
+	for orgID, devicesIDs := range deviceListGroupByOrg {
+
+		org, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
+		if err != nil {
+			http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
+			return
+		}
+		if isActive := activeCollectorKeys[org.CollectorServer]; !isActive {
+			for _, v := range devicesIDs {
+				failedDevices = append(failedDevices, deviceError{DeviceID: v, ErrorMessage: err.Error()})
+			}
+			continue
+		}
+		previousLearnedDevicesIDs = org.LearnedDevicesIDs
+		previousCollectedDevicesIDs = org.CollectedDevicesIDs
+
+		org.LearnedDevicesIDs = RemoveElements(previousLearnedDevicesIDs, devicesIDs)
+		org.CollectedDevicesIDs = RemoveElements(previousCollectedDevicesIDs, devicesIDs)
+
+		statusCode, resp, err := s.manageLogstashConfig(ctx, org, &failedDevices)
+
+		if err != nil {
+			unknownErrorWithMessage(w, err, s.Logger)
+			return
+		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			Error(w, statusCode, string(resp), s.Logger)
+			return
+		}
+
+		err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, org)
+		if err != nil {
+			fmt.Println("Error updating NetworkDeviceOrg:", err)
+			return
+		}
+	}
+
 	workerLimit := 10
 	sem := make(chan struct{}, workerLimit)
 
 	var wg sync.WaitGroup
-	failedDevices := []deviceError{}
+
 	var mu sync.Mutex
 
-	for i, id := range request.DeviceIDs {
+	for i, id := range request.LearnedDevicesIDs {
 		wg.Add(1)
 		sem <- struct{}{}
 		go func(ctx context.Context, i int, id uint64) {
@@ -363,7 +447,6 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 					s.Logger.Error("Recovered from panic: %v", rec)
 					mu.Lock()
 					failedDevices = append(failedDevices, deviceError{
-						Index:        i,
 						DeviceID:     id,
 						ErrorMessage: "internal server error",
 					})
@@ -380,7 +463,6 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				mu.Lock()
 				failedDevices = append(failedDevices, deviceError{
-					Index:        i,
 					DeviceID:     id,
 					ErrorMessage: "device not found",
 				})
@@ -392,7 +474,6 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				mu.Lock()
 				failedDevices = append(failedDevices, deviceError{
-					Index:        i,
 					DeviceID:     id,
 					ErrorMessage: err.Error(),
 				})
@@ -480,54 +561,46 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	if req.DeviceOS != nil {
 		device.DeviceOS = *req.DeviceOS
 	}
-	if req.IsConfigWritten != nil {
-		device.IsConfigWritten = *req.IsConfigWritten
+	if req.IsCollectingCfgWritten != nil {
+		device.IsCollectingCfgWritten = *req.IsCollectingCfgWritten
 	}
-	if req.LearningState != nil {
-		device.LearningState = *req.LearningState
-	}
-	if req.LearningUpdateDate != nil {
-		device.LearningUpdateDate = *req.LearningUpdateDate
-	}
-
 	if req.SSHConfig != nil {
-		if req.SSHConfig.SSHUserID != "" {
-			device.SSHConfig.SSHUserID = req.SSHConfig.SSHUserID
+		if req.SSHConfig.UserID != "" {
+			device.SSHConfig.UserID = req.SSHConfig.UserID
 		}
-		if req.SSHConfig.SSHPassword != "" {
-			device.SSHConfig.SSHPassword = req.SSHConfig.SSHPassword
+		if req.SSHConfig.Password != "" {
+			device.SSHConfig.Password = req.SSHConfig.Password
 		}
-		if req.SSHConfig.SSHEnPassword != "" {
-			device.SSHConfig.SSHEnPassword = req.SSHConfig.SSHEnPassword
+		if req.SSHConfig.EnPassword != "" {
+			device.SSHConfig.EnPassword = req.SSHConfig.EnPassword
 		}
-		if req.SSHConfig.SSHPort != 0 {
-			device.SSHConfig.SSHPort = req.SSHConfig.SSHPort
+		if req.SSHConfig.Port != 0 {
+			device.SSHConfig.Port = req.SSHConfig.Port
 		}
 	}
-
 	if req.SNMPConfig != nil {
-		if req.SNMPConfig.SNMPCommunity != "" {
-			device.SNMPConfig.SNMPCommunity = req.SNMPConfig.SNMPCommunity
+		if req.SNMPConfig.Community != "" {
+			device.SNMPConfig.Community = req.SNMPConfig.Community
 		}
-		if req.SNMPConfig.SNMPVersion != "" {
-			device.SNMPConfig.SNMPVersion = req.SNMPConfig.SNMPVersion
+		if req.SNMPConfig.Version != "" {
+			device.SNMPConfig.Version = req.SNMPConfig.Version
 		}
-		if req.SNMPConfig.SNMPPort != 0 {
-			device.SNMPConfig.SNMPPort = req.SNMPConfig.SNMPPort
+		if req.SNMPConfig.Port != 0 {
+			device.SNMPConfig.Port = req.SNMPConfig.Port
 		}
-		if req.SNMPConfig.SNMPProtocol != "" {
-			device.SNMPConfig.SNMPProtocol = req.SNMPConfig.SNMPProtocol
+		if req.SNMPConfig.Protocol != "" {
+			device.SNMPConfig.Protocol = req.SNMPConfig.Protocol
 		}
 	}
-
 	if req.Sensitivity != nil {
 		device.Sensitivity = *req.Sensitivity
 	}
-
 	if req.DeviceVendor != nil {
 		device.DeviceVendor = *req.DeviceVendor
 	}
-
+	if req.IsLearning != nil {
+		device.IsLearning = *req.IsLearning
+	}
 	if err := s.OrganizationExists(ctx, device.Organization); err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
 		return
@@ -550,51 +623,114 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
+type manageDeviceOrg struct {
+	ID                     uint64 `json:"device_id"`
+	IsLearning             bool   `json:"is_learning"`
+	IsCollectingCfgWritten bool   `json:"is_collecting_cfg_written"`
+}
+
+type deviceGroupByOrg map[string][]manageDeviceOrg
+
 //MonitoringConfigManagement is LogStash Config Management
 func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Request) {
-	var request struct {
-		DeviceIDs []uint64 `json:"devices_id"`
-	}
+
+	var request []manageDeviceOrg
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request data", http.StatusBadRequest)
 		return
 	}
 
 	ctx := r.Context()
-	failedDevices := []deviceError{}
+	deviceListGroupByOrg, learningDevicesGroupByOrg, failedDevices, previousOrgMap := getDevicesGroupByOrg(ctx, s, request)
 
-	deviceListGroupByOrg := make(map[string][]uint64)
-
-	for i, id := range request.DeviceIDs {
-		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
-		if err != nil {
-			failedDevices = append(failedDevices, deviceError{Index: i, DeviceID: id, ErrorMessage: err.Error()})
-		} else {
-			deviceListGroupByOrg[device.Organization] = append(deviceListGroupByOrg[device.Organization], device.ID)
-		}
-
-	}
 	if len(deviceListGroupByOrg) < 1 {
 		response := map[string]interface{}{
 			"failed_devices": failedDevices,
 		}
 		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 		return
-
 	}
-	fmt.Println(deviceListGroupByOrg)
-	collectorKeys, err := s.getCollectorServers()
 
+	existingDevicesOrg, err := s.Store.NetworkDeviceOrg(ctx).All(ctx)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).All(ctx)
+	// Retrieve server keys for storing Logstash config and identify active servers.
+	collectorKeys, activeCollectorKeys, err := s.getCollectorServers()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 
-	selectedNetDeviceOrgStore := addOrUpdateDevicesInStore(deviceOrg, deviceListGroupByOrg, collectorKeys)
-	for _, v := range selectedNetDeviceOrgStore {
-		statusCode, resp, err := s.generateLogstashConfigGroupByOrg(ctx, &v)
+	// TODO: Implement logic to determine the total number of devices for load balancing across collector servers.
+	// This placeholder ratio is used to compute a threshold for device distribution.
+	// The final implementation will ensure an even distribution of devices to avoid overloading any single collector server.
+	ratio := 0.5
+	threshold, orgDeviceCount, serverDeviceCount, orgToCollector, deviceOrgMap := computeThreshold(existingDevicesOrg, deviceListGroupByOrg, ratio)
+
+	orgsToUpdate, err := removeDeviceIDsFromPreviousOrg(ctx, s, request, previousOrgMap, deviceOrgMap)
+	if err != nil {
+		fmt.Println("Error removing device IDs from previous org:", err)
+		return
+	}
+
+	for org, devices := range deviceListGroupByOrg {
+		selectedServer := findLeastLoadedCollectorServer(
+			org,
+			orgDeviceCount,
+			collectorKeys,
+			threshold,
+			serverDeviceCount,
+			orgToCollector,
+		)
+		orgToCollector[org] = selectedServer
+		serverDeviceCount[selectedServer] += len(devices)
+	}
+
+	for org, devices := range deviceListGroupByOrg {
+		collectorServer := orgToCollector[org]
+
+		// Skip this organization if its collector server is not active
+		if isActive := activeCollectorKeys[collectorServer]; !isActive {
+			continue
+		}
+
+		orgInfo, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &org})
+		if err != nil || orgInfo == nil {
+			orgInfo = &cloudhub.NetworkDeviceOrg{
+				ID:                  org,
+				CollectedDevicesIDs: []uint64{},
+				LearnedDevicesIDs:   []uint64{},
+				CollectorServer:     collectorServer,
+				LoadModule:          LoadModule,
+				MLFunction:          MLFunction,
+				PredictionMode:      PredictionMode,
+				IsPredictionActive:  IsPredictionActive,
+				DataDuration:        DataDuration,
+				LearnCycle:          LearnCycle,
+			}
+		} else {
+			orgInfo.CollectorServer = collectorServer
+		}
+
+		existingDeviceIDs := orgInfo.CollectedDevicesIDs
+		for _, device := range devices {
+			existingDeviceIDs = appendUnique(existingDeviceIDs, device.ID)
+		}
+		orgInfo.CollectedDevicesIDs = existingDeviceIDs
+
+		existingLearningDeviceIDs := orgInfo.LearnedDevicesIDs
+		for _, device := range learningDevicesGroupByOrg[org] {
+			existingLearningDeviceIDs = appendUnique(existingLearningDeviceIDs, device.ID)
+		}
+		orgInfo.LearnedDevicesIDs = existingLearningDeviceIDs
+
+		orgsToUpdate[org] = orgInfo
+
+		statusCode, resp, err := s.manageLogstashConfig(ctx, orgInfo, &failedDevices)
 		if err != nil {
 			unknownErrorWithMessage(w, err, s.Logger)
 			return
@@ -602,21 +738,15 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 			Error(w, statusCode, string(resp), s.Logger)
 			return
 		}
-
-		org, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &v.ID})
-
-		if org != nil {
-			s.Store.NetworkDeviceOrg(ctx).Update(ctx, &v)
-			msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), v.ID)
-			s.logRegistration(ctx, "NetWorkDeviceOrg conf", msg)
-
-		} else {
-			s.Store.NetworkDeviceOrg(ctx).Add(ctx, &v)
-			msg := fmt.Sprintf(MsgNetWorkDeviceOrgCreated.String(), v.ID)
-			s.logRegistration(ctx, "NetWorkDeviceOrg conf", msg)
-		}
-
 	}
+
+	for _, orgInfo := range orgsToUpdate {
+		err := s.Store.NetworkDeviceOrg(ctx).Update(ctx, orgInfo)
+		if err != nil {
+			fmt.Println("Error updating NetworkDeviceOrg:", err)
+		}
+	}
+
 	response := map[string]interface{}{
 		"failed_devices": failedDevices,
 	}
@@ -624,60 +754,57 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 }
 
-func removeDevices(devices, devicesToRemove []uint64) []uint64 {
-	deviceMap := make(map[uint64]bool)
-	for _, device := range devicesToRemove {
-		deviceMap[device] = true
-	}
+// removeDeviceIDsFromPreviousOrg removes device IDs from their previous organizations
+func removeDeviceIDsFromPreviousOrg(ctx context.Context, s *Service, request []manageDeviceOrg, previousOrgMap, deviceOrgMap map[uint64]string) (map[string]*cloudhub.NetworkDeviceOrg, error) {
+	orgsToUpdate := make(map[string]*cloudhub.NetworkDeviceOrg)
 
-	var updatedDevices []uint64
-	for _, device := range devices {
-		if !deviceMap[device] {
-			updatedDevices = append(updatedDevices, device)
-		}
-	}
-	return updatedDevices
-}
-
-func addOrUpdateDevicesInStore(stores []cloudhub.NetworkDeviceOrg, orgDevices map[string][]uint64, collectors []string) []cloudhub.NetworkDeviceOrg {
-	for _, deviceIDs := range orgDevices {
-		for _, deviceID := range deviceIDs {
-			for i, store := range stores {
-				if contains(store.DevicesIDs, deviceID) {
-					stores[i].DevicesIDs = removeDevices(stores[i].DevicesIDs, []uint64{deviceID})
-					break
+	for _, reqDevice := range request {
+		previousOrg := previousOrgMap[reqDevice.ID]
+		if previousOrg != "" && previousOrg != deviceOrgMap[reqDevice.ID] {
+			orgInfo, exists := orgsToUpdate[previousOrg]
+			if !exists {
+				var err error
+				orgInfo, err = s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &previousOrg})
+				if err == nil && orgInfo != nil {
+					orgsToUpdate[previousOrg] = orgInfo
+				} else if err != nil {
+					return nil, err
+				}
+			}
+			if orgInfo != nil {
+				orgInfo.CollectedDevicesIDs = removeDeviceID(orgInfo.CollectedDevicesIDs, reqDevice.ID)
+				if reqDevice.IsLearning {
+					orgInfo.LearnedDevicesIDs = removeDeviceID(orgInfo.LearnedDevicesIDs, reqDevice.ID)
 				}
 			}
 		}
 	}
 
-	for org, deviceIDs := range orgDevices {
-		storeFound := false
-		for i, store := range stores {
-			if store.ID == org {
-				leastLoadedServer := findLeastLoadedCollectorServer(stores, collectors)
-				stores[i].DevicesIDs = appendUnique(stores[i].DevicesIDs, deviceIDs...)
-				stores[i].CollectorServer = leastLoadedServer
-				storeFound = true
-				break
+	return orgsToUpdate, nil
+}
+
+func getDevicesGroupByOrg(ctx context.Context, s *Service, request []manageDeviceOrg) (deviceGroupByOrg, deviceGroupByOrg, []deviceError, map[uint64]string) {
+	failedDevices := []deviceError{}
+	deviceListGroupByOrg := make(deviceGroupByOrg)
+	learningDevicesGroupByOrg := make(deviceGroupByOrg)
+	previousOrgMap := make(map[uint64]string)
+
+	for _, reqDevice := range request {
+		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &reqDevice.ID})
+		if err != nil {
+			failedDevices = append(failedDevices, deviceError{DeviceID: reqDevice.ID, ErrorMessage: err.Error()})
+		} else {
+			if !reqDevice.IsCollectingCfgWritten {
+				deviceListGroupByOrg[device.Organization] = append(deviceListGroupByOrg[device.Organization], reqDevice)
 			}
-		}
-		if !storeFound {
-			leastLoadedServer := findLeastLoadedCollectorServer(stores, collectors)
-			newStore := cloudhub.NetworkDeviceOrg{
-				ID:              org,
-				DevicesIDs:      deviceIDs,
-				LoadModule:      "learn.ch_nx_load",
-				MLFunction:      "ml_multiplied",
-				DataDuration:    15,
-				LearnCycle:      15,
-				CollectorServer: leastLoadedServer,
+			if reqDevice.IsLearning {
+				learningDevicesGroupByOrg[device.Organization] = append(learningDevicesGroupByOrg[device.Organization], reqDevice)
 			}
-			stores = append(stores, newStore)
+			previousOrgMap[reqDevice.ID] = device.Organization
 		}
 	}
 
-	return stores
+	return deviceListGroupByOrg, learningDevicesGroupByOrg, failedDevices, previousOrgMap
 }
 
 func contains(devices []uint64, deviceID uint64) bool {
@@ -688,44 +815,60 @@ func contains(devices []uint64, deviceID uint64) bool {
 	}
 	return false
 }
-
-func appendUnique(devices []uint64, newDevices ...uint64) []uint64 {
-	deviceSet := make(map[uint64]bool)
-	for _, device := range devices {
-		deviceSet[device] = true
-	}
-
-	for _, device := range newDevices {
-		if !deviceSet[device] {
-			devices = append(devices, device)
-			deviceSet[device] = true
+func removeDeviceID(devices []uint64, deviceID uint64) []uint64 {
+	for i, id := range devices {
+		if id == deviceID {
+			return append(devices[:i], devices[i+1:]...)
 		}
 	}
-
 	return devices
 }
-func findLeastLoadedCollectorServer(stores []cloudhub.NetworkDeviceOrg, collectors []string) string {
-	usedServers := make(map[string]bool)
-	for _, store := range stores {
-		usedServers[store.CollectorServer] = true
-	}
-	for _, server := range collectors {
-		if !usedServers[server] {
-			return server
+
+func appendUnique(devices []uint64, newDevice uint64) []uint64 {
+	for _, device := range devices {
+		if device == newDevice {
+			return devices
 		}
 	}
-	serverLoad := make(map[string]int)
-	for _, store := range stores {
-		serverLoad[store.CollectorServer] += len(store.DevicesIDs)
+	return append(devices, newDevice)
+}
+
+func findLeastLoadedCollectorServer(
+	org string,
+	orgDeviceCount map[string]int,
+	collectorServerKeys []string,
+	threshold int,
+	serverDeviceCount map[string]int,
+	orgToCollector map[string]string,
+) string {
+	var selectedServer string
+	minDevices := int(^uint(0) >> 1)
+
+	for _, server := range collectorServerKeys {
+		if _, exists := serverDeviceCount[server]; !exists {
+			selectedServer = server
+			break
+		}
 	}
 
-	leastLoadedServer := collectors[0]
-	for _, server := range collectors {
-		if serverLoad[server] < serverLoad[leastLoadedServer] {
-			leastLoadedServer = server
+	if selectedServer == "" {
+		for _, server := range collectorServerKeys {
+			if serverDeviceCount[server] < minDevices {
+				minDevices = serverDeviceCount[server]
+				selectedServer = server
+			}
 		}
 	}
-	return leastLoadedServer
+
+	currentServer, exists := orgToCollector[org]
+	if exists && selectedServer != currentServer {
+		selectedServer = currentServer
+		if orgDeviceCount[org] > threshold {
+			//Todo improve distribution collector-server
+		}
+	}
+
+	return selectedServer
 }
 
 func isZeroOfUnderlyingType(x interface{}) bool {
@@ -734,34 +877,34 @@ func isZeroOfUnderlyingType(x interface{}) bool {
 
 func updateSSHConfig(target, source *cloudhub.SSHConfig) {
 	if source != nil {
-		if !isZeroOfUnderlyingType(source.SSHUserID) {
-			target.SSHUserID = source.SSHUserID
+		if !isZeroOfUnderlyingType(source.UserID) {
+			target.UserID = source.UserID
 		}
-		if !isZeroOfUnderlyingType(source.SSHPassword) {
-			target.SSHPassword = source.SSHPassword
+		if !isZeroOfUnderlyingType(source.Password) {
+			target.Password = source.Password
 		}
-		if !isZeroOfUnderlyingType(source.SSHEnPassword) {
-			target.SSHEnPassword = source.SSHEnPassword
+		if !isZeroOfUnderlyingType(source.EnPassword) {
+			target.EnPassword = source.EnPassword
 		}
-		if !isZeroOfUnderlyingType(source.SSHPort) {
-			target.SSHPort = source.SSHPort
+		if !isZeroOfUnderlyingType(source.Port) {
+			target.Port = source.Port
 		}
 	}
 }
 
 func updateSNMPConfig(target, source *cloudhub.SNMPConfig) {
 	if source != nil {
-		if !isZeroOfUnderlyingType(source.SNMPCommunity) {
-			target.SNMPCommunity = source.SNMPCommunity
+		if !isZeroOfUnderlyingType(source.Community) {
+			target.Community = source.Community
 		}
-		if !isZeroOfUnderlyingType(source.SNMPVersion) {
-			target.SNMPVersion = source.SNMPVersion
+		if !isZeroOfUnderlyingType(source.Version) {
+			target.Version = source.Version
 		}
-		if !isZeroOfUnderlyingType(source.SNMPPort) {
-			target.SNMPPort = source.SNMPPort
+		if !isZeroOfUnderlyingType(source.Port) {
+			target.Port = source.Port
 		}
-		if !isZeroOfUnderlyingType(source.SNMPProtocol) {
-			target.SNMPProtocol = source.SNMPProtocol
+		if !isZeroOfUnderlyingType(source.Protocol) {
+			target.Protocol = source.Protocol
 		}
 	}
 }
@@ -780,14 +923,15 @@ func parseID(r *http.Request) (uint64, error) {
 	return id, nil
 }
 
-func (s *Service) getCollectorServers() ([]string, error) {
+func (s *Service) getCollectorServers() ([]string, map[string]bool, error) {
 	status, responseBody, err := s.GetWheelKeyAcceptedListAll()
+
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to retrieve keys, status code: %d", status)
+		return nil, nil, fmt.Errorf("failed to retrieve keys, status code: %d", status)
 	}
 
 	var response struct {
@@ -802,21 +946,92 @@ func (s *Service) getCollectorServers() ([]string, error) {
 
 	err = json.Unmarshal(responseBody, &response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
+		return nil, nil, fmt.Errorf("failed to unmarshal response: %v", err)
 	}
 
 	var collectorKeys []string
+	activeCollectorKeys := make(map[string]bool)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
 	for _, minion := range response.Return[0].Data.Return.Minions {
 		if strings.HasPrefix(minion, "ch-collector") {
 			collectorKeys = append(collectorKeys, minion)
+			wg.Add(1)
+			go func(minion string) {
+
+				defer wg.Done()
+				if statusCode, resp, err := s.IsActiveMinionPingTest(minion); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+					mu.Lock()
+					activeCollectorKeys[minion] = false
+					mu.Unlock()
+				} else if resp != nil {
+					r := &struct {
+						Return []map[string]bool `json:"return"`
+					}{}
+
+					if err := json.Unmarshal(resp, r); err != nil || !r.Return[0][minion] {
+						mu.Lock()
+						activeCollectorKeys[minion] = false
+						mu.Unlock()
+						return
+					}
+					mu.Lock()
+					activeCollectorKeys[minion] = true
+					mu.Unlock()
+
+				}
+			}(minion)
 		}
 	}
 
-	return collectorKeys, nil
+	wg.Wait()
+
+	return collectorKeys, activeCollectorKeys, nil
 }
 
-func (s *Service) generateLogstashConfigGroupByOrg(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg) (int, []byte, error) {
+func computeThreshold(existingDevicesOrg []cloudhub.NetworkDeviceOrg, groupedDevices deviceGroupByOrg, ratio float64) (int, map[string]int, map[string]int, map[string]string, map[uint64]string) {
+	totalDevices := 0
+	orgDeviceCount := make(map[string]int)
+	serverDeviceCount := make(map[string]int)
+	orgToCollector := make(map[string]string)
+	existingDeviceIDs := make(map[uint64]string)
+	deviceOrgMap := make(map[uint64]string)
+
+	for _, org := range existingDevicesOrg {
+		count := len(org.CollectedDevicesIDs)
+		totalDevices += count
+		orgDeviceCount[org.ID] = count
+		serverDeviceCount[org.CollectorServer] += count
+		orgToCollector[org.ID] = org.CollectorServer
+		for _, deviceID := range org.CollectedDevicesIDs {
+			existingDeviceIDs[deviceID] = org.ID
+		}
+	}
+
+	for org, devices := range groupedDevices {
+		for _, device := range devices {
+			if existingOrg, exists := existingDeviceIDs[device.ID]; exists {
+				if existingOrg != org {
+					orgDeviceCount[existingOrg]--
+					orgDeviceCount[org]++
+				}
+			} else {
+				totalDevices++
+				orgDeviceCount[org]++
+				existingDeviceIDs[device.ID] = org
+			}
+			deviceOrgMap[device.ID] = org
+		}
+	}
+
+	threshold := int(float64(totalDevices) * ratio)
+	return threshold, orgDeviceCount, serverDeviceCount, orgToCollector, deviceOrgMap
+}
+
+func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg, failedDevices *[]deviceError) (int, []byte, error) {
 	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &devOrg.ID})
+	devicesIDs := devOrg.CollectedDevicesIDs
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
@@ -846,11 +1061,46 @@ func (s *Service) generateLogstashConfigGroupByOrg(ctx context.Context, devOrg *
 	} else {
 		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error ocuured at DirectoryExists() func")
 	}
+	// If there are no devices to collect data from, remove the configuration file
+	if len(devicesIDs) < 1 {
+		statusCode, resp, err = s.RemoveFileWithLocalClient(filePath, devOrg.CollectorServer)
+		if err != nil {
+			return http.StatusInternalServerError, nil, err
+		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			return statusCode, resp, err
+		}
+	}
 
-	telegrafConfig := "test Message"
-	b, _ := toml.Marshal(telegrafConfig)
+	cannedFilePath := filepath.Join("../../", "canned", "template_logstash_gen.conf")
+	content, err := os.ReadFile(cannedFilePath)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+	configString := string(content)
 
-	statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{string(b)}, devOrg.CollectorServer)
+	var hostEntries []string
+	for _, deviceID := range devicesIDs {
+		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
+		if err != nil {
+			continue
+		}
+		host := fmt.Sprintf("%s:%s/%d", device.SNMPConfig.Protocol, device.DeviceIP, device.SNMPConfig.Port)
+		hostEntry := fmt.Sprintf("{host => \"%s\" community => \"%s\" version => \"%s\" retries => %d timeout => %d}",
+			host, device.SNMPConfig.Community, device.SNMPConfig.Version, 1, 30000)
+		hostEntries = append(hostEntries, hostEntry)
+	}
+
+	hosts := fmt.Sprintf("[%s]", strings.Join(hostEntries, ",\n"))
+	orgName := org.Name
+
+	replacer := strings.NewReplacer(
+		"${org}", orgName,
+		"${hosts}", hosts,
+	)
+
+	configString = replacer.Replace(configString)
+
+	statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{configString}, devOrg.CollectorServer)
 
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
@@ -882,4 +1132,21 @@ func (s *Service) removeLogstashConfigGroupByOrg(ctx context.Context, devOrg *cl
 	}
 
 	return http.StatusOK, nil, nil
+}
+
+// RemoveElements removes elements from the origin slice that are present in the delete slice.
+func RemoveElements[T comparable](origin []T, delete []T) []T {
+	deleteMap := make(map[T]bool)
+	for _, item := range delete {
+		deleteMap[item] = true
+	}
+
+	var result []T
+	for _, item := range origin {
+		if !deleteMap[item] {
+			result = append(result, item)
+		}
+	}
+
+	return result
 }

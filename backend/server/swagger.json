@@ -4934,7 +4934,7 @@
         "description": "Remove a specific device by IDs.",
         "parameters": [
           {
-            "name": "devices_id",
+            "name": "learned_devices_ids",
             "in": "body",
             "required": true,
 
@@ -5057,10 +5057,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/ApplyMonitoringDeviceRequest"
-              }
+              "$ref": "#/definitions/ApplyMonitoringDeviceRequest"
             }
           }
         ],
@@ -8685,15 +8682,15 @@
     "UpdateDeviceRequest": {
       "type": "object",
       "properties": {
-        "device_ip": {
-          "type": "string",
-          "description": "The IP address of the device",
-          "example": "192.168.0.1"
-        },
         "organization": {
           "type": "string",
           "description": "The organization to which the device belongs",
           "example": "default"
+        },
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
         },
         "hostname": {
           "type": "string",
@@ -8710,6 +8707,11 @@
           "description": "The operating system of the device",
           "example": "ios"
         },
+        "is_collector_cfg_written": {
+          "type": "bool",
+          "description": "Creation of Logstash configuration",
+          "example": "false"
+        },
         "ssh_config": {
           "$ref": "#/definitions/SSHConfig",
           "description": "The SSH configuration for the device"
@@ -8722,6 +8724,11 @@
           "type": "string",
           "description": "The vendor of the device",
           "example": "Cisco"
+        },
+        "is_learning": {
+          "type": "bool",
+          "description": "Indicates whether to create a learning model",
+          "example": "false"
         }
       },
       "required": []
@@ -8729,7 +8736,7 @@
     "DeleteDeviceRequest": {
       "type": "object",
       "properties": {
-        "devices_id": {
+        "devices_ids": {
           "type": "array",
           "description": "The IDs of the devices",
           "items": {
@@ -8738,21 +8745,43 @@
           "example": [1, 2]
         }
       },
-      "required": ["devices_id"]
+      "required": ["devices_ids"]
     },
     "ApplyMonitoringDeviceRequest": {
       "type": "object",
       "properties": {
-        "devices_id": {
+        "learned_devices": {
           "type": "array",
-          "description": "The IDs of the devices",
+          "description": "Array of learned devices",
           "items": {
-            "type": "uint64"
-          },
-          "example": [1, 2]
+            "type": "object",
+            "properties": {
+              "device_id": {
+                "type": "integer",
+                "format": "int64",
+                "description": "The ID of the device",
+                "example": 110
+              },
+              "is_Learning": {
+                "type": "boolean",
+                "description": "Indicates whether the device is in learning mode",
+                "example": true
+              },
+              "is_collecting_cfg_written": {
+                "type": "boolean",
+                "description": "Indicates whether the collecting configuration is written",
+                "example": false
+              }
+            },
+            "required": [
+              "device_id",
+              "is_Learning",
+              "is_collecting_cfg_written"
+            ]
+          }
         }
       },
-      "required": ["devices_id"]
+      "required": ["devices"]
     },
     "DeviceResponse": {
       "type": "object",
@@ -8760,17 +8789,12 @@
         "id": {
           "type": "uint64",
           "description": "Unique identifier representing a device resource",
-          "example": "12345"
+          "example": "1"
         },
         "organization": {
           "type": "string",
           "description": "The organization ID to which the device belongs",
           "example": "default"
-        },
-        "organization_name": {
-          "type": "string",
-          "description": "The organization Name to which the device belongs",
-          "example": "Default"
         },
         "device_ip": {
           "type": "string",
@@ -8797,14 +8821,9 @@
           "description": "The operating system of the device",
           "example": "ios"
         },
-        "is_config_written": {
+        "is_collector_cfg_written": {
           "type": "bool",
           "description": "Creation of Logstash configuration",
-          "example": "false"
-        },
-        "is_modeling_generated": {
-          "type": "bool",
-          "description": "Creation of Learning model",
           "example": "false"
         },
         "ssh_config": {
@@ -8824,6 +8843,31 @@
           "type": "string",
           "description": "The vendor of the device",
           "example": "Cisco"
+        },
+        "learning_state": {
+          "type": "string",
+          "description": "Indicates the status of model for the device",
+          "example": "Ready"
+        },
+        "learning_update_date": {
+          "type": "string",
+          "description": "model update datetime format TZ=UTC, Format=RFC3339",
+          "example": "2024-06-20T12:34:56Z"
+        },
+        "learning_finish_datetime": {
+          "type": "string",
+          "description": "model end datetime format TZ=UTC, Format=RFC3339",
+          "example": "2024-06-20T12:34:56Z"
+        },
+        "is_learning": {
+          "type": "bool",
+          "description": "Indicates whether to create a learning model",
+          "example": "false"
+        },
+        "ml_function": {
+          "type": "string",
+          "description": " ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_multiplied"
         }
       }
     },
@@ -9021,22 +9065,22 @@
     "SSHConfig": {
       "type": "object",
       "properties": {
-        "ssh_user_id": {
+        "user_id": {
           "type": "string",
           "description": "SSH id",
           "example": "admin"
         },
-        "ssh_password": {
+        "password": {
           "type": "string",
           "description": "SSH password",
           "example": "password123"
         },
-        "ssh_en_password": {
+        "en_password": {
           "type": "string",
           "description": "SSH enable password",
           "example": "enable_password"
         },
-        "ssh_port": {
+        "port": {
           "type": "integer",
           "description": "SSH port",
           "example": 22
@@ -9046,33 +9090,28 @@
     "SNMPConfig": {
       "type": "object",
       "properties": {
-        "snmp_community": {
+        "community": {
           "type": "string",
           "description": "SNMP community string",
           "example": "public"
         },
-        "snmp_port": {
+        "port": {
           "type": "integer",
           "description": "SNMP port",
           "example": 161
         },
-        "snmp_version": {
+        "version": {
           "type": "string",
           "description": "SNMP version",
           "example": "v2c"
         },
-        "snmp_protocol": {
+        "protocol": {
           "type": "string",
           "description": "SNMP protocol",
           "example": "udp"
         }
       },
-      "required": [
-        "snmp_community",
-        "snmp_port",
-        "snmp_version",
-        "snmp_protocol"
-      ]
+      "required": ["community", "port", "version", "protocol"]
     },
     "Device_SNMPConfig": {
       "type": "object",
@@ -9082,34 +9121,28 @@
           "description": "The IP address of the device",
           "example": "192.168.0.1"
         },
-        "snmp_community": {
+        "community": {
           "type": "string",
           "description": "SNMP community string",
           "example": "public"
         },
-        "snmp_port": {
+        "port": {
           "type": "integer",
           "description": "SNMP port",
           "example": 161
         },
-        "snmp_version": {
+        "version": {
           "type": "string",
           "description": "SNMP version",
           "example": "v2c"
         },
-        "snmp_protocol": {
+        "protocol": {
           "type": "string",
           "description": "SNMP protocol",
           "example": "udp"
         }
       },
-      "required": [
-        "snmp_community",
-        "device_ip",
-        "snmp_port",
-        "snmp_version",
-        "snmp_protocol"
-      ]
+      "required": ["community", "device_ip", "port", "version", "protocol"]
     },
     "SelfLinks": {
       "type": "object",

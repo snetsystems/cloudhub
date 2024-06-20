@@ -159,6 +159,16 @@ type Server struct {
 	OSP map[string]string `long:"osp" description:"The Informations to access to OSP API. '--osp=admin-provider:{salt admin provider} --osp=admin-user:{admin user name} --osp=admin-pw:{admin user password} --osp=auth-url:{keystone url} --osp=pj-domain-id:{project domain id} --osp=user-domain-id:{user domain id}'. E.g. via environment variable: 'export OSP=admin:{salt admin provider},admin-user:{admin user name}', etc." env:"OSP" env-delim:","`
 }
 
+// ML/DL Setting
+const (
+	LoadModule         = "learn.ch_nx_load"
+	MLFunction         = "ml_multiplied"
+	PredictionMode     = "ML"
+	DataDuration       = 15
+	LearnCycle         = 15
+	IsPredictionActive = false
+)
+
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
 	return func(configure func(oauth2.Provider, oauth2.Mux)) {
 		if err := ok(); err == nil {
