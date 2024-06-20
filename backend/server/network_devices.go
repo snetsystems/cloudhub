@@ -43,7 +43,7 @@ type updateDeviceRequest struct {
 	IsLearning             *bool                `json:"is_learning, omitempty"`
 }
 type deleteDevicesRequest struct {
-	LearnedDevicesIDs []uint64 `json:"learned_devices_ids"`
+	DevicesIDs []uint64 `json:"devices_ids"`
 }
 
 type deviceResponse struct {
@@ -383,12 +383,14 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, deviceID := range request.LearnedDevicesIDs {
+	for _, deviceID := range request.DevicesIDs {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
 		if err != nil {
 			failedDevices = append(failedDevices, deviceError{DeviceID: deviceID, ErrorMessage: err.Error()})
 		} else {
-			deviceListGroupByOrg[device.Organization] = append(deviceListGroupByOrg[device.Organization], device.ID)
+			if device.IsCollectingCfgWritten {
+				deviceListGroupByOrg[device.Organization] = append(deviceListGroupByOrg[device.Organization], device.ID)
+			}
 		}
 	}
 
@@ -437,7 +439,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 
 	var mu sync.Mutex
 
-	for i, id := range request.LearnedDevicesIDs {
+	for i, id := range request.DevicesIDs {
 		wg.Add(1)
 		sem <- struct{}{}
 		go func(ctx context.Context, i int, id uint64) {
