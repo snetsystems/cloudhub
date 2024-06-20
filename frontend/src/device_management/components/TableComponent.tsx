@@ -184,7 +184,7 @@ function TableComponent({
           {toprightRender}
         </div>
       </div>
-      <div className={`panel-body ${bodyClassName}`}>
+      <div className={`panel-body ${bodyClassName ?? ''}`}>
         <TableBase
           columns={columns}
           data={sortedData}

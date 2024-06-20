@@ -6,6 +6,7 @@ import {
   MONITORING_MODAL_INFO,
   SYSTEM_MODAL,
 } from 'src/device_management/constants'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 interface Props {
   data: ApplyMonitoringProps[]
@@ -13,6 +14,8 @@ interface Props {
 }
 
 function SystemConfirmModal({data, type}: Props) {
+  const scrollMaxHeight = window.innerHeight * 0.4
+
   const message = (type: string) => {
     switch (type) {
       case SYSTEM_MODAL.LEARNING:
@@ -34,14 +37,18 @@ function SystemConfirmModal({data, type}: Props) {
 
   return (
     <div className="device-modal--childNode">
-      <TableComponent
-        data={data}
-        tableTitle={'Device List'}
-        columns={deviceApplyMonitoringColumn}
-        isSearchDisplay={false}
-        bodyClassName="device-management-modal-body"
-      />
-
+      <FancyScrollbar
+        autoHeight={true}
+        maxHeight={scrollMaxHeight}
+        children={
+          <TableComponent
+            data={data}
+            tableTitle={'Device List'}
+            columns={deviceApplyMonitoringColumn}
+            isSearchDisplay={false}
+          />
+        }
+      ></FancyScrollbar>
       {message(type)}
     </div>
   )
