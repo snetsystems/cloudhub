@@ -1,13 +1,18 @@
 import React from 'react'
-import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
-import {AiModal, DeviceConnectionStatus, DeviceData} from 'src/types'
-import SystemConfirmModal from './MonitoringModal'
-import {ComponentColor} from 'src/reusable_ui'
-import {selectedArrayById} from '../utils'
 import {bindActionCreators} from 'redux'
-import {closeModal, openModal} from 'src/shared/actions/aiModal'
 import {connect} from 'react-redux'
-import {SYSTEM_MODAL} from '../constants'
+
+import {AiModal, DeviceConnectionStatus, DeviceData} from 'src/types'
+import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
+import SystemConfirmModal from 'src/device_management/components/MonitoringModal'
+import {ComponentColor} from 'src/reusable_ui'
+import {
+  hasMonitoringDevice,
+  selectedArrayById,
+} from 'src/device_management/utils'
+import {closeModal, openModal} from 'src/shared/actions/aiModal'
+
+import {SYSTEM_MODAL} from 'src/device_management/constants'
 
 interface Props {
   checkedArray: string[]
@@ -48,9 +53,9 @@ function DeviceManagementBtn({
     openModal({
       isVisible: true,
       // message: MONITORING_MODAL_INFO.workHeader,
-      title: 'Apply Monitoring Confirm',
+      title: 'Apply Monitoring',
       message: '',
-      btnColor: ComponentColor.Warning,
+      btnColor: ComponentColor.Primary,
       onConfirm: () => {
         getDeviceAJAX()
         closeModal()
@@ -76,7 +81,7 @@ function DeviceManagementBtn({
       // message: MONITORING_MODAL_INFO.workHeader,
       title: 'Edit Learning Model',
       message: '',
-      btnColor: ComponentColor.Success,
+      btnColor: ComponentColor.Primary,
       onConfirm: () => {
         getDeviceAJAX()
         closeModal()
@@ -96,8 +101,7 @@ function DeviceManagementBtn({
   const openDeleteModal = (idList: string[]) => {
     const validArray = selectedArrayById(data, idList, 'id')
     // create monitoring sql is_modeling_generated => is_monitoring
-
-    const isMonitoringInclude = validArray.find(i => i.isMonitoring)
+    const isMonitoringInclude = hasMonitoringDevice(validArray)
 
     openModal({
       title: 'Delete Device',

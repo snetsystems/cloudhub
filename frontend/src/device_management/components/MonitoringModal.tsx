@@ -1,8 +1,11 @@
 import React from 'react'
-import TableComponent from './TableComponent'
-import {deviceApplyMonitoringColumn} from '../constants/deviceManagementColumn'
+import TableComponent from 'src/device_management/components/TableComponent'
+import {deviceApplyMonitoringColumn} from 'src/device_management/constants/deviceManagementColumn'
 import {ApplyMonitoringProps} from 'src/types'
-import {MONITORING_MODAL_INFO, SYSTEM_MODAL} from '../constants'
+import {
+  MONITORING_MODAL_INFO,
+  SYSTEM_MODAL,
+} from 'src/device_management/constants'
 
 interface Props {
   data: ApplyMonitoringProps[]
@@ -33,7 +36,7 @@ function SystemConfirmModal({data, type}: Props) {
     <div className="device-modal--childNode">
       <TableComponent
         data={data}
-        tableTitle="Apply Monitoring List"
+        tableTitle={'Device List'}
         columns={deviceApplyMonitoringColumn}
         isSearchDisplay={false}
         bodyClassName="device-management-modal-body"
@@ -45,15 +48,3 @@ function SystemConfirmModal({data, type}: Props) {
 }
 
 export default SystemConfirmModal
-
-{
-  /*
-      <TableComponent
-            data={validArray}
-            tableTitle="Delete Device List"
-            columns={DEVICE_INFO_SELECTED_MONITORING}
-            isSearchDisplay={false}
-            bodyClassName="device-management-modal-body"
-          />
-          */
-}

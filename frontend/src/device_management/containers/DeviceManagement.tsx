@@ -158,7 +158,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           // options={this.options}
           topLeftRender={
             <DeviceManagementBtn
-              data={data}
+              data={updatedDeviceData}
               getDeviceAJAX={this.getDeviceAJAX}
               importDevice={this.importDevice}
               connectDevice={this.connectDevice}

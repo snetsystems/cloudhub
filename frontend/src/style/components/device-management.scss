@@ -41,6 +41,17 @@
 
 .device-modal--childNode {
   white-space: pre-wrap;
+  text-align: center;
+  font-size: 14px;
+
+  .label-info {
+    color: $c-rainforest;
+    font-weight: 600;
+  }
+  .label-warning {
+    color: $c-topaz;
+    font-weight: 600;
+  }
 
   > * {
     margin-top: 8px;

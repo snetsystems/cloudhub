@@ -1,5 +1,9 @@
 import {DeviceData, Organization} from 'src/types'
 
+export const hasMonitoringDevice = (devicesData: DeviceData[]): boolean => {
+  return devicesData.some(device => device.isMonitoring === true)
+}
+
 export const convertDeviceDataOrganizationNameToID = (
   devicesData: DeviceData | DeviceData[],
   organizations: Organization[]
