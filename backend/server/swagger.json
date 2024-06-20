@@ -5083,6 +5083,114 @@
         }
       }
     },
+    "ai/network/managements/orgs": {
+      "get": {
+        "tags": ["Device Organization Management"],
+        "summary": "Get all devices Organization",
+        "description": "Retrieve a list of all devices Organization.",
+        "responses": {
+          "200": {
+            "description": "A list of devices Organization.",
+            "schema": {
+              "$ref": "#/definitions/DeviceOrgResponse"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Device Organization Management"],
+        "summary": "Create new devices Organization",
+        "description": "Add new devices Organization.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DeviceOrgRequest"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Devices created successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceOrgResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+
+      "patch": {
+        "tags": ["Device Organization Management"],
+        "summary": "Update a device Organization by Organization ID",
+        "description": "Update the details of a specific device Organization by Organization ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Organization ID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDeviceOrgRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device updated successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceOrgResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/snmp/validation": {
       "post": {
         "tags": ["SNMP Management"],
@@ -8762,7 +8870,7 @@
                 "description": "The ID of the device",
                 "example": 110
               },
-              "is_Learning": {
+              "is_learning": {
                 "type": "boolean",
                 "description": "Indicates whether the device is in learning mode",
                 "example": true
@@ -8775,7 +8883,7 @@
             },
             "required": [
               "device_id",
-              "is_Learning",
+              "is_learning",
               "is_collecting_cfg_written"
             ]
           }
@@ -9143,6 +9251,148 @@
         }
       },
       "required": ["community", "device_ip", "port", "version", "protocol"]
+    },
+    "DeviceOrgRequest": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "description": "Organization ID",
+          "example": "default"
+        },
+        "ml_function": {
+          "type": "string",
+          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_multiplied"
+        },
+        "data_duration": {
+          "type": "integer",
+          "description": "data_duration for learning",
+          "example": "15"
+        },
+        "learn_cycle": {
+          "type": "integer",
+          "description": "learning_cycle (day[s]). Using in kapacitor cron method",
+          "example": "2"
+        },
+
+        "prediction_mode": {
+          "type": "string",
+          "description": "This is selected PredictionMode. It can be 'ML', 'DL' or 'Ensemble(ML + DL)'",
+          "example": "ML"
+        },
+        "is_prediction_active": {
+          "type": "bool",
+          "description": "Indicates whether AI prediction is active",
+          "example": false
+        }
+      },
+      "required": [
+        "organization",
+        "ml_function",
+        "data_duration",
+        "learn_cycle",
+        "prediction_mode",
+        "is_prediction_active"
+      ]
+    },
+    "DeviceOrgResponse": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "description": "Organization ID",
+          "example": "default"
+        },
+        "load_module": {
+          "type": "string",
+          "description": "Currently fixed by learn.ch_nx_load",
+          "example": "ch_nx_load"
+        },
+        "ml_function": {
+          "type": "string",
+          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_multiplied"
+        },
+        "data_duration": {
+          "type": "integer",
+          "description": "data_duration for learning",
+          "example": "15"
+        },
+        "learn_cycle": {
+          "type": "integer",
+          "description": "learning_cycle (day[s]). Using in kapacitor cron method",
+          "example": "2"
+        },
+        "learned_devices_ids": {
+          "type": "array",
+          "description": "the list of device IDs what will be learing included in the network device org",
+          "items": {
+            "type": "uint64"
+          },
+          "example": [1, 2, 3]
+        },
+        "collector_server": {
+          "type": "string",
+          "description": "the server(minion_id) used to collect network data",
+          "example": "ch-collector-01"
+        },
+        "prediction_mode": {
+          "type": "string",
+          "description": "This is selected PredictionMode. It can be 'ML', 'DL' or 'Ensemble(ML + DL)'",
+          "example": "ML"
+        },
+        "is_prediction_active": {
+          "type": "bool",
+          "description": "Indicates whether AI prediction is active",
+          "example": false
+        },
+        "collected_devices_ids": {
+          "type": "array",
+          "description": "the list of device IDs included in Logstash Config",
+          "items": {
+            "type": "uint64"
+          },
+          "example": [1, 2, 3]
+        }
+      },
+      "required": []
+    },
+    "UpdateDeviceOrgRequest": {
+      "type": "object",
+      "properties": {
+        "load_module": {
+          "type": "string",
+          "description": "Currently fixed by learn.ch_nx_load",
+          "example": "ch_nx_load"
+        },
+        "ml_function": {
+          "type": "string",
+          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_multiplied"
+        },
+        "data_duration": {
+          "type": "integer",
+          "description": "data_duration for learning",
+          "example": "15"
+        },
+        "learn_cycle": {
+          "type": "integer",
+          "description": "learning_cycle (day[s]). Using in kapacitor cron method",
+          "example": "2"
+        },
+        "prediction_mode": {
+          "type": "string",
+          "description": "This is selected PredictionMode. It can be 'ML', 'DL' or 'Ensemble(ML + DL)'",
+          "example": "ML"
+        },
+        "is_prediction_active": {
+          "type": "bool",
+          "description": "Indicates whether AI prediction is active",
+          "example": false
+        }
+      },
+      "required": []
     },
     "SelfLinks": {
       "type": "object",

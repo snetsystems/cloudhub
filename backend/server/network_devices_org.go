@@ -49,7 +49,6 @@ type updateDeviceOrgRequest struct {
 
 type deviceOrgRequest struct {
 	ID                 string  `json:"organization"`
-	LoadModule         string  `json:"load_module,omitempty"`
 	MLFunction         *string `json:"ml_function"`
 	DataDuration       *int    `json:"data_duration"`
 	LearnCycle         *int    `json:"learn_cycle"`
@@ -260,6 +259,21 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
+	_, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &req.ID})
+	if err != nil {
+		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error checking for existing Org: %v", err), s.Logger)
+		return
+	}
+
+	existingDeviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &req.ID})
+	if err == nil && existingDeviceOrg != nil {
+		Error(w, http.StatusConflict, fmt.Sprintf("Device Org with ID %s already exists", req.ID), s.Logger)
+		return
+	} else if err != nil {
+		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error checking for existing Device Org: %v", err), s.Logger)
+		return
+	}
+
 	// Create a new NetworkDeviceOrg from the request data
 	newDeviceOrg := cloudhub.NetworkDeviceOrg{
 		ID:                  req.ID,
@@ -275,7 +289,6 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Add(ctx, &newDeviceOrg)
-
 	if err != nil {
 		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating new Device Org: %v", err), s.Logger)
 		return
