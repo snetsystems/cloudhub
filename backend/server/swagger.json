@@ -8707,10 +8707,10 @@
           "description": "The operating system of the device",
           "example": "ios"
         },
-        "is_collector_cfg_written": {
+        "is_collecting_cfg_written": {
           "type": "bool",
           "description": "Creation of Logstash configuration",
-          "example": "false"
+          "example": false
         },
         "ssh_config": {
           "$ref": "#/definitions/SSHConfig",
@@ -8728,7 +8728,7 @@
         "is_learning": {
           "type": "bool",
           "description": "Indicates whether to create a learning model",
-          "example": "false"
+          "example": false
         }
       },
       "required": []
@@ -8821,10 +8821,10 @@
           "description": "The operating system of the device",
           "example": "ios"
         },
-        "is_collector_cfg_written": {
+        "is_collecting_cfg_written": {
           "type": "bool",
           "description": "Creation of Logstash configuration",
-          "example": "false"
+          "example": false
         },
         "ssh_config": {
           "$ref": "#/definitions/SSHConfig",
@@ -8862,7 +8862,7 @@
         "is_learning": {
           "type": "bool",
           "description": "Indicates whether to create a learning model",
-          "example": "false"
+          "example": false
         },
         "ml_function": {
           "type": "string",

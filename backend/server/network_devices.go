@@ -54,7 +54,7 @@ type deviceResponse struct {
 	DeviceType             string              `json:"device_type"`
 	DeviceCategory         string              `json:"device_category"`
 	DeviceOS               string              `json:"device_os"`
-	IsCollectingCfgWritten bool                `json:"is_collector_cfg_written"`
+	IsCollectingCfgWritten bool                `json:"is_collecting_cfg_written"`
 	SSHConfig              cloudhub.SSHConfig  `json:"ssh_config"`
 	SNMPConfig             cloudhub.SNMPConfig `json:"snmp_config"`
 	Sensitivity            float32             `json:"sensitivity"`
@@ -96,10 +96,10 @@ const (
 )
 
 func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
-	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
-
-	if err != nil {
-		return nil, err
+	deviceOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
+	MLFunction := ""
+	if deviceOrg != nil {
+		MLFunction = deviceOrg.MLFunction
 	}
 
 	resData := &deviceResponse{
@@ -129,7 +129,7 @@ func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.Network
 		LearningBeginDatetime:  device.LearningBeginDatetime,
 		LearningFinishDatetime: device.LearningFinishDatetime,
 		IsLearning:             device.IsLearning,
-		MLFunction:             deviceOrg.MLFunction,
+		MLFunction:             MLFunction,
 	}
 
 	return resData, nil

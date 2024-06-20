@@ -154,7 +154,7 @@ func TestDeviceID(t *testing.T) {
 				"device_type": "switch",
 				"device_category": "network",
 				"device_os": "IOS",
-				"is_collector_cfg_written": false,
+				"is_collecting_cfg_written": false,
 				"is_modeling_generated": false,
 				"ssh_config": {
 				  "user_id": "host",

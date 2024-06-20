@@ -1213,7 +1213,7 @@ type NetworkDevice struct {
 	DeviceType             string     `json:"device_type"`
 	DeviceCategory         string     `json:"device_category"`
 	DeviceOS               string     `json:"device_os"`
-	IsCollectingCfgWritten bool       `json:"is_collector_cfg_written"`
+	IsCollectingCfgWritten bool       `json:"is_collecting_cfg_written"`
 	SSHConfig              SSHConfig  `json:"ssh_config"`
 	SNMPConfig             SNMPConfig `json:"snmp_config"`
 	Sensitivity            float32    `json:"sensitivity"`
