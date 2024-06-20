@@ -295,7 +295,8 @@ func (s *Store) NetworkDeviceOrg(ctx context.Context) cloudhub.NetworkDeviceOrgS
 		return s.NetworkDeviceOrgStore
 	}
 	if org, ok := hasOrganizationContext(ctx); ok {
-		return organizations.NewNetworkDeviceOrgStore(s.NetworkDeviceOrgStore, org)
+		isSuperAdmin := hasSuperAdminContext(ctx)
+		return organizations.NewNetworkDeviceOrgStore(s.NetworkDeviceOrgStore, org, isSuperAdmin)
 	}
 
 	return &noop.NetworkDeviceOrgStore{}

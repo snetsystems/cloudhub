@@ -407,6 +407,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// Device Orgs Management
 	router.GET("/cloudhub/v1/ai/network/managements/orgs", EnsureViewer(service.AllDevicesOrg))
+	router.GET("/cloudhub/v1/ai/network/managements/orgs/:id", EnsureViewer(service.NetworkDeviceOrgID))
+	router.POST("/cloudhub/v1/ai/network/managements/orgs/", EnsureAdmin(service.AddNetworkDeviceOrg))
+	router.PATCH("/cloudhub/v1/ai/network/managements/orgs/:id", EnsureAdmin(service.UpdateNetworkDevice))
 
 	// SNMP Management
 	router.POST("/cloudhub/v1/snmp/validation", EnsureViewer(service.SNMPConnTestBulk))

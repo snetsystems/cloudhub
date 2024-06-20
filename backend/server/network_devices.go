@@ -40,7 +40,7 @@ type updateDeviceRequest struct {
 	SNMPConfig             *cloudhub.SNMPConfig `json:"snmp_config,omitempty"`
 	Sensitivity            *float32             `json:"sensitivity,omitempty"`
 	DeviceVendor           *string              `json:"device_vendor,omitempty"`
-	IsLearning             *bool                `json:"is_learning, omitempty"`
+	IsLearning             *bool                `json:"is_learning,omitempty"`
 }
 type deleteDevicesRequest struct {
 	DevicesIDs []uint64 `json:"devices_ids"`
@@ -377,12 +377,6 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	failedDevices := []deviceError{}
 	deviceListGroupByOrg := make(map[string][]uint64)
 
-	_, activeCollectorKeys, err := s.getCollectorServers()
-	if err != nil {
-		fmt.Println("internal server error:", err)
-		return
-	}
-
 	for _, deviceID := range request.DevicesIDs {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
 		if err != nil {
@@ -391,6 +385,15 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			if device.IsCollectingCfgWritten {
 				deviceListGroupByOrg[device.Organization] = append(deviceListGroupByOrg[device.Organization], device.ID)
 			}
+		}
+	}
+	activeCollectorKeys := make(map[string]bool)
+	if len(deviceListGroupByOrg) > 1 {
+		_, activeCollectorKeys, err := s.getCollectorServers()
+		activeCollectorKeys = activeCollectorKeys
+		if err != nil {
+			fmt.Println("internal server error:", err)
+			return
 		}
 	}
 
@@ -426,6 +429,9 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, org)
+		msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), org.ID)
+		s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
+
 		if err != nil {
 			fmt.Println("Error updating NetworkDeviceOrg:", err)
 			return
@@ -1109,6 +1115,10 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 		return statusCode, resp, err
 	}
+
+	//Todo: Log...
+	msg := fmt.Sprintf(MsgNetWorkDeviceConfCreated.String(), org.ID)
+	s.logRegistration(ctx, "NetWorkDeviceConf", msg)
 	return http.StatusOK, nil, nil
 }
 

@@ -14,14 +14,16 @@ var _ cloudhub.NetworkDeviceOrgStore = &NetworkDeviceOrgStore{}
 type NetworkDeviceOrgStore struct {
 	store        cloudhub.NetworkDeviceOrgStore
 	organization string
+	isSuperAdmin bool
 }
 
 // NewNetworkDeviceOrgStore creates a new NewNetworkDeviceOrgStore from an existing
 // cloudhub.NewNetworkDeviceOrgStore and an organization string
-func NewNetworkDeviceOrgStore(s cloudhub.NetworkDeviceOrgStore, org string) *NetworkDeviceOrgStore {
+func NewNetworkDeviceOrgStore(s cloudhub.NetworkDeviceOrgStore, org string, isSuperAdmin bool) *NetworkDeviceOrgStore {
 	return &NetworkDeviceOrgStore{
 		store:        s,
 		organization: org,
+		isSuperAdmin: isSuperAdmin,
 	}
 }
 
@@ -50,6 +52,10 @@ func (s *NetworkDeviceOrgStore) Get(ctx context.Context, q cloudhub.NetworkDevic
 	if err != nil {
 		return nil, err
 	}
+	if s.isSuperAdmin {
+		return t, nil
+	}
+
 	if *q.ID != s.organization {
 		return nil, cloudhub.ErrDeviceOrgNotFound
 	}
