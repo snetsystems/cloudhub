@@ -274,7 +274,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   private deleteDevicesAJAX = async (idList: string[]) => {
     const numIdList = idList.map(i => Number(i))
     this.setState({isLoading: true})
-    await deleteDevice({devices_id: numIdList})
+    await deleteDevice({devices_ids: numIdList})
 
     this.getDeviceAJAX()
     this.setState({checkedArray: [], isLoading: false})

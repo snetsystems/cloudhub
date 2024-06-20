@@ -214,15 +214,15 @@ class DeviceConnection extends PureComponent<Props, State> {
     deviceData: DeviceData
   ): SNMPConnectionRequest[] => {
     const {device_ip, snmp_config} = deviceData
-    const {snmp_community, snmp_port, snmp_version, snmp_protocol} = snmp_config
+    const {community, port, version, protocol} = snmp_config
 
     return [
       {
         device_ip,
-        snmp_community,
-        snmp_port,
-        snmp_version,
-        snmp_protocol,
+        community,
+        port,
+        version,
+        protocol,
       },
     ]
   }
@@ -396,14 +396,32 @@ class DeviceConnection extends PureComponent<Props, State> {
   ) => (value: string) => {
     let newValue: string | number = value
 
-    if (key === 'snmp_port' || key === 'ssh_port') {
-      newValue = Number(value)
-    }
-
     this.setState(prevState => {
       const device = prevState.deviceData
 
-      if (key in device.snmp_config) {
+      if (key === 'snmp_port') {
+        newValue = Number(value)
+        return {
+          deviceData: {
+            ...device,
+            snmp_config: {
+              ...device.snmp_config,
+              port: newValue,
+            },
+          },
+        }
+      } else if (key === 'ssh_port') {
+        newValue = Number(value)
+        return {
+          deviceData: {
+            ...device,
+            ssh_config: {
+              ...device.ssh_config,
+              port: newValue,
+            },
+          },
+        }
+      } else if (key in device.snmp_config) {
         return {
           deviceData: {
             ...device,

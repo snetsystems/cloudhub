@@ -167,9 +167,9 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
               isNewEditor: false,
               addr: rowData.device_ip,
               nodename: rowData.hostname,
-              sshId: rowData.ssh_config.ssh_user_id,
-              sshPw: rowData.ssh_config.ssh_password,
-              port: `${rowData.ssh_config.ssh_port}`,
+              sshId: rowData.ssh_config.user_id,
+              sshPw: rowData.ssh_config.password,
+              port: `${rowData.ssh_config.port}`,
             })
           }}
         ></button>

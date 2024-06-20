@@ -1,22 +1,24 @@
 export interface DeviceData {
   id?: number
   organization: string
-  organization_name?: string
   device_ip: string
   hostname?: string
   device_type?: string
   device_category?: string
   device_os?: string
-  device_vendor?: string
-  sensitivity?: number
+  IsCollectingCfgWritten?: boolean
   ssh_config?: SSHConfig
   snmp_config: SNMPConfig
+  sensitivity?: string
+  device_vendor?: string
+  learning_state?: string
+  learning_update_date?: string
+  learning_finish_datetime?: string
+  is_learning?: boolean
+  ml_function?: string
   links?: {
     self: string
   }
-  is_modeling_generated?: boolean
-  is_config_written?: boolean
-  isMonitoring?: boolean
 }
 
 export interface ApplyMonitoringProps {
@@ -27,25 +29,27 @@ export interface ApplyMonitoringProps {
 }
 
 export interface SNMPConfig {
-  snmp_community: string
-  snmp_port: number
-  snmp_version: string
-  snmp_protocol: string
+  community: string
+  port: number
+  version: string
+  protocol: string
+  snmp_port?: number
 }
 
 export interface SSHConfig {
-  ssh_user_id?: string
-  ssh_password?: string
-  ssh_en_password?: string
+  user_id?: string
+  password?: string
+  en_password?: string
+  port?: number
   ssh_port?: number
 }
 
 export interface SNMPConnectionRequest {
   device_ip: string
-  snmp_community?: string
-  snmp_port?: number
-  snmp_version?: string
-  snmp_protocol?: string
+  community?: string
+  port?: number
+  version?: string
+  protocol?: string
 }
 
 export interface SNMPConnectionResponse {
@@ -62,11 +66,11 @@ export interface SNMPConnectionFailedDevice {
 }
 
 export interface SNMPConnectionSuccessDevice {
-  index: number
   device_ip: string
-  device_os: string
+  index: number
   device_type: string
   hostname: string
+  device_os: string
 }
 
 export type CreateDeviceListRequest = DeviceData[]
@@ -100,7 +104,7 @@ export interface DeleteDeviceResponse {
 }
 
 export interface DeleteDeviceParams {
-  devices_id: number[]
+  devices_ids: number[]
 }
 
 export type ImportDevicePageStatus = 'UploadCSV' | 'DeviceStatus'
