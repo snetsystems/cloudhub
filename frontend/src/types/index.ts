@@ -113,6 +113,7 @@ import {
   SNMPConnectionFailedDevice,
   DeviceConnectionStatus,
   DeviceMonitoringStatus,
+  ApplyMonitoringProps,
 } from './deviceManagement'
 
 import {AiModal} from './aiModal'
@@ -228,4 +229,5 @@ export {
   DeviceConnectionStatus,
   AiModal,
   DeviceMonitoringStatus,
+  ApplyMonitoringProps,
 }

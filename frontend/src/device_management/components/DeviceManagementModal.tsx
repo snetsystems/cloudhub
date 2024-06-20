@@ -57,7 +57,7 @@ function DeviceManagementModal({
           <Form>
             <Form.Element>
               <div className="message-zone device-modal--childNode">
-                {message}
+                {!!message && <span>{message}</span>}
                 {!!childNode && childNode}
               </div>
             </Form.Element>

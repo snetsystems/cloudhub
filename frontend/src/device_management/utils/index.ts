@@ -41,3 +41,16 @@ export const convertDeviceDataOrganizationIDToName = (
     return mapOrganization(devicesData)
   }
 }
+
+export const selectedArrayById = (
+  array: any[],
+  checkedArray: string[],
+  key: string
+) => {
+  const validArray = array.filter(
+    i => checkedArray.includes(`${i[key]}`)
+    //create monitoring sql is_modeling_generated=> is_monitoring
+  )
+
+  return validArray
+}

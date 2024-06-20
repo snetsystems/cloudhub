@@ -43,10 +43,65 @@
   white-space: pre-wrap;
 
   > * {
-    margin-top: 4px;
+    margin-top: 8px;
 
     &:first-child {
       margin-top: 0;
     }
   }
+}
+
+.device-management-modal-body {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.device--indicator {
+  &.indicator--primary {
+    color: $c-rainforest;
+  }
+
+  &.indicator--fail {
+    color: $c-topaz;
+  }
+}
+
+.device-Management-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin-right: 30px;
+  justify-content: center;
+
+  span {
+    display: inline-block;
+    margin-left: 8px;
+    font-weight: 500;
+    font-style: italic;
+    color: $g10-wolf;
+    transition: color 0.25s ease;
+    @include no-user-select();
+  }
+  .slide-toggle.active + span {
+    font-style: normal;
+    color: $g15-platinum;
+  }
+}
+
+.pencil-confirm {
+  background-image: url('../../assets/images/pencil-confirm.svg');
+  background-size: 100% 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  width: 20px;
+  height: 20px;
+}
+
+.pencil-exclamation {
+  background-image: url('../../assets/images/pencil-exclamation.svg');
+  background-size: 100% 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  width: 20px;
+  height: 20px;
 }

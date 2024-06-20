@@ -5,12 +5,14 @@ import {
   IMPORT_DEVICE_CSV_Template,
   DEVICE_MANAGEMENT_URL,
   SNMP_CONNECTION_URL,
+  SYSTEM_MODAL,
 } from './deviceData'
 import {
   columns,
   IMPORT_FILE_DEVICE_STATUS_COLUMNS,
 } from './deviceManagementColumn'
 import {predictionColumn} from './predictionColumn'
+import {MONITORING_MODAL_INFO} from './systemMsg'
 export {
   DEFAULT_NETWORK_DEVICE_DATA,
   SNMP_VERSION,
@@ -21,4 +23,6 @@ export {
   predictionColumn,
   DEVICE_MANAGEMENT_URL,
   SNMP_CONNECTION_URL,
+  SYSTEM_MODAL,
+  MONITORING_MODAL_INFO,
 }

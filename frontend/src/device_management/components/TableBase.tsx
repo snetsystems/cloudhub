@@ -152,7 +152,7 @@ function TableBase({
                   <th
                     className={`${getAlignClassName(column?.align)} ${
                       options?.theadRow?.className ?? ''
-                    } ${column.options.checkbox ? 'checkbox' : ''}`}
+                    } ${column.options?.checkbox ? 'checkbox' : ''}`}
                     key={index}
                     onClick={() => onClickTh(column)}
                   >
@@ -244,7 +244,12 @@ function TableBase({
                             />
                           </div>
                         ) : column?.render ? (
-                          column.render(getValue(item, key), item, columnIndex)
+                          column.render(
+                            getValue(item, key),
+                            item,
+                            columnIndex,
+                            rowIndex
+                          )
                         ) : (
                           getValue(item, key)
                         )}

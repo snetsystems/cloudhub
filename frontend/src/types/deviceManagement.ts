@@ -16,6 +16,14 @@ export interface DeviceData {
   }
   is_modeling_generated?: boolean
   is_config_written?: boolean
+  isMonitoring?: boolean
+}
+
+export interface ApplyMonitoringProps {
+  isCreateLearning?: boolean
+  organization: string
+  device_ip: string
+  hostname: string
 }
 
 export interface SNMPConfig {

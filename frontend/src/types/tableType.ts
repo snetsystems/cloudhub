@@ -30,7 +30,12 @@ export interface ColumnInfo extends ColumnBaseInfo {
   name: string
   key: string
   options?: ColumnInfoOptions
-  render?: (value: any, rowData: any, index: number) => ReactNode
+  render?: (
+    value: any,
+    rowData: any,
+    ColumnIndex: number,
+    rowIndex: number
+  ) => ReactNode
 }
 
 export interface DataTableObject {

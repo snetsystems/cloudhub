@@ -15,7 +15,6 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {openShell} from 'src/shared/actions/shell'
 
 // Constants
-import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {
   DEFAULT_NETWORK_DEVICE_DATA,
   columns,
@@ -49,11 +48,10 @@ import {getDeep} from 'src/utils/wrappers'
 import {generateForHosts} from 'src/utils/tempVars'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {DELETE_MODAL_INFO, MONITORING_MODAL_INFO} from '../constants/deviceData'
+
 import {closeModal, openModal} from 'src/shared/actions/aiModal'
-import {ComponentColor} from 'src/reusable_ui'
-import {DEVICE_INFO_SELECTED_MONITORING} from '../constants/deviceManagementColumn'
 import {notifyFetchDeviceMonitoringStatusFailed} from 'src/shared/copy/notifications'
+import DeviceManagementBtn from '../components/DeviceManagementBtn'
 
 interface Auth {
   me: Me
@@ -134,6 +132,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       deviceConnectionStatus,
       importDeviceWizardVisibility,
       selectedDeviceData,
+      checkedArray,
     } = this.state
     const updatedDeviceData = this.getDeviceMonitoringStatus(
       data,
@@ -158,58 +157,14 @@ class DeviceManagement extends PureComponent<Props, State> {
           }
           // options={this.options}
           topLeftRender={
-            <div className="device-management-top left">
-              <div className="space-x">
-                <Authorized requiredRole={EDITOR_ROLE}>
-                  <button
-                    onClick={() => {
-                      this.onClickDelete(this.state.checkedArray)
-                    }}
-                    className="btn button btn-sm btn-primary"
-                    disabled={this.state.checkedArray.length === 0}
-                  >
-                    <span className="icon trash" /> Delete Device
-                  </button>
-                </Authorized>
-                {/* TODO Consder requiredRole */}
-                <Authorized requiredRole={EDITOR_ROLE}>
-                  <button
-                    onClick={() => {
-                      this.onClickMonitoring(this.state.checkedArray)
-                    }}
-                    className="btn button btn-sm btn-primary"
-                    disabled={this.state.checkedArray.length === 0}
-                  >
-                    <span className="icon import" /> Apply Monitoring
-                  </button>
-                </Authorized>
-              </div>
-              <div className="space-x">
-                <Authorized requiredRole={EDITOR_ROLE}>
-                  <div className="btn button btn-sm btn-primary">
-                    <span className="icon computer-desktop" /> Learning Setting
-                  </div>
-                </Authorized>
-
-                <Authorized requiredRole={EDITOR_ROLE}>
-                  <div
-                    onClick={this.connectDevice('Creating')}
-                    className="btn button btn-sm btn-primary"
-                  >
-                    <span className="icon plus" /> Add Device
-                  </div>
-                </Authorized>
-                {/* TODO Consder requiredRole */}
-                <Authorized requiredRole={EDITOR_ROLE}>
-                  <div
-                    onClick={this.importDevice}
-                    className="btn button btn-sm btn-primary"
-                  >
-                    <span className="icon import" /> Import Device
-                  </div>
-                </Authorized>
-              </div>
-            </div>
+            <DeviceManagementBtn
+              data={data}
+              getDeviceAJAX={this.getDeviceAJAX}
+              importDevice={this.importDevice}
+              connectDevice={this.connectDevice}
+              checkedArray={checkedArray}
+              deleteDevicesAJAX={this.deleteDevicesAJAX}
+            />
           }
         />
 
@@ -231,6 +186,14 @@ class DeviceManagement extends PureComponent<Props, State> {
           notify={this.props.notify}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
         />
+        {/* table + toggle btn UI */}
+        {/* {monitoringModalVisibility && (
+      <ApplyMonitoringModal
+        isVisible={monitoringModalVisibility}
+        setIsVisible={this.onClickMonitoringClose}
+        applyLearningData={selectedArrayById(data, checkedArray, 'id')}
+      />
+    )} */}
 
         {this.state.isLoading && (
           <div className="loading-box">
@@ -308,21 +271,6 @@ class DeviceManagement extends PureComponent<Props, State> {
     onConsoleClick: this.onClickShellModalOpen,
   })
 
-  private onClickDelete = (checkedArray: string[]) => {
-    this.props.openModal({
-      title: 'Delete Device',
-      isVisible: true,
-      message: DELETE_MODAL_INFO.message,
-      confirmText: 'Delete',
-      btnColor: ComponentColor.Danger,
-      onConfirm: () => {
-        this.deleteDevicesAJAX(checkedArray)
-        this.props.closeModal()
-      },
-      cancelText: 'Cancel',
-    })
-  }
-
   private deleteDevicesAJAX = async (idList: string[]) => {
     const numIdList = idList.map(i => Number(i))
     this.setState({isLoading: true})
@@ -330,39 +278,6 @@ class DeviceManagement extends PureComponent<Props, State> {
 
     this.getDeviceAJAX()
     this.setState({checkedArray: [], isLoading: false})
-  }
-
-  private onClickMonitoring = (checkedArray: string[]) => {
-    const validArray = this.state.data.filter(
-      i => checkedArray.includes(`${i.id}`)
-      //create monitoring sql is_modeling_generated=> is_monitoring
-    )
-
-    this.props.openModal({
-      isVisible: true,
-      // message: MONITORING_MODAL_INFO.workHeader,
-      message: '',
-      btnColor: ComponentColor.Warning,
-      onConfirm: () => {
-        this.props.closeModal()
-      },
-      confirmText: 'Confirm',
-      cancelText: 'Cancel',
-      childNode: (
-        <div className="device-modal--childNode">
-          <TableComponent
-            data={validArray}
-            tableTitle="Selected Device List"
-            columns={DEVICE_INFO_SELECTED_MONITORING}
-            isSearchDisplay={false}
-          />
-
-          {MONITORING_MODAL_INFO.workMessage}
-        </div>
-      ),
-    })
-
-    //Apply Monitoring Process -> close Modal
   }
 
   private connectDevice = (

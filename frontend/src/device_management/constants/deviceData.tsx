@@ -44,9 +44,9 @@ export const DELETE_MODAL_INFO = {
   message: `Are you sure you want to delete this?`,
 }
 
-export const MONITORING_MODAL_INFO = {
-  returnMessage: `The monitoring process for the requested device has been initiated.`,
-  workHeader: `Here is the Device List you requested.`,
-  workMessage: `Proceeding with the operation will pause data collection for approximately 1 min. 
-Would you like to continue?`,
-}
+export const SYSTEM_MODAL = {
+  LEARNING: 'learning',
+  MONITORING: 'monitoring',
+  DELETE: 'delete',
+  MONITORING_DELETE: 'monitoring_delete',
+} as const

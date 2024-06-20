@@ -29,6 +29,7 @@ interface Props {
   tableTitle?: string
   options?: DataTableOptions
   initSort?: SortInfo
+  bodyClassName?: string
 }
 
 function TableComponent({
@@ -46,6 +47,7 @@ function TableComponent({
   options,
   isSearchDisplay = true,
   initSort = null,
+  bodyClassName,
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
@@ -130,7 +132,7 @@ function TableComponent({
       return 0
     })
     return newData
-  }, [sortTarget, filterData])
+  }, [sortTarget, filterData, JSON.stringify(data)])
 
   const onSort = useCallback(
     (column: ColumnInfo) => {
@@ -182,7 +184,7 @@ function TableComponent({
           {toprightRender}
         </div>
       </div>
-      <div className="panel-body">
+      <div className={`panel-body ${bodyClassName}`}>
         <TableBase
           columns={columns}
           data={sortedData}

@@ -1,0 +1,59 @@
+import React from 'react'
+import TableComponent from './TableComponent'
+import {deviceApplyMonitoringColumn} from '../constants/deviceManagementColumn'
+import {ApplyMonitoringProps} from 'src/types'
+import {MONITORING_MODAL_INFO, SYSTEM_MODAL} from '../constants'
+
+interface Props {
+  data: ApplyMonitoringProps[]
+  type: typeof SYSTEM_MODAL[keyof typeof SYSTEM_MODAL]
+}
+
+function SystemConfirmModal({data, type}: Props) {
+  const message = (type: string) => {
+    switch (type) {
+      case SYSTEM_MODAL.LEARNING:
+        return MONITORING_MODAL_INFO.learningMessage
+
+      case SYSTEM_MODAL.MONITORING:
+        return MONITORING_MODAL_INFO.monitoringMessage
+
+      case SYSTEM_MODAL.DELETE:
+        return MONITORING_MODAL_INFO.deleteGeneralMessage
+
+      case SYSTEM_MODAL.MONITORING_DELETE:
+        return MONITORING_MODAL_INFO.deleteMonitoringMessage
+
+      default:
+        break
+    }
+  }
+
+  return (
+    <div className="device-modal--childNode">
+      <TableComponent
+        data={data}
+        tableTitle="Apply Monitoring List"
+        columns={deviceApplyMonitoringColumn}
+        isSearchDisplay={false}
+        bodyClassName="device-management-modal-body"
+      />
+
+      {message(type)}
+    </div>
+  )
+}
+
+export default SystemConfirmModal
+
+{
+  /*
+      <TableComponent
+            data={validArray}
+            tableTitle="Delete Device List"
+            columns={DEVICE_INFO_SELECTED_MONITORING}
+            isSearchDisplay={false}
+            bodyClassName="device-management-modal-body"
+          />
+          */
+}

@@ -4,7 +4,7 @@ import {ComponentColor} from 'src/reusable_ui'
 export interface AiModal {
   title?: string
   isVisible: boolean
-  message: string
+  message?: string
   confirmText?: string
   cancelText?: string
   customClass?: string
