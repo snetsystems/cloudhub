@@ -388,10 +388,10 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	}
 	activeCollectorKeys := make(map[string]bool)
 	if len(devicesGroupByOrg) > 1 {
-		_, activeCollectorKeys, err := s.getCollectorServers()
-		activeCollectorKeys = activeCollectorKeys
-		if err != nil {
-			fmt.Println("internal server error:", err)
+		var activeCollectorsErr error
+		_, activeCollectorKeys, activeCollectorsErr = s.getCollectorServers()
+		if activeCollectorsErr != nil {
+			http.Error(w, "Failed to access active collector-server", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -405,12 +405,15 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
 			return
 		}
-		if isActive := activeCollectorKeys[org.CollectorServer]; !isActive {
+
+		isActive := activeCollectorKeys[org.CollectorServer]
+		if !isActive {
 			for _, v := range devicesIDs {
-				failedDevices = append(failedDevices, deviceError{DeviceID: v, ErrorMessage: err.Error()})
+				failedDevices = append(failedDevices, deviceError{DeviceID: v, ErrorMessage: "collector server not active"})
 			}
 			continue
 		}
+
 		previousLearnedDevicesIDs = org.LearnedDevicesIDs
 		previousCollectedDevicesIDs = org.CollectedDevicesIDs
 
@@ -432,9 +435,13 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
 
 		if err != nil {
-			fmt.Println("Error updating NetworkDeviceOrg:", err)
+			for _, v := range devicesIDs {
+				failedDevices = append(failedDevices, deviceError{DeviceID: v, ErrorMessage: "Error updating NetworkDeviceOrg:"})
+			}
+			Error(w, statusCode, string("Error updating NetworkDeviceOrg:"), s.Logger)
 			return
 		}
+
 	}
 
 	workerLimit := 10
@@ -502,7 +509,6 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 	} else {
 		encodeJSON(w, http.StatusNoContent, response, s.Logger)
-
 	}
 }
 
@@ -684,7 +690,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 	collectorKeys, activeCollectorKeys, err := s.getCollectorServers()
 	if err != nil {
-		fmt.Println("Error:", err)
+		http.Error(w, "Failed to access active collector-server", http.StatusInternalServerError)
 		return
 	}
 
@@ -1149,7 +1155,7 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	//Todo: Log...
 	msg := fmt.Sprintf(MsgNetWorkDeviceConfCreated.String(), org.ID)
 	s.logRegistration(ctx, "NetWorkDeviceConf", msg)
-	return http.StatusOK, nil, nil
+	return http.StatusOK, nil, err
 }
 
 func (s *Service) removeLogstashConfigGroupByOrg(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg) (int, []byte, error) {
