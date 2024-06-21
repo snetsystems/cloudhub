@@ -1495,5 +1495,18 @@ export const notifyFetchDeviceMonitoringStatusFailed = (
 ): Notification => ({
   ...defaultErrorNotification,
   duration: INFINITE,
-  message: `Failed to fetch device monitoring status: ${errorMessage}`,
+  message: `Failed to fetch device monitoring status. ${errorMessage}`,
+})
+
+export const notifyApplyMonitoringSuccess = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Monitoring has been applied successfully.`,
+})
+
+export const notifyApplyMonitoringFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Apply Monitoring. ${errorMessage}`,
 })

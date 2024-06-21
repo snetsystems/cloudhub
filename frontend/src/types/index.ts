@@ -114,6 +114,9 @@ import {
   DeviceConnectionStatus,
   DeviceMonitoringStatus,
   ApplyMonitoringProps,
+  CollectingDevice,
+  ApplyMonitoringRequest,
+  ApplyMonitoringResponse,
 } from './deviceManagement'
 
 import {AiModal} from './aiModal'
@@ -230,4 +233,7 @@ export {
   AiModal,
   DeviceMonitoringStatus,
   ApplyMonitoringProps,
+  CollectingDevice,
+  ApplyMonitoringRequest,
+  ApplyMonitoringResponse,
 }

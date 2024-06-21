@@ -23,6 +23,7 @@ interface Props {
   data: DeviceData[]
   getDeviceAJAX: () => Promise<void>
   deleteDevicesAJAX: (idList: string[]) => Promise<void>
+  applyMonitoringAJAX: () => Promise<void>
 }
 
 function DeviceManagementBtn({
@@ -34,6 +35,7 @@ function DeviceManagementBtn({
   data,
   getDeviceAJAX,
   deleteDevicesAJAX,
+  applyMonitoringAJAX,
 }: Props) {
   //   const onClickMonitoring = () => {
   //     //toggle btn issue
@@ -57,10 +59,10 @@ function DeviceManagementBtn({
       message: '',
       btnColor: ComponentColor.Primary,
       onConfirm: () => {
-        getDeviceAJAX()
+        applyMonitoringAJAX()
         closeModal()
       },
-      confirmText: 'Confirm',
+      confirmText: 'Apply',
       cancelText: 'Cancel',
       onCancel: () => {
         getDeviceAJAX()

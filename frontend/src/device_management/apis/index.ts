@@ -16,10 +16,13 @@ import {
   UpdateDeviceRequest,
   Template,
   DeviceMonitoringStatus,
+  ApplyMonitoringRequest,
+  ApplyMonitoringResponse,
 } from 'src/types'
 
 // Constants
 import {
+  APPLY__MONITORING_URL,
   DEVICE_MANAGEMENT_URL,
   SNMP_CONNECTION_URL,
 } from 'src/device_management/constants'
@@ -150,6 +153,24 @@ export const deleteDevice = (params: DeleteDeviceParams) => {
       url: DEVICE_MANAGEMENT_URL,
       method: 'DELETE',
     }) as Promise<AxiosResponse<DeleteDeviceResponse>>
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const applyMonitoring = async (
+  learned_devices: ApplyMonitoringRequest
+) => {
+  try {
+    const response = await AJAX({
+      data: learned_devices,
+      url: APPLY__MONITORING_URL,
+      method: 'POST',
+    })
+    const {data} = response as ApplyMonitoringResponse
+
+    return data
   } catch (error) {
     console.error(error)
     throw error

@@ -6,7 +6,7 @@ export interface DeviceData {
   device_type?: string
   device_category?: string
   device_os?: string
-  IsCollectingCfgWritten?: boolean
+  is_collecting_cfg_written?: boolean
   ssh_config?: SSHConfig
   snmp_config: SNMPConfig
   sensitivity?: string
@@ -80,13 +80,13 @@ export interface CreateDeviceListResponse {
 }
 
 export interface FailedDevice {
-  index: number
-  device_ip: string
+  id: number
+  device_ip?: string
+  device_id?: string
   errorMessage: string
 }
-
 export interface GetDeviceListResponse {
-  Devices?: DeviceData[] | null
+  devices?: DeviceData[] | null
 }
 
 export interface UpdateDeviceRequest {
@@ -116,4 +116,18 @@ interface deviceMonitoringStatusData {
 }
 export interface DeviceMonitoringStatus {
   [x: string]: deviceMonitoringStatusData
+}
+
+export interface ApplyMonitoringRequest {
+  collecting_devices: CollectingDevice[]
+}
+
+export interface CollectingDevice {
+  device_id: number
+  is_learning: boolean
+  is_collecting_cfg_written: boolean
+}
+
+export interface ApplyMonitoringResponse {
+  data: {failed_devices: FailedDevice[]}
 }

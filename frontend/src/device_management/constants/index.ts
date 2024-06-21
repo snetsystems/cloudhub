@@ -6,6 +6,7 @@ import {
   DEVICE_MANAGEMENT_URL,
   SNMP_CONNECTION_URL,
   SYSTEM_MODAL,
+  APPLY__MONITORING_URL,
 } from './deviceData'
 import {
   columns,
@@ -25,4 +26,5 @@ export {
   SNMP_CONNECTION_URL,
   SYSTEM_MODAL,
   MONITORING_MODAL_INFO,
+  APPLY__MONITORING_URL,
 }

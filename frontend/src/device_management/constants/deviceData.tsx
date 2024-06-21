@@ -40,6 +40,9 @@ export const SNMP_CONNECTION_URL = '/cloudhub/v1/snmp/validation'
 export const DEVICE_MANAGEMENT_URL =
   '/cloudhub/v1//ai/network/managements/devices'
 
+export const APPLY__MONITORING_URL =
+  '/cloudhub/v1/ai/network/managements/monitoring/config'
+
 export const DELETE_MODAL_INFO = {
   message: `Are you sure you want to delete this?`,
 }
