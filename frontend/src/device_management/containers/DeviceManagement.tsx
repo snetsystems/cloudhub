@@ -60,6 +60,8 @@ import {closeModal, openModal} from 'src/shared/actions/aiModal'
 import {
   notifyApplyMonitoringFailed,
   notifyApplyMonitoringSuccess,
+  notifyDeleteDevicesFailed,
+  notifyDeleteDevicesSucceeded,
   notifyFetchDeviceMonitoringStatusFailed,
 } from 'src/shared/copy/notifications'
 import DeviceManagementBtn from '../components/DeviceManagementBtn'
@@ -286,10 +288,18 @@ class DeviceManagement extends PureComponent<Props, State> {
   private deleteDevicesAJAX = async (idList: string[]) => {
     const numIdList = idList.map(i => Number(i))
     this.setState({isLoading: true})
-    await deleteDevice({devices_ids: numIdList})
 
-    this.getDeviceAJAX()
-    this.setState({checkedArray: [], isLoading: false})
+    try {
+      await deleteDevice({devices_ids: numIdList})
+
+      this.props.notify(notifyDeleteDevicesSucceeded())
+      this.getDeviceAJAX()
+      this.setState({checkedArray: [], isLoading: false})
+    } catch (error) {
+      this.props.notify(notifyDeleteDevicesFailed(error.message || ''))
+      this.getDeviceAJAX()
+      this.setState({checkedArray: [], isLoading: false})
+    }
   }
 
   private applyMonitoringAJAX = async () => {

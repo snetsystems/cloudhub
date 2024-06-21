@@ -52,6 +52,7 @@ import {
   notifyCSVUploadFailedWithMessage,
   notifyCreateDevicesFailed,
   notifyCreateDevicesSucceeded,
+  notifyFetchSNMPConnectStatusSucceeded,
   notifySNMPConnectFailed,
 } from 'src/shared/copy/notifications'
 
@@ -277,6 +278,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
       snmpConnectionSuccessDevices
     )
 
+    this.props.notify(notifyFetchSNMPConnectStatusSucceeded())
     this.props.setDeviceManagementIsLoading(false)
     this.setState({
       importDevicePageStatus: 'DeviceStatus',
