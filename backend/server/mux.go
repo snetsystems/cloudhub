@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -640,4 +642,17 @@ func paramStr(key string, r *http.Request) (string, error) {
 	ctx := r.Context()
 	param := httprouter.GetParamFromContext(ctx, key)
 	return param, nil
+}
+
+// decodeRequest is a generic function to decode JSON request bodies
+func decodeRequest[T any](r *http.Request) (T, context.Context, error) {
+	var request T
+	ctx := r.Context()
+
+	// Decode the request body into the provided struct type
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		return request, ctx, errors.New("invalid request data")
+	}
+
+	return request, ctx, nil
 }

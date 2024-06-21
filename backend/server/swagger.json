@@ -8753,11 +8753,6 @@
           "description": "The type of the device",
           "example": "router"
         },
-        "device_category": {
-          "type": "string",
-          "description": "The category of the device",
-          "example": "network"
-        },
         "device_os": {
           "type": "string",
           "description": "The operating system of the device",
@@ -8782,7 +8777,6 @@
         "device_ip",
         "hostname",
         "device_type",
-        "device_category",
         "device_os",
         "snmp_config"
       ]
@@ -8837,6 +8831,11 @@
           "type": "bool",
           "description": "Indicates whether to create a learning model",
           "example": false
+        },
+        "sensitivity": {
+          "type": "flaot",
+          "description": "Sensitivity throttle ratio",
+          "example": "1.0"
         }
       },
       "required": []
@@ -8858,9 +8857,9 @@
     "ApplyMonitoringDeviceRequest": {
       "type": "object",
       "properties": {
-        "learned_devices": {
+        "collecting_devices": {
           "type": "array",
-          "description": "Array of learned devices",
+          "description": "Array of collecting devices",
           "items": {
             "type": "object",
             "properties": {
@@ -8987,6 +8986,32 @@
           "items": {
             "$ref": "#/definitions/DeviceResponse"
           }
+        },
+        "failed_devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FailedDevice"
+          }
+        }
+      }
+    },
+    "FailedDevice": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "description": "Index of the device in the request array",
+          "example": 0
+        },
+        "device_id": {
+          "type": "integer",
+          "description": "ID of the device",
+          "example": 1
+        },
+        "errorMessage": {
+          "type": "string",
+          "description": "Error message for the failed device",
+          "example": "organization does not exist"
         }
       }
     },
