@@ -1,5 +1,4 @@
 import React from 'react'
-import {ComponentColor, ComponentSize, SlideToggle} from 'src/reusable_ui'
 import {AlignType, ColumnInfo, DeviceData, ShellInfo, SortType} from 'src/types'
 
 interface Props {
@@ -69,52 +68,44 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       ),
     },
     {
-      // TODO: data sync
-      key: '',
-      name: 'Learning Run',
+      key: 'is_learning',
+      name: 'Learning Enabled',
       align: AlignType.CENTER,
       render: value => (
         <div
           className={`device--indicator ${
-            !value ? 'indicator--primary' : 'indicator--fail'
+            value ? 'indicator--primary' : 'indicator--fail'
           } flex-center`}
         >
-          Accepted
+          {value ? 'Enabled' : 'Disabled'}
         </div>
       ),
     },
     {
-      // TODO: data sync
-      key: '',
+      key: 'learning_state',
       name: 'Learning State',
-      render: value => (
-        <div
-          className={`agent--indicator ${
-            !!value ? 'indicator--primary' : 'indicator--fail'
-          }`}
-        >
-          {value ?? 'ready'}
-        </div>
-      ),
+      align: AlignType.CENTER,
+      render: value => <div> {value ? value : '-'}</div>,
     },
     {
-      // TODO: data sync
-      key: '',
-      name: 'Start Date',
+      // TODO: Convert Date Time
+      align: AlignType.CENTER,
+      key: 'learning_update_date',
+      name: 'Update Date',
       render: value => (
         <div
           className={`agent--indicator ${
             !!value ? 'indicator--primary' : 'indicator--fail'
           } `}
         >
-          <div>{value ?? `2024-06-13`}</div>
-          <div>{`16:45:00`}</div>
+          <div>{value ? value : '-'}</div>
         </div>
       ),
     },
     {
-      // TODO: data sync
-      key: '',
+      // TODO: Convert Date Time
+      align: AlignType.CENTER,
+      key: 'learning_finish_datetime',
       name: 'Finish Date',
       render: value => (
         <div
@@ -122,20 +113,20 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
             !!value ? 'indicator--primary' : 'indicator--fail'
           } `}
         >
-          <div>{value ?? `2024-06-13`}</div>
-          <div>{`16:45:00`}</div>
+          <div>{value ? value : '-'}</div>
         </div>
       ),
     },
     {
-      // TODO: data sync
-      key: '',
+      align: AlignType.CENTER,
+      key: 'ml_function',
       name: 'Algorithm',
+      render: value => <div> {value ? value : '-'}</div>,
     },
     {
-      key: 'isCollectingCfgWritten',
+      key: 'is_collecting_cfg_written',
       name: 'Edit',
-      render: (value, rowData: DeviceData, _, rowIndex) => {
+      render: (value, rowData: DeviceData) => {
         return (
           <button
             className={`btn btn-sm btn-default`}
@@ -144,8 +135,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
               onEditClick(rowData)
             }}
           >
-            {/* TODO: data sync */}
-            {rowIndex % 2 === 0 ? (
+            {value ? (
               <div className={'pencil-confirm'} />
             ) : (
               <div className={'pencil-exclamation'} />
