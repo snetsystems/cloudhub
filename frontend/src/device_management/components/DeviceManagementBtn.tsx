@@ -156,7 +156,7 @@ function DeviceManagementBtn({
             className="btn button btn-sm btn-primary"
             disabled={checkedArray.length === 0}
           >
-            <span className="icon import" /> Apply Monitoring
+            <span className="icon checkmark" /> Apply Monitoring
           </button>
         </Authorized>
         <Authorized requiredRole={EDITOR_ROLE}>
@@ -170,14 +170,16 @@ function DeviceManagementBtn({
             <span className="icon capacitor2" /> Learning Model
           </button>
         </Authorized>
+        <Authorized requiredRole={EDITOR_ROLE}>
+          <button
+            className="button button-sm button-default button-square"
+            title="Custom Learning Setting"
+          >
+            <span className="button-icon icon cog-thick"></span>
+          </button>
+        </Authorized>
       </div>
       <div className="space-x">
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <div className="btn button btn-sm btn-primary">
-            <span className="icon computer-desktop" /> Learning Setting
-          </div>
-        </Authorized>
-
         <Authorized requiredRole={EDITOR_ROLE}>
           <div
             onClick={connectDevice('Creating')}
