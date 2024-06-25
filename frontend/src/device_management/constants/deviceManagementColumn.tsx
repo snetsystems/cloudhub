@@ -12,20 +12,28 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
     {
       key: 'organization',
       name: 'Organization',
+      align: AlignType.CENTER,
       options: {
         sorting: true,
+      },
+      render: item => {
+        return (
+          <div style={{textAlign: 'left'}}>
+            <span>{item}</span>
+          </div>
+        )
       },
     },
     {
       key: 'device_ip',
       name: 'Device Ip',
+      align: AlignType.CENTER,
       options: {
         sorting: true,
       },
-      align: AlignType.RIGHT,
       render: item => {
         return (
-          <div>
+          <div style={{textAlign: 'left'}}>
             <span>{item}</span>
           </div>
         )
@@ -34,13 +42,22 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
     {
       key: 'hostname',
       name: 'Hostname',
+      align: AlignType.CENTER,
       options: {
         sorting: true,
+      },
+      render: item => {
+        return (
+          <div style={{textAlign: 'left'}}>
+            <span>{item}</span>
+          </div>
+        )
       },
     },
     {
       key: 'device_type',
       name: 'Device Type',
+      align: AlignType.CENTER,
       options: {
         sorting: true,
       },
@@ -48,6 +65,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
     {
       key: 'device_os',
       name: 'Device OS',
+      align: AlignType.CENTER,
       options: {
         sorting: true,
       },
@@ -126,6 +144,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
     {
       key: 'is_collecting_cfg_written',
       name: 'Edit',
+      align: AlignType.CENTER,
       render: (value, rowData: DeviceData) => {
         return (
           <button
@@ -147,6 +166,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
     {
       key: 'id',
       name: 'Console',
+      align: AlignType.CENTER,
       render: (_, rowData: DeviceData) => (
         <button
           className="btn btn-sm btn-default icon bash agent-row--button-sm"

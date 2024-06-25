@@ -4,6 +4,7 @@ import {Button, IconFont, ComponentStatus} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
+  title: string
   onDownloadCSVDeviceTemplate: () => void
 }
 
@@ -23,12 +24,13 @@ export default class CSVDeviceTemplateExporter extends PureComponent<
   }
 
   public render() {
+    const {title} = this.props
     const {buttonStatus} = this.state
 
     return (
       <Button
         customClass="csv-export"
-        text="CSV"
+        text={title}
         icon={IconFont.Download}
         status={buttonStatus}
         onClick={this.handleClick}

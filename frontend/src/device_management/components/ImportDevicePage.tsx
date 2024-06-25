@@ -163,6 +163,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
           Upload a CSV File
         </label>
         <CSVDeviceTemplateExporter
+          title="CSV Template Download"
           onDownloadCSVDeviceTemplate={this.handleDownloadCSVDeviceTemplate}
         />
       </div>
@@ -357,7 +358,8 @@ class ImportDevicePage extends PureComponent<Props, State> {
     if (failedDevices.length === 0 && snmpConnectionSuccessDevices === null) {
       return (
         <>
-          There is <label className="label-warning">0 device </label>to create.
+          There is <label className="label-warning">0 device </label>to
+          register.
         </>
       )
     } else if (
@@ -376,7 +378,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     ) {
       return (
         <>
-          Devices will be created when you click the
+          Devices will be registered if you click the
           <label className="label-info--save"> Save button.</label>
         </>
       )
@@ -389,7 +391,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
           <label className="label-warning">
             Only devices that succeeded in SNMP Connection{' '}
           </label>
-          will be created when you click the
+          will be registered if you click the
           <label className="label-info--save"> Save button.</label>
         </>
       )
