@@ -43,6 +43,7 @@ import {
   applyMonitoring,
   deleteDevice,
   fetchDeviceMonitoringStatus,
+  getAllDevicesOrg,
   getDeviceList,
 } from 'src/device_management/apis'
 import {getEnv} from 'src/shared/apis/env'
@@ -65,6 +66,7 @@ import {
   notifyDeleteDevicesSucceeded,
   notifyFetchDeviceMonitoringStatusFailed,
 } from 'src/shared/copy/notifications'
+import {DevicesOrgData} from 'src/types/deviceManagement'
 
 interface Auth {
   me: Me
@@ -90,9 +92,11 @@ interface State {
   deviceConnectionStatus: DeviceConnectionStatus
   deviceMonitoringStatus: DeviceMonitoringStatus
   importDeviceWizardVisibility: boolean
+  isLearningSettingModalVisibility: boolean
   deviceData: DeviceData[]
   selectedDeviceData: DeviceData
   checkedArray: string[]
+  orgLearningModel: DevicesOrgData
 }
 
 @ErrorHandling
@@ -111,6 +115,8 @@ class DeviceManagement extends PureComponent<Props, State> {
       deviceData: [DEFAULT_NETWORK_DEVICE_DATA as DeviceData],
       selectedDeviceData: DEFAULT_NETWORK_DEVICE_DATA,
       checkedArray: [],
+      isLearningSettingModalVisibility: false,
+      orgLearningModel: null,
     }
 
     this.setState = (args, callback) => {
@@ -126,6 +132,7 @@ class DeviceManagement extends PureComponent<Props, State> {
     try {
       this.getDeviceAJAX()
       this.fetchDeviceMonitoringStatus()
+      this.getAllDevicesOrgAJAX()
     } catch (error) {
       console.error(error)
       throw error
@@ -146,6 +153,8 @@ class DeviceManagement extends PureComponent<Props, State> {
       importDeviceWizardVisibility,
       selectedDeviceData,
       checkedArray,
+      isLearningSettingModalVisibility,
+      orgLearningModel,
     } = this.state
     const updatedDeviceData = this.getDeviceMonitoringStatus(
       data,
@@ -175,6 +184,7 @@ class DeviceManagement extends PureComponent<Props, State> {
               getDeviceAJAX={this.getDeviceAJAX}
               importDevice={this.importDevice}
               connectDevice={this.connectDevice}
+              reLearnSetting={this.reLearnSetting}
               checkedArray={checkedArray}
               deleteDevicesAJAX={this.deleteDevicesAJAX}
               applyMonitoringAJAX={this.applyMonitoringAJAX}
@@ -262,6 +272,10 @@ class DeviceManagement extends PureComponent<Props, State> {
     }
   }
 
+  private onCloseLearningSettingModal = () => {
+    this.setState({isLearningSettingModalVisibility: false})
+  }
+
   private getDeviceMonitoringStatus(
     devicesData: DeviceData[],
     deviceMonitoringStatus: DeviceMonitoringStatus
@@ -335,7 +349,7 @@ class DeviceManagement extends PureComponent<Props, State> {
     devicesData: DeviceData[]
   ): ApplyMonitoringRequest => {
     const collecting_devices: CollectingDevice[] = devicesData.map(device => ({
-      device_id: device.id || 0, // id가 없으면 기본값 0 사용
+      device_id: device.id || 0,
       is_learning: device.is_learning || false,
       is_collecting_cfg_written: device.is_collecting_cfg_written || false,
     }))
@@ -411,6 +425,25 @@ class DeviceManagement extends PureComponent<Props, State> {
   private importDevice = () => {
     this.setState({
       importDeviceWizardVisibility: true,
+    })
+  }
+
+  private reLearnSetting = () => {
+    this.setState({
+      isLearningSettingModalVisibility: true,
+    })
+  }
+
+  private getAllDevicesOrgAJAX = async () => {
+    const {me} = this.props
+    const {data} = await getAllDevicesOrg()
+    const currentOrg = _.get(me, 'currentOrganization')
+    const result = data.organizations.find(
+      i => i.organization === currentOrg.id
+    )
+
+    this.setState({
+      orgLearningModel: result,
     })
   }
 

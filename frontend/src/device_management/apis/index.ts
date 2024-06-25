@@ -31,6 +31,15 @@ import {
 import {proxy} from 'src/utils/queryUrlGenerator'
 import replaceTemplate from 'src/tempVars/utils/replace'
 import {getDeep} from 'src/utils/wrappers'
+import {MANAGEMENT_ORGANIZATIONS} from '../constants/deviceData'
+import {
+  CreateDeviceOrganizationOption,
+  DevicesOrgData,
+  GetAllDevicesOrgResponse,
+  UpdateDeviceOrganizationOption,
+  UpdateDevicesOrgResponse,
+} from 'src/types/deviceManagement'
+import {object} from 'prop-types'
 
 interface Series {
   name: string
@@ -169,6 +178,56 @@ export const applyMonitoring = async (
       method: 'POST',
     })
     const {data} = response as ApplyMonitoringResponse
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const getAllDevicesOrg = async () => {
+  try {
+    return AJAX<GetAllDevicesOrgResponse>({
+      method: 'GET',
+      url: MANAGEMENT_ORGANIZATIONS,
+    }) as Promise<AxiosResponse<GetAllDevicesOrgResponse>>
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const updateDeviceOrganization = async ({
+  id,
+  orgLearningModel,
+}: UpdateDeviceOrganizationOption) => {
+  try {
+    const response = await AJAX<UpdateDevicesOrgResponse>({
+      params: {id: id},
+      data: orgLearningModel,
+      url: MANAGEMENT_ORGANIZATIONS,
+      method: 'PATCH',
+    })
+    const {data} = response as UpdateDevicesOrgResponse
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const createDeviceOrganization = async (
+  orgLearningModel: CreateDeviceOrganizationOption
+) => {
+  try {
+    const response = await AJAX<UpdateDevicesOrgResponse>({
+      data: orgLearningModel.orgLearningModel,
+      url: MANAGEMENT_ORGANIZATIONS,
+      method: 'POST',
+    })
+    const {data} = response as UpdateDevicesOrgResponse
 
     return data
   } catch (error) {

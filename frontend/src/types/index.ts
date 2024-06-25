@@ -117,6 +117,14 @@ import {
   CollectingDevice,
   ApplyMonitoringRequest,
   ApplyMonitoringResponse,
+  LearningOption,
+  PredictionMode,
+  UpdateDeviceOrganizationOption,
+  UpdateDevicesOrgResponse,
+  CreateDeviceOrganizationOption,
+  LearningOrganizationOption,
+  DeviceDataMonitoringStatus,
+  PredictionLayoutCell,
 } from './deviceManagement'
 
 import {AiModal} from './aiModal'
@@ -236,4 +244,12 @@ export {
   CollectingDevice,
   ApplyMonitoringRequest,
   ApplyMonitoringResponse,
+  LearningOption,
+  PredictionMode,
+  UpdateDeviceOrganizationOption,
+  UpdateDevicesOrgResponse,
+  CreateDeviceOrganizationOption,
+  LearningOrganizationOption,
+  DeviceDataMonitoringStatus,
+  PredictionLayoutCell,
 }

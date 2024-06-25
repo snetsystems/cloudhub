@@ -1,6 +1,8 @@
-import {DeviceData, Organization} from 'src/types'
+import {DeviceData, DeviceDataMonitoringStatus, Organization} from 'src/types'
 
-export const hasMonitoringDevice = (devicesData: DeviceData[]): boolean => {
+export const hasMonitoringDevice = (
+  devicesData: DeviceDataMonitoringStatus[]
+): boolean => {
   return devicesData.some(device => device.isMonitoring === true)
 }
 
@@ -57,4 +59,12 @@ export const selectedArrayById = (
   )
 
   return validArray
+}
+
+export const getOrganizationIdByName = (
+  organizations: Organization[],
+  organizationName: string
+): string | '' => {
+  const organization = organizations.find(org => org.name === organizationName)
+  return organization ? organization.id : ''
 }

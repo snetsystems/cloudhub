@@ -7,6 +7,9 @@ import {
   SNMP_CONNECTION_URL,
   SYSTEM_MODAL,
   APPLY__MONITORING_URL,
+  ML_FUNCTION,
+  DEFAULT_LEARNING_OPTION,
+  MLFunctionMsg,
 } from './deviceData'
 import {
   columns,
@@ -14,6 +17,7 @@ import {
 } from './deviceManagementColumn'
 import {predictionColumn} from './predictionColumn'
 import {MONITORING_MODAL_INFO} from './systemMsg'
+import {fixturePredictionPageCells} from './fixture'
 export {
   DEFAULT_NETWORK_DEVICE_DATA,
   SNMP_VERSION,
@@ -27,4 +31,8 @@ export {
   SYSTEM_MODAL,
   MONITORING_MODAL_INFO,
   APPLY__MONITORING_URL,
+  ML_FUNCTION,
+  DEFAULT_LEARNING_OPTION,
+  MLFunctionMsg,
+  fixturePredictionPageCells,
 }

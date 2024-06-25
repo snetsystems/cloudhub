@@ -1,4 +1,10 @@
-import {DeviceData, DropdownItem, SNMPConfig, SSHConfig} from 'src/types'
+import {
+  DeviceData,
+  DropdownItem,
+  PredictionMode,
+  SNMPConfig,
+  SSHConfig,
+} from 'src/types'
 
 export const DEFAULT_SNMP_CONFIG: SNMPConfig = {
   community: '',
@@ -53,3 +59,27 @@ export const SYSTEM_MODAL = {
   DELETE: 'delete',
   MONITORING_DELETE: 'monitoring_delete',
 } as const
+
+export const ML_FUNCTION = [
+  'ml_multiplied',
+  'ml_scaling_normalized',
+  'ml_gaussian_std',
+]
+
+export const MLFunctionMsg = {
+  ml_multiplied: 'ML Multiplied',
+  ml_scaling_normalized: 'ML Scaling Normalized',
+  ml_gaussian_std: 'ML Gaussian Std',
+} as const
+
+export const DEFAULT_LEARNING_OPTION = {
+  organization: '',
+  data_duration: 1,
+  ml_function: 'ml_multiplied' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
+  learn_cycle: 1,
+  prediction_mode: 'Ensemble' as typeof PredictionMode[keyof typeof PredictionMode],
+  is_prediction_active: true,
+}
+
+export const MANAGEMENT_ORGANIZATIONS =
+  '/cloudhub/v1/ai/network/managements/orgs'

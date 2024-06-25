@@ -20,6 +20,7 @@ interface Props {
   importDevice: () => void
   openModal?: (aiModal: AiModal) => void
   closeModal?: () => void
+  reLearnSetting: () => void
   data: DeviceData[]
   getDeviceAJAX: () => Promise<void>
   deleteDevicesAJAX: (idList: string[]) => Promise<void>
@@ -36,6 +37,7 @@ function DeviceManagementBtn({
   getDeviceAJAX,
   deleteDevicesAJAX,
   applyMonitoringAJAX,
+  reLearnSetting,
 }: Props) {
   //   const onClickMonitoring = () => {
   //     //toggle btn issue
@@ -174,6 +176,9 @@ function DeviceManagementBtn({
           <button
             className="button button-sm button-default button-square"
             title="Custom Learning Setting"
+            onClick={() => {
+              reLearnSetting()
+            }}
           >
             <span className="button-icon icon cog-thick"></span>
           </button>

@@ -1,3 +1,5 @@
+import {MLFunctionMsg} from 'src/device_management/constants'
+
 export interface DeviceData {
   id?: number
   organization: string
@@ -19,6 +21,10 @@ export interface DeviceData {
   links?: {
     self: string
   }
+}
+
+export interface DeviceDataMonitoringStatus extends DeviceData {
+  isMonitoring: boolean
 }
 
 export interface ApplyMonitoringProps {
@@ -130,4 +136,63 @@ export interface CollectingDevice {
 
 export interface ApplyMonitoringResponse {
   data: {failed_devices: FailedDevice[]}
+}
+
+export interface CreateDeviceOrganizationOption {
+  orgLearningModel: LearningOption
+}
+
+export interface UpdateDeviceOrganizationOption {
+  id: string
+  orgLearningModel: LearningOrganizationOption
+}
+
+export interface LearningOrganizationOption {
+  data_duration: number
+  ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
+  is_prediction_active: boolean
+  learn_cycle: number
+  prediction_mode: typeof PredictionMode[keyof typeof PredictionMode]
+}
+
+export interface LearningOption extends LearningOrganizationOption {
+  organization: string
+}
+
+export interface GetAllDevicesOrgResponse {
+  organizations: DevicesOrgData[]
+}
+
+export interface UpdateDevicesOrgResponse {
+  data: DevicesOrgData
+}
+
+export interface DevicesOrgData {
+  organization: string
+  data_duration: number
+  ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
+  learn_cycle: number
+  prediction_mode: typeof PredictionMode[keyof typeof PredictionMode]
+  learned_devices_ids: number[]
+  collector_server: string
+  load_module: string
+  is_prediction_active: false
+  collected_devices_ids: number[]
+}
+
+export const PredictionMode = {
+  ML: 'ML',
+  DL: 'DL',
+  None: 'None',
+  Ensemble: 'ML + DL',
+} as const
+
+export interface PredictionLayoutCell {
+  i: string
+  x: number
+  y: number
+  w: number
+  h: number
+  minW?: number
+  minH?: number
 }
