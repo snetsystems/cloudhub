@@ -104,7 +104,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
             className="dropdown-stretch"
           />
         </div>
-        <div className="form-group col-xs-6" style={{height: '180px'}}>
+        <div className="form-group col-xs-6" style={{height: '100px'}}>
           <label>Protocol</label>
           <Dropdown
             items={SNMP_PROTOCOL}

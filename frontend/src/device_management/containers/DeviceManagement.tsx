@@ -7,8 +7,9 @@ import _ from 'lodash'
 // Components
 import ImportDevicePage from 'src/device_management/components/ImportDevicePage'
 import TableComponent from 'src/device_management/components/TableComponent'
-import LoadingSpinner from 'src/reusable_ui/components/spinners/LoadingSpinner'
 import DeviceConnection from 'src/device_management/components/DeviceConnection'
+import PageSpinner from 'src/shared/components/PageSpinner'
+import DeviceManagementBtn from 'src/device_management/components/DeviceManagementBtn'
 
 // Actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -64,7 +65,6 @@ import {
   notifyDeleteDevicesSucceeded,
   notifyFetchDeviceMonitoringStatusFailed,
 } from 'src/shared/copy/notifications'
-import DeviceManagementBtn from '../components/DeviceManagementBtn'
 
 interface Auth {
   me: Me
@@ -200,6 +200,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           notify={this.props.notify}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
         />
+        {this.state.isLoading && this.LoadingState}
         {/* table + toggle btn UI */}
         {/* {monitoringModalVisibility && (
       <ApplyMonitoringModal
@@ -208,13 +209,18 @@ class DeviceManagement extends PureComponent<Props, State> {
         applyLearningData={selectedArrayById(data, checkedArray, 'id')}
       />
     )} */}
-
-        {this.state.isLoading && (
-          <div className="loading-box">
-            <LoadingSpinner />
-          </div>
-        )}
       </>
+    )
+  }
+
+  private get LoadingState(): JSX.Element {
+    const {isLoading} = this.state
+    const pageSpinnerHeight = isLoading ? '50%' : '100%'
+
+    return (
+      <div className="device-management--loading">
+        <PageSpinner pageSpinnerHeight={pageSpinnerHeight} />
+      </div>
     )
   }
 
