@@ -138,7 +138,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
     {
       align: AlignType.CENTER,
       key: 'ml_function',
-      name: 'Algorithm',
+      name: 'ML Function',
       render: value => <div> {value ? value : '-'}</div>,
     },
     {
@@ -253,22 +253,46 @@ export const DEVICE_INFO_SELECTED_MONITORING: ColumnInfo[] = [
   {
     key: 'organization',
     name: 'Organization',
+    align: AlignType.CENTER,
     options: {
       sorting: true,
+    },
+    render: item => {
+      return (
+        <div style={{textAlign: 'left'}}>
+          <span>{item}</span>
+        </div>
+      )
     },
   },
   {
     key: 'device_ip',
     name: 'IP',
+    align: AlignType.CENTER,
     options: {
       sorting: true,
+    },
+    render: item => {
+      return (
+        <div style={{textAlign: 'left'}}>
+          <span>{item}</span>
+        </div>
+      )
     },
   },
   {
     key: 'hostname',
     name: 'Hostname',
+    align: AlignType.CENTER,
     options: {
       sorting: true,
+    },
+    render: item => {
+      return (
+        <div style={{textAlign: 'left'}}>
+          <span>{item}</span>
+        </div>
+      )
     },
   },
 ]
@@ -344,8 +368,16 @@ export const deviceApplyMonitoringColumn: ColumnInfo[] = [
   {
     key: 'organization',
     name: 'Organization',
+    align: AlignType.CENTER,
     options: {
       sorting: true,
+    },
+    render: item => {
+      return (
+        <div style={{textAlign: 'left'}}>
+          <span>{item}</span>
+        </div>
+      )
     },
   },
   {
@@ -354,13 +386,28 @@ export const deviceApplyMonitoringColumn: ColumnInfo[] = [
     options: {
       sorting: true,
     },
-    align: AlignType.RIGHT,
+    align: AlignType.CENTER,
+    render: item => {
+      return (
+        <div style={{textAlign: 'left'}}>
+          <span>{item}</span>
+        </div>
+      )
+    },
   },
   {
     key: 'hostname',
     name: 'Hostname',
+    align: AlignType.CENTER,
     options: {
       sorting: true,
+    },
+    render: item => {
+      return (
+        <div style={{textAlign: 'left'}}>
+          <span>{item}</span>
+        </div>
+      )
     },
   },
   {
