@@ -2,8 +2,13 @@
 import React, {PureComponent} from 'react'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import TableComponent from 'src/device_management/components/TableComponent'
+import {deviceconnectionColumn} from 'src/device_management/constants/deviceManagementColumn'
+import {DeviceData} from 'src/types'
 
-interface Props {}
+interface Props {
+  deviceData: DeviceData
+}
 
 @ErrorHandling
 export default class DeviceManagementCompletionStep extends PureComponent<Props> {
@@ -12,10 +17,16 @@ export default class DeviceManagementCompletionStep extends PureComponent<Props>
   }
 
   public render() {
+    const {deviceData} = this.props
+
     return (
-      <div className="wizard-step--bookend">
-        <div className="auth-logo" />
-        <p>You have successfully configured your Device Connection</p>
+      <div className="device-management-connection--completion">
+        <TableComponent
+          data={[deviceData]}
+          tableTitle="Device Information"
+          columns={deviceconnectionColumn}
+          isSearchDisplay={false}
+        />
       </div>
     )
   }

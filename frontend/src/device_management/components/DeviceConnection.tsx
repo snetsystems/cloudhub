@@ -170,7 +170,7 @@ class DeviceConnection extends PureComponent<Props, State> {
           nextLabel="Finish"
           previousLabel="Go Back"
         >
-          <DeviceManagementCompletionStep />
+          <DeviceManagementCompletionStep deviceData={deviceData} />
         </WizardStep>
       </WizardOverlay>
     )

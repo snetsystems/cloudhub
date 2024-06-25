@@ -426,3 +426,46 @@ export const deviceApplyMonitoringColumn: ColumnInfo[] = [
     ),
   },
 ]
+
+export const deviceconnectionColumn: ColumnInfo[] = [
+  {
+    key: 'organization',
+    name: 'Organization',
+    align: AlignType.CENTER,
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'device_ip',
+    name: 'IP',
+    options: {
+      sorting: true,
+    },
+    align: AlignType.CENTER,
+  },
+  {
+    key: 'hostname',
+    name: 'Hostname',
+    align: AlignType.CENTER,
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'device_type',
+    name: 'Device Type',
+    align: AlignType.CENTER,
+    options: {
+      sorting: true,
+    },
+  },
+  {
+    key: 'device_os',
+    name: 'Device OS',
+    align: AlignType.CENTER,
+    options: {
+      sorting: true,
+    },
+  },
+]
