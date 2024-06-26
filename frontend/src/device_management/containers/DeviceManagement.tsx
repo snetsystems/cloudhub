@@ -67,6 +67,7 @@ import {
   notifyFetchDeviceMonitoringStatusFailed,
 } from 'src/shared/copy/notifications'
 import {DevicesOrgData} from 'src/types/deviceManagement'
+import LearningSettingModal from '../components/LearningSettingModal'
 
 interface Auth {
   me: Me
@@ -209,6 +210,11 @@ class DeviceManagement extends PureComponent<Props, State> {
           onDismissOverlay={this.handleDismissImportDeviceModalOverlay}
           notify={this.props.notify}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
+        />
+        <LearningSettingModal
+          isVisible={isLearningSettingModalVisibility}
+          onClose={this.onCloseLearningSettingModal}
+          orgLearningModel={orgLearningModel}
         />
         {this.state.isLoading && this.LoadingState}
         {/* table + toggle btn UI */}
