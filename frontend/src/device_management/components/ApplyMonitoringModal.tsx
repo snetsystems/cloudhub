@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 
 // Components
 import {
@@ -59,8 +59,12 @@ function ApplyMonitoringModal({
   notify,
   setDeviceManagementIsLoading,
 }: Props) {
-  const [isMonitoringEnabled, setMonitoringEnabled] = useState<boolean>(false)
+  const [isMonitoringEnabled, setMonitoringEnabled] = useState<boolean>(true)
   const scrollMaxHeight = window.innerHeight * 0.4
+
+  useEffect(() => {
+    setMonitoringEnabled(true)
+  }, [isVisible])
 
   const handleToggleMonitoringEnabled = () => {
     setMonitoringEnabled(!isMonitoringEnabled)
