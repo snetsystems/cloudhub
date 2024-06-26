@@ -643,7 +643,7 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		device.IsLearning = *req.IsLearning
 	}
 
-	device.IsCollectingCfgWritten = true
+	device.IsCollectingCfgWritten = false
 
 	if err := s.OrganizationExists(ctx, device.Organization); err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
