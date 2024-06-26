@@ -604,9 +604,7 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	if req.DeviceOS != nil {
 		device.DeviceOS = *req.DeviceOS
 	}
-	if req.IsCollectingCfgWritten != nil {
-		device.IsCollectingCfgWritten = *req.IsCollectingCfgWritten
-	}
+
 	if req.SSHConfig != nil {
 		if req.SSHConfig.UserID != "" {
 			device.SSHConfig.UserID = req.SSHConfig.UserID
@@ -644,6 +642,9 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	if req.IsLearning != nil {
 		device.IsLearning = *req.IsLearning
 	}
+
+	device.IsCollectingCfgWritten = true
+
 	if err := s.OrganizationExists(ctx, device.Organization); err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
 		return
