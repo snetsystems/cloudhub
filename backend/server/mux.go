@@ -407,6 +407,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Device Management Monitoring
 	router.POST("/cloudhub/v1/ai/network/managements/monitoring/config", EnsureAdmin(service.MonitoringConfigManagement))
 
+	// Device Management Learning
+	router.POST("/cloudhub/v1/ai/network/managements/learning/config", EnsureAdmin(service.LearningDeviceManagement))
+
 	// Device Orgs Management
 	router.GET("/cloudhub/v1/ai/network/managements/orgs", EnsureViewer(service.AllDevicesOrg))
 	router.GET("/cloudhub/v1/ai/network/managements/orgs/:id", EnsureViewer(service.NetworkDeviceOrgID))

@@ -661,66 +661,80 @@ func ptr[T any](v T) *T {
 }
 
 func MockDeviceStoreSetup(mockData []deviceRequest) *mocks.NetworkDeviceStore {
+	var devices []*cloudhub.NetworkDevice
 	index := 0
+
+	addFunc := func(ctx context.Context, device *cloudhub.NetworkDevice) (*cloudhub.NetworkDevice, error) {
+		if index >= len(mockData) {
+			return nil, fmt.Errorf("mock error")
+		}
+		req := mockData[index]
+
+		mockConn := &mocks.SNMPConnection{
+			Host:      req.DeviceIP,
+			Connected: true,
+			Data: map[string]interface{}{
+				"1.3.6.1.2.1.1.5": []byte("TestHostname.example.com"),
+				"1.3.6.1.2.1.1.7": []byte(":4"),
+				"1.3.6.1.2.1.1.1": []byte("Cisco IOS XE Software"),
+			},
+		}
+
+		manager := &SNMPManager{
+			Config: &SNMPConfig{
+				DeviceIP:  req.DeviceIP,
+				Community: req.SNMPConfig.Community,
+				Version:   req.SNMPConfig.Version,
+				Port:      uint16(req.SNMPConfig.Port),
+				Protocol:  req.SNMPConfig.Protocol,
+			},
+			SNMP: mockConn,
+		}
+		collector := &SNMPCollector{
+			Manager: manager,
+			Queries: []SNMPQuery{
+				{Oid: "1.3.6.1.2.1.1.5", Key: "hostname", Process: processHostname},
+				{Oid: "1.3.6.1.2.1.1.7", Key: "deviceType", Process: processDeviceType},
+				{Oid: "1.3.6.1.2.1.1.1", Key: "deviceOS", Process: processDeviceOS},
+			},
+		}
+
+		snmp, err := collector.CollectData()
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve SNMP data: %v", err)
+		}
+
+		deviceResponse := &cloudhub.NetworkDevice{
+			ID:                     uint64(547 + index),
+			Organization:           req.Organization,
+			DeviceIP:               req.DeviceIP,
+			Hostname:               snmp["hostname"],
+			DeviceType:             snmp["deviceType"],
+			DeviceOS:               snmp["deviceOS"],
+			IsCollectingCfgWritten: false,
+			IsLearning:             false,
+			LearningState:          "",
+			SSHConfig:              req.SSHConfig,
+			SNMPConfig:             req.SNMPConfig,
+			DeviceVendor:           req.DeviceVendor,
+			Sensitivity:            1.0,
+		}
+		devices = append(devices, deviceResponse)
+		index++
+		return deviceResponse, nil
+	}
+
+	allFunc := func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+		var deviceList []cloudhub.NetworkDevice
+		for _, dev := range devices {
+			deviceList = append(deviceList, *dev)
+		}
+		return deviceList, nil
+	}
+
 	return &mocks.NetworkDeviceStore{
-		AddF: func(ctx context.Context, device *cloudhub.NetworkDevice) (*cloudhub.NetworkDevice, error) {
-			if index >= len(mockData) {
-				return nil, fmt.Errorf("mock error")
-			}
-			req := mockData[index]
-
-			mockConn := &mocks.SNMPConnection{
-				Host:      req.DeviceIP,
-				Connected: true,
-				Data: map[string]interface{}{
-					"1.3.6.1.2.1.1.5": []byte("TestHostname.example.com"),
-					"1.3.6.1.2.1.1.7": []byte(":4"),
-					"1.3.6.1.2.1.1.1": []byte("Cisco IOS XE Software"),
-				},
-			}
-
-			manager := &SNMPManager{
-				Config: &SNMPConfig{
-					DeviceIP:  req.DeviceIP,
-					Community: req.SNMPConfig.Community,
-					Version:   req.SNMPConfig.Version,
-					Port:      uint16(req.SNMPConfig.Port),
-					Protocol:  req.SNMPConfig.Protocol,
-				},
-				SNMP: mockConn,
-			}
-			collector := &SNMPCollector{
-				Manager: manager,
-				Queries: []SNMPQuery{
-					{Oid: "1.3.6.1.2.1.1.5", Key: "hostname", Process: processHostname},
-					{Oid: "1.3.6.1.2.1.1.7", Key: "deviceType", Process: processDeviceType},
-					{Oid: "1.3.6.1.2.1.1.1", Key: "deviceOS", Process: processDeviceOS},
-				},
-			}
-
-			snmp, err := collector.CollectData()
-
-			if err != nil {
-				return nil, fmt.Errorf("failed to retrieve SNMP data: %v", err)
-			}
-
-			response := &cloudhub.NetworkDevice{
-				ID:                     uint64(547 + index),
-				Organization:           req.Organization,
-				DeviceIP:               req.DeviceIP,
-				Hostname:               snmp["hostname"],
-				DeviceType:             snmp["deviceType"],
-				DeviceOS:               snmp["deviceOS"],
-				IsCollectingCfgWritten: false,
-				LearningState:          "Ready",
-				SSHConfig:              req.SSHConfig,
-				SNMPConfig:             req.SNMPConfig,
-				DeviceVendor:           req.DeviceVendor,
-				Sensitivity:            1.0,
-			}
-			index++
-			return response, nil
-		},
+		AddF: addFunc,
+		AllF: allFunc,
 	}
 }
 

@@ -5083,6 +5083,43 @@
         }
       }
     },
+    "/ai/network/managements/learning/config": {
+      "post": {
+        "tags": ["Device Management Apply Learning"],
+        "summary": "Select whether to learn the devices",
+        "description": "Building a learning model for the selected devices",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ApplyLearningDeviceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devices created successfully",
+            "schema": {
+              "$ref": "#/definitions/LogstashResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "ai/network/managements/orgs": {
       "get": {
         "tags": ["Device Organization Management"],
@@ -8833,7 +8870,7 @@
           "example": false
         },
         "sensitivity": {
-          "type": "flaot",
+          "type": "float",
           "description": "Sensitivity throttle ratio",
           "example": "1.0"
         }
@@ -8869,15 +8906,46 @@
                 "description": "The ID of the device",
                 "example": 110
               },
-              "is_learning": {
+              "is_collecting": {
                 "type": "boolean",
-                "description": "Indicates whether the device is in learning mode",
+                "description": "Indicates whether the collecting active/deactive",
                 "example": true
               },
               "is_collecting_cfg_written": {
                 "type": "boolean",
                 "description": "Indicates whether the collecting configuration is written",
                 "example": false
+              }
+            },
+            "required": [
+              "device_id",
+              "is_collecting",
+              "is_collecting_cfg_written"
+            ]
+          }
+        }
+      },
+      "required": ["devices"]
+    },
+    "ApplyLearningDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "learning_devices": {
+          "type": "array",
+          "description": "Array of collecting devices",
+          "items": {
+            "type": "object",
+            "properties": {
+              "device_id": {
+                "type": "integer",
+                "format": "int64",
+                "description": "The ID of the device",
+                "example": 110
+              },
+              "is_learning": {
+                "type": "boolean",
+                "description": "Indicates whether the collecting active/deactive",
+                "example": true
               }
             },
             "required": [
@@ -9051,11 +9119,6 @@
           "items": {
             "type": "object",
             "properties": {
-              "index": {
-                "type": "integer",
-                "description": "Index of the device in the request array",
-                "example": "0"
-              },
               "device_id": {
                 "type": "integer",
                 "description": "ID of the device",
