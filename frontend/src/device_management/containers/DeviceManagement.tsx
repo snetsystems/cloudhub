@@ -10,7 +10,8 @@ import TableComponent from 'src/device_management/components/TableComponent'
 import DeviceConnection from 'src/device_management/components/DeviceConnection'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import DeviceManagementBtn from 'src/device_management/components/DeviceManagementBtn'
-
+import LearningSettingModal from 'src/device_management/components/LearningSettingModal'
+import ApplyMonitoringModal from 'src/device_management/components/ApplyMonitoringModal'
 // Actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {openShell} from 'src/shared/actions/shell'
@@ -33,14 +34,11 @@ import {
   Source,
   Links,
   DeviceMonitoringStatus,
-  FailedDevice,
-  CollectingDevice,
-  ApplyMonitoringRequest,
+  DevicesOrgData,
 } from 'src/types'
 
 // API
 import {
-  applyMonitoring,
   deleteDevice,
   fetchDeviceMonitoringStatus,
   getAllDevicesOrg,
@@ -60,14 +58,10 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {closeModal, openModal} from 'src/shared/actions/aiModal'
 import {
-  notifyApplyMonitoringFailed,
-  notifyApplyMonitoringSuccess,
   notifyDeleteDevicesFailed,
   notifyDeleteDevicesSucceeded,
   notifyFetchDeviceMonitoringStatusFailed,
 } from 'src/shared/copy/notifications'
-import {DevicesOrgData} from 'src/types/deviceManagement'
-import LearningSettingModal from '../components/LearningSettingModal'
 
 interface Auth {
   me: Me
@@ -98,6 +92,7 @@ interface State {
   selectedDeviceData: DeviceData
   checkedArray: string[]
   orgLearningModel: DevicesOrgData
+  applyMonitoringModalVisibility: boolean
 }
 
 @ErrorHandling
@@ -118,6 +113,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       checkedArray: [],
       isLearningSettingModalVisibility: false,
       orgLearningModel: null,
+      applyMonitoringModalVisibility: false,
     }
 
     this.setState = (args, callback) => {
@@ -156,6 +152,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       checkedArray,
       isLearningSettingModalVisibility,
       orgLearningModel,
+      applyMonitoringModalVisibility,
     } = this.state
     const updatedDeviceData = this.getDeviceMonitoringStatus(
       data,
@@ -188,7 +185,7 @@ class DeviceManagement extends PureComponent<Props, State> {
               reLearnSetting={this.reLearnSetting}
               checkedArray={checkedArray}
               deleteDevicesAJAX={this.deleteDevicesAJAX}
-              applyMonitoringAJAX={this.applyMonitoringAJAX}
+              onOpenApplyMonitoringModal={this.handleOpenApplyMonitoringModal}
             />
           }
         />
@@ -217,14 +214,14 @@ class DeviceManagement extends PureComponent<Props, State> {
           orgLearningModel={orgLearningModel}
         />
         {this.state.isLoading && this.LoadingState}
-        {/* table + toggle btn UI */}
-        {/* {monitoringModalVisibility && (
-      <ApplyMonitoringModal
-        isVisible={monitoringModalVisibility}
-        setIsVisible={this.onClickMonitoringClose}
-        applyLearningData={selectedArrayById(data, checkedArray, 'id')}
-      />
-    )} */}
+        <ApplyMonitoringModal
+          isVisible={applyMonitoringModalVisibility}
+          onDismissOverlay={this.handleDismissCloseApplyMonitoringModal}
+          deviceData={selectedArrayById(data, checkedArray, 'id')}
+          notify={this.props.notify}
+          getDeviceAJAX={this.getDeviceAJAX}
+          setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
+        />
       </>
     )
   }
@@ -282,6 +279,14 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({isLearningSettingModalVisibility: false})
   }
 
+  private handleOpenApplyMonitoringModal = () => {
+    this.setState({applyMonitoringModalVisibility: true})
+  }
+
+  private handleDismissCloseApplyMonitoringModal = () => {
+    this.setState({applyMonitoringModalVisibility: false, checkedArray: []})
+  }
+
   private getDeviceMonitoringStatus(
     devicesData: DeviceData[],
     deviceMonitoringStatus: DeviceMonitoringStatus
@@ -326,87 +331,6 @@ class DeviceManagement extends PureComponent<Props, State> {
       this.getDeviceAJAX()
       this.setState({checkedArray: [], isLoading: false})
     }
-  }
-
-  private applyMonitoringAJAX = async () => {
-    const {data, checkedArray} = this.state
-
-    const selectedDeviceData = selectedArrayById(data, checkedArray, 'id')
-    const applyMonitoringRequest = this.convertDeviceDataToApplyMonitoringRequest(
-      selectedDeviceData
-    )
-
-    this.setState({isLoading: true})
-
-    try {
-      const {failed_devices} = await applyMonitoring(applyMonitoringRequest)
-
-      if (failed_devices && failed_devices.length > 0) {
-        return this.handleApplyMonitoringErrorWithFailedDevices(failed_devices)
-      }
-
-      return this.handleApplyMonitoringSuccess()
-    } catch (error) {
-      return this.handleApplyMonitoringError(error.message || '')
-    }
-  }
-
-  private convertDeviceDataToApplyMonitoringRequest = (
-    devicesData: DeviceData[]
-  ): ApplyMonitoringRequest => {
-    const collecting_devices: CollectingDevice[] = devicesData.map(device => ({
-      device_id: device.id || 0,
-      is_learning: device.is_learning || false,
-      is_collecting_cfg_written: device.is_collecting_cfg_written || false,
-    }))
-
-    return {collecting_devices}
-  }
-
-  private handleApplyMonitoringError = (errorMessage: string) => {
-    this.getDeviceAJAX()
-    this.setState({checkedArray: [], isLoading: false})
-    this.props.notify(notifyApplyMonitoringFailed(errorMessage))
-  }
-
-  private handleApplyMonitoringErrorWithFailedDevices = (
-    failedDevices: FailedDevice[]
-  ) => {
-    const failedMessage = this.getFailedDevicesErrorMessage(failedDevices)
-
-    this.getDeviceAJAX()
-    this.setState({checkedArray: [], isLoading: false})
-    this.props.notify(notifyApplyMonitoringFailed(failedMessage))
-  }
-
-  private getFailedDevicesErrorMessage = (
-    failedDevices: FailedDevice[]
-  ): string => {
-    const data = this.state.data
-
-    const limit = 5
-    let messages = failedDevices
-      .slice(0, limit)
-      .map(device => {
-        const deviceID = [device?.device_id]
-        const failedDevice = selectedArrayById(data, deviceID, 'id')
-        const deviceIp = failedDevice?.[0]?.device_ip ?? 'Unknown Device'
-
-        return `${deviceIp}: ${device.errorMessage}`
-      })
-      .join('.')
-
-    if (failedDevices.length > limit) {
-      messages += `Total ${failedDevices.length} devices failed`
-    }
-
-    return `${messages}`
-  }
-
-  private handleApplyMonitoringSuccess = () => {
-    this.getDeviceAJAX()
-    this.setState({checkedArray: [], isLoading: false})
-    this.props.notify(notifyApplyMonitoringSuccess())
   }
 
   private connectDevice = (

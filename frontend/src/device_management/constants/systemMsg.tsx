@@ -6,11 +6,11 @@ export const MONITORING_MODAL_INFO = {
   ),
   workHeader: <>Here is the Device List you requested.</>,
   monitoringMessage: (
-    <span className="span-header">
+    <>
       This action will{' '}
       <label className="label-warning">pause data collection </label>for about 1
       minute. Would you like to <label className="label-warning">apply</label>?
-    </span>
+    </>
   ),
   learningMessage: <></>,
   deleteMonitoringMessage: (

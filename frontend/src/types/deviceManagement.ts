@@ -27,7 +27,7 @@ export interface DeviceDataMonitoringStatus extends DeviceData {
   isMonitoring: boolean
 }
 
-export interface ApplyMonitoringProps {
+export interface MonitoringModalProps {
   isCreateLearning?: boolean
   organization: string
   device_ip: string
@@ -130,7 +130,7 @@ export interface ApplyMonitoringRequest {
 
 export interface CollectingDevice {
   device_id: number
-  is_learning: boolean
+  is_collecting: boolean
   is_collecting_cfg_written: boolean
 }
 
