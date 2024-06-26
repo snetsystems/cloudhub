@@ -1,52 +1,149 @@
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useState} from 'react'
+
+// Components
 import {
   Button,
   ComponentColor,
+  ComponentSize,
   Form,
   OverlayBody,
   OverlayContainer,
   OverlayHeading,
   OverlayTechnology,
+  SlideToggle,
 } from 'src/reusable_ui'
-import ApplyMonitoringTableComponent from './ApplyMonitoringTableComponent'
-import {ApplyMonitoringProps, DeviceData} from 'src/types'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import TableComponent from 'src/device_management/components/TableComponent'
+
+// Type
+import {
+  ApplyMonitoringRequest,
+  CollectingDevice,
+  DeviceData,
+  FailedDevice,
+  Notification,
+} from 'src/types'
+
+// Constants
+import {
+  MONITORING_MODAL_INFO,
+  deviceApplyMonitoringColumn,
+} from 'src/device_management/constants'
+
+// Utils
+import {selectedArrayById} from 'src/device_management/utils'
+
+// API
+import {applyMonitoring} from 'src/device_management/apis'
+
+// ETC
+import {
+  notifyApplyMonitoringFailed,
+  notifyApplyMonitoringSuccess,
+} from 'src/shared/copy/notifications'
 
 interface Props {
+  deviceData: DeviceData[]
   isVisible: boolean
-  setIsVisible: () => void
-  applyLearningData: DeviceData[]
+  getDeviceAJAX: () => Promise<void>
+  onDismissOverlay: () => void
+  notify: (n: Notification) => void
+  setDeviceManagementIsLoading: (isLoading: boolean) => void
 }
 
 function ApplyMonitoringModal({
+  deviceData,
   isVisible,
-  setIsVisible,
-  applyLearningData,
+  getDeviceAJAX,
+  onDismissOverlay,
+  notify,
+  setDeviceManagementIsLoading,
 }: Props) {
-  const [data, setData] = useState<ApplyMonitoringProps[]>(
-    applyLearningData.map(i => ({
-      ...{
-        organization: i.organization,
-        device_ip: i.device_ip,
-        hostname: i.hostname,
-        //todo: isMonitoring
-      },
-      isCreateLearning: true,
+  const [isMonitoringEnabled, setMonitoringEnabled] = useState<boolean>(false)
+  const scrollMaxHeight = window.innerHeight * 0.4
+
+  const handleToggleMonitoringEnabled = () => {
+    setMonitoringEnabled(!isMonitoringEnabled)
+  }
+
+  const applyMonitoringAJAX = async () => {
+    const applyMonitoringRequest = convertDeviceDataToApplyMonitoringRequest(
+      deviceData
+    )
+
+    setDeviceManagementIsLoading(true)
+
+    try {
+      const {failed_devices} = await applyMonitoring(applyMonitoringRequest)
+
+      if (failed_devices && failed_devices.length > 0) {
+        return handleApplyMonitoringErrorWithFailedDevices(failed_devices)
+      }
+
+      return handleApplyMonitoringSuccess()
+    } catch (error) {
+      return handleApplyMonitoringError(error.message || '')
+    }
+  }
+
+  const finalizeApplyMonitoringAPIResponse = () => {
+    setDeviceManagementIsLoading(false)
+    getDeviceAJAX()
+    onDismissOverlay()
+  }
+
+  const convertDeviceDataToApplyMonitoringRequest = (
+    devicesData: DeviceData[]
+  ): ApplyMonitoringRequest => {
+    const collecting_devices: CollectingDevice[] = devicesData.map(device => ({
+      device_id: device.id || 0,
+      is_collecting: isMonitoringEnabled,
+      is_collecting_cfg_written: device.is_collecting_cfg_written || false,
     }))
-  )
 
-  const changeToggle = (value, rowIndex) => {}
+    return {collecting_devices}
+  }
 
-  useEffect(() => {
-    console.log('useEffect data : ', data)
-  }, [
-    [
-      data.map(i => i.isCreateLearning).join(','),
-      data,
-      JSON.stringify(data),
-      isVisible,
-      applyLearningData,
-    ],
-  ])
+  const handleApplyMonitoringError = (errorMessage: string) => {
+    notify(notifyApplyMonitoringFailed(errorMessage))
+    finalizeApplyMonitoringAPIResponse()
+  }
+
+  const handleApplyMonitoringErrorWithFailedDevices = (
+    failedDevices: FailedDevice[]
+  ) => {
+    const failedMessage = getFailedDevicesErrorMessage(failedDevices)
+
+    notify(notifyApplyMonitoringFailed(failedMessage))
+    finalizeApplyMonitoringAPIResponse()
+  }
+
+  const getFailedDevicesErrorMessage = (
+    failedDevices: FailedDevice[]
+  ): string => {
+    const limit = 5
+    let messages = failedDevices
+      .slice(0, limit)
+      .map(device => {
+        const deviceID = [device?.device_id]
+        const failedDevice = selectedArrayById(deviceData, deviceID, 'id')
+        const deviceIp = failedDevice?.[0]?.device_ip ?? 'Unknown Device'
+
+        return `${deviceIp}: ${device.errorMessage}`
+      })
+      .join('.')
+
+    if (failedDevices.length > limit) {
+      messages += `Total ${failedDevices.length} devices failed`
+    }
+
+    return `${messages}`
+  }
+
+  const handleApplyMonitoringSuccess = () => {
+    notify(notifyApplyMonitoringSuccess())
+    finalizeApplyMonitoringAPIResponse()
+  }
 
   return (
     <OverlayTechnology visible={isVisible}>
@@ -54,35 +151,68 @@ function ApplyMonitoringModal({
         <OverlayHeading
           title={'Apply Monitoring Confirm'}
           onDismiss={() => {
-            setIsVisible()
+            onDismissOverlay()
           }}
         />
         <OverlayBody>
           <Form>
             <Form.Element>
-              <div className="message-zone device-modal--childNode">
-                <ApplyMonitoringTableComponent
-                  value={data}
-                  setValue={setData}
-                />
+              <>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    paddingBottom: '2px',
+                  }}
+                >
+                  <label style={{padding: '3px 5px 0px 0px'}}>
+                    Enable Monitoring
+                  </label>
+                  <div>
+                    <SlideToggle
+                      active={isMonitoringEnabled}
+                      onChange={handleToggleMonitoringEnabled}
+                      size={ComponentSize.ExtraSmall}
+                    />
+                  </div>
+                </div>
+                <FancyScrollbar
+                  autoHeight={true}
+                  maxHeight={scrollMaxHeight}
+                  children={
+                    <TableComponent
+                      data={deviceData}
+                      tableTitle={'Device List'}
+                      columns={deviceApplyMonitoringColumn}
+                      isSearchDisplay={false}
+                    />
+                  }
+                ></FancyScrollbar>
+              </>
+            </Form.Element>
+
+            <Form.Element>
+              <div className="device-management-message">
+                {MONITORING_MODAL_INFO.monitoringMessage}
               </div>
             </Form.Element>
             <Form.Footer>
-              <Button
-                color={ComponentColor.Warning}
-                text={'Confirm'}
-                onClick={() => {
-                  console.log('confirm: ', data)
-                  // applyMonitoring function
-                }}
-              />
+              <div style={{marginTop: '10px'}}>
+                <Button
+                  color={ComponentColor.Warning}
+                  text={'Apply'}
+                  onClick={() => {
+                    applyMonitoringAJAX()
+                  }}
+                />
 
-              <Button
-                text={'Cancel'}
-                onClick={() => {
-                  setIsVisible()
-                }}
-              />
+                <Button
+                  text={'Cancel'}
+                  onClick={() => {
+                    onDismissOverlay()
+                  }}
+                />
+              </div>
             </Form.Footer>
           </Form>
         </OverlayBody>

@@ -55,7 +55,6 @@ export const DELETE_MODAL_INFO = {
 
 export const SYSTEM_MODAL = {
   LEARNING: 'learning',
-  MONITORING: 'monitoring',
   DELETE: 'delete',
   MONITORING_DELETE: 'monitoring_delete',
 } as const

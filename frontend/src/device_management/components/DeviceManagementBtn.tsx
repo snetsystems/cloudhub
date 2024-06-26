@@ -24,7 +24,7 @@ interface Props {
   data: DeviceData[]
   getDeviceAJAX: () => Promise<void>
   deleteDevicesAJAX: (idList: string[]) => Promise<void>
-  applyMonitoringAJAX: () => Promise<void>
+  onOpenApplyMonitoringModal: () => void
 }
 
 function DeviceManagementBtn({
@@ -36,49 +36,11 @@ function DeviceManagementBtn({
   data,
   getDeviceAJAX,
   deleteDevicesAJAX,
-  applyMonitoringAJAX,
   reLearnSetting,
+  onOpenApplyMonitoringModal,
 }: Props) {
-  //   const onClickMonitoring = () => {
-  //     //toggle btn issue
-  //     // this.setState({monitoringModalVisibility: true})
-  //     //Apply Monitoring Process -> close Modal
-  //   }
-
-  //   const onClickMonitoringClose = () => {
-  //     this.getDeviceAJAX()
-  //     // this.setState({monitoringModalVisibility: false})
-  //   }
-
-  const openMonitoringModal = (idList: string[]) => {
-    const validArray = selectedArrayById(data, idList, 'id')
-    //create monitoring sql is_modeling_generated => is_monitoring
-
-    openModal({
-      isVisible: true,
-      // message: MONITORING_MODAL_INFO.workHeader,
-      title: 'Apply Monitoring',
-      message: '',
-      btnColor: ComponentColor.Primary,
-      onConfirm: () => {
-        applyMonitoringAJAX()
-        closeModal()
-      },
-      confirmText: 'Apply',
-      cancelText: 'Cancel',
-      onCancel: () => {
-        getDeviceAJAX()
-        closeModal()
-      },
-      childNode: (
-        <SystemConfirmModal data={validArray} type={SYSTEM_MODAL.MONITORING} />
-      ),
-    })
-  }
-
   const openLearningModelModal = (idList: string[]) => {
     const validArray = selectedArrayById(data, idList, 'id')
-    //create monitoring sql is_modeling_generated => is_monitoring
 
     openModal({
       isVisible: true,
@@ -152,8 +114,7 @@ function DeviceManagementBtn({
         <Authorized requiredRole={EDITOR_ROLE}>
           <button
             onClick={() => {
-              // onClickMonitoring(checkedArray)
-              openMonitoringModal(checkedArray)
+              onOpenApplyMonitoringModal()
             }}
             className="btn button btn-sm btn-primary"
             disabled={checkedArray.length === 0}
@@ -161,6 +122,7 @@ function DeviceManagementBtn({
             <span className="icon checkmark" /> Apply Monitoring
           </button>
         </Authorized>
+        {/* TODO Consder requiredRole */}
         <Authorized requiredRole={EDITOR_ROLE}>
           <button
             onClick={() => {

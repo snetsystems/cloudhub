@@ -14,10 +14,11 @@ import {
 import {
   columns,
   IMPORT_FILE_DEVICE_STATUS_COLUMNS,
+  deviceApplyMonitoringColumn,
 } from './deviceManagementColumn'
 import {predictionColumn} from './predictionColumn'
 import {MONITORING_MODAL_INFO} from './systemMsg'
-import {fixturePredictionPageCells} from './fixture'
+
 export {
   DEFAULT_NETWORK_DEVICE_DATA,
   SNMP_VERSION,
@@ -34,5 +35,6 @@ export {
   ML_FUNCTION,
   DEFAULT_LEARNING_OPTION,
   MLFunctionMsg,
-  fixturePredictionPageCells,
+  deviceApplyMonitoringColumn,
+  // fixturePredictionPageCells,
 }

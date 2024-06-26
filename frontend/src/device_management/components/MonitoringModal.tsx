@@ -1,7 +1,7 @@
 import React from 'react'
 import TableComponent from 'src/device_management/components/TableComponent'
 import {deviceApplyMonitoringColumn} from 'src/device_management/constants/deviceManagementColumn'
-import {ApplyMonitoringProps} from 'src/types'
+import {MonitoringModalProps} from 'src/types'
 import {
   MONITORING_MODAL_INFO,
   SYSTEM_MODAL,
@@ -9,7 +9,7 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 interface Props {
-  data: ApplyMonitoringProps[]
+  data: MonitoringModalProps[]
   type: typeof SYSTEM_MODAL[keyof typeof SYSTEM_MODAL]
 }
 
@@ -20,9 +20,6 @@ function SystemConfirmModal({data, type}: Props) {
     switch (type) {
       case SYSTEM_MODAL.LEARNING:
         return MONITORING_MODAL_INFO.learningMessage
-
-      case SYSTEM_MODAL.MONITORING:
-        return MONITORING_MODAL_INFO.monitoringMessage
 
       case SYSTEM_MODAL.DELETE:
         return MONITORING_MODAL_INFO.deleteGeneralMessage

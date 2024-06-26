@@ -34,12 +34,10 @@ import {getDeep} from 'src/utils/wrappers'
 import {MANAGEMENT_ORGANIZATIONS} from '../constants/deviceData'
 import {
   CreateDeviceOrganizationOption,
-  DevicesOrgData,
   GetAllDevicesOrgResponse,
   UpdateDeviceOrganizationOption,
   UpdateDevicesOrgResponse,
 } from 'src/types/deviceManagement'
-import {object} from 'prop-types'
 
 interface Series {
   name: string

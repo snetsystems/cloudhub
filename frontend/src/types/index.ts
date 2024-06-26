@@ -96,6 +96,7 @@ import {
 } from './tableType'
 import {
   DeviceData,
+  DevicesOrgData,
   SNMPConfig,
   SSHConfig,
   ImportDevicePageStatus,
@@ -113,7 +114,7 @@ import {
   SNMPConnectionFailedDevice,
   DeviceConnectionStatus,
   DeviceMonitoringStatus,
-  ApplyMonitoringProps,
+  MonitoringModalProps,
   CollectingDevice,
   ApplyMonitoringRequest,
   ApplyMonitoringResponse,
@@ -222,6 +223,7 @@ export {
   RowInfo,
   SortInfo,
   DeviceData,
+  DevicesOrgData,
   ImportDevicePageStatus,
   SNMPConfig,
   SSHConfig,
@@ -240,7 +242,7 @@ export {
   DeviceConnectionStatus,
   AiModal,
   DeviceMonitoringStatus,
-  ApplyMonitoringProps,
+  MonitoringModalProps,
   CollectingDevice,
   ApplyMonitoringRequest,
   ApplyMonitoringResponse,
