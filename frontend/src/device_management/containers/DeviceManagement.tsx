@@ -161,34 +161,36 @@ class DeviceManagement extends PureComponent<Props, State> {
 
     return (
       <>
-        <TableComponent
-          tableTitle={`${
-            this.state.data.length
-              ? this.state.data.length === 1
-                ? '1 Device'
-                : this.state.data.length + ' ' + 'Devices'
-              : '0 Device'
-          } list`}
-          data={updatedDeviceData}
-          columns={this.column}
-          checkedArray={this.state.checkedArray}
-          setCheckedArray={(value: string[]) =>
-            this.setState({checkedArray: value})
-          }
-          // options={this.options}
-          topLeftRender={
-            <DeviceManagementBtn
-              data={updatedDeviceData}
-              getDeviceAJAX={this.getDeviceAJAX}
-              importDevice={this.importDevice}
-              connectDevice={this.connectDevice}
-              reLearnSetting={this.reLearnSetting}
-              checkedArray={checkedArray}
-              deleteDevicesAJAX={this.deleteDevicesAJAX}
-              onOpenApplyMonitoringModal={this.handleOpenApplyMonitoringModal}
-            />
-          }
-        />
+        <div className="device-management--wrapper">
+          <TableComponent
+            tableTitle={`${
+              this.state.data.length
+                ? this.state.data.length === 1
+                  ? '1 Device'
+                  : this.state.data.length + ' ' + 'Devices'
+                : '0 Device'
+            } list`}
+            data={updatedDeviceData}
+            columns={this.column}
+            checkedArray={this.state.checkedArray}
+            setCheckedArray={(value: string[]) =>
+              this.setState({checkedArray: value})
+            }
+            // options={this.options}
+            topLeftRender={
+              <DeviceManagementBtn
+                data={updatedDeviceData}
+                getDeviceAJAX={this.getDeviceAJAX}
+                importDevice={this.importDevice}
+                connectDevice={this.connectDevice}
+                reLearnSetting={this.reLearnSetting}
+                checkedArray={checkedArray}
+                deleteDevicesAJAX={this.deleteDevicesAJAX}
+                onOpenApplyMonitoringModal={this.handleOpenApplyMonitoringModal}
+              />
+            }
+          />
+        </div>
 
         <DeviceConnection
           deviceConnectionStatus={deviceConnectionStatus}

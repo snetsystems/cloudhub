@@ -18,7 +18,7 @@ import {
 } from './deviceManagementColumn'
 import {predictionColumn} from './predictionColumn'
 import {MONITORING_MODAL_INFO} from './systemMsg'
-
+import {fixturePredictionPageCells} from './fixture'
 export {
   DEFAULT_NETWORK_DEVICE_DATA,
   SNMP_VERSION,
@@ -36,5 +36,5 @@ export {
   DEFAULT_LEARNING_OPTION,
   MLFunctionMsg,
   deviceApplyMonitoringColumn,
-  // fixturePredictionPageCells,
+  fixturePredictionPageCells,
 }

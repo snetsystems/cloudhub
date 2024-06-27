@@ -14,3 +14,11 @@ export interface AiModal {
   onConfirm?: () => void
   onCancel?: () => void
 }
+
+export interface HeaderNavigationObj {
+  id: string
+  titleText: string
+  value: string
+  active: string
+  label: string
+}
