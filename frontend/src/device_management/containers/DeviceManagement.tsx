@@ -12,9 +12,12 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import DeviceManagementBtn from 'src/device_management/components/DeviceManagementBtn'
 import LearningSettingModal from 'src/device_management/components/LearningSettingModal'
 import ApplyMonitoringModal from 'src/device_management/components/ApplyMonitoringModal'
+import ApplyLearningModal from 'src/device_management/components/ApplyLearningModal'
+
 // Actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {openShell} from 'src/shared/actions/shell'
+import {closeModal, openModal} from 'src/shared/actions/aiModal'
 
 // Constants
 import {
@@ -56,7 +59,6 @@ import {generateForHosts} from 'src/utils/tempVars'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {closeModal, openModal} from 'src/shared/actions/aiModal'
 import {
   notifyDeleteDevicesFailed,
   notifyDeleteDevicesSucceeded,
@@ -93,6 +95,7 @@ interface State {
   checkedArray: string[]
   orgLearningModel: DevicesOrgData
   applyMonitoringModalVisibility: boolean
+  learningModelModalVisibility: boolean
 }
 
 @ErrorHandling
@@ -114,6 +117,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       isLearningSettingModalVisibility: false,
       orgLearningModel: null,
       applyMonitoringModalVisibility: false,
+      learningModelModalVisibility: false,
     }
 
     this.setState = (args, callback) => {
@@ -153,6 +157,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       isLearningSettingModalVisibility,
       orgLearningModel,
       applyMonitoringModalVisibility,
+      learningModelModalVisibility,
     } = this.state
     const updatedDeviceData = this.getDeviceMonitoringStatus(
       data,
@@ -180,18 +185,17 @@ class DeviceManagement extends PureComponent<Props, State> {
             topLeftRender={
               <DeviceManagementBtn
                 data={updatedDeviceData}
-                getDeviceAJAX={this.getDeviceAJAX}
                 importDevice={this.importDevice}
                 connectDevice={this.connectDevice}
                 reLearnSetting={this.reLearnSetting}
                 checkedArray={checkedArray}
                 deleteDevicesAJAX={this.deleteDevicesAJAX}
                 onOpenApplyMonitoringModal={this.handleOpenApplyMonitoringModal}
+                onOpenLearningModelModal={this.handleOpenLearningModelModal}
               />
             }
           />
         </div>
-
         <DeviceConnection
           deviceConnectionStatus={deviceConnectionStatus}
           isVisible={deviceConnectionVisibility}
@@ -215,15 +219,25 @@ class DeviceManagement extends PureComponent<Props, State> {
           onClose={this.onCloseLearningSettingModal}
           orgLearningModel={orgLearningModel}
         />
-        {this.state.isLoading && this.LoadingState}
         <ApplyMonitoringModal
           isVisible={applyMonitoringModalVisibility}
-          onDismissOverlay={this.handleDismissCloseApplyMonitoringModal}
+          onDismissOverlay={this.handleDismissApplyMonitoringModal}
           deviceData={selectedArrayById(data, checkedArray, 'id')}
           notify={this.props.notify}
           getDeviceAJAX={this.getDeviceAJAX}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
+          initializeCheckedArray={this.initializeCheckedArray}
         />
+        <ApplyLearningModal
+          isVisible={learningModelModalVisibility}
+          onDismissOverlay={this.handleDismissLearningModelModal}
+          deviceData={selectedArrayById(data, checkedArray, 'id')}
+          notify={this.props.notify}
+          getDeviceAJAX={this.getDeviceAJAX}
+          setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
+          initializeCheckedArray={this.initializeCheckedArray}
+        />
+        {this.state.isLoading && this.LoadingState}
       </>
     )
   }
@@ -285,8 +299,16 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({applyMonitoringModalVisibility: true})
   }
 
-  private handleDismissCloseApplyMonitoringModal = () => {
-    this.setState({applyMonitoringModalVisibility: false, checkedArray: []})
+  private handleDismissApplyMonitoringModal = () => {
+    this.setState({applyMonitoringModalVisibility: false})
+  }
+
+  private handleOpenLearningModelModal = () => {
+    this.setState({learningModelModalVisibility: true})
+  }
+
+  private handleDismissLearningModelModal = () => {
+    this.setState({learningModelModalVisibility: false})
   }
 
   private getDeviceMonitoringStatus(
@@ -388,6 +410,10 @@ class DeviceManagement extends PureComponent<Props, State> {
 
   private setDeviceManagementIsLoading = (isLoading: boolean) => {
     this.setState({isLoading})
+  }
+
+  private initializeCheckedArray = () => {
+    this.setState({checkedArray: []})
   }
 }
 

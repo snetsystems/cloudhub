@@ -128,6 +128,15 @@ export interface ApplyMonitoringRequest {
   collecting_devices: CollectingDevice[]
 }
 
+export interface ApplyLearningEnableStatusRequest {
+  learning_devices: LearningDevice[]
+}
+
+export interface LearningDevice {
+  device_id: number
+  is_learning: boolean
+}
+
 export interface CollectingDevice {
   device_id: number
   is_collecting: boolean

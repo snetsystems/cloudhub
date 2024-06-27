@@ -10,6 +10,8 @@ import {
   ML_FUNCTION,
   DEFAULT_LEARNING_OPTION,
   MLFunctionMsg,
+  APPLY_LEARNING_ENABLE_STATUS_URL,
+  NETWORK_MANAGEMENT_ORGANIZATIONS_URL,
 } from './deviceData'
 import {
   columns,
@@ -37,4 +39,7 @@ export {
   MLFunctionMsg,
   deviceApplyMonitoringColumn,
   fixturePredictionPageCells,
+  APPLY_LEARNING_ENABLE_STATUS_URL,
+  NETWORK_MANAGEMENT_ORGANIZATIONS_URL,
+  // fixturePredictionPageCells,
 }

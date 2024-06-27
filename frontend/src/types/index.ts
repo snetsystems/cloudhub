@@ -126,6 +126,8 @@ import {
   LearningOrganizationOption,
   DeviceDataMonitoringStatus,
   PredictionLayoutCell,
+  LearningDevice,
+  ApplyLearningEnableStatusRequest,
 } from './deviceManagement'
 
 import {AiModal, HeaderNavigationObj} from './aiModal'
@@ -254,5 +256,7 @@ export {
   LearningOrganizationOption,
   DeviceDataMonitoringStatus,
   PredictionLayoutCell,
+  LearningDevice,
+  ApplyLearningEnableStatusRequest,
   HeaderNavigationObj,
 }
