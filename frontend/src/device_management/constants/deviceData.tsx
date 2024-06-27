@@ -62,16 +62,10 @@ export const SYSTEM_MODAL = {
   MONITORING_DELETE: 'monitoring_delete',
 } as const
 
-export const ML_FUNCTION = [
-  'ml_multiplied',
-  'ml_scaling_normalized',
-  'ml_gaussian_std',
-]
-
 export const MLFunctionMsg = {
-  ml_multiplied: 'ML Multiplied',
-  ml_scaling_normalized: 'ML Scaling Normalized',
-  ml_gaussian_std: 'ML Gaussian Std',
+  ml_multiplied: 'Correlation Coefficient',
+  ml_scaling_normalized: 'Scaling Normalized',
+  ml_gaussian_std: 'Gaussian Standard Deviation',
 } as const
 
 export const DEFAULT_LEARNING_OPTION = {
