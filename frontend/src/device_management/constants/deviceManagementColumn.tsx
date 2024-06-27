@@ -92,7 +92,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       render: value => (
         <div
           className={`device--indicator ${
-            value ? 'indicator--primary' : 'indicator--fail'
+            value ? 'indicator--primary' : ''
           } flex-center`}
         >
           {value ? 'Enabled' : 'Disabled'}

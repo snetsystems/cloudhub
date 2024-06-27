@@ -17,11 +17,11 @@ import TableComponent from 'src/device_management/components/TableComponent'
 
 // Type
 import {
-  ApplyMonitoringRequest,
-  CollectingDevice,
+  ApplyLearningEnableStatusRequest,
   DeviceData,
   FailedDevice,
   Notification,
+  LearningDevice,
 } from 'src/types'
 
 // Constants
@@ -34,12 +34,12 @@ import {
 import {selectedArrayById} from 'src/device_management/utils'
 
 // API
-import {applyMonitoring} from 'src/device_management/apis'
+import {applyLearningEnableStatus} from 'src/device_management/apis'
 
 // ETC
 import {
-  notifyApplyMonitoringFailed,
-  notifyApplyMonitoringSuccess,
+  notifyApplyLearningEnableStatusSuccess,
+  notifyApplyLearningEnableStatusFailed,
 } from 'src/shared/copy/notifications'
 
 interface Props {
@@ -52,7 +52,7 @@ interface Props {
   initializeCheckedArray: () => void
 }
 
-function ApplyMonitoringModal({
+function ApplyLearningModal({
   deviceData,
   isVisible,
   getDeviceAJAX,
@@ -61,68 +61,71 @@ function ApplyMonitoringModal({
   setDeviceManagementIsLoading,
   initializeCheckedArray,
 }: Props) {
-  const [isMonitoringEnabled, setIsMonitoringEnabled] = useState<boolean>(true)
+  const [isLearningEnabled, setIsLearningEnabled] = useState<boolean>(true)
   const scrollMaxHeight = window.innerHeight * 0.4
 
   useEffect(() => {
-    setIsMonitoringEnabled(true)
+    setIsLearningEnabled(true)
   }, [isVisible])
 
-  const handleToggleMonitoringEnabled = () => {
-    setIsMonitoringEnabled(!isMonitoringEnabled)
+  const handleToggleLearningEnabledStatus = () => {
+    setIsLearningEnabled(!isLearningEnabled)
   }
 
-  const applyMonitoringAJAX = async () => {
-    const applyMonitoringRequest = convertDeviceDataToApplyMonitoringRequest(
+  const applyLearningEnableStatusAJAX = async () => {
+    const applyLearningEnableStatusRequest = convertDeviceDataToApplyLearningEnableStatusRequest(
       deviceData
     )
 
     setDeviceManagementIsLoading(true)
 
     try {
-      const {failed_devices} = await applyMonitoring(applyMonitoringRequest)
+      const {failed_devices} = await applyLearningEnableStatus(
+        applyLearningEnableStatusRequest
+      )
 
       if (failed_devices && failed_devices.length > 0) {
-        return handleApplyMonitoringErrorWithFailedDevices(failed_devices)
+        return handleApplyLearningEnableStatusErrorWithFailedDevices(
+          failed_devices
+        )
       }
 
-      return handleApplyMonitoringSuccess()
+      return handleApplyLearningEnableStatusSuccess()
     } catch (error) {
-      return handleApplyMonitoringError(error.message || '')
+      return handleApplyLearningEnableStatusError(error.message || '')
     }
   }
 
-  const finalizeApplyMonitoringAPIResponse = () => {
+  const finalizeApplyLearningEnableStatusAPIResponse = () => {
     setDeviceManagementIsLoading(false)
     getDeviceAJAX()
     initializeCheckedArray()
     onDismissOverlay()
   }
 
-  const convertDeviceDataToApplyMonitoringRequest = (
+  const convertDeviceDataToApplyLearningEnableStatusRequest = (
     devicesData: DeviceData[]
-  ): ApplyMonitoringRequest => {
-    const collecting_devices: CollectingDevice[] = devicesData.map(device => ({
+  ): ApplyLearningEnableStatusRequest => {
+    const learning_devices: LearningDevice[] = devicesData.map(device => ({
       device_id: device.id || 0,
-      is_collecting: isMonitoringEnabled,
-      is_collecting_cfg_written: device.is_collecting_cfg_written || false,
+      is_learning: isLearningEnabled,
     }))
 
-    return {collecting_devices}
+    return {learning_devices}
   }
 
-  const handleApplyMonitoringError = (errorMessage: string) => {
-    notify(notifyApplyMonitoringFailed(errorMessage))
-    finalizeApplyMonitoringAPIResponse()
+  const handleApplyLearningEnableStatusError = (errorMessage: string) => {
+    notify(notifyApplyLearningEnableStatusFailed(errorMessage))
+    finalizeApplyLearningEnableStatusAPIResponse()
   }
 
-  const handleApplyMonitoringErrorWithFailedDevices = (
+  const handleApplyLearningEnableStatusErrorWithFailedDevices = (
     failedDevices: FailedDevice[]
   ) => {
     const failedMessage = getFailedDevicesErrorMessage(failedDevices)
 
-    notify(notifyApplyMonitoringFailed(failedMessage))
-    finalizeApplyMonitoringAPIResponse()
+    notify(notifyApplyLearningEnableStatusFailed(failedMessage))
+    finalizeApplyLearningEnableStatusAPIResponse()
   }
 
   const getFailedDevicesErrorMessage = (
@@ -147,16 +150,16 @@ function ApplyMonitoringModal({
     return `${messages}`
   }
 
-  const handleApplyMonitoringSuccess = () => {
-    notify(notifyApplyMonitoringSuccess())
-    finalizeApplyMonitoringAPIResponse()
+  const handleApplyLearningEnableStatusSuccess = () => {
+    notify(notifyApplyLearningEnableStatusSuccess())
+    finalizeApplyLearningEnableStatusAPIResponse()
   }
 
   return (
     <OverlayTechnology visible={isVisible}>
       <OverlayContainer>
         <OverlayHeading
-          title={'Apply Monitoring Confirm'}
+          title={'Edit Learning Model'}
           onDismiss={() => {
             onDismissOverlay()
           }}
@@ -173,12 +176,12 @@ function ApplyMonitoringModal({
                   }}
                 >
                   <label style={{padding: '3px 5px 0px 0px'}}>
-                    Enable Monitoring
+                    Enable Learning
                   </label>
                   <div>
                     <SlideToggle
-                      active={isMonitoringEnabled}
-                      onChange={handleToggleMonitoringEnabled}
+                      active={isLearningEnabled}
+                      onChange={handleToggleLearningEnabledStatus}
                       size={ComponentSize.ExtraSmall}
                     />
                   </div>
@@ -200,7 +203,7 @@ function ApplyMonitoringModal({
 
             <Form.Element>
               <div className="device-management-message">
-                {MONITORING_MODAL_INFO.monitoringMessage}
+                {MONITORING_MODAL_INFO.learningMessage}
               </div>
             </Form.Element>
             <Form.Footer>
@@ -209,7 +212,7 @@ function ApplyMonitoringModal({
                   color={ComponentColor.Primary}
                   text={'Apply'}
                   onClick={() => {
-                    applyMonitoringAJAX()
+                    applyLearningEnableStatusAJAX()
                   }}
                 />
 
@@ -228,4 +231,4 @@ function ApplyMonitoringModal({
   )
 }
 
-export default ApplyMonitoringModal
+export default ApplyLearningModal

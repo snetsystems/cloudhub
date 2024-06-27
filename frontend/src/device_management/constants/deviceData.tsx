@@ -49,6 +49,9 @@ export const DEVICE_MANAGEMENT_URL =
 export const APPLY__MONITORING_URL =
   '/cloudhub/v1/ai/network/managements/monitoring/config'
 
+export const APPLY_LEARNING_ENABLE_STATUS_URL =
+  '/cloudhub/v1/ai/network/managements/learning/config'
+
 export const DELETE_MODAL_INFO = {
   message: `Are you sure you want to delete this?`,
 }
@@ -80,5 +83,5 @@ export const DEFAULT_LEARNING_OPTION = {
   is_prediction_active: true,
 }
 
-export const MANAGEMENT_ORGANIZATIONS =
+export const NETWORK_MANAGEMENT_ORGANIZATIONS_URL =
   '/cloudhub/v1/ai/network/managements/orgs'
