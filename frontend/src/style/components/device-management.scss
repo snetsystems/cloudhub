@@ -1,3 +1,6 @@
+.device-management--wrapper {
+  padding: 20px;
+}
 .device-management-message {
   text-align: center;
   font-weight: 400;
@@ -8,6 +11,11 @@
   }
   .label-warning {
     color: $c-topaz;
+    font-weight: 600;
+  }
+
+  .label-info--apply {
+    color: $s-orange;
     font-weight: 600;
   }
 }

@@ -165,7 +165,7 @@ class SideNav extends PureComponent<Props> {
           <NavHeader link={`${sourcePrefix}/ai/device-management`} title="AI" />
           {isUsingVMware && (
             <NavListItem link={`${sourcePrefix}/ai/device-management`}>
-              Device Management
+              Network Device
             </NavListItem>
           )}
         </NavBlock>

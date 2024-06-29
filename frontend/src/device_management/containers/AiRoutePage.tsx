@@ -1,8 +1,14 @@
-import React from 'react'
+import React, {useState} from 'react'
 import _ from 'lodash'
-import {Page} from 'src/reusable_ui'
+import {Page, Radio} from 'src/reusable_ui'
 import SubSections from 'src/shared/components/SubSections'
-import {Me, Organization, TimeZones} from 'src/types'
+import {
+  HeaderNavigationObj,
+  Me,
+  Organization,
+  TimeRange,
+  TimeZones,
+} from 'src/types'
 import * as SourcesModels from 'src/types/sources'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import {LOGIN_AUTH_TYPE} from 'src/auth/constants'
@@ -16,6 +22,9 @@ import {connect} from 'react-redux'
 import * as appActions from 'src/shared/actions/app'
 import {openShell} from 'src/shared/actions/shell'
 import DeviceManagementModal from '../components/DeviceManagementModal'
+import PredictionPage from './PredictionPage'
+import CustomTimeRangeDropdown from 'src/shared/components/CustomTimeRangeDropdown'
+import moment from 'moment'
 
 interface Props {
   me: Me
@@ -29,30 +38,22 @@ interface Props {
   params: {tab: string}
 }
 
-const sections = (
-  isUsingAuth: boolean,
-  me: Me,
-  organizations: Organization[],
-  source: SourcesModels.Source
-) => {
-  let sections = [
-    {
-      url: 'device-management',
-      name: 'Device Management',
-      enabled: isUserAuthorized(me.role, ADMIN_ROLE),
-      component: (
-        <DeviceManagement
-          source={source}
-          me={me}
-          isUsingAuth={isUsingAuth}
-          organizations={organizations}
-        />
-      ),
-    },
-  ]
-
-  return sections
-}
+const defaultHeaderRadioButtons: HeaderNavigationObj[] = [
+  {
+    id: 'hostspage-tab-device-management',
+    titleText: 'Device Management',
+    value: 'device-management',
+    active: 'device-management',
+    label: 'Device Management',
+  },
+  {
+    id: 'hostspage-tab-prediction',
+    titleText: 'Prediction',
+    value: 'prediction',
+    active: 'prediction',
+    label: 'Prediction',
+  },
+]
 
 const AiRoutePage = (props: Props) => {
   const {
@@ -66,6 +67,18 @@ const AiRoutePage = (props: Props) => {
     setTimeZone,
   } = props
 
+  const [activeTab, setActiveTab] = useState('device-management')
+  const [headerRadioButtons, setHeaderRadioButtons] = useState<
+    HeaderNavigationObj[]
+  >(defaultHeaderRadioButtons)
+
+  const oneDayInSec = 86400
+
+  const [timeRange, setTimeRange] = useState<TimeRange>({
+    upper: moment().format(),
+    lower: moment().subtract(oneDayInSec, 'seconds').format(),
+  })
+
   let providers = []
 
   if (loginAuthType !== LOGIN_AUTH_TYPE.OAUTH) {
@@ -78,25 +91,63 @@ const AiRoutePage = (props: Props) => {
     })
   }
 
+  const handleApplyTime = (timeRange: TimeRange): void => {
+    setTimeRange(timeRange)
+  }
+
+  const onChooseActiveTab = (value: string) => {
+    setActiveTab(value)
+  }
+
   return (
     <Page>
       <Page.Header>
         <Page.Header.Left>
           <Page.Title title="CloudHub Admin" />
         </Page.Header.Left>
+        <Page.Header.Center widthPixels={headerRadioButtons.length * 90}>
+          <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
+            {defaultHeaderRadioButtons.map(rBtn => {
+              return (
+                <Radio.Button
+                  key={rBtn.titleText}
+                  id={rBtn.id}
+                  titleText={rBtn.titleText}
+                  value={rBtn.value}
+                  active={activeTab === rBtn.active}
+                  onClick={onChooseActiveTab}
+                >
+                  {rBtn.label}
+                </Radio.Button>
+              )
+            })}
+          </div>
+        </Page.Header.Center>
         <Page.Header.Right>
+          <CustomTimeRangeDropdown
+            onApplyTimeRange={handleApplyTime}
+            timeRange={timeRange}
+          />
           <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
         </Page.Header.Right>
       </Page.Header>
+
       <Page.Contents fullWidth={true}>
-        <div className="container-fluid">
-          <SubSections
-            sections={sections(isUsingAuth, me, organizations, source)}
-            activeSection={tab}
-            parentUrl="ai"
-            sourceID={source.id}
-          />
-        </div>
+        <>
+          {activeTab === 'device-management' && (
+            //@ts-ignore
+            <DeviceManagement
+              source={source}
+              me={me}
+              isUsingAuth={isUsingAuth}
+              organizations={organizations}
+            />
+          )}
+          {activeTab === 'prediction' && (
+            //@ts-ignore
+            <PredictionPage timeRange={timeRange} source={source} />
+          )}
+        </>
       </Page.Contents>
       <DeviceManagementModal />
     </Page>

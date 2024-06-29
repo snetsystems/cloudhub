@@ -1528,3 +1528,16 @@ export const notifyApplyMonitoringFailed = (
   duration: INFINITE,
   message: `Failed to Apply Monitoring. ${errorMessage}`,
 })
+
+export const notifyApplyLearningEnableStatusSuccess = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Learning Enable Status has been applied successfully.`,
+})
+
+export const notifyApplyLearningEnableStatusFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Apply Learning Enable Status. ${errorMessage}`,
+})

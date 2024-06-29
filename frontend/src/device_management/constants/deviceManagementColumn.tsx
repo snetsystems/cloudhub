@@ -1,5 +1,6 @@
 import React from 'react'
 import {AlignType, ColumnInfo, DeviceData, ShellInfo, SortType} from 'src/types'
+import {formatMLKey} from 'src/device_management/utils'
 
 interface Props {
   onEditClick: (deviceData: DeviceData) => void
@@ -92,7 +93,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       render: value => (
         <div
           className={`device--indicator ${
-            value ? 'indicator--primary' : 'indicator--fail'
+            value ? 'indicator--primary' : ''
           } flex-center`}
         >
           {value ? 'Enabled' : 'Disabled'}
@@ -139,7 +140,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       align: AlignType.CENTER,
       key: 'ml_function',
       name: 'ML Function',
-      render: value => <div> {value ? value : '-'}</div>,
+      render: value => <div> {value ? formatMLKey(value) : '-'}</div>,
     },
     {
       key: 'is_collecting_cfg_written',

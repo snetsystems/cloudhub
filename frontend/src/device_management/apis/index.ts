@@ -22,8 +22,10 @@ import {
 
 // Constants
 import {
+  APPLY_LEARNING_ENABLE_STATUS_URL,
   APPLY__MONITORING_URL,
   DEVICE_MANAGEMENT_URL,
+  NETWORK_MANAGEMENT_ORGANIZATIONS_URL,
   SNMP_CONNECTION_URL,
 } from 'src/device_management/constants'
 
@@ -31,8 +33,8 @@ import {
 import {proxy} from 'src/utils/queryUrlGenerator'
 import replaceTemplate from 'src/tempVars/utils/replace'
 import {getDeep} from 'src/utils/wrappers'
-import {MANAGEMENT_ORGANIZATIONS} from '../constants/deviceData'
 import {
+  ApplyLearningEnableStatusRequest,
   CreateDeviceOrganizationOption,
   GetAllDevicesOrgResponse,
   UpdateDeviceOrganizationOption,
@@ -166,12 +168,30 @@ export const deleteDevice = (params: DeleteDeviceParams) => {
   }
 }
 
-export const applyMonitoring = async (
-  learned_devices: ApplyMonitoringRequest
+export const applyLearningEnableStatus = async (
+  learning_devices: ApplyLearningEnableStatusRequest
 ) => {
   try {
     const response = await AJAX({
-      data: learned_devices,
+      data: learning_devices,
+      url: APPLY_LEARNING_ENABLE_STATUS_URL,
+      method: 'POST',
+    })
+    const {data} = response as ApplyMonitoringResponse
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const applyMonitoring = async (
+  collecting_devices: ApplyMonitoringRequest
+) => {
+  try {
+    const response = await AJAX({
+      data: collecting_devices,
       url: APPLY__MONITORING_URL,
       method: 'POST',
     })
@@ -188,7 +208,7 @@ export const getAllDevicesOrg = async () => {
   try {
     return AJAX<GetAllDevicesOrgResponse>({
       method: 'GET',
-      url: MANAGEMENT_ORGANIZATIONS,
+      url: NETWORK_MANAGEMENT_ORGANIZATIONS_URL,
     }) as Promise<AxiosResponse<GetAllDevicesOrgResponse>>
   } catch (error) {
     console.error(error)
@@ -204,7 +224,7 @@ export const updateDeviceOrganization = async ({
     const response = await AJAX<UpdateDevicesOrgResponse>({
       params: {id: id},
       data: orgLearningModel,
-      url: MANAGEMENT_ORGANIZATIONS,
+      url: NETWORK_MANAGEMENT_ORGANIZATIONS_URL,
       method: 'PATCH',
     })
     const {data} = response as UpdateDevicesOrgResponse
@@ -222,7 +242,7 @@ export const createDeviceOrganization = async (
   try {
     const response = await AJAX<UpdateDevicesOrgResponse>({
       data: orgLearningModel.orgLearningModel,
-      url: MANAGEMENT_ORGANIZATIONS,
+      url: NETWORK_MANAGEMENT_ORGANIZATIONS_URL,
       method: 'POST',
     })
     const {data} = response as UpdateDevicesOrgResponse

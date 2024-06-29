@@ -1,4 +1,6 @@
+import _ from 'lodash'
 import {DeviceData, DeviceDataMonitoringStatus, Organization} from 'src/types'
+import {MLFunctionMsg} from 'src/device_management/constants'
 
 export const hasMonitoringDevice = (
   devicesData: DeviceDataMonitoringStatus[]
@@ -67,4 +69,14 @@ export const getOrganizationIdByName = (
 ): string | '' => {
   const organization = organizations.find(org => org.name === organizationName)
   return organization ? organization.id : ''
+}
+
+export const formatMLKey = (
+  mlFunctionKey: keyof typeof MLFunctionMsg
+): typeof MLFunctionMsg[keyof typeof MLFunctionMsg] => {
+  if (!mlFunctionKey || !MLFunctionMsg.hasOwnProperty(mlFunctionKey)) {
+    return MLFunctionMsg.ml_gaussian_std
+  }
+
+  return MLFunctionMsg[mlFunctionKey]
 }

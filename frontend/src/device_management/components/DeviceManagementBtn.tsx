@@ -22,9 +22,9 @@ interface Props {
   closeModal?: () => void
   reLearnSetting: () => void
   data: DeviceData[]
-  getDeviceAJAX: () => Promise<void>
   deleteDevicesAJAX: (idList: string[]) => Promise<void>
   onOpenApplyMonitoringModal: () => void
+  onOpenLearningModelModal: () => void
 }
 
 function DeviceManagementBtn({
@@ -34,36 +34,11 @@ function DeviceManagementBtn({
   openModal,
   closeModal,
   data,
-  getDeviceAJAX,
   deleteDevicesAJAX,
   reLearnSetting,
   onOpenApplyMonitoringModal,
+  onOpenLearningModelModal,
 }: Props) {
-  const openLearningModelModal = (idList: string[]) => {
-    const validArray = selectedArrayById(data, idList, 'id')
-
-    openModal({
-      isVisible: true,
-      // message: MONITORING_MODAL_INFO.workHeader,
-      title: 'Edit Learning Model',
-      message: '',
-      btnColor: ComponentColor.Primary,
-      onConfirm: () => {
-        getDeviceAJAX()
-        closeModal()
-      },
-      confirmText: 'Confirm',
-      cancelText: 'Cancel',
-      onCancel: () => {
-        getDeviceAJAX()
-        closeModal()
-      },
-      childNode: (
-        <SystemConfirmModal data={validArray} type={SYSTEM_MODAL.LEARNING} />
-      ),
-    })
-  }
-
   const openDeleteModal = (idList: string[]) => {
     const validArray = selectedArrayById(data, idList, 'id')
     // create monitoring sql is_modeling_generated => is_monitoring
@@ -126,7 +101,7 @@ function DeviceManagementBtn({
         <Authorized requiredRole={EDITOR_ROLE}>
           <button
             onClick={() => {
-              openLearningModelModal(checkedArray)
+              onOpenLearningModelModal()
             }}
             className="btn button btn-sm btn-primary"
             disabled={checkedArray.length === 0}
