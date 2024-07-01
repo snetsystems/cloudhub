@@ -128,6 +128,7 @@ import {
   PredictionLayoutCell,
   LearningDevice,
   ApplyLearningEnableStatusRequest,
+  KapacitorForNetworkDeviceOrganization,
 } from './deviceManagement'
 
 import {AiModal, HeaderNavigationObj} from './aiModal'
@@ -259,4 +260,5 @@ export {
   LearningDevice,
   ApplyLearningEnableStatusRequest,
   HeaderNavigationObj,
+  KapacitorForNetworkDeviceOrganization,
 }

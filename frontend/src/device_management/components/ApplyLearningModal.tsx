@@ -46,6 +46,7 @@ interface Props {
   deviceData: DeviceData[]
   isVisible: boolean
   getDeviceAJAX: () => Promise<void>
+  getNetworkDeviceOrganizationsAJAX: () => Promise<void>
   onDismissOverlay: () => void
   notify: (n: Notification) => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
@@ -56,6 +57,7 @@ function ApplyLearningModal({
   deviceData,
   isVisible,
   getDeviceAJAX,
+  getNetworkDeviceOrganizationsAJAX,
   onDismissOverlay,
   notify,
   setDeviceManagementIsLoading,
@@ -99,6 +101,7 @@ function ApplyLearningModal({
   const finalizeApplyLearningEnableStatusAPIResponse = () => {
     setDeviceManagementIsLoading(false)
     getDeviceAJAX()
+    getNetworkDeviceOrganizationsAJAX()
     initializeCheckedArray()
     onDismissOverlay()
   }

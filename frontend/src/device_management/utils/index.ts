@@ -71,6 +71,14 @@ export const getOrganizationIdByName = (
   return organization ? organization.id : ''
 }
 
+export const getOrganizationNameByID = (
+  organizations: Organization[],
+  organizationID: string
+): string | '' => {
+  const organization = organizations.find(org => org.id === organizationID)
+  return organization ? organization.name : ''
+}
+
 export const formatMLKey = (
   mlFunctionKey: keyof typeof MLFunctionMsg
 ): typeof MLFunctionMsg[keyof typeof MLFunctionMsg] => {

@@ -1482,6 +1482,48 @@ export const notifyCreateDevicesFailed = (
   message: `Failed to Create Devices. ${errorMessage}`,
 })
 
+export const notifyCreateNetworkDeviceOrganizationSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Network Device Organization created successfully.`,
+})
+
+export const notifyCreateNetworkDeviceOrganizationFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Create Network Device Organization. ${errorMessage}`,
+})
+
+export const notifyUpdateNetworkDeviceOrganizationSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Network Device Organization updated successfully.`,
+})
+
+export const notifyUpdateNetworkDeviceOrganizationFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to update Network Device Organization. ${errorMessage}`,
+})
+
+export const notifyFetchNetworkDeviceOrganizationsError = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Get Network Device Organizations. ${errorMessage}`,
+})
+
+export const notifyFetchDeviceListError = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Get Device List. ${errorMessage}`,
+})
+
 export const notifyDeleteDevicesSucceeded = (): Notification => ({
   ...defaultSuccessNotification,
   message: `Devices deleted successfully.`,

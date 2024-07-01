@@ -1,7 +1,7 @@
 import {
   DeviceData,
   DropdownItem,
-  PredictionMode,
+  LearningOption,
   SNMPConfig,
   SSHConfig,
 } from 'src/types'
@@ -68,13 +68,11 @@ export const MLFunctionMsg = {
   ml_gaussian_std: 'Gaussian Standard Deviation',
 } as const
 
-export const DEFAULT_LEARNING_OPTION = {
+export const DEFAULT_LEARNING_OPTION: LearningOption = {
   organization: '',
   data_duration: 1,
-  ml_function: 'ml_multiplied' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
-  learn_cycle: 1,
-  prediction_mode: 'Ensemble' as typeof PredictionMode[keyof typeof PredictionMode],
-  is_prediction_active: true,
+  ml_function: 'ml_gaussian_std' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
+  relearn_cycle: '',
 }
 
 export const NETWORK_MANAGEMENT_ORGANIZATIONS_URL =

@@ -38,6 +38,7 @@ import {
   Links,
   DeviceMonitoringStatus,
   DevicesOrgData,
+  Kapacitor,
 } from 'src/types'
 
 // API
@@ -62,8 +63,12 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {
   notifyDeleteDevicesFailed,
   notifyDeleteDevicesSucceeded,
+  notifyFetchDeviceListError,
   notifyFetchDeviceMonitoringStatusFailed,
+  notifyFetchNetworkDeviceOrganizationsError,
+  notifyKapacitorConnectionFailed,
 } from 'src/shared/copy/notifications'
+import {getKapacitors} from 'src/shared/apis'
 
 interface Auth {
   me: Me
@@ -72,6 +77,7 @@ interface Auth {
 interface Props {
   auth: Auth
   source: Source
+  sources: Source[]
   links: Links
   isUsingAuth: boolean
   me: Me
@@ -80,6 +86,7 @@ interface Props {
   openShell: (shell: ShellInfo) => void
   openModal: (aiModal: AiModal) => void
   closeModal: () => void
+  fetchKapacitors: (source: Source) => Promise<void>
 }
 
 interface State {
@@ -96,6 +103,7 @@ interface State {
   orgLearningModel: DevicesOrgData
   applyMonitoringModalVisibility: boolean
   learningModelModalVisibility: boolean
+  kapacitors: Kapacitor[]
 }
 
 @ErrorHandling
@@ -118,6 +126,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       orgLearningModel: null,
       applyMonitoringModalVisibility: false,
       learningModelModalVisibility: false,
+      kapacitors: [],
     }
 
     this.setState = (args, callback) => {
@@ -132,8 +141,9 @@ class DeviceManagement extends PureComponent<Props, State> {
   public componentDidMount(): void {
     try {
       this.getDeviceAJAX()
+      this.getNetworkDeviceOrganizationsAJAX()
       this.fetchDeviceMonitoringStatus()
-      this.getAllDevicesOrgAJAX()
+      this.getKapacitors()
     } catch (error) {
       console.error(error)
       throw error
@@ -216,8 +226,15 @@ class DeviceManagement extends PureComponent<Props, State> {
         />
         <LearningSettingModal
           isVisible={isLearningSettingModalVisibility}
-          onClose={this.onCloseLearningSettingModal}
           orgLearningModel={orgLearningModel}
+          notify={this.props.notify}
+          onClose={this.onCloseLearningSettingModal}
+          kapacitors={this.state.kapacitors}
+          getDeviceAJAX={this.getDeviceAJAX}
+          getNetworkDeviceOrganizationsAJAX={
+            this.getNetworkDeviceOrganizationsAJAX
+          }
+          setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
         />
         <ApplyMonitoringModal
           isVisible={applyMonitoringModalVisibility}
@@ -225,6 +242,9 @@ class DeviceManagement extends PureComponent<Props, State> {
           deviceData={selectedArrayById(data, checkedArray, 'id')}
           notify={this.props.notify}
           getDeviceAJAX={this.getDeviceAJAX}
+          getNetworkDeviceOrganizationsAJAX={
+            this.getNetworkDeviceOrganizationsAJAX
+          }
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
           initializeCheckedArray={this.initializeCheckedArray}
         />
@@ -234,6 +254,9 @@ class DeviceManagement extends PureComponent<Props, State> {
           deviceData={selectedArrayById(data, checkedArray, 'id')}
           notify={this.props.notify}
           getDeviceAJAX={this.getDeviceAJAX}
+          getNetworkDeviceOrganizationsAJAX={
+            this.getNetworkDeviceOrganizationsAJAX
+          }
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
           initializeCheckedArray={this.initializeCheckedArray}
         />
@@ -255,13 +278,18 @@ class DeviceManagement extends PureComponent<Props, State> {
 
   private getDeviceAJAX = async () => {
     const {organizations} = this.props
-    const {data} = await getDeviceList()
-    const convertedDeviceData = convertDeviceDataOrganizationIDToName(
-      data.devices,
-      organizations
-    ) as DeviceData[]
 
-    this.setState({data: convertedDeviceData})
+    try {
+      const {data} = await getDeviceList()
+      const convertedDeviceData = convertDeviceDataOrganizationIDToName(
+        data.devices,
+        organizations
+      ) as DeviceData[]
+
+      this.setState({data: convertedDeviceData})
+    } catch (error) {
+      this.props.notify(notifyFetchDeviceListError(error.message || ''))
+    }
   }
 
   private fetchDeviceMonitoringStatus = async () => {
@@ -349,10 +377,12 @@ class DeviceManagement extends PureComponent<Props, State> {
 
       this.props.notify(notifyDeleteDevicesSucceeded())
       this.getDeviceAJAX()
+      this.getNetworkDeviceOrganizationsAJAX()
       this.setState({checkedArray: [], isLoading: false})
     } catch (error) {
       this.props.notify(notifyDeleteDevicesFailed(error.message || ''))
       this.getDeviceAJAX()
+      this.getNetworkDeviceOrganizationsAJAX()
       this.setState({checkedArray: [], isLoading: false})
     }
   }
@@ -368,6 +398,7 @@ class DeviceManagement extends PureComponent<Props, State> {
 
   private handleToggleDeviceConnectionModal = deviceConnectionVisibility => () => {
     this.getDeviceAJAX()
+    this.getNetworkDeviceOrganizationsAJAX()
     this.setState({
       deviceConnectionVisibility: deviceConnectionVisibility,
       deviceConnectionStatus: deviceConnectionVisibility
@@ -388,21 +419,29 @@ class DeviceManagement extends PureComponent<Props, State> {
     })
   }
 
-  private getAllDevicesOrgAJAX = async () => {
+  private getNetworkDeviceOrganizationsAJAX = async () => {
     const {me} = this.props
-    const {data} = await getAllDevicesOrg()
-    const currentOrg = _.get(me, 'currentOrganization')
-    const result = data.organizations.find(
-      i => i.organization === currentOrg.id
-    )
 
-    this.setState({
-      orgLearningModel: result,
-    })
+    try {
+      const {data} = await getAllDevicesOrg()
+      const currentOrg = _.get(me, 'currentOrganization')
+      const currentNetworkDeviceOrganization = data.organizations.find(
+        i => i.organization === currentOrg.id
+      )
+
+      this.setState({
+        orgLearningModel: currentNetworkDeviceOrganization,
+      })
+    } catch (error) {
+      this.props.notify(
+        notifyFetchNetworkDeviceOrganizationsError(error.message || '')
+      )
+    }
   }
 
   private handleDismissImportDeviceModalOverlay = (): void => {
     this.getDeviceAJAX()
+    this.getNetworkDeviceOrganizationsAJAX()
     this.setState({
       importDeviceWizardVisibility: false,
     })
@@ -415,14 +454,28 @@ class DeviceManagement extends PureComponent<Props, State> {
   private initializeCheckedArray = () => {
     this.setState({checkedArray: []})
   }
+
+  private getKapacitors = async () => {
+    const {source, sources} = this.props
+
+    try {
+      const currentSource = sources.find(s => s.id === source.id)
+      const kapacitors = await getKapacitors(currentSource)
+
+      this.setState({kapacitors})
+    } catch (error) {
+      this.props.notify(notifyKapacitorConnectionFailed())
+    }
+  }
 }
 
-const mstp = ({adminCloudHub: {organizations}, auth, links}) => ({
+const mstp = ({adminCloudHub: {organizations}, auth, links, sources}) => ({
   organizations,
   isUsingAuth: auth.isUsingAuth,
   auth,
   me: auth.me,
   links,
+  sources,
 })
 
 const mdtp = (dispatch: any) => ({
