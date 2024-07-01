@@ -24,36 +24,32 @@ func (s *Service) AllDevicesOrg(w http.ResponseWriter, r *http.Request) {
 
 type devicesOrgResponse struct {
 	Organizations []*deviceOrgResponse `json:"organizations"`
-	FailedOrgs    []*deviceOrgError    `json:"failed_orgs"`
 }
 type deviceOrgResponse struct {
-	ID                  string   `json:"organization"`
-	LoadModule          string   `json:"load_module"`
-	MLFunction          string   `json:"ml_function"`
-	DataDuration        int      `json:"data_duration"`
-	LearnCycle          int      `json:"learn_cycle"`
-	LearnedDevicesIDs   []uint64 `json:"learned_devices_ids"`
-	CollectorServer     string   `json:"collector_server"`
-	PredictionMode      string   `json:"prediction_mode"`
-	IsPredictionActive  bool     `json:"is_prediction_active"`
-	CollectedDevicesIDs []uint64 `json:"collected_devices_ids"`
+	ID                  string               `json:"organization"`
+	LoadModule          string               `json:"load_module"`
+	MLFunction          string               `json:"ml_function"`
+	DataDuration        int                  `json:"data_duration"`
+	LearnedDevicesIDs   []uint64             `json:"learned_devices_ids"`
+	CollectorServer     string               `json:"collector_server"`
+	CollectedDevicesIDs []uint64             `json:"collected_devices_ids"`
+	AIKapacitor         cloudhub.AIKapacitor `json:"ai_kapacitor"`
 }
 type updateDeviceOrgRequest struct {
-	LoadModule         *string `json:"load_module,omitempty"`
-	MLFunction         *string `json:"ml_function,omitempty"`
-	DataDuration       *int    `json:"data_duration,omitempty"`
-	LearnCycle         *int    `json:"learn_cycle,omitempty"`
-	PredictionMode     *string `json:"prediction_mode,omitempty"`
-	IsPredictionActive *bool   `json:"is_prediction_active,omitempty"`
+	LoadModule          *string               `json:"load_module,omitempty"`
+	MLFunction          *string               `json:"ml_function,omitempty"`
+	DataDuration        *int                  `json:"data_duration,omitempty"`
+	CollectedDevicesIDs *[]uint64             `json:"collected_devices_ids"`
+	LearnedDevicesIDs   *[]uint64             `json:"learned_devices_ids"`
+	AIKapacitor         *cloudhub.AIKapacitor `json:"ai_kapacitor"`
 }
 
 type deviceOrgRequest struct {
-	ID                 string  `json:"organization"`
-	MLFunction         *string `json:"ml_function"`
-	DataDuration       *int    `json:"data_duration"`
-	LearnCycle         *int    `json:"learn_cycle"`
-	PredictionMode     *string `json:"prediction_mode"`
-	IsPredictionActive *bool   `json:"is_prediction_active"`
+	ID           string                `json:"organization"`
+	MLFunction   *string               `json:"ml_function"`
+	DataDuration *int                  `json:"data_duration"`
+	RelearnCycle *string               `json:"relearn_cycle"`
+	AIKapacitor  *cloudhub.AIKapacitor `json:"ai_kapacitor"`
 }
 
 type deviceOrgError struct {
@@ -73,12 +69,9 @@ const MLFunctionGaussianStd = "ml_gaussian_std"
 
 // ML/DL Setting
 const (
-	LoadModule         = "learn.ch_nx_load"
-	MLFunction         = MLFunctionMultiplied
-	PredictionMode     = "ML"
-	DataDuration       = 15
-	LearnCycle         = 15
-	IsPredictionActive = false
+	LoadModule   = "learn.ch_nx_load"
+	MLFunction   = MLFunctionMultiplied
+	DataDuration = 15
 )
 
 func isAllowedMLFunction(function string) bool {
@@ -100,15 +93,10 @@ func (r *deviceOrgRequest) validCreate() error {
 	if r.DataDuration == nil {
 		return fmt.Errorf("data_duration required in device org request body")
 	}
-	if r.LearnCycle == nil {
-		return fmt.Errorf("learn_cycle required in device org request body")
+	if r.AIKapacitor == nil {
+		return fmt.Errorf("AI Kapacitor required in device org request body")
 	}
-	if r.PredictionMode == nil || *r.PredictionMode == "" {
-		return fmt.Errorf("prediction_mode required in device org request body")
-	}
-	if r.IsPredictionActive == nil {
-		return fmt.Errorf("is_prediction_active required in device org request body")
-	}
+
 	return nil
 }
 
@@ -118,23 +106,16 @@ func (r *updateDeviceOrgRequest) validUpdate() error {
 
 func newDevicesOrgResponse(ctx context.Context, s *Service, devicesOrg []cloudhub.NetworkDeviceOrg) *devicesOrgResponse {
 	Organizations := []*deviceOrgResponse{}
-	failedOrgs := []*deviceOrgError{}
-	for i, org := range devicesOrg {
+	for _, org := range devicesOrg {
 		data, err := newDeviceOrgResponse(ctx, s, &org)
-		if err != nil {
-			failedOrgs = append(failedOrgs, &deviceOrgError{
-				Index:        i,
-				OrgID:        org.ID,
-				ErrorMessage: err.Error(),
-			})
-		} else {
+		if err == nil {
+
 			Organizations = append(Organizations, data)
 		}
 	}
 
 	return &devicesOrgResponse{
 		Organizations: Organizations,
-		FailedOrgs:    failedOrgs,
 	}
 }
 
@@ -145,12 +126,10 @@ func newDeviceOrgResponse(ctx context.Context, s *Service, deviceOrg *cloudhub.N
 		LoadModule:          deviceOrg.LoadModule,
 		MLFunction:          deviceOrg.MLFunction,
 		DataDuration:        deviceOrg.DataDuration,
-		LearnCycle:          deviceOrg.LearnCycle,
 		LearnedDevicesIDs:   deviceOrg.LearnedDevicesIDs,
 		CollectorServer:     deviceOrg.CollectorServer,
-		PredictionMode:      deviceOrg.PredictionMode,
-		IsPredictionActive:  deviceOrg.IsPredictionActive,
 		CollectedDevicesIDs: deviceOrg.CollectedDevicesIDs,
+		AIKapacitor:         deviceOrg.AIKapacitor,
 	}
 
 	return resData, nil
@@ -217,11 +196,23 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	if req.DataDuration != nil {
 		deviceOrg.DataDuration = *req.DataDuration
 	}
-	if req.LearnCycle != nil {
-		deviceOrg.LearnCycle = *req.LearnCycle
+	if req.CollectedDevicesIDs != nil {
+		deviceOrg.CollectedDevicesIDs = *req.CollectedDevicesIDs
 	}
-	if req.PredictionMode != nil {
-		deviceOrg.PredictionMode = *req.PredictionMode
+	if req.LearnedDevicesIDs != nil {
+		deviceOrg.LearnedDevicesIDs = *req.LearnedDevicesIDs
+	}
+	if req.AIKapacitor != nil {
+		if req.AIKapacitor.KapaURL != "" {
+			deviceOrg.AIKapacitor.KapaURL = req.AIKapacitor.KapaURL
+		}
+		if req.AIKapacitor.Username != "" {
+			deviceOrg.AIKapacitor.Username = req.AIKapacitor.Username
+		}
+		if req.AIKapacitor.Password != "" {
+			deviceOrg.AIKapacitor.Password = req.AIKapacitor.Password
+		}
+		deviceOrg.AIKapacitor.InsecureSkipVerify = req.AIKapacitor.InsecureSkipVerify
 	}
 
 	if err := s.Store.NetworkDeviceOrg(ctx).Update(ctx, deviceOrg); err != nil {
@@ -265,12 +256,9 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingDeviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &req.ID})
-	if err == nil && existingDeviceOrg != nil {
+	existingDeviceOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &req.ID})
+	if existingDeviceOrg != nil {
 		Error(w, http.StatusConflict, fmt.Sprintf("Device Org with ID %s already exists", req.ID), s.Logger)
-		return
-	} else if err != nil {
-		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error checking for existing Device Org: %v", err), s.Logger)
 		return
 	}
 
@@ -280,12 +268,15 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 		LoadModule:          LoadModule,
 		MLFunction:          *req.MLFunction,
 		DataDuration:        *req.DataDuration,
-		LearnCycle:          *req.LearnCycle,
-		PredictionMode:      *req.PredictionMode,
-		IsPredictionActive:  *req.IsPredictionActive,
 		LearnedDevicesIDs:   []uint64{},
 		CollectedDevicesIDs: []uint64{},
 		CollectorServer:     "",
+		AIKapacitor: cloudhub.AIKapacitor{
+			KapaURL:            *&req.AIKapacitor.KapaURL,
+			Username:           *&req.AIKapacitor.Username,
+			Password:           *&req.AIKapacitor.Password,
+			InsecureSkipVerify: *&req.AIKapacitor.InsecureSkipVerify,
+		},
 	}
 
 	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Add(ctx, &newDeviceOrg)
@@ -302,4 +293,30 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 	msg := fmt.Sprintf(MsgNetWorkDeviceOrgCreated.String(), deviceOrg.ID)
 	s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
+}
+
+// RemoveNetworkDeviceOrg removes a Device Org from the store by ID.
+func (s *Service) RemoveNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
+	idStr, err := paramStr("id", r)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+
+	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &idStr})
+	if err != nil {
+		notFound(w, idStr, s.Logger)
+		return
+	}
+
+	if err := s.Store.NetworkDeviceOrg(ctx).Delete(ctx, &cloudhub.NetworkDeviceOrg{ID: deviceOrg.ID}); err != nil {
+		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error removing Device Org ID %s: %v", idStr, err), s.Logger)
+		return
+	}
+
+	msg := fmt.Sprintf("Network Device Org with ID %s removed successfully", idStr)
+	s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
+	encodeJSON(w, http.StatusOK, map[string]string{"message": msg}, s.Logger)
 }

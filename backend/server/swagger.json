@@ -5120,6 +5120,42 @@
         }
       }
     },
+    "/ai/network/managements/orgs{id}": {
+      "get": {
+        "tags": ["Device Organization Management"],
+        "summary": "Get a device Org by ID",
+        "description": "Retrieve the details of a specific device Org by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Organization ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device details retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceOrgResponse"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "ai/network/managements/orgs": {
       "get": {
         "tags": ["Device Organization Management"],
@@ -5129,7 +5165,7 @@
           "200": {
             "description": "A list of devices Organization.",
             "schema": {
-              "$ref": "#/definitions/DeviceOrgResponse"
+              "$ref": "#/definitions/DevicesOrgResponse"
             }
           },
           "default": {
@@ -5150,10 +5186,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/DeviceOrgRequest"
-              }
+              "$ref": "#/definitions/DeviceOrgRequest"
             }
           }
         ],
@@ -5178,7 +5211,6 @@
           }
         }
       },
-
       "patch": {
         "tags": ["Device Organization Management"],
         "summary": "Update a device Organization by Organization ID",
@@ -9309,6 +9341,32 @@
       },
       "required": ["community", "port", "version", "protocol"]
     },
+    "AIKapcitor": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "AI Kapacitor URL",
+          "example": "http://192.168.0.1:9094"
+        },
+        "username": {
+          "type": "string",
+          "description": "Kapacitor password",
+          "example": "root"
+        },
+        "password": {
+          "type": "string",
+          "description": "Kapacitor password",
+          "example": "password123"
+        },
+        "insecure_skip_verify": {
+          "type": "bool",
+          "description": "insecure_skip_verify option",
+          "example": false
+        }
+      },
+      "required": ["url", "insecure_skip_verify"]
+    },
     "Device_SNMPConfig": {
       "type": "object",
       "properties": {
@@ -9358,31 +9416,29 @@
           "description": "data_duration for learning",
           "example": "15"
         },
-        "learn_cycle": {
-          "type": "integer",
-          "description": "learning_cycle (day[s]). Using in kapacitor cron method",
-          "example": "2"
-        },
-
-        "prediction_mode": {
-          "type": "string",
-          "description": "This is selected PredictionMode. It can be 'ML', 'DL' or 'Ensemble(ML + DL)'",
-          "example": "ML"
-        },
-        "is_prediction_active": {
-          "type": "bool",
-          "description": "Indicates whether AI prediction is active",
-          "example": false
+        "ai_kapacitor": {
+          "$ref": "#/definitions/AIKapcitor",
+          "description": "The AIKapacitor represents the information for Kapacitor login"
         }
       },
       "required": [
         "organization",
         "ml_function",
         "data_duration",
-        "learn_cycle",
         "prediction_mode",
         "is_prediction_active"
       ]
+    },
+    "DevicesOrgResponse": {
+      "type": "object",
+      "properties": {
+        "organizations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeviceOrgResponse"
+          }
+        }
+      }
     },
     "DeviceOrgResponse": {
       "type": "object",
@@ -9407,11 +9463,7 @@
           "description": "data_duration for learning",
           "example": "15"
         },
-        "learn_cycle": {
-          "type": "integer",
-          "description": "learning_cycle (day[s]). Using in kapacitor cron method",
-          "example": "2"
-        },
+
         "learned_devices_ids": {
           "type": "array",
           "description": "the list of device IDs what will be learing included in the network device org",
@@ -9425,16 +9477,6 @@
           "description": "the server(minion_id) used to collect network data",
           "example": "ch-collector-01"
         },
-        "prediction_mode": {
-          "type": "string",
-          "description": "This is selected PredictionMode. It can be 'ML', 'DL' or 'Ensemble(ML + DL)'",
-          "example": "ML"
-        },
-        "is_prediction_active": {
-          "type": "bool",
-          "description": "Indicates whether AI prediction is active",
-          "example": false
-        },
         "collected_devices_ids": {
           "type": "array",
           "description": "the list of device IDs included in Logstash Config",
@@ -9442,10 +9484,15 @@
             "type": "uint64"
           },
           "example": [1, 2, 3]
+        },
+        "ai_kapacitor": {
+          "$ref": "#/definitions/AIKapcitor",
+          "description": "The AIKapacitor represents the information for Kapacitor login"
         }
       },
       "required": []
     },
+
     "UpdateDeviceOrgRequest": {
       "type": "object",
       "properties": {
@@ -9464,20 +9511,9 @@
           "description": "data_duration for learning",
           "example": "15"
         },
-        "learn_cycle": {
-          "type": "integer",
-          "description": "learning_cycle (day[s]). Using in kapacitor cron method",
-          "example": "2"
-        },
-        "prediction_mode": {
-          "type": "string",
-          "description": "This is selected PredictionMode. It can be 'ML', 'DL' or 'Ensemble(ML + DL)'",
-          "example": "ML"
-        },
-        "is_prediction_active": {
-          "type": "bool",
-          "description": "Indicates whether AI prediction is active",
-          "example": false
+        "ai_kapacitor": {
+          "$ref": "#/definitions/AIKapcitor",
+          "description": "The AIKapacitor represents the information for Kapacitor login"
         }
       },
       "required": []
