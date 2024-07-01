@@ -152,6 +152,14 @@ function ApplyMonitoringModal({
     finalizeApplyMonitoringAPIResponse()
   }
 
+  const getSlideToggleMarginTop = () => {
+    if (deviceData.length <= 12) {
+      return '-20px'
+    } else {
+      return '0px'
+    }
+  }
+
   return (
     <OverlayTechnology visible={isVisible}>
       <OverlayContainer>
@@ -165,24 +173,6 @@ function ApplyMonitoringModal({
           <Form>
             <Form.Element>
               <>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    paddingBottom: '2px',
-                  }}
-                >
-                  <label style={{padding: '3px 5px 0px 0px'}}>
-                    Enable Monitoring
-                  </label>
-                  <div>
-                    <SlideToggle
-                      active={isMonitoringEnabled}
-                      onChange={handleToggleMonitoringEnabled}
-                      size={ComponentSize.ExtraSmall}
-                    />
-                  </div>
-                </div>
                 <FancyScrollbar
                   autoHeight={true}
                   maxHeight={scrollMaxHeight}
@@ -197,14 +187,32 @@ function ApplyMonitoringModal({
                 ></FancyScrollbar>
               </>
             </Form.Element>
-
+            <Form.Element>
+              <div
+                className="form-control-static"
+                style={{
+                  justifyContent: 'left',
+                  marginTop: getSlideToggleMarginTop(),
+                  width: '183px',
+                }}
+              >
+                <SlideToggle
+                  active={isMonitoringEnabled}
+                  onChange={handleToggleMonitoringEnabled}
+                  size={ComponentSize.ExtraSmall}
+                />
+                <label style={{padding: '3px 0px 0px 5px'}}>
+                  Enable Monitoring
+                </label>
+              </div>
+            </Form.Element>
             <Form.Element>
               <div className="device-management-message">
                 {MONITORING_MODAL_INFO.monitoringMessage}
               </div>
             </Form.Element>
             <Form.Footer>
-              <div style={{marginTop: '10px'}}>
+              <div>
                 <Button
                   color={ComponentColor.Primary}
                   text={'Apply'}
