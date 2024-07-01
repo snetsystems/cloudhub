@@ -9416,6 +9416,11 @@
           "description": "data_duration for learning",
           "example": "15"
         },
+        "relearn_cycle": {
+          "type": "string",
+          "description": "Learning corn format",
+          "example": "* * * * *"
+        },
         "ai_kapacitor": {
           "$ref": "#/definitions/AIKapcitor",
           "description": "The AIKapacitor represents the information for Kapacitor login"
