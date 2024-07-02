@@ -91,6 +91,7 @@ function LearningSettingModal({
   const [learningOption, setLearningOption] = useState<LearningOption>(
     DEFAULT_LEARNING_OPTION
   )
+  const [isCreated, setIsCreated] = useState<boolean>(false)
 
   let dropdownCurOrg = [
     {
@@ -109,11 +110,11 @@ function LearningSettingModal({
 
   useEffect(() => {
     const organizationID = me.currentOrganization.id
-    const isNetworkDeviceOrganizationValid = orgLearningModel.find(
+    const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
       i => i.organization === organizationID
     )
 
-    if (isNetworkDeviceOrganizationValid) {
+    if (isNetworkDeviceOrganizationCreated) {
       const transformedData = transformOrgLearningModelToLearningOption()
       setLearningOption(transformedData)
     } else {
@@ -165,11 +166,11 @@ function LearningSettingModal({
     value: DropdownItem | Organization
   ) => {
     if (key === 'organization') {
-      const isNetworkDeviceOrganizationValid = orgLearningModel.find(
+      const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
         i => i.organization === (value as Organization).id
       )
 
-      if (isNetworkDeviceOrganizationValid) {
+      if (isNetworkDeviceOrganizationCreated) {
         const transformedData = transformOrgLearningModelToLearningOptionWithOrganization(
           value as Organization
         )
@@ -179,7 +180,7 @@ function LearningSettingModal({
           data_duration: DEFAULT_LEARNING_OPTION.data_duration,
           ml_function: DEFAULT_LEARNING_OPTION.ml_function,
           relearn_cycle: DEFAULT_LEARNING_OPTION.relearn_cycle,
-          organization: (value as Organization).id || '',
+          organization: (value as Organization).name || '',
         })
       }
     } else {
@@ -216,7 +217,11 @@ function LearningSettingModal({
   }
 
   const onSubmit = () => {
-    if (!!orgLearningModel) {
+    const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
+      i => i.organization === learningOption.organization
+    )
+
+    if (isCreated || isNetworkDeviceOrganizationCreated) {
       updateDeviceOrganizationAjax()
     } else {
       createDeviceOrganizationAjax()
@@ -253,6 +258,7 @@ function LearningSettingModal({
         },
       })
 
+      setIsCreated(true)
       notify(notifyCreateNetworkDeviceOrganizationSucceeded())
       finalizeApplyMLDLSettingAPIResponse()
     } catch (error) {
