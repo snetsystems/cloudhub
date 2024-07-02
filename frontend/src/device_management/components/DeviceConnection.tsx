@@ -58,6 +58,8 @@ interface Props {
   notify: (n: Notification) => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
   toggleVisibility: ToggleWizard
+  getDeviceAJAX: () => Promise<void>
+  getNetworkDeviceOrganizationsAJAX: () => Promise<void>
 }
 
 interface State {
@@ -255,6 +257,18 @@ class DeviceConnection extends PureComponent<Props, State> {
     return {error: false, payload: {}}
   }
 
+  private finalizeAPIResponse = () => {
+    const {
+      getDeviceAJAX,
+      getNetworkDeviceOrganizationsAJAX,
+      setDeviceManagementIsLoading,
+    } = this.props
+
+    setDeviceManagementIsLoading(false)
+    getDeviceAJAX()
+    getNetworkDeviceOrganizationsAJAX()
+  }
+
   private handleConnectSSH = () => {
     // TODO Call Connect SSH Device API
     this.setState({sshConnectionStatus: 'Complete'})
@@ -297,7 +311,7 @@ class DeviceConnection extends PureComponent<Props, State> {
   private handleCreateDevicesError = (errorMessage: string): NextReturn => {
     this.setState({setupCompleteStatus: 'Error'})
     this.props.notify(notifyCreateDeviceFailed(errorMessage))
-    this.props.setDeviceManagementIsLoading(false)
+    this.finalizeAPIResponse()
 
     return {error: true, payload: {}}
   }
@@ -305,7 +319,7 @@ class DeviceConnection extends PureComponent<Props, State> {
   private handleCreateDevicesSuccess = (): NextReturn => {
     this.setState({setupCompleteStatus: 'Complete'})
     this.props.notify(notifyCreateDeviceSucceeded())
-    this.props.setDeviceManagementIsLoading(false)
+    this.finalizeAPIResponse()
 
     return {error: false, payload: {}}
   }
@@ -339,7 +353,7 @@ class DeviceConnection extends PureComponent<Props, State> {
   private handleUpdateDevicesSuccess = (): NextReturn => {
     this.setState({setupCompleteStatus: 'Complete'})
     this.props.notify(notifyUpdateDeviceSucceeded())
-    this.props.setDeviceManagementIsLoading(false)
+    this.finalizeAPIResponse()
 
     return {error: false, payload: {}}
   }
@@ -349,7 +363,7 @@ class DeviceConnection extends PureComponent<Props, State> {
 
     this.setState({setupCompleteStatus: 'Error'})
     this.props.notify(notifyUpdateDeviceFailed(_errorMessage))
-    this.props.setDeviceManagementIsLoading(false)
+    this.finalizeAPIResponse()
 
     return {error: true, payload: {}}
   }

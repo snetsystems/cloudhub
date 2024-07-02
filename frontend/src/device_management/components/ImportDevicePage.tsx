@@ -62,6 +62,8 @@ interface Props {
   notify: (n: Notification) => void
   onDismissOverlay: () => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
+  getDeviceAJAX: () => Promise<void>
+  getNetworkDeviceOrganizationsAJAX: () => Promise<void>
 }
 
 interface State {
@@ -412,6 +414,18 @@ class ImportDevicePage extends PureComponent<Props, State> {
     this.props.setDeviceManagementIsLoading(false)
   }
 
+  private finalizeAPIResponse = () => {
+    const {
+      getDeviceAJAX,
+      getNetworkDeviceOrganizationsAJAX,
+      setDeviceManagementIsLoading,
+    } = this.props
+
+    setDeviceManagementIsLoading(false)
+    getDeviceAJAX()
+    getNetworkDeviceOrganizationsAJAX()
+  }
+
   private scrollMaxHeight = window.innerHeight * 0.45
 
   private get deviceStatus(): JSX.Element {
@@ -536,7 +550,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     const {onDismissOverlay} = this.props
 
     this.props.notify(notifyCreateDevicesFailed(errorMessage))
-    this.props.setDeviceManagementIsLoading(false)
+    this.finalizeAPIResponse()
     this.initializeComponentState()
     onDismissOverlay()
   }
@@ -548,7 +562,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     const failedMessage = this.getFailedDevicesErrorMessage(failedDevices)
 
     this.props.notify(notifyCreateDevicesFailed(failedMessage))
-    this.props.setDeviceManagementIsLoading(false)
+    this.finalizeAPIResponse()
     this.initializeComponentState()
     onDismissOverlay()
   }
@@ -573,7 +587,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
     const {onDismissOverlay} = this.props
 
     this.props.notify(notifyCreateDevicesSucceeded())
-    this.props.setDeviceManagementIsLoading(false)
+    this.finalizeAPIResponse()
     this.initializeComponentState()
     onDismissOverlay()
   }

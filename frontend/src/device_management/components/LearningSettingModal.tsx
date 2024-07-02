@@ -2,6 +2,7 @@
 import React, {useEffect, useState} from 'react'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
+import _ from 'lodash'
 
 // Components
 import {
@@ -66,7 +67,7 @@ interface Props {
   kapacitors: Kapacitor[]
   me?: Me
   organizations?: Organization[]
-  orgLearningModel?: DevicesOrgData
+  orgLearningModel?: DevicesOrgData[]
   notify: (n: Notification) => void
   onClose: () => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
@@ -107,42 +108,86 @@ function LearningSettingModal({
   }
 
   useEffect(() => {
-    if (orgLearningModel) {
-      const transformedData = transformOrgLearningModelToLearningOption(
-        orgLearningModel
-      )
+    const organizationID = me.currentOrganization.id
+    const isNetworkDeviceOrganizationValid = orgLearningModel.find(
+      i => i.organization === organizationID
+    )
+
+    if (isNetworkDeviceOrganizationValid) {
+      const transformedData = transformOrgLearningModelToLearningOption()
       setLearningOption(transformedData)
     } else {
-      setLearningOption(prevLearningOption => ({
-        ...prevLearningOption,
+      setLearningOption(() => ({
+        data_duration: DEFAULT_LEARNING_OPTION.data_duration,
+        ml_function: DEFAULT_LEARNING_OPTION.ml_function,
+        relearn_cycle: DEFAULT_LEARNING_OPTION.relearn_cycle,
         organization: me?.currentOrganization?.name || '',
       }))
     }
-  }, [isVisible, orgLearningModel])
+  }, [isVisible])
 
-  const transformOrgLearningModelToLearningOption = (
-    devicesOrgData: DevicesOrgData
-  ): LearningOption => {
+  const transformOrgLearningModelToLearningOption = (): LearningOption => {
+    const currentOrg = _.get(me, 'currentOrganization')
+    const currentNetworkDeviceOrganization = orgLearningModel.find(
+      i => i.organization === currentOrg.id
+    )
+
     return {
-      organization:
-        getOrganizationIdByName(organizations, devicesOrgData?.organization) ||
-        me.currentOrganization.name,
-      data_duration: devicesOrgData.data_duration,
+      organization: currentOrg.name,
+      data_duration: currentNetworkDeviceOrganization.data_duration,
       // TODO Parsing
-      ml_function: devicesOrgData.ml_function,
+      ml_function: currentNetworkDeviceOrganization.ml_function,
       // TODO Parsing
-      relearn_cycle: devicesOrgData.relearn_cycle || '',
-      ai_kapacitor: devicesOrgData.ai_kapacitor,
+      relearn_cycle: currentNetworkDeviceOrganization.relearn_cycle || '',
+      ai_kapacitor: currentNetworkDeviceOrganization.ai_kapacitor,
+    }
+  }
+
+  const transformOrgLearningModelToLearningOptionWithOrganization = (
+    organization: Organization
+  ): LearningOption => {
+    const currentNetworkDeviceOrganization = orgLearningModel.find(
+      i => i.organization === organization.id
+    )
+
+    return {
+      organization: organization.name,
+      data_duration: currentNetworkDeviceOrganization.data_duration,
+      // TODO Parsing
+      ml_function: currentNetworkDeviceOrganization.ml_function,
+      // TODO Parsing
+      relearn_cycle: currentNetworkDeviceOrganization.relearn_cycle || '',
+      ai_kapacitor: currentNetworkDeviceOrganization.ai_kapacitor,
     }
   }
 
   const setLearningDropdownState = (key: keyof LearningOption) => (
-    value: DropdownItem
+    value: DropdownItem | Organization
   ) => {
-    setLearningOption({
-      ...learningOption,
-      ...{[key]: value.text},
-    })
+    if (key === 'organization') {
+      const isNetworkDeviceOrganizationValid = orgLearningModel.find(
+        i => i.organization === (value as Organization).id
+      )
+
+      if (isNetworkDeviceOrganizationValid) {
+        const transformedData = transformOrgLearningModelToLearningOptionWithOrganization(
+          value as Organization
+        )
+        setLearningOption(transformedData)
+      } else {
+        setLearningOption({
+          data_duration: DEFAULT_LEARNING_OPTION.data_duration,
+          ml_function: DEFAULT_LEARNING_OPTION.ml_function,
+          relearn_cycle: DEFAULT_LEARNING_OPTION.relearn_cycle,
+          organization: (value as Organization).id || '',
+        })
+      }
+    } else {
+      setLearningOption({
+        ...learningOption,
+        ...{[key]: (value as DropdownItem).text},
+      })
+    }
   }
 
   const setKapacitorDropdownState = (
@@ -290,13 +335,9 @@ function LearningSettingModal({
                     type="text"
                     label="ReLearn Cycle"
                     onChange={setLearningInputState('relearn_cycle')}
-                    newClassName={'form-group col-xs-12'}
                   />
 
-                  <div
-                    className="form-group col-xs-12"
-                    style={{height: '95px'}}
-                  >
+                  <div className="form-group col-xs-6" style={{height: '95px'}}>
                     <label>Kapacitor</label>
                     <DeviceManagementKapacitorDropdown
                       selectedKapacitor={learningOption.ai_kapacitor}

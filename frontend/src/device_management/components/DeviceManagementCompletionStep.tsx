@@ -20,7 +20,10 @@ export default class DeviceManagementCompletionStep extends PureComponent<Props>
     const {deviceData} = this.props
 
     return (
-      <div className="device-management-connection--completion">
+      <div
+        className="device-management-connection--completion"
+        style={{maxHeight: '120px'}}
+      >
         <TableComponent
           data={[deviceData]}
           tableTitle="Device Information"

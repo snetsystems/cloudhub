@@ -77,10 +77,9 @@ export default class DeviceManagementKapacitorDropdown extends PureComponent<Pro
     const {kapacitors} = this.props
     return kapacitors.map(k => {
       const kapacitorUrl = k?.url || ''
-      const kapacitorName = k?.name ? `@(${k.name})` : ''
 
       return {
-        text: `${kapacitorUrl}${kapacitorName}`,
+        text: `${kapacitorUrl}`,
         kapacitor: k,
       }
     })
@@ -89,11 +88,7 @@ export default class DeviceManagementKapacitorDropdown extends PureComponent<Pro
   private get selected(): string {
     const {selectedKapacitor} = this.props
     const selectedKapacitorUrl = selectedKapacitor?.url || ''
-    // TODO Add User Name
-    const selectedKapacitorUsername = selectedKapacitor?.username
-      ? `@(${selectedKapacitor?.username})`
-      : ''
 
-    return `${selectedKapacitorUrl}${selectedKapacitorUsername}` || ''
+    return `${selectedKapacitorUrl}`
   }
 }
