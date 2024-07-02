@@ -110,6 +110,7 @@
     "fast-memoize": "^2.5.1",
     "fast.js": "^0.1.1",
     "fixed-data-table-2": "^0.8.13",
+    "d3-hexbin": "^0.2.2",
     "graphql": "^14.5.8",
     "graphql-tag": "^2.10.1",
     "he": "^1.1.1",
