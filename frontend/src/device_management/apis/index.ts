@@ -222,9 +222,8 @@ export const updateDeviceOrganization = async ({
 }: UpdateDeviceOrganizationOption) => {
   try {
     const response = await AJAX<UpdateDevicesOrgResponse>({
-      params: {id: id},
       data: orgLearningModel,
-      url: NETWORK_MANAGEMENT_ORGANIZATIONS_URL,
+      url: `${NETWORK_MANAGEMENT_ORGANIZATIONS_URL}/${id}`,
       method: 'PATCH',
     })
     const {data} = response as UpdateDevicesOrgResponse

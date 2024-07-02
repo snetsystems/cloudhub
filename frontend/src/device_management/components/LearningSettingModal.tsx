@@ -1,55 +1,140 @@
+// Library
 import React, {useEffect, useState} from 'react'
+import {bindActionCreators} from 'redux'
+import {connect} from 'react-redux'
+
+// Components
 import {
   Button,
   ComponentColor,
-  ComponentSize,
   ComponentStatus,
   Form,
   OverlayBody,
   OverlayContainer,
   OverlayHeading,
   OverlayTechnology,
-  SlideToggle,
 } from 'src/reusable_ui'
 import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
 import Dropdown from 'src/shared/components/Dropdown'
-import {bindActionCreators} from 'redux'
-import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {connect} from 'react-redux'
-import {DropdownItem, LearningOption, Me, Organization} from 'src/types'
-import {SUPERADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {DEFAULT_LEARNING_OPTION, MLFunctionMsg} from '../constants'
-import {DevicesOrgData, PredictionMode} from 'src/types/deviceManagement'
-import {createDeviceOrganization, updateDeviceOrganization} from '../apis'
-import {getOrganizationIdByName} from '../utils'
+import DeviceManagementKapacitorDropdown from 'src/device_management/components/DeviceManagementKapacitorDropdown'
+
+// Constant
+import {
+  DEFAULT_LEARNING_OPTION,
+  MLFunctionMsg,
+  MONITORING_MODAL_INFO,
+} from 'src/device_management/constants'
+
+// Action
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+
+// Type
+import {
+  DropdownItem,
+  LearningOption,
+  Me,
+  Organization,
+  Notification,
+  Kapacitor,
+} from 'src/types'
+import {
+  DevicesOrgData,
+  KapacitorForNetworkDeviceOrganization,
+} from 'src/types/deviceManagement'
+
+// API
+import {
+  createDeviceOrganization,
+  updateDeviceOrganization,
+} from 'src/device_management/apis'
+
+// Utils
+import {getOrganizationIdByName} from 'src/device_management/utils'
+
+// ETC
+import {SUPERADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
+import {
+  notifyCreateNetworkDeviceOrganizationFailed,
+  notifyCreateNetworkDeviceOrganizationSucceeded,
+  notifyUpdateNetworkDeviceOrganizationFailed,
+  notifyUpdateNetworkDeviceOrganizationSucceeded,
+} from 'src/shared/copy/notifications'
 
 interface Props {
   isVisible: boolean
-  onClose: () => void
+  kapacitors: Kapacitor[]
   me?: Me
   organizations?: Organization[]
-  isDefault?: boolean
   orgLearningModel?: DevicesOrgData
+  notify: (n: Notification) => void
+  onClose: () => void
+  setDeviceManagementIsLoading: (isLoading: boolean) => void
+  getDeviceAJAX: () => Promise<void>
+  getNetworkDeviceOrganizationsAJAX: () => Promise<void>
 }
 
 function LearningSettingModal({
   isVisible,
-  onClose,
   me,
   organizations,
   orgLearningModel,
+  kapacitors,
+  notify,
+  onClose,
+  setDeviceManagementIsLoading,
+  getDeviceAJAX,
+  getNetworkDeviceOrganizationsAJAX,
 }: Props) {
   const scrollMaxHeight = window.innerHeight * 0.4
   const [learningOption, setLearningOption] = useState<LearningOption>(
     DEFAULT_LEARNING_OPTION
   )
 
+  let dropdownCurOrg = [
+    {
+      ...me.currentOrganization,
+      text: me.currentOrganization.name,
+    },
+  ]
+
+  let dropdownOrg: any = null
+  if (organizations) {
+    dropdownOrg = organizations.map(role => ({
+      ...role,
+      text: role.name,
+    }))
+  }
+
   useEffect(() => {
-    //initial value
-    !!orgLearningModel && setLearningOption(orgLearningModel)
-    console.log('orgLearningModel: ', orgLearningModel)
-  }, [])
+    if (orgLearningModel) {
+      const transformedData = transformOrgLearningModelToLearningOption(
+        orgLearningModel
+      )
+      setLearningOption(transformedData)
+    } else {
+      setLearningOption(prevLearningOption => ({
+        ...prevLearningOption,
+        organization: me?.currentOrganization?.name || '',
+      }))
+    }
+  }, [isVisible, orgLearningModel])
+
+  const transformOrgLearningModelToLearningOption = (
+    devicesOrgData: DevicesOrgData
+  ): LearningOption => {
+    return {
+      organization:
+        getOrganizationIdByName(organizations, devicesOrgData?.organization) ||
+        me.currentOrganization.name,
+      data_duration: devicesOrgData.data_duration,
+      // TODO Parsing
+      ml_function: devicesOrgData.ml_function,
+      // TODO Parsing
+      relearn_cycle: devicesOrgData.relearn_cycle || '',
+      ai_kapacitor: devicesOrgData.ai_kapacitor,
+    }
+  }
 
   const setLearningDropdownState = (key: keyof LearningOption) => (
     value: DropdownItem
@@ -60,54 +145,102 @@ function LearningSettingModal({
     })
   }
 
-  const setLearningInputState = (key: keyof LearningOption) => (
-    value: string
+  const setKapacitorDropdownState = (
+    kapacitor: KapacitorForNetworkDeviceOrganization
   ) => {
     setLearningOption({
       ...learningOption,
-      ...{[key]: Number(value)},
+      ai_kapacitor: kapacitor,
     })
   }
 
-  const onToggleChanger = () => {
-    setLearningOption({
-      ...learningOption,
-      is_prediction_active: !learningOption.is_prediction_active,
-    })
-  }
-  const onSubmit = () => {
-    if (!!orgLearningModel) {
-      //update api
-      const {organization, ml_function, ...rest} = learningOption
-
-      updateDeviceOrganization({
-        id: getOrganizationIdByName(organizations, organization),
-        orgLearningModel: {ml_function: ml_function, ...rest},
+  const setLearningInputState = (key: keyof LearningOption) => (
+    value: string
+  ) => {
+    if (key === 'data_duration') {
+      setLearningOption({
+        ...learningOption,
+        [key]: Number(value),
       })
     } else {
-      //create api
-      const {organization, ml_function, ...rest} = learningOption
-      console.log({
+      setLearningOption({
+        ...learningOption,
+        [key]: value,
+      })
+    }
+  }
+
+  const onSubmit = () => {
+    if (!!orgLearningModel) {
+      updateDeviceOrganizationAjax()
+    } else {
+      createDeviceOrganizationAjax()
+    }
+  }
+
+  const updateDeviceOrganizationAjax = async () => {
+    const {organization, ...rest} = learningOption
+
+    try {
+      setDeviceManagementIsLoading(true)
+      await updateDeviceOrganization({
+        id: getOrganizationIdByName(organizations, organization),
+        orgLearningModel: {...rest},
+      })
+
+      notify(notifyUpdateNetworkDeviceOrganizationSucceeded())
+      finalizeApplyMLDLSettingAPIResponse()
+    } catch (error) {
+      notify(notifyUpdateNetworkDeviceOrganizationFailed(error.message || ''))
+      finalizeApplyMLDLSettingAPIResponse()
+    }
+  }
+
+  const createDeviceOrganizationAjax = async () => {
+    const {organization, ...rest} = learningOption
+
+    try {
+      setDeviceManagementIsLoading(true)
+      await createDeviceOrganization({
         orgLearningModel: {
-          ...rest,
-          ml_function: ml_function,
           organization: getOrganizationIdByName(organizations, organization),
+          ...rest,
         },
       })
 
-      createDeviceOrganization({
-        orgLearningModel: {
-          ...rest,
-          ml_function: ml_function,
-          organization: getOrganizationIdByName(organizations, organization),
-        },
-      })
+      notify(notifyCreateNetworkDeviceOrganizationSucceeded())
+      finalizeApplyMLDLSettingAPIResponse()
+    } catch (error) {
+      notify(notifyCreateNetworkDeviceOrganizationFailed(error.message || ''))
+      finalizeApplyMLDLSettingAPIResponse()
     }
+  }
+
+  const finalizeApplyMLDLSettingAPIResponse = () => {
+    setDeviceManagementIsLoading(false)
+    getDeviceAJAX()
+    getNetworkDeviceOrganizationsAJAX()
   }
 
   const convertValueToKey = (value: string, obj: Object) => {
     const index = Object.values(obj).findIndex(i => i === value)
     return Object.keys(obj)[index]
+  }
+
+  const isKapacitorEmpty = (): boolean => {
+    return kapacitors.length === 0
+  }
+
+  const LearningSettingModalMessage = () => {
+    return (
+      isKapacitorEmpty() && (
+        <Form.Element>
+          <div className="device-management-message">
+            {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorEmpty}
+          </div>
+        </Form.Element>
+      )
+    )
   }
 
   return (
@@ -123,9 +256,12 @@ function LearningSettingModal({
                     <label>Organization</label>
                     <Dropdown
                       disabled={!isUserAuthorized(me.role, SUPERADMIN_ROLE)}
-                      items={organizations.map(i => i.name)}
+                      items={me.superAdmin ? dropdownOrg : dropdownCurOrg}
                       onChoose={setLearningDropdownState('organization')}
-                      selected={learningOption?.organization}
+                      selected={
+                        learningOption?.organization ||
+                        me?.currentOrganization?.name
+                      }
                       className="dropdown-stretch"
                     />
                   </div>
@@ -143,48 +279,50 @@ function LearningSettingModal({
                       className="dropdown-stretch"
                     />
                   </div>
-                  <div className="form-group col-xs-6">
-                    <label>Prediction Mode</label>
-                    <Dropdown
-                      items={Object.values(PredictionMode)}
-                      onChoose={(value: DropdownItem) =>
-                        setLearningDropdownState('prediction_mode')({
-                          text: convertValueToKey(value.text, PredictionMode),
-                        })
-                      }
-                      selected={PredictionMode[learningOption.prediction_mode]}
-                      className="dropdown-stretch"
-                    />
-                  </div>
-
-                  <WizardTextInput
-                    value={`${learningOption.learn_cycle}`}
-                    type="number"
-                    label="Re-Learn Cycle(days)"
-                    onChange={setLearningInputState('learn_cycle')}
-                  />
                   <WizardTextInput
                     value={`${learningOption.data_duration}`}
                     type="number"
                     label="Data Duration(days)"
                     onChange={setLearningInputState('data_duration')}
                   />
-                  <div className="form-group col-xs-6">
-                    <label>Prediction Active</label>
-                    <SlideToggle
-                      active={learningOption.is_prediction_active}
-                      onChange={onToggleChanger}
-                      size={ComponentSize.ExtraSmall}
+                  <WizardTextInput
+                    value={`${learningOption.relearn_cycle}`}
+                    type="text"
+                    label="ReLearn Cycle"
+                    onChange={setLearningInputState('relearn_cycle')}
+                    newClassName={'form-group col-xs-12'}
+                  />
+
+                  <div
+                    className="form-group col-xs-12"
+                    style={{height: '95px'}}
+                  >
+                    <label>Kapacitor</label>
+                    <DeviceManagementKapacitorDropdown
+                      selectedKapacitor={learningOption.ai_kapacitor}
+                      kapacitors={kapacitors}
+                      setActiveKapacitor={setKapacitorDropdownState}
                     />
                   </div>
+
+                  {LearningSettingModalMessage()}
                 </>
               </FancyScrollbar>
             </Form.Element>
             <Form.Footer>
               <Button
-                status={ComponentStatus.Default}
+                active={isKapacitorEmpty()}
+                status={
+                  isKapacitorEmpty()
+                    ? ComponentStatus.Disabled
+                    : ComponentStatus.Default
+                }
                 text="Apply"
-                color={ComponentColor.Primary}
+                color={
+                  isKapacitorEmpty()
+                    ? ComponentColor.Default
+                    : ComponentColor.Primary
+                }
                 onClick={() => {
                   onSubmit()
                 }}

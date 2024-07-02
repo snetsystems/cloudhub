@@ -1122,12 +1122,15 @@ func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
 		LoadModule:          t.LoadModule,
 		MLFunction:          t.MLFunction,
 		DataDuration:        int32(t.DataDuration),
-		LearnCycle:          int32(t.LearnCycle),
 		LearnedDevicesIDs:   t.LearnedDevicesIDs,
 		CollectorServer:     t.CollectorServer,
-		PredictionMode:      t.PredictionMode,
-		IsPredictionActive:  t.IsPredictionActive,
 		CollectedDevicesIDs: t.CollectedDevicesIDs,
+		AIKapacitor: &AIKapacitor{
+			KapaURL:            t.AIKapacitor.KapaURL,
+			Username:           t.AIKapacitor.Username,
+			Password:           t.AIKapacitor.Password,
+			InsecureSkipVerify: t.AIKapacitor.InsecureSkipVerify,
+		},
 	})
 }
 
@@ -1141,12 +1144,15 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 	t.LoadModule = pb.LoadModule
 	t.MLFunction = pb.MLFunction
 	t.DataDuration = int(pb.DataDuration)
-	t.LearnCycle = int(pb.LearnCycle)
 	t.LearnedDevicesIDs = pb.LearnedDevicesIDs
 	t.CollectorServer = pb.CollectorServer
-	t.PredictionMode = pb.PredictionMode
-	t.IsPredictionActive = pb.IsPredictionActive
 	t.CollectedDevicesIDs = pb.CollectedDevicesIDs
+	t.AIKapacitor = cloudhub.AIKapacitor{
+		KapaURL:            pb.AIKapacitor.KapaURL,
+		Username:           pb.AIKapacitor.Username,
+		Password:           pb.AIKapacitor.Password,
+		InsecureSkipVerify: pb.AIKapacitor.InsecureSkipVerify,
+	}
 
 	return nil
 }

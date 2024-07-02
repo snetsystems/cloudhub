@@ -34,4 +34,19 @@ export const MONITORING_MODAL_INFO = {
       the selected device?
     </span>
   ),
+  ML_DL_SettingNetworkDeviceOrganizationNotCreated: (
+    <>
+      <>
+        You need to create a
+        <label className="label-warning"> network device organization </label>
+        first.
+      </>
+    </>
+  ),
+  ML_DL_SettingKapacitorEmpty: (
+    <>
+      There is <label className="label-warning">0 kapacitor </label>to configure
+      ML/DL Setting.
+    </>
+  ),
 }

@@ -1145,18 +1145,24 @@ type NetworkDeviceOrgQuery struct {
 	ID *string
 }
 
+//AIKapacitor represents the information for Kapacitor login
+type AIKapacitor struct {
+	KapaURL            string `json:"url"`
+	Username           string `json:"username"`
+	Password           string `json:"password"`
+	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
+}
+
 // NetworkDeviceOrg represents the information of a network device group
 type NetworkDeviceOrg struct {
-	ID                  string   `json:"organization"`
-	LoadModule          string   `json:"load_module"`
-	MLFunction          string   `json:"ml_function"`
-	DataDuration        int      `json:"data_duration"`
-	LearnCycle          int      `json:"learn_cycle"`
-	LearnedDevicesIDs   []uint64 `json:"learned_devices_ids"`
-	CollectorServer     string   `json:"collector_server"`
-	PredictionMode      string   `json:"prediction_mode"`
-	IsPredictionActive  bool     `json:"is_prediction_active"`
-	CollectedDevicesIDs []uint64 `json:"collected_devices_ids"`
+	ID                  string      `json:"organization"`
+	LoadModule          string      `json:"load_module"`
+	MLFunction          string      `json:"ml_function"`
+	DataDuration        int         `json:"data_duration"`
+	LearnedDevicesIDs   []uint64    `json:"learned_devices_ids"`
+	CollectorServer     string      `json:"collector_server"`
+	CollectedDevicesIDs []uint64    `json:"collected_devices_ids"`
+	AIKapacitor         AIKapacitor `json:"ai_kapacitor"`
 }
 
 // NetworkDeviceOrgStore is the Storage and retrieval of information

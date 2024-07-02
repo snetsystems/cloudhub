@@ -156,12 +156,18 @@ export interface UpdateDeviceOrganizationOption {
   orgLearningModel: LearningOrganizationOption
 }
 
+export interface KapacitorForNetworkDeviceOrganization {
+  url: string
+  username?: string
+  password?: string
+  insecure_skip_verify: boolean
+}
+
 export interface LearningOrganizationOption {
   data_duration: number
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
-  is_prediction_active: boolean
-  learn_cycle: number
-  prediction_mode: typeof PredictionMode[keyof typeof PredictionMode]
+  relearn_cycle: string
+  ai_kapacitor?: KapacitorForNetworkDeviceOrganization
 }
 
 export interface LearningOption extends LearningOrganizationOption {
@@ -180,13 +186,14 @@ export interface DevicesOrgData {
   organization: string
   data_duration: number
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
-  learn_cycle: number
-  prediction_mode: typeof PredictionMode[keyof typeof PredictionMode]
-  learned_devices_ids: number[]
-  collector_server: string
-  load_module: string
-  is_prediction_active: false
-  collected_devices_ids: number[]
+  relearn_cycle: string
+  ai_kapacitor?: KapacitorForNetworkDeviceOrganization
+  prediction_mode?: typeof PredictionMode[keyof typeof PredictionMode]
+  learned_devices_ids?: number[]
+  collector_server?: string
+  load_module?: string
+  is_prediction_active?: false
+  collected_devices_ids?: number[]
 }
 
 export const PredictionMode = {

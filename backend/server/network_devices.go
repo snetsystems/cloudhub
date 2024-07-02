@@ -783,10 +783,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 					CollectorServer:     collectorServer,
 					LoadModule:          LoadModule,
 					MLFunction:          MLFunction,
-					PredictionMode:      PredictionMode,
-					IsPredictionActive:  IsPredictionActive,
 					DataDuration:        DataDuration,
-					LearnCycle:          LearnCycle,
 				}
 			} else {
 				orgInfo = *existingDeviceOrg
@@ -885,10 +882,7 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 					CollectorServer:     "",
 					LoadModule:          LoadModule,
 					MLFunction:          MLFunction,
-					PredictionMode:      PredictionMode,
-					IsPredictionActive:  IsPredictionActive,
 					DataDuration:        DataDuration,
-					LearnCycle:          LearnCycle,
 				}
 			} else {
 				orgInfo = *existingDeviceOrg

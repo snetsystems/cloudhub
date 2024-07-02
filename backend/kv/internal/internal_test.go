@@ -606,12 +606,15 @@ func TestMarshalNetworkDeviceOrg(t *testing.T) {
 		LoadModule:          "learn.ch_nx_load",
 		MLFunction:          "ml_multiplied",
 		DataDuration:        1,
-		LearnCycle:          2,
 		LearnedDevicesIDs:   []uint64{1, 2, 3},
 		CollectorServer:     "ch-collector-1",
-		PredictionMode:      "ML",
 		CollectedDevicesIDs: []uint64{1, 2, 3},
-		IsPredictionActive:  false,
+		AIKapacitor: cloudhub.AIKapacitor{
+			KapaURL:            "http://127.0.0.1:9094",
+			Username:           "",
+			Password:           "",
+			InsecureSkipVerify: false,
+		},
 	}
 
 	var vv cloudhub.NetworkDeviceOrg
