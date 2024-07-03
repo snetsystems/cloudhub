@@ -9344,6 +9344,16 @@
     "AIKapcitor": {
       "type": "object",
       "properties": {
+        "srcId": {
+          "type": "int64",
+          "description": "SrcID of the data source",
+          "example": "1"
+        },
+        "kapaId": {
+          "type": "int64",
+          "description": " KapaID of the Kapacitor ID",
+          "example": "2"
+        },
         "url": {
           "type": "string",
           "description": "AI Kapacitor URL",
@@ -9418,7 +9428,7 @@
         },
         "relearn_cycle": {
           "type": "string",
-          "description": "Learning corn format",
+          "description": "Learning cron format",
           "example": "* * * * *"
         },
         "ai_kapacitor": {

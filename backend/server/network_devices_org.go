@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
+	"github.com/influxdata/kapacitor/client/v1"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	kapa "github.com/snetsystems/cloudhub/backend/kapacitor"
 )
 
 // AllDevicesOrg returns all devices within the store.
@@ -42,6 +45,7 @@ type updateDeviceOrgRequest struct {
 	CollectedDevicesIDs *[]uint64             `json:"collected_devices_ids"`
 	LearnedDevicesIDs   *[]uint64             `json:"learned_devices_ids"`
 	AIKapacitor         *cloudhub.AIKapacitor `json:"ai_kapacitor"`
+	RelearnCycle        *string               `json:"relearn_cycle"`
 }
 
 type deviceOrgRequest struct {
@@ -58,6 +62,13 @@ type deviceOrgError struct {
 	ErrorMessage string `json:"errorMessage"`
 }
 
+type influxdbInfo struct {
+	Origin   string
+	Port     string
+	Username string
+	Password string
+}
+
 // MLFunctionMultiplied represents an ML algorithm for multiplication-based operations.
 const MLFunctionMultiplied = "ml_multiplied"
 
@@ -69,9 +80,10 @@ const MLFunctionGaussianStd = "ml_gaussian_std"
 
 // ML/DL Setting
 const (
-	LoadModule   = "learn.ch_nx_load"
+	LoadModule   = "loader.cloudhub.ch_nx_load"
 	MLFunction   = MLFunctionMultiplied
 	DataDuration = 15
+	RelearnCycle = "1 0 1,15 * *"
 )
 
 func isAllowedMLFunction(function string) bool {
@@ -167,7 +179,8 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		invalidData(w, err, s.Logger)
 		return
 	}
-
+	isChangedKapaURL := false
+	previousAIKapacitor := cloudhub.AIKapacitor{}
 	var req updateDeviceOrgRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
@@ -186,6 +199,12 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		notFound(w, idStr, s.Logger)
 		return
 	}
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &idStr})
+	if err != nil {
+		notFound(w, idStr, s.Logger)
+		return
+	}
+	previousAIKapacitor = deviceOrg.AIKapacitor
 
 	if req.LoadModule != nil {
 		deviceOrg.LoadModule = *req.LoadModule
@@ -203,16 +222,33 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		deviceOrg.LearnedDevicesIDs = *req.LearnedDevicesIDs
 	}
 	if req.AIKapacitor != nil {
-		if req.AIKapacitor.KapaURL != "" {
-			deviceOrg.AIKapacitor.KapaURL = req.AIKapacitor.KapaURL
-		}
-		if req.AIKapacitor.Username != "" {
-			deviceOrg.AIKapacitor.Username = req.AIKapacitor.Username
-		}
-		if req.AIKapacitor.Password != "" {
-			deviceOrg.AIKapacitor.Password = req.AIKapacitor.Password
-		}
+		req.AIKapacitor.SrcID = req.AIKapacitor.SrcID
+		req.AIKapacitor.KapaID = req.AIKapacitor.KapaID
+		deviceOrg.AIKapacitor.Username = req.AIKapacitor.Username
+		deviceOrg.AIKapacitor.Password = req.AIKapacitor.Password
 		deviceOrg.AIKapacitor.InsecureSkipVerify = req.AIKapacitor.InsecureSkipVerify
+
+		if deviceOrg.AIKapacitor.KapaURL != req.AIKapacitor.KapaURL {
+			deviceOrg.AIKapacitor.KapaURL = req.AIKapacitor.KapaURL
+			isChangedKapaURL = true
+		}
+	}
+
+	if !isChangedKapaURL {
+		deleteLearningTask(ctx, s, org, previousAIKapacitor)
+		reqTask := deviceOrgRequest{
+			ID:           deviceOrg.ID,
+			MLFunction:   &deviceOrg.MLFunction,
+			DataDuration: &deviceOrg.DataDuration,
+			RelearnCycle: req.RelearnCycle,
+			AIKapacitor:  &deviceOrg.AIKapacitor,
+		}
+		err = createLearningTask(ctx, s, org, reqTask, deviceOrg)
+		if err != nil {
+			msg := fmt.Sprintf("Error updating TickSCript %s: %v", idStr, err)
+			Error(w, http.StatusInternalServerError, msg, s.Logger)
+			return
+		}
 	}
 
 	if err := s.Store.NetworkDeviceOrg(ctx).Update(ctx, deviceOrg); err != nil {
@@ -250,7 +286,7 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	_, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &req.ID})
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &req.ID})
 	if err != nil {
 		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error checking for existing Org: %v", err), s.Logger)
 		return
@@ -272,16 +308,25 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 		CollectedDevicesIDs: []uint64{},
 		CollectorServer:     "",
 		AIKapacitor: cloudhub.AIKapacitor{
-			KapaURL:            *&req.AIKapacitor.KapaURL,
-			Username:           *&req.AIKapacitor.Username,
-			Password:           *&req.AIKapacitor.Password,
-			InsecureSkipVerify: *&req.AIKapacitor.InsecureSkipVerify,
+			SrcID:              req.AIKapacitor.SrcID,
+			KapaID:             req.AIKapacitor.KapaID,
+			KapaURL:            req.AIKapacitor.KapaURL,
+			Username:           req.AIKapacitor.Username,
+			Password:           req.AIKapacitor.Password,
+			InsecureSkipVerify: req.AIKapacitor.InsecureSkipVerify,
 		},
 	}
 
 	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Add(ctx, &newDeviceOrg)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating new Device Org: %v", err), s.Logger)
+		return
+	}
+
+	err = createLearningTask(ctx, s, org, req, deviceOrg)
+	if err != nil {
+		s.Store.NetworkDeviceOrg(ctx).Delete(ctx, deviceOrg)
+		invalidData(w, err, s.Logger)
 		return
 	}
 
@@ -319,4 +364,159 @@ func (s *Service) RemoveNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	msg := fmt.Sprintf("Network Device Org with ID %s removed successfully", idStr)
 	s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
 	encodeJSON(w, http.StatusOK, map[string]string{"message": msg}, s.Logger)
+}
+
+func getInfluxDBs(ctx context.Context, s *Service) ([]influxdbInfo, error) {
+	influxDBs := make([]influxdbInfo, 0)
+	serverCtx := serverContext(ctx)
+	i := 0
+	for {
+		source, err := s.Store.Sources(serverCtx).Get(serverCtx, i)
+		if err != nil {
+			break
+		}
+		origin, port, err := getOriginAndPort(source.URL)
+		if err != nil {
+			break
+		}
+		influxDB := influxdbInfo{
+			Origin:   origin,
+			Port:     port,
+			Username: source.Username,
+			Password: source.Password,
+		}
+
+		influxDBs = append(influxDBs, influxDB)
+		i++
+	}
+	if len(influxDBs) < 1 {
+		return nil, fmt.Errorf("no InfluxDB sources found")
+	}
+	return influxDBs, nil
+}
+
+func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organization, req deviceOrgRequest, deviceOrg *cloudhub.NetworkDeviceOrg) error {
+	influxDBs, err := getInfluxDBs(ctx, s)
+	if err != nil || len(influxDBs) < 1 {
+		return fmt.Errorf("Error fetching InfluxDBs: %v", err)
+	}
+
+	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
+
+	taskReq := cloudhub.AutoGenerateLearnRule{
+		OrganizationName: org.Name,
+		Organization:     org.ID,
+		TaskTemplate:     kapa.LearnTaskField,
+		RelearnCycle:     *req.RelearnCycle,
+		LoadModule:       LoadModule,
+		MLFunction:       *req.MLFunction,
+		RetentionPolicy:  "auto",
+		AlertRule: cloudhub.AlertRule{
+			ID: cloudhub.LearnScriptPrefix + org.ID,
+		},
+		InfluxOrigin:     influxDBs[0].Origin,
+		InfluxDBPort:     influxDBs[0].Port,
+		InfluxDBUsername: influxDBs[0].Username,
+		InfluxDBPassword: influxDBs[0].Password,
+		EtcdOrigin:       "",
+		EtcdPort:         "",
+	}
+
+	if req.MLFunction == nil {
+		taskReq.MLFunction = MLFunction
+	} else {
+		taskReq.MLFunction = *req.MLFunction
+	}
+	if taskReq.RelearnCycle == "" {
+		taskReq.RelearnCycle = RelearnCycle
+	}
+
+	tmplParams := cloudhub.TemplateParams{
+		"OrgName":         taskReq.OrganizationName,
+		"LoadModule":      taskReq.LoadModule,
+		"MLFunction":      taskReq.MLFunction,
+		"Message":         taskReq.Message,
+		"RelearnCycle":    taskReq.RelearnCycle,
+		"RetentionPolicy": taskReq.RetentionPolicy,
+		"InfluxOrigin":    taskReq.InfluxOrigin,
+		"InfluxPort":      taskReq.InfluxDBPort,
+		"InfluxUsername":  taskReq.InfluxDBUsername,
+		"InfluxPassword":  taskReq.InfluxDBPassword,
+		"EtcdOrigin":      taskReq.EtcdOrigin,
+		"EtcdPort":        taskReq.EtcdPort,
+	}
+
+	script, err := c.Ticker.GenerateTaskFromTemplate(cloudhub.LoadTemplateConfig{
+		Field: kapa.LearnTaskField,
+		Path:  nil,
+	}, tmplParams)
+	if err != nil {
+		return err
+	}
+
+	kapaID := cloudhub.LearnScriptPrefix + org.ID
+	createTaskOptions := &client.CreateTaskOptions{
+		ID:   kapaID,
+		Type: client.BatchTask,
+		DBRPs: []client.DBRP{
+			{Database: org.Name, RetentionPolicy: "autogen"},
+			{Database: "Default", RetentionPolicy: "autogen"},
+		},
+		TICKscript: string(script),
+		Status:     client.Enabled,
+	}
+	task, err := c.AutoGenerateCreate(ctx, createTaskOptions)
+	if err != nil && task != nil {
+		return err
+	}
+
+	msg := fmt.Sprintf(MsgKapacitorRuleCreated.String(), createTaskOptions.ID, org.Name)
+	s.logRegistration(ctx, "Kapacitors Task", msg)
+	return nil
+}
+
+func deleteLearningTask(ctx context.Context, s *Service, org *cloudhub.Organization, AIKapacitor cloudhub.AIKapacitor) error {
+	c := kapa.NewClient(AIKapacitor.KapaURL, AIKapacitor.Username, AIKapacitor.Password, AIKapacitor.InsecureSkipVerify)
+
+	kapaID := cloudhub.LearnScriptPrefix + org.ID
+
+	// Check if the task exists
+	task, err := c.Get(ctx, kapaID)
+	if err != nil {
+		return fmt.Errorf("Error fetching Kapacitor task: %v", err)
+	}
+
+	if task == nil {
+		return fmt.Errorf("Kapacitor task %s not found", kapaID)
+	}
+
+	// Delete the task
+	err = c.Delete(ctx, c.Href(kapaID))
+	if err != nil {
+		return fmt.Errorf("Error deleting Kapacitor task: %v", err)
+	}
+
+	msg := fmt.Sprintf("Kapacitor task %s for organization %s deleted", kapaID, org.Name)
+	s.logRegistration(ctx, "Kapacitors Task", msg)
+	return nil
+}
+
+func getOriginAndPort(rawURL string) (string, string, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return "", "", fmt.Errorf("error parsing URL: %v", err)
+	}
+
+	origin := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Hostname())
+
+	port := parsedURL.Port()
+	if port == "" {
+		if parsedURL.Scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+
+	return origin, port, nil
 }

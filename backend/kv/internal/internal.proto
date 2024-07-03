@@ -296,7 +296,7 @@ message CSP {
 // Key: Organization ID
 message NetworkDeviceOrg {
   string ID                           = 1;  // Org ID
-  string LoadModule                   = 2;  // Currently fixed by learn.ch_nx_load
+  string LoadModule                   = 2;  // Currently fixed by loader.cloudhub.ch_nx_load
   string MLFunction                   = 3;  // ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']
   int32 DataDuration                  = 4;  // data_duration for learning
   repeated uint64 LearnedDevicesIDs   = 5;  // the list of device IDs what will be learing included in the network device org
@@ -306,10 +306,12 @@ message NetworkDeviceOrg {
 }
 
 message AIKapacitor {
-  string KapaURL = 1;  // KapaUrl is the url ot the kapacitor
-  string Username = 2;  
-  string Password = 3;
-  bool InsecureSkipVerify = 4;  
+  int64  SrcID    = 1;  // SrcID is the ID of the data source
+  int64  KapaID   = 2;  // KapaID is the id of the kapacitor this alert is associated with
+  string KapaURL  = 3;  // KapaURL is the url ot the kapacitor
+  string Username = 4;  
+  string Password = 5;
+  bool InsecureSkipVerify = 6;  
 }
 
 message SSHConfig {
