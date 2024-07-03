@@ -19,6 +19,9 @@ type TomlTemplateConfig struct {
 	PredictionTask struct {
 		Template string `toml:"template"`
 	} `toml:"prediction_task"`
+	LogstashTemplate struct {
+		Template string `toml:"template"`
+	} `toml:"logstash_gen"`
 }
 
 const (
@@ -26,6 +29,8 @@ const (
 	LearnTaskField cloudhub.TemplateFieldType = "LearnTask"
 	// PredictionTaskField represents the prediction_task template field
 	PredictionTaskField cloudhub.TemplateFieldType = "PredictionTask"
+	// LogstashTemplate represents the prediction_task template
+	LogstashTemplate cloudhub.TemplateFieldType = "LogstashTemplate"
 )
 
 // getDefaultTemplatePath returns the default path to the template file based on the workspace environment variable

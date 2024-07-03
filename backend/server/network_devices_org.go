@@ -62,7 +62,8 @@ type deviceOrgError struct {
 	ErrorMessage string `json:"errorMessage"`
 }
 
-type influxdbInfo struct {
+//InfluxdbInfo InfluxDB access Info
+type InfluxdbInfo struct {
 	Origin   string
 	Port     string
 	Username string
@@ -107,6 +108,12 @@ func (r *deviceOrgRequest) validCreate() error {
 	}
 	if r.AIKapacitor == nil {
 		return fmt.Errorf("AI Kapacitor required in device org request body")
+	}
+	if r.AIKapacitor.KapaURL == "" {
+		return fmt.Errorf("AI Kapacitor URL required in device org request body")
+	}
+	if r.RelearnCycle != nil {
+		return fmt.Errorf("AI RelearnCycle required in device org request body")
 	}
 
 	return nil
@@ -235,7 +242,9 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	}
 
 	if isChangedKapaURL {
-		deleteLearningTask(ctx, s, org, previousAIKapacitor)
+		if previousAIKapacitor.KapaURL != "" {
+			deleteLearningTask(ctx, s, org, previousAIKapacitor)
+		}
 		reqTask := deviceOrgRequest{
 			ID:           deviceOrg.ID,
 			MLFunction:   &deviceOrg.MLFunction,
@@ -322,12 +331,12 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating new Device Org: %v", err), s.Logger)
 		return
 	}
-
-	err = createLearningTask(ctx, s, org, req, deviceOrg)
-	if err != nil {
-		s.Store.NetworkDeviceOrg(ctx).Delete(ctx, deviceOrg)
-		invalidData(w, err, s.Logger)
-		return
+	if req.AIKapacitor != nil && req.AIKapacitor.KapaURL != "" {
+		err = createLearningTask(ctx, s, org, req, deviceOrg)
+		if err != nil {
+			invalidData(w, err, s.Logger)
+			return
+		}
 	}
 
 	res, err := newDeviceOrgResponse(ctx, s, deviceOrg)
@@ -366,8 +375,9 @@ func (s *Service) RemoveNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	encodeJSON(w, http.StatusOK, map[string]string{"message": msg}, s.Logger)
 }
 
-func getInfluxDBs(ctx context.Context, s *Service) ([]influxdbInfo, error) {
-	influxDBs := make([]influxdbInfo, 0)
+// GetServerInfluxDBs retrieves InfluxDB information from the server.
+func GetServerInfluxDBs(ctx context.Context, s *Service) ([]InfluxdbInfo, error) {
+	influxDBs := make([]InfluxdbInfo, 0)
 	serverCtx := serverContext(ctx)
 	i := 0
 	for {
@@ -375,11 +385,11 @@ func getInfluxDBs(ctx context.Context, s *Service) ([]influxdbInfo, error) {
 		if err != nil {
 			break
 		}
-		origin, port, err := getOriginAndPort(source.URL)
+		origin, port, err := getIPAndPort(source.URL)
 		if err != nil {
 			break
 		}
-		influxDB := influxdbInfo{
+		influxDB := InfluxdbInfo{
 			Origin:   origin,
 			Port:     port,
 			Username: source.Username,
@@ -396,9 +406,18 @@ func getInfluxDBs(ctx context.Context, s *Service) ([]influxdbInfo, error) {
 }
 
 func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organization, req deviceOrgRequest, deviceOrg *cloudhub.NetworkDeviceOrg) error {
-	influxDBs, err := getInfluxDBs(ctx, s)
+	influxDBs, err := GetServerInfluxDBs(ctx, s)
 	if err != nil || len(influxDBs) < 1 {
 		return fmt.Errorf("Error fetching InfluxDBs: %v", err)
+	}
+	etcdDBs := s.EtcdEndpoints
+	EtcdOrigin := ""
+	EtcdPort := ""
+	if len(etcdDBs) > 0 {
+		EtcdOrigin, EtcdPort, err = getIPAndPort(etcdDBs[0])
+		if err != nil {
+			return fmt.Errorf("Error fetching ETCD: %v", err)
+		}
 	}
 
 	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
@@ -418,8 +437,8 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		InfluxDBPort:     influxDBs[0].Port,
 		InfluxDBUsername: influxDBs[0].Username,
 		InfluxDBPassword: influxDBs[0].Password,
-		EtcdOrigin:       "",
-		EtcdPort:         "",
+		EtcdOrigin:       EtcdOrigin,
+		EtcdPort:         EtcdPort,
 	}
 
 	if req.MLFunction == nil {
@@ -427,7 +446,7 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	} else {
 		taskReq.MLFunction = *req.MLFunction
 	}
-	if taskReq.RelearnCycle == "" {
+	if req.RelearnCycle == nil {
 		taskReq.RelearnCycle = RelearnCycle
 	}
 
@@ -501,13 +520,13 @@ func deleteLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	return nil
 }
 
-func getOriginAndPort(rawURL string) (string, string, error) {
+func getIPAndPort(rawURL string) (string, string, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return "", "", fmt.Errorf("error parsing URL: %v", err)
 	}
 
-	origin := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Hostname())
+	ip := parsedURL.Hostname()
 
 	port := parsedURL.Port()
 	if port == "" {
@@ -518,5 +537,5 @@ func getOriginAndPort(rawURL string) (string, string, error) {
 		}
 	}
 
-	return origin, port, nil
+	return ip, port, nil
 }

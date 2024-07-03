@@ -492,3 +492,37 @@ func (s *Service) GetWheelKeyAcceptedListAll() (int, []byte, error) {
 	payload, _ := json.Marshal(body)
 	return s.SaltHTTPPost(payload)
 }
+
+// DockerRestart is tests to see if path is a valid directory
+func (s *Service) DockerRestart(path string, serviceName string, targetMinion string) (int, []byte, error) {
+	type kwarg struct {
+		Cmd string `json:"cmd"`
+		Cwd string `json:"cwd"`
+	}
+
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Target string `json:"tgt"`
+		Kwarg  kwarg  `json:"kwarg"`
+	}
+
+	dockerCommand := fmt.Sprintf("docker compose restart logstash")
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "local",
+		Target: targetMinion,
+		Fun:    "cmd.run",
+		Kwarg: kwarg{
+			Cmd: dockerCommand,
+			Cwd: path,
+		},
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
