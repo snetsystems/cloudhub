@@ -44,7 +44,7 @@ export const IMPORT_DEVICE_CSV_Template =
 export const SNMP_CONNECTION_URL = '/cloudhub/v1/snmp/validation'
 
 export const DEVICE_MANAGEMENT_URL =
-  '/cloudhub/v1//ai/network/managements/devices'
+  '/cloudhub/v1/ai/network/managements/devices'
 
 export const APPLY__MONITORING_URL =
   '/cloudhub/v1/ai/network/managements/monitoring/config'
@@ -72,8 +72,27 @@ export const DEFAULT_LEARNING_OPTION: LearningOption = {
   organization: '',
   data_duration: 1,
   ml_function: 'ml_gaussian_std' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
-  relearn_cycle: '1 0 1,15 * *',
 }
+
+export const DEFAULT_CRON_SCHEDULE = '1 0 1,15 * *'
 
 export const NETWORK_MANAGEMENT_ORGANIZATIONS_URL =
   '/cloudhub/v1/ai/network/managements/orgs'
+
+export const LEARN_TASK_PREFIX = 'learn-'
+
+export const DEFAULT_KAPACITOR = {
+  url: '',
+  name: '',
+  active: false,
+  insecureSkipVerify: false,
+}
+
+export const DEFAULT_TASK = {
+  id: '',
+  name: '',
+  status: '',
+  tickscript: '',
+  dbrps: [],
+  type: '',
+}

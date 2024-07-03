@@ -29,6 +29,12 @@ import {
   SNMP_CONNECTION_URL,
 } from 'src/device_management/constants'
 
+// API
+import {
+  getRule as getRuleAJAX,
+  updateTask as updateTaskAJAX,
+} from 'src/kapacitor/apis'
+
 // Utils
 import {proxy} from 'src/utils/queryUrlGenerator'
 import replaceTemplate from 'src/tempVars/utils/replace'
@@ -245,6 +251,35 @@ export const createDeviceOrganization = async (
       method: 'POST',
     })
     const {data} = response as UpdateDevicesOrgResponse
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const getSpecificRule = async (kapacitor, ruleID) => {
+  try {
+    const response = await getRuleAJAX(kapacitor, ruleID)
+    const {data: rule} = response
+
+    return rule
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const updateTaskForDeviceManagement = async (
+  kapacitor,
+  task,
+  ruleID
+) => {
+  try {
+    const response = await updateTaskAJAX(kapacitor, task, ruleID)
+
+    const {data} = response
 
     return data
   } catch (error) {
