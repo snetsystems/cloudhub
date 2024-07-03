@@ -1,6 +1,7 @@
 package kapacitor
 
 import (
+	"bytes"
 	"fmt"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -47,4 +48,22 @@ func (a *Alert) Generate(rule cloudhub.AlertRule) (cloudhub.TICKScript, error) {
 		return tick, err
 	}
 	return tick, nil
+}
+
+// GenerateTaskFromTemplate uses the provided template to generate a task.
+func (a *Alert) GenerateTaskFromTemplate(config cloudhub.LoadTemplateConfig, tmplParams cloudhub.TemplateParams) (cloudhub.TICKScript, error) {
+
+	tmpl, err := LoadTemplate(config)
+	if err != nil {
+		return "", err
+	}
+
+	var tpl bytes.Buffer
+	if err := tmpl.Execute(&tpl, tmplParams); err != nil {
+		return "", err
+	}
+
+	finalTickScript := tpl.String()
+
+	return cloudhub.TICKScript(finalTickScript), nil
 }

@@ -62,9 +62,9 @@ func NewClient(url, username, password string, insecureSkipVerify bool) *Client 
 
 // Task represents a running kapacitor task
 type Task struct {
-	ID         string         // Kapacitor ID
-	Href       string         // Kapacitor relative URI
-	HrefOutput string         // Kapacitor relative URI to HTTPOutNode
+	ID         string              // Kapacitor ID
+	Href       string              // Kapacitor relative URI
+	HrefOutput string              // Kapacitor relative URI to HTTPOutNode
 	Rule       cloudhub.AlertRule  // Rule is the rule that represents this Task
 	TICKScript cloudhub.TICKScript // TICKScript is the running script
 }
@@ -146,6 +146,22 @@ func (c *Client) Create(ctx context.Context, rule cloudhub.AlertRule) (*Task, er
 	}
 
 	task, err := kapa.CreateTask(*opt)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTask(&task), nil
+}
+
+// AutoGenerateCreate builds and POSTs a tickScript to kapacitor
+func (c *Client) AutoGenerateCreate(ctx context.Context, taskOptions *client.CreateTaskOptions) (*Task, error) {
+
+	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
+	if err != nil {
+		return nil, err
+	}
+
+	task, err := kapa.CreateTask(*taskOptions)
 	if err != nil {
 		return nil, err
 	}

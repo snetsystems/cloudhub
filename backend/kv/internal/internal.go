@@ -1126,6 +1126,8 @@ func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
 		CollectorServer:     t.CollectorServer,
 		CollectedDevicesIDs: t.CollectedDevicesIDs,
 		AIKapacitor: &AIKapacitor{
+			SrcID:              int64(t.AIKapacitor.SrcID),
+			KapaID:             int64(t.AIKapacitor.KapaID),
 			KapaURL:            t.AIKapacitor.KapaURL,
 			Username:           t.AIKapacitor.Username,
 			Password:           t.AIKapacitor.Password,
@@ -1148,6 +1150,8 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 	t.CollectorServer = pb.CollectorServer
 	t.CollectedDevicesIDs = pb.CollectedDevicesIDs
 	t.AIKapacitor = cloudhub.AIKapacitor{
+		SrcID:              int(pb.AIKapacitor.SrcID),
+		KapaID:             int(pb.AIKapacitor.KapaID),
 		KapaURL:            pb.AIKapacitor.KapaURL,
 		Username:           pb.AIKapacitor.Username,
 		Password:           pb.AIKapacitor.Password,
