@@ -112,7 +112,7 @@ func (r *deviceOrgRequest) validCreate() error {
 	if r.AIKapacitor.KapaURL == "" {
 		return fmt.Errorf("AI Kapacitor URL required in device org request body")
 	}
-	if r.CronSchedule != nil {
+	if r.CronSchedule == nil {
 		return fmt.Errorf("AI CronSchedule required in device org request body")
 	}
 
