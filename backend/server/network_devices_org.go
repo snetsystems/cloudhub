@@ -222,8 +222,8 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		deviceOrg.LearnedDevicesIDs = *req.LearnedDevicesIDs
 	}
 	if req.AIKapacitor != nil {
-		req.AIKapacitor.SrcID = req.AIKapacitor.SrcID
-		req.AIKapacitor.KapaID = req.AIKapacitor.KapaID
+		deviceOrg.AIKapacitor.SrcID = req.AIKapacitor.SrcID
+		deviceOrg.AIKapacitor.KapaID = req.AIKapacitor.KapaID
 		deviceOrg.AIKapacitor.Username = req.AIKapacitor.Username
 		deviceOrg.AIKapacitor.Password = req.AIKapacitor.Password
 		deviceOrg.AIKapacitor.InsecureSkipVerify = req.AIKapacitor.InsecureSkipVerify
