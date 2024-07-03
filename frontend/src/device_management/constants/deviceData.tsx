@@ -72,7 +72,7 @@ export const DEFAULT_LEARNING_OPTION: LearningOption = {
   organization: '',
   data_duration: 1,
   ml_function: 'ml_gaussian_std' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
-  relearn_cycle: '',
+  relearn_cycle: '1 0 1,15 * *',
 }
 
 export const NETWORK_MANAGEMENT_ORGANIZATIONS_URL =

@@ -154,7 +154,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {me, organizations, isUsingAuth} = this.props
+    const {me, organizations, isUsingAuth, source} = this.props
     const {
       data,
       deviceMonitoringStatus,
@@ -236,6 +236,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           orgLearningModel={orgLearningModel}
           notify={this.props.notify}
           onClose={this.onCloseLearningSettingModal}
+          source={source}
           kapacitors={this.state.kapacitors}
           getDeviceAJAX={this.getDeviceAJAX}
           getNetworkDeviceOrganizationsAJAX={

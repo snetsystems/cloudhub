@@ -157,10 +157,12 @@ export interface UpdateDeviceOrganizationOption {
 }
 
 export interface KapacitorForNetworkDeviceOrganization {
+  srcId: string
+  kapaId: string
   url: string
   username?: string
   password?: string
-  insecure_skip_verify: boolean
+  insecure_skip_verify?: boolean
 }
 
 export interface LearningOrganizationOption {

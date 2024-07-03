@@ -38,6 +38,7 @@ import {
   Organization,
   Notification,
   Kapacitor,
+  Source,
 } from 'src/types'
 import {
   DevicesOrgData,
@@ -58,9 +59,11 @@ import {SUPERADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 import {
   notifyCreateNetworkDeviceOrganizationFailed,
   notifyCreateNetworkDeviceOrganizationSucceeded,
+  notifyKapacitorConnectionFailed,
   notifyUpdateNetworkDeviceOrganizationFailed,
   notifyUpdateNetworkDeviceOrganizationSucceeded,
 } from 'src/shared/copy/notifications'
+import {getKapacitors, getSource} from 'src/shared/apis'
 
 interface Props {
   isVisible: boolean
@@ -68,6 +71,7 @@ interface Props {
   me?: Me
   organizations?: Organization[]
   orgLearningModel?: DevicesOrgData[]
+  source: Source
   notify: (n: Notification) => void
   onClose: () => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
@@ -81,6 +85,7 @@ function LearningSettingModal({
   organizations,
   orgLearningModel,
   kapacitors,
+  source,
   notify,
   onClose,
   setDeviceManagementIsLoading,
@@ -92,6 +97,11 @@ function LearningSettingModal({
     DEFAULT_LEARNING_OPTION
   )
   const [isCreated, setIsCreated] = useState<boolean>(false)
+  const [
+    isStoredKapacitorInValid,
+    setIsStoredKapacitorInValid,
+  ] = useState<boolean>(false)
+  const [storedKapacitorName, setStoredKapacitorName] = useState<string>('')
 
   let dropdownCurOrg = [
     {
@@ -133,10 +143,12 @@ function LearningSettingModal({
       i => i.organization === currentOrg.id
     )
 
+    if (isVisible)
+      checkValidKapacitor(currentNetworkDeviceOrganization.ai_kapacitor)
+
     return {
       organization: currentOrg.name,
       data_duration: currentNetworkDeviceOrganization.data_duration,
-      // TODO Parsing
       ml_function: currentNetworkDeviceOrganization.ml_function,
       // TODO Parsing
       relearn_cycle: currentNetworkDeviceOrganization.relearn_cycle || '',
@@ -154,7 +166,6 @@ function LearningSettingModal({
     return {
       organization: organization.name,
       data_duration: currentNetworkDeviceOrganization.data_duration,
-      // TODO Parsing
       ml_function: currentNetworkDeviceOrganization.ml_function,
       // TODO Parsing
       relearn_cycle: currentNetworkDeviceOrganization.relearn_cycle || '',
@@ -174,7 +185,9 @@ function LearningSettingModal({
         const transformedData = transformOrgLearningModelToLearningOptionWithOrganization(
           value as Organization
         )
+
         setLearningOption(transformedData)
+        checkValidKapacitor(transformedData.ai_kapacitor)
       } else {
         setLearningOption({
           data_duration: DEFAULT_LEARNING_OPTION.data_duration,
@@ -194,6 +207,7 @@ function LearningSettingModal({
   const setKapacitorDropdownState = (
     kapacitor: KapacitorForNetworkDeviceOrganization
   ) => {
+    setIsStoredKapacitorInValid(false)
     setLearningOption({
       ...learningOption,
       ai_kapacitor: kapacitor,
@@ -218,7 +232,9 @@ function LearningSettingModal({
 
   const onSubmit = () => {
     const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
-      i => i.organization === learningOption.organization
+      i =>
+        i.organization ===
+        getOrganizationIdByName(organizations, learningOption?.organization)
     )
 
     if (isCreated || isNetworkDeviceOrganizationCreated) {
@@ -230,6 +246,15 @@ function LearningSettingModal({
 
   const updateDeviceOrganizationAjax = async () => {
     const {organization, ...rest} = learningOption
+
+    if (isStoredKapacitorInValid) {
+      notify(
+        notifyUpdateNetworkDeviceOrganizationFailed(
+          'The Kapacitor you registered has been deleted. Please update the Kapacitor.'
+        )
+      )
+      return
+    }
 
     try {
       setDeviceManagementIsLoading(true)
@@ -279,18 +304,61 @@ function LearningSettingModal({
   }
 
   const isKapacitorEmpty = (): boolean => {
-    return kapacitors.length === 0
+    const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
+      i =>
+        i.organization ===
+        getOrganizationIdByName(organizations, learningOption.organization)
+    )
+
+    return !isNetworkDeviceOrganizationCreated && kapacitors.length === 0
+  }
+
+  const checkValidKapacitor = async kapacitor => {
+    const {srcId, kapaId} = kapacitor
+
+    if (srcId === undefined || kapaId === undefined) {
+      setIsStoredKapacitorInValid(true)
+      return
+    }
+
+    setDeviceManagementIsLoading(true)
+
+    try {
+      const source = await getSource(srcId)
+      const kapacitors = await getKapacitors(source)
+      const aiKapacitor = kapacitors
+        ? kapacitors.find(kapacitor => kapacitor.id === kapaId)
+        : undefined
+      const aiKapacitorName = aiKapacitor?.name || ''
+
+      setIsStoredKapacitorInValid(!aiKapacitor)
+      setStoredKapacitorName(aiKapacitorName)
+      setDeviceManagementIsLoading(false)
+    } catch (error) {
+      setDeviceManagementIsLoading(false)
+      console.error(notifyKapacitorConnectionFailed())
+    }
   }
 
   const LearningSettingModalMessage = () => {
     return (
-      isKapacitorEmpty() && (
-        <Form.Element>
-          <div className="device-management-message">
-            {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorEmpty}
-          </div>
-        </Form.Element>
-      )
+      <>
+        {isKapacitorEmpty() ? (
+          <Form.Element>
+            <div className="device-management-message">
+              {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorEmpty}
+            </div>
+          </Form.Element>
+        ) : (
+          isStoredKapacitorInValid && (
+            <Form.Element>
+              <div className="device-management-message">
+                {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorInvalid}
+              </div>
+            </Form.Element>
+          )
+        )}
+      </>
     )
   }
 
@@ -341,14 +409,20 @@ function LearningSettingModal({
                     type="text"
                     label="ReLearn Cycle"
                     onChange={setLearningInputState('relearn_cycle')}
+                    newClassName="form-group col-xs-12"
                   />
 
-                  <div className="form-group col-xs-6" style={{height: '95px'}}>
+                  <div
+                    className="form-group col-xs-12"
+                    style={{height: '95px'}}
+                  >
                     <label>Kapacitor</label>
                     <DeviceManagementKapacitorDropdown
+                      source={source}
                       selectedKapacitor={learningOption.ai_kapacitor}
                       kapacitors={kapacitors}
                       setActiveKapacitor={setKapacitorDropdownState}
+                      kapacitorName={storedKapacitorName}
                     />
                   </div>
 
