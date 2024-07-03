@@ -4,7 +4,7 @@ var name = 'AI Learn_{{.OrgName}}'
 
 var db = '{{.OrgName}}'
 
-var cron = '{{.RelearnCycle}}'
+var cron = '{{.CronSchedule}}'
 
 var loadModule = '{{.LoadModule}}'
 

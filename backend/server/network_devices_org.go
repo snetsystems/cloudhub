@@ -45,14 +45,14 @@ type updateDeviceOrgRequest struct {
 	CollectedDevicesIDs *[]uint64             `json:"collected_devices_ids"`
 	LearnedDevicesIDs   *[]uint64             `json:"learned_devices_ids"`
 	AIKapacitor         *cloudhub.AIKapacitor `json:"ai_kapacitor"`
-	RelearnCycle        *string               `json:"relearn_cycle"`
+	CronSchedule        *string               `json:"cron_schedule"`
 }
 
 type deviceOrgRequest struct {
 	ID           string                `json:"organization"`
 	MLFunction   *string               `json:"ml_function"`
 	DataDuration *int                  `json:"data_duration"`
-	RelearnCycle *string               `json:"relearn_cycle"`
+	CronSchedule *string               `json:"cron_schedule"`
 	AIKapacitor  *cloudhub.AIKapacitor `json:"ai_kapacitor"`
 }
 
@@ -62,7 +62,8 @@ type deviceOrgError struct {
 	ErrorMessage string `json:"errorMessage"`
 }
 
-type influxdbInfo struct {
+//InfluxdbInfo InfluxDB access Info
+type InfluxdbInfo struct {
 	Origin   string
 	Port     string
 	Username string
@@ -83,7 +84,7 @@ const (
 	LoadModule   = "loader.cloudhub.ch_nx_load"
 	MLFunction   = MLFunctionMultiplied
 	DataDuration = 15
-	RelearnCycle = "1 0 1,15 * *"
+	CronSchedule = "1 0 1,15 * *"
 )
 
 func isAllowedMLFunction(function string) bool {
@@ -107,6 +108,12 @@ func (r *deviceOrgRequest) validCreate() error {
 	}
 	if r.AIKapacitor == nil {
 		return fmt.Errorf("AI Kapacitor required in device org request body")
+	}
+	if r.AIKapacitor.KapaURL == "" {
+		return fmt.Errorf("AI Kapacitor URL required in device org request body")
+	}
+	if r.CronSchedule == nil {
+		return fmt.Errorf("AI CronSchedule required in device org request body")
 	}
 
 	return nil
@@ -235,12 +242,14 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	}
 
 	if isChangedKapaURL {
-		deleteLearningTask(ctx, s, org, previousAIKapacitor)
+		if previousAIKapacitor.KapaURL != "" {
+			deleteLearningTask(ctx, s, org, previousAIKapacitor)
+		}
 		reqTask := deviceOrgRequest{
 			ID:           deviceOrg.ID,
 			MLFunction:   &deviceOrg.MLFunction,
 			DataDuration: &deviceOrg.DataDuration,
-			RelearnCycle: req.RelearnCycle,
+			CronSchedule: req.CronSchedule,
 			AIKapacitor:  &deviceOrg.AIKapacitor,
 		}
 		err = createLearningTask(ctx, s, org, reqTask, deviceOrg)
@@ -322,12 +331,12 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating new Device Org: %v", err), s.Logger)
 		return
 	}
-
-	err = createLearningTask(ctx, s, org, req, deviceOrg)
-	if err != nil {
-		s.Store.NetworkDeviceOrg(ctx).Delete(ctx, deviceOrg)
-		invalidData(w, err, s.Logger)
-		return
+	if req.AIKapacitor != nil && req.AIKapacitor.KapaURL != "" {
+		err = createLearningTask(ctx, s, org, req, deviceOrg)
+		if err != nil {
+			invalidData(w, err, s.Logger)
+			return
+		}
 	}
 
 	res, err := newDeviceOrgResponse(ctx, s, deviceOrg)
@@ -366,8 +375,9 @@ func (s *Service) RemoveNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	encodeJSON(w, http.StatusOK, map[string]string{"message": msg}, s.Logger)
 }
 
-func getInfluxDBs(ctx context.Context, s *Service) ([]influxdbInfo, error) {
-	influxDBs := make([]influxdbInfo, 0)
+// GetServerInfluxDBs retrieves InfluxDB information from the server.
+func GetServerInfluxDBs(ctx context.Context, s *Service) ([]InfluxdbInfo, error) {
+	influxDBs := make([]InfluxdbInfo, 0)
 	serverCtx := serverContext(ctx)
 	i := 0
 	for {
@@ -375,11 +385,11 @@ func getInfluxDBs(ctx context.Context, s *Service) ([]influxdbInfo, error) {
 		if err != nil {
 			break
 		}
-		origin, port, err := getOriginAndPort(source.URL)
+		origin, port, err := getIPAndPort(source.URL)
 		if err != nil {
 			break
 		}
-		influxDB := influxdbInfo{
+		influxDB := InfluxdbInfo{
 			Origin:   origin,
 			Port:     port,
 			Username: source.Username,
@@ -396,18 +406,33 @@ func getInfluxDBs(ctx context.Context, s *Service) ([]influxdbInfo, error) {
 }
 
 func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organization, req deviceOrgRequest, deviceOrg *cloudhub.NetworkDeviceOrg) error {
-	influxDBs, err := getInfluxDBs(ctx, s)
+	influxDBs, err := GetServerInfluxDBs(ctx, s)
 	if err != nil || len(influxDBs) < 1 {
 		return fmt.Errorf("Error fetching InfluxDBs: %v", err)
+	}
+	etcdDBs := s.EtcdEndpoints
+	EtcdOrigin := ""
+	EtcdPort := ""
+	if len(etcdDBs) > 0 {
+		EtcdOrigin, EtcdPort, err = getIPAndPort(etcdDBs[0])
+		if err != nil {
+			return fmt.Errorf("Error fetching ETCD: %v", err)
+		}
 	}
 
 	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
 
+	if req.CronSchedule == nil {
+		*req.CronSchedule = CronSchedule
+	}
+	if req.MLFunction == nil {
+		*req.MLFunction = MLFunctionMultiplied
+	}
 	taskReq := cloudhub.AutoGenerateLearnRule{
 		OrganizationName: org.Name,
 		Organization:     org.ID,
 		TaskTemplate:     kapa.LearnTaskField,
-		RelearnCycle:     *req.RelearnCycle,
+		CronSchedule:     *req.CronSchedule,
 		LoadModule:       LoadModule,
 		MLFunction:       *req.MLFunction,
 		RetentionPolicy:  "auto",
@@ -418,17 +443,8 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		InfluxDBPort:     influxDBs[0].Port,
 		InfluxDBUsername: influxDBs[0].Username,
 		InfluxDBPassword: influxDBs[0].Password,
-		EtcdOrigin:       "",
-		EtcdPort:         "",
-	}
-
-	if req.MLFunction == nil {
-		taskReq.MLFunction = MLFunction
-	} else {
-		taskReq.MLFunction = *req.MLFunction
-	}
-	if taskReq.RelearnCycle == "" {
-		taskReq.RelearnCycle = RelearnCycle
+		EtcdOrigin:       EtcdOrigin,
+		EtcdPort:         EtcdPort,
 	}
 
 	tmplParams := cloudhub.TemplateParams{
@@ -436,7 +452,7 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		"LoadModule":      taskReq.LoadModule,
 		"MLFunction":      taskReq.MLFunction,
 		"Message":         taskReq.Message,
-		"RelearnCycle":    taskReq.RelearnCycle,
+		"CronSchedule":    taskReq.CronSchedule,
 		"RetentionPolicy": taskReq.RetentionPolicy,
 		"InfluxOrigin":    taskReq.InfluxOrigin,
 		"InfluxPort":      taskReq.InfluxDBPort,
@@ -501,13 +517,13 @@ func deleteLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	return nil
 }
 
-func getOriginAndPort(rawURL string) (string, string, error) {
+func getIPAndPort(rawURL string) (string, string, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return "", "", fmt.Errorf("error parsing URL: %v", err)
 	}
 
-	origin := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Hostname())
+	ip := parsedURL.Hostname()
 
 	port := parsedURL.Port()
 	if port == "" {
@@ -518,5 +534,5 @@ func getOriginAndPort(rawURL string) (string, string, error) {
 		}
 	}
 
-	return origin, port, nil
+	return ip, port, nil
 }

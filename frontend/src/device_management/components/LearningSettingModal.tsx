@@ -23,9 +23,13 @@ import DeviceManagementKapacitorDropdown from 'src/device_management/components/
 // Constant
 import {
   DEFAULT_LEARNING_OPTION,
+  DEFAULT_CRON_SCHEDULE,
+  DEFAULT_TASK,
+  LEARN_TASK_PREFIX,
   MLFunctionMsg,
   MONITORING_MODAL_INFO,
 } from 'src/device_management/constants'
+import {DEFAULT_KAPACITOR} from 'src/shared/constants'
 
 // Action
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -39,6 +43,7 @@ import {
   Notification,
   Kapacitor,
   Source,
+  Task,
 } from 'src/types'
 import {
   DevicesOrgData,
@@ -48,8 +53,11 @@ import {
 // API
 import {
   createDeviceOrganization,
+  getSpecificRule,
   updateDeviceOrganization,
+  updateTaskForDeviceManagement,
 } from 'src/device_management/apis'
+import {getKapacitors, getSource} from 'src/shared/apis'
 
 // Utils
 import {getOrganizationIdByName} from 'src/device_management/utils'
@@ -60,10 +68,11 @@ import {
   notifyCreateNetworkDeviceOrganizationFailed,
   notifyCreateNetworkDeviceOrganizationSucceeded,
   notifyKapacitorConnectionFailed,
+  notifyTickscriptUpdateFailedWithMessage,
+  notifyTickscriptUpdated,
   notifyUpdateNetworkDeviceOrganizationFailed,
   notifyUpdateNetworkDeviceOrganizationSucceeded,
 } from 'src/shared/copy/notifications'
-import {getKapacitors, getSource} from 'src/shared/apis'
 
 interface Props {
   isVisible: boolean
@@ -92,17 +101,44 @@ function LearningSettingModal({
   getDeviceAJAX,
   getNetworkDeviceOrganizationsAJAX,
 }: Props) {
-  const scrollMaxHeight = window.innerHeight * 0.4
   const [learningOption, setLearningOption] = useState<LearningOption>(
     DEFAULT_LEARNING_OPTION
   )
-  const [isCreated, setIsCreated] = useState<boolean>(false)
+  const [isUpdateAfterCreate, setIsUpdateAfterCreate] = useState<boolean>(false)
   const [
     isStoredKapacitorInValid,
     setIsStoredKapacitorInValid,
   ] = useState<boolean>(false)
+  const [storedKapacitor, setStoredKapacitor] = useState<Kapacitor>(
+    DEFAULT_KAPACITOR
+  )
   const [storedKapacitorName, setStoredKapacitorName] = useState<string>('')
+  const [taskForTiskscriptUpdate, setTaskForTiskscriptUpdate] = useState<Task>(
+    DEFAULT_TASK
+  )
+  const [cronSchedule, setCronSchedule] = useState<string>('')
 
+  useEffect(() => {
+    const organizationID = me.currentOrganization.id
+    const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
+      i => i.organization === organizationID
+    )
+
+    if (isNetworkDeviceOrganizationCreated) {
+      const transformedData = transformOrgLearningModelToLearningOption()
+      setLearningOption(transformedData)
+    } else {
+      setLearningOption(() => ({
+        data_duration: DEFAULT_LEARNING_OPTION.data_duration,
+        ml_function: DEFAULT_LEARNING_OPTION.ml_function,
+        organization: me?.currentOrganization?.name || '',
+      }))
+      setCronSchedule(DEFAULT_CRON_SCHEDULE)
+      setStoredKapacitorName('')
+    }
+  }, [isVisible])
+
+  const scrollMaxHeight = window.innerHeight * 0.4
   let dropdownCurOrg = [
     {
       ...me.currentOrganization,
@@ -118,25 +154,6 @@ function LearningSettingModal({
     }))
   }
 
-  useEffect(() => {
-    const organizationID = me.currentOrganization.id
-    const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
-      i => i.organization === organizationID
-    )
-
-    if (isNetworkDeviceOrganizationCreated) {
-      const transformedData = transformOrgLearningModelToLearningOption()
-      setLearningOption(transformedData)
-    } else {
-      setLearningOption(() => ({
-        data_duration: DEFAULT_LEARNING_OPTION.data_duration,
-        ml_function: DEFAULT_LEARNING_OPTION.ml_function,
-        relearn_cycle: DEFAULT_LEARNING_OPTION.relearn_cycle,
-        organization: me?.currentOrganization?.name || '',
-      }))
-    }
-  }, [isVisible])
-
   const transformOrgLearningModelToLearningOption = (): LearningOption => {
     const currentOrg = _.get(me, 'currentOrganization')
     const currentNetworkDeviceOrganization = orgLearningModel.find(
@@ -144,14 +161,15 @@ function LearningSettingModal({
     )
 
     if (isVisible)
-      checkValidKapacitor(currentNetworkDeviceOrganization.ai_kapacitor)
+      checkValidKapacitor(
+        currentNetworkDeviceOrganization.ai_kapacitor,
+        currentOrg.id
+      )
 
     return {
       organization: currentOrg.name,
       data_duration: currentNetworkDeviceOrganization.data_duration,
       ml_function: currentNetworkDeviceOrganization.ml_function,
-      // TODO Parsing
-      relearn_cycle: currentNetworkDeviceOrganization.relearn_cycle || '',
       ai_kapacitor: currentNetworkDeviceOrganization.ai_kapacitor,
     }
   }
@@ -167,8 +185,6 @@ function LearningSettingModal({
       organization: organization.name,
       data_duration: currentNetworkDeviceOrganization.data_duration,
       ml_function: currentNetworkDeviceOrganization.ml_function,
-      // TODO Parsing
-      relearn_cycle: currentNetworkDeviceOrganization.relearn_cycle || '',
       ai_kapacitor: currentNetworkDeviceOrganization.ai_kapacitor,
     }
   }
@@ -187,20 +203,54 @@ function LearningSettingModal({
         )
 
         setLearningOption(transformedData)
-        checkValidKapacitor(transformedData.ai_kapacitor)
+        checkValidKapacitor(
+          transformedData.ai_kapacitor,
+          (value as Organization).id
+        )
       } else {
         setLearningOption({
           data_duration: DEFAULT_LEARNING_OPTION.data_duration,
           ml_function: DEFAULT_LEARNING_OPTION.ml_function,
-          relearn_cycle: DEFAULT_LEARNING_OPTION.relearn_cycle,
           organization: (value as Organization).name || '',
         })
+        setCronSchedule(DEFAULT_CRON_SCHEDULE)
+        setStoredKapacitorName('')
       }
     } else {
       setLearningOption({
         ...learningOption,
         ...{[key]: (value as DropdownItem).text},
       })
+    }
+  }
+
+  const checkValidKapacitor = async (kapacitor, organizationID) => {
+    const {srcId, kapaId} = kapacitor
+
+    if (srcId === undefined || kapaId === undefined) {
+      setIsStoredKapacitorInValid(true)
+      return
+    }
+
+    setDeviceManagementIsLoading(true)
+
+    try {
+      const source = await getSource(srcId)
+      const kapacitors = await getKapacitors(source)
+      const aiKapacitor = kapacitors
+        ? kapacitors.find(kapacitor => kapacitor.id === kapaId)
+        : undefined
+      const aiKapacitorName = aiKapacitor?.name || ''
+
+      await fetchSpecificAlertRule(aiKapacitor, organizationID)
+
+      setIsStoredKapacitorInValid(!aiKapacitor)
+      setStoredKapacitor(aiKapacitor)
+      setStoredKapacitorName(aiKapacitorName)
+      setDeviceManagementIsLoading(false)
+    } catch (error) {
+      setDeviceManagementIsLoading(false)
+      console.error(notifyKapacitorConnectionFailed())
     }
   }
 
@@ -237,7 +287,7 @@ function LearningSettingModal({
         getOrganizationIdByName(organizations, learningOption?.organization)
     )
 
-    if (isCreated || isNetworkDeviceOrganizationCreated) {
+    if (isUpdateAfterCreate || isNetworkDeviceOrganizationCreated) {
       updateDeviceOrganizationAjax()
     } else {
       createDeviceOrganizationAjax()
@@ -258,10 +308,12 @@ function LearningSettingModal({
 
     try {
       setDeviceManagementIsLoading(true)
+
       await updateDeviceOrganization({
         id: getOrganizationIdByName(organizations, organization),
         orgLearningModel: {...rest},
       })
+      await updateTask()
 
       notify(notifyUpdateNetworkDeviceOrganizationSucceeded())
       finalizeApplyMLDLSettingAPIResponse()
@@ -280,10 +332,11 @@ function LearningSettingModal({
         orgLearningModel: {
           organization: getOrganizationIdByName(organizations, organization),
           ...rest,
+          cron_schedule: cronSchedule,
         },
       })
 
-      setIsCreated(true)
+      setIsUpdateAfterCreate(true)
       notify(notifyCreateNetworkDeviceOrganizationSucceeded())
       finalizeApplyMLDLSettingAPIResponse()
     } catch (error) {
@@ -298,9 +351,78 @@ function LearningSettingModal({
     getNetworkDeviceOrganizationsAJAX()
   }
 
-  const convertValueToKey = (value: string, obj: Object) => {
-    const index = Object.values(obj).findIndex(i => i === value)
-    return Object.keys(obj)[index]
+  const fetchSpecificAlertRule = async (
+    kapacitor: Kapacitor,
+    organizationID: string
+  ) => {
+    const ruleID = `${LEARN_TASK_PREFIX}${organizationID}`
+
+    try {
+      const rule = await getSpecificRule(kapacitor, ruleID)
+
+      saveFormatTaskForTickscriptUpdate(rule)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const saveFormatTaskForTickscriptUpdate = (storedTask: Task) => {
+    if (storedTask) {
+      setTaskForTiskscriptUpdate({
+        id: storedTask.id,
+        name: storedTask.name,
+        status: storedTask.status,
+        tickscript: storedTask.tickscript,
+        dbrps: storedTask.dbrps,
+        type: storedTask.type,
+      })
+
+      setOriginalCronSchedule(storedTask)
+    }
+  }
+
+  const setOriginalCronSchedule = (task: Task) => {
+    const cronRegex = /var cron = '([^']*)'/
+    const match = task?.tickscript?.match(cronRegex)
+    const cronValue = match ? match?.[1] : DEFAULT_CRON_SCHEDULE
+
+    setCronSchedule(cronValue)
+  }
+
+  const updateTask = async () => {
+    const organizationID = getOrganizationIdByName(
+      organizations,
+      learningOption.organization
+    )
+
+    try {
+      const updatedTask = replaceCronInTickscript()
+      const ruleID = `${LEARN_TASK_PREFIX}${organizationID}`
+      await updateTaskForDeviceManagement(storedKapacitor, updatedTask, ruleID)
+
+      notify(notifyTickscriptUpdated())
+    } catch (error) {
+      notify(notifyTickscriptUpdateFailedWithMessage())
+    }
+  }
+
+  const replaceCronInTickscript = (): Task => {
+    const cronRegex = /var cron = '([^']*)'/
+    let newTickscript = ''
+
+    if (taskForTiskscriptUpdate?.tickscript) {
+      newTickscript = taskForTiskscriptUpdate?.tickscript?.replace(
+        cronRegex,
+        `var cron = '${cronSchedule}'`
+      )
+    } else {
+      throw new Error('Failed to update TICKscript')
+    }
+
+    return {
+      ...taskForTiskscriptUpdate,
+      tickscript: newTickscript,
+    }
   }
 
   const isKapacitorEmpty = (): boolean => {
@@ -311,33 +433,6 @@ function LearningSettingModal({
     )
 
     return !isNetworkDeviceOrganizationCreated && kapacitors.length === 0
-  }
-
-  const checkValidKapacitor = async kapacitor => {
-    const {srcId, kapaId} = kapacitor
-
-    if (srcId === undefined || kapaId === undefined) {
-      setIsStoredKapacitorInValid(true)
-      return
-    }
-
-    setDeviceManagementIsLoading(true)
-
-    try {
-      const source = await getSource(srcId)
-      const kapacitors = await getKapacitors(source)
-      const aiKapacitor = kapacitors
-        ? kapacitors.find(kapacitor => kapacitor.id === kapaId)
-        : undefined
-      const aiKapacitorName = aiKapacitor?.name || ''
-
-      setIsStoredKapacitorInValid(!aiKapacitor)
-      setStoredKapacitorName(aiKapacitorName)
-      setDeviceManagementIsLoading(false)
-    } catch (error) {
-      setDeviceManagementIsLoading(false)
-      console.error(notifyKapacitorConnectionFailed())
-    }
   }
 
   const LearningSettingModalMessage = () => {
@@ -360,6 +455,11 @@ function LearningSettingModal({
         )}
       </>
     )
+  }
+
+  const convertValueToKey = (value: string, obj: Object) => {
+    const index = Object.values(obj).findIndex(i => i === value)
+    return Object.keys(obj)[index]
   }
 
   return (
@@ -405,10 +505,10 @@ function LearningSettingModal({
                     onChange={setLearningInputState('data_duration')}
                   />
                   <WizardTextInput
-                    value={`${learningOption.relearn_cycle}`}
+                    value={cronSchedule}
                     type="text"
-                    label="ReLearn Cycle"
-                    onChange={setLearningInputState('relearn_cycle')}
+                    label="Cron Schedule"
+                    onChange={setCronSchedule}
                     newClassName="form-group col-xs-12"
                   />
 

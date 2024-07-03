@@ -85,7 +85,6 @@ interface Props {
   openShell: (shell: ShellInfo) => void
   openModal: (aiModal: AiModal) => void
   closeModal: () => void
-  fetchKapacitors: (source: Source) => Promise<void>
 }
 
 interface State {
