@@ -234,7 +234,7 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	if !isChangedKapaURL {
+	if isChangedKapaURL {
 		deleteLearningTask(ctx, s, org, previousAIKapacitor)
 		reqTask := deviceOrgRequest{
 			ID:           deviceOrg.ID,
