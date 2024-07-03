@@ -60,9 +60,9 @@ function PredictionDashboardHeader(props: Props) {
         zIndex: 6,
       }}
     >
-      {cellName}
+      {cellName()}
       {props.children}
-      {headingBar}
+      {headingBar()}
     </div>
   )
 }

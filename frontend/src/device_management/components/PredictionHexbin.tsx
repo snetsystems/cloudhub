@@ -4,16 +4,20 @@ import {hexbin} from 'd3-hexbin'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
+interface Props {
+  onHexbinClick: (num: number) => void
+}
+
 interface HexagonData {
   x: number
   y: number
   statusColor: string
   hostname: string
+  index: number
 }
 
-interface HexagonInputData {
+interface HexagonInputData extends PredictionTooltipNode {
   statusColor: string
-  hostname: string
 }
 
 interface GenerateHexagonData {
@@ -21,14 +25,34 @@ interface GenerateHexagonData {
   y: number
 }
 
-//핵사곤 크기
+interface PredictionTooltipNode {
+  name: string
+  cpu: number
+  memory: number
+  traffic: string
+}
+
 const hexRadius = 30
 const hexPadding = 5
 
-const PredictionHexbin: React.FC = () => {
+const PredictionHexbin = ({onHexbinClick}: Props) => {
   const svgRef = useRef<SVGSVGElement>(null)
 
   const [colorChange, setColorChange] = useState<number>(2)
+
+  const [isTooltipActive, setIsTooltipActive] = useState(false)
+
+  const [tooltipNode, setTooltipNode] = useState<PredictionTooltipNode>({
+    name: null,
+    cpu: null,
+    memory: null,
+    traffic: null,
+  })
+
+  const [tooltipPosition, setTooltipPosition] = useState({
+    x: 0,
+    y: 0,
+  })
 
   //   for (let i = 0; i < 430; i++) {
   //     const newHostname = `${i + 1}`
@@ -39,26 +63,45 @@ const PredictionHexbin: React.FC = () => {
   //   }
 
   const inputData = useMemo<HexagonInputData[]>(() => {
-    return [...Array(150)].map((_, i) => {
-      const newHostname = `${i + 1}`
+    return [...Array(20)].map((hex, i) => {
       return {
         statusColor: i % colorChange === 1 ? 'red' : 'green',
-        hostname: newHostname,
+        name: hex.name,
+        cpu: hex.cpu,
+        memory: hex.memory,
+        traffic: hex.traffic,
       }
     })
   }, [colorChange])
 
   const attachEventHandlers = () => {
     if (!svgRef.current) return
+
     const svg = d3.select(svgRef.current)
+
     svg
       .selectAll('.hexagon')
       .on('mouseover', function () {
+        const tempPosition = {x: 0, y: 0}
+
         d3.select(this)
           .transition()
           .duration(150)
           .attr('transform', d => `translate(${d.x},${d.y}) scale(1.1)`)
           .style('cursor', 'pointer')
+          .attr('x', d => {
+            tempPosition.x = d.x
+            tempPosition.y = d.y
+            setTooltipNode({
+              cpu: d[0].cpu,
+              memory: d[0].memory,
+              name: d[0].name,
+              traffic: d[0].traffic,
+            })
+          })
+
+        setIsTooltipActive(true)
+        setTooltipPosition(tempPosition)
       })
       .on('mouseout', function () {
         d3.select(this)
@@ -66,6 +109,13 @@ const PredictionHexbin: React.FC = () => {
           .duration(150)
           .attr('transform', d => `translate(${d.x},${d.y})`)
           .style('cursor', 'default')
+
+        setIsTooltipActive(false)
+      })
+      .on('click', function () {
+        d3.select(this).attr('x', d => {
+          onHexbinClick(d[0].index)
+        })
       })
   }
 
@@ -85,6 +135,7 @@ const PredictionHexbin: React.FC = () => {
         x: x + hexPadding,
         y: y + hexPadding,
         ...inputData[i],
+        index: i,
       })
       if (x + hexWidth > svgWidth - hexHeight) {
         yOffset += (hexHeight * 3) / 4
@@ -153,11 +204,51 @@ const PredictionHexbin: React.FC = () => {
       .attr('dx', '.35em')
   }
 
-  //초기화
+  const onMouseDBClick = (data: any) => {}
+
+  const onMouseOver = (target: SVGSVGElement) => {
+    setTooltipNode({
+      name: target.getAttribute('data-label'),
+      cpu: parseInt(target.getAttribute('data-cpu')),
+      memory: parseInt(target.getAttribute('data-memory')),
+      traffic: target.getAttribute('data-traffic'),
+    })
+    setIsTooltipActive(true)
+
+    d3.select(target).classed('kubernetes-hover', true)
+  }
+
+  const onMouseLeave = (target: SVGSVGElement) => {
+    setIsTooltipActive(false),
+      d3.select(target).classed('kubernetes-hover', false)
+  }
+
+  //initialize
   useEffect(() => {
     drawHexagons()
     attachEventHandlers()
   }, [colorChange])
+
+  const tooltipComponent = (tooltip: PredictionTooltipNode) => {
+    return (
+      <div
+        style={{
+          top: `${tooltipPosition.y + 15}px`,
+          left: `${tooltipPosition.x + 15}px`,
+        }}
+        className={`prediction-tooltip ${
+          isTooltipActive ? 'active' : 'hidden'
+        }`}
+      >
+        <div className="prediction-tooltip-content">
+          <span>name: {tooltip.name}</span>
+          <span>cpu: {tooltip.cpu}</span>
+          <span>memory: {tooltip.memory}</span>
+          <span>traffic: {tooltip.traffic}</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <FancyScrollbar style={{height: 'calc(100% - 45px)'}} autoHide={true}>
@@ -169,6 +260,7 @@ const PredictionHexbin: React.FC = () => {
         className={'tab-pannel'}
       >
         <svg ref={svgRef} style={{width: '100%', height: '80%'}}></svg>
+        {tooltipComponent(tooltipNode)}
       </div>
     </FancyScrollbar>
   )
