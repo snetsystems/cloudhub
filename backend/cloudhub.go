@@ -326,7 +326,7 @@ type AutoGenerateLearnRule struct {
 	TaskTemplate     TemplateFieldType `json:"task_template,omitempty"` // TaskTemplate is the template string for the task.
 	Organization     string            `json:"organization"`
 	OrganizationName string            `json:"organization_name"`
-	RelearnCycle     string            `json:"relearn_cycle"`
+	CronSchedule     string            `json:"cron_schedule"`
 	LoadModule       string            `json:"load_module,omitempty"`
 	MLFunction       string            `json:"ml_function"`
 	RetentionPolicy  string            `json:"retention_policy"`

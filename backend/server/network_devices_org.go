@@ -45,14 +45,14 @@ type updateDeviceOrgRequest struct {
 	CollectedDevicesIDs *[]uint64             `json:"collected_devices_ids"`
 	LearnedDevicesIDs   *[]uint64             `json:"learned_devices_ids"`
 	AIKapacitor         *cloudhub.AIKapacitor `json:"ai_kapacitor"`
-	RelearnCycle        *string               `json:"relearn_cycle"`
+	CronSchedule        *string               `json:"cron_schedule"`
 }
 
 type deviceOrgRequest struct {
 	ID           string                `json:"organization"`
 	MLFunction   *string               `json:"ml_function"`
 	DataDuration *int                  `json:"data_duration"`
-	RelearnCycle *string               `json:"relearn_cycle"`
+	CronSchedule *string               `json:"cron_schedule"`
 	AIKapacitor  *cloudhub.AIKapacitor `json:"ai_kapacitor"`
 }
 
@@ -84,7 +84,7 @@ const (
 	LoadModule   = "loader.cloudhub.ch_nx_load"
 	MLFunction   = MLFunctionMultiplied
 	DataDuration = 15
-	RelearnCycle = "1 0 1,15 * *"
+	CronSchedule = "1 0 1,15 * *"
 )
 
 func isAllowedMLFunction(function string) bool {
@@ -112,8 +112,8 @@ func (r *deviceOrgRequest) validCreate() error {
 	if r.AIKapacitor.KapaURL == "" {
 		return fmt.Errorf("AI Kapacitor URL required in device org request body")
 	}
-	if r.RelearnCycle != nil {
-		return fmt.Errorf("AI RelearnCycle required in device org request body")
+	if r.CronSchedule != nil {
+		return fmt.Errorf("AI CronSchedule required in device org request body")
 	}
 
 	return nil
@@ -249,7 +249,7 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 			ID:           deviceOrg.ID,
 			MLFunction:   &deviceOrg.MLFunction,
 			DataDuration: &deviceOrg.DataDuration,
-			RelearnCycle: req.RelearnCycle,
+			CronSchedule: req.CronSchedule,
 			AIKapacitor:  &deviceOrg.AIKapacitor,
 		}
 		err = createLearningTask(ctx, s, org, reqTask, deviceOrg)
@@ -422,11 +422,17 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 
 	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
 
+	if req.CronSchedule == nil {
+		*req.CronSchedule = CronSchedule
+	}
+	if req.MLFunction == nil {
+		*req.MLFunction = MLFunctionMultiplied
+	}
 	taskReq := cloudhub.AutoGenerateLearnRule{
 		OrganizationName: org.Name,
 		Organization:     org.ID,
 		TaskTemplate:     kapa.LearnTaskField,
-		RelearnCycle:     *req.RelearnCycle,
+		CronSchedule:     *req.CronSchedule,
 		LoadModule:       LoadModule,
 		MLFunction:       *req.MLFunction,
 		RetentionPolicy:  "auto",
@@ -441,21 +447,12 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		EtcdPort:         EtcdPort,
 	}
 
-	if req.MLFunction == nil {
-		taskReq.MLFunction = MLFunction
-	} else {
-		taskReq.MLFunction = *req.MLFunction
-	}
-	if req.RelearnCycle == nil {
-		taskReq.RelearnCycle = RelearnCycle
-	}
-
 	tmplParams := cloudhub.TemplateParams{
 		"OrgName":         taskReq.OrganizationName,
 		"LoadModule":      taskReq.LoadModule,
 		"MLFunction":      taskReq.MLFunction,
 		"Message":         taskReq.Message,
-		"RelearnCycle":    taskReq.RelearnCycle,
+		"CronSchedule":    taskReq.CronSchedule,
 		"RetentionPolicy": taskReq.RetentionPolicy,
 		"InfluxOrigin":    taskReq.InfluxOrigin,
 		"InfluxPort":      taskReq.InfluxDBPort,
