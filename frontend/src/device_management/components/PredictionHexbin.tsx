@@ -3,6 +3,7 @@ import * as d3 from 'd3'
 import {hexbin} from 'd3-hexbin'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
+import dummy from 'src/device_management/constants/hexabinDummy.json'
 
 interface Props {
   onHexbinClick: (num: number) => void
@@ -63,9 +64,9 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
   //   }
 
   const inputData = useMemo<HexagonInputData[]>(() => {
-    return [...Array(20)].map((hex, i) => {
+    return dummy.map(hex => {
       return {
-        statusColor: i % colorChange === 1 ? 'red' : 'green',
+        statusColor: hex.cpu > 60 ? 'red' : 'green',
         name: hex.name,
         cpu: hex.cpu,
         memory: hex.memory,

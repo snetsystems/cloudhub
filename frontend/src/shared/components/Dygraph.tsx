@@ -135,7 +135,10 @@ class Dygraph extends Component<Props, State> {
 
   public componentDidMount() {
     const options = this.collectDygraphOptions()
-    const initialOptions = {...DEFAULT_DYGRAPH_OPTIONS, ...options}
+    const initialOptions: dygraphs.Options = {
+      ...DEFAULT_DYGRAPH_OPTIONS,
+      ...options,
+    }
 
     this.dygraph = new Dygraphs(
       this.graphRef.current,

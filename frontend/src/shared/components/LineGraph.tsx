@@ -154,8 +154,7 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       decimalPlaces,
       handleSetHoverTime,
     } = this.props
-    const {fillArea, showLine, showPoint} = graphOptions
-
+    const {fillArea, showLine, showPoint, clickCallback} = graphOptions
     if (!this.state.timeSeries) {
       return <h3 className="graph-spinner" />
     }
@@ -179,6 +178,7 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       pointSize: isBarType ? 0 : showPoint ? 3 : 0,
       drawPoints: isBarType ? false : showPoint,
       strokeWidth: isBarType ? 0 : showLine ? 1 : 0,
+      clickCallback: !!clickCallback ? clickCallback : null,
     }
 
     return (

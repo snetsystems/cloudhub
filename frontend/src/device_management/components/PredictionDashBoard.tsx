@@ -55,6 +55,7 @@ interface Props {
   manualRefresh: number
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
+  setSelectDate: React.Dispatch<React.SetStateAction<number>>
 }
 
 interface TempProps {
@@ -84,6 +85,7 @@ function PredictionDashBoard({
   manualRefresh,
   instance,
   onPickTemplate,
+  setSelectDate,
 }: Props) {
   const GridLayout = WidthProvider(ReactGridLayout)
 
@@ -112,11 +114,7 @@ function PredictionDashBoard({
     const defaultCells = fixturePredictionPageCells(source)
     const savedCells = localStorage.getItem('Prediction-cells')
     if (cells === null) {
-      if (!savedCells) {
-        setCells(defaultCells)
-      } else {
-        setCells(JSON.parse(savedCells))
-      }
+      !savedCells ? setCells(defaultCells) : setCells(JSON.parse(savedCells))
     } else {
       localStorage.setItem('Prediction-cells', JSON.stringify(cells))
     }
@@ -210,7 +208,18 @@ function PredictionDashBoard({
               {!!cell && (
                 <Layout
                   key={cell.i}
-                  cell={cell}
+                  cell={{
+                    ...cell,
+                    ...{
+                      graphOptions: {
+                        ...cell.graphOptions,
+                        clickCallback: (_, __, points) => {
+                          console.log(points[0].xval)
+                          setSelectDate(points[0].xval)
+                        },
+                      },
+                    },
+                  }}
                   host={host}
                   source={source}
                   onZoom={onZoom}

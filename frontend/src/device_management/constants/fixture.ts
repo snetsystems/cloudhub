@@ -1,15 +1,7 @@
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
 import {DEFAULT_AXIS} from 'src/dashboards/constants/cellEditor'
-import {
-  Cell,
-  CellQuery,
-  Axes,
-  CellType,
-  QueryType,
-  TimeRange,
-  Source,
-} from 'src/types'
+import {Cell, CellQuery, Axes, CellType, QueryType, Source} from 'src/types'
 import {
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
@@ -41,6 +33,12 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
   return [
     {
       ...NEW_DEFAULT_DASHBOARD_CELL,
+      graphOptions: {
+        fillArea: true,
+        showLine: true,
+        showPoint: false,
+        showTempVarCount: '',
+      },
       axes: emptyAxes,
       i: 'alerts-bar-graph',
       type: CellType.Bar,
