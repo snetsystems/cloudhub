@@ -406,7 +406,7 @@ function LearningSettingModal({
 
       notify(notifyTickscriptUpdated())
     } catch (error) {
-      notify(notifyTickscriptUpdateFailedWithMessage())
+      console.error(notifyTickscriptUpdateFailedWithMessage())
     }
   }
 
