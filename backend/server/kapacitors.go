@@ -1111,11 +1111,10 @@ func (s *Service) KapacitorTaskPostWithURL(w http.ResponseWriter, r *http.Reques
 	// log registrationte
 	msg := fmt.Sprintf(MsgKapacitorRuleCreated.String(), task.Rule.Name, org.Name)
 	s.logRegistration(ctx, "Kapacitors Task", msg)
-	response := map[string]interface{}{
-		"Message": msg,
-	}
 
-	encodeJSON(w, http.StatusCreated, response, s.Logger)
+	res := newAlertResponse(task, deviceOrg.AIKapacitor.SrcID, deviceOrg.AIKapacitor.KapaID)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+
 }
 
 // KapacitorTaskUpdateWithURL proxies to kapacitor with URL
