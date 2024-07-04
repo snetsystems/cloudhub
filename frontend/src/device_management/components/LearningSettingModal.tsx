@@ -313,7 +313,7 @@ function LearningSettingModal({
 
       await updateDeviceOrganization({
         id: getOrganizationIdByName(organizations, organization),
-        orgLearningModel: {...rest},
+        orgLearningModel: {...rest, cron_schedule: cronSchedule},
       })
       await updateTask()
 
