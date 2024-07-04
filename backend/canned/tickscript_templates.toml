@@ -1,0 +1,128 @@
+[learn_task]
+template = """
+var name = 'AI Learn_{{.OrgName}}'
+
+var db = '{{.OrgName}}'
+
+var cron = '{{.CronSchedule}}'
+
+var loadModule = '{{.LoadModule}}'
+
+var extra_opts = '{"organization":"{{.OrgName}}","influxdb":{"host":"{{.InfluxOrigin}}","port":{{.InfluxPort}},"username":"{{.InfluxUsername}}","password":"{{.InfluxPassword}}","db":"{{.OrgName}}"},"etcd":{"host":"{{.EtcdOrigin}}","port":"{{.EtcdPort}}"}}'
+
+var data = batch
+    |query('SELECT "cpu1min" FROM "{{.OrgName}}"."{{.RetentionPolicy}}"."snmp_nx"')
+        .period(5m)
+        .cron(cron)
+    |count('cpu1min')
+        .as('count')
+
+data
+    |alert()
+        .crit(lambda: "count" > 0)
+        .exec('/opt/cloudhub/bin/python', '/opt/cloudhub/ch-ai-src/ai.py', '-p', '/var/log/kapacitor-ai/ai.log', '-G', '-M', loadModule, '-x', extra_opts)
+
+"""
+
+[prediction_task]
+template = """
+var name = 'Anomaly Prediction_{{.OrgName}}'
+
+var db = '{{.OrgName}}'
+
+var rp = '{{.RetentionPolicy}}'
+
+var predict_mode = '{{.PredictMode}}'
+
+var ensemble_condition = '{{.PredictModeCondition}}'
+
+var message = '{{.Message}}'
+
+var trffic = stream
+    |from()
+        .database(db)
+        .retentionPolicy(rp)
+        .measurement('snmp_nx')
+        .groupBy(['agent_host', 'sys_name'])
+        .where(lambda: isPresent("ifIndex"))
+var tffUsed = trffic
+    .where(lambda: ("ifDescr" =~ /Ethernet/))
+var cpuUsed = stream
+    |from()
+        .database(db)
+        .retentionPolicy(rp)
+        .measurement('snmp_nx')
+        .groupBy(['agent_host', 'sys_name'])
+        .where(lambda: isPresent("cpu1min"))
+    |eval(lambda: "cpu1min")
+        .as('cpu_used')
+var inOctets = tffUsed
+    |sum('ifHCInOctets')
+        .as('total_ifHCInOctets')
+    |derivative('total_ifHCInOctets')
+        .unit(1s)
+        .nonNegative()
+var outOctets = tffUsed
+    |sum('ifHCOutOctets')
+        .as('total_ifHCOutOctets')
+    |derivative('total_ifHCOutOctets')
+        .unit(1s)
+        .nonNegative()
+var joined = inOctets
+    |join(outOctets)
+        .as('in', 'out')
+        .tolerance(1s)
+var tffVolume = joined
+    |eval(lambda: "in.total_ifHCInOctets" + "out.total_ifHCOutOctets")
+        .as('total_traffic')
+var predictData = cpuUsed
+    |join(tffVolume)
+        .as('cpu', 'traffic')
+        .tolerance(1s)
+    |eval(lambda: "cpu.cpu_used", lambda: "traffic.total_traffic")
+        .as('cpu_used', 'tff_volume')
+    |window()
+        .periodCount(5)
+        .everyCount(1)
+
+var data = predictData
+    @predict()
+        .predict_mode(predict_mode)
+        .ensemble_condition(ensemble_condition)
+
+var trigger = data
+    |alert()
+        .crit(lambda: "predict_status" == 'false')
+        .message(message)
+        .id(name)
+        .idTag('alertID')
+        .levelTag('level')
+        .messageField('message')
+        .durationField('duration'){{.AlertServices}}
+
+trigger
+    |eval(lambda: "agent_host", lambda: "cpu_used", lambda: "tff_volume", lambda: "predict_kind")
+        .as('host', 'cpu_used', 'tff_volume', 'value')
+        .tags('host')
+        .keep('duration', 'message', 'cpu_used', 'tff_volume', 'value')
+    |influxDBOut()
+        .create()
+        .database('Default')
+        .retentionPolicy('autogen')
+        .measurement('cloudhub_alerts')
+        .tag('alertName', name)
+        .tag('triggerType', 'anomaly_predict')
+
+trigger
+    |eval(lambda: "agent_host", lambda: "cpu_used", lambda: "tff_volume", lambda: "predict_kind")
+        .as('host', 'cpu_used', 'tff_volume', 'value')
+        .tags('host')
+        .keep('duration', 'message', 'cpu_used', 'tff_volume', 'value')
+    |influxDBOut()
+        .create()
+        .database(db)
+        .retentionPolicy('autogen')
+        .measurement('cloudhub_alerts')
+        .tag('alertName', name)
+        .tag('triggerType', 'anomaly_predict')
+"""

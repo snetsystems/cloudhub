@@ -1,12 +1,12 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	kapa "github.com/snetsystems/cloudhub/backend/kapacitor"
 )
 
 type deviceRequest struct {
@@ -535,7 +536,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 
 	response := make(map[string]interface{})
 	if len(failedDevices) > 0 {
-		response["failed_devices"] = failedDevices
+		response["failed_devices"] = convertFailedDevicesToArray(failedDevices)
 		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 	} else {
 		encodeJSON(w, http.StatusNoContent, response, s.Logger)
@@ -982,9 +983,7 @@ func getCollectingDevicesGroupByOrg(ctx context.Context, s *Service, request []m
 			networkDevicesMap[reqDevice.ID] = device
 			deviceOrgMap[reqDevice.ID] = device.Organization
 
-			if !(reqDevice.IsCollectingCfgWritten && reqDevice.IsCollecting) {
-				devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], reqDevice)
-			}
+			devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], reqDevice)
 
 		}
 	}
@@ -1066,20 +1065,20 @@ func findLeastLoadedCollectorServer(
 		}
 	}
 
+	currentServer, exists := orgToCollector[org]
+	if exists && selectedServer != currentServer {
+		selectedServer = currentServer
+		if orgDeviceCount[org] > threshold {
+			//Todo improve distribution collector-server
+		}
+	}
+
 	if selectedServer == "" {
 		for _, server := range collectorServerKeys {
 			if serverDeviceCount[server] < minDevices {
 				minDevices = serverDeviceCount[server]
 				selectedServer = server
 			}
-		}
-	}
-
-	currentServer, exists := orgToCollector[org]
-	if exists && selectedServer != currentServer {
-		selectedServer = currentServer
-		if orgDeviceCount[org] > threshold {
-			//Todo improve distribution collector-server
 		}
 	}
 
@@ -1249,8 +1248,8 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return http.StatusInternalServerError, nil, err
 	}
 
-	fileName := fmt.Sprintf("%s.conf", org.Name)
-	dirPath := "/etc/logstash/pipeline"
+	fileName := fmt.Sprintf("%s_snmp.nx.rb", org.Name)
+	dirPath := "/home/yslee/snet/cloudhub_elk/logstash/pipeline"
 	filePath := path.Join(dirPath, fileName)
 	var statusCode int
 	var resp []byte
@@ -1285,34 +1284,61 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		}
 		return statusCode, resp, nil
 	}
-	cannedFilePath := filepath.Join("../../", "canned", "template_logstash_gen.conf")
-	content, err := os.ReadFile(cannedFilePath)
+	cannedFilePath := filepath.Join("../../", "canned", "template_logstash_gen.toml")
+	tmpl, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
+		Field: kapa.LogstashTemplate,
+		Path:  &cannedFilePath,
+	})
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
-	configString := string(content)
 
 	var hostEntries []string
+	var deviceFilters []string
 	for _, deviceID := range devicesIDs {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
 		if err != nil {
 			continue
 		}
-		host := fmt.Sprintf("%s:%s/%d", device.SNMPConfig.Protocol, device.DeviceIP, device.SNMPConfig.Port)
+		host := fmt.Sprintf("%s:%s/%d", strings.ToLower(device.SNMPConfig.Protocol), device.DeviceIP, device.SNMPConfig.Port)
 		hostEntry := fmt.Sprintf("{host => \"%s\" community => \"%s\" version => \"%s\" retries => %d timeout => %d}",
 			host, device.SNMPConfig.Community, device.SNMPConfig.Version, 1, 30000)
 		hostEntries = append(hostEntries, hostEntry)
+
+		filter := fmt.Sprintf(`
+		if [host] == "%s" {
+			mutate {
+				add_field => {
+					"dev_id" => %d
+				}
+			}
+		}`, device.DeviceIP, device.ID)
+		deviceFilters = append(deviceFilters, filter)
 	}
 
-	hosts := fmt.Sprintf("[%s]", strings.Join(hostEntries, ",\n"))
-	orgName := org.Name
+	hosts := fmt.Sprintf("%s", strings.Join(hostEntries, ",\n"))
+	filters := strings.Join(deviceFilters, "\n")
 
-	replacer := strings.NewReplacer(
-		"${org}", orgName,
-		"${hosts}", hosts,
-	)
+	influxDBs, err := GetServerInfluxDBs(ctx, s)
+	if err != nil || len(influxDBs) < 1 {
+		return http.StatusInternalServerError, nil, err
+	}
 
-	configString = replacer.Replace(configString)
+	tmplParams := cloudhub.TemplateParams{
+		"OrgName":        org.Name,
+		"DeviceHosts":    hosts,
+		"DeviceFilter":   filters,
+		"InfluxOrigin":   influxDBs[0].Origin,
+		"InfluxPort":     influxDBs[0].Port,
+		"InfluxUsername": influxDBs[0].Username,
+		"InfluxPassword": influxDBs[0].Password,
+	}
+	var tpl bytes.Buffer
+	if err := tmpl.Execute(&tpl, tmplParams); err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	configString := tpl.String()
 
 	statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{configString}, devOrg.CollectorServer)
 
@@ -1320,6 +1346,21 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return http.StatusInternalServerError, nil, err
 	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 		return statusCode, resp, err
+	}
+	dockerPath := "/home/yslee/snet/cloudhub_elk"
+	if statusCode, resp, err := s.DockerRestart(dockerPath, "kapacitor", devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return statusCode, nil, err
+	} else if resp != nil {
+		r := &struct {
+			Return []map[string]string `json:"return"`
+		}{}
+
+		if err := json.Unmarshal(resp, r); err != nil {
+			return http.StatusInternalServerError, nil, err
+		}
+
+	} else {
+		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error occurred at DirectoryExists() func")
 	}
 
 	// Log the successful creation of the config
@@ -1330,7 +1371,7 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 
 func (s *Service) removeLogstashConfigGroupByOrg(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg) (int, []byte, error) {
 	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &devOrg.ID})
-	fileName := fmt.Sprintf("%s.conf", org.Name)
+	fileName := fmt.Sprintf("%s_snmp.nx.rb", org.Name)
 	dirPath := "/etc/logstash/pipeline"
 	filePath := path.Join(dirPath, fileName)
 

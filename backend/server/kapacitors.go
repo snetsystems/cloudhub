@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bouk/httprouter"
+	"github.com/influxdata/kapacitor/client/v1"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	kapa "github.com/snetsystems/cloudhub/backend/kapacitor"
 )
@@ -590,6 +591,160 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 	return res
 }
 
+// newAlertResponseWithURL formats task into an alertResponse
+func newAlertResponseWithURL(task *kapa.Task, org string, scriptType string) *alertResponse {
+	res := &alertResponse{
+		AlertRule: task.Rule,
+		Links:     alertLinks{},
+	}
+
+	if res.AlertNodes.Alerta == nil {
+		res.AlertNodes.Alerta = []*cloudhub.Alerta{}
+	}
+
+	for i, a := range res.AlertNodes.Alerta {
+		if a.Service == nil {
+			a.Service = []string{}
+			res.AlertNodes.Alerta[i] = a
+		}
+	}
+
+	if res.AlertNodes.Email == nil {
+		res.AlertNodes.Email = []*cloudhub.Email{}
+	}
+
+	for i, a := range res.AlertNodes.Email {
+		if a.To == nil {
+			a.To = []string{}
+			res.AlertNodes.Email[i] = a
+		}
+	}
+
+	if res.AlertNodes.Exec == nil {
+		res.AlertNodes.Exec = []*cloudhub.Exec{}
+	}
+
+	for i, a := range res.AlertNodes.Exec {
+		if a.Command == nil {
+			a.Command = []string{}
+			res.AlertNodes.Exec[i] = a
+		}
+	}
+
+	if res.AlertNodes.Kafka == nil {
+		res.AlertNodes.Kafka = []*cloudhub.Kafka{}
+	}
+
+	if res.AlertNodes.Log == nil {
+		res.AlertNodes.Log = []*cloudhub.Log{}
+	}
+
+	if res.AlertNodes.OpsGenie == nil {
+		res.AlertNodes.OpsGenie = []*cloudhub.OpsGenie{}
+	}
+
+	for i, a := range res.AlertNodes.OpsGenie {
+		if a.Teams == nil {
+			a.Teams = []string{}
+			res.AlertNodes.OpsGenie[i] = a
+		}
+
+		if a.Recipients == nil {
+			a.Recipients = []string{}
+			res.AlertNodes.OpsGenie[i] = a
+		}
+	}
+
+	if res.AlertNodes.OpsGenie2 == nil {
+		res.AlertNodes.OpsGenie2 = []*cloudhub.OpsGenie{}
+	}
+
+	for i, a := range res.AlertNodes.OpsGenie2 {
+		if a.Teams == nil {
+			a.Teams = []string{}
+			res.AlertNodes.OpsGenie2[i] = a
+		}
+
+		if a.Recipients == nil {
+			a.Recipients = []string{}
+			res.AlertNodes.OpsGenie2[i] = a
+		}
+	}
+
+	if res.AlertNodes.PagerDuty == nil {
+		res.AlertNodes.PagerDuty = []*cloudhub.PagerDuty{}
+	}
+
+	if res.AlertNodes.PagerDuty2 == nil {
+		res.AlertNodes.PagerDuty2 = []*cloudhub.PagerDuty{}
+	}
+
+	if res.AlertNodes.Posts == nil {
+		res.AlertNodes.Posts = []*cloudhub.Post{}
+	}
+
+	for i, a := range res.AlertNodes.Posts {
+		if a.Headers == nil {
+			a.Headers = map[string]string{}
+			res.AlertNodes.Posts[i] = a
+		}
+	}
+
+	if res.AlertNodes.Pushover == nil {
+		res.AlertNodes.Pushover = []*cloudhub.Pushover{}
+	}
+
+	if res.AlertNodes.Sensu == nil {
+		res.AlertNodes.Sensu = []*cloudhub.Sensu{}
+	}
+
+	for i, a := range res.AlertNodes.Sensu {
+		if a.Handlers == nil {
+			a.Handlers = []string{}
+			res.AlertNodes.Sensu[i] = a
+		}
+	}
+
+	if res.AlertNodes.Slack == nil {
+		res.AlertNodes.Slack = []*cloudhub.Slack{}
+	}
+
+	if res.AlertNodes.Talk == nil {
+		res.AlertNodes.Talk = []*cloudhub.Talk{}
+	}
+
+	if res.AlertNodes.TCPs == nil {
+		res.AlertNodes.TCPs = []*cloudhub.TCP{}
+	}
+
+	if res.AlertNodes.Telegram == nil {
+		res.AlertNodes.Telegram = []*cloudhub.Telegram{}
+	}
+
+	if res.AlertNodes.VictorOps == nil {
+		res.AlertNodes.VictorOps = []*cloudhub.VictorOps{}
+	}
+
+	if res.Query != nil {
+		if res.Query.ID == "" {
+			res.Query.ID = res.ID
+		}
+
+		if res.Query.Fields == nil {
+			res.Query.Fields = make([]cloudhub.Field, 0)
+		}
+
+		if res.Query.GroupBy.Tags == nil {
+			res.Query.GroupBy.Tags = make([]string, 0)
+		}
+
+		if res.Query.Tags == nil {
+			res.Query.Tags = make(map[string][]string)
+		}
+	}
+	return res
+}
+
 // ValidRuleRequest checks if the requested rule change is valid
 func ValidRuleRequest(rule cloudhub.AlertRule) error {
 	if rule.Query == nil {
@@ -662,7 +817,7 @@ func (s *Service) KapacitorRulesPut(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
-	
+
 	// log registrationte
 	msg := fmt.Sprintf(MsgKapacitorRuleModified.String(), task.Rule.Name, srv.Name)
 	s.logRegistration(ctx, "Kapacitors Rules", msg)
@@ -859,7 +1014,7 @@ func (s *Service) KapacitorRulesDelete(w http.ResponseWriter, r *http.Request) {
 
 	tid := httprouter.GetParamFromContext(ctx, "tid")
 	// Check if the rule is linked to this server and kapacitor
-	task, err := c.Get(ctx, tid);
+	task, err := c.Get(ctx, tid)
 	if err != nil {
 		if err == cloudhub.ErrAlertNotFound {
 			notFound(w, id, s.Logger)
@@ -878,4 +1033,185 @@ func (s *Service) KapacitorRulesDelete(w http.ResponseWriter, r *http.Request) {
 	s.logRegistration(ctx, "Kapacitors Rules", msg)
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// KapacitorTaskPostWithURL proxies POST to kapacitor
+func (s *Service) KapacitorTaskPostWithURL(w http.ResponseWriter, r *http.Request) {
+	var req cloudhub.AutoGeneratePredictionRule
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+	ctx := r.Context()
+	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &req.Organization})
+	if err != nil {
+		notFound(w, err.Error(), s.Logger)
+		return
+	}
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &req.Organization})
+	if err != nil {
+		notFound(w, err.Error(), s.Logger)
+		return
+	}
+
+	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
+
+	if req.Name == "" {
+		req.Name = req.ID
+	}
+	if req.OrganizationName == "" {
+		req.OrganizationName = org.Name
+	}
+	if req.TaskTemplate == "" {
+		req.TaskTemplate = kapa.PredictionTaskField
+	}
+
+	alertServices, err := kapa.AlertServices(req.AlertRule)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	tmplParams := cloudhub.TemplateParams{
+		"OrgName":              req.OrganizationName,
+		"Message":              req.Message,
+		"RetentionPolicy":      "autogen",
+		"PredictMode":          req.PredictMode,
+		"PredictModeCondition": req.PredictModeCondition,
+		"AlertServices":        alertServices,
+	}
+
+	script, err := c.Ticker.GenerateTaskFromTemplate(cloudhub.LoadTemplateConfig{
+		Field: kapa.PredictionTaskField,
+		Path:  nil,
+	}, tmplParams)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	kapaID := cloudhub.PredictScriptPrefix + org.ID
+	createTaskOptions := &client.CreateTaskOptions{
+		ID:   kapaID,
+		Type: client.StreamTask,
+		DBRPs: []client.DBRP{
+			{Database: org.Name, RetentionPolicy: "autogen"},
+			{Database: "Default", RetentionPolicy: "autogen"},
+		},
+		TICKscript: string(script),
+		Status:     client.Enabled,
+	}
+
+	task, err := c.AutoGenerateCreate(ctx, createTaskOptions)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleCreated.String(), task.Rule.Name, org.Name)
+	s.logRegistration(ctx, "Kapacitors Task", msg)
+	response := map[string]interface{}{
+		"Message": msg,
+	}
+
+	encodeJSON(w, http.StatusCreated, response, s.Logger)
+}
+
+// KapacitorTaskUpdateWithURL proxies to kapacitor with URL
+func (s *Service) KapacitorTaskUpdateWithURL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	idStr, err := paramStr("id", r)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+	scriptType, err := paramStr("name", r)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+	org, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &idStr})
+	if err != nil {
+		notFound(w, idStr, s.Logger)
+		return
+	}
+
+	c := kapa.NewClient(org.AIKapacitor.KapaURL, org.AIKapacitor.Username, org.AIKapacitor.Password, org.AIKapacitor.InsecureSkipVerify)
+	var req cloudhub.AlertRule
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+	// TODO: validate this data
+	/*
+		if err := req.Valid(); err != nil {
+			invalidData(w, err)
+			return
+		}
+	*/
+
+	// Check if the rule exists and is scoped correctly
+	tid := scriptType + org.ID
+	if _, err = c.Get(ctx, tid); err != nil {
+		if err == cloudhub.ErrAlertNotFound {
+			notFound(w, tid, s.Logger)
+			return
+		}
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	// Replace alert completely with this new alert.
+	req.ID = tid
+	task, err := c.Update(ctx, c.Href(tid), req)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleModified.String(), task.Rule.Name, tid)
+	s.logRegistration(ctx, "Kapacitors Task Update", msg)
+	response := map[string]interface{}{
+		"Message": msg,
+	}
+
+	encodeJSON(w, http.StatusCreated, response, s.Logger)
+}
+
+// KapacitorTaskGetWithURL retrieves specific task from kapacitor using URL
+func (s *Service) KapacitorTaskGetWithURL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	idStr, err := paramStr("id", r)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+	scriptType, err := paramStr("name", r)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+	org, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &idStr})
+	if err != nil {
+		notFound(w, idStr, s.Logger)
+		return
+	}
+
+	c := kapa.NewClient(org.AIKapacitor.KapaURL, org.AIKapacitor.Username, org.AIKapacitor.Password, org.AIKapacitor.InsecureSkipVerify)
+
+	tid := scriptType + org.ID
+	task, err := c.Get(ctx, tid)
+	if err != nil {
+		if err == cloudhub.ErrAlertNotFound {
+			notFound(w, tid, s.Logger)
+			return
+		}
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	res := newAlertResponseWithURL(task, org.ID, scriptType)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
 }

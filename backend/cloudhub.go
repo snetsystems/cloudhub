@@ -300,13 +300,61 @@ type AlertRule struct {
 	LastEnabled   time.Time     `json:"last-enabled,omitempty"` // Date the task was last set to status enabled
 }
 
+// TemplateFieldType represents the type of template field
+type TemplateFieldType string
+
+const (
+	// LearnScriptPrefix TickScript ID Prefix
+	LearnScriptPrefix = "learn-"
+	// PredictScriptPrefix TickScript ID Prefix
+	PredictScriptPrefix = "predict-"
+)
+
+// AutoGeneratePredictionRule extends Prediction AlertRule with an additional TaskTemplate field for automatic rule registration.
+type AutoGeneratePredictionRule struct {
+	AlertRule
+	TaskTemplate         TemplateFieldType `json:"task_template,omitempty"` // TaskTemplate is the template string for the task.
+	Organization         string            `json:"organization"`
+	OrganizationName     string            `json:"organization_name"`
+	PredictMode          string            `json:"predict_mode"`
+	PredictModeCondition string            `json:"predict_mode_condition"`
+}
+
+// AutoGenerateLearnRule extends Learning Rule with an additional TaskTemplate field for automatic rule registration.
+type AutoGenerateLearnRule struct {
+	AlertRule
+	TaskTemplate     TemplateFieldType `json:"task_template,omitempty"` // TaskTemplate is the template string for the task.
+	Organization     string            `json:"organization"`
+	OrganizationName string            `json:"organization_name"`
+	CronSchedule     string            `json:"cron_schedule"`
+	LoadModule       string            `json:"load_module,omitempty"`
+	MLFunction       string            `json:"ml_function"`
+	RetentionPolicy  string            `json:"retention_policy"`
+	InfluxOrigin     string            `json:"influxdb_origin"`
+	InfluxDBPort     string            `json:"influxdb_port"`
+	InfluxDBUsername string            `json:"influxdb_username"`
+	InfluxDBPassword string            `json:"influxdb_password"`
+	EtcdOrigin       string            `json:"etcd_origin"`
+	EtcdPort         string            `json:"etcd_port"`
+}
+
 // TICKScript task to be used by kapacitor
 type TICKScript string
+
+// TemplateParams is TickScript Template Params
+type TemplateParams map[string]string
+
+// LoadTemplateConfig Load file info
+type LoadTemplateConfig struct {
+	Field TemplateFieldType
+	Path  *string
+}
 
 // Ticker generates tickscript tasks for kapacitor
 type Ticker interface {
 	// Generate will create the tickscript to be used as a kapacitor task
 	Generate(AlertRule) (TICKScript, error)
+	GenerateTaskFromTemplate(LoadTemplateConfig, TemplateParams) (TICKScript, error)
 }
 
 // TriggerValues specifies the alerting logic for a specific trigger type
@@ -1147,6 +1195,8 @@ type NetworkDeviceOrgQuery struct {
 
 //AIKapacitor represents the information for Kapacitor login
 type AIKapacitor struct {
+	SrcID              int    `json:"srcId,string"`  // SrcID of the data source
+	KapaID             int    `json:"kapaId,string"` // KapaID of the Kapacitor ID
 	KapaURL            string `json:"url"`
 	Username           string `json:"username"`
 	Password           string `json:"password"`

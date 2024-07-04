@@ -1,0 +1,192 @@
+[logstash_gen]
+template = """
+input {
+	snmp {
+		type => "snmp_nx"
+		tags => ["{{.OrgName}}"]
+		hosts => [{{.DeviceHosts}}]
+		interval => 60
+		oid_root_skip => 6
+
+		walk => [ "1.3.6.1.2.1.1.1",
+		"1.3.6.1.2.1.1.3",
+		"1.3.6.1.2.1.1.5" ]
+
+		tables => [ {
+			"name" => "cpu"
+			"columns" => [
+			"1.3.6.1.4.1.9.9.109.1.1.1.1.6",	# 5sec
+			"1.3.6.1.4.1.9.9.109.1.1.1.1.7"		# 1min
+			]
+		}
+		, {
+			"name" => "memory"
+			"columns" => [
+			"1.3.6.1.4.1.9.9.48.1.1.1.5",	# used
+			"1.3.6.1.4.1.9.9.48.1.1.1.6"	# free
+			]
+		}
+		, {
+			"name" => "interfaces"
+			"columns" => [
+			"1.3.6.1.2.1.2.2.1.1",		# ifIndex
+			"1.3.6.1.2.1.2.2.1.2",		# ifDescr
+			"1.3.6.1.2.1.2.2.1.5",		# ifSpeed
+			"1.3.6.1.2.1.2.2.1.6",		# ifPhysAddress
+			"1.3.6.1.2.1.2.2.1.8",		# ifOperStatus
+			"1.3.6.1.2.1.2.2.1.13",		# ifInDiscards
+			"1.3.6.1.2.1.2.2.1.14",		# ifInErrors
+			"1.3.6.1.2.1.2.2.1.19",		# ifOutDiscards
+			"1.3.6.1.2.1.2.2.1.20",		# ifOutErrors
+			"1.3.6.1.2.1.31.1.1.1.1",	# ifName
+			"1.3.6.1.2.1.31.1.1.1.6",	# ifHCInOctets
+			"1.3.6.1.2.1.31.1.1.1.7",	# ifHCInUcastPkts
+			"1.3.6.1.2.1.31.1.1.1.8",	# ifHCInMulticastPkts
+			"1.3.6.1.2.1.31.1.1.1.9",	# ifHCInBroadcastPkts
+			"1.3.6.1.2.1.31.1.1.1.10",	# ifHCOutOctets
+			"1.3.6.1.2.1.31.1.1.1.11",	# ifHCOutUcastPkts
+			"1.3.6.1.2.1.31.1.1.1.12",	# ifHCOutMulticastPkts
+			"1.3.6.1.2.1.31.1.1.1.13",	# ifHCOutBroadcastPkts
+			"1.3.6.1.2.1.31.1.1.1.15",	# ifHighSpeed
+			"1.3.6.1.2.1.31.1.1.1.18"	# ifAlias
+			]
+		}
+		, {
+			"name" => "processes"
+			"columns" => [
+			"1.3.6.1.4.1.9.9.109.1.2.1.1.1", # pid
+			"1.3.6.1.4.1.9.9.109.1.2.1.1.2", # name
+			"1.3.6.1.4.1.9.9.109.1.2.3.1.3", # invoked
+			"1.3.6.1.4.1.9.9.109.1.2.3.1.4", # runtime
+			"1.3.6.1.4.1.9.9.109.1.2.3.1.5", # 5sec
+			"1.3.6.1.4.1.9.9.109.1.2.3.1.6"  # 1min
+			]
+		}
+		]
+	}
+}
+
+filter {
+	if [type] == "snmp_nx" or [type] == "snmp_nx_cpu_evt" or [type] == "snmp_nx_iface_evt" or [type] == "snmp_nx_proc_evt" {
+		{{.DeviceFilter}}
+	}
+}
+
+output {
+	if "{{.OrgName}}" in [tags] {
+		if [type] == "snmp_nx" {
+			influxdb {
+				host => "{{.InfluxOrigin}}"
+				port => {{.InfluxPort}}
+				db => "{{.OrgName}}"
+				measurement => "snmp_nx"
+				data_points => {
+					"dev_id" => "%{dev_id}"
+					"agent_host" => "%{host}"
+					"sys_name" => "%{system.sysName.0}"
+					"sys_desc" => "%{system.sysDescr.0}"
+					"sys_uptime" => "%{system.sysUpTime.sysUpTimeInstance}"
+					"mem_usage" => "%{mem_usage}"
+				}
+				send_as_tags => ["dev_id", "agent_host", "sys_name"]
+				coerce_values => {
+					"mem_usage" => "float"
+				}
+			}
+		}
+		if [type] == "snmp_nx_cpu_evt" {
+			influxdb {
+				host => "{{.InfluxOrigin}}"
+				port => {{.InfluxPort}}
+				db => "{{.OrgName}}"
+				measurement => "snmp_nx"
+				data_points => {
+					"dev_id" => "%{dev_id}"
+					"agent_host" => "%{host}"
+					"sys_name" => "%{system.sysName.0}"
+					"cpu_index" => "%{[cpu][index]}"
+					"cpu5sec" => "%{[cpu][9.9.109.1.1.1.1.6]}"
+					"cpu1min" => "%{[cpu][9.9.109.1.1.1.1.7]}"
+				}
+				send_as_tags => ["dev_id", "agent_host", "sys_name", "cpu_index"]
+				coerce_values => {
+					"cpu5sec" => "float"
+					"cpu1min" => "float"
+				}
+			}
+		}
+		if ([type] == "snmp_nx_iface_evt") and [interfaces][index] {
+			influxdb {
+				host => "{{.InfluxOrigin}}"
+				port => {{.InfluxPort}}
+				db => "{{.OrgName}}"
+				measurement => "snmp_nx"
+				data_points => {
+					"dev_id" => "%{dev_id}"
+					"agent_host" => "%{host}"
+					"sys_name" => "%{system.sysName.0}"
+					"ifIndex" => "%{[interfaces][index]}"
+					"ifDescr" => "%{ifDescr}"
+					"ifSpeed" => "%{[interfaces][interfaces.ifTable.ifEntry.ifSpeed]}"
+					"ifPhysAddress" => "%{[interfaces][interfaces.ifTable.ifEntry.ifPhysAddress]}"
+					"ifOperStatus" => "%{ifOperStatus}"
+					"ifInDiscards" => "%{[interfaces][interfaces.ifTable.ifEntry.ifInDiscards]}"
+					"ifInErrors" => "%{[interfaces][interfaces.ifTable.ifEntry.ifInErrors]}"
+					"ifOutDiscards" => "%{[interfaces][interfaces.ifTable.ifEntry.ifOutDiscards]}"
+					"ifOutErrors" => "%{[interfaces][interfaces.ifTable.ifEntry.ifOutErrors]}"
+					"ifName" => "%{ifName}"
+					"ifHCInOctets" => "%{[interfaces][ifMIB.ifMIBObjects.ifXTable.ifXEntry.ifHCInOctets]}"
+					"ifHCInUcastPkts" => "%{[interfaces][ifMIB.ifMIBObjects.ifXTable.ifXEntry.ifHCInUcastPkts]}"
+					"ifHCInMulticastPkts" => "%{[interfaces][ifMIB.ifMIBObjects.ifXTable.ifXEntry.ifHCInMulticastPkts]}"
+					"ifHCInBroadcastPkts" => "%{[interfaces][ifMIB.ifMIBObjects.ifXTable.ifXEntry.ifHCInBroadcastPkts]}"
+					"ifHCOutOctets" => "%{[interfaces][ifMIB.ifMIBObjects.ifXTable.ifXEntry.ifHCOutOctets]}"
+					"ifHCOutUcastPkts" => "%{[interfaces][ifMIB.ifMIBObjects.ifXTable.ifXEntry.ifHCOutUcastPkts]}"
+					"ifHCOutMulticastPkts" => "%{[interfaces][ifMIB.ifMIBObjects.ifXTable.ifXEntry.ifHCOutMulticastPkts]}"
+					"ifHCOutBroadcastPkts" => "%{[interfaces][ifMIB.ifMIBObjects.ifXTable.ifXEntry.ifHCOutBroadcastPkts]}"
+					"ifHighSpeed" => "%{[interfaces][ifMIB.ifMIBObjects.ifXTable.ifXEntry.ifHighSpeed]}"
+					"ifAlias" => "%{ifAlias}"
+				}
+				send_as_tags => ["dev_id", "agent_host", "sys_name", "ifIndex", "ifDescr", "ifName", "ifAlias"]
+				coerce_values => {
+					"ifSpeed" => "float"
+					"ifInDiscards" => "float"
+					"ifInErrors" => "float"
+					"ifOutDiscards" => "float"
+					"ifOutErrors" => "float"
+					"ifHCInOctets" => "float"
+					"ifHCInUcastPkts" => "float"
+					"ifHCInMulticastPkts" => "float"
+					"ifHCInBroadcastPkts" => "float"
+					"ifHCOutOctets" => "float"
+					"ifHCOutUcastPkts" => "float"
+					"ifHCOutMulticastPkts" => "float"
+					"ifHCOutBroadcastPkts" => "float"
+					"ifHighSpeed" => "float"
+				}
+			}
+		}
+		if [type] == "snmp_nx_proc_evt" {
+			influxdb {
+				host => "{{.InfluxOrigin}}"
+				port => {{.InfluxPort}}
+				db => "{{.OrgName}}"
+				measurement => "snmp_nx"
+				data_points => {
+					"dev_id" => "%{dev_id}"
+					"agent_host" => "%{host}"
+					"sys_name" => "%{system.sysName.0}"
+					"proc_name" => "%{[processes][9.9.109.1.2.1.1.2]}"
+					"proc_id" => "%{[processes][9.9.109.1.2.1.1.1]}"
+					"proc_cpu5s" => "%{[processes][9.9.109.1.2.3.1.5]}"
+					"proc_cpu1m" => "%{[processes][9.9.109.1.2.3.1.6]}"
+				}
+				send_as_tags => ["dev_id", "agent_host", "sys_name", "proc_name"]
+				coerce_values => {
+					"proc_cpu5s" => "float"
+					"proc_cpu1m" => "float"
+				}
+			}
+		}
+	}
+}
+"""

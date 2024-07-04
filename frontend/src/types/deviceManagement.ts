@@ -157,17 +157,19 @@ export interface UpdateDeviceOrganizationOption {
 }
 
 export interface KapacitorForNetworkDeviceOrganization {
+  srcId: string
+  kapaId: string
   url: string
   username?: string
   password?: string
-  insecure_skip_verify: boolean
+  insecure_skip_verify?: boolean
 }
 
 export interface LearningOrganizationOption {
   data_duration: number
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
-  relearn_cycle: string
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
+  cron_schedule?: string
 }
 
 export interface LearningOption extends LearningOrganizationOption {
@@ -186,7 +188,6 @@ export interface DevicesOrgData {
   organization: string
   data_duration: number
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
-  relearn_cycle: string
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
   prediction_mode?: typeof PredictionMode[keyof typeof PredictionMode]
   learned_devices_ids?: number[]

@@ -836,6 +836,11 @@ export const notifyTickscriptUpdated = (): Notification => ({
 export const notifyTickscriptUpdateFailed = (): string =>
   'Failed to update TICKscript.'
 
+export const notifyTickscriptUpdateFailedWithMessage = (): Notification => ({
+  ...defaultErrorNotification,
+  message: 'Failed to update TICKscript',
+})
+
 export const notifyTickscriptLoggingUnavailable = (): Notification => ({
   type: 'warning',
   icon: 'alert-triangle',

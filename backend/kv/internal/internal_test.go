@@ -610,6 +610,8 @@ func TestMarshalNetworkDeviceOrg(t *testing.T) {
 		CollectorServer:     "ch-collector-1",
 		CollectedDevicesIDs: []uint64{1, 2, 3},
 		AIKapacitor: cloudhub.AIKapacitor{
+			KapaID:             1,
+			SrcID:              2,
 			KapaURL:            "http://127.0.0.1:9094",
 			Username:           "",
 			Password:           "",

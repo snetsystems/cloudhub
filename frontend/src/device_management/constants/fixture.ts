@@ -1,8 +1,19 @@
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
-import {TEMP_VAR_DASHBOARD_TIME} from 'src/shared/constants'
 import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
 import {DEFAULT_AXIS} from 'src/dashboards/constants/cellEditor'
-import {Source, Cell, CellQuery, Axes, CellType, QueryType} from 'src/types'
+import {
+  Cell,
+  CellQuery,
+  Axes,
+  CellType,
+  QueryType,
+  TimeRange,
+  Source,
+} from 'src/types'
+import {
+  TEMP_VAR_DASHBOARD_TIME,
+  TEMP_VAR_UPPER_DASHBOARD_TIME,
+} from 'src/shared/constants'
 
 const emptyQuery: CellQuery = {
   query: '',
@@ -26,7 +37,7 @@ const emptyAxes: Axes = {
   y: DEFAULT_AXIS,
 }
 
-export const fixturePredictionPageCells = (): Cell[] => {
+export const fixturePredictionPageCells = (source: Source): Cell[] => {
   return [
     {
       ...NEW_DEFAULT_DASHBOARD_CELL,
@@ -38,18 +49,18 @@ export const fixturePredictionPageCells = (): Cell[] => {
       y: 0,
       w: 96,
       h: 10,
-      minH: 0,
+      minH: 10,
       legend: {},
       name: 'Alert Events per Day – Last 30 Days',
       colors: DEFAULT_LINE_COLORS,
       queries: [
         {
           id: '1234',
-          query: `SELECT count("value") AS "count_value" FROM "cloudhub_alerts" WHERE time > ${TEMP_VAR_DASHBOARD_TIME} GROUP BY time(1d)`,
+          query: `SELECT count("value") AS "count_value" FROM "cloudhub_alerts" WHERE time > '${TEMP_VAR_DASHBOARD_TIME}' time < '${TEMP_VAR_UPPER_DASHBOARD_TIME}' GROUP BY time(1d)`,
           source: '',
           type: QueryType.InfluxQL,
           queryConfig: {
-            database: '',
+            database: source.telegraf,
             measurement: 'cloudhub_alerts',
             retentionPolicy: 'autogen',
             fields: [
@@ -87,6 +98,7 @@ export const fixturePredictionPageCells = (): Cell[] => {
       y: 5,
       w: 96,
       h: 10,
+      minH: 10,
       name: '',
       queries: [],
       type: CellType.Table,
@@ -106,6 +118,7 @@ export const fixturePredictionPageCells = (): Cell[] => {
       y: 9,
       w: 96,
       h: 10,
+      minH: 10,
       name: '',
       queries: [],
       type: CellType.Table,

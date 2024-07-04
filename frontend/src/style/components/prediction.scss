@@ -12,6 +12,8 @@
   top: 50px;
   border: 1px solid $g6-smoke;
   border-radius: 4px;
+  z-index: 9;
+
   &:hover {
     border: 1px solid $s-deepOrange2;
   }
@@ -41,4 +43,29 @@
 .page.prediction-page {
   height: 100%;
   width: 100%;
+}
+
+.prediction-tooltip {
+  position: absolute;
+}
+
+.prediction-tooltip-content {
+  border: 2px solid $s-orange;
+  border-radius: 4px;
+  display: inline-flex;
+  flex-direction: column;
+  background-color: $g1-raven;
+  padding: 5px;
+
+  min-width: 150px;
+  height: 100%;
+  white-space: no-wrap;
+}
+
+.prediction-tooltip.hidden {
+  display: none;
+}
+
+.prediction-tooltip.active {
+  display: block;
 }

@@ -49,4 +49,16 @@ export const MONITORING_MODAL_INFO = {
       ML/DL Setting.
     </>
   ),
+  ML_DL_SettingKapacitorInvalid: (
+    <>
+      Kapacitor
+      <label className="label-warning">
+        {' '}
+        has been deleted or not registered.{' '}
+      </label>
+      Please
+      <label className="label-warning"> update </label>
+      the Kapacitor.
+    </>
+  ),
 }

@@ -5,11 +5,17 @@ import Dropdown from 'src/shared/components/Dropdown'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 
 // Type
-import {Kapacitor, KapacitorForNetworkDeviceOrganization} from 'src/types'
+import {
+  Kapacitor,
+  KapacitorForNetworkDeviceOrganization,
+  Source,
+} from 'src/types'
 
 interface Props {
   kapacitors: Kapacitor[]
   selectedKapacitor: KapacitorForNetworkDeviceOrganization
+  source: Source
+  kapacitorName: string
   buttonSize?: string
   setActiveKapacitor: (kapacitor: KapacitorForNetworkDeviceOrganization) => void
 }
@@ -30,10 +36,10 @@ export default class DeviceManagementKapacitorDropdown extends PureComponent<Pro
         <Authorized requiredRole={EDITOR_ROLE}>
           <Dropdown
             className="dropdown-stretch"
-            disabled={true}
+            disabled={false}
             items={[]}
             onChoose={this.handleSetActiveKapacitor}
-            selected={'None'}
+            selected={''}
           />
         </Authorized>
       )
@@ -54,7 +60,11 @@ export default class DeviceManagementKapacitorDropdown extends PureComponent<Pro
   private convertKapacitor(
     kapacitor: Kapacitor
   ): KapacitorForNetworkDeviceOrganization {
+    const {source} = this.props
+
     return {
+      srcId: source.id,
+      kapaId: kapacitor.id,
       url: kapacitor.url,
       username: kapacitor.username,
       password: kapacitor.password,
@@ -75,25 +85,23 @@ export default class DeviceManagementKapacitorDropdown extends PureComponent<Pro
 
   private get kapacitorItems(): KapacitorItem[] {
     const {kapacitors} = this.props
+
     return kapacitors.map(k => {
       const kapacitorUrl = k?.url || ''
-      const kapacitorName = k?.name ? `@(${k.name})` : ''
+      const kapacitorName = k?.name ? `${k.name} @ ` : ''
 
       return {
-        text: `${kapacitorUrl}${kapacitorName}`,
+        text: `${kapacitorName}${kapacitorUrl}`,
         kapacitor: k,
       }
     })
   }
 
   private get selected(): string {
-    const {selectedKapacitor} = this.props
+    const {selectedKapacitor, kapacitorName} = this.props
     const selectedKapacitorUrl = selectedKapacitor?.url || ''
-    // TODO Add User Name
-    const selectedKapacitorUsername = selectedKapacitor?.username
-      ? `@(${selectedKapacitor?.username})`
-      : ''
+    const _kapacitorName = kapacitorName ? `${kapacitorName} @ ` : ''
 
-    return `${selectedKapacitorUrl}${selectedKapacitorUsername}` || ''
+    return `${_kapacitorName}${selectedKapacitorUrl}`
   }
 }
