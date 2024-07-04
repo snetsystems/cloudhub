@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/bouk/httprouter"
@@ -1081,9 +1083,14 @@ func (s *Service) KapacitorTaskPostWithURL(w http.ResponseWriter, r *http.Reques
 		"AlertServices":        alertServices,
 	}
 
+	cannedFilePath := filepath.Join(s.CannedPath, "tickscript_templates.toml")
+	if _, err := os.Stat(cannedFilePath); os.IsNotExist(err) {
+		cannedFilePath = filepath.Join("../../", "canned", "tickscript_templates.toml")
+	}
+
 	script, err := c.Ticker.GenerateTaskFromTemplate(cloudhub.LoadTemplateConfig{
 		Field: kapa.PredictionTaskField,
-		Path:  nil,
+		Path:  &cannedFilePath,
 	}, tmplParams)
 	if err != nil {
 		invalidData(w, err, s.Logger)
@@ -1115,102 +1122,4 @@ func (s *Service) KapacitorTaskPostWithURL(w http.ResponseWriter, r *http.Reques
 	res := newAlertResponse(task, deviceOrg.AIKapacitor.SrcID, deviceOrg.AIKapacitor.KapaID)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 
-}
-
-// KapacitorTaskUpdateWithURL proxies to kapacitor with URL
-func (s *Service) KapacitorTaskUpdateWithURL(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	idStr, err := paramStr("id", r)
-	if err != nil {
-		invalidData(w, err, s.Logger)
-		return
-	}
-	scriptType, err := paramStr("name", r)
-	if err != nil {
-		invalidData(w, err, s.Logger)
-		return
-	}
-	org, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &idStr})
-	if err != nil {
-		notFound(w, idStr, s.Logger)
-		return
-	}
-
-	c := kapa.NewClient(org.AIKapacitor.KapaURL, org.AIKapacitor.Username, org.AIKapacitor.Password, org.AIKapacitor.InsecureSkipVerify)
-	var req cloudhub.AlertRule
-	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-		invalidData(w, err, s.Logger)
-		return
-	}
-	// TODO: validate this data
-	/*
-		if err := req.Valid(); err != nil {
-			invalidData(w, err)
-			return
-		}
-	*/
-
-	// Check if the rule exists and is scoped correctly
-	tid := scriptType + org.ID
-	if _, err = c.Get(ctx, tid); err != nil {
-		if err == cloudhub.ErrAlertNotFound {
-			notFound(w, tid, s.Logger)
-			return
-		}
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-		return
-	}
-
-	// Replace alert completely with this new alert.
-	req.ID = tid
-	task, err := c.Update(ctx, c.Href(tid), req)
-	if err != nil {
-		invalidData(w, err, s.Logger)
-		return
-	}
-
-	// log registrationte
-	msg := fmt.Sprintf(MsgKapacitorRuleModified.String(), task.Rule.Name, tid)
-	s.logRegistration(ctx, "Kapacitors Task Update", msg)
-	response := map[string]interface{}{
-		"Message": msg,
-	}
-
-	encodeJSON(w, http.StatusCreated, response, s.Logger)
-}
-
-// KapacitorTaskGetWithURL retrieves specific task from kapacitor using URL
-func (s *Service) KapacitorTaskGetWithURL(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	idStr, err := paramStr("id", r)
-	if err != nil {
-		invalidData(w, err, s.Logger)
-		return
-	}
-	scriptType, err := paramStr("name", r)
-	if err != nil {
-		invalidData(w, err, s.Logger)
-		return
-	}
-	org, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &idStr})
-	if err != nil {
-		notFound(w, idStr, s.Logger)
-		return
-	}
-
-	c := kapa.NewClient(org.AIKapacitor.KapaURL, org.AIKapacitor.Username, org.AIKapacitor.Password, org.AIKapacitor.InsecureSkipVerify)
-
-	tid := scriptType + org.ID
-	task, err := c.Get(ctx, tid)
-	if err != nil {
-		if err == cloudhub.ErrAlertNotFound {
-			notFound(w, tid, s.Logger)
-			return
-		}
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-		return
-	}
-
-	res := newAlertResponseWithURL(task, org.ID, scriptType)
-	encodeJSON(w, http.StatusOK, res, s.Logger)
 }

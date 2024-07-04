@@ -27,6 +27,7 @@ type Service struct {
 	AddonTokens              map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
 	OSP                      OSP
 	EtcdEndpoints            []string
+	CannedPath               string
 }
 
 type superAdminProviderGroups struct {

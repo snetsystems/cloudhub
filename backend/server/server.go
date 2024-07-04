@@ -662,7 +662,8 @@ func (s *Server) Serve(ctx context.Context) {
 		s.AddonURLs,
 		s.AddonTokens,
 		osp,
-		s.EtcdEndpoints)
+		s.EtcdEndpoints,
+		s.CannedPath)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -817,7 +818,9 @@ func openService(
 	addonURLs map[string]string,
 	addonTokens map[string]string,
 	osp OSP,
-	EtcdEndpoints []string) Service {
+	EtcdEndpoints []string,
+	CannedPath string,
+) Service {
 
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
 	if err != nil {
@@ -906,6 +909,7 @@ func openService(
 		AddonTokens:            addonTokens,
 		OSP:                    osp,
 		EtcdEndpoints:          EtcdEndpoints,
+		CannedPath:             CannedPath,
 	}
 }
 

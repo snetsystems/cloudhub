@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -1248,6 +1249,11 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return http.StatusInternalServerError, nil, err
 	}
 	cannedFilePath := filepath.Join("../../", "canned", "template_logstash_gen.toml")
+
+	if _, err := os.Stat(cannedFilePath); os.IsNotExist(err) {
+		cannedFilePath = filepath.Join(s.CannedPath, "template_logstash_gen.toml")
+	}
+
 	tmpl, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
 		Field: kapa.LogstashTemplateField,
 		Path:  &cannedFilePath,
