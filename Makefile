@@ -1,8 +1,8 @@
 VERSION = 1.5.0
 ifeq ($(OS), Windows_NT)
-	GOBINDATA := $(shell go-bindata.exe --version 2>nil)
+    GOBINDATA := $(shell go-bindata.exe --version 2>nil)
 else
-	GOBINDATA := $(shell which go-bindata 2> /dev/null)
+    GOBINDATA := $(shell which go-bindata 2> /dev/null)
 endif
 
 COMMIT ?= $(shell git rev-parse --short=8 HEAD)
@@ -39,7 +39,7 @@ assets: .jssrc .bindata
 backend/dist/dist_gen.go: $(UISOURCES)
 	go generate -x ./backend/dist
 
-backend/canned/bin_gen.go: backend/canned/*.json
+backend/canned/bin_gen.go: backend/canned/*.json backend/canned/*.toml
 	go generate -x ./backend/canned
 
 backend/protoboards/bin_gen.go: backend/protoboards/*.json
@@ -60,10 +60,11 @@ dep: .jsdep .godep
 .godep:
 ifndef GOBINDATA
 	@echo "Installing go-bindata"
-	go get -u github.com/kevinburke/go-bindata/go-bindata
+	go install github.com/go-bindata/go-bindata/...@latest
+	export PATH=$PATH:$(go env GOPATH)/bin
 	@echo "Installing go-protoc"
-	go get -u github.com/gogo/protobuf/protoc-gen-gofast
-	GO111MODULE=on go get
+	go install github.com/gogo/protobuf/protoc-gen-gofast@latest
+	GO111MODULE=on go mod tidy
 endif
 	@touch .godep
 
