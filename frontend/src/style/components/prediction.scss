@@ -69,3 +69,139 @@
 .prediction-tooltip.active {
   display: block;
 }
+
+.predictionTooltip-container {
+  width: 100%;
+  text-align: center;
+
+  .predictionTooltip-value {
+    &.predictionTooltip--normal {
+      color: $c-rainforest;
+    }
+    &.predictionTooltip--warning {
+      color: $c-pineapple;
+    }
+
+    &.predictionTooltip--danger {
+      color: #dc4e58;
+    }
+
+    &.predictionTooltip--critical {
+      color: #ff0000;
+    }
+
+    &.predictionTooltip--emergency {
+      color: #8b0000;
+    }
+
+    &.predictionTooltip-ipmi--normal {
+      color: $c-rainforest;
+    }
+
+    &.predictionTooltip-ipmi--warning {
+      color: $c-pineapple;
+    }
+
+    &.predictionTooltip-ipmi--danger {
+      color: #dc4e58;
+    }
+
+    &.predictionTooltip-ipmi--critical {
+      color: #ff0000;
+    }
+    &.predictionTooltip-ipmi--emergency {
+      color: #ab0000;
+    }
+  }
+
+  .predictionTooltip {
+    height: 2px;
+    text-align: center;
+    background: -webkit-linear-gradient(left, #2de5a5 0%, #298bdb 100%);
+    margin-top: 2px;
+
+    &.predictionTooltip--caution {
+      background: -webkit-linear-gradient(left, #2de5a5 8%, $c-pineapple 100%);
+    }
+
+    &.predictionTooltip--warning {
+      background: -webkit-linear-gradient(
+        left,
+        $c-pineapple 0%,
+        $c-dreamsicle 100%
+      );
+    }
+
+    &.predictionTooltip--danger {
+      background: -webkit-linear-gradient(left, $c-dreamsicle, red 100%);
+    }
+  }
+}
+
+.IPMI-predictionTooltip {
+  height: 2px;
+  text-align: center;
+  background: $c-rainforest;
+  margin-top: 2px;
+
+  &.predictionTooltip--normal {
+    background: $c-rainforest;
+  }
+  &.predictionTooltip--warning {
+    background: $c-pineapple;
+  }
+
+  &.predictionTooltip--danger {
+    background: #dc4e58;
+  }
+
+  &.predictionTooltip--critical {
+    background: #ff0000;
+  }
+
+  &.predictionTooltip--emergency {
+    background: #8b0000;
+  }
+
+  &.predictionTooltip-ipmi--normal {
+    background: $c-rainforest;
+  }
+
+  &.predictionTooltip-ipmi--warning {
+    background: $c-pineapple;
+  }
+
+  &.predictionTooltip-ipmi--danger {
+    background: #dc4e58;
+  }
+
+  &.predictionTooltip-ipmi--critical {
+    background: #ff0000;
+  }
+  &.predictionTooltip-ipmi--emergency {
+    background: #ab0000;
+  }
+}
+
+.topology-group-title-container {
+  width: 100%;
+  text-align: center;
+}
+
+.tab-pannel {
+}
+.blink {
+  animation: blink-animation 1s infinite;
+}
+
+@keyframes blink-animation {
+  0% {
+    fill: #ab0000;
+  }
+  50% {
+    fill: #ff4533;
+  }
+  100% {
+    fill: #ab0000;
+  }
+}

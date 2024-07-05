@@ -214,7 +214,6 @@ function PredictionDashBoard({
                       graphOptions: {
                         ...cell.graphOptions,
                         clickCallback: (_, __, points) => {
-                          console.log(points[0].xval)
                           setSelectDate(points[0].xval)
                         },
                       },

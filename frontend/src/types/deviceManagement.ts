@@ -213,3 +213,10 @@ export interface PredictionLayoutCell {
   minW?: number
   minH?: number
 }
+
+export interface PredictionTooltipNode {
+  name: string
+  cpu: number
+  memory: number
+  traffic: string
+}
