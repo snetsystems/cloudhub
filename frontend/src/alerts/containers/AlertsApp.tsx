@@ -152,6 +152,9 @@ class AlertsApp extends PureComponent<Props, State> {
         const nameIndex = alertSeries[0].columns.findIndex(
           col => col === 'alertName'
         )
+        const triggerTypeIndex = alertSeries[0].columns.findIndex(
+          col => col === 'triggerType'
+        )
 
         alertSeries[0].values.forEach(s => {
           results.push({
@@ -160,6 +163,7 @@ class AlertsApp extends PureComponent<Props, State> {
             value: `${s[valueIndex]}`,
             level: s[levelIndex],
             name: `${s[nameIndex]}`,
+            triggerType: `${s[triggerTypeIndex]}`,
           })
         })
 

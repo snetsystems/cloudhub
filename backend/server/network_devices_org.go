@@ -241,23 +241,22 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	if isChangedKapaURL {
-		if previousAIKapacitor.KapaURL != "" {
-			deleteLearningTask(ctx, s, org, previousAIKapacitor)
-		}
-		reqTask := deviceOrgRequest{
-			ID:           deviceOrg.ID,
-			MLFunction:   &deviceOrg.MLFunction,
-			DataDuration: &deviceOrg.DataDuration,
-			CronSchedule: req.CronSchedule,
-			AIKapacitor:  &deviceOrg.AIKapacitor,
-		}
-		err = createLearningTask(ctx, s, org, reqTask, deviceOrg)
-		if err != nil {
-			msg := fmt.Sprintf("Error updating TickSCript %s: %v", idStr, err)
-			Error(w, http.StatusInternalServerError, msg, s.Logger)
-			return
-		}
+	if isChangedKapaURL && previousAIKapacitor.KapaURL != "" {
+		deleteLearningTask(ctx, s, org, previousAIKapacitor)
+	}
+
+	reqTask := deviceOrgRequest{
+		ID:           deviceOrg.ID,
+		MLFunction:   &deviceOrg.MLFunction,
+		DataDuration: &deviceOrg.DataDuration,
+		CronSchedule: req.CronSchedule,
+		AIKapacitor:  &deviceOrg.AIKapacitor,
+	}
+	err = createLearningTask(ctx, s, org, reqTask, deviceOrg)
+	if err != nil {
+		msg := fmt.Sprintf("Error updating TickSCript %s: %v", idStr, err)
+		Error(w, http.StatusInternalServerError, msg, s.Logger)
+		return
 	}
 
 	if err := s.Store.NetworkDeviceOrg(ctx).Update(ctx, deviceOrg); err != nil {
@@ -423,10 +422,12 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
 
 	if req.CronSchedule == nil {
-		*req.CronSchedule = CronSchedule
+		defaultCronSchedule := CronSchedule
+		req.CronSchedule = &defaultCronSchedule
 	}
 	if req.MLFunction == nil {
-		*req.MLFunction = MLFunctionMultiplied
+		defaultMLFunction := MLFunctionMultiplied
+		req.MLFunction = &defaultMLFunction
 	}
 	taskReq := cloudhub.AutoGenerateLearnRule{
 		OrganizationName: org.Name,
@@ -492,6 +493,7 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 }
 
 func deleteLearningTask(ctx context.Context, s *Service, org *cloudhub.Organization, AIKapacitor cloudhub.AIKapacitor) error {
+
 	c := kapa.NewClient(AIKapacitor.KapaURL, AIKapacitor.Username, AIKapacitor.Password, AIKapacitor.InsecureSkipVerify)
 
 	kapaID := cloudhub.LearnScriptPrefix + org.ID

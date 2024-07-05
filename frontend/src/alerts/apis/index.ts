@@ -7,7 +7,7 @@ export const getAlerts = (
   limit: number,
   db: string
 ) => {
-  const query = `SELECT host, value, level, alertName FROM cloudhub_alerts WHERE time >= '${
+  const query = `SELECT host, value, level, alertName, triggerType FROM cloudhub_alerts WHERE time >= '${
     timeRange.lower
   }' AND time <= '${timeRange.upper}' ORDER BY time desc ${
     limit ? `LIMIT ${limit}` : ''

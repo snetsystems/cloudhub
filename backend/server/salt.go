@@ -494,7 +494,7 @@ func (s *Service) GetWheelKeyAcceptedListAll() (int, []byte, error) {
 }
 
 // DockerRestart is tests to see if path is a valid directory
-func (s *Service) DockerRestart(path string, serviceName string, targetMinion string) (int, []byte, error) {
+func (s *Service) DockerRestart(path string, targetMinion string) (int, []byte, error) {
 	type kwarg struct {
 		Cmd string `json:"cmd"`
 		Cwd string `json:"cwd"`

@@ -53,7 +53,7 @@ func (a *Alert) Generate(rule cloudhub.AlertRule) (cloudhub.TICKScript, error) {
 // GenerateTaskFromTemplate uses the provided template to generate a task.
 func (a *Alert) GenerateTaskFromTemplate(config cloudhub.LoadTemplateConfig, tmplParams cloudhub.TemplateParams) (cloudhub.TICKScript, error) {
 
-	tmpl, err := LoadTemplate(config)
+	tmpl, _, err := LoadTemplate(config)
 	if err != nil {
 		return "", err
 	}

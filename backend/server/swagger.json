@@ -9426,7 +9426,7 @@
           "description": "data_duration for learning",
           "example": "15"
         },
-        "relearn_cycle": {
+        "cron_schedule": {
           "type": "string",
           "description": "Learning cron format",
           "example": "* * * * *"
@@ -9441,7 +9441,8 @@
         "ml_function",
         "data_duration",
         "prediction_mode",
-        "is_prediction_active"
+        "is_prediction_active",
+        "cron_schedule"
       ]
     },
     "DevicesOrgResponse": {

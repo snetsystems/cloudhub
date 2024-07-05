@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -1247,9 +1248,30 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
+	cannedFilePath := filepath.Join("../../", "canned", "template_logstash_gen.toml")
+
+	if _, err := os.Stat(cannedFilePath); os.IsNotExist(err) {
+		cannedFilePath = filepath.Join(s.CannedPath, "template_logstash_gen.toml")
+	}
+
+	tmpl, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
+		Field: kapa.LogstashTemplateField,
+		Path:  &cannedFilePath,
+	})
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+	dockerPath, ok := extraFields["DockerPath"]
+	if !ok {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	dirPath, ok := extraFields["ConfigPath"]
+	if !ok {
+		return http.StatusInternalServerError, nil, err
+	}
 
 	fileName := fmt.Sprintf("%s_snmp.nx.rb", org.Name)
-	dirPath := "/home/yslee/snet/cloudhub_elk/logstash/pipeline"
 	filePath := path.Join(dirPath, fileName)
 	var statusCode int
 	var resp []byte
@@ -1283,14 +1305,6 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 			return statusCode, resp, err
 		}
 		return statusCode, resp, nil
-	}
-	cannedFilePath := filepath.Join("../../", "canned", "template_logstash_gen.toml")
-	tmpl, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
-		Field: kapa.LogstashTemplate,
-		Path:  &cannedFilePath,
-	})
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
 	}
 
 	var hostEntries []string
@@ -1347,8 +1361,8 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 		return statusCode, resp, err
 	}
-	dockerPath := "/home/yslee/snet/cloudhub_elk"
-	if statusCode, resp, err := s.DockerRestart(dockerPath, "kapacitor", devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+
+	if statusCode, resp, err := s.DockerRestart(dockerPath, devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 		return statusCode, nil, err
 	} else if resp != nil {
 		r := &struct {

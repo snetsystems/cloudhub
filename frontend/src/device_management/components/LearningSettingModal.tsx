@@ -116,7 +116,9 @@ function LearningSettingModal({
   const [taskForTiskscriptUpdate, setTaskForTiskscriptUpdate] = useState<Task>(
     DEFAULT_TASK
   )
-  const [cronSchedule, setCronSchedule] = useState<string>('')
+  const [cronSchedule, setCronSchedule] = useState<string>(
+    DEFAULT_CRON_SCHEDULE
+  )
 
   useEffect(() => {
     const organizationID = me.currentOrganization.id
@@ -311,7 +313,7 @@ function LearningSettingModal({
 
       await updateDeviceOrganization({
         id: getOrganizationIdByName(organizations, organization),
-        orgLearningModel: {...rest},
+        orgLearningModel: {...rest, cron_schedule: cronSchedule},
       })
       await updateTask()
 
@@ -384,7 +386,9 @@ function LearningSettingModal({
   const setOriginalCronSchedule = (task: Task) => {
     const cronRegex = /var cron = '([^']*)'/
     const match = task?.tickscript?.match(cronRegex)
-    const cronValue = match ? match?.[1] : DEFAULT_CRON_SCHEDULE
+    const cronValue = match
+      ? match?.[1] || DEFAULT_CRON_SCHEDULE
+      : DEFAULT_CRON_SCHEDULE
 
     setCronSchedule(cronValue)
   }
@@ -402,7 +406,7 @@ function LearningSettingModal({
 
       notify(notifyTickscriptUpdated())
     } catch (error) {
-      notify(notifyTickscriptUpdateFailedWithMessage())
+      console.error(notifyTickscriptUpdateFailedWithMessage())
     }
   }
 
