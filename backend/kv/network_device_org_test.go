@@ -25,7 +25,7 @@ func TestNetworkDeviceOrgStore(t *testing.T) {
 			LoadModule:        "earn.ch_nx_load",
 			MLFunction:        "Algorithm_1",
 			DataDuration:      1,
-			LearnedDevicesIDs: []uint64{1, 2},
+			LearnedDevicesIDs: []string{"1", "2"},
 			CollectorServer:   "ch-collector-1",
 		},
 		{
@@ -33,7 +33,7 @@ func TestNetworkDeviceOrgStore(t *testing.T) {
 			LoadModule:        "earn.ch_nx_load",
 			MLFunction:        "Algorithm_2",
 			DataDuration:      2,
-			LearnedDevicesIDs: []uint64{3, 4},
+			LearnedDevicesIDs: []string{"3", "4"},
 			CollectorServer:   "ch-collector-2"},
 	}
 

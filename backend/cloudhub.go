@@ -1209,9 +1209,9 @@ type NetworkDeviceOrg struct {
 	LoadModule          string      `json:"load_module"`
 	MLFunction          string      `json:"ml_function"`
 	DataDuration        int         `json:"data_duration"`
-	LearnedDevicesIDs   []uint64    `json:"learned_devices_ids"`
+	LearnedDevicesIDs   []string    `json:"learned_devices_ids"`
 	CollectorServer     string      `json:"collector_server"`
-	CollectedDevicesIDs []uint64    `json:"collected_devices_ids"`
+	CollectedDevicesIDs []string    `json:"collected_devices_ids"`
 	AIKapacitor         AIKapacitor `json:"ai_kapacitor"`
 }
 
@@ -1240,7 +1240,7 @@ var DeviceCategoryMap = map[string]string{
 // It is expected that only one of ID or Organization will be
 // specified, but all are provided NetworkDeviceStore should prefer ID.
 type NetworkDeviceQuery struct {
-	ID           *uint64
+	ID           *string
 	Organization *string
 }
 
@@ -1262,7 +1262,7 @@ type SNMPConfig struct {
 
 // NetworkDevice represents the information of a network device
 type NetworkDevice struct {
-	ID                     uint64     `json:"id,omitempty"`
+	ID                     string     `json:"id,omitempty"`
 	Organization           string     `json:"organization"`
 	DeviceIP               string     `json:"device_ip"`
 	Hostname               string     `json:"hostname"`

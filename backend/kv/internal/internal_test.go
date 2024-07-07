@@ -561,7 +561,7 @@ func TestMarshalCSP(t *testing.T) {
 
 func TestMarshalDevice(t *testing.T) {
 	v := cloudhub.NetworkDevice{
-		ID:                     123,
+		ID:                     "123",
 		Organization:           "default",
 		DeviceIP:               "192.168.1.1",
 		Hostname:               "device01",
@@ -606,9 +606,9 @@ func TestMarshalNetworkDeviceOrg(t *testing.T) {
 		LoadModule:          "learn.ch_nx_load",
 		MLFunction:          "ml_multiplied",
 		DataDuration:        1,
-		LearnedDevicesIDs:   []uint64{1, 2, 3},
+		LearnedDevicesIDs:   []string{"1", "2", "3"},
 		CollectorServer:     "ch-collector-1",
-		CollectedDevicesIDs: []uint64{1, 2, 3},
+		CollectedDevicesIDs: []string{"1", "2", "3"},
 		AIKapacitor: cloudhub.AIKapacitor{
 			KapaID:             1,
 			SrcID:              2,

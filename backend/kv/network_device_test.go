@@ -21,7 +21,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 
 	devices := []cloudhub.NetworkDevice{
 		{
-			ID:                     uint64(547),
+			ID:                     "547",
 			Organization:           "default",
 			DeviceIP:               "192.168.1.1",
 			Hostname:               "device01",
@@ -42,7 +42,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 			},
 		},
 		{
-			ID:                     uint64(547),
+			ID:                     "547",
 			Organization:           "1",
 			DeviceIP:               "192.168.1.2",
 			Hostname:               "device02",
@@ -106,7 +106,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 	}
 
 	// Getting test for a wrong id.
-	id := uint64(1000)
+	id := "1000"
 	empty_device, err := s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
 	fmt.Println(empty_device)
 	if err == nil {
