@@ -1,7 +1,7 @@
 import {MLFunctionMsg} from 'src/device_management/constants'
 
 export interface DeviceData {
-  id?: number
+  id?: string
   organization: string
   device_ip: string
   hostname?: string
@@ -86,7 +86,7 @@ export interface CreateDeviceListResponse {
 }
 
 export interface FailedDevice {
-  id: number
+  id: string
   device_ip?: string
   device_id?: string
   errorMessage: string
@@ -96,7 +96,7 @@ export interface GetDeviceListResponse {
 }
 
 export interface UpdateDeviceRequest {
-  id: number
+  id: string
   deviceData: DeviceData
 }
 
@@ -110,7 +110,7 @@ export interface DeleteDeviceResponse {
 }
 
 export interface DeleteDeviceParams {
-  devices_ids: number[]
+  devices_ids: string[]
 }
 
 export type ImportDevicePageStatus = 'UploadCSV' | 'DeviceStatus'
@@ -133,12 +133,12 @@ export interface ApplyLearningEnableStatusRequest {
 }
 
 export interface LearningDevice {
-  device_id: number
+  device_id: string
   is_learning: boolean
 }
 
 export interface CollectingDevice {
-  device_id: number
+  device_id: string
   is_collecting: boolean
   is_collecting_cfg_written: boolean
 }
@@ -190,11 +190,11 @@ export interface DevicesOrgData {
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
   prediction_mode?: typeof PredictionMode[keyof typeof PredictionMode]
-  learned_devices_ids?: number[]
+  learned_devices_ids?: string[]
   collector_server?: string
   load_module?: string
   is_prediction_active?: false
-  collected_devices_ids?: number[]
+  collected_devices_ids?: string[]
 }
 
 export const PredictionMode = {

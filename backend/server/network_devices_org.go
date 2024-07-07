@@ -33,17 +33,17 @@ type deviceOrgResponse struct {
 	LoadModule          string               `json:"load_module"`
 	MLFunction          string               `json:"ml_function"`
 	DataDuration        int                  `json:"data_duration"`
-	LearnedDevicesIDs   []uint64             `json:"learned_devices_ids"`
+	LearnedDevicesIDs   []string             `json:"learned_devices_ids"`
 	CollectorServer     string               `json:"collector_server"`
-	CollectedDevicesIDs []uint64             `json:"collected_devices_ids"`
+	CollectedDevicesIDs []string             `json:"collected_devices_ids"`
 	AIKapacitor         cloudhub.AIKapacitor `json:"ai_kapacitor"`
 }
 type updateDeviceOrgRequest struct {
 	LoadModule          *string               `json:"load_module,omitempty"`
 	MLFunction          *string               `json:"ml_function,omitempty"`
 	DataDuration        *int                  `json:"data_duration,omitempty"`
-	CollectedDevicesIDs *[]uint64             `json:"collected_devices_ids"`
-	LearnedDevicesIDs   *[]uint64             `json:"learned_devices_ids"`
+	CollectedDevicesIDs *[]string             `json:"collected_devices_ids"`
+	LearnedDevicesIDs   *[]string             `json:"learned_devices_ids"`
 	AIKapacitor         *cloudhub.AIKapacitor `json:"ai_kapacitor"`
 	CronSchedule        *string               `json:"cron_schedule"`
 }
@@ -312,8 +312,8 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 		LoadModule:          LoadModule,
 		MLFunction:          *req.MLFunction,
 		DataDuration:        *req.DataDuration,
-		LearnedDevicesIDs:   []uint64{},
-		CollectedDevicesIDs: []uint64{},
+		LearnedDevicesIDs:   []string{},
+		CollectedDevicesIDs: []string{},
 		CollectorServer:     "",
 		AIKapacitor: cloudhub.AIKapacitor{
 			SrcID:              req.AIKapacitor.SrcID,

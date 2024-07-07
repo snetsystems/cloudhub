@@ -106,7 +106,7 @@ function ApplyMonitoringModal({
     devicesData: DeviceData[]
   ): ApplyMonitoringRequest => {
     const collecting_devices: CollectingDevice[] = devicesData.map(device => ({
-      device_id: device.id || 0,
+      device_id: device.id || '0',
       is_collecting: isMonitoringEnabled,
       is_collecting_cfg_written: device.is_collecting_cfg_written || false,
     }))

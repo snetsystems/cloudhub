@@ -376,11 +376,10 @@ class DeviceManagement extends PureComponent<Props, State> {
   })
 
   private deleteDevicesAJAX = async (idList: string[]) => {
-    const numIdList = idList.map(i => Number(i))
     this.setState({isLoading: true})
 
     try {
-      await deleteDevice({devices_ids: numIdList})
+      await deleteDevice({devices_ids: idList})
 
       this.props.notify(notifyDeleteDevicesSucceeded())
       this.getDeviceAJAX()

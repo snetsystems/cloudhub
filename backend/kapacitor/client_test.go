@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	client "github.com/influxdata/kapacitor/client/v1"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
+// MockKapa is a mock implementation of KapaClient interface
 type MockKapa struct {
 	ResTask     client.Task
 	ResTasks    []client.Task
@@ -29,6 +32,7 @@ type MockKapa struct {
 	*client.UpdateTaskOptions
 }
 
+// CreateTask is a mock implementation of KapaClient.CreateTask
 func (m *MockKapa) CreateTask(opt client.CreateTaskOptions) (client.Task, error) {
 	m.CreateTaskOptions = &opt
 	return m.ResTask, m.CreateError
@@ -1346,7 +1350,7 @@ func TestClient_Create(t *testing.T) {
 				ctx: context.Background(),
 				rule: cloudhub.AlertRule{
 					ID:   "",
-					Name: "myname's",
+					Name: "cloudhub-v1-howdy",
 					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
@@ -1391,7 +1395,7 @@ var whereFilter = lambda: TRUE
 
 var period = 1d
 
-var name = 'myname\'s'
+var name = 'cloudhub-v1-howdy'
 
 var idVar = name + '-{{.Group}}'
 
@@ -1405,11 +1409,11 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cloudhub'
+var outputDB = 'db'
 
 var outputRP = 'autogen'
 
-var outputMeasurement = 'alerts'
+var outputMeasurement = 'cloudhub_alerts'
 
 var triggerType = 'deadman'
 
@@ -1451,7 +1455,6 @@ trigger
 trigger
     |httpOut('output')
 `,
-
 				ID:     "cloudhub-v1-howdy",
 				Type:   client.StreamTask,
 				Status: client.Enabled,
@@ -1470,7 +1473,6 @@ trigger
 					Type: "stream",
 					DBRPs: []cloudhub.DBRP{
 						{
-
 							DB: "db",
 							RP: "rp",
 						},
@@ -1496,7 +1498,7 @@ trigger
 				ctx: context.Background(),
 				rule: cloudhub.AlertRule{
 					ID:   "",
-					Name: "myname's",
+					Name: "cloudhub-v1-howdy",
 					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
@@ -1535,7 +1537,7 @@ var whereFilter = lambda: TRUE
 
 var period = 1d
 
-var name = 'myname\'s'
+var name = 'cloudhub-v1-howdy'
 
 var idVar = name
 
@@ -1549,11 +1551,11 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cloudhub'
+var outputDB = 'db'
 
 var outputRP = 'autogen'
 
-var outputMeasurement = 'alerts'
+var outputMeasurement = 'cloudhub_alerts'
 
 var triggerType = 'deadman'
 
@@ -1595,7 +1597,6 @@ trigger
 trigger
     |httpOut('output')
 `,
-
 				ID:     "cloudhub-v1-howdy",
 				Type:   client.StreamTask,
 				Status: client.Enabled,
@@ -1614,7 +1615,6 @@ trigger
 					Type: "stream",
 					DBRPs: []cloudhub.DBRP{
 						{
-
 							DB: "db",
 							RP: "rp",
 						},
@@ -1681,8 +1681,8 @@ trigger
 			if tt.wantErr {
 				return
 			}
-			if !gocmp.Equal(got, tt.want) {
-				t.Errorf("%q. Client.Create() = -got/+want %s", tt.name, gocmp.Diff(got, tt.want))
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("%q. Client.Create() = -got/+want %s", tt.name, cmp.Diff(got, tt.want))
 			}
 			if !reflect.DeepEqual(kapa.CreateTaskOptions, tt.createTaskOptions) {
 				t.Errorf("Client.Create() =  %v, want %v", kapa.CreateTaskOptions, tt.createTaskOptions)
@@ -1690,3 +1690,243 @@ trigger
 		})
 	}
 }
+func (m *MockKapa) EnableTask(id string) error {
+	return nil
+}
+
+func (m *MockKapa) DisableTask(id string) error {
+	return nil
+}
+
+func removeWhitespace(s string) string {
+	return strings.ReplaceAll(strings.Join(strings.Fields(s), ""), "\n", "")
+}
+
+// func TestClient_CustomCreate(t *testing.T) {
+// 	type fields struct {
+// 		URL        string
+// 		Username   string
+// 		Password   string
+// 		ID         cloudhub.ID
+// 		Ticker     cloudhub.Ticker
+// 		kapaClient func(url, username, password string, insecureSkipVerify bool) (KapaClient, error)
+// 	}
+// 	type args struct {
+// 		ctx  context.Context
+// 		rule cloudhub.AutoGeneratePredictionRule
+// 	}
+// 	kapa := &MockKapa{}
+
+// 	alertScript := `
+// var name = 'Anomaly Prediction'
+// var db = 'logstash'
+
+// var predict_mode = 'Ensemble'
+// var ensemble_condition = 'and'
+// var message = 'Kapacitor-1 Detected: [{{.Level}}] [{{.ID}}] {{ index .Tags "value" }}'
+// var triggerType = 'anomaly_predict'
+
+// var tffUsed = stream
+//     |from()
+//         .database(db)
+//         .retentionPolicy('autogen')
+//         .measurement('snmp_nx_if')
+//         .where(lambda: ("ifDescr" =~ /Ethernet/))
+//         .groupBy(['agent_host', 'sys_name'])
+
+// var cpuUsed = stream
+//     |from()
+//         .database(db)
+//         .retentionPolicy('autogen')
+//         .measurement('snmp_nx')
+//         .groupBy(['agent_host', 'sys_name'])
+//     |eval(lambda: "cpu1min")
+//         .as('cpu_used')
+
+// var inOctets = tffUsed
+//     |sum('ifHCInOctets')
+//         .as('total_ifHCInOctets')
+//     |derivative('total_ifHCInOctets')
+//         .unit(1s)
+//         .nonNegative()
+
+// var outOctets = tffUsed
+//     |sum('ifHCOutOctets')
+//         .as('total_ifHCOutOctets')
+//     |derivative('total_ifHCOutOctets')
+//         .unit(1s)
+//         .nonNegative()
+
+// var joined = inOctets
+//     |join(outOctets)
+//         .as('in', 'out')
+//         .tolerance(1s)
+
+// var tffVolume = joined
+//     |eval(lambda: "in.total_ifHCInOctets" + "out.total_ifHCOutOctets")
+//         .as('total_traffic')
+
+// var predictData = cpuUsed
+//     |join(tffVolume)
+//         .as('cpu', 'traffic')
+//         .tolerance(1s)
+//     |eval(lambda: "cpu.cpu_used", lambda: "traffic.total_traffic")
+//         .as('cpu_used', 'tff_volume')
+//     |window()
+//         .periodCount(5)
+//         .everyCount(1)
+
+// var data = predictData
+//     @predict_batch()
+//         .predict_mode(predict_mode)
+//         .ensemble_condition(ensemble_condition)
+//     |log()
+
+// var trigger = data
+//     |alert()
+//         .crit(lambda: "predict_status" == 'false')
+//         .message(message)
+//         .id(name)
+//         .idTag('alertID')
+//         .levelTag('level')
+//         .messageField('message')
+//         .tcp('myaddress:22')
+
+// trigger
+//     |eval(lambda: float("value"))
+//         .as('value')
+//         .keep()
+//     |influxDBOut()
+//         .create()
+//         .database('cloudhub')
+//         .retentionPolicy('autogen')
+//         .measurement('alerts')
+//         .tag('alertName', name)
+//         .tag('triggerType', triggerType)
+// `
+
+// 	tests := []struct {
+// 		name              string
+// 		fields            fields
+// 		args              args
+// 		resTask           client.Task
+// 		want              *Task
+// 		resError          error
+// 		wantErr           bool
+// 		createTaskOptions *client.CreateTaskOptions
+// 	}{
+// 		{
+// 			name: "create custom alert rule",
+// 			fields: fields{
+// 				kapaClient: func(url, username, password string, insecureSkipVerify bool) (KapaClient, error) {
+// 					return kapa, nil
+// 				},
+// 				Ticker: &Alert{},
+// 				ID: &MockID{
+// 					ID: "howdy",
+// 				},
+// 			},
+// 			args: args{
+// 				ctx: context.Background(),
+// 				rule: cloudhub.AutoGeneratePredictionRule{
+// 					AlertRule: cloudhub.AlertRule{
+// 						ID:   "",
+// 						Name: "Anomaly Prediction",
+// 						Query: &cloudhub.QueryConfig{
+// 							Database:        "logstash",
+// 							RetentionPolicy: "autogen",
+// 							Measurement:     "snmp_nx_if",
+// 							GroupBy: cloudhub.GroupBy{
+// 								Tags: []string{
+// 									"agent_host",
+// 									"sys_name",
+// 								},
+// 							},
+// 						},
+// 						AlertNodes: cloudhub.AlertNodes{
+// 							TCPs: []*cloudhub.TCP{
+// 								{
+// 									Address: "myaddress:22",
+// 								},
+// 							},
+// 						},
+// 						Message: "Kapacitor-1 Detected: [{{.Level}}] [{{.ID}}] {{ index .Tags \"value\" }}",
+// 					},
+// 				},
+// 			},
+// 			resTask: client.Task{
+// 				ID:     "cloudhub-v1-howdy",
+// 				Status: client.Enabled,
+// 				Type:   client.StreamTask,
+// 				DBRPs: []client.DBRP{
+// 					{
+// 						Database:        "logstash",
+// 						RetentionPolicy: "autogen",
+// 					},
+// 				},
+// 				Link: client.Link{
+// 					Href: "/kapacitor/v1/tasks/cloudhub-v1-howdy",
+// 				},
+// 			},
+// 			createTaskOptions: &client.CreateTaskOptions{
+// 				TICKscript: removeWhitespace(alertScript),
+// 				ID:         "cloudhub-v1-howdy",
+// 				Type:       client.StreamTask,
+// 				Status:     client.Enabled,
+// 				DBRPs: []client.DBRP{
+// 					{
+// 						Database:        "logstash",
+// 						RetentionPolicy: "autogen",
+// 					},
+// 				},
+// 			},
+// 			want: &Task{
+// 				ID:         "cloudhub-v1-howdy",
+// 				Href:       "/kapacitor/v1/tasks/cloudhub-v1-howdy",
+// 				HrefOutput: "/kapacitor/v1/tasks/cloudhub-v1-howdy/output",
+// 				Rule: cloudhub.AlertRule{
+// 					Type: "stream",
+// 					DBRPs: []cloudhub.DBRP{
+// 						{
+// 							DB: "logstash",
+// 							RP: "autogen",
+// 						},
+// 					},
+// 					Status: "enabled",
+// 					ID:     "cloudhub-v1-howdy",
+// 					Name:   "cloudhub-v1-howdy",
+// 				},
+// 			},
+// 		},
+// 	}
+
+// 	for _, tt := range tests {
+// 		kapa.ResTask = tt.resTask
+// 		kapa.CreateError = tt.resError
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			c := &Client{
+// 				URL:        tt.fields.URL,
+// 				Username:   tt.fields.Username,
+// 				Password:   tt.fields.Password,
+// 				ID:         tt.fields.ID,
+// 				Ticker:     tt.fields.Ticker,
+// 				kapaClient: tt.fields.kapaClient,
+// 			}
+// 			got, err := c.AutoGenerateCreate(tt.args.ctx, tt.args.rule)
+// 			if (err != nil) != tt.wantErr {
+// 				t.Errorf("AutoGenerateCreate Client.Create() error = %v, wantErr %v", err, tt.wantErr)
+// 				return
+// 			}
+// 			if tt.wantErr {
+// 				return
+// 			}
+// 			if !cmp.Equal(got, tt.want) {
+// 				t.Errorf("%q. AutoGenerateCreate Client.Create() = -got/+want %s", tt.name, cmp.Diff(got, tt.want))
+// 			}
+// 			if removeWhitespace(kapa.CreateTaskOptions.TICKscript) != removeWhitespace(tt.createTaskOptions.TICKscript) {
+
+// 				t.Errorf("TICKscript Diff = %s", cmp.Diff(removeWhitespace(kapa.CreateTaskOptions.TICKscript), removeWhitespace(tt.createTaskOptions.TICKscript)))
+// 			}
+// 		})
+// 	}
+// }

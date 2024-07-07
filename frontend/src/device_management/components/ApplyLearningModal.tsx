@@ -110,7 +110,7 @@ function ApplyLearningModal({
     devicesData: DeviceData[]
   ): ApplyLearningEnableStatusRequest => {
     const learning_devices: LearningDevice[] = devicesData.map(device => ({
-      device_id: device.id || 0,
+      device_id: device.id || '0',
       is_learning: isLearningEnabled,
     }))
 
