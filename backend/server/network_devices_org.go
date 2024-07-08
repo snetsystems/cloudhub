@@ -409,7 +409,7 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	if err != nil || len(influxDBs) < 1 {
 		return fmt.Errorf("Error fetching InfluxDBs: %v", err)
 	}
-	etcdDBs := s.EtcdEndpoints
+	etcdDBs := s.InternalENV.EtcdEndpoints
 	EtcdOrigin := ""
 	EtcdPort := ""
 	if len(etcdDBs) > 0 {

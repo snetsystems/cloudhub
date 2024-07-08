@@ -1073,6 +1073,12 @@ type Environment struct {
 	CustomAutoRefresh      string        `json:"customAutoRefresh,omitempty"`
 }
 
+// The InternalEnvironment variable is an internally shared environment variable within the server.
+type InternalEnvironment struct {
+	EtcdEndpoints []string
+	TemplatePath  string
+}
+
 // Topology is represents represents an topology
 type Topology struct {
 	ID           string   `json:"id,string,omitempty"`

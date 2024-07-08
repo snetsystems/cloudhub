@@ -26,8 +26,7 @@ type Service struct {
 	AddonURLs                map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
 	AddonTokens              map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
 	OSP                      OSP
-	EtcdEndpoints            []string
-	CannedPath               string
+	InternalENV              cloudhub.InternalEnvironment
 }
 
 type superAdminProviderGroups struct {
