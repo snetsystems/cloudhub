@@ -27,6 +27,7 @@ SCRIPT_DIR = "/usr/lib/cloudhub/scripts"
 LOGROTATE_DIR = "/etc/logrotate.d"
 CANNED_DIR = "/usr/share/cloudhub/cloudhub-canned"
 PROTOBOARDS_DIR = "/usr/share/cloudhub/cloudhub-protoboards"
+TEMPLATE_DIR = "/usr/share/cloudhub/cloudhub-templates"
 RESOURCES_DIR = "/usr/share/cloudhub/resources"
 KEY_DIR = "/usr/lib/cloudhub/key"
 
@@ -133,6 +134,7 @@ def create_package_fs(build_root):
         LOGROTATE_DIR[1:],
         CANNED_DIR[1:],
         PROTOBOARDS_DIR[1:],
+        TEMPLATE_DIR[1:], 
         RESOURCES_DIR[1:],
         KEY_DIR[1:]
     ]
@@ -168,6 +170,11 @@ def package_scripts(build_root, config_only=False, windows=False):
                                               os.path.join(
                                                   build_root, PROTOBOARDS_DIR[1:]),
                                               os.path.join(build_root, PROTOBOARDS_DIR[1:], "*json")),
+            shell=True, print_output=True)
+        run("cp {} {} && chmod 644 {}".format("backend/templates/*.toml",
+                                              os.path.join(
+                                                  build_root, TEMPLATE_DIR[1:]),
+                                              os.path.join(build_root, TEMPLATE_DIR[1:], "*.toml")),
             shell=True, print_output=True)
 
 

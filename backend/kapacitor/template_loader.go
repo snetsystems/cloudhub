@@ -35,8 +35,8 @@ const (
 	LogstashTemplateField cloudhub.TemplateFieldType = "LogstashTemplate"
 )
 
-// getDefaultTemplatePath returns the default path to the template file based on the workspace environment variable
-func getDefaultTemplatePath() string {
+// getDefaultTemplatesPath returns the default path to the template file based on the workspace environment variable
+func getDefaultTemplatesPath() string {
 	//Todo: update ${workspace}/backend/canned
 	return filepath.Join("../../", "template", "tickscript_templates.toml")
 }
@@ -45,7 +45,7 @@ func getDefaultTemplatePath() string {
 func LoadTemplate(config cloudhub.LoadTemplateConfig) (*template.Template, map[string]string, error) {
 	// Use default template path if none is provided
 	if config.Path == nil {
-		defaultPath := getDefaultTemplatePath()
+		defaultPath := getDefaultTemplatesPath()
 		config.Path = &defaultPath
 	}
 

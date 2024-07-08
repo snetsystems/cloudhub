@@ -158,7 +158,7 @@ type Server struct {
 
 	OSP map[string]string `long:"osp" description:"The Informations to access to OSP API. '--osp=admin-provider:{salt admin provider} --osp=admin-user:{admin user name} --osp=admin-pw:{admin user password} --osp=auth-url:{keystone url} --osp=pj-domain-id:{project domain id} --osp=user-domain-id:{user domain id}'. E.g. via environment variable: 'export OSP=admin:{salt admin provider},admin-user:{admin user name}', etc." env:"OSP" env-delim:","`
 
-	TemplatePath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/template)" env:"TEMPLATE_PATH" default:"template"`
+	TemplatesPath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/cloudhub-templates)" env:"TEMPLATES_PATH" default:"template"`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -674,7 +674,7 @@ func (s *Server) Serve(ctx context.Context) {
 	}
 	service.InternalENV = cloudhub.InternalEnvironment{
 		EtcdEndpoints: s.EtcdEndpoints,
-		TemplatePath:  s.TemplatePath,
+		TemplatesPath: s.TemplatesPath,
 	}
 	if !validBasepath(s.Basepath) {
 		err := fmt.Errorf("invalid basepath, must follow format \"/mybasepath\"")

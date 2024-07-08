@@ -1237,7 +1237,7 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	cannedFilePath := filepath.Join("../../", "template", "template_logstash_gen.toml")
 
 	if _, err := os.Stat(cannedFilePath); os.IsNotExist(err) {
-		cannedFilePath = filepath.Join(s.InternalENV.TemplatePath, "template_logstash_gen.toml")
+		cannedFilePath = filepath.Join(s.InternalENV.TemplatesPath, "template_logstash_gen.toml")
 	}
 
 	tmpl, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{

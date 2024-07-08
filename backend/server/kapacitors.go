@@ -1083,7 +1083,7 @@ func (s *Service) KapacitorTaskPostWithURL(w http.ResponseWriter, r *http.Reques
 		"AlertServices":        alertServices,
 	}
 
-	cannedFilePath := filepath.Join(s.InternalENV.TemplatePath, "tickscript_templates.toml")
+	cannedFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
 	if _, err := os.Stat(cannedFilePath); os.IsNotExist(err) {
 		cannedFilePath = filepath.Join("../../", "template", "tickscript_templates.toml")
 	}
