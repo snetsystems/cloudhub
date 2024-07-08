@@ -44,6 +44,7 @@ import {
   Kapacitor,
   Source,
   Task,
+  AlertRule,
 } from 'src/types'
 import {
   DevicesOrgData,
@@ -244,10 +245,12 @@ function LearningSettingModal({
         : undefined
       const aiKapacitorName = aiKapacitor?.name || ''
 
-      await fetchSpecificAlertRule(aiKapacitor, organizationID)
+      if (aiKapacitor) {
+        await fetchSpecificAlertRule(aiKapacitor, organizationID)
+      }
 
       setIsStoredKapacitorInValid(!aiKapacitor)
-      setStoredKapacitor(aiKapacitor)
+      setStoredKapacitor(aiKapacitor || DEFAULT_KAPACITOR)
       setStoredKapacitorName(aiKapacitorName)
       setDeviceManagementIsLoading(false)
     } catch (error) {
@@ -368,24 +371,24 @@ function LearningSettingModal({
     }
   }
 
-  const saveFormatTaskForTickscriptUpdate = (storedTask: Task) => {
-    if (storedTask) {
+  const saveFormatTaskForTickscriptUpdate = (fetchedRule: AlertRule) => {
+    if (fetchedRule) {
       setTaskForTiskscriptUpdate({
-        id: storedTask.id,
-        name: storedTask.name,
-        status: storedTask.status,
-        tickscript: storedTask.tickscript,
-        dbrps: storedTask.dbrps,
-        type: storedTask.type,
+        id: fetchedRule.id,
+        name: fetchedRule.name,
+        status: fetchedRule.status,
+        tickscript: fetchedRule.tickscript,
+        dbrps: fetchedRule.dbrps,
+        type: fetchedRule.type,
       })
 
-      setOriginalCronSchedule(storedTask)
+      setOriginalCronSchedule(fetchedRule)
     }
   }
 
-  const setOriginalCronSchedule = (task: Task) => {
+  const setOriginalCronSchedule = (rule: AlertRule) => {
     const cronRegex = /var cron = '([^']*)'/
-    const match = task?.tickscript?.match(cronRegex)
+    const match = rule?.tickscript?.match(cronRegex)
     const cronValue = match
       ? match?.[1] || DEFAULT_CRON_SCHEDULE
       : DEFAULT_CRON_SCHEDULE
