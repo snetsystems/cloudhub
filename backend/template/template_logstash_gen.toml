@@ -1,4 +1,6 @@
 [logstash_gen]
+dockerPath = ""
+configPath = ""
 template = """
 input {
 	snmp {
@@ -190,5 +192,3 @@ output {
 	}
 }
 """
-dockerPath = ""
-configPath = ""

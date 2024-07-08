@@ -157,6 +157,8 @@ type Server struct {
 	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"The token associated with addon [salt, swan]. E.g. via flags: '-k=salt:{token} -k=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
 
 	OSP map[string]string `long:"osp" description:"The Informations to access to OSP API. '--osp=admin-provider:{salt admin provider} --osp=admin-user:{admin user name} --osp=admin-pw:{admin user password} --osp=auth-url:{keystone url} --osp=pj-domain-id:{project domain id} --osp=user-domain-id:{user domain id}'. E.g. via environment variable: 'export OSP=admin:{salt admin provider},admin-user:{admin user name}', etc." env:"OSP" env-delim:","`
+
+	TemplatePath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/template)" env:"TEMPLATE_PATH" default:"template"`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -662,8 +664,7 @@ func (s *Server) Serve(ctx context.Context) {
 		s.AddonURLs,
 		s.AddonTokens,
 		osp,
-		s.EtcdEndpoints,
-		s.CannedPath)
+	)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -671,7 +672,10 @@ func (s *Server) Serve(ctx context.Context) {
 		TelegrafSystemInterval: s.TelegrafSystemInterval,
 		CustomAutoRefresh:      s.CustomAutoRefresh,
 	}
-
+	service.InternalENV = cloudhub.InternalEnvironment{
+		EtcdEndpoints: s.EtcdEndpoints,
+		TemplatePath:  s.TemplatePath,
+	}
 	if !validBasepath(s.Basepath) {
 		err := fmt.Errorf("invalid basepath, must follow format \"/mybasepath\"")
 		logger.
@@ -818,8 +822,6 @@ func openService(
 	addonURLs map[string]string,
 	addonTokens map[string]string,
 	osp OSP,
-	EtcdEndpoints []string,
-	CannedPath string,
 ) Service {
 
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
@@ -908,8 +910,6 @@ func openService(
 		AddonURLs:              addonURLs,
 		AddonTokens:            addonTokens,
 		OSP:                    osp,
-		EtcdEndpoints:          EtcdEndpoints,
-		CannedPath:             CannedPath,
 	}
 }
 

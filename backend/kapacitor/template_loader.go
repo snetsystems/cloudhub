@@ -38,7 +38,7 @@ const (
 // getDefaultTemplatePath returns the default path to the template file based on the workspace environment variable
 func getDefaultTemplatePath() string {
 	//Todo: update ${workspace}/backend/canned
-	return filepath.Join("../../", "canned", "tickscript_templates.toml")
+	return filepath.Join("../../", "template", "tickscript_templates.toml")
 }
 
 // LoadTemplate loads and parses the template from the given file path and field type
