@@ -33,6 +33,7 @@ import {PredictionModal} from './PredictionModal'
 import {Alert} from 'src/types/alerts'
 import _ from 'lodash'
 import Layout from 'src/shared/components/Layout'
+import {Link} from 'react-router'
 
 interface Props {
   inPresentationMode: boolean
@@ -305,6 +306,15 @@ function PredictionDashBoard({
   return (
     <>
       <Page className="prediction-page">
+        <div className="prediction-page--button">
+          <Link
+            to={`/sources/${source.id}/ai/device-management/prediction-rule`}
+            className="btn btn-sm btn-primary"
+            style={{marginRight: '4px'}}
+          >
+            <span className="icon plus" /> Build Alert Rule
+          </Link>
+        </div>
         <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
           <div className="dashboard container-fluid full-width">
             {!!cells && cells.length > 0 && (
