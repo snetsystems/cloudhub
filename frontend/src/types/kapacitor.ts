@@ -51,8 +51,30 @@ export interface AlertRule {
   status: string
   executing: boolean
   error: string
-  created: string
-  modified: string
+  created?: string
+  modified?: string
+  queryID?: string
+  'last-enabled'?: string
+}
+
+export interface AlertRuleForDeviceManagement {
+  id?: string
+  tickscript: TICKScript
+  query?: QueryConfig
+  every: string
+  alertNodes: AlertNodes
+  message: string
+  details: string
+  trigger: string
+  values: TriggerValues
+  name: string
+  type: string
+  dbrps: DBRP[]
+  status: string
+  executing: boolean
+  error: string
+  created?: string
+  modified?: string
   queryID?: string
   'last-enabled'?: string
 }

@@ -27,6 +27,7 @@ SCRIPT_DIR = "/usr/lib/cloudhub/scripts"
 LOGROTATE_DIR = "/etc/logrotate.d"
 CANNED_DIR = "/usr/share/cloudhub/cloudhub-canned"
 PROTOBOARDS_DIR = "/usr/share/cloudhub/cloudhub-protoboards"
+TEMPLATES_DIR = "/usr/share/cloudhub/cloudhub-templates"
 RESOURCES_DIR = "/usr/share/cloudhub/resources"
 KEY_DIR = "/usr/lib/cloudhub/key"
 
@@ -38,6 +39,7 @@ POSTUNINST_SCRIPT = "etc/scripts/post-uninstall.sh"
 LOGROTATE_SCRIPT = "etc/scripts/logrotate"
 CANNED_SCRIPTS = "backend/canned/*json"
 PROTOBOARDS_SCRIPTS = "backend/protoboards/*json"
+TEMPLATES_SCRIPTS = "backend/templates/*toml"
 KEY_FILE = "backend/cmd/cloudhub/cloudhub_self_signed.pem"
 
 # Default AWS S3 bucket for uploads
@@ -133,6 +135,7 @@ def create_package_fs(build_root):
         LOGROTATE_DIR[1:],
         CANNED_DIR[1:],
         PROTOBOARDS_DIR[1:],
+        TEMPLATES_DIR[1:], 
         RESOURCES_DIR[1:],
         KEY_DIR[1:]
     ]
@@ -168,6 +171,11 @@ def package_scripts(build_root, config_only=False, windows=False):
                                               os.path.join(
                                                   build_root, PROTOBOARDS_DIR[1:]),
                                               os.path.join(build_root, PROTOBOARDS_DIR[1:], "*json")),
+            shell=True, print_output=True)
+        run("cp {} {} && chmod 644 {}".format(TEMPLATES_SCRIPTS,
+                                              os.path.join(
+                                                  build_root, TEMPLATES_DIR[1:]),
+                                              os.path.join(build_root, TEMPLATES_DIR[1:], "*.toml")),
             shell=True, print_output=True)
 
 

@@ -1076,7 +1076,7 @@ type Environment struct {
 // The InternalEnvironment variable is an internally shared environment variable within the server.
 type InternalEnvironment struct {
 	EtcdEndpoints []string
-	TemplatePath  string
+	TemplatesPath string
 }
 
 // Topology is represents represents an topology

@@ -84,7 +84,8 @@ import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
 import {reducerVSphere, ResponseVSphere} from './clouds/types'
 
-import AiRoutePage from './device_management/containers/AiRoutePage'
+import AiRoutePage from 'src/device_management/containers/AiRoutePage'
+import PredictionRulePage from 'src/device_management/containers/PredictionRulePage'
 
 const errorsQueue = []
 
@@ -242,7 +243,10 @@ class Root extends PureComponent<Record<string, never>, State> {
             >
               <Route component={CheckSources}>
                 <Route path="ai/:tab" component={AiRoutePage} />
-
+                <Route
+                  path="ai/:tab/prediction-rule"
+                  component={PredictionRulePage}
+                />
                 <Route path="status" component={StatusPage} />
                 <Route path="visualize" component={DataExplorerPage} />
                 <Route path="dashboards" component={DashboardsPage} />

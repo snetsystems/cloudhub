@@ -33,7 +33,7 @@ ${BINARY}: $(SOURCES) .bindata .jsdep .godep
 
 assets: .jssrc .bindata
 
-.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go backend/kv/internal/internal.pb.go backend/template/bin_gen.go
+.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go backend/kv/internal/internal.pb.go backend/templates/bin_gen.go
 	@touch .bindata
 
 backend/dist/dist_gen.go: $(UISOURCES)
@@ -51,8 +51,8 @@ backend/server/swagger_gen.go: backend/server/swagger.json
 backend/kv/internal/internal.pb.go: backend/kv/internal/internal.proto
 	go generate -x ./backend/kv/internal
 
-backend/template/bin_gen.go: backend/template/*.toml
-	go generate -x ./backend/template
+backend/templates/bin_gen.go: backend/templates/*.toml
+	go generate -x ./backend/templates
 
 .jssrc: $(UISOURCES)
 	cd frontend && yarn run clean && yarn run build

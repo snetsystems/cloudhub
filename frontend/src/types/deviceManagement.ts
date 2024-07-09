@@ -1,4 +1,5 @@
 import {MLFunctionMsg} from 'src/device_management/constants'
+import {AlertRule} from 'src/types/kapacitor'
 
 export interface DeviceData {
   id?: string
@@ -189,7 +190,7 @@ export interface DevicesOrgData {
   data_duration: number
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
-  prediction_mode?: typeof PredictionMode[keyof typeof PredictionMode]
+  prediction_mode?: typeof PREDICT_MODE[keyof typeof PREDICT_MODE]
   learned_devices_ids?: string[]
   collector_server?: string
   load_module?: string
@@ -197,12 +198,15 @@ export interface DevicesOrgData {
   collected_devices_ids?: string[]
 }
 
-export const PredictionMode = {
+const PREDICT_MODE = {
   ML: 'ML',
   DL: 'DL',
-  None: 'None',
-  Ensemble: 'ML + DL',
+  EnsembleOrCondition: 'Ensemble (ML or DL)',
+  EnsembleAndCondition: 'Ensemble (ML and DL)',
 } as const
+
+export type PredictModeKey = keyof typeof PREDICT_MODE
+export type PredictMode = typeof PREDICT_MODE[keyof typeof PREDICT_MODE]
 
 export interface PredictionLayoutCell {
   i: string
@@ -219,4 +223,21 @@ export interface PredictionTooltipNode {
   cpu: number
   memory: number
   traffic: string
+}
+
+export interface CreateDeviceManagmenntScriptRequest extends AlertRule {
+  organization: string
+  organization_name: string
+  predict_mode: string
+  task_template?: string
+}
+
+export interface CreateDeviceManagmenntScriptResponse extends AlertRule {
+  data: {
+    links?: {
+      self?: string
+      kapacitor?: string
+      output?: string
+    }
+  }
 }

@@ -45,6 +45,12 @@
   width: 100%;
 }
 
+.prediction-page--button {
+  padding: 15px;
+  display: flex;
+  justify-content: end;
+}
+
 .prediction-tooltip {
   position: absolute;
 }

@@ -24,6 +24,7 @@ import {
 import {
   APPLY_LEARNING_ENABLE_STATUS_URL,
   APPLY__MONITORING_URL,
+  DEVICE_MANAGEMENT_SCRIPT_URL,
   DEVICE_MANAGEMENT_URL,
   NETWORK_MANAGEMENT_ORGANIZATIONS_URL,
   SNMP_CONNECTION_URL,
@@ -41,6 +42,8 @@ import replaceTemplate from 'src/tempVars/utils/replace'
 import {getDeep} from 'src/utils/wrappers'
 import {
   ApplyLearningEnableStatusRequest,
+  CreateDeviceManagmenntScriptRequest,
+  CreateDeviceManagmenntScriptResponse,
   CreateDeviceOrganizationOption,
   GetAllDevicesOrgResponse,
   UpdateDeviceOrganizationOption,
@@ -280,6 +283,25 @@ export const updateTaskForDeviceManagement = async (
     const response = await updateTaskAJAX(kapacitor, task, ruleID)
 
     const {data} = response
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const createDeviceManagementTickScript = async (
+  deviceManagementScript: CreateDeviceManagmenntScriptRequest
+) => {
+  try {
+    const response = await AJAX<CreateDeviceManagmenntScriptResponse>({
+      data: deviceManagementScript,
+      url: DEVICE_MANAGEMENT_SCRIPT_URL,
+      method: 'POST',
+    })
+
+    const {data} = response as CreateDeviceManagmenntScriptResponse
 
     return data
   } catch (error) {

@@ -45,6 +45,28 @@ export function fetchRule(source, ruleID) {
   }
 }
 
+export function fetchRuleWithCallback(source, ruleID, callback) {
+  return dispatch => {
+    getActiveKapacitor(source).then(kapacitor => {
+      getRuleAJAX(kapacitor, ruleID).then(({data: rule}) => {
+        dispatch({
+          type: 'LOAD_RULE',
+          payload: {
+            rule: Object.assign(rule, {queryID: rule?.query?.id || ''}),
+          },
+        })
+        dispatch(loadQuery(rule.query))
+
+        if (callback) {
+          callback({
+            rule: Object.assign(rule, {queryID: rule?.query?.id || ''}),
+          })
+        }
+      })
+    })
+  }
+}
+
 const addQuery = queryID => ({
   type: 'KAPA_ADD_QUERY',
   payload: {
