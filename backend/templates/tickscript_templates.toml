@@ -21,10 +21,21 @@ data
     |alert()
         .crit(lambda: "count" > 0)
         .exec('/opt/cloudhub/bin/python', '/opt/cloudhub/ch-ai-src/ai.py', '-p', '/var/log/kapacitor-ai/ai.log', '-G', '-M', loadModule, '-x', extra_opts)
-
 """
 
 [prediction_task]
+findAlertNodesKey = """
+var trigger = data
+    |alert()
+        .crit(lambda: "predict_status" == 'false')
+        .message(message)
+        .id(name)
+        .idTag('alertID')
+        .levelTag('level')
+        .messageField('message')
+        .durationField('duration')
+"""
+
 template = """
 var name = 'Anomaly Prediction_{{.OrgName}}'
 
@@ -126,3 +137,4 @@ trigger
         .tag('alertName', name)
         .tag('triggerType', 'anomaly_predict')
 """
+

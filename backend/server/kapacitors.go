@@ -9,7 +9,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"text/template"
 
 	"github.com/bouk/httprouter"
 	"github.com/influxdata/kapacitor/client/v1"
@@ -594,7 +596,7 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 }
 
 // newAlertResponseWithURL formats task into an alertResponse
-func newAlertResponseWithURL(task *kapa.Task, org string, scriptType string) *alertResponse {
+func newAlertResponseWithURL(task *kapa.Task) *alertResponse {
 	res := &alertResponse{
 		AlertRule: task.Rule,
 		Links:     alertLinks{},
@@ -1037,8 +1039,98 @@ func (s *Service) KapacitorRulesDelete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// KapacitorTaskPostWithURL proxies POST to kapacitor
-func (s *Service) KapacitorTaskPostWithURL(w http.ResponseWriter, r *http.Request) {
+// CreateKapacitorTask proxies POST to kapacitor
+func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
+	var req cloudhub.AutoGeneratePredictionRule
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+	ctx := r.Context()
+	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &req.Organization})
+	if err != nil {
+		notFound(w, err.Error(), s.Logger)
+		return
+	}
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &req.Organization})
+	if err != nil {
+		notFound(w, err.Error(), s.Logger)
+		return
+	}
+
+	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
+
+	if req.Name == "" {
+		req.Name = "Anomaly Prediction_" + org.Name
+	}
+	if req.OrganizationName == "" {
+		req.OrganizationName = org.Name
+	}
+	if req.TaskTemplate == "" {
+		req.TaskTemplate = kapa.PredictionTaskField
+	}
+
+	alertServices, err := kapa.AlertServices(req.AlertRule)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	tmplParams := cloudhub.TemplateParams{
+		"OrgName":              req.OrganizationName,
+		"Message":              req.Message,
+		"RetentionPolicy":      "autogen",
+		"PredictMode":          req.PredictMode,
+		"PredictModeCondition": req.PredictModeCondition,
+		"AlertServices":        alertServices,
+	}
+
+	templatesFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
+	if _, err := os.Stat(templatesFilePath); os.IsNotExist(err) {
+		templatesFilePath = filepath.Join("../../", "templates", "tickscript_templates.toml")
+	}
+
+	script, err := c.Ticker.GenerateTaskFromTemplate(cloudhub.LoadTemplateConfig{
+		Field: kapa.PredictionTaskField,
+		Path:  &templatesFilePath,
+	}, tmplParams)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	kapaID := cloudhub.PredictScriptPrefix + org.ID
+
+	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: "autogen"}}
+
+	if org.ID != "default" {
+		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: "autogen"})
+	}
+	createTaskOptions := &client.CreateTaskOptions{
+		ID:         kapaID,
+		Type:       client.StreamTask,
+		DBRPs:      DBRPs,
+		TICKscript: string(script),
+		Status:     client.Enabled,
+	}
+
+	task, err := c.AutoGenerateCreate(ctx, createTaskOptions)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleCreated.String(), task.Rule.Name, org.Name)
+	s.logRegistration(ctx, "Kapacitors Task", msg)
+
+	res := newAlertResponse(task, deviceOrg.AIKapacitor.SrcID, deviceOrg.AIKapacitor.KapaID)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+
+}
+
+// UpdateKapacitorTask proxies Update to kapacitor
+func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	var req cloudhub.AutoGeneratePredictionRule
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidData(w, err, s.Logger)
@@ -1068,58 +1160,93 @@ func (s *Service) KapacitorTaskPostWithURL(w http.ResponseWriter, r *http.Reques
 		req.TaskTemplate = kapa.PredictionTaskField
 	}
 
+	const tpl = `{{.AlertServices}}`
+
 	alertServices, err := kapa.AlertServices(req.AlertRule)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
-
-	tmplParams := cloudhub.TemplateParams{
-		"OrgName":              req.OrganizationName,
-		"Message":              req.Message,
-		"RetentionPolicy":      "autogen",
-		"PredictMode":          req.PredictMode,
-		"PredictModeCondition": req.PredictModeCondition,
-		"AlertServices":        alertServices,
+	// 데이터 설정
+	data := cloudhub.TemplateParams{
+		"AlertServices": alertServices,
 	}
 
-	cannedFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
-	if _, err := os.Stat(cannedFilePath); os.IsNotExist(err) {
-		cannedFilePath = filepath.Join("../../", "templates", "tickscript_templates.toml")
-	}
-
-	script, err := c.Ticker.GenerateTaskFromTemplate(cloudhub.LoadTemplateConfig{
-		Field: kapa.PredictionTaskField,
-		Path:  &cannedFilePath,
-	}, tmplParams)
+	var result strings.Builder
+	tmpl, err := template.New("alertTemplate").Parse(tpl)
 	if err != nil {
-		invalidData(w, err, s.Logger)
-		return
+		notFound(w, err.Error(), s.Logger)
 	}
 
+	err = tmpl.Execute(&result, data)
+	if err != nil {
+		notFound(w, err.Error(), s.Logger)
+	}
+
+	finalTemplate := cloudhub.TICKScript(result.String())
+
+	templatesFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
+	if _, err := os.Stat(templatesFilePath); os.IsNotExist(err) {
+		templatesFilePath = filepath.Join("../../", "templates", "tickscript_templates.toml")
+	}
+
+	_, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
+		Field: kapa.LogstashTemplateField,
+		Path:  &templatesFilePath,
+	})
+	if err != nil {
+		notFound(w, err.Error(), s.Logger)
+	}
+
+	findAlertNodesKey := extraFields["findAlertNodesKey"]
+
+	updatedString, err := updateAfterPattern(req.TICKScript, findAlertNodesKey, finalTemplate)
+	if err != nil {
+		notFound(w, err.Error(), s.Logger)
+	}
 	kapaID := cloudhub.PredictScriptPrefix + org.ID
-	createTaskOptions := &client.CreateTaskOptions{
-		ID:   kapaID,
-		Type: client.StreamTask,
-		DBRPs: []client.DBRP{
-			{Database: org.Name, RetentionPolicy: "autogen"},
-			{Database: "Default", RetentionPolicy: "autogen"},
-		},
-		TICKscript: string(script),
+
+	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: "autogen"}}
+
+	if org.ID != "default" {
+		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: "autogen"})
+	}
+	createTaskOptions := &client.UpdateTaskOptions{
+		ID:         kapaID,
+		Type:       client.StreamTask,
+		DBRPs:      DBRPs,
+		TICKscript: string(updatedString),
 		Status:     client.Enabled,
 	}
 
-	task, err := c.AutoGenerateCreate(ctx, createTaskOptions)
+	task, err := c.AutoGenerateUpdate(ctx, createTaskOptions, c.Href(kapaID))
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
-
 	// log registrationte
-	msg := fmt.Sprintf(MsgKapacitorRuleCreated.String(), task.Rule.Name, org.Name)
+	msg := fmt.Sprintf(MsgKapacitorRuleModified.String(), task.Rule.Name, org.Name)
 	s.logRegistration(ctx, "Kapacitors Task", msg)
 
 	res := newAlertResponse(task, deviceOrg.AIKapacitor.SrcID, deviceOrg.AIKapacitor.KapaID)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 
+}
+
+func updateAfterPattern(input cloudhub.TICKScript, pattern string, newValue cloudhub.TICKScript) (cloudhub.TICKScript, error) {
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return "", err
+	}
+
+	loc := re.FindStringIndex(string(input))
+	if loc == nil {
+		return input, fmt.Errorf("pattern not found")
+	}
+
+	beforePattern := input[:loc[1]]
+	afterPattern := input[loc[1]:]
+
+	result := beforePattern + newValue + afterPattern
+	return result, nil
 }

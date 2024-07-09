@@ -279,6 +279,7 @@ func (s *Service) SNMPConnTestBulk(w http.ResponseWriter, r *http.Request) {
 	for i, config := range reqs {
 		wg.Add(1)
 		sem <- struct{}{}
+		i := i
 		go func(ctx context.Context, config SNMPConfig, index int) {
 			defer wg.Done()
 			defer func() {
@@ -295,7 +296,7 @@ func (s *Service) SNMPConnTestBulk(w http.ResponseWriter, r *http.Request) {
 				}
 				<-sem
 			}()
-			snmpResult, err := s.testSNMP(ctx, config, index)
+			snmpResult, err := s.testSNMP(config, index)
 			if err != nil {
 				mu.Lock()
 				failedRequests = append(failedRequests, map[string]interface{}{
@@ -325,7 +326,7 @@ func (s *Service) SNMPConnTestBulk(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, response, s.Logger)
 }
 
-func (s *Service) testSNMP(ctx context.Context, config SNMPConfig, i int) (SNMPResponse, error) {
+func (s *Service) testSNMP(config SNMPConfig, i int) (SNMPResponse, error) {
 	queries := []SNMPQuery{
 		{Oid: "1.3.6.1.2.1.1.5", Key: "hostname", Process: processHostname},
 		{Oid: "1.3.6.1.2.1.1.7", Key: "deviceType", Process: processDeviceType},

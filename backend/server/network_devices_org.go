@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/influxdata/kapacitor/client/v1"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -21,7 +23,7 @@ func (s *Service) AllDevicesOrg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := newDevicesOrgResponse(ctx, s, devices)
+	res := newDevicesOrgResponse(devices)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
@@ -62,7 +64,7 @@ type deviceOrgError struct {
 	ErrorMessage string `json:"errorMessage"`
 }
 
-//InfluxdbInfo InfluxDB access Info
+// InfluxdbInfo InfluxDB access Info
 type InfluxdbInfo struct {
 	Origin   string
 	Port     string
@@ -123,10 +125,10 @@ func (r *updateDeviceOrgRequest) validUpdate() error {
 	return nil
 }
 
-func newDevicesOrgResponse(ctx context.Context, s *Service, devicesOrg []cloudhub.NetworkDeviceOrg) *devicesOrgResponse {
+func newDevicesOrgResponse(devicesOrg []cloudhub.NetworkDeviceOrg) *devicesOrgResponse {
 	Organizations := []*deviceOrgResponse{}
 	for _, org := range devicesOrg {
-		data, err := newDeviceOrgResponse(ctx, s, &org)
+		data, err := newDeviceOrgResponse(&org)
 		if err == nil {
 
 			Organizations = append(Organizations, data)
@@ -138,7 +140,7 @@ func newDevicesOrgResponse(ctx context.Context, s *Service, devicesOrg []cloudhu
 	}
 }
 
-func newDeviceOrgResponse(ctx context.Context, s *Service, deviceOrg *cloudhub.NetworkDeviceOrg) (*deviceOrgResponse, error) {
+func newDeviceOrgResponse(deviceOrg *cloudhub.NetworkDeviceOrg) (*deviceOrgResponse, error) {
 
 	resData := &deviceOrgResponse{
 		ID:                  deviceOrg.ID,
@@ -170,7 +172,7 @@ func (s *Service) NetworkDeviceOrgID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := newDeviceOrgResponse(ctx, s, deviceOrg)
+	res, err := newDeviceOrgResponse(deviceOrg)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating response for Device Org ID %s: %v", id, err), s.Logger)
 		return
@@ -268,7 +270,7 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	msg := fmt.Sprintf(MsgNetWorkDeviceModified.String(), idStr)
 	s.logRegistration(ctx, "NetWorkDevice", msg)
 
-	res, err := newDeviceOrgResponse(ctx, s, deviceOrg)
+	res, err := newDeviceOrgResponse(deviceOrg)
 	if err != nil {
 		notFound(w, idStr, s.Logger)
 		return
@@ -338,7 +340,7 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	res, err := newDeviceOrgResponse(ctx, s, deviceOrg)
+	res, err := newDeviceOrgResponse(deviceOrg)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating response for new Device Org: %v", err), s.Logger)
 		return
@@ -431,8 +433,6 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	}
 	taskReq := cloudhub.AutoGenerateLearnRule{
 		OrganizationName: org.Name,
-		Organization:     org.ID,
-		TaskTemplate:     kapa.LearnTaskField,
 		CronSchedule:     *req.CronSchedule,
 		LoadModule:       LoadModule,
 		MLFunction:       *req.MLFunction,
@@ -520,13 +520,21 @@ func deleteLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 }
 
 func getIPAndPort(rawURL string) (string, string, error) {
+	// Check if rawURL is in the form "IP:PORT"
+	if strings.Contains(rawURL, ":") {
+		host, port, err := net.SplitHostPort(rawURL)
+		if err == nil {
+			return host, port, nil
+		}
+	}
+
+	// Fallback to URL parsing
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return "", "", fmt.Errorf("error parsing URL: %v", err)
 	}
 
 	ip := parsedURL.Hostname()
-
 	port := parsedURL.Port()
 	if port == "" {
 		if parsedURL.Scheme == "https" {
