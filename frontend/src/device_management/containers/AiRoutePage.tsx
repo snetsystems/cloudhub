@@ -79,8 +79,6 @@ const AiRoutePage = (props: Props) => {
     organizations,
     timeZone,
     setTimeZone,
-    onChooseAutoRefresh,
-    onChooseCloudAutoRefresh,
     router,
   } = props
   const currentRoute = router.params?.tab
@@ -125,15 +123,15 @@ const AiRoutePage = (props: Props) => {
     setActiveTab(value)
   }
 
-  const handleChooseAutoRefresh = (option: {
-    milliseconds: RefreshRate
-    group?: string
-  }) => {
-    const {milliseconds, group} = option
-    group
-      ? onChooseCloudAutoRefresh({[group]: milliseconds})
-      : onChooseAutoRefresh(milliseconds)
-  }
+  // const handleChooseAutoRefresh = (option: {
+  //   milliseconds: RefreshRate
+  //   group?: string
+  // }) => {
+  //   const {milliseconds, group} = option
+  //   group
+  //     ? onChooseCloudAutoRefresh({[group]: milliseconds})
+  //     : onChooseAutoRefresh(milliseconds)
+  // }
 
   return (
     <Page>
@@ -188,7 +186,11 @@ const AiRoutePage = (props: Props) => {
           )}
           {activeTab === 'prediction' && (
             //@ts-ignore
-            <PredictionPage timeRange={timeRange} source={source} />
+            <PredictionPage
+              timeRange={timeRange}
+              source={source}
+              setTimeRange={setTimeRange}
+            />
           )}
         </>
       </Page.Contents>

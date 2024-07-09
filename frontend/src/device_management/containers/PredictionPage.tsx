@@ -3,19 +3,30 @@ import {connect} from 'react-redux'
 import PredictionDashBoard from '../components/PredictionDashBoard'
 import {Source, TimeRange} from 'src/types'
 import AJAX from 'src/utils/ajax'
-import {getAlerts} from 'src/alerts/apis'
 import {Alert} from 'src/types/alerts'
+import * as appActions from 'src/shared/actions/app'
 import _ from 'lodash'
+import {getPredictionAlert} from '../apis'
 
 interface Props {
   timeRange: TimeRange
   source: Source
   limit: number
+  setTimeRange: (value: TimeRange) => void
 }
-function PredictionPage({timeRange, source, limit: prevLimit}: Props) {
+function PredictionPage({
+  timeRange,
+  source,
+  limit: prevLimit,
+  setTimeRange,
+}: Props) {
+  const [selectDate, setSelectDate] = useState<number>(null)
+
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
 
-  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [alert, setAlert] = useState(null)
+
+  const [alertsData, setAlertsData] = useState<Alert[]>([])
 
   const [hasKapacitor, setHasKapacitor] = useState(false)
 
@@ -27,9 +38,20 @@ function PredictionPage({timeRange, source, limit: prevLimit}: Props) {
 
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    selectDate &&
+      alert.length &&
+      setTimeRange({
+        lower: convertTimeFormat(selectDate - 10000),
+        upper: convertTimeFormat(selectDate + 86400000),
+      })
+  }, [selectDate])
+
   // alert List get api
   useEffect(() => {
     setLimit(prevLimit ?? 30)
+
+    setSelectDate(null)
 
     AJAX({
       url: source.links?.kapacitors ?? '',
@@ -49,63 +71,84 @@ function PredictionPage({timeRange, source, limit: prevLimit}: Props) {
       })
   }, [timeRange])
 
-  //TODO: timerange var change to redux data not props
+  function convertTimeFormat(dateString) {
+    const date = new Date(dateString)
+    return date.toISOString()
+  }
+
+  //TODO: timerange var change to redux data not props -> why?
   const fetchAlerts = (): void => {
-    getAlerts(
+    getPredictionAlert(
       source.links.proxy,
       timeRange,
       limit * limitMultiplier,
       source.telegraf
     )
       .then(resp => {
-        const results = []
-
         const alertSeries = _.get(resp, ['data', 'results', '0', 'series'], [])
+
         if (alertSeries.length === 0) {
           setLoading(false)
-          setAlerts([])
+          setAlertsData([])
           return
         }
 
-        const timeIndex = alertSeries[0].columns.findIndex(
-          col => col === 'time'
-        )
-        const hostIndex = alertSeries[0].columns.findIndex(
-          col => col === 'host'
-        )
-        const valueIndex = alertSeries[0].columns.findIndex(
-          col => col === 'value'
-        )
-        const levelIndex = alertSeries[0].columns.findIndex(
-          col => col === 'level'
-        )
-        const nameIndex = alertSeries[0].columns.findIndex(
-          col => col === 'alertName'
-        )
+        setAlert(alertSeries)
 
-        alertSeries[0].values.forEach(s => {
-          results.push({
-            time: `${s[timeIndex]}`,
-            host: s[hostIndex],
-            value: `${s[valueIndex]}`,
-            level: s[levelIndex],
-            name: `${s[nameIndex]}`,
-          })
-        })
+        makeAlertsData(alertSeries)
 
-        // TODO: factor these setStates out to make a pure function and implement true limit & offset
         setError(false)
         setLoading(false)
-        setAlerts(results)
-        setIsAlertsMaxedOut(results.length !== limit * limitMultiplier)
       })
       .catch(e => {
         setError(e)
         setLoading(false)
-        setAlerts([])
+        setAlertsData([])
         setIsAlertsMaxedOut(false)
       })
   }
+
+  const makeAlertsData = alertSeries => {
+    const results = []
+
+    const timeIndex = alertSeries[0].columns.findIndex(col => col === 'time')
+    const hostIndex = alertSeries[0].columns.findIndex(col => col === 'host')
+    const valueIndex = alertSeries[0].columns.findIndex(col => col === 'value')
+    const levelIndex = alertSeries[0].columns.findIndex(col => col === 'level')
+    const nameIndex = alertSeries[0].columns.findIndex(
+      col => col === 'alertName'
+    )
+
+    alertSeries[0].values.forEach(s => {
+      results.push({
+        time: `${s[timeIndex]}`,
+        host: s[hostIndex],
+        value: `${s[valueIndex]}`,
+        level: s[levelIndex],
+        name: `${s[nameIndex]}`,
+      })
+    })
+
+    setAlertsData(results)
+    setIsAlertsMaxedOut(results.length !== limit * limitMultiplier)
+  }
+
+  // const filterFetchAlerts = selectDate => {
+  //   const timeIndex = alert[0].columns.findIndex(col => col === 'time')
+  //   const result = alert[0]?.values?.filter(i => {
+  //     if (
+  //       i[timeIndex] > selectDate - 43200000 &&
+  //       i[timeIndex] < selectDate + 43200000
+  //     ) {
+  //       console.log(i[timeIndex], selectDate)
+  //       return true
+  //     } else {
+  //       return false
+  //     }
+  //   })
+
+  //   console.log('result', result)
+  // }
 
   return (
     <>
@@ -113,7 +156,7 @@ function PredictionPage({timeRange, source, limit: prevLimit}: Props) {
         source={source}
         timeRange={timeRange}
         inPresentationMode={true}
-        alerts={alerts}
+        alerts={alertsData}
         error={error}
         fetchAlerts={fetchAlerts}
         hasKapacitor={hasKapacitor}
@@ -121,12 +164,29 @@ function PredictionPage({timeRange, source, limit: prevLimit}: Props) {
         loading={loading}
         setLimitMultiplier={setLimitMultiplier}
         host=""
-        manualRefresh={0}
         sources={[source]}
+        setSelectDate={setSelectDate}
       />
     </>
   )
 }
 
-export default connect(null)(PredictionPage)
+const mstp = ({
+  app: {
+    persisted: {timeZone},
+  },
+  auth: {isUsingAuth},
+}) => {
+  return {
+    isUsingAuth,
+    timeZone,
+  }
+}
+
+const mdtp = {
+  setTimeZone: appActions.setTimeZone,
+}
+
+export default connect(mstp, mdtp, null)(PredictionPage)
+
 // export default AiSettingPage

@@ -3,9 +3,11 @@ import * as d3 from 'd3'
 import {hexbin} from 'd3-hexbin'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
-
+import {PredictionTooltipNode} from 'src/types'
+import PredictionTooltip from './PredictionTooltip'
 interface Props {
   onHexbinClick: (num: number) => void
+  tooltipData: PredictionTooltipNode[]
 }
 
 interface HexagonData {
@@ -25,22 +27,21 @@ interface GenerateHexagonData {
   y: number
 }
 
-interface PredictionTooltipNode {
-  name: string
-  cpu: number
-  memory: number
-  traffic: string
-}
-
 const hexRadius = 30
 const hexPadding = 5
 
-const PredictionHexbin = ({onHexbinClick}: Props) => {
+const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
+  const parentRef = useRef<HTMLInputElement>(null)
+
+  const childrenRef = useRef<HTMLInputElement>(null)
+
   const svgRef = useRef<SVGSVGElement>(null)
 
   const [colorChange, setColorChange] = useState<number>(2)
 
   const [isTooltipActive, setIsTooltipActive] = useState(false)
+
+  const [isMouseOn, setIsMouseOn] = useState(false)
 
   const [tooltipNode, setTooltipNode] = useState<PredictionTooltipNode>({
     name: null,
@@ -54,22 +55,49 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
     y: 0,
   })
 
-  //   for (let i = 0; i < 430; i++) {
-  //     const newHostname = `${i + 1}`
-  //     inputData.push({
-  //       statusColor: i % colorChange === 1 ? 'red' : 'green',
-  //       hostname: newHostname,
-  //     })
-  //   }
+  const statusCal = (valueUsage: number) => {
+    const status =
+      valueUsage < 60
+        ? 'normal'
+        : valueUsage < 70
+        ? 'warning'
+        : valueUsage < 80
+        ? 'danger'
+        : valueUsage < 90
+        ? 'critical'
+        : valueUsage < 120
+        ? 'emergency'
+        : 'normal'
+    return status
+  }
+
+  const statusHexColor = (status: string) => {
+    //color change - prediction.scss
+    switch (status) {
+      case 'normal':
+        return '#2de5a5'
+      case 'warning':
+        return '#ffb94a'
+      case 'danger':
+        return '#dc4e58'
+      case 'critical':
+        return '#ff0000'
+      case 'emergency':
+        return '#ab0000'
+      default:
+        return '#7ce490'
+    }
+  }
 
   const inputData = useMemo<HexagonInputData[]>(() => {
-    return [...Array(20)].map((hex, i) => {
+    return tooltipData.map(hex => {
       return {
-        statusColor: i % colorChange === 1 ? 'red' : 'green',
+        statusColor: statusHexColor(statusCal((hex.cpu + hex.memory) / 2)),
         name: hex.name,
-        cpu: hex.cpu,
-        memory: hex.memory,
+        cpu: Number(hex.cpu.toFixed()),
+        memory: Number(hex.memory.toFixed()),
         traffic: hex.traffic,
+        status: statusCal((hex.cpu + hex.memory) / 2),
       }
     })
   }, [colorChange])
@@ -90,8 +118,8 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
           .attr('transform', d => `translate(${d.x},${d.y}) scale(1.1)`)
           .style('cursor', 'pointer')
           .attr('x', d => {
-            tempPosition.x = d.x
-            tempPosition.y = d.y
+            tempPosition.x = d.x + 15
+            tempPosition.y = d.y + 15
             setTooltipNode({
               cpu: d[0].cpu,
               memory: d[0].memory,
@@ -99,8 +127,8 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
               traffic: d[0].traffic,
             })
           })
-
         setIsTooltipActive(true)
+        setIsMouseOn(true)
         setTooltipPosition(tempPosition)
       })
       .on('mouseout', function () {
@@ -109,8 +137,9 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
           .duration(150)
           .attr('transform', d => `translate(${d.x},${d.y})`)
           .style('cursor', 'default')
-
-        setIsTooltipActive(false)
+        // setTooltipPosition({x: -999, y: -999})
+        setIsMouseOn(false)
+        // setIsTooltipActive(false)
       })
       .on('click', function () {
         d3.select(this).attr('x', d => {
@@ -191,6 +220,10 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
       .attr('d', hexbinGenerator.hexagon(hexRadius - hexPadding))
       .attr('transform', d => `translate(${d.x},${d.y})`)
       .attr('fill', d => d[0]?.statusColor)
+      .filter(d => {
+        return d[0]?.status === 'emergency'
+      })
+      .attr('class', 'hexagon blink')
 
     svg
       .selectAll('.hexagon-text')
@@ -204,25 +237,6 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
       .attr('dx', '.35em')
   }
 
-  const onMouseDBClick = (data: any) => {}
-
-  const onMouseOver = (target: SVGSVGElement) => {
-    setTooltipNode({
-      name: target.getAttribute('data-label'),
-      cpu: parseInt(target.getAttribute('data-cpu')),
-      memory: parseInt(target.getAttribute('data-memory')),
-      traffic: target.getAttribute('data-traffic'),
-    })
-    setIsTooltipActive(true)
-
-    d3.select(target).classed('kubernetes-hover', true)
-  }
-
-  const onMouseLeave = (target: SVGSVGElement) => {
-    setIsTooltipActive(false),
-      d3.select(target).classed('kubernetes-hover', false)
-  }
-
   //initialize
   useEffect(() => {
     drawHexagons()
@@ -230,21 +244,52 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
   }, [colorChange])
 
   const tooltipComponent = (tooltip: PredictionTooltipNode) => {
+    const gap = {width: 0, height: 0}
+    const position = {x: 0, y: 0}
+    const childWidth = {width: 0, height: 0}
+    if (!!parentRef.current && !!childrenRef.current) {
+      const {
+        offsetWidth: parentWidth,
+        offsetHeight: parentHeight,
+      } = parentRef.current
+
+      childWidth.width = childrenRef.current.offsetWidth
+      childWidth.height = childrenRef.current.offsetHeight
+
+      gap.width = tooltipPosition.x + childWidth.width - parentWidth
+      gap.height = tooltipPosition.y + childWidth.height - parentHeight
+    }
+
+    position.x =
+      gap.width > 0
+        ? tooltipPosition.x - childWidth.width - 30
+        : tooltipPosition.x
+    position.y =
+      gap.height > 0 ? tooltipPosition.y - gap.height : tooltipPosition.y
+
     return (
       <div
+        ref={childrenRef}
+        onMouseMove={() => {
+          setIsTooltipActive(false)
+        }}
+        // onMouseOut={() => setIsTooltipActive(false)}
         style={{
-          top: `${tooltipPosition.y + 15}px`,
-          left: `${tooltipPosition.x + 15}px`,
+          top: `${position.y}px`,
+          left: `${position.x}px`,
         }}
         className={`prediction-tooltip ${
-          isTooltipActive ? 'active' : 'hidden'
+          isTooltipActive || isMouseOn ? 'active' : 'hidden'
         }`}
       >
         <div className="prediction-tooltip-content">
-          <span>name: {tooltip.name}</span>
-          <span>cpu: {tooltip.cpu}</span>
-          <span>memory: {tooltip.memory}</span>
-          <span>traffic: {tooltip.traffic}</span>
+          <PredictionTooltip
+            cpu={tooltip.cpu}
+            memory={tooltip.memory}
+            traffic={tooltip.traffic}
+            name={tooltip.name}
+            status={statusCal((tooltip.cpu + tooltip.memory) / 2)}
+          />
         </div>
       </div>
     )
@@ -253,6 +298,7 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
   return (
     <FancyScrollbar style={{height: 'calc(100% - 45px)'}} autoHide={true}>
       <div
+        ref={parentRef}
         style={{
           backgroundColor: DEFAULT_CELL_BG_COLOR,
           height: 'calc(100% - 45px)',

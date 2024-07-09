@@ -242,7 +242,15 @@ class Root extends PureComponent<Record<string, never>, State> {
               component={UserIsAuthenticated(App)}
             >
               <Route component={CheckSources}>
-                <Route path="ai/:tab" component={AiRoutePage} />
+                <Route
+                  path="ai/:tab"
+                  component={props => (
+                    <AiRoutePage
+                      {...props}
+                      handleClearTimeout={this.handleClearTimeout}
+                    />
+                  )}
+                />{' '}
                 <Route
                   path="ai/:tab/prediction-rule"
                   component={PredictionRulePage}

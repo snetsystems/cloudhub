@@ -141,9 +141,9 @@ class AlertsTableRow extends PureComponent<Props> {
         ) : (
           <span>
             {value === '1'
-              ? 'ML'
+              ? 'Machine Learning'
               : value === '2'
-              ? 'DL'
+              ? 'Deep Learning'
               : value === '3'
               ? 'ALL'
               : 'OK'}
