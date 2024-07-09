@@ -411,7 +411,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v1/ai/network/managements/learning/config", EnsureAdmin(service.LearningDeviceManagement))
 
 	// Device Management tick script
-	router.POST("/cloudhub/v1/ai/network/managements/script/org", EnsureAdmin(service.KapacitorTaskPostWithURL))
+	router.POST("/cloudhub/v1/ai/network/managements/script/org", EnsureAdmin(service.CreateKapacitorTask))
+	router.PATCH("/cloudhub/v1/ai/network/managements/script/org", EnsureAdmin(service.UpdateKapacitorTask))
 
 	// Device Orgs Management
 	router.GET("/cloudhub/v1/ai/network/managements/orgs", EnsureViewer(service.AllDevicesOrg))

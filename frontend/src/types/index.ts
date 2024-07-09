@@ -132,6 +132,8 @@ import {
   CreateDeviceManagmenntScriptResponse,
   PredictMode,
   PredictModeKey,
+  UpdateDeviceManagmenntScriptRequest,
+  UpdateDeviceManagmenntScriptResponse,
 } from './deviceManagement'
 
 import {AiModal, HeaderNavigationObj} from './aiModal'
@@ -267,4 +269,6 @@ export {
   CreateDeviceManagmenntScriptResponse,
   PredictMode,
   PredictModeKey,
+  UpdateDeviceManagmenntScriptRequest,
+  UpdateDeviceManagmenntScriptResponse,
 }

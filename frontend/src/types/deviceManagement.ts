@@ -234,3 +234,20 @@ export interface CreateDeviceManagmenntScriptResponse extends AlertRule {
     }
   }
 }
+
+export interface UpdateDeviceManagmenntScriptRequest extends AlertRule {
+  organization: string
+  organization_name: string
+  predict_mode: string
+  task_template?: string
+}
+
+export interface UpdateDeviceManagmenntScriptResponse extends AlertRule {
+  data: {
+    links?: {
+      self?: string
+      kapacitor?: string
+      output?: string
+    }
+  }
+}

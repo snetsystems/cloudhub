@@ -1234,15 +1234,15 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
-	cannedFilePath := filepath.Join("../../", "templates", "template_logstash_gen.toml")
+	templatesFilePath := filepath.Join("../../", "templates", "template_logstash_gen.toml")
 
-	if _, err := os.Stat(cannedFilePath); os.IsNotExist(err) {
-		cannedFilePath = filepath.Join(s.InternalENV.TemplatesPath, "template_logstash_gen.toml")
+	if _, err := os.Stat(templatesFilePath); os.IsNotExist(err) {
+		templatesFilePath = filepath.Join(s.InternalENV.TemplatesPath, "template_logstash_gen.toml")
 	}
 
 	tmpl, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
 		Field: kapa.LogstashTemplateField,
-		Path:  &cannedFilePath,
+		Path:  &templatesFilePath,
 	})
 	if err != nil {
 		return http.StatusInternalServerError, nil, err

@@ -46,6 +46,8 @@ import {
   CreateDeviceManagmenntScriptResponse,
   CreateDeviceOrganizationOption,
   GetAllDevicesOrgResponse,
+  UpdateDeviceManagmenntScriptRequest,
+  UpdateDeviceManagmenntScriptResponse,
   UpdateDeviceOrganizationOption,
   UpdateDevicesOrgResponse,
 } from 'src/types/deviceManagement'
@@ -302,6 +304,25 @@ export const createDeviceManagementTickScript = async (
     })
 
     const {data} = response as CreateDeviceManagmenntScriptResponse
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const updateDeviceManagementTickScript = async (
+  deviceManagementScript: UpdateDeviceManagmenntScriptRequest
+) => {
+  try {
+    const response = await AJAX<UpdateDeviceManagmenntScriptResponse>({
+      data: deviceManagementScript,
+      url: DEVICE_MANAGEMENT_SCRIPT_URL,
+      method: 'PATCH',
+    })
+
+    const {data} = response as UpdateDeviceManagmenntScriptResponse
 
     return data
   } catch (error) {

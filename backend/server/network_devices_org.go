@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/influxdata/kapacitor/client/v1"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -520,13 +522,21 @@ func deleteLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 }
 
 func getIPAndPort(rawURL string) (string, string, error) {
+	// Check if rawURL is in the form "IP:PORT"
+	if strings.Contains(rawURL, ":") {
+		host, port, err := net.SplitHostPort(rawURL)
+		if err == nil {
+			return host, port, nil
+		}
+	}
+
+	// Fallback to URL parsing
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return "", "", fmt.Errorf("error parsing URL: %v", err)
 	}
 
 	ip := parsedURL.Hostname()
-
 	port := parsedURL.Port()
 	if port == "" {
 		if parsedURL.Scheme == "https" {

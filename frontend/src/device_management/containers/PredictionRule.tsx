@@ -25,7 +25,10 @@ import {Handler} from 'src/types/kapacitor'
 
 // API
 import {editRule} from 'src/kapacitor/apis'
-import {createDeviceManagementTickScript} from 'src/device_management/apis'
+import {
+  createDeviceManagementTickScript,
+  updateDeviceManagementTickScript,
+} from 'src/device_management/apis'
 
 // Action
 import {KapacitorRuleActions} from 'src/types/actions'
@@ -142,6 +145,7 @@ class PredictionRule extends Component<Props, State> {
 
   private get NameSection(): JSX.Element {
     const {rule} = this.props
+    console.log(rule)
     const ruleName = rule?.name || 'Untitled Rule'
 
     return (
@@ -206,7 +210,7 @@ class PredictionRule extends Component<Props, State> {
 
     this.props.setLoading(true)
     try {
-      const request = this.getCreateDeviceManagementScriptRequest()
+      const request = this.getDeviceManagementScriptRequest()
 
       await createDeviceManagementTickScript(request)
 
@@ -221,12 +225,17 @@ class PredictionRule extends Component<Props, State> {
     }
   }
 
-  private getCreateDeviceManagementScriptRequest = (): CreateDeviceManagmenntScriptRequest => {
+  private getDeviceManagementScriptRequest = (
+    updatedRule?: AlertRule
+  ): CreateDeviceManagmenntScriptRequest => {
     const {organizations, rule, selectedOrganizationName} = this.props
+
+    let _rule = updatedRule ? updatedRule : rule
+
     const predictModeAndEnsembleCondition = this.getPredictModeAndEnsembleCondition()
 
     return {
-      ...rule,
+      ..._rule,
       ...predictModeAndEnsembleCondition,
       organization: getOrganizationIdByName(
         organizations,
@@ -246,8 +255,10 @@ class PredictionRule extends Component<Props, State> {
     this.props.setLoading(true)
     try {
       const updatedRule = this.replaceTickscript()
+      const request = this.getDeviceManagementScriptRequest(updatedRule)
 
-      await editRule(updatedRule)
+      // await editRule(updatedRule)
+      await updateDeviceManagementTickScript(request)
       notify(notifyAlertRuleUpdated(rule?.name || ''))
       this.props.setLoading(false)
     } catch (error) {
