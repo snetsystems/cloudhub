@@ -194,8 +194,6 @@
   text-align: center;
 }
 
-.tab-pannel {
-}
 .blink {
   animation: blink-animation 1s infinite;
 }
@@ -210,4 +208,12 @@
   100% {
     fill: #ab0000;
   }
+}
+
+.loading-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

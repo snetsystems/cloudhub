@@ -78,6 +78,12 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
 
     return shouldNotBeFilterable ? (
       <div className="alerts-widget">
+        <div className="panel-heading">
+          <h2 className="panel-title">{this.props.alerts.length} Alerts</h2>
+          {this.props.alerts.length ? (
+            <SearchBar onSearch={this.filterAlerts} />
+          ) : null}
+        </div>
         {this.renderTable()}
         {limit && alertsCount ? (
           <button
@@ -108,11 +114,12 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
   private filterAlerts = (searchTerm: string, newAlerts?: Alert[]): void => {
     const alerts = newAlerts || this.props.alerts
     const filterText = searchTerm.toLowerCase()
-    const filteredAlerts = alerts.filter(({name, host, level}) => {
+    const filteredAlerts = alerts.filter(({name, host, level, value}) => {
       return (
         (name && name.toLowerCase().includes(filterText)) ||
         (host && host.toLowerCase().includes(filterText)) ||
-        (level && level.toLowerCase().includes(filterText))
+        (level && level.toLowerCase().includes(filterText)) ||
+        (value && value.toLowerCase().includes(filterText))
       )
     })
     this.setState({searchTerm, filteredAlerts})

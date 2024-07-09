@@ -3,10 +3,10 @@ import {connect} from 'react-redux'
 import PredictionDashBoard from '../components/PredictionDashBoard'
 import {Source, TimeRange} from 'src/types'
 import AJAX from 'src/utils/ajax'
-import {getAlerts} from 'src/alerts/apis'
 import {Alert} from 'src/types/alerts'
 import * as appActions from 'src/shared/actions/app'
 import _ from 'lodash'
+import {getPredictionAlert} from '../apis'
 
 interface Props {
   timeRange: TimeRange
@@ -78,7 +78,7 @@ function PredictionPage({
 
   //TODO: timerange var change to redux data not props -> why?
   const fetchAlerts = (): void => {
-    getAlerts(
+    getPredictionAlert(
       source.links.proxy,
       timeRange,
       limit * limitMultiplier,
@@ -164,7 +164,6 @@ function PredictionPage({
         loading={loading}
         setLimitMultiplier={setLimitMultiplier}
         host=""
-        manualRefresh={0}
         sources={[source]}
         setSelectDate={setSelectDate}
       />
@@ -176,13 +175,10 @@ const mstp = ({
   app: {
     persisted: {timeZone},
   },
-  adminCloudHub: {organizations},
-  auth: {isUsingAuth, me},
+  auth: {isUsingAuth},
 }) => {
   return {
-    organizations,
     isUsingAuth,
-    me,
     timeZone,
   }
 }

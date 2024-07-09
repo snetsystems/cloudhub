@@ -3,12 +3,11 @@ import * as d3 from 'd3'
 import {hexbin} from 'd3-hexbin'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
-import dummy from 'src/device_management/constants/hexabinDummy.json'
 import {PredictionTooltipNode} from 'src/types'
 import PredictionTooltip from './PredictionTooltip'
-
 interface Props {
   onHexbinClick: (num: number) => void
+  tooltipData: PredictionTooltipNode[]
 }
 
 interface HexagonData {
@@ -31,7 +30,7 @@ interface GenerateHexagonData {
 const hexRadius = 30
 const hexPadding = 5
 
-const PredictionHexbin = ({onHexbinClick}: Props) => {
+const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
   const parentRef = useRef<HTMLInputElement>(null)
 
   const childrenRef = useRef<HTMLInputElement>(null)
@@ -73,6 +72,7 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
   }
 
   const statusHexColor = (status: string) => {
+    //color change - prediction.scss
     switch (status) {
       case 'normal':
         return '#2de5a5'
@@ -90,12 +90,12 @@ const PredictionHexbin = ({onHexbinClick}: Props) => {
   }
 
   const inputData = useMemo<HexagonInputData[]>(() => {
-    return dummy.map(hex => {
+    return tooltipData.map(hex => {
       return {
         statusColor: statusHexColor(statusCal((hex.cpu + hex.memory) / 2)),
         name: hex.name,
-        cpu: hex.cpu,
-        memory: hex.memory,
+        cpu: Number(hex.cpu.toFixed()),
+        memory: Number(hex.memory.toFixed()),
         traffic: hex.traffic,
         status: statusCal((hex.cpu + hex.memory) / 2),
       }

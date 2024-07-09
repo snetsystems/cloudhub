@@ -1,8 +1,9 @@
-import React, {useEffect, useState} from 'react'
+import React, {useMemo, useState} from 'react'
 import {connect} from 'react-redux'
 import {Page} from 'src/reusable_ui'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import * as notifyActions from 'src/shared/actions/notifications'
+import * as DashboardsModels from 'src/types/dashboards'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {
   DASHBOARD_LAYOUT_ROW_HEIGHT,
@@ -19,7 +20,6 @@ import {
   TemplateValueType,
   TimeRange,
 } from 'src/types'
-import {fastMap} from 'src/utils/fast'
 import PredictionDashboardHeader from './PredictionDashboardHeader'
 import {
   DEFAULT_CELL_BG_COLOR,
@@ -28,14 +28,18 @@ import {
 import {RECENT_ALERTS_LIMIT} from 'src/status/constants'
 import PredictionAlertTable from './PredictionAlertTable'
 import {fixturePredictionPageCells} from '../constants'
-import PredictionHexbin from './PredictionHexbin'
 import {PredictionModal} from './PredictionModal'
 import {Alert} from 'src/types/alerts'
 import _ from 'lodash'
 import Layout from 'src/shared/components/Layout'
 import {Link} from 'react-router'
+import PredictionHexbinWrapper from './PredictionHexbinWrapper'
+import ManualRefresh, {
+  ManualRefreshProps,
+} from 'src/shared/components/ManualRefresh'
+import {WithRouterProps} from 'react-router'
 
-interface Props {
+interface Props extends ManualRefreshProps, WithRouterProps {
   inPresentationMode: boolean
   timeRange: TimeRange
   source: Source
@@ -46,14 +50,13 @@ interface Props {
   hasKapacitor: boolean
   isAlertsMaxedOut: boolean
   alerts: Alert[]
-
+  autoRefresh?: number
   host: string
   onZoom?: () => void
   onCloneCell?: () => void
   onDeleteCell?: () => void
   onSummonOverlayTechnologies?: () => void
   sources: Source[]
-  manualRefresh: number
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   setSelectDate: React.Dispatch<React.SetStateAction<number>>
@@ -76,7 +79,6 @@ function PredictionDashBoard({
   hasKapacitor,
   isAlertsMaxedOut,
   alerts,
-
   host,
   onZoom,
   onCloneCell,
@@ -90,13 +92,13 @@ function PredictionDashBoard({
 }: Props) {
   const GridLayout = WidthProvider(ReactGridLayout)
 
-  const [cells, setCells] = useState(null)
+  const savedCells: DashboardsModels.Cell[] = JSON.parse(
+    localStorage.getItem('Prediction-cells')
+  )
 
   const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false)
 
   const [openNum, setOpenNum] = useState<number>(null)
-
-  const [projects, setProject] = useState()
 
   const onHexbinClick = (num: number) => {
     if (openNum === num) {
@@ -107,19 +109,21 @@ function PredictionDashBoard({
     }
   }
 
-  const onHexbinLeave = () => {
-    setIsPredictionModalOpen(false)
-  }
-
-  useEffect(() => {
+  const cells = useMemo(() => {
     const defaultCells = fixturePredictionPageCells(source)
-    const savedCells = localStorage.getItem('Prediction-cells')
-    if (cells === null) {
-      !savedCells ? setCells(defaultCells) : setCells(JSON.parse(savedCells))
+
+    if (!!savedCells) {
+      return savedCells
     } else {
-      localStorage.setItem('Prediction-cells', JSON.stringify(cells))
+      return defaultCells
     }
-  }, [cells, timeRange])
+
+    // localStorage.setItem('Prediction-cells', JSON.stringify(cells))
+  }, [savedCells])
+
+  const setLocalCells = (cells: DashboardsModels.Cell[]) => {
+    localStorage.setItem('Prediction-cells', JSON.stringify(cells))
+  }
 
   const handleLayoutChange = layout => {
     let changed = false
@@ -150,7 +154,7 @@ function PredictionDashBoard({
     })
 
     if (changed) {
-      setCells(newCells)
+      setLocalCells(newCells as DashboardsModels.Cell[])
     }
   }
 
@@ -189,6 +193,7 @@ function PredictionDashBoard({
   }
 
   const layoutRender = ({cell, source, timeRange}: TempProps) => {
+    if (!cell) return null
     switch (cell.i) {
       case 'alerts-bar-graph': {
         return (
@@ -215,6 +220,7 @@ function PredictionDashBoard({
                       graphOptions: {
                         ...cell.graphOptions,
                         clickCallback: (_, __, points) => {
+                          //consider double click debounce
                           setSelectDate(points[0].xval)
                         },
                       },
@@ -226,7 +232,6 @@ function PredictionDashBoard({
                   sources={sources}
                   templates={templates()}
                   timeRange={timeRange}
-                  //timerange
                   isEditable={false}
                   onDeleteCell={onDeleteCell}
                   onCloneCell={onCloneCell}
@@ -290,24 +295,28 @@ function PredictionDashBoard({
               >
                 <div className="dash-graph--name">Device Hexagon Chart</div>
               </PredictionDashboardHeader>
-              <PredictionHexbin onHexbinClick={onHexbinClick} />
+              <PredictionHexbinWrapper
+                source={source}
+                onHexbinClick={onHexbinClick}
+              />
             </div>
           </Authorized>
         )
       }
-      // case 'instanceGraph': {
-      //   return (
-      //     <OpenStackInstanceGraph
-      //       source={source}
-      //       timeRange={timeRange}
-      //       filteredLayouts={filteredLayouts}
-      //       instance={updateInstance}
-      //       focusedInstance={focusedInstance}
-      //       manualRefresh={manualRefresh}
-      //       autoRefresh={autoRefresh}
-      //     />
-      //   )
-      // }
+      case 'instanceGraph': {
+        return (
+          <div>
+            <PredictionDashboardHeader
+              cellName={`Monitoring (${cell.i})`}
+              cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
+              cellTextColor={DEFAULT_CELL_TEXT_COLOR}
+            >
+              <div className="dash-graph--name">{cell.i}</div>
+            </PredictionDashboardHeader>
+            <span>{cell.i}</span>
+          </div>
+        )
+      }
     }
   }
 
@@ -347,15 +356,17 @@ function PredictionDashBoard({
                   isDraggable={true}
                   isResizable={true}
                 >
-                  {fastMap(cells, cell => (
-                    <div key={cell.i}>
-                      {layoutRender({
-                        cell: cell,
-                        source: source,
-                        timeRange: timeRange,
-                      })}
-                    </div>
-                  ))}
+                  {cells?.map(cell => {
+                    return (
+                      <div key={cell.i}>
+                        {layoutRender({
+                          cell: cell,
+                          source: source,
+                          timeRange: timeRange,
+                        })}
+                      </div>
+                    )
+                  })}
                 </GridLayout>
               </Authorized>
             )}
@@ -379,11 +390,15 @@ const mstp = state => {
   const {
     app: {
       ephemeral: {inPresentationMode},
+      persisted: {autoRefresh},
     },
+    auth: {isUsingAuth},
   } = state
 
   return {
     inPresentationMode,
+    isUsingAuth,
+    autoRefresh,
   }
 }
 
@@ -391,4 +406,4 @@ const mdtp = {
   notify: notifyActions.notify,
 }
 
-export default connect(mstp, mdtp, null)(PredictionDashBoard)
+export default connect(mstp, mdtp, null)(ManualRefresh(PredictionDashBoard))

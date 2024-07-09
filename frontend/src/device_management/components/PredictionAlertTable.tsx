@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React from 'react'
+import React, {useMemo} from 'react'
 import NoKapacitorError from 'src/shared/components/NoKapacitorError'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import {Source, TimeRange} from 'src/types'
@@ -37,6 +37,24 @@ function PredictionAlertTable({
     fetchAlerts()
   }
 
+  const remakeAlert = useMemo(() => {
+    return alerts.map(i => {
+      return {
+        ...i,
+        ...{
+          value:
+            i.value === '1'
+              ? 'Machine Learning'
+              : i.value === '2'
+              ? 'Deep Learning'
+              : i.value === '3'
+              ? 'ALL'
+              : 'OK',
+        },
+      }
+    })
+  }, [alerts])
+
   //tsx render
   const renderSubComponents = () => {
     if (error) {
@@ -61,7 +79,7 @@ function PredictionAlertTable({
         <PredictionAlertTableBody
           limit={limit}
           source={source}
-          alerts={alerts}
+          alerts={remakeAlert}
           shouldNotBeFilterable={isWidget}
           onGetMoreAlerts={handleGetMoreAlerts}
           isAlertsMaxedOut={isAlertsMaxedOut}
