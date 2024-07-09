@@ -433,8 +433,6 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	}
 	taskReq := cloudhub.AutoGenerateLearnRule{
 		OrganizationName: org.Name,
-		Organization:     org.ID,
-		TaskTemplate:     kapa.LearnTaskField,
 		CronSchedule:     *req.CronSchedule,
 		LoadModule:       LoadModule,
 		MLFunction:       *req.MLFunction,

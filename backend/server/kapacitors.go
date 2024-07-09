@@ -1190,10 +1190,13 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		templatesFilePath = filepath.Join("../../", "templates", "tickscript_templates.toml")
 	}
 
-	tmpl, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
+	_, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
 		Field: kapa.LogstashTemplateField,
 		Path:  &templatesFilePath,
 	})
+	if err != nil {
+		notFound(w, err.Error(), s.Logger)
+	}
 
 	findAlertNodesKey := extraFields["findAlertNodesKey"]
 

@@ -408,8 +408,6 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	previousLearnedDevicesIDs := []string{}
-	previousCollectedDevicesIDs := []string{}
 	for orgID, devicesIDs := range devicesGroupByOrg {
 		org, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
 		if err != nil {
@@ -431,13 +429,13 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		previousLearnedDevicesIDs = org.LearnedDevicesIDs
-		previousCollectedDevicesIDs = org.CollectedDevicesIDs
+		previousLearnedDevicesIDs := org.LearnedDevicesIDs
+		previousCollectedDevicesIDs := org.CollectedDevicesIDs
 
 		org.LearnedDevicesIDs = RemoveElements(previousLearnedDevicesIDs, devicesIDs)
 		org.CollectedDevicesIDs = RemoveElements(previousCollectedDevicesIDs, devicesIDs)
 
-		statusCode, resp, err := s.manageLogstashConfig(ctx, org, &failedDevices)
+		statusCode, resp, err := s.manageLogstashConfig(ctx, org)
 
 		if err != nil {
 			for _, id := range devicesIDs {
@@ -565,11 +563,6 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	if err != nil {
-		http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
-		return
-	}
-
 	device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
 	if err != nil {
 		notFound(w, id, s.Logger)
@@ -695,7 +688,7 @@ type learnFilteredDevices struct {
 	deviceOrgMap              map[string]string
 }
 
-//MonitoringConfigManagement is LogStash Config Management
+// MonitoringConfigManagement is LogStash Config Management
 func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Request) {
 	type requestData struct {
 		CollectingDevices []manageDeviceOrg `json:"collecting_devices"`
@@ -715,7 +708,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 			networkDevice := devicesData.networkDevicesMap[device.ID]
 			if networkDevice == nil {
 				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = fmt.Sprintf("Not found Device ID %d", device.ID)
+					failedDevices[device.ID] = fmt.Sprintf("Not found Device ID %s", device.ID)
 				}
 				continue
 			}
@@ -727,7 +720,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	existingDevicesOrg, _ := s.Store.NetworkDeviceOrg(ctx).All(ctx)
+	existingDevicesOrg, err := s.Store.NetworkDeviceOrg(ctx).All(ctx)
 	if err != nil {
 		http.Error(w, "Not found Organizations", http.StatusInternalServerError)
 		return
@@ -740,7 +733,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 	}
 
 	ratio := 0.5
-	threshold, orgDeviceCount, serverDeviceCount, orgToCollector := computeThreshold(existingDevicesOrg, devicesData.devicesGroupByOrg, ratio)
+	_, _, serverDeviceCount, orgToCollector := computeThreshold(existingDevicesOrg, devicesData.devicesGroupByOrg, ratio)
 
 	orgsToUpdate, err := removeDeviceIDsFromPreviousOrg(ctx, s, devicesData.deviceOrgMap)
 	if err != nil {
@@ -752,9 +745,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 	for org, devices := range devicesData.devicesGroupByOrg {
 		selectedServer := findLeastLoadedCollectorServer(
 			org,
-			orgDeviceCount,
 			collectorKeys,
-			threshold,
 			serverDeviceCount,
 			orgToCollector,
 		)
@@ -805,7 +796,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		orgInfo.CollectedDevicesIDs = existingCollectingDeviceIDs
 		orgsToUpdate[org] = orgInfo
 
-		statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo, &failedDevices)
+		statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo)
 		if err != nil {
 			for _, device := range devices {
 				if _, exists := failedDevices[device.ID]; !exists {
@@ -851,7 +842,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 	encodeJSON(w, http.StatusCreated, response, s.Logger)
 }
 
-//LearningDeviceManagement is Learning Device. Indicates whether to create a learning model
+// LearningDeviceManagement is Learning Device. Indicates whether to create a learning model
 func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Request) {
 	type requestData struct {
 		IsLearningDevices []manageLearningDeviceOrg `json:"learning_devices"`
@@ -1050,9 +1041,7 @@ func appendUnique(devices []string, newDevice string) []string {
 
 func findLeastLoadedCollectorServer(
 	org string,
-	orgDeviceCount map[string]int,
 	collectorServerKeys []string,
-	threshold int,
 	serverDeviceCount map[string]int,
 	orgToCollector map[string]string,
 ) string {
@@ -1069,9 +1058,6 @@ func findLeastLoadedCollectorServer(
 	currentServer, exists := orgToCollector[org]
 	if exists && selectedServer != currentServer {
 		selectedServer = currentServer
-		if orgDeviceCount[org] > threshold {
-			//Todo improve distribution collector-server
-		}
 	}
 
 	if selectedServer == "" {
@@ -1228,7 +1214,7 @@ func computeThreshold(existingDevicesOrg []cloudhub.NetworkDeviceOrg, groupedDev
 	return threshold, orgDeviceCount, serverDeviceCount, orgToCollector
 }
 
-func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg, failedDevices *map[string]string) (int, []byte, error) {
+func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg) (int, []byte, error) {
 	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &devOrg.ID})
 	devicesIDs := devOrg.CollectedDevicesIDs
 	if err != nil {
@@ -1309,14 +1295,14 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		if [host] == "%s" {
 			mutate {
 				add_field => {
-					"dev_id" => %d
+					"dev_id" => %s
 				}
 			}
 		}`, device.DeviceIP, device.ID)
 		deviceFilters = append(deviceFilters, filter)
 	}
 
-	hosts := fmt.Sprintf("%s", strings.Join(hostEntries, ",\n"))
+	hosts := strings.Join(hostEntries, ",\n")
 	filters := strings.Join(deviceFilters, "\n")
 
 	influxDBs, err := GetServerInfluxDBs(ctx, s)
