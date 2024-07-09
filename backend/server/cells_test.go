@@ -210,6 +210,7 @@ func Test_Service_DashboardCells(t *testing.T) {
 	}
 
 	for _, test := range cellsTests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

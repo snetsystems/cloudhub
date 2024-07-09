@@ -492,7 +492,7 @@ func (s *Service) generateTelegrafConfigForOSP(ctx context.Context, csp *cloudhu
 	}
 	b, _ := toml.Marshal(telegrafConfig)
 
-	if useLocalModule && err == nil {
+	if useLocalModule {
 		statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{string(b)}, s.AddonTokens["osp"])
 	} else {
 		statusCode, resp, err = s.CreateFile(filePath, []string{string(b)})

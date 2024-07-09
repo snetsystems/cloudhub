@@ -109,4 +109,4 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 
 replace github.com/prometheus/prometheus => github.com/goller/prometheus v1.6.1-0.20170502220046-58298e738211
 
-go 1.18
+go 1.21

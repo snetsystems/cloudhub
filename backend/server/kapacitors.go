@@ -594,7 +594,7 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 }
 
 // newAlertResponseWithURL formats task into an alertResponse
-func newAlertResponseWithURL(task *kapa.Task, org string, scriptType string) *alertResponse {
+func newAlertResponseWithURL(task *kapa.Task) *alertResponse {
 	res := &alertResponse{
 		AlertRule: task.Rule,
 		Links:     alertLinks{},
