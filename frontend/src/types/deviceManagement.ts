@@ -218,6 +218,13 @@ export interface PredictionLayoutCell {
   minH?: number
 }
 
+export interface PredictionTooltipNode {
+  name: string
+  cpu: number
+  memory: number
+  traffic: string
+}
+
 export interface CreateDeviceManagmenntScriptRequest extends AlertRule {
   organization: string
   organization_name: string

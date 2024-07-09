@@ -1,15 +1,7 @@
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
 import {DEFAULT_AXIS} from 'src/dashboards/constants/cellEditor'
-import {
-  Cell,
-  CellQuery,
-  Axes,
-  CellType,
-  QueryType,
-  TimeRange,
-  Source,
-} from 'src/types'
+import {Cell, CellQuery, Axes, CellType, QueryType, Source} from 'src/types'
 import {
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
@@ -41,6 +33,12 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
   return [
     {
       ...NEW_DEFAULT_DASHBOARD_CELL,
+      graphOptions: {
+        fillArea: true,
+        showLine: true,
+        showPoint: false,
+        showTempVarCount: '',
+      },
       axes: emptyAxes,
       i: 'alerts-bar-graph',
       type: CellType.Bar,
@@ -95,7 +93,7 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
       ...NEW_DEFAULT_DASHBOARD_CELL,
       i: 'history',
       x: 0,
-      y: 5,
+      y: 10,
       w: 96,
       h: 10,
       minH: 10,
@@ -113,9 +111,29 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
     },
     {
       ...NEW_DEFAULT_DASHBOARD_CELL,
-      i: 'polygon',
+      i: 'host-status',
       x: 0,
-      y: 9,
+      y: 20,
+      w: 96,
+      h: 10,
+      minH: 10,
+      name: '',
+      queries: [],
+      type: CellType.Table,
+      axes: emptyAxes,
+      colors: DEFAULT_LINE_COLORS,
+      legend: {},
+      timeFormat: '',
+      note: '',
+      links: {
+        self: '/cloudhub/v1/status/23/cells/c-bar-graphs-fly',
+      },
+    },
+    {
+      ...NEW_DEFAULT_DASHBOARD_CELL,
+      i: 'instanceGraph',
+      x: 0,
+      y: 30,
       w: 96,
       h: 10,
       minH: 10,

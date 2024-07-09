@@ -18,6 +18,7 @@ import {
   DeviceMonitoringStatus,
   ApplyMonitoringRequest,
   ApplyMonitoringResponse,
+  TimeRange,
 } from 'src/types'
 
 // Constants
@@ -310,6 +311,60 @@ export const createDeviceManagementTickScript = async (
     console.error(error)
     throw error
   }
+}
+
+export const getPredictionAlert = (
+  source: string,
+  timeRange: TimeRange,
+  limit: number,
+  db: string
+) => {
+  const query = `SELECT host, value, level, alertName, triggerType FROM cloudhub_alerts WHERE time >= '${
+    timeRange.lower
+  }' AND time <= '${timeRange.upper}' ORDER BY time desc ${
+    limit ? `LIMIT ${limit}` : ''
+  }`
+
+  return proxy({
+    source,
+    query,
+    db,
+  })
+}
+
+export const getLiveDeviceInfo = async (
+  source: string,
+  db: string,
+  tempVars: Template[],
+  meRole: string
+) => {
+  const query = replaceTemplate(
+    `SELECT mean("cpu1min") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 15m GROUP BY agent_host;
+    SELECT mean("mem_usage") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 15m GROUP BY agent_host;
+    SHOW TAG VALUES FROM \"autogen\".\"snmp_nx\" WITH KEY IN ("agent_host")
+      `,
+    tempVars
+  )
+
+  const {data} = await proxy({
+    source,
+    query,
+    db,
+  })
+  const cpuSeries = getDeep<Series[]>(data, 'results.[0].series', [])
+  const memUsedSeries = getDeep<Series[]>(data, 'results.[1].series', [])
+  const agentHost = getDeep<Series[]>(data, 'results.[2].series.[0].values', [])
+
+  const result = agentHost.map((host, idx) => {
+    return {
+      name: host[1] as string,
+      cpu: Number(cpuSeries[idx].values[0][1]),
+      memory: Number(memUsedSeries[idx].values[0][1]),
+      traffic: (Math.random() * 21660).toFixed(),
+    }
+  })
+
+  return result
 }
 
 export const updateDeviceManagementTickScript = async (
