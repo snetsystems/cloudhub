@@ -169,6 +169,25 @@ func (c *Client) AutoGenerateCreate(ctx context.Context, taskOptions *client.Cre
 	return NewTask(&task), nil
 }
 
+// AutoGenerateUpdate Update a tickScript to kapacitor
+func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.UpdateTaskOptions, href string) (*Task, error) {
+
+	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
+	if err != nil {
+		return nil, err
+	}
+
+	task, err := kapa.UpdateTask(client.Link{Href: href}, *taskOptions)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTask(&task), nil
+}
+
 func (c *Client) createFromTick(rule cloudhub.AlertRule) (*client.CreateTaskOptions, error) {
 	dbrps := make([]client.DBRP, len(rule.DBRPs))
 	for i := range rule.DBRPs {
