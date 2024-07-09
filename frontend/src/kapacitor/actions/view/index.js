@@ -45,25 +45,37 @@ export function fetchRule(source, ruleID) {
   }
 }
 
-export function fetchRuleWithCallback(source, ruleID, callback) {
+export function fetchRuleWithCallback(source, ruleID, callback, errorCallback) {
   return dispatch => {
-    getActiveKapacitor(source).then(kapacitor => {
-      getRuleAJAX(kapacitor, ruleID).then(({data: rule}) => {
-        dispatch({
-          type: 'LOAD_RULE',
-          payload: {
-            rule: Object.assign(rule, {queryID: rule?.query?.id || ''}),
-          },
-        })
-        dispatch(loadQuery(rule.query))
+    getActiveKapacitor(source)
+      .then(kapacitor => {
+        getRuleAJAX(kapacitor, ruleID)
+          .then(({data: rule}) => {
+            dispatch({
+              type: 'LOAD_RULE',
+              payload: {
+                rule: Object.assign(rule, {queryID: rule?.query?.id || ''}),
+              },
+            })
+            dispatch(loadQuery(rule.query))
 
-        if (callback) {
-          callback({
-            rule: Object.assign(rule, {queryID: rule?.query?.id || ''}),
+            if (callback) {
+              callback({
+                rule: Object.assign(rule, {queryID: rule?.query?.id || ''}),
+              })
+            }
           })
+          .catch(error => {
+            if (errorCallback) {
+              errorCallback(error)
+            }
+          })
+      })
+      .catch(error => {
+        if (errorCallback) {
+          errorCallback(error)
         }
       })
-    })
   }
 }
 

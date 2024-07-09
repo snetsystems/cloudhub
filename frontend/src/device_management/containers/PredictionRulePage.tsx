@@ -38,12 +38,14 @@ import {getAllDevicesOrg} from 'src/device_management/apis'
 import parseHandlersFromConfig from 'src/shared/parsing/parseHandlersFromConfig'
 import {getOrganizationNameByID} from 'src/device_management/utils'
 
+// Constants
 import {
   DEFAULT_ALERT_RULE,
   DEFAULT_PREDICT_MODE,
   PREDICT_TASK_PREFIX,
 } from 'src/device_management/constants/deviceData'
 import {DEFAULT_KAPACITOR, DEFAULT_SOURCE} from 'src/shared/constants'
+import {DEFAULT_RULE_ID} from 'src/kapacitor/constants'
 
 // ETC
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -113,7 +115,9 @@ class PredictionRulePage extends Component<Props, State> {
     }
   }
 
-  public async componentDidUpdate(_, prevState) {
+  public async componentDidUpdate(prevProps, prevState) {
+    this.updateRuleIfChanged(prevProps.rules, this.props.rules)
+
     if (
       prevState.selectedOrganizationID !== this.state.selectedOrganizationID
     ) {
@@ -129,6 +133,35 @@ class PredictionRulePage extends Component<Props, State> {
         console.error(error)
       }
     }
+  }
+
+  private updateRuleIfChanged(
+    prevRules: AlertRule[],
+    currentRules: AlertRule[]
+  ) {
+    const {selectedOrganizationID} = this.state
+    const prevRule = this.getRuleFromProps(prevRules, selectedOrganizationID)
+    const currentRule = this.getRuleFromProps(
+      currentRules,
+      selectedOrganizationID
+    )
+    if (
+      currentRule.id !== prevRule.id ||
+      currentRule.tickscript !== prevRule.tickscript ||
+      currentRule.alertNodes !== prevRule.alertNodes ||
+      currentRule.message !== prevRule.message ||
+      currentRule.name !== prevRule.name
+    ) {
+      this.setState({rule: currentRule})
+    }
+  }
+
+  private getRuleFromProps(
+    rules: AlertRule[],
+    selectedOrganizationID: string
+  ): AlertRule {
+    const ruleID = `${PREDICT_TASK_PREFIX}${selectedOrganizationID}`
+    return rules[ruleID] || rules[DEFAULT_RULE_ID] || DEFAULT_ALERT_RULE
   }
 
   private getNetworkDeviceOrganizationsAJAX = async () => {
@@ -174,6 +207,7 @@ class PredictionRulePage extends Component<Props, State> {
       source = await getSource(srcId)
       this.setState({sourceForNetworkDeviceOrganizationKapacitor: source})
     } catch (error) {
+      this.initializeState()
       console.error(error.message || '')
       return null
     }
@@ -222,7 +256,8 @@ class PredictionRulePage extends Component<Props, State> {
         await this.props.ruleActions.fetchRuleWithCallback(
           source,
           ruleID,
-          this.setRuleAndPredictModeForFetchedRule.bind(this)
+          this.setRuleAndPredictModeForFetchedRule.bind(this),
+          this.initializeState.bind(this)
         )
 
         await this.getKapacitorConfig(
@@ -232,6 +267,7 @@ class PredictionRulePage extends Component<Props, State> {
         this.initializeState()
       }
     } catch (error) {
+      this.initializeState()
       console.error(error)
     }
   }
@@ -317,6 +353,7 @@ class PredictionRulePage extends Component<Props, State> {
 
       this.setState({kapacitor, handlersFromConfig})
     } catch (error) {
+      this.initializeState()
       console.error(error)
     }
   }
