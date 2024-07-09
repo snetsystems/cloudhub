@@ -31,7 +31,7 @@ function PredictionHexbinWrapper({onHexbinClick, source, auth, notify}: Props) {
 
   const [hasKapacitor, setHasKapacitor] = useState(false)
 
-  const [error, setError] = useState<unknown>()
+  const [error, setError] = useState<string>()
 
   const [loading, setLoading] = useState<boolean>(false)
 
@@ -69,16 +69,23 @@ function PredictionHexbinWrapper({onHexbinClick, source, auth, notify}: Props) {
     const tempVars = generateForHosts(source)
     const meRole = _.get(auth, 'me.role', '')
 
-    getLiveDeviceInfo(source.links.proxy, source.telegraf, tempVars, meRole)
-      .then(resp => {
-        setHostList(resp)
-        setError(false)
-        setLoading(false)
-      })
-      .catch(e => {
-        setError(e)
-        setLoading(false)
-      })
+    try {
+      getLiveDeviceInfo(source.links.proxy, source.telegraf, tempVars, meRole)
+        .then(resp => {
+          setHostList(resp)
+          setError(null)
+          setLoading(false)
+        })
+        .catch(e => {
+          setError('Hexbin Chart Error')
+          setLoading(false)
+          console.log(e)
+        })
+    } catch (e) {
+      setError('Hexbin Chart Error')
+      setLoading(false)
+      console.log(e)
+    }
   }
 
   return (
@@ -89,7 +96,7 @@ function PredictionHexbinWrapper({onHexbinClick, source, auth, notify}: Props) {
             <div className="page-spinner" />
           </div>
         </>
-      ) : !hostList ? (
+      ) : !hostList || error ? (
         <div>{error}</div>
       ) : hasKapacitor ? (
         <PredictionHexbin
