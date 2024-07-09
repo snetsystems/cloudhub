@@ -18,9 +18,11 @@ const queryConfigs = (state = {}, action) => {
   switch (action.type) {
     case 'KAPA_LOAD_QUERY': {
       const {query} = action.payload
-      const nextState = Object.assign({}, state, {
-        [query.id]: query,
-      })
+      const nextState = {...state}
+
+      if (query?.id) {
+        nextState[query.id] = query
+      }
 
       return nextState
     }

@@ -1,4 +1,5 @@
 import {
+  AlertRule,
   DeviceData,
   DropdownItem,
   LearningOption,
@@ -68,6 +69,15 @@ export const MLFunctionMsg = {
   ml_gaussian_std: 'Gaussian Standard Deviation',
 } as const
 
+export const PREDICT_MODE = {
+  ML: 'ML',
+  DL: 'DL',
+  EnsembleOrCondition: 'Ensemble (ML or DL)',
+  EnsembleAndCondition: 'Ensemble (ML and DL)',
+} as const
+
+export const DEFAULT_PREDICT_MODE = 'ML'
+
 export const DEFAULT_LEARNING_OPTION: LearningOption = {
   organization: '',
   data_duration: 1,
@@ -79,7 +89,11 @@ export const DEFAULT_CRON_SCHEDULE = '1 0 1,15 * *'
 export const NETWORK_MANAGEMENT_ORGANIZATIONS_URL =
   '/cloudhub/v1/ai/network/managements/orgs'
 
+export const DEVICE_MANAGEMENT_SCRIPT_URL =
+  '/cloudhub/v1/ai/network/managements/script/org'
+
 export const LEARN_TASK_PREFIX = 'learn-'
+export const PREDICT_TASK_PREFIX = 'predict-'
 
 export const DEFAULT_KAPACITOR = {
   url: '',
@@ -95,4 +109,49 @@ export const DEFAULT_TASK = {
   tickscript: '',
   dbrps: [],
   type: '',
+}
+
+export const DEFAULT_ALERT_RULE: AlertRule = {
+  id: 'DEFAULT_RULE_ID',
+  tickscript: '',
+  every: 'null',
+  alertNodes: {
+    stateChangesOnly: false,
+    useFlapping: false,
+    post: [],
+    tcp: [],
+    email: [],
+    exec: [],
+    log: [],
+    victorOps: [],
+    pagerDuty: [],
+    pagerDuty2: [],
+    pushover: [],
+    sensu: [],
+    slack: [],
+    telegram: [],
+    alerta: [],
+    opsGenie: [],
+    opsGenie2: [],
+    talk: [],
+  },
+  message: '',
+  details: '',
+  trigger: '',
+  values: {
+    operator: '',
+    value: '',
+    rangeValue: '',
+  },
+  name: 'Untitled Rule',
+  type: '',
+  dbrps: [
+    {
+      db: '',
+      rp: '',
+    },
+  ],
+  status: '',
+  executing: false,
+  error: '',
 }

@@ -64,7 +64,6 @@ import {getKapacitors, getSource} from 'src/shared/apis'
 import {getOrganizationIdByName} from 'src/device_management/utils'
 
 // ETC
-import {SUPERADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 import {
   notifyCreateNetworkDeviceOrganizationFailed,
   notifyCreateNetworkDeviceOrganizationSucceeded,
@@ -148,14 +147,6 @@ function LearningSettingModal({
       text: me.currentOrganization.name,
     },
   ]
-
-  let dropdownOrg: any = null
-  if (organizations) {
-    dropdownOrg = organizations.map(role => ({
-      ...role,
-      text: role.name,
-    }))
-  }
 
   const transformOrgLearningModelToLearningOption = (): LearningOption => {
     const currentOrg = _.get(me, 'currentOrganization')
@@ -481,8 +472,7 @@ function LearningSettingModal({
                   <div className="form-group col-xs-12">
                     <label>Organization</label>
                     <Dropdown
-                      disabled={!isUserAuthorized(me.role, SUPERADMIN_ROLE)}
-                      items={me.superAdmin ? dropdownOrg : dropdownCurOrg}
+                      items={dropdownCurOrg}
                       onChoose={setLearningDropdownState('organization')}
                       selected={
                         learningOption?.organization ||

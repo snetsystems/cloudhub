@@ -119,7 +119,6 @@ import {
   ApplyMonitoringRequest,
   ApplyMonitoringResponse,
   LearningOption,
-  PredictionMode,
   UpdateDeviceOrganizationOption,
   UpdateDevicesOrgResponse,
   CreateDeviceOrganizationOption,
@@ -129,6 +128,10 @@ import {
   LearningDevice,
   ApplyLearningEnableStatusRequest,
   KapacitorForNetworkDeviceOrganization,
+  CreateDeviceManagmenntScriptRequest,
+  CreateDeviceManagmenntScriptResponse,
+  PredictMode,
+  PredictModeKey,
 } from './deviceManagement'
 
 import {AiModal, HeaderNavigationObj} from './aiModal'
@@ -250,7 +253,6 @@ export {
   ApplyMonitoringRequest,
   ApplyMonitoringResponse,
   LearningOption,
-  PredictionMode,
   UpdateDeviceOrganizationOption,
   UpdateDevicesOrgResponse,
   CreateDeviceOrganizationOption,
@@ -261,4 +263,8 @@ export {
   ApplyLearningEnableStatusRequest,
   HeaderNavigationObj,
   KapacitorForNetworkDeviceOrganization,
+  CreateDeviceManagmenntScriptRequest,
+  CreateDeviceManagmenntScriptResponse,
+  PredictMode,
+  PredictModeKey,
 }
