@@ -355,16 +355,22 @@ export const getLiveDeviceInfo = async (
   const memUsedSeries = getDeep<Series[]>(data, 'results.[1].series', [])
   const agentHost = getDeep<Series[]>(data, 'results.[2].series.[0].values', [])
 
-  const result = agentHost.map((host, idx) => {
-    return {
-      name: host[1] as string,
-      cpu: Number(cpuSeries[idx].values[0][1]),
-      memory: Number(memUsedSeries[idx].values[0][1]),
-      traffic: (Math.random() * 21660).toFixed(),
-    }
-  })
-
-  return result
+  if (
+    agentHost.length === memUsedSeries.length &&
+    agentHost.length === cpuSeries.length
+  ) {
+    const result = agentHost.map((host, idx) => {
+      return {
+        name: host[1] as string,
+        cpu: Number(cpuSeries[idx].values[0][1]),
+        memory: Number(memUsedSeries[idx].values[0][1]),
+        traffic: (Math.random() * 21660).toFixed(),
+      }
+    })
+    return result
+  } else {
+    throw Error('cpu or memory data is not invalid')
+  }
 }
 
 export const updateDeviceManagementTickScript = async (
