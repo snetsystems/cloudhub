@@ -17,7 +17,6 @@ interface Props {
   time: string | null
   host: string | null
   value: string | null
-  triggerType?: string | null
   timeZone: TimeZones
 }
 
@@ -126,7 +125,7 @@ class AlertsTableRow extends PureComponent<Props> {
   }
 
   private get valueCell(): JSX.Element {
-    const {value, triggerType} = this.props
+    const {value} = this.props
 
     return (
       <div
@@ -134,21 +133,7 @@ class AlertsTableRow extends PureComponent<Props> {
         style={{width: colValue}}
         data-test="valueCell"
       >
-        {value === null ? (
-          <span>{'–'}</span>
-        ) : triggerType !== 'anomaly_predict' ? (
-          <span>{value}</span>
-        ) : (
-          <span>
-            {value === '1'
-              ? 'ML'
-              : value === '2'
-              ? 'DL'
-              : value === '3'
-              ? 'ALL'
-              : 'OK'}
-          </span>
-        )}
+        {value === null ? <span>{'–'}</span> : <span>{value}</span>}
       </div>
     )
   }
