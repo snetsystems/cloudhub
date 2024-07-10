@@ -1347,8 +1347,8 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 			continue
 		}
 		host := fmt.Sprintf("%s:%s/%d", strings.ToLower(device.SNMPConfig.Protocol), device.DeviceIP, device.SNMPConfig.Port)
-		hostEntry := fmt.Sprintf("{host => \"%s\" community => \"%s\" version => \"%s\" retries => %d timeout => %d}",
-			host, device.SNMPConfig.Community, device.SNMPConfig.Version, 1, 30000)
+		hostEntry := fmt.Sprintf("{host => \"%s\" community => \"%s\" version => \"%s\" timeout => %d}",
+			host, device.SNMPConfig.Community, device.SNMPConfig.Version, 50000)
 		hostEntries = append(hostEntries, hostEntry)
 
 		filter := fmt.Sprintf(`
