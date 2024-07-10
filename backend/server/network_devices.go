@@ -1417,7 +1417,7 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 
 func (s *Service) removeLogstashConfigGroupByOrg(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg) (int, []byte, error) {
 	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &devOrg.ID})
-	fileName := fmt.Sprintf("%s_snmp.nx.rb", org.Name)
+	fileName := fmt.Sprintf("%s_snmp_nx.rb", org.Name)
 	dirPath := "/etc/logstash/pipeline"
 	filePath := path.Join(dirPath, fileName)
 
