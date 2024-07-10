@@ -299,6 +299,7 @@ class PredictionRulePage extends Component<Props, State> {
         predictMode: this.getOriginalPredictMode(_fetchedRule),
         isTickscriptCreated: true,
       })
+      this.setOriginalRuleMessage(_fetchedRule)
     } else {
       this.initializeState()
     }
@@ -322,6 +323,17 @@ class PredictionRulePage extends Component<Props, State> {
 
     const combinedMode = this.getPredictModeKey(predictMode, ensembleCondition)
     return combinedMode
+  }
+
+  private setOriginalRuleMessage = (fetchedRule: AlertRule) => {
+    const {ruleActions} = this.props
+    const ruleMessageRegex = /var message = '([^']*)'/
+    const ruleMessageMatch = fetchedRule?.tickscript?.match(ruleMessageRegex)
+    const ruleMessage = ruleMessageMatch ? ruleMessageMatch[1] : ''
+
+    if (ruleMessage) {
+      ruleActions.updateMessage(fetchedRule.id, ruleMessage)
+    }
   }
 
   private getPredictModeKey = (
