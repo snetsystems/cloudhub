@@ -1093,17 +1093,27 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 	t.DeviceCategory = pb.DeviceCategory
 	t.DeviceOS = pb.DeviceOS
 	t.IsCollectingCfgWritten = pb.IsCollectingCfgWritten
-	t.SSHConfig = cloudhub.SSHConfig{
-		UserID:     pb.SSHConfig.UserID,
-		Password:   pb.SSHConfig.Password,
-		EnPassword: pb.SSHConfig.EnPassword,
-		Port:       int(pb.SSHConfig.Port),
+
+	if pb.SSHConfig != nil {
+		t.SSHConfig = cloudhub.SSHConfig{
+			UserID:     pb.SSHConfig.UserID,
+			Password:   pb.SSHConfig.Password,
+			EnPassword: pb.SSHConfig.EnPassword,
+			Port:       int(pb.SSHConfig.Port),
+		}
+	} else {
+		t.SSHConfig = cloudhub.SSHConfig{}
 	}
-	t.SNMPConfig = cloudhub.SNMPConfig{
-		Community: pb.SNMPConfig.Community,
-		Version:   pb.SNMPConfig.Version,
-		Port:      int(pb.SNMPConfig.Port),
-		Protocol:  pb.SNMPConfig.Protocol,
+
+	if pb.SNMPConfig != nil {
+		t.SNMPConfig = cloudhub.SNMPConfig{
+			Community: pb.SNMPConfig.Community,
+			Version:   pb.SNMPConfig.Version,
+			Port:      int(pb.SNMPConfig.Port),
+			Protocol:  pb.SNMPConfig.Protocol,
+		}
+	} else {
+		t.SNMPConfig = cloudhub.SNMPConfig{}
 	}
 	t.Sensitivity = pb.Sensitivity
 	t.DeviceVendor = pb.DeviceVendor
@@ -1149,13 +1159,17 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 	t.LearnedDevicesIDs = pb.LearnedDevicesIDs
 	t.CollectorServer = pb.CollectorServer
 	t.CollectedDevicesIDs = pb.CollectedDevicesIDs
-	t.AIKapacitor = cloudhub.AIKapacitor{
-		SrcID:              int(pb.AIKapacitor.SrcID),
-		KapaID:             int(pb.AIKapacitor.KapaID),
-		KapaURL:            pb.AIKapacitor.KapaURL,
-		Username:           pb.AIKapacitor.Username,
-		Password:           pb.AIKapacitor.Password,
-		InsecureSkipVerify: pb.AIKapacitor.InsecureSkipVerify,
+	if pb.AIKapacitor != nil {
+		t.AIKapacitor = cloudhub.AIKapacitor{
+			SrcID:              int(pb.AIKapacitor.SrcID),
+			KapaID:             int(pb.AIKapacitor.KapaID),
+			KapaURL:            pb.AIKapacitor.KapaURL,
+			Username:           pb.AIKapacitor.Username,
+			Password:           pb.AIKapacitor.Password,
+			InsecureSkipVerify: pb.AIKapacitor.InsecureSkipVerify,
+		}
+	} else {
+		t.AIKapacitor = cloudhub.AIKapacitor{}
 	}
 
 	return nil
