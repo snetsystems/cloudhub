@@ -237,82 +237,7 @@ func (s *Service) processDevice(ctx context.Context, req deviceRequest, allDevic
 	return res, nil
 }
 
-// NewDevices creates and returns a new Device object (Version 2)
-func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
-
-	reqs, ctx, err := decodeRequest[[]deviceRequest](r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
-
-	if err != nil {
-		http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
-		return
-	}
-
-	ipCount := make(map[string]int)
-	for _, req := range reqs {
-		ipCount[req.DeviceIP]++
-	}
-
-	failedDevices := make(chan createDeviceError, len(ipCount))
-	uniqueReqs := []deviceRequest{}
-
-	for i, req := range reqs {
-		if ipCount[req.DeviceIP] > 1 {
-			failedDevices <- createDeviceError{
-				Index:        i,
-				DeviceIP:     req.DeviceIP,
-				ErrorMessage: "duplicate IP in request",
-			}
-		} else {
-			uniqueReqs = append(uniqueReqs, req)
-		}
-	}
-
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, cloudhub.WorkerLimit)
-	for i, req := range uniqueReqs {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(ctx context.Context, i int, req deviceRequest) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			_, err := s.processDevice(ctx, req, allDevices)
-			if err != nil {
-				failedDevices <- createDeviceError{
-					Index:        i,
-					DeviceIP:     req.DeviceIP,
-					ErrorMessage: err.Error(),
-				}
-			}
-		}(ctx, i, req)
-	}
-
-	go func() {
-		wg.Wait()
-		close(failedDevices)
-	}()
-
-	var failedDeviceList []createDeviceError
-	for err := range failedDevices {
-		failedDeviceList = append(failedDeviceList, err)
-	}
-
-	response := map[string]interface{}{
-		"failed_devices": failedDeviceList,
-	}
-	if len(failedDeviceList) > 0 {
-		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
-	} else {
-		encodeJSON(w, http.StatusCreated, response, s.Logger)
-	}
-}
-
-// NewDevices creates and returns a new Device object
+// // NewDevices creates and returns a new Device object (Version 2)
 // func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 
 // 	reqs, ctx, err := decodeRequest[[]deviceRequest](r)
@@ -333,69 +258,144 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 // 		ipCount[req.DeviceIP]++
 // 	}
 
-// 	failedDevices := []createDeviceError{}
+// 	failedDevices := make(chan createDeviceError, len(ipCount))
 // 	uniqueReqs := []deviceRequest{}
 
 // 	for i, req := range reqs {
 // 		if ipCount[req.DeviceIP] > 1 {
-// 			failedDevices = append(failedDevices, createDeviceError{
+// 			failedDevices <- createDeviceError{
 // 				Index:        i,
 // 				DeviceIP:     req.DeviceIP,
 // 				ErrorMessage: "duplicate IP in request",
-// 			})
+// 			}
 // 		} else {
 // 			uniqueReqs = append(uniqueReqs, req)
 // 		}
 // 	}
 
-// 	workerLimit := 10
-// 	sem := make(chan struct{}, workerLimit)
-
 // 	var wg sync.WaitGroup
-// 	var mu sync.Mutex
-
+// 	sem := make(chan struct{}, cloudhub.WorkerLimit)
 // 	for i, req := range uniqueReqs {
 // 		wg.Add(1)
 // 		sem <- struct{}{}
 // 		go func(ctx context.Context, i int, req deviceRequest) {
 // 			defer wg.Done()
-// 			defer func() {
-// 				if rec := recover(); rec != nil {
-// 					s.Logger.Error("Recovered from panic: %v", rec)
-// 					mu.Lock()
-// 					failedDevices = append(failedDevices, createDeviceError{
-// 						Index:        i,
-// 						DeviceIP:     req.DeviceIP,
-// 						ErrorMessage: "internal server error",
-// 					})
-// 					mu.Unlock()
-// 				}
-// 				<-sem
-// 			}()
+// 			defer func() { <-sem }()
 // 			_, err := s.processDevice(ctx, req, allDevices)
 // 			if err != nil {
-// 				mu.Lock()
-// 				failedDevices = append(failedDevices, createDeviceError{
+// 				failedDevices <- createDeviceError{
 // 					Index:        i,
 // 					DeviceIP:     req.DeviceIP,
 // 					ErrorMessage: err.Error(),
-// 				})
-// 				mu.Unlock()
+// 				}
 // 			}
 // 		}(ctx, i, req)
 // 	}
 
-// 	wg.Wait()
+// 	go func() {
+// 		wg.Wait()
+// 		close(failedDevices)
+// 	}()
+
+// 	var failedDeviceList []createDeviceError
+// 	for err := range failedDevices {
+// 		failedDeviceList = append(failedDeviceList, err)
+// 	}
 
 // 	response := map[string]interface{}{
-// 		"failed_devices": failedDevices,
+// 		"failed_devices": failedDeviceList,
 // 	}
-// 	if len(failedDevices) > 0 {
+// 	if len(failedDeviceList) > 0 {
 // 		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 // 	} else {
 // 		encodeJSON(w, http.StatusCreated, response, s.Logger)
 // 	}
 // }
+
+// NewDevices creates and returns a new Device object
+func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
+
+	reqs, ctx, err := decodeRequest[[]deviceRequest](r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
+
+	if err != nil {
+		http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
+		return
+	}
+
+	ipCount := make(map[string]int)
+	for _, req := range reqs {
+		ipCount[req.DeviceIP]++
+	}
+
+	failedDevices := []createDeviceError{}
+	uniqueReqs := []deviceRequest{}
+
+	for i, req := range reqs {
+		if ipCount[req.DeviceIP] > 1 {
+			failedDevices = append(failedDevices, createDeviceError{
+				Index:        i,
+				DeviceIP:     req.DeviceIP,
+				ErrorMessage: "duplicate IP in request",
+			})
+		} else {
+			uniqueReqs = append(uniqueReqs, req)
+		}
+	}
+
+	workerLimit := 10
+	sem := make(chan struct{}, workerLimit)
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	for i, req := range uniqueReqs {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(ctx context.Context, i int, req deviceRequest) {
+			defer wg.Done()
+			defer func() {
+				if rec := recover(); rec != nil {
+					s.Logger.Error("Recovered from panic: %v", rec)
+					mu.Lock()
+					failedDevices = append(failedDevices, createDeviceError{
+						Index:        i,
+						DeviceIP:     req.DeviceIP,
+						ErrorMessage: "internal server error",
+					})
+					mu.Unlock()
+				}
+				<-sem
+			}()
+			_, err := s.processDevice(ctx, req, allDevices)
+			if err != nil {
+				mu.Lock()
+				failedDevices = append(failedDevices, createDeviceError{
+					Index:        i,
+					DeviceIP:     req.DeviceIP,
+					ErrorMessage: err.Error(),
+				})
+				mu.Unlock()
+			}
+		}(ctx, i, req)
+	}
+
+	wg.Wait()
+
+	response := map[string]interface{}{
+		"failed_devices": failedDevices,
+	}
+	if len(failedDevices) > 0 {
+		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+	} else {
+		encodeJSON(w, http.StatusCreated, response, s.Logger)
+	}
+}
 
 // AllDevices returns all devices within the store.
 func (s *Service) AllDevices(w http.ResponseWriter, r *http.Request) {
