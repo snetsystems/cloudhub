@@ -10,7 +10,6 @@ import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import {setAutoRefresh} from 'src/shared/actions/app'
-import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import {
   DEFAULT_CELL_BG_COLOR,
@@ -100,7 +99,6 @@ function PredictionInstanceWrapper({
     milliseconds: RefreshRate
     group?: string
   }) => {
-    const {onChooseAutoRefresh} = this.props
     const {milliseconds} = option
     onChooseAutoRefresh(milliseconds)
   }
@@ -121,10 +119,10 @@ function PredictionInstanceWrapper({
 
   const handleChooseTimeRange = ({lower, upper}) => {
     if (upper) {
-      this.setState({selfTimeRange: {lower, upper}})
+      setSelfTimeRange({lower, upper})
     } else {
       const timeRange = timeRanges.find(range => range.lower === lower)
-      this.setState({selfTimeRange: timeRange})
+      setSelfTimeRange(timeRange)
     }
   }
 
@@ -140,7 +138,7 @@ function PredictionInstanceWrapper({
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
           <div className="page-header--right" style={{zIndex: 3}}>
-            {/* <AutoRefreshDropdown
+            <AutoRefreshDropdown
               onChoose={handleChooseAutoRefresh}
               selected={selfAutoRefrsh}
               onManualRefresh={handleManualRefresh}
@@ -148,7 +146,7 @@ function PredictionInstanceWrapper({
             <TimeRangeDropdown
               onChooseTimeRange={handleChooseTimeRange}
               selected={selfTimeRange}
-            /> */}
+            />
           </div>
         </PredictionDashboardHeader>
         {!_.isEmpty(instance) ? (

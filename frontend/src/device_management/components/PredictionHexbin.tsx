@@ -5,6 +5,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 import {PredictionTooltipNode} from 'src/types'
 import PredictionTooltip from './PredictionTooltip'
+import {TOOLTIP_WIDTH} from '../constants'
 
 interface Props {
   onHexbinClick: (num: number) => void
@@ -37,8 +38,6 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
   const childrenRef = useRef<HTMLInputElement>(null)
 
   const svgRef = useRef<SVGSVGElement>(null)
-
-  const [colorChange, setColorChange] = useState<number>(2)
 
   const [isTooltipActive, setIsTooltipActive] = useState(false)
 
@@ -114,7 +113,7 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
         }
       }
     })
-  }, [colorChange])
+  }, [])
 
   const attachEventHandlers = () => {
     if (!svgRef.current) return
@@ -255,7 +254,7 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
   useEffect(() => {
     drawHexagons()
     attachEventHandlers()
-  }, [colorChange])
+  }, [])
 
   const tooltipComponent = (tooltip: PredictionTooltipNode) => {
     const gap = {width: 0, height: 0}
@@ -296,7 +295,10 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
           isTooltipActive || isMouseOn ? 'active' : 'hidden'
         }`}
       >
-        <div className="prediction-tooltip-content">
+        <div
+          style={{width: TOOLTIP_WIDTH}}
+          className="prediction-tooltip-content"
+        >
           <PredictionTooltip
             cpu={tooltip.cpu}
             memory={tooltip.memory}

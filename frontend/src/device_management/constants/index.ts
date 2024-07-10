@@ -29,6 +29,14 @@ import {
 import {predictionColumn} from './predictionColumn'
 import {MONITORING_MODAL_INFO} from './systemMsg'
 import {fixturePredictionPageCells} from './fixture'
+import {
+  PREDICTION_TOOLTIP_TABLE_SIZING,
+  TOOLTIP_OFFSET_X,
+  TOOLTIP_WIDTH,
+  OUTLINE,
+  DETECT_RATE,
+  STATIC_TOOLTIP_HEIGHT,
+} from './prediction'
 export {
   DEFAULT_NETWORK_DEVICE_DATA,
   SNMP_VERSION,
@@ -57,5 +65,11 @@ export {
   DEVICE_MANAGEMENT_SCRIPT_URL,
   DEFAULT_PREDICT_MODE,
   PREDICT_TASK_PREFIX,
+  PREDICTION_TOOLTIP_TABLE_SIZING,
+  TOOLTIP_OFFSET_X,
+  TOOLTIP_WIDTH,
+  OUTLINE,
+  DETECT_RATE,
+  STATIC_TOOLTIP_HEIGHT,
   // fixturePredictionPageCells,
 }
