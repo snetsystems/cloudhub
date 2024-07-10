@@ -134,7 +134,7 @@ const AiRoutePage = (props: Props) => {
     <Page>
       <Page.Header>
         <Page.Header.Left>
-          <Page.Title title="CloudHub Admin" />
+          <Page.Title title="Network Device" />
         </Page.Header.Left>
         <Page.Header.Center widthPixels={headerRadioButtons.length * 150}>
           <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
