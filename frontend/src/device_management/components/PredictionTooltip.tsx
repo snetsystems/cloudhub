@@ -69,7 +69,7 @@ function PredictionTooltip({cpu, memory, name, traffic, status}: Props) {
               <TableBodyRowItem
                 title={PredictionTooltipIndicator({
                   value: traffic,
-                  status: null,
+                  status: status,
                 })}
                 width={TABLE_ROW_IN_BODY}
               ></TableBodyRowItem>

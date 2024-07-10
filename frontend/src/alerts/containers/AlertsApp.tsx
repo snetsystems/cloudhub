@@ -18,6 +18,7 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 
 import {Source, TimeRange, Me} from 'src/types'
 import {Alert} from '../../types/alerts'
+import {alertValueStatus} from 'src/shared/utils/alertValueStatus'
 
 interface Props {
   source: Source
@@ -163,18 +164,7 @@ class AlertsApp extends PureComponent<Props, State> {
           const host = s[hostIndex] ?? s[agentHostIndex]
           const value = (() => {
             if (s[triggerTypeIndex] === 'anomaly_predict') {
-              switch (s[valueIndex]) {
-                case 0:
-                  return 'OK'
-                case 1:
-                  return 'ML Predict'
-                case 2:
-                  return 'DL Predict'
-                case 3:
-                  return 'ML+DL Predict'
-                default:
-                  return null
-              }
+              alertValueStatus(s[triggerTypeIndex])
             } else {
               return s[valueIndex]
             }

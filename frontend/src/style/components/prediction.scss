@@ -79,7 +79,7 @@
 .predictionTooltip-container {
   width: 100%;
   text-align: center;
-
+  color: $g13-mist; //#bec2cc
   .predictionTooltip-value {
     &.predictionTooltip--normal {
       color: $c-rainforest;
@@ -147,7 +147,7 @@
 .IPMI-predictionTooltip {
   height: 2px;
   text-align: center;
-  background: $c-rainforest;
+  background: $g7-graphite;
   margin-top: 2px;
 
   &.predictionTooltip--normal {
@@ -216,4 +216,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.prediction-page {
+  .dashboard {
+    padding-top: 0;
+  }
 }

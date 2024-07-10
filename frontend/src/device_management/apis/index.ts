@@ -315,9 +315,9 @@ export const getPredictionAlert = (
   limit: number,
   db: string
 ) => {
-  const query = `SELECT host, value, level, alertName, triggerType FROM cloudhub_alerts WHERE time >= '${
+  const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE time >= '${
     timeRange.lower
-  }' AND time <= '${timeRange.upper}' ORDER BY time desc ${
+  }' AND time <= '${timeRange.upper}' AND value != 0 ORDER BY time desc ${
     limit ? `LIMIT ${limit}` : ''
   }`
 
@@ -335,8 +335,8 @@ export const getLiveDeviceInfo = async (
   meRole: string
 ) => {
   const query = replaceTemplate(
-    `SELECT mean("cpu1min") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 15m GROUP BY agent_host;
-    SELECT mean("mem_usage") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 15m GROUP BY agent_host;
+    `SELECT mean("cpu1min") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
+    SELECT mean("mem_usage") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
     SHOW TAG VALUES FROM \"autogen\".\"snmp_nx\" WITH KEY IN ("agent_host")
       `,
     tempVars
@@ -363,6 +363,7 @@ export const getLiveDeviceInfo = async (
         traffic: (Math.random() * 21660).toFixed(),
       }
     })
+
     return result
   } else {
     throw Error('cpu or memory data is not invalid')

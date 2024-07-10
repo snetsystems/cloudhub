@@ -28,7 +28,6 @@ import {
 import {RECENT_ALERTS_LIMIT} from 'src/status/constants'
 import PredictionAlertTable from './PredictionAlertTable'
 import {fixturePredictionPageCells} from '../constants'
-import {PredictionModal} from './PredictionModal'
 import {Alert} from 'src/types/alerts'
 import _ from 'lodash'
 import Layout from 'src/shared/components/Layout'
@@ -38,6 +37,7 @@ import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
 import {WithRouterProps} from 'react-router'
+import PredictionInstanceWrapper from './PredictionInstanceWrapper'
 
 interface Props extends ManualRefreshProps, WithRouterProps {
   inPresentationMode: boolean
@@ -95,19 +95,6 @@ function PredictionDashBoard({
   const savedCells: DashboardsModels.Cell[] = JSON.parse(
     localStorage.getItem('Prediction-cells')
   )
-
-  const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false)
-
-  const [openNum, setOpenNum] = useState<number>(null)
-
-  const onHexbinClick = (num: number) => {
-    if (openNum === num) {
-      setIsPredictionModalOpen(prev => !prev)
-    } else {
-      setIsPredictionModalOpen(true)
-      setOpenNum(num)
-    }
-  }
 
   const cells = useMemo(() => {
     const defaultCells = fixturePredictionPageCells(source)
@@ -209,7 +196,7 @@ function PredictionDashBoard({
                 cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
                 cellTextColor={DEFAULT_CELL_TEXT_COLOR}
               >
-                <div className="dash-graph--name">Monitoring Graph</div>
+                <div className="dash-graph--name"></div>
               </PredictionDashboardHeader>
               {!!cell && (
                 <Layout
@@ -259,7 +246,7 @@ function PredictionDashBoard({
                 cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
                 cellTextColor={DEFAULT_CELL_TEXT_COLOR}
               >
-                <div className="dash-graph--name">Alert History Table</div>
+                <div className="dash-graph--name"></div>
               </PredictionDashboardHeader>
 
               <PredictionAlertTable
@@ -293,28 +280,20 @@ function PredictionDashBoard({
                 cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
                 cellTextColor={DEFAULT_CELL_TEXT_COLOR}
               >
-                <div className="dash-graph--name">Device Hexagon Chart</div>
+                <div className="dash-graph--name"></div>
               </PredictionDashboardHeader>
-              <PredictionHexbinWrapper
-                source={source}
-                onHexbinClick={onHexbinClick}
-              />
+              <PredictionHexbinWrapper source={source} />
             </div>
           </Authorized>
         )
       }
       case 'instanceGraph': {
         return (
-          <div>
-            <PredictionDashboardHeader
-              cellName={`Monitoring (${cell.i})`}
-              cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
-              cellTextColor={DEFAULT_CELL_TEXT_COLOR}
-            >
-              <div className="dash-graph--name">{cell.i}</div>
-            </PredictionDashboardHeader>
-            <span>{cell.i}</span>
-          </div>
+          <PredictionInstanceWrapper
+            source={source}
+            timeRange={timeRange}
+            manualRefresh={manualRefresh}
+          />
         )
       }
     }
@@ -373,13 +352,6 @@ function PredictionDashBoard({
           </div>
         </Page.Contents>
       </Page>
-      {
-        <PredictionModal
-          isOpen={isPredictionModalOpen}
-          setIsOpen={setIsPredictionModalOpen}
-          index={openNum}
-        />
-      }
     </>
   )
 }

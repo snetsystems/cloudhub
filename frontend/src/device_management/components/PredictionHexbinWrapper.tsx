@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useState} from 'react'
 import PredictionHexbin from './PredictionHexbin'
 import AJAX from 'src/utils/ajax'
 import {
@@ -17,16 +17,16 @@ import {connect} from 'react-redux'
 import _ from 'lodash'
 import NoKapacitorError from 'src/shared/components/NoKapacitorError'
 import {notifyUnableToGetHosts} from 'src/shared/copy/notifications'
+import {PredictionModal} from './PredictionModal'
 
 interface Props {
-  onHexbinClick: (num: number) => void
   source: Source
   links?: Links
   auth?: Auth
   notify?: NotificationAction
 }
 
-function PredictionHexbinWrapper({onHexbinClick, source, auth, notify}: Props) {
+function PredictionHexbinWrapper({source, auth, notify}: Props) {
   const [hostList, setHostList] = useState<PredictionTooltipNode[]>(null)
 
   const [hasKapacitor, setHasKapacitor] = useState(false)
@@ -34,6 +34,20 @@ function PredictionHexbinWrapper({onHexbinClick, source, auth, notify}: Props) {
   const [error, setError] = useState<string>()
 
   const [loading, setLoading] = useState<boolean>(false)
+
+  const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false)
+
+  const [openNum, setOpenNum] = useState<number>(null)
+
+  const onHexbinClick = (num: number) => {
+    // the way to close modal is hexbin double click
+    if (openNum === num) {
+      setIsPredictionModalOpen(prev => !prev)
+    } else {
+      setOpenNum(num)
+      setIsPredictionModalOpen(true)
+    }
+  }
 
   // alert List get api
   useEffect(() => {
@@ -68,7 +82,6 @@ function PredictionHexbinWrapper({onHexbinClick, source, auth, notify}: Props) {
 
     const tempVars = generateForHosts(source)
     const meRole = _.get(auth, 'me.role', '')
-
     try {
       getLiveDeviceInfo(source.links.proxy, source.telegraf, tempVars, meRole)
         .then(resp => {
@@ -106,6 +119,13 @@ function PredictionHexbinWrapper({onHexbinClick, source, auth, notify}: Props) {
       ) : (
         <NoKapacitorError source={source} />
       )}
+      {
+        <PredictionModal
+          isOpen={isPredictionModalOpen}
+          setIsOpen={setIsPredictionModalOpen}
+          index={openNum}
+        />
+      }
     </>
   )
 }

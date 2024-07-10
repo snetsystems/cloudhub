@@ -5,6 +5,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 import {PredictionTooltipNode} from 'src/types'
 import PredictionTooltip from './PredictionTooltip'
+
 interface Props {
   onHexbinClick: (num: number) => void
   tooltipData: PredictionTooltipNode[]
@@ -57,7 +58,9 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
 
   const statusCal = (valueUsage: number) => {
     const status =
-      valueUsage < 60
+      valueUsage < 0
+        ? 'invalid'
+        : valueUsage < 60
         ? 'normal'
         : valueUsage < 70
         ? 'warning'
@@ -67,7 +70,7 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
         ? 'critical'
         : valueUsage < 120
         ? 'emergency'
-        : 'normal'
+        : 'invalid'
     return status
   }
 
@@ -85,19 +88,30 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
       case 'emergency':
         return '#ab0000'
       default:
-        return '#7ce490'
+        return '#545667'
     }
   }
 
   const inputData = useMemo<HexagonInputData[]>(() => {
     return tooltipData.map(hex => {
-      return {
-        statusColor: statusHexColor(statusCal((hex.cpu + hex.memory) / 2)),
-        name: hex.name,
-        cpu: Number(hex.cpu.toFixed()),
-        memory: Number(hex.memory.toFixed()),
-        traffic: hex.traffic,
-        status: statusCal((hex.cpu + hex.memory) / 2),
+      if (typeof hex.cpu === 'number' && typeof hex.memory === 'number') {
+        return {
+          statusColor: statusHexColor(statusCal((hex.cpu + hex.memory) / 2)),
+          name: hex.name,
+          cpu: Number(hex.cpu.toFixed()),
+          memory: Number(hex.memory.toFixed()),
+          traffic: hex.traffic,
+          status: statusCal((hex.cpu + hex.memory) / 2),
+        }
+      } else {
+        return {
+          statusColor: statusHexColor(''),
+          name: hex.name,
+          cpu: -1,
+          memory: -1,
+          traffic: hex.traffic,
+          status: 'invalid',
+        }
       }
     })
   }, [colorChange])

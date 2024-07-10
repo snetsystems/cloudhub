@@ -5,6 +5,7 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import {Source, TimeRange} from 'src/types'
 import {Alert} from 'src/types/alerts'
 import PredictionAlertTableBody from './PredictionAlertTableBody'
+import {alertValueStatus} from 'src/shared/utils/alertValueStatus'
 
 interface Props {
   source: Source
@@ -42,14 +43,7 @@ function PredictionAlertTable({
       return {
         ...i,
         ...{
-          value:
-            i.value === '1'
-              ? 'Machine Learning'
-              : i.value === '2'
-              ? 'Deep Learning'
-              : i.value === '3'
-              ? 'ALL'
-              : 'OK',
+          value: alertValueStatus(Number(i.value)),
         },
       }
     })
