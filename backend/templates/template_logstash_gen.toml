@@ -96,7 +96,7 @@ output {
 				}
 			}
 		}
-		if [type] == "snmp_nx_cpu_evt" {
+		if [type] == "snmp_nx_cpu_evt" and [cpu] {
 			influxdb {
 				host => "{{.InfluxOrigin}}"
 				port => {{.InfluxPort}}
@@ -117,7 +117,7 @@ output {
 				}
 			}
 		}
-		if ([type] == "snmp_nx_iface_evt") and [interfaces][index] {
+		if ([type] == "snmp_nx_iface_evt") and [interfaces] and [interfaces][index] {
 			influxdb {
 				host => "{{.InfluxOrigin}}"
 				port => {{.InfluxPort}}
@@ -167,7 +167,7 @@ output {
 				}
 			}
 		}
-		if [type] == "snmp_nx_proc_evt" {
+		if [type] == "snmp_nx_proc_evt" and [processes] {
 			influxdb {
 				host => "{{.InfluxOrigin}}"
 				port => {{.InfluxPort}}
