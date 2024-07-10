@@ -352,8 +352,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   ) {
     return devicesData.map(device => {
       const {device_ip} = device
-      const uptime = deviceMonitoringStatus?.[device_ip]?.uptime || 0
-      const isMonitoring = uptime !== 0
+      const isMonitoring = deviceMonitoringStatus?.[device_ip] || false
       return {
         ...device,
         isMonitoring,

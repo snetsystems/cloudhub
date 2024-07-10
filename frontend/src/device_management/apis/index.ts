@@ -69,7 +69,7 @@ export const fetchDeviceMonitoringStatus = async (
   tempVars: Template[]
 ): Promise<DeviceMonitoringStatus> => {
   const query = replaceTemplate(
-    `SELECT non_negative_derivative(mean(uptime)) AS Uptime FROM \":db:\".\":rp:\".\"snmp_nx\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY agent_host, time(${telegrafSystemInterval}) fill(0);`,
+    `SELECT sys_uptime FROM \":db:\".\":rp:\".\"snmp_nx\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY agent_host LIMIT 1;`,
     tempVars
   )
   const {data} = await proxy({
@@ -80,27 +80,23 @@ export const fetchDeviceMonitoringStatus = async (
   const deviceMonitoringStatus: DeviceMonitoringStatus = {}
   const uptimeSeries = getDeep<Series[]>(data, 'results.[0].series', [])
 
-  _.forEach(uptimeSeries, s => {
-    const deviceIP = _.get(s, 'tags.agent_host')
-    if (deviceIP) {
-      _.set(
-        deviceMonitoringStatus,
-        [deviceIP, 'uptime'],
-        _.get(deviceMonitoringStatus, [deviceIP, 'uptime'], 0)
-      )
-      const uptimeIndex = _.findIndex(s.columns, col => col === 'Uptime')
-      if (uptimeIndex !== -1) {
-        const latestValue = _.last(s.values)
-        if (_.isArray(latestValue) && latestValue.length > uptimeIndex) {
-          _.set(
-            deviceMonitoringStatus,
-            [deviceIP, 'uptime'],
-            Number(latestValue[uptimeIndex])
-          )
+  if (Array.isArray(uptimeSeries)) {
+    uptimeSeries.forEach(series => {
+      if (
+        series &&
+        typeof series === 'object' &&
+        series.tags &&
+        typeof series.tags.agent_host === 'string'
+      ) {
+        const deviceIP = series.tags.agent_host
+
+        if (deviceIP) {
+          const hasValues = _.get(series, 'values.length', 0) > 0
+          deviceMonitoringStatus[deviceIP] = hasValues
         }
       }
-    }
-  })
+    })
+  }
 
   return deviceMonitoringStatus
 }

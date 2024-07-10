@@ -80,9 +80,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       align: AlignType.CENTER,
       render: value => (
         <div
-          className={`table-dot ${
-            value ? 'dot-success' : 'dot-critical'
-          } flex-center`}
+          className={`table-dot ${value ? 'dot-success' : ''} flex-center`}
         ></div>
       ),
     },
