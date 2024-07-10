@@ -509,7 +509,7 @@ func (s *Service) DockerRestart(path string, targetMinion string) (int, []byte, 
 		Kwarg  kwarg  `json:"kwarg"`
 	}
 
-	dockerCommand := fmt.Sprintf("docker compose restart logstash")
+	dockerCommand := fmt.Sprintf("./sandbox2.sh restart logstash")
 
 	body := &param{
 		Token:  s.AddonTokens["salt"],

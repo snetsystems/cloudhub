@@ -86,7 +86,7 @@ const MLFunctionGaussianStd = "ml_gaussian_std"
 // ML/DL Setting
 const (
 	LoadModule   = "loader.cloudhub.ch_nx_load"
-	MLFunction   = MLFunctionMultiplied
+	MLFunction   = MLFunctionGaussianStd
 	DataDuration = 15
 	CronSchedule = "1 0 1,15 * *"
 )
@@ -430,7 +430,7 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		req.CronSchedule = &defaultCronSchedule
 	}
 	if req.MLFunction == nil {
-		defaultMLFunction := MLFunctionMultiplied
+		defaultMLFunction := MLFunction
 		req.MLFunction = &defaultMLFunction
 	}
 	taskReq := cloudhub.AutoGenerateLearnRule{
