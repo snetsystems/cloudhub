@@ -1061,7 +1061,7 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
 
 	if req.Name == "" {
-		req.Name = "Anomaly Prediction_" + org.Name
+		req.Name = org.Name
 	}
 	if req.OrganizationName == "" {
 		req.OrganizationName = org.Name
