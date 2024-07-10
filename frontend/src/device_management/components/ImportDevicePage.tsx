@@ -330,14 +330,16 @@ class ImportDevicePage extends PureComponent<Props, State> {
     failedDevices: SNMPConnectionFailedDevice[],
     snmpConnectionSuccessDevices: SNMPConnectionSuccessDevice[]
   ): DataTableObject[] => {
-    const _failedDevices = failedDevices.map(
-      (failedDevice: SNMPConnectionFailedDevice): DataTableObject => ({
-        index: failedDevice.index,
-        ip: failedDevice.device_ip,
-        status: 'Failed',
-        message: failedDevice.errorMessage,
-      })
-    )
+    const _failedDevices =
+      _.map(
+        failedDevices,
+        (failedDevice: SNMPConnectionFailedDevice): DataTableObject => ({
+          index: failedDevice.index,
+          ip: failedDevice.device_ip,
+          status: 'Failed',
+          message: failedDevice.errorMessage,
+        })
+      ) || []
 
     const successDevices =
       _.map(
@@ -357,7 +359,11 @@ class ImportDevicePage extends PureComponent<Props, State> {
     failedDevices: SNMPConnectionFailedDevice[],
     snmpConnectionSuccessDevices: SNMPConnectionSuccessDevice[]
   ): JSX.Element => {
-    if (failedDevices.length === 0 && snmpConnectionSuccessDevices === null) {
+    if (
+      failedDevices &&
+      failedDevices.length === 0 &&
+      snmpConnectionSuccessDevices === null
+    ) {
       return (
         <>
           There is <label className="label-warning">0 device </label>to
@@ -366,6 +372,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
       )
     } else if (
       snmpConnectionSuccessDevices === null &&
+      failedDevices &&
       failedDevices.length > 0
     ) {
       return (
@@ -376,6 +383,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
       )
     } else if (
       snmpConnectionSuccessDevices.length > 0 &&
+      failedDevices &&
       failedDevices.length === 0
     ) {
       return (
@@ -386,6 +394,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
       )
     } else if (
       snmpConnectionSuccessDevices.length > 0 &&
+      failedDevices &&
       failedDevices.length > 0
     ) {
       return (
@@ -571,12 +580,16 @@ class ImportDevicePage extends PureComponent<Props, State> {
     failedDevices: FailedDevice[]
   ): string => {
     const limit = 5
-    let messages = failedDevices
-      .slice(0, limit)
-      .map(device => `${device.device_ip}: ${device.errorMessage}`)
-      .join('.')
+    let messages = ''
 
-    if (failedDevices.length > limit) {
+    if (failedDevices) {
+      messages = failedDevices
+        .slice(0, limit)
+        .map(device => `${device.device_ip}: ${device.errorMessage}`)
+        .join('.')
+    }
+
+    if (failedDevices && failedDevices.length > limit) {
       messages += `Total ${failedDevices.length} devices failed`
     }
 
