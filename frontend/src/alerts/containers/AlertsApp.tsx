@@ -164,7 +164,7 @@ class AlertsApp extends PureComponent<Props, State> {
           const host = s[hostIndex] ?? s[agentHostIndex]
           const value = (() => {
             if (s[triggerTypeIndex] === 'anomaly_predict') {
-              alertValueStatus(s[triggerTypeIndex])
+              return alertValueStatus(s[valueIndex])
             } else {
               return s[valueIndex]
             }

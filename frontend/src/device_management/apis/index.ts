@@ -317,7 +317,7 @@ export const getPredictionAlert = (
 ) => {
   const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE time >= '${
     timeRange.lower
-  }' AND time <= '${timeRange.upper}' AND value != 0 ORDER BY time desc ${
+  }' AND time <= '${timeRange.upper}' ORDER BY time desc ${
     limit ? `LIMIT ${limit}` : ''
   }`
 

@@ -253,7 +253,7 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
       </div>
     ) : (
       <div className="generic-empty-state">
-        <h4 className="no-user-select">There are no Alerts to display</h4>
+        <h4 className="no-user-select">No Result</h4>
         <br />
         <h6 className="no-user-select">
           Try changing the Time Range or

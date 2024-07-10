@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react'
+import React, {useMemo} from 'react'
 import {connect} from 'react-redux'
 import {Page} from 'src/reusable_ui'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'

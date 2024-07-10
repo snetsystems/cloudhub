@@ -1,20 +1,22 @@
-import React, {memo} from 'react'
+import React from 'react'
 // components
 import {
   Table,
   TableBody,
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
-
-import {TOPOLOGY_TOOLTIP_TABLE_SIZING} from 'src/hosts/constants/topology'
 import {PredictionTooltipNode} from 'src/types'
 import {PredictionTooltipIndicator} from './PredictionTootipIndicator'
+import {PREDICTION_TOOLTIP_TABLE_SIZING} from '../constants'
 
 interface Props extends PredictionTooltipNode {
   status?: string
 }
 function PredictionTooltip({cpu, memory, name, traffic, status}: Props) {
-  const {TABLE_ROW_IN_HEADER, TABLE_ROW_IN_BODY} = TOPOLOGY_TOOLTIP_TABLE_SIZING
+  const {
+    TABLE_ROW_IN_HEADER,
+    TABLE_ROW_IN_BODY,
+  } = PREDICTION_TOOLTIP_TABLE_SIZING
 
   return (
     <>
