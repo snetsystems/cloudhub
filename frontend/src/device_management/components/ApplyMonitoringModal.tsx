@@ -120,7 +120,7 @@ function ApplyMonitoringModal({
   }
 
   const handleApplyMonitoringErrorWithFailedDevices = (
-    failedDevices: FailedDevice[]
+    failedDevices: FailedDevice[] | null
   ) => {
     const failedMessage = getFailedDevicesErrorMessage(failedDevices)
 
@@ -129,21 +129,25 @@ function ApplyMonitoringModal({
   }
 
   const getFailedDevicesErrorMessage = (
-    failedDevices: FailedDevice[]
+    failedDevices: FailedDevice[] | null
   ): string => {
+    let messages = ''
     const limit = 5
-    let messages = failedDevices
-      .slice(0, limit)
-      .map(device => {
-        const deviceID = [device?.device_id]
-        const failedDevice = selectedArrayById(deviceData, deviceID, 'id')
-        const deviceIp = failedDevice?.[0]?.device_ip ?? 'Unknown Device'
 
-        return `${deviceIp}: ${device.errorMessage}`
-      })
-      .join('.')
+    if (failedDevices) {
+      messages = failedDevices
+        .slice(0, limit)
+        .map(device => {
+          const deviceID = [device?.device_id]
+          const failedDevice = selectedArrayById(deviceData, deviceID, 'id')
+          const deviceIp = failedDevice?.[0]?.device_ip ?? 'Unknown Device'
 
-    if (failedDevices.length > limit) {
+          return `${deviceIp}: ${device.errorMessage}`
+        })
+        .join('.')
+    }
+
+    if (failedDevices && failedDevices.length > limit) {
       messages += `Total ${failedDevices.length} devices failed`
     }
 

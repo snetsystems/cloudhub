@@ -83,7 +83,7 @@ export interface SNMPConnectionSuccessDevice {
 export type CreateDeviceListRequest = DeviceData[]
 
 export interface CreateDeviceListResponse {
-  data: {failed_devices: FailedDevice[]}
+  data: {failed_devices: FailedDevice[] | null}
 }
 
 export interface FailedDevice {
@@ -102,7 +102,7 @@ export interface UpdateDeviceRequest {
 }
 
 export interface UpdateDeviceResponse {
-  data: {failed_devices: FailedDevice[]}
+  data: {failed_devices: FailedDevice[] | null}
 }
 
 export interface DeleteDeviceResponse {
@@ -145,7 +145,7 @@ export interface CollectingDevice {
 }
 
 export interface ApplyMonitoringResponse {
-  data: {failed_devices: FailedDevice[]}
+  data: {failed_devices: FailedDevice[] | null}
 }
 
 export interface CreateDeviceOrganizationOption {
