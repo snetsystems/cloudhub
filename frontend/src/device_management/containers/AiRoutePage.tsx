@@ -73,7 +73,6 @@ const AiRoutePage = (props: Props) => {
   const {
     me,
     source,
-    params: {tab},
     links: {auth, loginAuthType},
     isUsingAuth,
     organizations,

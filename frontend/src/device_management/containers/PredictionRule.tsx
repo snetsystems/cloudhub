@@ -24,7 +24,6 @@ import {
 import {Handler} from 'src/types/kapacitor'
 
 // API
-import {editRule} from 'src/kapacitor/apis'
 import {
   createDeviceManagementTickScript,
   updateDeviceManagementTickScript,
