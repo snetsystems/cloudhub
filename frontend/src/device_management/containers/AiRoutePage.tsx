@@ -83,8 +83,6 @@ const AiRoutePage = (props: Props) => {
   } = props
   const currentRoute = router.params?.tab
 
-  const [activeTab, setActiveTab] = useState('device-management')
-
   const [autoRefreshOptions, setAutoRefreshOptions] = useState<
     AutoRefreshOption[] | null
   >(getTimeOptionByGroup(currentRoute))
@@ -119,8 +117,8 @@ const AiRoutePage = (props: Props) => {
     setTimeRange(timeRange)
   }
 
-  const onChooseActiveTab = (value: string) => {
-    setActiveTab(value)
+  const onChooseActiveTab = (activeTab: string) => {
+    router.push(`/sources/${source.id}/ai/${activeTab}`)
   }
 
   // const handleChooseAutoRefresh = (option: {
@@ -148,7 +146,7 @@ const AiRoutePage = (props: Props) => {
                   id={rBtn.id}
                   titleText={rBtn.titleText}
                   value={rBtn.value}
-                  active={activeTab === rBtn.active}
+                  active={currentRoute === rBtn.active}
                   onClick={onChooseActiveTab}
                 >
                   {rBtn.label}
@@ -175,7 +173,7 @@ const AiRoutePage = (props: Props) => {
 
       <Page.Contents fullWidth={true}>
         <>
-          {activeTab === 'device-management' && (
+          {currentRoute === 'device-management' && (
             //@ts-ignore
             <DeviceManagement
               source={source}
@@ -184,7 +182,7 @@ const AiRoutePage = (props: Props) => {
               organizations={organizations}
             />
           )}
-          {activeTab === 'prediction' && (
+          {currentRoute === 'prediction' && (
             //@ts-ignore
             <PredictionPage
               timeRange={timeRange}

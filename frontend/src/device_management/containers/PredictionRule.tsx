@@ -189,9 +189,7 @@ class PredictionRule extends Component<Props, State> {
 
   private handleSave = () => {
     const {isTickscriptCreated, source, router} = this.props
-    // TODO Change Link to Prediction Page
-    // const pageLink = `/sources/${source.id}/ai/device-management`
-    const pageLink = `/sources/${source.id}/alert-rules`
+    const pageLink = `/sources/${source.id}/ai/prediction`
 
     if (isTickscriptCreated) {
       this.handleEdit()
@@ -296,7 +294,6 @@ class PredictionRule extends Component<Props, State> {
       `var ensemble_condition = '${predictModeAndEnsembleCondition.predict_mode_condition}'`
     )
 
-    // TODO Consider Replace Message
     newTickscript = replaceScript(
       newTickscript,
       /var message = '([^']*)'/,
