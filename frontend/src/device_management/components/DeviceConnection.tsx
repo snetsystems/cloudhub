@@ -208,7 +208,7 @@ class DeviceConnection extends PureComponent<Props, State> {
 
       return this.handleSNMPConnectionSuccess(results)
     } catch (error) {
-      return this.handleSNMPConnectionError(error.message)
+      return this.handleSNMPConnectionError(error?.message || 'Unknown Error')
     }
   }
 
@@ -304,7 +304,7 @@ class DeviceConnection extends PureComponent<Props, State> {
 
       return this.handleCreateDevicesSuccess()
     } catch (error) {
-      return this.handleCreateDevicesError(error.message)
+      return this.handleCreateDevicesError(error?.message || 'Unknown Error')
     }
   }
 
@@ -346,7 +346,7 @@ class DeviceConnection extends PureComponent<Props, State> {
 
       return this.handleUpdateDevicesSuccess()
     } catch (error) {
-      return this.handleUpdateDevicesError(error.message)
+      return this.handleUpdateDevicesError(error?.message || 'Unknown Error')
     }
   }
 

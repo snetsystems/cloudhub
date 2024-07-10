@@ -90,7 +90,7 @@ function ApplyMonitoringModal({
 
       return handleApplyMonitoringSuccess()
     } catch (error) {
-      return handleApplyMonitoringError(error.message || '')
+      return handleApplyMonitoringError(error?.message || 'Unknown Error')
     }
   }
 

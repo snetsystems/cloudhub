@@ -226,7 +226,9 @@ class ImportDevicePage extends PureComponent<Props, State> {
         this.setState({devicesDataParsedFromCSV: result?.data})
       },
       error: error => {
-        notify(notifyCSVUploadFailedWithMessage(error.message))
+        notify(
+          notifyCSVUploadFailedWithMessage(error?.message || 'Unknown Error')
+        )
       },
     })
   }
@@ -247,7 +249,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
 
       return this.handleSNMPConnection(failed_requests, results)
     } catch (error) {
-      return this.handleSNMPConnectionError(error.message)
+      return this.handleSNMPConnectionError(error?.message || 'Unknown Error')
     }
   }
 
@@ -551,7 +553,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
 
       return this.handleCreateDevicesSuccess()
     } catch (error) {
-      return this.handleCreateDevicesError(error.message)
+      return this.handleCreateDevicesError(error?.message || 'Unknown Error')
     }
   }
 

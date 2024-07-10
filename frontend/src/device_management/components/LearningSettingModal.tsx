@@ -314,7 +314,11 @@ function LearningSettingModal({
       notify(notifyUpdateNetworkDeviceOrganizationSucceeded())
       finalizeApplyMLDLSettingAPIResponse()
     } catch (error) {
-      notify(notifyUpdateNetworkDeviceOrganizationFailed(error.message || ''))
+      notify(
+        notifyUpdateNetworkDeviceOrganizationFailed(
+          error?.message || 'Unknown Error'
+        )
+      )
       finalizeApplyMLDLSettingAPIResponse()
     }
   }
@@ -336,7 +340,11 @@ function LearningSettingModal({
       notify(notifyCreateNetworkDeviceOrganizationSucceeded())
       finalizeApplyMLDLSettingAPIResponse()
     } catch (error) {
-      notify(notifyCreateNetworkDeviceOrganizationFailed(error.message || ''))
+      notify(
+        notifyCreateNetworkDeviceOrganizationFailed(
+          error?.message || 'Unknown Error'
+        )
+      )
       finalizeApplyMLDLSettingAPIResponse()
     }
   }
