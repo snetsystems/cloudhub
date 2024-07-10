@@ -246,7 +246,7 @@ class DeviceManagement extends PureComponent<Props, State> {
         <ApplyMonitoringModal
           isVisible={applyMonitoringModalVisibility}
           onDismissOverlay={this.handleDismissApplyMonitoringModal}
-          deviceData={selectedArrayById(data, checkedArray, 'id')}
+          deviceData={selectedArrayById(updatedDeviceData, checkedArray, 'id')}
           notify={this.props.notify}
           getDeviceAJAX={this.getDeviceAJAX}
           getNetworkDeviceOrganizationsAJAX={
@@ -258,7 +258,7 @@ class DeviceManagement extends PureComponent<Props, State> {
         <ApplyLearningModal
           isVisible={learningModelModalVisibility}
           onDismissOverlay={this.handleDismissLearningModelModal}
-          deviceData={selectedArrayById(data, checkedArray, 'id')}
+          deviceData={selectedArrayById(updatedDeviceData, checkedArray, 'id')}
           notify={this.props.notify}
           getDeviceAJAX={this.getDeviceAJAX}
           getNetworkDeviceOrganizationsAJAX={
