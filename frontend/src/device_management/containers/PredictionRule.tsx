@@ -145,7 +145,6 @@ class PredictionRule extends Component<Props, State> {
 
   private get NameSection(): JSX.Element {
     const {rule} = this.props
-    console.log(rule)
     const ruleName = rule?.name || 'Untitled Rule'
 
     return (
@@ -190,7 +189,9 @@ class PredictionRule extends Component<Props, State> {
 
   private handleSave = () => {
     const {isTickscriptCreated, source, router} = this.props
-    const predictionPageLink = `/sources/${source.id}/ai/device-management`
+    // TODO Change Link to Prediction Page
+    // const pageLink = `/sources/${source.id}/ai/device-management`
+    const pageLink = `/sources/${source.id}/alert-rules`
 
     if (isTickscriptCreated) {
       this.handleEdit()
@@ -198,7 +199,7 @@ class PredictionRule extends Component<Props, State> {
       this.handleCreate()
     }
 
-    router.push(predictionPageLink)
+    router.push(pageLink)
   }
 
   private handleCreate = async () => {
@@ -257,7 +258,6 @@ class PredictionRule extends Component<Props, State> {
       const updatedRule = this.replaceTickscript()
       const request = this.getDeviceManagementScriptRequest(updatedRule)
 
-      // await editRule(updatedRule)
       await updateDeviceManagementTickScript(request)
       notify(notifyAlertRuleUpdated(rule?.name || ''))
       this.props.setLoading(false)
