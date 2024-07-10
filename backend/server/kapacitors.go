@@ -1083,6 +1083,7 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		"PredictMode":          req.PredictMode,
 		"PredictModeCondition": req.PredictModeCondition,
 		"AlertServices":        alertServices,
+		"Group":                "{{.Group}}",
 	}
 
 	templatesFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
@@ -1167,7 +1168,6 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
-	// 데이터 설정
 	data := cloudhub.TemplateParams{
 		"AlertServices": alertServices,
 	}

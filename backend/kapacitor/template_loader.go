@@ -17,7 +17,8 @@ type TomlTemplateConfig struct {
 		Template string `toml:"template"`
 	} `toml:"learn_task"`
 	PredictionTask struct {
-		Template string `toml:"template"`
+		Template          string `toml:"template"`
+		FindAlertNodesKey string `toml:"findAlertNodesKey"`
 	} `toml:"prediction_task"`
 	LogstashTemplate struct {
 		Template   string `toml:"template"`

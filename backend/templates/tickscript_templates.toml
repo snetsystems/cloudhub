@@ -28,14 +28,14 @@ findAlertNodesKey = """
 var trigger = data
     |alert()
         .crit(lambda: "predict_status" == 'false')
+        .stateChangesOnly()
         .message(message)
-        .id(name)
+        .id(name + '-{{.Group}}')
         .idTag('alertID')
         .levelTag('level')
         .messageField('message')
         .durationField('duration')
 """
-
 template = """
 var name = 'Anomaly Prediction_{{.OrgName}}'
 
@@ -95,27 +95,31 @@ var predictData = cpuUsed
     |window()
         .periodCount(5)
         .everyCount(1)
-
-var data = predictData
+var predictResult = predictData
     @predict()
         .predict_mode(predict_mode)
         .ensemble_condition(ensemble_condition)
+var data = predictResult
+    |eval(lambda: "cpu_used", lambda: "tff_volume", lambda: "predict_status", lambda: "predict_kind")
+        .as('cpu_used', 'tff_volume', 'predict_status', 'predict_kind')
+    |groupBy(['agent_host', 'sys_name'])
 
 var trigger = data
     |alert()
         .crit(lambda: "predict_status" == 'false')
+        .stateChangesOnly()
         .message(message)
-        .id(name)
+        .id(name + '-{{.Group}}')
         .idTag('alertID')
         .levelTag('level')
         .messageField('message')
         .durationField('duration'){{.AlertServices}}
 
 trigger
-    |eval(lambda: "agent_host", lambda: "cpu_used", lambda: "tff_volume", lambda: "predict_kind")
-        .as('host', 'cpu_used', 'tff_volume', 'value')
+    |eval(lambda: "agent_host", lambda: "cpu_used", lambda: "tff_volume", lambda: if("predict_kind" == 1, 'ML', if("predict_kind" == 2, 'DL', if("predict_kind" == 3, 'ALL', 'OK'))), lambda: "predict_kind")
+        .as('host', 'cpu_used', 'tff_volume', 'predict', 'value')
         .tags('host')
-        .keep('duration', 'message', 'cpu_used', 'tff_volume', 'value')
+        .keep('duration', 'message', 'cpu_used', 'tff_volume', 'predict', 'value')
     |influxDBOut()
         .create()
         .database('Default')
@@ -125,10 +129,10 @@ trigger
         .tag('triggerType', 'anomaly_predict')
 
 trigger
-    |eval(lambda: "agent_host", lambda: "cpu_used", lambda: "tff_volume", lambda: "predict_kind")
-        .as('host', 'cpu_used', 'tff_volume', 'value')
+    |eval(lambda: "agent_host", lambda: "cpu_used", lambda: "tff_volume", lambda: if("predict_kind" == 1, 'ML', if("predict_kind" == 2, 'DL', if("predict_kind" == 3, 'ALL', 'OK'))), lambda: "predict_kind")
+        .as('host', 'cpu_used', 'tff_volume', 'predict', 'value')
         .tags('host')
-        .keep('duration', 'message', 'cpu_used', 'tff_volume', 'value')
+        .keep('duration', 'message', 'cpu_used', 'tff_volume', 'predict', 'value')
     |influxDBOut()
         .create()
         .database(db)

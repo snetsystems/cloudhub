@@ -274,14 +274,13 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, 10)
+	sem := make(chan struct{}, cloudhub.WorkerLimit)
 	for i, req := range uniqueReqs {
 		wg.Add(1)
 		sem <- struct{}{}
 		go func(ctx context.Context, i int, req deviceRequest) {
 			defer wg.Done()
 			defer func() { <-sem }()
-
 			_, err := s.processDevice(ctx, req, allDevices)
 			if err != nil {
 				failedDevices <- createDeviceError{
@@ -413,13 +412,6 @@ func (s *Service) AllDevices(w http.ResponseWriter, r *http.Request) {
 
 // DeviceID returns a single specified Device
 func (s *Service) DeviceID(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if rec := recover(); rec != nil {
-			s.Logger.Error("Recovered from panic: %v", rec)
-			Error(w, http.StatusInternalServerError, fmt.Sprintf("recovered from panic: %v", rec), s.Logger)
-		}
-	}()
-
 	id, err := paramStr("id", r)
 	if err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
@@ -544,7 +536,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	workerLimit := 10
+	workerLimit := cloudhub.WorkerLimit
 	sem := make(chan struct{}, workerLimit)
 
 	var wg sync.WaitGroup
@@ -556,14 +548,6 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		go func(ctx context.Context, i int, id string) {
 			defer wg.Done()
 			defer func() {
-				if rec := recover(); rec != nil {
-					s.Logger.Error("Recovered from panic: %v", rec)
-					mu.Lock()
-					if _, exists := failedDevices[id]; !exists {
-						failedDevices[id] = "internal server error"
-					}
-					mu.Unlock()
-				}
 				<-sem
 			}()
 

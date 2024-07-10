@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gosnmp/gosnmp"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // SNMPQuery represents an SNMP query.
@@ -258,6 +259,30 @@ type SNMPResponse struct {
 	Hostname   string `json:"hostname"`
 	DeviceOS   string `json:"device_os"`
 }
+type snmpReqError struct {
+	Index        int    `json:"index"`
+	DeviceIP     string `json:"device_ip,omitempty"`
+	ErrorMessage string `json:"errorMessage,omitempty"`
+}
+
+func (r *SNMPConfig) validCreate() error {
+	switch {
+	case r.DeviceIP == "":
+		return fmt.Errorf("device_ip required in device request body")
+
+	case r.Community == "":
+		return fmt.Errorf("Community required in device request body")
+
+	case r.Protocol == "":
+		return fmt.Errorf("Protocol required in device request body")
+
+	case r.Version == "":
+		return fmt.Errorf("Version required in device request body")
+
+	}
+
+	return nil
+}
 
 // SNMPConnTestBulk handles the SNMP connections test request.
 func (s *Service) SNMPConnTestBulk(w http.ResponseWriter, r *http.Request) {
@@ -268,13 +293,12 @@ func (s *Service) SNMPConnTestBulk(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 
-	workerLimit := 10 // This value can be adjusted based on system performance and requirements.
+	workerLimit := cloudhub.WorkerLimit
 	sem := make(chan struct{}, workerLimit)
 
 	var wg sync.WaitGroup
-	failedRequests := []map[string]interface{}{}
+	failedRequests := make(chan snmpReqError, len(reqs))
 	results := make(chan SNMPResponse, len(reqs))
-	var mu sync.Mutex
 
 	for i, config := range reqs {
 		wg.Add(1)
@@ -282,45 +306,36 @@ func (s *Service) SNMPConnTestBulk(w http.ResponseWriter, r *http.Request) {
 		i := i
 		go func(ctx context.Context, config SNMPConfig, index int) {
 			defer wg.Done()
-			defer func() {
-
-				if rec := recover(); rec != nil {
-					s.Logger.Error("Recovered from panic: %v", rec)
-					mu.Lock()
-					failedRequests = append(failedRequests, map[string]interface{}{
-						"index":        i,
-						"device_ip":    config.DeviceIP,
-						"errorMessage": "internal server error",
-					})
-					mu.Unlock()
-				}
-				<-sem
-			}()
+			defer func() { <-sem }()
 			snmpResult, err := s.testSNMP(config, index)
 			if err != nil {
-				mu.Lock()
-				failedRequests = append(failedRequests, map[string]interface{}{
-					"index":        index,
-					"device_ip":    config.DeviceIP,
-					"errorMessage": err.Error(),
-				})
-				mu.Unlock()
+				failedRequests <- snmpReqError{
+					Index:        index,
+					DeviceIP:     config.DeviceIP,
+					ErrorMessage: err.Error(),
+				}
 				return
 			}
 			results <- snmpResult
+
 		}(ctx, config, i)
 	}
-
-	wg.Wait()
-	close(results)
+	go func() {
+		wg.Wait()
+		close(results)
+		close(failedRequests)
+	}()
 
 	var allResults []SNMPResponse
 	for result := range results {
 		allResults = append(allResults, result)
 	}
-
+	var failedResults []snmpReqError
+	for failedRes := range failedRequests {
+		failedResults = append(failedResults, failedRes)
+	}
 	response := map[string]interface{}{
-		"failed_requests": failedRequests,
+		"failed_requests": failedResults,
 		"results":         allResults,
 	}
 	encodeJSON(w, http.StatusOK, response, s.Logger)
@@ -332,6 +347,7 @@ func (s *Service) testSNMP(config SNMPConfig, i int) (SNMPResponse, error) {
 		{Oid: "1.3.6.1.2.1.1.7", Key: "deviceType", Process: processDeviceType},
 		{Oid: "1.3.6.1.2.1.1.1", Key: "deviceOS", Process: processDeviceOS},
 	}
+
 	results, err := collectSNMPData(&config, queries)
 	if err != nil {
 		return SNMPResponse{}, err

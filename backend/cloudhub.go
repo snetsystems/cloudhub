@@ -1199,7 +1199,12 @@ type NetworkDeviceOrgQuery struct {
 	ID *string
 }
 
-//AIKapacitor represents the information for Kapacitor login
+// WorkerLimit controls the number of concurrent goroutines using a semaphore
+const (
+	WorkerLimit = 10
+)
+
+// AIKapacitor represents the information for Kapacitor login
 type AIKapacitor struct {
 	SrcID              int    `json:"srcId,string"`  // SrcID of the data source
 	KapaID             int    `json:"kapaId,string"` // KapaID of the Kapacitor ID
