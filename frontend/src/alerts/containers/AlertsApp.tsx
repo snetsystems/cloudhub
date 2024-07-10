@@ -155,15 +155,37 @@ class AlertsApp extends PureComponent<Props, State> {
         const triggerTypeIndex = alertSeries[0].columns.findIndex(
           col => col === 'triggerType'
         )
+        const agentHostIndex = alertSeries[0].columns.findIndex(
+          col => col === 'agent_host'
+        )
 
         alertSeries[0].values.forEach(s => {
+          const host = s[hostIndex] ?? s[agentHostIndex]
+          const value = (() => {
+            if (s[triggerTypeIndex] === 'anomaly_predict') {
+              switch (s[valueIndex]) {
+                case 0:
+                  return 'OK'
+                case 1:
+                  return 'ML Predict'
+                case 2:
+                  return 'DL Predict'
+                case 3:
+                  return 'ML+DL Predict'
+                default:
+                  return null
+              }
+            } else {
+              return s[valueIndex]
+            }
+          })()
+
           results.push({
             time: `${s[timeIndex]}`,
-            host: s[hostIndex],
-            value: `${s[valueIndex]}`,
+            host: host,
+            value: `${value}`,
             level: s[levelIndex],
             name: `${s[nameIndex]}`,
-            triggerType: `${s[triggerTypeIndex]}`,
           })
         })
 
