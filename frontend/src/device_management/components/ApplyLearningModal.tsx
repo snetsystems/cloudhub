@@ -94,7 +94,9 @@ function ApplyLearningModal({
 
       return handleApplyLearningEnableStatusSuccess()
     } catch (error) {
-      return handleApplyLearningEnableStatusError(error.message || '')
+      return handleApplyLearningEnableStatusError(
+        error?.message || 'Unknown Error'
+      )
     }
   }
 

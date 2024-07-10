@@ -143,7 +143,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       this.fetchDeviceMonitoringStatus()
       this.getKapacitors()
     } catch (error) {
-      console.error(error.message || '')
+      console.error(error?.message || 'Unknown Error')
       throw error
     }
   }
@@ -295,7 +295,9 @@ class DeviceManagement extends PureComponent<Props, State> {
 
       this.setState({data: convertedDeviceData})
     } catch (error) {
-      console.error(notifyFetchDeviceListError(error.message || ''))
+      console.error(
+        notifyFetchDeviceListError(error?.message || 'Unknown Error')
+      )
     }
   }
 
@@ -321,7 +323,9 @@ class DeviceManagement extends PureComponent<Props, State> {
       })
     } catch (error) {
       this.props.notify(
-        notifyFetchDeviceMonitoringStatusFailed(error.message || '')
+        notifyFetchDeviceMonitoringStatusFailed(
+          error?.message || 'Unknown Error'
+        )
       )
     }
   }
@@ -385,7 +389,9 @@ class DeviceManagement extends PureComponent<Props, State> {
       this.getNetworkDeviceOrganizationsAJAX()
       this.setState({checkedArray: [], isLoading: false})
     } catch (error) {
-      this.props.notify(notifyDeleteDevicesFailed(error.message || ''))
+      this.props.notify(
+        notifyDeleteDevicesFailed(error?.message || 'Unknown Error')
+      )
       this.getDeviceAJAX()
       this.getNetworkDeviceOrganizationsAJAX()
       this.setState({checkedArray: [], isLoading: false})
@@ -431,7 +437,7 @@ class DeviceManagement extends PureComponent<Props, State> {
         orgLearningModel: networkDeviceOrganization,
       })
     } catch (error) {
-      console.error(error.message || '')
+      console.error(error?.message || 'Unknown Error')
     }
   }
 

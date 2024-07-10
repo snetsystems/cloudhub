@@ -110,7 +110,7 @@ class PredictionRulePage extends Component<Props, State> {
 
       this.setState({isLoading: false})
     } catch (error) {
-      console.error(error.message || '')
+      console.error(error?.message || 'Unknown Error')
       this.setState({isLoading: false})
     }
   }
@@ -173,7 +173,7 @@ class PredictionRulePage extends Component<Props, State> {
         orgLearningModel: networkDeviceOrganization,
       })
     } catch (error) {
-      console.error(error.message || '')
+      console.error(error?.message || 'Unknown Error')
     }
   }
 
@@ -208,7 +208,7 @@ class PredictionRulePage extends Component<Props, State> {
       this.setState({sourceForNetworkDeviceOrganizationKapacitor: source})
     } catch (error) {
       this.initializeState()
-      console.error(error.message || '')
+      console.error(error?.message || 'Unknown Error')
       return null
     }
 
