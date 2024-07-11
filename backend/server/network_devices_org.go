@@ -435,10 +435,11 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	}
 	taskReq := cloudhub.AutoGenerateLearnRule{
 		OrganizationName: org.Name,
+		Organization:     org.ID,
 		CronSchedule:     *req.CronSchedule,
 		LoadModule:       LoadModule,
 		MLFunction:       *req.MLFunction,
-		RetentionPolicy:  "auto",
+		RetentionPolicy:  "autogen",
 		AlertRule: cloudhub.AlertRule{
 			ID: cloudhub.LearnScriptPrefix + org.ID,
 		},
@@ -452,6 +453,7 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 
 	tmplParams := cloudhub.TemplateParams{
 		"OrgName":         taskReq.OrganizationName,
+		"OrgID":           taskReq.Organization,
 		"LoadModule":      taskReq.LoadModule,
 		"MLFunction":      taskReq.MLFunction,
 		"Message":         taskReq.Message,

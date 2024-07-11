@@ -1,6 +1,6 @@
 [learn_task]
 template = """
-var name = 'AI Learn_{{.OrgName}}'
+var name = 'AI Learn {{.OrgName}}'
 
 var db = '{{.OrgName}}'
 
@@ -8,7 +8,7 @@ var cron = '{{.CronSchedule}}'
 
 var loadModule = '{{.LoadModule}}'
 
-var extra_opts = '{"organization":"{{.OrgName}}","influxdb":{"host":"{{.InfluxOrigin}}","port":{{.InfluxPort}},"username":"{{.InfluxUsername}}","password":"{{.InfluxPassword}}","db":"{{.OrgName}}"},"etcd":{"host":"{{.EtcdOrigin}}","port":"{{.EtcdPort}}"}}'
+var extra_opts = '{"organization":"{{.OrgID}}","influxdb":{"host":"{{.InfluxOrigin}}","port":{{.InfluxPort}},"username":"{{.InfluxUsername}}","password":"{{.InfluxPassword}}","db":"{{.OrgName}}"},"etcd":{"host":"{{.EtcdOrigin}}","port":"{{.EtcdPort}}"}}'
 
 var data = batch
     |query('SELECT "cpu1min" FROM "{{.OrgName}}"."{{.RetentionPolicy}}"."snmp_nx"')
