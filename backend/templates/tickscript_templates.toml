@@ -1,6 +1,6 @@
 [learn_task]
 template = """
-var name = 'AI Learn_{{.OrgName}}'
+var name = 'AI Learn {{.OrgName}}'
 
 var db = '{{.OrgName}}'
 
