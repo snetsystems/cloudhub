@@ -224,22 +224,20 @@ function ApplyLearningModal({
               </div>
             </Form.Element>
             <Form.Footer>
-              <div>
-                <Button
-                  color={ComponentColor.Primary}
-                  text={'Apply'}
-                  onClick={() => {
-                    applyLearningEnableStatusAJAX()
-                  }}
-                />
+              <Button
+                color={ComponentColor.Primary}
+                text={'Apply'}
+                onClick={() => {
+                  applyLearningEnableStatusAJAX()
+                }}
+              />
 
-                <Button
-                  text={'Cancel'}
-                  onClick={() => {
-                    onDismissOverlay()
-                  }}
-                />
-              </div>
+              <Button
+                text={'Cancel'}
+                onClick={() => {
+                  onDismissOverlay()
+                }}
+              />
             </Form.Footer>
           </Form>
         </OverlayBody>
