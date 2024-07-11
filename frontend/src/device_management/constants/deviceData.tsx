@@ -80,7 +80,7 @@ export const DEFAULT_PREDICT_MODE = 'ML'
 
 export const DEFAULT_LEARNING_OPTION: LearningOption = {
   organization: '',
-  data_duration: 1,
+  data_duration: 15,
   ml_function: 'ml_gaussian_std' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
 }
 
