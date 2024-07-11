@@ -111,6 +111,45 @@ func NewTask(task *client.Task) *Task {
 	}
 }
 
+// NewAITask creates a task from a kapacitor client  AI task
+func NewAITask(task *client.Task) *Task {
+	dbrps := make([]cloudhub.DBRP, len(task.DBRPs))
+	for i := range task.DBRPs {
+		dbrps[i].DB = task.DBRPs[i].Database
+		dbrps[i].RP = task.DBRPs[i].RetentionPolicy
+	}
+
+	script := cloudhub.TICKScript(task.TICKscript)
+	rule, err := TargetedReverseParser(script)
+	if err != nil {
+		name := task.ID
+		if matches := reTaskName.FindStringSubmatch(task.TICKscript); matches != nil {
+			name = matches[1]
+		}
+		rule = cloudhub.AlertRule{
+			Name:  name,
+			Query: nil,
+		}
+	}
+
+	rule.ID = task.ID
+	rule.TICKScript = script
+	rule.Type = task.Type.String()
+	rule.DBRPs = dbrps
+	rule.Status = task.Status.String()
+	rule.Executing = task.Executing
+	rule.Error = task.Error
+	rule.Created = task.Created
+	rule.Modified = task.Modified
+	rule.LastEnabled = task.LastEnabled
+	return &Task{
+		ID:         task.ID,
+		Href:       task.Link.Href,
+		HrefOutput: HrefOutput(task.ID),
+		Rule:       rule,
+	}
+}
+
 // HrefOutput returns the link to a kapacitor task httpOut Node given an id
 func HrefOutput(ID string) string {
 	return fmt.Sprintf("/kapacitor/v1/tasks/%s/%s", ID, HTTPEndpoint)
@@ -473,4 +512,19 @@ func NewKapaClient(url, username, password string, insecureSkipVerify bool) (Kap
 	}
 
 	return &PaginatingKapaClient{clnt, FetchRate}, nil
+}
+
+// GetAITask returns a single alert in kapacitor
+func (c *Client) GetAITask(ctx context.Context, id string) (*Task, error) {
+	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
+	if err != nil {
+		return nil, err
+	}
+	href := c.Href(id)
+	task, err := kapa.Task(client.Link{Href: href}, nil)
+	if err != nil {
+		return nil, cloudhub.ErrAlertNotFound
+	}
+
+	return NewAITask(&task), nil
 }
