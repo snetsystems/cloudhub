@@ -158,7 +158,7 @@ class SideNav extends PureComponent<Props> {
         )}
         <NavBlock
           highlightWhen={['ai']}
-          icon="_snet--application"
+          icon="ai-icon"
           link={`${sourcePrefix}/ai/device-management`}
           location={location}
         >
