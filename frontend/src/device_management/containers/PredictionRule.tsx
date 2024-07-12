@@ -62,6 +62,7 @@ interface Props {
   router: InjectedRouter
   kapacitor: Kapacitor
   organizations: Organization[]
+  isFetchingCompleted: boolean
   setLearningDropdownState: (organization: Organization) => void
   setPredictMode: (predictMode: string) => void
   notify: (message: Notification) => void
@@ -106,6 +107,7 @@ class PredictionRule extends Component<Props, State> {
               handlersFromConfig={handlersFromConfig}
               onGoToConfig={this.handleSaveToConfig}
               validationError={this.validationError}
+              isFetchingCompleted={this.props.isFetchingCompleted}
             />
 
             <RuleMessage rule={rule} ruleActions={ruleActions} />
