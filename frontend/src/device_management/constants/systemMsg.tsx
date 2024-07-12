@@ -12,13 +12,7 @@ export const MONITORING_MODAL_INFO = {
       <label className="label-info--apply">apply</label>?
     </>
   ),
-  learningMessage: (
-    <>
-      If you click the <label className="label-info--apply">Apply</label>{' '}
-      button, <label className="label-warning">Learning Enable Status</label>{' '}
-      will be updated.
-    </>
-  ),
+  learningMessage: <></>,
   deleteMonitoringMessage: (
     <span className="span-header">
       <label className="label-warning">
