@@ -1130,22 +1130,69 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// GetKapacitorTask proxies Get to kapacitor
+func (s *Service) GetKapacitorTask(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+	tid := httprouter.GetParamFromContext(ctx, "tid")
+	parts := strings.Split(tid, "-")
+	if len(parts) < 2 {
+		notFound(w, "Invalid tid format", s.Logger)
+		return
+	}
+
+	orgID := parts[1]
+
+	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
+	if err != nil {
+		notFound(w, err.Error(), s.Logger)
+		return
+	}
+
+	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
+
+	// Check if the rule exists within scope
+	task, err := c.GetAITask(ctx, tid)
+	if err != nil {
+		if err == cloudhub.ErrAlertNotFound {
+			notFound(w, deviceOrg.AIKapacitor.KapaID, s.Logger)
+			return
+		}
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	res := newAlertResponse(task, deviceOrg.AIKapacitor.SrcID, deviceOrg.AIKapacitor.KapaID)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+
+}
+
 // UpdateKapacitorTask proxies Update to kapacitor
 func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
+	id, err := paramStr("id", r)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
 	var req cloudhub.AutoGeneratePredictionRule
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
 	ctx := r.Context()
-	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &req.Organization})
+	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &id})
 	if err != nil {
 		notFound(w, err.Error(), s.Logger)
 		return
 	}
-	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &req.Organization})
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &id})
 	if err != nil {
 		notFound(w, err.Error(), s.Logger)
+		return
+	}
+	if deviceOrg.AIKapacitor.KapaURL == "" {
+		invalidData(w, fmt.Errorf("Please check the Kapacitor configuration"), s.Logger)
 		return
 	}
 
@@ -1191,14 +1238,14 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
-		Field: kapa.LogstashTemplateField,
+		Field: kapa.PredictionTaskField,
 		Path:  &templatesFilePath,
 	})
 	if err != nil {
 		notFound(w, err.Error(), s.Logger)
 	}
 
-	findAlertNodesKey := extraFields["findAlertNodesKey"]
+	findAlertNodesKey := extraFields["FindAlertNodesKey"]
 
 	updatedString, err := updateAfterPattern(req.TICKScript, findAlertNodesKey, finalTemplate)
 	if err != nil {

@@ -9,6 +9,8 @@ import {
   createTask as createTaskAJAX,
   updateTask as updateTaskAJAX,
 } from 'src/kapacitor/apis'
+import {getDeviceManagementTickScript} from 'src/device_management/apis'
+
 import {errorThrown} from 'shared/actions/errors'
 
 import {
@@ -49,7 +51,7 @@ export function fetchRuleWithCallback(source, ruleID, callback, errorCallback) {
   return dispatch => {
     getActiveKapacitor(source)
       .then(kapacitor => {
-        getRuleAJAX(kapacitor, ruleID)
+        getDeviceManagementTickScript(ruleID)
           .then(({data: rule}) => {
             dispatch({
               type: 'LOAD_RULE',

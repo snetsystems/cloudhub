@@ -50,6 +50,7 @@ type updateDeviceOrgRequest struct {
 	LearnedDevicesIDs   *[]string             `json:"learned_devices_ids"`
 	AIKapacitor         *cloudhub.AIKapacitor `json:"ai_kapacitor"`
 	CronSchedule        *string               `json:"cron_schedule"`
+	CollectorServer     *string               `json:"collector_server"`
 }
 
 type deviceOrgRequest struct {
@@ -231,6 +232,9 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	}
 	if req.LearnedDevicesIDs != nil {
 		deviceOrg.LearnedDevicesIDs = *req.LearnedDevicesIDs
+	}
+	if req.CollectorServer != nil {
+		deviceOrg.CollectorServer = *req.CollectorServer
 	}
 	if req.AIKapacitor != nil {
 		deviceOrg.AIKapacitor.SrcID = req.AIKapacitor.SrcID
