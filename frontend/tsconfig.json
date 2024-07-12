@@ -38,7 +38,6 @@
     "removeComments": true,
     "noLib": false,
     "preserveConstEnums": true,
-    "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "checkJs": false,
@@ -47,5 +46,10 @@
     "rootDir": "./",
     "outDir": "./dist"
   },
-  "exclude": ["assets", "build", "dist", "node_modules"]
+  "exclude": [
+    "assets",
+    "build",
+    "dist",
+    "node_modules"
+  ]
 }
