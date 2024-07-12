@@ -1135,8 +1135,15 @@ func (s *Service) GetKapacitorTask(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	tid := httprouter.GetParamFromContext(ctx, "tid")
-	orgId := strings.Split(tid, "-")
-	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgId[1]})
+	parts := strings.Split(tid, "-")
+	if len(parts) < 2 {
+		notFound(w, "Invalid tid format", s.Logger)
+		return
+	}
+
+	orgID := parts[1]
+
+	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
 	if err != nil {
 		notFound(w, err.Error(), s.Logger)
 		return
