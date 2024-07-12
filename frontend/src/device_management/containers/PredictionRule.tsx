@@ -6,9 +6,9 @@ import {InjectedRouter} from 'react-router'
 
 // Components
 import {Page} from 'src/reusable_ui'
-import RuleHandlers from 'src/kapacitor/components/RuleHandlers'
 import RuleHeaderSave from 'src/kapacitor/components/alert_rules/RuleHeaderSave'
 import Dropdown from 'src/shared/components/Dropdown'
+import PredictionRuleHandlers from 'src/device_management/components/PredictionRuleHandlers'
 
 // Type
 import {
@@ -99,7 +99,7 @@ class PredictionRule extends Component<Props, State> {
             {this.NameSection}
 
             {this.PredictMode}
-            <RuleHandlers
+            <PredictionRuleHandlers
               me={me}
               rule={rule}
               ruleActions={ruleActions}
@@ -248,14 +248,18 @@ class PredictionRule extends Component<Props, State> {
   }
 
   private updateAlertRule = async () => {
-    const {notify, rule} = this.props
+    const {notify, rule, organizations, selectedOrganizationName} = this.props
+    const organizationID = getOrganizationIdByName(
+      organizations,
+      selectedOrganizationName
+    )
 
     this.props.setLoading(true)
     try {
       const updatedRule = this.replaceTickscript()
       const request = this.getDeviceManagementScriptRequest(updatedRule)
 
-      await updateDeviceManagementTickScript(request)
+      await updateDeviceManagementTickScript(request, organizationID)
       notify(notifyAlertRuleUpdated(rule?.name || ''))
       this.props.setLoading(false)
     } catch (error) {

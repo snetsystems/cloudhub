@@ -291,7 +291,7 @@ class PredictionRulePage extends Component<Props, State> {
   private setRuleAndPredictModeForFetchedRule = (fetchedRule: {
     rule: AlertRule
   }) => {
-    const _fetchedRule = fetchedRule?.rule
+    const _fetchedRule = _.cloneDeep(fetchedRule?.rule)
 
     if (_fetchedRule) {
       this.setState({

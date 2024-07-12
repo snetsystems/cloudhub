@@ -370,13 +370,26 @@ export const getLiveDeviceInfo = async (
   }
 }
 
+export const getDeviceManagementTickScript = async ruleID => {
+  try {
+    return await AJAX({
+      method: 'GET',
+      url: `${DEVICE_MANAGEMENT_SCRIPT_URL}/${ruleID}`,
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export const updateDeviceManagementTickScript = async (
-  deviceManagementScript: UpdateDeviceManagmenntScriptRequest
+  deviceManagementScript: UpdateDeviceManagmenntScriptRequest,
+  organizationID: string
 ) => {
   try {
     const response = await AJAX<UpdateDeviceManagmenntScriptResponse>({
       data: deviceManagementScript,
-      url: DEVICE_MANAGEMENT_SCRIPT_URL,
+      url: `${DEVICE_MANAGEMENT_SCRIPT_URL}/${organizationID}`,
       method: 'PATCH',
     })
 
