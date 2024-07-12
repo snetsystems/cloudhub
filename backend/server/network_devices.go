@@ -242,14 +242,13 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 
 	reqs, ctx, err := decodeRequest[[]deviceRequest](r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		invalidData(w, err, s.Logger)
 		return
 	}
 
 	allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
-
 	if err != nil {
-		http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
@@ -312,91 +311,6 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// NewDevices creates and returns a new Device object
-// func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
-
-// 	reqs, ctx, err := decodeRequest[[]deviceRequest](r)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
-
-// 	if err != nil {
-// 		http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	ipCount := make(map[string]int)
-// 	for _, req := range reqs {
-// 		ipCount[req.DeviceIP]++
-// 	}
-
-// 	failedDevices := []createDeviceError{}
-// 	uniqueReqs := []deviceRequest{}
-
-// 	for i, req := range reqs {
-// 		if ipCount[req.DeviceIP] > 1 {
-// 			failedDevices = append(failedDevices, createDeviceError{
-// 				Index:        i,
-// 				DeviceIP:     req.DeviceIP,
-// 				ErrorMessage: "duplicate IP in request",
-// 			})
-// 		} else {
-// 			uniqueReqs = append(uniqueReqs, req)
-// 		}
-// 	}
-
-// 	workerLimit := 10
-// 	sem := make(chan struct{}, workerLimit)
-
-// 	var wg sync.WaitGroup
-// 	var mu sync.Mutex
-
-// 	for i, req := range uniqueReqs {
-// 		wg.Add(1)
-// 		sem <- struct{}{}
-// 		go func(ctx context.Context, i int, req deviceRequest) {
-// 			defer wg.Done()
-// 			defer func() {
-// 				if rec := recover(); rec != nil {
-// 					s.Logger.Error("Recovered from panic: %v", rec)
-// 					mu.Lock()
-// 					failedDevices = append(failedDevices, createDeviceError{
-// 						Index:        i,
-// 						DeviceIP:     req.DeviceIP,
-// 						ErrorMessage: "internal server error",
-// 					})
-// 					mu.Unlock()
-// 				}
-// 				<-sem
-// 			}()
-// 			_, err := s.processDevice(ctx, req, allDevices)
-// 			if err != nil {
-// 				mu.Lock()
-// 				failedDevices = append(failedDevices, createDeviceError{
-// 					Index:        i,
-// 					DeviceIP:     req.DeviceIP,
-// 					ErrorMessage: err.Error(),
-// 				})
-// 				mu.Unlock()
-// 			}
-// 		}(ctx, i, req)
-// 	}
-
-// 	wg.Wait()
-
-// 	response := map[string]interface{}{
-// 		"failed_devices": failedDevices,
-// 	}
-// 	if len(failedDevices) > 0 {
-// 		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
-// 	} else {
-// 		encodeJSON(w, http.StatusCreated, response, s.Logger)
-// 	}
-// }
-
 // AllDevices returns all devices within the store.
 func (s *Service) AllDevices(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -438,13 +352,13 @@ func (s *Service) DeviceID(w http.ResponseWriter, r *http.Request) {
 func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	request, ctx, err := decodeRequest[deleteDevicesRequest](r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
 		return
 	}
 
 	failedDevices := make(map[string]string)
 	devicesGroupByOrg := make(map[string][]string)
-
+	deviceOrgMap := make(map[string]string)
 	for _, deviceID := range request.DevicesIDs {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
 		if err != nil {
@@ -452,6 +366,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		} else {
 			if device.IsCollectingCfgWritten {
 				devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], device.ID)
+				deviceOrgMap[deviceID] = device.Organization
 			}
 		}
 	}
@@ -476,12 +391,13 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	orgsToUpdate, err := removeDeviceIDsFromPreviousOrg(ctx, s, deviceOrgMap)
 	for orgID, devicesIDs := range devicesGroupByOrg {
 		org, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
 		if err != nil {
 			for _, id := range devicesIDs {
 				if _, exists := failedDevices[id]; !exists {
-					failedDevices[id] = "Error updating NetworkDeviceOrg"
+					failedDevices[id] = err.Error()
 				}
 			}
 			continue
@@ -499,37 +415,41 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 
 		previousLearnedDevicesIDs := org.LearnedDevicesIDs
 		previousCollectedDevicesIDs := org.CollectedDevicesIDs
-
 		org.LearnedDevicesIDs = RemoveElements(previousLearnedDevicesIDs, devicesIDs)
 		org.CollectedDevicesIDs = RemoveElements(previousCollectedDevicesIDs, devicesIDs)
+		orgsToUpdate[org.ID] = *org
 
-		statusCode, resp, err := s.manageLogstashConfig(ctx, org)
-
+	}
+	for _, org := range orgsToUpdate {
+		statusCode, resp, err := s.manageLogstashConfig(ctx, &org)
 		if err != nil {
-			for _, id := range devicesIDs {
-				if _, exists := failedDevices[id]; !exists {
-					failedDevices[id] = err.Error()
+			for _, devicesIDs := range devicesGroupByOrg {
+				for _, id := range devicesIDs {
+					if _, exists := failedDevices[id]; !exists {
+						failedDevices[id] = err.Error()
+					}
 				}
 			}
 			continue
 		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-			for _, id := range devicesIDs {
-				if _, exists := failedDevices[id]; !exists {
-					message := fmt.Sprintf("duplicate IP in existing devices: %s", string(resp))
-					failedDevices[id] = message
+			for _, devicesIDs := range devicesGroupByOrg {
+				for _, id := range devicesIDs {
+					if _, exists := failedDevices[id]; !exists {
+						failedDevices[id] = string(resp)
+					}
 				}
 			}
 			continue
 		}
-
-		err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, org)
+		err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, &org)
 		msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), org.ID)
 		s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
-
 		if err != nil {
-			for _, id := range devicesIDs {
-				if _, exists := failedDevices[id]; !exists {
-					failedDevices[id] = "Error updating NetworkDeviceOrg"
+			for _, devicesIDs := range devicesGroupByOrg {
+				for _, id := range devicesIDs {
+					if _, exists := failedDevices[id]; !exists {
+						failedDevices[id] = err.Error()
+					}
 				}
 			}
 			continue
@@ -570,7 +490,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				mu.Lock()
 				if _, exists := failedDevices[id]; !exists {
-					failedDevices[id] = "device not found"
+					failedDevices[id] = err.Error()
 				}
 				mu.Unlock()
 				return
@@ -632,13 +552,13 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	if device.DeviceIP != *req.DeviceIP {
 		allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
 		if err != nil {
-			http.Error(w, "Failed to get existing devices", http.StatusInternalServerError)
+			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 			return
 		}
 		for _, device := range allDevices {
 			if device.DeviceIP == *req.DeviceIP {
 				message := fmt.Sprintf("duplicate IP in existing devices: %s", *req.DeviceIP)
-				http.Error(w, message, http.StatusBadRequest)
+				Error(w, http.StatusUnprocessableEntity, message, s.Logger)
 				return
 			}
 		}
@@ -727,6 +647,7 @@ type manageDeviceOrg struct {
 	IsCollecting           bool   `json:"is_collecting"`
 	IsCollectingCfgWritten bool   `json:"is_collecting_cfg_written"`
 }
+
 type manageLearningDeviceOrg struct {
 	ID         string `json:"device_id"`
 	IsLearning bool   `json:"is_learning"`
@@ -756,11 +677,11 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 	request, ctx, err := decodeRequest[requestData](r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
 
-	devicesData := getCollectingDevicesGroupByOrg(ctx, s, request.CollectingDevices)
+	devicesData := getDevicesGroupByOrg(ctx, s, request.CollectingDevices)
 	failedDevices := devicesData.failedDevices
 
 	if len(devicesData.devicesGroupByOrg) < 1 {
@@ -782,13 +703,13 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 	existingDevicesOrg, err := s.Store.NetworkDeviceOrg(ctx).All(ctx)
 	if err != nil {
-		http.Error(w, "Not found Organizations", http.StatusInternalServerError)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
 	collectorKeys, activeCollectorKeys, err := s.getCollectorServers()
 	if err != nil {
-		http.Error(w, "Failed to access active collector-server", http.StatusInternalServerError)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
@@ -797,7 +718,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 	orgsToUpdate, err := removeDeviceIDsFromPreviousOrg(ctx, s, devicesData.deviceOrgMap)
 	if err != nil {
-		fmt.Println("Error removing device IDs from previous org:", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
@@ -856,28 +777,28 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		orgInfo.CollectedDevicesIDs = existingCollectingDeviceIDs
 		orgsToUpdate[org] = orgInfo
 
+	}
+
+	// Update the store only for successful orgInfos
+	for org, orgInfo := range orgsToUpdate {
+
 		statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo)
 		if err != nil {
-			for _, device := range devices {
+			for _, device := range devicesData.devicesGroupByOrg[org] {
 				if _, exists := failedDevices[device.ID]; !exists {
 					failedDevices[device.ID] = err.Error()
 				}
 			}
-			delete(orgsToUpdate, org)
 			continue
 		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-			delete(orgsToUpdate, org)
-			for _, device := range devices {
+			for _, device := range devicesData.devicesGroupByOrg[org] {
 				if _, exists := failedDevices[device.ID]; !exists {
 					failedDevices[device.ID] = string(resp)
 				}
 			}
 			continue
 		}
-	}
 
-	// Update the store only for successful orgInfos
-	for org, orgInfo := range orgsToUpdate {
 		existOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &org})
 		if err != nil && existOrg == nil {
 			s.Store.NetworkDeviceOrg(ctx).Add(ctx, &orgInfo)
@@ -887,6 +808,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		for _, device := range devicesData.devicesGroupByOrg[org] {
 			networkDevice := devicesData.networkDevicesMap[device.ID]
 			networkDevice.IsCollectingCfgWritten = true
+			networkDevice.LearningState = Ready
 			err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice)
 			if err != nil {
 				if _, exists := failedDevices[device.ID]; !exists {
@@ -910,16 +832,15 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 
 	request, ctx, err := decodeRequest[requestData](r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
 
 	devicesData := getLearnedDevicesGroupByOrg(ctx, s, request.IsLearningDevices)
 	failedDevices := devicesData.failedDevices
-
 	orgsToUpdate, err := removeDeviceIDsFromPreviousOrg(ctx, s, devicesData.deviceOrgMap)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
@@ -1021,7 +942,7 @@ func removeDeviceIDsFromPreviousOrg(ctx context.Context, s *Service, deviceOrgMa
 	return orgsToUpdate, nil
 }
 
-func getCollectingDevicesGroupByOrg(ctx context.Context, s *Service, request []manageDeviceOrg) collectingFilteredDevices {
+func getDevicesGroupByOrg(ctx context.Context, s *Service, request []manageDeviceOrg) collectingFilteredDevices {
 	failedDevices := make(map[string]string)
 	devicesGroupByOrg := make(deviceGroupByOrg)
 	networkDevicesMap := make(map[string]*cloudhub.NetworkDevice)
@@ -1034,9 +955,7 @@ func getCollectingDevicesGroupByOrg(ctx context.Context, s *Service, request []m
 		} else {
 			networkDevicesMap[reqDevice.ID] = device
 			deviceOrgMap[reqDevice.ID] = device.Organization
-
 			devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], reqDevice)
-
 		}
 	}
 
@@ -1281,7 +1200,6 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return http.StatusInternalServerError, nil, err
 	}
 	templatesFilePath := filepath.Join("../../", "templates", "template_logstash_gen.toml")
-
 	if _, err := os.Stat(templatesFilePath); os.IsNotExist(err) {
 		templatesFilePath = filepath.Join(s.InternalENV.TemplatesPath, "template_logstash_gen.toml")
 	}
@@ -1413,30 +1331,6 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	msg := fmt.Sprintf(MsgNetWorkDeviceConfCreated.String(), org.ID)
 	s.logRegistration(ctx, "NetWorkDeviceConf", msg)
 	return http.StatusOK, nil, err
-}
-
-func (s *Service) removeLogstashConfigGroupByOrg(ctx context.Context, devOrg *cloudhub.NetworkDeviceOrg) (int, []byte, error) {
-	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &devOrg.ID})
-	fileName := fmt.Sprintf("%s_snmp_nx.rb", org.Name)
-	dirPath := "/etc/logstash/pipeline"
-	filePath := path.Join(dirPath, fileName)
-
-	var statusCode int
-	var resp []byte
-
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
-
-	statusCode, resp, err = s.RemoveFileWithLocalClient(filePath, devOrg.CollectorServer)
-
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-		return statusCode, resp, err
-	}
-
-	return http.StatusOK, nil, nil
 }
 
 // RemoveElements removes elements from the origin slice that are present in the delete slice.
