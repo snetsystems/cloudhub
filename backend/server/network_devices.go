@@ -47,6 +47,10 @@ type deleteDevicesRequest struct {
 	DevicesIDs []string `json:"devices_ids"`
 }
 
+type devicesResponse struct {
+	Devices       []*deviceResponse   `json:"devices"`
+	FailedDevices []createDeviceError `json:"failed_devices"`
+}
 type deviceResponse struct {
 	ID                     string              `json:"id"`
 	Organization           string              `json:"organization"`
@@ -99,7 +103,6 @@ const (
 func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
 	deviceOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
 	MLFunction := MLFunctionMultiplied
-
 	if deviceOrg != nil {
 		MLFunction = deviceOrg.MLFunction
 	}
@@ -135,11 +138,6 @@ func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.Network
 	}
 
 	return resData, nil
-}
-
-type devicesResponse struct {
-	Devices       []*deviceResponse   `json:"devices"`
-	FailedDevices []createDeviceError `json:"failed_devices"`
 }
 
 func newDevicesResponse(ctx context.Context, s *Service, devices []cloudhub.NetworkDevice) *devicesResponse {

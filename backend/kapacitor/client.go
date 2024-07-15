@@ -220,11 +220,8 @@ func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.Upd
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
 
-	return NewTask(&task), nil
+	return NewAITask(&task), nil
 }
 
 func (c *Client) createFromTick(rule cloudhub.AlertRule) (*client.CreateTaskOptions, error) {
