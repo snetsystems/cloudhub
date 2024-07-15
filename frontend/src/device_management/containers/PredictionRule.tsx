@@ -62,7 +62,6 @@ interface Props {
   router: InjectedRouter
   kapacitor: Kapacitor
   organizations: Organization[]
-  isFetchingCompleted: boolean
   setLearningDropdownState: (organization: Organization) => void
   setPredictMode: (predictMode: string) => void
   notify: (message: Notification) => void
@@ -88,6 +87,7 @@ class PredictionRule extends Component<Props, State> {
             <Page.Title title="Prediction Alert Rule Builder" />
           </Page.Header.Left>
           <Page.Header.Right showSourceIndicator={true}>
+            {this.saveButton}
             <RuleHeaderSave
               onSave={this.handleSave}
               validationError={this.validationError}
@@ -101,19 +101,35 @@ class PredictionRule extends Component<Props, State> {
 
             {this.PredictMode}
             <PredictionRuleHandlers
+              setLoading={this.props.setLoading}
               me={me}
               rule={rule}
               ruleActions={ruleActions}
               handlersFromConfig={handlersFromConfig}
               onGoToConfig={this.handleSaveToConfig}
               validationError={this.validationError}
-              isFetchingCompleted={this.props.isFetchingCompleted}
             />
 
             <RuleMessage rule={rule} ruleActions={ruleActions} />
           </div>
         </Page.Contents>
       </Page>
+    )
+  }
+
+  private get saveButton(): JSX.Element {
+    const {source, router} = this.props
+    const pageLink = `/sources/${source.id}/ai/prediction`
+
+    // TODO Add Unsaved Changes Condition
+    return (
+      <button
+        className="btn btn-default btn-sm"
+        title="Return to Prediction Page"
+        onClick={() => router.push(pageLink)}
+      >
+        Exit
+      </button>
     )
   }
 

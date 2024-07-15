@@ -31,7 +31,7 @@ func AlertServices(rule cloudhub.AlertRule) (string, error) {
 			return "", err
 		}
 	}
-	return node, nil
+	return toOldSchema(node), nil
 }
 
 func addAlertNodes(handlers cloudhub.AlertNodes) (string, error) {
@@ -57,14 +57,15 @@ func addAlertNodes(handlers cloudhub.AlertNodes) (string, error) {
 	var buf bytes.Buffer
 	aster.Program.Format(&buf, "", false)
 	rawTick := buf.String()
-	return toOldSchema(rawTick), nil
+	return rawTick, nil
 }
 
 var (
-	removeID      = regexp.MustCompile(`(?m)\s*\.id\(.*\)$`)      // Remove to use ID variable
-	removeMessage = regexp.MustCompile(`(?m)\s*\.message\(.*\)$`) // Remove to use message variable
-	removeDetails = regexp.MustCompile(`(?m)\s*\.details\(.*\)$`) // Remove to use details variable
-	removeHistory = regexp.MustCompile(`(?m)\s*\.history\(21\)$`) // Remove default history
+	removeID          = regexp.MustCompile(`(?m)\s*\.id\(.*\)$`)               // Remove to use ID variable
+	removeMessage     = regexp.MustCompile(`(?m)\s*\.message\(.*\)$`)          // Remove to use message variable
+	removeDetails     = regexp.MustCompile(`(?m)\s*\.details\(.*\)$`)          // Remove to use details variable
+	removeHistory     = regexp.MustCompile(`(?m)\s*\.history\(21\)$`)          // Remove default history
+	removeStateChange = regexp.MustCompile(`(?m)\s*\.stateChangesOnly\(.*\)$`) // Remove to use stateChangeOnly()
 )
 
 func toOldSchema(rawTick string) string {
@@ -74,4 +75,42 @@ func toOldSchema(rawTick string) string {
 	rawTick = removeDetails.ReplaceAllString(rawTick, "")
 	rawTick = removeHistory.ReplaceAllString(rawTick, "")
 	return rawTick
+}
+
+func defaultAISchemaParser(rawTick string) string {
+	rawTick = strings.Replace(rawTick, "stream\n    |from()\n    |alert()", "", -1)
+	rawTick = removeID.ReplaceAllString(rawTick, "")
+	rawTick = removeMessage.ReplaceAllString(rawTick, "")
+	rawTick = removeDetails.ReplaceAllString(rawTick, "")
+	rawTick = removeHistory.ReplaceAllString(rawTick, "")
+	rawTick = removeStateChange.ReplaceAllString(rawTick, "")
+	return rawTick
+}
+
+// ParseAlertForTarget generates alert chaining methods targeted at specific Services to be attached to an alert from all rule Services.
+func ParseAlertForTarget(rule cloudhub.AlertRule, schemaParser func(string) string) (string, error) {
+	node, err := addAlertNodes(rule.AlertNodes)
+	if err != nil {
+		return "", err
+	}
+
+	if err := ValidateAlert(node); err != nil {
+		// workaround for not-yet released fix https://github.com/influxdata/kapacitor/pull/2488
+		// it can be deleted once kapacitor 1.5.9+ is released
+		// can be simply: return "", err
+		if !strings.Contains(err.Error(), `property "servicenow"`) {
+			return "", err
+		}
+		// no method or property "servicenow" on *pipeline.AlertNode
+		node = strings.Replace(node, ".servicenow()", ".serviceNow()", 1)
+		if err2 := ValidateAlert(node); err2 != nil {
+			return "", err
+		}
+	}
+
+	if schemaParser == nil {
+		schemaParser = defaultAISchemaParser
+	}
+
+	return schemaParser(node), nil
 }

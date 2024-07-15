@@ -530,6 +530,11 @@ func TargetedReverseParser(script cloudhub.TICKScript) (cloudhub.AlertRule, erro
 	if ok {
 		rule.Name = name
 	}
+	detail, ok := varString("details", vars)
+	if ok {
+		rule.Details = detail
+	}
+
 	p, err := pipeline.CreatePipeline(modifiedScript, pipeline.StreamEdge, stateful.NewScope(), &deadman{}, vars)
 	if err != nil {
 		return cloudhub.AlertRule{}, err

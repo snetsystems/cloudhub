@@ -9,9 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
-	"text/template"
 
 	"github.com/bouk/httprouter"
 	"github.com/influxdata/kapacitor/client/v1"
@@ -1070,7 +1068,7 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		req.TaskTemplate = kapa.PredictionTaskField
 	}
 
-	alertServices, err := kapa.AlertServices(req.AlertRule)
+	alertServices, err := kapa.ParseAlertForTarget(req.AlertRule, nil)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -1084,6 +1082,7 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		"PredictModeCondition": req.PredictModeCondition,
 		"AlertServices":        alertServices,
 		"Group":                "{{.Group}}",
+		"Details":              req.Details,
 	}
 
 	templatesFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
@@ -1208,51 +1207,38 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		req.TaskTemplate = kapa.PredictionTaskField
 	}
 
-	const tpl = `{{.AlertServices}}`
-
-	alertServices, err := kapa.AlertServices(req.AlertRule)
+	alertServices, err := kapa.ParseAlertForTarget(req.AlertRule, nil)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
-	data := cloudhub.TemplateParams{
-		"AlertServices": alertServices,
-	}
 
-	var result strings.Builder
-	tmpl, err := template.New("alertTemplate").Parse(tpl)
-	if err != nil {
-		notFound(w, err.Error(), s.Logger)
+	tmplParams := cloudhub.TemplateParams{
+		"OrgName":              req.OrganizationName,
+		"Message":              req.Message,
+		"RetentionPolicy":      "autogen",
+		"PredictMode":          req.PredictMode,
+		"PredictModeCondition": req.PredictModeCondition,
+		"AlertServices":        alertServices,
+		"Group":                "{{.Group}}",
+		"Details":              req.Details,
 	}
-
-	err = tmpl.Execute(&result, data)
-	if err != nil {
-		notFound(w, err.Error(), s.Logger)
-	}
-
-	finalTemplate := cloudhub.TICKScript(result.String())
 
 	templatesFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
 	if _, err := os.Stat(templatesFilePath); os.IsNotExist(err) {
 		templatesFilePath = filepath.Join("../../", "templates", "tickscript_templates.toml")
 	}
 
-	_, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
+	script, err := c.Ticker.GenerateTaskFromTemplate(cloudhub.LoadTemplateConfig{
 		Field: kapa.PredictionTaskField,
 		Path:  &templatesFilePath,
-	})
+	}, tmplParams)
 	if err != nil {
-		notFound(w, err.Error(), s.Logger)
+		invalidData(w, err, s.Logger)
+		return
 	}
 
-	findAlertNodesKey := extraFields["FindAlertNodesKey"]
-
-	updatedString, err := updateAfterPattern(req.TICKScript, findAlertNodesKey, finalTemplate)
-	if err != nil {
-		notFound(w, err.Error(), s.Logger)
-	}
 	kapaID := cloudhub.PredictScriptPrefix + org.ID
-
 	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: "autogen"}}
 
 	if org.ID != "default" {
@@ -1262,7 +1248,7 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		ID:         kapaID,
 		Type:       client.StreamTask,
 		DBRPs:      DBRPs,
-		TICKscript: string(updatedString),
+		TICKscript: string(script),
 		Status:     client.Enabled,
 	}
 
@@ -1271,29 +1257,11 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
-	// log registrationte
+
 	msg := fmt.Sprintf(MsgKapacitorRuleModified.String(), task.Rule.Name, org.Name)
 	s.logRegistration(ctx, "Kapacitors Task", msg)
 
 	res := newAlertResponse(task, deviceOrg.AIKapacitor.SrcID, deviceOrg.AIKapacitor.KapaID)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 
-}
-
-func updateAfterPattern(input cloudhub.TICKScript, pattern string, newValue cloudhub.TICKScript) (cloudhub.TICKScript, error) {
-	re, err := regexp.Compile(pattern)
-	if err != nil {
-		return "", err
-	}
-
-	loc := re.FindStringIndex(string(input))
-	if loc == nil {
-		return input, fmt.Errorf("pattern not found")
-	}
-
-	beforePattern := input[:loc[1]]
-	afterPattern := input[loc[1]:]
-
-	result := beforePattern + newValue + afterPattern
-	return result, nil
 }

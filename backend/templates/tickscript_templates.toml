@@ -24,20 +24,8 @@ data
 """
 
 [prediction_task]
-findAlertNodesKey = """
-var trigger = data
-    |alert()
-        .crit(lambda: "predict_status" == 'false')
-        .stateChangesOnly()
-        .message(message)
-        .id(name + '-{{.Group}}')
-        .idTag('alertID')
-        .levelTag('level')
-        .messageField('message')
-        .durationField('duration')
-"""
 template = """
-var name = 'Anomaly Prediction_{{.OrgName}}'
+var name = 'Anomaly Prediction {{.OrgName}}'
 
 var db = '{{.OrgName}}'
 
@@ -48,6 +36,8 @@ var predict_mode = '{{.PredictMode}}'
 var ensemble_condition = '{{.PredictModeCondition}}'
 
 var message = '{{.Message}}'
+
+var details = '{{.Details}}'
 
 var trffic = stream
     |from()
@@ -99,6 +89,7 @@ var predictResult = predictData
     @predict()
         .predict_mode(predict_mode)
         .ensemble_condition(ensemble_condition)
+
 var data = predictResult
     |eval(lambda: "cpu_used", lambda: "tff_volume", lambda: "predict_status", lambda: "predict_kind")
         .as('cpu_used', 'tff_volume', 'predict_status', 'predict_kind')
@@ -113,7 +104,7 @@ var trigger = data
         .idTag('alertID')
         .levelTag('level')
         .messageField('message')
-        .durationField('duration'){{.AlertServices}}
+        .durationField('duration'){{if .Details}}.details(details){{end}}{{.AlertServices}}
 
 trigger
     |eval(lambda: "agent_host", lambda: "cpu_used", lambda: "tff_volume", lambda: if("predict_kind" == 1, 'ML', if("predict_kind" == 2, 'DL', if("predict_kind" == 3, 'ALL', 'OK'))), lambda: "predict_kind")
