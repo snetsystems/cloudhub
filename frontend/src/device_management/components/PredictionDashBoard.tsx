@@ -308,7 +308,7 @@ function PredictionDashBoard({
             className="btn btn-sm btn-primary"
             style={{marginRight: '4px'}}
           >
-            <span className="icon plus" /> Build Alert Rule
+            <span className="icon cog-thick" /> Rule Setting
           </Link>
         </div>
         <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
