@@ -656,7 +656,7 @@ export const notifyAlertRuleCreateFailed = (
 
 export const notifyAlertRuleUpdated = (ruleName: string): Notification => ({
   ...defaultSuccessNotification,
-  message: `${ruleName} saved successfully.`,
+  message: `${ruleName} updated successfully.`,
 })
 
 export const notifyAlertRuleUpdateFailed = (
@@ -664,7 +664,7 @@ export const notifyAlertRuleUpdateFailed = (
   errorMessage: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `There was a problem saving ${ruleName}: ${errorMessage}`,
+  message: `There was a problem updating ${ruleName}: ${errorMessage}`,
 })
 
 export const notifyAlertRuleDeleted = (ruleName: string): Notification => ({

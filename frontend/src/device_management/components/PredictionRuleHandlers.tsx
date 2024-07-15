@@ -5,6 +5,7 @@ import HandlerOptions from 'src/kapacitor/components/HandlerOptions'
 import HandlerTabs from 'src/kapacitor/components/HandlerTabs'
 import Dropdown from 'src/shared/components/Dropdown'
 import {parseHandlersFromRule} from 'src/shared/parsing/parseHandlersFromRule'
+import PageSpinner from 'src/shared/components/PageSpinner'
 
 import {DEFAULT_HANDLERS, AlertTypes} from 'src/kapacitor/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -34,7 +35,6 @@ interface Props {
   handlersFromConfig: Handler[]
   onGoToConfig: (configName: string) => void
   validationError: string
-  setLoading: (isLoading: boolean) => void
 }
 
 interface HandlerKind {
@@ -66,6 +66,7 @@ interface State {
   selectedHandler: Handler
   handlersOnThisAlert: Handler[]
   handlersOfKind: HandlerKind
+  isLoading: boolean
 }
 
 @ErrorHandling
@@ -77,13 +78,17 @@ class PredictionRuleHandlers extends PureComponent<Props, State> {
       selectedHandler: null,
       handlersOnThisAlert: [],
       handlersOfKind: {},
+      isLoading: true,
     }
   }
 
   public async componentDidUpdate(prevProps) {
     const {handlersFromConfig} = this.props
 
-    if (prevProps.rule.id !== this.props.rule.id) {
+    if (
+      prevProps.rule.name !== this.props.rule.name ||
+      prevProps.rule.id !== this.props.rule.id
+    ) {
       const {
         selectedHandler,
         handlersOnThisAlert,
@@ -94,8 +99,8 @@ class PredictionRuleHandlers extends PureComponent<Props, State> {
         selectedHandler,
         handlersOnThisAlert,
         handlersOfKind,
+        isLoading: false,
       })
-      this.props.setLoading(false)
     }
   }
 
@@ -146,6 +151,7 @@ class PredictionRuleHandlers extends PureComponent<Props, State> {
 
     return (
       <div className="rule-section">
+        {this.LoadingState}
         <h3 className="rule-section--heading">Alert Handlers</h3>
         <div className="rule-section--body">
           <div className={ruleSectionClassName}>
@@ -177,6 +183,20 @@ class PredictionRuleHandlers extends PureComponent<Props, State> {
             </div>
           ) : null}
         </div>
+      </div>
+    )
+  }
+
+  private get LoadingState(): JSX.Element {
+    const {isLoading} = this.state
+
+    if (!isLoading) {
+      return <></>
+    }
+
+    return (
+      <div className="device-management--loading">
+        <PageSpinner />
       </div>
     )
   }
