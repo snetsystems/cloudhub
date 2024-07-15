@@ -20,6 +20,7 @@ import {
   DEVICE_MANAGEMENT_SCRIPT_URL,
   DEFAULT_PREDICT_MODE,
   PREDICT_TASK_PREFIX,
+  DEFAULT_DEVICE_ORG_KAPACITOR,
 } from './deviceData'
 import {
   columns,
@@ -71,5 +72,6 @@ export {
   OUTLINE,
   DETECT_RATE,
   STATIC_TOOLTIP_HEIGHT,
+  DEFAULT_DEVICE_ORG_KAPACITOR,
   // fixturePredictionPageCells,
 }

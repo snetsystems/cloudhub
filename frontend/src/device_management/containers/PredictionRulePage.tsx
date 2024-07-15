@@ -92,7 +92,7 @@ class PredictionRulePage extends Component<Props, State> {
       kapacitor: DEFAULT_KAPACITOR,
       orgLearningModel: [],
       sourceForNetworkDeviceOrganizationKapacitor: DEFAULT_SOURCE as Source,
-      selectedOrganizationID: 'default',
+      selectedOrganizationID: '',
       predictMode: DEFAULT_PREDICT_MODE,
       isFetchingCompleted: false,
     }
@@ -103,7 +103,6 @@ class PredictionRulePage extends Component<Props, State> {
 
     try {
       this.setState({
-        isLoading: true,
         selectedOrganizationID: me?.currentOrganization?.id,
       })
 
@@ -118,9 +117,10 @@ class PredictionRulePage extends Component<Props, State> {
     this.updateRuleIfChanged(prevProps.rules, this.props.rules)
 
     if (
+      prevState.selectedOrganizationID !== '' &&
       prevState.selectedOrganizationID !== this.state.selectedOrganizationID
     ) {
-      this.setState({isLoading: true, isFetchingCompleted: false})
+      this.setState({isFetchingCompleted: false})
 
       try {
         await this.getNetworkDeviceOrganizationsAJAX()
@@ -234,6 +234,10 @@ class PredictionRulePage extends Component<Props, State> {
       this.initializeState(true)
       return
     }
+
+    this.setState({
+      isLoading: true,
+    })
 
     try {
       const source = await this.getSourceForNetworkDeviceOrganizationKapacitor()

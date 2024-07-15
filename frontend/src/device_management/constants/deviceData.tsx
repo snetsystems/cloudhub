@@ -2,6 +2,7 @@ import {
   AlertRule,
   DeviceData,
   DropdownItem,
+  KapacitorForNetworkDeviceOrganization,
   LearningOption,
   SNMPConfig,
   SSHConfig,
@@ -154,4 +155,13 @@ export const DEFAULT_ALERT_RULE: AlertRule = {
   status: '',
   executing: false,
   error: '',
+}
+
+export const DEFAULT_DEVICE_ORG_KAPACITOR: KapacitorForNetworkDeviceOrganization = {
+  srcId: '',
+  kapaId: '',
+  url: 'http://kapacitor:9094/',
+  username: '',
+  password: '',
+  insecure_skip_verify: false,
 }
