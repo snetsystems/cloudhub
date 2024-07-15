@@ -13,7 +13,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
     {
       key: 'organization',
       name: 'Organization',
-      align: AlignType.CENTER,
+      align: AlignType.LEFT,
       options: {
         sorting: true,
       },
@@ -28,7 +28,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
     {
       key: 'device_ip',
       name: 'Device Ip',
-      align: AlignType.CENTER,
+      align: AlignType.LEFT,
       options: {
         sorting: true,
       },
@@ -43,7 +43,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
     {
       key: 'hostname',
       name: 'Hostname',
-      align: AlignType.CENTER,
+      align: AlignType.LEFT,
       options: {
         sorting: true,
       },
@@ -252,7 +252,7 @@ export const DEVICE_INFO_SELECTED_MONITORING: ColumnInfo[] = [
   {
     key: 'organization',
     name: 'Organization',
-    align: AlignType.CENTER,
+    align: AlignType.LEFT,
     options: {
       sorting: true,
     },
@@ -267,7 +267,7 @@ export const DEVICE_INFO_SELECTED_MONITORING: ColumnInfo[] = [
   {
     key: 'device_ip',
     name: 'IP',
-    align: AlignType.CENTER,
+    align: AlignType.LEFT,
     options: {
       sorting: true,
     },
@@ -282,7 +282,7 @@ export const DEVICE_INFO_SELECTED_MONITORING: ColumnInfo[] = [
   {
     key: 'hostname',
     name: 'Hostname',
-    align: AlignType.CENTER,
+    align: AlignType.LEFT,
     options: {
       sorting: true,
     },
@@ -367,7 +367,7 @@ export const deviceApplyMonitoringColumn: ColumnInfo[] = [
   {
     key: 'organization',
     name: 'Organization',
-    align: AlignType.CENTER,
+    align: AlignType.LEFT,
     options: {
       sorting: true,
     },
@@ -385,7 +385,7 @@ export const deviceApplyMonitoringColumn: ColumnInfo[] = [
     options: {
       sorting: true,
     },
-    align: AlignType.CENTER,
+    align: AlignType.LEFT,
     render: item => {
       return (
         <div style={{textAlign: 'left'}}>
@@ -397,7 +397,7 @@ export const deviceApplyMonitoringColumn: ColumnInfo[] = [
   {
     key: 'hostname',
     name: 'Hostname',
-    align: AlignType.CENTER,
+    align: AlignType.LEFT,
     options: {
       sorting: true,
     },
