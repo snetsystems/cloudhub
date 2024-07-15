@@ -113,7 +113,7 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
         }
       }
     })
-  }, [])
+  }, [tooltipData])
 
   const attachEventHandlers = () => {
     if (!svgRef.current) return

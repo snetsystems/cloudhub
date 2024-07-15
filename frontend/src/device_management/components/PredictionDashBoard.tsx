@@ -1,6 +1,6 @@
-import React, {useMemo} from 'react'
+import React, {useEffect, useMemo} from 'react'
 import {connect} from 'react-redux'
-import {Page} from 'src/reusable_ui'
+import {Button, ComponentColor, Page} from 'src/reusable_ui'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import * as notifyActions from 'src/shared/actions/notifications'
 import * as DashboardsModels from 'src/types/dashboards'
@@ -13,6 +13,7 @@ import {
 } from 'src/shared/constants'
 import {
   Cell,
+  INPUT_TIME_TYPE,
   Source,
   Template,
   TemplateType,
@@ -25,10 +26,7 @@ import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
-import {RECENT_ALERTS_LIMIT} from 'src/status/constants'
-import PredictionAlertTable from './PredictionAlertTable'
 import {fixturePredictionPageCells} from '../constants'
-import {Alert} from 'src/types/alerts'
 import _ from 'lodash'
 import Layout from 'src/shared/components/Layout'
 import {Link} from 'react-router'
@@ -38,28 +36,27 @@ import ManualRefresh, {
 } from 'src/shared/components/ManualRefresh'
 import {WithRouterProps} from 'react-router'
 import PredictionInstanceWrapper from './PredictionInstanceWrapper'
+import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
+import moment from 'moment'
+import PredictionAlertHistoryWrapper from './PredictionAlertHistoryWrapper'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 interface Props extends ManualRefreshProps, WithRouterProps {
   inPresentationMode: boolean
   timeRange: TimeRange
   source: Source
-  setLimitMultiplier: React.Dispatch<React.SetStateAction<number>>
-  fetchAlerts: () => void
-  error: unknown
-  loading: boolean
-  hasKapacitor: boolean
-  isAlertsMaxedOut: boolean
-  alerts: Alert[]
-  autoRefresh?: number
   host: string
+  sources: Source[]
+  setSelectDate: React.Dispatch<React.SetStateAction<number>>
+  setTimeRange: (value: TimeRange) => void
+
+  autoRefresh?: number
   onZoom?: () => void
   onCloneCell?: () => void
   onDeleteCell?: () => void
   onSummonOverlayTechnologies?: () => void
-  sources: Source[]
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
-  setSelectDate: React.Dispatch<React.SetStateAction<number>>
 }
 
 interface TempProps {
@@ -72,13 +69,7 @@ function PredictionDashBoard({
   inPresentationMode,
   timeRange,
   source,
-  setLimitMultiplier,
-  fetchAlerts,
-  error,
-  loading,
-  hasKapacitor,
-  isAlertsMaxedOut,
-  alerts,
+  autoRefresh,
   host,
   onZoom,
   onCloneCell,
@@ -89,12 +80,31 @@ function PredictionDashBoard({
   instance,
   onPickTemplate,
   setSelectDate,
+  setTimeRange,
 }: Props) {
   const GridLayout = WidthProvider(ReactGridLayout)
 
   const savedCells: DashboardsModels.Cell[] = JSON.parse(
     localStorage.getItem('Prediction-cells')
   )
+  let intervalID
+  useEffect(() => {
+    const controller = new AbortController()
+
+    if (autoRefresh) {
+      clearInterval(intervalID)
+      // intervalID = window.setInterval(() => fetchKapacitor(), autoRefresh)
+    }
+
+    GlobalAutoRefresher.poll(autoRefresh)
+
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [])
 
   const cells = useMemo(() => {
     const defaultCells = fixturePredictionPageCells(source)
@@ -149,12 +159,18 @@ function PredictionDashBoard({
     const dashboardTime = {
       id: 'dashtime',
       tempVar: TEMP_VAR_DASHBOARD_TIME,
-      type: TemplateType.TimeStamp,
+      type:
+        timeRange.format === INPUT_TIME_TYPE.TIMESTAMP
+          ? TemplateType.TimeStamp
+          : TemplateType.Constant,
       label: '',
       values: [
         {
           value: timeRange.lower,
-          type: TemplateValueType.TimeStamp,
+          type:
+            timeRange.format === INPUT_TIME_TYPE.TIMESTAMP
+              ? TemplateValueType.TimeStamp
+              : TemplateValueType.Constant,
           selected: true,
           localSelected: true,
         },
@@ -164,12 +180,19 @@ function PredictionDashBoard({
     const upperDashboardTime = {
       id: 'upperdashtime',
       tempVar: TEMP_VAR_UPPER_DASHBOARD_TIME,
-      type: TemplateType.TimeStamp,
+      type:
+        timeRange.format === INPUT_TIME_TYPE.TIMESTAMP
+          ? TemplateType.TimeStamp
+          : TemplateType.Constant,
       label: '',
       values: [
         {
-          value: timeRange.upper,
-          type: TemplateValueType.TimeStamp,
+          value: timeRange.upper ?? 'now()',
+          type:
+            timeRange.format === INPUT_TIME_TYPE.TIMESTAMP &&
+            timeRange.upper !== 'now()'
+              ? TemplateValueType.TimeStamp
+              : TemplateValueType.Constant,
           selected: true,
           localSelected: true,
         },
@@ -192,11 +215,25 @@ function PredictionDashBoard({
           >
             <div style={{height: '100%', backgroundColor: '#292933'}}>
               <PredictionDashboardHeader
-                cellName={`Monitoring (${cell.i})`}
+                cellName={`Anomaly Prediction Counts Histogram`}
                 cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
                 cellTextColor={DEFAULT_CELL_TEXT_COLOR}
               >
-                <div className="dash-graph--name"></div>
+                <div style={{zIndex: 3}} className="page-header--right">
+                  <Button
+                    text="get 30days"
+                    color={ComponentColor.Primary}
+                    onClick={() => {
+                      setTimeRange({
+                        upper: convertTimeFormat(moment().format()),
+                        lower: convertTimeFormat(
+                          moment().subtract(30, 'day').format()
+                        ),
+                        format: INPUT_TIME_TYPE.TIMESTAMP,
+                      })
+                    }}
+                  />
+                </div>
               </PredictionDashboardHeader>
               {!!cell && (
                 <Layout
@@ -240,29 +277,11 @@ function PredictionDashBoard({
               isEditable: false,
             }}
           >
-            <div style={{height: '100%', backgroundColor: '#292933'}}>
-              <PredictionDashboardHeader
-                cellName={`Monitoring (${cell.i})`}
-                cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
-                cellTextColor={DEFAULT_CELL_TEXT_COLOR}
-              >
-                <div className="dash-graph--name"></div>
-              </PredictionDashboardHeader>
-
-              <PredictionAlertTable
-                source={source}
-                timeRange={timeRange}
-                isWidget={true}
-                limit={RECENT_ALERTS_LIMIT}
-                alerts={alerts}
-                error={error}
-                fetchAlerts={fetchAlerts}
-                hasKapacitor={hasKapacitor}
-                isAlertsMaxedOut={isAlertsMaxedOut}
-                loading={loading}
-                setLimitMultiplier={setLimitMultiplier}
-              />
-            </div>
+            <PredictionAlertHistoryWrapper
+              timeRange={timeRange}
+              source={source}
+              limit={30}
+            />
           </Authorized>
         )
       }
@@ -274,16 +293,7 @@ function PredictionDashBoard({
               isEditable: false,
             }}
           >
-            <div style={{height: '100%', backgroundColor: '#292933'}}>
-              <PredictionDashboardHeader
-                cellName={`Monitoring (${cell.i})`}
-                cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
-                cellTextColor={DEFAULT_CELL_TEXT_COLOR}
-              >
-                <div className="dash-graph--name"></div>
-              </PredictionDashboardHeader>
-              <PredictionHexbinWrapper source={source} />
-            </div>
+            <PredictionHexbinWrapper source={source} />
           </Authorized>
         )
       }
@@ -291,7 +301,6 @@ function PredictionDashBoard({
         return (
           <PredictionInstanceWrapper
             source={source}
-            timeRange={timeRange}
             manualRefresh={manualRefresh}
           />
         )

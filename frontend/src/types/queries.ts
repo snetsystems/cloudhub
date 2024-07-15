@@ -101,6 +101,18 @@ export interface TimeRange {
   format?: string
 }
 
+export interface TimeRangeWithType extends TimeRange {
+  menuOption?: typeof INPUT_TIME_TYPE
+}
+
+export const INPUT_TIME_TYPE = {
+  RELATIVE_TIME: 'relativeTime',
+  //now()-2d
+
+  TIMESTAMP: 'timestamp',
+  //"2024-07-08T06:34:00.000Z"
+} as const
+
 export interface DurationRange {
   lower: string
   upper?: string

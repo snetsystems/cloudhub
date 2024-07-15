@@ -1,7 +1,7 @@
 // Library
 import AJAX from 'src/utils/ajax'
 import {AxiosResponse} from 'axios'
-import _ from 'lodash'
+import _, {isEmpty} from 'lodash'
 
 // Types
 import {
@@ -19,6 +19,10 @@ import {
   ApplyMonitoringRequest,
   ApplyMonitoringResponse,
   TimeRange,
+  Layout,
+  AppsForHost,
+  Source,
+  INPUT_TIME_TYPE,
 } from 'src/types'
 
 // Constants
@@ -52,6 +56,8 @@ import {
   UpdateDeviceOrganizationOption,
   UpdateDevicesOrgResponse,
 } from 'src/types/deviceManagement'
+import {parseSeries} from '../utils'
+import {hasError} from 'apollo-client/core/ObservableQuery'
 
 interface Series {
   name: string
@@ -309,23 +315,45 @@ export const createDeviceManagementTickScript = async (
   }
 }
 
+const validateUpperTime = (upper: String) => {
+  if (upper !== 'now()' && !!upper) {
+    return `AND time <= '${upper}'`
+  } else {
+    return 'AND time <= now()'
+  }
+}
+
 export const getPredictionAlert = (
   source: string,
   timeRange: TimeRange,
   limit: number,
   db: string
 ) => {
-  const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE time >= '${
-    timeRange.lower
-  }' AND time <= '${timeRange.upper}' ORDER BY time desc ${
-    limit ? `LIMIT ${limit}` : ''
-  }`
+  if (timeRange.format === INPUT_TIME_TYPE.TIMESTAMP) {
+    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE time >= '${
+      timeRange.lower
+    }' ${validateUpperTime(timeRange.upper)} ORDER BY time desc ${
+      limit ? `LIMIT ${limit}` : ''
+    }`
 
-  return proxy({
-    source,
-    query,
-    db,
-  })
+    return proxy({
+      source,
+      query,
+      db,
+    })
+  } else {
+    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE time >= ${
+      timeRange.lower
+    } AND time <= ${timeRange.upper ?? 'now()'} ORDER BY time desc ${
+      limit ? `LIMIT ${limit}` : ''
+    }`
+
+    return proxy({
+      source,
+      query,
+      db,
+    })
+  }
 }
 
 export const getLiveDeviceInfo = async (
@@ -400,4 +428,72 @@ export const updateDeviceManagementTickScript = async (
     console.error(error)
     throw error
   }
+}
+
+export const getMeasurementsForPredictionInstance = async (
+  source: Source,
+  instance: string
+): Promise<string[]> => {
+  let query = ''
+
+  query = `SHOW MEASUREMENTS WHERE "agent_host" = '${instance}'`
+
+  const {data} = await proxy({
+    source: source.links.proxy,
+    query: query,
+    db: source.telegraf,
+  })
+
+  if (isEmpty(data) || hasError(data)) {
+    return []
+  }
+
+  const values = getDeep<string[][]>(data, 'results.[0].series.[0].values', [])
+  const measurements = values.map(m => {
+    return m[0]
+  })
+
+  return measurements
+}
+
+export const getAppsForAgentHost = async (
+  proxyLink: string,
+  host: string,
+  appLayouts: Layout[],
+  telegrafDB: string,
+  tempVars: Template[]
+) => {
+  const measurements = appLayouts
+    .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
+    .join(',')
+  const measurementsToApps = _.zipObject(
+    appLayouts.map(m => m.measurement),
+    appLayouts.map(({app}) => app)
+  )
+
+  let query = ''
+
+  query = `show series from ${measurements} where host = '${host}'`
+
+  const {data} = await proxy({
+    source: proxyLink,
+    query: replaceTemplate(query, tempVars),
+    db: telegrafDB,
+  })
+
+  const appsForHost: AppsForHost = {apps: [], tags: {host: null}}
+
+  const allSeries = getDeep<string[][]>(data, 'results.0.series.0.values', [])
+
+  allSeries.forEach(series => {
+    const seriesObj = parseSeries(series[0])
+    const measurement = seriesObj.measurement
+
+    appsForHost.apps = _.uniq(
+      appsForHost.apps.concat(measurementsToApps[measurement])
+    )
+    _.assign(appsForHost.tags, seriesObj.tags)
+  })
+
+  return appsForHost
 }

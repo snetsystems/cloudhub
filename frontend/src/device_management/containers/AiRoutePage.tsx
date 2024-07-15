@@ -3,6 +3,7 @@ import _ from 'lodash'
 import {Page, Radio} from 'src/reusable_ui'
 import {
   HeaderNavigationObj,
+  INPUT_TIME_TYPE,
   Me,
   Organization,
   RefreshRate,
@@ -17,19 +18,26 @@ import {LOGIN_AUTH_TYPE} from 'src/auth/constants'
 import DeviceManagement from './DeviceManagement'
 
 //action
+import {setAutoRefresh} from 'src/shared/actions/app'
+import {setCloudAutoRefresh} from 'src/clouds/actions'
+
 import {connect} from 'react-redux'
 import * as appActions from 'src/shared/actions/app'
 import {openShell} from 'src/shared/actions/shell'
 import DeviceManagementModal from '../components/DeviceManagementModal'
 import PredictionPage from './PredictionPage'
-import CustomTimeRangeDropdown from 'src/shared/components/CustomTimeRangeDropdown'
 import moment from 'moment'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 
-import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
+import ManualRefresh, {
+  ManualRefreshProps,
+} from 'src/shared/components/ManualRefresh'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
-import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 import {InjectedRouter, RouterState} from 'react-router'
+import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
+import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
+import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import {bindActionCreators} from 'redux'
 
 interface RouterProps extends InjectedRouter {
   params: RouterState['params']
@@ -47,6 +55,7 @@ interface Props extends ManualRefreshProps {
   params: {tab: string}
   autoRefresh: number
   cloudAutoRefresh: CloudAutoRefresh
+
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
   onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
   router: RouterProps
@@ -62,10 +71,10 @@ const defaultHeaderRadioButtons: HeaderNavigationObj[] = [
   },
   {
     id: 'hostspage-tab-prediction',
-    titleText: 'Prediction',
+    titleText: 'Anomaly Prediction',
     value: 'prediction',
     active: 'prediction',
-    label: 'Prediction',
+    label: 'Anomaly Prediction',
   },
 ]
 
@@ -79,12 +88,14 @@ const AiRoutePage = (props: Props) => {
     timeZone,
     setTimeZone,
     router,
+    autoRefresh,
+    onManualRefresh,
+    cloudAutoRefresh,
+    onChooseCloudAutoRefresh,
+    onChooseAutoRefresh,
   } = props
-  const currentRoute = router.params?.tab
 
-  const [autoRefreshOptions, setAutoRefreshOptions] = useState<
-    AutoRefreshOption[] | null
-  >(getTimeOptionByGroup(currentRoute))
+  const currentRoute = router.params?.tab
 
   const [headerRadioButtons, setHeaderRadioButtons] = useState<
     HeaderNavigationObj[]
@@ -93,6 +104,7 @@ const AiRoutePage = (props: Props) => {
   const [timeRange, setTimeRange] = useState<TimeRange>({
     upper: convertTimeFormat(moment().format()),
     lower: convertTimeFormat(moment().subtract(30, 'day').format()),
+    format: INPUT_TIME_TYPE.TIMESTAMP,
   })
 
   let providers = []
@@ -107,28 +119,28 @@ const AiRoutePage = (props: Props) => {
     })
   }
 
-  function convertTimeFormat(dateString) {
-    const date = new Date(dateString)
-    return date.toISOString()
-  }
-
   const handleApplyTime = (timeRange: TimeRange): void => {
-    setTimeRange(timeRange)
+    setTimeRange({
+      ...timeRange,
+      format: !!timeRange.lowerFlux
+        ? INPUT_TIME_TYPE.RELATIVE_TIME
+        : INPUT_TIME_TYPE.TIMESTAMP,
+    })
   }
 
   const onChooseActiveTab = (activeTab: string) => {
     router.push(`/sources/${source.id}/ai/${activeTab}`)
   }
 
-  // const handleChooseAutoRefresh = (option: {
-  //   milliseconds: RefreshRate
-  //   group?: string
-  // }) => {
-  //   const {milliseconds, group} = option
-  //   group
-  //     ? onChooseCloudAutoRefresh({[group]: milliseconds})
-  //     : onChooseAutoRefresh(milliseconds)
-  // }
+  const handleChooseAutoRefresh = (option: {
+    milliseconds: RefreshRate
+    group?: string
+  }) => {
+    const {milliseconds, group} = option
+    group
+      ? onChooseCloudAutoRefresh({[group]: milliseconds})
+      : onChooseAutoRefresh(milliseconds)
+  }
 
   return (
     <Page>
@@ -162,10 +174,23 @@ const AiRoutePage = (props: Props) => {
             customAutoRefreshOptions={autoRefreshOptions}
             customAutoRefreshSelected={cloudAutoRefresh}
           /> */}
-          <CustomTimeRangeDropdown
-            onApplyTimeRange={handleApplyTime}
-            timeRange={timeRange}
-          />
+
+          {currentRoute === 'prediction' && (
+            <>
+              <AutoRefreshDropdown
+                onChoose={handleChooseAutoRefresh}
+                selected={autoRefresh}
+                onManualRefresh={onManualRefresh}
+                customAutoRefreshOptions={getTimeOptionByGroup(currentRoute)}
+                customAutoRefreshSelected={cloudAutoRefresh}
+              />
+              <TimeRangeDropdown
+                //@ts-ignore
+                onChooseTimeRange={handleApplyTime}
+                selected={timeRange}
+              />
+            </>
+          )}
           <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
         </Page.Header.Right>
       </Page.Header>
@@ -198,7 +223,7 @@ const AiRoutePage = (props: Props) => {
 
 const mstp = ({
   app: {
-    persisted: {timeZone},
+    persisted: {timeZone, autoRefresh, cloudAutoRefresh},
   },
   adminCloudHub: {organizations},
   auth: {isUsingAuth, me},
@@ -208,12 +233,16 @@ const mstp = ({
     isUsingAuth,
     me,
     timeZone,
+    autoRefresh,
+    cloudAutoRefresh,
   }
 }
 
-const mdtp = {
+const mdtp = dispatch => ({
   setTimeZone: appActions.setTimeZone,
   openShell: openShell,
-}
+  onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
+  onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
+})
 
-export default connect(mstp, mdtp, null)(AiRoutePage)
+export default connect(mstp, mdtp, null)(ManualRefresh<Props>(AiRoutePage))

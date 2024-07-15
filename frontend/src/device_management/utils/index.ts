@@ -1,5 +1,10 @@
 import _ from 'lodash'
-import {DeviceData, DeviceDataMonitoringStatus, Organization} from 'src/types'
+import {
+  DeviceData,
+  DeviceDataMonitoringStatus,
+  Organization,
+  SeriesObj,
+} from 'src/types'
 import {MLFunctionMsg} from 'src/device_management/constants'
 
 export const hasMonitoringDevice = (
@@ -87,4 +92,54 @@ export const formatMLKey = (
   }
 
   return MLFunctionMsg[mlFunctionKey]
+}
+
+export const parseSeries = (seriesString: string): SeriesObj => {
+  const ident = /[^,]+/
+  const tag = /,?([^=]+)=([^,]+)/
+
+  const parseMeasurement = (s, obj) => {
+    const match = ident.exec(s)
+    const measurement = match[0]
+    if (measurement) {
+      obj.measurement = measurement
+    }
+    return s.slice(match.index + measurement.length)
+  }
+
+  const parseTag = (s, obj) => {
+    const match = tag.exec(s)
+
+    if (match) {
+      const kv = match[0]
+      const key = match[1]
+      const value = match[2]
+
+      if (key) {
+        if (!obj.tags) {
+          obj.tags = {}
+        }
+        obj.tags[key] = value
+      }
+      return s.slice(match.index + kv.length)
+    }
+
+    return ''
+  }
+
+  let workStr = seriesString.slice()
+  const out: SeriesObj = {
+    measurement: null,
+    tags: {host: null},
+  }
+
+  // Consume measurement
+  workStr = parseMeasurement(workStr, out)
+
+  // Consume tags
+  while (workStr.length > 0) {
+    workStr = parseTag(workStr, out)
+  }
+
+  return out
 }

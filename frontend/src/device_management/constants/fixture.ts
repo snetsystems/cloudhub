@@ -6,28 +6,6 @@ import {
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
 } from 'src/shared/constants'
-import {LayoutCell} from 'src/hosts/types'
-
-const CELL_WIDTH = 32
-const CELL_HEIGHT = 24
-const PAGE_WIDTH = 96
-
-const emptyQuery: CellQuery = {
-  query: '',
-  source: '',
-  queryConfig: {
-    database: '',
-    measurement: '',
-    retentionPolicy: '',
-    fields: [],
-    tags: {},
-    groupBy: {},
-    areTagsAccepted: false,
-    rawText: null,
-    range: null,
-  },
-  type: QueryType.InfluxQL,
-}
 
 const emptyAxes: Axes = {
   x: DEFAULT_AXIS,
@@ -54,7 +32,7 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
       h: 10,
       minH: 10,
       legend: {},
-      name: 'Alert Events per Day – Last 30 Days',
+      name: 'Alert Events',
       colors: DEFAULT_LINE_COLORS,
       queries: [
         {
@@ -155,51 +133,4 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
       },
     },
   ]
-}
-
-export const fixturePredictionInstanceCells = (
-  source: Source,
-  queries?: CellQuery[][]
-) => {
-  const defaultCells = [...Array(6)].map((_, idx) => {
-    return {
-      ...NEW_DEFAULT_DASHBOARD_CELL,
-      type: CellType.Line,
-      i: `Instance_${idx}`,
-      name: `Instance Graph ${idx}`,
-      queries: queries ? queries[idx] : [],
-    }
-  })
-
-  const positioningCell = autoPositionCells(defaultCells as Cell[])
-  return toCell(positioningCell, source)
-}
-
-const autoPositionCells = (cells: Cell[]): Cell[] => {
-  return cells.reduce((acc, cell, i) => {
-    const x = (i * CELL_WIDTH) % PAGE_WIDTH
-    const y = Math.floor((i * CELL_WIDTH) / PAGE_WIDTH) * CELL_HEIGHT
-    const newCell = {...cell, w: CELL_WIDTH, h: CELL_HEIGHT, x, y}
-
-    return [...acc, newCell]
-  }, [])
-}
-
-const toCell = (cell: Cell[], source: Source) => {
-  return cell.map(i => {
-    return {
-      queries: toCellQuery(source, i.queries),
-      ...i,
-    }
-  })
-}
-
-const toCellQuery = (source: Source, queries?: CellQuery[]) => {
-  const cellQuery: any = {
-    ...queries,
-    source: source.url,
-    type: 'influxql',
-  }
-
-  return cellQuery
 }

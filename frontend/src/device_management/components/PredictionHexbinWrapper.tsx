@@ -1,7 +1,8 @@
-import React, {useCallback, useEffect, useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import PredictionHexbin from './PredictionHexbin'
 import AJAX from 'src/utils/ajax'
 import {
+  Cell,
   Links,
   NotificationAction,
   PredictionTooltipNode,
@@ -18,6 +19,12 @@ import _ from 'lodash'
 import NoKapacitorError from 'src/shared/components/NoKapacitorError'
 import {notifyUnableToGetHosts} from 'src/shared/copy/notifications'
 import {PredictionModal} from './PredictionModal'
+import PredictionDashboardHeader from './PredictionDashboardHeader'
+import {
+  DEFAULT_CELL_BG_COLOR,
+  DEFAULT_CELL_TEXT_COLOR,
+} from 'src/dashboards/constants'
+import LoadingDots from 'src/shared/components/LoadingDots'
 
 interface Props {
   source: Source
@@ -33,11 +40,15 @@ function PredictionHexbinWrapper({source, auth, notify}: Props) {
 
   const [error, setError] = useState<string>()
 
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
 
   const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false)
 
   const [openNum, setOpenNum] = useState<number>(null)
+
+  useEffect(() => {
+    fetchKapacitor()
+  }, [])
 
   const onHexbinClick = (num: number) => {
     // the way to close modal is hexbin double click
@@ -49,8 +60,8 @@ function PredictionHexbinWrapper({source, auth, notify}: Props) {
     }
   }
 
-  // alert List get api
-  useEffect(() => {
+  const fetchKapacitor = () => {
+    setLoading(true)
     AJAX({
       url: source.links?.kapacitors ?? '',
       method: 'GET',
@@ -68,7 +79,7 @@ function PredictionHexbinWrapper({source, auth, notify}: Props) {
         setLoading(false)
         setError(e)
       })
-  }, [])
+  }
 
   //TODO: timerange var change to redux data not props -> why?
   const fetchDeviceInfo = async () => {
@@ -103,29 +114,39 @@ function PredictionHexbinWrapper({source, auth, notify}: Props) {
 
   return (
     <>
-      {loading ? (
-        <>
-          <div className="loading-container">
-            <div className="page-spinner" />
+      <div style={{height: '100%', backgroundColor: '#292933'}}>
+        <PredictionDashboardHeader
+          cellName={`Nodes Health Status`}
+          cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
+          cellTextColor={DEFAULT_CELL_TEXT_COLOR}
+        >
+          <div className="dash-graph--name">
+            {loading && (
+              <LoadingDots
+                className={'graph-panel__refreshing openstack-dots--loading'}
+              />
+            )}
           </div>
-        </>
-      ) : !hostList || error ? (
-        <div>{error}</div>
-      ) : hasKapacitor ? (
-        <PredictionHexbin
-          onHexbinClick={onHexbinClick}
-          tooltipData={hostList}
-        />
-      ) : (
-        <NoKapacitorError source={source} />
-      )}
-      {
-        <PredictionModal
-          isOpen={isPredictionModalOpen}
-          setIsOpen={setIsPredictionModalOpen}
-          index={openNum}
-        />
-      }
+        </PredictionDashboardHeader>
+
+        {!hostList || error ? (
+          <div>{error}</div>
+        ) : hasKapacitor ? (
+          <PredictionHexbin
+            onHexbinClick={onHexbinClick}
+            tooltipData={hostList}
+          />
+        ) : (
+          <NoKapacitorError source={source} />
+        )}
+        {
+          <PredictionModal
+            isOpen={isPredictionModalOpen}
+            setIsOpen={setIsPredictionModalOpen}
+            index={openNum}
+          />
+        }
+      </div>
     </>
   )
 }

@@ -51,6 +51,8 @@ import {
   Tags,
   TagValues,
   SelectedSubFunction,
+  TimeRangeWithType,
+  INPUT_TIME_TYPE,
 } from './queries'
 import {
   NewSource,
@@ -138,6 +140,8 @@ import {
 } from './deviceManagement'
 
 import {AiModal, HeaderNavigationObj} from './aiModal'
+
+import {AppsForHost, SeriesObj} from './prediction'
 
 export {
   Me,
@@ -273,4 +277,8 @@ export {
   PredictModeKey,
   UpdateDeviceManagmenntScriptRequest,
   UpdateDeviceManagmenntScriptResponse,
+  AppsForHost,
+  SeriesObj,
+  TimeRangeWithType,
+  INPUT_TIME_TYPE,
 }

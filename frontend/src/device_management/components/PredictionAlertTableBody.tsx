@@ -245,11 +245,7 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
 
     return shouldNotBeFilterable ? (
       <div className="graph-empty">
-        <p>
-          Learn how to configure your first <strong>Rule</strong> in
-          <br />
-          the <em>Getting Started</em> guide
-        </p>
+        <h4 className="no-user-select">No Result</h4>
       </div>
     ) : (
       <div className="generic-empty-state">

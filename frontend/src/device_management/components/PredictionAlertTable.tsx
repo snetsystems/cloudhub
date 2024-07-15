@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import React, {useMemo} from 'react'
 import NoKapacitorError from 'src/shared/components/NoKapacitorError'
-import PageSpinner from 'src/shared/components/PageSpinner'
 import {Source, TimeRange} from 'src/types'
 import {Alert} from 'src/types/alerts'
 import PredictionAlertTableBody from './PredictionAlertTableBody'
@@ -15,7 +14,6 @@ interface Props {
   setLimitMultiplier: React.Dispatch<React.SetStateAction<number>>
   fetchAlerts: () => void
   error: unknown
-  loading: boolean
   hasKapacitor: boolean
   isAlertsMaxedOut: boolean
   alerts: Alert[]
@@ -28,7 +26,6 @@ function PredictionAlertTable({
   setLimitMultiplier,
   fetchAlerts,
   error,
-  loading,
   hasKapacitor,
   isAlertsMaxedOut,
   alerts,
@@ -58,10 +55,6 @@ function PredictionAlertTable({
           <div>Check console logs.</div>
         </>
       )
-    }
-
-    if (loading || !source) {
-      return <PageSpinner />
     }
 
     return hasKapacitor ? (
