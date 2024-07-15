@@ -49,6 +49,7 @@ import {
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import isValidMessage from 'src/kapacitor/utils/alertMessageValidation'
 import RuleMessage from 'src/kapacitor/components/alert_rules/RuleMessage'
+import ConfirmButton from 'src/shared/components/ConfirmButton'
 
 interface Props {
   source: Source
@@ -88,6 +89,7 @@ class PredictionRule extends Component<Props, State> {
             <Page.Title title="Prediction Alert Rule Builder" />
           </Page.Header.Left>
           <Page.Header.Right showSourceIndicator={true}>
+            {this.saveButton}
             <RuleHeaderSave
               onSave={this.handleSave}
               validationError={this.validationError}
@@ -114,6 +116,22 @@ class PredictionRule extends Component<Props, State> {
           </div>
         </Page.Contents>
       </Page>
+    )
+  }
+
+  private get saveButton(): JSX.Element {
+    const {source, router} = this.props
+    const pageLink = `/sources/${source.id}/ai/prediction`
+
+    // TODO Add Unsaved Changes Condition
+    return (
+      <button
+        className="btn btn-default btn-sm"
+        title="Return to Prediction Page"
+        onClick={() => router.push(pageLink)}
+      >
+        Exit
+      </button>
     )
   }
 
