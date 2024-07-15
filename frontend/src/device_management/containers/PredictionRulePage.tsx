@@ -75,7 +75,6 @@ interface State {
   sourceForNetworkDeviceOrganizationKapacitor: Source
   isTickscriptCreated: boolean
   isLoading: boolean
-  isFetchingCompleted: boolean
   predictMode: PredictModeKey
 }
 
@@ -94,7 +93,6 @@ class PredictionRulePage extends Component<Props, State> {
       sourceForNetworkDeviceOrganizationKapacitor: DEFAULT_SOURCE as Source,
       selectedOrganizationID: '',
       predictMode: DEFAULT_PREDICT_MODE,
-      isFetchingCompleted: false,
     }
   }
 
@@ -120,8 +118,6 @@ class PredictionRulePage extends Component<Props, State> {
       prevState.selectedOrganizationID !== '' &&
       prevState.selectedOrganizationID !== this.state.selectedOrganizationID
     ) {
-      this.setState({isFetchingCompleted: false})
-
       try {
         await this.getNetworkDeviceOrganizationsAJAX()
         await this.fetchSpecificAlertRule(this.state.selectedOrganizationID)
@@ -285,7 +281,6 @@ class PredictionRulePage extends Component<Props, State> {
       sourceForNetworkDeviceOrganizationKapacitor: DEFAULT_SOURCE as Source,
       // TODO Consider Fetch Kapacitor
       predictMode: DEFAULT_PREDICT_MODE,
-      isFetchingCompleted: true,
     })
   }
 
@@ -304,8 +299,6 @@ class PredictionRulePage extends Component<Props, State> {
         rule: _fetchedRule,
         predictMode: this.getOriginalPredictMode(_fetchedRule),
         isTickscriptCreated: true,
-        isLoading: false,
-        isFetchingCompleted: true,
       })
       this.setOriginalRuleMessage(_fetchedRule)
     } else {
@@ -417,7 +410,6 @@ class PredictionRulePage extends Component<Props, State> {
           organizations={organizations}
           selectedPredictMode={predictMode}
           isTickscriptCreated={isTickscriptCreated}
-          isFetchingCompleted={this.state.isFetchingCompleted}
           setLearningDropdownState={this.setLearningDropdownState}
           setPredictMode={this.setPredictMode}
           setisTickscriptCreated={this.setisTickscriptCreated}

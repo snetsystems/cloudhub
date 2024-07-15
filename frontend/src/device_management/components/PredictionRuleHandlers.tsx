@@ -34,7 +34,7 @@ interface Props {
   handlersFromConfig: Handler[]
   onGoToConfig: (configName: string) => void
   validationError: string
-  isFetchingCompleted: boolean
+  setLoading: (isLoading: boolean) => void
 }
 
 interface HandlerKind {
@@ -72,30 +72,18 @@ interface State {
 class PredictionRuleHandlers extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
-    const {handlersFromConfig} = this.props
-    const {
-      handlersOnThisAlert,
-      selectedHandler,
-      handlersOfKind,
-    } = parseHandlersFromRule(this.props.rule, handlersFromConfig)
 
     this.state = {
-      selectedHandler,
-      handlersOnThisAlert,
-      handlersOfKind,
+      selectedHandler: null,
+      handlersOnThisAlert: [],
+      handlersOfKind: {},
     }
   }
 
   public async componentDidUpdate(prevProps) {
     const {handlersFromConfig} = this.props
 
-    if (
-      !_.isEqual(
-        prevProps.isFetchingCompleted,
-        this.props.isFetchingCompleted
-      ) &&
-      this.props.isFetchingCompleted
-    ) {
+    if (prevProps.rule.id !== this.props.rule.id) {
       const {
         selectedHandler,
         handlersOnThisAlert,
@@ -107,6 +95,7 @@ class PredictionRuleHandlers extends PureComponent<Props, State> {
         handlersOnThisAlert,
         handlersOfKind,
       })
+      this.props.setLoading(false)
     }
   }
 
