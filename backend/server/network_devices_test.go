@@ -273,7 +273,7 @@ func TestUpdateNetworkDevice(t *testing.T) {
 								DeviceType:             "switch",
 								DeviceOS:               "IOS",
 								IsCollectingCfgWritten: false,
-								LearningState:          "ready",
+								LearningState:          "Ready",
 							}, nil
 						}
 						return nil, cloudhub.ErrDeviceNotFound
@@ -385,7 +385,7 @@ func TestUpdateNetworkDevice(t *testing.T) {
 							DeviceType:             "switch",
 							DeviceOS:               "IOS",
 							IsCollectingCfgWritten: false,
-							LearningState:          "ready",
+							LearningState:          "Ready",
 						}, nil
 					},
 				},

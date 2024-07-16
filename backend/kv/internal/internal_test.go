@@ -583,7 +583,7 @@ func TestMarshalDevice(t *testing.T) {
 		},
 		Sensitivity:            0.2,
 		DeviceVendor:           "Cisco",
-		LearningState:          "ready",
+		LearningState:          "Ready",
 		LearningBeginDatetime:  "2024-06-19T08:45:30.123Z",
 		LearningFinishDatetime: "2024-06-19T08:45:30.123Z",
 		IsLearning:             false,

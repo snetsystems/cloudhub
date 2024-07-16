@@ -87,7 +87,7 @@ type State string
 
 // Define constants for the learn states
 const (
-	Ready        string = "ready"
+	Ready        string = "Ready"
 	MlInProgress string = "ML in Progress"
 	DlInProgress string = "DL in Progress"
 	MlComplete   string = "ML Complete"
