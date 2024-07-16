@@ -158,7 +158,7 @@ type Server struct {
 
 	OSP map[string]string `long:"osp" description:"The Informations to access to OSP API. '--osp=admin-provider:{salt admin provider} --osp=admin-user:{admin user name} --osp=admin-pw:{admin user password} --osp=auth-url:{keystone url} --osp=pj-domain-id:{project domain id} --osp=user-domain-id:{user domain id}'. E.g. via environment variable: 'export OSP=admin:{salt admin provider},admin-user:{admin user name}', etc." env:"OSP" env-delim:","`
 
-	AI map[string]string `long:"ai" description:"The Information to access to cloudhub AI. '--ai=docker-path:{docker-compose.yml path} --ai=logstash-path:{logstash config path} --ai=docker-cmd:{docker restart command} --ai=prediction-regex:{parsing tickScript}'. E.g. via environment variable" env:"AI" env-delim:","`
+	AI map[string]string `long:"ai" description:"The Information to access to cloudhub AI. '--ai=docker-path:{specifies the path to the Docker Compose file used for restarting the Logstash container} --ai=logstash-path:{The logstash-path variable is used to specify the directory where your Logstash pipeline configuration} --ai=docker-cmd:{docker restart command} --ai=prediction-regex:{parsing tickScript}'. E.g. via environment variable" env:"AI" env-delim:","`
 
 	TemplatesPath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/cloudhub-templates)" env:"TEMPLATES_PATH" default:"templates"`
 }
