@@ -53,6 +53,15 @@ class SideNav extends PureComponent<Props> {
       : false
   }
 
+  private isAddonUrlOn = (name: string): boolean => {
+    const {links} = this.props
+
+    return (
+      links.addons &&
+      links.addons.some(item => item.name === name && item.url === 'on')
+    )
+  }
+
   private toggleShellVisible = () => {
     const {shell, closeShell, openShell} = this.props
     return shell.isVisible ? closeShell() : openShell()
@@ -79,6 +88,7 @@ class SideNav extends PureComponent<Props> {
     const isUsingVMware = this.isExistInLinks(AddonType.vsphere)
     const isUsingK8s = this.isExistInLinks(AddonType.k8s)
     const isUsingOsp = this.isExistInLinks(AddonType.osp)
+    const isUsingAI = this.isAddonUrlOn(AddonType.ai)
     const cloudsNavLink = (() => {
       if (isUsingVMware) {
         return 'vmware'
@@ -156,19 +166,25 @@ class SideNav extends PureComponent<Props> {
             )}
           </NavBlock>
         )}
-        <NavBlock
-          highlightWhen={['ai']}
-          icon="ai-icon"
-          link={`${sourcePrefix}/ai/device-management`}
-          location={location}
-        >
-          <NavHeader link={`${sourcePrefix}/ai/device-management`} title="AI" />
-          {
-            <NavListItem link={`${sourcePrefix}/ai/device-management`}>
-              Network Device
-            </NavListItem>
-          }
-        </NavBlock>
+        {isUsingAI && (
+          <NavBlock
+            highlightWhen={['ai']}
+            icon="ai-icon"
+            link={`${sourcePrefix}/ai/device-management`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/ai/device-management`}
+              title="AI"
+            />
+            {
+              <NavListItem link={`${sourcePrefix}/ai/device-management`}>
+                Network Device
+              </NavListItem>
+            }
+          </NavBlock>
+        )}
+
         <NavBlock
           highlightWhen={['alerts', 'alert-rules', 'tickscript']}
           icon="alerts"
