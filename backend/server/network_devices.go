@@ -1193,7 +1193,7 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	dockerPath := aiConfig.DockerPath
 	dockerCmd := aiConfig.DockerCmd
 	dirPath := aiConfig.LogstashPath
-	fileName := fmt.Sprintf("%s_snmp.nx.rb", org.Name)
+	fileName := fmt.Sprintf("%s_snmp_nx.rb", org.Name)
 	filePath := path.Join(dirPath, fileName)
 
 	var statusCode int
