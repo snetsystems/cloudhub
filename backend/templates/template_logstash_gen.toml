@@ -1,5 +1,5 @@
 app  = "logstash"
-id ="logstash-config"
+id ="logstash-snmp_nx"
 template = """
 input {
 	snmp {
