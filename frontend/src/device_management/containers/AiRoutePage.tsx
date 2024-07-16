@@ -89,7 +89,7 @@ const AiRoutePage = (props: Props) => {
     setTimeZone,
     router,
     autoRefresh,
-    onManualRefresh,
+
     cloudAutoRefresh,
     onChooseCloudAutoRefresh,
     onChooseAutoRefresh,
@@ -97,6 +97,9 @@ const AiRoutePage = (props: Props) => {
 
   const currentRoute = router.params?.tab
 
+  const [manualRefreshState, setManualRefreshState] = useState(
+    new Date().getTime()
+  )
   const [headerRadioButtons, setHeaderRadioButtons] = useState<
     HeaderNavigationObj[]
   >(defaultHeaderRadioButtons)
@@ -126,6 +129,10 @@ const AiRoutePage = (props: Props) => {
         ? INPUT_TIME_TYPE.RELATIVE_TIME
         : INPUT_TIME_TYPE.TIMESTAMP,
     })
+  }
+
+  const handleManualRefresh = () => {
+    setManualRefreshState(Date.now())
   }
 
   const onChooseActiveTab = (activeTab: string) => {
@@ -167,20 +174,12 @@ const AiRoutePage = (props: Props) => {
           </div>
         </Page.Header.Center>
         <Page.Header.Right>
-          {/* <AutoRefreshDropdown
-            selected={autoRefresh}
-            onChoose={handleChooseAutoRefresh}
-            onManualRefresh={onManualRefresh}
-            customAutoRefreshOptions={autoRefreshOptions}
-            customAutoRefreshSelected={cloudAutoRefresh}
-          /> */}
-
           {currentRoute === 'prediction' && (
             <>
               <AutoRefreshDropdown
                 onChoose={handleChooseAutoRefresh}
                 selected={autoRefresh}
-                onManualRefresh={onManualRefresh}
+                onManualRefresh={handleManualRefresh}
                 customAutoRefreshOptions={getTimeOptionByGroup(currentRoute)}
                 customAutoRefreshSelected={cloudAutoRefresh}
               />
@@ -212,6 +211,8 @@ const AiRoutePage = (props: Props) => {
               timeRange={timeRange}
               source={source}
               setTimeRange={setTimeRange}
+              cloudAutoRefresh={cloudAutoRefresh}
+              manualRefresh={manualRefreshState}
             />
           )}
         </>

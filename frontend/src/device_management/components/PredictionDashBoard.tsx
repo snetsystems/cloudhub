@@ -1,34 +1,14 @@
-import React, {useEffect, useMemo} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 import {connect} from 'react-redux'
-import {Button, ComponentColor, Page} from 'src/reusable_ui'
+import {Page} from 'src/reusable_ui'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import * as notifyActions from 'src/shared/actions/notifications'
 import * as DashboardsModels from 'src/types/dashboards'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
-import {
-  DASHBOARD_LAYOUT_ROW_HEIGHT,
-  LAYOUT_MARGIN,
-  TEMP_VAR_DASHBOARD_TIME,
-  TEMP_VAR_UPPER_DASHBOARD_TIME,
-} from 'src/shared/constants'
-import {
-  Cell,
-  INPUT_TIME_TYPE,
-  Source,
-  Template,
-  TemplateType,
-  TemplateValue,
-  TemplateValueType,
-  TimeRange,
-} from 'src/types'
-import PredictionDashboardHeader from './PredictionDashboardHeader'
-import {
-  DEFAULT_CELL_BG_COLOR,
-  DEFAULT_CELL_TEXT_COLOR,
-} from 'src/dashboards/constants'
+import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
+import {Cell, Source, Template, TemplateValue, TimeRange} from 'src/types'
 import {fixturePredictionPageCells} from '../constants'
 import _ from 'lodash'
-import Layout from 'src/shared/components/Layout'
 import {Link} from 'react-router'
 import PredictionHexbinWrapper from './PredictionHexbinWrapper'
 import ManualRefresh, {
@@ -36,10 +16,10 @@ import ManualRefresh, {
 } from 'src/shared/components/ManualRefresh'
 import {WithRouterProps} from 'react-router'
 import PredictionInstanceWrapper from './PredictionInstanceWrapper'
-import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
-import moment from 'moment'
 import PredictionAlertHistoryWrapper from './PredictionAlertHistoryWrapper'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
+import PredictionDashboardWrapper from './PredictionDashboardWrapper'
 
 interface Props extends ManualRefreshProps, WithRouterProps {
   inPresentationMode: boolean
@@ -49,14 +29,14 @@ interface Props extends ManualRefreshProps, WithRouterProps {
   sources: Source[]
   setSelectDate: React.Dispatch<React.SetStateAction<number>>
   setTimeRange: (value: TimeRange) => void
-
-  autoRefresh?: number
+  cloudAutoRefresh?: CloudAutoRefresh
   onZoom?: () => void
   onCloneCell?: () => void
   onDeleteCell?: () => void
   onSummonOverlayTechnologies?: () => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
+  manualRefresh: number
 }
 
 interface TempProps {
@@ -66,37 +46,40 @@ interface TempProps {
 }
 
 function PredictionDashBoard({
-  inPresentationMode,
-  timeRange,
-  source,
-  autoRefresh,
-  host,
   onZoom,
   onCloneCell,
   onDeleteCell,
   onSummonOverlayTechnologies,
   sources,
+  inPresentationMode,
+  timeRange,
+  source,
+  host,
   manualRefresh,
+  cloudAutoRefresh,
   instance,
   onPickTemplate,
   setSelectDate,
   setTimeRange,
 }: Props) {
+  const [chartClickDate, setChartClickDate] = useState<TimeRange>(null)
+
   const GridLayout = WidthProvider(ReactGridLayout)
 
   const savedCells: DashboardsModels.Cell[] = JSON.parse(
     localStorage.getItem('Prediction-cells')
   )
   let intervalID
+
   useEffect(() => {
     const controller = new AbortController()
 
-    if (autoRefresh) {
+    if (!!cloudAutoRefresh.prediction) {
       clearInterval(intervalID)
-      // intervalID = window.setInterval(() => fetchKapacitor(), autoRefresh)
+      intervalID = window.setInterval(() => {}, cloudAutoRefresh.prediction)
     }
 
-    GlobalAutoRefresher.poll(autoRefresh)
+    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
 
     return () => {
       controller.abort()
@@ -104,7 +87,11 @@ function PredictionDashBoard({
       intervalID = null
       GlobalAutoRefresher.stopPolling()
     }
-  }, [])
+  }, [cloudAutoRefresh])
+
+  useEffect(() => {
+    setChartClickDate(null)
+  }, [timeRange])
 
   const cells = useMemo(() => {
     const defaultCells = fixturePredictionPageCells(source)
@@ -155,53 +142,6 @@ function PredictionDashBoard({
     }
   }
 
-  const templates = (): Template[] => {
-    const dashboardTime = {
-      id: 'dashtime',
-      tempVar: TEMP_VAR_DASHBOARD_TIME,
-      type:
-        timeRange.format === INPUT_TIME_TYPE.TIMESTAMP
-          ? TemplateType.TimeStamp
-          : TemplateType.Constant,
-      label: '',
-      values: [
-        {
-          value: timeRange.lower,
-          type:
-            timeRange.format === INPUT_TIME_TYPE.TIMESTAMP
-              ? TemplateValueType.TimeStamp
-              : TemplateValueType.Constant,
-          selected: true,
-          localSelected: true,
-        },
-      ],
-    }
-
-    const upperDashboardTime = {
-      id: 'upperdashtime',
-      tempVar: TEMP_VAR_UPPER_DASHBOARD_TIME,
-      type:
-        timeRange.format === INPUT_TIME_TYPE.TIMESTAMP
-          ? TemplateType.TimeStamp
-          : TemplateType.Constant,
-      label: '',
-      values: [
-        {
-          value: timeRange.upper ?? 'now()',
-          type:
-            timeRange.format === INPUT_TIME_TYPE.TIMESTAMP &&
-            timeRange.upper !== 'now()'
-              ? TemplateValueType.TimeStamp
-              : TemplateValueType.Constant,
-          selected: true,
-          localSelected: true,
-        },
-      ],
-    }
-
-    return [dashboardTime, upperDashboardTime]
-  }
-
   const layoutRender = ({cell, source, timeRange}: TempProps) => {
     if (!cell) return null
     switch (cell.i) {
@@ -213,59 +153,24 @@ function PredictionDashBoard({
               isEditable: false,
             }}
           >
-            <div style={{height: '100%', backgroundColor: '#292933'}}>
-              <PredictionDashboardHeader
-                cellName={`Anomaly Prediction Counts Histogram`}
-                cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
-                cellTextColor={DEFAULT_CELL_TEXT_COLOR}
-              >
-                <div style={{zIndex: 3}} className="page-header--right">
-                  <Button
-                    text="get 30days"
-                    color={ComponentColor.Primary}
-                    onClick={() => {
-                      setTimeRange({
-                        upper: convertTimeFormat(moment().format()),
-                        lower: convertTimeFormat(
-                          moment().subtract(30, 'day').format()
-                        ),
-                        format: INPUT_TIME_TYPE.TIMESTAMP,
-                      })
-                    }}
-                  />
-                </div>
-              </PredictionDashboardHeader>
-              {!!cell && (
-                <Layout
-                  key={cell.i}
-                  cell={{
-                    ...cell,
-                    ...{
-                      graphOptions: {
-                        ...cell.graphOptions,
-                        clickCallback: (_, __, points) => {
-                          //consider double click debounce
-                          setSelectDate(points[0].xval)
-                        },
-                      },
-                    },
-                  }}
-                  host={host}
-                  source={source}
-                  onZoom={onZoom}
-                  sources={sources}
-                  templates={templates()}
-                  timeRange={timeRange}
-                  isEditable={false}
-                  onDeleteCell={onDeleteCell}
-                  onCloneCell={onCloneCell}
-                  manualRefresh={manualRefresh}
-                  onSummonOverlayTechnologies={onSummonOverlayTechnologies}
-                  instance={instance}
-                  onPickTemplate={onPickTemplate}
-                />
-              )}
-            </div>
+            <PredictionDashboardWrapper
+              setSelectDate={setSelectDate}
+              key={cell.i}
+              cell={cell}
+              host={host}
+              source={source}
+              onZoom={onZoom}
+              sources={sources}
+              timeRange={timeRange}
+              onDeleteCell={onDeleteCell}
+              onCloneCell={onCloneCell}
+              manualRefresh={manualRefresh}
+              onSummonOverlayTechnologies={onSummonOverlayTechnologies}
+              instance={instance}
+              onPickTemplate={onPickTemplate}
+              setChartClickDate={setChartClickDate}
+              setTimeRange={setTimeRange}
+            />
           </Authorized>
         )
       }
@@ -281,6 +186,7 @@ function PredictionDashBoard({
               timeRange={timeRange}
               source={source}
               limit={30}
+              chartClickDate={chartClickDate}
             />
           </Authorized>
         )
@@ -371,7 +277,6 @@ const mstp = state => {
   const {
     app: {
       ephemeral: {inPresentationMode},
-      persisted: {autoRefresh},
     },
     auth: {isUsingAuth},
   } = state
@@ -379,7 +284,6 @@ const mstp = state => {
   return {
     inPresentationMode,
     isUsingAuth,
-    autoRefresh,
   }
 }
 

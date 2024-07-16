@@ -5,14 +5,23 @@ import {INPUT_TIME_TYPE, Source, TimeRange} from 'src/types'
 import * as appActions from 'src/shared/actions/app'
 import _ from 'lodash'
 import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 interface Props {
   timeRange: TimeRange
   source: Source
   limit: number
   setTimeRange: (value: TimeRange) => void
+  cloudAutoRefresh: CloudAutoRefresh
+  manualRefresh: number
 }
-function PredictionPage({timeRange, source, setTimeRange}: Props) {
+function PredictionPage({
+  timeRange,
+  source,
+  setTimeRange,
+  cloudAutoRefresh,
+  manualRefresh,
+}: Props) {
   const [selectDate, setSelectDate] = useState<number>(null)
 
   useEffect(() => {
@@ -51,6 +60,8 @@ function PredictionPage({timeRange, source, setTimeRange}: Props) {
         sources={[source]}
         setSelectDate={setSelectDate}
         setTimeRange={setTimeRange}
+        cloudAutoRefresh={cloudAutoRefresh}
+        manualRefresh={manualRefresh}
       />
     </>
   )

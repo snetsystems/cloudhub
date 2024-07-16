@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react'
 import PredictionHexbin from './PredictionHexbin'
 import AJAX from 'src/utils/ajax'
 import {
-  Cell,
   Links,
   NotificationAction,
   PredictionTooltipNode,

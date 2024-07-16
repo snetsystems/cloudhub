@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react'
-import {Cell, Source, TimeRange} from 'src/types'
+import {Source, TimeRange} from 'src/types'
 import {Alert} from 'src/types/alerts'
 import PredictionAlertTable from './PredictionAlertTable'
 import {RECENT_ALERTS_LIMIT} from 'src/status/constants'
@@ -17,12 +17,14 @@ interface Props {
   timeRange: TimeRange
   source: Source
   limit: number
+  chartClickDate: TimeRange
 }
 
 function PredictionAlertHistoryWrapper({
   timeRange,
   source,
   limit: prevLimit,
+  chartClickDate,
 }: Props) {
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
 
@@ -56,13 +58,13 @@ function PredictionAlertHistoryWrapper({
         setLoading(false)
         setError(e)
       })
-  }, [timeRange])
+  }, [timeRange, chartClickDate])
 
   //TODO: timerange var change to redux data not props -> why?
   const fetchAlerts = (): void => {
     getPredictionAlert(
       source.links.proxy,
-      timeRange,
+      chartClickDate ?? timeRange,
       limit * limitMultiplier,
       source.telegraf
     )

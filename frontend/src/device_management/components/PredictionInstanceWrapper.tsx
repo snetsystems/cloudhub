@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useState} from 'react'
 
 import {Cell, Layout, RefreshRate, Source, TimeRange} from 'src/types'
 import ReactObserver from 'react-resize-observer'
@@ -22,17 +22,17 @@ import PredictionDashboardHeader from './PredictionDashboardHeader'
 import {getLayouts} from 'src/hosts/apis'
 import {getDeep} from 'src/utils/wrappers'
 import {getCells} from 'src/hosts/utils/getCells'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 interface Props {
   source: Source
-  selfAutoRefresh?: number
   autoRefresh?: number
   onChooseAutoRefresh?: (milliseconds: RefreshRate) => void
   manualRefresh: number
 }
 
 const PredictionInstanceWrapper = React.memo(
-  ({source, selfAutoRefresh, onChooseAutoRefresh, manualRefresh}: Props) => {
+  ({source, onChooseAutoRefresh, autoRefresh, manualRefresh}: Props) => {
     const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
       timeRanges.find(tr => tr.lower === 'now() - 1h')
     )
@@ -41,9 +41,15 @@ const PredictionInstanceWrapper = React.memo(
     )
     const [layoutCells, setLayoutCells] = useState<Cell[]>([])
 
+    const instance = []
+
     useEffect(() => {
       getLayout()
     }, [])
+
+    useEffect(() => {
+      GlobalAutoRefresher.poll(autoRefresh)
+    }, [autoRefresh])
 
     const getLayout = async () => {
       const layoutResults = await getLayouts()
@@ -70,14 +76,7 @@ const PredictionInstanceWrapper = React.memo(
       return {filteredLayouts}
     }
 
-    const instance = useMemo(() => {
-      return []
-    }, [])
-
-    const handleChooseAutoRefresh = (option: {
-      milliseconds: RefreshRate
-      group?: string
-    }) => {
+    const handleChooseAutoRefresh = (option: {milliseconds: RefreshRate}) => {
       const {milliseconds} = option
       onChooseAutoRefresh(milliseconds)
     }
@@ -119,7 +118,7 @@ const PredictionInstanceWrapper = React.memo(
             <div className="page-header--right" style={{zIndex: 3}}>
               <AutoRefreshDropdown
                 onChoose={handleChooseAutoRefresh}
-                selected={selfAutoRefresh}
+                selected={autoRefresh}
                 onManualRefresh={handleManualRefresh}
               />
               <TimeRangeDropdown
@@ -180,12 +179,16 @@ const PredictionInstanceWrapper = React.memo(
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh},
+      persisted: {autoRefresh, cloudAutoRefresh},
+      ephemeral: {inPresentationMode},
     },
+    links,
   } = state
-
   return {
-    selfAutoRefresh: autoRefresh,
+    links,
+    autoRefresh,
+    cloudAutoRefresh,
+    inPresentationMode,
   }
 }
 
