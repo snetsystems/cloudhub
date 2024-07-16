@@ -7,8 +7,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/influxdata/kapacitor/client/v1"
@@ -471,13 +469,12 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		"EtcdPort":        taskReq.EtcdPort,
 	}
 
-	templatesFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
-	if _, err := os.Stat(templatesFilePath); os.IsNotExist(err) {
-		templatesFilePath = filepath.Join("../../", "templates", "tickscript_templates.toml")
-	}
-	script, err := c.Ticker.GenerateTaskFromTemplate(cloudhub.LoadTemplateConfig{
-		Field: kapa.LearnTaskField,
-		Path:  &templatesFilePath,
+	tm := s.InternalENV.TemplatesManager
+	t, err := tm.Get(ctx, string(LearnTaskField))
+	templateService := &TemplateService{}
+	script, err := templateService.LoadTemplate(cloudhub.LoadTemplateConfig{
+		Field:          LearnTaskField,
+		TemplateString: t.Template,
 	}, tmplParams)
 	if err != nil {
 		return err

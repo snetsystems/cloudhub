@@ -1,21 +1,17 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"path"
-	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	kapa "github.com/snetsystems/cloudhub/backend/kapacitor"
 )
 
 type deviceRequest struct {
@@ -923,20 +919,17 @@ func removeDeviceIDsFromPreviousOrg(ctx context.Context, s *Service, deviceOrgMa
 			}
 
 		}
-
 		for _, deviceID := range orgInfo.CollectedDevicesIDs {
 			if org, exists := deviceOrgMap[deviceID]; exists && org != orgInfo.ID {
 				orgInfo.CollectedDevicesIDs = removeDeviceID(orgInfo.CollectedDevicesIDs, deviceID)
 				updated = true
 			}
 		}
-
 		if updated {
 			orgsToUpdate[orgInfo.ID] = orgInfo
 		}
 
 	}
-
 	return orgsToUpdate, nil
 }
 
@@ -956,7 +949,6 @@ func getDevicesGroupByOrg(ctx context.Context, s *Service, request []manageDevic
 			devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], reqDevice)
 		}
 	}
-
 	return collectingFilteredDevices{
 		devicesGroupByOrg: devicesGroupByOrg,
 		failedDevices:     failedDevices,
@@ -981,7 +973,6 @@ func getLearnedDevicesGroupByOrg(ctx context.Context, s *Service, request []mana
 			deviceOrgMap[reqDevice.ID] = device.Organization
 		}
 	}
-
 	return learnFilteredDevices{
 		learningDevicesGroupByOrg: learningDevicesGroupByOrg,
 		failedDevices:             failedDevices,
@@ -1197,30 +1188,14 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
-	templatesFilePath := filepath.Join("../../", "templates", "template_logstash_gen.toml")
-	if _, err := os.Stat(templatesFilePath); os.IsNotExist(err) {
-		templatesFilePath = filepath.Join(s.InternalENV.TemplatesPath, "template_logstash_gen.toml")
-	}
 
-	tmpl, extraFields, err := kapa.LoadTemplate(cloudhub.LoadTemplateConfig{
-		Field: kapa.LogstashTemplateField,
-		Path:  &templatesFilePath,
-	})
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	}
-	dockerPath, ok := extraFields["DockerPath"]
-	if !ok {
-		return http.StatusInternalServerError, nil, err
-	}
-
-	dirPath, ok := extraFields["ConfigPath"]
-	if !ok {
-		return http.StatusInternalServerError, nil, err
-	}
-
+	aiConfig := s.InternalENV.AIConfig
+	dockerPath := aiConfig.DockerPath
+	dockerCmd := aiConfig.DockerCmd
+	dirPath := aiConfig.LogstashPath
 	fileName := fmt.Sprintf("%s_snmp.nx.rb", org.Name)
 	filePath := path.Join(dirPath, fileName)
+
 	var statusCode int
 	var resp []byte
 
@@ -1295,32 +1270,34 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		"InfluxUsername": influxDBs[0].Username,
 		"InfluxPassword": influxDBs[0].Password,
 	}
-	var tpl bytes.Buffer
-	if err := tmpl.Execute(&tpl, tmplParams); err != nil {
+
+	tm := s.InternalENV.TemplatesManager
+	t, err := tm.Get(ctx, string(LogstashTemplateField))
+	templateService := &TemplateService{}
+	configString, err := templateService.LoadTemplate(cloudhub.LoadTemplateConfig{
+		Field:          LogstashTemplateField,
+		TemplateString: t.Template,
+	}, tmplParams)
+	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
 
-	configString := tpl.String()
-
 	statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{configString}, devOrg.CollectorServer)
-
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 		return statusCode, resp, err
 	}
 
-	if statusCode, resp, err := s.DockerRestart(dockerPath, devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+	if statusCode, resp, err := s.DockerRestart(dockerPath, devOrg.CollectorServer, dockerCmd); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 		return statusCode, nil, err
 	} else if resp != nil {
 		r := &struct {
 			Return []map[string]string `json:"return"`
 		}{}
-
 		if err := json.Unmarshal(resp, r); err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
-
 	} else {
 		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error occurred at DirectoryExists() func")
 	}

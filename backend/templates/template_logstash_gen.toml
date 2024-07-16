@@ -1,6 +1,5 @@
-[logstash_gen]
-dockerPath = ""
-configPath = ""
+app  = "logstash"
+id ="logstash-config"
 template = """
 input {
 	snmp {

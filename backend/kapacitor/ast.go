@@ -512,12 +512,12 @@ func extractAlertNodes(p *pipeline.Pipeline, rule *cloudhub.AlertRule) error {
 }
 
 // TargetedReverseParser is Target specific syntax
-func TargetedReverseParser(script cloudhub.TICKScript) (cloudhub.AlertRule, error) {
+func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.AlertRule, error) {
 	rule := cloudhub.AlertRule{
 		Query: &cloudhub.QueryConfig{},
 	}
 	// Remove @predict() calls from the script
-	re := regexp.MustCompile(`(?m)@predict\(\)\s*\n\s*\.predict_mode\(predict_mode\)\s*\n\s*\.ensemble_condition\(ensemble_condition\)`)
+	re := regexp.MustCompile(regex)
 	modifiedScript := re.ReplaceAllString(string(script), "")
 
 	scope := stateful.NewScope()

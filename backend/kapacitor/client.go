@@ -112,7 +112,7 @@ func NewTask(task *client.Task) *Task {
 }
 
 // NewAITask creates a task from a kapacitor client  AI task
-func NewAITask(task *client.Task) *Task {
+func NewAITask(task *client.Task, regex string) *Task {
 	dbrps := make([]cloudhub.DBRP, len(task.DBRPs))
 	for i := range task.DBRPs {
 		dbrps[i].DB = task.DBRPs[i].Database
@@ -120,7 +120,7 @@ func NewAITask(task *client.Task) *Task {
 	}
 
 	script := cloudhub.TICKScript(task.TICKscript)
-	rule, err := TargetedReverseParser(script)
+	rule, err := TargetedReverseParser(script, regex)
 	if err != nil {
 		name := task.ID
 		if matches := reTaskName.FindStringSubmatch(task.TICKscript); matches != nil {
@@ -209,7 +209,7 @@ func (c *Client) AutoGenerateCreate(ctx context.Context, taskOptions *client.Cre
 }
 
 // AutoGenerateUpdate Update a tickScript to kapacitor
-func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.UpdateTaskOptions, href string) (*Task, error) {
+func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.UpdateTaskOptions, href string, regex string) (*Task, error) {
 
 	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
 	if err != nil {
@@ -221,7 +221,7 @@ func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.Upd
 		return nil, err
 	}
 
-	return NewAITask(&task), nil
+	return NewAITask(&task, regex), nil
 }
 
 func (c *Client) createFromTick(rule cloudhub.AlertRule) (*client.CreateTaskOptions, error) {
@@ -512,7 +512,7 @@ func NewKapaClient(url, username, password string, insecureSkipVerify bool) (Kap
 }
 
 // GetAITask returns a single alert in kapacitor
-func (c *Client) GetAITask(ctx context.Context, id string) (*Task, error) {
+func (c *Client) GetAITask(ctx context.Context, id string, regex string) (*Task, error) {
 	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
 	if err != nil {
 		return nil, err
@@ -523,5 +523,5 @@ func (c *Client) GetAITask(ctx context.Context, id string) (*Task, error) {
 		return nil, cloudhub.ErrAlertNotFound
 	}
 
-	return NewAITask(&task), nil
+	return NewAITask(&task, regex), nil
 }

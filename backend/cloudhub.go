@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"text/template"
 	"time"
 )
 
@@ -52,6 +53,9 @@ const (
 	ErrCSPAlreadyExists                = Error("CSP already exists")
 	ErrDeviceNotFound                  = Error("Network Device not found")
 	ErrDeviceOrgNotFound               = Error("Network Device organization not found")
+	ErrTemplatesInvalid                = Error("template is invalid")
+	ErrTemplateInvalid                 = Error("invalid template")
+	ErrTemplateNotFound                = Error("template not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -346,15 +350,14 @@ type TemplateParams map[string]string
 
 // LoadTemplateConfig Load file info
 type LoadTemplateConfig struct {
-	Field TemplateFieldType
-	Path  *string
+	Field          TemplateFieldType
+	TemplateString string
 }
 
 // Ticker generates tickscript tasks for kapacitor
 type Ticker interface {
 	// Generate will create the tickscript to be used as a kapacitor task
 	Generate(AlertRule) (TICKScript, error)
-	GenerateTaskFromTemplate(LoadTemplateConfig, TemplateParams) (TICKScript, error)
 }
 
 // TriggerValues specifies the alerting logic for a specific trigger type
@@ -1076,8 +1079,10 @@ type Environment struct {
 
 // The InternalEnvironment variable is an internally shared environment variable within the server.
 type InternalEnvironment struct {
-	EtcdEndpoints []string
-	TemplatesPath string
+	EtcdEndpoints    []string
+	TemplatesPath    string
+	TemplatesManager TemplatesManager
+	AIConfig         AIConfig
 }
 
 // Topology is represents represents an topology
@@ -1205,6 +1210,12 @@ const (
 	WorkerLimit = 10
 )
 
+// AITemplates is a config Template for Cloudhub AI
+type AITemplates struct {
+	ID          string `json:"id"`
+	Application string `json:"app"`
+}
+
 // AIKapacitor represents the information for Kapacitor login
 type AIKapacitor struct {
 	SrcID              int    `json:"srcId,string"`  // SrcID of the data source
@@ -1303,4 +1314,38 @@ type NetworkDeviceStore interface {
 	Get(ctx context.Context, q NetworkDeviceQuery) (*NetworkDevice, error)
 
 	Update(context.Context, *NetworkDevice) error
+}
+
+// ConfigTemplate represents a configuration template for a task
+type ConfigTemplate struct {
+	ID       string `json:"id"`
+	App      string `json:"app"`
+	Template string `json:"template"`
+}
+
+// ConfigTemplatesStore stores configuration templates
+type ConfigTemplatesStore interface {
+	// All returns all templates in the store
+	All(ctx context.Context) ([]ConfigTemplate, error)
+	// Get retrieves ConfigTemplate if `ID` exists
+	Get(ctx context.Context, ID string) (ConfigTemplate, error)
+}
+
+// TemplatesManager is Template config Manager
+type TemplatesManager interface {
+	All(ctx context.Context) ([]ConfigTemplate, error)
+	Get(ctx context.Context, id string) (ConfigTemplate, error)
+}
+
+// TemplateLoader is Template Loader for CLoudhub AI Config
+type TemplateLoader interface {
+	LoadTemplate(config LoadTemplateConfig) (*template.Template, error)
+}
+
+// AIConfig is to The Information to access to cloudhub AI
+type AIConfig struct {
+	DockerPath      string `json:"docker-path"`
+	DockerCmd       string `json:"docker-cmd"`
+	LogstashPath    string `json:"logstash-path"`
+	PredictionRegex string `json:"prediction-regex"`
 }
