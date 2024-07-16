@@ -651,12 +651,13 @@ export const notifyAlertRuleCreateFailed = (
   errorMessage: string
 ): Notification => ({
   ...defaultErrorNotification,
+  duration: INFINITE,
   message: `There was a problem creating ${ruleName}: ${errorMessage}`,
 })
 
 export const notifyAlertRuleUpdated = (ruleName: string): Notification => ({
   ...defaultSuccessNotification,
-  message: `${ruleName} saved successfully.`,
+  message: `${ruleName} updated successfully.`,
 })
 
 export const notifyAlertRuleUpdateFailed = (
@@ -664,7 +665,14 @@ export const notifyAlertRuleUpdateFailed = (
   errorMessage: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `There was a problem saving ${ruleName}: ${errorMessage}`,
+  duration: INFINITE,
+  message: `There was a problem updating ${ruleName}: ${errorMessage}`,
+})
+
+export const notifyKapacitorEngineRequired = (): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Please set the Kapacitor(AI Engine) first in ML/DL Setting.`,
 })
 
 export const notifyAlertRuleDeleted = (ruleName: string): Notification => ({
@@ -676,6 +684,7 @@ export const notifyAlertRuleDeleteFailed = (
   ruleName: string
 ): Notification => ({
   ...defaultErrorNotification,
+  duration: INFINITE,
   message: `${ruleName} could not be deleted.`,
 })
 

@@ -546,6 +546,7 @@ export enum AddonType {
   aws = 'aws',
   gcp = 'gcp',
   osp = 'osp',
+  ai = 'ai',
 }
 
 export const COLLECTOR_SERVER = 'ch-collector'

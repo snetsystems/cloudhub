@@ -9,6 +9,11 @@ import (
 // ensure that NetworkDeviceStore implements cloudhub.NetworkDeviceStore
 var _ cloudhub.NetworkDeviceStore = &NetworkDeviceStore{}
 
+const (
+	// DefaultOrganizationID is the id of the default organization
+	DefaultOrganizationID string = "default"
+)
+
 // NetworkDeviceStore facade on a NetworkDeviceStore that filters Device
 // by organization.
 type NetworkDeviceStore struct {
@@ -40,7 +45,7 @@ func (s *NetworkDeviceStore) All(ctx context.Context) ([]cloudhub.NetworkDevice,
 		return nil, err
 	}
 
-	if s.isSuperAdmin {
+	if s.isSuperAdmin && s.organization == DefaultOrganizationID {
 		return allDevice, nil
 	}
 

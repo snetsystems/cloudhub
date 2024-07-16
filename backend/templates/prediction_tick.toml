@@ -1,29 +1,5 @@
-[learn_task]
-template = """
-var name = 'AI Learn {{.OrgName}}'
-
-var db = '{{.OrgName}}'
-
-var cron = '{{.CronSchedule}}'
-
-var loadModule = '{{.LoadModule}}'
-
-var extra_opts = '{"organization":"{{.OrgID}}","influxdb":{"host":"{{.InfluxOrigin}}","port":{{.InfluxPort}},"username":"{{.InfluxUsername}}","password":"{{.InfluxPassword}}","db":"{{.OrgName}}"},"etcd":{"host":"{{.EtcdOrigin}}","port":"{{.EtcdPort}}"}}'
-
-var data = batch
-    |query('SELECT "cpu1min" FROM "{{.OrgName}}"."{{.RetentionPolicy}}"."snmp_nx"')
-        .period(5m)
-        .cron(cron)
-    |count('cpu1min')
-        .as('count')
-
-data
-    |alert()
-        .crit(lambda: "count" > 0)
-        .exec('/opt/cloudhub/bin/python', '/opt/cloudhub/ch-ai-src/ai.py', '-p', '/var/log/kapacitor-ai/ai.log', '-G', '-M', loadModule, '-x', extra_opts)
-"""
-
-[prediction_task]
+app  = "tickscript"
+id = "predict-task"
 template = """
 var name = 'Anomaly Prediction {{.OrgName}}'
 

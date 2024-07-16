@@ -65,7 +65,7 @@ interface Props {
   setLearningDropdownState: (organization: Organization) => void
   setPredictMode: (predictMode: string) => void
   notify: (message: Notification) => void
-  setLoading: (isLoading: boolean) => void
+  setLoadingForCreateAndUpdateScript: (isLoading: boolean) => void
   setisTickscriptCreated: (isTickscriptCreated: boolean) => void
 }
 
@@ -101,7 +101,6 @@ class PredictionRule extends Component<Props, State> {
 
             {this.PredictMode}
             <PredictionRuleHandlers
-              setLoading={this.props.setLoading}
               me={me}
               rule={rule}
               ruleActions={ruleActions}
@@ -224,20 +223,20 @@ class PredictionRule extends Component<Props, State> {
   private createAlertRule = async () => {
     const {rule, notify, setisTickscriptCreated} = this.props
 
-    this.props.setLoading(true)
+    this.props.setLoadingForCreateAndUpdateScript(true)
     try {
       const request = this.getDeviceManagementScriptRequest()
 
       await createDeviceManagementTickScript(request)
 
       notify(notifyAlertRuleCreated(rule?.name || 'Rule'))
-      this.props.setLoading(false)
+      this.props.setLoadingForCreateAndUpdateScript(false)
       setisTickscriptCreated(true)
     } catch (error) {
       notify(
         notifyAlertRuleCreateFailed(rule?.name || 'Rule', error.message || '')
       )
-      this.props.setLoading(false)
+      this.props.setLoadingForCreateAndUpdateScript(false)
     }
   }
 
@@ -272,19 +271,19 @@ class PredictionRule extends Component<Props, State> {
       selectedOrganizationName
     )
 
-    this.props.setLoading(true)
+    this.props.setLoadingForCreateAndUpdateScript(true)
     try {
       const updatedRule = this.replaceTickscript()
       const request = this.getDeviceManagementScriptRequest(updatedRule)
 
       await updateDeviceManagementTickScript(request, organizationID)
       notify(notifyAlertRuleUpdated(rule?.name || ''))
-      this.props.setLoading(false)
+      this.props.setLoadingForCreateAndUpdateScript(false)
     } catch (error) {
       console.error(
         notifyAlertRuleUpdateFailed(rule?.name || '', error.message || '')
       )
-      this.props.setLoading(false)
+      this.props.setLoadingForCreateAndUpdateScript(false)
     }
   }
 

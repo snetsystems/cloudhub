@@ -144,7 +144,7 @@ export const DEFAULT_ALERT_RULE: AlertRule = {
     value: '',
     rangeValue: '',
   },
-  name: 'Untitled Rule',
+  name: 'Default Rule',
   type: '',
   dbrps: [
     {

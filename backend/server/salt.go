@@ -494,7 +494,7 @@ func (s *Service) GetWheelKeyAcceptedListAll() (int, []byte, error) {
 }
 
 // DockerRestart is tests to see if path is a valid directory
-func (s *Service) DockerRestart(path string, targetMinion string) (int, []byte, error) {
+func (s *Service) DockerRestart(path string, targetMinion string, dockerCommand string) (int, []byte, error) {
 	type kwarg struct {
 		Cmd string `json:"cmd"`
 		Cwd string `json:"cwd"`
@@ -508,8 +508,6 @@ func (s *Service) DockerRestart(path string, targetMinion string) (int, []byte, 
 		Target string `json:"tgt"`
 		Kwarg  kwarg  `json:"kwarg"`
 	}
-
-	dockerCommand := fmt.Sprintf("./sandbox2.sh restart logstash")
 
 	body := &param{
 		Token:  s.AddonTokens["salt"],

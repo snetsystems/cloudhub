@@ -158,7 +158,9 @@ type Server struct {
 
 	OSP map[string]string `long:"osp" description:"The Informations to access to OSP API. '--osp=admin-provider:{salt admin provider} --osp=admin-user:{admin user name} --osp=admin-pw:{admin user password} --osp=auth-url:{keystone url} --osp=pj-domain-id:{project domain id} --osp=user-domain-id:{user domain id}'. E.g. via environment variable: 'export OSP=admin:{salt admin provider},admin-user:{admin user name}', etc." env:"OSP" env-delim:","`
 
-	TemplatesPath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/cloudhub-templates)" env:"TEMPLATES_PATH" default:"template"`
+	AI map[string]string `long:"ai" description:"The Information to access to cloudhub AI. '--ai=docker-path:{specifies the path to the Docker Compose file used for restarting the Logstash container} --ai=logstash-path:{The logstash-path variable is used to specify the directory where your Logstash pipeline configuration} --ai=docker-cmd:{docker restart command} --ai=prediction-regex:{parsing tickScript}'. E.g. via environment variable" env:"AI" env-delim:","`
+
+	TemplatesPath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/cloudhub-templates)" env:"TEMPLATES_PATH" default:"templates"`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -594,6 +596,7 @@ func (s *Server) Serve(ctx context.Context) {
 	}
 
 	osp := NewOSP(s.OSP)
+	aiConfig := NewAIConfig(s.AI)
 
 	var db kv.Store
 	if len(s.EtcdEndpoints) == 0 {
@@ -648,6 +651,8 @@ func (s *Server) Serve(ctx context.Context) {
 		basicPasswordResetType = "all"
 	}
 
+	templatesManager := NewConfigTemplatesManager(s.TemplatesPath, logger)
+
 	service := openService(
 		ctx,
 		db,
@@ -668,13 +673,16 @@ func (s *Server) Serve(ctx context.Context) {
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
+
 	service.Env = cloudhub.Environment{
 		TelegrafSystemInterval: s.TelegrafSystemInterval,
 		CustomAutoRefresh:      s.CustomAutoRefresh,
 	}
 	service.InternalENV = cloudhub.InternalEnvironment{
-		EtcdEndpoints: s.EtcdEndpoints,
-		TemplatesPath: s.TemplatesPath,
+		EtcdEndpoints:    s.EtcdEndpoints,
+		TemplatesPath:    s.TemplatesPath,
+		TemplatesManager: templatesManager,
+		AIConfig:         aiConfig,
 	}
 	if !validBasepath(s.Basepath) {
 		err := fmt.Errorf("invalid basepath, must follow format \"/mybasepath\"")

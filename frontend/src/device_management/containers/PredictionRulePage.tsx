@@ -231,10 +231,6 @@ class PredictionRulePage extends Component<Props, State> {
       return
     }
 
-    this.setState({
-      isLoading: true,
-    })
-
     try {
       const source = await this.getSourceForNetworkDeviceOrganizationKapacitor()
       if (!source) {
@@ -274,7 +270,6 @@ class PredictionRulePage extends Component<Props, State> {
     }
 
     this.setState({
-      isLoading: false,
       isTickscriptCreated: false,
       handlersFromConfig: [],
       kapacitor: DEFAULT_KAPACITOR,
@@ -413,7 +408,9 @@ class PredictionRulePage extends Component<Props, State> {
           setLearningDropdownState={this.setLearningDropdownState}
           setPredictMode={this.setPredictMode}
           setisTickscriptCreated={this.setisTickscriptCreated}
-          setLoading={this.setLoading}
+          setLoadingForCreateAndUpdateScript={
+            this.setLoadingForCreateAndUpdateScript
+          }
         />
       </>
     )
@@ -433,7 +430,7 @@ class PredictionRulePage extends Component<Props, State> {
     )
   }
 
-  private setLoading = (isLoading: boolean) => {
+  private setLoadingForCreateAndUpdateScript = (isLoading: boolean) => {
     this.setState({isLoading: isLoading})
   }
 

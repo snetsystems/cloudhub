@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/bouk/httprouter"
@@ -1065,7 +1063,7 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		req.OrganizationName = org.Name
 	}
 	if req.TaskTemplate == "" {
-		req.TaskTemplate = kapa.PredictionTaskField
+		req.TaskTemplate = PredictionTaskField
 	}
 
 	alertServices, err := kapa.ParseAlertForTarget(req.AlertRule, nil)
@@ -1085,14 +1083,12 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		"Details":              req.Details,
 	}
 
-	templatesFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
-	if _, err := os.Stat(templatesFilePath); os.IsNotExist(err) {
-		templatesFilePath = filepath.Join("../../", "templates", "tickscript_templates.toml")
-	}
-
-	script, err := c.Ticker.GenerateTaskFromTemplate(cloudhub.LoadTemplateConfig{
-		Field: kapa.PredictionTaskField,
-		Path:  &templatesFilePath,
+	tm := s.InternalENV.TemplatesManager
+	t, err := tm.Get(ctx, string(PredictionTaskField))
+	templateService := &TemplateService{}
+	script, err := templateService.LoadTemplate(cloudhub.LoadTemplateConfig{
+		Field:          PredictionTaskField,
+		TemplateString: t.Template,
 	}, tmplParams)
 	if err != nil {
 		invalidData(w, err, s.Logger)
@@ -1110,7 +1106,7 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		ID:         kapaID,
 		Type:       client.StreamTask,
 		DBRPs:      DBRPs,
-		TICKscript: string(script),
+		TICKscript: script,
 		Status:     client.Enabled,
 	}
 
@@ -1149,9 +1145,9 @@ func (s *Service) GetKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
-
+	aiConfig := s.InternalENV.AIConfig
 	// Check if the rule exists within scope
-	task, err := c.GetAITask(ctx, tid)
+	task, err := c.GetAITask(ctx, tid, aiConfig.PredictionRegex)
 	if err != nil {
 		if err == cloudhub.ErrAlertNotFound {
 			notFound(w, deviceOrg.AIKapacitor.KapaID, s.Logger)
@@ -1204,7 +1200,7 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		req.OrganizationName = org.Name
 	}
 	if req.TaskTemplate == "" {
-		req.TaskTemplate = kapa.PredictionTaskField
+		req.TaskTemplate = PredictionTaskField
 	}
 
 	alertServices, err := kapa.ParseAlertForTarget(req.AlertRule, nil)
@@ -1223,15 +1219,13 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		"Group":                "{{.Group}}",
 		"Details":              req.Details,
 	}
+	tm := s.InternalENV.TemplatesManager
+	t, err := tm.Get(ctx, string(PredictionTaskField))
 
-	templatesFilePath := filepath.Join(s.InternalENV.TemplatesPath, "tickscript_templates.toml")
-	if _, err := os.Stat(templatesFilePath); os.IsNotExist(err) {
-		templatesFilePath = filepath.Join("../../", "templates", "tickscript_templates.toml")
-	}
-
-	script, err := c.Ticker.GenerateTaskFromTemplate(cloudhub.LoadTemplateConfig{
-		Field: kapa.PredictionTaskField,
-		Path:  &templatesFilePath,
+	templateService := &TemplateService{}
+	script, err := templateService.LoadTemplate(cloudhub.LoadTemplateConfig{
+		Field:          PredictionTaskField,
+		TemplateString: t.Template,
 	}, tmplParams)
 	if err != nil {
 		invalidData(w, err, s.Logger)
@@ -1248,11 +1242,12 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		ID:         kapaID,
 		Type:       client.StreamTask,
 		DBRPs:      DBRPs,
-		TICKscript: string(script),
+		TICKscript: script,
 		Status:     client.Enabled,
 	}
+	aiConfig := s.InternalENV.AIConfig
 
-	task, err := c.AutoGenerateUpdate(ctx, createTaskOptions, c.Href(kapaID))
+	task, err := c.AutoGenerateUpdate(ctx, createTaskOptions, c.Href(kapaID), aiConfig.PredictionRegex)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
