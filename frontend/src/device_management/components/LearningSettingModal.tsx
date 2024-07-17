@@ -723,6 +723,12 @@ function LearningSettingModal({
                   onSubmit()
                 }}
               />
+              <Button
+                text={'Cancel'}
+                onClick={() => {
+                  onClose()
+                }}
+              />
             </Form.Footer>
           </Form>
         </OverlayBody>
