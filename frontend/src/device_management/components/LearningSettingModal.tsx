@@ -431,17 +431,18 @@ function LearningSettingModal({
       return
     }
 
-    const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
-      orgLearningModel,
-      organization
-    )
+    // TODO Deprecated (createDeviceOrganizationAjax)
+    // const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
+    //   orgLearningModel,
+    //   organization
+    // )
 
-    if (!isNetworkDeviceOrganizationValid) {
-      notifyFailure(
-        'The selected organization has no devices available for learning.'
-      )
-      return
-    }
+    // if (!isNetworkDeviceOrganizationValid) {
+    //   notifyFailure(
+    //     'The selected organization has no devices available for learning.'
+    //   )
+    //   return
+    // }
 
     if (isKapacitorNotSelected()) {
       notifyFailure('No kapacitors are available for configuration.')
