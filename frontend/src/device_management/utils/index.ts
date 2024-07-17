@@ -207,9 +207,9 @@ export const getOrganizationFromSource = (source: Source): string => {
 
 export const isNetworkDeviceOrganizationCreatedWithSrcId = (
   orgLearningModel: DevicesOrgData[],
-  organizationName: OrganizationID
+  organizationID: OrganizationID
 ) => {
-  const foundOrg = _.find(orgLearningModel, {organization: organizationName})
+  const foundOrg = _.find(orgLearningModel, {organization: organizationID})
 
   const srcId = _.get(foundOrg, 'ai_kapacitor.srcId', '')
   const kapaId = _.get(foundOrg, 'ai_kapacitor.kapaId', '')

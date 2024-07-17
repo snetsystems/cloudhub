@@ -43,13 +43,20 @@ export const MONITORING_MODAL_INFO = {
       configuration.
     </>
   ),
-  ML_DL_SettingKapacitorInvalid: (
+  ML_DL_Setting_NET_ORG_NOT_CREATED: (
     <>
       The selected organization
       <label className="label-warning">
         {' '}
         has no devices available for learning.{' '}
       </label>
+    </>
+  ),
+  ML_DL_SettingKapacitorInvalid: (
+    <>
+      Kapacitor (AI Engine){' '}
+      <label className="label-warning">needs to be set.</label> Please set the
+      Kapacitor and apply.{' '}
     </>
   ),
 }

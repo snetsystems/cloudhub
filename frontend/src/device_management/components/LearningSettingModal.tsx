@@ -52,6 +52,7 @@ import {
 
 // API
 import {
+  createDeviceOrganization,
   getSpecificRule,
   updateDeviceOrganization,
   updateTaskForDeviceManagement,
@@ -70,6 +71,8 @@ import {
 
 // ETC
 import {
+  notifyCreateNetworkDeviceOrganizationFailed,
+  notifyCreateNetworkDeviceOrganizationSucceeded,
   notifyKapacitorConnectionFailed,
   notifyTickscriptUpdateFailedWithMessage,
   notifyTickscriptUpdated,
@@ -108,6 +111,8 @@ function LearningSettingModal({
   getNetworkDeviceOrganizationsAJAX,
   getKapacitorsFromSelectedSource,
 }: Props) {
+  // TODO Deprecated (createDeviceOrganizationAjax)
+  const [isUpdateAfterCreate, setIsUpdateAfterCreate] = useState<boolean>(false)
   const [learningOption, setLearningOption] = useState<LearningOption>(
     DEFAULT_LEARNING_OPTION
   )
@@ -253,7 +258,7 @@ function LearningSettingModal({
     try {
       const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
         orgLearningModel,
-        getOrganizationNameByID(organizations, organizationID) || ''
+        organizationID
       )
 
       const organizationName =
@@ -271,12 +276,20 @@ function LearningSettingModal({
       const kapacitors = await getKapacitors(_source)
 
       if (!isNetworkDeviceOrganizationValid) {
+        setLearningOption(prevState => ({
+          ...prevState,
+          ai_kapacitor: convertKapacitor(kapacitors?.[0]),
+        }))
         setIsKapacitorInValid(true)
         setSelectedKapacitor(kapacitors?.[0] || null)
         setDeviceManagementIsLoading(false)
         return
       }
 
+      setLearningOption(prevState => ({
+        ...prevState,
+        ai_kapacitor: convertKapacitor(kapacitors?.[0]),
+      }))
       setIsKapacitorInValid(!kapacitors?.[0])
       setSelectedKapacitor(kapacitors?.[0] || null)
 
@@ -289,6 +302,27 @@ function LearningSettingModal({
       setIsKapacitorInValid(true)
       setSelectedKapacitor(null)
       console.error(notifyKapacitorConnectionFailed())
+    }
+  }
+
+  const convertKapacitor = (
+    kapacitor: Kapacitor
+  ): KapacitorForNetworkDeviceOrganization => {
+    if (!kapacitor) {
+      return {
+        srcId: '',
+        kapaId: '',
+        url: '',
+      }
+    }
+
+    return {
+      srcId: selectedSource.id,
+      kapaId: kapacitor.id,
+      url: kapacitor.url,
+      username: kapacitor.username,
+      password: kapacitor.password,
+      insecure_skip_verify: kapacitor.insecureSkipVerify,
     }
   }
 
@@ -331,14 +365,46 @@ function LearningSettingModal({
       i => i.organization === learningOption?.organization
     )
 
-    if (isNetworkDeviceOrganizationCreated) {
+    if (isUpdateAfterCreate || isNetworkDeviceOrganizationCreated) {
       updateDeviceOrganizationAjax()
     } else {
+      // TODO Deprecated (createDeviceOrganizationAjax)
+      createDeviceOrganizationAjax()
+
+      // TODO Add instead of createDeviceOrganizationAjax
+      // notify(
+      //   notifyUpdateNetworkDeviceOrganizationFailed(
+      //     'The selected organization has no devices available for learning.'
+      //   )
+      // )
+    }
+  }
+
+  // TODO Deprecated (createDeviceOrganizationAjax)
+  const createDeviceOrganizationAjax = async () => {
+    const {organization, ...rest} = learningOption
+
+    try {
+      setDeviceManagementIsLoading(true)
+      await createDeviceOrganization({
+        orgLearningModel: {
+          organization: organization,
+          ...rest,
+          cron_schedule: cronSchedule,
+        },
+      })
+
+      setIsKapacitorInValid(false)
+      setIsUpdateAfterCreate(true)
+      notify(notifyCreateNetworkDeviceOrganizationSucceeded())
+      finalizeApplyMLDLSettingAPIResponse()
+    } catch (error) {
       notify(
-        notifyUpdateNetworkDeviceOrganizationFailed(
-          'The selected organization has no devices available for learning.'
+        notifyCreateNetworkDeviceOrganizationFailed(
+          error?.message || 'Unknown Error'
         )
       )
+      finalizeApplyMLDLSettingAPIResponse()
     }
   }
 
@@ -384,6 +450,7 @@ function LearningSettingModal({
       })
       await updateTask()
 
+      setIsKapacitorInValid(false)
       notify(notifyUpdateNetworkDeviceOrganizationSucceeded())
       finalizeApplyMLDLSettingAPIResponse()
     } catch (error) {
@@ -493,6 +560,22 @@ function LearningSettingModal({
   }
 
   const LearningSettingModalMessage = () => {
+    const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
+      i =>
+        i.organization ===
+        getOrganizationIdByName(organizations, selectedSource.telegraf || '')
+    )
+
+    if (!isNetworkDeviceOrganizationCreated) {
+      return (
+        <Form.Element>
+          <div className="device-management-message">
+            {MONITORING_MODAL_INFO.ML_DL_Setting_NET_ORG_NOT_CREATED}
+          </div>
+        </Form.Element>
+      )
+    }
+
     return (
       <>
         {isKapacitorEmpty() ? (
