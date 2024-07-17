@@ -27,7 +27,7 @@ var tffUsed = trffic
 var cpuUsed = stream
     |from()
         .database(db)
-        .retentionPolicy(rp)
+        .retentionPolicy('autogen')
         .measurement('snmp_nx')
         .groupBy(['agent_host', 'sys_name'])
         .where(lambda: isPresent("cpu1min"))
@@ -83,9 +83,8 @@ var trigger = data
         .durationField('duration'){{if .Details}}.details(details){{end}}{{.AlertServices}}
 
 trigger
-    |eval(lambda: "agent_host", lambda: "cpu_used", lambda: "tff_volume", lambda: if("predict_kind" == 1, 'ML', if("predict_kind" == 2, 'DL', if("predict_kind" == 3, 'ALL', 'OK'))), lambda: "predict_kind")
-        .as('host', 'cpu_used', 'tff_volume', 'predict', 'value')
-        .tags('host')
+    |eval(lambda: if("predict_kind" == 1, 'ML', if("predict_kind" == 2, 'DL', if("predict_kind" == 3, 'ML+DL', 'OK'))), lambda: "predict_kind")
+        .as('predict', 'value')
         .keep('duration', 'message', 'cpu_used', 'tff_volume', 'predict', 'value')
     |influxDBOut()
         .create()
@@ -94,11 +93,10 @@ trigger
         .measurement('cloudhub_alerts')
         .tag('alertName', name)
         .tag('triggerType', 'anomaly_predict')
-
+{{ if ne .OrgName "Default" }}        
 trigger
-    |eval(lambda: "agent_host", lambda: "cpu_used", lambda: "tff_volume", lambda: if("predict_kind" == 1, 'ML', if("predict_kind" == 2, 'DL', if("predict_kind" == 3, 'ALL', 'OK'))), lambda: "predict_kind")
-        .as('host', 'cpu_used', 'tff_volume', 'predict', 'value')
-        .tags('host')
+    |eval(lambda: if("predict_kind" == 1, 'ML', if("predict_kind" == 2, 'DL', if("predict_kind" == 3, 'ML+DL', 'OK'))), lambda: "predict_kind")
+        .as('predict', 'value')
         .keep('duration', 'message', 'cpu_used', 'tff_volume', 'predict', 'value')
     |influxDBOut()
         .create()
@@ -107,5 +105,6 @@ trigger
         .measurement('cloudhub_alerts')
         .tag('alertName', name)
         .tag('triggerType', 'anomaly_predict')
+{{ end }}        
 """
 
