@@ -40,7 +40,7 @@ function PredictionTooltip({cpu, memory, name, traffic, status}: Props) {
               </div>
               <TableBodyRowItem
                 title={PredictionTooltipIndicator({
-                  value: `${cpu}%`,
+                  value: cpu === -1 ? 'NA' : `${cpu}%`,
                   status: status,
                 })}
                 width={TABLE_ROW_IN_BODY}
@@ -55,7 +55,7 @@ function PredictionTooltip({cpu, memory, name, traffic, status}: Props) {
               </div>
               <TableBodyRowItem
                 title={PredictionTooltipIndicator({
-                  value: `${memory}%`,
+                  value: memory === -1 ? 'NA' : `${memory}%`,
                   status: status,
                 })}
                 width={TABLE_ROW_IN_BODY}

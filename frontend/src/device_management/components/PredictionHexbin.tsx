@@ -56,26 +56,32 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
   })
 
   const statusCal = (valueUsage: number) => {
-    const status =
-      valueUsage < 0
-        ? 'invalid'
-        : valueUsage < 60
-        ? 'normal'
-        : valueUsage < 70
-        ? 'warning'
-        : valueUsage < 80
-        ? 'danger'
-        : valueUsage < 90
-        ? 'critical'
-        : valueUsage < 120
-        ? 'emergency'
-        : 'invalid'
-    return status
+    if (typeof valueUsage === 'number') {
+      const status =
+        valueUsage < 0
+          ? 'invalid'
+          : valueUsage < 60
+          ? 'normal'
+          : valueUsage < 70
+          ? 'warning'
+          : valueUsage < 80
+          ? 'danger'
+          : valueUsage < 90
+          ? 'critical'
+          : valueUsage < 120
+          ? 'emergency'
+          : 'invalid'
+      return status
+    } else {
+      return 'invalid'
+    }
   }
 
   const statusHexColor = (status: string) => {
     //color change - prediction.scss
     switch (status) {
+      case 'invalid':
+        return '#545667'
       case 'normal':
         return '#2de5a5'
       case 'warning':
@@ -104,7 +110,7 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
         }
       } else {
         return {
-          statusColor: statusHexColor(''),
+          statusColor: statusHexColor('invalid'),
           name: hex.name,
           cpu: -1,
           memory: -1,

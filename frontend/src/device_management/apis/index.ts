@@ -355,6 +355,138 @@ export const getPredictionAlert = (
     })
   }
 }
+interface host {
+  cpu: number
+  memory: number
+  traffic: string
+}
+const EmptyHost = {
+  name: '',
+  cpu: -1,
+  memory: -1,
+  traffic: '',
+}
+
+// export const getLiveDeviceInfo = async (
+//   source: string,
+//   db: string,
+//   tempVars: Template[],
+//   meRole: string
+// ) => {
+//   const query = replaceTemplate(
+//     `SELECT mean("cpu1min") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
+//     SELECT mean("mem_usage") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
+//     SELECT last("tff_volume") from (SELECT non_negative_derivative(sum("ifHCOutOctets"),1s) + non_negative_derivative(sum("ifHCInOctets"),1s) AS "tff_volume" FROM "Default"."autogen"."snmp_nx" WHERE "time" > now()-5m AND "ifDescr"=~/Ethernet/ GROUP BY time(1m), "agent_host") GROUP BY "agent_host";
+//    SHOW TAG VALUES WITH KEY = "agent_host" WHERE TIME > now() - 10m;
+//       `,
+//     tempVars
+//   )
+
+//   const {data} = await proxy({
+//     source,
+//     query,
+//     db,
+//   })
+
+//   const array = []
+//   const hosts = {}
+//   const cpuSeries = getDeep<Series[]>(data, 'results.[0].series', [])
+//   const memUsedSeries = getDeep<Series[]>(data, 'results.[1].series', [])
+//   const trafficSeries = getDeep<Series[]>(data, 'results.[2].series', [])
+//   const agentHost = getDeep<Series[]>(data, 'results.[3].series', [])
+
+//   agentHost?.forEach(s => {
+//     const hostnameIndex = s.columns?.findIndex(col => col === 'value')
+//     s.values?.forEach(v => {
+//       const hostname = v[hostnameIndex]
+//       hosts[hostname] = {
+//         ...EmptyHost,
+//         name: hostname,
+//       }
+//     })
+//   })
+
+//   console.log('hosts: ', hosts)
+
+//   cpuSeries?.forEach(s => {
+//     const meanIndex = s.columns?.findIndex(col => col === 'mean')
+//     hosts[s.tags.agent_host] = {
+//       ...EmptyHost,
+//       name: s.tags.agent_host,
+//       cpu: Number(cpuSeries.values[0][meanIndex]) ?? null,
+//     }
+//   })
+//   console.log('hosts1: ', hosts)
+
+//   memUsedSeries?.forEach(s => {
+//     const meanIndex = s.columns?.findIndex(col => col === 'mean')
+//     hosts[s.tags.agent_host] = {
+//       ...EmptyHost,
+//       name: s.tags.agent_host,
+//       memory: Number(memUsedSeries.values[0][meanIndex]) ?? null,
+//     }
+//   })
+//   console.log('hosts2: ', hosts)
+
+//   trafficSeries?.forEach(s => {
+//     const meanIndex = s.columns?.findIndex(col => col === 'mean')
+//     hosts[s.tags.agent_host] = {
+//       ...EmptyHost,
+//       name: s.tags.agent_host,
+//       traffic:
+//         decimalUnitNumber(trafficSeries.values[0][meanIndex], 'bps') ?? '',
+//     }
+//   })
+//   console.log('hosts3: ', hosts)
+
+//   const keyList = Object.keys(hosts)
+//   const valueList: host[] = Object.values(hosts)
+//   const result = keyList.map((i, idx) => {
+//     return {
+//       name: i,
+//       ...valueList[idx],
+//     }
+//   })
+//   console.log(result)
+//   return result
+
+//   // const agentHostList = agentHost.map(i => i[1])
+//   // const cpuSeriesList = cpuSeries.map(i => i.tags.agent_host)
+//   // const result = agentHost.map((host, idx) => {
+//   //   if (agentHostList.includes(cpuSeries[idx]?.tags?.agent_host)) {
+//   //     const index = cpuSeriesList.findIndex(
+//   //       i => i === cpuSeries[idx]?.tags?.agent_host
+//   //     )
+//   //     return {
+//   //       name: host[1] as string,
+//   //       cpu: Number(cpuSeries[index]?.values[0][1]) ?? null,
+//   //       memory: Number(memUsedSeries[index]?.values[0][1]) ?? null,
+//   //       traffic:
+//   //         decimalUnitNumber(trafficSeries[index]?.values[0][1], 'bps') ?? null,
+//   //     }
+//   //   } else {
+//   //     return {
+//   //       name: host[1] as string,
+//   //       cpu: null,
+//   //       memory: null,
+//   //       traffic: null,
+//   //     }
+//   //   }
+
+//   // return {
+//   //   name: host[1] as string,
+//   //   cpu: agentHostList.includes(cpuSeries[idx]?.tags?.agent_host)
+//   //     ? Number(cpuSeries[idx].values[0][1])
+//   //     : null,
+//   //   memory: agentHostList.includes(memUsedSeries[idx]?.tags?.agent_host)
+//   //     ? Number(memUsedSeries[idx].values[0][1])
+//   //     : null,
+//   //   traffic: agentHostList.includes(trafficSeries[idx]?.tags?.agent_host)
+//   // ? decimalUnitNumber(trafficSeries[idx].values[0][1], 'bps')
+//   //     : null,
+//   // }
+//   // })
+// }
 
 export const getLiveDeviceInfo = async (
   source: string,
@@ -381,24 +513,18 @@ export const getLiveDeviceInfo = async (
   const trafficSeries = getDeep<Series[]>(data, 'results.[2].series', [])
   const agentHost = getDeep<Series[]>(data, 'results.[3].series.[0].values', [])
 
-  if (
-    agentHost.length === memUsedSeries.length &&
-    agentHost.length === cpuSeries.length &&
-    agentHost.length === trafficSeries.length
-  ) {
-    const result = agentHost.map((host, idx) => {
-      return {
-        name: host[1] as string,
-        cpu: Number(cpuSeries[idx].values[0][1]),
-        memory: Number(memUsedSeries[idx].values[0][1]),
-        traffic: decimalUnitNumber(trafficSeries[idx].values[0][1], 'bps'),
-      }
-    })
+  const result = agentHost.map((host, idx) => {
+    const traffic = trafficSeries?.values?.[0]?.[1] || '-1'
 
-    return result
-  } else {
-    throw Error('cpu or memory data is not invalid')
-  }
+    return {
+      name: host[1] as string,
+      cpu: Number(cpuSeries?.[idx]?.values?.[0]?.[1] || -1),
+      memory: Number(memUsedSeries[idx]?.values?.[0]?.[1] || -1),
+      traffic: decimalUnitNumber(traffic, 'bps'),
+    }
+  })
+
+  return result
 }
 
 export const getDeviceManagementTickScript = async ruleID => {
