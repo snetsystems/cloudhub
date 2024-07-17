@@ -215,6 +215,9 @@ function LearningSettingModal({
     value: DropdownItem | Source
   ) => {
     if (key === 'organization') {
+      setTaskForTiskscriptUpdate(DEFAULT_TASK)
+      setCronSchedule(DEFAULT_CRON_SCHEDULE)
+
       const selectedSource = getSourceBySourceID(sources, (value as Source).id)
       const organizationID =
         getOrganizationIdByName(organizations, selectedSource?.telegraf) || ''
@@ -254,6 +257,9 @@ function LearningSettingModal({
   }
 
   const fetchAlertRule = async (organizationID: string) => {
+    setTaskForTiskscriptUpdate(DEFAULT_TASK)
+    setCronSchedule(DEFAULT_CRON_SCHEDULE)
+
     try {
       const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
         orgLearningModel,
@@ -339,6 +345,9 @@ function LearningSettingModal({
   }
 
   const fetchAlertRuleByKapacitor = async (kapacitor: Kapacitor) => {
+    setTaskForTiskscriptUpdate(DEFAULT_TASK)
+    setCronSchedule(DEFAULT_CRON_SCHEDULE)
+
     try {
       const organizationID = getOrganizationIdByName(
         organizations,
@@ -460,7 +469,10 @@ function LearningSettingModal({
           cron_schedule: cronSchedule,
         },
       })
-      await updateTask()
+
+      if (taskForTiskscriptUpdate?.tickscript) {
+        await updateTask()
+      }
 
       setIsKapacitorInValid(false)
       notify(notifyUpdateNetworkDeviceOrganizationSucceeded())
@@ -505,7 +517,6 @@ function LearningSettingModal({
 
       saveFormatTaskForTickscriptUpdate(rule)
     } catch (error) {
-      setCronSchedule(DEFAULT_CRON_SCHEDULE)
       console.error(error)
     }
   }
@@ -522,6 +533,9 @@ function LearningSettingModal({
       })
 
       setOriginalCronSchedule(fetchedRule)
+    } else {
+      setTaskForTiskscriptUpdate(DEFAULT_TASK)
+      setCronSchedule(DEFAULT_CRON_SCHEDULE)
     }
   }
 
