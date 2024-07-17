@@ -413,7 +413,7 @@ const EmptyHost = {
 //     hosts[s.tags.agent_host] = {
 //       ...EmptyHost,
 //       name: s.tags.agent_host,
-//       cpu: Number(cpuSeries.values[0][meanIndex]) ?? null,
+//       cpu: Number(s.values[0][meanIndex]) ?? null,
 //     }
 //   })
 //   console.log('hosts1: ', hosts)
@@ -423,7 +423,7 @@ const EmptyHost = {
 //     hosts[s.tags.agent_host] = {
 //       ...EmptyHost,
 //       name: s.tags.agent_host,
-//       memory: Number(memUsedSeries.values[0][meanIndex]) ?? null,
+//       memory: Number(s.values[0][meanIndex]) ?? null,
 //     }
 //   })
 //   console.log('hosts2: ', hosts)
@@ -433,8 +433,7 @@ const EmptyHost = {
 //     hosts[s.tags.agent_host] = {
 //       ...EmptyHost,
 //       name: s.tags.agent_host,
-//       traffic:
-//         decimalUnitNumber(trafficSeries.values[0][meanIndex], 'bps') ?? '',
+//       traffic: decimalUnitNumber(s.values[0][meanIndex], 'bps') ?? '',
 //     }
 //   })
 //   console.log('hosts3: ', hosts)
@@ -514,7 +513,7 @@ export const getLiveDeviceInfo = async (
   const agentHost = getDeep<Series[]>(data, 'results.[3].series.[0].values', [])
 
   const result = agentHost.map((host, idx) => {
-    const traffic = trafficSeries?.values?.[0]?.[1] || '-1'
+    const traffic = trafficSeries[idx]?.values?.[0]?.[1] || '-1'
 
     return {
       name: host[1] as string,
