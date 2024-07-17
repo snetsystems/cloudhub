@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react'
-import {Source, TimeRange} from 'src/types'
+import {INPUT_TIME_TYPE, Source, TimeRange} from 'src/types'
 import {Alert} from 'src/types/alerts'
 import PredictionAlertTable from './PredictionAlertTable'
 import {RECENT_ALERTS_LIMIT} from 'src/status/constants'
@@ -12,12 +12,13 @@ import LoadingDots from 'src/shared/components/LoadingDots'
 import AJAX from 'src/utils/ajax'
 import {getPredictionAlert} from '../apis'
 import _ from 'lodash'
-
+import {Button, ComponentColor} from 'src/reusable_ui'
 interface Props {
   timeRange: TimeRange
   source: Source
   limit: number
   chartClickDate: TimeRange
+  setTimeRange: (value: TimeRange) => void
 }
 
 function PredictionAlertHistoryWrapper({
@@ -25,6 +26,7 @@ function PredictionAlertHistoryWrapper({
   source,
   limit: prevLimit,
   chartClickDate,
+  setTimeRange,
 }: Props) {
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
 
@@ -94,7 +96,9 @@ function PredictionAlertHistoryWrapper({
     const results = []
 
     const timeIndex = alertSeries[0].columns.findIndex(col => col === 'time')
-    const hostIndex = alertSeries[0].columns.findIndex(col => col === 'host')
+    const hostIndex = alertSeries[0].columns.findIndex(
+      col => col === 'agent_host'
+    )
     const valueIndex = alertSeries[0].columns.findIndex(col => col === 'value')
     const levelIndex = alertSeries[0].columns.findIndex(col => col === 'level')
     const nameIndex = alertSeries[0].columns.findIndex(
@@ -129,6 +133,20 @@ function PredictionAlertHistoryWrapper({
                 className={'graph-panel__refreshing openstack-dots--loading'}
               />
             )}
+          </div>
+          <div style={{zIndex: 3}} className="page-header--right">
+            <Button
+              text="Reset (30d)"
+              color={ComponentColor.Primary}
+              onClick={() => {
+                setTimeRange({
+                  lower: 'now() - 30d',
+                  lowerFlux: '-30d',
+                  upper: null,
+                  format: INPUT_TIME_TYPE.RELATIVE_TIME,
+                })
+              }}
+            />
           </div>
         </PredictionDashboardHeader>
         <PredictionAlertTable

@@ -113,12 +113,14 @@ class AlertsTableRow extends PureComponent<Props> {
         {host === null ? (
           <span>{'–'}</span>
         ) : (
-          <Link
-            to={`/sources/${sourceID}/infrastructure/details/${host}`}
-            title={host}
-          >
-            {host}
-          </Link>
+          // Todo: link with valid canned
+          // <Link
+          //   to={`/sources/${sourceID}/infrastructure/details/${host}`}
+          //   title={host}
+          // >
+          //   {host}
+          // </Link>
+          <span className="alert-history-link">{host}</span>
         )}
       </div>
     )
