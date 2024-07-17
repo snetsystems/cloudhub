@@ -802,7 +802,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		for _, device := range devicesData.devicesGroupByOrg[org] {
 			networkDevice := devicesData.networkDevicesMap[device.ID]
 			networkDevice.IsCollectingCfgWritten = true
-			networkDevice.LearningState = Ready
+
 			err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice)
 			if err != nil {
 				if _, exists := failedDevices[device.ID]; !exists {
@@ -880,6 +880,9 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 		for _, device := range devicesData.learningDevicesGroupByOrg[org] {
 			networkDevice := devicesData.networkDevicesMap[device.ID]
 			networkDevice.IsLearning = device.IsLearning
+			if device.IsLearning && networkDevice.LearningState == "" {
+				networkDevice.LearningState = Ready
+			}
 			err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice)
 			if err != nil {
 				if _, exists := failedDevices[device.ID]; !exists {
