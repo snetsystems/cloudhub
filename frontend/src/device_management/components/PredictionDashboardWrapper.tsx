@@ -18,9 +18,7 @@ import {
   TimeRange,
 } from 'src/types'
 import PredictionDashboardHeader from './PredictionDashboardHeader'
-import {Button, ComponentColor} from 'src/reusable_ui'
 import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
-import moment from 'moment'
 import Layout from 'src/shared/components/Layout'
 import LoadingDots from 'src/shared/components/LoadingDots'
 
@@ -38,7 +36,6 @@ interface Props {
   sources: Source[]
   manualRefresh: number
   setChartClickDate: (date: TimeRange) => void
-  setTimeRange: (value: TimeRange) => void
 }
 
 function PredictionDashboardWrapper({
@@ -55,7 +52,6 @@ function PredictionDashboardWrapper({
   source,
   manualRefresh,
   setChartClickDate,
-  setTimeRange,
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const templates = (): Template[] => {
@@ -126,19 +122,6 @@ function PredictionDashboardWrapper({
               className={'graph-panel__refreshing openstack-dots--loading'}
             />
           )}
-        </div>
-        <div style={{zIndex: 3}} className="page-header--right">
-          <Button
-            text="get 30days"
-            color={ComponentColor.Primary}
-            onClick={() => {
-              setTimeRange({
-                upper: convertTimeFormat(moment().format()),
-                lower: convertTimeFormat(moment().subtract(30, 'day').format()),
-                format: INPUT_TIME_TYPE.TIMESTAMP,
-              })
-            }}
-          />
         </div>
       </PredictionDashboardHeader>
       {!!cell && (

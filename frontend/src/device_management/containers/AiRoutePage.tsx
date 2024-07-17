@@ -37,6 +37,7 @@ import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import {bindActionCreators} from 'redux'
+import {setPredictionTimeRange} from '../actions'
 
 interface RouterProps extends InjectedRouter {
   params: RouterState['params']
@@ -104,9 +105,10 @@ const AiRoutePage = (props: Props) => {
   >(defaultHeaderRadioButtons)
 
   const [timeRange, setTimeRange] = useState<TimeRange>({
-    upper: convertTimeFormat(moment().format()),
-    lower: convertTimeFormat(moment().subtract(30, 'day').format()),
-    format: INPUT_TIME_TYPE.TIMESTAMP,
+    lower: 'now() - 30d',
+    lowerFlux: '-30d',
+    upper: null,
+    format: INPUT_TIME_TYPE.RELATIVE_TIME,
   })
 
   let providers = []
@@ -243,6 +245,7 @@ const mdtp = dispatch => ({
 
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
+  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(ManualRefresh<Props>(AiRoutePage))

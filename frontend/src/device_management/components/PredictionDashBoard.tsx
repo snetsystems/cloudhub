@@ -164,7 +164,6 @@ function PredictionDashBoard({
               instance={instance}
               onPickTemplate={onPickTemplate}
               setChartClickDate={setChartClickDate}
-              setTimeRange={setTimeRange}
             />
           </Authorized>
         )
@@ -178,6 +177,7 @@ function PredictionDashBoard({
             }}
           >
             <PredictionAlertHistoryWrapper
+              setTimeRange={setTimeRange}
               timeRange={timeRange}
               source={source}
               limit={30}
