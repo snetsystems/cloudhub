@@ -49,6 +49,7 @@ type updateDeviceOrgRequest struct {
 	AIKapacitor         *cloudhub.AIKapacitor `json:"ai_kapacitor"`
 	CronSchedule        *string               `json:"cron_schedule"`
 	CollectorServer     *string               `json:"collector_server"`
+	TaskStatus          int                   `json:"task_status"`
 }
 
 type deviceOrgRequest struct {
@@ -57,6 +58,7 @@ type deviceOrgRequest struct {
 	DataDuration *int                  `json:"data_duration"`
 	CronSchedule *string               `json:"cron_schedule"`
 	AIKapacitor  *cloudhub.AIKapacitor `json:"ai_kapacitor"`
+	TaskStatus   int                   `json:"task_status"`
 }
 
 type deviceOrgError struct {
@@ -257,6 +259,7 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		DataDuration: &deviceOrg.DataDuration,
 		CronSchedule: req.CronSchedule,
 		AIKapacitor:  &deviceOrg.AIKapacitor,
+		TaskStatus:   req.TaskStatus,
 	}
 	err = createLearningTask(ctx, s, org, reqTask, deviceOrg)
 	if err != nil {
@@ -481,15 +484,16 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	}
 
 	kapaID := cloudhub.LearnScriptPrefix + org.ID
+	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: "autogen"}}
+	if org.ID != "default" {
+		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: "autogen"})
+	}
 	createTaskOptions := &client.CreateTaskOptions{
-		ID:   kapaID,
-		Type: client.BatchTask,
-		DBRPs: []client.DBRP{
-			{Database: org.Name, RetentionPolicy: "autogen"},
-			{Database: "Default", RetentionPolicy: "autogen"},
-		},
+		ID:         kapaID,
+		Type:       client.BatchTask,
+		DBRPs:      DBRPs,
 		TICKscript: string(script),
-		Status:     client.Enabled,
+		Status:     client.TaskStatus(req.TaskStatus),
 	}
 	task, err := c.AutoGenerateCreate(ctx, createTaskOptions)
 	if err != nil && task != nil {

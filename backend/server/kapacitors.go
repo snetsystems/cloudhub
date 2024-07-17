@@ -1096,18 +1096,23 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	kapaID := cloudhub.PredictScriptPrefix + org.ID
-
 	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: "autogen"}}
-
 	if org.ID != "default" {
 		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: "autogen"})
+	}
+	status := client.Enabled
+	if req.Status != "" {
+		if err := status.UnmarshalText([]byte(req.Status)); err != nil {
+			invalidData(w, err, s.Logger)
+			return
+		}
 	}
 	createTaskOptions := &client.CreateTaskOptions{
 		ID:         kapaID,
 		Type:       client.StreamTask,
 		DBRPs:      DBRPs,
 		TICKscript: script,
-		Status:     client.Enabled,
+		Status:     status,
 	}
 
 	task, err := c.AutoGenerateCreate(ctx, createTaskOptions)
@@ -1238,12 +1243,19 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	if org.ID != "default" {
 		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: "autogen"})
 	}
+	status := client.Enabled
+	if req.Status != "" {
+		if err := status.UnmarshalText([]byte(req.Status)); err != nil {
+			invalidData(w, err, s.Logger)
+			return
+		}
+	}
 	createTaskOptions := &client.UpdateTaskOptions{
 		ID:         kapaID,
 		Type:       client.StreamTask,
 		DBRPs:      DBRPs,
 		TICKscript: script,
-		Status:     client.Enabled,
+		Status:     status,
 	}
 	aiConfig := s.InternalENV.AIConfig
 
