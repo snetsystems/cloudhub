@@ -108,7 +108,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       // TODO: Convert Date Time
       align: AlignType.CENTER,
       key: 'learning_update_date',
-      name: 'Update Date',
+      name: 'Start Time',
       render: value => (
         <div
           className={`agent--indicator ${
@@ -123,7 +123,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       // TODO: Convert Date Time
       align: AlignType.CENTER,
       key: 'learning_finish_datetime',
-      name: 'Finish Date',
+      name: 'End Time',
       render: value => (
         <div
           className={`agent--indicator ${
