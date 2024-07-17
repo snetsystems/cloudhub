@@ -151,7 +151,8 @@ class PredictionRulePage extends Component<Props, State> {
       !_.isEqual(currentRule.alertNodes, prevRule.alertNodes) ||
       currentRule.message !== prevRule.message ||
       currentRule.name !== prevRule.name ||
-      currentRule.details !== prevRule.details
+      currentRule.details !== prevRule.details ||
+      currentRule.queryID !== prevRule.queryID
     ) {
       this.setState({rule: currentRule})
     }
