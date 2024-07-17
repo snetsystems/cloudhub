@@ -73,7 +73,6 @@ import {
 import {
   notifyCreateNetworkDeviceOrganizationFailed,
   notifyCreateNetworkDeviceOrganizationSucceeded,
-  notifyKapacitorConnectionFailed,
   notifyTickscriptUpdateFailedWithMessage,
   notifyTickscriptUpdated,
   notifyUpdateNetworkDeviceOrganizationFailed,
@@ -301,7 +300,7 @@ function LearningSettingModal({
       setDeviceManagementIsLoading(false)
       setIsKapacitorInValid(true)
       setSelectedKapacitor(null)
-      console.error(notifyKapacitorConnectionFailed())
+      console.error(error)
     }
   }
 
@@ -352,7 +351,7 @@ function LearningSettingModal({
       setDeviceManagementIsLoading(false)
     } catch (error) {
       setDeviceManagementIsLoading(false)
-      console.error(notifyKapacitorConnectionFailed())
+      console.error(error)
     }
   }
 
@@ -549,7 +548,9 @@ function LearningSettingModal({
 
       notify(notifyTickscriptUpdated())
     } catch (error) {
-      console.error(notifyTickscriptUpdateFailedWithMessage())
+      console.error(
+        notifyTickscriptUpdateFailedWithMessage(error.message || '')
+      )
     }
   }
 
@@ -572,43 +573,58 @@ function LearningSettingModal({
     }
   }
 
+  // TODO Deprecated (createDeviceOrganizationAjax)
   const LearningSettingModalMessage = () => {
-    const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
-      i =>
-        i.organization ===
-        getOrganizationIdByName(organizations, selectedSource.telegraf || '')
-    )
-
-    if (!isNetworkDeviceOrganizationCreated) {
-      return (
-        <Form.Element>
-          <div className="device-management-message">
-            {MONITORING_MODAL_INFO.ML_DL_Setting_NET_ORG_NOT_CREATED}
-          </div>
-        </Form.Element>
-      )
-    }
-
     return (
       <>
-        {isKapacitorEmpty() ? (
+        {isKapacitorEmpty() && (
           <Form.Element>
             <div className="device-management-message">
               {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorEmpty}
             </div>
           </Form.Element>
-        ) : (
-          isKapacitorInValid && (
-            <Form.Element>
-              <div className="device-management-message">
-                {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorInvalid}
-              </div>
-            </Form.Element>
-          )
         )}
       </>
     )
   }
+
+  // const LearningSettingModalMessage = () => {
+  //   const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
+  //     i =>
+  //       i.organization ===
+  //       getOrganizationIdByName(organizations, selectedSource.telegraf || '')
+  //   )
+
+  //   if (!isNetworkDeviceOrganizationCreated) {
+  //     return (
+  //       <Form.Element>
+  //         <div className="device-management-message">
+  //           {MONITORING_MODAL_INFO.ML_DL_Setting_NET_ORG_NOT_CREATED}
+  //         </div>
+  //       </Form.Element>
+  //     )
+  //   }
+
+  //   return (
+  //     <>
+  //       {isKapacitorEmpty() ? (
+  //         <Form.Element>
+  //           <div className="device-management-message">
+  //             {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorEmpty}
+  //           </div>
+  //         </Form.Element>
+  //       ) : (
+  //         isKapacitorInValid && (
+  //           <Form.Element>
+  //             <div className="device-management-message">
+  //               {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorInvalid}
+  //             </div>
+  //           </Form.Element>
+  //         )
+  //       )}
+  //     </>
+  //   )
+  // }
 
   const convertValueToKey = (value: string, obj: Object) => {
     const index = Object.values(obj).findIndex(i => i === value)

@@ -845,9 +845,12 @@ export const notifyTickscriptUpdated = (): Notification => ({
 export const notifyTickscriptUpdateFailed = (): string =>
   'Failed to update TICKscript.'
 
-export const notifyTickscriptUpdateFailedWithMessage = (): Notification => ({
+export const notifyTickscriptUpdateFailedWithMessage = (
+  message
+): Notification => ({
   ...defaultErrorNotification,
-  message: 'Failed to update TICKscript',
+  duration: INFINITE,
+  message: `Failed to update TICKscript. ${message}`,
 })
 
 export const notifyTickscriptLoggingUnavailable = (): Notification => ({
