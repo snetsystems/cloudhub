@@ -1,5 +1,8 @@
 .device-management--wrapper {
   padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
 }
 .device-management-message {
   text-align: center;
