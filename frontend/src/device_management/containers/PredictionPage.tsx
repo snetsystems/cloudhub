@@ -58,7 +58,6 @@ function PredictionPage({
         inPresentationMode={true}
         host=""
         sources={[source]}
-        setSelectDate={setSelectDate}
         setTimeRange={setTimeRange}
         cloudAutoRefresh={cloudAutoRefresh}
         manualRefresh={manualRefresh}

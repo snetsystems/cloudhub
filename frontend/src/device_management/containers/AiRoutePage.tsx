@@ -23,7 +23,6 @@ import {setCloudAutoRefresh} from 'src/clouds/actions'
 
 import {connect} from 'react-redux'
 import * as appActions from 'src/shared/actions/app'
-import {openShell} from 'src/shared/actions/shell'
 import DeviceManagementModal from '../components/DeviceManagementModal'
 import PredictionPage from './PredictionPage'
 import moment from 'moment'
@@ -240,8 +239,8 @@ const mstp = ({
 }
 
 const mdtp = dispatch => ({
-  setTimeZone: appActions.setTimeZone,
-  openShell: openShell,
+  setTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
+
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
 })

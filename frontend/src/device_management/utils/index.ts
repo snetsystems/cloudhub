@@ -143,3 +143,26 @@ export const parseSeries = (seriesString: string): SeriesObj => {
 
   return out
 }
+
+export const decimalUnitNumber = (value: string, unit: string) => {
+  const length = Number(value).toFixed().length
+  const kUnit = length >= 7 ? 'M' : length >= 4 ? 'K' : ''
+
+  let number
+  if (!!Number(value)) {
+    switch (kUnit) {
+      case 'M':
+        number = Number(value) / 1000000
+        break
+      case 'K':
+        number = Number(value) / 1000
+        break
+      default:
+        number = Number(value)
+    }
+
+    return number.toFixed() + ' ' + kUnit + unit
+  } else {
+    return 'unknown'
+  }
+}

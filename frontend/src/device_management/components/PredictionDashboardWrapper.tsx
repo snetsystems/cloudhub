@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
@@ -22,6 +22,7 @@ import {Button, ComponentColor} from 'src/reusable_ui'
 import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
 import moment from 'moment'
 import Layout from 'src/shared/components/Layout'
+import LoadingDots from 'src/shared/components/LoadingDots'
 
 interface Props {
   cell: Cell
@@ -32,7 +33,6 @@ interface Props {
   onSummonOverlayTechnologies?: () => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
-  setSelectDate: React.Dispatch<React.SetStateAction<number>>
   timeRange: TimeRange
   source: Source
   sources: Source[]
@@ -57,6 +57,7 @@ function PredictionDashboardWrapper({
   setChartClickDate,
   setTimeRange,
 }: Props) {
+  const [isLoading, setIsLoading] = useState(false)
   const templates = (): Template[] => {
     const dashboardTime = {
       id: 'dashtime',
@@ -119,6 +120,13 @@ function PredictionDashboardWrapper({
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
+        <div className="dash-graph--name">
+          {isLoading && (
+            <LoadingDots
+              className={'graph-panel__refreshing openstack-dots--loading'}
+            />
+          )}
+        </div>
         <div style={{zIndex: 3}} className="page-header--right">
           <Button
             text="get 30days"
@@ -167,4 +175,7 @@ function PredictionDashboardWrapper({
   )
 }
 
-export default PredictionDashboardWrapper
+const areEqual = (prev, next) => {
+  return prev === next
+}
+export default React.memo(PredictionDashboardWrapper, areEqual)

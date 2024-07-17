@@ -56,7 +56,7 @@ import {
   UpdateDeviceOrganizationOption,
   UpdateDevicesOrgResponse,
 } from 'src/types/deviceManagement'
-import {parseSeries} from '../utils'
+import {decimalUnitNumber, parseSeries} from '../utils'
 import {hasError} from 'apollo-client/core/ObservableQuery'
 
 interface Series {
@@ -365,6 +365,7 @@ export const getLiveDeviceInfo = async (
   const query = replaceTemplate(
     `SELECT mean("cpu1min") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
     SELECT mean("mem_usage") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
+    SELECT last("tff_volume") from (SELECT non_negative_derivative(sum("ifHCOutOctets"),1s) + non_negative_derivative(sum("ifHCInOctets"),1s) AS "tff_volume" FROM "Default"."autogen"."snmp_nx" WHERE "time" > now()-5m AND "ifDescr"=~/Ethernet/ GROUP BY time(1m), "agent_host") GROUP BY "agent_host";
     SHOW TAG VALUES FROM \"autogen\".\"snmp_nx\" WITH KEY IN ("agent_host")
       `,
     tempVars
@@ -377,18 +378,20 @@ export const getLiveDeviceInfo = async (
   })
   const cpuSeries = getDeep<Series[]>(data, 'results.[0].series', [])
   const memUsedSeries = getDeep<Series[]>(data, 'results.[1].series', [])
-  const agentHost = getDeep<Series[]>(data, 'results.[2].series.[0].values', [])
+  const trafficSeries = getDeep<Series[]>(data, 'results.[2].series', [])
+  const agentHost = getDeep<Series[]>(data, 'results.[3].series.[0].values', [])
 
   if (
     agentHost.length === memUsedSeries.length &&
-    agentHost.length === cpuSeries.length
+    agentHost.length === cpuSeries.length &&
+    agentHost.length === trafficSeries.length
   ) {
     const result = agentHost.map((host, idx) => {
       return {
         name: host[1] as string,
         cpu: Number(cpuSeries[idx].values[0][1]),
         memory: Number(memUsedSeries[idx].values[0][1]),
-        traffic: (Math.random() * 21660).toFixed(),
+        traffic: decimalUnitNumber(trafficSeries[idx].values[0][1], 'bps'),
       }
     })
 

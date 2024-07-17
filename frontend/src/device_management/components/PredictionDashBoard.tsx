@@ -11,9 +11,7 @@ import {fixturePredictionPageCells} from '../constants'
 import _ from 'lodash'
 import {Link} from 'react-router'
 import PredictionHexbinWrapper from './PredictionHexbinWrapper'
-import ManualRefresh, {
-  ManualRefreshProps,
-} from 'src/shared/components/ManualRefresh'
+import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
 import {WithRouterProps} from 'react-router'
 import PredictionInstanceWrapper from './PredictionInstanceWrapper'
 import PredictionAlertHistoryWrapper from './PredictionAlertHistoryWrapper'
@@ -22,21 +20,20 @@ import {CloudAutoRefresh} from 'src/clouds/types/type'
 import PredictionDashboardWrapper from './PredictionDashboardWrapper'
 
 interface Props extends ManualRefreshProps, WithRouterProps {
-  inPresentationMode: boolean
-  timeRange: TimeRange
-  source: Source
   host: string
+  source: Source
   sources: Source[]
-  setSelectDate: React.Dispatch<React.SetStateAction<number>>
-  setTimeRange: (value: TimeRange) => void
+  timeRange: TimeRange
+  manualRefresh: number
+  inPresentationMode: boolean
   cloudAutoRefresh?: CloudAutoRefresh
+  setTimeRange: (value: TimeRange) => void
   onZoom?: () => void
   onCloneCell?: () => void
   onDeleteCell?: () => void
   onSummonOverlayTechnologies?: () => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
-  manualRefresh: number
 }
 
 interface TempProps {
@@ -59,7 +56,6 @@ function PredictionDashBoard({
   cloudAutoRefresh,
   instance,
   onPickTemplate,
-  setSelectDate,
   setTimeRange,
 }: Props) {
   const [chartClickDate, setChartClickDate] = useState<TimeRange>(null)
@@ -154,7 +150,6 @@ function PredictionDashBoard({
             }}
           >
             <PredictionDashboardWrapper
-              setSelectDate={setSelectDate}
               key={cell.i}
               cell={cell}
               host={host}
@@ -291,4 +286,4 @@ const mdtp = {
   notify: notifyActions.notify,
 }
 
-export default connect(mstp, mdtp, null)(ManualRefresh(PredictionDashBoard))
+export default connect(mstp, mdtp, null)(PredictionDashBoard)
