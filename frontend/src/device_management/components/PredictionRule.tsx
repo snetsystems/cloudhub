@@ -1,11 +1,9 @@
 // Library
 import React, {Component} from 'react'
-import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
 import {InjectedRouter} from 'react-router'
 
 // Components
-import {Page} from 'src/reusable_ui'
+import {ComponentSize, Page, SlideToggle} from 'src/reusable_ui'
 import RuleHeaderSave from 'src/kapacitor/components/alert_rules/RuleHeaderSave'
 import Dropdown from 'src/shared/components/Dropdown'
 import PredictionRuleHandlers from 'src/device_management/components/PredictionRuleHandlers'
@@ -33,28 +31,33 @@ import {
 import {KapacitorRuleActions} from 'src/types/actions'
 
 // Utils
-import {getOrganizationIdByName} from 'src/device_management/utils'
+import {
+  convertSourcesToDropdownItems,
+  getOrganizationNameByID,
+} from 'src/device_management/utils'
 
 // Constants
 import {PREDICT_MODE} from 'src/device_management/constants'
 
 // Notification
-import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
   notifyAlertRuleCreated,
   notifyAlertRuleCreateFailed,
   notifyAlertRuleUpdated,
   notifyAlertRuleUpdateFailed,
+  notifyKapacitorEngineRequired,
 } from 'src/shared/copy/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import isValidMessage from 'src/kapacitor/utils/alertMessageValidation'
 import RuleMessage from 'src/kapacitor/components/alert_rules/RuleMessage'
 
 interface Props {
+  sources: Source[]
   source: Source
-  selectedOrganizationName: string
+  selectedOrganizationID: string
   selectedPredictMode: string
   isTickscriptCreated: boolean
+  isNetworkDeviceOrganizationValid: boolean
   me: Me
   rule: AlertRule
   ruleActions: KapacitorRuleActions
@@ -62,7 +65,7 @@ interface Props {
   router: InjectedRouter
   kapacitor: Kapacitor
   organizations: Organization[]
-  setLearningDropdownState: (organization: Organization) => void
+  setOrganizationDropdown: (organization: Source) => void
   setPredictMode: (predictMode: string) => void
   notify: (message: Notification) => void
   setLoadingForCreateAndUpdateScript: (isLoading: boolean) => void
@@ -72,13 +75,19 @@ interface Props {
 interface State {}
 
 @ErrorHandling
-class PredictionRule extends Component<Props, State> {
+export default class PredictionRule extends Component<Props, State> {
   constructor(props) {
     super(props)
   }
 
   public render() {
-    const {rule, ruleActions, handlersFromConfig, me} = this.props
+    const {
+      rule,
+      ruleActions,
+      handlersFromConfig,
+      me,
+      isNetworkDeviceOrganizationValid,
+    } = this.props
 
     return (
       <Page>
@@ -107,6 +116,9 @@ class PredictionRule extends Component<Props, State> {
               handlersFromConfig={handlersFromConfig}
               onGoToConfig={this.handleSaveToConfig}
               validationError={this.validationError}
+              isNetworkDeviceOrganizationValid={
+                isNetworkDeviceOrganizationValid
+              }
             />
 
             <RuleMessage rule={rule} ruleActions={ruleActions} />
@@ -133,14 +145,18 @@ class PredictionRule extends Component<Props, State> {
   }
 
   private get Organization(): JSX.Element {
-    const {me, setLearningDropdownState, selectedOrganizationName} = this.props
-
-    let dropdownCurOrg = [
-      {
-        ...me.currentOrganization,
-        text: me.currentOrganization.name,
-      },
-    ]
+    const {
+      setOrganizationDropdown,
+      selectedOrganizationID,
+      organizations,
+      me,
+      sources,
+      source,
+    } = this.props
+    const availableSources =
+      me.superAdmin && me.currentOrganization.id === 'default'
+        ? sources
+        : [source]
 
     return (
       <div className="rule-section">
@@ -148,9 +164,12 @@ class PredictionRule extends Component<Props, State> {
         <div className="rule-section--body">
           <div className="rule-section--row rule-section--row-first rule-section--row-last">
             <Dropdown
-              items={dropdownCurOrg}
-              onChoose={setLearningDropdownState}
-              selected={selectedOrganizationName}
+              items={convertSourcesToDropdownItems(availableSources)}
+              onChoose={setOrganizationDropdown}
+              selected={getOrganizationNameByID(
+                organizations,
+                selectedOrganizationID
+              )}
               className="dropdown-stretch"
             />
           </div>
@@ -160,8 +179,11 @@ class PredictionRule extends Component<Props, State> {
   }
 
   private get NameSection(): JSX.Element {
-    const {rule} = this.props
-    const ruleName = rule?.name || 'Untitled Rule'
+    const {rule, isNetworkDeviceOrganizationValid, ruleActions} = this.props
+    let ruleName =
+      isNetworkDeviceOrganizationValid && rule?.name
+        ? rule.name
+        : 'Untitled Rule'
 
     return (
       <div className="rule-section">
@@ -175,6 +197,34 @@ class PredictionRule extends Component<Props, State> {
               placeholder="ex: Ruley McRuleface"
               value={ruleName}
             />
+            <div
+              className="form-control-static"
+              style={{
+                border: 'none',
+                padding: '5px 0 0 2px',
+              }}
+            >
+              <SlideToggle
+                active={rule?.status === 'enabled'}
+                onChange={() => {
+                  const getStatus = rule => {
+                    if (!rule?.status) {
+                      return 'disabled'
+                    } else if (rule.status === 'enabled') {
+                      return 'disabled'
+                    } else if (rule.status === 'disabled') {
+                      return 'enabled'
+                    }
+                  }
+
+                  ruleActions.updateRuleStatusSuccess(rule.id, getStatus(rule))
+                }}
+                size={ComponentSize.ExtraSmall}
+              />
+              <label style={{padding: '3px 0px 0px 5px'}}>
+                Prediction Enabled
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -204,8 +254,19 @@ class PredictionRule extends Component<Props, State> {
   }
 
   private handleSave = () => {
-    const {isTickscriptCreated, source, router} = this.props
+    const {
+      isNetworkDeviceOrganizationValid,
+      isTickscriptCreated,
+      source,
+      router,
+      notify,
+    } = this.props
     const pageLink = `/sources/${source.id}/ai/prediction`
+
+    if (!isNetworkDeviceOrganizationValid) {
+      notify(notifyKapacitorEngineRequired())
+      return
+    }
 
     if (isTickscriptCreated) {
       this.handleEdit()
@@ -243,7 +304,7 @@ class PredictionRule extends Component<Props, State> {
   private getDeviceManagementScriptRequest = (
     updatedRule?: AlertRule
   ): CreateDeviceManagmenntScriptRequest => {
-    const {organizations, rule, selectedOrganizationName} = this.props
+    const {organizations, rule, selectedOrganizationID} = this.props
 
     let _rule = updatedRule ? updatedRule : rule
 
@@ -252,11 +313,11 @@ class PredictionRule extends Component<Props, State> {
     return {
       ..._rule,
       ...predictModeAndEnsembleCondition,
-      organization: getOrganizationIdByName(
+      organization: selectedOrganizationID,
+      organization_name: getOrganizationNameByID(
         organizations,
-        selectedOrganizationName
+        selectedOrganizationID
       ),
-      organization_name: selectedOrganizationName,
     }
   }
 
@@ -265,18 +326,14 @@ class PredictionRule extends Component<Props, State> {
   }
 
   private updateAlertRule = async () => {
-    const {notify, rule, organizations, selectedOrganizationName} = this.props
-    const organizationID = getOrganizationIdByName(
-      organizations,
-      selectedOrganizationName
-    )
+    const {notify, rule, selectedOrganizationID} = this.props
 
     this.props.setLoadingForCreateAndUpdateScript(true)
     try {
       const updatedRule = this.replaceTickscript()
       const request = this.getDeviceManagementScriptRequest(updatedRule)
 
-      await updateDeviceManagementTickScript(request, organizationID)
+      await updateDeviceManagementTickScript(request, selectedOrganizationID)
       notify(notifyAlertRuleUpdated(rule?.name || ''))
       this.props.setLoadingForCreateAndUpdateScript(false)
     } catch (error) {
@@ -407,9 +464,3 @@ class PredictionRule extends Component<Props, State> {
     return Object.keys(obj)[index]
   }
 }
-
-const mapDispatchToProps = dispatch => ({
-  notify: bindActionCreators(notifyAction, dispatch),
-})
-
-export default connect(null, mapDispatchToProps)(PredictionRule)

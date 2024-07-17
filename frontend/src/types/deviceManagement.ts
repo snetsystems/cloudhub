@@ -1,9 +1,12 @@
 import {MLFunctionMsg} from 'src/device_management/constants'
 import {AlertRule} from 'src/types/kapacitor'
 
+export type OrganizationID = string
+export type OrganizationName = string
+
 export interface DeviceData {
   id?: string
-  organization: string
+  organization: OrganizationID
   device_ip: string
   hostname?: string
   device_type?: string
@@ -30,7 +33,7 @@ export interface DeviceDataMonitoringStatus extends DeviceData {
 
 export interface MonitoringModalProps {
   isCreateLearning?: boolean
-  organization: string
+  organization: OrganizationName
   device_ip: string
   hostname: string
 }
@@ -106,8 +109,8 @@ export interface UpdateDeviceResponse {
 }
 
 export interface DeleteDeviceResponse {
-  code: number
-  message: string
+  devices: DeviceData[]
+  failed_devices: FailedDevice[] | null
 }
 
 export interface DeleteDeviceParams {
@@ -168,10 +171,11 @@ export interface LearningOrganizationOption {
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
   cron_schedule?: string
+  task_status?: 1 | 2
 }
 
 export interface LearningOption extends LearningOrganizationOption {
-  organization: string
+  organization: OrganizationID
 }
 
 export interface GetAllDevicesOrgResponse {
@@ -183,7 +187,7 @@ export interface UpdateDevicesOrgResponse {
 }
 
 export interface DevicesOrgData {
-  organization: string
+  organization: OrganizationID
   data_duration: number
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
@@ -223,7 +227,7 @@ export interface PredictionTooltipNode {
 }
 
 export interface CreateDeviceManagmenntScriptRequest extends AlertRule {
-  organization: string
+  organization: OrganizationID
   organization_name: string
   predict_mode: string
   task_template?: string
@@ -240,8 +244,8 @@ export interface CreateDeviceManagmenntScriptResponse extends AlertRule {
 }
 
 export interface UpdateDeviceManagmenntScriptRequest extends AlertRule {
-  organization: string
-  organization_name: string
+  organization: OrganizationID
+  organization_name: OrganizationName
   predict_mode: string
   task_template?: string
 }

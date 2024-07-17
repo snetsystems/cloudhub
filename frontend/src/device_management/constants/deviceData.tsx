@@ -83,6 +83,7 @@ export const DEFAULT_LEARNING_OPTION: LearningOption = {
   organization: '',
   data_duration: 15,
   ml_function: 'ml_gaussian_std' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
+  task_status: 2,
 }
 
 export const DEFAULT_CRON_SCHEDULE = '1 0 1,15 * *'

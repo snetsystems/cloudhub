@@ -7,8 +7,8 @@ export const MONITORING_MODAL_INFO = {
   monitoringMessage: (
     <>
       This action will{' '}
-      <label className="label-warning">pause data collection </label>for about 1
-      minute. Would you like to{' '}
+      <label className="label-warning">pause data collection </label>for around
+      1 minute. Would you like to{' '}
       <label className="label-info--apply">apply</label>?
     </>
   ),
@@ -39,20 +39,17 @@ export const MONITORING_MODAL_INFO = {
   ),
   ML_DL_SettingKapacitorEmpty: (
     <>
-      There is <label className="label-warning">0 kapacitor </label>to configure
-      ML/DL Setting.
+      <label className="label-warning">No kapacitors are available</label> for
+      configuration.
     </>
   ),
   ML_DL_SettingKapacitorInvalid: (
     <>
-      Kapacitor
+      The selected organization
       <label className="label-warning">
         {' '}
-        has been deleted or not registered.{' '}
+        has no devices available for learning.{' '}
       </label>
-      Please
-      <label className="label-warning"> update </label>
-      the Kapacitor.
     </>
   ),
 }

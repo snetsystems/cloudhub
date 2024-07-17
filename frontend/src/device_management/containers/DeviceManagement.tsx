@@ -39,6 +39,7 @@ import {
   DeviceMonitoringStatus,
   DevicesOrgData,
   Kapacitor,
+  FailedDevice,
 } from 'src/types'
 
 // API
@@ -141,7 +142,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       this.getDeviceAJAX()
       this.getNetworkDeviceOrganizationsAJAX()
       this.fetchDeviceMonitoringStatus()
-      this.getKapacitors()
+      this.getKapacitorsFromSelectedSource(this.props.source)
     } catch (error) {
       console.error(error?.message || 'Unknown Error')
       throw error
@@ -153,7 +154,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {me, organizations, isUsingAuth, source} = this.props
+    const {me, organizations, isUsingAuth, source, sources} = this.props
     const {
       data,
       deviceMonitoringStatus,
@@ -236,11 +237,13 @@ class DeviceManagement extends PureComponent<Props, State> {
           notify={this.props.notify}
           onClose={this.onCloseLearningSettingModal}
           source={source}
+          sources={sources}
           kapacitors={this.state.kapacitors}
           getDeviceAJAX={this.getDeviceAJAX}
           getNetworkDeviceOrganizationsAJAX={
             this.getNetworkDeviceOrganizationsAJAX
           }
+          getKapacitorsFromSelectedSource={this.getKapacitorsFromSelectedSource}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
         />
         <ApplyMonitoringModal
@@ -382,7 +385,12 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({isLoading: true})
 
     try {
-      await deleteDevice({devices_ids: idList})
+      const {data} = await deleteDevice({devices_ids: idList})
+
+      if (data?.failed_devices && data?.failed_devices?.length > 0) {
+        this.handleCreateDevicesErrorWithFailedDevices(data?.failed_devices)
+        return
+      }
 
       this.props.notify(notifyDeleteDevicesSucceeded())
       this.getDeviceAJAX()
@@ -396,6 +404,34 @@ class DeviceManagement extends PureComponent<Props, State> {
       this.getNetworkDeviceOrganizationsAJAX()
       this.setState({checkedArray: [], isLoading: false})
     }
+  }
+
+  private handleCreateDevicesErrorWithFailedDevices = (
+    failedDevices: FailedDevice[]
+  ) => {
+    const failedMessage = this.getFailedDevicesErrorMessage(failedDevices)
+
+    this.props.notify(notifyDeleteDevicesFailed(failedMessage))
+  }
+
+  private getFailedDevicesErrorMessage = (
+    failedDevices: FailedDevice[]
+  ): string => {
+    const limit = 5
+    let messages = ''
+
+    if (failedDevices) {
+      messages = failedDevices
+        .slice(0, limit)
+        .map(device => `${device.device_ip}: ${device.errorMessage}`)
+        .join('.')
+    }
+
+    if (failedDevices && failedDevices.length > limit) {
+      messages += `Total ${failedDevices.length} devices failed`
+    }
+
+    return `${messages}`
   }
 
   private connectDevice = (
@@ -455,15 +491,23 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.setState({checkedArray: []})
   }
 
-  private getKapacitors = async () => {
-    const {source, sources} = this.props
+  private getKapacitorsFromSelectedSource = async (source: Source) => {
+    if (!source) {
+      this.setState({kapacitors: []})
+      return
+    }
 
     try {
-      const currentSource = sources.find(s => s.id === source.id)
-      const kapacitors = await getKapacitors(currentSource)
+      const kapacitors = await getKapacitors(source)
+
+      if (!kapacitors) {
+        this.setState({kapacitors: []})
+        return
+      }
 
       this.setState({kapacitors})
     } catch (error) {
+      this.setState({kapacitors: []})
       this.props.notify(notifyKapacitorConnectionFailed())
     }
   }

@@ -17,7 +17,10 @@ interface Props {
   source: Source
   kapacitorName: string
   buttonSize?: string
-  setActiveKapacitor: (kapacitor: KapacitorForNetworkDeviceOrganization) => void
+  setActiveKapacitor: (
+    kapacitorForNetworkOrg: KapacitorForNetworkDeviceOrganization,
+    kapacitor: Kapacitor
+  ) => void
 }
 
 interface KapacitorItem {
@@ -75,7 +78,7 @@ export default class DeviceManagementKapacitorDropdown extends PureComponent<Pro
   private handleSetActiveKapacitor = (item: KapacitorItem) => {
     const {setActiveKapacitor} = this.props
 
-    setActiveKapacitor(this.convertKapacitor(item.kapacitor))
+    setActiveKapacitor(this.convertKapacitor(item.kapacitor), item.kapacitor)
   }
 
   private get isKapacitorsEmpty(): boolean {

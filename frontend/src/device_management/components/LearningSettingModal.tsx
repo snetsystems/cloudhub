@@ -29,7 +29,6 @@ import {
   MLFunctionMsg,
   MONITORING_MODAL_INFO,
 } from 'src/device_management/constants'
-import {DEFAULT_KAPACITOR} from 'src/shared/constants'
 
 // Action
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -53,20 +52,24 @@ import {
 
 // API
 import {
-  createDeviceOrganization,
   getSpecificRule,
   updateDeviceOrganization,
   updateTaskForDeviceManagement,
 } from 'src/device_management/apis'
-import {getKapacitors, getSource} from 'src/shared/apis'
+import {getKapacitors} from 'src/shared/apis'
 
 // Utils
-import {getOrganizationIdByName} from 'src/device_management/utils'
+import {
+  convertSourcesToDropdownItems,
+  getSourceBySourceID,
+  getOrganizationIdByName,
+  getOrganizationNameByID,
+  isNetworkDeviceOrganizationCreatedWithSrcId,
+  getSourceByTelegrafDatabase,
+} from 'src/device_management/utils'
 
 // ETC
 import {
-  notifyCreateNetworkDeviceOrganizationFailed,
-  notifyCreateNetworkDeviceOrganizationSucceeded,
   notifyKapacitorConnectionFailed,
   notifyTickscriptUpdateFailedWithMessage,
   notifyTickscriptUpdated,
@@ -81,9 +84,11 @@ interface Props {
   organizations?: Organization[]
   orgLearningModel?: DevicesOrgData[]
   source: Source
+  sources: Source[]
   notify: (n: Notification) => void
   onClose: () => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
+  getKapacitorsFromSelectedSource: (source: Source) => Promise<void>
   getDeviceAJAX: () => Promise<void>
   getNetworkDeviceOrganizationsAJAX: () => Promise<void>
 }
@@ -94,74 +99,93 @@ function LearningSettingModal({
   organizations,
   orgLearningModel,
   kapacitors,
+  sources,
   source,
   notify,
   onClose,
   setDeviceManagementIsLoading,
   getDeviceAJAX,
   getNetworkDeviceOrganizationsAJAX,
+  getKapacitorsFromSelectedSource,
 }: Props) {
   const [learningOption, setLearningOption] = useState<LearningOption>(
     DEFAULT_LEARNING_OPTION
   )
-  const [isUpdateAfterCreate, setIsUpdateAfterCreate] = useState<boolean>(false)
-  const [
-    isStoredKapacitorInValid,
-    setIsStoredKapacitorInValid,
-  ] = useState<boolean>(false)
-  const [storedKapacitor, setStoredKapacitor] = useState<Kapacitor>(
-    DEFAULT_KAPACITOR
+  const [isKapacitorInValid, setIsKapacitorInValid] = useState<boolean>(false)
+  const [selectedKapacitor, setSelectedKapacitor] = useState<Kapacitor | null>(
+    null
   )
-  const [storedKapacitorName, setStoredKapacitorName] = useState<string>('')
   const [taskForTiskscriptUpdate, setTaskForTiskscriptUpdate] = useState<Task>(
     DEFAULT_TASK
   )
   const [cronSchedule, setCronSchedule] = useState<string>(
     DEFAULT_CRON_SCHEDULE
   )
+  const [selectedSource, setSelectedSource] = useState<Source>(source)
 
   useEffect(() => {
-    const organizationID = me.currentOrganization.id
-    const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
-      i => i.organization === organizationID
-    )
+    if (isVisible) {
+      const organizationID = getOrganizationIdByName(
+        organizations,
+        selectedSource?.telegraf
+      )
+      const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
+        i => i.organization === organizationID
+      )
 
-    if (isNetworkDeviceOrganizationCreated) {
-      const transformedData = transformOrgLearningModelToLearningOption()
-      setLearningOption(transformedData)
-    } else {
-      setLearningOption(() => ({
-        data_duration: DEFAULT_LEARNING_OPTION.data_duration,
-        ml_function: DEFAULT_LEARNING_OPTION.ml_function,
-        organization: me?.currentOrganization?.name || '',
-      }))
-      setCronSchedule(DEFAULT_CRON_SCHEDULE)
-      setStoredKapacitorName('')
+      if (isNetworkDeviceOrganizationCreated) {
+        const transformedData = transformOrgLearningModelToLearningOption()
+
+        setLearningOption(transformedData)
+        getKapacitorsBySelectedSource(organizationID)
+        fetchAlertRule(organizationID)
+      } else {
+        setLearningOption(() => ({
+          data_duration: DEFAULT_LEARNING_OPTION.data_duration,
+          ml_function: DEFAULT_LEARNING_OPTION.ml_function,
+          organization: organizationID,
+        }))
+        getKapacitorsBySelectedSource(organizationID)
+        fetchAlertRule(organizationID)
+        setCronSchedule(DEFAULT_CRON_SCHEDULE)
+      }
     }
   }, [isVisible])
 
   const scrollMaxHeight = window.innerHeight * 0.4
-  let dropdownCurOrg = [
-    {
-      ...me.currentOrganization,
-      text: me.currentOrganization.name,
-    },
-  ]
+  const availableSources =
+    me.superAdmin && me.currentOrganization.id === 'default'
+      ? sources
+      : [source]
+
+  const getKapacitorsBySelectedSource = organizationID => {
+    const organizationName = getOrganizationNameByID(
+      organizations,
+      organizationID
+    )
+    const sourceForSuperAdmin = getSourceByTelegrafDatabase(
+      sources,
+      organizationName
+    )
+    const sourceForGetKapacitor =
+      me.superAdmin && me.currentOrganization.id === 'default'
+        ? sourceForSuperAdmin
+        : source
+
+    getKapacitorsFromSelectedSource(sourceForGetKapacitor)
+  }
 
   const transformOrgLearningModelToLearningOption = (): LearningOption => {
-    const currentOrg = _.get(me, 'currentOrganization')
+    const organizationID = getOrganizationIdByName(
+      organizations,
+      selectedSource.telegraf
+    )
     const currentNetworkDeviceOrganization = orgLearningModel.find(
-      i => i.organization === currentOrg.id
+      i => i.organization === organizationID
     )
 
-    if (isVisible)
-      checkValidKapacitor(
-        currentNetworkDeviceOrganization.ai_kapacitor,
-        currentOrg.id
-      )
-
     return {
-      organization: currentOrg.name,
+      organization: organizationID,
       data_duration: currentNetworkDeviceOrganization.data_duration,
       ml_function: currentNetworkDeviceOrganization.ml_function,
       ai_kapacitor: currentNetworkDeviceOrganization.ai_kapacitor,
@@ -169,14 +193,14 @@ function LearningSettingModal({
   }
 
   const transformOrgLearningModelToLearningOptionWithOrganization = (
-    organization: Organization
+    organizationID: string
   ): LearningOption => {
     const currentNetworkDeviceOrganization = orgLearningModel.find(
-      i => i.organization === organization.id
+      i => i.organization === organizationID
     )
 
     return {
-      organization: organization.name,
+      organization: organizationID,
       data_duration: currentNetworkDeviceOrganization.data_duration,
       ml_function: currentNetworkDeviceOrganization.ml_function,
       ai_kapacitor: currentNetworkDeviceOrganization.ai_kapacitor,
@@ -184,32 +208,39 @@ function LearningSettingModal({
   }
 
   const setLearningDropdownState = (key: keyof LearningOption) => (
-    value: DropdownItem | Organization
+    value: DropdownItem | Source
   ) => {
     if (key === 'organization') {
+      const selectedSource = getSourceBySourceID(sources, (value as Source).id)
+      const organizationID =
+        getOrganizationIdByName(organizations, selectedSource?.telegraf) || ''
+      const organizationName = getOrganizationNameByID(
+        organizations,
+        organizationID
+      )
+
       const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
-        i => i.organization === (value as Organization).id
+        i => i.organization === organizationName
       )
 
       if (isNetworkDeviceOrganizationCreated) {
         const transformedData = transformOrgLearningModelToLearningOptionWithOrganization(
-          value as Organization
+          organizationID
         )
 
         setLearningOption(transformedData)
-        checkValidKapacitor(
-          transformedData.ai_kapacitor,
-          (value as Organization).id
-        )
       } else {
         setLearningOption({
           data_duration: DEFAULT_LEARNING_OPTION.data_duration,
           ml_function: DEFAULT_LEARNING_OPTION.ml_function,
-          organization: (value as Organization).name || '',
+          organization: organizationID || '',
         })
         setCronSchedule(DEFAULT_CRON_SCHEDULE)
-        setStoredKapacitorName('')
       }
+
+      getKapacitorsBySelectedSource(organizationID)
+      fetchAlertRule(organizationID)
+      setSelectedSource(selectedSource)
     } else {
       setLearningOption({
         ...learningOption,
@@ -218,45 +249,64 @@ function LearningSettingModal({
     }
   }
 
-  const checkValidKapacitor = async (kapacitor, organizationID) => {
-    const {srcId, kapaId} = kapacitor
-
-    if (srcId === undefined || kapaId === undefined) {
-      setIsStoredKapacitorInValid(true)
-      return
-    }
-
-    setDeviceManagementIsLoading(true)
-
+  const fetchAlertRule = async (organizationID: string) => {
     try {
-      const source = await getSource(srcId)
-      const kapacitors = await getKapacitors(source)
-      const aiKapacitor = kapacitors
-        ? kapacitors.find(kapacitor => kapacitor.id === kapaId)
-        : undefined
-      const aiKapacitorName = aiKapacitor?.name || ''
+      const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
+        orgLearningModel,
+        getOrganizationNameByID(organizations, organizationID) || ''
+      )
 
-      if (aiKapacitor) {
-        await fetchSpecificAlertRule(aiKapacitor, organizationID)
+      const organizationName =
+        getOrganizationNameByID(organizations, organizationID) || ''
+      const _source = getSourceByTelegrafDatabase(sources, organizationName)
+
+      if (!_source) {
+        setIsKapacitorInValid(true)
+        setSelectedKapacitor(null)
+        return
       }
 
-      setIsStoredKapacitorInValid(!aiKapacitor)
-      setStoredKapacitor(aiKapacitor || DEFAULT_KAPACITOR)
-      setStoredKapacitorName(aiKapacitorName)
+      setDeviceManagementIsLoading(true)
+
+      const kapacitors = await getKapacitors(_source)
+
+      if (!isNetworkDeviceOrganizationValid) {
+        setIsKapacitorInValid(true)
+        setSelectedKapacitor(kapacitors?.[0] || null)
+        setDeviceManagementIsLoading(false)
+        return
+      }
+
+      setIsKapacitorInValid(!kapacitors?.[0])
+      setSelectedKapacitor(kapacitors?.[0] || null)
+
+      if (kapacitors?.[0]) {
+        await fetchSpecificAlertRule(kapacitors?.[0], organizationID)
+      }
       setDeviceManagementIsLoading(false)
     } catch (error) {
       setDeviceManagementIsLoading(false)
+      setIsKapacitorInValid(true)
+      setSelectedKapacitor(null)
       console.error(notifyKapacitorConnectionFailed())
     }
   }
 
   const setKapacitorDropdownState = (
-    kapacitor: KapacitorForNetworkDeviceOrganization
+    kapacitorForNetworkOrg: KapacitorForNetworkDeviceOrganization,
+    kapacitor: Kapacitor
   ) => {
-    setIsStoredKapacitorInValid(false)
+    const organizationID = getOrganizationIdByName(
+      organizations,
+      selectedSource?.telegraf
+    )
+
+    fetchAlertRule(organizationID)
+    setSelectedKapacitor(kapacitor)
+    setIsKapacitorInValid(false)
     setLearningOption({
       ...learningOption,
-      ai_kapacitor: kapacitor,
+      ai_kapacitor: kapacitorForNetworkOrg,
     })
   }
 
@@ -278,27 +328,46 @@ function LearningSettingModal({
 
   const onSubmit = () => {
     const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
-      i =>
-        i.organization ===
-        getOrganizationIdByName(organizations, learningOption?.organization)
+      i => i.organization === learningOption?.organization
     )
 
-    if (isUpdateAfterCreate || isNetworkDeviceOrganizationCreated) {
+    if (isNetworkDeviceOrganizationCreated) {
       updateDeviceOrganizationAjax()
     } else {
-      createDeviceOrganizationAjax()
+      notify(
+        notifyUpdateNetworkDeviceOrganizationFailed(
+          'The selected organization has no devices available for learning.'
+        )
+      )
     }
   }
 
   const updateDeviceOrganizationAjax = async () => {
     const {organization, ...rest} = learningOption
 
-    if (isStoredKapacitorInValid) {
-      notify(
-        notifyUpdateNetworkDeviceOrganizationFailed(
-          'The Kapacitor you registered has been deleted. Please update the Kapacitor.'
-        )
+    const notifyFailure = (message: string) => {
+      notify(notifyUpdateNetworkDeviceOrganizationFailed(message))
+    }
+
+    if (isKapacitorEmpty()) {
+      notifyFailure('No kapacitors are available for configuration.')
+      return
+    }
+
+    const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
+      orgLearningModel,
+      organization
+    )
+
+    if (!isNetworkDeviceOrganizationValid) {
+      notifyFailure(
+        'The selected organization has no devices available for learning.'
       )
+      return
+    }
+
+    if (isKapacitorNotSelected()) {
+      notifyFailure('No kapacitors are available for configuration.')
       return
     }
 
@@ -306,47 +375,38 @@ function LearningSettingModal({
       setDeviceManagementIsLoading(true)
 
       await updateDeviceOrganization({
-        id: getOrganizationIdByName(organizations, organization),
-        orgLearningModel: {...rest, cron_schedule: cronSchedule},
+        id: organization,
+        orgLearningModel: {
+          ...rest,
+          task_status: getTaskStatus(),
+          cron_schedule: cronSchedule,
+        },
       })
       await updateTask()
 
       notify(notifyUpdateNetworkDeviceOrganizationSucceeded())
       finalizeApplyMLDLSettingAPIResponse()
     } catch (error) {
-      notify(
-        notifyUpdateNetworkDeviceOrganizationFailed(
-          error?.message || 'Unknown Error'
-        )
-      )
+      notifyFailure(error?.message || 'Unknown Error')
       finalizeApplyMLDLSettingAPIResponse()
     }
   }
 
-  const createDeviceOrganizationAjax = async () => {
-    const {organization, ...rest} = learningOption
+  const getTaskStatus = (): 1 | 2 => {
+    const status = taskForTiskscriptUpdate?.status
+    return status
+      ? status === 'enabled'
+        ? 2
+        : 1
+      : DEFAULT_LEARNING_OPTION.task_status
+  }
 
-    try {
-      setDeviceManagementIsLoading(true)
-      await createDeviceOrganization({
-        orgLearningModel: {
-          organization: getOrganizationIdByName(organizations, organization),
-          ...rest,
-          cron_schedule: cronSchedule,
-        },
-      })
+  const isKapacitorEmpty = (): boolean => {
+    return kapacitors.length === 0
+  }
 
-      setIsUpdateAfterCreate(true)
-      notify(notifyCreateNetworkDeviceOrganizationSucceeded())
-      finalizeApplyMLDLSettingAPIResponse()
-    } catch (error) {
-      notify(
-        notifyCreateNetworkDeviceOrganizationFailed(
-          error?.message || 'Unknown Error'
-        )
-      )
-      finalizeApplyMLDLSettingAPIResponse()
-    }
+  const isKapacitorNotSelected = () => {
+    return selectedKapacitor === null || selectedKapacitor === undefined
   }
 
   const finalizeApplyMLDLSettingAPIResponse = () => {
@@ -396,15 +456,16 @@ function LearningSettingModal({
   }
 
   const updateTask = async () => {
-    const organizationID = getOrganizationIdByName(
-      organizations,
-      learningOption.organization
-    )
+    const organizationID = learningOption.organization
 
     try {
       const updatedTask = replaceCronInTickscript()
       const ruleID = `${LEARN_TASK_PREFIX}${organizationID}`
-      await updateTaskForDeviceManagement(storedKapacitor, updatedTask, ruleID)
+      await updateTaskForDeviceManagement(
+        selectedKapacitor,
+        updatedTask,
+        ruleID
+      )
 
       notify(notifyTickscriptUpdated())
     } catch (error) {
@@ -431,16 +492,6 @@ function LearningSettingModal({
     }
   }
 
-  const isKapacitorEmpty = (): boolean => {
-    const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
-      i =>
-        i.organization ===
-        getOrganizationIdByName(organizations, learningOption.organization)
-    )
-
-    return !isNetworkDeviceOrganizationCreated && kapacitors.length === 0
-  }
-
   const LearningSettingModalMessage = () => {
     return (
       <>
@@ -451,7 +502,7 @@ function LearningSettingModal({
             </div>
           </Form.Element>
         ) : (
-          isStoredKapacitorInValid && (
+          isKapacitorInValid && (
             <Form.Element>
               <div className="device-management-message">
                 {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorInvalid}
@@ -480,11 +531,13 @@ function LearningSettingModal({
                   <div className="form-group col-xs-12">
                     <label>Organization</label>
                     <Dropdown
-                      items={dropdownCurOrg}
+                      items={convertSourcesToDropdownItems(availableSources)}
                       onChoose={setLearningDropdownState('organization')}
                       selected={
-                        learningOption?.organization ||
-                        me?.currentOrganization?.name
+                        getOrganizationNameByID(
+                          organizations,
+                          learningOption?.organization
+                        ) || ''
                       }
                       className="dropdown-stretch"
                     />
@@ -506,7 +559,7 @@ function LearningSettingModal({
                   <WizardTextInput
                     value={`${learningOption.data_duration}`}
                     type="number"
-                    label="Data Duration(days)"
+                    label="Data Duration (days)"
                     onChange={setLearningInputState('data_duration')}
                   />
                   <WizardTextInput
@@ -521,13 +574,18 @@ function LearningSettingModal({
                     className="form-group col-xs-12"
                     style={{height: '95px'}}
                   >
-                    <label>Kapacitor</label>
+                    <label>Kapacitor (AI Engine)</label>
                     <DeviceManagementKapacitorDropdown
-                      source={source}
-                      selectedKapacitor={learningOption.ai_kapacitor}
+                      source={selectedSource}
+                      // TODO Change ai_kapacitor
+                      selectedKapacitor={{
+                        ...selectedKapacitor,
+                        srcId: selectedSource?.id || '',
+                        kapaId: selectedKapacitor?.id || '',
+                      }}
                       kapacitors={kapacitors}
                       setActiveKapacitor={setKapacitorDropdownState}
-                      kapacitorName={storedKapacitorName}
+                      kapacitorName={selectedKapacitor?.name || ''}
                     />
                   </div>
 

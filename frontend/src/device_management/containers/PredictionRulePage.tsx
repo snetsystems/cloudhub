@@ -19,7 +19,7 @@ import {
 
 // Components
 import PageSpinner from 'src/shared/components/PageSpinner'
-import PredictionRule from 'src/device_management/containers/PredictionRule'
+import PredictionRule from 'src/device_management/components/PredictionRule'
 
 // Actions
 import * as kapacitorRuleActionCreators from 'src/kapacitor/actions/view'
@@ -27,16 +27,18 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {KapacitorRuleActions} from 'src/types/actions'
 
 // API
-import {
-  getKapacitorConfig,
-  getSource,
-  getKapacitors,
-} from 'src/shared/apis/index'
+import {getKapacitorConfig, getKapacitors} from 'src/shared/apis/index'
 import {getAllDevicesOrg} from 'src/device_management/apis'
 
 // Utils
 import parseHandlersFromConfig from 'src/shared/parsing/parseHandlersFromConfig'
-import {getOrganizationNameByID} from 'src/device_management/utils'
+import {
+  getOrganizationIdByName,
+  getOrganizationNameByID,
+  getSourceByTelegrafDatabase,
+  getSourceBySourceID,
+  isNetworkDeviceOrganizationCreatedWithSrcId,
+} from 'src/device_management/utils'
 
 // Constants
 import {
@@ -56,6 +58,7 @@ interface Auth {
 }
 
 interface Props {
+  sources: Source[]
   source: Source
   rules: AlertRule[]
   ruleActions: KapacitorRuleActions
@@ -73,9 +76,10 @@ interface State {
   selectedOrganizationID: string
   orgLearningModel: DevicesOrgData[]
   sourceForNetworkDeviceOrganizationKapacitor: Source
-  isTickscriptCreated: boolean
-  isLoading: boolean
   predictMode: PredictModeKey
+  isLoading: boolean
+  isTickscriptCreated: boolean
+  isNetworkDeviceOrganizationValid: boolean
 }
 
 @ErrorHandling
@@ -93,6 +97,7 @@ class PredictionRulePage extends Component<Props, State> {
       sourceForNetworkDeviceOrganizationKapacitor: DEFAULT_SOURCE as Source,
       selectedOrganizationID: '',
       predictMode: DEFAULT_PREDICT_MODE,
+      isNetworkDeviceOrganizationValid: true,
     }
   }
 
@@ -107,6 +112,7 @@ class PredictionRulePage extends Component<Props, State> {
       await this.getNetworkDeviceOrganizationsAJAX()
       await this.fetchSpecificAlertRule(me.currentOrganization.id)
     } catch (error) {
+      this.initializeState(true)
       console.error(error?.message || 'Unknown Error')
     }
   }
@@ -122,6 +128,7 @@ class PredictionRulePage extends Component<Props, State> {
         await this.getNetworkDeviceOrganizationsAJAX()
         await this.fetchSpecificAlertRule(this.state.selectedOrganizationID)
       } catch (error) {
+        this.initializeState(true)
         console.error(error)
       }
     }
@@ -138,6 +145,7 @@ class PredictionRulePage extends Component<Props, State> {
       selectedOrganizationID
     )
     if (
+      currentRule.status !== prevRule.status ||
       currentRule.id !== prevRule.id ||
       currentRule.tickscript !== prevRule.tickscript ||
       !_.isEqual(currentRule.alertNodes, prevRule.alertNodes) ||
@@ -170,94 +178,41 @@ class PredictionRulePage extends Component<Props, State> {
     }
   }
 
-  private getSourceForNetworkDeviceOrganizationKapacitor = async (): Promise<Source | null> => {
-    const {selectedOrganizationID} = this.state
-    let source: Source | null = null
-
-    if (selectedOrganizationID === '') {
-      return null
-    }
-
-    const currentNetworkDeviceOrganization = this.getCurrentNetworkDeviceOrganization(
-      selectedOrganizationID
-    )
-    if (!currentNetworkDeviceOrganization) {
-      return null
-    }
-
-    const kapacitorForCurrentNetworkDeviceOrganization =
-      currentNetworkDeviceOrganization.ai_kapacitor
-    if (!kapacitorForCurrentNetworkDeviceOrganization) {
-      return null
-    }
-
-    const {srcId} = kapacitorForCurrentNetworkDeviceOrganization
-    if (!srcId) {
-      return null
-    }
-
-    try {
-      source = await getSource(srcId)
-      this.setState({sourceForNetworkDeviceOrganizationKapacitor: source})
-    } catch (error) {
-      console.error(error?.message || 'Unknown Error')
-      return null
-    }
-
-    return source
-  }
-
-  private getCurrentNetworkDeviceOrganization = (
-    organizationID
-  ): DevicesOrgData => {
+  private fetchSpecificAlertRule = async (organizationID: string) => {
+    const {sources, organizations} = this.props
     const {orgLearningModel} = this.state
 
-    return orgLearningModel.find(i => i.organization === organizationID)
-  }
-
-  private fetchSpecificAlertRule = async (organizationID: string) => {
-    if (!this.checkNetworkDeviceOrganizationCreated(organizationID)) {
-      this.initializeState(true)
-      return
-    }
-
-    const currentNetworkDeviceOrganization = this.getCurrentNetworkDeviceOrganization(
-      organizationID
-    )
-    const kapacitorID = currentNetworkDeviceOrganization?.ai_kapacitor?.kapaId
-
-    if (!kapacitorID) {
-      this.initializeState(true)
-      return
-    }
-
     try {
-      const source = await this.getSourceForNetworkDeviceOrganizationKapacitor()
-      if (!source) {
+      const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
+        orgLearningModel,
+        organizationID
+      )
+      const organizationName =
+        getOrganizationNameByID(organizations, organizationID) || ''
+      const selectedSource = getSourceByTelegrafDatabase(
+        sources,
+        organizationName
+      )
+
+      if (!selectedSource || !isNetworkDeviceOrganizationValid) {
         this.initializeState(true)
+        this.setState({
+          isNetworkDeviceOrganizationValid: false,
+        })
         return
       }
 
-      const kapacitors = await getKapacitors(source)
-      const kapacitorStoredInNetworkDeviceOrganization = kapacitors?.find(
-        kapacitor => kapacitor.id === kapacitorID
-      )
       const ruleID = `${PREDICT_TASK_PREFIX}${organizationID}`
 
-      if (kapacitorStoredInNetworkDeviceOrganization) {
-        await this.props.ruleActions.fetchRuleWithCallback(
-          source,
-          ruleID,
-          this.setRuleAndPredictModeForFetchedRule.bind(this),
-          this.initializeState.bind(this, true)()
-        )
+      await this.props.ruleActions.fetchRuleWithCallback(
+        selectedSource,
+        ruleID,
+        this.setRuleAndPredictModeForFetchedRule.bind(this),
+        this.initializeState.bind(this, true)()
+      )
 
-        await this.getKapacitorConfig(
-          kapacitorStoredInNetworkDeviceOrganization
-        )
-      } else {
-        this.initializeState(true)
-      }
+      const kapacitors = await getKapacitors(selectedSource)
+      await this.getKapacitorConfig(kapacitors?.[0])
     } catch (error) {
       this.initializeState(true)
       console.error(error)
@@ -271,17 +226,10 @@ class PredictionRulePage extends Component<Props, State> {
 
     this.setState({
       isTickscriptCreated: false,
-      handlersFromConfig: [],
       kapacitor: DEFAULT_KAPACITOR,
-      sourceForNetworkDeviceOrganizationKapacitor: DEFAULT_SOURCE as Source,
-      // TODO Consider Fetch Kapacitor
       predictMode: DEFAULT_PREDICT_MODE,
+      handlersFromConfig: [],
     })
-  }
-
-  private checkNetworkDeviceOrganizationCreated(organizationID) {
-    const {orgLearningModel} = this.state
-    return orgLearningModel.some(item => item.organization === organizationID)
   }
 
   private setRuleAndPredictModeForFetchedRule = (fetchedRule: {
@@ -355,19 +303,37 @@ class PredictionRulePage extends Component<Props, State> {
   }
 
   private getKapacitorConfig = async (kapacitor: Kapacitor) => {
+    if (!kapacitor) {
+      this.setState({
+        isNetworkDeviceOrganizationValid: false,
+      })
+      this.initializeState(true)
+    }
+
     try {
       const kapacitorConfig = await getKapacitorConfig(kapacitor)
       const handlersFromConfig = parseHandlersFromConfig(kapacitorConfig)
 
       this.setState({kapacitor, handlersFromConfig})
     } catch (error) {
+      this.setState({
+        isNetworkDeviceOrganizationValid: false,
+      })
       this.initializeState(true)
       console.error(error)
     }
   }
 
-  private setLearningDropdownState = (organization: Organization) => {
-    this.setState({selectedOrganizationID: organization.id})
+  private setOrganizationDropdown = (organization: Source) => {
+    const {organizations, sources} = this.props
+    const selectedSource = getSourceBySourceID(sources, organization.id)
+    const organizationID =
+      getOrganizationIdByName(organizations, selectedSource?.telegraf) || ''
+
+    this.setState({
+      isNetworkDeviceOrganizationValid: true,
+      selectedOrganizationID: organizationID,
+    })
   }
 
   private setPredictMode = predictMode => {
@@ -375,25 +341,31 @@ class PredictionRulePage extends Component<Props, State> {
   }
 
   public render() {
-    const {source, router, ruleActions, auth, organizations} = this.props
+    const {
+      sources,
+      source,
+      router,
+      ruleActions,
+      auth,
+      organizations,
+      notify,
+    } = this.props
     const {
       handlersFromConfig,
       kapacitor,
       selectedOrganizationID,
       rule,
       isTickscriptCreated,
+      isNetworkDeviceOrganizationValid,
       predictMode,
     } = this.state
-
-    const selectedOrganizationName = getOrganizationNameByID(
-      organizations,
-      selectedOrganizationID
-    )
 
     return (
       <>
         {this.LoadingState}
         <PredictionRule
+          notify={notify}
+          sources={sources}
           source={source}
           me={auth.me}
           rule={rule}
@@ -401,11 +373,12 @@ class PredictionRulePage extends Component<Props, State> {
           handlersFromConfig={handlersFromConfig}
           router={router}
           kapacitor={kapacitor}
-          selectedOrganizationName={selectedOrganizationName}
+          selectedOrganizationID={selectedOrganizationID}
           organizations={organizations}
           selectedPredictMode={predictMode}
           isTickscriptCreated={isTickscriptCreated}
-          setLearningDropdownState={this.setLearningDropdownState}
+          isNetworkDeviceOrganizationValid={isNetworkDeviceOrganizationValid}
+          setOrganizationDropdown={this.setOrganizationDropdown}
           setPredictMode={this.setPredictMode}
           setisTickscriptCreated={this.setisTickscriptCreated}
           setLoadingForCreateAndUpdateScript={

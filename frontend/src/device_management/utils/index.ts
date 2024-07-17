@@ -4,7 +4,11 @@ import {
   DeviceDataMonitoringStatus,
   Organization,
   SeriesObj,
+  DevicesOrgData,
+  DropdownItem,
+  Source,
 } from 'src/types'
+import {OrganizationID} from 'src/types/deviceManagement'
 import {MLFunctionMsg} from 'src/device_management/constants'
 
 export const hasMonitoringDevice = (
@@ -165,4 +169,50 @@ export const decimalUnitNumber = (value: string, unit: string) => {
   } else {
     return 'unknown'
   }
+}
+
+export const convertSourcesToDropdownItems = (
+  sources: Source[]
+): DropdownItem[] => {
+  return sources.map(source => ({
+    ...source,
+    text: source.name,
+  }))
+}
+
+export const getSourceByName = (
+  sources: Source[],
+  sourceName: string
+): Source | undefined => {
+  return sources.find(s => s.name === sourceName)
+}
+
+export const getSourceByTelegrafDatabase = (
+  sources: Source[],
+  organizationName: string
+): Source | undefined => {
+  return sources.find(s => s.telegraf === organizationName)
+}
+
+export const getSourceBySourceID = (
+  sources: Source[],
+  sourceID: string
+): Source | undefined => {
+  return sources.find(s => s.id === sourceID)
+}
+
+export const getOrganizationFromSource = (source: Source): string => {
+  return source?.organization || ''
+}
+
+export const isNetworkDeviceOrganizationCreatedWithSrcId = (
+  orgLearningModel: DevicesOrgData[],
+  organizationName: OrganizationID
+) => {
+  const foundOrg = _.find(orgLearningModel, {organization: organizationName})
+
+  const srcId = _.get(foundOrg, 'ai_kapacitor.srcId', '')
+  const kapaId = _.get(foundOrg, 'ai_kapacitor.kapaId', '')
+
+  return srcId !== '' && kapaId !== ''
 }

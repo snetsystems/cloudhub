@@ -35,6 +35,7 @@ interface Props {
   handlersFromConfig: Handler[]
   onGoToConfig: (configName: string) => void
   validationError: string
+  isNetworkDeviceOrganizationValid: boolean
 }
 
 interface HandlerKind {
@@ -83,17 +84,36 @@ class PredictionRuleHandlers extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(prevProps) {
-    const {handlersFromConfig} = this.props
+    const {
+      handlersFromConfig,
+      isNetworkDeviceOrganizationValid,
+      rule,
+    } = this.props
 
     if (
-      prevProps.rule.name !== this.props.rule.name ||
-      prevProps.rule.id !== this.props.rule.id
+      prevProps.isNetworkDeviceOrganizationValid !==
+      isNetworkDeviceOrganizationValid
+    ) {
+      const isLoading = isNetworkDeviceOrganizationValid
+      this.setState({
+        selectedHandler: null,
+        handlersOnThisAlert: [],
+        handlersOfKind: {},
+        isLoading,
+      })
+      return
+    }
+
+    if (
+      prevProps.rule.name !== rule.name ||
+      prevProps.rule.id !== rule.id ||
+      !_.isEqual(prevProps.handlersFromConfig, handlersFromConfig)
     ) {
       const {
         selectedHandler,
         handlersOnThisAlert,
         handlersOfKind,
-      } = parseHandlersFromRule(this.props.rule, handlersFromConfig)
+      } = parseHandlersFromRule(rule, handlersFromConfig)
 
       this.setState({
         selectedHandler,
