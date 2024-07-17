@@ -330,18 +330,30 @@ function LearningSettingModal({
     kapacitorForNetworkOrg: KapacitorForNetworkDeviceOrganization,
     kapacitor: Kapacitor
   ) => {
-    const organizationID = getOrganizationIdByName(
-      organizations,
-      selectedSource?.telegraf
-    )
-
-    fetchAlertRule(organizationID)
+    fetchAlertRuleByKapacitor(kapacitor)
     setSelectedKapacitor(kapacitor)
     setIsKapacitorInValid(false)
     setLearningOption({
       ...learningOption,
       ai_kapacitor: kapacitorForNetworkOrg,
     })
+  }
+
+  const fetchAlertRuleByKapacitor = async (kapacitor: Kapacitor) => {
+    try {
+      const organizationID = getOrganizationIdByName(
+        organizations,
+        selectedSource?.telegraf
+      )
+
+      setDeviceManagementIsLoading(true)
+      await fetchSpecificAlertRule(kapacitor, organizationID)
+
+      setDeviceManagementIsLoading(false)
+    } catch (error) {
+      setDeviceManagementIsLoading(false)
+      console.error(notifyKapacitorConnectionFailed())
+    }
   }
 
   const setLearningInputState = (key: keyof LearningOption) => (
@@ -493,6 +505,7 @@ function LearningSettingModal({
 
       saveFormatTaskForTickscriptUpdate(rule)
     } catch (error) {
+      setCronSchedule(DEFAULT_CRON_SCHEDULE)
       console.error(error)
     }
   }
