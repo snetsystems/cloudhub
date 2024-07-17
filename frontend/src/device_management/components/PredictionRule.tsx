@@ -258,10 +258,10 @@ export default class PredictionRule extends Component<Props, State> {
       isNetworkDeviceOrganizationValid,
       isTickscriptCreated,
       source,
-      router,
+      // router,
       notify,
     } = this.props
-    const pageLink = `/sources/${source.id}/ai/prediction`
+    // const pageLink = `/sources/${source.id}/ai/prediction`
 
     if (!isNetworkDeviceOrganizationValid) {
       notify(notifyKapacitorEngineRequired())
@@ -274,7 +274,8 @@ export default class PredictionRule extends Component<Props, State> {
       this.handleCreate()
     }
 
-    router.push(pageLink)
+    // TODO Consider Router
+    // router.push(pageLink)
   }
 
   private handleCreate = async () => {
