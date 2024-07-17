@@ -25,7 +25,6 @@ import {connect} from 'react-redux'
 import * as appActions from 'src/shared/actions/app'
 import DeviceManagementModal from '../components/DeviceManagementModal'
 import PredictionPage from './PredictionPage'
-import moment from 'moment'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 import ManualRefresh, {
@@ -33,11 +32,9 @@ import ManualRefresh, {
 } from 'src/shared/components/ManualRefresh'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import {InjectedRouter, RouterState} from 'react-router'
-import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import {bindActionCreators} from 'redux'
-import {setPredictionTimeRange} from '../actions'
 
 interface RouterProps extends InjectedRouter {
   params: RouterState['params']
@@ -245,7 +242,6 @@ const mdtp = dispatch => ({
 
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
-  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(ManualRefresh<Props>(AiRoutePage))
