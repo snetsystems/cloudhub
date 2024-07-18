@@ -389,22 +389,25 @@ class DeviceManagement extends PureComponent<Props, State> {
 
       if (data?.failed_devices && data?.failed_devices?.length > 0) {
         this.handleDeleteDevicesErrorWithFailedDevices(data?.failed_devices)
-        this.setState({checkedArray: [], isLoading: false})
+        this.reFreshStateAfterDeleteDevices()
         return
       }
 
       this.props.notify(notifyDeleteDevicesSucceeded())
-      this.getDeviceAJAX()
-      this.getNetworkDeviceOrganizationsAJAX()
-      this.setState({checkedArray: [], isLoading: false})
+      this.reFreshStateAfterDeleteDevices()
     } catch (error) {
       this.props.notify(
         notifyDeleteDevicesFailed(error?.message || 'Unknown Error')
       )
-      this.getDeviceAJAX()
-      this.getNetworkDeviceOrganizationsAJAX()
-      this.setState({checkedArray: [], isLoading: false})
+      this.reFreshStateAfterDeleteDevices()
     }
+  }
+
+  private reFreshStateAfterDeleteDevices = () => {
+    this.getDeviceAJAX()
+    this.getNetworkDeviceOrganizationsAJAX()
+    this.fetchDeviceMonitoringStatus()
+    this.setState({checkedArray: [], isLoading: false})
   }
 
   private handleDeleteDevicesErrorWithFailedDevices = (
