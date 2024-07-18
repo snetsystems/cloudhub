@@ -2,6 +2,7 @@ package kapacitor
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -516,8 +517,9 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 	rule := cloudhub.AlertRule{
 		Query: &cloudhub.QueryConfig{},
 	}
+	regexStr := fmt.Sprintf(`%s`, regex)
 	// Remove @predict() calls from the script
-	re := regexp.MustCompile(regex)
+	re := regexp.MustCompile(regexStr)
 	modifiedScript := re.ReplaceAllString(string(script), "")
 
 	scope := stateful.NewScope()
