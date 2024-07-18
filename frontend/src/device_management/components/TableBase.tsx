@@ -180,9 +180,9 @@ function TableBase({
                         {!!sortTarget &&
                           sortTarget.key === column.key &&
                           (sortTarget?.isDesc ? (
-                            <span className="icon caret-up" />
-                          ) : (
                             <span className="icon caret-down" />
+                          ) : (
+                            <span className="icon caret-up" />
                           ))}
                       </div>
                     ) : (
