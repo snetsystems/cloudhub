@@ -388,7 +388,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       const {data} = await deleteDevice({devices_ids: idList})
 
       if (data?.failed_devices && data?.failed_devices?.length > 0) {
-        this.handleCreateDevicesErrorWithFailedDevices(data?.failed_devices)
+        this.handleDeleteDevicesErrorWithFailedDevices(data?.failed_devices)
         this.setState({checkedArray: [], isLoading: false})
         return
       }
@@ -407,7 +407,7 @@ class DeviceManagement extends PureComponent<Props, State> {
     }
   }
 
-  private handleCreateDevicesErrorWithFailedDevices = (
+  private handleDeleteDevicesErrorWithFailedDevices = (
     failedDevices: FailedDevice[]
   ) => {
     const failedMessage = this.getFailedDevicesErrorMessage(failedDevices)
@@ -430,11 +430,11 @@ class DeviceManagement extends PureComponent<Props, State> {
               device?.errorMessage ?? ''
             }`
         )
-        .join('.')
+        .join('; ')
     }
 
     if (failedDevices && failedDevices.length > limit) {
-      messages += `Total ${failedDevices.length} devices failed`
+      messages += `;  Total ${failedDevices.length} devices failed.`
     }
 
     return `${messages}`

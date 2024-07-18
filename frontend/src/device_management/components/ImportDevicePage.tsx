@@ -588,11 +588,11 @@ class ImportDevicePage extends PureComponent<Props, State> {
       messages = failedDevices
         .slice(0, limit)
         .map(device => `${device.device_ip}: ${device.errorMessage}`)
-        .join('.')
+        .join('; ')
     }
 
     if (failedDevices && failedDevices.length > limit) {
-      messages += `Total ${failedDevices.length} devices failed`
+      messages += `;  Total ${failedDevices.length} devices failed.`
     }
 
     return `${messages}`

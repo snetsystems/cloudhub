@@ -149,11 +149,11 @@ function ApplyLearningModal({
 
           return `${deviceIp}: ${device.errorMessage}`
         })
-        .join('.')
+        .join('; ')
     }
 
     if (failedDevices && failedDevices.length > limit) {
-      messages += `Total ${failedDevices.length} devices failed`
+      messages += `;  Total ${failedDevices.length} devices failed.`
     }
 
     return `${messages}`
