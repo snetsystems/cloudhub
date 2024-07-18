@@ -1,7 +1,7 @@
 app  = "tickscript"
 id = "learn-task"
 template = """
-var name = 'AI Learn {{.OrgName}}'
+var name = '__AI Learn {{.OrgName}}__'
 
 var db = '{{.OrgName}}'
 

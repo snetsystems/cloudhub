@@ -1,7 +1,7 @@
 app  = "tickscript"
 id = "predict-task"
 template = """
-var name = 'Anomaly Prediction {{.OrgName}}'
+var name = '__Anomaly Prediction {{.OrgName}}__'
 
 var db = '{{.OrgName}}'
 
