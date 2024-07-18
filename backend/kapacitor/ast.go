@@ -517,7 +517,7 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 		Query: &cloudhub.QueryConfig{},
 	}
 	// Remove @predict() calls from the script
-	re := regexp.MustCompile("(?m)@predict\\(\\)\\s*\\n\\s*\\.predict_mode\\(predict_mode\\)\\s*\\n\\s*\\.ensemble_condition\\(ensemble_condition\\)")
+	re := regexp.MustCompile(regex)
 	modifiedScript := re.ReplaceAllString(string(script), "")
 
 	scope := stateful.NewScope()
