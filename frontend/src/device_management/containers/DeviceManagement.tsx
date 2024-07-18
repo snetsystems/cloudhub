@@ -389,6 +389,7 @@ class DeviceManagement extends PureComponent<Props, State> {
 
       if (data?.failed_devices && data?.failed_devices?.length > 0) {
         this.handleCreateDevicesErrorWithFailedDevices(data?.failed_devices)
+        this.setState({checkedArray: [], isLoading: false})
         return
       }
 
@@ -423,7 +424,12 @@ class DeviceManagement extends PureComponent<Props, State> {
     if (failedDevices) {
       messages = failedDevices
         .slice(0, limit)
-        .map(device => `${device.device_ip}: ${device.errorMessage}`)
+        .map(
+          device =>
+            `${device?.device_id ?? 'Unknown Device'}: ${
+              device?.errorMessage ?? ''
+            }`
+        )
         .join('.')
     }
 
