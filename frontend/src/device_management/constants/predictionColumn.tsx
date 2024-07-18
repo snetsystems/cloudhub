@@ -15,6 +15,7 @@ export const predictionColumn: ColumnInfo[] = [
     name: 'Device Ip',
     options: {
       sorting: true,
+      isIP: true,
     },
     render: item => {
       return (

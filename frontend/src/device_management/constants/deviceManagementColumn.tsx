@@ -31,6 +31,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       align: AlignType.LEFT,
       options: {
         sorting: true,
+        isIP: true,
       },
       render: item => {
         return (
@@ -201,6 +202,7 @@ export const IMPORT_FILE_DEVICE_STATUS_COLUMNS: ColumnInfo[] = [
     name: 'IP',
     options: {
       sorting: true,
+      isIP: true,
     },
     align: AlignType.CENTER,
   },
@@ -270,6 +272,7 @@ export const DEVICE_INFO_SELECTED_MONITORING: ColumnInfo[] = [
     align: AlignType.LEFT,
     options: {
       sorting: true,
+      isIP: true,
     },
     render: item => {
       return (
@@ -384,6 +387,7 @@ export const deviceApplyMonitoringColumn: ColumnInfo[] = [
     name: 'IP',
     options: {
       sorting: true,
+      isIP: true,
     },
     align: AlignType.LEFT,
     render: item => {
@@ -438,6 +442,7 @@ export const deviceconnectionColumn: ColumnInfo[] = [
     name: 'IP',
     options: {
       sorting: true,
+      isIP: true,
     },
     align: AlignType.CENTER,
   },

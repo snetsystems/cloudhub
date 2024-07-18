@@ -24,6 +24,7 @@ export interface ColumnInfoOptions {
   isAccordion?: boolean
   sorting?: boolean
   checkbox?: boolean
+  isIP?: boolean
 }
 
 export interface ColumnInfo extends ColumnBaseInfo {
@@ -55,4 +56,5 @@ export interface RowInfo {
 export interface SortInfo {
   key: string
   isDesc: boolean
+  isIP?: boolean
 }

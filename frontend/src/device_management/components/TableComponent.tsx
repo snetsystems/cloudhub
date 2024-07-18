@@ -90,11 +90,23 @@ function TableComponent({
       : (data as DataTableObject[])
   }, [keyword, data])
 
+  const sortIp = (a: string, b: string) => {
+    const aParts = a.split('.').map(Number)
+    const bParts = b.split('.').map(Number)
+
+    for (let i = 0; i < 4; i++) {
+      if (aParts[i] < bParts[i]) return -1
+      if (aParts[i] > bParts[i]) return 1
+    }
+    return 0
+  }
+
   const sortedData = useMemo(() => {
     const newData: DataTableObject[] = JSON.parse(JSON.stringify(filterData))
     if (sortTarget === null) {
       return newData
     }
+
     newData?.sort((a, b) => {
       let dataA = ''
       let dataB = ''
@@ -115,13 +127,20 @@ function TableComponent({
         dataB = (b[sortTarget.key] as any) ?? ''
       }
       const isDesc = sortTarget.isDesc
+
       if (isDesc) {
+        if (sortTarget.isIP) {
+          return sortIp(dataA, dataB) * -1
+        }
         if (dataA > dataB) {
           return -1
         } else if (dataA < dataB) {
           return 1
         }
       } else {
+        if (sortTarget.isIP) {
+          return sortIp(dataA, dataB)
+        }
         if (dataA > dataB) {
           return 1
         } else if (dataA < dataB) {
@@ -142,11 +161,13 @@ function TableComponent({
         setSortTarget({
           key: column.key,
           isDesc: false,
+          isIP: column.options.isIP,
         })
         return
       } else if (target.key !== column.key) {
         target.isDesc = false
         target.key = column.key
+        target.isIp = column.options.isIP
       } else {
         if (target.isDesc) {
           setSortTarget(null)
