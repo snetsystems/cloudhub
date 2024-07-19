@@ -137,6 +137,7 @@ import {
   PredictModeKey,
   UpdateDeviceManagmenntScriptRequest,
   UpdateDeviceManagmenntScriptResponse,
+  DeviceOrganizationStatus,
 } from './deviceManagement'
 
 import {AiModal, HeaderNavigationObj} from './aiModal'
@@ -281,4 +282,5 @@ export {
   SeriesObj,
   TimeRangeWithType,
   INPUT_TIME_TYPE,
+  DeviceOrganizationStatus,
 }

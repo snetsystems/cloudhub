@@ -2,12 +2,18 @@ import React from 'react'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 
-import {AiModal, DeviceConnectionStatus, DeviceData} from 'src/types'
+import {
+  AiModal,
+  DeviceConnectionStatus,
+  DeviceData,
+  DeviceOrganizationStatus,
+} from 'src/types'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import SystemConfirmModal from 'src/device_management/components/MonitoringModal'
 import {ComponentColor} from 'src/reusable_ui'
 import {
   hasMonitoringDevice,
+  checkNetworkDeviceOrganizationStatus,
   selectedArrayById,
 } from 'src/device_management/utils'
 import {closeModal, openModal} from 'src/shared/actions/aiModal'
@@ -22,6 +28,7 @@ interface Props {
   closeModal?: () => void
   reLearnSetting: () => void
   data: DeviceData[]
+  networkDeviceOrganizationStatus: DeviceOrganizationStatus
   deleteDevicesAJAX: (idList: string[]) => Promise<void>
   onOpenApplyMonitoringModal: () => void
   onOpenLearningModelModal: () => void
@@ -34,14 +41,20 @@ function DeviceManagementBtn({
   openModal,
   closeModal,
   data,
+  networkDeviceOrganizationStatus,
   deleteDevicesAJAX,
   reLearnSetting,
   onOpenApplyMonitoringModal,
   onOpenLearningModelModal,
 }: Props) {
+  const selectedDevices = selectedArrayById(data, checkedArray, 'id')
+  const isSelectedOrganizationStatusValid = checkNetworkDeviceOrganizationStatus(
+    selectedDevices,
+    networkDeviceOrganizationStatus
+  )
+
   const openDeleteModal = (idList: string[]) => {
     const validArray = selectedArrayById(data, idList, 'id')
-    // create monitoring sql is_modeling_generated => is_monitoring
     const isMonitoringInclude = hasMonitoringDevice(validArray)
 
     openModal({
@@ -104,14 +117,18 @@ function DeviceManagementBtn({
               onOpenLearningModelModal()
             }}
             className="btn button btn-sm btn-primary"
-            disabled={checkedArray.length === 0}
+            disabled={
+              checkedArray.length === 0 || !isSelectedOrganizationStatusValid
+            }
           >
             <span className="icon capacitor2" /> Learning Model
           </button>
         </Authorized>
         <Authorized requiredRole={EDITOR_ROLE}>
           <button
-            className="button button-sm button-default button-square"
+            className={`button button-sm button-default button-square ${
+              isSelectedOrganizationStatusValid ? '' : 'attention-flip'
+            }`}
             title="Custom Learning Setting"
             onClick={() => {
               reLearnSetting()

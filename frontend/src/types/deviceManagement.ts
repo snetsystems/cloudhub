@@ -199,6 +199,10 @@ export interface DevicesOrgData {
   collected_devices_ids?: string[]
 }
 
+export interface DeviceOrganizationStatus {
+  [key: OrganizationID]: boolean
+}
+
 const PREDICT_MODE = {
   ML: 'ML',
   DL: 'DL',

@@ -7,6 +7,7 @@ import {
   DevicesOrgData,
   DropdownItem,
   Source,
+  DeviceOrganizationStatus,
 } from 'src/types'
 import {OrganizationID} from 'src/types/deviceManagement'
 import {MLFunctionMsg} from 'src/device_management/constants'
@@ -215,4 +216,60 @@ export const isNetworkDeviceOrganizationCreatedWithSrcId = (
   const kapaId = _.get(foundOrg, 'ai_kapacitor.kapaId', '')
 
   return srcId !== '' && kapaId !== ''
+}
+
+export const getNetworkDeviceOrganizationStatus = (
+  orgLearningModel: DevicesOrgData[],
+  organizations: Organization[]
+): DeviceOrganizationStatus => {
+  if (!Array.isArray(orgLearningModel)) {
+    throw new Error(
+      'Invalid input: Network Device Organization should be an array'
+    )
+  }
+
+  return _.reduce(
+    orgLearningModel,
+    (acc, org) => {
+      if (typeof org.organization !== 'string' || !org.organization) {
+        throw new Error('Invalid organization ID')
+      }
+      const organizationName = getOrganizationNameByID(
+        organizations,
+        org.organization
+      )
+      const srcId = _.get(org, 'ai_kapacitor.srcId', '')
+      const kapaId = _.get(org, 'ai_kapacitor.kapaId', '')
+      acc[organizationName] = srcId !== '' && kapaId !== ''
+      return acc
+    },
+    {} as DeviceOrganizationStatus
+  )
+}
+
+export const checkNetworkDeviceOrganizationStatus = (
+  data: DeviceData[],
+  orgStatus: DeviceOrganizationStatus
+): boolean => {
+  if (!Array.isArray(data)) {
+    throw new Error('Invalid input: Network Device List should be an array')
+  }
+  if (typeof orgStatus !== 'object' || orgStatus === null) {
+    throw new Error(
+      'Invalid input: Network Device Organization Status should be an object'
+    )
+  }
+
+  const organizations = Array.from(
+    new Set(
+      data.map(device => {
+        if (typeof device.organization !== 'string' || !device.organization) {
+          throw new Error('Invalid organization ID')
+        }
+        return device.organization
+      })
+    )
+  )
+
+  return organizations.every(org => orgStatus[org] === true)
 }

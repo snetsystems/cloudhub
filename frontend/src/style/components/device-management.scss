@@ -146,3 +146,15 @@
   width: 20px;
   height: 20px;
 }
+
+@keyframes flip {
+  0% {
+    transform: perspective(400px) rotateY(0);
+  }
+  100% {
+    transform: perspective(400px) rotateY(360deg);
+  }
+}
+.attention-flip {
+  animation: flip 1s infinite;
+}

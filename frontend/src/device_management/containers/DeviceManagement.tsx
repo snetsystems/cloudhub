@@ -40,6 +40,7 @@ import {
   DevicesOrgData,
   Kapacitor,
   FailedDevice,
+  DeviceOrganizationStatus,
 } from 'src/types'
 
 // API
@@ -54,6 +55,7 @@ import {getEnv} from 'src/shared/apis/env'
 // Utils
 import {
   convertDeviceDataOrganizationIDToName,
+  getNetworkDeviceOrganizationStatus,
   selectedArrayById,
 } from 'src/device_management/utils'
 import {getDeep} from 'src/utils/wrappers'
@@ -100,6 +102,7 @@ interface State {
   selectedDeviceData: DeviceData
   checkedArray: string[]
   orgLearningModel: DevicesOrgData[]
+  networkDeviceOrganizationStatus: DeviceOrganizationStatus
   applyMonitoringModalVisibility: boolean
   learningModelModalVisibility: boolean
   kapacitors: Kapacitor[]
@@ -118,6 +121,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       selectedDeviceData: DEFAULT_NETWORK_DEVICE_DATA,
       checkedArray: [],
       orgLearningModel: [],
+      networkDeviceOrganizationStatus: {},
       kapacitors: [],
       isLoading: false,
       deviceConnectionStatus: 'None',
@@ -163,6 +167,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       importDeviceWizardVisibility,
       selectedDeviceData,
       checkedArray,
+      networkDeviceOrganizationStatus,
       isLearningSettingModalVisibility,
       orgLearningModel,
       applyMonitoringModalVisibility,
@@ -198,6 +203,9 @@ class DeviceManagement extends PureComponent<Props, State> {
                 connectDevice={this.connectDevice}
                 reLearnSetting={this.reLearnSetting}
                 checkedArray={checkedArray}
+                networkDeviceOrganizationStatus={
+                  networkDeviceOrganizationStatus
+                }
                 deleteDevicesAJAX={this.deleteDevicesAJAX}
                 onOpenApplyMonitoringModal={this.handleOpenApplyMonitoringModal}
                 onOpenLearningModelModal={this.handleOpenLearningModelModal}
@@ -474,11 +482,18 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 
   private getNetworkDeviceOrganizationsAJAX = async () => {
+    const {organizations} = this.props
+
     try {
       const {data} = await getAllDevicesOrg()
       const networkDeviceOrganization = data?.organizations || []
+      const networkDeviceOrganizationStatus = getNetworkDeviceOrganizationStatus(
+        networkDeviceOrganization,
+        organizations
+      )
 
       this.setState({
+        networkDeviceOrganizationStatus,
         orgLearningModel: networkDeviceOrganization,
       })
     } catch (error) {
