@@ -228,7 +228,7 @@ function ApplyMonitoringModal({
               />
 
               <Button
-                text={'Cancel'}
+                text={'Close'}
                 onClick={() => {
                   onDismissOverlay()
                 }}

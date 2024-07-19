@@ -734,7 +734,7 @@ function LearningSettingModal({
                 }}
               />
               <Button
-                text={'Cancel'}
+                text={'Close'}
                 onClick={() => {
                   onClose()
                 }}

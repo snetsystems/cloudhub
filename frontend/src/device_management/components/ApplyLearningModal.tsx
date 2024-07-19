@@ -233,7 +233,7 @@ function ApplyLearningModal({
               />
 
               <Button
-                text={'Cancel'}
+                text={'Close'}
                 onClick={() => {
                   onDismissOverlay()
                 }}

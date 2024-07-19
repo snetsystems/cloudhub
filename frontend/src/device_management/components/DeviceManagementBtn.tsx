@@ -66,7 +66,7 @@ function DeviceManagementBtn({
         deleteDevicesAJAX(idList)
         closeModal()
       },
-      cancelText: 'Cancel',
+      cancelText: 'Close',
       childNode: (
         <div className="device-modal--childNode">
           <>
