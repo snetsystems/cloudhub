@@ -2,7 +2,6 @@ package kapacitor
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -517,20 +516,14 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 	rule := cloudhub.AlertRule{
 		Query: &cloudhub.QueryConfig{},
 	}
-	regexStr := fmt.Sprintf(`%s`, regex)
 	// Remove @predict() calls from the script
-	re, err := regexp.Compile(regexStr)
-	if err != nil {
-		message := fmt.Errorf("-----err: %s   ----regex: %s: ", err, regex)
-		return cloudhub.AlertRule{}, message
-	}
+	re := regexp.MustCompile(regex)
 	modifiedScript := re.ReplaceAllString(string(script), "")
 
 	scope := stateful.NewScope()
 	template, err := pipeline.CreateTemplatePipeline(modifiedScript, pipeline.StreamEdge, scope, &deadman{})
 	if err != nil {
-		message := fmt.Errorf("err: %s   regex: %s: script: %s", err, regex, modifiedScript)
-		return cloudhub.AlertRule{}, message
+		return cloudhub.AlertRule{}, err
 	}
 	vars := template.Vars()
 	name, ok := varString("name", vars)
@@ -544,15 +537,9 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 
 	p, err := pipeline.CreatePipeline(modifiedScript, pipeline.StreamEdge, stateful.NewScope(), &deadman{}, vars)
 	if err != nil {
-		message := fmt.Errorf("err: %s   regex: %s: script: %s", err, regex, modifiedScript)
-		return cloudhub.AlertRule{}, message
+		return cloudhub.AlertRule{}, err
 	}
 
 	err = extractAlertNodes(p, &rule)
-	if err != nil {
-		message := fmt.Errorf("err: %s   regex: %s: script: %s", err, regex, modifiedScript)
-		return cloudhub.AlertRule{}, message
-	}
-	rule.Message = fmt.Sprintf("Message modifiedScript: %s", modifiedScript)
-	return rule, nil
+	return rule, err
 }

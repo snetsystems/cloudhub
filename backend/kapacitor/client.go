@@ -130,14 +130,13 @@ func NewAITask(task *client.Task, regex string) *Task {
 			Name:  name,
 			Query: nil,
 		}
-		rule.Error = err.Error()
-		rule.Message = fmt.Sprintf("Err: %s", err.Error())
 	}
 
 	rule.ID = task.ID
 	rule.TICKScript = script
 	rule.Type = task.Type.String()
 	rule.DBRPs = dbrps
+	rule.Error = err.Error()
 	rule.Status = task.Status.String()
 	rule.Executing = task.Executing
 	rule.Created = task.Created
