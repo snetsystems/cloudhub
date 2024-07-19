@@ -528,7 +528,8 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 	scope := stateful.NewScope()
 	template, err := pipeline.CreateTemplatePipeline(modifiedScript, pipeline.StreamEdge, scope, &deadman{})
 	if err != nil {
-		return cloudhub.AlertRule{}, err
+		message := fmt.Errorf("err: %s   regex: %s: script: %s", err, regex, modifiedScript)
+		return cloudhub.AlertRule{}, message
 	}
 	vars := template.Vars()
 	name, ok := varString("name", vars)
@@ -542,6 +543,7 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 
 	p, err := pipeline.CreatePipeline(modifiedScript, pipeline.StreamEdge, stateful.NewScope(), &deadman{}, vars)
 	if err != nil {
+		fmt.Errorf("%s %s", err, regex)
 		return cloudhub.AlertRule{}, err
 	}
 
