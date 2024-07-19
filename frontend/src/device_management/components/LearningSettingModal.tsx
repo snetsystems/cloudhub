@@ -221,13 +221,9 @@ function LearningSettingModal({
       const selectedSource = getSourceBySourceID(sources, (value as Source).id)
       const organizationID =
         getOrganizationIdByName(organizations, selectedSource?.telegraf) || ''
-      const organizationName = getOrganizationNameByID(
-        organizations,
-        organizationID
-      )
 
       const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
-        i => i.organization === organizationName
+        i => i.organization === organizationID
       )
 
       if (isNetworkDeviceOrganizationCreated) {
@@ -704,7 +700,6 @@ function LearningSettingModal({
                     <label>Kapacitor (AI Engine)</label>
                     <DeviceManagementKapacitorDropdown
                       source={selectedSource}
-                      // TODO Change ai_kapacitor
                       selectedKapacitor={{
                         ...selectedKapacitor,
                         srcId: selectedSource?.id || '',
