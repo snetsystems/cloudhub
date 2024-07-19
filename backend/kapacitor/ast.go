@@ -548,6 +548,9 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 	}
 
 	err = extractAlertNodes(p, &rule)
-	message := fmt.Errorf("err: %s   regex: %s: script: %s", err, regex, modifiedScript)
-	return rule, message
+	if err != nil {
+		message := fmt.Errorf("err: %s   regex: %s: script: %s", err, regex, modifiedScript)
+		return cloudhub.AlertRule{}, message
+	}
+	return rule, nil
 }
