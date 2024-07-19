@@ -130,6 +130,8 @@ func NewAITask(task *client.Task, regex string) *Task {
 			Name:  name,
 			Query: nil,
 		}
+		rule.Error = err.Error()
+		rule.Message = fmt.Sprintf("Err: %s", err.Error())
 	}
 
 	rule.ID = task.ID
@@ -138,7 +140,6 @@ func NewAITask(task *client.Task, regex string) *Task {
 	rule.DBRPs = dbrps
 	rule.Status = task.Status.String()
 	rule.Executing = task.Executing
-	rule.Error = task.Error
 	rule.Created = task.Created
 	rule.Modified = task.Modified
 	rule.LastEnabled = task.LastEnabled
@@ -219,6 +220,12 @@ func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.Upd
 	task, err := kapa.UpdateTask(client.Link{Href: href}, *taskOptions)
 	if err != nil {
 		return nil, err
+	}
+	// Now enable the task if previously enabled
+	if taskOptions.Status == client.Enabled {
+		if _, err := c.Enable(ctx, href); err != nil {
+			return nil, err
+		}
 	}
 
 	return NewAITask(&task, regex), nil

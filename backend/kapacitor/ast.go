@@ -521,7 +521,8 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 	// Remove @predict() calls from the script
 	re, err := regexp.Compile(regexStr)
 	if err != nil {
-		return cloudhub.AlertRule{}, err
+		message := fmt.Errorf("-----err: %s   ----regex: %s: ", err, regex)
+		return cloudhub.AlertRule{}, message
 	}
 	modifiedScript := re.ReplaceAllString(string(script), "")
 
@@ -552,5 +553,6 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 		message := fmt.Errorf("err: %s   regex: %s: script: %s", err, regex, modifiedScript)
 		return cloudhub.AlertRule{}, message
 	}
+	rule.Message = fmt.Sprintf("Message modifiedScript: %s", modifiedScript)
 	return rule, nil
 }
