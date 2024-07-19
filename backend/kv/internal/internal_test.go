@@ -617,6 +617,7 @@ func TestMarshalNetworkDeviceOrg(t *testing.T) {
 			Password:           "",
 			InsecureSkipVerify: false,
 		},
+		LearningCron: "1 0 1,15 * *",
 	}
 
 	var vv cloudhub.NetworkDeviceOrg

@@ -1143,6 +1143,7 @@ func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
 			Password:           t.AIKapacitor.Password,
 			InsecureSkipVerify: t.AIKapacitor.InsecureSkipVerify,
 		},
+		LearningCron: t.LearningCron,
 	})
 }
 
@@ -1171,6 +1172,7 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 	} else {
 		t.AIKapacitor = cloudhub.AIKapacitor{}
 	}
+	t.LearningCron = pb.LearningCron
 
 	return nil
 }

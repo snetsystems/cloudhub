@@ -1236,6 +1236,7 @@ type NetworkDeviceOrg struct {
 	CollectorServer     string      `json:"collector_server"`
 	CollectedDevicesIDs []string    `json:"collected_devices_ids"`
 	AIKapacitor         AIKapacitor `json:"ai_kapacitor"`
+	LearningCron        string      `json:"learning_cron"`
 }
 
 // NetworkDeviceOrgStore is the Storage and retrieval of information

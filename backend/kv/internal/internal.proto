@@ -303,6 +303,7 @@ message NetworkDeviceOrg {
   string CollectorServer              = 6;  // the server(minion_id) used to collect network data
   repeated string CollectedDevicesIDs = 7;  // the list of device IDs included in Logstash Config
   AIKapacitor AIKapacitor             = 8;  // Kapacitor configuration for AI 
+  string LearningCron                 = 9;  
 }
 
 message AIKapacitor {
