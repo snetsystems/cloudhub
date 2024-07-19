@@ -327,9 +327,14 @@ class PredictionRulePage extends Component<Props, State> {
 
   private setOrganizationDropdown = (organization: Source) => {
     const {organizations, sources} = this.props
+    const {selectedOrganizationID} = this.state
     const selectedSource = getSourceBySourceID(sources, organization.id)
     const organizationID =
       getOrganizationIdByName(organizations, selectedSource?.telegraf) || ''
+
+    if (selectedOrganizationID === organizationID) {
+      return
+    }
 
     this.setState({
       isNetworkDeviceOrganizationValid: true,
