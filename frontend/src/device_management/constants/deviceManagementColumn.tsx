@@ -153,6 +153,7 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
               e.stopPropagation()
               onEditClick(rowData)
             }}
+            title={`${value ? '' : 'Not applied yet'}`}
           >
             {value ? (
               <div className={'pencil-confirm'} />

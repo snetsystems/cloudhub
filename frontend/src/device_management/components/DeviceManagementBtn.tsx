@@ -94,6 +94,7 @@ function DeviceManagementBtn({
             }}
             className="btn button btn-sm btn-primary"
             disabled={checkedArray.length === 0}
+            title="Delete Device"
           >
             <span className="icon trash" /> Delete Device
           </button>
@@ -106,6 +107,7 @@ function DeviceManagementBtn({
             }}
             className="btn button btn-sm btn-primary"
             disabled={checkedArray.length === 0}
+            title="Apply Monitoring"
           >
             <span className="icon checkmark" /> Apply Monitoring
           </button>
@@ -120,6 +122,7 @@ function DeviceManagementBtn({
             disabled={
               checkedArray.length === 0 || !isSelectedOrganizationStatusValid
             }
+            title="Learning Model"
           >
             <span className="icon capacitor2" /> Learning Model
           </button>
@@ -143,13 +146,18 @@ function DeviceManagementBtn({
           <div
             onClick={connectDevice('Creating')}
             className="btn button btn-sm btn-primary"
+            title="Add Device"
           >
             <span className="icon plus" /> Add Device
           </div>
         </Authorized>
         {/* TODO Consder requiredRole */}
         <Authorized requiredRole={EDITOR_ROLE}>
-          <div onClick={importDevice} className="btn button btn-sm btn-primary">
+          <div
+            onClick={importDevice}
+            className="btn button btn-sm btn-primary"
+            title="Import Device"
+          >
             <span className="icon import" /> Import Device
           </div>
         </Authorized>

@@ -136,7 +136,7 @@ export default class PredictionRule extends Component<Props, State> {
     return (
       <button
         className="btn btn-default btn-sm"
-        title="Return to Prediction Page"
+        title="Return to Anomaly Prediction Page"
         onClick={() => router.push(pageLink)}
       >
         Exit
