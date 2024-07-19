@@ -543,10 +543,11 @@ func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.A
 
 	p, err := pipeline.CreatePipeline(modifiedScript, pipeline.StreamEdge, stateful.NewScope(), &deadman{}, vars)
 	if err != nil {
-		fmt.Errorf("%s %s", err, regex)
-		return cloudhub.AlertRule{}, err
+		message := fmt.Errorf("err: %s   regex: %s: script: %s", err, regex, modifiedScript)
+		return cloudhub.AlertRule{}, message
 	}
 
 	err = extractAlertNodes(p, &rule)
-	return rule, err
+	message := fmt.Errorf("err: %s   regex: %s: script: %s", err, regex, modifiedScript)
+	return rule, message
 }
