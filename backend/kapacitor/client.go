@@ -136,7 +136,7 @@ func NewAITask(task *client.Task, regex string) *Task {
 	rule.TICKScript = script
 	rule.Type = task.Type.String()
 	rule.DBRPs = dbrps
-	rule.Error = err.Error()
+	rule.Error = task.Error
 	rule.Status = task.Status.String()
 	rule.Executing = task.Executing
 	rule.Created = task.Created
