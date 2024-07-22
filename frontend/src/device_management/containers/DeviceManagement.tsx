@@ -56,6 +56,7 @@ import {getEnv} from 'src/shared/apis/env'
 import {
   convertDeviceDataOrganizationIDToName,
   getNetworkDeviceOrganizationStatus,
+  parseErrorMessage,
   selectedArrayById,
 } from 'src/device_management/utils'
 import {getDeep} from 'src/utils/wrappers'
@@ -148,8 +149,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       this.fetchDeviceMonitoringStatus()
       this.getKapacitorsFromSelectedSource(this.props.source)
     } catch (error) {
-      console.error(error?.message || 'Unknown Error')
-      throw error
+      console.error(parseErrorMessage(error))
     }
   }
 
@@ -306,9 +306,7 @@ class DeviceManagement extends PureComponent<Props, State> {
 
       this.setState({data: convertedDeviceData})
     } catch (error) {
-      console.error(
-        notifyFetchDeviceListError(error?.message || 'Unknown Error')
-      )
+      console.error(notifyFetchDeviceListError(parseErrorMessage(error)))
     }
   }
 
@@ -334,9 +332,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       })
     } catch (error) {
       this.props.notify(
-        notifyFetchDeviceMonitoringStatusFailed(
-          error?.message || 'Unknown Error'
-        )
+        notifyFetchDeviceMonitoringStatusFailed(parseErrorMessage(error))
       )
     }
   }
@@ -404,9 +400,7 @@ class DeviceManagement extends PureComponent<Props, State> {
       this.props.notify(notifyDeleteDevicesSucceeded())
       this.reFreshStateAfterDeleteDevices()
     } catch (error) {
-      this.props.notify(
-        notifyDeleteDevicesFailed(error?.message || 'Unknown Error')
-      )
+      this.props.notify(notifyDeleteDevicesFailed(parseErrorMessage(error)))
       this.reFreshStateAfterDeleteDevices()
     }
   }
@@ -497,7 +491,7 @@ class DeviceManagement extends PureComponent<Props, State> {
         orgLearningModel: networkDeviceOrganization,
       })
     } catch (error) {
-      console.error(error?.message || 'Unknown Error')
+      console.error(parseErrorMessage(error))
     }
   }
 

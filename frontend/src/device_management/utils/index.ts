@@ -286,12 +286,13 @@ export const parseErrorMessage = (error): string => {
       try {
         const s = error.data.slice(0, -5) // Remove 'null\n' at the end of these responses
         const data = JSON.parse(s)
-        return data.message || 'Unknown Error'
+
+        return data?.message || 'Unknown Error'
       } catch (e) {
         return 'Unknown Error'
       }
     } else if (typeof error.data === 'object') {
-      return error.data.message || 'Unknown Error'
+      return error?.data?.message || 'Unknown Error'
     }
   }
 

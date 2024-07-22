@@ -31,7 +31,7 @@ import {
 } from 'src/device_management/constants'
 
 // Utils
-import {selectedArrayById} from 'src/device_management/utils'
+import {parseErrorMessage, selectedArrayById} from 'src/device_management/utils'
 
 // API
 import {applyLearningEnableStatus} from 'src/device_management/apis'
@@ -94,9 +94,7 @@ function ApplyLearningModal({
 
       return handleApplyLearningEnableStatusSuccess()
     } catch (error) {
-      return handleApplyLearningEnableStatusError(
-        error?.message || 'Unknown Error'
-      )
+      return handleApplyLearningEnableStatusError(parseErrorMessage(error))
     }
   }
 

@@ -31,7 +31,7 @@ import {
 } from 'src/device_management/constants'
 
 // Utils
-import {selectedArrayById} from 'src/device_management/utils'
+import {parseErrorMessage, selectedArrayById} from 'src/device_management/utils'
 
 // API
 import {applyMonitoring} from 'src/device_management/apis'
@@ -90,7 +90,7 @@ function ApplyMonitoringModal({
 
       return handleApplyMonitoringSuccess()
     } catch (error) {
-      return handleApplyMonitoringError(error?.message || 'Unknown Error')
+      return handleApplyMonitoringError(parseErrorMessage(error))
     }
   }
 

@@ -38,6 +38,7 @@ import {
   getSourceByTelegrafDatabase,
   getSourceBySourceID,
   isNetworkDeviceOrganizationCreatedWithSrcId,
+  parseErrorMessage,
 } from 'src/device_management/utils'
 
 // Constants
@@ -113,7 +114,7 @@ class PredictionRulePage extends Component<Props, State> {
       await this.fetchSpecificAlertRule(me.currentOrganization.id)
     } catch (error) {
       this.initializeState(true)
-      console.error(error?.message || 'Unknown Error')
+      console.error(parseErrorMessage(error))
     }
   }
 
@@ -129,7 +130,7 @@ class PredictionRulePage extends Component<Props, State> {
         await this.fetchSpecificAlertRule(this.state.selectedOrganizationID)
       } catch (error) {
         this.initializeState(true)
-        console.error(error)
+        console.error(parseErrorMessage(error))
       }
     }
   }
@@ -175,7 +176,7 @@ class PredictionRulePage extends Component<Props, State> {
         orgLearningModel: networkDeviceOrganization,
       })
     } catch (error) {
-      console.error(error?.message || 'Unknown Error')
+      console.error(parseErrorMessage(error))
     }
   }
 
@@ -216,7 +217,7 @@ class PredictionRulePage extends Component<Props, State> {
       await this.getKapacitorConfig(kapacitors?.[0])
     } catch (error) {
       this.initializeState(true)
-      console.error(error)
+      console.error(parseErrorMessage(error))
     }
   }
 
@@ -321,7 +322,7 @@ class PredictionRulePage extends Component<Props, State> {
         isNetworkDeviceOrganizationValid: false,
       })
       this.initializeState(true)
-      console.error(error)
+      console.error(parseErrorMessage(error))
     }
   }
 
