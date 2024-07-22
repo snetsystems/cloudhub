@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path"
 	"reflect"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -94,6 +95,11 @@ const (
 	DlComplete   string = "DL Complete"
 	MlFail       string = "ML Fail"
 	DlFail       string = "DL Fail"
+)
+
+// CollectorSelectionRatio determines the ratio criteria for selecting collectors and is intended for future use.
+const (
+	CollectorSelectionRatio float64 = 0.5
 )
 
 func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
@@ -353,6 +359,8 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	failedDevices := make(map[string]string)
 	devicesGroupByOrg := make(map[string][]string)
 	deviceOrgMap := make(map[string]string)
+	restartCollectorServers := map[string]string{}
+
 	for _, deviceID := range request.DevicesIDs {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
 		if err != nil {
@@ -414,6 +422,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		orgsToUpdate[org.ID] = *org
 
 	}
+
 	for _, org := range orgsToUpdate {
 		statusCode, resp, err := s.manageLogstashConfig(ctx, &org)
 		if err != nil {
@@ -435,6 +444,21 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			}
 			continue
 		}
+		if _, exists := restartCollectorServers[org.CollectorServer]; !exists {
+			restartCollectorServers[org.CollectorServer] = org.CollectorServer
+			_, _, err := s.restartDocker(org.CollectorServer)
+			if err != nil {
+				for _, devicesIDs := range devicesGroupByOrg {
+					for _, id := range devicesIDs {
+						if _, exists := failedDevices[id]; !exists {
+							failedDevices[id] = err.Error()
+						}
+					}
+				}
+				continue
+			}
+		}
+
 		err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, &org)
 		msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), org.ID)
 		s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
@@ -712,6 +736,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 	devicesData := getDevicesGroupByOrg(ctx, s, request.CollectingDevices)
 	failedDevices := devicesData.failedDevices
+	restartCollectorServers := map[string]string{}
 
 	if len(devicesData.devicesGroupByOrg) < 1 {
 		for _, device := range request.CollectingDevices {
@@ -742,8 +767,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ratio := 0.5
-	_, _, serverDeviceCount, orgToCollector := computeThreshold(existingDevicesOrg, devicesData.devicesGroupByOrg, ratio)
+	_, _, serverDeviceCount, orgToCollector := computeThreshold(existingDevicesOrg, devicesData.devicesGroupByOrg, CollectorSelectionRatio)
 
 	orgsToUpdate, err := removeDeviceIDsFromPreviousOrg(ctx, s, devicesData.deviceOrgMap)
 	if err != nil {
@@ -828,6 +852,20 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 			continue
 		}
 
+		// Save unique collector servers to restartCollectorServers map
+		if _, exists := restartCollectorServers[orgInfo.CollectorServer]; !exists {
+			restartCollectorServers[orgInfo.CollectorServer] = orgInfo.CollectorServer
+			_, _, err := s.restartDocker(orgInfo.CollectorServer)
+			if err != nil {
+				for _, device := range devicesData.devicesGroupByOrg[org] {
+					if _, exists := failedDevices[device.ID]; !exists {
+						failedDevices[device.ID] = err.Error()
+					}
+				}
+				continue
+			}
+		}
+
 		existOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &org})
 		if err != nil && existOrg == nil {
 			s.Store.NetworkDeviceOrg(ctx).Add(ctx, &orgInfo)
@@ -836,7 +874,9 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		}
 		for _, device := range devicesData.devicesGroupByOrg[org] {
 			networkDevice := devicesData.networkDevicesMap[device.ID]
-			networkDevice.IsCollectingCfgWritten = true
+			if device.IsCollectingCfgWritten == false {
+				networkDevice.IsCollectingCfgWritten = true
+			}
 
 			err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice)
 			if err != nil {
@@ -845,6 +885,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 				}
 			}
 		}
+
 	}
 
 	response := map[string]interface{}{
@@ -1228,8 +1269,6 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	}
 
 	aiConfig := s.InternalENV.AIConfig
-	dockerPath := aiConfig.DockerPath
-	dockerCmd := aiConfig.DockerCmd
 	dirPath := aiConfig.LogstashPath
 	fileName := fmt.Sprintf("%s_snmp_nx.rb", org.Name)
 	filePath := path.Join(dirPath, fileName)
@@ -1326,8 +1365,19 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 		return statusCode, resp, err
 	}
+	// Log the successful creation of the config
+	msg := fmt.Sprintf(MsgNetWorkDeviceConfCreated.String(), org.ID)
+	s.logRegistration(ctx, "NetWorkDeviceConf", msg)
+	return http.StatusOK, nil, err
+}
 
-	if statusCode, resp, err := s.DockerRestart(dockerPath, devOrg.CollectorServer, dockerCmd); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+func (s *Service) restartDocker(collectorServer string) (int, []byte, error) {
+	aiConfig := s.InternalENV.AIConfig
+	dockerPath := aiConfig.DockerPath
+	dockerCmd := aiConfig.DockerCmd
+
+	statusCode, resp, err := s.DockerRestart(dockerPath, collectorServer, dockerCmd)
+	if err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 		return statusCode, nil, err
 	} else if resp != nil {
 		r := &struct {
@@ -1336,14 +1386,22 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		if err := json.Unmarshal(resp, r); err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
+		// Check for the success message using regex
+		re := regexp.MustCompile(`(?i)Restarting.*Started`)
+		for _, item := range r.Return {
+			for _, value := range item {
+				cleanedValue := strings.ReplaceAll(strings.ReplaceAll(value, "\n", ""), " ", "")
+				if !re.MatchString(cleanedValue) {
+					message := fmt.Errorf(value)
+					return http.StatusInternalServerError, nil, message
+				}
+
+			}
+		}
 	} else {
 		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error occurred at DirectoryExists() func")
 	}
-
-	// Log the successful creation of the config
-	msg := fmt.Sprintf(MsgNetWorkDeviceConfCreated.String(), org.ID)
-	s.logRegistration(ctx, "NetWorkDeviceConf", msg)
-	return http.StatusOK, nil, err
+	return statusCode, resp, nil
 }
 
 // RemoveElements removes elements from the origin slice that are present in the delete slice.
