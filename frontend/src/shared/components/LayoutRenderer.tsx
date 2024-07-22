@@ -75,7 +75,7 @@ class LayoutRenderer extends Component<Props, State> {
       onCloneCell,
       onSummonOverlayTechnologies,
       instance,
-      onPickTemplate
+      onPickTemplate,
     } = this.props
 
     const {rowHeight} = this.state

@@ -24,15 +24,23 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 import LoadingDots from 'src/shared/components/LoadingDots'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 interface Props {
   source: Source
   links?: Links
   auth?: Auth
   notify?: NotificationAction
+  cloudAutoRefresh?: CloudAutoRefresh
 }
 
-function PredictionHexbinWrapper({source, auth, notify}: Props) {
+function PredictionHexbinWrapper({
+  source,
+  auth,
+  notify,
+  cloudAutoRefresh,
+}: Props) {
   const [hostList, setHostList] = useState<PredictionTooltipNode[]>(null)
 
   const [hasKapacitor, setHasKapacitor] = useState(false)
@@ -45,9 +53,32 @@ function PredictionHexbinWrapper({source, auth, notify}: Props) {
 
   const [openNum, setOpenNum] = useState<number>(null)
 
+  let intervalID
+
   useEffect(() => {
     fetchKapacitor()
   }, [])
+
+  useEffect(() => {
+    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
+    const controller = new AbortController()
+
+    if (!!cloudAutoRefresh.prediction) {
+      clearInterval(intervalID)
+      intervalID = window.setInterval(() => {
+        fetchDeviceInfo()
+      }, cloudAutoRefresh.prediction)
+    }
+
+    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
+
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [cloudAutoRefresh])
 
   const onHexbinClick = (num: number) => {
     // the way to close modal is hexbin double click
@@ -153,7 +184,7 @@ function PredictionHexbinWrapper({source, auth, notify}: Props) {
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh},
+      persisted: {cloudAutoRefresh},
       ephemeral: {inPresentationMode},
     },
     links,
@@ -161,7 +192,7 @@ const mstp = state => {
   } = state
   return {
     links,
-    autoRefresh,
+    cloudAutoRefresh,
     inPresentationMode,
     auth,
   }

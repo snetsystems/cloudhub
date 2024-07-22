@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
@@ -21,6 +21,11 @@ import PredictionDashboardHeader from './PredictionDashboardHeader'
 import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
 import Layout from 'src/shared/components/Layout'
 import LoadingDots from 'src/shared/components/LoadingDots'
+import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
+import {setPredictionTimeRange} from '../actions'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 interface Props {
   cell: Cell
@@ -31,13 +36,14 @@ interface Props {
   onSummonOverlayTechnologies?: () => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
-  timeRange: TimeRange
   source: Source
   sources: Source[]
   manualRefresh: number
   setChartClickDate: (date: TimeRange) => void
+  predictionTimeRange?: TimeRange
+  cloudAutoRefresh?: CloudAutoRefresh
+  setPredictionTimeRange?: (value: TimeRange) => void
 }
-
 function PredictionDashboardWrapper({
   cell,
   host,
@@ -48,26 +54,32 @@ function PredictionDashboardWrapper({
   sources,
   instance,
   onPickTemplate,
-  timeRange,
+  predictionTimeRange,
   source,
   manualRefresh,
   setChartClickDate,
+  cloudAutoRefresh,
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
+  }, [cloudAutoRefresh.prediction])
+
   const templates = (): Template[] => {
     const dashboardTime = {
       id: 'dashtime',
       tempVar: TEMP_VAR_DASHBOARD_TIME,
       type:
-        timeRange.format === INPUT_TIME_TYPE.TIMESTAMP
+        predictionTimeRange.format === INPUT_TIME_TYPE.TIMESTAMP
           ? TemplateType.TimeStamp
           : TemplateType.Constant,
       label: '',
       values: [
         {
-          value: timeRange.lower,
+          value: predictionTimeRange.lower,
           type:
-            timeRange.format === INPUT_TIME_TYPE.TIMESTAMP
+            predictionTimeRange.format === INPUT_TIME_TYPE.TIMESTAMP
               ? TemplateValueType.TimeStamp
               : TemplateValueType.Constant,
           selected: true,
@@ -80,16 +92,16 @@ function PredictionDashboardWrapper({
       id: 'upperdashtime',
       tempVar: TEMP_VAR_UPPER_DASHBOARD_TIME,
       type:
-        timeRange.format === INPUT_TIME_TYPE.TIMESTAMP
+        predictionTimeRange.format === INPUT_TIME_TYPE.TIMESTAMP
           ? TemplateType.TimeStamp
           : TemplateType.Constant,
       label: '',
       values: [
         {
-          value: timeRange.upper ?? 'now()',
+          value: predictionTimeRange.upper ?? 'now()',
           type:
-            timeRange.format === INPUT_TIME_TYPE.TIMESTAMP &&
-            timeRange.upper !== 'now()'
+            predictionTimeRange.format === INPUT_TIME_TYPE.TIMESTAMP &&
+            predictionTimeRange.upper !== 'now()'
               ? TemplateValueType.TimeStamp
               : TemplateValueType.Constant,
           selected: true,
@@ -144,7 +156,7 @@ function PredictionDashboardWrapper({
           onZoom={onZoom}
           sources={sources}
           templates={templates()}
-          timeRange={timeRange}
+          timeRange={predictionTimeRange}
           isEditable={false}
           onDeleteCell={onDeleteCell}
           onCloneCell={onCloneCell}
@@ -158,7 +170,28 @@ function PredictionDashboardWrapper({
   )
 }
 
+const mstp = state => {
+  const {
+    predictionTimeRange: {predictionTimeRange},
+    app: {
+      persisted: {cloudAutoRefresh},
+    },
+  } = state
+
+  return {
+    predictionTimeRange,
+    cloudAutoRefresh,
+  }
+}
+
+const mdtp = (dispatch: any) => ({
+  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
+})
+
 const areEqual = (prev, next) => {
   return prev === next
 }
-export default React.memo(PredictionDashboardWrapper, areEqual)
+export default React.memo(
+  connect(mstp, mdtp, null)(PredictionDashboardWrapper),
+  areEqual
+)

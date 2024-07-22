@@ -9,64 +9,76 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 import LoadingDots from 'src/shared/components/LoadingDots'
-import AJAX from 'src/utils/ajax'
 import {getPredictionAlert} from '../apis'
 import _ from 'lodash'
 import {Button, ComponentColor} from 'src/reusable_ui'
+import {setPredictionTimeRange} from '../actions'
+import {bindActionCreators} from 'redux'
+import {connect} from 'react-redux'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 interface Props {
-  timeRange: TimeRange
+  predictionTimeRange?: TimeRange
   source: Source
   limit: number
   chartClickDate: TimeRange
-  setTimeRange: (value: TimeRange) => void
+  setPredictionTimeRange?: (value: TimeRange) => void
+  cloudAutoRefresh?: CloudAutoRefresh
+  manualRefresh?: number
 }
 
 function PredictionAlertHistoryWrapper({
-  timeRange,
   source,
-  limit: prevLimit,
+  limit = RECENT_ALERTS_LIMIT,
   chartClickDate,
-  setTimeRange,
+  predictionTimeRange,
+  setPredictionTimeRange,
+  cloudAutoRefresh,
+  manualRefresh,
 }: Props) {
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
 
   const [alertsData, setAlertsData] = useState<Alert[]>([])
 
-  const [hasKapacitor, setHasKapacitor] = useState(false)
-
   const [error, setError] = useState<unknown>()
-
-  const [limit, setLimit] = useState(prevLimit ?? 30)
 
   const [limitMultiplier, setLimitMultiplier] = useState(1)
 
   const [loading, setLoading] = useState(false)
 
+  let intervalID
+
+  useEffect(() => {
+    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
+    const controller = new AbortController()
+
+    if (!!cloudAutoRefresh.prediction) {
+      clearInterval(intervalID)
+      intervalID = window.setInterval(() => {
+        fetchAlerts()
+      }, cloudAutoRefresh.prediction)
+    }
+
+    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
+
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [cloudAutoRefresh])
+
   // alert List get api
   useEffect(() => {
-    AJAX({
-      url: source.links?.kapacitors ?? '',
-      method: 'GET',
-    })
-      .then(({data}) => {
-        if (!!data.kapacitors[0]) {
-          setHasKapacitor(true)
-          fetchAlerts()
-        } else {
-          setLoading(false)
-        }
-      })
-      .catch(e => {
-        setLoading(false)
-        setError(e)
-      })
-  }, [timeRange, chartClickDate])
+    fetchAlerts()
+  }, [setPredictionTimeRange, chartClickDate, manualRefresh])
 
   //TODO: timerange var change to redux data not props -> why?
   const fetchAlerts = (): void => {
     getPredictionAlert(
       source.links.proxy,
-      chartClickDate ?? timeRange,
+      chartClickDate ?? predictionTimeRange,
       limit * limitMultiplier,
       source.telegraf
     )
@@ -139,7 +151,7 @@ function PredictionAlertHistoryWrapper({
               text="Reset (30d)"
               color={ComponentColor.Primary}
               onClick={() => {
-                setTimeRange({
+                setPredictionTimeRange({
                   lower: 'now() - 30d',
                   lowerFlux: '-30d',
                   upper: null,
@@ -151,13 +163,12 @@ function PredictionAlertHistoryWrapper({
         </PredictionDashboardHeader>
         <PredictionAlertTable
           source={source}
-          timeRange={timeRange}
+          timeRange={predictionTimeRange}
           isWidget={true}
-          limit={RECENT_ALERTS_LIMIT}
+          limit={limit}
           alerts={alertsData}
           error={error}
           fetchAlerts={fetchAlerts}
-          hasKapacitor={hasKapacitor}
           isAlertsMaxedOut={isAlertsMaxedOut}
           setLimitMultiplier={setLimitMultiplier}
         />
@@ -174,8 +185,29 @@ function PredictionAlertHistoryWrapper({
   //   setLimitMultiplier={setLimitMultiplier}
 }
 
-const areEqual = (prevProps, nextProps) => {
-  return prevProps.value === nextProps.value
+const mstp = state => {
+  const {
+    predictionTimeRange: {predictionTimeRange},
+    app: {
+      persisted: {autoRefresh, cloudAutoRefresh},
+    },
+  } = state
+
+  return {
+    autoRefresh,
+    cloudAutoRefresh,
+    predictionTimeRange,
+  }
 }
 
-export default React.memo(PredictionAlertHistoryWrapper, areEqual)
+const mdtp = (dispatch: any) => ({
+  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
+})
+
+const areEqual = (prev, next) => {
+  return prev === next
+}
+export default React.memo(
+  connect(mstp, mdtp, null)(PredictionAlertHistoryWrapper),
+  areEqual
+)

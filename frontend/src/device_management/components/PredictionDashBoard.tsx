@@ -1,8 +1,7 @@
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {connect} from 'react-redux'
 import {Page} from 'src/reusable_ui'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
-import * as notifyActions from 'src/shared/actions/notifications'
 import * as DashboardsModels from 'src/types/dashboards'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
@@ -18,26 +17,27 @@ import PredictionAlertHistoryWrapper from './PredictionAlertHistoryWrapper'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 import PredictionDashboardWrapper from './PredictionDashboardWrapper'
+import {bindActionCreators} from 'redux'
+import {setPredictionTimeRange} from '../actions'
+import {setTimeRange} from 'src/dashboards/actions'
 
 interface Props extends ManualRefreshProps, WithRouterProps {
   host: string
   source: Source
   sources: Source[]
-  timeRange: TimeRange
-  manualRefresh: number
-  inPresentationMode: boolean
+  inPresentationMode?: boolean
   cloudAutoRefresh?: CloudAutoRefresh
-  setTimeRange: (value: TimeRange) => void
   onZoom?: () => void
   onCloneCell?: () => void
   onDeleteCell?: () => void
   onSummonOverlayTechnologies?: () => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
+  predictionTimeRange?: TimeRange
+  setPredictionTimeRange?: (value: TimeRange) => void
 }
 
 interface TempProps {
-  timeRange: TimeRange
   cell: Cell
   source: Source
 }
@@ -49,16 +49,17 @@ function PredictionDashBoard({
   onSummonOverlayTechnologies,
   sources,
   inPresentationMode,
-  timeRange,
   source,
   host,
   manualRefresh,
   cloudAutoRefresh,
   instance,
   onPickTemplate,
-  setTimeRange,
+  predictionTimeRange,
 }: Props) {
   const [chartClickDate, setChartClickDate] = useState<TimeRange>(null)
+
+  const prevProps = useRef({manualRefresh: null, cloudAutoRefresh: null})
 
   const GridLayout = WidthProvider(ReactGridLayout)
 
@@ -72,7 +73,6 @@ function PredictionDashBoard({
 
     if (!!cloudAutoRefresh.prediction) {
       clearInterval(intervalID)
-      intervalID = window.setInterval(() => {}, cloudAutoRefresh.prediction)
     }
 
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
@@ -83,11 +83,20 @@ function PredictionDashBoard({
       intervalID = null
       GlobalAutoRefresher.stopPolling()
     }
-  }, [cloudAutoRefresh])
+  }, [])
+
+  useEffect(() => {
+    // Todo: manual Refresh rerendering issue, compare prevProps and next-props
+    if (manualRefresh !== prevProps.current.manualRefresh)
+      prevProps.current = {
+        manualRefresh: manualRefresh,
+        cloudAutoRefresh: cloudAutoRefresh,
+      }
+  }, [manualRefresh, cloudAutoRefresh])
 
   useEffect(() => {
     setChartClickDate(null)
-  }, [timeRange])
+  }, [predictionTimeRange])
 
   const cells = useMemo(() => {
     const defaultCells = fixturePredictionPageCells(source)
@@ -138,7 +147,7 @@ function PredictionDashBoard({
     }
   }
 
-  const layoutRender = ({cell, source, timeRange}: TempProps) => {
+  const layoutRender = ({cell, source}: TempProps) => {
     if (!cell) return null
     switch (cell.i) {
       case 'alerts-bar-graph': {
@@ -156,14 +165,13 @@ function PredictionDashBoard({
               source={source}
               onZoom={onZoom}
               sources={sources}
-              timeRange={timeRange}
               onDeleteCell={onDeleteCell}
               onCloneCell={onCloneCell}
-              manualRefresh={manualRefresh}
               onSummonOverlayTechnologies={onSummonOverlayTechnologies}
               instance={instance}
               onPickTemplate={onPickTemplate}
               setChartClickDate={setChartClickDate}
+              manualRefresh={prevProps.current.manualRefresh}
             />
           </Authorized>
         )
@@ -177,8 +185,6 @@ function PredictionDashBoard({
             }}
           >
             <PredictionAlertHistoryWrapper
-              setTimeRange={setTimeRange}
-              timeRange={timeRange}
               source={source}
               limit={30}
               chartClickDate={chartClickDate}
@@ -202,7 +208,7 @@ function PredictionDashBoard({
         return (
           <PredictionInstanceWrapper
             source={source}
-            manualRefresh={manualRefresh}
+            manualRefresh={prevProps.current.manualRefresh}
           />
         )
       }
@@ -251,7 +257,6 @@ function PredictionDashBoard({
                         {layoutRender({
                           cell: cell,
                           source: source,
-                          timeRange: timeRange,
                         })}
                       </div>
                     )
@@ -274,16 +279,19 @@ const mstp = state => {
       ephemeral: {inPresentationMode},
     },
     auth: {isUsingAuth},
+    predictionTimeRange: {predictionTimeRange},
   } = state
 
   return {
+    predictionTimeRange,
     inPresentationMode,
     isUsingAuth,
   }
 }
 
-const mdtp = {
-  notify: notifyActions.notify,
-}
+const mdtp = (dispatch: any) => ({
+  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
+  setTimeRange: bindActionCreators(setTimeRange, dispatch),
+})
 
 export default connect(mstp, mdtp, null)(PredictionDashBoard)

@@ -22,6 +22,7 @@ import envReducer from 'src/shared/reducers/env'
 import {vspheres} from 'src/clouds/reducers'
 import source from 'src/sources/reducers'
 import aiModal from 'src/shared/reducers/aiModal'
+import predictionTimeRange from 'src/device_management/reducers/predictionDashboard'
 
 // eslint-disable-next-line no-unused-vars
 function lastAction(state = {}, action) {
@@ -46,6 +47,7 @@ const rootReducer = combineReducers({
   lastAction,
   source,
   aiModal,
+  predictionTimeRange,
 })
 
 const composeEnhancers =

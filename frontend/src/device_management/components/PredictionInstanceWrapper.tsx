@@ -1,7 +1,13 @@
 import _ from 'lodash'
 import React, {useEffect, useState} from 'react'
 
-import {Cell, Layout, RefreshRate, Source, TimeRange} from 'src/types'
+import {
+  Cell,
+  Layout,
+  PredictionManualRefresh,
+  Source,
+  TimeRange,
+} from 'src/types'
 import ReactObserver from 'react-resize-observer'
 import {timeRanges} from 'src/shared/data/timeRanges'
 
@@ -9,7 +15,6 @@ import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import {setAutoRefresh} from 'src/shared/actions/app'
-import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
@@ -27,12 +32,11 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 interface Props {
   source: Source
   autoRefresh?: number
-  onChooseAutoRefresh?: (milliseconds: RefreshRate) => void
   manualRefresh: number
 }
 
 const PredictionInstanceWrapper = React.memo(
-  ({source, onChooseAutoRefresh, autoRefresh, manualRefresh}: Props) => {
+  ({source, autoRefresh, manualRefresh}: Props) => {
     const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
       timeRanges.find(tr => tr.lower === 'now() - 1h')
     )
@@ -76,15 +80,6 @@ const PredictionInstanceWrapper = React.memo(
       return {filteredLayouts}
     }
 
-    const handleChooseAutoRefresh = (option: {milliseconds: RefreshRate}) => {
-      const {milliseconds} = option
-      onChooseAutoRefresh(milliseconds)
-    }
-
-    const handleManualRefresh = () => {
-      setSelfManualRefresh(Date.now())
-    }
-
     const tempVars = generateForHosts(source)
 
     const debouncedFit = _.debounce(() => {
@@ -116,11 +111,6 @@ const PredictionInstanceWrapper = React.memo(
             cellTextColor={DEFAULT_CELL_TEXT_COLOR}
           >
             <div className="page-header--right" style={{zIndex: 3}}>
-              <AutoRefreshDropdown
-                onChoose={handleChooseAutoRefresh}
-                selected={autoRefresh}
-                onManualRefresh={handleManualRefresh}
-              />
               <TimeRangeDropdown
                 onChooseTimeRange={handleChooseTimeRange}
                 selected={selfTimeRange}
@@ -179,7 +169,7 @@ const PredictionInstanceWrapper = React.memo(
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh, cloudAutoRefresh},
+      persisted: {autoRefresh},
       ephemeral: {inPresentationMode},
     },
     links,
@@ -187,7 +177,6 @@ const mstp = state => {
   return {
     links,
     autoRefresh,
-    cloudAutoRefresh,
     inPresentationMode,
   }
 }

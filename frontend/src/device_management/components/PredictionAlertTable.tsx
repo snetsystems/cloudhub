@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import React, {useMemo} from 'react'
-import NoKapacitorError from 'src/shared/components/NoKapacitorError'
 import {Source, TimeRange} from 'src/types'
 import {Alert} from 'src/types/alerts'
 import PredictionAlertTableBody from './PredictionAlertTableBody'
@@ -14,7 +13,6 @@ interface Props {
   setLimitMultiplier: React.Dispatch<React.SetStateAction<number>>
   fetchAlerts: () => void
   error: unknown
-  hasKapacitor: boolean
   isAlertsMaxedOut: boolean
   alerts: Alert[]
 }
@@ -26,7 +24,6 @@ function PredictionAlertTable({
   setLimitMultiplier,
   fetchAlerts,
   error,
-  hasKapacitor,
   isAlertsMaxedOut,
   alerts,
 }: Props) {
@@ -57,7 +54,7 @@ function PredictionAlertTable({
       )
     }
 
-    return hasKapacitor ? (
+    return (
       <div
         style={{
           height: 'calc(100% - 45px)',
@@ -73,8 +70,6 @@ function PredictionAlertTable({
           alertsCount={alerts.length}
         />
       </div>
-    ) : (
-      <NoKapacitorError source={source} />
     )
   }
 
