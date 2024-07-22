@@ -197,6 +197,7 @@ export interface DevicesOrgData {
   load_module?: string
   is_prediction_active?: false
   collected_devices_ids?: string[]
+  learning_cron?: string
 }
 
 export interface DeviceOrganizationStatus {

@@ -257,7 +257,7 @@ export default class PredictionRule extends Component<Props, State> {
     const {
       isNetworkDeviceOrganizationValid,
       isTickscriptCreated,
-      source,
+      // source,
       // router,
       notify,
     } = this.props
