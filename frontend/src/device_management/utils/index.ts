@@ -175,10 +175,12 @@ export const decimalUnitNumber = (value: string, unit: string) => {
 export const convertSourcesToDropdownItems = (
   sources: Source[]
 ): DropdownItem[] => {
-  return sources.map(source => ({
-    ...source,
-    text: source.name,
-  }))
+  return sources
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(source => ({
+      ...source,
+      text: source.name,
+    }))
 }
 
 export const getSourceByName = (
