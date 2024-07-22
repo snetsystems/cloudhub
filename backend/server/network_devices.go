@@ -563,6 +563,27 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		isModified = true
 	}
 	if req.Organization != nil && device.Organization != *req.Organization {
+		devOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
+		if err != nil {
+			Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+			return
+		}
+		if devOrg.CollectedDevicesIDs != nil {
+			for _, id := range devOrg.CollectedDevicesIDs {
+				if id == device.ID {
+					Error(w, http.StatusUnprocessableEntity, "Device ID is already being collected. Please stop collecting the device and try again", s.Logger)
+					return
+				}
+			}
+		}
+		if devOrg.LearnedDevicesIDs != nil {
+			for _, id := range devOrg.LearnedDevicesIDs {
+				if id == device.ID {
+					Error(w, http.StatusUnprocessableEntity, "Device ID is already being learning. Please stop learning the device and try again", s.Logger)
+					return
+				}
+			}
+		}
 		device.Organization = *req.Organization
 		isModified = true
 	}
