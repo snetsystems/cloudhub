@@ -1075,7 +1075,7 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	tmplParams := cloudhub.TemplateParams{
 		"OrgName":              req.OrganizationName,
 		"Message":              req.Message,
-		"RetentionPolicy":      "autogen",
+		"RetentionPolicy":      RetentionPolicy,
 		"PredictMode":          req.PredictMode,
 		"PredictModeCondition": req.PredictModeCondition,
 		"AlertServices":        alertServices,
@@ -1096,9 +1096,9 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	kapaID := cloudhub.PredictScriptPrefix + org.ID
-	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: "autogen"}}
+	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: RetentionPolicy}}
 	if org.ID != "default" {
-		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: "autogen"})
+		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: RetentionPolicy})
 	}
 	status := client.Enabled
 	if req.Status != "" {
@@ -1217,7 +1217,7 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	tmplParams := cloudhub.TemplateParams{
 		"OrgName":              req.OrganizationName,
 		"Message":              req.Message,
-		"RetentionPolicy":      "autogen",
+		"RetentionPolicy":      RetentionPolicy,
 		"PredictMode":          req.PredictMode,
 		"PredictModeCondition": req.PredictModeCondition,
 		"AlertServices":        alertServices,
@@ -1238,10 +1238,10 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	kapaID := cloudhub.PredictScriptPrefix + org.ID
-	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: "autogen"}}
+	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: RetentionPolicy}}
 
 	if org.ID != "default" {
-		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: "autogen"})
+		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: RetentionPolicy})
 	}
 	status := client.Enabled
 	if req.Status != "" {
@@ -1258,8 +1258,8 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		Status:     status,
 	}
 	aiConfig := s.InternalENV.AIConfig
-
-	task, err := c.AutoGenerateUpdate(ctx, createTaskOptions, c.Href(kapaID), aiConfig.PredictionRegex)
+	newAITaskProcessor := kapa.NewAITaskProcess{Regex: aiConfig.PredictionRegex}
+	task, err := c.AutoGenerateUpdate(ctx, createTaskOptions, c.Href(kapaID), newAITaskProcessor)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return

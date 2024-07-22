@@ -649,10 +649,57 @@ func TestSelectCollectorServer(t *testing.T) {
 	}
 }
 
-func TestCreateLogstashConfig(t *testing.T) {
+func TestIsInvalidCronExpression(t *testing.T) {
+	tests := []struct {
+		cron     string
+		expected bool
+		comment  string
+	}{
+		{"* * * * *", false, "Every minute"},
+		{"0 0 * * *", false, "Every day at midnight"},
+		{"*/5 * * * *", false, "Every 5 minutes"},
+		{"0 0 1 * *", false, "At midnight on the 1st day of every month"},
+		{"0 0 1 1 *", false, "At midnight on January 1st every year"},
+		{"0 0 1 1 0", false, "At midnight on January 1st and on Sunday every year"},
+		{"0,15,30,45 * * * *", false, "At 0, 15, 30, and 45 minutes past the hour"},
+		{"0-15 * * * *", false, "Every minute from 0 through 15 past the hour"},
+		{"0-15/5 * * * *", false, "Every 5 minutes from 0 through 15 past the hour"},
+		{"invalid cron", true, "Invalid cron expression"},
+		{"* * * *", true, "Invalid cron expression (missing one field)"},
+		{"60 * * * *", true, "Invalid cron expression (invalid minute value)"},
+		{"* 24 * * *", true, "Invalid cron expression (invalid hour value)"},
+		{"* * 32 * *", true, "Invalid cron expression (invalid day of the month value)"},
+		{"* * * 13 *", true, "Invalid cron expression (invalid month value)"},
+		{"* * * * 8", true, "Invalid cron expression (invalid day of the week value)"},
+		{"1 0 1,15 * *", false, "At 1 minute past midnight on the 1st and 15th of every month"},
+		{"0-59/2 * * * *", false, "Every 2 minutes from 0 through 59 past the hour"},
+		{"*/10 0 * * *", false, "Every 10 minutes at midnight"},
+		{"0 0-23/2 * * *", false, "Every 2 hours at midnight"},
+		{"0 0 * 1-12/2 *", false, "At midnight every 2 months"},
+		{"0 0 * * 1-5", false, "At midnight Monday through Friday"},
+		{"0 0 * * 0,6", false, "At midnight on Saturday and Sunday"},
+		{"0 0 1-7 * *", false, "At midnight on the 1st through 7th of every month"},
+		{"*/15 0-23/2 * * 1-5", false, "Every 15 minutes every 2 hours Monday through Friday"},
+		{"0 0 1 1 *", false, "At midnight on January 1st every year"},
+		{"0 12 1 1 *", false, "At noon on January 1st every year"},
+		{"0 12 1 1 0", false, "At noon on January 1st and on Sunday every year"},
+		{"0 12 1 1 7", false, "At noon on January 1st and on Saturday every year"},
+		{"0 12 1 1 6", false, "At noon on January 1st and on Friday every year"},
+		{"0 12 1 1 5", false, "At noon on January 1st and on Thursday every year"},
+		{"0 12 1 1 4", false, "At noon on January 1st and on Wednesday every year"},
+		{"0 12 1 1 3", false, "At noon on January 1st and on Tuesday every year"},
+		{"0 12 1 1 2", false, "At noon on January 1st and on Monday every year"},
+		{"0 12 1 1 1", false, "At noon on January 1st and on Sunday every year"},
+		{"0 12 1 1 0", false, "At noon on January 1st and on Sunday every year"},
+		{"0 12 1 1 1,3,5", false, "At noon on January 1st and on Monday, Wednesday, and Friday every year"},
+	}
 
-}
-func TestRestartLogstash(t *testing.T) {
+	for _, test := range tests {
+		result := isInvalidCronExpression(test.cron)
+		if result != test.expected {
+			t.Errorf("For cron expression '%s' (%s), expected %v but got %v", test.cron, test.comment, test.expected, result)
+		}
+	}
 }
 
 const MockOrganizationID = "76"
@@ -962,6 +1009,7 @@ func MockNetworkDeviceOrgStoreSetup() *mocks.NetworkDeviceOrgStore {
 		},
 	}
 }
+
 func equalMaps(a, b map[string][]int) bool {
 	if len(a) != len(b) {
 		return false

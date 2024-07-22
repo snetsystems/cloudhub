@@ -71,6 +71,32 @@ type Task struct {
 
 var reTaskName = regexp.MustCompile(`[\r\n]*var[ \t]+name[ \t]+=[ \t]+'([^']+)'`)
 
+// TaskPreprocessor is an interface for processing tasks after they are updated.
+// Implementations of this interface can define custom logic for handling
+// the task based on specific requirements.
+type TaskPreprocessor interface {
+	Process(task *client.Task) *Task
+}
+
+// NewAITaskProcess is a struct that implements the TaskPreprocessor interface.
+type NewAITaskProcess struct {
+	Regex string
+}
+
+// Process processes the provided task using the regex pattern and returns a new AI Task.
+func (p NewAITaskProcess) Process(task *client.Task) *Task {
+	return NewAITask(task, p.Regex)
+}
+
+// NewTaskProcess is a struct that implements the TaskPreprocessor interface.
+type NewTaskProcess struct{}
+
+// Process processes the provided task and returns a new Task.
+// It creates a new Task using the NewTask function.
+func (p NewTaskProcess) Process(task *client.Task) *Task {
+	return NewTask(task)
+}
+
 // NewTask creates a task from a kapacitor client task
 func NewTask(task *client.Task) *Task {
 	dbrps := make([]cloudhub.DBRP, len(task.DBRPs))
@@ -209,8 +235,7 @@ func (c *Client) AutoGenerateCreate(ctx context.Context, taskOptions *client.Cre
 }
 
 // AutoGenerateUpdate Update a tickScript to kapacitor
-func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.UpdateTaskOptions, href string, regex string) (*Task, error) {
-
+func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.UpdateTaskOptions, href string, preprocessor TaskPreprocessor) (*Task, error) {
 	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
 	if err != nil {
 		return nil, err
@@ -227,7 +252,7 @@ func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.Upd
 		}
 	}
 
-	return NewAITask(&task, regex), nil
+	return preprocessor.Process(&task), nil
 }
 
 func (c *Client) createFromTick(rule cloudhub.AlertRule) (*client.CreateTaskOptions, error) {

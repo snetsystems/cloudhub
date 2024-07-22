@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/influxdata/kapacitor/client/v1"
@@ -39,6 +40,7 @@ type deviceOrgResponse struct {
 	CollectorServer     string               `json:"collector_server"`
 	CollectedDevicesIDs []string             `json:"collected_devices_ids"`
 	AIKapacitor         cloudhub.AIKapacitor `json:"ai_kapacitor"`
+	LearningCron        string               `json:"learning_cron"`
 }
 type updateDeviceOrgRequest struct {
 	LoadModule          *string               `json:"load_module,omitempty"`
@@ -50,6 +52,7 @@ type updateDeviceOrgRequest struct {
 	CronSchedule        *string               `json:"cron_schedule"`
 	CollectorServer     *string               `json:"collector_server"`
 	TaskStatus          int                   `json:"task_status"`
+	LearningCron        string                `json:"learning_cron"`
 }
 
 type deviceOrgRequest struct {
@@ -59,6 +62,7 @@ type deviceOrgRequest struct {
 	CronSchedule *string               `json:"cron_schedule"`
 	AIKapacitor  *cloudhub.AIKapacitor `json:"ai_kapacitor"`
 	TaskStatus   int                   `json:"task_status"`
+	LearningCron string                `json:"learning_cron"`
 }
 
 type deviceOrgError struct {
@@ -86,10 +90,11 @@ const MLFunctionGaussianStd = "ml_gaussian_std"
 
 // ML/DL Setting
 const (
-	LoadModule   = "loader.cloudhub.ch_nx_load"
-	MLFunction   = MLFunctionGaussianStd
-	DataDuration = 15
-	CronSchedule = "1 0 1,15 * *"
+	LoadModule      = "loader.cloudhub.ch_nx_load"
+	MLFunction      = MLFunctionGaussianStd
+	DataDuration    = 15
+	CronSchedule    = "1 0 1,15 * *"
+	RetentionPolicy = "autogen"
 )
 
 func isAllowedMLFunction(function string) bool {
@@ -120,11 +125,24 @@ func (r *deviceOrgRequest) validCreate() error {
 	if r.CronSchedule == nil {
 		return fmt.Errorf("AI CronSchedule required in device org request body")
 	}
+	if isInvalidCronExpression(*r.CronSchedule) {
+		return fmt.Errorf("%s is an invalid cron expression", *r.CronSchedule)
+	}
 
 	return nil
 }
 
 func (r *updateDeviceOrgRequest) validUpdate() error {
+
+	if r.AIKapacitor.KapaURL == "" {
+		return fmt.Errorf("AI Kapacitor URL required in device org request body")
+	}
+	if r.CronSchedule == nil {
+		return fmt.Errorf("AI CronSchedule required in device org request body")
+	}
+	if isInvalidCronExpression(*r.CronSchedule) {
+		return fmt.Errorf("%s is an invalid cron expression", *r.CronSchedule)
+	}
 	return nil
 }
 
@@ -154,9 +172,80 @@ func newDeviceOrgResponse(deviceOrg *cloudhub.NetworkDeviceOrg) (*deviceOrgRespo
 		CollectorServer:     deviceOrg.CollectorServer,
 		CollectedDevicesIDs: deviceOrg.CollectedDevicesIDs,
 		AIKapacitor:         deviceOrg.AIKapacitor,
+		LearningCron:        deviceOrg.LearningCron,
 	}
 
 	return resData, nil
+}
+
+// AddNetworkDeviceOrg adds a new Device Org to the store.
+func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
+	var req deviceOrgRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	if err := req.validCreate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &req.ID})
+	if err != nil {
+		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error checking for existing Org: %v", err), s.Logger)
+		return
+	}
+
+	existingDeviceOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &req.ID})
+	if existingDeviceOrg != nil {
+		Error(w, http.StatusConflict, fmt.Sprintf("Device Org with ID %s already exists", req.ID), s.Logger)
+		return
+	}
+
+	// Create a new NetworkDeviceOrg from the request data
+	newDeviceOrg := cloudhub.NetworkDeviceOrg{
+		ID:                  req.ID,
+		LoadModule:          LoadModule,
+		MLFunction:          *req.MLFunction,
+		DataDuration:        *req.DataDuration,
+		LearnedDevicesIDs:   []string{},
+		CollectedDevicesIDs: []string{},
+		CollectorServer:     "",
+		AIKapacitor: cloudhub.AIKapacitor{
+			SrcID:              req.AIKapacitor.SrcID,
+			KapaID:             req.AIKapacitor.KapaID,
+			KapaURL:            req.AIKapacitor.KapaURL,
+			Username:           req.AIKapacitor.Username,
+			Password:           req.AIKapacitor.Password,
+			InsecureSkipVerify: req.AIKapacitor.InsecureSkipVerify,
+		},
+		LearningCron: *req.CronSchedule,
+	}
+
+	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Add(ctx, &newDeviceOrg)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating new Device Org: %v", err), s.Logger)
+		return
+	}
+	if req.AIKapacitor != nil && req.AIKapacitor.KapaURL != "" {
+		err = manageLearningTask(ctx, s, org, req, deviceOrg)
+		if err != nil {
+			invalidData(w, err, s.Logger)
+			return
+		}
+	}
+
+	res, err := newDeviceOrgResponse(deviceOrg)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating response for new Device Org: %v", err), s.Logger)
+		return
+	}
+	msg := fmt.Sprintf(MsgNetWorkDeviceOrgCreated.String(), deviceOrg.ID)
+	s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
+	encodeJSON(w, http.StatusCreated, res, s.Logger)
 }
 
 // NetworkDeviceOrgID returns a device org by ID.
@@ -236,6 +325,9 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	if req.CollectorServer != nil {
 		deviceOrg.CollectorServer = *req.CollectorServer
 	}
+	if req.CronSchedule != nil {
+		deviceOrg.LearningCron = *req.CronSchedule
+	}
 	if req.AIKapacitor != nil {
 		deviceOrg.AIKapacitor.SrcID = req.AIKapacitor.SrcID
 		deviceOrg.AIKapacitor.KapaID = req.AIKapacitor.KapaID
@@ -261,7 +353,7 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		AIKapacitor:  &deviceOrg.AIKapacitor,
 		TaskStatus:   req.TaskStatus,
 	}
-	err = createLearningTask(ctx, s, org, reqTask, deviceOrg)
+	err = manageLearningTask(ctx, s, org, reqTask, deviceOrg)
 	if err != nil {
 		msg := fmt.Sprintf("Error updating TickSCript %s: %v", idStr, err)
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
@@ -286,75 +378,6 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	msg = fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), idStr)
 	s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
-}
-
-// AddNetworkDeviceOrg adds a new Device Org to the store.
-func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
-	var req deviceOrgRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		invalidJSON(w, s.Logger)
-		return
-	}
-
-	if err := req.validCreate(); err != nil {
-		invalidData(w, err, s.Logger)
-		return
-	}
-
-	ctx := r.Context()
-
-	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &req.ID})
-	if err != nil {
-		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error checking for existing Org: %v", err), s.Logger)
-		return
-	}
-
-	existingDeviceOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &req.ID})
-	if existingDeviceOrg != nil {
-		Error(w, http.StatusConflict, fmt.Sprintf("Device Org with ID %s already exists", req.ID), s.Logger)
-		return
-	}
-
-	// Create a new NetworkDeviceOrg from the request data
-	newDeviceOrg := cloudhub.NetworkDeviceOrg{
-		ID:                  req.ID,
-		LoadModule:          LoadModule,
-		MLFunction:          *req.MLFunction,
-		DataDuration:        *req.DataDuration,
-		LearnedDevicesIDs:   []string{},
-		CollectedDevicesIDs: []string{},
-		CollectorServer:     "",
-		AIKapacitor: cloudhub.AIKapacitor{
-			SrcID:              req.AIKapacitor.SrcID,
-			KapaID:             req.AIKapacitor.KapaID,
-			KapaURL:            req.AIKapacitor.KapaURL,
-			Username:           req.AIKapacitor.Username,
-			Password:           req.AIKapacitor.Password,
-			InsecureSkipVerify: req.AIKapacitor.InsecureSkipVerify,
-		},
-	}
-
-	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Add(ctx, &newDeviceOrg)
-	if err != nil {
-		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating new Device Org: %v", err), s.Logger)
-		return
-	}
-	if req.AIKapacitor != nil && req.AIKapacitor.KapaURL != "" {
-		err = createLearningTask(ctx, s, org, req, deviceOrg)
-		if err != nil {
-			invalidData(w, err, s.Logger)
-			return
-		}
-	}
-
-	res, err := newDeviceOrgResponse(deviceOrg)
-	if err != nil {
-		Error(w, http.StatusInternalServerError, fmt.Sprintf("Error creating response for new Device Org: %v", err), s.Logger)
-		return
-	}
-	msg := fmt.Sprintf(MsgNetWorkDeviceOrgCreated.String(), deviceOrg.ID)
-	s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
-	encodeJSON(w, http.StatusCreated, res, s.Logger)
 }
 
 // RemoveNetworkDeviceOrg removes a Device Org from the store by ID.
@@ -413,7 +436,7 @@ func GetServerInfluxDBs(ctx context.Context, s *Service) ([]InfluxdbInfo, error)
 	return influxDBs, nil
 }
 
-func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organization, req deviceOrgRequest, deviceOrg *cloudhub.NetworkDeviceOrg) error {
+func manageLearningTask(ctx context.Context, s *Service, org *cloudhub.Organization, req deviceOrgRequest, deviceOrg *cloudhub.NetworkDeviceOrg) error {
 	influxDBs, err := GetServerInfluxDBs(ctx, s)
 	if err != nil || len(influxDBs) < 1 {
 		return fmt.Errorf("Error fetching InfluxDBs: %v", err)
@@ -444,7 +467,7 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		CronSchedule:     *req.CronSchedule,
 		LoadModule:       LoadModule,
 		MLFunction:       *req.MLFunction,
-		RetentionPolicy:  "autogen",
+		RetentionPolicy:  RetentionPolicy,
 		AlertRule: cloudhub.AlertRule{
 			ID: cloudhub.LearnScriptPrefix + org.ID,
 		},
@@ -484,9 +507,29 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	}
 
 	kapaID := cloudhub.LearnScriptPrefix + org.ID
-	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: "autogen"}}
+	DBRPs := []client.DBRP{{Database: "Default", RetentionPolicy: RetentionPolicy}}
 	if org.ID != "default" {
-		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: "autogen"})
+		DBRPs = append(DBRPs, client.DBRP{Database: org.Name, RetentionPolicy: RetentionPolicy})
+	}
+
+	// Check if the task exists
+	isExist, _ := c.Get(ctx, kapaID)
+	if isExist != nil {
+		updateTaskOptions := &client.UpdateTaskOptions{
+			ID:         kapaID,
+			Type:       client.BatchTask,
+			DBRPs:      DBRPs,
+			TICKscript: string(script),
+			Status:     client.TaskStatus(req.TaskStatus),
+		}
+		newTaskProcessor := kapa.NewTaskProcess{}
+		_, err := c.AutoGenerateUpdate(ctx, updateTaskOptions, c.Href(kapaID), newTaskProcessor)
+		if err != nil {
+			return err
+		}
+		msg := fmt.Sprintf(MsgKapacitorModified.String(), updateTaskOptions.ID, org.Name)
+		s.logRegistration(ctx, "Kapacitors Task", msg)
+		return nil
 	}
 	createTaskOptions := &client.CreateTaskOptions{
 		ID:         kapaID,
@@ -495,14 +538,14 @@ func createLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		TICKscript: string(script),
 		Status:     client.TaskStatus(req.TaskStatus),
 	}
-	task, err := c.AutoGenerateCreate(ctx, createTaskOptions)
-	if err != nil && task != nil {
+	createdTask, err := c.AutoGenerateCreate(ctx, createTaskOptions)
+	if err != nil && createdTask != nil {
 		return err
 	}
-
 	msg := fmt.Sprintf(MsgKapacitorRuleCreated.String(), createTaskOptions.ID, org.Name)
 	s.logRegistration(ctx, "Kapacitors Task", msg)
 	return nil
+
 }
 
 func deleteLearningTask(ctx context.Context, s *Service, org *cloudhub.Organization, AIKapacitor cloudhub.AIKapacitor) error {
@@ -558,4 +601,11 @@ func getIPAndPort(rawURL string) (string, string, error) {
 	}
 
 	return ip, port, nil
+}
+
+func isInvalidCronExpression(cron string) bool {
+	cronRegex := `^(\*|([0-5]?\d)(,\s*[0-5]?\d)*|([0-5]?\d(-[0-5]?\d)?)(/\d+)?|\*/\d+) (\*|([01]?\d|2[0-3])(,\s*([01]?\d|2[0-3]))*|([01]?\d|2[0-3])(-([01]?\d|2[0-3]))?(/\d+)?|\*/\d+) (\*|([1-9]|[12]\d|3[01])(,\s*([1-9]|[12]\d|3[01]))*|([1-9]|[12]\d|3[01])(-([1-9]|[12]\d|3[01]))?(/\d+)?|\*/\d+) (\*|(1[0-2]|0?[1-9])(,\s*(1[0-2]|0?[1-9]))*|(1[0-2]|0?[1-9])(-([1-9]|1[0-2]))?(/\d+)?|\*/\d+) (\*|([0-7])(,\s*[0-7])*|([0-7])(-[0-7])?(/\d+)?|\*/\d+)$`
+
+	re := regexp.MustCompile(cronRegex)
+	return !re.MatchString(strings.TrimSpace(cron))
 }
