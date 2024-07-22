@@ -119,6 +119,12 @@ func (r *deviceOrgRequest) validCreate() error {
 	if r.AIKapacitor == nil {
 		return fmt.Errorf("AI Kapacitor required in device org request body")
 	}
+	if r.AIKapacitor.KapaID == 0 {
+		return fmt.Errorf("AI Kapacitor ID required in device org request body")
+	}
+	if r.AIKapacitor.SrcID == 0 {
+		return fmt.Errorf("AI Source ID required in device org request body")
+	}
 	if r.AIKapacitor.KapaURL == "" {
 		return fmt.Errorf("AI Kapacitor URL required in device org request body")
 	}
@@ -136,6 +142,12 @@ func (r *updateDeviceOrgRequest) validUpdate() error {
 
 	if r.AIKapacitor.KapaURL == "" {
 		return fmt.Errorf("AI Kapacitor URL required in device org request body")
+	}
+	if r.AIKapacitor.KapaID == 0 {
+		return fmt.Errorf("AI Kapacitor ID required in device org request body")
+	}
+	if r.AIKapacitor.SrcID == 0 {
+		return fmt.Errorf("AI Source ID required in device org request body")
 	}
 	if r.CronSchedule == nil {
 		return fmt.Errorf("AI CronSchedule required in device org request body")
