@@ -557,62 +557,76 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-
-	if req.DeviceIP != nil {
+	isModified := false
+	if req.DeviceIP != nil && device.DeviceIP != *req.DeviceIP {
 		device.DeviceIP = *req.DeviceIP
+		isModified = true
 	}
-	if req.Organization != nil {
+	if req.Organization != nil && device.Organization != *req.Organization {
 		device.Organization = *req.Organization
+		isModified = true
 	}
-	if req.Hostname != nil {
+	if req.Hostname != nil && device.Hostname != *req.Hostname {
 		device.Hostname = *req.Hostname
+		isModified = true
 	}
-	if req.DeviceCategory != nil {
+	if req.DeviceCategory != nil && device.DeviceCategory != *req.DeviceCategory {
 		device.DeviceCategory = *req.DeviceCategory
+		isModified = true
 	}
-	if req.DeviceOS != nil {
+	if req.DeviceOS != nil && device.DeviceOS != *req.DeviceOS {
 		device.DeviceOS = *req.DeviceOS
+		isModified = true
 	}
 
 	if req.SSHConfig != nil {
-		if req.SSHConfig.UserID != "" {
+		if req.SSHConfig.UserID != "" && device.SSHConfig.UserID != req.SSHConfig.UserID {
 			device.SSHConfig.UserID = req.SSHConfig.UserID
 		}
-		if req.SSHConfig.Password != "" {
+		if req.SSHConfig.Password != "" && device.SSHConfig.Password != req.SSHConfig.Password {
 			device.SSHConfig.Password = req.SSHConfig.Password
 		}
-		if req.SSHConfig.EnPassword != "" {
+		if req.SSHConfig.EnPassword != "" && device.SSHConfig.EnPassword != req.SSHConfig.EnPassword {
 			device.SSHConfig.EnPassword = req.SSHConfig.EnPassword
 		}
-		if req.SSHConfig.Port != 0 {
+		if req.SSHConfig.Port != 0 && device.SSHConfig.Port != req.SSHConfig.Port {
 			device.SSHConfig.Port = req.SSHConfig.Port
 		}
 	}
 	if req.SNMPConfig != nil {
-		if req.SNMPConfig.Community != "" {
+		if req.SNMPConfig.Community != "" && device.SNMPConfig.Community != req.SNMPConfig.Community {
 			device.SNMPConfig.Community = req.SNMPConfig.Community
+			isModified = true
 		}
-		if req.SNMPConfig.Version != "" {
+		if req.SNMPConfig.Version != "" && device.SNMPConfig.Version != req.SNMPConfig.Version {
 			device.SNMPConfig.Version = req.SNMPConfig.Version
+			isModified = true
 		}
-		if req.SNMPConfig.Port != 0 {
+		if req.SNMPConfig.Port != 0 && device.SNMPConfig.Port != req.SNMPConfig.Port {
 			device.SNMPConfig.Port = req.SNMPConfig.Port
+			isModified = true
 		}
-		if req.SNMPConfig.Protocol != "" {
+		if req.SNMPConfig.Protocol != "" && device.SNMPConfig.Protocol != req.SNMPConfig.Protocol {
 			device.SNMPConfig.Protocol = req.SNMPConfig.Protocol
+			isModified = true
 		}
 	}
-	if req.Sensitivity != nil {
+	if req.Sensitivity != nil && device.Sensitivity != *req.Sensitivity {
 		device.Sensitivity = *req.Sensitivity
 	}
-	if req.DeviceVendor != nil {
+	if req.DeviceVendor != nil && device.DeviceVendor != *req.DeviceVendor {
 		device.DeviceVendor = *req.DeviceVendor
+		isModified = true
 	}
-	if req.IsLearning != nil {
+	if req.IsLearning != nil && device.IsLearning != *req.IsLearning {
 		device.IsLearning = *req.IsLearning
 	}
-
-	device.IsCollectingCfgWritten = false
+	if req.IsCollectingCfgWritten != nil && device.IsCollectingCfgWritten != *req.IsCollectingCfgWritten {
+		device.IsCollectingCfgWritten = *req.IsCollectingCfgWritten
+	}
+	if isModified {
+		device.IsCollectingCfgWritten = false
+	}
 
 	if err := s.OrganizationExists(ctx, device.Organization); err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
