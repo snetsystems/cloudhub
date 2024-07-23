@@ -1065,10 +1065,16 @@ func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
 			Port:       int32(t.SSHConfig.Port),
 		},
 		SNMPConfig: &SNMPConfig{
-			Community: t.SNMPConfig.Community,
-			Version:   t.SNMPConfig.Version,
-			Port:      int32(t.SNMPConfig.Port),
-			Protocol:  t.SNMPConfig.Protocol,
+			Community:     t.SNMPConfig.Community,
+			Version:       t.SNMPConfig.Version,
+			Port:          int32(t.SNMPConfig.Port),
+			Protocol:      t.SNMPConfig.Protocol,
+			SecurityName:  t.SNMPConfig.SecurityName,
+			AuthProtocol:  t.SNMPConfig.AuthProtocol,
+			AuthPass:      t.SNMPConfig.AuthPass,
+			PrivProtocol:  t.SNMPConfig.PrivProtocol,
+			PrivPass:      t.SNMPConfig.PrivPass,
+			SecurityLevel: t.SNMPConfig.SecurityLevel,
 		},
 		Sensitivity:            float32(t.Sensitivity),
 		DeviceVendor:           t.DeviceVendor,
@@ -1107,10 +1113,16 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 
 	if pb.SNMPConfig != nil {
 		t.SNMPConfig = cloudhub.SNMPConfig{
-			Community: pb.SNMPConfig.Community,
-			Version:   pb.SNMPConfig.Version,
-			Port:      int(pb.SNMPConfig.Port),
-			Protocol:  pb.SNMPConfig.Protocol,
+			Community:     pb.SNMPConfig.Community,
+			Version:       pb.SNMPConfig.Version,
+			Port:          int(pb.SNMPConfig.Port),
+			Protocol:      pb.SNMPConfig.Protocol,
+			SecurityName:  pb.SNMPConfig.SecurityName,
+			AuthProtocol:  pb.SNMPConfig.AuthProtocol,
+			AuthPass:      pb.SNMPConfig.AuthPass,
+			PrivProtocol:  pb.SNMPConfig.PrivProtocol,
+			PrivPass:      pb.SNMPConfig.PrivPass,
+			SecurityLevel: pb.SNMPConfig.SecurityLevel,
 		}
 	} else {
 		t.SNMPConfig = cloudhub.SNMPConfig{}

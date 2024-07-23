@@ -28,17 +28,23 @@ type SNMPManager struct {
 
 // SNMPConfig holds the SNMP configuration.
 type SNMPConfig struct {
-	Community    string                    `json:"community"`
-	DeviceIP     string                    `json:"device_ip"`
-	Port         uint16                    `json:"port"`
-	Version      string                    `json:"version"`
-	Username     string                    `json:"snmp_user"`
-	AuthPassword string                    `json:"snmp_auth_password"`
-	AuthProtocol gosnmp.SnmpV3AuthProtocol `json:"snmp_v3_auth_protocol"`
-	PrivPassword string                    `json:"snmp_private_password"`
-	PrivProtocol gosnmp.SnmpV3PrivProtocol `json:"snmp_v3_private_protocol"`
-	Protocol     string                    `json:"protocol"` // "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6"
+	DeviceIP      string `json:"device_ip"`
+	Community     string `json:"community"`
+	Version       string `json:"version"`
+	Port          uint16 `json:"port"`
+	Protocol      string `json:"protocol"` // "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6"
+	SecurityName  string `json:"security_name,omitempty"`
+	AuthProtocol  string `json:"auth_protocol,omitempty"` // auth protocol one of ["md5", "sha", "sha2", "hmac128sha224", "hmac192sha256", "hmac256sha384", "hmac384sha512"]
+	AuthPass      string `json:"auth_pass,omitempty"`
+	PrivProtocol  string `json:"priv_protocol,omitempty"` // priv_protocol one of ["des", "aes", "aes128", "aes192", "aes256"]
+	PrivPass      string `json:"priv_pass,omitempty"`
+	SecurityLevel string `json:"security_level,omitempty"` // security_level one of ["noAuthNoPriv", "authNoPriv", "authPriv"]
 }
+
+const (
+	connTimeout = 5 * time.Second
+	connRetry   = 3
+)
 
 // SNMPInterface defines the required methods for interacting with SNMP.
 type SNMPInterface interface {
@@ -54,7 +60,6 @@ type GoSNMPAdapter struct {
 }
 
 // Close closes the connection if it exists.
-// Returns an error if the connection cannot be closed.
 func (g *GoSNMPAdapter) Close() error {
 	if g.Conn != nil {
 		return g.Conn.Close()
@@ -63,55 +68,80 @@ func (g *GoSNMPAdapter) Close() error {
 }
 
 // Connect establishes a connection using the embedded GoSNMP instance.
-// Returns an error if the connection cannot be established.
 func (g *GoSNMPAdapter) Connect() error {
 	return g.GoSNMP.Connect()
 }
 
 // Walk performs an SNMP walk operation on the given OID using the provided walk function.
-// The walk function is called for each variable retrieved during the walk.
-// Returns an error if the walk operation fails.
 func (g *GoSNMPAdapter) Walk(oid string, walkFn gosnmp.WalkFunc) error {
 	return g.GoSNMP.Walk(oid, walkFn)
 }
 
 // Get retrieves SNMP variables for the given OIDs.
-// Returns the SNMP packet containing the variables and an error if the get operation fails.
 func (g *GoSNMPAdapter) Get(oids []string) (*gosnmp.SnmpPacket, error) {
 	return g.GoSNMP.Get(oids)
 }
 
 // NewSNMPManager initializes a new SNMP manager.
 func NewSNMPManager(config *SNMPConfig) (*SNMPManager, error) {
+	if err := config.validCreate(); err != nil {
+		return nil, err
+	}
+
 	version, err := parseSNMPVersion(config.Version)
 	if err != nil {
 		return nil, err
 	}
+	var msgFlags gosnmp.SnmpV3MsgFlags
+	var authProtocol gosnmp.SnmpV3AuthProtocol
+	var privProtocol gosnmp.SnmpV3PrivProtocol
+
+	protocol, err := parseProtocol(config.Protocol)
+	if err != nil {
+		return nil, err
+	}
+
+	if version == gosnmp.Version3 {
+		flags, err := parseSecurityLevel(config.SecurityLevel)
+		if err != nil {
+			return nil, err
+		}
+		msgFlags = flags
+	}
+
+	if msgFlags&gosnmp.AuthPriv > 0 || msgFlags&gosnmp.AuthNoPriv > 0 {
+		authProtocol, err = parseAuthProtocol(config.AuthProtocol)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if msgFlags == gosnmp.AuthPriv {
+		privProtocol, err = parsePrivProtocol(config.PrivProtocol)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	snmp := &gosnmp.GoSNMP{
 		Target:    config.DeviceIP,
 		Port:      config.Port,
 		Community: config.Community,
 		Version:   version,
-		Timeout:   5 * time.Second,
-		Retries:   3,
-	}
-
-	switch protocol := strings.ToLower(config.Protocol); protocol {
-	case "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
-		snmp.Transport = protocol
-	default:
-		return nil, fmt.Errorf("unsupported protocol: %s", config.Protocol)
+		Timeout:   connTimeout,
+		Retries:   connRetry,
+		Transport: protocol,
 	}
 
 	if version == gosnmp.Version3 {
 		snmp.SecurityModel = gosnmp.UserSecurityModel
-		snmp.MsgFlags = gosnmp.AuthPriv
+		snmp.MsgFlags = msgFlags
 		snmp.SecurityParameters = &gosnmp.UsmSecurityParameters{
-			UserName:                 config.Username,
-			AuthenticationProtocol:   config.AuthProtocol,
-			AuthenticationPassphrase: config.AuthPassword,
-			PrivacyProtocol:          config.PrivProtocol,
-			PrivacyPassphrase:        config.PrivPassword,
+			UserName:                 config.SecurityName,
+			AuthenticationProtocol:   authProtocol,
+			AuthenticationPassphrase: config.PrivPass,
+			PrivacyProtocol:          privProtocol,
+			PrivacyPassphrase:        config.AuthPass,
 		}
 	}
 
@@ -269,18 +299,42 @@ func (r *SNMPConfig) validCreate() error {
 	switch {
 	case r.DeviceIP == "":
 		return fmt.Errorf("device_ip required in device request body")
-
-	case r.Community == "":
-		return fmt.Errorf("Community required in device request body")
-
 	case r.Protocol == "":
 		return fmt.Errorf("Protocol required in device request body")
-
 	case r.Version == "":
 		return fmt.Errorf("Version required in device request body")
-
 	}
-
+	isSNMPV3, _ := parseSNMPVersion("v3")
+	reqVersion, err := parseSNMPVersion(strings.ToLower(r.Version))
+	if err != nil {
+		return fmt.Errorf(err.Error())
+	}
+	if reqVersion != isSNMPV3 {
+		if r.Community == "" {
+			return fmt.Errorf("Community required in device request body for SNMP v1/v2c")
+		}
+		return nil
+	}
+	reqSecurityLevel, err := parseSecurityLevel(strings.ToLower(r.SecurityLevel))
+	if err != nil {
+		return fmt.Errorf(err.Error())
+	}
+	switch reqSecurityLevel {
+	case gosnmp.NoAuthNoPriv:
+		if r.SecurityName == "" {
+			return fmt.Errorf("snmp_user required for noAuthNoPriv security level")
+		}
+	case gosnmp.AuthNoPriv:
+		if r.SecurityName == "" || r.PrivPass == "" || r.AuthProtocol == "" {
+			return fmt.Errorf("snmp_user, snmp_auth_password, and snmp_v3_auth_protocol required for authNoPriv security level")
+		}
+	case gosnmp.AuthPriv:
+		if r.SecurityName == "" || r.PrivPass == "" || r.AuthProtocol == "" || r.AuthPass == "" || r.PrivProtocol == "" {
+			return fmt.Errorf("snmp_user, snmp_auth_password, snmp_v3_auth_protocol, snmp_private_password, and snmp_v3_private_protocol required for authPriv security level")
+		}
+	default:
+		return fmt.Errorf("unsupported security level: %s", r.SecurityLevel)
+	}
 	return nil
 }
 
@@ -359,4 +413,62 @@ func (s *Service) testSNMP(config SNMPConfig, i int) (SNMPResponse, error) {
 		Hostname:   results["hostname"],
 		DeviceOS:   results["deviceOS"],
 	}, nil
+}
+
+func parseAuthProtocol(authProtocol string) (gosnmp.SnmpV3AuthProtocol, error) {
+	switch strings.ToUpper(authProtocol) {
+	case "MD5":
+		return gosnmp.MD5, nil
+	case "SHA":
+		return gosnmp.SHA, nil
+	case "SHA2":
+		return gosnmp.SHA256, nil
+	case "HMAC128SHA224":
+		return gosnmp.SHA224, nil
+	case "HMAC192SHA256":
+		return gosnmp.SHA256, nil
+	case "HMAC256SHA384":
+		return gosnmp.SHA384, nil
+	case "HMAC384SHA512":
+		return gosnmp.SHA512, nil
+	default:
+		return gosnmp.NoAuth, fmt.Errorf("unsupported SNMP v3 auth protocol: %s", authProtocol)
+	}
+}
+
+func parsePrivProtocol(privProtocol string) (gosnmp.SnmpV3PrivProtocol, error) {
+	switch strings.ToUpper(privProtocol) {
+	case "DES":
+		return gosnmp.DES, nil
+	case "AES", "AES128":
+		return gosnmp.AES, nil
+	case "AES192":
+		return gosnmp.AES192, nil
+	case "AES256":
+		return gosnmp.AES256, nil
+	default:
+		return gosnmp.NoPriv, fmt.Errorf("unsupported SNMP v3 priv protocol: %s", privProtocol)
+	}
+}
+
+func parseSecurityLevel(securityLevel string) (gosnmp.SnmpV3MsgFlags, error) {
+	switch strings.ToLower(securityLevel) {
+	case "noauthnopriv":
+		return gosnmp.NoAuthNoPriv, nil
+	case "authnopriv":
+		return gosnmp.AuthNoPriv, nil
+	case "authpriv":
+		return gosnmp.AuthPriv, nil
+	default:
+		return 0, fmt.Errorf("unsupported security level: %s", securityLevel)
+	}
+}
+
+func parseProtocol(protocol string) (string, error) {
+	switch strings.ToLower(protocol) {
+	case "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
+		return protocol, nil
+	default:
+		return "", fmt.Errorf("unsupported protocol: %s", protocol)
+	}
 }

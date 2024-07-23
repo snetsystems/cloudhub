@@ -125,10 +125,16 @@ func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.Network
 			Port:       device.SSHConfig.Port,
 		},
 		SNMPConfig: cloudhub.SNMPConfig{
-			Community: device.SNMPConfig.Community,
-			Version:   device.SNMPConfig.Version,
-			Port:      device.SNMPConfig.Port,
-			Protocol:  device.SNMPConfig.Protocol,
+			Community:     device.SNMPConfig.Community,
+			Version:       device.SNMPConfig.Version,
+			Port:          device.SNMPConfig.Port,
+			Protocol:      device.SNMPConfig.Protocol,
+			SecurityName:  device.SNMPConfig.SecurityName,
+			AuthProtocol:  device.SNMPConfig.AuthProtocol,
+			AuthPass:      device.SNMPConfig.AuthPass,
+			PrivProtocol:  device.SNMPConfig.PrivProtocol,
+			PrivPass:      device.SNMPConfig.PrivPass,
+			SecurityLevel: device.SNMPConfig.SecurityLevel,
 		},
 		Sensitivity:            device.Sensitivity,
 		DeviceVendor:           device.DeviceVendor,
@@ -655,6 +661,31 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 			device.SNMPConfig.Protocol = req.SNMPConfig.Protocol
 			isModified = true
 		}
+		if req.SNMPConfig.SecurityName != "" && device.SNMPConfig.SecurityName != req.SNMPConfig.SecurityName {
+			device.SNMPConfig.SecurityName = req.SNMPConfig.SecurityName
+			isModified = true
+		}
+		if req.SNMPConfig.AuthProtocol != "" && device.SNMPConfig.AuthProtocol != req.SNMPConfig.AuthProtocol {
+			device.SNMPConfig.AuthProtocol = req.SNMPConfig.AuthProtocol
+			isModified = true
+		}
+		if req.SNMPConfig.AuthPass != "" && device.SNMPConfig.AuthPass != req.SNMPConfig.AuthPass {
+			device.SNMPConfig.AuthPass = req.SNMPConfig.AuthPass
+			isModified = true
+		}
+		if req.SNMPConfig.PrivProtocol != "" && device.SNMPConfig.PrivProtocol != req.SNMPConfig.PrivProtocol {
+			device.SNMPConfig.PrivProtocol = req.SNMPConfig.PrivProtocol
+			isModified = true
+		}
+		if req.SNMPConfig.PrivPass != "" && device.SNMPConfig.PrivPass != req.SNMPConfig.PrivPass {
+			device.SNMPConfig.PrivPass = req.SNMPConfig.PrivPass
+			isModified = true
+		}
+		if req.SNMPConfig.SecurityLevel != "" && device.SNMPConfig.SecurityLevel != req.SNMPConfig.SecurityLevel {
+			device.SNMPConfig.SecurityLevel = req.SNMPConfig.SecurityLevel
+			isModified = true
+		}
+
 	}
 	if req.Sensitivity != nil && device.Sensitivity != *req.Sensitivity {
 		device.Sensitivity = *req.Sensitivity
@@ -1136,23 +1167,6 @@ func updateSSHConfig(target, source *cloudhub.SSHConfig) {
 		}
 		if !isZeroOfUnderlyingType(source.Port) {
 			target.Port = source.Port
-		}
-	}
-}
-
-func updateSNMPConfig(target, source *cloudhub.SNMPConfig) {
-	if source != nil {
-		if !isZeroOfUnderlyingType(source.Community) {
-			target.Community = source.Community
-		}
-		if !isZeroOfUnderlyingType(source.Version) {
-			target.Version = source.Version
-		}
-		if !isZeroOfUnderlyingType(source.Port) {
-			target.Port = source.Port
-		}
-		if !isZeroOfUnderlyingType(source.Protocol) {
-			target.Protocol = source.Protocol
 		}
 	}
 }
