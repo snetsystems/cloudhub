@@ -607,7 +607,7 @@ function LearningSettingModal({
                   <WizardTextInput
                     value={cronSchedule}
                     type="text"
-                    label="Cron Schedule"
+                    label="Cron Schedule (UTC Time Zone)"
                     onChange={setCronSchedule}
                     newClassName="form-group col-xs-12"
                   />
