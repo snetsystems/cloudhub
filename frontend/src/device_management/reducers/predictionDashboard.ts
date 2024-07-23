@@ -4,6 +4,7 @@ import {Action, ActionType} from '../actions'
 interface TimeRangeState {
   predictionTimeRange: TimeRange
   filteredHexbinHost: string
+  alertHostList: string[]
 }
 const initialState: TimeRangeState = {
   predictionTimeRange: {
@@ -13,6 +14,7 @@ const initialState: TimeRangeState = {
     format: INPUT_TIME_TYPE.RELATIVE_TIME,
   },
   filteredHexbinHost: '',
+  alertHostList: [],
 }
 
 const predictionDashboard = (
@@ -27,6 +29,10 @@ const predictionDashboard = (
     case ActionType.setFilteredHexbin: {
       const {filteredHexbinHost} = action.payload
       return {...state, filteredHexbinHost}
+    }
+    case ActionType.setAlertHostList: {
+      const {alertHostList} = action.payload
+      return {...state, alertHostList}
     }
     default:
       return state

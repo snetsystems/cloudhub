@@ -12,11 +12,12 @@ import LoadingDots from 'src/shared/components/LoadingDots'
 import {getPredictionAlert} from '../apis'
 import _ from 'lodash'
 import {Button, ComponentColor} from 'src/reusable_ui'
-import {setPredictionTimeRange} from '../actions'
+import {setAlertHostList, setPredictionTimeRange} from '../actions'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {setArrayHostList} from '../utils'
 interface Props {
   predictionTimeRange?: TimeRange
   source: Source
@@ -25,6 +26,8 @@ interface Props {
   setPredictionTimeRange?: (value: TimeRange) => void
   cloudAutoRefresh?: CloudAutoRefresh
   manualRefresh?: number
+  alertHostList?: string[]
+  setAlertHostList?: (value: string[]) => void
 }
 
 function PredictionAlertHistoryWrapper({
@@ -35,6 +38,8 @@ function PredictionAlertHistoryWrapper({
   setPredictionTimeRange,
   cloudAutoRefresh,
   manualRefresh,
+  alertHostList,
+  setAlertHostList,
 }: Props) {
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
 
@@ -74,7 +79,7 @@ function PredictionAlertHistoryWrapper({
     fetchAlerts()
   }, [setPredictionTimeRange, chartClickDate, manualRefresh])
 
-  //TODO: timerange var change to redux data not props -> why?
+  //TODO: timerange var change to redux data not props
   const fetchAlerts = (): void => {
     getPredictionAlert(
       source.links.proxy,
@@ -117,6 +122,7 @@ function PredictionAlertHistoryWrapper({
       col => col === 'alertName'
     )
 
+    const alertHostListTemp = []
     alertSeries[0].values.forEach(s => {
       results.push({
         time: `${s[timeIndex]}`,
@@ -125,7 +131,16 @@ function PredictionAlertHistoryWrapper({
         level: s[levelIndex],
         name: `${s[nameIndex]}`,
       })
+
+      alertHostListTemp.push({
+        host: s[hostIndex],
+        isOk: s[levelIndex] === 'OK',
+      })
     })
+
+    setAlertHostList(
+      setArrayHostList([...alertHostListTemp].reverse(), alertHostList)
+    )
 
     setAlertsData(results)
     setIsAlertsMaxedOut(results.length !== limit * limitMultiplier)
@@ -187,7 +202,7 @@ function PredictionAlertHistoryWrapper({
 
 const mstp = state => {
   const {
-    predictionDashboard: {predictionTimeRange},
+    predictionDashboard: {predictionTimeRange, alertHostList},
     app: {
       persisted: {autoRefresh, cloudAutoRefresh},
     },
@@ -197,11 +212,13 @@ const mstp = state => {
     autoRefresh,
     cloudAutoRefresh,
     predictionTimeRange,
+    alertHostList,
   }
 }
 
 const mdtp = (dispatch: any) => ({
   setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
+  setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
 })
 
 const areEqual = (prev, next) => {

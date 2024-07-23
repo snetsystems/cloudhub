@@ -1,13 +1,6 @@
 import _ from 'lodash'
 import React, {useEffect, useState} from 'react'
-
-import {
-  Cell,
-  Layout,
-  PredictionManualRefresh,
-  Source,
-  TimeRange,
-} from 'src/types'
+import {Cell, Layout, Source, TimeRange} from 'src/types'
 import ReactObserver from 'react-resize-observer'
 import {timeRanges} from 'src/shared/data/timeRanges'
 
@@ -41,9 +34,7 @@ const PredictionInstanceWrapper = React.memo(
     const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
       timeRanges.find(tr => tr.lower === 'now() - 1h')
     )
-    const [selfManualRefresh, setSelfManualRefresh] = useState<number>(
-      manualRefresh
-    )
+
     const [layoutCells, setLayoutCells] = useState<Cell[]>([])
 
     const instance = []
@@ -149,7 +140,7 @@ const PredictionInstanceWrapper = React.memo(
                     cells={layoutCells}
                     templates={tempVars}
                     timeRange={selfTimeRange}
-                    manualRefresh={selfManualRefresh}
+                    manualRefresh={manualRefresh}
                     host={''}
                   />
                 </div>

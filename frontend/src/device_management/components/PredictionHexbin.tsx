@@ -16,6 +16,7 @@ interface Props {
   ) => void
   tooltipData: PredictionTooltipNode[]
   filteredHexbinHost?: string
+  alertHostList?: string[]
 }
 
 interface HexagonData {
@@ -42,6 +43,7 @@ const PredictionHexbin = ({
   onHexbinClick,
   tooltipData,
   filteredHexbinHost,
+  alertHostList,
 }: Props) => {
   const parentRef = useRef<HTMLInputElement>(null)
 
@@ -70,6 +72,7 @@ const PredictionHexbin = ({
       generateHexagonData()
       drawHexagons()
       attachEventHandlers()
+      blinkHexbinHost()
     })
     if (svgRef.current) {
       resizeObserver.observe(svgRef.current.parentNode as Element)
@@ -89,6 +92,10 @@ const PredictionHexbin = ({
     drawHexagons()
     attachEventHandlers()
   }, [])
+
+  useEffect(() => {
+    blinkHexbinHost()
+  }, [alertHostList])
 
   const statusCal = (valueUsage: number) => {
     if (typeof valueUsage === 'number') {
@@ -217,6 +224,21 @@ const PredictionHexbin = ({
     })
   }
 
+  const blinkHexbinHost = () => {
+    if (!svgRef.current) return
+
+    const svg = d3.select(svgRef.current)
+
+    svg.selectAll('.hexagon').each(function (d) {
+      const hexagon = d3.select(this)
+      if (alertHostList.includes(d[0]?.name)) {
+        hexagon.attr('class', 'hexagon blink')
+      } else {
+        hexagon.attr('class', 'hexagon')
+      }
+    })
+  }
+
   const generateHexagonData = (): (GenerateHexagonData &
     HexagonInputData)[] => {
     const hexagonData = []
@@ -275,10 +297,6 @@ const PredictionHexbin = ({
       .attr('d', hexbinGenerator.hexagon(hexRadius - hexPadding))
       .attr('transform', d => `translate(${d.x},${d.y})`)
       .attr('fill', d => d[0]?.statusColor)
-      .filter(d => {
-        return d[0]?.status === 'emergency'
-      })
-      .attr('class', 'hexagon blink')
 
     svg
       .selectAll('.hexagon-text')
@@ -366,10 +384,11 @@ const PredictionHexbin = ({
 
 const mstp = state => {
   const {
-    predictionDashboard: {filteredHexbinHost},
+    predictionDashboard: {filteredHexbinHost, alertHostList},
   } = state
   return {
     filteredHexbinHost,
+    alertHostList,
   }
 }
 

@@ -8,6 +8,7 @@ import {
   DropdownItem,
   Source,
   DeviceOrganizationStatus,
+  hostState,
 } from 'src/types'
 import {OrganizationID} from 'src/types/deviceManagement'
 import {MLFunctionMsg} from 'src/device_management/constants'
@@ -301,4 +302,20 @@ export const parseErrorMessage = (error): string => {
   }
 
   return 'Unknown Error'
+}
+
+export const setArrayHostList = (
+  aryList: hostState[],
+  prevList: string[]
+): string[] => {
+  return [
+    ...aryList.reduce((acc, item) => {
+      if (item.isOk) {
+        acc.delete(item.host)
+      } else {
+        acc.add(item.host)
+      }
+      return acc
+    }, new Set(prevList)),
+  ] as string[]
 }

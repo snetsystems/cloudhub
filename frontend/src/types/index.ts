@@ -142,7 +142,12 @@ import {
 
 import {AiModal, HeaderNavigationObj} from './aiModal'
 
-import {AppsForHost, SeriesObj, PredictionManualRefresh} from './prediction'
+import {
+  AppsForHost,
+  SeriesObj,
+  PredictionManualRefresh,
+  hostState,
+} from './prediction'
 
 export {
   Me,
@@ -284,4 +289,5 @@ export {
   INPUT_TIME_TYPE,
   DeviceOrganizationStatus,
   PredictionManualRefresh,
+  hostState,
 }

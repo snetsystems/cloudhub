@@ -12,3 +12,8 @@ export interface PredictionManualRefresh {
   key: string
   value: number
 }
+
+export interface hostState {
+  host: string
+  isOk: boolean
+}

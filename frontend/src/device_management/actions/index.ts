@@ -1,10 +1,14 @@
 import {TimeRange} from 'src/types'
 
-export type Action = PredictionTimeRangeAction | PredictionFilteredHexbin
+export type Action =
+  | PredictionTimeRangeAction
+  | PredictionFilteredHexbin
+  | AlertHostList
 
 export enum ActionType {
   setPredictionTimeRange = 'SET_PREDICTION_DASHBOARD',
   setFilteredHexbin = 'SET_FILTERED_HEXBIN',
+  setAlertHostList = 'SET_ALERT_HOST_LIST',
 }
 
 interface PredictionTimeRangeAction {
@@ -18,6 +22,13 @@ interface PredictionFilteredHexbin {
   type: ActionType.setFilteredHexbin
   payload: {
     filteredHexbinHost: string
+  }
+}
+
+interface AlertHostList {
+  type: ActionType.setAlertHostList
+  payload: {
+    alertHostList: string[]
   }
 }
 
@@ -36,6 +47,13 @@ export const setFilteredHexbin = (
   type: ActionType.setFilteredHexbin,
   payload: {
     filteredHexbinHost,
+  },
+})
+
+export const setAlertHostList = (alertHostList: string[]): AlertHostList => ({
+  type: ActionType.setAlertHostList,
+  payload: {
+    alertHostList,
   },
 })
 
