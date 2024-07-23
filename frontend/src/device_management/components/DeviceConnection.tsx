@@ -36,7 +36,10 @@ import {
 } from 'src/device_management/apis/'
 
 // Utils
-import {convertDeviceDataOrganizationNameToID} from 'src/device_management/utils'
+import {
+  convertDeviceDataOrganizationNameToID,
+  parseErrorMessage,
+} from 'src/device_management/utils'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {
@@ -208,7 +211,7 @@ class DeviceConnection extends PureComponent<Props, State> {
 
       return this.handleSNMPConnectionSuccess(results)
     } catch (error) {
-      return this.handleSNMPConnectionError(error?.message || 'Unknown Error')
+      return this.handleSNMPConnectionError(parseErrorMessage(error))
     }
   }
 
@@ -304,7 +307,7 @@ class DeviceConnection extends PureComponent<Props, State> {
 
       return this.handleCreateDevicesSuccess()
     } catch (error) {
-      return this.handleCreateDevicesError(error?.message || 'Unknown Error')
+      return this.handleCreateDevicesError(parseErrorMessage(error))
     }
   }
 
@@ -346,7 +349,7 @@ class DeviceConnection extends PureComponent<Props, State> {
 
       return this.handleUpdateDevicesSuccess()
     } catch (error) {
-      return this.handleUpdateDevicesError(error?.message || 'Unknown Error')
+      return this.handleUpdateDevicesError(parseErrorMessage(error))
     }
   }
 

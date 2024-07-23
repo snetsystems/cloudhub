@@ -217,7 +217,7 @@ export const isNetworkDeviceOrganizationCreatedWithSrcId = (
   const srcId = _.get(foundOrg, 'ai_kapacitor.srcId', '')
   const kapaId = _.get(foundOrg, 'ai_kapacitor.kapaId', '')
 
-  return srcId !== '' && kapaId !== ''
+  return srcId !== '0' && kapaId !== '0'
 }
 
 export const getNetworkDeviceOrganizationStatus = (
@@ -242,7 +242,7 @@ export const getNetworkDeviceOrganizationStatus = (
       )
       const srcId = _.get(org, 'ai_kapacitor.srcId', '')
       const kapaId = _.get(org, 'ai_kapacitor.kapaId', '')
-      acc[organizationName] = srcId !== '' && kapaId !== ''
+      acc[organizationName] = srcId !== '0' && kapaId !== '0'
       return acc
     },
     {} as DeviceOrganizationStatus
@@ -274,4 +274,31 @@ export const checkNetworkDeviceOrganizationStatus = (
   )
 
   return organizations.every(org => orgStatus[org] === true)
+}
+
+export const parseErrorMessage = (error): string => {
+  if (error?.message) {
+    return error.message
+  }
+
+  if (error?.data) {
+    if (typeof error.data === 'string') {
+      try {
+        const s = error.data.slice(0, -5) // Remove 'null\n' at the end of these responses
+        const data = JSON.parse(s)
+
+        return data?.message || 'Unknown Error'
+      } catch (e) {
+        return 'Unknown Error'
+      }
+    } else if (typeof error.data === 'object') {
+      return error?.data?.message || 'Unknown Error'
+    }
+  }
+
+  if (error?.statusText) {
+    return error.statusText
+  }
+
+  return 'Unknown Error'
 }

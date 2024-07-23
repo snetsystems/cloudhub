@@ -55,7 +55,6 @@ import {
   createDeviceOrganization,
   getSpecificRule,
   updateDeviceOrganization,
-  updateTaskForDeviceManagement,
 } from 'src/device_management/apis'
 import {getKapacitors} from 'src/shared/apis'
 
@@ -67,14 +66,13 @@ import {
   getOrganizationNameByID,
   isNetworkDeviceOrganizationCreatedWithSrcId,
   getSourceByTelegrafDatabase,
+  parseErrorMessage,
 } from 'src/device_management/utils'
 
 // ETC
 import {
   notifyCreateNetworkDeviceOrganizationFailed,
   notifyCreateNetworkDeviceOrganizationSucceeded,
-  notifyTickscriptUpdateFailedWithMessage,
-  notifyTickscriptUpdated,
   notifyUpdateNetworkDeviceOrganizationFailed,
   notifyUpdateNetworkDeviceOrganizationSucceeded,
 } from 'src/shared/copy/notifications'
@@ -110,7 +108,6 @@ function LearningSettingModal({
   getNetworkDeviceOrganizationsAJAX,
   getKapacitorsFromSelectedSource,
 }: Props) {
-  // TODO Deprecated (createDeviceOrganizationAjax)
   const [isUpdateAfterCreate, setIsUpdateAfterCreate] = useState<boolean>(false)
   const [learningOption, setLearningOption] = useState<LearningOption>(
     DEFAULT_LEARNING_OPTION
@@ -150,8 +147,8 @@ function LearningSettingModal({
           organization: organizationID,
         }))
         getKapacitorsBySelectedSource(organizationID)
-        fetchAlertRule(organizationID)
         setCronSchedule(DEFAULT_CRON_SCHEDULE)
+        fetchAlertRule(organizationID)
       }
     }
   }, [isVisible])
@@ -188,6 +185,10 @@ function LearningSettingModal({
       i => i.organization === organizationID
     )
 
+    if (currentNetworkDeviceOrganization?.learning_cron) {
+      setCronSchedule(currentNetworkDeviceOrganization.learning_cron)
+    }
+
     return {
       organization: organizationID,
       data_duration: currentNetworkDeviceOrganization.data_duration,
@@ -202,6 +203,10 @@ function LearningSettingModal({
     const currentNetworkDeviceOrganization = orgLearningModel.find(
       i => i.organization === organizationID
     )
+
+    if (currentNetworkDeviceOrganization?.learning_cron) {
+      setCronSchedule(currentNetworkDeviceOrganization.learning_cron)
+    }
 
     return {
       organization: organizationID,
@@ -238,7 +243,6 @@ function LearningSettingModal({
           ml_function: DEFAULT_LEARNING_OPTION.ml_function,
           organization: organizationID || '',
         })
-        setCronSchedule(DEFAULT_CRON_SCHEDULE)
       }
 
       getKapacitorsBySelectedSource(organizationID)
@@ -254,7 +258,6 @@ function LearningSettingModal({
 
   const fetchAlertRule = async (organizationID: string) => {
     setTaskForTiskscriptUpdate(DEFAULT_TASK)
-    setCronSchedule(DEFAULT_CRON_SCHEDULE)
 
     try {
       const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
@@ -281,8 +284,8 @@ function LearningSettingModal({
           ...prevState,
           ai_kapacitor: convertKapacitor(kapacitors?.[0]),
         }))
-        setIsKapacitorInValid(true)
         setSelectedKapacitor(kapacitors?.[0] || null)
+        setIsKapacitorInValid(!kapacitors?.[0])
         setDeviceManagementIsLoading(false)
         return
       }
@@ -302,7 +305,7 @@ function LearningSettingModal({
       setDeviceManagementIsLoading(false)
       setIsKapacitorInValid(true)
       setSelectedKapacitor(null)
-      console.error(error)
+      console.error(parseErrorMessage(error))
     }
   }
 
@@ -331,6 +334,7 @@ function LearningSettingModal({
     kapacitorForNetworkOrg: KapacitorForNetworkDeviceOrganization,
     kapacitor: Kapacitor
   ) => {
+    setCronSchedule(DEFAULT_CRON_SCHEDULE)
     fetchAlertRuleByKapacitor(kapacitor)
     setSelectedKapacitor(kapacitor)
     setIsKapacitorInValid(false)
@@ -342,7 +346,6 @@ function LearningSettingModal({
 
   const fetchAlertRuleByKapacitor = async (kapacitor: Kapacitor) => {
     setTaskForTiskscriptUpdate(DEFAULT_TASK)
-    setCronSchedule(DEFAULT_CRON_SCHEDULE)
 
     try {
       const organizationID = getOrganizationIdByName(
@@ -356,7 +359,7 @@ function LearningSettingModal({
       setDeviceManagementIsLoading(false)
     } catch (error) {
       setDeviceManagementIsLoading(false)
-      console.error(error)
+      console.error(parseErrorMessage(error))
     }
   }
 
@@ -384,21 +387,26 @@ function LearningSettingModal({
     if (isUpdateAfterCreate || isNetworkDeviceOrganizationCreated) {
       updateDeviceOrganizationAjax()
     } else {
-      // TODO Deprecated (createDeviceOrganizationAjax)
       createDeviceOrganizationAjax()
-
-      // TODO Add instead of createDeviceOrganizationAjax
-      // notify(
-      //   notifyUpdateNetworkDeviceOrganizationFailed(
-      //     'The selected organization has no devices available for learning.'
-      //   )
-      // )
     }
   }
 
-  // TODO Deprecated (createDeviceOrganizationAjax)
   const createDeviceOrganizationAjax = async () => {
     const {organization, ...rest} = learningOption
+
+    const notifyCreateFailure = (message: string) => {
+      notify(notifyCreateNetworkDeviceOrganizationFailed(message))
+    }
+
+    if (isKapacitorEmpty()) {
+      notifyCreateFailure('No kapacitors are available for configuration.')
+      return
+    }
+
+    if (isKapacitorNotSelected()) {
+      notifyCreateFailure('No kapacitors are available for configuration.')
+      return
+    }
 
     try {
       setDeviceManagementIsLoading(true)
@@ -416,9 +424,7 @@ function LearningSettingModal({
       finalizeApplyMLDLSettingAPIResponse()
     } catch (error) {
       notify(
-        notifyCreateNetworkDeviceOrganizationFailed(
-          error?.message || 'Unknown Error'
-        )
+        notifyCreateNetworkDeviceOrganizationFailed(parseErrorMessage(error))
       )
       finalizeApplyMLDLSettingAPIResponse()
     }
@@ -435,19 +441,6 @@ function LearningSettingModal({
       notifyFailure('No kapacitors are available for configuration.')
       return
     }
-
-    // TODO Deprecated (createDeviceOrganizationAjax)
-    // const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
-    //   orgLearningModel,
-    //   organization
-    // )
-
-    // if (!isNetworkDeviceOrganizationValid) {
-    //   notifyFailure(
-    //     'The selected organization has no devices available for learning.'
-    //   )
-    //   return
-    // }
 
     if (isKapacitorNotSelected()) {
       notifyFailure('No kapacitors are available for configuration.')
@@ -466,15 +459,11 @@ function LearningSettingModal({
         },
       })
 
-      if (taskForTiskscriptUpdate?.tickscript) {
-        await updateTask()
-      }
-
       setIsKapacitorInValid(false)
       notify(notifyUpdateNetworkDeviceOrganizationSucceeded())
       finalizeApplyMLDLSettingAPIResponse()
     } catch (error) {
-      notifyFailure(error?.message || 'Unknown Error')
+      notifyFailure(parseErrorMessage(error))
       finalizeApplyMLDLSettingAPIResponse()
     }
   }
@@ -513,7 +502,7 @@ function LearningSettingModal({
 
       saveFormatTaskForTickscriptUpdate(rule)
     } catch (error) {
-      console.error(error)
+      console.error(parseErrorMessage(error))
     }
   }
 
@@ -545,97 +534,27 @@ function LearningSettingModal({
     setCronSchedule(cronValue)
   }
 
-  const updateTask = async () => {
-    const organizationID = learningOption.organization
-
-    try {
-      const updatedTask = replaceCronInTickscript()
-      const ruleID = `${LEARN_TASK_PREFIX}${organizationID}`
-      await updateTaskForDeviceManagement(
-        selectedKapacitor,
-        updatedTask,
-        ruleID
-      )
-
-      notify(notifyTickscriptUpdated())
-    } catch (error) {
-      console.error(
-        notifyTickscriptUpdateFailedWithMessage(error.message || '')
-      )
-    }
-  }
-
-  const replaceCronInTickscript = (): Task => {
-    const cronRegex = /var cron = '([^']*)'/
-    let newTickscript = ''
-
-    if (taskForTiskscriptUpdate?.tickscript) {
-      newTickscript = taskForTiskscriptUpdate?.tickscript?.replace(
-        cronRegex,
-        `var cron = '${cronSchedule}'`
-      )
-    } else {
-      throw new Error('Failed to update TICKscript')
-    }
-
-    return {
-      ...taskForTiskscriptUpdate,
-      tickscript: newTickscript,
-    }
-  }
-
-  // TODO Deprecated (createDeviceOrganizationAjax)
   const LearningSettingModalMessage = () => {
     return (
       <>
-        {isKapacitorEmpty() && (
+        {isKapacitorEmpty() ? (
           <Form.Element>
             <div className="device-management-message">
               {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorEmpty}
             </div>
           </Form.Element>
+        ) : (
+          isKapacitorInValid && (
+            <Form.Element>
+              <div className="device-management-message">
+                {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorInvalid}
+              </div>
+            </Form.Element>
+          )
         )}
       </>
     )
   }
-
-  // const LearningSettingModalMessage = () => {
-  //   const isNetworkDeviceOrganizationCreated = orgLearningModel.find(
-  //     i =>
-  //       i.organization ===
-  //       getOrganizationIdByName(organizations, selectedSource.telegraf || '')
-  //   )
-
-  //   if (!isNetworkDeviceOrganizationCreated) {
-  //     return (
-  //       <Form.Element>
-  //         <div className="device-management-message">
-  //           {MONITORING_MODAL_INFO.ML_DL_Setting_NET_ORG_NOT_CREATED}
-  //         </div>
-  //       </Form.Element>
-  //     )
-  //   }
-
-  //   return (
-  //     <>
-  //       {isKapacitorEmpty() ? (
-  //         <Form.Element>
-  //           <div className="device-management-message">
-  //             {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorEmpty}
-  //           </div>
-  //         </Form.Element>
-  //       ) : (
-  //         isKapacitorInValid && (
-  //           <Form.Element>
-  //             <div className="device-management-message">
-  //               {MONITORING_MODAL_INFO.ML_DL_SettingKapacitorInvalid}
-  //             </div>
-  //           </Form.Element>
-  //         )
-  //       )}
-  //     </>
-  //   )
-  // }
 
   const convertValueToKey = (value: string, obj: Object) => {
     const index = Object.values(obj).findIndex(i => i === value)

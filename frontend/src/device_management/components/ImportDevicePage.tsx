@@ -39,7 +39,10 @@ import {
 
 // Utils
 import {downloadCSV} from 'src/shared/utils/downloadTimeseriesCSV'
-import {convertDeviceDataOrganizationNameToID} from 'src/device_management/utils'
+import {
+  convertDeviceDataOrganizationNameToID,
+  parseErrorMessage,
+} from 'src/device_management/utils'
 
 // API
 import {createDevices, validateSNMPConnection} from 'src/device_management/apis'
@@ -226,9 +229,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
         this.setState({devicesDataParsedFromCSV: result?.data})
       },
       error: error => {
-        notify(
-          notifyCSVUploadFailedWithMessage(error?.message || 'Unknown Error')
-        )
+        notify(notifyCSVUploadFailedWithMessage(parseErrorMessage(error)))
       },
     })
   }
@@ -249,7 +250,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
 
       return this.handleSNMPConnection(failed_requests, results)
     } catch (error) {
-      return this.handleSNMPConnectionError(error?.message || 'Unknown Error')
+      return this.handleSNMPConnectionError(parseErrorMessage(error))
     }
   }
 
@@ -553,7 +554,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
 
       return this.handleCreateDevicesSuccess()
     } catch (error) {
-      return this.handleCreateDevicesError(error?.message || 'Unknown Error')
+      return this.handleCreateDevicesError(parseErrorMessage(error))
     }
   }
 

@@ -34,6 +34,7 @@ import {KapacitorRuleActions} from 'src/types/actions'
 import {
   convertSourcesToDropdownItems,
   getOrganizationNameByID,
+  parseErrorMessage,
 } from 'src/device_management/utils'
 
 // Constants
@@ -257,7 +258,7 @@ export default class PredictionRule extends Component<Props, State> {
     const {
       isNetworkDeviceOrganizationValid,
       isTickscriptCreated,
-      source,
+      // source,
       // router,
       notify,
     } = this.props
@@ -296,7 +297,10 @@ export default class PredictionRule extends Component<Props, State> {
       setisTickscriptCreated(true)
     } catch (error) {
       notify(
-        notifyAlertRuleCreateFailed(rule?.name || 'Rule', error.message || '')
+        notifyAlertRuleCreateFailed(
+          rule?.name || 'Rule',
+          parseErrorMessage(error)
+        )
       )
       this.props.setLoadingForCreateAndUpdateScript(false)
     }
@@ -339,7 +343,7 @@ export default class PredictionRule extends Component<Props, State> {
       this.props.setLoadingForCreateAndUpdateScript(false)
     } catch (error) {
       console.error(
-        notifyAlertRuleUpdateFailed(rule?.name || '', error.message || '')
+        notifyAlertRuleUpdateFailed(rule?.name || '', parseErrorMessage(error))
       )
       this.props.setLoadingForCreateAndUpdateScript(false)
     }
