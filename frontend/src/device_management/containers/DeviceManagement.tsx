@@ -41,6 +41,7 @@ import {
   Kapacitor,
   FailedDevice,
   DeviceOrganizationStatus,
+  TimeZones,
 } from 'src/types'
 
 // API
@@ -85,6 +86,7 @@ interface Props {
   isUsingAuth: boolean
   me: Me
   organizations: Organization[]
+  timeZone: TimeZones
   notify: (n: Notification) => void
   openShell: (shell: ShellInfo) => void
   openModal: (aiModal: AiModal) => void
@@ -142,11 +144,11 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.handleRowClick = this.handleRowClick.bind(this)
   }
 
-  public componentDidMount(): void {
+  public async componentDidMount() {
     try {
-      this.getDeviceAJAX()
-      this.getNetworkDeviceOrganizationsAJAX()
-      this.fetchDeviceMonitoringStatus()
+      await this.fetchDeviceMonitoringStatus()
+      await this.getDeviceAJAX()
+      await this.getNetworkDeviceOrganizationsAJAX()
       this.getKapacitorsFromSelectedSource(this.props.source)
     } catch (error) {
       console.error(parseErrorMessage(error))
@@ -161,7 +163,6 @@ class DeviceManagement extends PureComponent<Props, State> {
     const {me, organizations, isUsingAuth, source, sources} = this.props
     const {
       data,
-      deviceMonitoringStatus,
       deviceConnectionVisibility,
       deviceConnectionStatus,
       importDeviceWizardVisibility,
@@ -173,15 +174,12 @@ class DeviceManagement extends PureComponent<Props, State> {
       applyMonitoringModalVisibility,
       learningModelModalVisibility,
     } = this.state
-    const updatedDeviceData = this.getDeviceMonitoringStatus(
-      data,
-      deviceMonitoringStatus
-    )
 
     return (
       <>
         <div className="device-management--wrapper">
           <TableComponent
+            timeZone={this.props.timeZone}
             tableTitle={`${
               this.state.data.length
                 ? this.state.data.length === 1
@@ -189,7 +187,7 @@ class DeviceManagement extends PureComponent<Props, State> {
                   : this.state.data.length + ' ' + 'Devices'
                 : '0 Device'
             } list`}
-            data={updatedDeviceData}
+            data={data}
             columns={this.column}
             checkedArray={this.state.checkedArray}
             setCheckedArray={(value: string[]) =>
@@ -198,7 +196,7 @@ class DeviceManagement extends PureComponent<Props, State> {
             // options={this.options}
             topLeftRender={
               <DeviceManagementBtn
-                data={updatedDeviceData}
+                data={data}
                 importDevice={this.importDevice}
                 connectDevice={this.connectDevice}
                 reLearnSetting={this.reLearnSetting}
@@ -257,7 +255,7 @@ class DeviceManagement extends PureComponent<Props, State> {
         <ApplyMonitoringModal
           isVisible={applyMonitoringModalVisibility}
           onDismissOverlay={this.handleDismissApplyMonitoringModal}
-          deviceData={selectedArrayById(updatedDeviceData, checkedArray, 'id')}
+          deviceData={selectedArrayById(data, checkedArray, 'id')}
           notify={this.props.notify}
           getDeviceAJAX={this.getDeviceAJAX}
           getNetworkDeviceOrganizationsAJAX={
@@ -269,7 +267,7 @@ class DeviceManagement extends PureComponent<Props, State> {
         <ApplyLearningModal
           isVisible={learningModelModalVisibility}
           onDismissOverlay={this.handleDismissLearningModelModal}
-          deviceData={selectedArrayById(updatedDeviceData, checkedArray, 'id')}
+          deviceData={selectedArrayById(data, checkedArray, 'id')}
           notify={this.props.notify}
           getDeviceAJAX={this.getDeviceAJAX}
           getNetworkDeviceOrganizationsAJAX={
@@ -296,15 +294,20 @@ class DeviceManagement extends PureComponent<Props, State> {
 
   private getDeviceAJAX = async () => {
     const {organizations} = this.props
+    const {deviceMonitoringStatus} = this.state
 
     try {
       const {data} = await getDeviceList()
-      const convertedDeviceData = convertDeviceDataOrganizationIDToName(
-        data.devices,
+      const deviceDataWithOrgNames = convertDeviceDataOrganizationIDToName(
+        data?.devices || [],
         organizations
       ) as DeviceData[]
+      const deviceDataWithMonitoring = this.getDeviceMonitoringStatus(
+        deviceDataWithOrgNames,
+        deviceMonitoringStatus
+      )
 
-      this.setState({data: convertedDeviceData})
+      this.setState({data: deviceDataWithMonitoring})
     } catch (error) {
       console.error(notifyFetchDeviceListError(parseErrorMessage(error)))
     }
@@ -405,10 +408,11 @@ class DeviceManagement extends PureComponent<Props, State> {
     }
   }
 
-  private reFreshStateAfterDeleteDevices = () => {
-    this.getDeviceAJAX()
-    this.getNetworkDeviceOrganizationsAJAX()
-    this.fetchDeviceMonitoringStatus()
+  private reFreshStateAfterDeleteDevices = async () => {
+    await this.fetchDeviceMonitoringStatus()
+    await this.getDeviceAJAX()
+    await this.getNetworkDeviceOrganizationsAJAX()
+
     this.setState({checkedArray: [], isLoading: false})
   }
 
@@ -531,13 +535,14 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 }
 
-const mstp = ({adminCloudHub: {organizations}, auth, links, sources}) => ({
+const mstp = ({adminCloudHub: {organizations}, auth, links, sources, app}) => ({
   organizations,
   isUsingAuth: auth.isUsingAuth,
   auth,
   me: auth.me,
   links,
   sources,
+  timeZone: app.persisted.timeZone,
 })
 
 const mdtp = (dispatch: any) => ({

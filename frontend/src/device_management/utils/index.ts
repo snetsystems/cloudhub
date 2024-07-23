@@ -1,4 +1,6 @@
 import _ from 'lodash'
+import moment from 'moment'
+
 import {
   DeviceData,
   DeviceDataMonitoringStatus,
@@ -9,6 +11,7 @@ import {
   Source,
   DeviceOrganizationStatus,
   hostState,
+  TimeZones,
 } from 'src/types'
 import {OrganizationID} from 'src/types/deviceManagement'
 import {MLFunctionMsg} from 'src/device_management/constants'
@@ -318,4 +321,19 @@ export const setArrayHostList = (
       return acc
     }, new Set(prevList)),
   ] as string[]
+}
+
+export const formatDateTimeForDeviceData = (
+  dateTime: string | '',
+  timeZone: TimeZones
+): string => {
+  if (!dateTime) {
+    return '–'
+  }
+
+  if (timeZone === TimeZones.UTC) {
+    return moment.utc(dateTime).format('YYYY-MM-DD HH:mm:ss')
+  } else {
+    return moment.utc(dateTime).local().format('YYYY-MM-DD HH:mm:ss')
+  }
 }

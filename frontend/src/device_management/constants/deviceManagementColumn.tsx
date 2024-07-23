@@ -1,6 +1,9 @@
 import React from 'react'
 import {AlignType, ColumnInfo, DeviceData, ShellInfo, SortType} from 'src/types'
-import {formatMLKey} from 'src/device_management/utils'
+import {
+  formatDateTimeForDeviceData,
+  formatMLKey,
+} from 'src/device_management/utils'
 
 interface Props {
   onEditClick: (deviceData: DeviceData) => void
@@ -106,32 +109,34 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       render: value => <div> {value ? value : '-'}</div>,
     },
     {
-      // TODO: Convert Date Time
       align: AlignType.CENTER,
       key: 'learning_update_date',
       name: 'Start Time',
-      render: value => (
+      render: (value, _, __, ___, timeZone) => (
         <div
           className={`agent--indicator ${
             !!value ? 'indicator--primary' : 'indicator--fail'
           } `}
         >
-          <div>{value ? value : '-'}</div>
+          <div>
+            {value ? formatDateTimeForDeviceData(value, timeZone) : '-'}
+          </div>
         </div>
       ),
     },
     {
-      // TODO: Convert Date Time
       align: AlignType.CENTER,
       key: 'learning_finish_datetime',
       name: 'End Time',
-      render: value => (
+      render: (value, _, __, ___, timeZone) => (
         <div
           className={`agent--indicator ${
             !!value ? 'indicator--primary' : 'indicator--fail'
           } `}
         >
-          <div>{value ? value : '-'}</div>
+          <div>
+            {value ? formatDateTimeForDeviceData(value, timeZone) : '-'}
+          </div>
         </div>
       ),
     },

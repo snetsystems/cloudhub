@@ -5,9 +5,10 @@ import {
   DataTableObject,
   DataTableOptions,
   SortInfo,
+  TimeZones,
 } from 'src/types'
 
-import AccordionTable from './AccordionTable'
+import AccordionTable from 'src/device_management/components/AccordionTable'
 
 interface Props {
   columns: ColumnInfo[]
@@ -20,6 +21,7 @@ interface Props {
   onCheck?: (checked: string[]) => void
   checkedTargets?: string[]
   isMultiSelect?: boolean
+  timeZone: TimeZones
 }
 
 function TableBase({
@@ -33,6 +35,7 @@ function TableBase({
   isMultiSelect,
   sortTarget,
   onSort,
+  timeZone,
 }: Props) {
   const [openRowAccor, setOpenRowAccor] = useState<number | null>(null)
 
@@ -248,7 +251,8 @@ function TableBase({
                             getValue(item, key),
                             item,
                             columnIndex,
-                            rowIndex
+                            rowIndex,
+                            timeZone
                           )
                         ) : (
                           getValue(item, key)

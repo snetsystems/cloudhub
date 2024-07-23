@@ -10,6 +10,7 @@ import {
   SortInfo,
   DataTableObject,
   DataTableOptions,
+  TimeZones,
 } from 'src/types'
 import TableBase from './TableBase'
 import SearchBar from 'src/hosts/components/SearchBar'
@@ -30,6 +31,7 @@ interface Props {
   options?: DataTableOptions
   initSort?: SortInfo
   bodyClassName?: string
+  timeZone?: TimeZones
 }
 
 function TableComponent({
@@ -48,6 +50,7 @@ function TableComponent({
   isSearchDisplay = true,
   initSort = null,
   bodyClassName,
+  timeZone,
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
@@ -216,6 +219,7 @@ function TableComponent({
           checkedTargets={checkedArray}
           sortTarget={sortTarget}
           options={options}
+          timeZone={timeZone}
         />
       </div>
     </div>

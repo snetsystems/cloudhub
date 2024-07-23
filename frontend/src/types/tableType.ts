@@ -1,4 +1,5 @@
 import {ReactNode} from 'react'
+import {TimeZones} from 'src/types'
 
 export enum SortType {
   NONE = 'NONE',
@@ -35,7 +36,8 @@ export interface ColumnInfo extends ColumnBaseInfo {
     value: any,
     rowData: any,
     ColumnIndex: number,
-    rowIndex: number
+    rowIndex: number,
+    timeZone: TimeZones
   ) => ReactNode
 }
 
