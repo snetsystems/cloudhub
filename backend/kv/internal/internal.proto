@@ -323,10 +323,16 @@ message SSHConfig {
 }
 
 message SNMPConfig {
-  string Community = 1; // community string for SNMP
-  string Version   = 2; // version of SNMP used
-  int32 Port       = 3; // port number used for SNMP
-  string Protocol  = 4; // protocol to use udp or tcp
+  string Community     = 1;  // community string for SNMP
+  string Version       = 2;  // version of SNMP used
+  int32 Port           = 3;  // port number used for SNMP
+  string Protocol      = 4;  // protocol to use udp or tcp
+  string SecurityName  = 5;  // security name used in SNMP v3. Specifies the username.
+  string AuthProtocol  = 6;  // authentication protocol. One of ["md5", "sha", "sha2", "hmac128sha224", "hmac192sha256", "hmac256sha384", "hmac384sha512"].
+  string AuthPass      = 7;  // authentication password. Used with the authentication protocol.
+  string PrivProtocol  = 8;  // privacy protocol. One of ["des", "aes", "aes128", "aes192", "aes256"].
+  string PrivPass      = 9;  // privacy password. Used with the privacy protocol.
+  string SecurityLevel = 10; // security level. One of ["noAuthNoPriv", "authNoPriv", "authPriv"].
 }
 
 // Key: unique identifier of the device

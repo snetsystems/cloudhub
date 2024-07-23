@@ -5,6 +5,8 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import * as sourcesActions from 'src/shared/actions/sources'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {UserRole, ForceSessionAbortInputRole} from 'src/shared/actions/session'
+import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 import {Page} from 'src/reusable_ui'
 import InfluxTable from 'src/sources/components/InfluxTable'
@@ -38,6 +40,10 @@ interface Props {
   removeAndLoadSources: sourcesActions.RemoveAndLoadSources
   setActiveKapacitor: sourcesActions.SetActiveKapacitorAsync
   connectedSource: connectedSourceAction
+  ForceSessionAbortInputRole: (
+    requireRole: UserRole,
+    isNoAuthOuting?: boolean
+  ) => void
 }
 
 const VERSION = process.env.npm_package_version
@@ -55,6 +61,9 @@ class ManageSources extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
+    const {ForceSessionAbortInputRole} = this.props
+
+    ForceSessionAbortInputRole(SUPERADMIN_ROLE)
     this.fetchKapacitors()
   }
 
@@ -183,6 +192,10 @@ const mdtp = (dispatch: any) => ({
     dispatch
   ),
   connectedSource: bindActionCreators(connectedSource, dispatch),
+  ForceSessionAbortInputRole: bindActionCreators(
+    ForceSessionAbortInputRole,
+    dispatch
+  ),
 })
 
 export default connect(mstp, mdtp, null)(ManageSources)

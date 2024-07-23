@@ -1278,10 +1278,16 @@ type SSHConfig struct {
 
 // SNMPConfig is Connection Config
 type SNMPConfig struct {
-	Community string `json:"community"`
-	Version   string `json:"version"`
-	Port      int    `json:"port"`
-	Protocol  string `json:"protocol"`
+	Community     string `json:"community"`
+	Version       string `json:"version"`
+	Port          int    `json:"port"`
+	Protocol      string `json:"protocol"`
+	SecurityName  string `json:"security_name,omitempty"`
+	AuthProtocol  string `json:"auth_protocol,omitempty"` // auth protocol one of ["md5", "sha", "sha2", "hmac128sha224", "hmac192sha256", "hmac256sha384", "hmac384sha512"]
+	AuthPass      string `json:"auth_pass,omitempty"`
+	PrivProtocol  string `json:"priv_protocol,omitempty"` // priv_protocol one of ["des", "aes", "aes128", "aes192", "aes256"]
+	PrivPass      string `json:"priv_pass,omitempty"`
+	SecurityLevel string `json:"security_level,omitempty"` // security_level one of ["noAuthNoPriv", "authNoPriv", "authPriv"]
 }
 
 // NetworkDevice represents the information of a network device

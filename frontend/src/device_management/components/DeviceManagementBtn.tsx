@@ -130,7 +130,7 @@ function DeviceManagementBtn({
         <Authorized requiredRole={EDITOR_ROLE}>
           <button
             className={`button button-sm button-default button-square ${
-              isSelectedOrganizationStatusValid ? '' : 'attention-flip'
+              isSelectedOrganizationStatusValid ? '' : 'learning-model--invalid'
             }`}
             title="Custom Learning Setting"
             onClick={() => {
