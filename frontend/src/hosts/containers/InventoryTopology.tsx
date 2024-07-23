@@ -3693,12 +3693,17 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   private setTopologySetting = () => {
     const {auth} = this.props
+    let zoom = 1
+    let translate = {x: 0, y: 0}
 
-    const {zoom, translate} = getLocalStorage('inventoryTopologySetting')?.[
-      auth.me.currentOrganization.name
-    ] ?? {
-      zoom: 1,
-      translate: {x: 0, y: 0},
+    if (auth?.me?.currentOrganization) {
+      const settings = getLocalStorage('inventoryTopologySetting')?.[
+        auth.me.currentOrganization.name
+      ]
+      if (settings) {
+        zoom = settings.zoom ?? 1
+        translate = settings.translate ?? {x: 0, y: 0}
+      }
     }
 
     const view = this.graph.getView()
@@ -3709,6 +3714,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   private setLocalStorageToplogySetting = (view: mxGraphView) => {
     const {auth} = this.props
+
+    if (!auth?.me?.currentOrganization) {
+      return
+    }
+
     const zoom = view.getScale()
     const translate = view.getTranslate()
 
