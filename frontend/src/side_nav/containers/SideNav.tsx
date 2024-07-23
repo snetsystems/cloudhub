@@ -141,7 +141,7 @@ class SideNav extends PureComponent<Props> {
             title="Infrastructure"
           />
         </NavBlock>
-        {(isUsingVMware || isUsingK8s || isUsingOsp) && (
+        {isUsingAuth && (isUsingVMware || isUsingK8s || isUsingOsp) && (
           <NavBlock
             highlightWhen={['clouds']}
             icon="cloud"
@@ -169,7 +169,7 @@ class SideNav extends PureComponent<Props> {
             )}
           </NavBlock>
         )}
-        {isUsingAI && (
+        {isUsingAuth && isUsingAI && (
           <NavBlock
             highlightWhen={['ai']}
             icon="ai-icon"
