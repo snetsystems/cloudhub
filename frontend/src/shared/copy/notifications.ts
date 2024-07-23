@@ -1600,3 +1600,10 @@ export const notifyApplyLearningEnableStatusFailed = (
   duration: INFINITE,
   message: `Failed to Apply Learning Enable Status. ${errorMessage}`,
 })
+
+export const notifyPredictionHexbinGetFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Get Host List. ${errorMessage}`,
+})

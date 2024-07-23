@@ -26,17 +26,18 @@ import {generateForHosts} from 'src/utils/tempVars'
 import PredictionDashboardHeader from './PredictionDashboardHeader'
 import {getLayouts} from 'src/hosts/apis'
 import {getDeep} from 'src/utils/wrappers'
-import {getCells} from 'src/hosts/utils/getCells'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {getCellsWithWhere} from 'src/hosts/utils/getCellsWithWhere'
 
 interface Props {
   source: Source
   autoRefresh?: number
   manualRefresh: number
+  filteredHexbinHost?: string
 }
 
 const PredictionInstanceWrapper = React.memo(
-  ({source, autoRefresh, manualRefresh}: Props) => {
+  ({source, autoRefresh, manualRefresh, filteredHexbinHost}: Props) => {
     const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
       timeRanges.find(tr => tr.lower === 'now() - 1h')
     )
@@ -49,7 +50,7 @@ const PredictionInstanceWrapper = React.memo(
 
     useEffect(() => {
       getLayout()
-    }, [])
+    }, [filteredHexbinHost])
 
     useEffect(() => {
       GlobalAutoRefresher.poll(autoRefresh)
@@ -75,7 +76,9 @@ const PredictionInstanceWrapper = React.memo(
             : 0
         })
 
-      setLayoutCells(getCells(filteredLayouts, source))
+      setLayoutCells(
+        getCellsWithWhere(filteredLayouts, source, filteredHexbinHost ?? '')
+      )
 
       return {filteredLayouts}
     }
@@ -172,12 +175,14 @@ const mstp = state => {
       persisted: {autoRefresh},
       ephemeral: {inPresentationMode},
     },
+    predictionDashboard: {filteredHexbinHost},
     links,
   } = state
   return {
     links,
     autoRefresh,
     inPresentationMode,
+    filteredHexbinHost,
   }
 }
 

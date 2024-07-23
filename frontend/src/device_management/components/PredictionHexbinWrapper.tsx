@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react'
 import PredictionHexbin from './PredictionHexbin'
-import AJAX from 'src/utils/ajax'
 import {
   Links,
   NotificationAction,
@@ -15,8 +14,6 @@ import {bindActionCreators} from 'redux'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {connect} from 'react-redux'
 import _ from 'lodash'
-import NoKapacitorError from 'src/shared/components/NoKapacitorError'
-import {notifyUnableToGetHosts} from 'src/shared/copy/notifications'
 import {PredictionModal} from './PredictionModal'
 import PredictionDashboardHeader from './PredictionDashboardHeader'
 import {
@@ -26,6 +23,8 @@ import {
 import LoadingDots from 'src/shared/components/LoadingDots'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {setFilteredHexbin} from '../actions'
+import {notifyPredictionHexbinGetFailed} from 'src/shared/copy/notifications'
 
 interface Props {
   source: Source
@@ -33,17 +32,17 @@ interface Props {
   auth?: Auth
   notify?: NotificationAction
   cloudAutoRefresh?: CloudAutoRefresh
+  setFilteredHexbin?: (value: string) => void
 }
 
 function PredictionHexbinWrapper({
   source,
   auth,
-  notify,
   cloudAutoRefresh,
+  notify,
+  setFilteredHexbin,
 }: Props) {
   const [hostList, setHostList] = useState<PredictionTooltipNode[]>(null)
-
-  const [hasKapacitor, setHasKapacitor] = useState(false)
 
   const [error, setError] = useState<string>()
 
@@ -56,7 +55,7 @@ function PredictionHexbinWrapper({
   let intervalID
 
   useEffect(() => {
-    fetchKapacitor()
+    fetchDeviceInfo()
   }, [])
 
   useEffect(() => {
@@ -80,47 +79,25 @@ function PredictionHexbinWrapper({
     }
   }, [cloudAutoRefresh])
 
-  const onHexbinClick = (num: number) => {
+  const onHexbinClick = (
+    num: number,
+    host: string,
+    filteredHexbinHost?: string
+  ) => {
     // the way to close modal is hexbin double click
-    if (openNum === num) {
+
+    if (filteredHexbinHost === host) {
       setIsPredictionModalOpen(prev => !prev)
+      setFilteredHexbin('')
     } else {
       setOpenNum(num)
       setIsPredictionModalOpen(true)
+      setFilteredHexbin(host)
     }
-  }
-
-  const fetchKapacitor = () => {
-    setLoading(true)
-    AJAX({
-      url: source.links?.kapacitors ?? '',
-      method: 'GET',
-    })
-      .then(({data}) => {
-        if (!!data.kapacitors[0]) {
-          setHasKapacitor(true)
-          fetchDeviceInfo()
-        } else {
-          setLoading(false)
-        }
-      })
-      .catch(e => {
-        notify(notifyUnableToGetHosts())
-        setLoading(false)
-        setError(e)
-      })
   }
 
   //TODO: timerange var change to redux data not props -> why?
   const fetchDeviceInfo = async () => {
-    // const envVars = await getEnv(links.environment)
-
-    // const telegrafSystemInterval = getDeep<string>(
-    //   envVars,
-    //   'telegrafSystemInterval',
-    //   ''
-    // )
-
     const tempVars = generateForHosts(source)
     const meRole = _.get(auth, 'me.role', '')
     try {
@@ -137,6 +114,7 @@ function PredictionHexbinWrapper({
         })
     } catch (e) {
       setError('Hexbin Chart Error')
+      notify(notifyPredictionHexbinGetFailed(e))
       setLoading(false)
       console.log(e)
     }
@@ -161,13 +139,11 @@ function PredictionHexbinWrapper({
 
         {!hostList || error ? (
           <div>{error}</div>
-        ) : hasKapacitor ? (
+        ) : (
           <PredictionHexbin
             onHexbinClick={onHexbinClick}
             tooltipData={hostList}
           />
-        ) : (
-          <NoKapacitorError source={source} />
         )}
         {
           <PredictionModal
@@ -200,6 +176,7 @@ const mstp = state => {
 
 const mdtp = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
+  setFilteredHexbin: bindActionCreators(setFilteredHexbin, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(PredictionHexbinWrapper)

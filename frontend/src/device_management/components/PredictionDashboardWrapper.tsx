@@ -172,7 +172,7 @@ function PredictionDashboardWrapper({
 
 const mstp = state => {
   const {
-    predictionTimeRange: {predictionTimeRange},
+    predictionDashboard: {predictionTimeRange},
     app: {
       persisted: {cloudAutoRefresh},
     },

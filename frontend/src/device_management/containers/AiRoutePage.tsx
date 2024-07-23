@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import _ from 'lodash'
 import {Page, Radio} from 'src/reusable_ui'
 import {
@@ -228,7 +228,7 @@ const mstp = ({
   },
   adminCloudHub: {organizations},
   auth: {isUsingAuth, me},
-  predictionTimeRange: {predictionTimeRange},
+  predictionDashboard: {predictionTimeRange},
 }) => {
   return {
     organizations,

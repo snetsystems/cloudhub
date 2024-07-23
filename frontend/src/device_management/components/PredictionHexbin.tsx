@@ -6,10 +6,16 @@ import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 import {PredictionTooltipNode} from 'src/types'
 import PredictionTooltip from './PredictionTooltip'
 import {TOOLTIP_WIDTH} from '../constants'
+import {connect} from 'react-redux'
 
 interface Props {
-  onHexbinClick: (num: number) => void
+  onHexbinClick: (
+    num: number,
+    host: string,
+    filteredHexbinHost?: string
+  ) => void
   tooltipData: PredictionTooltipNode[]
+  filteredHexbinHost?: string
 }
 
 interface HexagonData {
@@ -32,7 +38,11 @@ interface GenerateHexagonData {
 const hexRadius = 30
 const hexPadding = 5
 
-const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
+const PredictionHexbin = ({
+  onHexbinClick,
+  tooltipData,
+  filteredHexbinHost,
+}: Props) => {
   const parentRef = useRef<HTMLInputElement>(null)
 
   const childrenRef = useRef<HTMLInputElement>(null)
@@ -54,6 +64,31 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
     x: 0,
     y: 0,
   })
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(_ => {
+      generateHexagonData()
+      drawHexagons()
+      attachEventHandlers()
+    })
+    if (svgRef.current) {
+      resizeObserver.observe(svgRef.current.parentNode as Element)
+    }
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [])
+
+  useEffect(() => {
+    attachEventHandlers()
+    highlightHexbinHost()
+  }, [filteredHexbinHost])
+
+  //initialize
+  useEffect(() => {
+    drawHexagons()
+    attachEventHandlers()
+  }, [])
 
   const statusCal = (valueUsage: number) => {
     if (typeof valueUsage === 'number') {
@@ -162,9 +197,24 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
       })
       .on('click', function () {
         d3.select(this).attr('x', d => {
-          onHexbinClick(d[0].index)
+          onHexbinClick(d[0].index, d[0].name, filteredHexbinHost)
         })
       })
+  }
+
+  const highlightHexbinHost = () => {
+    if (!svgRef.current) return
+
+    const svg = d3.select(svgRef.current)
+
+    svg.selectAll('.hexagon').each(function (d) {
+      const hexagon = d3.select(this)
+      if (d[0].name === filteredHexbinHost) {
+        hexagon.attr('stroke', '#f58220').attr('stroke-width', '3')
+      } else {
+        hexagon.attr('stroke', 'none').attr('stroke-width', '0')
+      }
+    })
   }
 
   const generateHexagonData = (): (GenerateHexagonData &
@@ -172,7 +222,7 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
     const hexagonData = []
     const svgWidth = svgRef.current.clientWidth
     const hexWidth = Math.sqrt(3) * hexRadius // Hexagon의 폭
-    const hexHeight = 2 * hexRadius // Hexagon의 높이
+    const hexHeight = 2 * hexRadius // Hexagon height
     let xOffset = 0
     let yOffset = 0
     for (let i = 0; i < inputData.length; i++) {
@@ -195,20 +245,6 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
 
     return hexagonData
   }
-
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(_ => {
-      generateHexagonData()
-      drawHexagons()
-      attachEventHandlers()
-    })
-    if (svgRef.current) {
-      resizeObserver.observe(svgRef.current.parentNode as Element)
-    }
-    return () => {
-      resizeObserver.disconnect()
-    }
-  }, [])
 
   const drawHexagons = () => {
     if (!svgRef.current) return
@@ -255,12 +291,6 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
       .attr('text-anchor', 'middle')
       .attr('dx', '.35em')
   }
-
-  //initialize
-  useEffect(() => {
-    drawHexagons()
-    attachEventHandlers()
-  }, [])
 
   const tooltipComponent = (tooltip: PredictionTooltipNode) => {
     const gap = {width: 0, height: 0}
@@ -333,4 +363,16 @@ const PredictionHexbin = ({onHexbinClick, tooltipData}: Props) => {
     </FancyScrollbar>
   )
 }
-export default PredictionHexbin
+
+const mstp = state => {
+  const {
+    predictionDashboard: {filteredHexbinHost},
+  } = state
+  return {
+    filteredHexbinHost,
+  }
+}
+
+const mdtp = () => ({})
+
+export default connect(mstp, mdtp, null)(PredictionHexbin)

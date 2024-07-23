@@ -187,7 +187,7 @@ function PredictionAlertHistoryWrapper({
 
 const mstp = state => {
   const {
-    predictionTimeRange: {predictionTimeRange},
+    predictionDashboard: {predictionTimeRange},
     app: {
       persisted: {autoRefresh, cloudAutoRefresh},
     },

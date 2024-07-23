@@ -279,7 +279,7 @@ const mstp = state => {
       ephemeral: {inPresentationMode},
     },
     auth: {isUsingAuth},
-    predictionTimeRange: {predictionTimeRange},
+    predictionDashboard: {predictionTimeRange},
   } = state
 
   return {

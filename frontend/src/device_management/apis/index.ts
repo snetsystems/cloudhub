@@ -376,7 +376,7 @@ export const getLiveDeviceInfo = async (
   const query = replaceTemplate(
     `SELECT mean("cpu1min") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
     SELECT mean("mem_usage") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
-    SELECT last("tff_volume") from (SELECT non_negative_derivative(sum("ifHCOutOctets"),1s) + non_negative_derivative(sum("ifHCInOctets"),1s) AS "tff_volume" FROM "Default"."autogen"."snmp_nx" WHERE "time" > now()-5m AND "ifDescr"=~/Ethernet/ GROUP BY time(1m), "agent_host") GROUP BY "agent_host";
+    SELECT last("tff_volume") from (SELECT non_negative_derivative(sum("ifHCOutOctets"),1s) + non_negative_derivative(sum("ifHCInOctets"),1s) AS "tff_volume" FROM \":db:\"."autogen"."snmp_nx" WHERE "time" > now()-5m AND "ifDescr"=~/Ethernet/ GROUP BY time(1m), "agent_host") GROUP BY "agent_host";
    SHOW TAG VALUES WITH KEY = "agent_host" WHERE TIME > now() - 10m;
       `,
     tempVars
