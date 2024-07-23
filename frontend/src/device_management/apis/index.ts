@@ -373,14 +373,19 @@ export const getLiveDeviceInfo = async (
   tempVars: Template[],
   meRole: string
 ) => {
+  const {data: deviceList} = await getDeviceList()
+
+  const deviceIpList = deviceList.devices.map(i => i.device_ip)
+
   const query = replaceTemplate(
     `SELECT mean("cpu1min") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
     SELECT mean("mem_usage") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
     SELECT last("tff_volume") from (SELECT non_negative_derivative(sum("ifHCOutOctets"),1s) + non_negative_derivative(sum("ifHCInOctets"),1s) AS "tff_volume" FROM \":db:\"."autogen"."snmp_nx" WHERE "time" > now()-5m AND "ifDescr"=~/Ethernet/ GROUP BY time(1m), "agent_host") GROUP BY "agent_host";
-   SHOW TAG VALUES WITH KEY = "agent_host" WHERE TIME > now() - 10m;
+   
       `,
     tempVars
   )
+  // SHOW TAG VALUES WITH KEY = "agent_host" WHERE TIME > now() - 10m;
 
   const {data} = await proxy({
     source,
@@ -392,43 +397,49 @@ export const getLiveDeviceInfo = async (
   const cpuSeries = getDeep<Series[]>(data, 'results.[0].series', [])
   const memUsedSeries = getDeep<Series[]>(data, 'results.[1].series', [])
   const trafficSeries = getDeep<Series[]>(data, 'results.[2].series', [])
-  const agentHost = getDeep<Series[]>(data, 'results.[3].series', [])
+  // const agentHost = getDeep<Series[]>(data, 'results.[3].series', [])
 
-  agentHost?.forEach(s => {
-    const hostnameIndex = s.columns?.findIndex(col => col === 'value')
-    s.values?.forEach(v => {
-      const hostname = v[hostnameIndex]
-      hosts[hostname] = {
-        ...EmptyHost,
-        name: hostname,
-      }
-    })
+  deviceIpList?.forEach(s => {
+    const hostname = s
+    hosts[hostname] = {
+      ...EmptyHost,
+      name: hostname,
+    }
   })
 
   cpuSeries?.forEach(s => {
     const meanIndex = s.columns?.findIndex(col => col === 'mean')
-    hosts[s.tags.agent_host] = {
-      ...hosts[s.tags.agent_host],
-      name: s.tags.agent_host,
-      cpu: Number(s.values[0][meanIndex]) ?? null,
+
+    if (deviceIpList.includes(s.tags.agent_host)) {
+      hosts[s.tags.agent_host] = {
+        ...hosts[s.tags.agent_host],
+        name: s.tags.agent_host,
+        cpu: Number(s.values[0][meanIndex]) ?? null,
+      }
     }
   })
 
   memUsedSeries?.forEach(s => {
     const meanIndex = s.columns?.findIndex(col => col === 'mean')
-    hosts[s.tags.agent_host] = {
-      ...hosts[s.tags.agent_host],
-      name: s.tags.agent_host,
-      memory: Number(s.values[0][meanIndex]) ?? null,
+
+    if (deviceIpList.includes(s.tags.agent_host)) {
+      hosts[s.tags.agent_host] = {
+        ...hosts[s.tags.agent_host],
+        name: s.tags.agent_host,
+        memory: Number(s.values[0][meanIndex]) ?? null,
+      }
     }
   })
 
   trafficSeries?.forEach(s => {
     const meanIndex = s.columns?.findIndex(col => col === 'last')
-    hosts[s.tags.agent_host] = {
-      ...hosts[s.tags.agent_host],
-      name: s.tags.agent_host,
-      traffic: decimalUnitNumber(`${s.values[0][meanIndex]}`, 'bps') ?? '',
+
+    if (deviceIpList.includes(s.tags.agent_host)) {
+      hosts[s.tags.agent_host] = {
+        ...hosts[s.tags.agent_host],
+        name: s.tags.agent_host,
+        traffic: decimalUnitNumber(`${s.values[0][meanIndex]}`, 'bps') ?? '',
+      }
     }
   })
 
