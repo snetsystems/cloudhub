@@ -146,7 +146,6 @@ class DeviceManagement extends PureComponent<Props, State> {
 
   public async componentDidMount() {
     try {
-      await this.fetchDeviceMonitoringStatus()
       await this.getDeviceAJAX()
       await this.getNetworkDeviceOrganizationsAJAX()
       this.getKapacitorsFromSelectedSource(this.props.source)
@@ -294,9 +293,9 @@ class DeviceManagement extends PureComponent<Props, State> {
 
   private getDeviceAJAX = async () => {
     const {organizations} = this.props
-    const {deviceMonitoringStatus} = this.state
 
     try {
+      const deviceMonitoringStatus = await this.fetchDeviceMonitoringStatus()
       const {data} = await getDeviceList()
       const deviceDataWithOrgNames = convertDeviceDataOrganizationIDToName(
         data?.devices || [],
@@ -333,6 +332,8 @@ class DeviceManagement extends PureComponent<Props, State> {
       this.setState({
         deviceMonitoringStatus,
       })
+
+      return deviceMonitoringStatus
     } catch (error) {
       this.props.notify(
         notifyFetchDeviceMonitoringStatusFailed(parseErrorMessage(error))
@@ -409,7 +410,6 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 
   private reFreshStateAfterDeleteDevices = async () => {
-    await this.fetchDeviceMonitoringStatus()
     await this.getDeviceAJAX()
     await this.getNetworkDeviceOrganizationsAJAX()
 
