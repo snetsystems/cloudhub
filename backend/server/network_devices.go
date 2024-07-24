@@ -593,27 +593,26 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		isModified = true
 	}
 	if req.Organization != nil && device.Organization != *req.Organization {
-		devOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
-		if err != nil {
-			Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
-			return
-		}
-		if devOrg.CollectedDevicesIDs != nil {
-			for _, id := range devOrg.CollectedDevicesIDs {
-				if id == device.ID {
-					Error(w, http.StatusUnprocessableEntity, "Device ID is already being collected. Please stop collecting the device and try again", s.Logger)
-					return
+		devOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
+		if devOrg != nil {
+			if devOrg.CollectedDevicesIDs != nil {
+				for _, id := range devOrg.CollectedDevicesIDs {
+					if id == device.ID {
+						Error(w, http.StatusUnprocessableEntity, "Device ID is already being collected. Please stop collecting the device and try again", s.Logger)
+						return
+					}
+				}
+			}
+			if devOrg.LearnedDevicesIDs != nil {
+				for _, id := range devOrg.LearnedDevicesIDs {
+					if id == device.ID {
+						Error(w, http.StatusUnprocessableEntity, "Device ID is already being learning. Please stop learning the device and try again", s.Logger)
+						return
+					}
 				}
 			}
 		}
-		if devOrg.LearnedDevicesIDs != nil {
-			for _, id := range devOrg.LearnedDevicesIDs {
-				if id == device.ID {
-					Error(w, http.StatusUnprocessableEntity, "Device ID is already being learning. Please stop learning the device and try again", s.Logger)
-					return
-				}
-			}
-		}
+
 		device.Organization = *req.Organization
 		isModified = true
 	}
@@ -1372,13 +1371,13 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
-
-	statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{configString}, devOrg.CollectorServer)
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-		return statusCode, resp, err
-	}
+	fmt.Print(configString)
+	// statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{configString}, devOrg.CollectorServer)
+	// if err != nil {
+	// 	return http.StatusInternalServerError, nil, err
+	// } else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+	// 	return statusCode, resp, err
+	// }
 	// Log the successful creation of the config
 	msg := fmt.Sprintf(MsgNetWorkDeviceConfCreated.String(), org.ID)
 	s.logRegistration(ctx, "NetWorkDeviceConf", msg)
