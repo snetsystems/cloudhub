@@ -465,9 +465,10 @@ func parseSecurityLevel(securityLevel string) (gosnmp.SnmpV3MsgFlags, error) {
 }
 
 func parseProtocol(protocol string) (string, error) {
-	switch strings.ToLower(protocol) {
+	protocolStr := strings.ToLower(protocol)
+	switch protocolStr {
 	case "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
-		return protocol, nil
+		return protocolStr, nil
 	default:
 		return "", fmt.Errorf("unsupported protocol: %s", protocol)
 	}
