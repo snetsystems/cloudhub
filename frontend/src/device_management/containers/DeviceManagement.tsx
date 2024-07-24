@@ -62,6 +62,7 @@ import {
 } from 'src/device_management/utils'
 import {getDeep} from 'src/utils/wrappers'
 import {generateForHosts} from 'src/utils/tempVars'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -78,6 +79,11 @@ interface Auth {
   me: Me
 }
 
+interface ManualRefresh {
+  key: string
+  value: number
+}
+
 interface Props {
   auth: Auth
   source: Source
@@ -91,6 +97,8 @@ interface Props {
   openShell: (shell: ShellInfo) => void
   openModal: (aiModal: AiModal) => void
   closeModal: () => void
+  autoRefresh: number
+  manualRefresh: ManualRefresh
 }
 
 interface State {
@@ -144,18 +152,60 @@ class DeviceManagement extends PureComponent<Props, State> {
     this.handleRowClick = this.handleRowClick.bind(this)
   }
 
+  public intervalID: number
+
   public async componentDidMount() {
+    const {autoRefresh, source} = this.props
+
     try {
       await this.getDeviceAJAX()
       await this.getNetworkDeviceOrganizationsAJAX()
-      this.getKapacitorsFromSelectedSource(this.props.source)
+      this.getKapacitorsFromSelectedSource(source)
+
+      if (autoRefresh) {
+        this.intervalID = window.setInterval(
+          () => this.refreshStateForDeviceManagement(),
+          autoRefresh
+        )
+      }
+
+      GlobalAutoRefresher.poll(autoRefresh)
     } catch (error) {
       console.error(parseErrorMessage(error))
     }
   }
 
+  public async componentDidUpdate(prevProps: Props) {
+    const {autoRefresh, manualRefresh} = this.props
+
+    if (!_.isEqual(prevProps.manualRefresh, manualRefresh)) {
+      this.refreshStateForDeviceManagement()
+    }
+
+    if (prevProps.autoRefresh !== autoRefresh) {
+      clearInterval(this.intervalID)
+      GlobalAutoRefresher.poll(autoRefresh)
+
+      if (autoRefresh) {
+        this.intervalID = window.setInterval(() => {
+          this.refreshStateForDeviceManagement()
+        }, autoRefresh)
+      }
+    }
+  }
+
+  private refreshStateForDeviceManagement = async () => {
+    this.getDeviceAJAX()
+    this.getNetworkDeviceOrganizationsAJAX()
+  }
+
   public componentWillUnmount() {
     this.isComponentMounted = false
+
+    if (this.intervalID !== null) {
+      clearInterval(this.intervalID)
+      this.intervalID = null
+    }
   }
 
   public render() {
@@ -410,10 +460,10 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 
   private reFreshStateAfterDeleteDevices = async () => {
-    await this.getDeviceAJAX()
-    await this.getNetworkDeviceOrganizationsAJAX()
-
     this.setState({checkedArray: [], isLoading: false})
+
+    this.getDeviceAJAX()
+    this.getNetworkDeviceOrganizationsAJAX()
   }
 
   private handleDeleteDevicesErrorWithFailedDevices = (

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useState} from 'react'
 import _ from 'lodash'
 import {Page, Radio} from 'src/reusable_ui'
 import {
@@ -102,7 +102,7 @@ const AiRoutePage = (props: Props) => {
     manualRefreshState,
     setManualRefreshState,
   ] = useState<PredictionManualRefresh>({
-    key: 'prediction',
+    key: 'network-device',
     value: Date.now(),
   })
   const [headerRadioButtons, setHeaderRadioButtons] = useState<
@@ -176,22 +176,22 @@ const AiRoutePage = (props: Props) => {
           </div>
         </Page.Header.Center>
         <Page.Header.Right>
-          {currentRoute === 'prediction' && (
-            <>
-              <AutoRefreshDropdown
-                onChoose={handleChooseAutoRefresh}
-                selected={autoRefresh}
-                onManualRefresh={handleManualRefresh}
-                customAutoRefreshOptions={getTimeOptionByGroup(currentRoute)}
-                customAutoRefreshSelected={cloudAutoRefresh}
-              />
+          <>
+            <AutoRefreshDropdown
+              onChoose={handleChooseAutoRefresh}
+              selected={autoRefresh}
+              onManualRefresh={handleManualRefresh}
+              customAutoRefreshOptions={getTimeOptionByGroup('prediction')}
+              customAutoRefreshSelected={cloudAutoRefresh}
+            />
+            {currentRoute === 'prediction' && (
               <TimeRangeDropdown
                 //@ts-ignore
                 onChooseTimeRange={handleApplyTime}
                 selected={predictionTimeRange}
               />
-            </>
-          )}
+            )}
+          </>
           <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
         </Page.Header.Right>
       </Page.Header>
@@ -205,6 +205,8 @@ const AiRoutePage = (props: Props) => {
               me={me}
               isUsingAuth={isUsingAuth}
               organizations={organizations}
+              autoRefresh={cloudAutoRefresh?.prediction || 0}
+              manualRefresh={manualRefreshState}
             />
           )}
           {currentRoute === 'prediction' && (
