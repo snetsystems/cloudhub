@@ -106,7 +106,6 @@ interface State {
   data: DeviceData[]
   deviceConnectionVisibility: boolean
   deviceConnectionStatus: DeviceConnectionStatus
-  deviceMonitoringStatus: DeviceMonitoringStatus
   importDeviceWizardVisibility: boolean
   isLearningSettingModalVisibility: boolean
   deviceData: DeviceData[]
@@ -127,7 +126,6 @@ class DeviceManagement extends PureComponent<Props, State> {
     super(props)
     this.state = {
       data: [],
-      deviceMonitoringStatus: {},
       deviceData: [DEFAULT_NETWORK_DEVICE_DATA as DeviceData],
       selectedDeviceData: DEFAULT_NETWORK_DEVICE_DATA,
       checkedArray: [],
@@ -369,13 +367,10 @@ class DeviceManagement extends PureComponent<Props, State> {
       )
 
       this.setState({
-        deviceMonitoringStatus,
         data: deviceDataWithMonitoring,
       })
     } catch (error) {
-      this.props.notify(
-        notifyFetchDeviceMonitoringStatusFailed(parseErrorMessage(error))
-      )
+      this.props.notify(notifyFetchDeviceMonitoringStatusFailed())
     }
   }
 

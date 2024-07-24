@@ -1567,12 +1567,10 @@ export const notifyUpdateDeviceFailed = (
   message: `Failed to update Device. ${errorMessage}`,
 })
 
-export const notifyFetchDeviceMonitoringStatusFailed = (
-  errorMessage: string
-): Notification => ({
+export const notifyFetchDeviceMonitoringStatusFailed = (): Notification => ({
   ...defaultErrorNotification,
   duration: INFINITE,
-  message: `Failed to fetch device monitoring status. ${errorMessage}`,
+  message: `Failed to fetch Device Monitoring Status from InfluxDB.`,
 })
 
 export const notifyApplyMonitoringSuccess = (): Notification => ({
