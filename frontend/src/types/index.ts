@@ -147,6 +147,8 @@ import {
   SeriesObj,
   PredictionManualRefresh,
   hostState,
+  HexagonData,
+  HexagonInputData,
 } from './prediction'
 
 export {
@@ -290,4 +292,6 @@ export {
   DeviceOrganizationStatus,
   PredictionManualRefresh,
   hostState,
+  HexagonData,
+  HexagonInputData,
 }

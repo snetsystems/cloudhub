@@ -63,9 +63,13 @@
   background-color: $g1-raven;
   padding: 5px;
 
-  min-width: 150px;
+  min-width: 100px;
   height: 100%;
   white-space: no-wrap;
+}
+
+.prediction-tooltip-content.grey {
+  border: 2px solid $g6-smoke;
 }
 
 .prediction-tooltip.hidden {
@@ -89,7 +93,7 @@
     }
 
     &.predictionTooltip--danger {
-      color: #dc4e58;
+      color: $c-topaz;
     }
 
     &.predictionTooltip--critical {
@@ -109,7 +113,7 @@
     }
 
     &.predictionTooltip-ipmi--danger {
-      color: #dc4e58;
+      color: $c-topaz;
     }
 
     &.predictionTooltip-ipmi--critical {
@@ -158,7 +162,7 @@
   }
 
   &.predictionTooltip--danger {
-    background: #dc4e58;
+    background: $c-topaz;
   }
 
   &.predictionTooltip--critical {
@@ -178,7 +182,7 @@
   }
 
   &.predictionTooltip-ipmi--danger {
-    background: #dc4e58;
+    background: $c-topaz;
   }
 
   &.predictionTooltip-ipmi--critical {
@@ -226,4 +230,53 @@
 
 .alert-history-link {
   color: #ce9178;
+}
+
+.hexbin-header--right {
+  display: flex;
+  flex-grow: 1 1;
+  align-items: center;
+}
+
+.hexbin-header--label {
+  padding: 0px 8px;
+  white-space: nowrap;
+}
+
+.prediction-tooltipView--wrapper {
+  display: flex;
+  padding: 12px 12px 12px 20px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hosts-table--tr.header {
+  opacity: 80%;
+  border-bottom: 1px solid $g6-smoke;
+  width: 100%;
+}
+
+.hosts-table--td.prediction {
+  white-space: nowrap;
+}
+
+.prediction-tooltip--blink {
+  animation: blink-opacity-animation 1s infinite;
+}
+
+@keyframes blink-opacity-animation {
+  0% {
+    background-color: #ab0000;
+    opacity: 80%;
+  }
+
+  50% {
+    opacity: 90%;
+    background-color: inherit;
+  }
+
+  100% {
+    background-color: #ab0000;
+    opacity: 80%;
+  }
 }

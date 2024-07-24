@@ -155,11 +155,14 @@ export const parseSeries = (seriesString: string): SeriesObj => {
 
 export const decimalUnitNumber = (value: string, unit: string) => {
   const length = Number(value).toFixed().length
-  const kUnit = length >= 7 ? 'M' : length >= 4 ? 'K' : ''
+  const kUnit = length >= 10 ? 'G' : length >= 7 ? 'M' : length >= 4 ? 'K' : ''
 
   let number
   if (!!Number(value)) {
     switch (kUnit) {
+      case 'G':
+        number = Number(value) / 1000000000
+        break
       case 'M':
         number = Number(value) / 1000000
         break
@@ -335,5 +338,47 @@ export const formatDateTimeForDeviceData = (
     return moment.utc(dateTime).format('YYYY-MM-DD HH:mm:ss')
   } else {
     return moment.utc(dateTime).local().format('YYYY-MM-DD HH:mm:ss')
+  }
+}
+
+export const statusCal = (valueUsage: number) => {
+  if (typeof valueUsage === 'number') {
+    const status =
+      valueUsage < 0
+        ? 'invalid'
+        : valueUsage < 60
+        ? 'normal'
+        : valueUsage < 70
+        ? 'warning'
+        : valueUsage < 80
+        ? 'danger'
+        : valueUsage < 90
+        ? 'critical'
+        : valueUsage < 120
+        ? 'emergency'
+        : 'invalid'
+    return status
+  } else {
+    return 'invalid'
+  }
+}
+
+export const statusHexColor = (status: string) => {
+  //color change - prediction.scss
+  switch (status) {
+    case 'invalid':
+      return '#545667'
+    case 'normal':
+      return '#2de5a5'
+    case 'warning':
+      return '#ffb94a'
+    case 'danger':
+      return '#e85b1c'
+    case 'critical':
+      return '#ff0000'
+    case 'emergency':
+      return '#ab0000'
+    default:
+      return '#545667'
   }
 }

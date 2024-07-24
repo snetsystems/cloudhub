@@ -1,12 +1,13 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import * as d3 from 'd3'
 import {hexbin} from 'd3-hexbin'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
-import {PredictionTooltipNode} from 'src/types'
+import {HexagonData, HexagonInputData, PredictionTooltipNode} from 'src/types'
 import PredictionTooltip from './PredictionTooltip'
-import {TOOLTIP_WIDTH} from '../constants'
+import {TOOLTIP_OFFSET_X} from '../constants'
 import {connect} from 'react-redux'
+import {statusCal} from '../utils'
 
 interface Props {
   onHexbinClick: (
@@ -14,21 +15,11 @@ interface Props {
     host: string,
     filteredHexbinHost?: string
   ) => void
-  tooltipData: PredictionTooltipNode[]
+  inputData: HexagonInputData[]
+  isMouseInComponent: boolean
+  //redux
   filteredHexbinHost?: string
   alertHostList?: string[]
-}
-
-interface HexagonData {
-  x: number
-  y: number
-  statusColor: string
-  hostname: string
-  index: number
-}
-
-interface HexagonInputData extends PredictionTooltipNode {
-  statusColor: string
 }
 
 interface GenerateHexagonData {
@@ -36,14 +27,15 @@ interface GenerateHexagonData {
   y: number
 }
 
-const hexRadius = 30
-const hexPadding = 5
+const HEX_RADIUS = 30
+const HEX_PADDING = 5
 
 const PredictionHexbin = ({
   onHexbinClick,
-  tooltipData,
+  inputData,
   filteredHexbinHost,
   alertHostList,
+  isMouseInComponent,
 }: Props) => {
   const parentRef = useRef<HTMLInputElement>(null)
 
@@ -73,6 +65,7 @@ const PredictionHexbin = ({
       drawHexagons()
       attachEventHandlers()
       blinkHexbinHost()
+      highlightHexbinHost()
     })
     if (svgRef.current) {
       resizeObserver.observe(svgRef.current.parentNode as Element)
@@ -97,71 +90,11 @@ const PredictionHexbin = ({
     blinkHexbinHost()
   }, [alertHostList])
 
-  const statusCal = (valueUsage: number) => {
-    if (typeof valueUsage === 'number') {
-      const status =
-        valueUsage < 0
-          ? 'invalid'
-          : valueUsage < 60
-          ? 'normal'
-          : valueUsage < 70
-          ? 'warning'
-          : valueUsage < 80
-          ? 'danger'
-          : valueUsage < 90
-          ? 'critical'
-          : valueUsage < 120
-          ? 'emergency'
-          : 'invalid'
-      return status
-    } else {
-      return 'invalid'
+  useEffect(() => {
+    if (!isMouseInComponent) {
+      setIsTooltipActive(false)
     }
-  }
-
-  const statusHexColor = (status: string) => {
-    //color change - prediction.scss
-    switch (status) {
-      case 'invalid':
-        return '#545667'
-      case 'normal':
-        return '#2de5a5'
-      case 'warning':
-        return '#ffb94a'
-      case 'danger':
-        return '#dc4e58'
-      case 'critical':
-        return '#ff0000'
-      case 'emergency':
-        return '#ab0000'
-      default:
-        return '#545667'
-    }
-  }
-
-  const inputData = useMemo<HexagonInputData[]>(() => {
-    return tooltipData.map(hex => {
-      if (typeof hex.cpu === 'number' && typeof hex.memory === 'number') {
-        return {
-          statusColor: statusHexColor(statusCal((hex.cpu + hex.memory) / 2)),
-          name: hex.name,
-          cpu: Number(hex.cpu.toFixed()),
-          memory: Number(hex.memory.toFixed()),
-          traffic: hex.traffic,
-          status: statusCal((hex.cpu + hex.memory) / 2),
-        }
-      } else {
-        return {
-          statusColor: statusHexColor('invalid'),
-          name: hex.name,
-          cpu: -1,
-          memory: -1,
-          traffic: hex.traffic,
-          status: 'invalid',
-        }
-      }
-    })
-  }, [tooltipData])
+  }, [isMouseInComponent])
 
   const attachEventHandlers = () => {
     if (!svgRef.current) return
@@ -179,7 +112,7 @@ const PredictionHexbin = ({
           .attr('transform', d => `translate(${d.x},${d.y}) scale(1.1)`)
           .style('cursor', 'pointer')
           .attr('x', d => {
-            tempPosition.x = d.x + 15
+            tempPosition.x = d.x + TOOLTIP_OFFSET_X / 2
             tempPosition.y = d.y + 15
             setTooltipNode({
               cpu: d[0].cpu,
@@ -226,11 +159,11 @@ const PredictionHexbin = ({
 
   const blinkHexbinHost = () => {
     if (!svgRef.current) return
-
     const svg = d3.select(svgRef.current)
 
     svg.selectAll('.hexagon').each(function (d) {
       const hexagon = d3.select(this)
+
       if (alertHostList.includes(d[0]?.name)) {
         hexagon.attr('class', 'hexagon blink')
       } else {
@@ -243,17 +176,17 @@ const PredictionHexbin = ({
     HexagonInputData)[] => {
     const hexagonData = []
     const svgWidth = svgRef.current.clientWidth
-    const hexWidth = Math.sqrt(3) * hexRadius // Hexagon의 폭
-    const hexHeight = 2 * hexRadius // Hexagon height
+    const hexWidth = Math.sqrt(3) * HEX_RADIUS // Hexagon의 폭
+    const hexHeight = 2 * HEX_RADIUS // Hexagon height
     let xOffset = 0
     let yOffset = 0
     for (let i = 0; i < inputData.length; i++) {
       const isOddRow = Math.floor(yOffset / ((hexHeight * 3) / 4)) % 2 === 1
-      const x = xOffset + (isOddRow ? hexRadius * 1.5 : 0)
+      const x = xOffset + (isOddRow ? HEX_RADIUS * 1.5 : 0)
       const y = yOffset + hexHeight * 0.75
       hexagonData.push({
-        x: x + hexPadding,
-        y: y + hexPadding,
+        x: x + HEX_PADDING,
+        y: y + HEX_PADDING,
         ...inputData[i],
         index: i,
       })
@@ -277,14 +210,14 @@ const PredictionHexbin = ({
     const svgWidth = svgRef.current.clientWidth
     const svgHeight = svgRef.current.clientHeight
     const maxHeight =
-      hexagonData.reduce((max, d) => Math.max(max, d.y), 0) + hexRadius
+      hexagonData.reduce((max, d) => Math.max(max, d.y), 0) + HEX_RADIUS
     svgRef.current.style.height = `${maxHeight}px`
     const hexbinGenerator = hexbin<HexagonData>()
       .extent([
         [0, 0],
         [svgWidth, svgHeight],
       ])
-      .radius(hexRadius)
+      .radius(HEX_RADIUS)
       .x(d => d.x)
       .y(d => d.y)
 
@@ -294,7 +227,7 @@ const PredictionHexbin = ({
       .enter()
       .append('path')
       .attr('class', 'hexagon')
-      .attr('d', hexbinGenerator.hexagon(hexRadius - hexPadding))
+      .attr('d', hexbinGenerator.hexagon(HEX_RADIUS - HEX_PADDING))
       .attr('transform', d => `translate(${d.x},${d.y})`)
       .attr('fill', d => d[0]?.statusColor)
 
@@ -329,8 +262,8 @@ const PredictionHexbin = ({
 
     position.x =
       gap.width > 0
-        ? tooltipPosition.x - childWidth.width - 30
-        : tooltipPosition.x
+        ? tooltipPosition.x - childWidth.width - TOOLTIP_OFFSET_X
+        : tooltipPosition.x + TOOLTIP_OFFSET_X / 2
     position.y =
       gap.height > 0 ? tooltipPosition.y - gap.height : tooltipPosition.y
 
@@ -346,21 +279,18 @@ const PredictionHexbin = ({
           left: `${position.x}px`,
         }}
         className={`prediction-tooltip ${
-          isTooltipActive || isMouseOn ? 'active' : 'hidden'
-        }`}
+          !isMouseInComponent || (!isTooltipActive && !isMouseOn)
+            ? 'hidden'
+            : 'active'
+        } `}
       >
-        <div
-          style={{width: TOOLTIP_WIDTH}}
-          className="prediction-tooltip-content"
-        >
-          <PredictionTooltip
-            cpu={tooltip.cpu}
-            memory={tooltip.memory}
-            traffic={tooltip.traffic}
-            name={tooltip.name}
-            status={statusCal((tooltip.cpu + tooltip.memory) / 2)}
-          />
-        </div>
+        <PredictionTooltip
+          cpu={tooltip.cpu}
+          memory={tooltip.memory}
+          traffic={tooltip.traffic}
+          name={tooltip.name}
+          status={statusCal((tooltip.cpu + tooltip.memory) / 2)}
+        />
       </div>
     )
   }
@@ -370,6 +300,7 @@ const PredictionHexbin = ({
       <div
         ref={parentRef}
         style={{
+          paddingLeft: '12px',
           backgroundColor: DEFAULT_CELL_BG_COLOR,
           height: 'calc(100% - 45px)',
         }}

@@ -163,16 +163,17 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
     }
   }
 
-  private handleMakeDiv = className => props => {
-    if (className === 'view') {
-      const customStyle = {...props}
-      customStyle.style.marginBottom = customStyle.style.marginBottom - 1
-      customStyle.style.marginRight = customStyle.style.marginRight - 1
-      return <div {...customStyle} className={`fancy-scroll--${className}`} />
-    } else {
-      return <div {...props} className={`fancy-scroll--${className}`} />
-    }
-  }
+  // private handleMakeDiv = className => props => {
+  //   if (className === 'view') {
+  //     const customStyle = {...props}
+  //     customStyle.style.marginBottom = customStyle.style.marginBottom - 1
+  //     customStyle.style.marginRight = customStyle.style.marginRight - 1
+  //     return <div {...customStyle} className={`fancy-scroll--${className}`} />
+  //   } else {
+  //     return <div {...props} className={`fancy-scroll--${className}`} />
+  //   }
+  // }
+
   private renderTable(): JSX.Element {
     const {
       source: {id},
