@@ -8,6 +8,7 @@
   "scripts": {
     "start": "node parcel.jsx",
     "build": "parcel build -d build --log-level 2 --no-source-maps --public-url '' src/index.html",
+    "dev-build": "parcel build -d build --log-level 2 --public-url '' src/index.html",
     "clean": "rm -rf ./build/* && rm -rf ./.cache && rm -rf ./dist",
     "tsc": "tsc -p ./tsconfig.json --noEmit --pretty",
     "tsc:watch": "tsc -p ./tsconfig.json --noEmit --pretty -w"
