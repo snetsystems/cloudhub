@@ -52,6 +52,7 @@ import {
   getDeviceList,
 } from 'src/device_management/apis'
 import {getEnv} from 'src/shared/apis/env'
+import {getKapacitors} from 'src/shared/apis'
 
 // Utils
 import {
@@ -73,7 +74,6 @@ import {
   notifyFetchDeviceMonitoringStatusFailed,
   notifyKapacitorConnectionFailed,
 } from 'src/shared/copy/notifications'
-import {getKapacitors} from 'src/shared/apis'
 
 interface Auth {
   me: Me
@@ -102,6 +102,7 @@ interface Props {
 }
 
 interface State {
+  isDataFetchingCompleted: boolean
   isLoading: boolean
   applyMonitoringModalVisibility: boolean
   deviceConnectionVisibility: boolean
@@ -124,6 +125,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
+      isDataFetchingCompleted: false,
       isLoading: false,
       applyMonitoringModalVisibility: false,
       deviceConnectionVisibility: false,
@@ -156,6 +158,8 @@ class DeviceManagement extends PureComponent<Props, State> {
     try {
       await this.getDeviceAJAX()
       await this.getNetworkDeviceOrganizationsAJAX()
+      this.setState({isDataFetchingCompleted: true})
+
       this.fetchDeviceMonitoringStatus()
       this.getKapacitorsFromSelectedSource(source)
 
@@ -221,7 +225,12 @@ class DeviceManagement extends PureComponent<Props, State> {
       orgLearningModel,
       applyMonitoringModalVisibility,
       learningModelModalVisibility,
+      isDataFetchingCompleted,
     } = this.state
+
+    if (!isDataFetchingCompleted) {
+      return this.LoadingState
+    }
 
     return (
       <>
