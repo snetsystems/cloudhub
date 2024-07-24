@@ -160,6 +160,7 @@ class DeviceManagement extends PureComponent<Props, State> {
     try {
       await this.getDeviceAJAX()
       await this.getNetworkDeviceOrganizationsAJAX()
+      this.fetchDeviceMonitoringStatus()
       this.getKapacitorsFromSelectedSource(source)
 
       if (autoRefresh) {
@@ -195,7 +196,8 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 
   private refreshStateForDeviceManagement = async () => {
-    this.getDeviceAJAX()
+    await this.getDeviceAJAX()
+    this.fetchDeviceMonitoringStatus()
     this.getNetworkDeviceOrganizationsAJAX()
   }
 
@@ -270,10 +272,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           isUsingAuth={isUsingAuth}
           toggleVisibility={this.handleToggleDeviceConnectionModal}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
-          getDeviceAJAX={this.getDeviceAJAX}
-          getNetworkDeviceOrganizationsAJAX={
-            this.getNetworkDeviceOrganizationsAJAX
-          }
+          refreshStateForDeviceManagement={this.refreshStateForDeviceManagement}
         />
         <ImportDevicePage
           isVisible={importDeviceWizardVisibility}
@@ -281,10 +280,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           onDismissOverlay={this.handleDismissImportDeviceModalOverlay}
           notify={this.props.notify}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
-          getDeviceAJAX={this.getDeviceAJAX}
-          getNetworkDeviceOrganizationsAJAX={
-            this.getNetworkDeviceOrganizationsAJAX
-          }
+          refreshStateForDeviceManagement={this.refreshStateForDeviceManagement}
         />
         <LearningSettingModal
           isVisible={isLearningSettingModalVisibility}
@@ -294,22 +290,16 @@ class DeviceManagement extends PureComponent<Props, State> {
           source={source}
           sources={sources}
           kapacitors={this.state.kapacitors}
-          getDeviceAJAX={this.getDeviceAJAX}
-          getNetworkDeviceOrganizationsAJAX={
-            this.getNetworkDeviceOrganizationsAJAX
-          }
           getKapacitorsFromSelectedSource={this.getKapacitorsFromSelectedSource}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
+          refreshStateForDeviceManagement={this.refreshStateForDeviceManagement}
         />
         <ApplyMonitoringModal
           isVisible={applyMonitoringModalVisibility}
           onDismissOverlay={this.handleDismissApplyMonitoringModal}
           deviceData={selectedArrayById(data, checkedArray, 'id')}
           notify={this.props.notify}
-          getDeviceAJAX={this.getDeviceAJAX}
-          getNetworkDeviceOrganizationsAJAX={
-            this.getNetworkDeviceOrganizationsAJAX
-          }
+          refreshStateForDeviceManagement={this.refreshStateForDeviceManagement}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
           initializeCheckedArray={this.initializeCheckedArray}
         />
@@ -318,10 +308,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           onDismissOverlay={this.handleDismissLearningModelModal}
           deviceData={selectedArrayById(data, checkedArray, 'id')}
           notify={this.props.notify}
-          getDeviceAJAX={this.getDeviceAJAX}
-          getNetworkDeviceOrganizationsAJAX={
-            this.getNetworkDeviceOrganizationsAJAX
-          }
+          refreshStateForDeviceManagement={this.refreshStateForDeviceManagement}
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
           initializeCheckedArray={this.initializeCheckedArray}
         />
@@ -345,24 +332,21 @@ class DeviceManagement extends PureComponent<Props, State> {
     const {organizations} = this.props
 
     try {
-      const deviceMonitoringStatus = await this.fetchDeviceMonitoringStatus()
       const {data} = await getDeviceList()
       const deviceDataWithOrgNames = convertDeviceDataOrganizationIDToName(
         data?.devices || [],
         organizations
       ) as DeviceData[]
-      const deviceDataWithMonitoring = this.getDeviceMonitoringStatus(
-        deviceDataWithOrgNames,
-        deviceMonitoringStatus
-      )
 
-      this.setState({data: deviceDataWithMonitoring})
+      this.setState({data: deviceDataWithOrgNames})
     } catch (error) {
       console.error(notifyFetchDeviceListError(parseErrorMessage(error)))
     }
   }
 
   private fetchDeviceMonitoringStatus = async () => {
+    const {data} = this.state
+
     try {
       const {source, links} = this.props
       const envVars = await getEnv(links.environment)
@@ -378,12 +362,15 @@ class DeviceManagement extends PureComponent<Props, State> {
         telegrafSystemInterval,
         tempVars
       )
+      const deviceDataWithMonitoring = this.getDeviceMonitoringStatus(
+        data,
+        deviceMonitoringStatus
+      )
 
       this.setState({
         deviceMonitoringStatus,
+        data: deviceDataWithMonitoring,
       })
-
-      return deviceMonitoringStatus
     } catch (error) {
       this.props.notify(
         notifyFetchDeviceMonitoringStatusFailed(parseErrorMessage(error))

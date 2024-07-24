@@ -61,8 +61,7 @@ interface Props {
   notify: (n: Notification) => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
   toggleVisibility: ToggleWizard
-  getDeviceAJAX: () => Promise<void>
-  getNetworkDeviceOrganizationsAJAX: () => Promise<void>
+  refreshStateForDeviceManagement: () => void
 }
 
 interface State {
@@ -262,14 +261,12 @@ class DeviceConnection extends PureComponent<Props, State> {
 
   private finalizeAPIResponse = () => {
     const {
-      getDeviceAJAX,
-      getNetworkDeviceOrganizationsAJAX,
+      refreshStateForDeviceManagement,
       setDeviceManagementIsLoading,
     } = this.props
 
     setDeviceManagementIsLoading(false)
-    getDeviceAJAX()
-    getNetworkDeviceOrganizationsAJAX()
+    refreshStateForDeviceManagement()
   }
 
   private handleConnectSSH = () => {

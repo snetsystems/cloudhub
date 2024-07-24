@@ -89,8 +89,7 @@ interface Props {
   onClose: () => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
   getKapacitorsFromSelectedSource: (source: Source) => Promise<void>
-  getDeviceAJAX: () => Promise<void>
-  getNetworkDeviceOrganizationsAJAX: () => Promise<void>
+  refreshStateForDeviceManagement: () => void
 }
 
 function LearningSettingModal({
@@ -104,8 +103,7 @@ function LearningSettingModal({
   notify,
   onClose,
   setDeviceManagementIsLoading,
-  getDeviceAJAX,
-  getNetworkDeviceOrganizationsAJAX,
+  refreshStateForDeviceManagement,
   getKapacitorsFromSelectedSource,
 }: Props) {
   const [isUpdateAfterCreate, setIsUpdateAfterCreate] = useState<boolean>(false)
@@ -487,8 +485,7 @@ function LearningSettingModal({
 
   const finalizeApplyMLDLSettingAPIResponse = () => {
     setDeviceManagementIsLoading(false)
-    getDeviceAJAX()
-    getNetworkDeviceOrganizationsAJAX()
+    refreshStateForDeviceManagement()
   }
 
   const fetchSpecificAlertRule = async (

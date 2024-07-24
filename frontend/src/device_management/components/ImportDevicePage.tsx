@@ -65,8 +65,7 @@ interface Props {
   notify: (n: Notification) => void
   onDismissOverlay: () => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
-  getDeviceAJAX: () => Promise<void>
-  getNetworkDeviceOrganizationsAJAX: () => Promise<void>
+  refreshStateForDeviceManagement: () => void
 }
 
 interface State {
@@ -428,14 +427,12 @@ class ImportDevicePage extends PureComponent<Props, State> {
 
   private finalizeAPIResponse = () => {
     const {
-      getDeviceAJAX,
-      getNetworkDeviceOrganizationsAJAX,
+      refreshStateForDeviceManagement,
       setDeviceManagementIsLoading,
     } = this.props
 
     setDeviceManagementIsLoading(false)
-    getDeviceAJAX()
-    getNetworkDeviceOrganizationsAJAX()
+    refreshStateForDeviceManagement()
   }
 
   private scrollMaxHeight = window.innerHeight * 0.45

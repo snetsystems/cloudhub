@@ -45,19 +45,17 @@ import {
 interface Props {
   deviceData: DeviceData[]
   isVisible: boolean
-  getDeviceAJAX: () => Promise<void>
-  getNetworkDeviceOrganizationsAJAX: () => Promise<void>
   onDismissOverlay: () => void
   notify: (n: Notification) => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
   initializeCheckedArray: () => void
+  refreshStateForDeviceManagement: () => void
 }
 
 function ApplyMonitoringModal({
   deviceData,
   isVisible,
-  getDeviceAJAX,
-  getNetworkDeviceOrganizationsAJAX,
+  refreshStateForDeviceManagement,
   onDismissOverlay,
   notify,
   setDeviceManagementIsLoading,
@@ -96,8 +94,7 @@ function ApplyMonitoringModal({
 
   const finalizeApplyMonitoringAPIResponse = () => {
     setDeviceManagementIsLoading(false)
-    getDeviceAJAX()
-    getNetworkDeviceOrganizationsAJAX()
+    refreshStateForDeviceManagement()
     initializeCheckedArray()
     onDismissOverlay()
   }
