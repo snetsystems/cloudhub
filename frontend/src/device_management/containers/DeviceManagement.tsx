@@ -103,18 +103,17 @@ interface Props {
 
 interface State {
   isLoading: boolean
-  data: DeviceData[]
+  applyMonitoringModalVisibility: boolean
   deviceConnectionVisibility: boolean
-  deviceConnectionStatus: DeviceConnectionStatus
   importDeviceWizardVisibility: boolean
   isLearningSettingModalVisibility: boolean
-  deviceData: DeviceData[]
-  selectedDeviceData: DeviceData
-  checkedArray: string[]
-  orgLearningModel: DevicesOrgData[]
-  networkDeviceOrganizationStatus: DeviceOrganizationStatus
-  applyMonitoringModalVisibility: boolean
   learningModelModalVisibility: boolean
+  selectedDeviceData: DeviceData
+  data: DeviceData[]
+  orgLearningModel: DevicesOrgData[]
+  deviceConnectionStatus: DeviceConnectionStatus
+  networkDeviceOrganizationStatus: DeviceOrganizationStatus
+  checkedArray: string[]
   kapacitors: Kapacitor[]
 }
 
@@ -125,20 +124,19 @@ class DeviceManagement extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      data: [],
-      deviceData: [DEFAULT_NETWORK_DEVICE_DATA as DeviceData],
-      selectedDeviceData: DEFAULT_NETWORK_DEVICE_DATA,
-      checkedArray: [],
-      orgLearningModel: [],
-      networkDeviceOrganizationStatus: {},
-      kapacitors: [],
       isLoading: false,
-      deviceConnectionStatus: 'None',
+      applyMonitoringModalVisibility: false,
       deviceConnectionVisibility: false,
       importDeviceWizardVisibility: false,
       isLearningSettingModalVisibility: false,
-      applyMonitoringModalVisibility: false,
       learningModelModalVisibility: false,
+      selectedDeviceData: DEFAULT_NETWORK_DEVICE_DATA,
+      data: [],
+      orgLearningModel: [],
+      deviceConnectionStatus: 'None',
+      networkDeviceOrganizationStatus: {},
+      checkedArray: [],
+      kapacitors: [],
     }
 
     this.setState = (args, callback) => {
