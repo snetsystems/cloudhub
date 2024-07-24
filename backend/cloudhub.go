@@ -822,6 +822,31 @@ type Layout struct {
 	Cells       []Cell `json:"cells"`
 }
 
+// UnmarshalJSON GraphOptions setting default values for missing fields.
+func (c *Cell) UnmarshalJSON(data []byte) error {
+	type Alias Cell
+	cell := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if err := json.Unmarshal(data, &cell); err != nil {
+		return err
+	}
+
+	if cell.GraphOptions == (GraphOptions{}) {
+		c.GraphOptions = GraphOptions{
+			FillArea:         false,
+			ShowLine:         true,
+			ShowPoint:        false,
+			ShowTempVarCount: "",
+		}
+	}
+
+	return nil
+}
+
 // LayoutsStore stores dashboards and associated Cells
 type LayoutsStore interface {
 	// All returns all dashboards in the store
