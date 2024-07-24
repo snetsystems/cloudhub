@@ -207,6 +207,7 @@ class DeviceManagement extends PureComponent<Props, State> {
     if (this.intervalID !== null) {
       clearInterval(this.intervalID)
       this.intervalID = null
+      GlobalAutoRefresher.stopPolling()
     }
   }
 
