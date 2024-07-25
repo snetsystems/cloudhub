@@ -620,6 +620,10 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		device.Hostname = *req.Hostname
 		isModified = true
 	}
+	if req.DeviceType != nil && device.DeviceType != *req.DeviceType {
+		device.DeviceType = *req.DeviceType
+		isModified = true
+	}
 	if req.DeviceCategory != nil && device.DeviceCategory != *req.DeviceCategory {
 		device.DeviceCategory = *req.DeviceCategory
 		isModified = true
@@ -1320,17 +1324,25 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return statusCode, resp, nil
 	}
 
-	var hostEntries []string
+	var hostEntriesV1AndV2 []string
+
 	var deviceFilters []string
+
+	filteredDevices := make(map[cloudhub.SNMPConfig]FilteredDeviceV3)
 	for _, deviceID := range devicesIDs {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
 		if err != nil {
 			continue
 		}
-		host := fmt.Sprintf("%s:%s/%d", strings.ToLower(device.SNMPConfig.Protocol), device.DeviceIP, device.SNMPConfig.Port)
-		hostEntry := fmt.Sprintf("{host => \"%s\" community => \"%s\" version => \"%s\" timeout => %d}",
-			host, device.SNMPConfig.Community, device.SNMPConfig.Version, 50000)
-		hostEntries = append(hostEntries, hostEntry)
+
+		if device.SNMPConfig.Version == "v3" || device.SNMPConfig.Version == "3" {
+			s.filterDeviceBySNMPConfigV3(*device, org.Name, &filteredDevices)
+		} else {
+			host := fmt.Sprintf("%s:%s/%d", strings.ToLower(device.SNMPConfig.Protocol), device.DeviceIP, device.SNMPConfig.Port)
+			hostEntry := fmt.Sprintf("{host => \"%s\" community => \"%s\" version => \"%s\" timeout => %d}",
+				host, device.SNMPConfig.Community, device.SNMPConfig.Version, 50000)
+			hostEntriesV1AndV2 = append(hostEntriesV1AndV2, hostEntry)
+		}
 
 		filter := fmt.Sprintf(`
 		if [host] == "%s" {
@@ -1343,7 +1355,8 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		deviceFilters = append(deviceFilters, filter)
 	}
 
-	hosts := strings.Join(hostEntries, ",\n")
+	snmpV1AndV2Hosts := strings.Join(hostEntriesV1AndV2, ",\n")
+	// snmpV3Hosts := strings.Join(hostEntriesV3, ",\n")
 	filters := strings.Join(deviceFilters, "\n")
 
 	influxDBs, err := GetServerInfluxDBs(ctx, s)
@@ -1351,14 +1364,36 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return http.StatusInternalServerError, nil, err
 	}
 
-	tmplParams := cloudhub.TemplateParams{
-		"OrgName":        org.Name,
-		"DeviceHosts":    hosts,
-		"DeviceFilter":   filters,
-		"InfluxOrigin":   influxDBs[0].Origin,
-		"InfluxPort":     influxDBs[0].Port,
-		"InfluxUsername": influxDBs[0].Username,
-		"InfluxPassword": influxDBs[0].Password,
+	filteredDevicesArray := make([]FilteredDeviceV3, 0, len(filteredDevices))
+	for _, fd := range filteredDevices {
+		fd.HostEntries = strings.TrimSuffix(fd.HostEntries, "\n")
+		filteredDevicesArray = append(filteredDevicesArray, fd)
+	}
+	tmplParams := []cloudhub.TemplateBlock{
+		{
+			Name: "input",
+			Params: cloudhub.TemplateParamsMap{
+				"DeviceHostsV1AndV2": snmpV1AndV2Hosts,
+				"OrgName":            org.Name,
+			},
+		},
+		{
+			Name: "snmp_v3_input",
+			Params: cloudhub.TemplateParamsMap{
+				"RefeatV3": filteredDevicesArray,
+			},
+		},
+		{
+			Name: "filter_ouput",
+			Params: cloudhub.TemplateParamsMap{
+				"OrgName":        org.Name,
+				"DeviceFilter":   filters,
+				"InfluxOrigin":   influxDBs[0].Origin,
+				"InfluxPort":     influxDBs[0].Port,
+				"InfluxUsername": influxDBs[0].Username,
+				"InfluxPassword": influxDBs[0].Password,
+			},
+		},
 	}
 
 	tm := s.InternalENV.TemplatesManager
@@ -1371,13 +1406,13 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	}
-	fmt.Print(configString)
-	// statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{configString}, devOrg.CollectorServer)
-	// if err != nil {
-	// 	return http.StatusInternalServerError, nil, err
-	// } else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-	// 	return statusCode, resp, err
-	// }
+
+	statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{configString}, devOrg.CollectorServer)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return statusCode, resp, err
+	}
 	// Log the successful creation of the config
 	msg := fmt.Sprintf(MsgNetWorkDeviceConfCreated.String(), org.ID)
 	s.logRegistration(ctx, "NetWorkDeviceConf", msg)
@@ -1400,11 +1435,12 @@ func (s *Service) restartDocker(collectorServer string) (int, []byte, error) {
 			return http.StatusInternalServerError, nil, err
 		}
 		// Check for the success message using regex
-		re := regexp.MustCompile(`(?i)Restarting.*Started`)
+		re := regexp.MustCompile(`(?i)(Restarting.*Started|Stopping .* done|Starting .* done)`)
 		for _, item := range r.Return {
 			for _, value := range item {
 				cleanedValue := strings.ReplaceAll(strings.ReplaceAll(value, "\n", ""), " ", "")
 				if !re.MatchString(cleanedValue) {
+
 					message := fmt.Errorf(value)
 					return http.StatusInternalServerError, nil, message
 				}
@@ -1432,4 +1468,49 @@ func RemoveElements[T comparable](origin []T, delete []T) []T {
 	}
 
 	return result
+}
+
+// FilteredDeviceV3 is SNMP V3 device Info
+type FilteredDeviceV3 struct {
+	HostEntries   string
+	SecurityName  string
+	AuthProtocol  string
+	AuthPass      string
+	PrivProtocol  string
+	PrivPass      string
+	SecurityLevel string
+	OrgName       string
+}
+
+func (s *Service) filterDeviceBySNMPConfigV3(device cloudhub.NetworkDevice, orgName string, filteredDevices *map[cloudhub.SNMPConfig]FilteredDeviceV3) {
+	reqConfig := device.SNMPConfig
+	host := fmt.Sprintf("%s:%s/%d", strings.ToLower(reqConfig.Protocol), device.DeviceIP, reqConfig.Port)
+	hostEntry := fmt.Sprintf("{host => \"%s\" version => \"%s\" timeout => %d}\n",
+		host, "3", 50000)
+
+	for config := range *filteredDevices {
+		if reflect.DeepEqual(config, reqConfig) {
+			fd := (*filteredDevices)[config]
+			fd.HostEntries += hostEntry
+			fd.SecurityName = reqConfig.SecurityName
+			fd.AuthProtocol = strings.ToLower(reqConfig.AuthProtocol)
+			fd.AuthPass = reqConfig.AuthPass
+			fd.PrivProtocol = strings.ToLower(reqConfig.PrivProtocol)
+			fd.PrivPass = reqConfig.PrivPass
+			fd.SecurityLevel = reqConfig.SecurityLevel
+			fd.OrgName = orgName
+			(*filteredDevices)[config] = fd
+			return
+		}
+	}
+	(*filteredDevices)[device.SNMPConfig] = FilteredDeviceV3{
+		HostEntries:   hostEntry,
+		SecurityName:  reqConfig.SecurityName,
+		AuthProtocol:  strings.ToLower(reqConfig.AuthProtocol),
+		AuthPass:      reqConfig.AuthPass,
+		PrivProtocol:  strings.ToLower(reqConfig.PrivProtocol),
+		PrivPass:      reqConfig.PrivPass,
+		SecurityLevel: reqConfig.SecurityLevel,
+		OrgName:       orgName,
+	}
 }

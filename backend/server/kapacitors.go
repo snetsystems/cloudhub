@@ -1072,15 +1072,17 @@ func (s *Service) CreateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmplParams := cloudhub.TemplateParams{
-		"OrgName":              req.OrganizationName,
-		"Message":              req.Message,
-		"RetentionPolicy":      RetentionPolicy,
-		"PredictMode":          req.PredictMode,
-		"PredictModeCondition": req.PredictModeCondition,
-		"AlertServices":        alertServices,
-		"Group":                "{{.Group}}",
-		"Details":              req.Details,
+	tmplParams := []cloudhub.TemplateBlock{
+		{
+			Name: "main", Params: cloudhub.TemplateParamsMap{"OrgName": req.OrganizationName,
+				"Message":              req.Message,
+				"RetentionPolicy":      RetentionPolicy,
+				"PredictMode":          req.PredictMode,
+				"PredictModeCondition": req.PredictModeCondition,
+				"AlertServices":        alertServices,
+				"Group":                "{{.Group}}",
+				"Details":              req.Details},
+		},
 	}
 
 	tm := s.InternalENV.TemplatesManager
@@ -1214,15 +1216,19 @@ func (s *Service) UpdateKapacitorTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmplParams := cloudhub.TemplateParams{
-		"OrgName":              req.OrganizationName,
-		"Message":              req.Message,
-		"RetentionPolicy":      RetentionPolicy,
-		"PredictMode":          req.PredictMode,
-		"PredictModeCondition": req.PredictModeCondition,
-		"AlertServices":        alertServices,
-		"Group":                "{{.Group}}",
-		"Details":              req.Details,
+	tmplParams := []cloudhub.TemplateBlock{
+		{
+			Name: "main", Params: cloudhub.TemplateParamsMap{
+				"OrgName":              req.OrganizationName,
+				"Message":              req.Message,
+				"RetentionPolicy":      RetentionPolicy,
+				"PredictMode":          req.PredictMode,
+				"PredictModeCondition": req.PredictModeCondition,
+				"AlertServices":        alertServices,
+				"Group":                "{{.Group}}",
+				"Details":              req.Details,
+			},
+		},
 	}
 	tm := s.InternalENV.TemplatesManager
 	t, err := tm.Get(ctx, string(PredictionTaskField))

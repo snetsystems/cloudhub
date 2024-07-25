@@ -21,23 +21,25 @@ const (
 )
 
 // LoadTemplate loads and parses the template from the given file path and field type
-func (s *TemplateService) LoadTemplate(config cloudhub.LoadTemplateConfig, tmplParams cloudhub.TemplateParams) (string, error) {
-	templateString := config.TemplateString
-	if templateString == "" {
-		return "", fmt.Errorf("template string is empty for field: %s", config.Field)
-	}
-
-	tmpl, err := template.New(string(config.Field)).Parse(templateString)
+func (s *TemplateService) LoadTemplate(config cloudhub.LoadTemplateConfig, tmplParams []cloudhub.TemplateBlock) (string, error) {
+	tmpl, err := template.New(string(config.Field)).Parse(config.TemplateString)
 	if err != nil {
 		return "", fmt.Errorf("error parsing template: %v", err)
 	}
 
-	var tpl bytes.Buffer
-	if err := tmpl.Execute(&tpl, tmplParams); err != nil {
-		return "", err
+	var finalBuffer bytes.Buffer
+
+	for _, block := range tmplParams {
+		var tpl bytes.Buffer
+		if err := tmpl.ExecuteTemplate(&tpl, block.Name, block.Params); err != nil {
+			return "", fmt.Errorf("error executing template for block %s: %v", block.Name, err)
+		}
+
+		finalBuffer.WriteString(tpl.String())
+		finalBuffer.WriteString("\n")
 	}
 
-	finalTickScript := tpl.String()
+	finalString := finalBuffer.String()
 
-	return finalTickScript, nil
+	return finalString, nil
 }

@@ -491,20 +491,23 @@ func manageLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		EtcdPort:         EtcdPort,
 	}
 
-	tmplParams := cloudhub.TemplateParams{
-		"OrgName":         taskReq.OrganizationName,
-		"OrgID":           taskReq.Organization,
-		"LoadModule":      taskReq.LoadModule,
-		"MLFunction":      taskReq.MLFunction,
-		"Message":         taskReq.Message,
-		"CronSchedule":    taskReq.CronSchedule,
-		"RetentionPolicy": taskReq.RetentionPolicy,
-		"InfluxOrigin":    taskReq.InfluxOrigin,
-		"InfluxPort":      taskReq.InfluxDBPort,
-		"InfluxUsername":  taskReq.InfluxDBUsername,
-		"InfluxPassword":  taskReq.InfluxDBPassword,
-		"EtcdOrigin":      taskReq.EtcdOrigin,
-		"EtcdPort":        taskReq.EtcdPort,
+	tmplParams := []cloudhub.TemplateBlock{
+		{Name: "main", Params: cloudhub.TemplateParamsMap{
+			"OrgName":         taskReq.OrganizationName,
+			"OrgID":           taskReq.Organization,
+			"LoadModule":      taskReq.LoadModule,
+			"MLFunction":      taskReq.MLFunction,
+			"Message":         taskReq.Message,
+			"CronSchedule":    taskReq.CronSchedule,
+			"RetentionPolicy": taskReq.RetentionPolicy,
+			"InfluxOrigin":    taskReq.InfluxOrigin,
+			"InfluxPort":      taskReq.InfluxDBPort,
+			"InfluxUsername":  taskReq.InfluxDBUsername,
+			"InfluxPassword":  taskReq.InfluxDBPassword,
+			"EtcdOrigin":      taskReq.EtcdOrigin,
+			"EtcdPort":        taskReq.EtcdPort,
+		},
+		},
 	}
 
 	tm := s.InternalENV.TemplatesManager

@@ -345,8 +345,14 @@ type AutoGenerateLearnRule struct {
 // TICKScript task to be used by kapacitor
 type TICKScript string
 
-// TemplateParams is TickScript Template Params
-type TemplateParams map[string]string
+// TemplateParamsMap is TemplateParams Params
+type TemplateParamsMap map[string]interface{}
+
+// TemplateBlock is TickScript Template Params
+type TemplateBlock struct {
+	Name   string
+	Params TemplateParamsMap
+}
 
 // LoadTemplateConfig Load file info
 type LoadTemplateConfig struct {

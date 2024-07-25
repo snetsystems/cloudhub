@@ -1032,3 +1032,92 @@ func equalSlices(a, b []int) bool {
 	}
 	return true
 }
+
+type NetworkDevice struct {
+	ID         string     `json:"id,omitempty"`
+	DeviceIP   string     `json:"device_ip"`
+	SNMPConfig SNMPConfig `json:"snmp_config"`
+}
+
+func createDevice(id, ip string, snmpConfig SNMPConfig) NetworkDevice {
+	return NetworkDevice{
+		ID:         id,
+		DeviceIP:   ip,
+		SNMPConfig: snmpConfig,
+	}
+}
+
+func TestFilterDevicesBySNMPConfigV3(t *testing.T) {
+
+	snmpConfig1 := cloudhub.SNMPConfig{
+		Version:       "v3",
+		Port:          161,
+		Protocol:      "udp",
+		SecurityName:  "333",
+		AuthProtocol:  "SHA",
+		AuthPass:      "222!",
+		PrivProtocol:  "AES",
+		PrivPass:      "111!",
+		SecurityLevel: "authPriv",
+	}
+
+	snmpConfig2 := cloudhub.SNMPConfig{
+		Version:       "v3",
+		Port:          162,
+		Protocol:      "udp",
+		SecurityName:  "334",
+		AuthProtocol:  "MD5",
+		AuthPass:      "223!",
+		PrivProtocol:  "DES",
+		PrivPass:      "112!",
+		SecurityLevel: "authPriv",
+	}
+
+	snmpConfig3 := cloudhub.SNMPConfig{
+		Version:       "v3",
+		Port:          163,
+		Protocol:      "tcp",
+		SecurityName:  "335",
+		AuthProtocol:  "SHA",
+		AuthPass:      "224!",
+		PrivProtocol:  "AES",
+		PrivPass:      "113!",
+		SecurityLevel: "authPriv",
+	}
+
+	devices := []cloudhub.NetworkDevice{
+		{ID: "1", DeviceIP: "10.20.5.211", SNMPConfig: snmpConfig1},
+		{ID: "2", DeviceIP: "10.20.5.212", SNMPConfig: snmpConfig2},
+		{ID: "3", DeviceIP: "10.20.5.213", SNMPConfig: snmpConfig1},
+		{ID: "4", DeviceIP: "10.20.5.214", SNMPConfig: snmpConfig2},
+		{ID: "5", DeviceIP: "10.20.5.215", SNMPConfig: snmpConfig1},
+		{ID: "6", DeviceIP: "10.20.5.216", SNMPConfig: snmpConfig3},
+		{ID: "7", DeviceIP: "10.20.5.217", SNMPConfig: snmpConfig3},
+		{ID: "8", DeviceIP: "10.20.5.218", SNMPConfig: snmpConfig3},
+		{ID: "9", DeviceIP: "10.20.5.219", SNMPConfig: snmpConfig2},
+		{ID: "10", DeviceIP: "10.20.5.220", SNMPConfig: snmpConfig1},
+	}
+
+	expected := map[cloudhub.SNMPConfig]string{
+		snmpConfig1: "{host => \"udp:10.20.5.211/161\" version => \"3\" timeout => 50000}\n{host => \"udp:10.20.5.213/161\" version => \"3\" timeout => 50000}\n{host => \"udp:10.20.5.215/161\" version => \"3\" timeout => 50000}\n{host => \"udp:10.20.5.220/161\" version => \"3\" timeout => 50000}\n",
+		snmpConfig2: "{host => \"udp:10.20.5.212/162\" version => \"3\" timeout => 50000}\n{host => \"udp:10.20.5.214/162\" version => \"3\" timeout => 50000}\n{host => \"udp:10.20.5.219/162\" version => \"3\" timeout => 50000}\n",
+		snmpConfig3: "{host => \"tcp:10.20.5.216/163\" version => \"3\" timeout => 50000}\n{host => \"tcp:10.20.5.217/163\" version => \"3\" timeout => 50000}\n{host => \"tcp:10.20.5.218/163\" version => \"3\" timeout => 50000}\n",
+	}
+
+	filteredDevices := make(map[cloudhub.SNMPConfig]FilteredDeviceV3)
+	s := &Service{}
+	orgName := "exampleOrg"
+
+	for _, device := range devices {
+		s.filterDeviceBySNMPConfigV3(device, orgName, &filteredDevices)
+	}
+
+	for config, fd := range filteredDevices {
+		if expected[config] != fd.HostEntries {
+			t.Errorf("Expected host entries for config %v: %s, but got: %s", config, expected[config], fd.HostEntries)
+		}
+		if fd.OrgName != orgName {
+			t.Errorf("Expected orgName %s, but got %s", orgName, fd.OrgName)
+		}
+	}
+}
