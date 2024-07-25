@@ -297,33 +297,46 @@ class ImportDevicePage extends PureComponent<Props, State> {
   private generateDevicesData = (
     snmpConnectionSuccessDevices: null | SNMPConnectionSuccessDevice[]
   ) => {
+    if (!snmpConnectionSuccessDevices) {
+      return []
+    }
+
     const {devicesDataParsedFromCSV} = this.state
-    const devicesData = devicesDataParsedFromCSV.map(deviceData => {
-      const result = _.find(
-        snmpConnectionSuccessDevices,
-        snmpConnectionSuccessDevice =>
-          snmpConnectionSuccessDevice.device_ip === deviceData.device_ip
-      )
-      return {
-        organization: deviceData?.organization || '',
-        device_ip: deviceData?.device_ip || '',
-        hostname: result?.hostname || '',
-        device_type: result?.device_type || '',
-        device_os: result?.device_os || '',
-        ssh_config: {
-          user_id: deviceData?.ssh_user_id || '',
-          password: deviceData?.ssh_password || '',
-          en_password: deviceData?.ssh_en_password || '',
-          port: deviceData?.ssh_port || 22,
-        },
-        snmp_config: {
-          community: deviceData?.snmp_community || '',
-          port: deviceData?.snmp_port || 161,
-          version: deviceData?.snmp_version || '1',
-          protocol: deviceData?.snmp_protocol || '',
-        },
-      }
-    })
+    const devicesData = devicesDataParsedFromCSV
+      .filter(deviceData => {
+        return _.some(
+          snmpConnectionSuccessDevices,
+          snmpConnectionSuccessDevice =>
+            snmpConnectionSuccessDevice.device_ip === deviceData.device_ip
+        )
+      })
+      .map(deviceData => {
+        const result = _.find(
+          snmpConnectionSuccessDevices,
+          snmpConnectionSuccessDevice =>
+            snmpConnectionSuccessDevice.device_ip === deviceData.device_ip
+        )
+
+        return {
+          organization: deviceData?.organization || '',
+          device_ip: deviceData?.device_ip || '',
+          hostname: result?.hostname || '',
+          device_type: result?.device_type || '',
+          device_os: result?.device_os || '',
+          ssh_config: {
+            user_id: deviceData?.ssh_user_id || '',
+            password: deviceData?.ssh_password || '',
+            en_password: deviceData?.ssh_en_password || '',
+            port: deviceData?.ssh_port || 22,
+          },
+          snmp_config: {
+            community: deviceData?.snmp_community || '',
+            port: deviceData?.snmp_port || 161,
+            version: deviceData?.snmp_version || '1',
+            protocol: deviceData?.snmp_protocol || '',
+          },
+        }
+      })
 
     return devicesData
   }
