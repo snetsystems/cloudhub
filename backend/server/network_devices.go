@@ -1370,6 +1370,7 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		filteredDevicesArray = append(filteredDevicesArray, fd)
 	}
 	tmplParams := []cloudhub.TemplateBlock{
+		{Name: "comment", Params: cloudhub.TemplateParamsMap{}},
 		{
 			Name: "input",
 			Params: cloudhub.TemplateParamsMap{
