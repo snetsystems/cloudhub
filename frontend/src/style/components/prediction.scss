@@ -251,7 +251,7 @@
 }
 
 .hosts-table--tr.header {
-  opacity: 80%;
+  opacity: 0.8;
   border-bottom: 1px solid $g6-smoke;
   width: 100%;
 }
@@ -267,16 +267,16 @@
 @keyframes blink-opacity-animation {
   0% {
     background-color: #ab0000;
-    opacity: 80%;
+    opacity: 0.8;
   }
 
   50% {
-    opacity: 90%;
+    opacity: 0.9;
     background-color: inherit;
   }
 
   100% {
     background-color: #ab0000;
-    opacity: 80%;
+    opacity: 0.8;
   }
 }
