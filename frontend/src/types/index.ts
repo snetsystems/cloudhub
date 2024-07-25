@@ -75,7 +75,7 @@ import {
   DygraphData,
 } from './dygraphs'
 import {JSONFeedData} from './status'
-import {Annotation} from './annotations'
+import {Annotation, AnnotationViewer} from './annotations'
 import {WriteDataMode, QueryUpdateState} from './dataExplorer'
 import {Host, Layout, Ipmi, IpmiCell, CloudHost, CloudHosts} from './hosts'
 import {Env} from './env'
@@ -212,6 +212,7 @@ export {
   RemoteDataState,
   JSONFeedData,
   Annotation,
+  AnnotationViewer,
   TemplateType,
   TemplateValueType,
   TemplateUpdate,

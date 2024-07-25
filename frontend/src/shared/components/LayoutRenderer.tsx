@@ -22,7 +22,14 @@ import {
 } from 'src/shared/constants'
 
 // Types
-import {TimeRange, Cell, Template, Source, TemplateValue} from 'src/types'
+import {
+  TimeRange,
+  Cell,
+  Template,
+  Source,
+  TemplateValue,
+  // AnnotationViewer,
+} from 'src/types'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -44,6 +51,8 @@ interface Props {
   onPositionChange?: (cells: Cell[]) => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
+  // isUsingAnnotationViewer?: boolean
+  // annotationsViewMode?: AnnotationViewer[]
 }
 
 interface State {
@@ -126,6 +135,8 @@ class LayoutRenderer extends Component<Props, State> {
                   onSummonOverlayTechnologies={onSummonOverlayTechnologies}
                   instance={instance}
                   onPickTemplate={onPickTemplate}
+                  // isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
+                  // annotationsViewMode={this.props.annotationsViewMode}
                 />
               </Authorized>
             </div>
