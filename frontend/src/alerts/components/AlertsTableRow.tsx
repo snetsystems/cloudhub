@@ -18,6 +18,7 @@ interface Props {
   host: string | null
   value: string | null
   timeZone: TimeZones
+  triggerType?: string
 }
 
 const {colName, colLevel, colTime, colHost, colValue} = ALERTS_TABLE
@@ -102,7 +103,7 @@ class AlertsTableRow extends PureComponent<Props> {
   }
 
   private get hostCell(): JSX.Element {
-    const {sourceID, host} = this.props
+    const {sourceID, host, triggerType} = this.props
 
     return (
       <div
@@ -114,13 +115,15 @@ class AlertsTableRow extends PureComponent<Props> {
           <span>{'–'}</span>
         ) : (
           // Todo: link with valid canned
-          // <Link
-          //   to={`/sources/${sourceID}/infrastructure/details/${host}`}
-          //   title={host}
-          // >
-          //   {host}
-          // </Link>
-          <span className="alert-history-link">{host}</span>
+          <Link
+            to={`/sources/${sourceID}/infrastructure/details/${host}${
+              !!triggerType ? `?trigger=${triggerType}` : ''
+            }`}
+            title={host}
+          >
+            {host}
+          </Link>
+          // <span className="alert-history-link">{host}</span>
         )}
       </div>
     )

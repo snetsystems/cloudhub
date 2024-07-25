@@ -176,6 +176,11 @@ class AlertsApp extends PureComponent<Props, State> {
             value: `${value}`,
             level: s[levelIndex],
             name: `${s[nameIndex]}`,
+            triggerType: `${
+              s[triggerTypeIndex] === 'anomaly_predict'
+                ? `${s[triggerTypeIndex]}`
+                : null
+            }`,
           })
         })
 

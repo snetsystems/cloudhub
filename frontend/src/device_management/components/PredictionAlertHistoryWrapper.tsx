@@ -121,21 +121,26 @@ function PredictionAlertHistoryWrapper({
     const nameIndex = alertSeries[0].columns.findIndex(
       col => col === 'alertName'
     )
-
+    const triggerTypeIndex = alertSeries[0].columns.findIndex(
+      col => col === 'triggerType'
+    )
     const alertHostListTemp = []
     alertSeries[0].values.forEach(s => {
-      results.push({
-        time: `${s[timeIndex]}`,
-        host: s[hostIndex],
-        value: `${s[valueIndex]}`,
-        level: s[levelIndex],
-        name: `${s[nameIndex]}`,
-      })
+      if (s[triggerTypeIndex] === 'anomaly_predict') {
+        results.push({
+          time: `${s[timeIndex]}`,
+          host: s[hostIndex],
+          value: `${s[valueIndex]}`,
+          level: s[levelIndex],
+          name: `${s[nameIndex]}`,
+          triggerType: `${s[triggerTypeIndex]}`,
+        })
 
-      alertHostListTemp.push({
-        host: s[hostIndex],
-        isOk: s[levelIndex] === 'OK',
-      })
+        alertHostListTemp.push({
+          host: s[hostIndex],
+          isOk: s[levelIndex] === 'OK',
+        })
+      }
     })
 
     setAlertHostList(

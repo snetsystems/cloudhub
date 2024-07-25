@@ -111,7 +111,6 @@ function toCellQuery(
   source: Source,
   whereTag: string
 ): CellQuery {
-  // "agent_host"!='10.10.250.2'
   const filteredQuery = {
     ...layoutQuery,
     wheres: [...(layoutQuery.wheres ?? []), `"agent_host" = '${whereTag}'`],

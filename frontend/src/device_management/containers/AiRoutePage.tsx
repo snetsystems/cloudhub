@@ -105,9 +105,6 @@ const AiRoutePage = (props: Props) => {
     key: 'network-device',
     value: Date.now(),
   })
-  const [headerRadioButtons, setHeaderRadioButtons] = useState<
-    HeaderNavigationObj[]
-  >(defaultHeaderRadioButtons)
 
   let providers = []
 
@@ -157,7 +154,9 @@ const AiRoutePage = (props: Props) => {
         <Page.Header.Left>
           <Page.Title title="Network Device" />
         </Page.Header.Left>
-        <Page.Header.Center widthPixels={headerRadioButtons.length * 150}>
+        <Page.Header.Center
+          widthPixels={defaultHeaderRadioButtons.length * 150}
+        >
           <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
             {defaultHeaderRadioButtons.map(rBtn => {
               return (

@@ -4,4 +4,5 @@ export interface Alert {
   value: string
   host: string
   level: string
+  triggerType?: string
 }

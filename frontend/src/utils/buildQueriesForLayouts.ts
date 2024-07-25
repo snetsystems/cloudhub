@@ -36,6 +36,8 @@ const buildCannedDashboardQuery = (
       text += ` and \"load_balancer\" = '${host}' or \"host\" = '${host}'`
     } else if (measurement === 'ipmi_sensor') {
       text += ` and \"hostname" \= '${host}'`
+    } else if (measurement === 'snmp_nx') {
+      text += ` and \"agent_host" \= '${host}'`
     } else {
       text += ` and \"host\" = '${host}'`
     }

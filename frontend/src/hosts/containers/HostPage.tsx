@@ -49,6 +49,7 @@ interface State {
   layouts: Layout[]
   hostLinks: DashboardSwitcherLinks
   timeRange: TimeRange
+  isAgentHost: boolean
 }
 
 class HostPage extends PureComponent<Props, State> {
@@ -59,12 +60,15 @@ class HostPage extends PureComponent<Props, State> {
       layouts: [],
       hostLinks: EMPTY_LINKS,
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+      isAgentHost: false,
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
   }
 
   public async componentDidMount() {
     const {location, autoRefresh} = this.props
+
+    this.setState({isAgentHost: location?.query?.trigger === 'anomaly_predict'})
 
     const {
       data: {layouts},
@@ -189,13 +193,19 @@ class HostPage extends PureComponent<Props, State> {
     const {source, params} = this.props
     const tempVars = generateForHosts(source)
 
-    const fetchMeasurements = getMeasurementsForHost(source, params.hostID)
+    const fetchMeasurements = getMeasurementsForHost(
+      source,
+      params.hostID,
+      this.state.isAgentHost ? 'snmp_nx' : null
+    )
+
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       params.hostID,
       layouts,
       source.telegraf,
-      tempVars
+      tempVars,
+      this.state.isAgentHost ? 'snmp_nx' : null
     )
 
     const [host, measurements] = await Promise.all([
