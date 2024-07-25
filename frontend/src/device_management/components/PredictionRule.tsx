@@ -58,7 +58,7 @@ interface Props {
   selectedOrganizationID: string
   selectedPredictMode: string
   isTickscriptCreated: boolean
-  isNetworkDeviceOrganizationValid: boolean
+  networkDeviceOrganizationStatus: 'valid' | 'invalid' | 'none'
   me: Me
   rule: AlertRule
   ruleActions: KapacitorRuleActions
@@ -71,6 +71,7 @@ interface Props {
   notify: (message: Notification) => void
   setLoadingForCreateAndUpdateScript: (isLoading: boolean) => void
   setisTickscriptCreated: (isTickscriptCreated: boolean) => void
+  fetchRuleAfterCreatingPredictionRule: () => void
 }
 
 interface State {}
@@ -87,7 +88,7 @@ export default class PredictionRule extends Component<Props, State> {
       ruleActions,
       handlersFromConfig,
       me,
-      isNetworkDeviceOrganizationValid,
+      networkDeviceOrganizationStatus,
     } = this.props
 
     return (
@@ -117,9 +118,7 @@ export default class PredictionRule extends Component<Props, State> {
               handlersFromConfig={handlersFromConfig}
               onGoToConfig={this.handleSaveToConfig}
               validationError={this.validationError}
-              isNetworkDeviceOrganizationValid={
-                isNetworkDeviceOrganizationValid
-              }
+              networkDeviceOrganizationStatus={networkDeviceOrganizationStatus}
             />
 
             <RuleMessage rule={rule} ruleActions={ruleActions} />
@@ -133,7 +132,6 @@ export default class PredictionRule extends Component<Props, State> {
     const {source, router} = this.props
     const pageLink = `/sources/${source.id}/ai/prediction`
 
-    // TODO Add Unsaved Changes Condition
     return (
       <button
         className="btn btn-default btn-sm"
@@ -180,9 +178,9 @@ export default class PredictionRule extends Component<Props, State> {
   }
 
   private get NameSection(): JSX.Element {
-    const {rule, isNetworkDeviceOrganizationValid, ruleActions} = this.props
+    const {rule, networkDeviceOrganizationStatus, ruleActions} = this.props
     let ruleName =
-      isNetworkDeviceOrganizationValid && rule?.name
+      networkDeviceOrganizationStatus !== 'invalid' && rule?.name
         ? rule.name
         : 'Untitled Rule'
 
@@ -256,15 +254,12 @@ export default class PredictionRule extends Component<Props, State> {
 
   private handleSave = () => {
     const {
-      isNetworkDeviceOrganizationValid,
+      networkDeviceOrganizationStatus,
       isTickscriptCreated,
-      // source,
-      // router,
       notify,
     } = this.props
-    // const pageLink = `/sources/${source.id}/ai/prediction`
 
-    if (!isNetworkDeviceOrganizationValid) {
+    if (networkDeviceOrganizationStatus === 'invalid') {
       notify(notifyKapacitorEngineRequired())
       return
     }
@@ -274,9 +269,6 @@ export default class PredictionRule extends Component<Props, State> {
     } else {
       this.handleCreate()
     }
-
-    // TODO Consider Router
-    // router.push(pageLink)
   }
 
   private handleCreate = async () => {
@@ -284,7 +276,12 @@ export default class PredictionRule extends Component<Props, State> {
   }
 
   private createAlertRule = async () => {
-    const {rule, notify, setisTickscriptCreated} = this.props
+    const {
+      rule,
+      notify,
+      setisTickscriptCreated,
+      fetchRuleAfterCreatingPredictionRule,
+    } = this.props
 
     this.props.setLoadingForCreateAndUpdateScript(true)
     try {
@@ -294,6 +291,7 @@ export default class PredictionRule extends Component<Props, State> {
 
       notify(notifyAlertRuleCreated(rule?.name || 'Rule'))
       this.props.setLoadingForCreateAndUpdateScript(false)
+      fetchRuleAfterCreatingPredictionRule()
       setisTickscriptCreated(true)
     } catch (error) {
       notify(
