@@ -102,6 +102,11 @@ const (
 	CollectorSelectionRatio float64 = 0.5
 )
 
+const (
+	// DefaultOrganizationID is the id of the default organization
+	DefaultOrganizationID string = "default"
+)
+
 func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
 	deviceOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
 	MLFunction := MLFunctionMultiplied
@@ -325,7 +330,23 @@ func (s *Service) AllDevices(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-
+	isSuperAdmin := hasSuperAdminContext(ctx)
+	currentOrg, ok := hasOrganizationContext(ctx)
+	if !ok {
+		Error(w, http.StatusInternalServerError, string(cloudhub.ErrOrganizationNotFound), s.Logger)
+		return
+	}
+	if !(isSuperAdmin && currentOrg == DefaultOrganizationID) {
+		devicesByOrg := devices[:0]
+		for _, d := range devices {
+			if d.Organization == currentOrg {
+				devicesByOrg = append(devicesByOrg, d)
+			}
+		}
+		res := newDevicesResponse(ctx, s, devicesByOrg)
+		encodeJSON(w, http.StatusOK, res, s.Logger)
+		return
+	}
 	res := newDevicesResponse(ctx, s, devices)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -648,7 +669,7 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if req.SNMPConfig != nil {
-		if req.SNMPConfig.Community != "" && device.SNMPConfig.Community != req.SNMPConfig.Community {
+		if device.SNMPConfig.Community != req.SNMPConfig.Community {
 			device.SNMPConfig.Community = req.SNMPConfig.Community
 			isModified = true
 		}
@@ -664,27 +685,27 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 			device.SNMPConfig.Protocol = req.SNMPConfig.Protocol
 			isModified = true
 		}
-		if req.SNMPConfig.SecurityName != "" && device.SNMPConfig.SecurityName != req.SNMPConfig.SecurityName {
+		if device.SNMPConfig.SecurityName != req.SNMPConfig.SecurityName {
 			device.SNMPConfig.SecurityName = req.SNMPConfig.SecurityName
 			isModified = true
 		}
-		if req.SNMPConfig.AuthProtocol != "" && device.SNMPConfig.AuthProtocol != req.SNMPConfig.AuthProtocol {
+		if device.SNMPConfig.AuthProtocol != req.SNMPConfig.AuthProtocol {
 			device.SNMPConfig.AuthProtocol = req.SNMPConfig.AuthProtocol
 			isModified = true
 		}
-		if req.SNMPConfig.AuthPass != "" && device.SNMPConfig.AuthPass != req.SNMPConfig.AuthPass {
+		if device.SNMPConfig.AuthPass != req.SNMPConfig.AuthPass {
 			device.SNMPConfig.AuthPass = req.SNMPConfig.AuthPass
 			isModified = true
 		}
-		if req.SNMPConfig.PrivProtocol != "" && device.SNMPConfig.PrivProtocol != req.SNMPConfig.PrivProtocol {
+		if device.SNMPConfig.PrivProtocol != req.SNMPConfig.PrivProtocol {
 			device.SNMPConfig.PrivProtocol = req.SNMPConfig.PrivProtocol
 			isModified = true
 		}
-		if req.SNMPConfig.PrivPass != "" && device.SNMPConfig.PrivPass != req.SNMPConfig.PrivPass {
+		if device.SNMPConfig.PrivPass != req.SNMPConfig.PrivPass {
 			device.SNMPConfig.PrivPass = req.SNMPConfig.PrivPass
 			isModified = true
 		}
-		if req.SNMPConfig.SecurityLevel != "" && device.SNMPConfig.SecurityLevel != req.SNMPConfig.SecurityLevel {
+		if device.SNMPConfig.SecurityLevel != req.SNMPConfig.SecurityLevel {
 			device.SNMPConfig.SecurityLevel = req.SNMPConfig.SecurityLevel
 			isModified = true
 		}
