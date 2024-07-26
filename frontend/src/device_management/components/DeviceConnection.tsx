@@ -261,7 +261,7 @@ class DeviceConnection extends PureComponent<Props, State> {
 
     const snmpRequest: SNMPConnectionRequest = {
       device_ip,
-      community,
+      community: version === '3' ? '' : community,
       port,
       version,
       protocol,
@@ -365,37 +365,13 @@ class DeviceConnection extends PureComponent<Props, State> {
     deviceData: DeviceData
   ): DeviceData => {
     const {snmp_config} = deviceData
-    const {version, security_level} = snmp_config
-
-    console.dir({
-      ...deviceData,
-      snmp_config: {
-        ...snmp_config,
-        security_level: version === '3' ? snmp_config.security_level || '' : '',
-        security_name: version === '3' ? snmp_config.security_name || '' : '',
-        auth_protocol:
-          version === '3' && security_level !== 'noAuthNoPriv'
-            ? snmp_config.auth_protocol || ''
-            : '',
-        auth_pass:
-          version === '3' && security_level !== 'noAuthNoPriv'
-            ? snmp_config.auth_pass || ''
-            : '',
-        priv_protocol:
-          version === '3' && security_level === 'authPriv'
-            ? snmp_config.priv_protocol || ''
-            : '',
-        priv_pass:
-          version === '3' && security_level === 'authPriv'
-            ? snmp_config.priv_pass || ''
-            : '',
-      },
-    })
+    const {version, security_level, community} = snmp_config
 
     return {
       ...deviceData,
       snmp_config: {
         ...snmp_config,
+        community: version === '3' ? '' : community,
         security_level: version === '3' ? snmp_config.security_level || '' : '',
         security_name: version === '3' ? snmp_config.security_name || '' : '',
         auth_protocol:
