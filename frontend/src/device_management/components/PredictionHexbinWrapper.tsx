@@ -180,14 +180,14 @@ function PredictionHexbinWrapper({
 
           <div style={{zIndex: 3}} className="page-header--right">
             <div className="hexbin-header--right">
+              <label className="hexbin-header--label">
+                {isHexbinDisplay ? 'Hexagon' : 'Card'}
+              </label>
               <SlideToggle
                 active={isHexbinDisplay}
                 onChange={hexbinViewHandler}
                 size={ComponentSize.Small}
               />
-              <label className="hexbin-header--label">
-                {isHexbinDisplay ? 'Hexagon' : 'Card'}
-              </label>
             </div>
           </div>
         </PredictionDashboardHeader>
