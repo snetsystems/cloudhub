@@ -45,18 +45,7 @@ func (s *NetworkDeviceStore) All(ctx context.Context) ([]cloudhub.NetworkDevice,
 		return nil, err
 	}
 
-	if s.isSuperAdmin && s.organization == DefaultOrganizationID {
-		return allDevice, nil
-	}
-
-	devices := allDevice[:0]
-	for _, d := range allDevice {
-		if d.Organization == s.organization {
-			devices = append(devices, d)
-		}
-	}
-
-	return devices, nil
+	return allDevice, nil
 }
 
 // Get returns a Device if the id exists and belongs to the organization that is set.

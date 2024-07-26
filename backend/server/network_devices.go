@@ -602,7 +602,7 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, device := range allDevices {
 			if device.DeviceIP == *req.DeviceIP {
-				message := fmt.Sprintf("duplicate IP in existing devices: %s", *req.DeviceIP)
+				message := fmt.Sprintf("duplicate IP in existing devices: %s, which might be registered in another organization", *req.DeviceIP)
 				Error(w, http.StatusUnprocessableEntity, message, s.Logger)
 				return
 			}
