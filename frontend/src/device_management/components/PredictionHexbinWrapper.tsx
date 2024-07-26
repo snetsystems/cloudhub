@@ -186,7 +186,7 @@ function PredictionHexbinWrapper({
                 size={ComponentSize.Small}
               />
               <label className="hexbin-header--label">
-                {isHexbinDisplay ? 'Hexbin View' : 'Tooltip View'}
+                {isHexbinDisplay ? 'Hexagon' : 'Card'}
               </label>
             </div>
           </div>
