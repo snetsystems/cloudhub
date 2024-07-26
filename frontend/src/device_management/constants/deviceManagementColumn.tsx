@@ -103,6 +103,12 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       ),
     },
     {
+      align: AlignType.CENTER,
+      key: 'ml_function',
+      name: 'ML Function',
+      render: value => <div> {value ? formatMLKey(value) : '-'}</div>,
+    },
+    {
       key: 'learning_state',
       name: 'Learning State',
       align: AlignType.CENTER,
@@ -139,12 +145,6 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
           </div>
         </div>
       ),
-    },
-    {
-      align: AlignType.CENTER,
-      key: 'ml_function',
-      name: 'ML Function',
-      render: value => <div> {value ? formatMLKey(value) : '-'}</div>,
     },
     {
       key: 'is_collecting_cfg_written',
