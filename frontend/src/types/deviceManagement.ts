@@ -38,11 +38,31 @@ export interface MonitoringModalProps {
   hostname: string
 }
 
+type snmpVersion = '1' | '2c' | '3'
+type SecurityLevel = 'noAuthNoPriv' | 'authNoPriv' | 'authPriv' | ''
+
+type AuthProtocol =
+  | 'md5'
+  | 'sha'
+  | 'sha2'
+  | 'hmac128sha224'
+  | 'hmac192sha256'
+  | 'hmac256sha384'
+  | 'hmac384sha512'
+  | ''
+type PrivProtocol = 'des' | 'aes' | 'aes128' | 'aes192' | 'aes256' | ''
+
 export interface SNMPConfig {
   community: string
   port: number
-  version: string
+  version: snmpVersion
   protocol: string
+  security_level?: SecurityLevel
+  security_name?: string
+  auth_protocol?: AuthProtocol
+  auth_pass?: string
+  priv_protocol?: PrivProtocol
+  priv_pass?: string
   snmp_port?: number
 }
 
@@ -58,8 +78,14 @@ export interface SNMPConnectionRequest {
   device_ip: string
   community?: string
   port?: number
-  version?: string
+  version?: snmpVersion
   protocol?: string
+  security_level?: SecurityLevel
+  security_name?: string
+  auth_protocol?: AuthProtocol
+  auth_pass?: string
+  priv_protocol?: PrivProtocol
+  priv_pass?: string
 }
 
 export interface SNMPConnectionResponse {

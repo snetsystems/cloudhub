@@ -11,8 +11,14 @@ import {
 export const DEFAULT_SNMP_CONFIG: SNMPConfig = {
   community: '',
   port: 161,
-  version: '1',
+  version: '2c',
   protocol: 'UDP',
+  security_level: 'authPriv',
+  security_name: '',
+  auth_protocol: 'sha',
+  auth_pass: '',
+  priv_protocol: 'aes',
+  priv_pass: '',
 }
 
 export const DEFAULT_SSH_CONFIG: SSHConfig = {
@@ -29,7 +35,11 @@ export const DEFAULT_NETWORK_DEVICE_DATA: DeviceData = {
   ssh_config: DEFAULT_SSH_CONFIG,
 }
 
-export const SNMP_VERSION: DropdownItem[] = [{text: '1'}, {text: '2c'}]
+export const SNMP_VERSION: DropdownItem[] = [
+  {text: '1'},
+  {text: '2c'},
+  {text: '3'},
+]
 
 export const SNMP_PROTOCOL: DropdownItem[] = [
   {text: 'UDP'},
@@ -38,6 +48,30 @@ export const SNMP_PROTOCOL: DropdownItem[] = [
   {text: 'TCP'},
   {text: 'TCP4'},
   {text: 'TCP6'},
+]
+
+export const AuthProtocols: DropdownItem[] = [
+  {text: 'md5'},
+  {text: 'sha'},
+  {text: 'sha2'},
+  {text: 'hmac128sha224'},
+  {text: 'hmac192sha256'},
+  {text: 'hmac256sha384'},
+  {text: 'hmac384sha512'},
+]
+
+export const PrivProtocols: DropdownItem[] = [
+  {text: 'des'},
+  {text: 'aes'},
+  {text: 'aes128'},
+  {text: 'aes192'},
+  {text: 'aes256'},
+]
+
+export const SecurityLevels: DropdownItem[] = [
+  {text: 'noAuthNoPriv'},
+  {text: 'authNoPriv'},
+  {text: 'authPriv'},
 ]
 
 export const IMPORT_DEVICE_CSV_Template =

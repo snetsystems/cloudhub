@@ -26,7 +26,10 @@ import {NextReturn, ToggleWizard} from 'src/types/wizard'
 
 // Constants
 import {StepStatusKey} from 'src/reusable_ui/constants/wizard'
-import {DEFAULT_NETWORK_DEVICE_DATA} from 'src/device_management/constants'
+import {
+  DEFAULT_NETWORK_DEVICE_DATA,
+  DEFAULT_SNMP_CONFIG,
+} from 'src/device_management/constants'
 
 // API
 import {
@@ -78,7 +81,7 @@ class DeviceConnection extends PureComponent<Props, State> {
     this.state = {
       deviceData:
         props.deviceConnectionStatus == 'Updating'
-          ? props.selectedDeviceData
+          ? this.fillMissingSNMPConfig(props.selectedDeviceData)
           : DEFAULT_NETWORK_DEVICE_DATA,
       deviceSNMPConnectionStatus: 'Incomplete',
       setupCompleteStatus: 'Incomplete',
@@ -92,7 +95,7 @@ class DeviceConnection extends PureComponent<Props, State> {
     ) {
       if (this.props.deviceConnectionStatus === 'Updating') {
         this.setState({
-          deviceData: this.props.selectedDeviceData,
+          deviceData: this.fillMissingSNMPConfig(this.props.selectedDeviceData),
           deviceSNMPConnectionStatus: 'Incomplete',
           setupCompleteStatus: 'Incomplete',
           sshConnectionStatus: 'Incomplete',
@@ -105,6 +108,31 @@ class DeviceConnection extends PureComponent<Props, State> {
           sshConnectionStatus: 'Incomplete',
         })
       }
+    }
+  }
+
+  private fillMissingSNMPConfig = (deviceData: DeviceData): DeviceData => {
+    return {
+      ...deviceData,
+      snmp_config: {
+        ...deviceData.snmp_config,
+        security_level:
+          deviceData?.snmp_config?.security_level ||
+          DEFAULT_SNMP_CONFIG.security_level,
+        security_name:
+          deviceData?.snmp_config?.security_name ||
+          DEFAULT_SNMP_CONFIG.security_name,
+        auth_protocol:
+          deviceData?.snmp_config?.auth_protocol ||
+          DEFAULT_SNMP_CONFIG.auth_protocol,
+        auth_pass:
+          deviceData?.snmp_config?.auth_pass || DEFAULT_SNMP_CONFIG.auth_pass,
+        priv_protocol:
+          deviceData?.snmp_config?.priv_protocol ||
+          DEFAULT_SNMP_CONFIG.priv_protocol,
+        priv_pass:
+          deviceData?.snmp_config?.priv_pass || DEFAULT_SNMP_CONFIG.priv_pass,
+      },
     }
   }
 
@@ -185,7 +213,7 @@ class DeviceConnection extends PureComponent<Props, State> {
     this.setState({
       deviceData:
         deviceConnectionStatus == 'Updating'
-          ? selectedDeviceData
+          ? this.fillMissingSNMPConfig(selectedDeviceData)
           : DEFAULT_NETWORK_DEVICE_DATA,
       deviceSNMPConnectionStatus: 'Incomplete',
       sshConnectionStatus: 'Incomplete',
@@ -218,17 +246,40 @@ class DeviceConnection extends PureComponent<Props, State> {
     deviceData: DeviceData
   ): SNMPConnectionRequest[] => {
     const {device_ip, snmp_config} = deviceData
-    const {community, port, version, protocol} = snmp_config
+    const {
+      community,
+      port,
+      version,
+      protocol,
+      security_name,
+      auth_protocol,
+      auth_pass,
+      priv_protocol,
+      priv_pass,
+      security_level,
+    } = snmp_config
 
-    return [
-      {
-        device_ip,
-        community,
-        port,
-        version,
-        protocol,
-      },
-    ]
+    const snmpRequest: SNMPConnectionRequest = {
+      device_ip,
+      community,
+      port,
+      version,
+      protocol,
+      security_level: version === '3' ? security_level : '',
+      security_name: version === '3' ? security_name : '',
+      auth_protocol:
+        version === '3' && security_level !== 'noAuthNoPriv'
+          ? auth_protocol
+          : '',
+      auth_pass:
+        version === '3' && security_level !== 'noAuthNoPriv' ? auth_pass : '',
+      priv_protocol:
+        version === '3' && security_level === 'authPriv' ? priv_protocol : '',
+      priv_pass:
+        version === '3' && security_level === 'authPriv' ? priv_pass : '',
+    }
+
+    return [snmpRequest]
   }
 
   private handleSNMPConnectionError = (errorMessage: string): NextReturn => {
@@ -292,11 +343,13 @@ class DeviceConnection extends PureComponent<Props, State> {
 
     try {
       const convertedDeviceData = convertDeviceDataOrganizationNameToID(
-        [deviceData],
+        deviceData,
         organizations
-      ) as DeviceData[]
+      ) as DeviceData
       this.props.setDeviceManagementIsLoading(true)
-      const {failed_devices} = await createDevices(convertedDeviceData)
+      const {failed_devices} = await createDevices([
+        this.convertDeviceDataSNMPConfig(convertedDeviceData),
+      ])
 
       if (failed_devices && failed_devices.length > 0) {
         return this.handleCreateDevicesError(failed_devices?.[0].errorMessage)
@@ -305,6 +358,63 @@ class DeviceConnection extends PureComponent<Props, State> {
       return this.handleCreateDevicesSuccess()
     } catch (error) {
       return this.handleCreateDevicesError(parseErrorMessage(error))
+    }
+  }
+
+  private convertDeviceDataSNMPConfig = (
+    deviceData: DeviceData
+  ): DeviceData => {
+    const {snmp_config} = deviceData
+    const {version, security_level} = snmp_config
+
+    console.dir({
+      ...deviceData,
+      snmp_config: {
+        ...snmp_config,
+        security_level: version === '3' ? snmp_config.security_level || '' : '',
+        security_name: version === '3' ? snmp_config.security_name || '' : '',
+        auth_protocol:
+          version === '3' && security_level !== 'noAuthNoPriv'
+            ? snmp_config.auth_protocol || ''
+            : '',
+        auth_pass:
+          version === '3' && security_level !== 'noAuthNoPriv'
+            ? snmp_config.auth_pass || ''
+            : '',
+        priv_protocol:
+          version === '3' && security_level === 'authPriv'
+            ? snmp_config.priv_protocol || ''
+            : '',
+        priv_pass:
+          version === '3' && security_level === 'authPriv'
+            ? snmp_config.priv_pass || ''
+            : '',
+      },
+    })
+
+    return {
+      ...deviceData,
+      snmp_config: {
+        ...snmp_config,
+        security_level: version === '3' ? snmp_config.security_level || '' : '',
+        security_name: version === '3' ? snmp_config.security_name || '' : '',
+        auth_protocol:
+          version === '3' && security_level !== 'noAuthNoPriv'
+            ? snmp_config.auth_protocol || ''
+            : '',
+        auth_pass:
+          version === '3' && security_level !== 'noAuthNoPriv'
+            ? snmp_config.auth_pass || ''
+            : '',
+        priv_protocol:
+          version === '3' && security_level === 'authPriv'
+            ? snmp_config.priv_protocol || ''
+            : '',
+        priv_pass:
+          version === '3' && security_level === 'authPriv'
+            ? snmp_config.priv_pass || ''
+            : '',
+      },
     }
   }
 
@@ -337,7 +447,7 @@ class DeviceConnection extends PureComponent<Props, State> {
       this.props.setDeviceManagementIsLoading(true)
       const {failed_devices} = await updateDevice({
         id,
-        deviceData: convertedDeviceData,
+        deviceData: this.convertDeviceDataSNMPConfig(convertedDeviceData),
       })
 
       if (failed_devices && failed_devices.length > 0) {
