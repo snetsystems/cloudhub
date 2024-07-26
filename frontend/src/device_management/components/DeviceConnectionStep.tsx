@@ -79,8 +79,9 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
         text: role.name,
       }))
     }
-    const protocolDropdownStyle =
-      deviceData?.snmp_config?.version === '3' ? {} : {height: '100px'}
+    const protocolDropdownStyle = this.getProtocolDropdownStyle(
+      deviceData?.snmp_config?.version
+    )
 
     return (
       <>
@@ -140,19 +141,17 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
     } = this.props
 
     const securityLevel = deviceData?.snmp_config?.security_level
-    const securityLevellDropdownStyle = this.getSecurityLevelDropdownStyle(
+    const securityLevelDropdownStyle = this.getSecurityLevelDropdownStyle(
       securityLevel
     )
-    const authenticationProtocloDropdownStyle = this.getAuthenticationProtocolDropdownStyle(
+    const authenticationProtocolDropdownStyle = this.getAuthenticationProtocolDropdownStyle(
       securityLevel
     )
+    const privacyProtocolDropdownStyle = this.getPrivacyProtocolDropdownStyle()
 
     return (
       <>
-        <div
-          className="form-group col-xs-6"
-          style={securityLevellDropdownStyle}
-        >
+        <div className="form-group col-xs-6" style={securityLevelDropdownStyle}>
           <label>Security Level</label>
           <Dropdown
             items={SecurityLevels}
@@ -170,7 +169,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
           <>
             <div
               className="form-group col-xs-6"
-              style={authenticationProtocloDropdownStyle}
+              style={authenticationProtocolDropdownStyle}
             >
               <label>Authentication Protocol</label>
               <Dropdown
@@ -190,7 +189,10 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
         )}
         {securityLevel === 'authPriv' && (
           <>
-            <div className="form-group col-xs-6" style={{height: '200px'}}>
+            <div
+              className="form-group col-xs-6"
+              style={privacyProtocolDropdownStyle}
+            >
               <label>Privacy Protocol</label>
               <Dropdown
                 items={PrivProtocols}
@@ -211,10 +213,14 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
     )
   }
 
+  private getProtocolDropdownStyle = (version: string) => {
+    return version === '3' ? {} : {height: '205px'}
+  }
+
   private getSecurityLevelDropdownStyle = level => {
     switch (level) {
       case 'noAuthNoPriv':
-        return {height: '130px'}
+        return {height: '150px'}
       default:
         return {}
     }
@@ -223,9 +229,13 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
   private getAuthenticationProtocolDropdownStyle = level => {
     switch (level) {
       case 'authNoPriv':
-        return {height: '200px'}
+        return {height: '235px'}
       default:
         return {}
     }
+  }
+
+  private getPrivacyProtocolDropdownStyle = () => {
+    return {height: '180px'}
   }
 }

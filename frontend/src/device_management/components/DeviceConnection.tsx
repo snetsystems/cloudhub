@@ -166,6 +166,7 @@ class DeviceConnection extends PureComponent<Props, State> {
           isSkippableStep={false}
           onNext={this.handleValidateSNMPConnection}
           nextLabel={'Next'}
+          maxHeightForFancyScrollbar={500}
         >
           <DeviceConnectionStep
             deviceData={deviceData}

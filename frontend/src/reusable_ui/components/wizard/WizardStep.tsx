@@ -26,6 +26,7 @@ export interface WizardStepProps {
   nextLabel?: string
   previousLabel?: string
   lastStep?: boolean
+  maxHeightForFancyScrollbar?: number
 }
 
 @ErrorHandling
@@ -38,7 +39,14 @@ class WizardStep extends PureComponent<WizardStepProps> {
   private scrollMaxHeight = window.innerHeight * 0.45
 
   public render() {
-    const {children, decrement, nextLabel, previousLabel, lastStep} = this.props
+    const {
+      children,
+      decrement,
+      nextLabel,
+      previousLabel,
+      lastStep,
+      maxHeightForFancyScrollbar,
+    } = this.props
 
     return (
       <>
@@ -47,7 +55,7 @@ class WizardStep extends PureComponent<WizardStepProps> {
           <FancyScrollbar
             autoHide={false}
             autoHeight={true}
-            maxHeight={this.scrollMaxHeight}
+            maxHeight={maxHeightForFancyScrollbar || this.scrollMaxHeight}
           >
             <div className="wizard-step--child">{children}</div>
           </FancyScrollbar>
