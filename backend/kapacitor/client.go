@@ -240,13 +240,17 @@ func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.Upd
 	if err != nil {
 		return nil, err
 	}
+	originalStatus := taskOptions.Status
+	if originalStatus == client.Enabled {
+		taskOptions.Status = client.Disabled
+	}
 
 	task, err := kapa.UpdateTask(client.Link{Href: href}, *taskOptions)
 	if err != nil {
 		return nil, err
 	}
 	// Now enable the task if previously enabled
-	if taskOptions.Status == client.Enabled {
+	if originalStatus == client.Enabled {
 		if _, err := c.Enable(ctx, href); err != nil {
 			return nil, err
 		}

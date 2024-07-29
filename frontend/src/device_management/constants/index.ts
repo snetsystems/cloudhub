@@ -21,6 +21,10 @@ import {
   DEFAULT_PREDICT_MODE,
   PREDICT_TASK_PREFIX,
   DEFAULT_DEVICE_ORG_KAPACITOR,
+  DEFAULT_SNMP_CONFIG,
+  AuthProtocols,
+  PrivProtocols,
+  SecurityLevels,
 } from './deviceData'
 import {
   columns,
@@ -73,5 +77,9 @@ export {
   DETECT_RATE,
   STATIC_TOOLTIP_HEIGHT,
   DEFAULT_DEVICE_ORG_KAPACITOR,
+  DEFAULT_SNMP_CONFIG,
+  AuthProtocols,
+  PrivProtocols,
+  SecurityLevels,
   // fixturePredictionPageCells,
 }

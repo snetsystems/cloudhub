@@ -139,9 +139,9 @@ func NewSNMPManager(config *SNMPConfig) (*SNMPManager, error) {
 		snmp.SecurityParameters = &gosnmp.UsmSecurityParameters{
 			UserName:                 config.SecurityName,
 			AuthenticationProtocol:   authProtocol,
-			AuthenticationPassphrase: config.PrivPass,
+			AuthenticationPassphrase: config.AuthPass,
 			PrivacyProtocol:          privProtocol,
-			PrivacyPassphrase:        config.AuthPass,
+			PrivacyPassphrase:        config.PrivPass,
 		}
 	}
 
@@ -322,15 +322,15 @@ func (r *SNMPConfig) validCreate() error {
 	switch reqSecurityLevel {
 	case gosnmp.NoAuthNoPriv:
 		if r.SecurityName == "" {
-			return fmt.Errorf("snmp_user required for noAuthNoPriv security level")
+			return fmt.Errorf("security_name required for noAuthNoPriv security level")
 		}
 	case gosnmp.AuthNoPriv:
-		if r.SecurityName == "" || r.PrivPass == "" || r.AuthProtocol == "" {
-			return fmt.Errorf("snmp_user, snmp_auth_password, and snmp_v3_auth_protocol required for authNoPriv security level")
+		if r.SecurityName == "" || r.AuthPass == "" || r.AuthProtocol == "" {
+			return fmt.Errorf("security_name, snmp_auth_password, and snmp_v3_auth_protocol required for authNoPriv security level")
 		}
 	case gosnmp.AuthPriv:
 		if r.SecurityName == "" || r.PrivPass == "" || r.AuthProtocol == "" || r.AuthPass == "" || r.PrivProtocol == "" {
-			return fmt.Errorf("snmp_user, snmp_auth_password, snmp_v3_auth_protocol, snmp_private_password, and snmp_v3_private_protocol required for authPriv security level")
+			return fmt.Errorf("security_name, snmp_auth_password, snmp_v3_auth_protocol, snmp_private_password, and snmp_v3_private_protocol required for authPriv security level")
 		}
 	default:
 		return fmt.Errorf("unsupported security level: %s", r.SecurityLevel)
