@@ -13,6 +13,8 @@ var cron = '{{.CronSchedule}}'
 
 var loadModule = '{{.LoadModule}}'
 
+var procCnt = '{{.ProcCnt}}'
+
 var extra_opts = '{"organization":"{{.OrgID}}","influxdb":{"host":"{{.InfluxOrigin}}","port":{{.InfluxPort}},"username":"{{.InfluxUsername}}","password":"{{.InfluxPassword}}","db":"{{.OrgName}}"},"etcd":{"host":"{{.EtcdOrigin}}","port":"{{.EtcdPort}}"}}'
 
 var data = batch
@@ -25,6 +27,6 @@ var data = batch
 data
     |alert()
         .crit(lambda: "count" > 0)
-        .exec('/opt/cloudhub/bin/python', '/opt/cloudhub/ch-ai-src/ai.py', '-p', '/var/log/kapacitor-ai/ai.log', '-G', '-M', loadModule, '-x', extra_opts)
+        .exec('/opt/cloudhub/bin/python', '/opt/cloudhub/ch-ai-src/ai.py', '-p', '/var/log/kapacitor-ai/ai.log', '-G', '-c', procCnt, '-M', loadModule, '-x', extra_opts)
 {{ end }}
 """
