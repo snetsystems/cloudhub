@@ -8,11 +8,15 @@ import {
 interface Props {
   onEditClick: (deviceData: DeviceData) => void
   onConsoleClick: (shell: ShellInfo) => void
+  isUserUnauthorized?: boolean
 }
 
-export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
-  return [
-    {key: 'id', name: '', options: {checkbox: true}},
+export const columns = ({
+  onEditClick,
+  onConsoleClick,
+  isUserUnauthorized,
+}: Props): ColumnInfo[] => {
+  const columns: ColumnInfo[] = [
     {
       key: 'organization',
       name: 'Organization',
@@ -147,29 +151,6 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       ),
     },
     {
-      key: 'is_collecting_cfg_written',
-      name: 'Edit',
-      align: AlignType.CENTER,
-      render: (value, rowData: DeviceData) => {
-        return (
-          <button
-            className={`btn btn-sm btn-default`}
-            onClick={e => {
-              e.stopPropagation()
-              onEditClick(rowData)
-            }}
-            title={`${value ? '' : 'Not applied yet'}`}
-          >
-            {value ? (
-              <div className={'pencil-confirm'} />
-            ) : (
-              <div className={'pencil-exclamation'} />
-            )}
-          </button>
-        )
-      },
-    },
-    {
       key: 'id',
       name: 'Console',
       align: AlignType.CENTER,
@@ -192,6 +173,39 @@ export const columns = ({onEditClick, onConsoleClick}: Props): ColumnInfo[] => {
       ),
     },
   ]
+
+  if (!isUserUnauthorized) {
+    columns.unshift({
+      key: 'id',
+      name: '',
+      options: {checkbox: true},
+    })
+    columns.splice(columns.length - 1, 0, {
+      key: 'is_collecting_cfg_written',
+      name: 'Edit',
+      align: AlignType.CENTER,
+      render: (value, rowData: DeviceData) => {
+        return (
+          <button
+            className={`btn btn-sm btn-default`}
+            onClick={e => {
+              e.stopPropagation()
+              onEditClick(rowData)
+            }}
+            title={`${value ? '' : 'Not applied yet'}`}
+          >
+            {value ? (
+              <div className={'pencil-confirm'} />
+            ) : (
+              <div className={'pencil-exclamation'} />
+            )}
+          </button>
+        )
+      },
+    })
+  }
+
+  return columns
 }
 export const IMPORT_FILE_DEVICE_STATUS_COLUMNS: ColumnInfo[] = [
   {

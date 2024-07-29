@@ -74,6 +74,7 @@ import {
   notifyFetchDeviceMonitoringStatusFailed,
   notifyKapacitorConnectionFailed,
 } from 'src/shared/copy/notifications'
+import {ADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 
 interface Auth {
   me: Me
@@ -428,6 +429,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   private column = columns({
     onEditClick: this.handleRowClick,
     onConsoleClick: this.onClickShellModalOpen,
+    isUserUnauthorized: !isUserAuthorized(this.props.me.role, ADMIN_ROLE),
   })
 
   private deleteDevicesAJAX = async (idList: string[]) => {
