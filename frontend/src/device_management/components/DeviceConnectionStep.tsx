@@ -24,10 +24,11 @@ import {
   DropdownItem,
   SNMPConfig,
   SSHConfig,
+  authProtocolValueToText,
+  privProtocolValueToText,
 } from 'src/types'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
-
 interface Props {
   deviceData: DeviceData
   isUsingAuth: boolean
@@ -175,7 +176,11 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
               <Dropdown
                 items={AuthProtocols}
                 onChoose={onChooseDeviceDataDropdown('auth_protocol')}
-                selected={deviceData?.snmp_config?.auth_protocol}
+                selected={
+                  authProtocolValueToText[
+                    deviceData?.snmp_config?.auth_protocol || ''
+                  ]
+                }
                 className="dropdown-stretch"
               />
             </div>
@@ -197,7 +202,11 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
               <Dropdown
                 items={PrivProtocols}
                 onChoose={onChooseDeviceDataDropdown('priv_protocol')}
-                selected={deviceData?.snmp_config?.priv_protocol}
+                selected={
+                  privProtocolValueToText[
+                    deviceData?.snmp_config?.priv_protocol || ''
+                  ]
+                }
                 className="dropdown-stretch"
               />
             </div>

@@ -138,6 +138,12 @@ import {
   UpdateDeviceManagmenntScriptRequest,
   UpdateDeviceManagmenntScriptResponse,
   DeviceOrganizationStatus,
+  AuthProtocol,
+  PrivProtocol,
+  authProtocolTextToValue,
+  privProtocolTextToValue,
+  authProtocolValueToText,
+  privProtocolValueToText,
 } from './deviceManagement'
 
 import {AiModal, HeaderNavigationObj} from './aiModal'
@@ -297,4 +303,10 @@ export {
   HexagonData,
   HexagonInputData,
   AnomalyFactor,
+  AuthProtocol,
+  PrivProtocol,
+  authProtocolTextToValue,
+  privProtocolTextToValue,
+  authProtocolValueToText,
+  privProtocolValueToText,
 }

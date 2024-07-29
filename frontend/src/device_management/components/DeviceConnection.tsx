@@ -21,6 +21,8 @@ import {
   SNMPConnectionRequest,
   SSHConfig,
   SNMPConnectionSuccessDevice,
+  authProtocolTextToValue,
+  privProtocolTextToValue,
 } from 'src/types'
 import {NextReturn, ToggleWizard} from 'src/types/wizard'
 
@@ -462,12 +464,23 @@ class DeviceConnection extends PureComponent<Props, State> {
       const device = prevState.deviceData
 
       if (key in device.snmp_config) {
+        const newValue =
+          key === 'auth_protocol'
+            ? value.text
+              ? authProtocolTextToValue[value.text]
+              : ''
+            : key === 'priv_protocol'
+            ? value.text
+              ? privProtocolTextToValue[value.text]
+              : ''
+            : value.text
+
         return {
           deviceData: {
             ...device,
             snmp_config: {
               ...device.snmp_config,
-              [key]: value.text,
+              [key]: newValue,
             },
           },
         }

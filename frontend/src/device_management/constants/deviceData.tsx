@@ -50,28 +50,28 @@ export const SNMP_PROTOCOL: DropdownItem[] = [
   {text: 'TCP6'},
 ]
 
-export const AuthProtocols: DropdownItem[] = [
-  {text: 'md5'},
-  {text: 'sha'},
-  {text: 'sha2'},
-  {text: 'hmac128sha224'},
-  {text: 'hmac192sha256'},
-  {text: 'hmac256sha384'},
-  {text: 'hmac384sha512'},
-]
-
-export const PrivProtocols: DropdownItem[] = [
-  {text: 'des'},
-  {text: 'aes'},
-  {text: 'aes128'},
-  {text: 'aes192'},
-  {text: 'aes256'},
-]
-
 export const SecurityLevels: DropdownItem[] = [
   {text: 'noAuthNoPriv'},
   {text: 'authNoPriv'},
   {text: 'authPriv'},
+]
+
+export const AuthProtocols: DropdownItem[] = [
+  {text: 'MD5'},
+  {text: 'SHA'},
+  {text: 'SHA-2'},
+  {text: 'HMAC-SHA-224'},
+  {text: 'HMAC-SHA-256'},
+  {text: 'HMAC-SHA-384'},
+  {text: 'HMAC-SHA-512'},
+]
+
+export const PrivProtocols: DropdownItem[] = [
+  {text: 'DES'},
+  {text: 'AES'},
+  {text: 'AES-128'},
+  {text: 'AES-192'},
+  {text: 'AES-256'},
 ]
 
 export const IMPORT_DEVICE_CSV_Template =

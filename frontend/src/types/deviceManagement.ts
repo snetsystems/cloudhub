@@ -41,7 +41,7 @@ export interface MonitoringModalProps {
 type snmpVersion = '1' | '2c' | '3'
 type SecurityLevel = 'noAuthNoPriv' | 'authNoPriv' | 'authPriv' | ''
 
-type AuthProtocol =
+export type AuthProtocol =
   | 'md5'
   | 'sha'
   | 'sha2'
@@ -50,7 +50,7 @@ type AuthProtocol =
   | 'hmac256sha384'
   | 'hmac384sha512'
   | ''
-type PrivProtocol = 'des' | 'aes' | 'aes128' | 'aes192' | 'aes256' | ''
+export type PrivProtocol = 'des' | 'aes' | 'aes128' | 'aes192' | 'aes256' | ''
 
 export interface SNMPConfig {
   community: string
@@ -290,3 +290,41 @@ export interface UpdateDeviceManagmenntScriptResponse extends AlertRule {
     }
   }
 }
+
+export const authProtocolTextToValue: Record<string, AuthProtocol> = {
+  MD5: 'md5',
+  SHA: 'sha',
+  'SHA-2': 'sha2',
+  'HMAC-SHA-224': 'hmac128sha224',
+  'HMAC-SHA-256': 'hmac192sha256',
+  'HMAC-SHA-384': 'hmac256sha384',
+  'HMAC-SHA-512': 'hmac384sha512',
+} as const
+
+export const privProtocolTextToValue: Record<string, PrivProtocol> = {
+  DES: 'des',
+  AES: 'aes',
+  'AES-128': 'aes128',
+  'AES-192': 'aes192',
+  'AES-256': 'aes256',
+} as const
+
+export const authProtocolValueToText: Record<AuthProtocol, string> = {
+  md5: 'MD5',
+  sha: 'SHA',
+  sha2: 'SHA-2',
+  hmac128sha224: 'HMAC-SHA-224',
+  hmac192sha256: 'HMAC-SHA-256',
+  hmac256sha384: 'HMAC-SHA-384',
+  hmac384sha512: 'HMAC-SHA-512',
+  '': '',
+} as const
+
+export const privProtocolValueToText: Record<PrivProtocol, string> = {
+  des: 'DES',
+  aes: 'AES',
+  aes128: 'AES-128',
+  aes192: 'AES-192',
+  aes256: 'AES-256',
+  '': '',
+} as const
