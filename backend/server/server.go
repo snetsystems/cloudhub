@@ -153,12 +153,12 @@ type Server struct {
 
 	oauthClient http.Client
 
-	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, gcp, osp, k8s, swan, oncue, ipmi-secret-key]. Actually, this is a key-value extensional option not only url but also any key-value. Refer to the following usage samples. E.g., via flags: '-u=salt:{url} -u=salt_config_path:{path} -u=aws:on[off] -u=gcp:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
+	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, gcp, osp, k8s, swan, oncue, ipmi-secret-key, ai]. Actually, this is a key-value extensional option not only url but also any key-value. Refer to the following usage samples. E.g., via flags: '-u=salt:{url} -u=salt_config_path:{path} -u=aws:on[off] -u=gcp:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key} -u=ai:on[off]'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
 	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"The token associated with addon [salt, swan]. E.g. via flags: '-k=salt:{token} -k=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
 
 	OSP map[string]string `long:"osp" description:"The Informations to access to OSP API. '--osp=admin-provider:{salt admin provider} --osp=admin-user:{admin user name} --osp=admin-pw:{admin user password} --osp=auth-url:{keystone url} --osp=pj-domain-id:{project domain id} --osp=user-domain-id:{user domain id}'. E.g. via environment variable: 'export OSP=admin:{salt admin provider},admin-user:{admin user name}', etc." env:"OSP" env-delim:","`
 
-	AI map[string]string `long:"ai" description:"The Information to access to cloudhub AI. '--ai=docker-path:{specifies the path to the Docker Compose file used for restarting the Logstash container} --ai=logstash-path:{The logstash-path variable is used to specify the directory where your Logstash pipeline configuration} --ai=docker-cmd:{docker restart command} --ai=prediction-regex:{parsing tickScript}'. E.g. via environment variable" env:"AI" env-delim:","`
+	AI map[string]string `long:"ai" description:"The Information to access to cloudhub AI. '--ai=docker-path:{specifies the path to the Docker Compose file used for restarting the Logstash container} --ai=docker-cmd:{docker restart command} --ai=logstash-path:{The logstash-path variable is used to specify the directory where your Logstash pipeline configuration} --ai=prediction-regex:{parsing tickScript}'. E.g. via environment variable" env:"AI" env-delim:","`
 
 	TemplatesPath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/cloudhub-templates)" env:"TEMPLATES_PATH" default:"templates"`
 }
@@ -802,6 +802,16 @@ func (s *Server) Serve(ctx context.Context) {
 			Error(err)
 		return
 	}
+	if _, ok := s.AddonURLs["ai"]; ok {
+		if aiConfig.DockerCmd == "" || aiConfig.DockerPath == "" || aiConfig.LogstashPath == "" || aiConfig.PredictionRegex == "" {
+			logger.
+				WithField("component", "server").
+				Error(errors.New("AI option is enabled but configuration is invalid"))
+			return
+		}
+
+	}
+
 	if err := httpServer.Serve(listener); err != nil {
 		logger.
 			WithField("component", "server").
