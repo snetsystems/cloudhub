@@ -196,7 +196,7 @@ export interface LearningOrganizationOption {
   data_duration: number
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
-  cron_schedule?: string
+  learning_cron?: string
   task_status?: 1 | 2
 }
 

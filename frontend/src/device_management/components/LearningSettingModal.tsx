@@ -412,7 +412,7 @@ function LearningSettingModal({
         orgLearningModel: {
           organization: organization,
           ...rest,
-          cron_schedule: cronSchedule,
+          learning_cron: cronSchedule,
         },
       })
 
@@ -453,7 +453,7 @@ function LearningSettingModal({
         orgLearningModel: {
           ...rest,
           task_status: getTaskStatus(),
-          cron_schedule: cronSchedule,
+          learning_cron: cronSchedule,
         },
       })
 
