@@ -49,9 +49,11 @@ import {
   DygraphClass,
   DygraphSeries,
   TimeZones,
+  AnnotationViewer,
   // AnnotationViewer,
 } from 'src/types'
 import {LineColor} from 'src/types/colors'
+import AnnotationsViewer from './AnnotationsViewer'
 
 const Dygraphs = D as any
 
@@ -90,8 +92,8 @@ interface Props {
   mode?: string
   underlayCallback?: () => void
   timeZone: TimeZones
-  // isUsingAnnotationViewer: boolean
-  // annotationsViewMode: AnnotationViewer[]
+  isUsingAnnotationViewer: boolean
+  annotationsViewMode: AnnotationViewer[]
 }
 
 interface State {
@@ -195,14 +197,14 @@ class Dygraph extends Component<Props, State> {
       >
         {this.dygraph && (
           <div className="dygraph-addons">
-            {/* {this.props.isUsingAnnotationViewer && (
+            {this.props.isUsingAnnotationViewer && (
               <AnnotationsViewer
                 dygraph={this.dygraph}
                 staticLegendHeight={staticLegendHeight}
                 xAxisRange={xAxisRange}
                 annotationsViewMode={this.props.annotationsViewMode}
               />
-            )} */}
+            )}
             {this.areAnnotationsVisible && (
               <Annotations
                 dygraph={this.dygraph}

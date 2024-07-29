@@ -9,7 +9,6 @@ interface Props {
   source: Source
   isWidget: boolean
   limit?: number
-  timeRange?: TimeRange
   setLimitMultiplier: React.Dispatch<React.SetStateAction<number>>
   fetchAlerts: () => void
   error: unknown

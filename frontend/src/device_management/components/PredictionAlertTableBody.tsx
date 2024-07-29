@@ -15,11 +15,13 @@ import {ALERTS_TABLE} from 'src/alerts/constants/tableSizing'
 
 // Types
 import {Alert} from 'src/types/alerts'
-import {Source, TimeZones} from 'src/types'
+import {AnomalyFactor, Source, TimeZones} from 'src/types'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {bindActionCreators} from 'redux'
+import {setSelectedAnomaly} from '../actions'
 
 enum Direction {
   ASC = 'asc',
@@ -35,10 +37,13 @@ interface OwnProps {
   isAlertsMaxedOut: boolean
   alertsCount: number
   onGetMoreAlerts: () => void
+  setSelectedAnomaly?: (anomalyFactor: AnomalyFactor) => void
+  selectedAnomaly?: AnomalyFactor
+  filteredHexbinHost?: string
 }
 
 interface StateProps {
-  timeZone: TimeZones
+  timeZone?: TimeZones
 }
 
 interface State {
@@ -67,6 +72,18 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
     this.filterAlerts(this.state.searchTerm, newProps.alerts)
   }
 
+  public componentDidUpdate(prevProps) {
+    if (
+      prevProps.filteredHexbinHost !== this.props.filteredHexbinHost &&
+      !!this.state.filteredAlerts
+    ) {
+      this.filterAlertsByHost(
+        this.props.filteredHexbinHost,
+        this.state.filteredAlerts
+      )
+    }
+  }
+
   public render() {
     const {
       shouldNotBeFilterable,
@@ -79,7 +96,9 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
     return shouldNotBeFilterable ? (
       <div className="alerts-widget">
         <div className="panel-heading">
-          <h2 className="panel-title">{this.props.alerts.length} Alerts</h2>
+          <h2 className="panel-title">
+            {this.state.filteredAlerts.length} Alerts
+          </h2>
           {this.props.alerts.length ? (
             <SearchBar onSearch={this.filterAlerts} />
           ) : null}
@@ -93,7 +112,7 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
             style={{marginBottom: '20px'}}
           >
             {isAlertsMaxedOut
-              ? `All ${alertsCount} Alerts displayed`
+              ? `All ${this.state.filteredAlerts.length} Alerts displayed`
               : 'Load next 30 Alerts'}
           </button>
         ) : null}
@@ -123,6 +142,15 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
       )
     })
     this.setState({searchTerm, filteredAlerts})
+  }
+
+  private filterAlertsByHost = (filteredHost: string, newAlerts?: Alert[]) => {
+    const alerts = newAlerts
+    const filterText = filteredHost.toLowerCase()
+    const filteredAlerts = alerts.filter(i => {
+      return i.host && i.host.toLowerCase().includes(filterText)
+    })
+    this.setState({filteredAlerts})
   }
 
   private changeSort = (key: string): (() => void) => (): void => {
@@ -178,6 +206,7 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
     const {
       source: {id},
       timeZone,
+      selectedAnomaly,
     } = this.props
     const alerts = this.sort(
       this.state.filteredAlerts,
@@ -227,7 +256,18 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
         </div>
         <FancyScrollbar>
           {alerts.map(alert => (
-            <div className="alert-history-table--tr" key={uuid.v4()}>
+            <div
+              onClick={() => {
+                this.onClickHandler(alert.time, alert.host)
+              }}
+              className={`alert-history-table--tr ${
+                selectedAnomaly.time === alert.time &&
+                selectedAnomaly.host === alert.host
+                  ? 'selected'
+                  : ''
+              } pointer`}
+              key={uuid.v4()}
+            >
               <AlertsTableRow sourceID={id} {...alert} timeZone={timeZone} />
             </div>
           ))}
@@ -265,10 +305,32 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
       </div>
     )
   }
+
+  private onClickHandler = (time: string, host: string) => {
+    const {selectedAnomaly, setSelectedAnomaly} = this.props
+
+    if (selectedAnomaly.host === host && selectedAnomaly.time === time) {
+      setSelectedAnomaly({
+        host: '',
+        time: '',
+      })
+    } else {
+      setSelectedAnomaly({
+        host: host,
+        time: time,
+      })
+    }
+  }
 }
 
-const mstp = ({app}) => ({
+const mstp = ({app, predictionDashboard}) => ({
   timeZone: app.persisted.timeZone,
+  selectedAnomaly: predictionDashboard.selectedAnomaly,
+  filteredHexbinHost: predictionDashboard.filteredHexbinHost,
 })
 
-export default connect(mstp, null)(PredictionAlertTableBody)
+const mdtp = dispatch => ({
+  setSelectedAnomaly: bindActionCreators(setSelectedAnomaly, dispatch),
+})
+
+export default connect(mstp, mdtp, null)(PredictionAlertTableBody)

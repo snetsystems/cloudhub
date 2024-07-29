@@ -25,6 +25,7 @@ import {
   Source,
   QueryType,
   TemplateValue,
+  AnnotationViewer,
   // AnnotationViewer,
 } from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
@@ -47,8 +48,8 @@ interface Props {
   onSummonOverlayTechnologies: () => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
-  // isUsingAnnotationViewer?: boolean
-  // annotationsViewMode?: AnnotationViewer[]
+  isUsingAnnotationViewer?: boolean
+  annotationsViewMode?: AnnotationViewer[]
 }
 
 interface State {
@@ -190,8 +191,8 @@ class Layout extends Component<Props, State> {
         cellNoteVisibility={cell.noteVisibility}
         onPickTemplate={onPickTemplate}
         graphOptions={cell.graphOptions}
-        // isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
-        // annotationsViewMode={this.props.annotationsViewMode}
+        isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
+        annotationsViewMode={this.props.annotationsViewMode}
       />
     )
   }

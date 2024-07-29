@@ -34,6 +34,7 @@ import {
   RemoteDataState,
   CellType,
   FluxTable,
+  AnnotationViewer,
   // AnnotationViewer,
 } from 'src/types'
 import {DataType} from 'src/shared/constants'
@@ -56,8 +57,8 @@ interface Props {
   handleSetHoverTime: () => void
   activeQueryIndex?: number
   onUpdateVisType?: (type: CellType) => Promise<void>
-  // isUsingAnnotationViewer?: boolean
-  // annotationsViewMode?: AnnotationViewer[]
+  isUsingAnnotationViewer?: boolean
+  annotationsViewMode?: AnnotationViewer[]
 }
 
 type LineGraphProps = Props & RouteComponentProps<any, any>
@@ -203,8 +204,8 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
           isGraphFilled={this.isGraphFilled}
           containerStyle={this.containerStyle}
           handleSetHoverTime={handleSetHoverTime}
-          // isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
-          // annotationsViewMode={this.props.annotationsViewMode}
+          isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
+          annotationsViewMode={this.props.annotationsViewMode}
         >
           {type === CellType.LinePlusSingleStat && (
             <SingleStat

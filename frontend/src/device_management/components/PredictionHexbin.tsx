@@ -29,6 +29,7 @@ interface GenerateHexagonData {
 
 const HEX_RADIUS = 30
 const HEX_PADDING = 5
+const PREFIX_PARENT_HEIGHT = 45
 
 const PredictionHexbin = ({
   onHexbinClick,
@@ -257,7 +258,11 @@ const PredictionHexbin = ({
       childWidth.height = childrenRef.current.offsetHeight
 
       gap.width = tooltipPosition.x + childWidth.width - parentWidth
-      gap.height = tooltipPosition.y + childWidth.height - parentHeight
+      gap.height =
+        tooltipPosition.y +
+        childWidth.height -
+        parentHeight -
+        PREFIX_PARENT_HEIGHT
     }
 
     position.x =

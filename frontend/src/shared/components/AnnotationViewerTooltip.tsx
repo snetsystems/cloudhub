@@ -9,7 +9,7 @@ interface TimeStampProps {
 
 const TimeStamp: FunctionComponent<TimeStampProps> = ({time}) => (
   <div className="annotation-tooltip--timestamp">
-    {`${moment(time).format('YYYY/MM/DD HH:mm:ss.SS')}`}
+    {`${moment(time).format('YYYY/MM/DD HH:mm:ss.SSS')}`}
   </div>
 )
 

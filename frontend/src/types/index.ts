@@ -149,6 +149,7 @@ import {
   hostState,
   HexagonData,
   HexagonInputData,
+  AnomalyFactor,
 } from './prediction'
 
 export {
@@ -295,4 +296,5 @@ export {
   hostState,
   HexagonData,
   HexagonInputData,
+  AnomalyFactor,
 }
