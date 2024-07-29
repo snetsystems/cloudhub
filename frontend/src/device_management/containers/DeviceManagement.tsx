@@ -197,8 +197,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   }
 
   private refreshStateForDeviceManagement = async () => {
-    await this.getDeviceAJAX()
-    this.fetchDeviceMonitoringStatus()
+    this.getDeviceAJAXForRefreshState()
     this.getNetworkDeviceOrganizationsAJAX()
   }
 
@@ -383,6 +382,39 @@ class DeviceManagement extends PureComponent<Props, State> {
     }
   }
 
+  private getDeviceAJAXForRefreshState = async () => {
+    const {organizations, source, links} = this.props
+
+    try {
+      const {data} = await getDeviceList()
+      const deviceDataWithOrgNames = convertDeviceDataOrganizationIDToName(
+        data?.devices || [],
+        organizations
+      ) as DeviceData[]
+      const envVars = await getEnv(links.environment)
+      const telegrafSystemInterval = getDeep<string>(
+        envVars,
+        'telegrafSystemInterval',
+        ''
+      )
+      const tempVars = generateForHosts(source)
+      const deviceMonitoringStatus = await fetchDeviceMonitoringStatus(
+        source.links.proxy,
+        source.telegraf,
+        telegrafSystemInterval,
+        tempVars
+      )
+      const deviceDataWithMonitoring = this.getDeviceMonitoringStatus(
+        deviceDataWithOrgNames,
+        deviceMonitoringStatus
+      )
+
+      this.setState({data: deviceDataWithMonitoring})
+    } catch (error) {
+      console.error(notifyFetchDeviceListError(parseErrorMessage(error)))
+    }
+  }
+
   private onCloseLearningSettingModal = () => {
     this.setState({isLearningSettingModalVisibility: false})
   }
@@ -455,8 +487,7 @@ class DeviceManagement extends PureComponent<Props, State> {
   private reFreshStateAfterDeleteDevices = async () => {
     this.setState({checkedArray: [], isLoading: false})
 
-    await this.getDeviceAJAX()
-    this.fetchDeviceMonitoringStatus()
+    this.getDeviceAJAXForRefreshState()
     this.getNetworkDeviceOrganizationsAJAX()
   }
 
