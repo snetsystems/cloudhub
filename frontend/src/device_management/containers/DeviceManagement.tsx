@@ -261,6 +261,7 @@ class DeviceManagement extends PureComponent<Props, State> {
                 networkDeviceOrganizationStatus={
                   networkDeviceOrganizationStatus
                 }
+                me={me}
                 deleteDevicesAJAX={this.deleteDevicesAJAX}
                 onOpenApplyMonitoringModal={this.handleOpenApplyMonitoringModal}
                 onOpenLearningModelModal={this.handleOpenLearningModelModal}

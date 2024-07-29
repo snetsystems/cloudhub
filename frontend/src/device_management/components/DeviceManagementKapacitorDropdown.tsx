@@ -2,7 +2,6 @@ import React, {PureComponent} from 'react'
 
 // Components
 import Dropdown from 'src/shared/components/Dropdown'
-import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 
 // Type
 import {
@@ -36,27 +35,23 @@ export default class DeviceManagementKapacitorDropdown extends PureComponent<Pro
   public render() {
     if (this.isKapacitorsEmpty) {
       return (
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <Dropdown
-            className="dropdown-stretch"
-            disabled={false}
-            items={[]}
-            onChoose={this.handleSetActiveKapacitor}
-            selected={''}
-          />
-        </Authorized>
+        <Dropdown
+          className="dropdown-stretch"
+          disabled={false}
+          items={[]}
+          onChoose={this.handleSetActiveKapacitor}
+          selected={''}
+        />
       )
     }
 
     return (
-      <Authorized requiredRole={EDITOR_ROLE}>
-        <Dropdown
-          className="dropdown-stretch"
-          items={this.kapacitorItems}
-          onChoose={this.handleSetActiveKapacitor}
-          selected={this.selected}
-        />
-      </Authorized>
+      <Dropdown
+        className="dropdown-stretch"
+        items={this.kapacitorItems}
+        onChoose={this.handleSetActiveKapacitor}
+        selected={this.selected}
+      />
     )
   }
 

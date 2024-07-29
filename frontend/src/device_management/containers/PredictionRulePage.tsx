@@ -25,6 +25,7 @@ import PredictionRule from 'src/device_management/components/PredictionRule'
 import * as kapacitorRuleActionCreators from 'src/kapacitor/actions/view'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {KapacitorRuleActions} from 'src/types/actions'
+import {UserRole, ForceSessionAbortInputRole} from 'src/shared/actions/session'
 
 // API
 import {getKapacitorConfig, getKapacitors} from 'src/shared/apis/index'
@@ -52,6 +53,7 @@ import {DEFAULT_RULE_ID} from 'src/kapacitor/constants'
 
 // ETC
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {ADMIN_ROLE} from 'src/auth/Authorized'
 
 interface Auth {
   me: Me
@@ -68,6 +70,10 @@ interface Props {
   me: Me
   organizations: Organization[]
   notify: (notification: Notification) => void
+  ForceSessionAbortInputRole: (
+    requireRole: UserRole,
+    isNoAuthOuting?: boolean
+  ) => void
 }
 
 interface State {
@@ -104,6 +110,9 @@ class PredictionRulePage extends Component<Props, State> {
 
   public async componentDidMount() {
     const {me} = this.props
+    const {ForceSessionAbortInputRole} = this.props
+
+    ForceSessionAbortInputRole(ADMIN_ROLE)
 
     try {
       this.setState({
@@ -455,6 +464,10 @@ const mapStateToProps = ({adminCloudHub: {organizations}, rules, auth}) => ({
 const mapDispatchToProps = dispatch => ({
   ruleActions: bindActionCreators(kapacitorRuleActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
+  ForceSessionAbortInputRole: bindActionCreators(
+    ForceSessionAbortInputRole,
+    dispatch
+  ),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(PredictionRulePage)

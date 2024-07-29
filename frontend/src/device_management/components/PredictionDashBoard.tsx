@@ -1,11 +1,15 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react'
+import React, {useEffect, useMemo, useRef} from 'react'
 import {connect} from 'react-redux'
 import {Page} from 'src/reusable_ui'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import * as DashboardsModels from 'src/types/dashboards'
-import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
+import Authorized, {
+  ADMIN_ROLE,
+  EDITOR_ROLE,
+  isUserAuthorized,
+} from 'src/auth/Authorized'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
-import {Cell, Source, Template, TemplateValue, TimeRange} from 'src/types'
+import {Cell, Me, Source, Template, TemplateValue, TimeRange} from 'src/types'
 import {fixturePredictionPageCells} from '../constants'
 import _ from 'lodash'
 import {Link} from 'react-router'
@@ -36,6 +40,7 @@ interface Props extends ManualRefreshProps, WithRouterProps {
   predictionTimeRange?: TimeRange
   setPredictionTimeRange?: (value: TimeRange) => void
   setHistogramDate?: (value: TimeRange) => void
+  me: Me
 }
 
 interface TempProps {
@@ -58,6 +63,7 @@ function PredictionDashBoard({
   onPickTemplate,
   predictionTimeRange,
   setHistogramDate,
+  me,
 }: Props) {
   const prevProps = useRef({manualRefresh: null, cloudAutoRefresh: null})
 
@@ -67,6 +73,7 @@ function PredictionDashBoard({
     localStorage.getItem('Prediction-cells')
   )
   let intervalID
+  const isAdminRole = isUserAuthorized(me.role, ADMIN_ROLE)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -214,13 +221,15 @@ function PredictionDashBoard({
     <>
       <Page className="prediction-page">
         <div className="prediction-page--button">
-          <Link
-            to={`/sources/${source.id}/ai/device-management/prediction-rule`}
-            className="btn btn-sm btn-primary"
-            style={{marginRight: '4px'}}
-          >
-            <span className="icon cog-thick" /> Rule Setting
-          </Link>
+          {isAdminRole && (
+            <Link
+              to={`/sources/${source.id}/ai/device-management/prediction-rule`}
+              className="btn btn-sm btn-primary"
+              style={{marginRight: '4px'}}
+            >
+              <span className="icon cog-thick" /> Rule Setting
+            </Link>
+          )}
         </div>
         <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
           <div className="dashboard container-fluid full-width">
@@ -273,11 +282,12 @@ const mstp = state => {
     app: {
       ephemeral: {inPresentationMode},
     },
-    auth: {isUsingAuth},
+    auth: {isUsingAuth, me},
     predictionDashboard: {predictionTimeRange},
   } = state
 
   return {
+    me,
     predictionTimeRange,
     inPresentationMode,
     isUsingAuth,

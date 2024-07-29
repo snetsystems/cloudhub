@@ -7,8 +7,9 @@ import {
   DeviceConnectionStatus,
   DeviceData,
   DeviceOrganizationStatus,
+  Me,
 } from 'src/types'
-import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
+import {ADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 import SystemConfirmModal from 'src/device_management/components/MonitoringModal'
 import {ComponentColor} from 'src/reusable_ui'
 import {
@@ -22,13 +23,14 @@ import {SYSTEM_MODAL} from 'src/device_management/constants'
 
 interface Props {
   checkedArray: string[]
+  data: DeviceData[]
+  networkDeviceOrganizationStatus: DeviceOrganizationStatus
+  me: Me
   connectDevice: (deviceConnectionStatus?: DeviceConnectionStatus) => () => void
   importDevice: () => void
   openModal?: (aiModal: AiModal) => void
   closeModal?: () => void
   reLearnSetting: () => void
-  data: DeviceData[]
-  networkDeviceOrganizationStatus: DeviceOrganizationStatus
   deleteDevicesAJAX: (idList: string[]) => Promise<void>
   onOpenApplyMonitoringModal: () => void
   onOpenLearningModelModal: () => void
@@ -42,6 +44,7 @@ function DeviceManagementBtn({
   closeModal,
   data,
   networkDeviceOrganizationStatus,
+  me,
   deleteDevicesAJAX,
   reLearnSetting,
   onOpenApplyMonitoringModal,
@@ -52,6 +55,7 @@ function DeviceManagementBtn({
     selectedDevices,
     networkDeviceOrganizationStatus
   )
+  const isAdminRole = isUserAuthorized(me.role, ADMIN_ROLE)
 
   const openDeleteModal = (idList: string[]) => {
     const validArray = selectedArrayById(data, idList, 'id')
@@ -85,84 +89,79 @@ function DeviceManagementBtn({
   }
 
   return (
-    <div className="device-management-top left">
-      <div className="space-x">
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <button
-            onClick={() => {
-              openDeleteModal(checkedArray)
-            }}
-            className="btn button btn-sm btn-primary"
-            disabled={checkedArray.length === 0}
-            title="Delete Device"
-          >
-            <span className="icon trash" /> Delete Device
-          </button>
-        </Authorized>
-        {/* TODO Consder requiredRole */}
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <button
-            onClick={() => {
-              onOpenApplyMonitoringModal()
-            }}
-            className="btn button btn-sm btn-primary"
-            disabled={checkedArray.length === 0}
-            title="Apply Monitoring"
-          >
-            <span className="icon checkmark" /> Apply Monitoring
-          </button>
-        </Authorized>
-        {/* TODO Consder requiredRole */}
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <button
-            onClick={() => {
-              onOpenLearningModelModal()
-            }}
-            className="btn button btn-sm btn-primary"
-            disabled={
-              checkedArray.length === 0 || !isSelectedOrganizationStatusValid
-            }
-            title="Learning Model"
-          >
-            <span className="icon capacitor2" /> Learning Model
-          </button>
-        </Authorized>
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <button
-            className={`button button-sm button-default button-square ${
-              isSelectedOrganizationStatusValid ? '' : 'learning-model--invalid'
-            }`}
-            title="Custom Learning Setting"
-            onClick={() => {
-              reLearnSetting()
-            }}
-          >
-            <span className="button-icon icon cog-thick"></span>
-          </button>
-        </Authorized>
-      </div>
-      <div className="space-x">
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <div
-            onClick={connectDevice('Creating')}
-            className="btn button btn-sm btn-primary"
-            title="Add Device"
-          >
-            <span className="icon plus" /> Add Device
+    <>
+      {isAdminRole && (
+        <div className="device-management-top left">
+          <div className="space-x">
+            <button
+              onClick={() => {
+                openDeleteModal(checkedArray)
+              }}
+              className="btn button btn-sm btn-primary"
+              disabled={checkedArray.length === 0}
+              title="Delete Device"
+            >
+              <span className="icon trash" /> Delete Device
+            </button>
+
+            <button
+              onClick={() => {
+                onOpenApplyMonitoringModal()
+              }}
+              className="btn button btn-sm btn-primary"
+              disabled={checkedArray.length === 0}
+              title="Apply Monitoring"
+            >
+              <span className="icon checkmark" /> Apply Monitoring
+            </button>
+
+            <button
+              onClick={() => {
+                onOpenLearningModelModal()
+              }}
+              className="btn button btn-sm btn-primary"
+              disabled={
+                checkedArray.length === 0 || !isSelectedOrganizationStatusValid
+              }
+              title="Learning Model"
+            >
+              <span className="icon capacitor2" /> Learning Model
+            </button>
+
+            <button
+              className={`button button-sm button-default button-square ${
+                isSelectedOrganizationStatusValid
+                  ? ''
+                  : 'learning-model--invalid'
+              }`}
+              title="Custom Learning Setting"
+              onClick={() => {
+                reLearnSetting()
+              }}
+            >
+              <span className="button-icon icon cog-thick"></span>
+            </button>
           </div>
-        </Authorized>
-        {/* TODO Consder requiredRole */}
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <div
-            onClick={importDevice}
-            className="btn button btn-sm btn-primary"
-            title="Import Device"
-          >
-            <span className="icon import" /> Import Device
+          <div className="space-x">
+            <div
+              onClick={connectDevice('Creating')}
+              className="btn button btn-sm btn-primary"
+              title="Add Device"
+            >
+              <span className="icon plus" /> Add Device
+            </div>
+
+            <div
+              onClick={importDevice}
+              className="btn button btn-sm btn-primary"
+              title="Import Device"
+            >
+              <span className="icon import" /> Import Device
+            </div>
           </div>
-        </Authorized>
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   )
 }
 
