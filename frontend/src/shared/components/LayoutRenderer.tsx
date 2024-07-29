@@ -28,6 +28,7 @@ import {
   Template,
   Source,
   TemplateValue,
+  AnnotationViewer,
   // AnnotationViewer,
 } from 'src/types'
 
@@ -51,8 +52,8 @@ interface Props {
   onPositionChange?: (cells: Cell[]) => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
-  // isUsingAnnotationViewer?: boolean
-  // annotationsViewMode?: AnnotationViewer[]
+  isUsingAnnotationViewer?: boolean
+  annotationsViewMode?: AnnotationViewer[]
 }
 
 interface State {
@@ -89,7 +90,6 @@ class LayoutRenderer extends Component<Props, State> {
 
     const {rowHeight} = this.state
     const isDashboard = !!this.props.onPositionChange
-
     return (
       <Authorized
         requiredRole={EDITOR_ROLE}
@@ -135,8 +135,8 @@ class LayoutRenderer extends Component<Props, State> {
                   onSummonOverlayTechnologies={onSummonOverlayTechnologies}
                   instance={instance}
                   onPickTemplate={onPickTemplate}
-                  // isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
-                  // annotationsViewMode={this.props.annotationsViewMode}
+                  isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
+                  annotationsViewMode={this.props.annotationsViewMode}
                 />
               </Authorized>
             </div>

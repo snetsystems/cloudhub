@@ -22,18 +22,18 @@ interface Props {
   predictionTimeRange?: TimeRange
   source: Source
   limit: number
-  chartClickDate: TimeRange
   setPredictionTimeRange?: (value: TimeRange) => void
   cloudAutoRefresh?: CloudAutoRefresh
   manualRefresh?: number
   alertHostList?: string[]
   setAlertHostList?: (value: string[]) => void
+  histogramDate?: TimeRange
 }
 
 function PredictionAlertHistoryWrapper({
   source,
   limit = RECENT_ALERTS_LIMIT,
-  chartClickDate,
+  histogramDate,
   predictionTimeRange,
   setPredictionTimeRange,
   cloudAutoRefresh,
@@ -77,13 +77,13 @@ function PredictionAlertHistoryWrapper({
   // alert List get api
   useEffect(() => {
     fetchAlerts()
-  }, [setPredictionTimeRange, chartClickDate, manualRefresh])
+  }, [histogramDate, manualRefresh])
 
   //TODO: timerange var change to redux data not props
   const fetchAlerts = (): void => {
     getPredictionAlert(
       source.links.proxy,
-      chartClickDate ?? predictionTimeRange,
+      histogramDate ?? predictionTimeRange,
       limit * limitMultiplier,
       source.telegraf
     )
@@ -183,7 +183,6 @@ function PredictionAlertHistoryWrapper({
         </PredictionDashboardHeader>
         <PredictionAlertTable
           source={source}
-          timeRange={predictionTimeRange}
           isWidget={true}
           limit={limit}
           alerts={alertsData}
@@ -207,7 +206,7 @@ function PredictionAlertHistoryWrapper({
 
 const mstp = state => {
   const {
-    predictionDashboard: {predictionTimeRange, alertHostList},
+    predictionDashboard: {predictionTimeRange, alertHostList, histogramDate},
     app: {
       persisted: {autoRefresh, cloudAutoRefresh},
     },
@@ -215,6 +214,7 @@ const mstp = state => {
 
   return {
     autoRefresh,
+    histogramDate,
     cloudAutoRefresh,
     predictionTimeRange,
     alertHostList,

@@ -18,7 +18,7 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 import PredictionDashboardWrapper from './PredictionDashboardWrapper'
 import {bindActionCreators} from 'redux'
-import {setPredictionTimeRange} from '../actions'
+import {setHistogramDate, setPredictionTimeRange} from '../actions'
 import {setTimeRange} from 'src/dashboards/actions'
 
 interface Props extends ManualRefreshProps, WithRouterProps {
@@ -35,6 +35,7 @@ interface Props extends ManualRefreshProps, WithRouterProps {
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   predictionTimeRange?: TimeRange
   setPredictionTimeRange?: (value: TimeRange) => void
+  setHistogramDate?: (value: TimeRange) => void
 }
 
 interface TempProps {
@@ -56,9 +57,8 @@ function PredictionDashBoard({
   instance,
   onPickTemplate,
   predictionTimeRange,
+  setHistogramDate,
 }: Props) {
-  const [chartClickDate, setChartClickDate] = useState<TimeRange>(null)
-
   const prevProps = useRef({manualRefresh: null, cloudAutoRefresh: null})
 
   const GridLayout = WidthProvider(ReactGridLayout)
@@ -95,7 +95,7 @@ function PredictionDashBoard({
   }, [manualRefresh, cloudAutoRefresh])
 
   useEffect(() => {
-    setChartClickDate(null)
+    setHistogramDate(null)
   }, [predictionTimeRange])
 
   const cells = useMemo(() => {
@@ -170,7 +170,6 @@ function PredictionDashBoard({
               onSummonOverlayTechnologies={onSummonOverlayTechnologies}
               instance={instance}
               onPickTemplate={onPickTemplate}
-              setChartClickDate={setChartClickDate}
               manualRefresh={prevProps.current.manualRefresh}
             />
           </Authorized>
@@ -184,11 +183,7 @@ function PredictionDashBoard({
               isEditable: false,
             }}
           >
-            <PredictionAlertHistoryWrapper
-              source={source}
-              limit={30}
-              chartClickDate={chartClickDate}
-            />
+            <PredictionAlertHistoryWrapper source={source} limit={30} />
           </Authorized>
         )
       }
@@ -292,6 +287,7 @@ const mstp = state => {
 const mdtp = (dispatch: any) => ({
   setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
   setTimeRange: bindActionCreators(setTimeRange, dispatch),
+  setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(PredictionDashBoard)

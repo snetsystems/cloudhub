@@ -237,6 +237,14 @@ $table-tab-scrollbar-height: 6px;
     background-color: $g4-onyx;
   }
 }
+.alert-history-table--tr.selected {
+  background-color: $g5-pepper;
+}
+.alert-history-table--tr.pointer {
+  &:hover {
+    cursor: pointer;
+  }
+}
 .alert-history-table--td {
   font-size: 12px;
   font-family: $code-font;

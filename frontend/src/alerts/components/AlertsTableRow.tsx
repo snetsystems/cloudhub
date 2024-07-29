@@ -114,8 +114,8 @@ class AlertsTableRow extends PureComponent<Props> {
         {host === null ? (
           <span>{'–'}</span>
         ) : (
-          // Todo: link with valid canned
           <Link
+            onClick={e => e.stopPropagation()}
             to={`/sources/${sourceID}/infrastructure/details/${host}${
               !!triggerType ? `?trigger=${triggerType}` : ''
             }`}

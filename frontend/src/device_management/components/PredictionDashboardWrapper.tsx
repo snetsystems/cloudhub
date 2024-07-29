@@ -8,6 +8,7 @@ import {
   TEMP_VAR_UPPER_DASHBOARD_TIME,
 } from 'src/shared/constants'
 import {
+  AnomalyFactor,
   Cell,
   INPUT_TIME_TYPE,
   Source,
@@ -23,7 +24,11 @@ import Layout from 'src/shared/components/Layout'
 import LoadingDots from 'src/shared/components/LoadingDots'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
-import {setPredictionTimeRange} from '../actions'
+import {
+  setHistogramDate,
+  setPredictionTimeRange,
+  setSelectedAnomaly,
+} from '../actions'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 
@@ -39,10 +44,11 @@ interface Props {
   source: Source
   sources: Source[]
   manualRefresh: number
-  setChartClickDate: (date: TimeRange) => void
   predictionTimeRange?: TimeRange
   cloudAutoRefresh?: CloudAutoRefresh
   setPredictionTimeRange?: (value: TimeRange) => void
+  setHistogramDate?: (value: TimeRange) => void
+  setSelectedAnomaly?: (anomalyFactor: AnomalyFactor) => void
 }
 function PredictionDashboardWrapper({
   cell,
@@ -57,8 +63,9 @@ function PredictionDashboardWrapper({
   predictionTimeRange,
   source,
   manualRefresh,
-  setChartClickDate,
   cloudAutoRefresh,
+  setHistogramDate,
+  setSelectedAnomaly,
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
 
@@ -114,7 +121,11 @@ function PredictionDashboardWrapper({
   }
 
   const handleClickDate = (time: number) => {
-    setChartClickDate({
+    setSelectedAnomaly({
+      host: '',
+      time: '',
+    })
+    setHistogramDate({
       lower: convertTimeFormat(time - 32400000),
       upper: convertTimeFormat(time + 54000000),
       format: INPUT_TIME_TYPE.TIMESTAMP,
@@ -186,6 +197,8 @@ const mstp = state => {
 
 const mdtp = (dispatch: any) => ({
   setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
+  setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
+  setSelectedAnomaly: bindActionCreators(setSelectedAnomaly, dispatch),
 })
 
 const areEqual = (prev, next) => {
@@ -193,5 +206,6 @@ const areEqual = (prev, next) => {
 }
 export default React.memo(
   connect(mstp, mdtp, null)(PredictionDashboardWrapper),
+
   areEqual
 )

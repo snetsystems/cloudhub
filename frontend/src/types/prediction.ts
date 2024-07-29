@@ -31,3 +31,8 @@ export interface HexagonData {
 export interface HexagonInputData extends PredictionTooltipNode {
   statusColor: string
 }
+
+export interface AnomalyFactor {
+  host: string
+  time: string
+}

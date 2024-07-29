@@ -10,17 +10,21 @@ const CELL_WIDTH = 32
 const CELL_HEIGHT = 24
 const PAGE_WIDTH = 96
 
-interface queryWithWhere {
+interface queryWithWhereGroupby {
   wheres?: string
+  groupbys?: string
 }
 
 export function getCellsWithWhere(
   layouts: Layout[],
   source: Source,
-  whereTag: string
+  whereTag: string,
+  isGroupbyOneMin?: boolean
 ): Cell[] {
   const layoutCells = getLayoutCells(layouts)
-  const cells = layoutCells.map(d => toCell(d, source, whereTag))
+  const cells = layoutCells.map(d =>
+    toCell(d, source, whereTag, isGroupbyOneMin)
+  )
 
   return cells
 }
@@ -89,9 +93,12 @@ function translateCellGroups(groups: LayoutCell[][]): LayoutCell[] {
 function toCell(
   layoutCell: LayoutCell,
   source: Source,
-  whereTag: string
+  whereTag: string,
+  isGroupbyOneMin?: boolean
 ): Cell {
-  const queries = layoutCell.queries.map(d => toCellQuery(d, source, whereTag))
+  const queries = layoutCell.queries.map(d =>
+    toCellQuery(d, source, whereTag, isGroupbyOneMin)
+  )
   const cell = {
     ...NEW_DEFAULT_DASHBOARD_CELL,
     ...layoutCell,
@@ -107,22 +114,31 @@ function toCell(
 }
 
 function toCellQuery(
-  layoutQuery: LayoutQuery & queryWithWhere,
+  layoutQuery: LayoutQuery & queryWithWhereGroupby,
   source: Source,
-  whereTag: string
+  whereTag: string,
+  isGroupbyOneMin?: boolean
 ): CellQuery {
   const filteredQuery = {
     ...layoutQuery,
-    wheres: [...(layoutQuery.wheres ?? []), `"agent_host" = '${whereTag}'`],
+    wheres: [
+      ...(layoutQuery.wheres ?? []),
+      whereTag ? `"agent_host" = '${whereTag}'` : null,
+    ].filter(i => !!i),
+    groupbys: [
+      ...layoutQuery.groupbys,
+      isGroupbyOneMin ? 'time(1m)' : null,
+    ].filter(i => !!i),
   }
 
-  const cellQuery: any = !!whereTag
-    ? {
-        ...filteredQuery,
-        source: source.url,
-        type: 'influxql',
-      }
-    : {...layoutQuery, source: source.url, type: 'influxql'}
+  const cellQuery: any =
+    !!whereTag || isGroupbyOneMin
+      ? {
+          ...filteredQuery,
+          source: source.url,
+          type: 'influxql',
+        }
+      : {...layoutQuery, source: source.url, type: 'influxql'}
 
   return cellQuery
 }

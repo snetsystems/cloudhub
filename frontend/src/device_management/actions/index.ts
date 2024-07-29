@@ -1,14 +1,18 @@
-import {TimeRange} from 'src/types'
+import {AnomalyFactor, TimeRange} from 'src/types'
 
 export type Action =
   | PredictionTimeRangeAction
   | PredictionFilteredHexbin
   | AlertHostList
+  | SelectedAnomaly
+  | HistogramDateAction
 
 export enum ActionType {
   setPredictionTimeRange = 'SET_PREDICTION_DASHBOARD',
   setFilteredHexbin = 'SET_FILTERED_HEXBIN',
   setAlertHostList = 'SET_ALERT_HOST_LIST',
+  setSelectedAnomaly = 'SET_SELECTED_ANOMALY',
+  setHistogramDate = 'SET_HISTOGRAM_DATE',
 }
 
 interface PredictionTimeRangeAction {
@@ -29,6 +33,18 @@ interface AlertHostList {
   type: ActionType.setAlertHostList
   payload: {
     alertHostList: string[]
+  }
+}
+interface SelectedAnomaly {
+  type: ActionType.setSelectedAnomaly
+  payload: {
+    selectedAnomaly: AnomalyFactor
+  }
+}
+interface HistogramDateAction {
+  type: ActionType.setHistogramDate
+  payload: {
+    histogramDate: TimeRange
   }
 }
 
@@ -54,6 +70,24 @@ export const setAlertHostList = (alertHostList: string[]): AlertHostList => ({
   type: ActionType.setAlertHostList,
   payload: {
     alertHostList,
+  },
+})
+
+export const setSelectedAnomaly = (
+  selectedAnomaly: AnomalyFactor
+): SelectedAnomaly => ({
+  type: ActionType.setSelectedAnomaly,
+  payload: {
+    selectedAnomaly,
+  },
+})
+
+export const setHistogramDate = (
+  histogramDate: TimeRange
+): HistogramDateAction => ({
+  type: ActionType.setHistogramDate,
+  payload: {
+    histogramDate,
   },
 })
 
