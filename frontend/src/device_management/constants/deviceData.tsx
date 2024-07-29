@@ -111,7 +111,8 @@ export const PREDICT_MODE = {
   EnsembleAndCondition: 'Ensemble (ML and DL)',
 } as const
 
-export const DEFAULT_PREDICT_MODE = 'ML'
+export const DEFAULT_PREDICT_MODE: keyof typeof PREDICT_MODE =
+  'EnsembleAndCondition'
 
 export const DEFAULT_LEARNING_OPTION: LearningOption = {
   organization: '',
