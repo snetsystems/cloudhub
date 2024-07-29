@@ -455,7 +455,8 @@ class DeviceManagement extends PureComponent<Props, State> {
   private reFreshStateAfterDeleteDevices = async () => {
     this.setState({checkedArray: [], isLoading: false})
 
-    this.getDeviceAJAX()
+    await this.getDeviceAJAX()
+    this.fetchDeviceMonitoringStatus()
     this.getNetworkDeviceOrganizationsAJAX()
   }
 
