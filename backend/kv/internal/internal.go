@@ -1156,6 +1156,7 @@ func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
 			InsecureSkipVerify: t.AIKapacitor.InsecureSkipVerify,
 		},
 		LearningCron: t.LearningCron,
+		ProcCnt:      int32(t.ProcCnt),
 	})
 }
 
@@ -1185,7 +1186,7 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 		t.AIKapacitor = cloudhub.AIKapacitor{}
 	}
 	t.LearningCron = pb.LearningCron
-
+	t.ProcCnt = int(pb.ProcCnt)
 	return nil
 }
 

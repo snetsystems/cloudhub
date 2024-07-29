@@ -304,8 +304,8 @@ message NetworkDeviceOrg {
   repeated string CollectedDevicesIDs = 7;  // the list of device IDs included in Logstash Config
   AIKapacitor AIKapacitor             = 8;  // Kapacitor configuration for AI 
   string LearningCron                 = 9;  
+  int32 ProcCnt						  = 10; // Used learning process count(s)
 }
-
 message AIKapacitor {
   int64  SrcID    = 1;  // SrcID is the ID of the data source
   int64  KapaID   = 2;  // KapaID is the id of the kapacitor this alert is associated with
@@ -314,19 +314,17 @@ message AIKapacitor {
   string Password = 5;
   bool InsecureSkipVerify = 6;  
 }
-
 message SSHConfig {
   string UserID     = 1; // user id used for SSH connection
   string Password   = 2; // the password used for SSH connection
   string EnPassword = 3; // enable password for devices that require it
   int32 Port        = 4; // port number used for SSH connection
 }
-
 message SNMPConfig {
-  string Community     = 1;  // community string for SNMP
-  string Version       = 2;  // version of SNMP used
-  int32 Port           = 3;  // port number used for SNMP
-  string Protocol      = 4;  // protocol to use udp or tcp
+  string Community     = 1; // community string for SNMP
+  string Version       = 2; // version of SNMP used
+  int32 Port           = 3; // port number used for SNMP
+  string Protocol      = 4; // protocol to use udp or tcp
   string SecurityName  = 5;  // security name used in SNMP v3. Specifies the username.
   string AuthProtocol  = 6;  // authentication protocol. One of ["md5", "sha", "sha2", "hmac128sha224", "hmac192sha256", "hmac256sha384", "hmac384sha512"].
   string AuthPass      = 7;  // authentication password. Used with the authentication protocol.
@@ -334,7 +332,6 @@ message SNMPConfig {
   string PrivPass      = 9;  // privacy password. Used with the privacy protocol.
   string SecurityLevel = 10; // security level. One of ["noAuthNoPriv", "authNoPriv", "authPriv"].
 }
-
 // Key: unique identifier of the device
 message NetworkDevice { 
   string ID                     = 1;  // unique identifier of the device
@@ -354,7 +351,6 @@ message NetworkDevice {
   string LearningFinishDatetime = 15; // TZ=UTC, Format=RFC3339
   bool IsLearning               = 16; //  Indicates whether to create a learning model
 }
-
 // Key: device IP (Afer adding device ID tag from logstash to influxdb, this key will be device ID)
 message MLNxRst {
   string Device                     = 1;  // IP address or ID of the device
@@ -370,14 +366,18 @@ message MLNxRst {
   repeated float TrafficArray       = 11; // Use Gaussian Graph
   repeated float GaussianArray      = 12; // Use Gaussian Graph
 }
-// Key: device IP (Afer adding device ID tag from logstash to influxdb, this key will be device ID)
 message DLNxRst {
-  string Device                     = 1;  // IP address or ID of the device
+  string Device                     = 1;  // ID of the device
+  string LearningFinishDatetime     = 2;  // TZ=UTC, Format=RFC3339
+  float DLThreshold                 = 3;
+  repeated float TrainLoss          = 4;  // Use Loss Graph
+  repeated float ValidLoss          = 5;  // Use Loss Graph
+  repeated float MSE                = 6;  // Use Mean Squared Error Graph
+}
+message DLNxRstStg{
+  string Device                     = 1;  // ID of the device
   string LearningFinishDatetime     = 2;  // TZ=UTC, Format=RFC3339
   bytes Scaler                      = 3;
   bytes Model                       = 4;
   float DLThreshold                 = 5;
-  repeated float TrainLoss          = 6;  // Use Loss Graph
-  repeated float ValidLoss          = 7;  // Use Loss Graph
-  repeated float MSE                = 8;  // Use Mean Squared Error Graph
 }

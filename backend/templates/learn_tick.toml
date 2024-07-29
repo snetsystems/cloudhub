@@ -9,7 +9,7 @@ var name = '__AI Learn {{.OrgName}}__'
 
 var db = '{{.OrgName}}'
 
-var cron = '{{.CronSchedule}}'
+var cron = '{{.LearningCron}}'
 
 var loadModule = '{{.LoadModule}}'
 

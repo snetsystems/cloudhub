@@ -331,7 +331,7 @@ type AutoGenerateLearnRule struct {
 	TaskTemplate     TemplateFieldType `json:"task_template,omitempty"` // TaskTemplate is the template string for the task.
 	Organization     string            `json:"organization"`
 	OrganizationName string            `json:"organization_name"`
-	CronSchedule     string            `json:"cron_schedule"`
+	LearningCron     string            `json:"learning_cron"`
 	LoadModule       string            `json:"load_module,omitempty"`
 	MLFunction       string            `json:"ml_function"`
 	RetentionPolicy  string            `json:"retention_policy"`
@@ -341,6 +341,7 @@ type AutoGenerateLearnRule struct {
 	InfluxDBPassword string            `json:"influxdb_password"`
 	EtcdOrigin       string            `json:"etcd_origin"`
 	EtcdPort         string            `json:"etcd_port"`
+	ProcCnt          int               `json:"process_count"`
 }
 
 // TICKScript task to be used by kapacitor
@@ -1273,6 +1274,7 @@ type NetworkDeviceOrg struct {
 	CollectedDevicesIDs []string    `json:"collected_devices_ids"`
 	AIKapacitor         AIKapacitor `json:"ai_kapacitor"`
 	LearningCron        string      `json:"learning_cron"`
+	ProcCnt             int         `json:"process_count"`
 }
 
 // NetworkDeviceOrgStore is the Storage and retrieval of information

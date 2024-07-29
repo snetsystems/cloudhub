@@ -41,6 +41,7 @@ type deviceOrgResponse struct {
 	CollectedDevicesIDs []string             `json:"collected_devices_ids"`
 	AIKapacitor         cloudhub.AIKapacitor `json:"ai_kapacitor"`
 	LearningCron        string               `json:"learning_cron"`
+	ProcCnt             int                  `json:"process_count"`
 }
 type updateDeviceOrgRequest struct {
 	LoadModule          *string               `json:"load_module,omitempty"`
@@ -49,20 +50,20 @@ type updateDeviceOrgRequest struct {
 	CollectedDevicesIDs *[]string             `json:"collected_devices_ids"`
 	LearnedDevicesIDs   *[]string             `json:"learned_devices_ids"`
 	AIKapacitor         *cloudhub.AIKapacitor `json:"ai_kapacitor"`
-	CronSchedule        *string               `json:"cron_schedule"`
 	CollectorServer     *string               `json:"collector_server"`
 	TaskStatus          int                   `json:"task_status"`
-	LearningCron        string                `json:"learning_cron"`
+	LearningCron        *string               `json:"learning_cron"`
+	ProcCnt             int                   `json:"process_count"`
 }
 
 type deviceOrgRequest struct {
 	ID           string                `json:"organization"`
 	MLFunction   *string               `json:"ml_function"`
 	DataDuration *int                  `json:"data_duration"`
-	CronSchedule *string               `json:"cron_schedule"`
 	AIKapacitor  *cloudhub.AIKapacitor `json:"ai_kapacitor"`
 	TaskStatus   int                   `json:"task_status"`
-	LearningCron string                `json:"learning_cron"`
+	LearningCron *string               `json:"learning_cron"`
+	ProcCnt      int                   `json:"process_count"`
 }
 
 type deviceOrgError struct {
@@ -93,7 +94,7 @@ const (
 	LoadModule      = "loader.cloudhub.ch_nx_load"
 	MLFunction      = MLFunctionGaussianStd
 	DataDuration    = 15
-	CronSchedule    = "1 0 1,15 * *"
+	LearningCron    = "1 0 1,15 * *"
 	RetentionPolicy = "autogen"
 )
 
@@ -128,32 +129,34 @@ func (r *deviceOrgRequest) validCreate() error {
 	if r.AIKapacitor.KapaURL == "" {
 		return fmt.Errorf("AI Kapacitor URL required in device org request body")
 	}
-	if r.CronSchedule == nil {
-		return fmt.Errorf("AI CronSchedule required in device org request body")
+	if r.LearningCron == nil {
+		return fmt.Errorf("AI LearningCron required in device org request body")
 	}
-	if isInvalidCronExpression(*r.CronSchedule) {
-		return fmt.Errorf("%s is an invalid cron expression", *r.CronSchedule)
+	if isInvalidCronExpression(*r.LearningCron) {
+		return fmt.Errorf("%s is an invalid cron expression", *r.LearningCron)
 	}
 
 	return nil
 }
 
 func (r *updateDeviceOrgRequest) validUpdate() error {
+	if r.AIKapacitor != nil {
+		if r.AIKapacitor.KapaURL == "" {
+			return fmt.Errorf("AI Kapacitor URL required in device org request body")
+		}
+		if r.AIKapacitor.KapaID == 0 {
+			return fmt.Errorf("AI Kapacitor ID required in device org request body")
+		}
+		if r.AIKapacitor.SrcID == 0 {
+			return fmt.Errorf("AI Source ID required in device org request body")
+		}
+	}
 
-	if r.AIKapacitor.KapaURL == "" {
-		return fmt.Errorf("AI Kapacitor URL required in device org request body")
+	if r.LearningCron == nil {
+		return fmt.Errorf("AI LearningCron required in device org request body")
 	}
-	if r.AIKapacitor.KapaID == 0 {
-		return fmt.Errorf("AI Kapacitor ID required in device org request body")
-	}
-	if r.AIKapacitor.SrcID == 0 {
-		return fmt.Errorf("AI Source ID required in device org request body")
-	}
-	if r.CronSchedule == nil {
-		return fmt.Errorf("AI CronSchedule required in device org request body")
-	}
-	if isInvalidCronExpression(*r.CronSchedule) {
-		return fmt.Errorf("%s is an invalid cron expression", *r.CronSchedule)
+	if isInvalidCronExpression(*r.LearningCron) {
+		return fmt.Errorf("%s is an invalid cron expression", *r.LearningCron)
 	}
 	return nil
 }
@@ -185,6 +188,7 @@ func newDeviceOrgResponse(deviceOrg *cloudhub.NetworkDeviceOrg) (*deviceOrgRespo
 		CollectedDevicesIDs: deviceOrg.CollectedDevicesIDs,
 		AIKapacitor:         deviceOrg.AIKapacitor,
 		LearningCron:        deviceOrg.LearningCron,
+		ProcCnt:             deviceOrg.ProcCnt,
 	}
 
 	return resData, nil
@@ -234,7 +238,8 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 			Password:           req.AIKapacitor.Password,
 			InsecureSkipVerify: req.AIKapacitor.InsecureSkipVerify,
 		},
-		LearningCron: *req.CronSchedule,
+		LearningCron: *req.LearningCron,
+		ProcCnt:      req.ProcCnt,
 	}
 
 	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Add(ctx, &newDeviceOrg)
@@ -337,8 +342,8 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	if req.CollectorServer != nil {
 		deviceOrg.CollectorServer = *req.CollectorServer
 	}
-	if req.CronSchedule != nil {
-		deviceOrg.LearningCron = *req.CronSchedule
+	if req.LearningCron != nil {
+		deviceOrg.LearningCron = *req.LearningCron
 	}
 	if req.AIKapacitor != nil {
 		deviceOrg.AIKapacitor.SrcID = req.AIKapacitor.SrcID
@@ -361,7 +366,7 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		ID:           deviceOrg.ID,
 		MLFunction:   &deviceOrg.MLFunction,
 		DataDuration: &deviceOrg.DataDuration,
-		CronSchedule: req.CronSchedule,
+		LearningCron: req.LearningCron,
 		AIKapacitor:  &deviceOrg.AIKapacitor,
 		TaskStatus:   req.TaskStatus,
 	}
@@ -465,9 +470,9 @@ func manageLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 
 	c := kapa.NewClient(deviceOrg.AIKapacitor.KapaURL, deviceOrg.AIKapacitor.Username, deviceOrg.AIKapacitor.Password, deviceOrg.AIKapacitor.InsecureSkipVerify)
 
-	if req.CronSchedule == nil {
-		defaultCronSchedule := CronSchedule
-		req.CronSchedule = &defaultCronSchedule
+	if req.LearningCron == nil {
+		defaultLearningCron := LearningCron
+		req.LearningCron = &defaultLearningCron
 	}
 	if req.MLFunction == nil {
 		defaultMLFunction := MLFunction
@@ -476,7 +481,7 @@ func manageLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 	taskReq := cloudhub.AutoGenerateLearnRule{
 		OrganizationName: org.Name,
 		Organization:     org.ID,
-		CronSchedule:     *req.CronSchedule,
+		LearningCron:     *req.LearningCron,
 		LoadModule:       LoadModule,
 		MLFunction:       *req.MLFunction,
 		RetentionPolicy:  RetentionPolicy,
@@ -489,6 +494,7 @@ func manageLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 		InfluxDBPassword: influxDBs[0].Password,
 		EtcdOrigin:       EtcdOrigin,
 		EtcdPort:         EtcdPort,
+		ProcCnt:          req.ProcCnt,
 	}
 
 	tmplParams := []cloudhub.TemplateBlock{
@@ -498,7 +504,7 @@ func manageLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 			"LoadModule":      taskReq.LoadModule,
 			"MLFunction":      taskReq.MLFunction,
 			"Message":         taskReq.Message,
-			"CronSchedule":    taskReq.CronSchedule,
+			"LearningCron":    taskReq.LearningCron,
 			"RetentionPolicy": taskReq.RetentionPolicy,
 			"InfluxOrigin":    taskReq.InfluxOrigin,
 			"InfluxPort":      taskReq.InfluxDBPort,
@@ -506,6 +512,7 @@ func manageLearningTask(ctx context.Context, s *Service, org *cloudhub.Organizat
 			"InfluxPassword":  taskReq.InfluxDBPassword,
 			"EtcdOrigin":      taskReq.EtcdOrigin,
 			"EtcdPort":        taskReq.EtcdPort,
+			"ProcCnt":         taskReq.ProcCnt,
 		},
 		},
 	}
