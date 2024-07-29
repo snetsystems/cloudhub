@@ -98,6 +98,7 @@ type DataStore interface {
 	CSP(ctx context.Context) cloudhub.CSPStore
 	NetworkDevice(ctx context.Context) cloudhub.NetworkDeviceStore
 	NetworkDeviceOrg(ctx context.Context) cloudhub.NetworkDeviceOrgStore
+	MLNxRst(ctx context.Context) cloudhub.MLNxRstStore
 }
 
 // ensure that Store implements a DataStore
@@ -120,6 +121,7 @@ type Store struct {
 	CSPStore                cloudhub.CSPStore
 	NetworkDeviceStore      cloudhub.NetworkDeviceStore
 	NetworkDeviceOrgStore   cloudhub.NetworkDeviceOrgStore
+	MLNxRstStore            cloudhub.MLNxRstStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -300,4 +302,14 @@ func (s *Store) NetworkDeviceOrg(ctx context.Context) cloudhub.NetworkDeviceOrgS
 	}
 
 	return &noop.NetworkDeviceOrgStore{}
+}
+
+// MLNxRst returns a noop.MLNxRstStore if the context has no organization specified
+// and an organization.MLNxRstStore otherwise.
+func (s *Store) MLNxRst(ctx context.Context) cloudhub.MLNxRstStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.MLNxRstStore
+	}
+
+	return &noop.MLNxRstStore{}
 }

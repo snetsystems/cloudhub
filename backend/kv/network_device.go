@@ -139,6 +139,7 @@ func (s *NetworkDeviceStore) All(ctx context.Context) ([]cloudhub.NetworkDevice,
 	return devices, nil
 }
 
+// DeleteAll all known Devices delete
 func (s *NetworkDeviceStore) DeleteAll(ctx context.Context) error {
 
 	// Fetch all keys with the specified prefix

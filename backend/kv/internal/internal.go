@@ -1188,3 +1188,44 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 
 	return nil
 }
+
+// MarshalMLNxRst encodes an MLNxRst struct to binary protobuf format.
+func MarshalMLNxRst(t *cloudhub.MLNxRst) ([]byte, error) {
+	return proto.Marshal(&MLNxRst{
+		Device:                 t.Device,
+		LearningFinishDatetime: t.LearningFinishDatetime,
+		Epsilon:                t.Epsilon,
+		MeanMatrix:             t.MeanMatrix,
+		CovarianceMatrix:       t.CovarianceMatrix,
+		K:                      t.K,
+		Mean:                   t.Mean,
+		MDThreshold:            t.MDThreshold,
+		MDArray:                t.MDArray,
+		CPUArray:               t.CPUArray,
+		TrafficArray:           t.TrafficArray,
+		GaussianArray:          t.GaussianArray,
+	})
+}
+
+// UnmarshalMLNxRst decodes an MLNxRst from binary protobuf data.
+func UnmarshalMLNxRst(data []byte, t *cloudhub.MLNxRst) error {
+	var pb MLNxRst
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	t.Device = pb.Device
+	t.LearningFinishDatetime = pb.LearningFinishDatetime
+	t.Epsilon = pb.Epsilon
+	t.MeanMatrix = pb.MeanMatrix
+	t.CovarianceMatrix = pb.CovarianceMatrix
+	t.K = pb.K
+	t.Mean = pb.Mean
+	t.MDThreshold = pb.MDThreshold
+	t.MDArray = pb.MDArray
+	t.CPUArray = pb.CPUArray
+	t.TrafficArray = pb.TrafficArray
+	t.GaussianArray = pb.GaussianArray
+
+	return nil
+}

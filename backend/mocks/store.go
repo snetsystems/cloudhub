@@ -23,6 +23,7 @@ type Store struct {
 	CSPStore                cloudhub.CSPStore
 	NetworkDeviceStore      cloudhub.NetworkDeviceStore
 	NetworkDeviceOrgStore   cloudhub.NetworkDeviceOrgStore
+	MLNxRstStore            cloudhub.MLNxRstStore
 }
 
 // Sources ...
@@ -98,4 +99,9 @@ func (s *Store) NetworkDevice(ctx context.Context) cloudhub.NetworkDeviceStore {
 // NetworkDeviceOrg ...
 func (s *Store) NetworkDeviceOrg(ctx context.Context) cloudhub.NetworkDeviceOrgStore {
 	return s.NetworkDeviceOrgStore
+}
+
+// MLNxRst ...
+func (s *Store) MLNxRst(ctx context.Context) cloudhub.MLNxRstStore {
+	return s.MLNxRstStore
 }

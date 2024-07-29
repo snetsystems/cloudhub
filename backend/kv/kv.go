@@ -26,6 +26,7 @@ var (
 	cspBucket                = []byte("CSP")
 	networkDeviceBucket      = []byte("NetworkDevice")
 	networkDeviceOrgBucket   = []byte("NetworkDeviceOrg")
+	mlNxRstBucket            = []byte("MLNxRst")
 )
 
 // Store is an interface for a generic key value store. It is modeled after
@@ -128,6 +129,7 @@ func (s *Service) initialize(ctx context.Context, tx Tx) error {
 		cspBucket,
 		networkDeviceBucket,
 		networkDeviceOrgBucket,
+		mlNxRstBucket,
 	}
 
 	for i := range buckets {
@@ -216,4 +218,9 @@ func (s *Service) NetworkDeviceStore() cloudhub.NetworkDeviceStore {
 // NetworkDeviceOrgStore returns a cloudhub.DeviceStore.
 func (s *Service) NetworkDeviceOrgStore() cloudhub.NetworkDeviceOrgStore {
 	return &NetworkDeviceOrgStore{client: s}
+}
+
+// MLNxRstStore returns a cloudhub.DeviceStore.
+func (s *Service) MLNxRstStore() cloudhub.MLNxRstStore {
+	return &MLNxRstStore{client: s}
 }

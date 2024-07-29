@@ -904,6 +904,7 @@ func openService(
 			CSPStore:                svc.CSPStore(),
 			NetworkDeviceStore:      svc.NetworkDeviceStore(),
 			NetworkDeviceOrgStore:   svc.NetworkDeviceOrgStore(),
+			MLNxRstStore:            svc.MLNxRstStore(),
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,

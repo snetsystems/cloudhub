@@ -358,29 +358,26 @@ message NetworkDevice {
 // Key: device IP (Afer adding device ID tag from logstash to influxdb, this key will be device ID)
 message MLNxRst {
   string Device                     = 1;  // IP address or ID of the device
-  double Epsilon                    = 2;  // ML Result value
-  string MeanMatrix                 = 3;  // 1x2 mean numpy matrix
-  string CovarianceMatrix           = 4;  // 2x2 covariance numpy matrix
-  float K                           = 5;  // Dicision coefficient for determination of threshold
-  float Mean                        = 6;  // Mean value by whole elements
-  float MDThreshold                 = 7;  // MDThreshold = mean * K * Sensitivity
-  repeated float MDArray            = 8;  // Mahalanobis distance array (Use later)
-  repeated float CPUArray           = 9;  // (Use later)
-  repeated float TrafficArray       = 10; // (Use later)
-  repeated float GaussianArray      = 11; // (Use later)
-  string LearningFinishDatetime     = 12; // TZ=UTC, Format=RFC3339
+  string LearningFinishDatetime     = 2;  // TZ=UTC, Format=RFC3339
+  double Epsilon                    = 3;  // ML Result value
+  string MeanMatrix                 = 4;  // 1x2 mean numpy matrix
+  string CovarianceMatrix           = 5;  // 2x2 covariance numpy matrix
+  float K                           = 6;  // Dicision coefficient for determination of threshold
+  float Mean                        = 7;  // Mean value by whole elements
+  float MDThreshold                 = 8;  // MDThreshold = mean * K * Sensitivity
+  repeated float MDArray            = 9;  // Mahalanobis distance array
+  repeated float CPUArray           = 10; // Use Gaussian Graph
+  repeated float TrafficArray       = 11; // Use Gaussian Graph
+  repeated float GaussianArray      = 12; // Use Gaussian Graph
 }
-
 // Key: device IP (Afer adding device ID tag from logstash to influxdb, this key will be device ID)
 message DLNxRst {
-  string Device                 = 1;  // IP address or ID of the device
-  bytes Scaler                  = 2;
-  bytes Model                   = 3;
-  float DLThreshold             = 4;
-  string LearningFinishDatetime = 5;  // TZ=UTC, Format=RFC3339
+  string Device                     = 1;  // IP address or ID of the device
+  string LearningFinishDatetime     = 2;  // TZ=UTC, Format=RFC3339
+  bytes Scaler                      = 3;
+  bytes Model                       = 4;
+  float DLThreshold                 = 5;
+  repeated float TrainLoss          = 6;  // Use Loss Graph
+  repeated float ValidLoss          = 7;  // Use Loss Graph
+  repeated float MSE                = 8;  // Use Mean Squared Error Graph
 }
-
-// The following is a vim modeline, it autoconfigures vim to have the
-// appropriate tabbing and whitespace management to edit this file
-//
-// vim: ai:ts=4:noet:sts=4

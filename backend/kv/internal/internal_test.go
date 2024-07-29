@@ -629,3 +629,29 @@ func TestMarshalNetworkDeviceOrg(t *testing.T) {
 		t.Fatalf("Mismatch in original and copied NetworkDeviceGroup struct: got %#v, want %#v", vv, v)
 	}
 }
+
+func TestMarshalMLNxRst(t *testing.T) {
+	v := cloudhub.MLNxRst{
+		Device:                 "192.168.1.1",
+		LearningFinishDatetime: "2024-07-26T10:00:00Z",
+		Epsilon:                0.01,
+		MeanMatrix:             "[1.0, 2.0]",
+		CovarianceMatrix:       "[[1.0, 0.0], [0.0, 1.0]]",
+		K:                      1.5,
+		Mean:                   2.0,
+		MDThreshold:            3.0,
+		MDArray:                []float32{0.5, 1.2, 0.8},
+		CPUArray:               []float32{0.2, 0.3, 0.4},
+		TrafficArray:           []float32{0.1, 0.2, 0.3},
+		GaussianArray:          []float32{0.05, 0.15, 0.25},
+	}
+
+	var vv cloudhub.MLNxRst
+	if buf, err := internal.MarshalMLNxRst(&v); err != nil {
+		t.Fatal("Marshal failed:", err)
+	} else if err := internal.UnmarshalMLNxRst(buf, &vv); err != nil {
+		t.Fatal("Unmarshal failed:", err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("Mismatch in original and copied MLNxRst struct: got %#v, want %#v", vv, v)
+	}
+}

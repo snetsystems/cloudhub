@@ -56,6 +56,7 @@ const (
 	ErrTemplatesInvalid                = Error("template is invalid")
 	ErrTemplateInvalid                 = Error("invalid template")
 	ErrTemplateNotFound                = Error("template not found")
+	ErrMLNxRstNotFound                 = Error("MLNxRet not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -1225,6 +1226,10 @@ type KVClient interface {
 	CSPStore() CSPStore
 	// NetworkDeviceStore returns the kv's NetworkDeviceStore type.
 	NetworkDeviceStore() NetworkDeviceStore
+	// NetworkDeviceOrg returns the kv's NetworkDeviceOrg type.
+	NetworkDeviceOrgStore() NetworkDeviceOrgStore
+	// MLNxRstStore returns the kv's MLNxRstStore type.
+	MLNxRstStore() MLNxRstStore
 }
 
 // NetworkDeviceOrgQuery represents the attributes that a networkDeviceOrg may be retrieved by.
@@ -1386,4 +1391,38 @@ type AIConfig struct {
 	DockerCmd       string `json:"docker-cmd"`
 	LogstashPath    string `json:"logstash-path"`
 	PredictionRegex string `json:"prediction-regex"`
+}
+
+// MLNxRstQuery represents the attributes that a MLNxRst may be retrieved by.
+// It is predominantly used in the MLNxRstStore.Get method.
+type MLNxRstQuery struct {
+	ID *string
+}
+
+// MLNxRstStore is the Storage and retrieval of information
+type MLNxRstStore interface {
+	All(context.Context) ([]MLNxRst, error)
+	Add(context.Context, *MLNxRst) (*MLNxRst, error)
+
+	Delete(context.Context, *MLNxRst) error
+
+	Get(ctx context.Context, q MLNxRstQuery) (*MLNxRst, error)
+
+	Update(context.Context, *MLNxRst) error
+}
+
+// MLNxRst represents the result of a Machine Learning (ML) process
+type MLNxRst struct {
+	Device                 string    `json:"device_ip"`                // IP address or ID of the device
+	LearningFinishDatetime string    `json:"learning_finish_datetime"` // TZ=UTC, Format=RFC3339
+	Epsilon                float64   `json:"epsilon"`                  // ML Result value
+	MeanMatrix             string    `json:"mean_matrix"`              // 1x2 mean numpy matrix
+	CovarianceMatrix       string    `json:"covariance_matrix"`        // 2x2 covariance numpy matrix
+	K                      float32   `json:"k"`                        // Decision coefficient for determination of threshold
+	Mean                   float32   `json:"mean"`                     // Mean value by whole elements
+	MDThreshold            float32   `json:"md_threshold"`             // MDThreshold = mean * K * Sensitivity
+	MDArray                []float32 `json:"md_array"`                 // Mahalanobis distance array
+	CPUArray               []float32 `json:"cpu_array"`                // Use Gaussian Graph
+	TrafficArray           []float32 `json:"traffic_array"`            // Use Gaussian Graph
+	GaussianArray          []float32 `json:"gaussian_array"`           // Use Gaussian Graph
 }

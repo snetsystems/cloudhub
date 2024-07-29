@@ -410,6 +410,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Device Management Learning
 	router.POST("/cloudhub/v1/ai/network/managements/learning/config", EnsureAdmin(service.LearningDeviceManagement))
 
+	// Device Learning Result
+	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/ml", EnsureViewer(service.GetMLNxRst))
+
 	// Device Management tick script
 	router.POST("/cloudhub/v1/ai/network/managements/script/org", EnsureAdmin(service.CreateKapacitorTask))
 	router.PATCH("/cloudhub/v1/ai/network/managements/script/org/:id", EnsureAdmin(service.UpdateKapacitorTask))
@@ -421,6 +424,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v1/ai/network/managements/orgs/", EnsureAdmin(service.AddNetworkDeviceOrg))
 	router.PATCH("/cloudhub/v1/ai/network/managements/orgs/:id", EnsureAdmin(service.UpdateNetworkDeviceOrg))
 	router.DELETE("/cloudhub/v1/ai/network/managements/orgs/:id", EnsureAdmin(service.RemoveNetworkDeviceOrg))
+
 	// SNMP Management
 	router.POST("/cloudhub/v1/snmp/validation", EnsureViewer(service.SNMPConnTestBulk))
 
