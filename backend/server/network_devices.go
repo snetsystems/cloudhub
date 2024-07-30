@@ -83,33 +83,6 @@ type deviceMapByOrg struct {
 	AllDevices            []string
 }
 
-type manageDeviceOrg struct {
-	ID                     string `json:"device_id"`
-	IsCollecting           bool   `json:"is_collecting"`
-	IsCollectingCfgWritten bool   `json:"is_collecting_cfg_written"`
-}
-
-type manageLearningDeviceOrg struct {
-	ID         string `json:"device_id"`
-	IsLearning bool   `json:"is_learning"`
-}
-
-type deviceGroupByOrg map[string][]manageDeviceOrg
-type learningDeviceByOrg map[string][]manageLearningDeviceOrg
-
-type collectingFilteredDevices struct {
-	devicesGroupByOrg deviceGroupByOrg
-	failedDevices     map[string]string
-	networkDevicesMap map[string]*cloudhub.NetworkDevice
-	deviceOrgMap      map[string]string
-}
-type learnFilteredDevices struct {
-	learningDevicesGroupByOrg learningDeviceByOrg
-	failedDevices             map[string]string
-	networkDevicesMap         map[string]*cloudhub.NetworkDevice
-	deviceOrgMap              map[string]string
-}
-
 // State type definition
 type State string
 
@@ -477,9 +450,8 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	for _, orgInfo := range orgsToUpdate {
-		orgInfo.CollectedDevicesIDs = filterValidDeviceIDs(ctx, s, orgInfo.CollectedDevicesIDs)
-		statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo)
+	for _, org := range orgsToUpdate {
+		statusCode, resp, err := s.manageLogstashConfig(ctx, &org)
 		if err != nil {
 			for _, devicesIDs := range devicesGroupByOrg {
 				for _, id := range devicesIDs {
@@ -499,9 +471,9 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			}
 			continue
 		}
-		if _, exists := restartCollectorServers[orgInfo.CollectorServer]; !exists {
-			restartCollectorServers[orgInfo.CollectorServer] = orgInfo.CollectorServer
-			_, _, err := s.restartDocker(orgInfo.CollectorServer)
+		if _, exists := restartCollectorServers[org.CollectorServer]; !exists {
+			restartCollectorServers[org.CollectorServer] = org.CollectorServer
+			_, _, err := s.restartDocker(org.CollectorServer)
 			if err != nil {
 				for _, devicesIDs := range devicesGroupByOrg {
 					for _, id := range devicesIDs {
@@ -514,8 +486,8 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, &orgInfo)
-		msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), orgInfo.ID)
+		err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, &org)
+		msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), org.ID)
 		s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
 		if err != nil {
 			for _, devicesIDs := range devicesGroupByOrg {
@@ -778,6 +750,33 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
+type manageDeviceOrg struct {
+	ID                     string `json:"device_id"`
+	IsCollecting           bool   `json:"is_collecting"`
+	IsCollectingCfgWritten bool   `json:"is_collecting_cfg_written"`
+}
+
+type manageLearningDeviceOrg struct {
+	ID         string `json:"device_id"`
+	IsLearning bool   `json:"is_learning"`
+}
+
+type deviceGroupByOrg map[string][]manageDeviceOrg
+type learningDeviceByOrg map[string][]manageLearningDeviceOrg
+
+type collectingFilteredDevices struct {
+	devicesGroupByOrg deviceGroupByOrg
+	failedDevices     map[string]string
+	networkDevicesMap map[string]*cloudhub.NetworkDevice
+	deviceOrgMap      map[string]string
+}
+type learnFilteredDevices struct {
+	learningDevicesGroupByOrg learningDeviceByOrg
+	failedDevices             map[string]string
+	networkDevicesMap         map[string]*cloudhub.NetworkDevice
+	deviceOrgMap              map[string]string
+}
+
 // MonitoringConfigManagement is LogStash Config Management
 func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Request) {
 	type requestData struct {
@@ -890,7 +889,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 	// Update the store only for successful orgInfos
 	for org, orgInfo := range orgsToUpdate {
-		orgInfo.CollectedDevicesIDs = filterValidDeviceIDs(ctx, s, orgInfo.CollectedDevicesIDs)
+
 		statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo)
 		if err != nil {
 			for _, device := range devicesData.devicesGroupByOrg[org] {
@@ -1003,7 +1002,6 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 
 	// Update the store only for successful orgInfos
 	for org, orgInfo := range orgsToUpdate {
-		orgInfo.LearnedDevicesIDs = filterValidDeviceIDs(ctx, s, orgInfo.LearnedDevicesIDs)
 		existOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &org})
 		if err != nil && existOrg == nil {
 			s.Store.NetworkDeviceOrg(ctx).Add(ctx, &orgInfo)
@@ -1537,17 +1535,4 @@ func (s *Service) filterDeviceBySNMPConfigV3(device cloudhub.NetworkDevice, orgN
 		SecurityLevel: reqConfig.SecurityLevel,
 		OrgName:       orgName,
 	}
-}
-
-func filterValidDeviceIDs(ctx context.Context, s *Service, deviceIDs []string) []string {
-	var validDeviceIDs []string
-
-	for _, deviceID := range deviceIDs {
-		_, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
-		if err == nil {
-			validDeviceIDs = append(validDeviceIDs, deviceID)
-		}
-	}
-
-	return validDeviceIDs
 }

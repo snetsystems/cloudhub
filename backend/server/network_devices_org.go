@@ -399,6 +399,7 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		LearningCron: req.LearningCron,
 		AIKapacitor:  &deviceOrg.AIKapacitor,
 		TaskStatus:   req.TaskStatus,
+		ProcCnt:      req.ProcCnt,
 	}
 	err = manageLearningTask(ctx, s, org, reqTask, deviceOrg)
 	if err != nil {
