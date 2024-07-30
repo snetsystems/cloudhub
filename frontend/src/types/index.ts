@@ -144,6 +144,7 @@ import {
   privProtocolTextToValue,
   authProtocolValueToText,
   privProtocolValueToText,
+  SecurityLevelMapping,
 } from './deviceManagement'
 
 import {AiModal, HeaderNavigationObj} from './aiModal'
@@ -309,4 +310,5 @@ export {
   privProtocolTextToValue,
   authProtocolValueToText,
   privProtocolValueToText,
+  SecurityLevelMapping,
 }

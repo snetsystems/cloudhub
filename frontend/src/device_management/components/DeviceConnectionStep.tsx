@@ -26,6 +26,7 @@ import {
   SSHConfig,
   authProtocolValueToText,
   privProtocolValueToText,
+  SecurityLevelMapping,
 } from 'src/types'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -142,11 +143,12 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
     } = this.props
 
     const securityLevel = deviceData?.snmp_config?.security_level
+    const securityLevelLower = securityLevel ? securityLevel.toLowerCase() : ''
     const securityLevelDropdownStyle = this.getSecurityLevelDropdownStyle(
-      securityLevel
+      securityLevelLower
     )
     const authenticationProtocolDropdownStyle = this.getAuthenticationProtocolDropdownStyle(
-      securityLevel
+      securityLevelLower
     )
     const privacyProtocolDropdownStyle = this.getPrivacyProtocolDropdownStyle()
 
@@ -157,7 +159,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
           <Dropdown
             items={SecurityLevels}
             onChoose={onChooseDeviceDataDropdown('security_level')}
-            selected={securityLevel}
+            selected={SecurityLevelMapping[securityLevelLower]}
             className="dropdown-stretch"
           />
         </div>
@@ -166,7 +168,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
           label={'Security User'}
           onChange={onChangeDeviceData('security_name')}
         />
-        {securityLevel && securityLevel !== 'noAuthNoPriv' && (
+        {securityLevelLower !== 'noauthnopriv' && (
           <>
             <div
               className="form-group col-xs-6"
@@ -192,7 +194,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
             />
           </>
         )}
-        {securityLevel === 'authPriv' && (
+        {securityLevelLower === 'authpriv' && (
           <>
             <div
               className="form-group col-xs-6"
@@ -226,18 +228,22 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
     return version === '3' ? {} : {height: '100px'}
   }
 
-  private getSecurityLevelDropdownStyle = level => {
-    switch (level) {
-      case 'noAuthNoPriv':
+  private getSecurityLevelDropdownStyle = (level: string) => {
+    const levelLower = level ? level.toLowerCase() : ''
+
+    switch (levelLower) {
+      case 'noauthnopriv':
         return {height: '150px'}
       default:
         return {}
     }
   }
 
-  private getAuthenticationProtocolDropdownStyle = level => {
-    switch (level) {
-      case 'authNoPriv':
+  private getAuthenticationProtocolDropdownStyle = (level: string) => {
+    const levelLower = level ? level.toLowerCase() : ''
+
+    switch (levelLower) {
+      case 'authnopriv':
         return {height: '235px'}
       default:
         return {}

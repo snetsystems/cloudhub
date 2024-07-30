@@ -256,13 +256,52 @@ class ImportDevicePage extends PureComponent<Props, State> {
   private generateSNMPConfigs = (): SNMPConnectionRequest[] => {
     const {devicesDataParsedFromCSV} = this.state
 
-    return devicesDataParsedFromCSV.map(snmpConfig => ({
-      device_ip: snmpConfig?.device_ip,
-      community: snmpConfig?.snmp_community,
-      port: snmpConfig?.snmp_port,
-      version: snmpConfig?.snmp_version,
-      protocol: snmpConfig?.snmp_protocol,
-    }))
+    return devicesDataParsedFromCSV.map(snmpConfig => {
+      const {
+        device_ip,
+        snmp_community,
+        snmp_port,
+        snmp_version,
+        snmp_protocol,
+        security_name,
+        auth_protocol,
+        auth_pass,
+        priv_protocol,
+        priv_pass,
+        security_level,
+      } = snmpConfig
+
+      const snmpVersionString = String(snmp_version)
+      const securityLevelLower = security_level
+        ? security_level.toLowerCase()
+        : ''
+
+      return {
+        device_ip,
+        community: snmpVersionString === '3' ? '' : snmp_community,
+        port: snmp_port,
+        version: snmpVersionString,
+        protocol: snmp_protocol,
+        security_level: snmpVersionString === '3' ? security_level : '',
+        security_name: snmpVersionString === '3' ? security_name : '',
+        auth_protocol:
+          snmpVersionString === '3' && securityLevelLower !== 'noauthnopriv'
+            ? auth_protocol
+            : '',
+        auth_pass:
+          snmpVersionString === '3' && securityLevelLower !== 'noauthnopriv'
+            ? auth_pass
+            : '',
+        priv_protocol:
+          snmpVersionString === '3' && securityLevelLower === 'authpriv'
+            ? priv_protocol
+            : '',
+        priv_pass:
+          snmpVersionString === '3' && securityLevelLower === 'authpriv'
+            ? priv_pass
+            : '',
+      }
+    })
   }
 
   private handleSNMPConnection = (
@@ -289,7 +328,7 @@ class ImportDevicePage extends PureComponent<Props, State> {
       importDevicePageStatus: 'DeviceStatus',
       isDeviceDataSaveButtonEnabled: isDeviceDataSaveButtonEnabled,
       deviceStatusTableData: deviceStatusTableData,
-      devicesData: devicesData,
+      devicesData: devicesData as [] | DeviceData[],
       deviceStatusMessageJSXElement: deviceStatusMessageJSXElement,
     })
   }
@@ -317,6 +356,24 @@ class ImportDevicePage extends PureComponent<Props, State> {
             snmpConnectionSuccessDevice.device_ip === deviceData.device_ip
         )
 
+        const {
+          snmp_community,
+          snmp_port,
+          snmp_version,
+          snmp_protocol,
+          security_name,
+          auth_protocol,
+          auth_pass,
+          priv_protocol,
+          priv_pass,
+          security_level,
+        } = deviceData
+
+        const snmpVersionString = String(snmp_version)
+        const securityLevelLower = security_level
+          ? security_level.toLowerCase()
+          : ''
+
         return {
           organization: deviceData?.organization || '',
           device_ip: deviceData?.device_ip || '',
@@ -330,10 +387,28 @@ class ImportDevicePage extends PureComponent<Props, State> {
             port: deviceData?.ssh_port || 22,
           },
           snmp_config: {
-            community: deviceData?.snmp_community || '',
-            port: deviceData?.snmp_port || 161,
-            version: deviceData?.snmp_version || '1',
-            protocol: deviceData?.snmp_protocol || '',
+            community: snmpVersionString === '3' ? '' : snmp_community,
+            port: snmp_port,
+            version: snmpVersionString,
+            protocol: snmp_protocol,
+            security_level: snmpVersionString === '3' ? security_level : '',
+            security_name: snmpVersionString === '3' ? security_name : '',
+            auth_protocol:
+              snmpVersionString === '3' && securityLevelLower !== 'noauthnopriv'
+                ? auth_protocol
+                : '',
+            auth_pass:
+              snmpVersionString === '3' && securityLevelLower !== 'noauthnopriv'
+                ? auth_pass
+                : '',
+            priv_protocol:
+              snmpVersionString === '3' && securityLevelLower === 'authpriv'
+                ? priv_protocol
+                : '',
+            priv_pass:
+              snmpVersionString === '3' && securityLevelLower === 'authpriv'
+                ? priv_pass
+                : '',
           },
         }
       })

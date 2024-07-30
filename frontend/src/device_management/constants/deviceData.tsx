@@ -75,7 +75,7 @@ export const PrivProtocols: DropdownItem[] = [
 ]
 
 export const IMPORT_DEVICE_CSV_Template =
-  'device_ip,organization,snmp_community,snmp_port,snmp_version,snmp_protocol,ssh_user_id,ssh_password,ssh_en_password,ssh_port'
+  'device_ip,organization,snmp_community,snmp_port,snmp_version,snmp_protocol,security_level,security_name,auth_protocol,auth_pass,priv_protocol,priv_pass,ssh_user_id,ssh_password,ssh_en_password,ssh_port'
 
 export const SNMP_CONNECTION_URL = '/cloudhub/v1/snmp/validation'
 

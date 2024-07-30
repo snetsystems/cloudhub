@@ -39,7 +39,14 @@ export interface MonitoringModalProps {
 }
 
 type snmpVersion = '1' | '2c' | '3'
-type SecurityLevel = 'noAuthNoPriv' | 'authNoPriv' | 'authPriv' | ''
+type SecurityLevel =
+  | 'noAuthNoPriv'
+  | 'authNoPriv'
+  | 'authPriv'
+  | 'noauthnopriv'
+  | 'authnopriv'
+  | 'authpriv'
+  | ''
 
 export type AuthProtocol =
   | 'md5'
@@ -78,7 +85,7 @@ export interface SNMPConnectionRequest {
   device_ip: string
   community?: string
   port?: number
-  version?: snmpVersion
+  version?: snmpVersion | string
   protocol?: string
   security_level?: SecurityLevel
   security_name?: string
@@ -328,5 +335,15 @@ export const privProtocolValueToText: Record<PrivProtocol, string> = {
   aes128: 'AES-128',
   aes192: 'AES-192',
   aes256: 'AES-256',
+  '': '',
+} as const
+
+export const SecurityLevelMapping: {[key in SecurityLevel]: SecurityLevel} = {
+  noAuthNoPriv: 'noAuthNoPriv',
+  authNoPriv: 'authNoPriv',
+  authPriv: 'authPriv',
+  noauthnopriv: 'noAuthNoPriv',
+  authnopriv: 'authNoPriv',
+  authpriv: 'authPriv',
   '': '',
 } as const
