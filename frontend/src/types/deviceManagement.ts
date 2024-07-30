@@ -195,9 +195,10 @@ export interface KapacitorForNetworkDeviceOrganization {
 export interface LearningOrganizationOption {
   data_duration: number
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
-  ai_kapacitor?: KapacitorForNetworkDeviceOrganization
   learning_cron?: string
+  ai_kapacitor?: KapacitorForNetworkDeviceOrganization
   task_status?: 1 | 2
+  process_count?: number
 }
 
 export interface LearningOption extends LearningOrganizationOption {
@@ -216,14 +217,15 @@ export interface DevicesOrgData {
   organization: OrganizationID
   data_duration: number
   ml_function: typeof MLFunctionMsg[keyof typeof MLFunctionMsg]
+  prediction_mode: typeof PREDICT_MODE[keyof typeof PREDICT_MODE]
+  learned_devices_ids: string[]
+  collector_server: string
+  load_module: string
+  is_prediction_active: false
+  learning_cron: string
+  process_count: number
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
-  prediction_mode?: typeof PREDICT_MODE[keyof typeof PREDICT_MODE]
-  learned_devices_ids?: string[]
-  collector_server?: string
-  load_module?: string
-  is_prediction_active?: false
   collected_devices_ids?: string[]
-  learning_cron?: string
 }
 
 export interface DeviceOrganizationStatus {

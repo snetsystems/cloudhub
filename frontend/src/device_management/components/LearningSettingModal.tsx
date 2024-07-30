@@ -28,6 +28,7 @@ import {
   LEARN_TASK_PREFIX,
   MLFunctionMsg,
   MONITORING_MODAL_INFO,
+  DEFAULT_PROCESS_COUNT,
 } from 'src/device_management/constants'
 
 // Action
@@ -114,11 +115,12 @@ function LearningSettingModal({
   const [selectedKapacitor, setSelectedKapacitor] = useState<Kapacitor | null>(
     null
   )
-  const [taskForTiskscriptUpdate, setTaskForTiskscriptUpdate] = useState<Task>(
-    DEFAULT_TASK
-  )
+  const [currentTask, setCurrentTask] = useState<Task>(DEFAULT_TASK)
   const [cronSchedule, setCronSchedule] = useState<string>(
     DEFAULT_CRON_SCHEDULE
+  )
+  const [processCount, setProcessCount] = useState<number>(
+    DEFAULT_PROCESS_COUNT
   )
   const [selectedSource, setSelectedSource] = useState<Source>(source)
 
@@ -146,6 +148,7 @@ function LearningSettingModal({
         }))
         getKapacitorsBySelectedSource(organizationID)
         setCronSchedule(DEFAULT_CRON_SCHEDULE)
+        setProcessCount(DEFAULT_PROCESS_COUNT)
         fetchAlertRule(organizationID)
       }
     }
@@ -187,6 +190,10 @@ function LearningSettingModal({
       setCronSchedule(currentNetworkDeviceOrganization.learning_cron)
     }
 
+    if (currentNetworkDeviceOrganization?.process_count) {
+      setProcessCount(currentNetworkDeviceOrganization.process_count)
+    }
+
     return {
       organization: organizationID,
       data_duration: currentNetworkDeviceOrganization.data_duration,
@@ -206,6 +213,10 @@ function LearningSettingModal({
       setCronSchedule(currentNetworkDeviceOrganization.learning_cron)
     }
 
+    if (currentNetworkDeviceOrganization?.process_count) {
+      setProcessCount(currentNetworkDeviceOrganization.process_count)
+    }
+
     return {
       organization: organizationID,
       data_duration: currentNetworkDeviceOrganization.data_duration,
@@ -218,8 +229,9 @@ function LearningSettingModal({
     value: DropdownItem | Source
   ) => {
     if (key === 'organization') {
-      setTaskForTiskscriptUpdate(DEFAULT_TASK)
+      setCurrentTask(DEFAULT_TASK)
       setCronSchedule(DEFAULT_CRON_SCHEDULE)
+      setProcessCount(DEFAULT_PROCESS_COUNT)
 
       const selectedSource = getSourceBySourceID(sources, (value as Source).id)
       const organizationID =
@@ -255,7 +267,7 @@ function LearningSettingModal({
   }
 
   const fetchAlertRule = async (organizationID: string) => {
-    setTaskForTiskscriptUpdate(DEFAULT_TASK)
+    setCurrentTask(DEFAULT_TASK)
 
     try {
       const isNetworkDeviceOrganizationValid = isNetworkDeviceOrganizationCreatedWithSrcId(
@@ -333,6 +345,7 @@ function LearningSettingModal({
     kapacitor: Kapacitor
   ) => {
     setCronSchedule(DEFAULT_CRON_SCHEDULE)
+    setProcessCount(DEFAULT_PROCESS_COUNT)
     fetchAlertRuleByKapacitor(kapacitor)
     setSelectedKapacitor(kapacitor)
     setIsKapacitorInValid(false)
@@ -343,7 +356,7 @@ function LearningSettingModal({
   }
 
   const fetchAlertRuleByKapacitor = async (kapacitor: Kapacitor) => {
-    setTaskForTiskscriptUpdate(DEFAULT_TASK)
+    setCurrentTask(DEFAULT_TASK)
 
     try {
       const organizationID = getOrganizationIdByName(
@@ -413,6 +426,7 @@ function LearningSettingModal({
           organization: organization,
           ...rest,
           learning_cron: cronSchedule,
+          process_count: processCount,
         },
       })
 
@@ -454,6 +468,7 @@ function LearningSettingModal({
           ...rest,
           task_status: getTaskStatus(),
           learning_cron: cronSchedule,
+          process_count: processCount,
         },
       })
 
@@ -467,7 +482,7 @@ function LearningSettingModal({
   }
 
   const getTaskStatus = (): 1 | 2 => {
-    const status = taskForTiskscriptUpdate?.status
+    const status = currentTask?.status
     return status
       ? status === 'enabled'
         ? 2
@@ -497,15 +512,15 @@ function LearningSettingModal({
     try {
       const rule = await getSpecificRule(kapacitor, ruleID)
 
-      saveFormatTaskForTickscriptUpdate(rule)
+      saveCurrentTask(rule)
     } catch (error) {
       console.error(parseErrorMessage(error))
     }
   }
 
-  const saveFormatTaskForTickscriptUpdate = (fetchedRule: AlertRule) => {
+  const saveCurrentTask = (fetchedRule: AlertRule) => {
     if (fetchedRule) {
-      setTaskForTiskscriptUpdate({
+      setCurrentTask({
         id: fetchedRule.id,
         name: fetchedRule.name,
         status: fetchedRule.status,
@@ -514,11 +529,30 @@ function LearningSettingModal({
         type: fetchedRule.type,
       })
 
+      setOriginalProcessCount(fetchedRule)
       setOriginalCronSchedule(fetchedRule)
     } else {
-      setTaskForTiskscriptUpdate(DEFAULT_TASK)
+      setCurrentTask(DEFAULT_TASK)
       setCronSchedule(DEFAULT_CRON_SCHEDULE)
+      setProcessCount(DEFAULT_PROCESS_COUNT)
     }
+  }
+
+  const setOriginalProcessCount = (rule: AlertRule) => {
+    const processCountRegex = /var procCnt = '([^']*)'/
+    const match = rule?.tickscript?.match(processCountRegex)
+    let processCountValue
+
+    try {
+      processCountValue = match ? Number(match?.[1]) : DEFAULT_PROCESS_COUNT
+      if (isNaN(processCountValue)) {
+        processCountValue = DEFAULT_PROCESS_COUNT
+      }
+    } catch (e) {
+      processCountValue = DEFAULT_PROCESS_COUNT
+    }
+
+    setProcessCount(processCountValue)
   }
 
   const setOriginalCronSchedule = (rule: AlertRule) => {
@@ -556,6 +590,16 @@ function LearningSettingModal({
   const convertValueToKey = (value: string, obj: Object) => {
     const index = Object.values(obj).findIndex(i => i === value)
     return Object.keys(obj)[index]
+  }
+
+  const handleProcessCountChange = (value: string) => {
+    const numericValue = Number(value)
+
+    if (!isNaN(numericValue)) {
+      setProcessCount(numericValue)
+    } else {
+      setProcessCount(DEFAULT_PROCESS_COUNT)
+    }
   }
 
   return (
@@ -606,9 +650,13 @@ function LearningSettingModal({
                     type="text"
                     label="Cron Schedule (UTC Time Zone)"
                     onChange={setCronSchedule}
-                    newClassName="form-group col-xs-12"
                   />
-
+                  <WizardTextInput
+                    value={`${processCount}`}
+                    type="number"
+                    label="Process Count"
+                    onChange={handleProcessCountChange}
+                  />
                   <div
                     className="form-group col-xs-12"
                     style={{height: '95px'}}

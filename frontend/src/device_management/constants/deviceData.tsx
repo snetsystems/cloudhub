@@ -123,6 +123,8 @@ export const DEFAULT_LEARNING_OPTION: LearningOption = {
 
 export const DEFAULT_CRON_SCHEDULE = '1 0 1,15 * *'
 
+export const DEFAULT_PROCESS_COUNT = 5
+
 export const NETWORK_MANAGEMENT_ORGANIZATIONS_URL =
   '/cloudhub/v1/ai/network/managements/orgs'
 
