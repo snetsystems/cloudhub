@@ -168,7 +168,7 @@ class DeviceConnection extends PureComponent<Props, State> {
           isSkippableStep={false}
           onNext={this.handleValidateSNMPConnection}
           nextLabel={'Next'}
-          maxHeightForFancyScrollbar={500}
+          maxHeightForFancyScrollbar={this.getWizardMaxHeight()}
         >
           <DeviceConnectionStep
             deviceData={deviceData}
@@ -209,6 +209,28 @@ class DeviceConnection extends PureComponent<Props, State> {
         </WizardStep>
       </WizardOverlay>
     )
+  }
+
+  private getWizardMaxHeight = () => {
+    const {deviceData} = this.state
+    const version = deviceData?.snmp_config?.version || '2c'
+    const securityLevel = deviceData?.snmp_config?.security_level
+
+    if (version === '1' || version === '2c') {
+      return 260
+    }
+
+    if (version === '3') {
+      if (securityLevel === 'noAuthNoPriv') {
+        return 295
+      } else if (securityLevel === 'authNoPriv') {
+        return 355
+      } else if (securityLevel === 'authPriv') {
+        return 410
+      }
+    }
+
+    return 260
   }
 
   private handleResetWizard = () => {

@@ -223,7 +223,7 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
   }
 
   private getProtocolDropdownStyle = (version: string) => {
-    return version === '3' ? {} : {height: '205px'}
+    return version === '3' ? {} : {height: '100px'}
   }
 
   private getSecurityLevelDropdownStyle = level => {
