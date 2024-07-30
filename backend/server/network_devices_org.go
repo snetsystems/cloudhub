@@ -96,6 +96,8 @@ const (
 	DataDuration    = 15
 	LearningCron    = "1 0 1,15 * *"
 	RetentionPolicy = "autogen"
+	InitTaskStatus  = 2 //enabled
+	ProcCnt         = 5
 )
 
 func isAllowedMLFunction(function string) bool {
@@ -105,6 +107,27 @@ func isAllowedMLFunction(function string) bool {
 	default:
 		return false
 	}
+}
+func (r *deviceOrgRequest) UnmarshalJSON(data []byte) error {
+	type Alias deviceOrgRequest
+	aux := &struct {
+		TaskStatus int `json:"task_status"`
+		ProcCnt    int `json:"process_count"`
+		*Alias
+	}{
+		TaskStatus: InitTaskStatus,
+		ProcCnt:    ProcCnt,
+		Alias:      (*Alias)(r),
+	}
+
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	r.TaskStatus = aux.TaskStatus
+	r.ProcCnt = aux.ProcCnt
+
+	return nil
 }
 
 func (r *deviceOrgRequest) validCreate() error {
