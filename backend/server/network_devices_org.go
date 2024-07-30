@@ -111,21 +111,28 @@ func isAllowedMLFunction(function string) bool {
 func (r *deviceOrgRequest) UnmarshalJSON(data []byte) error {
 	type Alias deviceOrgRequest
 	aux := &struct {
-		TaskStatus int `json:"task_status"`
-		ProcCnt    int `json:"process_count"`
+		TaskStatus *int `json:"task_status,omitempty"`
+		ProcCnt    *int `json:"process_count,omitempty"`
 		*Alias
 	}{
-		TaskStatus: InitTaskStatus,
-		ProcCnt:    ProcCnt,
-		Alias:      (*Alias)(r),
+		Alias: (*Alias)(r),
 	}
 
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 
-	r.TaskStatus = aux.TaskStatus
-	r.ProcCnt = aux.ProcCnt
+	if aux.TaskStatus == nil {
+		r.TaskStatus = InitTaskStatus
+	} else {
+		r.TaskStatus = *aux.TaskStatus
+	}
+
+	if aux.ProcCnt == nil {
+		r.ProcCnt = ProcCnt
+	} else {
+		r.ProcCnt = *aux.ProcCnt
+	}
 
 	return nil
 }
