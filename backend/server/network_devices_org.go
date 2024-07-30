@@ -353,6 +353,7 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	previousAIKapacitor = deviceOrg.AIKapacitor
+	deviceOrg.ProcCnt = req.ProcCnt
 
 	if req.LoadModule != nil {
 		deviceOrg.LoadModule = *req.LoadModule
@@ -372,6 +373,7 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	if req.CollectorServer != nil {
 		deviceOrg.CollectorServer = *req.CollectorServer
 	}
+
 	if req.LearningCron != nil {
 		deviceOrg.LearningCron = *req.LearningCron
 	}
