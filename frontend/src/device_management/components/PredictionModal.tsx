@@ -68,7 +68,7 @@ export const PredictionModal = ({
         )
       }
     } catch (e) {
-      console.log('error eee', e)
+      console.log(e)
     }
 
     setLoading(false)
@@ -83,7 +83,7 @@ export const PredictionModal = ({
         setDlResultData(result.data)
       }
     } catch (e) {
-      console.log('error eee', e)
+      console.log(e)
     }
 
     setLoading(false)
