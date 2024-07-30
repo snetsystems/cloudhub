@@ -57,6 +57,7 @@ const (
 	ErrTemplateInvalid                 = Error("invalid template")
 	ErrTemplateNotFound                = Error("template not found")
 	ErrMLNxRstNotFound                 = Error("MLNxRet not found")
+	ErrDLNxRstNotFound                 = Error("DLNxRet not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -1404,6 +1405,7 @@ type MLNxRstQuery struct {
 // MLNxRstStore is the Storage and retrieval of information
 type MLNxRstStore interface {
 	All(context.Context) ([]MLNxRst, error)
+
 	Add(context.Context, *MLNxRst) (*MLNxRst, error)
 
 	Delete(context.Context, *MLNxRst) error
@@ -1427,4 +1429,33 @@ type MLNxRst struct {
 	CPUArray               []float32 `json:"cpu_array"`                // Use Gaussian Graph
 	TrafficArray           []float32 `json:"traffic_array"`            // Use Gaussian Graph
 	GaussianArray          []float32 `json:"gaussian_array"`           // Use Gaussian Graph
+}
+
+// DLNxRstQuery represents the attributes that a DLNxRst may be retrieved by.
+// It is predominantly used in the DLNxRstStore.Get method.
+type DLNxRstQuery struct {
+	ID *string
+}
+
+// DLNxRstStore is the Storage and retrieval of information
+type DLNxRstStore interface {
+	All(context.Context) ([]DLNxRst, error)
+
+	Add(context.Context, *DLNxRst) (*DLNxRst, error)
+
+	Delete(context.Context, *DLNxRst) error
+
+	Get(ctx context.Context, q DLNxRstQuery) (*DLNxRst, error)
+
+	Update(context.Context, *DLNxRst) error
+}
+
+// DLNxRst represents the result of a deep learning process
+type DLNxRst struct {
+	Device                 string    `json:"device"`                   // IP address of the device
+	LearningFinishDatetime string    `json:"learning_finish_datetime"` // TZ=UTC, Format=RFC3339
+	DLThreshold            float32   `json:"dl_threshold"`             // DL Threshold value
+	TrainLoss              []float32 `json:"train_loss"`               // Use Loss Graph
+	ValidLoss              []float32 `json:"valid_loss"`               // Use Loss Graph
+	MSE                    []float32 `json:"mse"`                      // Use Mean Squared Error Graph
 }

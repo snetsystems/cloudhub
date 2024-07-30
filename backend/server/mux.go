@@ -412,6 +412,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// Device Learning Result
 	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/ml", EnsureViewer(service.GetMLNxRst))
+	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/dl", EnsureViewer(service.GetDLNxRst))
 
 	// Device Management tick script
 	router.POST("/cloudhub/v1/ai/network/managements/script/org", EnsureAdmin(service.CreateKapacitorTask))
