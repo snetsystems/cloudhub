@@ -36,3 +36,27 @@ export interface AnomalyFactor {
   host: string
   time: string
 }
+
+export interface GetLearningMLData {
+  device_ip: string
+  learning_finish_datetime: string
+  epsilon: number
+  mean_matrix: number[]
+  covariance_matrix: number[][]
+  k: number
+  mean: number
+  md_threshold: number
+  md_array: number[]
+  cpu_array: number[]
+  traffic_array: number[]
+  gaussian_array: number[]
+}
+
+export interface GetLearningDLData {
+  device_ip: string
+  learning_finish_datetime: string
+  dl_threshold: number
+  train_loss: number[]
+  valid_loss: number[]
+  mse: number[]
+}

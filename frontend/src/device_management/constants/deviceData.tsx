@@ -131,6 +131,12 @@ export const NETWORK_MANAGEMENT_ORGANIZATIONS_URL =
 export const DEVICE_MANAGEMENT_SCRIPT_URL =
   '/cloudhub/v1/ai/network/managements/script/org'
 
+export const LEARNING_RST_ML_URL =
+  '/cloudhub/v1/ai/network/managements/learning/rst/ml'
+
+export const LEARNING_RST_DL_UR =
+  '/cloudhub/v1/ai/network/managements/learning/rst/dl'
+
 export const LEARN_TASK_PREFIX = 'learn-'
 export const PREDICT_TASK_PREFIX = 'predict-'
 

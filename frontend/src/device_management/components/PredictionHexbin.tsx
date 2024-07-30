@@ -10,11 +10,7 @@ import {connect} from 'react-redux'
 import {statusCal} from '../utils'
 
 interface Props {
-  onHexbinClick: (
-    num: number,
-    host: string,
-    filteredHexbinHost?: string
-  ) => void
+  onHexbinClick: (host: string, filteredHexbinHost?: string) => void
   inputData: HexagonInputData[]
   isMouseInComponent: boolean
   //redux
@@ -138,7 +134,7 @@ const PredictionHexbin = ({
       })
       .on('click', function () {
         d3.select(this).attr('x', d => {
-          onHexbinClick(d[0].index, d[0].name, filteredHexbinHost)
+          onHexbinClick(d[0].name, filteredHexbinHost)
         })
       })
   }

@@ -28,7 +28,7 @@ import {setFilteredHexbin} from '../actions'
 import {notifyPredictionHexbinGetFailed} from 'src/shared/copy/notifications'
 import PredictionTooltipView from './PredictionTooltipView'
 import {statusCal, statusHexColor} from '../utils'
-import {ComponentSize, SlideToggle} from 'src/reusable_ui'
+import PredictionHexbinToggle from './PredictionHexbinToggle'
 
 interface Props {
   source: Source
@@ -56,9 +56,13 @@ function PredictionHexbinWrapper({
 
   const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false)
 
-  const [openNum, setOpenNum] = useState<number>(null)
+  const [openNum, setOpenNum] = useState<string>(null)
 
   const [isHexbinDisplay, setIsHexbinDisplay] = useState(true)
+
+  const [isMlChartDisplay, setIsMlChartDisplay] = useState(false)
+
+  const [isDlChartDisplay, setIsDlChartDisplay] = useState(false)
 
   let intervalID
 
@@ -115,18 +119,14 @@ function PredictionHexbinWrapper({
     })
   }, [hostList])
 
-  const onHexbinClick = (
-    num: number,
-    host: string,
-    filteredHexbinHost?: string
-  ) => {
+  const onHexbinClick = (host: string, filteredHexbinHost?: string) => {
     // the way to close modal is hexbin double click
 
     if (filteredHexbinHost === host) {
-      setIsPredictionModalOpen(prev => !prev)
+      setIsPredictionModalOpen(false)
       setFilteredHexbin('')
     } else {
-      setOpenNum(num)
+      setOpenNum(host)
       setIsPredictionModalOpen(true)
       setFilteredHexbin(host)
     }
@@ -171,25 +171,34 @@ function PredictionHexbinWrapper({
           cellName={`Nodes Health Status`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
+          setModalOpen={setIsPredictionModalOpen}
         >
           {loading && (
             <LoadingDots
               className={'graph-panel__refreshing openstack-dots--loading'}
             />
           )}
-
-          <div style={{zIndex: 3}} className="page-header--right">
-            <div className="hexbin-header--right">
-              <label className="hexbin-header--label">
-                {isHexbinDisplay ? 'Hexagon' : 'Card'}
-              </label>
-              <SlideToggle
-                active={isHexbinDisplay}
-                onChange={hexbinViewHandler}
-                size={ComponentSize.Small}
-              />
-            </div>
-          </div>
+          <PredictionHexbinToggle
+            label={isHexbinDisplay ? 'Hexagon' : 'Card'}
+            onChange={hexbinViewHandler}
+            isActive={isHexbinDisplay}
+            isLeft={true}
+          />
+          <PredictionHexbinToggle
+            isActive={isDlChartDisplay}
+            onChange={() => {
+              setIsDlChartDisplay(!isDlChartDisplay)
+            }}
+            label="DL"
+            // isHide={true}
+          />
+          <PredictionHexbinToggle
+            isActive={isMlChartDisplay}
+            onChange={() => {
+              setIsMlChartDisplay(!isMlChartDisplay)
+            }}
+            label="ML"
+          />
         </PredictionDashboardHeader>
 
         {!hostList || error ? (
@@ -206,13 +215,15 @@ function PredictionHexbinWrapper({
             inputData={inputData}
           />
         )}
-        {
+        {(isMlChartDisplay || isDlChartDisplay) && isPredictionModalOpen && (
           <PredictionModal
             isOpen={isPredictionModalOpen}
             setIsOpen={setIsPredictionModalOpen}
-            index={openNum}
+            isMl={isMlChartDisplay}
+            isDl={isDlChartDisplay}
+            host={openNum}
           />
-        }
+        )}
       </div>
     </>
   )

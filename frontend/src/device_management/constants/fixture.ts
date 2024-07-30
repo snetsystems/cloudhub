@@ -1,7 +1,7 @@
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
 import {DEFAULT_AXIS} from 'src/dashboards/constants/cellEditor'
-import {Cell, CellQuery, Axes, CellType, QueryType, Source} from 'src/types'
+import {Cell, Axes, CellType, QueryType, Source} from 'src/types'
 import {
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
@@ -101,7 +101,7 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
       w: 96,
       h: 12,
       minH: 12,
-      minW: 17,
+      minW: 30,
       name: '',
       queries: [],
       type: CellType.Table,

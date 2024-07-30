@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, {useMemo} from 'react'
-import {Source, TimeRange} from 'src/types'
+import {Source} from 'src/types'
 import {Alert} from 'src/types/alerts'
 import PredictionAlertTableBody from './PredictionAlertTableBody'
 import {alertValueStatus} from 'src/shared/utils/alertValueStatus'

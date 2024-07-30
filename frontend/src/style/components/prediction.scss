@@ -4,10 +4,9 @@
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 300ms;
   background-color: $g2-kevlar;
-  width: 550px;
-  max-height: 800px;
+  width: 580px;
+  // max-height: 800px;
   //   padding: 10px;
-  overflow-y: auto;
   right: 0;
   top: 50px;
   border: 1px solid $g6-smoke;
@@ -193,6 +192,10 @@
   }
 }
 
+.chartSector {
+  padding: 12px 0;
+}
+
 .topology-group-title-container {
   width: 100%;
   text-align: center;
@@ -278,5 +281,11 @@
   100% {
     background-color: #ab0000;
     opacity: 0.8;
+  }
+}
+
+.prediction.dev-mode {
+  > * {
+    display: none;
   }
 }

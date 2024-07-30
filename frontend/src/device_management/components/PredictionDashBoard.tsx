@@ -11,7 +11,6 @@ import Authorized, {
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
 import {Cell, Me, Source, Template, TemplateValue, TimeRange} from 'src/types'
 import {fixturePredictionPageCells} from '../constants'
-import _ from 'lodash'
 import {Link} from 'react-router'
 import PredictionHexbinWrapper from './PredictionHexbinWrapper'
 import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
@@ -24,6 +23,7 @@ import PredictionDashboardWrapper from './PredictionDashboardWrapper'
 import {bindActionCreators} from 'redux'
 import {setHistogramDate, setPredictionTimeRange} from '../actions'
 import {setTimeRange} from 'src/dashboards/actions'
+import _ from 'lodash'
 
 interface Props extends ManualRefreshProps, WithRouterProps {
   host: string
@@ -282,12 +282,11 @@ const mstp = state => {
     app: {
       ephemeral: {inPresentationMode},
     },
-    auth: {isUsingAuth, me},
+    auth: {isUsingAuth},
     predictionDashboard: {predictionTimeRange},
   } = state
 
   return {
-    me,
     predictionTimeRange,
     inPresentationMode,
     isUsingAuth,
@@ -300,4 +299,11 @@ const mdtp = (dispatch: any) => ({
   setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
 })
 
-export default connect(mstp, mdtp, null)(PredictionDashBoard)
+const isEqual = (prev, next) => {
+  return _.isEqual(prev, next)
+}
+
+export default React.memo(
+  connect(mstp, mdtp, null)(PredictionDashBoard),
+  isEqual
+)

@@ -7,11 +7,7 @@ import {connect} from 'react-redux'
 
 interface Props {
   inputData: HexagonInputData[]
-  onHexbinClick: (
-    num: number,
-    host: string,
-    filteredHexbinHost?: string
-  ) => void
+  onHexbinClick: (host: string, filteredHexbinHost?: string) => void
   //redux
   filteredHexbinHost?: string
   alertHostList?: string[]
@@ -31,7 +27,7 @@ function PredictionTooltipView({
               <div
                 onClick={e => {
                   e.stopPropagation()
-                  onHexbinClick(idx, tooltip.name, filteredHexbinHost)
+                  onHexbinClick(tooltip.name, filteredHexbinHost)
                 }}
                 key={tooltip.name}
               >

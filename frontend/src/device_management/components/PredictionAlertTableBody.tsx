@@ -74,7 +74,9 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
 
   public componentDidUpdate(prevProps) {
     if (
-      prevProps.filteredHexbinHost !== this.props.filteredHexbinHost &&
+      (prevProps.filteredHexbinHost !== this.props.filteredHexbinHost ||
+        prevProps.alerts !== this.props.alerts) &&
+      !!this.props.filteredHexbinHost &&
       !!this.state.filteredAlerts
     ) {
       this.filterAlertsByHost(

@@ -211,6 +211,7 @@ const AiRoutePage = (props: Props) => {
           {currentRoute === 'prediction' && (
             //@ts-ignore
             <PredictionPage
+              me={me}
               source={source}
               cloudAutoRefresh={cloudAutoRefresh}
               manualRefresh={manualRefreshState}

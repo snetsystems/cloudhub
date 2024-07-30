@@ -157,6 +157,8 @@ import {
   HexagonData,
   HexagonInputData,
   AnomalyFactor,
+  GetLearningMLData,
+  GetLearningDLData,
 } from './prediction'
 
 export {
@@ -311,4 +313,6 @@ export {
   authProtocolValueToText,
   privProtocolValueToText,
   SecurityLevelMapping,
+  GetLearningMLData,
+  GetLearningDLData,
 }

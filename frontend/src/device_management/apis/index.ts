@@ -23,6 +23,8 @@ import {
   AppsForHost,
   Source,
   INPUT_TIME_TYPE,
+  GetLearningMLData,
+  GetLearningDLData,
 } from 'src/types'
 
 // Constants
@@ -58,6 +60,7 @@ import {
 } from 'src/types/deviceManagement'
 import {decimalUnitNumber, parseSeries} from '../utils'
 import {hasError} from 'apollo-client/core/ObservableQuery'
+import {LEARNING_RST_DL_UR, LEARNING_RST_ML_URL} from '../constants/deviceData'
 
 interface Series {
   name: string
@@ -552,4 +555,35 @@ export const getAppsForAgentHost = async (
   })
 
   return appsForHost
+}
+
+export const getLearningRstMl = async (host: string) => {
+  try {
+    const result = await AJAX<GetLearningMLData>({
+      url: LEARNING_RST_ML_URL,
+      method: 'GET',
+      params: {
+        ip: host,
+      },
+    })
+    return result as AxiosResponse<GetLearningMLData>
+  } catch (error) {
+    console.error(error)
+    return null as AxiosResponse<GetLearningMLData>
+  }
+}
+
+export const getLearningRstDL = async (host: string) => {
+  try {
+    return AJAX<GetLearningDLData>({
+      url: LEARNING_RST_DL_UR,
+      method: 'GET',
+      params: {
+        ip: host,
+      },
+    }) as Promise<AxiosResponse<GetLearningDLData>>
+  } catch (error) {
+    console.error(error)
+    return null as AxiosResponse<GetLearningDLData>
+  }
 }
