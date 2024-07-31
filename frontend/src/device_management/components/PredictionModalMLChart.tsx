@@ -1,9 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react'
-
 import {GetLearningMLData} from 'src/types'
 import {getLearningRstMl} from '../apis'
 import _ from 'lodash'
-import {NoData} from './PredictionModalNodata'
 import {MLNxRstChart} from './PredictionModalMLContent'
 
 interface Props {

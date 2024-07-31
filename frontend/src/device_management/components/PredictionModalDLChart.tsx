@@ -1,7 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react'
 import {GetLearningDLData} from 'src/types'
 import {getLearningRstDL} from 'src/device_management//apis'
-
 import {DLNxRstChart} from 'src/device_management/components/PredictionModalDLContent'
 
 interface Props {

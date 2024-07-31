@@ -97,7 +97,7 @@ export const DLNxRstChart: React.FC<DLChartSectorProps> = ({
     <div className="chartSector">
       <div>
         <ModalContentHeader
-          title="DL Rst"
+          title="DL Curve & Mean Squared Error"
           headerContents={isNoData ? [] : headerContents}
         />
       </div>

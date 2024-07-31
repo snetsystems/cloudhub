@@ -25,7 +25,7 @@ export const PredictionModal = ({
     <div className={`prediction-form ${isOpen ? 'open' : 'close'}`}>
       <FancyScrollbar autoHeight={true} maxHeight={800} autoHide={false}>
         <div className={'overlay--heading'}>
-          <div className="overlay--title">{'Prediction'}</div>
+          <div className="overlay--title">{'Learning Plot'}</div>
           <button className="overlay--dismiss" onClick={() => setIsOpen(false)}>
             close
           </button>

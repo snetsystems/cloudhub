@@ -100,7 +100,7 @@ export const MLNxRstChart: React.FC<MLChartSectorProps> = ({
     <div className="chartSector">
       <div>
         <ModalContentHeader
-          title="ML Rst"
+          title="ML Plot"
           headerContents={isNoData ? [] : headerContents}
         />
       </div>
