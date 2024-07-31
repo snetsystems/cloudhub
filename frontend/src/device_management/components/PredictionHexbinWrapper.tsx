@@ -53,6 +53,7 @@ function PredictionHexbinWrapper({
       return {
         ml: false,
         dl: false,
+        hexagon: true,
       }
     }
   }
@@ -69,7 +70,9 @@ function PredictionHexbinWrapper({
 
   const [openNum, setOpenNum] = useState<string>(null)
 
-  const [isHexbinDisplay, setIsHexbinDisplay] = useState(true)
+  const [isHexbinDisplay, setIsHexbinDisplay] = useState(
+    getMlDlTagInit().hexagon
+  )
 
   const [isMlChartDisplay, setIsMlChartDisplay] = useState(getMlDlTagInit().ml)
 
@@ -170,12 +173,14 @@ function PredictionHexbinWrapper({
 
   const hexbinViewHandler = () => {
     setIsHexbinDisplay(!isHexbinDisplay)
+    setTagLocalStorage(!isHexbinDisplay, 'hexagon')
   }
 
-  const setTagLocalStorage = (value: boolean, key: 'ml' | 'dl') => {
+  const setTagLocalStorage = (value: boolean, key: 'ml' | 'dl' | 'hexagon') => {
     const result = {
       ml: isMlChartDisplay,
       dl: isDlChartDisplay,
+      hexagon: isHexbinDisplay,
     }
 
     result[key] = value
