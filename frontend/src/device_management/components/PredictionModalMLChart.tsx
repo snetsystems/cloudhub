@@ -1,8 +1,10 @@
 import React, {useEffect, useMemo, useState} from 'react'
-import {Scatter} from 'react-chartjs-2'
+
 import {GetLearningMLData} from 'src/types'
 import {getLearningRstMl} from '../apis'
 import _ from 'lodash'
+import {NoData} from './PredictionModalNodata'
+import {MLNxRstChart} from './PredictionModalMLContent'
 
 interface Props {
   host: string
@@ -143,8 +145,8 @@ function PredictionModalMLChart({host}: Props) {
       type: 'line',
       borderColor: 'red',
       data: [
-        {x: gaussianMin, y: mlResultData?.epsilon}, // threshold 값
-        {x: gaussianMax, y: mlResultData?.epsilon}, // threshold 값
+        {x: gaussianMin, y: mlResultData?.epsilon},
+        {x: gaussianMax, y: mlResultData?.epsilon},
       ],
       order: 1,
     }
@@ -193,51 +195,14 @@ function PredictionModalMLChart({host}: Props) {
 
   return (
     <>
-      {noData ? (
-        <div className="generic-empty-state">
-          <h4 style={{margin: '90px 0'}}>No Data. </h4>
-        </div>
-      ) : loading ? (
-        <></>
-      ) : (
-        <div className="chartSector">
-          <div>
-            <span style={{whiteSpace: 'pre-wrap'}} className="span-header">
-              {`eps:\n${mlResultData?.epsilon ?? ''}`}
-            </span>
-            <br />
-            <span style={{whiteSpace: 'pre-wrap'}} className="span-header">
-              {`mean:\n${mlResultData?.mean_matrix ?? ''}`}
-            </span>
-            <br />
-            <span style={{whiteSpace: 'pre-wrap'}} className="span-header ">
-              {`cov:\n[${JSON.parse(`${mlResultData?.covariance_matrix}`)
-                .map(innerArray => `[${innerArray.join(', ')}]`)
-                .join(', \n')}]`}
-            </span>
-          </div>
-          <div className="prediction-chart-wrap">
-            <Scatter
-              //@ts-ignore
-              data={mlChartDataSet}
-              //@ts-ignore
-              options={options}
-              width={500}
-              height={300}
-            />
-          </div>
-          <div className="prediction-chart-wrap">
-            <Scatter
-              //@ts-ignore
-              data={gaussianChartDataSet}
-              //@ts-ignore
-              options={options}
-              width={500}
-              height={300}
-            />
-          </div>
-        </div>
-      )}
+      {noData && <NoData />}
+      <MLNxRstChart
+        loading={loading}
+        mlResultData={mlResultData}
+        mlChartDataSet={mlChartDataSet}
+        gaussianChartDataSet={gaussianChartDataSet}
+        options={options}
+      />
     </>
   )
 }

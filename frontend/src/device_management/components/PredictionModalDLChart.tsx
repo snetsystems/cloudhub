@@ -2,6 +2,8 @@ import React, {useEffect, useMemo, useState} from 'react'
 import {Line} from 'react-chartjs-2'
 import {GetLearningDLData} from 'src/types'
 import {getLearningRstDL} from '../apis'
+import {NoData} from './PredictionModalNodata'
+import {DLNxRstChart} from './PredictionModalDLContent'
 
 interface Props {
   host: string
@@ -143,41 +145,14 @@ function PredictionModalDLChart({host}: Props) {
 
   return (
     <>
-      {noData ? (
-        <div className="generic-empty-state">
-          <h4 style={{margin: '90px 0'}}>No Data. </h4>
-        </div>
-      ) : loading ? (
-        <></>
-      ) : (
-        <div className="chartSector">
-          <div>
-            <span style={{whiteSpace: 'pre-wrap'}} className="span-header">
-              {`dl_threshold: \n${dlResultData?.dl_threshold ?? ''}`}
-            </span>
-          </div>
-          <div className="prediction-chart-wrap">
-            <Line
-              //@ts-ignore
-              data={trainChartDataSet}
-              //@ts-ignore
-              options={options}
-              width={500}
-              height={300}
-            />
-          </div>
-          <div className="prediction-chart-wrap">
-            <Line
-              //@ts-ignore
-              data={mseChartDataSet}
-              //@ts-ignore
-              options={options}
-              width={500}
-              height={300}
-            />
-          </div>
-        </div>
-      )}
+      {noData && loading && <NoData />}
+      <DLNxRstChart
+        loading={loading}
+        dlResultData={dlResultData}
+        trainChartDataSet={trainChartDataSet}
+        mseChartDataSet={mseChartDataSet}
+        options={options}
+      />
     </>
   )
 }

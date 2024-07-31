@@ -62,14 +62,14 @@ export interface GetLearningDLData {
 }
 
 export interface MLChartSectorProps {
-  isOpen: boolean
+  loading: boolean
   mlResultData: GetLearningMLData
   mlChartDataSet: any
   gaussianChartDataSet: any
   options: any
 }
 export interface DLChartSectorProps {
-  isOpen: boolean
+  loading: boolean
   dlResultData: GetLearningDLData
   trainChartDataSet: any
   mseChartDataSet: any

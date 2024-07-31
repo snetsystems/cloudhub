@@ -4,14 +4,14 @@ import {MLChartSectorProps, ContentItem} from 'src/types/prediction'
 import ModalContentHeader from 'src/device_management/components/PredictionModalContentHeader'
 
 export const MLNxRstChart: React.FC<MLChartSectorProps> = ({
-  isOpen,
+  loading,
   mlResultData,
   mlChartDataSet,
   gaussianChartDataSet,
   options,
 }) => {
-  if (!isOpen) {
-    return null
+  if (loading) {
+    return <div>isLoading</div>
   }
   const headerContents: ContentItem[] = [
     {title: 'eps', content: mlResultData?.epsilon ?? ''},

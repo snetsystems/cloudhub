@@ -4,13 +4,13 @@ import {DLChartSectorProps, ContentItem} from 'src/types/prediction'
 import ModalContentHeader from 'src/device_management/components/PredictionModalContentHeader'
 
 export const DLNxRstChart: React.FC<DLChartSectorProps> = ({
-  isOpen,
+  loading,
   dlResultData,
   trainChartDataSet,
   mseChartDataSet,
   options,
 }) => {
-  if (!isOpen) {
+  if (loading) {
     return null
   }
 
