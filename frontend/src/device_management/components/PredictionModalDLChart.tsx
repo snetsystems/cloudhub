@@ -43,7 +43,9 @@ function PredictionModalDLChart({host}: Props) {
       }),
       backgroundColor: 'rgba(45, 199, 232, 1)',
       order: 2,
-      pointRadius: 1,
+      pointRadius: 0,
+      borderWidth: 1,
+
       borderColor: 'rgba(45, 199, 232, 1)',
     }
   }, [dlResultData?.train_loss])
@@ -57,7 +59,8 @@ function PredictionModalDLChart({host}: Props) {
 
       backgroundColor: 'rgba(255, 166, 77, 1)',
       order: 2,
-      pointRadius: 1,
+      pointRadius: 0,
+      borderWidth: 1,
       borderColor: 'rgba(255, 166, 77, 1)',
     }
   }, [dlResultData?.valid_loss])
@@ -73,15 +76,12 @@ function PredictionModalDLChart({host}: Props) {
   const dlMseData = useMemo(() => {
     return {
       label: 'mse',
-
       data: dlResultData?.mse?.map(item => {
         return item
       }),
       type: 'line',
       backgroundColor: 'rgba(45, 199, 232, 1)',
-      borderColor: 'rgba(45, 199, 232, 1)',
-      pointRadius: 1,
-
+      pointRadius: 2,
       order: 2,
     }
   }, [dlResultData?.train_loss])
@@ -91,9 +91,17 @@ function PredictionModalDLChart({host}: Props) {
       label: 'DL_threshold',
       type: 'line',
       borderColor: 'red',
-      data: dlResultData?.mse.map(() => dlResultData?.dl_threshold),
-      borderWidth: 1,
-      pointRadius: 1,
+      data: [
+        {
+          x: 0,
+          y: dlResultData?.dl_threshold,
+        },
+        {
+          x: dlResultData?.mse?.length,
+          y: dlResultData?.dl_threshold,
+        },
+      ],
+
       order: 1,
     }
   }, [dlResultData?.dl_threshold, dlResultData?.mse?.length])

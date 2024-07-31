@@ -1,5 +1,5 @@
 import React from 'react'
-import {Line} from 'react-chartjs-2'
+import {Line, Scatter} from 'react-chartjs-2'
 import {DLChartSectorProps, ContentItem} from 'src/types/prediction'
 import ModalContentHeader from 'src/device_management/components/PredictionModalContentHeader'
 import {NoData} from './PredictionModalNodata'
@@ -47,13 +47,19 @@ const getChartComponents = (
         //@ts-ignore
         data={trainChartDataSet}
         //@ts-ignore
-        options={options}
+        options={{
+          ...options,
+          scales: {
+            ...options.scales,
+            x: {...options.scales.x, type: 'linear', min: -10},
+          },
+        }}
         width={500}
         height={300}
       />
     </ChartWrapper>
     <ChartWrapper>
-      <Line
+      <Scatter
         //@ts-ignore
         data={mseChartDataSet}
         //@ts-ignore
