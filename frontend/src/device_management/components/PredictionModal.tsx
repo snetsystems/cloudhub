@@ -5,6 +5,9 @@ import {GetLearningDLData, GetLearningMLData} from 'src/types'
 import {getLearningRstDL, getLearningRstMl} from '../apis'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import _ from 'lodash'
+import {MLNxRstChart} from './PredictionModalMLContent'
+import {DLNxRstChart} from './PredictionModalDLContent'
+import {NoData} from './PredictionModalNodata'
 
 interface Props {
   isOpen: boolean
@@ -251,7 +254,7 @@ export const PredictionModal = ({
       type: 'line',
       borderColor: 'red',
       data: [
-        {x: 0, y: dlResultData?.dl_threshold}, // threshold 값
+        {x: 0, y: dlResultData?.dl_threshold},
         {x: dlResultData?.mse?.length, y: dlResultData?.dl_threshold},
       ],
       order: 1,
@@ -327,103 +330,23 @@ export const PredictionModal = ({
               <Form.Element>
                 {
                   <>
-                    {noData && isMl ? (
-                      <div className="generic-empty-state">
-                        <h4 style={{margin: '90px 0'}}>No Data. </h4>
-                      </div>
-                    ) : (
-                      isMl && (
-                        <div className="chartSector">
-                          <div>
-                            <span
-                              style={{whiteSpace: 'pre-wrap'}}
-                              className="span-header"
-                            >
-                              {`eps:\n${mlResultData?.epsilon ?? ''}`}
-                            </span>
-                            <br />
-                            <span
-                              style={{whiteSpace: 'pre-wrap'}}
-                              className="span-header"
-                            >
-                              {`mean:\n${mlResultData?.mean_matrix ?? ''}`}
-                            </span>
-                            <br />
-                            <span
-                              style={{whiteSpace: 'pre-wrap'}}
-                              className="span-header "
-                            >
-                              {`cov:\n[${JSON.parse(
-                                `${mlResultData?.covariance_matrix}`
-                              )
-                                .map(innerArray => `[${innerArray.join(', ')}]`)
-                                .join(', \n')}]`}
-                            </span>
-                          </div>
-                          <div className="prediction-chart-wrap">
-                            <Scatter
-                              //@ts-ignore
-                              data={mlChartDataSet}
-                              //@ts-ignore
-                              options={options}
-                              width={500}
-                              height={300}
-                            />
-                          </div>
-                          <div className="prediction-chart-wrap">
-                            <Scatter
-                              //@ts-ignore
-                              data={gaussianChartDataSet}
-                              //@ts-ignore
-                              options={options}
-                              width={500}
-                              height={300}
-                            />
-                          </div>
-                        </div>
-                      )
-                    )}
+                    {noData && isMl && <NoData />}
+                    <MLNxRstChart
+                      isOpen={isMl}
+                      mlResultData={mlResultData}
+                      mlChartDataSet={mlChartDataSet}
+                      gaussianChartDataSet={gaussianChartDataSet}
+                      options={options}
+                    />
 
-                    {noData && isDl ? (
-                      <div className="generic-empty-state">
-                        <h4 style={{margin: '90px 0'}}>No Data. </h4>
-                      </div>
-                    ) : (
-                      isDl && (
-                        <div className="chartSector">
-                          <div>
-                            <span
-                              style={{whiteSpace: 'pre-wrap'}}
-                              className="span-header"
-                            >
-                              {`dl_threshold: \n${
-                                dlResultData?.dl_threshold ?? ''
-                              }`}
-                            </span>
-                          </div>
-                          <div className="prediction-chart-wrap">
-                            <Line
-                              //@ts-ignore
-                              data={trainChartDataSet}
-                              //@ts-ignore
-                              options={options}
-                              width={500}
-                              height={300}
-                            />
-                          </div>
-                          <div className="prediction-chart-wrap">
-                            <Line
-                              //@ts-ignore
-                              data={mseChartDataSet}
-                              //@ts-ignore
-                              options={options}
-                              width={500}
-                              height={300}
-                            />
-                          </div>
-                        </div>
-                      )
-                    )}
+                    {noData && isDl && <NoData />}
+                    <DLNxRstChart
+                      isOpen={isDl}
+                      dlResultData={dlResultData}
+                      trainChartDataSet={trainChartDataSet}
+                      mseChartDataSet={mseChartDataSet}
+                      options={options}
+                    />
                   </>
                 }
               </Form.Element>

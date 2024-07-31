@@ -60,3 +60,27 @@ export interface GetLearningDLData {
   valid_loss: number[]
   mse: number[]
 }
+
+export interface MLChartSectorProps {
+  isOpen: boolean
+  mlResultData: GetLearningMLData
+  mlChartDataSet: any
+  gaussianChartDataSet: any
+  options: any
+}
+export interface DLChartSectorProps {
+  isOpen: boolean
+  dlResultData: GetLearningDLData
+  trainChartDataSet: any
+  mseChartDataSet: any
+  options: any
+}
+
+export interface ContentItem {
+  title: string
+  content: string | number | object
+}
+
+export interface ModalContentHeaderProps {
+  headerContents: ContentItem[]
+}
