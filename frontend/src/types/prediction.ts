@@ -62,6 +62,7 @@ export interface GetLearningDLData {
 }
 
 export interface MLChartSectorProps {
+  isNoData: boolean
   loading: boolean
   mlResultData: GetLearningMLData
   mlChartDataSet: any
@@ -69,6 +70,7 @@ export interface MLChartSectorProps {
   options: any
 }
 export interface DLChartSectorProps {
+  isNoData: boolean
   loading: boolean
   dlResultData: GetLearningDLData
   trainChartDataSet: any

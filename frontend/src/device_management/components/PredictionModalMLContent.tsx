@@ -2,14 +2,19 @@ import React from 'react'
 import {Scatter} from 'react-chartjs-2'
 import {MLChartSectorProps, ContentItem} from 'src/types/prediction'
 import ModalContentHeader from 'src/device_management/components/PredictionModalContentHeader'
+import {NoData} from './PredictionModalNodata'
 
 export const MLNxRstChart: React.FC<MLChartSectorProps> = ({
+  isNoData,
   loading,
   mlResultData,
   mlChartDataSet,
   gaussianChartDataSet,
   options,
 }) => {
+  if (isNoData) {
+    return <NoData />
+  }
   if (loading) {
     return <div>isLoading</div>
   }

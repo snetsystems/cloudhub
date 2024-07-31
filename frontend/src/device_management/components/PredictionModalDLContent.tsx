@@ -2,14 +2,19 @@ import React from 'react'
 import {Line} from 'react-chartjs-2'
 import {DLChartSectorProps, ContentItem} from 'src/types/prediction'
 import ModalContentHeader from 'src/device_management/components/PredictionModalContentHeader'
+import {NoData} from './PredictionModalNodata'
 
 export const DLNxRstChart: React.FC<DLChartSectorProps> = ({
+  isNoData,
   loading,
   dlResultData,
   trainChartDataSet,
   mseChartDataSet,
   options,
 }) => {
+  if (isNoData) {
+    return <NoData />
+  }
   if (loading) {
     return null
   }

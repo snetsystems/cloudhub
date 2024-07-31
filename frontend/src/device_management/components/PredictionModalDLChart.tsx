@@ -142,8 +142,8 @@ function PredictionModalDLChart({host}: Props) {
 
   return (
     <>
-      {noData && loading && <NoData />}
       <DLNxRstChart
+        isNoData={noData}
         loading={loading}
         dlResultData={dlResultData}
         trainChartDataSet={trainChartDataSet}

@@ -195,9 +195,9 @@ function PredictionModalMLChart({host}: Props) {
 
   return (
     <>
-      {noData && <NoData />}
       <MLNxRstChart
-        loading={loading}
+        isNoData={noData}
+        loading={!noData && loading}
         mlResultData={mlResultData}
         mlChartDataSet={mlChartDataSet}
         gaussianChartDataSet={gaussianChartDataSet}
