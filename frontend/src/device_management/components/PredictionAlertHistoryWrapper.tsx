@@ -12,7 +12,11 @@ import LoadingDots from 'src/shared/components/LoadingDots'
 import {getPredictionAlert} from '../apis'
 import _ from 'lodash'
 import {Button, ComponentColor} from 'src/reusable_ui'
-import {setAlertHostList, setPredictionTimeRange} from '../actions'
+import {
+  setAlertHostList,
+  setFilteredHexbin,
+  setPredictionTimeRange,
+} from '../actions'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
@@ -29,6 +33,7 @@ interface Props {
   alertHostList?: string[]
   setAlertHostList?: (value: string[]) => void
   histogramDate?: TimeRange
+  filteredHexbinHost?: string
 }
 
 function PredictionAlertHistoryWrapper({
@@ -41,6 +46,7 @@ function PredictionAlertHistoryWrapper({
   manualRefresh,
   alertHostList,
   setAlertHostList,
+  filteredHexbinHost,
 }: Props) {
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
 
@@ -86,12 +92,13 @@ function PredictionAlertHistoryWrapper({
     histogramDate?.lower,
     predictionTimeRange.lower,
     source.links.proxy,
+    filteredHexbinHost,
   ])
 
   // alert List get api
   useEffect(() => {
     fetchAlerts()
-  }, [histogramDate, manualRefresh, fetchAlerts])
+  }, [histogramDate, manualRefresh, fetchAlerts, filteredHexbinHost])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
@@ -152,8 +159,17 @@ function PredictionAlertHistoryWrapper({
       setArrayHostList([...alertHostListTemp].reverse(), alertHostList)
     )
 
-    setAlertsData(results)
+    setAlertsData(filterSelectedHost(results))
+
     setIsAlertsMaxedOut(results.length !== limit * limitMultiplier)
+  }
+
+  const filterSelectedHost = (alerts: Alert[]) => {
+    if (!!filteredHexbinHost) {
+      return alerts.filter(i => i.host === filteredHexbinHost)
+    } else {
+      return alerts
+    }
   }
 
   const getDate = (date: string) => {
@@ -223,7 +239,12 @@ function PredictionAlertHistoryWrapper({
 
 const mstp = state => {
   const {
-    predictionDashboard: {predictionTimeRange, alertHostList, histogramDate},
+    predictionDashboard: {
+      predictionTimeRange,
+      alertHostList,
+      histogramDate,
+      filteredHexbinHost,
+    },
     app: {
       persisted: {autoRefresh, cloudAutoRefresh},
     },
@@ -235,12 +256,14 @@ const mstp = state => {
     cloudAutoRefresh,
     predictionTimeRange,
     alertHostList,
+    filteredHexbinHost,
   }
 }
 
 const mdtp = (dispatch: any) => ({
   setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
   setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
+  setFilteredHexbin: bindActionCreators(setFilteredHexbin, dispatch),
 })
 
 const areEqual = (prev, next) => {

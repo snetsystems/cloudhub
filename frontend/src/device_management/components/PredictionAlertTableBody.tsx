@@ -72,19 +72,26 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
     this.filterAlerts(this.state.searchTerm, newProps.alerts)
   }
 
-  public componentDidUpdate(prevProps) {
-    if (
-      (prevProps.filteredHexbinHost !== this.props.filteredHexbinHost ||
-        prevProps.alerts !== this.props.alerts) &&
-      !!this.props.filteredHexbinHost &&
-      !!this.state.filteredAlerts
-    ) {
-      this.filterAlertsByHost(
-        this.props.filteredHexbinHost,
-        this.state.filteredAlerts
-      )
-    }
+  public componentWillUnmount(): void {
+    this.props.setSelectedAnomaly({
+      host: '',
+      time: '',
+    })
   }
+
+  // public componentDidUpdate(prevProps) {
+  //   if (
+  //     (prevProps.filteredHexbinHost !== this.props.filteredHexbinHost ||
+  //       prevProps.alerts !== this.props.alerts) &&
+  //     !!this.props.filteredHexbinHost &&
+  //     !!this.state.filteredAlerts
+  //   ) {
+  //     this.filterAlertsByHost(
+  //       this.props.filteredHexbinHost,
+  //       this.state.filteredAlerts
+  //     )
+  //   }
+  // }
 
   public render() {
     const {
@@ -146,14 +153,14 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
     this.setState({searchTerm, filteredAlerts})
   }
 
-  private filterAlertsByHost = (filteredHost: string, newAlerts?: Alert[]) => {
-    const alerts = newAlerts
-    const filterText = filteredHost.toLowerCase()
-    const filteredAlerts = alerts.filter(i => {
-      return i.host && i.host.toLowerCase().includes(filterText)
-    })
-    this.setState({filteredAlerts})
-  }
+  // private filterAlertsByHost = (filteredHost: string, newAlerts?: Alert[]) => {
+  //   const alerts = newAlerts
+  //   const filterText = filteredHost.toLowerCase()
+  //   const filteredAlerts = alerts.filter(i => {
+  //     return i.host && i.host.toLowerCase().includes(filterText)
+  //   })
+  //   this.setState({filteredAlerts})
+  // }
 
   private changeSort = (key: string): (() => void) => (): void => {
     // if we're using the key, reverse order; otherwise, set it with ascending
