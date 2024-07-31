@@ -79,6 +79,7 @@ function PredictionHexbinWrapper({
 
   useEffect(() => {
     fetchDeviceInfo()
+    return () => setFilteredHexbin('')
   }, [])
 
   useEffect(() => {
