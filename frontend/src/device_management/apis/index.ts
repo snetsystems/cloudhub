@@ -575,13 +575,14 @@ export const getLearningRstMl = async (host: string) => {
 
 export const getLearningRstDL = async (host: string) => {
   try {
-    return AJAX<GetLearningDLData>({
+    const result = await AJAX<GetLearningDLData>({
       url: LEARNING_RST_DL_UR,
       method: 'GET',
       params: {
         ip: host,
       },
-    }) as Promise<AxiosResponse<GetLearningDLData>>
+    })
+    return result as AxiosResponse<GetLearningDLData>
   } catch (error) {
     console.error(error)
     return null as AxiosResponse<GetLearningDLData>

@@ -12,7 +12,7 @@ interface Props {
 function PredictionModalMLChart({host}: Props) {
   const [mlResultData, setMlResultData] = useState<GetLearningMLData>()
 
-  const [noData, setNoData] = useState(false)
+  const [noData, setNoData] = useState(true)
 
   const [loading, setLoading] = useState(true)
 
@@ -23,11 +23,11 @@ function PredictionModalMLChart({host}: Props) {
   useEffect(() => {
     getMlData(host)
 
-    return () => {
-      setMlResultData(null)
-      setNoData(true)
-      setLoading(true)
-    }
+    // return () => {
+    //   setMlResultData(null)
+    //   setNoData(true)
+    //   setLoading(true)
+    // }
   }, [host])
 
   const getMlData = async (host: string) => {

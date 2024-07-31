@@ -1,7 +1,5 @@
 import React from 'react'
-
 import {Form} from 'src/reusable_ui'
-
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import _ from 'lodash'
 import PredictionModalDLChart from './PredictionModalDLChart'

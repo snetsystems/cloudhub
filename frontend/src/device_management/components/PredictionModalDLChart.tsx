@@ -1,5 +1,4 @@
 import React, {useEffect, useMemo, useState} from 'react'
-import {Line} from 'react-chartjs-2'
 import {GetLearningDLData} from 'src/types'
 import {getLearningRstDL} from '../apis'
 import {NoData} from './PredictionModalNodata'
@@ -11,19 +10,18 @@ interface Props {
 function PredictionModalDLChart({host}: Props) {
   const [dlResultData, setDlResultData] = useState<GetLearningDLData>()
 
-  const [noData, setNoData] = useState(false)
+  const [noData, setNoData] = useState(true)
 
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    console.log('host: ', host)
     getDlData(host)
 
-    return () => {
-      setDlResultData(null)
-      setNoData(true)
-      setLoading(true)
-    }
+    // return () => {
+    //   setDlResultData(null)
+    //   setNoData(true)
+    //   setLoading(true)
+    // }
   }, [host])
 
   const getDlData = async (host: string) => {
@@ -35,11 +33,10 @@ function PredictionModalDLChart({host}: Props) {
         setDlResultData(result.data)
         setNoData(false)
       }
-      setLoading(false)
     } catch (e) {
       console.error(e)
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   //Dl-tran,valid First Chart
