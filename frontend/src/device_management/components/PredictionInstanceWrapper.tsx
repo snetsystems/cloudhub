@@ -28,6 +28,7 @@ import {getLayouts} from 'src/hosts/apis'
 import {getDeep} from 'src/utils/wrappers'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getCellsWithWhere} from 'src/hosts/utils/getCellsWithWhere'
+import {setSelectedAnomaly} from '../actions'
 
 interface Props {
   source: Source
@@ -36,6 +37,7 @@ interface Props {
   filteredHexbinHost?: string
   selectedAnomaly?: AnomalyFactor
   timeZone?: TimeZones
+  setSelectedAnomaly?: (value: AnomalyFactor) => void
 }
 
 const TIME_GAP = 1500000
@@ -47,9 +49,18 @@ const PredictionInstanceWrapper = ({
   filteredHexbinHost,
   selectedAnomaly,
   timeZone,
+  setSelectedAnomaly,
 }: Props) => {
+  const getTimeRangeFromLocalStorage = (): TimeRange => {
+    if (!!localStorage.getItem('monitoring-chart')) {
+      return JSON.parse(localStorage.getItem('monitoring-chart'))
+    } else {
+      return timeRanges.find(tr => tr.lower === 'now() - 1h')
+    }
+  }
+
   const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
-    timeRanges.find(tr => tr.lower === 'now() - 1h')
+    getTimeRangeFromLocalStorage()
   )
 
   const [layouts, setLayouts] = useState<Layout[]>()
@@ -69,17 +80,24 @@ const PredictionInstanceWrapper = ({
         lower: convertTime(Number(selectedAnomaly.time) - TIME_GAP),
       })
     } else {
-      setSelfTimeRange({
-        lower: 'now() - 24h',
-        lowerFlux: '-24hs',
-        upper: null,
-      })
+      setSelfTimeRange(getTimeRangeFromLocalStorage())
     }
   }, [selectedAnomaly])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(autoRefresh)
   }, [autoRefresh])
+
+  const saveTimeRangeToLocalStorage = (timeRange: TimeRange) => {
+    localStorage.setItem(
+      'monitoring-chart',
+      JSON.stringify({
+        lower: timeRange.lower,
+        lowerFlux: timeRange.lowerFlux,
+        upper: null,
+      })
+    )
+  }
 
   const convertTime = (number: number) => {
     return new Date(number).toISOString()
@@ -133,7 +151,14 @@ const PredictionInstanceWrapper = ({
     } else {
       const timeRange = timeRanges.find(range => range.lower === lower)
       setSelfTimeRange(timeRange)
+      saveTimeRangeToLocalStorage(timeRange)
     }
+
+    //annotation set null
+    setSelectedAnomaly({
+      host: null,
+      time: null,
+    })
   }
 
   return (
@@ -231,6 +256,7 @@ const mstp = state => {
 
 const mdtp = dispatch => ({
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
+  setSelectedAnomaly: bindActionCreators(setSelectedAnomaly, dispatch),
 })
 
 const areEqual = (prevProps, nextProps) => {
