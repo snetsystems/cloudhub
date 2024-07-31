@@ -37,12 +37,12 @@ export const PredictionModal = ({
   const [noData, setNoData] = useState(false)
   useEffect(() => {
     try {
-      getMlData(host)
-      getDlData(host)
+      isMl && getMlData(host)
+      isDl && getDlData(host)
     } catch (e) {
       setLoading(false)
     }
-  }, [])
+  }, [host])
 
   const getMlData = async (host: string) => {
     try {
@@ -53,7 +53,7 @@ export const PredictionModal = ({
         setMlResultData(result.data)
         setGaussianMax(
           findMinMaxValue(
-            _.max(result.data.md_array),
+            _.max(result.data.cpu_array),
             _.max(result.data.traffic_array),
             'max'
           )
@@ -61,7 +61,7 @@ export const PredictionModal = ({
 
         setGaussianMin(
           findMinMaxValue(
-            _.min(result.data.md_array),
+            _.min(result.data.cpu_array),
             _.min(result.data.traffic_array),
             'min'
           )
@@ -110,9 +110,9 @@ export const PredictionModal = ({
           y: item,
         }
       }),
-
       backgroundColor: 'rgba(45, 199, 232, 1)',
       order: 2,
+      pointRadius: 2,
     }
   }, [mlResultData])
 
@@ -148,6 +148,7 @@ export const PredictionModal = ({
 
       backgroundColor: 'rgba(45, 199, 232, 1)',
       order: 2,
+      pointRadius: 2,
     }
   }, [mlResultData?.cpu_array])
 
@@ -163,6 +164,7 @@ export const PredictionModal = ({
 
       backgroundColor: 'rgba(255, 166, 77, 1)',
       order: 2,
+      pointRadius: 2,
     }
   }, [mlResultData?.traffic_array])
 
@@ -199,9 +201,10 @@ export const PredictionModal = ({
       data: dlResultData?.train_loss?.map(item => {
         return item
       }),
-
       backgroundColor: 'rgba(45, 199, 232, 1)',
       order: 2,
+      pointRadius: 1,
+      borderColor: 'rgba(45, 199, 232, 1)',
     }
   }, [dlResultData?.train_loss])
 
@@ -214,14 +217,15 @@ export const PredictionModal = ({
 
       backgroundColor: 'rgba(255, 166, 77, 1)',
       order: 2,
+      pointRadius: 1,
+      borderColor: 'rgba(255, 166, 77, 1)',
     }
   }, [dlResultData?.valid_loss])
 
   const trainChartDataSet = useMemo(() => {
     return {
-      // can get Legend
       datasets: [dlTrainData, dlValidData],
-      labels: dlResultData?.valid_loss.map((_, i) => i + 1),
+      labels: dlResultData?.valid_loss.map((_, i) => i),
     }
   }, [dlTrainData, dlValidData])
 
@@ -229,7 +233,8 @@ export const PredictionModal = ({
 
   const dlMseData = useMemo(() => {
     return {
-      label: 'Train loss',
+      label: 'mse',
+
       data: dlResultData?.mse?.map(item => {
         return item
       }),
@@ -240,22 +245,25 @@ export const PredictionModal = ({
   }, [dlResultData?.train_loss])
 
   const dlThreshold = useMemo(() => {
+    console.log(dlResultData?.mse?.length)
     return {
       label: 'DL_threshold',
       type: 'line',
       borderColor: 'red',
       data: [
         {x: 0, y: dlResultData?.dl_threshold}, // threshold 값
-        {x: dlResultData?.mse?.length, y: dlResultData?.dl_threshold}, // threshold 값
+        {x: dlResultData?.mse?.length, y: dlResultData?.dl_threshold},
       ],
       order: 1,
     }
   }, [dlResultData?.dl_threshold, dlResultData?.mse?.length])
 
   const mseChartDataSet = useMemo(() => {
+    console.log(dlThreshold)
+
     return {
       datasets: [dlMseData, dlThreshold],
-      labels: dlResultData?.mse?.map((_, i) => i + 1),
+      labels: dlResultData?.mse?.map((_, i) => i),
     }
   }, [dlMseData, dlThreshold])
 
@@ -269,6 +277,8 @@ export const PredictionModal = ({
         },
       },
       y: {
+        // min: 0,
+        // max: 1,
         beginAtZero: true,
         grid: {
           display: true,
@@ -325,6 +335,13 @@ export const PredictionModal = ({
                       isMl && (
                         <div className="chartSector">
                           <div>
+                            <span
+                              style={{whiteSpace: 'pre-wrap'}}
+                              className="span-header"
+                            >
+                              {`eps:\n${mlResultData?.epsilon ?? ''}`}
+                            </span>
+                            <br />
                             <span
                               style={{whiteSpace: 'pre-wrap'}}
                               className="span-header"

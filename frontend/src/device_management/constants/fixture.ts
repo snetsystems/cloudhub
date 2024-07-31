@@ -101,7 +101,7 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
       w: 96,
       h: 12,
       minH: 12,
-      minW: 30,
+      minW: 20,
       name: '',
       queries: [],
       type: CellType.Table,
