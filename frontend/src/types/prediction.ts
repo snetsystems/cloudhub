@@ -84,5 +84,6 @@ export interface ContentItem {
 }
 
 export interface ModalContentHeaderProps {
+  title: string
   headerContents: ContentItem[]
 }
