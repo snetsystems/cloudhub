@@ -22,6 +22,7 @@ interface Props {
   predictionTimeRange?: TimeRange
   source: Source
   limit: number
+
   setPredictionTimeRange?: (value: TimeRange) => void
   cloudAutoRefresh?: CloudAutoRefresh
   manualRefresh?: number
@@ -151,11 +152,23 @@ function PredictionAlertHistoryWrapper({
     setIsAlertsMaxedOut(results.length !== limit * limitMultiplier)
   }
 
+  const getDate = (date: string) => {
+    const time = new Date(date)
+    return `${time.getFullYear()}-${time.getMonth() + 1}-${time.getDate()}`
+  }
+
   return (
     <>
       <div style={{height: '100%', backgroundColor: '#292933'}}>
         <PredictionDashboardHeader
-          cellName={`Anomaly Prediction History`}
+          cellName={
+            <p>
+              Anomaly Prediction History{' '}
+              {!!histogramDate
+                ? `Filtering: ${getDate(histogramDate?.lower)}`
+                : ''}
+            </p>
+          }
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >

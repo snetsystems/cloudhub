@@ -5,7 +5,7 @@ import chroma from 'chroma-js'
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 interface Props {
-  cellName: string
+  cellName: ReactNode
   cellBackgroundColor: string
   cellTextColor: string
   children: ReactNode
