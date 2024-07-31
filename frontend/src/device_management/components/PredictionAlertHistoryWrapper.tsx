@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useState} from 'react'
 import {INPUT_TIME_TYPE, Source, TimeRange} from 'src/types'
 import {Alert} from 'src/types/alerts'
 import PredictionAlertTable from './PredictionAlertTable'
@@ -54,34 +54,7 @@ function PredictionAlertHistoryWrapper({
 
   let intervalID
 
-  useEffect(() => {
-    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
-    const controller = new AbortController()
-
-    if (!!cloudAutoRefresh.prediction) {
-      clearInterval(intervalID)
-      intervalID = window.setInterval(() => {
-        fetchAlerts()
-      }, cloudAutoRefresh.prediction)
-    }
-
-    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
-
-    return () => {
-      controller.abort()
-      clearInterval(intervalID)
-      intervalID = null
-      GlobalAutoRefresher.stopPolling()
-    }
-  }, [cloudAutoRefresh])
-
-  // alert List get api
-  useEffect(() => {
-    fetchAlerts()
-  }, [histogramDate, manualRefresh])
-
-  //TODO: timerange var change to redux data not props
-  const fetchAlerts = (): void => {
+  const fetchAlerts = useCallback((): void => {
     getPredictionAlert(
       source.links.proxy,
       histogramDate ?? predictionTimeRange,
@@ -108,7 +81,38 @@ function PredictionAlertHistoryWrapper({
         setAlertsData([])
         setIsAlertsMaxedOut(false)
       })
-  }
+  }, [
+    limitMultiplier,
+    histogramDate?.lower,
+    predictionTimeRange.lower,
+    source.links.proxy,
+  ])
+
+  // alert List get api
+  useEffect(() => {
+    fetchAlerts()
+  }, [histogramDate, manualRefresh, fetchAlerts])
+
+  useEffect(() => {
+    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
+    const controller = new AbortController()
+
+    if (!!cloudAutoRefresh.prediction) {
+      clearInterval(intervalID)
+      intervalID = window.setInterval(() => {
+        fetchAlerts()
+      }, cloudAutoRefresh.prediction)
+    }
+
+    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
+
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [cloudAutoRefresh, fetchAlerts])
 
   const makeAlertsData = alertSeries => {
     const results = []
