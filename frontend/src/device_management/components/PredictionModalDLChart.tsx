@@ -1,8 +1,8 @@
 import React, {useEffect, useMemo, useState} from 'react'
 import {GetLearningDLData} from 'src/types'
-import {getLearningRstDL} from '../apis'
-import {NoData} from './PredictionModalNodata'
-import {DLNxRstChart} from './PredictionModalDLContent'
+import {getLearningRstDL} from 'src/device_management//apis'
+
+import {DLNxRstChart} from 'src/device_management/components/PredictionModalDLContent'
 
 interface Props {
   host: string
@@ -16,12 +16,6 @@ function PredictionModalDLChart({host}: Props) {
 
   useEffect(() => {
     getDlData(host)
-
-    // return () => {
-    //   setDlResultData(null)
-    //   setNoData(true)
-    //   setLoading(true)
-    // }
   }, [host])
 
   const getDlData = async (host: string) => {

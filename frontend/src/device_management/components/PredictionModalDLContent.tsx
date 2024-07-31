@@ -3,6 +3,67 @@ import {Line} from 'react-chartjs-2'
 import {DLChartSectorProps, ContentItem} from 'src/types/prediction'
 import ModalContentHeader from 'src/device_management/components/PredictionModalContentHeader'
 import {NoData} from './PredictionModalNodata'
+import PageSpinner from 'src/shared/components/PageSpinner'
+
+const ChartWrapper: React.FC<{children: React.ReactNode}> = ({children}) => (
+  <div
+    style={{width: '500px', height: '300px'}}
+    className="prediction-chart-wrap"
+  >
+    {children}
+  </div>
+)
+
+const getLoadingComponent = () => (
+  <div className="chartSector">
+    <ChartWrapper>
+      <PageSpinner />
+    </ChartWrapper>
+    <ChartWrapper>
+      <PageSpinner />
+    </ChartWrapper>
+  </div>
+)
+
+const getNoDataComponent = () => (
+  <div className="chartSector">
+    <ChartWrapper>
+      <NoData />
+    </ChartWrapper>
+    <ChartWrapper>
+      <NoData />
+    </ChartWrapper>
+  </div>
+)
+
+const getChartComponents = (
+  trainChartDataSet: any,
+  mseChartDataSet: any,
+  options: any
+) => (
+  <div className="chartSector">
+    <ChartWrapper>
+      <Line
+        //@ts-ignore
+        data={trainChartDataSet}
+        //@ts-ignore
+        options={options}
+        width={500}
+        height={300}
+      />
+    </ChartWrapper>
+    <ChartWrapper>
+      <Line
+        //@ts-ignore
+        data={mseChartDataSet}
+        //@ts-ignore
+        options={options}
+        width={500}
+        height={300}
+      />
+    </ChartWrapper>
+  </div>
+)
 
 export const DLNxRstChart: React.FC<DLChartSectorProps> = ({
   isNoData,
@@ -12,42 +73,29 @@ export const DLNxRstChart: React.FC<DLChartSectorProps> = ({
   mseChartDataSet,
   options,
 }) => {
-  if (isNoData) {
-    return <NoData />
-  }
-  if (loading) {
-    return null
-  }
+  const headerContents: ContentItem[] = dlResultData
+    ? [{title: 'dl_threshold', content: dlResultData.dl_threshold ?? ''}]
+    : []
 
-  const headerContents: ContentItem[] = [
-    {title: 'dl_threshold', content: dlResultData?.dl_threshold ?? ''},
-  ]
+  const getInnerComponents = () => {
+    if (loading) {
+      return getLoadingComponent()
+    }
+    if (isNoData) {
+      return getNoDataComponent()
+    }
+    return getChartComponents(trainChartDataSet, mseChartDataSet, options)
+  }
 
   return (
     <div className="chartSector">
       <div>
-        <ModalContentHeader headerContents={headerContents} />
-      </div>
-      <div className="prediction-chart-wrap">
-        <Line
-          //@ts-ignore
-          data={trainChartDataSet}
-          //@ts-ignore
-          options={options}
-          width={500}
-          height={300}
+        <ModalContentHeader
+          title="DL Rst"
+          headerContents={isNoData ? [] : headerContents}
         />
       </div>
-      <div className="prediction-chart-wrap">
-        <Line
-          //@ts-ignore
-          data={mseChartDataSet}
-          //@ts-ignore
-          options={options}
-          width={500}
-          height={300}
-        />
-      </div>
+      {getInnerComponents()}
     </div>
   )
 }
