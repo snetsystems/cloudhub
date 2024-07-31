@@ -52,7 +52,9 @@ function PredictionDashboardHeader(props: Props) {
 
   return (
     <div
-      onMouseDown={() => props.setModalOpen(false)}
+      onMouseDown={() => {
+        props.setModalOpen && props.setModalOpen(false)
+      }}
       className={
         'dash-graph--heading dash-graph--heading-draggable prediction-dash-graph--draggable'
       }

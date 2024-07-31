@@ -46,6 +46,17 @@ function PredictionHexbinWrapper({
   notify,
   setFilteredHexbin,
 }: Props) {
+  const getMlDlTagInit = () => {
+    if (!!localStorage.getItem('hexbinTag')) {
+      return JSON.parse(localStorage.getItem('hexbinTag'))
+    } else {
+      return {
+        ml: false,
+        dl: false,
+      }
+    }
+  }
+
   const [hostList, setHostList] = useState<PredictionTooltipNode[]>(null)
 
   const [error, setError] = useState<string>()
@@ -60,9 +71,9 @@ function PredictionHexbinWrapper({
 
   const [isHexbinDisplay, setIsHexbinDisplay] = useState(true)
 
-  const [isMlChartDisplay, setIsMlChartDisplay] = useState(false)
+  const [isMlChartDisplay, setIsMlChartDisplay] = useState(getMlDlTagInit().ml)
 
-  const [isDlChartDisplay, setIsDlChartDisplay] = useState(false)
+  const [isDlChartDisplay, setIsDlChartDisplay] = useState(getMlDlTagInit().dl)
 
   let intervalID
 
@@ -160,6 +171,16 @@ function PredictionHexbinWrapper({
     setIsHexbinDisplay(!isHexbinDisplay)
   }
 
+  const setTagLocalStorage = (value: boolean, key: 'ml' | 'dl') => {
+    const result = {
+      ml: isMlChartDisplay,
+      dl: isDlChartDisplay,
+    }
+
+    result[key] = value
+    localStorage.setItem('hexbinTag', JSON.stringify(result))
+  }
+
   return (
     <>
       <div
@@ -188,6 +209,7 @@ function PredictionHexbinWrapper({
             isActive={isDlChartDisplay}
             onChange={() => {
               setIsDlChartDisplay(!isDlChartDisplay)
+              setTagLocalStorage(!isDlChartDisplay, 'dl')
             }}
             label="DL"
             // isHide={true}
@@ -196,6 +218,7 @@ function PredictionHexbinWrapper({
             isActive={isMlChartDisplay}
             onChange={() => {
               setIsMlChartDisplay(!isMlChartDisplay)
+              setTagLocalStorage(!isMlChartDisplay, 'ml')
             }}
             label="ML"
           />
