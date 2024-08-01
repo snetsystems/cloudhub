@@ -202,6 +202,11 @@ class PredictionRuleHandlers extends PureComponent<Props, State> {
                 rule={rule}
                 onGoToConfig={onGoToConfig}
                 validationError={validationError}
+                emptyJSXElement={
+                  <p style={{paddingTop: '5px', color: '#f58220'}}>
+                    Please configure the Alert Handler first
+                  </p>
+                }
               />
             </div>
           ) : null}
