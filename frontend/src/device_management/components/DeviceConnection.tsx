@@ -402,7 +402,6 @@ class DeviceConnection extends PureComponent<Props, State> {
     const {snmp_config} = deviceData
     const {version, security_level, community} = snmp_config
 
-    const versionLower = version ? version.toLowerCase() : ''
     const securityLevelLower = security_level
       ? security_level.toLowerCase()
       : ''
@@ -411,25 +410,25 @@ class DeviceConnection extends PureComponent<Props, State> {
       ...deviceData,
       snmp_config: {
         ...snmp_config,
-        community: versionLower === '3' ? '' : community,
+        community: version === '3' ? '' : community,
         security_level:
-          versionLower === '3' ? snmp_config.security_level || '' : '',
+          version === '3' ? snmp_config.security_level || '' : '',
         security_name:
-          versionLower === '3' ? snmp_config.security_name || '' : '',
+          version === '3' ? snmp_config.security_name || '' : '',
         auth_protocol:
-          versionLower === '3' && securityLevelLower !== 'noauthnopriv'
+          version === '3' && securityLevelLower !== 'noauthnopriv'
             ? snmp_config.auth_protocol || ''
             : '',
         auth_pass:
-          versionLower === '3' && securityLevelLower !== 'noauthnopriv'
+          version === '3' && securityLevelLower !== 'noauthnopriv'
             ? snmp_config.auth_pass || ''
             : '',
         priv_protocol:
-          versionLower === '3' && securityLevelLower === 'authpriv'
+          version === '3' && securityLevelLower === 'authpriv'
             ? snmp_config.priv_protocol || ''
             : '',
         priv_pass:
-          versionLower === '3' && securityLevelLower === 'authpriv'
+          version === '3' && securityLevelLower === 'authpriv'
             ? snmp_config.priv_pass || ''
             : '',
       },
