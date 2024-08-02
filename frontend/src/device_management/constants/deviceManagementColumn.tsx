@@ -120,7 +120,7 @@ export const columns = ({
     },
     {
       align: AlignType.CENTER,
-      key: 'learning_update_date',
+      key: 'learning_update_datetime',
       name: 'Start Time',
       render: (value, _, __, ___, timeZone) => (
         <div

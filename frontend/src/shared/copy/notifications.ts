@@ -295,6 +295,14 @@ export const notifyCloudHubOrgDeleted = (orgName: string): Notification => ({
   message: `Organization ${orgName} deleted successfully.`,
 })
 
+export const notifyCloudHubOrgDeletionFailedWithRegisteredDevices = (
+  orgName: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to delete organization ${orgName}: There are devices registered under this organization.`,
+})
+
 export const notifyCloudHubOrgInvalidName = (): Notification => ({
   ...defaultErrorNotification,
   type: 'warning',
