@@ -1,4 +1,11 @@
 import React, {useEffect, useState} from 'react'
+
+//Components
+import Layout from 'src/shared/components/Layout'
+import LoadingDots from 'src/shared/components/LoadingDots'
+import PredictionDashboardHeader from 'src/device_management/components/PredictionDashboardHeader'
+
+// Constants
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
@@ -7,6 +14,8 @@ import {
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
 } from 'src/shared/constants'
+
+// Types
 import {
   AnomalyFactor,
   Cell,
@@ -17,20 +26,23 @@ import {
   TemplateValue,
   TemplateValueType,
   TimeRange,
+  TimeZones,
 } from 'src/types'
-import PredictionDashboardHeader from './PredictionDashboardHeader'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
+
+// Utils
 import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
-import Layout from 'src/shared/components/Layout'
-import LoadingDots from 'src/shared/components/LoadingDots'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+
+// Redux
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {
   setHistogramDate,
   setPredictionTimeRange,
   setSelectedAnomaly,
-} from '../actions'
-import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
+} from 'src/device_management/actions'
+import moment from 'moment'
 
 interface Props {
   cell: Cell
@@ -49,6 +61,7 @@ interface Props {
   setPredictionTimeRange?: (value: TimeRange) => void
   setHistogramDate?: (value: TimeRange) => void
   setSelectedAnomaly?: (anomalyFactor: AnomalyFactor) => void
+  timeZone?: TimeZones
 }
 function PredictionDashboardWrapper({
   cell,
@@ -56,6 +69,7 @@ function PredictionDashboardWrapper({
   onZoom,
   onCloneCell,
   onDeleteCell,
+  timeZone,
   onSummonOverlayTechnologies,
   sources,
   instance,
@@ -125,11 +139,24 @@ function PredictionDashboardWrapper({
       host: '',
       time: '',
     })
-    setHistogramDate({
-      lower: convertTimeFormat(time - 32400000),
-      upper: convertTimeFormat(time + 54000000),
-      format: INPUT_TIME_TYPE.TIMESTAMP,
-    })
+    //86,400,000ms = 1d
+    if (timeZone === TimeZones.UTC) {
+      setHistogramDate({
+        lower: convertTimeFormat(time),
+        upper: convertTimeFormat(time + 86400000),
+        format: INPUT_TIME_TYPE.TIMESTAMP,
+      })
+    } else {
+      setHistogramDate({
+        lower: convertTimeFormat(
+          moment(time).format('YYYY-MM-DDTHH:mm:ss.SSS')
+        ),
+        upper: convertTimeFormat(
+          moment(time + 86400000).format('YYYY-MM-DDTHH:mm:ss.SSS')
+        ),
+        format: INPUT_TIME_TYPE.TIMESTAMP,
+      })
+    }
   }
 
   return (
@@ -185,13 +212,14 @@ const mstp = state => {
   const {
     predictionDashboard: {predictionTimeRange},
     app: {
-      persisted: {cloudAutoRefresh},
+      persisted: {cloudAutoRefresh, timeZone},
     },
   } = state
 
   return {
     predictionTimeRange,
     cloudAutoRefresh,
+    timeZone,
   }
 }
 
