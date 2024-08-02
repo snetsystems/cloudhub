@@ -77,7 +77,8 @@ var data = predictResult
 
 var trigger = data
     |alert()
-        .crit(lambda: "predict_status" == 'false')
+        .warn(lambda: ensemble_condition == 'or' AND "predict_status" == 'false' AND ("predict_kind" == 1 OR "predict_kind" == 2))
+        .crit(lambda: "predict_status" == 'false' AND ((ensemble_condition == 'or' AND "predict_kind" == 3) OR ensemble_condition != 'or'))
         .stateChangesOnly()
         .message(message)
         .id(name + '-{{.Group}}')

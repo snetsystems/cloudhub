@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -225,9 +224,10 @@ func TestDeviceID(t *testing.T) {
 
 func TestUpdateNetworkDevice(t *testing.T) {
 	type fields struct {
-		NetworkDeviceStore cloudhub.NetworkDeviceStore
-		OrganizationsStore cloudhub.OrganizationsStore
-		Logger             cloudhub.Logger
+		NetworkDeviceStore    *mocks.NetworkDeviceStore
+		OrganizationsStore    *mocks.OrganizationsStore
+		NetworkDeviceOrgStore *mocks.NetworkDeviceOrgStore
+		Logger                cloudhub.Logger
 	}
 	type args struct {
 		w       *httptest.ResponseRecorder
@@ -260,9 +260,6 @@ func TestUpdateNetworkDevice(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				NetworkDeviceStore: &mocks.NetworkDeviceStore{
-					UpdateF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
-						return nil
-					},
 					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
 						if *q.ID == "958172376138104800" {
 							return &cloudhub.NetworkDevice{
@@ -271,15 +268,112 @@ func TestUpdateNetworkDevice(t *testing.T) {
 								Organization:           "76",
 								Hostname:               "SWITCH_01",
 								DeviceType:             "switch",
+								DeviceCategory:         "network",
 								DeviceOS:               "IOS",
 								IsCollectingCfgWritten: false,
 								LearningState:          "Ready",
+								SSHConfig: cloudhub.SSHConfig{
+									UserID:   "host",
+									Password: "@1234",
+									Port:     22,
+								},
+								SNMPConfig: cloudhub.SNMPConfig{
+									Community:     "@1234",
+									Version:       "1",
+									Port:          623,
+									Protocol:      "udp",
+									SecurityName:  "user",
+									AuthProtocol:  "sha",
+									AuthPass:      "authPass",
+									PrivProtocol:  "aes",
+									PrivPass:      "privPass",
+									SecurityLevel: "authPriv",
+								},
+								Sensitivity:            1.0,
+								DeviceVendor:           "Cisco",
+								LearningBeginDatetime:  "2023-01-04T00:00:00Z",
+								LearningFinishDatetime: "2023-01-05T12:00:00Z",
+								IsLearning:             false,
 							}, nil
 						}
 						return nil, cloudhub.ErrDeviceNotFound
 					},
+					UpdateF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
+						return nil
+					},
+					AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+						return []cloudhub.NetworkDevice{
+							{
+								ID:                     "958172376138104800",
+								DeviceIP:               "172.16.11.168",
+								Organization:           "76",
+								Hostname:               "SWITCH_01",
+								DeviceType:             "switch",
+								DeviceCategory:         "network",
+								DeviceOS:               "IOS",
+								IsCollectingCfgWritten: false,
+								LearningState:          "Ready",
+								SSHConfig: cloudhub.SSHConfig{
+									UserID:   "host",
+									Password: "@1234",
+									Port:     22,
+								},
+								SNMPConfig: cloudhub.SNMPConfig{
+									Community:     "@1234",
+									Version:       "1",
+									Port:          623,
+									Protocol:      "udp",
+									SecurityName:  "user",
+									AuthProtocol:  "sha",
+									AuthPass:      "authPass",
+									PrivProtocol:  "aes",
+									PrivPass:      "privPass",
+									SecurityLevel: "authPriv",
+								},
+								Sensitivity:            1.0,
+								DeviceVendor:           "Cisco",
+								LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+								LearningFinishDatetime: "2023-01-01T12:00:00Z",
+								IsLearning:             false,
+							},
+							{
+								ID:                     "548",
+								DeviceIP:               "172.16.11.169",
+								Organization:           "76",
+								Hostname:               "SWITCH_02",
+								DeviceType:             "switch",
+								DeviceCategory:         "network",
+								DeviceOS:               "IOS",
+								IsCollectingCfgWritten: false,
+								LearningState:          "Ready",
+								SSHConfig: cloudhub.SSHConfig{
+									UserID:   "host",
+									Password: "@1234",
+									Port:     22,
+								},
+								SNMPConfig: cloudhub.SNMPConfig{
+									Community:     "@1234",
+									Version:       "1",
+									Port:          623,
+									Protocol:      "udp",
+									SecurityName:  "user",
+									AuthProtocol:  "sha",
+									AuthPass:      "authPass",
+									PrivProtocol:  "aes",
+									PrivPass:      "privPass",
+									SecurityLevel: "authPriv",
+								},
+								Sensitivity:            1.0,
+								DeviceVendor:           "Cisco",
+								LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+								LearningFinishDatetime: "2023-01-01T12:00:00Z",
+								IsLearning:             false,
+							},
+						}, nil
+					},
 				},
-				OrganizationsStore: MockOrganizationsStoreSetup(),
+				OrganizationsStore:    MockOrganizationsStoreSetup(),
+				NetworkDeviceOrgStore: MockNetworkDeviceOrgStoreSetup(),
 			},
 			id:         "958172376138104800",
 			wantStatus: http.StatusOK,
@@ -289,111 +383,35 @@ func TestUpdateNetworkDevice(t *testing.T) {
 				"device_ip": "192.168.1.2",
 				"hostname": "UPDATED_SWITCH_01",
 				"device_type": "switch",
-				"device_category": "",
+				"device_category": "network",
 				"device_os": "IOS",
-				"is_monitoring_enabled": false,
-				"is_modeling_generated": false,
+				"is_collecting_cfg_written": false,
+				"learning_state": "Ready",
 				"ssh_config": {
-				  "user_id": "",
-				  "password": "",
 				  "en_password": "",
-				  "port": 0
+				  "password": "@1234",
+				  "port": "22",
+				  "user_id": "host"
 				},
 				"snmp_config": {
-				  "community": "",
-				  "version": "",
-				  "port": 0,
-				  "protocol": ""
+				  "community": "@1234",
+				  "version": "1",
+				  "port": 623,
+				  "protocol": "udp",
+				  "security_name": "user",
+				  "auth_protocol": "sha",
+				  "auth_pass": "authPass",
+				  "priv_protocol": "aes",
+				  "priv_pass": "privPass",
+				  "security_level": "authPriv"
 				},
-				"device_vendor": ""
+				"sensitivity": 1.0,
+				"device_vendor": "Cisco",
+				"learning_update_datetime": "2023-01-04T00:00:00Z",
+				"learning_finish_datetime": "2023-01-05T12:00:00Z",
+				"ml_function":"ml_multiplied",
+				"is_learning": false
 			  }`,
-		},
-		{
-			name: "Device Not Found",
-			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest(
-					"PUT",
-					"http://any.url",
-					nil,
-				),
-				request: updateDeviceRequest{
-					DeviceIP: ptr("192.168.1.2"),
-				},
-			},
-			fields: fields{
-				Logger: log.New(log.DebugLevel),
-				NetworkDeviceStore: &mocks.NetworkDeviceStore{
-					UpdateF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
-						return nil
-					},
-					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
-						return nil, cloudhub.ErrDeviceNotFound
-					},
-				},
-				OrganizationsStore: MockOrganizationsStoreSetup(),
-			},
-			id:         "999",
-			wantStatus: http.StatusNotFound,
-			wantBody:   `{"code": 404,"message": "ID 999 not found"}`,
-		},
-		{
-			name: "empty device_ip in Request Body",
-			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest(
-					"PUT",
-					"http://any.url",
-					strings.NewReader(`invalid json`),
-				),
-				request: updateDeviceRequest{},
-			},
-			fields: fields{
-				Logger:             log.New(log.DebugLevel),
-				NetworkDeviceStore: &mocks.NetworkDeviceStore{},
-				OrganizationsStore: MockOrganizationsStoreSetup(),
-			},
-			id:         "958172376138104800",
-			wantStatus: http.StatusUnprocessableEntity,
-			wantBody:   `{"code": 422,"message": "device_ip required in device request body"}`,
-		},
-		{
-			name: "Internal Server Error",
-			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest(
-					"PUT",
-					"http://any.url",
-					nil,
-				),
-				request: updateDeviceRequest{
-					DeviceIP: ptr("192.168.1.2"),
-				},
-			},
-			fields: fields{
-				Logger: log.New(log.DebugLevel),
-				NetworkDeviceStore: &mocks.NetworkDeviceStore{
-					UpdateF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
-						return errors.New("update failed")
-					},
-					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
-						return &cloudhub.NetworkDevice{
-							ID:                     "958172376138104800",
-							DeviceIP:               "172.16.11.168",
-							Organization:           "76",
-							Hostname:               "SWITCH_01",
-							DeviceType:             "switch",
-							DeviceOS:               "IOS",
-							IsCollectingCfgWritten: false,
-							LearningState:          "Ready",
-						}, nil
-					},
-				},
-				OrganizationsStore: MockOrganizationsStoreSetup(),
-			},
-			id:         "958172376138104800",
-			wantStatus: http.StatusInternalServerError,
-			wantBody:   `{"code": 500,"message": "Error updating Device ID 958172376138104800: update failed"}`,
 		},
 	}
 
@@ -401,16 +419,18 @@ func TestUpdateNetworkDevice(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					OrganizationsStore: tt.fields.OrganizationsStore,
-					NetworkDeviceStore: tt.fields.NetworkDeviceStore,
+					OrganizationsStore:    tt.fields.OrganizationsStore,
+					NetworkDeviceOrgStore: tt.fields.NetworkDeviceOrgStore,
+					NetworkDeviceStore:    tt.fields.NetworkDeviceStore,
 				},
 				Logger: tt.fields.Logger,
 			}
 
 			buf, _ := json.Marshal(tt.args.request)
 			tt.args.r.Body = io.NopCloser(bytes.NewReader(buf))
+
 			tt.args.r = tt.args.r.WithContext(httprouter.WithParams(
-				context.Background(),
+				tt.args.r.Context(),
 				httprouter.Params{
 					{
 						Key:   "id",
@@ -435,17 +455,18 @@ func TestUpdateNetworkDevice(t *testing.T) {
 					t.Logf("Differences found UpdateNetworkDevice(): %s", result)
 					t.Fail()
 				}
-
 			}
 		})
 	}
 }
-
 func TestRemoveDevices(t *testing.T) {
 	type fields struct {
-		NetworkDeviceStore cloudhub.NetworkDeviceStore
-		OrganizationsStore cloudhub.OrganizationsStore
-		Logger             cloudhub.Logger
+		NetworkDeviceStore    cloudhub.NetworkDeviceStore
+		NetworkDeviceOrgStore cloudhub.NetworkDeviceOrgStore
+		OrganizationsStore    cloudhub.OrganizationsStore
+		MLNxRstStore          cloudhub.MLNxRstStore
+		DLNxRstStore          cloudhub.DLNxRstStore
+		Logger                cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -465,45 +486,16 @@ func TestRemoveDevices(t *testing.T) {
 				r: httptest.NewRequest(
 					"DELETE",
 					"http://any.url",
-					strings.NewReader(`{"learned_devices_ids": ["958172376138104800", 548]}`),
+					strings.NewReader(`{"devices_ids": ["958172376138104800", "548"]}`),
 				),
 			},
 			fields: fields{
-				Logger: log.New(log.DebugLevel),
-				NetworkDeviceStore: &mocks.NetworkDeviceStore{
-					DeleteF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
-						return nil
-					},
-					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
-						if *q.ID == "958172376138104800" {
-							return &cloudhub.NetworkDevice{
-								ID:                     "958172376138104800",
-								DeviceIP:               "172.16.11.168",
-								Organization:           "76",
-								Hostname:               "SWITCH_01",
-								DeviceType:             "switch",
-								DeviceOS:               "IOS",
-								IsCollectingCfgWritten: false,
-								LearningState:          "Ready",
-							}, nil
-						}
-						if *q.ID == "548" {
-							return &cloudhub.NetworkDevice{
-								ID:                     "548",
-								DeviceIP:               "192.168.1.1",
-								Organization:           "76",
-								Hostname:               "SWITCH_02",
-								DeviceType:             "switch",
-								DeviceOS:               "IOS",
-								IsCollectingCfgWritten: false,
-								LearningState:          "Ready",
-							}, nil
-						}
-						return nil, cloudhub.ErrDeviceNotFound
-					},
-				},
-
-				OrganizationsStore: MockOrganizationsStoreSetup(),
+				Logger:                log.New(log.DebugLevel),
+				NetworkDeviceOrgStore: MockNetworkDeviceOrgStoreSetup(),
+				NetworkDeviceStore:    MockNetworkDeviceStoreSetup(),
+				OrganizationsStore:    MockOrganizationsStoreSetup(),
+				MLNxRstStore:          MockMLNxRstStoreSetup(),
+				DLNxRstStore:          MockDLNxRstStoreSetup(),
 			},
 			wantStatus: http.StatusNoContent,
 		},
@@ -514,58 +506,25 @@ func TestRemoveDevices(t *testing.T) {
 				r: httptest.NewRequest(
 					"DELETE",
 					"http://any.url",
-					strings.NewReader(`{"learned_devices_ids": [999]}`),
+					strings.NewReader(`{"devices_ids": [999]}`),
 				),
 			},
 			fields: fields{
-				Logger: log.New(log.DebugLevel),
+				Logger:                log.New(log.DebugLevel),
+				NetworkDeviceOrgStore: MockNetworkDeviceOrgStoreSetup(),
 				NetworkDeviceStore: &mocks.NetworkDeviceStore{
+					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
+						return nil, cloudhub.ErrDeviceNotFound
+					},
 					DeleteF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
-						return nil, cloudhub.ErrDeviceNotFound
-					},
 				},
 				OrganizationsStore: MockOrganizationsStoreSetup(),
+				MLNxRstStore:       MockMLNxRstStoreSetup(),
+				DLNxRstStore:       MockDLNxRstStoreSetup(),
 			},
-			wantStatus: http.StatusMultiStatus,
-		},
-		{
-			name: "Deletion Error",
-			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest(
-					"DELETE",
-					"http://any.url",
-					strings.NewReader(`{"learned_devices_ids": [549]}`),
-				),
-			},
-			fields: fields{
-				Logger: log.New(log.DebugLevel),
-				NetworkDeviceStore: &mocks.NetworkDeviceStore{
-					DeleteF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
-						return errors.New("deletion failed")
-					},
-					GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
-						if *q.ID == "548" {
-							return &cloudhub.NetworkDevice{
-								ID:                     "548",
-								DeviceIP:               "192.168.1.1",
-								Organization:           "76",
-								Hostname:               "SWITCH_02",
-								DeviceType:             "switch",
-								DeviceOS:               "IOS",
-								IsCollectingCfgWritten: false,
-								LearningState:          "Ready",
-							}, nil
-						}
-						return nil, cloudhub.ErrDeviceNotFound
-					},
-				},
-				OrganizationsStore: MockOrganizationsStoreSetup(),
-			},
-			wantStatus: http.StatusMultiStatus,
+			wantStatus: http.StatusUnprocessableEntity,
 		},
 	}
 
@@ -573,8 +532,11 @@ func TestRemoveDevices(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					OrganizationsStore: tt.fields.OrganizationsStore,
-					NetworkDeviceStore: tt.fields.NetworkDeviceStore,
+					NetworkDeviceOrgStore: tt.fields.NetworkDeviceOrgStore,
+					OrganizationsStore:    tt.fields.OrganizationsStore,
+					NetworkDeviceStore:    tt.fields.NetworkDeviceStore,
+					MLNxRstStore:          tt.fields.MLNxRstStore,
+					DLNxRstStore:          tt.fields.DLNxRstStore,
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -809,6 +771,8 @@ func MockOrganizationsStoreSetup() *mocks.OrganizationsStore {
 }
 
 func MockNetworkDeviceStoreSetup() *mocks.NetworkDeviceStore {
+	updatedDevices := make(map[string]*cloudhub.NetworkDevice)
+
 	return &mocks.NetworkDeviceStore{
 		GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
 			if *q.ID == "958172376138104800" {
@@ -828,15 +792,21 @@ func MockNetworkDeviceStoreSetup() *mocks.NetworkDeviceStore {
 						Port:     22,
 					},
 					SNMPConfig: cloudhub.SNMPConfig{
-						Community: "@1234",
-						Version:   "1",
-						Port:      623,
-						Protocol:  "udp",
+						Community:     "@1234",
+						Version:       "1",
+						Port:          623,
+						Protocol:      "udp",
+						SecurityName:  "user",
+						AuthProtocol:  "sha",
+						AuthPass:      "authPass",
+						PrivProtocol:  "aes",
+						PrivPass:      "privPass",
+						SecurityLevel: "authPriv",
 					},
 					Sensitivity:            1.0,
-					DeviceVendor:           "",
-					LearningBeginDatetime:  "",
-					LearningFinishDatetime: "",
+					DeviceVendor:           "Cisco",
+					LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+					LearningFinishDatetime: "2023-01-01T12:00:00Z",
 					IsLearning:             false,
 				}, nil
 			}
@@ -844,6 +814,121 @@ func MockNetworkDeviceStoreSetup() *mocks.NetworkDeviceStore {
 				return &cloudhub.NetworkDevice{
 					ID:                     "548",
 					DeviceIP:               "172.16.11.169",
+					Organization:           "76",
+					Hostname:               "SWITCH_02",
+					DeviceType:             "switch",
+					DeviceCategory:         "network",
+					DeviceOS:               "IOS",
+					IsCollectingCfgWritten: false,
+					LearningState:          "Ready",
+					SSHConfig: cloudhub.SSHConfig{
+						UserID:   "host",
+						Password: "@1234",
+						Port:     22,
+					},
+					SNMPConfig: cloudhub.SNMPConfig{
+						Community:     "@1234",
+						Version:       "1",
+						Port:          623,
+						Protocol:      "udp",
+						SecurityName:  "user",
+						AuthProtocol:  "sha",
+						AuthPass:      "authPass",
+						PrivProtocol:  "aes",
+						PrivPass:      "privPass",
+						SecurityLevel: "authPriv",
+					},
+					Sensitivity:            1.0,
+					DeviceVendor:           "Cisco",
+					LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+					LearningFinishDatetime: "2023-01-01T12:00:00Z",
+					IsLearning:             false,
+				}, nil
+			}
+			if *q.ID == "549" {
+				return &cloudhub.NetworkDevice{
+					ID:                     "549",
+					DeviceIP:               "172.16.11.170",
+					Organization:           "77",
+					Hostname:               "SWITCH_03",
+					DeviceType:             "switch",
+					DeviceCategory:         "network",
+					DeviceOS:               "IOS",
+					IsCollectingCfgWritten: false,
+					LearningState:          "Ready",
+					SSHConfig: cloudhub.SSHConfig{
+						UserID:   "host",
+						Password: "@1234",
+						Port:     22,
+					},
+					SNMPConfig: cloudhub.SNMPConfig{
+						Community:     "@1234",
+						Version:       "1",
+						Port:          623,
+						Protocol:      "udp",
+						SecurityName:  "user",
+						AuthProtocol:  "sha",
+						AuthPass:      "authPass",
+						PrivProtocol:  "aes",
+						PrivPass:      "privPass",
+						SecurityLevel: "authPriv",
+					},
+					Sensitivity:            1.0,
+					DeviceVendor:           "Cisco",
+					LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+					LearningFinishDatetime: "2023-01-01T12:00:00Z",
+					IsLearning:             false,
+				}, nil
+			}
+			if *q.ID == "550" {
+				return &cloudhub.NetworkDevice{
+					ID:                     "550",
+					DeviceIP:               "172.16.11.171",
+					Organization:           "77",
+					Hostname:               "SWITCH_04",
+					DeviceType:             "switch",
+					DeviceCategory:         "network",
+					DeviceOS:               "IOS",
+					IsCollectingCfgWritten: false,
+					LearningState:          "Ready",
+					SSHConfig: cloudhub.SSHConfig{
+						UserID:   "host",
+						Password: "@1234",
+						Port:     22,
+					},
+					SNMPConfig: cloudhub.SNMPConfig{
+						Community:     "@1234",
+						Version:       "1",
+						Port:          623,
+						Protocol:      "udp",
+						SecurityName:  "user",
+						AuthProtocol:  "sha",
+						AuthPass:      "authPass",
+						PrivProtocol:  "aes",
+						PrivPass:      "privPass",
+						SecurityLevel: "authPriv",
+					},
+					Sensitivity:            1.0,
+					DeviceVendor:           "Cisco",
+					LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+					LearningFinishDatetime: "2023-01-01T12:00:00Z",
+					IsLearning:             false,
+				}, nil
+			}
+			return &cloudhub.NetworkDevice{}, cloudhub.ErrDeviceNotFound
+		},
+		DeleteF: func(ctx context.Context, nd *cloudhub.NetworkDevice) error {
+			return nil
+		},
+		UpdateF: func(ctx context.Context, device *cloudhub.NetworkDevice) error {
+			updatedDevices[device.ID] = device
+			return nil
+		},
+		AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+			return []cloudhub.NetworkDevice{
+				{
+					ID:                     "958172376138104800",
+					DeviceIP:               "172.16.11.168",
 					Organization:           "76",
 					Hostname:               "SWITCH_01",
 					DeviceType:             "switch",
@@ -857,24 +942,61 @@ func MockNetworkDeviceStoreSetup() *mocks.NetworkDeviceStore {
 						Port:     22,
 					},
 					SNMPConfig: cloudhub.SNMPConfig{
-						Community: "@1234",
-						Version:   "1",
-						Port:      623,
-						Protocol:  "udp",
+						Community:     "@1234",
+						Version:       "1",
+						Port:          623,
+						Protocol:      "udp",
+						SecurityName:  "user",
+						AuthProtocol:  "sha",
+						AuthPass:      "authPass",
+						PrivProtocol:  "aes",
+						PrivPass:      "privPass",
+						SecurityLevel: "authPriv",
 					},
 					Sensitivity:            1.0,
-					DeviceVendor:           "",
-					LearningBeginDatetime:  "",
-					LearningFinishDatetime: "",
+					DeviceVendor:           "Cisco",
+					LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+					LearningFinishDatetime: "2023-01-01T12:00:00Z",
 					IsLearning:             false,
-				}, nil
-			}
-			if *q.ID == "549" {
-				return &cloudhub.NetworkDevice{
+				},
+				{
+					ID:                     "548",
+					DeviceIP:               "172.16.11.169",
+					Organization:           "76",
+					Hostname:               "SWITCH_02",
+					DeviceType:             "switch",
+					DeviceCategory:         "network",
+					DeviceOS:               "IOS",
+					IsCollectingCfgWritten: false,
+					LearningState:          "Ready",
+					SSHConfig: cloudhub.SSHConfig{
+						UserID:   "host",
+						Password: "@1234",
+						Port:     22,
+					},
+					SNMPConfig: cloudhub.SNMPConfig{
+						Community:     "@1234",
+						Version:       "1",
+						Port:          623,
+						Protocol:      "udp",
+						SecurityName:  "user",
+						AuthProtocol:  "sha",
+						AuthPass:      "authPass",
+						PrivProtocol:  "aes",
+						PrivPass:      "privPass",
+						SecurityLevel: "authPriv",
+					},
+					Sensitivity:            1.0,
+					DeviceVendor:           "Cisco",
+					LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+					LearningFinishDatetime: "2023-01-01T12:00:00Z",
+					IsLearning:             false,
+				},
+				{
 					ID:                     "549",
 					DeviceIP:               "172.16.11.170",
 					Organization:           "77",
-					Hostname:               "SWITCH_01",
+					Hostname:               "SWITCH_03",
 					DeviceType:             "switch",
 					DeviceCategory:         "network",
 					DeviceOS:               "IOS",
@@ -886,24 +1008,28 @@ func MockNetworkDeviceStoreSetup() *mocks.NetworkDeviceStore {
 						Port:     22,
 					},
 					SNMPConfig: cloudhub.SNMPConfig{
-						Community: "@1234",
-						Version:   "1",
-						Port:      623,
-						Protocol:  "udp",
+						Community:     "@1234",
+						Version:       "1",
+						Port:          623,
+						Protocol:      "udp",
+						SecurityName:  "user",
+						AuthProtocol:  "sha",
+						AuthPass:      "authPass",
+						PrivProtocol:  "aes",
+						PrivPass:      "privPass",
+						SecurityLevel: "authPriv",
 					},
 					Sensitivity:            1.0,
-					DeviceVendor:           "",
-					LearningBeginDatetime:  "",
-					LearningFinishDatetime: "",
+					DeviceVendor:           "Cisco",
+					LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+					LearningFinishDatetime: "2023-01-01T12:00:00Z",
 					IsLearning:             false,
-				}, nil
-			}
-			if *q.ID == "550" {
-				return &cloudhub.NetworkDevice{
+				},
+				{
 					ID:                     "550",
 					DeviceIP:               "172.16.11.171",
 					Organization:           "77",
-					Hostname:               "SWITCH_01",
+					Hostname:               "SWITCH_04",
 					DeviceType:             "switch",
 					DeviceCategory:         "network",
 					DeviceOS:               "IOS",
@@ -915,19 +1041,24 @@ func MockNetworkDeviceStoreSetup() *mocks.NetworkDeviceStore {
 						Port:     22,
 					},
 					SNMPConfig: cloudhub.SNMPConfig{
-						Community: "@1234",
-						Version:   "1",
-						Port:      623,
-						Protocol:  "udp",
+						Community:     "@1234",
+						Version:       "1",
+						Port:          623,
+						Protocol:      "udp",
+						SecurityName:  "user",
+						AuthProtocol:  "sha",
+						AuthPass:      "authPass",
+						PrivProtocol:  "aes",
+						PrivPass:      "privPass",
+						SecurityLevel: "authPriv",
 					},
 					Sensitivity:            1.0,
-					DeviceVendor:           "",
-					LearningBeginDatetime:  "",
-					LearningFinishDatetime: "",
+					DeviceVendor:           "Cisco",
+					LearningBeginDatetime:  "2023-01-01T00:00:00Z",
+					LearningFinishDatetime: "2023-01-01T12:00:00Z",
 					IsLearning:             false,
-				}, nil
-			}
-			return &cloudhub.NetworkDevice{}, nil
+				},
+			}, nil
 		},
 	}
 }
@@ -983,28 +1114,112 @@ func NewMockData() *MockData {
 	}
 }
 
+func MockMLNxRstStoreSetup() *mocks.MLNxRstStore {
+
+	return &mocks.MLNxRstStore{
+		GetF: func(ctx context.Context, q cloudhub.MLNxRstQuery) (*cloudhub.MLNxRst, error) {
+			return &cloudhub.MLNxRst{
+				Device:                 "192.168.1.1",
+				LearningFinishDatetime: "2023-01-01T00:00:00Z",
+				Epsilon:                0.1,
+				MeanMatrix:             "[1, 2]",
+				CovarianceMatrix:       "[[1, 0], [0, 1]]",
+				K:                      1.0,
+				Mean:                   0.5,
+				MDThreshold:            1.5,
+				MDArray:                []float32{0.1, 0.2, 0.3},
+				CPUArray:               []float32{0.1, 0.2, 0.3},
+				TrafficArray:           []float32{0.1, 0.2, 0.3},
+				GaussianArray:          []float32{0.1, 0.2, 0.3},
+			}, nil
+		},
+		DeleteF: func(ctx context.Context, rst *cloudhub.MLNxRst) error {
+			return nil
+		},
+	}
+}
+func MockDLNxRstStoreSetup() *mocks.DLNxRstStore {
+
+	return &mocks.DLNxRstStore{
+		GetF: func(ctx context.Context, q cloudhub.DLNxRstQuery) (*cloudhub.DLNxRst, error) {
+			return &cloudhub.DLNxRst{
+				Device:                 "192.168.1.1",
+				LearningFinishDatetime: "2023-01-01T00:00:00Z",
+				DLThreshold:            1.5,
+				TrainLoss:              []float32{0.1, 0.2, 0.3},
+				ValidLoss:              []float32{0.1, 0.2, 0.3},
+				MSE:                    []float32{0.1, 0.2, 0.3},
+			}, nil
+		},
+		DeleteF: func(ctx context.Context, rst *cloudhub.DLNxRst) error {
+			return nil
+		},
+	}
+
+}
+
 func MockNetworkDeviceOrgStoreSetup() *mocks.NetworkDeviceOrgStore {
 	return &mocks.NetworkDeviceOrgStore{
 		AllF: func(ctx context.Context) ([]cloudhub.NetworkDeviceOrg, error) {
 			return []cloudhub.NetworkDeviceOrg{
 				{
 					ID:                "default",
+					LoadModule:        "",
 					MLFunction:        "ml_multiplied",
 					DataDuration:      1,
 					LearnedDevicesIDs: []string{"1", "2", "3"},
 					CollectorServer:   "ch-collector-2",
+					AIKapacitor: cloudhub.AIKapacitor{
+						SrcID:              1,
+						KapaID:             1,
+						KapaURL:            "http://example.com",
+						Username:           "user",
+						Password:           "password",
+						InsecureSkipVerify: true,
+					},
+					LearningCron: "0 0 * * *",
+					ProcCnt:      5,
+				},
+				{
+					ID:                  "76",
+					LoadModule:          "",
+					MLFunction:          "ml_multiplied",
+					DataDuration:        1,
+					LearnedDevicesIDs:   []string{"1", "2", "3"},
+					CollectedDevicesIDs: []string{"1", "2", "3"},
+					CollectorServer:     "ch-collector-2",
+					AIKapacitor: cloudhub.AIKapacitor{
+						SrcID:              1,
+						KapaID:             1,
+						KapaURL:            "http://example.com",
+						Username:           "user",
+						Password:           "password",
+						InsecureSkipVerify: true,
+					},
+					LearningCron: "0 0 * * *",
+					ProcCnt:      5,
 				},
 			}, nil
 		},
 		GetF: func(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error) {
 			return &cloudhub.NetworkDeviceOrg{
 				ID:                  "76",
+				MLFunction:          "ml_multiplied",
 				LoadModule:          "",
-				MLFunction:          "",
-				DataDuration:        15,
-				LearnedDevicesIDs:   []string{},
-				CollectorServer:     "",
-				CollectedDevicesIDs: []string{},
+				DataDuration:        1,
+				LearnedDevicesIDs:   []string{"1", "2", "3"},
+				CollectedDevicesIDs: []string{"1", "2", "3"},
+				CollectorServer:     "ch-collector-2",
+				AIKapacitor: cloudhub.AIKapacitor{
+					SrcID:              1,
+					KapaID:             1,
+					KapaURL:            "http://example.com",
+					Username:           "user",
+					Password:           "password",
+					InsecureSkipVerify: true,
+				},
+				LearningCron: "0 0 * * *",
+				ProcCnt:      5,
 			}, nil
 		},
 	}

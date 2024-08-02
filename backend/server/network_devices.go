@@ -62,7 +62,7 @@ type deviceResponse struct {
 	Sensitivity            float32             `json:"sensitivity"`
 	DeviceVendor           string              `json:"device_vendor"`
 	LearningState          string              `json:"learning_state"`
-	LearningBeginDatetime  string              `json:"learning_update_date"`
+	LearningBeginDatetime  string              `json:"learning_update_datetime"`
 	LearningFinishDatetime string              `json:"learning_finish_datetime"`
 	IsLearning             bool                `json:"is_learning"`
 	MLFunction             string              `json:"ml_function"`
@@ -391,7 +391,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	for _, deviceID := range request.DevicesIDs {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
 		if err != nil {
-			failedDevices[deviceID] = err.Error()
+			addFailedDevice(failedDevices, &sync.Mutex{}, deviceID, err)
 		} else {
 			if device.IsCollectingCfgWritten {
 				devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], device.ID)
@@ -407,14 +407,12 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		if activeCollectorsErr != nil {
 			for _, ids := range devicesGroupByOrg {
 				for _, id := range ids {
-					if _, exists := failedDevices[id]; !exists {
-						failedDevices[id] = "Failed to access active collector-server"
-					}
+					addFailedDevice(failedDevices, &sync.Mutex{}, id, fmt.Errorf("Failed to access active collector-server"))
 				}
 			}
 
 			response := make(map[string]interface{})
-			response["failed_devices"] = failedDevices
+			response["failed_devices"] = convertFailedDevicesToArray(failedDevices)
 			encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 			return
 		}
@@ -425,9 +423,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		org, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
 		if err != nil {
 			for _, id := range devicesIDs {
-				if _, exists := failedDevices[id]; !exists {
-					failedDevices[id] = err.Error()
-				}
+				addFailedDevice(failedDevices, &sync.Mutex{}, id, err)
 			}
 			continue
 		}
@@ -435,9 +431,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		isActive := activeCollectorKeys[org.CollectorServer]
 		if !isActive {
 			for _, id := range devicesIDs {
-				if _, exists := failedDevices[id]; !exists {
-					failedDevices[id] = "collector server not active"
-				}
+				addFailedDevice(failedDevices, &sync.Mutex{}, id, fmt.Errorf("collector server not active"))
 			}
 			continue
 		}
@@ -455,18 +449,14 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			for _, devicesIDs := range devicesGroupByOrg {
 				for _, id := range devicesIDs {
-					if _, exists := failedDevices[id]; !exists {
-						failedDevices[id] = err.Error()
-					}
+					addFailedDevice(failedDevices, &sync.Mutex{}, id, err)
 				}
 			}
 			continue
 		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 			for _, devicesIDs := range devicesGroupByOrg {
 				for _, id := range devicesIDs {
-					if _, exists := failedDevices[id]; !exists {
-						failedDevices[id] = string(resp)
-					}
+					addFailedDevice(failedDevices, &sync.Mutex{}, id, fmt.Errorf(string(resp)))
 				}
 			}
 			continue
@@ -477,9 +467,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				for _, devicesIDs := range devicesGroupByOrg {
 					for _, id := range devicesIDs {
-						if _, exists := failedDevices[id]; !exists {
-							failedDevices[id] = err.Error()
-						}
+						addFailedDevice(failedDevices, &sync.Mutex{}, id, err)
 					}
 				}
 				continue
@@ -492,18 +480,14 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			for _, devicesIDs := range devicesGroupByOrg {
 				for _, id := range devicesIDs {
-					if _, exists := failedDevices[id]; !exists {
-						failedDevices[id] = err.Error()
-					}
+					addFailedDevice(failedDevices, &sync.Mutex{}, id, err)
 				}
 			}
 			continue
 		}
 	}
 
-	workerLimit := cloudhub.WorkerLimit
-	sem := make(chan struct{}, workerLimit)
-
+	sem := make(chan struct{}, cloudhub.WorkerLimit)
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
@@ -524,30 +508,35 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			mu.Unlock()
 
 			device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
-			if err := s.OrganizationExists(ctx, device.Organization); err != nil {
-				mu.Lock()
-				if _, exists := failedDevices[id]; !exists {
-					failedDevices[id] = err.Error()
-				}
-				mu.Unlock()
+			if err != nil {
+				addFailedDevice(failedDevices, &mu, id, err)
 				return
 			}
-			if err != nil {
-				mu.Lock()
-				if _, exists := failedDevices[id]; !exists {
-					failedDevices[id] = err.Error()
-				}
-				mu.Unlock()
+			if err := s.OrganizationExists(ctx, device.Organization); err != nil {
+				addFailedDevice(failedDevices, &mu, id, err)
 				return
+			}
+			serverCtx := serverContext(ctx)
+			MLRst, _ := s.Store.MLNxRst(serverCtx).Get(serverCtx, cloudhub.MLNxRstQuery{ID: &device.DeviceIP})
+			if MLRst != nil {
+				err = s.Store.MLNxRst(serverCtx).Delete(serverCtx, MLRst)
+				if err != nil {
+					addFailedDevice(failedDevices, &mu, id, err)
+					return
+				}
+			}
+			DLRst, _ := s.Store.DLNxRst(serverCtx).Get(serverCtx, cloudhub.DLNxRstQuery{ID: &device.DeviceIP})
+			if DLRst != nil {
+				err = s.Store.DLNxRst(serverCtx).Delete(serverCtx, DLRst)
+				if err != nil {
+					addFailedDevice(failedDevices, &mu, id, err)
+					return
+				}
 			}
 
 			err = s.Store.NetworkDevice(ctx).Delete(ctx, device)
 			if err != nil {
-				mu.Lock()
-				if _, exists := failedDevices[id]; !exists {
-					failedDevices[id] = err.Error()
-				}
-				mu.Unlock()
+				addFailedDevice(failedDevices, &mu, id, err)
 				return
 			}
 
@@ -1035,6 +1024,14 @@ func convertFailedDevicesToArray(failedDevices map[string]string) []deviceError 
 		result = append(result, deviceError{DeviceID: id, ErrorMessage: errMsg})
 	}
 	return result
+}
+
+func addFailedDevice(failedDevices map[string]string, mu *sync.Mutex, id string, err error) {
+	mu.Lock()
+	defer mu.Unlock()
+	if _, exists := failedDevices[id]; !exists {
+		failedDevices[id] = err.Error()
+	}
 }
 
 // removeDeviceIDsFromPreviousOrg removes device IDs from their previous organizations
