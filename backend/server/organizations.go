@@ -232,6 +232,19 @@ func (s *Service) RemoveOrganization(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return
 	}
+	devices, err := s.Store.NetworkDevice(ctx).All(ctx)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	for _, device := range devices {
+		if device.Organization == org.ID {
+			msg := "The organization cannot be deleted because there are registered devices associated with it."
+			Error(w, http.StatusConflict, msg, s.Logger)
+			return
+		}
+	}
+
 	if err := s.Store.Organizations(ctx).Delete(ctx, org); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
