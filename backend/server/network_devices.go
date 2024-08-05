@@ -16,8 +16,8 @@ import (
 )
 
 type deviceRequest struct {
-	DeviceIP     string              `json:"device_ip"`
 	Organization string              `json:"organization"`
+	DeviceIP     string              `json:"device_ip"`
 	Hostname     string              `json:"hostname"`
 	DeviceType   string              `json:"device_type"`
 	DeviceOS     string              `json:"device_os"`
@@ -36,9 +36,9 @@ type updateDeviceRequest struct {
 	IsCollectingCfgWritten *bool                `json:"is_collecting_cfg_written,omitempty"`
 	SSHConfig              *cloudhub.SSHConfig  `json:"ssh_config,omitempty"`
 	SNMPConfig             *cloudhub.SNMPConfig `json:"snmp_config,omitempty"`
-	Sensitivity            *float32             `json:"sensitivity,omitempty"`
 	DeviceVendor           *string              `json:"device_vendor,omitempty"`
 	IsLearning             *bool                `json:"is_learning,omitempty"`
+	Sensitivity            *float32             `json:"sensitivity,omitempty"`
 }
 type deleteDevicesRequest struct {
 	DevicesIDs []string `json:"devices_ids"`
@@ -393,7 +393,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			addFailedDevice(failedDevices, &sync.Mutex{}, deviceID, err)
 		} else {
-			if device.IsCollectingCfgWritten {
+			if device.IsCollectingCfgWritten || device.IsLearning {
 				devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], device.ID)
 				deviceOrgMap[deviceID] = device.Organization
 			}
@@ -445,25 +445,8 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, org := range orgsToUpdate {
-		statusCode, resp, err := s.manageLogstashConfig(ctx, &org)
-		if err != nil {
-			for _, devicesIDs := range devicesGroupByOrg {
-				for _, id := range devicesIDs {
-					addFailedDevice(failedDevices, &sync.Mutex{}, id, err)
-				}
-			}
-			continue
-		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-			for _, devicesIDs := range devicesGroupByOrg {
-				for _, id := range devicesIDs {
-					addFailedDevice(failedDevices, &sync.Mutex{}, id, fmt.Errorf(string(resp)))
-				}
-			}
-			continue
-		}
-		if _, exists := restartCollectorServers[org.CollectorServer]; !exists {
-			restartCollectorServers[org.CollectorServer] = org.CollectorServer
-			_, _, err := s.restartDocker(org.CollectorServer)
+		if len(org.CollectedDevicesIDs) > 0 {
+			statusCode, resp, err := s.manageLogstashConfig(ctx, &org)
 			if err != nil {
 				for _, devicesIDs := range devicesGroupByOrg {
 					for _, id := range devicesIDs {
@@ -471,9 +454,27 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 				continue
+			} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+				for _, devicesIDs := range devicesGroupByOrg {
+					for _, id := range devicesIDs {
+						addFailedDevice(failedDevices, &sync.Mutex{}, id, fmt.Errorf(string(resp)))
+					}
+				}
+				continue
+			}
+			if _, exists := restartCollectorServers[org.CollectorServer]; !exists {
+				restartCollectorServers[org.CollectorServer] = org.CollectorServer
+				_, _, err := s.restartDocker(org.CollectorServer)
+				if err != nil {
+					for _, devicesIDs := range devicesGroupByOrg {
+						for _, id := range devicesIDs {
+							addFailedDevice(failedDevices, &sync.Mutex{}, id, err)
+						}
+					}
+					continue
+				}
 			}
 		}
-
 		err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, &org)
 		msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), org.ID)
 		s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
