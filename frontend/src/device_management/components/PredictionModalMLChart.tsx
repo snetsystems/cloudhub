@@ -93,7 +93,7 @@ function PredictionModalMLChart({host}: Props) {
       type: 'line',
       borderColor: 'red',
       data: [
-        {x: 0, y: mlResultData?.md_threshold}, // threshold 값
+        {x: 0, y: mlResultData?.md_threshold}, // threshold value
         {x: mlResultData?.md_array?.length, y: mlResultData?.md_threshold},
       ],
       order: 1,

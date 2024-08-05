@@ -16,7 +16,7 @@ import moment from 'moment'
 
 import {timeRanges} from 'src/shared/data/timeRanges'
 
-import {Source, TimeRange, Me} from 'src/types'
+import {Source, TimeRange, Me, TimeZones} from 'src/types'
 import {Alert} from '../../types/alerts'
 import {alertValueStatus} from 'src/shared/utils/alertValueStatus'
 
@@ -26,6 +26,7 @@ interface Props {
   isWidget: boolean
   limit: number
   me: Me
+  timeZone?: TimeZones
 }
 
 interface State {
@@ -86,7 +87,10 @@ class AlertsApp extends PureComponent<Props, State> {
       })
   }
 
-  public componentDidUpdate(__, prevState) {
+  public componentDidUpdate(prevProps, prevState) {
+    if (!_.isEqual(prevProps.timeZone, this.props.timeZone)) {
+      this.fetchAlerts()
+    }
     if (!_.isEqual(prevState.timeRange, this.state.timeRange)) {
       this.fetchAlerts()
     }
@@ -241,5 +245,11 @@ class AlertsApp extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = ({auth: {me}}) => ({me})
+const mapStateToProps = ({
+  auth: {me},
+  app: {
+    persisted: {timeZone},
+  },
+}) => ({me, timeZone})
+
 export default connect(mapStateToProps, null)(AlertsApp)
