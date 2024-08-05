@@ -175,7 +175,10 @@ function PredictionDashboardWrapper({
             ...i,
             groupbys: ['time(1d)'],
             wheres: [],
-            tz: timeZone === TimeZones.UTC ? 'UTC' : 'Asia/Seoul',
+            tz:
+              timeZone === TimeZones.UTC
+                ? 'UTC'
+                : `${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
           }
         }),
       },
