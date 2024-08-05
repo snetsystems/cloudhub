@@ -26,6 +26,7 @@ import {
   notifyCloudHubUserUpdated,
   notifyCloudHubUserDeleted,
   notifyCloudHubBasicUserAdd,
+  notifyCloudHubOrgDeletionFailedWithRegisteredDevices,
 } from 'src/shared/copy/notifications'
 
 import {REVERT_STATE_DELAY} from 'src/shared/constants'
@@ -321,6 +322,17 @@ export const deleteOrganizationAsync = organization => async dispatch => {
     await deleteOrganizationAJAX(organization)
     dispatch(notify(notifyCloudHubOrgDeleted(organization.name)))
   } catch (error) {
+    if (error?.status === 409) {
+      dispatch(
+        notify(
+          notifyCloudHubOrgDeletionFailedWithRegisteredDevices(
+            organization?.name || ''
+          )
+        )
+      )
+      dispatch(addOrganization(organization))
+      return
+    }
     dispatch(errorThrown(error))
     dispatch(addOrganization(organization))
   }

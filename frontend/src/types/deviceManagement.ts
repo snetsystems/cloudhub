@@ -18,7 +18,7 @@ export interface DeviceData {
   sensitivity?: string
   device_vendor?: string
   learning_state?: string
-  learning_update_date?: string
+  learning_update_datetime?: string
   learning_finish_datetime?: string
   is_learning?: boolean
   ml_function?: string
