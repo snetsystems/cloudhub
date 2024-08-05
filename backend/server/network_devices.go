@@ -397,6 +397,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 				devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], device.ID)
 				deviceOrgMap[deviceID] = device.Organization
 			}
+
 		}
 	}
 
@@ -445,8 +446,25 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, org := range orgsToUpdate {
-		if len(org.CollectedDevicesIDs) > 0 {
-			statusCode, resp, err := s.manageLogstashConfig(ctx, &org)
+		statusCode, resp, err := s.manageLogstashConfig(ctx, &org)
+		if err != nil {
+			for _, devicesIDs := range devicesGroupByOrg {
+				for _, id := range devicesIDs {
+					addFailedDevice(failedDevices, &sync.Mutex{}, id, err)
+				}
+			}
+			continue
+		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			for _, devicesIDs := range devicesGroupByOrg {
+				for _, id := range devicesIDs {
+					addFailedDevice(failedDevices, &sync.Mutex{}, id, fmt.Errorf(string(resp)))
+				}
+			}
+			continue
+		}
+		if _, exists := restartCollectorServers[org.CollectorServer]; !exists {
+			restartCollectorServers[org.CollectorServer] = org.CollectorServer
+			_, _, err := s.restartDocker(org.CollectorServer)
 			if err != nil {
 				for _, devicesIDs := range devicesGroupByOrg {
 					for _, id := range devicesIDs {
@@ -454,27 +472,9 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 				continue
-			} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-				for _, devicesIDs := range devicesGroupByOrg {
-					for _, id := range devicesIDs {
-						addFailedDevice(failedDevices, &sync.Mutex{}, id, fmt.Errorf(string(resp)))
-					}
-				}
-				continue
-			}
-			if _, exists := restartCollectorServers[org.CollectorServer]; !exists {
-				restartCollectorServers[org.CollectorServer] = org.CollectorServer
-				_, _, err := s.restartDocker(org.CollectorServer)
-				if err != nil {
-					for _, devicesIDs := range devicesGroupByOrg {
-						for _, id := range devicesIDs {
-							addFailedDevice(failedDevices, &sync.Mutex{}, id, err)
-						}
-					}
-					continue
-				}
 			}
 		}
+
 		err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, &org)
 		msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), org.ID)
 		s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
