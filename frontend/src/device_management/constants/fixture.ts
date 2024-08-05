@@ -2,13 +2,9 @@
 import {DEFAULT_AXIS} from 'src/dashboards/constants/cellEditor'
 import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
-import {
-  TEMP_VAR_DASHBOARD_TIME,
-  TEMP_VAR_UPPER_DASHBOARD_TIME,
-} from 'src/shared/constants'
 
 // Type
-import {Cell, Axes, CellType, QueryType, Source} from 'src/types'
+import {Cell, Axes, CellType, Source, QueryType} from 'src/types'
 
 const emptyAxes: Axes = {
   x: DEFAULT_AXIS,
@@ -39,36 +35,11 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
       colors: DEFAULT_LINE_COLORS,
       queries: [
         {
-          id: '1234',
-          query: `SELECT count("value") AS "count_value" FROM "cloudhub_alerts" WHERE time > '${TEMP_VAR_DASHBOARD_TIME}' time < '${TEMP_VAR_UPPER_DASHBOARD_TIME}' GROUP BY time(1d)`,
+          query:
+            'SELECT count("value") AS "count_value" FROM "Default"."autogen"."cloudhub_alerts"',
+          queryConfig: null,
           source: '',
           type: QueryType.InfluxQL,
-          queryConfig: {
-            database: source.telegraf,
-            measurement: 'cloudhub_alerts',
-            retentionPolicy: 'autogen',
-            fields: [
-              {
-                value: 'count',
-                type: 'func',
-                alias: 'count_value',
-                args: [
-                  {
-                    value: 'value',
-                    type: 'field',
-                  },
-                ],
-              },
-            ],
-            tags: {},
-            groupBy: {
-              time: '1d',
-              tags: [],
-            },
-            areTagsAccepted: false,
-            rawText: null,
-            range: null,
-          },
         },
       ],
       links: {

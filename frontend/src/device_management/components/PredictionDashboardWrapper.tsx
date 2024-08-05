@@ -69,7 +69,6 @@ function PredictionDashboardWrapper({
   onZoom,
   onCloneCell,
   onDeleteCell,
-  timeZone,
   onSummonOverlayTechnologies,
   sources,
   instance,
@@ -80,6 +79,7 @@ function PredictionDashboardWrapper({
   cloudAutoRefresh,
   setHistogramDate,
   setSelectedAnomaly,
+  timeZone,
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
 
@@ -159,6 +159,29 @@ function PredictionDashboardWrapper({
     }
   }
 
+  const reBuildQuery = (cell: Cell) => {
+    return {
+      ...cell,
+      ...{
+        graphOptions: {
+          ...cell.graphOptions,
+          clickCallback: (_, __, points) => {
+            //consider double click debounce
+            handleClickDate(points[0].xval)
+          },
+        },
+        queries: cell.queries.map(i => {
+          return {
+            ...i,
+            groupbys: ['time(1d)'],
+            wheres: [],
+            tz: timeZone === TimeZones.UTC ? 'UTC' : 'Asia/Seoul',
+          }
+        }),
+      },
+    }
+  }
+
   return (
     <div style={{height: '100%', backgroundColor: '#292933'}}>
       <PredictionDashboardHeader
@@ -177,18 +200,7 @@ function PredictionDashboardWrapper({
       {!!cell && (
         <Layout
           key={cell.i}
-          cell={{
-            ...cell,
-            ...{
-              graphOptions: {
-                ...cell.graphOptions,
-                clickCallback: (_, __, points) => {
-                  //consider double click debounce
-                  handleClickDate(points[0].xval)
-                },
-              },
-            },
-          }}
+          cell={reBuildQuery(cell)}
           host={host}
           source={source}
           onZoom={onZoom}
@@ -217,9 +229,9 @@ const mstp = state => {
   } = state
 
   return {
+    timeZone,
     predictionTimeRange,
     cloudAutoRefresh,
-    timeZone,
   }
 }
 
