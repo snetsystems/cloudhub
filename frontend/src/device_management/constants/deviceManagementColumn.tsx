@@ -1,5 +1,9 @@
 import React from 'react'
+
+//Type
 import {AlignType, ColumnInfo, DeviceData, ShellInfo, SortType} from 'src/types'
+
+// Utils
 import {
   formatDateTimeForDeviceData,
   formatMLKey,

@@ -1,12 +1,18 @@
 import React from 'react'
+
+// Components
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import TableComponent from 'src/device_management/components/TableComponent'
+
+// Constants
 import {deviceApplyMonitoringColumn} from 'src/device_management/constants/deviceManagementColumn'
-import {MonitoringModalProps} from 'src/types'
 import {
   MONITORING_MODAL_INFO,
   SYSTEM_MODAL,
 } from 'src/device_management/constants'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+
+// Type
+import {MonitoringModalProps} from 'src/types'
 
 interface Props {
   data: MonitoringModalProps[]

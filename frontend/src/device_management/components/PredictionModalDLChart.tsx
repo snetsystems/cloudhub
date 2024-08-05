@@ -1,6 +1,12 @@
 import React, {useEffect, useMemo, useState} from 'react'
+
+// Type
 import {GetLearningDLData} from 'src/types'
-import {getLearningRstDL} from 'src/device_management//apis'
+
+// API
+import {getLearningRstDL} from 'src/device_management/apis'
+
+// Components
 import {DLNxRstChart} from 'src/device_management/components/PredictionModalDLContent'
 
 interface Props {
@@ -122,8 +128,6 @@ function PredictionModalDLChart({host}: Props) {
         },
       },
       y: {
-        // min: 0,
-        // max: 1,
         beginAtZero: true,
         grid: {
           display: true,
@@ -132,9 +136,7 @@ function PredictionModalDLChart({host}: Props) {
         },
       },
     },
-    // animations: false,
-    // animation: {duration: 0},
-    // intersect: false,
+
     hover: {intersect: false},
     plugins: {
       tooltip: {enabled: false},

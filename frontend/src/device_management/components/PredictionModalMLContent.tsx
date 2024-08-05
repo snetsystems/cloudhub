@@ -1,9 +1,15 @@
 import React from 'react'
+
+// Library
 import {Scatter} from 'react-chartjs-2'
-import {MLChartSectorProps, ContentItem} from 'src/types/prediction'
-import ModalContentHeader from 'src/device_management/components/PredictionModalContentHeader'
-import {NoData} from './PredictionModalNodata'
+
+// Components
 import PageSpinner from 'src/shared/components/PageSpinner'
+import {NoData} from 'src/device_management/components/PredictionModalNodata'
+import ModalContentHeader from 'src/device_management/components/PredictionModalContentHeader'
+
+// Type
+import {MLChartSectorProps, ContentItem} from 'src/types/prediction'
 
 const ChartWrapper: React.FC<{children: React.ReactNode}> = ({children}) => (
   <div

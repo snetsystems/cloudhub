@@ -1,5 +1,8 @@
 import React from 'react'
+
+// Library
 import classnames from 'classnames'
+
 export const PredictionTooltipIndicator = ({
   value,
   status,

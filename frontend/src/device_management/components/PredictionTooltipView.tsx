@@ -1,8 +1,16 @@
 import React from 'react'
-import {HexagonInputData} from 'src/types'
-import PredictionTooltip from './PredictionTooltip'
-import {statusCal} from '../utils'
+
+// Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import PredictionTooltip from 'src/device_management/components/PredictionTooltip'
+
+// Type
+import {HexagonInputData} from 'src/types'
+
+// Utils
+import {statusCal} from 'src/device_management/utils'
+
+// Redux
 import {connect} from 'react-redux'
 
 interface Props {
@@ -22,7 +30,7 @@ function PredictionTooltipView({
     <>
       <FancyScrollbar style={{height: 'calc(100% - 45px)'}} autoHide={true}>
         <div className="prediction-tooltipView--wrapper">
-          {inputData.map((tooltip, idx) => {
+          {inputData.map(tooltip => {
             return (
               <div
                 onClick={e => {
@@ -59,6 +67,4 @@ const mstp = state => {
   }
 }
 
-const mdtp = () => ({})
-
-export default connect(mstp, mdtp, null)(PredictionTooltipView)
+export default connect(mstp, null)(PredictionTooltipView)

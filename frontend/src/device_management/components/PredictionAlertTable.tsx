@@ -1,8 +1,16 @@
-import _ from 'lodash'
 import React, {useMemo} from 'react'
+
+// Library
+import _ from 'lodash'
+
+// Type
 import {Source} from 'src/types'
 import {Alert} from 'src/types/alerts'
-import PredictionAlertTableBody from './PredictionAlertTableBody'
+
+// Components
+import PredictionAlertTableBody from 'src/device_management/components/PredictionAlertTableBody'
+
+// Utils
 import {alertValueStatus} from 'src/shared/utils/alertValueStatus'
 
 interface Props {

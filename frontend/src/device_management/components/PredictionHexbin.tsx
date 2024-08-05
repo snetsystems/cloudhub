@@ -1,19 +1,31 @@
 import React, {useEffect, useRef, useState} from 'react'
+
+// Library
 import * as d3 from 'd3'
 import {hexbin} from 'd3-hexbin'
+
+// Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import PredictionTooltip from 'src/device_management/components/PredictionTooltip'
+
+// Constants
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
+import {TOOLTIP_OFFSET_X} from 'src/device_management/constants'
+
+// Type
 import {HexagonData, HexagonInputData, PredictionTooltipNode} from 'src/types'
-import PredictionTooltip from './PredictionTooltip'
-import {TOOLTIP_OFFSET_X} from '../constants'
+
+// Utils
+import {statusCal} from 'src/device_management/utils'
+
+// Redux
 import {connect} from 'react-redux'
-import {statusCal} from '../utils'
 
 interface Props {
   onHexbinClick: (host: string, filteredHexbinHost?: string) => void
   inputData: HexagonInputData[]
   isMouseInComponent: boolean
-  //redux
+
   filteredHexbinHost?: string
   alertHostList?: string[]
 }
@@ -128,9 +140,7 @@ const PredictionHexbin = ({
           .duration(150)
           .attr('transform', d => `translate(${d.x},${d.y})`)
           .style('cursor', 'default')
-        // setTooltipPosition({x: -999, y: -999})
         setIsMouseOn(false)
-        // setIsTooltipActive(false)
       })
       .on('click', function () {
         d3.select(this).attr('x', d => {
@@ -274,7 +284,6 @@ const PredictionHexbin = ({
         onMouseMove={() => {
           setIsTooltipActive(false)
         }}
-        // onMouseOut={() => setIsTooltipActive(false)}
         style={{
           top: `${position.y}px`,
           left: `${position.x}px`,

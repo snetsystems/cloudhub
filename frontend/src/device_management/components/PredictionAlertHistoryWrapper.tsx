@@ -1,27 +1,40 @@
 import React, {useCallback, useEffect, useState} from 'react'
+import _ from 'lodash'
+
+// Type
 import {INPUT_TIME_TYPE, Source, TimeRange} from 'src/types'
 import {Alert} from 'src/types/alerts'
-import PredictionAlertTable from './PredictionAlertTable'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
+
+// Components
+import PredictionAlertTable from 'src/device_management/components/PredictionAlertTable'
+import {Button, ComponentColor} from 'src/reusable_ui'
+import LoadingDots from 'src/shared/components/LoadingDots'
+
+// Constant
 import {RECENT_ALERTS_LIMIT} from 'src/status/constants'
-import PredictionDashboardHeader from './PredictionDashboardHeader'
+import PredictionDashboardHeader from 'src/device_management/components/PredictionDashboardHeader'
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
-import LoadingDots from 'src/shared/components/LoadingDots'
-import {getPredictionAlert} from '../apis'
-import _ from 'lodash'
-import {Button, ComponentColor} from 'src/reusable_ui'
+
+// API
+import {getPredictionAlert} from 'src/device_management/apis'
+
+// Redux
 import {
   setAlertHostList,
   setFilteredHexbin,
   setPredictionTimeRange,
-} from '../actions'
+} from 'src/device_management/actions'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
+
+//Util
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
-import {setArrayHostList} from '../utils'
+import {setArrayHostList} from 'src/device_management/utils'
+
 interface Props {
   predictionTimeRange?: TimeRange
   source: Source
@@ -227,14 +240,6 @@ function PredictionAlertHistoryWrapper({
       </div>
     </>
   )
-
-  //   alerts={alertsData}
-  //   error={error}
-  //   fetchAlerts={fetchAlerts}
-  //   hasKapacitor={hasKapacitor}
-  //   isAlertsMaxedOut={isAlertsMaxedOut}
-  //   loading={loading}
-  //   setLimitMultiplier={setLimitMultiplier}
 }
 
 const mstp = state => {

@@ -1,5 +1,9 @@
 import React, {useState} from 'react'
+
+// Library
 import classnames from 'classnames'
+
+// Type
 import {ModalContentHeaderProps} from 'src/types/prediction'
 
 const styleClassnames = isActive => {

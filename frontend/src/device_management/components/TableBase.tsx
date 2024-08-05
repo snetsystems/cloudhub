@@ -1,4 +1,6 @@
-import React, {ReactNode, useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
+
+// Type
 import {
   AlignType,
   ColumnInfo,
@@ -13,7 +15,6 @@ import AccordionTable from 'src/device_management/components/AccordionTable'
 interface Props {
   columns: ColumnInfo[]
   data: DataTableObject[]
-  customNoDataNode?: ReactNode
   onSort?: (column: ColumnInfo) => void
   options?: DataTableOptions
   sortTarget?: SortInfo | null
@@ -27,7 +28,6 @@ interface Props {
 function TableBase({
   columns,
   data,
-  customNoDataNode,
   options,
   accordionColumns,
   onCheck,
@@ -273,6 +273,7 @@ function TableBase({
                         }`}
                       >
                         <AccordionTable
+                          timeZone={timeZone}
                           tableData={
                             getValue(item, accordionKey) as DataTableObject[]
                           }

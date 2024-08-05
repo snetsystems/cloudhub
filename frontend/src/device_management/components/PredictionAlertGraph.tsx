@@ -1,8 +1,42 @@
 import React, {Component} from 'react'
-import {connect} from 'react-redux'
 import {WithRouterProps, withRouter} from 'react-router'
-import LogsGraphContainer from 'src/logs/components/LogsGraphContainer'
 
+//Components
+import LogsGraphContainer from 'src/logs/components/LogsGraphContainer'
+import TimeWindowDropdown from 'src/logs/components/TimeWindowDropdown'
+import {Greys} from 'src/reusable_ui'
+import HistogramResults from 'src/logs/components/HistogramResults'
+import HistogramChart from 'src/shared/components/HistogramChart'
+
+// Type
+import {
+  FetchLoop,
+  Filter,
+  SearchStatus,
+  TimeBounds,
+  TimeMarker,
+  TimeRange,
+  TimeWindow,
+} from 'src/types/logs'
+import {Namespace} from 'src/types'
+import {
+  HistogramColor,
+  HistogramData,
+  HistogramDatum,
+} from 'src/types/histogram'
+
+// Utils
+import extentBy from 'src/utils/extentBy'
+import {computeTimeBounds} from 'src/logs/utils/timeBounds'
+import {formatTime} from 'src/logs/utils'
+import {getDeep} from 'src/utils/wrappers'
+import {colorForSeverity} from 'src/logs/utils/colors'
+
+// Constant
+import {SEVERITY_SORTING_ORDER} from 'src/logs/constants'
+
+// Redux
+import {connect} from 'react-redux'
 import {
   setTableCustomTimeAsync,
   setTableRelativeTimeAsync,
@@ -30,35 +64,14 @@ import {
   setSearchStatus,
   executeHistogramQueryAsync,
 } from 'src/logs/actions'
+
+// ETC
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {getDeep} from 'src/utils/wrappers'
-import HistogramResults from 'src/logs/components/HistogramResults'
 import {getSourcesAsync} from 'src/shared/actions/sources'
 import {AutoSizer} from 'react-virtualized'
-import HistogramChart from 'src/shared/components/HistogramChart'
-import {colorForSeverity} from 'src/logs/utils/colors'
+
+// Library
 import _ from 'lodash'
-import {
-  FetchLoop,
-  Filter,
-  SearchStatus,
-  TimeBounds,
-  TimeMarker,
-  TimeRange,
-  TimeWindow,
-} from 'src/types/logs'
-import extentBy from 'src/utils/extentBy'
-import {computeTimeBounds} from 'src/logs/utils/timeBounds'
-import {Namespace} from 'src/types'
-import {
-  HistogramColor,
-  HistogramData,
-  HistogramDatum,
-} from 'src/types/histogram'
-import TimeWindowDropdown from 'src/logs/components/TimeWindowDropdown'
-import {SEVERITY_SORTING_ORDER} from 'src/logs/constants'
-import {Greys} from 'src/reusable_ui'
-import {formatTime} from 'src/logs/utils'
 
 interface Props extends WithRouterProps {
   queryCount?: number

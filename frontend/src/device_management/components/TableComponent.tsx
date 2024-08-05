@@ -5,6 +5,8 @@ import React, {
   useMemo,
   useState,
 } from 'react'
+
+//Type
 import {
   ColumnInfo,
   SortInfo,
@@ -12,8 +14,10 @@ import {
   DataTableOptions,
   TimeZones,
 } from 'src/types'
-import TableBase from './TableBase'
+
+// Components
 import SearchBar from 'src/hosts/components/SearchBar'
+import TableBase from 'src/device_management/components/TableBase'
 
 interface Props {
   data: DataTableObject[]

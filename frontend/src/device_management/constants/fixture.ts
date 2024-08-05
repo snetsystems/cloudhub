@@ -1,11 +1,14 @@
-import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
-import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
+// Constants
 import {DEFAULT_AXIS} from 'src/dashboards/constants/cellEditor'
-import {Cell, Axes, CellType, QueryType, Source} from 'src/types'
+import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
+import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 import {
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
 } from 'src/shared/constants'
+
+// Type
+import {Cell, Axes, CellType, QueryType, Source} from 'src/types'
 
 const emptyAxes: Axes = {
   x: DEFAULT_AXIS,

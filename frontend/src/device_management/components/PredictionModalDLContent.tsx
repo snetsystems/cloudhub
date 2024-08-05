@@ -1,8 +1,14 @@
 import React from 'react'
+
+//Library
 import {Line, Scatter} from 'react-chartjs-2'
+
+// Type
 import {DLChartSectorProps, ContentItem} from 'src/types/prediction'
+
+// Components
 import ModalContentHeader from 'src/device_management/components/PredictionModalContentHeader'
-import {NoData} from './PredictionModalNodata'
+import {NoData} from 'src/device_management/components/PredictionModalNodata'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
 const ChartWrapper: React.FC<{children: React.ReactNode}> = ({children}) => (

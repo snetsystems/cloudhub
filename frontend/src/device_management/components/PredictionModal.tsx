@@ -1,9 +1,13 @@
 import React from 'react'
+
+// Library
+import _ from 'lodash'
+
+// Components
 import {Form} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import _ from 'lodash'
-import PredictionModalDLChart from './PredictionModalDLChart'
-import PredictionModalMLChart from './PredictionModalMLChart'
+import PredictionModalDLChart from 'src/device_management/components/PredictionModalDLChart'
+import PredictionModalMLChart from 'src/device_management/components/PredictionModalMLChart'
 
 interface Props {
   isOpen: boolean

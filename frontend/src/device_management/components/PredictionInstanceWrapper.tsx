@@ -1,5 +1,14 @@
-import _ from 'lodash'
 import React, {useEffect, useState} from 'react'
+
+// Library
+import _ from 'lodash'
+
+// Components
+import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import PredictionDashboardHeader from 'src/device_management/components/PredictionDashboardHeader'
+
+// Type
 import {
   AnomalyFactor,
   Cell,
@@ -11,19 +20,19 @@ import {
 import ReactObserver from 'react-resize-observer'
 import {timeRanges} from 'src/shared/data/timeRanges'
 
-import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+// Redux
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import {setAutoRefresh} from 'src/shared/actions/app'
+
+// constants
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
-import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
-import PredictionDashboardHeader from './PredictionDashboardHeader'
 import {getLayouts} from 'src/hosts/apis'
 import {getDeep} from 'src/utils/wrappers'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'

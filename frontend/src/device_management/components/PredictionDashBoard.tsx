@@ -1,29 +1,45 @@
 import React, {useEffect, useMemo, useRef} from 'react'
-import {connect} from 'react-redux'
-import {Page} from 'src/reusable_ui'
+
+// Library
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
+import _ from 'lodash'
+
+// Components
+import {Page} from 'src/reusable_ui'
+import PredictionHexbinWrapper from 'src/device_management/components/PredictionHexbinWrapper'
+import PredictionInstanceWrapper from 'src/device_management/components/PredictionInstanceWrapper'
+import PredictionDashboardWrapper from 'src/device_management/components/PredictionDashboardWrapper'
+import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
+import PredictionAlertHistoryWrapper from 'src/device_management/components/PredictionAlertHistoryWrapper'
+
+// Type
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 import * as DashboardsModels from 'src/types/dashboards'
+import {Cell, Me, Source, Template, TemplateValue, TimeRange} from 'src/types'
+
+// Auth
 import Authorized, {
   ADMIN_ROLE,
   EDITOR_ROLE,
   isUserAuthorized,
 } from 'src/auth/Authorized'
+
+// Constants
+import {fixturePredictionPageCells} from 'src/device_management/constants'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
-import {Cell, Me, Source, Template, TemplateValue, TimeRange} from 'src/types'
-import {fixturePredictionPageCells} from '../constants'
-import {Link} from 'react-router'
-import PredictionHexbinWrapper from './PredictionHexbinWrapper'
-import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
-import {WithRouterProps} from 'react-router'
-import PredictionInstanceWrapper from './PredictionInstanceWrapper'
-import PredictionAlertHistoryWrapper from './PredictionAlertHistoryWrapper'
+
+// Util
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
-import PredictionDashboardWrapper from './PredictionDashboardWrapper'
+import {Link, WithRouterProps} from 'react-router'
+
+// Redux
+import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
-import {setHistogramDate, setPredictionTimeRange} from '../actions'
+import {
+  setHistogramDate,
+  setPredictionTimeRange,
+} from 'src/device_management/actions'
 import {setTimeRange} from 'src/dashboards/actions'
-import _ from 'lodash'
 
 interface Props extends ManualRefreshProps, WithRouterProps {
   host: string

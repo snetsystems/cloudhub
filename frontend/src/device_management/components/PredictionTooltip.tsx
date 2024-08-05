@@ -1,14 +1,20 @@
 import React from 'react'
-// components
+
+// Components
 import {
   Table,
   TableBody,
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import {PredictionTooltipNode} from 'src/types'
-import {PredictionTooltipIndicator} from './PredictionTootipIndicator'
-import {PREDICTION_TOOLTIP_TABLE_SIZING, TOOLTIP_WIDTH} from '../constants'
-import {PREDICTION_TOOLTIP_HEADER} from '../constants/prediction'
+import {PredictionTooltipIndicator} from 'src/device_management/components/PredictionTootipIndicator'
+
+// Constants
+import {
+  PREDICTION_TOOLTIP_TABLE_SIZING,
+  TOOLTIP_WIDTH,
+} from 'src/device_management/constants'
+import {PREDICTION_TOOLTIP_HEADER} from 'src/device_management/constants/prediction'
 
 interface Props extends PredictionTooltipNode {
   status?: string

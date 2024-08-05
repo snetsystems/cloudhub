@@ -1,6 +1,5 @@
 // Components
 import React, {PureComponent} from 'react'
-import {connect} from 'react-redux'
 
 // Libraries
 import _ from 'lodash'
@@ -10,6 +9,8 @@ import {Link} from 'react-router'
 // Components
 import AlertsTableRow from 'src/alerts/components/AlertsTableRow'
 import SearchBar from 'src/alerts/components/SearchBar'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+
 // Constants
 import {ALERTS_TABLE} from 'src/alerts/constants/tableSizing'
 
@@ -19,9 +20,11 @@ import {AnomalyFactor, Source, TimeZones} from 'src/types'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+
+// Redux
 import {bindActionCreators} from 'redux'
-import {setSelectedAnomaly} from '../actions'
+import {connect} from 'react-redux'
+import {setSelectedAnomaly} from 'src/device_management/actions'
 
 enum Direction {
   ASC = 'asc',
@@ -78,20 +81,6 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
       time: '',
     })
   }
-
-  // public componentDidUpdate(prevProps) {
-  //   if (
-  //     (prevProps.filteredHexbinHost !== this.props.filteredHexbinHost ||
-  //       prevProps.alerts !== this.props.alerts) &&
-  //     !!this.props.filteredHexbinHost &&
-  //     !!this.state.filteredAlerts
-  //   ) {
-  //     this.filterAlertsByHost(
-  //       this.props.filteredHexbinHost,
-  //       this.state.filteredAlerts
-  //     )
-  //   }
-  // }
 
   public render() {
     const {
@@ -153,15 +142,6 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
     this.setState({searchTerm, filteredAlerts})
   }
 
-  // private filterAlertsByHost = (filteredHost: string, newAlerts?: Alert[]) => {
-  //   const alerts = newAlerts
-  //   const filterText = filteredHost.toLowerCase()
-  //   const filteredAlerts = alerts.filter(i => {
-  //     return i.host && i.host.toLowerCase().includes(filterText)
-  //   })
-  //   this.setState({filteredAlerts})
-  // }
-
   private changeSort = (key: string): (() => void) => (): void => {
     // if we're using the key, reverse order; otherwise, set it with ascending
     if (this.state.sortKey === key) {
@@ -199,17 +179,6 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
         return alerts
     }
   }
-
-  // private handleMakeDiv = className => props => {
-  //   if (className === 'view') {
-  //     const customStyle = {...props}
-  //     customStyle.style.marginBottom = customStyle.style.marginBottom - 1
-  //     customStyle.style.marginRight = customStyle.style.marginRight - 1
-  //     return <div {...customStyle} className={`fancy-scroll--${className}`} />
-  //   } else {
-  //     return <div {...props} className={`fancy-scroll--${className}`} />
-  //   }
-  // }
 
   private renderTable(): JSX.Element {
     const {

@@ -1,5 +1,17 @@
 import React, {useEffect, useMemo, useState} from 'react'
-import PredictionHexbin from './PredictionHexbin'
+
+// Library
+import _ from 'lodash'
+
+// Components
+import PredictionHexbin from 'src/device_management/components/PredictionHexbin'
+import {PredictionModal} from 'src/device_management/components/PredictionModal'
+import PredictionHexbinToggle from 'src/device_management/components/PredictionHexbinToggle'
+import PredictionTooltipView from 'src/device_management/components/PredictionTooltipView'
+import LoadingDots from 'src/shared/components/LoadingDots'
+import PredictionDashboardHeader from 'src/device_management/components/PredictionDashboardHeader'
+
+// Type
 import {
   HexagonInputData,
   Links,
@@ -7,28 +19,33 @@ import {
   PredictionTooltipNode,
   Source,
 } from 'src/types'
-import {getLiveDeviceInfo} from '../apis'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
+
+// API
+import {getLiveDeviceInfo} from 'src/device_management/apis'
+
+// Utils
 import {generateForHosts} from 'src/utils/tempVars'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {statusCal, statusHexColor} from 'src/device_management/utils'
+
+// Auth
 import {Auth} from 'src/types/reducers/auth'
 
-import {bindActionCreators} from 'redux'
-import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {connect} from 'react-redux'
-import _ from 'lodash'
-import {PredictionModal} from './PredictionModal'
-import PredictionDashboardHeader from './PredictionDashboardHeader'
+// Constants
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
-import LoadingDots from 'src/shared/components/LoadingDots'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
-import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {setFilteredHexbin} from '../actions'
+
+// Redux
+import {bindActionCreators} from 'redux'
+import {connect} from 'react-redux'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {setFilteredHexbin} from 'src/device_management/actions'
+
+// ETC
 import {notifyPredictionHexbinGetFailed} from 'src/shared/copy/notifications'
-import PredictionTooltipView from './PredictionTooltipView'
-import {statusCal, statusHexColor} from '../utils'
-import PredictionHexbinToggle from './PredictionHexbinToggle'
 
 interface Props {
   source: Source
@@ -135,8 +152,6 @@ function PredictionHexbinWrapper({
   }, [hostList])
 
   const onHexbinClick = (host: string, filteredHexbinHost?: string) => {
-    // the way to close modal is hexbin double click
-
     if (filteredHexbinHost === host) {
       setIsPredictionModalOpen(false)
       setFilteredHexbin('')
@@ -147,7 +162,6 @@ function PredictionHexbinWrapper({
     }
   }
 
-  //TODO: timerange var change to redux data not props
   const fetchDeviceInfo = async () => {
     const tempVars = generateForHosts(source)
     const meRole = _.get(auth, 'me.role', '')

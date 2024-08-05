@@ -1,8 +1,16 @@
 import React, {useEffect, useMemo, useState} from 'react'
-import {GetLearningMLData} from 'src/types'
-import {getLearningRstMl} from '../apis'
+
+// Library
 import _ from 'lodash'
-import {MLNxRstChart} from './PredictionModalMLContent'
+
+// Type
+import {GetLearningMLData} from 'src/types'
+
+// Api
+import {getLearningRstMl} from 'src/device_management/apis'
+
+// Components
+import {MLNxRstChart} from 'src/device_management/components/PredictionModalMLContent'
 
 interface Props {
   host: string
@@ -20,12 +28,6 @@ function PredictionModalMLChart({host}: Props) {
 
   useEffect(() => {
     getMlData(host)
-
-    // return () => {
-    //   setMlResultData(null)
-    //   setNoData(true)
-    //   setLoading(true)
-    // }
   }, [host])
 
   const getMlData = async (host: string) => {
@@ -172,8 +174,6 @@ function PredictionModalMLChart({host}: Props) {
         },
       },
       y: {
-        // min: 0,
-        // max: 1,
         beginAtZero: true,
         grid: {
           display: true,
@@ -182,9 +182,6 @@ function PredictionModalMLChart({host}: Props) {
         },
       },
     },
-    // animations: false,
-    // animation: {duration: 0},
-    // intersect: false,
     hover: {intersect: false},
     plugins: {
       tooltip: {enabled: false},
