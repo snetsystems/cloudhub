@@ -20,6 +20,7 @@ import {
 
 // Types
 import {
+  Cell,
   Source,
   Template,
   TemplateType,
@@ -52,6 +53,7 @@ class StatusPage extends Component<Props> {
       shellModalVisible: false,
     }
   }
+
   public render() {
     const {source, onSetTimeZone, timeZone} = this.props
     const cells = fixtureStatusPageCells(source)
@@ -72,7 +74,7 @@ class StatusPage extends Component<Props> {
               <LayoutRenderer
                 host=""
                 sources={[]}
-                cells={cells}
+                cells={this.reBuildCell(cells)}
                 source={source}
                 manualRefresh={0}
                 isEditable={false}
@@ -88,6 +90,31 @@ class StatusPage extends Component<Props> {
         </Page.Contents>
       </Page>
     )
+  }
+
+  private reBuildCell(cells: Cell[]) {
+    const {timeZone} = this.props
+
+    return cells.map(cell => {
+      if (cell.i === 'alerts-bar-graph') {
+        return {
+          ...cell,
+          queries: cell.queries.map(i => {
+            return {
+              ...i,
+              groupbys: ['time(1d)'],
+              wheres: [],
+              tz:
+                timeZone === TimeZones.UTC
+                  ? 'UTC'
+                  : `${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+            }
+          }),
+        }
+      } else {
+        return cell
+      }
+    })
   }
 
   private get templates(): Template[] {

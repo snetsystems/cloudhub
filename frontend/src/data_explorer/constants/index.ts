@@ -18,7 +18,7 @@ export const INFLUXQL_FUNCTIONS: string[] = [
 export const INFLUXQL_DERIVATIVE: string = 'derivative'
 export const INFLUXQL_NON_DERIVATIVE: string = 'non_negative_derivative'
 
-// 중첩 function option
+// function option
 export const INFLUXQL_NESTED_FUNCTIONS: string[] = [
   'derivative',
   'non_negative_derivative',

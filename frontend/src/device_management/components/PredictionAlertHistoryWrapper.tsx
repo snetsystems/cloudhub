@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useState} from 'react'
 import _ from 'lodash'
 
 // Type
-import {INPUT_TIME_TYPE, Source, TimeRange} from 'src/types'
+import {INPUT_TIME_TYPE, Source, TimeRange, TimeZones} from 'src/types'
 import {Alert} from 'src/types/alerts'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 
@@ -40,26 +40,28 @@ interface Props {
   source: Source
   limit: number
 
-  setPredictionTimeRange?: (value: TimeRange) => void
-  cloudAutoRefresh?: CloudAutoRefresh
+  timeZone?: TimeZones
   manualRefresh?: number
   alertHostList?: string[]
-  setAlertHostList?: (value: string[]) => void
   histogramDate?: TimeRange
   filteredHexbinHost?: string
+  cloudAutoRefresh?: CloudAutoRefresh
+  setAlertHostList?: (value: string[]) => void
+  setPredictionTimeRange?: (value: TimeRange) => void
 }
 
 function PredictionAlertHistoryWrapper({
   source,
-  limit = RECENT_ALERTS_LIMIT,
+  timeZone,
   histogramDate,
-  predictionTimeRange,
-  setPredictionTimeRange,
-  cloudAutoRefresh,
   manualRefresh,
   alertHostList,
+  cloudAutoRefresh,
   setAlertHostList,
   filteredHexbinHost,
+  predictionTimeRange,
+  setPredictionTimeRange,
+  limit = RECENT_ALERTS_LIMIT,
 }: Props) {
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
 
@@ -111,7 +113,7 @@ function PredictionAlertHistoryWrapper({
   // alert List get api
   useEffect(() => {
     fetchAlerts()
-  }, [histogramDate, manualRefresh, fetchAlerts, filteredHexbinHost])
+  }, [histogramDate, manualRefresh, fetchAlerts, filteredHexbinHost, timeZone])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
@@ -251,7 +253,7 @@ const mstp = state => {
       filteredHexbinHost,
     },
     app: {
-      persisted: {autoRefresh, cloudAutoRefresh},
+      persisted: {autoRefresh, cloudAutoRefresh, timeZone},
     },
   } = state
 
@@ -262,6 +264,7 @@ const mstp = state => {
     predictionTimeRange,
     alertHostList,
     filteredHexbinHost,
+    timeZone,
   }
 }
 
