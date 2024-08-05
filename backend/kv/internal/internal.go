@@ -1259,3 +1259,30 @@ func UnmarshalDLNxRst(data []byte, t *cloudhub.DLNxRst) error {
 
 	return nil
 }
+
+// MarshalDLNxRstStg encodes a DLNxRstStg struct to binary protobuf format.
+func MarshalDLNxRstStg(t *cloudhub.DLNxRstStg) ([]byte, error) {
+	return proto.Marshal(&DLNxRstStg{
+		Device:                 t.Device,
+		LearningFinishDatetime: t.LearningFinishDatetime,
+		Scaler:                 t.Scaler,
+		Model:                  t.Model,
+		DLThreshold:            t.DLThreshold,
+	})
+}
+
+// UnmarshalDLNxRstStg decodes a DLNxRstStg from binary protobuf data.
+func UnmarshalDLNxRstStg(data []byte, t *cloudhub.DLNxRstStg) error {
+	var pb DLNxRstStg
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	t.Device = pb.Device
+	t.LearningFinishDatetime = pb.LearningFinishDatetime
+	t.Scaler = pb.Scaler
+	t.Model = pb.Model
+	t.DLThreshold = pb.DLThreshold
+
+	return nil
+}

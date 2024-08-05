@@ -546,6 +546,11 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+			err = s.Store.DLNxRstStg(serverCtx).Delete(serverCtx, cloudhub.DLNxRstStgQuery{ID: &device.DeviceIP})
+			if err != nil {
+				addFailedDevice(failedDevices, &mu, id, err)
+				return
+			}
 
 			err = s.Store.NetworkDevice(ctx).Delete(ctx, device)
 			if err != nil {

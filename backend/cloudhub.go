@@ -1459,3 +1459,23 @@ type DLNxRst struct {
 	ValidLoss              []float32 `json:"valid_loss"`               // Use Loss Graph
 	MSE                    []float32 `json:"mse"`                      // Use Mean Squared Error Graph
 }
+
+// DLNxRstStgQuery represents the attributes that a DLNxRst may be retrieved by.
+// It is predominantly used in the DLNxRstStgStore.Get method.
+type DLNxRstStgQuery struct {
+	ID *string
+}
+
+// DLNxRstStgStore is the Storage and retrieval of information
+type DLNxRstStgStore interface {
+	Delete(ctx context.Context, q DLNxRstStgQuery) error
+}
+
+// DLNxRstStg represents the result of a deep learning process
+type DLNxRstStg struct {
+	Device                 string  `json:"device"`                   // IP address of the device
+	LearningFinishDatetime string  `json:"learning_finish_datetime"` // TZ=UTC, Format=RFC3339
+	Scaler                 []byte  `json:"scaler"`
+	Model                  []byte  `json:"model"`
+	DLThreshold            float32 `json:"dl_threshold"` // DL Threshold value
+}

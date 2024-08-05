@@ -314,6 +314,11 @@ func (b *Bucket) Delete(key []byte) error {
 	return ErrTxNotWritable
 }
 
+// Exists checks if the given key exists and returns the key if it does.
+func (b *Bucket) Exists(key []byte) (bool, error) {
+	return b.getKey(b.encodeKey(key))
+}
+
 func (b *Bucket) encodeKey(key []byte) string {
 	k := append([]byte{}, b.prefix...)
 	k = append(k, '/')
@@ -371,4 +376,19 @@ func (b *Bucket) getAll(prefix string) ([]Pair, error) {
 	}
 
 	return ps, nil
+}
+
+func (b *Bucket) getKey(key string) (bool, error) {
+	kvOpts := []clientv3.OpOption{
+		clientv3.WithKeysOnly(),
+	}
+	r, err := b.tx.client.db.Get(context.TODO(), key, kvOpts...)
+	if err != nil {
+		return false, err
+	}
+
+	if len(r.Kvs) == 0 {
+		return false, nil
+	}
+	return true, nil
 }

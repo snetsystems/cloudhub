@@ -916,6 +916,7 @@ func openService(
 			NetworkDeviceOrgStore:   svc.NetworkDeviceOrgStore(),
 			MLNxRstStore:            svc.MLNxRstStore(),
 			DLNxRstStore:            svc.DLNxRstStore(),
+			DLNxRstStgStore:         svc.DLNxRstStgStore(),
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,

@@ -675,3 +675,21 @@ func TestMarshalDLNxRst(t *testing.T) {
 		t.Fatalf("Mismatch in original and copied DLNxRst struct: got %#v, want %#v", vv, v)
 	}
 }
+func TestMarshalDLNxRstStg(t *testing.T) {
+	v := cloudhub.DLNxRstStg{
+		Device:                 "192.168.1.1",
+		LearningFinishDatetime: "2024-07-30T12:34:56Z",
+		Scaler:                 []byte{1, 2, 3, 4},
+		Model:                  []byte{5, 6, 7, 8},
+		DLThreshold:            0.8,
+	}
+
+	var vv cloudhub.DLNxRstStg
+	if buf, err := internal.MarshalDLNxRstStg(&v); err != nil {
+		t.Fatal("Marshal failed:", err)
+	} else if err := internal.UnmarshalDLNxRstStg(buf, &vv); err != nil {
+		t.Fatal("Unmarshal failed:", err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("Mismatch in original and copied DLNxRstStg struct: got %#v, want %#v", vv, v)
+	}
+}
