@@ -49,7 +49,7 @@ interface Props {
   setSelectedAnomaly?: (value: AnomalyFactor) => void
 }
 
-const TIME_GAP = 1500000
+const TIME_GAP = 3600000
 
 const PredictionInstanceWrapper = ({
   source,

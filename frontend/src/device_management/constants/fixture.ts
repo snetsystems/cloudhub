@@ -35,8 +35,7 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
       colors: DEFAULT_LINE_COLORS,
       queries: [
         {
-          query:
-            'SELECT count("value") AS "count_value" FROM "Default"."autogen"."cloudhub_alerts"',
+          query: `SELECT count("value") AS "count_value" FROM "${source.telegraf}"."autogen"."cloudhub_alerts"`,
           queryConfig: null,
           source: '',
           type: QueryType.InfluxQL,

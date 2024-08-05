@@ -346,7 +346,7 @@ export const statusCal = (valueUsage: number) => {
     const status =
       valueUsage < 0
         ? 'invalid'
-        : valueUsage < 60
+        : valueUsage < 50
         ? 'normal'
         : valueUsage < 70
         ? 'warning'
@@ -354,7 +354,7 @@ export const statusCal = (valueUsage: number) => {
         ? 'danger'
         : valueUsage < 90
         ? 'critical'
-        : valueUsage < 120
+        : valueUsage >= 90
         ? 'emergency'
         : 'invalid'
     return status
