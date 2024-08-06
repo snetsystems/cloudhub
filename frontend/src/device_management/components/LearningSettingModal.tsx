@@ -645,6 +645,7 @@ function LearningSettingModal({
                     type="number"
                     label="Data Duration (days)"
                     onChange={setLearningInputState('data_duration')}
+                    min={1}
                   />
                   <WizardTextInput
                     value={cronSchedule}
@@ -657,6 +658,7 @@ function LearningSettingModal({
                     type="number"
                     label="Process Count"
                     onChange={handleProcessCountChange}
+                    min={1}
                   />
                   <div
                     className="form-group col-xs-12"
