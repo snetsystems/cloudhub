@@ -5,6 +5,7 @@ import _ from 'lodash'
 // Components
 import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
 import Dropdown from 'src/shared/components/Dropdown'
+import WizardNumberInput from 'src/reusable_ui/components/wizard/WizardNumberInput'
 
 // Constants
 import {
@@ -30,6 +31,7 @@ import {
 } from 'src/types'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   deviceData: DeviceData
   isUsingAuth: boolean
@@ -124,8 +126,8 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
             className="dropdown-stretch"
           />
         </div>
-        <WizardTextInput
-          value={`${deviceData?.snmp_config?.port || 161}`}
+        <WizardNumberInput
+          value={`${deviceData?.snmp_config?.port}`}
           label={'Port (Default: 161)'}
           type={'number'}
           onChange={onChangeDeviceData('snmp_port')}

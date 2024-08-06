@@ -19,6 +19,7 @@ import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
 import Dropdown from 'src/shared/components/Dropdown'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import DeviceManagementKapacitorDropdown from 'src/device_management/components/DeviceManagementKapacitorDropdown'
+import WizardNumberInput from 'src/reusable_ui/components/wizard/WizardNumberInput'
 
 // Constant
 import {
@@ -639,7 +640,7 @@ function LearningSettingModal({
                       className="dropdown-stretch"
                     />
                   </div>
-                  <WizardTextInput
+                  <WizardNumberInput
                     value={`${learningOption.data_duration}`}
                     type="number"
                     label="Data Duration (days)"
@@ -651,7 +652,7 @@ function LearningSettingModal({
                     label="Cron Schedule (UTC Time Zone)"
                     onChange={setCronSchedule}
                   />
-                  <WizardTextInput
+                  <WizardNumberInput
                     value={`${processCount}`}
                     type="number"
                     label="Process Count"
