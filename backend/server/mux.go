@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -395,6 +397,38 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/csp/:id", EnsureAdmin(service.RemoveCSP))
 	router.PATCH("/cloudhub/v1/csp/:id", EnsureAdmin(service.UpdateCSP))
 
+	// Device Management
+	router.GET("/cloudhub/v1/ai/network/managements/devices", EnsureViewer(service.AllDevices))
+	router.GET("/cloudhub/v1/ai/network/managements/devices/:id", EnsureViewer(service.DeviceID))
+	router.POST("/cloudhub/v1/ai/network/managements/devices", EnsureAdmin(service.NewDevices))
+	router.DELETE("/cloudhub/v1/ai/network/managements/devices", EnsureAdmin(service.RemoveDevices))
+	router.PATCH("/cloudhub/v1/ai/network/managements/devices/:id", EnsureAdmin(service.UpdateNetworkDevice))
+
+	// Device Management Monitoring
+	router.POST("/cloudhub/v1/ai/network/managements/monitoring/config", EnsureAdmin(service.MonitoringConfigManagement))
+
+	// Device Management Learning
+	router.POST("/cloudhub/v1/ai/network/managements/learning/config", EnsureAdmin(service.LearningDeviceManagement))
+
+	// Device Learning Result
+	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/ml", EnsureViewer(service.GetMLNxRst))
+	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/dl", EnsureViewer(service.GetDLNxRst))
+
+	// Device Management tick script
+	router.POST("/cloudhub/v1/ai/network/managements/script/org", EnsureAdmin(service.CreateKapacitorTask))
+	router.PATCH("/cloudhub/v1/ai/network/managements/script/org/:id", EnsureAdmin(service.UpdateKapacitorTask))
+	router.GET("/cloudhub/v1/ai/network/managements/script/org/:tid", EnsureViewer(service.GetKapacitorTask))
+
+	// Device Orgs Management
+	router.GET("/cloudhub/v1/ai/network/managements/orgs", EnsureViewer(service.AllDevicesOrg))
+	router.GET("/cloudhub/v1/ai/network/managements/orgs/:id", EnsureViewer(service.NetworkDeviceOrgID))
+	router.POST("/cloudhub/v1/ai/network/managements/orgs/", EnsureAdmin(service.AddNetworkDeviceOrg))
+	router.PATCH("/cloudhub/v1/ai/network/managements/orgs/:id", EnsureAdmin(service.UpdateNetworkDeviceOrg))
+	router.DELETE("/cloudhub/v1/ai/network/managements/orgs/:id", EnsureAdmin(service.RemoveNetworkDeviceOrg))
+
+	// SNMP Management
+	router.POST("/cloudhub/v1/snmp/validation", EnsureViewer(service.SNMPConnTestBulk))
+
 	// http logging
 	router.POST("/cloudhub/v1/logging", EnsureViewer(service.HTTPLogging))
 
@@ -621,4 +655,17 @@ func paramStr(key string, r *http.Request) (string, error) {
 	ctx := r.Context()
 	param := httprouter.GetParamFromContext(ctx, key)
 	return param, nil
+}
+
+// decodeRequest is a generic function to decode JSON request bodies
+func decodeRequest[T any](r *http.Request) (T, context.Context, error) {
+	var request T
+	ctx := r.Context()
+
+	// Decode the request body into the provided struct type
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		return request, ctx, errors.New("invalid request data")
+	}
+
+	return request, ctx, nil
 }

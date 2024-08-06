@@ -17,6 +17,7 @@ interface Props {
   placeholder?: string
   autoFocus?: boolean
   type?: string
+  newClassName?: string
 }
 
 interface State {
@@ -55,6 +56,7 @@ class WizardTextInput extends PureComponent<Props, State> {
       autoFocus,
       label,
       type,
+      newClassName,
     } = this.props
 
     let inputClass = ''
@@ -64,9 +66,10 @@ class WizardTextInput extends PureComponent<Props, State> {
       inputClass = 'form-volcano'
       errorText = validation.reason
     }
+    const divClassName = newClassName || 'form-group col-xs-6'
 
     return (
-      <div className="form-group col-xs-6">
+      <div className={divClassName}>
         <label htmlFor={label}>{label}</label>
         <input
           type={type}

@@ -3,7 +3,7 @@
   "info": {
     "title": "CloudHub",
     "description": "API endpoints for CloudHub",
-    "version": "1.5.0"
+    "version": "2.0.0"
   },
   "schemes": ["http"],
   "basePath": "/cloudhub/v1",
@@ -4869,9 +4869,656 @@
           }
         }
       }
+    },
+    "/ai/network/managements/devices": {
+      "get": {
+        "tags": ["Device Management"],
+        "summary": "Get all devices",
+        "description": "Retrieve a list of all devices.",
+        "responses": {
+          "200": {
+            "description": "A list of devices.",
+            "schema": {
+              "$ref": "#/definitions/DevicesResponse"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Device Management"],
+        "summary": "Create new devices",
+        "description": "Add new devices to the network.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DeviceRequest"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Devices created successfully",
+            "schema": {
+              "$ref": "#/definitions/CreateDevicesResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Device Management"],
+        "summary": "Delete a device by IDs",
+        "description": "Remove a specific device by IDs.",
+        "parameters": [
+          {
+            "name": "learned_devices_ids",
+            "in": "body",
+            "required": true,
+
+            "schema": {
+              "$ref": "#/definitions/DeleteDeviceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Device deleted successfully"
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Device Management"],
+        "summary": "Update a device by ID",
+        "description": "Update the details of a specific device by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Device ID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDeviceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device updated successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/devices/{id}": {
+      "get": {
+        "tags": ["Device Management"],
+        "summary": "Get a device by ID",
+        "description": "Retrieve the details of a specific device by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Device ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device details retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceResponse"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/monitoring/config": {
+      "post": {
+        "tags": ["Device Management Apply Monitoring"],
+        "summary": "Device Management Apply Monitoring for Logstash Config",
+        "description": "Managing Logstash configuration by Organization",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ApplyMonitoringDeviceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devices created successfully",
+            "schema": {
+              "$ref": "#/definitions/LogstashResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/learning/config": {
+      "post": {
+        "tags": ["Device Management Apply Learning"],
+        "summary": "Select whether to learn the devices",
+        "description": "Building a learning model for the selected devices",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ApplyLearningDeviceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devices created successfully",
+            "schema": {
+              "$ref": "#/definitions/LogstashResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/orgs{id}": {
+      "get": {
+        "tags": ["Device Organization Management"],
+        "summary": "Get a device Org by ID",
+        "description": "Retrieve the details of a specific device Org by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Organization ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device details retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceOrgResponse"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/orgs": {
+      "get": {
+        "tags": ["Device Organization Management"],
+        "summary": "Get all devices Organization",
+        "description": "Retrieve a list of all devices Organization.",
+        "responses": {
+          "200": {
+            "description": "A list of devices Organization.",
+            "schema": {
+              "$ref": "#/definitions/DevicesOrgResponse"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Device Organization Management"],
+        "summary": "Create new devices Organization",
+        "description": "Add new devices Organization.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeviceOrgRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Devices created successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceOrgResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Device Organization Management"],
+        "summary": "Update a device Organization by Organization ID",
+        "description": "Update the details of a specific device Organization by Organization ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Organization ID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDeviceOrgRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device updated successfully",
+            "schema": {
+              "$ref": "#/definitions/DeviceOrgResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/learning/rst/ml": {
+      "get": {
+        "tags": ["Machine Learning RST"],
+        "summary": "Get MLNxRst by IP",
+        "description": "Retrieve the details of a specific MLNxRst by IP.",
+        "parameters": [
+          {
+            "name": "ip",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "IP address of the MLNxRst"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MLNxRst details retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/MLNxRstResponse"
+            }
+          },
+          "422": {
+            "description": "Missing or invalid parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "MLNxRst not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/learning/rst/dl": {
+      "get": {
+        "tags": ["Deep Learning RST"],
+        "summary": "Get DLNxRst by IP",
+        "description": "Retrieve the details of a specific DLNxRst by IP.",
+        "parameters": [
+          {
+            "name": "ip",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "IP address of the DLNxRst"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DLNxRst details retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/DLNxRstResponse"
+            }
+          },
+          "422": {
+            "description": "Missing or invalid parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "DLNxRst not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/ai/network/managements/script/org/{tid}": {
+      "get": {
+        "tags": ["Device Organization TickScript"],
+        "summary": "Get a TickSCript by TickScript ID",
+        "description": "Retrieve the details of a specific device Org by ID.",
+        "parameters": [
+          {
+            "name": "tid",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "TickScript ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device Organization TickScript details retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/Rule"
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "ai/network/managements/script/org/": {
+      "post": {
+        "tags": ["Device Organization TickScript"],
+        "description": "Create Organization Learning TickScript",
+        "parameters": [
+          {
+            "name": "rule",
+            "in": "body",
+            "description": "TickScript to generate device Org",
+            "schema": {
+              "$ref": "#/definitions/LearnTickScriptReqest"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "TickScript to generate device Org successfully created",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the newly created kapacitor rule resource."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Rule"
+            }
+          },
+          "404": {
+            "description": "Source ID or Kapacitor ID does not exist.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Source ID , Kapacitor ID or alert are unprocessable",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error; generally a problem creating alert in kapacitor",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Device Organization TickScript"],
+        "description": "Update Organization TickScript",
+        "parameters": [
+          {
+            "name": "rule",
+            "in": "body",
+            "description": "TickScript to update device Org",
+            "schema": {
+              "$ref": "#/definitions/LearnTickScriptReqest"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "TickScript to device Org successfully updated",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the newly updated kapacitor rule resource."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Rule"
+            }
+          },
+          "404": {
+            "description": "Source ID or Kapacitor ID does not exist.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Source ID , Kapacitor ID or alert are unprocessable",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error; generally a problem creating alert in kapacitor",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/snmp/validation": {
+      "post": {
+        "tags": ["SNMP Management"],
+        "summary": "Validate SNMP connection",
+        "description": "Perform a bulk test to validate SNMP connections.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Device_SNMPConfig"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SNMP validation successful",
+            "schema": {
+              "$ref": "#/definitions/SNMPValidationResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
-
   "definitions": {
     "Organization": {
       "type": "object",
@@ -5757,6 +6404,97 @@
         "name": {
           "type": "string",
           "description": "Measurement name."
+        }
+      }
+    },
+    "LearnTickScriptReqest": {
+      "type": "object",
+      "example": {
+        "id": "cloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
+        "query": {
+          "id": "ce72917d-1ecb-45ea-a6cb-4c122deb93c7",
+          "database": "telegraf",
+          "measurement": "cpu",
+          "retentionPolicy": "autogen",
+          "fields": [
+            {
+              "value": "max",
+              "type": "func",
+              "args": [
+                {
+                  "value": "usage_system",
+                  "type": "field"
+                }
+              ]
+            }
+          ],
+          "tags": {},
+          "groupBy": {
+            "time": "10m",
+            "tags": []
+          },
+          "areTagsAccepted": true
+        },
+        "every": "30s",
+        "alerts": ["alerta"],
+        "alertNodes": [
+          {
+            "name": "alerta",
+            "args": [],
+            "properties": []
+          }
+        ],
+        "message": "too much spam",
+        "details": "muh body",
+        "trigger": "threshold",
+        "values": {
+          "operator": "greater than",
+          "value": "10"
+        },
+        "name": "Untitled Rule",
+        "tickscript": "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = []\n\nvar whereFilter = lambda: TRUE\n\nvar period = 10m\n\nvar every = 30s\n\nvar name = 'Untitled Rule'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = 'too much spam'\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cloudhub'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'threshold'\n\nvar details = 'muh body'\n\nvar crit = 10\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n    |window()\n        .period(period)\n        .every(every)\n        .align()\n    |max('usage_system')\n        .as('value')\n\nvar trigger = data\n    |alert()\n        .crit(lambda: \"value\" > crit)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .details(details)\n        .alerta()\n\ntrigger\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
+        "type": "stream",
+        "dbrps": [
+          {
+            "db": "telegraf",
+            "rp": "autogen"
+          }
+        ],
+        "status": "disabled",
+        "executing": false,
+        "error": "",
+        "created": "2017-05-05T16:16:03.471138388-05:00",
+        "modified": "2017-05-23T15:57:42.625909746-05:00",
+        "last-enabled": "2017-05-05T16:16:25.890210217-05:00",
+        "links": {
+          "self": "/cloudhub/v1/sources/5/kapacitors/5/rules/cloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
+          "kapacitor": "/cloudhub/v1/sources/5/kapacitors/5/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
+          "output": "/cloudhub/v1/sources/5/kapacitors/5/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38%2Foutput"
+        }
+      },
+      "properties": {
+        "Rule": {
+          "$ref": "#/definitions/Rule"
+        },
+        "organization": {
+          "type": "string",
+          "description": "Organization that this source belongs to, when CloudHub auth is in use",
+          "example": "default"
+        },
+        "organization_name": {
+          "type": "string",
+          "description": "Organization name that this source belongs to, when CloudHub auth is in use",
+          "example": "Default"
+        },
+        "predict_mode": {
+          "type": "string",
+          "description": "Predict mode is used to make predictions on new, unseen data using a trained ML, DL, or ensemble model.",
+          "example": "ML"
+        },
+        "predict_mode_condition": {
+          "type": "string",
+          "description": "Predict Mode Condition is used in Ensemble methods to apply AND/OR conditions for combining predictions from multiple models.",
+          "example": "AND"
         }
       }
     },
@@ -8366,6 +9104,916 @@
         "minion": "minion01",
         "links": {
           "self": "/cloudhub/v1/csp/1"
+        }
+      }
+    },
+    "DeviceRequest": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "description": "The organization ID to which the device belongs",
+          "example": "default"
+        },
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "hostname": {
+          "type": "string",
+          "description": "The hostname of the device",
+          "example": "device1"
+        },
+        "device_type": {
+          "type": "string",
+          "description": "The type of the device",
+          "example": "router"
+        },
+        "device_os": {
+          "type": "string",
+          "description": "The operating system of the device",
+          "example": "ios"
+        },
+        "ssh_config": {
+          "$ref": "#/definitions/SSHConfig",
+          "description": "The SSH configuration for the device"
+        },
+        "snmp_config": {
+          "$ref": "#/definitions/SNMPConfig",
+          "description": "The SNMP configuration for the device"
+        },
+        "device_vendor": {
+          "type": "string",
+          "description": "The vendor of the device",
+          "example": "Cisco"
+        }
+      },
+      "required": [
+        "organization",
+        "device_ip",
+        "hostname",
+        "device_type",
+        "device_os",
+        "snmp_config"
+      ]
+    },
+    "UpdateDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "description": "The organization to which the device belongs",
+          "example": "default"
+        },
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "hostname": {
+          "type": "string",
+          "description": "The hostname of the device",
+          "example": "root"
+        },
+        "device_type": {
+          "type": "string",
+          "description": "The type of the device",
+          "example": "swtich"
+        },
+        "device_os": {
+          "type": "string",
+          "description": "The operating system of the device",
+          "example": "ios"
+        },
+        "is_collecting_cfg_written": {
+          "type": "bool",
+          "description": "Creation of Logstash configuration",
+          "example": false
+        },
+        "ssh_config": {
+          "$ref": "#/definitions/SSHConfig",
+          "description": "The SSH configuration for the device"
+        },
+        "snmp_config": {
+          "$ref": "#/definitions/SNMPConfig",
+          "description": "The SNMP configuration for the device"
+        },
+        "device_vendor": {
+          "type": "string",
+          "description": "The vendor of the device",
+          "example": "Cisco"
+        },
+        "is_learning": {
+          "type": "bool",
+          "description": "Indicates whether to create a learning model",
+          "example": false
+        },
+        "sensitivity": {
+          "type": "float",
+          "description": "Sensitivity throttle ratio",
+          "example": "1.0"
+        }
+      },
+      "required": []
+    },
+    "DeleteDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "devices_ids": {
+          "type": "array",
+          "description": "The IDs of the devices",
+          "items": {
+            "type": "string"
+          },
+          "example": ["1", "2"]
+        }
+      },
+      "required": ["devices_ids"]
+    },
+    "ApplyMonitoringDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "collecting_devices": {
+          "type": "array",
+          "description": "Array of collecting devices",
+          "items": {
+            "type": "object",
+            "properties": {
+              "device_id": {
+                "type": "string",
+                "description": "The ID of the device",
+                "example": "1"
+              },
+              "is_collecting": {
+                "type": "boolean",
+                "description": "Indicates whether the collecting active/deactive",
+                "example": true
+              },
+              "is_collecting_cfg_written": {
+                "type": "boolean",
+                "description": "Indicates whether the collecting configuration is written",
+                "example": false
+              }
+            },
+            "required": [
+              "device_id",
+              "is_collecting",
+              "is_collecting_cfg_written"
+            ]
+          }
+        }
+      },
+      "required": ["collecting_devices"]
+    },
+    "ApplyLearningDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "learning_devices": {
+          "type": "array",
+          "description": "Array of collecting devices",
+          "items": {
+            "type": "object",
+            "properties": {
+              "device_id": {
+                "type": "string",
+                "description": "The ID of the device",
+                "example": "1"
+              },
+              "is_learning": {
+                "type": "boolean",
+                "description": "Indicates whether the collecting active/deactive",
+                "example": true
+              }
+            },
+            "required": ["device_id", "is_learning"]
+          }
+        }
+      },
+      "required": ["learning_devices"]
+    },
+    "DeviceResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier representing a device resource",
+          "example": "1"
+        },
+        "organization": {
+          "type": "string",
+          "description": "The organization ID to which the device belongs",
+          "example": "default"
+        },
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "hostname": {
+          "type": "string",
+          "description": "The hostname of the device",
+          "example": "device"
+        },
+        "device_type": {
+          "type": "string",
+          "description": "The type of the device",
+          "example": "router"
+        },
+        "device_category": {
+          "type": "string",
+          "description": "The category of the device",
+          "example": "network"
+        },
+        "device_os": {
+          "type": "string",
+          "description": "The operating system of the device",
+          "example": "ios"
+        },
+        "is_collecting_cfg_written": {
+          "type": "bool",
+          "description": "Creation of Logstash configuration",
+          "example": false
+        },
+        "ssh_config": {
+          "$ref": "#/definitions/SSHConfig",
+          "description": "The SSH configuration for the device"
+        },
+        "snmp_config": {
+          "$ref": "#/definitions/SNMPConfig",
+          "description": "The SNMP configuration for the device"
+        },
+        "sensitivity": {
+          "type": "flaot",
+          "description": "Sensitivity throttle ratio",
+          "example": "1.0"
+        },
+        "device_vendor": {
+          "type": "string",
+          "description": "The vendor of the device",
+          "example": "Cisco"
+        },
+        "learning_state": {
+          "type": "string",
+          "description": "Indicates the status of model for the device",
+          "example": "Ready"
+        },
+        "learning_update_datetime": {
+          "type": "string",
+          "description": "model update datetime format TZ=UTC, Format=RFC3339",
+          "example": "2024-06-20T12:34:56Z"
+        },
+        "learning_finish_datetime": {
+          "type": "string",
+          "description": "model end datetime format TZ=UTC, Format=RFC3339",
+          "example": "2024-06-20T12:34:56Z"
+        },
+        "is_learning": {
+          "type": "bool",
+          "description": "Indicates whether to create a learning model",
+          "example": false
+        },
+        "ml_function": {
+          "type": "string",
+          "description": " ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_multiplied"
+        }
+      }
+    },
+    "DevicesResponse": {
+      "type": "object",
+      "properties": {
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeviceResponse"
+          }
+        },
+        "failed_devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FailedDevice"
+          }
+        }
+      }
+    },
+    "FailedDevice": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "description": "Index of the device in the request array",
+          "example": 0
+        },
+        "device_id": {
+          "type": "string",
+          "description": "ID of the device",
+          "example": "1"
+        },
+        "errorMessage": {
+          "type": "string",
+          "description": "Error message for the failed device",
+          "example": "organization does not exist"
+        }
+      }
+    },
+    "CreateDevicesResponse": {
+      "type": "object",
+      "properties": {
+        "failed_devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "description": "Index of the device in the request array",
+                "example": "0"
+              },
+              "device_ip": {
+                "type": "string",
+                "description": "IP address of the device",
+                "example": "192.168.0.1"
+              },
+              "errorMessage": {
+                "type": "string",
+                "description": "Error message for the failed device",
+                "example": "organization does not exist"
+              }
+            }
+          }
+        }
+      }
+    },
+    "LogstashResponse": {
+      "type": "object",
+      "properties": {
+        "failed_devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "device_id": {
+                "type": "string",
+                "description": "ID of the device",
+                "example": "1"
+              },
+              "errorMessage": {
+                "type": "string",
+                "description": "Error message for the failed device",
+                "example": "organization does not exist"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SNMPValidationRequest": {
+      "type": "object",
+      "properties": {
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of target devices for SNMP validation",
+          "example": ["192.168.0.1", "192.168.0.2"]
+        },
+        "community": {
+          "type": "string",
+          "description": "SNMP community string",
+          "example": "public"
+        },
+        "device_ip": {
+          "type": "string",
+          "description": "Device IP address",
+          "example": "192.168.0.1"
+        },
+        "port": {
+          "type": "integer",
+          "description": "SNMP port",
+          "example": 161
+        },
+        "version": {
+          "type": "string",
+          "description": "SNMP version",
+          "example": "v2c"
+        },
+        "username": {
+          "type": "string",
+          "description": "SNMP user name (for SNMP v3)",
+          "example": "snmp_user"
+        },
+        "auth_password": {
+          "type": "string",
+          "description": "SNMP authentication password (for SNMP v3)",
+          "example": "auth_pass"
+        },
+        "auth_protocol": {
+          "type": "string",
+          "description": "SNMP authentication protocol (for SNMP v3)",
+          "example": "MD5"
+        },
+        "priv_password": {
+          "type": "string",
+          "description": "SNMP privacy password (for SNMP v3)",
+          "example": "priv_pass"
+        },
+        "priv_protocol": {
+          "type": "string",
+          "description": "SNMP privacy protocol (for SNMP v3)",
+          "example": "DES"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "SNMP protocol",
+          "example": "udp"
+        }
+      },
+      "required": ["community", "device_ip", "port", "version"]
+    },
+    "SNMPValidationResponse": {
+      "type": "object",
+      "properties": {
+        "failed_requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "description": "Index of the request in the array"
+              },
+              "device_ip": {
+                "type": "string",
+                "description": "Device IP address"
+              },
+              "errorMessage": {
+                "type": "string",
+                "description": "Error message for the failed request"
+              }
+            }
+          },
+          "description": "List of failed requests"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "device_ip": {
+                "type": "string",
+                "description": "IP address of the device",
+                "example": "192.168.0.1"
+              },
+              "index": {
+                "type": "integer",
+                "description": "Index of the request in the array",
+                "example": "0"
+              },
+              "device_type": {
+                "type": "string",
+                "description": "The type of the device",
+                "example": "switch"
+              },
+              "hostname": {
+                "type": "string",
+                "description": "The hostname of the device",
+                "example": "root"
+              },
+              "device_os": {
+                "type": "string",
+                "description": "The operating system of the device",
+                "example": "ios"
+              }
+            }
+          },
+          "description": "List of SNMP validation results"
+        }
+      }
+    },
+    "SSHConfig": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "description": "SSH id",
+          "example": "admin"
+        },
+        "password": {
+          "type": "string",
+          "description": "SSH password",
+          "example": "password123"
+        },
+        "en_password": {
+          "type": "string",
+          "description": "SSH enable password",
+          "example": "enable_password"
+        },
+        "port": {
+          "type": "integer",
+          "description": "SSH port",
+          "example": 22
+        }
+      }
+    },
+    "SNMPConfig": {
+      "type": "object",
+      "properties": {
+        "community": {
+          "type": "string",
+          "description": "SNMP community string",
+          "example": "public"
+        },
+        "version": {
+          "type": "string",
+          "description": "SNMP version",
+          "example": "v2c"
+        },
+        "port": {
+          "type": "integer",
+          "description": "SNMP port",
+          "example": 161
+        },
+        "protocol": {
+          "type": "string",
+          "description": "SNMP protocol",
+          "example": "udp"
+        },
+        "security_name": {
+          "type": "string",
+          "description": "SNMP SecurityName",
+          "example": "admin"
+        },
+        "auth_protocol": {
+          "type": "string",
+          "description": "SNMP AuthProtocol",
+          "example": "SHA"
+        },
+        "auth_pass": {
+          "type": "string",
+          "description": "SNMP Auth Password",
+          "example": "password"
+        },
+        "priv_protocol": {
+          "type": "string",
+          "description": "SNMP PrivProtocol",
+          "example": "AES"
+        },
+        "priv_pass": {
+          "type": "string",
+          "description": "SNMP PrivPass",
+          "example": "priv_password"
+        },
+        "security_level": {
+          "type": "string",
+          "description": "SNMP SecurityLevel",
+          "example": "authPriv"
+        }
+      },
+      "required": ["community", "port", "version", "protocol"]
+    },
+    "AIKapcitor": {
+      "type": "object",
+      "properties": {
+        "srcId": {
+          "type": "int64",
+          "description": "SrcID of the data source",
+          "example": "1"
+        },
+        "kapaId": {
+          "type": "int64",
+          "description": " KapaID of the Kapacitor ID",
+          "example": "2"
+        },
+        "url": {
+          "type": "string",
+          "description": "AI Kapacitor URL",
+          "example": "http://192.168.0.1:9094"
+        },
+        "username": {
+          "type": "string",
+          "description": "Kapacitor password",
+          "example": "root"
+        },
+        "password": {
+          "type": "string",
+          "description": "Kapacitor password",
+          "example": "password123"
+        },
+        "insecure_skip_verify": {
+          "type": "bool",
+          "description": "insecure_skip_verify option",
+          "example": false
+        }
+      },
+      "required": ["srcId", "kapaId", "url", "insecure_skip_verify"]
+    },
+    "Device_SNMPConfig": {
+      "type": "object",
+      "properties": {
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "community": {
+          "type": "string",
+          "description": "SNMP community string",
+          "example": "public"
+        },
+        "port": {
+          "type": "integer",
+          "description": "SNMP port",
+          "example": 161
+        },
+        "version": {
+          "type": "string",
+          "description": "SNMP version",
+          "example": "v2c"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "SNMP protocol",
+          "example": "udp"
+        }
+      },
+      "required": ["community", "device_ip", "port", "version", "protocol"]
+    },
+    "DeviceOrgRequest": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "description": "Organization ID",
+          "example": "default"
+        },
+        "ml_function": {
+          "type": "string",
+          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_multiplied"
+        },
+        "data_duration": {
+          "type": "integer",
+          "description": "data_duration for learning",
+          "example": "15"
+        },
+        "ai_kapacitor": {
+          "$ref": "#/definitions/AIKapcitor",
+          "description": "The AIKapacitor represents the information for Kapacitor login"
+        },
+        "task_status": {
+          "type": "integer",
+          "description": "Task init status",
+          "example": "1"
+        },
+        "learning_cron": {
+          "type": "string",
+          "description": "Learning cron format",
+          "example": "* * * * *"
+        },
+        "process_count": {
+          "type": "integer",
+          "description": "Used learning process count(s)",
+          "example": "5"
+        }
+      },
+      "required": [
+        "organization",
+        "ml_function",
+        "data_duration",
+        "ai_kapacitor",
+        "task_status",
+        "learning_cron",
+        "process_count"
+      ]
+    },
+    "DevicesOrgResponse": {
+      "type": "object",
+      "properties": {
+        "organizations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeviceOrgResponse"
+          }
+        }
+      }
+    },
+    "DeviceOrgResponse": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "description": "Organization ID",
+          "example": "default"
+        },
+        "load_module": {
+          "type": "string",
+          "description": "Currently fixed by learn.ch_nx_load",
+          "example": "ch_nx_load"
+        },
+        "ml_function": {
+          "type": "string",
+          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_multiplied"
+        },
+        "data_duration": {
+          "type": "integer",
+          "description": "data_duration for learning",
+          "example": "15"
+        },
+        "learned_devices_ids": {
+          "type": "array",
+          "description": "the list of device IDs what will be learing included in the network device org",
+          "items": {
+            "type": "string"
+          },
+          "example": ["1", "2", "3"]
+        },
+        "collector_server": {
+          "type": "string",
+          "description": "the server(minion_id) used to collect network data",
+          "example": "ch-collector-01"
+        },
+        "collected_devices_ids": {
+          "type": "array",
+          "description": "the list of device IDs included in Logstash Config",
+          "items": {
+            "type": "string"
+          },
+          "example": ["1", "2", "3"]
+        },
+        "ai_kapacitor": {
+          "$ref": "#/definitions/AIKapcitor",
+          "description": "The AIKapacitor represents the information for Kapacitor login"
+        },
+        "learning_cron": {
+          "type": "string",
+          "description": "Learning tickscript cron schedule",
+          "example": "1 0 1,15 * *"
+        },
+        "process_count": {
+          "type": "integer",
+          "description": "Used learning process count(s)",
+          "example": 5
+        }
+      },
+      "required": []
+    },
+    "UpdateDeviceOrgRequest": {
+      "type": "object",
+      "properties": {
+        "load_module": {
+          "type": "string",
+          "description": "Currently fixed by learn.ch_nx_load",
+          "example": "ch_nx_load"
+        },
+        "ml_function": {
+          "type": "string",
+          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_multiplied"
+        },
+        "data_duration": {
+          "type": "integer",
+          "description": "data_duration for learning",
+          "example": "15"
+        },
+        "ai_kapacitor": {
+          "$ref": "#/definitions/AIKapcitor",
+          "description": "The AIKapacitor represents the information for Kapacitor login"
+        }
+      },
+      "required": []
+    },
+    "MLNxRstResponse": {
+      "type": "object",
+      "properties": {
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "learning_finish_datetime": {
+          "type": "string",
+          "description": "Learning finish datetime",
+          "example": "2024-08-01T08:01:16.032671+00:00"
+        },
+        "epsilon": {
+          "type": "integer",
+          "format": "float",
+          "example": "000015486720343033517"
+        },
+        "mean_matrix": {
+          "type": "string",
+          "description": "Mean Martix",
+          "example": "[10.886713050442653, 15.130264128903189]"
+        },
+        "covariance_matrix": {
+          "type": "string",
+          "description": "Covariance Martix",
+          "example": "[[1.7202563295405007, 0.22496712525335746], [0.22496712525335746, 0.6428136983838423]]"
+        },
+        "k": {
+          "type": "integer",
+          "format": "float",
+          "example": 0.49130857
+        },
+        "mean": {
+          "type": "integer",
+          "format": "float",
+          "example": 13.008489
+        },
+        "md_threshold": {
+          "type": "integer",
+          "format": "float",
+          "example": 6.391182
+        },
+        "md_array": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "float"
+          },
+          "example": [1.0447414, 1.0309266]
+        },
+        "cpu_array": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "float"
+          },
+          "example": [1.0447414, 1.0309266]
+        },
+        "traffic_array": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "float"
+          },
+          "example": [1.0447414, 1.0309266]
+        },
+        "gaussian_array": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "float"
+          },
+          "example": [1.0447414, 1.0309266]
+        }
+      }
+    },
+    "DLNxRstResponse": {
+      "type": "object",
+      "properties": {
+        "device_ip": {
+          "type": "string",
+          "description": "The IP address of the device",
+          "example": "192.168.0.1"
+        },
+        "learning_finish_datetime": {
+          "type": "string",
+          "description": "Learning finish datetime",
+          "example": "2024-08-01T08:01:16.032671+00:00"
+        },
+        "dl_threshold": {
+          "type": "integer",
+          "format": "float",
+          "example": "000015486720343033517"
+        },
+
+        "train_loss": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "float"
+          },
+          "example": [1.0447414, 1.0309266]
+        },
+        "valid_loss": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "float"
+          },
+          "example": [1.0447414, 1.0309266]
+        },
+        "mse": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "float"
+          },
+          "example": [1.0447414, 1.0309266]
+        }
+      }
+    },
+    "SelfLinks": {
+      "type": "object",
+      "properties": {
+        "self": {
+          "type": "string",
+          "description": "Self link",
+          "example": "/cloudhub/v1/ai/network/managements/devices/12345"
         }
       }
     }

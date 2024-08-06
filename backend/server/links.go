@@ -3,6 +3,8 @@ package server
 import (
 	"errors"
 	"net/url"
+
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type getFluxLinksResponse struct {
@@ -96,4 +98,17 @@ func NewOSP(osp map[string]string) OSP {
 	}
 
 	return newOsp
+}
+
+// NewAIConfig converts map to AI Struct
+func NewAIConfig(aiConfig map[string]string) cloudhub.AIConfig {
+	var newAiConfig cloudhub.AIConfig
+	if len(aiConfig) > 0 {
+		newAiConfig.DockerPath = aiConfig["docker-path"]
+		newAiConfig.LogstashPath = aiConfig["logstash-path"]
+		newAiConfig.DockerCmd = aiConfig["docker-cmd"]
+		newAiConfig.PredictionRegex = aiConfig["prediction-regex"]
+	}
+
+	return newAiConfig
 }

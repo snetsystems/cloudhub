@@ -457,7 +457,7 @@ export const DEFAULT_SOURCE = {
 
 export const DEFAULT_KAPACITOR = {
   url: 'http://kapacitor:9094/',
-  name: 'New Kapacitor',
+  name: '',
   username: '',
   password: '',
   active: true,
@@ -546,6 +546,7 @@ export enum AddonType {
   aws = 'aws',
   gcp = 'gcp',
   osp = 'osp',
+  ai = 'ai',
 }
 
 export const COLLECTOR_SERVER = 'ch-collector'

@@ -39,3 +39,8 @@ export const timeSeriesToTableGraph = async (
 ): Promise<TimeSeriesToTableGraphReturnType> => {
   return await manager.timeSeriesToTableGraph(raw)
 }
+
+export const convertTimeFormat = dateString => {
+  const date = new Date(dateString)
+  return date.toISOString()
+}

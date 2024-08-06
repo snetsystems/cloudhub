@@ -33,6 +33,7 @@ class HandlerOptions extends Component {
       updateDetails,
       onGoToConfig,
       validationError,
+      emptyJSXElement,
     } = this.props
     switch (selectedHandler && selectedHandler.type) {
       case 'post':
@@ -72,6 +73,7 @@ class HandlerOptions extends Component {
             validationError={validationError}
             updateDetails={updateDetails}
             rule={rule}
+            emptyJSXElement={emptyJSXElement}
           />
         )
       case 'alerta':
@@ -90,6 +92,7 @@ class HandlerOptions extends Component {
             handleModifyHandler={handleModifyHandler}
             onGoToConfig={onGoToConfig('kafka')}
             validationError={validationError}
+            emptyJSXElement={emptyJSXElement}
           />
         )
       case 'opsGenie':
@@ -153,6 +156,7 @@ class HandlerOptions extends Component {
             handleModifyHandler={handleModifyHandler}
             onGoToConfig={onGoToConfig('slack')}
             validationError={validationError}
+            emptyJSXElement={emptyJSXElement}
           />
         )
       case 'talk':
@@ -171,6 +175,7 @@ class HandlerOptions extends Component {
             handleModifyHandler={handleModifyHandler}
             onGoToConfig={onGoToConfig('telegram')}
             validationError={validationError}
+            emptyJSXElement={emptyJSXElement}
           />
         )
       case 'victorOps':
@@ -188,7 +193,7 @@ class HandlerOptions extends Component {
   }
 }
 
-const {func, shape, string} = PropTypes
+const {func, shape, string, element} = PropTypes
 
 HandlerOptions.propTypes = {
   selectedHandler: shape({}).isRequired,
@@ -197,6 +202,7 @@ HandlerOptions.propTypes = {
   rule: shape({}),
   onGoToConfig: func.isRequired,
   validationError: string.isRequired,
+  emptyJSXElement: element,
 }
 
 export default ErrorHandling(HandlerOptions)

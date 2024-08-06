@@ -6,6 +6,10 @@ export interface ShellInfo {
   preNodename?: string
   tabkey?: number
   socket?: any
+  //TODO: ssh auth info hide
+  sshId?: string
+  sshPw?: string
+  port?: string
 }
 
 export interface ShellLoad {

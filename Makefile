@@ -1,8 +1,8 @@
-VERSION = 1.5.0
+VERSION = 2.0.0
 ifeq ($(OS), Windows_NT)
-	GOBINDATA := $(shell go-bindata.exe --version 2>nil)
+    GOBINDATA := $(shell go-bindata.exe --version 2>nil)
 else
-	GOBINDATA := $(shell which go-bindata 2> /dev/null)
+    GOBINDATA := $(shell which go-bindata 2> /dev/null)
 endif
 
 COMMIT ?= $(shell git rev-parse --short=8 HEAD)
@@ -33,7 +33,7 @@ ${BINARY}: $(SOURCES) .bindata .jsdep .godep
 
 assets: .jssrc .bindata
 
-.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go backend/kv/internal/internal.pb.go
+.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go backend/kv/internal/internal.pb.go backend/templates/bin_gen.go
 	@touch .bindata
 
 backend/dist/dist_gen.go: $(UISOURCES)
@@ -51,6 +51,9 @@ backend/server/swagger_gen.go: backend/server/swagger.json
 backend/kv/internal/internal.pb.go: backend/kv/internal/internal.proto
 	go generate -x ./backend/kv/internal
 
+backend/templates/bin_gen.go: backend/templates/*.toml
+	go generate -x ./backend/templates
+
 .jssrc: $(UISOURCES)
 	cd frontend && yarn run clean && yarn run build
 	@touch .jssrc
@@ -60,10 +63,11 @@ dep: .jsdep .godep
 .godep:
 ifndef GOBINDATA
 	@echo "Installing go-bindata"
-	go get -u github.com/kevinburke/go-bindata/go-bindata
+	go install github.com/go-bindata/go-bindata/...@latest
+	export PATH=$PATH:$(go env GOPATH)/bin
 	@echo "Installing go-protoc"
-	go get -u github.com/gogo/protobuf/protoc-gen-gofast
-	GO111MODULE=on go get
+	go install github.com/gogo/protobuf/protoc-gen-gofast@latest
+	GO111MODULE=on go mod tidy
 endif
 	@touch .godep
 
@@ -104,7 +108,7 @@ clean:
 	if [ -f backend/cmd/cloudhubctl/${CTLBINARY} ] ; then rm backend/cmd/cloudhubctl/${CTLBINARY} ; fi
 	cd frontend && yarn run clean
 #	cd frontend && rm -rf node_modules
-	rm -f backend/dist/dist_gen.go backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/server/swagger_gen.go
+	rm -f backend/dist/dist_gen.go backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/server/swagger_gen.go backend/templates/bin_gen.go
 	@rm -f .godep .jsdep .jssrc .bindata
 
 # For Vim-go Env.

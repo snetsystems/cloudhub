@@ -10,6 +10,7 @@ export PORT="8888"
 export BOLT_PATH="/var/lib/cloudhub/cloudhub-v1.db"
 export CANNED_PATH="/usr/share/cloudhub/cloudhub-canned"
 export PROTOBOARDS_PATH="/usr/share/cloudhub/cloudhub-protoboards"
+export TEMPLATES_PATH="/usr/share/cloudhub/cloudhub-templates"
 
 # Options to pass to the script on startup
 . /etc/default/cloudhub

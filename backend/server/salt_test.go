@@ -110,3 +110,50 @@ func TestService_DaemonReload(t *testing.T) {
 		})
 	}
 }
+
+func TestService_GetWheelKeyAcceptedListAll(t *testing.T) {
+
+	tests := []struct {
+		name string
+		s    *Service
+	}{
+		{
+			name: "Get Wheel Key Accepted List",
+			s: &Service{
+				AddonURLs: map[string]string{
+					"salt": saltTestURL,
+				},
+				AddonTokens: map[string]string{
+					"salt": saltTestToken,
+				},
+				Logger: log.New(log.DebugLevel),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			statusCode, resp, err := tt.s.GetWheelKeyAcceptedListAll()
+			if err != nil {
+				t.Errorf("Service.GetWheelKeyAcceptedListAll() error = %v\n", err)
+			} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+				t.Errorf("Service.GetWheelKeyAcceptedListAll() statusCode = %v\n", statusCode)
+			}
+
+			// Logging the response for debugging
+			tt.s.Logger.
+				WithField("1-statusCode", statusCode).
+				WithField("2-resp", resp).
+				Debug("Responsed Data")
+
+			// Additional checks to verify the correctness of the response
+			var response Response
+			if err := json.Unmarshal(resp, &response); err != nil {
+				t.Errorf("Failed to unmarshal response: %v\n", err)
+			}
+
+			if len(response.Return) == 0 || !response.Return[0].Data.Success {
+				t.Errorf("Expected successful response, got: %v\n", response)
+			}
+		})
+	}
+}

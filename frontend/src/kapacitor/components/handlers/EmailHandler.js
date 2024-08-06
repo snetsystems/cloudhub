@@ -11,18 +11,21 @@ const EmailHandler = ({
   handleModifyHandler,
   onGoToConfig,
   validationError,
+  emptyJSXElement,
 }) =>
   selectedHandler.enabled ? (
     <div className="endpoint-tab-contents">
       <div className="endpoint-tab--parameters">
         <h4 className="u-flex u-jc-space-between">
           Parameters from Kapacitor Configuration
-          <div className="btn btn-default btn-sm" onClick={onGoToConfig}>
-            <span className="icon cog-thick" />
-            {validationError
-              ? 'Exit this Rule and Edit Configuration'
-              : 'Save this Rule and Edit Configuration'}
-          </div>
+          {emptyJSXElement ? null : (
+            <div className="btn btn-default btn-sm" onClick={onGoToConfig}>
+              <span className="icon cog-thick" />
+              {validationError
+                ? 'Exit this Rule and Edit Configuration'
+                : 'Save this Rule and Edit Configuration'}
+            </div>
+          )}
         </h4>
         <div className="faux-form">
           <HandlerInput
@@ -74,10 +77,11 @@ const EmailHandler = ({
     <HandlerEmpty
       onGoToConfig={onGoToConfig}
       validationError={validationError}
+      emptyJSXElement={emptyJSXElement}
     />
   )
 
-const {func, shape, string} = PropTypes
+const {func, shape, string, element} = PropTypes
 
 EmailHandler.propTypes = {
   selectedHandler: shape({}).isRequired,
@@ -86,6 +90,7 @@ EmailHandler.propTypes = {
   rule: shape({}),
   onGoToConfig: func.isRequired,
   validationError: string.isRequired,
+  emptyJSXElement: element,
 }
 
 export default EmailHandler

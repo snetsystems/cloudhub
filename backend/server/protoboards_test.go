@@ -181,6 +181,7 @@ func Test_Protoboards(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			// setup mock cloudhub.Service and mock logger

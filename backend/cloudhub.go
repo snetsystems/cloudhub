@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"text/template"
 	"time"
 )
 
@@ -50,6 +51,13 @@ const (
 	ErrTopologyAlreadyExists           = Error("topology already exists")
 	ErrCSPNotFound                     = Error("CSP not found")
 	ErrCSPAlreadyExists                = Error("CSP already exists")
+	ErrDeviceNotFound                  = Error("Network Device not found")
+	ErrDeviceOrgNotFound               = Error("Network Device organization not found")
+	ErrTemplatesInvalid                = Error("template is invalid")
+	ErrTemplateInvalid                 = Error("invalid template")
+	ErrTemplateNotFound                = Error("template not found")
+	ErrMLNxRstNotFound                 = Error("MLNxRet not found")
+	ErrDLNxRstNotFound                 = Error("DLNxRet not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -298,8 +306,62 @@ type AlertRule struct {
 	LastEnabled   time.Time     `json:"last-enabled,omitempty"` // Date the task was last set to status enabled
 }
 
+// TemplateFieldType represents the type of template field
+type TemplateFieldType string
+
+const (
+	// LearnScriptPrefix TickScript ID Prefix
+	LearnScriptPrefix = "learn-"
+	// PredictScriptPrefix TickScript ID Prefix
+	PredictScriptPrefix = "predict-"
+)
+
+// AutoGeneratePredictionRule extends Prediction AlertRule with an additional TaskTemplate field for automatic rule registration.
+type AutoGeneratePredictionRule struct {
+	AlertRule
+	TaskTemplate         TemplateFieldType `json:"task_template,omitempty"` // TaskTemplate is the template string for the task.
+	Organization         string            `json:"organization"`
+	OrganizationName     string            `json:"organization_name"`
+	PredictMode          string            `json:"predict_mode"`
+	PredictModeCondition string            `json:"predict_mode_condition"`
+}
+
+// AutoGenerateLearnRule extends Learning Rule with an additional TaskTemplate field for automatic rule registration.
+type AutoGenerateLearnRule struct {
+	AlertRule
+	TaskTemplate     TemplateFieldType `json:"task_template,omitempty"` // TaskTemplate is the template string for the task.
+	Organization     string            `json:"organization"`
+	OrganizationName string            `json:"organization_name"`
+	LearningCron     string            `json:"learning_cron"`
+	LoadModule       string            `json:"load_module,omitempty"`
+	MLFunction       string            `json:"ml_function"`
+	RetentionPolicy  string            `json:"retention_policy"`
+	InfluxOrigin     string            `json:"influxdb_origin"`
+	InfluxDBPort     string            `json:"influxdb_port"`
+	InfluxDBUsername string            `json:"influxdb_username"`
+	InfluxDBPassword string            `json:"influxdb_password"`
+	EtcdOrigin       string            `json:"etcd_origin"`
+	EtcdPort         string            `json:"etcd_port"`
+	ProcCnt          int               `json:"process_count"`
+}
+
 // TICKScript task to be used by kapacitor
 type TICKScript string
+
+// TemplateParamsMap is TemplateParams Params
+type TemplateParamsMap map[string]interface{}
+
+// TemplateBlock is TickScript Template Params
+type TemplateBlock struct {
+	Name   string
+	Params TemplateParamsMap
+}
+
+// LoadTemplateConfig Load file info
+type LoadTemplateConfig struct {
+	Field          TemplateFieldType
+	TemplateString string
+}
 
 // Ticker generates tickscript tasks for kapacitor
 type Ticker interface {
@@ -747,16 +809,17 @@ type DashboardsStore interface {
 
 // Cell is a rectangle and multiple time series queries to visualize.
 type Cell struct {
-	X          int32           `json:"x"`
-	Y          int32           `json:"y"`
-	W          int32           `json:"w"`
-	H          int32           `json:"h"`
-	I          string          `json:"i"`
-	Name       string          `json:"name"`
-	Queries    []Query         `json:"queries"`
-	Axes       map[string]Axis `json:"axes"`
-	Type       string          `json:"type"`
-	CellColors []CellColor     `json:"colors"`
+	X            int32           `json:"x"`
+	Y            int32           `json:"y"`
+	W            int32           `json:"w"`
+	H            int32           `json:"h"`
+	I            string          `json:"i"`
+	Name         string          `json:"name"`
+	Queries      []Query         `json:"queries"`
+	Axes         map[string]Axis `json:"axes"`
+	Type         string          `json:"type"`
+	CellColors   []CellColor     `json:"colors"`
+	GraphOptions GraphOptions    `json:"graphOptions"`
 }
 
 // Layout is a collection of Cells for visualization
@@ -766,6 +829,31 @@ type Layout struct {
 	Measurement string `json:"measurement"`
 	Autoflow    bool   `json:"autoflow"`
 	Cells       []Cell `json:"cells"`
+}
+
+// UnmarshalJSON GraphOptions setting default values for missing fields.
+func (c *Cell) UnmarshalJSON(data []byte) error {
+	type Alias Cell
+	cell := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if err := json.Unmarshal(data, &cell); err != nil {
+		return err
+	}
+
+	if cell.GraphOptions == (GraphOptions{}) {
+		c.GraphOptions = GraphOptions{
+			FillArea:         false,
+			ShowLine:         true,
+			ShowPoint:        false,
+			ShowTempVarCount: "",
+		}
+	}
+
+	return nil
 }
 
 // LayoutsStore stores dashboards and associated Cells
@@ -1023,6 +1111,14 @@ type Environment struct {
 	CustomAutoRefresh      string        `json:"customAutoRefresh,omitempty"`
 }
 
+// The InternalEnvironment variable is an internally shared environment variable within the server.
+type InternalEnvironment struct {
+	EtcdEndpoints    []string
+	TemplatesPath    string
+	TemplatesManager TemplatesManager
+	AIConfig         AIConfig
+}
+
 // Topology is represents represents an topology
 type Topology struct {
 	ID           string   `json:"id,string,omitempty"`
@@ -1130,4 +1226,256 @@ type KVClient interface {
 	TopologiesStore() TopologiesStore
 	// CSPStore returns the kv's CSPStore type.
 	CSPStore() CSPStore
+	// NetworkDeviceStore returns the kv's NetworkDeviceStore type.
+	NetworkDeviceStore() NetworkDeviceStore
+	// NetworkDeviceOrg returns the kv's NetworkDeviceOrg type.
+	NetworkDeviceOrgStore() NetworkDeviceOrgStore
+	// MLNxRstStore returns the kv's MLNxRstStore type.
+	MLNxRstStore() MLNxRstStore
+}
+
+// NetworkDeviceOrgQuery represents the attributes that a networkDeviceOrg may be retrieved by.
+// It is predominantly used in the networkDeviceOrgStore.Get method.
+//
+// It is expected that only one of Organization ID will be
+// specified, but all are provided networkDeviceOrgStore should prefer ID.
+type NetworkDeviceOrgQuery struct {
+	ID *string
+}
+
+// WorkerLimit controls the number of concurrent goroutines using a semaphore
+const (
+	WorkerLimit = 10
+)
+
+// AITemplates is a config Template for Cloudhub AI
+type AITemplates struct {
+	ID          string `json:"id"`
+	Application string `json:"app"`
+}
+
+// AIKapacitor represents the information for Kapacitor login
+type AIKapacitor struct {
+	SrcID              int    `json:"srcId,string"`  // SrcID of the data source
+	KapaID             int    `json:"kapaId,string"` // KapaID of the Kapacitor ID
+	KapaURL            string `json:"url"`
+	Username           string `json:"username"`
+	Password           string `json:"password"`
+	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
+}
+
+// NetworkDeviceOrg represents the information of a network device group
+type NetworkDeviceOrg struct {
+	ID                  string      `json:"organization"`
+	LoadModule          string      `json:"load_module"`
+	MLFunction          string      `json:"ml_function"`
+	DataDuration        int         `json:"data_duration"`
+	LearnedDevicesIDs   []string    `json:"learned_devices_ids"`
+	CollectorServer     string      `json:"collector_server"`
+	CollectedDevicesIDs []string    `json:"collected_devices_ids"`
+	AIKapacitor         AIKapacitor `json:"ai_kapacitor"`
+	LearningCron        string      `json:"learning_cron"`
+	ProcCnt             int         `json:"process_count"`
+}
+
+// NetworkDeviceOrgStore is the Storage and retrieval of information
+type NetworkDeviceOrgStore interface {
+	All(context.Context) ([]NetworkDeviceOrg, error)
+
+	Add(context.Context, *NetworkDeviceOrg) (*NetworkDeviceOrg, error)
+
+	Delete(context.Context, *NetworkDeviceOrg) error
+
+	Get(ctx context.Context, q NetworkDeviceOrgQuery) (*NetworkDeviceOrg, error)
+
+	Update(context.Context, *NetworkDeviceOrg) error
+}
+
+// DeviceCategoryMap maps device category keys to their corresponding category names.
+var DeviceCategoryMap = map[string]string{
+	"server":  "server",
+	"network": "network",
+}
+
+// NetworkDeviceQuery represents the attributes that a NetworkDevice may be retrieved by.
+// It is predominantly used in the NetworkDeviceStore.Get method.
+//
+// It is expected that only one of ID or Organization will be
+// specified, but all are provided NetworkDeviceStore should prefer ID.
+type NetworkDeviceQuery struct {
+	ID           *string
+	Organization *string
+}
+
+// SSHConfig is Connection Config
+type SSHConfig struct {
+	UserID     string `json:"user_id"`
+	Password   string `json:"password"`
+	EnPassword string `json:"en_password"`
+	Port       int    `json:"port"`
+}
+
+// SNMPConfig is Connection Config
+type SNMPConfig struct {
+	Community     string `json:"community"`
+	Version       string `json:"version"`
+	Port          int    `json:"port"`
+	Protocol      string `json:"protocol"`
+	SecurityName  string `json:"security_name,omitempty"`
+	AuthProtocol  string `json:"auth_protocol,omitempty"` // auth protocol one of ["md5", "sha", "sha2", "hmac128sha224", "hmac192sha256", "hmac256sha384", "hmac384sha512"]
+	AuthPass      string `json:"auth_pass,omitempty"`
+	PrivProtocol  string `json:"priv_protocol,omitempty"` // priv_protocol one of ["des", "aes", "aes128", "aes192", "aes256"]
+	PrivPass      string `json:"priv_pass,omitempty"`
+	SecurityLevel string `json:"security_level,omitempty"` // security_level one of ["noAuthNoPriv", "authNoPriv", "authPriv"]
+}
+
+// NetworkDevice represents the information of a network device
+type NetworkDevice struct {
+	ID                     string     `json:"id,omitempty"`
+	Organization           string     `json:"organization"`
+	DeviceIP               string     `json:"device_ip"`
+	Hostname               string     `json:"hostname"`
+	DeviceType             string     `json:"device_type"`
+	DeviceCategory         string     `json:"device_category"`
+	DeviceOS               string     `json:"device_os"`
+	IsCollectingCfgWritten bool       `json:"is_collecting_cfg_written"`
+	SSHConfig              SSHConfig  `json:"ssh_config"`
+	SNMPConfig             SNMPConfig `json:"snmp_config"`
+	Sensitivity            float32    `json:"sensitivity"`
+	DeviceVendor           string     `json:"device_vendor"`
+	LearningState          string     `json:"learning_state"`
+	LearningBeginDatetime  string     `json:"learning_begin_datetime"`
+	LearningFinishDatetime string     `json:"learning_finish_datetime"`
+	IsLearning             bool       `json:"is_learning"`
+}
+
+// NetworkDeviceStore is the Storage and retrieval of information
+type NetworkDeviceStore interface {
+	All(context.Context) ([]NetworkDevice, error)
+
+	Add(context.Context, *NetworkDevice) (*NetworkDevice, error)
+
+	Delete(context.Context, *NetworkDevice) error
+
+	Get(ctx context.Context, q NetworkDeviceQuery) (*NetworkDevice, error)
+
+	Update(context.Context, *NetworkDevice) error
+}
+
+// ConfigTemplate represents a configuration template for a task
+type ConfigTemplate struct {
+	ID       string `json:"id"`
+	App      string `json:"app"`
+	Template string `json:"template"`
+}
+
+// ConfigTemplatesStore stores configuration templates
+type ConfigTemplatesStore interface {
+	// All returns all templates in the store
+	All(ctx context.Context) ([]ConfigTemplate, error)
+	// Get retrieves ConfigTemplate if `ID` exists
+	Get(ctx context.Context, ID string) (ConfigTemplate, error)
+}
+
+// TemplatesManager is Template config Manager
+type TemplatesManager interface {
+	All(ctx context.Context) ([]ConfigTemplate, error)
+	Get(ctx context.Context, id string) (ConfigTemplate, error)
+}
+
+// TemplateLoader is Template Loader for CLoudhub AI Config
+type TemplateLoader interface {
+	LoadTemplate(config LoadTemplateConfig) (*template.Template, error)
+}
+
+// AIConfig is to The Information to access to cloudhub AI
+type AIConfig struct {
+	DockerPath      string `json:"docker-path"`
+	DockerCmd       string `json:"docker-cmd"`
+	LogstashPath    string `json:"logstash-path"`
+	PredictionRegex string `json:"prediction-regex"`
+}
+
+// MLNxRstQuery represents the attributes that a MLNxRst may be retrieved by.
+// It is predominantly used in the MLNxRstStore.Get method.
+type MLNxRstQuery struct {
+	ID *string
+}
+
+// MLNxRstStore is the Storage and retrieval of information
+type MLNxRstStore interface {
+	All(context.Context) ([]MLNxRst, error)
+
+	Add(context.Context, *MLNxRst) (*MLNxRst, error)
+
+	Delete(context.Context, *MLNxRst) error
+
+	Get(ctx context.Context, q MLNxRstQuery) (*MLNxRst, error)
+
+	Update(context.Context, *MLNxRst) error
+}
+
+// MLNxRst represents the result of a Machine Learning (ML) process
+type MLNxRst struct {
+	Device                 string    `json:"device_ip"`                // IP address or ID of the device
+	LearningFinishDatetime string    `json:"learning_finish_datetime"` // TZ=UTC, Format=RFC3339
+	Epsilon                float64   `json:"epsilon"`                  // ML Result value
+	MeanMatrix             string    `json:"mean_matrix"`              // 1x2 mean numpy matrix
+	CovarianceMatrix       string    `json:"covariance_matrix"`        // 2x2 covariance numpy matrix
+	K                      float32   `json:"k"`                        // Decision coefficient for determination of threshold
+	Mean                   float32   `json:"mean"`                     // Mean value by whole elements
+	MDThreshold            float32   `json:"md_threshold"`             // MDThreshold = mean * K * Sensitivity
+	MDArray                []float32 `json:"md_array"`                 // Mahalanobis distance array
+	CPUArray               []float32 `json:"cpu_array"`                // Use Gaussian Graph
+	TrafficArray           []float32 `json:"traffic_array"`            // Use Gaussian Graph
+	GaussianArray          []float32 `json:"gaussian_array"`           // Use Gaussian Graph
+}
+
+// DLNxRstQuery represents the attributes that a DLNxRst may be retrieved by.
+// It is predominantly used in the DLNxRstStore.Get method.
+type DLNxRstQuery struct {
+	ID *string
+}
+
+// DLNxRstStore is the Storage and retrieval of information
+type DLNxRstStore interface {
+	All(context.Context) ([]DLNxRst, error)
+
+	Add(context.Context, *DLNxRst) (*DLNxRst, error)
+
+	Delete(context.Context, *DLNxRst) error
+
+	Get(ctx context.Context, q DLNxRstQuery) (*DLNxRst, error)
+
+	Update(context.Context, *DLNxRst) error
+}
+
+// DLNxRst represents the result of a deep learning process
+type DLNxRst struct {
+	Device                 string    `json:"device"`                   // IP address of the device
+	LearningFinishDatetime string    `json:"learning_finish_datetime"` // TZ=UTC, Format=RFC3339
+	DLThreshold            float32   `json:"dl_threshold"`             // DL Threshold value
+	TrainLoss              []float32 `json:"train_loss"`               // Use Loss Graph
+	ValidLoss              []float32 `json:"valid_loss"`               // Use Loss Graph
+	MSE                    []float32 `json:"mse"`                      // Use Mean Squared Error Graph
+}
+
+// DLNxRstStgQuery represents the attributes that a DLNxRst may be retrieved by.
+// It is predominantly used in the DLNxRstStgStore.Get method.
+type DLNxRstStgQuery struct {
+	ID *string
+}
+
+// DLNxRstStgStore is the Storage and retrieval of information
+type DLNxRstStgStore interface {
+	Delete(ctx context.Context, q DLNxRstStgQuery) error
+}
+
+// DLNxRstStg represents the result of a deep learning process
+type DLNxRstStg struct {
+	Device                 string  `json:"device"`                   // IP address of the device
+	LearningFinishDatetime string  `json:"learning_finish_datetime"` // TZ=UTC, Format=RFC3339
+	Scaler                 []byte  `json:"scaler"`
+	Model                  []byte  `json:"model"`
+	DLThreshold            float32 `json:"dl_threshold"` // DL Threshold value
 }

@@ -13,6 +13,7 @@ import DygraphLegend from 'src/shared/components/DygraphLegend'
 import StaticLegend from 'src/shared/components/StaticLegend'
 import Annotations from 'src/shared/components/Annotations'
 import Crosshair from 'src/shared/components/Crosshair'
+// import AnnotationsViewer from 'src/shared/components/AnnotationsViewer'
 
 // Utils
 import getRange, {getStackedRange} from 'src/shared/parsing/getRangeForDygraph'
@@ -48,8 +49,11 @@ import {
   DygraphClass,
   DygraphSeries,
   TimeZones,
+  AnnotationViewer,
+  // AnnotationViewer,
 } from 'src/types'
 import {LineColor} from 'src/types/colors'
+import AnnotationsViewer from './AnnotationsViewer'
 
 const Dygraphs = D as any
 
@@ -88,6 +92,8 @@ interface Props {
   mode?: string
   underlayCallback?: () => void
   timeZone: TimeZones
+  isUsingAnnotationViewer: boolean
+  annotationsViewMode: AnnotationViewer[]
 }
 
 interface State {
@@ -135,7 +141,10 @@ class Dygraph extends Component<Props, State> {
 
   public componentDidMount() {
     const options = this.collectDygraphOptions()
-    const initialOptions = {...DEFAULT_DYGRAPH_OPTIONS, ...options}
+    const initialOptions: dygraphs.Options = {
+      ...DEFAULT_DYGRAPH_OPTIONS,
+      ...options,
+    }
 
     this.dygraph = new Dygraphs(
       this.graphRef.current,
@@ -188,6 +197,14 @@ class Dygraph extends Component<Props, State> {
       >
         {this.dygraph && (
           <div className="dygraph-addons">
+            {this.props.isUsingAnnotationViewer && (
+              <AnnotationsViewer
+                dygraph={this.dygraph}
+                staticLegendHeight={staticLegendHeight}
+                xAxisRange={xAxisRange}
+                annotationsViewMode={this.props.annotationsViewMode}
+              />
+            )}
             {this.areAnnotationsVisible && (
               <Annotations
                 dygraph={this.dygraph}

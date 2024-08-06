@@ -492,7 +492,7 @@ func (s *Service) generateTelegrafConfigForOSP(ctx context.Context, csp *cloudhu
 	}
 	b, _ := toml.Marshal(telegrafConfig)
 
-	if useLocalModule && err == nil {
+	if useLocalModule {
 		statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{string(b)}, s.AddonTokens["osp"])
 	} else {
 		statusCode, resp, err = s.CreateFile(filePath, []string{string(b)})
@@ -534,6 +534,7 @@ func (s *Service) removeTelegrafConfigForOSP(csp *cloudhub.CSP) (int, []byte, er
 	return s.DaemonReload("telegraf.service")
 }
 
+// IsMinionActive checks if the specified minion is active by sending a ping request.
 func (s *Service) IsMinionActive(provider string) (bool, error) {
 
 	useLocalModule := false
@@ -549,26 +550,28 @@ func (s *Service) IsMinionActive(provider string) (bool, error) {
 			}{}
 
 			if err := json.Unmarshal(resp, r); err != nil || !r.Return[0][s.AddonTokens[provider]] {
-
-				return useLocalModule, fmt.Errorf("Target minion %s is not available.", s.AddonTokens[provider])
+				return useLocalModule, fmt.Errorf("Target minion %s is not available", s.AddonTokens[provider])
 			}
+
 		}
 		return useLocalModule, nil
-	} else {
-		return useLocalModule, nil
 	}
+	return useLocalModule, nil
 
 }
 
+// Response represents the overall response structure from the Salt API.
 type Response struct {
 	Return []ReturnData `json:"return"`
 }
 
+// ReturnData represents the data returned for each response entry.
 type ReturnData struct {
 	Tag  string                 `json:"tag"`
 	Data ReturnWheelKeyListData `json:"data"`
 }
 
+// ReturnWheelKeyListData contains the detailed data of the wheel key list.
 type ReturnWheelKeyListData struct {
 	Fun        string         `json:"fun"`
 	JID        string         `json:"jid"`
@@ -579,6 +582,7 @@ type ReturnWheelKeyListData struct {
 	Success    bool           `json:"success"`
 }
 
+// MinionResponse contains the lists of minions in various states.
 type MinionResponse struct {
 	Minions         []string `json:"minions"`
 	MinionsPre      []string `json:"minions_pre"`
@@ -587,34 +591,33 @@ type MinionResponse struct {
 	Local           []string `json:"local"`
 }
 
+// IsMinionAvailable checks if the specified minion is available by retrieving the key list.
 func (s *Service) IsMinionAvailable(provider string) (bool, error) {
 
 	IsMinionAvailable := false
 
 	if targetMinion, ok := s.AddonTokens[provider]; ok {
+		statusCode, resp, err := s.GetWheelKeyListAll()
+		if err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			return IsMinionAvailable, fmt.Errorf("Target minion %s is not available", targetMinion)
+		}
+		var response Response
+		if err := json.Unmarshal([]byte(resp), &response); err != nil {
+			fmt.Println("Invalid request data:", err)
+			return IsMinionAvailable, err
+		}
 
-		if statusCode, resp, err := s.GetWheelKeyListAll(); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-			return IsMinionAvailable, fmt.Errorf("Target minion %s is not available.", targetMinion)
-		} else {
-			var response Response
-			if err := json.Unmarshal([]byte(resp), &response); err != nil {
-				fmt.Println("JSON 파싱 오류:", err)
-				return IsMinionAvailable, err
-			}
-
-			minionData := response.Return[0].Data.MinionData
-			for _, minions := range [][]string{minionData.Minions, minionData.MinionsPre, minionData.MinionsRejected, minionData.MinionsDenied} {
-				for _, minion := range minions {
-					if minion == targetMinion {
-						IsMinionAvailable = true
-						return IsMinionAvailable, nil
-					}
+		minionData := response.Return[0].Data.MinionData
+		for _, minions := range [][]string{minionData.Minions, minionData.MinionsPre, minionData.MinionsRejected, minionData.MinionsDenied} {
+			for _, minion := range minions {
+				if minion == targetMinion {
+					IsMinionAvailable = true
+					return IsMinionAvailable, nil
 				}
 			}
 		}
-		return IsMinionAvailable, fmt.Errorf("Target minion %s is not available.", targetMinion)
-	} else {
-		return IsMinionAvailable, nil
-	}
 
+		return IsMinionAvailable, fmt.Errorf("Target minion %s is not available", targetMinion)
+	}
+	return IsMinionAvailable, nil
 }

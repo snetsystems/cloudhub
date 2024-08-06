@@ -305,6 +305,8 @@ export const getAppsForHost = async (
   let query = ''
   if (getFrom === 'IPMI') {
     query = `show series from ${measurements} where hostname = '${host}'`
+  } else if (getFrom === 'snmp_nx') {
+    query = `show series from ${measurements} where agent_host = '${host}'`
   } else {
     query = `show series from ${measurements} where host = '${host}'`
   }
@@ -552,6 +554,8 @@ export const getMeasurementsForHost = async (
   let query = ''
   if (getFrom === 'IPMI') {
     query = `SHOW MEASUREMENTS WHERE hostname = '${host}'`
+  } else if (getFrom === 'snmp_nx') {
+    query = `SHOW MEASUREMENTS WHERE agent_host = '${host}'`
   } else {
     query = `SHOW MEASUREMENTS WHERE host = '${host}'`
   }

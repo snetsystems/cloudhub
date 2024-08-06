@@ -9,7 +9,8 @@ import (
 var _ cloudhub.Ticker = &Alert{}
 
 // Alert defines alerting strings in template rendering
-type Alert struct{}
+type Alert struct {
+}
 
 // Generate creates a Tickscript from the alertrule
 func (a *Alert) Generate(rule cloudhub.AlertRule) (cloudhub.TICKScript, error) {

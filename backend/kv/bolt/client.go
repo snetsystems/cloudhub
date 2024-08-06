@@ -193,6 +193,15 @@ func (b *Bucket) NextSequence() (uint64, error) {
 	return b.bucket.NextSequence()
 }
 
+// Exists checks if the given key exists within the specified prefix and returns true if it does.
+func (b *Bucket) Exists(key []byte) (bool, error) {
+	value := b.bucket.Get(key)
+	if value == nil {
+		return false, nil
+	}
+	return true, nil
+}
+
 // ForEach executes a function for each key/value pair in a bucket.
 // If the provided function returns an error then the iteration is stopped and
 // the error is returned to the caller. The provided function must not modify

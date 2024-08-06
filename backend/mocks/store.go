@@ -21,6 +21,11 @@ type Store struct {
 	VspheresStore           cloudhub.VspheresStore
 	TopologiesStore         cloudhub.TopologiesStore
 	CSPStore                cloudhub.CSPStore
+	NetworkDeviceStore      cloudhub.NetworkDeviceStore
+	NetworkDeviceOrgStore   cloudhub.NetworkDeviceOrgStore
+	MLNxRstStore            cloudhub.MLNxRstStore
+	DLNxRstStore            cloudhub.DLNxRstStore
+	DLNxRstStgStore         cloudhub.DLNxRstStgStore
 }
 
 // Sources ...
@@ -86,4 +91,29 @@ func (s *Store) Topologies(ctx context.Context) cloudhub.TopologiesStore {
 // CSP ...
 func (s *Store) CSP(ctx context.Context) cloudhub.CSPStore {
 	return s.CSPStore
+}
+
+// NetworkDevice ...
+func (s *Store) NetworkDevice(ctx context.Context) cloudhub.NetworkDeviceStore {
+	return s.NetworkDeviceStore
+}
+
+// NetworkDeviceOrg ...
+func (s *Store) NetworkDeviceOrg(ctx context.Context) cloudhub.NetworkDeviceOrgStore {
+	return s.NetworkDeviceOrgStore
+}
+
+// MLNxRst ...
+func (s *Store) MLNxRst(ctx context.Context) cloudhub.MLNxRstStore {
+	return s.MLNxRstStore
+}
+
+// DLNxRst ...
+func (s *Store) DLNxRst(ctx context.Context) cloudhub.DLNxRstStore {
+	return s.DLNxRstStore
+}
+
+// DLNxRstStg ...
+func (s *Store) DLNxRstStg(ctx context.Context) cloudhub.DLNxRstStgStore {
+	return s.DLNxRstStgStore
 }

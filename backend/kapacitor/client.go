@@ -62,14 +62,40 @@ func NewClient(url, username, password string, insecureSkipVerify bool) *Client 
 
 // Task represents a running kapacitor task
 type Task struct {
-	ID         string         // Kapacitor ID
-	Href       string         // Kapacitor relative URI
-	HrefOutput string         // Kapacitor relative URI to HTTPOutNode
+	ID         string              // Kapacitor ID
+	Href       string              // Kapacitor relative URI
+	HrefOutput string              // Kapacitor relative URI to HTTPOutNode
 	Rule       cloudhub.AlertRule  // Rule is the rule that represents this Task
 	TICKScript cloudhub.TICKScript // TICKScript is the running script
 }
 
 var reTaskName = regexp.MustCompile(`[\r\n]*var[ \t]+name[ \t]+=[ \t]+'([^']+)'`)
+
+// TaskPreprocessor is an interface for processing tasks after they are updated.
+// Implementations of this interface can define custom logic for handling
+// the task based on specific requirements.
+type TaskPreprocessor interface {
+	Process(task *client.Task) *Task
+}
+
+// NewAITaskProcess is a struct that implements the TaskPreprocessor interface.
+type NewAITaskProcess struct {
+	Regex string
+}
+
+// Process processes the provided task using the regex pattern and returns a new AI Task.
+func (p NewAITaskProcess) Process(task *client.Task) *Task {
+	return NewAITask(task, p.Regex)
+}
+
+// NewTaskProcess is a struct that implements the TaskPreprocessor interface.
+type NewTaskProcess struct{}
+
+// Process processes the provided task and returns a new Task.
+// It creates a new Task using the NewTask function.
+func (p NewTaskProcess) Process(task *client.Task) *Task {
+	return NewTask(task)
+}
 
 // NewTask creates a task from a kapacitor client task
 func NewTask(task *client.Task) *Task {
@@ -100,6 +126,45 @@ func NewTask(task *client.Task) *Task {
 	rule.Status = task.Status.String()
 	rule.Executing = task.Executing
 	rule.Error = task.Error
+	rule.Created = task.Created
+	rule.Modified = task.Modified
+	rule.LastEnabled = task.LastEnabled
+	return &Task{
+		ID:         task.ID,
+		Href:       task.Link.Href,
+		HrefOutput: HrefOutput(task.ID),
+		Rule:       rule,
+	}
+}
+
+// NewAITask creates a task from a kapacitor client  AI task
+func NewAITask(task *client.Task, regex string) *Task {
+	dbrps := make([]cloudhub.DBRP, len(task.DBRPs))
+	for i := range task.DBRPs {
+		dbrps[i].DB = task.DBRPs[i].Database
+		dbrps[i].RP = task.DBRPs[i].RetentionPolicy
+	}
+
+	script := cloudhub.TICKScript(task.TICKscript)
+	rule, err := TargetedReverseParser(script, regex)
+	if err != nil {
+		name := task.ID
+		if matches := reTaskName.FindStringSubmatch(task.TICKscript); matches != nil {
+			name = matches[1]
+		}
+		rule = cloudhub.AlertRule{
+			Name:  name,
+			Query: nil,
+		}
+	}
+
+	rule.ID = task.ID
+	rule.TICKScript = script
+	rule.Type = task.Type.String()
+	rule.DBRPs = dbrps
+	rule.Error = task.Error
+	rule.Status = task.Status.String()
+	rule.Executing = task.Executing
 	rule.Created = task.Created
 	rule.Modified = task.Modified
 	rule.LastEnabled = task.LastEnabled
@@ -151,6 +216,47 @@ func (c *Client) Create(ctx context.Context, rule cloudhub.AlertRule) (*Task, er
 	}
 
 	return NewTask(&task), nil
+}
+
+// AutoGenerateCreate builds and POSTs a tickScript to kapacitor
+func (c *Client) AutoGenerateCreate(ctx context.Context, taskOptions *client.CreateTaskOptions) (*Task, error) {
+
+	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
+	if err != nil {
+		return nil, err
+	}
+
+	task, err := kapa.CreateTask(*taskOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTask(&task), nil
+}
+
+// AutoGenerateUpdate Update a tickScript to kapacitor
+func (c *Client) AutoGenerateUpdate(ctx context.Context, taskOptions *client.UpdateTaskOptions, href string, preprocessor TaskPreprocessor) (*Task, error) {
+	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
+	if err != nil {
+		return nil, err
+	}
+	originalStatus := taskOptions.Status
+	if originalStatus == client.Enabled {
+		taskOptions.Status = client.Disabled
+	}
+
+	task, err := kapa.UpdateTask(client.Link{Href: href}, *taskOptions)
+	if err != nil {
+		return nil, err
+	}
+	// Now enable the task if previously enabled
+	if originalStatus == client.Enabled {
+		if _, err := c.Enable(ctx, href); err != nil {
+			return nil, err
+		}
+	}
+
+	return preprocessor.Process(&task), nil
 }
 
 func (c *Client) createFromTick(rule cloudhub.AlertRule) (*client.CreateTaskOptions, error) {
@@ -438,4 +544,19 @@ func NewKapaClient(url, username, password string, insecureSkipVerify bool) (Kap
 	}
 
 	return &PaginatingKapaClient{clnt, FetchRate}, nil
+}
+
+// GetAITask returns a single alert in kapacitor
+func (c *Client) GetAITask(ctx context.Context, id string, regex string) (*Task, error) {
+	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
+	if err != nil {
+		return nil, err
+	}
+	href := c.Href(id)
+	task, err := kapa.Task(client.Link{Href: href}, nil)
+	if err != nil {
+		return nil, cloudhub.ErrAlertNotFound
+	}
+
+	return NewAITask(&task, regex), nil
 }
