@@ -28,15 +28,12 @@ func (s *TemplateService) LoadTemplate(config cloudhub.LoadTemplateConfig, tmplP
 	}
 
 	var finalBuffer bytes.Buffer
-
 	for _, block := range tmplParams {
 		var tpl bytes.Buffer
 		if err := tmpl.ExecuteTemplate(&tpl, block.Name, block.Params); err != nil {
 			return "", fmt.Errorf("error executing template for block %s: %v", block.Name, err)
 		}
-
 		finalBuffer.WriteString(tpl.String())
-		finalBuffer.WriteString("\n")
 	}
 
 	finalString := finalBuffer.String()

@@ -882,7 +882,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		orgInfo.CollectorServer = collectorServer
 		existingCollectingDeviceIDs := orgInfo.CollectedDevicesIDs
 		for _, device := range devices {
-			if device.IsCollecting || !device.IsCollectingCfgWritten {
+			if device.IsCollecting {
 				existingCollectingDeviceIDs = appendUnique(existingCollectingDeviceIDs, device.ID)
 			} else {
 				existingCollectingDeviceIDs = removeDeviceID(existingCollectingDeviceIDs, device.ID)
@@ -896,7 +896,6 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 	// Update the store only for successful orgInfos
 	for org, orgInfo := range orgsToUpdate {
-
 		statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo)
 		if err != nil {
 			for _, device := range devicesData.devicesGroupByOrg[org] {
@@ -1392,9 +1391,7 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	}
 
 	snmpV1AndV2Hosts := strings.Join(hostEntriesV1AndV2, ",\n")
-	// snmpV3Hosts := strings.Join(hostEntriesV3, ",\n")
 	filters := strings.Join(deviceFilters, "\n")
-
 	influxDBs, err := GetServerInfluxDBs(ctx, s)
 	if err != nil || len(influxDBs) < 1 {
 		return http.StatusInternalServerError, nil, err
