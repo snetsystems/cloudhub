@@ -393,30 +393,32 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
 		if err != nil {
 			addFailedDevice(failedDevices, &sync.Mutex{}, deviceID, err)
-		} else {
-			if device.IsCollectingCfgWritten || device.IsLearning {
-				devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], device.ID)
-				deviceOrgMap[deviceID] = device.Organization
-			}
-
 		}
+		devicesGroupByOrg[device.Organization] = append(devicesGroupByOrg[device.Organization], device.ID)
+		deviceOrgMap[deviceID] = device.Organization
 	}
 
 	activeCollectorKeys := make(map[string]bool)
-	if len(devicesGroupByOrg) > 0 {
-		var activeCollectorsErr error
-		_, activeCollectorKeys, activeCollectorsErr = s.getCollectorServers()
-		if activeCollectorsErr != nil {
-			for _, ids := range devicesGroupByOrg {
-				for _, id := range ids {
+
+	for orgID, devices := range devicesGroupByOrg {
+		org, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
+		if err != nil {
+			Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+			return
+		}
+		if len(org.CollectedDevicesIDs) > 0 {
+			var activeCollectorsErr error
+			_, activeCollectorKeys, activeCollectorsErr = s.getCollectorServers()
+			if activeCollectorsErr != nil {
+				for _, id := range devices {
 					addFailedDevice(failedDevices, &sync.Mutex{}, id, fmt.Errorf("Failed to access active collector-server"))
 				}
-			}
 
-			response := make(map[string]interface{})
-			response["failed_devices"] = convertFailedDevicesToArray(failedDevices)
-			encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
-			return
+				response := make(map[string]interface{})
+				response["failed_devices"] = convertFailedDevicesToArray(failedDevices)
+				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+				return
+			}
 		}
 	}
 
