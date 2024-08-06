@@ -158,7 +158,6 @@ func (manager *SNMPManager) Connect() error {
 	if manager.SNMP == nil {
 		return fmt.Errorf("SNMP configuration is not initialized")
 	}
-	fmt.Printf("Connecting to SNMP device at %s:%d using %s\n", manager.Config.DeviceIP, manager.Config.Port, manager.Config.Protocol)
 	return manager.SNMP.Connect()
 }
 
