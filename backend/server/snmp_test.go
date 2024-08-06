@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/gosnmp/gosnmp"
@@ -43,6 +44,31 @@ func TestParseVersion(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, test.expected, version)
+			}
+		})
+	}
+}
+
+func TestValidateDeviceIP(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected error
+	}{
+		{"", fmt.Errorf("device_ip required in device request body")}, // Empty IP, should fail
+		{"256.256.256.256", fmt.Errorf("invalid device_ip format")},   // Invalid IPv4, should fail
+		{"192.168.1.1", nil},                                   // Valid IPv4, should pass
+		{"2001:0db8:85a3:0000:0000:8a2e:0370:7334", nil},       // Valid IPv6, should pass
+		{"invalid_ip", fmt.Errorf("invalid device_ip format")}, // Invalid IP, should fail
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			err := ValidateDeviceIP(test.input)
+			if test.expected != nil {
+				require.Error(t, err)
+				assert.Equal(t, test.expected.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}

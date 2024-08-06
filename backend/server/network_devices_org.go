@@ -147,6 +147,9 @@ func (r *deviceOrgRequest) validCreate() error {
 	if r.DataDuration == nil {
 		return fmt.Errorf("data_duration required in device org request body")
 	}
+	if *r.DataDuration < 0 {
+		return fmt.Errorf("data_duration count must be greater than or equal to 0")
+	}
 	if r.AIKapacitor == nil {
 		return fmt.Errorf("AI Kapacitor required in device org request body")
 	}
@@ -165,7 +168,9 @@ func (r *deviceOrgRequest) validCreate() error {
 	if isInvalidCronExpression(*r.LearningCron) {
 		return fmt.Errorf("%s is an invalid cron expression", *r.LearningCron)
 	}
-
+	if r.ProcCnt < 0 {
+		return fmt.Errorf("Process count must be greater than or equal to 0")
+	}
 	return nil
 }
 
@@ -187,6 +192,15 @@ func (r *updateDeviceOrgRequest) validUpdate() error {
 	}
 	if isInvalidCronExpression(*r.LearningCron) {
 		return fmt.Errorf("%s is an invalid cron expression", *r.LearningCron)
+	}
+	if r.DataDuration == nil {
+		return fmt.Errorf("data_duration required in device org request body")
+	}
+	if *r.DataDuration < 0 {
+		return fmt.Errorf("data_duration count must be greater than or equal to 0")
+	}
+	if r.ProcCnt < 0 {
+		return fmt.Errorf("Process count must be greater than or equal to 0")
 	}
 	return nil
 }

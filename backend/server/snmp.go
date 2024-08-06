@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -296,12 +297,14 @@ type snmpReqError struct {
 
 func (r *SNMPConfig) validCreate() error {
 	switch {
-	case r.DeviceIP == "":
-		return fmt.Errorf("device_ip required in device request body")
 	case r.Protocol == "":
 		return fmt.Errorf("Protocol required in device request body")
 	case r.Version == "":
 		return fmt.Errorf("Version required in device request body")
+	}
+	err := ValidateDeviceIP(r.DeviceIP)
+	if err != nil {
+		return fmt.Errorf(err.Error())
 	}
 	isSNMPV3, _ := parseSNMPVersion("v3")
 	reqVersion, err := parseSNMPVersion(strings.ToLower(r.Version))
@@ -471,4 +474,23 @@ func parseProtocol(protocol string) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported protocol: %s", protocol)
 	}
+}
+
+// ValidateDeviceIP checks if DeviceIP is a valid IPv4 or IPv6 address
+func ValidateDeviceIP(ip string) error {
+	if ip == "" {
+		return fmt.Errorf("Device IP required in device request body")
+	}
+
+	ipv4Pattern := `^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$`
+	ipv6Pattern := `^([0-9a-fA-F]{1,4}:){7}([0-9a-fA-F]{1,4})$`
+
+	ipv4Regex := regexp.MustCompile(ipv4Pattern)
+	ipv6Regex := regexp.MustCompile(ipv6Pattern)
+
+	if !ipv4Regex.MatchString(ip) && !ipv6Regex.MatchString(ip) {
+		return fmt.Errorf("invalid Device IP format")
+	}
+
+	return nil
 }

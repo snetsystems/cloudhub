@@ -177,13 +177,14 @@ func newDevicesResponse(ctx context.Context, s *Service, devices []cloudhub.Netw
 
 func (r *deviceRequest) validCreate() error {
 	switch {
-	case r.DeviceIP == "":
-		return fmt.Errorf("device_ip required in device request body")
-
 	case r.Organization == "":
 		return fmt.Errorf("organization required in device request body")
 	}
 
+	err := ValidateDeviceIP(r.DeviceIP)
+	if err != nil {
+		return fmt.Errorf(err.Error())
+	}
 	return nil
 }
 
@@ -519,7 +520,6 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			mu.Unlock()
-
 			device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
 			if err != nil {
 				addFailedDevice(failedDevices, &mu, id, err)
@@ -551,20 +551,17 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 				addFailedDevice(failedDevices, &mu, id, err)
 				return
 			}
-
 			err = s.Store.NetworkDevice(ctx).Delete(ctx, device)
 			if err != nil {
 				addFailedDevice(failedDevices, &mu, id, err)
 				return
 			}
-
 			msg := fmt.Sprintf(MsgNetWorkDeviceDeleted.String(), id)
 			s.logRegistration(ctx, "NetWorkDevice", msg)
 		}(ctx, i, id)
 	}
 
 	wg.Wait()
-
 	response := make(map[string]interface{})
 	if len(failedDevices) > 0 {
 		response["failed_devices"] = convertFailedDevicesToArray(failedDevices)
@@ -581,20 +578,17 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
-
 	var req updateDeviceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
 	}
-
 	if err := req.validUpdate(); err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
 
 	ctx := r.Context()
-
 	device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
 	if err != nil {
 		notFound(w, id, s.Logger)
@@ -660,7 +654,6 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		device.DeviceOS = *req.DeviceOS
 		isModified = true
 	}
-
 	if req.SSHConfig != nil {
 		if req.SSHConfig.UserID != "" && device.SSHConfig.UserID != req.SSHConfig.UserID {
 			device.SSHConfig.UserID = req.SSHConfig.UserID
@@ -716,7 +709,6 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 			device.SNMPConfig.SecurityLevel = req.SNMPConfig.SecurityLevel
 			isModified = true
 		}
-
 	}
 	if req.Sensitivity != nil && device.Sensitivity != *req.Sensitivity {
 		device.Sensitivity = *req.Sensitivity
@@ -734,12 +726,10 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	if isModified {
 		device.IsCollectingCfgWritten = false
 	}
-
 	if err := s.OrganizationExists(ctx, device.Organization); err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
 		return
 	}
-
 	if err := s.Store.NetworkDevice(ctx).Update(ctx, device); err != nil {
 		msg := fmt.Sprintf("Error updating Device ID %s: %v", id, err)
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
@@ -762,15 +752,12 @@ type manageDeviceOrg struct {
 	IsCollecting           bool   `json:"is_collecting"`
 	IsCollectingCfgWritten bool   `json:"is_collecting_cfg_written"`
 }
-
 type manageLearningDeviceOrg struct {
 	ID         string `json:"device_id"`
 	IsLearning bool   `json:"is_learning"`
 }
-
 type deviceGroupByOrg map[string][]manageDeviceOrg
 type learningDeviceByOrg map[string][]manageLearningDeviceOrg
-
 type collectingFilteredDevices struct {
 	devicesGroupByOrg deviceGroupByOrg
 	failedDevices     map[string]string
@@ -1065,7 +1052,6 @@ func removeDeviceIDsFromPreviousOrg(ctx context.Context, s *Service, deviceOrgMa
 				orgInfo.LearnedDevicesIDs = removeDeviceID(orgInfo.LearnedDevicesIDs, deviceID)
 				updated = true
 			}
-
 		}
 		for _, deviceID := range orgInfo.CollectedDevicesIDs {
 			if org, exists := deviceOrgMap[deviceID]; exists && org != orgInfo.ID {
@@ -1076,7 +1062,6 @@ func removeDeviceIDsFromPreviousOrg(ctx context.Context, s *Service, deviceOrgMa
 		if updated {
 			orgsToUpdate[orgInfo.ID] = orgInfo
 		}
-
 	}
 	return orgsToUpdate, nil
 }
@@ -1188,27 +1173,6 @@ func findLeastLoadedCollectorServer(
 	return selectedServer
 }
 
-func isZeroOfUnderlyingType(x interface{}) bool {
-	return x == reflect.Zero(reflect.TypeOf(x)).Interface()
-}
-
-func updateSSHConfig(target, source *cloudhub.SSHConfig) {
-	if source != nil {
-		if !isZeroOfUnderlyingType(source.UserID) {
-			target.UserID = source.UserID
-		}
-		if !isZeroOfUnderlyingType(source.Password) {
-			target.Password = source.Password
-		}
-		if !isZeroOfUnderlyingType(source.EnPassword) {
-			target.EnPassword = source.EnPassword
-		}
-		if !isZeroOfUnderlyingType(source.Port) {
-			target.Port = source.Port
-		}
-	}
-}
-
 func (s *Service) getCollectorServers() ([]string, map[string]bool, error) {
 	status, responseBody, err := s.GetWheelKeyAcceptedListAll()
 
@@ -1245,7 +1209,6 @@ func (s *Service) getCollectorServers() ([]string, map[string]bool, error) {
 			collectorKeys = append(collectorKeys, minion)
 			wg.Add(1)
 			go func(minion string) {
-
 				defer wg.Done()
 				if statusCode, resp, err := s.IsActiveMinionPingTest(minion); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 					mu.Lock()
@@ -1265,7 +1228,6 @@ func (s *Service) getCollectorServers() ([]string, map[string]bool, error) {
 					mu.Lock()
 					activeCollectorKeys[minion] = true
 					mu.Unlock()
-
 				}
 			}(minion)
 		}
@@ -1360,9 +1322,7 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 	}
 
 	var hostEntriesV1AndV2 []string
-
 	var deviceFilters []string
-
 	filteredDevices := make(map[cloudhub.SNMPConfig]FilteredDeviceV3)
 	for _, deviceID := range devicesIDs {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
@@ -1474,11 +1434,9 @@ func (s *Service) restartDocker(collectorServer string) (int, []byte, error) {
 			for _, value := range item {
 				cleanedValue := strings.ReplaceAll(strings.ReplaceAll(value, "\n", ""), " ", "")
 				if !re.MatchString(cleanedValue) {
-
 					message := fmt.Errorf(value)
 					return http.StatusInternalServerError, nil, message
 				}
-
 			}
 		}
 	} else {
@@ -1493,7 +1451,6 @@ func RemoveElements[T comparable](origin []T, delete []T) []T {
 	for _, item := range delete {
 		deleteMap[item] = true
 	}
-
 	var result []T
 	for _, item := range origin {
 		if !deleteMap[item] {
