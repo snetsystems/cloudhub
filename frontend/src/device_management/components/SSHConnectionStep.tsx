@@ -4,6 +4,7 @@ import _ from 'lodash'
 
 // Components
 import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
+import WizardNumberInput from 'src/reusable_ui/components/wizard/WizardNumberInput'
 
 // Types
 import {Source, DeviceData, SNMPConfig, SSHConfig} from 'src/types'
@@ -45,7 +46,7 @@ export default class SSHConnectionStep extends PureComponent<Props, State> {
           type={'password'}
         />
 
-        <WizardTextInput
+        <WizardNumberInput
           value={`${deviceData?.ssh_config?.port}`}
           label={'Port (Default: 22)'}
           type={'number'}
