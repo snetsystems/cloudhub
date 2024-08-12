@@ -127,6 +127,8 @@ function LearningSettingModal({
 
   useEffect(() => {
     if (isVisible) {
+      setIsUpdateAfterCreate(false)
+
       const organizationID = getOrganizationIdByName(
         organizations,
         selectedSource?.telegraf
@@ -230,6 +232,7 @@ function LearningSettingModal({
     value: DropdownItem | Source
   ) => {
     if (key === 'organization') {
+      setIsUpdateAfterCreate(false)
       setCurrentTask(DEFAULT_TASK)
       setCronSchedule(DEFAULT_CRON_SCHEDULE)
       setProcessCount(DEFAULT_PROCESS_COUNT)
