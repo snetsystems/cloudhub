@@ -496,17 +496,11 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 
 	failedDevicesChan := make(chan FailedDevice, len(failedDevices))
 
-	var errorWaitGroup sync.WaitGroup
-	errorWaitGroup.Add(1)
-	go func() {
-		defer errorWaitGroup.Done()
-		for id, err := range failedDevices {
-			recordedDevices.Store(id, true)
-			failedDevicesChan <- FailedDevice{ID: id, Err: fmt.Errorf(err)}
-		}
-	}()
+	for id, err := range failedDevices {
+		recordedDevices.Store(id, true)
+		failedDevicesChan <- FailedDevice{ID: id, Err: fmt.Errorf(err)}
+	}
 
-	errorWaitGroup.Wait()
 	sem := make(chan struct{}, cloudhub.WorkerLimit)
 	var wg sync.WaitGroup
 	for i, id := range request.DevicesIDs {
