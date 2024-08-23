@@ -119,6 +119,13 @@ export const notifyCSVDownloadFailed = (): Notification => ({
   message: 'Unable to download .CSV file',
 })
 
+export const notifyCSVUploadFailedWithMessage = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: errorMessage,
+})
+
 export const notifyCSVUploadFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: 'Please upload a .csv file',
@@ -286,6 +293,14 @@ export const notifyCloudHubBasicUserAdd = (
 export const notifyCloudHubOrgDeleted = (orgName: string): Notification => ({
   ...defaultSuccessNotification,
   message: `Organization ${orgName} deleted successfully.`,
+})
+
+export const notifyCloudHubOrgDeletionFailedWithRegisteredDevices = (
+  orgName: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to delete organization ${orgName}: There are devices registered under this organization.`,
 })
 
 export const notifyCloudHubOrgInvalidName = (): Notification => ({
@@ -644,12 +659,13 @@ export const notifyAlertRuleCreateFailed = (
   errorMessage: string
 ): Notification => ({
   ...defaultErrorNotification,
+  duration: INFINITE,
   message: `There was a problem creating ${ruleName}: ${errorMessage}`,
 })
 
 export const notifyAlertRuleUpdated = (ruleName: string): Notification => ({
   ...defaultSuccessNotification,
-  message: `${ruleName} saved successfully.`,
+  message: `${ruleName} updated successfully.`,
 })
 
 export const notifyAlertRuleUpdateFailed = (
@@ -657,7 +673,14 @@ export const notifyAlertRuleUpdateFailed = (
   errorMessage: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `There was a problem saving ${ruleName}: ${errorMessage}`,
+  duration: INFINITE,
+  message: `There was a problem updating ${ruleName}: ${errorMessage}`,
+})
+
+export const notifyKapacitorEngineRequired = (): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Please set the Kapacitor(AI Engine) first in ML/DL Setting.`,
 })
 
 export const notifyAlertRuleDeleted = (ruleName: string): Notification => ({
@@ -669,6 +692,7 @@ export const notifyAlertRuleDeleteFailed = (
   ruleName: string
 ): Notification => ({
   ...defaultErrorNotification,
+  duration: INFINITE,
   message: `${ruleName} could not be deleted.`,
 })
 
@@ -828,6 +852,14 @@ export const notifyTickscriptUpdated = (): Notification => ({
 
 export const notifyTickscriptUpdateFailed = (): string =>
   'Failed to update TICKscript.'
+
+export const notifyTickscriptUpdateFailedWithMessage = (
+  message
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to update TICKscript. ${message}`,
+})
 
 export const notifyTickscriptLoggingUnavailable = (): Notification => ({
   type: 'warning',
@@ -1431,4 +1463,153 @@ export const notifyGetDetectedHostStatusFailed = (
   ...defaultErrorNotification,
   duration: INFINITE,
   message: `Failed to Get Detected Host Status : ${errorMessage}`,
+})
+
+export const notifyFetchSNMPConnectStatusSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `SNMP Connection Status Successfully Fetched.`,
+})
+
+export const notifySNMPConnectSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Connected to SNMP successfully.`,
+})
+
+export const notifySNMPConnectFailed = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `SNMP Connection Failed. ${error}`,
+})
+
+export const notifyCreateDeviceSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Device created successfully.`,
+})
+
+export const notifyCreateDeviceFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Create Device. ${errorMessage}`,
+})
+
+export const notifyCreateDevicesSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Devices created successfully.`,
+})
+
+export const notifyCreateDevicesFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Create Devices. ${errorMessage}`,
+})
+
+export const notifyCreateNetworkDeviceOrganizationSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Network Device Organization created successfully.`,
+})
+
+export const notifyCreateNetworkDeviceOrganizationFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Create Network Device Organization. ${errorMessage}`,
+})
+
+export const notifyUpdateNetworkDeviceOrganizationSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Network Device Organization updated successfully.`,
+})
+
+export const notifyUpdateNetworkDeviceOrganizationFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to update Network Device Organization. ${errorMessage}`,
+})
+
+export const notifyFetchNetworkDeviceOrganizationsError = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Get Network Device Organizations. ${errorMessage}`,
+})
+
+export const notifyFetchDeviceListError = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Get Device List. ${errorMessage}`,
+})
+
+export const notifyDeleteDevicesSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Devices deleted successfully.`,
+})
+
+export const notifyDeleteDevicesFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Delete Devices. ${errorMessage}`,
+})
+
+export const notifyUpdateDeviceSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Device updated successfully.`,
+})
+
+export const notifyUpdateDeviceFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to update Device. ${errorMessage}`,
+})
+
+export const notifyFetchDeviceMonitoringStatusFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to fetch Device Monitoring Status from InfluxDB.`,
+})
+
+export const notifyApplyMonitoringSuccess = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Monitoring has been applied successfully.`,
+})
+
+export const notifyApplyMonitoringFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Apply Monitoring. ${errorMessage}`,
+})
+
+export const notifyApplyLearningEnableStatusSuccess = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Learning Enable Status has been applied successfully.`,
+})
+
+export const notifyApplyLearningEnableStatusFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Apply Learning Enable Status. ${errorMessage}`,
+})
+
+export const notifyPredictionHexbinGetFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Get Host List. ${errorMessage}`,
 })

@@ -3,7 +3,11 @@ import React, {PureComponent} from 'react'
 import {withRouter, Link} from 'react-router'
 import {connect} from 'react-redux'
 
-import Authorized, {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+import Authorized, {
+  ADMIN_ROLE,
+  isUserAuthorized,
+  SUPERADMIN_ROLE,
+} from 'src/auth/Authorized'
 
 import UserNavBlock from 'src/side_nav/components/UserNavBlock'
 
@@ -53,6 +57,15 @@ class SideNav extends PureComponent<Props> {
       : false
   }
 
+  private isAddonUrlOn = (name: string): boolean => {
+    const {links} = this.props
+
+    return (
+      links.addons &&
+      links.addons.some(item => item.name === name && item.url === 'on')
+    )
+  }
+
   private toggleShellVisible = () => {
     const {shell, closeShell, openShell} = this.props
     return shell.isVisible ? closeShell() : openShell()
@@ -74,11 +87,11 @@ class SideNav extends PureComponent<Props> {
     const id = sourceID || _.get(defaultSource, 'id', 0)
     const sourcePrefix = `/sources/${id}`
     const isDefaultPage = location.split('/').includes(DEFAULT_HOME_PAGE)
-    const isUsingSalt = this.isExistInLinks(AddonType.salt)
     const isUsing128T = this.isExistInLinks(AddonType.router128T)
     const isUsingVMware = this.isExistInLinks(AddonType.vsphere)
     const isUsingK8s = this.isExistInLinks(AddonType.k8s)
     const isUsingOsp = this.isExistInLinks(AddonType.osp)
+    const isUsingAI = this.isAddonUrlOn(AddonType.ai)
     const cloudsNavLink = (() => {
       if (isUsingVMware) {
         return 'vmware'
@@ -128,7 +141,7 @@ class SideNav extends PureComponent<Props> {
             title="Infrastructure"
           />
         </NavBlock>
-        {(isUsingVMware || isUsingK8s || isUsingOsp) && (
+        {isUsingAuth && (isUsingVMware || isUsingK8s || isUsingOsp) && (
           <NavBlock
             highlightWhen={['clouds']}
             icon="cloud"
@@ -156,17 +169,25 @@ class SideNav extends PureComponent<Props> {
             )}
           </NavBlock>
         )}
-        <NavBlock
-          highlightWhen={['applications']}
-          icon="_snet--application"
-          link={`${sourcePrefix}/applications`}
-          location={location}
-        >
-          <NavHeader
-            link={`${sourcePrefix}/applications`}
-            title="Applications"
-          />
-        </NavBlock>
+        {isUsingAuth && isUsingAI && (
+          <NavBlock
+            highlightWhen={['ai']}
+            icon="ai-icon"
+            link={`${sourcePrefix}/ai/device-management`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/ai/device-management`}
+              title="AI"
+            />
+            {
+              <NavListItem link={`${sourcePrefix}/ai/device-management`}>
+                Network Device
+              </NavListItem>
+            }
+          </NavBlock>
+        )}
+
         <NavBlock
           highlightWhen={['alerts', 'alert-rules', 'tickscript']}
           icon="alerts"
@@ -255,55 +276,7 @@ class SideNav extends PureComponent<Props> {
             </NavListItem>
           </NavBlock>
         </Authorized>
-        <Authorized
-          requiredRole={ADMIN_ROLE}
-          replaceWithIfNotAuthorized={
-            <NavBlock
-              highlightWhen={['manage-sources']}
-              icon="wrench"
-              link={`${sourcePrefix}/manage-sources`}
-              location={location}
-            >
-              <NavHeader
-                link={`${sourcePrefix}/manage-sources`}
-                title="Configuration"
-              />
-            </NavBlock>
-          }
-          replaceWithIfNotUsingAuth={
-            <NavBlock
-              highlightWhen={['manage-sources']}
-              icon="wrench"
-              link={`${sourcePrefix}/manage-sources`}
-              location={location}
-            >
-              <NavHeader
-                link={`${sourcePrefix}/manage-sources`}
-                title="Configuration"
-              />
-            </NavBlock>
-          }
-        >
-          <NavBlock
-            highlightWhen={['manage-sources', 'agent-admin']}
-            icon="wrench"
-            link={`${sourcePrefix}/manage-sources`}
-            location={location}
-          >
-            <NavHeader
-              link={`${sourcePrefix}/manage-sources`}
-              title="Configuration"
-            />
-            <NavListItem link={`${sourcePrefix}/manage-sources`}>
-              Configuration
-            </NavListItem>
-            {isUsingSalt ? (
-              <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
-                Agent Configuration
-              </NavListItem>
-            ) : null}
-          </NavBlock>
-        </Authorized>
+        {this.Configuration}
         {isUsingAuth && (
           <UserNavBlock
             logoutLink={logoutLink}
@@ -343,6 +316,106 @@ class SideNav extends PureComponent<Props> {
         </div>
         <div className="sidebar--item cursor-default symbol-company" />
       </nav>
+    )
+  }
+
+  private get Configuration() {
+    const {
+      params: {sourceID},
+      location: {pathname: location},
+      sources = [],
+      me,
+    } = this.props
+    const defaultSource = sources.find(s => s.default)
+    const isUsingSalt = this.isExistInLinks(AddonType.salt)
+    const id = sourceID || _.get(defaultSource, 'id', 0)
+    const sourcePrefix = `/sources/${id}`
+    const isSuperAdmin = isUserAuthorized(me.role, SUPERADMIN_ROLE)
+
+    const superAdminContent = (
+      <NavBlock
+        highlightWhen={['manage-sources', 'agent-admin']}
+        icon="wrench"
+        link={`${sourcePrefix}/manage-sources`}
+        location={location}
+      >
+        <NavHeader
+          link={`${sourcePrefix}/manage-sources`}
+          title="Configuration"
+        />
+        <NavListItem link={`${sourcePrefix}/manage-sources`}>
+          Configuration
+        </NavListItem>
+        {isUsingSalt && (
+          <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
+            Agent Configuration
+          </NavListItem>
+        )}
+      </NavBlock>
+    )
+
+    const otherRoleContent = isUsingSalt && (
+      <NavBlock
+        highlightWhen={['agent-admin']}
+        icon="wrench"
+        link={`${sourcePrefix}/agent-admin/agent-minions`}
+        location={location}
+      >
+        <NavHeader
+          link={`${sourcePrefix}/agent-admin/agent-minions`}
+          title="Configuration"
+        />
+
+        <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
+          Agent Configuration
+        </NavListItem>
+      </NavBlock>
+    )
+
+    if (isSuperAdmin) {
+      return (
+        <Authorized
+          requiredRole={SUPERADMIN_ROLE}
+          replaceWithIfNotAuthorized={<></>}
+          replaceWithIfNotUsingAuth={
+            <NavBlock
+              highlightWhen={['manage-sources']}
+              icon="wrench"
+              link={`${sourcePrefix}/manage-sources`}
+              location={location}
+            >
+              <NavHeader
+                link={`${sourcePrefix}/manage-sources`}
+                title="Configuration"
+              />
+            </NavBlock>
+          }
+        >
+          <>{superAdminContent}</>
+        </Authorized>
+      )
+    }
+
+    return (
+      <Authorized
+        requiredRole={ADMIN_ROLE}
+        replaceWithIfNotAuthorized={<></>}
+        replaceWithIfNotUsingAuth={
+          <NavBlock
+            highlightWhen={['manage-sources']}
+            icon="wrench"
+            link={`${sourcePrefix}/manage-sources`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/manage-sources`}
+              title="Configuration"
+            />
+          </NavBlock>
+        }
+      >
+        <>{otherRoleContent}</>
+      </Authorized>
     )
   }
 }

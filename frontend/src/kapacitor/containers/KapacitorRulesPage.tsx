@@ -120,9 +120,20 @@ export class KapacitorRulesPage extends PureComponent<Props, State> {
     if (isUserAuthorized(auth.me.role, SUPERADMIN_ROLE) || !auth.isUsingAuth) {
       meRules = _.cloneDeep(rules)
     } else {
-      meRules = _.filter(rules, rule =>
-        rule.query ? rule.query.database === currentOrganization : false
-      )
+      meRules = _.isArray(rules) ? rules.filter(rule => {
+        if (_.isObject(rule) && rule.query) {
+          return _.get(rule, 'query.database') === currentOrganization;
+        } else if (_.isString(rule.tickscript)) {
+          const tickscriptDatabaseMatch = rule.tickscript.match(
+            /var\s+db\s*=\s*'(\w+)'/
+          );
+          const tickscriptDatabase = tickscriptDatabaseMatch
+            ? tickscriptDatabaseMatch[1]
+            : null;
+          return tickscriptDatabase === currentOrganization;
+        }
+        return false;
+      }) : [];
     }
 
     return (

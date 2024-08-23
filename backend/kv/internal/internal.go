@@ -1046,3 +1046,243 @@ func UnmarshalCSP(data []byte, t *cloudhub.CSP) error {
 
 	return nil
 }
+
+// MarshalNetworkDevice encodes a Device struct to binary protobuf format.
+func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
+	return proto.Marshal(&NetworkDevice{
+		ID:                     t.ID,
+		Organization:           t.Organization,
+		DeviceIP:               t.DeviceIP,
+		Hostname:               t.Hostname,
+		DeviceType:             t.DeviceType,
+		DeviceCategory:         t.DeviceCategory,
+		DeviceOS:               t.DeviceOS,
+		IsCollectingCfgWritten: t.IsCollectingCfgWritten,
+		SSHConfig: &SSHConfig{
+			UserID:     t.SSHConfig.UserID,
+			Password:   t.SSHConfig.Password,
+			EnPassword: t.SSHConfig.EnPassword,
+			Port:       int32(t.SSHConfig.Port),
+		},
+		SNMPConfig: &SNMPConfig{
+			Community:     t.SNMPConfig.Community,
+			Version:       t.SNMPConfig.Version,
+			Port:          int32(t.SNMPConfig.Port),
+			Protocol:      t.SNMPConfig.Protocol,
+			SecurityName:  t.SNMPConfig.SecurityName,
+			AuthProtocol:  t.SNMPConfig.AuthProtocol,
+			AuthPass:      t.SNMPConfig.AuthPass,
+			PrivProtocol:  t.SNMPConfig.PrivProtocol,
+			PrivPass:      t.SNMPConfig.PrivPass,
+			SecurityLevel: t.SNMPConfig.SecurityLevel,
+		},
+		Sensitivity:            float32(t.Sensitivity),
+		DeviceVendor:           t.DeviceVendor,
+		LearningState:          t.LearningState,
+		LearningBeginDatetime:  t.LearningBeginDatetime,
+		LearningFinishDatetime: t.LearningFinishDatetime,
+		IsLearning:             t.IsLearning,
+	})
+}
+
+// UnmarshalNetworkDevice decodes a Device from binary protobuf data.
+func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
+	var pb NetworkDevice
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	t.ID = pb.ID
+	t.Organization = pb.Organization
+	t.DeviceIP = pb.DeviceIP
+	t.Hostname = pb.Hostname
+	t.DeviceType = pb.DeviceType
+	t.DeviceCategory = pb.DeviceCategory
+	t.DeviceOS = pb.DeviceOS
+	t.IsCollectingCfgWritten = pb.IsCollectingCfgWritten
+
+	if pb.SSHConfig != nil {
+		t.SSHConfig = cloudhub.SSHConfig{
+			UserID:     pb.SSHConfig.UserID,
+			Password:   pb.SSHConfig.Password,
+			EnPassword: pb.SSHConfig.EnPassword,
+			Port:       int(pb.SSHConfig.Port),
+		}
+	} else {
+		t.SSHConfig = cloudhub.SSHConfig{}
+	}
+
+	if pb.SNMPConfig != nil {
+		t.SNMPConfig = cloudhub.SNMPConfig{
+			Community:     pb.SNMPConfig.Community,
+			Version:       pb.SNMPConfig.Version,
+			Port:          int(pb.SNMPConfig.Port),
+			Protocol:      pb.SNMPConfig.Protocol,
+			SecurityName:  pb.SNMPConfig.SecurityName,
+			AuthProtocol:  pb.SNMPConfig.AuthProtocol,
+			AuthPass:      pb.SNMPConfig.AuthPass,
+			PrivProtocol:  pb.SNMPConfig.PrivProtocol,
+			PrivPass:      pb.SNMPConfig.PrivPass,
+			SecurityLevel: pb.SNMPConfig.SecurityLevel,
+		}
+	} else {
+		t.SNMPConfig = cloudhub.SNMPConfig{}
+	}
+	t.Sensitivity = pb.Sensitivity
+	t.DeviceVendor = pb.DeviceVendor
+	t.LearningState = pb.LearningState
+	t.LearningBeginDatetime = pb.LearningBeginDatetime
+	t.LearningFinishDatetime = pb.LearningFinishDatetime
+	t.IsLearning = pb.IsLearning
+
+	return nil
+}
+
+// MarshalNetworkDeviceOrg encodes a networkDeviceOrg struct to binary protobuf format.
+func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
+	return proto.Marshal(&NetworkDeviceOrg{
+		ID:                  t.ID,
+		LoadModule:          t.LoadModule,
+		MLFunction:          t.MLFunction,
+		DataDuration:        int32(t.DataDuration),
+		LearnedDevicesIDs:   t.LearnedDevicesIDs,
+		CollectorServer:     t.CollectorServer,
+		CollectedDevicesIDs: t.CollectedDevicesIDs,
+		AIKapacitor: &AIKapacitor{
+			SrcID:              int64(t.AIKapacitor.SrcID),
+			KapaID:             int64(t.AIKapacitor.KapaID),
+			KapaURL:            t.AIKapacitor.KapaURL,
+			Username:           t.AIKapacitor.Username,
+			Password:           t.AIKapacitor.Password,
+			InsecureSkipVerify: t.AIKapacitor.InsecureSkipVerify,
+		},
+		LearningCron: t.LearningCron,
+		ProcCnt:      int32(t.ProcCnt),
+	})
+}
+
+// UnmarshalNetworkDeviceOrg decodes a networkDeviceOrg from binary protobuf data.
+func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error {
+	var pb NetworkDeviceOrg
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	t.ID = pb.ID
+	t.LoadModule = pb.LoadModule
+	t.MLFunction = pb.MLFunction
+	t.DataDuration = int(pb.DataDuration)
+	t.LearnedDevicesIDs = pb.LearnedDevicesIDs
+	t.CollectorServer = pb.CollectorServer
+	t.CollectedDevicesIDs = pb.CollectedDevicesIDs
+	if pb.AIKapacitor != nil {
+		t.AIKapacitor = cloudhub.AIKapacitor{
+			SrcID:              int(pb.AIKapacitor.SrcID),
+			KapaID:             int(pb.AIKapacitor.KapaID),
+			KapaURL:            pb.AIKapacitor.KapaURL,
+			Username:           pb.AIKapacitor.Username,
+			Password:           pb.AIKapacitor.Password,
+			InsecureSkipVerify: pb.AIKapacitor.InsecureSkipVerify,
+		}
+	} else {
+		t.AIKapacitor = cloudhub.AIKapacitor{}
+	}
+	t.LearningCron = pb.LearningCron
+	t.ProcCnt = int(pb.ProcCnt)
+	return nil
+}
+
+// MarshalMLNxRst encodes an MLNxRst struct to binary protobuf format.
+func MarshalMLNxRst(t *cloudhub.MLNxRst) ([]byte, error) {
+	return proto.Marshal(&MLNxRst{
+		Device:                 t.Device,
+		LearningFinishDatetime: t.LearningFinishDatetime,
+		Epsilon:                t.Epsilon,
+		MeanMatrix:             t.MeanMatrix,
+		CovarianceMatrix:       t.CovarianceMatrix,
+		K:                      t.K,
+		Mean:                   t.Mean,
+		MDThreshold:            t.MDThreshold,
+		MDArray:                t.MDArray,
+		CPUArray:               t.CPUArray,
+		TrafficArray:           t.TrafficArray,
+		GaussianArray:          t.GaussianArray,
+	})
+}
+
+// UnmarshalMLNxRst decodes an MLNxRst from binary protobuf data.
+func UnmarshalMLNxRst(data []byte, t *cloudhub.MLNxRst) error {
+	var pb MLNxRst
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	t.Device = pb.Device
+	t.LearningFinishDatetime = pb.LearningFinishDatetime
+	t.Epsilon = pb.Epsilon
+	t.MeanMatrix = pb.MeanMatrix
+	t.CovarianceMatrix = pb.CovarianceMatrix
+	t.K = pb.K
+	t.Mean = pb.Mean
+	t.MDThreshold = pb.MDThreshold
+	t.MDArray = pb.MDArray
+	t.CPUArray = pb.CPUArray
+	t.TrafficArray = pb.TrafficArray
+	t.GaussianArray = pb.GaussianArray
+
+	return nil
+}
+
+// MarshalDLNxRst encodes a DLNxRst struct to binary protobuf format.
+func MarshalDLNxRst(t *cloudhub.DLNxRst) ([]byte, error) {
+	return proto.Marshal(&DLNxRst{
+		Device:                 t.Device,
+		LearningFinishDatetime: t.LearningFinishDatetime,
+		DLThreshold:            t.DLThreshold,
+		TrainLoss:              t.TrainLoss,
+		ValidLoss:              t.ValidLoss,
+		MSE:                    t.MSE,
+	})
+}
+
+// UnmarshalDLNxRst decodes a DLNxRst from binary protobuf data.
+func UnmarshalDLNxRst(data []byte, t *cloudhub.DLNxRst) error {
+	var pb DLNxRst
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	t.Device = pb.Device
+	t.LearningFinishDatetime = pb.LearningFinishDatetime
+	t.DLThreshold = pb.DLThreshold
+	t.TrainLoss = pb.TrainLoss
+	t.ValidLoss = pb.ValidLoss
+	t.MSE = pb.MSE
+
+	return nil
+}
+
+// MarshalDLNxRstStg encodes a DLNxRstStg struct to binary protobuf format.
+func MarshalDLNxRstStg(t *cloudhub.DLNxRstStg) ([]byte, error) {
+	return proto.Marshal(&DLNxRstStg{
+		Device:                 t.Device,
+		LearningFinishDatetime: t.LearningFinishDatetime,
+		Scaler:                 t.Scaler,
+		Model:                  t.Model,
+		DLThreshold:            t.DLThreshold,
+	})
+}
+
+// UnmarshalDLNxRstStg decodes a DLNxRstStg from binary protobuf data.
+func UnmarshalDLNxRstStg(data []byte, t *cloudhub.DLNxRstStg) error {
+	var pb DLNxRstStg
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	t.Device = pb.Device
+	t.LearningFinishDatetime = pb.LearningFinishDatetime
+	t.Scaler = pb.Scaler
+	t.Model = pb.Model
+	t.DLThreshold = pb.DLThreshold
+
+	return nil
+}

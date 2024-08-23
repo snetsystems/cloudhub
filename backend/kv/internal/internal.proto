@@ -219,7 +219,7 @@ message Role {
 message Mapping {
 	string Provider              = 1; // Provider is the provider that certifies and issues this user's authentication, e.g. GitHub
 	string Scheme                = 2; // Scheme is the scheme used to perform this user's authentication, e.g. OAuth2 or LDAP
-	string ProviderOrganization  = 3; // ProviderOrganization is the group or organizations that you are a part of in an auth provider
+	string ProviderOrganization  = 3; // ProviderOrganization is the organization or organizations that you are a part of in an auth provider
 	string ID                    = 4; // ID is the unique ID for the mapping
 	string Organization          = 5; // Organization is the organization ID that resource belongs to
 }
@@ -293,8 +293,97 @@ message CSP {
 	string Organization     = 9; // Organization is the organization ID that resource belongs to
 	string Minion           = 10; // Minion is the vsphere connect salt minion
 }
+// Key: Organization ID
+message NetworkDeviceOrg {
+  string ID                           = 1;  // Org ID
+  string LoadModule                   = 2;  // Currently fixed by loader.cloudhub.ch_nx_load
+  string MLFunction                   = 3;  // ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']
+  int32 DataDuration                  = 4;  // data_duration for learning
+  repeated string LearnedDevicesIDs   = 5;  // the list of device IDs what will be learing included in the network device org
+  string CollectorServer              = 6;  // the server(minion_id) used to collect network data
+  repeated string CollectedDevicesIDs = 7;  // the list of device IDs included in Logstash Config
+  AIKapacitor AIKapacitor             = 8;  // Kapacitor configuration for AI 
+  string LearningCron                 = 9;  
+  int32 ProcCnt						  = 10; // Used learning process count(s)
+}
 
-// The following is a vim modeline, it autoconfigures vim to have the
-// appropriate tabbing and whitespace management to edit this file
-//
-// vim: ai:ts=4:noet:sts=4
+message AIKapacitor {
+  int64  SrcID    = 1;  // SrcID is the ID of the data source
+  int64  KapaID   = 2;  // KapaID is the id of the kapacitor this alert is associated with
+  string KapaURL  = 3;  // KapaURL is the url ot the kapacitor
+  string Username = 4;  
+  string Password = 5;
+  bool InsecureSkipVerify = 6;  
+}
+
+message SSHConfig {
+  string UserID     = 1; // user id used for SSH connection
+  string Password   = 2; // the password used for SSH connection
+  string EnPassword = 3; // enable password for devices that require it
+  int32 Port        = 4; // port number used for SSH connection
+}
+
+message SNMPConfig {
+  string Community     = 1; // community string for SNMP
+  string Version       = 2; // version of SNMP used
+  int32 Port           = 3; // port number used for SNMP
+  string Protocol      = 4; // protocol to use udp or tcp
+  string SecurityName  = 5;  // security name used in SNMP v3. Specifies the username.
+  string AuthProtocol  = 6;  // authentication protocol. One of ["md5", "sha", "sha2", "hmac128sha224", "hmac192sha256", "hmac256sha384", "hmac384sha512"].
+  string AuthPass      = 7;  // authentication password. Used with the authentication protocol.
+  string PrivProtocol  = 8;  // privacy protocol. One of ["des", "aes", "aes128", "aes192", "aes256"].
+  string PrivPass      = 9;  // privacy password. Used with the privacy protocol.
+  string SecurityLevel = 10; // security level. One of ["noAuthNoPriv", "authNoPriv", "authPriv"].
+}
+
+// Key: unique identifier of the device
+message NetworkDevice { 
+  string ID                     = 1;  // unique identifier of the device
+  string Organization           = 2;  // organization ID that device belongs to
+  string DeviceIP               = 3;  // IP address of the device
+  string Hostname               = 4;  // network name of the device
+  string DeviceType             = 5;  // type of the device, such as switch or router
+  string DeviceCategory         = 6;  // category of the device, such as Server or Network
+  string DeviceOS               = 7;  // operating system running on the device
+  bool IsCollectingCfgWritten   = 8;  // collecting config written status
+  SSHConfig SSHConfig           = 9;  // contains the SSH configuration for the device
+  SNMPConfig SNMPConfig         = 10; // contains the SNMP configuration for the device
+  float Sensitivity             = 11; // Sensitivity throttle ratio (Default: 1.0)
+  string DeviceVendor           = 12; // DeviceVendor is the vendor of the device
+  string LearningState          = 13; // Indicates the status of model for the device
+  string LearningBeginDatetime  = 14; // TZ=UTC, Format=RFC3339
+  string LearningFinishDatetime = 15; // TZ=UTC, Format=RFC3339
+  bool IsLearning               = 16; //  Indicates whether to create a learning model
+}
+
+message MLNxRst {
+  string Device                     = 1;  // IP address of the device
+  string LearningFinishDatetime     = 2;  // TZ=UTC, Format=RFC3339
+  double Epsilon                    = 3;  // ML Result value
+  string MeanMatrix                 = 4;  // 1x2 mean numpy matrix
+  string CovarianceMatrix           = 5;  // 2x2 covariance numpy matrix
+  float K                           = 6;  // Dicision coefficient for determination of threshold
+  float Mean                        = 7;  // Mean value by whole elements
+  float MDThreshold                 = 8;  // MDThreshold = mean * K * Sensitivity
+  repeated float MDArray            = 9;  // Mahalanobis distance array
+  repeated float CPUArray           = 10; // Use Gaussian Graph
+  repeated float TrafficArray       = 11; // Use Gaussian Graph
+  repeated float GaussianArray      = 12; // Use Gaussian Graph
+}
+
+message DLNxRst {
+  string Device                     = 1;  // IP address of the device
+  string LearningFinishDatetime     = 2;  // TZ=UTC, Format=RFC3339
+  float DLThreshold                 = 3;
+  repeated float TrainLoss          = 4;  // Use Loss Graph
+  repeated float ValidLoss          = 5;  // Use Loss Graph
+  repeated float MSE                = 6;  // Use Mean Squared Error Graph
+}
+
+message DLNxRstStg{
+  string Device                     = 1;  // IP address of the device
+  string LearningFinishDatetime     = 2;  // TZ=UTC, Format=RFC3339
+  bytes Scaler                      = 3;
+  bytes Model                       = 4;
+  float DLThreshold                 = 5;
+}

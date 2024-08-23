@@ -9,3 +9,5 @@ export enum StepStatus {
   Complete = 'checkmark',
   Error = 'remove',
 }
+
+export type StepStatusKey = keyof typeof StepStatus

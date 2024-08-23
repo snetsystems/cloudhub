@@ -9,10 +9,11 @@ require (
 	github.com/gavv/httpexpect v2.0.0+incompatible
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.4
+	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.2
+	github.com/gosnmp/gosnmp v1.37.0
 	github.com/influxdata/flux v0.65.0
 	github.com/influxdata/influxdb v1.1.5
 	github.com/influxdata/kapacitor v1.5.9
@@ -23,11 +24,11 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.5
 	github.com/sergi/go-diff v1.1.0
 	github.com/sirupsen/logrus v1.6.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.4
 	go.etcd.io/bbolt v1.3.5
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20201125193152-8a03d2e9614b
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+	golang.org/x/crypto v0.13.0
+	golang.org/x/net v0.15.0
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/api v0.15.0
 )
@@ -90,10 +91,9 @@ require (
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
 	go.uber.org/zap v1.10.0 // indirect
-	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
 	google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884 // indirect
 	google.golang.org/grpc v1.29.1 // indirect
@@ -109,4 +109,4 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 
 replace github.com/prometheus/prometheus => github.com/goller/prometheus v1.6.1-0.20170502220046-58298e738211
 
-go 1.18
+go 1.21

@@ -13,6 +13,7 @@ Environment="PORT=8888"
 Environment="BOLT_PATH=/var/lib/cloudhub/cloudhub-v1.db"
 Environment="CANNED_PATH=/usr/share/cloudhub/cloudhub-canned"
 Environment="PROTOBOARDS_PATH=/usr/share/cloudhub/cloudhub-protoboards"
+Environment="TEMPLATES_PATH=/usr/share/cloudhub/cloudhub-templates"
 EnvironmentFile=-/etc/default/cloudhub
 ExecStart=/usr/bin/cloudhub $CLOUDHUB_OPTS
 KillMode=control-group

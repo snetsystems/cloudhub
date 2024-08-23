@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "private": true,
   "description": "This is CloudHub's User interface made in React & Typescript",
   "author": "Jack Kim",
@@ -8,6 +8,7 @@
   "scripts": {
     "start": "node parcel.jsx",
     "build": "parcel build -d build --log-level 2 --no-source-maps --public-url '' src/index.html",
+    "dev-build": "parcel build -d build --log-level 2 --public-url '' src/index.html",
     "clean": "rm -rf ./build/* && rm -rf ./.cache && rm -rf ./dist",
     "tsc": "tsc -p ./tsconfig.json --noEmit --pretty",
     "tsc:watch": "tsc -p ./tsconfig.json --noEmit --pretty -w"
@@ -110,6 +111,7 @@
     "fast-memoize": "^2.5.1",
     "fast.js": "^0.1.1",
     "fixed-data-table-2": "^0.8.13",
+    "d3-hexbin": "^0.2.2",
     "graphql": "^14.5.8",
     "graphql-tag": "^2.10.1",
     "he": "^1.1.1",

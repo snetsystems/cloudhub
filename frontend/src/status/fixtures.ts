@@ -1,5 +1,4 @@
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
-import {TEMP_VAR_DASHBOARD_TIME} from 'src/shared/constants'
 import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
 import {DEFAULT_AXIS} from 'src/dashboards/constants/cellEditor'
 import {Source, Cell, CellQuery, Axes, CellType, QueryType} from 'src/types'
@@ -45,35 +44,10 @@ export const fixtureStatusPageCells = (source: Source): Cell[] => {
       queries: [
         {
           id: '1234',
-          query: `SELECT count("value") AS "count_value" FROM "cloudhub_alerts" WHERE time > ${TEMP_VAR_DASHBOARD_TIME} GROUP BY time(1d)`,
+          query: `SELECT count("value") AS "count_value" FROM "${source.telegraf}"."autogen"."cloudhub_alerts"`,
           source: '',
           type: QueryType.InfluxQL,
-          queryConfig: {
-            database: source.telegraf,
-            measurement: 'cloudhub_alerts',
-            retentionPolicy: 'autogen',
-            fields: [
-              {
-                value: 'count',
-                type: 'func',
-                alias: 'count_value',
-                args: [
-                  {
-                    value: 'value',
-                    type: 'field',
-                  },
-                ],
-              },
-            ],
-            tags: {},
-            groupBy: {
-              time: '1d',
-              tags: [],
-            },
-            areTagsAccepted: false,
-            rawText: null,
-            range: null,
-          },
+          queryConfig: null,
         },
       ],
       links: {

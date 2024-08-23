@@ -19,6 +19,7 @@ export default function rules(state = {}, action) {
           alertNodes: {},
           every: null,
           name: 'Untitled Rule',
+          status: 'enabled',
         },
       })
     }

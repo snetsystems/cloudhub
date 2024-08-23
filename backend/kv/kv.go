@@ -24,6 +24,11 @@ var (
 	vSpheresBucket           = []byte("vSpheres")
 	topologyBucket           = []byte("Topologies")
 	cspBucket                = []byte("CSP")
+	networkDeviceBucket      = []byte("NetworkDevice")
+	networkDeviceOrgBucket   = []byte("NetworkDeviceOrg")
+	mlNxRstBucket            = []byte("MLNxRst")
+	dlNxRstBucket            = []byte("DLNxRst")
+	dLNxRstStgBucket         = []byte("DLNxRstStg")
 )
 
 // Store is an interface for a generic key value store. It is modeled after
@@ -64,6 +69,8 @@ type Bucket interface {
 	// the error is returned to the caller. The provided function must not modify
 	// the bucket; this will result in undefined behavior.
 	ForEach(fn func(k, v []byte) error) error
+	// Exists returns a key within this bucket. Errors if key does not exist.
+	Exists(key []byte) (bool, error)
 }
 
 // Service is the struct that cloudhub services are implemented on.
@@ -124,6 +131,11 @@ func (s *Service) initialize(ctx context.Context, tx Tx) error {
 		vSpheresBucket,
 		topologyBucket,
 		cspBucket,
+		networkDeviceBucket,
+		networkDeviceOrgBucket,
+		mlNxRstBucket,
+		dlNxRstBucket,
+		dLNxRstStgBucket,
 	}
 
 	for i := range buckets {
@@ -202,4 +214,29 @@ func (s *Service) TopologiesStore() cloudhub.TopologiesStore {
 // CSPStore returns a cloudhub.CSPStore.
 func (s *Service) CSPStore() cloudhub.CSPStore {
 	return &cspStore{client: s}
+}
+
+// NetworkDeviceStore returns a cloudhub.DeviceStore.
+func (s *Service) NetworkDeviceStore() cloudhub.NetworkDeviceStore {
+	return &NetworkDeviceStore{client: s}
+}
+
+// NetworkDeviceOrgStore returns a cloudhub.DeviceStore.
+func (s *Service) NetworkDeviceOrgStore() cloudhub.NetworkDeviceOrgStore {
+	return &NetworkDeviceOrgStore{client: s}
+}
+
+// MLNxRstStore returns a cloudhub.MLNxRstStore.
+func (s *Service) MLNxRstStore() cloudhub.MLNxRstStore {
+	return &MLNxRstStore{client: s}
+}
+
+// DLNxRstStore returns a cloudhub.DLNxRstStore.
+func (s *Service) DLNxRstStore() cloudhub.DLNxRstStore {
+	return &DLNxRstStore{client: s}
+}
+
+// DLNxRstStgStore returns a cloudhub.DLNxRstStgStore.
+func (s *Service) DLNxRstStgStore() cloudhub.DLNxRstStgStore {
+	return &DLNxRstStgStore{client: s}
 }

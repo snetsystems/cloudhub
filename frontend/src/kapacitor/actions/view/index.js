@@ -9,6 +9,8 @@ import {
   createTask as createTaskAJAX,
   updateTask as updateTaskAJAX,
 } from 'src/kapacitor/apis'
+import {getDeviceManagementTickScript} from 'src/device_management/apis'
+
 import {errorThrown} from 'shared/actions/errors'
 
 import {
@@ -42,6 +44,40 @@ export function fetchRule(source, ruleID) {
         dispatch(loadQuery(rule.query))
       })
     })
+  }
+}
+
+export function fetchRuleWithCallback(source, ruleID, callback, errorCallback) {
+  return dispatch => {
+    getActiveKapacitor(source)
+      .then(kapacitor => {
+        getDeviceManagementTickScript(ruleID)
+          .then(({data: rule}) => {
+            dispatch({
+              type: 'LOAD_RULE',
+              payload: {
+                rule: Object.assign(rule, {queryID: rule?.query?.id || ''}),
+              },
+            })
+            dispatch(loadQuery(rule.query))
+
+            if (callback) {
+              callback({
+                rule: Object.assign(rule, {queryID: rule?.query?.id || ''}),
+              })
+            }
+          })
+          .catch(error => {
+            if (errorCallback) {
+              errorCallback(error)
+            }
+          })
+      })
+      .catch(error => {
+        if (errorCallback) {
+          errorCallback(error)
+        }
+      })
   }
 }
 

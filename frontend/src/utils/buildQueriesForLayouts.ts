@@ -24,6 +24,7 @@ const buildCannedDashboardQuery = (
   let text = query.query
   const wheres = _.get(query, 'wheres')
   const groupbys = _.get(query, 'groupbys')
+  const tz = _.get(query, 'tz')
 
   if (upper) {
     text += ` where time > '${lower}' AND time < '${upper}'`
@@ -36,6 +37,8 @@ const buildCannedDashboardQuery = (
       text += ` and \"load_balancer\" = '${host}' or \"host\" = '${host}'`
     } else if (measurement === 'ipmi_sensor') {
       text += ` and \"hostname" \= '${host}'`
+    } else if (measurement === 'snmp_nx') {
+      text += ` and \"agent_host" \= '${host}'`
     } else {
       text += ` and \"host\" = '${host}'`
     }
@@ -67,6 +70,10 @@ const buildCannedDashboardQuery = (
     }
   } else {
     text += ` group by time(${defaultGroupBy})`
+  }
+
+  if (tz) {
+    text += ` tz('${tz}')`
   }
 
   return text

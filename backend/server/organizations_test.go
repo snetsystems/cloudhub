@@ -727,3 +727,71 @@ func TestService_NewOrganization(t *testing.T) {
 		})
 	}
 }
+
+func TestService_OrganizationExists(t *testing.T) {
+	type fields struct {
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
+	}
+	type args struct {
+		ctx     context.Context
+		orgName string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Organization exists",
+			fields: fields{
+				OrganizationsStore: &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
+							ID:   "1337",
+							Name: "The Good Place",
+						}, nil
+					},
+				},
+				Logger: log.New(log.DebugLevel),
+			},
+			args: args{
+				ctx:     context.Background(),
+				orgName: "1337",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Organization does not exist",
+			fields: fields{
+				OrganizationsStore: &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return nil, fmt.Errorf("Organization with ID %s not found", *q.ID)
+					},
+				},
+				Logger: log.New(log.DebugLevel),
+			},
+			args: args{
+				ctx:     context.Background(),
+				orgName: "9999",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Service{
+				Store: &mocks.Store{
+					OrganizationsStore: tt.fields.OrganizationsStore,
+				},
+				Logger: tt.fields.Logger,
+			}
+			err := s.OrganizationExists(tt.args.ctx, tt.args.orgName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("%q. OrganizationExists() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+			}
+		})
+	}
+}

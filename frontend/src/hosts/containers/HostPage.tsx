@@ -22,12 +22,13 @@ import {notIncludeApps} from 'src/hosts/constants/apps'
 import {
   setAutoRefresh,
   delayEnablePresentationMode,
+  setTimeZone,
 } from 'src/shared/actions/app'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getCells} from 'src/hosts/utils/getCells'
 
-import {Source, Layout, TimeRange} from 'src/types'
+import {Source, Layout, TimeRange, TimeZones} from 'src/types'
 import {Location} from 'history'
 import {DashboardSwitcherLinks} from 'src/types/dashboards'
 
@@ -40,6 +41,8 @@ interface Props {
   inPresentationMode: boolean
   autoRefresh: number
   manualRefresh: number
+  timeZone: TimeZones
+  onSetTimeZone: typeof setTimeZone
   onManualRefresh: () => void
   handleChooseTimeRange: typeof setAutoRefresh
   handleClickPresentationButton: typeof delayEnablePresentationMode
@@ -49,6 +52,7 @@ interface State {
   layouts: Layout[]
   hostLinks: DashboardSwitcherLinks
   timeRange: TimeRange
+  isAgentHost: boolean
 }
 
 class HostPage extends PureComponent<Props, State> {
@@ -59,12 +63,15 @@ class HostPage extends PureComponent<Props, State> {
       layouts: [],
       hostLinks: EMPTY_LINKS,
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+      isAgentHost: false,
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
   }
 
   public async componentDidMount() {
     const {location, autoRefresh} = this.props
+
+    this.setState({isAgentHost: location?.query?.trigger === 'anomaly_predict'})
 
     const {
       data: {layouts},
@@ -132,6 +139,8 @@ class HostPage extends PureComponent<Props, State> {
       inPresentationMode,
       handleClickPresentationButton,
       source,
+      timeZone,
+      onSetTimeZone,
     } = this.props
     const {timeRange, hostLinks, layouts} = this.state
 
@@ -141,6 +150,8 @@ class HostPage extends PureComponent<Props, State> {
     return (
       <div className="page">
         <DashboardHeader
+          timeZone={timeZone}
+          onSetTimeZone={onSetTimeZone}
           timeRange={timeRange}
           activeDashboard={hostID}
           autoRefresh={autoRefresh}
@@ -189,13 +200,19 @@ class HostPage extends PureComponent<Props, State> {
     const {source, params} = this.props
     const tempVars = generateForHosts(source)
 
-    const fetchMeasurements = getMeasurementsForHost(source, params.hostID)
+    const fetchMeasurements = getMeasurementsForHost(
+      source,
+      params.hostID,
+      this.state.isAgentHost ? 'snmp_nx' : null
+    )
+
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       params.hostID,
       layouts,
       source.telegraf,
-      tempVars
+      tempVars,
+      this.state.isAgentHost ? 'snmp_nx' : null
     )
 
     const [host, measurements] = await Promise.all([
@@ -222,16 +239,18 @@ class HostPage extends PureComponent<Props, State> {
 const mstp = ({
   app: {
     ephemeral: {inPresentationMode},
-    persisted: {autoRefresh},
+    persisted: {autoRefresh, timeZone},
   },
 }) => ({
   inPresentationMode,
   autoRefresh,
+  timeZone,
 })
 
 const mdtp = {
   handleChooseTimeRange: setAutoRefresh,
   handleClickPresentationButton: delayEnablePresentationMode,
+  onSetTimeZone: setTimeZone,
 }
 
 export default connect(mstp, mdtp)(ManualRefresh(ErrorHandling(HostPage)))

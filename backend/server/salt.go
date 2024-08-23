@@ -203,6 +203,7 @@ func (s *Service) CreateFile(path string, contents []string) (int, []byte, error
 	return s.SaltHTTPPost(payload)
 }
 
+// CreateFileWithLocalClient creates a file with the specified contents on the target minion.
 func (s *Service) CreateFileWithLocalClient(path string, contents []string, targetMinion string) (int, []byte, error) {
 
 	type kwarg struct {
@@ -264,6 +265,7 @@ func (s *Service) RemoveFile(path string) (int, []byte, error) {
 	return s.SaltHTTPPost(payload)
 }
 
+// RemoveFileWithLocalClient removes a file at the specified path on the target minion.
 func (s *Service) RemoveFileWithLocalClient(path string, targetMinion string) (int, []byte, error) {
 	type param struct {
 		Token  string `json:"token"`
@@ -316,6 +318,7 @@ func (s *Service) DirectoryExists(path string) (int, []byte, error) {
 	return s.SaltHTTPPost(payload)
 }
 
+// DirectoryExistsWithLocalClient checks if a directory exists at the specified path on the target minion.
 func (s *Service) DirectoryExistsWithLocalClient(path string, targetMinion string) (int, []byte, error) {
 
 	type param struct {
@@ -369,6 +372,7 @@ func (s *Service) Mkdir(path string) (int, []byte, error) {
 	return s.SaltHTTPPost(payload)
 }
 
+// MkdirWithLocalClient creates a directory at the specified path on the target minion.
 func (s *Service) MkdirWithLocalClient(path string, targetMinion string) (int, []byte, error) {
 
 	type param struct {
@@ -422,6 +426,7 @@ func (s *Service) DaemonReload(name string) (int, []byte, error) {
 	return s.SaltHTTPPost(payload)
 }
 
+// IsActiveMinionPingTest checks if the specified minion is active by sending a ping request.
 func (s *Service) IsActiveMinionPingTest(targetMinion string) (int, []byte, error) {
 
 	type param struct {
@@ -444,6 +449,7 @@ func (s *Service) IsActiveMinionPingTest(targetMinion string) (int, []byte, erro
 	return s.SaltHTTPPost(payload)
 }
 
+// GetWheelKeyListAll retrieves a list of all keys using the wheel client.
 func (s *Service) GetWheelKeyListAll() (int, []byte, error) {
 
 	type param struct {
@@ -458,6 +464,61 @@ func (s *Service) GetWheelKeyListAll() (int, []byte, error) {
 		Eauth:  "pam",
 		Client: "wheel",
 		Fun:    "key.list_all",
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
+
+// GetWheelKeyAcceptedListAll retrieves a list of all accepted keys using the wheel client.
+func (s *Service) GetWheelKeyAcceptedListAll() (int, []byte, error) {
+
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Match  string `json:"match"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "wheel",
+		Fun:    "key.list",
+		Match:  "accepted",
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
+
+// DockerRestart is tests to see if path is a valid directory
+func (s *Service) DockerRestart(path string, targetMinion string, dockerCommand string) (int, []byte, error) {
+	type kwarg struct {
+		Cmd string `json:"cmd"`
+		Cwd string `json:"cwd"`
+	}
+
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Target string `json:"tgt"`
+		Kwarg  kwarg  `json:"kwarg"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "local",
+		Target: targetMinion,
+		Fun:    "cmd.run",
+		Kwarg: kwarg{
+			Cmd: dockerCommand,
+			Cwd: path,
+		},
 	}
 
 	payload, _ := json.Marshal(body)

@@ -510,3 +510,36 @@ func extractAlertNodes(p *pipeline.Pipeline, rule *cloudhub.AlertRule) error {
 		return nil
 	})
 }
+
+// TargetedReverseParser is Target specific syntax
+func TargetedReverseParser(script cloudhub.TICKScript, regex string) (cloudhub.AlertRule, error) {
+	rule := cloudhub.AlertRule{
+		Query: &cloudhub.QueryConfig{},
+	}
+	// Remove @predict() calls from the script
+	re := regexp.MustCompile(regex)
+	modifiedScript := re.ReplaceAllString(string(script), "")
+
+	scope := stateful.NewScope()
+	template, err := pipeline.CreateTemplatePipeline(modifiedScript, pipeline.StreamEdge, scope, &deadman{})
+	if err != nil {
+		return cloudhub.AlertRule{}, err
+	}
+	vars := template.Vars()
+	name, ok := varString("name", vars)
+	if ok {
+		rule.Name = name
+	}
+	detail, ok := varString("details", vars)
+	if ok {
+		rule.Details = detail
+	}
+
+	p, err := pipeline.CreatePipeline(modifiedScript, pipeline.StreamEdge, stateful.NewScope(), &deadman{}, vars)
+	if err != nil {
+		return cloudhub.AlertRule{}, err
+	}
+
+	err = extractAlertNodes(p, &rule)
+	return rule, err
+}

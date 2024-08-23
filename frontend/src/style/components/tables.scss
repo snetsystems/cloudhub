@@ -237,6 +237,14 @@ $table-tab-scrollbar-height: 6px;
     background-color: $g4-onyx;
   }
 }
+.alert-history-table--tr.selected {
+  background-color: $g5-pepper;
+}
+.alert-history-table--tr.pointer {
+  &:hover {
+    cursor: pointer;
+  }
+}
 .alert-history-table--td {
   font-size: 12px;
   font-family: $code-font;
@@ -324,5 +332,141 @@ $wordBreak: break-word;
   & + .list-type {
     width: $listWidth;
     word-break: $wordBreak;
+  }
+}
+
+/*
+    table-wrapper
+    ----------------------------------------------
+*/
+
+.table-accordion {
+  .table-accordion-tr {
+    transition: transform 0.2s ease;
+    transform: (0, 100%);
+    column-span: all;
+    background-color: #31313d;
+
+    .table-accordion-tr.open {
+      height: 100%;
+    }
+
+    .table-accordion-tr.close {
+      height: 0;
+    }
+
+    .table-accordion-td {
+      padding: 10px;
+    }
+  }
+}
+
+.table-top {
+  display: flex;
+  align-items: center;
+  > * {
+    margin-left: 0.5rem;
+
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+  .panel-title {
+    white-space: nowrap;
+  }
+}
+
+.table-top.left {
+  width: 100%;
+}
+
+.table-top.right {
+  justify-content: end;
+  margin-left: 0.5rem;
+}
+
+.hover-pointer-cursor {
+  :hover {
+    cursor: pointer;
+  }
+}
+
+.subsection .panel.panel-solid .panel-body .table-accordion-div {
+  transition-property: height;
+  transition-duration: 0.5s;
+}
+.subsection .panel.panel-solid .panel-body .table-accordion-div.close {
+  height: 0;
+}
+.subsection .panel.panel-solid .panel-body .table-accordion-div.open {
+  height: 100%;
+}
+
+.padding-left-5 {
+  padding: 0 20px;
+}
+
+// device-management
+.device-management-top.left {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  > * {
+    margin-left: 0.5rem;
+
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+
+  .space-x {
+    display: flex;
+
+    > * {
+      margin-left: 0.5rem;
+
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+.table > thead > tr,
+.table > tbody > tr {
+  > .align-left {
+    text-align: left;
+  }
+  > .align-right {
+    text-align: right;
+  }
+  > .align-center {
+    text-align: center;
+  }
+
+  //for custom render
+  > .flex-left {
+    width: 100%;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+  }
+  > .flex-right {
+    width: 100%;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+  }
+  > .flex-centers {
+    width: 100%;
+    display: flex;
+    justify-content: cne;
+    align-items: center;
+  }
+
+  > .checkbox {
+    width: 30px;
   }
 }

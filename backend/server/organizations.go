@@ -232,6 +232,19 @@ func (s *Service) RemoveOrganization(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return
 	}
+	devices, err := s.Store.NetworkDevice(ctx).All(ctx)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	for _, device := range devices {
+		if device.Organization == org.ID {
+			msg := "The organization cannot be deleted because there are registered devices associated with it."
+			Error(w, http.StatusConflict, msg, s.Logger)
+			return
+		}
+	}
+
 	if err := s.Store.Organizations(ctx).Delete(ctx, org); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
@@ -242,4 +255,21 @@ func (s *Service) RemoveOrganization(w http.ResponseWriter, r *http.Request) {
 	s.logRegistration(ctx, "Organizations", msg)
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// OrganizationExists checks if an organization with the given organization ID exists in the store.
+func (s *Service) OrganizationExists(ctx context.Context, orgID string) error {
+	if _, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID}); err != nil {
+		return fmt.Errorf("organization does not exist")
+	}
+	return nil
+}
+
+// OrganizationNameByID retrieves the name of the organization given its ID.
+func (s *Service) OrganizationNameByID(ctx context.Context, orgID string) (string, error) {
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
+	if err != nil {
+		return "", fmt.Errorf("organization does not exist")
+	}
+	return org.Name, nil
 }

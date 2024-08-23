@@ -53,6 +53,8 @@ import {
   QueryUpdateState,
   QueryType,
   TemplateValue,
+  AnnotationViewer,
+  // AnnotationViewer
 } from 'src/types'
 import {
   TableOptions,
@@ -110,6 +112,8 @@ interface Props {
   onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
   onUpdateVisType?: (type: CellType) => Promise<void>
   onPickTemplate?: (template: Template, value: TemplateValue) => void
+  isUsingAnnotationViewer?: boolean
+  annotationsViewMode?: AnnotationViewer[]
 }
 class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
@@ -531,6 +535,8 @@ class RefreshingGraph extends Component<Props> {
         decimalPlaces={decimalPlaces}
         onUpdateVisType={onUpdateVisType}
         handleSetHoverTime={handleSetHoverTime}
+        isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
+        annotationsViewMode={this.props.annotationsViewMode}
       />
     )
   }

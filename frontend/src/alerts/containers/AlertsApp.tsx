@@ -16,8 +16,9 @@ import moment from 'moment'
 
 import {timeRanges} from 'src/shared/data/timeRanges'
 
-import {Source, TimeRange, Me} from 'src/types'
+import {Source, TimeRange, Me, TimeZones} from 'src/types'
 import {Alert} from '../../types/alerts'
+import {alertValueStatus} from 'src/shared/utils/alertValueStatus'
 
 interface Props {
   source: Source
@@ -25,6 +26,7 @@ interface Props {
   isWidget: boolean
   limit: number
   me: Me
+  timeZone?: TimeZones
 }
 
 interface State {
@@ -85,7 +87,10 @@ class AlertsApp extends PureComponent<Props, State> {
       })
   }
 
-  public componentDidUpdate(__, prevState) {
+  public componentDidUpdate(prevProps, prevState) {
+    if (!_.isEqual(prevProps.timeZone, this.props.timeZone)) {
+      this.fetchAlerts()
+    }
     if (!_.isEqual(prevState.timeRange, this.state.timeRange)) {
       this.fetchAlerts()
     }
@@ -152,14 +157,34 @@ class AlertsApp extends PureComponent<Props, State> {
         const nameIndex = alertSeries[0].columns.findIndex(
           col => col === 'alertName'
         )
+        const triggerTypeIndex = alertSeries[0].columns.findIndex(
+          col => col === 'triggerType'
+        )
+        const agentHostIndex = alertSeries[0].columns.findIndex(
+          col => col === 'agent_host'
+        )
 
         alertSeries[0].values.forEach(s => {
+          const host = s[hostIndex] ?? s[agentHostIndex]
+          const value = (() => {
+            if (s[triggerTypeIndex] === 'anomaly_predict') {
+              return alertValueStatus(s[valueIndex])
+            } else {
+              return s[valueIndex]
+            }
+          })()
+
           results.push({
             time: `${s[timeIndex]}`,
-            host: s[hostIndex],
-            value: `${s[valueIndex]}`,
+            host: host,
+            value: `${value}`,
             level: s[levelIndex],
             name: `${s[nameIndex]}`,
+            triggerType: `${
+              s[triggerTypeIndex] === 'anomaly_predict'
+                ? `${s[triggerTypeIndex]}`
+                : null
+            }`,
           })
         })
 
@@ -220,5 +245,11 @@ class AlertsApp extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = ({auth: {me}}) => ({me})
+const mapStateToProps = ({
+  auth: {me},
+  app: {
+    persisted: {timeZone},
+  },
+}) => ({me, timeZone})
+
 export default connect(mapStateToProps, null)(AlertsApp)

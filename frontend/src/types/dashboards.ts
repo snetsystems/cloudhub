@@ -1,5 +1,6 @@
 import {Template, TimeRange, QueryConfig, Status} from 'src/types'
 import {ColorString} from 'src/types/colors'
+import {Point} from './dygraphs'
 
 export interface Axis {
   label: string
@@ -32,6 +33,7 @@ export interface GraphOptions {
   showLine: boolean
   showPoint: boolean
   showTempVarCount: string
+  clickCallback?: (e: MouseEvent, xval: number, points: Point[]) => any
 }
 
 export interface Sort {

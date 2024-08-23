@@ -558,3 +558,138 @@ func TestMarshalCSP(t *testing.T) {
 		t.Fatalf("source protobuf copy error: got %#v, expected %#v", vv, v)
 	}
 }
+
+func TestMarshalDevice(t *testing.T) {
+	v := cloudhub.NetworkDevice{
+		ID:                     "123",
+		Organization:           "default",
+		DeviceIP:               "192.168.1.1",
+		Hostname:               "device01",
+		DeviceType:             "Router",
+		DeviceCategory:         "Network",
+		DeviceOS:               "Cisco IOS",
+		IsCollectingCfgWritten: false,
+		SSHConfig: cloudhub.SSHConfig{
+			UserID:     "admin",
+			Password:   "admin123",
+			EnPassword: "secret123",
+			Port:       22,
+		},
+		SNMPConfig: cloudhub.SNMPConfig{
+			Community: "public",
+			Version:   "2c",
+			Port:      161,
+			Protocol:  "udp",
+		},
+		Sensitivity:            0.2,
+		DeviceVendor:           "Cisco",
+		LearningState:          "Ready",
+		LearningBeginDatetime:  "2024-06-19T08:45:30.123Z",
+		LearningFinishDatetime: "2024-06-19T08:45:30.123Z",
+		IsLearning:             false,
+	}
+
+	var vv cloudhub.NetworkDevice
+
+	if buf, err := internal.MarshalNetworkDevice(&v); err != nil {
+		t.Fatal("Marshal failed:", err)
+	} else if err := internal.UnmarshalNetworkDevice(buf, &vv); err != nil {
+		t.Fatal("Unmarshal failed:", err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("Mismatch in original and copied NetworkDevice struct: got %#v, want %#v", vv, v)
+	}
+}
+
+func TestMarshalNetworkDeviceOrg(t *testing.T) {
+	v := cloudhub.NetworkDeviceOrg{
+		ID:                  "default",
+		LoadModule:          "learn.ch_nx_load",
+		MLFunction:          "ml_multiplied",
+		DataDuration:        1,
+		LearnedDevicesIDs:   []string{"1", "2", "3"},
+		CollectorServer:     "ch-collector-1",
+		CollectedDevicesIDs: []string{"1", "2", "3"},
+		AIKapacitor: cloudhub.AIKapacitor{
+			KapaID:             1,
+			SrcID:              2,
+			KapaURL:            "http://127.0.0.1:9094",
+			Username:           "",
+			Password:           "",
+			InsecureSkipVerify: false,
+		},
+		LearningCron: "1 0 1,15 * *",
+	}
+
+	var vv cloudhub.NetworkDeviceOrg
+	if buf, err := internal.MarshalNetworkDeviceOrg(&v); err != nil {
+		t.Fatal("Marshal failed:", err)
+	} else if err := internal.UnmarshalNetworkDeviceOrg(buf, &vv); err != nil {
+		t.Fatal("Unmarshal failed:", err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("Mismatch in original and copied NetworkDeviceGroup struct: got %#v, want %#v", vv, v)
+	}
+}
+
+func TestMarshalMLNxRst(t *testing.T) {
+	v := cloudhub.MLNxRst{
+		Device:                 "192.168.1.1",
+		LearningFinishDatetime: "2024-07-26T10:00:00Z",
+		Epsilon:                0.01,
+		MeanMatrix:             "[1.0, 2.0]",
+		CovarianceMatrix:       "[[1.0, 0.0], [0.0, 1.0]]",
+		K:                      1.5,
+		Mean:                   2.0,
+		MDThreshold:            3.0,
+		MDArray:                []float32{0.5, 1.2, 0.8},
+		CPUArray:               []float32{0.2, 0.3, 0.4},
+		TrafficArray:           []float32{0.1, 0.2, 0.3},
+		GaussianArray:          []float32{0.05, 0.15, 0.25},
+	}
+
+	var vv cloudhub.MLNxRst
+	if buf, err := internal.MarshalMLNxRst(&v); err != nil {
+		t.Fatal("Marshal failed:", err)
+	} else if err := internal.UnmarshalMLNxRst(buf, &vv); err != nil {
+		t.Fatal("Unmarshal failed:", err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("Mismatch in original and copied MLNxRst struct: got %#v, want %#v", vv, v)
+	}
+}
+
+func TestMarshalDLNxRst(t *testing.T) {
+	v := cloudhub.DLNxRst{
+		Device:                 "192.168.1.1",
+		LearningFinishDatetime: "2024-07-30T12:34:56Z",
+		DLThreshold:            0.8,
+		TrainLoss:              []float32{0.1, 0.2, 0.15},
+		ValidLoss:              []float32{0.12, 0.18, 0.14},
+		MSE:                    []float32{0.01, 0.02, 0.015},
+	}
+
+	var vv cloudhub.DLNxRst
+	if buf, err := internal.MarshalDLNxRst(&v); err != nil {
+		t.Fatal("Marshal failed:", err)
+	} else if err := internal.UnmarshalDLNxRst(buf, &vv); err != nil {
+		t.Fatal("Unmarshal failed:", err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("Mismatch in original and copied DLNxRst struct: got %#v, want %#v", vv, v)
+	}
+}
+func TestMarshalDLNxRstStg(t *testing.T) {
+	v := cloudhub.DLNxRstStg{
+		Device:                 "192.168.1.1",
+		LearningFinishDatetime: "2024-07-30T12:34:56Z",
+		Scaler:                 []byte{1, 2, 3, 4},
+		Model:                  []byte{5, 6, 7, 8},
+		DLThreshold:            0.8,
+	}
+
+	var vv cloudhub.DLNxRstStg
+	if buf, err := internal.MarshalDLNxRstStg(&v); err != nil {
+		t.Fatal("Marshal failed:", err)
+	} else if err := internal.UnmarshalDLNxRstStg(buf, &vv); err != nil {
+		t.Fatal("Unmarshal failed:", err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("Mismatch in original and copied DLNxRstStg struct: got %#v, want %#v", vv, v)
+	}
+}

@@ -27,6 +27,7 @@ interface Props {
   ) => void
   onGoToConfig: () => void
   validationError: string
+  emptyJSXElement: JSX.Element
 }
 
 const KafkaHandler: FunctionComponent<Props> = ({
@@ -34,6 +35,7 @@ const KafkaHandler: FunctionComponent<Props> = ({
   handleModifyHandler,
   onGoToConfig,
   validationError,
+  emptyJSXElement,
 }) => {
   const handler = {...selectedHandler, cluster: selectedHandler.id}
   handleModifyHandler(handler, 'cluster', false, 0)
@@ -52,10 +54,12 @@ const KafkaHandler: FunctionComponent<Props> = ({
         <div className="endpoint-tab--parameters">
           <h4 className="u-flex u-jc-space-between">
             Parameters for this Alert Handler
-            <div className="btn btn-default btn-sm" onClick={onGoToConfig}>
-              <span className="icon cog-thick" />
-              {goToConfigText}
-            </div>
+            {emptyJSXElement ? null : (
+              <div className="btn btn-default btn-sm" onClick={onGoToConfig}>
+                <span className="icon cog-thick" />
+                {goToConfigText}
+              </div>
+            )}
           </h4>
           <div className="faux-form">
             <HandlerInput
@@ -82,6 +86,7 @@ const KafkaHandler: FunctionComponent<Props> = ({
     <HandlerEmpty
       onGoToConfig={onGoToConfig}
       validationError={validationError}
+      emptyJSXElement={emptyJSXElement}
     />
   )
 }
