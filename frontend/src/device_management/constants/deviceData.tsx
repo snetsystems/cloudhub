@@ -82,6 +82,9 @@ export const SNMP_CONNECTION_URL = '/cloudhub/v1/snmp/validation'
 export const DEVICE_MANAGEMENT_URL =
   '/cloudhub/v1/ai/network/managements/devices'
 
+export const DEVICE_MANAGEMENT_UPLOAD_URL =
+  '/cloudhub/v1/ai/network/managements/devices/upload'
+
 export const APPLY__MONITORING_URL =
   '/cloudhub/v1/ai/network/managements/monitoring/config'
 

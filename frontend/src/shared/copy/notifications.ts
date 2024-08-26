@@ -1498,6 +1498,18 @@ export const notifyCreateDevicesSucceeded = (): Notification => ({
   ...defaultSuccessNotification,
   message: `Devices created successfully.`,
 })
+export const notifySaveDevicesSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Devices saved successfully.`,
+})
+
+export const notifySaveDevicesFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to save Devices. ${errorMessage}`,
+})
 
 export const notifyCreateDevicesFailed = (
   errorMessage: string
