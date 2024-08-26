@@ -349,17 +349,23 @@ class DisplayOptions extends Component<Props, State> {
         return (
           <RadarChartOptions
             axes={this.axes}
+            fieldOptions={fieldOptions}
+            groupByTag={this.groupByTag}
+            tableOptions={tableOptions}
             type={type}
             lineColors={lineColors}
             graphOptions={graphOptions}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            defaultYLabel={defaultYLabel}
             dashboardTemplates={dashboardTemplates}
             onUpdateAxes={onUpdateAxes}
             onUpdateGraphOptions={onUpdateGraphOptions}
             onToggleStaticLegend={onToggleStaticLegend}
             onUpdateStaticLegendPosition={onUpdateStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
+            onUpdateFieldOptions={onUpdateFieldOptions}
+            onUpdateTableOptions={onUpdateTableOptions}
           />
         )
       case CellType.StaticScatter:
