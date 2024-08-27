@@ -1680,7 +1680,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
     this.graph.getFoldingImage = getFoldingImage.bind(this)
 
     const outln = new mxOutline(this.graph, this.outline)
-    outln.outline.labelsVisible = true
     outln.outline.setHtmlLabels(true)
   }
 
@@ -2179,23 +2178,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   // @ts-ignore
-  private graphUpdate = () => {
-    this.graph.getModel().beginUpdate()
+  private graphUpdateSave = (cell: mxCellType) => {
     try {
-    } finally {
-      this.graph.getModel().endUpdate()
-      this.graph.refresh()
-    }
-  }
-
-  // @ts-ignore
-  private graphUpdateSave = () => {
-    this.graph.getModel().beginUpdate()
-    try {
-    } finally {
-      this.graph.getModel().endUpdate()
-      this.graph.refresh()
-      this.handleGraphModel(this.graph.getModel())
+      if (cell) {
+        this.graph.refresh(cell)
+        this.handleGraphModel(this.graph.getModel())
+      }
+    } catch (error) {
+      console.error('Error updating graph:', error)
     }
   }
 

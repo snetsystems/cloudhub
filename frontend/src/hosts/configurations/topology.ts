@@ -394,8 +394,6 @@ export const applyHandler = function (
   let isInputPassword = false
 
   if (newValue !== oldValue) {
-    graph.getModel().beginUpdate()
-
     try {
       if (attribute.nodeName === 'data-label') {
         const title = getContainerTitle(containerElement)
@@ -466,8 +464,7 @@ export const applyHandler = function (
       if (isInputPassword) {
         graph.setSelectionCell(cell)
       }
-      graph.getModel().endUpdate()
-      this.graphUpdateSave()
+      this.graphUpdateSave(cell)
     }
   }
 }
@@ -1338,9 +1335,10 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
 export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
   if (!this.graph) return
 
-  const model = this.graph.getModel()
+  if (!ipmiCellsStatus || ipmiCellsStatus.length === 0) {
+    return
+  }
 
-  model.beginUpdate()
   try {
     _.forEach(ipmiCellsStatus, ipmiCellStatus => {
       const childrenCell = ipmiCellStatus.cell.getChildAt(0)
@@ -1376,8 +1374,11 @@ export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
       }
     })
   } finally {
-    model.endUpdate()
-    this.graphUpdate()
+    if (ipmiCellsStatus.length > 1) {
+      this.graph.refresh()
+    } else if (ipmiCellsStatus.length === 1) {
+      this.graph.refresh(ipmiCellsStatus[0].cell)
+    }
   }
 }
 
@@ -1456,12 +1457,17 @@ export const detectedHostsStatus = function (
 ) {
   if (!this.graph) return
   const {cpu, memory, disk, temperature} = TOOLTIP_TYPE
-  const model = this.graph.getModel()
 
-  model.beginUpdate()
+  if (!cells || cells.length === 0) {
+    return
+  }
+
+  let nodeCount = 0
+
   try {
     _.forEach(cells, cell => {
       if (cell.getStyle().includes('node')) {
+        nodeCount++
         const containerElement = getContainerElement(cell.value)
         const name = containerElement.getAttribute('data-name')
 
@@ -1549,8 +1555,11 @@ export const detectedHostsStatus = function (
       }
     })
   } finally {
-    model.endUpdate()
-    this.graphUpdate()
+    if (nodeCount > 1) {
+      this.graph.refresh()
+    } else if (nodeCount === 1) {
+      this.graph.refresh(cells[0])
+    }
   }
 
   return null
