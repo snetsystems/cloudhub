@@ -254,29 +254,40 @@ const PredictionHexbin = ({
     const gap = {width: 0, height: 0}
     const position = {x: 0, y: 0}
     const childWidth = {width: 0, height: 0}
-    if (!!parentRef.current && !!childrenRef.current) {
-      const {
-        offsetWidth: parentWidth,
-        offsetHeight: parentHeight,
-      } = parentRef.current
+
+    if (!!childrenRef.current && !!svgRef.current && !!parentRef.current) {
+      const parentRefRect = parentRef.current.getBoundingClientRect()
+
+      const svgRefRect = svgRef.current.getBoundingClientRect()
 
       childWidth.width = childrenRef.current.offsetWidth
       childWidth.height = childrenRef.current.offsetHeight
 
-      gap.width = tooltipPosition.x + childWidth.width - parentWidth
+      gap.width =
+        svgRefRect.left +
+        tooltipPosition.x +
+        childWidth.width -
+        parentRefRect.right
+
       gap.height =
+        svgRefRect.top +
         tooltipPosition.y +
         childWidth.height -
-        parentHeight -
-        PREFIX_PARENT_HEIGHT
-    }
+        parentRefRect.bottom
 
-    position.x =
-      gap.width > 0
-        ? tooltipPosition.x - childWidth.width - TOOLTIP_OFFSET_X
-        : tooltipPosition.x + TOOLTIP_OFFSET_X / 2
-    position.y =
-      gap.height > 0 ? tooltipPosition.y - gap.height : tooltipPosition.y
+      position.x =
+        gap.width > 0
+          ? svgRefRect.left +
+            tooltipPosition.x -
+            childWidth.width -
+            TOOLTIP_OFFSET_X * 1.2
+          : svgRefRect.left + tooltipPosition.x + TOOLTIP_OFFSET_X / 2
+
+      position.y =
+        gap.height > 0
+          ? svgRefRect.top + tooltipPosition.y - gap.height
+          : svgRefRect.top + tooltipPosition.y
+    }
 
     return (
       <div
@@ -306,20 +317,21 @@ const PredictionHexbin = ({
   }
 
   return (
-    <FancyScrollbar style={{height: 'calc(100% - 45px)'}} autoHide={true}>
-      <div
-        ref={parentRef}
-        style={{
-          paddingLeft: '12px',
-          backgroundColor: DEFAULT_CELL_BG_COLOR,
-          height: 'calc(100% - 45px)',
-        }}
-        className={'tab-pannel'}
-      >
-        <svg ref={svgRef} style={{width: '100%', height: '80%'}}></svg>
-        {tooltipComponent(tooltipNode)}
-      </div>
-    </FancyScrollbar>
+    <div style={{height: 'calc(100% - 45px)'}} ref={parentRef}>
+      <FancyScrollbar style={{height: '100%'}} autoHide={true}>
+        <div
+          style={{
+            paddingLeft: '12px',
+            backgroundColor: DEFAULT_CELL_BG_COLOR,
+            height: '100%',
+          }}
+          className={'tab-pannel'}
+        >
+          <svg ref={svgRef} style={{width: '100%', height: '80%'}}></svg>
+          {tooltipComponent(tooltipNode)}
+        </div>
+      </FancyScrollbar>
+    </div>
   )
 }
 
