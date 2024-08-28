@@ -63,7 +63,7 @@ function PredictionTooltip({
                   className="prediction"
                   title={PredictionTooltipIndicator({
                     value: cpu === -1 ? 'NA' : `${cpu}%`,
-                    status: status,
+                    status: cpu === -1 ? 'NA' : `${cpu}`,
                   })}
                   width={TABLE_ROW_IN_BODY}
                 ></TableBodyRowItem>
@@ -79,7 +79,7 @@ function PredictionTooltip({
                   className="prediction"
                   title={PredictionTooltipIndicator({
                     value: memory === -1 ? 'NA' : `${memory}%`,
-                    status: status,
+                    status: memory === -1 ? 'NA' : `${memory}`,
                   })}
                   width={TABLE_ROW_IN_BODY}
                 ></TableBodyRowItem>
@@ -95,7 +95,7 @@ function PredictionTooltip({
                   className="prediction"
                   title={PredictionTooltipIndicator({
                     value: traffic,
-                    status: status,
+                    status: memory === -1 && cpu === -1 ? 'NA' : '260', //상태와 무관한 색
                   })}
                   width={TABLE_ROW_IN_BODY}
                 ></TableBodyRowItem>

@@ -27,7 +27,11 @@ import {getLiveDeviceInfo} from 'src/device_management/apis'
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {statusCal, statusHexColor} from 'src/device_management/utils'
+import {
+  returnCriticalValue,
+  statusCal,
+  statusHexColor,
+} from 'src/device_management/utils'
 
 // Auth
 import {Auth} from 'src/types/reducers/auth'
@@ -123,6 +127,7 @@ function PredictionHexbinWrapper({
     }
   }, [cloudAutoRefresh])
 
+  //@ts-ignore
   const inputData = useMemo<HexagonInputData[]>(() => {
     if (hostList === null) {
       return []
@@ -132,6 +137,8 @@ function PredictionHexbinWrapper({
       if (typeof hex.cpu === 'number' && typeof hex.memory === 'number') {
         return {
           statusColor: statusHexColor(statusCal((hex.cpu + hex.memory) / 2)),
+          //@ts-ignore
+          displayState: returnCriticalValue(hex),
           name: hex.name,
           cpu: Number(hex.cpu.toFixed()),
           memory: Number(hex.memory.toFixed()),
@@ -141,6 +148,7 @@ function PredictionHexbinWrapper({
       } else {
         return {
           statusColor: statusHexColor('invalid'),
+          displayState: -1,
           name: hex.name,
           cpu: -1,
           memory: -1,

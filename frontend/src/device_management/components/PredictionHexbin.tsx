@@ -16,7 +16,7 @@ import {TOOLTIP_OFFSET_X} from 'src/device_management/constants'
 import {HexagonData, HexagonInputData, PredictionTooltipNode} from 'src/types'
 
 // Utils
-import {statusCal} from 'src/device_management/utils'
+import {hslColorValue, returnCriticalValue} from 'src/device_management/utils'
 
 // Redux
 import {connect} from 'react-redux'
@@ -37,7 +37,6 @@ interface GenerateHexagonData {
 
 const HEX_RADIUS = 30
 const HEX_PADDING = 5
-const PREFIX_PARENT_HEIGHT = 45
 
 const PredictionHexbin = ({
   onHexbinClick,
@@ -153,7 +152,7 @@ const PredictionHexbin = ({
     if (!svgRef.current) return
 
     const svg = d3.select(svgRef.current)
-
+    //color setting
     svg.selectAll('.hexagon').each(function (d) {
       const hexagon = d3.select(this)
       if (d[0].name === filteredHexbinHost) {
@@ -236,18 +235,11 @@ const PredictionHexbin = ({
       .attr('class', 'hexagon')
       .attr('d', hexbinGenerator.hexagon(HEX_RADIUS - HEX_PADDING))
       .attr('transform', d => `translate(${d.x},${d.y})`)
-      .attr('fill', d => d[0]?.statusColor)
-
-    svg
-      .selectAll('.hexagon-text')
-      .data(hexagonData)
-      .enter()
-      .append('text')
-      .attr('class', 'hexagon-text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y)
-      .attr('text-anchor', 'middle')
-      .attr('dx', '.35em')
+      .attr('fill', d =>
+        d[0]?.displayState === -1
+          ? d[0]?.statusColor // invalid
+          : hslColorValue(`${d[0]?.displayState}`)
+      )
   }
 
   const tooltipComponent = (tooltip: PredictionTooltipNode) => {
@@ -310,7 +302,7 @@ const PredictionHexbin = ({
           memory={tooltip.memory}
           traffic={tooltip.traffic}
           name={tooltip.name}
-          status={statusCal((tooltip.cpu + tooltip.memory) / 2)}
+          status={`${returnCriticalValue(tooltip)}`}
         />
       </div>
     )

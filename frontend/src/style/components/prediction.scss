@@ -83,45 +83,45 @@
   width: 100%;
   text-align: center;
   color: $g13-mist; //#bec2cc
-  .predictionTooltip-value {
-    &.predictionTooltip--normal {
-      color: $c-rainforest;
-    }
-    &.predictionTooltip--warning {
-      color: $c-pineapple;
-    }
+  // .predictionTooltip-value {
+  //   &.predictionTooltip--normal {
+  //     color: $c-rainforest;
+  //   }
+  //   &.predictionTooltip--warning {
+  //     color: $c-pineapple;
+  //   }
 
-    &.predictionTooltip--danger {
-      color: $c-topaz;
-    }
+  //   &.predictionTooltip--danger {
+  //     color: $c-topaz;
+  //   }
 
-    &.predictionTooltip--critical {
-      color: #ff0000;
-    }
+  //   &.predictionTooltip--critical {
+  //     color: #ff0000;
+  //   }
 
-    &.predictionTooltip--emergency {
-      color: #8b0000;
-    }
+  //   &.predictionTooltip--emergency {
+  //     color: #8b0000;
+  //   }
 
-    &.predictionTooltip-ipmi--normal {
-      color: $c-rainforest;
-    }
+  //   &.predictionTooltip-ipmi--normal {
+  //     color: $c-rainforest;
+  //   }
 
-    &.predictionTooltip-ipmi--warning {
-      color: $c-pineapple;
-    }
+  //   &.predictionTooltip-ipmi--warning {
+  //     color: $c-pineapple;
+  //   }
 
-    &.predictionTooltip-ipmi--danger {
-      color: $c-topaz;
-    }
+  //   &.predictionTooltip-ipmi--danger {
+  //     color: $c-topaz;
+  //   }
 
-    &.predictionTooltip-ipmi--critical {
-      color: #ff0000;
-    }
-    &.predictionTooltip-ipmi--emergency {
-      color: #ab0000;
-    }
-  }
+  //   &.predictionTooltip-ipmi--critical {
+  //     color: #ff0000;
+  //   }
+  //   &.predictionTooltip-ipmi--emergency {
+  //     color: #ab0000;
+  //   }
+  // }
 
   .predictionTooltip {
     height: 2px;
@@ -153,43 +153,43 @@
   background: $g7-graphite;
   margin-top: 2px;
 
-  &.predictionTooltip--normal {
-    background: $c-rainforest;
-  }
-  &.predictionTooltip--warning {
-    background: $c-pineapple;
-  }
+  // &.predictionTooltip--normal {
+  //   background: $c-rainforest;
+  // }
+  // &.predictionTooltip--warning {
+  //   background: $c-pineapple;
+  // }
 
-  &.predictionTooltip--danger {
-    background: $c-topaz;
-  }
+  // &.predictionTooltip--danger {
+  //   background: $c-topaz;
+  // }
 
-  &.predictionTooltip--critical {
-    background: #ff0000;
-  }
+  // &.predictionTooltip--critical {
+  //   background: #ff0000;
+  // }
 
-  &.predictionTooltip--emergency {
-    background: #8b0000;
-  }
+  // &.predictionTooltip--emergency {
+  //   background: #8b0000;
+  // }
 
-  &.predictionTooltip-ipmi--normal {
-    background: $c-rainforest;
-  }
+  // &.predictionTooltip-ipmi--normal {
+  //   background: $c-rainforest;
+  // }
 
-  &.predictionTooltip-ipmi--warning {
-    background: $c-pineapple;
-  }
+  // &.predictionTooltip-ipmi--warning {
+  //   background: $c-pineapple;
+  // }
 
-  &.predictionTooltip-ipmi--danger {
-    background: $c-topaz;
-  }
+  // &.predictionTooltip-ipmi--danger {
+  //   background: $c-topaz;
+  // }
 
-  &.predictionTooltip-ipmi--critical {
-    background: #ff0000;
-  }
-  &.predictionTooltip-ipmi--emergency {
-    background: #ab0000;
-  }
+  // &.predictionTooltip-ipmi--critical {
+  //   background: #ff0000;
+  // }
+  // &.predictionTooltip-ipmi--emergency {
+  //   background: #ab0000;
+  // }
 }
 
 .chartSector {

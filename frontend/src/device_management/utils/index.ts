@@ -13,7 +13,7 @@ import {
   hostState,
   TimeZones,
 } from 'src/types'
-import {OrganizationID} from 'src/types/deviceManagement'
+import {OrganizationID, PredictionTooltipNode} from 'src/types/deviceManagement'
 import {MLFunctionMsg} from 'src/device_management/constants'
 
 export const hasMonitoringDevice = (
@@ -381,4 +381,19 @@ export const statusHexColor = (status: string) => {
     default:
       return '#545667'
   }
+}
+
+export const returnCriticalValue = (host: PredictionTooltipNode) => {
+  const result = [host.cpu, host.memory]?.sort((a, b) => b - a)[0] ?? 0
+
+  return result
+}
+
+export const hslColorValue = (value: string) => {
+  if (!Number(value)) {
+    return statusHexColor('invalid')
+  }
+  const result = ((100 - Number(value)) * 159) / 100
+
+  return `hsl(${result ?? 0}, 78%, 54%)`
 }
