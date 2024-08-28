@@ -31,6 +31,7 @@ import {CloudAutoRefresh} from 'src/clouds/types/type'
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
+import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import {InjectedRouter, RouterState} from 'react-router'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
@@ -176,6 +177,7 @@ const AiRoutePage = (props: Props) => {
         </Page.Header.Center>
         <Page.Header.Right>
           <>
+            <SourceIndicator />
             <AutoRefreshDropdown
               onChoose={handleChooseAutoRefresh}
               selected={autoRefresh}
