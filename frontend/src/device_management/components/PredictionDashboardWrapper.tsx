@@ -38,6 +38,7 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {
+  setAlertHostList,
   setHistogramDate,
   setPredictionTimeRange,
   setSelectedAnomaly,
@@ -62,6 +63,7 @@ interface Props {
   setHistogramDate?: (value: TimeRange) => void
   setSelectedAnomaly?: (anomalyFactor: AnomalyFactor) => void
   timeZone?: TimeZones
+  setAlertHostList?: (value: string[]) => void
 }
 function PredictionDashboardWrapper({
   cell,
@@ -80,6 +82,7 @@ function PredictionDashboardWrapper({
   setHistogramDate,
   setSelectedAnomaly,
   timeZone,
+  setAlertHostList,
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
 
@@ -139,6 +142,7 @@ function PredictionDashboardWrapper({
       host: '',
       time: '',
     })
+    setAlertHostList([])
     //86,400,000ms = 1d
     if (timeZone === TimeZones.UTC) {
       setHistogramDate({
@@ -242,6 +246,7 @@ const mdtp = (dispatch: any) => ({
   setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
   setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
   setSelectedAnomaly: bindActionCreators(setSelectedAnomaly, dispatch),
+  setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
 })
 
 const areEqual = (prev, next) => {
