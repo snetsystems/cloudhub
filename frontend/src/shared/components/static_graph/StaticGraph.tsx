@@ -291,6 +291,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            tableOptions={tableOptions}
+            fieldOptions={fieldOptionsWithGroupByTag}
             showCount={showCount}
           />
         )

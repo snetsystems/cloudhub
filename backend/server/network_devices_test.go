@@ -32,7 +32,7 @@ func TestNewDevices(t *testing.T) {
 	type args struct {
 		w       *httptest.ResponseRecorder
 		r       *http.Request
-		devices []deviceRequest
+		devices []createDeviceRequest
 	}
 	tests := []struct {
 		name            string
@@ -671,7 +671,7 @@ func ptr[T any](v T) *T {
 	return &v
 }
 
-func MockDeviceStoreSetup(mockData []deviceRequest) *mocks.NetworkDeviceStore {
+func MockDeviceStoreSetup(mockData []createDeviceRequest) *mocks.NetworkDeviceStore {
 	var devices []*cloudhub.NetworkDevice
 	index := 0
 
@@ -1064,13 +1064,13 @@ func MockNetworkDeviceStoreSetup() *mocks.NetworkDeviceStore {
 }
 
 type MockData struct {
-	Devices         []deviceRequest
-	DevicesFailures []deviceRequest
+	Devices         []createDeviceRequest
+	DevicesFailures []createDeviceRequest
 }
 
 func NewMockData() *MockData {
 	return &MockData{
-		Devices: []deviceRequest{
+		Devices: []createDeviceRequest{
 			{
 				DeviceIP:     "172.16.11.168",
 				Organization: "76",
@@ -1100,7 +1100,7 @@ func NewMockData() *MockData {
 				DeviceVendor: "cisco",
 			},
 		},
-		DevicesFailures: []deviceRequest{
+		DevicesFailures: []createDeviceRequest{
 			{
 				DeviceIP:     "",
 				Organization: "76",

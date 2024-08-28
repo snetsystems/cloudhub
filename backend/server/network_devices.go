@@ -15,7 +15,7 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-type deviceRequest struct {
+type createDeviceRequest struct {
 	Organization string              `json:"organization"`
 	DeviceIP     string              `json:"device_ip"`
 	Hostname     string              `json:"hostname"`
@@ -40,6 +40,12 @@ type updateDeviceRequest struct {
 	IsLearning             *bool                `json:"is_learning,omitempty"`
 	Sensitivity            *float32             `json:"sensitivity,omitempty"`
 }
+
+type updateDeviceData struct {
+	id string
+	updateDeviceRequest
+}
+
 type deleteDevicesRequest struct {
 	DevicesIDs []string `json:"devices_ids"`
 }
@@ -77,14 +83,10 @@ type deviceError struct {
 	DeviceID     string `json:"device_id,omitempty"`
 	ErrorMessage string `json:"errorMessage"`
 }
-
 type deviceMapByOrg struct {
 	SavedCollectorDevices []string
 	AllDevices            []string
 }
-
-// State type definition
-type State string
 
 // FailedDevice represents a structure for a failed device
 type FailedDevice struct {
@@ -181,7 +183,7 @@ func newDevicesResponse(ctx context.Context, s *Service, devices []cloudhub.Netw
 	}
 }
 
-func (r *deviceRequest) validCreate() error {
+func (r *createDeviceRequest) validCreate() error {
 	switch {
 	case r.Organization == "":
 		return fmt.Errorf("organization required in device request body")
@@ -198,9 +200,9 @@ func (r *updateDeviceRequest) validUpdate() error {
 	return nil
 }
 
-func (r *deviceRequest) CreateDeviceFromRequest() (*cloudhub.NetworkDevice, error) {
+func (r *createDeviceRequest) CreateDeviceFromRequest() (*cloudhub.NetworkDevice, error) {
 	if r == nil {
-		return nil, errors.New("deviceRequest is nil")
+		return nil, errors.New("createDeviceRequest is nil")
 	}
 
 	return &cloudhub.NetworkDevice{
@@ -222,15 +224,9 @@ func (r *deviceRequest) CreateDeviceFromRequest() (*cloudhub.NetworkDevice, erro
 	}, nil
 }
 
-func (s *Service) processDevice(ctx context.Context, req deviceRequest, allDevices []cloudhub.NetworkDevice) (*cloudhub.NetworkDevice, error) {
+func (s *Service) createDevice(ctx context.Context, req createDeviceRequest) (*cloudhub.NetworkDevice, error) {
 	if s == nil || s.Store == nil {
 		return nil, errors.New("Service or Store is nil")
-	}
-
-	for _, device := range allDevices {
-		if device.DeviceIP == req.DeviceIP {
-			return nil, fmt.Errorf("duplicate IP in existing devices: %s", req.DeviceIP)
-		}
 	}
 
 	if err := req.validCreate(); err != nil {
@@ -255,10 +251,10 @@ func (s *Service) processDevice(ctx context.Context, req deviceRequest, allDevic
 	return res, nil
 }
 
-// NewDevices creates and returns a new Device object (Version 2)
-func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
+// NewDevice creates and returns a new Device object
+func (s *Service) NewDevice(w http.ResponseWriter, r *http.Request) {
 
-	reqs, ctx, err := decodeRequest[[]deviceRequest](r)
+	reqs, ctx, err := decodeRequest[[]createDeviceRequest](r)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -270,53 +266,95 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ipCount := make(map[string]int)
-	for _, req := range reqs {
-		ipCount[req.DeviceIP]++
+	existingIPs := make(map[string]bool)
+	for _, device := range allDevices {
+		existingIPs[device.DeviceIP] = true
 	}
 
-	failedDevices := make(chan createDeviceError, len(ipCount))
-	uniqueReqs := []deviceRequest{}
-
+	var failedDeviceList []createDeviceError
 	for i, req := range reqs {
-		if ipCount[req.DeviceIP] > 1 {
-			failedDevices <- createDeviceError{
+		if _, exists := existingIPs[req.DeviceIP]; exists {
+			failedDeviceList = append(failedDeviceList, createDeviceError{
 				Index:        i,
 				DeviceIP:     req.DeviceIP,
-				ErrorMessage: "duplicate IP in request",
-			}
-		} else {
-			uniqueReqs = append(uniqueReqs, req)
+				ErrorMessage: fmt.Sprintf("duplicate IP in existing devices: %s", req.DeviceIP),
+			})
+			continue
+		}
+		_, err = s.createDevice(ctx, req)
+		if err != nil {
+			failedDeviceList = append(failedDeviceList, createDeviceError{
+				Index:        i,
+				DeviceIP:     req.DeviceIP,
+				ErrorMessage: err.Error(),
+			})
 		}
 	}
 
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, cloudhub.WorkerLimit)
-	for i, req := range uniqueReqs {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(ctx context.Context, i int, req deviceRequest) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			_, err := s.processDevice(ctx, req, allDevices)
-			if err != nil {
-				failedDevices <- createDeviceError{
-					Index:        i,
-					DeviceIP:     req.DeviceIP,
-					ErrorMessage: err.Error(),
-				}
-			}
-		}(ctx, i, req)
+	response := map[string]interface{}{
+		"failed_devices": failedDeviceList,
+	}
+	if len(failedDeviceList) > 0 {
+		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+	} else {
+		encodeJSON(w, http.StatusCreated, response, s.Logger)
+	}
+}
+
+// NewDevices creates and returns a new Device object (Version 2)
+func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
+
+	reqs, ctx, err := decodeRequest[[]createDeviceRequest](r)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
 	}
 
-	go func() {
-		wg.Wait()
-		close(failedDevices)
-	}()
+	allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 
 	var failedDeviceList []createDeviceError
-	for err := range failedDevices {
-		failedDeviceList = append(failedDeviceList, err)
+	existingIPs := make(map[string]string)
+
+	for _, device := range allDevices {
+		existingIPs[device.DeviceIP] = device.ID
+	}
+
+	for i, req := range reqs {
+		currentReq := req
+		if id, exists := existingIPs[currentReq.DeviceIP]; exists {
+			_, err := s.UpdateDevice(ctx, &updateDeviceData{
+				id: id,
+				updateDeviceRequest: updateDeviceRequest{
+					Organization: &currentReq.Organization,
+					DeviceIP:     &currentReq.DeviceIP,
+					Hostname:     &currentReq.Hostname,
+					DeviceType:   &currentReq.DeviceType,
+					DeviceOS:     &currentReq.DeviceOS,
+					SSHConfig:    &currentReq.SSHConfig,
+					SNMPConfig:   &currentReq.SNMPConfig,
+				},
+			})
+			if err != nil {
+				failedDeviceList = append(failedDeviceList, createDeviceError{
+					Index:        i,
+					DeviceIP:     currentReq.DeviceIP,
+					ErrorMessage: err.Error(),
+				})
+			}
+		} else {
+			_, err = s.createDevice(ctx, currentReq)
+			if err != nil {
+				failedDeviceList = append(failedDeviceList, createDeviceError{
+					Index:        i,
+					DeviceIP:     currentReq.DeviceIP,
+					ErrorMessage: err.Error(),
+				})
+			}
+		}
 	}
 
 	response := map[string]interface{}{
@@ -394,7 +432,6 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	devicesGroupByOrg := make(map[string][]string)
 	deviceOrgMap := make(map[string]string)
 	restartCollectorServers := map[string]string{}
-	var recordedDevices sync.Map
 
 	for _, deviceID := range request.DevicesIDs {
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
@@ -405,7 +442,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		deviceOrgMap[deviceID] = device.Organization
 	}
 
-	activeCollectorKeys := make(map[string]bool)
+	activeCollectorKeys := &sync.Map{}
 
 	for orgID, devices := range devicesGroupByOrg {
 		org, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
@@ -430,8 +467,8 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	for orgID, devicesIDs := range devicesGroupByOrg {
 		org, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
 		if org != nil {
-			isActive := activeCollectorKeys[org.CollectorServer]
-			if !isActive && len(org.CollectedDevicesIDs) > 0 {
+			_, exists := activeCollectorKeys.Load(org.CollectorServer)
+			if !exists && len(org.CollectedDevicesIDs) > 0 {
 				for _, id := range devicesIDs {
 					addFailedDevice(failedDevices, id, fmt.Errorf("collector server not active"))
 				}
@@ -494,74 +531,49 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	failedDevicesChan := make(chan FailedDevice, len(failedDevices))
+	for _, id := range request.DevicesIDs {
+		if _, exists := failedDevices[id]; exists {
+			return
+		}
 
-	for id, err := range failedDevices {
-		recordedDevices.Store(id, true)
-		failedDevicesChan <- FailedDevice{ID: id, Err: fmt.Errorf(err)}
-	}
-
-	sem := make(chan struct{}, cloudhub.WorkerLimit)
-	var wg sync.WaitGroup
-	for i, id := range request.DevicesIDs {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(ctx context.Context, i int, id string) {
-			defer wg.Done()
-			defer func() {
-				<-sem
-			}()
-
-			if _, exists := recordedDevices.Load(id); exists {
-				return
-			}
-
-			device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
+		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
+		if err != nil {
+			addFailedDevice(failedDevices, id, err)
+			return
+		}
+		if err := s.OrganizationExists(ctx, device.Organization); err != nil {
+			addFailedDevice(failedDevices, id, err)
+			return
+		}
+		serverCtx := serverContext(ctx)
+		MLRst, _ := s.Store.MLNxRst(serverCtx).Get(serverCtx, cloudhub.MLNxRstQuery{ID: &device.DeviceIP})
+		if MLRst != nil {
+			err = s.Store.MLNxRst(serverCtx).Delete(serverCtx, MLRst)
 			if err != nil {
-				failedDevicesChan <- FailedDevice{ID: id, Err: err}
+				addFailedDevice(failedDevices, id, err)
 				return
 			}
-			if err := s.OrganizationExists(ctx, device.Organization); err != nil {
-				failedDevicesChan <- FailedDevice{ID: id, Err: err}
-				return
-			}
-			serverCtx := serverContext(ctx)
-			MLRst, _ := s.Store.MLNxRst(serverCtx).Get(serverCtx, cloudhub.MLNxRstQuery{ID: &device.DeviceIP})
-			if MLRst != nil {
-				err = s.Store.MLNxRst(serverCtx).Delete(serverCtx, MLRst)
-				if err != nil {
-					failedDevicesChan <- FailedDevice{ID: id, Err: err}
-					return
-				}
-			}
-			DLRst, _ := s.Store.DLNxRst(serverCtx).Get(serverCtx, cloudhub.DLNxRstQuery{ID: &device.DeviceIP})
-			if DLRst != nil {
-				err = s.Store.DLNxRst(serverCtx).Delete(serverCtx, DLRst)
-				if err != nil {
-					failedDevicesChan <- FailedDevice{ID: id, Err: err}
-					return
-				}
-			}
-			err = s.Store.DLNxRstStg(serverCtx).Delete(serverCtx, cloudhub.DLNxRstStgQuery{ID: &device.DeviceIP})
+		}
+		DLRst, _ := s.Store.DLNxRst(serverCtx).Get(serverCtx, cloudhub.DLNxRstQuery{ID: &device.DeviceIP})
+		if DLRst != nil {
+			err = s.Store.DLNxRst(serverCtx).Delete(serverCtx, DLRst)
 			if err != nil {
-				failedDevicesChan <- FailedDevice{ID: id, Err: err}
+				addFailedDevice(failedDevices, id, err)
 				return
 			}
-			err = s.Store.NetworkDevice(ctx).Delete(ctx, device)
-			if err != nil {
-				failedDevicesChan <- FailedDevice{ID: id, Err: err}
-				return
-			}
-			msg := fmt.Sprintf(MsgNetWorkDeviceDeleted.String(), id)
-			s.logRegistration(ctx, "NetWorkDevice", msg)
-		}(ctx, i, id)
-	}
-
-	wg.Wait()
-	close(failedDevicesChan)
-
-	for failedDevice := range failedDevicesChan {
-		addFailedDevice(failedDevices, failedDevice.ID, failedDevice.Err)
+		}
+		err = s.Store.DLNxRstStg(serverCtx).Delete(serverCtx, cloudhub.DLNxRstStgQuery{ID: &device.DeviceIP})
+		if err != nil {
+			addFailedDevice(failedDevices, id, err)
+			return
+		}
+		err = s.Store.NetworkDevice(ctx).Delete(ctx, device)
+		if err != nil {
+			addFailedDevice(failedDevices, id, err)
+			return
+		}
+		msg := fmt.Sprintf(MsgNetWorkDeviceDeleted.String(), id)
+		s.logRegistration(ctx, "NetWorkDevice", msg)
 	}
 
 	response := make(map[string]interface{})
@@ -591,52 +603,38 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
+	updateData := updateDeviceData{
+		id:                  id,
+		updateDeviceRequest: req,
+	}
+	device, err := s.UpdateDevice(ctx, &updateData)
+	if err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
+	}
+
+	res, err := newDeviceResponse(ctx, s, device)
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
 	}
 
-	if device.DeviceIP != *req.DeviceIP {
-		allDevices, err := s.Store.NetworkDevice(ctx).All(ctx)
-		if err != nil {
-			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-			return
-		}
-		for _, device := range allDevices {
-			if device.DeviceIP == *req.DeviceIP {
-				message := fmt.Sprintf("duplicate IP in existing devices: %s, which might be registered in another organization", *req.DeviceIP)
-				Error(w, http.StatusUnprocessableEntity, message, s.Logger)
-				return
-			}
-		}
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// UpdateDevice updates the specified NetworkDevice with the given request data.
+func (s *Service) UpdateDevice(ctx context.Context, req *updateDeviceData) (*cloudhub.NetworkDevice, error) {
+	device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &req.id})
+	if err != nil {
+		return nil, fmt.Errorf("device not found: %v", err)
 	}
+
 	isModified := false
 	if req.DeviceIP != nil && device.DeviceIP != *req.DeviceIP {
 		device.DeviceIP = *req.DeviceIP
 		isModified = true
 	}
 	if req.Organization != nil && device.Organization != *req.Organization {
-		devOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
-		if devOrg != nil {
-			if devOrg.CollectedDevicesIDs != nil {
-				for _, id := range devOrg.CollectedDevicesIDs {
-					if id == device.ID {
-						Error(w, http.StatusUnprocessableEntity, "Device ID is already being collected. Please stop collecting the device and try again", s.Logger)
-						return
-					}
-				}
-			}
-			if devOrg.LearnedDevicesIDs != nil {
-				for _, id := range devOrg.LearnedDevicesIDs {
-					if id == device.ID {
-						Error(w, http.StatusUnprocessableEntity, "Device ID is already being learning. Please stop learning the device and try again", s.Logger)
-						return
-					}
-				}
-			}
-		}
-
 		device.Organization = *req.Organization
 		isModified = true
 	}
@@ -727,26 +725,29 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 	}
 	if isModified {
 		device.IsCollectingCfgWritten = false
+
+		devOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
+		if devOrg != nil {
+			for _, id := range devOrg.CollectedDevicesIDs {
+				if id == device.ID {
+					return nil, fmt.Errorf("device is already being collected. Stop collecting before updating")
+				}
+			}
+			for _, id := range devOrg.LearnedDevicesIDs {
+				if id == device.ID {
+					return nil, fmt.Errorf("device is already being learned. Stop learning before updating")
+				}
+			}
+		}
 	}
 	if err := s.OrganizationExists(ctx, device.Organization); err != nil {
-		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
-		return
+		return nil, fmt.Errorf("organization does not exist: %v", err)
 	}
 	if err := s.Store.NetworkDevice(ctx).Update(ctx, device); err != nil {
-		msg := fmt.Sprintf("Error updating Device ID %s: %v", id, err)
-		Error(w, http.StatusInternalServerError, msg, s.Logger)
-		return
-	}
-	msg := fmt.Sprintf(MsgNetWorkDeviceModified.String(), device.ID)
-	s.logRegistration(ctx, "NetWorkDevice", msg)
-
-	res, err := newDeviceResponse(ctx, s, device)
-	if err != nil {
-		notFound(w, id, s.Logger)
-		return
+		return nil, fmt.Errorf("failed to update device: %v", err)
 	}
 
-	encodeJSON(w, http.StatusOK, res, s.Logger)
+	return device, nil
 }
 
 type manageDeviceOrg struct {
@@ -842,7 +843,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		collectorServer := orgToCollector[org]
 
 		// Skip this organization if its collector server is not active
-		if isActive := activeCollectorKeys[collectorServer]; !isActive {
+		if _, exists := activeCollectorKeys.Load(collectorServer); !exists {
 			for _, device := range devices {
 				if _, exists := failedDevices[device.ID]; !exists {
 					failedDevices[device.ID] = "Failed to access active collector-server"
@@ -1173,7 +1174,7 @@ func findLeastLoadedCollectorServer(
 	return selectedServer
 }
 
-func (s *Service) getCollectorServers() ([]string, map[string]bool, error) {
+func (s *Service) getCollectorServers() ([]string, *sync.Map, error) {
 	status, responseBody, err := s.GetWheelKeyAcceptedListAll()
 
 	if err != nil {
@@ -1200,8 +1201,7 @@ func (s *Service) getCollectorServers() ([]string, map[string]bool, error) {
 	}
 
 	var collectorKeys []string
-	activeCollectorKeys := make(map[string]bool)
-	var mu sync.Mutex
+	activeCollectorKeys := &sync.Map{}
 	var wg sync.WaitGroup
 
 	for _, minion := range response.Return[0].Data.Return.Minions {
@@ -1211,23 +1211,17 @@ func (s *Service) getCollectorServers() ([]string, map[string]bool, error) {
 			go func(minion string) {
 				defer wg.Done()
 				if statusCode, resp, err := s.IsActiveMinionPingTest(minion); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-					mu.Lock()
-					activeCollectorKeys[minion] = false
-					mu.Unlock()
+					activeCollectorKeys.Store(minion, false)
 				} else if resp != nil {
 					r := &struct {
 						Return []map[string]bool `json:"return"`
 					}{}
 
 					if err := json.Unmarshal(resp, r); err != nil || !r.Return[0][minion] {
-						mu.Lock()
-						activeCollectorKeys[minion] = false
-						mu.Unlock()
+						activeCollectorKeys.Store(minion, false)
 						return
 					}
-					mu.Lock()
-					activeCollectorKeys[minion] = true
-					mu.Unlock()
+					activeCollectorKeys.Store(minion, true)
 				}
 			}(minion)
 		}

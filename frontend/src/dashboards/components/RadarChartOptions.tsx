@@ -14,6 +14,7 @@ import Dropdown from 'src/shared/components/Dropdown'
 // Constants
 import {AXES_SCALE_OPTIONS} from 'src/dashboards/constants/cellEditor'
 import {STATISTICAL_GRAPH_TYPES} from 'src/dashboards/graphics/graph'
+import {DEFAULT_STATISTICAL_TIME_FIELD} from 'src/dashboards/constants/'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -28,16 +29,27 @@ import {
   getSelectedShowTemplateVariable,
   getShowTemplateVariable,
 } from 'src/shared/utils/staticGraph'
+import {
+  DropdownOption,
+  RenamableField,
+  TableOptionsInterface,
+} from 'src/types/statisticalgraph'
+import GraphOptionsSortBy from 'src/dashboards/components/GraphOptionsSortBy'
+import GraphOptionsCustomizeFields from 'src/dashboards/components/GraphOptionsCustomizeFields'
 
 const {LINEAR, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
 const getInputMin = () => (-Infinity).toString()
 
 interface Props {
+  groupByTag: string[]
+  tableOptions: TableOptionsInterface
+  fieldOptions: RenamableField[]
   type: string
   axes: Axes
   graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  defaultYLabel: string
   dashboardTemplates?: Template[]
   lineColors: ColorString[]
   onUpdateAxes: (axes: Axes) => void
@@ -47,6 +59,8 @@ interface Props {
     staticLegendPosition: StaticLegendPositionType
   ) => void
   onUpdateLineColors: (colors: ColorString[]) => void
+  onUpdateTableOptions: (options: TableOptionsInterface) => void
+  onUpdateFieldOptions: (fieldOptions: RenamableField[]) => void
 }
 
 interface State {
@@ -82,6 +96,7 @@ class RadarChartOptions extends PureComponent<Props, State> {
       rPrefix: getDeep<string>(props, 'axes.y.prefix', ''),
       rSuffix: getDeep<string>(props, 'axes.y.suffix', ''),
     }
+    this.moveField = this.moveField.bind(this)
   }
 
   public render() {
@@ -89,9 +104,12 @@ class RadarChartOptions extends PureComponent<Props, State> {
       axes: {
         y: {bounds},
       },
+      groupByTag,
       type,
       lineColors,
-
+      defaultYLabel,
+      fieldOptions,
+      tableOptions,
       onUpdateLineColors,
     } = this.props
     const {rPrefix, rSuffix} = this.state
@@ -100,12 +118,76 @@ class RadarChartOptions extends PureComponent<Props, State> {
     const {menuOption} = STATISTICAL_GRAPH_TYPES.find(
       graph => graph.type === type
     )
+    const tableSortByOptions = fieldOptions
+      .map(field => ({
+        key: field.internalName,
+        text: field.displayName || field.internalName,
+      }))
+      .filter(field => field?.key !== 'time')
+    const customizeFieldOptions = fieldOptions.filter(fieldOption => {
+      if (
+        fieldOption.internalName === 'time' ||
+        groupByTag.includes(fieldOption.internalName)
+      ) {
+        return false
+      }
+      return true
+    })
+    const isValidSelectedSortField =
+      tableOptions?.sortBy?.internalName !== 'time' &&
+      tableOptions?.sortBy?.internalName !== '' &&
+      tableSortByOptions.some(
+        tableSortByOption =>
+          tableSortByOption?.key === tableOptions?.sortBy?.internalName
+      )
 
+    const selectedGraphOptionSortField = this.getSelectedGraphOptionSortField()
+    const firstGroupByTag = groupByTag[0]
+    const selectedSortFieldByFirstGroupBy =
+      _.get(
+        _.find(fieldOptions, {internalName: firstGroupByTag}),
+        'displayName'
+      ) || firstGroupByTag
+
+    const selectedSortFieldByFirstField =
+      _.get(
+        _.find(fieldOptions, {internalName: defaultYLabel}),
+        'displayName'
+      ) || defaultYLabel
+    const defaultStatisticalTimeField: RenamableField = {
+      ...DEFAULT_STATISTICAL_TIME_FIELD,
+      internalName:
+        firstGroupByTag === undefined
+          ? selectedSortFieldByFirstField
+          : selectedSortFieldByFirstGroupBy,
+    }
     return (
       <FancyScrollbar className="display-options" autoHide={false}>
         <div className="display-options--wrapper">
           <h5 className="display-options--header">{menuOption} Controls</h5>
           <form autoComplete="off" className="form-group-wrapper">
+            <GraphOptionsSortBy
+              selected={
+                isValidSelectedSortField
+                  ? selectedGraphOptionSortField
+                  : defaultStatisticalTimeField
+              }
+              selectedDirection={tableOptions?.sortBy?.direction || 'asc'}
+              sortByOptions={tableSortByOptions}
+              onChooseSortBy={this.handleChooseSortBy}
+              onChooseSortByDirection={this.handleChooseSortByDirection}
+            />
+            <div
+              className="form-group col-xs-6"
+              style={{width: '100%', marginBottom: '30px'}}
+            >
+              <GraphOptionsCustomizeFields
+                fields={customizeFieldOptions}
+                onFieldUpdate={this.handleFieldUpdate}
+                moveField={this.moveField}
+                isUsingTempVar={false}
+              />
+            </div>
             <Input
               name="r-prefix"
               id="r-prefix"
@@ -153,6 +235,22 @@ class RadarChartOptions extends PureComponent<Props, State> {
         </div>
       </FancyScrollbar>
     )
+  }
+  private getSelectedGraphOptionSortField(): RenamableField {
+    const {fieldOptions, tableOptions} = this.props
+
+    const matchedFieldOption = _.find(fieldOptions, {
+      internalName: tableOptions?.sortBy?.internalName,
+    })
+
+    if (
+      matchedFieldOption &&
+      matchedFieldOption?.displayName !== tableOptions?.sortBy?.displayName
+    ) {
+      return matchedFieldOption
+    }
+
+    return tableOptions?.sortBy
   }
 
   private get staticLegendTabs(): JSX.Element {
@@ -358,6 +456,87 @@ class RadarChartOptions extends PureComponent<Props, State> {
     const newAxes = {...axes, y: {...axes.y, base}}
 
     onUpdateAxes(newAxes)
+  }
+
+  private handleFieldUpdate = field => {
+    const {
+      onUpdateTableOptions,
+      onUpdateFieldOptions,
+      tableOptions,
+      fieldOptions,
+    } = this.props
+    const {sortBy} = tableOptions
+
+    const updatedFieldOptions = fieldOptions.map(f =>
+      f.internalName === field.internalName ? field : f
+    )
+
+    if (sortBy.internalName === field.internalName) {
+      const updatedSortBy = {...sortBy, displayName: field.displayName}
+      onUpdateTableOptions({
+        ...tableOptions,
+        sortBy: updatedSortBy,
+      })
+    }
+
+    onUpdateFieldOptions(updatedFieldOptions)
+  }
+
+  private filterExcludedFields(fieldOption) {
+    const {groupByTag} = this.props
+
+    if (
+      fieldOption.internalName === 'time' ||
+      groupByTag.includes(fieldOption?.internalName)
+    ) {
+      return false
+    }
+    return true
+  }
+
+  private findActualIndex(filteredFieldOptions, filteredIndex) {
+    return _.get(filteredFieldOptions, `[${filteredIndex}].originalIndex`, 0)
+  }
+
+  private moveField(dragIndex, hoverIndex) {
+    const {onUpdateFieldOptions, fieldOptions} = this.props
+
+    const filteredFieldOptions = fieldOptions
+      .map((field, index) => ({field, originalIndex: index}))
+      .filter(item => this.filterExcludedFields(item.field))
+
+    const actualDragIndex = this.findActualIndex(
+      filteredFieldOptions,
+      dragIndex
+    )
+    const actualHoverIndex = this.findActualIndex(
+      filteredFieldOptions,
+      hoverIndex
+    )
+    const draggedField = fieldOptions[actualDragIndex]
+    let newFieldOptions = [...fieldOptions]
+
+    newFieldOptions.splice(actualDragIndex, 1)
+    newFieldOptions.splice(actualHoverIndex, 0, draggedField)
+
+    onUpdateFieldOptions(newFieldOptions)
+  }
+
+  private handleChooseSortBy = (option: DropdownOption) => {
+    const {tableOptions, onUpdateTableOptions, fieldOptions} = this.props
+    const sortBy = fieldOptions.find(f => f.internalName === option.key)
+
+    onUpdateTableOptions({...tableOptions, sortBy})
+  }
+
+  private handleChooseSortByDirection = (direction: 'asc' | 'desc') => {
+    const {tableOptions, onUpdateTableOptions, fieldOptions} = this.props
+    const sortBy = fieldOptions.find(
+      f => f.internalName === tableOptions.sortBy.internalName
+    )
+    const updatedSortBy = {...sortBy, direction: direction}
+
+    onUpdateTableOptions({...tableOptions, sortBy: updatedSortBy})
   }
 
   private handleUpdateShowCount = (item: DropdownItem): void => {
