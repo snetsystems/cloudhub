@@ -134,7 +134,20 @@ function PredictionHexbinWrapper({
     }
 
     return hostList?.map(hex => {
-      if (typeof hex.cpu === 'number' && typeof hex.memory === 'number') {
+      if (hex.memory === 0 && typeof hex.cpu === 'number') {
+        return {
+          statusColor: statusHexColor('invalid'),
+          displayState: -1,
+          name: hex.name,
+          cpu: Number(hex.cpu.toFixed()),
+          memory: 0,
+          traffic: hex.traffic,
+          status: 'invalid',
+        }
+      } else if (
+        typeof hex.cpu === 'number' &&
+        typeof hex.memory === 'number'
+      ) {
         return {
           statusColor: statusHexColor(statusCal((hex.cpu + hex.memory) / 2)),
           //@ts-ignore

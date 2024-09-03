@@ -383,14 +383,15 @@ export const statusHexColor = (status: string) => {
   }
 }
 
-export const returnCriticalValue = (host: PredictionTooltipNode) => {
+export const returnCriticalValue = (host: PredictionTooltipNode): number => {
   const result = [host.cpu, host.memory]?.sort((a, b) => b - a)[0] ?? 0
 
   return result
 }
 
 export const hslColorValue = (value: string) => {
-  if (!Number(value)) {
+  //validation check with 0
+  if (!(Number(value) + 100)) {
     return statusHexColor('invalid')
   }
   const result = ((100 - Number(value)) * 159) / 100
