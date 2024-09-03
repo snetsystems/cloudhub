@@ -39,12 +39,11 @@ interface Props {
   predictionTimeRange?: TimeRange
   source: Source
   limit: number
-
   timeZone?: TimeZones
-  manualRefresh?: number
   alertHostList?: string[]
   histogramDate?: TimeRange
   filteredHexbinHost?: string
+  predictionManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
   setAlertHostList?: (value: string[]) => void
   setPredictionTimeRange?: (value: TimeRange) => void
@@ -54,13 +53,13 @@ function PredictionAlertHistoryWrapper({
   source,
   timeZone,
   histogramDate,
-  manualRefresh,
   alertHostList,
   cloudAutoRefresh,
   setAlertHostList,
   filteredHexbinHost,
   predictionTimeRange,
   setPredictionTimeRange,
+  predictionManualRefresh,
   limit = RECENT_ALERTS_LIMIT,
 }: Props) {
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
@@ -113,7 +112,13 @@ function PredictionAlertHistoryWrapper({
   // alert List get api
   useEffect(() => {
     fetchAlerts()
-  }, [histogramDate, manualRefresh, fetchAlerts, filteredHexbinHost, timeZone])
+  }, [
+    histogramDate,
+    fetchAlerts,
+    filteredHexbinHost,
+    timeZone,
+    predictionManualRefresh,
+  ])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
@@ -251,6 +256,7 @@ const mstp = state => {
       alertHostList,
       histogramDate,
       filteredHexbinHost,
+      predictionManualRefresh,
     },
     app: {
       persisted: {autoRefresh, cloudAutoRefresh, timeZone},
@@ -265,6 +271,7 @@ const mstp = state => {
     alertHostList,
     filteredHexbinHost,
     timeZone,
+    predictionManualRefresh,
   }
 }
 

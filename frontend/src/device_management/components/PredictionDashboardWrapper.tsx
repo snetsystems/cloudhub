@@ -56,7 +56,6 @@ interface Props {
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   source: Source
   sources: Source[]
-  manualRefresh: number
   predictionTimeRange?: TimeRange
   cloudAutoRefresh?: CloudAutoRefresh
   setPredictionTimeRange?: (value: TimeRange) => void
@@ -64,6 +63,7 @@ interface Props {
   setSelectedAnomaly?: (anomalyFactor: AnomalyFactor) => void
   timeZone?: TimeZones
   setAlertHostList?: (value: string[]) => void
+  predictionManualRefresh?: number
 }
 function PredictionDashboardWrapper({
   cell,
@@ -77,12 +77,12 @@ function PredictionDashboardWrapper({
   onPickTemplate,
   predictionTimeRange,
   source,
-  manualRefresh,
   cloudAutoRefresh,
   setHistogramDate,
   setSelectedAnomaly,
   timeZone,
   setAlertHostList,
+  predictionManualRefresh,
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
 
@@ -217,7 +217,7 @@ function PredictionDashboardWrapper({
           isEditable={false}
           onDeleteCell={onDeleteCell}
           onCloneCell={onCloneCell}
-          manualRefresh={manualRefresh}
+          manualRefresh={predictionManualRefresh}
           onSummonOverlayTechnologies={onSummonOverlayTechnologies}
           instance={instance}
           onPickTemplate={onPickTemplate}
@@ -229,7 +229,7 @@ function PredictionDashboardWrapper({
 
 const mstp = state => {
   const {
-    predictionDashboard: {predictionTimeRange},
+    predictionDashboard: {predictionTimeRange, predictionManualRefresh},
     app: {
       persisted: {cloudAutoRefresh, timeZone},
     },
@@ -237,6 +237,7 @@ const mstp = state => {
 
   return {
     timeZone,
+    predictionManualRefresh,
     predictionTimeRange,
     cloudAutoRefresh,
   }

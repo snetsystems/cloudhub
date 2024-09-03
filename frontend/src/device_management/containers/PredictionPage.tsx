@@ -1,7 +1,7 @@
 import React from 'react'
 import {connect} from 'react-redux'
 import PredictionDashBoard from '../components/PredictionDashBoard'
-import {Me, PredictionManualRefresh, Source} from 'src/types'
+import {Me, Source} from 'src/types'
 import _ from 'lodash'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 
@@ -9,10 +9,9 @@ interface Props {
   source: Source
   limit: number
   cloudAutoRefresh: CloudAutoRefresh
-  manualRefresh: PredictionManualRefresh
   me: Me
 }
-function PredictionPage({me, source, cloudAutoRefresh, manualRefresh}: Props) {
+function PredictionPage({me, source, cloudAutoRefresh}: Props) {
   return (
     <>
       <PredictionDashBoard
@@ -21,7 +20,6 @@ function PredictionPage({me, source, cloudAutoRefresh, manualRefresh}: Props) {
         host=""
         sources={[source]}
         cloudAutoRefresh={cloudAutoRefresh}
-        manualRefresh={manualRefresh.value}
         me={me}
       />
     </>
@@ -37,7 +35,7 @@ const mstp = ({auth: {isUsingAuth}}) => {
 const mdtp = {}
 
 const areEqual = (prevProps, nextProps) => {
-  return prevProps.manualRefresh.value === nextProps.manualRefresh.value
+  return prevProps === nextProps
 }
 
 export default React.memo(connect(mstp, mdtp, null)(PredictionPage), areEqual)

@@ -6,6 +6,8 @@ export type Action =
   | AlertHostList
   | SelectedAnomaly
   | HistogramDateAction
+  | PredictionManualRefreshAction
+  | StateInitAction
 
 export enum ActionType {
   setPredictionTimeRange = 'SET_PREDICTION_DASHBOARD',
@@ -13,6 +15,8 @@ export enum ActionType {
   setAlertHostList = 'SET_ALERT_HOST_LIST',
   setSelectedAnomaly = 'SET_SELECTED_ANOMALY',
   setHistogramDate = 'SET_HISTOGRAM_DATE',
+  setPredictionManualRefresh = 'SET_PREDICTION_MANUAL_REFRESH',
+  setStateInit = 'SET_STATE_INIT',
 }
 
 interface PredictionTimeRangeAction {
@@ -46,6 +50,17 @@ interface HistogramDateAction {
   payload: {
     histogramDate: TimeRange
   }
+}
+
+interface PredictionManualRefreshAction {
+  type: ActionType.setPredictionManualRefresh
+  payload: {
+    predictionManualRefresh: number
+  }
+}
+
+interface StateInitAction {
+  type: ActionType.setStateInit
 }
 
 export const setPredictionTimeRange = (
@@ -91,6 +106,16 @@ export const setHistogramDate = (
   },
 })
 
+export const setPredictionManualRefresh = (): PredictionManualRefreshAction => ({
+  type: ActionType.setPredictionManualRefresh,
+  payload: {
+    predictionManualRefresh: Date.now(),
+  },
+})
+
+export const setStateInitAction = (): StateInitAction => ({
+  type: ActionType.setStateInit,
+})
 // export const setPredictionTimeRange = (timeRange: TimeRange) => (
 //   dispatch: Dispatch<Action>
 // ): void => {

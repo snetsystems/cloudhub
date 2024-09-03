@@ -7,6 +7,7 @@ interface TimeRangeState {
   alertHostList: string[]
   selectedAnomaly: AnomalyFactor
   histogramDate: TimeRange
+  predictionManualRefresh: number
 }
 const initialState: TimeRangeState = {
   predictionTimeRange: {
@@ -22,6 +23,7 @@ const initialState: TimeRangeState = {
     time: '',
   },
   histogramDate: null,
+  predictionManualRefresh: 0,
 }
 
 const predictionDashboard = (
@@ -48,6 +50,22 @@ const predictionDashboard = (
     case ActionType.setHistogramDate: {
       const {histogramDate} = action.payload
       return {...state, histogramDate}
+    }
+    case ActionType.setPredictionManualRefresh: {
+      const {predictionManualRefresh} = action.payload
+      return {...state, predictionManualRefresh}
+    }
+    case ActionType.setStateInit: {
+      return {
+        ...state,
+
+        filteredHexbinHost: '',
+        selectedAnomaly: {
+          host: '',
+          time: '',
+        },
+        histogramDate: null,
+      }
     }
     default:
       return state

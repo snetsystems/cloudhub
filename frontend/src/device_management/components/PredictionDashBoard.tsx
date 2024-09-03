@@ -9,13 +9,12 @@ import {Page} from 'src/reusable_ui'
 import PredictionHexbinWrapper from 'src/device_management/components/PredictionHexbinWrapper'
 import PredictionInstanceWrapper from 'src/device_management/components/PredictionInstanceWrapper'
 import PredictionDashboardWrapper from 'src/device_management/components/PredictionDashboardWrapper'
-import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
 import PredictionAlertHistoryWrapper from 'src/device_management/components/PredictionAlertHistoryWrapper'
 
 // Type
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 import * as DashboardsModels from 'src/types/dashboards'
-import {Cell, Me, Source, Template, TemplateValue, TimeRange} from 'src/types'
+import {Cell, Me, Source, Template, TemplateValue} from 'src/types'
 
 // Auth
 import Authorized, {
@@ -34,14 +33,8 @@ import {Link, WithRouterProps} from 'react-router'
 
 // Redux
 import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
-import {
-  setHistogramDate,
-  setPredictionTimeRange,
-} from 'src/device_management/actions'
-import {setTimeRange} from 'src/dashboards/actions'
 
-interface Props extends ManualRefreshProps, WithRouterProps {
+interface Props extends WithRouterProps {
   host: string
   source: Source
   sources: Source[]
@@ -53,9 +46,6 @@ interface Props extends ManualRefreshProps, WithRouterProps {
   onSummonOverlayTechnologies?: () => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
-  predictionTimeRange?: TimeRange
-  setPredictionTimeRange?: (value: TimeRange) => void
-  setHistogramDate?: (value: TimeRange) => void
   me: Me
 }
 
@@ -73,15 +63,12 @@ function PredictionDashBoard({
   inPresentationMode,
   source,
   host,
-  manualRefresh,
   cloudAutoRefresh,
   instance,
   onPickTemplate,
-  predictionTimeRange,
-  setHistogramDate,
   me,
 }: Props) {
-  const prevProps = useRef({manualRefresh: null, cloudAutoRefresh: null})
+  const prevProps = useRef({cloudAutoRefresh: null})
 
   const GridLayout = WidthProvider(ReactGridLayout)
 
@@ -109,17 +96,10 @@ function PredictionDashBoard({
   }, [])
 
   useEffect(() => {
-    // Todo: manual Refresh rerendering issue, compare prevProps and next-props
-    if (manualRefresh !== prevProps.current.manualRefresh)
-      prevProps.current = {
-        manualRefresh: manualRefresh,
-        cloudAutoRefresh: cloudAutoRefresh,
-      }
-  }, [manualRefresh, cloudAutoRefresh])
-
-  useEffect(() => {
-    setHistogramDate(null)
-  }, [predictionTimeRange])
+    prevProps.current = {
+      cloudAutoRefresh: cloudAutoRefresh,
+    }
+  }, [cloudAutoRefresh])
 
   const cells = useMemo(() => {
     const defaultCells = fixturePredictionPageCells(source)
@@ -129,8 +109,6 @@ function PredictionDashBoard({
     } else {
       return defaultCells
     }
-
-    // localStorage.setItem('Prediction-cells', JSON.stringify(cells))
   }, [savedCells])
 
   const setLocalCells = (cells: DashboardsModels.Cell[]) => {
@@ -193,7 +171,6 @@ function PredictionDashBoard({
               onSummonOverlayTechnologies={onSummonOverlayTechnologies}
               instance={instance}
               onPickTemplate={onPickTemplate}
-              manualRefresh={prevProps.current.manualRefresh}
             />
           </Authorized>
         )
@@ -223,12 +200,7 @@ function PredictionDashBoard({
         )
       }
       case 'instanceGraph': {
-        return (
-          <PredictionInstanceWrapper
-            source={source}
-            manualRefresh={prevProps.current.manualRefresh}
-          />
-        )
+        return <PredictionInstanceWrapper source={source} />
       }
     }
   }
@@ -292,34 +264,22 @@ function PredictionDashBoard({
 }
 
 // tslint:disable-next-line: variable-name
-
 const mstp = state => {
   const {
     app: {
       ephemeral: {inPresentationMode},
     },
     auth: {isUsingAuth},
-    predictionDashboard: {predictionTimeRange},
   } = state
 
   return {
-    predictionTimeRange,
     inPresentationMode,
     isUsingAuth,
   }
 }
 
-const mdtp = (dispatch: any) => ({
-  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
-  setTimeRange: bindActionCreators(setTimeRange, dispatch),
-  setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
-})
-
 const isEqual = (prev, next) => {
   return _.isEqual(prev, next)
 }
 
-export default React.memo(
-  connect(mstp, mdtp, null)(PredictionDashBoard),
-  isEqual
-)
+export default React.memo(connect(mstp, null)(PredictionDashBoard), isEqual)

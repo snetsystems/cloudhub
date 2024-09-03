@@ -1,4 +1,6 @@
 import React, {useState} from 'react'
+import {InjectedRouter, RouterState} from 'react-router'
+
 import _ from 'lodash'
 import {Page, Radio} from 'src/reusable_ui'
 import {
@@ -21,23 +23,27 @@ import DeviceManagement from './DeviceManagement'
 //action
 import {setAutoRefresh} from 'src/shared/actions/app'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
-
 import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 import * as appActions from 'src/shared/actions/app'
 import DeviceManagementModal from '../components/DeviceManagementModal'
 import PredictionPage from './PredictionPage'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {
+  setHistogramDate,
+  setPredictionManualRefresh,
+  setPredictionTimeRange,
+  setStateInitAction,
+} from '../actions'
 
+//component
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
-import {InjectedRouter, RouterState} from 'react-router'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
-import {bindActionCreators} from 'redux'
-import {setPredictionTimeRange} from '../actions'
 
 interface RouterProps extends InjectedRouter {
   params: RouterState['params']
@@ -60,6 +66,9 @@ interface Props extends ManualRefreshProps {
   router: RouterProps
   predictionTimeRange: TimeRange
   setPredictionTimeRange: (value: TimeRange) => void
+  setPredictionManualRefresh: () => void
+  setStateInitAction: () => void
+  setHistogramDate: (value: TimeRange) => void
 }
 
 const defaultHeaderRadioButtons: HeaderNavigationObj[] = [
@@ -95,6 +104,9 @@ const AiRoutePage = (props: Props) => {
     onChooseCloudAutoRefresh,
     onChooseAutoRefresh,
     predictionTimeRange,
+    setPredictionManualRefresh,
+    setStateInitAction,
+    setHistogramDate,
   } = props
 
   const currentRoute = router.params?.tab
@@ -120,6 +132,8 @@ const AiRoutePage = (props: Props) => {
   }
 
   const handleApplyTime = (timeRange: TimeRange): void => {
+    setHistogramDate(null)
+
     setPredictionTimeRange({
       ...timeRange,
       format: !!timeRange.lowerFlux
@@ -129,6 +143,10 @@ const AiRoutePage = (props: Props) => {
   }
 
   const handleManualRefresh = () => {
+    //redux
+    setPredictionManualRefresh()
+    setStateInitAction()
+
     setManualRefreshState({
       ...manualRefreshState,
       value: Date.now(),
@@ -216,7 +234,6 @@ const AiRoutePage = (props: Props) => {
               me={me}
               source={source}
               cloudAutoRefresh={cloudAutoRefresh}
-              manualRefresh={manualRefreshState}
             />
           )}
         </>
@@ -250,6 +267,12 @@ const mdtp = dispatch => ({
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
   setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
+  setPredictionManualRefresh: bindActionCreators(
+    setPredictionManualRefresh,
+    dispatch
+  ),
+  setStateInitAction: bindActionCreators(setStateInitAction, dispatch),
+  setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(ManualRefresh<Props>(AiRoutePage))

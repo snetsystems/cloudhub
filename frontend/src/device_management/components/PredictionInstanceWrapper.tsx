@@ -42,7 +42,7 @@ import {setSelectedAnomaly} from '../actions'
 interface Props {
   source: Source
   autoRefresh?: number
-  manualRefresh: number
+  predictionManualRefresh?: number
   filteredHexbinHost?: string
   selectedAnomaly?: AnomalyFactor
   timeZone?: TimeZones
@@ -54,7 +54,7 @@ const TIME_GAP = 3600000
 const PredictionInstanceWrapper = ({
   source,
   autoRefresh,
-  manualRefresh,
+  predictionManualRefresh: manualRefresh,
   filteredHexbinHost,
   selectedAnomaly,
   timeZone,
@@ -250,7 +250,11 @@ const mstp = state => {
       persisted: {autoRefresh, timeZone},
       ephemeral: {inPresentationMode},
     },
-    predictionDashboard: {filteredHexbinHost, selectedAnomaly},
+    predictionDashboard: {
+      filteredHexbinHost,
+      selectedAnomaly,
+      predictionManualRefresh,
+    },
     links,
   } = state
   return {
@@ -260,6 +264,7 @@ const mstp = state => {
     inPresentationMode,
     filteredHexbinHost,
     selectedAnomaly,
+    predictionManualRefresh,
   }
 }
 
