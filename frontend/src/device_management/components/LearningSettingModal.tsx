@@ -3,6 +3,7 @@ import React, {useEffect, useState} from 'react'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import _ from 'lodash'
+import {InjectedRouter, withRouter, WithRouterProps} from 'react-router'
 
 // Components
 import {
@@ -79,7 +80,7 @@ import {
   notifyUpdateNetworkDeviceOrganizationSucceeded,
 } from 'src/shared/copy/notifications'
 
-interface Props {
+interface Props extends WithRouterProps {
   isVisible: boolean
   kapacitors: Kapacitor[]
   me?: Me
@@ -87,6 +88,7 @@ interface Props {
   orgLearningModel?: DevicesOrgData[]
   source: Source
   sources: Source[]
+  router: InjectedRouter
   notify: (n: Notification) => void
   onClose: () => void
   setDeviceManagementIsLoading: (isLoading: boolean) => void
@@ -102,6 +104,7 @@ function LearningSettingModal({
   kapacitors,
   sources,
   source,
+  router,
   notify,
   onClose,
   setDeviceManagementIsLoading,
@@ -124,6 +127,10 @@ function LearningSettingModal({
     DEFAULT_PROCESS_COUNT
   )
   const [selectedSource, setSelectedSource] = useState<Source>(source)
+  const [
+    isLearningSettingLoading,
+    setIsLearningSettingLoading,
+  ] = useState<boolean>(false)
 
   useEffect(() => {
     if (isVisible) {
@@ -289,7 +296,7 @@ function LearningSettingModal({
         return
       }
 
-      setDeviceManagementIsLoading(true)
+      setLoading(true)
 
       const kapacitors = await getKapacitors(_source)
 
@@ -300,7 +307,7 @@ function LearningSettingModal({
         }))
         setSelectedKapacitor(kapacitors?.[0] || null)
         setIsKapacitorInValid(!kapacitors?.[0])
-        setDeviceManagementIsLoading(false)
+        setLoading(false)
         return
       }
 
@@ -314,9 +321,9 @@ function LearningSettingModal({
       if (kapacitors?.[0]) {
         await fetchSpecificAlertRule(kapacitors?.[0], organizationID)
       }
-      setDeviceManagementIsLoading(false)
+      setLoading(false)
     } catch (error) {
-      setDeviceManagementIsLoading(false)
+      setLoading(false)
       setIsKapacitorInValid(true)
       setSelectedKapacitor(null)
       console.error(parseErrorMessage(error))
@@ -368,12 +375,12 @@ function LearningSettingModal({
         selectedSource?.telegraf
       )
 
-      setDeviceManagementIsLoading(true)
+      setLoading(true)
       await fetchSpecificAlertRule(kapacitor, organizationID)
 
-      setDeviceManagementIsLoading(false)
+      setLoading(false)
     } catch (error) {
-      setDeviceManagementIsLoading(false)
+      setLoading(false)
       console.error(parseErrorMessage(error))
     }
   }
@@ -424,7 +431,7 @@ function LearningSettingModal({
     }
 
     try {
-      setDeviceManagementIsLoading(true)
+      setLoading(true)
       await createDeviceOrganization({
         orgLearningModel: {
           organization: organization,
@@ -434,6 +441,7 @@ function LearningSettingModal({
         },
       })
 
+      await fetchSpecificAlertRule(kapacitors?.[0], organization)
       setIsKapacitorInValid(false)
       setIsUpdateAfterCreate(true)
       notify(notifyCreateNetworkDeviceOrganizationSucceeded())
@@ -464,7 +472,7 @@ function LearningSettingModal({
     }
 
     try {
-      setDeviceManagementIsLoading(true)
+      setLoading(true)
 
       await updateDeviceOrganization({
         id: organization,
@@ -476,6 +484,7 @@ function LearningSettingModal({
         },
       })
 
+      await fetchSpecificAlertRule(kapacitors?.[0], organization)
       setIsKapacitorInValid(false)
       notify(notifyUpdateNetworkDeviceOrganizationSucceeded())
       finalizeApplyMLDLSettingAPIResponse()
@@ -502,8 +511,13 @@ function LearningSettingModal({
     return selectedKapacitor === null || selectedKapacitor === undefined
   }
 
+  const setLoading = (isLoading: boolean) => {
+    setDeviceManagementIsLoading(isLoading)
+    setIsLearningSettingLoading(isLoading)
+  }
+
   const finalizeApplyMLDLSettingAPIResponse = () => {
-    setDeviceManagementIsLoading(false)
+    setLoading(false)
     refreshStateForDeviceManagement()
   }
 
@@ -606,6 +620,50 @@ function LearningSettingModal({
     }
   }
 
+  const renderTaskStatus = () => {
+    if (isLearningSettingLoading) return <></>
+
+    if (currentTask.status === 'enabled') {
+      return (
+        <div
+          className="device--indicator indicator--primary flex-center"
+          style={{
+            fontWeight: 500,
+            textAlign: 'center',
+            paddingRight: '6px',
+          }}
+        >
+          Enabled
+        </div>
+      )
+    }
+
+    return (
+      <div
+        className="device--indicator flex-center"
+        style={{
+          fontWeight: 500,
+          textAlign: 'center',
+          paddingRight: '6px',
+        }}
+      >
+        Disabled
+      </div>
+    )
+  }
+
+  const handleClickAlertIcon = () => {
+    const confirm = window.confirm(
+      "If you make changes, they won't be saved.\nDo you want to continue?"
+    )
+
+    if (confirm) {
+      onSubmit()
+
+      router.push(`/sources/${selectedSource.id}/alert-rules`)
+    }
+  }
+
   return (
     <OverlayTechnology visible={isVisible}>
       <OverlayContainer maxWidth={600}>
@@ -615,7 +673,7 @@ function LearningSettingModal({
             <Form.Element>
               <FancyScrollbar autoHeight={true} maxHeight={scrollMaxHeight}>
                 <>
-                  <div className="form-group col-xs-12">
+                  <div className="form-group col-xs-8">
                     <label>Organization</label>
                     <Dropdown
                       items={convertSourcesToDropdownItems(availableSources)}
@@ -628,6 +686,22 @@ function LearningSettingModal({
                       }
                       className="dropdown-stretch"
                     />
+                  </div>
+                  <div className="form-group col-xs-4">
+                    <label style={{height: '14px'}}></label>
+                    <div className="task-enabled--setting">
+                      {renderTaskStatus()}
+                      <a
+                        href="#"
+                        onClick={e => {
+                          e.preventDefault()
+                          handleClickAlertIcon()
+                        }}
+                        title="Alert Setting"
+                      >
+                        (Setting)
+                      </a>
+                    </div>
                   </div>
 
                   <div className="form-group col-xs-6">
@@ -728,4 +802,4 @@ const mdtp = (dispatch: any) => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 
-export default connect(mstp, mdtp, null)(LearningSettingModal)
+export default connect(mstp, mdtp, null)(withRouter(LearningSettingModal))
