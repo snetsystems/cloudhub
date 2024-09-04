@@ -205,6 +205,17 @@ const Shell = (props: Props) => {
       }
 
       if (e.ctrlKey && e.keyCode == 68) {
+        e.preventDefault()
+        // term.write('\x04')
+        if (socket) {
+          socket.close()
+          setSocket(null)
+        }
+        if (term) {
+          term.dispose()
+          setTerm(null)
+        }
+
         return false
       }
     })
