@@ -206,6 +206,7 @@ import {
   getFocusedCell,
   onMouseMovexGraph,
   mouseOverTooltipStatus,
+  refreshGraph,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
@@ -601,18 +602,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   public async componentDidMount() {
     const {notify} = this.props
-
     this.createEditor()
     this.configureEditor()
     this.setActionInEditor()
     this.configureStylesheet(mx)
-
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
 
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
-
     this.setState({
       layouts,
     })
@@ -621,9 +619,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
       if (this.isUsingCSP) {
         await this.handleLoadCsps()
       }
-
       await this.getInventoryTopology()
       this.setTopologySetting()
+
       await this.fetchIntervalData()
       await this.getIpmiTargetList()
     } catch (error) {
@@ -1034,27 +1032,28 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private handleClickTemperatureOkButton = async () => {
     const {notify} = this.props
     const {hostsObject, preferenceTemperatureValues} = this.state
-
+    let updateNode = null
     if (this.isValidTemperature()) {
       return
     }
-
+    if (!this.graph) return
+    const graph = this.graph
+    const parent = graph.getDefaultParent()
+    const cells = this.getAllCells(parent, true)
     try {
-      if (!this.graph) return
-
-      const graph = this.graph
-      const parent = graph.getDefaultParent()
-      const cells = this.getAllCells(parent, true)
       const selectedTemperatureValue = _.filter(
         preferenceTemperatureValues,
         temperatureValue => temperatureValue.includes('active:1')
       )
-      detectedHostsStatus.bind(this)(
+      const [count, err] = detectedHostsStatus.bind(this)(
         cells,
         hostsObject,
         selectedTemperatureValue?.[0]
       )
-
+      if (err) {
+        throw err
+      }
+      updateNode = count
       notify(notifyPreferencesTemperatureApplySucceeded())
 
       this.setState({
@@ -1065,6 +1064,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     } catch (error) {
       notify(notifyGetDetectedHostStatusFailed(error.message))
     } finally {
+      refreshGraph(updateNode, graph, cells?.[0])
       this.setState({
         isPreferencesOverlayVisible: !this.state.isPreferencesOverlayVisible,
       })
@@ -1074,26 +1074,29 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private handleClickTemperatureApplyButton = async () => {
     const {notify} = this.props
     const {hostsObject, preferenceTemperatureValues} = this.state
+    let updateNode = null
 
     if (this.isValidTemperature()) {
       return
     }
-
+    if (!this.graph) return
+    const graph = this.graph
+    const parent = graph.getDefaultParent()
+    const cells = this.getAllCells(parent, true)
     try {
-      if (!this.graph) return
-
-      const graph = this.graph
-      const parent = graph.getDefaultParent()
-      const cells = this.getAllCells(parent, true)
       const selectedTemperatureValue = _.filter(
         preferenceTemperatureValues,
         temperatureValue => temperatureValue.includes('active:1')
       )
-      detectedHostsStatus.bind(this)(
+      const [count, err] = detectedHostsStatus.bind(this)(
         cells,
         hostsObject,
         selectedTemperatureValue?.[0]
       )
+      if (err) {
+        throw err
+      }
+      updateNode = count
 
       notify(notifyPreferencesTemperatureApplySucceeded())
 
@@ -1103,6 +1106,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
       })
     } catch (error) {
       notify(notifyGetDetectedHostStatusFailed(error.message))
+    } finally {
+      refreshGraph(updateNode, graph, cells?.[0])
     }
   }
 
@@ -1337,25 +1342,28 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   private fetchIntervalData = async () => {
     const {notify} = this.props
-
+    if (!this.graph) return
     this.setState(preState => ({
       ...preState,
       fetchIntervalDataStatus: RemoteDataState.Loading,
     }))
-
     try {
+      this.graph.model.beginUpdate()
       await this.getHostData()
-      await this.getIpmiStatus()
+      this.fetchIpmiStatus()
       this.getDetectedHostStatus()
     } catch (error) {
       notify(notifyFetchIntervalDataFailed(error.message))
     } finally {
+      this.graph.model.endUpdate()
+      this.graph.refresh()
       this.setState(preState => ({
         ...preState,
         fetchIntervalDataStatus: RemoteDataState.Done,
       }))
     }
   }
+
   private getIpmiData = async () => {
     const {source, auth} = this.props
 
@@ -1392,7 +1400,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
     )
     const ipmiObject = await this.getIpmiData()
     const hostsObject = _.defaultsDeep({}, agentObject, ipmiObject)
-
     const hostsError = notifyUnableToGetHosts().message
     if (!hostsObject) {
       throw new Error(hostsError)
@@ -1419,40 +1426,28 @@ export class InventoryTopology extends PureComponent<Props, State> {
       ? getFocusedCell(cells, focusedCellId)
       : cells
 
-    detectedHostsStatus.bind(this)(
+    const [updateCount, err] = detectedHostsStatus.bind(this)(
       filteredCells,
       hostsObject,
       selectedTemperatureValue
     )
+    return [updateCount, err]
   }
 
-  private getIpmiStatus = async (focusedCellId?: string) => {
+  private fetchIpmiStatus = () => {
     if (!this.graph) return
 
     const graph = this.graph
+    const {hostsObject} = this.state
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
-
-    const filteredCells = focusedCellId
-      ? getFocusedCell(cells, focusedCellId)
-      : cells
-    let ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(
-      filteredCells
-    )
-
-    if (_.isEmpty(ipmiCells)) return
-
-    this.setIpmiStatus(ipmiCells)
-  }
-
-  private setIpmiStatus = async (ipmiCells: IpmiCell[]) => {
-    const ipmiCellsStatus: IpmiCell[] = await this.props.handleGetIpmiStatus(
-      this.salt.url,
-      this.salt.token,
-      ipmiCells
-    )
-
-    ipmiPowerIndicator.bind(this)(ipmiCellsStatus)
+    const ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(cells)
+    _.forEach(ipmiCells, ipmiCell => {
+      if (hostsObject[ipmiCell.hostname]?.powerStatus) {
+        ipmiCell.powerStatus = hostsObject[ipmiCell.hostname].powerStatus
+      }
+    })
+    ipmiPowerIndicator.bind(this)(ipmiCells)
   }
 
   private getIpmiTargetList = async () => {
@@ -2324,14 +2319,16 @@ export class InventoryTopology extends PureComponent<Props, State> {
                 <div id="toolbarContainer" ref={this.toolbarRef}></div>
               </div>
               <div id="contentBodySection">
+                {fetchIntervalDataStatus === RemoteDataState.Loading && (
+                  <LoadingSpinner className={'fetchIntervalDots'} />
+                )}
                 <div id="graphContainer" ref={this.containerRef}>
                   {topologyStatus === RemoteDataState.Loading && (
                     <PageSpinner />
                   )}
-                  {fetchIntervalDataStatus === RemoteDataState.Loading && (
-                    <LoadingSpinner className={'fetchIntervalDots'} />
-                  )}
-                  <div id="outlineContainer" ref={this.outlineRef}></div>
+
+                  <div id="outlineContainer" ref={this.outlineRef} />
+
                   <ResizableDock
                     className={classnames('', {
                       active: isStatusVisible,

@@ -16,7 +16,7 @@ import {
 } from 'mxgraph'
 
 // Types
-import {Host, IpmiCell} from 'src/types'
+import {Host, IpmiCell, RemoteDataState} from 'src/types'
 import {CloudServiceProvider, Instance} from 'src/hosts/types/cloud'
 
 // Utils
@@ -377,12 +377,9 @@ export const createTextField = function (
 
   mxEvent.addListener(input, updateEvent, async () => {
     applyHandler.bind(this)(graph, cell, attribute, input.value)
-
-    await this.getIpmiStatus(cell.getId())
-    this.getDetectedHostStatus(cell.getId())
   })
 }
-export const applyHandler = function (
+export const applyHandler = async function (
   graph: mxGraphType,
   cell: mxCellType,
   attribute: any,
@@ -390,7 +387,6 @@ export const applyHandler = function (
 ) {
   const containerElement = getContainerElement(cell.value)
   const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
-
   let isInputPassword = false
 
   if (newValue !== oldValue) {
@@ -457,16 +453,38 @@ export const applyHandler = function (
             `mxgraph-cell--icon-${newValue.replaceAll(`-`, '').toLowerCase()}`
           )
       }
-
       containerElement.setAttribute(attribute.nodeName, newValue)
       cell.setValue(containerElement.outerHTML)
+      this.setState({fetchIntervalDataStatus: RemoteDataState.Loading})
+      await getIpmiStatus.bind(this)(cell.getId())
+      this.getDetectedHostStatus(cell.getId())
     } finally {
       if (isInputPassword) {
         graph.setSelectionCell(cell)
       }
       this.graphUpdateSave(cell)
+      this.setState({fetchIntervalDataStatus: RemoteDataState.Done})
     }
   }
+}
+async function getIpmiStatus(focusedCellId: string) {
+  if (!this.graph) return
+
+  const graph = this.graph
+  const parent = graph.getDefaultParent()
+  const cells = this.getAllCells(parent, true)
+
+  const filteredCells = getFocusedCell(cells, focusedCellId)
+
+  const ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(
+    filteredCells
+  )
+  const ipmiCellsStatus: IpmiCell[] = await this.props.handleGetIpmiStatus(
+    this.salt.url,
+    this.salt.token,
+    ipmiCells
+  )
+  ipmiPowerIndicator.bind(this)(ipmiCellsStatus)
 }
 
 export const createHTMLValue = function (node: Menu, style: string) {
@@ -708,6 +726,7 @@ export const dragCell = (node: Menu, self: any) => (
 
   if (dataType === 'Server') {
     self.getDetectedHostStatus(v1.getId())
+    graph.refresh(v1)
   }
 }
 
@@ -1314,6 +1333,7 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
               pass: originalPass,
               powerStatus: '',
               cell: cell,
+              hostname: hostname,
             }
 
             ipmiCells = [...ipmiCells, ipmiCell]
@@ -1324,6 +1344,17 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
               )
             )
           }
+        } else {
+          const emptyIpmiCell: IpmiCell = {
+            target: '',
+            host: '',
+            user: '',
+            pass: '',
+            powerStatus: 'empty',
+            cell: cell,
+            hostname: hostname,
+          }
+          ipmiCells = [...ipmiCells, emptyIpmiCell]
         }
       }
     }
@@ -1373,12 +1404,8 @@ export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
         childrenCell.setValue(childrenContainerElement.outerHTML)
       }
     })
-  } finally {
-    if (ipmiCellsStatus.length > 1) {
-      this.graph.refresh()
-    } else if (ipmiCellsStatus.length === 1) {
-      this.graph.refresh(ipmiCellsStatus[0].cell)
-    }
+  } catch (err) {
+    console.error('ipmiPowerIndicator Err: ', err)
   }
 }
 
@@ -1463,14 +1490,13 @@ export const detectedHostsStatus = function (
   }
 
   let nodeCount = 0
-
+  let error = null
   try {
     _.forEach(cells, cell => {
       if (cell.getStyle().includes('node')) {
         nodeCount++
         const containerElement = getContainerElement(cell.value)
         const name = containerElement.getAttribute('data-name')
-
         const findHost = _.find(hostsObject, host => host.name === name)
 
         if (!_.isEmpty(findHost)) {
@@ -1554,15 +1580,11 @@ export const detectedHostsStatus = function (
         }
       }
     })
-  } finally {
-    if (nodeCount > 1) {
-      this.graph.refresh()
-    } else if (nodeCount === 1) {
-      this.graph.refresh(cells[0])
-    }
+  } catch (err) {
+    error = err
   }
 
-  return null
+  return [nodeCount, error]
 }
 
 export const getFromOptions = (focusedInstance: Instance) => {
@@ -1632,4 +1654,16 @@ export const mouseOverTooltipStatus = (
     {}
   )
   return tooltipStatus
+}
+
+export function refreshGraph(
+  nodeCount: number | null,
+  graph: any,
+  cell: mxCellType
+) {
+  if (nodeCount && nodeCount > 1) {
+    graph.refresh()
+  } else if (nodeCount && nodeCount === 1) {
+    graph.refresh(cell)
+  }
 }

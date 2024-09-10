@@ -1547,6 +1547,7 @@ export const getHostsInfoWithIpmi = async (
        /system_temp|exhaust_temp|outlet_temp|mb_cpu_out_temp|temp_mb_outlet/
      )}) GROUP BY hostname ) GROUP BY hostname;
      SELECT last(value) as "ipmi_ip" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m GROUP BY  "hostname", "server" FILL(null);
+     SELECT mean("value") AS "powerStatus" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'chassis_power_status' AND "hostname" != '' AND time > now() - 10m GROUP BY hostname, server fill(null);
      `,
     tempVars
   )
@@ -1566,6 +1567,8 @@ export const getHostsInfoWithIpmi = async (
   const ipmiInsideSeries = getDeep<IpmiSeries[]>(data, 'results.[4].series', [])
   const ipmiOutletSeries = getDeep<IpmiSeries[]>(data, 'results.[5].series', [])
   const ipmiHostsAndIp = getDeep<IpmiSeries[]>(data, 'results.[6].series', [])
+  const ipmiPowerStatus = getDeep<IpmiSeries[]>(data, 'results.[7].series', [])
+
   allHostsSeries.forEach(s => {
     const hostnameIndex = s.columns.findIndex(col => col === 'value')
     s.values.forEach(v => {
@@ -1632,6 +1635,14 @@ export const getHostsInfoWithIpmi = async (
       }
     }
   })
+  ipmiPowerStatus.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'powerStatus')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].powerStatus =
+        Number(s.values[0][meanIndex]) === 1 ? 'on' : 'off'
+    }
+  })
+
   if (
     meRole !== SUPERADMIN_ROLE ||
     (meRole === SUPERADMIN_ROLE &&

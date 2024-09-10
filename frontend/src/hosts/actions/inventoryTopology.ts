@@ -167,6 +167,12 @@ export const updateInventoryTopologyAsync = (
   }
 }
 
+export const emptyIpmiStatus = async () => {
+  return {
+    return: [{emptyHost: 'empty'}],
+  }
+}
+
 export const getIpmiStatusAsync = (
   pUrl: string,
   pToken: string,
@@ -175,17 +181,22 @@ export const getIpmiStatusAsync = (
   try {
     const ipmis = await Promise.all(
       pIpmis.map(pIpmi => {
-        return getIpmiStatusSaltApi(pUrl, pToken, pIpmi)
+        return pIpmi.powerStatus === 'empty'
+          ? emptyIpmiStatus()
+          : getIpmiStatusSaltApi(pUrl, pToken, pIpmi)
       })
     )
 
     let error = ''
     let ipmiHost = ''
     let resultIpmis: IpmiCell[] = pIpmis
-
     _.map(ipmis, (ipmiAPIResponse, index) => {
       const ipmi = ipmiAPIResponse?.return?.[0]
-      if (_.values(ipmi)[0] !== 'on' && _.values(ipmi)[0] !== 'off') {
+      if (
+        _.values(ipmi)[0] !== 'on' &&
+        _.values(ipmi)[0] !== 'off' &&
+        _.values(ipmi)[0] !== 'empty'
+      ) {
         if (error !== null) {
           error += '\n'
         }
@@ -194,7 +205,11 @@ export const getIpmiStatusAsync = (
 
         resultIpmis[index].powerStatus = ''
       } else {
-        resultIpmis[index].powerStatus = _.values(ipmi)[0]
+        if (_.values(ipmi)[0] === 'empty') {
+          resultIpmis[index].powerStatus = ''
+        } else {
+          resultIpmis[index].powerStatus = _.values(ipmi)[0]
+        }
       }
     })
 
