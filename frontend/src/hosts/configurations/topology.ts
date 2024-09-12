@@ -199,6 +199,28 @@ export const getConnectImage = function (state: mxCellStateType) {
 }
 
 export const isCellSelectable = function (cell: mxCellType) {
+  if (
+    this.graph &&
+    this.graph.lastEvent &&
+    this.graph.lastEvent instanceof PointerEvent &&
+    this.graph.lastEvent.button === 2
+  ) {
+    return false
+  }
+
+  return !this.graph.isCellLocked(cell)
+}
+
+export const isCellMovable = function (cell: mxCellType) {
+  if (
+    this.graph &&
+    this.graph.lastEvent &&
+    this.graph.lastEvent instanceof PointerEvent &&
+    this.graph.lastEvent.button === 2
+  ) {
+    return false
+  }
+
   return !this.graph.isCellLocked(cell)
 }
 
@@ -1042,6 +1064,9 @@ export const onClickMxGraph = function (
   _graph: mxGraphType,
   me: mxEventObjectType
 ) {
+  const evt = me.getProperty('event')
+  if (evt?.button === 2 || evt?.buttons === 2) return
+
   const cell: mxCellType = me.getProperty('cell')
 
   if (!_.isEmpty(cell) && cell.style.includes('node')) {

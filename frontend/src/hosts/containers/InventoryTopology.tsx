@@ -207,6 +207,7 @@ import {
   onMouseMovexGraph,
   mouseOverTooltipStatus,
   refreshGraph,
+  isCellMovable,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
@@ -245,6 +246,7 @@ export const {
   mxGeometry,
   mxPopupMenu,
   mxEventObject,
+  mxConnectionHandler,
 } = mx
 
 window['mxGraph'] = mxGraph
@@ -272,6 +274,7 @@ window['mxOutline'] = mxOutline
 window['mxPoint'] = mxPoint
 window['mxPopupMenu'] = mxPopupMenu
 window['mxEventObject'] = mxEventObject
+window['mxConnectionHandler'] = mxConnectionHandler
 
 interface Auth {
   me: Me
@@ -1552,6 +1555,62 @@ export class InventoryTopology extends PureComponent<Props, State> {
       return group
     }
 
+    mxConnectionHandler.prototype.mouseDown = function (_, me) {
+      this.mouseDownCounter++
+
+      const event = me.getEvent()
+
+      if (event.button === 2 || event.buttons === 2) {
+        return
+      }
+
+      if (
+        this.isEnabled() &&
+        this.graph.isEnabled() &&
+        !me.isConsumed() &&
+        !this.isConnecting() &&
+        this.isStartEvent(me)
+      ) {
+        if (
+          this.constraintHandler.currentConstraint != null &&
+          this.constraintHandler.currentFocus != null &&
+          this.constraintHandler.currentPoint != null
+        ) {
+          this.sourceConstraint = this.constraintHandler.currentConstraint
+          this.previous = this.constraintHandler.currentFocus
+          this.first = this.constraintHandler.currentPoint.clone()
+        } else {
+          // Stores the location of the initial mousedown
+          this.first = new mxPoint(me.getGraphX(), me.getGraphY())
+        }
+
+        this.edgeState = this.createEdgeState(me)
+        this.mouseDownCounter = 1
+
+        if (this.waypointsEnabled && this.shape == null) {
+          this.waypoints = null
+          this.shape = this.createShape()
+
+          if (this.edgeState != null) {
+            this.shape.apply(this.edgeState)
+          }
+        }
+
+        // Stores the starting point in the geometry of the preview
+        if (this.previous == null && this.edgeState != null) {
+          var pt = this.graph.getPointForEvent(me.getEvent())
+          this.edgeState.cell.geometry.setTerminalPoint(pt, true)
+        }
+
+        this.fireEvent(new mxEventObject(mxEvent.START, 'state', this.previous))
+
+        me.consume()
+      }
+
+      this.selectedIcon = this.icon
+      this.icon = null
+    }
+
     mxGraph.prototype.groupCells = function (group, border, cells) {
       if (cells == null) {
         cells = mxUtils.sortCells(this.getSelectionCells(), true)
@@ -1621,7 +1680,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
       return group
     }
 
+    this.graph.panningHandler.ignoreCell = true
+    this.graph.panningHandler.isForcePanningEvent = me => {
+      return me.getEvent().button === 2
+    }
+
     this.graph.isCellSelectable = isCellSelectable.bind(this)
+    this.graph.isCellMovable = isCellMovable.bind(this)
 
     this.graph.setConnectable(true)
 
