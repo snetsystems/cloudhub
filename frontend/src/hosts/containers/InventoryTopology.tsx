@@ -788,7 +788,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const isExportXML = modalTitle === 'Export XML'
 
     return (
-      <div id="containerWrapper">
+      <div id="containerWrapper" style={{userSelect: 'none'}}>
         {!mxClient.isBrowserSupported() ? (
           <>this Browser Not Supported</>
         ) : (
