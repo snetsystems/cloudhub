@@ -1432,3 +1432,11 @@ export const notifyGetDetectedHostStatusFailed = (
   duration: INFINITE,
   message: `Failed to Get Detected Host Status : ${errorMessage}`,
 })
+
+export const notifySetIpmiStatusFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Set IPMI Status : ${errorMessage}`,
+})

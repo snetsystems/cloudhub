@@ -61,6 +61,7 @@ import {
   notifyPreferencesTemperatureApplySucceeded,
   notifyFetchIntervalDataFailed,
   notifyGetDetectedHostStatusFailed,
+  notifySetIpmiStatusFailed,
 } from 'src/shared/copy/notifications'
 import {notIncludeApps} from 'src/hosts/constants/apps'
 import {
@@ -208,6 +209,7 @@ import {
   mouseOverTooltipStatus,
   refreshGraph,
   isCellMovable,
+  createIPMIStatusIcon,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
@@ -835,7 +837,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
             <OverlayTechnology visible={isImportTopologyOverlayVisible}>
               <ImportTopologyOverlay
                 onDismissOverlay={this.handleImportTopologyToggleOverlay}
-                onImportTopology={this.onImportTopology}
+                onImportTopology={this.handleImportTopologyAndFetchIntervalData}
                 notify={notify}
               />
             </OverlayTechnology>
@@ -862,7 +864,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private onImportTopology = async (importedTopology: string) => {
+  private handleImportTopologyAndFetchIntervalData = async (
+    importedTopology: string
+  ) => {
+    await this.importTopology(importedTopology)
+    this.fetchIntervalData()
+  }
+
+  private importTopology = async (importedTopology: string) => {
     const topology = importedTopology
     const graph = this.graph
 
@@ -905,6 +914,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
             containerElement.removeAttribute(attr.nodeName)
             cell.setValue(containerElement.outerHTML)
           })
+
+          createIPMIStatusIcon(graph, cell)
         }
       })
     } finally {
@@ -1310,6 +1321,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
               containerElement.removeAttribute(attr.nodeName)
               cell.setValue(containerElement.outerHTML)
             })
+            createIPMIStatusIcon(graph, cell)
           }
         })
       } finally {
@@ -1437,14 +1449,22 @@ export class InventoryTopology extends PureComponent<Props, State> {
     return [updateCount, err]
   }
 
-  private fetchIpmiStatus = () => {
+  private fetchIpmiStatus = (focusedCellId?: string) => {
     if (!this.graph) return
 
     const graph = this.graph
     const {hostsObject} = this.state
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
-    const ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(cells)
+
+    const filteredCells = focusedCellId
+      ? getFocusedCell(cells, focusedCellId)
+      : cells
+
+    const ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(
+      filteredCells
+    )
+
     _.forEach(ipmiCells, ipmiCell => {
       if (hostsObject[ipmiCell.hostname]?.powerStatus) {
         ipmiCell.powerStatus = hostsObject[ipmiCell.hostname].powerStatus
@@ -1930,11 +1950,37 @@ export class InventoryTopology extends PureComponent<Props, State> {
       state: IpmiSetPowerStatus,
       popupText: string
     ) => {
+      const credentialKeys = {
+        target: 'Using Minion',
+        host: 'IPMI Host',
+        user: 'IPMI User',
+        pass: 'IPMI Password',
+      }
+
+      const ipmiCredentials = {
+        target,
+        host: ipmiHost,
+        user: ipmiUser,
+        pass: ipmiPass,
+      }
+      for (const key in ipmiCredentials) {
+        if (!ipmiCredentials[key]) {
+          this.props.notify(
+            notifySetIpmiStatusFailed(
+              `The "${credentialKeys[key]}" field cannot be empty.`
+            )
+          )
+          return
+        }
+      }
+
+      const decryptedPass = cryptoJSAESdecrypt(ipmiPass, this.secretKey.url)
+
       const ipmi: Ipmi = {
         target,
         host: ipmiHost,
         user: ipmiUser,
-        pass: cryptoJSAESdecrypt(ipmiPass, this.secretKey.url),
+        pass: decryptedPass,
       }
 
       const onConfirm = async () => {

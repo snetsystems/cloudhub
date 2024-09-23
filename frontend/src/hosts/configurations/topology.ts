@@ -401,6 +401,39 @@ export const createTextField = function (
     applyHandler.bind(this)(graph, cell, attribute, input.value)
   })
 }
+
+export const createIPMIStatusIcon = function (
+  graph: mxGraphType,
+  cell: mxCellType
+) {
+  if (!graph || !cell) {
+    console.error('Invalid graph or cell provided.')
+    return
+  }
+
+  if (!cell.children || cell.children.length === 0) {
+    console.error('No children in the provided cell.')
+    return
+  }
+
+  const childrenCell = cell.getChildAt(0)
+  if (!childrenCell || !childrenCell.style) {
+    console.error('No valid children cell or missing style.')
+    return
+  }
+
+  const sepCellStyle = _.split(childrenCell.style, ';')
+  if (sepCellStyle.length === 0 || !sepCellStyle[0]) {
+    console.error('Invalid or empty style string.')
+    return
+  }
+
+  if (sepCellStyle[0] === 'ipmi') {
+    graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [childrenCell])
+    childrenCell.setVisible(true)
+  }
+}
+
 export const applyHandler = async function (
   graph: mxGraphType,
   cell: mxCellType,
@@ -410,6 +443,7 @@ export const applyHandler = async function (
   const containerElement = getContainerElement(cell.value)
   const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
   let isInputPassword = false
+  let shouldFetchData = false
 
   if (newValue !== oldValue) {
     try {
@@ -435,19 +469,6 @@ export const applyHandler = async function (
         }
       }
 
-      if (attribute.nodeName === 'data-ipmi_host') {
-        if (cell.children) {
-          const childrenCell = cell.getChildAt(0)
-          const sepCellStyle = _.split(childrenCell.style, ';')
-          if (sepCellStyle[0] === 'ipmi') {
-            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
-              childrenCell,
-            ])
-            childrenCell.setVisible(getIsHasString(newValue))
-          }
-        }
-      }
-
       if (attribute.nodeName === 'data-ipmi_pass') {
         if (newValue.length > 0) {
           newValue = CryptoJS.AES.encrypt(
@@ -464,6 +485,7 @@ export const applyHandler = async function (
 
         if (childrenCell.style.includes('status')) {
           childrenCell.setVisible(newValue !== 'false' ? true : false)
+          shouldFetchData = newValue !== 'false'
         }
       }
 
@@ -475,11 +497,17 @@ export const applyHandler = async function (
             `mxgraph-cell--icon-${newValue.replaceAll(`-`, '').toLowerCase()}`
           )
       }
+
+      if (attribute.nodeName === 'data-name') shouldFetchData = true
+
       containerElement.setAttribute(attribute.nodeName, newValue)
       cell.setValue(containerElement.outerHTML)
       this.setState({fetchIntervalDataStatus: RemoteDataState.Loading})
-      await getIpmiStatus.bind(this)(cell.getId())
-      this.getDetectedHostStatus(cell.getId())
+
+      if (shouldFetchData) {
+        await this.fetchIpmiStatus(cell.getId())
+        await this.getDetectedHostStatus(cell.getId())
+      }
     } finally {
       if (isInputPassword) {
         graph.setSelectionCell(cell)
@@ -488,25 +516,6 @@ export const applyHandler = async function (
       this.setState({fetchIntervalDataStatus: RemoteDataState.Done})
     }
   }
-}
-async function getIpmiStatus(focusedCellId: string) {
-  if (!this.graph) return
-
-  const graph = this.graph
-  const parent = graph.getDefaultParent()
-  const cells = this.getAllCells(parent, true)
-
-  const filteredCells = getFocusedCell(cells, focusedCellId)
-
-  const ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(
-    filteredCells
-  )
-  const ipmiCellsStatus: IpmiCell[] = await this.props.handleGetIpmiStatus(
-    this.salt.url,
-    this.salt.token,
-    ipmiCells
-  )
-  ipmiPowerIndicator.bind(this)(ipmiCellsStatus)
 }
 
 export const createHTMLValue = function (node: Menu, style: string) {
@@ -647,7 +656,8 @@ export const dragCell = (node: Menu, self: any) => (
 
     ipmiStatus.geometry.offset = new mxPoint(-12, -12)
     ipmiStatus.setConnectable(false)
-    ipmiStatus.setVisible(false)
+    ipmiStatus.setVisible(true)
+    graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [ipmiStatus])
 
     const linkBox = document.createElement('div')
     linkBox.setAttribute('btn-type', 'href')
@@ -747,9 +757,14 @@ export const dragCell = (node: Menu, self: any) => (
   const dataType = cell.getAttribute('data-type')
 
   if (dataType === 'Server') {
-    self.getDetectedHostStatus(v1.getId())
-    graph.refresh(v1)
+    fetchIntervalData(graph, v1, self)
   }
+}
+
+const fetchIntervalData = async (graph, cell, self) => {
+  await self.fetchIpmiStatus(cell.getId())
+  await self.getDetectedHostStatus(cell.getId())
+  graph.refresh(cell)
 }
 
 export const drawCellInGroup = (nodes: Menu[]) => (
@@ -1331,56 +1346,54 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
     if (cell.getStyle().includes('node')) {
       const containerElement = getContainerElement(cell.value)
 
-      if (containerElement.hasAttribute('data-ipmi_host')) {
-        const ipmiTarget = containerElement.getAttribute('data-using_minion')
-        const ipmiHost = containerElement.getAttribute('data-ipmi_host')
-        const ipmiUser = containerElement.getAttribute('data-ipmi_user')
-        const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
-        const hostname = containerElement.getAttribute('data-label')
+      const ipmiTarget = containerElement.getAttribute('data-using_minion')
+      const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+      const ipmiUser = containerElement.getAttribute('data-ipmi_user')
+      const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+      const hostname = containerElement.getAttribute('data-name')
 
-        if (
-          !_.isEmpty(ipmiTarget) &&
-          !_.isEmpty(ipmiHost) &&
-          !_.isEmpty(ipmiUser) &&
-          !_.isEmpty(ipmiPass)
-        ) {
-          try {
-            const decryptedBytes = CryptoJS.AES.decrypt(
-              ipmiPass,
-              this.secretKey.url
-            )
-            const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+      if (
+        !_.isEmpty(ipmiTarget) &&
+        !_.isEmpty(ipmiHost) &&
+        !_.isEmpty(ipmiUser) &&
+        !_.isEmpty(ipmiPass)
+      ) {
+        try {
+          const decryptedBytes = CryptoJS.AES.decrypt(
+            ipmiPass,
+            this.secretKey.url
+          )
+          const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-            const ipmiCell: IpmiCell = {
-              target: ipmiTarget,
-              host: ipmiHost,
-              user: ipmiUser,
-              pass: originalPass,
-              powerStatus: '',
-              cell: cell,
-              hostname: hostname,
-            }
-
-            ipmiCells = [...ipmiCells, ipmiCell]
-          } catch (error) {
-            this.props.notify(
-              notifyDecryptedBytesFailed(
-                `incorrect IPMI Password for ${hostname} : ${ipmiHost}`
-              )
-            )
-          }
-        } else {
-          const emptyIpmiCell: IpmiCell = {
-            target: '',
-            host: '',
-            user: '',
-            pass: '',
-            powerStatus: 'empty',
+          const ipmiCell: IpmiCell = {
+            target: ipmiTarget,
+            host: ipmiHost,
+            user: ipmiUser,
+            pass: originalPass,
+            powerStatus: '',
             cell: cell,
             hostname: hostname,
           }
-          ipmiCells = [...ipmiCells, emptyIpmiCell]
+
+          ipmiCells = [...ipmiCells, ipmiCell]
+        } catch (error) {
+          this.props.notify(
+            notifyDecryptedBytesFailed(
+              `incorrect IPMI Password for ${hostname} : ${ipmiHost}`
+            )
+          )
         }
+      } else {
+        const emptyIpmiCell: IpmiCell = {
+          target: '',
+          host: '',
+          user: '',
+          pass: '',
+          powerStatus: '',
+          cell: cell,
+          hostname: hostname,
+        }
+        ipmiCells = [...ipmiCells, emptyIpmiCell]
       }
     }
   })
