@@ -1000,9 +1000,20 @@ func UnmarshalTopology(data []byte, t *cloudhub.Topology) error {
 			IPMIVisible:       pb.TopologyOptions.IpmiVisible,
 			LinkVisible:       pb.TopologyOptions.LinkVisible,
 		}
+	} else {
+		t.TopologyOptions = getDefaultTopologyOptions()
 	}
 
 	return nil
+}
+
+func getDefaultTopologyOptions() cloudhub.TopologyOptions {
+	return cloudhub.TopologyOptions{
+		MinimapVisible:    true,
+		HostStatusVisible: true,
+		IPMIVisible:       true,
+		LinkVisible:       true,
+	}
 }
 
 // MarshalCSP encodes a mapping to binary protobuf format.

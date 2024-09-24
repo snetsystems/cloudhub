@@ -20,13 +20,6 @@ type topologyResponse struct {
 	TopologyOptions cloudhub.TopologyOptions `json:"topologyOptions,omitempty"`
 }
 
-type topologyOptionsResponse struct {
-	MinimapVisible    bool `json:"minimapVisible"`
-	HostStatusVisible bool `json:"hostStatusVisible"`
-	IPMIVisible       bool `json:"ipmiVisible"`
-	LinkVisible       bool `json:"linkVisible"`
-}
-
 // RequestBody represents the structure of the request payload
 // containing cells, user preferences, and topology options for the topology.
 type RequestBody struct {
