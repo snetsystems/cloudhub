@@ -357,9 +357,9 @@ export const createTextField = function (
 
     form.addOption(
       input,
-      'FALSE',
-      false,
-      attribute.nodeValue === 'false' ? true : false
+      'NONE',
+      'none',
+      attribute.nodeValue === 'none' ? true : false
     )
   } else if (attribute.nodeName === 'data-icon') {
     input = form.addCombo(nodeName, false)
@@ -483,7 +483,7 @@ export const applyHandler = async function (
         const childrenCell = cell.getChildAt(2)
 
         if (childrenCell.style.includes('status')) {
-          childrenCell.setVisible(newValue !== 'false' ? true : false)
+          childrenCell.setVisible(newValue !== 'none' ? true : false)
           shouldFetchData = newValue !== 'false'
         }
       }
@@ -546,7 +546,7 @@ export const applyHandler = async function (
         cell.value.match(/data-status="([^"]+)"/)[1].trim() ?? true
       if (childrenCell.style.includes('status')) {
         childrenCell.setVisible(
-          dataStatus !== 'false' && this.state.topologyOption.hostStatusVisible
+          dataStatus !== 'none' && this.state.topologyOption.hostStatusVisible
         )
       }
     }
@@ -780,7 +780,7 @@ export const dragCell = (node: Menu, self: any) => (
 
     statusCell.geometry.offset = new mxPoint(-24, 6)
     statusCell.setConnectable(false)
-    const statusCheck = _.get(node, 'status') ? true : false
+    const statusCheck = _.get(node, 'status') !== 'none' ? true : false
     statusCell.setVisible(
       statusCheck && self.state.topologyOption.hostStatusVisible
     )
