@@ -87,3 +87,10 @@ export interface Instance {
   instanceid: string
   instancename: string
 }
+
+export interface TopologyOption {
+  hostStatusVisible: boolean
+  ipmiVisible: boolean
+  linkVisible: boolean
+  minimapVisible: boolean
+}

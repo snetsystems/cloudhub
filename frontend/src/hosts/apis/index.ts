@@ -13,7 +13,11 @@ import {
 // Types
 import {Template, Layout, Source, Host, Links} from 'src/types'
 import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
-import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
+import {
+  CloudServiceProvider,
+  CSPFileWriteParam,
+  TopologyOption,
+} from 'src/hosts/types'
 import {DashboardSwitcherLinks} from 'src/types/dashboards'
 
 // APIs
@@ -903,12 +907,13 @@ export const updateInventoryTopology = async (
   links: Links,
   cellsId: string,
   cells: string,
-  preferences: string[]
+  preferences: string[],
+  topologyOptions: TopologyOption
 ) => {
   return await AJAX({
     url: `${_.get(links, 'topologies')}/${cellsId}`,
     method: 'PATCH',
-    data: {cells, preferences},
+    data: {cells, preferences, topologyOptions},
     headers: {'Content-Type': 'text/xml'},
   })
 }

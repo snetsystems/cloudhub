@@ -62,6 +62,8 @@ import {
   notifyFetchIntervalDataFailed,
   notifyGetDetectedHostStatusFailed,
   notifySetIpmiStatusFailed,
+  notifyTopologyOptionChangeFailed,
+  notifyMapReloadFailed,
 } from 'src/shared/copy/notifications'
 import {notIncludeApps} from 'src/hosts/constants/apps'
 import {
@@ -92,6 +94,7 @@ import {
   CSPFileWriteParam,
   Instance,
   PreferenceType,
+  TopologyOption,
 } from 'src/hosts/types'
 import {
   default as mxgraph,
@@ -219,6 +222,7 @@ import {
   getLocalStorage,
   setLocalStorage,
 } from 'src/shared/middleware/localStorage'
+import TopologySettingOverlay from 'src/hosts/components/TopologySettingOverlay'
 
 const mx = mxgraph()
 
@@ -403,6 +407,7 @@ interface State {
   hostDetailInfoWithSalt: Partial<HostDetailTable> | {}
   isGetHostDetailInfo: RemoteDataState
   isPreferencesOverlayVisible: boolean
+  isOptionOverlayVisible: boolean
   preferenceTemperatureValues: string[]
   unsavedTopology: string
   preferencesStatus: RemoteDataState
@@ -419,6 +424,8 @@ interface State {
   }
   tooltipNode: Partial<TemperatureTooltip>
   isMouseUp: boolean
+  isSettingOverlayOpen: boolean
+  topologyOption: TopologyOption
 }
 
 @ErrorHandling
@@ -527,6 +534,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       hostDetailInfoWithSalt: {},
       isGetHostDetailInfo: RemoteDataState.NotStarted,
       isPreferencesOverlayVisible: false,
+      isOptionOverlayVisible: false,
       preferenceTemperatureValues: [],
       unsavedPreferenceTemperatureValues: [],
       unsavedTopology: '',
@@ -543,6 +551,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
       },
       tooltipNode: {},
       isMouseUp: true,
+      isSettingOverlayOpen: false,
+      topologyOption: {
+        minimapVisible: true,
+        ipmiVisible: true,
+        linkVisible: true,
+        hostStatusVisible: true,
+      },
     }
   }
 
@@ -656,6 +671,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       hostsObject,
       isDetectedServer,
       activeEditorTab,
+      topologyOption,
     } = this.state
 
     if (layouts) {
@@ -686,6 +702,36 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
       if (prevState.cloudAccessInfos !== cloudAccessInfos) {
         this.makeTreemenu()
+      }
+
+      if (
+        !_.isEqual(
+          prevState.topologyOption.minimapVisible,
+          topologyOption.minimapVisible
+        )
+      ) {
+        this.mapReload()
+      }
+
+      if (
+        !_.isEqual(
+          prevState.topologyOption.ipmiVisible,
+          topologyOption.ipmiVisible
+        ) ||
+        !_.isEqual(
+          prevState.topologyOption.hostStatusVisible,
+          topologyOption.hostStatusVisible
+        ) ||
+        !_.isEqual(
+          prevState.topologyOption.linkVisible,
+          topologyOption.linkVisible
+        )
+      ) {
+        this.fetchIntervalData()
+      }
+
+      if (!_.isEqual(prevState.topologyOption, topologyOption)) {
+        this.handleChangeTopologyOption()
       }
     }
 
@@ -785,10 +831,12 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isImportTopologyOverlayVisible,
       isPreferencesOverlayVisible,
       preferencesStatus,
+      isOptionOverlayVisible,
+      topologyOption,
     } = this.state
     const {notify} = this.props
     const isExportXML = modalTitle === 'Export XML'
-
+    //modal
     return (
       <div id="containerWrapper" style={{userSelect: 'none'}}>
         {!mxClient.isBrowserSupported() ? (
@@ -856,6 +904,19 @@ export class InventoryTopology extends PureComponent<Props, State> {
                 onChangeRadioButton={this.handleChangeRadioButton}
                 onDismissOverlay={this.handlePreferencesToggleOverlay}
                 notify={notify}
+              />
+            )}
+            {isOptionOverlayVisible && (
+              <TopologySettingOverlay
+                isOptionOverlayVisible={isOptionOverlayVisible}
+                setIsOptionOverlayVisible={(value: boolean) =>
+                  this.setState({isOptionOverlayVisible: value})
+                }
+                state={RemoteDataState.Done}
+                topologyOption={topologyOption}
+                setTopologyOption={(value: TopologyOption) =>
+                  this.setState({topologyOption: value})
+                }
               />
             )}
           </>
@@ -1202,6 +1263,60 @@ export class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
+  private handleChangeTopologyOption = () => {
+    if (this.isValidTemperature()) {
+      return
+    }
+    if (!this.graph) return
+    const graph = this.graph
+
+    graph.getModel().beginUpdate()
+
+    try {
+      _.forEach(graph.getModel().cells, (cell: mxCellType) => {
+        const containerElement = getContainerElement(cell.value)
+
+        if (containerElement && containerElement.hasAttribute('data-type')) {
+          const dataType = containerElement.getAttribute('data-type')
+          const attrsKeys = _.map(
+            _.keys(eachNodeTypeAttrs[dataType].attrs),
+            attr => `data-${attr}`
+          )
+
+          _.forEach(attrsKeys, attr => {
+            applyHandler.bind(this)(graph, cell, attr)
+          })
+        }
+      })
+    } catch (error) {
+      notify(notifyTopologyOptionChangeFailed(error.message))
+    } finally {
+      graph.getModel().endUpdate()
+    }
+  }
+
+  private mapReload = () => {
+    if (this.isValidTemperature()) {
+      return
+    }
+    if (!this.graph) return
+
+    const graph = this.graph
+    const currentTranslate = graph.getView().getTranslate()
+    const currentScale = graph.getView().getScale()
+
+    graph.getModel().beginUpdate()
+    try {
+      graph.refresh()
+      graph.getView().setTranslate(currentTranslate.x, currentTranslate.y)
+      graph.getView().setScale(currentScale)
+    } catch (error) {
+      notify(notifyMapReloadFailed(error.message))
+    } finally {
+      graph.getModel().endUpdate()
+    }
+  }
+
   private handleCloseInstanceTypeModal = () => {
     this.setState({isInstanceTypeModalVisible: false})
   }
@@ -1299,7 +1414,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
               _.keys(eachNodeTypeAttrs[dataType].attrs),
               attr => `data-${attr}`
             )
-
             const filterdAttrs = _.difference(
               _.map(
                 _.filter(
@@ -1326,6 +1440,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
         })
       } finally {
         graph.getModel().endUpdate()
+
+        if (_.get(topology, 'topologyOptions')) {
+          this.setState({topologyOption: topology.topologyOptions})
+        }
       }
     }
 
@@ -1450,7 +1568,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private fetchIpmiStatus = (focusedCellId?: string) => {
-    if (!this.graph) return
+    if (!this.graph || !this.state.topologyOption.ipmiVisible) return
 
     const graph = this.graph
     const {hostsObject} = this.state
@@ -2277,7 +2395,21 @@ export class InventoryTopology extends PureComponent<Props, State> {
         meRole === EDITOR_ROLE
       ) {
         this.setState({
+          isOptionOverlayVisible: false,
           isPreferencesOverlayVisible: true,
+        })
+      }
+    })
+
+    this.editor.addAction('option', async () => {
+      if (
+        meRole === SUPERADMIN_ROLE ||
+        meRole === ADMIN_ROLE ||
+        meRole === EDITOR_ROLE
+      ) {
+        this.setState({
+          isOptionOverlayVisible: true,
+          isPreferencesOverlayVisible: false,
         })
       }
     })
@@ -2413,6 +2545,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isPinned,
       isOpenSensorData,
       fetchIntervalDataStatus,
+      topologyOption,
     } = this.state
     const [topSize, bottomSize] = bottomProportions
     return [
@@ -2437,8 +2570,16 @@ export class InventoryTopology extends PureComponent<Props, State> {
                   {topologyStatus === RemoteDataState.Loading && (
                     <PageSpinner />
                   )}
-
-                  <div id="outlineContainer" ref={this.outlineRef} />
+                  {fetchIntervalDataStatus === RemoteDataState.Loading && (
+                    <LoadingSpinner className={'fetchIntervalDots'} />
+                  )}
+                  <div
+                    id="outlineContainer"
+                    ref={this.outlineRef}
+                    style={{
+                      display: topologyOption.minimapVisible ? 'block' : 'none',
+                    }}
+                  ></div>
 
                   <ResizableDock
                     className={classnames('', {
@@ -2788,6 +2929,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       topologyId,
       topology,
       unsavedPreferenceTemperatureValues,
+      topologyOption,
     } = this.state
 
     this.setState({topologyStatus: RemoteDataState.Loading})
@@ -2813,7 +2955,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
           links,
           topologyId,
           topology,
-          unsavedPreferenceTemperatureValues
+          unsavedPreferenceTemperatureValues,
+          topologyOption
         )
 
         notify(notifyTopologySaved())

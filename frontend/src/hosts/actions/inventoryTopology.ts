@@ -39,7 +39,11 @@ import {
   notifygetGCPInstancesFailed,
 } from 'src/shared/copy/notifications'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
-import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
+import {
+  CloudServiceProvider,
+  CSPFileWriteParam,
+  TopologyOption,
+} from 'src/hosts/types'
 
 export enum ActionTypes {
   LoadInventoryTopology = 'LOAD_INVENTORY_TOPOLOGY',
@@ -150,14 +154,16 @@ export const updateInventoryTopologyAsync = (
   links: Links,
   cellsId: string,
   cells: string,
-  preferences: string[]
+  preferences: string[],
+  topologyOptions: TopologyOption
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const resultUpdateInventoryTopology = await updateInventoryTopology(
       links,
       cellsId,
       cells,
-      preferences
+      preferences,
+      topologyOptions
     )
 
     return resultUpdateInventoryTopology

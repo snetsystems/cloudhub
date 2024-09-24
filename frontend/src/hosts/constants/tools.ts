@@ -81,6 +81,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     label: 'Preferences',
     icon: 'wrench',
   },
+  {
+    actionName: 'option',
+    label: 'Option',
+    icon: 'cog-thick',
+  },
 ]
 
 export interface Menu {

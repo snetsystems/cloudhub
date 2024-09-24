@@ -354,6 +354,7 @@ export const createTextField = function (
       'ipmi',
       attribute.nodeValue === 'ipmi' ? true : false
     )
+
     form.addOption(
       input,
       'FALSE',
@@ -433,7 +434,6 @@ export const createIPMIStatusIcon = function (
     childrenCell.setVisible(true)
   }
 }
-
 export const applyHandler = async function (
   graph: mxGraphType,
   cell: mxCellType,
@@ -464,7 +464,7 @@ export const applyHandler = async function (
             childrenLink.setAttribute('href', newValue)
 
             childrenCell.setValue(childrenContainerElement.outerHTML)
-            childrenCell.setVisible(getIsHasString(newValue))
+            childrenCell.setVisible(this.state.topologyOption.linkVisible)
           }
         }
       }
@@ -475,7 +475,6 @@ export const applyHandler = async function (
             newValue,
             this.secretKey.url
           ).toString()
-
           isInputPassword = true
         }
       }
@@ -514,6 +513,42 @@ export const applyHandler = async function (
       }
       this.graphUpdateSave(cell)
       this.setState({fetchIntervalDataStatus: RemoteDataState.Done})
+    }
+  } else {
+    if (attribute === 'data-link') {
+      if (cell.children) {
+        const childrenCell = cell.getChildAt(1)
+        const dataLink = cell.value.match(/data-link="([^"]+)"/)
+        if (childrenCell.style.includes('href') && !!dataLink) {
+          const childrenContainerElement = getContainerElement(
+            childrenCell.value
+          )
+
+          const childrenLink = childrenContainerElement.querySelector('a')
+          childrenLink.setAttribute('href', newValue)
+          childrenCell.setValue(childrenContainerElement.outerHTML)
+          childrenCell.setVisible(this.state.topologyOption.linkVisible)
+        }
+      }
+    }
+
+    if (attribute === 'data-ipmi_host') {
+      if (cell.children) {
+        const childrenCell = cell.getChildAt(0)
+        childrenCell.setVisible(this.state.topologyOption.ipmiVisible)
+        if (childrenCell.value.includes('ipmi')) {
+        }
+      }
+    }
+    if (attribute === 'data-status') {
+      const childrenCell = cell.getChildAt(2)
+      const dataStatus =
+        cell.value.match(/data-status="([^"]+)"/)[1].trim() ?? true
+      if (childrenCell.style.includes('status')) {
+        childrenCell.setVisible(
+          dataStatus !== 'false' && this.state.topologyOption.hostStatusVisible
+        )
+      }
     }
   }
 }
@@ -627,7 +662,6 @@ export const dragCell = (node: Menu, self: any) => (
     )
 
     v1.setConnectable(true)
-
     const ipmiBox = document.createElement('div')
     ipmiBox.classList.add('vertex')
     ipmiBox.setAttribute('btn-type', 'ipmi')
@@ -656,7 +690,7 @@ export const dragCell = (node: Menu, self: any) => (
 
     ipmiStatus.geometry.offset = new mxPoint(-12, -12)
     ipmiStatus.setConnectable(false)
-    ipmiStatus.setVisible(true)
+    ipmiStatus.setVisible(self.state.topologyOption.ipmiVisible)
     graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [ipmiStatus])
 
     const linkBox = document.createElement('div')
@@ -747,7 +781,9 @@ export const dragCell = (node: Menu, self: any) => (
     statusCell.geometry.offset = new mxPoint(-24, 6)
     statusCell.setConnectable(false)
     const statusCheck = _.get(node, 'status') ? true : false
-    statusCell.setVisible(statusCheck)
+    statusCell.setVisible(
+      statusCheck && self.state.topologyOption.hostStatusVisible
+    )
   } finally {
     model.endUpdate()
   }
