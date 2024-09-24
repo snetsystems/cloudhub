@@ -79,7 +79,18 @@ class TopologySettingOverlay extends PureComponent<Props, State> {
               this.onCheckClick('ipmiVisible', e.currentTarget.checked)
             }
           />
-          <label htmlFor="ipmiVisible">IPMI Status</label>
+          <label htmlFor="ipmiVisible">IPMI Power Status</label>
+        </div>
+        <div className="form-control-static">
+          <input
+            type="checkbox"
+            id="hostStatusVisible"
+            defaultChecked={topologyOption.hostStatusVisible}
+            onChange={e =>
+              this.onCheckClick('hostStatusVisible', e.currentTarget.checked)
+            }
+          />
+          <label htmlFor="hostStatusVisible">Host Health Status</label>
         </div>
         <div className="form-control-static">
           <input
@@ -91,17 +102,6 @@ class TopologySettingOverlay extends PureComponent<Props, State> {
             }
           />
           <label htmlFor="linkVisible">Link Dashboard</label>
-        </div>
-        <div className="form-control-static">
-          <input
-            type="checkbox"
-            id="hostStatusVisible"
-            defaultChecked={topologyOption.hostStatusVisible}
-            onChange={e =>
-              this.onCheckClick('hostStatusVisible', e.currentTarget.checked)
-            }
-          />
-          <label htmlFor="hostStatusVisible">Host Status</label>
         </div>
       </div>
     )
