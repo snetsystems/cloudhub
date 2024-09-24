@@ -8129,6 +8129,27 @@
         "password": "dkeidj@!@"
       }
     },
+    "TopologyOptions": {
+      "type": "object",
+      "properties": {
+        "minimapVisible": {
+          "type": "boolean",
+          "description": "Visibility of the minimap"
+        },
+        "hostStatusVisible": {
+          "type": "boolean",
+          "description": "Visibility of the host status"
+        },
+        "ipmiVisible": {
+          "type": "boolean",
+          "description": "Visibility of the IPMI (Intelligent Platform Management Interface)"
+        },
+        "linkVisible": {
+          "type": "boolean",
+          "description": "Visibility of the network links"
+        }
+      }
+    },
     "InventoryTopologyReq": {
       "type": "object",
       "description": "inventory topology diagram xml content",
@@ -8149,6 +8170,9 @@
             "type:inside,active:1,min:56,max:55",
             "type:outlet,active:0,min:34,max:50"
           ]
+        },
+        "topologyOptions": {
+          "$ref": "#/definitions/TopologyOptions"
         }
       }
     },
@@ -8176,9 +8200,19 @@
             "type": "string"
           }
         },
+        "topologyOptions": {
+          "$ref": "#/definitions/TopologyOptions"
+        },
         "links": {"type": "string", "description": "self url"}
       },
-      "required": ["id", "organization", "diagram", "links", "preferences"],
+      "required": [
+        "id",
+        "organization",
+        "diagram",
+        "links",
+        "preferences",
+        "topologyOptions"
+      ],
       "example": {
         "id": "1",
         "organization": "2",
@@ -8190,6 +8224,12 @@
         ],
         "links": {
           "self": "/cloudhub/v1/topologies/1"
+        },
+        "topologyOptions": {
+          "minimapVisible": true,
+          "hostStatusVisible": true,
+          "ipmiVisible": true,
+          "linkVisible": true
         }
       }
     },

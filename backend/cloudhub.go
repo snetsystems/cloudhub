@@ -1013,10 +1013,20 @@ type Environment struct {
 
 // Topology is represents represents an topology
 type Topology struct {
-	ID           string   `json:"id,string,omitempty"`
-	Organization string   `json:"organization,omitempty"`   // Organization is the organization ID that resource belongs to
-	Diagram      string   `json:"diagram,string,omitempty"` // diagram xml
-	Preferences  []string `json:"preferences,omitempty"`    // User preferences
+	ID              string          `json:"id,string,omitempty"`
+	Organization    string          `json:"organization,omitempty"`    // Organization is the organization ID that resource belongs to
+	Diagram         string          `json:"diagram,string,omitempty"`  // diagram xml
+	Preferences     []string        `json:"preferences,omitempty"`     // User preferences
+	TopologyOptions TopologyOptions `json:"topologyOptions,omitempty"` // Configuration options for the topology, defined in TopologyOptions
+}
+
+// TopologyOptions represents various settings for displaying elements of the topology.
+// Each field controls the visibility of specific icons or features within the topology.
+type TopologyOptions struct {
+	MinimapVisible    bool `json:"minimapVisible"`    // Controls whether the minimap is visible in the mxgraph
+	HostStatusVisible bool `json:"hostStatusVisible"` // Controls whether the host status is visible
+	IPMIVisible       bool `json:"ipmiVisible"`       // Controls whether the IPMI icon is visible
+	LinkVisible       bool `json:"linkVisible"`       // Controls whether the dashboard link icon is visible
 }
 
 // TopologyQuery represents the attributes that a topology may be retrieved by.
