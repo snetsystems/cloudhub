@@ -1556,11 +1556,11 @@ export const detectedHostsStatus = function (
   hostsObject: {[x: string]: Host},
   selectedTemperatureValue: string = 'type:inside,active:1,min:38,max:55'
 ) {
-  if (!this.graph) return
+  if (!this.graph) return [0, new Error('Graph object is missing or null')]
   const {cpu, memory, disk, temperature} = TOOLTIP_TYPE
 
   if (!cells || cells.length === 0) {
-    return
+    return [0, null]
   }
 
   let nodeCount = 0
