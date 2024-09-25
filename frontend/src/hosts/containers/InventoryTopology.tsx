@@ -2566,8 +2566,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
                 {fetchIntervalDataStatus === RemoteDataState.Loading && (
                   <LoadingSpinner className={'fetchIntervalDots'} />
                 )}
-                {topologyStatus === RemoteDataState.Loading && <PageSpinner />}
+
                 <div id="graphContainer" ref={this.containerRef}>
+                  {topologyStatus === RemoteDataState.Loading && (
+                    <PageSpinner />
+                  )}
                   <div
                     id="outlineContainer"
                     ref={this.outlineRef}
