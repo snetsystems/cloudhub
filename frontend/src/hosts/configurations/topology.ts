@@ -354,7 +354,6 @@ export const createTextField = function (
       'ipmi',
       attribute.nodeValue === 'ipmi' ? true : false
     )
-
     form.addOption(
       input,
       'NONE',
@@ -464,7 +463,9 @@ export const applyHandler = async function (
             childrenLink.setAttribute('href', newValue)
 
             childrenCell.setValue(childrenContainerElement.outerHTML)
-            childrenCell.setVisible(this.state.topologyOption.linkVisible)
+            childrenCell.setVisible(
+              !!newValue && this.state.topologyOption.linkVisible
+            )
           }
         }
       }
@@ -483,7 +484,10 @@ export const applyHandler = async function (
         const childrenCell = cell.getChildAt(2)
 
         if (childrenCell.style.includes('status')) {
-          childrenCell.setVisible(newValue !== 'none' ? true : false)
+          childrenCell.setVisible(
+            (newValue !== 'none' ? true : false) &&
+              this.state.topologyOption.hostStatusVisible
+          )
           shouldFetchData = newValue !== 'false'
         }
       }
@@ -519,13 +523,12 @@ export const applyHandler = async function (
       if (cell.children) {
         const childrenCell = cell.getChildAt(1)
         const dataLink = cell.value.match(/data-link="([^"]+)"/)
-        if (childrenCell.style.includes('href') && !!dataLink) {
+        if (childrenCell?.style?.includes('href') && !!dataLink) {
           const childrenContainerElement = getContainerElement(
             childrenCell.value
           )
-
           const childrenLink = childrenContainerElement.querySelector('a')
-          childrenLink.setAttribute('href', newValue)
+          childrenLink.setAttribute('href', dataLink[1])
           childrenCell.setValue(childrenContainerElement.outerHTML)
           childrenCell.setVisible(this.state.topologyOption.linkVisible)
         }
@@ -541,13 +544,16 @@ export const applyHandler = async function (
       }
     }
     if (attribute === 'data-status') {
-      const childrenCell = cell.getChildAt(2)
-      const dataStatus =
-        cell.value.match(/data-status="([^"]+)"/)[1].trim() ?? true
-      if (childrenCell.style.includes('status')) {
-        childrenCell.setVisible(
-          dataStatus !== 'none' && this.state.topologyOption.hostStatusVisible
-        )
+      if (cell.children) {
+        const childrenCell = cell.getChildAt(2)
+        const dataStatus =
+          cell.value.match(/data-status="([^"]+)"/)[1].trim() ?? true
+        //check
+        if (childrenCell?.style?.includes('status')) {
+          childrenCell.setVisible(
+            dataStatus !== 'none' && this.state.topologyOption.hostStatusVisible
+          )
+        }
       }
     }
   }
