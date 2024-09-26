@@ -1333,6 +1333,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       this.setState(preState => ({
         ...preState,
         fetchIntervalDataStatus: RemoteDataState.Done,
+        topology: this.xmlExport(this.graph.getModel()),
       }))
     }
   }
@@ -2965,7 +2966,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
         const response = await createInventoryTopology(
           links,
-          this.xmlExport(this.graph.getModel()),
+          topology,
           unsavedPreferenceTemperatureValues
         )
         const getTopologyId = _.get(response, 'data.id', null)
@@ -2981,7 +2982,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         await updateInventoryTopology(
           links,
           topologyId,
-          this.xmlExport(this.graph.getModel()),
+          topology,
           unsavedPreferenceTemperatureValues,
           topologyOption
         )
