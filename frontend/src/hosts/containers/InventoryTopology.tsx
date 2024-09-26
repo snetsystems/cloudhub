@@ -641,7 +641,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
         await this.handleLoadCsps()
       }
       await this.getInventoryTopology()
-      this.handleChangeTopologyOption()
 
       this.setTopologySetting()
 
@@ -730,11 +729,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
           topologyOption.linkVisible
         )
       ) {
-        this.fetchIntervalData()
-      }
-
-      if (!_.isEqual(prevState.topologyOption, topologyOption)) {
-        this.handleChangeTopologyOption()
+        this.onChangeTopologyOption()
       }
     }
 
@@ -839,7 +834,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
     } = this.state
     const {notify} = this.props
     const isExportXML = modalTitle === 'Export XML'
-    //modal
     return (
       <div id="containerWrapper" style={{userSelect: 'none'}}>
         {!mxClient.isBrowserSupported() ? (
@@ -918,7 +912,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
                 state={RemoteDataState.Done}
                 topologyOption={topologyOption}
                 setTopologyOption={(value: TopologyOption) =>
-                  this.setState({topologyOption: value})
+                  this.setState(prevState => ({
+                    ...prevState,
+                    topologyOption: value,
+                  }))
                 }
               />
             )}
@@ -1273,8 +1270,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
     if (!this.graph) return
     const graph = this.graph
 
-    graph.getModel().beginUpdate()
-
     try {
       _.forEach(graph.getModel().cells, (cell: mxCellType) => {
         const containerElement = getContainerElement(cell.value)
@@ -1293,8 +1288,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       })
     } catch (error) {
       notify(notifyTopologyOptionChangeFailed(error.message))
-    } finally {
-      graph.getModel().endUpdate()
     }
   }
 
@@ -1310,13 +1303,37 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
     graph.getModel().beginUpdate()
     try {
-      graph.refresh()
       graph.getView().setTranslate(currentTranslate.x, currentTranslate.y)
       graph.getView().setScale(currentScale)
     } catch (error) {
       notify(notifyMapReloadFailed(error.message))
     } finally {
       graph.getModel().endUpdate()
+    }
+  }
+
+  private onChangeTopologyOption = () => {
+    const {notify} = this.props
+    if (!this.graph) return
+    this.setState(preState => ({
+      ...preState,
+      fetchIntervalDataStatus: RemoteDataState.Loading,
+    }))
+    try {
+      this.graph.model.beginUpdate()
+      this.handleChangeTopologyOption()
+
+      this.fetchIpmiStatus()
+      this.getDetectedHostStatus()
+    } catch (error) {
+      notify(notifyTopologyOptionChangeFailed(error.message))
+    } finally {
+      this.graph.model.endUpdate()
+      this.graph.refresh()
+      this.setState(preState => ({
+        ...preState,
+        fetchIntervalDataStatus: RemoteDataState.Done,
+      }))
     }
   }
 
@@ -2948,7 +2965,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
         const response = await createInventoryTopology(
           links,
-          topology,
+          this.xmlExport(this.graph.getModel()),
           unsavedPreferenceTemperatureValues
         )
         const getTopologyId = _.get(response, 'data.id', null)
@@ -2964,7 +2981,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         await updateInventoryTopology(
           links,
           topologyId,
-          topology,
+          this.xmlExport(this.graph.getModel()),
           unsavedPreferenceTemperatureValues,
           topologyOption
         )

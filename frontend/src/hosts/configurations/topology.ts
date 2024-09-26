@@ -530,29 +530,33 @@ export const applyHandler = async function (
           )
           const childrenLink = childrenContainerElement.querySelector('a')
           childrenLink.setAttribute('href', dataLink[1])
-          childrenCell.setValue(childrenContainerElement.outerHTML)
           childrenCell.setVisible(this.state.topologyOption.linkVisible)
+          childrenCell.setValue(childrenContainerElement.outerHTML)
         }
       }
     }
-
     if (attribute === 'data-ipmi_host') {
       if (cell.children) {
         const childrenCell = cell.getChildAt(0)
-        childrenCell.setVisible(this.state.topologyOption.ipmiVisible)
+        const childrenContainerElement = getContainerElement(childrenCell.value)
+
         if (childrenCell.value.includes('ipmi')) {
+          childrenCell.setVisible(this.state.topologyOption.ipmiVisible)
+          childrenCell.setValue(childrenContainerElement.outerHTML)
         }
       }
     }
     if (attribute === 'data-status') {
       if (cell.children) {
         const childrenCell = cell.getChildAt(2)
+        const childrenContainerElement = getContainerElement(childrenCell.value)
         const dataStatus =
           cell.value.match(/data-status="([^"]+)"/)[1].trim() ?? true
         if (childrenCell?.style?.includes('status')) {
           childrenCell.setVisible(
             dataStatus !== 'none' && this.state.topologyOption.hostStatusVisible
           )
+          childrenCell.setValue(childrenContainerElement.outerHTML)
         }
       }
     }
@@ -1524,7 +1528,6 @@ const renderHostState = (
     return
   }
   const hostValue = findHost[findKey]
-
   const statusValue = dataStatusValue(
     statusKind,
     hostValue,
