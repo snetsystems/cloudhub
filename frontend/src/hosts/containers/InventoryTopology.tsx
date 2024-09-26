@@ -640,6 +640,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
         await this.handleLoadCsps()
       }
       await this.getInventoryTopology()
+      this.handleChangeTopologyOption()
+
       this.setTopologySetting()
 
       await this.fetchIntervalData()

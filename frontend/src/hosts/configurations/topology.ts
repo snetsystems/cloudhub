@@ -548,7 +548,6 @@ export const applyHandler = async function (
         const childrenCell = cell.getChildAt(2)
         const dataStatus =
           cell.value.match(/data-status="([^"]+)"/)[1].trim() ?? true
-        //check
         if (childrenCell?.style?.includes('status')) {
           childrenCell.setVisible(
             dataStatus !== 'none' && this.state.topologyOption.hostStatusVisible
