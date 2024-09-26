@@ -488,7 +488,8 @@ export const applyHandler = async function (
             (newValue !== 'none' ? true : false) &&
               this.state.topologyOption.hostStatusVisible
           )
-          shouldFetchData = newValue !== 'false'
+
+          shouldFetchData = newValue !== 'none'
         }
       }
 
@@ -654,6 +655,8 @@ export const dragCell = (node: Menu, self: any) => (
 
   model.beginUpdate()
   const cell = createHTMLValue(node, 'node')
+  const dataType = cell.getAttribute('data-type')
+
   try {
     v1 = graph.insertVertex(
       parent,
@@ -695,8 +698,6 @@ export const dragCell = (node: Menu, self: any) => (
 
     ipmiStatus.geometry.offset = new mxPoint(-12, -12)
     ipmiStatus.setConnectable(false)
-    ipmiStatus.setVisible(self.state.topologyOption.ipmiVisible)
-    graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [ipmiStatus])
 
     const linkBox = document.createElement('div')
     linkBox.setAttribute('btn-type', 'href')
@@ -738,7 +739,10 @@ export const dragCell = (node: Menu, self: any) => (
 
     const statusBox = document.createElement('div')
     statusBox.classList.add('vertex')
-    statusBox.setAttribute('data-status', 'agent')
+    statusBox.setAttribute(
+      'data-status',
+      dataType === 'Server' ? 'agent' : 'none'
+    )
     statusBox.setAttribute('btn-type', 'status')
     statusBox.style.display = 'flex'
     statusBox.style.alignItems = 'center'
@@ -785,17 +789,20 @@ export const dragCell = (node: Menu, self: any) => (
 
     statusCell.geometry.offset = new mxPoint(-24, 6)
     statusCell.setConnectable(false)
-    const statusCheck = _.get(node, 'status') !== 'none' ? true : false
-    statusCell.setVisible(
-      statusCheck && self.state.topologyOption.hostStatusVisible
-    )
+
+    if (dataType === 'Server') {
+      ipmiStatus.setVisible(self.state.topologyOption.ipmiVisible)
+      graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [ipmiStatus])
+      statusCell.setVisible(self.state.topologyOption.hostStatusVisible)
+    } else {
+      ipmiStatus.setVisible(false)
+      statusCell.setVisible(false)
+    }
   } finally {
     model.endUpdate()
   }
 
   graph.setSelectionCell(v1)
-
-  const dataType = cell.getAttribute('data-type')
 
   if (dataType === 'Server') {
     fetchIntervalData(graph, v1, self)
