@@ -172,6 +172,7 @@ import {
   getNamespaceID,
   isGCPRequiredCheck,
   getAgentDetails,
+  generateSHA256Hash,
 } from 'src/hosts/utils'
 
 // error
@@ -2483,9 +2484,18 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleGraphModel = (sender: mxGraphModelType) => {
-    const topology = this.xmlExport(sender)
+    const previousTopology = this.state.topology
+    const currentTopology = this.xmlExport(sender)
 
-    this.setState({topology, isTopologyChanged: true})
+    const previousTopologyHash = generateSHA256Hash(previousTopology)
+    const currentTopologyHash = generateSHA256Hash(currentTopology)
+
+    if (previousTopologyHash !== currentTopologyHash) {
+      this.setState({
+        topology: currentTopology,
+        isTopologyChanged: true,
+      })
+    }
   }
 
   private handleClose = () => {
