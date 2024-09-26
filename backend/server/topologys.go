@@ -70,6 +70,12 @@ func (s *Service) Topology(w http.ResponseWriter, r *http.Request) {
 			ID:           "",
 			Organization: "",
 			Links:        selfLinks{Self: ""},
+			TopologyOptions: cloudhub.TopologyOptions{
+				MinimapVisible:    true,
+				HostStatusVisible: true,
+				IPMIVisible:       true,
+				LinkVisible:       true,
+			},
 		}
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
