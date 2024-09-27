@@ -990,7 +990,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
             cell.setValue(containerElement.outerHTML)
           })
 
-          createIPMIStatusIcon(graph, cell)
+          createIPMIStatusIcon.bind(this)(graph, cell)
         }
       })
     } finally {
@@ -1473,7 +1473,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
               containerElement.removeAttribute(attr.nodeName)
               cell.setValue(containerElement.outerHTML)
             })
-            createIPMIStatusIcon(graph, cell)
+            createIPMIStatusIcon.bind(this)(graph, cell)
           }
         })
       } finally {
@@ -2399,6 +2399,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       this.setState({
         isImportTopologyOverlayVisible: true,
       })
+      this.onChangeTopologyOption()
     })
 
     this.editor.addAction('export', () => {

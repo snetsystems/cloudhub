@@ -431,7 +431,7 @@ export const createIPMIStatusIcon = function (
     return
   }
 
-  if (sepCellStyle[0] === 'ipmi') {
+  if (sepCellStyle[0] === 'ipmi' && this.state.topologyOption.ipmiVisible) {
     graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [childrenCell])
     childrenCell.setVisible(true)
   }
