@@ -356,8 +356,8 @@ export const createTextField = function (
     form.addOption(
       input,
       'NONE',
-      'none',
-      attribute.nodeValue === 'none' ? true : false
+      false,
+      attribute.nodeValue === 'false' ? true : false
     )
   } else if (attribute.nodeName === 'data-icon') {
     input = form.addCombo(nodeName, false)
@@ -488,11 +488,11 @@ export const applyHandler = async function (
 
         if (childrenCell.style.includes('status')) {
           childrenCell.setVisible(
-            (newValue !== 'none' ? true : false) &&
+            (newValue !== 'false' ? true : false) &&
               this.state.topologyOption.hostStatusVisible
           )
 
-          shouldFetchData = newValue !== 'none'
+          shouldFetchData = newValue !== 'false'
         }
       }
 
@@ -550,7 +550,8 @@ export const applyMultiHandler = async function (
           cell.value.match(/data-status="([^"]+)"/)[1].trim() ?? true
         if (childrenCell?.style?.includes('status')) {
           childrenCell.setVisible(
-            dataStatus !== 'none' && this.state.topologyOption.hostStatusVisible
+            dataStatus !== 'false' &&
+              this.state.topologyOption.hostStatusVisible
           )
           childrenCell.setValue(childrenContainerElement.outerHTML)
         }
@@ -754,7 +755,7 @@ export const dragCell = (node: Menu, self: any) => (
     statusBox.classList.add('vertex')
     statusBox.setAttribute(
       'data-status',
-      dataType === 'Server' ? 'agent' : 'none'
+      dataType === 'Server' ? 'agent' : 'false'
     )
     statusBox.setAttribute('btn-type', 'status')
     statusBox.style.display = 'flex'
