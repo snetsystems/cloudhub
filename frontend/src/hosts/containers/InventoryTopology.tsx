@@ -3928,7 +3928,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const hostname = container.getAttribute('data-name')
     const dataGatherType = container.getAttribute('data-status')
 
-    if (isTooltipActiveHost === cellId || dataGatherType === 'none') {
+    if (
+      isTooltipActiveHost === cellId ||
+      dataGatherType === 'none' ||
+      dataGatherType === 'false'
+    ) {
       return
     }
 
