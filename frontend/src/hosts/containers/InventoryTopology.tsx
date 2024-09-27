@@ -1334,6 +1334,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         ...preState,
         fetchIntervalDataStatus: RemoteDataState.Done,
         topology: this.xmlExport(this.graph.getModel()),
+        isTopologyChanged: true,
       }))
     }
   }
