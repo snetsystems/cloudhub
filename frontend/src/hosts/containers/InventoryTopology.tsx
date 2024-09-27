@@ -943,6 +943,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
     importedTopology: string
   ) => {
     await this.importTopology(importedTopology)
+    this.onChangeTopologyOption()
+
     this.fetchIntervalData()
   }
 
@@ -993,6 +995,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
           createIPMIStatusIcon.bind(this)(graph, cell)
         }
       })
+
+      this.onChangeTopologyOption()
     } finally {
       graph.getModel().endUpdate()
     }
@@ -2399,7 +2403,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       this.setState({
         isImportTopologyOverlayVisible: true,
       })
-      this.onChangeTopologyOption()
     })
 
     this.editor.addAction('export', () => {
