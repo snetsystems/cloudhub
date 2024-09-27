@@ -410,7 +410,7 @@ interface State {
   isPreferencesOverlayVisible: boolean
   isOptionOverlayVisible: boolean
   preferenceTemperatureValues: string[]
-  unsavedTopology: string
+  originalTopology: string
   preferencesStatus: RemoteDataState
   unsavedPreferenceTemperatureValues: string[]
   fetchIntervalDataStatus: RemoteDataState
@@ -538,7 +538,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isOptionOverlayVisible: false,
       preferenceTemperatureValues: [],
       unsavedPreferenceTemperatureValues: [],
-      unsavedTopology: '',
+      originalTopology: '',
       preferencesStatus: RemoteDataState.Done,
       fetchIntervalDataStatus: RemoteDataState.NotStarted,
       isTooltipActiveHost: null,
@@ -793,7 +793,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
   public componentWillUnmount() {
     const {isTopologyChanged} = this.state
     const view = this.graph.getView()
-    if (isTopologyChanged && window.confirm('Do you want to save changes?')) {
+    if (
+      (isTopologyChanged || this.compareTopology()) &&
+      window.confirm('Do you want to save changes?')
+    ) {
       this.handleTopologySave()
     }
 
@@ -808,6 +811,16 @@ export class InventoryTopology extends PureComponent<Props, State> {
     }
     this.setLocalStorageToplogySetting(view)
     this.isComponentMounted = false
+  }
+
+  private compareTopology = () => {
+    const previousTopology = this.state.originalTopology
+    const currentTopology = this.state.topology
+
+    const previousTopologyHash = generateSHA256Hash(previousTopology)
+    const currentTopologyHash = generateSHA256Hash(currentTopology)
+
+    return previousTopologyHash !== currentTopologyHash
   }
 
   public render() {
@@ -1484,7 +1497,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         'preferences',
         defaultPreferencesTemperature
       ),
-      unsavedTopology: _.get(topology, 'diagram'),
+      originalTopology: _.get(topology, 'diagram'),
       topology: _.get(topology, 'diagram'),
       topologyId: _.get(topology, 'id'),
       topologyStatus: RemoteDataState.Done,
@@ -2975,7 +2988,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         notify(notifyTopologySaved())
 
         this.setState({
-          unsavedTopology: topology,
+          originalTopology: topology,
           topologyId: getTopologyId,
           topologyStatus: RemoteDataState.Done,
         })
@@ -2992,7 +3005,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
         this.fetchIntervalData()
         this.setState({
-          unsavedTopology: topology,
+          originalTopology: topology,
           topologyStatus: RemoteDataState.Done,
           isTopologyChanged: false,
         })
