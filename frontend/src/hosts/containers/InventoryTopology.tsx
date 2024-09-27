@@ -214,6 +214,7 @@ import {
   refreshGraph,
   isCellMovable,
   createIPMIStatusIcon,
+  applyMultiHandler,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
@@ -1282,20 +1283,20 @@ export class InventoryTopology extends PureComponent<Props, State> {
     }
     if (!this.graph) return
     const graph = this.graph
+    const cells = graph.getModel().cells
 
     try {
-      _.forEach(graph.getModel().cells, (cell: mxCellType) => {
+      _.forEach(cells, (cell: mxCellType) => {
         const containerElement = getContainerElement(cell.value)
-
         if (containerElement && containerElement.hasAttribute('data-type')) {
           const dataType = containerElement.getAttribute('data-type')
+
           const attrsKeys = _.map(
             _.keys(eachNodeTypeAttrs[dataType].attrs),
             attr => `data-${attr}`
           )
-
           _.forEach(attrsKeys, attr => {
-            applyHandler.bind(this)(graph, cell, attr)
+            applyMultiHandler.bind(this)(cell, attr, dataType)
           })
         }
       })
@@ -1313,6 +1314,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const graph = this.graph
     const currentTranslate = graph.getView().getTranslate()
     const currentScale = graph.getView().getScale()
+
+    this.setState(prevState => ({...prevState, isTopologyChanged: true}))
 
     graph.getModel().beginUpdate()
     try {

@@ -24,7 +24,6 @@ import {
   dataStatusValue,
   getContainerElement,
   getContainerTitle,
-  getIsHasString,
   getNotAvailableTitle,
   getParseHTML,
   getSelectedHostKey,
@@ -416,6 +415,10 @@ export const createIPMIStatusIcon = function (
     return
   }
 
+  if (!cell.value.includes('data-type="Server"')) {
+    return
+  }
+
   const childrenCell = cell.getChildAt(0)
   if (!childrenCell || !childrenCell.style) {
     console.error('No valid children cell or missing style.')
@@ -519,22 +522,15 @@ export const applyHandler = async function (
       this.graphUpdateSave(cell)
       this.setState({fetchIntervalDataStatus: RemoteDataState.Done})
     }
-  } else {
-    if (attribute === 'data-link') {
-      if (cell.children) {
-        const childrenCell = cell.getChildAt(1)
-        const dataLink = cell.value.match(/data-link="([^"]+)"/)
-        if (childrenCell?.style?.includes('href') && !!dataLink) {
-          const childrenContainerElement = getContainerElement(
-            childrenCell.value
-          )
-          const childrenLink = childrenContainerElement.querySelector('a')
-          childrenLink.setAttribute('href', dataLink[1])
-          childrenCell.setVisible(this.state.topologyOption.linkVisible)
-          childrenCell.setValue(childrenContainerElement.outerHTML)
-        }
-      }
-    }
+  }
+}
+
+export const applyMultiHandler = async function (
+  cell: mxCellType,
+  attribute: any,
+  dataType: string
+) {
+  if (dataType === 'Server') {
     if (attribute === 'data-ipmi_host') {
       if (cell.children) {
         const childrenCell = cell.getChildAt(0)
@@ -558,6 +554,19 @@ export const applyHandler = async function (
           )
           childrenCell.setValue(childrenContainerElement.outerHTML)
         }
+      }
+    }
+  }
+  if (attribute === 'data-link') {
+    if (cell.children) {
+      const childrenCell = cell.getChildAt(1)
+      const dataLink = cell.value.match(/data-link="([^"]+)"/)
+      if (childrenCell?.style?.includes('href') && !!dataLink) {
+        const childrenContainerElement = getContainerElement(childrenCell.value)
+        const childrenLink = childrenContainerElement.querySelector('a')
+        childrenLink.setAttribute('href', dataLink[1])
+        childrenCell.setVisible(this.state.topologyOption.linkVisible)
+        childrenCell.setValue(childrenContainerElement.outerHTML)
       }
     }
   }
