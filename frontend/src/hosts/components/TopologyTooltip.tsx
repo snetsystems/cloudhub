@@ -61,6 +61,7 @@ export default function TopologyTooltip({targetPosition, tooltipNode}: Props) {
         width: `${TOOLTIP_WIDTH}px`,
         top: dynamicTopOffset,
         left: targetPosition.left,
+        userSelect: 'text',
       }}
     >
       <div

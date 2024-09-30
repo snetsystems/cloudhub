@@ -512,6 +512,10 @@ export const updateCSPInstanceData = (
   return cspInstanceData
 }
 
+export const generateSHA256Hash = (data: string) => {
+  return CryptoJS.SHA256(data).toString(CryptoJS.enc.Hex)
+}
+
 export const cryptoJSAESencrypt = (key: string, encryptKey: string) => {
   const encryptedBytes = CryptoJS.AES.encrypt(key, encryptKey)
   const encryptedKey = encryptedBytes.toString()

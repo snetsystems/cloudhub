@@ -13,7 +13,11 @@ import {
 // Types
 import {Template, Layout, Source, Host, Links} from 'src/types'
 import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
-import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
+import {
+  CloudServiceProvider,
+  CSPFileWriteParam,
+  TopologyOption,
+} from 'src/hosts/types'
 import {DashboardSwitcherLinks} from 'src/types/dashboards'
 
 // APIs
@@ -903,12 +907,13 @@ export const updateInventoryTopology = async (
   links: Links,
   cellsId: string,
   cells: string,
-  preferences: string[]
+  preferences: string[],
+  topologyOptions: TopologyOption
 ) => {
   return await AJAX({
     url: `${_.get(links, 'topologies')}/${cellsId}`,
     method: 'PATCH',
-    data: {cells, preferences},
+    data: {cells, preferences, topologyOptions},
     headers: {'Content-Type': 'text/xml'},
   })
 }
@@ -1537,9 +1542,7 @@ export const getHostsInfoWithIpmi = async (
     `SELECT mean("value") AS "ipmiCpu" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'cpu_usage' AND "hostname" != '' AND time > now() - 10m GROUP BY hostname fill(null);
      SELECT mean("value") AS "ipmiMemory" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'mem_usage' AND "hostname" != '' AND time > now() - 10m GROUP BY hostname;
      SHOW TAG VALUES FROM \":db:\".\":rp:\".\"ipmi_sensor\" WITH KEY = "hostname" WHERE TIME > now() - 10m AND "hostname" != '';
-     SELECT max("inlet") AS "inlet" FROM ( SELECT last("value") AS "inlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "hostname" != '' AND time > now() - 10m AND ("name" =~ ${new RegExp(
-       /inlet_temp|mb_cpu_in_temp|temp_mb_inlet/
-     )}) GROUP BY hostname ) GROUP BY hostname;
+     SELECT max("inlet") AS "inlet" FROM ( SELECT last("value") AS "inlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "hostname" != '' AND time > now() - 10m AND ("name" = 'inlet_temp' OR "name" = 'mb_cpu_in_temp' OR "name" = 'temp_mb_inlet') GROUP BY hostname ) GROUP BY hostname;
      SELECT max("inside") AS "inside", "name" as "cpu_count" FROM ( SELECT last("value") AS "inside"  FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "hostname" != '' AND time > now() - 10m AND ("name" =~ ${new RegExp(
        /cpu_temp|cpu\d+_temp|cpu_temp_\d+|cpu_dimmg\d+_temp|temp_cpu\d+/
      )}) GROUP BY hostname, "name" ) GROUP BY hostname;
@@ -1547,6 +1550,7 @@ export const getHostsInfoWithIpmi = async (
        /system_temp|exhaust_temp|outlet_temp|mb_cpu_out_temp|temp_mb_outlet/
      )}) GROUP BY hostname ) GROUP BY hostname;
      SELECT last(value) as "ipmi_ip" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m GROUP BY  "hostname", "server" FILL(null);
+     SELECT mean("value") AS "powerStatus" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'chassis_power_status' AND "hostname" != '' AND time > now() - 10m GROUP BY hostname, server fill(null);
      `,
     tempVars
   )
@@ -1566,6 +1570,8 @@ export const getHostsInfoWithIpmi = async (
   const ipmiInsideSeries = getDeep<IpmiSeries[]>(data, 'results.[4].series', [])
   const ipmiOutletSeries = getDeep<IpmiSeries[]>(data, 'results.[5].series', [])
   const ipmiHostsAndIp = getDeep<IpmiSeries[]>(data, 'results.[6].series', [])
+  const ipmiPowerStatus = getDeep<IpmiSeries[]>(data, 'results.[7].series', [])
+
   allHostsSeries.forEach(s => {
     const hostnameIndex = s.columns.findIndex(col => col === 'value')
     s.values.forEach(v => {
@@ -1632,6 +1638,14 @@ export const getHostsInfoWithIpmi = async (
       }
     }
   })
+  ipmiPowerStatus.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'powerStatus')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].powerStatus =
+        Number(s.values[0][meanIndex]) === 1 ? 'on' : 'off'
+    }
+  })
+
   if (
     meRole !== SUPERADMIN_ROLE ||
     (meRole === SUPERADMIN_ROLE &&

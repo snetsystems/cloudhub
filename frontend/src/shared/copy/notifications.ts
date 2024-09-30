@@ -1432,3 +1432,25 @@ export const notifyGetDetectedHostStatusFailed = (
   duration: INFINITE,
   message: `Failed to Get Detected Host Status : ${errorMessage}`,
 })
+
+export const notifySetIpmiStatusFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Set IPMI Status : ${errorMessage}`,
+})
+
+export const notifyTopologyOptionChangeFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Change Topology Options : ${errorMessage}`,
+})
+
+export const notifyMapReloadFailed = (errorMessage: string): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Reload Map : ${errorMessage}`,
+})

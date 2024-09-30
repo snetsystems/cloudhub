@@ -275,6 +275,14 @@ message Topology {
 	string Organization     		 = 2; // Organization is the organization ID that resource belongs to
 	string Diagram          		 = 3; // diagram xml
 	repeated string Preferences      = 4; // Temperature type and values
+	TopologyOptions topologyOptions  = 5; // Options for the topology
+}
+
+message TopologyOptions {
+	bool minimapVisible     = 1; // Whether to show the minimap
+	bool hostStatusVisible  = 2; // Whether to show the host status
+	bool ipmiVisible        = 3; // Whether to show the IPMI icon
+	bool linkVisible        = 4; // Whether to show the dashboard link icon
 }
 
 message CSP {
