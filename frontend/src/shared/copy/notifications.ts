@@ -1625,3 +1625,25 @@ export const notifyPredictionHexbinGetFailed = (
   ...defaultErrorNotification,
   message: `Failed to Get Host List. ${errorMessage}`,
 })
+
+export const notifySetIpmiStatusFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Set IPMI Status : ${errorMessage}`,
+})
+
+export const notifyTopologyOptionChangeFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Change Topology Options : ${errorMessage}`,
+})
+
+export const notifyMapReloadFailed = (errorMessage: string): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Reload Map : ${errorMessage}`,
+})

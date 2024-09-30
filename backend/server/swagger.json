@@ -5,22 +5,14 @@
     "description": "API endpoints for CloudHub",
     "version": "2.1.0"
   },
-  "schemes": [
-    "http"
-  ],
+  "schemes": ["http"],
   "basePath": "/cloudhub/v1",
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
   "paths": {
     "/": {
       "get": {
-        "tags": [
-          "routes"
-        ],
+        "tags": ["routes"],
         "summary": "Lists all the endpoints",
         "description": "List of the endpoints.",
         "responses": {
@@ -41,9 +33,7 @@
     },
     "/basic/login": {
       "post": {
-        "tags": [
-          "login"
-        ],
+        "tags": ["login"],
         "summary": "Login Cloudhub potal",
         "description": "Login Cloudhub potal (not oauth2)",
         "parameters": [
@@ -99,9 +89,7 @@
     },
     "/basic/logout": {
       "get": {
-        "tags": [
-          "logout"
-        ],
+        "tags": ["logout"],
         "summary": "Logout Cloudhub potal",
         "description": "Logout Cloudhub potal (not oauth2)",
         "responses": {
@@ -125,9 +113,7 @@
     },
     "/basic/password/reset": {
       "get": {
-        "tags": [
-          "passwd reset by user"
-        ],
+        "tags": ["passwd reset by user"],
         "summary": "Password reset",
         "description": "password reset by user (Before Login)",
         "parameters": [
@@ -180,9 +166,7 @@
     },
     "/password/reset": {
       "get": {
-        "tags": [
-          "passwd reset by admin"
-        ],
+        "tags": ["passwd reset by admin"],
         "summary": "Password reset",
         "description": "password force reset by Admin",
         "parameters": [
@@ -235,9 +219,7 @@
     },
     "/basic/password": {
       "patch": {
-        "tags": [
-          "passwd change by admin"
-        ],
+        "tags": ["passwd change by admin"],
         "summary": "Password change",
         "description": "Password force change by admin",
         "parameters": [
@@ -279,9 +261,7 @@
     },
     "/sources": {
       "get": {
-        "tags": [
-          "sources"
-        ],
+        "tags": ["sources"],
         "summary": "Configured data sources",
         "description": "These data sources store time series data.",
         "responses": {
@@ -300,9 +280,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sources"
-        ],
+        "tags": ["sources"],
         "summary": "Create new data source",
         "parameters": [
           {
@@ -339,9 +317,7 @@
     },
     "/sources/{id}": {
       "get": {
-        "tags": [
-          "sources"
-        ],
+        "tags": ["sources"],
         "parameters": [
           {
             "name": "id",
@@ -375,9 +351,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "sources"
-        ],
+        "tags": ["sources"],
         "summary": "Update data source configuration",
         "parameters": [
           {
@@ -419,9 +393,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sources"
-        ],
+        "tags": ["sources"],
         "parameters": [
           {
             "name": "id",
@@ -453,10 +425,7 @@
     },
     "/sources/{id}/queries": {
       "post": {
-        "tags": [
-          "sources",
-          "queries"
-        ],
+        "tags": ["sources", "queries"],
         "description": "Used to analyze queries for structure`",
         "parameters": [
           {
@@ -500,10 +469,7 @@
     },
     "/sources/{id}/proxy": {
       "post": {
-        "tags": [
-          "sources",
-          "proxy"
-        ],
+        "tags": ["sources", "proxy"],
         "description": "Query the backend time series data source and return the response according to `format`",
         "parameters": [
           {
@@ -566,10 +532,7 @@
     },
     "/sources/{id}/write": {
       "post": {
-        "tags": [
-          "sources",
-          "write"
-        ],
+        "tags": ["sources", "write"],
         "description": "Write points to the backend time series data source",
         "parameters": [
           {
@@ -607,26 +570,14 @@
             "in": "query",
             "description": "Sets the precision for the supplied Unix time values. InfluxDB assumes that timestamps are in nanoseconds if you do not specify precision.",
             "type": "string",
-            "enum": [
-              "ns",
-              "u",
-              "ms",
-              "s",
-              "m",
-              "h"
-            ]
+            "enum": ["ns", "u", "ms", "s", "m", "h"]
           },
           {
             "name": "consistency",
             "in": "query",
             "description": "Sets the write consistency for the point. InfluxDB assumes that the write consistency is one if you do not specify consistency. See the InfluxEnterprise documentation for detailed descriptions of each consistency option.",
             "type": "string",
-            "enum": [
-              "any",
-              "one",
-              "quorum",
-              "all"
-            ]
+            "enum": ["any", "one", "quorum", "all"]
           }
         ],
         "responses": {
@@ -662,9 +613,7 @@
     },
     "/sources/{id}/health": {
       "get": {
-        "tags": [
-          "sources"
-        ],
+        "tags": ["sources"],
         "summary": "Health check for source",
         "description": "Returns if the tsdb source can be contacted",
         "parameters": [
@@ -697,10 +646,7 @@
     },
     "/sources/{id}/permissions": {
       "get": {
-        "tags": [
-          "sources",
-          "users"
-        ],
+        "tags": ["sources", "users"],
         "summary": "Retrieve possible permissions for this data source",
         "parameters": [
           {
@@ -735,10 +681,7 @@
     },
     "/sources/{id}/users": {
       "get": {
-        "tags": [
-          "sources",
-          "users"
-        ],
+        "tags": ["sources", "users"],
         "summary": "Retrieve all data sources users",
         "parameters": [
           {
@@ -771,10 +714,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sources",
-          "users"
-        ],
+        "tags": ["sources", "users"],
         "summary": "Create new user for this data source",
         "parameters": [
           {
@@ -824,10 +764,7 @@
     },
     "/sources/{id}/users/{user_id}": {
       "get": {
-        "tags": [
-          "sources",
-          "users"
-        ],
+        "tags": ["sources", "users"],
         "parameters": [
           {
             "name": "id",
@@ -868,10 +805,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "sources",
-          "users"
-        ],
+        "tags": ["sources", "users"],
         "summary": "Update user configuration",
         "description": "Update one parameter at a time (one of password, permissions or roles)",
         "parameters": [
@@ -921,10 +855,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sources",
-          "users"
-        ],
+        "tags": ["sources", "users"],
         "parameters": [
           {
             "name": "id",
@@ -963,11 +894,7 @@
     },
     "/sources/{id}/roles": {
       "get": {
-        "tags": [
-          "sources",
-          "users",
-          "roles"
-        ],
+        "tags": ["sources", "users", "roles"],
         "summary": "Retrieve all data sources roles.  Available only in Influx Enterprise",
         "parameters": [
           {
@@ -1000,11 +927,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sources",
-          "users",
-          "roles"
-        ],
+        "tags": ["sources", "users", "roles"],
         "summary": "Create new role for this data source",
         "parameters": [
           {
@@ -1054,11 +977,7 @@
     },
     "/sources/{id}/roles/{role_id}": {
       "get": {
-        "tags": [
-          "sources",
-          "users",
-          "roles"
-        ],
+        "tags": ["sources", "users", "roles"],
         "parameters": [
           {
             "name": "id",
@@ -1099,11 +1018,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "sources",
-          "users",
-          "roles"
-        ],
+        "tags": ["sources", "users", "roles"],
         "summary": "Update role configuration",
         "parameters": [
           {
@@ -1152,11 +1067,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sources",
-          "users",
-          "roles"
-        ],
+        "tags": ["sources", "users", "roles"],
         "parameters": [
           {
             "name": "id",
@@ -1195,9 +1106,7 @@
     },
     "/sources/{id}/dbs/": {
       "get": {
-        "tags": [
-          "databases"
-        ],
+        "tags": ["databases"],
         "summary": "Retrieve all databases for a source",
         "parameters": [
           {
@@ -1230,9 +1139,7 @@
         }
       },
       "post": {
-        "tags": [
-          "databases"
-        ],
+        "tags": ["databases"],
         "summary": "Create new database for a source",
         "parameters": [
           {
@@ -1276,9 +1183,7 @@
     },
     "/sources/{id}/dbs/{db}": {
       "delete": {
-        "tags": [
-          "databases"
-        ],
+        "tags": ["databases"],
         "summary": "Delete database for a source",
         "parameters": [
           {
@@ -1317,9 +1222,7 @@
     },
     "/sources/{id}/dbs/{db}/rps": {
       "get": {
-        "tags": [
-          "retention policies"
-        ],
+        "tags": ["retention policies"],
         "summary": "Retrieve all retention policies for a database",
         "parameters": [
           {
@@ -1359,9 +1262,7 @@
         }
       },
       "post": {
-        "tags": [
-          "retention policies"
-        ],
+        "tags": ["retention policies"],
         "summary": "Create new retention policy for a database",
         "parameters": [
           {
@@ -1412,9 +1313,7 @@
     },
     "/sources/{id}/dbs/{db}/rps/{rp}": {
       "patch": {
-        "tags": [
-          "retention policies"
-        ],
+        "tags": ["retention policies"],
         "summary": "Alter retention policy for a database",
         "parameters": [
           {
@@ -1470,9 +1369,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "retention policies"
-        ],
+        "tags": ["retention policies"],
         "summary": "Delete retention policy for a database",
         "parameters": [
           {
@@ -1518,9 +1415,7 @@
     },
     "/sources/{id}/dbs/{db}/measurements": {
       "get": {
-        "tags": [
-          "measurements"
-        ],
+        "tags": ["measurements"],
         "summary": "Retrieve measurements in a database",
         "parameters": [
           {
@@ -1592,10 +1487,7 @@
     },
     "/sources/{id}/kapacitors": {
       "get": {
-        "tags": [
-          "sources",
-          "kapacitors"
-        ],
+        "tags": ["sources", "kapacitors"],
         "parameters": [
           {
             "name": "id",
@@ -1622,10 +1514,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sources",
-          "kapacitors"
-        ],
+        "tags": ["sources", "kapacitors"],
         "summary": "Create new kapacitor backend",
         "parameters": [
           {
@@ -1669,10 +1558,7 @@
     },
     "/sources/{id}/kapacitors/{kapa_id}": {
       "get": {
-        "tags": [
-          "sources",
-          "kapacitors"
-        ],
+        "tags": ["sources", "kapacitors"],
         "parameters": [
           {
             "name": "id",
@@ -1713,10 +1599,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "sources",
-          "kapacitors"
-        ],
+        "tags": ["sources", "kapacitors"],
         "summary": "Update kapacitor configuration",
         "parameters": [
           {
@@ -1765,10 +1648,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sources",
-          "kapacitors"
-        ],
+        "tags": ["sources", "kapacitors"],
         "parameters": [
           {
             "name": "id",
@@ -1808,11 +1688,7 @@
     },
     "/sources/{id}/kapacitors/{kapa_id}/rules": {
       "get": {
-        "tags": [
-          "sources",
-          "kapacitors",
-          "rules"
-        ],
+        "tags": ["sources", "kapacitors", "rules"],
         "description": "Get all defined alert rules.",
         "parameters": [
           {
@@ -1852,11 +1728,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sources",
-          "kapacitors",
-          "rules"
-        ],
+        "tags": ["sources", "kapacitors", "rules"],
         "description": "Create kapacitor alert rule",
         "parameters": [
           {
@@ -1920,11 +1792,7 @@
     },
     "/sources/{id}/kapacitors/{kapa_id}/rules/{rule_id}": {
       "get": {
-        "tags": [
-          "sources",
-          "kapacitors",
-          "rules"
-        ],
+        "tags": ["sources", "kapacitors", "rules"],
         "parameters": [
           {
             "name": "id",
@@ -1972,11 +1840,7 @@
         }
       },
       "put": {
-        "tags": [
-          "sources",
-          "kapacitors",
-          "rules"
-        ],
+        "tags": ["sources", "kapacitors", "rules"],
         "summary": "Update rule alert rule configuration",
         "parameters": [
           {
@@ -2032,11 +1896,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sources",
-          "kapacitors",
-          "rules"
-        ],
+        "tags": ["sources", "kapacitors", "rules"],
         "parameters": [
           {
             "name": "id",
@@ -2082,11 +1942,7 @@
     },
     "/sources/{id}/kapacitors/{kapa_id}/proxy": {
       "get": {
-        "tags": [
-          "sources",
-          "kapacitors",
-          "proxy"
-        ],
+        "tags": ["sources", "kapacitors", "proxy"],
         "description": "GET to `path` of kapacitor.  The response and status code from kapacitor is directly returned.",
         "parameters": [
           {
@@ -2130,11 +1986,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sources",
-          "kapacitors",
-          "proxy"
-        ],
+        "tags": ["sources", "kapacitors", "proxy"],
         "description": "DELETE to `path` of kapacitor. The response and status code from kapacitor is directly returned.",
         "parameters": [
           {
@@ -2178,11 +2030,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "sources",
-          "kapacitors",
-          "proxy"
-        ],
+        "tags": ["sources", "kapacitors", "proxy"],
         "description": "PATCH body directly to configured kapacitor.  The response and status code from kapacitor is directly returned.",
         "parameters": [
           {
@@ -2235,11 +2083,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sources",
-          "kapacitors",
-          "proxy"
-        ],
+        "tags": ["sources", "kapacitors", "proxy"],
         "description": "POST body directly to configured kapacitor.  The response and status code from kapacitor is directly returned.",
         "parameters": [
           {
@@ -2294,10 +2138,7 @@
     },
     "/sources/{id}/services": {
       "get": {
-        "tags": [
-          "sources",
-          "services"
-        ],
+        "tags": ["sources", "services"],
         "parameters": [
           {
             "name": "id",
@@ -2324,10 +2165,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sources",
-          "services"
-        ],
+        "tags": ["sources", "services"],
         "parameters": [
           {
             "name": "id",
@@ -2370,10 +2208,7 @@
     },
     "/sources/{id}/services/{srv_id}": {
       "get": {
-        "tags": [
-          "sources",
-          "services"
-        ],
+        "tags": ["sources", "services"],
         "parameters": [
           {
             "name": "id",
@@ -2414,10 +2249,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "sources",
-          "services"
-        ],
+        "tags": ["sources", "services"],
         "summary": "Update service configuration",
         "parameters": [
           {
@@ -2472,10 +2304,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sources",
-          "services"
-        ],
+        "tags": ["sources", "services"],
         "parameters": [
           {
             "name": "id",
@@ -2515,11 +2344,7 @@
     },
     "/sources/{id}/services/{srv_id}/proxy": {
       "get": {
-        "tags": [
-          "sources",
-          "services",
-          "proxy"
-        ],
+        "tags": ["sources", "services", "proxy"],
         "description": "GET to `path` of Service.  The response and status code from Service is directly returned.",
         "parameters": [
           {
@@ -2563,11 +2388,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sources",
-          "services",
-          "proxy"
-        ],
+        "tags": ["sources", "services", "proxy"],
         "description": "DELETE to `path` of Service. The response and status code from the service is directly returned.",
         "parameters": [
           {
@@ -2611,11 +2432,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "sources",
-          "services",
-          "proxy"
-        ],
+        "tags": ["sources", "services", "proxy"],
         "description": "PATCH body directly to configured service.  The response and status code from Service is directly returned.",
         "parameters": [
           {
@@ -2668,11 +2485,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sources",
-          "services",
-          "proxy"
-        ],
+        "tags": ["sources", "services", "proxy"],
         "description": "POST body directly to configured Service.  The response and status code from Service is directly returned.",
         "parameters": [
           {
@@ -2727,10 +2540,7 @@
     },
     "/mappings": {
       "get": {
-        "tags": [
-          "layouts",
-          "mappings"
-        ],
+        "tags": ["layouts", "mappings"],
         "summary": "Mappings between app names and measurements",
         "description": "Mappings provide a means to alias measurement names found within a telegraf database and application layouts found within CloudHub\n",
         "responses": {
@@ -2751,9 +2561,7 @@
     },
     "/layouts": {
       "get": {
-        "tags": [
-          "layouts"
-        ],
+        "tags": ["layouts"],
         "summary": "Pre-configured layouts",
         "parameters": [
           {
@@ -2796,9 +2604,7 @@
         }
       },
       "post": {
-        "tags": [
-          "layouts"
-        ],
+        "tags": ["layouts"],
         "summary": "Create new layout",
         "parameters": [
           {
@@ -2835,9 +2641,7 @@
     },
     "/layouts/{id}": {
       "get": {
-        "tags": [
-          "layouts"
-        ],
+        "tags": ["layouts"],
         "parameters": [
           {
             "name": "id",
@@ -2871,9 +2675,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "layouts"
-        ],
+        "tags": ["layouts"],
         "parameters": [
           {
             "name": "id",
@@ -2903,9 +2705,7 @@
         }
       },
       "put": {
-        "tags": [
-          "layouts"
-        ],
+        "tags": ["layouts"],
         "summary": "Replace layout configuration.",
         "parameters": [
           {
@@ -2949,9 +2749,7 @@
     },
     "/dashboards": {
       "get": {
-        "tags": [
-          "dashboards"
-        ],
+        "tags": ["dashboards"],
         "summary": "List of all dashboards",
         "responses": {
           "200": {
@@ -2969,9 +2767,7 @@
         }
       },
       "post": {
-        "tags": [
-          "dashboards"
-        ],
+        "tags": ["dashboards"],
         "summary": "Create new dashboard",
         "parameters": [
           {
@@ -3008,9 +2804,7 @@
     },
     "/dashboards/{id}": {
       "get": {
-        "tags": [
-          "dashboards"
-        ],
+        "tags": ["dashboards"],
         "parameters": [
           {
             "name": "id",
@@ -3044,9 +2838,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "dashboards"
-        ],
+        "tags": ["dashboards"],
         "parameters": [
           {
             "name": "id",
@@ -3076,9 +2868,7 @@
         }
       },
       "put": {
-        "tags": [
-          "dashboards"
-        ],
+        "tags": ["dashboards"],
         "summary": "Replace dashboard information.",
         "parameters": [
           {
@@ -3120,9 +2910,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "layouts"
-        ],
+        "tags": ["layouts"],
         "summary": "Update dashboard information.",
         "description": "Update either the dashboard name or the dashboard cells",
         "parameters": [
@@ -3167,10 +2955,7 @@
     },
     "/organizations": {
       "get": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "summary": "Retrieve all organizations",
         "description": "Returns all organizations from the store",
         "responses": {
@@ -3201,10 +2986,7 @@
         }
       },
       "post": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "summary": "Create new organization",
         "description": "Creates a CloudHub organization in the store",
         "parameters": [
@@ -3260,10 +3042,7 @@
     },
     "/organizations/{id}": {
       "get": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "parameters": [
           {
             "name": "id",
@@ -3303,10 +3082,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "summary": "Update existing organization",
         "description": "Updates a CloudHub organization in the store",
         "parameters": [
@@ -3368,10 +3144,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "summary": "Delete organization",
         "description": "Deletes a CloudHub organization in the store",
         "parameters": [
@@ -3416,10 +3189,7 @@
     },
     "/users": {
       "get": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "summary": "Retrieve all CloudHub users within the current organization",
         "description": "Returns all CloudHub users within the current organization from the store",
         "responses": {
@@ -3450,10 +3220,7 @@
         }
       },
       "post": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "summary": "Create new user (by admin)",
         "description": "Creates a CloudHub user in the store",
         "parameters": [
@@ -3515,10 +3282,7 @@
     },
     "/basic/users": {
       "post": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "summary": "Create new user (by sign up)",
         "description": "Creates a CloudHub user in the store",
         "parameters": [
@@ -3580,10 +3344,7 @@
     },
     "/users/{id}": {
       "get": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "parameters": [
           {
             "name": "id",
@@ -3623,10 +3384,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "summary": "Update existing user",
         "description": "Updates a CloudHub user in the store",
         "parameters": [
@@ -3700,10 +3458,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "organizations",
-          "users"
-        ],
+        "tags": ["organizations", "users"],
         "summary": "Delete user",
         "description": "Deletes a CloudHub user in the store",
         "parameters": [
@@ -3748,9 +3503,7 @@
     },
     "/config": {
       "get": {
-        "tags": [
-          "config"
-        ],
+        "tags": ["config"],
         "summary": "Returns the global application configuration",
         "description": "All global application configurations",
         "responses": {
@@ -3777,9 +3530,7 @@
     },
     "/config/auth": {
       "get": {
-        "tags": [
-          "config"
-        ],
+        "tags": ["config"],
         "summary": "Returns the global application configuration for auth",
         "description": "All global application configuration for auth",
         "responses": {
@@ -3804,9 +3555,7 @@
         }
       },
       "put": {
-        "tags": [
-          "config"
-        ],
+        "tags": ["config"],
         "summary": "Updates the global application configuration for auth",
         "description": "Replaces the global application configuration for auth",
         "parameters": [
@@ -3844,9 +3593,7 @@
     },
     "/org_config": {
       "get": {
-        "tags": [
-          "organization config"
-        ],
+        "tags": ["organization config"],
         "summary": "Retrieve the organization configuration",
         "description": "Organization-specific configurations such as log viewer configs",
         "responses": {
@@ -3873,9 +3620,7 @@
     },
     "/org_config/logviewer": {
       "get": {
-        "tags": [
-          "organization config"
-        ],
+        "tags": ["organization config"],
         "summary": "Retrieve the organization-specific log viewer configurations",
         "description": "Retrieve the log viewer configurations for the user's current organization",
         "responses": {
@@ -3900,9 +3645,7 @@
         }
       },
       "put": {
-        "tags": [
-          "organization config"
-        ],
+        "tags": ["organization config"],
         "summary": "Update the log viewer configuration",
         "description": "Update the log viewer configuration for a specific organization",
         "parameters": [
@@ -3940,10 +3683,7 @@
     },
     "/sources/{id}/annotations/": {
       "get": {
-        "tags": [
-          "sources",
-          "annotations"
-        ],
+        "tags": ["sources", "annotations"],
         "description": "Retrieve a list of user-defined annotations.",
         "parameters": [
           {
@@ -3998,10 +3738,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sources",
-          "annotations"
-        ],
+        "tags": ["sources", "annotations"],
         "description": "Create an annotation",
         "parameters": [
           {
@@ -4045,10 +3782,7 @@
     },
     "/sources/{id}/annotations/{annotation_id}": {
       "get": {
-        "tags": [
-          "sources",
-          "annotations"
-        ],
+        "tags": ["sources", "annotations"],
         "description": "Retrieve a single annotation",
         "parameters": [
           {
@@ -4094,10 +3828,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sources",
-          "annotations"
-        ],
+        "tags": ["sources", "annotations"],
         "description": "Delete an annotation",
         "parameters": [
           {
@@ -4134,10 +3865,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "sources",
-          "annotations"
-        ],
+        "tags": ["sources", "annotations"],
         "description": "Update an annotation",
         "parameters": [
           {
@@ -4188,9 +3916,7 @@
     },
     "/proxy/salt": {
       "post": {
-        "tags": [
-          "salt proxy"
-        ],
+        "tags": ["salt proxy"],
         "description": "POST body directly to Salt backend. The response and status code from Salt is directly returned.",
         "parameters": [
           {
@@ -4215,9 +3941,7 @@
     },
     "/vspheres": {
       "get": {
-        "tags": [
-          "vspheres"
-        ],
+        "tags": ["vspheres"],
         "summary": "Retrieve all vspheres",
         "description": "Returns all vspheres from the store",
         "responses": {
@@ -4248,9 +3972,7 @@
         }
       },
       "post": {
-        "tags": [
-          "vspheres"
-        ],
+        "tags": ["vspheres"],
         "summary": "Create new vsphere",
         "description": "Creates a vsphere in the store",
         "parameters": [
@@ -4369,9 +4091,7 @@
     },
     "/vspheres/{id}": {
       "get": {
-        "tags": [
-          "vspheres"
-        ],
+        "tags": ["vspheres"],
         "parameters": [
           {
             "name": "id",
@@ -4411,9 +4131,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "vspheres"
-        ],
+        "tags": ["vspheres"],
         "summary": "Update existing vsphere",
         "description": "Updates a vsphere in the store",
         "parameters": [
@@ -4531,9 +4249,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "vspheres"
-        ],
+        "tags": ["vspheres"],
         "summary": "Delete vsphere",
         "description": "Deletes a vsphere in the store",
         "parameters": [
@@ -4578,9 +4294,7 @@
     },
     "/topologies": {
       "get": {
-        "tags": [
-          "topologies"
-        ],
+        "tags": ["topologies"],
         "summary": "Search organization's inventory topology",
         "description": "Returns a inventory topology from the store",
         "responses": {
@@ -4617,9 +4331,7 @@
         }
       },
       "post": {
-        "tags": [
-          "topologies"
-        ],
+        "tags": ["topologies"],
         "summary": "Create organization's new inventory topology",
         "description": "Creates a inventory topology in the store",
         "parameters": [
@@ -4673,9 +4385,7 @@
     },
     "/topologies/{id}": {
       "patch": {
-        "tags": [
-          "topologies"
-        ],
+        "tags": ["topologies"],
         "summary": "Update organization's inventory topology",
         "description": "Updates a inventory topology in the store",
         "parameters": [
@@ -4742,9 +4452,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "topologies"
-        ],
+        "tags": ["topologies"],
         "summary": "Delete organization's inventory topology",
         "description": "Deletes a inventory topology in the store",
         "parameters": [
@@ -4789,10 +4497,7 @@
     },
     "/login/locked": {
       "patch": {
-        "tags": [
-          "login",
-          "users"
-        ],
+        "tags": ["login", "users"],
         "summary": "Locked user",
         "description": "Block user login",
         "parameters": [
@@ -4834,9 +4539,7 @@
     },
     "/logging": {
       "post": {
-        "tags": [
-          "logging"
-        ],
+        "tags": ["logging"],
         "description": "web general acitivity logging",
         "parameters": [
           {
@@ -4877,9 +4580,7 @@
     },
     "/csp": {
       "get": {
-        "tags": [
-          "CSP"
-        ],
+        "tags": ["CSP"],
         "summary": "Search organization's all CSP",
         "description": "Returns all CSP from the store",
         "responses": {
@@ -4916,9 +4617,7 @@
         }
       },
       "post": {
-        "tags": [
-          "CSP"
-        ],
+        "tags": ["CSP"],
         "summary": "Create organization's new CSP",
         "description": "Creates a CSP in the store",
         "parameters": [
@@ -5001,9 +4700,7 @@
     },
     "/csp/{id}": {
       "get": {
-        "tags": [
-          "CSP"
-        ],
+        "tags": ["CSP"],
         "parameters": [
           {
             "name": "id",
@@ -5043,9 +4740,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "CSP"
-        ],
+        "tags": ["CSP"],
         "summary": "Update organization's CSP",
         "description": "Updates a CSP in the store",
         "parameters": [
@@ -5132,9 +4827,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "CSP"
-        ],
+        "tags": ["CSP"],
         "summary": "Delete organization's CSP",
         "description": "Deletes a CSP in the store",
         "parameters": [
@@ -5179,9 +4872,7 @@
     },
     "/ai/network/managements/devices": {
       "get": {
-        "tags": [
-          "Device Management"
-        ],
+        "tags": ["Device Management"],
         "summary": "Get all devices",
         "description": "Retrieve a list of all devices.",
         "responses": {
@@ -5200,9 +4891,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Device Management"
-        ],
+        "tags": ["Device Management"],
         "summary": "Create new devices",
         "description": "Add new devices to the network.",
         "parameters": [
@@ -5240,9 +4929,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Device Management"
-        ],
+        "tags": ["Device Management"],
         "summary": "Delete a device by IDs",
         "description": "Remove a specific device by IDs.",
         "parameters": [
@@ -5274,9 +4961,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Device Management"
-        ],
+        "tags": ["Device Management"],
         "summary": "Update a device by ID",
         "description": "Update the details of a specific device by ID.",
         "parameters": [
@@ -5326,9 +5011,7 @@
     },
     "/ai/network/managements/devices/{id}": {
       "get": {
-        "tags": [
-          "Device Management"
-        ],
+        "tags": ["Device Management"],
         "summary": "Get a device by ID",
         "description": "Retrieve the details of a specific device by ID.",
         "parameters": [
@@ -5364,9 +5047,7 @@
     },
     "/ai/network/managements/monitoring/config": {
       "post": {
-        "tags": [
-          "Device Management Apply Monitoring"
-        ],
+        "tags": ["Device Management Apply Monitoring"],
         "summary": "Device Management Apply Monitoring for Logstash Config",
         "description": "Managing Logstash configuration by Organization",
         "parameters": [
@@ -5403,9 +5084,7 @@
     },
     "/ai/network/managements/learning/config": {
       "post": {
-        "tags": [
-          "Device Management Apply Learning"
-        ],
+        "tags": ["Device Management Apply Learning"],
         "summary": "Select whether to learn the devices",
         "description": "Building a learning model for the selected devices",
         "parameters": [
@@ -5442,9 +5121,7 @@
     },
     "/ai/network/managements/orgs{id}": {
       "get": {
-        "tags": [
-          "Device Organization Management"
-        ],
+        "tags": ["Device Organization Management"],
         "summary": "Get a device Org by ID",
         "description": "Retrieve the details of a specific device Org by ID.",
         "parameters": [
@@ -5480,9 +5157,7 @@
     },
     "/ai/network/managements/orgs": {
       "get": {
-        "tags": [
-          "Device Organization Management"
-        ],
+        "tags": ["Device Organization Management"],
         "summary": "Get all devices Organization",
         "description": "Retrieve a list of all devices Organization.",
         "responses": {
@@ -5501,9 +5176,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Device Organization Management"
-        ],
+        "tags": ["Device Organization Management"],
         "summary": "Create new devices Organization",
         "description": "Add new devices Organization.",
         "parameters": [
@@ -5538,9 +5211,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Device Organization Management"
-        ],
+        "tags": ["Device Organization Management"],
         "summary": "Update a device Organization by Organization ID",
         "description": "Update the details of a specific device Organization by Organization ID.",
         "parameters": [
@@ -5590,9 +5261,7 @@
     },
     "/ai/network/managements/learning/rst/ml": {
       "get": {
-        "tags": [
-          "Machine Learning RST"
-        ],
+        "tags": ["Machine Learning RST"],
         "summary": "Get MLNxRst by IP",
         "description": "Retrieve the details of a specific MLNxRst by IP.",
         "parameters": [
@@ -5634,9 +5303,7 @@
     },
     "/ai/network/managements/learning/rst/dl": {
       "get": {
-        "tags": [
-          "Deep Learning RST"
-        ],
+        "tags": ["Deep Learning RST"],
         "summary": "Get DLNxRst by IP",
         "description": "Retrieve the details of a specific DLNxRst by IP.",
         "parameters": [
@@ -5678,9 +5345,7 @@
     },
     "/ai/network/managements/script/org/{tid}": {
       "get": {
-        "tags": [
-          "Device Organization TickScript"
-        ],
+        "tags": ["Device Organization TickScript"],
         "summary": "Get a TickSCript by TickScript ID",
         "description": "Retrieve the details of a specific device Org by ID.",
         "parameters": [
@@ -5716,9 +5381,7 @@
     },
     "ai/network/managements/script/org/": {
       "post": {
-        "tags": [
-          "Device Organization TickScript"
-        ],
+        "tags": ["Device Organization TickScript"],
         "description": "Create Organization Learning TickScript",
         "parameters": [
           {
@@ -5766,9 +5429,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Device Organization TickScript"
-        ],
+        "tags": ["Device Organization TickScript"],
         "description": "Update Organization TickScript",
         "parameters": [
           {
@@ -5818,9 +5479,7 @@
     },
     "/snmp/validation": {
       "post": {
-        "tags": [
-          "SNMP Management"
-        ],
+        "tags": ["SNMP Management"],
         "summary": "Validate SNMP connection",
         "description": "Perform a bulk test to validate SNMP connections.",
         "parameters": [
@@ -5867,12 +5526,7 @@
         "defaultRole": {
           "description": "The default role that new users in this organization will have.",
           "type": "string",
-          "enum": [
-            "member",
-            "viewer",
-            "editor",
-            "admin"
-          ]
+          "enum": ["member", "viewer", "editor", "admin"]
         },
         "id": {
           "type": "string",
@@ -5895,9 +5549,7 @@
           "description": "User-facing name of the organization resource."
         }
       },
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "example": {
         "defaultRole": "viewer",
         "id": "1",
@@ -5909,9 +5561,7 @@
     },
     "Organizations": {
       "type": "object",
-      "required": [
-        "organizations"
-      ],
+      "required": ["organizations"],
       "properties": {
         "links": {
           "type": "object",
@@ -5970,12 +5620,7 @@
           "description": "Email (only scheme=basic currently supported)"
         }
       },
-      "required": [
-        "name",
-        "provider",
-        "roles",
-        "scheme"
-      ],
+      "required": ["name", "provider", "roles", "scheme"],
       "example": {
         "name": "pineapple@cubeoctohedron.flux",
         "provider": "github",
@@ -6061,13 +5706,7 @@
           "description": "user locked"
         }
       },
-      "required": [
-        "id",
-        "name",
-        "provider",
-        "roles",
-        "scheme"
-      ],
+      "required": ["id", "name", "provider", "roles", "scheme"],
       "example": {
         "id": "1",
         "links": {
@@ -6091,9 +5730,7 @@
     },
     "Users": {
       "type": "object",
-      "required": [
-        "users"
-      ],
+      "required": ["users"],
       "properties": {
         "links": {
           "type": "object",
@@ -6126,10 +5763,7 @@
           "description": "locked"
         }
       },
-      "required": [
-        "name",
-        "locked"
-      ],
+      "required": ["name", "locked"],
       "example": {
         "name": "test",
         "locked": true
@@ -6141,12 +5775,7 @@
         "name": {
           "description": "A CloudHub user's role within an organization.",
           "type": "string",
-          "enum": [
-            "member",
-            "viewer",
-            "editor",
-            "admin"
-          ]
+          "enum": ["member", "viewer", "editor", "admin"]
         },
         "organization": {
           "type": "string",
@@ -6156,9 +5785,7 @@
     },
     "Databases": {
       "type": "object",
-      "required": [
-        "databases"
-      ],
+      "required": ["databases"],
       "properties": {
         "databases": {
           "type": "array",
@@ -6170,9 +5797,7 @@
     },
     "Database": {
       "type": "object",
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "example": {
         "name": "NOAA_water_database",
         "duration": "3d",
@@ -6244,9 +5869,7 @@
     },
     "Kapacitors": {
       "type": "object",
-      "required": [
-        "kapacitors"
-      ],
+      "required": ["kapacitors"],
       "properties": {
         "kapacitors": {
           "type": "array",
@@ -6258,10 +5881,7 @@
     },
     "Kapacitor": {
       "type": "object",
-      "required": [
-        "name",
-        "url"
-      ],
+      "required": ["name", "url"],
       "example": {
         "id": "4",
         "name": "kapa",
@@ -6337,9 +5957,7 @@
     },
     "Services": {
       "type": "object",
-      "required": [
-        "services"
-      ],
+      "required": ["services"],
       "properties": {
         "services": {
           "type": "array",
@@ -6351,10 +5969,7 @@
     },
     "Service": {
       "type": "object",
-      "required": [
-        "name",
-        "url"
-      ],
+      "required": ["name", "url"],
       "example": {
         "id": "1",
         "sourceID": "1",
@@ -6442,9 +6057,7 @@
     },
     "Rules": {
       "type": "object",
-      "required": [
-        "rules"
-      ],
+      "required": ["rules"],
       "properties": {
         "rules": {
           "type": "array",
@@ -6568,10 +6181,7 @@
               }
             }
           },
-          "required": [
-            "time",
-            "tags"
-          ]
+          "required": ["time", "tags"]
         },
         "fields": {
           "type": "array",
@@ -6589,10 +6199,7 @@
               "type": "string"
             }
           },
-          "required": [
-            "lower",
-            "upper"
-          ]
+          "required": ["lower", "upper"]
         }
       },
       "required": [
@@ -6608,9 +6215,7 @@
     "KapacitorNode": {
       "type": "object",
       "description": "Represents a node in the kapacitor TICKscript graph",
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "properties": {
         "name": {
           "type": "string",
@@ -6634,10 +6239,7 @@
     },
     "Field": {
       "type": "object",
-      "required": [
-        "type",
-        "value"
-      ],
+      "required": ["type", "value"],
       "description": "Represents a field to be returned from an InfluxQL query",
       "properties": {
         "value": {
@@ -6647,14 +6249,7 @@
         "type": {
           "description": "type describes the field type. func is a function; field is a field reference",
           "type": "string",
-          "enum": [
-            "func",
-            "field",
-            "integer",
-            "number",
-            "regex",
-            "wildcard"
-          ]
+          "enum": ["func", "field", "integer", "number", "regex", "wildcard"]
         },
         "alias": {
           "description": "Alias overrides the field name in the returned response.  Applies only if type is `func`",
@@ -6672,9 +6267,7 @@
     "KapacitorProperty": {
       "type": "object",
       "description": "Represents a property attached to a node in the kapacitor TICKscript graph",
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "properties": {
         "name": {
           "type": "string",
@@ -6691,9 +6284,7 @@
     },
     "RetentionPolicies": {
       "type": "object",
-      "required": [
-        "retentionPolicies"
-      ],
+      "required": ["retentionPolicies"],
       "properties": {
         "retentionPolicies": {
           "type": "array",
@@ -6705,11 +6296,7 @@
     },
     "RetentionPolicy": {
       "type": "object",
-      "required": [
-        "name",
-        "duration",
-        "replication"
-      ],
+      "required": ["name", "duration", "replication"],
       "example": {
         "name": "weekly",
         "duration": "7d",
@@ -6848,9 +6435,7 @@
           "areTagsAccepted": true
         },
         "every": "30s",
-        "alerts": [
-          "alerta"
-        ],
+        "alerts": ["alerta"],
         "alertNodes": [
           {
             "name": "alerta",
@@ -6941,9 +6526,7 @@
           "areTagsAccepted": true
         },
         "every": "30s",
-        "alerts": [
-          "alerta"
-        ],
+        "alerts": ["alerta"],
         "alertNodes": [
           {
             "name": "alerta",
@@ -6979,11 +6562,7 @@
           "output": "/cloudhub/v1/sources/5/kapacitors/5/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38%2Foutput"
         }
       },
-      "required": [
-        "query",
-        "every",
-        "trigger"
-      ],
+      "required": ["query", "every", "trigger"],
       "properties": {
         "id": {
           "type": "string",
@@ -7046,11 +6625,7 @@
         "trigger": {
           "type": "string",
           "description": "Trigger defines the alerting structure; deadman alert if no data are received for the specified time range; relative alert if the data change relative to the data in a different time range; threshold alert if the data cross a boundary",
-          "enum": [
-            "deadman",
-            "relative",
-            "threshold"
-          ]
+          "enum": ["deadman", "relative", "threshold"]
         },
         "values": {
           "type": "object",
@@ -7059,10 +6634,7 @@
             "change": {
               "description": "Specifies if the change is percent or absolute",
               "type": "string",
-              "enum": [
-                "% change",
-                "change"
-              ]
+              "enum": ["% change", "change"]
             },
             "period": {
               "description": "Length of time before deadman is alerted (golang duration)",
@@ -7110,10 +6682,7 @@
         "status": {
           "type": "string",
           "description": "Represents if this rule is enabled or disabled in kapacitor",
-          "enum": [
-            "enabled",
-            "disabled"
-          ]
+          "enum": ["enabled", "disabled"]
         },
         "executing": {
           "type": "boolean",
@@ -7123,10 +6692,7 @@
         "type": {
           "type": "string",
           "description": "Represents the task type where stream is data streamed to kapacitor and batch is queried by kapacitor.",
-          "enum": [
-            "stream",
-            "batch"
-          ]
+          "enum": ["stream", "batch"]
         },
         "error": {
           "type": "string",
@@ -7150,10 +6716,7 @@
         },
         "links": {
           "type": "object",
-          "required": [
-            "self",
-            "kapacitor"
-          ],
+          "required": ["self", "kapacitor"],
           "properties": {
             "self": {
               "description": "Self link pointing to this rule resource",
@@ -7187,10 +6750,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "db",
-        "rp"
-      ]
+      "required": ["db", "rp"]
     },
     "Sources": {
       "type": "array",
@@ -7223,9 +6783,7 @@
           "health": "/cloudhub/v1/sources/4/health"
         }
       },
-      "required": [
-        "url"
-      ],
+      "required": ["url"],
       "properties": {
         "id": {
           "type": "string",
@@ -7240,11 +6798,7 @@
           "type": "string",
           "description": "Format of the data source",
           "readOnly": true,
-          "enum": [
-            "influx",
-            "influx-enterprise",
-            "influx-relay"
-          ]
+          "enum": ["influx", "influx-enterprise", "influx-relay"]
         },
         "username": {
           "type": "string",
@@ -7370,9 +6924,7 @@
           }
         ]
       },
-      "required": [
-        "query"
-      ],
+      "required": ["query"],
       "properties": {
         "query": {
           "type": "string"
@@ -7386,14 +6938,7 @@
         "epoch": {
           "description": "timestamp return format",
           "type": "string",
-          "enum": [
-            "h",
-            "m",
-            "s",
-            "ms",
-            "u",
-            "ns"
-          ]
+          "enum": ["h", "m", "s", "ms", "u", "ns"]
         },
         "tempVars": {
           "type": "array",
@@ -7431,14 +6976,7 @@
         },
         "type": {
           "type": "string",
-          "enum": [
-            "csv",
-            "tagKey",
-            "tagValue",
-            "fieldKey",
-            "timeStamp",
-            "map"
-          ],
+          "enum": ["csv", "tagKey", "tagValue", "fieldKey", "timeStamp", "map"],
           "description": "The type will change the format of the output value. tagKey/fieldKey are double quoted; tagValue are single quoted; csv and timeStamp are not quoted."
         },
         "key": {
@@ -7521,10 +7059,7 @@
               {
                 "scope": "database",
                 "name": "telegraf",
-                "allowed": [
-                  "ReadData",
-                  "WriteData"
-                ]
+                "allowed": ["ReadData", "WriteData"]
               }
             ],
             "links": {
@@ -7536,9 +7071,7 @@
     },
     "InfluxDB-Role": {
       "type": "object",
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "properties": {
         "name": {
           "type": "string",
@@ -7578,10 +7111,7 @@
           {
             "scope": "database",
             "name": "telegraf",
-            "allowed": [
-              "ReadData",
-              "WriteData"
-            ]
+            "allowed": ["ReadData", "WriteData"]
           }
         ],
         "links": {
@@ -7630,10 +7160,7 @@
                   {
                     "scope": "database",
                     "name": "telegraf",
-                    "allowed": [
-                      "ReadData",
-                      "WriteData"
-                    ]
+                    "allowed": ["ReadData", "WriteData"]
                   }
                 ],
                 "links": {
@@ -7707,10 +7234,7 @@
               {
                 "scope": "database",
                 "name": "telegraf",
-                "allowed": [
-                  "ReadData",
-                  "WriteData"
-                ]
+                "allowed": ["ReadData", "WriteData"]
               }
             ],
             "links": {
@@ -7733,18 +7257,12 @@
     "InfluxDB-Permission": {
       "description": "Permission is a specific allowance for InfluxDB User or InfluxDB Role bound to a scope of the data source",
       "type": "object",
-      "required": [
-        "scope",
-        "allowed"
-      ],
+      "required": ["scope", "allowed"],
       "properties": {
         "scope": {
           "type": "string",
           "description": "Describes if the permission is for all databases or restricted to one database",
-          "enum": [
-            "all",
-            "database"
-          ]
+          "enum": ["all", "database"]
         },
         "name": {
           "type": "string",
@@ -7757,10 +7275,7 @@
       "example": {
         "scope": "database",
         "name": "telegraf",
-        "allowed": [
-          "READ",
-          "WRITE"
-        ]
+        "allowed": ["READ", "WRITE"]
       }
     },
     "AllPermissions": {
@@ -7818,9 +7333,7 @@
       }
     },
     "Layouts": {
-      "required": [
-        "layouts"
-      ],
+      "required": ["layouts"],
       "type": "object",
       "properties": {
         "layouts": {
@@ -7833,11 +7346,7 @@
     },
     "Layout": {
       "type": "object",
-      "required": [
-        "cells",
-        "app",
-        "measurement"
-      ],
+      "required": ["cells", "app", "measurement"],
       "properties": {
         "id": {
           "type": "string",
@@ -7880,15 +7389,11 @@
             "queries": [
               {
                 "query": "SELECT derivative(mean(\"tx_bytes\"), 10s) AS \"net_tx_bytes\" FROM \"docker_container_net\"",
-                "groupbys": [
-                  "\"container_name\""
-                ]
+                "groupbys": ["\"container_name\""]
               },
               {
                 "query": "SELECT derivative(mean(\"rx_bytes\"), 10s) AS \"net_rx_bytes\" FROM \"docker_container_net\"",
-                "groupbys": [
-                  "\"container_name\""
-                ]
+                "groupbys": ["\"container_name\""]
               }
             ],
             "type": ""
@@ -7902,9 +7407,7 @@
     },
     "Mappings": {
       "type": "object",
-      "required": [
-        "mappings"
-      ],
+      "required": ["mappings"],
       "properties": {
         "mappings": {
           "type": "array",
@@ -7916,10 +7419,7 @@
     },
     "Mapping": {
       "type": "object",
-      "required": [
-        "measurement",
-        "name"
-      ],
+      "required": ["measurement", "name"],
       "properties": {
         "measurement": {
           "description": "The measurement where data for this mapping is found",
@@ -7937,13 +7437,7 @@
     },
     "Cell": {
       "type": "object",
-      "required": [
-        "i",
-        "x",
-        "y",
-        "w",
-        "h"
-      ],
+      "required": ["i", "x", "y", "w", "h"],
       "properties": {
         "i": {
           "description": "Unique ID of Cell",
@@ -8029,19 +7523,12 @@
             "type": {
               "description": "type is the style of the legend",
               "type": "string",
-              "enum": [
-                "static"
-              ]
+              "enum": ["static"]
             },
             "orientation": {
               "description": "orientation is the location of the legend with respect to the cell graph",
               "type": "string",
-              "enum": [
-                "top",
-                "bottom",
-                "left",
-                "right"
-              ]
+              "enum": ["top", "bottom", "left", "right"]
             }
           }
         },
@@ -8058,11 +7545,7 @@
           "wrapping": {
             "description": "wrapping describes the text wrapping style to be used in table cells",
             "type": "string",
-            "enum": [
-              "truncate",
-              "wrap",
-              "single-line"
-            ]
+            "enum": ["truncate", "wrap", "single-line"]
           },
           "fixFirstColumn": {
             "description": "fixFirstColumn indicates whether the first column of the table should be locked",
@@ -8144,9 +7627,7 @@
     },
     "LayoutQuery": {
       "type": "object",
-      "required": [
-        "query"
-      ],
+      "required": ["query"],
       "properties": {
         "label": {
           "description": "Optional Y-axis user-facing label for this query",
@@ -8155,10 +7636,7 @@
         "range": {
           "description": "Optional default range of the Y-axis",
           "type": "object",
-          "required": [
-            "upper",
-            "lower"
-          ],
+          "required": ["upper", "lower"],
           "properties": {
             "upper": {
               "description": "Upper bound of the display range of the Y-axis",
@@ -8193,19 +7671,13 @@
       "example": {
         "label": "# warnings",
         "query": "SELECT count(\"check_id\") as \"Number Warning\" FROM consul_health_checks",
-        "wheres": [
-          "\"status\" = 'warning'"
-        ],
-        "groupbys": [
-          "\"service_name\""
-        ]
+        "wheres": ["\"status\" = 'warning'"],
+        "groupbys": ["\"service_name\""]
       }
     },
     "DashboardQuery": {
       "type": "object",
-      "required": [
-        "query"
-      ],
+      "required": ["query"],
       "properties": {
         "label": {
           "description": "Optional Y-axis user-facing label for this query",
@@ -8214,10 +7686,7 @@
         "range": {
           "description": "Optional default range of the Y-axis",
           "type": "object",
-          "required": [
-            "upper",
-            "lower"
-          ],
+          "required": ["upper", "lower"],
           "properties": {
             "upper": {
               "description": "Upper bound of the display range of the Y-axis",
@@ -8447,11 +7916,7 @@
         "type": {
           "description": "Type is how the color is used.",
           "type": "string",
-          "enum": [
-            "min",
-            "max",
-            "threshold"
-          ]
+          "enum": ["min", "max", "threshold"]
         },
         "hex": {
           "description": "Hex is the hex number of the color",
@@ -8545,9 +8010,7 @@
     "AuthConfig": {
       "description": "Global application configuration for auth",
       "type": "object",
-      "required": [
-        "superAdminNewUsers"
-      ],
+      "required": ["superAdminNewUsers"],
       "properties": {
         "superAdminNewUsers": {
           "type": "boolean",
@@ -8561,9 +8024,7 @@
     "OrganizationConfig": {
       "description": "Configurations for a specific organization",
       "type": "object",
-      "required": [
-        "logViewer"
-      ],
+      "required": ["logViewer"],
       "properties": {
         "organization": {
           "type": "string",
@@ -8626,9 +8087,7 @@
     "LogViewerConfig": {
       "description": "Contains the organization-specific configuration for the log viewer",
       "type": "object",
-      "required": [
-        "columns"
-      ],
+      "required": ["columns"],
       "properties": {
         "columns": {
           "description": "Defines the order, names, and visibility of columns in the log viewer table",
@@ -8688,11 +8147,7 @@
     "LogViewerColumn": {
       "description": "Contains the organization-specific configuration for the log viewer",
       "type": "object",
-      "required": [
-        "name",
-        "encodings",
-        "position"
-      ],
+      "required": ["name", "encodings", "position"],
       "properties": {
         "name": {
           "description": "Unique identifier name of the column",
@@ -8708,10 +8163,7 @@
           "items": {
             "description": "Type and value and optional name of an encoding",
             "type": "object",
-            "required": [
-              "type",
-              "value"
-            ],
+            "required": ["type", "value"],
             "properties": {
               "type": {
                 "type": "string"
@@ -9005,10 +8457,7 @@
     },
     "Link": {
       "type": "object",
-      "required": [
-        "rel",
-        "href"
-      ],
+      "required": ["rel", "href"],
       "readOnly": true,
       "description": "URI of resource.",
       "properties": {
@@ -9184,10 +8633,7 @@
       "example": {
         "return": [
           {
-            "up": [
-              "server-01.snet.com",
-              "server-02.snet.com"
-            ],
+            "up": ["server-01.snet.com", "server-02.snet.com"],
             "down": []
           }
         ]
@@ -9333,9 +8779,7 @@
     },
     "Vspheres": {
       "type": "object",
-      "required": [
-        "vspheres"
-      ],
+      "required": ["vspheres"],
       "properties": {
         "links": {
           "type": "object",
@@ -9373,10 +8817,7 @@
           "description": "true or false(case-insensitive), default: false"
         }
       },
-      "required": [
-        "name",
-        "password"
-      ],
+      "required": ["name", "password"],
       "example": {
         "name": "test",
         "password": "dkeidj@!@",
@@ -9392,9 +8833,7 @@
           "description": "password reset flag (Y/N)"
         }
       },
-      "required": [
-        "passwordResetFlag"
-      ],
+      "required": ["passwordResetFlag"],
       "example": {
         "passwordResetFlag": "N"
       }
@@ -9420,11 +8859,7 @@
           "description": "temporary password"
         }
       },
-      "required": [
-        "passwordResetFlag",
-        "user_name",
-        "send_kind"
-      ],
+      "required": ["passwordResetFlag", "user_name", "send_kind"],
       "example": {
         "passwordResetFlag": "N",
         "password": "dkdu@#(632",
@@ -9445,13 +8880,31 @@
           "description": "user password"
         }
       },
-      "required": [
-        "name",
-        "password"
-      ],
+      "required": ["name", "password"],
       "example": {
         "name": "test",
         "password": "dkeidj@!@"
+      }
+    },
+    "TopologyOptions": {
+      "type": "object",
+      "properties": {
+        "minimapVisible": {
+          "type": "boolean",
+          "description": "Visibility of the minimap"
+        },
+        "hostStatusVisible": {
+          "type": "boolean",
+          "description": "Visibility of the host status"
+        },
+        "ipmiVisible": {
+          "type": "boolean",
+          "description": "Visibility of the IPMI (Intelligent Platform Management Interface)"
+        },
+        "linkVisible": {
+          "type": "boolean",
+          "description": "Visibility of the network links"
+        }
       }
     },
     "InventoryTopologyReq": {
@@ -9474,6 +8927,9 @@
             "type:inside,active:1,min:56,max:55",
             "type:outlet,active:0,min:34,max:50"
           ]
+        },
+        "topologyOptions": {
+          "$ref": "#/definitions/TopologyOptions"
         }
       }
     },
@@ -9501,17 +8957,18 @@
             "type": "string"
           }
         },
-        "links": {
-          "type": "string",
-          "description": "self url"
-        }
+        "topologyOptions": {
+          "$ref": "#/definitions/TopologyOptions"
+        },
+        "links": {"type": "string", "description": "self url"}
       },
       "required": [
         "id",
         "organization",
         "diagram",
         "links",
-        "preferences"
+        "preferences",
+        "topologyOptions"
       ],
       "example": {
         "id": "1",
@@ -9524,6 +8981,12 @@
         ],
         "links": {
           "self": "/cloudhub/v1/topologies/1"
+        },
+        "topologyOptions": {
+          "minimapVisible": true,
+          "hostStatusVisible": true,
+          "ipmiVisible": true,
+          "linkVisible": true
         }
       }
     },
@@ -9540,10 +9003,7 @@
           "description": "log message"
         }
       },
-      "required": [
-        "action",
-        "message"
-      ],
+      "required": ["action", "message"],
       "example": {
         "action": "test",
         "message": "test message"
@@ -9551,9 +9011,7 @@
     },
     "CSPs": {
       "type": "object",
-      "required": [
-        "CSPs"
-      ],
+      "required": ["CSPs"],
       "properties": {
         "links": {
           "type": "object",
@@ -9599,10 +9057,7 @@
           "description": "Target Salt Minion(Applied if providor is aws only)"
         }
       },
-      "required": [
-        "provider",
-        "namespace"
-      ],
+      "required": ["provider", "namespace"],
       "example": {
         "provider": "osp",
         "namespace": "osp_pj_demo01",
@@ -9679,13 +9134,7 @@
           "description": "self url"
         }
       },
-      "required": [
-        "id",
-        "provider",
-        "namespace",
-        "organization",
-        "links"
-      ],
+      "required": ["id", "provider", "namespace", "organization", "links"],
       "example": {
         "id": "1",
         "provider": "osp",
@@ -9818,15 +9267,10 @@
           "items": {
             "type": "string"
           },
-          "example": [
-            "1",
-            "2"
-          ]
+          "example": ["1", "2"]
         }
       },
-      "required": [
-        "devices_ids"
-      ]
+      "required": ["devices_ids"]
     },
     "ApplyMonitoringDeviceRequest": {
       "type": "object",
@@ -9861,9 +9305,7 @@
           }
         }
       },
-      "required": [
-        "collecting_devices"
-      ]
+      "required": ["collecting_devices"]
     },
     "ApplyLearningDeviceRequest": {
       "type": "object",
@@ -9885,16 +9327,11 @@
                 "example": true
               }
             },
-            "required": [
-              "device_id",
-              "is_learning"
-            ]
+            "required": ["device_id", "is_learning"]
           }
         }
       },
-      "required": [
-        "learning_devices"
-      ]
+      "required": ["learning_devices"]
     },
     "DeviceResponse": {
       "type": "object",
@@ -10081,10 +9518,7 @@
             "type": "string"
           },
           "description": "List of target devices for SNMP validation",
-          "example": [
-            "192.168.0.1",
-            "192.168.0.2"
-          ]
+          "example": ["192.168.0.1", "192.168.0.2"]
         },
         "community": {
           "type": "string",
@@ -10137,12 +9571,7 @@
           "example": "udp"
         }
       },
-      "required": [
-        "community",
-        "device_ip",
-        "port",
-        "version"
-      ]
+      "required": ["community", "device_ip", "port", "version"]
     },
     "SNMPValidationResponse": {
       "type": "object",
@@ -10283,12 +9712,7 @@
           "example": "authPriv"
         }
       },
-      "required": [
-        "community",
-        "port",
-        "version",
-        "protocol"
-      ]
+      "required": ["community", "port", "version", "protocol"]
     },
     "AIKapcitor": {
       "type": "object",
@@ -10324,12 +9748,7 @@
           "example": false
         }
       },
-      "required": [
-        "srcId",
-        "kapaId",
-        "url",
-        "insecure_skip_verify"
-      ]
+      "required": ["srcId", "kapaId", "url", "insecure_skip_verify"]
     },
     "Device_SNMPConfig": {
       "type": "object",
@@ -10360,13 +9779,7 @@
           "example": "udp"
         }
       },
-      "required": [
-        "community",
-        "device_ip",
-        "port",
-        "version",
-        "protocol"
-      ]
+      "required": ["community", "device_ip", "port", "version", "protocol"]
     },
     "DeviceOrgRequest": {
       "type": "object",
@@ -10456,11 +9869,7 @@
           "items": {
             "type": "string"
           },
-          "example": [
-            "1",
-            "2",
-            "3"
-          ]
+          "example": ["1", "2", "3"]
         },
         "collector_server": {
           "type": "string",
@@ -10473,11 +9882,7 @@
           "items": {
             "type": "string"
           },
-          "example": [
-            "1",
-            "2",
-            "3"
-          ]
+          "example": ["1", "2", "3"]
         },
         "ai_kapacitor": {
           "$ref": "#/definitions/AIKapcitor",
@@ -10570,10 +9975,7 @@
             "type": "integer",
             "format": "float"
           },
-          "example": [
-            1.0447414,
-            1.0309266
-          ]
+          "example": [1.0447414, 1.0309266]
         },
         "cpu_array": {
           "type": "array",
@@ -10581,10 +9983,7 @@
             "type": "integer",
             "format": "float"
           },
-          "example": [
-            1.0447414,
-            1.0309266
-          ]
+          "example": [1.0447414, 1.0309266]
         },
         "traffic_array": {
           "type": "array",
@@ -10592,10 +9991,7 @@
             "type": "integer",
             "format": "float"
           },
-          "example": [
-            1.0447414,
-            1.0309266
-          ]
+          "example": [1.0447414, 1.0309266]
         },
         "gaussian_array": {
           "type": "array",
@@ -10603,10 +9999,7 @@
             "type": "integer",
             "format": "float"
           },
-          "example": [
-            1.0447414,
-            1.0309266
-          ]
+          "example": [1.0447414, 1.0309266]
         }
       }
     },
@@ -10634,10 +10027,7 @@
             "type": "integer",
             "format": "float"
           },
-          "example": [
-            1.0447414,
-            1.0309266
-          ]
+          "example": [1.0447414, 1.0309266]
         },
         "valid_loss": {
           "type": "array",
@@ -10645,10 +10035,7 @@
             "type": "integer",
             "format": "float"
           },
-          "example": [
-            1.0447414,
-            1.0309266
-          ]
+          "example": [1.0447414, 1.0309266]
         },
         "mse": {
           "type": "array",
@@ -10656,10 +10043,7 @@
             "type": "integer",
             "format": "float"
           },
-          "example": [
-            1.0447414,
-            1.0309266
-          ]
+          "example": [1.0447414, 1.0309266]
         }
       }
     },

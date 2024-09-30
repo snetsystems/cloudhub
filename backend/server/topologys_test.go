@@ -56,6 +56,12 @@ func TestTopology(t *testing.T) {
 								"type:inside,active:0,min:38,max:55",
 								"type:outlet,active:0,min:30,max:50",
 							},
+							TopologyOptions: cloudhub.TopologyOptions{
+								MinimapVisible:    true,
+								HostStatusVisible: false,
+								IPMIVisible:       true,
+								LinkVisible:       true,
+							},
 						}, nil
 					},
 				},
@@ -70,7 +76,7 @@ func TestTopology(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"},"diagram":"<xml></xml>","preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"]}`,
+			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"},"diagram":"\u003cxml\u003e\u003c/xml\u003e","preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"],"topologyOptions":{"minimapVisible":true,"hostStatusVisible":false,"ipmiVisible":true,"linkVisible":true}}`,
 		},
 	}
 
@@ -135,7 +141,12 @@ func TestUpdateTopology(t *testing.T) {
 					"type:inlet,active:0,min:15,max:30",
 					"type:inside,active:1,min:56,max:55",
 					"type:outlet,active:0,min:34,max:50"
-				]}`,
+				], "topologyOptions": {
+					"minimapVisible": true,
+					"hostStatusVisible": false,
+					"ipmiVisible": true,
+					"linkVisible": true
+				}}`,
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
@@ -153,6 +164,12 @@ func TestUpdateTopology(t *testing.T) {
 								"type:inside,active:0,min:38,max:55",
 								"type:outlet,active:0,min:30,max:50",
 							},
+							TopologyOptions: cloudhub.TopologyOptions{
+								MinimapVisible:    true,
+								HostStatusVisible: false,
+								IPMIVisible:       true,
+								LinkVisible:       true,
+							},
 						}, nil
 					},
 				},
@@ -160,7 +177,7 @@ func TestUpdateTopology(t *testing.T) {
 			id:              "1",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"},"preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"]}`,
+			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"},"preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"],"topologyOptions":{"minimapVisible":true,"hostStatusVisible":false,"ipmiVisible":true,"linkVisible":true}}`,
 		},
 	}
 
@@ -317,7 +334,12 @@ func TestNewTopology(t *testing.T) {
 					"type:inlet,active:0,min:15,max:30",
 					"type:inside,active:1,min:56,max:55",
 					"type:outlet,active:0,min:34,max:50"
-				]}`,
+				], "topologyOptions": {
+					"minimapVisible": true,
+					"hostStatusVisible": false,
+					"ipmiVisible": true,
+					"linkVisible": true
+				}}`,
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
@@ -331,6 +353,12 @@ func TestNewTopology(t *testing.T) {
 								"type:inlet,active:1,min:15,max:30",
 								"type:inside,active:0,min:38,max:55",
 								"type:outlet,active:0,min:30,max:50",
+							},
+							TopologyOptions: cloudhub.TopologyOptions{
+								MinimapVisible:    true,
+								HostStatusVisible: false,
+								IPMIVisible:       true,
+								LinkVisible:       true,
 							},
 						}, nil
 					},
@@ -365,7 +393,7 @@ func TestNewTopology(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1","links":{"self":"/cloudhub/v1/topologies/1"},"organization":"225","preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"]}`,
+			wantBody:        `{"id":"1","links":{"self":"/cloudhub/v1/topologies/1"},"organization":"225","preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"],"topologyOptions":{"minimapVisible":true,"hostStatusVisible":false,"ipmiVisible":true,"linkVisible":true}}`,
 		},
 		{
 			name: "Fail to create topology - no body",

@@ -526,6 +526,12 @@ func TestMarshalTopology(t *testing.T) {
 			"type:inside,active:0,min:38,max:55",
 			"type:outlet,active:0,min:30,max:50",
 		},
+		TopologyOptions: cloudhub.TopologyOptions{
+			MinimapVisible:    true,
+			HostStatusVisible: false,
+			IPMIVisible:       true,
+			LinkVisible:       true,
+		},
 	}
 
 	var vv cloudhub.Topology
