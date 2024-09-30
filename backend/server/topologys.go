@@ -12,16 +12,20 @@ import (
 )
 
 type topologyResponse struct {
-	ID           string    `json:"id"`
-	Organization string    `json:"organization"`
-	Links        selfLinks `json:"links"`
-	Diagram      string    `json:"diagram,omitempty"`
-	Preferences  []string  `json:"preferences,omitempty"`
+	ID              string                   `json:"id"`
+	Organization    string                   `json:"organization"`
+	Links           selfLinks                `json:"links"`
+	Diagram         string                   `json:"diagram,omitempty"`
+	Preferences     []string                 `json:"preferences,omitempty"`
+	TopologyOptions cloudhub.TopologyOptions `json:"topologyOptions,omitempty"`
 }
 
+// RequestBody represents the structure of the request payload
+// containing cells, user preferences, and topology options for the topology.
 type RequestBody struct {
-	Cells       string   `json:"cells"`
-	Preferences []string `json:"preferences"`
+	Cells           string                   `json:"cells"`
+	Preferences     []string                 `json:"preferences"`
+	TopologyOptions cloudhub.TopologyOptions `json:"topologyOptions"`
 }
 
 func newTopologyResponse(t *cloudhub.Topology, resDiagram bool) *topologyResponse {
@@ -32,6 +36,12 @@ func newTopologyResponse(t *cloudhub.Topology, resDiagram bool) *topologyRespons
 		Organization: t.Organization,
 		Links:        selfLinks{Self: selfLink},
 		Preferences:  t.Preferences,
+		TopologyOptions: cloudhub.TopologyOptions{
+			MinimapVisible:    t.TopologyOptions.MinimapVisible,
+			HostStatusVisible: t.TopologyOptions.HostStatusVisible,
+			IPMIVisible:       t.TopologyOptions.IPMIVisible,
+			LinkVisible:       t.TopologyOptions.LinkVisible,
+		},
 	}
 
 	if resDiagram {
@@ -60,6 +70,12 @@ func (s *Service) Topology(w http.ResponseWriter, r *http.Request) {
 			ID:           "",
 			Organization: "",
 			Links:        selfLinks{Self: ""},
+			TopologyOptions: cloudhub.TopologyOptions{
+				MinimapVisible:    true,
+				HostStatusVisible: true,
+				IPMIVisible:       true,
+				LinkVisible:       true,
+			},
 		}
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
@@ -102,6 +118,12 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 		Diagram:      requestData.Cells,
 		Preferences:  requestData.Preferences,
 		Organization: defaultOrg.ID,
+		TopologyOptions: cloudhub.TopologyOptions{
+			MinimapVisible:    requestData.TopologyOptions.MinimapVisible,
+			HostStatusVisible: requestData.TopologyOptions.HostStatusVisible,
+			IPMIVisible:       requestData.TopologyOptions.IPMIVisible,
+			LinkVisible:       requestData.TopologyOptions.LinkVisible,
+		},
 	}
 
 	if err := ValidTopologRequest(topology, defaultOrg.ID); err != nil {
@@ -115,7 +137,7 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// log registrationte
+	// log registration
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &res.Organization})
 	msg := fmt.Sprintf(MsgTopologyCreated.String(), org.Name)
 	s.logRegistration(ctx, "Topologies", msg)
@@ -190,6 +212,12 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 
 	topology.Diagram = requestData.Cells
 	topology.Preferences = requestData.Preferences
+	topology.TopologyOptions = cloudhub.TopologyOptions{
+		MinimapVisible:    requestData.TopologyOptions.MinimapVisible,
+		HostStatusVisible: requestData.TopologyOptions.HostStatusVisible,
+		IPMIVisible:       requestData.TopologyOptions.IPMIVisible,
+		LinkVisible:       requestData.TopologyOptions.LinkVisible,
+	}
 
 	if err := s.Store.Topologies(ctx).Update(ctx, topology); err != nil {
 		msg := fmt.Sprintf("Error updating topology ID %s: %v", id, err)
@@ -197,7 +225,7 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// log registrationte
+	// log registration
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &topology.Organization})
 	msg := fmt.Sprintf(MsgTopologyModified.String(), org.Name)
 	s.logRegistration(ctx, "Topologies", msg)
