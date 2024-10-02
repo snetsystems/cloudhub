@@ -9979,8 +9979,8 @@
         },
         "ml_function": {
           "type": "string",
-          "description": " ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
-          "example": "ml_multiplied"
+          "description": " ML Learning Threshold Decision Algorithm. One of ['ml_linear_descent', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_linear_descent"
         }
       }
     },
@@ -10378,8 +10378,8 @@
         },
         "ml_function": {
           "type": "string",
-          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
-          "example": "ml_multiplied"
+          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_linear_descent', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_linear_descent"
         },
         "data_duration": {
           "type": "integer",
@@ -10442,8 +10442,8 @@
         },
         "ml_function": {
           "type": "string",
-          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
-          "example": "ml_multiplied"
+          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_linear_descent', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_linear_descent"
         },
         "data_duration": {
           "type": "integer",
@@ -10506,8 +10506,8 @@
         },
         "ml_function": {
           "type": "string",
-          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']",
-          "example": "ml_multiplied"
+          "description": "ML Learning Threshold Decision Algorithm. One of ['ml_linear_descent', 'ml_scaling_normalized', 'ml_gaussian_std']",
+          "example": "ml_linear_descent"
         },
         "data_duration": {
           "type": "integer",

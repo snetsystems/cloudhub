@@ -99,7 +99,7 @@ export const SYSTEM_MODAL = {
 } as const
 
 export const MLFunctionMsg = {
-  ml_multiplied: 'Correlation Coefficient',
+  ml_linear_descent: 'Linear Descent',
   ml_scaling_normalized: 'Scaling Normalized',
   ml_gaussian_std: 'Gaussian Standard Deviation',
 } as const

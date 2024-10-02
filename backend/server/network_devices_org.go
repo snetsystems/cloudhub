@@ -80,8 +80,8 @@ type InfluxdbInfo struct {
 	Password string
 }
 
-// MLFunctionMultiplied represents an ML algorithm for multiplication-based operations.
-const MLFunctionMultiplied = "ml_multiplied"
+// MLFunctionLinearDescent represents an ML algorithm for multiplication-based operations.
+const MLFunctionLinearDescent = "ml_linear_descent"
 
 // MLFunctionScalingNormalized represents an ML algorithm for scaling and normalization.
 const MLFunctionScalingNormalized = "ml_scaling_normalized"
@@ -102,7 +102,7 @@ const (
 
 func isAllowedMLFunction(function string) bool {
 	switch function {
-	case MLFunctionMultiplied, MLFunctionScalingNormalized, MLFunctionGaussianStd:
+	case MLFunctionLinearDescent, MLFunctionScalingNormalized, MLFunctionGaussianStd:
 		return true
 	default:
 		return false

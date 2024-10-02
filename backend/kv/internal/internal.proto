@@ -297,7 +297,7 @@ message CSP {
 message NetworkDeviceOrg {
   string ID                           = 1;  // Org ID
   string LoadModule                   = 2;  // Currently fixed by loader.cloudhub.ch_nx_load
-  string MLFunction                   = 3;  // ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']
+  string MLFunction                   = 3;  // ML Learning Threshold Decision Algorithm. One of ['ml_linear_descent', 'ml_scaling_normalized', 'ml_gaussian_std']
   int32 DataDuration                  = 4;  // data_duration for learning
   repeated string LearnedDevicesIDs   = 5;  // the list of device IDs what will be learing included in the network device org
   string CollectorServer              = 6;  // the server(minion_id) used to collect network data

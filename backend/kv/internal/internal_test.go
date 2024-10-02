@@ -604,7 +604,7 @@ func TestMarshalNetworkDeviceOrg(t *testing.T) {
 	v := cloudhub.NetworkDeviceOrg{
 		ID:                  "default",
 		LoadModule:          "learn.ch_nx_load",
-		MLFunction:          "ml_multiplied",
+		MLFunction:          "ml_linear_descent",
 		DataDuration:        1,
 		LearnedDevicesIDs:   []string{"1", "2", "3"},
 		CollectorServer:     "ch-collector-1",
