@@ -652,14 +652,12 @@ function LearningSettingModal({
     )
   }
 
-  const handleClickAlertIcon = () => {
+  const handleClickAlertSettingButton = () => {
     const confirm = window.confirm(
       "If you make changes, they won't be saved.\nDo you want to continue?"
     )
 
     if (confirm) {
-      onSubmit()
-
       router.push(`/sources/${selectedSource.id}/alert-rules`)
     }
   }
@@ -695,7 +693,7 @@ function LearningSettingModal({
                         href="#"
                         onClick={e => {
                           e.preventDefault()
-                          handleClickAlertIcon()
+                          handleClickAlertSettingButton()
                         }}
                         title="Alert Setting"
                       >
