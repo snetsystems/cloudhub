@@ -246,6 +246,15 @@ function PredictionHexbinWrapper({
             isActive={isHexbinDisplay}
             isLeft={true}
           />
+
+          <PredictionHexbinToggle
+            isActive={isMlChartDisplay}
+            onChange={() => {
+              setIsMlChartDisplay(!isMlChartDisplay)
+              setTagLocalStorage(!isMlChartDisplay, 'ml')
+            }}
+            label="ML"
+          />
           <PredictionHexbinToggle
             isActive={isDlChartDisplay}
             onChange={() => {
@@ -254,14 +263,6 @@ function PredictionHexbinWrapper({
             }}
             label="DL"
             // isHide={true}
-          />
-          <PredictionHexbinToggle
-            isActive={isMlChartDisplay}
-            onChange={() => {
-              setIsMlChartDisplay(!isMlChartDisplay)
-              setTagLocalStorage(!isMlChartDisplay, 'ml')
-            }}
-            label="ML"
           />
         </PredictionDashboardHeader>
 
