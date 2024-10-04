@@ -120,7 +120,7 @@ export const DEFAULT_PREDICT_MODE: keyof typeof PREDICT_MODE =
 export const DEFAULT_LEARNING_OPTION: LearningOption = {
   organization: '',
   data_duration: 15,
-  ml_function: 'ml_scaling_normalized' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
+  ml_function: 'ml_linear_descent' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
   task_status: 2,
 }
 
