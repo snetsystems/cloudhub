@@ -409,7 +409,7 @@ func TestUpdateNetworkDevice(t *testing.T) {
 				"device_vendor": "Cisco",
 				"learning_update_datetime": "2023-01-04T00:00:00Z",
 				"learning_finish_datetime": "2023-01-05T12:00:00Z",
-				"ml_function":"ml_multiplied",
+				"ml_function":"ml_linear_descent",
 				"is_learning": false
 			  }`,
 		},
@@ -1165,7 +1165,7 @@ func MockNetworkDeviceOrgStoreSetup() *mocks.NetworkDeviceOrgStore {
 				{
 					ID:                "default",
 					LoadModule:        "",
-					MLFunction:        "ml_multiplied",
+					MLFunction:        "ml_linear_descent",
 					DataDuration:      1,
 					LearnedDevicesIDs: []string{"1", "2", "3"},
 					CollectorServer:   "ch-collector-2",
@@ -1183,7 +1183,7 @@ func MockNetworkDeviceOrgStoreSetup() *mocks.NetworkDeviceOrgStore {
 				{
 					ID:                  "76",
 					LoadModule:          "",
-					MLFunction:          "ml_multiplied",
+					MLFunction:          "ml_linear_descent",
 					DataDuration:        1,
 					LearnedDevicesIDs:   []string{"1", "2", "3"},
 					CollectedDevicesIDs: []string{"1", "2", "3"},
@@ -1204,7 +1204,7 @@ func MockNetworkDeviceOrgStoreSetup() *mocks.NetworkDeviceOrgStore {
 		GetF: func(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error) {
 			return &cloudhub.NetworkDeviceOrg{
 				ID:                  "76",
-				MLFunction:          "ml_multiplied",
+				MLFunction:          "ml_linear_descent",
 				LoadModule:          "",
 				DataDuration:        1,
 				LearnedDevicesIDs:   []string{"1", "2", "3"},

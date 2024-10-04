@@ -117,7 +117,7 @@ const (
 
 func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
 	deviceOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
-	MLFunction := MLFunctionMultiplied
+	MLFunction := MLFunctionLinearDescent
 	if deviceOrg != nil {
 		MLFunction = deviceOrg.MLFunction
 	}
