@@ -1336,3 +1336,87 @@ func TestFilterDevicesBySNMPConfigV3(t *testing.T) {
 		}
 	}
 }
+
+func TestPreprocessRequestCreate(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *string
+		expected *string
+	}{
+		{
+			name:     "Trim spaces from LearningCron",
+			input:    ptr("  * * * * *  "),
+			expected: ptr("* * * * *"),
+		},
+		{
+			name:     "No spaces in LearningCron",
+			input:    ptr("* * * * *"),
+			expected: ptr("* * * * *"),
+		},
+		{
+			name:     "Nil LearningCron",
+			input:    nil,
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &deviceOrgRequest{
+				LearningCron: tt.input,
+			}
+			err := req.prerocessRequestCreate()
+			if err != nil {
+				t.Fatalf("prerocessRequestCreate() returned an error: %v", err)
+			}
+
+			if tt.input == nil && req.LearningCron != nil {
+				t.Errorf("Expected LearningCron to remain nil, but got %v", *req.LearningCron)
+			} else if tt.input != nil && *req.LearningCron != *tt.expected {
+				t.Errorf("Expected LearningCron to be %v, but got %v", *tt.expected, *req.LearningCron)
+			}
+		})
+	}
+}
+
+func TestPreprocessRequestUpdate(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *string
+		expected *string
+	}{
+		{
+			name:     "Trim spaces from LearningCron",
+			input:    ptr("  0 0 * * *  "),
+			expected: ptr("0 0 * * *"),
+		},
+		{
+			name:     "No spaces in LearningCron",
+			input:    ptr("0 0 * * *"),
+			expected: ptr("0 0 * * *"),
+		},
+		{
+			name:     "Nil LearningCron",
+			input:    nil,
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &updateDeviceOrgRequest{
+				LearningCron: tt.input,
+			}
+			err := req.prerocessRequestUpdate()
+			if err != nil {
+				t.Fatalf("prerocessRequestUpdate() returned an error: %v", err)
+			}
+
+			if tt.input == nil && req.LearningCron != nil {
+				t.Errorf("Expected LearningCron to remain nil, but got %v", *req.LearningCron)
+			} else if tt.input != nil && *req.LearningCron != *tt.expected {
+				t.Errorf("Expected LearningCron to be %v, but got %v", *tt.expected, *req.LearningCron)
+			}
+		})
+	}
+}
