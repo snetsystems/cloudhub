@@ -103,7 +103,7 @@ const PredictionInstanceWrapper = ({
       JSON.stringify({
         lower: timeRange.lower,
         lowerFlux: timeRange.lowerFlux,
-        upper: null,
+        upper: timeRange?.upper ?? null,
       })
     )
   }
@@ -157,6 +157,7 @@ const PredictionInstanceWrapper = ({
   const handleChooseTimeRange = ({lower, upper}) => {
     if (upper) {
       setSelfTimeRange({lower, upper})
+      saveTimeRangeToLocalStorage({lower, upper})
     } else {
       const timeRange = timeRanges.find(range => range.lower === lower)
       setSelfTimeRange(timeRange)
