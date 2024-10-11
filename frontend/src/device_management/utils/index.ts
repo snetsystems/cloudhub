@@ -155,11 +155,23 @@ export const parseSeries = (seriesString: string): SeriesObj => {
 
 export const decimalUnitNumber = (value: string, unit: string) => {
   const length = Number(value).toFixed().length
-  const kUnit = length >= 10 ? 'G' : length >= 7 ? 'M' : length >= 4 ? 'K' : ''
+  const kUnit =
+    length >= 13
+      ? 'T'
+      : length >= 10
+      ? 'G'
+      : length >= 7
+      ? 'M'
+      : length >= 4
+      ? 'K'
+      : ''
 
   let number
   if (!!Number(value)) {
     switch (kUnit) {
+      case 'T':
+        number = Number(value) / 1000000000000
+        break
       case 'G':
         number = Number(value) / 1000000000
         break
@@ -394,7 +406,7 @@ export const hslColorValue = (value: string) => {
   if (!(Number(value) + 100)) {
     return statusHexColor('invalid')
   }
-  const result = ((100 - Number(value)) * 159) / 100
+  const result = ((100 - Number(value)) * 110) / 100
 
   return `hsl(${result ?? 0}, 78%, 54%)`
 }
