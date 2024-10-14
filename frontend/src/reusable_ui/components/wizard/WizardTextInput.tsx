@@ -18,6 +18,8 @@ interface Props {
   autoFocus?: boolean
   type?: string
   newClassName?: string
+  buttonComponent?: JSX.Element
+  labelClassName?: string
 }
 
 interface State {
@@ -37,6 +39,7 @@ class WizardTextInput extends PureComponent<Props, State> {
     autoFocus: false,
     type: 'text',
     onSubmit: () => null,
+    labelClassName: '',
   }
 
   constructor(props) {
@@ -57,6 +60,8 @@ class WizardTextInput extends PureComponent<Props, State> {
       label,
       type,
       newClassName,
+      buttonComponent,
+      labelClassName,
     } = this.props
 
     let inputClass = ''
@@ -70,7 +75,10 @@ class WizardTextInput extends PureComponent<Props, State> {
 
     return (
       <div className={divClassName}>
-        <label htmlFor={label}>{label}</label>
+        <label htmlFor={label} className={labelClassName}>
+          {label}
+        </label>
+        {buttonComponent && buttonComponent}
         <input
           type={type}
           id={label}

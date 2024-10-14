@@ -9,12 +9,14 @@ import {InjectedRouter, withRouter, WithRouterProps} from 'react-router'
 import {
   Button,
   ComponentColor,
+  ComponentSize,
   ComponentStatus,
   Form,
   OverlayBody,
   OverlayContainer,
   OverlayHeading,
   OverlayTechnology,
+  Radio,
 } from 'src/reusable_ui'
 import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
 import Dropdown from 'src/shared/components/Dropdown'
@@ -47,6 +49,7 @@ import {
   Source,
   Task,
   AlertRule,
+  TimeZones,
 } from 'src/types'
 import {
   DevicesOrgData,
@@ -71,6 +74,7 @@ import {
   getSourceByTelegrafDatabase,
   parseErrorMessage,
 } from 'src/device_management/utils'
+import {convertCronExpression} from 'src/utils/cronParser'
 
 // ETC
 import {
@@ -131,6 +135,7 @@ function LearningSettingModal({
     isLearningSettingLoading,
     setIsLearningSettingLoading,
   ] = useState<boolean>(false)
+  const [cronTimeZone, setCronTimeZone] = useState<TimeZones>(TimeZones.UTC)
 
   useEffect(() => {
     if (isVisible) {
@@ -157,7 +162,7 @@ function LearningSettingModal({
           organization: organizationID,
         }))
         getKapacitorsBySelectedSource(organizationID)
-        setCronSchedule(DEFAULT_CRON_SCHEDULE)
+        setCronSchedule(getCronSchduleByTimezone(DEFAULT_CRON_SCHEDULE))
         setProcessCount(DEFAULT_PROCESS_COUNT)
         fetchAlertRule(organizationID)
       }
@@ -197,7 +202,9 @@ function LearningSettingModal({
     )
 
     if (currentNetworkDeviceOrganization?.learning_cron) {
-      setCronSchedule(currentNetworkDeviceOrganization.learning_cron)
+      setCronSchedule(
+        getCronSchduleByTimezone(currentNetworkDeviceOrganization.learning_cron)
+      )
     }
 
     if (currentNetworkDeviceOrganization?.process_count) {
@@ -220,7 +227,9 @@ function LearningSettingModal({
     )
 
     if (currentNetworkDeviceOrganization?.learning_cron) {
-      setCronSchedule(currentNetworkDeviceOrganization.learning_cron)
+      setCronSchedule(
+        getCronSchduleByTimezone(currentNetworkDeviceOrganization.learning_cron)
+      )
     }
 
     if (currentNetworkDeviceOrganization?.process_count) {
@@ -241,7 +250,7 @@ function LearningSettingModal({
     if (key === 'organization') {
       setIsUpdateAfterCreate(false)
       setCurrentTask(DEFAULT_TASK)
-      setCronSchedule(DEFAULT_CRON_SCHEDULE)
+      setCronSchedule(getCronSchduleByTimezone(DEFAULT_CRON_SCHEDULE))
       setProcessCount(DEFAULT_PROCESS_COUNT)
 
       const selectedSource = getSourceBySourceID(sources, (value as Source).id)
@@ -355,7 +364,7 @@ function LearningSettingModal({
     kapacitorForNetworkOrg: KapacitorForNetworkDeviceOrganization,
     kapacitor: Kapacitor
   ) => {
-    setCronSchedule(DEFAULT_CRON_SCHEDULE)
+    setCronSchedule(getCronSchduleByTimezone(DEFAULT_CRON_SCHEDULE))
     setProcessCount(DEFAULT_PROCESS_COUNT)
     fetchAlertRuleByKapacitor(kapacitor)
     setSelectedKapacitor(kapacitor)
@@ -430,13 +439,18 @@ function LearningSettingModal({
       return
     }
 
+    const convertedCronSchedule =
+      cronTimeZone === TimeZones.Local
+        ? convertCronScheduleLocalToUTC(cronSchedule)
+        : cronSchedule
+
     try {
       setLoading(true)
       await createDeviceOrganization({
         orgLearningModel: {
           organization: organization,
           ...rest,
-          learning_cron: cronSchedule,
+          learning_cron: convertedCronSchedule,
           process_count: processCount,
         },
       })
@@ -474,12 +488,17 @@ function LearningSettingModal({
     try {
       setLoading(true)
 
+      const convertedCronSchedule =
+        cronTimeZone === TimeZones.Local
+          ? convertCronScheduleLocalToUTC(cronSchedule)
+          : cronSchedule
+
       await updateDeviceOrganization({
         id: organization,
         orgLearningModel: {
           ...rest,
           task_status: getTaskStatus(),
-          learning_cron: cronSchedule,
+          learning_cron: convertedCronSchedule,
           process_count: processCount,
         },
       })
@@ -551,7 +570,7 @@ function LearningSettingModal({
       setOriginalCronSchedule(fetchedRule)
     } else {
       setCurrentTask(DEFAULT_TASK)
-      setCronSchedule(DEFAULT_CRON_SCHEDULE)
+      setCronSchedule(getCronSchduleByTimezone(DEFAULT_CRON_SCHEDULE))
       setProcessCount(DEFAULT_PROCESS_COUNT)
     }
   }
@@ -580,7 +599,7 @@ function LearningSettingModal({
       ? match?.[1] || DEFAULT_CRON_SCHEDULE
       : DEFAULT_CRON_SCHEDULE
 
-    setCronSchedule(cronValue)
+    setCronSchedule(getCronSchduleByTimezone(cronValue))
   }
 
   const LearningSettingModalMessage = () => {
@@ -662,6 +681,70 @@ function LearningSettingModal({
     }
   }
 
+  const renderTimeZone = () => {
+    return (
+      <Radio
+        size={ComponentSize.ExtraSmall}
+        customClass="learning-model-cron--button"
+      >
+        <Radio.Button
+          id="cron-timezone-utc"
+          titleText="UTC"
+          value={TimeZones.UTC}
+          onClick={handleClickUTCTimezoneButton}
+          active={cronTimeZone === TimeZones.UTC}
+        >
+          UTC
+        </Radio.Button>
+        <Radio.Button
+          id="cron-timezone-local"
+          titleText="Local"
+          value={TimeZones.Local}
+          onClick={handleClickLocalTimezoneButton}
+          active={cronTimeZone === TimeZones.Local}
+        >
+          Local
+        </Radio.Button>
+      </Radio>
+    )
+  }
+
+  const getCronSchduleByTimezone = _cronSchedule => {
+    return cronTimeZone === TimeZones.Local
+      ? convertCronScheduleUTCToLocal(_cronSchedule)
+      : _cronSchedule
+  }
+
+  const convertCronScheduleLocalToUTC = _cronSchedule => {
+    const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+    return convertCronExpression(_cronSchedule, localTimeZone, 'UTC').trim()
+  }
+
+  const handleClickUTCTimezoneButton = () => {
+    if (cronTimeZone === TimeZones.UTC) return
+
+    const convertedCronSchedule = convertCronScheduleLocalToUTC(cronSchedule)
+
+    setCronTimeZone(TimeZones.UTC)
+    setCronSchedule(convertedCronSchedule)
+  }
+
+  const convertCronScheduleUTCToLocal = _cronSchedule => {
+    const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+    return convertCronExpression(_cronSchedule, 'UTC', localTimeZone).trim()
+  }
+
+  const handleClickLocalTimezoneButton = () => {
+    if (cronTimeZone === TimeZones.Local) return
+
+    const convertedCronSchedule = convertCronScheduleUTCToLocal(cronSchedule)
+
+    setCronTimeZone(TimeZones.Local)
+    setCronSchedule(convertedCronSchedule)
+  }
+
   return (
     <OverlayTechnology visible={isVisible}>
       <OverlayContainer maxWidth={600}>
@@ -725,8 +808,10 @@ function LearningSettingModal({
                   <WizardTextInput
                     value={cronSchedule}
                     type="text"
-                    label="Cron Schedule (UTC Time Zone)"
+                    label="Cron Schedule"
                     onChange={setCronSchedule}
+                    buttonComponent={renderTimeZone()}
+                    labelClassName="learning-model-cron--labelClassName"
                   />
                   <WizardNumberInput
                     value={`${processCount}`}
@@ -734,6 +819,7 @@ function LearningSettingModal({
                     label="Process Count"
                     onChange={handleProcessCountChange}
                     min={1}
+                    labelClassName="learning-model-processcount--labelClassName"
                   />
                   <div
                     className="form-group col-xs-12"

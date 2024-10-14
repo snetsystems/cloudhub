@@ -250,7 +250,7 @@ class Root extends PureComponent<Record<string, never>, State> {
                       handleClearTimeout={this.handleClearTimeout}
                     />
                   )}
-                />{' '}
+                />
                 <Route
                   path="ai/:tab/prediction-rule"
                   component={PredictionRulePage}
