@@ -4,7 +4,7 @@ import _ from 'lodash'
 // Type
 import {INPUT_TIME_TYPE, Source, TimeRange, TimeZones} from 'src/types'
 import {Alert} from 'src/types/alerts'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
 // Components
 import PredictionAlertTable from 'src/device_management/components/PredictionAlertTable'
@@ -26,7 +26,7 @@ import {getPredictionAlert} from 'src/device_management/apis'
 import {
   setAlertHostList,
   setFilteredHexbin,
-  setPredictionTimeRange,
+  setHistogramDate,
 } from 'src/device_management/actions'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
@@ -34,31 +34,34 @@ import {connect} from 'react-redux'
 //Util
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {setArrayHostList} from 'src/device_management/utils'
+import {setCloudTimeRange} from 'src/clouds/actions/clouds'
 
 interface Props {
-  predictionTimeRange?: TimeRange
   source: Source
   limit: number
   timeZone?: TimeZones
   alertHostList?: string[]
   histogramDate?: TimeRange
   filteredHexbinHost?: string
+  cloudTimeRange?: CloudTimeRange
   predictionManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
+  setHistogramDate?: (value: TimeRange) => void
   setAlertHostList?: (value: string[]) => void
-  setPredictionTimeRange?: (value: TimeRange) => void
+  onChooseCloudTimeRange?: (value: CloudTimeRange) => void
 }
 
 function PredictionAlertHistoryWrapper({
   source,
   timeZone,
-  histogramDate,
   alertHostList,
+  histogramDate,
+  cloudTimeRange,
   cloudAutoRefresh,
   setAlertHostList,
+  setHistogramDate,
   filteredHexbinHost,
-  predictionTimeRange,
-  setPredictionTimeRange,
+  onChooseCloudTimeRange,
   predictionManualRefresh,
   limit = RECENT_ALERTS_LIMIT,
 }: Props) {
@@ -77,7 +80,7 @@ function PredictionAlertHistoryWrapper({
   const fetchAlerts = useCallback((): void => {
     getPredictionAlert(
       source.links.proxy,
-      histogramDate ?? predictionTimeRange,
+      histogramDate ?? cloudTimeRange.prediction,
       limit * limitMultiplier,
       source.telegraf
     )
@@ -104,7 +107,7 @@ function PredictionAlertHistoryWrapper({
   }, [
     limitMultiplier,
     histogramDate?.lower,
-    predictionTimeRange.lower,
+    cloudTimeRange?.prediction?.lower,
     source.links.proxy,
     filteredHexbinHost,
   ])
@@ -197,6 +200,19 @@ function PredictionAlertHistoryWrapper({
     return `${time.getFullYear()}-${time.getMonth() + 1}-${time.getDate()}`
   }
 
+  const onClickReset = () => {
+    setHistogramDate(null)
+
+    onChooseCloudTimeRange({
+      prediction: {
+        lower: 'now() - 30d',
+        lowerFlux: '-30d',
+        upper: null,
+        format: INPUT_TIME_TYPE.RELATIVE_TIME,
+      },
+    })
+  }
+
   return (
     <>
       <div style={{height: '100%', backgroundColor: '#292933'}}>
@@ -224,12 +240,7 @@ function PredictionAlertHistoryWrapper({
               text="Reset (30d)"
               color={ComponentColor.Primary}
               onClick={() => {
-                setPredictionTimeRange({
-                  lower: 'now() - 30d',
-                  lowerFlux: '-30d',
-                  upper: null,
-                  format: INPUT_TIME_TYPE.RELATIVE_TIME,
-                })
+                onClickReset()
               }}
             />
           </div>
@@ -252,14 +263,13 @@ function PredictionAlertHistoryWrapper({
 const mstp = state => {
   const {
     predictionDashboard: {
-      predictionTimeRange,
       alertHostList,
       histogramDate,
       filteredHexbinHost,
       predictionManualRefresh,
     },
     app: {
-      persisted: {autoRefresh, cloudAutoRefresh, timeZone},
+      persisted: {autoRefresh, cloudTimeRange, cloudAutoRefresh, timeZone},
     },
   } = state
 
@@ -267,18 +277,19 @@ const mstp = state => {
     autoRefresh,
     histogramDate,
     cloudAutoRefresh,
-    predictionTimeRange,
     alertHostList,
     filteredHexbinHost,
     timeZone,
+    cloudTimeRange,
     predictionManualRefresh,
   }
 }
 
 const mdtp = (dispatch: any) => ({
-  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
+  onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
   setFilteredHexbin: bindActionCreators(setFilteredHexbin, dispatch),
+  setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
 })
 
 const areEqual = (prev, next) => {

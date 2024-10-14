@@ -72,11 +72,11 @@ import {
   getGCPInstancesAsync,
 } from 'src/hosts/actions'
 import {Instance} from 'src/hosts/types/index'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 interface Props extends ManualRefreshProps {
   source: Source
   links: Links
-  autoRefresh: number
   timeRange: TimeRange
   inPresentationMode: boolean
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
@@ -93,6 +93,7 @@ interface Props extends ManualRefreshProps {
   ) => Promise<any>
   handleClickCspTableRow: () => void
   tableTitle: () => JSX.Element
+  cloudAutoRefresh: CloudAutoRefresh
 }
 
 interface State {
@@ -158,7 +159,7 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
       ? proportions
       : proportions.split(',').map(v => Number(v))
 
-    const {notify, autoRefresh, handleLoadCspsAsync} = this.props
+    const {notify, cloudAutoRefresh, handleLoadCspsAsync} = this.props
 
     const layoutResults = await getLayouts()
 
@@ -218,15 +219,15 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
       hostsPage = defaultState
     }
 
-    if (autoRefresh) {
+    if (cloudAutoRefresh.host) {
       clearInterval(this.intervalID)
       this.intervalID = window.setInterval(
         () => this.fetchCspHostsData(layouts),
-        autoRefresh
+        cloudAutoRefresh.host
       )
     }
 
-    GlobalAutoRefresher.poll(autoRefresh)
+    GlobalAutoRefresher.poll(cloudAutoRefresh.host)
 
     const getFocusedInstance = hostsPage.focusedInstance
     if (getFocusedInstance) {
@@ -263,7 +264,7 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    const {autoRefresh} = this.props
+    const {cloudAutoRefresh} = this.props
     const {
       layouts,
       focusedInstance,
@@ -291,8 +292,8 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
         this.setState({filteredLayouts})
       }
 
-      if (prevProps.autoRefresh !== autoRefresh) {
-        GlobalAutoRefresher.poll(autoRefresh)
+      if (prevProps.cloudAutoRefresh.host !== cloudAutoRefresh.host) {
+        GlobalAutoRefresher.poll(cloudAutoRefresh.host)
       }
     }
   }
@@ -310,14 +311,16 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
         this.setState({filteredLayouts})
       }
 
-      if (this.props.autoRefresh !== nextProps.autoRefresh) {
+      if (
+        this.props.cloudAutoRefresh.host !== nextProps.cloudAutoRefresh.host
+      ) {
         clearInterval(this.intervalID)
-        GlobalAutoRefresher.poll(nextProps.autoRefresh)
+        GlobalAutoRefresher.poll(nextProps.cloudAutoRefresh.host)
 
-        if (nextProps.autoRefresh) {
+        if (nextProps.cloudAutoRefresh.host) {
           this.intervalID = window.setInterval(() => {
             this.fetchCspHostsData(layouts)
-          }, nextProps.autoRefresh)
+          }, nextProps.cloudAutoRefresh.host)
         }
       }
     }
@@ -752,14 +755,14 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh},
+      persisted: {cloudAutoRefresh},
       ephemeral: {inPresentationMode},
     },
     links,
   } = state
   return {
     links,
-    autoRefresh,
+    cloudAutoRefresh,
     inPresentationMode,
   }
 }

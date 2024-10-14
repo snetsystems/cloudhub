@@ -2,6 +2,28 @@ import {TimeRangeOption} from 'src/types/queries'
 
 const nowMinus30d = 'now() - 30d'
 
+export const CLOUD_TIME_RANGE = {
+  default: {
+    defaultGroupBy: '1m',
+    seconds: 3600,
+    inputValue: 'Past 1h',
+    lower: 'now() - 1h',
+    lowerFlux: '-1h',
+    upper: null,
+    menuOption: 'Past 1h',
+  },
+  prediction: {
+    defaultGroupBy: '6h',
+    seconds: 2592000,
+    inputValue: 'Past 30d',
+    lower: nowMinus30d,
+    lowerFlux: '-30d',
+    upper: null,
+    menuOption: 'Past 30d',
+    format: 'relativeTime',
+  },
+}
+
 export const timeRanges: TimeRangeOption[] = [
   {
     defaultGroupBy: '10s',

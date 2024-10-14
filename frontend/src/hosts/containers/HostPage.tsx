@@ -31,6 +31,7 @@ import {getCells} from 'src/hosts/utils/getCells'
 import {Source, Layout, TimeRange, TimeZones} from 'src/types'
 import {Location} from 'history'
 import {DashboardSwitcherLinks} from 'src/types/dashboards'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 interface Props {
   source: Source
@@ -46,6 +47,7 @@ interface Props {
   onManualRefresh: () => void
   handleChooseTimeRange: typeof setAutoRefresh
   handleClickPresentationButton: typeof delayEnablePresentationMode
+  cloudAutoRefresh: CloudAutoRefresh
 }
 
 interface State {
@@ -239,10 +241,11 @@ class HostPage extends PureComponent<Props, State> {
 const mstp = ({
   app: {
     ephemeral: {inPresentationMode},
-    persisted: {autoRefresh, timeZone},
+    persisted: {autoRefresh, cloudAutoRefresh, timeZone},
   },
 }) => ({
   inPresentationMode,
+  cloudAutoRefresh,
   autoRefresh,
   timeZone,
 })
