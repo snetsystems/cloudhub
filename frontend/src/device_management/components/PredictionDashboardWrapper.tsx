@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 
 //Components
 import Layout from 'src/shared/components/Layout'
@@ -88,22 +88,22 @@ function PredictionDashboardWrapper({
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
   }, [cloudAutoRefresh.prediction])
 
+  const isTimeStamp = useMemo(() => {
+    return cloudTimeRange?.prediction?.format === INPUT_TIME_TYPE.TIMESTAMP
+  }, [cloudTimeRange?.prediction])
+
   const templates = (): Template[] => {
     const dashboardTime = {
       id: 'dashtime',
       tempVar: TEMP_VAR_DASHBOARD_TIME,
-      type:
-        cloudTimeRange.prediction.format === INPUT_TIME_TYPE.TIMESTAMP
-          ? TemplateType.TimeStamp
-          : TemplateType.Constant,
+      type: isTimeStamp ? TemplateType.TimeStamp : TemplateType.Constant,
       label: '',
       values: [
         {
           value: cloudTimeRange.prediction.lower,
-          type:
-            cloudTimeRange.prediction.format === INPUT_TIME_TYPE.TIMESTAMP
-              ? TemplateValueType.TimeStamp
-              : TemplateValueType.Constant,
+          type: isTimeStamp
+            ? TemplateValueType.TimeStamp
+            : TemplateValueType.Constant,
           selected: true,
           localSelected: true,
         },
@@ -113,17 +113,13 @@ function PredictionDashboardWrapper({
     const upperDashboardTime = {
       id: 'upperdashtime',
       tempVar: TEMP_VAR_UPPER_DASHBOARD_TIME,
-      type:
-        cloudTimeRange.prediction.format === INPUT_TIME_TYPE.TIMESTAMP
-          ? TemplateType.TimeStamp
-          : TemplateType.Constant,
+      type: isTimeStamp ? TemplateType.TimeStamp : TemplateType.Constant,
       label: '',
       values: [
         {
           value: cloudTimeRange.prediction.upper ?? 'now()',
           type:
-            cloudTimeRange.prediction.format === INPUT_TIME_TYPE.TIMESTAMP &&
-            cloudTimeRange.prediction.upper !== 'now()'
+            isTimeStamp && cloudTimeRange.prediction.upper !== 'now()'
               ? TemplateValueType.TimeStamp
               : TemplateValueType.Constant,
           selected: true,
