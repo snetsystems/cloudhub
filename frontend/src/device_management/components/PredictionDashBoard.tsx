@@ -29,12 +29,12 @@ import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
 
 // Util
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {Link, WithRouterProps} from 'react-router'
+import {Link} from 'react-router'
 
 // Redux
 import {connect} from 'react-redux'
 
-interface Props extends WithRouterProps {
+interface Props {
   host: string
   source: Source
   sources: Source[]

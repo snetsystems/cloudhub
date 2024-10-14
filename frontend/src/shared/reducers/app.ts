@@ -14,7 +14,8 @@ import {CloudAction, CloudActionTypes} from 'src/clouds/types/actions/clouds'
 
 // types
 import {TimeZones} from 'src/types'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
+import {CLOUD_TIME_RANGE} from '../data/timeRanges'
 
 interface State {
   ephemeral: {
@@ -25,6 +26,7 @@ interface State {
     cloudAutoRefresh: CloudAutoRefresh
     showTemplateVariableControlBar: boolean
     timeZone: TimeZones
+    cloudTimeRange: CloudTimeRange
   }
 }
 
@@ -37,6 +39,7 @@ const initialState: State = {
     cloudAutoRefresh: CLOUD_AUTO_REFRESH,
     showTemplateVariableControlBar: SHOW_TEMP_VAR_CONTROL_BAR_DEFAULT,
     timeZone: TimeZones.Local,
+    cloudTimeRange: CLOUD_TIME_RANGE,
   },
 }
 
@@ -103,6 +106,15 @@ const appPersistedReducer = (
         cloudAutoRefresh: {
           ...state.cloudAutoRefresh,
           ...action.payload.cloudAutoRefresh,
+        },
+      }
+    }
+    case CloudActionTypes.SetCloudTimeRange: {
+      return {
+        ...state,
+        cloudTimeRange: {
+          ...state.cloudTimeRange,
+          ...action.payload.cloudTimeRange,
         },
       }
     }
