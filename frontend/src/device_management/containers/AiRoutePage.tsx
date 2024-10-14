@@ -26,15 +26,14 @@ import {setCloudAutoRefresh} from 'src/clouds/actions'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import * as appActions from 'src/shared/actions/app'
-import DeviceManagementModal from '../components/DeviceManagementModal'
+import DeviceManagementModal from 'src/device_management/components/DeviceManagementModal'
 import PredictionPage from './PredictionPage'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {
   setHistogramDate,
   setPredictionManualRefresh,
-  setPredictionTimeRange,
   setStateInitAction,
-} from '../actions'
+} from 'src/device_management/actions'
 
 //component
 import ManualRefresh, {
@@ -44,6 +43,8 @@ import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import {setCloudTimeRange} from 'src/clouds/actions/clouds'
+import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
 
 interface RouterProps extends InjectedRouter {
   params: RouterState['params']
@@ -64,8 +65,8 @@ interface Props extends ManualRefreshProps {
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
   onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
   router: RouterProps
-  predictionTimeRange: TimeRange
-  setPredictionTimeRange: (value: TimeRange) => void
+  cloudTimeRange: CloudTimeRange
+  onChooseCloudTimeRange: (value: CloudTimeRange) => void
   setPredictionManualRefresh: () => void
   setStateInitAction: () => void
   setHistogramDate: (value: TimeRange) => void
@@ -99,11 +100,11 @@ const AiRoutePage = (props: Props) => {
     setTimeZone,
     router,
     autoRefresh,
-    setPredictionTimeRange,
+    onChooseCloudTimeRange,
     cloudAutoRefresh,
     onChooseCloudAutoRefresh,
     onChooseAutoRefresh,
-    predictionTimeRange,
+    cloudTimeRange,
     setPredictionManualRefresh,
     setStateInitAction,
     setHistogramDate,
@@ -134,11 +135,13 @@ const AiRoutePage = (props: Props) => {
   const handleApplyTime = (timeRange: TimeRange): void => {
     setHistogramDate(null)
 
-    setPredictionTimeRange({
-      ...timeRange,
-      format: !!timeRange.lowerFlux
-        ? INPUT_TIME_TYPE.RELATIVE_TIME
-        : INPUT_TIME_TYPE.TIMESTAMP,
+    onChooseCloudTimeRange({
+      prediction: {
+        ...timeRange,
+        format: !!timeRange.lowerFlux
+          ? INPUT_TIME_TYPE.RELATIVE_TIME
+          : INPUT_TIME_TYPE.TIMESTAMP,
+      },
     })
   }
 
@@ -207,7 +210,9 @@ const AiRoutePage = (props: Props) => {
               <TimeRangeDropdown
                 //@ts-ignore
                 onChooseTimeRange={handleApplyTime}
-                selected={predictionTimeRange}
+                selected={
+                  cloudTimeRange?.prediction ?? CLOUD_TIME_RANGE.prediction
+                }
               />
             )}
           </>
@@ -245,11 +250,10 @@ const AiRoutePage = (props: Props) => {
 
 const mstp = ({
   app: {
-    persisted: {timeZone, autoRefresh, cloudAutoRefresh},
+    persisted: {timeZone, autoRefresh, cloudAutoRefresh, cloudTimeRange},
   },
   adminCloudHub: {organizations},
   auth: {isUsingAuth, me},
-  predictionDashboard: {predictionTimeRange},
 }) => {
   return {
     organizations,
@@ -257,16 +261,16 @@ const mstp = ({
     me,
     timeZone,
     autoRefresh,
+    cloudTimeRange,
     cloudAutoRefresh,
-    predictionTimeRange,
   }
 }
 
 const mdtp = dispatch => ({
   setTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
+  onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
-  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
   setPredictionManualRefresh: bindActionCreators(
     setPredictionManualRefresh,
     dispatch

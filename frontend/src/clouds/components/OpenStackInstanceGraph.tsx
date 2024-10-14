@@ -15,7 +15,7 @@ import {
 import {getCells} from 'src/hosts/utils/getCells'
 
 // actions
-import {setAutoRefresh} from 'src/shared/actions/app'
+import {setCloudAutoRefresh, setCloudTimeRange} from 'src/clouds/actions/clouds'
 
 // components
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
@@ -27,75 +27,99 @@ import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
 // types
 import {timeRanges} from 'src/shared/data/timeRanges'
 import {Layout, RefreshRate, Source, TimeRange} from 'src/types'
+import {CloudTimeRange} from 'src/clouds/types'
 import {FocusedInstance, OpenStackInstance} from 'src/clouds/types/openstack'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 // utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {getTimeOptionByGroup} from '../constants/autoRefresh'
+import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 interface Props {
   filteredLayouts: Layout[]
   source: Source
   instance: OpenStackInstance
   focusedInstance: Partial<FocusedInstance>
-  selfAutoRefrsh?: number
+  cloudAutoRefresh?: CloudAutoRefresh
   autoRefresh?: number
   manualRefresh: number
   timeRange?: TimeRange
-  onChooseAutoRefresh?: (milliseconds: RefreshRate) => void
+  cloudTimeRange?: CloudTimeRange
+  onChooseCloudTimeRange?: (timeRange: CloudTimeRange) => void
+  onChooseCloudAutoRefresh?: (autoRefreshGroup: CloudAutoRefresh) => void
 }
 interface State {
   selfTimeRange: TimeRange
   selfManulRefresh: number
+  selfAutoRefresh: number
+  autoRefreshOptions: AutoRefreshOption[] | null
 }
 @ErrorHandling
 class OpenStackInstanceGraph extends Component<Props, State> {
   public intervalID: number
   constructor(props: Props) {
     super(props)
-    const {timeRange} = this.props
+    const {timeRange, cloudTimeRange, cloudAutoRefresh} = this.props
 
     this.state = {
       selfTimeRange: timeRange
         ? timeRange
+        : cloudTimeRange?.openstack
+        ? cloudTimeRange.openstack
         : timeRanges.find(tr => tr.lower === 'now() - 1h'),
       selfManulRefresh: 0,
+      selfAutoRefresh: cloudAutoRefresh.openstackMonitor,
+      autoRefreshOptions: getTimeOptionByGroup('openstackMonitor'),
     }
   }
   componentDidMount(): void {
-    const {selfAutoRefrsh, autoRefresh} = this.props
-
-    GlobalAutoRefresher.poll(selfAutoRefrsh)
+    const {cloudAutoRefresh, autoRefresh} = this.props
+    GlobalAutoRefresher.poll(cloudAutoRefresh.openstackMonitor)
     GlobalAutoRefresher.poll(autoRefresh)
   }
+
   componentDidUpdate(prevProps: Readonly<Props>): void {
     const {
       manualRefresh: prevManulRefresh,
-      selfAutoRefrsh: prevSelfAutorefresh,
+      cloudAutoRefresh: prevSelfAutorefresh,
       timeRange: prevTimeRange,
       autoRefresh: prevAutoRefresh,
     } = prevProps
-    const {manualRefresh, selfAutoRefrsh, autoRefresh, timeRange} = this.props
+    const {
+      manualRefresh,
+      cloudAutoRefresh,
+      autoRefresh,
+      timeRange,
+      onChooseCloudTimeRange,
+    } = this.props
     if (prevManulRefresh !== manualRefresh) {
       this.setState({selfManulRefresh: manualRefresh})
     }
     if (prevAutoRefresh !== autoRefresh) {
       GlobalAutoRefresher.poll(autoRefresh)
     }
-    if (prevSelfAutorefresh !== selfAutoRefrsh) {
-      GlobalAutoRefresher.poll(selfAutoRefrsh)
+    if (
+      prevSelfAutorefresh.openstackMonitor !== cloudAutoRefresh.openstackMonitor
+    ) {
+      GlobalAutoRefresher.poll(cloudAutoRefresh.openstackMonitor)
     }
     if (prevTimeRange !== timeRange) {
       this.setState({selfTimeRange: timeRange})
+      onChooseCloudTimeRange({openstack: timeRange})
     }
   }
 
   public async UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    const {filteredLayouts, selfAutoRefrsh, autoRefresh} = this.props
+    const {filteredLayouts, cloudAutoRefresh, autoRefresh} = this.props
     if (filteredLayouts.length) {
-      if (selfAutoRefrsh !== nextProps.selfAutoRefrsh) {
-        GlobalAutoRefresher.poll(nextProps.selfAutoRefrsh)
+      if (
+        cloudAutoRefresh.openstackMonitor !==
+        nextProps.cloudAutoRefresh.openstackMonitor
+      ) {
+        GlobalAutoRefresher.poll(nextProps.cloudAutoRefresh.openstackMonitor)
       }
       if (autoRefresh !== nextProps.autoRefresh) {
         GlobalAutoRefresher.poll(nextProps.autoRefresh)
@@ -113,9 +137,9 @@ class OpenStackInstanceGraph extends Component<Props, State> {
       source,
       instance,
       focusedInstance,
-      selfAutoRefrsh,
+      cloudAutoRefresh,
     } = this.props
-    const {selfTimeRange, selfManulRefresh} = this.state
+    const {selfTimeRange, selfManulRefresh, autoRefreshOptions} = this.state
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
     const renderInstance = {
@@ -140,8 +164,10 @@ class OpenStackInstanceGraph extends Component<Props, State> {
           <div className="page-header--right" style={{zIndex: 3}}>
             <AutoRefreshDropdown
               onChoose={this.handleChooseAutoRefresh}
-              selected={selfAutoRefrsh}
+              selected={cloudAutoRefresh.openstackMonitor}
               onManualRefresh={this.handleManualRefresh}
+              customAutoRefreshSelected={cloudAutoRefresh}
+              customAutoRefreshOptions={autoRefreshOptions}
             />
             <TimeRangeDropdown
               //@ts-ignore
@@ -201,17 +227,20 @@ class OpenStackInstanceGraph extends Component<Props, State> {
     milliseconds: RefreshRate
     group?: string
   }) => {
-    const {onChooseAutoRefresh} = this.props
+    const {onChooseCloudAutoRefresh} = this.props
     const {milliseconds} = option
-    onChooseAutoRefresh(milliseconds)
+    onChooseCloudAutoRefresh({openstackMonitor: milliseconds})
   }
 
   private handleChooseTimeRange = ({lower, upper}) => {
+    const {onChooseCloudTimeRange} = this.props
     if (upper) {
       this.setState({selfTimeRange: {lower, upper}})
+      onChooseCloudTimeRange({openstack: {lower, upper}})
     } else {
       const timeRange = timeRanges.find(range => range.lower === lower)
       this.setState({selfTimeRange: timeRange})
+      onChooseCloudTimeRange({openstack: timeRange})
     }
   }
   private handleManualRefresh = (): void => {
@@ -224,18 +253,20 @@ class OpenStackInstanceGraph extends Component<Props, State> {
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh},
+      persisted: {cloudTimeRange, cloudAutoRefresh},
     },
     links,
   } = state
 
   return {
     links,
-    selfAutoRefrsh: autoRefresh,
+    cloudTimeRange,
+    cloudAutoRefresh,
   }
 }
 
 const mdtp = dispatch => ({
-  onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
+  onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
+  onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
 })
 export default connect(mstp, mdtp, null)(OpenStackInstanceGraph)

@@ -16,7 +16,6 @@ function PredictionPage({me, source, cloudAutoRefresh}: Props) {
     <>
       <PredictionDashBoard
         source={source}
-        inPresentationMode={true}
         host=""
         sources={[source]}
         cloudAutoRefresh={cloudAutoRefresh}

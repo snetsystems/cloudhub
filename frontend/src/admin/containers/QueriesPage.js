@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import PropTypes from 'prop-types'
+import PropTypes, {object} from 'prop-types'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
@@ -24,12 +24,14 @@ import {
 import {eachRoleQueries} from 'src/admin/utils/eachRoleWorker'
 
 import {notify as notifyAction} from 'shared/actions/notifications'
+import queries from 'src/data_explorer/reducers/queries'
+import {setCloudAutoRefresh} from 'src/clouds/actions'
 
 class QueriesPage extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      updateInterval: 5000,
+      updateInterval: props.cloudAutoRefresh.queries ?? 5000,
     }
   }
   componentDidMount() {
@@ -78,7 +80,7 @@ class QueriesPage extends Component {
   }
 
   updateQueries = () => {
-    const {source, notify, loadQueries, auth} = this.props
+    const {source, notify, loadQueries, auth, cloudAutoRefresh} = this.props
     showDatabases(source.links.proxy).then(resp => {
       const {databases, errors} = showDatabasesParser(resp.data)
       const checkDatabases = eachRoleQueries(databases, auth)
@@ -126,6 +128,7 @@ class QueriesPage extends Component {
     })
   }
   changeRefreshInterval = ({milliseconds: updateInterval}) => {
+    this.props.onChooseCloudAutoRefresh({queries: updateInterval})
     this.setState(state => ({...state, updateInterval}))
     if (this.intervalID) {
       clearInterval(this.intervalID)
@@ -143,7 +146,16 @@ class QueriesPage extends Component {
   }
 }
 
-const {arrayOf, func, string, shape} = PropTypes
+const {
+  arrayOf,
+  func,
+  string,
+  number,
+  shape,
+  oneOfType,
+  objectOf,
+  oneOf,
+} = PropTypes
 
 QueriesPage.propTypes = {
   auth: shape().isRequired,
@@ -160,16 +172,22 @@ QueriesPage.propTypes = {
   changeSort: func,
   killQuery: func,
   notify: func.isRequired,
+  cloudAutoRefresh: oneOfType([objectOf(number), oneOf([null])]),
+  onChooseCloudAutoRefresh: func,
 }
 
 const mapStateToProps = ({
   adminInfluxDB: {queries, queriesSort, queryIDToKill},
   auth,
+  app: {
+    persisted: {cloudAutoRefresh},
+  },
 }) => ({
   queries,
   queriesSort,
   queryIDToKill,
   auth,
+  cloudAutoRefresh,
 })
 
 const mapDispatchToProps = dispatch => ({
@@ -178,6 +196,7 @@ const mapDispatchToProps = dispatch => ({
   changeSort: bindActionCreators(setQueriesSortAction, dispatch),
   killQuery: bindActionCreators(killQueryAsync, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
+  onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
 })
 
 export default connect(

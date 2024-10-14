@@ -34,7 +34,7 @@ import {
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as AppActions from 'src/types/actions/app'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
 import {
   loadCloudServiceProvidersAsync,
@@ -47,6 +47,7 @@ import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/aut
 
 // Constants
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
+import {setCloudTimeRange} from 'src/clouds/actions/clouds'
 
 interface RouterProps extends InjectedRouter {
   params: RouterState['params']
@@ -56,11 +57,13 @@ interface Props extends ManualRefreshProps {
   source: Source
   links: Links
   cloudAutoRefresh: CloudAutoRefresh
+  cloudTimeRange: CloudTimeRange
   autoRefresh: number
   inPresentationMode: boolean
   notify: NotificationAction
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
   onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
+  onChooseCloudTimeRange: (autoRefreshGroup: CloudTimeRange) => void
   handleClearTimeout: (key: string) => void
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
@@ -86,7 +89,9 @@ class Infrastructure extends PureComponent<Props, State> {
     super(props)
 
     this.state = {
-      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+      timeRange:
+        props.cloudTimeRange?.infrastructure ??
+        timeRanges.find(tr => tr.lower === 'now() - 1h'),
       autoRefreshOptions: getTimeOptionByGroup('topology'),
       activeTab: 'topology',
       headerRadioButtons: [],
@@ -99,6 +104,7 @@ class Infrastructure extends PureComponent<Props, State> {
   }) => {
     const {onChooseAutoRefresh, onChooseCloudAutoRefresh} = this.props
     const {milliseconds, group} = option
+
     group
       ? onChooseCloudAutoRefresh({[group]: milliseconds})
       : onChooseAutoRefresh(milliseconds)
@@ -219,11 +225,18 @@ class Infrastructure extends PureComponent<Props, State> {
   }
 
   private handleChooseTimeRange = ({lower, upper}) => {
+    const {onChooseCloudTimeRange} = this.props
     if (upper) {
       this.setState({timeRange: {lower, upper}})
+      onChooseCloudTimeRange({
+        infrastructure: {lower, upper},
+      })
     } else {
       const timeRange = timeRanges.find(range => range.lower === lower)
       this.setState({timeRange})
+      onChooseCloudTimeRange({
+        infrastructure: timeRange,
+      })
     }
   }
 
@@ -240,7 +253,7 @@ class Infrastructure extends PureComponent<Props, State> {
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh, cloudAutoRefresh},
+      persisted: {autoRefresh, cloudAutoRefresh, cloudTimeRange},
       ephemeral: {inPresentationMode},
     },
     links,
@@ -248,6 +261,7 @@ const mstp = state => {
   return {
     links,
     autoRefresh,
+    cloudTimeRange,
     cloudAutoRefresh,
     inPresentationMode,
   }
@@ -256,6 +270,7 @@ const mstp = state => {
 const mdtp = dispatch => ({
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
+  onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   handleClickPresentationButton: bindActionCreators(
     delayEnablePresentationMode,
     dispatch

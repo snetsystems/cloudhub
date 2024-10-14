@@ -36,7 +36,7 @@ import {
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as AppActions from 'src/types/actions/app'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
 // Utils
 import {RouterState, InjectedRouter} from 'react-router'
@@ -44,6 +44,7 @@ import {RouterState, InjectedRouter} from 'react-router'
 // Constants
 import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
+import {setCloudTimeRange} from 'src/clouds/actions/clouds'
 
 interface RouterProps extends InjectedRouter {
   params: RouterState['params']
@@ -54,6 +55,8 @@ interface Props extends ManualRefreshProps {
   links: Links
   autoRefresh: number
   cloudAutoRefresh: CloudAutoRefresh
+  cloudTimeRange: CloudTimeRange
+  onChooseCloudTimeRange: (timeRange: CloudTimeRange) => void
   inPresentationMode: boolean
   notify: NotificationAction
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
@@ -77,7 +80,9 @@ class Clouds extends PureComponent<Props, State> {
     const currentRoute = this.props.router.params?.cloud
 
     this.state = {
-      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+      timeRange:
+        props.cloudTimeRange?.[currentRoute] ??
+        timeRanges.find(tr => tr.lower === 'now() - 1h'),
       autoRefreshOptions: getTimeOptionByGroup(currentRoute),
       currentRoute,
     }
@@ -90,6 +95,9 @@ class Clouds extends PureComponent<Props, State> {
       this.setState(prevState => ({
         ...prevState,
         autoRefreshOptions: getTimeOptionByGroup(currentRoute),
+        timeRange:
+          this.props.cloudTimeRange?.[currentRoute] ??
+          timeRanges.find(tr => tr.lower === 'now() - 1h'),
         currentRoute,
       }))
     }
@@ -167,7 +175,7 @@ class Clouds extends PureComponent<Props, State> {
                 source={source}
                 manualRefresh={manualRefresh}
                 timeRange={timeRange}
-                autoRefresh={autoRefresh}
+                autoRefresh={cloudAutoRefresh?.vmware || 0}
                 handleClearTimeout={handleClearTimeout}
               />
             )}
@@ -177,7 +185,7 @@ class Clouds extends PureComponent<Props, State> {
                 source={source}
                 manualRefresh={manualRefresh}
                 timeRange={timeRange}
-                autoRefresh={autoRefresh}
+                autoRefresh={cloudAutoRefresh?.kubernetes || 0}
               />
             )}
             {_.get(router.params, 'cloud') === 'openstack' && (
@@ -196,11 +204,19 @@ class Clouds extends PureComponent<Props, State> {
   }
 
   private handleChooseTimeRange = ({lower, upper}) => {
+    const {onChooseCloudTimeRange} = this.props
     if (upper) {
       this.setState({timeRange: {lower, upper}})
+      const timeRangeTemp = {}
+      timeRangeTemp[this.state.currentRoute] = {lower, upper}
+      onChooseCloudTimeRange(timeRangeTemp)
     } else {
       const timeRange = timeRanges.find(range => range.lower === lower)
       this.setState({timeRange})
+
+      const timeRangeTemp = {}
+      timeRangeTemp[this.state.currentRoute] = timeRange
+      onChooseCloudTimeRange(timeRangeTemp)
     }
   }
 
@@ -212,7 +228,7 @@ class Clouds extends PureComponent<Props, State> {
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh, cloudAutoRefresh},
+      persisted: {autoRefresh, cloudAutoRefresh, cloudTimeRange},
       ephemeral: {inPresentationMode},
     },
     links,
@@ -223,12 +239,14 @@ const mstp = state => {
     autoRefresh,
     cloudAutoRefresh,
     inPresentationMode,
+    cloudTimeRange,
   }
 }
 
 const mdtp = dispatch => ({
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
+  onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   handleClickPresentationButton: bindActionCreators(
     delayEnablePresentationMode,
     dispatch
