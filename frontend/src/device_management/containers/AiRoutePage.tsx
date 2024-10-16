@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {InjectedRouter, RouterState} from 'react-router'
 
 import _ from 'lodash'
@@ -120,6 +120,14 @@ const AiRoutePage = (props: Props) => {
     value: Date.now(),
   })
 
+  useEffect(() => {
+    if (!cloudAutoRefresh?.prediction) {
+      onChooseCloudAutoRefresh({
+        prediction: 5000,
+      })
+    }
+  }, [])
+
   let providers = []
 
   if (loginAuthType !== LOGIN_AUTH_TYPE.OAUTH) {
@@ -235,11 +243,7 @@ const AiRoutePage = (props: Props) => {
           )}
           {currentRoute === 'prediction' && (
             //@ts-ignore
-            <PredictionPage
-              me={me}
-              source={source}
-              cloudAutoRefresh={cloudAutoRefresh}
-            />
+            <PredictionPage me={me} source={source} />
           )}
         </>
       </Page.Contents>

@@ -68,8 +68,6 @@ function PredictionDashBoard({
   onPickTemplate,
   me,
 }: Props) {
-  const prevProps = useRef({cloudAutoRefresh: null})
-
   const GridLayout = WidthProvider(ReactGridLayout)
 
   const savedCells: DashboardsModels.Cell[] = JSON.parse(
@@ -93,13 +91,7 @@ function PredictionDashBoard({
       intervalID = null
       GlobalAutoRefresher.stopPolling()
     }
-  }, [])
-
-  useEffect(() => {
-    prevProps.current = {
-      cloudAutoRefresh: cloudAutoRefresh,
-    }
-  }, [cloudAutoRefresh])
+  }, [cloudAutoRefresh.prediction])
 
   const cells = useMemo(() => {
     const defaultCells = fixturePredictionPageCells(source)
@@ -268,13 +260,15 @@ const mstp = state => {
   const {
     app: {
       ephemeral: {inPresentationMode},
+      persisted: {cloudAutoRefresh},
     },
     auth: {isUsingAuth},
   } = state
 
   return {
-    inPresentationMode,
     isUsingAuth,
+    cloudAutoRefresh,
+    inPresentationMode,
   }
 }
 

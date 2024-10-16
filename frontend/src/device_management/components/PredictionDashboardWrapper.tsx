@@ -17,6 +17,7 @@ import {
 
 // Types
 import {
+  AlertHostList,
   AnomalyFactor,
   Cell,
   INPUT_TIME_TYPE,
@@ -59,7 +60,7 @@ interface Props {
   setHistogramDate?: (value: TimeRange) => void
   setSelectedAnomaly?: (anomalyFactor: AnomalyFactor) => void
   timeZone?: TimeZones
-  setAlertHostList?: (value: string[]) => void
+  setAlertHostList?: (value: AlertHostList) => void
   predictionManualRefresh?: number
   cloudTimeRange?: CloudTimeRange
 }
@@ -100,7 +101,7 @@ function PredictionDashboardWrapper({
       label: '',
       values: [
         {
-          value: cloudTimeRange.prediction.lower,
+          value: cloudTimeRange.prediction?.lower ?? 'now() - 30d',
           type: isTimeStamp
             ? TemplateValueType.TimeStamp
             : TemplateValueType.Constant,
@@ -117,9 +118,9 @@ function PredictionDashboardWrapper({
       label: '',
       values: [
         {
-          value: cloudTimeRange.prediction.upper ?? 'now()',
+          value: cloudTimeRange.prediction?.upper ?? 'now()',
           type:
-            isTimeStamp && cloudTimeRange.prediction.upper !== 'now()'
+            isTimeStamp && cloudTimeRange.prediction?.upper !== 'now()'
               ? TemplateValueType.TimeStamp
               : TemplateValueType.Constant,
           selected: true,
@@ -136,7 +137,7 @@ function PredictionDashboardWrapper({
       host: '',
       time: '',
     })
-    setAlertHostList([])
+    setAlertHostList({critical: [], warning: []})
     //86,400,000ms = 1d
     if (timeZone === TimeZones.UTC) {
       setHistogramDate({
