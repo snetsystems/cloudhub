@@ -153,12 +153,13 @@ import {
   AppsForHost,
   SeriesObj,
   PredictionManualRefresh,
-  hostState,
+  HostState,
   HexagonData,
   HexagonInputData,
   AnomalyFactor,
   GetLearningMLData,
   GetLearningDLData,
+  AlertHostList,
 } from './prediction'
 
 export {
@@ -302,7 +303,7 @@ export {
   INPUT_TIME_TYPE,
   DeviceOrganizationStatus,
   PredictionManualRefresh,
-  hostState,
+  HostState,
   HexagonData,
   HexagonInputData,
   AnomalyFactor,
@@ -315,4 +316,5 @@ export {
   SecurityLevelMapping,
   GetLearningMLData,
   GetLearningDLData,
+  AlertHostList,
 }

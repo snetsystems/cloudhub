@@ -217,6 +217,22 @@
   }
 }
 
+.warning-blink {
+  animation: blink-warning-animation 1s infinite;
+}
+
+@keyframes blink-warning-animation {
+  0% {
+    fill: #f3a426;
+  }
+  50% {
+    fill: #f9d719;
+  }
+  100% {
+    fill: #f3a426;
+  }
+}
+
 .loading-container {
   width: 100%;
   height: 100%;

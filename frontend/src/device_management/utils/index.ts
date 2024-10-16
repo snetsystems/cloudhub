@@ -10,8 +10,9 @@ import {
   DropdownItem,
   Source,
   DeviceOrganizationStatus,
-  hostState,
+  HostState,
   TimeZones,
+  AlertHostList,
 } from 'src/types'
 import {OrganizationID, PredictionTooltipNode} from 'src/types/deviceManagement'
 import {MLFunctionMsg} from 'src/device_management/constants'
@@ -323,19 +324,35 @@ export const parseErrorMessage = (error): string => {
 }
 
 export const setArrayHostList = (
-  aryList: hostState[],
-  prevList: string[]
-): string[] => {
-  return [
-    ...aryList.reduce((acc, item) => {
+  aryList: HostState[],
+  prevList: AlertHostList
+): AlertHostList => {
+  const {critical: prevCritical, warning: prevWarning} = prevList
+
+  const {critical, warning} = aryList.reduce(
+    (acc, item) => {
       if (item.isOk) {
-        acc.delete(item.host)
-      } else {
-        acc.add(item.host)
+        acc.critical.delete(item.host)
+        acc.warning.delete(item.host)
+      } else if (item.level === 'CRITICAL') {
+        acc.critical.add(item.host)
+        acc.warning.delete(item.host) // CRITICAL should not be in warning
+      } else if (item.level === 'WARNING') {
+        acc.warning.add(item.host)
+        acc.critical.delete(item.host) // WARNING should not be in critical
       }
       return acc
-    }, new Set(prevList)),
-  ] as string[]
+    },
+    {
+      critical: new Set(prevCritical),
+      warning: new Set(prevWarning),
+    }
+  )
+
+  return {
+    critical: Array.from(critical),
+    warning: Array.from(warning),
+  }
 }
 
 export const formatDateTimeForDeviceData = (
