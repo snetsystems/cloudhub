@@ -2,7 +2,14 @@ import React, {useCallback, useEffect, useState} from 'react'
 import _ from 'lodash'
 
 // Type
-import {INPUT_TIME_TYPE, Source, TimeRange, TimeZones} from 'src/types'
+import {
+  AlertHostList,
+  HostState,
+  INPUT_TIME_TYPE,
+  Source,
+  TimeRange,
+  TimeZones,
+} from 'src/types'
 import {Alert} from 'src/types/alerts'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
@@ -40,14 +47,14 @@ interface Props {
   source: Source
   limit: number
   timeZone?: TimeZones
-  alertHostList?: string[]
+  alertHostList?: AlertHostList
   histogramDate?: TimeRange
   filteredHexbinHost?: string
   cloudTimeRange?: CloudTimeRange
   predictionManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
   setHistogramDate?: (value: TimeRange) => void
-  setAlertHostList?: (value: string[]) => void
+  setAlertHostList?: (value: AlertHostList) => void
   onChooseCloudTimeRange?: (value: CloudTimeRange) => void
 }
 
@@ -159,7 +166,8 @@ function PredictionAlertHistoryWrapper({
     const triggerTypeIndex = alertSeries[0].columns.findIndex(
       col => col === 'triggerType'
     )
-    const alertHostListTemp = []
+    const alertHostListTemp: HostState[] = []
+
     alertSeries[0].values.forEach(s => {
       if (s[triggerTypeIndex] === 'anomaly_predict') {
         results.push({
@@ -173,13 +181,16 @@ function PredictionAlertHistoryWrapper({
 
         alertHostListTemp.push({
           host: s[hostIndex],
+          level: s[levelIndex],
           isOk: s[levelIndex] === 'OK',
         })
       }
     })
 
+    //org, source ip dep -> redux init
+
     setAlertHostList(
-      setArrayHostList([...alertHostListTemp].reverse(), alertHostList)
+      setArrayHostList(alertHostListTemp.reverse(), alertHostList)
     )
 
     setAlertsData(filterSelectedHost(results))

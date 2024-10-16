@@ -1,9 +1,9 @@
-import {AnomalyFactor, TimeRange} from 'src/types'
+import {AlertHostList, AnomalyFactor, TimeRange} from 'src/types'
 
 export type Action =
   | PredictionTimeRangeAction
   | PredictionFilteredHexbin
-  | AlertHostList
+  | AlertHostListAction
   | SelectedAnomaly
   | HistogramDateAction
   | PredictionManualRefreshAction
@@ -33,10 +33,10 @@ interface PredictionFilteredHexbin {
   }
 }
 
-interface AlertHostList {
+interface AlertHostListAction {
   type: ActionType.setAlertHostList
   payload: {
-    alertHostList: string[]
+    alertHostList: AlertHostList
   }
 }
 interface SelectedAnomaly {
@@ -81,7 +81,9 @@ export const setFilteredHexbin = (
   },
 })
 
-export const setAlertHostList = (alertHostList: string[]): AlertHostList => ({
+export const setAlertHostList = (
+  alertHostList: AlertHostList
+): AlertHostListAction => ({
   type: ActionType.setAlertHostList,
   payload: {
     alertHostList,

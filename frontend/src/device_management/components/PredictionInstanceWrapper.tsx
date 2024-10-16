@@ -49,7 +49,7 @@ interface Props {
   setSelectedAnomaly?: (value: AnomalyFactor) => void
 }
 
-const TIME_GAP = 3600000
+const TIME_GAP = 7200000
 
 const PredictionInstanceWrapper = ({
   source,
@@ -139,7 +139,7 @@ const PredictionInstanceWrapper = ({
         filteredLayouts,
         source,
         filteredHexbinHost ?? '',
-        !!selectedAnomaly.time ?? false
+        !!selectedAnomaly.time
       )
     )
   }

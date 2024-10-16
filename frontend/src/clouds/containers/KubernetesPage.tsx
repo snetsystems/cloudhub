@@ -62,7 +62,14 @@ import {getCpuAndLoadForK8s} from 'src/clouds/apis'
 
 // Types
 import {Addon} from 'src/types/auth'
-import {Source, Layout, TimeRange, Links, RemoteDataState} from 'src/types'
+import {
+  Source,
+  Layout,
+  TimeRange,
+  Links,
+  RemoteDataState,
+  NotificationAction,
+} from 'src/types'
 import {DashboardSwitcherLinks} from 'src/types/dashboards'
 import {
   TooltipNode,

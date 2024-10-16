@@ -3,24 +3,16 @@ import {connect} from 'react-redux'
 import PredictionDashBoard from '../components/PredictionDashBoard'
 import {Me, Source} from 'src/types'
 import _ from 'lodash'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 interface Props {
   source: Source
   limit: number
-  cloudAutoRefresh: CloudAutoRefresh
   me: Me
 }
-function PredictionPage({me, source, cloudAutoRefresh}: Props) {
+function PredictionPage({me, source}: Props) {
   return (
     <>
-      <PredictionDashBoard
-        source={source}
-        host=""
-        sources={[source]}
-        cloudAutoRefresh={cloudAutoRefresh}
-        me={me}
-      />
+      <PredictionDashBoard source={source} host="" sources={[source]} me={me} />
     </>
   )
 }

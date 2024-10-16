@@ -13,7 +13,12 @@ import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 import {TOOLTIP_OFFSET_X} from 'src/device_management/constants'
 
 // Type
-import {HexagonData, HexagonInputData, PredictionTooltipNode} from 'src/types'
+import {
+  AlertHostList,
+  HexagonData,
+  HexagonInputData,
+  PredictionTooltipNode,
+} from 'src/types'
 
 // Utils
 import {hslColorValue, returnCriticalValue} from 'src/device_management/utils'
@@ -27,7 +32,7 @@ interface Props {
   isMouseInComponent: boolean
 
   filteredHexbinHost?: string
-  alertHostList?: string[]
+  alertHostList?: AlertHostList
 }
 
 interface GenerateHexagonData {
@@ -170,8 +175,10 @@ const PredictionHexbin = ({
     svg.selectAll('.hexagon').each(function (d) {
       const hexagon = d3.select(this)
 
-      if (alertHostList.includes(d[0]?.name)) {
+      if (alertHostList.critical.includes(d[0]?.name)) {
         hexagon.attr('class', 'hexagon blink')
+      } else if (alertHostList.warning.includes(d[0]?.name)) {
+        hexagon.attr('class', 'hexagon warning-blink')
       } else {
         hexagon.attr('class', 'hexagon')
       }
