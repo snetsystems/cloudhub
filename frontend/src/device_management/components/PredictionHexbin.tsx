@@ -177,8 +177,7 @@ const PredictionHexbin = ({
 
       if (alertHostList.critical.includes(d[0]?.name)) {
         hexagon.attr('class', 'hexagon blink')
-        // } else if (alertHostList.warning.includes(d[0]?.name)) {
-      } else if (d[0]?.name === '10.10.250.122') {
+      } else if (alertHostList.warning.includes(d[0]?.name)) {
         hexagon.attr('class', 'hexagon warning-blink')
       } else {
         hexagon.attr('class', 'hexagon')
