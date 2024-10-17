@@ -182,6 +182,8 @@ function PredictionModalMLChart({host}: Props) {
         },
       },
     },
+    responsive: true,
+    maintainAspectRatio: false,
     hover: {intersect: false},
     plugins: {
       tooltip: {enabled: false},

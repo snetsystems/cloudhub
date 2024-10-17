@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useContext} from 'react'
 
 // Library
 import {Scatter} from 'react-chartjs-2'
@@ -11,14 +11,21 @@ import ModalContentHeader from 'src/device_management/components/PredictionModal
 // Type
 import {MLChartSectorProps, ContentItem} from 'src/types/prediction'
 
-const ChartWrapper: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <div
-    style={{width: '500px', height: '300px'}}
-    className="prediction-chart-wrap"
-  >
-    {children}
-  </div>
-)
+//constant
+import {ModalSizeContext} from 'src/device_management/constants/prediction'
+
+const ChartWrapper: React.FC<{children: React.ReactNode}> = ({children}) => {
+  const {height} = useContext(ModalSizeContext)
+
+  return (
+    <div
+      style={{width: '500px', height: height}}
+      className="prediction-chart-wrap"
+    >
+      {children}
+    </div>
+  )
+}
 
 const getLoadingComponent = () => (
   <div className="chartSector">
@@ -46,30 +53,34 @@ const getChartComponents = (
   mlChartDataSet: any,
   gaussianChartDataSet: any,
   options: any
-) => (
-  <div className="chartSector">
-    <ChartWrapper>
-      <Scatter
-        //@ts-ignore
-        data={mlChartDataSet}
-        //@ts-ignore
-        options={options}
-        width={500}
-        height={300}
-      />
-    </ChartWrapper>
-    <ChartWrapper>
-      <Scatter
-        //@ts-ignore
-        data={gaussianChartDataSet}
-        //@ts-ignore
-        options={options}
-        width={500}
-        height={300}
-      />
-    </ChartWrapper>
-  </div>
-)
+) => {
+  const {height} = useContext(ModalSizeContext)
+
+  return (
+    <div className="chartSector">
+      <ChartWrapper>
+        <Scatter
+          //@ts-ignore
+          data={mlChartDataSet}
+          //@ts-ignore
+          options={options}
+          width={500}
+          height={height}
+        />
+      </ChartWrapper>
+      <ChartWrapper>
+        <Scatter
+          //@ts-ignore
+          data={gaussianChartDataSet}
+          //@ts-ignore
+          options={options}
+          width={500}
+          height={height}
+        />
+      </ChartWrapper>
+    </div>
+  )
+}
 
 export const MLNxRstChart: React.FC<MLChartSectorProps> = ({
   isNoData,
