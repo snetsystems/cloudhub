@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useContext, useEffect} from 'react'
 
 //Library
 import {Line, Scatter} from 'react-chartjs-2'
@@ -11,14 +11,21 @@ import ModalContentHeader from 'src/device_management/components/PredictionModal
 import {NoData} from 'src/device_management/components/PredictionModalNodata'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
-const ChartWrapper: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <div
-    style={{width: '500px', height: '300px'}}
-    className="prediction-chart-wrap"
-  >
-    {children}
-  </div>
-)
+//constant
+import {ModalSizeContext} from 'src/device_management/constants/prediction'
+
+const ChartWrapper: React.FC<{children: React.ReactNode}> = ({children}) => {
+  const {height} = useContext(ModalSizeContext)
+
+  return (
+    <div
+      style={{width: '500px', height: height}}
+      className="prediction-chart-wrap"
+    >
+      {children}
+    </div>
+  )
+}
 
 const getLoadingComponent = () => (
   <div className="chartSector">
@@ -46,36 +53,43 @@ const getChartComponents = (
   trainChartDataSet: any,
   mseChartDataSet: any,
   options: any
-) => (
-  <div className="chartSector">
-    <ChartWrapper>
-      <Line
-        //@ts-ignore
-        data={trainChartDataSet}
-        //@ts-ignore
-        options={{
-          ...options,
-          scales: {
-            ...options.scales,
-            x: {...options.scales.x, type: 'linear', min: -10},
-          },
-        }}
-        width={500}
-        height={300}
-      />
-    </ChartWrapper>
-    <ChartWrapper>
-      <Scatter
-        //@ts-ignore
-        data={mseChartDataSet}
-        //@ts-ignore
-        options={options}
-        width={500}
-        height={300}
-      />
-    </ChartWrapper>
-  </div>
-)
+) => {
+  const {height} = useContext(ModalSizeContext)
+
+  useEffect(() => {
+    window.addEventListener('resize', () => {})
+  }, [])
+  return (
+    <div className="chartSector">
+      <ChartWrapper>
+        <Line
+          //@ts-ignore
+          data={trainChartDataSet}
+          //@ts-ignore
+          options={{
+            ...options,
+            scales: {
+              ...options.scales,
+              x: {...options.scales.x, type: 'linear', min: -10},
+            },
+          }}
+          width={500}
+          height={height}
+        />
+      </ChartWrapper>
+      <ChartWrapper>
+        <Scatter
+          //@ts-ignore
+          data={mseChartDataSet}
+          //@ts-ignore
+          options={options}
+          width={500}
+          height={height}
+        />
+      </ChartWrapper>
+    </div>
+  )
+}
 
 export const DLNxRstChart: React.FC<DLChartSectorProps> = ({
   isNoData,

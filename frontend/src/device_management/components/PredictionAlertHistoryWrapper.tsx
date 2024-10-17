@@ -42,6 +42,7 @@ import {connect} from 'react-redux'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {setArrayHostList} from 'src/device_management/utils'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
+import {timeRanges} from 'src/shared/data/timeRanges'
 
 interface Props {
   source: Source
@@ -87,7 +88,9 @@ function PredictionAlertHistoryWrapper({
   const fetchAlerts = useCallback((): void => {
     getPredictionAlert(
       source.links.proxy,
-      histogramDate ?? cloudTimeRange.prediction,
+      histogramDate ??
+        cloudTimeRange?.prediction ??
+        timeRanges.find(i => i.inputValue === 'Past 30d'),
       limit * limitMultiplier,
       source.telegraf
     )
