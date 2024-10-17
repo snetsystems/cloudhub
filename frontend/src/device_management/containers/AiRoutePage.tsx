@@ -121,7 +121,7 @@ const AiRoutePage = (props: Props) => {
   })
 
   useEffect(() => {
-    if (!cloudAutoRefresh?.prediction) {
+    if (typeof cloudAutoRefresh?.prediction !== 'number') {
       onChooseCloudAutoRefresh({
         prediction: 5000,
       })
@@ -173,6 +173,7 @@ const AiRoutePage = (props: Props) => {
     group?: string
   }) => {
     const {milliseconds, group} = option
+    console.log(milliseconds)
     group
       ? onChooseCloudAutoRefresh({[group]: milliseconds})
       : onChooseAutoRefresh(milliseconds)

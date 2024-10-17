@@ -31,7 +31,10 @@ class QueriesPage extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      updateInterval: props.cloudAutoRefresh.queries || 5000,
+      updateInterval:
+        typeof props.cloudAutoRefresh.queries === 'number'
+          ? props.cloudAutoRefresh.queries
+          : 5000,
     }
   }
   componentDidMount() {
