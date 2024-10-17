@@ -8,7 +8,7 @@
     "author": "InfluxData",
     "license": "MIT",
     "icon": "",
-    "url": "https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere"
+    "url": "https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere"
   },
   "data": {
     "cells": [
@@ -105,7 +105,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere).",
+        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -201,7 +201,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere).",
+        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -297,7 +297,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere).",
+        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -393,7 +393,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere).",
+        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -489,7 +489,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere).",
+        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -571,7 +571,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere).",
+        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -653,7 +653,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere).",
+        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -735,7 +735,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere).",
+        "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -809,7 +809,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "This dashboard will give you an overview of your VMware vSphere hosts and includes metrics from `vsphere_host_*` set of measurements populated by the [Telegraf vSphere Input Plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/vsphere).",
+        "note": "This dashboard will give you an overview of your VMware vSphere hosts and includes metrics from `vsphere_host_*` set of measurements populated by the [Telegraf vSphere Input Plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
         "noteVisibility": "default"
       }
     ],

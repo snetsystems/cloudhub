@@ -9,7 +9,7 @@
     "author": "influxdata",
     "license": "MIT",
     "icon": "",
-    "url": "https://github.com/influxdata/telegraf/tree/master/plugins/inputs/redis"
+    "url": "https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/redis"
   },
   "data": {
     "cells": [

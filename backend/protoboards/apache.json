@@ -9,7 +9,7 @@
     "author": "InfluxData",
     "license": "MIT",
     "icon": "",
-    "url": "https://github.com/influxdata/telegraf/tree/master/plugins/inputs/apache"
+    "url": "https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache"
   },
   "data": {
     "cells": [
@@ -92,7 +92,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/apache).",
+        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -222,7 +222,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
-        "note": "To enable this graph, you will need to configure the Telegraf `logparser` plugin to read your Apache Access Logs. For more information, please visit the [Telegraf Logparser plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/logparser).",
+        "note": "To enable this graph, you will need to configure the Telegraf `logparser` plugin to read your Apache Access Logs. For more information, please visit the [Telegraf Logparser plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/logparser).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -318,7 +318,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/apache).",
+        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -414,7 +414,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `logparser` plugin to read your Apache Access Logs. For more information, please visit the [Telegraf Logparser plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/logparser).",
+        "note": "To enable this graph, you will need to configure the Telegraf `logparser` plugin to read your Apache Access Logs. For more information, please visit the [Telegraf Logparser plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/logparser).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -496,7 +496,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/apache).",
+        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -578,7 +578,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 1},
-        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/apache).",
+        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -674,7 +674,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/apache).",
+        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -770,7 +770,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/apache).",
+        "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -940,7 +940,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `net` plugin. For more information, please visit the [Telegraf Net plugin documentation](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/net/NET_README.md).",
+        "note": "To enable this graph, you will need to configure the Telegraf `net` plugin. For more information, please visit the [Telegraf Net plugin documentation](https://github.com/snetsystems/telegraf/blob/master/plugins/inputs/net/NET_README.md).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1036,7 +1036,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `diskio` plugin. For more information, please visit the [Telegraf Disk IO plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/diskio).",
+        "note": "To enable this graph, you will need to configure the Telegraf `diskio` plugin. For more information, please visit the [Telegraf Disk IO plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/diskio).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1132,7 +1132,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system).",
+        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1228,7 +1228,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
-        "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/mem).",
+        "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mem).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1310,7 +1310,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
-        "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/mem).",
+        "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mem).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1392,7 +1392,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
-        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system).",
+        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1474,7 +1474,7 @@
         ],
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
-        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system).",
+        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
         "noteVisibility": "showWhenNoData"
       }
     ],
