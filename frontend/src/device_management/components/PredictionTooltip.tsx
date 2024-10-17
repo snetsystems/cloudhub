@@ -26,7 +26,6 @@ function PredictionTooltip({
   memory,
   name,
   traffic,
-  status,
   isBlink,
   isSelected = true,
 }: Props) {

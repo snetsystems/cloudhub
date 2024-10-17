@@ -14,6 +14,7 @@ import {
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
 } from 'src/shared/constants'
+import {timeRanges} from 'src/shared/data/timeRanges'
 
 // Types
 import {
@@ -85,9 +86,11 @@ function PredictionDashboardWrapper({
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
 
+  const defaultTimeRange = timeRanges.find(i => i.inputValue === 'Past 30d')
+
   useEffect(() => {
-    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
-  }, [cloudAutoRefresh.prediction])
+    GlobalAutoRefresher.poll(cloudAutoRefresh?.prediction)
+  }, [cloudAutoRefresh?.prediction])
 
   const isTimeStamp = useMemo(() => {
     return cloudTimeRange?.prediction?.format === INPUT_TIME_TYPE.TIMESTAMP
@@ -101,7 +104,7 @@ function PredictionDashboardWrapper({
       label: '',
       values: [
         {
-          value: cloudTimeRange.prediction?.lower ?? 'now() - 30d',
+          value: cloudTimeRange?.prediction?.lower ?? 'now() - 30d',
           type: isTimeStamp
             ? TemplateValueType.TimeStamp
             : TemplateValueType.Constant,
@@ -118,9 +121,9 @@ function PredictionDashboardWrapper({
       label: '',
       values: [
         {
-          value: cloudTimeRange.prediction?.upper ?? 'now()',
+          value: cloudTimeRange?.prediction?.upper ?? 'now()',
           type:
-            isTimeStamp && cloudTimeRange.prediction?.upper !== 'now()'
+            isTimeStamp && cloudTimeRange?.prediction?.upper !== 'now()'
               ? TemplateValueType.TimeStamp
               : TemplateValueType.Constant,
           selected: true,
@@ -208,7 +211,7 @@ function PredictionDashboardWrapper({
           onZoom={onZoom}
           sources={sources}
           templates={templates()}
-          timeRange={cloudTimeRange.prediction}
+          timeRange={cloudTimeRange?.prediction ?? defaultTimeRange}
           isEditable={false}
           onDeleteCell={onDeleteCell}
           onCloneCell={onCloneCell}
