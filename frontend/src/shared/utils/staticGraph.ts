@@ -368,7 +368,9 @@ const createPieChartDatasets = ({
     sortFields,
     sortingBasisField
   )
-  const getColors = getLineColorsHexes(colors, labels.length)
+  const colorsByCount =
+    showCount > labels.length ? labels.length : showCount ?? labels.length
+  const getColors = getLineColorsHexes(colors, colorsByCount)
 
   const datasets = fastReduce(
     excludeTags,
