@@ -92,8 +92,8 @@ class TimeRangeDropdown extends Component {
   render() {
     const {selected, preventCustomTimeRange, page} = this.props
     const {isOpen, customTimeRange, isCustomTimeRangeOpen} = this.state
-    const isRelativeTimeRange = selected.upper === null
-    const isNow = selected.upper === 'now()'
+    const isRelativeTimeRange = selected?.upper === null
+    const isNow = selected?.upper === 'now()'
 
     return (
       <div className="time-range-dropdown">

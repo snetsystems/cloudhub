@@ -101,8 +101,8 @@ const PredictionInstanceWrapper = ({
     localStorage.setItem(
       'monitoring-chart',
       JSON.stringify({
-        lower: timeRange.lower,
-        lowerFlux: timeRange.lowerFlux,
+        lower: timeRange?.lower ?? 'now() - 1h',
+        lowerFlux: timeRange?.lowerFlux,
         upper: timeRange?.upper ?? null,
       })
     )
