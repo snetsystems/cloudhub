@@ -112,7 +112,7 @@ class DisplayOptions extends Component<Props, State> {
     this.state = {
       defaultXLabel: this.defaultXLabel,
       defaultYLabel: this.defaultYLabel,
-      proportions: [undefined, undefined, undefined],
+      proportions: Array.from({length: 3}, () => 1 / 3),
     }
   }
 
