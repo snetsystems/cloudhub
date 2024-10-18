@@ -225,6 +225,7 @@ const PredictionInstanceWrapper = ({
                     {
                       id: selectedAnomaly.host,
                       startTime: Number(selectedAnomaly.time),
+                      endTime: Number(selectedAnomaly.time),
                       text: `Anomaly Time (${timeZone})`,
                     },
                   ]}

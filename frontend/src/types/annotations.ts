@@ -1,7 +1,7 @@
 export interface AnnotationViewer {
   id: string
   startTime: number
-  endTime?: number
+  endTime: number
   text: string
 }
 

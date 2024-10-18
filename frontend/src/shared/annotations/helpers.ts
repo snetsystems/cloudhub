@@ -1,6 +1,11 @@
 import uuid from 'uuid'
 
-import {Annotation, TagFilter, TagFilterType} from 'src/types/annotations'
+import {
+  Annotation,
+  AnnotationViewer,
+  TagFilter,
+  TagFilterType,
+} from 'src/types/annotations'
 
 export const ANNOTATION_MIN_DELTA = 0.5
 
@@ -26,6 +31,28 @@ export const visibleAnnotations = (
   xAxisRange: [number, number],
   annotations: Annotation[] = []
 ): Annotation[] => {
+  const [xStart, xEnd] = xAxisRange
+
+  if (xStart === 0 && xEnd === 0) {
+    return []
+  }
+
+  return annotations.filter(a => {
+    if (a.startTime === null || a.endTime === null) {
+      return false
+    }
+    if (a.endTime === a.startTime) {
+      return xStart <= a.startTime && a.startTime <= xEnd
+    }
+
+    return !(a.endTime < xStart || xEnd < a.startTime)
+  })
+}
+
+export const visibleAnnotationsViewer = (
+  xAxisRange: [number, number],
+  annotations: AnnotationViewer[] = []
+): AnnotationViewer[] => {
   const [xStart, xEnd] = xAxisRange
 
   if (xStart === 0 && xEnd === 0) {
