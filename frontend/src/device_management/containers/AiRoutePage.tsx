@@ -173,7 +173,6 @@ const AiRoutePage = (props: Props) => {
     group?: string
   }) => {
     const {milliseconds, group} = option
-    console.log(milliseconds)
     group
       ? onChooseCloudAutoRefresh({[group]: milliseconds})
       : onChooseAutoRefresh(milliseconds)

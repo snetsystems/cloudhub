@@ -5,7 +5,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PredictionTooltip from 'src/device_management/components/PredictionTooltip'
 
 // Type
-import {HexagonInputData} from 'src/types'
+import {AlertHostList, HexagonInputData} from 'src/types'
 
 // Utils
 import {statusCal} from 'src/device_management/utils'
@@ -18,7 +18,7 @@ interface Props {
   onHexbinClick: (host: string, filteredHexbinHost?: string) => void
   //redux
   filteredHexbinHost?: string
-  alertHostList?: string[]
+  alertHostList?: AlertHostList
 }
 function PredictionTooltipView({
   inputData,
@@ -45,7 +45,8 @@ function PredictionTooltipView({
                   traffic={tooltip.traffic}
                   name={tooltip.name}
                   status={statusCal((tooltip.cpu + tooltip.memory) / 2)}
-                  isBlink={alertHostList.includes(tooltip.name)}
+                  isCritical={alertHostList.critical.includes(tooltip.name)}
+                  isWarning={alertHostList.warning.includes(tooltip.name)}
                   isSelected={filteredHexbinHost === tooltip.name}
                 />
               </div>

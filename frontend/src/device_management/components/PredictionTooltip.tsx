@@ -18,7 +18,8 @@ import {PREDICTION_TOOLTIP_HEADER} from 'src/device_management/constants/predict
 
 interface Props extends PredictionTooltipNode {
   status?: string
-  isBlink?: boolean
+  isCritical?: boolean
+  isWarning?: boolean
   isSelected?: boolean
 }
 function PredictionTooltip({
@@ -26,7 +27,8 @@ function PredictionTooltip({
   memory,
   name,
   traffic,
-  isBlink,
+  isCritical,
+  isWarning,
   isSelected = true,
 }: Props) {
   const {
@@ -39,7 +41,15 @@ function PredictionTooltip({
       style={{minWidth: TOOLTIP_WIDTH}}
       className={`prediction-tooltip-content ${isSelected ? '' : 'grey'}`}
     >
-      <div className={isBlink ? `prediction-tooltip--blink` : ''}>
+      <div
+        className={
+          isCritical
+            ? `prediction-tooltip--blink`
+            : isWarning
+            ? 'blink-opacity-animation-warning'
+            : ''
+        }
+      >
         <Table>
           <TableBody>
             <>
