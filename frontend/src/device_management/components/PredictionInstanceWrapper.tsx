@@ -5,7 +5,7 @@ import _ from 'lodash'
 
 // Components
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import TimeRangeShiftDropdown from 'src/shared/components/TimeRangeShiftDropdown'
 import PredictionDashboardHeader from 'src/device_management/components/PredictionDashboardHeader'
 
 // Type
@@ -31,13 +31,17 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
+
+// Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
-import {getLayouts} from 'src/hosts/apis'
 import {getDeep} from 'src/utils/wrappers'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+
+// ETC
+import {getLayouts} from 'src/hosts/apis'
 import {getCellsWithWhere} from 'src/hosts/utils/getCellsWithWhere'
-import {setSelectedAnomaly} from '../actions'
+import {setSelectedAnomaly} from 'src/device_management/actions'
 
 interface Props {
   source: Source
@@ -183,7 +187,7 @@ const PredictionInstanceWrapper = ({
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
           <div className="page-header--right" style={{zIndex: 3}}>
-            <TimeRangeDropdown
+            <TimeRangeShiftDropdown
               onChooseTimeRange={handleChooseTimeRange}
               selected={selfTimeRange}
             />
