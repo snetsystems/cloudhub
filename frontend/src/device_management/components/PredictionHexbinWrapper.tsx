@@ -58,6 +58,7 @@ interface Props {
   notify?: NotificationAction
   cloudAutoRefresh?: CloudAutoRefresh
   setFilteredHexbin?: (value: string) => void
+  predictionManualRefresh?: number
 }
 
 function PredictionHexbinWrapper({
@@ -66,6 +67,7 @@ function PredictionHexbinWrapper({
   cloudAutoRefresh,
   notify,
   setFilteredHexbin,
+  predictionManualRefresh,
 }: Props) {
   const getMlDlTagInit = () => {
     if (!!localStorage.getItem('hexbinTag')) {
@@ -104,7 +106,7 @@ function PredictionHexbinWrapper({
   useEffect(() => {
     fetchDeviceInfo()
     return () => setFilteredHexbin('')
-  }, [])
+  }, [predictionManualRefresh])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
@@ -119,6 +121,7 @@ function PredictionHexbinWrapper({
 
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
 
+    console.log('refresh')
     return () => {
       controller.abort()
       clearInterval(intervalID)
@@ -300,6 +303,7 @@ const mstp = state => {
       persisted: {cloudAutoRefresh},
       ephemeral: {inPresentationMode},
     },
+    predictionDashboard: {predictionManualRefresh},
     links,
     auth,
   } = state
@@ -307,6 +311,7 @@ const mstp = state => {
     links,
     cloudAutoRefresh,
     inPresentationMode,
+    predictionManualRefresh,
     auth,
   }
 }

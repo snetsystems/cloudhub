@@ -45,8 +45,8 @@ function PredictionTooltipView({
                   traffic={tooltip.traffic}
                   name={tooltip.name}
                   status={statusCal((tooltip.cpu + tooltip.memory) / 2)}
-                  isCritical={alertHostList.critical.includes(tooltip.name)}
-                  isWarning={alertHostList.warning.includes(tooltip.name)}
+                  isCritical={alertHostList?.critical.includes(tooltip.name)}
+                  isWarning={alertHostList?.warning.includes(tooltip.name)}
                   isSelected={filteredHexbinHost === tooltip.name}
                 />
               </div>

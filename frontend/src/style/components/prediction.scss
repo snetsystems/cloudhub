@@ -282,6 +282,9 @@
 .prediction-tooltip--blink {
   animation: blink-opacity-animation 1s infinite;
 }
+.prediction-tooltip--blink-warning {
+  animation: blink-opacity-animation 1s infinite;
+}
 
 @keyframes blink-opacity-animation {
   0% {
@@ -296,6 +299,23 @@
 
   100% {
     background-color: #ab0000;
+    opacity: 0.8;
+  }
+}
+
+@keyframes blink-opacity-animation-warning {
+  0% {
+    background-color: #abab00;
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 0.9;
+    background-color: inherit;
+  }
+
+  100% {
+    background-color: #abab00;
     opacity: 0.8;
   }
 }
