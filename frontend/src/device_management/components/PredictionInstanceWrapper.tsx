@@ -38,6 +38,7 @@ import {getDeep} from 'src/utils/wrappers'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getCellsWithWhere} from 'src/hosts/utils/getCellsWithWhere'
 import {setSelectedAnomaly} from '../actions'
+import PredictionHexbinToggle from './PredictionHexbinToggle'
 
 interface Props {
   source: Source
@@ -58,7 +59,6 @@ const PredictionInstanceWrapper = ({
   filteredHexbinHost,
   selectedAnomaly,
   timeZone,
-  setSelectedAnomaly,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem('monitoring-chart')) {
@@ -67,6 +67,10 @@ const PredictionInstanceWrapper = ({
       return timeRanges.find(tr => tr.lower === 'now() - 1h')
     }
   }
+
+  const [interval, setInterval] = useState(1)
+
+  const [isIntervalManual, setIsIntervalManual] = useState(false)
 
   const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
     getTimeRangeFromLocalStorage()
@@ -96,6 +100,20 @@ const PredictionInstanceWrapper = ({
   useEffect(() => {
     GlobalAutoRefresher.poll(autoRefresh)
   }, [autoRefresh])
+
+  useEffect(() => {
+    if (!!layouts) {
+      setLayoutCells(
+        getCellsWithWhere(
+          layouts,
+          source,
+          filteredHexbinHost ?? '',
+          !!selectedAnomaly.time,
+          isIntervalManual ? interval : null
+        )
+      )
+    }
+  }, [layouts, interval, filteredHexbinHost, isIntervalManual])
 
   const saveTimeRangeToLocalStorage = (timeRange: TimeRange) => {
     localStorage.setItem(
@@ -133,15 +151,6 @@ const PredictionInstanceWrapper = ({
       })
 
     setLayouts(filteredLayouts)
-
-    setLayoutCells(
-      getCellsWithWhere(
-        filteredLayouts,
-        source,
-        filteredHexbinHost ?? '',
-        !!selectedAnomaly.time
-      )
-    )
   }
 
   const tempVars = generateForHosts(source)
@@ -164,11 +173,18 @@ const PredictionInstanceWrapper = ({
       saveTimeRangeToLocalStorage(timeRange)
     }
 
+    setInterval(null)
     //annotation set null
-    setSelectedAnomaly({
-      host: null,
-      time: null,
-    })
+    // setSelectedAnomaly({
+    //   host: null,
+    //   time: null,
+    // })
+  }
+
+  const onIntervalHandler = value => {
+    if (typeof Number(value) === 'number') {
+      setInterval(Number(value))
+    }
   }
 
   return (
@@ -183,6 +199,27 @@ const PredictionInstanceWrapper = ({
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
           <div className="page-header--right" style={{zIndex: 3}}>
+            {!!selectedAnomaly.time && (
+              <>
+                <PredictionHexbinToggle
+                  isActive={isIntervalManual}
+                  onChange={() => {
+                    setIsIntervalManual(!isIntervalManual)
+                  }}
+                  label="Manual Interval"
+                />
+                {isIntervalManual && (
+                  <input
+                    type="text"
+                    className="form-control input-sm"
+                    placeholder="Interval..."
+                    onChange={e => onIntervalHandler(e.currentTarget.value)}
+                    value={interval}
+                    style={{minWidth: '100px'}}
+                  />
+                )}
+              </>
+            )}
             <TimeRangeDropdown
               onChooseTimeRange={handleChooseTimeRange}
               selected={selfTimeRange}

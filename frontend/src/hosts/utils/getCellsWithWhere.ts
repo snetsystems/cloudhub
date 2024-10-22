@@ -19,11 +19,12 @@ export function getCellsWithWhere(
   layouts: Layout[],
   source: Source,
   whereTag: string,
-  isGroupbyOneMin?: boolean
+  isAnnotation?: boolean,
+  interval?: number
 ): Cell[] {
   const layoutCells = getLayoutCells(layouts)
   const cells = layoutCells.map(d =>
-    toCell(d, source, whereTag, isGroupbyOneMin)
+    toCell(d, source, whereTag, isAnnotation, interval)
   )
 
   return cells
@@ -94,10 +95,11 @@ function toCell(
   layoutCell: LayoutCell,
   source: Source,
   whereTag: string,
-  isGroupbyOneMin?: boolean
+  isAnnotation?: boolean,
+  interval?: number
 ): Cell {
   const queries = layoutCell.queries.map(d =>
-    toCellQuery(d, source, whereTag, isGroupbyOneMin)
+    toCellQuery(d, source, whereTag, isAnnotation, interval)
   )
   const cell = {
     ...NEW_DEFAULT_DASHBOARD_CELL,
@@ -117,7 +119,8 @@ function toCellQuery(
   layoutQuery: LayoutQuery & queryWithWhereGroupby,
   source: Source,
   whereTag: string,
-  isGroupbyOneMin?: boolean
+  isAnnotation?: boolean,
+  interval?: number
 ): CellQuery {
   const filteredQuery = {
     ...layoutQuery,
@@ -127,12 +130,12 @@ function toCellQuery(
     ].filter(i => !!i),
     groupbys: [
       ...layoutQuery.groupbys,
-      isGroupbyOneMin ? 'time(1m)' : null,
+      isAnnotation ? (interval > 0 ? `time(${interval}m)` : `time(1m)`) : null,
     ].filter(i => !!i),
   }
 
   const cellQuery: any =
-    !!whereTag || isGroupbyOneMin
+    !!whereTag || isAnnotation
       ? {
           ...filteredQuery,
           source: source.url,

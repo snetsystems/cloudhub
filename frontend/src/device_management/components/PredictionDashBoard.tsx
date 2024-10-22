@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef} from 'react'
+import React, {useEffect, useMemo} from 'react'
 
 // Library
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
