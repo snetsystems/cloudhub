@@ -121,7 +121,6 @@ function PredictionHexbinWrapper({
 
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
 
-    console.log('refresh')
     return () => {
       controller.abort()
       clearInterval(intervalID)
