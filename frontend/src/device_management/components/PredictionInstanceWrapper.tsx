@@ -88,7 +88,7 @@ const PredictionInstanceWrapper = ({
 
   useEffect(() => {
     getLayout()
-  }, [filteredHexbinHost, selfTimeRange])
+  }, [])
 
   useEffect(() => {
     if (!!selectedAnomaly.time && !!layouts) {
@@ -117,7 +117,7 @@ const PredictionInstanceWrapper = ({
         )
       )
     }
-  }, [layouts, interval, filteredHexbinHost, isIntervalManual])
+  }, [layouts, interval, filteredHexbinHost, isIntervalManual, selfTimeRange])
 
   const saveTimeRangeToLocalStorage = (timeRange: TimeRange) => {
     localStorage.setItem(
@@ -176,18 +176,13 @@ const PredictionInstanceWrapper = ({
       setSelfTimeRange(timeRange)
       saveTimeRangeToLocalStorage(timeRange)
     }
-
-    setInterval(null)
-    //annotation set null
-    // setSelectedAnomaly({
-    //   host: null,
-    //   time: null,
-    // })
   }
 
   const onIntervalHandler = value => {
-    if (typeof Number(value) === 'number') {
+    if (!!Number(value)) {
       setInterval(Number(value))
+    } else {
+      setInterval(null)
     }
   }
 
