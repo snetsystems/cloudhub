@@ -241,10 +241,10 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "Network Device - Inbound Discard and Error Packets",
+      "name": "Network Device - In/Out Discards",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(sum(\"ifInDiscards\"),1s) AS \"ifInDiscards\", non_negative_derivative(sum(\"ifInErrors\"),1s) AS \"ifInErrors\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "query": "SELECT non_negative_derivative(sum(\"ifInDiscards\"),1s) AS \"ifInDiscards\", non_negative_derivative(sum(\"ifOutDiscards\"),1s) AS \"ifOutDiscards\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
           "groupbys": ["\"agent_host\""],
           "wheres": ["\"ifDescr\" =~ /Ethernet/"]
         }
@@ -318,10 +318,10 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "Network Device - Outbound Discard and Error Packets",
+      "name": "Network Device - In/Out Errors",
       "queries": [
         {
-          "query": "SELECT  non_negative_derivative(sum(\"ifOutDiscards\"),1s) AS \"ifOutDiscards\", non_negative_derivative(sum(\"ifOutErrors\"),1s) AS \"ifOutErrors\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "query": "SELECT  non_negative_derivative(sum(\"ifInErrors\"),1s) AS \"ifInErrors\", non_negative_derivative(sum(\"ifOutErrors\"),1s) AS \"ifOutErrors\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
           "groupbys": ["\"agent_host\""],
           "wheres": ["\"ifDescr\" =~ /Ethernet/"]
         }
