@@ -4,6 +4,7 @@ import _ from 'lodash'
 // Type
 import {
   AlertHostList,
+  AnomalyFactor,
   HostState,
   INPUT_TIME_TYPE,
   Source,
@@ -34,6 +35,7 @@ import {
   setAlertHostList,
   setFilteredHexbin,
   setHistogramDate,
+  setSelectedAnomaly,
 } from 'src/device_management/actions'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
@@ -43,6 +45,7 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {setArrayHostList} from 'src/device_management/utils'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
 import {timeRanges} from 'src/shared/data/timeRanges'
+import {ANOMALY_INITIAL} from '../constants'
 
 interface Props {
   source: Source
@@ -56,6 +59,7 @@ interface Props {
   cloudAutoRefresh?: CloudAutoRefresh
   setHistogramDate?: (value: TimeRange) => void
   setAlertHostList?: (value: AlertHostList) => void
+  setSelectedAnomaly?: (value: AnomalyFactor) => void
   onChooseCloudTimeRange?: (value: CloudTimeRange) => void
 }
 
@@ -68,6 +72,7 @@ function PredictionAlertHistoryWrapper({
   cloudAutoRefresh,
   setAlertHostList,
   setHistogramDate,
+  setSelectedAnomaly,
   filteredHexbinHost,
   onChooseCloudTimeRange,
   predictionManualRefresh,
@@ -216,6 +221,7 @@ function PredictionAlertHistoryWrapper({
 
   const onClickReset = () => {
     setHistogramDate(null)
+    setSelectedAnomaly(ANOMALY_INITIAL)
 
     onChooseCloudTimeRange({
       prediction: {
@@ -249,7 +255,11 @@ function PredictionAlertHistoryWrapper({
               />
             )}
           </div>
-          <div style={{zIndex: 3}} className="page-header--right">
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            style={{zIndex: 3}}
+            className="page-header--right"
+          >
             <Button
               text="Reset (30d)"
               color={ComponentColor.Primary}
@@ -304,6 +314,7 @@ const mdtp = (dispatch: any) => ({
   setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
   setFilteredHexbin: bindActionCreators(setFilteredHexbin, dispatch),
   setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
+  setSelectedAnomaly: bindActionCreators(setSelectedAnomaly, dispatch),
 })
 
 const areEqual = (prev, next) => {
