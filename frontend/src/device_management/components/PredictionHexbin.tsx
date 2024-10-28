@@ -30,7 +30,6 @@ interface Props {
   onHexbinClick: (host: string, filteredHexbinHost?: string) => void
   inputData: HexagonInputData[]
   isMouseInComponent: boolean
-
   filteredHexbinHost?: string
   alertHostList?: AlertHostList
 }
@@ -73,11 +72,16 @@ const PredictionHexbin = ({
   })
 
   useEffect(() => {
+    attachEventHandlers()
+    highlightHexbinHost()
+  }, [filteredHexbinHost])
+
+  useEffect(() => {
     const resizeObserver = new ResizeObserver(_ => {
       generateHexagonData()
       drawHexagons()
-      attachEventHandlers()
       blinkHexbinHost()
+      attachEventHandlers()
       highlightHexbinHost()
     })
     if (svgRef.current) {
@@ -86,17 +90,11 @@ const PredictionHexbin = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [])
-
-  useEffect(() => {
-    attachEventHandlers()
-    highlightHexbinHost()
   }, [filteredHexbinHost])
 
   //initialize
   useEffect(() => {
     drawHexagons()
-    attachEventHandlers()
   }, [])
 
   useEffect(() => {
@@ -118,7 +116,6 @@ const PredictionHexbin = ({
       .selectAll('.hexagon')
       .on('mouseover', function () {
         const tempPosition = {x: 0, y: 0}
-
         d3.select(this)
           .transition()
           .duration(150)
