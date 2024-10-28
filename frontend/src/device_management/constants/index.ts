@@ -44,6 +44,8 @@ import {
   STATIC_TOOLTIP_HEIGHT,
   MODAL_HEIGHT,
   CHART_HEIGHT,
+  ANOMALY_INITIAL,
+  TIME_GAP,
 } from './prediction'
 export {
   DEFAULT_NETWORK_DEVICE_DATA,
@@ -87,6 +89,7 @@ export {
   SecurityLevels,
   MODAL_HEIGHT,
   CHART_HEIGHT,
-
+  ANOMALY_INITIAL,
+  TIME_GAP,
   // fixturePredictionPageCells,
 }

@@ -16,4 +16,11 @@ export const STATIC_TOOLTIP_HEIGHT = 147
 export const MODAL_HEIGHT = window.innerHeight * 0.85
 export const CHART_HEIGHT = window.innerHeight * 0.3
 
+export const TIME_GAP = 7200000
+
+export const ANOMALY_INITIAL = {
+  host: '',
+  time: '',
+}
+
 export const ModalSizeContext = createContext({height: MODAL_HEIGHT})

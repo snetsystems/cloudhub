@@ -43,6 +43,7 @@ import {getLayouts} from 'src/hosts/apis'
 import {getCellsWithWhere} from 'src/hosts/utils/getCellsWithWhere'
 import PredictionHexbinToggle from 'src/device_management/components/PredictionHexbinToggle'
 import {setSelectedAnomaly} from 'src/device_management/actions'
+import {TIME_GAP} from '../constants'
 
 interface Props {
   source: Source
@@ -53,8 +54,6 @@ interface Props {
   timeZone?: TimeZones
   setSelectedAnomaly?: (value: AnomalyFactor) => void
 }
-
-const TIME_GAP = 7200000
 
 const PredictionInstanceWrapper = ({
   source,
@@ -112,7 +111,6 @@ const PredictionInstanceWrapper = ({
           layouts,
           source,
           filteredHexbinHost ?? '',
-          !!selectedAnomaly.time,
           isIntervalManual ? interval : null
         )
       )
@@ -179,10 +177,8 @@ const PredictionInstanceWrapper = ({
   }
 
   const onIntervalHandler = value => {
-    if (!!Number(value)) {
-      setInterval(Number(value))
-    } else {
-      setInterval(null)
+    if (value > 0) {
+      setInterval(value)
     }
   }
 
@@ -197,27 +193,27 @@ const PredictionInstanceWrapper = ({
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
-          <div className="page-header--right" style={{zIndex: 3}}>
-            {!!selectedAnomaly.time && (
-              <>
-                <PredictionHexbinToggle
-                  isActive={isIntervalManual}
-                  onChange={() => {
-                    setIsIntervalManual(!isIntervalManual)
-                  }}
-                  label="Manual Interval"
-                />
-                {isIntervalManual && (
-                  <input
-                    type="text"
-                    className="form-control input-sm"
-                    placeholder="Interval..."
-                    onChange={e => onIntervalHandler(e.currentTarget.value)}
-                    value={interval}
-                    style={{minWidth: '100px'}}
-                  />
-                )}
-              </>
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            className="page-header--right"
+            style={{zIndex: 3}}
+          >
+            <PredictionHexbinToggle
+              isActive={isIntervalManual}
+              onChange={() => {
+                setIsIntervalManual(!isIntervalManual)
+              }}
+              label="Manual Interval"
+            />
+            {isIntervalManual && (
+              <input
+                type="number"
+                className="form-control input-sm"
+                placeholder="Interval..."
+                onChange={e => onIntervalHandler(e.currentTarget.value)}
+                value={interval}
+                style={{minWidth: '100px'}}
+              />
             )}
 
             <TimeRangeShiftDropdown

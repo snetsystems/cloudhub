@@ -19,13 +19,10 @@ export function getCellsWithWhere(
   layouts: Layout[],
   source: Source,
   whereTag: string,
-  isAnnotation?: boolean,
   interval?: number
 ): Cell[] {
   const layoutCells = getLayoutCells(layouts)
-  const cells = layoutCells.map(d =>
-    toCell(d, source, whereTag, isAnnotation, interval)
-  )
+  const cells = layoutCells.map(d => toCell(d, source, whereTag, interval))
 
   return cells
 }
@@ -95,11 +92,10 @@ function toCell(
   layoutCell: LayoutCell,
   source: Source,
   whereTag: string,
-  isAnnotation?: boolean,
   interval?: number
 ): Cell {
   const queries = layoutCell.queries.map(d =>
-    toCellQuery(d, source, whereTag, isAnnotation, interval)
+    toCellQuery(d, source, whereTag, interval)
   )
   const cell = {
     ...NEW_DEFAULT_DASHBOARD_CELL,
@@ -119,7 +115,6 @@ function toCellQuery(
   layoutQuery: LayoutQuery & queryWithWhereGroupby,
   source: Source,
   whereTag: string,
-  isAnnotation?: boolean,
   interval?: number
 ): CellQuery {
   const filteredQuery = {
@@ -130,12 +125,12 @@ function toCellQuery(
     ].filter(i => !!i),
     groupbys: [
       ...layoutQuery.groupbys,
-      isAnnotation ? (interval > 0 ? `time(${interval}m)` : `time(1m)`) : null,
+      interval > 0 ? `time(${interval}m)` : `time(1m)`,
     ].filter(i => !!i),
   }
 
   const cellQuery: any =
-    !!whereTag || isAnnotation
+    !!whereTag || interval > 0
       ? {
           ...filteredQuery,
           source: source.url,
