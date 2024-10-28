@@ -29,7 +29,8 @@ class TimeRangeDropdown extends Component {
     super(props)
     const {lower, upper} = props.selected
 
-    const isTimeValid = moment(upper).isValid() && moment(lower).isValid()
+    const isTimeValid =
+      (upper === 'now()' || moment(upper).isValid()) && moment(lower).isValid()
     const customTimeRange = isTimeValid ? {lower, upper} : emptyTime
 
     this.state = {

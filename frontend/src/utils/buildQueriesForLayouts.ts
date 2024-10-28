@@ -26,7 +26,9 @@ const buildCannedDashboardQuery = (
   const groupbys = _.get(query, 'groupbys')
   const tz = _.get(query, 'tz')
 
-  if (upper) {
+  if (upper === 'now()') {
+    text += ` where time > '${lower}' AND time < ${upper}`
+  } else if (upper) {
     text += ` where time > '${lower}' AND time < '${upper}'`
   } else {
     text += ` where time > ${lower}`
