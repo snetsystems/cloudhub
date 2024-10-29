@@ -100,7 +100,7 @@ var trigger = data
         .warn(lambda: ensemble_condition == 'or' AND "predict_status" == 'false' AND ("predict_kind" == 1 OR "predict_kind" == 2))
         .crit(lambda: ("predict_status" == 'true' AND ("predict_kind" == 4 OR "predict_kind" == 5 OR "predict_kind" == 6)) OR
             ("predict_status" == 'false' AND ((ensemble_condition == 'or' AND "predict_kind" == 3) OR ensemble_condition != 'or')))
-        .stateChangesOnly(5m)
+        .stateChangesOnly(10m)
         .message(message)
         .id(name + '-{{.Group}}')
         .idTag('alertID')
