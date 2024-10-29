@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import moment from 'moment'
 
 import {buildQuery} from 'src/utils/influxql'
 import {TYPE_SHIFTED, TYPE_QUERY_CONFIG} from 'src/dashboards/constants'
@@ -10,6 +11,19 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 
 import {Cell, CellQuery, LayoutQuery, TimeRange} from 'src/types'
 
+const getCustomTimerangeGroupBy = (upper, lower) => {
+  const upperTime = upper === 'now()' ? moment().toISOString() : upper
+  const duration = moment.duration(moment(upperTime).diff(moment(lower)))
+
+  if (duration.asMinutes() <= 5) return '10s'
+  if (duration.asHours() <= 6) return '1m'
+  if (duration.asHours() <= 12) return '5m'
+  if (duration.asHours() <= 24) return '10m'
+  if (duration.asDays() <= 2) return '30m'
+  if (duration.asDays() <= 7) return '1h'
+  return '6h'
+}
+
 const buildCannedDashboardQuery = (
   query: LayoutQuery | CellQuery,
   {lower, upper}: TimeRange,
@@ -17,9 +31,15 @@ const buildCannedDashboardQuery = (
   instance?: object,
   measurement?: string
 ): string => {
-  const {defaultGroupBy} = timeRanges.find(range => range.lower === lower) || {
-    defaultGroupBy: '5m',
-  }
+  const isTimeValid =
+    (upper === 'now()' || moment(upper).isValid()) && moment(lower).isValid()
+  const defaultGroupBy = isTimeValid
+    ? getCustomTimerangeGroupBy(upper, lower)
+    : (
+        timeRanges.find(range => range.lower === lower) || {
+          defaultGroupBy: '5m',
+        }
+      ).defaultGroupBy
 
   let text = query.query
   const wheres = _.get(query, 'wheres')
