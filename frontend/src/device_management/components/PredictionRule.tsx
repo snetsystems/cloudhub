@@ -340,7 +340,7 @@ export default class PredictionRule extends Component<Props, State> {
       notify(notifyAlertRuleUpdated(rule?.name || ''))
       this.props.setLoadingForCreateAndUpdateScript(false)
     } catch (error) {
-      console.error(
+      notify(
         notifyAlertRuleUpdateFailed(rule?.name || '', parseErrorMessage(error))
       )
       this.props.setLoadingForCreateAndUpdateScript(false)
