@@ -88,6 +88,8 @@ function PredictionAlertHistoryWrapper({
 
   const [loading, setLoading] = useState(false)
 
+  const [manualReset, setManualReset] = useState(0)
+
   let intervalID
 
   const fetchAlerts = useCallback((): void => {
@@ -231,6 +233,8 @@ function PredictionAlertHistoryWrapper({
         format: INPUT_TIME_TYPE.RELATIVE_TIME,
       },
     })
+
+    setManualReset(Date.now())
   }
 
   return (
@@ -278,6 +282,7 @@ function PredictionAlertHistoryWrapper({
           fetchAlerts={fetchAlerts}
           isAlertsMaxedOut={isAlertsMaxedOut}
           setLimitMultiplier={setLimitMultiplier}
+          manualReset={manualReset}
         />
       </div>
     </>
