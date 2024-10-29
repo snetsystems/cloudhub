@@ -103,7 +103,6 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
           <h2 className="panel-title">
             {this.state.filteredAlerts.length} Alerts
           </h2>
-          {/* <SearchBar onSearch={this.filterAlerts} /> */}
           {this.searchBarComponent()}
         </div>
         {this.renderTable()}
@@ -124,10 +123,7 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
       <div className="panel">
         <div className="panel-heading">
           <h2 className="panel-title">{this.props.alerts.length} Alerts</h2>
-          {this.props.alerts.length ? (
-            // <SearchBar onSearch={this.filterAlerts} />
-            <>{this.searchBarComponent()}</>
-          ) : null}
+          {this.props.alerts.length ? <>{this.searchBarComponent()}</> : null}
         </div>
         <div className="panel-body">{this.renderTable()}</div>
       </div>
