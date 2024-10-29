@@ -31,9 +31,9 @@ const buildCannedDashboardQuery = (
   instance?: object,
   measurement?: string
 ): string => {
-  const isTimeValid =
+  const isUsingCustomTimeRange =
     (upper === 'now()' || moment(upper).isValid()) && moment(lower).isValid()
-  const defaultGroupBy = isTimeValid
+  const defaultGroupBy = isUsingCustomTimeRange
     ? getCustomTimerangeGroupBy(upper, lower)
     : (
         timeRanges.find(range => range.lower === lower) || {
