@@ -8,7 +8,6 @@ import {Link} from 'react-router'
 
 // Components
 import AlertsTableRow from 'src/alerts/components/AlertsTableRow'
-import SearchBar from 'src/alerts/components/SearchBar'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Constants

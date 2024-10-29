@@ -71,6 +71,8 @@ const PredictionInstanceWrapper = ({
     }
   }
 
+  const [tempInterval, setTempInterval] = useState(1)
+
   const [interval, setInterval] = useState(1)
 
   const [isIntervalManual, setIsIntervalManual] = useState(false)
@@ -177,8 +179,18 @@ const PredictionInstanceWrapper = ({
   }
 
   const onIntervalHandler = value => {
-    if (value > 0) {
-      setInterval(value)
+    if (value >= 0) {
+      setTempInterval(value)
+    }
+  }
+
+  const onFocusOutHandler = () => {
+    setInterval(tempInterval)
+  }
+
+  const onKeyUpHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.keyCode === 13) {
+      setInterval(tempInterval)
     }
   }
 
@@ -206,16 +218,23 @@ const PredictionInstanceWrapper = ({
               label="Manual Interval"
             />
             {isIntervalManual && (
-              <input
-                type="number"
-                className="form-control input-sm"
-                placeholder="Interval..."
-                onChange={e => onIntervalHandler(e.currentTarget.value)}
-                value={interval}
-                style={{minWidth: '100px'}}
-              />
+              <>
+                <input
+                  type="number"
+                  className="form-control input-sm prediction-interval--input"
+                  placeholder="Interval..."
+                  onChange={e => onIntervalHandler(e.currentTarget.value)}
+                  value={tempInterval}
+                  onBlur={() => {
+                    onFocusOutHandler()
+                  }}
+                  onKeyUp={e => {
+                    onKeyUpHandler(e)
+                  }}
+                />
+                <span>min</span>
+              </>
             )}
-
             <TimeRangeShiftDropdown
               onChooseTimeRange={handleChooseTimeRange}
               selected={selfTimeRange}
