@@ -90,7 +90,7 @@ const PredictionHexbin = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [filteredHexbinHost])
+  }, [filteredHexbinHost, alertHostList])
 
   //initialize
   useEffect(() => {
