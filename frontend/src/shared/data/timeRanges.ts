@@ -1,4 +1,4 @@
-import {TimeRangeOption} from 'src/types/queries'
+import {GroupBys, TimeRangeOption} from 'src/types/queries'
 
 const nowMinus30d = 'now() - 30d'
 
@@ -105,6 +105,45 @@ export const timeRanges: TimeRangeOption[] = [
     lowerFlux: '-30d',
     upper: null,
     menuOption: 'Past 30d',
+  },
+]
+
+export const timeRangesGroupBys: GroupBys[] = [
+  {
+    defaultGroupBy: 1,
+    lower: 'now() - 5m',
+  },
+  {
+    defaultGroupBy: 1,
+    lower: 'now() - 15m',
+  },
+  {
+    defaultGroupBy: 1,
+    lower: 'now() - 1h',
+  },
+  {
+    defaultGroupBy: 1,
+    lower: 'now() - 6h',
+  },
+  {
+    defaultGroupBy: 5,
+    lower: 'now() - 12h',
+  },
+  {
+    defaultGroupBy: 10,
+    lower: 'now() - 24h',
+  },
+  {
+    defaultGroupBy: 30,
+    lower: 'now() - 2d',
+  },
+  {
+    defaultGroupBy: 60,
+    lower: 'now() - 7d',
+  },
+  {
+    defaultGroupBy: 360,
+    lower: nowMinus30d,
   },
 ]
 

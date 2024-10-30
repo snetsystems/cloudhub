@@ -125,7 +125,7 @@ function toCellQuery(
     ].filter(i => !!i),
     groupbys: [
       ...layoutQuery.groupbys,
-      interval > 0 ? `time(${interval}m)` : `time(1m)`,
+      interval > 0 ? `time(${interval}m)` : null,
     ].filter(i => !!i),
   }
 

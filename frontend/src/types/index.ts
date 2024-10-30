@@ -52,6 +52,7 @@ import {
   TagValues,
   SelectedSubFunction,
   TimeRangeWithType,
+  GroupBys,
   INPUT_TIME_TYPE,
 } from './queries'
 import {
@@ -317,4 +318,5 @@ export {
   GetLearningMLData,
   GetLearningDLData,
   AlertHostList,
+  GroupBys,
 }

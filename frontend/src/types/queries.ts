@@ -131,6 +131,11 @@ export interface TimeRangeOption extends TimeRange {
   menuOption: string
 }
 
+export interface GroupBys {
+  defaultGroupBy: number
+  lower: string
+}
+
 export interface SelectedSubFunction {
   [key: string]: string[]
 }

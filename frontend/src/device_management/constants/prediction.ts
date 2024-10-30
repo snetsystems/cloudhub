@@ -18,6 +18,8 @@ export const CHART_HEIGHT = window.innerHeight * 0.3
 
 export const TIME_GAP = 7200000
 
+export const DEFAULT_GROUP_BY = 1
+
 export const ANOMALY_INITIAL = {
   host: '',
   time: '',

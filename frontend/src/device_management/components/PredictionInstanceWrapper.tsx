@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 
 // Library
 import _ from 'lodash'
@@ -18,7 +18,7 @@ import {
   TimeZones,
 } from 'src/types'
 import ReactObserver from 'react-resize-observer'
-import {timeRanges} from 'src/shared/data/timeRanges'
+import {timeRanges, timeRangesGroupBys} from 'src/shared/data/timeRanges'
 
 // Redux
 import {bindActionCreators} from 'redux'
@@ -31,6 +31,7 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
+import {DEFAULT_GROUP_BY, TIME_GAP} from 'src/device_management/constants'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -43,7 +44,6 @@ import {getLayouts} from 'src/hosts/apis'
 import {getCellsWithWhere} from 'src/hosts/utils/getCellsWithWhere'
 import PredictionHexbinToggle from 'src/device_management/components/PredictionHexbinToggle'
 import {setSelectedAnomaly} from 'src/device_management/actions'
-import {TIME_GAP} from '../constants'
 
 interface Props {
   source: Source
@@ -63,6 +63,8 @@ const PredictionInstanceWrapper = ({
   selectedAnomaly,
   timeZone,
 }: Props) => {
+  const intervalRef = useRef(null)
+
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem('monitoring-chart')) {
       return JSON.parse(localStorage.getItem('monitoring-chart'))
@@ -71,9 +73,9 @@ const PredictionInstanceWrapper = ({
     }
   }
 
-  const [tempInterval, setTempInterval] = useState(1)
+  const [tempInterval, setTempInterval] = useState(DEFAULT_GROUP_BY)
 
-  const [interval, setInterval] = useState(1)
+  const [interval, setInterval] = useState(DEFAULT_GROUP_BY)
 
   const [isIntervalManual, setIsIntervalManual] = useState(false)
 
@@ -99,6 +101,7 @@ const PredictionInstanceWrapper = ({
       })
     } else {
       setSelfTimeRange(getTimeRangeFromLocalStorage())
+      setIsIntervalManual(false)
     }
   }, [selectedAnomaly])
 
@@ -170,27 +173,46 @@ const PredictionInstanceWrapper = ({
   const handleChooseTimeRange = ({lower, upper}) => {
     if (upper) {
       setSelfTimeRange({lower, upper})
-      saveTimeRangeToLocalStorage({lower, upper})
+      // saveTimeRangeToLocalStorage({lower, upper})
     } else {
+      setIsIntervalManual(false)
       const timeRange = timeRanges.find(range => range.lower === lower)
       setSelfTimeRange(timeRange)
       saveTimeRangeToLocalStorage(timeRange)
     }
   }
 
+  const onToggleChangeHandler = () => {
+    const groupBy =
+      timeRangesGroupBys.find(tr => tr.lower === selfTimeRange.lower)
+        ?.defaultGroupBy ?? DEFAULT_GROUP_BY
+    setIsIntervalManual(!isIntervalManual)
+    setTempInterval(groupBy)
+    setInterval(groupBy)
+  }
+
   const onIntervalHandler = value => {
-    if (value >= 0) {
-      setTempInterval(value)
+    const numericValue = Number(value)
+    if (!isNaN(numericValue)) {
+      setTempInterval(numericValue)
+    } else {
+      setTempInterval(0)
     }
   }
 
   const onFocusOutHandler = () => {
-    setInterval(tempInterval)
+    if (tempInterval > 0) {
+      setInterval(tempInterval)
+    } else {
+      setIsIntervalManual(false)
+    }
   }
 
   const onKeyUpHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.keyCode === 13) {
-      setInterval(tempInterval)
+    if (!!intervalRef.current) {
+      if (e.keyCode === 13) {
+        intervalRef.current.blur()
+      }
     }
   }
 
@@ -213,18 +235,22 @@ const PredictionInstanceWrapper = ({
             <PredictionHexbinToggle
               isActive={isIntervalManual}
               onChange={() => {
-                setIsIntervalManual(!isIntervalManual)
+                onToggleChangeHandler()
               }}
               label="Manual Interval"
             />
             {isIntervalManual && (
               <>
                 <input
+                  ref={intervalRef}
                   type="number"
+                  min="1"
                   className="form-control input-sm prediction-interval--input"
                   placeholder="Interval..."
                   onChange={e => onIntervalHandler(e.currentTarget.value)}
-                  value={tempInterval}
+                  value={`${tempInterval}`}
+                  autoComplete={'off'}
+                  spellCheck={false}
                   onBlur={() => {
                     onFocusOutHandler()
                   }}
@@ -272,7 +298,7 @@ const PredictionInstanceWrapper = ({
                   timeRange={selfTimeRange}
                   manualRefresh={manualRefresh}
                   host={''}
-                  isUsingAnnotationViewer={true}
+                  isUsingAnnotationViewer={!!selectedAnomaly.time}
                   annotationsViewMode={[
                     {
                       id: selectedAnomaly.host,
