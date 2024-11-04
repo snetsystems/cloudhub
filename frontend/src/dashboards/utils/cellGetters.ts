@@ -18,6 +18,20 @@ import {Cell, CellType, Dashboard, NewDefaultCell} from 'src/types/dashboards'
 import {QueryConfig, DurationRange} from 'src/types/queries'
 import {Template} from 'src/types'
 
+const whereRegex = /\where\b/i
+const selectRegex = /\bselect\b/i
+const fromRegex = /\bfrom\b/i
+const groupByRegex = /\bgroup\s+by\b/i
+const fillRegex = /\bfill\b/i
+const asSpaceRegex = /\bAS\b\s*/gi
+const andRegex = /\band\b/i
+const orRegex = /\bor\b/i
+const softsetRegex = /\bsoftset\b/i
+const slimitRegex = /\bslimit\b/i
+const offsetRegex = /\boffset\b/i
+const limitRegex = /\blimit\b/i
+const orderByRegex = /\border\s+by\b/i
+
 const getMostCommonValue = (values: number[]): number => {
   const results = values.reduce(
     (acc, value) => {
@@ -211,30 +225,29 @@ export const getConfig = async (
 }
 
 export const queryConfigParser = (query: string) => {
-  const splitQuery = query.split('WHERE')
+  const splitQuery = query.split(whereRegex)
 
   const backQuery = splitQuery[1]
 
-  const frontQuery = splitQuery[0].split('SELECT')
+  const frontQuery = splitQuery[0].split(selectRegex)
 
   if (frontQuery.length > 2) {
     //subquery filter
     return null
   }
 
-  const frontSplitQuery = frontQuery[1]?.split('FROM')
+  const frontSplitQuery = frontQuery[1]?.split(fromRegex)
 
-  const selectClause = frontSplitQuery[0]
+  const selectClause = frontSplitQuery[0] || null
 
   const fromClause = frontSplitQuery[1].replaceAll(' ', '').replaceAll(`\"`, '')
 
-  const backQuerySplit = backQuery.split('FILL')
+  const backQuerySplit = backQuery.split(fillRegex)
+  const whereClause = backQuerySplit[0].split(groupByRegex)[0] || null
 
-  const whereClause = backQuerySplit[0].split('GROUP BY')[0]
+  const groupByClause = backQuerySplit[0].split(groupByRegex)[1] || null
 
-  const groupByClause = backQuerySplit[0].split('GROUP BY')[1]
-
-  const fillClause = backQuerySplit[1]
+  const fillClause = backQuerySplit[1] || null
 
   const areTagsAccepted: boolean = !whereClause.includes('!=')
 
@@ -255,15 +268,14 @@ export const queryConfigParser = (query: string) => {
 
 export const parseSelectClause = (input: string) => {
   const modifiedString = input
-    .replace(/ AS /g, '') // AS remove
-    .replace(/\"|\s*\s*/g, '') // space remove
+    .replace(asSpaceRegex, '') // AS remove
+    .replace(/["\s]+/g, '') // space remove
     .split(/,(?![^(]*\))/) // string to array
 
   const modifiedArray = modifiedString.map(i =>
-    i.split(/AS\s+"|,\s*|\)\s*|\(\s*|\\+"/).filter(i => !!i)
+    i.split(/,\s*|\)\s*|\(\s*/).filter(i => i)
   )
 
-  // const tempSubFunc = subFuncHandler(modifiedArray)
   const result = modifiedArray.map(item => {
     const arg = []
     if (item.length > 4) {
@@ -277,7 +289,7 @@ export const parseSelectClause = (input: string) => {
         type: 'func',
         args: arg,
         value: item[1]?.replaceAll(' ', '') ?? '',
-        alias: item[item.length - 1]?.replace('AS ', '') ?? '',
+        alias: item[item.length - 1]?.replace(asSpaceRegex, '') ?? '',
         subFunc: item[0],
       }
     } else if (item[0] === 'derivative' || 'non_negative_derivative') {
@@ -290,7 +302,7 @@ export const parseSelectClause = (input: string) => {
         type: 'func',
         args: arg,
         value: item[0]?.replaceAll(' ', '') ?? '',
-        alias: item[item.length - 1]?.replace('AS ', '') ?? '',
+        alias: item[item.length - 1]?.replace(asSpaceRegex, '') ?? '',
       }
     } else {
       arg[0] = {
@@ -302,7 +314,7 @@ export const parseSelectClause = (input: string) => {
         type: 'func',
         args: arg,
         value: item[0]?.replaceAll(' ', '') ?? '',
-        alias: item[2]?.replace('AS ', '') ?? '',
+        alias: item[2]?.replace(asSpaceRegex, '') ?? '',
       }
     }
   })
@@ -343,7 +355,7 @@ export const parseFromClause = (input: string) => {
 }
 
 export const parseWhereClause = (input: string, areTagsAccepted: boolean) => {
-  const whereClause = input.split('AND').filter(i => !i.includes('time'))
+  const whereClause = input.split(andRegex).filter(i => !i.includes('time'))
 
   if (whereClause.length === 0) {
     return null
@@ -361,7 +373,7 @@ export const parseWhereNegTag = (whereAry: string[]) => {
   whereAry.forEach(input => {
     input
       .replace(/["()'! ]/g, '')
-      .split('AND')
+      .split(andRegex)
       .forEach(item => {
         let [key, value] = item.split('=')
         key = key?.replace(/['"]/g, '')
@@ -381,7 +393,7 @@ export const parseWhereAccTag = (whereAry: string[]) => {
   whereAry.forEach(input => {
     input
       .replace(/["()'! ]/g, '')
-      .split('OR')
+      .split(orRegex)
       .forEach(item => {
         let [key, value] = item.split('=')
         key = key?.replace(/['"]/g, '')
@@ -400,7 +412,7 @@ export const parseWhereAccTag = (whereAry: string[]) => {
 
 export const parseGroupByClause = (input: string | null) => {
   let time = ''
-  if (input === null) {
+  if (!input) {
     return {
       tags: [],
       time: time,
@@ -434,13 +446,13 @@ export const parseGroupByClause = (input: string | null) => {
 
 export const parseFillClause = (input: string | null) => {
   let regex = /([^a-zA-Z0-9:]+)/g
-  return groupByTagPick(input?.replace(regex, ''))
+  return groupByTagPick(input?.replace(regex, '') ?? '')
 }
 
 //return GroupBy Clause tag ary
 export const separateGroupByClause = (input: string) => {
   const reg = /\(([^()]+)\)/g
-  const seperate = input.toUpperCase().split('GROUP BY')
+  const seperate = input.toUpperCase().split(groupByRegex)
   if (seperate[seperate.length - 1].replaceAll(reg, '').includes(')')) {
     return parseGroupByClause(null)
   } else {
@@ -449,11 +461,11 @@ export const separateGroupByClause = (input: string) => {
 }
 
 export const groupByTagPick = (input: string) => {
-  const soffset = input?.split('SOFFSET') ?? ''
-  const slimit = soffset[0].split('SLIMIT')
-  const offset = slimit[0].split('OFFSET')
-  const limit = offset[0].split('LIMIT')
-  const oderby = limit[0].split('ORDER BY')
-  const fill = oderby[0].split('FILL')[0]
+  const soffset = input?.split(softsetRegex) ?? ''
+  const slimit = soffset[0].split(slimitRegex)
+  const offset = slimit[0].split(offsetRegex)
+  const limit = offset[0].split(limitRegex)
+  const oderby = limit[0].split(orderByRegex)
+  const fill = oderby[0].split(fillRegex)[0]
   return fill?.toLowerCase()
 }
