@@ -792,10 +792,16 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public componentWillUnmount() {
+    const {auth} = this.props
     const {isTopologyChanged} = this.state
     const view = this.graph.getView()
+    const meRole = _.get(auth, 'me.role', '')
+
     if (
       (isTopologyChanged || this.compareTopology()) &&
+      (meRole === SUPERADMIN_ROLE ||
+        meRole === ADMIN_ROLE ||
+        meRole === EDITOR_ROLE) &&
       window.confirm('Do you want to save changes?')
     ) {
       this.handleTopologySave()
