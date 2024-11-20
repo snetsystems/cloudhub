@@ -258,7 +258,7 @@
 }
 
 .hexbin-header--label {
-  padding: 0px 8px;
+  padding: 0 0 0 8px;
   white-space: nowrap;
 }
 
@@ -273,6 +273,28 @@
   opacity: 0.8;
   border-bottom: 1px solid $g6-smoke;
   width: 100%;
+}
+
+.prediction {
+  > .page-header--right.header {
+    justify-content: flex-end;
+    &:last-child {
+      margin-right: 4px;
+    }
+
+    > * {
+      margin: 0 4px 0 0 !important;
+      &:only-child {
+        margin-right: 0 !important;
+      }
+    }
+  }
+}
+
+.prediction-toggle {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .hosts-table--td.prediction {
