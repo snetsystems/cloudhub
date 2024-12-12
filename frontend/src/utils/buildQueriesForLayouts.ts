@@ -94,7 +94,12 @@ const buildCannedDashboardQuery = (
     text += ` group by time(${defaultGroupBy})`
   }
 
-  if (text.includes('non_negative_derivative') || text.includes('derivative')) {
+  if (
+    text.includes('non_negative_derivative') ||
+    text.includes('derivative') ||
+    text.includes('difference') ||
+    text.includes('non_negative_difference')
+  ) {
     text += ` offset 1`
   }
 
