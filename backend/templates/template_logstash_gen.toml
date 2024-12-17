@@ -178,10 +178,14 @@ output {
 					"sys_desc" => "%{system.sysDescr.0}"
 					"sys_uptime" => "%{system.sysUpTime.sysUpTimeInstance}"
 					"mem_usage" => "%{mem_usage}"
+					"total_ifHCInOctets" => "%{total_ifHCInOctets}"
+					"total_ifHCOutOctets" => "%{total_ifHCOutOctets}"
 				}
 				send_as_tags => ["dev_id", "agent_host", "sys_name"]
 				coerce_values => {
 					"mem_usage" => "float"
+					"total_ifHCInOctets" => "float"
+					"total_ifHCOutOctets" => "float"
 				}
 			}
 		}
