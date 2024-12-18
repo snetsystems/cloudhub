@@ -84,6 +84,9 @@ const PredictionInstanceWrapper = ({
   )
 
   const [layouts, setLayouts] = useState<Layout[]>()
+  const [layoutsForFilteredHost, setLayoutsForFilteredHost] = useState<
+    Layout[]
+  >()
 
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
 
@@ -94,7 +97,7 @@ const PredictionInstanceWrapper = ({
   }, [])
 
   useEffect(() => {
-    if (!!selectedAnomaly.time && !!layouts) {
+    if (!!selectedAnomaly.time && !!layouts && !!layoutsForFilteredHost) {
       setSelfTimeRange({
         upper: convertTime(Number(selectedAnomaly.time) + TIME_GAP),
         lower: convertTime(Number(selectedAnomaly.time) - TIME_GAP),
@@ -110,10 +113,14 @@ const PredictionInstanceWrapper = ({
   }, [autoRefresh])
 
   useEffect(() => {
-    if (!!layouts) {
+    const hasFilteredHost =
+      filteredHexbinHost !== undefined && filteredHexbinHost !== ''
+    const currentLayouts = hasFilteredHost ? layoutsForFilteredHost : layouts
+
+    if (!!currentLayouts) {
       setLayoutCells(
         getCellsWithWhere(
-          layouts,
+          currentLayouts,
           source,
           filteredHexbinHost ?? '',
           isIntervalManual ? interval : null
@@ -146,9 +153,17 @@ const PredictionInstanceWrapper = ({
 
   const getLayoutsforInstance = async (layouts: Layout[]) => {
     const filteredLayouts = layouts
-      .filter(layout => {
-        return layout.app === 'snmp_nx'
+      .filter(layout => layout.app === 'snmp_nx')
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
       })
+
+    const filteredLayoutsForFilteredHost = layouts
+      .filter(layout => layout.app === 'snmp_nx_ifdesc')
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -158,6 +173,7 @@ const PredictionInstanceWrapper = ({
       })
 
     setLayouts(filteredLayouts)
+    setLayoutsForFilteredHost(filteredLayoutsForFilteredHost)
   }
 
   const tempVars = generateForHosts(source)
