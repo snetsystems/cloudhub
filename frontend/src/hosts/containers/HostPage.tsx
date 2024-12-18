@@ -72,16 +72,21 @@ class HostPage extends PureComponent<Props, State> {
 
   public async componentDidMount() {
     const {location, autoRefresh} = this.props
+    const isAgentHost = location?.query?.trigger === 'anomaly_predict'
 
-    this.setState({isAgentHost: location?.query?.trigger === 'anomaly_predict'})
+    this.setState({isAgentHost: isAgentHost})
 
     const {
       data: {layouts},
     } = await getLayouts()
 
+    const filteredNotIncludeApps = isAgentHost
+      ? notIncludeApps.filter(app => app !== 'snmp_nx_ifdesc')
+      : notIncludeApps
+
     const filterLayouts = _.filter(
       layouts,
-      m => !_.includes(notIncludeApps, m.app)
+      m => !_.includes(filteredNotIncludeApps, m.app)
     )
 
     // fetching layouts and mappings can be done at the same time
