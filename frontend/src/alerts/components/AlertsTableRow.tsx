@@ -117,7 +117,7 @@ class AlertsTableRow extends PureComponent<Props> {
           <Link
             onClick={e => e.stopPropagation()}
             to={`/sources/${sourceID}/infrastructure/details/${host}${
-              !!triggerType ? `?trigger=${triggerType}&app=snmp_nx_ifdesc` : ''
+              !!triggerType ? `?trigger=${triggerType}&app=snmp_nx_all` : ''
             }`}
             title={host}
           >

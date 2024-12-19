@@ -17,7 +17,10 @@ import {
   loadHostsLinks,
 } from 'src/hosts/apis'
 import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
-import {notIncludeApps} from 'src/hosts/constants/apps'
+import {
+  notIncludeApps,
+  excludedAppsForHostDetailsPage,
+} from 'src/hosts/constants/apps'
 
 import {
   setAutoRefresh,
@@ -81,7 +84,9 @@ class HostPage extends PureComponent<Props, State> {
     } = await getLayouts()
 
     const filteredNotIncludeApps = isAgentHost
-      ? notIncludeApps.filter(app => app !== 'snmp_nx_ifdesc')
+      ? notIncludeApps.filter(
+          app => !excludedAppsForHostDetailsPage.includes(app)
+        )
       : notIncludeApps
 
     const filterLayouts = _.filter(

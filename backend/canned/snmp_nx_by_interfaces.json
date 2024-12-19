@@ -1,11 +1,11 @@
 {
-  "id": "37b0740a-79ac-4f4c-8ca0-e223a47400b8",
+  "id": "7677c3d5-076d-4825-9ed3-841640a23ecd",
   "measurement": "snmp_nx",
-  "app": "snmp_nx",
+  "app": "snmp_nx_by_interfaces",
   "autoflow": true,
   "cells": [
     {
-      "i": "3d78e355-716c-4b5e-ad62-525dd70524ef",
+      "i": "8823ef56-5fa9-470b-9c54-86fdfc1ee98a",
       "x": 38,
       "y": 26,
       "w": 29,
@@ -49,21 +49,21 @@
       "type": "line",
       "colors": [
         {
-          "id": "f62f0970-74ab-433a-8ee9-884ec452f46f",
+          "id": "82b72040-a174-4954-be30-b9a5065bc1ed",
           "type": "scale",
           "hex": "#31C0F6",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "385fc49e-d2cc-4b2d-b076-0e46a1c9fcd3",
+          "id": "ad2c995b-9dac-4055-9f02-dabd0b575caf",
           "type": "scale",
           "hex": "#A500A5",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "496c3e65-c4d2-42a9-b45c-8a6d299ca1ba",
+          "id": "d9b9cec6-95b6-4abf-8855-6c49a53771f4",
           "type": "scale",
           "hex": "#FF7E27",
           "name": "Nineteen Eighty Four",
@@ -81,7 +81,7 @@
       }
     },
     {
-      "i": "7a2ab247-e592-4c21-bb89-afb31c5410e2",
+      "i": "10827396-4a61-4342-8695-ef73ac830bae",
       "x": 67,
       "y": 26,
       "w": 29,
@@ -125,21 +125,21 @@
       "type": "line",
       "colors": [
         {
-          "id": "f6956f95-7adb-4b40-910c-d70017ceb490",
+          "id": "3dc0b476-36e0-47ee-b3ae-fc6ec7cebddd",
           "type": "scale",
           "hex": "#31C0F6",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "c6f7459e-5727-4da6-bd58-3890103d48cc",
+          "id": "ff6f98da-c590-4acf-bd03-6467f8f8e3d9",
           "type": "scale",
           "hex": "#A500A5",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "e7496211-7c09-49d6-8ae5-757d69ee32ac",
+          "id": "7ca92b8d-7c85-4351-8735-831eacbef3fd",
           "type": "scale",
           "hex": "#FF7E27",
           "name": "Nineteen Eighty Four",
@@ -157,19 +157,19 @@
       }
     },
     {
-      "i": "8c1a0fe8-42b3-4272-99c8-e7a656084888",
+      "i": "331267d9-4b8d-42c4-81e1-483d95cf74ba",
       "x": 33,
       "y": 52,
       "w": 31,
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "Network Device - Ethernet Volume",
+      "name": "Network Device - Ethernet Volume By Interfaces",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(mean(\"total_ifHCOutOctets\"),1s) + non_negative_derivative(mean(\"total_ifHCInOctets\"),1s) AS \"ifVolume\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
-          "groupbys": ["\"agent_host\""],
-          "wheres": []
+          "query": "SELECT non_negative_derivative(mean(\"ifHCOutOctets\"), 1s) + non_negative_derivative(mean(\"ifHCInOctets\"), 1s) AS \"ifVolume\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"ifDescr\""],
+          "wheres": ["\"ifDescr\" =~ /Ethernet/"]
         }
       ],
       "axes": {
@@ -201,21 +201,21 @@
       "type": "line",
       "colors": [
         {
-          "id": "cf49d577-5fd9-4736-a1ac-fee6c7a837ba",
+          "id": "c50c8cca-2128-41f7-864c-28fcf3aefeff",
           "type": "scale",
           "hex": "#31C0F6",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "9f78483a-3cb2-4932-a780-3bb6b669259f",
+          "id": "32d2df1c-940c-4b44-9355-9dcbff20c4d0",
           "type": "scale",
           "hex": "#A500A5",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "83c745d5-cd3a-44bb-8af3-49a76f7856da",
+          "id": "c2fbfb76-c063-440c-b77c-25520f762018",
           "type": "scale",
           "hex": "#FF7E27",
           "name": "Nineteen Eighty Four",
@@ -234,19 +234,19 @@
       }
     },
     {
-      "i": "b7e0893f-1898-402d-8335-537f4ecd530a",
+      "i": "2d759b11-e37b-49c4-9b91-77f59a61d255",
       "x": 0,
       "y": 52,
       "w": 33,
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "Network Device - In/Out Discards",
+      "name": "Network Device - In/Out Discards By Interfaces",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(mean(\"total_ifInDiscards\"),1s) AS \"total_ifInDiscards\", non_negative_derivative(mean(\"total_ifOutDiscards\"),1s) AS \"total_ifOutDiscards\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
-          "groupbys": ["\"agent_host\""],
-          "wheres": []
+          "query": "SELECT non_negative_derivative(mean(\"ifInDiscards\"), 1s) AS \"ifInDiscards\", non_negative_derivative(mean(\"ifOutDiscards\"), 1s) AS \"ifOutDiscards\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"ifDescr\""],
+          "wheres": ["\"ifDescr\" =~ /Ethernet/"]
         }
       ],
       "axes": {
@@ -278,21 +278,21 @@
       "type": "line",
       "colors": [
         {
-          "id": "8b33dcb0-467f-47a1-9149-1fe038b57ca9",
+          "id": "fd81b2a5-e4ed-4296-879d-41303f5b916a",
           "type": "scale",
           "hex": "#31C0F6",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "aabb7184-f67d-4f3e-99dd-4edd16b2be74",
+          "id": "e5568a09-af59-4dcd-92df-528459051a83",
           "type": "scale",
           "hex": "#A500A5",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "c5d0a8e7-111e-482e-a567-c2689f443452",
+          "id": "2125459e-8ca3-4001-90e0-eb0ddbe6cf2f",
           "type": "scale",
           "hex": "#FF7E27",
           "name": "Nineteen Eighty Four",
@@ -311,19 +311,19 @@
       }
     },
     {
-      "i": "60c67f17-5a03-410e-867b-b1ab01e5812b",
+      "i": "82dd247f-bca6-4ce4-bce6-4dc6de68bb6f",
       "x": 0,
       "y": 52,
       "w": 33,
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "Network Device - In/Out Errors",
+      "name": "Network Device - In/Out Errors By Interfaces",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(mean(\"total_ifInErrors\"),1s) AS \"total_ifInErrors\", non_negative_derivative(mean(\"total_ifOutErrors\"),1s) AS \"total_ifOutErrors\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
-          "groupbys": ["\"agent_host\""],
-          "wheres": []
+          "query": "SELECT non_negative_derivative(mean(\"ifInErrors\"), 1s) AS \"ifInErrors\", non_negative_derivative(mean(\"ifOutErrors\"), 1s) AS \"ifOutErrors\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"ifDescr\""],
+          "wheres": ["\"ifDescr\" =~ /Ethernet/"]
         }
       ],
       "axes": {
@@ -355,21 +355,21 @@
       "type": "line",
       "colors": [
         {
-          "id": "9a63c628-34ba-4d6e-b6b5-10472b796436",
+          "id": "f56446b8-12e2-4243-8160-7f3d206989a0",
           "type": "scale",
           "hex": "#31C0F6",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "0fc055ec-18c7-4981-ab4f-fe381cb29f4d",
+          "id": "5f8b4453-a826-44a0-a651-fa427b918201",
           "type": "scale",
           "hex": "#A500A5",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "4dd5af0f-32db-474f-afdd-75d09f976aa9",
+          "id": "8b7d8d60-8f6d-4eea-b5fb-aa3f636642d2",
           "type": "scale",
           "hex": "#FF7E27",
           "name": "Nineteen Eighty Four",
@@ -388,7 +388,7 @@
       }
     },
     {
-      "i": "ca6726ea-2d12-47cf-8092-68c3f7c11267",
+      "i": "92496128-c938-4bf9-a450-edf1d9b4c10f",
       "x": 67,
       "y": 26,
       "w": 29,
@@ -432,21 +432,21 @@
       "type": "line",
       "colors": [
         {
-          "id": "464a555c-efe7-4108-814d-6dea04953362",
+          "id": "52afc31c-5234-481f-9c5a-d6939f6c69ee",
           "type": "scale",
           "hex": "#31C0F6",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "4875c483-b8af-401b-94ac-6fd5a665715b",
+          "id": "ad23dc25-66e1-4df6-accf-0aa6faab0921",
           "type": "scale",
           "hex": "#A500A5",
           "name": "Nineteen Eighty Four",
           "value": "0"
         },
         {
-          "id": "93a63106-cff3-46c2-9527-a3646974e0b3",
+          "id": "06ca7744-9e54-45f7-b240-41bb86f53df8",
           "type": "scale",
           "hex": "#FF7E27",
           "name": "Nineteen Eighty Four",

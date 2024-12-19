@@ -78,15 +78,21 @@ const PredictionInstanceWrapper = ({
   const [interval, setInterval] = useState(DEFAULT_GROUP_BY)
 
   const [isIntervalManual, setIsIntervalManual] = useState(false)
+  const [
+    showFilteredHostLayoutsByInterfaces,
+    setShowFilteredHostLayoutsByInterfaces,
+  ] = useState(false)
 
   const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
     getTimeRangeFromLocalStorage()
   )
 
   const [layouts, setLayouts] = useState<Layout[]>()
-  const [layoutsForFilteredHost, setLayoutsForFilteredHost] = useState<
-    Layout[]
-  >()
+  const [filteredHostLayouts, setFilteredHostLayouts] = useState<Layout[]>()
+  const [
+    filteredHostLayoutsByInterfaces,
+    setFilteredHostLayoutsByInterfaces,
+  ] = useState<Layout[]>()
 
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
 
@@ -97,7 +103,12 @@ const PredictionInstanceWrapper = ({
   }, [])
 
   useEffect(() => {
-    if (!!selectedAnomaly.time && !!layouts && !!layoutsForFilteredHost) {
+    if (
+      !!selectedAnomaly.time &&
+      !!layouts &&
+      !!filteredHostLayouts &&
+      !!filteredHostLayoutsByInterfaces
+    ) {
       setSelfTimeRange({
         upper: convertTime(Number(selectedAnomaly.time) + TIME_GAP),
         lower: convertTime(Number(selectedAnomaly.time) - TIME_GAP),
@@ -113,9 +124,13 @@ const PredictionInstanceWrapper = ({
   }, [autoRefresh])
 
   useEffect(() => {
-    const hasFilteredHost =
-      filteredHexbinHost !== undefined && filteredHexbinHost !== ''
-    const currentLayouts = hasFilteredHost ? layoutsForFilteredHost : layouts
+    const hasFilteredHost = isFilteredHost(filteredHexbinHost)
+
+    const currentLayouts = hasFilteredHost
+      ? showFilteredHostLayoutsByInterfaces
+        ? filteredHostLayoutsByInterfaces
+        : filteredHostLayouts
+      : layouts
 
     if (!!currentLayouts) {
       setLayoutCells(
@@ -127,7 +142,14 @@ const PredictionInstanceWrapper = ({
         )
       )
     }
-  }, [layouts, interval, filteredHexbinHost, isIntervalManual, selfTimeRange])
+  }, [
+    layouts,
+    interval,
+    filteredHexbinHost,
+    isIntervalManual,
+    selfTimeRange,
+    showFilteredHostLayoutsByInterfaces,
+  ])
 
   const saveTimeRangeToLocalStorage = (timeRange: TimeRange) => {
     localStorage.setItem(
@@ -162,8 +184,18 @@ const PredictionInstanceWrapper = ({
           : 0
       })
 
-    const filteredLayoutsForFilteredHost = layouts
-      .filter(layout => layout.app === 'snmp_nx_ifdesc')
+    const filteredHostLayouts = layouts
+      .filter(layout => layout.app === 'snmp_nx')
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+
+    const filteredHostLayoutsByInterfaces = layouts
+      .filter(layout => layout.app === 'snmp_nx_by_interfaces')
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -173,7 +205,8 @@ const PredictionInstanceWrapper = ({
       })
 
     setLayouts(filteredLayouts)
-    setLayoutsForFilteredHost(filteredLayoutsForFilteredHost)
+    setFilteredHostLayouts(filteredHostLayouts)
+    setFilteredHostLayoutsByInterfaces(filteredHostLayoutsByInterfaces)
   }
 
   const tempVars = generateForHosts(source)
@@ -196,6 +229,10 @@ const PredictionInstanceWrapper = ({
       setSelfTimeRange(timeRange)
       saveTimeRangeToLocalStorage(timeRange)
     }
+  }
+
+  const onToggleShowFilteredHostDerivativeLayouts = () => {
+    setShowFilteredHostLayoutsByInterfaces(prevState => !prevState)
   }
 
   const onToggleChangeHandler = () => {
@@ -232,6 +269,10 @@ const PredictionInstanceWrapper = ({
     }
   }
 
+  const isFilteredHost = (filteredHexbinHost: string | undefined): boolean => {
+    return filteredHexbinHost !== undefined && filteredHexbinHost !== ''
+  }
+
   return (
     <>
       <div
@@ -249,6 +290,16 @@ const PredictionInstanceWrapper = ({
             style={{zIndex: 3}}
           >
             <PredictionHexbinToggle
+              isHide={!isFilteredHost(filteredHexbinHost)}
+              isActive={showFilteredHostLayoutsByInterfaces}
+              onChange={() => {
+                onToggleShowFilteredHostDerivativeLayouts()
+              }}
+              label="By Interfaces"
+            />
+            {/* Deprecated */}
+            <PredictionHexbinToggle
+              isHide={true}
               isActive={isIntervalManual}
               onChange={() => {
                 onToggleChangeHandler()
