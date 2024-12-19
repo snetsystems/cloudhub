@@ -413,7 +413,7 @@
         },
         "y": {
           "bounds": ["0", ""],
-          "label": "Packet Counts",
+          "label": "Packet Counts per Sec",
           "prefix": "",
           "suffix": "",
           "base": "raw",
