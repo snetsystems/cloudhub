@@ -65,6 +65,11 @@ var outErrors = traffic
         .unit(1s)
         .nonNegative()
 
+var joined = inOctets
+    |join(outOctets)
+        .as('in', 'out')
+        .tolerance(1s)
+
 var tffVolume = joined
     |eval(lambda: "in.total_ifHCInOctets" + "out.total_ifHCOutOctets")
         .as('total_traffic')
