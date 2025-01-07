@@ -88,7 +88,6 @@ const PredictionInstanceWrapper = ({
   )
 
   const [layouts, setLayouts] = useState<Layout[]>()
-  const [filteredHostLayouts, setFilteredHostLayouts] = useState<Layout[]>()
   const [
     filteredHostLayoutsByInterfaces,
     setFilteredHostLayoutsByInterfaces,
@@ -106,7 +105,6 @@ const PredictionInstanceWrapper = ({
     if (
       !!selectedAnomaly.time &&
       !!layouts &&
-      !!filteredHostLayouts &&
       !!filteredHostLayoutsByInterfaces
     ) {
       setSelfTimeRange({
@@ -123,14 +121,20 @@ const PredictionInstanceWrapper = ({
     GlobalAutoRefresher.poll(autoRefresh)
   }, [autoRefresh])
 
-  useEffect(() => {
+  const getCurrentLayouts = () => {
     const hasFilteredHost = isFilteredHost(filteredHexbinHost)
 
-    const currentLayouts = hasFilteredHost
-      ? showFilteredHostLayoutsByInterfaces
-        ? filteredHostLayoutsByInterfaces
-        : filteredHostLayouts
+    if (!hasFilteredHost) {
+      return layouts
+    }
+
+    return showFilteredHostLayoutsByInterfaces
+      ? filteredHostLayoutsByInterfaces
       : layouts
+  }
+
+  useEffect(() => {
+    const currentLayouts = getCurrentLayouts()
 
     if (!!currentLayouts) {
       setLayoutCells(
@@ -184,16 +188,6 @@ const PredictionInstanceWrapper = ({
           : 0
       })
 
-    const filteredHostLayouts = layouts
-      .filter(layout => layout.app === 'snmp_nx')
-      .sort((x, y) => {
-        return x.measurement < y.measurement
-          ? -1
-          : x.measurement > y.measurement
-          ? 1
-          : 0
-      })
-
     const filteredHostLayoutsByInterfaces = layouts
       .filter(layout => layout.app === 'snmp_nx_by_interfaces')
       .sort((x, y) => {
@@ -205,7 +199,6 @@ const PredictionInstanceWrapper = ({
       })
 
     setLayouts(filteredLayouts)
-    setFilteredHostLayouts(filteredHostLayouts)
     setFilteredHostLayoutsByInterfaces(filteredHostLayoutsByInterfaces)
   }
 
