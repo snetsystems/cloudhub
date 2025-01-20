@@ -6,6 +6,7 @@ export interface Query {
   id: string
   queryConfig: QueryConfig
   type: string
+  groupbys?: string[]
 }
 
 export interface QueryConfig {

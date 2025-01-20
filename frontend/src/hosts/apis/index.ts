@@ -284,6 +284,13 @@ interface LayoutsResponse {
   layouts: Layout[]
 }
 
+export const getLayout = (id: string) =>
+  AJAX({
+    method: 'GET',
+    resource: 'layouts',
+    id: id,
+  }) as Promise<AxiosResponse<Layout>>
+
 export const getLayouts = () =>
   AJAX({
     method: 'GET',

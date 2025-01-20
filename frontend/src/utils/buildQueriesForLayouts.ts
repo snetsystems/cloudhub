@@ -10,6 +10,7 @@ import {
 import {timeRanges} from 'src/shared/data/timeRanges'
 
 import {Cell, CellQuery, LayoutQuery, TimeRange} from 'src/types'
+import {isStaticGraphType} from 'src/shared/utils/staticGraph'
 
 const getCustomTimerangeGroupBy = (upper, lower) => {
   const upperTime = upper === 'now()' ? moment().toISOString() : upper
@@ -29,7 +30,8 @@ const buildCannedDashboardQuery = (
   {lower, upper}: TimeRange,
   host: string,
   instance?: object,
-  measurement?: string
+  measurement?: string,
+  isStaticGraph?: boolean
 ): string => {
   const isUsingCustomTimeRange =
     (upper === 'now()' || moment(upper).isValid()) && moment(lower).isValid()
@@ -83,7 +85,9 @@ const buildCannedDashboardQuery = (
   }
 
   if (groupbys) {
-    if (groupbys.find(g => g.includes('time'))) {
+    if (isStaticGraph) {
+      text += ` group by ${groupbys.join(',')}`
+    } else if (groupbys.find(g => g.includes('time'))) {
       text += ` group by ${groupbys.join(',')}`
     } else if (groupbys.length > 0) {
       text += ` group by time(${defaultGroupBy}),${groupbys.join(',')}`
@@ -168,7 +172,8 @@ export const buildQueriesForLayouts = (
         timeRange,
         host,
         instance,
-        _.get(cell, 'measurement')
+        _.get(cell, 'measurement'),
+        isStaticGraphType(cell?.type)
       )
     }
 

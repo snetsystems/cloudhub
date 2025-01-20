@@ -9,6 +9,7 @@ export const notIncludeApps: string[] = [
   'openstack',
   'snmp_nx_by_interfaces',
   'snmp_nx_all',
+  'snmp_nx_static',
 ]
 
 export const excludedAppsForHostDetailsPage: string[] = ['snmp_nx_all']

@@ -162,6 +162,8 @@ message Cell {
 	repeated string ylabels = 9; // Labels of the y-axes
 	string type             = 10; // Cell visualization type
 	map<string, Axis> axes  = 11; // Axes represent the graphical viewport for a cell's visualizations
+	TableOptions tableOptions  = 12; // TableOptions for visualization of cell with type 'table'
+	repeated RenamableField fieldOptions = 13; // Options for each of the fields returned in a cell
 }
 
 message Query {

@@ -107,5 +107,26 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
         self: '/cloudhub/v1/status/23/cells/c-bar-graphs-fly',
       },
     },
+    {
+      ...NEW_DEFAULT_DASHBOARD_CELL,
+      i: 'staticGraph',
+      x: 0,
+      y: 52,
+      w: 100,
+      h: 55,
+      minW: 30,
+      minH: 55,
+      name: '',
+      queries: [],
+      type: CellType.Table,
+      axes: emptyAxes,
+      colors: DEFAULT_LINE_COLORS,
+      legend: {},
+      timeFormat: '',
+      note: '',
+      links: {
+        self: '/cloudhub/v1/status/23/cells/c-bar-graphs-fly',
+      },
+    },
   ]
 }

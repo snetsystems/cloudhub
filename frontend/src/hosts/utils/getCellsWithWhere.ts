@@ -7,7 +7,9 @@ import {Layout, LayoutCell, LayoutQuery} from 'src/types/hosts'
 import {CellType, CellQuery} from 'src/types/dashboards'
 
 const CELL_WIDTH = 32
+const WIDE_CELL_WIDTH = 48
 const CELL_HEIGHT = 24
+const EXPANDED_CELL_HEIGHT = 32
 const PAGE_WIDTH = 96
 
 interface queryWithWhereGroupby {
@@ -19,15 +21,19 @@ export function getCellsWithWhere(
   layouts: Layout[],
   source: Source,
   whereTag: string,
-  interval?: number
+  interval?: number,
+  isUsingWideCell?: boolean
 ): Cell[] {
-  const layoutCells = getLayoutCells(layouts)
+  const layoutCells = getLayoutCells(layouts, isUsingWideCell)
   const cells = layoutCells.map(d => toCell(d, source, whereTag, interval))
 
   return cells
 }
 
-function getLayoutCells(layouts: Layout[]): LayoutCell[] {
+function getLayoutCells(
+  layouts: Layout[],
+  isUsingWideCell?: boolean
+): LayoutCell[] {
   if (layouts.length === 0) {
     return []
   }
@@ -45,7 +51,7 @@ function getLayoutCells(layouts: Layout[]): LayoutCell[] {
 
   const staticLayouts = layouts.filter(layout => !layout.autoflow)
   const cellGroups = [
-    autoPositionCells(autoflowCells),
+    autoPositionCells(autoflowCells, isUsingWideCell),
     ...staticLayouts.map(layout => layout.cells),
   ]
 
@@ -54,11 +60,17 @@ function getLayoutCells(layouts: Layout[]): LayoutCell[] {
   return cells
 }
 
-function autoPositionCells(cells: LayoutCell[]): LayoutCell[] {
+function autoPositionCells(
+  cells: LayoutCell[],
+  isUsingWideCell?: boolean
+): LayoutCell[] {
+  const cellWidth = isUsingWideCell ? WIDE_CELL_WIDTH : CELL_WIDTH
+  const cellHeight = isUsingWideCell ? EXPANDED_CELL_HEIGHT : CELL_HEIGHT
+
   return cells.reduce((acc, cell, i) => {
-    const x = (i * CELL_WIDTH) % PAGE_WIDTH
-    const y = Math.floor((i * CELL_WIDTH) / PAGE_WIDTH) * CELL_HEIGHT
-    const newCell = {...cell, w: CELL_WIDTH, h: CELL_HEIGHT, x, y}
+    const x = (i * cellWidth) % PAGE_WIDTH
+    const y = Math.floor((i * cellWidth) / PAGE_WIDTH) * cellHeight
+    const newCell = {...cell, w: cellWidth, h: cellHeight, x, y}
 
     return [...acc, newCell]
   }, [])
@@ -104,7 +116,7 @@ function toCell(
 
     links: {},
     legend: {},
-    type: CellType.Line,
+    type: (layoutCell?.type as CellType) || CellType.Line,
     colors: [],
   }
 

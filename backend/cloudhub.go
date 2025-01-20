@@ -809,17 +809,19 @@ type DashboardsStore interface {
 
 // Cell is a rectangle and multiple time series queries to visualize.
 type Cell struct {
-	X            int32           `json:"x"`
-	Y            int32           `json:"y"`
-	W            int32           `json:"w"`
-	H            int32           `json:"h"`
-	I            string          `json:"i"`
-	Name         string          `json:"name"`
-	Queries      []Query         `json:"queries"`
-	Axes         map[string]Axis `json:"axes"`
-	Type         string          `json:"type"`
-	CellColors   []CellColor     `json:"colors"`
-	GraphOptions GraphOptions    `json:"graphOptions"`
+	X            int32            `json:"x"`
+	Y            int32            `json:"y"`
+	W            int32            `json:"w"`
+	H            int32            `json:"h"`
+	I            string           `json:"i"`
+	Name         string           `json:"name"`
+	Queries      []Query          `json:"queries"`
+	Axes         map[string]Axis  `json:"axes"`
+	Type         string           `json:"type"`
+	CellColors   []CellColor      `json:"colors"`
+	GraphOptions GraphOptions     `json:"graphOptions"`
+	TableOptions TableOptions     `json:"tableOptions,omitempty"`
+	FieldOptions []RenamableField `json:"fieldOptions,omitempty"`
 }
 
 // Layout is a collection of Cells for visualization
