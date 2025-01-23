@@ -12,7 +12,7 @@
       "h": 22,
       "minW": 10,
       "minH": 4,
-      "name": "CPU Usage (%) Top",
+      "name": "CPU Usage (%)",
       "queries": [
         {
           "query": "SELECT mean(\"cpu1min\") AS \"mean_cpu1min\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
@@ -120,7 +120,7 @@
       "h": 32,
       "minW": 48,
       "minH": 32,
-      "name": "Memory Usage (%) Top",
+      "name": "Memory Usage (%)",
       "queries": [
         {
           "query": "SELECT mean(\"mem_usage\") AS \"mean_mem_usage\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
@@ -416,7 +416,7 @@
       "h": 32,
       "minW": 48,
       "minH": 32,
-      "name": "Process Top",
+      "name": "CPU Usage - Process",
       "queries": [
         {
           "query": "SELECT mean(\"proc_cpu1m\") AS \"mean_proc_cpu1m\" FROM \":db:\".\":rp:\".\"snmp_nx\"",

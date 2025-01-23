@@ -146,7 +146,7 @@ const PredictionStaticGraphWrapper = ({
         style={{height: '100%', backgroundColor: GRAPH_BG_COLOR}}
       >
         <PredictionDashboardHeader
-          cellName={`Static Graph Monitoring`}
+          cellName={`Statistic Graph`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >

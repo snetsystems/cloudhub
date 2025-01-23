@@ -273,7 +273,7 @@ const PredictionInstanceWrapper = ({
         style={{height: '100%', backgroundColor: GRAPH_BG_COLOR}}
       >
         <PredictionDashboardHeader
-          cellName={`Time Series Monitoring`}
+          cellName={`Time Series Graph`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
