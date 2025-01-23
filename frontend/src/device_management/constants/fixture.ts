@@ -94,7 +94,7 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
       y: 24,
       w: 67,
       h: 28,
-      minH: 10,
+      minH: 28,
       name: '',
       queries: [],
       type: CellType.Table,
@@ -109,7 +109,7 @@ export const fixturePredictionPageCells = (source: Source): Cell[] => {
     },
     {
       ...NEW_DEFAULT_DASHBOARD_CELL,
-      i: 'staticGraph',
+      i: 'statisticalGraph',
       x: 0,
       y: 52,
       w: 100,

@@ -44,7 +44,7 @@ interface Props {
   selectedAnomaly?: AnomalyFactor
 }
 
-const PredictionStaticGraphWrapper = ({
+const PredictionStatisticalGraphWrapper = ({
   source,
   autoRefresh,
   predictionManualRefresh: manualRefresh,
@@ -238,6 +238,6 @@ const areEqual = (prevProps, nextProps) => {
 }
 
 export default React.memo(
-  connect(mstp, mdtp, null)(PredictionStaticGraphWrapper),
+  connect(mstp, mdtp, null)(PredictionStatisticalGraphWrapper),
   areEqual
 )

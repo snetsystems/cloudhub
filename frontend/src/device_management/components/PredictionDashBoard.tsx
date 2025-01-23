@@ -10,7 +10,7 @@ import PredictionHexbinWrapper from 'src/device_management/components/Prediction
 import PredictionInstanceWrapper from 'src/device_management/components/PredictionInstanceWrapper'
 import PredictionDashboardWrapper from 'src/device_management/components/PredictionDashboardWrapper'
 import PredictionAlertHistoryWrapper from 'src/device_management/components/PredictionAlertHistoryWrapper'
-import PredictionStaticGraphWrapper from 'src/device_management/components/PredictionStaticGraphWrapper'
+import PredictionStatisticalGraphWrapper from 'src/device_management/components/PredictionStatisticalGraphWrapper'
 
 // Type
 import {CloudAutoRefresh} from 'src/clouds/types/type'
@@ -195,8 +195,8 @@ function PredictionDashBoard({
       case 'instanceGraph': {
         return <PredictionInstanceWrapper source={source} />
       }
-      case 'staticGraph': {
-        return <PredictionStaticGraphWrapper source={source} />
+      case 'statisticalGraph': {
+        return <PredictionStatisticalGraphWrapper source={source} />
       }
     }
   }
