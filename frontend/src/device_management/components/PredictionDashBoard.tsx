@@ -238,6 +238,13 @@ function PredictionDashBoard({
                   useCSSTransforms={false}
                   isDraggable={true}
                   isResizable={true}
+                  onResizeStop={(_, __, ___, ____, _____, resizeHandle) => {
+                    const parentElement = resizeHandle?.parentElement
+
+                    if (parentElement?.classList.contains('resizing')) {
+                      parentElement.classList.remove('resizing')
+                    }
+                  }}
                 >
                   {cells?.map(cell => {
                     return (
