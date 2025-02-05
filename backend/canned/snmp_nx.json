@@ -228,8 +228,8 @@
       },
       "graphOptions": {
         "fillArea": false,
-        "showLine": false,
-        "showPoint": true,
+        "showLine": true,
+        "showPoint": false,
         "showTempVarCount": ""
       }
     },
