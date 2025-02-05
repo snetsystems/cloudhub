@@ -39,7 +39,11 @@ import {
   notifygetGCPInstancesFailed,
 } from 'src/shared/copy/notifications'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
-import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
+import {
+  CloudServiceProvider,
+  CSPFileWriteParam,
+  TopologyOption,
+} from 'src/hosts/types'
 
 export enum ActionTypes {
   LoadInventoryTopology = 'LOAD_INVENTORY_TOPOLOGY',
@@ -150,20 +154,28 @@ export const updateInventoryTopologyAsync = (
   links: Links,
   cellsId: string,
   cells: string,
-  preferences: string[]
+  preferences: string[],
+  topologyOptions: TopologyOption
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const resultUpdateInventoryTopology = await updateInventoryTopology(
       links,
       cellsId,
       cells,
-      preferences
+      preferences,
+      topologyOptions
     )
 
     return resultUpdateInventoryTopology
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))
+  }
+}
+
+export const emptyIpmiStatus = async () => {
+  return {
+    return: [{emptyHost: 'empty'}],
   }
 }
 
@@ -175,17 +187,22 @@ export const getIpmiStatusAsync = (
   try {
     const ipmis = await Promise.all(
       pIpmis.map(pIpmi => {
-        return getIpmiStatusSaltApi(pUrl, pToken, pIpmi)
+        return pIpmi.powerStatus === 'empty'
+          ? emptyIpmiStatus()
+          : getIpmiStatusSaltApi(pUrl, pToken, pIpmi)
       })
     )
 
     let error = ''
     let ipmiHost = ''
     let resultIpmis: IpmiCell[] = pIpmis
-
     _.map(ipmis, (ipmiAPIResponse, index) => {
       const ipmi = ipmiAPIResponse?.return?.[0]
-      if (_.values(ipmi)[0] !== 'on' && _.values(ipmi)[0] !== 'off') {
+      if (
+        _.values(ipmi)[0] !== 'on' &&
+        _.values(ipmi)[0] !== 'off' &&
+        _.values(ipmi)[0] !== 'empty'
+      ) {
         if (error !== null) {
           error += '\n'
         }
@@ -194,7 +211,11 @@ export const getIpmiStatusAsync = (
 
         resultIpmis[index].powerStatus = ''
       } else {
-        resultIpmis[index].powerStatus = _.values(ipmi)[0]
+        if (_.values(ipmi)[0] === 'empty') {
+          resultIpmis[index].powerStatus = ''
+        } else {
+          resultIpmis[index].powerStatus = _.values(ipmi)[0]
+        }
       }
     })
 

@@ -4,6 +4,7 @@ import {
   CSPAccessObject,
   CSPFileWriteParam,
   Instance,
+  TopologyOption,
 } from 'src/hosts/types/cloud'
 import {PreferenceType} from 'src/hosts/types/preferences'
 
@@ -14,4 +15,5 @@ export {
   CSPFileWriteParam,
   Instance,
   PreferenceType,
+  TopologyOption,
 }

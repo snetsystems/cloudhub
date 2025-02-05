@@ -65,6 +65,7 @@ import {
 } from 'src/types'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 interface Auth {
   me: Me
@@ -74,6 +75,7 @@ export interface Props extends ManualRefreshProps {
   source: Source
   links: Links
   autoRefresh: number
+  cloudAutoRefresh: CloudAutoRefresh
   inPresentationMode: boolean
   timeRange: TimeRange
   auth: Auth
@@ -132,7 +134,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       ? proportions
       : proportions.split(',').map(v => Number(v))
 
-    const {notify, autoRefresh} = this.props
+    const {notify, cloudAutoRefresh} = this.props
 
     const layoutResults = await getLayouts()
 
@@ -174,15 +176,15 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       hostsPage = defaultState
     }
 
-    if (autoRefresh) {
+    if (cloudAutoRefresh.host) {
       clearInterval(this.intervalID)
       this.intervalID = window.setInterval(
         () => this.fetchHostsData(filterLayouts),
-        autoRefresh
+        cloudAutoRefresh.host
       )
     }
 
-    GlobalAutoRefresher.poll(autoRefresh)
+    GlobalAutoRefresher.poll(cloudAutoRefresh.host)
 
     const hostID = hostsPage.focusedHost
     if (hostID === '') {
@@ -202,7 +204,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    const {autoRefresh} = this.props
+    const {cloudAutoRefresh} = this.props
     const {layouts, focusedHost} = this.state
 
     if (layouts) {
@@ -215,8 +217,8 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
         this.setState({filteredLayouts})
       }
 
-      if (prevProps.autoRefresh !== autoRefresh) {
-        GlobalAutoRefresher.poll(autoRefresh)
+      if (prevProps.cloudAutoRefresh.host !== cloudAutoRefresh.host) {
+        GlobalAutoRefresher.poll(cloudAutoRefresh.host)
       }
     }
   }
@@ -234,14 +236,16 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
         this.setState({filteredLayouts})
       }
 
-      if (this.props.autoRefresh !== nextProps.autoRefresh) {
+      if (
+        this.props.cloudAutoRefresh.host !== nextProps.cloudAutoRefresh.host
+      ) {
         clearInterval(this.intervalID)
-        GlobalAutoRefresher.poll(nextProps.autoRefresh)
+        GlobalAutoRefresher.poll(nextProps.cloudAutoRefresh.host)
 
-        if (nextProps.autoRefresh) {
+        if (nextProps.cloudAutoRefresh.host) {
           this.intervalID = window.setInterval(
             () => this.fetchHostsData(layouts),
-            nextProps.autoRefresh
+            nextProps.cloudAutoRefresh.host
           )
         }
       }
@@ -492,7 +496,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh},
+      persisted: {cloudAutoRefresh},
       ephemeral: {inPresentationMode},
     },
     links,
@@ -500,7 +504,7 @@ const mstp = state => {
   } = state
   return {
     links,
-    autoRefresh,
+    cloudAutoRefresh,
     inPresentationMode,
     auth,
   }

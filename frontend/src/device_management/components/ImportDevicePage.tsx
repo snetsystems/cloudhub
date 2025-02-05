@@ -45,7 +45,10 @@ import {
 } from 'src/device_management/utils'
 
 // API
-import {createDevices, validateSNMPConnection} from 'src/device_management/apis'
+import {
+  saveDevicesWithCSVUpload,
+  validateSNMPConnection,
+} from 'src/device_management/apis'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -53,10 +56,10 @@ import {
   csvExportFailed,
   notifyCSVUploadFailed,
   notifyCSVUploadFailedWithMessage,
-  notifyCreateDevicesFailed,
-  notifyCreateDevicesSucceeded,
   notifyFetchSNMPConnectStatusSucceeded,
   notifySNMPConnectFailed,
+  notifySaveDevicesFailed,
+  notifySaveDevicesSucceeded,
 } from 'src/shared/copy/notifications'
 
 interface Props {
@@ -617,10 +620,10 @@ class ImportDevicePage extends PureComponent<Props, State> {
   }
 
   private handleSaveImportedDeviceFile = () => {
-    this.createDevices()
+    this.saveDevices()
   }
 
-  private createDevices = async () => {
+  private saveDevices = async () => {
     const {organizations} = this.props
     const {devicesData} = this.state
 
@@ -631,34 +634,36 @@ class ImportDevicePage extends PureComponent<Props, State> {
       ) as DeviceData[]
 
       this.props.setDeviceManagementIsLoading(true)
-      const {failed_devices} = await createDevices(convertedDeviceData)
+      const {failed_devices} = await saveDevicesWithCSVUpload(
+        convertedDeviceData
+      )
 
       if (failed_devices && failed_devices.length > 0) {
-        return this.handleCreateDevicesErrorWithFailedDevices(failed_devices)
+        return this.handleSaveDevicesErrorWithFailedDevices(failed_devices)
       }
 
-      return this.handleCreateDevicesSuccess()
+      return this.handleSaveDevicesSuccess()
     } catch (error) {
-      return this.handleCreateDevicesError(parseErrorMessage(error))
+      return this.handleSaveDevicesError(parseErrorMessage(error))
     }
   }
 
-  private handleCreateDevicesError = (errorMessage: string) => {
+  private handleSaveDevicesError = (errorMessage: string) => {
     const {onDismissOverlay} = this.props
 
-    this.props.notify(notifyCreateDevicesFailed(errorMessage))
+    this.props.notify(notifySaveDevicesFailed(errorMessage))
     this.finalizeAPIResponse()
     this.initializeComponentState()
     onDismissOverlay()
   }
 
-  private handleCreateDevicesErrorWithFailedDevices = (
+  private handleSaveDevicesErrorWithFailedDevices = (
     failedDevices: FailedDevice[]
   ) => {
     const {onDismissOverlay} = this.props
     const failedMessage = this.getFailedDevicesErrorMessage(failedDevices)
 
-    this.props.notify(notifyCreateDevicesFailed(failedMessage))
+    this.props.notify(notifySaveDevicesFailed(failedMessage))
     this.finalizeAPIResponse()
     this.initializeComponentState()
     onDismissOverlay()
@@ -684,10 +689,10 @@ class ImportDevicePage extends PureComponent<Props, State> {
     return `${messages}`
   }
 
-  private handleCreateDevicesSuccess = () => {
+  private handleSaveDevicesSuccess = () => {
     const {onDismissOverlay} = this.props
 
-    this.props.notify(notifyCreateDevicesSucceeded())
+    this.props.notify(notifySaveDevicesSucceeded())
     this.finalizeAPIResponse()
     this.initializeComponentState()
     onDismissOverlay()

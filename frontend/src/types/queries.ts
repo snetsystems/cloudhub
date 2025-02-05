@@ -6,6 +6,7 @@ export interface Query {
   id: string
   queryConfig: QueryConfig
   type: string
+  groupbys?: string[]
 }
 
 export interface QueryConfig {
@@ -129,6 +130,11 @@ export interface TimeRangeOption extends TimeRange {
   seconds: number
   inputValue: string
   menuOption: string
+}
+
+export interface GroupBys {
+  defaultGroupBy: number
+  lower: string
 }
 
 export interface SelectedSubFunction {

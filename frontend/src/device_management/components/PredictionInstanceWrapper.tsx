@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 
 // Library
 import _ from 'lodash'
 
 // Components
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import TimeRangeShiftDropdown from 'src/shared/components/TimeRangeShiftDropdown'
 import PredictionDashboardHeader from 'src/device_management/components/PredictionDashboardHeader'
 
 // Type
@@ -18,7 +18,7 @@ import {
   TimeZones,
 } from 'src/types'
 import ReactObserver from 'react-resize-observer'
-import {timeRanges} from 'src/shared/data/timeRanges'
+import {timeRanges, timeRangesGroupBys} from 'src/shared/data/timeRanges'
 
 // Redux
 import {bindActionCreators} from 'redux'
@@ -31,35 +31,40 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
+import {DEFAULT_GROUP_BY, TIME_GAP} from 'src/device_management/constants'
+
+// Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
-import {getLayouts} from 'src/hosts/apis'
 import {getDeep} from 'src/utils/wrappers'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+
+// ETC
+import {getLayouts} from 'src/hosts/apis'
 import {getCellsWithWhere} from 'src/hosts/utils/getCellsWithWhere'
-import {setSelectedAnomaly} from '../actions'
+import PredictionHexbinToggle from 'src/device_management/components/PredictionHexbinToggle'
+import {setSelectedAnomaly} from 'src/device_management/actions'
 
 interface Props {
   source: Source
   autoRefresh?: number
-  manualRefresh: number
+  predictionManualRefresh?: number
   filteredHexbinHost?: string
   selectedAnomaly?: AnomalyFactor
   timeZone?: TimeZones
   setSelectedAnomaly?: (value: AnomalyFactor) => void
 }
 
-const TIME_GAP = 3600000
-
 const PredictionInstanceWrapper = ({
   source,
   autoRefresh,
-  manualRefresh,
+  predictionManualRefresh: manualRefresh,
   filteredHexbinHost,
   selectedAnomaly,
   timeZone,
-  setSelectedAnomaly,
 }: Props) => {
+  const intervalRef = useRef(null)
+
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem('monitoring-chart')) {
       return JSON.parse(localStorage.getItem('monitoring-chart'))
@@ -68,11 +73,25 @@ const PredictionInstanceWrapper = ({
     }
   }
 
+  const [tempInterval, setTempInterval] = useState(DEFAULT_GROUP_BY)
+
+  const [interval, setInterval] = useState(DEFAULT_GROUP_BY)
+
+  const [isIntervalManual, setIsIntervalManual] = useState(false)
+  const [
+    showFilteredHostLayoutsByInterfaces,
+    setShowFilteredHostLayoutsByInterfaces,
+  ] = useState(false)
+
   const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
     getTimeRangeFromLocalStorage()
   )
 
   const [layouts, setLayouts] = useState<Layout[]>()
+  const [
+    filteredHostLayoutsByInterfaces,
+    setFilteredHostLayoutsByInterfaces,
+  ] = useState<Layout[]>()
 
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
 
@@ -80,16 +99,21 @@ const PredictionInstanceWrapper = ({
 
   useEffect(() => {
     getLayout()
-  }, [filteredHexbinHost, selfTimeRange])
+  }, [])
 
   useEffect(() => {
-    if (!!selectedAnomaly.time && !!layouts) {
+    if (
+      !!selectedAnomaly.time &&
+      !!layouts &&
+      !!filteredHostLayoutsByInterfaces
+    ) {
       setSelfTimeRange({
         upper: convertTime(Number(selectedAnomaly.time) + TIME_GAP),
         lower: convertTime(Number(selectedAnomaly.time) - TIME_GAP),
       })
     } else {
       setSelfTimeRange(getTimeRangeFromLocalStorage())
+      setIsIntervalManual(false)
     }
   }, [selectedAnomaly])
 
@@ -97,13 +121,47 @@ const PredictionInstanceWrapper = ({
     GlobalAutoRefresher.poll(autoRefresh)
   }, [autoRefresh])
 
+  const getCurrentLayouts = () => {
+    const hasFilteredHost = isFilteredHost(filteredHexbinHost)
+
+    if (!hasFilteredHost) {
+      return layouts
+    }
+
+    return showFilteredHostLayoutsByInterfaces
+      ? filteredHostLayoutsByInterfaces
+      : layouts
+  }
+
+  useEffect(() => {
+    const currentLayouts = getCurrentLayouts()
+
+    if (!!currentLayouts) {
+      setLayoutCells(
+        getCellsWithWhere(
+          currentLayouts,
+          source,
+          filteredHexbinHost ?? '',
+          isIntervalManual ? interval : null
+        )
+      )
+    }
+  }, [
+    layouts,
+    interval,
+    filteredHexbinHost,
+    isIntervalManual,
+    selfTimeRange,
+    showFilteredHostLayoutsByInterfaces,
+  ])
+
   const saveTimeRangeToLocalStorage = (timeRange: TimeRange) => {
     localStorage.setItem(
       'monitoring-chart',
       JSON.stringify({
-        lower: timeRange.lower,
-        lowerFlux: timeRange.lowerFlux,
-        upper: null,
+        lower: timeRange?.lower ?? 'now() - 1h',
+        lowerFlux: timeRange?.lowerFlux,
+        upper: timeRange?.upper ?? null,
       })
     )
   }
@@ -121,9 +179,17 @@ const PredictionInstanceWrapper = ({
 
   const getLayoutsforInstance = async (layouts: Layout[]) => {
     const filteredLayouts = layouts
-      .filter(layout => {
-        return layout.app === 'snmp_nx'
+      .filter(layout => layout.app === 'snmp_nx')
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
       })
+
+    const filteredHostLayoutsByInterfaces = layouts
+      .filter(layout => layout.app === 'snmp_nx_by_interfaces')
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -133,15 +199,7 @@ const PredictionInstanceWrapper = ({
       })
 
     setLayouts(filteredLayouts)
-
-    setLayoutCells(
-      getCellsWithWhere(
-        filteredLayouts,
-        source,
-        filteredHexbinHost ?? '',
-        !!selectedAnomaly.time ?? false
-      )
-    )
+    setFilteredHostLayoutsByInterfaces(filteredHostLayoutsByInterfaces)
   }
 
   const tempVars = generateForHosts(source)
@@ -157,17 +215,55 @@ const PredictionInstanceWrapper = ({
   const handleChooseTimeRange = ({lower, upper}) => {
     if (upper) {
       setSelfTimeRange({lower, upper})
+      // saveTimeRangeToLocalStorage({lower, upper})
     } else {
+      setIsIntervalManual(false)
       const timeRange = timeRanges.find(range => range.lower === lower)
       setSelfTimeRange(timeRange)
       saveTimeRangeToLocalStorage(timeRange)
     }
+  }
 
-    //annotation set null
-    setSelectedAnomaly({
-      host: null,
-      time: null,
-    })
+  const onToggleShowFilteredHostDerivativeLayouts = () => {
+    setShowFilteredHostLayoutsByInterfaces(prevState => !prevState)
+  }
+
+  const onToggleChangeHandler = () => {
+    const groupBy =
+      timeRangesGroupBys.find(tr => tr.lower === selfTimeRange.lower)
+        ?.defaultGroupBy ?? DEFAULT_GROUP_BY
+    setIsIntervalManual(!isIntervalManual)
+    setTempInterval(groupBy)
+    setInterval(groupBy)
+  }
+
+  const onIntervalHandler = value => {
+    const numericValue = Number(value)
+    if (!isNaN(numericValue)) {
+      setTempInterval(numericValue)
+    } else {
+      setTempInterval(0)
+    }
+  }
+
+  const onFocusOutHandler = () => {
+    if (tempInterval > 0) {
+      setInterval(tempInterval)
+    } else {
+      setIsIntervalManual(false)
+    }
+  }
+
+  const onKeyUpHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!!intervalRef.current) {
+      if (e.keyCode === 13) {
+        intervalRef.current.blur()
+      }
+    }
+  }
+
+  const isFilteredHost = (filteredHexbinHost: string | undefined): boolean => {
+    return filteredHexbinHost !== undefined && filteredHexbinHost !== ''
   }
 
   return (
@@ -177,12 +273,55 @@ const PredictionInstanceWrapper = ({
         style={{height: '100%', backgroundColor: GRAPH_BG_COLOR}}
       >
         <PredictionDashboardHeader
-          cellName={`Time Series Monitoring`}
+          cellName={`Time Series Graph`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
-          <div className="page-header--right" style={{zIndex: 3}}>
-            <TimeRangeDropdown
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            className="page-header--right"
+            style={{zIndex: 3}}
+          >
+            <PredictionHexbinToggle
+              isHide={!isFilteredHost(filteredHexbinHost)}
+              isActive={showFilteredHostLayoutsByInterfaces}
+              onChange={() => {
+                onToggleShowFilteredHostDerivativeLayouts()
+              }}
+              label="By Interfaces"
+            />
+            {/* Deprecated */}
+            <PredictionHexbinToggle
+              isHide={true}
+              isActive={isIntervalManual}
+              onChange={() => {
+                onToggleChangeHandler()
+              }}
+              label="Manual Interval"
+            />
+            {isIntervalManual && (
+              <>
+                <input
+                  ref={intervalRef}
+                  type="number"
+                  min="1"
+                  className="form-control input-sm prediction-interval--input"
+                  placeholder="Interval..."
+                  onChange={e => onIntervalHandler(e.currentTarget.value)}
+                  value={`${tempInterval}`}
+                  autoComplete={'off'}
+                  spellCheck={false}
+                  onBlur={() => {
+                    onFocusOutHandler()
+                  }}
+                  onKeyUp={e => {
+                    onKeyUpHandler(e)
+                  }}
+                />
+                <span>min</span>
+              </>
+            )}
+            <TimeRangeShiftDropdown
               onChooseTimeRange={handleChooseTimeRange}
               selected={selfTimeRange}
             />
@@ -219,11 +358,12 @@ const PredictionInstanceWrapper = ({
                   timeRange={selfTimeRange}
                   manualRefresh={manualRefresh}
                   host={''}
-                  isUsingAnnotationViewer={true}
+                  isUsingAnnotationViewer={!!selectedAnomaly.time}
                   annotationsViewMode={[
                     {
                       id: selectedAnomaly.host,
                       startTime: Number(selectedAnomaly.time),
+                      endTime: Number(selectedAnomaly.time),
                       text: `Anomaly Time (${timeZone})`,
                     },
                   ]}
@@ -250,7 +390,11 @@ const mstp = state => {
       persisted: {autoRefresh, timeZone},
       ephemeral: {inPresentationMode},
     },
-    predictionDashboard: {filteredHexbinHost, selectedAnomaly},
+    predictionDashboard: {
+      filteredHexbinHost,
+      selectedAnomaly,
+      predictionManualRefresh,
+    },
     links,
   } = state
   return {
@@ -260,6 +404,7 @@ const mstp = state => {
     inPresentationMode,
     filteredHexbinHost,
     selectedAnomaly,
+    predictionManualRefresh,
   }
 }
 

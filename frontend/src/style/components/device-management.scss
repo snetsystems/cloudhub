@@ -166,3 +166,26 @@
   animation: bounce 1s infinite;
   text-shadow: 0 0 5px $s-orange, 0 0 10px $s-orange, 0 0 25px #fff;
 }
+
+.task-enabled--setting {
+  display: flex;
+  justify-content: flex-end;
+
+  > a {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+}
+
+.learning-model-cron--button {
+  width: 33%;
+  height: 20px;
+}
+
+.form-group .learning-model-cron--labelClassName {
+  width: 67%;
+}
+
+.form-group .learning-model-processcount--labelClassName {
+  height: 18px;
+}

@@ -5,6 +5,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {DygraphClass, AnnotationViewer} from 'src/types'
 
 import AnnotationViewerComponent from 'src/shared/components/AnnotationViewer'
+import {visibleAnnotationsViewer} from 'src/shared/annotations/helpers'
 
 interface Props {
   staticLegendHeight: number
@@ -22,10 +23,14 @@ class AnnotationsViewer extends Component<Props> {
       staticLegendHeight,
       annotationsViewMode,
     } = this.props
+    const filteredAnnotationsViewMode = visibleAnnotationsViewer(
+      xAxisRange,
+      annotationsViewMode
+    )
 
     return (
       <div className="annotations-container">
-        {annotationsViewMode.map(a => (
+        {filteredAnnotationsViewMode.map(a => (
           <AnnotationViewerComponent
             key={a.id}
             xAxisRange={xAxisRange}

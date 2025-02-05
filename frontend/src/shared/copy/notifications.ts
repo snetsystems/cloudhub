@@ -1498,6 +1498,18 @@ export const notifyCreateDevicesSucceeded = (): Notification => ({
   ...defaultSuccessNotification,
   message: `Devices created successfully.`,
 })
+export const notifySaveDevicesSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Devices saved successfully.`,
+})
+
+export const notifySaveDevicesFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to save Devices. ${errorMessage}`,
+})
 
 export const notifyCreateDevicesFailed = (
   errorMessage: string
@@ -1612,4 +1624,26 @@ export const notifyPredictionHexbinGetFailed = (
 ): Notification => ({
   ...defaultErrorNotification,
   message: `Failed to Get Host List. ${errorMessage}`,
+})
+
+export const notifySetIpmiStatusFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Set IPMI Status : ${errorMessage}`,
+})
+
+export const notifyTopologyOptionChangeFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Change Topology Options : ${errorMessage}`,
+})
+
+export const notifyMapReloadFailed = (errorMessage: string): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Reload Map : ${errorMessage}`,
 })

@@ -10,10 +10,11 @@ import {
   DropdownItem,
   Source,
   DeviceOrganizationStatus,
-  hostState,
+  HostState,
   TimeZones,
+  AlertHostList,
 } from 'src/types'
-import {OrganizationID} from 'src/types/deviceManagement'
+import {OrganizationID, PredictionTooltipNode} from 'src/types/deviceManagement'
 import {MLFunctionMsg} from 'src/device_management/constants'
 
 export const hasMonitoringDevice = (
@@ -155,11 +156,23 @@ export const parseSeries = (seriesString: string): SeriesObj => {
 
 export const decimalUnitNumber = (value: string, unit: string) => {
   const length = Number(value).toFixed().length
-  const kUnit = length >= 10 ? 'G' : length >= 7 ? 'M' : length >= 4 ? 'K' : ''
+  const kUnit =
+    length >= 13
+      ? 'T'
+      : length >= 10
+      ? 'G'
+      : length >= 7
+      ? 'M'
+      : length >= 4
+      ? 'K'
+      : ''
 
   let number
   if (!!Number(value)) {
     switch (kUnit) {
+      case 'T':
+        number = Number(value) / 1000000000000
+        break
       case 'G':
         number = Number(value) / 1000000000
         break
@@ -311,19 +324,35 @@ export const parseErrorMessage = (error): string => {
 }
 
 export const setArrayHostList = (
-  aryList: hostState[],
-  prevList: string[]
-): string[] => {
-  return [
-    ...aryList.reduce((acc, item) => {
+  aryList: HostState[],
+  prevList: AlertHostList
+): AlertHostList => {
+  const {critical: prevCritical, warning: prevWarning} = prevList
+
+  const {critical, warning} = aryList.reduce(
+    (acc, item) => {
       if (item.isOk) {
-        acc.delete(item.host)
-      } else {
-        acc.add(item.host)
+        acc.critical.delete(item.host)
+        acc.warning.delete(item.host)
+      } else if (item.level === 'CRITICAL') {
+        acc.critical.add(item.host)
+        acc.warning.delete(item.host) // CRITICAL should not be in warning
+      } else if (item.level === 'WARNING') {
+        acc.warning.add(item.host)
+        acc.critical.delete(item.host) // WARNING should not be in critical
       }
       return acc
-    }, new Set(prevList)),
-  ] as string[]
+    },
+    {
+      critical: new Set(prevCritical),
+      warning: new Set(prevWarning),
+    }
+  )
+
+  return {
+    critical: Array.from(critical),
+    warning: Array.from(warning),
+  }
 }
 
 export const formatDateTimeForDeviceData = (
@@ -381,4 +410,20 @@ export const statusHexColor = (status: string) => {
     default:
       return '#545667'
   }
+}
+
+export const returnCriticalValue = (host: PredictionTooltipNode): number => {
+  const result = [host.cpu, host.memory]?.sort((a, b) => b - a)[0] ?? 0
+
+  return result
+}
+
+export const hslColorValue = (value: string) => {
+  //validation check with 0
+  if (!(Number(value) + 100)) {
+    return statusHexColor('invalid')
+  }
+  const result = ((100 - Number(value)) * 110) / 100
+
+  return `hsl(${result ?? 0}, 78%, 54%)`
 }

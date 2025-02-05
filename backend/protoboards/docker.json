@@ -13,7 +13,7 @@
     "author": "InfluxData",
     "license": "MIT",
     "icon": "",
-    "url": "https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker"
+    "url": "https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker"
   },
   "data": {
     "cells": [
@@ -98,7 +98,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "This dashboard gives you an overview of metrics from the Docker Engine API on each host and includes metrics from `docker` set of measurements populated by the [Telegraf Docker Input Plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "This dashboard gives you an overview of metrics from the Docker Engine API on each host and includes metrics from `docker` set of measurements populated by the [Telegraf Docker Input Plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "default"
       },
       {
@@ -204,7 +204,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -313,7 +313,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf System Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system).",
+        "note": "To enable this graph, you will need to configure the [Telegraf System Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -419,7 +419,7 @@
           "isEnforced": true,
           "digits": 0
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Mem Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/mem).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Mem Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mem).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -525,7 +525,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf CPU Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/cpu).",
+        "note": "To enable this graph, you will need to configure the [Telegraf CPU Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/cpu).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -634,7 +634,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf DiskIO Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/diskio).",
+        "note": "To enable this graph, you will need to configure the [Telegraf DiskIO Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/diskio).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -740,7 +740,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -832,7 +832,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -924,7 +924,7 @@
           "isEnforced": true,
           "digits": 0
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1016,7 +1016,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1122,7 +1122,7 @@
           "isEnforced": false,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1228,7 +1228,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1334,7 +1334,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1440,7 +1440,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/docker).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Docker Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/docker).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1546,7 +1546,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the [Telegraf Disk Input plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/disk).",
+        "note": "To enable this graph, you will need to configure the [Telegraf Disk Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/disk).",
         "noteVisibility": "showWhenNoData"
       }
     ],

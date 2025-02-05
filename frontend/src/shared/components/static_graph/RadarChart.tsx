@@ -31,6 +31,7 @@ import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
+import {FieldOption, TableOptions} from 'src/types/dashboards'
 
 ChartJS.register(
   RadialLinearScale,
@@ -50,6 +51,8 @@ interface Props {
   colors: ColorString[]
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  tableOptions: TableOptions
+  fieldOptions: FieldOption[]
   showCount?: number | null
 }
 
@@ -60,6 +63,8 @@ const RadarChart = ({
   colors,
   staticLegend,
   staticLegendPosition,
+  tableOptions,
+  fieldOptions,
   showCount,
 }: Props) => {
   const chartRef = useRef<ChartJS<'radar', [], unknown>>(null)
@@ -73,13 +78,15 @@ const RadarChart = ({
     []
   )
   const queryKey = _.get(data, ['0', 'response', 'uuid'], [])
-  const isUpdated = useIsUpdated({queryKey, colors})
+  const isUpdated = useIsUpdated({queryKey, tableOptions, fieldOptions, colors})
 
   const chartData = useMemo(
     () =>
       staticGraphDatasets(CellType.StaticRadar)({
         rawData,
         colors,
+        tableOptions,
+        fieldOptions,
         showCount,
       }),
     [isUpdated, showCount]
@@ -89,7 +96,7 @@ const RadarChart = ({
       staticGraphOptions[CellType.StaticRadar]({
         axes,
       }),
-    [data, axes]
+    [isUpdated, data, axes]
   )
 
   useEffect(() => {

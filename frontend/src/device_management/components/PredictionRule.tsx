@@ -7,6 +7,7 @@ import {ComponentSize, Page, SlideToggle} from 'src/reusable_ui'
 import RuleHeaderSave from 'src/kapacitor/components/alert_rules/RuleHeaderSave'
 import Dropdown from 'src/shared/components/Dropdown'
 import PredictionRuleHandlers from 'src/device_management/components/PredictionRuleHandlers'
+import PredictionRuleMessage from 'src/device_management/components/PredictionRuleMessage'
 
 // Type
 import {
@@ -50,7 +51,6 @@ import {
 } from 'src/shared/copy/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import isValidMessage from 'src/kapacitor/utils/alertMessageValidation'
-import RuleMessage from 'src/kapacitor/components/alert_rules/RuleMessage'
 
 interface Props {
   sources: Source[]
@@ -121,7 +121,7 @@ export default class PredictionRule extends Component<Props, State> {
               networkDeviceOrganizationStatus={networkDeviceOrganizationStatus}
             />
 
-            <RuleMessage rule={rule} ruleActions={ruleActions} />
+            <PredictionRuleMessage rule={rule} ruleActions={ruleActions} />
           </div>
         </Page.Contents>
       </Page>
@@ -340,7 +340,7 @@ export default class PredictionRule extends Component<Props, State> {
       notify(notifyAlertRuleUpdated(rule?.name || ''))
       this.props.setLoadingForCreateAndUpdateScript(false)
     } catch (error) {
-      console.error(
+      notify(
         notifyAlertRuleUpdateFailed(rule?.name || '', parseErrorMessage(error))
       )
       this.props.setLoadingForCreateAndUpdateScript(false)

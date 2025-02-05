@@ -178,10 +178,34 @@ output {
 					"sys_desc" => "%{system.sysDescr.0}"
 					"sys_uptime" => "%{system.sysUpTime.sysUpTimeInstance}"
 					"mem_usage" => "%{mem_usage}"
+					"total_ifInDiscards" => "%{total_ifInDiscards}"
+					"total_ifOutDiscards" => "%{total_ifOutDiscards}"
+					"total_ifInErrors" => "%{total_ifInErrors}"
+					"total_ifOutErrors" => "%{total_ifOutErrors}"
+					"total_ifHCInUcastPkts" => "%{total_ifHCInUcastPkts}"
+					"total_ifHCOutUcastPkts" => "%{total_ifHCOutUcastPkts}"
+					"total_ifHCInMulticastPkts" => "%{total_ifHCInMulticastPkts}"
+					"total_ifHCOutMulticastPkts" => "%{total_ifHCOutMulticastPkts}"
+					"total_ifHCInBroadcastPkts" => "%{total_ifHCInBroadcastPkts}"
+					"total_ifHCOutBroadcastPkts" => "%{total_ifHCOutBroadcastPkts}"
+					"total_ifHCInOctets" => "%{total_ifHCInOctets}"
+					"total_ifHCOutOctets" => "%{total_ifHCOutOctets}"
 				}
 				send_as_tags => ["dev_id", "agent_host", "sys_name"]
 				coerce_values => {
 					"mem_usage" => "float"
+					"total_ifInDiscards" => "float"
+					"total_ifOutDiscards" => "float"
+					"total_ifInErrors" => "float"
+					"total_ifOutErrors" => "float"
+					"total_ifHCInUcastPkts" => "float"
+					"total_ifHCOutUcastPkts" => "float"
+					"total_ifHCInMulticastPkts" => "float"
+					"total_ifHCOutMulticastPkts" => "float"
+					"total_ifHCInBroadcastPkts" => "float"
+					"total_ifHCOutBroadcastPkts" => "float"
+					"total_ifHCInOctets" => "float"
+					"total_ifHCOutOctets" => "float"
 				}
 			}
 		}

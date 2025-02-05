@@ -1,5 +1,5 @@
 // Type
-import {LayoutCell as LayoutCells, Template} from 'src/types'
+import {LayoutCell as LayoutCells, Template, TimeRange} from 'src/types'
 import {LayoutCell, VMRole} from 'src/clouds/types'
 import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 
@@ -153,4 +153,8 @@ export interface reducerVSphere {
 
 export type CloudAutoRefresh = {
   [x: string]: number
+}
+
+export type CloudTimeRange = {
+  [x: string]: TimeRange
 }

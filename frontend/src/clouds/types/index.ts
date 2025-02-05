@@ -20,6 +20,7 @@ import {
   ResponseVMS,
   handleSelectHostProps,
   vmParam,
+  CloudTimeRange,
 } from 'src/clouds/types/type'
 
 import {
@@ -78,4 +79,5 @@ export {
   OpenStackGaugeChartProjectData,
   OpenStackGaugeChartCloudResource,
   OpenStackGaugeChartSize,
+  CloudTimeRange,
 }

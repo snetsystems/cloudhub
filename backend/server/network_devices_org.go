@@ -136,6 +136,20 @@ func (r *deviceOrgRequest) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
+func (r *deviceOrgRequest) prerocessRequestCreate() error {
+	if r.LearningCron != nil {
+		*r.LearningCron = strings.Trim(*r.LearningCron, " ")
+	}
+
+	return nil
+}
+func (r *updateDeviceOrgRequest) prerocessRequestUpdate() error {
+	if r.LearningCron != nil {
+		*r.LearningCron = strings.Trim(*r.LearningCron, " ")
+	}
+
+	return nil
+}
 
 func (r *deviceOrgRequest) validCreate() error {
 	if r.ID == "" {
@@ -250,6 +264,10 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
+	if err := req.prerocessRequestCreate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
 
 	ctx := r.Context()
 
@@ -353,7 +371,10 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		invalidData(w, err, s.Logger)
 		return
 	}
-
+	if err := req.prerocessRequestUpdate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
 	ctx := r.Context()
 
 	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &idStr})

@@ -22,6 +22,7 @@ interface Props {
   error: unknown
   isAlertsMaxedOut: boolean
   alerts: Alert[]
+  manualReset?: number
 }
 
 function PredictionAlertTable({
@@ -33,6 +34,7 @@ function PredictionAlertTable({
   error,
   isAlertsMaxedOut,
   alerts,
+  manualReset,
 }: Props) {
   const handleGetMoreAlerts = (): void => {
     setLimitMultiplier(prev => prev + 1)
@@ -75,6 +77,7 @@ function PredictionAlertTable({
           onGetMoreAlerts={handleGetMoreAlerts}
           isAlertsMaxedOut={isAlertsMaxedOut}
           alertsCount={alerts.length}
+          manualReset={manualReset}
         />
       </div>
     )

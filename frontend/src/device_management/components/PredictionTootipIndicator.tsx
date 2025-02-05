@@ -2,6 +2,7 @@ import React from 'react'
 
 // Library
 import classnames from 'classnames'
+import {hslColorValue} from '../utils'
 
 export const PredictionTooltipIndicator = ({
   value,
@@ -19,6 +20,9 @@ export const PredictionTooltipIndicator = ({
           'predictionTooltip-value',
           `predictionTooltip--${indicatorStatus}`
         )}
+        style={{
+          color: hslColorValue(status),
+        }}
       >
         {value}
       </div>
@@ -27,6 +31,9 @@ export const PredictionTooltipIndicator = ({
           'IPMI-predictionTooltip',
           `predictionTooltip-ipmi--${indicatorStatus}`
         )}
+        style={{
+          background: hslColorValue(status),
+        }}
       ></div>
     </div>
   )

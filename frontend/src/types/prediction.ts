@@ -15,9 +15,10 @@ export interface PredictionManualRefresh {
   value: number
 }
 
-export interface hostState {
+export interface HostState {
   host: string
   isOk: boolean
+  level: string
 }
 
 export interface HexagonData {
@@ -30,11 +31,17 @@ export interface HexagonData {
 
 export interface HexagonInputData extends PredictionTooltipNode {
   statusColor: string
+  displayState: number
 }
 
 export interface AnomalyFactor {
   host: string
   time: string
+}
+
+export interface AlertHostList {
+  warning: string[]
+  critical: string[]
 }
 
 export interface GetLearningMLData {

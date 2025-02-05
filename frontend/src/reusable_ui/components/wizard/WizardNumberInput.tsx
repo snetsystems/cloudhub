@@ -19,6 +19,7 @@ interface Props {
   type?: string
   newClassName?: string
   min?: number
+  labelClassName?: string
 }
 
 interface State {
@@ -60,6 +61,7 @@ class WizardNumberInput extends PureComponent<Props, State> {
       type,
       newClassName,
       min,
+      labelClassName,
     } = this.props
 
     let inputClass = ''
@@ -73,7 +75,9 @@ class WizardNumberInput extends PureComponent<Props, State> {
 
     return (
       <div className={divClassName}>
-        <label htmlFor={label}>{label}</label>
+        <label htmlFor={label} className={labelClassName}>
+          {label}
+        </label>
         <input
           type={type}
           id={label}

@@ -1,12 +1,19 @@
-import {AnomalyFactor, INPUT_TIME_TYPE, TimeRange} from 'src/types'
+import {
+  AlertHostList,
+  AnomalyFactor,
+  INPUT_TIME_TYPE,
+  TimeRange,
+} from 'src/types'
 import {Action, ActionType} from '../actions'
+import {ANOMALY_INITIAL} from '../constants'
 
 interface TimeRangeState {
   predictionTimeRange: TimeRange
   filteredHexbinHost: string
-  alertHostList: string[]
+  alertHostList: AlertHostList
   selectedAnomaly: AnomalyFactor
   histogramDate: TimeRange
+  predictionManualRefresh: number
 }
 const initialState: TimeRangeState = {
   predictionTimeRange: {
@@ -16,12 +23,10 @@ const initialState: TimeRangeState = {
     format: INPUT_TIME_TYPE.RELATIVE_TIME,
   },
   filteredHexbinHost: '',
-  alertHostList: [],
-  selectedAnomaly: {
-    host: '',
-    time: '',
-  },
+  alertHostList: {warning: [], critical: []},
+  selectedAnomaly: ANOMALY_INITIAL,
   histogramDate: null,
+  predictionManualRefresh: 0,
 }
 
 const predictionDashboard = (
@@ -48,6 +53,18 @@ const predictionDashboard = (
     case ActionType.setHistogramDate: {
       const {histogramDate} = action.payload
       return {...state, histogramDate}
+    }
+    case ActionType.setPredictionManualRefresh: {
+      const {predictionManualRefresh} = action.payload
+      return {...state, predictionManualRefresh}
+    }
+    case ActionType.setStateInit: {
+      return {
+        ...state,
+        filteredHexbinHost: '',
+        selectedAnomaly: ANOMALY_INITIAL,
+        histogramDate: null,
+      }
     }
     default:
       return state

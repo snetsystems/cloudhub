@@ -1,5 +1,5 @@
 // Components
-import React, {PureComponent} from 'react'
+import React, {ChangeEvent, PureComponent} from 'react'
 
 // Libraries
 import _ from 'lodash'
@@ -8,7 +8,6 @@ import {Link} from 'react-router'
 
 // Components
 import AlertsTableRow from 'src/alerts/components/AlertsTableRow'
-import SearchBar from 'src/alerts/components/SearchBar'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Constants
@@ -43,6 +42,7 @@ interface OwnProps {
   setSelectedAnomaly?: (anomalyFactor: AnomalyFactor) => void
   selectedAnomaly?: AnomalyFactor
   filteredHexbinHost?: string
+  manualReset?: number
 }
 
 interface StateProps {
@@ -68,6 +68,12 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
       filteredAlerts: this.props.alerts,
       sortDirection: Direction.NONE,
       sortKey: '',
+    }
+  }
+
+  public componentDidUpdate(prevProps: Readonly<Props>): void {
+    if (prevProps.manualReset !== this.props.manualReset) {
+      this.setState({searchTerm: ''}, () => this.filterAlerts(''))
     }
   }
 
@@ -97,9 +103,7 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
           <h2 className="panel-title">
             {this.state.filteredAlerts.length} Alerts
           </h2>
-          {this.props.alerts.length ? (
-            <SearchBar onSearch={this.filterAlerts} />
-          ) : null}
+          {this.searchBarComponent()}
         </div>
         {this.renderTable()}
         {limit && alertsCount ? (
@@ -119,9 +123,7 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
       <div className="panel">
         <div className="panel-heading">
           <h2 className="panel-title">{this.props.alerts.length} Alerts</h2>
-          {this.props.alerts.length ? (
-            <SearchBar onSearch={this.filterAlerts} />
-          ) : null}
+          {this.props.alerts.length ? <>{this.searchBarComponent()}</> : null}
         </div>
         <div className="panel-body">{this.renderTable()}</div>
       </div>
@@ -281,6 +283,27 @@ class PredictionAlertTableBody extends PureComponent<Props, State> {
           </Link>
         </h6>
       </div>
+    )
+  }
+
+  private searchBarComponent() {
+    return (
+      <div className="search-widget" style={{width: '260px'}}>
+        <input
+          type="text"
+          className="form-control input-sm"
+          placeholder="Filter Alerts..."
+          onChange={this.handleChange}
+          value={this.state.searchTerm}
+        />
+        <span className="icon search" />
+      </div>
+    )
+  }
+
+  private handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    this.setState({searchTerm: e.target.value}, () =>
+      this.filterAlerts(this.state.searchTerm)
     )
   }
 

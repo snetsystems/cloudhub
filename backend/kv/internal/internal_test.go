@@ -131,6 +131,8 @@ func TestMarshalLayout(t *testing.T) {
 						},
 					},
 				},
+				TableOptions: cloudhub.TableOptions{},
+				FieldOptions: []cloudhub.RenamableField{},
 			},
 		},
 	}
@@ -525,6 +527,12 @@ func TestMarshalTopology(t *testing.T) {
 			"type:inlet,active:1,min:15,max:30",
 			"type:inside,active:0,min:38,max:55",
 			"type:outlet,active:0,min:30,max:50",
+		},
+		TopologyOptions: cloudhub.TopologyOptions{
+			MinimapVisible:    true,
+			HostStatusVisible: false,
+			IPMIVisible:       true,
+			LinkVisible:       true,
 		},
 	}
 

@@ -27,7 +27,11 @@ import {getLiveDeviceInfo} from 'src/device_management/apis'
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {statusCal, statusHexColor} from 'src/device_management/utils'
+import {
+  returnCriticalValue,
+  statusCal,
+  statusHexColor,
+} from 'src/device_management/utils'
 
 // Auth
 import {Auth} from 'src/types/reducers/auth'
@@ -54,6 +58,7 @@ interface Props {
   notify?: NotificationAction
   cloudAutoRefresh?: CloudAutoRefresh
   setFilteredHexbin?: (value: string) => void
+  predictionManualRefresh?: number
 }
 
 function PredictionHexbinWrapper({
@@ -62,6 +67,7 @@ function PredictionHexbinWrapper({
   cloudAutoRefresh,
   notify,
   setFilteredHexbin,
+  predictionManualRefresh,
 }: Props) {
   const getMlDlTagInit = () => {
     if (!!localStorage.getItem('hexbinTag')) {
@@ -100,7 +106,7 @@ function PredictionHexbinWrapper({
   useEffect(() => {
     fetchDeviceInfo()
     return () => setFilteredHexbin('')
-  }, [])
+  }, [predictionManualRefresh])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
@@ -123,15 +129,31 @@ function PredictionHexbinWrapper({
     }
   }, [cloudAutoRefresh])
 
+  //@ts-ignore
   const inputData = useMemo<HexagonInputData[]>(() => {
     if (hostList === null) {
       return []
     }
 
     return hostList?.map(hex => {
-      if (typeof hex.cpu === 'number' && typeof hex.memory === 'number') {
+      if (hex.memory === 0 && typeof hex.cpu === 'number') {
+        return {
+          statusColor: statusHexColor('invalid'),
+          displayState: -1,
+          name: hex.name,
+          cpu: Number(hex.cpu.toFixed()),
+          memory: 0,
+          traffic: hex.traffic,
+          status: 'invalid',
+        }
+      } else if (
+        typeof hex.cpu === 'number' &&
+        typeof hex.memory === 'number'
+      ) {
         return {
           statusColor: statusHexColor(statusCal((hex.cpu + hex.memory) / 2)),
+          //@ts-ignore
+          displayState: returnCriticalValue(hex),
           name: hex.name,
           cpu: Number(hex.cpu.toFixed()),
           memory: Number(hex.memory.toFixed()),
@@ -141,6 +163,7 @@ function PredictionHexbinWrapper({
       } else {
         return {
           statusColor: statusHexColor('invalid'),
+          displayState: -1,
           name: hex.name,
           cpu: -1,
           memory: -1,
@@ -225,6 +248,15 @@ function PredictionHexbinWrapper({
             isActive={isHexbinDisplay}
             isLeft={true}
           />
+
+          <PredictionHexbinToggle
+            isActive={isMlChartDisplay}
+            onChange={() => {
+              setIsMlChartDisplay(!isMlChartDisplay)
+              setTagLocalStorage(!isMlChartDisplay, 'ml')
+            }}
+            label="ML"
+          />
           <PredictionHexbinToggle
             isActive={isDlChartDisplay}
             onChange={() => {
@@ -233,14 +265,6 @@ function PredictionHexbinWrapper({
             }}
             label="DL"
             // isHide={true}
-          />
-          <PredictionHexbinToggle
-            isActive={isMlChartDisplay}
-            onChange={() => {
-              setIsMlChartDisplay(!isMlChartDisplay)
-              setTagLocalStorage(!isMlChartDisplay, 'ml')
-            }}
-            label="ML"
           />
         </PredictionDashboardHeader>
 
@@ -278,6 +302,7 @@ const mstp = state => {
       persisted: {cloudAutoRefresh},
       ephemeral: {inPresentationMode},
     },
+    predictionDashboard: {predictionManualRefresh},
     links,
     auth,
   } = state
@@ -285,6 +310,7 @@ const mstp = state => {
     links,
     cloudAutoRefresh,
     inPresentationMode,
+    predictionManualRefresh,
     auth,
   }
 }

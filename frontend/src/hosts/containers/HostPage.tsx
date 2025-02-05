@@ -17,7 +17,10 @@ import {
   loadHostsLinks,
 } from 'src/hosts/apis'
 import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
-import {notIncludeApps} from 'src/hosts/constants/apps'
+import {
+  notIncludeApps,
+  excludedAppsForHostDetailsPage,
+} from 'src/hosts/constants/apps'
 
 import {
   setAutoRefresh,
@@ -31,6 +34,7 @@ import {getCells} from 'src/hosts/utils/getCells'
 import {Source, Layout, TimeRange, TimeZones} from 'src/types'
 import {Location} from 'history'
 import {DashboardSwitcherLinks} from 'src/types/dashboards'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 interface Props {
   source: Source
@@ -46,6 +50,7 @@ interface Props {
   onManualRefresh: () => void
   handleChooseTimeRange: typeof setAutoRefresh
   handleClickPresentationButton: typeof delayEnablePresentationMode
+  cloudAutoRefresh: CloudAutoRefresh
 }
 
 interface State {
@@ -70,16 +75,23 @@ class HostPage extends PureComponent<Props, State> {
 
   public async componentDidMount() {
     const {location, autoRefresh} = this.props
+    const isAgentHost = location?.query?.trigger === 'anomaly_predict'
 
-    this.setState({isAgentHost: location?.query?.trigger === 'anomaly_predict'})
+    this.setState({isAgentHost: isAgentHost})
 
     const {
       data: {layouts},
     } = await getLayouts()
 
+    const filteredNotIncludeApps = isAgentHost
+      ? notIncludeApps.filter(
+          app => !excludedAppsForHostDetailsPage.includes(app)
+        )
+      : notIncludeApps
+
     const filterLayouts = _.filter(
       layouts,
-      m => !_.includes(notIncludeApps, m.app)
+      m => !_.includes(filteredNotIncludeApps, m.app)
     )
 
     // fetching layouts and mappings can be done at the same time
@@ -239,10 +251,11 @@ class HostPage extends PureComponent<Props, State> {
 const mstp = ({
   app: {
     ephemeral: {inPresentationMode},
-    persisted: {autoRefresh, timeZone},
+    persisted: {autoRefresh, cloudAutoRefresh, timeZone},
   },
 }) => ({
   inPresentationMode,
+  cloudAutoRefresh,
   autoRefresh,
   timeZone,
 })

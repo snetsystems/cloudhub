@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import moment from 'moment'
 
 import {buildQuery} from 'src/utils/influxql'
 import {TYPE_SHIFTED, TYPE_QUERY_CONFIG} from 'src/dashboards/constants'
@@ -9,24 +10,47 @@ import {
 import {timeRanges} from 'src/shared/data/timeRanges'
 
 import {Cell, CellQuery, LayoutQuery, TimeRange} from 'src/types'
+import {isStaticGraphType} from 'src/shared/utils/staticGraph'
+
+const getCustomTimerangeGroupBy = (upper, lower) => {
+  const upperTime = upper === 'now()' ? moment().toISOString() : upper
+  const duration = moment.duration(moment(upperTime).diff(moment(lower)))
+
+  if (duration.asMinutes() <= 5) return '10s'
+  if (duration.asHours() <= 6) return '1m'
+  if (duration.asHours() <= 12) return '5m'
+  if (duration.asHours() <= 24) return '10m'
+  if (duration.asDays() <= 2) return '30m'
+  if (duration.asDays() <= 7) return '1h'
+  return '6h'
+}
 
 const buildCannedDashboardQuery = (
   query: LayoutQuery | CellQuery,
   {lower, upper}: TimeRange,
   host: string,
   instance?: object,
-  measurement?: string
+  measurement?: string,
+  isStaticGraph?: boolean
 ): string => {
-  const {defaultGroupBy} = timeRanges.find(range => range.lower === lower) || {
-    defaultGroupBy: '5m',
-  }
+  const isUsingCustomTimeRange =
+    (upper === 'now()' || moment(upper).isValid()) && moment(lower).isValid()
+  const defaultGroupBy = isUsingCustomTimeRange
+    ? getCustomTimerangeGroupBy(upper, lower)
+    : (
+        timeRanges.find(range => range.lower === lower) || {
+          defaultGroupBy: '5m',
+        }
+      ).defaultGroupBy
 
   let text = query.query
   const wheres = _.get(query, 'wheres')
   const groupbys = _.get(query, 'groupbys')
   const tz = _.get(query, 'tz')
 
-  if (upper) {
+  if (upper === 'now()') {
+    text += ` where time > '${lower}' AND time < ${upper}`
+  } else if (upper) {
     text += ` where time > '${lower}' AND time < '${upper}'`
   } else {
     text += ` where time > ${lower}`
@@ -61,7 +85,9 @@ const buildCannedDashboardQuery = (
   }
 
   if (groupbys) {
-    if (groupbys.find(g => g.includes('time'))) {
+    if (isStaticGraph) {
+      text += ` group by ${groupbys.join(',')}`
+    } else if (groupbys.find(g => g.includes('time'))) {
       text += ` group by ${groupbys.join(',')}`
     } else if (groupbys.length > 0) {
       text += ` group by time(${defaultGroupBy}),${groupbys.join(',')}`
@@ -146,7 +172,8 @@ export const buildQueriesForLayouts = (
         timeRange,
         host,
         instance,
-        _.get(cell, 'measurement')
+        _.get(cell, 'measurement'),
+        isStaticGraphType(cell?.type)
       )
     }
 
