@@ -32,7 +32,7 @@ func TestNewDevices(t *testing.T) {
 	type args struct {
 		w       *httptest.ResponseRecorder
 		r       *http.Request
-		devices []deviceRequest
+		devices []createDeviceRequest
 	}
 	tests := []struct {
 		name            string
@@ -409,7 +409,7 @@ func TestUpdateNetworkDevice(t *testing.T) {
 				"device_vendor": "Cisco",
 				"learning_update_datetime": "2023-01-04T00:00:00Z",
 				"learning_finish_datetime": "2023-01-05T12:00:00Z",
-				"ml_function":"ml_multiplied",
+				"ml_function":"ml_linear_descent",
 				"is_learning": false
 			  }`,
 		},
@@ -671,7 +671,7 @@ func ptr[T any](v T) *T {
 	return &v
 }
 
-func MockDeviceStoreSetup(mockData []deviceRequest) *mocks.NetworkDeviceStore {
+func MockDeviceStoreSetup(mockData []createDeviceRequest) *mocks.NetworkDeviceStore {
 	var devices []*cloudhub.NetworkDevice
 	index := 0
 
@@ -1064,13 +1064,13 @@ func MockNetworkDeviceStoreSetup() *mocks.NetworkDeviceStore {
 }
 
 type MockData struct {
-	Devices         []deviceRequest
-	DevicesFailures []deviceRequest
+	Devices         []createDeviceRequest
+	DevicesFailures []createDeviceRequest
 }
 
 func NewMockData() *MockData {
 	return &MockData{
-		Devices: []deviceRequest{
+		Devices: []createDeviceRequest{
 			{
 				DeviceIP:     "172.16.11.168",
 				Organization: "76",
@@ -1100,7 +1100,7 @@ func NewMockData() *MockData {
 				DeviceVendor: "cisco",
 			},
 		},
-		DevicesFailures: []deviceRequest{
+		DevicesFailures: []createDeviceRequest{
 			{
 				DeviceIP:     "",
 				Organization: "76",
@@ -1165,7 +1165,7 @@ func MockNetworkDeviceOrgStoreSetup() *mocks.NetworkDeviceOrgStore {
 				{
 					ID:                "default",
 					LoadModule:        "",
-					MLFunction:        "ml_multiplied",
+					MLFunction:        "ml_linear_descent",
 					DataDuration:      1,
 					LearnedDevicesIDs: []string{"1", "2", "3"},
 					CollectorServer:   "ch-collector-2",
@@ -1183,7 +1183,7 @@ func MockNetworkDeviceOrgStoreSetup() *mocks.NetworkDeviceOrgStore {
 				{
 					ID:                  "76",
 					LoadModule:          "",
-					MLFunction:          "ml_multiplied",
+					MLFunction:          "ml_linear_descent",
 					DataDuration:        1,
 					LearnedDevicesIDs:   []string{"1", "2", "3"},
 					CollectedDevicesIDs: []string{"1", "2", "3"},
@@ -1204,7 +1204,7 @@ func MockNetworkDeviceOrgStoreSetup() *mocks.NetworkDeviceOrgStore {
 		GetF: func(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error) {
 			return &cloudhub.NetworkDeviceOrg{
 				ID:                  "76",
-				MLFunction:          "ml_multiplied",
+				MLFunction:          "ml_linear_descent",
 				LoadModule:          "",
 				DataDuration:        1,
 				LearnedDevicesIDs:   []string{"1", "2", "3"},
@@ -1334,5 +1334,89 @@ func TestFilterDevicesBySNMPConfigV3(t *testing.T) {
 		if fd.OrgName != orgName {
 			t.Errorf("Expected orgName %s, but got %s", orgName, fd.OrgName)
 		}
+	}
+}
+
+func TestPreprocessRequestCreate(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *string
+		expected *string
+	}{
+		{
+			name:     "Trim spaces from LearningCron",
+			input:    ptr("  * * * * *  "),
+			expected: ptr("* * * * *"),
+		},
+		{
+			name:     "No spaces in LearningCron",
+			input:    ptr("* * * * *"),
+			expected: ptr("* * * * *"),
+		},
+		{
+			name:     "Nil LearningCron",
+			input:    nil,
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &deviceOrgRequest{
+				LearningCron: tt.input,
+			}
+			err := req.prerocessRequestCreate()
+			if err != nil {
+				t.Fatalf("prerocessRequestCreate() returned an error: %v", err)
+			}
+
+			if tt.input == nil && req.LearningCron != nil {
+				t.Errorf("Expected LearningCron to remain nil, but got %v", *req.LearningCron)
+			} else if tt.input != nil && *req.LearningCron != *tt.expected {
+				t.Errorf("Expected LearningCron to be %v, but got %v", *tt.expected, *req.LearningCron)
+			}
+		})
+	}
+}
+
+func TestPreprocessRequestUpdate(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *string
+		expected *string
+	}{
+		{
+			name:     "Trim spaces from LearningCron",
+			input:    ptr("  0 0 * * *  "),
+			expected: ptr("0 0 * * *"),
+		},
+		{
+			name:     "No spaces in LearningCron",
+			input:    ptr("0 0 * * *"),
+			expected: ptr("0 0 * * *"),
+		},
+		{
+			name:     "Nil LearningCron",
+			input:    nil,
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &updateDeviceOrgRequest{
+				LearningCron: tt.input,
+			}
+			err := req.prerocessRequestUpdate()
+			if err != nil {
+				t.Fatalf("prerocessRequestUpdate() returned an error: %v", err)
+			}
+
+			if tt.input == nil && req.LearningCron != nil {
+				t.Errorf("Expected LearningCron to remain nil, but got %v", *req.LearningCron)
+			} else if tt.input != nil && *req.LearningCron != *tt.expected {
+				t.Errorf("Expected LearningCron to be %v, but got %v", *tt.expected, *req.LearningCron)
+			}
+		})
 	}
 }

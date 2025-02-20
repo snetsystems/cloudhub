@@ -13,10 +13,15 @@ import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 import {TOOLTIP_OFFSET_X} from 'src/device_management/constants'
 
 // Type
-import {HexagonData, HexagonInputData, PredictionTooltipNode} from 'src/types'
+import {
+  AlertHostList,
+  HexagonData,
+  HexagonInputData,
+  PredictionTooltipNode,
+} from 'src/types'
 
 // Utils
-import {statusCal} from 'src/device_management/utils'
+import {hslColorValue, returnCriticalValue} from 'src/device_management/utils'
 
 // Redux
 import {connect} from 'react-redux'
@@ -25,9 +30,8 @@ interface Props {
   onHexbinClick: (host: string, filteredHexbinHost?: string) => void
   inputData: HexagonInputData[]
   isMouseInComponent: boolean
-
   filteredHexbinHost?: string
-  alertHostList?: string[]
+  alertHostList?: AlertHostList
 }
 
 interface GenerateHexagonData {
@@ -37,7 +41,6 @@ interface GenerateHexagonData {
 
 const HEX_RADIUS = 30
 const HEX_PADDING = 5
-const PREFIX_PARENT_HEIGHT = 45
 
 const PredictionHexbin = ({
   onHexbinClick,
@@ -69,11 +72,16 @@ const PredictionHexbin = ({
   })
 
   useEffect(() => {
+    attachEventHandlers()
+    highlightHexbinHost()
+  }, [filteredHexbinHost])
+
+  useEffect(() => {
     const resizeObserver = new ResizeObserver(_ => {
       generateHexagonData()
       drawHexagons()
-      attachEventHandlers()
       blinkHexbinHost()
+      attachEventHandlers()
       highlightHexbinHost()
     })
     if (svgRef.current) {
@@ -82,17 +90,11 @@ const PredictionHexbin = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [])
-
-  useEffect(() => {
-    attachEventHandlers()
-    highlightHexbinHost()
-  }, [filteredHexbinHost])
+  }, [filteredHexbinHost, alertHostList])
 
   //initialize
   useEffect(() => {
     drawHexagons()
-    attachEventHandlers()
   }, [])
 
   useEffect(() => {
@@ -114,7 +116,6 @@ const PredictionHexbin = ({
       .selectAll('.hexagon')
       .on('mouseover', function () {
         const tempPosition = {x: 0, y: 0}
-
         d3.select(this)
           .transition()
           .duration(150)
@@ -153,7 +154,7 @@ const PredictionHexbin = ({
     if (!svgRef.current) return
 
     const svg = d3.select(svgRef.current)
-
+    //color setting
     svg.selectAll('.hexagon').each(function (d) {
       const hexagon = d3.select(this)
       if (d[0].name === filteredHexbinHost) {
@@ -171,8 +172,10 @@ const PredictionHexbin = ({
     svg.selectAll('.hexagon').each(function (d) {
       const hexagon = d3.select(this)
 
-      if (alertHostList.includes(d[0]?.name)) {
+      if (alertHostList.critical.includes(d[0]?.name)) {
         hexagon.attr('class', 'hexagon blink')
+      } else if (alertHostList.warning.includes(d[0]?.name)) {
+        hexagon.attr('class', 'hexagon warning-blink')
       } else {
         hexagon.attr('class', 'hexagon')
       }
@@ -236,47 +239,51 @@ const PredictionHexbin = ({
       .attr('class', 'hexagon')
       .attr('d', hexbinGenerator.hexagon(HEX_RADIUS - HEX_PADDING))
       .attr('transform', d => `translate(${d.x},${d.y})`)
-      .attr('fill', d => d[0]?.statusColor)
-
-    svg
-      .selectAll('.hexagon-text')
-      .data(hexagonData)
-      .enter()
-      .append('text')
-      .attr('class', 'hexagon-text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y)
-      .attr('text-anchor', 'middle')
-      .attr('dx', '.35em')
+      .attr('fill', d =>
+        d[0]?.displayState === -1
+          ? d[0]?.statusColor // invalid
+          : hslColorValue(`${d[0]?.displayState}`)
+      )
   }
 
   const tooltipComponent = (tooltip: PredictionTooltipNode) => {
     const gap = {width: 0, height: 0}
     const position = {x: 0, y: 0}
     const childWidth = {width: 0, height: 0}
-    if (!!parentRef.current && !!childrenRef.current) {
-      const {
-        offsetWidth: parentWidth,
-        offsetHeight: parentHeight,
-      } = parentRef.current
+
+    if (!!childrenRef.current && !!svgRef.current && !!parentRef.current) {
+      const parentRefRect = parentRef.current.getBoundingClientRect()
+
+      const svgRefRect = svgRef.current.getBoundingClientRect()
 
       childWidth.width = childrenRef.current.offsetWidth
       childWidth.height = childrenRef.current.offsetHeight
 
-      gap.width = tooltipPosition.x + childWidth.width - parentWidth
+      gap.width =
+        svgRefRect.left +
+        tooltipPosition.x +
+        childWidth.width -
+        parentRefRect.right
+
       gap.height =
+        svgRefRect.top +
         tooltipPosition.y +
         childWidth.height -
-        parentHeight -
-        PREFIX_PARENT_HEIGHT
-    }
+        parentRefRect.bottom
 
-    position.x =
-      gap.width > 0
-        ? tooltipPosition.x - childWidth.width - TOOLTIP_OFFSET_X
-        : tooltipPosition.x + TOOLTIP_OFFSET_X / 2
-    position.y =
-      gap.height > 0 ? tooltipPosition.y - gap.height : tooltipPosition.y
+      position.x =
+        gap.width > 0
+          ? svgRefRect.left +
+            tooltipPosition.x -
+            childWidth.width -
+            TOOLTIP_OFFSET_X * 1.2
+          : svgRefRect.left + tooltipPosition.x + TOOLTIP_OFFSET_X / 2
+
+      position.y =
+        gap.height > 0
+          ? svgRefRect.top + tooltipPosition.y - gap.height
+          : svgRefRect.top + tooltipPosition.y
+    }
 
     return (
       <div
@@ -299,27 +306,28 @@ const PredictionHexbin = ({
           memory={tooltip.memory}
           traffic={tooltip.traffic}
           name={tooltip.name}
-          status={statusCal((tooltip.cpu + tooltip.memory) / 2)}
+          status={`${returnCriticalValue(tooltip)}`}
         />
       </div>
     )
   }
 
   return (
-    <FancyScrollbar style={{height: 'calc(100% - 45px)'}} autoHide={true}>
-      <div
-        ref={parentRef}
-        style={{
-          paddingLeft: '12px',
-          backgroundColor: DEFAULT_CELL_BG_COLOR,
-          height: 'calc(100% - 45px)',
-        }}
-        className={'tab-pannel'}
-      >
-        <svg ref={svgRef} style={{width: '100%', height: '80%'}}></svg>
-        {tooltipComponent(tooltipNode)}
-      </div>
-    </FancyScrollbar>
+    <div style={{height: 'calc(100% - 45px)'}} ref={parentRef}>
+      <FancyScrollbar style={{height: '100%'}} autoHide={true}>
+        <div
+          style={{
+            paddingLeft: '12px',
+            backgroundColor: DEFAULT_CELL_BG_COLOR,
+            height: '100%',
+          }}
+          className={'tab-pannel'}
+        >
+          <svg ref={svgRef} style={{width: '100%', height: '80%'}}></svg>
+          {tooltipComponent(tooltipNode)}
+        </div>
+      </FancyScrollbar>
+    </div>
   )
 }
 

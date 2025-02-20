@@ -2,9 +2,17 @@ import React, {useCallback, useEffect, useState} from 'react'
 import _ from 'lodash'
 
 // Type
-import {INPUT_TIME_TYPE, Source, TimeRange, TimeZones} from 'src/types'
+import {
+  AlertHostList,
+  AnomalyFactor,
+  HostState,
+  INPUT_TIME_TYPE,
+  Source,
+  TimeRange,
+  TimeZones,
+} from 'src/types'
 import {Alert} from 'src/types/alerts'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
 // Components
 import PredictionAlertTable from 'src/device_management/components/PredictionAlertTable'
@@ -26,7 +34,8 @@ import {getPredictionAlert} from 'src/device_management/apis'
 import {
   setAlertHostList,
   setFilteredHexbin,
-  setPredictionTimeRange,
+  setHistogramDate,
+  setSelectedAnomaly,
 } from 'src/device_management/actions'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
@@ -34,33 +43,39 @@ import {connect} from 'react-redux'
 //Util
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {setArrayHostList} from 'src/device_management/utils'
+import {setCloudTimeRange} from 'src/clouds/actions/clouds'
+import {timeRanges} from 'src/shared/data/timeRanges'
+import {ANOMALY_INITIAL} from '../constants'
 
 interface Props {
-  predictionTimeRange?: TimeRange
   source: Source
   limit: number
-
   timeZone?: TimeZones
-  manualRefresh?: number
-  alertHostList?: string[]
+  alertHostList?: AlertHostList
   histogramDate?: TimeRange
   filteredHexbinHost?: string
+  cloudTimeRange?: CloudTimeRange
+  predictionManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
-  setAlertHostList?: (value: string[]) => void
-  setPredictionTimeRange?: (value: TimeRange) => void
+  setHistogramDate?: (value: TimeRange) => void
+  setAlertHostList?: (value: AlertHostList) => void
+  setSelectedAnomaly?: (value: AnomalyFactor) => void
+  onChooseCloudTimeRange?: (value: CloudTimeRange) => void
 }
 
 function PredictionAlertHistoryWrapper({
   source,
   timeZone,
-  histogramDate,
-  manualRefresh,
   alertHostList,
+  histogramDate,
+  cloudTimeRange,
   cloudAutoRefresh,
   setAlertHostList,
+  setHistogramDate,
+  setSelectedAnomaly,
   filteredHexbinHost,
-  predictionTimeRange,
-  setPredictionTimeRange,
+  onChooseCloudTimeRange,
+  predictionManualRefresh,
   limit = RECENT_ALERTS_LIMIT,
 }: Props) {
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
@@ -73,12 +88,16 @@ function PredictionAlertHistoryWrapper({
 
   const [loading, setLoading] = useState(false)
 
+  const [manualReset, setManualReset] = useState(0)
+
   let intervalID
 
   const fetchAlerts = useCallback((): void => {
     getPredictionAlert(
       source.links.proxy,
-      histogramDate ?? predictionTimeRange,
+      histogramDate ??
+        cloudTimeRange?.prediction ??
+        timeRanges.find(i => i.inputValue === 'Past 30d'),
       limit * limitMultiplier,
       source.telegraf
     )
@@ -105,7 +124,7 @@ function PredictionAlertHistoryWrapper({
   }, [
     limitMultiplier,
     histogramDate?.lower,
-    predictionTimeRange.lower,
+    cloudTimeRange?.prediction?.lower,
     source.links.proxy,
     filteredHexbinHost,
   ])
@@ -113,7 +132,13 @@ function PredictionAlertHistoryWrapper({
   // alert List get api
   useEffect(() => {
     fetchAlerts()
-  }, [histogramDate, manualRefresh, fetchAlerts, filteredHexbinHost, timeZone])
+  }, [
+    histogramDate,
+    fetchAlerts,
+    filteredHexbinHost,
+    timeZone,
+    predictionManualRefresh,
+  ])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
@@ -151,7 +176,8 @@ function PredictionAlertHistoryWrapper({
     const triggerTypeIndex = alertSeries[0].columns.findIndex(
       col => col === 'triggerType'
     )
-    const alertHostListTemp = []
+    const alertHostListTemp: HostState[] = []
+
     alertSeries[0].values.forEach(s => {
       if (s[triggerTypeIndex] === 'anomaly_predict') {
         results.push({
@@ -165,13 +191,16 @@ function PredictionAlertHistoryWrapper({
 
         alertHostListTemp.push({
           host: s[hostIndex],
+          level: s[levelIndex],
           isOk: s[levelIndex] === 'OK',
         })
       }
     })
 
+    //org, source ip dep -> redux init
+
     setAlertHostList(
-      setArrayHostList([...alertHostListTemp].reverse(), alertHostList)
+      setArrayHostList(alertHostListTemp.reverse(), alertHostList)
     )
 
     setAlertsData(filterSelectedHost(results))
@@ -190,6 +219,22 @@ function PredictionAlertHistoryWrapper({
   const getDate = (date: string) => {
     const time = new Date(date)
     return `${time.getFullYear()}-${time.getMonth() + 1}-${time.getDate()}`
+  }
+
+  const onClickReset = () => {
+    setHistogramDate(null)
+    setSelectedAnomaly(ANOMALY_INITIAL)
+
+    onChooseCloudTimeRange({
+      prediction: {
+        lower: 'now() - 30d',
+        lowerFlux: '-30d',
+        upper: null,
+        format: INPUT_TIME_TYPE.RELATIVE_TIME,
+      },
+    })
+
+    setManualReset(Date.now())
   }
 
   return (
@@ -214,17 +259,16 @@ function PredictionAlertHistoryWrapper({
               />
             )}
           </div>
-          <div style={{zIndex: 3}} className="page-header--right">
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            style={{zIndex: 3}}
+            className="page-header--right"
+          >
             <Button
               text="Reset (30d)"
               color={ComponentColor.Primary}
               onClick={() => {
-                setPredictionTimeRange({
-                  lower: 'now() - 30d',
-                  lowerFlux: '-30d',
-                  upper: null,
-                  format: INPUT_TIME_TYPE.RELATIVE_TIME,
-                })
+                onClickReset()
               }}
             />
           </div>
@@ -238,6 +282,7 @@ function PredictionAlertHistoryWrapper({
           fetchAlerts={fetchAlerts}
           isAlertsMaxedOut={isAlertsMaxedOut}
           setLimitMultiplier={setLimitMultiplier}
+          manualReset={manualReset}
         />
       </div>
     </>
@@ -247,13 +292,13 @@ function PredictionAlertHistoryWrapper({
 const mstp = state => {
   const {
     predictionDashboard: {
-      predictionTimeRange,
       alertHostList,
       histogramDate,
       filteredHexbinHost,
+      predictionManualRefresh,
     },
     app: {
-      persisted: {autoRefresh, cloudAutoRefresh, timeZone},
+      persisted: {autoRefresh, cloudTimeRange, cloudAutoRefresh, timeZone},
     },
   } = state
 
@@ -261,17 +306,20 @@ const mstp = state => {
     autoRefresh,
     histogramDate,
     cloudAutoRefresh,
-    predictionTimeRange,
     alertHostList,
     filteredHexbinHost,
     timeZone,
+    cloudTimeRange,
+    predictionManualRefresh,
   }
 }
 
 const mdtp = (dispatch: any) => ({
-  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
+  onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
   setFilteredHexbin: bindActionCreators(setFilteredHexbin, dispatch),
+  setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
+  setSelectedAnomaly: bindActionCreators(setSelectedAnomaly, dispatch),
 })
 
 const areEqual = (prev, next) => {

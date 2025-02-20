@@ -157,16 +157,44 @@ func MarshalLayout(l cloudhub.Layout) ([]byte, error) {
 			}
 		}
 
+		sortBy := &RenamableField{
+			InternalName: c.TableOptions.SortBy.InternalName,
+			DisplayName:  c.TableOptions.SortBy.DisplayName,
+			Visible:      c.TableOptions.SortBy.Visible,
+			Direction:    c.TableOptions.SortBy.Direction,
+			TempVar:      c.TableOptions.SortBy.TempVar,
+		}
+
+		tableOptions := &TableOptions{
+			VerticalTimeAxis: c.TableOptions.VerticalTimeAxis,
+			SortBy:           sortBy,
+			Wrapping:         c.TableOptions.Wrapping,
+			FixFirstColumn:   c.TableOptions.FixFirstColumn,
+		}
+
+		fieldOptions := make([]*RenamableField, len(c.FieldOptions))
+		for i, field := range c.FieldOptions {
+			fieldOptions[i] = &RenamableField{
+				InternalName: field.InternalName,
+				DisplayName:  field.DisplayName,
+				Visible:      field.Visible,
+				Direction:    field.Direction,
+				TempVar:      field.TempVar,
+			}
+		}
+
 		cells[i] = &Cell{
-			X:       c.X,
-			Y:       c.Y,
-			W:       c.W,
-			H:       c.H,
-			I:       c.I,
-			Name:    c.Name,
-			Queries: queries,
-			Type:    c.Type,
-			Axes:    axes,
+			X:            c.X,
+			Y:            c.Y,
+			W:            c.W,
+			H:            c.H,
+			I:            c.I,
+			Name:         c.Name,
+			Queries:      queries,
+			Type:         c.Type,
+			Axes:         axes,
+			FieldOptions: fieldOptions,
+			TableOptions: tableOptions,
 		}
 	}
 	return proto.Marshal(&Layout{
@@ -216,16 +244,44 @@ func UnmarshalLayout(data []byte, l *cloudhub.Layout) error {
 			}
 		}
 
+		tableOptions := cloudhub.TableOptions{}
+		if c.TableOptions != nil {
+			sortBy := cloudhub.RenamableField{}
+			if c.TableOptions.SortBy != nil {
+				sortBy.InternalName = c.TableOptions.SortBy.InternalName
+				sortBy.DisplayName = c.TableOptions.SortBy.DisplayName
+				sortBy.Visible = c.TableOptions.SortBy.Visible
+				sortBy.Direction = c.TableOptions.SortBy.Direction
+				sortBy.TempVar = c.TableOptions.SortBy.TempVar
+			}
+			tableOptions.SortBy = sortBy
+			tableOptions.VerticalTimeAxis = c.TableOptions.VerticalTimeAxis
+			tableOptions.Wrapping = c.TableOptions.Wrapping
+			tableOptions.FixFirstColumn = c.TableOptions.FixFirstColumn
+		}
+
+		fieldOptions := make([]cloudhub.RenamableField, len(c.FieldOptions))
+		for i, field := range c.FieldOptions {
+			fieldOptions[i] = cloudhub.RenamableField{}
+			fieldOptions[i].InternalName = field.InternalName
+			fieldOptions[i].DisplayName = field.DisplayName
+			fieldOptions[i].Visible = field.Visible
+			fieldOptions[i].Direction = field.Direction
+			fieldOptions[i].TempVar = field.TempVar
+		}
+
 		cells[i] = cloudhub.Cell{
-			X:       c.X,
-			Y:       c.Y,
-			W:       c.W,
-			H:       c.H,
-			I:       c.I,
-			Name:    c.Name,
-			Queries: queries,
-			Type:    c.Type,
-			Axes:    axes,
+			X:            c.X,
+			Y:            c.Y,
+			W:            c.W,
+			H:            c.H,
+			I:            c.I,
+			Name:         c.Name,
+			Queries:      queries,
+			Type:         c.Type,
+			Axes:         axes,
+			TableOptions: tableOptions,
+			FieldOptions: fieldOptions,
 		}
 	}
 	l.Cells = cells
@@ -998,6 +1054,12 @@ func MarshalTopology(t *cloudhub.Topology) ([]byte, error) {
 		Organization: t.Organization,
 		Diagram:      t.Diagram,
 		Preferences:  t.Preferences,
+		TopologyOptions: &TopologyOptions{
+			MinimapVisible:    t.TopologyOptions.MinimapVisible,
+			HostStatusVisible: t.TopologyOptions.HostStatusVisible,
+			IpmiVisible:       t.TopologyOptions.IPMIVisible,
+			LinkVisible:       t.TopologyOptions.LinkVisible,
+		},
 	})
 }
 
@@ -1013,7 +1075,27 @@ func UnmarshalTopology(data []byte, t *cloudhub.Topology) error {
 	t.Diagram = pb.Diagram
 	t.Preferences = pb.Preferences
 
+	if pb.TopologyOptions != nil {
+		t.TopologyOptions = cloudhub.TopologyOptions{
+			MinimapVisible:    pb.TopologyOptions.MinimapVisible,
+			HostStatusVisible: pb.TopologyOptions.HostStatusVisible,
+			IPMIVisible:       pb.TopologyOptions.IpmiVisible,
+			LinkVisible:       pb.TopologyOptions.LinkVisible,
+		}
+	} else {
+		t.TopologyOptions = getDefaultTopologyOptions()
+	}
+
 	return nil
+}
+
+func getDefaultTopologyOptions() cloudhub.TopologyOptions {
+	return cloudhub.TopologyOptions{
+		MinimapVisible:    true,
+		HostStatusVisible: true,
+		IPMIVisible:       true,
+		LinkVisible:       true,
+	}
 }
 
 // MarshalCSP encodes a mapping to binary protobuf format.

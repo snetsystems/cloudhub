@@ -162,6 +162,8 @@ message Cell {
 	repeated string ylabels = 9; // Labels of the y-axes
 	string type             = 10; // Cell visualization type
 	map<string, Axis> axes  = 11; // Axes represent the graphical viewport for a cell's visualizations
+	TableOptions tableOptions  = 12; // TableOptions for visualization of cell with type 'table'
+	repeated RenamableField fieldOptions = 13; // Options for each of the fields returned in a cell
 }
 
 message Query {
@@ -282,6 +284,14 @@ message Topology {
 	string Organization     		 = 2; // Organization is the organization ID that resource belongs to
 	string Diagram          		 = 3; // diagram xml
 	repeated string Preferences      = 4; // Temperature type and values
+	TopologyOptions topologyOptions  = 5; // Options for the topology
+}
+
+message TopologyOptions {
+	bool minimapVisible     = 1; // Whether to show the minimap
+	bool hostStatusVisible  = 2; // Whether to show the host status
+	bool ipmiVisible        = 3; // Whether to show the IPMI icon
+	bool linkVisible        = 4; // Whether to show the dashboard link icon
 }
 
 message CSP {
@@ -297,7 +307,7 @@ message CSP {
 message NetworkDeviceOrg {
   string ID                           = 1;  // Org ID
   string LoadModule                   = 2;  // Currently fixed by loader.cloudhub.ch_nx_load
-  string MLFunction                   = 3;  // ML Learning Threshold Decision Algorithm. One of ['ml_multiplied', 'ml_scaling_normalized', 'ml_gaussian_std']
+  string MLFunction                   = 3;  // ML Learning Threshold Decision Algorithm. One of ['ml_linear_descent', 'ml_scaling_normalized', 'ml_gaussian_std']
   int32 DataDuration                  = 4;  // data_duration for learning
   repeated string LearnedDevicesIDs   = 5;  // the list of device IDs what will be learing included in the network device org
   string CollectorServer              = 6;  // the server(minion_id) used to collect network data

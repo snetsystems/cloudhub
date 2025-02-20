@@ -1,11 +1,13 @@
-import {AnomalyFactor, TimeRange} from 'src/types'
+import {AlertHostList, AnomalyFactor, TimeRange} from 'src/types'
 
 export type Action =
   | PredictionTimeRangeAction
   | PredictionFilteredHexbin
-  | AlertHostList
+  | AlertHostListAction
   | SelectedAnomaly
   | HistogramDateAction
+  | PredictionManualRefreshAction
+  | StateInitAction
 
 export enum ActionType {
   setPredictionTimeRange = 'SET_PREDICTION_DASHBOARD',
@@ -13,6 +15,8 @@ export enum ActionType {
   setAlertHostList = 'SET_ALERT_HOST_LIST',
   setSelectedAnomaly = 'SET_SELECTED_ANOMALY',
   setHistogramDate = 'SET_HISTOGRAM_DATE',
+  setPredictionManualRefresh = 'SET_PREDICTION_MANUAL_REFRESH',
+  setStateInit = 'SET_STATE_INIT',
 }
 
 interface PredictionTimeRangeAction {
@@ -29,10 +33,10 @@ interface PredictionFilteredHexbin {
   }
 }
 
-interface AlertHostList {
+interface AlertHostListAction {
   type: ActionType.setAlertHostList
   payload: {
-    alertHostList: string[]
+    alertHostList: AlertHostList
   }
 }
 interface SelectedAnomaly {
@@ -46,6 +50,17 @@ interface HistogramDateAction {
   payload: {
     histogramDate: TimeRange
   }
+}
+
+interface PredictionManualRefreshAction {
+  type: ActionType.setPredictionManualRefresh
+  payload: {
+    predictionManualRefresh: number
+  }
+}
+
+interface StateInitAction {
+  type: ActionType.setStateInit
 }
 
 export const setPredictionTimeRange = (
@@ -66,7 +81,9 @@ export const setFilteredHexbin = (
   },
 })
 
-export const setAlertHostList = (alertHostList: string[]): AlertHostList => ({
+export const setAlertHostList = (
+  alertHostList: AlertHostList
+): AlertHostListAction => ({
   type: ActionType.setAlertHostList,
   payload: {
     alertHostList,
@@ -91,6 +108,16 @@ export const setHistogramDate = (
   },
 })
 
+export const setPredictionManualRefresh = (): PredictionManualRefreshAction => ({
+  type: ActionType.setPredictionManualRefresh,
+  payload: {
+    predictionManualRefresh: Date.now(),
+  },
+})
+
+export const setStateInitAction = (): StateInitAction => ({
+  type: ActionType.setStateInit,
+})
 // export const setPredictionTimeRange = (timeRange: TimeRange) => (
 //   dispatch: Dispatch<Action>
 // ): void => {

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 
 //Components
 import Layout from 'src/shared/components/Layout'
@@ -14,9 +14,11 @@ import {
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
 } from 'src/shared/constants'
+import {timeRanges} from 'src/shared/data/timeRanges'
 
 // Types
 import {
+  AlertHostList,
   AnomalyFactor,
   Cell,
   INPUT_TIME_TYPE,
@@ -28,7 +30,7 @@ import {
   TimeRange,
   TimeZones,
 } from 'src/types'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
 // Utils
 import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
@@ -38,8 +40,8 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {
+  setAlertHostList,
   setHistogramDate,
-  setPredictionTimeRange,
   setSelectedAnomaly,
 } from 'src/device_management/actions'
 import moment from 'moment'
@@ -55,13 +57,13 @@ interface Props {
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   source: Source
   sources: Source[]
-  manualRefresh: number
-  predictionTimeRange?: TimeRange
   cloudAutoRefresh?: CloudAutoRefresh
-  setPredictionTimeRange?: (value: TimeRange) => void
   setHistogramDate?: (value: TimeRange) => void
   setSelectedAnomaly?: (anomalyFactor: AnomalyFactor) => void
   timeZone?: TimeZones
+  setAlertHostList?: (value: AlertHostList) => void
+  predictionManualRefresh?: number
+  cloudTimeRange?: CloudTimeRange
 }
 function PredictionDashboardWrapper({
   cell,
@@ -73,36 +75,39 @@ function PredictionDashboardWrapper({
   sources,
   instance,
   onPickTemplate,
-  predictionTimeRange,
   source,
-  manualRefresh,
   cloudAutoRefresh,
   setHistogramDate,
   setSelectedAnomaly,
   timeZone,
+  setAlertHostList,
+  predictionManualRefresh,
+  cloudTimeRange,
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
 
+  const defaultTimeRange = timeRanges.find(i => i.inputValue === 'Past 30d')
+
   useEffect(() => {
-    GlobalAutoRefresher.poll(cloudAutoRefresh.prediction)
-  }, [cloudAutoRefresh.prediction])
+    GlobalAutoRefresher.poll(cloudAutoRefresh?.prediction)
+  }, [cloudAutoRefresh?.prediction])
+
+  const isTimeStamp = useMemo(() => {
+    return cloudTimeRange?.prediction?.format === INPUT_TIME_TYPE.TIMESTAMP
+  }, [cloudTimeRange?.prediction])
 
   const templates = (): Template[] => {
     const dashboardTime = {
       id: 'dashtime',
       tempVar: TEMP_VAR_DASHBOARD_TIME,
-      type:
-        predictionTimeRange.format === INPUT_TIME_TYPE.TIMESTAMP
-          ? TemplateType.TimeStamp
-          : TemplateType.Constant,
+      type: isTimeStamp ? TemplateType.TimeStamp : TemplateType.Constant,
       label: '',
       values: [
         {
-          value: predictionTimeRange.lower,
-          type:
-            predictionTimeRange.format === INPUT_TIME_TYPE.TIMESTAMP
-              ? TemplateValueType.TimeStamp
-              : TemplateValueType.Constant,
+          value: cloudTimeRange?.prediction?.lower ?? 'now() - 30d',
+          type: isTimeStamp
+            ? TemplateValueType.TimeStamp
+            : TemplateValueType.Constant,
           selected: true,
           localSelected: true,
         },
@@ -112,17 +117,13 @@ function PredictionDashboardWrapper({
     const upperDashboardTime = {
       id: 'upperdashtime',
       tempVar: TEMP_VAR_UPPER_DASHBOARD_TIME,
-      type:
-        predictionTimeRange.format === INPUT_TIME_TYPE.TIMESTAMP
-          ? TemplateType.TimeStamp
-          : TemplateType.Constant,
+      type: isTimeStamp ? TemplateType.TimeStamp : TemplateType.Constant,
       label: '',
       values: [
         {
-          value: predictionTimeRange.upper ?? 'now()',
+          value: cloudTimeRange?.prediction?.upper ?? 'now()',
           type:
-            predictionTimeRange.format === INPUT_TIME_TYPE.TIMESTAMP &&
-            predictionTimeRange.upper !== 'now()'
+            isTimeStamp && cloudTimeRange?.prediction?.upper !== 'now()'
               ? TemplateValueType.TimeStamp
               : TemplateValueType.Constant,
           selected: true,
@@ -139,6 +140,7 @@ function PredictionDashboardWrapper({
       host: '',
       time: '',
     })
+    setAlertHostList({critical: [], warning: []})
     //86,400,000ms = 1d
     if (timeZone === TimeZones.UTC) {
       setHistogramDate({
@@ -209,11 +211,11 @@ function PredictionDashboardWrapper({
           onZoom={onZoom}
           sources={sources}
           templates={templates()}
-          timeRange={predictionTimeRange}
+          timeRange={cloudTimeRange?.prediction ?? defaultTimeRange}
           isEditable={false}
           onDeleteCell={onDeleteCell}
           onCloneCell={onCloneCell}
-          manualRefresh={manualRefresh}
+          manualRefresh={predictionManualRefresh}
           onSummonOverlayTechnologies={onSummonOverlayTechnologies}
           instance={instance}
           onPickTemplate={onPickTemplate}
@@ -225,23 +227,24 @@ function PredictionDashboardWrapper({
 
 const mstp = state => {
   const {
-    predictionDashboard: {predictionTimeRange},
+    predictionDashboard: {predictionManualRefresh},
     app: {
-      persisted: {cloudAutoRefresh, timeZone},
+      persisted: {cloudAutoRefresh, timeZone, cloudTimeRange},
     },
   } = state
 
   return {
     timeZone,
-    predictionTimeRange,
+    predictionManualRefresh,
     cloudAutoRefresh,
+    cloudTimeRange,
   }
 }
 
 const mdtp = (dispatch: any) => ({
-  setPredictionTimeRange: bindActionCreators(setPredictionTimeRange, dispatch),
   setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
   setSelectedAnomaly: bindActionCreators(setSelectedAnomaly, dispatch),
+  setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
 })
 
 const areEqual = (prev, next) => {

@@ -7,7 +7,9 @@ import {Layout, LayoutCell, LayoutQuery} from 'src/types/hosts'
 import {CellType, CellQuery} from 'src/types/dashboards'
 
 const CELL_WIDTH = 32
+const WIDE_CELL_WIDTH = 48
 const CELL_HEIGHT = 24
+const EXPANDED_CELL_HEIGHT = 32
 const PAGE_WIDTH = 96
 
 interface queryWithWhereGroupby {
@@ -19,17 +21,19 @@ export function getCellsWithWhere(
   layouts: Layout[],
   source: Source,
   whereTag: string,
-  isGroupbyOneMin?: boolean
+  interval?: number,
+  isUsingWideCell?: boolean
 ): Cell[] {
-  const layoutCells = getLayoutCells(layouts)
-  const cells = layoutCells.map(d =>
-    toCell(d, source, whereTag, isGroupbyOneMin)
-  )
+  const layoutCells = getLayoutCells(layouts, isUsingWideCell)
+  const cells = layoutCells.map(d => toCell(d, source, whereTag, interval))
 
   return cells
 }
 
-function getLayoutCells(layouts: Layout[]): LayoutCell[] {
+function getLayoutCells(
+  layouts: Layout[],
+  isUsingWideCell?: boolean
+): LayoutCell[] {
   if (layouts.length === 0) {
     return []
   }
@@ -47,7 +51,7 @@ function getLayoutCells(layouts: Layout[]): LayoutCell[] {
 
   const staticLayouts = layouts.filter(layout => !layout.autoflow)
   const cellGroups = [
-    autoPositionCells(autoflowCells),
+    autoPositionCells(autoflowCells, isUsingWideCell),
     ...staticLayouts.map(layout => layout.cells),
   ]
 
@@ -56,11 +60,17 @@ function getLayoutCells(layouts: Layout[]): LayoutCell[] {
   return cells
 }
 
-function autoPositionCells(cells: LayoutCell[]): LayoutCell[] {
+function autoPositionCells(
+  cells: LayoutCell[],
+  isUsingWideCell?: boolean
+): LayoutCell[] {
+  const cellWidth = isUsingWideCell ? WIDE_CELL_WIDTH : CELL_WIDTH
+  const cellHeight = isUsingWideCell ? EXPANDED_CELL_HEIGHT : CELL_HEIGHT
+
   return cells.reduce((acc, cell, i) => {
-    const x = (i * CELL_WIDTH) % PAGE_WIDTH
-    const y = Math.floor((i * CELL_WIDTH) / PAGE_WIDTH) * CELL_HEIGHT
-    const newCell = {...cell, w: CELL_WIDTH, h: CELL_HEIGHT, x, y}
+    const x = (i * cellWidth) % PAGE_WIDTH
+    const y = Math.floor((i * cellWidth) / PAGE_WIDTH) * cellHeight
+    const newCell = {...cell, w: cellWidth, h: cellHeight, x, y}
 
     return [...acc, newCell]
   }, [])
@@ -94,10 +104,10 @@ function toCell(
   layoutCell: LayoutCell,
   source: Source,
   whereTag: string,
-  isGroupbyOneMin?: boolean
+  interval?: number
 ): Cell {
   const queries = layoutCell.queries.map(d =>
-    toCellQuery(d, source, whereTag, isGroupbyOneMin)
+    toCellQuery(d, source, whereTag, interval)
   )
   const cell = {
     ...NEW_DEFAULT_DASHBOARD_CELL,
@@ -106,7 +116,7 @@ function toCell(
 
     links: {},
     legend: {},
-    type: CellType.Line,
+    type: (layoutCell?.type as CellType) || CellType.Line,
     colors: [],
   }
 
@@ -117,7 +127,7 @@ function toCellQuery(
   layoutQuery: LayoutQuery & queryWithWhereGroupby,
   source: Source,
   whereTag: string,
-  isGroupbyOneMin?: boolean
+  interval?: number
 ): CellQuery {
   const filteredQuery = {
     ...layoutQuery,
@@ -127,12 +137,12 @@ function toCellQuery(
     ].filter(i => !!i),
     groupbys: [
       ...layoutQuery.groupbys,
-      isGroupbyOneMin ? 'time(1m)' : null,
+      interval > 0 ? `time(${interval}m)` : null,
     ].filter(i => !!i),
   }
 
   const cellQuery: any =
-    !!whereTag || isGroupbyOneMin
+    !!whereTag || interval > 0
       ? {
           ...filteredQuery,
           source: source.url,

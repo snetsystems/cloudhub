@@ -14,7 +14,7 @@
     "author": "InfluxData",
     "license": "MIT",
     "icon": "",
-    "url": "https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb"
+    "url": "https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb"
   },
   "data": {
     "cells": [
@@ -107,7 +107,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -199,7 +199,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -283,7 +283,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "This dashboard gives you an overview of your InfluxDB instance and includes metrics from the `influxdb_*` measurements populated by the [Telegraf InfluxDB Input Plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "This dashboard gives you an overview of your InfluxDB instance and includes metrics from the `influxdb_*` measurements populated by the [Telegraf InfluxDB Input Plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "default"
       },
       {
@@ -389,7 +389,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `disk` plugin. For more information, please visit the [Telegraf Disk plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/disk).",
+        "note": "To enable this graph, you will need to configure the Telegraf `disk` plugin. For more information, please visit the [Telegraf Disk plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/disk).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -495,7 +495,7 @@
           "isEnforced": true,
           "digits": 0
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/mem).",
+        "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mem).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -587,7 +587,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system).",
+        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -693,7 +693,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `net` plugin. For more information, please visit the [Telegraf Net plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/net).",
+        "note": "To enable this graph, you will need to configure the Telegraf `net` plugin. For more information, please visit the [Telegraf Net plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/net).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -799,7 +799,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `cpu` plugin. For more information, please visit the [Telegraf CPU plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/cpu).",
+        "note": "To enable this graph, you will need to configure the Telegraf `cpu` plugin. For more information, please visit the [Telegraf CPU plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/cpu).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -905,7 +905,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system).",
+        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -997,7 +997,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system).",
+        "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1103,7 +1103,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1209,7 +1209,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1315,7 +1315,7 @@
           "isEnforced": true,
           "digits": 0
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1421,7 +1421,7 @@
           "isEnforced": false,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1542,7 +1542,7 @@
           "isEnforced": false,
           "digits": 0
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1663,7 +1663,7 @@
           "isEnforced": false,
           "digits": 0
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1764,7 +1764,7 @@
           "isEnforced": false,
           "digits": 0
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1865,7 +1865,7 @@
           "isEnforced": false,
           "digits": 0
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -1986,7 +1986,7 @@
           "isEnforced": false,
           "digits": 0
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -2092,7 +2092,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       },
       {
@@ -2198,7 +2198,7 @@
           "isEnforced": true,
           "digits": 2
         },
-        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/influxdb).",
+        "note": "To enable this graph, you will need to configure the Telegraf `influxdb` plugin. For more information, please visit the [Telegraf InfluxDB plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/influxdb).",
         "noteVisibility": "showWhenNoData"
       }
     ],

@@ -1,0 +1,467 @@
+{
+  "id": "7677c3d5-076d-4825-9ed3-841640a23ecd",
+  "measurement": "snmp_nx",
+  "app": "snmp_nx_by_interfaces",
+  "autoflow": true,
+  "cells": [
+    {
+      "i": "8823ef56-5fa9-470b-9c54-86fdfc1ee98a",
+      "x": 38,
+      "y": 26,
+      "w": 29,
+      "h": 22,
+      "minW": 10,
+      "minH": 4,
+      "name": "Network Device - CPU Usage",
+      "queries": [
+        {
+          "query": "SELECT mean(\"cpu1min\") AS \"mean_cpu1min\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"agent_host\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "CPU Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "82b72040-a174-4954-be30-b9a5065bc1ed",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "ad2c995b-9dac-4055-9f02-dabd0b575caf",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "d9b9cec6-95b6-4abf-8855-6c49a53771f4",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "10827396-4a61-4342-8695-ef73ac830bae",
+      "x": 67,
+      "y": 26,
+      "w": 29,
+      "h": 22,
+      "minW": 10,
+      "minH": 4,
+      "name": "Network Device - Memory Usage",
+      "queries": [
+        {
+          "query": "SELECT mean(\"mem_usage\") AS \"mean_mem_usage\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"agent_host\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Memory Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "3dc0b476-36e0-47ee-b3ae-fc6ec7cebddd",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "ff6f98da-c590-4acf-bd03-6467f8f8e3d9",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "7ca92b8d-7c85-4351-8735-831eacbef3fd",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "331267d9-4b8d-42c4-81e1-483d95cf74ba",
+      "x": 33,
+      "y": 52,
+      "w": 31,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "Network Device - Ethernet Volume By Interfaces",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"ifHCOutOctets\"), 1s) + non_negative_derivative(mean(\"ifHCInOctets\"), 1s) AS \"ifVolume\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"ifDescr\""],
+          "wheres": ["\"ifDescr\" =~ /Ethernet/"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", ""],
+          "label": "In-Out Octets (BPS)",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "c50c8cca-2128-41f7-864c-28fcf3aefeff",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "32d2df1c-940c-4b44-9355-9dcbff20c4d0",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "c2fbfb76-c063-440c-b77c-25520f762018",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "2d759b11-e37b-49c4-9b91-77f59a61d255",
+      "x": 0,
+      "y": 52,
+      "w": 33,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "Network Device - In/Out Discards By Interfaces",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"ifInDiscards\"), 1s) AS \"ifInDiscards\", non_negative_derivative(mean(\"ifOutDiscards\"), 1s) AS \"ifOutDiscards\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"ifDescr\""],
+          "wheres": ["\"ifDescr\" =~ /Ethernet/"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", ""],
+          "label": "Packet Counts per Sec",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "fd81b2a5-e4ed-4296-879d-41303f5b916a",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "e5568a09-af59-4dcd-92df-528459051a83",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "2125459e-8ca3-4001-90e0-eb0ddbe6cf2f",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": false,
+        "showPoint": true,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "82dd247f-bca6-4ce4-bce6-4dc6de68bb6f",
+      "x": 0,
+      "y": 52,
+      "w": 33,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "Network Device - In/Out Errors By Interfaces",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"ifInErrors\"), 1s) AS \"ifInErrors\", non_negative_derivative(mean(\"ifOutErrors\"), 1s) AS \"ifOutErrors\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"ifDescr\""],
+          "wheres": ["\"ifDescr\" =~ /Ethernet/"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", ""],
+          "label": "Packet Counts per Sec",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "f56446b8-12e2-4243-8160-7f3d206989a0",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "5f8b4453-a826-44a0-a651-fa427b918201",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "8b7d8d60-8f6d-4eea-b5fb-aa3f636642d2",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": false,
+        "showPoint": true,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "92496128-c938-4bf9-a450-edf1d9b4c10f",
+      "x": 67,
+      "y": 26,
+      "w": 29,
+      "h": 22,
+      "minW": 10,
+      "minH": 4,
+      "name": "Network Device - Process Utilization",
+      "queries": [
+        {
+          "query": "SELECT mean(\"proc_cpu1m\") AS \"mean_proc_cpu1m\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"agent_host\", \"proc_name\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Process Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "52afc31c-5234-481f-9c5a-d6939f6c69ee",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "ad23dc25-66e1-4df6-accf-0aa6faab0921",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "06ca7744-9e54-45f7-b240-41bb86f53df8",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    }
+  ]
+}

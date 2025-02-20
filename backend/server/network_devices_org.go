@@ -80,8 +80,8 @@ type InfluxdbInfo struct {
 	Password string
 }
 
-// MLFunctionMultiplied represents an ML algorithm for multiplication-based operations.
-const MLFunctionMultiplied = "ml_multiplied"
+// MLFunctionLinearDescent represents an ML algorithm for multiplication-based operations.
+const MLFunctionLinearDescent = "ml_linear_descent"
 
 // MLFunctionScalingNormalized represents an ML algorithm for scaling and normalization.
 const MLFunctionScalingNormalized = "ml_scaling_normalized"
@@ -102,7 +102,7 @@ const (
 
 func isAllowedMLFunction(function string) bool {
 	switch function {
-	case MLFunctionMultiplied, MLFunctionScalingNormalized, MLFunctionGaussianStd:
+	case MLFunctionLinearDescent, MLFunctionScalingNormalized, MLFunctionGaussianStd:
 		return true
 	default:
 		return false
@@ -132,6 +132,20 @@ func (r *deviceOrgRequest) UnmarshalJSON(data []byte) error {
 		r.ProcCnt = ProcCnt
 	} else {
 		r.ProcCnt = *aux.ProcCnt
+	}
+
+	return nil
+}
+func (r *deviceOrgRequest) prerocessRequestCreate() error {
+	if r.LearningCron != nil {
+		*r.LearningCron = strings.Trim(*r.LearningCron, " ")
+	}
+
+	return nil
+}
+func (r *updateDeviceOrgRequest) prerocessRequestUpdate() error {
+	if r.LearningCron != nil {
+		*r.LearningCron = strings.Trim(*r.LearningCron, " ")
 	}
 
 	return nil
@@ -250,6 +264,10 @@ func (s *Service) AddNetworkDeviceOrg(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
+	if err := req.prerocessRequestCreate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
 
 	ctx := r.Context()
 
@@ -353,7 +371,10 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		invalidData(w, err, s.Logger)
 		return
 	}
-
+	if err := req.prerocessRequestUpdate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
 	ctx := r.Context()
 
 	deviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &idStr})

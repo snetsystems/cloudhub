@@ -250,6 +250,7 @@ class DeviceManagement extends PureComponent<Props, State> {
             setCheckedArray={(value: string[]) =>
               this.setState({checkedArray: value})
             }
+            initSort={{key: 'organization', isDesc: false}}
             // options={this.options}
             topLeftRender={
               <DeviceManagementBtn

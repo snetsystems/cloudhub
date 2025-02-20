@@ -131,6 +131,8 @@ func TestMarshalLayout(t *testing.T) {
 						},
 					},
 				},
+				TableOptions: cloudhub.TableOptions{},
+				FieldOptions: []cloudhub.RenamableField{},
 			},
 		},
 	}
@@ -526,6 +528,12 @@ func TestMarshalTopology(t *testing.T) {
 			"type:inside,active:0,min:38,max:55",
 			"type:outlet,active:0,min:30,max:50",
 		},
+		TopologyOptions: cloudhub.TopologyOptions{
+			MinimapVisible:    true,
+			HostStatusVisible: false,
+			IPMIVisible:       true,
+			LinkVisible:       true,
+		},
 	}
 
 	var vv cloudhub.Topology
@@ -604,7 +612,7 @@ func TestMarshalNetworkDeviceOrg(t *testing.T) {
 	v := cloudhub.NetworkDeviceOrg{
 		ID:                  "default",
 		LoadModule:          "learn.ch_nx_load",
-		MLFunction:          "ml_multiplied",
+		MLFunction:          "ml_linear_descent",
 		DataDuration:        1,
 		LearnedDevicesIDs:   []string{"1", "2", "3"},
 		CollectorServer:     "ch-collector-1",

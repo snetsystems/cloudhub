@@ -16,7 +16,7 @@ import {
 } from 'mxgraph'
 
 // Types
-import {Host, IpmiCell} from 'src/types'
+import {Host, IpmiCell, RemoteDataState} from 'src/types'
 import {CloudServiceProvider, Instance} from 'src/hosts/types/cloud'
 
 // Utils
@@ -24,7 +24,6 @@ import {
   dataStatusValue,
   getContainerElement,
   getContainerTitle,
-  getIsHasString,
   getNotAvailableTitle,
   getParseHTML,
   getSelectedHostKey,
@@ -199,6 +198,28 @@ export const getConnectImage = function (state: mxCellStateType) {
 }
 
 export const isCellSelectable = function (cell: mxCellType) {
+  if (
+    this.graph &&
+    this.graph.lastEvent &&
+    this.graph.lastEvent instanceof PointerEvent &&
+    this.graph.lastEvent.button === 2
+  ) {
+    return false
+  }
+
+  return !this.graph.isCellLocked(cell)
+}
+
+export const isCellMovable = function (cell: mxCellType) {
+  if (
+    this.graph &&
+    this.graph.lastEvent &&
+    this.graph.lastEvent instanceof PointerEvent &&
+    this.graph.lastEvent.button === 2
+  ) {
+    return false
+  }
+
   return !this.graph.isCellLocked(cell)
 }
 
@@ -334,7 +355,7 @@ export const createTextField = function (
     )
     form.addOption(
       input,
-      'FALSE',
+      'NONE',
       false,
       attribute.nodeValue === 'false' ? true : false
     )
@@ -377,12 +398,45 @@ export const createTextField = function (
 
   mxEvent.addListener(input, updateEvent, async () => {
     applyHandler.bind(this)(graph, cell, attribute, input.value)
-
-    await this.getIpmiStatus(cell.getId())
-    this.getDetectedHostStatus(cell.getId())
   })
 }
-export const applyHandler = function (
+
+export const createIPMIStatusIcon = function (
+  graph: mxGraphType,
+  cell: mxCellType
+) {
+  if (!graph || !cell) {
+    console.error('Invalid graph or cell provided.')
+    return
+  }
+
+  if (!cell.children || cell.children.length === 0) {
+    console.error('No children in the provided cell.')
+    return
+  }
+
+  if (!cell.value.includes('data-type="Server"')) {
+    return
+  }
+
+  const childrenCell = cell.getChildAt(0)
+  if (!childrenCell || !childrenCell.style) {
+    console.error('No valid children cell or missing style.')
+    return
+  }
+
+  const sepCellStyle = _.split(childrenCell.style, ';')
+  if (sepCellStyle.length === 0 || !sepCellStyle[0]) {
+    console.error('Invalid or empty style string.')
+    return
+  }
+
+  if (sepCellStyle[0] === 'ipmi' && this.state.topologyOption.ipmiVisible) {
+    graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [childrenCell])
+    childrenCell.setVisible(true)
+  }
+}
+export const applyHandler = async function (
   graph: mxGraphType,
   cell: mxCellType,
   attribute: any,
@@ -390,12 +444,10 @@ export const applyHandler = function (
 ) {
   const containerElement = getContainerElement(cell.value)
   const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
-
   let isInputPassword = false
+  let shouldFetchData = false
 
   if (newValue !== oldValue) {
-    graph.getModel().beginUpdate()
-
     try {
       if (attribute.nodeName === 'data-label') {
         const title = getContainerTitle(containerElement)
@@ -414,20 +466,9 @@ export const applyHandler = function (
             childrenLink.setAttribute('href', newValue)
 
             childrenCell.setValue(childrenContainerElement.outerHTML)
-            childrenCell.setVisible(getIsHasString(newValue))
-          }
-        }
-      }
-
-      if (attribute.nodeName === 'data-ipmi_host') {
-        if (cell.children) {
-          const childrenCell = cell.getChildAt(0)
-          const sepCellStyle = _.split(childrenCell.style, ';')
-          if (sepCellStyle[0] === 'ipmi') {
-            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
-              childrenCell,
-            ])
-            childrenCell.setVisible(getIsHasString(newValue))
+            childrenCell.setVisible(
+              !!newValue && this.state.topologyOption.linkVisible
+            )
           }
         }
       }
@@ -438,7 +479,6 @@ export const applyHandler = function (
             newValue,
             this.secretKey.url
           ).toString()
-
           isInputPassword = true
         }
       }
@@ -447,7 +487,12 @@ export const applyHandler = function (
         const childrenCell = cell.getChildAt(2)
 
         if (childrenCell.style.includes('status')) {
-          childrenCell.setVisible(newValue !== 'false' ? true : false)
+          childrenCell.setVisible(
+            (newValue !== 'false' ? true : false) &&
+              this.state.topologyOption.hostStatusVisible
+          )
+
+          shouldFetchData = newValue !== 'false'
         }
       }
 
@@ -460,14 +505,70 @@ export const applyHandler = function (
           )
       }
 
+      if (attribute.nodeName === 'data-name') shouldFetchData = true
+
       containerElement.setAttribute(attribute.nodeName, newValue)
       cell.setValue(containerElement.outerHTML)
+      this.setState({fetchIntervalDataStatus: RemoteDataState.Loading})
+
+      if (shouldFetchData) {
+        await this.fetchIpmiStatus(cell.getId())
+        await this.getDetectedHostStatus(cell.getId())
+      }
     } finally {
       if (isInputPassword) {
         graph.setSelectionCell(cell)
       }
-      graph.getModel().endUpdate()
-      this.graphUpdateSave()
+      this.graphUpdateSave(cell)
+      this.setState({fetchIntervalDataStatus: RemoteDataState.Done})
+    }
+  }
+}
+
+export const applyMultiHandler = async function (
+  cell: mxCellType,
+  attribute: any,
+  dataType: string
+) {
+  if (dataType === 'Server') {
+    if (attribute === 'data-ipmi_host') {
+      if (cell.children) {
+        const childrenCell = cell.getChildAt(0)
+        const childrenContainerElement = getContainerElement(childrenCell.value)
+
+        if (childrenCell.value.includes('ipmi')) {
+          childrenCell.setVisible(this.state.topologyOption.ipmiVisible)
+          childrenCell.setValue(childrenContainerElement.outerHTML)
+        }
+      }
+    }
+    if (attribute === 'data-status') {
+      if (cell.children) {
+        const childrenCell = cell.getChildAt(2)
+        const childrenContainerElement = getContainerElement(childrenCell.value)
+        const dataStatus =
+          cell.value.match(/data-status="([^"]+)"/)[1].trim() ?? true
+        if (childrenCell?.style?.includes('status')) {
+          childrenCell.setVisible(
+            dataStatus !== 'false' &&
+              this.state.topologyOption.hostStatusVisible
+          )
+          childrenCell.setValue(childrenContainerElement.outerHTML)
+        }
+      }
+    }
+  }
+  if (attribute === 'data-link') {
+    if (cell.children) {
+      const childrenCell = cell.getChildAt(1)
+      const dataLink = cell.value.match(/data-link="([^"]+)"/)
+      if (childrenCell?.style?.includes('href') && !!dataLink) {
+        const childrenContainerElement = getContainerElement(childrenCell.value)
+        const childrenLink = childrenContainerElement.querySelector('a')
+        childrenLink.setAttribute('href', dataLink[1])
+        childrenCell.setVisible(this.state.topologyOption.linkVisible)
+        childrenCell.setValue(childrenContainerElement.outerHTML)
+      }
     }
   }
 }
@@ -568,6 +669,8 @@ export const dragCell = (node: Menu, self: any) => (
 
   model.beginUpdate()
   const cell = createHTMLValue(node, 'node')
+  const dataType = cell.getAttribute('data-type')
+
   try {
     v1 = graph.insertVertex(
       parent,
@@ -581,7 +684,6 @@ export const dragCell = (node: Menu, self: any) => (
     )
 
     v1.setConnectable(true)
-
     const ipmiBox = document.createElement('div')
     ipmiBox.classList.add('vertex')
     ipmiBox.setAttribute('btn-type', 'ipmi')
@@ -610,7 +712,6 @@ export const dragCell = (node: Menu, self: any) => (
 
     ipmiStatus.geometry.offset = new mxPoint(-12, -12)
     ipmiStatus.setConnectable(false)
-    ipmiStatus.setVisible(false)
 
     const linkBox = document.createElement('div')
     linkBox.setAttribute('btn-type', 'href')
@@ -652,7 +753,10 @@ export const dragCell = (node: Menu, self: any) => (
 
     const statusBox = document.createElement('div')
     statusBox.classList.add('vertex')
-    statusBox.setAttribute('data-status', 'agent')
+    statusBox.setAttribute(
+      'data-status',
+      dataType === 'Server' ? 'agent' : 'false'
+    )
     statusBox.setAttribute('btn-type', 'status')
     statusBox.style.display = 'flex'
     statusBox.style.alignItems = 'center'
@@ -699,19 +803,30 @@ export const dragCell = (node: Menu, self: any) => (
 
     statusCell.geometry.offset = new mxPoint(-24, 6)
     statusCell.setConnectable(false)
-    const statusCheck = _.get(node, 'status') ? true : false
-    statusCell.setVisible(statusCheck)
+
+    if (dataType === 'Server') {
+      ipmiStatus.setVisible(self.state.topologyOption.ipmiVisible)
+      graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [ipmiStatus])
+      statusCell.setVisible(self.state.topologyOption.hostStatusVisible)
+    } else {
+      ipmiStatus.setVisible(false)
+      statusCell.setVisible(false)
+    }
   } finally {
     model.endUpdate()
   }
 
   graph.setSelectionCell(v1)
 
-  const dataType = cell.getAttribute('data-type')
-
   if (dataType === 'Server') {
-    self.getDetectedHostStatus(v1.getId())
+    fetchIntervalData(graph, v1, self)
   }
+}
+
+const fetchIntervalData = async (graph, cell, self) => {
+  await self.fetchIpmiStatus(cell.getId())
+  await self.getDetectedHostStatus(cell.getId())
+  graph.refresh(cell)
 }
 
 export const drawCellInGroup = (nodes: Menu[]) => (
@@ -1026,6 +1141,9 @@ export const onClickMxGraph = function (
   _graph: mxGraphType,
   me: mxEventObjectType
 ) {
+  const evt = me.getProperty('event')
+  if (evt?.button === 2 || evt?.buttons === 2) return
+
   const cell: mxCellType = me.getProperty('cell')
 
   if (!_.isEmpty(cell) && cell.style.includes('node')) {
@@ -1290,44 +1408,54 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
     if (cell.getStyle().includes('node')) {
       const containerElement = getContainerElement(cell.value)
 
-      if (containerElement.hasAttribute('data-ipmi_host')) {
-        const ipmiTarget = containerElement.getAttribute('data-using_minion')
-        const ipmiHost = containerElement.getAttribute('data-ipmi_host')
-        const ipmiUser = containerElement.getAttribute('data-ipmi_user')
-        const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
-        const hostname = containerElement.getAttribute('data-label')
+      const ipmiTarget = containerElement.getAttribute('data-using_minion')
+      const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+      const ipmiUser = containerElement.getAttribute('data-ipmi_user')
+      const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+      const hostname = containerElement.getAttribute('data-name')
 
-        if (
-          !_.isEmpty(ipmiTarget) &&
-          !_.isEmpty(ipmiHost) &&
-          !_.isEmpty(ipmiUser) &&
-          !_.isEmpty(ipmiPass)
-        ) {
-          try {
-            const decryptedBytes = CryptoJS.AES.decrypt(
-              ipmiPass,
-              this.secretKey.url
-            )
-            const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+      if (
+        !_.isEmpty(ipmiTarget) &&
+        !_.isEmpty(ipmiHost) &&
+        !_.isEmpty(ipmiUser) &&
+        !_.isEmpty(ipmiPass)
+      ) {
+        try {
+          const decryptedBytes = CryptoJS.AES.decrypt(
+            ipmiPass,
+            this.secretKey.url
+          )
+          const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-            const ipmiCell: IpmiCell = {
-              target: ipmiTarget,
-              host: ipmiHost,
-              user: ipmiUser,
-              pass: originalPass,
-              powerStatus: '',
-              cell: cell,
-            }
-
-            ipmiCells = [...ipmiCells, ipmiCell]
-          } catch (error) {
-            this.props.notify(
-              notifyDecryptedBytesFailed(
-                `incorrect IPMI Password for ${hostname} : ${ipmiHost}`
-              )
-            )
+          const ipmiCell: IpmiCell = {
+            target: ipmiTarget,
+            host: ipmiHost,
+            user: ipmiUser,
+            pass: originalPass,
+            powerStatus: '',
+            cell: cell,
+            hostname: hostname,
           }
+
+          ipmiCells = [...ipmiCells, ipmiCell]
+        } catch (error) {
+          this.props.notify(
+            notifyDecryptedBytesFailed(
+              `incorrect IPMI Password for ${hostname} : ${ipmiHost}`
+            )
+          )
         }
+      } else {
+        const emptyIpmiCell: IpmiCell = {
+          target: '',
+          host: '',
+          user: '',
+          pass: '',
+          powerStatus: '',
+          cell: cell,
+          hostname: hostname,
+        }
+        ipmiCells = [...ipmiCells, emptyIpmiCell]
       }
     }
   })
@@ -1338,9 +1466,10 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
 export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
   if (!this.graph) return
 
-  const model = this.graph.getModel()
+  if (!ipmiCellsStatus || ipmiCellsStatus.length === 0) {
+    return
+  }
 
-  model.beginUpdate()
   try {
     _.forEach(ipmiCellsStatus, ipmiCellStatus => {
       const childrenCell = ipmiCellStatus.cell.getChildAt(0)
@@ -1375,9 +1504,8 @@ export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
         childrenCell.setValue(childrenContainerElement.outerHTML)
       }
     })
-  } finally {
-    model.endUpdate()
-    this.graphUpdate()
+  } catch (err) {
+    console.error('ipmiPowerIndicator Err: ', err)
   }
 }
 
@@ -1410,7 +1538,6 @@ const renderHostState = (
     return
   }
   const hostValue = findHost[findKey]
-
   const statusValue = dataStatusValue(
     statusKind,
     hostValue,
@@ -1454,17 +1581,21 @@ export const detectedHostsStatus = function (
   hostsObject: {[x: string]: Host},
   selectedTemperatureValue: string = 'type:inside,active:1,min:38,max:55'
 ) {
-  if (!this.graph) return
+  if (!this.graph) return [0, new Error('Graph object is missing or null')]
   const {cpu, memory, disk, temperature} = TOOLTIP_TYPE
-  const model = this.graph.getModel()
 
-  model.beginUpdate()
+  if (!cells || cells.length === 0) {
+    return [0, null]
+  }
+
+  let nodeCount = 0
+  let error = null
   try {
     _.forEach(cells, cell => {
       if (cell.getStyle().includes('node')) {
+        nodeCount++
         const containerElement = getContainerElement(cell.value)
         const name = containerElement.getAttribute('data-name')
-
         const findHost = _.find(hostsObject, host => host.name === name)
 
         if (!_.isEmpty(findHost)) {
@@ -1548,12 +1679,11 @@ export const detectedHostsStatus = function (
         }
       }
     })
-  } finally {
-    model.endUpdate()
-    this.graphUpdate()
+  } catch (err) {
+    error = err
   }
 
-  return null
+  return [nodeCount, error]
 }
 
 export const getFromOptions = (focusedInstance: Instance) => {
@@ -1623,4 +1753,16 @@ export const mouseOverTooltipStatus = (
     {}
   )
   return tooltipStatus
+}
+
+export function refreshGraph(
+  nodeCount: number | null,
+  graph: any,
+  cell: mxCellType
+) {
+  if (nodeCount && nodeCount > 1) {
+    graph.refresh()
+  } else if (nodeCount && nodeCount === 1) {
+    graph.refresh(cell)
+  }
 }

@@ -19,15 +19,14 @@ var message = '{{.Message}}'
 
 var details = '{{.Details}}'
 
-var trffic = stream
+var traffic = stream
     |from()
         .database(db)
         .retentionPolicy(rp)
         .measurement('snmp_nx')
         .groupBy(['agent_host', 'sys_name'])
-        .where(lambda: isPresent("ifIndex"))
-var tffUsed = trffic
-    .where(lambda: ("ifDescr" =~ /Ethernet/))
+        .where(lambda: isPresent("total_ifHCInOctets"))
+
 var cpuUsed = stream
     |from()
         .database(db)
@@ -37,48 +36,67 @@ var cpuUsed = stream
         .where(lambda: isPresent("cpu1min"))
     |eval(lambda: "cpu1min")
         .as('cpu_used')
-var inOctets = tffUsed
-    |sum('ifHCInOctets')
+
+var inOctets = traffic
+    |mean('total_ifHCInOctets')
         .as('total_ifHCInOctets')
     |derivative('total_ifHCInOctets')
         .unit(1s)
         .nonNegative()
-var outOctets = tffUsed
-    |sum('ifHCOutOctets')
+
+var outOctets = traffic
+    |mean('total_ifHCOutOctets')
         .as('total_ifHCOutOctets')
     |derivative('total_ifHCOutOctets')
         .unit(1s)
         .nonNegative()
+
+var inErrors = traffic
+    |mean('total_ifInErrors')
+        .as('total_ifInErrors')
+    |derivative('total_ifInErrors')
+        .unit(1s)
+        .nonNegative()
+
+var outErrors = traffic
+    |mean('total_ifOutErrors')
+        .as('total_ifOutErrors')
+    |derivative('total_ifOutErrors')
+        .unit(1s)
+        .nonNegative()
+
 var joined = inOctets
     |join(outOctets)
         .as('in', 'out')
         .tolerance(1s)
+
 var tffVolume = joined
     |eval(lambda: "in.total_ifHCInOctets" + "out.total_ifHCOutOctets")
         .as('total_traffic')
+
 var predictData = cpuUsed
-    |join(tffVolume)
-        .as('cpu', 'traffic')
+    |join(tffVolume, inErrors, outErrors)
+        .as('cpu', 'traffic', 'inErrors', 'outErrors')
         .tolerance(1s)
-    |eval(lambda: "cpu.cpu_used", lambda: "traffic.total_traffic")
-        .as('cpu_used', 'tff_volume')
+    |eval(lambda: "cpu.cpu_used", lambda: "traffic.total_traffic", lambda: "inErrors.total_ifInErrors", lambda: "outErrors.total_ifOutErrors")
+        .as('cpu_used', 'tff_volume', 'inErrors', 'outErrors')
     |window()
         .periodCount(5)
         .everyCount(1)
+        
 var predictResult = predictData
     @predict()
         .predict_mode(predict_mode)
         .ensemble_condition(ensemble_condition)
 
 var data = predictResult
-    |eval(lambda: "cpu_used", lambda: "tff_volume", lambda: "predict_status", lambda: "predict_kind")
-        .as('cpu_used', 'tff_volume', 'predict_status', 'predict_kind')
     |groupBy(['agent_host', 'sys_name'])
 
 var trigger = data
     |alert()
         .warn(lambda: ensemble_condition == 'or' AND "predict_status" == 'false' AND ("predict_kind" == 1 OR "predict_kind" == 2))
-        .crit(lambda: "predict_status" == 'false' AND ((ensemble_condition == 'or' AND "predict_kind" == 3) OR ensemble_condition != 'or'))
+        .crit(lambda: ("predict_status" == 'true' AND ("predict_kind" == 4 OR "predict_kind" == 5 OR "predict_kind" == 6)) OR
+            ("predict_status" == 'false' AND ((ensemble_condition == 'or' AND "predict_kind" == 3) OR ensemble_condition != 'or')))
         .stateChangesOnly()
         .message(message)
         .id(name + '-{{.Group}}')
@@ -87,10 +105,36 @@ var trigger = data
         .messageField('message')
         .durationField('duration'){{if .Details}}.details(details){{end}}{{.AlertServices}}
 
-trigger
-    |eval(lambda: if("predict_kind" == 1, 'ML', if("predict_kind" == 2, 'DL', if("predict_kind" == 3, 'ML+DL', 'OK'))), lambda: "predict_kind")
+var triggerData = trigger
+    |eval(
+        lambda: if(
+            "predict_kind" == 1,
+            'ML',
+            if(
+                "predict_kind" == 2,
+                'DL',
+                if(
+                    "predict_kind" == 3,
+                    'ML+DL',
+                    if(
+                        "predict_kind" == 4,
+                        'In Error Packet',
+                        if(
+                            "predict_kind" == 5,
+                            'Out Error Packet',
+                            if("predict_kind" == 6, 'In/Out Error Packet', 'OK')
+                        )
+                    )
+                )
+            )
+        ),
+        lambda: "predict_kind"
+    )
         .as('predict', 'value')
-        .keep('duration', 'message', 'cpu_used', 'tff_volume', 'predict', 'value')
+        .keep('duration', 'message', 'cpu_used', 'tff_volume', 'ml_epsilon', 'dl_threshold', 'inErrors', 'outErrors', 'predict', 'value')
+
+
+triggerData
     |influxDBOut()
         .create()
         .database('Default')
@@ -98,11 +142,9 @@ trigger
         .measurement('cloudhub_alerts')
         .tag('alertName', name)
         .tag('triggerType', 'anomaly_predict')
+
 {{ if ne .OrgName "Default" }}        
-trigger
-    |eval(lambda: if("predict_kind" == 1, 'ML', if("predict_kind" == 2, 'DL', if("predict_kind" == 3, 'ML+DL', 'OK'))), lambda: "predict_kind")
-        .as('predict', 'value')
-        .keep('duration', 'message', 'cpu_used', 'tff_volume', 'predict', 'value')
+triggerData
     |influxDBOut()
         .create()
         .database(db)

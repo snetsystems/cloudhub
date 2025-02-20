@@ -446,6 +446,42 @@
     margin: 0 4px;
   }
 }
+
+.topology-setting {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  border: 2px solid $g5-pepper;
+
+  #setting-title {
+    font-size: 17px;
+    padding-right: 25px;
+  }
+
+  .btn-ok {
+    background-color: $c-rainforest;
+    color: $g20-white;
+    display: inline-block;
+    width: 58px;
+    margin: 0 4px;
+  }
+
+  .btn-cancel {
+    display: inline-block;
+    width: 58px;
+    margin: 0 4px;
+  }
+
+  .topology-spinner {
+    position: absolute;
+    z-index: 3;
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+  }
+}
 .fetchIntervalDots {
   position: absolute;
   margin-left: 5px;

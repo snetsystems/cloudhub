@@ -45,9 +45,62 @@ export const autoRefreshOptions: AutoRefreshOption[] = [
   },
 ]
 
+export const autoRefreshGroupDefaultOption = (
+  groupName: string | undefined,
+  groupKey: string
+) => [
+  {...autoRefreshHeader, group: groupName},
+  {...autoRefreshOptionPaused, group: groupName},
+  {
+    id: `auto-refresh-5s-${groupKey}`,
+    milliseconds: 5000,
+    label: '5s',
+    type: AutoRefreshOptionType.Option,
+    group: groupName,
+  },
+  {
+    id: `auto-refresh-10s-${groupKey}`,
+    milliseconds: 10000,
+    label: '10s',
+    type: AutoRefreshOptionType.Option,
+    group: groupName,
+  },
+  {
+    id: `auto-refresh-15s-${groupKey}`,
+    milliseconds: 15000,
+    label: '15s',
+    type: AutoRefreshOptionType.Option,
+    group: groupName,
+  },
+  {
+    id: `auto-refresh-30s-${groupKey}`,
+    milliseconds: 30000,
+    label: '30s',
+    type: AutoRefreshOptionType.Option,
+    group: groupName,
+  },
+  {
+    id: `auto-refresh-60s-${groupKey}`,
+    milliseconds: 60000,
+    label: '60s',
+    type: AutoRefreshOptionType.Option,
+    group: groupName,
+  },
+]
+
 export function getTimeOptionByGroup(groupName: string | undefined) {
   return (
     {
+      host: autoRefreshGroupDefaultOption(groupName, 'host'),
+      vmware: autoRefreshGroupDefaultOption(groupName, 'vmware'),
+      kubernetes: autoRefreshGroupDefaultOption(groupName, 'kubernetes'),
+      prediction: autoRefreshGroupDefaultOption(groupName, 'prediction'),
+      queries: autoRefreshGroupDefaultOption(groupName, 'queries'),
+      detailHost: autoRefreshGroupDefaultOption(groupName, 'detailHost'),
+      openstackMonitor: autoRefreshGroupDefaultOption(
+        groupName,
+        'openstackMonitor'
+      ),
       openstack: [
         {...autoRefreshHeader, group: groupName},
         {...autoRefreshOptionPaused, group: groupName},
@@ -133,45 +186,7 @@ export function getTimeOptionByGroup(groupName: string | undefined) {
           group: groupName,
         },
       ],
-      prediction: [
-        {...autoRefreshHeader, group: groupName},
-        {...autoRefreshOptionPaused, group: groupName},
-        {
-          id: 'auto-refresh-5s-prediction',
-          milliseconds: 5000,
-          label: '5s',
-          type: AutoRefreshOptionType.Option,
-          group: groupName,
-        },
-        {
-          id: 'auto-refresh-10s-prediction',
-          milliseconds: 10000,
-          label: '10s',
-          type: AutoRefreshOptionType.Option,
-          group: groupName,
-        },
-        {
-          id: 'auto-refresh-15s-prediction',
-          milliseconds: 15000,
-          label: '15s',
-          type: AutoRefreshOptionType.Option,
-          group: groupName,
-        },
-        {
-          id: 'auto-refresh-30s-prediction',
-          milliseconds: 30000,
-          label: '30s',
-          type: AutoRefreshOptionType.Option,
-          group: groupName,
-        },
-        {
-          id: 'auto-refresh-60s-prediction',
-          milliseconds: 60000,
-          label: '60s',
-          type: AutoRefreshOptionType.Option,
-          group: groupName,
-        },
-      ],
+
       default: _.map(defaultAutoRefreshOptions, autoRefreshOption => ({
         ...autoRefreshOption,
         group: groupName,

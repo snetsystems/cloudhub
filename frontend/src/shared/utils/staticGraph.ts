@@ -368,7 +368,9 @@ const createPieChartDatasets = ({
     sortFields,
     sortingBasisField
   )
-  const getColors = getLineColorsHexes(colors, labels.length)
+  const colorsByCount =
+    showCount > labels.length ? labels.length : showCount ?? labels.length
+  const getColors = getLineColorsHexes(colors, colorsByCount)
 
   const datasets = fastReduce(
     excludeTags,
@@ -439,6 +441,7 @@ const createBarChartDatasets = ({
           backgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
           borderColor: getcolors[colIndex],
           borderWidth: 1,
+          minBarLength: 3,
         })
       }
       return acc
@@ -517,34 +520,55 @@ const createLineChartDatasets = ({
 
 const createRadarChartDatasets = ({
   rawData,
+  fieldOptions,
+  tableOptions,
   colors,
   showCount,
 }: StatisticalGraphDatasetConfigType) => {
-  const convertData = rawData
-  const columns = convertData[0].columns
-  const processedData = fastMap(convertData, item =>
-    item.values[0].slice(1).map(value => value)
+  const {
+    excludeTags,
+    excludeTagsFields,
+    sortFields,
+    sortingBasisField,
+  } = getChartFields(fieldOptions, tableOptions, rawData)
+
+  const {sortedData, labels} = sortedStaticGraphData(
+    rawData,
+    sortFields,
+    sortingBasisField
   )
-  const axesX = fastMap(convertData, item => _.values(item.tags))
-  const getcolors = getLineColorsHexes(colors, columns.length - 1)
-  const datasets = columns.slice(1).map((col, colIndex) => ({
-    label: col,
-    data: fastMap(processedData, data => data[colIndex]),
-    backgroundColor: changeColorsOpacity(getcolors, 0.2)[colIndex],
-    borderColor: getcolors[colIndex],
-    borderWidth: 1,
-    pointBackgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
-    pointBorderColor: getcolors[colIndex],
-    pointHoverBackgroundColor: '#fff',
-    pointHoverBorderColor: getcolors[colIndex],
-  }))
+
+  const getcolors = getLineColorsHexes(colors, excludeTagsFields.length)
+
+  const datasets = fastReduce(
+    excludeTags,
+    (acc, col, colIndex) => {
+      if (col.visible) {
+        acc.push({
+          label: col.displayName !== '' ? col.displayName : col.internalName,
+          data: fastMap(
+            sortedData,
+            item => item[sortingBasisField.indexOf(col.internalName)]
+          ),
+          backgroundColor: changeColorsOpacity(getcolors, 0.2)[colIndex],
+          borderColor: getcolors[colIndex],
+          borderWidth: 1,
+          pointBackgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
+          pointBorderColor: getcolors[colIndex],
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: getcolors[colIndex],
+        })
+      }
+      return acc
+    },
+    []
+  )
 
   if (showCount === 0) {
     return {labels: [], datasets: []}
   }
-
   return {
-    labels: showCount ? axesX.splice(0, showCount) : axesX,
+    labels: showCount ? labels.splice(0, showCount) : labels,
     datasets: showCount
       ? datasets.map(chart => ({
           ...chart,

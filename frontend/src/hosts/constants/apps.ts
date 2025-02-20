@@ -7,7 +7,12 @@ export const notIncludeApps: string[] = [
   'stackdriver',
   'cloudwatch_elb',
   'openstack',
+  'snmp_nx_by_interfaces',
+  'snmp_nx_all',
+  'snmp_nx_static',
 ]
+
+export const excludedAppsForHostDetailsPage: string[] = ['snmp_nx_all']
 
 export const awsApps: string[] = ['cloudwatch', 'cloudwatch_elb']
 

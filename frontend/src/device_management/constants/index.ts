@@ -42,6 +42,11 @@ import {
   OUTLINE,
   DETECT_RATE,
   STATIC_TOOLTIP_HEIGHT,
+  MODAL_HEIGHT,
+  CHART_HEIGHT,
+  ANOMALY_INITIAL,
+  TIME_GAP,
+  DEFAULT_GROUP_BY,
 } from './prediction'
 export {
   DEFAULT_NETWORK_DEVICE_DATA,
@@ -83,5 +88,10 @@ export {
   AuthProtocols,
   PrivProtocols,
   SecurityLevels,
+  MODAL_HEIGHT,
+  CHART_HEIGHT,
+  ANOMALY_INITIAL,
+  TIME_GAP,
+  DEFAULT_GROUP_BY,
   // fixturePredictionPageCells,
 }

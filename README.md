@@ -8,13 +8,6 @@ Therefore, CloudHub has been enhanced by adding our direction, such as automatio
 
 CloudHub has been started with _Chronograf_ version **1.7.11**.
 
-### Using the basic common features
-
-As we follow on using guides like the way of _TICK_ Script or _Flux_ queries, for more informations of the basic common features between _Chronograf_ 1.7.11 and CloudHub refer to the following link.<br>
-[Github for **_chronograf_**](https://github.com/influxdata/chronograf/blob/master/README.md)<br>
-[Documentation for **_TICK Stack_**](https://docs.influxdata.com/)<br>
-But you should use [Forked **Snetsystems/telegraf**](https://github.com/snetsystems/telegraf/releases)
-
 ### Test Environment
 
 For running this project, maybe, you should get the environment for test data and composition like telegraf, kapacity and influxdb (but not need chronograf).
@@ -23,53 +16,83 @@ This **_Sandbox_** provided by _sysnetsystems_ will help to do.<br>
 
 For the agent management or vsphere, k8s inventory viewer test, you prepare to Salt master, api, minion.<br>
 You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt/)<br>
-[Documentation for **_SaltStack_** ](https://docs.saltstack.com/en/latest/contents.html)
+
+For collecting data from data sources,<br>
+you should use [Forked **Snetsystems/telegraf**](https://github.com/snetsystems/telegraf/releases)
 
 ## How to use Cloudhub
 
-[Documentation for **CloudHub** Guide (Korean)](https://seversky.atlassian.net/wiki/spaces/CSHD/overview)
+[Documentation for **CloudHub** Guide (in Korean)](https://seversky.atlassian.net/wiki/spaces/CSHD/overview)
 
-## Key Differences against _Chronograf_ at this point(version).
-
-- Add a Basic(id/pw) authentication and management feature.
-  - Regarding to above, an activity log is added.
-- Add **multi-tenant** feature across Users-Roles-Groups-DataSources.
-- Hosts to Infrastructures and basic charts added.
-- Infrastructure Topology Map authoring feature by user group.
-  - Status Overview of entire nodes(About CPU Temperature, CPU Memory, Disk usage, etc.).
-  - Show IPMI Sensor Data.
-  - Addable to connect to Public Cloud(AWS, GCE).
-- Visualization added by criteria of Applications.
-- Integration a backend with **_SaltStack_**.
-  - Avoid CORS Problem: `Web UI > CloudHub Salt Proxy > Salt API Server > Salt Master > Salt Minions.`
-  - Telegraf agent management and configuration editing and deploying remotely via **_SaltStack_ Rest API**.
-- Web SSH Terminal Console feature.
-  - Connection to hosts using ssh protocol via CloudHub WebSocket Proxy.
-- Add **Statistic graphs** for data visualization.
-- Optionable Addon features.
-  - **_VMWare_ Infrastructure** Viewer.
-    - via **_VSphere_** API and **_Salt_**
-  - **\_OpenStack Infrastructure\_\_** Monitoring.
-  - **_K8s Infrastructure_** Diagram & Viewer.
-    - via customized `Salt Kuberetes` Module.
-  - **_AWS_** Instances Monitoring.
-  - **_GCE_** Instances Monitoring.
-  - SWAN Router & SDPlex(Oncue) Features.
-  - Bare-metal Server Remote Management via **IPMI**
+## General Features
+### Infrastructure
+Infrastructure Topology Map authoring feature by user group.
+- Status Overview of entire nodes(About CPU Temperature, CPU Memory, Disk usage, etc.).
+- Show IPMI Sensor Data.
+- Addable to connect to Public Cloud(AWS, GCE).
+- Bare-metal Server Remote Management via **IPMI**
   <p align="center">
     <img src="./docs/images/infrastructure.png"/>
     <img src="./docs/images/topology_map.png"/>
-    <img src="./docs/images/VMWare.png"/>
-    <img src="./docs/images/dashboard.png"/>
-    <img src="./docs/images/osp.png"/>
-    <img src="./docs/images/k8s.png"/>
-    <img src="./docs/images/AWS_01.png"/>
-    <img src="./docs/images/AWS_02.png"/>
-    <img src="./docs/images/AWS_03.png"/>
-    <img src="./docs/images/applications.png"/>
-    <img src="./docs/images/agent_configure.png"/>
-    <img src="./docs/images/swan.png"/>
   </p>
+
+### **Several Type Graphs** for customizable visualization
+<p align="center">
+  <img src="./docs/images/stat_dashboard.png"/>
+</p>
+
+### Telegraf agent control via **_SaltStack_**
+<p align="center">
+  <img src="./docs/images/agent_configure.png"/>
+</p>
+
+### Web SSH Terminal Console
+  - Connection to hosts using ssh protocol via CloudHub WebSocket Proxy.
+    <p align="center">
+      <img src="./docs/images/ch_terminal.png"/>
+    </p>
+
+### **_VMWare_ Infrastructure** Viewer
+<p align="center">
+  <img src="./docs/images/VMWare.png"/>
+</p>
+
+### **_OpenStack Infrastructure_** Monitoring
+<p align="center">
+  <img src="./docs/images/osp.png"/>
+</p>
+
+### **_K8s Infrastructure_** Diagram & Viewer
+<p align="center">
+  <img src="./docs/images/k8s.png"/>
+</p>
+
+### **_AWS_** Instances Monitoring
+  - Topology and Time series graphs
+    <p align="center">
+      <img src="./docs/images/AWS_01.png"/>
+    </p>
+  - Topology and Instance details
+    <p align="center">
+      <img src="./docs/images/AWS_02.png"/>
+    </p>
+  - Host list and Time series graphs
+    <p align="center">
+      <img src="./docs/images/AWS_03.png"/>
+    </p>
+
+### **_GCE_** Instances Monitoring
+<p align="center">
+  <img src="./docs/images/gce.png"/>
+</p>
+
+## AI Features
+### Anomaly Detection for Network Device using **AI(Deep Learning)**
+<p align="center">
+  <img src="./docs/images/net_ai_mon.png"/>
+  <img src="./docs/images/ai_dashboard.png"/>
+</p>
+<br>
 
 ## Change log
 

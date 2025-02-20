@@ -26,7 +26,11 @@ const PredictionHexbinToggle = ({
         isLeft ? 'page-header--left' : 'page-header--right'
       } ${isHide ? 'dev-mode' : ''}`}
     >
-      <div className={`${isLeft ? 'page-header--left' : 'page-header--right'}`}>
+      <div
+        className={`header ${
+          isLeft ? 'page-header--left' : 'page-header--right'
+        }`}
+      >
         <label className="hexbin-header--label">{label}</label>
         <SlideToggle
           active={isActive}

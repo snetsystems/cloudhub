@@ -82,6 +82,9 @@ export const SNMP_CONNECTION_URL = '/cloudhub/v1/snmp/validation'
 export const DEVICE_MANAGEMENT_URL =
   '/cloudhub/v1/ai/network/managements/devices'
 
+export const DEVICE_MANAGEMENT_UPLOAD_URL =
+  '/cloudhub/v1/ai/network/managements/devices/upload'
+
 export const APPLY__MONITORING_URL =
   '/cloudhub/v1/ai/network/managements/monitoring/config'
 
@@ -99,7 +102,7 @@ export const SYSTEM_MODAL = {
 } as const
 
 export const MLFunctionMsg = {
-  ml_multiplied: 'Correlation Coefficient',
+  ml_linear_descent: 'Linear Descent',
   ml_scaling_normalized: 'Scaling Normalized',
   ml_gaussian_std: 'Gaussian Standard Deviation',
 } as const
@@ -117,7 +120,7 @@ export const DEFAULT_PREDICT_MODE: keyof typeof PREDICT_MODE =
 export const DEFAULT_LEARNING_OPTION: LearningOption = {
   organization: '',
   data_duration: 15,
-  ml_function: 'ml_scaling_normalized' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
+  ml_function: 'ml_linear_descent' as typeof MLFunctionMsg[keyof typeof MLFunctionMsg],
   task_status: 2,
 }
 

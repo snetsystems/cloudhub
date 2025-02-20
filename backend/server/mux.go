@@ -400,7 +400,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Device Management
 	router.GET("/cloudhub/v1/ai/network/managements/devices", EnsureViewer(service.AllDevices))
 	router.GET("/cloudhub/v1/ai/network/managements/devices/:id", EnsureViewer(service.DeviceID))
-	router.POST("/cloudhub/v1/ai/network/managements/devices", EnsureAdmin(service.NewDevices))
+	router.POST("/cloudhub/v1/ai/network/managements/devices", EnsureAdmin(service.NewDevice))
+	router.POST("/cloudhub/v1/ai/network/managements/devices/upload", EnsureAdmin(service.NewDevices))
 	router.DELETE("/cloudhub/v1/ai/network/managements/devices", EnsureAdmin(service.RemoveDevices))
 	router.PATCH("/cloudhub/v1/ai/network/managements/devices/:id", EnsureAdmin(service.UpdateNetworkDevice))
 

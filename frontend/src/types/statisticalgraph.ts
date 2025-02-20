@@ -44,3 +44,12 @@ export type StatisticalGraphFieldOption = {
   direction?: '' | 'asc' | 'desc'
   groupByTagOrder?: number
 }
+export interface TableOptionsInterface {
+  verticalTimeAxis: boolean
+  sortBy: RenamableField
+  fixFirstColumn: boolean
+}
+export interface DropdownOption {
+  text: string
+  key: string
+}

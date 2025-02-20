@@ -61,6 +61,9 @@ import {
   notifyPreferencesTemperatureApplySucceeded,
   notifyFetchIntervalDataFailed,
   notifyGetDetectedHostStatusFailed,
+  notifySetIpmiStatusFailed,
+  notifyTopologyOptionChangeFailed,
+  notifyMapReloadFailed,
 } from 'src/shared/copy/notifications'
 import {notIncludeApps} from 'src/hosts/constants/apps'
 import {
@@ -91,6 +94,7 @@ import {
   CSPFileWriteParam,
   Instance,
   PreferenceType,
+  TopologyOption,
 } from 'src/hosts/types'
 import {
   default as mxgraph,
@@ -168,6 +172,7 @@ import {
   getNamespaceID,
   isGCPRequiredCheck,
   getAgentDetails,
+  generateSHA256Hash,
 } from 'src/hosts/utils'
 
 // error
@@ -206,6 +211,10 @@ import {
   getFocusedCell,
   onMouseMovexGraph,
   mouseOverTooltipStatus,
+  refreshGraph,
+  isCellMovable,
+  createIPMIStatusIcon,
+  applyMultiHandler,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
@@ -215,6 +224,7 @@ import {
   getLocalStorage,
   setLocalStorage,
 } from 'src/shared/middleware/localStorage'
+import TopologySettingOverlay from 'src/hosts/components/TopologySettingOverlay'
 
 const mx = mxgraph()
 
@@ -244,6 +254,7 @@ export const {
   mxGeometry,
   mxPopupMenu,
   mxEventObject,
+  mxConnectionHandler,
 } = mx
 
 window['mxGraph'] = mxGraph
@@ -271,6 +282,7 @@ window['mxOutline'] = mxOutline
 window['mxPoint'] = mxPoint
 window['mxPopupMenu'] = mxPopupMenu
 window['mxEventObject'] = mxEventObject
+window['mxConnectionHandler'] = mxConnectionHandler
 
 interface Auth {
   me: Me
@@ -397,8 +409,9 @@ interface State {
   hostDetailInfoWithSalt: Partial<HostDetailTable> | {}
   isGetHostDetailInfo: RemoteDataState
   isPreferencesOverlayVisible: boolean
+  isOptionOverlayVisible: boolean
   preferenceTemperatureValues: string[]
-  unsavedTopology: string
+  originalTopology: string
   preferencesStatus: RemoteDataState
   unsavedPreferenceTemperatureValues: string[]
   fetchIntervalDataStatus: RemoteDataState
@@ -413,6 +426,8 @@ interface State {
   }
   tooltipNode: Partial<TemperatureTooltip>
   isMouseUp: boolean
+  isSettingOverlayOpen: boolean
+  topologyOption: TopologyOption
 }
 
 @ErrorHandling
@@ -521,9 +536,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
       hostDetailInfoWithSalt: {},
       isGetHostDetailInfo: RemoteDataState.NotStarted,
       isPreferencesOverlayVisible: false,
+      isOptionOverlayVisible: false,
       preferenceTemperatureValues: [],
       unsavedPreferenceTemperatureValues: [],
-      unsavedTopology: '',
+      originalTopology: '',
       preferencesStatus: RemoteDataState.Done,
       fetchIntervalDataStatus: RemoteDataState.NotStarted,
       isTooltipActiveHost: null,
@@ -537,6 +553,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
       },
       tooltipNode: {},
       isMouseUp: true,
+      isSettingOverlayOpen: false,
+      topologyOption: {
+        minimapVisible: true,
+        ipmiVisible: true,
+        linkVisible: true,
+        hostStatusVisible: true,
+      },
     }
   }
 
@@ -601,18 +624,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   public async componentDidMount() {
     const {notify} = this.props
-
     this.createEditor()
     this.configureEditor()
     this.setActionInEditor()
     this.configureStylesheet(mx)
-
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
 
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
-
     this.setState({
       layouts,
     })
@@ -621,9 +641,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
       if (this.isUsingCSP) {
         await this.handleLoadCsps()
       }
-
       await this.getInventoryTopology()
+
       this.setTopologySetting()
+
       await this.fetchIntervalData()
       await this.getIpmiTargetList()
     } catch (error) {
@@ -653,6 +674,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       hostsObject,
       isDetectedServer,
       activeEditorTab,
+      topologyOption,
     } = this.state
 
     if (layouts) {
@@ -683,6 +705,32 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
       if (prevState.cloudAccessInfos !== cloudAccessInfos) {
         this.makeTreemenu()
+      }
+
+      if (
+        !_.isEqual(
+          prevState.topologyOption.minimapVisible,
+          topologyOption.minimapVisible
+        )
+      ) {
+        this.mapReload()
+      }
+
+      if (
+        !_.isEqual(
+          prevState.topologyOption.ipmiVisible,
+          topologyOption.ipmiVisible
+        ) ||
+        !_.isEqual(
+          prevState.topologyOption.hostStatusVisible,
+          topologyOption.hostStatusVisible
+        ) ||
+        !_.isEqual(
+          prevState.topologyOption.linkVisible,
+          topologyOption.linkVisible
+        )
+      ) {
+        this.onChangeTopologyOption()
       }
     }
 
@@ -744,9 +792,18 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public componentWillUnmount() {
+    const {auth} = this.props
     const {isTopologyChanged} = this.state
     const view = this.graph.getView()
-    if (isTopologyChanged && window.confirm('Do you want to save changes?')) {
+    const meRole = _.get(auth, 'me.role', '')
+
+    if (
+      (isTopologyChanged || this.compareTopology()) &&
+      (meRole === SUPERADMIN_ROLE ||
+        meRole === ADMIN_ROLE ||
+        meRole === EDITOR_ROLE) &&
+      window.confirm('Do you want to save changes?')
+    ) {
       this.handleTopologySave()
     }
 
@@ -761,6 +818,16 @@ export class InventoryTopology extends PureComponent<Props, State> {
     }
     this.setLocalStorageToplogySetting(view)
     this.isComponentMounted = false
+  }
+
+  private compareTopology = () => {
+    const previousTopology = this.state.originalTopology
+    const currentTopology = this.state.topology
+
+    const previousTopologyHash = generateSHA256Hash(previousTopology)
+    const currentTopologyHash = generateSHA256Hash(currentTopology)
+
+    return previousTopologyHash !== currentTopologyHash
   }
 
   public render() {
@@ -782,12 +849,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isImportTopologyOverlayVisible,
       isPreferencesOverlayVisible,
       preferencesStatus,
+      isOptionOverlayVisible,
+      topologyOption,
     } = this.state
     const {notify} = this.props
     const isExportXML = modalTitle === 'Export XML'
-
     return (
-      <div id="containerWrapper">
+      <div id="containerWrapper" style={{userSelect: 'none'}}>
         {!mxClient.isBrowserSupported() ? (
           <>this Browser Not Supported</>
         ) : (
@@ -834,7 +902,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
             <OverlayTechnology visible={isImportTopologyOverlayVisible}>
               <ImportTopologyOverlay
                 onDismissOverlay={this.handleImportTopologyToggleOverlay}
-                onImportTopology={this.onImportTopology}
+                onImportTopology={this.handleImportTopologyAndFetchIntervalData}
                 notify={notify}
               />
             </OverlayTechnology>
@@ -855,13 +923,38 @@ export class InventoryTopology extends PureComponent<Props, State> {
                 notify={notify}
               />
             )}
+            {isOptionOverlayVisible && (
+              <TopologySettingOverlay
+                isOptionOverlayVisible={isOptionOverlayVisible}
+                setIsOptionOverlayVisible={(value: boolean) =>
+                  this.setState({isOptionOverlayVisible: value})
+                }
+                state={RemoteDataState.Done}
+                topologyOption={topologyOption}
+                setTopologyOption={(value: TopologyOption) =>
+                  this.setState(prevState => ({
+                    ...prevState,
+                    topologyOption: value,
+                  }))
+                }
+              />
+            )}
           </>
         )}
       </div>
     )
   }
 
-  private onImportTopology = async (importedTopology: string) => {
+  private handleImportTopologyAndFetchIntervalData = async (
+    importedTopology: string
+  ) => {
+    await this.importTopology(importedTopology)
+    this.onChangeTopologyOption()
+
+    this.fetchIntervalData()
+  }
+
+  private importTopology = async (importedTopology: string) => {
     const topology = importedTopology
     const graph = this.graph
 
@@ -904,8 +997,12 @@ export class InventoryTopology extends PureComponent<Props, State> {
             containerElement.removeAttribute(attr.nodeName)
             cell.setValue(containerElement.outerHTML)
           })
+
+          createIPMIStatusIcon.bind(this)(graph, cell)
         }
       })
+
+      this.onChangeTopologyOption()
     } finally {
       graph.getModel().endUpdate()
     }
@@ -1034,27 +1131,28 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private handleClickTemperatureOkButton = async () => {
     const {notify} = this.props
     const {hostsObject, preferenceTemperatureValues} = this.state
-
+    let updateNode = null
     if (this.isValidTemperature()) {
       return
     }
-
+    if (!this.graph) return
+    const graph = this.graph
+    const parent = graph.getDefaultParent()
+    const cells = this.getAllCells(parent, true)
     try {
-      if (!this.graph) return
-
-      const graph = this.graph
-      const parent = graph.getDefaultParent()
-      const cells = this.getAllCells(parent, true)
       const selectedTemperatureValue = _.filter(
         preferenceTemperatureValues,
         temperatureValue => temperatureValue.includes('active:1')
       )
-      detectedHostsStatus.bind(this)(
+      const [count, err] = detectedHostsStatus.bind(this)(
         cells,
         hostsObject,
         selectedTemperatureValue?.[0]
       )
-
+      if (err) {
+        throw err
+      }
+      updateNode = count
       notify(notifyPreferencesTemperatureApplySucceeded())
 
       this.setState({
@@ -1065,6 +1163,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     } catch (error) {
       notify(notifyGetDetectedHostStatusFailed(error.message))
     } finally {
+      refreshGraph(updateNode, graph, cells?.[0])
       this.setState({
         isPreferencesOverlayVisible: !this.state.isPreferencesOverlayVisible,
       })
@@ -1074,26 +1173,29 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private handleClickTemperatureApplyButton = async () => {
     const {notify} = this.props
     const {hostsObject, preferenceTemperatureValues} = this.state
+    let updateNode = null
 
     if (this.isValidTemperature()) {
       return
     }
-
+    if (!this.graph) return
+    const graph = this.graph
+    const parent = graph.getDefaultParent()
+    const cells = this.getAllCells(parent, true)
     try {
-      if (!this.graph) return
-
-      const graph = this.graph
-      const parent = graph.getDefaultParent()
-      const cells = this.getAllCells(parent, true)
       const selectedTemperatureValue = _.filter(
         preferenceTemperatureValues,
         temperatureValue => temperatureValue.includes('active:1')
       )
-      detectedHostsStatus.bind(this)(
+      const [count, err] = detectedHostsStatus.bind(this)(
         cells,
         hostsObject,
         selectedTemperatureValue?.[0]
       )
+      if (err) {
+        throw err
+      }
+      updateNode = count
 
       notify(notifyPreferencesTemperatureApplySucceeded())
 
@@ -1103,6 +1205,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
       })
     } catch (error) {
       notify(notifyGetDetectedHostStatusFailed(error.message))
+    } finally {
+      refreshGraph(updateNode, graph, cells?.[0])
     }
   }
 
@@ -1181,6 +1285,84 @@ export class InventoryTopology extends PureComponent<Props, State> {
       preferenceTemperatureValues: unsavedPreferenceTemperatureValues,
       isPreferencesOverlayVisible: !this.state.isPreferencesOverlayVisible,
     })
+  }
+
+  private handleChangeTopologyOption = () => {
+    if (this.isValidTemperature()) {
+      return
+    }
+    if (!this.graph) return
+    const graph = this.graph
+    const cells = graph.getModel().cells
+
+    try {
+      _.forEach(cells, (cell: mxCellType) => {
+        const containerElement = getContainerElement(cell.value)
+        if (containerElement && containerElement.hasAttribute('data-type')) {
+          const dataType = containerElement.getAttribute('data-type')
+
+          const attrsKeys = _.map(
+            _.keys(eachNodeTypeAttrs[dataType].attrs),
+            attr => `data-${attr}`
+          )
+          _.forEach(attrsKeys, attr => {
+            applyMultiHandler.bind(this)(cell, attr, dataType)
+          })
+        }
+      })
+    } catch (error) {
+      notify(notifyTopologyOptionChangeFailed(error.message))
+    }
+  }
+
+  private mapReload = () => {
+    if (this.isValidTemperature()) {
+      return
+    }
+    if (!this.graph) return
+
+    const graph = this.graph
+    const currentTranslate = graph.getView().getTranslate()
+    const currentScale = graph.getView().getScale()
+
+    this.setState(prevState => ({...prevState, isTopologyChanged: true}))
+
+    graph.getModel().beginUpdate()
+    try {
+      graph.getView().setTranslate(currentTranslate.x, currentTranslate.y)
+      graph.getView().setScale(currentScale)
+    } catch (error) {
+      notify(notifyMapReloadFailed(error.message))
+    } finally {
+      graph.getModel().endUpdate()
+    }
+  }
+
+  private onChangeTopologyOption = () => {
+    const {notify} = this.props
+    if (!this.graph) return
+    this.setState(preState => ({
+      ...preState,
+      fetchIntervalDataStatus: RemoteDataState.Loading,
+    }))
+    try {
+      this.graph.model.beginUpdate()
+      this.handleChangeTopologyOption()
+
+      this.fetchIpmiStatus()
+      this.getDetectedHostStatus()
+    } catch (error) {
+      notify(notifyTopologyOptionChangeFailed(error.message))
+    } finally {
+      this.graph.model.endUpdate()
+      this.graph.refresh()
+      this.setState(preState => ({
+        ...preState,
+        fetchIntervalDataStatus: RemoteDataState.Done,
+        topology: this.xmlExport(this.graph.getModel()),
+        isTopologyChanged: true,
+      }))
+    }
   }
 
   private handleCloseInstanceTypeModal = () => {
@@ -1280,7 +1462,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
               _.keys(eachNodeTypeAttrs[dataType].attrs),
               attr => `data-${attr}`
             )
-
             const filterdAttrs = _.difference(
               _.map(
                 _.filter(
@@ -1302,10 +1483,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
               containerElement.removeAttribute(attr.nodeName)
               cell.setValue(containerElement.outerHTML)
             })
+            createIPMIStatusIcon.bind(this)(graph, cell)
           }
         })
       } finally {
         graph.getModel().endUpdate()
+
+        if (_.get(topology, 'topologyOptions')) {
+          this.setState({topologyOption: topology.topologyOptions})
+        }
       }
     }
 
@@ -1324,7 +1510,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         'preferences',
         defaultPreferencesTemperature
       ),
-      unsavedTopology: _.get(topology, 'diagram'),
+      originalTopology: _.get(topology, 'diagram'),
       topology: _.get(topology, 'diagram'),
       topologyId: _.get(topology, 'id'),
       topologyStatus: RemoteDataState.Done,
@@ -1337,25 +1523,28 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   private fetchIntervalData = async () => {
     const {notify} = this.props
-
+    if (!this.graph) return
     this.setState(preState => ({
       ...preState,
       fetchIntervalDataStatus: RemoteDataState.Loading,
     }))
-
     try {
+      this.graph.model.beginUpdate()
       await this.getHostData()
-      await this.getIpmiStatus()
+      this.fetchIpmiStatus()
       this.getDetectedHostStatus()
     } catch (error) {
       notify(notifyFetchIntervalDataFailed(error.message))
     } finally {
+      this.graph.model.endUpdate()
+      this.graph.refresh()
       this.setState(preState => ({
         ...preState,
         fetchIntervalDataStatus: RemoteDataState.Done,
       }))
     }
   }
+
   private getIpmiData = async () => {
     const {source, auth} = this.props
 
@@ -1392,7 +1581,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
     )
     const ipmiObject = await this.getIpmiData()
     const hostsObject = _.defaultsDeep({}, agentObject, ipmiObject)
-
     const hostsError = notifyUnableToGetHosts().message
     if (!hostsObject) {
       throw new Error(hostsError)
@@ -1419,40 +1607,36 @@ export class InventoryTopology extends PureComponent<Props, State> {
       ? getFocusedCell(cells, focusedCellId)
       : cells
 
-    detectedHostsStatus.bind(this)(
+    const [updateCount, err] = detectedHostsStatus.bind(this)(
       filteredCells,
       hostsObject,
       selectedTemperatureValue
     )
+    return [updateCount, err]
   }
 
-  private getIpmiStatus = async (focusedCellId?: string) => {
-    if (!this.graph) return
+  private fetchIpmiStatus = (focusedCellId?: string) => {
+    if (!this.graph || !this.state.topologyOption.ipmiVisible) return
 
     const graph = this.graph
+    const {hostsObject} = this.state
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
 
     const filteredCells = focusedCellId
       ? getFocusedCell(cells, focusedCellId)
       : cells
-    let ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(
+
+    const ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(
       filteredCells
     )
 
-    if (_.isEmpty(ipmiCells)) return
-
-    this.setIpmiStatus(ipmiCells)
-  }
-
-  private setIpmiStatus = async (ipmiCells: IpmiCell[]) => {
-    const ipmiCellsStatus: IpmiCell[] = await this.props.handleGetIpmiStatus(
-      this.salt.url,
-      this.salt.token,
-      ipmiCells
-    )
-
-    ipmiPowerIndicator.bind(this)(ipmiCellsStatus)
+    _.forEach(ipmiCells, ipmiCell => {
+      if (hostsObject[ipmiCell.hostname]?.powerStatus) {
+        ipmiCell.powerStatus = hostsObject[ipmiCell.hostname].powerStatus
+      }
+    })
+    ipmiPowerIndicator.bind(this)(ipmiCells)
   }
 
   private getIpmiTargetList = async () => {
@@ -1557,6 +1741,62 @@ export class InventoryTopology extends PureComponent<Props, State> {
       return group
     }
 
+    mxConnectionHandler.prototype.mouseDown = function (_, me) {
+      this.mouseDownCounter++
+
+      const event = me.getEvent()
+
+      if (event.button === 2 || event.buttons === 2) {
+        return
+      }
+
+      if (
+        this.isEnabled() &&
+        this.graph.isEnabled() &&
+        !me.isConsumed() &&
+        !this.isConnecting() &&
+        this.isStartEvent(me)
+      ) {
+        if (
+          this.constraintHandler.currentConstraint != null &&
+          this.constraintHandler.currentFocus != null &&
+          this.constraintHandler.currentPoint != null
+        ) {
+          this.sourceConstraint = this.constraintHandler.currentConstraint
+          this.previous = this.constraintHandler.currentFocus
+          this.first = this.constraintHandler.currentPoint.clone()
+        } else {
+          // Stores the location of the initial mousedown
+          this.first = new mxPoint(me.getGraphX(), me.getGraphY())
+        }
+
+        this.edgeState = this.createEdgeState(me)
+        this.mouseDownCounter = 1
+
+        if (this.waypointsEnabled && this.shape == null) {
+          this.waypoints = null
+          this.shape = this.createShape()
+
+          if (this.edgeState != null) {
+            this.shape.apply(this.edgeState)
+          }
+        }
+
+        // Stores the starting point in the geometry of the preview
+        if (this.previous == null && this.edgeState != null) {
+          var pt = this.graph.getPointForEvent(me.getEvent())
+          this.edgeState.cell.geometry.setTerminalPoint(pt, true)
+        }
+
+        this.fireEvent(new mxEventObject(mxEvent.START, 'state', this.previous))
+
+        me.consume()
+      }
+
+      this.selectedIcon = this.icon
+      this.icon = null
+    }
+
     mxGraph.prototype.groupCells = function (group, border, cells) {
       if (cells == null) {
         cells = mxUtils.sortCells(this.getSelectionCells(), true)
@@ -1626,7 +1866,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
       return group
     }
 
+    this.graph.panningHandler.ignoreCell = true
+    this.graph.panningHandler.isForcePanningEvent = me => {
+      return me.getEvent().button === 2
+    }
+
     this.graph.isCellSelectable = isCellSelectable.bind(this)
+    this.graph.isCellMovable = isCellMovable.bind(this)
 
     this.graph.setConnectable(true)
 
@@ -1680,7 +1926,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
     this.graph.getFoldingImage = getFoldingImage.bind(this)
 
     const outln = new mxOutline(this.graph, this.outline)
-    outln.outline.labelsVisible = true
     outln.outline.setHtmlLabels(true)
   }
 
@@ -1871,11 +2116,37 @@ export class InventoryTopology extends PureComponent<Props, State> {
       state: IpmiSetPowerStatus,
       popupText: string
     ) => {
+      const credentialKeys = {
+        target: 'Using Minion',
+        host: 'IPMI Host',
+        user: 'IPMI User',
+        pass: 'IPMI Password',
+      }
+
+      const ipmiCredentials = {
+        target,
+        host: ipmiHost,
+        user: ipmiUser,
+        pass: ipmiPass,
+      }
+      for (const key in ipmiCredentials) {
+        if (!ipmiCredentials[key]) {
+          this.props.notify(
+            notifySetIpmiStatusFailed(
+              `The "${credentialKeys[key]}" field cannot be empty.`
+            )
+          )
+          return
+        }
+      }
+
+      const decryptedPass = cryptoJSAESdecrypt(ipmiPass, this.secretKey.url)
+
       const ipmi: Ipmi = {
         target,
         host: ipmiHost,
         user: ipmiUser,
-        pass: cryptoJSAESdecrypt(ipmiPass, this.secretKey.url),
+        pass: decryptedPass,
       }
 
       const onConfirm = async () => {
@@ -2172,30 +2443,35 @@ export class InventoryTopology extends PureComponent<Props, State> {
         meRole === EDITOR_ROLE
       ) {
         this.setState({
+          isOptionOverlayVisible: false,
           isPreferencesOverlayVisible: true,
+        })
+      }
+    })
+
+    this.editor.addAction('option', async () => {
+      if (
+        meRole === SUPERADMIN_ROLE ||
+        meRole === ADMIN_ROLE ||
+        meRole === EDITOR_ROLE
+      ) {
+        this.setState({
+          isOptionOverlayVisible: true,
+          isPreferencesOverlayVisible: false,
         })
       }
     })
   }
 
   // @ts-ignore
-  private graphUpdate = () => {
-    this.graph.getModel().beginUpdate()
+  private graphUpdateSave = (cell: mxCellType) => {
     try {
-    } finally {
-      this.graph.getModel().endUpdate()
-      this.graph.refresh()
-    }
-  }
-
-  // @ts-ignore
-  private graphUpdateSave = () => {
-    this.graph.getModel().beginUpdate()
-    try {
-    } finally {
-      this.graph.getModel().endUpdate()
-      this.graph.refresh()
-      this.handleGraphModel(this.graph.getModel())
+      if (cell) {
+        this.graph.refresh(cell)
+        this.handleGraphModel(this.graph.getModel())
+      }
+    } catch (error) {
+      console.error('Error updating graph:', error)
     }
   }
 
@@ -2253,9 +2529,18 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleGraphModel = (sender: mxGraphModelType) => {
-    const topology = this.xmlExport(sender)
+    const previousTopology = this.state.topology
+    const currentTopology = this.xmlExport(sender)
 
-    this.setState({topology, isTopologyChanged: true})
+    const previousTopologyHash = generateSHA256Hash(previousTopology)
+    const currentTopologyHash = generateSHA256Hash(currentTopology)
+
+    if (previousTopologyHash !== currentTopologyHash) {
+      this.setState({
+        topology: currentTopology,
+        isTopologyChanged: true,
+      })
+    }
   }
 
   private handleClose = () => {
@@ -2317,6 +2602,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isPinned,
       isOpenSensorData,
       fetchIntervalDataStatus,
+      topologyOption,
     } = this.state
     const [topSize, bottomSize] = bottomProportions
     return [
@@ -2334,14 +2620,22 @@ export class InventoryTopology extends PureComponent<Props, State> {
                 <div id="toolbarContainer" ref={this.toolbarRef}></div>
               </div>
               <div id="contentBodySection">
+                {fetchIntervalDataStatus === RemoteDataState.Loading && (
+                  <LoadingSpinner className={'fetchIntervalDots'} />
+                )}
+
                 <div id="graphContainer" ref={this.containerRef}>
                   {topologyStatus === RemoteDataState.Loading && (
                     <PageSpinner />
                   )}
-                  {fetchIntervalDataStatus === RemoteDataState.Loading && (
-                    <LoadingSpinner className={'fetchIntervalDots'} />
-                  )}
-                  <div id="outlineContainer" ref={this.outlineRef}></div>
+                  <div
+                    id="outlineContainer"
+                    ref={this.outlineRef}
+                    style={{
+                      display: topologyOption.minimapVisible ? 'block' : 'none',
+                    }}
+                  ></div>
+
                   <ResizableDock
                     className={classnames('', {
                       active: isStatusVisible,
@@ -2690,6 +2984,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       topologyId,
       topology,
       unsavedPreferenceTemperatureValues,
+      topologyOption,
     } = this.state
 
     this.setState({topologyStatus: RemoteDataState.Loading})
@@ -2706,7 +3001,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         notify(notifyTopologySaved())
 
         this.setState({
-          unsavedTopology: topology,
+          originalTopology: topology,
           topologyId: getTopologyId,
           topologyStatus: RemoteDataState.Done,
         })
@@ -2715,14 +3010,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
           links,
           topologyId,
           topology,
-          unsavedPreferenceTemperatureValues
+          unsavedPreferenceTemperatureValues,
+          topologyOption
         )
 
         notify(notifyTopologySaved())
 
         this.fetchIntervalData()
         this.setState({
-          unsavedTopology: topology,
+          originalTopology: topology,
           topologyStatus: RemoteDataState.Done,
           isTopologyChanged: false,
         })
@@ -3638,7 +3934,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const hostname = container.getAttribute('data-name')
     const dataGatherType = container.getAttribute('data-status')
 
-    if (isTooltipActiveHost === cellId || dataGatherType === 'false') {
+    if (
+      isTooltipActiveHost === cellId ||
+      dataGatherType === 'none' ||
+      dataGatherType === 'false'
+    ) {
       return
     }
 

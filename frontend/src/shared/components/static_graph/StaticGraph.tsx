@@ -291,6 +291,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            tableOptions={tableOptions}
+            fieldOptions={fieldOptionsWithGroupByTag}
             showCount={showCount}
           />
         )
@@ -388,7 +390,9 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
     queries: Query[],
     fieldOptions: StatisticalGraphFieldOption[]
   ): StatisticalGraphFieldOption[] => {
-    const groupByTags = queries[0].queryConfig.groupBy.tags
+    const groupByTags =
+      queries?.[0]?.groupbys || queries[0].queryConfig.groupBy.tags
+
     return fastMap(fieldOptions, fieldOption => {
       const isGroupByTag = groupByTags.indexOf(fieldOption.internalName)
       return isGroupByTag !== -1

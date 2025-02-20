@@ -25,12 +25,24 @@ func TestTopologiesStore(t *testing.T) {
 			Organization: "133",
 			Diagram:      "<mxGraphModel><root></root></mxGraphModel>",
 			Preferences:  []string{"type:inlet,active:1,min:15,max:30"},
+			TopologyOptions: cloudhub.TopologyOptions{
+				MinimapVisible:    true,
+				HostStatusVisible: false,
+				IPMIVisible:       true,
+				LinkVisible:       true,
+			},
 		},
 		{
 			ID:           "",
 			Organization: "226541",
 			Diagram:      "<mxGraphModel><root></root></mxGraphModel>",
 			Preferences:  []string{"type:inlet,active:1,min:15,max:30"},
+			TopologyOptions: cloudhub.TopologyOptions{
+				MinimapVisible:    false,
+				HostStatusVisible: true,
+				IPMIVisible:       false,
+				LinkVisible:       true,
+			},
 		},
 	}
 
@@ -56,11 +68,17 @@ func TestTopologiesStore(t *testing.T) {
 	tss[1].Preferences = []string{
 		"type:inlet,active:1,min:15,max:30",
 	}
+	tss[1].TopologyOptions = cloudhub.TopologyOptions{
+		MinimapVisible:    true,
+		HostStatusVisible: true,
+		IPMIVisible:       true,
+		LinkVisible:       false,
+	}
 	if err := s.Update(ctx, &tss[1]); err != nil {
 		t.Fatal(err)
 	}
 
-	// Confirm topology have updated.
+	// Confirm topology has updated.
 	ts, err := s.Get(ctx, cloudhub.TopologyQuery{ID: &tss[1].ID})
 	fmt.Println(ts)
 	if err != nil {
@@ -69,9 +87,11 @@ func TestTopologiesStore(t *testing.T) {
 		t.Fatalf("topology 1 update error: got %v, expected %v", ts.Diagram, "<mxGraphModel><root><mxCell></mxCell></root></mxGraphModel>")
 	} else if ts.Preferences[0] != "type:inlet,active:1,min:15,max:30" {
 		t.Fatalf("topology 1 update error: got %v, expected %v", ts.Preferences[0], "type:inlet,active:1,min:15,max:30")
+	} else if !ts.TopologyOptions.MinimapVisible || !ts.TopologyOptions.HostStatusVisible || !ts.TopologyOptions.IPMIVisible || ts.TopologyOptions.LinkVisible {
+		t.Fatalf("topology 1 update error: topology options not updated correctly")
 	}
 
-	// Delete an topology.
+	// Delete a topology.
 	if err := s.Delete(ctx, ts); err != nil {
 		t.Fatal(err)
 	}

@@ -25,6 +25,7 @@ export interface Host {
   inside?: number
   inlet?: number
   outlet?: number
+  powerStatus?: string
   extraTag?: {[x: string]: any}
 }
 
@@ -73,6 +74,7 @@ export interface IpmiCell {
   pass: string
   powerStatus: string
   cell: mxCellType
+  hostname?: string
 }
 
 export interface CloudHost {

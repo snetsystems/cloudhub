@@ -58,9 +58,13 @@ import {
   UpdateDeviceOrganizationOption,
   UpdateDevicesOrgResponse,
 } from 'src/types/deviceManagement'
-import {decimalUnitNumber, parseSeries} from '../utils'
+import {decimalUnitNumber, parseSeries} from 'src/device_management/utils'
 import {hasError} from 'apollo-client/core/ObservableQuery'
-import {LEARNING_RST_DL_UR, LEARNING_RST_ML_URL} from '../constants/deviceData'
+import {
+  DEVICE_MANAGEMENT_UPLOAD_URL,
+  LEARNING_RST_DL_UR,
+  LEARNING_RST_ML_URL,
+} from 'src/device_management/constants/deviceData'
 
 interface Series {
   name: string
@@ -179,6 +183,24 @@ export const deleteDevice = (params: DeleteDeviceParams) => {
       url: DEVICE_MANAGEMENT_URL,
       method: 'DELETE',
     }) as Promise<AxiosResponse<DeleteDeviceResponse>>
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const saveDevicesWithCSVUpload = async (
+  devicesInfo: CreateDeviceListRequest
+) => {
+  try {
+    const response = await AJAX({
+      data: devicesInfo,
+      url: DEVICE_MANAGEMENT_UPLOAD_URL,
+      method: 'POST',
+    })
+    const {data} = response as CreateDeviceListResponse
+
+    return data
   } catch (error) {
     console.error(error)
     throw error
@@ -383,7 +405,7 @@ export const getLiveDeviceInfo = async (
   const query = replaceTemplate(
     `SELECT mean("cpu1min") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
     SELECT mean("mem_usage") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
-    SELECT last("tff_volume") from (SELECT non_negative_derivative(sum("ifHCOutOctets"),1s) + non_negative_derivative(sum("ifHCInOctets"),1s) AS "tff_volume" FROM \":db:\"."autogen"."snmp_nx" WHERE "time" > now()-5m AND "ifDescr"=~/Ethernet/ GROUP BY time(1m), "agent_host") GROUP BY "agent_host";
+    SELECT last("tff_volume") from (SELECT non_negative_derivative(mean("total_ifHCOutOctets"),1s) + non_negative_derivative(mean("total_ifHCInOctets"),1s) AS "tff_volume" FROM \":db:\"."autogen"."snmp_nx" WHERE "time" > now()-5m GROUP BY time(1m), "agent_host") GROUP BY "agent_host";
    
       `,
     tempVars

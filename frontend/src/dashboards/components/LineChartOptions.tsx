@@ -31,27 +31,14 @@ import {
   getSelectedShowTemplateVariable,
   getShowTemplateVariable,
 } from 'src/shared/utils/staticGraph'
+import {
+  DropdownOption,
+  RenamableField,
+  TableOptionsInterface,
+} from 'src/types/statisticalgraph'
 
 const {LINEAR, LOG, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
 const getInputMin = () => (-Infinity).toString()
-
-interface DropdownOption {
-  text: string
-  key: string
-}
-
-interface RenamableField {
-  internalName: string
-  displayName: string
-  visible: boolean
-  direction?: '' | 'asc' | 'desc'
-}
-
-interface TableOptionsInterface {
-  verticalTimeAxis: boolean
-  sortBy: RenamableField
-  fixFirstColumn: boolean
-}
 
 interface Props {
   groupByTag: string[]

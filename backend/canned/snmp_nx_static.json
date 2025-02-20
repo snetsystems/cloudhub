@@ -1,0 +1,527 @@
+{
+  "id": "d61cdfb1-babd-459a-87b9-5c271360655e",
+  "measurement": "snmp_nx",
+  "app": "snmp_nx_static",
+  "autoflow": true,
+  "cells": [
+    {
+      "i": "a722c51a-2879-47c2-b16e-79d0663d832b",
+      "x": 0,
+      "y": 37,
+      "w": 47,
+      "h": 22,
+      "minW": 10,
+      "minH": 4,
+      "name": "CPU Usage (%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"cpu1min\") AS \"mean_cpu1min\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"agent_host\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Device IP",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "CPU Usage (%)",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticBar",
+      "colors": [
+        {
+          "id": "c18c68ab-d3d1-491a-86f7-d8ed8ecdf66b",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "37feb1ac-4432-425b-acda-f384841284c4",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "d724fbb2-f30f-4827-bb42-ff4365e00816",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "snmp_nx.mean_cpu1min",
+          "displayName": "CPU Usage",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": false,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "agent_host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "snmp_nx.mean_cpu1min",
+          "displayName": "CPU Usage",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": true,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "2206432e-f369-46ed-a594-b712a196e123",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 32,
+      "minW": 48,
+      "minH": 32,
+      "name": "Memory Usage (%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"mem_usage\") AS \"mean_mem_usage\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"agent_host\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticDoughnut",
+      "colors": [
+        {
+          "id": "001bf4ae-4299-4911-a376-ce38e7c31e2d",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "75c1470c-bd3d-473e-99be-26f6f68eabcb",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0f23b66f-f8e8-4615-9be3-d50ca57617e2",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "snmp_nx.mean_mem_usage",
+          "displayName": "Memory Usage",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": false,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "agent_host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "snmp_nx.mean_mem_usage",
+          "displayName": "Memory Usage",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": true,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "7da5218f-1778-4f48-a16f-5b1ebef8c911",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 32,
+      "minW": 48,
+      "minH": 32,
+      "name": "CPU-Mem Correlation",
+      "queries": [
+        {
+          "query": "SELECT mean(\"mem_usage\") AS \"mean_mem_usage\", mean(\"cpu1min\") AS \"mean_cpu1min\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"agent_host\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Memory Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "CPU Usage (%)",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticScatter",
+      "colors": [
+        {
+          "id": "3ad1b76a-a7d8-4daf-b908-ba5346c4b900",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "e73d1b77-e69f-4f07-8420-0c2309599f63",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0f7d1912-1819-465b-93b2-b42ab0213db7",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "graphOptions": {
+        "fillArea": true,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "b0950bca-943a-42e1-ba07-6b711c7a6f9c",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 32,
+      "minW": 48,
+      "minH": 32,
+      "name": "CPU-Memory Radar Graph",
+      "queries": [
+        {
+          "query": "SELECT mean(\"cpu5sec\") AS \"mean_cpu5sec\", mean(\"mem_usage\") AS \"mean_mem_usage\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"agent_host\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticRadar",
+      "colors": [
+        {
+          "id": "bdf7bdaf-87d8-4da9-a43f-989e7933bfa8",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "646c0447-2315-45bf-9e5a-84e334332e93",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "814cb49b-e6dc-42bb-89b8-e8d3240b46fe",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "snmp_nx.mean_cpu5sec",
+          "displayName": "CPU Usage",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "agent_host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "snmp_nx.mean_cpu5sec",
+          "displayName": "CPU Usage",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "snmp_nx.mean_mem_usage",
+          "displayName": "Memory Usage",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": true,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "517d7cfb-be44-4f18-93c8-d032ca03bc49",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 32,
+      "minW": 48,
+      "minH": 32,
+      "name": "CPU Usage - Process",
+      "queries": [
+        {
+          "query": "SELECT mean(\"proc_cpu1m\") AS \"mean_proc_cpu1m\" FROM \":db:\".\":rp:\".\"snmp_nx\"",
+          "groupbys": ["\"agent_host\"", "\"proc_name\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Host IP, Process name",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "CPU",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticBar",
+      "colors": [
+        {
+          "id": "8122c24c-8fc1-4b6b-b20e-b25bd0a769c4",
+          "type": "scale",
+          "hex": "#8F8AF4",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        },
+        {
+          "id": "69ff2a5e-aace-4e2a-9b5c-70eebb6ff41a",
+          "type": "scale",
+          "hex": "#A51414",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        },
+        {
+          "id": "587ec809-0f01-4361-bb80-0f713838195e",
+          "type": "scale",
+          "hex": "#F4CF31",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "snmp_nx.mean_proc_cpu1m",
+          "displayName": "CPU",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "agent_host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "proc_name",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "snmp_nx.mean_proc_cpu1m",
+          "displayName": "CPU",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": true,
+        "showLine": true,
+        "showPoint": true,
+        "showTempVarCount": ":show_proc_cnt:"
+      }
+    }
+  ]
+}
