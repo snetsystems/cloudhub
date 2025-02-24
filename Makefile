@@ -28,8 +28,8 @@ build: assets ${BINARY}
 gobuild: .godep ${BINARY}
 
 ${BINARY}: $(SOURCES) .bindata .jsdep .godep
-	cd backend && GO111MODULE=on go build -o ./cmd/cloudhub/${BINARY} ${LDFLAGS} ./cmd/cloudhub/main.go
-	cd backend && GO111MODULE=on go build -o ./cmd/cloudhubctl/${CTLBINARY} ${LDFLAGS} ./cmd/cloudhubctl
+	cd backend && CGO_ENABLED=0 GO111MODULE=on go build -o ./cmd/cloudhub/${BINARY} ${LDFLAGS} ./cmd/cloudhub/main.go
+	cd backend && CGO_ENABLED=0 GO111MODULE=on go build -o ./cmd/cloudhubctl/${CTLBINARY} ${LDFLAGS} ./cmd/cloudhubctl
 
 assets: .jssrc .bindata
 

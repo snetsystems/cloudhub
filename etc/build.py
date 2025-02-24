@@ -541,7 +541,6 @@ def build(version=None,
             if "static_" in arch:
                 static = True
                 arch = arch.replace("static_", "")
-            build_command += "CGO_ENABLED=0 "
             build_command_last_options += "-a -installsuffix cgo "
 
         # Handle variations in architecture output
@@ -552,7 +551,10 @@ def build(version=None,
             arch = "arm64"
         elif "arm" in arch:
             arch = "arm"
-        build_command += "cd backend && GOOS={} GOARCH={} ".format(platform, arch)
+        build_command += "cd backend && "
+        if static:
+            build_command += "CGO_ENABLED=0 "
+        build_command += "GOOS={} GOARCH={} ".format(platform, arch)
 
         if "arm" in fullarch:
             if fullarch == "armel":
@@ -587,6 +589,7 @@ def build(version=None,
         build_command += build_command_last_options
         build_command += path
         start_time = datetime.utcnow()
+        logging.info("Build Command: {}".format(build_command))
         run(build_command, shell=True, print_output=True)
         end_time = datetime.utcnow()
         logging.info("Time taken: {}s".format((end_time - start_time).total_seconds()))
