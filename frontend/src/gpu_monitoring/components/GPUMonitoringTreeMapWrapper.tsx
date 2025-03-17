@@ -27,13 +27,13 @@ import {
 import {EMPTY_FILTERED_HOST_FOR_GPU_MONITORING} from 'src/gpu_monitoring/constants'
 
 interface Props {
-  filteredHostForGPUMonitoring: FilteredHostForGPUMonitoring
   minionHostnameMapping: Record<string, string>
   hostsForGPUSmiData: HostsForGPUSmiData
   hostsForGPUSmiMIGData: HostsForGPUSmiMIGData
   migProfilesState: Record<string, MigProfile[]>
   isLoading: boolean
-  setFilteredHostForGPUMonitoring: (
+  filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
+  setFilteredHostForGPUMonitoring?: (
     filteredHostForGPUMonitoring: FilteredHostForGPUMonitoring
   ) => void
 }
@@ -71,6 +71,7 @@ function GPUMonitoringTreeMapWrapper({
       gpuIndex: -1,
       gi: -1,
       ci: -1,
+      migMode: 'N/A',
     })
   }
 
@@ -94,14 +95,19 @@ function GPUMonitoringTreeMapWrapper({
       return
     }
 
+    const gpuData = hostsForGPUSmiData[filteredHost]?.find(
+      item => item.gpuIndex === filteredGPUIndex
+    )
+    const migMode = gpuData ? gpuData.migMode : 'Disabled'
+
     setFilteredHostForGPUMonitoring({
       hostname: filteredHost,
       gpuIndex: filteredGPUIndex,
       gi: -1,
       ci: -1,
+      migMode,
     })
   }
-
   const renderMockSlideToggle = (): JSX.Element => {
     return (
       <div

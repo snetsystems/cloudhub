@@ -55,8 +55,9 @@ import {
 
 interface Props {
   source: Source
-  addons: Addon[]
-  gpuMonitoringManualRefresh: number
+  sources: Source[]
+  addons?: Addon[]
+  gpuMonitoringManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
   inPresentationMode?: boolean
   notify?: NotificationAction

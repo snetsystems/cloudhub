@@ -47,6 +47,7 @@ export interface FilteredHostForGPUMonitoring {
   gpuIndex: number
   gi: number
   ci: number
+  migMode: 'Enabled' | 'Disabled' | 'N/A'
 }
 
 export interface GPUMonitoringSeries {
