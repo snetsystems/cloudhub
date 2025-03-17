@@ -180,11 +180,13 @@ class SideNav extends PureComponent<Props> {
               link={`${sourcePrefix}/ai/device-management`}
               title="AI"
             />
-            {
-              <NavListItem link={`${sourcePrefix}/ai/device-management`}>
-                Network Device
-              </NavListItem>
-            }
+
+            <NavListItem link={`${sourcePrefix}/ai/gpu-monitoring`}>
+              NVIDIA GPU
+            </NavListItem>
+            <NavListItem link={`${sourcePrefix}/ai/device-management`}>
+              Network Device
+            </NavListItem>
           </NavBlock>
         )}
 

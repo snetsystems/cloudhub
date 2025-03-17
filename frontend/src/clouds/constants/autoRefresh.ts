@@ -95,6 +95,7 @@ export function getTimeOptionByGroup(groupName: string | undefined) {
       vmware: autoRefreshGroupDefaultOption(groupName, 'vmware'),
       kubernetes: autoRefreshGroupDefaultOption(groupName, 'kubernetes'),
       prediction: autoRefreshGroupDefaultOption(groupName, 'prediction'),
+      gpuMonitoring: autoRefreshGroupDefaultOption(groupName, 'gpuMonitoring'),
       queries: autoRefreshGroupDefaultOption(groupName, 'queries'),
       detailHost: autoRefreshGroupDefaultOption(groupName, 'detailHost'),
       openstackMonitor: autoRefreshGroupDefaultOption(

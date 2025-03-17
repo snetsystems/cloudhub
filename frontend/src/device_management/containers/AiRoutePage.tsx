@@ -17,6 +17,10 @@ import * as SourcesModels from 'src/types/sources'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import {LOGIN_AUTH_TYPE} from 'src/auth/constants'
 
+// Container
+import GPUMonitoringPage from 'src/gpu_monitoring/containers/GPUMonitoringPage'
+import PredictionPage from 'src/device_management/containers/PredictionPage'
+
 //page
 import DeviceManagement from './DeviceManagement'
 
@@ -27,13 +31,16 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import * as appActions from 'src/shared/actions/app'
 import DeviceManagementModal from 'src/device_management/components/DeviceManagementModal'
-import PredictionPage from './PredictionPage'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {
   setHistogramDate,
   setPredictionManualRefresh,
   setStateInitAction,
 } from 'src/device_management/actions'
+import {
+  setGPUMonitoringManualRefresh,
+  setGPUMonitoringStateInit,
+} from 'src/gpu_monitoring/actions'
 
 //component
 import ManualRefresh, {
@@ -70,6 +77,8 @@ interface Props extends ManualRefreshProps {
   setPredictionManualRefresh: () => void
   setStateInitAction: () => void
   setHistogramDate: (value: TimeRange) => void
+  setGPUMonitoringManualRefresh: () => void
+  setGPUMonitoringStateInit: () => void
 }
 
 const defaultHeaderRadioButtons: HeaderNavigationObj[] = [
@@ -108,6 +117,8 @@ const AiRoutePage = (props: Props) => {
     setPredictionManualRefresh,
     setStateInitAction,
     setHistogramDate,
+    setGPUMonitoringManualRefresh,
+    setGPUMonitoringStateInit,
   } = props
 
   const currentRoute = router.params?.tab
@@ -124,6 +135,12 @@ const AiRoutePage = (props: Props) => {
     if (typeof cloudAutoRefresh?.prediction !== 'number') {
       onChooseCloudAutoRefresh({
         prediction: 5000,
+      })
+    }
+
+    if (typeof cloudAutoRefresh?.gpuMonitoring !== 'number') {
+      onChooseCloudAutoRefresh({
+        gpuMonitoring: 5000,
       })
     }
   }, [])
@@ -153,6 +170,17 @@ const AiRoutePage = (props: Props) => {
     })
   }
 
+  const handleApplyTimeForGPUMonitoring = (timeRange: TimeRange): void => {
+    onChooseCloudTimeRange({
+      gpuMonitoring: {
+        ...timeRange,
+        format: !!timeRange.lowerFlux
+          ? INPUT_TIME_TYPE.RELATIVE_TIME
+          : INPUT_TIME_TYPE.TIMESTAMP,
+      },
+    })
+  }
+
   const handleManualRefresh = () => {
     //redux
     setPredictionManualRefresh()
@@ -162,6 +190,11 @@ const AiRoutePage = (props: Props) => {
       ...manualRefreshState,
       value: Date.now(),
     })
+  }
+
+  const handleManualRefreshForGPUMonitoring = () => {
+    setGPUMonitoringManualRefresh()
+    setGPUMonitoringStateInit()
   }
 
   const onChooseActiveTab = (activeTab: string) => {
@@ -178,35 +211,49 @@ const AiRoutePage = (props: Props) => {
       : onChooseAutoRefresh(milliseconds)
   }
 
-  return (
-    <Page>
-      <Page.Header>
-        <Page.Header.Left>
-          <Page.Title title="Network Device" />
-        </Page.Header.Left>
-        <Page.Header.Center
-          widthPixels={defaultHeaderRadioButtons.length * 150}
-        >
-          <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
-            {defaultHeaderRadioButtons.map(rBtn => {
-              return (
-                <Radio.Button
-                  key={rBtn.titleText}
-                  id={rBtn.id}
-                  titleText={rBtn.titleText}
-                  value={rBtn.value}
-                  active={currentRoute === rBtn.active}
-                  onClick={onChooseActiveTab}
-                >
-                  {rBtn.label}
-                </Radio.Button>
-              )
-            })}
-          </div>
-        </Page.Header.Center>
-        <Page.Header.Right>
+  const renderHeaderCenter = () => {
+    if (currentRoute === 'gpu-monitoring') return <></>
+    return (
+      <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
+        {defaultHeaderRadioButtons.map(rBtn => (
+          <Radio.Button
+            key={rBtn.titleText}
+            id={rBtn.id}
+            titleText={rBtn.titleText}
+            value={rBtn.value}
+            active={currentRoute === rBtn.active}
+            onClick={onChooseActiveTab}
+          >
+            {rBtn.label}
+          </Radio.Button>
+        ))}
+      </div>
+    )
+  }
+
+  const renderHeaderRight = () => {
+    return (
+      <>
+        <SourceIndicator />
+        {currentRoute === 'gpu-monitoring' ? (
           <>
-            <SourceIndicator />
+            <AutoRefreshDropdown
+              onChoose={handleChooseAutoRefresh}
+              selected={autoRefresh}
+              onManualRefresh={handleManualRefreshForGPUMonitoring}
+              customAutoRefreshOptions={getTimeOptionByGroup('gpuMonitoring')}
+              customAutoRefreshSelected={cloudAutoRefresh}
+            />
+            <TimeRangeDropdown
+              // @ts-ignore
+              onChooseTimeRange={handleApplyTimeForGPUMonitoring}
+              selected={
+                cloudTimeRange?.gpuMonitoring ?? CLOUD_TIME_RANGE.gpuMonitoring
+              }
+            />
+          </>
+        ) : (
+          <>
             <AutoRefreshDropdown
               onChoose={handleChooseAutoRefresh}
               selected={autoRefresh}
@@ -224,29 +271,61 @@ const AiRoutePage = (props: Props) => {
               />
             )}
           </>
-          <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
-        </Page.Header.Right>
-      </Page.Header>
+        )}
+        <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
+      </>
+    )
+  }
 
-      <Page.Contents fullWidth={true}>
-        <>
-          {currentRoute === 'device-management' && (
-            //@ts-ignore
-            <DeviceManagement
-              source={source}
-              me={me}
-              isUsingAuth={isUsingAuth}
-              organizations={organizations}
-              autoRefresh={cloudAutoRefresh?.prediction || 0}
-              manualRefresh={manualRefreshState}
-            />
-          )}
-          {currentRoute === 'prediction' && (
-            //@ts-ignore
-            <PredictionPage me={me} source={source} />
-          )}
-        </>
-      </Page.Contents>
+  const renderPageContent = () => {
+    switch (currentRoute) {
+      case 'device-management':
+        return (
+          // @ts-ignore
+          <DeviceManagement
+            source={source}
+            me={me}
+            isUsingAuth={isUsingAuth}
+            organizations={organizations}
+            autoRefresh={cloudAutoRefresh?.prediction || 0}
+            manualRefresh={manualRefreshState}
+          />
+        )
+      case 'prediction':
+        return (
+          // @ts-ignore
+          <PredictionPage me={me} source={source} />
+        )
+      case 'gpu-monitoring':
+        return (
+          // @ts-ignore
+          <GPUMonitoringPage me={me} source={source} />
+        )
+      default:
+        return null
+    }
+  }
+
+  return (
+    <Page>
+      <Page.Header>
+        <Page.Header.Left>
+          <Page.Title
+            title={
+              currentRoute === 'gpu-monitoring'
+                ? 'NVIDIA GPU Map'
+                : 'Network Device'
+            }
+          />
+        </Page.Header.Left>
+        <Page.Header.Center
+          widthPixels={defaultHeaderRadioButtons.length * 150}
+        >
+          {renderHeaderCenter()}
+        </Page.Header.Center>
+        <Page.Header.Right>{renderHeaderRight()}</Page.Header.Right>
+      </Page.Header>
+      <Page.Contents fullWidth={true}>{renderPageContent()}</Page.Contents>
       <DeviceManagementModal />
     </Page>
   )
@@ -281,6 +360,14 @@ const mdtp = dispatch => ({
   ),
   setStateInitAction: bindActionCreators(setStateInitAction, dispatch),
   setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
+  setGPUMonitoringManualRefresh: bindActionCreators(
+    setGPUMonitoringManualRefresh,
+    dispatch
+  ),
+  setGPUMonitoringStateInit: bindActionCreators(
+    setGPUMonitoringStateInit,
+    dispatch
+  ),
 })
 
 export default connect(mstp, mdtp, null)(ManualRefresh<Props>(AiRoutePage))

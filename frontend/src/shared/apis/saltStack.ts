@@ -248,6 +248,45 @@ export async function getLocalGrainsItem(
   }
 }
 
+export async function runLocalNVidiaGPUMigLgip(pUrl: string, pToken: string) {
+  try {
+    const params: Params = {
+      client: 'local',
+      tgt: 'G@gpus:vendor:nvidia',
+      fun: 'cmd.run',
+      kwarg: {
+        cmd: 'nvidia-smi mig -lgip',
+      },
+      tgt_type: 'compound',
+    }
+
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function runLocalNvidiaGrainsItemForGPU(
+  pUrl: string,
+  pToken: string
+) {
+  try {
+    const params = {
+      client: 'local',
+      tgt: 'G@gpus:vendor:nvidia',
+      fun: 'grains.item',
+      arg: ['os', 'osrelease', 'localhost', 'gpus'],
+      tgt_type: 'compound',
+    }
+
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runAcceptKey(
   pUrl: string,
   pToken: string,

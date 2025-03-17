@@ -1,0 +1,195 @@
+.page .gpu-monitoring-page {
+  height: 100%;
+  width: 100%;
+}
+
+#treemap-host-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.treemap-host-item {
+  width: 144px;
+  height: 100%;
+  border: 2px solid $g7-graphite;
+  margin: 2px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.treemap-hostname {
+  width: 96%;
+  height: 25px;
+  line-height: 25px;
+  text-align: center;
+  font-size: 10px;
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.treemap-gpu-container {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: left;
+  align-items: flex-start;
+}
+
+.treemap-gpu-node {
+  position: relative;
+  width: 70px;
+  height: 50px;
+  border: 2px solid $g5-pepper;
+  box-sizing: border-box;
+  background: white;
+  cursor: pointer;
+}
+
+.treemap-gpu-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 9px;
+  line-height: 9px;
+  font-weight: bold;
+  font-size: 8px;
+  text-align: center;
+  color: white;
+  background: #203864;
+}
+
+.treemap-inner-container {
+  position: absolute;
+  top: 9px;
+  left: 3px;
+  right: 3px;
+  bottom: 0;
+  box-sizing: border-box;
+}
+
+.treemap-inner-container.gpu-monitoring-tooltip--blink::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -3px;
+  right: -3px;
+  bottom: 0;
+  background-color: #ab0000;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.treemap-node {
+  position: absolute;
+  border: 0.5px solid #9ca0ae;
+  line-height: 3.6px;
+  overflow: hidden;
+  text-indent: 0.6px;
+  box-sizing: border-box;
+  height: 14px;
+}
+
+.treemap-node.ci-node {
+  border-radius: 25px;
+  height: 14px;
+}
+
+.gpu-monitoring-tooltip {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.gpu-monitoring-tooltip.hidden {
+  display: none;
+}
+
+.gpu-monitoring-tooltip.active {
+  display: block;
+}
+
+.gpu-monitoring-tooltip-content {
+  border: 2px solid $s-orange;
+  border-radius: 4px;
+  display: inline-flex;
+  flex-direction: column;
+  background-color: $g1-raven;
+  padding: 5px;
+
+  min-width: 100px;
+  height: auto;
+  white-space: nowrap;
+}
+
+.gpu-monitoring-tooltip--td {
+  font-size: 11px;
+  padding: 0px 0px 0px 16px;
+}
+
+.gpu-monitoring-tooltip-content.grey {
+  border: 2px solid $g6-smoke;
+}
+
+.gpu-monitoringTooltip-container {
+  width: 100%;
+  text-align: center;
+  color: $g13-mist;
+}
+
+@keyframes blink-critical-animation {
+  0% {
+    background-color: #ab0000;
+    opacity: 0.4;
+  }
+  50% {
+    background-color: #ab0000;
+    opacity: 0.9;
+  }
+  100% {
+    background-color: #ab0000;
+    opacity: 0.4;
+  }
+}
+
+.gpu-monitoring-tooltip--blink {
+  animation: blink-critical-animation 1s infinite;
+}
+
+.gpu-monitoringTooltip-value {
+  text-align: center;
+  padding-left: 4px;
+}
+
+.gpu-monitoringTooltip-graph {
+  height: 2px;
+  text-align: right;
+  background: #545667;
+  margin-top: 2px;
+}
+
+.gpu-monitoring-slide--inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gpu-monitoring-slide--label {
+  display: inline-block;
+  min-width: 135px;
+  text-align: right;
+  z-index: 5;
+}
+
+.gpu-monitoring-slide--toggle-wrapper {
+  width: 50px;
+  display: flex;
+  justify-content: center;
+  z-index: 5;
+}
