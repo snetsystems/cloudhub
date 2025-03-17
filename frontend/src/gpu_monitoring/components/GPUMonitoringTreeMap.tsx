@@ -314,12 +314,15 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                 100
             }
           }
+          const gpuUtilization = currentGPUSmiData.gpuUtilization
+
           const finalUsageRatio = Math.max(
             memoryUsagePercent,
             gpuTemperaturePercent,
             gpuMemTemperaturePercent,
             gpuPowerUsagePercent,
-            combinedTxRxData
+            combinedTxRxData,
+            gpuUtilization
           )
           const dynamicColor = colorScaleForGPUMonitoring(finalUsageRatio)
           gpuDiv.style('background', dynamicColor)
@@ -340,18 +343,28 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                 y: d3.event.clientY - parentRect.top,
               }
               const trimmedHostName = hostData.name.split(':')[0].trim()
+              const tooltipRows = [
+                {title: 'GPU Memory', value: memoryUsagePercent},
+                {title: 'GPU Temp (°C)', value: gpuTemperaturePercent},
+                {
+                  title: 'GPU Memory Temp (°C)',
+                  value: gpuMemTemperaturePercent,
+                },
+                {title: 'Pwr Consumption', value: gpuPowerUsagePercent},
+                {title: 'PCIe Traffic', value: combinedTxRxData},
+              ]
+              if (
+                currentGPUSmiData.migMode &&
+                currentGPUSmiData.migMode.toLowerCase() === 'disabled'
+              ) {
+                tooltipRows.unshift({
+                  title: 'GPU Utilization',
+                  value: gpuUtilization,
+                })
+              }
               setTooltipNode({
                 name: `${trimmedHostName} (GPU ${gpuData.gpuIndex})`,
-                rows: [
-                  {title: 'GPU Memory', value: memoryUsagePercent},
-                  {title: 'GPU Temp (°C)', value: gpuTemperaturePercent},
-                  {
-                    title: 'GPU Memory Temp (°C)',
-                    value: gpuMemTemperaturePercent,
-                  },
-                  {title: 'Pwr Consumption', value: gpuPowerUsagePercent},
-                  {title: 'PCIe Traffic', value: combinedTxRxData},
-                ],
+                rows: tooltipRows,
               })
               setTooltipPosition(tempPosition)
               setIsMouseOn(true)

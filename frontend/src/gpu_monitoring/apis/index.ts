@@ -45,6 +45,7 @@ export const getNVidiaSmiDataForHosts = async (
      SELECT last("mig_mode") FROM ":db:"."autogen"."nvidia_smi" WHERE time > now() - 10m GROUP BY "host", "index";
      SELECT last("memory_total") /(1024*1024*1024) FROM ":db:"."autogen"."nvidia_smi" WHERE time > now() - 10m GROUP BY "host", "index";
      SELECT mean("memory_used") /(1024*1024*1024) FROM ":db:"."autogen"."nvidia_smi" WHERE time > now() - 10m GROUP BY "host", "index";
+     SELECT mean("utilization_gpu") FROM ":db:"."autogen"."nvidia_smi" WHERE time > now() - 10m GROUP BY "host", "index";
      `,
     tempVars
   )

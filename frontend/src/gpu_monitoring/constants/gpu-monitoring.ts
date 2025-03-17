@@ -44,6 +44,7 @@ export const EmptyHostForGPUMonitoring: GPUSmiData = {
   gpuMemoryUtilization: -1,
   gpuMemoryTotal: -1,
   gpuMemoryUsed: -1,
+  gpuUtilization: -1,
 }
 
 export const EmptyHostsForGPUMIGMonitoring: GPUSmiMIGData = {

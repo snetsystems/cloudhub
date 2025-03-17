@@ -127,6 +127,7 @@ export const transformNVidiaSmiData = (
     {statement: 11, property: 'migMode', valueKey: 'last'},
     {statement: 12, property: 'gpuMemoryTotal', valueKey: 'last'},
     {statement: 13, property: 'gpuMemoryUsed', valueKey: 'mean'},
+    {statement: 14, property: 'gpuUtilization', valueKey: 'mean'},
   ]
 
   const hostMap: HostsForGPUSmiData = {}
@@ -158,6 +159,7 @@ export const transformNVidiaSmiData = (
           pcieLinkCurrentWidth: -1,
           pcieLinkTx: -1,
           pcieLinkRx: -1,
+          gpuUtilization: -1,
           migMode: 'Enabled',
         }
         hostMap[host].push(gpuData)

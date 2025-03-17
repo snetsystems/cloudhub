@@ -29,6 +29,7 @@ export interface GPUSmiData {
   gpuMemoryUtilization: number
   gpuMemoryTotal: number
   gpuMemoryUsed: number
+  gpuUtilization: number
 }
 export interface GPUSmiMIGData {
   hostname: string

@@ -19,6 +19,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17066.66667,
       pcieLinkRx: 17066.66667,
       migMode: 'Disabled',
+      gpuUtilization: 50,
     },
     {
       hostname: 'host1',
@@ -37,6 +38,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17066.66667,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host1',
@@ -55,6 +57,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 34133.33333,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host1',
@@ -73,6 +76,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17066.66667,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
   ],
   host2: [
@@ -93,6 +97,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 18000,
       pcieLinkRx: 18000,
       migMode: 'Disabled',
+      gpuUtilization: 55,
     },
     {
       hostname: 'host2',
@@ -111,6 +116,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 18000,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host2',
@@ -129,6 +135,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 35000,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host2',
@@ -147,6 +154,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17000,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host2',
@@ -165,6 +173,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17000,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 95,
     },
   ],
   host3: [
@@ -185,6 +194,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 16000,
       pcieLinkRx: 16000,
       migMode: 'Disabled',
+      gpuUtilization: 52,
     },
     {
       hostname: 'host3',
@@ -203,6 +213,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 16500,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
   ],
   host4: [
@@ -223,6 +234,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17500,
       pcieLinkRx: 17500,
       migMode: 'Disabled',
+      gpuUtilization: 54,
     },
     {
       hostname: 'host4',
@@ -241,6 +253,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17500,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host4',
@@ -259,6 +272,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 34500,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host4',
@@ -277,6 +291,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17050,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host4',
@@ -295,6 +310,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17050,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 91,
     },
     {
       hostname: 'host4',
@@ -313,6 +329,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17050,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 96,
     },
     {
       hostname: 'host4',
@@ -331,6 +348,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17050,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 99,
     },
   ],
   host5: [
@@ -351,6 +369,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17200,
       pcieLinkRx: 17200,
       migMode: 'Disabled',
+      gpuUtilization: 53,
     },
     {
       hostname: 'host5',
@@ -369,6 +388,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17200,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host5',
@@ -387,6 +407,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 33900,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host5',
@@ -405,6 +426,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 16900,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host5',
@@ -423,6 +445,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 16900,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 89,
     },
   ],
   host6: [
@@ -443,6 +466,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 16900,
       pcieLinkRx: 16900,
       migMode: 'Disabled',
+      gpuUtilization: 51,
     },
     {
       hostname: 'host6',
@@ -461,6 +485,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 16900,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host6',
@@ -479,6 +504,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 33700,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host6',
@@ -497,6 +523,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 16700,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host6',
@@ -515,6 +542,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 16700,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 87,
     },
   ],
   host7: [
@@ -535,6 +563,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17300,
       pcieLinkRx: 17300,
       migMode: 'Disabled',
+      gpuUtilization: 56,
     },
     {
       hostname: 'host7',
@@ -553,6 +582,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17300,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host7',
@@ -571,6 +601,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 35200,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host7',
@@ -589,6 +620,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17100,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host7',
@@ -607,6 +639,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17100,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 96,
     },
   ],
   host8: [
@@ -627,6 +660,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17400,
       pcieLinkRx: 17400,
       migMode: 'Disabled',
+      gpuUtilization: 57,
     },
     {
       hostname: 'host8',
@@ -645,6 +679,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17400,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host8',
@@ -663,6 +698,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 35400,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host8',
@@ -681,6 +717,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17200,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host8',
@@ -699,6 +736,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17200,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 94,
     },
   ],
   host9: [
@@ -719,6 +757,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17500,
       pcieLinkRx: 17500,
       migMode: 'Disabled',
+      gpuUtilization: 58,
     },
     {
       hostname: 'host9',
@@ -737,6 +776,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17500,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host9',
@@ -755,6 +795,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 35500,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host9',
@@ -773,6 +814,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17300,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host9',
@@ -791,6 +833,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17300,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 95,
     },
   ],
   host10: [
@@ -811,6 +854,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17600,
       pcieLinkRx: 17600,
       migMode: 'Disabled',
+      gpuUtilization: 59,
     },
     {
       hostname: 'host10',
@@ -829,6 +873,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17600,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host10',
@@ -847,6 +892,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 35600,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host10',
@@ -865,6 +911,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17400,
       pcieLinkRx: 0,
       migMode: 'Enabled',
+      gpuUtilization: -1,
     },
     {
       hostname: 'host10',
@@ -883,6 +930,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkTx: 17400,
       pcieLinkRx: 0,
       migMode: 'Disabled',
+      gpuUtilization: 96,
     },
   ],
 }
