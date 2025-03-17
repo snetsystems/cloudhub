@@ -211,7 +211,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
       .attr('class', 'treemap-host-item')
       .style('border', (d: any) =>
         filteredHostForGPUMonitoring &&
-        d.name === filteredHostForGPUMonitoring.hostname
+        d.originalHostname === filteredHostForGPUMonitoring.hostname
           ? FILTERED_HOST_BORDER
           : null
       )
@@ -241,7 +241,8 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
           .style('border', () => {
             if (
               filteredHostForGPUMonitoring &&
-              hostData.name === filteredHostForGPUMonitoring.hostname &&
+              hostData.originalHostname ===
+                filteredHostForGPUMonitoring.hostname &&
               gpuData.gpuIndex === filteredHostForGPUMonitoring.gpuIndex
             ) {
               return FILTERED_HOST_BORDER
