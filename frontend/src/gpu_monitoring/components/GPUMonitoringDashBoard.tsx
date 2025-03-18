@@ -8,6 +8,7 @@ import {bindActionCreators} from 'redux'
 // Components
 import {Page} from 'src/reusable_ui'
 import GPUMonitoringTreeMapWrapper from 'src/gpu_monitoring/components/GPUMonitoringTreeMapWrapper'
+import GPUMonitoringCellsGraphWrapper from 'src/gpu_monitoring/components/GPUMonitoringCellsGraphWrapper'
 
 // Type
 import {CloudAutoRefresh} from 'src/clouds/types/type'
@@ -296,6 +297,40 @@ function GPUMonitoringDashBoard({
               hostsForGPUSmiMIGData={hostsForGPUSmiMIGData}
               migProfilesState={migProfilesState}
               isLoading={gpuMonitoringTreeMapLoading}
+            />
+          </Authorized>
+        )
+      }
+      case 'gpu-statistics': {
+        return (
+          <Authorized
+            requiredRole={EDITOR_ROLE}
+            propsOverride={{
+              isEditable: false,
+            }}
+          >
+            <GPUMonitoringCellsGraphWrapper
+              title="Statistic Graph"
+              cellKey="d61cdfb1-babd-459a-87b9-5c271360655e"
+              source={source}
+              xNum={2}
+            />
+          </Authorized>
+        )
+      }
+      case 'gpu-series': {
+        return (
+          <Authorized
+            requiredRole={EDITOR_ROLE}
+            propsOverride={{
+              isEditable: false,
+            }}
+          >
+            <GPUMonitoringCellsGraphWrapper
+              title="Time Series Graph"
+              cellKey="37b0740a-79ac-4f4c-8ca0-e223a47400b8"
+              source={source}
+              xNum={4}
             />
           </Authorized>
         )
