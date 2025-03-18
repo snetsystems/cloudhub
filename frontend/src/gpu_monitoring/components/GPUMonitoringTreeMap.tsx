@@ -34,7 +34,10 @@ import {
 } from 'src/gpu_monitoring/utils'
 
 // MockData
-import {hostsForGPUSmiMockingData} from 'src/gpu_monitoring/mocks/gpu-smi-mockdata'
+import {
+  hostsForGPUSmiMockingData,
+  minionHostnameMappingMock,
+} from 'src/gpu_monitoring/mocks/gpu-smi-mockdata'
 import {hostsForGPUSmiMIGMockingData} from 'src/gpu_monitoring/mocks/gpu-smi-mig-mockdata'
 import {migProfilesMockData} from 'src/gpu_monitoring/mocks/gpu-mig-profile-mockdata'
 
@@ -83,9 +86,22 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
     y: 0,
   })
 
+  const mergeMinionHostnameMapping = (
+    realMapping: Record<string, string>,
+    mockMapping: Record<string, string>,
+    isMockActive: boolean
+  ): Record<string, string> => {
+    if (!isMockActive) {
+      return realMapping
+    }
+    return {
+      ...realMapping,
+      ...mockMapping,
+    }
+  }
+
   const mergeData = (realData: any, mockData: any) => {
     const merged = {...realData}
-
     Object.keys(mockData).forEach(key => {
       if (merged[key]) {
         merged[key] = merged[key].concat(mockData[key])
@@ -98,7 +114,6 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
 
   const mergeMigProfilesData = (realData: any, mockData: any) => {
     const merged = {...realData}
-
     Object.keys(mockData).forEach(key => {
       if (merged[key]) {
         merged[key] = merged[key].concat(mockData[key])
@@ -129,6 +144,18 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
     isMockActive
       ? mergeMigProfilesData(migProfilesState, migProfilesMockData)
       : migProfilesState
+  )
+
+  const [finalMinionHostnameMapping, setFinalMinionHostnameMapping] = useState<
+    Record<string, string>
+  >(
+    isMockActive
+      ? mergeMinionHostnameMapping(
+          minionHostnameMapping,
+          minionHostnameMappingMock,
+          isMockActive
+        )
+      : minionHostnameMapping
   )
 
   useLayoutEffect(() => {
@@ -184,11 +211,21 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
       : migProfilesState
 
     setFinalMigProfilesData(computedMigProfiles)
+
+    const computedMapping = isMockActive
+      ? mergeMinionHostnameMapping(
+          minionHostnameMapping,
+          minionHostnameMappingMock,
+          isMockActive
+        )
+      : minionHostnameMapping
+    setFinalMinionHostnameMapping(computedMapping)
   }, [
     isMockActive,
     hostsForGPUSmiData,
     hostsForGPUSmiMIGData,
     migProfilesState,
+    minionHostnameMapping,
   ])
 
   useEffect(() => {
@@ -499,7 +536,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
     finalGPUSmiData,
     finalGPUSmiMIGData,
     finalMigProfilesData,
-    minionHostnameMapping,
+    finalMinionHostnameMapping,
     filteredHostForGPUMonitoring,
   ])
 
@@ -534,7 +571,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
   }
 
   const createHostData = (hostname: string) => {
-    const displayHostname = minionHostnameMapping[hostname] || hostname
+    const displayHostname = finalMinionHostnameMapping[hostname] || hostname
     const hostData: any = {
       name: displayHostname,
       originalHostname: hostname,
