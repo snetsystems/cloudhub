@@ -75,9 +75,7 @@ function GPUMonitoringStatisticsWrapper({
   }, [layout, selfTimeRange])
 
   const getLayoutForInstance = async () => {
-    // app_id: snmp_nx_static
     const SNMP_STATIC_LAYOUT_ID = cellKey
-    await getLayouts()
     const layoutResults = await getLayout(SNMP_STATIC_LAYOUT_ID)
     const layout = getDeep<Layout>(layoutResults, 'data', null)
 
