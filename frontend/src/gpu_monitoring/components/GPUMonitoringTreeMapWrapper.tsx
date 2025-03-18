@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React from 'react'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 
@@ -32,7 +32,9 @@ interface Props {
   hostsForGPUSmiMIGData: HostsForGPUSmiMIGData
   migProfilesState: Record<string, MigProfile[]>
   isLoading: boolean
+  isMockActive: boolean
   filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
+  setIsMockActive: React.Dispatch<React.SetStateAction<boolean>>
   setFilteredHostForGPUMonitoring?: (
     filteredHostForGPUMonitoring: FilteredHostForGPUMonitoring
   ) => void
@@ -44,11 +46,11 @@ function GPUMonitoringTreeMapWrapper({
   hostsForGPUSmiData,
   hostsForGPUSmiMIGData,
   migProfilesState,
+  isMockActive,
   isLoading,
   setFilteredHostForGPUMonitoring,
+  setIsMockActive,
 }: Props) {
-  const [isMockActive, setIsMockActive] = useState(false)
-
   const handleHostnameNodeClick = (
     filteredHost: string,
     filteredGPUIndex: number

@@ -88,6 +88,7 @@ function GPUMonitoringDashBoard({
   const [migProfilesState, setMigProfilesState] = useState<
     Record<string, MigProfile[]>
   >({})
+  const [isMockActive, setIsMockActive] = useState(false)
 
   const GridLayout = WidthProvider(ReactGridLayout)
   const savedCells: DashboardsModels.Cell[] = JSON.parse(
@@ -288,6 +289,8 @@ function GPUMonitoringDashBoard({
             }}
           >
             <GPUMonitoringTreeMapWrapper
+              isMockActive={isMockActive}
+              setIsMockActive={setIsMockActive}
               minionHostnameMapping={minionHostnameMapping}
               hostsForGPUSmiData={hostsForGPUSmiData}
               hostsForGPUSmiMIGData={hostsForGPUSmiMIGData}
