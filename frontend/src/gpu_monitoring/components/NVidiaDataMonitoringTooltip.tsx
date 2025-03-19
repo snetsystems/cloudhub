@@ -71,6 +71,8 @@ function NVidiaDataMonitoringTooltip({rows, name, isSelected = true}: Props) {
                     title={GPUMonitoringTooltipIndicator({
                       tooltipText: formatValue(row.value),
                       value: row.value,
+                      originalValue: row?.originalValue,
+                      isTemperatureMetrics: row?.isTemperatureMetrics,
                     })}
                     width={TABLE_ROW_IN_BODY}
                     className="gpu-monitoring-tooltip--td"

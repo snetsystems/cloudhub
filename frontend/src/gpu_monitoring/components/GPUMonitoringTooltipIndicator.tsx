@@ -1,16 +1,26 @@
 import React from 'react'
 import classnames from 'classnames'
-import {colorScaleForGPUMonitoring} from 'src/gpu_monitoring/utils'
+import {
+  colorScaleForGPUMonitoring,
+  colorScaleForGPUTempMetricsMonitoring,
+} from 'src/gpu_monitoring/utils'
 
 export const GPUMonitoringTooltipIndicator = ({
   tooltipText,
   value,
+  originalValue,
+  isTemperatureMetrics,
 }: {
   tooltipText: string | React.ReactText
   value: number
+  originalValue?: number
+  isTemperatureMetrics?: boolean
 }): JSX.Element => {
-  if (!tooltipText) return
+  if (!tooltipText) return null
   const indicatorStatus = tooltipText === 'N/A' ? '' : tooltipText
+  const color = isTemperatureMetrics
+    ? colorScaleForGPUTempMetricsMonitoring(value)
+    : colorScaleForGPUMonitoring(value)
 
   return (
     <div className="gpu-monitoringTooltip-container">
@@ -20,10 +30,10 @@ export const GPUMonitoringTooltipIndicator = ({
           `gpu-monitoringTooltip--${indicatorStatus}`
         )}
         style={{
-          color: colorScaleForGPUMonitoring(value),
+          color: color,
         }}
       >
-        {tooltipText}
+        {originalValue !== undefined ? originalValue : tooltipText}
       </div>
       <div
         className={classnames(
@@ -31,7 +41,7 @@ export const GPUMonitoringTooltipIndicator = ({
           `gpu-monitoringTooltip--${indicatorStatus}`
         )}
         style={{
-          background: colorScaleForGPUMonitoring(value),
+          background: color,
         }}
       ></div>
     </div>

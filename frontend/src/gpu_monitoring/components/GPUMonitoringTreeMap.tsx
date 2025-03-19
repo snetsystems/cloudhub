@@ -382,12 +382,23 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
               const trimmedHostName = hostData.name.split(':')[0].trim()
               const tooltipRows = [
                 {title: 'GPU Memory', value: memoryUsagePercent},
-                {title: 'GPU Temp (°C)', value: gpuTemperaturePercent},
+                {
+                  title: 'GPU Temp (°C)',
+                  value: gpuTemperaturePercent,
+                  originalValue: currentGPUSmiData.gpuTemperature,
+                  isTemperatureMetrics: true,
+                },
                 {
                   title: 'GPU Memory Temp (°C)',
                   value: gpuMemTemperaturePercent,
+                  originalValue: currentGPUSmiData.gpuMemoryTemperature,
+                  isTemperatureMetrics: true,
                 },
-                {title: 'Pwr Consumption', value: gpuPowerUsagePercent},
+                {
+                  title: 'Pwr Consumption',
+                  value: gpuPowerUsagePercent,
+                  originalValue: currentGPUSmiData.gpuPowerDraw,
+                },
                 {title: 'PCIe Traffic', value: combinedTxRxData},
               ]
               if (

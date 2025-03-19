@@ -1,6 +1,8 @@
 interface TooltipRow {
   title: string
   value: number
+  originalValue?: number
+  isTemperatureMetrics?: boolean
 }
 
 export interface NVidiaSmiMonitoringTooltipNode {

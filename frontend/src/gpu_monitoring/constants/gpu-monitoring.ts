@@ -40,7 +40,7 @@ export const EmptyHostForGPUMonitoring: GPUSmiData = {
   pcieLinkRx: -1,
   pcieLinkCurrentGeneration: -1,
   pcieLinkCurrentWidth: -1,
-  migMode: 'Enabled',
+  migMode: 'Disabled',
   gpuMemoryUtilization: -1,
   gpuMemoryTotal: -1,
   gpuMemoryUsed: -1,
@@ -63,6 +63,7 @@ export const EMPTY_FILTERED_HOST_FOR_GPU_MONITORING: FilteredHostForGPUMonitorin
   ci: -1,
   gi: -1,
   gpuIndex: -1,
+  migMode: 'Disabled',
 }
 
 export const GPU_MONITORING_TOOLTIP_TABLE_SIZING = {

@@ -1,11 +1,7 @@
 import _ from 'lodash'
 import {useEffect, useRef} from 'react'
 import {statusHexColor} from 'src/device_management/utils'
-import {
-  BYTES_PER_GB,
-  MIG_PROFILE_REGEX,
-  MIN_TEMPERATURE,
-} from 'src/gpu_monitoring/constants'
+import {BYTES_PER_GB, MIG_PROFILE_REGEX} from 'src/gpu_monitoring/constants'
 import {
   AllowedGPUMonitoringMetricProperty,
   GPUMonitoringSeries,
@@ -19,11 +15,13 @@ import {
 export const calculateTemperaturePercent = (
   temperature: number,
   maxThreshold: number
-): number =>
-  Math.max(
-    ((temperature - MIN_TEMPERATURE) / (maxThreshold - MIN_TEMPERATURE)) * 100,
-    0
-  )
+): number => {
+  if (maxThreshold === 0) {
+    console.error('Max Threshold value cannot be zero.')
+    return 0
+  }
+  return Math.max((temperature / maxThreshold) * 100, 0)
+}
 
 export const processMigProfiles = (response: string) => {
   const lines = response.split('\n').filter(line => line.trim() !== '')
@@ -94,6 +92,16 @@ export const colorScaleForGPUMonitoring = (value: number) => {
   }
   const result = ((100 - value) * 110) / 100
   return `hsl(${result}, 78%, 54%)`
+}
+
+export const colorScaleForGPUTempMetricsMonitoring = (value: number) => {
+  if (isNaN(value) || value < 0 || value > 100) {
+    return statusHexColor('invalid')
+  }
+
+  const maxHue = (160 * 360) / 255
+  const hue = Math.round((1 - value / 100) * maxHue)
+  return `hsl(${hue}, 78%, 54%)`
 }
 
 type NumericKeys<T> = {
