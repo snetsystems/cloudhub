@@ -85,7 +85,7 @@ function GPUMonitoringDetailsWrapper({
       setSelectedGpuInfo({
         nvidia_smi_log: {
           ...originalHostNvidiaInfo.nvidia_smi_log,
-          gpu: [gpuData[focusedHostGPU]],
+          gpu: gpuData[focusedHostGPU],
         },
       })
     } else {
@@ -158,7 +158,7 @@ function GPUMonitoringDetailsWrapper({
     switch (activeEditorTab) {
       case TabTypes.HOST:
         return focusedHost ? (
-          <div style={{height: 'calc(100% - 40.5px)'}}>
+          <div style={{padding: '12px', height: 'calc(100% - 40.5px)'}}>
             <FancyScrollbar>
               <GPUMonitoringDetailsHost
                 selectInstanceData={hostInfo}
@@ -182,7 +182,7 @@ function GPUMonitoringDetailsWrapper({
                     fontFamily:
                       'Roboto, Helvetica, Arial, Tahoma, Verdana, sans-serif',
                     height: '100%',
-                    margin: '16px',
+                    margin: '12px',
                     backgroundColor: '#292933',
                   }}
                   collapsed={3}
