@@ -92,6 +92,7 @@ class SideNav extends PureComponent<Props> {
     const isUsingK8s = this.isExistInLinks(AddonType.k8s)
     const isUsingOsp = this.isExistInLinks(AddonType.osp)
     const isUsingAI = this.isAddonUrlOn(AddonType.ai)
+    const isUsingNvidiaGpu = this.isAddonUrlOn(AddonType.nvidia)
     const cloudsNavLink = (() => {
       if (isUsingVMware) {
         return 'vmware'
@@ -173,17 +174,22 @@ class SideNav extends PureComponent<Props> {
           <NavBlock
             highlightWhen={['ai']}
             icon="ai-icon"
-            link={`${sourcePrefix}/ai/device-management`}
+            link={
+              isUsingNvidiaGpu
+                ? `${sourcePrefix}/ai/gpu-monitoring`
+                : `${sourcePrefix}/ai/device-management`
+            }
             location={location}
           >
             <NavHeader
               link={`${sourcePrefix}/ai/device-management`}
               title="AI"
             />
-
-            <NavListItem link={`${sourcePrefix}/ai/gpu-monitoring`}>
-              NVIDIA GPU
-            </NavListItem>
+            {isUsingNvidiaGpu && (
+              <NavListItem link={`${sourcePrefix}/ai/gpu-monitoring`}>
+                NVIDIA GPU
+              </NavListItem>
+            )}
             <NavListItem link={`${sourcePrefix}/ai/device-management`}>
               Network Device
             </NavListItem>

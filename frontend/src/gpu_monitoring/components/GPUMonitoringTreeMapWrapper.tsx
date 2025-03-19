@@ -48,6 +48,7 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 import {EMPTY_FILTERED_HOST_FOR_GPU_MONITORING} from 'src/gpu_monitoring/constants'
+import {AddonType} from 'src/shared/constants'
 
 interface Props {
   isMockActive: boolean
@@ -61,6 +62,13 @@ interface Props {
   setFilteredHostForGPUMonitoring?: (
     filteredHostForGPUMonitoring: FilteredHostForGPUMonitoring
   ) => void
+}
+
+const isAddonUrlOn = (name: string, addons): boolean => {
+  return addons && addons.some(item => item.name === name && item.url === 'on')
+}
+const getAddonToken = (name: string, addons): string => {
+  return addons?.find(item => item.name === name)?.token ?? ''
 }
 
 function GPUMonitoringTreeMapWrapper({
@@ -86,6 +94,9 @@ function GPUMonitoringTreeMapWrapper({
   const [migProfilesState, setMigProfilesState] = useState<
     Record<string, MigProfile[]>
   >({})
+
+  const isUsingNvidiaGpu = isAddonUrlOn(AddonType.nvidia, addons)
+  const isUsingNvidiaProd = getAddonToken(AddonType.nvidia, addons)
 
   let intervalID
 
@@ -328,7 +339,9 @@ function GPUMonitoringTreeMapWrapper({
               className={'graph-panel__refreshing openstack-dots--loading'}
             />
           )}
-          {renderMockSlideToggle()}
+          {isUsingNvidiaGpu &&
+            isUsingNvidiaProd === 'dev' &&
+            renderMockSlideToggle()}
         </GPUMonitoringDashboardHeader>
 
         <GPUMonitoringTreeMap
