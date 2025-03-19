@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useCallback, useEffect, useState} from 'react'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 
@@ -10,14 +10,37 @@ import {ComponentSize, SlideToggle} from 'src/reusable_ui'
 
 // Types
 import {
-  HostsForGPUSmiData,
-  HostsForGPUSmiMIGData,
   FilteredHostForGPUMonitoring,
   MigProfile,
+  NotificationAction,
+  FetchNVidiaGPUMigLgipResponse,
+  FetchNvidiaLocalGrainItemsForGPUResponse,
+  NvidiaLocalGrainItemForGPU,
+  Source,
 } from 'src/types'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {Addon} from 'src/types/auth'
+
+// Utils
+import {processMigProfiles} from 'src/gpu_monitoring/utils'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {generateForHosts} from 'src/utils/tempVars'
+
+// API
+import {
+  getNVidiaGPUMigLgip,
+  getNvidiaGrainsItem,
+  getNVidiaSmiDataForHosts,
+  getNVidiaSmiMIGDataForHosts,
+} from 'src/gpu_monitoring/apis'
 
 // ETC
 import {setFilteredHostForGPUMonitoring} from 'src/gpu_monitoring/actions'
+import {
+  notifyGetNVidiaGPUMigLgipFailed,
+  notifyGetNVidiaSmiDataForHostsFailed,
+  notifyGetNVidiaSmiMIGDataForHostsFailed,
+} from 'src/shared/copy/notifications'
 
 // Constants
 import {
@@ -27,13 +50,13 @@ import {
 import {EMPTY_FILTERED_HOST_FOR_GPU_MONITORING} from 'src/gpu_monitoring/constants'
 
 interface Props {
-  minionHostnameMapping: Record<string, string>
-  hostsForGPUSmiData: HostsForGPUSmiData
-  hostsForGPUSmiMIGData: HostsForGPUSmiMIGData
-  migProfilesState: Record<string, MigProfile[]>
-  isLoading: boolean
   isMockActive: boolean
+  source: Source
+  addons?: Addon[]
+  gpuMonitoringManualRefresh?: number
+  cloudAutoRefresh?: CloudAutoRefresh
   filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
+  notify?: NotificationAction
   setIsMockActive: React.Dispatch<React.SetStateAction<boolean>>
   setFilteredHostForGPUMonitoring?: (
     filteredHostForGPUMonitoring: FilteredHostForGPUMonitoring
@@ -42,15 +65,164 @@ interface Props {
 
 function GPUMonitoringTreeMapWrapper({
   filteredHostForGPUMonitoring,
-  minionHostnameMapping,
-  hostsForGPUSmiData,
-  hostsForGPUSmiMIGData,
-  migProfilesState,
   isMockActive,
-  isLoading,
+  cloudAutoRefresh,
+  addons,
+  gpuMonitoringManualRefresh,
+  source,
+  notify,
   setFilteredHostForGPUMonitoring,
   setIsMockActive,
 }: Props) {
+  const [hostsForGPUSmiData, setHostsForGPUSmiData] = useState<any>({})
+  const [hostsForGPUSmiMIGData, setHostsForGPUSmiMIGData] = useState<any>({})
+  const [
+    gpuMonitoringTreeMapLoading,
+    setGpuMonitoringTreeMapLoading,
+  ] = useState<boolean>(true)
+  const [minionHostnameMapping, setMinionHostnameMapping] = useState<
+    Record<string, string>
+  >({})
+  const [migProfilesState, setMigProfilesState] = useState<
+    Record<string, MigProfile[]>
+  >({})
+
+  let intervalID
+
+  useEffect(() => {
+    fetchAllGpuData()
+    fetchNvidiaLocalGrainItems()
+    return () =>
+      setFilteredHostForGPUMonitoring(EMPTY_FILTERED_HOST_FOR_GPU_MONITORING)
+  }, [gpuMonitoringManualRefresh])
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    GlobalAutoRefresher.poll(cloudAutoRefresh.gpuMonitoring)
+
+    if (cloudAutoRefresh.gpuMonitoring) {
+      intervalID = setInterval(() => {
+        fetchAllGpuData()
+        fetchNvidiaLocalGrainItems()
+      }, cloudAutoRefresh.gpuMonitoring)
+    }
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [cloudAutoRefresh.gpuMonitoring])
+
+  const fetchNVidiaSmiDataForHosts = async () => {
+    const tempVars = generateForHosts(source)
+    const resp = await getNVidiaSmiDataForHosts(
+      source.links.proxy,
+      source.telegraf,
+      tempVars
+    )
+    return resp
+  }
+
+  const fetchNVidiaSmiMIGDataForHosts = async () => {
+    const tempVars = generateForHosts(source)
+    const resp = await getNVidiaSmiMIGDataForHosts(
+      source.links.proxy,
+      source.telegraf,
+      tempVars
+    )
+    return resp
+  }
+
+  const fetchNVidiaGPUMigLgip = useCallback(async () => {
+    const addon = addons.find(addon => addon.name === 'salt')
+    if (!addon) {
+      throw new Error('Salt addon not found')
+    }
+
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
+
+    const {data} = await getNVidiaGPUMigLgip(saltMasterUrl, saltMasterToken)
+    const response = data as FetchNVidiaGPUMigLgipResponse
+    const processedMigProfiles = processMigProfiles(response)
+    return processedMigProfiles
+  }, [addons])
+
+  const fetchAllGpuData = async () => {
+    setGpuMonitoringTreeMapLoading(true)
+
+    const [
+      smiDataResult,
+      smiMIGDataResult,
+      migLgipResult,
+    ] = await Promise.allSettled([
+      fetchNVidiaSmiDataForHosts(),
+      fetchNVidiaSmiMIGDataForHosts(),
+      fetchNVidiaGPUMigLgip(),
+    ])
+
+    if (smiDataResult.status === 'fulfilled') {
+      setHostsForGPUSmiData(smiDataResult.value)
+    } else {
+      setHostsForGPUSmiData({})
+      notify(notifyGetNVidiaSmiDataForHostsFailed())
+      console.error(smiDataResult.reason)
+    }
+
+    if (smiMIGDataResult.status === 'fulfilled') {
+      setHostsForGPUSmiMIGData(smiMIGDataResult.value)
+    } else {
+      setHostsForGPUSmiMIGData({})
+      notify(notifyGetNVidiaSmiMIGDataForHostsFailed())
+      console.error(smiMIGDataResult.reason)
+    }
+
+    if (migLgipResult.status === 'fulfilled') {
+      setMigProfilesState(migLgipResult.value)
+    } else {
+      setMigProfilesState({})
+      notify(notifyGetNVidiaGPUMigLgipFailed())
+      console.error(migLgipResult.reason)
+    }
+
+    setGpuMonitoringTreeMapLoading(false)
+  }
+
+  const fetchNvidiaLocalGrainItems = useCallback(async () => {
+    const addon = addons.find(addon => addon.name === 'salt')
+    if (!addon) {
+      console.error('Salt addon not found')
+      return
+    }
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
+
+    try {
+      const {data} = await getNvidiaGrainsItem(saltMasterUrl, saltMasterToken)
+      const response = data as FetchNvidiaLocalGrainItemsForGPUResponse
+      const mapping: Record<string, string> = {}
+
+      response.return.forEach(item => {
+        Object.keys(item).forEach(key => {
+          const grainItem = item[key] as NvidiaLocalGrainItemForGPU
+          const nvidiaGpu = grainItem.gpus.find(
+            gpu => gpu.vendor.toLowerCase() === 'nvidia'
+          )
+          let displayName = grainItem.localhost
+          if (nvidiaGpu) {
+            displayName = `${displayName} : ${nvidiaGpu.model}`
+          }
+          mapping[key] = displayName
+        })
+      })
+      setMinionHostnameMapping(mapping)
+    } catch (error) {
+      console.error(error)
+    }
+  }, [addons])
+
   const handleHostnameNodeClick = (
     filteredHost: string,
     filteredGPUIndex: number
@@ -151,7 +323,7 @@ function GPUMonitoringTreeMapWrapper({
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
-          {isLoading && (
+          {gpuMonitoringTreeMapLoading && (
             <LoadingDots
               className={'graph-panel__refreshing openstack-dots--loading'}
             />
@@ -177,13 +349,19 @@ function GPUMonitoringTreeMapWrapper({
 const mstp = state => {
   const {
     app: {
-      ephemeral: {inPresentationMode},
+      persisted: {cloudAutoRefresh},
     },
-    gpuMonitoringDashboard: {filteredHostForGPUMonitoring},
+    links: {addons},
+    gpuMonitoringDashboard: {
+      gpuMonitoringManualRefresh,
+      filteredHostForGPUMonitoring,
+    },
   } = state
   return {
-    inPresentationMode,
+    cloudAutoRefresh,
+    addons,
     filteredHostForGPUMonitoring,
+    gpuMonitoringManualRefresh,
   }
 }
 
