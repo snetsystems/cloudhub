@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import {useEffect, useRef} from 'react'
 import {statusHexColor} from 'src/device_management/utils'
 import {
   BYTES_PER_GB,
@@ -237,4 +238,17 @@ export const transformNVidiaSmiMIGData = (
   })
 
   return hostMap
+}
+
+export function useIsMounted() {
+  const isMounted = useRef<boolean>(true)
+
+  useEffect(() => {
+    isMounted.current = true
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  return isMounted
 }

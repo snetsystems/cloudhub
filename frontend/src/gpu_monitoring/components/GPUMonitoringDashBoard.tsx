@@ -17,6 +17,7 @@ import {Cell, Source} from 'src/types'
 import {FIXTURE_GPU_MONITORING_CELLS} from 'src/gpu_monitoring/constants'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
+import GPUMonitoringDetailsWrapper from './GPUMonitoringDetailsWrapper'
 
 interface Props {
   source: Source
@@ -136,6 +137,9 @@ function GPUMonitoringDashBoard({inPresentationMode, source}: Props) {
             />
           </Authorized>
         )
+      }
+      case 'gpu-monitoring-details': {
+        return <GPUMonitoringDetailsWrapper />
       }
       default:
         return null

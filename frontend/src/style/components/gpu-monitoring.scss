@@ -195,3 +195,23 @@
   justify-content: center;
   z-index: 5;
 }
+
+.gpu-monitoring-detail-header {
+  z-index: 3;
+  margin-right: 4px;
+}
+.gpu-monitoring-detail-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 18px;
+}
+
+.react-json-view .icon-container .collapsed-icon svg {
+  fill: #22adf6 !important;
+}
+
+.react-json-view .icon-container .expanded-icon svg {
+  fill: rgb(245, 130, 32) !important;
+}

@@ -1,6 +1,7 @@
 // Library
 import _ from 'lodash'
 import {AxiosResponse} from 'axios'
+import {parseStringPromise} from 'xml2js'
 
 // Types
 import {HostsForGPUSmiData, HostsForGPUSmiMIGData, Template} from 'src/types'
@@ -23,6 +24,7 @@ import {
 import {
   runLocalNVidiaGPUMigLgip,
   runLocalNvidiaGrainsItemForGPU,
+  runLocalNVidiaInfoXML,
 } from 'src/shared/apis/saltStack'
 
 export const getNVidiaSmiDataForHosts = async (
@@ -120,5 +122,26 @@ export const getNVidiaGPUMigLgip = async (pUrl: string, pToken: string) => {
     return minions
   } catch (error) {
     console.error(error)
+  }
+}
+
+export const fetchNVidiaInfoJson = async (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) => {
+  try {
+    const response = await runLocalNVidiaInfoXML(pUrl, pToken, pMinionId)
+    const xmlMatch = _.values(response?.data?.return?.[0])
+    if (!xmlMatch) {
+      return null
+    }
+    const jsonData = await parseStringPromise(xmlMatch[0], {
+      explicitArray: false,
+    })
+
+    return jsonData
+  } catch (error) {
+    return null
   }
 }

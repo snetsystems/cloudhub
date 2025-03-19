@@ -34,5 +34,26 @@ export const FIXTURE_GPU_MONITORING_CELLS = (source: Source): Cell[] => {
         self: '',
       },
     },
+    {
+      ...NEW_DEFAULT_DASHBOARD_CELL,
+      i: 'gpu-monitoring-details',
+      x: 0,
+      y: 52,
+      w: 50,
+      h: 30,
+      minH: 15,
+      minW: 13,
+      name: '',
+      queries: [],
+      type: CellType.Table,
+      axes: emptyAxes,
+      colors: DEFAULT_LINE_COLORS,
+      legend: {},
+      timeFormat: '',
+      note: '',
+      links: {
+        self: '',
+      },
+    },
   ]
 }
