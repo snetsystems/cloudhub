@@ -1,7 +1,11 @@
 import _ from 'lodash'
 import {useEffect, useRef} from 'react'
 import {statusHexColor} from 'src/device_management/utils'
-import {BYTES_PER_GB, MIG_PROFILE_REGEX} from 'src/gpu_monitoring/constants'
+import {
+  BYTES_PER_GB,
+  MIG_PROFILE_REGEX,
+  MIN_TEMPERATURE,
+} from 'src/gpu_monitoring/constants'
 import {
   AllowedGPUMonitoringMetricProperty,
   GPUMonitoringSeries,
@@ -16,11 +20,17 @@ export const calculateTemperaturePercent = (
   temperature: number,
   maxThreshold: number
 ): number => {
-  if (maxThreshold === 0) {
-    console.error('Max Threshold value cannot be zero.')
+  if (maxThreshold <= MIN_TEMPERATURE) {
+    console.error(
+      `Max Threshold (${maxThreshold}) must be greater than the minimum temperature (${MIN_TEMPERATURE}).`
+    )
     return 0
   }
-  return Math.max((temperature / maxThreshold) * 100, 0)
+
+  const percent =
+    ((temperature - MIN_TEMPERATURE) / (maxThreshold - MIN_TEMPERATURE)) * 100
+
+  return Math.min(Math.max(percent, 0), 100)
 }
 
 export const processMigProfiles = (response: string) => {
