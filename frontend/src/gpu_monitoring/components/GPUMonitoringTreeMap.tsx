@@ -75,7 +75,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
     rows: [
       {title: 'GPU Memory', value: -1},
       {title: 'PCIe Traffic', value: -1},
-      {title: 'Pwr Consumption', value: -1},
+      {title: 'Pwr Consumption (W)', value: -1},
       {title: 'GPU Temp (°C)', value: -1},
       {title: 'GPU Memory Temp (°C)', value: -1},
     ],
@@ -384,9 +384,9 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                 {title: 'GPU Memory', value: memoryUsagePercent},
                 {title: 'PCIe Traffic', value: combinedTxRxData},
                 {
-                  title: 'Pwr Consumption',
+                  title: 'Pwr Consumption (W)',
                   value: gpuPowerUsagePercent,
-                  originalValue: currentGPUSmiData.gpuPowerDraw,
+                  originalValue: `${currentGPUSmiData.gpuPowerDraw}W`,
                 },
                 {
                   title: 'GPU Temp (°C)',

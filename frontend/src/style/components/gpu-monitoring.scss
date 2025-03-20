@@ -171,7 +171,10 @@
 
 .gpu-monitoringTooltip-value {
   text-align: center;
-  padding-left: 4px;
+  padding-left: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gpu-monitoringTooltip-graph {

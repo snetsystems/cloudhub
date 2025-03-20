@@ -1,7 +1,7 @@
 interface TooltipRow {
   title: string
   value: number
-  originalValue?: number
+  originalValue?: number | string
   isTemperatureMetrics?: boolean
 }
 
