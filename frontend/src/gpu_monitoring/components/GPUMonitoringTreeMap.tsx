@@ -74,10 +74,10 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
     name: '',
     rows: [
       {title: 'GPU Memory', value: -1},
+      {title: 'PCIe Traffic', value: -1},
+      {title: 'Pwr Consumption', value: -1},
       {title: 'GPU Temp (°C)', value: -1},
       {title: 'GPU Memory Temp (°C)', value: -1},
-      {title: 'Pwr Consumption', value: -1},
-      {title: 'PCIe Traffic', value: -1},
     ],
   })
   const [tooltipPosition, setTooltipPosition] = useState({x: 0, y: 0})
@@ -382,6 +382,12 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
               const trimmedHostName = hostData.name.split(':')[0].trim()
               const tooltipRows = [
                 {title: 'GPU Memory', value: memoryUsagePercent},
+                {title: 'PCIe Traffic', value: combinedTxRxData},
+                {
+                  title: 'Pwr Consumption',
+                  value: gpuPowerUsagePercent,
+                  originalValue: currentGPUSmiData.gpuPowerDraw,
+                },
                 {
                   title: 'GPU Temp (°C)',
                   value: gpuTemperaturePercent,
@@ -394,12 +400,6 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                   originalValue: currentGPUSmiData.gpuMemoryTemperature,
                   isTemperatureMetrics: true,
                 },
-                {
-                  title: 'Pwr Consumption',
-                  value: gpuPowerUsagePercent,
-                  originalValue: currentGPUSmiData.gpuPowerDraw,
-                },
-                {title: 'PCIe Traffic', value: combinedTxRxData},
               ]
               if (
                 currentGPUSmiData.migMode &&
