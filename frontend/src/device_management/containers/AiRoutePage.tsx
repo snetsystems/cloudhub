@@ -170,17 +170,6 @@ const AiRoutePage = (props: Props) => {
     })
   }
 
-  const handleApplyTimeForGPUMonitoring = (timeRange: TimeRange): void => {
-    onChooseCloudTimeRange({
-      gpuMonitoring: {
-        ...timeRange,
-        format: !!timeRange.lowerFlux
-          ? INPUT_TIME_TYPE.RELATIVE_TIME
-          : INPUT_TIME_TYPE.TIMESTAMP,
-      },
-    })
-  }
-
   const handleManualRefresh = () => {
     //redux
     setPredictionManualRefresh()
@@ -243,13 +232,6 @@ const AiRoutePage = (props: Props) => {
               onManualRefresh={handleManualRefreshForGPUMonitoring}
               customAutoRefreshOptions={getTimeOptionByGroup('gpuMonitoring')}
               customAutoRefreshSelected={cloudAutoRefresh}
-            />
-            <TimeRangeDropdown
-              // @ts-ignore
-              onChooseTimeRange={handleApplyTimeForGPUMonitoring}
-              selected={
-                cloudTimeRange?.gpuMonitoring ?? CLOUD_TIME_RANGE.gpuMonitoring
-              }
             />
           </>
         ) : (
