@@ -12,9 +12,9 @@
 }
 
 .treemap-host-item {
-  width: 144px;
+  width: auto;
   height: 100%;
-  border: 2px solid $g7-graphite;
+  border: 2px solid #545667;
   margin: 2px;
   box-sizing: border-box;
   display: flex;
@@ -39,8 +39,13 @@
   width: 100%;
   display: flex;
   flex-wrap: wrap;
-  justify-content: left;
-  align-items: flex-start;
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-start: initial;
+  grid-template-rows: repeat(2, minmax(50px, auto));
+  grid-auto-columns: minmax(70px, 1fr);
+  gap: 4px;
+  width: 100%;
 }
 
 .treemap-gpu-node {
