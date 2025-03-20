@@ -181,6 +181,7 @@ function GPUMonitoringDetailsWrapper({
                   style={{
                     fontFamily:
                       'Roboto, Helvetica, Arial, Tahoma, Verdana, sans-serif',
+                    fontSize: '0.65rem',
                     height: '100%',
                     margin: '12px',
                     backgroundColor: '#292933',
@@ -210,22 +211,22 @@ function GPUMonitoringDetailsWrapper({
       >
         <div className="gpu-monitoring-detail-header radio-buttons radio-buttons--default radio-buttons--sm">
           <Radio.Button
-            id="hostspage-tab-HOST"
+            id="details-tab-HOST"
             titleText="HOST"
             value={TabTypes.HOST}
             active={activeEditorTab === TabTypes.HOST}
             onClick={() => handleActiveEditorTab(TabTypes.HOST)}
           >
-            HOST
+            <span className="gpu-monitoring-detail-header-title">HOST</span>
           </Radio.Button>
           <Radio.Button
-            id="hostspage-tab-GPU"
+            id="details-tab-GPU"
             titleText="GPU"
             value={TabTypes.GPU}
             active={activeEditorTab === TabTypes.GPU}
             onClick={() => handleActiveEditorTab(TabTypes.GPU)}
           >
-            GPU
+            <span className="gpu-monitoring-detail-header-title">GPU</span>
           </Radio.Button>
         </div>
         {isLoading && (

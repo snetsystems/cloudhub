@@ -136,9 +136,11 @@ export const fetchNVidiaInfoJson = async (
     if (!xmlMatch) {
       return null
     }
-    const jsonData = await parseStringPromise(xmlMatch[0], {
+    const options = {
       explicitArray: false,
-    })
+      attrkey: 'attrs',
+    }
+    const jsonData = await parseStringPromise(xmlMatch[0], options)
 
     return jsonData
   } catch (error) {
