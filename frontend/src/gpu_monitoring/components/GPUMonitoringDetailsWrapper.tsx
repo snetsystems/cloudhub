@@ -18,7 +18,6 @@ import {HostDetailTable} from 'src/hosts/types/agent'
 import {FilteredHostForGPUMonitoring} from 'src/types'
 
 // ETC
-import {setFilteredHostForGPUMonitoring} from 'src/gpu_monitoring/actions'
 import {fetchNVidiaInfoJson} from 'src/gpu_monitoring/apis'
 
 // Constants
@@ -34,9 +33,6 @@ enum TabTypes {
 interface Props {
   filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
   addons?: Addon[]
-  setFilteredHostForGPUMonitoring?: (
-    filteredHostForGPUMonitoring: FilteredHostForGPUMonitoring
-  ) => void
 }
 
 function GPUMonitoringDetailsWrapper({
@@ -45,10 +41,8 @@ function GPUMonitoringDetailsWrapper({
 }: Props) {
   const [activeEditorTab, setActiveEditorTab] = useState<TabTypes>(TabTypes.GPU)
   const [isLoading, setIsLoading] = useState(false)
-  const [originalHostNvidiaInfo, setOriginalHostNvidiaInfo] = useState<any>(
-    null
-  )
-  const [selectedGpuInfo, setSelectedGpuInfo] = useState<any>(null)
+  const [originalHostNvidiaInfo, setOriginalHostNvidiaInfo] = useState(null)
+  const [selectedGpuInfo, setSelectedGpuInfo] = useState(null)
   const [hostInfo, setHostInfo] = useState<Partial<HostDetailTable> | {}>(null)
 
   const focusedHost = filteredHostForGPUMonitoring?.hostname
@@ -181,7 +175,7 @@ function GPUMonitoringDetailsWrapper({
                   style={{
                     fontFamily:
                       'Roboto, Helvetica, Arial, Tahoma, Verdana, sans-serif',
-                    fontSize: '0.65rem',
+                    fontSize: '11px',
                     height: '100%',
                     margin: '12px',
                     backgroundColor: '#292933',
@@ -247,11 +241,4 @@ const mstp = state => ({
   addons: state.links.addons,
 })
 
-const mdtp = dispatch => ({
-  setFilteredHostForGPUMonitoring: bindActionCreators(
-    setFilteredHostForGPUMonitoring,
-    dispatch
-  ),
-})
-
-export default connect(mstp, mdtp, null)(GPUMonitoringDetailsWrapper)
+export default connect(mstp, null, null)(GPUMonitoringDetailsWrapper)
