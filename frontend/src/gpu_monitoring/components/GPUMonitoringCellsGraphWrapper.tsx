@@ -1,50 +1,77 @@
-import React, {useEffect, useState} from 'react'
-
 // Library
+import React, {useEffect, useMemo, useState} from 'react'
 import _ from 'lodash'
+import ReactObserver from 'react-resize-observer'
+import {connect} from 'react-redux'
 
-import {ErrorHandling} from 'src/shared/decorators/errors'
-import {Cell, Layout, Source, TimeRange} from 'src/types'
-import GPUMonitoringDashboardHeader from './GPUMonitoringDashboardHeader'
+// Types
+import {
+  Cell,
+  FilteredHostForGPUMonitoring,
+  Layout,
+  Source,
+  TimeRange,
+} from 'src/types'
+
+// Constants
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
+import {NVIDIA_SMI_CANNED_LAYOUT_IDS} from 'src/gpu_monitoring/constants'
+
+// Components
+import GPUMonitoringDashboardHeader from 'src/gpu_monitoring/components/GPUMonitoringDashboardHeader'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import TimeRangeShiftDropdown from 'src/shared/components/TimeRangeShiftDropdown'
-import ReactObserver from 'react-resize-observer'
-import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+
+// Utils
+import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
-import {getLayout, getLayouts} from 'src/hosts/apis'
-import {connect} from 'react-redux'
 import {getCellsWithRatio} from 'src/hosts/utils/getCellsWithRatio'
+
+// API
+import {getLayout} from 'src/hosts/apis'
 
 interface Props {
   xNum: number
   title: string
   source: Source
-  cellKey: string
+  selectedTimeRangeLocalStorageKey: string
+  filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
   autoRefresh?: number
   manualRefresh?: number
 }
 
-ErrorHandling
-function GPUMonitoringStatisticsWrapper({
+const GPUMonitoringCellsGraphWrapper = ({
   xNum,
   title,
   source,
-  cellKey,
+  selectedTimeRangeLocalStorageKey,
+  filteredHostForGPUMonitoring,
   autoRefresh,
   manualRefresh,
-}: Props) {
-  //함수 밖으로 빼기
+}: Props) => {
+  const timeSeriesCannedLayoutID = useMemo(() => {
+    if (filteredHostForGPUMonitoring) {
+      if (filteredHostForGPUMonitoring.gpuIndex === -1) {
+        return NVIDIA_SMI_CANNED_LAYOUT_IDS.nvidia_smi_all
+      } else if (filteredHostForGPUMonitoring.migMode === 'Enabled') {
+        return NVIDIA_SMI_CANNED_LAYOUT_IDS.nvidia_smi_mig_enabled
+      } else if (filteredHostForGPUMonitoring.migMode === 'Disabled') {
+        return NVIDIA_SMI_CANNED_LAYOUT_IDS.nvidia_smi_mig_disabled
+      }
+    }
+    return NVIDIA_SMI_CANNED_LAYOUT_IDS.nvidia_smi_all
+  }, [filteredHostForGPUMonitoring])
+
   const getTimeRangeFromLocalStorage = (): TimeRange => {
-    if (!!localStorage.getItem(title)) {
-      return JSON.parse(localStorage.getItem(title))
+    if (!!localStorage.getItem(selectedTimeRangeLocalStorageKey)) {
+      return JSON.parse(localStorage.getItem(selectedTimeRangeLocalStorageKey))
     } else {
       return timeRanges.find(tr => tr.lower === 'now() - 1h')
     }
@@ -62,21 +89,30 @@ function GPUMonitoringStatisticsWrapper({
 
   useEffect(() => {
     getLayoutForInstance()
-  }, [])
+  }, [timeSeriesCannedLayoutID])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(autoRefresh)
   }, [autoRefresh])
 
   useEffect(() => {
-    if (!!layout) {
-      setLayoutCells(getCellsWithRatio(layout, source, '', xNum, null))
+    const whereTags = {
+      host: filteredHostForGPUMonitoring.hostname,
+      index: filteredHostForGPUMonitoring.gpuIndex,
     }
-  }, [layout, selfTimeRange])
+
+    if (!!layout) {
+      setLayoutCells(getCellsWithRatio(layout, source, whereTags, xNum, null))
+    }
+  }, [
+    layout,
+    selfTimeRange,
+    filteredHostForGPUMonitoring.hostname,
+    filteredHostForGPUMonitoring.gpuIndex,
+  ])
 
   const getLayoutForInstance = async () => {
-    const SNMP_STATIC_LAYOUT_ID = cellKey
-    const layoutResults = await getLayout(SNMP_STATIC_LAYOUT_ID)
+    const layoutResults = await getLayout(timeSeriesCannedLayoutID)
     const layout = getDeep<Layout>(layoutResults, 'data', null)
 
     setLayout(layout ? [layout] : [])
@@ -97,7 +133,7 @@ function GPUMonitoringStatisticsWrapper({
 
   const saveTimeRangeToLocalStorage = (timeRange: TimeRange) => {
     localStorage.setItem(
-      'monitoring-static-chart',
+      selectedTimeRangeLocalStorageKey,
       JSON.stringify({
         lower: timeRange?.lower ?? 'now() - 1h',
         lowerFlux: timeRange?.lowerFlux,
@@ -188,14 +224,22 @@ const mstp = state => {
     app: {
       persisted: {autoRefresh, timeZone},
     },
-
+    gpuMonitoringDashboard: {filteredHostForGPUMonitoring},
     links,
   } = state
   return {
     links,
     timeZone,
     autoRefresh,
+    filteredHostForGPUMonitoring,
   }
 }
 
-export default connect(mstp, null)(GPUMonitoringStatisticsWrapper)
+const isEqual = (prev, next) => {
+  return _.isEqual(prev, next)
+}
+
+export default React.memo(
+  connect(mstp, null, null)(GPUMonitoringCellsGraphWrapper),
+  isEqual
+)

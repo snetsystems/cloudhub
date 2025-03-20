@@ -19,6 +19,7 @@ import {
   EmptyHostsForGPUMIGMonitoring,
   GPU_MONITORING_CRITICAL_VALUE,
   DEFAULT_UNIT_SEGMENT,
+  NVIDIA_SMI_CANNED_LAYOUT_IDS,
 } from 'src/gpu_monitoring/constants/gpu-monitoring'
 
 export {
@@ -42,4 +43,5 @@ export {
   EmptyHostsForGPUMIGMonitoring,
   GPU_MONITORING_CRITICAL_VALUE,
   DEFAULT_UNIT_SEGMENT,
+  NVIDIA_SMI_CANNED_LAYOUT_IDS,
 }

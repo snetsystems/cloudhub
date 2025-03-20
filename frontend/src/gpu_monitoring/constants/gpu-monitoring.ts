@@ -75,3 +75,9 @@ export const GPU_MONITORING_TOOLTIP_BODY_FONTSIZE = '11px'
 export const GPU_MONITORING_TOOLTIP_BODY_PADDING = '4px 0px 0px 2px'
 export const GPU_MONITORING_TOOLTIP_OFFSET_X = 40
 export const GPU_MONITORING_TOOLTIP_WIDTH = 200
+
+export const NVIDIA_SMI_CANNED_LAYOUT_IDS = {
+  nvidia_smi_all: '3d38d9a2-c38c-4da9-a029-f5d56a8d2a8b',
+  nvidia_smi_mig_enabled: '8c437aee-8f6e-459b-9e9d-fccb11524b5f',
+  nvidia_smi_mig_disabled: 'ef5a5390-ce3f-4d5e-bbf9-651195c66013',
+}

@@ -7,6 +7,7 @@ import {connect} from 'react-redux'
 // Components
 import {Page} from 'src/reusable_ui'
 import GPUMonitoringTreeMapWrapper from 'src/gpu_monitoring/components/GPUMonitoringTreeMapWrapper'
+import GPUMonitoringDetailsWrapper from 'src/gpu_monitoring/components/GPUMonitoringDetailsWrapper'
 import GPUMonitoringCellsGraphWrapper from 'src/gpu_monitoring/components/GPUMonitoringCellsGraphWrapper'
 
 // Type
@@ -16,8 +17,7 @@ import {Cell, Source} from 'src/types'
 // Constants
 import {FIXTURE_GPU_MONITORING_CELLS} from 'src/gpu_monitoring/constants'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
-import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
-import GPUMonitoringDetailsWrapper from './GPUMonitoringDetailsWrapper'
+import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
 
 interface Props {
   source: Source
@@ -91,7 +91,7 @@ function GPUMonitoringDashBoard({inPresentationMode, source}: Props) {
       case 'gpu-monitoring': {
         return (
           <Authorized
-            requiredRole={EDITOR_ROLE}
+            requiredRole={VIEWER_ROLE}
             propsOverride={{
               isEditable: false,
             }}
@@ -104,34 +104,17 @@ function GPUMonitoringDashBoard({inPresentationMode, source}: Props) {
           </Authorized>
         )
       }
-      case 'gpu-statistics': {
+      case 'gpu-time-series': {
         return (
           <Authorized
-            requiredRole={EDITOR_ROLE}
-            propsOverride={{
-              isEditable: false,
-            }}
-          >
-            <GPUMonitoringCellsGraphWrapper
-              title="Statistic Graph"
-              cellKey="d61cdfb1-babd-459a-87b9-5c271360655e"
-              source={source}
-              xNum={2}
-            />
-          </Authorized>
-        )
-      }
-      case 'gpu-series': {
-        return (
-          <Authorized
-            requiredRole={EDITOR_ROLE}
+            requiredRole={VIEWER_ROLE}
             propsOverride={{
               isEditable: false,
             }}
           >
             <GPUMonitoringCellsGraphWrapper
               title="Time Series Graph"
-              cellKey="37b0740a-79ac-4f4c-8ca0-e223a47400b8"
+              selectedTimeRangeLocalStorageKey="gpu-monitoring-time-series-graph"
               source={source}
               xNum={4}
             />
@@ -153,7 +136,7 @@ function GPUMonitoringDashBoard({inPresentationMode, source}: Props) {
           <div className="dashboard container-fluid full-width">
             {!!cells && cells.length > 0 && (
               <Authorized
-                requiredRole={EDITOR_ROLE}
+                requiredRole={VIEWER_ROLE}
                 propsOverride={{
                   isDraggable: false,
                   isResizable: false,

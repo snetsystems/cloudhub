@@ -1,0 +1,900 @@
+{
+  "id": "ef5a5390-ce3f-4d5e-bbf9-651195c66013",
+  "measurement": "nvidia_smi",
+  "app": "nvidia_smi_mig_disabled",
+  "autoflow": true,
+  "cells": [
+    {
+      "i": "cd9bd36b-5843-4c6d-8191-aa24e37a9e2a",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "GPU Utilization",
+      "queries": [
+        {
+          "query": "SELECT mean(\"utilization_gpu\") AS \"mean_utilization_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "GPU Utilization",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "fb1b1661-13dc-432f-9591-c1fd0abeab34",
+          "type": "scale",
+          "hex": "#74D495",
+          "name": "Atlantis",
+          "value": "0"
+        },
+        {
+          "id": "c3356ccd-2549-4b57-a408-035868b90637",
+          "type": "scale",
+          "hex": "#3F3FBA",
+          "name": "Atlantis",
+          "value": "0"
+        },
+        {
+          "id": "07ca4864-d236-48fd-8458-531f411d203e",
+          "type": "scale",
+          "hex": "#FF4D9E",
+          "name": "Atlantis",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "af57a6e7-658e-4845-8f5a-cc05bbec7f46",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "GPU Mem Utilization",
+      "queries": [
+        {
+          "query": "SELECT mean(\"utilization_memory\") AS \"mean_utilization_memory\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Mem Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "6982e03e-4dc5-45da-9a93-0d83368a3778",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "370afae5-80c3-4a37-93ef-12a463a0e66d",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "22941341-050f-48f1-843a-202a4ce564e7",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "afd141b1-5c9f-46e6-a9a6-08e449ec518a",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "GPU Mem Usage",
+      "queries": [
+        {
+          "query": "SELECT mean(\"memory_used\") AS \"memory_used\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Mem Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "e452b2d6-2c98-4bd7-bbcf-f040c63e8877",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "139b65b5-950f-4d4e-9ff0-1bf4eb1aa4ec",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "898c3d29-f439-457b-abbf-fcc005f81d83",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "8dd3caab-6a0d-43d8-97e4-46413703391e",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "Pwr Consumption",
+      "queries": [
+        {
+          "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_power_draw\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Power Consumption(W)",
+          "prefix": "",
+          "suffix": "W",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "ffc25058-2f0a-4362-8bf1-06f9ae37315c",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "27e93512-bbfc-45e9-8ccd-570f4ed5882c",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "6d872235-467e-4375-97d6-c4839e196823",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "67466370-5ce9-470f-a11f-ee900d505404",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "GPU Temperature",
+      "queries": [
+        {
+          "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Mem Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "9700bed8-0b36-48dd-a54f-8ab7f30e056c",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "52eb4d59-7117-4c4f-b845-105dc9c90f80",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "551f48e7-db8a-46fd-b65b-eb57e2fdeb38",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "001d6639-6d2a-43e8-97ab-f8def3870446",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "GPU Memory Temperature",
+      "queries": [
+        {
+          "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Mem Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "12cc652d-aa1c-41a0-90fc-031927bae53d",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "cc2d275b-6b06-48dd-a4a1-21030fe224f1",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "61335a0a-5ac0-40fd-85a6-7046d006afac",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "406ce8dd-5e76-4e90-995d-0b65d38b9e34",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "SM Clocks",
+      "queries": [
+        {
+          "query": "SELECT mean(\"clocks_current_sm\") AS \"clocks_current_sm\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Clocks",
+          "prefix": "",
+          "suffix": " MHz",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "2933a0dd-ec09-4ed5-a5df-585cc11fc01f",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "c2eb52e0-38fe-4250-a13b-f3614f61957f",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "e98548d9-5dab-4603-a21e-0c7ef61d1477",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_gpu_prometheus.mean_DCGM_FI_PROF_PCIE_RX_BYTES",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_gpu_prometheus.mean_DCGM_FI_PROF_PCIE_TX_BYTES",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "b2cfdcd9-0ab6-4f91-b95f-fcb8c69f0515",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "PCIe Tx",
+      "queries": [
+        {
+          "query": "SELECT mean(\"pcie_link_tx_util\") AS \"pcie_link_tx\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Rx / Tx",
+          "prefix": "",
+          "suffix": "b/sec",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "7a109db2-9c04-472e-9751-b090e4233763",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "b83f69bc-4898-4531-ba0a-8c0ea943fd88",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "f588f08e-3267-4600-833a-bfd303eef87d",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "f75f7d3f-8274-40e9-9e0a-628aa11a535f",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "PCIe Rx",
+      "queries": [
+        {
+          "query": "SELECT mean(\"pcie_link_rx_util\") AS \"pcie_link_rx\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Rx / Tx",
+          "prefix": "",
+          "suffix": "b/sec",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "9cda7c56-dbde-40b9-8b30-84f289e15a43",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0138379b-2626-4bb0-ac8c-e5fb428568af",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "e9952ca2-ff54-4cad-8f22-597f7c4ef2b3",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    }
+  ]
+}

@@ -21,7 +21,7 @@ interface queryWithWhereGroupby {
 export function getCellsWithRatio(
   layouts: Layout[],
   source: Source,
-  whereTag: string,
+  whereTag: {host: string; index: number},
   xNum: number,
   interval?: number
 ): Cell[] {
@@ -98,7 +98,7 @@ function translateCellGroups(groups: LayoutCell[][]): LayoutCell[] {
 function toCell(
   layoutCell: LayoutCell,
   source: Source,
-  whereTag: string,
+  whereTag: {host: string; index: number},
   interval?: number
 ): Cell {
   const queries = layoutCell.queries.map(d =>
@@ -121,23 +121,25 @@ function toCell(
 function toCellQuery(
   layoutQuery: LayoutQuery & queryWithWhereGroupby,
   source: Source,
-  whereTag: string,
+  whereTag: {host: string; index: number},
   interval?: number
 ): CellQuery {
+  const additionalWheres = [
+    whereTag.host !== '' ? `"host" = '${whereTag.host}'` : null,
+    whereTag.index !== -1 ? `"index" = '${whereTag.index}'` : null,
+  ].filter(i => !!i)
+
   const filteredQuery = {
     ...layoutQuery,
-    wheres: [
-      ...(layoutQuery.wheres ?? []),
-      whereTag ? `"agent_host" = '${whereTag}'` : null,
-    ].filter(i => !!i),
+    wheres: [...(layoutQuery.wheres ?? []), ...additionalWheres],
     groupbys: [
-      ...layoutQuery.groupbys,
-      interval > 0 ? `time(${interval}m)` : null,
+      ...(layoutQuery.groupbys ?? []),
+      interval && interval > 0 ? `time(${interval}m)` : null,
     ].filter(i => !!i),
   }
 
   const cellQuery: any =
-    !!whereTag || interval > 0
+    whereTag.host !== '' || whereTag.index !== -1 || (interval && interval > 0)
       ? {
           ...filteredQuery,
           source: source.url,
