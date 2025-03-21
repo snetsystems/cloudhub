@@ -391,13 +391,13 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                 {
                   title: 'GPU Temp (°C)',
                   value: gpuTemperaturePercent,
-                  originalValue: currentGPUSmiData.gpuTemperature,
+                  originalValue: `${currentGPUSmiData.gpuTemperature}°C`,
                   isTemperatureMetrics: true,
                 },
                 {
                   title: 'GPU Memory Temp (°C)',
                   value: gpuMemTemperaturePercent,
-                  originalValue: currentGPUSmiData.gpuMemoryTemperature,
+                  originalValue: `${currentGPUSmiData.gpuMemoryTemperature}°C`,
                   isTemperatureMetrics: true,
                 },
               ]
