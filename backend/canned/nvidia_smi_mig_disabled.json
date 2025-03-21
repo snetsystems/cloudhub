@@ -502,7 +502,7 @@
       "name": "GPU Mem Temperature",
       "queries": [
         {
-          "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "query": "SELECT mean(\"temperature_gpu_mem\") AS \"mean_temperature_gpu_mem\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
           "groupbys": ["\"index\""],
           "wheres": []
         }
