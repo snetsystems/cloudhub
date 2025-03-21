@@ -136,7 +136,7 @@ function GPUMonitoringDashBoard({inPresentationMode, source}: Props) {
               title="Statistic Graph"
               selectedTimeRangeLocalStorageKey="gpu-monitoring-statistics-graph"
               source={source}
-              xNum={4}
+              xNum={2}
               isStatisticsGraph={true}
             />
           </Authorized>

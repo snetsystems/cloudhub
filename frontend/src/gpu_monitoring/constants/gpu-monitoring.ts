@@ -82,8 +82,5 @@ export const NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS = {
   nvidia_smi_mig_disabled: 'ef5a5390-ce3f-4d5e-bbf9-651195c66013',
 }
 
-export const NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_IDS = {
-  nvidia_smi_all: '3d38d9a2-c38c-4da9-a029-f5d56a8d2a8b',
-  nvidia_smi_mig_enabled: '8c437aee-8f6e-459b-9e9d-fccb11524b5f',
-  nvidia_smi_mig_disabled: 'ef5a5390-ce3f-4d5e-bbf9-651195c66013',
-}
+export const NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_ID =
+  '8dd12870-bea8-45a6-a427-de16a83f05d2'

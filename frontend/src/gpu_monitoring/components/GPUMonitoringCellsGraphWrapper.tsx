@@ -20,7 +20,7 @@ import {
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
 import {
-  NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_IDS,
+  NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_ID,
   NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS,
 } from 'src/gpu_monitoring/constants'
 
@@ -62,20 +62,21 @@ const GPUMonitoringCellsGraphWrapper = ({
   isStatisticsGraph,
 }: Props) => {
   const timeSeriesCannedLayoutID = useMemo(() => {
-    const layoutIDs = isStatisticsGraph
-      ? NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_IDS
-      : NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS
+    if (isStatisticsGraph) {
+      return NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_ID
+    }
 
     if (filteredHostForGPUMonitoring) {
       if (filteredHostForGPUMonitoring.gpuIndex === -1) {
-        return layoutIDs.nvidia_smi_all
+        return NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS.nvidia_smi_all
       } else if (filteredHostForGPUMonitoring.migMode === 'Enabled') {
-        return layoutIDs.nvidia_smi_mig_enabled
+        return NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS.nvidia_smi_mig_enabled
       } else if (filteredHostForGPUMonitoring.migMode === 'Disabled') {
-        return layoutIDs.nvidia_smi_mig_disabled
+        return NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS.nvidia_smi_mig_disabled
       }
     }
-    return layoutIDs.nvidia_smi_all
+
+    return NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS.nvidia_smi_all
   }, [filteredHostForGPUMonitoring, isStatisticsGraph])
 
   const getTimeRangeFromLocalStorage = (): TimeRange => {
@@ -105,6 +106,8 @@ const GPUMonitoringCellsGraphWrapper = ({
   }, [autoRefresh])
 
   useEffect(() => {
+    if (isStatisticsGraph) return
+
     const whereTags = {
       host: filteredHostForGPUMonitoring.hostname,
       index: filteredHostForGPUMonitoring.gpuIndex,
@@ -119,6 +122,19 @@ const GPUMonitoringCellsGraphWrapper = ({
     filteredHostForGPUMonitoring.hostname,
     filteredHostForGPUMonitoring.gpuIndex,
   ])
+
+  useEffect(() => {
+    if (!isStatisticsGraph) return
+
+    const whereTags = {
+      host: '',
+      index: -1,
+    }
+
+    if (!!layout) {
+      setLayoutCells(getCellsWithRatio(layout, source, whereTags, xNum, null))
+    }
+  }, [layout, selfTimeRange])
 
   const getLayoutForInstance = async () => {
     const layoutResults = await getLayout(timeSeriesCannedLayoutID)
