@@ -499,7 +499,7 @@
       "h": 18,
       "minW": 10,
       "minH": 4,
-      "name": "GPU Memory Temperature",
+      "name": "GPU Mem Temperature",
       "queries": [
         {
           "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -518,7 +518,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "GPU Mem Temperature",
+          "label": "Mem Temperature",
           "prefix": "",
           "suffix": "",
           "base": "2",
@@ -904,7 +904,7 @@
       "h": 18,
       "minW": 10,
       "minH": 4,
-      "name": "[MIG] GI/CI Frame Buffer Memory Usage",
+      "name": "[MIG] GI/CI Frame Buffer Mem Usage",
       "queries": [
         {
           "query": "SELECT mean(\"memory_fb_used\") AS \"memory_fb_used\" FROM \":db:\".\":rp:\".\"nvidia_smi_mig\"",
@@ -1009,7 +1009,7 @@
       "h": 18,
       "minW": 10,
       "minH": 4,
-      "name": "[MIG] GI/CI Bar1 Memory Usage",
+      "name": "[MIG] GI/CI Bar1 Mem Usage",
       "queries": [
         {
           "query": "SELECT mean(\"memory_bar1_used\") AS \"memory_bar1_used\" FROM \":db:\".\":rp:\".\"nvidia_smi_mig\"",

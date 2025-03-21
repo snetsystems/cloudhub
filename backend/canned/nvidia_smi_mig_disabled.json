@@ -499,7 +499,7 @@
       "h": 18,
       "minW": 10,
       "minH": 4,
-      "name": "GPU Memory Temperature",
+      "name": "GPU Mem Temperature",
       "queries": [
         {
           "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -518,7 +518,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "GPU Mem Temperature",
+          "label": "Mem Temperature",
           "prefix": "",
           "suffix": "",
           "base": "2",
