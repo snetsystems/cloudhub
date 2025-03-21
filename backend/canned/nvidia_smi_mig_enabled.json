@@ -396,117 +396,6 @@
       }
     },
     {
-      "i": "00edd14e-1e86-45c8-9598-26c7118d790a",
-      "x": 0,
-      "y": 0,
-      "w": 20,
-      "h": 18,
-      "minW": 10,
-      "minH": 4,
-      "name": "SM Clocks",
-      "queries": [
-        {
-          "query": "SELECT mean(\"clocks_current_sm\") AS \"clocks_current_sm\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
-          "groupbys": ["\"index\""],
-          "wheres": []
-        }
-      ],
-      "axes": {
-        "x": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y": {
-          "bounds": ["", ""],
-          "label": "Clocks",
-          "prefix": "",
-          "suffix": " MHz",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y2": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "10",
-          "scale": "linear"
-        }
-      },
-      "type": "line",
-      "colors": [
-        {
-          "id": "795b2d5a-c1b9-4bb7-bd72-8d7a50b3bc34",
-          "type": "scale",
-          "hex": "#31C0F6",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        },
-        {
-          "id": "fd6cfb65-fc31-4b6c-b23f-4cdc2b9da3fa",
-          "type": "scale",
-          "hex": "#A500A5",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        },
-        {
-          "id": "68fd8acd-c02d-4feb-b0da-3adb236c8f67",
-          "type": "scale",
-          "hex": "#FF7E27",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        }
-      ],
-      "legend": {
-        "orientation": "bottom"
-      },
-      "tableOptions": {
-        "verticalTimeAxis": true,
-        "sortBy": {
-          "internalName": "time",
-          "displayName": "",
-          "visible": true,
-          "direction": "asc",
-          "tempVar": ""
-        },
-        "wrapping": "truncate",
-        "fixFirstColumn": true
-      },
-      "fieldOptions": [
-        {
-          "internalName": "time",
-          "displayName": "",
-          "visible": true,
-          "direction": "asc",
-          "tempVar": ""
-        },
-        {
-          "internalName": "nvidia_gpu_prometheus.mean_DCGM_FI_PROF_PCIE_RX_BYTES",
-          "displayName": "",
-          "visible": true,
-          "direction": "asc",
-          "tempVar": ""
-        },
-        {
-          "internalName": "nvidia_gpu_prometheus.mean_DCGM_FI_PROF_PCIE_TX_BYTES",
-          "displayName": "",
-          "visible": true,
-          "direction": "asc",
-          "tempVar": ""
-        }
-      ],
-      "graphOptions": {
-        "fillArea": false,
-        "showLine": true,
-        "showPoint": false,
-        "showTempVarCount": ""
-      }
-    },
-    {
       "i": "0c7248b7-2158-424c-8555-277b1210ecc4",
       "x": 0,
       "y": 0,
@@ -689,6 +578,117 @@
       "fieldOptions": [
         {
           "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "00edd14e-1e86-45c8-9598-26c7118d790a",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 18,
+      "minW": 10,
+      "minH": 4,
+      "name": "SM Clocks",
+      "queries": [
+        {
+          "query": "SELECT mean(\"clocks_current_sm\") AS \"clocks_current_sm\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Clocks",
+          "prefix": "",
+          "suffix": " MHz",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "795b2d5a-c1b9-4bb7-bd72-8d7a50b3bc34",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "fd6cfb65-fc31-4b6c-b23f-4cdc2b9da3fa",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "68fd8acd-c02d-4feb-b0da-3adb236c8f67",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_gpu_prometheus.mean_DCGM_FI_PROF_PCIE_RX_BYTES",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_gpu_prometheus.mean_DCGM_FI_PROF_PCIE_TX_BYTES",
           "displayName": "",
           "visible": true,
           "direction": "asc",
@@ -1004,7 +1004,7 @@
         }
       ],
       "graphOptions": {
-        "fillArea": true,
+        "fillArea": false,
         "showLine": true,
         "showPoint": false,
         "showTempVarCount": ""
