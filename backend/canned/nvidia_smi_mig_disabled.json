@@ -128,7 +128,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "GPU Mem Utilization",
+          "label": "Mem Utilization",
           "prefix": "",
           "suffix": "",
           "base": "raw",
@@ -323,7 +323,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "Power Consumption(W)",
+          "label": "Pwr Consumption(W)",
           "prefix": "",
           "suffix": "W",
           "base": "raw",
@@ -518,7 +518,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "GPU Memory Temperature",
+          "label": "GPU Mem Temperature",
           "prefix": "",
           "suffix": "",
           "base": "2",
@@ -616,7 +616,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "Tx",
+          "label": "PCIe Tx",
           "prefix": "",
           "suffix": "b/sec",
           "base": "2",
@@ -714,7 +714,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "Rx",
+          "label": "PCIe Rx",
           "prefix": "",
           "suffix": "b/sec",
           "base": "2",
