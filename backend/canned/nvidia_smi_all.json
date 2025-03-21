@@ -420,9 +420,9 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "GPU Temperature",
+          "label": "GPU Temperature(°C)",
           "prefix": "",
-          "suffix": "",
+          "suffix": "°C",
           "base": "2",
           "scale": "linear"
         },
@@ -518,9 +518,9 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "Mem Temperature",
+          "label": "Mem Temperature(°C)",
           "prefix": "",
-          "suffix": "",
+          "suffix": "°C",
           "base": "2",
           "scale": "linear"
         },
