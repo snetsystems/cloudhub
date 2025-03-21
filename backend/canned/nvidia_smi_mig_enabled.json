@@ -226,7 +226,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "Mem Usage",
+          "label": "GPU Temperature",
           "prefix": "",
           "suffix": "",
           "base": "2",
@@ -324,7 +324,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "Mem Usage",
+          "label": "GPU Memory Temperature",
           "prefix": "",
           "suffix": "",
           "base": "2",
@@ -422,7 +422,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "Rx / Tx",
+          "label": "Tx",
           "prefix": "",
           "suffix": "b/sec",
           "base": "2",
@@ -520,7 +520,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "Rx / Tx",
+          "label": "Rx",
           "prefix": "",
           "suffix": "b/sec",
           "base": "2",
@@ -729,7 +729,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "FB, BAR1 Mem Usage",
+          "label": "FB Mem Usage",
           "prefix": "",
           "suffix": "",
           "base": "2",
@@ -834,7 +834,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "FB, BAR1 Mem Usage",
+          "label": "BAR1 Mem Usage",
           "prefix": "",
           "suffix": "",
           "base": "2",
