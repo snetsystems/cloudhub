@@ -67,16 +67,22 @@ export const EMPTY_FILTERED_HOST_FOR_GPU_MONITORING: FilteredHostForGPUMonitorin
 }
 
 export const GPU_MONITORING_TOOLTIP_TABLE_SIZING = {
-  TABLE_ROW_IN_HEADER: '65%',
-  TABLE_ROW_IN_BODY: '35%',
+  TABLE_ROW_IN_HEADER: '60%',
+  TABLE_ROW_IN_BODY: '40%',
 }
 export const GPU_MONITORING_TOOLTIP_HEADER = '100%'
 export const GPU_MONITORING_TOOLTIP_BODY_FONTSIZE = '11px'
 export const GPU_MONITORING_TOOLTIP_BODY_PADDING = '4px 0px 0px 2px'
 export const GPU_MONITORING_TOOLTIP_OFFSET_X = 40
-export const GPU_MONITORING_TOOLTIP_WIDTH = 200
+export const GPU_MONITORING_TOOLTIP_WIDTH = 220
 
-export const NVIDIA_SMI_CANNED_LAYOUT_IDS = {
+export const NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS = {
+  nvidia_smi_all: '3d38d9a2-c38c-4da9-a029-f5d56a8d2a8b',
+  nvidia_smi_mig_enabled: '8c437aee-8f6e-459b-9e9d-fccb11524b5f',
+  nvidia_smi_mig_disabled: 'ef5a5390-ce3f-4d5e-bbf9-651195c66013',
+}
+
+export const NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_IDS = {
   nvidia_smi_all: '3d38d9a2-c38c-4da9-a029-f5d56a8d2a8b',
   nvidia_smi_mig_enabled: '8c437aee-8f6e-459b-9e9d-fccb11524b5f',
   nvidia_smi_mig_disabled: 'ef5a5390-ce3f-4d5e-bbf9-651195c66013',

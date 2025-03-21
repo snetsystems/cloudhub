@@ -228,6 +228,9 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
     minionHostnameMapping,
   ])
 
+  const formatValue = (value: number): string =>
+    value === -1 ? 'N/A' : `${value.toFixed(1)}`
+
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -381,23 +384,47 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
               }
               const trimmedHostName = hostData.name.split(':')[0].trim()
               const tooltipRows = [
-                {title: 'GPU Memory', value: memoryUsagePercent},
+                {
+                  title: 'GPU Memory',
+                  value: memoryUsagePercent,
+                  originalValue: (
+                    <>
+                      {formatValue(memoryUsagePercent)}
+                      <span style={{paddingLeft: '1px'}}>%</span>
+                    </>
+                  ),
+                },
                 {title: 'PCIe Traffic', value: combinedTxRxData},
                 {
                   title: 'Pwr Consumption (W)',
                   value: gpuPowerUsagePercent,
-                  originalValue: `${currentGPUSmiData.gpuPowerDraw}W`,
+                  originalValue: (
+                    <>
+                      {formatValue(currentGPUSmiData.gpuPowerDraw)}
+                      <span style={{paddingLeft: '1px'}}>W</span>
+                    </>
+                  ),
                 },
                 {
                   title: 'GPU Temp (°C)',
                   value: gpuTemperaturePercent,
-                  originalValue: `${currentGPUSmiData.gpuTemperature}°C`,
+                  originalValue: (
+                    <>
+                      {formatValue(currentGPUSmiData.gpuTemperature)}
+                      <span style={{paddingLeft: '1px'}}>°C</span>
+                    </>
+                  ),
                   isTemperatureMetrics: true,
                 },
                 {
                   title: 'GPU Memory Temp (°C)',
                   value: gpuMemTemperaturePercent,
-                  originalValue: `${currentGPUSmiData.gpuMemoryTemperature}°C`,
+                  originalValue: (
+                    <>
+                      {formatValue(currentGPUSmiData.gpuMemoryTemperature)}
+                      <span style={{paddingLeft: '1px'}}>°C</span>
+                    </>
+                  ),
                   isTemperatureMetrics: true,
                 },
               ]
@@ -408,6 +435,12 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                 tooltipRows.unshift({
                   title: 'GPU Utilization',
                   value: gpuUtilization,
+                  originalValue: (
+                    <>
+                      {formatValue(gpuUtilization)}
+                      <span style={{paddingLeft: '1px'}}>%</span>
+                    </>
+                  ),
                 })
               }
               setTooltipNode({
@@ -502,10 +535,22 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                   {
                     title: 'Frame Buffer Memory',
                     value: fbUsage,
+                    originalValue: (
+                      <>
+                        {formatValue(fbUsage)}
+                        <span style={{paddingLeft: '1px'}}>%</span>
+                      </>
+                    ),
                   },
                   {
                     title: 'Bar1 Memory',
                     value: bar1Usage,
+                    originalValue: (
+                      <>
+                        {formatValue(bar1Usage)}
+                        <span style={{paddingLeft: '1px'}}>%</span>
+                      </>
+                    ),
                   },
                 ]
               } else if (d.data.gi !== undefined && d.data.ci === undefined) {

@@ -1,7 +1,7 @@
 interface TooltipRow {
   title: string
   value: number
-  originalValue?: number | string
+  originalValue?: number | string | JSX.Element
   isTemperatureMetrics?: boolean
 }
 

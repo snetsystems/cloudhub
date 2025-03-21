@@ -19,7 +19,10 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
-import {NVIDIA_SMI_CANNED_LAYOUT_IDS} from 'src/gpu_monitoring/constants'
+import {
+  NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_IDS,
+  NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS,
+} from 'src/gpu_monitoring/constants'
 
 // Components
 import GPUMonitoringDashboardHeader from 'src/gpu_monitoring/components/GPUMonitoringDashboardHeader'
@@ -45,6 +48,7 @@ interface Props {
   filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
   autoRefresh?: number
   manualRefresh?: number
+  isStatisticsGraph?: boolean
 }
 
 const GPUMonitoringCellsGraphWrapper = ({
@@ -55,19 +59,24 @@ const GPUMonitoringCellsGraphWrapper = ({
   filteredHostForGPUMonitoring,
   autoRefresh,
   manualRefresh,
+  isStatisticsGraph,
 }: Props) => {
   const timeSeriesCannedLayoutID = useMemo(() => {
+    const layoutIDs = isStatisticsGraph
+      ? NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_IDS
+      : NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS
+
     if (filteredHostForGPUMonitoring) {
       if (filteredHostForGPUMonitoring.gpuIndex === -1) {
-        return NVIDIA_SMI_CANNED_LAYOUT_IDS.nvidia_smi_all
+        return layoutIDs.nvidia_smi_all
       } else if (filteredHostForGPUMonitoring.migMode === 'Enabled') {
-        return NVIDIA_SMI_CANNED_LAYOUT_IDS.nvidia_smi_mig_enabled
+        return layoutIDs.nvidia_smi_mig_enabled
       } else if (filteredHostForGPUMonitoring.migMode === 'Disabled') {
-        return NVIDIA_SMI_CANNED_LAYOUT_IDS.nvidia_smi_mig_disabled
+        return layoutIDs.nvidia_smi_mig_disabled
       }
     }
-    return NVIDIA_SMI_CANNED_LAYOUT_IDS.nvidia_smi_all
-  }, [filteredHostForGPUMonitoring])
+    return layoutIDs.nvidia_smi_all
+  }, [filteredHostForGPUMonitoring, isStatisticsGraph])
 
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem(selectedTimeRangeLocalStorageKey)) {

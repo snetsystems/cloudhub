@@ -11,9 +11,9 @@ export const GPUMonitoringTooltipIndicator = ({
   originalValue,
   isTemperatureMetrics,
 }: {
-  tooltipText: string | React.ReactText
+  tooltipText: React.ReactText
   value: number
-  originalValue?: number | string
+  originalValue?: React.ReactText | JSX.Element
   isTemperatureMetrics?: boolean
 }): JSX.Element => {
   if (!tooltipText) return null

@@ -124,6 +124,24 @@ function GPUMonitoringDashBoard({inPresentationMode, source}: Props) {
       case 'gpu-monitoring-details': {
         return <GPUMonitoringDetailsWrapper />
       }
+      case 'gpu-statistics': {
+        return (
+          <Authorized
+            requiredRole={VIEWER_ROLE}
+            propsOverride={{
+              isEditable: false,
+            }}
+          >
+            <GPUMonitoringCellsGraphWrapper
+              title="Statistic Graph"
+              selectedTimeRangeLocalStorageKey="gpu-monitoring-statistics-graph"
+              source={source}
+              xNum={4}
+              isStatisticsGraph={true}
+            />
+          </Authorized>
+        )
+      }
       default:
         return null
     }

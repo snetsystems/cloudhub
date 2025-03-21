@@ -36,7 +36,7 @@ function NVidiaDataMonitoringTooltip({rows, name, isSelected = true}: Props) {
 
   return (
     <div
-      style={{minWidth: GPU_MONITORING_TOOLTIP_WIDTH}}
+      style={{width: GPU_MONITORING_TOOLTIP_WIDTH}}
       className={`gpu-monitoring-tooltip-content ${isSelected ? '' : 'grey'}`}
     >
       <div>
