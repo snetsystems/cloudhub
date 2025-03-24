@@ -228,7 +228,9 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
 
     d3.select(containerRef.current).selectAll('*').remove()
 
-    const hostnames = Object.keys(finalGPUSmiData)
+    const hostnames = Object.keys(finalMinionHostnameMapping).filter(
+      name => finalGPUSmiData[name] && finalGPUSmiData[name].length > 0
+    )
     const hosts = hostnames.map(name => createHostData(name))
     const hostContainer = d3
       .select(containerRef.current)
