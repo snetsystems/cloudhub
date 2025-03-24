@@ -4,14 +4,14 @@ import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 
 // Type
-import {Cell, Axes, CellType, Source} from 'src/types'
+import {Cell, Axes, CellType} from 'src/types'
 
 const emptyAxes: Axes = {
   x: DEFAULT_AXIS,
   y: DEFAULT_AXIS,
 }
 
-export const FIXTURE_GPU_MONITORING_CELLS = (source: Source): Cell[] => {
+export const FIXTURE_GPU_MONITORING_CELLS = (): Cell[] => {
   return [
     {
       ...NEW_DEFAULT_DASHBOARD_CELL,
@@ -82,9 +82,9 @@ export const FIXTURE_GPU_MONITORING_CELLS = (source: Source): Cell[] => {
       x: 48,
       y: 24,
       w: 48,
-      h: 40,
+      h: 52,
       minW: 30,
-      minH: 40,
+      minH: 52,
       name: '',
       queries: [],
       type: CellType.Table,

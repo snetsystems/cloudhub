@@ -103,11 +103,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
   const mergeData = (realData: any, mockData: any) => {
     const merged = {...realData}
     Object.keys(mockData).forEach(key => {
-      if (merged[key]) {
-        merged[key] = merged[key].concat(mockData[key])
-      } else {
-        merged[key] = mockData[key]
-      }
+      merged[key] = mockData[key]
     })
     return merged
   }
@@ -115,11 +111,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
   const mergeMigProfilesData = (realData: any, mockData: any) => {
     const merged = {...realData}
     Object.keys(mockData).forEach(key => {
-      if (merged[key]) {
-        merged[key] = merged[key].concat(mockData[key])
-      } else {
-        merged[key] = mockData[key]
-      }
+      merged[key] = mockData[key]
     })
     return merged
   }

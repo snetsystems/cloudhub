@@ -39,7 +39,7 @@ function GPUMonitoringDashBoard({inPresentationMode, source}: Props) {
   )
 
   const cells = useMemo(() => {
-    const defaultCells = FIXTURE_GPU_MONITORING_CELLS(source)
+    const defaultCells = FIXTURE_GPU_MONITORING_CELLS()
 
     if (!!savedCells) {
       return savedCells
