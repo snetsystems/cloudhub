@@ -391,7 +391,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "GPU Pwr Limit - Pwr Consumption Radar Graph Top 5",
+      "name": "Pwr Limit - Pwr Consumption Radar Graph Top 5",
       "queries": [
         {
           "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_gpu_power_draw\", mean(\"gpu_current_power_limit\") AS \"mean_gpu_current_power_limit\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
