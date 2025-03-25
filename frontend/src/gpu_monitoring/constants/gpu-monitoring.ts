@@ -8,8 +8,10 @@ export const GPU_MONITORING_CRITICAL_VALUE = 95
 
 export const GAP_BETWEEN_GPU_LABEL_AND_GPU_NODE = 2
 
-export const REPEATING_LINEAR_GRADIENT_STYLE =
-  'repeating-linear-gradient(45deg, gray, gray 3px, white 3px, white 5px)'
+export const NOT_USABLE_GI_CI_CSS =
+  'repeating-linear-gradient(45deg, gray, gray 1.8px, white 1.8px, white 3px)'
+
+export const UNUSED_GI_CI_CSS = 'gray'
 
 export const PCIE_GENERATION_SPEED: Record<number, number> = {
   1: 250,

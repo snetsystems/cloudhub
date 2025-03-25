@@ -9,13 +9,14 @@ import NVidiaDataMonitoringTooltip from 'src/gpu_monitoring/components/NVidiaDat
 import {
   GAP_BETWEEN_GPU_LABEL_AND_GPU_NODE,
   PCIE_GENERATION_SPEED,
-  REPEATING_LINEAR_GRADIENT_STYLE,
+  UNUSED_GI_CI_CSS,
   BYTES_PER_GB,
   GPU_MONITORING_TOOLTIP_OFFSET_X,
   FILTERED_HOST_BORDER,
   GPU_MONITORING_TOOLTIP_WIDTH,
   GPU_MONITORING_CRITICAL_VALUE,
   DEFAULT_UNIT_SEGMENT,
+  NOT_USABLE_GI_CI_CSS,
 } from 'src/gpu_monitoring/constants'
 
 // Types
@@ -500,9 +501,13 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
             )
             .style('background', (d: any) => {
               const usage = computeGiCiUsage(d)
-              return d.data.unused
-                ? REPEATING_LINEAR_GRADIENT_STYLE
-                : colorScaleForGPUMonitoring(usage)
+              if (d.data.mapping === 'not_usable') {
+                return NOT_USABLE_GI_CI_CSS
+              }
+              if (d.data.mapping === 'unused') {
+                return UNUSED_GI_CI_CSS
+              }
+              return colorScaleForGPUMonitoring(usage)
             })
             .classed('gpu-monitoring-tooltip--blink', (d: any) => {
               return computeGiCiUsage(d) >= GPU_MONITORING_CRITICAL_VALUE
@@ -640,11 +645,30 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
       if (!isMigDisabled) {
         if (gpuRows.length > 0) {
           const applicableProfiles = finalMigProfilesData[hostname] || []
-          const unitSegment =
-            applicableProfiles.length > 0
-              ? d3.min(applicableProfiles, (d: any) => d.memGiB)
-              : DEFAULT_UNIT_SEGMENT
-          const totalSegments = Math.floor(gpuInfo.gpuMemoryTotal / unitSegment)
+          const filteredProfiles = applicableProfiles.filter(
+            (profile: MigProfile) => !profile.name.includes('+me')
+          )
+
+          const smallestProfile =
+            filteredProfiles.length > 0
+              ? filteredProfiles.reduce((prev: MigProfile, curr: MigProfile) =>
+                  curr.memGiB < prev.memGiB ? curr : prev
+                )
+              : applicableProfiles.length > 0
+              ? applicableProfiles.reduce(
+                  (prev: MigProfile, curr: MigProfile) =>
+                    curr.memGiB < prev.memGiB ? curr : prev
+                )
+              : {memGiB: DEFAULT_UNIT_SEGMENT, totalInstances: 1}
+
+          const unitSegment = smallestProfile.memGiB
+          const maxInstances = smallestProfile.totalInstances
+
+          const computedSegments = Math.floor(
+            gpuInfo.gpuMemoryTotal / unitSegment
+          )
+          const allowedSegments = maxInstances
+          const totalSegments = computedSegments
           const giMap: Record<string, any[]> = {}
 
           gpuRows.forEach((row: any) => {
@@ -731,7 +755,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                   mapping: '1:1',
                 })
               } else {
-                const expectedCiCountForGi = segmentsForGi
+                const expectedCiCountForGi = allowedSegments
                 const eachCiValue = allocated / expectedCiCountForGi
 
                 rows.forEach((row: any) => {
@@ -762,21 +786,39 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
               }
             })
 
-          const leftoverSegments = totalSegments - totalAllocatedSegments
-          if (leftoverSegments > 0) {
-            for (let i = 0; i < leftoverSegments; i++) {
+          const leftoverUsableSegments =
+            allowedSegments - totalAllocatedSegments
+          if (leftoverUsableSegments > 0) {
+            for (let i = 0; i < leftoverUsableSegments; i++) {
               giNodes.push({
                 name: 'Unused',
                 value: unitSegment,
                 unused: true,
+                mapping: 'unused',
               })
-            }
-            for (let i = 0; i < leftoverSegments; i++) {
               ciNodes.push({
                 name: 'Unused',
                 value: unitSegment,
                 unused: true,
                 mapping: 'unused',
+              })
+            }
+          }
+
+          const notUsableSegments = computedSegments - allowedSegments
+          if (leftoverUsableSegments > 0 && notUsableSegments > 0) {
+            for (let i = 0; i < notUsableSegments; i++) {
+              giNodes.push({
+                name: 'Not Usable',
+                value: unitSegment,
+                unused: true,
+                mapping: 'not_usable',
+              })
+              ciNodes.push({
+                name: 'Not Usable',
+                value: unitSegment,
+                unused: true,
+                mapping: 'not_usable',
               })
             }
           }
