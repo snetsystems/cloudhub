@@ -1118,7 +1118,12 @@
       "queries": [
         {
           "query": "SELECT mean(\"used_memory\") AS \"used_memory\" FROM \":db:\".\":rp:\".\"nvidia_smi_process\"",
-          "groupbys": ["\"index\"", "\"gpu_index\"", "\"compute_index\""],
+          "groupbys": [
+            "\"index\"",
+            "\"gpu_index\"",
+            "\"compute_index\"",
+            "\"name\""
+          ],
           "wheres": []
         }
       ],

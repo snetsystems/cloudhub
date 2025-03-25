@@ -32,7 +32,7 @@ import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
-import {generateForHosts} from 'src/utils/tempVars'
+import {generateForHostsForStatisticalGraph} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
 import {getCellsWithRatio} from 'src/hosts/utils/getCellsWithRatio'
@@ -47,7 +47,7 @@ interface Props {
   selectedTimeRangeLocalStorageKey: string
   filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
   autoRefresh?: number
-  manualRefresh?: number
+  gpuMonitoringManualRefresh?: number
   isStatisticsGraph?: boolean
 }
 
@@ -58,7 +58,7 @@ const GPUMonitoringCellsGraphWrapper = ({
   selectedTimeRangeLocalStorageKey,
   filteredHostForGPUMonitoring,
   autoRefresh,
-  manualRefresh,
+  gpuMonitoringManualRefresh: manualRefresh,
   isStatisticsGraph,
 }: Props) => {
   const timeSeriesCannedLayoutID = useMemo(() => {
@@ -143,7 +143,7 @@ const GPUMonitoringCellsGraphWrapper = ({
     setLayout(layout ? [layout] : [])
   }
 
-  const tempVars = generateForHosts(source)
+  const tempVars = generateForHostsForStatisticalGraph(source)
 
   const handleChooseTimeRange = ({lower, upper}) => {
     if (upper) {
@@ -249,7 +249,10 @@ const mstp = state => {
     app: {
       persisted: {autoRefresh, timeZone},
     },
-    gpuMonitoringDashboard: {filteredHostForGPUMonitoring},
+    gpuMonitoringDashboard: {
+      filteredHostForGPUMonitoring,
+      gpuMonitoringManualRefresh,
+    },
     links,
   } = state
   return {
@@ -257,6 +260,7 @@ const mstp = state => {
     timeZone,
     autoRefresh,
     filteredHostForGPUMonitoring,
+    gpuMonitoringManualRefresh,
   }
 }
 
