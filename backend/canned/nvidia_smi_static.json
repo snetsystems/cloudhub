@@ -313,24 +313,24 @@
       "type": "staticBar",
       "colors": [
         {
-          "id": "088e03cb-f309-4df9-ae97-f85ea1cd98ec",
+          "id": "14d11ad2-b6ee-407e-84b8-2ce9b58e7c85",
           "type": "scale",
-          "hex": "#31C0F6",
-          "name": "Nineteen Eighty Four",
+          "hex": "#FD7A5D",
+          "name": "Delorean",
           "value": "0"
         },
         {
-          "id": "372dee94-c4aa-4da2-bfd3-8ff9ab53a3d3",
+          "id": "9cb145a3-cd25-4706-bf7f-85dfad1aaab8",
           "type": "scale",
-          "hex": "#A500A5",
-          "name": "Nineteen Eighty Four",
+          "hex": "#5F1CF2",
+          "name": "Delorean",
           "value": "0"
         },
         {
-          "id": "a0099bc3-1484-435a-8df0-9a733e67547f",
+          "id": "9fe90bdb-99d0-4984-98a2-3ee65a0da01f",
           "type": "scale",
-          "hex": "#FF7E27",
-          "name": "Nineteen Eighty Four",
+          "hex": "#4CE09A",
+          "name": "Delorean",
           "value": "0"
         }
       ],
@@ -698,24 +698,24 @@
       "type": "staticBar",
       "colors": [
         {
-          "id": "a215a077-1590-4241-8a33-ecc79c7a890f",
+          "id": "563e4763-7fbb-4db8-ae63-05d97c158dae",
           "type": "scale",
-          "hex": "#31C0F6",
-          "name": "Nineteen Eighty Four",
+          "hex": "#74D495",
+          "name": "Atlantis",
           "value": "0"
         },
         {
-          "id": "efaae64d-6549-4706-9643-2fce9ea59381",
+          "id": "37b885f6-0f26-483b-b026-ac1cb9b5c69e",
           "type": "scale",
-          "hex": "#A500A5",
-          "name": "Nineteen Eighty Four",
+          "hex": "#3F3FBA",
+          "name": "Atlantis",
           "value": "0"
         },
         {
-          "id": "9ff3bac1-19e2-400e-89e2-40322978ff67",
+          "id": "0da6c575-b95f-4434-bb26-45384b0cc279",
           "type": "scale",
-          "hex": "#FF7E27",
-          "name": "Nineteen Eighty Four",
+          "hex": "#FF4D9E",
+          "name": "Atlantis",
           "value": "0"
         }
       ],
@@ -942,24 +942,24 @@
       "type": "staticBar",
       "colors": [
         {
-          "id": "9337c377-45c0-4aac-b778-9370c2c0bfa1",
+          "id": "433aff16-1afc-45be-91fe-6aebd67fa118",
           "type": "scale",
-          "hex": "#31C0F6",
-          "name": "Nineteen Eighty Four",
+          "hex": "#FD7A5D",
+          "name": "Delorean",
           "value": "0"
         },
         {
-          "id": "4f08a245-c14c-4edc-81ca-b4fb2eebdb72",
+          "id": "300a0316-b39f-48d5-a816-827731d3bd08",
           "type": "scale",
-          "hex": "#A500A5",
-          "name": "Nineteen Eighty Four",
+          "hex": "#5F1CF2",
+          "name": "Delorean",
           "value": "0"
         },
         {
-          "id": "9d90e439-1f12-42c8-99cf-14571fc9a7b3",
+          "id": "2837d74f-fc5b-4dfd-9185-4dc98ce6d642",
           "type": "scale",
-          "hex": "#FF7E27",
-          "name": "Nineteen Eighty Four",
+          "hex": "#4CE09A",
+          "name": "Delorean",
           "value": "0"
         }
       ],
@@ -1177,24 +1177,24 @@
       "type": "staticBar",
       "colors": [
         {
-          "id": "e540d310-6e78-4803-ab33-169a464e43a4",
+          "id": "698bcf77-f6f1-4d6f-a6db-4b2b9b0fcf64",
           "type": "scale",
-          "hex": "#31C0F6",
-          "name": "Nineteen Eighty Four",
+          "hex": "#74D495",
+          "name": "Atlantis",
           "value": "0"
         },
         {
-          "id": "3ec99f29-5f5b-4ea7-8b99-343172c68486",
+          "id": "0924fff5-5ec4-4463-aa85-04bc6ac4d605",
           "type": "scale",
-          "hex": "#A500A5",
-          "name": "Nineteen Eighty Four",
+          "hex": "#3F3FBA",
+          "name": "Atlantis",
           "value": "0"
         },
         {
-          "id": "4872da04-1ca6-4000-8c23-aa4d7ebd4a52",
+          "id": "3599dad3-0d46-4863-a140-674a3e125abe",
           "type": "scale",
-          "hex": "#FF7E27",
-          "name": "Nineteen Eighty Four",
+          "hex": "#FF4D9E",
+          "name": "Atlantis",
           "value": "0"
         }
       ],

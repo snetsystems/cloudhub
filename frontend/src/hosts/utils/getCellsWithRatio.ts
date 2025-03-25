@@ -5,6 +5,7 @@ import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants'
 import {Source, Cell} from 'src/types'
 import {Layout, LayoutCell, LayoutQuery} from 'src/types/hosts'
 import {CellType, CellQuery} from 'src/types/dashboards'
+import {ColorString} from 'src/types/colors'
 
 // 추후 높이 조절을 위해 남겨둠 (delete)
 const CELL_WIDTH = 32
@@ -112,7 +113,7 @@ function toCell(
     links: {},
     legend: {},
     type: (layoutCell?.type as CellType) || CellType.Line,
-    colors: [],
+    colors: ((layoutCell?.colors as unknown) as ColorString[]) || [],
   }
 
   return cell
