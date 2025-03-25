@@ -46,7 +46,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "GPU Mem usage Top 5",
+      "name": "GPU Mem Usage Top 5",
       "queries": [
         {
           "query": "SELECT mean(\"memory_used\") AS \"memory_used\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
