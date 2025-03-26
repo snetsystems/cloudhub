@@ -18,7 +18,12 @@ import _ from 'lodash'
 import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
 import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
-import {CellType, FieldOption, TableOptions} from 'src/types/dashboards'
+import {
+  CellType,
+  DecimalPlaces,
+  FieldOption,
+  TableOptions,
+} from 'src/types/dashboards'
 
 // Utilities
 import {
@@ -62,6 +67,7 @@ interface Props {
   fillArea: boolean
   showLine: boolean
   showPoint: boolean
+  decimalPlaces: DecimalPlaces
   showCount?: number | null
 }
 
@@ -80,6 +86,7 @@ const LineChart = ({
   showLine,
   showPoint,
   showCount,
+  decimalPlaces,
 }: Props) => {
   const chartRef = useRef<ChartJS<'line', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -115,8 +122,17 @@ const LineChart = ({
         yAxisTitle,
         showLine,
         showPoint,
+        decimalPlaces,
       }),
-    [isUpdated, xAxisTitle, yAxisTitle, axes, showLine, showPoint]
+    [
+      isUpdated,
+      xAxisTitle,
+      yAxisTitle,
+      axes,
+      showLine,
+      showPoint,
+      decimalPlaces,
+    ]
   )
 
   useEffect(() => {

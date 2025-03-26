@@ -146,6 +146,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -261,6 +265,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -376,6 +384,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -498,6 +510,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -640,6 +656,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": true,
         "showLine": true,
@@ -775,6 +795,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -890,6 +914,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -1005,6 +1033,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -1120,6 +1152,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -1254,6 +1290,10 @@
           "tempVar": ""
         }
       ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,

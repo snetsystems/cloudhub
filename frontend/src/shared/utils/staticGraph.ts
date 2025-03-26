@@ -3,7 +3,7 @@ import _ from 'lodash'
 
 // Types
 import {Axes, Template, TemplateValue} from 'src/types'
-import {CellType, GraphOptions} from 'src/types/dashboards'
+import {CellType, DecimalPlaces, GraphOptions} from 'src/types/dashboards'
 import {TimeSeriesSeries} from 'src/types/series'
 import {
   Direction,
@@ -38,40 +38,42 @@ export const convertToStaticGraphMinMaxValue = (value: string) => {
 export const formatStaticGraphValue = (
   axes: Axes,
   value: number,
-  axesType = 'y'
+  axesType = 'y',
+  decimalPlacesDigits?: number
 ) => {
+  const dp = decimalPlacesDigits !== undefined ? decimalPlacesDigits : 0
   let formattedValue
 
   let axesBase = axesType === 'x' ? axes?.x?.base : axes?.y?.base
   switch (axesBase) {
     case 'raw':
       if (value >= 1e5) {
-        formattedValue = value.toExponential(2)
+        formattedValue = value.toExponential(dp)
       } else {
-        formattedValue = formatNumberForGraphWithPrecision(value)
+        formattedValue = formatNumberForGraphWithPrecision(value, dp)
       }
       break
     case '10':
       if (value >= 1e9) {
-        formattedValue = (value / 1e9).toFixed(2) + ' B'
+        formattedValue = (value / 1e9).toFixed(dp) + ' B'
       } else if (value >= 1e6) {
-        formattedValue = (value / 1e6).toFixed(2) + ' M'
+        formattedValue = (value / 1e6).toFixed(dp) + ' M'
       } else if (value >= 1e3) {
-        formattedValue = (value / 1e3).toFixed(2) + ' K'
+        formattedValue = (value / 1e3).toFixed(dp) + ' K'
       } else {
-        formattedValue = formatNumberForGraphWithPrecision(value)
+        formattedValue = formatNumberForGraphWithPrecision(value, dp)
       }
       break
     case '2':
     default:
       if (value >= 1024 * 1024 * 1024) {
-        formattedValue = (value / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
+        formattedValue = (value / (1024 * 1024 * 1024)).toFixed(dp) + ' GB'
       } else if (value >= 1024 * 1024) {
-        formattedValue = (value / (1024 * 1024)).toFixed(2) + ' MB'
+        formattedValue = (value / (1024 * 1024)).toFixed(dp) + ' MB'
       } else if (value >= 1024) {
-        formattedValue = (value / 1024).toFixed(2) + ' KB'
+        formattedValue = (value / 1024).toFixed(dp) + ' KB'
       } else {
-        formattedValue = formatNumberForGraphWithPrecision(value) + ' B'
+        formattedValue = formatNumberForGraphWithPrecision(value, dp) + ' B'
       }
       break
   }
@@ -587,11 +589,13 @@ const createBarChartOptions = ({
   xAxisTitle,
   yAxisTitle,
   barChartType,
+  decimalPlaces,
 }: {
   axes: Axes
   xAxisTitle?: string
   yAxisTitle?: string
   barChartType: CellType
+  decimalPlaces: DecimalPlaces
 }) => {
   const type: StatisticalGraphScaleType =
     axes?.y?.scale === 'log' ? 'logarithmic' : undefined
@@ -616,9 +620,11 @@ const createBarChartOptions = ({
           },
           label: function (context) {
             return [
-              ` ${context.dataset.label}:${formatStaticGraphValue(
+              ` ${context.dataset.label}: ${formatStaticGraphValue(
                 axes,
-                context.raw
+                context.raw,
+                'y',
+                decimalPlaces?.digits
               )}`,
             ]
           },
@@ -657,7 +663,12 @@ const createBarChartOptions = ({
         ticks: {
           ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
           callback: function (value) {
-            return formatStaticGraphValue(axes, value)
+            return formatStaticGraphValue(
+              axes,
+              value,
+              'y',
+              decimalPlaces?.digits
+            )
           },
         },
       },
@@ -673,12 +684,14 @@ const createLineChartOptions = ({
   yAxisTitle,
   showLine,
   showPoint,
+  decimalPlaces,
 }: {
   axes: Axes
   xAxisTitle?: string
   yAxisTitle?: string
   showLine: boolean
   showPoint: boolean
+  decimalPlaces: DecimalPlaces
 }) => {
   const type: StatisticalGraphScaleType =
     axes?.y?.scale === 'log' ? 'logarithmic' : undefined
@@ -705,9 +718,11 @@ const createLineChartOptions = ({
           },
           label: function (context) {
             return [
-              ` ${context.dataset.label}:${formatStaticGraphValue(
+              ` ${context.dataset.label}: ${formatStaticGraphValue(
                 axes,
-                context.raw
+                context.raw,
+                'y',
+                decimalPlaces?.digits
               )}`,
             ]
           },
@@ -744,7 +759,12 @@ const createLineChartOptions = ({
         ticks: {
           ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
           callback: function (value) {
-            return formatStaticGraphValue(axes, value)
+            return formatStaticGraphValue(
+              axes,
+              value,
+              'y',
+              decimalPlaces?.digits
+            )
           },
         },
       },
@@ -758,10 +778,12 @@ const createScatterChartOptions = ({
   axes,
   xAxisTitle,
   yAxisTitle,
+  decimalPlaces,
 }: {
   axes: Axes
   xAxisTitle?: string
   yAxisTitle?: string
+  decimalPlaces: DecimalPlaces
 }) => {
   const xType: StatisticalGraphScaleType =
     axes?.x?.scale === 'log' ? 'logarithmic' : undefined
@@ -804,8 +826,14 @@ const createScatterChartOptions = ({
               `(${formatStaticGraphValue(
                 axes,
                 x,
-                'x'
-              )} , ${formatStaticGraphValue(axes, y, 'y')})`,
+                'x',
+                decimalPlaces?.digits
+              )} , ${formatStaticGraphValue(
+                axes,
+                y,
+                'y',
+                decimalPlaces?.digits
+              )})`,
             ]
           },
         },
@@ -824,7 +852,12 @@ const createScatterChartOptions = ({
         ticks: {
           ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
           callback: function (value) {
-            return formatStaticGraphValue(axes, value, 'x')
+            return formatStaticGraphValue(
+              axes,
+              value,
+              'x',
+              decimalPlaces?.digits
+            )
           },
         },
       },
@@ -840,7 +873,12 @@ const createScatterChartOptions = ({
         ticks: {
           ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
           callback: function (value) {
-            return formatStaticGraphValue(axes, value)
+            return formatStaticGraphValue(
+              axes,
+              value,
+              'y',
+              decimalPlaces?.digits
+            )
           },
         },
       },
@@ -849,7 +887,13 @@ const createScatterChartOptions = ({
   return dynamicOption
 }
 
-const createPieOptions = ({axes}: {axes: Axes}) => {
+const createPieOptions = ({
+  axes,
+  decimalPlaces,
+}: {
+  axes: Axes
+  decimalPlaces: DecimalPlaces
+}) => {
   const dynamicOption = {
     ...STATIC_GRAPH_OPTIONS,
     plugins: {
@@ -866,7 +910,9 @@ const createPieOptions = ({axes}: {axes: Axes}) => {
             return [
               ` ${context.dataset.label}: ${formatStaticGraphValue(
                 axes,
-                context.raw
+                context.raw,
+                'y',
+                decimalPlaces?.digits
               )}`,
             ]
           },
@@ -878,7 +924,13 @@ const createPieOptions = ({axes}: {axes: Axes}) => {
 
   return dynamicOption
 }
-const createStaticRadarOptions = ({axes}: {axes: Axes}) => {
+const createStaticRadarOptions = ({
+  axes,
+  decimalPlaces,
+}: {
+  axes: Axes
+  decimalPlaces: DecimalPlaces
+}) => {
   const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
   const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
     bounds[0]
@@ -902,7 +954,9 @@ const createStaticRadarOptions = ({axes}: {axes: Axes}) => {
             return [
               ` ${context.dataset.label}: ${formatStaticGraphValue(
                 axes,
-                context.raw
+                context.raw,
+                'y',
+                decimalPlaces?.digits
               )}`,
             ]
           },
@@ -922,7 +976,12 @@ const createStaticRadarOptions = ({axes}: {axes: Axes}) => {
         ticks: {
           ...STATIC_GRAPH_OPTIONS.scales?.r?.ticks,
           callback: function (value) {
-            return formatStaticGraphValue(axes, value)
+            return formatStaticGraphValue(
+              axes,
+              value,
+              'y',
+              decimalPlaces?.digits
+            )
           },
         },
       },
@@ -946,12 +1005,18 @@ export const staticGraphDatasets = (cellType: CellType) => {
 }
 
 export const staticGraphOptions = {
-  [CellType.StaticStackedBar]: ({axes, xAxisTitle, yAxisTitle}) =>
+  [CellType.StaticStackedBar]: ({
+    axes,
+    xAxisTitle,
+    yAxisTitle,
+    decimalPlaces,
+  }) =>
     createBarChartOptions({
       axes,
       xAxisTitle,
       yAxisTitle,
       barChartType: CellType.StaticStackedBar,
+      decimalPlaces,
     }),
   [CellType.StaticLineChart]: ({
     axes,
@@ -959,6 +1024,7 @@ export const staticGraphOptions = {
     yAxisTitle,
     showLine,
     showPoint,
+    decimalPlaces,
   }) =>
     createLineChartOptions({
       axes,
@@ -966,18 +1032,24 @@ export const staticGraphOptions = {
       yAxisTitle,
       showLine,
       showPoint,
+      decimalPlaces,
     }),
-  [CellType.StaticBar]: ({axes, xAxisTitle, yAxisTitle}) =>
+  [CellType.StaticBar]: ({axes, xAxisTitle, yAxisTitle, decimalPlaces}) =>
     createBarChartOptions({
       axes,
       xAxisTitle,
       yAxisTitle,
       barChartType: CellType.StaticBar,
+      decimalPlaces,
     }),
-  [CellType.StaticPie]: createPieOptions,
-  [CellType.StaticDoughnut]: createPieOptions,
-  [CellType.StaticScatter]: createScatterChartOptions,
-  [CellType.StaticRadar]: createStaticRadarOptions,
+  [CellType.StaticPie]: ({axes, decimalPlaces}) =>
+    createPieOptions({axes, decimalPlaces}),
+  [CellType.StaticDoughnut]: ({axes, decimalPlaces}) =>
+    createPieOptions({axes, decimalPlaces}),
+  [CellType.StaticScatter]: ({axes, xAxisTitle, yAxisTitle, decimalPlaces}) =>
+    createScatterChartOptions({axes, xAxisTitle, yAxisTitle, decimalPlaces}),
+  [CellType.StaticRadar]: ({axes, decimalPlaces}) =>
+    createStaticRadarOptions({axes, decimalPlaces}),
 }
 
 export const parseIfPositiveNumber = (

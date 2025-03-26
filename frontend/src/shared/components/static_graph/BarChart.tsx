@@ -31,7 +31,7 @@ import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {CellType, TableOptions} from 'src/types/dashboards'
+import {CellType, DecimalPlaces, TableOptions} from 'src/types/dashboards'
 import {StatisticalGraphFieldOption} from 'src/types/statisticalgraph'
 
 // Utils
@@ -54,6 +54,7 @@ interface Props {
   staticGraphStyle: React.CSSProperties
   data: TimeSeriesServerResponse[] | FluxTable[]
   colors: ColorString[]
+  decimalPlaces: DecimalPlaces
   xAxisTitle?: string
   yAxisTitle?: string
   staticLegend: boolean
@@ -75,6 +76,7 @@ const BarChart = ({
   tableOptions,
   fieldOptions,
   showCount,
+  decimalPlaces,
 }: Props) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -108,8 +110,9 @@ const BarChart = ({
         axes,
         xAxisTitle,
         yAxisTitle,
+        decimalPlaces,
       }),
-    [isUpdated, xAxisTitle, yAxisTitle, axes]
+    [isUpdated, xAxisTitle, yAxisTitle, axes, decimalPlaces]
   )
 
   useEffect(() => {

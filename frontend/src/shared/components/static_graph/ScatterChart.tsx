@@ -29,7 +29,7 @@ import {
   staticGraphDatasets,
   staticGraphOptions,
 } from 'src/shared/utils/staticGraph'
-import {CellType} from 'src/types/dashboards'
+import {CellType, DecimalPlaces} from 'src/types/dashboards'
 
 // Utils
 import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
@@ -54,6 +54,7 @@ interface Props {
   yAxisTitle?: string
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  decimalPlaces: DecimalPlaces
   showCount?: number | null
 }
 
@@ -67,6 +68,7 @@ const ScatterChart = ({
   staticLegend,
   staticLegendPosition,
   showCount,
+  decimalPlaces,
 }: Props) => {
   const chartRef = useRef<
     ChartJS<'scatter', DefaultDataPoint<'scatter'>[], unknown>
@@ -98,8 +100,9 @@ const ScatterChart = ({
         axes,
         xAxisTitle,
         yAxisTitle,
+        decimalPlaces,
       }),
-    [isUpdated, axes, xAxisTitle, yAxisTitle]
+    [isUpdated, axes, xAxisTitle, yAxisTitle, decimalPlaces]
   )
 
   useEffect(() => {

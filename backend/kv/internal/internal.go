@@ -172,6 +172,11 @@ func MarshalLayout(l cloudhub.Layout) ([]byte, error) {
 			FixFirstColumn:   c.TableOptions.FixFirstColumn,
 		}
 
+		decimalPlaces := &DecimalPlaces{
+			IsEnforced: c.DecimalPlaces.IsEnforced,
+			Digits:     c.DecimalPlaces.Digits,
+		}
+
 		fieldOptions := make([]*RenamableField, len(c.FieldOptions))
 		for i, field := range c.FieldOptions {
 			fieldOptions[i] = &RenamableField{
@@ -184,17 +189,18 @@ func MarshalLayout(l cloudhub.Layout) ([]byte, error) {
 		}
 
 		cells[i] = &Cell{
-			X:            c.X,
-			Y:            c.Y,
-			W:            c.W,
-			H:            c.H,
-			I:            c.I,
-			Name:         c.Name,
-			Queries:      queries,
-			Type:         c.Type,
-			Axes:         axes,
-			FieldOptions: fieldOptions,
-			TableOptions: tableOptions,
+			X:             c.X,
+			Y:             c.Y,
+			W:             c.W,
+			H:             c.H,
+			I:             c.I,
+			Name:          c.Name,
+			Queries:       queries,
+			Type:          c.Type,
+			Axes:          axes,
+			DecimalPlaces: decimalPlaces,
+			FieldOptions:  fieldOptions,
+			TableOptions:  tableOptions,
 		}
 	}
 	return proto.Marshal(&Layout{
@@ -270,18 +276,28 @@ func UnmarshalLayout(data []byte, l *cloudhub.Layout) error {
 			fieldOptions[i].TempVar = field.TempVar
 		}
 
+		decimalPlaces := cloudhub.DecimalPlaces{}
+		if c.DecimalPlaces != nil {
+			decimalPlaces.IsEnforced = c.DecimalPlaces.IsEnforced
+			decimalPlaces.Digits = c.DecimalPlaces.Digits
+		} else {
+			decimalPlaces.IsEnforced = true
+			decimalPlaces.Digits = 2
+		}
+
 		cells[i] = cloudhub.Cell{
-			X:            c.X,
-			Y:            c.Y,
-			W:            c.W,
-			H:            c.H,
-			I:            c.I,
-			Name:         c.Name,
-			Queries:      queries,
-			Type:         c.Type,
-			Axes:         axes,
-			TableOptions: tableOptions,
-			FieldOptions: fieldOptions,
+			X:             c.X,
+			Y:             c.Y,
+			W:             c.W,
+			H:             c.H,
+			I:             c.I,
+			Name:          c.Name,
+			Queries:       queries,
+			Type:          c.Type,
+			Axes:          axes,
+			DecimalPlaces: decimalPlaces,
+			TableOptions:  tableOptions,
+			FieldOptions:  fieldOptions,
 		}
 	}
 	l.Cells = cells

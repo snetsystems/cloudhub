@@ -1,6 +1,9 @@
 import {flatten} from 'lodash'
 
-import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants'
+import {
+  DEFAULT_DECIMAL_PLACES,
+  NEW_DEFAULT_DASHBOARD_CELL,
+} from 'src/dashboards/constants'
 
 import {Source, Cell} from 'src/types'
 import {Layout, LayoutCell, LayoutQuery} from 'src/types/hosts'
@@ -114,6 +117,7 @@ function toCell(
     legend: {},
     type: (layoutCell?.type as CellType) || CellType.Line,
     colors: ((layoutCell?.colors as unknown) as ColorString[]) || [],
+    decimalPlaces: layoutCell.decimalPlaces || DEFAULT_DECIMAL_PLACES,
   }
 
   return cell

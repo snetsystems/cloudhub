@@ -164,6 +164,7 @@ message Cell {
 	map<string, Axis> axes  = 11; // Axes represent the graphical viewport for a cell's visualizations
 	TableOptions tableOptions  = 12; // TableOptions for visualization of cell with type 'table'
 	repeated RenamableField fieldOptions = 13; // Options for each of the fields returned in a cell
+	DecimalPlaces decimalPlaces          = 14; // Represents how precise the values of this field should be
 }
 
 message Query {
