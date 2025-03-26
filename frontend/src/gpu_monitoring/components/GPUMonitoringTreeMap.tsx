@@ -774,12 +774,21 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                 })
                 if (rows.length < expectedCiCountForGi) {
                   const missing = expectedCiCountForGi - rows.length
+                  const allocatedBeforeThisGI =
+                    totalAllocatedSegments - segmentsForGi
+
                   for (let i = 0; i < missing; i++) {
+                    const currentAllocationIndex =
+                      allocatedBeforeThisGI + rows.length + i
+                    const mappingType =
+                      currentAllocationIndex < allowedSegments
+                        ? 'unused'
+                        : 'not_usable'
                     ciNodes.push({
-                      name: 'Unused',
+                      name: mappingType === 'unused' ? 'Unused' : 'Not Usable',
                       value: eachCiValue,
                       unused: true,
-                      mapping: 'unused',
+                      mapping: mappingType,
                     })
                   }
                 }
