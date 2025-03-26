@@ -755,7 +755,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                   mapping: '1:1',
                 })
               } else {
-                const expectedCiCountForGi = allowedSegments
+                const expectedCiCountForGi = segmentsForGi
                 const eachCiValue = allocated / expectedCiCountForGi
 
                 rows.forEach((row: any) => {
@@ -779,7 +779,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
                       name: 'Unused',
                       value: eachCiValue,
                       unused: true,
-                      mapping: '1:many',
+                      mapping: 'unused',
                     })
                   }
                 }
