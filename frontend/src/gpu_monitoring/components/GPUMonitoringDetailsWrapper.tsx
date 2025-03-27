@@ -39,7 +39,7 @@ function GPUMonitoringDetailsWrapper({
   filteredHostForGPUMonitoring,
 }: Props) {
   const [activeEditorTab, setActiveEditorTab] = useState<GPU_DETAIL_TAB_TYPES>(
-    GPU_DETAIL_TAB_TYPES.GPU_OBJECT
+    GPU_DETAIL_TAB_TYPES.GPU
   )
   const [isLoading, setIsLoading] = useState(false)
   const [originalHostNvidiaInfo, setOriginalHostNvidiaInfo] = useState(null)
