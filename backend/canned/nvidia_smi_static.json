@@ -941,7 +941,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "Pwr Consumption Idle 5",
+      "name": "Pwr Consumption Idle 10",
       "queries": [
         {
           "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_power_draw\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -1064,7 +1064,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "GPU Temperature Idle 5",
+      "name": "GPU Temperature Idle 10",
       "queries": [
         {
           "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -1187,7 +1187,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "[MIG] GI/CI Frame Buffer Mem Usage Idle 5",
+      "name": "[MIG] GI/CI Frame Buffer Mem Usage Idle 10",
       "queries": [
         {
           "query": "SELECT mean(\"memory_fb_used\") AS \"memory_fb_used\" FROM \":db:\".\":rp:\".\"nvidia_smi_mig\"",
