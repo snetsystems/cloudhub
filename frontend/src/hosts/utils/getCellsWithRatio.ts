@@ -114,10 +114,10 @@ function toCell(
     queries,
 
     links: {},
-    legend: {},
+    legend: layoutCell?.legend || {},
     type: (layoutCell?.type as CellType) || CellType.Line,
     colors: ((layoutCell?.colors as unknown) as ColorString[]) || [],
-    decimalPlaces: layoutCell.decimalPlaces || DEFAULT_DECIMAL_PLACES,
+    decimalPlaces: layoutCell?.decimalPlaces || DEFAULT_DECIMAL_PLACES,
   }
 
   return cell
