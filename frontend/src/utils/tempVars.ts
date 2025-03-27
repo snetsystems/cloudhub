@@ -69,7 +69,7 @@ export const generateForHostsForStatisticalGraph = (
     label: '',
     values: [
       {
-        value: '5',
+        value: '10',
         type: TemplateValueType.Constant,
         selected: true,
         localSelected: true,
@@ -83,7 +83,7 @@ export const generateForHostsForStatisticalGraph = (
     label: '',
     values: [
       {
-        value: '5',
+        value: '10',
         type: TemplateValueType.Constant,
         selected: true,
         localSelected: true,
