@@ -2,15 +2,15 @@ import {HostsForGPUSmiData} from 'src/types'
 
 export const minionHostnameMappingMock: Record<string, string> = {
   host1: 'host1 : GA100GL [A30 PCIe]',
-  host2: 'host2 : GA102 [A40 PCIe]',
+  host2: 'host2 : GA100GL [A30 PCIe]',
   host3: 'host3 : GA100GL [A30 PCIe]',
   host4: 'host4 : GA100 [A100 PCIe]',
-  host5: 'host5 : GA102 [A40 PCIe]',
-  host6: 'host6 : GA102 [A40 PCIe]',
-  host7: 'host7 : GA102 [A40 PCIe]',
-  host8: 'host8 : GA102 [A40 PCIe]',
-  host9: 'host9 : GA102 [A40 PCIe]',
-  host10: 'host10 : GA102 [A40 PCIe]',
+  host5: 'host5 : GA100GL [A30 PCIe]',
+  host6: 'host6 : GA100GL [A30 PCIe]',
+  host7: 'host7 : GA100GL [A30 PCIe]',
+  host8: 'host8 : GA100GL [A30 PCIe]',
+  host9: 'host9 : GA100GL [A30 PCIe]',
+  host10: 'host10 : GA100GL [A30 PCIe]',
   host11: 'host11 : GA100GL [A30 PCIe]',
 }
 
