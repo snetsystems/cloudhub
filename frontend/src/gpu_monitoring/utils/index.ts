@@ -299,16 +299,18 @@ export const getGpuDetails = (gpuInfo: NvidiaSmiLog) => {
   const resourceData: Record<string, Record<string, string>> = {}
   const limitData: Record<string, Record<string, string>> = {}
   const configData: Record<string, Record<string, string>> = {}
+  const temperatureData: Record<string, Record<string, string>> = {}
+  const deviceInfoData: Record<string, Record<string, string>> = {}
 
   gpu.forEach(g => {
-    const gpuKey = `${g.attrs.id}`
+    const gpuKey = `#${g.minor_number}`
 
     resourceData[gpuKey] = {
-      MEMORY_TOTAL: g.fb_memory_usage.total,
-      MEMORY_USED: g.fb_memory_usage.used,
-      MEMORY_FREE: g.fb_memory_usage.free,
-      POWER_DRAW: g.gpu_power_readings.power_draw,
-      VOLTAGE: g.voltage.graphics_volt,
+      MEMORY_TOTAL: g.fb_memory_usage?.total,
+      MEMORY_USED: g.fb_memory_usage?.used,
+      MEMORY_FREE: g.fb_memory_usage?.free,
+      POWER_DRAW: g.gpu_power_readings?.power_draw,
+      VOLTAGE: g.voltage?.graphics_volt,
       PCIE_LINK_GEN:
         g.pci?.pci_gpu_link_info?.pcie_gen?.current_link_gen ?? 'N/A',
       PCIE_LINK_WIDTH:
@@ -316,17 +318,17 @@ export const getGpuDetails = (gpuInfo: NvidiaSmiLog) => {
     }
 
     limitData[gpuKey] = {
-      POWER_LIMIT_DEFAULT: g.gpu_power_readings.default_power_limit,
-      POWER_LIMIT_MAX: g.gpu_power_readings.max_power_limit,
-      GPU_TEMP_MAX_THRESHOLD: g.temperature.gpu_temp_max_threshold,
-      GPU_TEMP_SLOW_THRESHOLD: g.temperature.gpu_temp_slow_threshold,
-      MEMORY_TEMP_MAX: g.temperature.gpu_temp_max_mem_threshold,
+      POWER_LIMIT_DEFAULT: g.gpu_power_readings?.default_power_limit,
+      POWER_LIMIT_MAX: g.gpu_power_readings?.max_power_limit,
+      GPU_TEMP_MAX_THRESHOLD: g.temperature?.gpu_temp_max_threshold,
+      GPU_TEMP_SLOW_THRESHOLD: g.temperature?.gpu_temp_slow_threshold,
+      MEMORY_TEMP_MAX: g.temperature?.gpu_temp_max_mem_threshold,
     }
 
     configData[gpuKey] = {
       VBIOS_VERSION: g.vbios_version,
       PRODUCT_ARCHITECTURE: g.product_architecture ?? 'N/A',
-      ECC_MODE: g.ecc_mode.current_ecc ?? 'N/A',
+      ECC_MODE: g.ecc_mode?.current_ecc ?? 'N/A',
       DISPLAY_ACTIVE: g.display_active ?? 'N/A',
       DISPLAY_MODE: g.display_mode ?? 'N/A',
       PCIE_LINK_GEN:
@@ -335,7 +337,25 @@ export const getGpuDetails = (gpuInfo: NvidiaSmiLog) => {
         g.pci?.pci_gpu_link_info?.link_widths?.current_link_width ?? 'N/A',
       PERSISTENCE_MODE: g.persistence_mode ?? 'N/A',
       COMPUTE_MODE: g.compute_mode ?? 'N/A',
-      MIG_MODE: g.mig_mode.current_mig ?? 'N/A',
+      MIG_MODE: g.mig_mode?.current_mig ?? 'N/A',
+    }
+
+    temperatureData[gpuKey] = {
+      GPU_TEMP: g.temperature?.gpu_temp,
+      MEMORY_TEMP: g.temperature?.memory_temp,
+      GPU_TEMP_MAX_THRESHOLD: g.temperature?.gpu_temp_max_threshold,
+      GPU_TEMP_SLOW_THRESHOLD: g.temperature?.gpu_temp_slow_threshold,
+      GPU_TEMP_MAX_GPU_THRESHOLD: g.temperature?.gpu_temp_max_gpu_threshold,
+      GPU_TEMP_MAX_MEM_THRESHOLD: g.temperature?.gpu_temp_max_mem_threshold,
+    }
+
+    deviceInfoData[gpuKey] = {
+      UUID: g.uuid,
+      SERIAL: g.serial,
+      MINOR_NUMBER: g.minor_number,
+      PRODUCT_NAME: g.product_name,
+      BOARD_ID: g.board_id,
+      GPU_MODULE_ID: g.gpu_module_id,
     }
   })
 
@@ -355,6 +375,16 @@ export const getGpuDetails = (gpuInfo: NvidiaSmiLog) => {
       name: 'gpu',
       role: 'table',
       data: limitData,
+    },
+    TEMPERATURE: {
+      name: 'gpu',
+      role: 'table',
+      data: temperatureData,
+    },
+    DEVICE: {
+      name: 'gpu',
+      role: 'table',
+      data: deviceInfoData,
     },
   }
 }
