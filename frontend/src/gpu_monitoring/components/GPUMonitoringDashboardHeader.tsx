@@ -56,7 +56,7 @@ function GPUMonitoringDashboardHeader(props: Props) {
       }
       style={{
         margin: 0,
-        height: '32px',
+        height: '30px',
         backgroundColor: '#292933',
         zIndex: 6,
       }}
