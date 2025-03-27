@@ -1,11 +1,18 @@
+//Libraries
 import _ from 'lodash'
 import {useEffect, useRef} from 'react'
+
+//Utils
 import {statusHexColor} from 'src/device_management/utils'
+
+//Constants
 import {
   BYTES_PER_GB,
   MIG_PROFILE_REGEX,
   MIN_TEMPERATURE,
 } from 'src/gpu_monitoring/constants'
+
+//Types
 import {
   AllowedGPUMonitoringMetricProperty,
   GPUMonitoringSeries,
@@ -15,6 +22,7 @@ import {
   HostsForGPUSmiMIGData,
   MigProfile,
 } from 'src/types'
+import {NvidiaSmiLog} from 'src/gpu_monitoring/types/gpu-details'
 
 export const calculateTemperaturePercent = (
   temperature: number,
@@ -269,4 +277,84 @@ export function useIsMounted() {
   }, [])
 
   return isMounted
+}
+export const getGpuDetails = (gpuInfo: NvidiaSmiLog) => {
+  if (_.isEmpty(gpuInfo)) return {}
+
+  const {driver_version, cuda_version, attached_gpus, timestamp, gpu} = gpuInfo
+
+  const systemInfo = {
+    SYSTEM: {
+      name: 'host',
+      role: 'table',
+      data: {
+        DRIVER_VERSION: driver_version,
+        CUDA_VERSION: cuda_version,
+        ATTACHED_GPUS: attached_gpus,
+        TIMESTAMP: timestamp,
+      },
+    },
+  }
+
+  const resourceData: Record<string, Record<string, string>> = {}
+  const limitData: Record<string, Record<string, string>> = {}
+  const configData: Record<string, Record<string, string>> = {}
+
+  gpu.forEach(g => {
+    const gpuKey = `${g.attrs.id}`
+
+    resourceData[gpuKey] = {
+      MEMORY_TOTAL: g.fb_memory_usage.total,
+      MEMORY_USED: g.fb_memory_usage.used,
+      MEMORY_FREE: g.fb_memory_usage.free,
+      POWER_DRAW: g.gpu_power_readings.power_draw,
+      VOLTAGE: g.voltage.graphics_volt,
+      PCIE_LINK_GEN:
+        g.pci?.pci_gpu_link_info?.pcie_gen?.current_link_gen ?? 'N/A',
+      PCIE_LINK_WIDTH:
+        g.pci?.pci_gpu_link_info?.link_widths?.current_link_width ?? 'N/A',
+    }
+
+    limitData[gpuKey] = {
+      POWER_LIMIT_DEFAULT: g.gpu_power_readings.default_power_limit,
+      POWER_LIMIT_MAX: g.gpu_power_readings.max_power_limit,
+      GPU_TEMP_MAX_THRESHOLD: g.temperature.gpu_temp_max_threshold,
+      GPU_TEMP_SLOW_THRESHOLD: g.temperature.gpu_temp_slow_threshold,
+      MEMORY_TEMP_MAX: g.temperature.gpu_temp_max_mem_threshold,
+    }
+
+    configData[gpuKey] = {
+      VBIOS_VERSION: g.vbios_version,
+      PRODUCT_ARCHITECTURE: g.product_architecture ?? 'N/A',
+      ECC_MODE: g.ecc_mode.current_ecc ?? 'N/A',
+      DISPLAY_ACTIVE: g.display_active ?? 'N/A',
+      DISPLAY_MODE: g.display_mode ?? 'N/A',
+      PCIE_LINK_GEN:
+        g.pci?.pci_gpu_link_info?.pcie_gen?.current_link_gen ?? 'N/A',
+      PCIE_LINK_WIDTH:
+        g.pci?.pci_gpu_link_info?.link_widths?.current_link_width ?? 'N/A',
+      PERSISTENCE_MODE: g.persistence_mode ?? 'N/A',
+      COMPUTE_MODE: g.compute_mode ?? 'N/A',
+      MIG_MODE: g.mig_mode.current_mig ?? 'N/A',
+    }
+  })
+
+  return {
+    ...systemInfo,
+    CONFIG: {
+      name: 'gpu',
+      role: 'table',
+      data: configData,
+    },
+    RESOURCE: {
+      name: 'gpu',
+      role: 'table',
+      data: resourceData,
+    },
+    LIMIT: {
+      name: 'gpu',
+      role: 'table',
+      data: limitData,
+    },
+  }
 }

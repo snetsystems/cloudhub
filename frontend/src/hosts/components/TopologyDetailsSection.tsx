@@ -12,6 +12,7 @@ import TopologyStorageTable from 'src/hosts/components/TopologyStorageTable'
 import TopologyNetworkTable from 'src/hosts/components/TopologyNetworkTable'
 import TopologyDiskTable from 'src/hosts/components/TopologyDiskTable'
 import TopologyHostDetailTable from 'src/hosts/components/TopologyHostDetailTable'
+import GPUOverViewTable from 'src/gpu_monitoring/components/GPUOverViewTable'
 
 // types
 import {HostDetailTable} from 'src/hosts/types/agent'
@@ -131,6 +132,15 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
       })
     }
 
+    if (selectInstanceData['name'] === 'gpu') {
+      return (
+        <GPUOverViewTable
+          key="gpu_table"
+          label="GPU"
+          contents={selectInstanceData['data']}
+        />
+      )
+    }
     return <>no State</>
   }
 

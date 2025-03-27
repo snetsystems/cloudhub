@@ -142,7 +142,7 @@ export const fetchNVidiaInfoJson = async (
     }
     const jsonData = await parseStringPromise(xmlMatch[0], options)
 
-    return jsonData
+    return jsonData?.nvidia_smi_log
   } catch (error) {
     return null
   }

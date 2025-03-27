@@ -1,6 +1,5 @@
 // Library
 import React, {useCallback, useEffect, useRef, useState} from 'react'
-import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import ReactJson from 'react-json-view'
 
@@ -16,6 +15,7 @@ import {HostDetailTable} from 'src/hosts/types/agent'
 
 // Types
 import {FilteredHostForGPUMonitoring} from 'src/types'
+import {GPU_DETAIL_TAB_TYPES} from 'src/gpu_monitoring/constants/gpu-monitoring'
 
 // ETC
 import {fetchNVidiaInfoJson} from 'src/gpu_monitoring/apis'
@@ -26,10 +26,9 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 
-enum TabTypes {
-  HOST = 'HOST',
-  GPU = 'GPU',
-}
+// Utils
+import {getGpuDetails} from 'src/gpu_monitoring/utils'
+
 interface Props {
   filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
   addons?: Addon[]
@@ -39,11 +38,16 @@ function GPUMonitoringDetailsWrapper({
   addons,
   filteredHostForGPUMonitoring,
 }: Props) {
-  const [activeEditorTab, setActiveEditorTab] = useState<TabTypes>(TabTypes.GPU)
+  const [activeEditorTab, setActiveEditorTab] = useState<GPU_DETAIL_TAB_TYPES>(
+    GPU_DETAIL_TAB_TYPES.GPU_OBJECT
+  )
   const [isLoading, setIsLoading] = useState(false)
   const [originalHostNvidiaInfo, setOriginalHostNvidiaInfo] = useState(null)
   const [selectedGpuInfo, setSelectedGpuInfo] = useState(null)
   const [hostInfo, setHostInfo] = useState<Partial<HostDetailTable> | {}>(null)
+  const [gpuOverView, setGpuOverView] = useState<Partial<HostDetailTable> | {}>(
+    null
+  )
 
   const focusedHost = filteredHostForGPUMonitoring?.hostname
   const focusedHostGPU = filteredHostForGPUMonitoring?.gpuIndex ?? -1
@@ -52,13 +56,15 @@ function GPUMonitoringDetailsWrapper({
   const shouldUpdateHost =
     focusedHost &&
     (focusedHost !== previousHost.current ||
-      (activeEditorTab === TabTypes.HOST ? !hostInfo : !originalHostNvidiaInfo))
+      (activeEditorTab === GPU_DETAIL_TAB_TYPES.HOST
+        ? !hostInfo
+        : !originalHostNvidiaInfo))
 
   useEffect(() => {
     if (shouldUpdateHost) {
-      activeEditorTab === TabTypes.HOST
+      activeEditorTab === GPU_DETAIL_TAB_TYPES.HOST
         ? fetchHostDetails()
-        : fetchNVidiaInfoXML()
+        : fetchNVidiaInfoJSON()
 
       if (focusedHost !== previousHost.current) {
         setHostInfo(null)
@@ -69,25 +75,30 @@ function GPUMonitoringDetailsWrapper({
   }, [focusedHost, shouldUpdateHost, activeEditorTab])
 
   useEffect(() => {
-    if (focusedHostGPU !== -1 && originalHostNvidiaInfo?.nvidia_smi_log?.gpu) {
-      const gpuData = originalHostNvidiaInfo.nvidia_smi_log.gpu
+    if (focusedHostGPU !== -1 && originalHostNvidiaInfo?.gpu) {
+      const gpuData = originalHostNvidiaInfo?.gpu
 
       if (!Array.isArray(gpuData) || gpuData.length <= focusedHostGPU) {
         return
       }
+      const updateGpuInfo = {
+        ...originalHostNvidiaInfo,
+        gpu: gpuData[focusedHostGPU],
+      }
 
-      setSelectedGpuInfo({
-        nvidia_smi_log: {
-          ...originalHostNvidiaInfo.nvidia_smi_log,
-          gpu: gpuData[focusedHostGPU],
-        },
-      })
+      const updateGpuTableInfo = {
+        ...originalHostNvidiaInfo,
+        gpu: [gpuData[focusedHostGPU]],
+      }
+      setSelectedGpuInfo(updateGpuInfo)
+      setGpuOverView(updateGpuTableInfo)
     } else {
+      setGpuOverView(null)
       setSelectedGpuInfo(null)
     }
   }, [focusedHostGPU, originalHostNvidiaInfo])
 
-  const fetchNVidiaInfoXML = useCallback(async () => {
+  const fetchNVidiaInfoJSON = useCallback(async () => {
     const addon = addons.find(addon => addon.name === 'salt')
     if (!addon) {
       console.error('Salt addon not found')
@@ -102,9 +113,10 @@ function GPUMonitoringDetailsWrapper({
         focusedHost
       )
       setOriginalHostNvidiaInfo(data ? data : null)
+      setGpuOverView(data ? data : null)
       setSelectedGpuInfo(null)
     } catch (error) {
-      console.error('Error fetching NVidia Info XML:', error)
+      console.error('Error fetching NVidia Info JSON:', error)
     } finally {
       setIsLoading(false)
     }
@@ -132,7 +144,7 @@ function GPUMonitoringDetailsWrapper({
     }
   }, [addons, focusedHost])
 
-  const handleActiveEditorTab = (tab: TabTypes) => {
+  const handleActiveEditorTab = (tab: GPU_DETAIL_TAB_TYPES) => {
     setActiveEditorTab(tab)
   }
 
@@ -150,9 +162,9 @@ function GPUMonitoringDetailsWrapper({
     }
 
     switch (activeEditorTab) {
-      case TabTypes.HOST:
+      case GPU_DETAIL_TAB_TYPES.HOST:
         return focusedHost ? (
-          <div style={{padding: '12px', height: 'calc(100% - 40.5px)'}}>
+          <div className="gpu-monitoring-detail-table-wrap">
             <FancyScrollbar>
               <GPUMonitoringDetailsHost
                 selectInstanceData={hostInfo}
@@ -164,12 +176,29 @@ function GPUMonitoringDetailsWrapper({
           renderEmptyContent('Please select a Host')
         )
 
-      case TabTypes.GPU:
+      case GPU_DETAIL_TAB_TYPES.GPU:
+        return focusedHost ? (
+          <div className="gpu-monitoring-detail-table-wrap">
+            <FancyScrollbar>
+              <GPUMonitoringDetailsHost
+                selectInstanceData={getGpuDetails(
+                  gpuOverView || originalHostNvidiaInfo
+                )}
+                instanceTypeModal={null}
+              />
+            </FancyScrollbar>
+          </div>
+        ) : (
+          renderEmptyContent('Please select a Host')
+        )
+
+      case GPU_DETAIL_TAB_TYPES.GPU_OBJECT:
         return focusedHost ? (
           <div style={{height: 'calc(100% - 40.5px)'}}>
             <FancyScrollbar>
               {originalHostNvidiaInfo && (
                 <ReactJson
+                  name={false}
                   displayDataTypes={false}
                   theme={'summerfruit'}
                   style={{
@@ -197,7 +226,7 @@ function GPUMonitoringDetailsWrapper({
   }
 
   return (
-    <div style={{height: '100%', backgroundColor: '#292933'}}>
+    <div className="gpu-monitoring-detail-wrap">
       <GPUMonitoringDashboardHeader
         cellName="Details"
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
@@ -207,20 +236,37 @@ function GPUMonitoringDetailsWrapper({
           <Radio.Button
             id="details-tab-HOST"
             titleText="HOST"
-            value={TabTypes.HOST}
-            active={activeEditorTab === TabTypes.HOST}
-            onClick={() => handleActiveEditorTab(TabTypes.HOST)}
+            value={GPU_DETAIL_TAB_TYPES.HOST}
+            active={activeEditorTab === GPU_DETAIL_TAB_TYPES.HOST}
+            onClick={() => handleActiveEditorTab(GPU_DETAIL_TAB_TYPES.HOST)}
           >
-            <span className="gpu-monitoring-detail-header-title">HOST</span>
+            <span className="gpu-monitoring-detail-header-title">
+              Host Info
+            </span>
           </Radio.Button>
           <Radio.Button
             id="details-tab-GPU"
-            titleText="GPU"
-            value={TabTypes.GPU}
-            active={activeEditorTab === TabTypes.GPU}
-            onClick={() => handleActiveEditorTab(TabTypes.GPU)}
+            titleText="GPU OverView"
+            value={GPU_DETAIL_TAB_TYPES.GPU}
+            active={activeEditorTab === GPU_DETAIL_TAB_TYPES.GPU}
+            onClick={() => handleActiveEditorTab(GPU_DETAIL_TAB_TYPES.GPU)}
           >
-            <span className="gpu-monitoring-detail-header-title">GPU</span>
+            <span className="gpu-monitoring-detail-header-title">
+              GPU OverView
+            </span>
+          </Radio.Button>
+          <Radio.Button
+            id="details-tab-GPU"
+            titleText="GPU Details"
+            value={GPU_DETAIL_TAB_TYPES.GPU_OBJECT}
+            active={activeEditorTab === GPU_DETAIL_TAB_TYPES.GPU_OBJECT}
+            onClick={() =>
+              handleActiveEditorTab(GPU_DETAIL_TAB_TYPES.GPU_OBJECT)
+            }
+          >
+            <span className="gpu-monitoring-detail-header-title">
+              GPU Details
+            </span>
           </Radio.Button>
         </div>
         {isLoading && (

@@ -204,6 +204,14 @@
   justify-content: center;
   z-index: 5;
 }
+.gpu-monitoring-detail-wrap {
+  height: 100%;
+  background-color: #292933;
+}
+.gpu-monitoring-detail-table-wrap {
+  padding: 12px;
+  height: calc(100% - 40.5px);
+}
 
 .gpu-monitoring-detail-header {
   z-index: 3;
