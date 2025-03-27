@@ -880,6 +880,10 @@
           "value": "0"
         }
       ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
