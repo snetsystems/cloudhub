@@ -342,7 +342,7 @@ export const hostsForGPUSmiMockingData: HostsForGPUSmiData = {
       pcieLinkCurrentWidth: 16,
       pcieLinkTx: 17050,
       pcieLinkRx: 0,
-      migMode: 'Disabled',
+      migMode: 'Enabled',
       gpuUtilization: 35,
     },
     {

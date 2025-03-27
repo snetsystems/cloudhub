@@ -648,7 +648,6 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
           const filteredProfiles = applicableProfiles.filter(
             (profile: MigProfile) => !profile.name.includes('+me')
           )
-
           const smallestProfile =
             filteredProfiles.length > 0
               ? filteredProfiles.reduce((prev: MigProfile, curr: MigProfile) =>
@@ -687,6 +686,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
               const rows = giMap[giKey]
               let frameBufferTotalGB = rows[0].fbTotal / BYTES_PER_GB
               let bar1MemoryTotalGB = rows[0].bar1Total / BYTES_PER_GB
+
               const allocated =
                 Math.floor((frameBufferTotalGB + unitSegment) / unitSegment) *
                 unitSegment
@@ -815,7 +815,27 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
           }
 
           const notUsableSegments = computedSegments - allowedSegments
-          if (leftoverUsableSegments > 0 && notUsableSegments > 0) {
+
+          const gpuApplicableProfiles = applicableProfiles.filter(
+            (profile: MigProfile) => profile.gpu === gpuIndex
+          )
+          const biggestProfile =
+            gpuApplicableProfiles.length > 0
+              ? gpuApplicableProfiles.reduce(
+                  (prev: MigProfile, curr: MigProfile) =>
+                    curr.memGiB > prev.memGiB ? curr : prev
+                )
+              : smallestProfile
+
+          let lastAllocated = 0
+          if (giNodes.length > 0) {
+            lastAllocated = giNodes[giNodes.length - 1].value
+          }
+
+          if (
+            notUsableSegments > 0 &&
+            lastAllocated !== biggestProfile.memGiB
+          ) {
             for (let i = 0; i < notUsableSegments; i++) {
               giNodes.push({
                 name: 'Not Usable',
