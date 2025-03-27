@@ -16,7 +16,7 @@
       "queries": [
         {
           "query": "SELECT mean(\"memory_used\") AS \"memory_used\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
-          "groupbys": ["\"index\""],
+          "groupbys": ["\"host\"", "\"index\""],
           "wheres": []
         }
       ],
@@ -114,7 +114,7 @@
       "queries": [
         {
           "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_power_draw\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
-          "groupbys": ["\"index\""],
+          "groupbys": ["\"host\"", "\"index\""],
           "wheres": []
         }
       ],
@@ -211,7 +211,7 @@
       "queries": [
         {
           "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
-          "groupbys": ["\"index\""],
+          "groupbys": ["\"host\"", "\"index\""],
           "wheres": []
         }
       ],
@@ -309,7 +309,7 @@
       "queries": [
         {
           "query": "SELECT mean(\"temperature_gpu_mem\") AS \"mean_temperature_gpu_mem\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
-          "groupbys": ["\"index\""],
+          "groupbys": ["\"host\"", "\"index\""],
           "wheres": []
         }
       ],
@@ -407,7 +407,7 @@
       "queries": [
         {
           "query": "SELECT mean(\"pcie_link_tx_util\") AS \"pcie_link_tx\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
-          "groupbys": ["\"index\""],
+          "groupbys": ["\"host\"", "\"index\""],
           "wheres": []
         }
       ],
@@ -505,7 +505,7 @@
       "queries": [
         {
           "query": "SELECT mean(\"pcie_link_rx_util\") AS \"pcie_link_rx\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
-          "groupbys": ["\"index\""],
+          "groupbys": ["\"host\"", "\"index\""],
           "wheres": []
         }
       ],
@@ -603,7 +603,7 @@
       "queries": [
         {
           "query": "SELECT mean(\"clocks_current_sm\") AS \"clocks_current_sm\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
-          "groupbys": ["\"index\""],
+          "groupbys": ["\"host\"", "\"index\""],
           "wheres": []
         }
       ],
@@ -714,7 +714,12 @@
       "queries": [
         {
           "query": "SELECT mean(\"memory_fb_used\") AS \"memory_fb_used\" FROM \":db:\".\":rp:\".\"nvidia_smi_mig\"",
-          "groupbys": ["\"index\"", "\"gpu_index\"", "\"compute_index\""],
+          "groupbys": [
+            "\"host\"",
+            "\"index\"",
+            "\"gpu_index\"",
+            "\"compute_index\""
+          ],
           "wheres": []
         }
       ],
@@ -819,7 +824,12 @@
       "queries": [
         {
           "query": "SELECT mean(\"memory_bar1_used\") AS \"memory_bar1_used\" FROM \":db:\".\":rp:\".\"nvidia_smi_mig\"",
-          "groupbys": ["\"index\"", "\"gpu_index\"", "\"compute_index\""],
+          "groupbys": [
+            "\"host\"",
+            "\"index\"",
+            "\"gpu_index\"",
+            "\"compute_index\""
+          ],
           "wheres": []
         }
       ],
@@ -925,6 +935,7 @@
         {
           "query": "SELECT mean(\"used_memory\") AS \"used_memory\" FROM \":db:\".\":rp:\".\"nvidia_smi_process\"",
           "groupbys": [
+            "\"host\"",
             "\"index\"",
             "\"gpu_index\"",
             "\"compute_index\"",
