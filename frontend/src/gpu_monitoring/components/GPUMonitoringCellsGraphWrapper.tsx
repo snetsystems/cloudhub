@@ -189,7 +189,7 @@ const GPUMonitoringCellsGraphWrapper = ({
           <div
             onMouseDown={e => e.stopPropagation()}
             className="page-header--right"
-            style={{zIndex: 3}}
+            style={{zIndex: 3, marginRight: '4px'}}
           >
             <TimeRangeShiftDropdown
               onChooseTimeRange={handleChooseTimeRange}

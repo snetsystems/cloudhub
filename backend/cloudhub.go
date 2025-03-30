@@ -823,6 +823,7 @@ type Cell struct {
 	DecimalPlaces DecimalPlaces    `json:"decimalPlaces"`
 	TableOptions  TableOptions     `json:"tableOptions,omitempty"`
 	FieldOptions  []RenamableField `json:"fieldOptions,omitempty"`
+	Legend        Legend           `json:"legend"`
 }
 
 // Layout is a collection of Cells for visualization

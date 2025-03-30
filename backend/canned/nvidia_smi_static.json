@@ -8,7 +8,7 @@
       "tempVar": ":top_count:",
       "values": [
         {
-          "value": "5",
+          "value": "10",
           "type": "constant",
           "selected": true
         }
@@ -24,7 +24,7 @@
       "tempVar": ":idle_count:",
       "values": [
         {
-          "value": "5",
+          "value": "10",
           "type": "constant",
           "selected": true
         }
@@ -46,7 +46,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "GPU Mem Usage Top 5",
+      "name": "GPU Mem Usage Top 10",
       "queries": [
         {
           "query": "SELECT mean(\"memory_used\") AS \"memory_used\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -81,6 +81,10 @@
         }
       },
       "type": "staticPie",
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
       "colors": [
         {
           "id": "3fb84367-b410-4ed8-aff4-522f5141c754",
@@ -165,7 +169,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "GPU Temperature Top 5",
+      "name": "GPU Temperature Top 10",
       "queries": [
         {
           "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -284,7 +288,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "Pwr Consumption Top 5",
+      "name": "Pwr Consumption Top 10",
       "queries": [
         {
           "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_power_draw\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -403,7 +407,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "Pwr Limit - Pwr Consumption Radar Graph Top 5",
+      "name": "Pwr Limit - Pwr Consumption Radar Graph Top 10",
       "queries": [
         {
           "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_gpu_power_draw\", mean(\"gpu_current_power_limit\") AS \"mean_gpu_current_power_limit\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -461,6 +465,10 @@
           "value": "0"
         }
       ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -529,7 +537,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "[MIG] Process GPU Mem Usage Top 5",
+      "name": "[MIG] Process GPU Mem Usage Top 10",
       "queries": [
         {
           "query": "SELECT mean(\"used_memory\") AS \"used_memory\" FROM \":db:\".\":rp:\".\"nvidia_smi_process\"",
@@ -676,7 +684,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "[MIG] GI/CI Frame Buffer Mem Usage Top 5",
+      "name": "[MIG] GI/CI Frame Buffer Mem Usage Top 10",
       "queries": [
         {
           "query": "SELECT mean(\"memory_fb_used\") AS \"memory_fb_used\" FROM \":db:\".\":rp:\".\"nvidia_smi_mig\"",
@@ -872,6 +880,10 @@
           "value": "0"
         }
       ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -933,7 +945,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "Pwr Consumption Idle 5",
+      "name": "Pwr Consumption Idle 10",
       "queries": [
         {
           "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_power_draw\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -967,30 +979,34 @@
           "scale": "linear"
         }
       },
-      "type": "staticBar",
+      "type": "staticDoughnut",
       "colors": [
         {
           "id": "433aff16-1afc-45be-91fe-6aebd67fa118",
           "type": "scale",
-          "hex": "#FD7A5D",
-          "name": "Delorean",
+          "hex": "#74D495",
+          "name": "Atlantis",
           "value": "0"
         },
         {
           "id": "300a0316-b39f-48d5-a816-827731d3bd08",
           "type": "scale",
-          "hex": "#5F1CF2",
-          "name": "Delorean",
+          "hex": "#3F3FBA",
+          "name": "Atlantis",
           "value": "0"
         },
         {
           "id": "2837d74f-fc5b-4dfd-9185-4dc98ce6d642",
           "type": "scale",
-          "hex": "#4CE09A",
-          "name": "Delorean",
+          "hex": "#FF4D9E",
+          "name": "Atlantis",
           "value": "0"
         }
       ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -1052,7 +1068,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "GPU Temperature Idle 5",
+      "name": "GPU Temperature Idle 10",
       "queries": [
         {
           "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
@@ -1086,7 +1102,7 @@
           "scale": "linear"
         }
       },
-      "type": "staticBar",
+      "type": "staticDoughnut",
       "colors": [
         {
           "id": "6ebd1b55-b5ed-436d-bbd5-d0cdb0ed7e70",
@@ -1110,6 +1126,10 @@
           "value": "0"
         }
       ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -1171,7 +1191,7 @@
       "h": 24,
       "minW": 10,
       "minH": 4,
-      "name": "[MIG] GI/CI Frame Buffer Mem Usage Idle 5",
+      "name": "[MIG] GI/CI Frame Buffer Mem Usage Idle 10",
       "queries": [
         {
           "query": "SELECT mean(\"memory_fb_used\") AS \"memory_fb_used\" FROM \":db:\".\":rp:\".\"nvidia_smi_mig\"",
@@ -1210,30 +1230,34 @@
           "scale": "linear"
         }
       },
-      "type": "staticBar",
+      "type": "staticDoughnut",
       "colors": [
         {
           "id": "698bcf77-f6f1-4d6f-a6db-4b2b9b0fcf64",
           "type": "scale",
-          "hex": "#74D495",
-          "name": "Atlantis",
+          "hex": "#FDC44F",
+          "name": "Cthulhu",
           "value": "0"
         },
         {
           "id": "0924fff5-5ec4-4463-aa85-04bc6ac4d605",
           "type": "scale",
-          "hex": "#3F3FBA",
-          "name": "Atlantis",
+          "hex": "#007C76",
+          "name": "Cthulhu",
           "value": "0"
         },
         {
           "id": "3599dad3-0d46-4863-a140-674a3e125abe",
           "type": "scale",
-          "hex": "#FF4D9E",
-          "name": "Atlantis",
+          "hex": "#8983FF",
+          "name": "Cthulhu",
           "value": "0"
         }
       ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
