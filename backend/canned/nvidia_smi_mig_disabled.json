@@ -70,9 +70,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "orientation": "bottom"
-      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -167,9 +164,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "orientation": "bottom"
-      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -264,10 +258,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -362,9 +352,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "orientation": "bottom"
-      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -459,10 +446,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -557,10 +540,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -655,10 +634,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -753,10 +728,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
@@ -851,9 +822,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "orientation": "bottom"
-      },
       "tableOptions": {
         "verticalTimeAxis": true,
         "sortBy": {
