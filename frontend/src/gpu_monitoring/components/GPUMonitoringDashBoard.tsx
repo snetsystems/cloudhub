@@ -1,5 +1,5 @@
 // Library
-import React, {useMemo, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import _ from 'lodash'
 import {connect} from 'react-redux'
@@ -13,15 +13,20 @@ import GPUMonitoringCellsGraphWrapper from 'src/gpu_monitoring/components/GPUMon
 // Type
 import * as DashboardsModels from 'src/types/dashboards'
 import {Cell, Source} from 'src/types'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 // Constants
 import {FIXTURE_GPU_MONITORING_CELLS} from 'src/gpu_monitoring/constants'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
 import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
 
+// Util
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+
 interface Props {
   source: Source
   sources: Source[]
+  cloudAutoRefresh?: CloudAutoRefresh
   inPresentationMode?: boolean
 }
 
@@ -30,13 +35,35 @@ interface TempProps {
   source: Source
 }
 
-function GPUMonitoringDashBoard({inPresentationMode, source}: Props) {
+function GPUMonitoringDashBoard({
+  inPresentationMode,
+  source,
+  cloudAutoRefresh,
+}: Props) {
   const [isMockActive, setIsMockActive] = useState(false)
 
   const GridLayout = WidthProvider(ReactGridLayout)
   const savedCells: DashboardsModels.Cell[] = JSON.parse(
     localStorage.getItem('GPU-Monitoring-cells')
   )
+  let intervalID
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    if (!!cloudAutoRefresh.gpuMonitoring) {
+      clearInterval(intervalID)
+    }
+
+    GlobalAutoRefresher.poll(cloudAutoRefresh.gpuMonitoring)
+
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [cloudAutoRefresh.gpuMonitoring])
 
   const cells = useMemo(() => {
     const defaultCells = FIXTURE_GPU_MONITORING_CELLS()
@@ -205,11 +232,13 @@ const mstp = state => {
   const {
     app: {
       ephemeral: {inPresentationMode},
+      persisted: {cloudAutoRefresh},
     },
   } = state
 
   return {
     inPresentationMode,
+    cloudAutoRefresh,
   }
 }
 

@@ -134,13 +134,13 @@ const AiRoutePage = (props: Props) => {
   useEffect(() => {
     if (typeof cloudAutoRefresh?.prediction !== 'number') {
       onChooseCloudAutoRefresh({
-        prediction: 0,
+        prediction: 5000,
       })
     }
 
     if (typeof cloudAutoRefresh?.gpuMonitoring !== 'number') {
       onChooseCloudAutoRefresh({
-        gpuMonitoring: 0,
+        gpuMonitoring: 5000,
       })
     }
   }, [])
