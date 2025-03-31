@@ -701,28 +701,16 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
               let bar1MemoryUsedGB = 0
 
               if (rows.length > 1) {
-                const expectedCiCountForGi = segmentsForGi
-                const eachCiValue = allocated / expectedCiCountForGi
-                let normalizedFBUsed = 0
-                let normalizedBar1Used = 0
+                let totalFBUsedGB = 0
+                let totalBar1UsedGB = 0
 
                 rows.forEach((row: any) => {
-                  const rowFbTotalGB = row.fbTotal / BYTES_PER_GB
-                  const rowBar1TotalGB = row.bar1Total / BYTES_PER_GB
-                  const rowFbUsedGB = row.fbUsed / BYTES_PER_GB
-                  const rowBar1UsedGB = row.bar1Used / BYTES_PER_GB
-
-                  normalizedFBUsed += rowFbTotalGB
-                    ? (rowFbUsedGB / rowFbTotalGB) * eachCiValue
-                    : 0
-                  normalizedBar1Used += rowBar1TotalGB
-                    ? (rowBar1UsedGB / rowBar1TotalGB) * eachCiValue
-                    : 0
+                  totalFBUsedGB += row.fbUsed / BYTES_PER_GB
+                  totalBar1UsedGB += row.bar1Used / BYTES_PER_GB
                 })
-                frameBufferUsedGB = normalizedFBUsed
-                bar1MemoryUsedGB = normalizedBar1Used
-                frameBufferTotalGB = allocated
-                bar1MemoryTotalGB = allocated
+
+                frameBufferUsedGB = totalFBUsedGB
+                bar1MemoryUsedGB = totalBar1UsedGB
               } else {
                 const row = rows[0]
                 frameBufferUsedGB = row.fbUsed / BYTES_PER_GB
