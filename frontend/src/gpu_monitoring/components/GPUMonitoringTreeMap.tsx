@@ -662,12 +662,8 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
 
           const unitSegment = smallestProfile.memGiB
           const maxInstances = smallestProfile.totalInstances
-
-          const computedSegments = Math.floor(
-            gpuInfo.gpuMemoryTotal / unitSegment
-          )
           const allowedSegments = maxInstances
-          const totalSegments = computedSegments
+          const totalSegments = Math.floor(gpuInfo.gpuMemoryTotal / unitSegment)
           const giMap: Record<string, any[]> = {}
 
           gpuRows.forEach((row: any) => {
@@ -802,7 +798,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
             }
           }
 
-          const notUsableSegments = computedSegments - allowedSegments
+          const notUsableSegments = totalSegments - allowedSegments
 
           const gpuApplicableProfiles = applicableProfiles.filter(
             (profile: MigProfile) => profile.gpu === gpuIndex
