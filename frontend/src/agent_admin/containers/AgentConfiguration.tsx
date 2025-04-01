@@ -322,21 +322,23 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       getRunnerSaltCmdTelegrafPlugin(
         saltMasterUrl,
         saltMasterToken,
-        'telegraf --input-list'
+        'telegraf plugins inputs'
       ),
       getRunnerSaltCmdTelegrafPlugin(
         saltMasterUrl,
         saltMasterToken,
-        'telegraf --output-list'
+        'telegraf plugins out'
       ),
     ])
 
-    const inputPlugin = _.get(telegrafPlugin[0], 'return')[0]
-      .replace(/ /g, '')
-      .split('\n')
-    const outputPlugin = _.get(telegrafPlugin[1], 'return')[0]
-      .replace(/ /g, '')
-      .split('\n')
+    const inputPlugin =
+      _.get(telegrafPlugin[0], 'return')[0]
+        .match(/\.(\w+)/g)
+        ?.map(v => v.slice(1)) ?? []
+    const outputPlugin =
+      _.get(telegrafPlugin[1], 'return')[0]
+        .match(/\.(\w+)/g)
+        ?.map(v => v.slice(1)) ?? []
 
     inputPlugin.shift()
     outputPlugin.shift()
