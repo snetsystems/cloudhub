@@ -866,6 +866,7 @@ export async function getRunnerSaltCmdTelegraf(
       kwarg: {
         fun: 'cmd.run',
         cmd: 'telegraf --usage ' + pMeasurements,
+        runas: "telegraf"
       },
     }
 
