@@ -94,6 +94,7 @@ function GPUMonitoringTreeMapWrapper({
   const [migProfilesState, setMigProfilesState] = useState<
     Record<string, MigProfile[]>
   >({})
+  const [error, setError] = useState<string>('')
 
   const isUsingNvidiaGpu = isAddonUrlOn(AddonType.nvidia, addons)
   const isUsingNvidiaProd = getAddonToken(AddonType.nvidia, addons)
@@ -174,10 +175,13 @@ function GPUMonitoringTreeMapWrapper({
       fetchNVidiaGPUMigLgip(),
     ])
 
+    let hasError = false
     if (smiDataResult.status === 'fulfilled') {
       setHostsForGPUSmiData(smiDataResult.value)
     } else {
       setHostsForGPUSmiData({})
+      setError('Failed to fetch NVIDIA SMI data')
+      hasError = true
       notify(notifyGetNVidiaSmiDataForHostsFailed())
       console.error(smiDataResult.reason)
     }
@@ -186,6 +190,8 @@ function GPUMonitoringTreeMapWrapper({
       setHostsForGPUSmiMIGData(smiMIGDataResult.value)
     } else {
       setHostsForGPUSmiMIGData({})
+      setError('Failed to fetch NVIDIA SMI MIG data')
+      hasError = true
       notify(notifyGetNVidiaSmiMIGDataForHostsFailed())
       console.error(smiMIGDataResult.reason)
     }
@@ -194,8 +200,14 @@ function GPUMonitoringTreeMapWrapper({
       setMigProfilesState(migLgipResult.value)
     } else {
       setMigProfilesState({})
+      setError('Failed to fetch NVIDIA MIG profiles')
+      hasError = true
       notify(notifyGetNVidiaGPUMigLgipFailed())
       console.error(migLgipResult.reason)
+    }
+
+    if (!hasError) {
+      setError('')
     }
 
     setGpuMonitoringTreeMapLoading(false)
@@ -231,6 +243,7 @@ function GPUMonitoringTreeMapWrapper({
       setMinionHostnameMapping(mapping)
     } catch (error) {
       console.error(error)
+      setError('Failed to fetch NVIDIA Local Grain Items')
     }
   }, [addons])
 
@@ -293,6 +306,7 @@ function GPUMonitoringTreeMapWrapper({
       migMode,
     })
   }
+
   const renderMockSlideToggle = (): JSX.Element => {
     return (
       <div
@@ -334,7 +348,7 @@ function GPUMonitoringTreeMapWrapper({
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
-          {gpuMonitoringTreeMapLoading && (
+          {!error && gpuMonitoringTreeMapLoading && (
             <LoadingDots
               className={'graph-panel__refreshing openstack-dots--loading'}
             />
@@ -344,16 +358,22 @@ function GPUMonitoringTreeMapWrapper({
             renderMockSlideToggle()}
         </GPUMonitoringDashboardHeader>
 
-        <GPUMonitoringTreeMap
-          isMockActive={isMockActive}
-          filteredHostForGPUMonitoring={filteredHostForGPUMonitoring}
-          hostsForGPUSmiData={hostsForGPUSmiData}
-          hostsForGPUSmiMIGData={hostsForGPUSmiMIGData}
-          migProfilesState={migProfilesState}
-          onHostnameNodeClick={handleHostnameNodeClick}
-          onGPUIndexNodeClick={handleGPUIndexNodeClick}
-          minionHostnameMapping={minionHostnameMapping}
-        />
+        {error ? (
+          <div style={{padding: '20px'}}>
+            {'Unable to get GPU Device Status'}
+          </div>
+        ) : (
+          <GPUMonitoringTreeMap
+            isMockActive={isMockActive}
+            filteredHostForGPUMonitoring={filteredHostForGPUMonitoring}
+            hostsForGPUSmiData={hostsForGPUSmiData}
+            hostsForGPUSmiMIGData={hostsForGPUSmiMIGData}
+            migProfilesState={migProfilesState}
+            onHostnameNodeClick={handleHostnameNodeClick}
+            onGPUIndexNodeClick={handleGPUIndexNodeClick}
+            minionHostnameMapping={minionHostnameMapping}
+          />
+        )}
       </div>
     </>
   )
