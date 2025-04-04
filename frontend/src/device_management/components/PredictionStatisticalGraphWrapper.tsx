@@ -40,7 +40,6 @@ interface Props {
   source: Source
   autoRefresh?: number
   predictionManualRefresh?: number
-  filteredHexbinHost?: string
   selectedAnomaly?: AnomalyFactor
 }
 
@@ -48,7 +47,6 @@ const PredictionStatisticalGraphWrapper = ({
   source,
   autoRefresh,
   predictionManualRefresh: manualRefresh,
-  filteredHexbinHost,
   selectedAnomaly,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
@@ -64,8 +62,6 @@ const PredictionStatisticalGraphWrapper = ({
   )
   const [layout, setLayout] = useState<Layout[]>()
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
-
-  const instance = []
 
   useEffect(() => {
     getLayoutForInstance()
@@ -88,11 +84,9 @@ const PredictionStatisticalGraphWrapper = ({
 
   useEffect(() => {
     if (!!layout) {
-      setLayoutCells(
-        getCellsWithWhere(layout, source, filteredHexbinHost ?? '', null, true)
-      )
+      setLayoutCells(getCellsWithWhere(layout, source, '', null, true))
     }
-  }, [layout, filteredHexbinHost, selfTimeRange])
+  }, [layout, selfTimeRange])
 
   const saveTimeRangeToLocalStorage = (timeRange: TimeRange) => {
     localStorage.setItem(
@@ -161,48 +155,37 @@ const PredictionStatisticalGraphWrapper = ({
             />
           </div>
         </PredictionDashboardHeader>
-        {!_.isEmpty(instance) ? (
-          <div className="panel-body">
-            <div className="generic-empty-state">
-              <h4 style={{margin: '90px 0'}}>No Instances found</h4>
+        <>
+          <div className="panel-body" style={{backgroundColor: GRAPH_BG_COLOR}}>
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+              }}
+            >
+              <ReactObserver onResize={handleOnResize} />
+              <LayoutRenderer
+                source={source}
+                sources={[source]}
+                isStatusPage={false}
+                isStaticPage={true}
+                isEditable={false}
+                cells={layoutCells}
+                templates={tempVars}
+                timeRange={selfTimeRange}
+                manualRefresh={manualRefresh}
+                host={''}
+              />
             </div>
           </div>
-        ) : (
-          <>
-            <div
-              className="panel-body"
-              style={{backgroundColor: GRAPH_BG_COLOR}}
-            >
-              <div
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  height: '100%',
-                }}
-              >
-                <ReactObserver onResize={handleOnResize} />
-                <LayoutRenderer
-                  source={source}
-                  sources={[source]}
-                  isStatusPage={false}
-                  isStaticPage={true}
-                  isEditable={false}
-                  cells={layoutCells}
-                  templates={tempVars}
-                  timeRange={selfTimeRange}
-                  manualRefresh={manualRefresh}
-                  host={''}
-                />
-              </div>
-            </div>
-            <div className="dash-graph--gradient-border">
-              <div className="dash-graph--gradient-top-left" />
-              <div className="dash-graph--gradient-top-right" />
-              <div className="dash-graph--gradient-bottom-left" />
-              <div className="dash-graph--gradient-bottom-right" />
-            </div>
-          </>
-        )}
+          <div className="dash-graph--gradient-border">
+            <div className="dash-graph--gradient-top-left" />
+            <div className="dash-graph--gradient-top-right" />
+            <div className="dash-graph--gradient-bottom-left" />
+            <div className="dash-graph--gradient-bottom-right" />
+          </div>
+        </>
       </div>
     </>
   )
@@ -213,17 +196,12 @@ const mstp = state => {
     app: {
       persisted: {autoRefresh},
     },
-    predictionDashboard: {
-      filteredHexbinHost,
-      selectedAnomaly,
-      predictionManualRefresh,
-    },
+    predictionDashboard: {selectedAnomaly, predictionManualRefresh},
     links,
   } = state
   return {
     links,
     autoRefresh,
-    filteredHexbinHost,
     selectedAnomaly,
     predictionManualRefresh,
   }
