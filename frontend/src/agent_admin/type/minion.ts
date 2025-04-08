@@ -9,7 +9,8 @@ export interface Minion {
   isSaveFile?: string
   isAccept?: boolean
   isCheck?: boolean
-  isSaltRuning?: boolean
+  isSaltRunning?: boolean
+  telegrafVersion?: string
 }
 
 export interface MinionsObject {

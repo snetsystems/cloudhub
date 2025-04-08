@@ -50,7 +50,6 @@ interface Props {
   isUserAuthorized: boolean
   saltMasterUrl: string
   saltMasterToken: string
-  onLogout: () => void
   minionsObject: MinionsObject
   minionsStatus: RemoteDataState
   handleTelegrafStatus: (targetMinion: string) => Promise<void>
@@ -122,7 +121,7 @@ export class AgentControl extends PureComponent<Props, State> {
     if (!isUserAuthorized) return
 
     const minions = _.values(this.props.minionsObject).filter(
-      f => f.isSaltRuning !== false
+      f => f.isSaltRunning !== false
     )
 
     this.setState({
@@ -141,7 +140,7 @@ export class AgentControl extends PureComponent<Props, State> {
     if (prevProps !== this.props) {
       this.setState({
         Minions: _.values(this.props.minionsObject).filter(
-          f => f.isSaltRuning !== false
+          f => f.isSaltRunning !== false
         ),
         controlPageStatus: this.props.minionsStatus,
       })
@@ -297,7 +296,6 @@ export class AgentControl extends PureComponent<Props, State> {
           saltMasterToken,
           host
         )
-
         this.setState({
           minionLog: 'Service Stop' + '\n' + yaml.dump(data.return[0]),
           isAllCheck: false,

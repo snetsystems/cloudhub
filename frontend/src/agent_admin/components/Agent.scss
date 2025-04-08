@@ -448,3 +448,15 @@
     }
   }
 }
+.telegraf-plugins-default-measurements {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.telegraf-plugins-dropdown {
+  color: #eeeff2;
+  position: relative;
+  top: 0;
+  transform: none;
+}

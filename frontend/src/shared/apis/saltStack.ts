@@ -866,7 +866,7 @@ export async function getRunnerSaltCmdTelegraf(
       kwarg: {
         fun: 'cmd.run',
         cmd: 'telegraf --usage ' + pMeasurements,
-        runas: "telegraf"
+        runas: 'telegraf',
       },
     }
 
@@ -889,6 +889,7 @@ export async function getRunnerSaltCmdTelegrafPlugin(
       kwarg: {
         fun: 'cmd.shell',
         cmd: pCmd,
+        runas: 'telegraf',
       },
     }
 
@@ -2674,6 +2675,39 @@ export const grantRoleOspProject = async params => {
     }
 
     const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalSaltCmdTelegraf(
+  pUrl: string,
+  pToken: string,
+  pCmd: string,
+  pMinionId: string
+) {
+  try {
+    const params = {
+      client: 'local',
+      fun: 'cmd.run',
+      kwarg: {
+        cmd: pCmd,
+      },
+      tgt_type: '',
+      tgt: '',
+    }
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+
+    const result = await apiRequest(pUrl, pToken, params)
 
     return result
   } catch (error) {

@@ -80,3 +80,13 @@ export const COLLECTOR_CONFIG_TAB_ORDER: CollectorConfigTabName[] = [
   'openstack',
   'openshift',
 ]
+
+export const TELEGRAF_PLUGINS = {
+  inputs: 'inputs',
+  outputs: 'outputs',
+  processors: 'processors',
+  aggregators: 'aggregators',
+  secretstores: 'secretstores',
+  parsers: 'parsers',
+  serializers: 'serializers',
+}

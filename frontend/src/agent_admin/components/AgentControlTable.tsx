@@ -42,9 +42,9 @@ export interface Props {
   onClickRun: () => void
   onClickStop: () => void
   onClickInstall: () => void
-  handleAllCheck: ({_this: object}) => void
-  handleMinionCheck: ({_this: object}) => void
-  handleOnChoose: ({selectItem: string}) => void
+  handleAllCheck: ({_this: {}}) => void
+  handleMinionCheck: ({_this: {}}) => void
+  handleOnChoose: ({selectItem: {}}) => void
 }
 
 interface State {
@@ -56,9 +56,10 @@ interface State {
   minionIPAdress: string
 }
 
+type OnChoose = {_this: {object}; selectItem: string}
 interface SelectButton {
   buttonName: string
-  handleOnChoose?: ({_this: object, selectItem: string}) => void
+  handleOnChoose?: (OnChoose) => void
   items: string[]
   buttonStatus: boolean
   isDisabled: boolean
@@ -89,9 +90,9 @@ class AgentControlTable extends PureComponent<Props, State> {
   )
 
   public filter(allHosts: Minion[], searchTerm: string): Minion[] {
-    const filterText = searchTerm.toLowerCase()
+    const filterText = searchTerm?.toLowerCase()
     return allHosts.filter(h => {
-      return h.host.toLowerCase().includes(filterText)
+      return h.host?.toLowerCase().includes(filterText)
     })
   }
 
@@ -353,6 +354,7 @@ class AgentControlTable extends PureComponent<Props, State> {
       OSVersionWidth,
       IPWidth,
       ActionWidth,
+      TelegrafVersionWidth,
     } = AGENT_CONTROL_TABLE_SIZING
     return (
       <div className="hosts-table--thead">
@@ -378,6 +380,15 @@ class AgentControlTable extends PureComponent<Props, State> {
             Host
             <span className="icon caret-up" />
           </div>
+          <div
+            onClick={this.updateSort('version')}
+            className={this.sortableClasses('version')}
+            style={{width: TelegrafVersionWidth}}
+          >
+            Collector Version
+            <span className="icon caret-up" />
+          </div>
+
           <div
             onClick={this.updateSort('os')}
             className={this.sortableClasses('os')}
@@ -476,7 +487,7 @@ class AgentControlTable extends PureComponent<Props, State> {
           <FancyScrollbar
             children={sortedHosts.map(
               (m: Minion, i: number): JSX.Element =>
-                m.os && m.os.toLocaleLowerCase() !== 'windows' ? (
+                m.os ? (
                   <AgentControlTableRow
                     key={i}
                     minions={m}

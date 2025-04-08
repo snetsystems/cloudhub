@@ -42,7 +42,15 @@ class AgentControlTableRow extends PureComponent<Props> {
 
   private get TableRowEachPage() {
     const {minions, isCheck, onMouseLeave, onMouseOver} = this.props
-    const {osVersion, os, ip, host, isInstall, isRunning} = minions
+    const {
+      osVersion,
+      os,
+      ip,
+      host,
+      isInstall,
+      isRunning,
+      telegrafVersion,
+    } = minions
     const {
       CheckWidth,
       StatusWidth,
@@ -51,6 +59,7 @@ class AgentControlTableRow extends PureComponent<Props> {
       OSVersionWidth,
       IPWidth,
       ActionWidth,
+      TelegrafVersionWidth,
     } = AGENT_CONTROL_TABLE_SIZING
     const minionIPAddresses = ip.split(',')
     const isMultipleIPAddress = ip !== '' && minionIPAddresses.length > 1
@@ -76,6 +85,10 @@ class AgentControlTableRow extends PureComponent<Props> {
           width={CheckWidth}
         />
         <TableBodyRowItem title={host} width={HostWidth} />
+        <TableBodyRowItem
+          title={telegrafVersion ? telegrafVersion : ''}
+          width={TelegrafVersionWidth}
+        />
         <TableBodyRowItem
           title={os ? <OSIndicator os={os} /> : ''}
           width={OSWidth}
