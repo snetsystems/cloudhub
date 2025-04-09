@@ -96,7 +96,7 @@ const AgentConfigPluginContents = ({
   const groupedPlugins = _.groupBy(sortedPlugins, 'category')
   return (
     <FancyScrollbar>
-      {_.isEmpty(groupedPlugins) && (
+      {_.isEmpty(plugins) && (
         <div>
           <p>This version of Telegraf is not supported.</p>
           <p>Please update to the latest version.</p>
