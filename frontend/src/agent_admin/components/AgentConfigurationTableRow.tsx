@@ -58,13 +58,14 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
   }
   private get TableRowEachPage(): JSX.Element {
     const {minions, onMouseLeave, onMouseOver} = this.props
-    const {osVersion, os, ip, host, isRunning} = minions
+    const {osVersion, os, ip, host, isRunning, telegrafVersion} = minions
     const {
       HostWidth,
       OSWidth,
       OSVersionWidth,
       IPWidth,
       ActionWidth,
+      TelegrafVersionWidth,
     } = AGENT_CONFIGURATION_TABLE_SIZING
     const minionIPAddresses = ip.split(',')
     const isMultipleIPAddress = ip !== '' && minionIPAddresses.length > 1
@@ -78,6 +79,10 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
         onClick={this.handleOnClickTableRow}
       >
         <TableBodyRowItem title={host} width={HostWidth} />
+        <TableBodyRowItem
+          title={telegrafVersion}
+          width={TelegrafVersionWidth}
+        />
         <TableBodyRowItem
           title={os ? <OSIndicator os={os} /> : ''}
           width={OSWidth}

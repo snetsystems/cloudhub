@@ -1,6 +1,7 @@
 // Types
 import {ColorString} from 'src/types/colors'
 import {TimeSeriesSeries} from 'src/types/series'
+import {DecimalPlaces} from 'src/types/dashboards'
 
 export type StatisticalGraphScaleType = 'logarithmic' | undefined
 export type StatisticalGraphBoundsType = [string, string] | undefined
@@ -25,6 +26,7 @@ export type StatisticalGraphDatasetConfigType = {
   colors: ColorString[]
   showCount?: number | null
   fillArea?: boolean
+  decimalPlaces?: DecimalPlaces
 }
 
 export type StatisticalGraphSortOption = {

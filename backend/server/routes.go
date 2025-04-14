@@ -178,16 +178,21 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		i := 0
 		for name, url := range a.AddonURLs {
 			var emitURL string
+			var token = ""
 			switch name {
 			case "salt":
 				emitURL = "/cloudhub/v1/proxy/salt"
+			case "nvidia-gpu":
+				token = a.AddonTokens["nvidia-gpu"]
+				emitURL = url
 			default:
 				emitURL = url
 			}
 
 			routes.Addons[i] = getAddonLinksResponse{
-				Name: name,
-				URL:  emitURL,
+				Name:  name,
+				URL:   emitURL,
+				Token: token,
 			}
 			i++
 		}

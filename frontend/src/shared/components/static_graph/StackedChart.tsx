@@ -30,7 +30,12 @@ import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {CellType, FieldOption, TableOptions} from 'src/types/dashboards'
+import {
+  CellType,
+  DecimalPlaces,
+  FieldOption,
+  TableOptions,
+} from 'src/types/dashboards'
 
 // Utils
 import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
@@ -58,6 +63,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  decimalPlaces: DecimalPlaces
   showCount?: number | null
 }
 
@@ -73,6 +79,7 @@ const StackedChart = ({
   tableOptions,
   fieldOptions,
   showCount,
+  decimalPlaces,
 }: Props) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -106,8 +113,9 @@ const StackedChart = ({
         axes,
         xAxisTitle,
         yAxisTitle,
+        decimalPlaces,
       }),
-    [isUpdated, xAxisTitle, yAxisTitle, axes]
+    [isUpdated, xAxisTitle, yAxisTitle, axes, decimalPlaces]
   )
 
   useEffect(() => {

@@ -1,0 +1,1329 @@
+{
+  "id": "8dd12870-bea8-45a6-a427-de16a83f05d2",
+  "measurement": "nvidia_smi",
+  "app": "nvidia_smi_static",
+  "autoflow": true,
+  "templates": [
+    {
+      "tempVar": ":top_count:",
+      "values": [
+        {
+          "value": "10",
+          "type": "constant",
+          "selected": true
+        }
+      ],
+      "id": "3bfbf0a6-dbec-4bc6-bf46-907deaa94c6f",
+      "type": "text",
+      "label": "",
+      "links": {
+        "self": ""
+      }
+    },
+    {
+      "tempVar": ":idle_count:",
+      "values": [
+        {
+          "value": "10",
+          "type": "constant",
+          "selected": true
+        }
+      ],
+      "id": "080924d2-a2a2-422b-a49d-c12939280d0a",
+      "type": "text",
+      "label": "",
+      "links": {
+        "self": ""
+      }
+    }
+  ],
+  "cells": [
+    {
+      "i": "9c34381b-6d97-4df3-b585-695152d80053",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "GPU Mem Usage Top 10",
+      "queries": [
+        {
+          "query": "SELECT mean(\"memory_used\") AS \"memory_used\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"host\"", "\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Hostname / GPU Index",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Mem Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticPie",
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
+      "colors": [
+        {
+          "id": "3fb84367-b410-4ed8-aff4-522f5141c754",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "8eedeabd-811f-4330-906c-292802db433b",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "60aff1ad-272f-4e5f-a318-bd2b85d98f1c",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "nvidia_smi.memory_used",
+          "displayName": "GPU Mem usage",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi.memory_used",
+          "displayName": "GPU Mem usage",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ":top_count:"
+      }
+    },
+    {
+      "i": "44e42c6d-0dc9-4b8b-8125-c026bf2f7024",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "GPU Temperature Top 10",
+      "queries": [
+        {
+          "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"host\"", "\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Hostname / GPU Index",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "GPU Temperature(°C)",
+          "prefix": "",
+          "suffix": "°C",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticBar",
+      "colors": [
+        {
+          "id": "752d97e3-dc84-4886-96eb-23a87949d336",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "1b175632-779a-44ba-b8ae-bc8d9bbe5173",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "6b7ed183-91b0-4f98-a25e-f0ff3eca3ad6",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "nvidia_smi.mean_temperature_gpu",
+          "displayName": "GPU Temperature",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi.mean_temperature_gpu",
+          "displayName": "GPU Temperature",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ":top_count:"
+      }
+    },
+    {
+      "i": "e0adc6ee-6f2b-499f-aa10-c413d52d6943",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "Pwr Consumption Top 10",
+      "queries": [
+        {
+          "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_power_draw\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"host\"", "\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Hostname / GPU Index",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Pwr Consumption(W)",
+          "prefix": "",
+          "suffix": "W",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticBar",
+      "colors": [
+        {
+          "id": "14d11ad2-b6ee-407e-84b8-2ce9b58e7c85",
+          "type": "scale",
+          "hex": "#FD7A5D",
+          "name": "Delorean",
+          "value": "0"
+        },
+        {
+          "id": "9cb145a3-cd25-4706-bf7f-85dfad1aaab8",
+          "type": "scale",
+          "hex": "#5F1CF2",
+          "name": "Delorean",
+          "value": "0"
+        },
+        {
+          "id": "9fe90bdb-99d0-4984-98a2-3ee65a0da01f",
+          "type": "scale",
+          "hex": "#4CE09A",
+          "name": "Delorean",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "nvidia_smi.mean_power_draw",
+          "displayName": "Pwr Consumption",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi.mean_power_draw",
+          "displayName": "Pwr Consumption",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ":top_count:"
+      }
+    },
+    {
+      "i": "af535e33-491c-4b60-bd2d-4de75f587323",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "Pwr Limit - Pwr Consumption Radar Graph Top 10",
+      "queries": [
+        {
+          "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_gpu_power_draw\", mean(\"gpu_current_power_limit\") AS \"mean_gpu_current_power_limit\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"host\"", "\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Hostname / GPU Index",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Mem Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticRadar",
+      "colors": [
+        {
+          "id": "c6834f20-1875-4dd3-8f36-0caeb034f374",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "fb3c1ca8-a3ea-4996-9edc-ba95ab7df2f6",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "5da6f05a-3d96-4e6b-bf82-08e8f3e29ef5",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "nvidia_smi.mean_gpu_power_draw",
+          "displayName": "GPU Pwr Consumption(W)",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi.mean_gpu_power_draw",
+          "displayName": "GPU Pwr Consumption(W)",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi.mean_gpu_current_power_limit",
+          "displayName": "GPU Pwr Limit(W)",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ":top_count:"
+      }
+    },
+    {
+      "i": "b3316744-e2cf-413a-b67c-6df32869599f",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "[MIG] Process GPU Mem Usage Top 10",
+      "queries": [
+        {
+          "query": "SELECT mean(\"used_memory\") AS \"used_memory\" FROM \":db:\".\":rp:\".\"nvidia_smi_process\"",
+          "groupbys": [
+            "\"compute_index\"",
+            "\"gpu_index\"",
+            "\"host\"",
+            "\"index\"",
+            "\"name\""
+          ],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "CI / GI / Hostname / GPU Index / Process Name",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Used Memory",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticBar",
+      "colors": [
+        {
+          "id": "af52d3bb-72e4-47ba-bd0e-293bf9cd6ca6",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "5dd6aae4-4236-46f0-a544-e79d968e9e25",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "441531a4-a758-4145-ab82-b580713ce6f8",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "nvidia_smi_process.used_memory",
+          "displayName": "[MIG] Process GPU Mem Usage",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "compute_index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "gpu_index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "name",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi_process.used_memory",
+          "displayName": "[MIG] Process GPU Mem Usage",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": true,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ":top_count:"
+      }
+    },
+
+    {
+      "i": "a0703245-220c-4602-abd9-bab849a72157",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "[MIG] GI/CI Frame Buffer Mem Usage Top 10",
+      "queries": [
+        {
+          "query": "SELECT mean(\"memory_fb_used\") AS \"memory_fb_used\" FROM \":db:\".\":rp:\".\"nvidia_smi_mig\"",
+          "groupbys": [
+            "\"compute_index\"",
+            "\"gpu_index\"",
+            "\"host\"",
+            "\"index\""
+          ],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "CI / GI / Hostname / GPU Index",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "FB Mem Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticBar",
+      "colors": [
+        {
+          "id": "563e4763-7fbb-4db8-ae63-05d97c158dae",
+          "type": "scale",
+          "hex": "#74D495",
+          "name": "Atlantis",
+          "value": "0"
+        },
+        {
+          "id": "37b885f6-0f26-483b-b026-ac1cb9b5c69e",
+          "type": "scale",
+          "hex": "#3F3FBA",
+          "name": "Atlantis",
+          "value": "0"
+        },
+        {
+          "id": "0da6c575-b95f-4434-bb26-45384b0cc279",
+          "type": "scale",
+          "hex": "#FF4D9E",
+          "name": "Atlantis",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "nvidia_smi_mig.memory_fb_used",
+          "displayName": "[MIG] GI/CI Frame Buffer Mem Usage",
+          "visible": true,
+          "direction": "desc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "compute_index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "gpu_index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi_mig.memory_fb_used",
+          "displayName": "[MIG] GI/CI Frame Buffer Mem Usage",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ":top_count:"
+      }
+    },
+    {
+      "i": "86f32408-59f4-4f36-84f4-14470b1a5a98",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "GPU Mem Utilization - Pwr Consumption Correlation",
+      "queries": [
+        {
+          "query": "SELECT mean(\"utilization_memory\") AS \"mean_utilization_memory\", mean(\"gpu_power_draw\") AS \"mean_gpu_power_draw\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"host\"", "\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["0", ""],
+          "label": "GPU Utilization(%)",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Pwr Consumption(W)",
+          "prefix": "",
+          "suffix": "W",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticScatter",
+      "colors": [
+        {
+          "id": "39146014-05b8-4f39-bb82-e500d1343b8e",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "31b1e158-1cac-47e0-a604-9b8dd458c70f",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "c91e81db-e9c8-4065-a058-f18caa9f52a4",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi.mean_gpu_power_draw",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi.mean_utilization_memory",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "67324ce9-b41a-4876-ba8d-0850546895ab",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "Pwr Consumption Idle 10",
+      "queries": [
+        {
+          "query": "SELECT mean(\"gpu_power_draw\") AS \"mean_power_draw\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"host\"", "\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Hostname / GPU Index",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Pwr Consumption(W)",
+          "prefix": "",
+          "suffix": "W",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticDoughnut",
+      "colors": [
+        {
+          "id": "433aff16-1afc-45be-91fe-6aebd67fa118",
+          "type": "scale",
+          "hex": "#74D495",
+          "name": "Atlantis",
+          "value": "0"
+        },
+        {
+          "id": "300a0316-b39f-48d5-a816-827731d3bd08",
+          "type": "scale",
+          "hex": "#3F3FBA",
+          "name": "Atlantis",
+          "value": "0"
+        },
+        {
+          "id": "2837d74f-fc5b-4dfd-9185-4dc98ce6d642",
+          "type": "scale",
+          "hex": "#FF4D9E",
+          "name": "Atlantis",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "nvidia_smi.mean_power_draw",
+          "displayName": "Pwr Consumption",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi.mean_power_draw",
+          "displayName": "Pwr Consumption",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ":idle_count:"
+      }
+    },
+    {
+      "i": "c976fb62-d0d8-448f-99bb-55886c965d2a",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "GPU Temperature Idle 10",
+      "queries": [
+        {
+          "query": "SELECT mean(\"temperature_gpu\") AS \"mean_temperature_gpu\" FROM \":db:\".\":rp:\".\"nvidia_smi\"",
+          "groupbys": ["\"host\"", "\"index\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Hostname / GPU Index",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "GPU Temperature(°C)",
+          "prefix": "",
+          "suffix": "°C",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticDoughnut",
+      "colors": [
+        {
+          "id": "6ebd1b55-b5ed-436d-bbd5-d0cdb0ed7e70",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "3e3ec21b-c54b-44dd-959d-153f2cd0ab2f",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "121549fe-f352-426d-89ae-400c0a95a355",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "nvidia_smi.mean_temperature_gpu",
+          "displayName": "GPU Temperature",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi.mean_temperature_gpu",
+          "displayName": "GPU Temperature",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ":idle_count:"
+      }
+    },
+    {
+      "i": "35dc0549-cfe8-4667-abfe-63301832aec7",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "name": "[MIG] GI/CI Frame Buffer Mem Usage Idle 10",
+      "queries": [
+        {
+          "query": "SELECT mean(\"memory_fb_used\") AS \"memory_fb_used\" FROM \":db:\".\":rp:\".\"nvidia_smi_mig\"",
+          "groupbys": [
+            "\"compute_index\"",
+            "\"gpu_index\"",
+            "\"host\"",
+            "\"index\""
+          ],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "CI / GI / Hostname / GPU Index",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "FB Mem Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticDoughnut",
+      "colors": [
+        {
+          "id": "698bcf77-f6f1-4d6f-a6db-4b2b9b0fcf64",
+          "type": "scale",
+          "hex": "#FDC44F",
+          "name": "Cthulhu",
+          "value": "0"
+        },
+        {
+          "id": "0924fff5-5ec4-4463-aa85-04bc6ac4d605",
+          "type": "scale",
+          "hex": "#007C76",
+          "name": "Cthulhu",
+          "value": "0"
+        },
+        {
+          "id": "3599dad3-0d46-4863-a140-674a3e125abe",
+          "type": "scale",
+          "hex": "#8983FF",
+          "name": "Cthulhu",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "right"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "nvidia_smi_mig.memory_fb_used",
+          "displayName": "[MIG] GI/CI Frame Buffer Mem Usage",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "compute_index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "gpu_index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "host",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "index",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nvidia_smi_mig.memory_fb_used",
+          "displayName": "[MIG] GI/CI Frame Buffer Mem Usage",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 0
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ":idle_count:"
+      }
+    }
+  ]
+}

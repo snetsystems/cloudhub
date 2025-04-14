@@ -23,6 +23,7 @@ import {vspheres} from 'src/clouds/reducers'
 import source from 'src/sources/reducers'
 import aiModal from 'src/shared/reducers/aiModal'
 import predictionDashboard from 'src/device_management/reducers/predictionDashboard'
+import gpuMonitoringDashboard from 'src/gpu_monitoring/reducers/gpuMonitoringDashboard'
 
 // eslint-disable-next-line no-unused-vars
 function lastAction(state = {}, action) {
@@ -48,6 +49,7 @@ const rootReducer = combineReducers({
   source,
   aiModal,
   predictionDashboard,
+  gpuMonitoringDashboard,
 })
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
@@ -65,7 +67,6 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 //     window.__REACT_DEVTOOLS_GLOBAL_HOOK__.onCommitFiberUnmount = function () {}
 //   }
 // }
-
 
 export default function configureStore(initialState, browserHistory) {
   const routingMiddleware = routerMiddleware(browserHistory)

@@ -12,11 +12,15 @@ import {
   getLocalServiceStatusTelegraf,
   getMinionsState,
   getLocalGrainsItem,
+  getLocalSaltCmdTelegraf,
 } from 'src/shared/apis/saltStack'
 import {getAllHosts} from 'src/shared/apis/multiTenant'
 
 // Constants
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+
+// Utils
+import {extractTelegrafVersion} from 'src/agent_admin/utils'
 
 const EmptyMinion: Minion = {
   host: '',
@@ -27,7 +31,7 @@ const EmptyMinion: Minion = {
   isCheck: false,
   isInstall: false,
   isRunning: false,
-  isSaltRuning: false,
+  isSaltRunning: false,
 }
 
 export const getMinionKeyListAllAdmin = async (
@@ -41,7 +45,6 @@ export const getMinionKeyListAllAdmin = async (
     getWheelKeyListAll(pUrl, pToken),
     getAllHosts(pSource),
   ])
-
   const keyList = info[0].data.return[0].data.return
   const hosts = _.values(info[1]).map(m => m.name)
 
@@ -51,13 +54,13 @@ export const getMinionKeyListAllAdmin = async (
         minions[k] = {
           host: k,
           status: MinionState.Accept,
-          isSaltRuning: false,
+          isSaltRunning: false,
         }
     } else {
       minions[k] = {
         host: k,
         status: MinionState.Accept,
-        isSaltRuning: false,
+        isSaltRunning: false,
       }
     }
   }
@@ -68,13 +71,13 @@ export const getMinionKeyListAllAdmin = async (
         minions[k] = {
           host: k,
           status: MinionState.UnAccept,
-          isSaltRuning: false,
+          isSaltRunning: false,
         }
     } else {
       minions[k] = {
         host: k,
         status: MinionState.UnAccept,
-        isSaltRuning: false,
+        isSaltRunning: false,
       }
     }
 
@@ -85,14 +88,14 @@ export const getMinionKeyListAllAdmin = async (
           ...EmptyMinion,
           host: k,
           status: MinionState.Reject,
-          isSaltRuning: false,
+          isSaltRunning: false,
         }
     } else {
       minions[k] = {
         ...EmptyMinion,
         host: k,
         status: MinionState.Reject,
-        isSaltRuning: false,
+        isSaltRunning: false,
       }
     }
 
@@ -103,21 +106,25 @@ export const getMinionKeyListAllAdmin = async (
           ...EmptyMinion,
           host: k,
           status: MinionState.Denied,
-          isSaltRuning: false,
+          isSaltRunning: false,
         }
     } else {
       minions[k] = {
         ...EmptyMinion,
         host: k,
         status: MinionState.Denied,
-        isSaltRuning: false,
+        isSaltRunning: false,
       }
     }
 
-  const paramKeyList = _.values(minions).map(m => m.host)
+  const paramKeyList = _.values(minions)
+    .filter(m => m.status === MinionState.Accept)
+    .map(m => m.host)
+
   const grainItemInfo = await Promise.all([
     getLocalGrainsItem(pUrl, pToken, paramKeyList.toString()),
   ])
+
   const ipv4Regexformat: RegExp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/
   const exceptLoopbackRegexFormat: RegExp = /^(?!127.0.0.1)/
   const osList = grainItemInfo[0].data.return[0]
@@ -139,19 +146,19 @@ export const getMinionKeyListAllAdmin = async (
         ip: ipList,
         os: osList[k].os,
         osVersion: osList[k].osrelease,
-        isSaltRuning: typeof osList[k] !== 'object' ? false : true,
+        isSaltRunning: typeof osList[k] !== 'object' ? false : true,
       }
     } else {
       minions[k] = {
         ...minions[k],
         ip: ipList,
-        isSaltRuning: false,
+        isSaltRunning: false,
       }
     }
   }
 
   const paramSaltRuningKeyList = _.values(minions)
-    .filter(f => f.isSaltRuning !== false)
+    .filter(f => f.isSaltRunning !== false)
     .map(m => m.host)
 
   const telegrafInfo = await getTelegrafInstalledList(
@@ -162,13 +169,17 @@ export const getMinionKeyListAllAdmin = async (
 
   const installList = telegrafInfo[0].data.return[0]
   const statusList = telegrafInfo[1].data.return[0]
+  const versionList = telegrafInfo[2].data.return[0]
 
-  for (const k of _.values(minions).map(m => m.host))
+  for (const k of _.values(minions).map(m => m.host)) {
+    const {version} = extractTelegrafVersion(versionList[k])
     minions[k] = {
       ...minions[k],
       isInstall: installList[k] !== true ? false : true,
       isRunning: statusList[k] !== true ? false : true,
+      telegrafVersion: version,
     }
+  }
 
   return minions
 }
@@ -234,6 +245,7 @@ export const getTelegrafInstalledList = async (
   return await Promise.all([
     getLocalServiceEnabledTelegraf(pUrl, pToken, minionId),
     getLocalServiceStatusTelegraf(pUrl, pToken, minionId),
+    getLocalSaltCmdTelegraf(pUrl, pToken, 'telegraf version', minionId),
   ])
 }
 
@@ -245,12 +257,17 @@ export const getTelegrafState = async (
 ) => {
   const telegrafInfo = await getTelegrafInstalledList(pUrl, pToken, minionId)
   const installList = telegrafInfo[0].data.return[0]
+  const installKeysList = _.keys(installList)
   const statusList = telegrafInfo[1].data.return[0]
-
-  minions[minionId] = {
-    ...minions[minionId],
-    isInstall: installList[minionId] !== true ? false : true,
-    isRunning: statusList[minionId] !== true ? false : true,
+  const versionList = telegrafInfo[2].data.return[0]
+  for (const k of installKeysList) {
+    const {version} = extractTelegrafVersion(versionList[k])
+    minions[k] = {
+      ...minions[k],
+      isInstall: installList[k] !== true ? false : true,
+      isRunning: statusList[k] !== true ? false : true,
+      telegrafVersion: version,
+    }
   }
 
   return minions
@@ -288,7 +305,7 @@ export const getGrainItem = async (
       ip: ipList,
       os: osList[minionId].os,
       osVersion: osList[minionId].osrelease,
-      isSaltRuning: typeof osList[minionId] !== 'object' ? false : true,
+      isSaltRunning: typeof osList[minionId] !== 'object' ? false : true,
     }
 
     await getTelegrafState(pUrl, pToken, minionId, minions)

@@ -9,3 +9,5 @@ export const SUPPORTED_OS_VERSION_ORDER = [
   // 'SUPPORTED_UBUNTU_VERSION',
   'SUPPORTED_REDHAT_VERSION',
 ]
+
+export const LegacyTelegrafVersion = 1.3

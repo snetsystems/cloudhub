@@ -1,6 +1,7 @@
 import {Axes} from 'src/types'
 import {mxCell as mxCellType} from 'mxgraph'
 import {CloudServiceProvider} from 'src/hosts/types'
+import {DecimalPlaces, Legend} from 'src/types/dashboards'
 
 export interface HostNames {
   [index: string]: HostName
@@ -54,6 +55,8 @@ export interface LayoutCell {
   queries: LayoutQuery[]
   axes: Axes
   colors: string[]
+  decimalPlaces?: DecimalPlaces
+  legend?: Legend
 }
 
 export interface LayoutQuery {

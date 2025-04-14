@@ -37,10 +37,6 @@
           "base": "2",
           "scale": "linear"
         }
-      },
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
       }
     },
     {
@@ -76,10 +72,6 @@
           "base": "2",
           "scale": "linear"
         }
-      },
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
       }
     },
     {

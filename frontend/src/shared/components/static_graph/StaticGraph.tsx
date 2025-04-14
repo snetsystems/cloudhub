@@ -157,6 +157,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       tableOptions,
       fieldOptions,
       templates,
+      decimalPlaces,
     } = this.props
     const {fillArea, showLine, showPoint} = graphOptions
 
@@ -196,6 +197,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
             showCount={showCount}
+            decimalPlaces={decimalPlaces}
           />
         )
       case CellType.StaticStackedBar:
@@ -213,6 +215,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
             showCount={showCount}
+            decimalPlaces={decimalPlaces}
           />
         )
       case CellType.StaticPie:
@@ -228,6 +231,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
             showCount={showCount}
+            decimalPlaces={decimalPlaces}
           />
         )
       case CellType.StaticDoughnut:
@@ -243,6 +247,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
             showCount={showCount}
+            decimalPlaces={decimalPlaces}
           />
         )
       case CellType.StaticScatter:
@@ -279,6 +284,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             xAxisTitle={xAxisTitleForScatterChart}
             yAxisTitle={yAxisTitleForScatterChart}
             showCount={showCount}
+            decimalPlaces={decimalPlaces}
           />
         )
       case CellType.StaticRadar:
@@ -294,6 +300,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             tableOptions={tableOptions}
             fieldOptions={fieldOptionsWithGroupByTag}
             showCount={showCount}
+            decimalPlaces={decimalPlaces}
           />
         )
 
@@ -315,6 +322,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             xAxisTitle={xAxisTitle}
             yAxisTitle={yAxisTitle}
             showCount={showCount}
+            decimalPlaces={decimalPlaces}
           />
         )
       default:

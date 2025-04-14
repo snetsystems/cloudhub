@@ -64,9 +64,9 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   )
 
   public filter(allHosts: Minion[], searchTerm: string): Minion[] {
-    const filterText = searchTerm.toLowerCase()
+    const filterText = searchTerm?.toLowerCase()
     return allHosts.filter(h => {
-      return h.host.toLowerCase().includes(filterText)
+      return h.host?.toLowerCase().includes(filterText)
     })
   }
 
@@ -191,10 +191,6 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
           : null}
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
-          <span>
-            This feature is{' '}
-            <span className="caution-word">not supported yet</span> for Windows.
-          </span>
           <SearchBar
             placeholder="Filter by Host..."
             onSearch={this.updateSearchTerm}
@@ -231,6 +227,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
       OSVersionWidth,
       IPWidth,
       ActionWidth,
+      TelegrafVersionWidth,
     } = AGENT_CONFIGURATION_TABLE_SIZING
     return (
       <div className="hosts-table--thead">
@@ -241,6 +238,14 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
             style={{width: HostWidth}}
           >
             Host
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('version')}
+            className={this.sortableClasses('version')}
+            style={{width: TelegrafVersionWidth}}
+          >
+            Collector Version
             <span className="icon caret-up" />
           </div>
           <div
@@ -340,7 +345,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
           <FancyScrollbar
             children={sortedHosts.map(
               (m: Minion, i: number): JSX.Element =>
-                m.os && m.os.toLocaleLowerCase() !== 'windows' ? (
+                m.os ? (
                   <AgentConfigurationTableRow
                     key={i}
                     minions={m}

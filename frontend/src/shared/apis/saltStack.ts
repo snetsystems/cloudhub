@@ -248,6 +248,45 @@ export async function getLocalGrainsItem(
   }
 }
 
+export async function runLocalNVidiaGPUMigLgip(pUrl: string, pToken: string) {
+  try {
+    const params: Params = {
+      client: 'local',
+      tgt: 'G@gpus:vendor:nvidia',
+      fun: 'cmd.run',
+      kwarg: {
+        cmd: 'nvidia-smi mig -lgip',
+      },
+      tgt_type: 'compound',
+    }
+
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function runLocalNvidiaGrainsItemForGPU(
+  pUrl: string,
+  pToken: string
+) {
+  try {
+    const params = {
+      client: 'local',
+      tgt: 'G@gpus:vendor:nvidia',
+      fun: 'grains.item',
+      arg: ['os', 'osrelease', 'localhost', 'gpus'],
+      tgt_type: 'compound',
+    }
+
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runAcceptKey(
   pUrl: string,
   pToken: string,
@@ -539,6 +578,34 @@ export async function runLocalServiceReloadTelegraf(
   }
 }
 
+export async function runLocalNVidiaInfoXML(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'cmd.run',
+      kwarg: {
+        cmd: `nvidia-smi -q -x`,
+      },
+    }
+
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runLocalServiceTestTelegraf(
   pUrl: string,
   pToken: string,
@@ -799,6 +866,7 @@ export async function getRunnerSaltCmdTelegraf(
       kwarg: {
         fun: 'cmd.run',
         cmd: 'telegraf --usage ' + pMeasurements,
+        runas: 'telegraf',
       },
     }
 
@@ -821,6 +889,7 @@ export async function getRunnerSaltCmdTelegrafPlugin(
       kwarg: {
         fun: 'cmd.shell',
         cmd: pCmd,
+        runas: 'telegraf',
       },
     }
 
@@ -2606,6 +2675,39 @@ export const grantRoleOspProject = async params => {
     }
 
     const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalSaltCmdTelegraf(
+  pUrl: string,
+  pToken: string,
+  pCmd: string,
+  pMinionId: string
+) {
+  try {
+    const params = {
+      client: 'local',
+      fun: 'cmd.run',
+      kwarg: {
+        cmd: pCmd,
+      },
+      tgt_type: '',
+      tgt: '',
+    }
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+
+    const result = await apiRequest(pUrl, pToken, params)
 
     return result
   } catch (error) {

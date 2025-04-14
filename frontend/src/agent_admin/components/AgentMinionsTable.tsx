@@ -67,9 +67,9 @@ class AgentMinionsTable extends PureComponent<Props, State> {
   )
 
   public filter(allHosts: Minion[], searchTerm: string): Minion[] {
-    const filterText = searchTerm.toLowerCase()
+    const filterText = searchTerm?.toLowerCase()
     return allHosts.filter(h => {
-      return h.host.toLowerCase().includes(filterText)
+      return h.host?.toLowerCase().includes(filterText)
     })
   }
 

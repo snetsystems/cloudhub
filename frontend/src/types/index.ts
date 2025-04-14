@@ -163,6 +163,23 @@ import {
   AlertHostList,
 } from './prediction'
 
+import {
+  NVidiaSmiMonitoringTooltipNode,
+  GPUSmiData,
+  GPUSmiMIGData,
+  GPUMonitoringSeries,
+  HostsForGPUSmiData,
+  HostsForGPUSmiMIGData,
+  AllowedGPUMonitoringMetricProperty,
+  FilteredHostForGPUMonitoring,
+  FetchNvidiaLocalGrainItemsResponse,
+  NvidiaLocalGrainItem,
+  FetchNvidiaLocalGrainItemsForGPUResponse,
+  NvidiaLocalGrainItemForGPU,
+  FetchNVidiaGPUMigLgipResponse,
+  MigProfile,
+} from './gpuMonitoring'
+
 export {
   Me,
   Env,
@@ -319,4 +336,18 @@ export {
   GetLearningDLData,
   AlertHostList,
   GroupBys,
+  NVidiaSmiMonitoringTooltipNode,
+  HostsForGPUSmiData,
+  HostsForGPUSmiMIGData,
+  GPUSmiData,
+  GPUSmiMIGData,
+  GPUMonitoringSeries,
+  AllowedGPUMonitoringMetricProperty,
+  FilteredHostForGPUMonitoring,
+  FetchNvidiaLocalGrainItemsForGPUResponse,
+  FetchNvidiaLocalGrainItemsResponse,
+  NvidiaLocalGrainItem,
+  NvidiaLocalGrainItemForGPU,
+  FetchNVidiaGPUMigLgipResponse,
+  MigProfile,
 }

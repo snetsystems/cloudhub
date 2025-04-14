@@ -9,25 +9,14 @@ import SearchBar from 'src/hosts/components/SearchBar'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import AgentControlModal from 'src/agent_admin/components/AgentControlModal'
-import Dropdown from 'src/shared/components/Dropdown'
-import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 import AgentMinionsToolTip from 'src/agent_admin/components/AgentMinionsToolTip'
-import AgentControlSupportOSVersionToolTip from 'src/agent_admin/components/AgentControlSupportOSVersionToolTip'
 
 // Contants
-import {
-  SELECTBOX_TEXT,
-  AGENT_CONTROL_TABLE_SIZING,
-} from 'src/agent_admin/constants'
+import {AGENT_CONTROL_TABLE_SIZING} from 'src/agent_admin/constants'
 
 // Types
 import {RemoteDataState} from 'src/types'
-import {
-  Minion,
-  SortDirection,
-  AgentDirFile,
-  AgentDirFileInfo,
-} from 'src/agent_admin/type'
+import {Minion, SortDirection} from 'src/agent_admin/type'
 
 // Decorator
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -36,15 +25,11 @@ export interface Props {
   minions: Minion[]
   controlPageStatus: RemoteDataState
   isAllCheck: boolean
-  telegrafList: AgentDirFile
-  chooseMenu: string
   onClickAction: (host: string, isRunning: boolean) => () => Promise<void>
   onClickRun: () => void
   onClickStop: () => void
-  onClickInstall: () => void
-  handleAllCheck: ({_this: object}) => void
-  handleMinionCheck: ({_this: object}) => void
-  handleOnChoose: ({selectItem: string}) => void
+  handleAllCheck: ({_this: {}}) => void
+  handleMinionCheck: ({_this: {}}) => void
 }
 
 interface State {
@@ -54,14 +39,6 @@ interface State {
   isToolipActive: boolean
   targetPosition: {width: number; top: number; right: number; left: number}
   minionIPAdress: string
-}
-
-interface SelectButton {
-  buttonName: string
-  handleOnChoose?: ({_this: object, selectItem: string}) => void
-  items: string[]
-  buttonStatus: boolean
-  isDisabled: boolean
 }
 
 @ErrorHandling
@@ -89,9 +66,9 @@ class AgentControlTable extends PureComponent<Props, State> {
   )
 
   public filter(allHosts: Minion[], searchTerm: string): Minion[] {
-    const filterText = searchTerm.toLowerCase()
+    const filterText = searchTerm?.toLowerCase()
     return allHosts.filter(h => {
-      return h.host.toLowerCase().includes(filterText)
+      return h.host?.toLowerCase().includes(filterText)
     })
   }
 
@@ -193,16 +170,7 @@ class AgentControlTable extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {
-      onClickRun,
-      onClickStop,
-      onClickInstall,
-      controlPageStatus,
-      minions,
-      telegrafList,
-      handleOnChoose,
-      chooseMenu,
-    } = this.props
+    const {onClickRun, onClickStop, controlPageStatus, minions} = this.props
 
     const isCheckedMinions = !(
       minions.filter(m => m.isCheck === true).length > 0
@@ -215,13 +183,7 @@ class AgentControlTable extends PureComponent<Props, State> {
           : null}
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
-          <span>
-            This feature is{' '}
-            <span className="caution-word">not supported yet</span> for Windows.
-          </span>
           <span style={{display: 'flex'}}>
-            <span className="tooltip--agent-control">OS Support</span>
-            <AgentControlSupportOSVersionToolTip />
             <SearchBar
               placeholder="Filter by Host..."
               onSearch={this.updateSearchTerm}
@@ -261,64 +223,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             onCancel={() => {}}
             onConfirm={onClickStop.bind(this)}
           />
-
-          <AgentControlModal
-            disabled={[
-              isCheckedMinions,
-              chooseMenu === SELECTBOX_TEXT.DEFAULT,
-            ].includes(true)}
-            minions={minions}
-            name={'INSTALL'}
-            message={
-              'There is already installed a collector at least one, do you go on?'
-            }
-            buttonClassName={
-              'btn btn-inline_block btn-default agent--btn btn-primary'
-            }
-            cancelText={'Cancel'}
-            confirmText={'OK'}
-            onCancel={() => {}}
-            onConfirm={onClickInstall.bind(this)}
-            customClass={'agent-default-button'}
-          />
-
-          <this.SelectButton
-            buttonName={chooseMenu}
-            handleOnChoose={handleOnChoose}
-            items={this.extractionFilesName(telegrafList.files)}
-            buttonStatus={telegrafList.isLoading}
-            isDisabled={false}
-          />
         </div>
       </div>
     )
-  }
-  private SelectButton = (props: SelectButton) => {
-    const {buttonName, items, buttonStatus, isDisabled} = props
-
-    return (
-      <div className={'agent-select--button-box'}>
-        {buttonStatus ? (
-          <div className={'loading-box'}>
-            <LoadingSpinner />
-          </div>
-        ) : null}
-        <Dropdown
-          items={items}
-          onChoose={this.getHandleOnChoose}
-          selected={buttonName}
-          className="dropdown-stretch top"
-          disabled={isDisabled}
-        />
-      </div>
-    )
-  }
-  private getHandleOnChoose = (selectItem: {text: string}) => {
-    this.props.handleOnChoose({selectItem: selectItem.text})
-  }
-
-  public extractionFilesName = (items: AgentDirFileInfo[]): string[] => {
-    return items.map(item => item.application)
   }
 
   private getHandleAllCheck = () => {
@@ -353,6 +260,7 @@ class AgentControlTable extends PureComponent<Props, State> {
       OSVersionWidth,
       IPWidth,
       ActionWidth,
+      TelegrafVersionWidth,
     } = AGENT_CONTROL_TABLE_SIZING
     return (
       <div className="hosts-table--thead">
@@ -378,6 +286,15 @@ class AgentControlTable extends PureComponent<Props, State> {
             Host
             <span className="icon caret-up" />
           </div>
+          <div
+            onClick={this.updateSort('version')}
+            className={this.sortableClasses('version')}
+            style={{width: TelegrafVersionWidth}}
+          >
+            Collector Version
+            <span className="icon caret-up" />
+          </div>
+
           <div
             onClick={this.updateSort('os')}
             className={this.sortableClasses('os')}
@@ -476,7 +393,7 @@ class AgentControlTable extends PureComponent<Props, State> {
           <FancyScrollbar
             children={sortedHosts.map(
               (m: Minion, i: number): JSX.Element =>
-                m.os && m.os.toLocaleLowerCase() !== 'windows' ? (
+                m.os ? (
                   <AgentControlTableRow
                     key={i}
                     minions={m}

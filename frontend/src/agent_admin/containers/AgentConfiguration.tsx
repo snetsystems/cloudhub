@@ -2,7 +2,7 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
-import memoize from 'memoize-one'
+
 import * as TOML from '@iarna/toml'
 import {EditorChange} from 'codemirror'
 import {AxiosResponse} from 'axios'
@@ -12,15 +12,12 @@ import moment from 'moment'
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import AgentConfigurationTable from 'src/agent_admin/components/AgentConfigurationTable'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor'
-import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction'
 import AgentConfigModal from 'src/agent_admin/components/AgentConfigModal'
 import AgentConfigConsoleModal from 'src/agent_admin/components/AgentConfigConsoleModal'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import Dropdown from 'src/shared/components/Dropdown'
-import SearchBar from 'src/hosts/components/SearchBar'
-import AgentConfigPlugInModal from 'src/agent_admin/components/AgentConfigPlugInModal'
+import AgentConfigPlugin from 'src/agent_admin/components/AgentConfigPlugins'
 
 // Middleware
 import {
@@ -40,8 +37,6 @@ import {
   getLocalFileReadAsync,
   getLocalFileWriteAsync,
   runLocalServiceTestTelegrafAsync,
-  getRunnerSaltCmdTelegrafAsync,
-  getRunnerSaltCmdTelegrafPluginAsync,
 } from 'src/agent_admin/actions'
 
 // Notification
@@ -61,7 +56,7 @@ import {
 
 // Constants
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
-import {AGENT_TELEGRAF_CONFIG, GET_STATUS} from 'src/agent_admin/constants'
+import {GET_STATUS} from 'src/agent_admin/constants'
 
 // Types
 import {
@@ -72,13 +67,24 @@ import {
   NotificationFunc,
   DropdownItem,
 } from 'src/types'
-import {MinionsObject, SortDirection} from 'src/agent_admin/type'
+import {MinionsObject} from 'src/agent_admin/type'
 
 // API
 import {
   getLocalDirectoryMake,
   runLocalServiceReloadTelegraf,
+  runLocalServiceReStartTelegraf,
 } from 'src/shared/apis/saltStack'
+
+// Utils
+import {getTelegrafConfigPath} from 'src/agent_admin/utils'
+
+interface LocalStorageAgentConfig {
+  focusedHost?: string
+  focusedHostIp?: string
+  configScript?: string
+  isApplyBtnEnabled?: boolean
+}
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
@@ -125,16 +131,6 @@ interface Props {
     script: string,
     path?: string
   ) => Promise<AxiosResponse>
-  getRunnerSaltCmdTelegraf: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    measurements: string
-  ) => Promise<AxiosResponse>
-  getRunnerSaltCmdTelegrafPlugin: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    cmd: string
-  ) => Promise<AxiosResponse>
   runLocalServiceTestTelegraf: (
     saltMasterUrl: string,
     saltMasterToken: string,
@@ -151,12 +147,9 @@ interface State {
   isOpenPlugin: boolean
   isDisabledPlugins: boolean
   configPageStatus: RemoteDataState
-  measurementsStatus: RemoteDataState
   collectorConfigStatus: RemoteDataState
   horizontalProportions: number[]
   verticalProportions: number[]
-  description: string
-  focusedMeasure: string
   configScript: string
   responseMessage: string
   focusedHost: string
@@ -167,24 +160,9 @@ interface State {
   isCollectorInstalled: boolean
   isModalCall: boolean
   selectedOrg: string
-  inputPluginList: Plugin[]
-  outputPluginList: Plugin[]
-  searchTerm: string
   isConsoleModalVisible: boolean
   isConsoleModalMessage: string
-  isPluginModalVisible: boolean
   timeStampTempFile: string
-}
-interface Plugin {
-  inoutType: string
-  name: string
-  isActivity: boolean
-}
-interface LocalStorageAgentConfig {
-  focusedHost?: string
-  focusedHostIp?: string
-  configScript?: string
-  isApplyBtnEnabled?: boolean
 }
 
 @ErrorHandling
@@ -200,12 +178,9 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isOpenPlugin: false,
       isDisabledPlugins: false,
       configPageStatus: RemoteDataState.NotStarted,
-      measurementsStatus: RemoteDataState.NotStarted,
       collectorConfigStatus: RemoteDataState.NotStarted,
       horizontalProportions: [0.43, 0.57],
       verticalProportions: [0.3, 0.7],
-      description: '',
-      focusedMeasure: '',
       configScript: '',
       responseMessage: '',
       focusedHost: '',
@@ -216,12 +191,8 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isCollectorInstalled: false,
       isModalCall: false,
       selectedOrg: this.DEFAULT_DROPDOWN_TEXT,
-      inputPluginList: [],
-      outputPluginList: [],
-      searchTerm: '',
       isConsoleModalVisible: false,
       isConsoleModalMessage: '',
-      isPluginModalVisible: false,
       timeStampTempFile: '',
     }
   }
@@ -256,8 +227,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isConsoleModalVisible,
     })
 
-    this.getTelegrafPlugin()
-
     this.setState({
       isModalCall: checkData.isModalCall,
       isModalVisible: checkData.isModalVisible,
@@ -265,7 +234,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isGetLocalStorage: checkData.isGetLocalStorage,
       isCollectorInstalled: checkData.isCollectorInstalled,
       configPageStatus: this.props.minionsStatus,
-      measurementsStatus: RemoteDataState.Loading,
     })
   }
 
@@ -312,53 +280,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     })
   }
 
-  public getTelegrafPlugin = async () => {
-    const {
-      saltMasterUrl,
-      saltMasterToken,
-      getRunnerSaltCmdTelegrafPlugin,
-    } = this.props
-    const telegrafPlugin = await Promise.all([
-      getRunnerSaltCmdTelegrafPlugin(
-        saltMasterUrl,
-        saltMasterToken,
-        'telegraf --input-list'
-      ),
-      getRunnerSaltCmdTelegrafPlugin(
-        saltMasterUrl,
-        saltMasterToken,
-        'telegraf --output-list'
-      ),
-    ])
-
-    const inputPlugin = _.get(telegrafPlugin[0], 'return')[0]
-      .replace(/ /g, '')
-      .split('\n')
-    const outputPlugin = _.get(telegrafPlugin[1], 'return')[0]
-      .replace(/ /g, '')
-      .split('\n')
-
-    inputPlugin.shift()
-    outputPlugin.shift()
-
-    const inputPluginList = _.map(inputPlugin, input => ({
-      inoutType: 'IN',
-      name: input,
-      isActivity: false,
-    }))
-    const outputPluginList = _.map(outputPlugin, output => ({
-      inoutType: 'OUT',
-      name: output,
-      isActivity: false,
-    }))
-
-    this.setState({
-      inputPluginList,
-      outputPluginList,
-      measurementsStatus: RemoteDataState.Done,
-    })
-  }
-
   public onClickTableRowCall = async (host: string) => {
     if (this.state.focusedHost === host) return
     const {
@@ -366,6 +287,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       saltMasterUrl,
       saltMasterToken,
       getLocalFileRead,
+      minionsObject,
     } = this.props
 
     this.setState({
@@ -375,11 +297,12 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isInitEditor: true,
       isGetLocalStorage: false,
     })
-
+    const configPath = getTelegrafConfigPath(minionsObject[host].os)
     const getLocalFileReadPromise = getLocalFileRead(
       saltMasterUrl,
       saltMasterToken,
-      host
+      host,
+      configPath.FILE
     )
 
     getLocalFileReadPromise
@@ -499,23 +422,33 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       configPageStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
     })
-
+    const telegrafConfigPath = getTelegrafConfigPath(
+      minionsObject[focusedHost].os
+    )
     const getLocalFileWritePromise = getLocalFileWrite(
       saltMasterUrl,
       saltMasterToken,
       focusedHost,
-      configScript
+      configScript,
+      telegrafConfigPath.FILE
     )
 
     getLocalFileWritePromise
       .then(({data}): void => {
         responseMessage = data.return[0][focusedHost]
 
-        const getLocalServiceReloadTelegrafPromise = runLocalServiceReloadTelegraf(
-          saltMasterUrl,
-          saltMasterToken,
-          focusedHost
-        )
+        const getLocalServiceReloadTelegrafPromise =
+          minionsObject[focusedHost].os.toLowerCase() === 'windows'
+            ? runLocalServiceReStartTelegraf(
+                saltMasterUrl,
+                saltMasterToken,
+                focusedHost
+              )
+            : runLocalServiceReloadTelegraf(
+                saltMasterUrl,
+                saltMasterToken,
+                focusedHost
+              )
 
         getLocalServiceReloadTelegrafPromise
           .then(async ({data}) => {
@@ -543,7 +476,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
               responseMessage,
               configPageStatus: RemoteDataState.Done,
               collectorConfigStatus: RemoteDataState.Done,
-              measurementsStatus: RemoteDataState.Done,
             })
 
             await handleTelegrafStatus(focusedHost)
@@ -555,7 +487,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
             this.setState({
               configPageStatus: RemoteDataState.Done,
               collectorConfigStatus: RemoteDataState.Done,
-              measurementsStatus: RemoteDataState.Done,
             })
           })
       })
@@ -565,7 +496,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
         this.setState({
           configPageStatus: RemoteDataState.Done,
           collectorConfigStatus: RemoteDataState.Done,
-          measurementsStatus: RemoteDataState.Done,
         })
       })
   }
@@ -611,6 +541,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       organizations,
       me,
       getLocalFileWrite,
+      minionsObject,
     } = this.props
     const {focusedHost, configScript} = this.state
     let {isApplyBtnEnabled, responseMessage} = this.state
@@ -673,12 +604,14 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isConsoleModalVisible: true,
       isConsoleModalMessage: '',
     })
-
+    const telegrafConfigPath = getTelegrafConfigPath(
+      minionsObject[focusedHost].os
+    )
     const getLocalDirectoryMakePromise = getLocalDirectoryMake(
       saltMasterUrl,
       saltMasterToken,
       focusedHost,
-      AGENT_TELEGRAF_CONFIG.TEMPDIRECTORY
+      telegrafConfigPath.TEMPDIRECTORY
     )
 
     getLocalDirectoryMakePromise
@@ -691,9 +624,10 @@ export class AgentConfiguration extends PureComponent<Props, State> {
 
         const timeStamp = moment().format('YYYYMMDDHHmmssSS')
         const tempDirectory = path.join(
-          AGENT_TELEGRAF_CONFIG.TEMPDIRECTORY,
+          telegrafConfigPath.TEMPDIRECTORY,
           `${timeStamp}.conf`
         )
+
         const getLocalFileWritePromise = getLocalFileWrite(
           saltMasterUrl,
           saltMasterToken,
@@ -740,6 +674,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       saltMasterUrl,
       saltMasterToken,
       runLocalServiceTestTelegraf,
+      minionsObject,
     } = this.props
     const {
       selectedInputPlugin,
@@ -747,9 +682,12 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isApplyBtnEnabled,
       timeStampTempFile,
     } = this.state
+    const telegrafConfigPath = getTelegrafConfigPath(
+      minionsObject[focusedHost].os
+    )
     const telegrafConfDirectory = isApplyBtnEnabled
       ? timeStampTempFile
-      : AGENT_TELEGRAF_CONFIG.FILE
+      : telegrafConfigPath.FILE
 
     const getLocalServiceTestTelegrafPromise = runLocalServiceTestTelegraf(
       saltMasterUrl,
@@ -857,17 +795,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
                 onClose={this.handleCloseConsoleModal}
               />
             </div>
-            <AgentConfigPlugInModal
-              isVisible={this.state.isPluginModalVisible}
-              onClose={() => {
-                this.setState({
-                  isPluginModalVisible: !this.state.isPluginModalVisible,
-                })
-                this.handlePluginClose()
-              }}
-              plugin={this.state.focusedMeasure}
-              description={this.state.description}
-            />
           </div>
         ) : (
           <div
@@ -942,13 +869,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     }
   }
 
-  private get MeasurementsContent() {
-    if (this.state.measurementsStatus === RemoteDataState.Error)
-      return this.ErrorState
-
-    return this.MeasurementsContentBody
-  }
-
   private get CollectorConfigContent() {
     if (this.state.collectorConfigStatus === RemoteDataState.Error)
       return this.ErrorState
@@ -978,73 +898,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
         <h4 style={{margin: '90px 0'}}>There was a problem loading data</h4>
       </div>
     )
-  }
-
-  private handleFocusedPlugin = async ({
-    _thisProps,
-  }: {
-    _thisProps: {name: string; idx: number; inoutkind: string}
-  }) => {
-    const {
-      saltMasterUrl,
-      saltMasterToken,
-      getRunnerSaltCmdTelegraf,
-    } = this.props
-    const {inputPluginList, outputPluginList} = this.state
-    const {name, inoutkind} = _thisProps
-
-    this.setState({
-      isPluginModalVisible: true,
-      focusedMeasure: name,
-      description: '',
-    })
-
-    const mapInputPlugin = inputPluginList.map(m => {
-      if (m.inoutType === inoutkind && m.name === name) m.isActivity = true
-      else m.isActivity = false
-      return m
-    })
-
-    const mapOutputPlugin = outputPluginList.map(m => {
-      if (m.inoutType === inoutkind && m.name === name) m.isActivity = true
-      else m.isActivity = false
-      return m
-    })
-
-    try {
-      const {data} = await getRunnerSaltCmdTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        name
-      )
-      this.setState({
-        inputPluginList: [...mapInputPlugin],
-        outputPluginList: [...mapOutputPlugin],
-        description: data.return[0],
-      })
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  private handlePluginClose = (): void => {
-    const {inputPluginList, outputPluginList} = this.state
-
-    const mapInputPlugin = inputPluginList.map(m => {
-      m.isActivity = false
-      return m
-    })
-
-    const mapOutputPlugin = outputPluginList.map(m => {
-      m.isActivity = false
-      return m
-    })
-
-    this.setState({
-      inputPluginList: [...mapInputPlugin],
-      outputPluginList: [...mapOutputPlugin],
-      focusedMeasure: '',
-    })
   }
 
   private horizontalHandleResize = (horizontalProportions: number[]): void => {
@@ -1119,29 +972,17 @@ export class AgentConfiguration extends PureComponent<Props, State> {
   }
 
   private Measurements() {
-    const {measurementsStatus} = this.state
+    const {saltMasterUrl, saltMasterToken, minionsObject} = this.props
+    const {focusedHost} = this.state
+    const focusedMinionsObject = minionsObject?.[focusedHost]
     return (
-      <div className="panel">
-        {measurementsStatus === RemoteDataState.Loading
-          ? this.LoadingState
-          : null}
-        <div className="panel-heading">
-          <h2
-            className="panel-title use-user-select"
-            style={{
-              width: '100%',
-            }}
-          >
-            Plugins
-          </h2>
-          <SearchBar
-            placeholder="Filter by Plugin..."
-            onSearch={this.pluginSearchTerm}
-            width={500}
-          />
-        </div>
-        <div className="panel-body">{this.MeasurementsContent}</div>
-      </div>
+      <AgentConfigPlugin
+        loadingState={this.LoadingState}
+        errorStateComponent={this.ErrorState}
+        saltMasterUrl={saltMasterUrl}
+        saltMasterToken={saltMasterToken}
+        minionsObject={focusedMinionsObject}
+      />
     )
   }
 
@@ -1149,110 +990,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     return _.map(pluginList, plugin => ({
       text: plugin,
     }))
-  }
-
-  public getSortedPlugin = memoize(
-    (
-      inputPluginList: Plugin[],
-      searchTerm: string,
-      sortKey: string,
-      sortDirection: SortDirection.ASC
-    ) =>
-      this.sort(
-        this.filter(inputPluginList, searchTerm),
-        sortKey,
-        sortDirection
-      )
-  )
-
-  public filter(plugin: Plugin[], searchTerm: string): Plugin[] {
-    const filterText = searchTerm.toLowerCase()
-    return plugin.filter(h => {
-      return h.name.toLowerCase().includes(filterText)
-    })
-  }
-
-  public sort(
-    plugin: Plugin[],
-    key: string,
-    direction: SortDirection
-  ): Plugin[] {
-    switch (direction) {
-      case SortDirection.ASC:
-        return _.sortBy(plugin, e => e[key])
-      case SortDirection.DESC:
-        return _.sortBy(plugin, e => e[key]).reverse()
-      default:
-        return plugin
-    }
-  }
-
-  public pluginSearchTerm = (searchTerm: string): void => {
-    this.setState({searchTerm})
-  }
-
-  private get MeasurementsContentBody() {
-    const {
-      description,
-      focusedMeasure,
-      inputPluginList,
-      outputPluginList,
-      searchTerm,
-    } = this.state
-
-    const sortedInputPlugin = this.getSortedPlugin(
-      inputPluginList,
-      searchTerm,
-      'name',
-      SortDirection.ASC
-    )
-
-    const sortedOutputPlugin = this.getSortedPlugin(
-      outputPluginList,
-      searchTerm,
-      'name',
-      SortDirection.ASC
-    )
-
-    return (
-      <FancyScrollbar>
-        <div className={'default-measurements'}>(Output Plugin)</div>
-        <div className="query-builder--list">
-          {sortedOutputPlugin.map((v, i) => {
-            return (
-              <AgentToolbarFunction
-                inoutkind={'OUT'}
-                name={v.name}
-                isActivity={v.isActivity}
-                key={i}
-                idx={i}
-                handleFocusedPlugin={this.handleFocusedPlugin.bind(this)}
-                description={description}
-                focusedMeasure={focusedMeasure}
-              />
-            )
-          })}
-        </div>
-
-        <div className={'default-measurements'}> (Input Plugin)</div>
-        <div className="query-builder--list">
-          {sortedInputPlugin.map((v, i) => {
-            return (
-              <AgentToolbarFunction
-                inoutkind={'IN'}
-                name={v.name}
-                isActivity={v.isActivity}
-                key={i}
-                idx={i}
-                handleFocusedPlugin={this.handleFocusedPlugin.bind(this)}
-                description={description}
-                focusedMeasure={focusedMeasure}
-              />
-            )
-          })}
-        </div>
-      </FancyScrollbar>
-    )
   }
 
   private CollectorConfig() {
@@ -1438,8 +1175,6 @@ const mdtp = {
   getLocalFileRead: getLocalFileReadAsync,
   getLocalFileWrite: getLocalFileWriteAsync,
   runLocalServiceTestTelegraf: runLocalServiceTestTelegrafAsync,
-  getRunnerSaltCmdTelegraf: getRunnerSaltCmdTelegrafAsync,
-  getRunnerSaltCmdTelegrafPlugin: getRunnerSaltCmdTelegrafPluginAsync,
 }
 
 export default connect(mstp, mdtp)(AgentConfiguration)

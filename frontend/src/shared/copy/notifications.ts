@@ -1647,3 +1647,21 @@ export const notifyMapReloadFailed = (errorMessage: string): Notification => ({
   duration: INFINITE,
   message: `Failed to Reload Map : ${errorMessage}`,
 })
+
+export const notifyGetNVidiaSmiDataForHostsFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Get NVIDIA SMI Data.`,
+  duration: INFINITE,
+})
+
+export const notifyGetNVidiaSmiMIGDataForHostsFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Get NVIDIA SMI MIG Data.`,
+  duration: INFINITE,
+})
+
+export const notifyGetNVidiaGPUMigLgipFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Get NVIDIA SMI MIG Profile Data.`,
+  duration: INFINITE,
+})

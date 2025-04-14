@@ -30,7 +30,12 @@ import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {CellType, FieldOption, TableOptions} from 'src/types/dashboards'
+import {
+  CellType,
+  DecimalPlaces,
+  FieldOption,
+  TableOptions,
+} from 'src/types/dashboards'
 // Utils
 import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
 
@@ -45,6 +50,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  decimalPlaces: DecimalPlaces
   showCount?: number | null
 }
 
@@ -58,6 +64,7 @@ const DoughnutChart = ({
   tableOptions,
   fieldOptions,
   showCount,
+  decimalPlaces,
 }: Props) => {
   const chartRef = useRef<ChartJS<'doughnut', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -88,8 +95,9 @@ const DoughnutChart = ({
     () =>
       staticGraphOptions[CellType.StaticDoughnut]({
         axes,
+        decimalPlaces,
       }),
-    [isUpdated, axes]
+    [isUpdated, axes, decimalPlaces]
   )
   useEffect(() => {
     if (chartInstance && chartRef.current) {

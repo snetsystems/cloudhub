@@ -34,3 +34,9 @@ export interface CollectorConfigTabData {
 }
 
 export type CollectorConfigTabName = 'openstack' | 'openshift'
+
+export interface TelegrafPlugin {
+  category: string
+  name: string
+  isActive: boolean
+}

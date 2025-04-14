@@ -10,6 +10,8 @@ export const notIncludeApps: string[] = [
   'snmp_nx_by_interfaces',
   'snmp_nx_all',
   'snmp_nx_static',
+  'nvidia_smi_mig_enabled',
+  'nvidia_smi_mig_disabled',
 ]
 
 export const excludedAppsForHostDetailsPage: string[] = ['snmp_nx_all']

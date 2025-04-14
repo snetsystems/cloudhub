@@ -70,9 +70,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "orientation": "bottom"
-      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -146,9 +143,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "orientation": "bottom"
-      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -222,9 +216,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "orientation": "bottom"
-      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -298,10 +289,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -375,10 +362,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "graphOptions": {
         "fillArea": false,
         "showLine": false,
@@ -452,10 +435,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "graphOptions": {
         "fillArea": false,
         "showLine": false,
@@ -529,10 +508,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
@@ -606,10 +581,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "graphOptions": {
         "fillArea": false,
         "showLine": false,
@@ -683,10 +654,6 @@
           "value": "0"
         }
       ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
       "graphOptions": {
         "fillArea": false,
         "showLine": false,

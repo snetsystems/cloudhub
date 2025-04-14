@@ -23,7 +23,13 @@ import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {Axes, CellType, FieldOption, TableOptions} from 'src/types/dashboards'
+import {
+  Axes,
+  CellType,
+  DecimalPlaces,
+  FieldOption,
+  TableOptions,
+} from 'src/types/dashboards'
 import {
   staticGraphDatasets,
   staticGraphOptions,
@@ -43,6 +49,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
+  decimalPlaces: DecimalPlaces
   showCount?: number | null
 }
 
@@ -56,6 +63,7 @@ const PieChart = ({
   tableOptions,
   fieldOptions,
   showCount,
+  decimalPlaces,
 }: Props) => {
   const chartRef = useRef<ChartJS<'pie', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -86,8 +94,9 @@ const PieChart = ({
     () =>
       staticGraphOptions[CellType.StaticPie]({
         axes,
+        decimalPlaces,
       }),
-    [isUpdated, axes]
+    [isUpdated, axes, decimalPlaces]
   )
 
   useEffect(() => {

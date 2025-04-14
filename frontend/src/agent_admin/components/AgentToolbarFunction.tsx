@@ -3,7 +3,7 @@ import React, {PureComponent} from 'react'
 import _ from 'lodash'
 
 // Components
-import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
+import {TELEGRAF_PLUGINS} from 'src/agent_admin/constants/CollectorConfigTable'
 
 // Decorator
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -13,9 +13,18 @@ interface Props {
   name: string | null
   isActivity: boolean
   idx: number
+  category: string
+  version: string
   description: string
   focusedMeasure: string
-  handleFocusedPlugin: AgentConfiguration['handleFocusedPlugin']
+  handleFocusedPlugin: ({
+    name,
+    category,
+  }: {
+    name: string
+    category: string
+    idx: number
+  }) => Promise<void>
 }
 
 interface State {
@@ -42,7 +51,7 @@ class AgentToolbarFunction extends PureComponent<Props, State> {
   componentWillUnmount() {}
 
   render() {
-    const {name, isActivity} = this.props
+    const {name, isActivity, category, version} = this.props
     return (
       <>
         <div
@@ -50,25 +59,51 @@ class AgentToolbarFunction extends PureComponent<Props, State> {
           style={{position: 'relative'}}
         >
           {`${name}`}
-          <button
-            className={
-              isActivity
-                ? 'btn btn-primary item active'
-                : 'btn btn-primary item'
-            }
-            onClick={this.handleFocusing.bind(this)}
-            ref={this.functionRef}
-          >
-            {`?`}
-          </button>
+          {this.isLinkComponent(category) ? (
+            <a
+              style={{padding: '0 9.5px'}}
+              className={
+                isActivity
+                  ? 'btn btn-primary item active'
+                  : 'btn btn-primary item'
+              }
+              target="_blank"
+              href={`https://github.com/snetsystems/telegraf/blob/v${version}/plugins/${category}/${name}/README.md`}
+            >
+              <span
+                style={{transform: 'none', margin: '0', fontSize: '11px'}}
+                className="button-icon icon export"
+              ></span>
+            </a>
+          ) : (
+            <button
+              className={
+                isActivity
+                  ? 'btn btn-primary item active'
+                  : 'btn btn-primary item'
+              }
+              onClick={this.handleFocusing.bind(this)}
+              ref={this.functionRef}
+            >
+              {`?`}
+            </button>
+          )}
         </div>
       </>
     )
   }
 
+  private isLinkComponent(category) {
+    return (
+      category != TELEGRAF_PLUGINS.inputs &&
+      category != TELEGRAF_PLUGINS.outputs
+    )
+  }
+
   private handleFocusing = () => {
-    const {handleFocusedPlugin} = this.props
-    handleFocusedPlugin({_thisProps: this.props})
+    const {handleFocusedPlugin, name, category, idx} = this.props
+
+    handleFocusedPlugin({name, category, idx})
   }
 }
 

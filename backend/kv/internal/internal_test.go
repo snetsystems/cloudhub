@@ -131,8 +131,9 @@ func TestMarshalLayout(t *testing.T) {
 						},
 					},
 				},
-				TableOptions: cloudhub.TableOptions{},
-				FieldOptions: []cloudhub.RenamableField{},
+				TableOptions:  cloudhub.TableOptions{},
+				FieldOptions:  []cloudhub.RenamableField{},
+				DecimalPlaces: cloudhub.DecimalPlaces{},
 			},
 		},
 	}
