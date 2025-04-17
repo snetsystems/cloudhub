@@ -34,6 +34,8 @@ import {Link} from 'react-router'
 
 // Redux
 import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
+import {setStatisticHeight, setTimeSeriesHeight} from '../actions'
 
 interface Props {
   host: string
@@ -47,6 +49,8 @@ interface Props {
   onSummonOverlayTechnologies?: () => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
+  setTimeSeriesHeight?: (height: number) => void
+  setStatisticHeight?: (height: number) => void
   me: Me
 }
 
@@ -68,6 +72,8 @@ function PredictionDashBoard({
   instance,
   onPickTemplate,
   me,
+  setTimeSeriesHeight,
+  setStatisticHeight,
 }: Props) {
   const GridLayout = WidthProvider(ReactGridLayout)
 
@@ -113,6 +119,14 @@ function PredictionDashBoard({
 
     const newCells = cells.map(cell => {
       const l = layout.find(ly => ly.i === cell.i)
+
+      if (l.i === 'instanceGraph') {
+        setTimeSeriesHeight(l.h)
+      }
+
+      if (l.i === 'statisticalGraph') {
+        setStatisticHeight(l.h)
+      }
 
       if (
         cell.x !== l.x ||
@@ -283,8 +297,16 @@ const mstp = state => {
   }
 }
 
+const mdtp = dispatch => ({
+  setTimeSeriesHeight: bindActionCreators(setTimeSeriesHeight, dispatch),
+  setStatisticHeight: bindActionCreators(setStatisticHeight, dispatch),
+})
+
 const isEqual = (prev, next) => {
   return _.isEqual(prev, next)
 }
 
-export default React.memo(connect(mstp, null)(PredictionDashBoard), isEqual)
+export default React.memo(
+  connect(mstp, mdtp, null)(PredictionDashBoard),
+  isEqual
+)

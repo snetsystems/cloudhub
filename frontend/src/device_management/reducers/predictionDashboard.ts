@@ -14,6 +14,8 @@ interface TimeRangeState {
   selectedAnomaly: AnomalyFactor
   histogramDate: TimeRange
   predictionManualRefresh: number
+  timeSeriesHeight: number
+  statisticHeight: number
 }
 const initialState: TimeRangeState = {
   predictionTimeRange: {
@@ -27,6 +29,8 @@ const initialState: TimeRangeState = {
   selectedAnomaly: ANOMALY_INITIAL,
   histogramDate: null,
   predictionManualRefresh: 0,
+  timeSeriesHeight: 10,
+  statisticHeight: 10,
 }
 
 const predictionDashboard = (
@@ -65,6 +69,14 @@ const predictionDashboard = (
         selectedAnomaly: ANOMALY_INITIAL,
         histogramDate: null,
       }
+    }
+    case ActionType.setTimeSeriesHeight: {
+      const {timeSeriesHeight} = action.payload
+      return {...state, timeSeriesHeight}
+    }
+    case ActionType.setStatisticHeight: {
+      const {statisticHeight} = action.payload
+      return {...state, statisticHeight}
     }
     default:
       return state
