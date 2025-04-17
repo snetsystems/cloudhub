@@ -340,7 +340,7 @@ class InfluxQLEditor extends Component<Props, State> {
     } else if (e.key === 'Escape') {
       e.preventDefault()
       this.setState({isTemplating: false})
-    } else if (e.key === 'Enter') {
+    } else if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault()
       this.handleUpdate()
     }
