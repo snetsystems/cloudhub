@@ -65,10 +65,7 @@ function autoPositionCells(cells: LayoutCell[], ratio: Ratio): LayoutCell[] {
   const cellWidth = PAGE_WIDTH / ratio.xNum
   // const extraHeight = ratio.yNum % 2 == 0 ? 4 : 3
   const extraHeight = 8
-  const cellHeight =
-    Math.ceil((ratio.height * 2 - extraHeight) / ratio.yNum) -
-    1 -
-    (ratio.yNum % 2)
+  const cellHeight = Math.floor((ratio.height * 2 - extraHeight) / ratio.yNum)
 
   return cells.reduce((acc, cell, i) => {
     const x = (i * cellWidth) % PAGE_WIDTH
