@@ -5,12 +5,16 @@ export type Action =
   | GPUMonitoringFilteredHostAction
   | GPUMonitoringManualRefreshAction
   | StateGPUMonitoringInitAction
+  | TimeSeriesGraphHeightAction
+  | StatisticGraphHeightAction
 
 export enum ActionType {
   setGPUMonitoringTimeRange = 'SET_GPU_MONITORING_TIME_RANGE',
   setFilteredHostForGPUMonitoring = 'SET_GPU_MONITORING_FILTERED_HOST',
   setGPUMonitoringManualRefresh = 'SET_GPU_MONITORING_MANUAL_REFRESH',
   setGPUMonitoringStateInit = 'SET_GPU_MONITORING_STATE_INIT',
+  setTimeSeriesGraphHeightAction = 'SET_TIME_SERIES_GRAPH',
+  setStatisticGraphHeightAction = 'SET_STATISTIC_GRAPH',
 }
 
 interface GPUMonitoringTimeRangeAction {
@@ -36,6 +40,20 @@ interface GPUMonitoringManualRefreshAction {
 
 interface StateGPUMonitoringInitAction {
   type: ActionType.setGPUMonitoringStateInit
+}
+
+interface TimeSeriesGraphHeightAction {
+  type: ActionType.setTimeSeriesGraphHeightAction
+  payload: {
+    timeSeriesGraphHeight: number
+  }
+}
+
+interface StatisticGraphHeightAction {
+  type: ActionType.setStatisticGraphHeightAction
+  payload: {
+    statisticGraphHeight: number
+  }
 }
 
 export const setGPUMonitoringTimeRange = (
@@ -65,4 +83,22 @@ export const setGPUMonitoringManualRefresh = (): GPUMonitoringManualRefreshActio
 
 export const setGPUMonitoringStateInit = (): StateGPUMonitoringInitAction => ({
   type: ActionType.setGPUMonitoringStateInit,
+})
+
+export const setTimeSeriesGraphHeight = (
+  height: number
+): TimeSeriesGraphHeightAction => ({
+  type: ActionType.setTimeSeriesGraphHeightAction,
+  payload: {
+    timeSeriesGraphHeight: height,
+  },
+})
+
+export const setStatisticGraphHeight = (
+  height: number
+): StatisticGraphHeightAction => ({
+  type: ActionType.setStatisticGraphHeightAction,
+  payload: {
+    statisticGraphHeight: height,
+  },
 })
