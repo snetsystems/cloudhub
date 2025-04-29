@@ -328,7 +328,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
             'All',
             ..._.keys(configObj.inputs),
           ]),
-          configScript: TOML.stringify(configObj),
+          configScript: hostLocalFileReadData,
           isGetLocalStorage: isChanged,
           isApplyBtnEnabled: isChanged ? true : !isChanged,
           collectorConfigStatus: RemoteDataState.Done,
@@ -1123,42 +1123,42 @@ export class AgentConfiguration extends PureComponent<Props, State> {
 
     if (selectedOrg === org.name) return
 
-    const configObj = TOML.parse(configScript)
-    const influxdbs: any = _.get(configObj, 'outputs.influxdb')
-    const agent: any = _.get(configObj, 'agent')
+    const lines = configScript.split('\n')
+    let currentSection = ''
 
-    if (!influxdbs || !agent) return
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      const sectionHeaderMatch = line.match(/^\s*\[+\s*([^\]]+)\s*\]+/)
 
-    let isChanged = false
-
-    influxdbs.forEach((influxdb: {database: string}) => {
-      if (_.get(influxdb, 'database') !== org.name) {
-        _.set(influxdb, 'database', org.name)
+      if (sectionHeaderMatch) {
+        currentSection = sectionHeaderMatch[1].trim()
+      } else {
+        if (
+          currentSection === 'outputs.influxdb' &&
+          /^\s*database\s*=/.test(line)
+        ) {
+          lines[i] = line.replace(
+            /(^\s*database\s*=\s*)(['"])(.*?)\2/,
+            (_, prefix, quote) => `${prefix}${quote}${org.name}${quote}`
+          )
+        } else if (
+          currentSection === 'agent' &&
+          /^\s*hostname\s*=/.test(line)
+        ) {
+          lines[i] = line.replace(
+            /(^\s*hostname\s*=\s*)(['"])(.*?)\2/,
+            (_, prefix, quote) => `${prefix}${quote}${focusedHost}${quote}`
+          )
+        }
       }
+    }
+
+    const newConfigScript = lines.join('\n')
+
+    this.setState({
+      selectedOrg: org.name,
+      configScript: newConfigScript,
     })
-
-    if (_.get(agent, 'hostname') !== focusedHost) {
-      _.set(agent, 'hostname', focusedHost)
-    }
-
-    const checker = _.some(
-      _.map(influxdbs, m => m.database === org.name),
-      false
-    )
-
-    if (!checker && _.get(agent, 'hostname') === focusedHost) {
-      isChanged = true
-    }
-
-    if (isChanged)
-      this.setState({
-        selectedOrg: org.name,
-        configScript: TOML.stringify(configObj),
-      })
-    else
-      this.setState({
-        selectedOrg: org.name,
-      })
   }
 }
 
