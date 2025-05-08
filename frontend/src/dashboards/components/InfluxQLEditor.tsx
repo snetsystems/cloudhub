@@ -201,7 +201,6 @@ class InfluxQLEditor extends Component<Props, State> {
 
   private handleBlurEditor = (): void => {
     this.setState({focused: false, isShowingTemplateValues: false})
-    this.handleUpdate()
   }
 
   private handleCloseDrawer = (): void => {
@@ -340,7 +339,7 @@ class InfluxQLEditor extends Component<Props, State> {
     } else if (e.key === 'Escape') {
       e.preventDefault()
       this.setState({isTemplating: false})
-    } else if (e.key === 'Enter' && e.shiftKey) {
+    } else if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault()
       this.handleUpdate()
     }
