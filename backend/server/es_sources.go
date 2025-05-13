@@ -2,9 +2,13 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
@@ -22,6 +26,7 @@ type esSourceLinks struct {
 	Users       string `json:"users"`       // /sources/{id}/users
 	Roles       string `json:"roles"`       // /sources/{id}/roles  (if role-capable)
 	Health      string `json:"health"`      // /sources/{id}/health
+	Proxy       string `json:"proxy"`       // /es/{id}/proxy/<path>
 }
 
 type esSourceResponse struct {
@@ -55,6 +60,7 @@ func newEsSourceResponse(src cloudhub.EsSource) esSourceResponse {
 		Permissions: idPath + "/permissions",
 		Users:       idPath + "/users",
 		Health:      idPath + "/health",
+		Proxy:       idPath + "/proxy",
 	}
 
 	return esSourceResponse{
@@ -263,4 +269,91 @@ func (s *Service) validateEsCredentials(ctx context.Context, src *cloudhub.EsSou
 
 type getEsSourcesResponse struct {
 	EsSources []esSourceResponse `json:"esSources"`
+}
+
+// Elastic proxies any request under
+//
+//	/cloudhub/v1/es/{id}/proxy/{wildcard…}
+//
+// to the actual Elasticsearch host.
+func (s *Service) Elastic(w http.ResponseWriter, r *http.Request) {
+	// ── 1. Parse :id ───────────────────────────────────────────────────────
+	id, err := paramID("id", r)
+	if err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
+	}
+
+	// ── 2. Determine tail path after “…/proxy” ─────────────────────────────
+	// Example input:
+	//   /cloudhub/v1/es/7/proxy/_cluster/health
+	// Split once on "/proxy" and keep whatever comes after it.
+	parts := strings.SplitN(r.URL.Path, "/proxy", 2)
+	var tail string
+	if len(parts) == 2 {
+		tail = parts[1] // starts with "/" or may be empty
+	}
+	if tail == "" {
+		tail = "/" // default to Elasticsearch root
+	}
+
+	ctx := r.Context()
+
+	// ── 3. Load ES source ──────────────────────────────────────────────────
+	src, err := s.Store.EsSources(ctx).Get(ctx, id)
+	if err != nil {
+		notFound(w, id, s.Logger)
+		return
+	}
+
+	// ── 4. Build reverse proxy ─────────────────────────────────────────────
+	proxy := buildEsReverseProxy(src)
+	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, e error) {
+		s.Logger.WithField("err", e)
+		rw.WriteHeader(http.StatusBadGateway)
+	}
+
+	// ── 5. Rewrite request URL before proxying ────────────────────────────
+	r.URL.Scheme = "" // overwritten by Director
+	r.URL.Host = ""
+	r.URL.Path = tail  // "/_cluster/health" …
+	r.URL.RawPath = "" // let proxy re‑encode
+	r.Host = ""        // Host header will be set by proxy
+
+	proxy.ServeHTTP(w, r)
+}
+
+// buildEsReverseProxy creates a reverse proxy with per‑source TLS + auth
+func buildEsReverseProxy(src cloudhub.EsSource) *httputil.ReverseProxy {
+	target, _ := url.Parse(src.URL) // src.URL already validated
+	rp := httputil.NewSingleHostReverseProxy(target)
+
+	// ── transport with custom TLS ───────────────────────────────────────────
+	rp.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: src.InsecureSkipVerify},
+		Proxy:           http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+	}
+
+	// ── director tweaks outgoing request ────────────────────────────────────
+	rp.Director = func(req *http.Request) {
+		// Preserve original method/URL from incoming ServeHTTP call
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		// Inject authentication header
+		if src.BasicAuth != nil {
+			req.SetBasicAuth(src.BasicAuth.Username, src.BasicAuth.Password)
+		} else if src.APIKeyAuth != nil {
+			// RFC‑9308:  Authorization: ApiKey <base64(id:apiKey)>
+			token := base64.StdEncoding.EncodeToString(
+				[]byte(src.APIKeyAuth.ID + ":" + src.APIKeyAuth.APIKey),
+			)
+			req.Header.Set("Authorization", "ApiKey "+token)
+		}
+		// Forward all other headers unchanged
+	}
+	return rp
 }

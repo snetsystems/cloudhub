@@ -442,6 +442,10 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// ElasticSearch Sources
 	router.GET("/cloudhub/v1/es", EnsureViewer(service.EsSources))
 
+	// Source Proxy to Influx; Has gzip compression around the handler
+	elastic := gziphandler.GzipHandler(EnsureViewer(service.Elastic))
+	registerAllMethods(router, "/cloudhub/v1/es/:id/proxy/*path", elastic)
+
 	allRoutes := &AllRoutes{
 		Logger:                opts.Logger,
 		StatusFeed:            opts.StatusFeedURL,
