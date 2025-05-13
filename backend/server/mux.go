@@ -439,6 +439,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Validates go templates for the js client
 	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))
 
+	// ElasticSearch Sources
+	router.GET("/cloudhub/v1/es", EnsureViewer(service.EsSources))
+
 	allRoutes := &AllRoutes{
 		Logger:                opts.Logger,
 		StatusFeed:            opts.StatusFeedURL,

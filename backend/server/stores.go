@@ -101,6 +101,7 @@ type DataStore interface {
 	MLNxRst(ctx context.Context) cloudhub.MLNxRstStore
 	DLNxRst(ctx context.Context) cloudhub.DLNxRstStore
 	DLNxRstStg(ctx context.Context) cloudhub.DLNxRstStgStore
+	EsSources(ctx context.Context) cloudhub.EsSourcesStore
 }
 
 // ensure that Store implements a DataStore
@@ -126,6 +127,7 @@ type Store struct {
 	MLNxRstStore            cloudhub.MLNxRstStore
 	DLNxRstStore            cloudhub.DLNxRstStore
 	DLNxRstStgStore         cloudhub.DLNxRstStgStore
+	EsSourcesStore          cloudhub.EsSourcesStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -333,4 +335,17 @@ func (s *Store) DLNxRstStg(ctx context.Context) cloudhub.DLNxRstStgStore {
 	}
 
 	return &noop.DLNxRstStgStore{}
+}
+
+// EsSources returns a noop.SourcesStore if the context has no organization specified
+// and an organization.SourcesStore otherwise.
+func (s *Store) EsSources(ctx context.Context) cloudhub.EsSourcesStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.EsSourcesStore
+	}
+	if org, ok := hasOrganizationContext(ctx); ok {
+		return organizations.NewEsSourcesStore(s.EsSourcesStore, org)
+	}
+
+	return &noop.EsSourcesStore{}
 }

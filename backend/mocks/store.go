@@ -26,6 +26,7 @@ type Store struct {
 	MLNxRstStore            cloudhub.MLNxRstStore
 	DLNxRstStore            cloudhub.DLNxRstStore
 	DLNxRstStgStore         cloudhub.DLNxRstStgStore
+	EsSourcesStore          cloudhub.EsSourcesStore
 }
 
 // Sources ...
@@ -116,4 +117,9 @@ func (s *Store) DLNxRst(ctx context.Context) cloudhub.DLNxRstStore {
 // DLNxRstStg ...
 func (s *Store) DLNxRstStg(ctx context.Context) cloudhub.DLNxRstStgStore {
 	return s.DLNxRstStgStore
+}
+
+// EsSources ...
+func (s *Store) EsSources(ctx context.Context) cloudhub.EsSourcesStore {
+	return s.EsSourcesStore
 }

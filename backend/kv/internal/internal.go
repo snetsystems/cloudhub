@@ -1384,3 +1384,73 @@ func UnmarshalDLNxRstStg(data []byte, t *cloudhub.DLNxRstStg) error {
 
 	return nil
 }
+
+// MarshalEsSource encodes a cloudhub.EsSource into its protobuf representation.
+func MarshalEsSource(s cloudhub.EsSource) ([]byte, error) {
+	pb := &EsSource{
+		ID:                 int64(s.ID),
+		Name:               s.Name,
+		Default:            s.Default,
+		Role:               s.Role,
+		Version:            s.Version,
+		URL:                s.URL,
+		InsecureSkipVerify: s.InsecureSkipVerify,
+		IndexPatterns:      s.IndexPatterns,
+		DefaultIndex:       s.DefaultIndex,
+		Organization:       s.Organization,
+	}
+
+	if s.BasicAuth != nil {
+		pb.Basic = &BasicAuth{
+			Username: s.BasicAuth.Username,
+			Password: s.BasicAuth.Password,
+		}
+	}
+	if s.APIKeyAuth != nil {
+		pb.APIKey = &APIKeyAuth{
+			ID:     s.APIKeyAuth.ID,
+			APIKey: s.APIKeyAuth.APIKey,
+		}
+	}
+
+	return proto.Marshal(pb)
+}
+
+// UnmarshalEsSource decodes protobuf data into a cloudhub.EsSource.
+func UnmarshalEsSource(data []byte, s *cloudhub.EsSource) error {
+	var pb EsSource
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	s.ID = int(pb.ID)
+	s.Name = pb.Name
+	s.Default = pb.Default
+	s.Role = pb.Role
+	s.Version = pb.Version
+	s.URL = pb.URL
+	s.InsecureSkipVerify = pb.InsecureSkipVerify
+	s.IndexPatterns = pb.IndexPatterns
+	s.DefaultIndex = pb.DefaultIndex
+	s.Organization = pb.Organization
+
+	if pb.Basic != nil {
+		s.BasicAuth = &cloudhub.BasicAuth{
+			Username: pb.Basic.Username,
+			Password: pb.Basic.Password,
+		}
+	} else {
+		s.BasicAuth = nil
+	}
+
+	if pb.APIKey != nil {
+		s.APIKeyAuth = &cloudhub.APIKeyAuth{
+			ID:     pb.APIKey.ID,
+			APIKey: pb.APIKey.APIKey,
+		}
+	} else {
+		s.APIKeyAuth = nil
+	}
+
+	return nil
+}

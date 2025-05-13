@@ -161,6 +161,14 @@ type Server struct {
 	AI map[string]string `long:"ai" description:"The Information to access to cloudhub AI. '--ai=docker-path:{specifies the path to the Docker Compose file used for restarting the Logstash container} --ai=docker-cmd:{docker restart command} --ai=logstash-path:{The logstash-path variable is used to specify the directory where your Logstash pipeline configuration} --ai=prediction-regex:{parsing tickScript}'. E.g. via environment variable" env:"AI" env-delim:","`
 
 	TemplatesPath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/cloudhub-templates)" env:"TEMPLATES_PATH" default:"templates"`
+
+	EsURLs               []string `long:"es-urls"           description:"Comma-separated list of Elasticsearch endpoints"   env:"ES_URLS"           default:"http://localhost:9200"`
+	EsUsername           string   `long:"es-username"       description:"Elasticsearch basic-auth username"                env:"ES_USERNAME"`
+	EsPassword           string   `long:"es-password"       description:"Elasticsearch basic-auth password"                env:"ES_PASSWORD"`
+	EsAPIKeyID           string   `long:"es-apikey-id"      description:"Elasticsearch API-Key ID"                         env:"ES_APIKEY_ID"`
+	EsAPIKeySecret       string   `long:"es-apikey-secret"  description:"Elasticsearch API-Key secret"                     env:"ES_APIKEY_SECRET"`
+	EsDefaultIndex       string   `long:"es-default-index"  description:"Default index name or pattern for queries"        env:"ES_DEFAULT_INDEX" default:"*"`
+	EsInsecureSkipVerify bool     `long:"es-insecure-skip-verify" description:"Skip TLS cert verification for Elasticsearch" env:"ES_INSECURE_SKIP_VERIFY"`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -539,6 +547,7 @@ type builders struct {
 	Dashboards    DashboardBuilder
 	Organizations OrganizationBuilder
 	Protoboards   ProtoboardsBuilder
+	EsSources     EsSourcesBuilder
 }
 
 func (s *Server) newBuilders(logger cloudhub.Logger) builders {
@@ -579,6 +588,22 @@ func (s *Server) newBuilders(logger cloudhub.Logger) builders {
 			Logger:          logger,
 			UUID:            &idgen.UUID{},
 			ProtoboardsPath: s.ProtoboardsPath,
+		},
+		EsSources: &MultiEsSourceBuilder{
+			EsURLs: s.EsURLs,
+			BasicAuth: &cloudhub.BasicAuth{
+				Username: s.EsUsername,
+				Password: s.EsPassword,
+			},
+			APIKeyAuth: &cloudhub.APIKeyAuth{
+				ID:     s.EsAPIKeyID,
+				APIKey: s.EsAPIKeySecret,
+			},
+			DefaultIndex:       s.EsDefaultIndex,
+			InsecureSkipVerify: s.EsInsecureSkipVerify,
+			Logger:             logger,
+			ID:                 idgen.NewTime(),
+			Path:               s.ResourcesPath,
 		},
 	}
 }
@@ -880,6 +905,14 @@ func openService(
 		os.Exit(1)
 	}
 
+	esSources, err := builder.EsSources.Build(svc.EsSourcesStore())
+	if err != nil {
+		logger.
+			WithField("component", "EsSourcesStore").
+			Error("Unable to construct a MultiEsSourcesStore", err)
+		os.Exit(1)
+	}
+
 	protoboards, err := builder.Protoboards.Build()
 	if err != nil {
 		logger.
@@ -917,6 +950,7 @@ func openService(
 			MLNxRstStore:            svc.MLNxRstStore(),
 			DLNxRstStore:            svc.DLNxRstStore(),
 			DLNxRstStgStore:         svc.DLNxRstStgStore(),
+			EsSourcesStore:          esSources,
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,

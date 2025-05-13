@@ -398,3 +398,26 @@ message DLNxRstStg{
   bytes Model                       = 4;
   float DLThreshold                 = 5;
 }
+
+message EsSource {
+  int64        ID                 = 1;  // Unique ID (primary key)
+  string       Name               = 2;  // User-defined name
+  bool         Default            = 3;  // Flag indicating default source
+  string       Role               = 4;  // Minimum user role required for access
+  string       Version            = 5;  // Elasticsearch version ("unknown" if not detected)
+  string       URL                = 6;  // e.g. "https://es-host:9200"
+  bool         InsecureSkipVerify = 7;  // Disable TLS certificate verification
+  BasicAuth    Basic              = 8;  // Username/password authentication (optional)
+  APIKeyAuth   APIKey             = 9; // API key authentication (optional)
+  repeated string IndexPatterns   = 10; // e.g. ["logs-*", "metrics-*"]
+  string       DefaultIndex       = 11; // Default index to query
+  string       Organization       = 12; // Organization ID for this resource
+}
+message BasicAuth {
+  string Username = 1;  // Username for basic auth
+  string Password = 2;  // Password for basic auth
+}
+message APIKeyAuth {
+  string ID     = 1;    // API key ID
+  string APIKey = 2;    // Secret API key
+}

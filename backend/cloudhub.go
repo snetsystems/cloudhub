@@ -278,6 +278,52 @@ type SourcesStore interface {
 	Update(context.Context, Source) error
 }
 
+// EsSource holds connection info for Elasticsearch.
+type EsSource struct {
+	ID                 int    `json:"id,string"`                    // Unique ID (primary key)
+	Name               string `json:"name"`                         // User-defined name
+	Default            bool   `json:"default"`                      // Flag indicating default source
+	Role               string `json:"role,omitempty"`               // Minimum user role for access
+	Version            string `json:"version,omitempty"`            // ES version ("unknown" if not detected)
+	URL                string `json:"url"`                          // e.g. "https://es-host:9200"
+	InsecureSkipVerify bool   `json:"insecureSkipVerify,omitempty"` // Disable TLS cert verification
+
+	BasicAuth  *BasicAuth  `json:"basic,omitempty"`
+	APIKeyAuth *APIKeyAuth `json:"apiKey,omitempty"`
+
+	IndexPatterns []string `json:"indexPatterns,omitempty"` // e.g. ["logs-*", "metrics-*"]
+	DefaultIndex  string   `json:"defaultIndex,omitempty"`  // Default index to query
+
+	Organization string `json:"organization"` // Organization is the organization ID that resource
+
+}
+
+// BasicAuth carries username/password credentials.
+type BasicAuth struct {
+	Username string `json:"username"` // Basic auth username
+	Password string `json:"password"` // Basic auth password
+}
+
+// APIKeyAuth carries API-Key credentials.
+type APIKeyAuth struct {
+	ID     string `json:"id"`     // API key ID
+	APIKey string `json:"apiKey"` // Secret API key
+}
+
+// EsSourcesStore stores connection information for a `TimeSeries`
+type EsSourcesStore interface {
+	// All returns all sources in the store
+	All(context.Context) ([]EsSource, error)
+	// Add creates a new source in the SourcesStore and returns Source with ID
+	Add(context.Context, EsSource) (EsSource, error)
+	// Delete the Source from the store
+	Delete(context.Context, EsSource) error
+	// Get retrieves Source if `ID` exists
+	Get(ctx context.Context, ID int) (EsSource, error)
+	// Update the Source in the store.
+	Update(context.Context, EsSource) error
+}
+
 // DBRP represents a database and retention policy for a time series source
 type DBRP struct {
 	DB string `json:"db"`
@@ -1246,6 +1292,8 @@ type KVClient interface {
 	NetworkDeviceOrgStore() NetworkDeviceOrgStore
 	// MLNxRstStore returns the kv's MLNxRstStore type.
 	MLNxRstStore() MLNxRstStore
+	// EsSourcesStore returns the kv's EsSourcesStore type.
+	EsSourcesStore() EsSourcesStore
 }
 
 // NetworkDeviceOrgQuery represents the attributes that a networkDeviceOrg may be retrieved by.
