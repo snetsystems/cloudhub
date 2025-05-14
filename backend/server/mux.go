@@ -443,6 +443,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v1/es", EnsureViewer(service.EsSources))
 	router.GET("/cloudhub/v1/es/:id", EnsureViewer(service.EsSourcesID))
 	router.POST("/cloudhub/v1/es", EnsureViewer(service.NewEsSource))
+	router.PATCH("/cloudhub/v1/es/:id", EnsureEditor(service.UpdateEsSource))
+	router.DELETE("/cloudhub/v1/es/:id", EnsureAdmin(service.RemoveEsSource))
 
 	// Source Proxy to Influx; Has gzip compression around the handler
 	elastic := gziphandler.GzipHandler(EnsureViewer(service.Elastic))

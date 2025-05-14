@@ -160,6 +160,85 @@ func (s *Service) EsSourcesID(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, newEsSourceResponse(src), s.Logger)
 }
 
+// UpdateEsSource handles incremental updates of an existing Elasticsearch source
+func (s *Service) UpdateEsSource(w http.ResponseWriter, r *http.Request) {
+	id, err := paramID("id", r)
+	if err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	src, err := s.Store.EsSources(ctx).Get(ctx, id)
+	if err != nil {
+		notFound(w, id, s.Logger)
+		return
+	}
+
+	var req cloudhub.EsSource
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	if req.Name != "" {
+		src.Name = req.Name
+	}
+	if req.URL != "" {
+		src.URL = req.URL
+	}
+	if req.BasicAuth != nil {
+		src.BasicAuth = req.BasicAuth
+	}
+	if req.APIKeyAuth != nil {
+		src.APIKeyAuth = req.APIKeyAuth
+	}
+
+	src.InsecureSkipVerify = req.InsecureSkipVerify
+
+	if len(req.IndexPatterns) > 0 {
+		src.IndexPatterns = req.IndexPatterns
+	}
+	if req.DefaultIndex != "" {
+		src.DefaultIndex = req.DefaultIndex
+	}
+
+	if req.Organization != "" {
+		src.Organization = req.Organization
+	}
+
+	defaultOrg, err := s.Store.Organizations(ctx).DefaultOrganization(ctx)
+	if err != nil {
+		unknownErrorWithMessage(w, err, s.Logger)
+		return
+	}
+	if err := validEsSourceRequest(&src, defaultOrg.ID); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	src.Version = s.fetchEsVersion(ctx, &src)
+
+	if err := s.validateEsCredentials(ctx, &src); err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	if _, dryRun := r.URL.Query()["dryRun"]; !dryRun {
+		if err := s.Store.EsSources(ctx).Update(ctx, src); err != nil {
+			msg := fmt.Sprintf("Error updating ES source ID %d: %v", id, err)
+			Error(w, http.StatusInternalServerError, msg, s.Logger)
+			return
+		}
+	}
+
+	msg := fmt.Sprintf(MsgSourcesModified.String(), src.Name)
+	s.logRegistration(ctx, "EsSources", msg)
+
+	res := newEsSourceResponse(src)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
 // RemoveEsSource deletes the source from the store
 func (s *Service) RemoveEsSource(w http.ResponseWriter, r *http.Request) {
 	id, err := paramID("id", r)
