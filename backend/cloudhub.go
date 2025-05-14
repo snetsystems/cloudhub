@@ -289,7 +289,7 @@ type EsSource struct {
 	InsecureSkipVerify bool   `json:"insecureSkipVerify,omitempty"` // Disable TLS cert verification
 
 	BasicAuth  *BasicAuth  `json:"basicAuth,omitempty"`
-	APIKeyAuth *APIKeyAuth `json:"ApiKeyAuth,omitempty"`
+	APIKeyAuth *APIKeyAuth `json:"apiKeyAuth,omitempty"`
 
 	IndexPatterns []string `json:"indexPatterns,omitempty"` // e.g. ["logs-*", "metrics-*"]
 	DefaultIndex  string   `json:"defaultIndex,omitempty"`  // Default index to query
