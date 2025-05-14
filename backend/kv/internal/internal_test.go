@@ -702,3 +702,91 @@ func TestMarshalDLNxRstStg(t *testing.T) {
 		t.Fatalf("Mismatch in original and copied DLNxRstStg struct: got %#v, want %#v", vv, v)
 	}
 }
+
+// TestMarshalMarshalEsSource verifies that an EsSource can be
+// marshaled to protobuf and unmarshaled back without loss.
+func TestMarshalMarshalEsSource(t *testing.T) {
+	cases := []struct {
+		name string
+		src  cloudhub.EsSource
+	}{
+		{
+			name: "NoAuth",
+			src: cloudhub.EsSource{
+				ID:                 1,
+				Name:               "no-auth",
+				Default:            true,
+				Role:               "viewer",
+				Version:            "7.10.2",
+				URL:                "https://es.local:9200",
+				InsecureSkipVerify: false,
+				IndexPatterns:      []string{"index-*"},
+				DefaultIndex:       "index-1",
+				Organization:       "org-000",
+			},
+		},
+		{
+			name: "BasicAuth",
+			src: cloudhub.EsSource{
+				ID:                 2,
+				Name:               "with-basic",
+				Default:            false,
+				Role:               "admin",
+				Version:            "8.0.0",
+				URL:                "https://secure-es:9200",
+				InsecureSkipVerify: true,
+				IndexPatterns:      []string{"logs-*", "metrics-*"},
+				DefaultIndex:       "logs-2025",
+				Organization:       "org-123",
+				BasicAuth: &cloudhub.BasicAuth{
+					Username: "elastic",
+					Password: "changeme",
+				},
+			},
+		},
+		{
+			name: "APIKeyAuth",
+			src: cloudhub.EsSource{
+				ID:                 3,
+				Name:               "with-apikey",
+				Default:            false,
+				Role:               "reader",
+				Version:            "7.9.3",
+				URL:                "https://api-es:9200",
+				InsecureSkipVerify: false,
+				IndexPatterns:      []string{"*"},
+				DefaultIndex:       "default",
+				Organization:       "org-456",
+				APIKeyAuth: &cloudhub.APIKeyAuth{
+					ID:     "key-id-xyz",
+					APIKey: "secret-key-abc",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Marshal to protobuf
+			buf, err := internal.MarshalEsSource(tc.src)
+			if err != nil {
+				t.Fatalf("MarshalEsSource failed: %v", err)
+			}
+			if len(buf) == 0 {
+				t.Fatal("MarshalEsSource returned empty buffer")
+			}
+
+			// Unmarshal back into a fresh struct
+			var got cloudhub.EsSource
+			if err := internal.UnmarshalEsSource(buf, &got); err != nil {
+				t.Fatalf("UnmarshalEsSource failed: %v", err)
+			}
+
+			// Compare original vs round-tripped
+			if !reflect.DeepEqual(tc.src, got) {
+				t.Fatalf("Round-trip mismatch for %q:\n got: %+v\nwant: %+v",
+					tc.name, got, tc.src)
+			}
+		})
+	}
+}
