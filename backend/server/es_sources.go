@@ -2,11 +2,9 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -70,7 +68,7 @@ func newEsSourceResponse(src cloudhub.EsSource) esSourceResponse {
 	}
 }
 
-// NewEsSource ...
+// NewEsSource adds a new valid Elasticsearch source to the store
 func (s *Service) NewEsSource(w http.ResponseWriter, r *http.Request) {
 	var src cloudhub.EsSource
 	if err := json.NewDecoder(r.Body).Decode(&src); err != nil {
@@ -98,12 +96,14 @@ func (s *Service) NewEsSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if src, err := s.Store.EsSources(ctx).Add(ctx, src); err != nil {
+	var saved cloudhub.EsSource
+	if saved, err = s.Store.EsSources(ctx).Add(ctx, src); err != nil {
 		msg := fmt.Errorf("Error storing source %v: %v", src, err)
 		unknownErrorWithMessage(w, msg, s.Logger)
 		return
 	}
 
+	src = saved
 	s.logRegistration(ctx, "EsSources", fmt.Sprintf(MsgSourcesCreated.String(), src.Name))
 
 	res := newEsSourceResponse(src)
@@ -329,14 +329,7 @@ func buildEsReverseProxy(src cloudhub.EsSource) *httputil.ReverseProxy {
 	rp := httputil.NewSingleHostReverseProxy(target)
 
 	// ── transport with custom TLS ───────────────────────────────────────────
-	rp.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: src.InsecureSkipVerify},
-		Proxy:           http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-	}
+	rp.Transport = elastic.SharedTransport(src.InsecureSkipVerify)
 
 	// ── director tweaks outgoing request ────────────────────────────────────
 	rp.Director = func(req *http.Request) {
