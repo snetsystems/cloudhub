@@ -262,3 +262,56 @@ func TestElasticProxy_BasicAuth(t *testing.T) {
 		t.Errorf("Elastic proxy expected 200, got %d", rw.Result().StatusCode)
 	}
 }
+
+func TestUpdateEsSource_OrganizationChange(t *testing.T) {
+	es := fakeESServer()
+	defer es.Close()
+
+	// 초기 저장된 소스: organization="oldOrg"
+	saved := cloudhub.EsSource{
+		ID:           9,
+		URL:          es.URL,
+		BasicAuth:    &cloudhub.BasicAuth{},
+		Organization: "oldOrg",
+	}
+
+	var updatedSrc cloudhub.EsSource
+	store := &mocks.EsSourcesStore{
+		GetF: func(ctx context.Context, id int) (cloudhub.EsSource, error) {
+			return saved, nil
+		},
+		UpdateF: func(ctx context.Context, src cloudhub.EsSource) error {
+			updatedSrc = src
+			return nil
+		},
+	}
+
+	svc := &server.Service{
+		Store: &mocks.Store{
+			EsSourcesStore: store,
+			OrganizationsStore: &mocks.OrganizationsStore{
+				DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "org"}, nil
+				},
+			},
+		},
+		Logger: log.New(log.DebugLevel),
+	}
+
+	// PATCH /cloudhub/v1/es/9?dryRun 제거
+	body := `{"organization":"newOrg"}`
+	req := httptest.NewRequest("PATCH", "/cloudhub/v1/es/9", strings.NewReader(body))
+	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
+		{Key: "id", Value: "9"},
+	}))
+	rw := httptest.NewRecorder()
+
+	svc.UpdateEsSource(rw, req)
+
+	if rw.Result().StatusCode != http.StatusOK {
+		t.Fatalf("UpdateEsSource expected 200, got %d", rw.Result().StatusCode)
+	}
+	if updatedSrc.Organization != "newOrg" {
+		t.Errorf("organization not updated: got %q, want %q", updatedSrc.Organization, "newOrg")
+	}
+}
