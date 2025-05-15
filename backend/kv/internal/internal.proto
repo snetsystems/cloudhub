@@ -412,6 +412,7 @@ message EsSource {
   repeated string IndexPatterns   = 10; // e.g. ["logs-*", "metrics-*"]
   string       DefaultIndex       = 11; // Default index to query
   string       Organization       = 12; // Organization ID for this resource
+  string       Authentication     = 13; // Authentication ["basic","apiKey"]
 }
 message BasicAuth {
   string Username = 1;  // Username for basic auth

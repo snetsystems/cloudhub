@@ -45,8 +45,15 @@ func esSourceAuthenticationMethod(src cloudhub.EsSource) string {
 }
 
 func newEsSourceResponse(src cloudhub.EsSource) esSourceResponse {
-	src.BasicAuth.Password = ""
-	src.BasicAuth.Username = ""
+	if src.BasicAuth != nil {
+		src.BasicAuth.Password = ""
+	}
+
+	if src.APIKeyAuth != nil {
+		src.APIKeyAuth.APIKey = ""
+		src.APIKeyAuth.ID = ""
+	}
+
 	base := "/cloudhub/v1/es"
 	idPath := fmt.Sprintf("%s/%d", base, src.ID)
 

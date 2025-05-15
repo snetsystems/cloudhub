@@ -1398,6 +1398,7 @@ func MarshalEsSource(s cloudhub.EsSource) ([]byte, error) {
 		IndexPatterns:      s.IndexPatterns,
 		DefaultIndex:       s.DefaultIndex,
 		Organization:       s.Organization,
+		Authentication:     s.Authentication,
 	}
 
 	if s.BasicAuth != nil {
@@ -1433,6 +1434,7 @@ func UnmarshalEsSource(data []byte, s *cloudhub.EsSource) error {
 	s.IndexPatterns = pb.IndexPatterns
 	s.DefaultIndex = pb.DefaultIndex
 	s.Organization = pb.Organization
+	s.Authentication = pb.Authentication
 
 	if pb.BasicAuth != nil {
 		s.BasicAuth = &cloudhub.BasicAuth{

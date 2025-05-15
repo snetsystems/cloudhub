@@ -294,8 +294,8 @@ type EsSource struct {
 	IndexPatterns []string `json:"indexPatterns,omitempty"` // e.g. ["logs-*", "metrics-*"]
 	DefaultIndex  string   `json:"defaultIndex,omitempty"`  // Default index to query
 
-	Organization string `json:"organization"` // Organization is the organization ID that resource
-
+	Organization   string `json:"organization"` // Organization is the organization ID that resource
+	Authentication string `json:"authentication"`
 }
 
 // BasicAuth carries username/password credentials.

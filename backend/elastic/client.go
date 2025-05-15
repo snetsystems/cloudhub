@@ -4,6 +4,7 @@ package elastic
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -84,20 +85,26 @@ func NewClient(cfg Config) (*Client, error) {
 		Transport: SharedTransport(cfg.InsecureSkipVerify),
 	}
 
-	if cfg.BasicAuth != nil {
+	switch {
+	case cfg.APIKeyAuth != nil:
+		esCfg.APIKey = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s",
+			cfg.APIKeyAuth.ID,
+			cfg.APIKeyAuth.APIKey,
+		)))
+	case cfg.BasicAuth != nil:
+
 		esCfg.Username = cfg.BasicAuth.Username
 		esCfg.Password = cfg.BasicAuth.Password
-	}
-
-	if cfg.APIKeyAuth != nil {
-		esCfg.APIKey = fmt.Sprintf("%s:%s", cfg.APIKeyAuth.ID, cfg.APIKeyAuth.APIKey)
+	default:
+		return nil, fmt.Errorf(
+			"authentication required: either APIKeyAuth or BasicAuth must be set",
+		)
 	}
 
 	es, err := elasticsearch.NewClient(esCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Elasticsearch client: %w", err)
 	}
-
 	return &Client{es: es}, nil
 }
 
