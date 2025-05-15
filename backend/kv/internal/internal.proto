@@ -407,8 +407,8 @@ message EsSource {
   string       Version            = 5;  // Elasticsearch version ("unknown" if not detected)
   string       URL                = 6;  // e.g. "https://es-host:9200"
   bool         InsecureSkipVerify = 7;  // Disable TLS certificate verification
-  BasicAuth    Basic              = 8;  // Username/password authentication (optional)
-  APIKeyAuth   APIKey             = 9; // API key authentication (optional)
+  BasicAuth    BasicAuth          = 8;  // Username/password authentication (optional)
+  APIKeyAuth   APIKeyAuth             = 9; // API key authentication (optional)
   repeated string IndexPatterns   = 10; // e.g. ["logs-*", "metrics-*"]
   string       DefaultIndex       = 11; // Default index to query
   string       Organization       = 12; // Organization ID for this resource

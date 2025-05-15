@@ -104,7 +104,7 @@ func (s *Service) NewEsSource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	src = saved
-	s.logRegistration(ctx, "EsSources", fmt.Sprintf(MsgSourcesCreated.String(), src.Name))
+	s.logRegistration(ctx, "EsSources", fmt.Sprintf(MsgEsSourcesCreated.String(), src.Name))
 
 	res := newEsSourceResponse(src)
 	location(w, res.Links.Self)
@@ -232,7 +232,7 @@ func (s *Service) UpdateEsSource(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	msg := fmt.Sprintf(MsgSourcesModified.String(), src.Name)
+	msg := fmt.Sprintf(MsgEsSourcesModified.String(), src.Name)
 	s.logRegistration(ctx, "EsSources", msg)
 
 	res := newEsSourceResponse(src)
@@ -258,7 +258,7 @@ func (s *Service) RemoveEsSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.logRegistration(ctx, "EsSources", fmt.Sprintf(MsgSourcesDeleted.String(), src.Name))
+	s.logRegistration(ctx, "EsSources", fmt.Sprintf(MsgEsSourcesDeleted.String(), src.Name))
 	w.WriteHeader(http.StatusNoContent)
 }
 

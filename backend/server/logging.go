@@ -132,6 +132,11 @@ const (
 	MsgNetWorkDeviceConfCreated  = logMessage("NetWorkDevice LogStash Config %s has been created.")
 	MsgNetWorkDeviceConfModified = logMessage("NetWorkDevice LogStash Config %s has been modified.")
 	MsgNetWorkDeviceConfgDeleted = logMessage("NetWorkDevice LogStash Config %s has been deleted.")
+
+	//Elastic Sources
+	MsgEsSourcesCreated  = logMessage("%s has been created.")
+	MsgEsSourcesModified = logMessage("%s has been modified.")
+	MsgEsSourcesDeleted  = logMessage("%s has been deleted.")
 )
 
 type proxyLogRequest struct {

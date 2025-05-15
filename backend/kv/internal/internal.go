@@ -1401,13 +1401,13 @@ func MarshalEsSource(s cloudhub.EsSource) ([]byte, error) {
 	}
 
 	if s.BasicAuth != nil {
-		pb.Basic = &BasicAuth{
+		pb.BasicAuth = &BasicAuth{
 			Username: s.BasicAuth.Username,
 			Password: s.BasicAuth.Password,
 		}
 	}
 	if s.APIKeyAuth != nil {
-		pb.APIKey = &APIKeyAuth{
+		pb.APIKeyAuth = &APIKeyAuth{
 			ID:     s.APIKeyAuth.ID,
 			APIKey: s.APIKeyAuth.APIKey,
 		}
@@ -1434,19 +1434,19 @@ func UnmarshalEsSource(data []byte, s *cloudhub.EsSource) error {
 	s.DefaultIndex = pb.DefaultIndex
 	s.Organization = pb.Organization
 
-	if pb.Basic != nil {
+	if pb.BasicAuth != nil {
 		s.BasicAuth = &cloudhub.BasicAuth{
-			Username: pb.Basic.Username,
-			Password: pb.Basic.Password,
+			Username: pb.BasicAuth.Username,
+			Password: pb.BasicAuth.Password,
 		}
 	} else {
 		s.BasicAuth = nil
 	}
 
-	if pb.APIKey != nil {
+	if pb.APIKeyAuth != nil {
 		s.APIKeyAuth = &cloudhub.APIKeyAuth{
-			ID:     pb.APIKey.ID,
-			APIKey: pb.APIKey.APIKey,
+			ID:     pb.APIKeyAuth.ID,
+			APIKey: pb.APIKeyAuth.APIKey,
 		}
 	} else {
 		s.APIKeyAuth = nil

@@ -267,7 +267,6 @@ func TestUpdateEsSource_OrganizationChange(t *testing.T) {
 	es := fakeESServer()
 	defer es.Close()
 
-	// 초기 저장된 소스: organization="oldOrg"
 	saved := cloudhub.EsSource{
 		ID:           9,
 		URL:          es.URL,
@@ -298,7 +297,6 @@ func TestUpdateEsSource_OrganizationChange(t *testing.T) {
 		Logger: log.New(log.DebugLevel),
 	}
 
-	// PATCH /cloudhub/v1/es/9?dryRun 제거
 	body := `{"organization":"newOrg"}`
 	req := httptest.NewRequest("PATCH", "/cloudhub/v1/es/9", strings.NewReader(body))
 	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
