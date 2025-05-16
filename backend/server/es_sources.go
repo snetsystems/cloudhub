@@ -35,10 +35,10 @@ type esSourceResponse struct {
 
 func esSourceAuthenticationMethod(src cloudhub.EsSource) string {
 	switch {
-	case src.BasicAuth != nil:
-		return "basic"
-	case src.APIKeyAuth != nil:
-		return "apiKey"
+	case src.Authentication == cloudhub.APIkeyMethod:
+		return cloudhub.APIkeyMethod
+	case src.Authentication == cloudhub.BasicMethod:
+		return cloudhub.BasicMethod
 	default:
 		return "unknown"
 	}
@@ -314,6 +314,7 @@ func (s *Service) fetchEsVersion(ctx context.Context, src *cloudhub.EsSource) st
 		URL:                src.URL,
 		BasicAuth:          src.BasicAuth,
 		APIKeyAuth:         src.APIKeyAuth,
+		Authentication:     src.Authentication,
 		InsecureSkipVerify: src.InsecureSkipVerify,
 	})
 	if err != nil {
@@ -339,6 +340,7 @@ func (s *Service) validateEsCredentials(ctx context.Context, src *cloudhub.EsSou
 		URL:                src.URL,
 		BasicAuth:          src.BasicAuth,
 		APIKeyAuth:         src.APIKeyAuth,
+		Authentication:     src.Authentication,
 		InsecureSkipVerify: src.InsecureSkipVerify,
 	})
 	if err != nil {

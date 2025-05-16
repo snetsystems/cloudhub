@@ -69,6 +69,7 @@ type Config struct {
 	URL                string
 	BasicAuth          *cloudhub.BasicAuth
 	APIKeyAuth         *cloudhub.APIKeyAuth
+	Authentication     string
 	InsecureSkipVerify bool
 }
 
@@ -86,18 +87,17 @@ func NewClient(cfg Config) (*Client, error) {
 	}
 
 	switch {
-	case cfg.APIKeyAuth != nil:
+	case cfg.Authentication == cloudhub.APIkeyMethod && cfg.APIKeyAuth != nil:
 		esCfg.APIKey = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s",
 			cfg.APIKeyAuth.ID,
 			cfg.APIKeyAuth.APIKey,
 		)))
-	case cfg.BasicAuth != nil:
-
+	case cfg.Authentication == cloudhub.BasicMethod && cfg.BasicAuth != nil:
 		esCfg.Username = cfg.BasicAuth.Username
 		esCfg.Password = cfg.BasicAuth.Password
 	default:
 		return nil, fmt.Errorf(
-			"authentication required: either APIKeyAuth or BasicAuth must be set",
+			"authentication required: either apiKey or basic must be set",
 		)
 	}
 

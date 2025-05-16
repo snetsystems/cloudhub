@@ -278,6 +278,12 @@ type SourcesStore interface {
 	Update(context.Context, Source) error
 }
 
+// The kinds of authentication method.
+const (
+	BasicMethod  = "basic"
+	APIkeyMethod = "apiKey"
+)
+
 // EsSource holds connection info for Elasticsearch.
 type EsSource struct {
 	ID                 int    `json:"id,string"`                    // Unique ID (primary key)
@@ -294,8 +300,8 @@ type EsSource struct {
 	IndexPatterns []string `json:"indexPatterns,omitempty"` // e.g. ["logs-*", "metrics-*"]
 	DefaultIndex  string   `json:"defaultIndex,omitempty"`  // Default index to query
 
-	Organization   string `json:"organization"` // Organization is the organization ID that resource
-	Authentication string `json:"authentication"`
+	Organization   string `json:"organization"`   // Organization is the organization ID that resource
+	Authentication string `json:"authentication"` // Authentication method ["basic", "apiKey"]
 }
 
 // BasicAuth carries username/password credentials.
