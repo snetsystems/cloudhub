@@ -1,14 +1,18 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -58,14 +62,9 @@ func newEsSourceResponse(src cloudhub.EsSource) esSourceResponse {
 	idPath := fmt.Sprintf("%s/%d", base, src.ID)
 
 	links := esSourceLinks{
-		Self:        idPath,
-		Search:      idPath + "/search",
-		Indices:     idPath + "/indices",
-		Bulk:        idPath + "/bulk",
-		Permissions: idPath + "/permissions",
-		Users:       idPath + "/users",
-		Health:      idPath + "/health",
-		Proxy:       idPath + "/proxy",
+		Self:   idPath,
+		Health: idPath + "/health",
+		Proxy:  idPath + "/proxy",
 	}
 
 	return esSourceResponse{
@@ -195,10 +194,14 @@ func (s *Service) UpdateEsSource(w http.ResponseWriter, r *http.Request) {
 		src.URL = req.URL
 	}
 	if req.BasicAuth != nil {
-		src.BasicAuth = req.BasicAuth
+		if req.BasicAuth.Password != "" || src.BasicAuth == nil {
+			src.BasicAuth = req.BasicAuth
+		}
 	}
 	if req.APIKeyAuth != nil {
-		src.APIKeyAuth = req.APIKeyAuth
+		if (req.APIKeyAuth.APIKey != "" && req.APIKeyAuth.ID != "") || src.APIKeyAuth == nil {
+			src.APIKeyAuth = req.APIKeyAuth
+		}
 	}
 
 	src.InsecureSkipVerify = req.InsecureSkipVerify
@@ -362,20 +365,13 @@ type getEsSourcesResponse struct {
 // Elastic proxies any request under
 //
 //	/cloudhub/v1/es/{id}/proxy/{wildcard…}
-//
-// to the actual Elasticsearch host.
 func (s *Service) Elastic(w http.ResponseWriter, r *http.Request) {
-	// ── 1. Parse :id ───────────────────────────────────────────────────────
 	id, err := paramID("id", r)
 	if err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
 		return
 	}
 
-	// ── 2. Determine tail path after “…/proxy” ─────────────────────────────
-	// Example input:
-	//   /cloudhub/v1/es/7/proxy/_cluster/health
-	// Split once on "/proxy" and keep whatever comes after it.
 	parts := strings.SplitN(r.URL.Path, "/proxy", 2)
 	var tail string
 	if len(parts) == 2 {
@@ -386,22 +382,18 @@ func (s *Service) Elastic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-
-	// ── 3. Load ES source ──────────────────────────────────────────────────
 	src, err := s.Store.EsSources(ctx).Get(ctx, id)
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
 	}
 
-	// ── 4. Build reverse proxy ─────────────────────────────────────────────
 	proxy := buildEsReverseProxy(src)
 	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, e error) {
 		s.Logger.WithField("err", e)
 		rw.WriteHeader(http.StatusBadGateway)
 	}
 
-	// ── 5. Rewrite request URL before proxying ────────────────────────────
 	r.URL.Scheme = "" // overwritten by Director
 	r.URL.Host = ""
 	r.URL.Path = tail  // "/_cluster/health" …
@@ -416,10 +408,8 @@ func buildEsReverseProxy(src cloudhub.EsSource) *httputil.ReverseProxy {
 	target, _ := url.Parse(src.URL) // src.URL already validated
 	rp := httputil.NewSingleHostReverseProxy(target)
 
-	// ── transport with custom TLS ───────────────────────────────────────────
 	rp.Transport = elastic.SharedTransport(src.InsecureSkipVerify)
 
-	// ── director tweaks outgoing request ────────────────────────────────────
 	rp.Director = func(req *http.Request) {
 		// Preserve original method/URL from incoming ServeHTTP call
 		req.URL.Scheme = target.Scheme
@@ -434,7 +424,172 @@ func buildEsReverseProxy(src cloudhub.EsSource) *httputil.ReverseProxy {
 			)
 			req.Header.Set("Authorization", "ApiKey "+token)
 		}
-		// Forward all other headers unchanged
 	}
 	return rp
+}
+
+// MultiElasticProxy handles concurrent proxy of a single Elasticsearch API call to multiple sources and aggregates the results.
+func (s *Service) MultiElasticProxy(w http.ResponseWriter, r *http.Request) {
+	const MaxWorkers = cloudhub.WorkerLimit
+
+	var req cloudhub.MultiProxyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	results := make([]cloudhub.MultiProxyResult, len(req.SourceIds))
+
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, MaxWorkers)
+
+	for i, srcID := range req.SourceIds {
+
+		wg.Add(1)
+		go func(idx int, id string) {
+
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			result := cloudhub.MultiProxyResult{SourceID: id}
+			sID, err := strconv.Atoi(id)
+			if err != nil {
+				result.Status = 404
+				result.Error = "ES Source not found"
+				results[idx] = result
+				return
+			}
+
+			src, err := s.Store.EsSources(ctx).Get(ctx, sID)
+			if err != nil {
+				result.Status = 404
+				result.Error = "ES Source not found"
+				results[idx] = result
+				return
+			}
+
+			esPath := req.Path
+			if len(req.Query) > 0 {
+				q := url.Values{}
+				for k, v := range req.Query {
+					q.Set(k, v)
+				}
+				esPath += "?" + q.Encode()
+			}
+
+			resp, err := s.doElasticsearchRequest(src, req.Method, esPath, req.Body)
+			if err != nil {
+				result.Status = 500
+				result.Error = err.Error()
+				results[idx] = result
+				return
+			}
+
+			defer resp.Body.Close()
+
+			result.Status = resp.StatusCode
+			respBody, _ := io.ReadAll(resp.Body)
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				var data interface{}
+				if err := json.Unmarshal(respBody, &data); err == nil {
+					result.Data = data
+				} else {
+					result.Data = string(respBody)
+				}
+			} else {
+				result.Error = string(respBody)
+			}
+			results[idx] = result
+		}(i, srcID)
+	}
+
+	wg.Wait()
+	encodeJSON(w, http.StatusOK, results, s.Logger)
+}
+
+// EsAutocomplete Autocomplete terms
+func (s *Service) EsAutocomplete(w http.ResponseWriter, r *http.Request) {
+	id, err := paramID("id", r)
+	if err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
+	}
+	ctx := r.Context()
+	src, err := s.Store.EsSources(ctx).Get(ctx, id)
+	if err != nil {
+		notFound(w, id, s.Logger)
+		return
+	}
+
+	var req struct {
+		Index string `json:"index"`
+		Field string `json:"field"`
+		Query string `json:"query,omitempty"`
+		Size  int    `json:"size,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+	if req.Index == "" || req.Field == "" {
+		invalidData(w, fmt.Errorf("index/field required"), s.Logger)
+		return
+	}
+	if req.Size == 0 {
+		req.Size = 10
+	}
+
+	path := fmt.Sprintf("/%s/_terms_enum", req.Index)
+	body := map[string]interface{}{
+		"field": req.Field,
+		"size":  req.Size,
+	}
+	if req.Query != "" {
+		body["string"] = req.Query
+	}
+
+	resp, err := s.doElasticsearchRequest(src, "POST", path, body)
+	if err != nil {
+		Error(w, http.StatusBadGateway, err.Error(), s.Logger)
+		return
+	}
+	defer resp.Body.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
+}
+
+func (s *Service) doElasticsearchRequest(
+	src cloudhub.EsSource,
+	method, path string,
+	body interface{},
+) (*http.Response, error) {
+	var bodyReader io.Reader
+	if body != nil {
+		b, _ := json.Marshal(body)
+		bodyReader = bytes.NewReader(b)
+	}
+
+	esURL := src.URL + path
+	req, err := http.NewRequest(method, esURL, bodyReader)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	if src.BasicAuth != nil {
+		req.SetBasicAuth(src.BasicAuth.Username, src.BasicAuth.Password)
+	} else if src.APIKeyAuth != nil {
+		token := base64.StdEncoding.EncodeToString([]byte(src.APIKeyAuth.ID + ":" + src.APIKeyAuth.APIKey))
+		req.Header.Set("Authorization", "ApiKey "+token)
+	}
+
+	client := &http.Client{
+		Transport: elastic.SharedTransport(src.InsecureSkipVerify),
+		Timeout:   5 * time.Second,
+	}
+	return client.Do(req)
 }

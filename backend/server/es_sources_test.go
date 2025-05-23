@@ -313,3 +313,93 @@ func TestUpdateEsSource_OrganizationChange(t *testing.T) {
 		t.Errorf("organization not updated: got %q, want %q", updatedSrc.Organization, "newOrg")
 	}
 }
+
+func TestMultiElasticProxy(t *testing.T) {
+
+	esOK := fakeESServer()
+	defer esOK.Close()
+	esErr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Simulated failure", http.StatusInternalServerError)
+	}))
+	defer esErr.Close()
+
+	sources := []cloudhub.EsSource{
+		{ID: 1, URL: esOK.URL, BasicAuth: &cloudhub.BasicAuth{Username: "u", Password: "p"}},
+		{ID: 2, URL: esErr.URL, BasicAuth: &cloudhub.BasicAuth{Username: "u", Password: "p"}},
+	}
+	store := &mocks.EsSourcesStore{
+		GetF: func(ctx context.Context, id int) (cloudhub.EsSource, error) {
+			for _, s := range sources {
+				if s.ID == id {
+					return s, nil
+				}
+			}
+			return cloudhub.EsSource{}, fmt.Errorf("not found")
+		},
+	}
+	svc := &server.Service{
+		Store: &mocks.Store{
+			EsSourcesStore: store,
+			OrganizationsStore: &mocks.OrganizationsStore{
+				DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "org"}, nil
+				},
+			},
+		},
+		Logger: log.New(log.DebugLevel),
+	}
+
+	multiReq := cloudhub.MultiProxyRequest{
+		SourceIds: []string{"1", "2"},
+		Method:    "POST",
+		Path:      "/_search",
+		Body: map[string]interface{}{
+			"query": map[string]interface{}{"match_all": map[string]interface{}{}},
+			"size":  1,
+		},
+	}
+	reqBody, _ := json.Marshal(multiReq)
+	req := httptest.NewRequest("POST", "/cloudhub/v1/es/multi/proxy", bytes.NewReader(reqBody))
+	rw := httptest.NewRecorder()
+
+	svc.MultiElasticProxy(rw, req)
+	res := rw.Result()
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", res.StatusCode)
+	}
+
+	var resp []cloudhub.MultiProxyResult
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode error: %v", err)
+	}
+	if len(resp) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(resp))
+	}
+
+	foundOK, foundErr := false, false
+	for _, r := range resp {
+		switch r.SourceID {
+		case "1":
+			if r.Status != 200 {
+				t.Errorf("expected status 200 for source 1, got %d", r.Status)
+			}
+			if r.Data == nil {
+				t.Errorf("expected data for source 1, got nil")
+			}
+			foundOK = true
+		case "2":
+			if r.Status != 500 {
+				t.Errorf("expected status 500 for source 2, got %d", r.Status)
+			}
+			if r.Error == "" {
+				t.Errorf("expected error for source 2, got empty")
+			}
+			foundErr = true
+		default:
+			t.Errorf("unexpected sourceId: %s", r.SourceID)
+		}
+	}
+	if !foundOK || !foundErr {
+		t.Errorf("results missing: foundOK=%v, foundErr=%v", foundOK, foundErr)
+	}
+}

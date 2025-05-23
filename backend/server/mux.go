@@ -445,10 +445,13 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v1/es", EnsureViewer(service.NewEsSource))
 	router.PATCH("/cloudhub/v1/es/:id", EnsureEditor(service.UpdateEsSource))
 	router.DELETE("/cloudhub/v1/es/:id", EnsureAdmin(service.RemoveEsSource))
+	router.POST("/cloudhub/v1/es/:id/autocomplete", EnsureViewer(service.EsAutocomplete))
 
 	// Source Proxy to Influx; Has gzip compression around the handler
 	elastic := gziphandler.GzipHandler(EnsureViewer(service.Elastic))
 	registerAllMethods(router, "/cloudhub/v1/es/:id/proxy/*path", elastic)
+
+	router.POST("/cloudhub/v1/proxy/multi/es", EnsureViewer(service.MultiElasticProxy))
 
 	allRoutes := &AllRoutes{
 		Logger:                opts.Logger,

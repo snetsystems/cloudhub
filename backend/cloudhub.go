@@ -330,6 +330,23 @@ type EsSourcesStore interface {
 	Update(context.Context, EsSource) error
 }
 
+// MultiProxyRequest represents a batch request to proxy a single Elasticsearch API call to multiple sources.
+type MultiProxyRequest struct {
+	SourceIds []string          `json:"sourceIds"`
+	Method    string            `json:"method"`
+	Path      string            `json:"path"`
+	Query     map[string]string `json:"query"`
+	Body      interface{}       `json:"body"`
+}
+
+// MultiProxyResult contains the outcome of a proxy request to a single Elasticsearch source.
+type MultiProxyResult struct {
+	SourceID string      `json:"sourceId"`
+	Status   int         `json:"status"`
+	Data     interface{} `json:"data,omitempty"`
+	Error    string      `json:"error,omitempty"`
+}
+
 // DBRP represents a database and retention policy for a time series source
 type DBRP struct {
 	DB string `json:"db"`
