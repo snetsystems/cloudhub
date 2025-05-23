@@ -216,6 +216,9 @@ func (s *Service) UpdateEsSource(w http.ResponseWriter, r *http.Request) {
 	if req.Organization != "" {
 		src.Organization = req.Organization
 	}
+	if req.Authentication != "" {
+		src.Authentication = req.Authentication
+	}
 
 	defaultOrg, err := s.Store.Organizations(ctx).DefaultOrganization(ctx)
 	if err != nil {
