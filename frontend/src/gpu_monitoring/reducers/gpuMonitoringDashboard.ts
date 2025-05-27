@@ -10,6 +10,8 @@ interface TimeRangeState {
   gpuMonitoringTimeRange: TimeRange
   filteredHostForGPUMonitoring: FilteredHostForGPUMonitoring
   gpuMonitoringManualRefresh: number
+  statisticGraphHeight: number
+  timeSeriesGraphHeight: number
 }
 const initialState: TimeRangeState = {
   gpuMonitoringTimeRange: {
@@ -20,6 +22,8 @@ const initialState: TimeRangeState = {
   },
   filteredHostForGPUMonitoring: EMPTY_FILTERED_HOST_FOR_GPU_MONITORING,
   gpuMonitoringManualRefresh: 0,
+  statisticGraphHeight: 81,
+  timeSeriesGraphHeight: 49,
 }
 
 const gpuMonitoringDashboard = (
@@ -38,6 +42,14 @@ const gpuMonitoringDashboard = (
     case ActionType.setGPUMonitoringManualRefresh: {
       const {gpuMonitoringManualRefresh} = action.payload
       return {...state, gpuMonitoringManualRefresh}
+    }
+    case ActionType.setStatisticGraphHeightAction: {
+      const {statisticGraphHeight} = action.payload
+      return {...state, statisticGraphHeight}
+    }
+    case ActionType.setTimeSeriesGraphHeightAction: {
+      const {timeSeriesGraphHeight} = action.payload
+      return {...state, timeSeriesGraphHeight}
     }
     case ActionType.setGPUMonitoringStateInit: {
       return {

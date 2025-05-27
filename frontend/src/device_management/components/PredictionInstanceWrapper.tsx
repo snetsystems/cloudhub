@@ -41,15 +41,16 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 // ETC
 import {getLayouts} from 'src/hosts/apis'
-import {getCellsWithWhere} from 'src/hosts/utils/getCellsWithWhere'
 import PredictionHexbinToggle from 'src/device_management/components/PredictionHexbinToggle'
 import {setSelectedAnomaly} from 'src/device_management/actions'
+import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
 
 interface Props {
   source: Source
   autoRefresh?: number
   predictionManualRefresh?: number
   filteredHexbinHost?: string
+  timeSeriesHeight?: number
   selectedAnomaly?: AnomalyFactor
   timeZone?: TimeZones
   setSelectedAnomaly?: (value: AnomalyFactor) => void
@@ -60,6 +61,7 @@ const PredictionInstanceWrapper = ({
   autoRefresh,
   predictionManualRefresh: manualRefresh,
   filteredHexbinHost,
+  timeSeriesHeight,
   selectedAnomaly,
   timeZone,
 }: Props) => {
@@ -78,6 +80,7 @@ const PredictionInstanceWrapper = ({
   const [interval, setInterval] = useState(DEFAULT_GROUP_BY)
 
   const [isIntervalManual, setIsIntervalManual] = useState(false)
+
   const [
     showFilteredHostLayoutsByInterfaces,
     setShowFilteredHostLayoutsByInterfaces,
@@ -88,6 +91,7 @@ const PredictionInstanceWrapper = ({
   )
 
   const [layouts, setLayouts] = useState<Layout[]>()
+
   const [
     filteredHostLayoutsByInterfaces,
     setFilteredHostLayoutsByInterfaces,
@@ -135,13 +139,18 @@ const PredictionInstanceWrapper = ({
 
   useEffect(() => {
     const currentLayouts = getCurrentLayouts()
-
+    const ratio = {
+      xNum: 3,
+      yNum: 2,
+      height: timeSeriesHeight,
+    }
     if (!!currentLayouts) {
       setLayoutCells(
-        getCellsWithWhere(
+        getCellsReactive(
           currentLayouts,
           source,
           filteredHexbinHost ?? '',
+          ratio,
           isIntervalManual ? interval : null
         )
       )
@@ -153,6 +162,7 @@ const PredictionInstanceWrapper = ({
     isIntervalManual,
     selfTimeRange,
     showFilteredHostLayoutsByInterfaces,
+    timeSeriesHeight,
   ])
 
   const saveTimeRangeToLocalStorage = (timeRange: TimeRange) => {
@@ -337,7 +347,7 @@ const PredictionInstanceWrapper = ({
           <>
             <div
               className="panel-body"
-              style={{backgroundColor: GRAPH_BG_COLOR}}
+              style={{backgroundColor: GRAPH_BG_COLOR, padding: '10px'}}
             >
               <div
                 style={{
@@ -394,6 +404,7 @@ const mstp = state => {
       filteredHexbinHost,
       selectedAnomaly,
       predictionManualRefresh,
+      timeSeriesHeight,
     },
     links,
   } = state
@@ -404,6 +415,7 @@ const mstp = state => {
     inPresentationMode,
     filteredHexbinHost,
     selectedAnomaly,
+    timeSeriesHeight,
     predictionManualRefresh,
   }
 }

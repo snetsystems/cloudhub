@@ -31,14 +31,15 @@ import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
 import {getDeep} from 'src/utils/wrappers'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {getCellsWithWhere} from 'src/hosts/utils/getCellsWithWhere'
 
 // ETC
 import {getLayout} from 'src/hosts/apis'
+import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
 
 interface Props {
   source: Source
   autoRefresh?: number
+  statisticHeight?: number
   predictionManualRefresh?: number
   selectedAnomaly?: AnomalyFactor
 }
@@ -46,6 +47,7 @@ interface Props {
 const PredictionStatisticalGraphWrapper = ({
   source,
   autoRefresh,
+  statisticHeight,
   predictionManualRefresh: manualRefresh,
   selectedAnomaly,
 }: Props) => {
@@ -83,10 +85,15 @@ const PredictionStatisticalGraphWrapper = ({
   }, [autoRefresh])
 
   useEffect(() => {
-    if (!!layout) {
-      setLayoutCells(getCellsWithWhere(layout, source, '', null, true))
+    const ratio = {
+      xNum: 2,
+      yNum: 3,
+      height: statisticHeight,
     }
-  }, [layout, selfTimeRange])
+    if (!!layout) {
+      setLayoutCells(getCellsReactive(layout, source, '', ratio, null))
+    }
+  }, [layout, selfTimeRange, statisticHeight])
 
   const saveTimeRangeToLocalStorage = (timeRange: TimeRange) => {
     localStorage.setItem(
@@ -156,7 +163,10 @@ const PredictionStatisticalGraphWrapper = ({
           </div>
         </PredictionDashboardHeader>
         <>
-          <div className="panel-body" style={{backgroundColor: GRAPH_BG_COLOR}}>
+          <div
+            className="panel-body"
+            style={{backgroundColor: GRAPH_BG_COLOR, padding: '10px'}}
+          >
             <div
               style={{
                 position: 'relative',
@@ -196,13 +206,18 @@ const mstp = state => {
     app: {
       persisted: {autoRefresh},
     },
-    predictionDashboard: {selectedAnomaly, predictionManualRefresh},
+    predictionDashboard: {
+      selectedAnomaly,
+      predictionManualRefresh,
+      statisticHeight,
+    },
     links,
   } = state
   return {
     links,
     autoRefresh,
     selectedAnomaly,
+    statisticHeight,
     predictionManualRefresh,
   }
 }

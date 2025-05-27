@@ -22,12 +22,20 @@ import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
 
 // Util
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {bindActionCreators} from 'redux'
+import {
+  setStatisticHeight,
+  setTimeSeriesHeight,
+} from 'src/device_management/actions'
+import {setStatisticGraphHeight, setTimeSeriesGraphHeight} from '../actions'
 
 interface Props {
   source: Source
   sources: Source[]
   cloudAutoRefresh?: CloudAutoRefresh
   inPresentationMode?: boolean
+  setTimeSeriesHeight?: (height: number) => void
+  setStatisticHeight?: (height: number) => void
 }
 
 interface TempProps {
@@ -39,6 +47,8 @@ function GPUMonitoringDashBoard({
   inPresentationMode,
   source,
   cloudAutoRefresh,
+  setTimeSeriesHeight,
+  setStatisticHeight,
 }: Props) {
   const [isMockActive, setIsMockActive] = useState(false)
 
@@ -84,6 +94,14 @@ function GPUMonitoringDashBoard({
 
     const newCells = cells.map(cell => {
       const l = layout.find(ly => ly.i === cell.i)
+
+      if (l.i === 'gpu-time-series') {
+        setTimeSeriesHeight(l.h)
+      }
+
+      if (l.i === 'gpu-statistics') {
+        setStatisticHeight(l.h)
+      }
 
       if (
         cell.x !== l.x ||
@@ -242,7 +260,10 @@ const mstp = state => {
   }
 }
 
-const mdtp = () => ({})
+const mdtp = dispatch => ({
+  setTimeSeriesHeight: bindActionCreators(setTimeSeriesGraphHeight, dispatch),
+  setStatisticHeight: bindActionCreators(setStatisticGraphHeight, dispatch),
+})
 
 const isEqual = (prev, next) => {
   return _.isEqual(prev, next)

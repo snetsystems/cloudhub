@@ -8,6 +8,8 @@ export type Action =
   | HistogramDateAction
   | PredictionManualRefreshAction
   | StateInitAction
+  | TimeSeriesHeightAction
+  | StatisticHeightAction
 
 export enum ActionType {
   setPredictionTimeRange = 'SET_PREDICTION_DASHBOARD',
@@ -17,6 +19,8 @@ export enum ActionType {
   setHistogramDate = 'SET_HISTOGRAM_DATE',
   setPredictionManualRefresh = 'SET_PREDICTION_MANUAL_REFRESH',
   setStateInit = 'SET_STATE_INIT',
+  setTimeSeriesHeight = 'SET_TIME_SERIES_HEIGHT',
+  setStatisticHeight = 'SET_STATISTIC_HEIGHT',
 }
 
 interface PredictionTimeRangeAction {
@@ -61,6 +65,20 @@ interface PredictionManualRefreshAction {
 
 interface StateInitAction {
   type: ActionType.setStateInit
+}
+
+interface TimeSeriesHeightAction {
+  type: ActionType.setTimeSeriesHeight
+  payload: {
+    timeSeriesHeight: number
+  }
+}
+
+interface StatisticHeightAction {
+  type: ActionType.setStatisticHeight
+  payload: {
+    statisticHeight: number
+  }
 }
 
 export const setPredictionTimeRange = (
@@ -117,6 +135,22 @@ export const setPredictionManualRefresh = (): PredictionManualRefreshAction => (
 
 export const setStateInitAction = (): StateInitAction => ({
   type: ActionType.setStateInit,
+})
+
+export const setTimeSeriesHeight = (
+  height: number
+): TimeSeriesHeightAction => ({
+  type: ActionType.setTimeSeriesHeight,
+  payload: {
+    timeSeriesHeight: height,
+  },
+})
+
+export const setStatisticHeight = (height: number): StatisticHeightAction => ({
+  type: ActionType.setStatisticHeight,
+  payload: {
+    statisticHeight: height,
+  },
 })
 // export const setPredictionTimeRange = (timeRange: TimeRange) => (
 //   dispatch: Dispatch<Action>

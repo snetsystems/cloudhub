@@ -35,10 +35,10 @@ import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHostsForStatisticalGraph} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
-import {getCellsWithRatio} from 'src/hosts/utils/getCellsWithRatio'
 
 // API
 import {getLayout} from 'src/hosts/apis'
+import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
 
 interface Props {
   xNum: number
@@ -49,6 +49,8 @@ interface Props {
   autoRefresh?: number
   gpuMonitoringManualRefresh?: number
   isStatisticsGraph?: boolean
+  statisticGraphHeight?: number
+  timeSeriesGraphHeight?: number
 }
 
 const GPUMonitoringCellsGraphWrapper = ({
@@ -60,6 +62,8 @@ const GPUMonitoringCellsGraphWrapper = ({
   autoRefresh,
   gpuMonitoringManualRefresh: manualRefresh,
   isStatisticsGraph,
+  statisticGraphHeight,
+  timeSeriesGraphHeight,
 }: Props) => {
   const timeSeriesCannedLayoutID = useMemo(() => {
     if (isStatisticsGraph) {
@@ -107,34 +111,49 @@ const GPUMonitoringCellsGraphWrapper = ({
 
   useEffect(() => {
     if (isStatisticsGraph) return
-
-    const whereTags = {
-      host: filteredHostForGPUMonitoring.hostname,
-      index: filteredHostForGPUMonitoring.gpuIndex,
+    // prepare rollback
+    // const whereTags = {
+    //   host: filteredHostForGPUMonitoring.hostname,
+    //   index: filteredHostForGPUMonitoring.gpuIndex,
+    // }
+    const ratio = {
+      xNum: 4,
+      yNum: 3,
+      height: timeSeriesGraphHeight,
     }
 
     if (!!layout) {
-      setLayoutCells(getCellsWithRatio(layout, source, whereTags, xNum, null))
+      // setLayoutCells(getCellsWithRatio(layout, source, whereTags, xNum, null))
+      setLayoutCells(
+        getCellsReactive(
+          layout,
+          source,
+          filteredHostForGPUMonitoring.hostname ?? '',
+          ratio,
+          null
+        )
+      )
     }
   }, [
     layout,
     selfTimeRange,
     filteredHostForGPUMonitoring.hostname,
     filteredHostForGPUMonitoring.gpuIndex,
+    timeSeriesGraphHeight,
   ])
 
   useEffect(() => {
     if (!isStatisticsGraph) return
 
-    const whereTags = {
-      host: '',
-      index: -1,
+    const ratio = {
+      xNum: 2,
+      yNum: 5,
+      height: statisticGraphHeight,
     }
-
     if (!!layout) {
-      setLayoutCells(getCellsWithRatio(layout, source, whereTags, xNum, null))
+      setLayoutCells(getCellsReactive(layout, source, '', ratio, null))
     }
-  }, [layout, selfTimeRange])
+  }, [layout, selfTimeRange, statisticGraphHeight])
 
   const getLayoutForInstance = async () => {
     const layoutResults = await getLayout(timeSeriesCannedLayoutID)
@@ -252,6 +271,8 @@ const mstp = state => {
     gpuMonitoringDashboard: {
       filteredHostForGPUMonitoring,
       gpuMonitoringManualRefresh,
+      statisticGraphHeight,
+      timeSeriesGraphHeight,
     },
     links,
   } = state
@@ -261,6 +282,8 @@ const mstp = state => {
     autoRefresh,
     filteredHostForGPUMonitoring,
     gpuMonitoringManualRefresh,
+    statisticGraphHeight,
+    timeSeriesGraphHeight,
   }
 }
 
