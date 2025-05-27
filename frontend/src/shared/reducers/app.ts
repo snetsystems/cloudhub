@@ -13,9 +13,13 @@ import {ActionTypes, Action} from 'src/types/actions/app'
 import {CloudAction, CloudActionTypes} from 'src/clouds/types/actions/clouds'
 
 // types
-import {TimeZones} from 'src/types'
+import {BaseElasticSearchData, TimeZones} from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {CLOUD_TIME_RANGE} from '../data/timeRanges'
+import {
+  ElasticSearchAction,
+  ElasticSearchActionTypes,
+} from '../actions/elasticSearch'
 
 interface State {
   ephemeral: {
@@ -27,6 +31,7 @@ interface State {
     showTemplateVariableControlBar: boolean
     timeZone: TimeZones
     cloudTimeRange: CloudTimeRange
+    esSource: BaseElasticSearchData | null
   }
 }
 
@@ -40,6 +45,7 @@ const initialState: State = {
     showTemplateVariableControlBar: SHOW_TEMP_VAR_CONTROL_BAR_DEFAULT,
     timeZone: TimeZones.Local,
     cloudTimeRange: CLOUD_TIME_RANGE,
+    esSource: null,
   },
 }
 
@@ -74,7 +80,7 @@ const appEphemeralReducer = (
 
 const appPersistedReducer = (
   state = initialAppPersistedState,
-  action: Action | CloudAction
+  action: Action | CloudAction | ElasticSearchAction
 ) => {
   switch (action.type) {
     case ActionTypes.SetAutoRefresh: {
@@ -116,6 +122,14 @@ const appPersistedReducer = (
           ...state.cloudTimeRange,
           ...action.payload.cloudTimeRange,
         },
+      }
+    }
+
+    case ElasticSearchActionTypes.ElasticSearchConnect: {
+      const {elasticSearchInfo} = action.payload
+      return {
+        ...state,
+        esSource: elasticSearchInfo,
       }
     }
 

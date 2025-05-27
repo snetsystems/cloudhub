@@ -24,6 +24,7 @@ import source from 'src/sources/reducers'
 import aiModal from 'src/shared/reducers/aiModal'
 import predictionDashboard from 'src/device_management/reducers/predictionDashboard'
 import gpuMonitoringDashboard from 'src/gpu_monitoring/reducers/gpuMonitoringDashboard'
+import esSourcesReducer from 'src/shared/reducers/esSources'
 
 // eslint-disable-next-line no-unused-vars
 function lastAction(state = {}, action) {
@@ -50,6 +51,7 @@ const rootReducer = combineReducers({
   aiModal,
   predictionDashboard,
   gpuMonitoringDashboard,
+  esSources: esSourcesReducer,
 })
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
