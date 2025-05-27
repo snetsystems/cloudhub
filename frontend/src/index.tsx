@@ -87,6 +87,10 @@ import {reducerVSphere, ResponseVSphere} from './clouds/types'
 
 import AiRoutePage from 'src/device_management/containers/AiRoutePage'
 import PredictionRulePage from 'src/device_management/containers/PredictionRulePage'
+import {
+  connectElasticSearch,
+  getElasticSearchInfoAsync,
+} from './shared/actions/elasticSearch'
 
 const errorsQueue = []
 
@@ -177,6 +181,16 @@ class Root extends PureComponent<Record<string, never>, State> {
     dispatch
   )
 
+  private handleGetElasticSearchInfo = bindActionCreators(
+    getElasticSearchInfoAsync,
+    dispatch
+  )
+
+  private handleConnectElasticSearch = bindActionCreators(
+    connectElasticSearch,
+    dispatch
+  )
+
   private heartbeatTimer: number
 
   private timeout: {
@@ -203,6 +217,7 @@ class Root extends PureComponent<Record<string, never>, State> {
       await this.getLinks()
       await this.checkAuth()
       await populateEnv(store.getState().links.environment)
+      await this.getEsSources()
       this.setState({ready: true})
     } catch (error) {
       dispatch(errorThrown(error))
@@ -640,6 +655,24 @@ class Root extends PureComponent<Record<string, never>, State> {
       await this.performHeartbeat({shouldResetMe: true})
     } catch (error) {
       dispatch(errorThrown(error))
+    }
+  }
+
+  private async getEsSources() {
+    await this.handleGetElasticSearchInfo()
+
+    const esSource = store.getState().app.persisted.esSource
+    const esSources = store.getState().esSources.esSources
+    if (!!esSource) {
+      //esSource is already connected
+      this.handleConnectElasticSearch({elasticSearchInfo: esSource})
+    } else {
+      //esSource is not connected
+      esSources.forEach(element => {
+        if (element.default === true) {
+          this.handleConnectElasticSearch({elasticSearchInfo: element})
+        }
+      })
     }
   }
 }
