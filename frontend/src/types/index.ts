@@ -180,6 +180,17 @@ import {
   MigProfile,
 } from './gpuMonitoring'
 
+import {
+  BasicAuth,
+  ApiKeyAuth,
+  EsLinks,
+  BaseElasticSearchData,
+  AllGetResponse,
+  ElasticSearchState,
+  CreateElasticSearchParams,
+  ToggleEsWizard,
+} from './elasticSearch'
+
 export {
   Me,
   Env,
@@ -350,4 +361,12 @@ export {
   NvidiaLocalGrainItemForGPU,
   FetchNVidiaGPUMigLgipResponse,
   MigProfile,
+  BasicAuth,
+  ApiKeyAuth,
+  EsLinks,
+  BaseElasticSearchData,
+  AllGetResponse,
+  ElasticSearchState,
+  CreateElasticSearchParams,
+  ToggleEsWizard,
 }

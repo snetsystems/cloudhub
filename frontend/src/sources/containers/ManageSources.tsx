@@ -18,11 +18,22 @@ import {
   notifySourceDeleteFailed,
 } from 'src/shared/copy/notifications'
 
-import {Me, Source, Notification, Organization} from 'src/types'
+import {
+  Me,
+  Source,
+  Notification,
+  Organization,
+  BaseElasticSearchData,
+  ToggleEsWizard,
+} from 'src/types'
 import {ToggleWizard} from 'src/types/wizard'
+import ElasticTable from '../components/ElasticTable'
+import EsConnectionWizard from '../components/EsConnectionWizard'
 
 interface State {
   wizardVisibility: boolean
+  esWizardVisibility: boolean
+  esSourceInWizard: BaseElasticSearchData
   sourceInWizard: Source
   jumpStep: number
   showNewKapacitor: boolean
@@ -54,9 +65,11 @@ class ManageSources extends PureComponent<Props, State> {
     super(props)
     this.state = {
       wizardVisibility: false,
+      esWizardVisibility: false,
       sourceInWizard: null,
       jumpStep: null,
       showNewKapacitor: null,
+      esSourceInWizard: null,
     }
   }
 
@@ -85,9 +98,11 @@ class ManageSources extends PureComponent<Props, State> {
     } = this.props
     const {
       wizardVisibility,
+      esWizardVisibility,
       sourceInWizard,
       jumpStep,
       showNewKapacitor,
+      esSourceInWizard,
     } = this.state
     return (
       <Page>
@@ -107,6 +122,7 @@ class ManageSources extends PureComponent<Props, State> {
             toggleWizard={this.toggleWizard}
             connectedSource={connectedSource}
           />
+          <ElasticTable toggleEsWizard={this.toggleEsWizard} />
           <p className="version-number">CloudHub Version: {VERSION}</p>
         </Page.Contents>
         <ConnectionWizard
@@ -118,6 +134,11 @@ class ManageSources extends PureComponent<Props, State> {
           source={sourceInWizard}
           jumpStep={jumpStep}
           showNewKapacitor={showNewKapacitor}
+        />
+        <EsConnectionWizard
+          isVisible={esWizardVisibility}
+          toggleEsWizard={this.toggleEsWizard}
+          esSource={esSourceInWizard}
         />
       </Page>
     )
@@ -157,6 +178,16 @@ class ManageSources extends PureComponent<Props, State> {
     })
   }
 
+  private toggleEsWizard: ToggleEsWizard = (
+    isVisible,
+    esSource = null
+  ) => () => {
+    this.setState({
+      esWizardVisibility: isVisible,
+      esSourceInWizard: esSource,
+    })
+  }
+
   private handleSetActiveKapacitor = kapacitor => {
     this.props.setActiveKapacitor(kapacitor)
   }
@@ -164,13 +195,19 @@ class ManageSources extends PureComponent<Props, State> {
 
 const mstp = ({
   adminCloudHub: {organizations},
+  app: {
+    persisted: {esSource},
+  },
   auth: {isUsingAuth, me},
   sources,
+  esSources: {esSources},
 }) => ({
   organizations,
   isUsingAuth,
   me,
   sources,
+  esSources,
+  esSource,
 })
 
 const mdtp = (dispatch: any) => ({
