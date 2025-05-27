@@ -235,12 +235,15 @@ class SideNav extends PureComponent<Props> {
           }
         >
           <NavBlock
-            highlightWhen={['logs', 'activity-logs']}
+            highlightWhen={['log-analysis', 'logs', 'activity-logs']}
             icon="eye"
             link={`${sourcePrefix}/logs`}
             location={location}
           >
             <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+            <NavListItem link={`${sourcePrefix}/log-analysis`}>
+              Log Analysis
+            </NavListItem>
             <NavListItem link={`${sourcePrefix}/logs`}>System Logs</NavListItem>
             <NavListItem link={`${sourcePrefix}/activity-logs`}>
               Activity Logs
