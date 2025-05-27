@@ -34,6 +34,7 @@ import {Clouds} from 'src/clouds'
 import {Applications} from 'src/applications'
 import {LogsPage} from 'src/logs'
 import {ActivityLogsPage} from 'src/activitylogs'
+import LogAnalysisDashboard from 'src/log_analysis/containers/LogAnalysisDashboard'
 import AlertsApp from 'src/alerts'
 import {
   KapacitorPage,
@@ -295,6 +296,7 @@ class Root extends PureComponent<Record<string, never>, State> {
                   path="alert-rules/:ruleID"
                   component={KapacitorRulePage}
                 />
+                <Route path="log-analysis" component={LogAnalysisDashboard} />
                 <Route path="activity-logs" component={ActivityLogsPage} />
                 <Route path="logs" component={LogsPage} />
                 <Route
