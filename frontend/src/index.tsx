@@ -668,7 +668,7 @@ class Root extends PureComponent<Record<string, never>, State> {
       this.handleConnectElasticSearch({elasticSearchInfo: esSource})
     } else {
       //esSource is not connected
-      esSources.forEach(element => {
+      esSources?.forEach(element => {
         if (element.default === true) {
           this.handleConnectElasticSearch({elasticSearchInfo: element})
         }
