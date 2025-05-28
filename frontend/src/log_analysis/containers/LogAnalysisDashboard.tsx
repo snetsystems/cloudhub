@@ -6,7 +6,6 @@ import {connect} from 'react-redux'
 
 // Components
 import {Page} from 'src/reusable_ui'
-import LogAnalysisTreeMap from 'src/log_analysis/components/LogAnalysisTreeMap'
 
 // Type
 import * as DashboardsModels from 'src/types/dashboards'
@@ -16,6 +15,7 @@ import {Cell, Source} from 'src/types'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
 import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
 import {FIXTURE_LOG_ANALYSIS_CELLS} from 'src/log_analysis/constants/fixture'
+import ToggleViewWrap from '../components/ToggleViewWrap'
 
 interface TempProps {
   cell: Cell
@@ -88,13 +88,7 @@ function LogAnalysisDashboard({inPresentationMode, source}) {
               isEditable: false,
             }}
           >
-            <LogAnalysisTreeMap
-              data={[
-                {token: 'error', count: 120},
-                {token: 'login', count: 80},
-                {token: 'timeout', count: 30},
-              ]}
-            />
+            <ToggleViewWrap />
           </Authorized>
         )
       }

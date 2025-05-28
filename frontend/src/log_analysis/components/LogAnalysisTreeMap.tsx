@@ -89,14 +89,6 @@ const LogAnalysisTreeMap: React.FC<Props> = ({data}) => {
 
   return (
     <>
-      <LogAnalysisDashboardHeader
-        cellName="Log Analysis TreeMap"
-        cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
-        cellTextColor={DEFAULT_CELL_TEXT_COLOR}
-      >
-        <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
-      </LogAnalysisDashboardHeader>
-
       <svg
         ref={svgRef}
         style={{
