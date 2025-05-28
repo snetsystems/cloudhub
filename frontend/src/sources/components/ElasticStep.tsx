@@ -13,12 +13,20 @@ import {
   notifySourceCreationFailed,
 } from 'src/shared/copy/notifications'
 import {notifySourceConnectionSucceeded} from 'src/shared/copy/notifications'
-import {CreateElasticSearchParams, Me, Organization} from 'src/types'
+import {
+  BaseElasticSearchData,
+  CreateElasticSearchParams,
+  Me,
+  Organization,
+} from 'src/types'
 import {NextReturn} from 'src/types/wizard'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {getDeep} from 'src/utils/wrappers'
 import _ from 'lodash'
-import {getElasticSearchInfoAsync} from 'src/shared/actions/elasticSearch'
+import {
+  connectElasticSearch,
+  getElasticSearchInfoAsync,
+} from 'src/shared/actions/elasticSearch'
 
 interface Props {
   esSource: CreateElasticSearchParams
@@ -30,6 +38,9 @@ interface Props {
   notify?: typeof notifyAction
   updateElasticSearchInfo?: (params: CreateElasticSearchParams) => void
   getElasticSearchInfoAsync?: () => void
+  connectElasticSearch?: (params: {
+    elasticSearchInfo: BaseElasticSearchData
+  }) => void
 }
 interface State {
   esSource: CreateElasticSearchParams | null
@@ -81,7 +92,7 @@ class ElasticStep extends PureComponent<Props, State> {
       }
       try {
         const sourceFromServer = await createElasticSearchInfo(esSource)
-        // update redux store
+        this.connectDefaultEsSource(sourceFromServer)
         await this.props.getElasticSearchInfoAsync()
 
         notify(notifySourceConnectionSucceeded(esSource.name))
@@ -94,7 +105,6 @@ class ElasticStep extends PureComponent<Props, State> {
       if (!!esSource.id) {
         try {
           const sourceFromServer = await updateElasticSearchInfo(esSource)
-          // update redux store
           await this.props.getElasticSearchInfoAsync()
 
           notify(notifySourceConnectionSucceeded(esSource.name))
@@ -356,6 +366,13 @@ class ElasticStep extends PureComponent<Props, State> {
     }
     return true
   }
+
+  private connectDefaultEsSource = (result: BaseElasticSearchData) => {
+    const {connectElasticSearch} = this.props
+    if (result.default) {
+      connectElasticSearch({elasticSearchInfo: result})
+    }
+  }
 }
 
 const mstp = ({adminCloudHub: {organizations}, auth: {isUsingAuth, me}}) => ({
@@ -375,6 +392,7 @@ const mdtp = dispatch => ({
     getElasticSearchInfoAsync,
     dispatch
   ),
+  connectElasticSearch: bindActionCreators(connectElasticSearch, dispatch),
 })
 
 export default connect(mstp, mdtp, null, {forwardRef: true})(ElasticStep)
