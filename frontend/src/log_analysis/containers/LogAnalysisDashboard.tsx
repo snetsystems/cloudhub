@@ -6,6 +6,7 @@ import {connect} from 'react-redux'
 
 // Components
 import {Page} from 'src/reusable_ui'
+import LogAnalysisTreeMap from 'src/log_analysis/components/LogAnalysisTreeMap'
 
 // Type
 import * as DashboardsModels from 'src/types/dashboards'
@@ -79,6 +80,24 @@ function LogAnalysisDashboard({inPresentationMode, source}) {
   const layoutRender = ({cell}: TempProps) => {
     if (!cell) return null
     switch (cell.i) {
+      case 'log-analysis-treemap': {
+        return (
+          <Authorized
+            requiredRole={VIEWER_ROLE}
+            propsOverride={{
+              isEditable: false,
+            }}
+          >
+            <LogAnalysisTreeMap
+              data={[
+                {token: 'error', count: 120},
+                {token: 'login', count: 80},
+                {token: 'timeout', count: 30},
+              ]}
+            />
+          </Authorized>
+        )
+      }
       default:
         return null
     }
