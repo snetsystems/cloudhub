@@ -191,7 +191,7 @@ import {
   ToggleEsWizard,
 } from './elasticSearch'
 
-import {SidePanelState, OpenPanelPayload, ClosePanelPayload} from './sidePanel'
+import {SidePanelState, OpenPanelPayload} from './sidePanel'
 
 export {
   Me,
@@ -373,5 +373,4 @@ export {
   ToggleEsWizard,
   SidePanelState,
   OpenPanelPayload,
-  ClosePanelPayload,
 }
