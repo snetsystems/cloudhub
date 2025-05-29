@@ -191,6 +191,8 @@ import {
   ToggleEsWizard,
 } from './elasticSearch'
 
+import {SidePanelState, OpenPanelPayload, ClosePanelPayload} from './sidePanel'
+
 export {
   Me,
   Env,
@@ -369,4 +371,7 @@ export {
   ElasticSearchState,
   CreateElasticSearchParams,
   ToggleEsWizard,
+  SidePanelState,
+  OpenPanelPayload,
+  ClosePanelPayload,
 }
