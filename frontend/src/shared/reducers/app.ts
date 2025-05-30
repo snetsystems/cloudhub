@@ -133,6 +133,13 @@ const appPersistedReducer = (
       }
     }
 
+    case ElasticSearchActionTypes.ElasticSearchDisconnect: {
+      return {
+        ...state,
+        esSource: null,
+      }
+    }
+
     default:
       return state
   }

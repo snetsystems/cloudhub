@@ -11,6 +11,7 @@ export enum ElasticSearchActionTypes {
   ElasticSearchGetFailed = 'ELASTICSEARCH_GET_FAILED',
   ElasticSearchUpdateRequested = 'ELASTICSEARCH_UPDATE_REQUESTED',
   ElasticSearchConnect = 'ELASTICSEARCH_CONNECT',
+  ElasticSearchDisconnect = 'ELASTICSEARCH_DISCONNECT',
 }
 
 export type ElasticSearchAction =
@@ -19,7 +20,7 @@ export type ElasticSearchAction =
   | ElasticSearchGetFailedAction
   | ElasticSearchUpdateRequestedAction
   | ElasticSearchConnectAction
-
+  | ElasticSearchDisconnectAction
 export interface ElasticSearchGetRequestedAction {
   type: ElasticSearchActionTypes.ElasticSearchGetRequested
 }
@@ -91,4 +92,12 @@ export const connectElasticSearch = (payload: {
 }): ElasticSearchConnectAction => ({
   type: ElasticSearchActionTypes.ElasticSearchConnect,
   payload,
+})
+
+export interface ElasticSearchDisconnectAction {
+  type: ElasticSearchActionTypes.ElasticSearchDisconnect
+}
+
+export const disconnectElasticSearch = (): ElasticSearchDisconnectAction => ({
+  type: ElasticSearchActionTypes.ElasticSearchDisconnect,
 })

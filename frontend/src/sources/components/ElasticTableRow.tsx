@@ -7,6 +7,7 @@ import {BaseElasticSearchData} from 'src/types'
 import {deleteElasticSearchInfo} from 'src/shared/apis/elasticSearch'
 import {
   connectElasticSearch,
+  disconnectElasticSearch,
   getElasticSearchInfoAsync,
 } from 'src/shared/actions/elasticSearch'
 import {bindActionCreators} from 'redux'
@@ -22,6 +23,7 @@ interface Props {
   fetchElasticSearchInfo?: () => void
   connectElasticSearch?: ({elasticSearchInfo}) => void
   toggleEsWizard: (open: boolean) => () => void
+  disconnectElasticSearch?: () => void
 }
 
 function ElasticTableRow({
@@ -30,6 +32,7 @@ function ElasticTableRow({
   fetchElasticSearchInfo,
   connectElasticSearch,
   toggleEsWizard,
+  disconnectElasticSearch,
 }: Props) {
   const connectionLink = useRef<EsConnectionLink>(null)
 
@@ -41,6 +44,10 @@ function ElasticTableRow({
 
   const onDeleteElasticSearch = async (id: string) => {
     await deleteElasticSearchInfo(id)
+    if (esSource.id === id) {
+      disconnectElasticSearch()
+    }
+
     await fetchElasticSearchInfo()
   }
 
@@ -118,6 +125,10 @@ const mdtp = dispatch => {
   return {
     fetchElasticSearchInfo: () => dispatch(getElasticSearchInfoAsync()),
     connectElasticSearch: bindActionCreators(connectElasticSearch, dispatch),
+    disconnectElasticSearch: bindActionCreators(
+      disconnectElasticSearch,
+      dispatch
+    ),
   }
 }
 

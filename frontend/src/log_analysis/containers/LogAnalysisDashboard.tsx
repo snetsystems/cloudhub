@@ -205,23 +205,18 @@ function LogAnalysisDashboard({
     return (
       <>
         <SourceIndicator />
+        <AutoRefreshDropdown
+          onChoose={handleChooseAutoRefresh}
+          selected={0}
+          onManualRefresh={handleManualRefresh}
+          customAutoRefreshOptions={getTimeOptionByGroup('logAnalysis')}
+          customAutoRefreshSelected={cloudAutoRefresh}
+        />
 
-        <>
-          <AutoRefreshDropdown
-            onChoose={handleChooseAutoRefresh}
-            selected={0}
-            onManualRefresh={handleManualRefresh}
-            customAutoRefreshOptions={getTimeOptionByGroup('logAnalysis')}
-            customAutoRefreshSelected={cloudAutoRefresh}
-          />
-
-          <TimeRangeDropdown
-            onChooseTimeRange={handleApplyTime}
-            selected={
-              cloudTimeRange?.logAnalysis ?? CLOUD_TIME_RANGE.logAnalysis
-            }
-          />
-        </>
+        <TimeRangeDropdown
+          onChooseTimeRange={handleApplyTime}
+          selected={cloudTimeRange?.logAnalysis ?? CLOUD_TIME_RANGE.logAnalysis}
+        />
 
         <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
       </>
