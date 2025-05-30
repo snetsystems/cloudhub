@@ -1,16 +1,25 @@
 // Library
-import React, {useMemo, useCallback} from 'react'
+import React, {useMemo, useCallback, useState} from 'react'
 import {HorizontalAlignment, OuiInMemoryTable} from '@opensearch-project/oui'
 import '@opensearch-project/oui/dist/oui_theme_dark.css'
 
 // Components
 import ExpandableCell from 'src/log_analysis/components/ExpandableCell'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import LoadingDots from 'src/shared/components/LoadingDots'
+import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 
 // Type
 import {TimeZones} from 'src/types'
 
 // Util
 import {formattedTime} from 'src/log_analysis/util'
+
+// Constants
+import {
+  DEFAULT_CELL_BG_COLOR,
+  DEFAULT_CELL_TEXT_COLOR,
+} from 'src/dashboards/constants'
 
 interface SyslogEvent {
   id: string
@@ -63,6 +72,7 @@ function LogAnalysisSyslogTable({timeZone = TimeZones.UTC}: Props) {
   // TODO Remove Mock Data
   const items = useMemo(() => generateMockData(100), [])
   const onSearchChange = useCallback(criteria => {}, [])
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const columns = [
     {
@@ -122,29 +132,43 @@ function LogAnalysisSyslogTable({timeZone = TimeZones.UTC}: Props) {
   }
 
   return (
-    <div className="syslog-table--container">
-      <OuiInMemoryTable<SyslogEvent>
-        itemId="id"
-        items={items}
-        columns={columns}
-        pagination={{hidePerPageOptions: true}}
-        sorting={sorting}
-        search={{
-          box: {
-            incremental: true,
-            placeholder: 'Filter your Syslog data',
-            style: {
-              width: '98%',
-              background: 'inherit',
-              border: '2px solid #383846',
-              padding: '4px 4px 4px 38px',
-              margin: '5px 0px',
-            },
-          },
-          onChange: onSearchChange,
-        }}
-      />
-    </div>
+    <>
+      <LogAnalysisDashboardHeader
+        cellName="Log Analysis Syslog Table"
+        cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
+        cellTextColor={DEFAULT_CELL_TEXT_COLOR}
+      >
+        {isLoading && (
+          <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
+        )}
+      </LogAnalysisDashboardHeader>
+
+      <FancyScrollbar style={{height: 'calc(100% - 40px)'}}>
+        <div className="syslog-table--container">
+          <OuiInMemoryTable<SyslogEvent>
+            itemId="id"
+            items={items}
+            columns={columns}
+            pagination={{hidePerPageOptions: true}}
+            sorting={sorting}
+            search={{
+              box: {
+                incremental: true,
+                placeholder: 'Filter your Syslog data',
+                style: {
+                  width: '98%',
+                  background: 'inherit',
+                  border: '2px solid #383846',
+                  padding: '4px 4px 4px 38px',
+                  margin: '5px 0px',
+                },
+              },
+              onChange: onSearchChange,
+            }}
+          />
+        </div>
+      </FancyScrollbar>
+    </>
   )
 }
 
