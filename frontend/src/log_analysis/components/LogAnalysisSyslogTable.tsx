@@ -1,10 +1,16 @@
 // Library
-import React, {useMemo, useCallback, useState} from 'react'
+import React, {useMemo, useCallback} from 'react'
 import {HorizontalAlignment, OuiInMemoryTable} from '@opensearch-project/oui'
 import '@opensearch-project/oui/dist/oui_theme_dark.css'
 
 // Components
 import ExpandableCell from 'src/log_analysis/components/ExpandableCell'
+
+// Type
+import {TimeZones} from 'src/types'
+
+// Util
+import {formattedTime} from 'src/log_analysis/util'
 
 interface SyslogEvent {
   id: string
@@ -28,7 +34,7 @@ function generateMockData(count = 60): SyslogEvent[] {
   ]
 
   return Array.from({length: count}, (_, i) => {
-    const ts = new Date(Date.now() - i * 45_000).toISOString()
+    const ts = String(Date.now() - i * 45_000)
     const msg = msgs[i % msgs.length]
     const tokens = msg
       .toLowerCase()
@@ -49,12 +55,13 @@ function generateMockData(count = 60): SyslogEvent[] {
   })
 }
 
-interface Props {}
+interface Props {
+  timeZone: TimeZones
+}
 // TODO Add Search Change Event
-function LogAnalysisSyslogTable({}: Props) {
+function LogAnalysisSyslogTable({timeZone = TimeZones.UTC}: Props) {
   // TODO Remove Mock Data
   const items = useMemo(() => generateMockData(100), [])
-
   const onSearchChange = useCallback(criteria => {}, [])
 
   const columns = [
@@ -64,7 +71,7 @@ function LogAnalysisSyslogTable({}: Props) {
       dataType: 'date' as const,
       sortable: true,
       width: '10%',
-      render: (v: string) => new Date(v).toLocaleString(),
+      render: (v: string) => formattedTime(v, timeZone),
     },
     {
       field: 'ip',
