@@ -34,5 +34,26 @@ export const FIXTURE_LOG_ANALYSIS_CELLS = (): Cell[] => {
         self: '',
       },
     },
+    {
+      ...NEW_DEFAULT_DASHBOARD_CELL,
+      i: 'log-analysis-syslog-table',
+      x: 0,
+      y: 0,
+      w: 48,
+      h: 40,
+      minH: 40,
+      minW: 48,
+      name: '',
+      queries: [],
+      type: CellType.Table,
+      axes: emptyAxes,
+      colors: DEFAULT_LINE_COLORS,
+      legend: {},
+      timeFormat: '',
+      note: '',
+      links: {
+        self: '',
+      },
+    },
   ]
 }

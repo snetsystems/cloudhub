@@ -1,0 +1,59 @@
+.ouiBasicTable {
+  padding: 0% 1%;
+}
+
+table.ouiTable {
+  font: inherit;
+  background: inherit;
+}
+
+/* Hide form control icons */
+.ouiFormControlLayoutIcons {
+  left: 28px;
+}
+
+.ouiFieldSearch {
+  padding-left: 32px;
+}
+
+/* Search Inputbox */
+.ouiSearchBar__searchHolder {
+  text-align: center;
+}
+
+/* Pagination Area */
+.ouiBasicTable > div:nth-child(2) > .ouiFlexGroup--directionRow {
+  height: 35px;
+}
+
+.expandableCell {
+  position: relative;
+}
+
+.expandableCell__content {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.expandableCell__content.collapsed {
+  white-space: nowrap;
+}
+
+.expandableCell__content.expanded {
+  white-space: normal;
+  overflow-y: auto;
+}
+
+.expandableCell__toggle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 2px 4px;
+  font-size: 0.85em;
+  cursor: pointer;
+  text-decoration: underline;
+  background: transparent;
+}

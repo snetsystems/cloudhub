@@ -6,6 +6,7 @@ import {connect} from 'react-redux'
 
 // Components
 import {Page} from 'src/reusable_ui'
+import LogAnalysisSyslogTable from 'src/log_analysis/components/LogAnalysisSyslogTable'
 
 // Type
 import * as DashboardsModels from 'src/types/dashboards'
@@ -80,6 +81,18 @@ function LogAnalysisDashboard({inPresentationMode, source}) {
   const layoutRender = ({cell}: TempProps) => {
     if (!cell) return null
     switch (cell.i) {
+      case 'log-analysis-syslog-table': {
+        return (
+          <Authorized
+            requiredRole={VIEWER_ROLE}
+            propsOverride={{
+              isEditable: false,
+            }}
+          >
+            <LogAnalysisSyslogTable />
+          </Authorized>
+        )
+      }
       case 'log-analysis-treemap': {
         return (
           <Authorized

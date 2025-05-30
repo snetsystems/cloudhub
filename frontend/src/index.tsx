@@ -92,6 +92,8 @@ import {
   getElasticSearchInfoAsync,
 } from './shared/actions/elasticSearch'
 
+import 'src/log_analysis/util/setupOUIIcons'
+
 const errorsQueue = []
 
 const rootNode = getRootNode()
