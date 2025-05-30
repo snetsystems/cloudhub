@@ -8,12 +8,15 @@
   display: flex;
   flex-direction: row;
   height: 100%;
-}
 
-.modal-content {
-  height: auto;
-  transition: width 0.3s ease-in-out;
-  overflow: hidden;
-  padding: 10px;
-  background-color: $g3-castle;
+  * {
+    width: 100%;
+  }
+  .modal-content {
+    height: auto;
+    transition: width 0.3s ease-in-out;
+    overflow: hidden;
+    padding: 10px;
+    background-color: $g3-castle;
+  }
 }

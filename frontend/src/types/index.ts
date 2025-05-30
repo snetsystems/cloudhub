@@ -193,6 +193,8 @@ import {
 
 import {SidePanelState, OpenPanelPayload} from './sidePanel'
 
+import {Ratio, LogAnalysisManualRefresh} from './logAnalysis'
+
 export {
   Me,
   Env,
@@ -373,4 +375,6 @@ export {
   ToggleEsWizard,
   SidePanelState,
   OpenPanelPayload,
+  Ratio,
+  LogAnalysisManualRefresh,
 }
