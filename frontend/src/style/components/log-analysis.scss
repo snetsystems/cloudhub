@@ -7,9 +7,25 @@ table.ouiTable {
   background: inherit;
 }
 
-/* Hide form control icons */
 .ouiFormControlLayoutIcons {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: auto;
+  right: auto;
+}
+
+.ouiFormControlLayout__childrenWrapper {
+  position: relative;
+}
+
+.ouiFormControlLayout__childrenWrapper
+  > .ouiFormControlLayoutIcons:not(.ouiFormControlLayoutIcons--right) {
   left: 28px;
+}
+
+.ouiFormControlLayoutIcons.ouiFormControlLayoutIcons--right {
+  right: 28px;
 }
 
 .ouiFieldSearch {
