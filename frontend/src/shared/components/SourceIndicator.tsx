@@ -4,21 +4,39 @@ import uuid from 'uuid'
 
 import ReactTooltip from 'react-tooltip'
 import {SourceContext} from 'src/CheckSources'
-import {Source} from 'src/types'
+import {BaseElasticSearchData, Source} from 'src/types'
+import {connect} from 'react-redux'
 
 interface Props {
   sourceOverride?: Source
+  esSource?: BaseElasticSearchData
 }
 
-const getTooltipText = (source: Source, sourceOverride: Source): string => {
+const getTooltipText = (
+  source: Source,
+  sourceOverride: Source,
+  esSource: BaseElasticSearchData
+): string => {
   const {name, url} = source
+
   const sourceName: string = _.get(sourceOverride, 'name', name)
   const sourceUrl: string = _.get(sourceOverride, 'url', url)
+  const sourceText = `<h1>Connected to Source:</h1><p><code>${sourceName} @ ${sourceUrl}</code></p>`
 
-  return `<h1>Connected to Source:</h1><p><code>${sourceName} @ ${sourceUrl}</code></p>`
+  if (!esSource) {
+    return `${sourceText}`
+  } else {
+    const {name: esSourceName, url: esSourceUrl} = esSource
+    const esSourceText = `<h1>Connected to Elastic Search:</h1><p><code>${esSourceName} @ ${esSourceUrl}</code></p>`
+
+    return `${sourceText}${esSourceText}`
+  }
 }
 
-const SourceIndicator: FunctionComponent<Props> = ({sourceOverride}) => {
+const SourceIndicator: FunctionComponent<Props> = ({
+  sourceOverride,
+  esSource,
+}) => {
   const uuidTooltip: string = uuid.v4()
 
   return (
@@ -27,7 +45,7 @@ const SourceIndicator: FunctionComponent<Props> = ({sourceOverride}) => {
         <div
           className="source-indicator"
           data-for={uuidTooltip}
-          data-tip={getTooltipText(source, sourceOverride)}
+          data-tip={getTooltipText(source, sourceOverride, esSource)}
         >
           <span className="icon disks" />
           <ReactTooltip
@@ -36,6 +54,9 @@ const SourceIndicator: FunctionComponent<Props> = ({sourceOverride}) => {
             html={true}
             place="left"
             class="influx-tooltip"
+            offset={{
+              top: !!esSource ? -36 : 0,
+            }}
           />
         </div>
       )}
@@ -43,4 +64,11 @@ const SourceIndicator: FunctionComponent<Props> = ({sourceOverride}) => {
   )
 }
 
-export default SourceIndicator
+const mstp = (state: any) => {
+  const {esSource} = state.app.persisted
+  return {
+    esSource,
+  }
+}
+
+export default connect(mstp, null, null)(SourceIndicator)
