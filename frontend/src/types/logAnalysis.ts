@@ -8,3 +8,62 @@ export interface LogAnalysisManualRefresh {
   key: string
   value: number
 }
+
+export interface ESResponse {
+  id: string
+  rawResponse: RawResponse
+  isPartial: boolean
+  isRunning: boolean
+  total: number
+  loaded: number
+  isRestored: boolean
+}
+
+interface RawResponse {
+  took: number
+  timed_out: boolean
+  _shards: Shards
+  hits: HitsContainer
+}
+
+interface Shards {
+  total: number
+  successful: number
+  skipped: number
+  failed: number
+}
+
+interface HitsContainer {
+  total: number
+  max_score: null
+  hits: HitItem[]
+}
+
+interface HitItem {
+  _index: string
+  _id: string
+  _score: null
+  fields: HitFields
+  sort: Array<string | number>
+  _ignored?: string[]
+  ignored_field_values?: HitFields
+}
+
+export interface HitFields {
+  '@timestamp'?: string[]
+  'host.ip'?: string[]
+  'host.hostname'?: string[]
+  message?: string[]
+  message_tokens?: string[]
+  'event.original'?: string[]
+  'service.type'?: string[]
+  'process.name'?: string[]
+  'process.pid'?: number[]
+  'log.syslog.severity.code'?: number[]
+  'log.syslog.priority'?: number[]
+  'log.syslog.facility.code'?: number[]
+  '@version.keyword'?: string[]
+  '@version'?: string[]
+  type?: string[]
+  'message.keyword'?: string[]
+}

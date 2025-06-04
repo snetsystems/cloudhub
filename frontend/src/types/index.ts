@@ -193,7 +193,12 @@ import {
 
 import {SidePanelState, OpenPanelPayload} from './sidePanel'
 
-import {Ratio, LogAnalysisManualRefresh} from './logAnalysis'
+import {
+  Ratio,
+  LogAnalysisManualRefresh,
+  ESResponse,
+  HitFields,
+} from './logAnalysis'
 
 export {
   Me,
@@ -377,4 +382,6 @@ export {
   OpenPanelPayload,
   Ratio,
   LogAnalysisManualRefresh,
+  ESResponse,
+  HitFields,
 }

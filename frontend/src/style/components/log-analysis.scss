@@ -1,71 +1,31 @@
-.ouiBasicTable {
-  padding: 0% 1%;
+.syslog-table--container {
+  width: 98%;
+  justify-self: center;
 }
 
-table.ouiTable {
-  font: inherit;
-  background: inherit;
+.ouiFlexItem.ouiSearchBar__searchHolder {
+  padding-top: 5px;
 }
 
-.ouiFormControlLayoutIcons {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  left: auto;
-  right: auto;
+.ouiDataGrid--headerUnderline .ouiDataGridHeaderCell {
+  border-bottom: 2px solid #383846;
 }
 
-.ouiFormControlLayout__childrenWrapper
-  > .ouiFormControlLayoutIcons:not(.ouiFormControlLayoutIcons--right) {
-  left: 28px;
+.ouiDataGridRowCell {
+  font-size: 13px;
 }
 
-.ouiFormControlLayoutIcons.ouiFormControlLayoutIcons--right {
-  right: 28px;
+.ouiDataGrid__focusWrap {
+  padding-top: 10px;
 }
 
-.ouiFieldSearch {
-  padding-left: 32px;
+#log-analysis--livestatus {
+  z-index: 3;
 }
 
-/* Search Inputbox */
-.ouiSearchBar__searchHolder {
-  text-align: center;
-}
-
-/* Pagination Area */
-.ouiBasicTable > div:nth-child(2) > .ouiFlexGroup--directionRow {
-  height: 35px;
-}
-
-.expandableCell {
-  position: relative;
-}
-
-.expandableCell__content {
-  display: block;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-.expandableCell__content.collapsed {
-  white-space: nowrap;
-}
-
-.expandableCell__content.expanded {
-  white-space: normal;
-  overflow-y: auto;
-}
-
-.expandableCell__toggle {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  padding: 2px 4px;
-  font-size: 0.85em;
-  cursor: pointer;
-  text-decoration: underline;
-  background: transparent;
+#log-analysis--livestatus > button {
+  width: 28px;
+  height: 26px;
+  line-height: 18px;
+  margin: 0px 0px 0px 12px;
 }

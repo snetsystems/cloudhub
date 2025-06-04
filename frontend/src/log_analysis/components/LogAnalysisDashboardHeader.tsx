@@ -10,6 +10,7 @@ interface Props {
   cellTextColor: string
   children: ReactNode
   setModalOpen?: (value: boolean) => void
+  customNamenode?: ReactNode
 }
 
 function LogAnalysisDashboardHeader(props: Props) {
@@ -65,6 +66,7 @@ function LogAnalysisDashboardHeader(props: Props) {
         zIndex: 6,
       }}
     >
+      {props.customNamenode && <>{props.customNamenode}</>}
       {cellName()}
       {props.children}
       {headingBar()}
