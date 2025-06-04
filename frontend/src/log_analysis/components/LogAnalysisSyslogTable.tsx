@@ -27,6 +27,8 @@ import {
 import {
   LOG_ANALYSIS_CELLS_COLUMNS,
   LOG_ANALYSIS_SYSLOG_TABLE_PAGE_SIZE_OPTIONS,
+  SYSLOG_FACILITY_MAP,
+  SYSLOG_SEVERITY_MAP,
 } from 'src/log_analysis/constants'
 
 interface Row extends HitFields {
@@ -179,20 +181,17 @@ function LogAnalysisSyslogTable({timeZone = TimeZones.UTC}: Props) {
       },
       {
         id: 'log.syslog.severity.code',
-        display: 'Syslog Severity Code',
-        schema: 'numeric',
+        display: 'Syslog Severity',
         isExpandable: false,
       },
       {
         id: 'log.syslog.priority',
         display: 'Syslog Priority',
-        schema: 'numeric',
         isExpandable: false,
       },
       {
         id: 'log.syslog.facility.code',
-        display: 'Syslog Facility Code',
-        schema: 'numeric',
+        display: 'Syslog Facility',
         isExpandable: false,
       },
     ],
@@ -331,6 +330,7 @@ function LogAnalysisSyslogTable({timeZone = TimeZones.UTC}: Props) {
   const renderCellValue = useCallback(
     ({rowIndex, columnId}: {rowIndex: number; columnId: string}) => {
       const row = filteredItems[rowIndex]
+
       if (!row) return null
       switch (columnId) {
         case '@timestamp':
@@ -351,12 +351,26 @@ function LogAnalysisSyslogTable({timeZone = TimeZones.UTC}: Props) {
           return row['process.name']?.[0] || ''
         case 'process.pid':
           return row['process.pid']?.[0] || ''
-        case 'log.syslog.severity.code':
-          return row['log.syslog.severity.code']?.[0] || ''
-        case 'log.syslog.priority':
-          return row['log.syslog.priority']?.[0] || ''
-        case 'log.syslog.facility.code':
-          return row['log.syslog.facility.code']?.[0] || ''
+        case 'log.syslog.severity.code': {
+          const sev = row['log.syslog.severity.code']?.[0]
+          if (sev == null) return ''
+          return SYSLOG_SEVERITY_MAP[sev] || String(sev)
+        }
+        case 'log.syslog.facility.code': {
+          const fac = row['log.syslog.facility.code']?.[0]
+          if (fac == null) return ''
+          return SYSLOG_FACILITY_MAP[fac] || String(fac)
+        }
+        case 'log.syslog.priority': {
+          const pri = row['log.syslog.priority']?.[0]
+          if (pri == null) return ''
+          const facFromPri = Math.floor(pri / 8)
+          const sevFromPri = pri % 8
+          const facText = SYSLOG_FACILITY_MAP[facFromPri] || String(facFromPri)
+          const sevText = SYSLOG_SEVERITY_MAP[sevFromPri] || String(sevFromPri)
+          return `${pri} (${facText} / ${sevText})`
+        }
+
         default:
           return null
       }
