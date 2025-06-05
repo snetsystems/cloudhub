@@ -19,6 +19,10 @@ export interface ESResponse {
   isRestored: boolean
 }
 
+export interface SyslogTableRows extends HitFields {
+  id: string
+}
+
 interface RawResponse {
   took: number
   timed_out: boolean
@@ -67,3 +71,5 @@ export interface HitFields {
   type?: string[]
   'message.keyword'?: string[]
 }
+
+export type FilteredLogsForLogAnalysis = string[]

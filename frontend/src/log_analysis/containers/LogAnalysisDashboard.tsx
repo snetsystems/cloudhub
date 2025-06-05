@@ -6,7 +6,7 @@ import {connect} from 'react-redux'
 
 // Components
 import {Page} from 'src/reusable_ui'
-import LogAnalysisSyslogTable from 'src/log_analysis/components/LogAnalysisSyslogTable'
+import LogAnalysisSyslogTableWrapper from 'src/log_analysis/components/LogAnalysisSyslogTableWrapper'
 
 // Type
 import * as DashboardsModels from 'src/types/dashboards'
@@ -167,7 +167,7 @@ function LogAnalysisDashboard({
               isEditable: false,
             }}
           >
-            <LogAnalysisSyslogTable timeZone={timeZone} />
+            <LogAnalysisSyslogTableWrapper timeZone={timeZone} />
           </Authorized>
         )
       }

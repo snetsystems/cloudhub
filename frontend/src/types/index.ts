@@ -198,6 +198,8 @@ import {
   LogAnalysisManualRefresh,
   ESResponse,
   HitFields,
+  FilteredLogsForLogAnalysis,
+  SyslogTableRows,
 } from './logAnalysis'
 
 export {
@@ -384,4 +386,6 @@ export {
   LogAnalysisManualRefresh,
   ESResponse,
   HitFields,
+  FilteredLogsForLogAnalysis,
+  SyslogTableRows,
 }
