@@ -667,12 +667,20 @@ class Root extends PureComponent<Record<string, never>, State> {
     const esSources = store.getState().esSources.esSources
     if (!!esSource) {
       //esSource is already connected
-      this.handleConnectElasticSearch({elasticSearchInfo: esSource})
+      esSources?.forEach(element => {
+        if (element.id === esSource.id) {
+          this.handleConnectElasticSearch({elasticSearchInfo: element})
+        } else {
+          this.handleConnectElasticSearch({elasticSearchInfo: null})
+        }
+      })
     } else {
       //esSource is not connected
       esSources?.forEach(element => {
         if (element.default === true) {
           this.handleConnectElasticSearch({elasticSearchInfo: element})
+        } else {
+          this.handleConnectElasticSearch({elasticSearchInfo: null})
         }
       })
     }
