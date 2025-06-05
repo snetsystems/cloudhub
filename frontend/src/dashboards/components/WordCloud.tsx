@@ -5,12 +5,12 @@ import {
   CloudWord,
   Orientation,
   ScaleType,
-  WordDatum,
+  TokenData,
 } from '../utils/wordCloudLayout'
 import {useWordCloudLayout} from '../hooks/useWordCloudLayout'
 
 export interface WordCloudProps {
-  data: WordDatum[]
+  data: TokenData[]
   width: number
   height: number
   topN?: number
@@ -19,7 +19,7 @@ export interface WordCloudProps {
   minFontSize?: number
   maxFontSize?: number
   padding?: number
-  onSelect?: (tag: WordDatum) => void
+  onSelect?: (tag: TokenData) => void
   duration?: number
   exitDuration?: number
   animate?: boolean

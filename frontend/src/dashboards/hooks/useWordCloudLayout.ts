@@ -1,7 +1,7 @@
 // useWordCloudLayout.ts
 import {useEffect, useState} from 'react'
 import {
-  WordDatum,
+  TokenData,
   CloudWord,
   generateWordCloudLayout,
   Orientation,
@@ -9,7 +9,7 @@ import {
 } from '../utils/wordCloudLayout'
 
 interface UseLayoutParams {
-  data: WordDatum[]
+  data: TokenData[]
   width: number
   height: number
   topN?: number

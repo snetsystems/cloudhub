@@ -4,7 +4,7 @@ import cloud from 'd3-cloud'
 export type Orientation = 'single' | 'right angled' | 'multiple'
 export type ScaleType = 'linear' | 'log' | 'square root'
 
-export interface WordDatum {
+export interface TokenData {
   text: string
   value: number
   meta?: unknown
@@ -50,7 +50,7 @@ const SCALE_FACTORIES: Record<
 }
 
 export function generateWordCloudLayout(
-  data: WordDatum[],
+  data: TokenData[],
   opts: LayoutOptions
 ): Promise<CloudWord[]> {
   const {

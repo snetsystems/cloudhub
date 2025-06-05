@@ -17,12 +17,14 @@ import validateDygraphData from 'src/worker/jobs/validateDygraphData'
 import postJSON from 'src/worker/jobs/postJSON'
 import fluxTablesToDygraph from 'src/worker/jobs/fluxTablesToDygraph'
 import fluxTablesToSingleStat from 'src/worker/jobs/fluxTablesToSingleStat'
+import esProxy from 'src/worker/jobs/esProxy'
 
 type Job = (msg: Message) => Promise<any>
 
 const jobMapping: {[key: string]: Job} = {
   GET: get,
   PROXY: proxy,
+  ESPROXY: esProxy,
   POSTJSON: postJSON,
   TABLETRANSFORM: tableTransform,
   TSTOTABLEGRAPH: timeSeriesToTableGraph,

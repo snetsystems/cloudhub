@@ -3,88 +3,121 @@ import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import LoadingDots from 'src/shared/components/LoadingDots'
 
-import PredictionHexbinToggle from 'src/device_management/components/PredictionHexbinToggle'
-import {Source, Links, NotificationAction} from 'src/types'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
-import {setFilteredHexbin} from 'src/device_management/actions'
-import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {BaseElasticSearchData} from 'src/types'
+
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 import {DEFAULT_CELL_BG_COLOR, DEFAULT_CELL_TEXT_COLOR} from '../constants'
+import {setCloudAutoRefresh, setCloudTimeRange} from 'src/clouds/actions/clouds'
+import _ from 'lodash'
 
-export interface ViewConfig<P = {}> {
+import * as appActions from 'src/shared/actions/app'
+import {ComponentSize, SlideToggle} from 'src/reusable_ui'
+import {CloudTimeRange} from 'src/clouds/types'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+export interface ViewConfig {
   key: string
   label: string
   Component: React.ComponentType<any>
   props?: any
-  fetchData?: () => Promise<any>
+  fetchData?: (esSrc: BaseElasticSearchData) => Promise<any>
 }
 
-export interface ToggleViewOwnProps<P = {}> {
-  source: Source
+export interface ToggleViewOwnProps {
   loading: boolean
-  views: ViewConfig<P>[]
+  views: ViewConfig[]
   autoRefreshInterval?: number
 }
 
 interface StateProps {
+  autoRefresh: number
   cloudAutoRefresh: CloudAutoRefresh
-  predictionManualRefresh: number
+  cloudTimeRange: CloudTimeRange
+  esSource: BaseElasticSearchData
 }
-interface DispatchProps {
-  notify: NotificationAction
-  setFilteredHexbin: typeof setFilteredHexbin
-}
+interface DispatchProps {}
 
-type ToggleViewProps<P> = ToggleViewOwnProps<P> & StateProps & DispatchProps
+type ToggleViewProps = ToggleViewOwnProps & StateProps & DispatchProps
 
 function ToggleView<P>({
-  source,
+  esSource,
   loading,
   views,
-  autoRefreshInterval = 0,
   cloudAutoRefresh,
-  predictionManualRefresh,
-}: ToggleViewProps<P>) {
+  cloudTimeRange,
+}: ToggleViewProps) {
   const [activeKey, setActiveKey] = useState(views[0]?.key)
   const activeView = useMemo(() => views.find(v => v.key === activeKey)!, [
     activeKey,
     views,
   ])
 
-  useEffect(() => {
-    activeView.fetchData?.()
-  }, [predictionManualRefresh, activeView])
+  let intervalID
 
   useEffect(() => {
-    const interval = autoRefreshInterval || cloudAutoRefresh.prediction
-    if (!interval) return
-    const id = window.setInterval(() => {
-      activeView.fetchData?.()
-    }, interval)
-    return () => clearInterval(id)
-  }, [activeKey, activeView, autoRefreshInterval, cloudAutoRefresh])
+    activeView.fetchData?.(esSource)
+  }, [cloudAutoRefresh.logAnalysis])
+
+  useEffect(() => {
+    GlobalAutoRefresher.poll(cloudAutoRefresh.logAnalysis)
+    const controller = new AbortController()
+
+    if (!!cloudAutoRefresh.logAnalysis) {
+      clearInterval(intervalID)
+      intervalID = window.setInterval(() => {
+        activeView.fetchData?.(esSource)
+      }, cloudAutoRefresh.logAnalysis)
+    }
+
+    GlobalAutoRefresher.poll(cloudAutoRefresh.logAnalysis)
+
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [cloudAutoRefresh.logAnalysis])
 
   const renderToggle = () => {
     if (views.length !== 2) return null
     const [first, second] = views
     const isSecondActive = activeKey === second.key
     return (
-      <PredictionHexbinToggle
-        label={isSecondActive ? second.label : first.label}
-        isActive={isSecondActive}
-        onChange={() => setActiveKey(isSecondActive ? first.key : second.key)}
-        isLeft={!isSecondActive}
-      />
+      <>
+        <div
+          onMouseDown={e => e.stopPropagation()}
+          style={{zIndex: 3}}
+          className={`prediction ${
+            isSecondActive ? 'page-header--left' : 'page-header--right'
+          } `}
+        >
+          <div
+            className={`header ${
+              isSecondActive ? 'page-header--left' : 'page-header--right'
+            }`}
+          >
+            <label className="hexbin-header--label">
+              {isSecondActive ? second.label : first.label}
+            </label>
+            <SlideToggle
+              active={isSecondActive}
+              onChange={() =>
+                setActiveKey(isSecondActive ? first.key : second.key)
+              }
+              size={ComponentSize.ExtraSmall}
+            />
+          </div>
+        </div>
+      </>
     )
   }
-
   return (
     <div
       style={{
         width: '100%',
         height: '100%',
         backgroundColor: '#292933',
-        overflow: 'hidden',
       }}
     >
       <LogAnalysisDashboardHeader
@@ -97,19 +130,45 @@ function ToggleView<P>({
         )}
         {renderToggle()}
       </LogAnalysisDashboardHeader>
-
-      <activeView.Component {...(activeView.props as P)} />
+      <div style={{width: '100%', height: 'calc(100% - 40px)'}}>
+        <activeView.Component {...(activeView.props as P)} />
+      </div>
     </div>
   )
 }
 
-const mapStateToProps = state => ({
-  cloudAutoRefresh: state.app.persisted.cloudAutoRefresh,
-  predictionManualRefresh: state.predictionDashboard.predictionManualRefresh,
-})
-const mapDispatchToProps = dispatch => ({
-  notify: bindActionCreators(notifyAction, dispatch),
-  setFilteredHexbin: bindActionCreators(setFilteredHexbin, dispatch),
+const mstp = state => {
+  const {
+    app: {
+      ephemeral: {inPresentationMode},
+      persisted: {
+        timeZone,
+        autoRefresh,
+        cloudAutoRefresh,
+        cloudTimeRange,
+        esSource,
+      },
+    },
+  } = state
+
+  return {
+    inPresentationMode,
+    timeZone,
+    autoRefresh,
+    cloudAutoRefresh,
+    cloudTimeRange,
+    esSource,
+  }
+}
+
+const mdtp = dispatch => ({
+  setCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
+  onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
+  setTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(ToggleView)
+const isEqual = (prev, next) => {
+  return _.isEqual(prev, next)
+}
+
+export default React.memo(connect(mstp, mdtp)(ToggleView), isEqual)
