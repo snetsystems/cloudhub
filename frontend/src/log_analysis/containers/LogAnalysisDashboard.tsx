@@ -5,7 +5,7 @@ import _ from 'lodash'
 import {connect} from 'react-redux'
 
 // Components
-import {Page} from 'src/reusable_ui'
+import {Button, Page} from 'src/reusable_ui'
 import LogAnalysisSyslogTableWrapper from 'src/log_analysis/components/LogAnalysisSyslogTableWrapper'
 
 // Type
@@ -39,6 +39,8 @@ import * as appActions from 'src/shared/actions/app'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {setStateInitAction} from 'src/device_management/actions'
+import TestCellsGraphWrapper from '../components/CellsGraphWrapper'
+import LogAnalysisAlertBarWarpper from '../components/LogAnalysisAlertBarWrapper'
 
 interface TempProps {
   cell: Cell
@@ -54,6 +56,7 @@ interface Props {
   cloudAutoRefresh: CloudAutoRefresh
   setCloudTimeRange: (value: CloudTimeRange) => void
   onChooseCloudAutoRefresh: (value: CloudAutoRefresh) => void
+  openPanel: typeof openPanel
 }
 
 function LogAnalysisDashboard({
@@ -65,6 +68,7 @@ function LogAnalysisDashboard({
   onChooseCloudAutoRefresh,
   timeZone,
   setTimeZone,
+  openPanel,
 }: Props) {
   const [
     manualRefreshState,
@@ -91,14 +95,14 @@ function LogAnalysisDashboard({
   // TODO Add AutoRefresh Feat
 
   const cells = useMemo(() => {
-    const defaultCells = FIXTURE_LOG_ANALYSIS_CELLS()
+    const defaultCells = FIXTURE_LOG_ANALYSIS_CELLS(source)
 
     if (!!savedCells) {
       return savedCells
     } else {
       return defaultCells
     }
-  }, [savedCells])
+  }, [savedCells, source])
 
   const setLocalCells = (cells: DashboardsModels.Cell[]) => {
     localStorage.setItem('Log-Analysis-cells', JSON.stringify(cells))
@@ -183,6 +187,25 @@ function LogAnalysisDashboard({
           </Authorized>
         )
       }
+      case 'alerts-bar-graph': {
+        return (
+          <Authorized
+            requiredRole={VIEWER_ROLE}
+            propsOverride={{
+              isEditable: false,
+            }}
+          >
+            <LogAnalysisAlertBarWarpper
+              cell={cell}
+              host={''}
+              source={source}
+              sources={[source]}
+              isEditable={false}
+              manualRefresh={manualRefreshState.value}
+            />
+          </Authorized>
+        )
+      }
       default:
         return null
     }
@@ -219,8 +242,28 @@ function LogAnalysisDashboard({
         />
 
         <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
+        <Button text="Expand" onClick={handleExpand} />
       </>
     )
+  }
+
+  const handleExpand = () => {
+    console.log('expand')
+    openPanel({
+      panelProps: (
+        <TestCellsGraphWrapper
+          ratio={{
+            xNum: 1,
+            yNum: 6,
+            height: 100,
+          }}
+          title="test"
+          source={source}
+          selectedTimeRangeLocalStorageKey="expandTimePulse"
+        />
+      ),
+      width: 400,
+    })
   }
 
   return (

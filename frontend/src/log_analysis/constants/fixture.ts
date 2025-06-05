@@ -4,14 +4,14 @@ import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants/index'
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 
 // Type
-import {Cell, Axes, CellType} from 'src/types'
+import {Cell, Axes, CellType, QueryType, Source} from 'src/types'
 
 const emptyAxes: Axes = {
   x: DEFAULT_AXIS,
   y: DEFAULT_AXIS,
 }
 
-export const FIXTURE_LOG_ANALYSIS_CELLS = (): Cell[] => {
+export const FIXTURE_LOG_ANALYSIS_CELLS = (source: Source): Cell[] => {
   return [
     {
       ...NEW_DEFAULT_DASHBOARD_CELL,
@@ -53,6 +53,38 @@ export const FIXTURE_LOG_ANALYSIS_CELLS = (): Cell[] => {
       note: '',
       links: {
         self: '',
+      },
+    },
+    {
+      ...NEW_DEFAULT_DASHBOARD_CELL,
+      graphOptions: {
+        fillArea: true,
+        showLine: true,
+        showPoint: false,
+        showTempVarCount: '',
+      },
+      axes: emptyAxes,
+      i: 'alerts-bar-graph',
+      type: CellType.Bar,
+      isWidget: false,
+      x: 0,
+      y: 58,
+      w: 43,
+      h: 24,
+      minH: 10,
+      legend: {},
+      name: 'Alert Events',
+      colors: DEFAULT_LINE_COLORS,
+      queries: [
+        {
+          query: `SELECT count("value") AS "count_value" FROM "${source.telegraf}"."autogen"."cloudhub_alerts"`,
+          queryConfig: null,
+          source: '',
+          type: QueryType.InfluxQL,
+        },
+      ],
+      links: {
+        self: '/cloudhub/v1/status/23/cells/c-bar-graphs-fly',
       },
     },
   ]

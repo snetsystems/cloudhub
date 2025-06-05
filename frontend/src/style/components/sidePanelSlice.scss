@@ -17,6 +17,16 @@
     transition: width 0.3s ease-in-out;
     overflow: hidden;
     padding: 10px;
-    background-color: $g3-castle;
+
+    flex: 0 0 400px; // flex 컨테이너에서도 강제
+    box-sizing: border-box; // 패딩 포함
+  }
+  .modal-content-inner {
+    position: fixed;
+    top: 45px;
+    width: inherit;
+    right: 0;
+    height: calc(100% - 45px);
+    overflow: hidden;
   }
 }

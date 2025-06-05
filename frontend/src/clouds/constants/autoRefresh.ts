@@ -97,6 +97,10 @@ export function getTimeOptionByGroup(groupName: string | undefined) {
       prediction: autoRefreshGroupDefaultOption(groupName, 'prediction'),
       gpuMonitoring: autoRefreshGroupDefaultOption(groupName, 'gpuMonitoring'),
       logAnalysis: autoRefreshGroupDefaultOption(groupName, 'logAnalysis'),
+      expandTimePulse: autoRefreshGroupDefaultOption(
+        groupName,
+        'expandTimePulse'
+      ),
       queries: autoRefreshGroupDefaultOption(groupName, 'queries'),
       detailHost: autoRefreshGroupDefaultOption(groupName, 'detailHost'),
       openstackMonitor: autoRefreshGroupDefaultOption(

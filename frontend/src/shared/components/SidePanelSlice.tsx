@@ -13,13 +13,7 @@ interface Props {
   closePanel?: () => void
 }
 
-function SidePanelSlice({
-  children,
-  isOpen,
-  panelProps,
-  closePanel,
-  width,
-}: Props) {
+function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
   const [shouldRender, setShouldRender] = useState(isOpen)
   const [isRender, setIsRender] = useState(isOpen)
 
@@ -60,10 +54,9 @@ function SidePanelSlice({
       {shouldRender ? (
         <div
           className={`modal-content ${isOpen && isRender ? 'open' : ''}`}
-          onClick={closePanel}
           style={{width: isOpen && isRender ? width : 0}}
         >
-          {panelProps}
+          <div className="modal-content-inner">{panelProps}</div>
         </div>
       ) : null}
     </div>
