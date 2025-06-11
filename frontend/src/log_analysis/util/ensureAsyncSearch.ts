@@ -1,4 +1,8 @@
 import {esProxy, ESProxyQuery} from 'src/utils/esQueryUrlGenerator'
+import _ from 'lodash'
+import CryptoJS from 'crypto-js'
+
+const cache = new Map<string, {id: string; data?: any}>()
 
 export interface AsyncSearchResult<T = any> {
   id: string
@@ -8,6 +12,7 @@ export interface AsyncSearchResult<T = any> {
   total: number
   loaded: number
   isRestored: boolean
+  isVailSearchId: boolean
 }
 
 export function toAsyncSearchResult<T = any>(raw: any): AsyncSearchResult<T> {
@@ -19,6 +24,7 @@ export function toAsyncSearchResult<T = any>(raw: any): AsyncSearchResult<T> {
     total: raw.response?._shards?.total ?? 0,
     loaded: raw.response?._shards?.successful ?? 0,
     isRestored: raw.is_restored ?? false,
+    isVailSearchId: raw?.isVailSearchId ?? true,
   }
 }
 
@@ -28,6 +34,12 @@ export interface EnsureAsyncSearchOpts {
   keepAlive?: string // keep_alive (default '60000ms')
   keepOnCompletion?: boolean // keep_on_completion (default true)
   signal?: AbortSignal // External AbortSignal (optional)
+  batched_reduce_size?: number
+  ccs_minimize_roundtrips?: boolean
+  wait_for_completion_timeout?: string
+  keep_on_completion?: boolean
+  ignore_unavailable?: boolean
+  preference?: number
 }
 
 const DEFAULT_OPTS: Required<Omit<EnsureAsyncSearchOpts, 'signal'>> = {
@@ -35,6 +47,34 @@ const DEFAULT_OPTS: Required<Omit<EnsureAsyncSearchOpts, 'signal'>> = {
   waitTimeout: '5s',
   keepAlive: '60000ms',
   keepOnCompletion: true,
+  batched_reduce_size: 64,
+  ccs_minimize_roundtrips: true,
+  wait_for_completion_timeout: '200ms',
+  keep_on_completion: true,
+  ignore_unavailable: true,
+  preference: Date.now(),
+}
+
+export async function asyncSearch<T = any>(
+  proxyUrl: string,
+  esReq: ESProxyQuery,
+  opts: EnsureAsyncSearchOpts = {}
+): Promise<AsyncSearchResult<T>> {
+  const key = stableHash(esReq)
+  const c = cache.get(key)
+  if (c?.data) return c.data as AsyncSearchResult<T>
+
+  const res = await ensureAsyncSearch<T>(
+    proxyUrl,
+    {
+      ...esReq,
+      searchId: c?.id,
+    },
+    opts
+  )
+  if (!res.isRunning) cache.set(key, {id: res.id, data: res})
+  else cache.set(key, {id: res.id})
+  return res
 }
 
 export async function ensureAsyncSearch<T = any>(
@@ -46,8 +86,7 @@ export async function ensureAsyncSearch<T = any>(
     ...DEFAULT_OPTS,
     ...opts,
   }
-
-  // Try to retrieve previous search result by ID
+  let isVailSearchId = true
   if (esReq.searchId) {
     try {
       const {data} = await esProxy(proxyUrl, {
@@ -58,11 +97,10 @@ export async function ensureAsyncSearch<T = any>(
       const prev = toAsyncSearchResult<T>(data)
       if (!prev.isRunning) return prev
     } catch {
-      console.debug('Previous ID is invalid, starting new search')
+      isVailSearchId = false
     }
   }
 
-  // Start a new async_search
   const {data: posted} = await esProxy(proxyUrl, {
     ...esReq,
     params: {
@@ -76,7 +114,6 @@ export async function ensureAsyncSearch<T = any>(
   let res = toAsyncSearchResult<T>(posted)
   if (!res.isRunning) return res
 
-  // Poll until the search is finished
   return new Promise((resolve, reject) => {
     const timer = setInterval(async () => {
       try {
@@ -85,7 +122,7 @@ export async function ensureAsyncSearch<T = any>(
           method: 'GET',
           signal,
         })
-        res = toAsyncSearchResult<T>(data)
+        res = toAsyncSearchResult<T>({...data, isVailSearchId})
         if (!res.isRunning) {
           clearInterval(timer)
           resolve(res)
@@ -101,4 +138,26 @@ export async function ensureAsyncSearch<T = any>(
       reject(new DOMException('Aborted', 'AbortError'))
     })
   })
+}
+
+export const stableHash = (...args: unknown[]): string => {
+  const json = JSON.stringify(args, sortReplacer)
+
+  return CryptoJS.SHA1(json).toString(CryptoJS.enc.Hex)
+}
+
+function sortReplacer(_k: string, val: unknown) {
+  if (
+    val &&
+    typeof val === 'object' &&
+    !Array.isArray(val) &&
+    Object.getPrototypeOf(val) === Object.prototype
+  ) {
+    const sorted: Record<string, unknown> = {}
+    for (const key of Object.keys(val).sort()) {
+      sorted[key] = (val as any)[key]
+    }
+    return sorted
+  }
+  return val
 }

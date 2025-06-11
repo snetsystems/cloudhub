@@ -55,10 +55,16 @@ function ToggleView<P>({
   let intervalID
 
   useEffect(() => {
+    if (_.isEmpty(esSource)) {
+      return
+    }
     activeView.fetchData?.(esSource)
   }, [cloudAutoRefresh.logAnalysis])
 
   useEffect(() => {
+    if (_.isEmpty(esSource)) {
+      return
+    }
     GlobalAutoRefresher.poll(cloudAutoRefresh.logAnalysis)
     const controller = new AbortController()
 

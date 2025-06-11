@@ -8,78 +8,7 @@ import LogAnalysisTreeMap from 'src/log_analysis/components/LogAnalysisTreeMap'
 
 import type {BaseElasticSearchData} from 'src/types'
 import {TokenData} from 'src/dashboards/types'
-import {ensureAsyncSearch} from '../util/ensureAsyncSearch'
-
-export async function fetchMessageTokenDatas(
-  esSource: BaseElasticSearchData,
-  gteISO: string,
-  lteISO: string,
-  prevId?: string,
-  size = 100
-): Promise<{stats: TokenData[]; id: string}> {
-  const params = {
-    batched_reduce_size: 64,
-    ccs_minimize_roundtrips: true,
-    wait_for_completion_timeout: '5s',
-    keep_on_completion: true,
-    keep_alive: '60000ms',
-    ignore_unavailable: true,
-    preference: Date.now(),
-  } as const
-
-  const body = {
-    aggs: {
-      token_stat: {
-        terms: {
-          field: 'message_tokens',
-          order: {_count: 'desc'},
-          size: size,
-        },
-      },
-    },
-    size: 0,
-    _source: {excludes: []},
-    query: {
-      bool: {
-        must: [],
-        should: [],
-        must_not: [],
-        filter: [
-          {
-            range: {
-              '@timestamp': {
-                format: 'strict_date_optional_time',
-                gte: gteISO,
-                lte: lteISO,
-              },
-            },
-          },
-        ],
-      },
-    },
-    stored_fields: ['*'],
-    runtime_mappings: {},
-    script_fields: {},
-    fields: [{field: '@timestamp', format: 'date_time'}],
-  }
-
-  const res = await ensureAsyncSearch(esSource.links.proxy, {
-    path: '/syslog-*/_async_search',
-    method: 'POST',
-    params,
-    body,
-    searchId: prevId,
-  })
-
-  const stats: TokenData[] = res.rawResponse.aggregations[
-    'token_stat'
-  ].buckets.map((b: {key: string; doc_count: number}) => ({
-    text: b.key,
-    value: b.doc_count,
-  }))
-
-  return {stats, id: res.id}
-}
+import {fetchMessageTokenData} from '../apis'
 
 interface ViewProps {
   data: TokenData[]
@@ -89,8 +18,6 @@ interface ViewProps {
 export default function ToggleViewWrap() {
   const [data, setData] = useState<TokenData[]>([])
   const [loading, setLoading] = useState(false)
-  const inFlight = useRef(false)
-  const lastSearchId = useRef<string>()
 
   const handleRectClick = (token: string, raw: number, pct: number) => {
     console.log(`Clicked → ${token} | ${raw} (${pct.toFixed(2)}%)`)
@@ -98,21 +25,16 @@ export default function ToggleViewWrap() {
 
   const fetchTokenData = useCallback(async (src: BaseElasticSearchData) => {
     setLoading(true)
-    if (inFlight.current) return
-    inFlight.current = true
 
     try {
-      const {stats, id} = await fetchMessageTokenDatas(
+      const {data} = await fetchMessageTokenData(
         src,
-        new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-        new Date().toISOString(),
-        lastSearchId.current
+        '2025-05-26T08:16:03.312Z',
+        new Date().toISOString()
       )
-      lastSearchId.current = id
-      setData(stats)
+      setData(data)
     } finally {
       setLoading(false)
-      inFlight.current = false
     }
   }, [])
 
