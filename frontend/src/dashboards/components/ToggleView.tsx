@@ -38,6 +38,7 @@ export interface ToggleViewOwnProps {
   topN?: number
   isMoreFetch: boolean
   onChangeTopN?: (e: ChangeEvent<HTMLInputElement>) => void
+  handleOnBlur?: () => void
 }
 
 interface StateProps {
@@ -59,6 +60,7 @@ function ToggleView<P>({
   topN = 100,
   isMoreFetch,
   onChangeTopN,
+  handleOnBlur,
 }: ToggleViewProps) {
   const [activeKey, setActiveKey] = useState(views[0]?.key)
 
@@ -172,6 +174,7 @@ function ToggleView<P>({
             type={InputType.Number}
             onChange={onChangeTopN}
             value={topN.toString()}
+            onBlur={handleOnBlur}
           />
         </div>
         {renderToggle()}

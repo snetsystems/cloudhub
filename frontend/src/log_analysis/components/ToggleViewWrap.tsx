@@ -17,11 +17,11 @@ interface ViewProps {
   topN: string
 }
 const MAX_TOP_N = 1000
-
+const DEFAULT_TOP_N = 100
 export default function ToggleViewWrap() {
   const [data, setData] = useState<TokenData[]>([])
   const [loading, setLoading] = useState(false)
-  const [topN, setTopN] = useState(100)
+  const [topN, setTopN] = useState(DEFAULT_TOP_N)
   const [isMoreFetch, setIsMoreFetch] = useState(false)
   const handleRectClick = (token: string, raw: number, pct: number) => {
     console.log(`Clicked → ${token} | ${raw} (${pct.toFixed(2)}%)`)
@@ -29,10 +29,14 @@ export default function ToggleViewWrap() {
 
   const ohChangeTopN = (e: ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10)
-    if (isNaN(value)) return
-    if (value > MAX_TOP_N) return
+
+    if (!isNaN(value) && value > MAX_TOP_N) return
     setTopN(value)
-    if (value > data.length) setIsMoreFetch(true)
+    if (!isNaN(value) && value > data.length) setIsMoreFetch(true)
+  }
+
+  const handleOnBlur = () => {
+    if (isNaN(topN)) setTopN(DEFAULT_TOP_N)
   }
 
   const fetchTokenData = useCallback(
@@ -86,6 +90,7 @@ export default function ToggleViewWrap() {
     <ToggleView
       loading={loading}
       onChangeTopN={ohChangeTopN}
+      handleOnBlur={handleOnBlur}
       topN={topN}
       isMoreFetch={isMoreFetch}
       views={views.map(v => ({...v, props: v.props(data)}))}
