@@ -44,7 +44,7 @@ function ElasticTableRow({
 
   const onDeleteElasticSearch = async (id: string) => {
     await deleteElasticSearchInfo(id)
-    if (esSource.id === id) {
+    if (connectedEsSource.id === id) {
       disconnectElasticSearch()
     }
 

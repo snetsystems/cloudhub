@@ -89,6 +89,7 @@ import AiRoutePage from 'src/device_management/containers/AiRoutePage'
 import PredictionRulePage from 'src/device_management/containers/PredictionRulePage'
 import {
   connectElasticSearch,
+  disconnectElasticSearch,
   getElasticSearchInfoAsync,
 } from './shared/actions/elasticSearch'
 
@@ -190,6 +191,11 @@ class Root extends PureComponent<Record<string, never>, State> {
 
   private handleConnectElasticSearch = bindActionCreators(
     connectElasticSearch,
+    dispatch
+  )
+
+  private handleDisconnectElasticSearch = bindActionCreators(
+    disconnectElasticSearch,
     dispatch
   )
 
@@ -667,20 +673,21 @@ class Root extends PureComponent<Record<string, never>, State> {
     const esSources = store.getState().esSources.esSources
     if (!!esSource) {
       //esSource is already connected
-      esSources?.forEach(element => {
-        if (element.id === esSource.id) {
-          this.handleConnectElasticSearch({elasticSearchInfo: element})
-        } else {
-          this.handleConnectElasticSearch({elasticSearchInfo: null})
-        }
-      })
+      if (
+        esSources?.filter(element => {
+          if (element.id === esSource.id) {
+            return true
+          }
+          return false
+        }).length === 0
+      ) {
+        this.handleDisconnectElasticSearch()
+      }
     } else {
       //esSource is not connected
       esSources?.forEach(element => {
         if (element.default === true) {
           this.handleConnectElasticSearch({elasticSearchInfo: element})
-        } else {
-          this.handleConnectElasticSearch({elasticSearchInfo: null})
         }
       })
     }
