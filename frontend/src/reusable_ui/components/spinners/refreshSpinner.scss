@@ -1,0 +1,24 @@
+.refresh-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.spinning {
+  .refresh-spinner-icon {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    transform-origin: center;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
+}
