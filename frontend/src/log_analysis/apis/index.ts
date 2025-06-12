@@ -2,12 +2,17 @@ import {TokenData} from 'src/dashboards/types'
 import {BaseElasticSearchData} from 'src/types'
 import {asyncSearch} from '../util/ensureAsyncSearch'
 
-export async function fetchMessageTokenData(
-  esSource: BaseElasticSearchData,
-  gteISO: string,
-  lteISO: string,
-  size = 100
-): Promise<{data: TokenData[]}> {
+export async function fetchMessageTokenData({
+  esSource,
+  gteISO,
+  lteISO,
+  size = 100,
+}: {
+  esSource: BaseElasticSearchData
+  gteISO: string
+  lteISO: string
+  size: number
+}): Promise<{data: TokenData[]}> {
   const body = {
     aggs: {
       token_stat: {
@@ -43,7 +48,6 @@ export async function fetchMessageTokenData(
     script_fields: {},
     fields: [{field: '@timestamp', format: 'date_time'}],
   }
-
   const res = await asyncSearch(esSource.links.proxy, {
     path: '/syslog-*/_async_search',
     method: 'POST',

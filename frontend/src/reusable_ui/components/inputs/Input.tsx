@@ -10,6 +10,7 @@ import classnames from 'classnames'
 
 // Types
 import {ComponentStatus, ComponentSize, IconFont} from 'src/reusable_ui/types'
+import uuid from 'uuid'
 
 export enum InputType {
   Text = 'text',
@@ -52,6 +53,11 @@ class Input extends Component<Props> {
     spellCheck: false,
     type: InputType.Text,
   }
+  private id: string
+  constructor(props) {
+    super(props)
+    this.id = uuid.v4()
+  }
 
   public render() {
     const {
@@ -73,6 +79,7 @@ class Input extends Component<Props> {
     return (
       <div className={this.className} style={this.containerStyle}>
         <input
+          id={this.id}
           title={this.title}
           type={type}
           value={value}

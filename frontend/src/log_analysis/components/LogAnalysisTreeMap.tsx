@@ -97,7 +97,6 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
     percent: string
   }>({visible: false, x: 0, y: 0, name: '', value: 0, percent: ''})
 
-  /* ──────────────── Helpers ──────────────── */
   const sortAndTrim = (src: TokenData[], n: number): TokenData[] => {
     const sorted = [...src].sort((a, b) => b.value - a.value)
     return n > 0 && sorted.length > n ? sorted.slice(0, n) : sorted
@@ -117,7 +116,6 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
     minH: number
   ): WeightedTokenData[] => {
     const total = src.reduce((s, d) => s + d.value, 0)
-    console.log(src)
     const areaPerCount = (w * h) / total
     const minArea = minW * minH
     const minCount = Math.ceil(minArea / areaPerCount)
@@ -141,7 +139,7 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
     const maxTiles = Math.floor(
       (width * height) / (minTileWidth * minTileHeight)
     )
-    console.log(maxTiles, minTileWidth, minTileHeight)
+
     const overflowCnt = Math.max(sorted.length - maxTiles, 0)
     const eff = overflowCnt > 0 ? sorted.slice(0, maxTiles) : sorted
 
@@ -168,7 +166,6 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
       (width * height) / (minTileWidth * minTileHeight)
     )
     const trimmed = weighted.slice(0, maxTiles)
-    console.log(maxTiles)
 
     const rootData: TreemapNode = {
       name: 'root',

@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo} from 'react'
+import React, {useState, useEffect, useMemo, ChangeEvent, useRef} from 'react'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import LoadingDots from 'src/shared/components/LoadingDots'
@@ -8,25 +8,36 @@ import {BaseElasticSearchData} from 'src/types'
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 import {DEFAULT_CELL_BG_COLOR, DEFAULT_CELL_TEXT_COLOR} from '../constants'
 import {setCloudAutoRefresh, setCloudTimeRange} from 'src/clouds/actions/clouds'
-import _ from 'lodash'
+import _, {debounce} from 'lodash'
 
 import * as appActions from 'src/shared/actions/app'
-import {ComponentSize, SlideToggle} from 'src/reusable_ui'
+import {
+  ComponentSize,
+  IconFont,
+  Input,
+  InputType,
+  SlideToggle,
+} from 'src/reusable_ui'
 import {CloudTimeRange} from 'src/clouds/types'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+
 export interface ViewConfig {
   key: string
   label: string
   Component: React.ComponentType<any>
   props?: any
-  fetchData?: (esSrc: BaseElasticSearchData) => Promise<any>
+  fetchData?: (esSrc: BaseElasticSearchData, topN: number) => Promise<any>
+  topN?: number
 }
 
 export interface ToggleViewOwnProps {
   loading: boolean
   views: ViewConfig[]
   autoRefreshInterval?: number
+  topN?: number
+  isMoreFetch: boolean
+  onChangeTopN?: (e: ChangeEvent<HTMLInputElement>) => void
 }
 
 interface StateProps {
@@ -45,33 +56,53 @@ function ToggleView<P>({
   views,
   cloudAutoRefresh,
   cloudTimeRange,
+  topN = 100,
+  isMoreFetch,
+  onChangeTopN,
 }: ToggleViewProps) {
   const [activeKey, setActiveKey] = useState(views[0]?.key)
+
   const activeView = useMemo(() => views.find(v => v.key === activeKey)!, [
     activeKey,
     views,
   ])
-
   let intervalID
 
+  const fetchTokenDataDebounced = useRef(
+    debounce((src: BaseElasticSearchData, topN: number) => {
+      activeView.fetchData?.(src, topN)
+    }, 1000)
+  ).current
+
   useEffect(() => {
-    if (_.isEmpty(esSource)) {
-      return
+    if (!isMoreFetch) return
+    if (_.isEmpty(esSource)) return
+
+    fetchTokenDataDebounced(esSource, topN)
+  }, [isMoreFetch, esSource, topN])
+
+  useEffect(() => {
+    return () => {
+      fetchTokenDataDebounced.cancel()
     }
-    activeView.fetchData?.(esSource)
+  }, [fetchTokenDataDebounced])
+
+  useEffect(() => {
+    if (_.isEmpty(esSource)) return
+
+    activeView.fetchData?.(esSource, topN)
   }, [cloudAutoRefresh.logAnalysis])
 
   useEffect(() => {
-    if (_.isEmpty(esSource)) {
-      return
-    }
+    if (_.isEmpty(esSource)) return
+
     GlobalAutoRefresher.poll(cloudAutoRefresh.logAnalysis)
     const controller = new AbortController()
 
     if (!!cloudAutoRefresh.logAnalysis) {
       clearInterval(intervalID)
       intervalID = window.setInterval(() => {
-        activeView.fetchData?.(esSource)
+        activeView.fetchData?.(esSource, topN)
       }, cloudAutoRefresh.logAnalysis)
     }
 
@@ -134,6 +165,15 @@ function ToggleView<P>({
         {loading && (
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
         )}
+        <div style={{zIndex: 3, maxWidth: '100px'}}>
+          <Input
+            icon={IconFont.Filter}
+            size={ComponentSize.ExtraSmall}
+            type={InputType.Number}
+            onChange={onChangeTopN}
+            value={topN.toString()}
+          />
+        </div>
         {renderToggle()}
       </LogAnalysisDashboardHeader>
       <div style={{width: '100%', height: 'calc(100% - 40px)'}}>
