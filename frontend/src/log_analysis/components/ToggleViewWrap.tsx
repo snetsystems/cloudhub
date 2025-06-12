@@ -30,7 +30,8 @@ export default function ToggleViewWrap() {
       const {data} = await fetchMessageTokenData(
         src,
         '2025-05-26T08:16:03.312Z',
-        new Date().toISOString()
+        new Date().toISOString(),
+        300
       )
       setData(data)
     } finally {
@@ -84,9 +85,7 @@ function TreeMapComponent({data, onRectClick}: ViewProps) {
           width={width}
           height={height}
           data={filtered}
-          minTileWidth={5}
-          minTileHeight={5}
-          topN={100}
+          topN={300}
           onRectClick={onRectClick}
         />
       )}

@@ -51,6 +51,7 @@ export default function WordCloud({
     maxFontSize,
     padding,
   })
+  const overflowCount = topN - words.length
 
   const palette = useMemo(
     () =>
@@ -128,5 +129,29 @@ export default function WordCloud({
     prevWordsRef.current = words
   }, [words, width, height, onSelect, duration, exitDuration, palette, animate])
 
-  return <svg ref={svgRef} />
+  return (
+    <div style={{position: 'relative', width, height}}>
+      <svg ref={svgRef} />
+      {overflowCount > 0 && (
+        <span
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            background: '#fff',
+            borderRadius: 12,
+            padding: '2px 8px',
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#1f2131',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+            userSelect: 'none',
+            pointerEvents: 'none',
+          }}
+        >
+          +{overflowCount} more
+        </span>
+      )}
+    </div>
+  )
 }

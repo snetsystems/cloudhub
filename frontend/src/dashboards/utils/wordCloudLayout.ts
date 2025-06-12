@@ -64,10 +64,7 @@ export function generateWordCloudLayout(
     padding,
   } = opts
 
-  const subset = [...data]
-    .sort((a, b) => b.value - a.value)
-    .slice(0, topN)
-    .sort(() => Math.random() - 0.5)
+  const subset = [...data].sort((a, b) => b.value - a.value).slice(0, topN)
 
   const f = SCALE_FACTORIES[scale]()
   f.range(
