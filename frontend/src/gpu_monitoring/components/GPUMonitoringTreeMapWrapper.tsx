@@ -41,6 +41,7 @@ import {
   notifyGetNVidiaSmiDataForHostsFailed,
   notifyGetNVidiaSmiMIGDataForHostsFailed,
 } from 'src/shared/copy/notifications'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Constants
 import {
@@ -403,6 +404,7 @@ const mdtp = dispatch => ({
     setFilteredHostForGPUMonitoring,
     dispatch
   ),
+  notify: bindActionCreators(notifyAction, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(GPUMonitoringTreeMapWrapper)
