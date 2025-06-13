@@ -25,7 +25,7 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 import {
-  LOG_ANALYSIS_CELLS_COLUMNS,
+  LOG_ANALYSIS_LOCAL_STORAGE_KEY,
   LOG_ANALYSIS_SYSLOG_TABLE_PAGE_SIZE_OPTIONS,
   SYSLOG_FACILITY_MAP,
   SYSLOG_SEVERITY_MAP,
@@ -129,7 +129,7 @@ function LogAnalysisSyslogTable({
   const [searchQuery, setSearchQuery] = useState('')
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
     try {
-      const stored = localStorage.getItem(LOG_ANALYSIS_CELLS_COLUMNS)
+      const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
         if (
@@ -180,14 +180,21 @@ function LogAnalysisSyslogTable({
 
   useEffect(() => {
     try {
+      const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+      const parsed = stored ? JSON.parse(stored) : {}
       localStorage.setItem(
-        LOG_ANALYSIS_CELLS_COLUMNS,
-        JSON.stringify({visibleColumns, sortColumns})
+        LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+        JSON.stringify({
+          ...parsed,
+          visibleColumns,
+          sortColumns,
+          pageSize,
+        })
       )
     } catch {
       console.log('Failed to save table state to LocalStorage.')
     }
-  }, [visibleColumns, sortColumns])
+  }, [visibleColumns, sortColumns, pageSize])
 
   const onSearchChange = useCallback(({query, error}) => {
     if (!error && query.text !== undefined) setSearchQuery(query.text)

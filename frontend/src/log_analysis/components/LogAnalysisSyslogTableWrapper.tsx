@@ -17,7 +17,7 @@ import {
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
 // Constants
-import {LOG_ANALYSIS_CELLS_COLUMNS} from 'src/log_analysis/constants'
+import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants'
 
 // Components
 import LogAnalysisSyslogTable from 'src/log_analysis/components/LogAnalysisSyslogTable'
@@ -53,16 +53,29 @@ function LogAnalysisSyslogTableWrapper({
   esSource,
   setFilteredLogForLogAnalysis,
 }: LogAnalysisSyslogTableProps) {
-  let intervalID
+  let intervalID: number | null
   const [rows, setRows] = useState<SyslogTableRows[]>([])
   const [totalRowCount, setTotalRowCount] = useState(0)
   const [pageIndex, setPageIndex] = useState(0)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (typeof parsed.pageSize === 'number') {
+          return parsed.pageSize
+        }
+      }
+    } catch {
+      console.log('Failed to parse pageSize from LocalStorage.')
+    }
+    return 10
+  })
   const [sortColumns, setSortColumns] = useState<
     {id: string; direction: 'asc' | 'desc'}[]
   >(() => {
     try {
-      const stored = localStorage.getItem(LOG_ANALYSIS_CELLS_COLUMNS)
+      const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
         if (
@@ -174,16 +187,26 @@ function LogAnalysisSyslogTableWrapper({
     }
   }, [cloudAutoRefresh?.logAnalysis, esSource, isLiveUpdating])
 
-  const onChangeItemsPerPage = size => {
+  const onChangeItemsPerPage = (size: number) => {
     setPageIndex(0)
     setPageSize(size)
+    try {
+      const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+      const parsed = stored ? JSON.parse(stored) : {}
+      localStorage.setItem(
+        LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+        JSON.stringify({...parsed, pageSize: size})
+      )
+    } catch {
+      console.log('Failed to save pageSize to LocalStorage.')
+    }
   }
 
-  const onChangePage = index => {
+  const onChangePage = (index: number) => {
     setPageIndex(index)
   }
 
-  const onSort = cols => {
+  const onSort = (cols: {id: string; direction: 'asc' | 'desc'}[]) => {
     setPageIndex(0)
     setSortColumns(cols)
   }
