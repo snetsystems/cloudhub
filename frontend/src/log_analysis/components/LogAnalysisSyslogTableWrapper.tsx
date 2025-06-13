@@ -90,6 +90,8 @@ function LogAnalysisSyslogTableWrapper({
     cloudAutoRefresh?.logAnalysis
   )
   const prevManualRefreshRef = useRef<number>(manualRefresh)
+  const sortFirstRunRef = useRef(true)
+  const lastFetchParamsRef = useRef<string>('')
 
   useEffect(() => {
     const prev = prevAutoRefreshRef.current
@@ -102,25 +104,44 @@ function LogAnalysisSyslogTableWrapper({
     prevAutoRefreshRef.current = current
   }, [cloudAutoRefresh?.logAnalysis])
 
-  const getSyslogTableData = useCallback(async () => {
-    if (!isLiveUpdating || _.isEmpty(esSource)) return
+  const getSyslogTableData = useCallback(
+    async (force: boolean = false) => {
+      if (!isLiveUpdating || _.isEmpty(esSource)) return
 
-    setIsLoading(true)
-    try {
-      const {data, total} = await fetchSyslogTableData(
-        esSource,
-        '2025-05-30T08:16:03.312Z',
-        new Date().toISOString(),
-        pageIndex,
-        pageSize,
-        sortColumns
-      )
-      setRows(data)
-      setTotalRowCount(total)
-    } finally {
-      setIsLoading(false)
+      const key = `${pageIndex}-${pageSize}-${JSON.stringify(sortColumns)}`
+      if (!force && key === lastFetchParamsRef.current) return
+      lastFetchParamsRef.current = key
+
+      setIsLoading(true)
+      try {
+        const {data, total} = await fetchSyslogTableData(
+          esSource,
+          '2025-05-30T08:16:03.312Z',
+          new Date().toISOString(),
+          pageIndex,
+          pageSize,
+          sortColumns
+        )
+        setRows(data)
+        setTotalRowCount(total)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [esSource, pageIndex, pageSize, sortColumns, isLiveUpdating]
+  )
+
+  useEffect(() => {
+    getSyslogTableData()
+  }, [pageIndex, pageSize])
+
+  useEffect(() => {
+    if (sortFirstRunRef.current) {
+      sortFirstRunRef.current = false
+      return
     }
-  }, [esSource, pageIndex, pageSize, sortColumns, isLiveUpdating])
+    getSyslogTableData()
+  }, [sortColumns])
 
   useEffect(() => {
     const prev = prevManualRefreshRef.current
@@ -141,7 +162,7 @@ function LogAnalysisSyslogTableWrapper({
         if (!isLiveUpdating) return
 
         setPageIndex(0)
-        getSyslogTableData()
+        getSyslogTableData(true)
       }, cloudAutoRefresh.logAnalysis)
     }
 
@@ -153,20 +174,13 @@ function LogAnalysisSyslogTableWrapper({
     }
   }, [cloudAutoRefresh?.logAnalysis, esSource, isLiveUpdating])
 
-  useEffect(() => {
-    setPageIndex(0)
-    getSyslogTableData()
-  }, [sortColumns])
-
   const onChangeItemsPerPage = size => {
     setPageIndex(0)
     setPageSize(size)
-    getSyslogTableData()
   }
 
   const onChangePage = index => {
     setPageIndex(index)
-    getSyslogTableData()
   }
 
   const onSort = cols => {
