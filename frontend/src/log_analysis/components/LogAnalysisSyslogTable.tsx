@@ -11,10 +11,10 @@ import '@opensearch-project/oui/dist/oui_theme_dark.css'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LoadingDots from 'src/shared/components/LoadingDots'
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
-import LiveUpdatingStatus from 'src/logs/components/LiveUpdatingStatus'
+import RefreshSpinner from 'src/reusable_ui/components/spinners/RefreshSpinner'
 
 // Type
-import {FilteredLogsForLogAnalysis, SyslogTableRows, TimeZones} from 'src/types'
+import {SyslogTableRows, TimeZones} from 'src/types'
 
 // Util
 import {formattedTime} from 'src/log_analysis/util'
@@ -32,19 +32,35 @@ import {
 } from 'src/log_analysis/constants'
 
 interface Props {
+  isLoading: boolean
+  isLiveUpdating: boolean
   syslogTableRows: SyslogTableRows[]
   timeZone: TimeZones
-  filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
-  setFilteredLogForLogAnalysis?: (
-    filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
-  ) => void
+  autoRefreshNumberValue: number
+  totalRowCount: number
+  pageIndex: number
+  pageSize: number
+  sortColumns: {id: string; direction: 'asc' | 'desc'}[]
+  onChangeLiveUpdatingStatus: () => void
+  onChangePage: (index: number) => void
+  onChangeItemsPerPage: (size: number) => void
+  onSort: (cols: {id: string; direction: 'asc' | 'desc'}[]) => void
 }
 
 function LogAnalysisSyslogTable({
+  isLiveUpdating,
+  isLoading,
   syslogTableRows,
   timeZone = TimeZones.UTC,
-  filteredLogsForLogAnalysis,
-  setFilteredLogForLogAnalysis,
+  totalRowCount,
+  autoRefreshNumberValue,
+  pageIndex,
+  pageSize,
+  sortColumns = [],
+  onChangeLiveUpdatingStatus,
+  onChangePage,
+  onChangeItemsPerPage,
+  onSort,
 }: Props) {
   const columns = useMemo(
     () => [
@@ -54,22 +70,14 @@ function LogAnalysisSyslogTable({
         schema: 'datetime',
         isExpandable: false,
       },
-      {
-        id: 'host.ip',
-        display: 'Host IP',
-        schema: 'ip',
-        isExpandable: false,
-      },
+      {id: 'host.ip', display: 'Host IP', schema: 'ip', isExpandable: false},
       {
         id: 'host.hostname',
         display: 'Hostname',
+        schema: 'string',
         isExpandable: false,
       },
-      {
-        id: 'message',
-        display: 'Message',
-        isExpandable: true,
-      },
+      {id: 'message', display: 'Message', schema: 'string', isExpandable: true},
       {
         id: 'message_tokens',
         display: 'Token Count',
@@ -79,16 +87,19 @@ function LogAnalysisSyslogTable({
       {
         id: 'event.original',
         display: 'Event Original',
+        schema: 'string',
         isExpandable: true,
       },
       {
         id: 'service.type',
         display: 'Service Type',
+        schema: 'string',
         isExpandable: false,
       },
       {
         id: 'process.name',
         display: 'Process Name',
+        schema: 'string',
         isExpandable: false,
       },
       {
@@ -115,17 +126,7 @@ function LogAnalysisSyslogTable({
     ],
     []
   )
-
-  const defaultVisible = columns.map(col => col.id)
-  const defaultSort = [{id: '@timestamp', direction: 'desc'}]
-
-  const [searchQuery, setSearchQuery] = useState<string>('')
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
-  const [isLiveUpdating, setIsLiveUpdating] = useState<boolean>(true)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(LOG_ANALYSIS_CELLS_COLUMNS)
@@ -142,113 +143,60 @@ function LogAnalysisSyslogTable({
     } catch {
       console.log('Failed to parse table state from LocalStorage.')
     }
-    return defaultVisible
-  })
-  const [sortColumns, setSortColumns] = useState<
-    {id: string; direction: 'asc' | 'desc'}[]
-  >(() => {
-    try {
-      const stored = localStorage.getItem(LOG_ANALYSIS_CELLS_COLUMNS)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (
-          parsed &&
-          Array.isArray(parsed.sortColumns) &&
-          parsed.sortColumns.every(
-            (s: any) =>
-              s != null &&
-              typeof s === 'object' &&
-              typeof s.id === 'string' &&
-              (s.direction === 'asc' || s.direction === 'desc')
-          )
-        ) {
-          return parsed.sortColumns
-        }
-      }
-    } catch {
-      console.log('Failed to parse table state from LocalStorage.')
-    }
-    return defaultSort
+    return columns.map(col => col.id)
   })
 
-  const items = useMemo(() => syslogTableRows, [])
+  const items = useMemo(() => syslogTableRows, [syslogTableRows])
   const filteredItems = useMemo(() => {
     if (!searchQuery) return items
-    const lowerCased = searchQuery.toLowerCase()
+    const lower = searchQuery.toLowerCase()
     return items.filter(row => {
-      const checks = [
-        row['@timestamp']?.[0]?.toLowerCase() || '',
-        row['host.ip']?.[0]?.toLowerCase() || '',
-        row['host.hostname']?.[0]?.toLowerCase() || '',
-        row['message']?.[0]?.toLowerCase() || '',
-        row['message_tokens']?.length?.toString() || '',
-        row['event.original']?.[0]?.toLowerCase() || '',
-        row['service.type']?.[0]?.toLowerCase() || '',
-        row['process.name']?.[0]?.toLowerCase() || '',
-        row['process.pid']?.[0]?.toString().toLowerCase() || '',
-        row['log.syslog.severity.code']?.[0]?.toString().toLowerCase() || '',
-        row['log.syslog.priority']?.[0]?.toString().toLowerCase() || '',
-        row['log.syslog.facility.code']?.[0]?.toString().toLowerCase() || '',
+      const fields = [
+        row['@timestamp']?.[0] || '',
+        row['host.ip']?.[0] || '',
+        row['host.hostname']?.[0] || '',
+        row['message']?.[0] || '',
+        (row['message_tokens']?.length || '').toString(),
+        row['event.original']?.[0] || '',
+        row['service.type']?.[0] || '',
+        row['process.name']?.[0] || '',
+        (row['process.pid']?.[0] || '').toString(),
+        (row['log.syslog.severity.code']?.[0] || '').toString(),
+        (row['log.syslog.priority']?.[0] || '').toString(),
+        (row['log.syslog.facility.code']?.[0] || '').toString(),
       ]
       const tokens = row['message_tokens'] || []
       return (
-        checks.some(field => field.includes(lowerCased)) ||
-        tokens.some(token => token.includes(lowerCased))
+        fields.some(f => f.toLowerCase().includes(lower)) ||
+        tokens.some(t => t.includes(lower))
       )
     })
   }, [items, searchQuery])
 
   useEffect(() => {
-    const totalPages = Math.max(
-      1,
-      Math.ceil(filteredItems.length / pagination.pageSize)
-    )
-    if (pagination.pageIndex >= totalPages) {
-      setPagination(prev => ({...prev, pageIndex: totalPages - 1}))
-    }
-  }, [filteredItems.length, pagination.pageSize, pagination.pageIndex])
+    const totalPages = Math.max(1, Math.ceil(totalRowCount / pageSize))
+    if (pageIndex >= totalPages) onChangePage(totalPages - 1)
+  }, [totalRowCount, pageSize, pageIndex, onChangePage])
 
   useEffect(() => {
     try {
-      const toStore = {visibleColumns, sortColumns}
-      localStorage.setItem(LOG_ANALYSIS_CELLS_COLUMNS, JSON.stringify(toStore))
+      localStorage.setItem(
+        LOG_ANALYSIS_CELLS_COLUMNS,
+        JSON.stringify({visibleColumns, sortColumns})
+      )
     } catch {
       console.log('Failed to save table state to LocalStorage.')
     }
   }, [visibleColumns, sortColumns])
 
   const onSearchChange = useCallback(({query, error}) => {
-    if (!error && query.text !== undefined) {
-      setSearchQuery(query.text)
-    }
+    if (!error && query.text !== undefined) setSearchQuery(query.text)
   }, [])
 
-  const onChangePage = useCallback(
-    (pageIndex: number) => setPagination(prev => ({...prev, pageIndex})),
-    []
-  )
-
-  const onChangeItemsPerPage = useCallback(
-    (pageSize: number) =>
-      setPagination(prev => ({
-        ...prev,
-        pageIndex: 0,
-        pageSize,
-      })),
-    []
-  )
-
-  const onSort = useCallback(
-    (newSortColumns: {id: string; direction: 'asc' | 'desc'}[]) => {
-      setSortColumns(newSortColumns)
-    },
-    []
-  )
-
   const renderCellValue = useCallback(
-    ({rowIndex, columnId}: {rowIndex: number; columnId: string}) => {
-      const row = filteredItems[rowIndex]
-
+    ({rowIndex, columnId}) => {
+      const indexInPage = rowIndex - pageIndex * pageSize
+      const row = filteredItems[indexInPage]
       if (!row) return null
       switch (columnId) {
         case '@timestamp':
@@ -288,12 +236,11 @@ function LogAnalysisSyslogTable({
           const sevText = SYSLOG_SEVERITY_MAP[sevFromPri] || String(sevFromPri)
           return `${pri} (${facText} / ${sevText})`
         }
-
         default:
           return null
       }
     },
-    [filteredItems, timeZone]
+    [filteredItems, timeZone, pageIndex, pageSize]
   )
 
   const ipSchema: OuiDataGridSchemaDetector = {
@@ -314,10 +261,8 @@ function LogAnalysisSyslogTable({
     sortTextAsc: 'Low-High',
     sortTextDesc: 'High-Low',
   }
-
-  const handleChangeLiveUpdatingStatus = () => {
-    setIsLiveUpdating(!isLiveUpdating)
-  }
+  const shouldAutoRefresh =
+    autoRefreshNumberValue !== undefined && autoRefreshNumberValue !== 0
 
   return (
     <>
@@ -326,10 +271,15 @@ function LogAnalysisSyslogTable({
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         customNamenode={
-          <div id="log-analysis--livestatus">
-            <LiveUpdatingStatus
-              onChangeLiveUpdatingStatus={handleChangeLiveUpdatingStatus}
-              liveUpdating={isLiveUpdating}
+          <div
+            className={`livestatus-wrapper ${
+              shouldAutoRefresh ? '' : 'disabled'
+            }`}
+            onClick={shouldAutoRefresh ? onChangeLiveUpdatingStatus : undefined}
+          >
+            <RefreshSpinner
+              isActive={isLoading || (shouldAutoRefresh && isLiveUpdating)}
+              isHighlighted={!!autoRefreshNumberValue && isLiveUpdating}
             />
           </div>
         }
@@ -347,30 +297,21 @@ function LogAnalysisSyslogTable({
             box={{
               incremental: true,
               placeholder: 'Filter your Syslog data',
-              style: {
-                background: 'inherit',
-              },
+              style: {background: 'inherit'},
             }}
           />
 
           <OuiDataGrid
-            aria-label="In-memory syslog data grid"
+            aria-label="Server-side paginated syslog data grid"
             columns={columns}
-            columnVisibility={{
-              visibleColumns: visibleColumns,
-              setVisibleColumns: setVisibleColumns,
-            }}
-            rowCount={filteredItems.length}
+            columnVisibility={{visibleColumns, setVisibleColumns}}
+            rowCount={totalRowCount}
             renderCellValue={renderCellValue}
             schemaDetectors={[ipSchema]}
-            inMemory={{level: 'sorting'}}
-            sorting={{
-              columns: sortColumns as {id: string; direction: 'asc' | 'desc'}[],
-              onSort,
-            }}
+            sorting={{columns: sortColumns, onSort}}
             pagination={{
-              pageIndex: pagination.pageIndex,
-              pageSize: pagination.pageSize,
+              pageIndex,
+              pageSize,
               pageSizeOptions: LOG_ANALYSIS_SYSLOG_TABLE_PAGE_SIZE_OPTIONS,
               onChangePage,
               onChangeItemsPerPage,

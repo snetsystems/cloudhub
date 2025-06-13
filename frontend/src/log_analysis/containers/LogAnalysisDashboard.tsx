@@ -92,8 +92,6 @@ function LogAnalysisDashboard({
     localStorage.getItem('Log-Analysis-cells')
   )
 
-  // TODO Add AutoRefresh Feat
-
   const cells = useMemo(() => {
     const defaultCells = FIXTURE_LOG_ANALYSIS_CELLS(source)
 
@@ -171,7 +169,10 @@ function LogAnalysisDashboard({
               isEditable: false,
             }}
           >
-            <LogAnalysisSyslogTableWrapper timeZone={timeZone} />
+            <LogAnalysisSyslogTableWrapper
+              timeZone={timeZone}
+              manualRefresh={manualRefreshState.value}
+            />
           </Authorized>
         )
       }

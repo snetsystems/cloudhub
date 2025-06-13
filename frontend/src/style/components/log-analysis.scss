@@ -19,13 +19,11 @@
   padding-top: 10px;
 }
 
-#log-analysis--livestatus {
+.livestatus-wrapper {
   z-index: 3;
+  padding-left: 8px;
 }
 
-#log-analysis--livestatus > button {
-  width: 28px;
-  height: 26px;
-  line-height: 18px;
-  margin: 0px 0px 0px 12px;
+.livestatus-wrapper.disabled > .refresh-spinner {
+  cursor: not-allowed;
 }
