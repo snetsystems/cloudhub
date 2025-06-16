@@ -200,6 +200,8 @@ import {
   HitFields,
   FilteredLogsForLogAnalysis,
   SyslogTableRows,
+  MatchPhraseFilterClause,
+  RangeFilterClause,
 } from './logAnalysis'
 
 export {
@@ -388,4 +390,6 @@ export {
   HitFields,
   FilteredLogsForLogAnalysis,
   SyslogTableRows,
+  MatchPhraseFilterClause,
+  RangeFilterClause,
 }

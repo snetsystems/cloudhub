@@ -72,4 +72,20 @@ export interface HitFields {
   'message.keyword'?: string[]
 }
 
-export type FilteredLogsForLogAnalysis = string[]
+export interface MatchPhraseFilterClause {
+  match_phrase: {[key: string]: string | number}
+}
+
+export interface RangeFilterClause {
+  range: {
+    [field: string]: {
+      format?: string
+      gte?: string
+      lte?: string
+    }
+  }
+}
+
+export type FilteredLogsForLogAnalysis = Array<
+  MatchPhraseFilterClause | RangeFilterClause
+>
