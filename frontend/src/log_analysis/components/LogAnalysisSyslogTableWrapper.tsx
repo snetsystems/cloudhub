@@ -119,7 +119,8 @@ function LogAnalysisSyslogTableWrapper({
 
   const getSyslogTableData = useCallback(
     async (force: boolean = false) => {
-      if (!isLiveUpdating || _.isEmpty(esSource)) return
+      if (!force && !isLiveUpdating) return
+      if (_.isEmpty(esSource)) return
 
       const key = `${pageIndex}-${pageSize}-${JSON.stringify(sortColumns)}`
       if (!force && key === lastFetchParamsRef.current) return
@@ -145,8 +146,12 @@ function LogAnalysisSyslogTableWrapper({
   )
 
   useEffect(() => {
+    getSyslogTableData(true)
+  }, [pageIndex])
+
+  useEffect(() => {
     getSyslogTableData()
-  }, [pageIndex, pageSize])
+  }, [pageSize])
 
   useEffect(() => {
     if (sortFirstRunRef.current) {

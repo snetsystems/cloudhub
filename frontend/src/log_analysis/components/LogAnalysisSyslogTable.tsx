@@ -132,11 +132,7 @@ function LogAnalysisSyslogTable({
       const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
-        if (
-          parsed &&
-          Array.isArray(parsed.visibleColumns) &&
-          parsed.visibleColumns.every((c: any) => typeof c === 'string')
-        ) {
+        if (Array.isArray(parsed.visibleColumns)) {
           return parsed.visibleColumns
         }
       }
@@ -226,13 +222,11 @@ function LogAnalysisSyslogTable({
           return row['process.pid']?.[0] || ''
         case 'log.syslog.severity.code': {
           const sev = row['log.syslog.severity.code']?.[0]
-          if (sev == null) return ''
-          return SYSLOG_SEVERITY_MAP[sev] || String(sev)
+          return sev == null ? '' : SYSLOG_SEVERITY_MAP[sev] || String(sev)
         }
         case 'log.syslog.facility.code': {
           const fac = row['log.syslog.facility.code']?.[0]
-          if (fac == null) return ''
-          return SYSLOG_FACILITY_MAP[fac] || String(fac)
+          return fac == null ? '' : SYSLOG_FACILITY_MAP[fac] || String(fac)
         }
         case 'log.syslog.priority': {
           const pri = row['log.syslog.priority']?.[0]
@@ -309,6 +303,7 @@ function LogAnalysisSyslogTable({
           />
 
           <OuiDataGrid
+            key={pageSize}
             aria-label="Server-side paginated syslog data grid"
             columns={columns}
             columnVisibility={{visibleColumns, setVisibleColumns}}
