@@ -202,6 +202,9 @@ import {
   SyslogTableRows,
   MatchPhraseFilterClause,
   RangeFilterClause,
+  BaseFilter,
+  KQLFilterClause,
+  LogsFilterClause,
 } from './logAnalysis'
 
 export {
@@ -392,4 +395,7 @@ export {
   SyslogTableRows,
   MatchPhraseFilterClause,
   RangeFilterClause,
+  BaseFilter,
+  KQLFilterClause,
+  LogsFilterClause,
 }

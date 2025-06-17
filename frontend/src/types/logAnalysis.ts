@@ -72,6 +72,10 @@ export interface HitFields {
   'message.keyword'?: string[]
 }
 
+export type FilteredLogsForLogAnalysis = Array<
+  MatchPhraseFilterClause | RangeFilterClause | KQLFilterClause
+>
+
 export interface MatchPhraseFilterClause {
   match_phrase: {[key: string]: string | number}
 }
@@ -86,6 +90,15 @@ export interface RangeFilterClause {
   }
 }
 
-export type FilteredLogsForLogAnalysis = Array<
-  MatchPhraseFilterClause | RangeFilterClause
->
+export interface KQLFilterClause {
+  kql: string
+}
+
+export interface BaseFilter {
+  id: string
+}
+
+export type LogsFilterClause =
+  | (BaseFilter & MatchPhraseFilterClause)
+  | (BaseFilter & RangeFilterClause)
+  | (BaseFilter & KQLFilterClause)

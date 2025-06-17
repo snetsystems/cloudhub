@@ -1,6 +1,10 @@
 import moment from 'moment'
 import {CloudTimeRange} from 'src/clouds/types'
-import {FilteredLogsForLogAnalysis, TimeZones} from 'src/types'
+import {
+  FilteredLogsForLogAnalysis,
+  LogsFilterClause,
+  TimeZones,
+} from 'src/types'
 
 export const formattedTime = (
   timestampInput: string | null,
@@ -48,4 +52,25 @@ export const buildCombinedFilters = (
     })
   }
   return combined
+}
+export const getLogsFilterLabel = (filter: LogsFilterClause): string => {
+  if ('match_phrase' in filter) {
+    const key = Object.keys(filter.match_phrase)[0]
+    const value = filter.match_phrase[key]
+    return `${key} == ${value}`
+  }
+
+  if ('range' in filter) {
+    const field = Object.keys(filter.range)[0]
+    const {gte, lte} = filter.range[field]
+    const parts: string[] = []
+    if (gte !== undefined) parts.push(`>= ${gte}`)
+    if (lte !== undefined) parts.push(`<= ${lte}`)
+    return `${field} ${parts.join(' and ')}`
+  }
+
+  if ('kql' in filter) {
+    return filter.kql
+  }
+  return ''
 }

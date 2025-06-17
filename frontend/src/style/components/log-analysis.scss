@@ -27,3 +27,30 @@
 .livestatus-wrapper.disabled > .refresh-spinner {
   cursor: not-allowed;
 }
+
+.logs-analysis-filter-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 95%;
+  align-self: center;
+  padding-top: 5px;
+  height: 60px;
+
+  .logs-viewer--filter {
+    height: auto;
+    min-height: 28px;
+  }
+
+  .logs-viewer--filter > span {
+    margin: 1px 0;
+    width: 100%;
+    white-space: inherit;
+    text-overflow: inherit;
+    max-width: none;
+  }
+}
