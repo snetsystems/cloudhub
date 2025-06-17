@@ -1,5 +1,6 @@
 import moment from 'moment'
-import {TimeZones} from 'src/types'
+import {CloudTimeRange} from 'src/clouds/types'
+import {FilteredLogsForLogAnalysis, TimeZones} from 'src/types'
 
 export const formattedTime = (
   timestampInput: string | null,
@@ -22,4 +23,29 @@ export const formattedTime = (
   }
 
   return utcMoment.local().format('YYYY-MM-DD HH:mm:ss')
+}
+
+export const buildCombinedFilters = (
+  baseFilters: FilteredLogsForLogAnalysis,
+  timeRange?: CloudTimeRange['logAnalysis']
+): FilteredLogsForLogAnalysis => {
+  const defaultLower = timeRange?.lower ?? ''
+  const defaultUpper = timeRange?.upper ?? ''
+
+  const combined: FilteredLogsForLogAnalysis = [...baseFilters]
+  const hasTime = combined.some(
+    clause => 'range' in clause && Object.keys(clause.range)[0] === '@timestamp'
+  )
+  if (!hasTime) {
+    combined.push({
+      range: {
+        '@timestamp': {
+          format: 'strict_date_optional_time',
+          gte: defaultLower,
+          lte: defaultUpper,
+        },
+      },
+    })
+  }
+  return combined
 }

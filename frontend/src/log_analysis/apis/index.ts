@@ -1,5 +1,9 @@
 import {TokenData} from 'src/dashboards/types'
-import {BaseElasticSearchData, SyslogTableRows} from 'src/types'
+import {
+  BaseElasticSearchData,
+  FilteredLogsForLogAnalysis,
+  SyslogTableRows,
+} from 'src/types'
 import {asyncSearch} from '../util/ensureAsyncSearch'
 
 export async function fetchMessageTokenData({
@@ -66,8 +70,7 @@ export async function fetchMessageTokenData({
 
 export async function fetchSyslogTableData(
   esSource: BaseElasticSearchData,
-  gteISO: string,
-  lteISO: string,
+  filters: FilteredLogsForLogAnalysis,
   pageIndex: number,
   pageSize: number,
   sortColumns: {id: string; direction: 'asc' | 'desc'}[]
@@ -104,17 +107,7 @@ export async function fetchSyslogTableData(
     query: {
       bool: {
         must: [],
-        filter: [
-          {
-            range: {
-              '@timestamp': {
-                format: 'strict_date_optional_time',
-                gte: gteISO,
-                lte: lteISO,
-              },
-            },
-          },
-        ],
+        filter: filters,
         should: [],
         must_not: [],
       },

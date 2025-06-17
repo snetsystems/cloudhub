@@ -27,6 +27,7 @@ import {fetchSyslogTableData} from 'src/log_analysis/apis'
 
 // Util
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {buildCombinedFilters} from 'src/log_analysis/util'
 
 interface LogAnalysisSyslogTableOwnProps {
   timeZone?: TimeZones
@@ -48,10 +49,10 @@ type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps & StateProps
 function LogAnalysisSyslogTableWrapper({
   manualRefresh,
   timeZone,
-  filteredLogsForLogAnalysis,
+  filteredLogsForLogAnalysis = [],
   cloudAutoRefresh,
+  cloudTimeRange,
   esSource,
-  setFilteredLogForLogAnalysis,
 }: LogAnalysisSyslogTableProps) {
   let intervalID: number | null
   const [rows, setRows] = useState<SyslogTableRows[]>([])
@@ -126,12 +127,16 @@ function LogAnalysisSyslogTableWrapper({
       if (!force && key === lastFetchParamsRef.current) return
       lastFetchParamsRef.current = key
 
+      const combinedFilters = buildCombinedFilters(
+        filteredLogsForLogAnalysis,
+        cloudTimeRange?.logAnalysis
+      )
+
       setIsLoading(true)
       try {
         const {data, total} = await fetchSyslogTableData(
           esSource,
-          '2025-05-30T08:16:03.312Z',
-          new Date().toISOString(),
+          combinedFilters,
           pageIndex,
           pageSize,
           sortColumns
@@ -142,16 +147,24 @@ function LogAnalysisSyslogTableWrapper({
         setIsLoading(false)
       }
     },
-    [esSource, pageIndex, pageSize, sortColumns, isLiveUpdating]
+    [
+      esSource,
+      pageIndex,
+      pageSize,
+      sortColumns,
+      isLiveUpdating,
+      filteredLogsForLogAnalysis,
+      cloudTimeRange,
+    ]
   )
 
   useEffect(() => {
     getSyslogTableData(true)
-  }, [pageIndex])
+  }, [pageIndex, getSyslogTableData])
 
   useEffect(() => {
     getSyslogTableData()
-  }, [pageSize])
+  }, [pageSize, getSyslogTableData])
 
   useEffect(() => {
     if (sortFirstRunRef.current) {
@@ -159,7 +172,7 @@ function LogAnalysisSyslogTableWrapper({
       return
     }
     getSyslogTableData()
-  }, [sortColumns])
+  }, [sortColumns, getSyslogTableData])
 
   useEffect(() => {
     const prev = prevManualRefreshRef.current
@@ -168,7 +181,7 @@ function LogAnalysisSyslogTableWrapper({
       getSyslogTableData()
     }
     prevManualRefreshRef.current = manualRefresh
-  }, [manualRefresh])
+  }, [manualRefresh, getSyslogTableData])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.logAnalysis)
@@ -190,7 +203,12 @@ function LogAnalysisSyslogTableWrapper({
       intervalID = null
       GlobalAutoRefresher.stopPolling()
     }
-  }, [cloudAutoRefresh?.logAnalysis, esSource, isLiveUpdating])
+  }, [
+    cloudAutoRefresh?.logAnalysis,
+    esSource,
+    isLiveUpdating,
+    getSyslogTableData,
+  ])
 
   const onChangeItemsPerPage = (size: number) => {
     setPageIndex(0)
