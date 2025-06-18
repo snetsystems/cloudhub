@@ -39,39 +39,16 @@ const TreemapTooltip: React.FC<{
   percent: string
 }> = ({x, y, name, value, percent}) => (
   <div
+    className="tree-map-modal"
     style={{
-      position: 'fixed',
       left: x,
       top: y,
-      pointerEvents: 'none',
-      zIndex: 2000,
-      border: '2px solid #fa991c',
-      borderRadius: 4,
-      background: '#1f2131',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
-      padding: '6px 10px 6px',
-      minWidth: 140,
-      color: '#fff',
-      fontSize: 13,
-      lineHeight: 1.35,
-      whiteSpace: 'nowrap',
-      display: 'flex',
-      flexDirection: 'column',
-      boxSizing: 'border-box',
     }}
   >
-    <span style={{fontWeight: 700, fontSize: 14}}>{name}</span>
-    <div
-      style={{
-        height: 1,
-        background: '#545667',
-        opacity: 0.85,
-        margin: '2px 0 6px',
-      }}
-    />
+    <span className="tree-map-modal__title">{name}</span>
+    <div className="tree-map-modal__divider" />
     <span>
-      {value}{' '}
-      <span style={{fontWeight: 700, color: '#ffcf82'}}>({percent}%)</span>
+      {value} <span className="tree-map-modal__percent">({percent}%)</span>
     </span>
   </div>
 )
@@ -270,7 +247,7 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
     onRectClick,
   ])
   return (
-    <div style={{position: 'relative', width: '100%', height: '100%'}}>
+    <div className="relative-full">
       <svg
         ref={svgRef}
         width={width}
@@ -288,22 +265,7 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
         />
       )}
       {overflowCount > 0 && (
-        <span
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            background: '#fff',
-            borderRadius: 12,
-            padding: '2px 8px',
-            fontSize: 12,
-            fontWeight: 700,
-            color: '#1f2131',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-          }}
-        >
-          +{overflowCount} more
-        </span>
+        <span className="hidden-indicator">+{overflowCount} more</span>
       )}
     </div>
   )

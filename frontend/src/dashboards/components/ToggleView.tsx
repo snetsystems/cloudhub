@@ -6,7 +6,10 @@ import LoadingDots from 'src/shared/components/LoadingDots'
 import {BaseElasticSearchData} from 'src/types'
 
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
-import {DEFAULT_CELL_BG_COLOR, DEFAULT_CELL_TEXT_COLOR} from '../constants'
+import {
+  DEFAULT_CELL_BG_COLOR,
+  DEFAULT_CELL_TEXT_COLOR,
+} from 'src/dashboards/constants'
 import {setCloudAutoRefresh, setCloudTimeRange} from 'src/clouds/actions/clouds'
 import _, {debounce} from 'lodash'
 
@@ -21,6 +24,8 @@ import {
 import {CloudTimeRange} from 'src/clouds/types'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {useLocalStorage} from 'src/log_analysis/hooks/useLocalStorage'
+import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants'
 
 export interface ViewConfig {
   key: string
@@ -62,8 +67,15 @@ function ToggleView<P>({
   onChangeTopN,
   handleOnBlur,
 }: ToggleViewProps) {
-  const [activeKey, setActiveKey] = useState(views[0]?.key)
-
+  const [storageObj, setStorageObj] = useLocalStorage<{activeView: string}>(
+    LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+    {
+      activeView: views[0]?.key,
+    }
+  )
+  const activeKey = storageObj.activeView
+  const setActiveKey = (value: string) =>
+    setStorageObj(prev => ({...prev, activeView: value}))
   const activeView = useMemo(() => views.find(v => v.key === activeKey)!, [
     activeKey,
     views,
@@ -93,7 +105,7 @@ function ToggleView<P>({
     if (_.isEmpty(esSource)) return
 
     activeView.fetchData?.(esSource, topN)
-  }, [cloudAutoRefresh.logAnalysis])
+  }, [cloudAutoRefresh.logAnalysis, topN, esSource])
 
   useEffect(() => {
     if (_.isEmpty(esSource)) return
@@ -116,7 +128,7 @@ function ToggleView<P>({
       intervalID = null
       GlobalAutoRefresher.stopPolling()
     }
-  }, [cloudAutoRefresh.logAnalysis])
+  }, [cloudAutoRefresh.logAnalysis, topN, esSource])
 
   const renderToggle = () => {
     if (views.length !== 2) return null
@@ -126,8 +138,7 @@ function ToggleView<P>({
       <>
         <div
           onMouseDown={e => e.stopPropagation()}
-          style={{zIndex: 3}}
-          className={`prediction ${
+          className={`z-index-3 prediction ${
             isSecondActive ? 'page-header--left' : 'page-header--right'
           } `}
         >
@@ -152,13 +163,7 @@ function ToggleView<P>({
     )
   }
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        backgroundColor: '#292933',
-      }}
-    >
+    <div className="w-full h-full background-grid-header">
       <LogAnalysisDashboardHeader
         cellName="Log Analysis TreeMap"
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
@@ -167,19 +172,21 @@ function ToggleView<P>({
         {loading && (
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
         )}
-        <div style={{zIndex: 3, maxWidth: '100px'}}>
+        <div className="toggle-view--header---filter">
           <Input
             icon={IconFont.Filter}
             size={ComponentSize.ExtraSmall}
             type={InputType.Number}
             onChange={onChangeTopN}
             value={topN.toString()}
+            min={1}
+            max={1000}
             onBlur={handleOnBlur}
           />
         </div>
         {renderToggle()}
       </LogAnalysisDashboardHeader>
-      <div style={{width: '100%', height: 'calc(100% - 40px)'}}>
+      <div className="toggle-view--content">
         <activeView.Component {...(activeView.props as P)} />
       </div>
     </div>

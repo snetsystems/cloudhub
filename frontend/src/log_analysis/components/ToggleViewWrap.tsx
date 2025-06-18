@@ -9,6 +9,8 @@ import LogAnalysisTreeMap from 'src/log_analysis/components/LogAnalysisTreeMap'
 import type {BaseElasticSearchData} from 'src/types'
 import {TokenData} from 'src/dashboards/types'
 import {fetchMessageTokenData} from '../apis'
+import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from '../constants'
+import {useLocalStorage} from '../hooks/useLocalStorage'
 
 interface ViewProps {
   data: TokenData[]
@@ -16,21 +18,31 @@ interface ViewProps {
   onChangeTopN
   topN: string
 }
-const MAX_TOP_N = 1000
+
 const DEFAULT_TOP_N = 100
 export default function ToggleViewWrap() {
   const [data, setData] = useState<TokenData[]>([])
   const [loading, setLoading] = useState(false)
-  const [topN, setTopN] = useState(DEFAULT_TOP_N)
-  const [isMoreFetch, setIsMoreFetch] = useState(false)
-  const handleRectClick = (token: string, raw: number, pct: number) => {
-    console.log(`Clicked → ${token} | ${raw} (${pct.toFixed(2)}%)`)
-  }
+  const [storageObj, setStorageObj] = useLocalStorage<{
+    filteredCount: number
+  }>(LOG_ANALYSIS_LOCAL_STORAGE_KEY, {
+    filteredCount: DEFAULT_TOP_N,
+    isTreeMap: true,
+  })
+  const topN = storageObj.filteredCount
+  const setTopN = (value: number) =>
+    setStorageObj(prev => ({...prev, filteredCount: value}))
 
+  const [isMoreFetch, setIsMoreFetch] = useState(false)
+
+  const handleRectClick = useCallback(
+    (token: string, raw: number, pct: number) => {
+      console.log(`Clicked → ${token} | ${raw} (${pct.toFixed(2)}%)`)
+    },
+    []
+  )
   const ohChangeTopN = (e: ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10)
-
-    if (!isNaN(value) && value > MAX_TOP_N) return
     setTopN(value)
     if (!isNaN(value) && value > data.length) setIsMoreFetch(true)
   }
@@ -63,7 +75,7 @@ export default function ToggleViewWrap() {
       {
         key: 'tree-map',
         label: 'Tree Map',
-        Component: TreeMapComponent,
+        Component: React.memo(TreeMapComponent),
         props: (d: TokenData[]) => ({
           data: d,
           onRectClick: handleRectClick,
@@ -74,7 +86,7 @@ export default function ToggleViewWrap() {
       {
         key: 'word-cloud',
         label: 'Tag Cloud',
-        Component: TagCloudComponent,
+        Component: React.memo(TagCloudComponent),
         props: (d: TokenData[]) => ({
           data: d,
           onRectClick: handleRectClick,
@@ -83,7 +95,7 @@ export default function ToggleViewWrap() {
         fetchData: fetchTokenData,
       },
     ],
-    [fetchTokenData, topN]
+    [fetchTokenData, topN, handleRectClick]
   )
 
   return (
@@ -107,10 +119,7 @@ function TreeMapComponent({data, onRectClick, topN}: ViewProps) {
 
   const [ref, {width, height}] = useResizeObserver<HTMLDivElement>()
   return (
-    <div
-      ref={ref}
-      style={{width: '100%', height: '100%', position: 'relative'}}
-    >
+    <div ref={ref} className="relative-full">
       {width > 0 && height > 0 && (
         <LogAnalysisTreeMap
           width={width}
@@ -134,10 +143,7 @@ function TagCloudComponent({data, topN}: ViewProps) {
   const [containerRef, {width, height}] = useResizeObserver<HTMLDivElement>()
 
   return (
-    <div
-      ref={containerRef}
-      style={{width: '100%', height: '100%', position: 'relative'}}
-    >
+    <div ref={containerRef} className="relative-full">
       {width > 0 && height > 0 && (
         <WordCloud
           data={filteredData}

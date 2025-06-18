@@ -39,6 +39,8 @@ interface Props {
   titleText?: string
   disabledTitleText?: string
   customClass?: string
+  min?: number
+  max?: number
 }
 
 class Input extends Component<Props> {
@@ -67,6 +69,8 @@ class Input extends Component<Props> {
       placeholder,
       autoFocus,
       spellCheck,
+      min,
+      max,
       onChange,
       onBlur,
       onFocus,
@@ -94,6 +98,8 @@ class Input extends Component<Props> {
           onKeyDown={onKeyDown}
           onMouseDown={onMouseDown}
           className="input-field"
+          min={min}
+          max={max}
           disabled={status === ComponentStatus.Disabled}
         />
         {this.icon}

@@ -6,8 +6,8 @@ import {
   Orientation,
   ScaleType,
   TokenData,
-} from '../utils/wordCloudLayout'
-import {useWordCloudLayout} from '../hooks/useWordCloudLayout'
+} from 'src/dashboards/utils/wordCloudLayout'
+import {useWordCloudLayout} from 'src/dashboards/hooks/useWordCloudLayout'
 
 export interface WordCloudProps {
   data: TokenData[]
@@ -133,24 +133,7 @@ export default function WordCloud({
     <div style={{position: 'relative', width, height}}>
       <svg ref={svgRef} />
       {overflowCount > 0 && (
-        <span
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            background: '#fff',
-            borderRadius: 12,
-            padding: '2px 8px',
-            fontSize: 12,
-            fontWeight: 700,
-            color: '#1f2131',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-            userSelect: 'none',
-            pointerEvents: 'none',
-          }}
-        >
-          +{overflowCount} more
-        </span>
+        <span className="hidden-indicator">+{overflowCount} more</span>
       )}
     </div>
   )

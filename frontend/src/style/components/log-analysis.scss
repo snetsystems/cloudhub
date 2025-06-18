@@ -54,3 +54,78 @@
     max-width: none;
   }
 }
+
+.relative-full {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.w-full {
+  width: 100%;
+}
+.h-full {
+  height: 100%;
+}
+.background-grid-header {
+  background-color: #292933;
+}
+.z-index-3 {
+  z-index: 3;
+}
+.hidden-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1f2131;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  user-select: none;
+  pointer-events: none;
+}
+.toggle-view--header---filter {
+  z-index: 3;
+  max-width: 120px;
+}
+
+.toggle-view--content {
+  width: 100%;
+  height: calc(100% - 40px);
+}
+
+.tree-map-modal {
+  position: fixed;
+  pointer-events: none;
+  z-index: 2000;
+  border: 2px solid #fa991c;
+  border-radius: 4px;
+  background: #1f2131;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  padding: 6px 10px 6px;
+  min-width: 140px;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+
+  .tree-map-modal__title {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .tree-map-modal__divider {
+    height: 1px;
+    background: #545667;
+    opacity: 0.85;
+    margin: 2px 0 6px;
+  }
+  .tree-map-modal__percent {
+    font-weight: 700;
+    color: #ffcf82;
+  }
+}
