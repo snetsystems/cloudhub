@@ -107,7 +107,10 @@ function LogAnalysisSyslogTableWrapper({
     return [{id: '@timestamp', direction: 'desc'}]
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [isLiveUpdating, setIsLiveUpdating] = useState<boolean>(true)
+  const [isLiveUpdating, setIsLiveUpdating] = useState<boolean>(() => {
+    const interval = cloudAutoRefresh?.logAnalysis
+    return interval !== undefined && interval !== 0
+  })
 
   const prevAutoRefreshRef = useRef<number | undefined>(
     cloudAutoRefresh?.logAnalysis
