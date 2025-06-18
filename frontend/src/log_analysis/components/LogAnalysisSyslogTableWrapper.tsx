@@ -5,7 +5,10 @@ import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 
 // Action
-import {setFilteredLogForLogAnalysis} from 'src/log_analysis/actions/'
+import {
+  setFilteredLogForLogAnalysis,
+  addLogAnalysisRangeFilterClause,
+} from 'src/log_analysis/actions/'
 
 // Type
 import {
@@ -41,6 +44,12 @@ interface StateProps {
   filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   setFilteredLogForLogAnalysis?: (
     filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
+  ) => void
+  addLogAnalysisRangeFilterClause?: (
+    field: string,
+    gte?: string,
+    lte?: string,
+    format?: string
   ) => void
 }
 
@@ -105,7 +114,10 @@ function LogAnalysisSyslogTableWrapper({
   )
   const prevManualRefreshRef = useRef<number>(manualRefresh)
   const sortFirstRunRef = useRef(true)
+  const pageIndexFirstRunRef = useRef(true)
   const lastFetchParamsRef = useRef<string>('')
+  const didSortRef = useRef(false)
+  const isAutoRefreshPageResetRef = useRef(false)
 
   useEffect(() => {
     const prev = prevAutoRefreshRef.current
@@ -120,7 +132,6 @@ function LogAnalysisSyslogTableWrapper({
 
   const getSyslogTableData = useCallback(
     async (force: boolean = false) => {
-      if (!force && !isLiveUpdating) return
       if (_.isEmpty(esSource)) return
 
       const key = `${pageIndex}-${pageSize}-${JSON.stringify(sortColumns)}`
@@ -152,13 +163,30 @@ function LogAnalysisSyslogTableWrapper({
       pageIndex,
       pageSize,
       sortColumns,
-      isLiveUpdating,
       filteredLogsForLogAnalysis,
       cloudTimeRange,
     ]
   )
 
   useEffect(() => {
+    setPageIndex(0)
+    getSyslogTableData()
+  }, [filteredLogsForLogAnalysis])
+
+  useEffect(() => {
+    if (pageIndexFirstRunRef.current) {
+      pageIndexFirstRunRef.current = false
+      return
+    }
+    if (didSortRef.current) {
+      didSortRef.current = false
+      return
+    }
+    if (isAutoRefreshPageResetRef.current) {
+      isAutoRefreshPageResetRef.current = false
+      getSyslogTableData(true)
+      return
+    }
     getSyslogTableData(true)
   }, [pageIndex, getSyslogTableData])
 
@@ -192,8 +220,12 @@ function LogAnalysisSyslogTableWrapper({
       intervalID = window.setInterval(() => {
         if (!isLiveUpdating) return
 
-        setPageIndex(0)
-        getSyslogTableData(true)
+        if (pageIndex !== 0) {
+          isAutoRefreshPageResetRef.current = true
+          setPageIndex(0)
+        } else {
+          getSyslogTableData(true)
+        }
       }, cloudAutoRefresh.logAnalysis)
     }
 
@@ -231,6 +263,7 @@ function LogAnalysisSyslogTableWrapper({
 
   const onSort = (cols: {id: string; direction: 'asc' | 'desc'}[]) => {
     setPageIndex(0)
+    didSortRef.current = true
     setSortColumns(cols)
   }
 
@@ -274,6 +307,10 @@ const mstp = state => {
 const mdtp = dispatch => ({
   setFilteredLogForLogAnalysis: bindActionCreators(
     setFilteredLogForLogAnalysis,
+    dispatch
+  ),
+  addLogAnalysisRangeFilterClause: bindActionCreators(
+    addLogAnalysisRangeFilterClause,
     dispatch
   ),
 })

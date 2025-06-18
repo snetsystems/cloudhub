@@ -1,4 +1,4 @@
-import {SyslogTableRows} from 'src/types'
+import {FilteredLogsForLogAnalysis, SyslogTableRows} from 'src/types'
 
 export const LOG_ANALYSIS_LOCAL_STORAGE_KEY = 'Log-Analysis'
 export const LOG_ANALYSIS_SYSLOG_TABLE_PAGE_SIZE_OPTIONS = [5, 10, 50]
@@ -125,4 +125,18 @@ export const SYSLOG_TABLE_ROWS_MOCK_DATA: SyslogTableRows[] = [
     'log.syslog.priority': [30],
     'log.syslog.facility.code': [3],
   },
+]
+
+export const MOCK_LOG_FILTERS: FilteredLogsForLogAnalysis = [
+  {match_phrase: {'host.ip': '192.168.1.100'}},
+  {
+    range: {
+      '@timestamp': {
+        format: 'strict_date_optional_time',
+        gte: '2025-06-01T00:00:00Z',
+        lte: '2025-06-15T23:59:59Z',
+      },
+    },
+  },
+  {match_phrase: {'service.type': 'ssh'}},
 ]
