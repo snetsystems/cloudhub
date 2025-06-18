@@ -121,6 +121,10 @@ function LogAnalysisSyslogTableWrapper({
   const lastFetchParamsRef = useRef<string>('')
   const didSortRef = useRef(false)
   const isAutoRefreshPageResetRef = useRef(false)
+  const prevFiltersRef = useRef<FilteredLogsForLogAnalysis>(
+    filteredLogsForLogAnalysis
+  )
+  const filterFirstRunRef = useRef(true)
 
   useEffect(() => {
     const prev = prevAutoRefreshRef.current
@@ -172,9 +176,17 @@ function LogAnalysisSyslogTableWrapper({
   )
 
   useEffect(() => {
+    if (filterFirstRunRef.current) {
+      filterFirstRunRef.current = false
+      return
+    }
+    if (_.isEqual(prevFiltersRef.current, filteredLogsForLogAnalysis)) {
+      return
+    }
+    prevFiltersRef.current = filteredLogsForLogAnalysis
     setPageIndex(0)
     getSyslogTableData()
-  }, [filteredLogsForLogAnalysis])
+  }, [filteredLogsForLogAnalysis, getSyslogTableData])
 
   useEffect(() => {
     if (pageIndexFirstRunRef.current) {
