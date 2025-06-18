@@ -8,13 +8,11 @@ import {asyncSearch} from '../util/ensureAsyncSearch'
 
 export async function fetchMessageTokenData({
   esSource,
-  gteISO,
-  lteISO,
+  filters,
   size = 100,
 }: {
   esSource: BaseElasticSearchData
-  gteISO: string
-  lteISO: string
+  filters: FilteredLogsForLogAnalysis
   size: number
 }): Promise<{data: TokenData[]}> {
   const body = {
@@ -32,19 +30,9 @@ export async function fetchMessageTokenData({
     query: {
       bool: {
         must: [],
+        filter: filters,
         should: [],
         must_not: [],
-        filter: [
-          {
-            range: {
-              '@timestamp': {
-                format: 'strict_date_optional_time',
-                gte: gteISO,
-                lte: lteISO,
-              },
-            },
-          },
-        ],
       },
     },
     stored_fields: ['*'],

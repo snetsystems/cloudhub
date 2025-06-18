@@ -1,9 +1,9 @@
-import React, {useState, useEffect, useMemo, ChangeEvent, useRef} from 'react'
+import React, {useEffect, useMemo, ChangeEvent, useRef} from 'react'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 import LoadingDots from 'src/shared/components/LoadingDots'
 
-import {BaseElasticSearchData} from 'src/types'
+import {BaseElasticSearchData, FilteredLogsForLogAnalysis} from 'src/types'
 
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 import {
@@ -26,13 +26,19 @@ import {CloudAutoRefresh} from 'src/clouds/types/type'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {useLocalStorage} from 'src/log_analysis/hooks/useLocalStorage'
 import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants'
+import {setFilteredLogForLogAnalysis} from 'src/log_analysis/actions'
 
 export interface ViewConfig {
   key: string
   label: string
   Component: React.ComponentType<any>
   props?: any
-  fetchData?: (esSrc: BaseElasticSearchData, topN: number) => Promise<any>
+  fetchData?: (
+    esSrc: BaseElasticSearchData,
+    topN: number,
+    cloudTimeRange?: CloudTimeRange,
+    filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
+  ) => Promise<any>
   topN?: number
 }
 
@@ -47,9 +53,9 @@ export interface ToggleViewOwnProps {
 }
 
 interface StateProps {
-  autoRefresh: number
   cloudAutoRefresh: CloudAutoRefresh
-  cloudTimeRange: CloudTimeRange
+  cloudTimeRange?: CloudTimeRange
+  filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   esSource: BaseElasticSearchData
 }
 interface DispatchProps {}
@@ -61,6 +67,7 @@ function ToggleView<P>({
   loading,
   views,
   cloudAutoRefresh,
+  filteredLogsForLogAnalysis,
   cloudTimeRange,
   topN = 100,
   isMoreFetch,
@@ -83,17 +90,41 @@ function ToggleView<P>({
   let intervalID
 
   const fetchTokenDataDebounced = useRef(
-    debounce((src: BaseElasticSearchData, topN: number) => {
-      activeView.fetchData?.(src, topN)
-    }, 1000)
+    debounce(
+      (
+        src: BaseElasticSearchData,
+        topN: number,
+        cloudTimeRange?: CloudTimeRange,
+        filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
+      ) => {
+        activeView.fetchData?.(
+          src,
+          topN,
+          cloudTimeRange,
+          filteredLogsForLogAnalysis
+        )
+      },
+      1000
+    )
   ).current
 
   useEffect(() => {
     if (!isMoreFetch) return
     if (_.isEmpty(esSource)) return
 
-    fetchTokenDataDebounced(esSource, topN)
-  }, [isMoreFetch, esSource, topN])
+    fetchTokenDataDebounced(
+      esSource,
+      topN,
+      cloudTimeRange,
+      filteredLogsForLogAnalysis
+    )
+  }, [
+    isMoreFetch,
+    esSource,
+    topN,
+    cloudTimeRange?.logAnalysis,
+    filteredLogsForLogAnalysis,
+  ])
 
   useEffect(() => {
     return () => {
@@ -104,8 +135,19 @@ function ToggleView<P>({
   useEffect(() => {
     if (_.isEmpty(esSource)) return
 
-    activeView.fetchData?.(esSource, topN)
-  }, [cloudAutoRefresh.logAnalysis, topN, esSource])
+    activeView.fetchData?.(
+      esSource,
+      topN,
+      cloudTimeRange,
+      filteredLogsForLogAnalysis
+    )
+  }, [
+    cloudAutoRefresh.logAnalysis,
+    topN,
+    esSource,
+    cloudTimeRange?.logAnalysis,
+    filteredLogsForLogAnalysis,
+  ])
 
   useEffect(() => {
     if (_.isEmpty(esSource)) return
@@ -116,7 +158,12 @@ function ToggleView<P>({
     if (!!cloudAutoRefresh.logAnalysis) {
       clearInterval(intervalID)
       intervalID = window.setInterval(() => {
-        activeView.fetchData?.(esSource, topN)
+        activeView.fetchData?.(
+          esSource,
+          topN,
+          cloudTimeRange,
+          filteredLogsForLogAnalysis
+        )
       }, cloudAutoRefresh.logAnalysis)
     }
 
@@ -128,7 +175,13 @@ function ToggleView<P>({
       intervalID = null
       GlobalAutoRefresher.stopPolling()
     }
-  }, [cloudAutoRefresh.logAnalysis, topN, esSource])
+  }, [
+    cloudAutoRefresh.logAnalysis,
+    topN,
+    esSource,
+    cloudTimeRange?.logAnalysis,
+    filteredLogsForLogAnalysis,
+  ])
 
   const renderToggle = () => {
     if (views.length !== 2) return null
@@ -197,23 +250,18 @@ const mstp = state => {
   const {
     app: {
       ephemeral: {inPresentationMode},
-      persisted: {
-        timeZone,
-        autoRefresh,
-        cloudAutoRefresh,
-        cloudTimeRange,
-        esSource,
-      },
+      persisted: {timeZone, cloudAutoRefresh, cloudTimeRange, esSource},
     },
+    logAnalysisDashboard: {filteredLogsForLogAnalysis},
   } = state
 
   return {
     inPresentationMode,
     timeZone,
-    autoRefresh,
     cloudAutoRefresh,
     cloudTimeRange,
     esSource,
+    filteredLogsForLogAnalysis,
   }
 }
 
@@ -221,6 +269,10 @@ const mdtp = dispatch => ({
   setCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
   setTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
+  setFilteredLogForLogAnalysis: bindActionCreators(
+    setFilteredLogForLogAnalysis,
+    dispatch
+  ),
 })
 
 const isEqual = (prev, next) => {

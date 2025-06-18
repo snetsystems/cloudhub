@@ -6,11 +6,13 @@ import ToggleView from '../../dashboards/components/ToggleView'
 import {useResizeObserver} from '../../dashboards/hooks/useResizeObserver'
 import LogAnalysisTreeMap from 'src/log_analysis/components/LogAnalysisTreeMap'
 
-import type {BaseElasticSearchData} from 'src/types'
+import type {BaseElasticSearchData, FilteredLogsForLogAnalysis} from 'src/types'
 import {TokenData} from 'src/dashboards/types'
 import {fetchMessageTokenData} from '../apis'
 import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from '../constants'
 import {useLocalStorage} from '../hooks/useLocalStorage'
+import {buildCombinedFilters} from 'src/log_analysis/util'
+import {CloudTimeRange} from 'src/clouds/types'
 
 interface ViewProps {
   data: TokenData[]
@@ -27,7 +29,6 @@ export default function ToggleViewWrap() {
     filteredCount: number
   }>(LOG_ANALYSIS_LOCAL_STORAGE_KEY, {
     filteredCount: DEFAULT_TOP_N,
-    isTreeMap: true,
   })
   const topN = storageObj.filteredCount
   const setTopN = (value: number) =>
@@ -52,13 +53,21 @@ export default function ToggleViewWrap() {
   }
 
   const fetchTokenData = useCallback(
-    async (src: BaseElasticSearchData, size: number) => {
+    async (
+      src: BaseElasticSearchData,
+      size: number,
+      cloudTimeRange?: CloudTimeRange,
+      filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
+    ) => {
       setLoading(true)
       try {
+        const combinedFilters = buildCombinedFilters(
+          filteredLogsForLogAnalysis,
+          cloudTimeRange?.logAnalysis
+        )
         const {data} = await fetchMessageTokenData({
           esSource: src,
-          gteISO: '2025-05-26T08:16:03.312Z',
-          lteISO: new Date().toISOString(),
+          filters: combinedFilters,
           size,
         })
         setData(data)
@@ -75,7 +84,7 @@ export default function ToggleViewWrap() {
       {
         key: 'tree-map',
         label: 'Tree Map',
-        Component: React.memo(TreeMapComponent),
+        Component: TreeMapComponent,
         props: (d: TokenData[]) => ({
           data: d,
           onRectClick: handleRectClick,
@@ -86,7 +95,7 @@ export default function ToggleViewWrap() {
       {
         key: 'word-cloud',
         label: 'Tag Cloud',
-        Component: React.memo(TagCloudComponent),
+        Component: TagCloudComponent,
         props: (d: TokenData[]) => ({
           data: d,
           onRectClick: handleRectClick,
