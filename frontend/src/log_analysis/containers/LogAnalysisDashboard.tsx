@@ -7,7 +7,7 @@ import {connect} from 'react-redux'
 // Components
 import {Button, Page} from 'src/reusable_ui'
 import LogAnalysisSyslogTableWrapper from 'src/log_analysis/components/LogAnalysisSyslogTableWrapper'
-import LogsFilterViewer from 'src/log_analysis/components/LogsFilterViewer'
+import LogsFilterContainer from 'src/log_analysis/components/LogsFilterContainer'
 
 // Type
 import * as DashboardsModels from 'src/types/dashboards'
@@ -21,12 +21,6 @@ import {
   TimeRange,
   TimeZones,
 } from 'src/types'
-
-// Action
-import {
-  removeLogAnalysisMatchPhraseFilterClause,
-  removeLogAnalysisRangeFilterClause,
-} from 'src/log_analysis/actions'
 
 // Constants
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
@@ -78,14 +72,11 @@ function LogAnalysisDashboard({
   source,
   cloudTimeRange,
   cloudAutoRefresh,
-  filteredLogsForLogAnalysis,
   setCloudTimeRange,
   onChooseCloudAutoRefresh,
   timeZone,
   setTimeZone,
   openPanel,
-  removeLogAnalysisMatchPhraseFilterClause,
-  removeLogAnalysisRangeFilterClause,
 }: Props) {
   const [
     manualRefreshState,
@@ -265,31 +256,6 @@ function LogAnalysisDashboard({
     )
   }
 
-  const renderLogFilterContainer = () => (
-    <div className="logs-analysis-filter-container">
-      {filteredLogsForLogAnalysis.map((clause, idx) => (
-        <LogsFilterViewer
-          key={idx}
-          filter={{id: idx.toString(), ...clause}}
-          onDelete={id => {
-            const index = Number(id)
-            const target = filteredLogsForLogAnalysis[index]
-            if ('match_phrase' in target) {
-              const k = Object.keys(target.match_phrase)[0]
-              removeLogAnalysisMatchPhraseFilterClause(
-                k,
-                target.match_phrase[k]
-              )
-            } else if ('range' in target) {
-              const f = Object.keys(target.range)[0]
-              removeLogAnalysisRangeFilterClause(f)
-            }
-          }}
-        />
-      ))}
-    </div>
-  )
-
   const handleExpand = () => {
     console.log('expand')
     openPanel({
@@ -320,7 +286,7 @@ function LogAnalysisDashboard({
           <Page.Header.Right>{renderHeaderRight()}</Page.Header.Right>
         </Page.Header>
 
-        {renderLogFilterContainer()}
+        <LogsFilterContainer />
         <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
           <SidePanelSlice>
             <div className="dashboard container-fluid full-width">
@@ -380,7 +346,6 @@ const mstp = state => {
       ephemeral: {inPresentationMode},
       persisted: {timeZone, autoRefresh, cloudAutoRefresh, cloudTimeRange},
     },
-    logAnalysisDashboard: {filteredLogsForLogAnalysis},
   } = state
 
   return {
@@ -389,7 +354,6 @@ const mstp = state => {
     autoRefresh,
     cloudAutoRefresh,
     cloudTimeRange,
-    filteredLogsForLogAnalysis,
   }
 }
 
@@ -399,14 +363,6 @@ const mdtp = dispatch => ({
   setCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
   setTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
-  removeLogAnalysisMatchPhraseFilterClause: bindActionCreators(
-    removeLogAnalysisMatchPhraseFilterClause,
-    dispatch
-  ),
-  removeLogAnalysisRangeFilterClause: bindActionCreators(
-    removeLogAnalysisRangeFilterClause,
-    dispatch
-  ),
 })
 
 const isEqual = (prev, next) => {
