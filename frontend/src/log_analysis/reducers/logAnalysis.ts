@@ -30,7 +30,20 @@ const logAnalysisDashboard = (
       }
     }
     case ActionType.addLogAnalysisMatchPhraseFilterClause: {
-      const {clause} = (action as any).payload
+      const {clause} = (action as any).payload as {
+        clause: MatchPhraseFilterClause
+      }
+      const key = Object.keys(clause.match_phrase)[0]
+      const value = clause.match_phrase[key]
+      const exists = state.filteredLogsForLogAnalysis.some(
+        c =>
+          'match_phrase' in c &&
+          Object.keys(c.match_phrase)[0] === key &&
+          c.match_phrase[key] === value
+      )
+      if (exists) {
+        return state
+      }
       return {
         ...state,
         filteredLogsForLogAnalysis: [
@@ -53,13 +66,18 @@ const logAnalysisDashboard = (
       }
     }
     case ActionType.addLogAnalysisRangeFilterClause: {
-      const {clause} = (action as any).payload
+      const {clause} = (action as any).payload as {clause: RangeFilterClause}
+      const field = Object.keys(clause.range)[0]
+      const filtered = state.filteredLogsForLogAnalysis.filter(
+        c =>
+          !(
+            'range' in c &&
+            Object.keys((c as RangeFilterClause).range)[0] === field
+          )
+      )
       return {
         ...state,
-        filteredLogsForLogAnalysis: [
-          ...state.filteredLogsForLogAnalysis,
-          clause as RangeFilterClause,
-        ],
+        filteredLogsForLogAnalysis: [...filtered, clause as RangeFilterClause],
       }
     }
     case ActionType.removeLogAnalysisRangeFilterClause: {
