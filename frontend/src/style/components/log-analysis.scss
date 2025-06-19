@@ -44,6 +44,7 @@
   .logs-viewer--filter {
     height: auto;
     min-height: 28px;
+    max-width: none;
   }
 
   .logs-viewer--filter > span {

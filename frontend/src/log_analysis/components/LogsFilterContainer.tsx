@@ -11,13 +11,14 @@ import {
 } from 'src/log_analysis/actions'
 
 // Type
-import {FilteredLogsForLogAnalysis} from 'src/types'
+import {FilteredLogsForLogAnalysis, TimeZones} from 'src/types'
 
 // Components
 import LogsFilterViewer from 'src/log_analysis/components/LogsFilterViewer'
 
 interface Props {
   filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
+  timeZone?: TimeZones
   removeLogAnalysisMatchPhraseFilterClause?: (
     key: string,
     value: string | number
@@ -27,6 +28,7 @@ interface Props {
 
 function LogsFilterContainer({
   filteredLogsForLogAnalysis,
+  timeZone,
   removeLogAnalysisMatchPhraseFilterClause,
   removeLogAnalysisRangeFilterClause,
 }: Props) {
@@ -37,6 +39,7 @@ function LogsFilterContainer({
           <LogsFilterViewer
             key={idx}
             filter={{id: idx.toString(), ...clause}}
+            timeZone={timeZone}
             onDelete={id => {
               const index = Number(id)
               const target = filteredLogsForLogAnalysis[index]
@@ -60,11 +63,15 @@ function LogsFilterContainer({
 
 const mstp = state => {
   const {
+    app: {
+      persisted: {timeZone},
+    },
     logAnalysisDashboard: {filteredLogsForLogAnalysis},
   } = state
 
   return {
     filteredLogsForLogAnalysis,
+    timeZone,
   }
 }
 
