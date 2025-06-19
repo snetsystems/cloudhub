@@ -22,7 +22,7 @@ interface LogAnalysisTreeMapProps {
   topN?: number
   minTileWidth?: number
   minTileHeight?: number
-  onRectClick: (token: string, rawCount: number, percent: number) => void
+  onRectClick: (token: string) => void
 }
 
 const DEFAULT_COLORS = [
@@ -178,9 +178,7 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
       .attr('fill', d => color(d.data.name))
       .style('cursor', 'pointer')
       .on('click', (_, d) => {
-        const original = displayData.find(x => x.text === d.data.name)!
-        const pct = (original.value / realTotal) * 100
-        onRectClick(d.data.name, original.value, pct)
+        onRectClick(d.data.name)
       })
       .on('mouseenter', (evt, d) => {
         const original = displayData.find(x => x.text === d.data.name)

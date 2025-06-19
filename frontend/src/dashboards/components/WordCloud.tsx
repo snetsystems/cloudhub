@@ -19,7 +19,7 @@ export interface WordCloudProps {
   minFontSize?: number
   maxFontSize?: number
   padding?: number
-  onSelect?: (tag: TokenData) => void
+  onSelect?: (token: string) => void
   duration?: number
   exitDuration?: number
   animate?: boolean
@@ -88,9 +88,7 @@ export default function WordCloud({
       .style('font-family', 'Inter UI, sans-serif')
       .style('fill-opacity', 0)
       .text(d => d.text)
-      .on('click', (_, d) =>
-        onSelect?.({text: d.text, value: d.value, meta: d.meta})
-      )
+      .on('click', (_, d) => onSelect?.(d.text))
 
     const merged = enter.merge(sel as any)
     const hasPrev = prevWordsRef.current.length > 0
