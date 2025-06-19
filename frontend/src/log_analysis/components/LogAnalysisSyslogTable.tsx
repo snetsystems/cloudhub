@@ -80,9 +80,9 @@ function LogAnalysisSyslogTable({
       {id: 'message', display: 'Message', schema: 'string', isExpandable: true},
       {
         id: 'message_tokens',
-        display: 'Token Count',
-        schema: 'numeric',
-        isExpandable: false,
+        display: 'Message Tokens',
+        schema: 'string',
+        isExpandable: true,
       },
       {
         id: 'event.original',
@@ -152,7 +152,6 @@ function LogAnalysisSyslogTable({
         row['host.ip']?.[0] || '',
         row['host.hostname']?.[0] || '',
         row['message']?.[0] || '',
-        (row['message_tokens']?.length || '').toString(),
         row['event.original']?.[0] || '',
         row['service.type']?.[0] || '',
         row['process.name']?.[0] || '',
@@ -164,7 +163,7 @@ function LogAnalysisSyslogTable({
       const tokens = row['message_tokens'] || []
       return (
         fields.some(f => f.toLowerCase().includes(lower)) ||
-        tokens.some(t => t.includes(lower))
+        tokens.some(t => t.toLowerCase().includes(lower))
       )
     })
   }, [items, searchQuery])
@@ -192,9 +191,10 @@ function LogAnalysisSyslogTable({
     }
   }, [visibleColumns, sortColumns, pageSize])
 
-  const onSearchChange = useCallback(({query, error}) => {
-    if (!error && query.text !== undefined) setSearchQuery(query.text)
-  }, [])
+  // Deprecated
+  // const onSearchChange = useCallback(({query, error}) => {
+  //   if (!error && query.text !== undefined) setSearchQuery(query.text)
+  // }, [])
 
   const renderCellValue = useCallback(
     ({rowIndex, columnId}) => {
@@ -206,11 +206,31 @@ function LogAnalysisSyslogTable({
         '@timestamp',
         'host.ip',
         'process.pid',
-        'message_tokens',
         'log.syslog.severity.code',
         'log.syslog.priority',
         'log.syslog.facility.code',
+        'message_tokens',
       ]
+
+      if (columnId === 'message_tokens') {
+        const tokens = row['message_tokens'] || []
+        const highlights = row._highlight?.[columnId] || []
+        const matchedPlain = highlights.map(h => h.replace(/<[^>]+>/g, ''))
+        return tokens.reduce<React.ReactNode[]>((acc, token, idx) => {
+          if (idx > 0) acc.push(', ')
+          const isMatch = matchedPlain.includes(token)
+          acc.push(
+            isMatch ? (
+              <span key={idx} className="logs-analysis-highlight--match">
+                {token}
+              </span>
+            ) : (
+              token
+            )
+          )
+          return acc
+        }, [])
+      }
 
       const html = row._highlight?.[columnId]?.[0]
       if (html && !excluded.includes(columnId)) {
@@ -226,8 +246,6 @@ function LogAnalysisSyslogTable({
           return row['host.hostname']?.[0] || ''
         case 'message':
           return row['message']?.[0] || ''
-        case 'message_tokens':
-          return row['message_tokens']?.length || 0
         case 'event.original':
           return row['event.original']?.[0] || ''
         case 'service.type':
@@ -308,7 +326,8 @@ function LogAnalysisSyslogTable({
 
       <FancyScrollbar style={{height: 'calc(100% - 40px)'}}>
         <div className="syslog-table--container">
-          <OuiSearchBar
+          {/* Deprecated */}
+          {/* <OuiSearchBar
             query={searchQuery}
             onChange={onSearchChange}
             box={{
@@ -316,7 +335,7 @@ function LogAnalysisSyslogTable({
               placeholder: 'Filter your Syslog data',
               style: {background: 'inherit'},
             }}
-          />
+          /> */}
 
           <OuiDataGrid
             key={pageSize}

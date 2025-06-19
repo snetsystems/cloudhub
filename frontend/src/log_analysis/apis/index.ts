@@ -106,6 +106,7 @@ export async function fetchSyslogTableData(
       fields: {
         'host.hostname': {},
         message: {},
+        message_tokens: {},
         'event.original': {},
         'service.type': {},
         'process.name': {},
