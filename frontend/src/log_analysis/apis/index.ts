@@ -101,9 +101,15 @@ export async function fetchSyslogTableData(
       },
     },
     highlight: {
-      pre_tags: ['@kibana-highlighted-field@'],
-      post_tags: ['@/kibana-highlighted-field@'],
-      fields: {'*': {}},
+      pre_tags: ["<span class='logs-analysis-highlight--match'>"],
+      post_tags: ['</span>'],
+      fields: {
+        'host.hostname': {},
+        message: {},
+        'event.original': {},
+        'service.type': {},
+        'process.name': {},
+      },
       fragment_size: 2147483647,
     },
     stored_fields: ['*'],
@@ -122,8 +128,12 @@ export async function fetchSyslogTableData(
     typeof res.rawResponse.hits.total === 'object'
       ? res.rawResponse.hits.total.value
       : res.rawResponse.hits.total
-  const data: SyslogTableRows[] = Array.isArray(hitsArray)
-    ? hitsArray.map(hit => ({id: hit._id, ...hit.fields}))
+  const data = Array.isArray(hitsArray)
+    ? hitsArray.map(hit => ({
+        id: hit._id,
+        ...hit.fields,
+        _highlight: hit.highlight,
+      }))
     : []
 
   return {data, total}

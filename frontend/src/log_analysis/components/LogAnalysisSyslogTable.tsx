@@ -34,7 +34,7 @@ import {
 interface Props {
   isLoading: boolean
   isLiveUpdating: boolean
-  syslogTableRows: SyslogTableRows[]
+  syslogTableRows: (SyslogTableRows & {_highlight?: Record<string, string[]>})[]
   timeZone: TimeZones
   autoRefreshNumberValue: number
   totalRowCount: number
@@ -201,6 +201,22 @@ function LogAnalysisSyslogTable({
       const indexInPage = rowIndex - pageIndex * pageSize
       const row = filteredItems[indexInPage]
       if (!row) return null
+
+      const excluded = [
+        '@timestamp',
+        'host.ip',
+        'process.pid',
+        'message_tokens',
+        'log.syslog.severity.code',
+        'log.syslog.priority',
+        'log.syslog.facility.code',
+      ]
+
+      const html = row._highlight?.[columnId]?.[0]
+      if (html && !excluded.includes(columnId)) {
+        return <span dangerouslySetInnerHTML={{__html: html}} />
+      }
+
       switch (columnId) {
         case '@timestamp':
           return formattedTime(row['@timestamp']?.[0] || null, timeZone)
