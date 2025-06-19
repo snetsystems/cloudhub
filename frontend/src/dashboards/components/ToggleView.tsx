@@ -226,16 +226,19 @@ function ToggleView<P>({
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
         )}
         <div className="toggle-view--header---filter">
-          <Input
-            icon={IconFont.Filter}
-            size={ComponentSize.ExtraSmall}
-            type={InputType.Number}
-            onChange={onChangeTopN}
-            value={topN.toString()}
-            min={1}
-            max={1000}
-            onBlur={handleOnBlur}
-          />
+          <div className="search-widget" style={{width: '120px'}}>
+            <input
+              type={InputType.Number}
+              className="form-control input-sm"
+              placeholder="Filter Tokens..."
+              onChange={onChangeTopN}
+              min={1}
+              max={1000}
+              onBlur={handleOnBlur}
+              value={`${topN}`}
+            />
+            <span className="icon filter" />
+          </div>
         </div>
         {renderToggle()}
       </LogAnalysisDashboardHeader>
