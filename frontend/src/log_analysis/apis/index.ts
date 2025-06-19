@@ -1,4 +1,4 @@
-import {TokenData} from 'src/dashboards/types'
+import {TokenData, LogCountData} from 'src/dashboards/types'
 import {
   BaseElasticSearchData,
   FilteredLogsForLogAnalysis,
@@ -138,4 +138,69 @@ export async function fetchSyslogTableData(
     : []
 
   return {data, total}
+}
+
+export async function fetchLogsCount({
+  esSource,
+  gteISO,
+  lteISO,
+}: {
+  esSource: BaseElasticSearchData
+  gteISO: string
+  lteISO: string
+}): Promise<{data: LogCountData[]}> {
+  const body = {
+    aggs: {
+      '0': {
+        date_histogram: {
+          field: '@timestamp',
+          calendar_interval: '1d',
+          time_zone: 'UTC',
+          extended_bounds: {
+            min: gteISO,
+            max: lteISO,
+          },
+        },
+      },
+    },
+    size: 0,
+    _source: {excludes: []},
+    query: {
+      bool: {
+        must: [],
+        should: [],
+        must_not: [],
+        filter: [
+          {
+            range: {
+              '@timestamp': {
+                format: 'strict_date_optional_time',
+                gte: gteISO,
+                lte: lteISO,
+              },
+            },
+          },
+        ],
+      },
+    },
+    stored_fields: ['*'],
+    runtime_mappings: {},
+    script_fields: {},
+    fields: [{field: '@timestamp', format: 'date_time'}],
+  }
+
+  const res = await asyncSearch(esSource.links.proxy, {
+    path: '/syslog-*/_async_search',
+    method: 'POST',
+    body,
+  })
+
+  const data: LogCountData[] = res.rawResponse.aggregations['0'].buckets.map(
+    (b: {key: string; doc_count: number}) => ({
+      time: b.key,
+      value: b.doc_count,
+    })
+  )
+
+  return {data}
 }

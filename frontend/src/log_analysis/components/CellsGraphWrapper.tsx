@@ -20,11 +20,6 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
-import {
-  NVIDIA_SMI_STATISTIC_CANNED_LAYOUT_ID,
-  NVIDIA_SMI_TIME_SERIES_CANNED_LAYOUT_IDS,
-} from 'src/gpu_monitoring/constants'
-
 // Components
 import GPUMonitoringDashboardHeader from 'src/gpu_monitoring/components/GPUMonitoringDashboardHeader'
 import {timeRanges} from 'src/shared/data/timeRanges'

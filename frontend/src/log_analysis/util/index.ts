@@ -33,8 +33,7 @@ export const buildCombinedFilters = (
   baseFilters: FilteredLogsForLogAnalysis,
   timeRange?: CloudTimeRange['logAnalysis']
 ): FilteredLogsForLogAnalysis => {
-  const defaultLower = timeRange?.lower ?? ''
-  const defaultUpper = timeRange?.upper ?? ''
+  const {gteISO, lteISO} = lowerToESRange(timeRange)
 
   const combined: FilteredLogsForLogAnalysis = [...baseFilters]
   const hasTime = combined.some(
@@ -45,8 +44,8 @@ export const buildCombinedFilters = (
       range: {
         '@timestamp': {
           format: 'strict_date_optional_time',
-          gte: defaultLower,
-          lte: defaultUpper,
+          gte: gteISO,
+          lte: lteISO,
         },
       },
     })
@@ -73,4 +72,81 @@ export const getLogsFilterLabel = (filter: LogsFilterClause): string => {
     return filter.kql
   }
   return ''
+}
+
+export type RelativeExpr = `now() - ${number}${'s' | 'm' | 'h' | 'd' | 'w'}`
+export type DateExpr =
+  | RelativeExpr
+  | 'now()'
+  | string // ISO-8601 e.g. "2025-06-17T09:00:00Z"
+  | null
+  | undefined
+
+export interface FluxLikeRange {
+  lower?: DateExpr
+  upper?: DateExpr
+  format?: string
+}
+
+export interface ESRange {
+  gteISO: string // lower  → gte
+  lteISO: string // upper  → lte
+}
+
+const MS = {
+  s: 1_000,
+  m: 60_000,
+  h: 3_600_000,
+  d: 86_400_000,
+  w: 604_800_000,
+} as const
+
+export function lowerToESRange(
+  upperOrObj: DateExpr | FluxLikeRange,
+  lowerMaybe?: DateExpr,
+  nowDate: Date = new Date()
+): ESRange {
+  let lower: DateExpr
+  let upper: DateExpr
+
+  if (
+    typeof upperOrObj === 'object' &&
+    upperOrObj !== null &&
+    ('lower' in upperOrObj || 'upper' in upperOrObj)
+  ) {
+    lower = upperOrObj.lower ?? null
+    upper = upperOrObj.upper ?? 'now()'
+  } else {
+    upper = upperOrObj as DateExpr
+    lower = lowerMaybe ?? null
+  }
+
+  const lteISO = toISO(upper, nowDate) // upper → lte
+  const gteISO = toISO(lower, nowDate) // lower → gte
+
+  if (new Date(gteISO).getTime() > new Date(lteISO).getTime()) {
+    throw new Error(`lower(${gteISO})가 upper(${lteISO})보다 이후입니다.`)
+  }
+
+  return {gteISO, lteISO}
+}
+
+/* ---------------------------------------------------------------------- */
+function toISO(expr: DateExpr, now: Date): string {
+  if (!expr || expr.trim().toLowerCase() === 'now()') {
+    return now.toISOString()
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(expr)) {
+    return new Date(expr).toISOString()
+  }
+
+  const m = expr.match(/^now\(\)\s*-\s*(\d+)\s*([smhdw])$/i)
+  if (m) {
+    const amount = Number(m[1])
+    const unit = m[2].toLowerCase() as keyof typeof MS
+    return new Date(now.getTime() - amount * MS[unit]).toISOString()
+  }
+
+  throw new Error(`지원하지 않는 날짜 표현식: ${expr}`)
 }

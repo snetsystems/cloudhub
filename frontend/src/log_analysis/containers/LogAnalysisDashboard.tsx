@@ -204,14 +204,7 @@ function LogAnalysisDashboard({
               isEditable: false,
             }}
           >
-            <LogAnalysisAlertBarWarpper
-              cell={cell}
-              host={''}
-              source={source}
-              sources={[source]}
-              isEditable={false}
-              manualRefresh={manualRefreshState.value}
-            />
+            <LogAnalysisAlertBarWarpper cell={cell} />
           </Authorized>
         )
       }

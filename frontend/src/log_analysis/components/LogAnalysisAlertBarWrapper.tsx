@@ -1,143 +1,254 @@
-import React, {useMemo, useEffect} from 'react'
+import React, {useMemo, useEffect, useState, useRef, MouseEvent} from 'react'
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 import LogAnalysisDashboardHeader from './LogAnalysisDashboardHeader'
-import Layout from 'src/shared/components/Layout'
 
-import {
-  Cell,
-  INPUT_TIME_TYPE,
-  Source,
-  Template,
-  TemplateValueType,
-  TimeRange,
-  TimeZones,
-  TemplateType,
-  TemplateValue,
-} from 'src/types'
-import {Instance} from 'src/hosts/types'
-import {
-  TEMP_VAR_DASHBOARD_TIME,
-  TEMP_VAR_UPPER_DASHBOARD_TIME,
-} from 'src/shared/constants'
+import {Cell, TimeZones, BaseElasticSearchData} from 'src/types'
+
 import {timeRanges} from 'src/shared/data/timeRanges'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
-
+import {
+  addLogAnalysisRangeFilterClause,
+  removeLogAnalysisRangeFilterClause,
+} from '../actions'
+import moment from 'moment'
+import RefreshSpinner from 'src/reusable_ui/components/spinners/RefreshSpinner'
+import {fetchLogsCount} from '../apis'
+import {LogCountData} from 'src/dashboards/types'
+import {Bar, getElementAtEvent} from 'react-chartjs-2'
+import {Chart as ChartJS} from 'chart.js'
+import {lowerToESRange} from '../util'
+import {FilteredLogsForLogAnalysis} from 'src/types/logAnalysis'
 interface Props {
   cell: Cell
-  host: string
-  source: Source
-  sources: Source[]
-  isEditable: boolean
-
-  onZoom?: () => void
-  onDeleteCell?: () => void
-  onCloneCell?: () => void
-  onSummonOverlayTechnologies?: () => void
-  manualRefresh?: number
-  instance?: Instance
-  onPickTemplate?: (template: Template, value: TemplateValue) => void
+  esSource?: BaseElasticSearchData
   cloudTimeRange?: CloudTimeRange
   cloudAutoRefresh?: CloudAutoRefresh
   timeZone?: TimeZones
+  setCloudTimeRange?: (value: CloudTimeRange) => void
+  addLogAnalysisRangeFilter?: (
+    field: string,
+    gte?: string,
+    lte?: string,
+    format?: string
+  ) => void
+  filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
+  removeLogAnalysisRangeFilterClause?: (field: string) => void
 }
 function LogAnalysisAlertBarWrapper({
   cell,
-  host,
-  source,
-  onZoom,
-  sources,
   cloudTimeRange,
-  onDeleteCell,
-  onCloneCell,
-  manualRefresh,
-  onSummonOverlayTechnologies,
-  instance,
-  onPickTemplate,
   cloudAutoRefresh,
-  timeZone,
+  esSource,
+  addLogAnalysisRangeFilter,
+  removeLogAnalysisRangeFilterClause,
 }: Props) {
+  const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
+
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const [logsData, setLogsData] = useState<LogCountData[]>([])
+
+  /** ① 클릭된 바의 위치를 기억하는 리액트 상태 */
+  const [active, setActive] = useState<null | {
+    index: number
+    datasetIndex: number
+  }>(null)
+
+  /** ④ 캔버스 클릭 → getElementAtEvent 로 bar 요소 획득 */
+  const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
+    const elem = getElementAtEvent(chartRef.current, e)[0] // 배열 중 첫 번째
+    if (!elem) {
+      setActive(null) // 빈 공간 클릭 시 선택 해제
+      return
+    }
+    const {index, datasetIndex} = elem
+
+    if (
+      active &&
+      active.index === index &&
+      active.datasetIndex === datasetIndex
+    ) {
+      removeLogAnalysisRangeFilterClause('@timestamp')
+      setActive(null)
+    } else {
+      setActive({index, datasetIndex})
+      addLogAnalysisRangeFilter(
+        '@timestamp',
+        logsData[index].time,
+        logsData[index].time + 86400000
+      )
+    }
+  }
+
   const defaultTimeRange = timeRanges.find(i => i.inputValue === 'Past 30d')
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
-  }, [cloudAutoRefresh?.logAnalysis])
+    getLogsData(esSource)
+  }, [cloudAutoRefresh?.logAnalysis, esSource])
 
-  const isTimeStamp = useMemo(() => {
-    return cloudTimeRange?.logAnalysis?.format === INPUT_TIME_TYPE.TIMESTAMP
-  }, [cloudTimeRange?.logAnalysis])
+  const getLogsData = async (esSource: BaseElasticSearchData) => {
+    if (!esSource) return
 
-  const templates = (): Template[] => {
-    const dashboardTime = {
-      id: 'dashtime',
-      tempVar: TEMP_VAR_DASHBOARD_TIME,
-      type: isTimeStamp ? TemplateType.TimeStamp : TemplateType.Constant,
-      label: '',
-      values: [
-        {
-          value: cloudTimeRange?.logAnalysis?.lower ?? 'now() - 30d',
-          type: isTimeStamp
-            ? TemplateValueType.TimeStamp
-            : TemplateValueType.Constant,
-          selected: true,
-          localSelected: true,
-        },
-      ],
-    }
+    const {gteISO, lteISO} = lowerToESRange({
+      lower: cloudTimeRange?.logAnalysis?.lower ?? defaultTimeRange.lower,
+      upper: cloudTimeRange?.logAnalysis?.upper ?? 'now()',
+    })
 
-    const upperDashboardTime = {
-      id: 'upperdashtime',
-      tempVar: TEMP_VAR_UPPER_DASHBOARD_TIME,
-      type: isTimeStamp ? TemplateType.TimeStamp : TemplateType.Constant,
-      label: '',
-      values: [
-        {
-          value: cloudTimeRange?.logAnalysis?.upper ?? 'now()',
-          type:
-            isTimeStamp && cloudTimeRange?.logAnalysis?.upper !== 'now()'
-              ? TemplateValueType.TimeStamp
-              : TemplateValueType.Constant,
-          selected: true,
-          localSelected: true,
-        },
-      ],
-    }
+    const res = await fetchLogsCount({
+      esSource,
+      gteISO,
+      lteISO,
+    })
 
-    return [dashboardTime, upperDashboardTime]
+    setLogsData(res.data)
   }
 
-  const handleClickDate = (time: number) => {
-    //click event
-  }
-
-  const reBuildQuery = (cell: Cell) => {
+  const chartData = useMemo(() => {
     return {
-      ...cell,
-      ...{
-        graphOptions: {
-          ...cell.graphOptions,
-          clickCallback: (_, __, points) => {
-            //consider double click debounce
-            handleClickDate(points[0].xval)
+      datasets: [
+        {
+          label: 'Count',
+          data: logsData.map(i => ({x: i?.time, y: i?.value})),
+          borderSkipped: false,
+          backgroundColor: logsData.map((_, i) =>
+            active && i === active.index
+              ? '#F3852C'
+              : i !== 0
+              ? 'rgba(49, 192, 246, 0.8)'
+              : 'rgba(49, 192, 246, 0.3)'
+          ),
+          borderColor: logsData.map((_, i) =>
+            active && i === active.index ? '#F3852C' : 'rgba(0,0,0,0)'
+          ),
+          minBarLength: 3,
+          borderWidth: logsData.map((_, i) =>
+            active && i === active.index ? 2 : 1
+          ),
+          borderRadius: 4,
+        },
+      ],
+      labels: logsData.map(i => moment(i.time).format('MMM DD')),
+    }
+  }, [logsData, active])
+
+  const options = ({
+    xAxisTitle,
+    yAxisTitle,
+  }: {
+    xAxisTitle: string
+    yAxisTitle: string
+  }) => {
+    return {
+      layout: {
+        padding: {
+          right: 10,
+        },
+      },
+      animation: {
+        duration: 0,
+      },
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+        zoom: {
+          zoom: {
+            drag: {
+              enabled: true,
+            },
+            wheel: {
+              enabled: false,
+            },
+            pinch: {
+              enabled: true,
+            },
+            mode: 'x' as const,
           },
         },
-        queries: cell.queries.map(i => {
-          return {
-            ...i,
-            groupbys: ['time(1d)'],
-            wheres: [],
-            tz:
-              timeZone === TimeZones.UTC
-                ? 'UTC'
-                : `${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
-          }
-        }),
+        tooltip: {
+          borderWidth: 0,
+          cornerRadius: 4,
+          pointStyle: 'circle',
+          usePointStyle: true,
+          boxWidth: 10,
+          boxHeight: 10,
+          callbacks: {},
+        },
+        legend: {
+          display: false,
+        },
       },
+      scales: {
+        x: {
+          title: {
+            color: '#999dab',
+            display: true,
+            font: {
+              size: 11,
+              weight: '600',
+            },
+            padding: {
+              top: 15,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            },
+            text: xAxisTitle,
+          },
+          barThickness: 1,
+          grid: {
+            color: '#383846',
+          },
+          ticks: {
+            font: {
+              size: 11,
+              weight: '600',
+            },
+            maxRotation: 0,
+            minRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 8,
+            autoSkipPadding: 25,
+            sampleSize: 8,
+          },
+          stacked: false,
+        },
+        y: {
+          title: {
+            color: '#999dab',
+            display: true,
+            font: {
+              size: 11,
+              weight: '600',
+            },
+
+            position: 'left',
+            text: yAxisTitle,
+          },
+          grid: {
+            color: '#383846',
+          },
+          ticks: {
+            font: {
+              size: 11,
+              weight: '600',
+            },
+          },
+          stacked: false,
+        },
+      },
+    }
+  }
+
+  const onResetZoom = () => {
+    if (chartRef && chartRef.current) {
+      chartRef.current.resetZoom()
     }
   }
 
@@ -148,26 +259,42 @@ function LogAnalysisAlertBarWrapper({
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
-        <div className="dash-graph--name"></div>
+        <div className="dash-graph--name">
+          <RefreshSpinner
+            isActive={isRefreshing}
+            isHighlighted={isRefreshing}
+          />
+
+          <button
+            className="refresh-spinner button button-sm button-default button-square"
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+            }}
+            onClick={e => {
+              e.stopPropagation()
+              setIsRefreshing(!isRefreshing)
+            }}
+          >
+            {isRefreshing ? 'Stop' : 'Start'}
+          </button>
+        </div>
       </LogAnalysisDashboardHeader>
+
       {!!cell && (
-        <Layout
-          key={cell.i}
-          cell={reBuildQuery(cell)}
-          host={host}
-          source={source}
-          onZoom={onZoom}
-          sources={sources}
-          templates={templates()}
-          timeRange={cloudTimeRange?.logAnalysis ?? defaultTimeRange}
-          isEditable={false}
-          onDeleteCell={onDeleteCell}
-          onCloneCell={onCloneCell}
-          manualRefresh={manualRefresh}
-          onSummonOverlayTechnologies={onSummonOverlayTechnologies}
-          instance={instance}
-          onPickTemplate={onPickTemplate}
-        />
+        <div className="histogram-graph--chart">
+          <Bar
+            options={options({
+              xAxisTitle: 'Time Stamp',
+              yAxisTitle: 'Logs Count',
+            })}
+            ref={chartRef}
+            data={chartData}
+            onDoubleClick={onResetZoom}
+            onClick={handleClick}
+          />
+        </div>
       )}
     </div>
   )
@@ -176,14 +303,28 @@ function LogAnalysisAlertBarWrapper({
 const mstp = state => {
   const {
     app: {
-      persisted: {cloudAutoRefresh, timeZone, cloudTimeRange},
+      persisted: {cloudAutoRefresh, timeZone, cloudTimeRange, esSource},
     },
+    logAnalysisDashboard: {filteredLogsForLogAnalysis},
   } = state
   return {
     cloudTimeRange,
     cloudAutoRefresh,
     timeZone,
+    esSource,
+    filteredLogsForLogAnalysis,
   }
 }
 
-export default connect(mstp)(LogAnalysisAlertBarWrapper)
+const mdtp = dispatch => ({
+  addLogAnalysisRangeFilter: bindActionCreators(
+    addLogAnalysisRangeFilterClause,
+    dispatch
+  ),
+  removeLogAnalysisRangeFilterClause: bindActionCreators(
+    removeLogAnalysisRangeFilterClause,
+    dispatch
+  ),
+})
+
+export default connect(mstp, mdtp)(LogAnalysisAlertBarWrapper)
