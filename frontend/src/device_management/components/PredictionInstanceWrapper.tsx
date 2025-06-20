@@ -149,7 +149,7 @@ const PredictionInstanceWrapper = ({
         getCellsReactive(
           currentLayouts,
           source,
-          filteredHexbinHost ?? '',
+          {agent_host: filteredHexbinHost ?? ''},
           ratio,
           isIntervalManual ? interval : null
         )

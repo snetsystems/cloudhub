@@ -91,7 +91,7 @@ const PredictionStatisticalGraphWrapper = ({
       height: statisticHeight,
     }
     if (!!layout) {
-      setLayoutCells(getCellsReactive(layout, source, '', ratio, null))
+      setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
     }
   }, [layout, selfTimeRange, statisticHeight])
 
