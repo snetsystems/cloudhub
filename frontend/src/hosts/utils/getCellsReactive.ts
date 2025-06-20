@@ -22,10 +22,15 @@ interface Ratio {
   yNum: number
   height: number
 }
+
+interface WhereTag {
+  [key: string]: string | number
+}
+
 export function getCellsReactive(
   layouts: Layout[],
   source: Source,
-  whereTag: string,
+  whereTag: WhereTag,
   ratio: Ratio,
   interval?: number
 ): Cell[] {
@@ -103,7 +108,7 @@ function translateCellGroups(groups: LayoutCell[][]): LayoutCell[] {
 function toCell(
   layoutCell: LayoutCell,
   source: Source,
-  whereTag: string,
+  whereTag: WhereTag,
   interval?: number
 ): Cell {
   const queries = layoutCell.queries.map(d =>
@@ -115,10 +120,10 @@ function toCell(
     queries,
 
     links: {},
-    legend: {},
+    legend: layoutCell?.legend || {},
     type: (layoutCell?.type as CellType) || CellType.Line,
     colors: ((layoutCell?.colors as unknown) as ColorString[]) || [],
-    decimalPlaces: layoutCell.decimalPlaces || DEFAULT_DECIMAL_PLACES,
+    decimalPlaces: layoutCell?.decimalPlaces || DEFAULT_DECIMAL_PLACES,
   }
 
   return cell
@@ -127,12 +132,17 @@ function toCell(
 function toCellQuery(
   layoutQuery: LayoutQuery & queryWithWhereGroupby,
   source: Source,
-  whereTag: string,
+  whereTag: WhereTag,
   interval?: number
 ): CellQuery {
-  const additionalWheres = [
-    whereTag !== '' ? `"host" = '${whereTag}'` : null,
-  ].filter(i => !!i)
+  const additionalWheres = Object.keys(whereTag)
+    .map(key => {
+      if (whereTag[key] !== '' && whereTag[key] !== -1) {
+        return `"${key}" = '${whereTag[key]}'`
+      }
+      return null
+    })
+    .filter(i => !!i)
 
   const filteredQuery = {
     ...layoutQuery,
@@ -144,7 +154,7 @@ function toCellQuery(
   }
 
   const cellQuery: any =
-    whereTag !== '' || (interval && interval > 0)
+    whereTag.host !== '' || whereTag.index !== -1 || (interval && interval > 0)
       ? {
           ...filteredQuery,
           source: source.url,

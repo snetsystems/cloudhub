@@ -111,11 +111,10 @@ const GPUMonitoringCellsGraphWrapper = ({
 
   useEffect(() => {
     if (isStatisticsGraph) return
-    // prepare rollback
-    // const whereTags = {
-    //   host: filteredHostForGPUMonitoring.hostname,
-    //   index: filteredHostForGPUMonitoring.gpuIndex,
-    // }
+    const whereTags = {
+      host: filteredHostForGPUMonitoring.hostname,
+      index: filteredHostForGPUMonitoring.gpuIndex,
+    }
     const ratio = {
       xNum: 4,
       yNum: 3,
@@ -123,16 +122,7 @@ const GPUMonitoringCellsGraphWrapper = ({
     }
 
     if (!!layout) {
-      // setLayoutCells(getCellsWithRatio(layout, source, whereTags, xNum, null))
-      setLayoutCells(
-        getCellsReactive(
-          layout,
-          source,
-          filteredHostForGPUMonitoring.hostname ?? '',
-          ratio,
-          null
-        )
-      )
+      setLayoutCells(getCellsReactive(layout, source, whereTags, ratio, null))
     }
   }, [
     layout,
@@ -151,7 +141,7 @@ const GPUMonitoringCellsGraphWrapper = ({
       height: statisticGraphHeight,
     }
     if (!!layout) {
-      setLayoutCells(getCellsReactive(layout, source, '', ratio, null))
+      setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
     }
   }, [layout, selfTimeRange, statisticGraphHeight])
 
