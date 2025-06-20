@@ -17,7 +17,6 @@ import {
   removeLogAnalysisRangeFilterClause,
 } from '../actions'
 import moment from 'moment'
-import RefreshSpinner from 'src/reusable_ui/components/spinners/RefreshSpinner'
 import {fetchLogsCount} from '../apis'
 import {LogCountData} from 'src/dashboards/types'
 import {Bar, getElementAtEvent} from 'react-chartjs-2'
@@ -50,8 +49,6 @@ function LogAnalysisAlertBarWrapper({
 }: Props) {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
 
-  const [isRefreshing, setIsRefreshing] = useState(false)
-
   const [logsData, setLogsData] = useState<LogCountData[]>([])
 
   /** ① 클릭된 바의 위치를 기억하는 리액트 상태 */
@@ -65,6 +62,7 @@ function LogAnalysisAlertBarWrapper({
     const elem = getElementAtEvent(chartRef.current, e)[0] // 배열 중 첫 번째
     if (!elem) {
       setActive(null) // 빈 공간 클릭 시 선택 해제
+      removeLogAnalysisRangeFilterClause('@timestamp')
       return
     }
     const {index, datasetIndex} = elem
@@ -160,7 +158,7 @@ function LogAnalysisAlertBarWrapper({
         zoom: {
           zoom: {
             drag: {
-              enabled: true,
+              enabled: false,
             },
             wheel: {
               enabled: false,
@@ -168,6 +166,7 @@ function LogAnalysisAlertBarWrapper({
             pinch: {
               enabled: true,
             },
+
             mode: 'x' as const,
           },
         },
@@ -259,27 +258,7 @@ function LogAnalysisAlertBarWrapper({
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
-        <div className="dash-graph--name">
-          <RefreshSpinner
-            isActive={isRefreshing}
-            isHighlighted={isRefreshing}
-          />
-
-          <button
-            className="refresh-spinner button button-sm button-default button-square"
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-            }}
-            onClick={e => {
-              e.stopPropagation()
-              setIsRefreshing(!isRefreshing)
-            }}
-          >
-            {isRefreshing ? 'Stop' : 'Start'}
-          </button>
-        </div>
+        <div className="dash-graph--name"></div>
       </LogAnalysisDashboardHeader>
 
       {!!cell && (
@@ -291,7 +270,9 @@ function LogAnalysisAlertBarWrapper({
             })}
             ref={chartRef}
             data={chartData}
-            onDoubleClick={onResetZoom}
+            onDrag={() => {
+              console.log('onDrag')
+            }}
             onClick={handleClick}
           />
         </div>
