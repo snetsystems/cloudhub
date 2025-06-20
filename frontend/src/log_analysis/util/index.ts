@@ -5,6 +5,7 @@ import {
   LogsFilterClause,
   TimeZones,
 } from 'src/types'
+import {OperatorMeta, FIELD_OPERATOR_META} from '../constants/search-filter'
 
 export const formattedTime = (
   timestampInput: string | null,
@@ -163,4 +164,13 @@ function toISO(expr: DateExpr, now: Date): string {
   }
 
   throw new Error(`지원하지 않는 날짜 표현식: ${expr}`)
+}
+
+export const getFieldOperatorsWithLogical = (
+  field: string,
+  type: string
+): OperatorMeta[] => {
+  const ops = FIELD_OPERATOR_META[field] || FIELD_OPERATOR_META[type]
+
+  return [...ops]
 }

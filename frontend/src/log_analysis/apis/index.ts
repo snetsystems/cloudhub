@@ -5,6 +5,19 @@ import {
   SyslogTableRows,
 } from 'src/types'
 import {asyncSearch} from '../util/ensureAsyncSearch'
+import {esProxy} from 'src/utils/esQueryUrlGenerator'
+import {
+  AutoCompleteResult,
+  FieldInfo,
+  FieldListResponse,
+} from 'src/types/elasticSearch'
+import {
+  ALWAYS_TOP_FIELDS,
+  KNOWN_ES_FIELD_TYPES,
+  LOGICAL_OPERATORS,
+  OperatorMeta,
+} from '../constants/search-filter'
+import {getFieldOperatorsWithLogical} from '../util'
 
 export async function fetchMessageTokenData({
   esSource,
@@ -203,4 +216,140 @@ export async function fetchLogsCount({
   )
 
   return {data}
+}
+
+export async function fetchKibanaFieldList({
+  esSource,
+  indexPattern = 'syslog-*',
+}: {
+  esSource: BaseElasticSearchData
+  indexPattern?: string
+}): Promise<FieldListResponse> {
+  try {
+    const {data} = await esProxy(esSource.links.proxy, {
+      path: `/${indexPattern}/_field_caps?fields=*`,
+      method: 'POST',
+    })
+
+    const fieldTypeMap: Record<string, string> = {}
+    Object.entries(data?.fields ?? {}).forEach(([field, typeObj]) => {
+      const types = Object.keys(typeObj)
+
+      if (types.length === 1) {
+        fieldTypeMap[field] = types[0]
+      } else {
+        fieldTypeMap[field] =
+          types.find(t => KNOWN_ES_FIELD_TYPES.includes(t)) || types[0]
+      }
+    })
+
+    const usableFields = [
+      ...new Set([
+        ...Object.entries(data?.fields ?? {})
+          .filter(([_, typeObj]) => {
+            const typeNames = Object.keys(typeObj)
+            if (typeNames.length === 1 && typeNames[0] === 'object')
+              return false
+            return Object.values(typeObj).some(
+              (info: any) =>
+                (info.searchable || info.aggregatable) && !info.metadata_field
+            )
+          })
+          .map(([field]) => field),
+        ...ALWAYS_TOP_FIELDS,
+      ]),
+    ]
+
+    const topFields = ALWAYS_TOP_FIELDS.filter(f => usableFields.includes(f))
+    const restFields = usableFields
+      .filter(f => !ALWAYS_TOP_FIELDS.includes(f))
+      .sort()
+
+    const fields: FieldInfo[] = [...topFields, ...restFields].map(field => ({
+      field,
+      type: fieldTypeMap[field] || field,
+    }))
+
+    return {fields, total: fields.length}
+  } catch (err) {
+    return {fields: [], total: 0}
+  }
+}
+
+export async function getAutoCompleteResult({
+  input,
+  allFields,
+  esSource,
+  indexPattern = 'syslog-*',
+}: {
+  input: string
+  allFields: FieldInfo[]
+  esSource: BaseElasticSearchData
+  indexPattern?: string
+}): Promise<AutoCompleteResult> {
+  const trimmed = input.trim()
+  const endsWithSpace = input.endsWith(' ')
+  let fields: FieldInfo[] = []
+  let operators: OperatorMeta[] = []
+  let values: string[] = []
+
+  const match = trimmed.match(/^([\w\.\-]+)\s*[:!<>=]+\s*(.*)$/)
+  if (match) {
+    const field = match[1]
+    const valueInput = match[2] || ''
+
+    if (
+      (valueInput && input.endsWith(' ')) ||
+      /^".+"$/.test(valueInput.trim()) ||
+      /^'.+'$/.test(valueInput.trim())
+    ) {
+      return {fields: [], operators: LOGICAL_OPERATORS, values: []}
+    }
+
+    try {
+      const {data} = await esProxy(esSource.links.proxy, {
+        path: `/${indexPattern}/_terms_enum`,
+        method: 'POST',
+        body: {
+          field,
+          string: valueInput,
+          size: 10,
+        },
+      })
+      values = data.terms || []
+    } catch {
+      values = []
+    }
+    return {fields: [], operators: [], values}
+  }
+
+  const lower = trimmed.toLowerCase()
+  const startsWithFields = allFields.filter(f =>
+    f.field.toLowerCase().startsWith(lower)
+  )
+  const includesFields = allFields.filter(
+    f =>
+      !f.field.toLowerCase().startsWith(lower) &&
+      f.field.toLowerCase().includes(lower)
+  )
+  fields = [...startsWithFields, ...includesFields]
+
+  if (fields.length === 1) {
+    if (!endsWithSpace) {
+      operators = getFieldOperatorsWithLogical(fields[0].field, fields[0].type)
+    } else {
+      operators = [
+        ...getFieldOperatorsWithLogical(fields[0].field, fields[0].type),
+        ...LOGICAL_OPERATORS,
+      ]
+    }
+  } else {
+    operators = [
+      {op: ':', label: 'equals', description: 'equals some value'},
+      {op: ':*', label: 'exists', description: 'exists in any form'},
+      ...(endsWithSpace ? LOGICAL_OPERATORS : []),
+    ]
+  }
+
+  return {fields, operators}
 }

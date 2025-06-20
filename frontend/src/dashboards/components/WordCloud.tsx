@@ -51,8 +51,7 @@ export default function WordCloud({
     maxFontSize,
     padding,
   })
-  const overflowCount = topN - words.length
-
+  const overflowCount = data.length - words.length
   const palette = useMemo(
     () =>
       d3
@@ -87,6 +86,7 @@ export default function WordCloud({
       .style('fill', d => palette(d.text))
       .style('font-family', 'Inter UI, sans-serif')
       .style('fill-opacity', 0)
+      .style('cursor', 'pointer')
       .text(d => d.text)
       .on('click', (_, d) => onSelect?.(d.text))
 
@@ -130,7 +130,7 @@ export default function WordCloud({
   return (
     <div style={{position: 'relative', width, height}}>
       <svg ref={svgRef} />
-      {overflowCount > 0 && (
+      {words.length > 0 && overflowCount > 0 && (
         <span className="hidden-indicator">+{overflowCount} more</span>
       )}
     </div>

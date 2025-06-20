@@ -1,3 +1,5 @@
+import {OperatorMeta} from 'src/log_analysis/constants/search-filter'
+
 export interface BasicAuth {
   username: string
   password: string
@@ -61,3 +63,18 @@ export type ToggleEsWizard = (
   isVisible: boolean,
   esInfo?: BaseElasticSearchData
 ) => () => void
+
+export interface FieldInfo {
+  field: string
+  type: string
+}
+export interface FieldListResponse {
+  fields: FieldInfo[]
+  total: number
+}
+
+export interface AutoCompleteResult {
+  fields: FieldInfo[]
+  operators: OperatorMeta[]
+  values?: string[]
+}
