@@ -62,6 +62,32 @@ function LogAnalysisAlertBarWrapper({
 
   const [dragEndTime, setDragEndTime] = useState(0)
 
+  let intervalID
+
+  useEffect(() => {
+    GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
+    const controller = new AbortController()
+
+    if (!!cloudAutoRefresh?.logAnalysis) {
+      clearInterval(intervalID)
+      intervalID = window.setInterval(() => {
+        getLogsData(esSource)
+      }, cloudAutoRefresh?.logAnalysis)
+    }
+
+    GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [cloudAutoRefresh?.logAnalysis, esSource])
+
+  useEffect(() => {
+    getLogsData(esSource)
+  }, [])
+
   useEffect(() => {
     if (
       timeRange &&
@@ -113,11 +139,6 @@ function LogAnalysisAlertBarWrapper({
   }
 
   const defaultTimeRange = timeRanges.find(i => i.inputValue === 'Past 30d')
-
-  useEffect(() => {
-    GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
-    getLogsData(esSource)
-  }, [cloudAutoRefresh?.logAnalysis, esSource])
 
   const getLogsData = async (esSource: BaseElasticSearchData) => {
     if (!esSource) return
