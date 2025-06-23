@@ -5,6 +5,7 @@ import {
   SYSLOG_FACILITY_MAP,
   SYSLOG_SEVERITY_MAP,
   SYSLOG_TABLE_ROWS_MOCK_DATA,
+  SYSLOG_TABLE_CHUNK_SIZE,
 } from 'src/log_analysis/constants/log-analysis'
 
 export {
@@ -14,4 +15,5 @@ export {
   SYSLOG_FACILITY_MAP,
   SYSLOG_SEVERITY_MAP,
   SYSLOG_TABLE_ROWS_MOCK_DATA,
+  SYSLOG_TABLE_CHUNK_SIZE,
 }

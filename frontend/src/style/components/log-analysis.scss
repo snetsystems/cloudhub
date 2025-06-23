@@ -3,6 +3,17 @@
   justify-self: center;
 }
 
+.syslog-table--total-count {
+  padding: 5px 0px 0px 10px;
+  font-weight: bold;
+}
+
+button[data-test-subj='pagination-button-next'][disabled] {
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 .ouiFlexItem.ouiSearchBar__searchHolder {
   padding-top: 5px;
 }

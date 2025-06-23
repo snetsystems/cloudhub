@@ -2,7 +2,7 @@ import {manager} from 'src/worker/JobManager'
 
 export interface ESProxyQuery {
   path: string
-  method?: 'GET' | 'POST'
+  method?: 'GET' | 'POST' | 'DELETE'
   params?: Record<string, any>
   body?: Record<string, any>
   uuid?: string

@@ -1,5 +1,5 @@
 import {FilteredLogsForLogAnalysis, SyslogTableRows} from 'src/types'
-
+export const SYSLOG_TABLE_CHUNK_SIZE = 500
 export const LOG_ANALYSIS_LOCAL_STORAGE_KEY = 'Log-Analysis'
 export const LOG_ANALYSIS_SYSLOG_TABLE_PAGE_SIZE_OPTIONS = [5, 10, 50]
 

@@ -1,10 +1,6 @@
 // Library
 import React, {useState, useEffect, useMemo, useCallback} from 'react'
-import {
-  OuiDataGrid,
-  OuiDataGridSchemaDetector,
-  OuiSearchBar,
-} from '@opensearch-project/oui'
+import {OuiDataGrid, OuiDataGridSchemaDetector} from '@opensearch-project/oui'
 import '@opensearch-project/oui/dist/oui_theme_dark.css'
 
 // Components
@@ -37,6 +33,7 @@ interface Props {
   syslogTableRows: (SyslogTableRows & {_highlight?: Record<string, string[]>})[]
   timeZone: TimeZones
   autoRefreshNumberValue: number
+  totalHitsValue: number
   totalRowCount: number
   pageIndex: number
   pageSize: number
@@ -45,6 +42,8 @@ interface Props {
   onChangePage: (index: number) => void
   onChangeItemsPerPage: (size: number) => void
   onSort: (cols: {id: string; direction: 'asc' | 'desc'}[]) => void
+  onLoadMore: () => void
+  hasMore: boolean
 }
 
 function LogAnalysisSyslogTable({
@@ -52,6 +51,7 @@ function LogAnalysisSyslogTable({
   isLoading,
   syslogTableRows,
   timeZone = TimeZones.UTC,
+  totalHitsValue,
   totalRowCount,
   autoRefreshNumberValue,
   pageIndex,
@@ -61,6 +61,8 @@ function LogAnalysisSyslogTable({
   onChangePage,
   onChangeItemsPerPage,
   onSort,
+  onLoadMore,
+  hasMore,
 }: Props) {
   const columns = useMemo(
     () => [
@@ -126,7 +128,7 @@ function LogAnalysisSyslogTable({
     ],
     []
   )
-  const [searchQuery, setSearchQuery] = useState('')
+
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
@@ -143,34 +145,22 @@ function LogAnalysisSyslogTable({
   })
 
   const items = useMemo(() => syslogTableRows, [syslogTableRows])
+  const [searchQuery, setSearchQuery] = useState('')
   const filteredItems = useMemo(() => {
     if (!searchQuery) return items
     const lower = searchQuery.toLowerCase()
-    return items.filter(row => {
-      const fields = [
-        row['@timestamp']?.[0] || '',
-        row['host.ip']?.[0] || '',
-        row['host.hostname']?.[0] || '',
-        row['message']?.[0] || '',
-        row['event.original']?.[0] || '',
-        row['service.type']?.[0] || '',
-        row['process.name']?.[0] || '',
-        (row['process.pid']?.[0] || '').toString(),
-        (row['log.syslog.severity.code']?.[0] || '').toString(),
-        (row['log.syslog.priority']?.[0] || '').toString(),
-        (row['log.syslog.facility.code']?.[0] || '').toString(),
-      ]
-      const tokens = row['message_tokens'] || []
-      return (
-        fields.some(f => f.toLowerCase().includes(lower)) ||
-        tokens.some(t => t.toLowerCase().includes(lower))
-      )
-    })
+    return items.filter(row =>
+      Object.values(row)
+        .flat()
+        .some(val => String(val).toLowerCase().includes(lower))
+    )
   }, [items, searchQuery])
 
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(totalRowCount / pageSize))
-    if (pageIndex >= totalPages) onChangePage(totalPages - 1)
+    if (pageIndex >= totalPages) {
+      onChangePage(totalPages - 1)
+    }
   }, [totalRowCount, pageSize, pageIndex, onChangePage])
 
   useEffect(() => {
@@ -190,12 +180,6 @@ function LogAnalysisSyslogTable({
       console.log('Failed to save table state to LocalStorage.')
     }
   }, [visibleColumns, sortColumns, pageSize])
-
-  // Deprecated
-  // const onSearchChange = useCallback(({query, error}) => {
-  //   if (!error && query.text !== undefined) setSearchQuery(query.text)
-  // }, [])
-
   const renderCellValue = useCallback(
     ({rowIndex, columnId}) => {
       const indexInPage = rowIndex - pageIndex * pageSize
@@ -299,6 +283,9 @@ function LogAnalysisSyslogTable({
   const shouldAutoRefresh =
     autoRefreshNumberValue !== undefined && autoRefreshNumberValue !== 0
 
+  const totalPages = Math.max(1, Math.ceil(totalRowCount / pageSize))
+  const isLastPage = pageIndex === totalPages - 1
+
   return (
     <>
       <LogAnalysisDashboardHeader
@@ -324,22 +311,14 @@ function LogAnalysisSyslogTable({
         )}
       </LogAnalysisDashboardHeader>
 
-      <FancyScrollbar style={{height: 'calc(100% - 40px)'}}>
+      <FancyScrollbar style={{height: 'calc(100% - 80px)'}}>
         <div className="syslog-table--container">
-          {/* Deprecated */}
-          {/* <OuiSearchBar
-            query={searchQuery}
-            onChange={onSearchChange}
-            box={{
-              incremental: true,
-              placeholder: 'Filter your Syslog data',
-              style: {background: 'inherit'},
-            }}
-          /> */}
-
+          <div className="syslog-table--total-count">
+            Documents ({totalHitsValue})
+          </div>
           <OuiDataGrid
             key={pageSize}
-            aria-label="Server-side paginated syslog data grid"
+            aria-label="Client-side paginated syslog data grid"
             columns={columns}
             columnVisibility={{visibleColumns, setVisibleColumns}}
             rowCount={totalRowCount}
@@ -369,6 +348,24 @@ function LogAnalysisSyslogTable({
             }}
           />
         </div>
+        {isLastPage && hasMore && (
+          <div style={{padding: '8px', textAlign: 'center'}}>
+            <span>
+              Search results are limited to {totalRowCount} documents.
+            </span>
+            <span
+              onClick={isLoading ? undefined : onLoadMore}
+              style={{
+                paddingLeft: '8px',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                color: '#1BA9F5',
+                opacity: isLoading ? 0.5 : 1,
+              }}
+            >
+              {isLoading ? 'Loading' : 'Load More'}
+            </span>
+          </div>
+        )}
       </FancyScrollbar>
     </>
   )

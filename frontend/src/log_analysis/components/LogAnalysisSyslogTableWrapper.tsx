@@ -1,8 +1,9 @@
 // Library
-import React, {useCallback, useEffect, useState, useRef} from 'react'
+import React, {useCallback, useEffect, useState, useRef, useMemo} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
+import debounce from 'lodash/debounce'
 
 // Action
 import {
@@ -20,7 +21,10 @@ import {
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
 // Constants
-import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants'
+import {
+  LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+  SYSLOG_TABLE_CHUNK_SIZE,
+} from 'src/log_analysis/constants'
 
 // Components
 import LogAnalysisSyslogTable from 'src/log_analysis/components/LogAnalysisSyslogTable'
@@ -42,15 +46,6 @@ interface StateProps {
   cloudTimeRange?: CloudTimeRange
   esSource?: BaseElasticSearchData
   filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
-  setFilteredLogForLogAnalysis?: (
-    filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
-  ) => void
-  addLogAnalysisRangeFilterClause?: (
-    field: string,
-    gte?: string,
-    lte?: string,
-    format?: string
-  ) => void
 }
 
 type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps & StateProps
@@ -63,7 +58,8 @@ function LogAnalysisSyslogTableWrapper({
   cloudTimeRange,
   esSource,
 }: LogAnalysisSyslogTableProps) {
-  let intervalID: number | null
+  let intervalID: number | null = null
+
   const [rows, setRows] = useState<SyslogTableRows[]>([])
   const [totalRowCount, setTotalRowCount] = useState(0)
   const [pageIndex, setPageIndex] = useState(0)
@@ -117,14 +113,11 @@ function LogAnalysisSyslogTableWrapper({
   )
   const prevManualRefreshRef = useRef<number>(manualRefresh)
   const sortFirstRunRef = useRef(true)
-  const pageIndexFirstRunRef = useRef(true)
-  const lastFetchParamsRef = useRef<string>('')
-  const didSortRef = useRef(false)
-  const isAutoRefreshPageResetRef = useRef(false)
   const prevFiltersRef = useRef<FilteredLogsForLogAnalysis>(
     filteredLogsForLogAnalysis
   )
   const filterFirstRunRef = useRef(true)
+  const prevSortValuesRef = useRef<any>(null)
 
   useEffect(() => {
     const prev = prevAutoRefreshRef.current
@@ -138,93 +131,51 @@ function LogAnalysisSyslogTableWrapper({
   }, [cloudAutoRefresh?.logAnalysis])
 
   const getSyslogTableData = useCallback(
-    async (force: boolean = false) => {
+    async (reset: boolean = false) => {
       if (_.isEmpty(esSource)) return
-
-      const key = `${pageIndex}-${pageSize}-${JSON.stringify(sortColumns)}`
-      if (!force && key === lastFetchParamsRef.current) return
-      lastFetchParamsRef.current = key
-
       const combinedFilters = buildCombinedFilters(
         filteredLogsForLogAnalysis,
         cloudTimeRange?.logAnalysis
       )
-
       setIsLoading(true)
       try {
-        const {data, total} = await fetchSyslogTableData(
+        const {data, total, lastSortValues} = await fetchSyslogTableData(
           esSource,
           combinedFilters,
-          pageIndex,
-          pageSize,
-          sortColumns
+          SYSLOG_TABLE_CHUNK_SIZE,
+          sortColumns,
+          reset ? undefined : prevSortValuesRef.current
         )
-        setRows(data)
         setTotalRowCount(total)
+        if (reset) setRows(data)
+        else setRows(prev => [...prev, ...data])
+        if (lastSortValues) prevSortValuesRef.current = lastSortValues
       } finally {
         setIsLoading(false)
       }
     },
-    [
-      esSource,
-      pageIndex,
-      pageSize,
-      sortColumns,
-      filteredLogsForLogAnalysis,
-      cloudTimeRange,
-    ]
+    [esSource, sortColumns, filteredLogsForLogAnalysis, cloudTimeRange]
+  )
+
+  const debouncedGetSyslogTableData = useMemo(
+    () => debounce((reset: boolean) => getSyslogTableData(reset), 250),
+    [getSyslogTableData]
   )
 
   useEffect(() => {
-    if (filterFirstRunRef.current) {
-      filterFirstRunRef.current = false
-      return
+    return () => {
+      debouncedGetSyslogTableData.cancel()
     }
-    if (_.isEqual(prevFiltersRef.current, filteredLogsForLogAnalysis)) {
-      return
-    }
-    prevFiltersRef.current = filteredLogsForLogAnalysis
-    setPageIndex(0)
-    getSyslogTableData()
-  }, [filteredLogsForLogAnalysis, getSyslogTableData])
-
-  useEffect(() => {
-    if (pageIndexFirstRunRef.current) {
-      pageIndexFirstRunRef.current = false
-      return
-    }
-    if (didSortRef.current) {
-      didSortRef.current = false
-      return
-    }
-    if (isAutoRefreshPageResetRef.current) {
-      isAutoRefreshPageResetRef.current = false
-      getSyslogTableData(true)
-      return
-    }
-    getSyslogTableData(true)
-  }, [pageIndex, getSyslogTableData])
-
-  useEffect(() => {
-    getSyslogTableData()
-  }, [pageSize, getSyslogTableData])
-
-  useEffect(() => {
-    if (sortFirstRunRef.current) {
-      sortFirstRunRef.current = false
-      return
-    }
-    getSyslogTableData()
-  }, [sortColumns, getSyslogTableData])
+  }, [debouncedGetSyslogTableData])
 
   useEffect(() => {
     const prev = prevManualRefreshRef.current
     if (prev !== manualRefresh) {
       setPageIndex(0)
-      getSyslogTableData()
+      debouncedGetSyslogTableData(true)
     }
     prevManualRefreshRef.current = manualRefresh
-  }, [manualRefresh, getSyslogTableData])
+  }, [manualRefresh, debouncedGetSyslogTableData])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.logAnalysis)
@@ -234,16 +185,10 @@ function LogAnalysisSyslogTableWrapper({
       clearInterval(intervalID)
       intervalID = window.setInterval(() => {
         if (!isLiveUpdating) return
-
-        if (pageIndex !== 0) {
-          isAutoRefreshPageResetRef.current = true
-          setPageIndex(0)
-        } else {
-          getSyslogTableData(true)
-        }
+        setPageIndex(0)
+        debouncedGetSyslogTableData(true)
       }, cloudAutoRefresh.logAnalysis)
     }
-
     return () => {
       controller.abort()
       clearInterval(intervalID)
@@ -254,11 +199,35 @@ function LogAnalysisSyslogTableWrapper({
     cloudAutoRefresh?.logAnalysis,
     esSource,
     isLiveUpdating,
-    getSyslogTableData,
+    debouncedGetSyslogTableData,
   ])
 
-  const onChangeItemsPerPage = (size: number) => {
+  useEffect(() => {
+    if (sortFirstRunRef.current) {
+      sortFirstRunRef.current = false
+      return
+    }
     setPageIndex(0)
+    debouncedGetSyslogTableData(true)
+  }, [sortColumns, debouncedGetSyslogTableData])
+
+  useEffect(() => {
+    if (filterFirstRunRef.current) {
+      filterFirstRunRef.current = false
+      setPageIndex(0)
+      debouncedGetSyslogTableData(true)
+      return
+    }
+    if (_.isEqual(prevFiltersRef.current, filteredLogsForLogAnalysis)) {
+      return
+    }
+    prevFiltersRef.current = filteredLogsForLogAnalysis
+    setPageIndex(0)
+    debouncedGetSyslogTableData(true)
+  }, [filteredLogsForLogAnalysis, debouncedGetSyslogTableData])
+
+  const onChangePage = (index: number) => setPageIndex(index)
+  const onChangeItemsPerPage = (size: number) => {
     setPageSize(size)
     try {
       const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
@@ -271,26 +240,22 @@ function LogAnalysisSyslogTableWrapper({
       console.log('Failed to save pageSize to LocalStorage.')
     }
   }
-
-  const onChangePage = (index: number) => {
-    setPageIndex(index)
-  }
-
-  const onSort = (cols: {id: string; direction: 'asc' | 'desc'}[]) => {
-    setPageIndex(0)
-    didSortRef.current = true
+  const onLoadMore = () => debouncedGetSyslogTableData(false)
+  const onSort = (cols: {id: string; direction: 'asc' | 'desc'}[]) =>
     setSortColumns(cols)
-  }
-
   const onChangeLiveUpdatingStatus = () => setIsLiveUpdating(prev => !prev)
 
   return (
     <LogAnalysisSyslogTable
       autoRefreshNumberValue={cloudAutoRefresh?.logAnalysis}
       isLoading={isLoading}
-      syslogTableRows={rows}
+      syslogTableRows={rows.slice(
+        pageIndex * pageSize,
+        (pageIndex + 1) * pageSize
+      )}
       timeZone={timeZone}
-      totalRowCount={totalRowCount}
+      totalHitsValue={totalRowCount}
+      totalRowCount={rows.length}
       pageIndex={pageIndex}
       pageSize={pageSize}
       sortColumns={sortColumns}
@@ -298,6 +263,8 @@ function LogAnalysisSyslogTableWrapper({
       onChangePage={onChangePage}
       onChangeItemsPerPage={onChangeItemsPerPage}
       onSort={onSort}
+      onLoadMore={onLoadMore}
+      hasMore={rows.length < totalRowCount}
       onChangeLiveUpdatingStatus={onChangeLiveUpdatingStatus}
     />
   )

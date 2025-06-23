@@ -42,7 +42,7 @@ export interface EnsureAsyncSearchOpts {
   preference?: number
 }
 
-const DEFAULT_OPTS: Required<Omit<EnsureAsyncSearchOpts, 'signal'>> = {
+export const DEFAULT_OPTS: Required<Omit<EnsureAsyncSearchOpts, 'signal'>> = {
   pollMs: 1000,
   waitTimeout: '5s',
   keepAlive: '60000ms',

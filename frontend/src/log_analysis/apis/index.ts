@@ -4,7 +4,7 @@ import {
   FilteredLogsForLogAnalysis,
   SyslogTableRows,
 } from 'src/types'
-import {asyncSearch} from '../util/ensureAsyncSearch'
+import {asyncSearch, DEFAULT_OPTS} from '../util/ensureAsyncSearch'
 import {esProxy} from 'src/utils/esQueryUrlGenerator'
 import {
   AutoCompleteResult,
@@ -73,13 +73,36 @@ export async function fetchMessageTokenData({
   return {data}
 }
 
+export async function openPit(
+  esSource: BaseElasticSearchData,
+  keepAlive: string = DEFAULT_OPTS.keepAlive
+): Promise<string> {
+  const {data} = await esProxy(esSource.links.proxy, {
+    path: `/syslog-*/_pit?keep_alive=${keepAlive}`,
+    method: 'POST',
+  })
+
+  return data.id
+}
+
+export async function closePit(
+  esSource: BaseElasticSearchData,
+  pitId: string
+): Promise<void> {
+  await esProxy(esSource.links.proxy, {
+    path: '/_pit',
+    method: 'DELETE',
+    body: {pit_id: pitId},
+  })
+}
+
 export async function fetchSyslogTableData(
   esSource: BaseElasticSearchData,
   filters: FilteredLogsForLogAnalysis,
-  pageIndex: number,
   pageSize: number,
-  sortColumns: {id: string; direction: 'asc' | 'desc'}[]
-): Promise<{data: SyslogTableRows[]; total: number}> {
+  sortColumns: {id: string; direction: 'asc' | 'desc'}[],
+  searchAfter?: any
+): Promise<{data: SyslogTableRows[]; total: number; lastSortValues: any}> {
   const sort = sortColumns.length
     ? sortColumns.map(({id, direction}) => ({
         [id]: {
@@ -99,11 +122,11 @@ export async function fetchSyslogTableData(
         {_doc: {order: 'desc', unmapped_type: 'boolean'}},
       ]
 
-  const body = {
+  const body: Record<string, any> = {
     track_total_hits: true,
-    from: pageIndex * pageSize,
     size: pageSize,
     sort,
+    ...(searchAfter != null ? {search_after: searchAfter} : {}),
     fields: [
       {field: '*', include_unmapped: true},
       {field: '@timestamp', format: 'strict_date_optional_time'},
@@ -136,25 +159,121 @@ export async function fetchSyslogTableData(
   }
 
   const res = await asyncSearch(esSource.links.proxy, {
-    path: '/syslog-*/_async_search',
+    path: '/_async_search',
     method: 'POST',
     body,
   })
 
-  const hitsArray = res?.rawResponse?.hits?.hits
+  const hitsArray = res?.rawResponse?.hits?.hits || []
   const total =
     typeof res.rawResponse.hits.total === 'object'
       ? res.rawResponse.hits.total.value
       : res.rawResponse.hits.total
-  const data = Array.isArray(hitsArray)
-    ? hitsArray.map(hit => ({
-        id: hit._id,
-        ...hit.fields,
-        _highlight: hit.highlight,
-      }))
-    : []
 
-  return {data, total}
+  const data = hitsArray.map(hit => ({
+    id: hit._id,
+    ...hit.fields,
+    _highlight: hit.highlight,
+  }))
+
+  const lastSortValues = hitsArray.length
+    ? hitsArray[hitsArray.length - 1].sort
+    : undefined
+
+  return {data, total, lastSortValues}
+}
+
+export async function fetchSyslogTableDataWithPit(
+  esSource: BaseElasticSearchData,
+  filters: FilteredLogsForLogAnalysis,
+  pageSize: number,
+  sortColumns: {id: string; direction: 'asc' | 'desc'}[],
+  pitId: string,
+  searchAfter?: any
+): Promise<{data: SyslogTableRows[]; total: number; lastSortValues: any}> {
+  if (pitId === null) {
+    return {data: [], total: 0, lastSortValues: undefined}
+  }
+
+  const sort = sortColumns.length
+    ? sortColumns.map(({id, direction}) => ({
+        [id]: {
+          order: direction,
+          format: id === '@timestamp' ? 'strict_date_optional_time' : undefined,
+          unmapped_type: 'boolean',
+        },
+      }))
+    : [
+        {
+          '@timestamp': {
+            order: 'desc',
+            format: 'strict_date_optional_time',
+            unmapped_type: 'boolean',
+          },
+        },
+        {_doc: {order: 'desc', unmapped_type: 'boolean'}},
+      ]
+
+  const body: Record<string, any> = {
+    pit: {id: pitId, keep_alive: '1m'},
+    track_total_hits: true,
+    size: pageSize,
+    sort,
+    ...(searchAfter != null ? {search_after: searchAfter} : {}),
+    fields: [
+      {field: '*', include_unmapped: true},
+      {field: '@timestamp', format: 'strict_date_optional_time'},
+    ],
+    _source: false,
+    query: {
+      bool: {
+        must: [],
+        filter: filters,
+        should: [],
+        must_not: [],
+      },
+    },
+    highlight: {
+      pre_tags: ["<span class='logs-analysis-highlight--match'>"],
+      post_tags: ['</span>'],
+      fields: {
+        'host.hostname': {},
+        message: {},
+        message_tokens: {},
+        'event.original': {},
+        'service.type': {},
+        'process.name': {},
+      },
+      fragment_size: 2147483647,
+    },
+    stored_fields: ['*'],
+    runtime_mappings: {},
+    script_fields: {},
+  }
+
+  const res = await asyncSearch(esSource.links.proxy, {
+    path: '/_async_search',
+    method: 'POST',
+    body,
+  })
+
+  const hitsArray = res?.rawResponse?.hits?.hits || []
+  const total =
+    typeof res.rawResponse.hits.total === 'object'
+      ? res.rawResponse.hits.total.value
+      : res.rawResponse.hits.total
+
+  const data = hitsArray.map(hit => ({
+    id: hit._id,
+    ...hit.fields,
+    _highlight: hit.highlight,
+  }))
+
+  const lastSortValues = hitsArray.length
+    ? hitsArray[hitsArray.length - 1].sort
+    : undefined
+
+  return {data, total, lastSortValues}
 }
 
 export async function fetchLogsCount({
