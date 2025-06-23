@@ -1,4 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {connect} from 'react-redux'
+
 import type {
   BaseElasticSearchData,
   FieldInfo,
@@ -6,29 +8,30 @@ import type {
 } from 'src/types/elasticSearch'
 import {fetchKibanaFieldList, getAutoCompleteResult} from '../apis'
 import {OperatorMeta, LOGICAL_OPERATORS} from '../constants/search-filter'
-import {ESRange} from '../util'
+import {ESRange, lowerToESRange} from '../util'
 
 import {OuiIcon} from '@opensearch-project/oui'
 import 'src/log_analysis/util/setupOUIIcons'
 import SearchFilterItem from './SearchFilterItem'
+import {CloudTimeRange} from 'src/clouds/types'
+import {timeRanges} from 'src/shared/data/timeRanges'
 
-const mockSource: BaseElasticSearchData = {
-  id: '1082106298267889664',
-  name: 'Defaultzzzzzzz',
-  version: '8.17.3',
-  url: 'https://10.20.2.216:9200',
-  insecureSkipVerify: true,
-  basicAuth: {username: 'jinhyeong.kim', password: ''},
-  organization: 'default',
-  authentication: 'basic',
-  links: {proxy: '/cloudhub/v1/es/1082106298267889664/proxy'} as any,
-  defaultIndex: '',
-  indexPatterns: [],
-  apiKeyAuth: null,
-  default: false,
+interface ReduxState {
+  app: {
+    persisted: {
+      esSource?: BaseElasticSearchData
+      cloudTimeRange?: CloudTimeRange
+    }
+  }
+}
+interface StateProps {
+  esSource?: BaseElasticSearchData
+  cloudTimeRange?: CloudTimeRange
 }
 
-export default function LogSearchFilterBar() {
+type Props = StateProps
+
+function LogSearchFilterBar({esSource, cloudTimeRange}: Props) {
   const [fields, setFields] = useState<FieldInfo[]>([])
   const [inputValue, setInputValue] = useState('')
   const [autocomplete, setAutocomplete] = useState<AutoCompleteResult>({
@@ -65,11 +68,20 @@ export default function LogSearchFilterBar() {
     setActiveIndex(-1)
   }, [autocomplete])
 
+  const defaultTimeRange = timeRanges.find(i => i.inputValue === 'Past 30d')
   const timeRange: ESRange = useMemo(() => {
-    const nowISO = new Date().toISOString()
+    if (cloudTimeRange?.logAnalysis) {
+      const {gteISO, lteISO} = lowerToESRange({
+        lower: cloudTimeRange.logAnalysis.lower ?? defaultTimeRange.lower,
+        upper: cloudTimeRange.logAnalysis.upper ?? 'now()',
+      })
+      return {gteISO, lteISO}
+    }
+
+    const lteISO = new Date().toISOString()
     const gteISO = new Date(Date.now() - 15 * 60_000).toISOString()
-    return {gteISO, lteISO: nowISO}
-  }, [])
+    return {gteISO, lteISO}
+  }, [cloudTimeRange])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!dropdownOpen || dropdownItems.length === 0) return
@@ -91,11 +103,11 @@ export default function LogSearchFilterBar() {
     }
   }
 
-  const getItemProps = (i: number) => ({
-    className: `kql-item${i === activeIndex ? ' is-active' : ''}`,
-    onMouseEnter: () => setActiveIndex(i),
+  const getItemProps = (idx: number) => ({
+    className: `kql-item${idx === activeIndex ? ' is-active' : ''}`,
+    onMouseEnter: () => setActiveIndex(idx),
     onClick: () => {
-      const it = dropdownItems[i]
+      const it = dropdownItems[idx]
       if (it.type === 'field') handleFieldSelect(it.data)
       else if (it.type === 'operator') handleOperatorSelect(it.data)
       else if (it.type === 'logical') handleLogicalOperatorSelect(it.data)
@@ -105,25 +117,24 @@ export default function LogSearchFilterBar() {
 
   const triggerAC = useCallback(
     async (value: string, useFields: FieldInfo[] = fields) => {
-      if (useFields.length === 0) return
-      const r = await getAutoCompleteResult({
+      if (!esSource || useFields.length === 0) return
+      const res = await getAutoCompleteResult({
         input: value,
         allFields: useFields,
-        esSource: mockSource,
+        esSource,
         timeRange,
       })
-      console.log('r', r)
-      setAutocomplete(r)
+      setAutocomplete(res)
     },
-    [fields, timeRange]
+    [esSource, fields, timeRange]
   )
-
   const handleFocus = async () => {
+    if (!esSource) return
     setDropdownOpen(true)
     if (fields.length === 0) {
-      const {fields: f} = await fetchKibanaFieldList({esSource: mockSource})
-      setFields(f)
-      triggerAC(inputValue, f)
+      const {fields: fetched} = await fetchKibanaFieldList({esSource})
+      setFields(fetched)
+      triggerAC(inputValue, fetched)
     } else triggerAC(inputValue)
   }
 
@@ -144,10 +155,10 @@ export default function LogSearchFilterBar() {
   const handleMouseDown = () => (dropdownMouseDown.current = true)
 
   const handleFieldSelect = (f: FieldInfo) => {
-    setInputValue(p => {
-      const logical = p.match(/(and|or)\s*$/i)
-      if (logical) return p.replace(/(and|or)\s*$/i, '$1 ') + f.field + ' '
-      const m = p.match(/^(.*?\b(?:and|or)\b\s*)$/i)
+    setInputValue(prev => {
+      const logical = prev.match(/(and|or)\s*$/i)
+      if (logical) return prev.replace(/(and|or)\s*$/i, '$1 ') + f.field + ' '
+      const m = prev.match(/^(.*?\b(?:and|or)\b\s*)$/i)
       return m ? m[1] + f.field + ' ' : f.field + ' '
     })
     setTimeout(() => triggerAC(`${f.field} `), 0)
@@ -264,3 +275,10 @@ export default function LogSearchFilterBar() {
     </div>
   )
 }
+
+const mstp = (state: ReduxState): StateProps => ({
+  esSource: state.app.persisted.esSource,
+  cloudTimeRange: state.app.persisted.cloudTimeRange,
+})
+
+export default connect(mstp)(LogSearchFilterBar)
