@@ -23,6 +23,11 @@ import {Bar, getElementAtEvent} from 'react-chartjs-2'
 import {Chart as ChartJS} from 'chart.js'
 import {lowerToESRange} from '../util'
 import {FilteredLogsForLogAnalysis} from 'src/types/logAnalysis'
+import {stableSelectionPlugin} from 'src/shared/utils/esChart'
+
+//chart plugin
+ChartJS.register(stableSelectionPlugin)
+
 interface Props {
   cell: Cell
   esSource?: BaseElasticSearchData
@@ -51,31 +56,45 @@ function LogAnalysisAlertBarWrapper({
 
   const [logsData, setLogsData] = useState<LogCountData[]>([])
 
-  /** ① 클릭된 바의 위치를 기억하는 리액트 상태 */
-  const [active, setActive] = useState<null | {
-    index: number
-    datasetIndex: number
-  }>(null)
+  const [timeRange, setTimeRange] = useState<{gte: number; lte: number}>()
 
-  /** ④ 캔버스 클릭 → getElementAtEvent 로 bar 요소 획득 */
+  const [active, setActive] = useState<number[]>([])
+
+  const [dragEndTime, setDragEndTime] = useState(0)
+
+  useEffect(() => {
+    if (timeRange) {
+      addLogAnalysisRangeFilter(
+        '@timestamp',
+        new Date(logsData[timeRange.gte].time).toISOString(),
+        new Date(logsData[timeRange.lte].time + 86400000).toISOString()
+      )
+    }
+  }, [timeRange])
+
   const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
-    const elem = getElementAtEvent(chartRef.current, e)[0] // 배열 중 첫 번째
-    if (!elem) {
-      setActive(null) // 빈 공간 클릭 시 선택 해제
-      removeLogAnalysisRangeFilterClause('@timestamp')
+    if (Date.now() - dragEndTime < 200) {
       return
     }
-    const {index, datasetIndex} = elem
 
-    if (
-      active &&
-      active.index === index &&
-      active.datasetIndex === datasetIndex
-    ) {
+    const elem = getElementAtEvent(chartRef.current, e)[0]
+    if (!elem) {
+      if (active.length <= 1) {
+        return
+      } else if (active.length > 1) {
+        removeLogAnalysisRangeFilterClause('@timestamp')
+        setActive([])
+        return
+      }
+    }
+
+    const {index} = elem
+
+    if (active && active.includes(index)) {
       removeLogAnalysisRangeFilterClause('@timestamp')
-      setActive(null)
+      setActive([])
     } else {
-      setActive({index, datasetIndex})
+      setActive([index])
       addLogAnalysisRangeFilter(
         '@timestamp',
         logsData[index].time,
@@ -116,19 +135,19 @@ function LogAnalysisAlertBarWrapper({
           data: logsData.map(i => ({x: i?.time, y: i?.value})),
           borderSkipped: false,
           backgroundColor: logsData.map((_, i) =>
-            active && i === active.index
+            active?.includes(i)
               ? '#F3852C'
-              : i !== 0
+              : logsData.length === 1
               ? 'rgba(49, 192, 246, 0.8)'
-              : 'rgba(49, 192, 246, 0.3)'
+              : i === 0
+              ? 'rgba(49, 192, 246, 0.3)'
+              : 'rgba(49, 192, 246, 0.8)'
           ),
           borderColor: logsData.map((_, i) =>
-            active && i === active.index ? '#F3852C' : 'rgba(0,0,0,0)'
+            active?.includes(i) ? '#F3852C' : 'rgba(0,0,0,0)'
           ),
-          minBarLength: 3,
-          borderWidth: logsData.map((_, i) =>
-            active && i === active.index ? 2 : 1
-          ),
+          minBarLength: 5,
+          borderWidth: logsData.map((_, i) => (active?.includes(i) ? 2 : 1)),
           borderRadius: 4,
         },
       ],
@@ -136,13 +155,7 @@ function LogAnalysisAlertBarWrapper({
     }
   }, [logsData, active])
 
-  const options = ({
-    xAxisTitle,
-    yAxisTitle,
-  }: {
-    xAxisTitle: string
-    yAxisTitle: string
-  }) => {
+  const options = useMemo(() => {
     return {
       layout: {
         padding: {
@@ -155,6 +168,17 @@ function LogAnalysisAlertBarWrapper({
       maintainAspectRatio: false,
       responsive: true,
       plugins: {
+        'stable-selection': {
+          threshold: 8,
+          onSelect: ({gte, lte, indices}) => {
+            setTimeRange({gte, lte})
+            setActive(indices)
+          },
+
+          onDragEnd: () => {
+            setDragEndTime(Date.now())
+          },
+        },
         zoom: {
           zoom: {
             drag: {
@@ -198,8 +222,9 @@ function LogAnalysisAlertBarWrapper({
               right: 0,
               bottom: 0,
             },
-            text: xAxisTitle,
+            text: 'Time Stamp',
           },
+
           barThickness: 1,
           grid: {
             color: '#383846',
@@ -228,7 +253,7 @@ function LogAnalysisAlertBarWrapper({
             },
 
             position: 'left',
-            text: yAxisTitle,
+            text: 'Logs Count',
           },
           grid: {
             color: '#383846',
@@ -243,7 +268,7 @@ function LogAnalysisAlertBarWrapper({
         },
       },
     }
-  }
+  }, [logsData])
 
   const onResetZoom = () => {
     if (chartRef && chartRef.current) {
@@ -264,15 +289,9 @@ function LogAnalysisAlertBarWrapper({
       {!!cell && (
         <div className="histogram-graph--chart">
           <Bar
-            options={options({
-              xAxisTitle: 'Time Stamp',
-              yAxisTitle: 'Logs Count',
-            })}
+            options={options}
             ref={chartRef}
             data={chartData}
-            onDrag={() => {
-              console.log('onDrag')
-            }}
             onClick={handleClick}
           />
         </div>
