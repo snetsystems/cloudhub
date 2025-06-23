@@ -1,5 +1,6 @@
 import {TimeRange, TimeZones, RefreshRate} from 'src/types'
 import {LogsState} from 'src/types/logs'
+import {FilteredLogsForLogAnalysis} from 'src/types'
 
 export interface LocalStorage {
   VERSION: VERSION
@@ -10,6 +11,9 @@ export interface LocalStorage {
   logs: LogsState
   activitylogs: LogsState
   telegrafSystemInterval: string
+  logAnalysisDashboard: {
+    filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
+  }
 }
 
 export type VERSION = string
