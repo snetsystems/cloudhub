@@ -63,14 +63,19 @@ function LogAnalysisAlertBarWrapper({
   const [dragEndTime, setDragEndTime] = useState(0)
 
   useEffect(() => {
-    if (timeRange) {
+    if (
+      timeRange &&
+      logsData &&
+      logsData[timeRange.gte] &&
+      logsData[timeRange.lte]
+    ) {
       addLogAnalysisRangeFilter(
         '@timestamp',
         new Date(logsData[timeRange.gte].time).toISOString(),
         new Date(logsData[timeRange.lte].time + 86400000).toISOString()
       )
     }
-  }, [timeRange])
+  }, [timeRange, logsData])
 
   const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
     if (Date.now() - dragEndTime < 200) {
@@ -89,6 +94,10 @@ function LogAnalysisAlertBarWrapper({
     }
 
     const {index} = elem
+
+    if (!logsData || !logsData[index] || !logsData[index].time) {
+      return
+    }
 
     if (active && active.includes(index)) {
       removeLogAnalysisRangeFilterClause('@timestamp')
@@ -128,6 +137,24 @@ function LogAnalysisAlertBarWrapper({
   }
 
   const chartData = useMemo(() => {
+    if (!logsData || logsData.length === 0) {
+      return {
+        datasets: [
+          {
+            label: 'Count',
+            data: [],
+            borderSkipped: false,
+            backgroundColor: [],
+            borderColor: [],
+            minBarLength: 5,
+            borderWidth: [],
+            borderRadius: 4,
+          },
+        ],
+        labels: [],
+      }
+    }
+
     return {
       datasets: [
         {
@@ -151,7 +178,7 @@ function LogAnalysisAlertBarWrapper({
           borderRadius: 4,
         },
       ],
-      labels: logsData.map(i => moment(i.time).format('MMM DD')),
+      labels: logsData.map(i => moment(i?.time).format('MMM DD')),
     }
   }, [logsData, active])
 

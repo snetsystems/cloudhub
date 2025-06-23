@@ -44,7 +44,20 @@ export const stableSelectionPlugin: Plugin<'bar'> = {
 
     function onMove(e: MouseEvent) {
       if (state.start == null) return
-      state.end = e.offsetX
+
+      // 마우스가 chart 영역을 벗어났는지 확인
+      const rect = canvas.getBoundingClientRect()
+      const mouseX = e.clientX - rect.left
+
+      // chart 영역을 벗어나면 드래그 상태 초기화
+      if (mouseX < 0 || mouseX > rect.width) {
+        state.start = state.end = undefined
+        state.active = false
+        chart.update('none')
+        return
+      }
+
+      state.end = mouseX
       if (!state.active && Math.abs(state.end - state.start) > THR)
         state.active = true
       chart.update('none')
