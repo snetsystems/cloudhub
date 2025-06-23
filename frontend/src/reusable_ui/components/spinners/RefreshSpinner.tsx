@@ -13,14 +13,11 @@ const RefreshSpinner = ({isActive, isHighlighted}: Props) => {
 
   useEffect(() => {
     if (isActive) {
-      // 시작 시점 기록 + 스피닝 시작
       spinStartTimeRef.current = Date.now()
       setSpinning(true)
     } else if (spinning) {
-      // 최소 지속시간 보장
       const elapsed = Date.now() - (spinStartTimeRef.current ?? 0)
       const remaining = MIN_SPIN_DURATION - elapsed
-
       if (remaining > 0) {
         const timeout = setTimeout(() => {
           setSpinning(false)

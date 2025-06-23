@@ -138,3 +138,9 @@
 .histogram-graph--chart {
   height: calc(100% - 45px);
 }
+
+.livestatus-wrapper.flex {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+}

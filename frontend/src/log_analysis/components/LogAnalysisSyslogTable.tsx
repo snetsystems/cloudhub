@@ -302,22 +302,22 @@ function LogAnalysisSyslogTable({
   return (
     <>
       <LogAnalysisDashboardHeader
-        cellName="Log Analysis Syslog Table"
-        cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
-        cellTextColor={DEFAULT_CELL_TEXT_COLOR}
-        customNamenode={
+        cellName={
           <div
             className={`livestatus-wrapper ${
               shouldAutoRefresh ? '' : 'disabled'
-            }`}
+            } flex`}
             onClick={shouldAutoRefresh ? onChangeLiveUpdatingStatus : undefined}
           >
+            Log Analysis Syslog Table
             <RefreshSpinner
               isActive={isLoading || (shouldAutoRefresh && isLiveUpdating)}
               isHighlighted={!!autoRefreshNumberValue && isLiveUpdating}
             />
           </div>
         }
+        cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
+        cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
         {isLoading && (
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
