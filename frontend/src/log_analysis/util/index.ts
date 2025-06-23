@@ -174,3 +174,15 @@ export const getFieldOperatorsWithLogical = (
 
   return [...ops]
 }
+
+export const buildTimeRangeFilter = ({gteISO, lteISO}: ESRange) => ({
+  index_filter: {
+    range: {
+      '@timestamp': {
+        gte: gteISO,
+        lte: lteISO,
+        format: 'strict_date_optional_time',
+      },
+    },
+  },
+})

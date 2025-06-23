@@ -21,6 +21,10 @@ import {icon as ouiTokenString} from '@opensearch-project/oui/es/components/icon
 import {icon as ouiTokenNumber} from '@opensearch-project/oui/es/components/icon/assets/tokens/tokenNumber'
 import {icon as ouiCheck} from '@opensearch-project/oui/es/components/icon/assets/check'
 import {icon as ouiEmpty} from '@opensearch-project/oui/es/components/icon/assets/empty'
+import {icon as kqlValue} from '@opensearch-project/oui/es/components/icon/assets/kql_value'
+import {icon as kqlOperand} from '@opensearch-project/oui/es/components/icon/assets/kql_operand'
+import {icon as kqlField} from '@opensearch-project/oui/es/components/icon/assets/kql_field'
+import {icon as kqlSelector} from '@opensearch-project/oui/es/components/icon/assets/kql_selector'
 
 appendIconComponentCache({
   search: ouiSearch,
@@ -43,4 +47,8 @@ appendIconComponentCache({
   tokenNumber: ouiTokenNumber,
   check: ouiCheck,
   empty: ouiEmpty,
+  kqlValue: kqlValue,
+  kqlOperand: kqlOperand,
+  kqlField: kqlField,
+  kqlSelector: kqlSelector,
 })

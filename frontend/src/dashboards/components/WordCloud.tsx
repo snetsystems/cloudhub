@@ -128,7 +128,7 @@ export default function WordCloud({
   }, [words, width, height, onSelect, duration, exitDuration, palette, animate])
 
   return (
-    <div style={{position: 'relative', width, height}}>
+    <div style={{position: 'relative', width, height, userSelect: 'none'}}>
       <svg ref={svgRef} />
       {words.length > 0 && overflowCount > 0 && (
         <span className="hidden-indicator">+{overflowCount} more</span>

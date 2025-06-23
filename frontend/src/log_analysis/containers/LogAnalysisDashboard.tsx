@@ -43,6 +43,7 @@ import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {setStateInitAction} from 'src/device_management/actions'
 import TestCellsGraphWrapper from '../components/CellsGraphWrapper'
 import LogAnalysisAlertBarWarpper from '../components/LogAnalysisAlertBarWrapper'
+import LogSearchFilterBar from '../components/LogSearchFilterBar'
 
 interface TempProps {
   cell: Cell
@@ -278,7 +279,7 @@ function LogAnalysisDashboard({
           <Page.Header.Center>{renderHeaderCenter()}</Page.Header.Center>
           <Page.Header.Right>{renderHeaderRight()}</Page.Header.Right>
         </Page.Header>
-
+        <LogSearchFilterBar />
         <LogsFilterContainer />
         <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
           <SidePanelSlice>

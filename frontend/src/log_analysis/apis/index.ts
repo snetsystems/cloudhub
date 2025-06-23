@@ -16,8 +16,12 @@ import {
   KNOWN_ES_FIELD_TYPES,
   LOGICAL_OPERATORS,
   OperatorMeta,
-} from '../constants/search-filter'
-import {getFieldOperatorsWithLogical} from '../util'
+} from 'src/log_analysis/constants/search-filter'
+import {
+  ESRange,
+  buildTimeRangeFilter,
+  getFieldOperatorsWithLogical,
+} from 'src/log_analysis/util'
 
 export async function fetchMessageTokenData({
   esSource,
@@ -269,7 +273,6 @@ export async function fetchKibanaFieldList({
       field,
       type: fieldTypeMap[field] || field,
     }))
-
     return {fields, total: fields.length}
   } catch (err) {
     return {fields: [], total: 0}
@@ -280,15 +283,19 @@ export async function getAutoCompleteResult({
   input,
   allFields,
   esSource,
+  timeRange,
   indexPattern = 'syslog-*',
 }: {
   input: string
   allFields: FieldInfo[]
   esSource: BaseElasticSearchData
+  timeRange: ESRange
   indexPattern?: string
 }): Promise<AutoCompleteResult> {
-  const trimmed = input.trim()
-  const endsWithSpace = input.endsWith(' ')
+  const logicalSplit = input.split(/\b(?:and|or)\b\s*/i)
+  const current = logicalSplit[logicalSplit.length - 1] //
+  const trimmed = current.trim()
+  const endsWithSpace = current.endsWith(' ')
   let fields: FieldInfo[] = []
   let operators: OperatorMeta[] = []
   let values: string[] = []
@@ -299,7 +306,7 @@ export async function getAutoCompleteResult({
     const valueInput = match[2] || ''
 
     if (
-      (valueInput && input.endsWith(' ')) ||
+      (valueInput && current.endsWith(' ')) ||
       /^".+"$/.test(valueInput.trim()) ||
       /^'.+'$/.test(valueInput.trim())
     ) {
@@ -314,6 +321,7 @@ export async function getAutoCompleteResult({
           field,
           string: valueInput,
           size: 10,
+          ...buildTimeRangeFilter(timeRange),
         },
       })
       values = data.terms || []

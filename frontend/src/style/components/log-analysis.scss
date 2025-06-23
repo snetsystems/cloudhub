@@ -144,3 +144,142 @@
   align-items: start;
   gap: 8px;
 }
+
+$bg: #1d1e24;
+$border: #343741;
+$primary: #f58220;
+$text: #d3dae6;
+$highlight: #25262e;
+
+.kql-filter-bar {
+  position: relative;
+  width: 100%;
+  padding: 0 20px;
+  z-index: 1000;
+}
+
+.kql-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid $border;
+  border-radius: 4px;
+  background: $bg;
+}
+
+.kql-icon-search {
+  margin-left: 8px;
+  color: $text;
+  pointer-events: none;
+}
+
+.kql-clear-btn {
+  margin-right: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  .ouiIcon {
+    color: $text;
+    transition: color 120ms;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+}
+
+.kql-input {
+  flex: 1 1 auto;
+  padding: 6px 6px;
+  background: transparent;
+  border: none;
+  color: $text;
+  font-size: 14px;
+
+  &::placeholder {
+    color: rgba($text, 0.5);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.kql-focus-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  background: $primary;
+  transition: width 150ms ease;
+}
+
+.kql-box:focus-within .kql-focus-bar {
+  width: 100%;
+}
+
+.kql-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  background: $bg;
+  border: 1px solid $border;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  z-index: 100;
+}
+
+.kql-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  &:hover,
+  &.is-active {
+    font-weight: 600;
+  }
+}
+.kql-label {
+  min-width: 250px;
+}
+.kql-dropdown .kql-item:last-child {
+  border-bottom: none;
+}
+
+.kql-field {
+  color: $primary;
+}
+.kql-op {
+  color: $primary;
+  margin-right: 4px;
+}
+.kql-value {
+  color: $primary;
+}
+
+.kql-meta {
+  font-size: 12px;
+  color: #888;
+  margin-left: 6px;
+}
+.kql-desc {
+  font-size: 11px;
+  color: #aaa;
+  margin-left: 6px;
+}
+.kql-token {
+  margin-right: 8px;
+  color: #b1b6ff;
+}
+.kql-value {
+  color: $primary;
+}
