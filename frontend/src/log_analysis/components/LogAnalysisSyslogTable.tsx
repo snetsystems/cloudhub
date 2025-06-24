@@ -286,6 +286,8 @@ function LogAnalysisSyslogTable({
   const totalPages = Math.max(1, Math.ceil(totalRowCount / pageSize))
   const isLastPage = pageIndex === totalPages - 1
 
+  const gridHeight = syslogTableRows.length * 35 + 100
+
   return (
     <>
       <LogAnalysisDashboardHeader
@@ -346,6 +348,7 @@ function LogAnalysisSyslogTable({
               rowHover: 'highlight',
               header: 'underline',
             }}
+            height={gridHeight}
           />
         </div>
         {isLastPage && hasMore && (
