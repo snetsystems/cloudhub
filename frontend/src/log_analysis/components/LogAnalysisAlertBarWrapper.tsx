@@ -90,15 +90,15 @@ function LogAnalysisAlertBarWrapper({
   }, [])
 
   useEffect(() => {
-    if (active.length > 0 || !logsData) return
+    if (!logsData) return
 
-    filteredLogsForLogAnalysis.forEach(filter => {
+    let result = filteredLogsForLogAnalysis.filter(filter => {
       if ('range' in filter) {
         const {gte, lte} = filter.range['@timestamp']
         const newGte = new Date(gte).getTime()
         const newLte = new Date(lte).getTime()
         const ary = []
-        logsData.filter((log, idx) => {
+        logsData.forEach((log, idx) => {
           if (
             new Date(log.time).getTime() >= newGte &&
             new Date(log.time).getTime() < newLte
@@ -108,8 +108,12 @@ function LogAnalysisAlertBarWrapper({
         })
 
         setActive(ary)
+        return ary.length > 0
       }
     })
+    if (result.length === 0) {
+      setActive([])
+    }
   }, [logsData, filteredLogsForLogAnalysis])
 
   useEffect(() => {
@@ -243,8 +247,10 @@ function LogAnalysisAlertBarWrapper({
         'stable-selection': {
           threshold: 8,
           onSelect: ({gte, lte, indices}) => {
-            setTimeRange({gte, lte})
-            setActive(indices)
+            if (gte >= 0 && lte >= 0) {
+              setTimeRange({gte, lte})
+              setActive(indices)
+            }
           },
 
           onDragEnd: () => {
