@@ -1,4 +1,3 @@
-// Library
 import React, {useCallback, useEffect, useState, useRef, useMemo} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
@@ -22,8 +21,8 @@ import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
 // Constants
 import {
+  DEFAULT_SYSLOG_TABLE_CHUNK_SIZE,
   LOG_ANALYSIS_LOCAL_STORAGE_KEY,
-  SYSLOG_TABLE_CHUNK_SIZE,
 } from 'src/log_analysis/constants'
 
 // Components
@@ -32,7 +31,7 @@ import LogAnalysisSyslogTable from 'src/log_analysis/components/LogAnalysisSyslo
 // API
 import {fetchSyslogTableData} from 'src/log_analysis/apis'
 
-// Util
+// Utils
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {buildCombinedFilters} from 'src/log_analysis/util'
 
@@ -58,6 +57,27 @@ function LogAnalysisSyslogTableWrapper({
   cloudTimeRange,
   esSource,
 }: LogAnalysisSyslogTableProps) {
+  const [syslogTableChunkSize, setSyslogTableChunkSize] = useState<number>(
+    () => {
+      try {
+        const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (typeof parsed.chunkSize === 'number') {
+            return parsed.chunkSize
+          }
+        }
+      } catch {
+        console.log('Failed to parse chunkSize from LocalStorage.')
+      }
+      return DEFAULT_SYSLOG_TABLE_CHUNK_SIZE
+    }
+  )
+  const syslogTableChunkSizeRef = useRef(syslogTableChunkSize)
+  useEffect(() => {
+    syslogTableChunkSizeRef.current = syslogTableChunkSize
+  }, [syslogTableChunkSize])
+
   let intervalID: number | null = null
 
   const [rows, setRows] = useState<SyslogTableRows[]>([])
@@ -142,7 +162,7 @@ function LogAnalysisSyslogTableWrapper({
         const {data, total, lastSortValues} = await fetchSyslogTableData(
           esSource,
           combinedFilters,
-          SYSLOG_TABLE_CHUNK_SIZE,
+          syslogTableChunkSizeRef.current,
           sortColumns,
           reset ? undefined : prevSortValuesRef.current
         )
@@ -154,6 +174,7 @@ function LogAnalysisSyslogTableWrapper({
         setIsLoading(false)
       }
     },
+
     [esSource, sortColumns, filteredLogsForLogAnalysis, cloudTimeRange]
   )
 
@@ -247,6 +268,36 @@ function LogAnalysisSyslogTableWrapper({
 
   return (
     <LogAnalysisSyslogTable
+      chunkSize={syslogTableChunkSize}
+      onChunkSizeChange={value => {
+        setSyslogTableChunkSize(value)
+        try {
+          const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+          const parsed = stored ? JSON.parse(stored) : {}
+          localStorage.setItem(
+            LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+            JSON.stringify({...parsed, chunkSize: value})
+          )
+        } catch {
+          console.log('Failed to save Chunk Size to LocalStorage.')
+        }
+      }}
+      onChunkSizeBlur={value => {
+        const finalValue = isNaN(value)
+          ? DEFAULT_SYSLOG_TABLE_CHUNK_SIZE
+          : value
+        setSyslogTableChunkSize(finalValue)
+        try {
+          const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+          const parsed = stored ? JSON.parse(stored) : {}
+          localStorage.setItem(
+            LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+            JSON.stringify({...parsed, chunkSize: finalValue})
+          )
+        } catch {
+          console.log('Failed to save Chunk Size to LocalStorage.')
+        }
+      }}
       autoRefreshNumberValue={cloudAutoRefresh?.logAnalysis}
       isLoading={isLoading}
       syslogTableRows={rows.slice(

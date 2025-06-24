@@ -21,6 +21,7 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 import {
+  DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE,
   LOG_ANALYSIS_LOCAL_STORAGE_KEY,
   LOG_ANALYSIS_SYSLOG_TABLE_PAGE_SIZE_OPTIONS,
   SYSLOG_FACILITY_MAP,
@@ -28,6 +29,9 @@ import {
 } from 'src/log_analysis/constants'
 
 interface Props {
+  chunkSize: number
+  onChunkSizeChange: (value: number) => void
+  onChunkSizeBlur: (value: number) => void
   isLoading: boolean
   isLiveUpdating: boolean
   syslogTableRows: (SyslogTableRows & {_highlight?: Record<string, string[]>})[]
@@ -47,6 +51,9 @@ interface Props {
 }
 
 function LogAnalysisSyslogTable({
+  chunkSize,
+  onChunkSizeChange,
+  onChunkSizeBlur,
   isLiveUpdating,
   isLoading,
   syslogTableRows,
@@ -282,11 +289,10 @@ function LogAnalysisSyslogTable({
   }
   const shouldAutoRefresh =
     autoRefreshNumberValue !== undefined && autoRefreshNumberValue !== 0
-
   const totalPages = Math.max(1, Math.ceil(totalRowCount / pageSize))
   const isLastPage = pageIndex === totalPages - 1
 
-  const gridHeight = syslogTableRows.length * 35 + 100
+  const gridHeight = `${syslogTableRows.length * 35 + 150}px`
 
   return (
     <>
@@ -311,6 +317,38 @@ function LogAnalysisSyslogTable({
         {isLoading && (
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
         )}
+        <div className="syslog-table-chunksize--container">
+          <div
+            className="syslog-table-chunksize--inner"
+            onMouseDown={e => e.stopPropagation()}
+            onDragStart={e => {
+              e.stopPropagation()
+            }}
+            onClick={e => {
+              e.stopPropagation()
+            }}
+          >
+            <label htmlFor="chunkSizeInput">Chunk Size</label>
+            <input
+              id="chunkSizeInput"
+              type="number"
+              className="form-control input-sm"
+              placeholder="Chunk Size"
+              value={chunkSize}
+              onChange={e => {
+                const v = parseInt(e.target.value, 10) || 1
+                onChunkSizeChange(
+                  v > DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE
+                    ? DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE
+                    : v
+                )
+              }}
+              onBlur={() => onChunkSizeBlur(chunkSize)}
+              min={1}
+              max={DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE}
+            />
+          </div>
+        </div>
       </LogAnalysisDashboardHeader>
 
       <FancyScrollbar style={{height: 'calc(100% - 80px)'}}>

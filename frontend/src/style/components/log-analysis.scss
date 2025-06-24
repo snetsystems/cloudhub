@@ -8,6 +8,26 @@
   font-weight: bold;
 }
 
+.syslog-table-chunksize--container {
+  z-index: 3;
+}
+
+.syslog-table-chunksize--inner {
+  width: 208px;
+  display: flex;
+  align-items: center;
+
+  > label {
+    margin-right: 5px;
+    width: 70px;
+    padding-top: 2px;
+  }
+
+  > input {
+    width: 120px;
+  }
+}
+
 button[data-test-subj='pagination-button-next'][disabled] {
   cursor: not-allowed;
   pointer-events: none;
