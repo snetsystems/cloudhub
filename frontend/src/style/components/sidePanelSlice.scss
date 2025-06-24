@@ -12,21 +12,22 @@
   > * {
     width: 100%;
   }
+
   .modal-content {
     height: auto;
     transition: width 0.3s ease-in-out;
     overflow: hidden;
     padding: 10px;
-
-    flex: 0 0 400px; // flex 컨테이너에서도 강제
-    box-sizing: border-box; // 패딩 포함
+    flex: 0 0 400px;
+    box-sizing: border-box;
   }
+
   .modal-content-inner {
     position: fixed;
-    top: 45px;
+    top: 137px;
     width: inherit;
     right: 0;
-    height: calc(100% - 45px);
+    height: calc(100% - 137px);
     overflow: hidden;
   }
 }
