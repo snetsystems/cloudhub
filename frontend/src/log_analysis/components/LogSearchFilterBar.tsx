@@ -126,10 +126,8 @@ function LogSearchFilterBar({
       } else {
         const it = dropdownItems[activeIndex]
         if (it.type === 'field') handleFieldSelect(it.data)
-        else if (it.type === 'operator')
-          (it.data.op === 'and' || it.data.op === 'or'
-            ? handleLogicalOperatorSelect
-            : handleOperatorSelect)(it.data)
+        else if (it.type === 'operator') handleOperatorSelect(it.data)
+        else if (it.type === 'logical') handleLogicalOperatorSelect(it.data)
         else handleValueSelect(it.data)
       }
     }
