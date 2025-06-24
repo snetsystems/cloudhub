@@ -7,6 +7,14 @@
   padding: 4px;
 }
 
+.spinning.slow {
+  .refresh-spinner-icon {
+    animation: spin 2.5s linear infinite;
+    display: inline-block;
+    transform-origin: center;
+  }
+}
+
 .spinning {
   .refresh-spinner-icon {
     animation: spin 1s linear infinite;

@@ -33,7 +33,7 @@ const RefreshSpinner = ({isActive, isHighlighted}: Props) => {
     <div
       className={`refresh-spinner button button-sm button-default button-square ${
         spinning ? 'spinning' : ''
-      } ${isHighlighted ? 'button-primary' : ''}`}
+      } ${isHighlighted ? 'button-primary slow' : ''}`}
     >
       <span className="button-icon icon refresh refresh-spinner-icon" />
     </div>
