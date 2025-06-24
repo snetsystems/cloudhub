@@ -8,13 +8,20 @@ import type {
 } from 'src/types/elasticSearch'
 import {fetchKibanaFieldList, getAutoCompleteResult} from '../apis'
 import {OperatorMeta, LOGICAL_OPERATORS} from '../constants/search-filter'
-import {ESRange, lowerToESRange} from '../util'
+import {ESRange, kqlToBoolShould, lowerToESRange} from '../util'
 
 import {OuiIcon} from '@opensearch-project/oui'
 import 'src/log_analysis/util/setupOUIIcons'
 import SearchFilterItem from './SearchFilterItem'
 import {CloudTimeRange} from 'src/clouds/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
+import {FilteredLogsForLogAnalysis} from 'src/types'
+import {bindActionCreators} from 'redux'
+import {
+  addLogAnalysisKQLFilterClause,
+  removeLogAnalysisKQLFilterClause,
+} from '../actions'
+import {LogFilterClause} from 'src/types/logAnalysis'
 
 interface ReduxState {
   app: {
@@ -23,15 +30,29 @@ interface ReduxState {
       cloudTimeRange?: CloudTimeRange
     }
   }
+  logAnalysisDashboard?: {
+    filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
+  }
 }
 interface StateProps {
   esSource?: BaseElasticSearchData
   cloudTimeRange?: CloudTimeRange
+  filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
 }
 
-type Props = StateProps
+interface DispatchProps {
+  addKql: (kql: string, dsl: LogFilterClause) => void
+  removeKql: (kql: string) => void
+}
 
-function LogSearchFilterBar({esSource, cloudTimeRange}: Props) {
+type Props = StateProps & DispatchProps
+
+function LogSearchFilterBar({
+  esSource,
+  cloudTimeRange,
+  addKql,
+  removeKql,
+}: Props) {
   const [fields, setFields] = useState<FieldInfo[]>([])
   const [inputValue, setInputValue] = useState('')
   const [autocomplete, setAutocomplete] = useState<AutoCompleteResult>({
@@ -84,22 +105,33 @@ function LogSearchFilterBar({esSource, cloudTimeRange}: Props) {
   }, [cloudTimeRange])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!dropdownOpen || dropdownItems.length === 0) return
+    if (!dropdownOpen || dropdownItems.length === 0) {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+
+        submitFilter()
+      }
+      return
+    }
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setActiveIndex(i => (i + 1 < dropdownItems.length ? i + 1 : 0))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setActiveIndex(i => (i - 1 >= 0 ? i - 1 : dropdownItems.length - 1))
-    } else if (e.key === 'Enter' && activeIndex !== -1) {
+    } else if (e.key === 'Enter') {
       e.preventDefault()
-      const it = dropdownItems[activeIndex]
-      if (it.type === 'field') handleFieldSelect(it.data)
-      else if (it.type === 'operator') {
-        ;(it.data.op === 'and' || it.data.op === 'or'
-          ? handleLogicalOperatorSelect
-          : handleOperatorSelect)(it.data)
-      } else handleValueSelect(it.data)
+      if (activeIndex === -1) {
+        submitFilter()
+      } else {
+        const it = dropdownItems[activeIndex]
+        if (it.type === 'field') handleFieldSelect(it.data)
+        else if (it.type === 'operator')
+          (it.data.op === 'and' || it.data.op === 'or'
+            ? handleLogicalOperatorSelect
+            : handleOperatorSelect)(it.data)
+        else handleValueSelect(it.data)
+      }
     }
   }
 
@@ -132,7 +164,9 @@ function LogSearchFilterBar({esSource, cloudTimeRange}: Props) {
     if (!esSource) return
     setDropdownOpen(true)
     if (fields.length === 0) {
-      const {fields: fetched} = await fetchKibanaFieldList({esSource})
+      const {fields: fetched} = await fetchKibanaFieldList({
+        esSource,
+      })
       setFields(fetched)
       triggerAC(inputValue, fetched)
     } else triggerAC(inputValue)
@@ -167,9 +201,10 @@ function LogSearchFilterBar({esSource, cloudTimeRange}: Props) {
     setInputValue(p => p.trim() + ' ' + op.op + ' ')
     setTimeout(() => triggerAC(`${inputValue.trim()} ${op.op} `), 0)
   }
-  const handleValueSelect = (v: string) => {
-    const q = /[\s,:"]/g.test(v) ? `"${v.replace(/"/g, '\\"')}"` : v
-    setInputValue(p => p.trimEnd() + ' ' + q + ' ')
+  const handleValueSelect = (raw: string) => {
+    if (!raw) return
+    const q = `"${raw.replace(/"/g, '\\"')}"`
+    setInputValue(prev => prev.trimEnd() + ' ' + q + ' ')
     setAutocomplete({fields: [], operators: LOGICAL_OPERATORS, values: []})
     setDropdownOpen(true)
   }
@@ -179,10 +214,22 @@ function LogSearchFilterBar({esSource, cloudTimeRange}: Props) {
   }
 
   const clearInput = () => {
+    const trimmed = inputValue.trim()
+    if (trimmed) removeKql(trimmed)
+
     setInputValue('')
     setAutocomplete({fields: [], operators: [], values: []})
     setDropdownOpen(false)
     inputRef.current?.focus()
+  }
+
+  const submitFilter = () => {
+    const trimmed = inputValue.trim()
+    if (!trimmed || !esSource) return
+    const kqlClause = kqlToBoolShould(trimmed)
+    if (!kqlClause) return
+    addKql(trimmed, kqlClause)
+    setDropdownOpen(false)
   }
 
   return (
@@ -279,6 +326,17 @@ function LogSearchFilterBar({esSource, cloudTimeRange}: Props) {
 const mstp = (state: ReduxState): StateProps => ({
   esSource: state.app.persisted.esSource,
   cloudTimeRange: state.app.persisted.cloudTimeRange,
+  filteredLogsForLogAnalysis:
+    state.logAnalysisDashboard.filteredLogsForLogAnalysis,
 })
 
-export default connect(mstp)(LogSearchFilterBar)
+const mdtp = dispatch =>
+  bindActionCreators(
+    {
+      addKql: addLogAnalysisKQLFilterClause,
+      removeKql: removeLogAnalysisKQLFilterClause,
+    },
+    dispatch
+  )
+
+export default connect(mstp, mdtp)(LogSearchFilterBar)

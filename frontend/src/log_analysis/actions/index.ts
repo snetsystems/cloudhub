@@ -2,7 +2,9 @@ import {
   FilteredLogsForLogAnalysis,
   MatchPhraseFilterClause,
   RangeFilterClause,
+  KQLFilterClause,
 } from 'src/types'
+import {KqlDslWrapper, LogFilterClause} from 'src/types/logAnalysis'
 
 export enum ActionType {
   setFilteredLogForLogAnalysis = 'SET_LOG_ANALYSIS_FILTERED_LOG',
@@ -11,6 +13,8 @@ export enum ActionType {
   removeLogAnalysisMatchPhraseFilterClause = 'REMOVE_LOG_ANALYSIS_MATCH_PHRASE_FILTER_CLAUSE',
   addLogAnalysisRangeFilterClause = 'ADD_LOG_ANALYSIS_RANGE_FILTER_CLAUSE',
   removeLogAnalysisRangeFilterClause = 'REMOVE_LOG_ANALYSIS_RANGE_FILTER_CLAUSE',
+  addLogAnalysisKQLFilterClause = 'ADD_LOG_ANALYSIS_KQL_FILTER_CLAUSE',
+  removeLogAnalysisKQLFilterClause = 'REMOVE_LOG_ANALYSIS_KQL_FILTER_CLAUSE',
 }
 
 export type LogAnalysisAction =
@@ -20,12 +24,12 @@ export type LogAnalysisAction =
   | RemoveLogAnalysisMatchPhraseFilterClauseAction
   | AddLogAnalysisRangeFilterClauseAction
   | RemoveLogAnalysisRangeFilterClauseAction
+  | AddLogAnalysisKQLFilterClauseAction
+  | RemoveLogAnalysisKQLFilterClauseAction
 
 interface LogAnalysisFilteredLogAction {
   type: ActionType.setFilteredLogForLogAnalysis
-  payload: {
-    filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
-  }
+  payload: {filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis}
 }
 
 export const setFilteredLogForLogAnalysis = (
@@ -45,9 +49,7 @@ export const setLogAnalysisStateInit = (): LogAnalysisInitAction => ({
 
 interface AddLogAnalysisMatchPhraseFilterClauseAction {
   type: ActionType.addLogAnalysisMatchPhraseFilterClause
-  payload: {
-    clause: MatchPhraseFilterClause
-  }
+  payload: {clause: MatchPhraseFilterClause}
 }
 
 export const addLogAnalysisMatchPhraseFilterClause = (
@@ -55,17 +57,12 @@ export const addLogAnalysisMatchPhraseFilterClause = (
   value: string | number
 ): AddLogAnalysisMatchPhraseFilterClauseAction => ({
   type: ActionType.addLogAnalysisMatchPhraseFilterClause,
-  payload: {
-    clause: {match_phrase: {[key]: value}},
-  },
+  payload: {clause: {match_phrase: {[key]: value}}},
 })
 
 interface RemoveLogAnalysisMatchPhraseFilterClauseAction {
   type: ActionType.removeLogAnalysisMatchPhraseFilterClause
-  payload: {
-    key: string
-    value: string | number
-  }
+  payload: {key: string; value: string | number}
 }
 
 export const removeLogAnalysisMatchPhraseFilterClause = (
@@ -78,9 +75,7 @@ export const removeLogAnalysisMatchPhraseFilterClause = (
 
 interface AddLogAnalysisRangeFilterClauseAction {
   type: ActionType.addLogAnalysisRangeFilterClause
-  payload: {
-    clause: RangeFilterClause
-  }
+  payload: {clause: RangeFilterClause}
 }
 
 export const addLogAnalysisRangeFilterClause = (
@@ -105,9 +100,7 @@ export const addLogAnalysisRangeFilterClause = (
 
 interface RemoveLogAnalysisRangeFilterClauseAction {
   type: ActionType.removeLogAnalysisRangeFilterClause
-  payload: {
-    field: string
-  }
+  payload: {field: string}
 }
 
 export const removeLogAnalysisRangeFilterClause = (
@@ -116,3 +109,24 @@ export const removeLogAnalysisRangeFilterClause = (
   type: ActionType.removeLogAnalysisRangeFilterClause,
   payload: {field},
 })
+
+interface AddLogAnalysisKQLFilterClauseAction {
+  type: ActionType.addLogAnalysisKQLFilterClause
+  payload: {clause: KQLFilterClause}
+}
+
+export const addLogAnalysisKQLFilterClause = (
+  kql: string,
+  dsl: LogFilterClause
+) => ({
+  type: ActionType.addLogAnalysisKQLFilterClause as const,
+  payload: {clause: {kql, dsl} as KqlDslWrapper},
+})
+
+export const removeLogAnalysisKQLFilterClause = (kql: string) => ({
+  type: ActionType.removeLogAnalysisKQLFilterClause as const,
+  payload: {kql},
+})
+export type RemoveLogAnalysisKQLFilterClauseAction = ReturnType<
+  typeof removeLogAnalysisKQLFilterClause
+>

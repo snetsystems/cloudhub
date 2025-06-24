@@ -3,9 +3,15 @@ import {CloudTimeRange} from 'src/clouds/types'
 import {
   FilteredLogsForLogAnalysis,
   LogsFilterClause,
+  MatchPhraseFilterClause,
   TimeZones,
 } from 'src/types'
 import {OperatorMeta, FIELD_OPERATOR_META} from '../constants/search-filter'
+import {
+  BoolShouldClause,
+  LogAnalysisFilter,
+  LogFilterClause,
+} from 'src/types/logAnalysis'
 
 export const formattedTime = (
   timestampInput: string | null,
@@ -30,13 +36,16 @@ export const formattedTime = (
   return utcMoment.local().format('YYYY-MM-DD HH:mm:ss')
 }
 
+export const unwrapDsl = (clause: LogAnalysisFilter): LogFilterClause =>
+  'dsl' in clause ? clause.dsl : clause
+
 export const buildCombinedFilters = (
   baseFilters: FilteredLogsForLogAnalysis,
   timeRange?: CloudTimeRange['logAnalysis']
-): FilteredLogsForLogAnalysis => {
+): LogFilterClause[] => {
   const {gteISO, lteISO} = lowerToESRange(timeRange)
 
-  const combined: FilteredLogsForLogAnalysis = [...baseFilters]
+  const combined: LogFilterClause[] = baseFilters.map(unwrapDsl)
   const hasTime = combined.some(
     clause => 'range' in clause && Object.keys(clause.range)[0] === '@timestamp'
   )
@@ -186,3 +195,21 @@ export const buildTimeRangeFilter = ({gteISO, lteISO}: ESRange) => ({
     },
   },
 })
+
+export const kqlToBoolShould = (raw: string): BoolShouldClause | null => {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+
+  const m = trimmed.match(/^([\w\.\-]+)\s*:\s*["']?(.+?)["']?$/)
+  if (!m) return null
+
+  const [, field, value] = m
+  const clause: MatchPhraseFilterClause = {match_phrase: {[field]: value}}
+
+  return {
+    bool: {
+      should: [clause] as const,
+      minimum_should_match: 1,
+    },
+  }
+}

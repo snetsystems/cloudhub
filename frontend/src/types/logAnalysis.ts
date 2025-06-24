@@ -72,9 +72,17 @@ export interface HitFields {
   'message.keyword'?: string[]
 }
 
-export type FilteredLogsForLogAnalysis = Array<
-  MatchPhraseFilterClause | RangeFilterClause | KQLFilterClause
->
+export type FilteredLogsForLogAnalysis = LogAnalysisFilter[]
+
+export type LogFilterClause =
+  | MatchPhraseFilterClause
+  | RangeFilterClause
+  | BoolShouldClause
+
+export interface KqlDslWrapper {
+  kql: string
+  dsl: LogFilterClause
+}
 
 export interface MatchPhraseFilterClause {
   match_phrase: {[key: string]: string | number}
@@ -91,7 +99,9 @@ export interface RangeFilterClause {
 }
 
 export interface KQLFilterClause {
+  kind: 'kql-wrapper'
   kql: string
+  dsl: LogFilterClause
 }
 
 export interface BaseFilter {
@@ -101,4 +111,14 @@ export interface BaseFilter {
 export type LogsFilterClause =
   | (BaseFilter & MatchPhraseFilterClause)
   | (BaseFilter & RangeFilterClause)
+  | (BaseFilter & BoolShouldClause)
   | (BaseFilter & KQLFilterClause)
+
+export interface BoolShouldClause {
+  bool: {
+    should: ReadonlyArray<MatchPhraseFilterClause>
+    minimum_should_match: 1
+  }
+}
+
+export type LogAnalysisFilter = LogFilterClause | KQLFilterClause

@@ -6,6 +6,7 @@ import _ from 'lodash'
 
 // Actions
 import {
+  removeLogAnalysisKQLFilterClause,
   removeLogAnalysisMatchPhraseFilterClause,
   removeLogAnalysisRangeFilterClause,
 } from 'src/log_analysis/actions'
@@ -24,40 +25,41 @@ interface Props {
     value: string | number
   ) => void
   removeLogAnalysisRangeFilterClause?: (field: string) => void
+  removeLogAnalysisKQLFilterClause?: (kql: string) => void
 }
 
 function LogsFilterContainer({
-  filteredLogsForLogAnalysis,
+  filteredLogsForLogAnalysis = [],
   timeZone,
   removeLogAnalysisMatchPhraseFilterClause,
   removeLogAnalysisRangeFilterClause,
+  removeLogAnalysisKQLFilterClause,
 }: Props) {
   return (
-    <>
-      <div className="logs-analysis-filter-container">
-        {filteredLogsForLogAnalysis.map((clause, idx) => (
-          <LogsFilterViewer
-            key={idx}
-            filter={{id: idx.toString(), ...clause}}
-            timeZone={timeZone}
-            onDelete={id => {
-              const index = Number(id)
-              const target = filteredLogsForLogAnalysis[index]
-              if ('match_phrase' in target) {
-                const k = Object.keys(target.match_phrase)[0]
-                removeLogAnalysisMatchPhraseFilterClause(
-                  k,
-                  target.match_phrase[k]
-                )
-              } else if ('range' in target) {
-                const f = Object.keys(target.range)[0]
-                removeLogAnalysisRangeFilterClause(f)
-              }
-            }}
-          />
-        ))}
-      </div>
-    </>
+    <div className="logs-analysis-filter-container">
+      {filteredLogsForLogAnalysis.map((clause, idx) => (
+        <LogsFilterViewer
+          key={idx}
+          filter={{id: idx.toString(), ...clause}}
+          timeZone={timeZone}
+          onDelete={id => {
+            const target = filteredLogsForLogAnalysis[Number(id)]
+            if ('match_phrase' in target) {
+              const k = Object.keys(target.match_phrase)[0]
+              removeLogAnalysisMatchPhraseFilterClause?.(
+                k,
+                target.match_phrase[k]
+              )
+            } else if ('range' in target) {
+              const f = Object.keys(target.range)[0]
+              removeLogAnalysisRangeFilterClause?.(f)
+            } else if ('kql' in target) {
+              removeLogAnalysisKQLFilterClause?.(target.kql)
+            }
+          }}
+        />
+      ))}
+    </div>
   )
 }
 
@@ -68,7 +70,6 @@ const mstp = state => {
     },
     logAnalysisDashboard: {filteredLogsForLogAnalysis},
   } = state
-
   return {
     filteredLogsForLogAnalysis,
     timeZone,
@@ -84,11 +85,13 @@ const mdtp = dispatch => ({
     removeLogAnalysisRangeFilterClause,
     dispatch
   ),
+  removeLogAnalysisKQLFilterClause: bindActionCreators(
+    removeLogAnalysisKQLFilterClause,
+    dispatch
+  ),
 })
 
-const isEqual = (prev, next) => {
-  return _.isEqual(prev, next)
-}
+const isEqual = (prev, next) => _.isEqual(prev, next)
 
 export default React.memo(
   connect(mstp, mdtp, null)(LogsFilterContainer),
