@@ -90,7 +90,6 @@ function LogAnalysisAlertBarWrapper({
   }, [])
 
   useEffect(() => {
-    console.log('filteredLogsForLogAnalysis', filteredLogsForLogAnalysis)
     if (active.length > 0 || !logsData) return
 
     filteredLogsForLogAnalysis.forEach(filter => {
@@ -98,7 +97,6 @@ function LogAnalysisAlertBarWrapper({
         const {gte, lte} = filter.range['@timestamp']
         const newGte = new Date(gte).getTime()
         const newLte = new Date(lte).getTime()
-        console.log('filter', logsData, newGte, newLte)
         const ary = []
         logsData.filter((log, idx) => {
           if (
@@ -108,7 +106,7 @@ function LogAnalysisAlertBarWrapper({
             ary.push(idx)
           }
         })
-        console.log('ary', ary)
+
         setActive(ary)
       }
     })
@@ -201,8 +199,6 @@ function LogAnalysisAlertBarWrapper({
         labels: [],
       }
     }
-
-    console.log('active', active)
 
     return {
       datasets: [
