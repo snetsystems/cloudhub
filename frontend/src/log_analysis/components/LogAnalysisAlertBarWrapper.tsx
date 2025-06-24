@@ -51,6 +51,7 @@ function LogAnalysisAlertBarWrapper({
   esSource,
   addLogAnalysisRangeFilter,
   removeLogAnalysisRangeFilterClause,
+  filteredLogsForLogAnalysis,
 }: Props) {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
 
@@ -87,6 +88,31 @@ function LogAnalysisAlertBarWrapper({
   useEffect(() => {
     getLogsData(esSource)
   }, [])
+
+  useEffect(() => {
+    console.log('filteredLogsForLogAnalysis', filteredLogsForLogAnalysis)
+    if (active.length > 0 || !logsData) return
+
+    filteredLogsForLogAnalysis.forEach(filter => {
+      if ('range' in filter) {
+        const {gte, lte} = filter.range['@timestamp']
+        const newGte = new Date(gte).getTime()
+        const newLte = new Date(lte).getTime()
+        console.log('filter', logsData, newGte, newLte)
+        const ary = []
+        logsData.filter((log, idx) => {
+          if (
+            new Date(log.time).getTime() >= newGte &&
+            new Date(log.time).getTime() < newLte
+          ) {
+            ary.push(idx)
+          }
+        })
+        console.log('ary', ary)
+        setActive(ary)
+      }
+    })
+  }, [logsData, filteredLogsForLogAnalysis])
 
   useEffect(() => {
     if (
@@ -175,6 +201,8 @@ function LogAnalysisAlertBarWrapper({
         labels: [],
       }
     }
+
+    console.log('active', active)
 
     return {
       datasets: [

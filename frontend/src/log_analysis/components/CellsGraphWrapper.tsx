@@ -107,7 +107,7 @@ const TestCellsGraphWrapper = ({
         getCellsReactive(
           layout,
           source,
-          filteredHostForGPUMonitoring.hostname ?? '',
+          {host: filteredHostForGPUMonitoring.hostname ?? ''},
           ratio,
           null
         )
@@ -125,7 +125,7 @@ const TestCellsGraphWrapper = ({
     if (!isStatisticsGraph) return
 
     if (!!layout) {
-      setLayoutCells(getCellsReactive(layout, source, '', ratio, null))
+      setLayoutCells(getCellsReactive(layout, source, {host: ''}, ratio, null))
     }
   }, [layout, selfTimeRange, statisticGraphHeight])
 
