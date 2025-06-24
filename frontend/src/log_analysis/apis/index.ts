@@ -104,13 +104,18 @@ export async function fetchSyslogTableData(
   searchAfter?: any
 ): Promise<{data: SyslogTableRows[]; total: number; lastSortValues: any}> {
   const sort = sortColumns.length
-    ? sortColumns.map(({id, direction}) => ({
-        [id]: {
-          order: direction,
-          format: id === '@timestamp' ? 'strict_date_optional_time' : undefined,
-          unmapped_type: 'boolean',
-        },
-      }))
+    ? [
+        ...sortColumns.map(({id, direction}) => ({
+          [id]: {
+            order: direction,
+            format:
+              id === '@timestamp' ? 'strict_date_optional_time' : undefined,
+            unmapped_type: 'boolean',
+          },
+        })),
+        {_seq_no: {order: 'asc', unmapped_type: 'long'}},
+        {_primary_term: {order: 'asc', unmapped_type: 'long'}},
+      ]
     : [
         {
           '@timestamp': {
@@ -119,7 +124,8 @@ export async function fetchSyslogTableData(
             unmapped_type: 'boolean',
           },
         },
-        {_doc: {order: 'desc', unmapped_type: 'boolean'}},
+        {_seq_no: {order: 'asc', unmapped_type: 'long'}},
+        {_primary_term: {order: 'asc', unmapped_type: 'long'}},
       ]
 
   const body: Record<string, any> = {
@@ -132,14 +138,7 @@ export async function fetchSyslogTableData(
       {field: '@timestamp', format: 'strict_date_optional_time'},
     ],
     _source: false,
-    query: {
-      bool: {
-        must: [],
-        filter: filters,
-        should: [],
-        must_not: [],
-      },
-    },
+    query: {bool: {must: [], filter: filters, should: [], must_not: []}},
     highlight: {
       pre_tags: ["<span class='logs-analysis-highlight--match'>"],
       post_tags: ['</span>'],
@@ -159,7 +158,7 @@ export async function fetchSyslogTableData(
   }
 
   const res = await asyncSearch(esSource.links.proxy, {
-    path: '/_async_search',
+    path: '/syslog-*/_async_search',
     method: 'POST',
     body,
   })
