@@ -9,9 +9,11 @@ import {
 import {OperatorMeta, FIELD_OPERATOR_META} from '../constants/search-filter'
 import {
   BoolShouldClause,
+  KQLFilterClause,
   LogAnalysisFilter,
   LogFilterClause,
 } from 'src/types/logAnalysis'
+import {timeRanges} from 'src/shared/data/timeRanges'
 
 export const formattedTime = (
   timestampInput: string | null,
@@ -89,10 +91,6 @@ export const getLogsFilterLabel = (
     }
 
     return `${field} ${parts.join(' AND ')}`
-  }
-
-  if ('kql' in filter) {
-    return filter.kql
   }
 
   return ''
@@ -213,3 +211,18 @@ export const kqlToBoolShould = (raw: string): BoolShouldClause | null => {
     },
   }
 }
+
+export const extractKqlFromFilters = (
+  filters: FilteredLogsForLogAnalysis
+): string => {
+  console.log(filters)
+  const kqlFilter = filters?.find(
+    f => 'kql' in f && typeof f.kql === 'string'
+  ) as KQLFilterClause
+
+  return kqlFilter?.kql ?? ''
+}
+
+export const defaultTimeRange = timeRanges.find(
+  i => i.inputValue === 'Past 30d'
+)
