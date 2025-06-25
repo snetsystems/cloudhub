@@ -147,7 +147,7 @@ export function lowerToESRange(
   const gteISO = toISO(lower, nowDate) // lower → gte
 
   if (new Date(gteISO).getTime() > new Date(lteISO).getTime()) {
-    throw new Error(`lower(${gteISO})가 upper(${lteISO})보다 이후입니다.`)
+    throw new Error(`lower(${gteISO}) is after upper(${lteISO})`)
   }
 
   return {gteISO, lteISO}
@@ -170,7 +170,7 @@ function toISO(expr: DateExpr, now: Date): string {
     return new Date(now.getTime() - amount * MS[unit]).toISOString()
   }
 
-  throw new Error(`지원하지 않는 날짜 표현식: ${expr}`)
+  throw new Error(`Unsupported date expression: ${expr}`)
 }
 
 export const getFieldOperatorsWithLogical = (
