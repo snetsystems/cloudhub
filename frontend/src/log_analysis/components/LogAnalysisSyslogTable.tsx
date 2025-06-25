@@ -328,7 +328,7 @@ function LogAnalysisSyslogTable({
               e.stopPropagation()
             }}
           >
-            <label htmlFor="chunkSizeInput">Chunk Size</label>
+            <label htmlFor="chunkSizeInput">Result Chunk Size</label>
             <input
               id="chunkSizeInput"
               type="number"
@@ -392,7 +392,9 @@ function LogAnalysisSyslogTable({
         {isLastPage && hasMore && (
           <div style={{padding: '8px', textAlign: 'center'}}>
             <span>
-              Search results are limited to {totalRowCount} documents.
+              {totalRowCount === 1
+                ? `Search Result is limited to ${totalRowCount} document.`
+                : `Search Results are limited to ${totalRowCount} documents.`}
             </span>
             <span
               onClick={isLoading ? undefined : onLoadMore}
