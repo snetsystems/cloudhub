@@ -226,3 +226,15 @@ export const extractKqlFromFilters = (
 export const defaultTimeRange = timeRanges.find(
   i => i.inputValue === 'Past 30d'
 )
+
+export const ENUM_COMPATIBLE_OPS = new Set([':', ':=', ':*', ':~'])
+
+export const parseFieldOpValue = (src: string) => {
+  const trimmed = src.trim()
+
+  const m = trimmed.match(/^([\w\.\-]+)\s*([:!*><=]{1,2})\s*(.*)$/)
+  if (!m) return null
+
+  const [, field, op, value] = m
+  return {field, op, value}
+}

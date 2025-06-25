@@ -18,9 +18,11 @@ import {
   OperatorMeta,
 } from 'src/log_analysis/constants/search-filter'
 import {
+  ENUM_COMPATIBLE_OPS,
   ESRange,
   buildTimeRangeFilter,
   getFieldOperatorsWithLogical,
+  parseFieldOpValue,
 } from 'src/log_analysis/util'
 
 export async function fetchMessageTokenData({
@@ -410,65 +412,58 @@ export async function getAutoCompleteResult({
   timeRange: ESRange
   indexPattern?: string
 }): Promise<AutoCompleteResult> {
-  const logicalSplit = input.split(/\b(?:and|or)\b\s*/i)
-  const current = logicalSplit[logicalSplit.length - 1] //
-  const trimmed = current.trim()
+  const logicalParts = input.split(/\b(?:and|or)\b\s*/i)
+  const current = logicalParts[logicalParts.length - 1] ?? ''
   const endsWithSpace = current.endsWith(' ')
-  let fields: FieldInfo[] = []
-  let operators: OperatorMeta[] = []
-  let values: string[] = []
+  const parsed = parseFieldOpValue(current)
+  if (parsed) {
+    const {field, op, value: valueInput} = parsed
 
-  const match = trimmed.match(/^([\w\.\-]+)\s*[:!<>=]+\s*(.*)$/)
-  if (match) {
-    const field = match[1]
-    const valueInput = match[2] || ''
+    if (ENUM_COMPATIBLE_OPS.has(op)) {
+      const quoted = /^(['"]).+\1$/.test(valueInput.trim())
+      if (quoted || (valueInput && endsWithSpace)) {
+        return {fields: [], operators: LOGICAL_OPERATORS, values: []}
+      }
 
-    if (
-      (valueInput && current.endsWith(' ')) ||
-      /^".+"$/.test(valueInput.trim()) ||
-      /^'.+'$/.test(valueInput.trim())
-    ) {
-      return {fields: [], operators: LOGICAL_OPERATORS, values: []}
+      try {
+        const {data} = await esProxy(esSource.links.proxy, {
+          path: `/${indexPattern}/_terms_enum`,
+          method: 'POST',
+          body: {
+            field,
+            string: valueInput,
+            size: 10,
+            ...buildTimeRangeFilter(timeRange),
+          },
+        })
+        return {fields: [], operators: [], values: data.terms ?? []}
+      } catch {
+        return {fields: [], operators: [], values: []}
+      }
     }
 
-    try {
-      const {data} = await esProxy(esSource.links.proxy, {
-        path: `/${indexPattern}/_terms_enum`,
-        method: 'POST',
-        body: {
-          field,
-          string: valueInput,
-          size: 10,
-          ...buildTimeRangeFilter(timeRange),
-        },
-      })
-      values = data.terms || []
-    } catch {
-      values = []
-    }
-    return {fields: [], operators: [], values}
+    return {fields: [], operators: LOGICAL_OPERATORS, values: []}
   }
 
-  const lower = trimmed.toLowerCase()
-  const startsWithFields = allFields.filter(f =>
+  const lower = current.trim().toLowerCase()
+  const startsWith = allFields.filter(f =>
     f.field.toLowerCase().startsWith(lower)
   )
-  const includesFields = allFields.filter(
+  const includes = allFields.filter(
     f =>
       !f.field.toLowerCase().startsWith(lower) &&
       f.field.toLowerCase().includes(lower)
   )
-  fields = [...startsWithFields, ...includesFields]
+  const fields = [...startsWith, ...includes]
 
+  let operators: OperatorMeta[] = []
   if (fields.length === 1) {
-    if (!endsWithSpace) {
-      operators = getFieldOperatorsWithLogical(fields[0].field, fields[0].type)
-    } else {
-      operators = [
-        ...getFieldOperatorsWithLogical(fields[0].field, fields[0].type),
-        ...LOGICAL_OPERATORS,
-      ]
-    }
+    operators = endsWithSpace
+      ? [
+          ...getFieldOperatorsWithLogical(fields[0].field, fields[0].type),
+          ...LOGICAL_OPERATORS,
+        ]
+      : getFieldOperatorsWithLogical(fields[0].field, fields[0].type)
   } else {
     operators = [
       {op: ':', label: 'equals', description: 'equals some value'},
@@ -477,5 +472,5 @@ export async function getAutoCompleteResult({
     ]
   }
 
-  return {fields, operators}
+  return {fields, operators, values: []}
 }
