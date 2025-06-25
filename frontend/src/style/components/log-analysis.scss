@@ -205,10 +205,11 @@ $highlight: #25262e;
 }
 
 .kql-clear-btn {
-  margin-right: 8px;
   background: transparent;
   border: none;
-  padding: 0;
+  display: flex;
+  justify-content: center;
+  padding: 8px 9px 8px;
   cursor: pointer;
 
   .ouiIcon {
@@ -254,9 +255,9 @@ $highlight: #25262e;
 
 .kql-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  width: 100%;
+  top: calc(100% + 1px);
+  left: 20px;
+  width: calc(100% - 40px);
   max-height: 400px;
   overflow-y: auto;
   background: $bg;

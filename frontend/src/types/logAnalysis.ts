@@ -99,7 +99,7 @@ export interface RangeFilterClause {
 }
 
 export interface KQLFilterClause {
-  kind: 'kql-wrapper'
+  kind: 'kql'
   kql: string
   dsl: LogFilterClause
 }

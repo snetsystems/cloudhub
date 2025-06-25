@@ -8,13 +8,18 @@ import type {
 } from 'src/types/elasticSearch'
 import {fetchKibanaFieldList, getAutoCompleteResult} from '../apis'
 import {OperatorMeta, LOGICAL_OPERATORS} from '../constants/search-filter'
-import {ESRange, kqlToBoolShould, lowerToESRange} from '../util'
+import {
+  ESRange,
+  defaultTimeRange,
+  extractKqlFromFilters,
+  kqlToBoolShould,
+  lowerToESRange,
+} from '../util'
 
 import {OuiIcon} from '@opensearch-project/oui'
 import 'src/log_analysis/util/setupOUIIcons'
 import SearchFilterItem from './SearchFilterItem'
 import {CloudTimeRange} from 'src/clouds/types'
-import {timeRanges} from 'src/shared/data/timeRanges'
 import {FilteredLogsForLogAnalysis} from 'src/types'
 import {bindActionCreators} from 'redux'
 import {
@@ -34,6 +39,7 @@ interface ReduxState {
     filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
   }
 }
+
 interface StateProps {
   esSource?: BaseElasticSearchData
   cloudTimeRange?: CloudTimeRange
@@ -42,7 +48,7 @@ interface StateProps {
 
 interface DispatchProps {
   addKql: (kql: string, dsl: LogFilterClause) => void
-  removeKql: (kql: string) => void
+  removeKql: () => void
 }
 
 type Props = StateProps & DispatchProps
@@ -52,9 +58,12 @@ function LogSearchFilterBar({
   cloudTimeRange,
   addKql,
   removeKql,
+  filteredLogsForLogAnalysis,
 }: Props) {
   const [fields, setFields] = useState<FieldInfo[]>([])
-  const [inputValue, setInputValue] = useState('')
+  const [inputValue, setInputValue] = useState(() =>
+    extractKqlFromFilters(filteredLogsForLogAnalysis || [])
+  )
   const [autocomplete, setAutocomplete] = useState<AutoCompleteResult>({
     fields: [],
     operators: [],
@@ -77,6 +86,12 @@ function LogSearchFilterBar({
   }, [autocomplete])
 
   useEffect(() => {
+    if (filteredLogsForLogAnalysis) {
+      setInputValue(extractKqlFromFilters(filteredLogsForLogAnalysis))
+    }
+  }, [filteredLogsForLogAnalysis])
+
+  useEffect(() => {
     const ops = autocomplete.operators.map(o => ({
       type: o.op === 'and' || o.op === 'or' ? 'logical' : 'operator',
       data: o,
@@ -89,7 +104,6 @@ function LogSearchFilterBar({
     setActiveIndex(-1)
   }, [autocomplete])
 
-  const defaultTimeRange = timeRanges.find(i => i.inputValue === 'Past 30d')
   const timeRange: ESRange = useMemo(() => {
     if (cloudTimeRange?.logAnalysis) {
       const {gteISO, lteISO} = lowerToESRange({
@@ -213,7 +227,7 @@ function LogSearchFilterBar({
 
   const clearInput = () => {
     const trimmed = inputValue.trim()
-    if (trimmed) removeKql(trimmed)
+    if (trimmed) removeKql()
 
     setInputValue('')
     setAutocomplete({fields: [], operators: [], values: []})
@@ -223,7 +237,14 @@ function LogSearchFilterBar({
 
   const submitFilter = () => {
     const trimmed = inputValue.trim()
-    if (!trimmed || !esSource) return
+    if (!esSource) return
+
+    if (!trimmed) {
+      removeKql()
+      setDropdownOpen(false)
+      return
+    }
+
     const kqlClause = kqlToBoolShould(trimmed)
     if (!kqlClause) return
     addKql(trimmed, kqlClause)

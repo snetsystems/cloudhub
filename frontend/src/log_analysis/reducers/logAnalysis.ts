@@ -95,27 +95,21 @@ const logAnalysisDashboard = (
     }
     case ActionType.addLogAnalysisKQLFilterClause: {
       const {clause} = action.payload
-      if (
-        state.filteredLogsForLogAnalysis.some(
-          c => 'kql' in c && c.kql === clause.kql
-        )
+
+      const withoutKql = state.filteredLogsForLogAnalysis.filter(
+        f => !('kql' in f)
       )
-        return state
       return {
         ...state,
-        filteredLogsForLogAnalysis: [
-          ...state.filteredLogsForLogAnalysis,
-          clause,
-        ],
+        filteredLogsForLogAnalysis: [...withoutKql, clause],
       }
     }
 
     case ActionType.removeLogAnalysisKQLFilterClause: {
-      const {kql} = action.payload
       return {
         ...state,
         filteredLogsForLogAnalysis: state.filteredLogsForLogAnalysis.filter(
-          c => !('kql' in c && c.kql === kql)
+          f => !('kql' in f)
         ),
       }
     }

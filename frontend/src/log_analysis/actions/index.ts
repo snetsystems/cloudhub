@@ -123,9 +123,9 @@ export const addLogAnalysisKQLFilterClause = (
   payload: {clause: {kql, dsl} as KqlDslWrapper},
 })
 
-export const removeLogAnalysisKQLFilterClause = (kql: string) => ({
+export const removeLogAnalysisKQLFilterClause = () => ({
   type: ActionType.removeLogAnalysisKQLFilterClause as const,
-  payload: {kql},
+  payload: {},
 })
 export type RemoveLogAnalysisKQLFilterClauseAction = ReturnType<
   typeof removeLogAnalysisKQLFilterClause

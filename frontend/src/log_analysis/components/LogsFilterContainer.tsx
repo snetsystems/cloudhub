@@ -6,7 +6,6 @@ import _ from 'lodash'
 
 // Actions
 import {
-  removeLogAnalysisKQLFilterClause,
   removeLogAnalysisMatchPhraseFilterClause,
   removeLogAnalysisRangeFilterClause,
 } from 'src/log_analysis/actions'
@@ -33,32 +32,31 @@ function LogsFilterContainer({
   timeZone,
   removeLogAnalysisMatchPhraseFilterClause,
   removeLogAnalysisRangeFilterClause,
-  removeLogAnalysisKQLFilterClause,
 }: Props) {
   return (
     <div className="logs-analysis-filter-container">
-      {filteredLogsForLogAnalysis.map((clause, idx) => (
-        <LogsFilterViewer
-          key={idx}
-          filter={{id: idx.toString(), ...clause}}
-          timeZone={timeZone}
-          onDelete={id => {
-            const target = filteredLogsForLogAnalysis[Number(id)]
-            if ('match_phrase' in target) {
-              const k = Object.keys(target.match_phrase)[0]
-              removeLogAnalysisMatchPhraseFilterClause?.(
-                k,
-                target.match_phrase[k]
-              )
-            } else if ('range' in target) {
-              const f = Object.keys(target.range)[0]
-              removeLogAnalysisRangeFilterClause?.(f)
-            } else if ('kql' in target) {
-              removeLogAnalysisKQLFilterClause?.(target.kql)
-            }
-          }}
-        />
-      ))}
+      {filteredLogsForLogAnalysis
+        .filter(clause => !('kql' in clause))
+        .map((clause, idx) => (
+          <LogsFilterViewer
+            key={idx}
+            filter={{id: idx.toString(), ...clause}}
+            timeZone={timeZone}
+            onDelete={id => {
+              const target = filteredLogsForLogAnalysis[Number(id)]
+              if ('match_phrase' in target) {
+                const k = Object.keys(target.match_phrase)[0]
+                removeLogAnalysisMatchPhraseFilterClause?.(
+                  k,
+                  target.match_phrase[k]
+                )
+              } else if ('range' in target) {
+                const f = Object.keys(target.range)[0]
+                removeLogAnalysisRangeFilterClause?.(f)
+              }
+            }}
+          />
+        ))}
     </div>
   )
 }
@@ -83,10 +81,6 @@ const mdtp = dispatch => ({
   ),
   removeLogAnalysisRangeFilterClause: bindActionCreators(
     removeLogAnalysisRangeFilterClause,
-    dispatch
-  ),
-  removeLogAnalysisKQLFilterClause: bindActionCreators(
-    removeLogAnalysisKQLFilterClause,
     dispatch
   ),
 })
