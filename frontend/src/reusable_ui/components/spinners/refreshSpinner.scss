@@ -9,17 +9,13 @@
 
 .spinning.slow {
   .refresh-spinner-icon {
-    animation: spin 2.5s linear infinite;
-    display: inline-block;
-    transform-origin: center;
+    animation: spin 5s linear infinite;
   }
 }
 
 .spinning {
   .refresh-spinner-icon {
-    animation: spin 1s linear infinite;
-    display: inline-block;
-    transform-origin: center;
+    animation: spin 2s linear infinite;
   }
 }
 
@@ -28,6 +24,6 @@
     transform: rotate(0deg);
   }
   to {
-    transform: rotate(180deg);
+    transform: rotate(360deg);
   }
 }
