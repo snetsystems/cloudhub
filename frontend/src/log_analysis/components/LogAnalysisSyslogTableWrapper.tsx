@@ -159,10 +159,13 @@ function LogAnalysisSyslogTableWrapper({
       )
       setIsLoading(true)
       try {
+        const chunkSizeParam = reset
+          ? DEFAULT_SYSLOG_TABLE_CHUNK_SIZE
+          : syslogTableChunkSizeRef.current
         const {data, total, lastSortValues} = await fetchSyslogTableData(
           esSource,
           combinedFilters,
-          syslogTableChunkSizeRef.current,
+          chunkSizeParam,
           sortColumns,
           reset ? undefined : prevSortValuesRef.current
         )

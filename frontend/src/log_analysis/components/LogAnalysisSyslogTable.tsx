@@ -157,6 +157,16 @@ function LogAnalysisSyslogTable({
     return columns.map(col => col.id)
   })
 
+  const [chunkSizeInputValue, setChunkSizeInputValue] = useState<string>(
+    String(chunkSize)
+  )
+
+  useEffect(() => {
+    setChunkSizeInputValue(String(chunkSize))
+  }, [chunkSize])
+
+  const isLoadMoreDisabled = isLoading || chunkSizeInputValue.trim() === ''
+
   const items = useMemo(() => syslogTableRows, [syslogTableRows])
   const [searchQuery, setSearchQuery] = useState('')
   const filteredItems = useMemo(() => {
@@ -370,34 +380,6 @@ function LogAnalysisSyslogTable({
         {isLoading && (
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
         )}
-        <div className="syslog-table-chunksize--container">
-          <div
-            className="syslog-table-chunksize--inner"
-            onMouseDown={e => e.stopPropagation()}
-            onDragStart={e => e.stopPropagation()}
-            onClick={e => e.stopPropagation()}
-          >
-            <label htmlFor="chunkSizeInput">Result Chunk Size</label>
-            <input
-              id="chunkSizeInput"
-              type="number"
-              className="form-control input-sm"
-              placeholder="Chunk Size"
-              value={chunkSize}
-              onChange={e => {
-                const v = parseInt(e.target.value, 10) || 1
-                onChunkSizeChange(
-                  v > DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE
-                    ? DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE
-                    : v
-                )
-              }}
-              onBlur={() => onChunkSizeBlur(chunkSize)}
-              min={1}
-              max={DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE}
-            />
-          </div>
-        </div>
       </LogAnalysisDashboardHeader>
 
       <FancyScrollbar style={{height: 'calc(100% - 80px)'}}>
@@ -439,23 +421,62 @@ function LogAnalysisSyslogTable({
           />
         </div>
         {isLastPage && hasMore && (
-          <div style={{padding: '8px', textAlign: 'center'}}>
+          <div className="syslog-table-chunksize--container">
             <span>
               {totalRowCount === 1
                 ? `Search Result is limited to ${totalRowCount} document.`
                 : `Search Results are limited to ${totalRowCount} documents.`}
             </span>
-            <span
-              onClick={isLoading ? undefined : onLoadMore}
-              style={{
-                paddingLeft: '8px',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                color: '#1BA9F5',
-                opacity: isLoading ? 0.5 : 1,
-              }}
-            >
-              {isLoading ? 'Loading' : 'Load More'}
-            </span>
+            <div className="syslog-table-chunksize--inner">
+              <span
+                onClick={isLoadMoreDisabled ? undefined : onLoadMore}
+                style={{
+                  paddingLeft: '8px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  color: '#1BA9F5',
+                  opacity: isLoading ? 0.5 : 1,
+                  textDecoration: isLoading ? undefined : 'underline',
+                }}
+              >
+                {isLoading ? 'Loading ' : 'Load More Chunk Size:'}
+              </span>
+              <input
+                id="chunkSizeInput"
+                type="number"
+                className="form-control input-sm"
+                placeholder="Chunk Size"
+                aria-label="Chunk Size"
+                value={chunkSizeInputValue}
+                onChange={e => {
+                  const v = e.target.value
+                  setChunkSizeInputValue(v)
+                  if (v.trim() !== '') {
+                    const num = parseInt(v, 10)
+                    onChunkSizeChange(
+                      isNaN(num)
+                        ? 1
+                        : num > DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE
+                        ? DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE
+                        : num
+                    )
+                  }
+                }}
+                onBlur={() => {
+                  if (
+                    chunkSizeInputValue.trim() === '' ||
+                    isNaN(Number(chunkSizeInputValue))
+                  ) {
+                    setChunkSizeInputValue('1')
+                    onChunkSizeBlur(1)
+                  } else {
+                    const num = Number(chunkSizeInputValue)
+                    onChunkSizeBlur(num)
+                  }
+                }}
+                min={1}
+                max={DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE}
+              />
+            </div>
           </div>
         )}
       </FancyScrollbar>
