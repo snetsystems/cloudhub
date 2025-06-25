@@ -2,12 +2,16 @@
 import React, {useState, useEffect, useMemo, useCallback} from 'react'
 import {OuiDataGrid, OuiDataGridSchemaDetector} from '@opensearch-project/oui'
 import '@opensearch-project/oui/dist/oui_theme_dark.css'
+import {useDispatch} from 'react-redux'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LoadingDots from 'src/shared/components/LoadingDots'
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 import RefreshSpinner from 'src/reusable_ui/components/spinners/RefreshSpinner'
+
+// Action
+import {addLogAnalysisMatchPhraseFilterClause} from 'src/log_analysis/actions'
 
 // Type
 import {SyslogTableRows, TimeZones} from 'src/types'
@@ -71,6 +75,8 @@ function LogAnalysisSyslogTable({
   onLoadMore,
   hasMore,
 }: Props) {
+  const dispatch = useDispatch()
+
   const columns = useMemo(
     () => [
       {
@@ -187,6 +193,8 @@ function LogAnalysisSyslogTable({
       console.log('Failed to save table state to LocalStorage.')
     }
   }, [visibleColumns, sortColumns, pageSize])
+
+  const excludedOnClickFields = ['@timestamp']
   const renderCellValue = useCallback(
     ({rowIndex, columnId}) => {
       const indexInPage = rowIndex - pageIndex * pageSize
@@ -228,45 +236,90 @@ function LogAnalysisSyslogTable({
         return <span dangerouslySetInnerHTML={{__html: html}} />
       }
 
+      let cellContent: React.ReactNode
       switch (columnId) {
         case '@timestamp':
-          return formattedTime(row['@timestamp']?.[0] || null, timeZone)
+          cellContent = formattedTime(row['@timestamp']?.[0] || null, timeZone)
+          break
         case 'host.ip':
-          return row['host.ip']?.[0] || ''
+          cellContent = row['host.ip']?.[0] || ''
+          break
         case 'host.hostname':
-          return row['host.hostname']?.[0] || ''
+          cellContent = row['host.hostname']?.[0] || ''
+          break
         case 'message':
-          return row['message']?.[0] || ''
+          cellContent = row['message']?.[0] || ''
+          break
         case 'event.original':
-          return row['event.original']?.[0] || ''
+          cellContent = row['event.original']?.[0] || ''
+          break
         case 'service.type':
-          return row['service.type']?.[0] || ''
+          cellContent = row['service.type']?.[0] || ''
+          break
         case 'process.name':
-          return row['process.name']?.[0] || ''
+          cellContent = row['process.name']?.[0] || ''
+          break
         case 'process.pid':
-          return row['process.pid']?.[0] || ''
+          cellContent = row['process.pid']?.[0] || ''
+          break
         case 'log.syslog.severity.code': {
           const sev = row['log.syslog.severity.code']?.[0]
-          return sev == null ? '' : SYSLOG_SEVERITY_MAP[sev] || String(sev)
+          cellContent =
+            sev == null ? '' : SYSLOG_SEVERITY_MAP[sev] || String(sev)
+          break
         }
         case 'log.syslog.facility.code': {
           const fac = row['log.syslog.facility.code']?.[0]
-          return fac == null ? '' : SYSLOG_FACILITY_MAP[fac] || String(fac)
+          cellContent =
+            fac == null ? '' : SYSLOG_FACILITY_MAP[fac] || String(fac)
+          break
         }
         case 'log.syslog.priority': {
           const pri = row['log.syslog.priority']?.[0]
-          if (pri == null) return ''
-          const facFromPri = Math.floor(pri / 8)
-          const sevFromPri = pri % 8
-          const facText = SYSLOG_FACILITY_MAP[facFromPri] || String(facFromPri)
-          const sevText = SYSLOG_SEVERITY_MAP[sevFromPri] || String(sevFromPri)
-          return `${pri} (${facText} / ${sevText})`
+          if (pri == null) {
+            cellContent = ''
+          } else {
+            const facFromPri = Math.floor(pri / 8)
+            const sevFromPri = pri % 8
+            const facText =
+              SYSLOG_FACILITY_MAP[facFromPri] || String(facFromPri)
+            const sevText =
+              SYSLOG_SEVERITY_MAP[sevFromPri] || String(sevFromPri)
+            cellContent = `${pri} (${facText} / ${sevText})`
+          }
+          break
         }
         default:
-          return null
+          cellContent = null
       }
+
+      const rawValue = (row as any)[columnId]
+      const filterValue =
+        Array.isArray(rawValue) && rawValue.length > 0
+          ? rawValue[0]
+          : rawValue ?? ''
+
+      return (
+        <span
+          style={{
+            cursor: excludedOnClickFields.includes(columnId)
+              ? 'default'
+              : 'pointer',
+          }}
+          onClick={
+            excludedOnClickFields.includes(columnId)
+              ? undefined
+              : () =>
+                  dispatch(
+                    addLogAnalysisMatchPhraseFilterClause(columnId, filterValue)
+                  )
+          }
+        >
+          {cellContent}
+        </span>
+      )
     },
-    [filteredItems, timeZone, pageIndex, pageSize]
+    [filteredItems, timeZone, pageIndex, pageSize, dispatch]
   )
 
   const ipSchema: OuiDataGridSchemaDetector = {
@@ -321,12 +374,8 @@ function LogAnalysisSyslogTable({
           <div
             className="syslog-table-chunksize--inner"
             onMouseDown={e => e.stopPropagation()}
-            onDragStart={e => {
-              e.stopPropagation()
-            }}
-            onClick={e => {
-              e.stopPropagation()
-            }}
+            onDragStart={e => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <label htmlFor="chunkSizeInput">Result Chunk Size</label>
             <input
