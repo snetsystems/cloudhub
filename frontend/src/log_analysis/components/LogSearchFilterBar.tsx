@@ -6,15 +6,21 @@ import type {
   FieldInfo,
   AutoCompleteResult,
 } from 'src/types/elasticSearch'
-import {fetchKibanaFieldList, getAutoCompleteResult} from '../apis'
-import {OperatorMeta, LOGICAL_OPERATORS} from '../constants/search-filter'
+import {
+  fetchKibanaFieldList,
+  getAutoCompleteResult,
+} from 'src/log_analysis/apis'
+import {
+  OperatorMeta,
+  LOGICAL_OPERATORS,
+} from 'src/log_analysis/constants/search-filter'
 import {
   ESRange,
   defaultTimeRange,
   extractKqlFromFilters,
   kqlToBoolShould,
   lowerToESRange,
-} from '../util'
+} from 'src/log_analysis/util'
 
 import {OuiIcon} from '@opensearch-project/oui'
 import 'src/log_analysis/util/setupOUIIcons'
@@ -25,8 +31,8 @@ import {bindActionCreators} from 'redux'
 import {
   addLogAnalysisKQLFilterClause,
   removeLogAnalysisKQLFilterClause,
-} from '../actions'
-import {LogFilterClause} from 'src/types/logAnalysis'
+} from 'src/log_analysis/actions'
+import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
 
 interface ReduxState {
   app: {
@@ -47,7 +53,7 @@ interface StateProps {
 }
 
 interface DispatchProps {
-  addKql: (kql: string, dsl: LogFilterClause) => void
+  addKql: (kql, dsl) => void
   removeKql: () => void
 }
 
@@ -122,27 +128,40 @@ function LogSearchFilterBar({
     if (!dropdownOpen || dropdownItems.length === 0) {
       if (e.key === 'Enter') {
         e.preventDefault()
-
         submitFilter()
       }
       return
     }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActiveIndex(i => (i + 1 < dropdownItems.length ? i + 1 : 0))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActiveIndex(i => (i - 1 >= 0 ? i - 1 : dropdownItems.length - 1))
-    } else if (e.key === 'Enter') {
-      e.preventDefault()
-      if (activeIndex === -1) {
-        submitFilter()
-      } else {
-        const it = dropdownItems[activeIndex]
-        if (it.type === 'field') handleFieldSelect(it.data)
-        else if (it.type === 'operator') handleOperatorSelect(it.data)
-        else if (it.type === 'logical') handleLogicalOperatorSelect(it.data)
-        else handleValueSelect(it.data)
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault()
+        setActiveIndex(i => (i + 1 < dropdownItems.length ? i + 1 : 0))
+        break
+      }
+      case 'ArrowUp': {
+        e.preventDefault()
+        setActiveIndex(i => (i - 1 >= 0 ? i - 1 : dropdownItems.length - 1))
+        break
+      }
+      case 'Escape': {
+        e.preventDefault()
+        setDropdownOpen(false)
+        setActiveIndex(-1)
+        break
+      }
+      case 'Enter': {
+        e.preventDefault()
+        if (activeIndex === -1) {
+          submitFilter()
+        } else {
+          const it = dropdownItems[activeIndex]
+          if (it.type === 'field') handleFieldSelect(it.data)
+          else if (it.type === 'operator') handleOperatorSelect(it.data)
+          else if (it.type === 'logical') handleLogicalOperatorSelect(it.data)
+          else handleValueSelect(it.data)
+        }
+        break
       }
     }
   }
@@ -179,6 +198,7 @@ function LogSearchFilterBar({
       const {fields: fetched} = await fetchKibanaFieldList({
         esSource,
       })
+
       setFields(fetched)
       triggerAC(inputValue, fetched)
     } else triggerAC(inputValue)
@@ -200,13 +220,17 @@ function LogSearchFilterBar({
     }, 120)
   const handleMouseDown = () => (dropdownMouseDown.current = true)
 
+  const RE_LOGICAL_PART = /(\b(?:and|or)\b\s*)[^ ]*$/i
+
   const handleFieldSelect = (f: FieldInfo) => {
     setInputValue(prev => {
-      const logical = prev.match(/(and|or)\s*$/i)
-      if (logical) return prev.replace(/(and|or)\s*$/i, '$1 ') + f.field + ' '
-      const m = prev.match(/^(.*?\b(?:and|or)\b\s*)$/i)
-      return m ? m[1] + f.field + ' ' : f.field + ' '
+      const replaced = prev.replace(
+        RE_LOGICAL_PART,
+        (_, op) => `${op}${f.field} `
+      )
+      return replaced === prev ? `${f.field} ` : replaced
     })
+
     setTimeout(() => triggerAC(`${f.field} `), 0)
   }
   const handleOperatorSelect = (op: OperatorMeta) => {
@@ -236,18 +260,47 @@ function LogSearchFilterBar({
   }
 
   const submitFilter = () => {
-    const trimmed = inputValue.trim()
     if (!esSource) return
 
-    if (!trimmed) {
+    /* TODO: openSearch build  */
+    // const indexPattern = {
+    //   title: 'syslog-*',
+    //   fields: [
+    //     {name: 'status', type: 'string'},
+    //     {name: 'timestamp', type: 'date'},
+    //     {name: 'count', type: 'number'},
+    //   ],
+    // }
+    // const result = buildEsQuery(
+    //   indexPattern,
+    //   {
+    //     query: `
+    //       (
+    //         status: "active" or status: "warning"
+    //       )
+    //       and count >= 100
+    //       and not host.hostname: "server-test*"
+    //       and timestamp >= "2024-06-01T00:00:00Z"
+    //       and (
+    //         error.message: "*disk*" or
+    //         error.level: "critical"
+    //       )
+    //     `,
+    //     language: 'kuery',
+    //   },
+    //   [],
+    //   {allowLeadingWildcards: true}
+    //)
+
+    //console.log(JSON.stringify(result, null, 2))
+
+    if (!inputValue) {
       removeKql()
       setDropdownOpen(false)
       return
     }
 
-    const kqlClause = kqlToBoolShould(trimmed)
-    if (!kqlClause) return
-    addKql(trimmed, kqlClause)
+    addKql(inputValue, kqlToBoolShould(inputValue.trim()))
     setDropdownOpen(false)
   }
 
@@ -278,6 +331,13 @@ function LogSearchFilterBar({
 
           <span className="kql-focus-bar" />
         </div>
+        <Button
+          customClass="kql-input-submit"
+          size={ComponentSize.Small}
+          color={ComponentColor.Primary}
+          onClick={submitFilter}
+          text="Search"
+        />
       </div>
 
       {dropdownOpen && dropdownItems.length > 0 && (

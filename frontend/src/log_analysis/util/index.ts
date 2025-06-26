@@ -227,7 +227,7 @@ export const defaultTimeRange = timeRanges.find(
   i => i.inputValue === 'Past 30d'
 )
 
-export const ENUM_COMPATIBLE_OPS = new Set([':', ':=', ':*', ':~'])
+export const ENUM_COMPATIBLE_OPS = new Set([':', ':=', ': *', ':~'])
 
 export const parseFieldOpValue = (src: string) => {
   const trimmed = src.trim()

@@ -113,11 +113,30 @@ export type LogsFilterClause =
   | (BaseFilter & RangeFilterClause)
   | (BaseFilter & BoolShouldClause)
   | (BaseFilter & KQLFilterClause)
+  | (BaseFilter & BoolFilter)
 
 export interface BoolShouldClause {
   bool: {
     should: ReadonlyArray<MatchPhraseFilterClause>
     minimum_should_match: 1
+  }
+}
+export type FilterState = {
+  store: any
+}
+export type Filter = {
+  $state?: FilterState
+  meta: any
+  query?: any
+}
+
+export interface BoolFilter extends Filter {
+  bool: {
+    must?: LogFilterClause[]
+    filter?: LogFilterClause[]
+    should?: LogFilterClause[]
+    must_not?: LogFilterClause[]
+    minimum_should_match?: number | string
   }
 }
 

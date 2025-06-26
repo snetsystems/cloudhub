@@ -7,15 +7,15 @@ export interface OperatorMeta {
 export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
   _id: [
     {op: ':', label: 'equals', description: 'equals some value'},
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
   _index: [
     {op: ':', label: 'equals', description: 'equals some value'},
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
   _ignored: [
     {op: ':', label: 'equals', description: 'equals some value'},
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
 
   keyword: [
@@ -25,7 +25,7 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
       label: 'not equals',
       description: 'does not equal the given value',
     },
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
 
   text: [
@@ -35,7 +35,7 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
       label: 'matches',
       description: 'matches the given text (wildcard, regexp, etc.)',
     },
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
 
   ip: [
@@ -52,7 +52,7 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
       label: 'greater than or equal to',
       description: 'is greater than or equal to some value',
     },
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
 
   long: [
@@ -74,7 +74,7 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
       label: 'greater than or equal to',
       description: 'is greater than or equal to some value',
     },
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
   integer: [
     {op: ':', label: 'equals', description: 'equals some value'},
@@ -95,7 +95,7 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
       label: 'greater than or equal to',
       description: 'is greater than or equal to some value',
     },
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
   float: [
     {op: ':', label: 'equals', description: 'equals some value'},
@@ -116,7 +116,7 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
       label: 'greater than or equal to',
       description: 'is greater than or equal to some value',
     },
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
   double: [
     {op: ':', label: 'equals', description: 'equals some value'},
@@ -137,7 +137,7 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
       label: 'greater than or equal to',
       description: 'is greater than or equal to some value',
     },
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
 
   date: [
@@ -156,12 +156,12 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
     {op: '>', label: 'after', description: 'is after some value'},
     {op: '>=', label: 'after or at', description: 'is after or at some value'},
     {op: 'between', label: 'between', description: 'is between two dates'},
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
   boolean: [
     {op: ':', label: 'equals', description: 'is true or false'},
     {op: '!=', label: 'not equals', description: 'is not true or false'},
-    {op: ':*', label: 'exists', description: 'exists in any form'},
+    {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
 }
 

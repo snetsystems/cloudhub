@@ -467,7 +467,7 @@ export async function getAutoCompleteResult({
   } else {
     operators = [
       {op: ':', label: 'equals', description: 'equals some value'},
-      {op: ':*', label: 'exists', description: 'exists in any form'},
+      {op: ': *', label: 'exists', description: 'exists in any form'},
       ...(endsWithSpace ? LOGICAL_OPERATORS : []),
     ]
   }

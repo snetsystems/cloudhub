@@ -216,6 +216,7 @@ $highlight: #25262e;
   border: 1px solid $border;
   border-radius: 4px;
   background: $bg;
+  flex: 1;
 }
 
 .kql-icon-search {
@@ -244,7 +245,7 @@ $highlight: #25262e;
 
 .kql-input {
   flex: 1 1 auto;
-  padding: 6px 6px;
+  padding: 5px 6px;
   background: transparent;
   border: none;
   color: $text;
@@ -293,6 +294,7 @@ $highlight: #25262e;
   align-items: center;
   padding: 6px 14px;
   cursor: pointer;
+  font-size: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 
   &:hover,
@@ -319,12 +321,12 @@ $highlight: #25262e;
 }
 
 .kql-meta {
-  font-size: 12px;
+  font-size: 13px;
   color: #888;
   margin-left: 6px;
 }
 .kql-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: #aaa;
   margin-left: 6px;
 }
@@ -334,4 +336,10 @@ $highlight: #25262e;
 }
 .kql-value {
   color: $primary;
+}
+.kql-input-wrap {
+  display: flex;
+}
+.kql-input-submit {
+  margin-left: 5px;
 }
