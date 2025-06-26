@@ -2,6 +2,7 @@ import React, {PureComponent} from 'react'
 import Container from 'src/reusable_ui/components/overlays/OverlayContainer'
 import Body from 'src/reusable_ui/components/overlays/OverlayBody'
 import {Button, ComponentColor} from 'src/reusable_ui'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 interface Props {
   isVisible: boolean
@@ -49,19 +50,21 @@ class MessageTokensModal extends PureComponent<Props, State> {
     const {tokens} = this.props
     const {selectedTokens} = this.state
     return (
-      <div>
-        {tokens.map(token => (
-          <div key={token} className="form-control-static">
-            <input
-              type="checkbox"
-              id={`token_${token}`}
-              defaultChecked={selectedTokens.includes(token)}
-              onChange={e => this.onToggle(token, e.currentTarget.checked)}
-            />
-            <label htmlFor={`token_${token}`}>{token}</label>
-          </div>
-        ))}
-      </div>
+      <FancyScrollbar>
+        <div>
+          {tokens.map(token => (
+            <div key={token} className="form-control-static">
+              <input
+                type="checkbox"
+                id={`token_${token}`}
+                defaultChecked={selectedTokens.includes(token)}
+                onChange={e => this.onToggle(token, e.currentTarget.checked)}
+              />
+              <label htmlFor={`token_${token}`}>{token}</label>
+            </div>
+          ))}
+        </div>
+      </FancyScrollbar>
     )
   }
 

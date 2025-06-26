@@ -23,24 +23,36 @@
 }
 
 .message-tokens-modal {
+  max-height: 400px;
   position: fixed;
-  top: 27.5%;
-  left: 50%;
+  top: 27.5vh;
+  left: 50vw;
   transform: translate(-50%, -50%);
-  width: 380px;
+  width: 385px;
   border: 2px solid $g5-pepper;
   z-index: 7;
 
   .form-control-static {
-    overflow: auto;
+    width: 318px;
+
+    > label {
+      width: 305px;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+  }
+
+  .form-control-static:last-child {
+    margin-bottom: 4px;
   }
 
   .overlay--heading {
-    justify-content: initial;
+    justify-content: flex-start;
   }
 
-  .overlay-body {
-    padding-bottom: 22px;
+  .overlay--body {
+    padding-bottom: 30px;
+    height: 200px;
   }
 
   .btn-cancel {
