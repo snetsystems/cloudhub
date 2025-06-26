@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import React, {PureComponent} from 'react'
 import Container from 'src/reusable_ui/components/overlays/OverlayContainer'
 import Body from 'src/reusable_ui/components/overlays/OverlayBody'
@@ -13,6 +14,7 @@ interface Props {
 
 interface State {
   selectedTokens: string[]
+  prevTokens: string[]
 }
 
 class MessageTokensModal extends PureComponent<Props, State> {
@@ -20,9 +22,18 @@ class MessageTokensModal extends PureComponent<Props, State> {
     super(props)
     this.state = {
       selectedTokens: [...props.tokens],
+      prevTokens: [...props.tokens],
     }
   }
 
+  componentDidUpdate(prevProps: Props) {
+    if (!_.isEqual(prevProps.tokens, this.props.tokens)) {
+      this.setState({
+        selectedTokens: [...this.props.tokens],
+        prevTokens: [...this.props.tokens],
+      })
+    }
+  }
   private get renderHeader() {
     return (
       <div className="overlay--heading">
@@ -57,7 +68,7 @@ class MessageTokensModal extends PureComponent<Props, State> {
               <input
                 type="checkbox"
                 id={`token_${token}`}
-                defaultChecked={selectedTokens.includes(token)}
+                checked={selectedTokens.includes(token)}
                 onChange={e => this.onToggle(token, e.currentTarget.checked)}
               />
               <label htmlFor={`token_${token}`}>{token}</label>
