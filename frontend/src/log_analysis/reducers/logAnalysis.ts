@@ -82,6 +82,7 @@ const logAnalysisDashboard = (
     }
     case ActionType.removeLogAnalysisRangeFilterClause: {
       const {field} = (action as any).payload
+
       return {
         ...state,
         filteredLogsForLogAnalysis: state.filteredLogsForLogAnalysis.filter(

@@ -215,7 +215,6 @@ export const kqlToBoolShould = (raw: string): BoolShouldClause | null => {
 export const extractKqlFromFilters = (
   filters: FilteredLogsForLogAnalysis
 ): string => {
-  console.log(filters)
   const kqlFilter = filters?.find(
     f => 'kql' in f && typeof f.kql === 'string'
   ) as KQLFilterClause

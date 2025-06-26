@@ -250,7 +250,7 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
         ref={svgRef}
         width={width}
         height={height}
-        style={{display: 'block'}}
+        style={{display: 'block', userSelect: 'none'}}
       />
 
       {tooltip.visible && (
