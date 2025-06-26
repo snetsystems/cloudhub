@@ -2,19 +2,25 @@
 import React, {useState, useEffect, useMemo, useCallback} from 'react'
 import {OuiDataGrid, OuiDataGridSchemaDetector} from '@opensearch-project/oui'
 import '@opensearch-project/oui/dist/oui_theme_dark.css'
-import {useDispatch} from 'react-redux'
+import {connect, useDispatch} from 'react-redux'
+import {bindActionCreators} from 'redux'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LoadingDots from 'src/shared/components/LoadingDots'
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 import RefreshSpinner from 'src/reusable_ui/components/spinners/RefreshSpinner'
+import MessageTokensModal from 'src/log_analysis/components/MessageTokensModal'
 
-// Action
-import {addLogAnalysisMatchPhraseFilterClause} from 'src/log_analysis/actions'
+// Actions
+import {
+  addLogAnalysisMatchPhraseFilterClause,
+  addLogAnalysisRangeFilterClause,
+  removeLogAnalysisMatchPhraseFilterClause,
+} from 'src/log_analysis/actions'
 
 // Type
-import {SyslogTableRows, TimeZones} from 'src/types'
+import {FilteredLogsForLogAnalysis, SyslogTableRows, TimeZones} from 'src/types'
 
 // Util
 import {formattedTime} from 'src/log_analysis/util'
@@ -25,7 +31,6 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 import {
-  DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE,
   LOG_ANALYSIS_LOCAL_STORAGE_KEY,
   LOG_ANALYSIS_SYSLOG_TABLE_PAGE_SIZE_OPTIONS,
   SYSLOG_FACILITY_MAP,
@@ -34,8 +39,7 @@ import {
 
 interface Props {
   chunkSize: number
-  onChunkSizeChange: (value: number) => void
-  onChunkSizeBlur: (value: number) => void
+  filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   isLoading: boolean
   isLiveUpdating: boolean
   syslogTableRows: (SyslogTableRows & {_highlight?: Record<string, string[]>})[]
@@ -46,6 +50,8 @@ interface Props {
   pageIndex: number
   pageSize: number
   sortColumns: {id: string; direction: 'asc' | 'desc'}[]
+  onChunkSizeChange: (value: number) => void
+  onChunkSizeBlur: (value: number) => void
   onChangeLiveUpdatingStatus: () => void
   onChangePage: (index: number) => void
   onChangeItemsPerPage: (size: number) => void
@@ -55,9 +61,8 @@ interface Props {
 }
 
 function LogAnalysisSyslogTable({
+  filteredLogsForLogAnalysis,
   chunkSize,
-  onChunkSizeChange,
-  onChunkSizeBlur,
   isLiveUpdating,
   isLoading,
   syslogTableRows,
@@ -67,6 +72,8 @@ function LogAnalysisSyslogTable({
   autoRefreshNumberValue,
   pageIndex,
   pageSize,
+  onChunkSizeChange,
+  onChunkSizeBlur,
   sortColumns = [],
   onChangeLiveUpdatingStatus,
   onChangePage,
@@ -76,6 +83,14 @@ function LogAnalysisSyslogTable({
   hasMore,
 }: Props) {
   const dispatch = useDispatch()
+
+  const [
+    isMessageTokensModalVisible,
+    setIsMessageTokensModalVisible,
+  ] = useState(false)
+  const [messageTokensForModal, setMessageTokensForModal] = useState<string[]>(
+    []
+  )
 
   const columns = useMemo(
     () => [
@@ -168,16 +183,6 @@ function LogAnalysisSyslogTable({
   const isLoadMoreDisabled = isLoading || chunkSizeInputValue.trim() === ''
 
   const items = useMemo(() => syslogTableRows, [syslogTableRows])
-  const [searchQuery, setSearchQuery] = useState('')
-  const filteredItems = useMemo(() => {
-    if (!searchQuery) return items
-    const lower = searchQuery.toLowerCase()
-    return items.filter(row =>
-      Object.values(row)
-        .flat()
-        .some(val => String(val).toLowerCase().includes(lower))
-    )
-  }, [items, searchQuery])
 
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(totalRowCount / pageSize))
@@ -208,10 +213,10 @@ function LogAnalysisSyslogTable({
   const renderCellValue = useCallback(
     ({rowIndex, columnId}) => {
       const indexInPage = rowIndex - pageIndex * pageSize
-      const row = filteredItems[indexInPage]
+      const row = items[indexInPage]
       if (!row) return null
 
-      const excluded = [
+      const excludedHighlightFields = [
         '@timestamp',
         'host.ip',
         'process.pid',
@@ -225,24 +230,39 @@ function LogAnalysisSyslogTable({
         const tokens = row['message_tokens'] || []
         const highlights = row._highlight?.[columnId] || []
         const matchedPlain = highlights.map(h => h.replace(/<[^>]+>/g, ''))
-        return tokens.reduce<React.ReactNode[]>((acc, token, idx) => {
-          if (idx > 0) acc.push(', ')
-          const isMatch = matchedPlain.includes(token)
-          acc.push(
-            isMatch ? (
-              <span key={idx} className="logs-analysis-highlight--match">
-                {token}
-              </span>
-            ) : (
-              token
+        const tokenNodes = tokens.reduce<React.ReactNode[]>(
+          (acc, token, idx) => {
+            if (idx > 0) acc.push(', ')
+            const isMatch = matchedPlain.includes(token)
+            acc.push(
+              isMatch ? (
+                <span key={idx} className="logs-analysis-highlight--match">
+                  {token}
+                </span>
+              ) : (
+                token
+              )
             )
-          )
-          return acc
-        }, [])
+            return acc
+          },
+          []
+        )
+
+        return (
+          <span
+            style={{cursor: 'pointer'}}
+            onClick={() => {
+              setMessageTokensForModal(tokens)
+              setIsMessageTokensModalVisible(true)
+            }}
+          >
+            {tokenNodes}
+          </span>
+        )
       }
 
       const html = row._highlight?.[columnId]?.[0]
-      if (html && !excluded.includes(columnId)) {
+      if (html && !excludedHighlightFields.includes(columnId)) {
         return <span dangerouslySetInnerHTML={{__html: html}} />
       }
 
@@ -329,7 +349,7 @@ function LogAnalysisSyslogTable({
         </span>
       )
     },
-    [filteredItems, timeZone, pageIndex, pageSize, dispatch]
+    [items, timeZone, pageIndex, pageSize, dispatch]
   )
 
   const ipSchema: OuiDataGridSchemaDetector = {
@@ -452,13 +472,7 @@ function LogAnalysisSyslogTable({
                   setChunkSizeInputValue(v)
                   if (v.trim() !== '') {
                     const num = parseInt(v, 10)
-                    onChunkSizeChange(
-                      isNaN(num)
-                        ? 1
-                        : num > DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE
-                        ? DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE
-                        : num
-                    )
+                    onChunkSizeChange(isNaN(num) ? 1 : num)
                   }
                 }}
                 onBlur={() => {
@@ -474,16 +488,62 @@ function LogAnalysisSyslogTable({
                   }
                 }}
                 min={1}
-                max={DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE}
               />
             </div>
           </div>
         )}
       </FancyScrollbar>
+
+      {isMessageTokensModalVisible && (
+        <MessageTokensModal
+          isVisible={isMessageTokensModalVisible}
+          tokens={messageTokensForModal}
+          onClose={() => setIsMessageTokensModalVisible(false)}
+          onConfirm={selectedTokens => {
+            selectedTokens.forEach(token => {
+              dispatch(
+                addLogAnalysisMatchPhraseFilterClause('message_tokens', token)
+              )
+            })
+            messageTokensForModal
+              .filter(token => !selectedTokens.includes(token))
+              .forEach(token => {
+                const exists = filteredLogsForLogAnalysis.some(
+                  clause =>
+                    'match_phrase' in clause &&
+                    clause.match_phrase['message_tokens'] === token
+                )
+                if (exists) {
+                  dispatch(
+                    removeLogAnalysisMatchPhraseFilterClause(
+                      'message_tokens',
+                      token
+                    )
+                  )
+                }
+              })
+            setIsMessageTokensModalVisible(false)
+          }}
+        />
+      )}
     </>
   )
 }
 
-const areEqual = (prevProps: Props, nextProps: Props) => prevProps === nextProps
+const mstp = state => {
+  const {
+    logAnalysisDashboard: {filteredLogsForLogAnalysis},
+  } = state
+  return {
+    filteredLogsForLogAnalysis,
+  }
+}
 
-export default React.memo(LogAnalysisSyslogTable, areEqual)
+const mdtp = dispatch => ({
+  addLogAnalysisRangeFilterClause: bindActionCreators(
+    addLogAnalysisRangeFilterClause,
+    dispatch
+  ),
+})
+
+export default connect(mstp, mdtp, null)(LogAnalysisSyslogTable)

@@ -22,6 +22,32 @@
   }
 }
 
+.message-tokens-modal {
+  position: fixed;
+  top: 27.5%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 380px;
+  border: 2px solid $g5-pepper;
+  z-index: 7;
+
+  .form-control-static {
+    overflow: auto;
+  }
+
+  .overlay--heading {
+    justify-content: initial;
+  }
+
+  .overlay-body {
+    padding-bottom: 22px;
+  }
+
+  .btn-cancel {
+    margin-left: 66px;
+  }
+}
+
 button[data-test-subj='pagination-button-next'][disabled] {
   cursor: not-allowed;
   pointer-events: none;
