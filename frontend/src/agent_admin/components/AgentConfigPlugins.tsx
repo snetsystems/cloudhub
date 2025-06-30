@@ -176,6 +176,24 @@ const AgentConfigPlugin = ({
     return plugins
   }
 
+  const extractPluginStr = (parsed: string, response: any): string => {
+    const fromParsed = _.get(parsed, 'return')?.[0]
+    if (typeof fromParsed === 'string') {
+      return fromParsed
+    }
+    const fromResponse = _.get(response.data, 'return')?.[0]
+
+    if (fromResponse && typeof fromResponse === 'object') {
+      const dynamicValue = Object.values(fromResponse)[0] || ''
+      return typeof dynamicValue === 'string'
+        ? dynamicValue.split('\n').slice(1).join('\n')
+        : ''
+    } else if (typeof fromResponse === 'string') {
+      return fromResponse.split('\n').slice(1).join('\n')
+    }
+    return ''
+  }
+
   const getTelegrafInfoWithVersion = async (version: string) => {
     try {
       if (parseFloat(extractNumericVersion(version)) < LegacyTelegrafVersion) {
@@ -195,8 +213,11 @@ const AgentConfigPlugin = ({
           'telegraf plugins',
           minionsObject.host
         )
-        const pluginStr =
-          _.get(yaml.safeLoad(response.data), 'return')?.[0] || ''
+        const pluginStr = extractPluginStr(
+          yaml.safeLoad(response.data),
+          response
+        )
+
         const telegrafPlugins = parsePluginsV3(pluginStr)
         setPluginsObject(prev => ({
           ...prev,
