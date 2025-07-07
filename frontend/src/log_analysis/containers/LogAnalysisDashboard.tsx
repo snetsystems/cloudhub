@@ -281,8 +281,11 @@ function LogAnalysisDashboard({
         </Page.Header>
         <LogSearchFilterBar />
         <LogsFilterContainer />
-        <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
-          <SidePanelSlice>
+        <SidePanelSlice>
+          <Page.Contents
+            fullWidth={true}
+            inPresentationMode={inPresentationMode}
+          >
             <div className="dashboard container-fluid full-width">
               {!!cells && cells.length > 0 && (
                 <Authorized
@@ -327,8 +330,8 @@ function LogAnalysisDashboard({
                 </Authorized>
               )}
             </div>
-          </SidePanelSlice>
-        </Page.Contents>
+          </Page.Contents>
+        </SidePanelSlice>
       </Page>
     </>
   )

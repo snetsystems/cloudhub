@@ -24,10 +24,11 @@
 
   .modal-content-inner {
     position: fixed;
-    top: 137px;
+    top: 119px;
     width: inherit;
     right: 0;
-    height: calc(100% - 137px);
+    height: calc(100% - 119px);
     overflow: hidden;
+    border-left: 1px solid $g3-castle;
   }
 }
