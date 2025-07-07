@@ -1,11 +1,12 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {connect} from 'react-redux'
+import {buildOpenSearchQuery} from 'dsl-builder'
 
 import type {
   BaseElasticSearchData,
   FieldInfo,
   AutoCompleteResult,
-} from 'src/types/elasticSearch'
+} from 'src/types/elasticSearch'  
 import {
   fetchKibanaFieldList,
   getAutoCompleteResult,
@@ -18,7 +19,6 @@ import {
   ESRange,
   defaultTimeRange,
   extractKqlFromFilters,
-  kqlToBoolShould,
   lowerToESRange,
 } from 'src/log_analysis/util'
 
@@ -81,6 +81,21 @@ function LogSearchFilterBar({
 
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownMouseDown = useRef(false)
+
+  const schemaToEsMeta = (type: string) => {
+    switch (type) {
+      case 'date':
+        return {esTypes: ['date'], aggregatable: true}
+      case 'ip':
+        return {esTypes: ['ip'], aggregatable: true}
+      case 'numeric':
+        return {esTypes: ['long'], aggregatable: true}
+      case 'keyword':
+        return {esTypes: ['keyword'], aggregatable: true}
+      default:
+        return {esTypes: ['text', 'keyword'], aggregatable: true}
+    }
+  }
 
   useEffect(() => {
     setDropdownItems([
@@ -262,37 +277,34 @@ function LogSearchFilterBar({
   const submitFilter = () => {
     if (!esSource) return
 
-    /* TODO: openSearch build  */
-    // const indexPattern = {
-    //   title: 'syslog-*',
-    //   fields: [
-    //     {name: 'status', type: 'string'},
-    //     {name: 'timestamp', type: 'date'},
-    //     {name: 'count', type: 'number'},
-    //   ],
-    // }
-    // const result = buildEsQuery(
-    //   indexPattern,
-    //   {
-    //     query: `
-    //       (
-    //         status: "active" or status: "warning"
-    //       )
-    //       and count >= 100
-    //       and not host.hostname: "server-test*"
-    //       and timestamp >= "2024-06-01T00:00:00Z"
-    //       and (
-    //         error.message: "*disk*" or
-    //         error.level: "critical"
-    //       )
-    //     `,
-    //     language: 'kuery',
-    //   },
-    //   [],
-    //   {allowLeadingWildcards: true}
-    //)
+    const indexPattern = {
+      title: 'syslog-*',
+      fields: fields.map(f => {
+        const meta = schemaToEsMeta(f.type)
+        return {
+          name: f.field,
+          type: f.type,
+          esTypes: meta.esTypes,
+          searchable: true,
+          filterable: true,
+          aggregatable: meta.aggregatable,
+        }
+      }),
+    }
 
-    //console.log(JSON.stringify(result, null, 2))
+    const result = buildOpenSearchQuery(
+      indexPattern,
+      {
+        query: inputValue.trim(),
+        language: 'kuery',
+      },
+      [],
+      {
+        allowLeadingWildcards: true,
+        queryStringOptions: undefined,
+        ignoreFilterIfFieldNotInIndex: false,
+      }
+    )
 
     if (!inputValue) {
       removeKql()
@@ -300,7 +312,7 @@ function LogSearchFilterBar({
       return
     }
 
-    addKql(inputValue, kqlToBoolShould(inputValue.trim()))
+    addKql(inputValue, result)
     setDropdownOpen(false)
   }
 
