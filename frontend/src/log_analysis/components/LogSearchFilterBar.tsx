@@ -6,7 +6,7 @@ import type {
   BaseElasticSearchData,
   FieldInfo,
   AutoCompleteResult,
-} from 'src/types/elasticSearch'  
+} from 'src/types/elasticSearch'
 import {
   fetchKibanaFieldList,
   getAutoCompleteResult,
@@ -82,21 +82,6 @@ function LogSearchFilterBar({
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownMouseDown = useRef(false)
 
-  const schemaToEsMeta = (type: string) => {
-    switch (type) {
-      case 'date':
-        return {esTypes: ['date'], aggregatable: true}
-      case 'ip':
-        return {esTypes: ['ip'], aggregatable: true}
-      case 'numeric':
-        return {esTypes: ['long'], aggregatable: true}
-      case 'keyword':
-        return {esTypes: ['keyword'], aggregatable: true}
-      default:
-        return {esTypes: ['text', 'keyword'], aggregatable: true}
-    }
-  }
-
   useEffect(() => {
     setDropdownItems([
       ...autocomplete.fields.map(f => ({type: 'field', data: f})),
@@ -124,6 +109,19 @@ function LogSearchFilterBar({
     ])
     setActiveIndex(-1)
   }, [autocomplete])
+
+  useEffect(() => {
+    if (!esSource || fields.length > 0) return
+    ;(async () => {
+      try {
+        const {fields: fetched} = await fetchKibanaFieldList({esSource})
+        setFields(fetched)
+        triggerAC(inputValue, fetched)
+      } catch (err) {
+        setFields([])
+      }
+    })()
+  }, [esSource, fields.length])
 
   const timeRange: ESRange = useMemo(() => {
     if (cloudTimeRange?.logAnalysis) {
@@ -280,14 +278,13 @@ function LogSearchFilterBar({
     const indexPattern = {
       title: 'syslog-*',
       fields: fields.map(f => {
-        const meta = schemaToEsMeta(f.type)
         return {
           name: f.field,
           type: f.type,
-          esTypes: meta.esTypes,
-          searchable: true,
-          filterable: true,
-          aggregatable: meta.aggregatable,
+          esTypes: [f.type],
+          searchable: f.searchable,
+          filterable: f.searchable,
+          aggregatable: f.aggregatable,
         }
       }),
     }

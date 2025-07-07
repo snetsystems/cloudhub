@@ -67,6 +67,8 @@ export type ToggleEsWizard = (
 export interface FieldInfo {
   field: string
   type: string
+  aggregatable: boolean
+  searchable: boolean
 }
 export interface FieldListResponse {
   fields: FieldInfo[]

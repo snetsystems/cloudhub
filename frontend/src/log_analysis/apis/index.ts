@@ -356,14 +356,27 @@ export async function fetchKibanaFieldList({
     })
 
     const fieldTypeMap: Record<string, string> = {}
+    const fieldFlagMap: Record<
+      string,
+      {searchable: boolean; aggregatable: boolean}
+    > = {}
+
     Object.entries(data?.fields ?? {}).forEach(([field, typeObj]) => {
       const types = Object.keys(typeObj)
+      const firstType = types[0]
 
-      if (types.length === 1) {
-        fieldTypeMap[field] = types[0]
-      } else {
-        fieldTypeMap[field] =
-          types.find(t => KNOWN_ES_FIELD_TYPES.includes(t)) || types[0]
+      fieldTypeMap[field] =
+        types.length === 1
+          ? firstType
+          : types.find(t => KNOWN_ES_FIELD_TYPES.includes(t)) || firstType
+
+      const infos = Object.values(typeObj) as Array<{
+        searchable: boolean
+        aggregatable: boolean
+      }>
+      fieldFlagMap[field] = {
+        searchable: infos.some(info => info.searchable),
+        aggregatable: infos.some(info => info.aggregatable),
       }
     })
 
@@ -391,8 +404,11 @@ export async function fetchKibanaFieldList({
 
     const fields: FieldInfo[] = [...topFields, ...restFields].map(field => ({
       field,
-      type: fieldTypeMap[field] || field,
+      type: fieldTypeMap[field] || 'text',
+      searchable: fieldFlagMap[field]?.searchable ?? false,
+      aggregatable: fieldFlagMap[field]?.aggregatable ?? false,
     }))
+
     return {fields, total: fields.length}
   } catch (err) {
     return {fields: [], total: 0}
