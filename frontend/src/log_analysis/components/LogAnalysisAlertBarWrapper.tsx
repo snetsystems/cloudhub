@@ -21,7 +21,7 @@ import {fetchLogsCount} from '../apis'
 import {LogCountData} from 'src/dashboards/types'
 import {Bar, getElementAtEvent} from 'react-chartjs-2'
 import {Chart as ChartJS} from 'chart.js'
-import {lowerToESRange} from '../util'
+import {buildCombinedFilters, lowerToESRange} from '../util'
 import {FilteredLogsForLogAnalysis} from 'src/types/logAnalysis'
 import {stableSelectionPlugin} from 'src/shared/utils/esChart'
 
@@ -87,7 +87,7 @@ function LogAnalysisAlertBarWrapper({
 
   useEffect(() => {
     getLogsData(esSource)
-  }, [])
+  }, [filteredLogsForLogAnalysis])
 
   useEffect(() => {
     if (!logsData) return
@@ -176,12 +176,14 @@ function LogAnalysisAlertBarWrapper({
       upper: cloudTimeRange?.logAnalysis?.upper ?? 'now()',
     })
 
+    const combinedFilters = buildCombinedFilters(filteredLogsForLogAnalysis)
+
     const res = await fetchLogsCount({
       esSource,
       gteISO,
       lteISO,
+      filters: combinedFilters.filter(filter => !('range' in filter)),
     })
-
     setLogsData(res.data)
   }
 

@@ -281,10 +281,12 @@ export async function fetchLogsCount({
   esSource,
   gteISO,
   lteISO,
+  filters,
 }: {
   esSource: BaseElasticSearchData
   gteISO: string
   lteISO: string
+  filters: FilteredLogsForLogAnalysis
 }): Promise<{data: LogCountData[]}> {
   const body = {
     aggs: {
@@ -317,6 +319,7 @@ export async function fetchLogsCount({
               },
             },
           },
+          ...filters,
         ],
       },
     },
