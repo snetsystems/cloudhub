@@ -1,4 +1,11 @@
-import React, {useMemo, useEffect, useState, useRef, MouseEvent} from 'react'
+import React, {
+  useMemo,
+  useEffect,
+  useState,
+  useRef,
+  MouseEvent,
+  useCallback,
+} from 'react'
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
@@ -24,6 +31,7 @@ import {Chart as ChartJS} from 'chart.js'
 import {buildCombinedFilters, lowerToESRange} from '../util'
 import {FilteredLogsForLogAnalysis} from 'src/types/logAnalysis'
 import {stableSelectionPlugin} from 'src/shared/utils/esChart'
+import {HistogramOptions} from '../util/HistogramOptions'
 
 //chart plugin
 ChartJS.register(stableSelectionPlugin)
@@ -55,6 +63,10 @@ function LogAnalysisAlertBarWrapper({
 }: Props) {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
 
+  const prevFilterRef = useRef<FilteredLogsForLogAnalysis>([])
+
+  const prevTimeRangeRef = useRef<{gte: number; lte: number} | undefined>()
+
   const [logsData, setLogsData] = useState<LogCountData[]>([])
 
   const [timeRange, setTimeRange] = useState<{gte: number; lte: number}>()
@@ -62,6 +74,39 @@ function LogAnalysisAlertBarWrapper({
   const [active, setActive] = useState<number[]>([])
 
   const [dragEndTime, setDragEndTime] = useState(0)
+
+  const defaultTimeRange = timeRanges.find(i => i.inputValue === 'Past 30d')
+
+  const getLogsData = useCallback(
+    async (esSource: BaseElasticSearchData) => {
+      if (!esSource) return
+
+      const {gteISO, lteISO} = lowerToESRange({
+        lower: cloudTimeRange?.logAnalysis?.lower ?? defaultTimeRange.lower,
+        upper: cloudTimeRange?.logAnalysis?.upper ?? 'now()',
+      })
+
+      const combinedFilters = buildCombinedFilters(filteredLogsForLogAnalysis)
+
+      const res = await fetchLogsCount({
+        esSource,
+        gteISO,
+        lteISO,
+        filters: combinedFilters.filter(
+          clause =>
+            !(
+              'range' in clause && Object.keys(clause.range)[0] === '@timestamp'
+            )
+        ),
+      })
+      setLogsData(res.data)
+    },
+    [
+      cloudTimeRange?.logAnalysis?.lower,
+      cloudTimeRange?.logAnalysis?.upper,
+      filteredLogsForLogAnalysis,
+    ]
+  )
 
   let intervalID
 
@@ -83,11 +128,17 @@ function LogAnalysisAlertBarWrapper({
       intervalID = null
       GlobalAutoRefresher.stopPolling()
     }
-  }, [cloudAutoRefresh?.logAnalysis, esSource])
+  }, [cloudAutoRefresh?.logAnalysis, esSource, getLogsData])
 
   useEffect(() => {
-    getLogsData(esSource)
-  }, [filteredLogsForLogAnalysis])
+    const hasFilterChanged =
+      JSON.stringify(prevFilterRef.current) !==
+      JSON.stringify(filteredLogsForLogAnalysis)
+    if (hasFilterChanged) {
+      prevFilterRef.current = filteredLogsForLogAnalysis
+      getLogsData(esSource)
+    }
+  }, [filteredLogsForLogAnalysis, getLogsData, esSource])
 
   useEffect(() => {
     if (!logsData) return
@@ -117,19 +168,30 @@ function LogAnalysisAlertBarWrapper({
   }, [logsData, filteredLogsForLogAnalysis])
 
   useEffect(() => {
+    const hasTimeRangeChanged =
+      JSON.stringify(prevTimeRangeRef.current) !== JSON.stringify(timeRange)
+
     if (
+      hasTimeRangeChanged &&
       timeRange &&
       logsData &&
       logsData[timeRange.gte] &&
       logsData[timeRange.lte]
     ) {
+      prevTimeRangeRef.current = timeRange
+      removeLogAnalysisRangeFilterClause('@timestamp')
       addLogAnalysisRangeFilter(
         '@timestamp',
         new Date(logsData[timeRange.gte].time).toISOString(),
         new Date(logsData[timeRange.lte].time + 86400000).toISOString()
       )
     }
-  }, [timeRange, logsData])
+  }, [
+    timeRange,
+    logsData,
+    addLogAnalysisRangeFilter,
+    removeLogAnalysisRangeFilterClause,
+  ])
 
   const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
     if (Date.now() - dragEndTime < 200) {
@@ -164,27 +226,6 @@ function LogAnalysisAlertBarWrapper({
         logsData[index].time + 86400000
       )
     }
-  }
-
-  const defaultTimeRange = timeRanges.find(i => i.inputValue === 'Past 30d')
-
-  const getLogsData = async (esSource: BaseElasticSearchData) => {
-    if (!esSource) return
-
-    const {gteISO, lteISO} = lowerToESRange({
-      lower: cloudTimeRange?.logAnalysis?.lower ?? defaultTimeRange.lower,
-      upper: cloudTimeRange?.logAnalysis?.upper ?? 'now()',
-    })
-
-    const combinedFilters = buildCombinedFilters(filteredLogsForLogAnalysis)
-
-    const res = await fetchLogsCount({
-      esSource,
-      gteISO,
-      lteISO,
-      filters: combinedFilters.filter(filter => !('range' in filter)),
-    })
-    setLogsData(res.data)
   }
 
   const chartData = useMemo(() => {
@@ -234,127 +275,12 @@ function LogAnalysisAlertBarWrapper({
   }, [logsData, active])
 
   const options = useMemo(() => {
-    return {
-      layout: {
-        padding: {
-          right: 10,
-        },
-      },
-      animation: {
-        duration: 0,
-      },
-      maintainAspectRatio: false,
-      responsive: true,
-      plugins: {
-        'stable-selection': {
-          threshold: 8,
-          onSelect: ({gte, lte, indices}) => {
-            if (gte >= 0 && lte >= 0) {
-              setTimeRange({gte, lte})
-              setActive(indices)
-            }
-          },
-
-          onDragEnd: () => {
-            setDragEndTime(Date.now())
-          },
-        },
-        zoom: {
-          zoom: {
-            drag: {
-              enabled: false,
-            },
-            wheel: {
-              enabled: false,
-            },
-            pinch: {
-              enabled: true,
-            },
-
-            mode: 'x' as const,
-          },
-        },
-        tooltip: {
-          borderWidth: 0,
-          cornerRadius: 4,
-          pointStyle: 'circle',
-          usePointStyle: true,
-          boxWidth: 10,
-          boxHeight: 10,
-          callbacks: {},
-        },
-        legend: {
-          display: false,
-        },
-      },
-      scales: {
-        x: {
-          title: {
-            color: '#999dab',
-            display: true,
-            font: {
-              size: 11,
-              weight: '600',
-            },
-            padding: {
-              top: 15,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            },
-            text: 'Time Stamp',
-          },
-
-          barThickness: 1,
-          grid: {
-            color: '#383846',
-          },
-          ticks: {
-            font: {
-              size: 11,
-              weight: '600',
-            },
-            maxRotation: 0,
-            minRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 8,
-            autoSkipPadding: 25,
-            sampleSize: 8,
-          },
-          stacked: false,
-        },
-        y: {
-          title: {
-            color: '#999dab',
-            display: true,
-            font: {
-              size: 11,
-              weight: '600',
-            },
-
-            position: 'left',
-            text: 'Logs Count',
-          },
-          grid: {
-            color: '#383846',
-          },
-          ticks: {
-            font: {
-              size: 11,
-              weight: '600',
-            },
-          },
-          stacked: false,
-        },
-      },
-    }
-  }, [logsData])
-
-  const onResetZoom = () => {
-    if (chartRef && chartRef.current) {
-      chartRef.current.resetZoom()
-    }
-  }
+    return HistogramOptions({
+      setTimeRange: setTimeRange,
+      setActive: setActive,
+      setDragEndTime: setDragEndTime,
+    })
+  }, [setTimeRange, setActive, setDragEndTime, logsData])
 
   return (
     <div style={{height: '100%', backgroundColor: '#292933'}}>
