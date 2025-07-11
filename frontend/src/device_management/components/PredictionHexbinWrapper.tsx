@@ -268,7 +268,11 @@ function PredictionHexbinWrapper({
           />
         </PredictionDashboardHeader>
 
-        {!hostList || error ? (
+        {loading ? (
+          <div className="loading-container">
+            <h3 className="graph-spinner" />
+          </div>
+        ) : !hostList || error ? (
           <div>{error}</div>
         ) : isHexbinDisplay ? (
           <PredictionHexbin
