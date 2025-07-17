@@ -207,6 +207,8 @@ import {
   LogsFilterClause,
 } from './logAnalysis'
 
+import {DeviceMeta, DeviceMapping} from './devicesMapping'
+
 export {
   Me,
   Env,
@@ -398,4 +400,6 @@ export {
   BaseFilter,
   KQLFilterClause,
   LogsFilterClause,
+  DeviceMeta,
+  DeviceMapping,
 }
