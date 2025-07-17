@@ -14,6 +14,7 @@ import {
 import {
   BaseElasticSearchData,
   FilteredLogsForLogAnalysis,
+  Source,
   SyslogTableRows,
   TimeZones,
 } from 'src/types'
@@ -40,6 +41,7 @@ interface LogAnalysisSyslogTableOwnProps {
 }
 
 interface StateProps {
+  source: Source
   manualRefresh: number
   cloudAutoRefresh?: CloudAutoRefresh
   cloudTimeRange?: CloudTimeRange
@@ -50,6 +52,7 @@ interface StateProps {
 type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps & StateProps
 
 function LogAnalysisSyslogTableWrapper({
+  source,
   manualRefresh,
   timeZone,
   filteredLogsForLogAnalysis = [],
@@ -271,6 +274,7 @@ function LogAnalysisSyslogTableWrapper({
 
   return (
     <LogAnalysisSyslogTable
+      source={source}
       chunkSize={syslogTableChunkSize}
       onChunkSizeChange={value => {
         setSyslogTableChunkSize(value)

@@ -25,6 +25,7 @@ import {icon as kqlValue} from '@opensearch-project/oui/es/components/icon/asset
 import {icon as kqlOperand} from '@opensearch-project/oui/es/components/icon/assets/kql_operand'
 import {icon as kqlField} from '@opensearch-project/oui/es/components/icon/assets/kql_field'
 import {icon as kqlSelector} from '@opensearch-project/oui/es/components/icon/assets/kql_selector'
+import {icon as lineChart} from '@opensearch-project/oui/es/components/icon/assets/lineChart' 
 
 appendIconComponentCache({
   search: ouiSearch,
@@ -51,4 +52,5 @@ appendIconComponentCache({
   kqlOperand: kqlOperand,
   kqlField: kqlField,
   kqlSelector: kqlSelector,
+  lineChart: lineChart
 })
