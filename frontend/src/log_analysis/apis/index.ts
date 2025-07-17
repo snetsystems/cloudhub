@@ -147,7 +147,9 @@ export async function fetchSyslogTableData(
       fields: {
         'host.hostname': {},
         message: {},
-        message_tokens: {},
+        message_tokens: {
+          number_of_fragments: 0,
+        },
         'event.original': {},
         'service.type': {},
         'process.name': {},
@@ -240,7 +242,9 @@ export async function fetchSyslogTableDataWithPit(
       fields: {
         'host.hostname': {},
         message: {},
-        message_tokens: {},
+        message_tokens: {
+          number_of_fragments: 0,
+        },
         'event.original': {},
         'service.type': {},
         'process.name': {},
