@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import _ from 'lodash'
 import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
@@ -54,7 +54,7 @@ interface Props {
   closePanel?: () => void
 }
 
-const TestCellsGraphWrapper = ({
+const LogAnalysisCellsGraphWrapper = ({
   ratio,
   title,
   source,
@@ -131,7 +131,7 @@ const TestCellsGraphWrapper = ({
 
   const getLayoutForInstance = async () => {
     const layoutResults = await getLayout(
-      'a3cfadab-56dc-48b8-9161-c6e9d82555c1' // canned layout id 입력 or 변수명으로 선언
+      'a3cfadab-56dc-48b8-9161-c6e9d82555c1' // canned layout id
     )
     const layout = getDeep<Layout>(layoutResults, 'data', null)
 
@@ -287,6 +287,6 @@ const isEqual = (prev, next) => {
 }
 
 export default React.memo(
-  connect(mstp, mdtp, null)(TestCellsGraphWrapper),
+  connect(mstp, mdtp, null)(LogAnalysisCellsGraphWrapper),
   isEqual
 )

@@ -5,7 +5,7 @@ import _ from 'lodash'
 import {connect} from 'react-redux'
 
 // Components
-import {Button, Page} from 'src/reusable_ui'
+import {Page} from 'src/reusable_ui'
 import LogAnalysisSyslogTableWrapper from 'src/log_analysis/components/LogAnalysisSyslogTableWrapper'
 import LogsFilterContainer from 'src/log_analysis/components/LogsFilterContainer'
 
@@ -41,7 +41,6 @@ import * as appActions from 'src/shared/actions/app'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {setStateInitAction} from 'src/device_management/actions'
-import TestCellsGraphWrapper from '../components/CellsGraphWrapper'
 import LogAnalysisAlertBarWarpper from '../components/LogAnalysisAlertBarWrapper'
 import LogSearchFilterBar from '../components/LogSearchFilterBar'
 
@@ -60,7 +59,6 @@ interface Props {
   filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
   setCloudTimeRange: (value: CloudTimeRange) => void
   onChooseCloudAutoRefresh: (value: CloudAutoRefresh) => void
-  openPanel: typeof openPanel
   removeLogAnalysisMatchPhraseFilterClause: (
     key: string,
     value: string | number
@@ -77,7 +75,6 @@ function LogAnalysisDashboard({
   onChooseCloudAutoRefresh,
   timeZone,
   setTimeZone,
-  openPanel,
 }: Props) {
   const [
     manualRefreshState,
@@ -181,6 +178,7 @@ function LogAnalysisDashboard({
             <LogAnalysisSyslogTableWrapper
               timeZone={timeZone}
               manualRefresh={manualRefreshState.value}
+              source={source}
             />
           </Authorized>
         )
@@ -245,28 +243,8 @@ function LogAnalysisDashboard({
         />
 
         <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
-        <Button text="Expand" onClick={handleExpand} />
       </>
     )
-  }
-
-  const handleExpand = () => {
-    console.log('expand')
-    openPanel({
-      panelProps: (
-        <TestCellsGraphWrapper
-          ratio={{
-            xNum: 1,
-            yNum: 6,
-            height: 100,
-          }}
-          title="test"
-          source={source}
-          selectedTimeRangeLocalStorageKey="expandTimePulse"
-        />
-      ),
-      width: 400,
-    })
   }
 
   return (
