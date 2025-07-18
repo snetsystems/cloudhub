@@ -255,11 +255,25 @@ type Tx struct {
 	writable bool
 }
 
-// Bucket creates a bucket struct with the provided bucket.
-func (t *Tx) Bucket(b []byte) kv.Bucket {
+// Bucket creates a bucket struct with the provided bucket name and optional extraPrefix.
+func (t *Tx) Bucket(b []byte, extraPrefix ...string) kv.Bucket {
+	var prefix string
+	if len(extraPrefix) > 0 {
+		var rawPrefix string
+		if strings.HasPrefix(extraPrefix[0], "/") {
+			rawPrefix = string(b) + extraPrefix[0]
+		} else if len(b) > 0 {
+			rawPrefix = string(b) + "/" + extraPrefix[0]
+		} else {
+			rawPrefix = extraPrefix[0]
+		}
+		prefix = strings.TrimSuffix(rawPrefix, "/")
+	} else {
+		prefix = string(b)
+	}
 	return &Bucket{
 		tx:     t,
-		prefix: b,
+		prefix: []byte(prefix),
 	}
 }
 

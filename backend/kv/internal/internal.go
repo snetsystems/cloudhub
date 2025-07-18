@@ -1456,3 +1456,67 @@ func UnmarshalEsSource(data []byte, s *cloudhub.EsSource) error {
 
 	return nil
 }
+
+// MarshalDeviceMeta encodes a DeviceMeta struct to binary protobuf format.
+func MarshalDeviceMeta(meta *cloudhub.DeviceMeta) ([]byte, error) {
+	return proto.Marshal(&DeviceMappingMeta{
+		Ip:         meta.IP,
+		Hostname:   meta.Hostname,
+		AliasName:  meta.AliasName,
+		DeviceType: meta.DeviceType,
+		OrgId:      meta.OrgID,
+	})
+}
+
+// UnmarshalDeviceMeta decodes a DeviceMeta from binary protobuf data.
+func UnmarshalDeviceMeta(data []byte, meta *cloudhub.DeviceMeta) error {
+	var pb DeviceMappingMeta
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	meta.IP = pb.Ip
+	meta.Hostname = pb.Hostname
+	meta.AliasName = pb.AliasName
+	meta.DeviceType = pb.DeviceType
+	meta.OrgID = pb.OrgId
+	return nil
+}
+
+// MarshalDeviceToOrg encodes a DeviceToOrg struct to binary protobuf format.
+func MarshalDeviceToOrg(dto *cloudhub.DeviceToOrg) ([]byte, error) {
+	return proto.Marshal(&DeviceMappingToOrg{
+		OrgId:     dto.OrgID,
+		AliasName: dto.AliasName,
+	})
+}
+
+// UnmarshalDeviceToOrg decodes a DeviceToOrg from binary protobuf data.
+func UnmarshalDeviceToOrg(data []byte, dto *cloudhub.DeviceToOrg) error {
+	var pb DeviceMappingToOrg
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	dto.OrgID = pb.OrgId
+	dto.AliasName = pb.AliasName
+	return nil
+}
+
+// MarshalAliasToDevice encodes an AliasToDevice struct to binary protobuf format.
+func MarshalAliasToDevice(atd *cloudhub.AliasToDevice) ([]byte, error) {
+	return proto.Marshal(&AliasMappingToDevice{
+		OrgId:    atd.OrgID,
+		Hostname: atd.Hostname,
+	})
+}
+
+// UnmarshalAliasToDevice decodes an AliasToDevice from binary protobuf data.
+func UnmarshalAliasToDevice(data []byte, atd *cloudhub.AliasToDevice) error {
+	var pb AliasMappingToDevice
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	atd.OrgID = pb.OrgId
+	atd.Hostname = pb.Hostname
+	return nil
+}

@@ -790,3 +790,54 @@ func TestMarshalMarshalEsSource(t *testing.T) {
 		})
 	}
 }
+
+func TestMarshalDeviceMeta(t *testing.T) {
+	v := &cloudhub.DeviceMeta{
+		IP:         "192.168.1.100",
+		Hostname:   "test-host",
+		AliasName:  "testhost",
+		DeviceType: "switch",
+		OrgID:      "org123",
+	}
+
+	var vv cloudhub.DeviceMeta
+	if buf, err := internal.MarshalDeviceMeta(v); err != nil {
+		t.Fatal(err)
+	} else if err := internal.UnmarshalDeviceMeta(buf, &vv); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(*v, vv) {
+		t.Fatalf("DeviceMeta protobuf copy error: got %#v, expected %#v", vv, *v)
+	}
+}
+
+func TestMarshalDeviceToOrg(t *testing.T) {
+	v := &cloudhub.DeviceToOrg{
+		OrgID:     "org123",
+		AliasName: "testhost",
+	}
+
+	var vv cloudhub.DeviceToOrg
+	if buf, err := internal.MarshalDeviceToOrg(v); err != nil {
+		t.Fatal(err)
+	} else if err := internal.UnmarshalDeviceToOrg(buf, &vv); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(*v, vv) {
+		t.Fatalf("DeviceToOrg protobuf copy error: got %#v, expected %#v", vv, *v)
+	}
+}
+
+func TestMarshalAliasToDevice(t *testing.T) {
+	v := &cloudhub.AliasToDevice{
+		OrgID:    "org123",
+		Hostname: "test-host",
+	}
+
+	var vv cloudhub.AliasToDevice
+	if buf, err := internal.MarshalAliasToDevice(v); err != nil {
+		t.Fatal(err)
+	} else if err := internal.UnmarshalAliasToDevice(buf, &vv); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(*v, vv) {
+		t.Fatalf("AliasToDevice protobuf copy error: got %#v, expected %#v", vv, *v)
+	}
+}

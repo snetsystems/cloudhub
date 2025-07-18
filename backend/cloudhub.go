@@ -58,6 +58,7 @@ const (
 	ErrTemplateNotFound                = Error("template not found")
 	ErrMLNxRstNotFound                 = Error("MLNxRet not found")
 	ErrDLNxRstNotFound                 = Error("DLNxRet not found")
+	ErrDeviceAlreadyExists             = Error("device already exists")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -1563,4 +1564,67 @@ type DLNxRstStg struct {
 	Scaler                 []byte  `json:"scaler"`
 	Model                  []byte  `json:"model"`
 	DLThreshold            float32 `json:"dl_threshold"` // DL Threshold value
+}
+
+// DeviceMeta represents metadata for a device, including network and organizational info.
+type DeviceMeta struct {
+	IP         string `json:"ip"`         // Management IP address
+	Hostname   string `json:"hostname"`   // Hostname (used as key leaf)
+	AliasName  string `json:"aliasName"`  // Alias name assigned to the device where the agent is installed
+	DeviceType string `json:"deviceType"` // Device type ["VM", "BM", "SWITCH", "ROUTER", "ETC", ...]
+	OrgID      string `json:"orgId"`      // Organization ID this device belongs to
+}
+
+// DeviceToOrg maps a device to its organization and alias name.
+type DeviceToOrg struct {
+	OrgID     string `json:"orgId"`     // Organization ID this device belongs to
+	AliasName string `json:"aliasName"` // Alias name assigned to the device where the agent is installed
+}
+
+// AliasToDevice maps an alias name to its corresponding organization and hostname.
+type AliasToDevice struct {
+	OrgID    string `json:"orgId"`    // Organization ID this device belongs to
+	Hostname string `json:"hostname"` // Original DeviceMeta.hostname
+}
+
+// AccessContext represents the access context of the user.
+type AccessContext struct {
+	IsSuperAdmin bool
+	OrgID        string
+}
+
+// DeviceMappingsStore defines methods for managing device <-> org/alias mappings in etcd.
+type DeviceMappingsStore interface {
+	// AddDevice creates a new device mapping (with alias, org, hostname keys). Returns error if device already exists.
+	AddDevice(ctx context.Context, meta *DeviceMeta) error
+
+	// GetDevice retrieves a device's metadata by hostname.
+	GetDevice(ctx context.Context, hostname string) (*DeviceMeta, error)
+
+	// AllDevices returns all devices across all orgs.
+	AllDevices(ctx context.Context, access AccessContext) ([]*DeviceMeta, error)
+
+	// UpdateDevice updates the metadata of a device (partial update, e.g., alias/org). May call MoveDeviceOrg internally if org changes.
+	UpdateDevice(ctx context.Context, hostname string, patch *DeviceMeta) error
+
+	// DeleteDevice deletes a device and all associated mappings (alias/org/hostname keys) in a transaction.
+	DeleteDevice(ctx context.Context, hostname string) error
+
+	// MoveDeviceOrg moves a device to a new org (atomic transaction, update all related keys).
+	MoveDeviceOrg(ctx context.Context, hostname string, newOrg string) error
+
+	// AddAlias adds a new alias mapping (alias -> device).
+	AddAlias(ctx context.Context, alias, orgId, hostname string) error
+
+	// UpdateAlias updates the device mapped to an alias.
+	UpdateAlias(ctx context.Context, alias, orgId, hostname string) error
+
+	// DeleteAlias removes an alias mapping.
+	DeleteAlias(ctx context.Context, alias string) error
+
+	// GetByAlias retrieves orgId and hostname by alias.
+	GetByAlias(ctx context.Context, alias string) (*AliasToDevice, error)
+
+	// GetByHostname retrieves orgId and aliasName by hostname.
+	GetByHostname(ctx context.Context, hostname string) (*DeviceToOrg, error)
 }

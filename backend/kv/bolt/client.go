@@ -162,7 +162,7 @@ func (tx *Tx) CreateBucketIfNotExists(b []byte) (kv.Bucket, error) {
 }
 
 // Bucket retrieves the bucket named b.
-func (tx *Tx) Bucket(b []byte) kv.Bucket {
+func (tx *Tx) Bucket(b []byte, extraPrefix ...string) kv.Bucket {
 	return &Bucket{
 		bucket: tx.tx.Bucket(b),
 	}

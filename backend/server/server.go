@@ -951,6 +951,7 @@ func openService(
 			DLNxRstStore:            svc.DLNxRstStore(),
 			DLNxRstStgStore:         svc.DLNxRstStgStore(),
 			EsSourcesStore:          esSources,
+			DeviceMappingsStore:     svc.DeviceMappingsStore(),
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,
