@@ -3,12 +3,14 @@ import {
   MatchPhraseFilterClause,
   RangeFilterClause,
   KQLFilterClause,
+  DeviceMeta,
 } from 'src/types'
 import {KqlDslWrapper, LogFilterClause} from 'src/types/logAnalysis'
 
 export enum ActionType {
   setFilteredLogForLogAnalysis = 'SET_LOG_ANALYSIS_FILTERED_LOG',
   setLogAnalysisStateInit = 'SET_LOG_ANALYSIS_STATE_INIT',
+  setLogAnalysisManualRefresh = 'SET_LOG_ANALYSIS_MANUAL_REFRESH',
   addLogAnalysisMatchPhraseFilterClause = 'ADD_LOG_ANALYSIS_MATCH_PHRASE_FILTER_CLAUSE',
   removeLogAnalysisMatchPhraseFilterClause = 'REMOVE_LOG_ANALYSIS_MATCH_PHRASE_FILTER_CLAUSE',
   addLogAnalysisRangeFilterClause = 'ADD_LOG_ANALYSIS_RANGE_FILTER_CLAUSE',
@@ -20,6 +22,7 @@ export enum ActionType {
 export type LogAnalysisAction =
   | LogAnalysisFilteredLogAction
   | LogAnalysisInitAction
+  | LogAnalysisManualRefreshAction
   | AddLogAnalysisMatchPhraseFilterClauseAction
   | RemoveLogAnalysisMatchPhraseFilterClauseAction
   | AddLogAnalysisRangeFilterClauseAction
@@ -45,6 +48,20 @@ interface LogAnalysisInitAction {
 
 export const setLogAnalysisStateInit = (): LogAnalysisInitAction => ({
   type: ActionType.setLogAnalysisStateInit,
+})
+
+interface LogAnalysisManualRefreshAction {
+  type: ActionType.setLogAnalysisManualRefresh
+  payload: {
+    logAnalysisManualRefresh: number
+  }
+}
+
+export const setLogAnalysisManualRefresh = (): LogAnalysisManualRefreshAction => ({
+  type: ActionType.setLogAnalysisManualRefresh,
+  payload: {
+    logAnalysisManualRefresh: Date.now(),
+  },
 })
 
 interface AddLogAnalysisMatchPhraseFilterClauseAction {
@@ -130,3 +147,26 @@ export const removeLogAnalysisKQLFilterClause = () => ({
 export type RemoveLogAnalysisKQLFilterClauseAction = ReturnType<
   typeof removeLogAnalysisKQLFilterClause
 >
+
+export enum SelectedDeviceActionType {
+  setSelectedDevice = 'SET_SELECTED_DEVICE',
+  resetSelectedDevice = 'RESET_SELECTED_DEVICE',
+}
+
+export type SelectedDeviceAction =
+  | {
+      type: SelectedDeviceActionType.setSelectedDevice
+      payload: {selectedDevice: DeviceMeta}
+    }
+  | {type: SelectedDeviceActionType.resetSelectedDevice}
+
+export const setSelectedDevice = (
+  selectedDevice: DeviceMeta
+): SelectedDeviceAction => ({
+  type: SelectedDeviceActionType.setSelectedDevice,
+  payload: {selectedDevice},
+})
+
+export const resetSelectedDevice = (): SelectedDeviceAction => ({
+  type: SelectedDeviceActionType.resetSelectedDevice,
+})

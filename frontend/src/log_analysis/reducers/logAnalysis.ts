@@ -8,10 +8,12 @@ import {
 
 interface LogAnalysisState {
   filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
+  logAnalysisManualRefresh: number
 }
 
 const initialState: LogAnalysisState = {
   filteredLogsForLogAnalysis: [],
+  logAnalysisManualRefresh: 0,
 }
 
 const logAnalysisDashboard = (
@@ -28,6 +30,10 @@ const logAnalysisDashboard = (
         ...state,
         filteredLogsForLogAnalysis: [],
       }
+    }
+    case ActionType.setLogAnalysisManualRefresh: {
+      const {logAnalysisManualRefresh} = action.payload
+      return {...state, logAnalysisManualRefresh}
     }
     case ActionType.addLogAnalysisMatchPhraseFilterClause: {
       const {clause} = (action as any).payload as {

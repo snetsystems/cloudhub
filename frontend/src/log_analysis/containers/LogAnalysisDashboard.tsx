@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useMemo} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import _ from 'lodash'
 import {connect} from 'react-redux'
@@ -15,7 +15,6 @@ import {
   Cell,
   FilteredLogsForLogAnalysis,
   INPUT_TIME_TYPE,
-  LogAnalysisManualRefresh,
   RefreshRate,
   Source,
   TimeRange,
@@ -43,6 +42,7 @@ import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {setStateInitAction} from 'src/device_management/actions'
 import LogAnalysisAlertBarWarpper from '../components/LogAnalysisAlertBarWrapper'
 import LogSearchFilterBar from '../components/LogSearchFilterBar'
+import {setLogAnalysisManualRefresh} from 'src/log_analysis/actions'
 
 interface TempProps {
   cell: Cell
@@ -59,6 +59,7 @@ interface Props {
   filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
   setCloudTimeRange: (value: CloudTimeRange) => void
   onChooseCloudAutoRefresh: (value: CloudAutoRefresh) => void
+  setLogAnalysisManualRefresh: typeof setLogAnalysisManualRefresh
   removeLogAnalysisMatchPhraseFilterClause: (
     key: string,
     value: string | number
@@ -75,15 +76,8 @@ function LogAnalysisDashboard({
   onChooseCloudAutoRefresh,
   timeZone,
   setTimeZone,
+  setLogAnalysisManualRefresh,
 }: Props) {
-  const [
-    manualRefreshState,
-    setManualRefreshState,
-  ] = useState<LogAnalysisManualRefresh>({
-    key: 'log-analysis',
-    value: Date.now(),
-  })
-
   const GridLayout = WidthProvider(ReactGridLayout)
 
   useEffect(() => {
@@ -177,7 +171,6 @@ function LogAnalysisDashboard({
           >
             <LogAnalysisSyslogTableWrapper
               timeZone={timeZone}
-              manualRefresh={manualRefreshState.value}
               source={source}
             />
           </Authorized>
@@ -219,10 +212,7 @@ function LogAnalysisDashboard({
     //redux
     setStateInitAction()
 
-    setManualRefreshState({
-      ...manualRefreshState,
-      value: Date.now(),
-    })
+    setLogAnalysisManualRefresh()
   }
 
   const renderHeaderRight = () => {
@@ -338,6 +328,10 @@ const mdtp = dispatch => ({
   setCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
   setTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
+  setLogAnalysisManualRefresh: bindActionCreators(
+    setLogAnalysisManualRefresh,
+    dispatch
+  ),
 })
 
 const isEqual = (prev, next) => {

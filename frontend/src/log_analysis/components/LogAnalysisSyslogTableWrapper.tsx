@@ -8,7 +8,9 @@ import debounce from 'lodash/debounce'
 import {
   setFilteredLogForLogAnalysis,
   addLogAnalysisRangeFilterClause,
+  setSelectedDevice,
 } from 'src/log_analysis/actions/'
+import {openPanel} from 'src/shared/actions/sidePanel'
 
 // Type
 import {
@@ -28,6 +30,7 @@ import {
 
 // Components
 import LogAnalysisSyslogTable from 'src/log_analysis/components/LogAnalysisSyslogTable'
+import LogAnalysisCellsGraphWrapper from 'src/log_analysis/components/LogAnalysisCellsGraphWrapper'
 
 // API
 import {fetchSyslogTableData} from 'src/log_analysis/apis'
@@ -42,23 +45,27 @@ interface LogAnalysisSyslogTableOwnProps {
 
 interface StateProps {
   source: Source
-  manualRefresh: number
+  logAnalysisManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
   cloudTimeRange?: CloudTimeRange
   esSource?: BaseElasticSearchData
   filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
+  openPanel?: typeof openPanel
+  setSelectedDevice?: typeof setSelectedDevice
 }
 
 type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps & StateProps
 
 function LogAnalysisSyslogTableWrapper({
   source,
-  manualRefresh,
+  logAnalysisManualRefresh,
   timeZone,
   filteredLogsForLogAnalysis = [],
   cloudAutoRefresh,
   cloudTimeRange,
   esSource,
+  openPanel,
+  setSelectedDevice,
 }: LogAnalysisSyslogTableProps) {
   const [syslogTableChunkSize, setSyslogTableChunkSize] = useState<number>(
     () => {
@@ -134,7 +141,7 @@ function LogAnalysisSyslogTableWrapper({
   const prevAutoRefreshRef = useRef<number | undefined>(
     cloudAutoRefresh?.logAnalysis
   )
-  const prevManualRefreshRef = useRef<number>(manualRefresh)
+  const prevManualRefreshRef = useRef<number>(logAnalysisManualRefresh)
   const sortFirstRunRef = useRef(true)
   const prevFiltersRef = useRef<FilteredLogsForLogAnalysis>(
     filteredLogsForLogAnalysis
@@ -197,12 +204,12 @@ function LogAnalysisSyslogTableWrapper({
 
   useEffect(() => {
     const prev = prevManualRefreshRef.current
-    if (prev !== manualRefresh) {
+    if (prev !== logAnalysisManualRefresh) {
       setPageIndex(0)
       debouncedGetSyslogTableData(true)
     }
-    prevManualRefreshRef.current = manualRefresh
-  }, [manualRefresh, debouncedGetSyslogTableData])
+    prevManualRefreshRef.current = logAnalysisManualRefresh
+  }, [logAnalysisManualRefresh, debouncedGetSyslogTableData])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.logAnalysis)
@@ -272,9 +279,42 @@ function LogAnalysisSyslogTableWrapper({
     setSortColumns(cols)
   const onChangeLiveUpdatingStatus = () => setIsLiveUpdating(prev => !prev)
 
+  const handleExpandSideBar = useCallback(
+    (hostname: string) => {
+      // TODO Get DeviceMeta from API
+      const deviceMeta = {
+        id: '',
+        ip: '',
+        hostname: hostname,
+        aliasName: '',
+        deviceType: '',
+        orgId: '',
+        isDeletable: false,
+      }
+      setSelectedDevice(deviceMeta)
+      openPanel({
+        panelProps: (
+          <LogAnalysisCellsGraphWrapper
+            ratio={{
+              xNum: 1,
+              yNum: 6,
+              height: 100,
+            }}
+            title="Time Series Graph"
+            source={source}
+            selectedTimeRangeLocalStorageKey="log-analysis-time-series-graph"
+            layoutId="a3cfadab-56dc-48b8-9161-c6e9d82555c1"
+          />
+        ),
+        width: 400,
+      })
+    },
+    [source, openPanel, setSelectedDevice]
+  )
+
   return (
     <LogAnalysisSyslogTable
-      source={source}
+      handleExpandSideBar={handleExpandSideBar}
       chunkSize={syslogTableChunkSize}
       onChunkSizeChange={value => {
         setSyslogTableChunkSize(value)
@@ -333,7 +373,10 @@ const mstp = state => {
     app: {
       persisted: {timeZone, cloudAutoRefresh, cloudTimeRange, esSource},
     },
-    logAnalysisDashboard: {filteredLogsForLogAnalysis},
+    logAnalysisDashboard: {
+      filteredLogsForLogAnalysis,
+      logAnalysisManualRefresh,
+    },
   } = state
   return {
     timeZone,
@@ -341,10 +384,12 @@ const mstp = state => {
     cloudTimeRange,
     esSource,
     filteredLogsForLogAnalysis,
+    logAnalysisManualRefresh,
   }
 }
 
 const mdtp = dispatch => ({
+  openPanel: bindActionCreators(openPanel, dispatch),
   setFilteredLogForLogAnalysis: bindActionCreators(
     setFilteredLogForLogAnalysis,
     dispatch
@@ -353,6 +398,7 @@ const mdtp = dispatch => ({
     addLogAnalysisRangeFilterClause,
     dispatch
   ),
+  setSelectedDevice: bindActionCreators(setSelectedDevice, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(LogAnalysisSyslogTableWrapper)

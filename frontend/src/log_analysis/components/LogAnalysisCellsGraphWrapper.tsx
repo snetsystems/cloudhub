@@ -5,15 +5,8 @@ import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
 
 // Types
-import {
-  Cell,
-  FilteredHostForGPUMonitoring,
-  Layout,
-  Ratio,
-  Source,
-  TimeRange,
-} from 'src/types'
-
+import {Cell, DeviceMeta, Layout, Ratio, Source, TimeRange} from 'src/types'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 // Constants
 import {
   DEFAULT_CELL_BG_COLOR,
@@ -21,10 +14,10 @@ import {
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
 // Components
-import GPUMonitoringDashboardHeader from 'src/gpu_monitoring/components/GPUMonitoringDashboardHeader'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import TimeRangeShiftDropdown from 'src/shared/components/TimeRangeShiftDropdown'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -42,16 +35,14 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 interface Props {
   ratio: Ratio
-  title: string
   source: Source
+  title: string
   selectedTimeRangeLocalStorageKey: string
-  filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
-  autoRefresh?: number
-  gpuMonitoringManualRefresh?: number
-  isStatisticsGraph?: boolean
-  statisticGraphHeight?: number
-  timeSeriesGraphHeight?: number
+  cloudAutoRefresh?: CloudAutoRefresh
+  selectedDevice?: DeviceMeta
+  logAnalysisManualRefresh?: number
   closePanel?: () => void
+  layoutId: string
 }
 
 const LogAnalysisCellsGraphWrapper = ({
@@ -59,13 +50,11 @@ const LogAnalysisCellsGraphWrapper = ({
   title,
   source,
   selectedTimeRangeLocalStorageKey,
-  filteredHostForGPUMonitoring,
-  autoRefresh,
-  gpuMonitoringManualRefresh: manualRefresh,
-  isStatisticsGraph,
-  statisticGraphHeight,
-  timeSeriesGraphHeight,
+  selectedDevice,
+  cloudAutoRefresh,
+  logAnalysisManualRefresh,
   closePanel,
+  layoutId,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem(selectedTimeRangeLocalStorageKey)) {
@@ -90,49 +79,31 @@ const LogAnalysisCellsGraphWrapper = ({
   }, [])
 
   useEffect(() => {
-    GlobalAutoRefresher.poll(autoRefresh)
-  }, [autoRefresh])
+    GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
+  }, [cloudAutoRefresh?.logAnalysis])
 
   useEffect(() => {
-    if (isStatisticsGraph) return
-    // prepare rollback
-    // const whereTags = {
-    //   host: filteredHostForGPUMonitoring.hostname,
-    //   index: filteredHostForGPUMonitoring.gpuIndex,
-    // }
-
     if (!!layout) {
-      // setLayoutCells(getCellsWithRatio(layout, source, whereTags, xNum, null))
       setLayoutCells(
         getCellsReactive(
           layout,
           source,
-          {host: filteredHostForGPUMonitoring.hostname ?? ''},
+          {host: selectedDevice?.hostname ?? ''},
           ratio,
           null
         )
       )
     }
-  }, [
-    layout,
-    selfTimeRange,
-    filteredHostForGPUMonitoring.hostname,
-    filteredHostForGPUMonitoring.gpuIndex,
-    timeSeriesGraphHeight,
-  ])
+  }, [layout, selfTimeRange, selectedDevice?.hostname])
 
   useEffect(() => {
-    if (!isStatisticsGraph) return
-
     if (!!layout) {
       setLayoutCells(getCellsReactive(layout, source, {host: ''}, ratio, null))
     }
-  }, [layout, selfTimeRange, statisticGraphHeight])
+  }, [layout, selfTimeRange])
 
   const getLayoutForInstance = async () => {
-    const layoutResults = await getLayout(
-      'a3cfadab-56dc-48b8-9161-c6e9d82555c1' // canned layout id
-    )
+    const layoutResults = await getLayout(layoutId)
     const layout = getDeep<Layout>(layoutResults, 'data', null)
 
     setLayout(layout ? [layout] : [])
@@ -176,7 +147,7 @@ const LogAnalysisCellsGraphWrapper = ({
         className="panel"
         style={{height: '100%', backgroundColor: GRAPH_BG_COLOR}}
       >
-        <GPUMonitoringDashboardHeader
+        <LogAnalysisDashboardHeader
           cellName={title}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
@@ -199,7 +170,7 @@ const LogAnalysisCellsGraphWrapper = ({
               />
             </div>
           </div>
-        </GPUMonitoringDashboardHeader>
+        </LogAnalysisDashboardHeader>
         {!_.isEmpty(instance) ? (
           <div className="panel-body">
             <div className="generic-empty-state">
@@ -233,7 +204,7 @@ const LogAnalysisCellsGraphWrapper = ({
                     cells={layoutCells}
                     templates={tempVars}
                     timeRange={selfTimeRange}
-                    manualRefresh={manualRefresh}
+                    manualRefresh={logAnalysisManualRefresh}
                     host={''}
                   />
                 </div>
@@ -255,24 +226,16 @@ const LogAnalysisCellsGraphWrapper = ({
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh, timeZone},
+      persisted: {cloudAutoRefresh, timeZone},
     },
-    gpuMonitoringDashboard: {
-      filteredHostForGPUMonitoring,
-      gpuMonitoringManualRefresh,
-      statisticGraphHeight,
-      timeSeriesGraphHeight,
-    },
-    links,
+    selectedDevice: {selectedDevice},
+    logAnalysisDashboard: {logAnalysisManualRefresh},
   } = state
   return {
-    links,
+    cloudAutoRefresh,
     timeZone,
-    autoRefresh,
-    filteredHostForGPUMonitoring,
-    gpuMonitoringManualRefresh,
-    statisticGraphHeight,
-    timeSeriesGraphHeight,
+    selectedDevice,
+    logAnalysisManualRefresh,
   }
 }
 

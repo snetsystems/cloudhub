@@ -15,7 +15,6 @@ import LoadingDots from 'src/shared/components/LoadingDots'
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 import RefreshSpinner from 'src/reusable_ui/components/spinners/RefreshSpinner'
 import MessageTokensModal from 'src/log_analysis/components/MessageTokensModal'
-import LogAnalysisCellsGraphWrapper from 'src/log_analysis/components/LogAnalysisCellsGraphWrapper'
 
 // Actions
 import {
@@ -23,15 +22,9 @@ import {
   addLogAnalysisRangeFilterClause,
   removeLogAnalysisMatchPhraseFilterClause,
 } from 'src/log_analysis/actions'
-import {openPanel} from 'src/shared/actions/sidePanel'
 
 // Type
-import {
-  FilteredLogsForLogAnalysis,
-  Source,
-  SyslogTableRows,
-  TimeZones,
-} from 'src/types'
+import {FilteredLogsForLogAnalysis, SyslogTableRows, TimeZones} from 'src/types'
 
 // Util
 import {formattedTime} from 'src/log_analysis/util'
@@ -49,7 +42,6 @@ import {
 } from 'src/log_analysis/constants'
 
 interface Props {
-  source: Source
   chunkSize: number
   filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   isLoading: boolean
@@ -69,12 +61,11 @@ interface Props {
   onChangeItemsPerPage: (size: number) => void
   onSort: (cols: {id: string; direction: 'asc' | 'desc'}[]) => void
   onLoadMore: () => void
-  openPanel?: typeof openPanel
+  handleExpandSideBar: (hostname: string) => void
   hasMore: boolean
 }
 
 function LogAnalysisSyslogTable({
-  source,
   filteredLogsForLogAnalysis,
   chunkSize,
   isLiveUpdating,
@@ -94,7 +85,7 @@ function LogAnalysisSyslogTable({
   onChangeItemsPerPage,
   onSort,
   onLoadMore,
-  openPanel,
+  handleExpandSideBar,
   hasMore,
 }: Props) {
   const dispatch = useDispatch()
@@ -231,24 +222,6 @@ function LogAnalysisSyslogTable({
     }
   }, [visibleColumns, sortColumns, pageSize])
 
-  const handleExpandSideBar = () => {
-    openPanel({
-      panelProps: (
-        <LogAnalysisCellsGraphWrapper
-          ratio={{
-            xNum: 1,
-            yNum: 6,
-            height: 100,
-          }}
-          title="Log Analysis Time Series Graph"
-          source={source}
-          selectedTimeRangeLocalStorageKey="log-analysis-time-series-graph"
-        />
-      ),
-      width: 400,
-    })
-  }
-
   const excludedOnClickFields = ['@timestamp']
   const renderCellValue = useCallback(
     ({rowIndex, columnId}) => {
@@ -302,9 +275,11 @@ function LogAnalysisSyslogTable({
       }
 
       if (columnId === 'timeSeriesGraph') {
+        const hostname = row['host.hostname']?.[0] || ''
+
         return (
           <div className="syslog-table-expand--icon">
-            <span onClick={handleExpandSideBar}>
+            <span onClick={() => handleExpandSideBar(hostname)}>
               <OuiIcon type="lineChart" size="l" />
             </span>
           </div>
@@ -399,7 +374,7 @@ function LogAnalysisSyslogTable({
         </span>
       )
     },
-    [items, timeZone, pageIndex, pageSize, dispatch]
+    [items, timeZone, pageIndex, pageSize, dispatch, handleExpandSideBar]
   )
 
   const ipSchema: OuiDataGridSchemaDetector = {
@@ -437,7 +412,7 @@ function LogAnalysisSyslogTable({
             } flex`}
             onClick={shouldAutoRefresh ? onChangeLiveUpdatingStatus : undefined}
           >
-            Log Analysis Syslog Table
+            Syslog Table
             <RefreshSpinner
               isActive={isLoading || (shouldAutoRefresh && isLiveUpdating)}
               isHighlighted={!!autoRefreshNumberValue && isLiveUpdating}
@@ -590,7 +565,6 @@ const mstp = state => {
 }
 
 const mdtp = dispatch => ({
-  openPanel: bindActionCreators(openPanel, dispatch),
   addLogAnalysisRangeFilterClause: bindActionCreators(
     addLogAnalysisRangeFilterClause,
     dispatch
