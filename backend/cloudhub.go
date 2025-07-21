@@ -1568,11 +1568,12 @@ type DLNxRstStg struct {
 
 // DeviceMeta represents metadata for a device, including network and organizational info.
 type DeviceMeta struct {
-	IP         string `json:"ip"`         // Management IP address
-	Hostname   string `json:"hostname"`   // Hostname (used as key leaf)
-	AliasName  string `json:"aliasName"`  // Alias name assigned to the device where the agent is installed
-	DeviceType string `json:"deviceType"` // Device type ["VM", "BM", "SWITCH", "ROUTER", "ETC", ...]
-	OrgID      string `json:"orgId"`      // Organization ID this device belongs to
+	IP          string `json:"ip"`         // Management IP address
+	Hostname    string `json:"hostname"`   // Hostname (used as key leaf)
+	AliasName   string `json:"aliasName"`  // Alias name assigned to the device where the agent is installed
+	DeviceType  string `json:"deviceType"` // Device type ["VM", "BM", "SWITCH", "ROUTER", "ETC", ...]
+	OrgID       string `json:"orgId"`      // Organization ID this device belongs to
+	IsDeletable bool   `json:"isDeletable"`
 }
 
 // DeviceToOrg maps a device to its organization and alias name.
