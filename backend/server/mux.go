@@ -695,7 +695,7 @@ func paramStr(key string, r *http.Request) (string, error) {
 func queryInt(key string, r *http.Request) (int, error) {
 	val := r.URL.Query().Get(key)
 	if val == "" {
-		return -1, fmt.Errorf("missing query parameter %q", key)
+		return -1, nil
 	}
 	n, err := strconv.Atoi(val)
 	if err != nil {
@@ -708,7 +708,7 @@ func queryInt(key string, r *http.Request) (int, error) {
 func queryInt64(key string, r *http.Request) (int64, error) {
 	val := r.URL.Query().Get(key)
 	if val == "" {
-		return -1, fmt.Errorf("missing query parameter %q", key)
+		return -1, nil
 	}
 	n, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {

@@ -34,12 +34,13 @@ type moveDeviceOrgRequest struct {
 
 // deviceMappingResponse represents device mapping API response
 type deviceMappingResponse struct {
-	IP         string    `json:"ip"`
-	Hostname   string    `json:"hostname"`
-	AliasName  string    `json:"aliasName"`
-	DeviceType string    `json:"deviceType"`
-	OrgID      string    `json:"orgId"`
-	Links      selfLinks `json:"links,omitempty"`
+	IP          string    `json:"ip"`
+	Hostname    string    `json:"hostname"`
+	AliasName   string    `json:"aliasName"`
+	DeviceType  string    `json:"deviceType"`
+	OrgID       string    `json:"orgId"`
+	Links       selfLinks `json:"links,omitempty"`
+	IsDeletable bool      `json:"isDeletable"`
 }
 
 // deviceMappingsResponse represents multiple device mappings response
@@ -110,6 +111,7 @@ func newDeviceMappingResponse(meta *cloudhub.DeviceMeta) deviceMappingResponse {
 		Links: selfLinks{
 			Self: fmt.Sprintf("/cloudhub/v1/device-mappings/%s/devices/%s", meta.OrgID, meta.Hostname),
 		},
+		IsDeletable: meta.IsDeletable,
 	}
 }
 
@@ -138,7 +140,6 @@ func (s *Service) AllDeviceMappings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if esID == -1 {
-
 		devices, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
 			IsSuperAdmin: isSuperAdmin,
 			OrgID:        currOrg,
@@ -569,29 +570,36 @@ func (s *Service) mergeAndUpsertDevices(
 	}
 
 	var toCreate []*cloudhub.DeviceMeta
-	for h := range hosts {
-		if _, ok := cache[h]; !ok {
-			meta := &cloudhub.DeviceMeta{
-				IP:         hosts[h].IP,
-				Hostname:   h,
-				AliasName:  "", // unknown
-				DeviceType: defaultDeviceType(hosts[h]),
-				OrgID:      orgID,
-			}
-			toCreate = append(toCreate, meta)
-			cache[h] = meta
+	for h, info := range hosts {
+		if _, ok := cache[h]; ok {
+			continue
 		}
+		meta := &cloudhub.DeviceMeta{
+			IP:          info.IP,
+			Hostname:    h,
+			AliasName:   "", // unknown
+			DeviceType:  defaultDeviceType(info),
+			OrgID:       orgID,
+			IsDeletable: false,
+		}
+		toCreate = append(toCreate, meta)
+		cache[h] = meta
 	}
-
-	if len(toCreate) > 0 {
+	if len(toCreate) != 0 {
 		if err := s.Store.DeviceMappings(ctx).BatchAddDevices(ctx, toCreate); err != nil {
 			return nil, err
 		}
+	}
+
+	for host, dev := range cache {
+		_, found := hosts[host]
+		dev.IsDeletable = !found
 	}
 
 	out := make([]*cloudhub.DeviceMeta, 0, len(cache))
 	for _, v := range cache {
 		out = append(out, v)
 	}
+
 	return out, nil
 }
