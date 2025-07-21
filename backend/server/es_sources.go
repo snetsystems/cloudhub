@@ -568,3 +568,27 @@ func (s *Service) DistinctHostsBefore(
 
 	return cli.DistinctHostsBefore(ctx, indexPattern, days)
 }
+
+// GetLatestHostInfo returns the latest ESInfo for a hostname.
+func (s *Service) GetLatestHostInfo(
+	ctx context.Context, srcID int, indexPattern, hostname string,
+) (cloudhub.ESInfo, bool, error) {
+
+	src, err := s.Store.EsSources(ctx).Get(ctx, srcID)
+	if err != nil {
+		return cloudhub.ESInfo{}, false, err
+	}
+
+	cli, err := elastic.NewClient(elastic.Config{
+		URL:                src.URL,
+		BasicAuth:          src.BasicAuth,
+		APIKeyAuth:         src.APIKeyAuth,
+		Authentication:     src.Authentication,
+		InsecureSkipVerify: src.InsecureSkipVerify,
+	})
+	if err != nil {
+		return cloudhub.ESInfo{}, false, err
+	}
+
+	return cli.GetLatestHostInfo(ctx, indexPattern, hostname)
+}

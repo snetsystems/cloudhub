@@ -471,6 +471,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Device meta detail (LogTable click; may auto-register if superadmin)
 	router.GET("/cloudhub/v1/device-mappings/meta/:hostname", EnsureViewer(service.GetDeviceMetaDetail))
 
+	// Ensure device
+	router.POST("/cloudhub/v1/device-mappings/ensure", EnsureViewer(service.EnsureDevice))
+
 	allRoutes := &AllRoutes{
 		Logger:                opts.Logger,
 		StatusFeed:            opts.StatusFeedURL,
@@ -688,6 +691,32 @@ func paramStr(key string, r *http.Request) (string, error) {
 	ctx := r.Context()
 	param := httprouter.GetParamFromContext(ctx, key)
 	return param, nil
+}
+
+// bodyInt64 converts a string field from the parsed JSON struct to int64.
+func bodyInt64(s string, fieldName string) (int64, error) {
+	if s == "" {
+		return 0, fmt.Errorf("%s is required", fieldName)
+	}
+	v, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s: %v", fieldName, err)
+	}
+	return v, nil
+}
+func bodyInt(raw interface{}, fieldName string) (int, error) {
+	switch v := raw.(type) {
+	case float64:
+		return int(v), nil
+	case string:
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			return 0, fmt.Errorf("invalid %s: %v", fieldName, err)
+		}
+		return i, nil
+	default:
+		return 0, fmt.Errorf("%s must be number or string", fieldName)
+	}
 }
 
 // queryInt returns the integer value of a query‑string parameter.

@@ -67,6 +67,15 @@ type deviceMetaDetailResponse struct {
 	Status string                 `json:"status"` // "found", "auto_registered", "not_found"
 }
 
+type ensureDeviceRequest struct {
+	Hostname   string `json:"hostname"`
+	EsSourceID string `json:"esSource,omitempty"`
+}
+type ensureDeviceResponse struct {
+	Meta   deviceMappingResponse `json:"meta"`
+	Status string                `json:"status"` // found | auto_registered | not_found
+}
+
 func (r *createDeviceMappingRequest) ValidCreate() error {
 	if r.Hostname == "" {
 		return fmt.Errorf("hostname is required")
@@ -512,13 +521,14 @@ func (s *Service) GetDeviceMetaDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if hasRole(ctx, "superAdmin") {
+	if hasSuperAdminContext(ctx) {
 		meta := &cloudhub.DeviceMeta{
-			IP:         "",
-			Hostname:   hostname,
-			AliasName:  hostname,
-			DeviceType: "ETC",
-			OrgID:      "default",
+			IP:          "",
+			Hostname:    hostname,
+			AliasName:   hostname,
+			DeviceType:  "ETC",
+			OrgID:       "default",
+			IsDeletable: false,
 		}
 
 		if err := s.Store.DeviceMappings(ctx).AddDevice(ctx, meta); err != nil {
@@ -540,10 +550,6 @@ func (s *Service) GetDeviceMetaDetail(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusNotFound, resp, s.Logger)
 }
 
-// hasRole checks if the user has a specific role
-func hasRole(ctx context.Context, role string) bool {
-	return true
-}
 func defaultDeviceType(es cloudhub.ESInfo) string {
 	if es.DeviceType == "" {
 		return "BM"
@@ -602,4 +608,79 @@ func (s *Service) mergeAndUpsertDevices(
 	}
 
 	return out, nil
+}
+
+// EnsureDevice guarantees that a hostname exists in the device‑mapping store.
+func (s *Service) EnsureDevice(w http.ResponseWriter, r *http.Request) {
+
+	var req ensureDeviceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Hostname == "" {
+		invalidJSON(w, s.Logger)
+		return
+	}
+	hostname := req.Hostname
+
+	esSourceID, esErr := bodyInt(req.EsSourceID, "esSource")
+
+	ctx := serverContext(r.Context())
+
+	meta, err := s.Store.DeviceMappings(ctx).GetDevice(ctx, hostname)
+	if err == nil {
+		resp := ensureDeviceResponse{
+			Meta:   newDeviceMappingResponse(meta),
+			Status: "found",
+		}
+		encodeJSON(w, http.StatusOK, resp, s.Logger)
+		return
+	}
+
+	if !hasSuperAdminContext(ctx) {
+		resp := ensureDeviceResponse{Status: "not_found"}
+		encodeJSON(w, http.StatusNotFound, resp, s.Logger)
+		return
+	}
+
+	if esSourceID == -1 {
+		Error(w, http.StatusUnprocessableEntity, esErr.Error(), s.Logger)
+		return
+	}
+	var esInfo cloudhub.ESInfo
+	if esErr != nil {
+		Error(w, http.StatusUnprocessableEntity, esErr.Error(), s.Logger)
+		return
+	}
+
+	info, ok, err := s.GetLatestHostInfo(
+		ctx, esSourceID, "syslog-*", hostname,
+	)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	if !ok {
+		resp := ensureDeviceResponse{Status: "not_found"}
+		encodeJSON(w, http.StatusNotFound, resp, s.Logger)
+		return
+	}
+	esInfo = info
+
+	meta = &cloudhub.DeviceMeta{
+		IP:          esInfo.IP,
+		Hostname:    hostname,
+		AliasName:   "",
+		DeviceType:  defaultDeviceType(esInfo),
+		OrgID:       "default",
+		IsDeletable: false,
+	}
+	if err := s.Store.DeviceMappings(ctx).AddDevice(ctx, meta); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	resp := ensureDeviceResponse{
+		Meta:   newDeviceMappingResponse(meta),
+		Status: "auto_registered",
+	}
+	encodeJSON(w, http.StatusCreated, resp, s.Logger)
+
 }

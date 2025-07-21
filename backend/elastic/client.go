@@ -259,3 +259,68 @@ func (c *Client) DistinctHostsBefore(
 	}
 	return out, nil
 }
+
+// GetLatestHostInfo returns (info, true) if ES has at least one
+// document for the hostname, else (_, false).
+func (c *Client) GetLatestHostInfo(
+	ctx context.Context,
+	indexPattern, hostname string,
+) (cloudhub.ESInfo, bool, error) {
+
+	body := map[string]any{
+		"size": 1,
+		"query": map[string]any{
+			"bool": map[string]any{
+				"must": []any{
+					map[string]any{"term": map[string]any{
+						"host.hostname": hostname,
+					}},
+				},
+			},
+		},
+		"sort": []any{
+			map[string]any{"@timestamp": map[string]string{"order": "desc"}},
+		},
+		"_source": []string{"host.ip", "device.type"},
+	}
+
+	req, _ := json.Marshal(body)
+	res, err := c.es.Search(
+		c.es.Search.WithContext(ctx),
+		c.es.Search.WithIndex(indexPattern),
+		c.es.Search.WithBody(bytes.NewReader(req)),
+		c.es.Search.WithTrackTotalHits(false),
+	)
+	if err != nil {
+		return cloudhub.ESInfo{}, false, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return cloudhub.ESInfo{}, false, fmt.Errorf("es error %s", res.Status())
+	}
+
+	var resp struct {
+		Hits struct {
+			Hits []struct {
+				Source struct {
+					Host struct {
+						IP string `json:"ip"`
+					} `json:"host"`
+					Device struct {
+						Type string `json:"type"`
+					} `json:"device"`
+				} `json:"_source"`
+			} `json:"hits"`
+		} `json:"hits"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return cloudhub.ESInfo{}, false, err
+	}
+	if len(resp.Hits.Hits) == 0 {
+		return cloudhub.ESInfo{}, false, nil
+	}
+
+	src := resp.Hits.Hits[0].Source
+	return cloudhub.ESInfo{IP: src.Host.IP, DeviceType: src.Device.Type}, true, nil
+}
