@@ -445,7 +445,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v1/es", EnsureViewer(service.NewEsSource))
 	router.PATCH("/cloudhub/v1/es/:id", EnsureEditor(service.UpdateEsSource))
 	router.DELETE("/cloudhub/v1/es/:id", EnsureAdmin(service.RemoveEsSource))
-	router.POST("/cloudhub/v1/es/:id/autocomplete", EnsureViewer(service.EsAutocomplete))
 
 	// Source Proxy to Influx; Has gzip compression around the handler
 	elastic := gziphandler.GzipHandler(EnsureViewer(service.Elastic))
@@ -689,6 +688,33 @@ func paramStr(key string, r *http.Request) (string, error) {
 	ctx := r.Context()
 	param := httprouter.GetParamFromContext(ctx, key)
 	return param, nil
+}
+
+// queryInt returns the integer value of a query‑string parameter.
+// Example:  /foo?es-source=42            →  queryInt("es-source", r) == 42
+func queryInt(key string, r *http.Request) (int, error) {
+	val := r.URL.Query().Get(key)
+	if val == "" {
+		return -1, fmt.Errorf("missing query parameter %q", key)
+	}
+	n, err := strconv.Atoi(val)
+	if err != nil {
+		return -1, fmt.Errorf("invalid integer for %q: %s", key, val)
+	}
+	return n, nil
+}
+
+// queryInt64 works like queryInt but for 64‑bit ints.
+func queryInt64(key string, r *http.Request) (int64, error) {
+	val := r.URL.Query().Get(key)
+	if val == "" {
+		return -1, fmt.Errorf("missing query parameter %q", key)
+	}
+	n, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return -1, fmt.Errorf("invalid int64 for %q: %s", key, val)
+	}
+	return n, nil
 }
 
 // decodeRequest is a generic function to decode JSON request bodies

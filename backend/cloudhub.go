@@ -1593,6 +1593,12 @@ type AccessContext struct {
 	OrgID        string
 }
 
+// ESInfo models the JSON structure of the ES Info API response.
+type ESInfo struct {
+	IP         string
+	DeviceType string
+}
+
 // DeviceMappingsStore defines methods for managing device <-> org/alias mappings in etcd.
 type DeviceMappingsStore interface {
 	// AddDevice creates a new device mapping (with alias, org, hostname keys). Returns error if device already exists.
@@ -1614,10 +1620,10 @@ type DeviceMappingsStore interface {
 	MoveDeviceOrg(ctx context.Context, hostname string, newOrg string) error
 
 	// AddAlias adds a new alias mapping (alias -> device).
-	AddAlias(ctx context.Context, alias, orgId, hostname string) error
+	AddAlias(ctx context.Context, alias, orgID, hostname string) error
 
 	// UpdateAlias updates the device mapped to an alias.
-	UpdateAlias(ctx context.Context, alias, orgId, hostname string) error
+	UpdateAlias(ctx context.Context, alias, orgID, hostname string) error
 
 	// DeleteAlias removes an alias mapping.
 	DeleteAlias(ctx context.Context, alias string) error
@@ -1627,4 +1633,7 @@ type DeviceMappingsStore interface {
 
 	// GetByHostname retrieves orgId and aliasName by hostname.
 	GetByHostname(ctx context.Context, hostname string) (*DeviceToOrg, error)
+
+	// BatchAddDevices adds multiple devices in a single transaction.
+	BatchAddDevices(ctx context.Context, metas []*DeviceMeta) error
 }

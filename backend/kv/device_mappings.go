@@ -537,3 +537,89 @@ func fullPrefix(bucket []byte, prefix string) string {
 	}
 	return "/" + string(bucket) + "/" + prefix
 }
+
+func (s *deviceMappingsStore) BatchAddDevices(
+	ctx context.Context,
+	metas []*cloudhub.DeviceMeta,
+) error {
+
+	if len(metas) == 0 {
+		return nil
+	}
+
+	seen := make(map[string]struct{}, len(metas))
+
+	return s.client.kv.Update(ctx, func(tx Tx) error {
+
+		if tx.Bucket(deviceMappingsBucket) == nil {
+			return fmt.Errorf("bucket %q not found", deviceMappingsBucket)
+		}
+
+		for _, m := range metas {
+			if m == nil || m.Hostname == "" {
+				continue
+			}
+			if m.OrgID == "" {
+				m.OrgID = defaultOrgID
+			}
+
+			dupKey := m.Hostname
+			if _, ok := seen[dupKey]; ok {
+				continue
+			}
+			seen[dupKey] = struct{}{}
+
+			d2oKey := buildDeviceToOrgKey(m.Hostname)
+			if v, _ := tx.Bucket(deviceMappingsBucket).Get([]byte(d2oKey)); v != nil {
+				continue
+			}
+
+			if m.AliasName != "" {
+				aliasKey := buildAliasToDeviceKey(m.AliasName)
+				if v, _ := tx.Bucket(deviceMappingsBucket).Get([]byte(aliasKey)); v != nil {
+					return fmt.Errorf("alias %s already exists", m.AliasName)
+				}
+			}
+
+			metaData, err := internal.MarshalDeviceMeta(m)
+			if err != nil {
+				return fmt.Errorf("marshal device meta: %w", err)
+			}
+			dtoBytes, err := internal.MarshalDeviceToOrg(&cloudhub.DeviceToOrg{
+				OrgID:     m.OrgID,
+				AliasName: m.AliasName,
+			})
+			if err != nil {
+				return fmt.Errorf("marshal device‑to‑org: %w", err)
+			}
+			var aliasBytes []byte
+			if m.AliasName != "" {
+				aliasBytes, err = internal.MarshalAliasToDevice(&cloudhub.AliasToDevice{
+					OrgID:    m.OrgID,
+					Hostname: m.Hostname,
+				})
+				if err != nil {
+					return fmt.Errorf("marshal alias‑to‑device: %w", err)
+				}
+			}
+
+			// ── put KV entries ──────────────────────────
+			if err := tx.Bucket(deviceMappingsBucket).Put(
+				[]byte(buildOrgDeviceKey(m.OrgID, m.Hostname)), metaData,
+			); err != nil {
+				return err
+			}
+			if err := tx.Bucket(deviceMappingsBucket).Put([]byte(d2oKey), dtoBytes); err != nil {
+				return err
+			}
+			if m.AliasName != "" {
+				if err := tx.Bucket(deviceMappingsBucket).Put(
+					[]byte(buildAliasToDeviceKey(m.AliasName)), aliasBytes,
+				); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}

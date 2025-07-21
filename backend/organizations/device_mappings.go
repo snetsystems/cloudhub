@@ -296,3 +296,25 @@ func (s *DeviceMappingsStore) GetByHostname(ctx context.Context, hostname string
 
 	return deviceToOrg, nil
 }
+
+// BatchAddDevices adds multiple devices in a single transaction.
+func (s *DeviceMappingsStore) BatchAddDevices(ctx context.Context, metas []*cloudhub.DeviceMeta) error {
+	err := validOrganization(ctx)
+	if err != nil {
+		return err
+	}
+
+	// SuperAdmin can add devices to any organization
+	if s.isSuperAdmin {
+		return s.store.BatchAddDevices(ctx, metas)
+	}
+
+	// Regular users can only add devices to their organization
+	for _, meta := range metas {
+		if meta.OrgID != s.organization {
+			return fmt.Errorf("cannot add device to organization %s: access denied", meta.OrgID)
+		}
+	}
+
+	return s.store.BatchAddDevices(ctx, metas)
+}

@@ -65,3 +65,8 @@ func (s *DeviceMappingsStore) GetByAlias(ctx context.Context, alias string) (*cl
 func (s *DeviceMappingsStore) GetByHostname(ctx context.Context, hostname string) (*cloudhub.DeviceToOrg, error) {
 	return nil, cloudhub.ErrDeviceNotFound
 }
+
+// BatchAddDevices is a no-op.
+func (s *DeviceMappingsStore) BatchAddDevices(ctx context.Context, metas []*cloudhub.DeviceMeta) error {
+	return nil
+}

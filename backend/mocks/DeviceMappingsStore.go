@@ -10,17 +10,18 @@ var _ cloudhub.DeviceMappingsStore = &DeviceMappingsStore{}
 
 // DeviceMappingsStore is a mock implementation of cloudhub.DeviceMappingsStore
 type DeviceMappingsStore struct {
-	AddDeviceFunc     func(ctx context.Context, meta *cloudhub.DeviceMeta) error
-	GetDeviceFunc     func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error)
-	AllDevicesFunc    func(ctx context.Context, access cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error)
-	UpdateDeviceFunc  func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error
-	DeleteDeviceFunc  func(ctx context.Context, hostname string) error
-	MoveDeviceOrgFunc func(ctx context.Context, hostname string, newOrg string) error
-	AddAliasFunc      func(ctx context.Context, alias, orgId, hostname string) error
-	UpdateAliasFunc   func(ctx context.Context, alias, orgId, hostname string) error
-	DeleteAliasFunc   func(ctx context.Context, alias string) error
-	GetByAliasFunc    func(ctx context.Context, alias string) (*cloudhub.AliasToDevice, error)
-	GetByHostnameFunc func(ctx context.Context, hostname string) (*cloudhub.DeviceToOrg, error)
+	AddDeviceFunc       func(ctx context.Context, meta *cloudhub.DeviceMeta) error
+	GetDeviceFunc       func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error)
+	AllDevicesFunc      func(ctx context.Context, access cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error)
+	UpdateDeviceFunc    func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error
+	DeleteDeviceFunc    func(ctx context.Context, hostname string) error
+	MoveDeviceOrgFunc   func(ctx context.Context, hostname string, newOrg string) error
+	AddAliasFunc        func(ctx context.Context, alias, orgId, hostname string) error
+	UpdateAliasFunc     func(ctx context.Context, alias, orgId, hostname string) error
+	DeleteAliasFunc     func(ctx context.Context, alias string) error
+	GetByAliasFunc      func(ctx context.Context, alias string) (*cloudhub.AliasToDevice, error)
+	GetByHostnameFunc   func(ctx context.Context, hostname string) (*cloudhub.DeviceToOrg, error)
+	BatchAddDevicesFunc func(ctx context.Context, metas []*cloudhub.DeviceMeta) error
 }
 
 // AddDevice mocks the AddDevice method
@@ -76,4 +77,9 @@ func (s *DeviceMappingsStore) GetByAlias(ctx context.Context, alias string) (*cl
 // GetByHostname mocks the GetByHostname method
 func (s *DeviceMappingsStore) GetByHostname(ctx context.Context, hostname string) (*cloudhub.DeviceToOrg, error) {
 	return s.GetByHostnameFunc(ctx, hostname)
+}
+
+// BatchAddDevices mocks the BatchAddDevices method
+func (s *DeviceMappingsStore) BatchAddDevices(ctx context.Context, metas []*cloudhub.DeviceMeta) error {
+	return s.BatchAddDevicesFunc(ctx, metas)
 }

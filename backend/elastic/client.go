@@ -2,6 +2,7 @@
 package elastic
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/base64"
@@ -148,4 +149,113 @@ func (c *Client) Version(ctx context.Context) (string, error) {
 	}
 
 	return info.Version.Number, nil
+}
+
+// Es returns the official go-elasticsearch Client.
+func (c *Client) Es() *elasticsearch.Client {
+	return c.es
+}
+
+// DistinctHostsBefore returns a set of hostnames that have at least one
+// document in `indexPattern` older than N days.
+func (c *Client) DistinctHostsBefore(
+	ctx context.Context,
+	indexPattern string,
+	daysAgo int,
+) (map[string]cloudhub.ESInfo, error) {
+
+	body := map[string]any{
+		"size": 0,
+		"query": map[string]any{
+			"range": map[string]any{
+				"@timestamp": map[string]string{
+					"lt": fmt.Sprintf("now-%dd", daysAgo),
+				},
+			},
+		},
+		"aggs": map[string]any{
+			"hosts": map[string]any{
+				"terms": map[string]any{
+					"field":          "host.hostname",
+					"size":           10_000,
+					"shard_size":     20_000,
+					"execution_hint": "map",
+				},
+				"aggs": map[string]any{
+					"sample": map[string]any{
+						"top_hits": map[string]any{
+							"size": 1,
+							"_source": []string{
+								"host.ip",
+								"device.type",
+							},
+							"sort": []any{
+								map[string]any{
+									"@timestamp": map[string]string{
+										"order": "desc",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	reqBody, _ := json.Marshal(body)
+
+	res, err := c.es.Search(
+		c.es.Search.WithContext(ctx),
+		c.es.Search.WithIndex(indexPattern),
+		c.es.Search.WithBody(bytes.NewReader(reqBody)),
+		c.es.Search.WithTrackTotalHits(false),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("es search error: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, fmt.Errorf("es error %s", res.Status())
+	}
+
+	var resp struct {
+		Aggregations struct {
+			Hosts struct {
+				Buckets []struct {
+					Key    string `json:"key"`
+					Sample struct {
+						Hits struct {
+							Hits []struct {
+								Source struct {
+									Host struct {
+										IP string `json:"ip"`
+									} `json:"host"`
+									Device struct {
+										Type string `json:"type"`
+									} `json:"device"`
+								} `json:"_source"`
+							} `json:"hits"`
+						} `json:"hits"`
+					} `json:"sample"`
+				} `json:"buckets"`
+			} `json:"hosts"`
+		} `json:"aggregations"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return nil, fmt.Errorf("decode error: %w", err)
+	}
+
+	out := make(map[string]cloudhub.ESInfo, len(resp.Aggregations.Hosts.Buckets))
+	for _, b := range resp.Aggregations.Hosts.Buckets {
+		if len(b.Sample.Hits.Hits) == 0 {
+			continue
+		}
+		doc := b.Sample.Hits.Hits[0].Source
+		out[b.Key] = cloudhub.ESInfo{
+			IP:         doc.Host.IP,
+			DeviceType: doc.Device.Type,
+		}
+	}
+	return out, nil
 }

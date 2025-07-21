@@ -512,59 +512,6 @@ func (s *Service) MultiElasticProxy(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, results, s.Logger)
 }
 
-// EsAutocomplete Autocomplete terms
-func (s *Service) EsAutocomplete(w http.ResponseWriter, r *http.Request) {
-	id, err := paramID("id", r)
-	if err != nil {
-		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
-		return
-	}
-	ctx := r.Context()
-	src, err := s.Store.EsSources(ctx).Get(ctx, id)
-	if err != nil {
-		notFound(w, id, s.Logger)
-		return
-	}
-
-	var req struct {
-		Index string `json:"index"`
-		Field string `json:"field"`
-		Query string `json:"query,omitempty"`
-		Size  int    `json:"size,omitempty"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		invalidJSON(w, s.Logger)
-		return
-	}
-	if req.Index == "" || req.Field == "" {
-		invalidData(w, fmt.Errorf("index/field required"), s.Logger)
-		return
-	}
-	if req.Size == 0 {
-		req.Size = 10
-	}
-
-	path := fmt.Sprintf("/%s/_terms_enum", req.Index)
-	body := map[string]interface{}{
-		"field": req.Field,
-		"size":  req.Size,
-	}
-	if req.Query != "" {
-		body["string"] = req.Query
-	}
-
-	resp, err := s.doElasticsearchRequest(src, "POST", path, body)
-	if err != nil {
-		Error(w, http.StatusBadGateway, err.Error(), s.Logger)
-		return
-	}
-	defer resp.Body.Close()
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(resp.StatusCode)
-	io.Copy(w, resp.Body)
-}
-
 func (s *Service) doElasticsearchRequest(
 	src cloudhub.EsSource,
 	method, path string,
@@ -595,4 +542,29 @@ func (s *Service) doElasticsearchRequest(
 		Timeout:   5 * time.Second,
 	}
 	return client.Do(req)
+}
+
+// DistinctHostsBefore returns a set of hostnames that have at least one
+// document in `indexPattern` older than N days.
+func (s *Service) DistinctHostsBefore(
+	ctx context.Context, srcID int, indexPattern string, days int,
+) (map[string]cloudhub.ESInfo, error) {
+
+	src, err := s.Store.EsSources(ctx).Get(ctx, srcID)
+	if err != nil {
+		return nil, err
+	}
+
+	cli, err := elastic.NewClient(elastic.Config{
+		URL:                src.URL,
+		BasicAuth:          src.BasicAuth,
+		APIKeyAuth:         src.APIKeyAuth,
+		Authentication:     src.Authentication,
+		InsecureSkipVerify: src.InsecureSkipVerify,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return cli.DistinctHostsBefore(ctx, indexPattern, days)
 }

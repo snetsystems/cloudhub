@@ -122,31 +122,54 @@ func newDeviceMappingsByOrgResponse(devices []*cloudhub.DeviceMeta) map[string][
 	return resp
 }
 
-// AllDeviceMappings returns all device mappings
+// AllDeviceMappings returns all device mappings for an organization
 func (s *Service) AllDeviceMappings(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx := serverContext(r.Context())
+
 	isSuperAdmin := hasSuperAdminContext(ctx)
-	currentOrg, ok := hasOrganizationContext(ctx)
-	if !ok {
+	currOrg, orgOK := hasOrganizationContext(ctx)
+	if !orgOK {
 		Error(w, http.StatusInternalServerError, string(cloudhub.ErrOrganizationNotFound), s.Logger)
 		return
 	}
-	devices, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
-		IsSuperAdmin: isSuperAdmin,
-		OrgID:        currentOrg,
-	})
+	esID, err := queryInt("es-source", r)
+	if err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
+	}
+	if esID == -1 {
+
+		devices, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
+			IsSuperAdmin: isSuperAdmin,
+			OrgID:        currOrg,
+		})
+		if err != nil {
+			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+			return
+		}
+
+		encodeJSON(w, http.StatusOK, newDeviceMappingsByOrgResponse(devices), s.Logger)
+		return
+	}
+
+	hosts, err := s.DistinctHostsBefore(ctx, esID, "syslog-*", 7)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
-	resp := newDeviceMappingsByOrgResponse(devices)
-	encodeJSON(w, http.StatusOK, resp, s.Logger)
+	devices, err := s.mergeAndUpsertDevices(ctx, currOrg, hosts)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	encodeJSON(w, http.StatusOK, newDeviceMappingsByOrgResponse(devices), s.Logger)
 }
 
 // GetDeviceMapping returns a specific device mapping by hostname
 func (s *Service) GetDeviceMapping(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx := serverContext(r.Context())
 	hostname := httprouter.GetParamFromContext(ctx, "hostname")
 
 	if hostname == "" {
@@ -358,6 +381,7 @@ func (s *Service) DeleteDeviceMapping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// MoveDeviceToOrg moves a device to a different organization
 func (s *Service) MoveDeviceToOrg(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	orgID := httprouter.GetParamFromContext(ctx, "orgId")
@@ -518,4 +542,56 @@ func (s *Service) GetDeviceMetaDetail(w http.ResponseWriter, r *http.Request) {
 // hasRole checks if the user has a specific role
 func hasRole(ctx context.Context, role string) bool {
 	return true
+}
+func defaultDeviceType(es cloudhub.ESInfo) string {
+	if es.DeviceType == "" {
+		return "BM"
+	}
+	return es.DeviceType
+}
+func (s *Service) mergeAndUpsertDevices(
+	ctx context.Context,
+	orgID string,
+	hosts map[string]cloudhub.ESInfo,
+) ([]*cloudhub.DeviceMeta, error) {
+
+	existing, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
+		IsSuperAdmin: hasSuperAdminContext(ctx),
+		OrgID:        orgID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	cache := make(map[string]*cloudhub.DeviceMeta, len(existing))
+	for _, d := range existing {
+		cache[d.Hostname] = d
+	}
+
+	var toCreate []*cloudhub.DeviceMeta
+	for h := range hosts {
+		if _, ok := cache[h]; !ok {
+			meta := &cloudhub.DeviceMeta{
+				IP:         hosts[h].IP,
+				Hostname:   h,
+				AliasName:  "", // unknown
+				DeviceType: defaultDeviceType(hosts[h]),
+				OrgID:      orgID,
+			}
+			toCreate = append(toCreate, meta)
+			cache[h] = meta
+		}
+	}
+
+	if len(toCreate) > 0 {
+		if err := s.Store.DeviceMappings(ctx).BatchAddDevices(ctx, toCreate); err != nil {
+			return nil, err
+		}
+	}
+
+	out := make([]*cloudhub.DeviceMeta, 0, len(cache))
+	for _, v := range cache {
+		out = append(out, v)
+	}
+	return out, nil
 }
