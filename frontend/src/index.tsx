@@ -685,11 +685,24 @@ class Root extends PureComponent<Record<string, never>, State> {
       }
     } else {
       //esSource is not connected
-      esSources?.forEach(element => {
-        if (element.default === true) {
-          this.handleConnectElasticSearch({elasticSearchInfo: element})
-        }
-      })
+      const {
+        auth: {me},
+      } = store.getState()
+
+      if (me.superAdmin) {
+        esSources?.forEach(element => {
+          if (element.default === true) {
+            this.handleConnectElasticSearch({elasticSearchInfo: element})
+          }
+        })
+      } else {
+        console.log('me.currentOrganization', esSources, me.currentOrganization)
+        esSources?.forEach(element => {
+          if (element.organization === me.currentOrganization?.id) {
+            this.handleConnectElasticSearch({elasticSearchInfo: element})
+          }
+        })
+      }
     }
   }
 }
