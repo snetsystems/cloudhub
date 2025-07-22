@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -35,6 +36,31 @@ type esSourceResponse struct {
 	cloudhub.EsSource
 	AuthenticationMethod string        `json:"authentication"`
 	Links                esSourceLinks `json:"links"`
+}
+
+// Mutator is a function that modifies the request before it is sent to the Elasticsearch server.
+type Mutator interface {
+	Match(tail string, es cloudhub.EsSource, r *http.Request) bool
+	Apply(ctx context.Context, es cloudhub.EsSource,
+		w http.ResponseWriter, r *http.Request) (handled bool, err error)
+}
+
+// MutateFn is a function that modifies the request before it is sent to the Elasticsearch server.
+type MutateFn struct {
+	match func(tail string, esSource cloudhub.EsSource, r *http.Request) bool
+	apply func(cxt context.Context, esSource cloudhub.EsSource,
+		w http.ResponseWriter, r *http.Request) (bool, error)
+}
+
+// Match checks if the request matches the mutator.
+func (m MutateFn) Match(t string, esSource cloudhub.EsSource, r *http.Request) bool {
+	return m.match(t, esSource, r)
+}
+
+// Apply applies the mutator to the request.
+func (m MutateFn) Apply(cxt context.Context, esSource cloudhub.EsSource,
+	w http.ResponseWriter, r *http.Request) (bool, error) {
+	return m.apply(cxt, esSource, w, r)
 }
 
 func esSourceAuthenticationMethod(src cloudhub.EsSource) string {
@@ -364,6 +390,71 @@ func (s *Service) validateEsCredentials(ctx context.Context, src *cloudhub.EsSou
 type getEsSourcesResponse struct {
 	EsSources []esSourceResponse `json:"esSources"`
 }
+type esBody struct {
+	Query     any            `json:"query,omitempty"`
+	Highlight map[string]any `json:"highlight,omitempty"`
+}
+
+// AsyncSearchFilter adds a terms filter to the query for the given field and devices.
+func AsyncSearchFilter(s *Service) Mutator {
+	return MutateFn{
+		match: func(tail string, esSource cloudhub.EsSource, r *http.Request) bool {
+			return tail == "/syslog-*/_async_search" && r.Method == http.MethodPost &&
+				!hasSuperAdminContext(r.Context())
+		},
+		apply: func(ctx context.Context, esSource cloudhub.EsSource,
+			w http.ResponseWriter, r *http.Request) (bool, error) {
+			org, _ := hasOrganizationContext(ctx)
+
+			devs, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
+				IsSuperAdmin: false, OrgID: org,
+			})
+			if err != nil {
+				return false, err
+			}
+
+			hosts := make([]string, len(devs))
+			for i, d := range devs {
+				hosts[i] = d.Hostname
+			}
+
+			raw, _ := io.ReadAll(r.Body)
+			mod, err := injectDeviceFilter(raw, "host.hostname", hosts)
+			if err != nil {
+				return false, err
+			}
+
+			r.Body = io.NopCloser(bytes.NewReader(mod))
+			r.ContentLength = int64(len(mod))
+			r.Header.Set("Content-Length", strconv.Itoa(len(mod)))
+			return false, nil
+		},
+	}
+}
+
+var errHandled = errors.New("response written")
+
+// TermsEnumGuard blocks /syslog-*/_terms_enum for non‑super admins
+func TermsEnumGuard() Mutator {
+	return MutateFn{
+		match: func(tail string, _ cloudhub.EsSource, _ *http.Request) bool {
+			return tail == "/syslog-*/_terms_enum"
+		},
+
+		apply: func(ctx context.Context, _ cloudhub.EsSource,
+			w http.ResponseWriter, _ *http.Request) (bool, error) {
+
+			if hasSuperAdminContext(ctx) {
+				return false, nil
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"terms":[],"complete":true}`))
+			return true, nil
+		},
+	}
+}
 
 // Elastic proxies any request under
 //
@@ -384,11 +475,30 @@ func (s *Service) Elastic(w http.ResponseWriter, r *http.Request) {
 		tail = "/" // default to Elasticsearch root
 	}
 
-	ctx := r.Context()
+	ctx := serverContext(r.Context())
+
 	src, err := s.Store.EsSources(ctx).Get(ctx, id)
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
+	}
+
+	mutators := []Mutator{
+		AsyncSearchFilter(s),
+		TermsEnumGuard(),
+	}
+
+	for _, m := range mutators {
+		if m.Match(tail, src, r) {
+			handled, err := m.Apply(ctx, src, w, r)
+			if err != nil {
+				Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+				return
+			}
+			if handled {
+				return
+			}
+		}
 	}
 
 	proxy := buildEsReverseProxy(src)
@@ -591,4 +701,48 @@ func (s *Service) GetLatestHostInfo(
 	}
 
 	return cli.GetLatestHostInfo(ctx, indexPattern, hostname)
+}
+
+// injectDeviceFilter adds a terms filter to the query for the given field and devices.
+func injectDeviceFilter(body []byte, field string, devices []string) ([]byte, error) {
+
+	var root map[string]any
+	if len(body) > 0 {
+		if err := json.Unmarshal(body, &root); err != nil {
+			return nil, fmt.Errorf("invalid DSL: %w", err)
+		}
+	}
+
+	origQ, ok := root["query"]
+	if !ok {
+		origQ = map[string]any{"match_all": map[string]any{}}
+	}
+
+	hostTerms := map[string]any{
+		"terms": map[string]any{field: devices},
+	}
+	root["query"] = map[string]any{
+		"bool": map[string]any{
+			"must":   []any{origQ},
+			"filter": []any{hostTerms},
+		},
+	}
+
+	hl, _ := root["highlight"].(map[string]any)
+	if hl == nil {
+		hl = map[string]any{}
+		root["highlight"] = hl
+	}
+	hl["highlight_query"] = origQ
+
+	return json.Marshal(root)
+}
+
+func wrapWithBool(orig any, hostFilter map[string]any) map[string]any {
+	return map[string]any{
+		"bool": map[string]any{
+			"must":   []any{orig},
+			"filter": []any{hostFilter},
+		},
+	}
 }
