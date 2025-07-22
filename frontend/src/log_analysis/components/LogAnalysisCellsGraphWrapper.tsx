@@ -91,6 +91,7 @@ const LogAnalysisCellsGraphWrapper = ({
   const instance = []
 
   useEffect(() => {
+    setLayout([])
     getLayoutForInstance()
   }, [deviceType, selectedDevice?.aliasName])
 
@@ -181,15 +182,16 @@ const LogAnalysisCellsGraphWrapper = ({
   }
 
   const getLayoutsforVMWare = async (layouts: Layout[]) => {
-    const filteredLayouts = _.filter(layouts, m => m.app === 'vsphere').sort(
-      (x, y) => {
-        return x.measurement < y.measurement
-          ? -1
-          : x.measurement > y.measurement
-          ? 1
-          : 0
-      }
-    )
+    const filteredLayouts = _.filter(
+      layouts,
+      m => m.app === 'vsphere' && m.measurement.startsWith('vsphere_vm')
+    ).sort((x, y) => {
+      return x.measurement < y.measurement
+        ? -1
+        : x.measurement > y.measurement
+        ? 1
+        : 0
+    })
 
     return {filteredLayouts}
   }

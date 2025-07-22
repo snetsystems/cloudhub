@@ -355,6 +355,9 @@ function LogAnalysisSyslogTable({
           }
           break
         }
+        case 'deviceType':
+          cellContent = row['deviceType']?.[0] || ''
+          break
         default:
           cellContent = null
       }
