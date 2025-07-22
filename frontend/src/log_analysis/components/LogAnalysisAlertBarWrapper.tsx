@@ -111,6 +111,10 @@ function LogAnalysisAlertBarWrapper({
   let intervalID
 
   useEffect(() => {
+    getLogsData(esSource)
+  }, [])
+
+  useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
     const controller = new AbortController()
 
