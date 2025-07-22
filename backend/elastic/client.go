@@ -169,7 +169,7 @@ func (c *Client) DistinctHostsBefore(
 		"query": map[string]any{
 			"range": map[string]any{
 				"@timestamp": map[string]string{
-					"lt": fmt.Sprintf("now-%dd", daysAgo),
+					"gt": fmt.Sprintf("now-%dd", daysAgo),
 				},
 			},
 		},
