@@ -547,7 +547,6 @@ type builders struct {
 	Dashboards    DashboardBuilder
 	Organizations OrganizationBuilder
 	Protoboards   ProtoboardsBuilder
-	EsSources     EsSourcesBuilder
 }
 
 func (s *Server) newBuilders(logger cloudhub.Logger) builders {
@@ -588,22 +587,6 @@ func (s *Server) newBuilders(logger cloudhub.Logger) builders {
 			Logger:          logger,
 			UUID:            &idgen.UUID{},
 			ProtoboardsPath: s.ProtoboardsPath,
-		},
-		EsSources: &MultiEsSourceBuilder{
-			EsURLs: s.EsURLs,
-			BasicAuth: &cloudhub.BasicAuth{
-				Username: s.EsUsername,
-				Password: s.EsPassword,
-			},
-			APIKeyAuth: &cloudhub.APIKeyAuth{
-				ID:     s.EsAPIKeyID,
-				APIKey: s.EsAPIKeySecret,
-			},
-			DefaultIndex:       s.EsDefaultIndex,
-			InsecureSkipVerify: s.EsInsecureSkipVerify,
-			Logger:             logger,
-			ID:                 idgen.NewTime(),
-			Path:               s.ResourcesPath,
 		},
 	}
 }
@@ -905,14 +888,6 @@ func openService(
 		os.Exit(1)
 	}
 
-	esSources, err := builder.EsSources.Build(svc.EsSourcesStore())
-	if err != nil {
-		logger.
-			WithField("component", "EsSourcesStore").
-			Error("Unable to construct a MultiEsSourcesStore", err)
-		os.Exit(1)
-	}
-
 	protoboards, err := builder.Protoboards.Build()
 	if err != nil {
 		logger.
@@ -950,7 +925,7 @@ func openService(
 			MLNxRstStore:            svc.MLNxRstStore(),
 			DLNxRstStore:            svc.DLNxRstStore(),
 			DLNxRstStgStore:         svc.DLNxRstStgStore(),
-			EsSourcesStore:          esSources,
+			EsSourcesStore:          svc.EsSourcesStore(),
 			DeviceMappingsStore:     svc.DeviceMappingsStore(),
 		},
 		Logger:                 logger,
