@@ -1,8 +1,6 @@
 package server
 
 import (
-	"fmt"
-
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/canned"
 	"github.com/snetsystems/cloudhub/backend/filestore"
@@ -235,53 +233,4 @@ func (builder *MultiOrganizationBuilder) Build(db cloudhub.OrganizationsStore) (
 	}
 
 	return orgs, nil
-}
-
-// EsSourcesBuilder builds a MultiEsSourceStore
-type EsSourcesBuilder interface {
-	Build(cloudhub.EsSourcesStore) (*multistore.EsSourcesStore, error)
-}
-
-// MultiEsSourceBuilder implements EsSourcesBuilder
-type MultiEsSourceBuilder struct {
-	EsURLs             []string
-	BasicAuth          *cloudhub.BasicAuth
-	APIKeyAuth         *cloudhub.APIKeyAuth
-	DefaultIndex       string
-	InsecureSkipVerify bool
-
-	Logger cloudhub.Logger
-	ID     cloudhub.ID
-	Path   string
-}
-
-// Build return a MultiEsSourceStore
-func (fs *MultiEsSourceBuilder) Build(db cloudhub.EsSourcesStore) (*multistore.EsSourcesStore, error) {
-	files := filestore.NewEsSources(fs.Path, fs.ID, fs.Logger)
-
-	stores := []cloudhub.EsSourcesStore{db, files}
-
-	for i := len(fs.EsURLs) - 1; i >= 0; i-- {
-		url := fs.EsURLs[i]
-
-		src := &cloudhub.EsSource{
-			ID:                 i,
-			Name:               fmt.Sprintf("es-%d", i),
-			URL:                url,
-			Default:            false,
-			Version:            "unknown",
-			BasicAuth:          fs.BasicAuth,
-			APIKeyAuth:         fs.APIKeyAuth,
-			InsecureSkipVerify: fs.InsecureSkipVerify,
-			IndexPatterns:      []string{fs.DefaultIndex},
-			DefaultIndex:       fs.DefaultIndex,
-			Organization:       "default",
-		}
-
-		stores = append([]cloudhub.EsSourcesStore{
-			&memdb.EsSourcesStore{EsSource: src},
-		}, stores...)
-	}
-
-	return &multistore.EsSourcesStore{Stores: stores}, nil
 }
