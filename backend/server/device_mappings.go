@@ -391,38 +391,6 @@ func (s *Service) DeleteDeviceMapping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// MoveDeviceToOrg moves a device to a different organization
-func (s *Service) MoveDeviceToOrg(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	orgID := httprouter.GetParamFromContext(ctx, "orgId")
-	hostname := httprouter.GetParamFromContext(ctx, "hostname")
-
-	if orgID == "" {
-		Error(w, http.StatusBadRequest, "orgId parameter is required", s.Logger)
-		return
-	}
-	if hostname == "" {
-		Error(w, http.StatusBadRequest, "hostname parameter is required", s.Logger)
-		return
-	}
-
-	if err := s.OrganizationExists(ctx, orgID); err != nil {
-		Error(w, http.StatusBadRequest, fmt.Sprintf("organization %s does not exist", orgID), s.Logger)
-		return
-	}
-
-	if err := s.Store.DeviceMappings(ctx).MoveDeviceOrg(ctx, hostname, orgID); err != nil {
-		if err.Error() == fmt.Sprintf("hostname %s not found", hostname) {
-			Error(w, http.StatusNotFound, "device not found", s.Logger)
-		} else {
-			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-		}
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
 // GetOrgDevices returns all devices belonging to an organization (for LogAnalysis filtering)
 func (s *Service) GetOrgDevices(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

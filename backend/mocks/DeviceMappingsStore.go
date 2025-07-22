@@ -49,11 +49,6 @@ func (s *DeviceMappingsStore) DeleteDevice(ctx context.Context, hostname string)
 	return s.DeleteDeviceFunc(ctx, hostname)
 }
 
-// MoveDeviceOrg mocks the MoveDeviceOrg method
-func (s *DeviceMappingsStore) MoveDeviceOrg(ctx context.Context, hostname string, newOrg string) error {
-	return s.MoveDeviceOrgFunc(ctx, hostname, newOrg)
-}
-
 // AddAlias mocks the AddAlias method
 func (s *DeviceMappingsStore) AddAlias(ctx context.Context, alias string, orgID string, hostname string) error {
 	return s.AddAliasFunc(ctx, alias, orgID, hostname)

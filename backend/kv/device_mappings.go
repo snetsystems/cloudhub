@@ -183,7 +183,10 @@ func (s *deviceMappingsStore) AllDevices(ctx context.Context, access cloudhub.Ac
 	return devices, nil
 }
 
-// UpdateDevice updates the metadata of a device (partial update, e.g., alias/org). May call MoveDeviceOrg internally if org changes.
+// UpdateDevice updates the metadata of a device atomically (org / alias / ip / type ...).
+// - If OrgID changes, old org-device key is deleted and the new one is written.
+// - If AliasName changes, duplicate check is performed, old alias mapping is removed, new one is written.
+// - All writes happen in a single STM/transaction for consistency.
 func (s *deviceMappingsStore) UpdateDevice(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error {
 	if hostname == "" {
 		return fmt.Errorf("hostname is required")
@@ -192,44 +195,54 @@ func (s *deviceMappingsStore) UpdateDevice(ctx context.Context, hostname string,
 		return fmt.Errorf("patch data cannot be nil")
 	}
 
+	// 1) Load current metadata
 	current, err := s.GetDevice(ctx, hostname)
 	if err != nil {
 		return err
 	}
 
+	// 2) Basic sanity checks
 	if patch.Hostname != "" && patch.Hostname != hostname {
 		return fmt.Errorf("hostname mismatch: patch=%s request=%s", patch.Hostname, hostname)
 	}
 
+	// 3) Build the updated snapshot (apply non-zero patch fields)
 	updated := *current
-
 	if patch.IP != "" {
 		updated.IP = patch.IP
-	}
-	if patch.AliasName != current.AliasName {
-		updated.AliasName = patch.AliasName
 	}
 	if patch.DeviceType != "" {
 		updated.DeviceType = patch.DeviceType
 	}
-
+	if patch.AliasName != current.AliasName { // allow empty "" to clear alias
+		updated.AliasName = patch.AliasName
+	}
 	if patch.OrgID != "" && patch.OrgID != current.OrgID {
-		return s.MoveDeviceOrg(ctx, hostname, patch.OrgID)
+		updated.OrgID = patch.OrgID
 	}
 
+	// 4) Start transactional update
 	return s.client.kv.Update(ctx, func(tx Tx) error {
 		bucket := tx.Bucket(deviceMappingsBucket)
 
+		// 4-1) Alias duplication check (only when alias actually changes and new alias is not empty)
 		if current.AliasName != updated.AliasName && updated.AliasName != "" {
 			newAliasKey := buildAliasToDeviceKey(updated.AliasName)
 			if existingAliasData, _ := bucket.Get([]byte(newAliasKey)); existingAliasData != nil {
 				var existingMapping cloudhub.AliasToDevice
 				if err := internal.UnmarshalAliasToDevice(existingAliasData, &existingMapping); err == nil {
 					if existingMapping.Hostname != updated.Hostname {
-						return fmt.Errorf("alias %s already exists for device %s",
+						return fmt.Errorf("alias %q already exists for device %q",
 							updated.AliasName, existingMapping.Hostname)
 					}
 				}
+			}
+		}
+
+		if current.OrgID != updated.OrgID {
+			oldOrgKey := buildOrgDeviceKey(current.OrgID, current.Hostname)
+			if err := bucket.Delete([]byte(oldOrgKey)); err != nil {
+				return fmt.Errorf("failed to delete old org-device mapping: %w", err)
 			}
 		}
 
@@ -238,35 +251,21 @@ func (s *deviceMappingsStore) UpdateDevice(ctx context.Context, hostname string,
 			return fmt.Errorf("failed to marshal device meta: %w", err)
 		}
 
+		newOrgKey := buildOrgDeviceKey(updated.OrgID, updated.Hostname)
+		if err := bucket.Put([]byte(newOrgKey), metaData); err != nil {
+			return fmt.Errorf("failed to put org-device mapping: %w", err)
+		}
+
 		deviceToOrg := &cloudhub.DeviceToOrg{
 			OrgID:     updated.OrgID,
 			AliasName: updated.AliasName,
 		}
 		deviceToOrgData, err := internal.MarshalDeviceToOrg(deviceToOrg)
 		if err != nil {
-			return fmt.Errorf("failed to marshal device to org: %w", err)
+			return fmt.Errorf("failed to marshal device-to-org: %w", err)
 		}
-
-		var aliasToDeviceData []byte
-		if updated.AliasName != "" {
-			aliasToDevice := &cloudhub.AliasToDevice{
-				OrgID:    updated.OrgID,
-				Hostname: updated.Hostname,
-			}
-			aliasToDeviceData, err = internal.MarshalAliasToDevice(aliasToDevice)
-			if err != nil {
-				return fmt.Errorf("failed to marshal alias to device: %w", err)
-			}
-		}
-
-		orgDeviceKey := buildOrgDeviceKey(updated.OrgID, updated.Hostname)
-		if err := bucket.Put([]byte(orgDeviceKey), metaData); err != nil {
-			return fmt.Errorf("failed to update org-device mapping: %w", err)
-		}
-
-		deviceToOrgKey := buildDeviceToOrgKey(updated.Hostname)
-		if err := bucket.Put([]byte(deviceToOrgKey), deviceToOrgData); err != nil {
-			return fmt.Errorf("failed to update device-to-org mapping: %w", err)
+		if err := bucket.Put([]byte(buildDeviceToOrgKey(updated.Hostname)), deviceToOrgData); err != nil {
+			return fmt.Errorf("failed to put device-to-org mapping: %w", err)
 		}
 
 		if current.AliasName != updated.AliasName && current.AliasName != "" {
@@ -277,85 +276,18 @@ func (s *deviceMappingsStore) UpdateDevice(ctx context.Context, hostname string,
 		}
 
 		if updated.AliasName != "" {
+			aliasToDevice := &cloudhub.AliasToDevice{
+				OrgID:    updated.OrgID,
+				Hostname: updated.Hostname,
+			}
+			aliasToDeviceData, err := internal.MarshalAliasToDevice(aliasToDevice)
+			if err != nil {
+				return fmt.Errorf("failed to marshal alias-to-device: %w", err)
+			}
 			aliasKey := buildAliasToDeviceKey(updated.AliasName)
 			if err := bucket.Put([]byte(aliasKey), aliasToDeviceData); err != nil {
-				return fmt.Errorf("failed to update alias-to-device mapping: %w", err)
+				return fmt.Errorf("failed to put alias-to-device mapping: %w", err)
 			}
-		}
-
-		return nil
-	})
-}
-
-// MoveDeviceOrg moves a device to a new org (atomic via STM)
-func (s *deviceMappingsStore) MoveDeviceOrg(ctx context.Context, hostname string, newOrgID string) error {
-	if hostname == "" {
-		return fmt.Errorf("hostname is required")
-	}
-	if newOrgID == "" {
-		return fmt.Errorf("new org ID is required")
-	}
-
-	current, err := s.GetDevice(ctx, hostname)
-	if err != nil {
-		return err
-	}
-
-	if current.OrgID == newOrgID {
-		return nil
-	}
-
-	return s.client.kv.Update(ctx, func(tx Tx) error {
-		bucket := tx.Bucket(deviceMappingsBucket)
-
-		oldOrgDeviceKey := buildOrgDeviceKey(current.OrgID, current.Hostname)
-		if err := bucket.Delete([]byte(oldOrgDeviceKey)); err != nil {
-			return fmt.Errorf("failed to delete old org-device mapping: %w", err)
-		}
-
-		if newOrgID == "invalid-org" {
-			return fmt.Errorf("organization %s is invalid", newOrgID)
-		}
-
-		updated := *current
-		updated.OrgID = newOrgID
-
-		metaData, err := internal.MarshalDeviceMeta(&updated)
-		if err != nil {
-			return fmt.Errorf("failed to marshal device meta: %w", err)
-		}
-
-		deviceToOrg := &cloudhub.DeviceToOrg{
-			OrgID:     updated.OrgID,
-			AliasName: updated.AliasName,
-		}
-		deviceToOrgData, err := internal.MarshalDeviceToOrg(deviceToOrg)
-		if err != nil {
-			return fmt.Errorf("failed to marshal device to org: %w", err)
-		}
-
-		aliasToDevice := &cloudhub.AliasToDevice{
-			OrgID:    updated.OrgID,
-			Hostname: updated.Hostname,
-		}
-		aliasToDeviceData, err := internal.MarshalAliasToDevice(aliasToDevice)
-		if err != nil {
-			return fmt.Errorf("failed to marshal alias to device: %w", err)
-		}
-
-		newOrgDeviceKey := buildOrgDeviceKey(updated.OrgID, updated.Hostname)
-		if err := bucket.Put([]byte(newOrgDeviceKey), metaData); err != nil {
-			return fmt.Errorf("failed to create new org-device mapping: %w", err)
-		}
-
-		deviceToOrgKey := buildDeviceToOrgKey(updated.Hostname)
-		if err := bucket.Put([]byte(deviceToOrgKey), deviceToOrgData); err != nil {
-			return fmt.Errorf("failed to update device-to-org mapping: %w", err)
-		}
-
-		aliasKey := buildAliasToDeviceKey(updated.AliasName)
-		if err := bucket.Put([]byte(aliasKey), aliasToDeviceData); err != nil {
-			return fmt.Errorf("failed to update alias-to-device mapping: %w", err)
 		}
 
 		return nil

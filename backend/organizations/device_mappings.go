@@ -146,21 +146,6 @@ func (s *DeviceMappingsStore) DeleteDevice(ctx context.Context, hostname string)
 	return s.store.DeleteDevice(ctx, hostname)
 }
 
-// MoveDeviceOrg moves a device to a new organization. SuperAdmin only.
-func (s *DeviceMappingsStore) MoveDeviceOrg(ctx context.Context, hostname string, newOrgID string) error {
-	err := validOrganization(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Only SuperAdmin can move devices between organizations
-	if !s.isSuperAdmin {
-		return fmt.Errorf("insufficient permissions: only SuperAdmin can move devices between organizations")
-	}
-
-	return s.store.MoveDeviceOrg(ctx, hostname, newOrgID)
-}
-
 // AddAlias adds a new alias mapping with organization access control.
 func (s *DeviceMappingsStore) AddAlias(ctx context.Context, alias, orgID, hostname string) error {
 	err := validOrganization(ctx)

@@ -1611,14 +1611,11 @@ type DeviceMappingsStore interface {
 	// AllDevices returns all devices across all orgs.
 	AllDevices(ctx context.Context, access AccessContext) ([]*DeviceMeta, error)
 
-	// UpdateDevice updates the metadata of a device (partial update, e.g., alias/org). May call MoveDeviceOrg internally if org changes.
+	// UpdateDevice updates the metadata of a device (partial update, e.g., alias/org).
 	UpdateDevice(ctx context.Context, hostname string, patch *DeviceMeta) error
 
 	// DeleteDevice deletes a device and all associated mappings (alias/org/hostname keys) in a transaction.
 	DeleteDevice(ctx context.Context, hostname string) error
-
-	// MoveDeviceOrg moves a device to a new org (atomic transaction, update all related keys).
-	MoveDeviceOrg(ctx context.Context, hostname string, newOrg string) error
 
 	// AddAlias adds a new alias mapping (alias -> device).
 	AddAlias(ctx context.Context, alias, orgID, hostname string) error

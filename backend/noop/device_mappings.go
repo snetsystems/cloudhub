@@ -36,11 +36,6 @@ func (s *DeviceMappingsStore) DeleteDevice(ctx context.Context, hostname string)
 	return nil
 }
 
-// MoveDeviceOrg is a no-op.
-func (s *DeviceMappingsStore) MoveDeviceOrg(ctx context.Context, hostname string, newOrg string) error {
-	return nil
-}
-
 // AddAlias is a no-op.
 func (s *DeviceMappingsStore) AddAlias(ctx context.Context, alias, orgID, hostname string) error {
 	return nil

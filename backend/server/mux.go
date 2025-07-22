@@ -453,17 +453,14 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v1/proxy/multi/es", EnsureViewer(service.MultiElasticProxy))
 
 	// DeviceMappings (context-scoped collection)
-	// SuperAdmin: all orgs; Regular/Admin: currentOrg only (ctx 기반)
+	// SuperAdmin: all orgs; Regular/Admin: currentOrg only
 	router.GET("/cloudhub/v1/device-mappings", EnsureViewer(service.AllDeviceMappings))
-	router.POST("/cloudhub/v1/device-mappings", EnsureAdmin(service.RegisterDevice)) // or service.CreateDeviceMapping
+	router.POST("/cloudhub/v1/device-mappings", EnsureAdmin(service.RegisterDevice))
 
 	// Single device (moved under /devices to avoid httprouter wildcard conflicts)
 	router.GET("/cloudhub/v1/device-mappings/devices/:hostname", EnsureViewer(service.GetDeviceMapping))
 	router.PATCH("/cloudhub/v1/device-mappings/devices/:hostname", EnsureAdmin(service.UpdateDeviceMapping))
 	router.DELETE("/cloudhub/v1/device-mappings/devices/:hostname", EnsureAdmin(service.DeleteDeviceMapping))
-
-	// Move device to another org (orgId in JSON body: {"newOrgId":"..."})
-	router.POST("/cloudhub/v1/device-mappings/devices/:hostname/move", EnsureAdmin(service.MoveDeviceToOrg))
 
 	// Alias lookup
 	router.GET("/cloudhub/v1/device-mappings/aliases/:aliasName", EnsureViewer(service.GetDeviceByAlias))
