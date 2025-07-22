@@ -12,6 +12,7 @@ import AllUsersPage from 'src/admin/containers/cloudhub/AllUsersPage'
 import OrganizationsPage from 'src/admin/containers/cloudhub/OrganizationsPage'
 import ProvidersPage from 'src/admin/containers/ProvidersPage'
 import ProviderConfPage from 'src/admin/containers/cloudhub/ProviderConfPage'
+import DevicesMappingPage from 'src/admin/components/DevicesMappingPage'
 
 // actions
 import {
@@ -70,6 +71,17 @@ const sections = (me, providers, cspProviders = []) => {
           meID={me.id}
           meCurrentOrganization={me.currentOrganization}
           cspProviders={cspProviders}
+        />
+      ),
+    },
+    {
+      url: 'devices-mappings',
+      name: 'Devices Mapping',
+      enabled: isUserAuthorized(me.role, ADMIN_ROLE),
+      component: (
+        <DevicesMappingPage
+          me={me}
+          meCurrentOrganization={me.currentOrganization}
         />
       ),
     },

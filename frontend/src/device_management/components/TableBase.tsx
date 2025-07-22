@@ -155,7 +155,9 @@ function TableBase({
                   <th
                     className={`${getAlignClassName(column?.align)} ${
                       options?.theadRow?.className ?? ''
-                    } ${column.options?.checkbox ? 'checkbox' : ''}`}
+                    } ${column.options?.thead?.className ?? ''} ${
+                      column.options?.checkbox ? 'checkbox' : ''
+                    }`}
                     key={index}
                     onClick={() => onClickTh(column)}
                   >
@@ -223,9 +225,7 @@ function TableBase({
                       <td
                         key={columnIndex}
                         onClick={() => columns[columnIndex].onClick}
-                        className={`${
-                          column.options?.thead?.className ?? ''
-                        } ${getAlignClassName(column?.align)}`}
+                        className={`${getAlignClassName(column?.align)}`}
                       >
                         {column?.options?.checkbox ? (
                           <div className="dark-checkbox">
