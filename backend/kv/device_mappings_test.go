@@ -11,7 +11,7 @@ import (
 
 // TestDeviceMappingsStore_BasicOperations tests basic CRUD operations
 func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
-	c, err := NewTestClient("etcd")
+	c, err := NewTestClient()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 
 // TestDeviceMappingsStore_DuplicateHandling tests duplicate prevention
 func TestDeviceMappingsStore_DuplicateHandling(t *testing.T) {
-	c, err := NewTestClient("etcd")
+	c, err := NewTestClient()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,7 +204,7 @@ func TestDeviceMappingsStore_DuplicateHandling(t *testing.T) {
 
 // TestDeviceMappingsStore_MoveDeviceOrg tests organization change
 func TestDeviceMappingsStore_MoveDeviceOrg(t *testing.T) {
-	c, err := NewTestClient("etcd")
+	c, err := NewTestClient()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,6 +221,14 @@ func TestDeviceMappingsStore_MoveDeviceOrg(t *testing.T) {
 		OrgID:      "org-123",
 	}
 
+	// Clean up test data before starting the test
+	devices, _ := s.AllDevices(ctx, cloudhub.AccessContext{IsSuperAdmin: true})
+	for _, d := range devices {
+		if d.Hostname == device.Hostname {
+			_ = s.DeleteDevice(ctx, d.Hostname)
+		}
+	}
+
 	// Add device
 	err = s.AddDevice(ctx, device)
 	if err != nil {
@@ -231,7 +239,7 @@ func TestDeviceMappingsStore_MoveDeviceOrg(t *testing.T) {
 
 // TestDeviceMappingsStore_AtomicityDemo demonstrates atomic transaction behavior
 func TestDeviceMappingsStore_AtomicityDemo(t *testing.T) {
-	c, err := NewTestClient("etcd")
+	c, err := NewTestClient()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -247,6 +255,17 @@ func TestDeviceMappingsStore_AtomicityDemo(t *testing.T) {
 			AliasName:  "demo-alias",
 			DeviceType: "VM",
 			OrgID:      "demo-org",
+		}
+
+		// Clean up test data before starting the test
+		devices, _ := s.AllDevices(ctx, cloudhub.AccessContext{IsSuperAdmin: true})
+		if devices != nil {
+			for _, d := range devices {
+				fmt.Println("Before test - will delete:", device.Hostname)
+				if d.Hostname == device.Hostname {
+					_ = s.DeleteDevice(ctx, d.Hostname)
+				}
+			}
 		}
 
 		// Step 1: Add device
@@ -327,7 +346,7 @@ func TestDeviceMappingsStore_AtomicityDemo(t *testing.T) {
 
 // TestDeviceMappingsStore_TransactionRollback tests actual rollback behavior
 func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
-	c, err := NewTestClient("etcd")
+	c, err := NewTestClient()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -352,6 +371,21 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 			AliasName:  "existing-alias-2",
 			DeviceType: "VM",
 			OrgID:      "org-123",
+		}
+
+		// Clean up test data before starting the test
+		devices, _ := s.AllDevices(ctx, cloudhub.AccessContext{IsSuperAdmin: true})
+
+		if devices != nil {
+			for _, d := range devices {
+				fmt.Println("Before test - will delete:", device1.Hostname)
+				if d.Hostname == device1.Hostname {
+					_ = s.DeleteDevice(ctx, d.Hostname)
+				}
+				if d.Hostname == device2.Hostname {
+					_ = s.DeleteDevice(ctx, d.Hostname)
+				}
+			}
 		}
 
 		err := s.AddDevice(ctx, device1)
@@ -482,6 +516,7 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 		}
 
 		t.Log("ROLLBACK VERIFIED: Failed add left no partial state")
+
 	})
 
 	t.Run("ContextCancellation_RollbackTest", func(t *testing.T) {
@@ -539,8 +574,8 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 	})
 
 }
-func TestDeviceMappingsStore_AllDevices_ETCD(t *testing.T) {
-	c, err := NewTestClient("etcd")
+func TestDeviceMappingsStore_AllDevices(t *testing.T) {
+	c, err := NewTestClient()
 	if err != nil {
 		t.Fatal(err)
 	}

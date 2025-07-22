@@ -465,9 +465,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Alias lookup
 	router.GET("/cloudhub/v1/device-mappings/aliases/:aliasName", EnsureViewer(service.GetDeviceByAlias))
 
-	// Device meta detail (LogTable click; may auto-register if superadmin)
-	router.GET("/cloudhub/v1/device-mappings/meta/:hostname", EnsureViewer(service.GetDeviceMetaDetail))
-
 	// Ensure device
 	router.POST("/cloudhub/v1/device-mappings/ensure", EnsureViewer(service.EnsureDevice))
 

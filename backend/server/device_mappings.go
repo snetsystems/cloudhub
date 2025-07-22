@@ -168,7 +168,7 @@ func (s *Service) AllDeviceMappings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	devices, err := s.mergeAndUpsertDevices(ctx, currOrg, hosts)
+	devices, err := s.mergeAndUpsertDevices(ctx, hosts)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
@@ -469,55 +469,6 @@ func (s *Service) GetDeviceByAlias(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, resp, s.Logger)
 }
 
-// GetDeviceMetaDetail handles LogTable Detail click scenario (Sequence 4.4)
-func (s *Service) GetDeviceMetaDetail(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	hostname := httprouter.GetParamFromContext(ctx, "hostname")
-
-	if hostname == "" {
-		Error(w, http.StatusBadRequest, "hostname parameter is required", s.Logger)
-		return
-	}
-
-	device, err := s.Store.DeviceMappings(ctx).GetDevice(ctx, hostname)
-	if err == nil {
-		resp := deviceMetaDetailResponse{
-			Meta:   &[]deviceMappingResponse{newDeviceMappingResponse(device)}[0],
-			Status: "found",
-		}
-		encodeJSON(w, http.StatusOK, resp, s.Logger)
-		return
-	}
-
-	if hasSuperAdminContext(ctx) {
-		meta := &cloudhub.DeviceMeta{
-			IP:          "",
-			Hostname:    hostname,
-			AliasName:   hostname,
-			DeviceType:  "ETC",
-			OrgID:       "default",
-			IsDeletable: false,
-		}
-
-		if err := s.Store.DeviceMappings(ctx).AddDevice(ctx, meta); err != nil {
-			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-			return
-		}
-
-		resp := deviceMetaDetailResponse{
-			Meta:   &[]deviceMappingResponse{newDeviceMappingResponse(meta)}[0],
-			Status: "auto_registered",
-		}
-		encodeJSON(w, http.StatusOK, resp, s.Logger)
-		return
-	}
-
-	resp := deviceMetaDetailResponse{
-		Status: "not_found",
-	}
-	encodeJSON(w, http.StatusNotFound, resp, s.Logger)
-}
-
 func defaultDeviceType(es cloudhub.ESInfo) string {
 	if es.DeviceType == "" {
 		return "BM"
@@ -526,13 +477,12 @@ func defaultDeviceType(es cloudhub.ESInfo) string {
 }
 func (s *Service) mergeAndUpsertDevices(
 	ctx context.Context,
-	orgID string,
 	hosts map[string]cloudhub.ESInfo,
 ) ([]*cloudhub.DeviceMeta, error) {
 
 	existing, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
 		IsSuperAdmin: hasSuperAdminContext(ctx),
-		OrgID:        orgID,
+		OrgID:        DefaultOrganizationID,
 	})
 	if err != nil {
 		return nil, err
@@ -553,7 +503,7 @@ func (s *Service) mergeAndUpsertDevices(
 			Hostname:    h,
 			AliasName:   "", // unknown
 			DeviceType:  defaultDeviceType(info),
-			OrgID:       orgID,
+			OrgID:       DefaultOrganizationID,
 			IsDeletable: false,
 		}
 		toCreate = append(toCreate, meta)
