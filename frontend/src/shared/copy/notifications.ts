@@ -1665,3 +1665,11 @@ export const notifyGetNVidiaGPUMigLgipFailed = (): Notification => ({
   message: `Failed to Get NVIDIA SMI MIG Profile Data.`,
   duration: INFINITE,
 })
+
+export const notifyFetchSyslogTableDataFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to fetch syslog table data. ${message}`,
+  duration: INFINITE,
+})

@@ -141,3 +141,7 @@ export const MOCK_LOG_FILTERS: FilteredLogsForLogAnalysis = [
   },
   {match_phrase: {'service.type': 'ssh'}},
 ]
+
+export const LOG_ANALYSIS_TIME_SERIES_DEVICE_LAYOUT_IDS = {
+  switch: '37b0740a-79ac-4f4c-8ca0-e223a47400b8',
+}

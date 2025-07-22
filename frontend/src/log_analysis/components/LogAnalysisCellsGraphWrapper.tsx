@@ -5,7 +5,15 @@ import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
 
 // Types
-import {Cell, DeviceMeta, Layout, Ratio, Source, TimeRange} from 'src/types'
+import {
+  Cell,
+  DeviceToOrgMapping,
+  DeviceType,
+  Layout,
+  Ratio,
+  Source,
+  TimeRange,
+} from 'src/types'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 // Constants
 import {
@@ -13,6 +21,9 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
+import {notIncludeApps} from 'src/hosts/constants/apps'
+import {LOG_ANALYSIS_TIME_SERIES_DEVICE_LAYOUT_IDS} from 'src/log_analysis/constants/'
+
 // Components
 import {timeRanges} from 'src/shared/data/timeRanges'
 import TimeRangeShiftDropdown from 'src/shared/components/TimeRangeShiftDropdown'
@@ -21,12 +32,17 @@ import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisD
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
-import {generateForHostsForStatisticalGraph} from 'src/utils/tempVars'
+import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
 
 // API
-import {getLayout} from 'src/hosts/apis'
+import {
+  getLayout,
+  getLayouts,
+  getAppsForHost,
+  getMeasurementsForHost,
+} from 'src/hosts/apis'
 import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
 import {Cancel} from 'src/shared/components/ConfirmOrCancel'
 import {bindActionCreators} from 'redux'
@@ -39,10 +55,10 @@ interface Props {
   title: string
   selectedTimeRangeLocalStorageKey: string
   cloudAutoRefresh?: CloudAutoRefresh
-  selectedDevice?: DeviceMeta
+  selectedDevice?: DeviceToOrgMapping
   logAnalysisManualRefresh?: number
   closePanel?: () => void
-  layoutId: string
+  deviceType?: DeviceType
 }
 
 const LogAnalysisCellsGraphWrapper = ({
@@ -54,7 +70,7 @@ const LogAnalysisCellsGraphWrapper = ({
   cloudAutoRefresh,
   logAnalysisManualRefresh,
   closePanel,
-  layoutId,
+  deviceType = 'baremetal',
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem(selectedTimeRangeLocalStorageKey)) {
@@ -76,40 +92,164 @@ const LogAnalysisCellsGraphWrapper = ({
 
   useEffect(() => {
     getLayoutForInstance()
-  }, [])
+  }, [deviceType, selectedDevice?.aliasName])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
   }, [cloudAutoRefresh?.logAnalysis])
 
+  const getDeviceKeyValue = () => {
+    switch (deviceType) {
+      case 'baremetal':
+        return {host: selectedDevice?.aliasName ?? ''}
+      case 'vm':
+        return {vmname: selectedDevice?.aliasName ?? ''}
+      case 'switch':
+        return {agent_host: selectedDevice?.aliasName ?? ''}
+      default:
+        return {host: selectedDevice?.aliasName ?? ''}
+    }
+  }
+
   useEffect(() => {
     if (!!layout) {
       setLayoutCells(
-        getCellsReactive(
-          layout,
-          source,
-          {host: selectedDevice?.hostname ?? ''},
-          ratio,
-          null
-        )
+        getCellsReactive(layout, source, getDeviceKeyValue(), ratio, null)
       )
     }
-  }, [layout, selfTimeRange, selectedDevice?.hostname])
+  }, [layout, selfTimeRange, selectedDevice?.aliasName, deviceType])
 
-  useEffect(() => {
-    if (!!layout) {
-      setLayoutCells(getCellsReactive(layout, source, {host: ''}, ratio, null))
-    }
-  }, [layout, selfTimeRange])
+  const fetchHostsAndMeasurements = async (
+    layouts: Layout[],
+    hostID: string
+  ) => {
+    const tempVars = generateForHosts(source)
+    const fetchMeasurements = getMeasurementsForHost(source, hostID)
 
-  const getLayoutForInstance = async () => {
-    const layoutResults = await getLayout(layoutId)
-    const layout = getDeep<Layout>(layoutResults, 'data', null)
+    const filterLayouts = _.filter(
+      layouts,
+      m => !_.includes(notIncludeApps, m.app)
+    )
 
-    setLayout(layout ? [layout] : [])
+    const fetchHosts = getAppsForHost(
+      source.links.proxy,
+      hostID,
+      filterLayouts,
+      source.telegraf,
+      tempVars
+    )
+
+    const [host, measurements] = await Promise.all([
+      fetchHosts,
+      fetchMeasurements,
+    ])
+
+    return {host, measurements}
   }
 
-  const tempVars = generateForHostsForStatisticalGraph(source)
+  const getLayoutsforHost = async (layouts: Layout[], hostID: string) => {
+    const {host, measurements} = await fetchHostsAndMeasurements(
+      layouts,
+      hostID
+    )
+
+    const layoutsWithinHost = layouts.filter(layout => {
+      return (
+        host.apps &&
+        host.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+
+    const filteredLayouts = layoutsWithinHost
+      .filter(layout => {
+        return (
+          layout.app === 'system' ||
+          layout.app === 'win_system' ||
+          layout.app === 'ipmi_sensor'
+        )
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+
+    return {filteredLayouts}
+  }
+
+  const getLayoutsforVMWare = async (layouts: Layout[]) => {
+    const filteredLayouts = _.filter(layouts, m => m.app === 'vsphere').sort(
+      (x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      }
+    )
+
+    return {filteredLayouts}
+  }
+
+  const getLayoutForInstance = async () => {
+    const aliasName = selectedDevice?.aliasName
+    switch (deviceType) {
+      case 'baremetal':
+        if (aliasName) {
+          const layoutResults = await getLayouts()
+          const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+
+          if (layouts && layouts.length > 0) {
+            const {filteredLayouts} = await getLayoutsforHost(
+              layouts,
+              aliasName
+            )
+            setLayout(filteredLayouts)
+          } else {
+            setLayout([])
+          }
+        } else {
+          setLayout([])
+        }
+        break
+
+      case 'vm':
+        if (aliasName) {
+          const layoutResults = await getLayouts()
+          const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+
+          if (layouts && layouts.length > 0) {
+            const {filteredLayouts} = await getLayoutsforVMWare(layouts)
+            setLayout(filteredLayouts)
+          } else {
+            setLayout([])
+          }
+        } else {
+          setLayout([])
+        }
+        break
+
+      case 'switch':
+        const layoutId = LOG_ANALYSIS_TIME_SERIES_DEVICE_LAYOUT_IDS[deviceType]
+        if (layoutId) {
+          const layoutResults = await getLayout(layoutId)
+          const layout = getDeep<Layout>(layoutResults, 'data', null)
+          setLayout(layout ? [layout] : [])
+        } else {
+          setLayout([])
+        }
+        break
+
+      default:
+        setLayout([])
+        break
+    }
+  }
+
+  const tempVars = generateForHosts(source)
 
   const handleChooseTimeRange = ({lower, upper}) => {
     if (upper) {

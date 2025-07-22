@@ -1,11 +1,11 @@
-import {DeviceMeta} from 'src/types'
+import {DeviceToOrgMapping} from 'src/types'
 import {
   SelectedDeviceAction,
   SelectedDeviceActionType,
 } from 'src/log_analysis/actions'
 
 interface SelectedDeviceState {
-  selectedDevice: DeviceMeta | {}
+  selectedDevice: DeviceToOrgMapping | {}
 }
 
 const initialState: SelectedDeviceState = {

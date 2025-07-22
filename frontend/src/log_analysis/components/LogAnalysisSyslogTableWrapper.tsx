@@ -11,14 +11,18 @@ import {
   setSelectedDevice,
 } from 'src/log_analysis/actions/'
 import {openPanel} from 'src/shared/actions/sidePanel'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Type
 import {
   BaseElasticSearchData,
+  DeviceToOrgMapping,
+  DeviceType,
   FilteredLogsForLogAnalysis,
   Source,
   SyslogTableRows,
   TimeZones,
+  Notification,
 } from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
@@ -38,6 +42,7 @@ import {fetchSyslogTableData} from 'src/log_analysis/apis'
 // Utils
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {buildCombinedFilters} from 'src/log_analysis/util'
+import {notifyFetchSyslogTableDataFailed} from 'src/shared/copy/notifications'
 
 interface LogAnalysisSyslogTableOwnProps {
   timeZone?: TimeZones
@@ -52,6 +57,7 @@ interface StateProps {
   filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   openPanel?: typeof openPanel
   setSelectedDevice?: typeof setSelectedDevice
+  notify?: (message: Notification) => void
 }
 
 type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps & StateProps
@@ -66,6 +72,7 @@ function LogAnalysisSyslogTableWrapper({
   esSource,
   openPanel,
   setSelectedDevice,
+  notify,
 }: LogAnalysisSyslogTableProps) {
   const [syslogTableChunkSize, setSyslogTableChunkSize] = useState<number>(
     () => {
@@ -183,12 +190,17 @@ function LogAnalysisSyslogTableWrapper({
         if (reset) setRows(data)
         else setRows(prev => [...prev, ...data])
         if (lastSortValues) prevSortValuesRef.current = lastSortValues
+      } catch (error) {
+        notify(notifyFetchSyslogTableDataFailed(error.message))
+
+        setTotalRowCount(0)
+        if (reset) setRows([])
       } finally {
         setIsLoading(false)
       }
     },
 
-    [esSource, sortColumns, filteredLogsForLogAnalysis, cloudTimeRange]
+    [esSource, sortColumns, filteredLogsForLogAnalysis, cloudTimeRange, notify]
   )
 
   const debouncedGetSyslogTableData = useMemo(
@@ -280,17 +292,13 @@ function LogAnalysisSyslogTableWrapper({
   const onChangeLiveUpdatingStatus = () => setIsLiveUpdating(prev => !prev)
 
   const handleExpandSideBar = useCallback(
-    (hostname: string) => {
-      // TODO Get DeviceMeta from API
-      const deviceMeta = {
-        id: '',
-        ip: '',
-        hostname: hostname,
-        aliasName: '',
-        deviceType: '',
+    (hostname: string, deviceType: DeviceType) => {
+      // TODO Get DeviceToOrgMapping from API
+      const deviceMeta: DeviceToOrgMapping = {
         orgId: '',
-        isDeletable: false,
+        aliasName: hostname,
       }
+
       setSelectedDevice(deviceMeta)
       openPanel({
         panelProps: (
@@ -303,7 +311,7 @@ function LogAnalysisSyslogTableWrapper({
             title="Time Series Graph"
             source={source}
             selectedTimeRangeLocalStorageKey="log-analysis-time-series-graph"
-            layoutId="a3cfadab-56dc-48b8-9161-c6e9d82555c1"
+            deviceType={deviceType}
           />
         ),
         width: 400,
@@ -399,6 +407,7 @@ const mdtp = dispatch => ({
     dispatch
   ),
   setSelectedDevice: bindActionCreators(setSelectedDevice, dispatch),
+  notify: bindActionCreators(notifyAction, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(LogAnalysisSyslogTableWrapper)

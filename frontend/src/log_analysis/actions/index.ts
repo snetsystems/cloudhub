@@ -3,7 +3,7 @@ import {
   MatchPhraseFilterClause,
   RangeFilterClause,
   KQLFilterClause,
-  DeviceMeta,
+  DeviceToOrgMapping,
 } from 'src/types'
 import {KqlDslWrapper, LogFilterClause} from 'src/types/logAnalysis'
 
@@ -156,12 +156,12 @@ export enum SelectedDeviceActionType {
 export type SelectedDeviceAction =
   | {
       type: SelectedDeviceActionType.setSelectedDevice
-      payload: {selectedDevice: DeviceMeta}
+      payload: {selectedDevice: DeviceToOrgMapping}
     }
   | {type: SelectedDeviceActionType.resetSelectedDevice}
 
 export const setSelectedDevice = (
-  selectedDevice: DeviceMeta
+  selectedDevice: DeviceToOrgMapping
 ): SelectedDeviceAction => ({
   type: SelectedDeviceActionType.setSelectedDevice,
   payload: {selectedDevice},

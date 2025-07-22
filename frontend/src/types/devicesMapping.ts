@@ -11,3 +11,8 @@ export interface DeviceMeta {
 export interface DeviceMapping {
   [key: string]: DeviceMeta[]
 }
+
+export interface DeviceToOrgMapping {
+  orgId: string
+  aliasName: string
+}

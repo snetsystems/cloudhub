@@ -167,6 +167,15 @@ export async function fetchSyslogTableData(
     body,
   })
 
+  const shards = res?.rawResponse?._shards
+  if (shards && shards.failed > 0) {
+    const failures = shards.failures || []
+    const errorMessage = `Some shards failed: ${shards.failed}/${
+      shards.total
+    }. First failure: ${failures[0]?.reason?.reason || 'Unknown error'}`
+    throw new Error(errorMessage)
+  }
+
   const hitsArray = res?.rawResponse?.hits?.hits || []
   const total =
     typeof res.rawResponse.hits.total === 'object'
@@ -261,6 +270,15 @@ export async function fetchSyslogTableDataWithPit(
     method: 'POST',
     body,
   })
+
+  const shards = res?.rawResponse?._shards
+  if (shards && shards.failed > 0) {
+    const failures = shards.failures || []
+    const errorMessage = `Some shards failed: ${shards.failed}/${
+      shards.total
+    }. First failure: ${failures[0]?.reason?.reason || 'Unknown error'}`
+    throw new Error(errorMessage)
+  }
 
   const hitsArray = res?.rawResponse?.hits?.hits || []
   const total =

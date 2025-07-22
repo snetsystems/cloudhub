@@ -24,7 +24,12 @@ import {
 } from 'src/log_analysis/actions'
 
 // Type
-import {FilteredLogsForLogAnalysis, SyslogTableRows, TimeZones} from 'src/types'
+import {
+  DeviceType,
+  FilteredLogsForLogAnalysis,
+  SyslogTableRows,
+  TimeZones,
+} from 'src/types'
 
 // Util
 import {formattedTime} from 'src/log_analysis/util'
@@ -61,7 +66,7 @@ interface Props {
   onChangeItemsPerPage: (size: number) => void
   onSort: (cols: {id: string; direction: 'asc' | 'desc'}[]) => void
   onLoadMore: () => void
-  handleExpandSideBar: (hostname: string) => void
+  handleExpandSideBar: (hostname: string, deviceType: DeviceType) => void
   hasMore: boolean
 }
 
@@ -164,6 +169,12 @@ function LogAnalysisSyslogTable({
       {
         id: 'log.syslog.facility.code',
         display: 'Syslog Facility',
+        isExpandable: false,
+      },
+      {
+        id: 'deviceType',
+        display: 'Device Type',
+        schema: 'string',
         isExpandable: false,
       },
     ],
@@ -276,10 +287,10 @@ function LogAnalysisSyslogTable({
 
       if (columnId === 'timeSeriesGraph') {
         const hostname = row['host.hostname']?.[0] || ''
-
+        const deviceType = row['deviceType']?.[0] || 'baremetal'
         return (
           <div className="syslog-table-expand--icon">
-            <span onClick={() => handleExpandSideBar(hostname)}>
+            <span onClick={() => handleExpandSideBar(hostname, deviceType)}>
               <OuiIcon type="lineChart" size="l" />
             </span>
           </div>

@@ -205,9 +205,10 @@ import {
   BaseFilter,
   KQLFilterClause,
   LogsFilterClause,
+  DeviceType,
 } from './logAnalysis'
 
-import {DeviceMeta, DeviceMapping} from './devicesMapping'
+import {DeviceMeta, DeviceMapping, DeviceToOrgMapping} from './devicesMapping'
 
 export {
   Me,
@@ -402,4 +403,6 @@ export {
   LogsFilterClause,
   DeviceMeta,
   DeviceMapping,
+  DeviceType,
+  DeviceToOrgMapping,
 }
