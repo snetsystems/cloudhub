@@ -688,6 +688,7 @@ class Root extends PureComponent<Record<string, never>, State> {
       const {
         auth: {me},
       } = store.getState()
+      if (!me) return
 
       if (me.superAdmin) {
         esSources?.forEach(element => {
