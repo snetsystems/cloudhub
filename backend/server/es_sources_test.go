@@ -60,9 +60,11 @@ func TestNewEsSource_Success(t *testing.T) {
 	}
 
 	reqBody, _ := json.Marshal(cloudhub.EsSource{
-		Name:      "MyCluster",
-		URL:       es.URL,
-		BasicAuth: &cloudhub.BasicAuth{Username: "u", Password: "p"},
+		Name:           "MyCluster",
+		URL:            es.URL,
+		BasicAuth:      &cloudhub.BasicAuth{Username: "u", Password: "p"},
+		Authentication: "basic",
+		Organization:   "org1",
 	})
 	req := httptest.NewRequest("POST", "/cloudhub/v1/es", bytes.NewReader(reqBody))
 	rw := httptest.NewRecorder()
@@ -159,7 +161,7 @@ func TestUpdateAndRemoveEsSource(t *testing.T) {
 	es := fakeESServer()
 	defer es.Close()
 
-	saved := cloudhub.EsSource{ID: 7, URL: es.URL, BasicAuth: &cloudhub.BasicAuth{}}
+	saved := cloudhub.EsSource{ID: 7, URL: es.URL, BasicAuth: &cloudhub.BasicAuth{}, Organization: "org", Authentication: "basic"}
 	updatedCalled := false
 	removedCalled := false
 	store := &mocks.EsSourcesStore{
@@ -209,7 +211,7 @@ func TestEsSourceHealth_Success(t *testing.T) {
 	es := fakeESServer()
 	defer es.Close()
 
-	src := cloudhub.EsSource{ID: 5, URL: es.URL, BasicAuth: &cloudhub.BasicAuth{}}
+	src := cloudhub.EsSource{ID: 5, URL: es.URL, BasicAuth: &cloudhub.BasicAuth{}, Organization: "org", Authentication: "basic"}
 	store := &mocks.EsSourcesStore{
 		GetF: func(ctx context.Context, id int) (cloudhub.EsSource, error) { return src, nil },
 	}
@@ -238,7 +240,7 @@ func TestElasticProxy_BasicAuth(t *testing.T) {
 	es := fakeESServer()
 	defer es.Close()
 
-	src := cloudhub.EsSource{ID: 8, URL: es.URL, BasicAuth: &cloudhub.BasicAuth{Username: "user", Password: "pass"}}
+	src := cloudhub.EsSource{ID: 8, URL: es.URL, BasicAuth: &cloudhub.BasicAuth{Username: "user", Password: "pass"}, Organization: "org", Authentication: "basic"}
 	store := &mocks.EsSourcesStore{
 		GetF: func(ctx context.Context, id int) (cloudhub.EsSource, error) { return src, nil },
 	}
@@ -268,10 +270,11 @@ func TestUpdateEsSource_OrganizationChange(t *testing.T) {
 	defer es.Close()
 
 	saved := cloudhub.EsSource{
-		ID:           9,
-		URL:          es.URL,
-		BasicAuth:    &cloudhub.BasicAuth{},
-		Organization: "oldOrg",
+		ID:             9,
+		URL:            es.URL,
+		BasicAuth:      &cloudhub.BasicAuth{},
+		Organization:   "oldOrg",
+		Authentication: "basic",
 	}
 
 	var updatedSrc cloudhub.EsSource
@@ -324,8 +327,8 @@ func TestMultiElasticProxy(t *testing.T) {
 	defer esErr.Close()
 
 	sources := []cloudhub.EsSource{
-		{ID: 1, URL: esOK.URL, BasicAuth: &cloudhub.BasicAuth{Username: "u", Password: "p"}},
-		{ID: 2, URL: esErr.URL, BasicAuth: &cloudhub.BasicAuth{Username: "u", Password: "p"}},
+		{ID: 1, URL: esOK.URL, BasicAuth: &cloudhub.BasicAuth{Username: "u", Password: "p"}, Organization: "org", Authentication: "basic"},
+		{ID: 2, URL: esErr.URL, BasicAuth: &cloudhub.BasicAuth{Username: "u", Password: "p"}, Organization: "org", Authentication: "basic"},
 	}
 	store := &mocks.EsSourcesStore{
 		GetF: func(ctx context.Context, id int) (cloudhub.EsSource, error) {

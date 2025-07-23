@@ -454,8 +454,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// DeviceMappings (context-scoped collection)
 	// SuperAdmin: all orgs; Regular/Admin: currentOrg only
-	router.GET("/cloudhub/v1/device-mappings", EnsureViewer(service.AllDeviceMappings))
-	router.POST("/cloudhub/v1/device-mappings", EnsureAdmin(service.RegisterDevice))
+	router.GET("/cloudhub/v1/device-mappings/devices", EnsureViewer(service.AllDeviceMappings))
+	router.POST("/cloudhub/v1/device-mappings/devices", EnsureAdmin(service.RegisterDevice))
 
 	// Single device (moved under /devices to avoid httprouter wildcard conflicts)
 	router.GET("/cloudhub/v1/device-mappings/devices/:hostname", EnsureViewer(service.GetDeviceMapping))

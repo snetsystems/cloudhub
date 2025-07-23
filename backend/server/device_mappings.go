@@ -62,18 +62,13 @@ type aliasLookupResponse struct {
 }
 
 // deviceMetaDetailResponse represents device detail for LogTable Detail click
-type deviceMetaDetailResponse struct {
-	Meta   *deviceMappingResponse `json:"meta,omitempty"`
-	Status string                 `json:"status"` // "found", "auto_registered", "not_found"
-}
-
 type ensureDeviceRequest struct {
 	Hostname   string `json:"hostname"`
 	EsSourceID string `json:"esSource,omitempty"`
 }
 type ensureDeviceResponse struct {
-	Meta   deviceMappingResponse `json:"meta"`
-	Status string                `json:"status"` // found | auto_registered | not_found
+	Meta   *deviceMappingResponse `json:"meta,omitempty"`
+	Status string                 `json:"status"` // found | auto_registered | not_found
 }
 
 func (r *createDeviceMappingRequest) ValidCreate() error {
@@ -110,8 +105,8 @@ func (r *moveDeviceOrgRequest) ValidMove() error {
 	return nil
 }
 
-func newDeviceMappingResponse(meta *cloudhub.DeviceMeta) deviceMappingResponse {
-	return deviceMappingResponse{
+func newDeviceMappingResponse(meta *cloudhub.DeviceMeta) *deviceMappingResponse {
+	return &deviceMappingResponse{
 		IP:         meta.IP,
 		Hostname:   meta.Hostname,
 		AliasName:  meta.AliasName,
@@ -124,8 +119,8 @@ func newDeviceMappingResponse(meta *cloudhub.DeviceMeta) deviceMappingResponse {
 	}
 }
 
-func newDeviceMappingsByOrgResponse(devices []*cloudhub.DeviceMeta) map[string][]deviceMappingResponse {
-	resp := make(map[string][]deviceMappingResponse)
+func newDeviceMappingsByOrgResponse(devices []*cloudhub.DeviceMeta) map[string][]*deviceMappingResponse {
+	resp := make(map[string][]*deviceMappingResponse)
 	for _, device := range devices {
 		org := device.OrgID
 		resp[org] = append(resp[org], newDeviceMappingResponse(device))

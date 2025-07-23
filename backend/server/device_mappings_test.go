@@ -66,9 +66,9 @@ func TestService_RegisterDevice(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newTestService(t, tt.store)
 			router := httprouter.New()
-			router.POST("/cloudhub/v1/device-mappings", s.RegisterDevice)
+			router.POST("/cloudhub/v1/device-mappings/devices", s.RegisterDevice)
 
-			req := httptest.NewRequest("POST", "/cloudhub/v1/device-mappings", bytes.NewBufferString(tt.body))
+			req := httptest.NewRequest("POST", "/cloudhub/v1/device-mappings/devices", bytes.NewBufferString(tt.body))
 			if tt.ctxSetup != nil {
 				req = tt.ctxSetup(req)
 			}
@@ -186,6 +186,465 @@ func TestService_GetDeviceMapping(t *testing.T) {
 			gotStr, _ := json.Marshal(got)
 			wantStr, _ := json.Marshal(want)
 
+			if string(gotStr) != string(wantStr) {
+				t.Errorf("handler returned unexpected body: got %s want %s", string(gotStr), string(wantStr))
+			}
+		})
+	}
+}
+
+func TestService_UpdateDeviceMapping(t *testing.T) {
+	initialDevice := &cloudhub.DeviceMeta{
+		IP: "1.2.3.4", Hostname: "test-host", AliasName: "alias", DeviceType: "BM", OrgID: "default",
+	}
+
+	tests := []struct {
+		name           string
+		body           string
+		isSuperAdmin   bool
+		currentOrg     string
+		targetHostname string
+		mockSetup      func(*mocks.DeviceMappingsStore, *mocks.OrganizationsStore)
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "update alias name successfully",
+			body:           `{"aliasName": "new-alias"}`,
+			isSuperAdmin:   true,
+			currentOrg:     "default",
+			targetHostname: "test-host",
+			mockSetup: func(dms *mocks.DeviceMappingsStore, os *mocks.OrganizationsStore) {
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) {
+					return initialDevice, nil
+				}
+				dms.UpdateDeviceFunc = func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error {
+					if patch.AliasName != "new-alias" {
+						t.Errorf("Expected alias to be updated to 'new-alias', but got %s", patch.AliasName)
+					}
+					return nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"new-alias","deviceType":"BM","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
+		},
+		{
+			name:           "superadmin can change orgId",
+			body:           `{"orgId": "new-org"}`,
+			isSuperAdmin:   true,
+			currentOrg:     "default",
+			targetHostname: "test-host",
+			mockSetup: func(dms *mocks.DeviceMappingsStore, os *mocks.OrganizationsStore) {
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) { return initialDevice, nil }
+				dms.UpdateDeviceFunc = func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error { return nil }
+				os.GetF = func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "new-org"}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"BM","orgId":"new-org","links":{"self":"/cloudhub/v1/device-mappings/new-org/devices/test-host"},"isDeletable":false}`,
+		},
+		{
+			name:           "non-superadmin cannot change orgId",
+			body:           `{"orgId": "new-org"}`,
+			isSuperAdmin:   false,
+			currentOrg:     "default",
+			targetHostname: "test-host",
+			mockSetup: func(dms *mocks.DeviceMappingsStore, os *mocks.OrganizationsStore) {
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) { return initialDevice, nil }
+			},
+			expectedStatus: http.StatusForbidden,
+			expectedBody:   `{"code":403,"message":"only superAdmin can change orgId"}`,
+		},
+		{
+			name:           "device not found",
+			body:           `{"aliasName": "new-alias"}`,
+			isSuperAdmin:   true,
+			currentOrg:     "default",
+			targetHostname: "not-found-host",
+			mockSetup: func(dms *mocks.DeviceMappingsStore, os *mocks.OrganizationsStore) {
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) {
+					return nil, fmt.Errorf("hostname %s not found", hostname)
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"code":404,"message":"device not found"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dms := &mocks.DeviceMappingsStore{}
+			os := &mocks.OrganizationsStore{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(dms, os)
+			}
+			// This is a bit of a hack to get the updated device back for the response.
+			if dms.UpdateDeviceFunc != nil {
+				originalUpdate := dms.UpdateDeviceFunc
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) {
+					var req updateDeviceMappingRequest
+					json.NewDecoder(bytes.NewReader([]byte(tt.body))).Decode(&req)
+					final := *initialDevice
+					if req.AliasName != nil {
+						final.AliasName = *req.AliasName
+					}
+					if req.OrgID != nil {
+						final.OrgID = *req.OrgID
+					}
+					return &final, nil
+				}
+				dms.UpdateDeviceFunc = func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error {
+					return originalUpdate(ctx, hostname, patch)
+				}
+			}
+
+			store := &mocks.Store{DeviceMappingsStore: dms, OrganizationsStore: os}
+			s := newTestService(t, store)
+			router := httprouter.New()
+			router.PATCH("/cloudhub/v1/device-mappings/devices/:hostname", s.UpdateDeviceMapping)
+
+			req := httptest.NewRequest("PATCH", "/cloudhub/v1/device-mappings/devices/"+tt.targetHostname, bytes.NewBufferString(tt.body))
+			user := &cloudhub.User{SuperAdmin: tt.isSuperAdmin}
+			ctx := context.WithValue(req.Context(), UserContextKey, user)
+			ctx = context.WithValue(ctx, organizations.ContextKey, tt.currentOrg)
+			req = req.WithContext(ctx)
+
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, req)
+
+			if res.Code != tt.expectedStatus {
+				t.Errorf("handler returned wrong status code: got %v want %v", res.Code, tt.expectedStatus)
+			}
+			var got, want interface{}
+			json.Unmarshal(res.Body.Bytes(), &got)
+			json.Unmarshal([]byte(tt.expectedBody), &want)
+			gotStr, _ := json.Marshal(got)
+			wantStr, _ := json.Marshal(want)
+			if string(gotStr) != string(wantStr) {
+				t.Errorf("handler returned unexpected body: got %s want %s", string(gotStr), string(wantStr))
+			}
+		})
+	}
+}
+
+func TestService_DeleteDeviceMapping(t *testing.T) {
+	initialDevice := &cloudhub.DeviceMeta{
+		IP: "1.2.3.4", Hostname: "test-host", AliasName: "alias", DeviceType: "BM", OrgID: "default",
+	}
+
+	tests := []struct {
+		name           string
+		isSuperAdmin   bool
+		currentOrg     string
+		targetHostname string
+		mockSetup      func(*mocks.DeviceMappingsStore)
+		expectedStatus int
+	}{
+		{
+			name:           "delete device successfully",
+			isSuperAdmin:   true,
+			currentOrg:     "default",
+			targetHostname: "test-host",
+			mockSetup: func(dms *mocks.DeviceMappingsStore) {
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) { return initialDevice, nil }
+				dms.DeleteDeviceFunc = func(ctx context.Context, hostname string) error { return nil }
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "device not found",
+			isSuperAdmin:   true,
+			currentOrg:     "default",
+			targetHostname: "not-found-host",
+			mockSetup: func(dms *mocks.DeviceMappingsStore) {
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) {
+					return nil, fmt.Errorf("hostname %s not found", hostname)
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:           "permission denied",
+			isSuperAdmin:   false,
+			currentOrg:     "other-org",
+			targetHostname: "test-host",
+			mockSetup: func(dms *mocks.DeviceMappingsStore) {
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) { return initialDevice, nil }
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dms := &mocks.DeviceMappingsStore{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(dms)
+			}
+			store := &mocks.Store{DeviceMappingsStore: dms}
+			s := newTestService(t, store)
+			router := httprouter.New()
+			router.DELETE("/cloudhub/v1/device-mappings/devices/:hostname", s.DeleteDeviceMapping)
+
+			req := httptest.NewRequest("DELETE", "/cloudhub/v1/device-mappings/devices/"+tt.targetHostname, nil)
+			user := &cloudhub.User{SuperAdmin: tt.isSuperAdmin}
+			ctx := context.WithValue(req.Context(), UserContextKey, user)
+			ctx = context.WithValue(ctx, organizations.ContextKey, tt.currentOrg)
+			req = req.WithContext(ctx)
+
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, req)
+
+			if res.Code != tt.expectedStatus {
+				t.Errorf("handler returned wrong status code: got %v want %v", res.Code, tt.expectedStatus)
+			}
+		})
+	}
+}
+
+func TestService_AllDeviceMappings(t *testing.T) {
+	allDevices := []*cloudhub.DeviceMeta{
+		{OrgID: "org1", Hostname: "host1"},
+		{OrgID: "org2", Hostname: "host2"},
+	}
+	org1Devices := []*cloudhub.DeviceMeta{
+		{OrgID: "org1", Hostname: "host1"},
+	}
+
+	tests := []struct {
+		name           string
+		isSuperAdmin   bool
+		currentOrg     string
+		url            string
+		mockSetup      func(*mocks.DeviceMappingsStore)
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:         "superadmin gets all devices",
+			isSuperAdmin: true,
+			currentOrg:   "any-org",
+			url:          "/cloudhub/v1/device-mappings/devices",
+			mockSetup: func(dms *mocks.DeviceMappingsStore) {
+				dms.AllDevicesFunc = func(ctx context.Context, ac cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error) {
+					if !ac.IsSuperAdmin {
+						t.Error("Expected superadmin access")
+					}
+					return allDevices, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"org1":[{"ip":"","hostname":"host1","aliasName":"","deviceType":"","orgId":"org1","links":{"self":"/cloudhub/v1/device-mappings/org1/devices/host1"},"isDeletable":false}],"org2":[{"ip":"","hostname":"host2","aliasName":"","deviceType":"","orgId":"org2","links":{"self":"/cloudhub/v1/device-mappings/org2/devices/host2"},"isDeletable":false}]}`,
+		},
+		{
+			name:         "regular user gets only their org's devices",
+			isSuperAdmin: false,
+			currentOrg:   "org1",
+			url:          "/cloudhub/v1/device-mappings/devices",
+			mockSetup: func(dms *mocks.DeviceMappingsStore) {
+				dms.AllDevicesFunc = func(ctx context.Context, ac cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error) {
+					if ac.IsSuperAdmin || ac.OrgID != "org1" {
+						t.Errorf("Expected access for org1, got superadmin: %v, org: %s", ac.IsSuperAdmin, ac.OrgID)
+					}
+					return org1Devices, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"org1":[{"ip":"","hostname":"host1","aliasName":"","deviceType":"","orgId":"org1","links":{"self":"/cloudhub/v1/device-mappings/org1/devices/host1"},"isDeletable":false}]}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dms := &mocks.DeviceMappingsStore{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(dms)
+			}
+			store := &mocks.Store{DeviceMappingsStore: dms}
+			s := newTestService(t, store)
+			router := httprouter.New()
+			router.GET("/cloudhub/v1/device-mappings/devices", s.AllDeviceMappings)
+
+			req := httptest.NewRequest("GET", tt.url, nil)
+			user := &cloudhub.User{SuperAdmin: tt.isSuperAdmin}
+			ctx := context.WithValue(req.Context(), UserContextKey, user)
+			ctx = context.WithValue(ctx, organizations.ContextKey, tt.currentOrg)
+			req = req.WithContext(ctx)
+
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, req)
+
+			if res.Code != tt.expectedStatus {
+				t.Errorf("handler returned wrong status code: got %v want %v", res.Code, tt.expectedStatus)
+			}
+			var got, want interface{}
+			json.Unmarshal(res.Body.Bytes(), &got)
+			json.Unmarshal([]byte(tt.expectedBody), &want)
+			gotStr, _ := json.Marshal(got)
+			wantStr, _ := json.Marshal(want)
+			if string(gotStr) != string(wantStr) {
+				t.Errorf("handler returned unexpected body: got %s want %s", string(gotStr), string(wantStr))
+			}
+		})
+	}
+}
+
+func TestService_GetDeviceByAlias(t *testing.T) {
+	aliasToDevice := &cloudhub.AliasToDevice{OrgID: "default", Hostname: "test-host"}
+
+	tests := []struct {
+		name           string
+		isSuperAdmin   bool
+		currentOrg     string
+		targetAlias    string
+		mockSetup      func(*mocks.DeviceMappingsStore)
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:         "get device by alias successfully",
+			isSuperAdmin: true,
+			currentOrg:   "any-org",
+			targetAlias:  "my-alias",
+			mockSetup: func(dms *mocks.DeviceMappingsStore) {
+				dms.GetByAliasFunc = func(ctx context.Context, alias string) (*cloudhub.AliasToDevice, error) {
+					return aliasToDevice, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"aliasName":"my-alias","orgId":"default","hostname":"test-host"}`,
+		},
+		{
+			name:         "alias not found",
+			isSuperAdmin: true,
+			currentOrg:   "any-org",
+			targetAlias:  "not-found-alias",
+			mockSetup: func(dms *mocks.DeviceMappingsStore) {
+				dms.GetByAliasFunc = func(ctx context.Context, alias string) (*cloudhub.AliasToDevice, error) {
+					return nil, fmt.Errorf("alias %s not found", alias)
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"code":404,"message":"alias not found"}`,
+		},
+		{
+			name:         "permission denied for different org",
+			isSuperAdmin: false,
+			currentOrg:   "other-org",
+			targetAlias:  "my-alias",
+			mockSetup: func(dms *mocks.DeviceMappingsStore) {
+				dms.GetByAliasFunc = func(ctx context.Context, alias string) (*cloudhub.AliasToDevice, error) {
+					return aliasToDevice, nil
+				}
+			},
+			expectedStatus: http.StatusForbidden,
+			expectedBody:   `{"code":403,"message":"access to alias denied"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dms := &mocks.DeviceMappingsStore{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(dms)
+			}
+			store := &mocks.Store{DeviceMappingsStore: dms}
+			s := newTestService(t, store)
+			router := httprouter.New()
+			router.GET("/cloudhub/v1/device-mappings/aliases/:aliasName", s.GetDeviceByAlias)
+
+			req := httptest.NewRequest("GET", "/cloudhub/v1/device-mappings/aliases/"+tt.targetAlias, nil)
+			user := &cloudhub.User{SuperAdmin: tt.isSuperAdmin}
+			ctx := context.WithValue(req.Context(), UserContextKey, user)
+			ctx = context.WithValue(ctx, organizations.ContextKey, tt.currentOrg)
+			req = req.WithContext(ctx)
+
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, req)
+
+			if res.Code != tt.expectedStatus {
+				t.Errorf("handler returned wrong status code: got %v want %v", res.Code, tt.expectedStatus)
+			}
+			var got, want interface{}
+			json.Unmarshal(res.Body.Bytes(), &got)
+			json.Unmarshal([]byte(tt.expectedBody), &want)
+			gotStr, _ := json.Marshal(got)
+			wantStr, _ := json.Marshal(want)
+			if string(gotStr) != string(wantStr) {
+				t.Errorf("handler returned unexpected body: got %s want %s", string(gotStr), string(wantStr))
+			}
+		})
+	}
+}
+
+func TestService_EnsureDevice(t *testing.T) {
+	foundDevice := &cloudhub.DeviceMeta{Hostname: "found-host", OrgID: "default"}
+
+	tests := []struct {
+		name           string
+		body           string
+		isSuperAdmin   bool
+		mockSetup      func(*mocks.DeviceMappingsStore, *Service)
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:         "device already found",
+			body:         `{"hostname": "found-host"}`,
+			isSuperAdmin: true,
+			mockSetup: func(dms *mocks.DeviceMappingsStore, s *Service) {
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) {
+					return foundDevice, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"meta":{"ip":"","hostname":"found-host","aliasName":"","deviceType":"","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/found-host"},"isDeletable":false},"status":"found"}`,
+		},
+		{
+			name:         "device not found and user is not superadmin",
+			body:         `{"hostname": "not-found-host"}`,
+			isSuperAdmin: false,
+			mockSetup: func(dms *mocks.DeviceMappingsStore, s *Service) {
+				dms.GetDeviceFunc = func(ctx context.Context, hostname string) (*cloudhub.DeviceMeta, error) {
+					return nil, fmt.Errorf("not found")
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"status":"not_found"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dms := &mocks.DeviceMappingsStore{}
+			store := &mocks.Store{DeviceMappingsStore: dms}
+			s := newTestService(t, store)
+
+			if tt.mockSetup != nil {
+				tt.mockSetup(dms, s)
+			}
+
+			router := httprouter.New()
+			router.POST("/cloudhub/v1/device-mappings/ensure", s.EnsureDevice)
+
+			req := httptest.NewRequest("POST", "/cloudhub/v1/device-mappings/ensure", bytes.NewBufferString(tt.body))
+			user := &cloudhub.User{SuperAdmin: tt.isSuperAdmin}
+			ctx := context.WithValue(req.Context(), UserContextKey, user)
+			ctx = context.WithValue(ctx, organizations.ContextKey, "default")
+			req = req.WithContext(ctx)
+
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, req)
+
+			if res.Code != tt.expectedStatus {
+				t.Errorf("handler returned wrong status code: got %v want %v", res.Code, tt.expectedStatus)
+			}
+			var got, want interface{}
+			json.Unmarshal(res.Body.Bytes(), &got)
+			json.Unmarshal([]byte(tt.expectedBody), &want)
+			gotStr, _ := json.Marshal(got)
+			wantStr, _ := json.Marshal(want)
 			if string(gotStr) != string(wantStr) {
 				t.Errorf("handler returned unexpected body: got %s want %s", string(gotStr), string(wantStr))
 			}
