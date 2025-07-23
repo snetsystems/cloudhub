@@ -11,7 +11,7 @@ import {
   updateActiveHostLink,
 } from 'src/hosts/utils/hostsSwitcherLinks'
 // Types
-import {Template, Layout, Source, Host, Links} from 'src/types'
+import {Template, Layout, Source, Host, Links, DropdownItem} from 'src/types'
 import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
 import {
   CloudServiceProvider,
@@ -1680,4 +1680,69 @@ export const getHostsInfoWithIpmi = async (
   }
 
   return hosts
+}
+
+export const getTagValuesForDeviceType = async (
+  source: Source,
+  deviceType: string,
+  tempVars: Template[]
+): Promise<DropdownItem[]> => {
+  let query = ''
+
+  switch (deviceType) {
+    case 'baremetal':
+      query = replaceTemplate(
+        'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
+        tempVars
+      )
+      break
+    case 'vm':
+      query = replaceTemplate(
+        'SHOW TAG VALUES FROM "vsphere_vm_cpu" WITH KEY="vmname"',
+        tempVars
+      )
+      break
+    case 'switch':
+      query = replaceTemplate(
+        'SHOW TAG VALUES FROM "snmp_nx" WITH KEY="agent_host"',
+        tempVars
+      )
+      break
+    default:
+      query = replaceTemplate(
+        'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
+        tempVars
+      )
+      break
+  }
+
+  try {
+    const {data} = await proxy({
+      source: source.links.proxy,
+      query,
+      db: source.telegraf,
+    })
+
+    if (isEmpty(data) || hasError(data)) {
+      return []
+    }
+
+    const values = getDeep<string[][]>(
+      data,
+      'results.[0].series.[0].values',
+      []
+    )
+    const tagValues = values.map(v => ({
+      text: v[1],
+    }))
+
+    return tagValues
+  } catch (error) {
+    console.error(
+      'Error fetching tag values for device type:',
+      deviceType,
+      error
+    )
+    return []
+  }
 }

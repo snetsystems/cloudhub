@@ -23,6 +23,7 @@ import {
   SyslogTableRows,
   TimeZones,
   Notification,
+  Me,
 } from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
@@ -43,13 +44,19 @@ import {fetchSyslogTableData} from 'src/log_analysis/apis'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {buildCombinedFilters} from 'src/log_analysis/util'
 import {notifyFetchSyslogTableDataFailed} from 'src/shared/copy/notifications'
+import {ADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 
 interface LogAnalysisSyslogTableOwnProps {
   timeZone?: TimeZones
 }
 
+interface Auth {
+  me: Me
+}
+
 interface StateProps {
   source: Source
+  auth?: Auth
   logAnalysisManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
   cloudTimeRange?: CloudTimeRange
@@ -64,6 +71,7 @@ type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps & StateProps
 
 function LogAnalysisSyslogTableWrapper({
   source,
+  auth,
   logAnalysisManualRefresh,
   timeZone,
   filteredLogsForLogAnalysis = [],
@@ -312,6 +320,10 @@ function LogAnalysisSyslogTableWrapper({
             source={source}
             selectedTimeRangeLocalStorageKey="log-analysis-time-series-graph"
             deviceType={deviceType}
+            isAuthorized={isUserAuthorized(
+              _.get(auth, 'me.role', ''),
+              ADMIN_ROLE
+            )}
           />
         ),
         width: 400,
@@ -385,6 +397,7 @@ const mstp = state => {
       filteredLogsForLogAnalysis,
       logAnalysisManualRefresh,
     },
+    auth,
   } = state
   return {
     timeZone,
@@ -393,6 +406,7 @@ const mstp = state => {
     esSource,
     filteredLogsForLogAnalysis,
     logAnalysisManualRefresh,
+    auth,
   }
 }
 

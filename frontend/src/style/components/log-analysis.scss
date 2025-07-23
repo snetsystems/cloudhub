@@ -22,6 +22,37 @@
   }
 }
 
+.log-analysis-matching-alias-title {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 0px 0px 15px;
+}
+
+.log-analysis-matching-alias {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 0px 30px 15px;
+
+  > button {
+    width: 52px;
+    margin-right: 3px;
+  }
+}
+
+.matching-alias-dropdown-50 {
+  width: 53%;
+
+  .dropdown-toggle {
+    width: 100%;
+  }
+
+  .dropdown-autocomplete {
+    width: 100%;
+  }
+}
+
 .syslog-table-expand--icon {
   display: flex;
   height: 100%;

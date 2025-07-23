@@ -9,6 +9,7 @@ import {
   Cell,
   DeviceToOrgMapping,
   DeviceType,
+  DropdownItem,
   Layout,
   Ratio,
   Source,
@@ -29,6 +30,7 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 import TimeRangeShiftDropdown from 'src/shared/components/TimeRangeShiftDropdown'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
+import MatchingAlias from 'src/log_analysis/components/MatchingAlias'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -42,6 +44,7 @@ import {
   getLayouts,
   getAppsForHost,
   getMeasurementsForHost,
+  getTagValuesForDeviceType,
 } from 'src/hosts/apis'
 import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
 import {Cancel} from 'src/shared/components/ConfirmOrCancel'
@@ -54,6 +57,7 @@ interface Props {
   source: Source
   title: string
   selectedTimeRangeLocalStorageKey: string
+  isAuthorized: boolean
   cloudAutoRefresh?: CloudAutoRefresh
   selectedDevice?: DeviceToOrgMapping
   logAnalysisManualRefresh?: number
@@ -66,6 +70,7 @@ const LogAnalysisCellsGraphWrapper = ({
   title,
   source,
   selectedTimeRangeLocalStorageKey,
+  isAuthorized,
   selectedDevice,
   cloudAutoRefresh,
   logAnalysisManualRefresh,
@@ -88,19 +93,49 @@ const LogAnalysisCellsGraphWrapper = ({
     getTimeRangeFromLocalStorage()
   )
 
-  const instance = []
+  const [isFromAgent, setIsFromAgent] = useState(deviceType === 'baremetal')
+  const [dropdownItems, setDropdownItems] = useState<DropdownItem[]>([])
+  const [dropdownSelected, setDropdownSelected] = useState('')
+  const [dropdownIsOpen, setDropdownIsOpen] = useState(false)
+
+  const currentDeviceType = isFromAgent ? 'baremetal' : deviceType
 
   useEffect(() => {
     setLayout([])
     getLayoutForInstance()
-  }, [deviceType, selectedDevice?.aliasName])
+  }, [selectedDevice?.aliasName, currentDeviceType])
+
+  useEffect(() => {
+    if (selectedDevice?.aliasName) {
+      setDropdownSelected(selectedDevice.aliasName)
+    }
+  }, [selectedDevice?.aliasName])
+
+  useEffect(() => {
+    const fetchDropdownItems = async () => {
+      try {
+        const tempVars = generateForHosts(source)
+        const tagValues = await getTagValuesForDeviceType(
+          source,
+          currentDeviceType,
+          tempVars
+        )
+        setDropdownItems(tagValues)
+      } catch (error) {
+        console.error('Error fetching dropdown items:', error)
+        setDropdownItems([])
+      }
+    }
+
+    fetchDropdownItems()
+  }, [currentDeviceType, source])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
   }, [cloudAutoRefresh?.logAnalysis])
 
   const getDeviceKeyValue = () => {
-    switch (deviceType) {
+    switch (currentDeviceType) {
       case 'baremetal':
         return {host: selectedDevice?.aliasName ?? ''}
       case 'vm':
@@ -118,7 +153,7 @@ const LogAnalysisCellsGraphWrapper = ({
         getCellsReactive(layout, source, getDeviceKeyValue(), ratio, null)
       )
     }
-  }, [layout, selfTimeRange, selectedDevice?.aliasName, deviceType])
+  }, [layout, selfTimeRange, selectedDevice?.aliasName, currentDeviceType])
 
   const fetchHostsAndMeasurements = async (
     layouts: Layout[],
@@ -198,7 +233,8 @@ const LogAnalysisCellsGraphWrapper = ({
 
   const getLayoutForInstance = async () => {
     const aliasName = selectedDevice?.aliasName
-    switch (deviceType) {
+
+    switch (currentDeviceType) {
       case 'baremetal':
         if (aliasName) {
           const layoutResults = await getLayouts()
@@ -283,6 +319,25 @@ const LogAnalysisCellsGraphWrapper = ({
     debouncedFit()
   }
 
+  const onToggleChange = () => {
+    if (deviceType !== 'baremetal') {
+      setIsFromAgent(prev => !prev)
+    }
+  }
+
+  const handleDropdownOnChoose = (item: DropdownItem) => {
+    setDropdownSelected(item.text)
+    setDropdownIsOpen(false)
+  }
+
+  const handleDropdownOnClose = () => {
+    setDropdownIsOpen(false)
+  }
+
+  const handleDropdownOnClick = () => {
+    setDropdownIsOpen(prev => !prev)
+  }
+
   return (
     <>
       <div
@@ -313,18 +368,44 @@ const LogAnalysisCellsGraphWrapper = ({
             </div>
           </div>
         </LogAnalysisDashboardHeader>
-        {!_.isEmpty(instance) ? (
-          <div className="panel-body">
-            <div className="generic-empty-state">
-              <h4 style={{margin: '90px 0'}}>No Instances found</h4>
+        {_.isEmpty(layout) ? (
+          <>
+            <MatchingAlias
+              toggleActive={isFromAgent}
+              onToggleChange={onToggleChange}
+              dropdownItems={dropdownItems}
+              dropdownSelected={dropdownSelected}
+              dropdownOnChoose={handleDropdownOnChoose}
+              dropdownOnClick={handleDropdownOnClick}
+              dropdownOnClose={handleDropdownOnClose}
+              dropdownIsOpen={dropdownIsOpen}
+              isAuthorized={isAuthorized}
+              toggleDisabled={deviceType === 'baremetal'}
+            />
+            <div className="panel-body" style={{margin: '0 15px'}}>
+              <div className="generic-empty-state">
+                <h4 style={{margin: '90px 0'}}>No Results Found</h4>
+              </div>
             </div>
-          </div>
+          </>
         ) : (
           <>
             <FancyScrollbar
               style={{height: 'calc(100% - 45px)'}}
               autoHide={true}
             >
+              <MatchingAlias
+                dropdownItems={dropdownItems}
+                toggleActive={isFromAgent}
+                dropdownIsOpen={dropdownIsOpen}
+                isAuthorized={isAuthorized}
+                dropdownOnChoose={handleDropdownOnChoose}
+                dropdownOnClick={handleDropdownOnClick}
+                dropdownOnClose={handleDropdownOnClose}
+                onToggleChange={onToggleChange}
+                dropdownSelected={dropdownSelected}
+                toggleDisabled={deviceType === 'baremetal'}
+              />
               <div
                 className="panel-body"
                 style={{backgroundColor: GRAPH_BG_COLOR}}
