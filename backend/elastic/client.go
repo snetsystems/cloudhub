@@ -169,7 +169,8 @@ func (c *Client) DistinctHostsBefore(
 		"query": map[string]any{
 			"range": map[string]any{
 				"@timestamp": map[string]string{
-					"gt": fmt.Sprintf("now-%dd", daysAgo),
+					"gte": fmt.Sprintf("now-%dd", daysAgo),
+					"lte": "now",
 				},
 			},
 		},
@@ -260,35 +261,56 @@ func (c *Client) DistinctHostsBefore(
 	return out, nil
 }
 
-// GetLatestHostInfo returns (info, true) if ES has at least one
-// document for the hostname, else (_, false).
+// GetLatestHostInfo returns the latest ESInfo for a hostname.
 func (c *Client) GetLatestHostInfo(
 	ctx context.Context,
 	indexPattern, hostname string,
+	lookbackDays int,
 ) (cloudhub.ESInfo, bool, error) {
+
+	if hostname == "" {
+		return cloudhub.ESInfo{}, false, fmt.Errorf("hostname is required")
+	}
+
+	filter := []any{
+		map[string]any{"term": map[string]any{"host.hostname": hostname}},
+	}
+
+	if lookbackDays > 0 {
+		filter = append(filter, map[string]any{
+			"range": map[string]any{
+				"@timestamp": map[string]any{
+					"gte": fmt.Sprintf("now-%dd", lookbackDays),
+					"lte": "now",
+				},
+			},
+		})
+	}
 
 	body := map[string]any{
 		"size": 1,
 		"query": map[string]any{
 			"bool": map[string]any{
-				"must": []any{
-					map[string]any{"term": map[string]any{
-						"host.hostname": hostname,
-					}},
-				},
+				"filter": filter,
 			},
 		},
 		"sort": []any{
-			map[string]any{"@timestamp": map[string]string{"order": "desc"}},
+			map[string]any{
+				"@timestamp": map[string]any{"order": "desc"},
+			},
 		},
 		"_source": []string{"host.ip", "device.type"},
 	}
 
-	req, _ := json.Marshal(body)
+	reqBytes, err := json.Marshal(body)
+	if err != nil {
+		return cloudhub.ESInfo{}, false, fmt.Errorf("marshal body: %w", err)
+	}
+
 	res, err := c.es.Search(
 		c.es.Search.WithContext(ctx),
 		c.es.Search.WithIndex(indexPattern),
-		c.es.Search.WithBody(bytes.NewReader(req)),
+		c.es.Search.WithBody(bytes.NewReader(reqBytes)),
 		c.es.Search.WithTrackTotalHits(false),
 	)
 	if err != nil {
@@ -300,7 +322,7 @@ func (c *Client) GetLatestHostInfo(
 		return cloudhub.ESInfo{}, false, fmt.Errorf("es error %s", res.Status())
 	}
 
-	var resp struct {
+	var esResp struct {
 		Hits struct {
 			Hits []struct {
 				Source struct {
@@ -314,13 +336,17 @@ func (c *Client) GetLatestHostInfo(
 			} `json:"hits"`
 		} `json:"hits"`
 	}
-	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+	if err := json.NewDecoder(res.Body).Decode(&esResp); err != nil {
 		return cloudhub.ESInfo{}, false, err
 	}
-	if len(resp.Hits.Hits) == 0 {
+
+	if len(esResp.Hits.Hits) == 0 {
 		return cloudhub.ESInfo{}, false, nil
 	}
 
-	src := resp.Hits.Hits[0].Source
-	return cloudhub.ESInfo{IP: src.Host.IP, DeviceType: src.Device.Type}, true, nil
+	src := esResp.Hits.Hits[0].Source
+	return cloudhub.ESInfo{
+		IP:         src.Host.IP,
+		DeviceType: src.Device.Type,
+	}, true, nil
 }

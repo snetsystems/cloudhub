@@ -71,6 +71,13 @@ type ensureDeviceResponse struct {
 	Status string                 `json:"status"` // found | auto_registered | not_found
 }
 
+var (
+	defaultDays   = 7
+	defaultIndex  = "syslog-*"
+	defaultOrgID  = "default"
+	defaultDevice = "BM"
+)
+
 func (r *createDeviceMappingRequest) ValidCreate() error {
 	if r.Hostname == "" {
 		return fmt.Errorf("hostname is required")
@@ -466,7 +473,7 @@ func (s *Service) GetDeviceByAlias(w http.ResponseWriter, r *http.Request) {
 
 func defaultDeviceType(es cloudhub.ESInfo) string {
 	if es.DeviceType == "" {
-		return "BM"
+		return defaultDevice
 	}
 	return es.DeviceType
 }
@@ -564,7 +571,7 @@ func (s *Service) EnsureDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info, ok, err := s.GetLatestHostInfo(
-		ctx, esSourceID, "syslog-*", hostname,
+		ctx, esSourceID, defaultIndex, hostname, defaultDays,
 	)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
@@ -582,7 +589,7 @@ func (s *Service) EnsureDevice(w http.ResponseWriter, r *http.Request) {
 		Hostname:    hostname,
 		AliasName:   "",
 		DeviceType:  defaultDeviceType(esInfo),
-		OrgID:       "default",
+		OrgID:       defaultOrgID,
 		IsDeletable: false,
 	}
 	if err := s.Store.DeviceMappings(ctx).AddDevice(ctx, meta); err != nil {

@@ -681,7 +681,7 @@ func (s *Service) DistinctHostsBefore(
 
 // GetLatestHostInfo returns the latest ESInfo for a hostname.
 func (s *Service) GetLatestHostInfo(
-	ctx context.Context, srcID int, indexPattern, hostname string,
+	ctx context.Context, srcID int, indexPattern, hostname string, days int,
 ) (cloudhub.ESInfo, bool, error) {
 
 	src, err := s.Store.EsSources(ctx).Get(ctx, srcID)
@@ -700,7 +700,7 @@ func (s *Service) GetLatestHostInfo(
 		return cloudhub.ESInfo{}, false, err
 	}
 
-	return cli.GetLatestHostInfo(ctx, indexPattern, hostname)
+	return cli.GetLatestHostInfo(ctx, indexPattern, hostname, days)
 }
 
 // injectDeviceFilter adds a terms filter to the query for the given field and devices.
