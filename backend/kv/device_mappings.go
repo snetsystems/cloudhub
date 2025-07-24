@@ -51,6 +51,9 @@ func (s *deviceMappingsStore) AddDevice(ctx context.Context, meta *cloudhub.Devi
 	if meta.OrgID == "" {
 		meta.OrgID = defaultOrgID
 	}
+	if meta.Vendor == "" {
+		meta.Vendor = ""
+	}
 	if meta.AliasName == "" {
 		meta.AliasName = ""
 	}
@@ -210,6 +213,14 @@ func (s *deviceMappingsStore) UpdateDevice(ctx context.Context, hostname string,
 	}
 	if patch.OrgID != "" && patch.OrgID != current.OrgID {
 		updated.OrgID = patch.OrgID
+	}
+	if patch.Vendor != "" {
+		updated.Vendor = patch.Vendor
+	}
+
+	// 3-1) Validate vendor requirement for non-default org
+	if updated.OrgID != defaultOrgID && updated.Vendor == "" {
+		return fmt.Errorf("vendor is required when org is not default")
 	}
 
 	// 4) Start transactional update

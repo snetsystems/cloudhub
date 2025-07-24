@@ -292,6 +292,9 @@ func TestService_UpdateDeviceMapping(t *testing.T) {
 					if req.OrgID != nil {
 						final.OrgID = *req.OrgID
 					}
+					if req.Vendor != nil {
+						final.Vendor = *req.Vendor
+					}
 					return &final, nil
 				}
 				dms.UpdateDeviceFunc = func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error {

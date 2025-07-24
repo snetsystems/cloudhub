@@ -798,6 +798,7 @@ func TestMarshalDeviceMeta(t *testing.T) {
 		AliasName:  "testhost",
 		DeviceType: "switch",
 		OrgID:      "org123",
+		Vendor:     "Cloudhub",
 	}
 
 	var vv cloudhub.DeviceMeta

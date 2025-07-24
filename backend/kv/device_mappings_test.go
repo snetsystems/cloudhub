@@ -27,6 +27,7 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 		AliasName:  "web-server",
 		DeviceType: "VM",
 		OrgID:      "org-123",
+		Vendor:     "Cloudhub",
 	}
 
 	// Test 1: Add Device - verify all 3 keys are created atomically
@@ -73,6 +74,7 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 			IP:         "192.168.1.101", // IP change
 			AliasName:  "updated-alias", // Alias change
 			DeviceType: "baremetal",     // Type change
+			Vendor:     "Cloudhub",
 		}
 
 		err := s.UpdateDevice(ctx, device.Hostname, patch)
@@ -86,7 +88,7 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 			t.Fatal("Failed to get updated device:", err)
 		}
 
-		if updated.IP != patch.IP || updated.AliasName != patch.AliasName || updated.DeviceType != patch.DeviceType {
+		if updated.IP != patch.IP || updated.AliasName != patch.AliasName || updated.DeviceType != patch.DeviceType || updated.Vendor != patch.Vendor {
 			t.Fatalf("Device not properly updated: got %+v", *updated)
 		}
 
@@ -108,6 +110,7 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 		device.IP = patch.IP
 		device.AliasName = patch.AliasName
 		device.DeviceType = patch.DeviceType
+		device.Vendor = patch.Vendor
 	})
 
 	// Test 3: Delete Device - verify all 3 keys are deleted atomically
@@ -157,6 +160,7 @@ func TestDeviceMappingsStore_DuplicateHandling(t *testing.T) {
 		AliasName:  "web-server",
 		DeviceType: "VM",
 		OrgID:      "org-123",
+		Vendor:     "Cloudhub",
 	}
 
 	device2 := &cloudhub.DeviceMeta{
@@ -165,6 +169,7 @@ func TestDeviceMappingsStore_DuplicateHandling(t *testing.T) {
 		AliasName:  "web-server",     // same alias (conflict!)
 		DeviceType: "VM",
 		OrgID:      "org-123",
+		Vendor:     "Cloudhub",
 	}
 
 	// Add first device
@@ -219,6 +224,7 @@ func TestDeviceMappingsStore_MoveDeviceOrg(t *testing.T) {
 		AliasName:  "web-server",
 		DeviceType: "VM",
 		OrgID:      "org-123",
+		Vendor:     "Cloudhub",
 	}
 
 	// Clean up test data before starting the test
@@ -255,6 +261,7 @@ func TestDeviceMappingsStore_AtomicityDemo(t *testing.T) {
 			AliasName:  "demo-alias",
 			DeviceType: "VM",
 			OrgID:      "demo-org",
+			Vendor:     "Cloudhub",
 		}
 
 		// Clean up test data before starting the test
@@ -363,6 +370,7 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 			AliasName:  "original-alias-1",
 			DeviceType: "VM",
 			OrgID:      "org-123",
+			Vendor:     "Cloudhub",
 		}
 
 		device2 := &cloudhub.DeviceMeta{
@@ -371,6 +379,7 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 			AliasName:  "existing-alias-2",
 			DeviceType: "VM",
 			OrgID:      "org-123",
+			Vendor:     "Cloudhub",
 		}
 
 		// Clean up test data before starting the test
@@ -472,6 +481,7 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 			AliasName:  "shared-alias",
 			DeviceType: "VM",
 			OrgID:      "org-123",
+			Vendor:     "Cloudhub",
 		}
 
 		err := s.AddDevice(ctx, existingDevice)
@@ -486,6 +496,7 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 			AliasName:  "shared-alias", // duplicate alias
 			DeviceType: "baremetal",
 			OrgID:      "org-123",
+			Vendor:     "Cloudhub",
 		}
 
 		t.Log("Attempting to add device with duplicate alias (should fail and rollback)...")
@@ -527,6 +538,7 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 			AliasName:  "context-cancel-alias",
 			DeviceType: "VM",
 			OrgID:      "org-123",
+			Vendor:     "Cloudhub",
 		}
 
 		// First verify success case
@@ -575,7 +587,7 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 
 }
 func TestDeviceMappingsStore_AllDevices(t *testing.T) {
-	c, err := NewTestClient()
+	c, err := NewTestClient() // ETCD Only succeeds with this test
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -600,6 +612,7 @@ func TestDeviceMappingsStore_AllDevices(t *testing.T) {
 		AliasName:  "alias-1",
 		DeviceType: "VM",
 		OrgID:      "org-1",
+		Vendor:     "Cloudhub",
 	}
 	device2 := &cloudhub.DeviceMeta{
 		IP:         "10.0.0.2",
@@ -607,6 +620,7 @@ func TestDeviceMappingsStore_AllDevices(t *testing.T) {
 		AliasName:  "alias-2",
 		DeviceType: "baremetal",
 		OrgID:      "org-2",
+		Vendor:     "Cloudhub",
 	}
 	if err := s.AddDevice(ctx, device1); err != nil {
 		t.Fatal("Failed to add device1:", err)
