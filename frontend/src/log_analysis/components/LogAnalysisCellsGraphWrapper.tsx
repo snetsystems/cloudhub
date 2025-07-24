@@ -45,6 +45,7 @@ import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
 // Actions
 import {closePanel} from 'src/shared/actions/sidePanel'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {setSelectedDevice} from 'src/log_analysis/actions/'
 
 // API
 import {
@@ -68,6 +69,7 @@ interface Props {
   logAnalysisManualRefresh?: number
   closePanel?: () => void
   notify?: (message: Notification) => void
+  setSelectedDevice?: (device: DeviceMeta) => void
 }
 
 const LogAnalysisCellsGraphWrapper = ({
@@ -81,6 +83,7 @@ const LogAnalysisCellsGraphWrapper = ({
   logAnalysisManualRefresh,
   closePanel,
   notify,
+  setSelectedDevice,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem(selectedTimeRangeLocalStorageKey)) {
@@ -157,26 +160,38 @@ const LogAnalysisCellsGraphWrapper = ({
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
   }, [cloudAutoRefresh?.logAnalysis])
 
-  const getDeviceKeyValue = () => {
+  const getDeviceKeyValue = (dropdownSelected: string) => {
     switch (currentDeviceType) {
       case 'baremetal':
-        return {host: selectedDeviceAliasName}
+        return {host: dropdownSelected}
       case 'vm':
-        return {vmname: selectedDeviceAliasName}
+        return {vmname: dropdownSelected}
       case 'switch':
-        return {agent_host: selectedDeviceAliasName}
+        return {agent_host: dropdownSelected}
       default:
-        return {host: selectedDeviceAliasName}
+        return {host: dropdownSelected}
     }
   }
 
   useEffect(() => {
     if (!!layout) {
       setLayoutCells(
-        getCellsReactive(layout, source, getDeviceKeyValue(), ratio, null)
+        getCellsReactive(
+          layout,
+          source,
+          getDeviceKeyValue(dropdownSelected),
+          ratio,
+          null
+        )
       )
     }
-  }, [layout, selfTimeRange, selectedDeviceAliasName, currentDeviceType])
+  }, [
+    layout,
+    selfTimeRange,
+    selectedDeviceAliasName,
+    currentDeviceType,
+    dropdownSelected,
+  ])
 
   const fetchHostsAndMeasurements = async (
     layouts: Layout[],
@@ -371,7 +386,15 @@ const LogAnalysisCellsGraphWrapper = ({
           orgId: '',
         }
 
-        await updateDeviceMapping(selectedDevice.hostname, data, [])
+        const updatedDevice = await updateDeviceMapping(
+          selectedDevice.hostname,
+          data,
+          []
+        )
+
+        if (updatedDevice) {
+          setSelectedDevice(updatedDevice.data)
+        }
       } catch (error) {
         notify(notifyUpdateDeviceMappingFailed(error.message || ''))
       }
@@ -509,6 +532,7 @@ const mdtp = dispatch => {
   return {
     closePanel: () => bindActionCreators(closePanel, dispatch)(),
     notify: bindActionCreators(notifyAction, dispatch),
+    setSelectedDevice: bindActionCreators(setSelectedDevice, dispatch),
   }
 }
 
