@@ -16,7 +16,6 @@ import {
 } from '../apis/deviceMapping'
 import _ from 'lodash'
 import {NewDeviceTable} from './NewDeviceTable'
-import {hostname} from 'os'
 
 interface Props {
   me: Me
@@ -33,7 +32,10 @@ function DevicesMappingPage({
 }: Props) {
   const [newDevice, setNewDevice] = useState<DeviceMeta[]>([])
 
-  const [mappingList, setMappingList] = useState<DeviceMapping>()
+  const [mappingList, setMappingList] = useState<DeviceMapping>({
+    unmappedDevices: [],
+    mappedDevices: [],
+  })
 
   useEffect(() => {
     if (esSource) {
@@ -48,6 +50,7 @@ function DevicesMappingPage({
       unmappedDevices: [],
       mappedDevices: [],
     }
+
     Object.keys(response).forEach(org => {
       if (org === 'default') {
         tempAry['unmappedDevices'] = response[org]
@@ -67,10 +70,9 @@ function DevicesMappingPage({
     console.log('reordered', reordered)
 
     setMappingList(reordered)
-    setOrg
   }
 
-  const setOrg = async (
+  const setMappingInfo = async (
     hostName: string,
     org: string,
     aliasName: string,
@@ -132,7 +134,7 @@ function DevicesMappingPage({
   const debouncedSetOrg = useMemo(
     () =>
       _.debounce((aliasName: string, rowData: DeviceMeta) => {
-        setOrg(
+        setMappingInfo(
           rowData.hostname,
           rowData.orgId,
           aliasName,
@@ -163,27 +165,30 @@ function DevicesMappingPage({
         />
       )}
       {!!mappingList &&
-        Object.keys(mappingList).map((org, i) => {
+        Object.keys(mappingList).map((type, i) => {
+          if (!me.superAdmin && type === 'unmappedDevices') {
+            return null
+          }
           return (
-            <div key={org + i} className="panel-body">
+            <div key={type + i} className="panel-body">
               <TableComponent
                 initSort={{
                   key: 'hostname',
                   isDesc: false,
                 }}
                 tableTitle={
-                  org === 'unmappedDevices'
+                  type === 'unmappedDevices'
                     ? 'Unmapped Devices'
                     : 'Mapped Devices'
                 }
                 columns={mappingTableColumns(
                   me,
-                  setOrg,
+                  setMappingInfo,
                   deleteDevice,
                   onChangeAlias,
                   organizations || []
                 )}
-                data={mappingList[org]}
+                data={mappingList[type]}
                 isSearchDisplay={false}
                 bodyClassName={`mapping-table`}
               />

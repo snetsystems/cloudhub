@@ -1673,3 +1673,16 @@ export const notifyFetchSyslogTableDataFailed = (
   message: `Failed to fetch syslog table data. ${message}`,
   duration: INFINITE,
 })
+
+export const notifyDeleteDeviceFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Delete Unmapped Device. ${errorMessage}`,
+})
+
+export const notifyDeleteDeviceSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Unmapped Device deleted successfully.`,
+})

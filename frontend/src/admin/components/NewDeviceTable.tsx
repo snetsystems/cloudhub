@@ -2,7 +2,7 @@ import React from 'react'
 import TableComponent from 'src/device_management/components/TableComponent'
 import {newDeviceTableColumns} from '../constants/newDviceTableColumns'
 import {DeviceMeta, Organization} from 'src/types'
-import {saveDeviceMapping} from '../apis/deviceMapping'
+import {createDeviceMapping} from '../apis/deviceMapping'
 
 export const NewDeviceTable = ({
   newDevice,
@@ -22,7 +22,7 @@ export const NewDeviceTable = ({
   }
 
   const saveDevice = async () => {
-    await saveDeviceMapping(newDevice[0], organizations)
+    await createDeviceMapping(newDevice[0], organizations)
       .then(() => {
         setNewDevice([])
       })

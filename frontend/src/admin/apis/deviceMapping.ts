@@ -1,14 +1,31 @@
 import AJAX from 'src/utils/ajax'
 import {AxiosResponse} from 'axios'
 import {DeviceMapping, DeviceMeta, Organization} from 'src/types'
+import {
+  notifyDeleteDeviceFailed,
+  notifyDeleteDeviceSucceeded,
+  notifyFetchDeviceListError,
+  notifyUpdateDeviceFailed,
+  notifyUpdateDeviceSucceeded,
+  notifyCreateDeviceSucceeded,
+  notifyCreateDeviceFailed,
+} from 'src/shared/copy/notifications'
+import {notify} from 'src/shared/actions/notifications'
 
 export const fetchDeviceList = async (
   esSourceId: string
 ): Promise<DeviceMapping> => {
   const response = await AJAX({
-    url: `/cloudhub/v1/device-mappings?es-source=${esSourceId}`,
+    url: `/cloudhub/v1/device-mappings/devices?es-source=${esSourceId}`,
     method: 'GET',
   })
+
+  console.log('error: ', response)
+
+  if (response.status !== 200) {
+    notify(notifyFetchDeviceListError(response.data.message))
+    throw new Error(notifyFetchDeviceListError(response.data.message).message)
+  }
 
   return response.data
 }
@@ -21,22 +38,41 @@ export const deleteDeviceMapping = async (
     method: 'DELETE',
   })
 
+  if (response.status !== 200) {
+    notify(notifyDeleteDeviceFailed(response.data.message))
+    throw new Error(notifyDeleteDeviceFailed(response.data.message).message)
+  }
+
+  notify(notifyDeleteDeviceSucceeded())
   return response
 }
 
 export const createDeviceMapping = async (
-  ip: string,
-  hostName: string
+  data: DeviceMeta,
+  orgList: Organization[]
 ): Promise<AxiosResponse> => {
+  const orgId = orgNameToId(data.orgId, orgList)
+
+  const param = {
+    ip: data.ip,
+    hostName: data.hostname,
+    aliasName: data.aliasName,
+    deviceType: data.deviceType,
+    orgId: orgId,
+  }
+
   const response = await AJAX({
-    url: `/cloudhub/v1/device-mappings`,
+    url: `/cloudhub/v1/device-mappings/devices`,
     method: 'POST',
-    data: {
-      ip,
-      hostName,
-    },
+    data: param,
   })
 
+  if (response.status !== 200) {
+    notify(notifyCreateDeviceFailed(response.data.message))
+    throw new Error(notifyCreateDeviceFailed(response.data.message).message)
+  }
+
+  notify(notifyCreateDeviceSucceeded())
   return response
 }
 
@@ -65,29 +101,12 @@ export const updateDeviceMapping = async (
     data: param,
   })
 
-  return response
-}
-
-export const saveDeviceMapping = async (
-  data: DeviceMeta,
-  orgList: Organization[]
-): Promise<AxiosResponse> => {
-  const orgId = orgNameToId(data.orgId, orgList)
-
-  const param = {
-    ip: data.ip,
-    hostName: data.hostname,
-    aliasName: data.aliasName,
-    deviceType: data.deviceType,
-    orgId: orgId,
+  if (response.status !== 200) {
+    notify(notifyUpdateDeviceFailed(response.data.message))
+    throw new Error(notifyUpdateDeviceFailed(response.data.message).message)
   }
 
-  const response = await AJAX({
-    url: `/cloudhub/v1/device-mappings`,
-    method: 'POST',
-    data: param,
-  })
-
+  notify(notifyUpdateDeviceSucceeded())
   return response
 }
 

@@ -48,6 +48,7 @@ export interface DataTableObject {
 export interface DataTableOptions {
   theadRow?: RowInfo
   tbodyRow?: RowInfo
+  noDataMessage?: ReactNode
 }
 
 export interface RowInfo {

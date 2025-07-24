@@ -59,6 +59,7 @@ class ElasticStep extends PureComponent<Props, State> {
       apiKeyAuth: null,
       insecureSkipVerify: true,
       organization: '',
+      default: false,
     },
     authToggle: true,
   }
@@ -200,13 +201,7 @@ class ElasticStep extends PureComponent<Props, State> {
         <div className="form-group col-xs-6">
           <label>Organization</label>
           <Dropdown
-            items={
-              !isUsingAuth || me.superAdmin
-                ? dropdownCurOrg
-                  ? dropdownCurOrg
-                  : [esSource.organization]
-                : dropdownOrg
-            }
+            items={!isUsingAuth || me.superAdmin ? dropdownOrg : dropdownCurOrg}
             onChoose={this.onChooseDropdown('organization')}
             selected={esSource.organization}
             className="dropdown-stretch"
@@ -217,6 +212,12 @@ class ElasticStep extends PureComponent<Props, State> {
           isChecked={authToggle}
           text={'Basic Auth'}
           onChange={this.changeAuth}
+        />
+        <WizardCheckbox
+          halfWidth={true}
+          isChecked={esSource.default}
+          text={'Default'}
+          onChange={this.changeDefault}
         />
         {/* {this.isHTTPS && (
           <WizardCheckbox
@@ -276,6 +277,13 @@ class ElasticStep extends PureComponent<Props, State> {
         authToggle: false,
       })
     }
+  }
+
+  private changeDefault = (value: boolean) => {
+    const {esSource} = this.state
+    this.setState({
+      esSource: {...esSource, default: value},
+    })
   }
 
   private parseError = (error: any): string => {

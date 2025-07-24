@@ -57,6 +57,7 @@ export interface CreateElasticSearchParams {
   insecureSkipVerify: boolean
   organization: string
   authentication: 'basic' | 'apiKey' | 'unknown'
+  default: boolean
 }
 
 export type ToggleEsWizard = (

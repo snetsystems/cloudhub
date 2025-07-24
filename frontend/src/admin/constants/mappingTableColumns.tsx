@@ -6,7 +6,7 @@ import ConfirmButton from 'src/shared/components/ConfirmButton'
 
 export const mappingTableColumns = (
   me: Me,
-  setOrg: (
+  setMappingInfo: (
     hostName: string,
     org: string,
     aliasName: string,
@@ -128,7 +128,7 @@ export const mappingTableColumns = (
           <Dropdown
             items={organizations?.map(org => ({text: org.name})) || []}
             onChoose={e => {
-              setOrg(
+              setMappingInfo(
                 rowData.hostname,
                 e.text, // org
                 rowData.aliasName, // aliasName
