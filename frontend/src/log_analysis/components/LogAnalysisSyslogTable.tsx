@@ -29,6 +29,7 @@ import {
   FilteredLogsForLogAnalysis,
   SyslogTableRows,
   TimeZones,
+  TimeRange,
 } from 'src/types'
 
 // Util
@@ -66,8 +67,27 @@ interface Props {
   onChangeItemsPerPage: (size: number) => void
   onSort: (cols: {id: string; direction: 'asc' | 'desc'}[]) => void
   onLoadMore: () => void
-  handleExpandSideBar: (hostname: string, deviceType: DeviceType) => void
+  handleExpandSideBar: (
+    hostname: string,
+    deviceType: DeviceType,
+    logTimeRange: TimeRange
+  ) => void
   hasMore: boolean
+}
+
+function getTimeRangeFromTimestamp(
+  timestamp: string | null
+): {lower: string; upper: string | null} {
+  if (timestamp) {
+    const centerDate = new Date(timestamp)
+    const lowerDate = new Date(centerDate.getTime() - 15 * 60 * 1000)
+    const upperDate = new Date(centerDate.getTime() + 15 * 60 * 1000)
+    const lower = lowerDate.toISOString()
+    const upper = upperDate.toISOString()
+    return {lower, upper}
+  } else {
+    return {lower: 'now() - 1h', upper: null}
+  }
 }
 
 function LogAnalysisSyslogTable({
@@ -288,9 +308,15 @@ function LogAnalysisSyslogTable({
       if (columnId === 'timeSeriesGraph') {
         const hostname = row['host.hostname']?.[0] || ''
         const deviceType = row['deviceType']?.[0] || 'baremetal'
+        const timestamp = row['@timestamp']?.[0] || null
+        const logTimeRange = getTimeRangeFromTimestamp(timestamp)
         return (
           <div className="syslog-table-expand--icon">
-            <span onClick={() => handleExpandSideBar(hostname, deviceType)}>
+            <span
+              onClick={() =>
+                handleExpandSideBar(hostname, deviceType, logTimeRange)
+              }
+            >
               <OuiIcon
                 type="lineChart"
                 size="l"
