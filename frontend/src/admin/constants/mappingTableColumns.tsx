@@ -1,25 +1,32 @@
 import React from 'react'
 import {Dropdown} from 'src/shared/components/Dropdown'
-import {AlignType, ColumnInfo, DeviceMeta, Me, Organization} from 'src/types'
+import {
+  AlignType,
+  ColumnInfo,
+  DeviceMeta,
+  DropdownItem,
+  Me,
+  Organization,
+} from 'src/types'
 import _ from 'lodash'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
+import MatchingAliasDropdownWrapper from 'src/log_analysis/components/MatchingAliasDropdownWrapper'
+import {orgNameToId} from '../utils/deviceMapping'
 
 export const mappingTableColumns = (
   me: Me,
-  setMappingInfo: (
-    hostName: string,
-    org: string,
-    aliasName: string,
-    deviceType: string,
-    ip: string
-  ) => void,
+  setMappingInfo: (device: DeviceMeta) => void,
   deleteDevice: (hostName: string) => void,
   onChangeAlias: (
-    e: React.ChangeEvent<HTMLInputElement>,
+    value: string,
     rowData: DeviceMeta,
-    rowIndex: number
+    rowIndex: number,
+    key: string
   ) => void,
-  organizations?: Organization[]
+  organizations?: Organization[],
+  allTagValues?: {
+    [deviceType: string]: DropdownItem[]
+  }
 ): ColumnInfo[] => [
   {
     key: 'hostname',
@@ -45,7 +52,7 @@ export const mappingTableColumns = (
     name: 'DeviceType',
     options: {
       thead: {
-        className: 'w-15',
+        className: 'w-10',
       },
     },
     render: (value, rowData) => (
@@ -64,7 +71,7 @@ export const mappingTableColumns = (
     name: 'IP',
     options: {
       thead: {
-        className: 'w-15',
+        className: 'w-10',
       },
     },
     render: (value, rowData) => (
@@ -78,13 +85,41 @@ export const mappingTableColumns = (
       </div>
     ),
   },
+  {
+    key: 'vendor',
+    name: 'Vendor',
+    options: {
+      thead: {
+        className: 'w-15',
+      },
+    },
+    render: (value, rowData, _, rowIndex) => (
+      <div className={`${rowData.isDeletable ? 'isDeletable' : ''}`}>
+        <input
+          type="text"
+          className="input-cte"
+          value={value}
+          onChange={e => {
+            onChangeAlias(e.target.value, rowData, rowIndex, 'vendor')
+          }}
+        />
+        {/* <MatchingAliasDropdownWrapper
+          items={allTagValues?.[rowData.deviceType] || []}
+          selectedItem={value}
+          setSelectedItem={text => {
+            onChangeAlias(text, rowData, rowIndex, 'vendor')
+          }}
+        /> */}
+      </div>
+    ),
+  },
 
   {
     key: 'aliasName',
     name: 'Target',
     options: {
       thead: {
-        className: 'w-35',
+        className: 'w-30',
         align: AlignType.CENTER,
       },
     },
@@ -93,13 +128,11 @@ export const mappingTableColumns = (
         <div className={'provider--arrow'}>
           <span />
           <div className="host">
-            <input
-              type="text"
-              className="input-cte"
-              value={value}
-              placeholder={rowData.hostname}
-              onChange={e => {
-                onChangeAlias(e, rowData, rowIndex)
+            <MatchingAliasDropdownWrapper
+              items={allTagValues?.[rowData.deviceType] || []}
+              selectedItem={value}
+              setSelectedItem={text => {
+                onChangeAlias(text, rowData, rowIndex, 'aliasName')
               }}
             />
           </div>
@@ -128,13 +161,10 @@ export const mappingTableColumns = (
           <Dropdown
             items={organizations?.map(org => ({text: org.name})) || []}
             onChoose={e => {
-              setMappingInfo(
-                rowData.hostname,
-                e.text, // org
-                rowData.aliasName, // aliasName
-                rowData.deviceType,
-                rowData.ip
-              )
+              setMappingInfo({
+                ...rowData,
+                orgId: orgNameToId(e.text, organizations || []),
+              })
             }} // change tenant
             selected={org[0]?.name ?? value}
             className="dropdown-stretch"

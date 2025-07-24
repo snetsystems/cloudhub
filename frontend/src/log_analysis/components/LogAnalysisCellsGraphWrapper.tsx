@@ -379,18 +379,17 @@ const LogAnalysisCellsGraphWrapper = ({
   const handleOnApply = async () => {
     if (selectedDevice?.hostname && selectedDeviceAliasName) {
       try {
-        const data = {
+        const data: DeviceMeta = {
+          hostname: selectedDevice.hostname,
           aliasName: selectedDeviceAliasName,
           deviceType: '',
           ip: '',
           orgId: '',
+          vendor: '',
+          isDeletable: false,
         }
 
-        const updatedDevice = await updateDeviceMapping(
-          selectedDevice.hostname,
-          data,
-          []
-        )
+        const updatedDevice = await updateDeviceMapping(data)
 
         if (updatedDevice) {
           setSelectedDevice(updatedDevice.data)

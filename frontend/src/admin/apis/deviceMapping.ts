@@ -11,6 +11,7 @@ import {
   notifyCreateDeviceFailed,
 } from 'src/shared/copy/notifications'
 import {notify} from 'src/shared/actions/notifications'
+import {orgNameToId} from 'src/admin/utils/deviceMapping'
 
 export const fetchDeviceList = async (
   esSourceId: string
@@ -77,26 +78,18 @@ export const createDeviceMapping = async (
 }
 
 export const updateDeviceMapping = async (
-  hostName: string,
-  data: {
-    aliasName: string
-    deviceType: string
-    ip: string
-    orgId: string
-  },
-  orgList: Organization[]
+  data: DeviceMeta
 ): Promise<AxiosResponse> => {
-  const orgId = orgNameToId(data.orgId, orgList)
-
   const param = {
     aliasName: data.aliasName,
     deviceType: data.deviceType,
     ip: data.ip,
-    orgId: orgId,
+    orgId: data.orgId,
+    vendor: data.vendor,
   }
 
   const response = await AJAX({
-    url: `/cloudhub/v1/device-mappings/devices/${hostName}`,
+    url: `/cloudhub/v1/device-mappings/devices/${data.hostname}`,
     method: 'PATCH',
     data: param,
   })
@@ -108,10 +101,6 @@ export const updateDeviceMapping = async (
 
   notify(notifyUpdateDeviceSucceeded())
   return response
-}
-
-const orgNameToId = (orgName: string, orgList: Organization[]) => {
-  return orgList.find(org => org.name === orgName)?.id
 }
 
 export const ensureDeviceMapping = async (
