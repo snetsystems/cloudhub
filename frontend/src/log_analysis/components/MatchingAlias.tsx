@@ -16,7 +16,7 @@ interface MatchingAliasProps {
   onApply?: () => void
   onToggleChange?: (active: boolean) => void
   dropdownItems: DropdownItem[]
-  dropdownSelected: string
+  selectedDropdown: string
   dropdownIsOpen?: boolean
   isAuthorized?: boolean
   dropdownOnChoose: (item: DropdownItem) => void
@@ -30,7 +30,7 @@ const MatchingAlias: React.FC<MatchingAliasProps> = ({
   onApply,
   onToggleChange,
   dropdownItems = [],
-  dropdownSelected = '',
+  selectedDropdown = '',
   dropdownIsOpen,
   isAuthorized,
   dropdownOnChoose = () => {},
@@ -51,7 +51,7 @@ const MatchingAlias: React.FC<MatchingAliasProps> = ({
           onChoose={dropdownOnChoose}
           onClick={dropdownOnClick}
           onClose={dropdownOnClose}
-          selected={dropdownSelected}
+          selected={selectedDropdown}
           className={'dropdown matching-alias-dropdown-50'}
         />
         <Button

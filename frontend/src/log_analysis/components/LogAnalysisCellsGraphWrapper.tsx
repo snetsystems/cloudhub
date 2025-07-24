@@ -104,15 +104,13 @@ const LogAnalysisCellsGraphWrapper = ({
   const deviceType = selectedDevice?.deviceType || 'baremetal'
   const [isFromAgent, setIsFromAgent] = useState(deviceType === 'baremetal')
   const [dropdownItems, setDropdownItems] = useState<DropdownItem[]>([])
-  const [dropdownSelected, setDropdownSelected] = useState('')
-  const [dropdownIsOpen, setDropdownIsOpen] = useState(false)
-
   const [selectedDeviceAliasName, setSelectedDeviceAliasName] = useState(() => {
     if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
       return selectedDevice.aliasName
     }
     return selectedDevice?.hostname ?? ''
   })
+  const [dropdownIsOpen, setDropdownIsOpen] = useState(false)
 
   useEffect(() => {
     if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
@@ -133,12 +131,16 @@ const LogAnalysisCellsGraphWrapper = ({
 
   useEffect(() => {
     if (selectedDeviceAliasName) {
-      setDropdownSelected(selectedDeviceAliasName)
+      setSelectedDeviceAliasName(selectedDeviceAliasName)
     }
   }, [selectedDeviceAliasName])
 
   useEffect(() => {
     const fetchDropdownItems = async () => {
+      if (!isAuthorized) {
+        return
+      }
+
       try {
         const tempVars = generateForHosts(source)
         const tagValues = await getTagValuesForDeviceType(
@@ -154,22 +156,22 @@ const LogAnalysisCellsGraphWrapper = ({
     }
 
     fetchDropdownItems()
-  }, [currentDeviceType, source])
+  }, [currentDeviceType, source, isAuthorized])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
   }, [cloudAutoRefresh?.logAnalysis])
 
-  const getDeviceKeyValue = (dropdownSelected: string) => {
+  const getDeviceKeyValue = (selectedDeviceAliasName: string) => {
     switch (currentDeviceType) {
       case 'baremetal':
-        return {host: dropdownSelected}
+        return {host: selectedDeviceAliasName}
       case 'vm':
-        return {vmname: dropdownSelected}
+        return {vmname: selectedDeviceAliasName}
       case 'switch':
-        return {agent_host: dropdownSelected}
+        return {agent_host: selectedDeviceAliasName}
       default:
-        return {host: dropdownSelected}
+        return {host: selectedDeviceAliasName}
     }
   }
 
@@ -179,19 +181,13 @@ const LogAnalysisCellsGraphWrapper = ({
         getCellsReactive(
           layout,
           source,
-          getDeviceKeyValue(dropdownSelected),
+          getDeviceKeyValue(selectedDeviceAliasName),
           ratio,
           null
         )
       )
     }
-  }, [
-    layout,
-    selfTimeRange,
-    selectedDeviceAliasName,
-    currentDeviceType,
-    dropdownSelected,
-  ])
+  }, [layout, selfTimeRange, selectedDeviceAliasName, currentDeviceType])
 
   const fetchHostsAndMeasurements = async (
     layouts: Layout[],
@@ -270,18 +266,16 @@ const LogAnalysisCellsGraphWrapper = ({
   }
 
   const getLayoutForInstance = async () => {
-    const aliasName = selectedDeviceAliasName
-
     switch (currentDeviceType) {
       case 'baremetal':
-        if (aliasName) {
+        if (selectedDeviceAliasName) {
           const layoutResults = await getLayouts()
           const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
           if (layouts && layouts.length > 0) {
             const {filteredLayouts} = await getLayoutsforHost(
               layouts,
-              aliasName
+              selectedDeviceAliasName
             )
             setLayout(filteredLayouts)
           } else {
@@ -293,7 +287,7 @@ const LogAnalysisCellsGraphWrapper = ({
         break
 
       case 'vm':
-        if (aliasName) {
+        if (selectedDeviceAliasName) {
           const layoutResults = await getLayouts()
           const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
@@ -358,13 +352,11 @@ const LogAnalysisCellsGraphWrapper = ({
   }
 
   const onToggleChange = () => {
-    if (deviceType !== 'baremetal') {
-      setIsFromAgent(prev => !prev)
-    }
+    setIsFromAgent(prev => !prev)
   }
 
   const handleDropdownOnChoose = (item: DropdownItem) => {
-    setDropdownSelected(item.text)
+    setSelectedDeviceAliasName(item.text)
     setDropdownIsOpen(false)
   }
 
@@ -377,10 +369,10 @@ const LogAnalysisCellsGraphWrapper = ({
   }
 
   const handleOnApply = async () => {
-    if (selectedDevice?.hostname && dropdownSelected) {
+    if (selectedDevice?.hostname && selectedDeviceAliasName) {
       try {
         const data = {
-          aliasName: dropdownSelected,
+          aliasName: selectedDeviceAliasName,
           deviceType: '',
           ip: '',
           orgId: '',
@@ -438,7 +430,7 @@ const LogAnalysisCellsGraphWrapper = ({
               toggleActive={isFromAgent}
               onToggleChange={onToggleChange}
               dropdownItems={dropdownItems}
-              dropdownSelected={dropdownSelected}
+              selectedDropdown={selectedDeviceAliasName}
               dropdownOnChoose={handleDropdownOnChoose}
               dropdownOnClick={handleDropdownOnClick}
               dropdownOnClose={handleDropdownOnClose}
@@ -468,7 +460,7 @@ const LogAnalysisCellsGraphWrapper = ({
                 dropdownOnClick={handleDropdownOnClick}
                 dropdownOnClose={handleDropdownOnClose}
                 onToggleChange={onToggleChange}
-                dropdownSelected={dropdownSelected}
+                selectedDropdown={selectedDeviceAliasName}
                 toggleDisabled={false}
                 onApply={handleOnApply}
               />
