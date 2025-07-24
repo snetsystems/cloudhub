@@ -1814,3 +1814,39 @@ export const getAllTagValuesForDeviceTypes = async (
     }
   }
 }
+
+export const getRecentActiveMeasurementsForHost = async (
+  source: Source,
+  host: string,
+  measurements: string[] = ['win_cpu', 'cpu'],
+  minutes: number = 30
+): Promise<string[]> => {
+  const queries = measurements.map(
+    m =>
+      `SELECT * FROM "${m}" WHERE host = '${host}' AND time > now() - ${minutes}m LIMIT 1`
+  )
+
+  const combinedQuery = queries.join('; ')
+
+  const {data} = await proxy({
+    source: source.links.proxy,
+    query: combinedQuery,
+    db: source.telegraf,
+  })
+
+  const activeMeasurements: string[] = []
+  if (data && data.results) {
+    data.results.forEach((result, idx) => {
+      if (
+        result.series &&
+        result.series[0] &&
+        result.series[0].values &&
+        result.series[0].values.length > 0
+      ) {
+        activeMeasurements.push(measurements[idx])
+      }
+    })
+  }
+
+  return activeMeasurements
+}

@@ -23,8 +23,6 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
-import {notIncludeApps} from 'src/hosts/constants/apps'
-import {LOG_ANALYSIS_TIME_SERIES_DEVICE_LAYOUT_IDS} from 'src/log_analysis/constants/'
 
 // Components
 import {timeRanges} from 'src/shared/data/timeRanges'
@@ -49,11 +47,9 @@ import {setSelectedDevice} from 'src/log_analysis/actions/'
 
 // API
 import {
-  getLayout,
   getLayouts,
-  getAppsForHost,
-  getMeasurementsForHost,
   getTagValuesForDeviceType,
+  getRecentActiveMeasurementsForHost,
 } from 'src/hosts/apis'
 import {updateDeviceMapping} from 'src/admin/apis/deviceMapping'
 import {notifyUpdateDeviceMappingFailed} from 'src/shared/copy/notifications'
@@ -109,6 +105,7 @@ const LogAnalysisCellsGraphWrapper = ({
     setSelfTimeRange(logTimeRange)
   }, [logTimeRange])
 
+  const [allLayouts, setAllLayouts] = useState<Layout[]>([])
   const deviceType = selectedDevice?.deviceType || 'baremetal'
   const [isFromAgent, setIsFromAgent] = useState(deviceType === 'baremetal')
   const [dropdownItems, setDropdownItems] = useState<DropdownItem[]>([])
@@ -130,12 +127,25 @@ const LogAnalysisCellsGraphWrapper = ({
     }
   }, [selectedDevice?.hostname])
 
-  const currentDeviceType = isFromAgent ? 'baremetal' : deviceType
+  useEffect(() => {
+    const fetchAllLayouts = async () => {
+      try {
+        const layoutResults = await getLayouts()
+        const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+        setAllLayouts(layouts || [])
+      } catch (error) {
+        setAllLayouts([])
+      }
+    }
+    fetchAllLayouts()
+  }, [])
 
   useEffect(() => {
     setLayout([])
-    getLayoutForInstance()
-  }, [selectedDeviceAliasName, currentDeviceType])
+    if (allLayouts.length > 0) {
+      getLayoutForInstance()
+    }
+  }, [selectedDeviceAliasName, deviceType, isFromAgent, allLayouts])
 
   useEffect(() => {
     if (selectedDeviceAliasName) {
@@ -145,6 +155,8 @@ const LogAnalysisCellsGraphWrapper = ({
 
   useEffect(() => {
     const fetchDropdownItems = async () => {
+      const currentDeviceType = isFromAgent ? 'baremetal' : deviceType
+
       if (!isAuthorized) {
         return
       }
@@ -164,14 +176,14 @@ const LogAnalysisCellsGraphWrapper = ({
     }
 
     fetchDropdownItems()
-  }, [currentDeviceType, source, isAuthorized])
+  }, [deviceType, isFromAgent, source, isAuthorized])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
   }, [cloudAutoRefresh?.logAnalysis])
 
   const getDeviceKeyValue = (selectedDeviceAliasName: string) => {
-    switch (currentDeviceType) {
+    switch (deviceType) {
       case 'baremetal':
         return {host: selectedDeviceAliasName}
       case 'vm':
@@ -195,136 +207,83 @@ const LogAnalysisCellsGraphWrapper = ({
         )
       )
     }
-  }, [layout, selfTimeRange, selectedDeviceAliasName, currentDeviceType])
+  }, [layout, selfTimeRange, selectedDeviceAliasName, deviceType, isFromAgent])
 
-  const fetchHostsAndMeasurements = async (
+  const fetchMeasurements = async (hostID: string) => {
+    const measurements = await getRecentActiveMeasurementsForHost(
+      source,
+      hostID,
+      ['win_cpu', 'cpu'],
+      30
+    )
+
+    let filteredMeasurements: string[] = []
+
+    if (measurements.includes('win_cpu')) {
+      filteredMeasurements = ['win_cpu', 'win_mem', 'win_system', 'disk']
+    } else {
+      filteredMeasurements = ['cpu', 'mem', 'system', 'disk']
+    }
+
+    filteredMeasurements = Array.from(new Set(filteredMeasurements))
+
+    return {filteredMeasurements}
+  }
+
+  const filterLayoutsByRule = async (
     layouts: Layout[],
+    deviceType: string,
+    isFromAgent: boolean,
     hostID: string
   ) => {
-    const tempVars = generateForHosts(source)
-    const fetchMeasurements = getMeasurementsForHost(source, hostID)
+    let filtered: Layout[] = []
 
-    const filterLayouts = _.filter(
-      layouts,
-      m => !_.includes(notIncludeApps, m.app)
-    )
-
-    const fetchHosts = getAppsForHost(
-      source.links.proxy,
-      hostID,
-      filterLayouts,
-      source.telegraf,
-      tempVars
-    )
-
-    const [host, measurements] = await Promise.all([
-      fetchHosts,
-      fetchMeasurements,
-    ])
-
-    return {host, measurements}
-  }
-
-  const getLayoutsforHost = async (layouts: Layout[], hostID: string) => {
-    const {host, measurements} = await fetchHostsAndMeasurements(
-      layouts,
-      hostID
-    )
-
-    const layoutsWithinHost = layouts.filter(layout => {
-      return (
-        host.apps &&
-        host.apps.includes(layout.app) &&
-        measurements.includes(layout.measurement)
-      )
-    })
-
-    const filteredLayouts = layoutsWithinHost
-      .filter(layout => {
-        return (
-          layout.app === 'system' ||
-          layout.app === 'win_system' ||
-          layout.app === 'ipmi_sensor'
+    if (isFromAgent) {
+      if (
+        deviceType === 'baremetal' ||
+        deviceType === 'vm' ||
+        deviceType === 'switch'
+      ) {
+        filtered = layouts.filter(
+          layout => layout.app === 'system' || layout.app === 'win_system'
         )
-      })
-      .sort((x, y) => {
-        return x.measurement < y.measurement
-          ? -1
-          : x.measurement > y.measurement
-          ? 1
-          : 0
-      })
 
-    return {filteredLayouts}
-  }
+        if (filtered.length > 0 && hostID) {
+          const {filteredMeasurements} = await fetchMeasurements(hostID)
+          filtered = filtered.filter(layout =>
+            filteredMeasurements.includes(layout.measurement)
+          )
+        }
+      }
+    } else if (deviceType === 'baremetal') {
+      filtered = layouts.filter(layout => layout.app === 'ipmi_sensor')
+    } else if (deviceType === 'vm') {
+      filtered = layouts.filter(
+        layout =>
+          layout.app === 'vsphere' &&
+          layout.measurement.startsWith('vsphere_vm')
+      )
+    } else if (deviceType === 'switch') {
+      filtered = layouts.filter(layout => layout.app === 'snmp_nx')
+    }
 
-  const getLayoutsforVMWare = async (layouts: Layout[]) => {
-    const filteredLayouts = _.filter(
-      layouts,
-      m => m.app === 'vsphere' && m.measurement.startsWith('vsphere_vm')
-    ).sort((x, y) => {
+    return filtered.sort((x, y) => {
       return x.measurement < y.measurement
         ? -1
         : x.measurement > y.measurement
         ? 1
         : 0
     })
-
-    return {filteredLayouts}
   }
 
   const getLayoutForInstance = async () => {
-    switch (currentDeviceType) {
-      case 'baremetal':
-        if (selectedDeviceAliasName) {
-          const layoutResults = await getLayouts()
-          const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
-
-          if (layouts && layouts.length > 0) {
-            const {filteredLayouts} = await getLayoutsforHost(
-              layouts,
-              selectedDeviceAliasName
-            )
-            setLayout(filteredLayouts)
-          } else {
-            setLayout([])
-          }
-        } else {
-          setLayout([])
-        }
-        break
-
-      case 'vm':
-        if (selectedDeviceAliasName) {
-          const layoutResults = await getLayouts()
-          const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
-
-          if (layouts && layouts.length > 0) {
-            const {filteredLayouts} = await getLayoutsforVMWare(layouts)
-            setLayout(filteredLayouts)
-          } else {
-            setLayout([])
-          }
-        } else {
-          setLayout([])
-        }
-        break
-
-      case 'switch':
-        const layoutId = LOG_ANALYSIS_TIME_SERIES_DEVICE_LAYOUT_IDS[deviceType]
-        if (layoutId) {
-          const layoutResults = await getLayout(layoutId)
-          const layout = getDeep<Layout>(layoutResults, 'data', null)
-          setLayout(layout ? [layout] : [])
-        } else {
-          setLayout([])
-        }
-        break
-
-      default:
-        setLayout([])
-        break
-    }
+    const filteredLayouts = await filterLayoutsByRule(
+      allLayouts,
+      deviceType,
+      isFromAgent,
+      selectedDevice?.hostname || ''
+    )
+    setLayout(filteredLayouts)
   }
 
   const tempVars = generateForHosts(source)
