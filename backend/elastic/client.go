@@ -188,7 +188,7 @@ func (c *Client) DistinctHostsBefore(
 							"size": 1,
 							"_source": []string{
 								"host.ip",
-								"device.type",
+								"deviceType",
 							},
 							"sort": []any{
 								map[string]any{
@@ -232,9 +232,7 @@ func (c *Client) DistinctHostsBefore(
 									Host struct {
 										IP string `json:"ip"`
 									} `json:"host"`
-									Device struct {
-										Type string `json:"type"`
-									} `json:"device"`
+									DeviceType string `json:"deviceType"`
 								} `json:"_source"`
 							} `json:"hits"`
 						} `json:"hits"`
@@ -243,6 +241,7 @@ func (c *Client) DistinctHostsBefore(
 			} `json:"hosts"`
 		} `json:"aggregations"`
 	}
+
 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
 		return nil, fmt.Errorf("decode error: %w", err)
 	}
@@ -255,7 +254,7 @@ func (c *Client) DistinctHostsBefore(
 		doc := b.Sample.Hits.Hits[0].Source
 		out[b.Key] = cloudhub.ESInfo{
 			IP:         doc.Host.IP,
-			DeviceType: doc.Device.Type,
+			DeviceType: doc.DeviceType,
 		}
 	}
 	return out, nil
@@ -275,7 +274,6 @@ func (c *Client) GetLatestHostInfo(
 	filter := []any{
 		map[string]any{"term": map[string]any{"host.hostname": hostname}},
 	}
-
 	if lookbackDays > 0 {
 		filter = append(filter, map[string]any{
 			"range": map[string]any{
@@ -299,7 +297,7 @@ func (c *Client) GetLatestHostInfo(
 				"@timestamp": map[string]any{"order": "desc"},
 			},
 		},
-		"_source": []string{"host.ip", "device.type"},
+		"_source": []string{"host.ip", "deviceType", "device.type"},
 	}
 
 	reqBytes, err := json.Marshal(body)
@@ -329,6 +327,9 @@ func (c *Client) GetLatestHostInfo(
 					Host struct {
 						IP string `json:"ip"`
 					} `json:"host"`
+
+					DeviceType string `json:"deviceType"`
+
 					Device struct {
 						Type string `json:"type"`
 					} `json:"device"`
@@ -345,8 +346,13 @@ func (c *Client) GetLatestHostInfo(
 	}
 
 	src := esResp.Hits.Hits[0].Source
+	deviceType := src.DeviceType
+	if deviceType == "" {
+		deviceType = src.Device.Type
+	}
+
 	return cloudhub.ESInfo{
 		IP:         src.Host.IP,
-		DeviceType: src.Device.Type,
+		DeviceType: deviceType,
 	}, true, nil
 }

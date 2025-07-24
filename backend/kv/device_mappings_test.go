@@ -72,7 +72,7 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 		patch := &cloudhub.DeviceMeta{
 			IP:         "192.168.1.101", // IP change
 			AliasName:  "updated-alias", // Alias change
-			DeviceType: "BM",            // Type change
+			DeviceType: "baremetal",     // Type change
 		}
 
 		err := s.UpdateDevice(ctx, device.Hostname, patch)
@@ -484,7 +484,7 @@ func TestDeviceMappingsStore_TransactionRollback(t *testing.T) {
 			IP:         "192.168.1.500",
 			Hostname:   "new-device",
 			AliasName:  "shared-alias", // duplicate alias
-			DeviceType: "BM",
+			DeviceType: "baremetal",
 			OrgID:      "org-123",
 		}
 
@@ -605,7 +605,7 @@ func TestDeviceMappingsStore_AllDevices(t *testing.T) {
 		IP:         "10.0.0.2",
 		Hostname:   "server-2",
 		AliasName:  "alias-2",
-		DeviceType: "BM",
+		DeviceType: "baremetal",
 		OrgID:      "org-2",
 	}
 	if err := s.AddDevice(ctx, device1); err != nil {

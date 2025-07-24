@@ -75,7 +75,7 @@ var (
 	defaultDays   = 7
 	defaultIndex  = "syslog-*"
 	defaultOrgID  = "default"
-	defaultDevice = "BM"
+	defaultDevice = "baremetal"
 )
 
 func (r *createDeviceMappingRequest) ValidCreate() error {
@@ -86,7 +86,7 @@ func (r *createDeviceMappingRequest) ValidCreate() error {
 		return fmt.Errorf("ip is required")
 	}
 	if r.DeviceType == "" {
-		r.DeviceType = "BM" // default device type
+		r.DeviceType = defaultDevice // default device type
 	}
 	if r.OrgID == "" {
 		r.OrgID = "default" // default to default organization
