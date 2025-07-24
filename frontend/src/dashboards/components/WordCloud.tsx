@@ -1,12 +1,17 @@
+//Library
 import React, {useRef, useEffect, useMemo} from 'react'
 import * as d3 from 'd3'
 import {schemeCategory10} from 'd3-scale-chromatic'
+
+//Types
 import {
   CloudWord,
   Orientation,
   ScaleType,
   TokenData,
 } from 'src/dashboards/utils/wordCloudLayout'
+
+//Hooks
 import {useWordCloudLayout} from 'src/dashboards/hooks/useWordCloudLayout'
 
 export interface WordCloudProps {

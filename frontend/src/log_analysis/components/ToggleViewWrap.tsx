@@ -1,27 +1,45 @@
+//Library
 import React, {ChangeEvent, useCallback, useMemo, useState} from 'react'
-import WordCloud from '../../dashboards/components/WordCloud'
-import ToggleView from '../../dashboards/components/ToggleView'
-import {useResizeObserver} from '../../dashboards/hooks/useResizeObserver'
+
+//Components
+import WordCloud from 'src/dashboards/components/WordCloud'
+import ToggleView from 'src/dashboards/components/ToggleView'
+import {useResizeObserver} from 'src/dashboards/hooks/useResizeObserver'
 import LogAnalysisTreeMap from 'src/log_analysis/components/LogAnalysisTreeMap'
 
+//Types
 import type {BaseElasticSearchData, FilteredLogsForLogAnalysis} from 'src/types'
 import {TokenData} from 'src/dashboards/types'
-import {fetchMessageTokenData} from '../apis'
-import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from '../constants'
-import {useLocalStorage} from '../hooks/useLocalStorage'
+
+//Apis
+import {fetchMessageTokenData} from 'src/log_analysis/apis'
+
+//Constants
+import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants'
+
+//Hooks
+import {useLocalStorage} from 'src/log_analysis/hooks/useLocalStorage'
+
+//Utils
 import {buildCombinedFilters} from 'src/log_analysis/util'
 import {CloudTimeRange} from 'src/clouds/types'
-import {useDispatch} from 'react-redux'
-import {addLogAnalysisMatchPhraseFilterClause} from '../actions'
 
+//Redux
+import {useDispatch} from 'react-redux'
+
+//Actions
+import {addLogAnalysisMatchPhraseFilterClause} from 'src/log_analysis/actions'
+
+//Interface
 interface ViewProps {
   data: TokenData[]
   onRectClick: (token: string) => void
-  onChangeTopN
+  onChangeTopN: (e: ChangeEvent<HTMLInputElement>) => void
   topN: string
 }
 
 const DEFAULT_TOP_N = 100
+
 export default function ToggleViewWrap() {
   const dispatch = useDispatch()
 
@@ -69,10 +87,12 @@ export default function ToggleViewWrap() {
   const addMessageTokensFilter = (token): void => {
     dispatch(addLogAnalysisMatchPhraseFilterClause('message_tokens', token))
   }
+
   const handleRectClick = useCallback((token: string) => {
     addMessageTokensFilter(token)
   }, [])
-  const ohChangeTopN = (e: ChangeEvent<HTMLInputElement>) => {
+
+  const onChangeTopN = (e: ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10)
     setTopN(value)
     if (!isNaN(value) && value > data.length) setIsMoreFetch(true)
@@ -114,7 +134,7 @@ export default function ToggleViewWrap() {
     <>
       <ToggleView
         loading={loading}
-        onChangeTopN={ohChangeTopN}
+        onChangeTopN={onChangeTopN}
         handleOnBlur={handleOnBlur}
         topN={topN}
         isMoreFetch={isMoreFetch}

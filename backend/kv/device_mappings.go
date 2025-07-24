@@ -218,11 +218,6 @@ func (s *deviceMappingsStore) UpdateDevice(ctx context.Context, hostname string,
 		updated.Vendor = patch.Vendor
 	}
 
-	// 3-1) Validate vendor requirement for non-default org
-	if updated.OrgID != defaultOrgID && updated.Vendor == "" {
-		return fmt.Errorf("vendor is required when org is not default")
-	}
-
 	// 4) Start transactional update
 	return s.client.kv.Update(ctx, func(tx Tx) error {
 		bucket := tx.Bucket(deviceMappingsBucket)
