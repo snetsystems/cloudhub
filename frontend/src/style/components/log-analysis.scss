@@ -1,3 +1,9 @@
+$bg: #1d1e24;
+$border: #343741;
+$primary: #f58220;
+$text: #d3dae6;
+$highlight: #25262e;
+
 .syslog-table--container {
   width: 98%;
   justify-self: center;
@@ -60,6 +66,9 @@
 
   > span {
     cursor: pointer;
+  }
+  path {
+    stroke: $primary;
   }
 }
 
@@ -248,12 +257,6 @@ button[data-test-subj='pagination-button-next'][disabled] {
   align-items: start;
   gap: 8px;
 }
-
-$bg: #1d1e24;
-$border: #343741;
-$primary: #f58220;
-$text: #d3dae6;
-$highlight: #25262e;
 
 .kql-filter-bar {
   position: relative;

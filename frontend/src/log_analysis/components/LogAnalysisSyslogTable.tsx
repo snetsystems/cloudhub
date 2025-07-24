@@ -291,7 +291,11 @@ function LogAnalysisSyslogTable({
         return (
           <div className="syslog-table-expand--icon">
             <span onClick={() => handleExpandSideBar(hostname, deviceType)}>
-              <OuiIcon type="lineChart" size="l" />
+              <OuiIcon
+                type="lineChart"
+                size="l"
+                className="custom-icon-color"
+              />
             </span>
           </div>
         )
