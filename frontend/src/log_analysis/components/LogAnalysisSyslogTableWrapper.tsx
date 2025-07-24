@@ -24,6 +24,7 @@ import {
   Notification,
   Me,
   DeviceMeta,
+  TimeRange,
 } from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
@@ -326,12 +327,16 @@ function LogAnalysisSyslogTableWrapper({
   }
 
   const handleExpandSideBar = useCallback(
-    async (hostname: string, deviceType: DeviceType) => {
+    async (
+      hostname: string,
+      deviceType: DeviceType,
+      logTimeRange: TimeRange
+    ) => {
       const deviceMeta = await getDeviceMapping(hostname, deviceType)
 
       setSelectedDevice(deviceMeta)
       openPanel({
-        panelProps: (
+        panelProps: ((
           <LogAnalysisCellsGraphWrapper
             ratio={{
               xNum: 1,
@@ -345,8 +350,9 @@ function LogAnalysisSyslogTableWrapper({
               _.get(auth, 'me.role', ''),
               ADMIN_ROLE
             )}
+            logTimeRange={logTimeRange}
           />
-        ),
+        ) as unknown) as React.ReactElement,
         width: 400,
       })
     },

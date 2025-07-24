@@ -70,6 +70,7 @@ interface Props {
   closePanel?: () => void
   notify?: (message: Notification) => void
   setSelectedDevice?: (device: DeviceMeta) => void
+  logTimeRange: TimeRange
 }
 
 const LogAnalysisCellsGraphWrapper = ({
@@ -84,12 +85,15 @@ const LogAnalysisCellsGraphWrapper = ({
   closePanel,
   notify,
   setSelectedDevice,
+  logTimeRange,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
-    if (!!localStorage.getItem(selectedTimeRangeLocalStorageKey)) {
+    if (logTimeRange) {
+      return logTimeRange
+    } else if (!!localStorage.getItem(selectedTimeRangeLocalStorageKey)) {
       return JSON.parse(localStorage.getItem(selectedTimeRangeLocalStorageKey))
     } else {
-      return timeRanges.find(tr => tr.lower === 'now() - 1h')
+      return {lower: 'now() - 1h', upper: null}
     }
   }
 
@@ -100,6 +104,10 @@ const LogAnalysisCellsGraphWrapper = ({
   const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
     getTimeRangeFromLocalStorage()
   )
+
+  useEffect(() => {
+    setSelfTimeRange(logTimeRange)
+  }, [logTimeRange])
 
   const deviceType = selectedDevice?.deviceType || 'baremetal'
   const [isFromAgent, setIsFromAgent] = useState(deviceType === 'baremetal')
