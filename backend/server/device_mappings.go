@@ -17,6 +17,7 @@ type createDeviceMappingRequest struct {
 	AliasName  string `json:"aliasName,omitempty"`
 	DeviceType string `json:"deviceType"`
 	OrgID      string `json:"orgId,omitempty"`
+	Vendor     string `json:"vendor,omitempty"`
 }
 
 // updateDeviceMappingRequest represents a request to update device mapping
@@ -25,6 +26,7 @@ type updateDeviceMappingRequest struct {
 	AliasName  *string `json:"aliasName,omitempty"`
 	DeviceType *string `json:"deviceType,omitempty"`
 	OrgID      *string `json:"orgId,omitempty"`
+	Vendor     *string `json:"vendor,omitempty"`
 }
 
 // moveDeviceOrgRequest represents a request to move device to different organization
@@ -41,6 +43,7 @@ type deviceMappingResponse struct {
 	OrgID       string    `json:"orgId"`
 	Links       selfLinks `json:"links,omitempty"`
 	IsDeletable bool      `json:"isDeletable"`
+	Vendor      string    `json:"vendor"`
 }
 
 // deviceMappingsResponse represents multiple device mappings response
@@ -75,7 +78,7 @@ var (
 	defaultDays   = 7
 	defaultIndex  = "syslog-*"
 	defaultOrgID  = "default"
-	defaultDevice = "BM"
+	defaultDevice = "baremetal"
 )
 
 func (r *createDeviceMappingRequest) ValidCreate() error {
@@ -86,7 +89,7 @@ func (r *createDeviceMappingRequest) ValidCreate() error {
 		return fmt.Errorf("ip is required")
 	}
 	if r.DeviceType == "" {
-		r.DeviceType = "BM" // default device type
+		r.DeviceType = defaultDevice // default device type
 	}
 	if r.OrgID == "" {
 		r.OrgID = "default" // default to default organization
@@ -99,7 +102,7 @@ func (r *createDeviceMappingRequest) ValidCreate() error {
 
 // TODO: Add validation for alias name
 func (r *updateDeviceMappingRequest) ValidUpdate() error {
-	if r.IP == nil && r.AliasName == nil && r.DeviceType == nil && r.OrgID == nil {
+	if r.IP == nil && r.AliasName == nil && r.DeviceType == nil && r.OrgID == nil && r.Vendor == nil {
 		return fmt.Errorf("no fields to update")
 	}
 	return nil
@@ -123,6 +126,7 @@ func newDeviceMappingResponse(meta *cloudhub.DeviceMeta) *deviceMappingResponse 
 			Self: fmt.Sprintf("/cloudhub/v1/device-mappings/%s/devices/%s", meta.OrgID, meta.Hostname),
 		},
 		IsDeletable: meta.IsDeletable,
+		Vendor:      meta.Vendor,
 	}
 }
 
@@ -241,12 +245,15 @@ func (s *Service) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 		AliasName:  req.AliasName,
 		DeviceType: req.DeviceType,
 		OrgID:      req.OrgID,
+		Vendor:     req.Vendor,
 	}
 
 	if err := s.Store.DeviceMappings(ctx).AddDevice(ctx, meta); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+
+	s.logRegistration(ctx, "DeviceMappings", fmt.Sprintf(MsgDeviceMappingCreated.String(), meta.Hostname))
 
 	encodeJSON(w, http.StatusCreated, newDeviceMappingResponse(meta), s.Logger)
 }
@@ -325,11 +332,15 @@ func (s *Service) UpdateDeviceMapping(w http.ResponseWriter, r *http.Request) {
 	if req.OrgID != nil {
 		final.OrgID = *req.OrgID
 	}
-
+	if req.Vendor != nil {
+		final.Vendor = *req.Vendor
+	}
 	if err := s.Store.DeviceMappings(ctx).UpdateDevice(ctx, hostname, final); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+
+	s.logRegistration(ctx, "DeviceMappings", fmt.Sprintf(MsgDeviceMappingModified.String(), hostname))
 
 	updated, err := s.Store.DeviceMappings(ctx).GetDevice(ctx, hostname)
 	if err != nil {
@@ -340,13 +351,6 @@ func (s *Service) UpdateDeviceMapping(w http.ResponseWriter, r *http.Request) {
 	}
 
 	encodeJSON(w, http.StatusOK, newDeviceMappingResponse(updated), s.Logger)
-}
-
-func derefString(ptr *string, fallback string) string {
-	if ptr != nil {
-		return *ptr
-	}
-	return fallback
 }
 
 // DeleteDeviceMapping deletes a device mapping
@@ -389,6 +393,8 @@ func (s *Service) DeleteDeviceMapping(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	s.logRegistration(ctx, "DeviceMappings", fmt.Sprintf(MsgDeviceMappingDeleted.String(), hostname))
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -507,6 +513,7 @@ func (s *Service) mergeAndUpsertDevices(
 			DeviceType:  defaultDeviceType(info),
 			OrgID:       DefaultOrganizationID,
 			IsDeletable: false,
+			Vendor:      "",
 		}
 		toCreate = append(toCreate, meta)
 		cache[h] = meta
@@ -514,6 +521,11 @@ func (s *Service) mergeAndUpsertDevices(
 	if len(toCreate) != 0 {
 		if err := s.Store.DeviceMappings(ctx).BatchAddDevices(ctx, toCreate); err != nil {
 			return nil, err
+		}
+
+		// Log batch device creation
+		for _, device := range toCreate {
+			s.logRegistration(ctx, "DeviceMappings", fmt.Sprintf(MsgDeviceMappingAutoRegistered.String(), device.Hostname))
 		}
 	}
 
@@ -591,11 +603,14 @@ func (s *Service) EnsureDevice(w http.ResponseWriter, r *http.Request) {
 		DeviceType:  defaultDeviceType(esInfo),
 		OrgID:       defaultOrgID,
 		IsDeletable: false,
+		Vendor:      "",
 	}
 	if err := s.Store.DeviceMappings(ctx).AddDevice(ctx, meta); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+
+	s.logRegistration(ctx, "DeviceMappings", fmt.Sprintf(MsgDeviceMappingAutoRegistered.String(), hostname))
 
 	resp := ensureDeviceResponse{
 		Meta:   newDeviceMappingResponse(meta),

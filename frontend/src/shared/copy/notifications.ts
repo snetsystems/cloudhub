@@ -1686,3 +1686,19 @@ export const notifyDeleteDeviceSucceeded = (): Notification => ({
   ...defaultSuccessNotification,
   message: `Unmapped Device deleted successfully.`,
 })
+
+export const notifyFetchDeviceMappingFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to fetch device data. ${message}`,
+  duration: INFINITE,
+})
+
+export const notifyUpdateDeviceMappingFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to update device mapping. ${message}`,
+  duration: INFINITE,
+})

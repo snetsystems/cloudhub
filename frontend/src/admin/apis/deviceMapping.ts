@@ -113,3 +113,24 @@ export const updateDeviceMapping = async (
 const orgNameToId = (orgName: string, orgList: Organization[]) => {
   return orgList.find(org => org.name === orgName)?.id
 }
+
+export const ensureDeviceMapping = async (
+  hostName: string,
+  esSourceID: string
+): Promise<DeviceMeta> => {
+  const data: {
+    hostname: string
+    esSource?: string
+  } = {
+    hostname: hostName,
+    esSource: esSourceID,
+  }
+
+  const response = await AJAX({
+    url: `/cloudhub/v1/device-mappings/ensure`,
+    method: 'POST',
+    data,
+  })
+
+  return response?.data?.meta || {}
+}

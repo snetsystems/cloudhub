@@ -3,16 +3,18 @@ import React, {useEffect, useState} from 'react'
 import _ from 'lodash'
 import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 
 // Types
 import {
   Cell,
-  DeviceToOrgMapping,
-  DeviceType,
+  DeviceMeta,
+  DropdownItem,
   Layout,
   Ratio,
   Source,
   TimeRange,
+  Notification,
 } from 'src/types'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 // Constants
@@ -29,12 +31,21 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 import TimeRangeShiftDropdown from 'src/shared/components/TimeRangeShiftDropdown'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
+import MatchingAlias from 'src/log_analysis/components/MatchingAlias'
+import {Cancel} from 'src/shared/components/ConfirmOrCancel'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
+import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
+
+// Actions
+import {closePanel} from 'src/shared/actions/sidePanel'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {setSelectedDevice} from 'src/log_analysis/actions/'
 
 // API
 import {
@@ -42,23 +53,23 @@ import {
   getLayouts,
   getAppsForHost,
   getMeasurementsForHost,
+  getTagValuesForDeviceType,
 } from 'src/hosts/apis'
-import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
-import {Cancel} from 'src/shared/components/ConfirmOrCancel'
-import {bindActionCreators} from 'redux'
-import {closePanel} from 'src/shared/actions/sidePanel'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {updateDeviceMapping} from 'src/admin/apis/deviceMapping'
+import {notifyUpdateDeviceMappingFailed} from 'src/shared/copy/notifications'
 
 interface Props {
   ratio: Ratio
   source: Source
   title: string
   selectedTimeRangeLocalStorageKey: string
+  isAuthorized: boolean
   cloudAutoRefresh?: CloudAutoRefresh
-  selectedDevice?: DeviceToOrgMapping
+  selectedDevice?: DeviceMeta
   logAnalysisManualRefresh?: number
   closePanel?: () => void
-  deviceType?: DeviceType
+  notify?: (message: Notification) => void
+  setSelectedDevice?: (device: DeviceMeta) => void
 }
 
 const LogAnalysisCellsGraphWrapper = ({
@@ -66,11 +77,13 @@ const LogAnalysisCellsGraphWrapper = ({
   title,
   source,
   selectedTimeRangeLocalStorageKey,
+  isAuthorized,
   selectedDevice,
   cloudAutoRefresh,
   logAnalysisManualRefresh,
   closePanel,
-  deviceType = 'baremetal',
+  notify,
+  setSelectedDevice,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem(selectedTimeRangeLocalStorageKey)) {
@@ -88,37 +101,97 @@ const LogAnalysisCellsGraphWrapper = ({
     getTimeRangeFromLocalStorage()
   )
 
-  const instance = []
+  const deviceType = selectedDevice?.deviceType || 'baremetal'
+  const [isFromAgent, setIsFromAgent] = useState(deviceType === 'baremetal')
+  const [dropdownItems, setDropdownItems] = useState<DropdownItem[]>([])
+  const [dropdownSelected, setDropdownSelected] = useState('')
+  const [dropdownIsOpen, setDropdownIsOpen] = useState(false)
+
+  const [selectedDeviceAliasName, setSelectedDeviceAliasName] = useState(() => {
+    if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
+      return selectedDevice.aliasName
+    }
+    return selectedDevice?.hostname ?? ''
+  })
+
+  useEffect(() => {
+    if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
+      setSelectedDeviceAliasName(selectedDevice.aliasName)
+    } else if (selectedDevice?.hostname) {
+      setSelectedDeviceAliasName(selectedDevice.hostname)
+    } else {
+      setSelectedDeviceAliasName('')
+    }
+  }, [selectedDevice?.hostname])
+
+  const currentDeviceType = isFromAgent ? 'baremetal' : deviceType
 
   useEffect(() => {
     setLayout([])
     getLayoutForInstance()
-  }, [deviceType, selectedDevice?.aliasName])
+  }, [selectedDeviceAliasName, currentDeviceType])
+
+  useEffect(() => {
+    if (selectedDeviceAliasName) {
+      setDropdownSelected(selectedDeviceAliasName)
+    }
+  }, [selectedDeviceAliasName])
+
+  useEffect(() => {
+    const fetchDropdownItems = async () => {
+      try {
+        const tempVars = generateForHosts(source)
+        const tagValues = await getTagValuesForDeviceType(
+          source,
+          currentDeviceType,
+          tempVars
+        )
+        setDropdownItems(tagValues)
+      } catch (error) {
+        console.error('Error fetching dropdown items:', error)
+        setDropdownItems([])
+      }
+    }
+
+    fetchDropdownItems()
+  }, [currentDeviceType, source])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
   }, [cloudAutoRefresh?.logAnalysis])
 
-  const getDeviceKeyValue = () => {
-    switch (deviceType) {
+  const getDeviceKeyValue = (dropdownSelected: string) => {
+    switch (currentDeviceType) {
       case 'baremetal':
-        return {host: selectedDevice?.aliasName ?? ''}
+        return {host: dropdownSelected}
       case 'vm':
-        return {vmname: selectedDevice?.aliasName ?? ''}
+        return {vmname: dropdownSelected}
       case 'switch':
-        return {agent_host: selectedDevice?.aliasName ?? ''}
+        return {agent_host: dropdownSelected}
       default:
-        return {host: selectedDevice?.aliasName ?? ''}
+        return {host: dropdownSelected}
     }
   }
 
   useEffect(() => {
     if (!!layout) {
       setLayoutCells(
-        getCellsReactive(layout, source, getDeviceKeyValue(), ratio, null)
+        getCellsReactive(
+          layout,
+          source,
+          getDeviceKeyValue(dropdownSelected),
+          ratio,
+          null
+        )
       )
     }
-  }, [layout, selfTimeRange, selectedDevice?.aliasName, deviceType])
+  }, [
+    layout,
+    selfTimeRange,
+    selectedDeviceAliasName,
+    currentDeviceType,
+    dropdownSelected,
+  ])
 
   const fetchHostsAndMeasurements = async (
     layouts: Layout[],
@@ -197,8 +270,9 @@ const LogAnalysisCellsGraphWrapper = ({
   }
 
   const getLayoutForInstance = async () => {
-    const aliasName = selectedDevice?.aliasName
-    switch (deviceType) {
+    const aliasName = selectedDeviceAliasName
+
+    switch (currentDeviceType) {
       case 'baremetal':
         if (aliasName) {
           const layoutResults = await getLayouts()
@@ -283,6 +357,50 @@ const LogAnalysisCellsGraphWrapper = ({
     debouncedFit()
   }
 
+  const onToggleChange = () => {
+    if (deviceType !== 'baremetal') {
+      setIsFromAgent(prev => !prev)
+    }
+  }
+
+  const handleDropdownOnChoose = (item: DropdownItem) => {
+    setDropdownSelected(item.text)
+    setDropdownIsOpen(false)
+  }
+
+  const handleDropdownOnClose = () => {
+    setDropdownIsOpen(false)
+  }
+
+  const handleDropdownOnClick = () => {
+    setDropdownIsOpen(prev => !prev)
+  }
+
+  const handleOnApply = async () => {
+    if (selectedDevice?.hostname && dropdownSelected) {
+      try {
+        const data = {
+          aliasName: dropdownSelected,
+          deviceType: '',
+          ip: '',
+          orgId: '',
+        }
+
+        const updatedDevice = await updateDeviceMapping(
+          selectedDevice.hostname,
+          data,
+          []
+        )
+
+        if (updatedDevice) {
+          setSelectedDevice(updatedDevice.data)
+        }
+      } catch (error) {
+        notify(notifyUpdateDeviceMappingFailed(error.message || ''))
+      }
+    }
+  }
+
   return (
     <>
       <div
@@ -313,18 +431,47 @@ const LogAnalysisCellsGraphWrapper = ({
             </div>
           </div>
         </LogAnalysisDashboardHeader>
-        {!_.isEmpty(instance) ? (
-          <div className="panel-body">
-            <div className="generic-empty-state">
-              <h4 style={{margin: '90px 0'}}>No Instances found</h4>
+        {_.isEmpty(layout) ? (
+          <>
+            {/* // TODO Consider Toggle Disabled */}
+            <MatchingAlias
+              toggleActive={isFromAgent}
+              onToggleChange={onToggleChange}
+              dropdownItems={dropdownItems}
+              dropdownSelected={dropdownSelected}
+              dropdownOnChoose={handleDropdownOnChoose}
+              dropdownOnClick={handleDropdownOnClick}
+              dropdownOnClose={handleDropdownOnClose}
+              dropdownIsOpen={dropdownIsOpen}
+              isAuthorized={isAuthorized}
+              toggleDisabled={false}
+              onApply={handleOnApply}
+            />
+            <div className="panel-body" style={{margin: '0 15px'}}>
+              <div className="generic-empty-state">
+                <h4 style={{margin: '90px 0'}}>No Results Found</h4>
+              </div>
             </div>
-          </div>
+          </>
         ) : (
           <>
             <FancyScrollbar
               style={{height: 'calc(100% - 45px)'}}
               autoHide={true}
             >
+              <MatchingAlias
+                dropdownItems={dropdownItems}
+                toggleActive={isFromAgent}
+                dropdownIsOpen={dropdownIsOpen}
+                isAuthorized={isAuthorized}
+                dropdownOnChoose={handleDropdownOnChoose}
+                dropdownOnClick={handleDropdownOnClick}
+                dropdownOnClose={handleDropdownOnClose}
+                onToggleChange={onToggleChange}
+                dropdownSelected={dropdownSelected}
+                toggleDisabled={false}
+                onApply={handleOnApply}
+              />
               <div
                 className="panel-body"
                 style={{backgroundColor: GRAPH_BG_COLOR}}
@@ -384,6 +531,8 @@ const mstp = state => {
 const mdtp = dispatch => {
   return {
     closePanel: () => bindActionCreators(closePanel, dispatch)(),
+    notify: bindActionCreators(notifyAction, dispatch),
+    setSelectedDevice: bindActionCreators(setSelectedDevice, dispatch),
   }
 }
 

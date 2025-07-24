@@ -137,6 +137,12 @@ const (
 	MsgEsSourcesCreated  = logMessage("%s has been created.")
 	MsgEsSourcesModified = logMessage("%s has been modified.")
 	MsgEsSourcesDeleted  = logMessage("%s has been deleted.")
+
+	// Device Mappings
+	MsgDeviceMappingCreated        = logMessage("Device mapping %s has been created.")
+	MsgDeviceMappingModified       = logMessage("Device mapping %s has been modified.")
+	MsgDeviceMappingDeleted        = logMessage("Device mapping %s has been deleted.")
+	MsgDeviceMappingAutoRegistered = logMessage("Device mapping %s has been auto-registered.")
 )
 
 type proxyLogRequest struct {

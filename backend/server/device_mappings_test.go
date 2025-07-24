@@ -51,7 +51,7 @@ func TestService_RegisterDevice(t *testing.T) {
 					},
 				},
 			},
-			body: `{"ip": "1.2.3.4", "hostname": "test-host", "aliasName": "alias", "deviceType": "BM", "orgId": "default"}`,
+			body: `{"ip": "1.2.3.4", "hostname": "test-host", "aliasName": "alias", "deviceType": "baremetal", "orgId": "default"}`,
 			ctxSetup: func(req *http.Request) *http.Request {
 				user := &cloudhub.User{SuperAdmin: true}
 				ctx := context.WithValue(req.Context(), UserContextKey, user)
@@ -59,7 +59,7 @@ func TestService_RegisterDevice(t *testing.T) {
 				return req.WithContext(ctx)
 			},
 			expectedStatus: http.StatusCreated,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"BM","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
 		},
 	}
 	for _, tt := range tests {
@@ -98,7 +98,7 @@ func TestService_GetDeviceMapping(t *testing.T) {
 		IP:         "1.2.3.4",
 		Hostname:   "test-host",
 		AliasName:  "alias",
-		DeviceType: "BM",
+		DeviceType: "baremetal",
 		OrgID:      "default",
 	}
 
@@ -132,7 +132,7 @@ func TestService_GetDeviceMapping(t *testing.T) {
 				return req.WithContext(ctx)
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"BM","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
 		},
 		{
 			name:  "get device successfully as org member",
@@ -145,7 +145,7 @@ func TestService_GetDeviceMapping(t *testing.T) {
 				return req.WithContext(ctx)
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"BM","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
 		},
 		{
 			name:  "access denied for different org",
@@ -195,7 +195,7 @@ func TestService_GetDeviceMapping(t *testing.T) {
 
 func TestService_UpdateDeviceMapping(t *testing.T) {
 	initialDevice := &cloudhub.DeviceMeta{
-		IP: "1.2.3.4", Hostname: "test-host", AliasName: "alias", DeviceType: "BM", OrgID: "default",
+		IP: "1.2.3.4", Hostname: "test-host", AliasName: "alias", DeviceType: "baremetal", OrgID: "default",
 	}
 
 	tests := []struct {
@@ -226,7 +226,7 @@ func TestService_UpdateDeviceMapping(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"new-alias","deviceType":"BM","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"new-alias","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
 		},
 		{
 			name:           "superadmin can change orgId",
@@ -242,7 +242,7 @@ func TestService_UpdateDeviceMapping(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"BM","orgId":"new-org","links":{"self":"/cloudhub/v1/device-mappings/new-org/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"baremetal","orgId":"new-org","links":{"self":"/cloudhub/v1/device-mappings/new-org/devices/test-host"},"isDeletable":false}`,
 		},
 		{
 			name:           "non-superadmin cannot change orgId",
@@ -292,6 +292,9 @@ func TestService_UpdateDeviceMapping(t *testing.T) {
 					if req.OrgID != nil {
 						final.OrgID = *req.OrgID
 					}
+					if req.Vendor != nil {
+						final.Vendor = *req.Vendor
+					}
 					return &final, nil
 				}
 				dms.UpdateDeviceFunc = func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error {
@@ -330,7 +333,7 @@ func TestService_UpdateDeviceMapping(t *testing.T) {
 
 func TestService_DeleteDeviceMapping(t *testing.T) {
 	initialDevice := &cloudhub.DeviceMeta{
-		IP: "1.2.3.4", Hostname: "test-host", AliasName: "alias", DeviceType: "BM", OrgID: "default",
+		IP: "1.2.3.4", Hostname: "test-host", AliasName: "alias", DeviceType: "baremetal", OrgID: "default",
 	}
 
 	tests := []struct {

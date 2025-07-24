@@ -4,6 +4,10 @@ import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import _ from 'lodash'
 import {connect} from 'react-redux'
 
+// Actions
+import {setLogAnalysisManualRefresh} from 'src/log_analysis/actions'
+import {resetSelectedDevice} from 'src/log_analysis/actions'
+
 // Components
 import {Page} from 'src/reusable_ui'
 import LogAnalysisSyslogTableWrapper from 'src/log_analysis/components/LogAnalysisSyslogTableWrapper'
@@ -42,7 +46,6 @@ import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {setStateInitAction} from 'src/device_management/actions'
 import LogAnalysisAlertBarWarpper from '../components/LogAnalysisAlertBarWrapper'
 import LogSearchFilterBar from '../components/LogSearchFilterBar'
-import {setLogAnalysisManualRefresh} from 'src/log_analysis/actions'
 
 interface TempProps {
   cell: Cell
@@ -65,6 +68,8 @@ interface Props {
     value: string | number
   ) => void
   removeLogAnalysisRangeFilterClause: (field: string) => void
+  closePanel: typeof closePanel
+  resetSelectedDevice: typeof resetSelectedDevice
 }
 
 function LogAnalysisDashboard({
@@ -77,6 +82,8 @@ function LogAnalysisDashboard({
   timeZone,
   setTimeZone,
   setLogAnalysisManualRefresh,
+  closePanel,
+  resetSelectedDevice,
 }: Props) {
   const GridLayout = WidthProvider(ReactGridLayout)
 
@@ -85,6 +92,10 @@ function LogAnalysisDashboard({
       onChooseCloudAutoRefresh({
         logAnalysis: 5000,
       })
+    }
+    return () => {
+      closePanel()
+      resetSelectedDevice()
     }
   }, [])
 
@@ -325,6 +336,7 @@ const mstp = state => {
 const mdtp = dispatch => ({
   openPanel: bindActionCreators(openPanel, dispatch),
   closePanel: bindActionCreators(closePanel, dispatch),
+  resetSelectedDevice: bindActionCreators(resetSelectedDevice, dispatch),
   setCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
   setTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
