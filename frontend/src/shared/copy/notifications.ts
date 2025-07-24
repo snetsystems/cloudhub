@@ -1673,3 +1673,19 @@ export const notifyFetchSyslogTableDataFailed = (
   message: `Failed to fetch syslog table data. ${message}`,
   duration: INFINITE,
 })
+
+export const notifyFetchDeviceMappingFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to fetch device data. ${message}`,
+  duration: INFINITE,
+})
+
+export const notifyUpdateDeviceMappingFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to update device mapping. ${message}`,
+  duration: INFINITE,
+})

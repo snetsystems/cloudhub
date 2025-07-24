@@ -16,7 +16,6 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 // Type
 import {
   BaseElasticSearchData,
-  DeviceToOrgMapping,
   DeviceType,
   FilteredLogsForLogAnalysis,
   Source,
@@ -24,6 +23,7 @@ import {
   TimeZones,
   Notification,
   Me,
+  DeviceMeta,
 } from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
@@ -39,11 +39,15 @@ import LogAnalysisCellsGraphWrapper from 'src/log_analysis/components/LogAnalysi
 
 // API
 import {fetchSyslogTableData} from 'src/log_analysis/apis'
+import {ensureDeviceMapping} from 'src/admin/apis/deviceMapping'
 
 // Utils
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {buildCombinedFilters} from 'src/log_analysis/util'
-import {notifyFetchSyslogTableDataFailed} from 'src/shared/copy/notifications'
+import {
+  notifyFetchDeviceMappingFailed,
+  notifyFetchSyslogTableDataFailed,
+} from 'src/shared/copy/notifications'
 import {ADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 
 interface LogAnalysisSyslogTableOwnProps {
@@ -299,13 +303,31 @@ function LogAnalysisSyslogTableWrapper({
     setSortColumns(cols)
   const onChangeLiveUpdatingStatus = () => setIsLiveUpdating(prev => !prev)
 
-  const handleExpandSideBar = useCallback(
-    (hostname: string, deviceType: DeviceType) => {
-      // TODO Get DeviceToOrgMapping from API
-      const deviceMeta: DeviceToOrgMapping = {
+  const getDeviceMapping = async (
+    hostname: string,
+    deviceType: DeviceType
+  ): Promise<DeviceMeta> => {
+    try {
+      const deviceMapping = await ensureDeviceMapping(hostname, esSource?.id)
+
+      return deviceMapping
+    } catch (error: any) {
+      notify(notifyFetchDeviceMappingFailed(error.message || ''))
+
+      return {
+        ip: '',
+        hostname,
+        aliasName: '',
+        deviceType: deviceType,
         orgId: '',
-        aliasName: hostname,
-      }
+        isDeletable: false,
+      } as DeviceMeta
+    }
+  }
+
+  const handleExpandSideBar = useCallback(
+    async (hostname: string, deviceType: DeviceType) => {
+      const deviceMeta = await getDeviceMapping(hostname, deviceType)
 
       setSelectedDevice(deviceMeta)
       openPanel({
@@ -319,7 +341,6 @@ function LogAnalysisSyslogTableWrapper({
             title="Time Series Graph"
             source={source}
             selectedTimeRangeLocalStorageKey="log-analysis-time-series-graph"
-            deviceType={deviceType}
             isAuthorized={isUserAuthorized(
               _.get(auth, 'me.role', ''),
               ADMIN_ROLE

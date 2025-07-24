@@ -3,17 +3,18 @@ import React, {useEffect, useState} from 'react'
 import _ from 'lodash'
 import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 
 // Types
 import {
   Cell,
-  DeviceToOrgMapping,
-  DeviceType,
+  DeviceMeta,
   DropdownItem,
   Layout,
   Ratio,
   Source,
   TimeRange,
+  Notification,
 } from 'src/types'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 // Constants
@@ -31,12 +32,19 @@ import TimeRangeShiftDropdown from 'src/shared/components/TimeRangeShiftDropdown
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 import MatchingAlias from 'src/log_analysis/components/MatchingAlias'
+import {Cancel} from 'src/shared/components/ConfirmOrCancel'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
+import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
+
+// Actions
+import {closePanel} from 'src/shared/actions/sidePanel'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // API
 import {
@@ -46,11 +54,8 @@ import {
   getMeasurementsForHost,
   getTagValuesForDeviceType,
 } from 'src/hosts/apis'
-import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
-import {Cancel} from 'src/shared/components/ConfirmOrCancel'
-import {bindActionCreators} from 'redux'
-import {closePanel} from 'src/shared/actions/sidePanel'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {updateDeviceMapping} from 'src/admin/apis/deviceMapping'
+import {notifyUpdateDeviceMappingFailed} from 'src/shared/copy/notifications'
 
 interface Props {
   ratio: Ratio
@@ -59,10 +64,10 @@ interface Props {
   selectedTimeRangeLocalStorageKey: string
   isAuthorized: boolean
   cloudAutoRefresh?: CloudAutoRefresh
-  selectedDevice?: DeviceToOrgMapping
+  selectedDevice?: DeviceMeta
   logAnalysisManualRefresh?: number
   closePanel?: () => void
-  deviceType?: DeviceType
+  notify?: (message: Notification) => void
 }
 
 const LogAnalysisCellsGraphWrapper = ({
@@ -75,7 +80,7 @@ const LogAnalysisCellsGraphWrapper = ({
   cloudAutoRefresh,
   logAnalysisManualRefresh,
   closePanel,
-  deviceType = 'baremetal',
+  notify,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem(selectedTimeRangeLocalStorageKey)) {
@@ -93,23 +98,41 @@ const LogAnalysisCellsGraphWrapper = ({
     getTimeRangeFromLocalStorage()
   )
 
+  const deviceType = selectedDevice?.deviceType || 'baremetal'
   const [isFromAgent, setIsFromAgent] = useState(deviceType === 'baremetal')
   const [dropdownItems, setDropdownItems] = useState<DropdownItem[]>([])
   const [dropdownSelected, setDropdownSelected] = useState('')
   const [dropdownIsOpen, setDropdownIsOpen] = useState(false)
+
+  const [selectedDeviceAliasName, setSelectedDeviceAliasName] = useState(() => {
+    if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
+      return selectedDevice.aliasName
+    }
+    return selectedDevice?.hostname ?? ''
+  })
+
+  useEffect(() => {
+    if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
+      setSelectedDeviceAliasName(selectedDevice.aliasName)
+    } else if (selectedDevice?.hostname) {
+      setSelectedDeviceAliasName(selectedDevice.hostname)
+    } else {
+      setSelectedDeviceAliasName('')
+    }
+  }, [selectedDevice?.hostname])
 
   const currentDeviceType = isFromAgent ? 'baremetal' : deviceType
 
   useEffect(() => {
     setLayout([])
     getLayoutForInstance()
-  }, [selectedDevice?.aliasName, currentDeviceType])
+  }, [selectedDeviceAliasName, currentDeviceType])
 
   useEffect(() => {
-    if (selectedDevice?.aliasName) {
-      setDropdownSelected(selectedDevice.aliasName)
+    if (selectedDeviceAliasName) {
+      setDropdownSelected(selectedDeviceAliasName)
     }
-  }, [selectedDevice?.aliasName])
+  }, [selectedDeviceAliasName])
 
   useEffect(() => {
     const fetchDropdownItems = async () => {
@@ -137,13 +160,13 @@ const LogAnalysisCellsGraphWrapper = ({
   const getDeviceKeyValue = () => {
     switch (currentDeviceType) {
       case 'baremetal':
-        return {host: selectedDevice?.aliasName ?? ''}
+        return {host: selectedDeviceAliasName}
       case 'vm':
-        return {vmname: selectedDevice?.aliasName ?? ''}
+        return {vmname: selectedDeviceAliasName}
       case 'switch':
-        return {agent_host: selectedDevice?.aliasName ?? ''}
+        return {agent_host: selectedDeviceAliasName}
       default:
-        return {host: selectedDevice?.aliasName ?? ''}
+        return {host: selectedDeviceAliasName}
     }
   }
 
@@ -153,7 +176,7 @@ const LogAnalysisCellsGraphWrapper = ({
         getCellsReactive(layout, source, getDeviceKeyValue(), ratio, null)
       )
     }
-  }, [layout, selfTimeRange, selectedDevice?.aliasName, currentDeviceType])
+  }, [layout, selfTimeRange, selectedDeviceAliasName, currentDeviceType])
 
   const fetchHostsAndMeasurements = async (
     layouts: Layout[],
@@ -232,7 +255,7 @@ const LogAnalysisCellsGraphWrapper = ({
   }
 
   const getLayoutForInstance = async () => {
-    const aliasName = selectedDevice?.aliasName
+    const aliasName = selectedDeviceAliasName
 
     switch (currentDeviceType) {
       case 'baremetal':
@@ -338,6 +361,23 @@ const LogAnalysisCellsGraphWrapper = ({
     setDropdownIsOpen(prev => !prev)
   }
 
+  const handleOnApply = async () => {
+    if (selectedDevice?.hostname && dropdownSelected) {
+      try {
+        const data = {
+          aliasName: dropdownSelected,
+          deviceType: '',
+          ip: '',
+          orgId: '',
+        }
+
+        await updateDeviceMapping(selectedDevice.hostname, data, [])
+      } catch (error) {
+        notify(notifyUpdateDeviceMappingFailed(error.message || ''))
+      }
+    }
+  }
+
   return (
     <>
       <div
@@ -370,6 +410,7 @@ const LogAnalysisCellsGraphWrapper = ({
         </LogAnalysisDashboardHeader>
         {_.isEmpty(layout) ? (
           <>
+            {/* // TODO Consider Toggle Disabled */}
             <MatchingAlias
               toggleActive={isFromAgent}
               onToggleChange={onToggleChange}
@@ -380,7 +421,8 @@ const LogAnalysisCellsGraphWrapper = ({
               dropdownOnClose={handleDropdownOnClose}
               dropdownIsOpen={dropdownIsOpen}
               isAuthorized={isAuthorized}
-              toggleDisabled={deviceType === 'baremetal'}
+              toggleDisabled={false}
+              onApply={handleOnApply}
             />
             <div className="panel-body" style={{margin: '0 15px'}}>
               <div className="generic-empty-state">
@@ -404,7 +446,8 @@ const LogAnalysisCellsGraphWrapper = ({
                 dropdownOnClose={handleDropdownOnClose}
                 onToggleChange={onToggleChange}
                 dropdownSelected={dropdownSelected}
-                toggleDisabled={deviceType === 'baremetal'}
+                toggleDisabled={false}
+                onApply={handleOnApply}
               />
               <div
                 className="panel-body"
@@ -465,6 +508,7 @@ const mstp = state => {
 const mdtp = dispatch => {
   return {
     closePanel: () => bindActionCreators(closePanel, dispatch)(),
+    notify: bindActionCreators(notifyAction, dispatch),
   }
 }
 
