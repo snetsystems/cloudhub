@@ -4,6 +4,15 @@ $primary: #f58220;
 $text: #d3dae6;
 $highlight: #25262e;
 
+.log-analysis-page {
+  .close-button {
+    > button {
+      height: 25px;
+      line-height: 30px;
+    }
+  }
+}
+
 .syslog-table--container {
   width: 98%;
   justify-self: center;
