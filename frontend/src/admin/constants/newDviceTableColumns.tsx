@@ -76,7 +76,7 @@ export const newDeviceTableColumns = (
     name: 'Target',
     options: {
       thead: {
-        className: 'w-35',
+        className: 'w-30',
         align: AlignType.CENTER,
       },
     },
@@ -127,7 +127,13 @@ export const newDeviceTableColumns = (
     render: () => (
       <div className="mapping-table-center">
         <div className="save-button">
-          <span className="icon checkmark" onClick={() => saveDevice()} />
+          <ConfirmButton
+            confirmAction={() => saveDevice()}
+            confirmText="Save Device"
+            size="btn-sm"
+            square={true}
+            icon="checkmark"
+          />
         </div>
         <div className="delete-button">
           <ConfirmButton

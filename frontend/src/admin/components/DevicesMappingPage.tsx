@@ -5,6 +5,7 @@ import {
   DeviceMapping,
   BaseElasticSearchData,
   DeviceMeta,
+  Source,
 } from 'src/types'
 import {mappingTableColumns} from 'src/admin/constants/mappingTableColumns'
 import TableComponent from 'src/device_management/components/TableComponent'
@@ -16,12 +17,15 @@ import {
 } from '../apis/deviceMapping'
 import _ from 'lodash'
 import {NewDeviceTable} from './NewDeviceTable'
+import {orgIdToName} from '../utils/deviceMapping'
+import {useDeviceType} from 'src/log_analysis/hooks/useDeviceType'
 
 interface Props {
   me: Me
   meCurrentOrganization: Organization
   esSource: BaseElasticSearchData
   organizations?: Organization[]
+  currentSource?: Source
 }
 
 function DevicesMappingPage({
@@ -29,12 +33,16 @@ function DevicesMappingPage({
   meCurrentOrganization,
   esSource,
   organizations,
+  currentSource,
 }: Props) {
+  const allTagValues = useDeviceType(currentSource)
+
+  const [isStyleChanged, setIsStyleChanged] = useState(false)
+
   const [newDevice, setNewDevice] = useState<DeviceMeta[]>([])
 
   const [mappingList, setMappingList] = useState<DeviceMapping>({
-    unmappedDevices: [],
-    mappedDevices: [],
+    default: [],
   })
 
   useEffect(() => {
@@ -46,54 +54,34 @@ function DevicesMappingPage({
   const getDeviceList = async (esSourceId: string) => {
     const response = await fetchDeviceList(esSourceId)
 
-    let tempAry: DeviceMapping = {
-      unmappedDevices: [],
-      mappedDevices: [],
-    }
+    // Object.keys(response).forEach(org => {
+    //   if (org === 'default') {
+    //     tempAry['unmappedDevices'] = response[org]
+    //   } else {
+    //     tempAry['mappedDevices'] = [
+    //       ...(tempAry?.['mappedDevices'] || []),
+    //       ...response[org],
+    //     ]
+    //   }
+    // })
 
-    Object.keys(response).forEach(org => {
-      if (org === 'default') {
-        tempAry['unmappedDevices'] = response[org]
-      } else {
-        tempAry['mappedDevices'] = [
-          ...(tempAry?.['mappedDevices'] || []),
-          ...response[org],
-        ]
-      }
-    })
+    // const reordered = (({unmappedDevices, mappedDevices}) => ({
+    //   mappedDevices,
+    //   unmappedDevices,
+    // }))(tempAry)
 
-    const reordered = (({unmappedDevices, mappedDevices}) => ({
-      mappedDevices,
-      unmappedDevices,
-    }))(tempAry)
+    // console.log('reordered', reordered)
 
-    console.log('reordered', reordered)
-
-    setMappingList(reordered)
+    setMappingList(response)
   }
 
-  const setMappingInfo = async (
-    hostName: string,
-    org: string,
-    aliasName: string,
-    deviceType: string,
-    ip: string
-  ) => {
+  const setMappingInfo = async (device: DeviceMeta) => {
     if (!me.superAdmin) return
 
-    //todo: change org api call
-    await updateDeviceMapping(
-      hostName,
-      {
-        aliasName,
-        deviceType,
-        ip,
-        orgId: org,
-      },
-      organizations
-    )
+    //todo: 빈배열 지우기
+    await updateDeviceMapping(device)
 
-    getDeviceList(esSource.id)
+    await getDeviceList(esSource.id)
   }
 
   const addDevice = async () => {
@@ -104,6 +92,7 @@ function DevicesMappingPage({
       ip: '',
       orgId: 'default',
       isDeletable: false,
+      vendor: '',
     }
     setNewDevice([dummyDevice])
   }
@@ -114,36 +103,26 @@ function DevicesMappingPage({
   }
 
   const onChangeAlias = (
-    e: React.ChangeEvent<HTMLInputElement>,
+    value: string,
     rowData: DeviceMeta,
-    rowIndex: number
+    rowIndex: number,
+    key: string
   ) => {
-    const {value} = e.target
     const tempAry = _.cloneDeep(mappingList)
+    console.log('orgName', mappingList, value, rowData, rowIndex, key)
+    tempAry[rowData.orgId][rowIndex][key] = value
 
-    if (rowData.orgId === 'default') {
-      tempAry.unmappedDevices[rowIndex].aliasName = value
-    } else {
-      tempAry.mappedDevices[rowIndex].aliasName = value
-    }
+    // setMappingList(tempAry)
 
-    setMappingList(tempAry)
-    debouncedSetOrg(value, rowData)
+    setMappingInfo(tempAry[rowData.orgId][rowIndex])
+
+    //todo: debounce setMappingInfo
   }
 
-  const debouncedSetOrg = useMemo(
-    () =>
-      _.debounce((aliasName: string, rowData: DeviceMeta) => {
-        setMappingInfo(
-          rowData.hostname,
-          rowData.orgId,
-          aliasName,
-          rowData.deviceType,
-          rowData.ip
-        )
-      }, 1000),
-    [mappingList]
-  )
+  // const debouncedSetOrg = useMemo(
+  //   () => _.debounce((key: string, rowIndex: number) => {}, 1000),
+  //   [mappingList]
+  // )
 
   return (
     <div className="panel panel-solid">
@@ -154,6 +133,12 @@ function DevicesMappingPage({
               Add Device
             </button>
           )}
+          <button
+            className="btn btn-primary"
+            onClick={() => setIsStyleChanged(!isStyleChanged)}
+          >
+            Change Style
+          </button>
         </div>
       </div>
       {newDevice.length > 0 && me.superAdmin && (
@@ -165,32 +150,34 @@ function DevicesMappingPage({
         />
       )}
       {!!mappingList &&
-        Object.keys(mappingList).map((type, i) => {
-          if (!me.superAdmin && type === 'unmappedDevices') {
+        Object.keys(mappingList).map((org, i) => {
+          if (
+            !me.superAdmin &&
+            org !== orgIdToName(me.currentOrganization.id, organizations || [])
+          ) {
             return null
           }
           return (
-            <div key={type + i} className="panel-body">
+            <div key={org + i} className="panel-body">
               <TableComponent
                 initSort={{
                   key: 'hostname',
                   isDesc: false,
                 }}
-                tableTitle={
-                  type === 'unmappedDevices'
-                    ? 'Unmapped Devices'
-                    : 'Mapped Devices'
-                }
+                tableTitle={orgIdToName(org, organizations || [])}
                 columns={mappingTableColumns(
                   me,
                   setMappingInfo,
                   deleteDevice,
                   onChangeAlias,
-                  organizations || []
+                  organizations || [],
+                  allTagValues
                 )}
-                data={mappingList[type]}
+                data={mappingList[org]}
                 isSearchDisplay={false}
-                bodyClassName={`mapping-table`}
+                bodyClassName={`${
+                  isStyleChanged ? 'mapping-table-2' : 'mapping-table'
+                }`}
               />
             </div>
           )
@@ -204,11 +191,15 @@ const mstp = state => {
     app: {
       persisted: {esSource},
     },
+    sources: {sourceID},
     adminCloudHub: {organizations},
+    logs: {currentSource},
   } = state
   return {
     esSource,
     organizations,
+    sourceID,
+    currentSource,
   }
 }
 

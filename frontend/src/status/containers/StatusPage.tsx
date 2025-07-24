@@ -26,9 +26,16 @@ import {
   TemplateType,
   TemplateValueType,
   TimeZones,
+  BaseElasticSearchData,
 } from 'src/types'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {bindActionCreators} from 'redux'
+import {
+  disconnectElasticSearch,
+  connectElasticSearch,
+  getElasticSearchInfoAsync,
+} from 'src/shared/actions/elasticSearch'
 
 interface OwnProps {
   source: Source
@@ -38,11 +45,20 @@ interface OwnProps {
 interface StateProps {
   timeZone: TimeZones
   onSetTimeZone: typeof appActions.setTimeZone
+  esSource?: BaseElasticSearchData
+  esSources?: BaseElasticSearchData[]
+  organizationId?: string
+}
+
+interface DispatchProps {
+  getElasticSearchInfoAsync?: typeof getElasticSearchInfoAsync
+  connectElasticSearch?: typeof connectElasticSearch
+  disconnectElasticSearch?: typeof disconnectElasticSearch
 }
 
 const timeRange = STATUS_PAGE_TIME_RANGE
 
-type Props = StateProps & OwnProps
+type Props = StateProps & OwnProps & DispatchProps
 
 @ErrorHandling
 class StatusPage extends Component<Props> {
@@ -53,6 +69,8 @@ class StatusPage extends Component<Props> {
       shellModalVisible: false,
     }
   }
+
+  //Todo: connect elasticsearch
 
   public render() {
     const {source, onSetTimeZone, timeZone} = this.props
@@ -152,12 +170,24 @@ class StatusPage extends Component<Props> {
   }
 }
 
-const mstp = ({app}) => ({
+const mstp = ({app, esSources, auth}) => ({
   timeZone: app.persisted.timeZone,
+  esSource: app.persisted.esSource,
+  esSources: esSources.esSources,
+  organizationId: auth.me.currentOrganization?.id,
 })
 
-const mdtp = {
-  onSetTimeZone: appActions.setTimeZone,
-}
+const mdtp = dispatch => ({
+  onSetTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
+  getElasticSearchInfoAsync: bindActionCreators(
+    getElasticSearchInfoAsync,
+    dispatch
+  ),
+  connectElasticSearch: bindActionCreators(connectElasticSearch, dispatch),
+  disconnectElasticSearch: bindActionCreators(
+    disconnectElasticSearch,
+    dispatch
+  ),
+})
 
 export default connect(mstp, mdtp)(StatusPage)
