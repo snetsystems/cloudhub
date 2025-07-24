@@ -1,3 +1,4 @@
+//Library
 import React, {
   useMemo,
   useEffect,
@@ -6,34 +7,48 @@ import React, {
   MouseEvent,
   useCallback,
 } from 'react'
+
+//Constants
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
-import LogAnalysisDashboardHeader from './LogAnalysisDashboardHeader'
 
+//Components
+import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
+
+//Types
 import {Cell, TimeZones, BaseElasticSearchData} from 'src/types'
 
+//Utils
 import {timeRanges} from 'src/shared/data/timeRanges'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
+
+//Redux
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
+
+//Actions
 import {
   addLogAnalysisRangeFilterClause,
   removeLogAnalysisRangeFilterClause,
-} from '../actions'
+} from 'src/log_analysis/actions'
+
+//Utils
 import moment from 'moment'
-import {fetchLogsCount} from '../apis'
+import {fetchLogsCount} from 'src/log_analysis/apis'
+
+//Types
 import {LogCountData} from 'src/dashboards/types'
 import {Bar, getElementAtEvent} from 'react-chartjs-2'
 import {Chart as ChartJS} from 'chart.js'
-import {buildCombinedFilters, lowerToESRange} from '../util'
+import {buildCombinedFilters, lowerToESRange} from 'src/log_analysis/util'
 import {FilteredLogsForLogAnalysis} from 'src/types/logAnalysis'
 import {stableSelectionPlugin} from 'src/shared/utils/esChart'
-import {HistogramOptions} from '../util/HistogramOptions'
+import {HistogramOptions} from 'src/log_analysis/util/HistogramOptions'
+import LoadingDots from 'src/shared/components/LoadingDots'
 
-//chart plugin
 ChartJS.register(stableSelectionPlugin)
 
 interface Props {
@@ -51,6 +66,7 @@ interface Props {
   ) => void
   filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   removeLogAnalysisRangeFilterClause?: (field: string) => void
+  logAnalysisManualRefresh?: number
 }
 function LogAnalysisAlertBarWrapper({
   cell,
@@ -60,6 +76,7 @@ function LogAnalysisAlertBarWrapper({
   addLogAnalysisRangeFilter,
   removeLogAnalysisRangeFilterClause,
   filteredLogsForLogAnalysis,
+  logAnalysisManualRefresh,
 }: Props) {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
 
@@ -77,10 +94,12 @@ function LogAnalysisAlertBarWrapper({
 
   const defaultTimeRange = timeRanges.find(i => i.inputValue === 'Past 30d')
 
+  const [loading, setLoading] = useState(false)
+
   const getLogsData = useCallback(
     async (esSource: BaseElasticSearchData) => {
       if (!esSource) return
-
+      setLoading(true)
       const {gteISO, lteISO} = lowerToESRange({
         lower: cloudTimeRange?.logAnalysis?.lower ?? defaultTimeRange.lower,
         upper: cloudTimeRange?.logAnalysis?.upper ?? 'now()',
@@ -100,6 +119,7 @@ function LogAnalysisAlertBarWrapper({
         ),
       })
       setLogsData(res.data)
+      setLoading(false)
     },
     [
       cloudTimeRange?.logAnalysis?.lower,
@@ -112,7 +132,7 @@ function LogAnalysisAlertBarWrapper({
 
   useEffect(() => {
     getLogsData(esSource)
-  }, [])
+  }, [logAnalysisManualRefresh])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
@@ -132,7 +152,12 @@ function LogAnalysisAlertBarWrapper({
       intervalID = null
       GlobalAutoRefresher.stopPolling()
     }
-  }, [cloudAutoRefresh?.logAnalysis, esSource, getLogsData])
+  }, [
+    cloudAutoRefresh?.logAnalysis,
+    esSource,
+    getLogsData,
+    logAnalysisManualRefresh,
+  ])
 
   useEffect(() => {
     const hasFilterChanged =
@@ -294,6 +319,9 @@ function LogAnalysisAlertBarWrapper({
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
         <div className="dash-graph--name"></div>
+        {loading && (
+          <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
+        )}
       </LogAnalysisDashboardHeader>
 
       {!!cell && (
@@ -315,7 +343,10 @@ const mstp = state => {
     app: {
       persisted: {cloudAutoRefresh, timeZone, cloudTimeRange, esSource},
     },
-    logAnalysisDashboard: {filteredLogsForLogAnalysis},
+    logAnalysisDashboard: {
+      filteredLogsForLogAnalysis,
+      logAnalysisManualRefresh,
+    },
   } = state
   return {
     cloudTimeRange,
@@ -323,6 +354,7 @@ const mstp = state => {
     timeZone,
     esSource,
     filteredLogsForLogAnalysis,
+    logAnalysisManualRefresh,
   }
 }
 

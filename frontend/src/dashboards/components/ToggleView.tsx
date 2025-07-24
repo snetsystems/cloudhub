@@ -1,29 +1,39 @@
+//Library
 import React, {useEffect, useMemo, ChangeEvent, useRef} from 'react'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
+
+//Components
 import LoadingDots from 'src/shared/components/LoadingDots'
 
+//Types
 import {BaseElasticSearchData, FilteredLogsForLogAnalysis} from 'src/types'
 
+//Components
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
+
+//Actions
 import {setCloudAutoRefresh, setCloudTimeRange} from 'src/clouds/actions/clouds'
+
+//Utils
 import _, {debounce} from 'lodash'
 
+//Redux
 import * as appActions from 'src/shared/actions/app'
-import {
-  ComponentSize,
-  IconFont,
-  Input,
-  InputType,
-  SlideToggle,
-} from 'src/reusable_ui'
+import {ComponentSize, InputType, SlideToggle} from 'src/reusable_ui'
+
+//Types
 import {CloudTimeRange} from 'src/clouds/types'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
+
+//Utils
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+
+//Hooks
 import {useLocalStorage} from 'src/log_analysis/hooks/useLocalStorage'
 import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants'
 import {setFilteredLogForLogAnalysis} from 'src/log_analysis/actions'
@@ -57,6 +67,7 @@ interface StateProps {
   cloudTimeRange?: CloudTimeRange
   filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   esSource: BaseElasticSearchData
+  logAnalysisManualRefresh?: number
 }
 interface DispatchProps {}
 
@@ -73,6 +84,7 @@ function ToggleView<P>({
   isMoreFetch,
   onChangeTopN,
   handleOnBlur,
+  logAnalysisManualRefresh,
 }: ToggleViewProps) {
   const [storageObj, setStorageObj] = useLocalStorage<{activeView: string}>(
     LOG_ANALYSIS_LOCAL_STORAGE_KEY,
@@ -147,6 +159,7 @@ function ToggleView<P>({
     esSource,
     cloudTimeRange?.logAnalysis,
     filteredLogsForLogAnalysis,
+    logAnalysisManualRefresh,
   ])
 
   useEffect(() => {
@@ -181,6 +194,7 @@ function ToggleView<P>({
     esSource,
     cloudTimeRange?.logAnalysis,
     filteredLogsForLogAnalysis,
+    logAnalysisManualRefresh,
   ])
 
   const renderToggle = () => {
@@ -255,7 +269,10 @@ const mstp = state => {
       ephemeral: {inPresentationMode},
       persisted: {timeZone, cloudAutoRefresh, cloudTimeRange, esSource},
     },
-    logAnalysisDashboard: {filteredLogsForLogAnalysis},
+    logAnalysisDashboard: {
+      filteredLogsForLogAnalysis,
+      logAnalysisManualRefresh,
+    },
   } = state
 
   return {
@@ -265,6 +282,7 @@ const mstp = state => {
     cloudTimeRange,
     esSource,
     filteredLogsForLogAnalysis,
+    logAnalysisManualRefresh,
   }
 }
 

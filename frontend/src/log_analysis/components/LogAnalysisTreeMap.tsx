@@ -1,6 +1,9 @@
+//Library
 import React, {useEffect, useMemo, useRef, useState} from 'react'
 import * as d3 from 'd3'
 import type {HierarchyRectangularNode} from 'd3-hierarchy'
+
+//Types
 import {TokenData} from 'src/dashboards/types'
 
 interface TreemapNode {

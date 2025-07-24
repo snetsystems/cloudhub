@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useMemo} from 'react'
+import React, {useEffect, useMemo, useCallback} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import _ from 'lodash'
 import {connect} from 'react-redux'
@@ -219,12 +219,10 @@ function LogAnalysisDashboard({
   const renderHeaderCenter = () => {
     return <div> </div>
   }
-  const handleManualRefresh = () => {
-    //redux
+  const handleManualRefresh = useCallback(() => {
     setStateInitAction()
-
     setLogAnalysisManualRefresh()
-  }
+  }, [setLogAnalysisManualRefresh])
 
   const renderHeaderRight = () => {
     return (
