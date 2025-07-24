@@ -1746,3 +1746,71 @@ export const getTagValuesForDeviceType = async (
     return []
   }
 }
+
+export const getAllTagValuesForDeviceTypes = async (
+  source: Source,
+  tempVars: Template[]
+): Promise<{[deviceType: string]: DropdownItem[]}> => {
+  const queries = [
+    {
+      deviceType: 'baremetal',
+      query: replaceTemplate(
+        'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
+        tempVars
+      ),
+    },
+    {
+      deviceType: 'vm',
+      query: replaceTemplate(
+        'SHOW TAG VALUES FROM "vsphere_vm_cpu" WITH KEY="vmname"',
+        tempVars
+      ),
+    },
+    {
+      deviceType: 'switch',
+      query: replaceTemplate(
+        'SHOW TAG VALUES FROM "snmp_nx" WITH KEY="agent_host"',
+        tempVars
+      ),
+    },
+  ]
+
+  const combinedQuery = queries.map(q => q.query).join('; ')
+
+  try {
+    const {data} = await proxy({
+      source: source.links.proxy,
+      query: combinedQuery,
+      db: source.telegraf,
+    })
+
+    const result: {[deviceType: string]: DropdownItem[]} = {}
+
+    queries.forEach((queryInfo, index) => {
+      const resultData = data.results[index]
+
+      if (!resultData || !resultData.series || resultData.error) {
+        result[queryInfo.deviceType] = []
+        return
+      }
+
+      const values = getDeep<string[][]>(resultData, 'series.[0].values', [])
+
+      const tagValues = values.map(v => ({
+        text: v[1],
+      }))
+
+      result[queryInfo.deviceType] = tagValues
+    })
+
+    return result
+  } catch (error) {
+    console.error('Error fetching tag values for all device types:', error)
+
+    return {
+      baremetal: [],
+      vm: [],
+      switch: [],
+    }
+  }
+}
