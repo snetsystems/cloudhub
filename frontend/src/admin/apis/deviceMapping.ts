@@ -1,6 +1,6 @@
 import AJAX from 'src/utils/ajax'
 import {AxiosResponse} from 'axios'
-import {DeviceMeta, Organization} from 'src/types'
+import {DeviceAlias, DeviceMeta, Organization} from 'src/types'
 import {orgNameToId} from 'src/admin/utils/deviceMapping'
 
 export const fetchDeviceList = async (
@@ -87,4 +87,15 @@ export const ensureDeviceMapping = async (
   })
 
   return response?.data?.meta || {}
+}
+
+export const getDeviceAlias = async (
+  hostName: string
+): Promise<DeviceAlias> => {
+  const response = await AJAX({
+    url: `/cloudhub/v1/device-mappings/aliases/${hostName}`,
+    method: 'GET',
+  })
+
+  return response?.data || {}
 }

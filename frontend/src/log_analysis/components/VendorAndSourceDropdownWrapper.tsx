@@ -48,7 +48,7 @@ const VendorAndSourceDropdownWrapper: React.FC<VendorAndSourceDropdownWrapperPro
   onCollectingSourceClose,
 }) => (
   <>
-    {(deviceType === 'baremetal' || deviceType === 'vm') && (
+    {(deviceType === 'baremetal' || deviceType === 'vm') && !isFromAgent && (
       <>
         <div className="vendor-source-dropdown-wrapper-title">{'Vendor'}</div>
         <div className="vendor-source-dropdown-wrapper">
@@ -64,7 +64,6 @@ const VendorAndSourceDropdownWrapper: React.FC<VendorAndSourceDropdownWrapperPro
             onApply={onVendorApply}
           />
           <CollectingSourceDropdown
-            isFromAgent={isFromAgent}
             deviceType={deviceType}
             items={collectingSourceItems}
             selected={selectedCollectingSource}

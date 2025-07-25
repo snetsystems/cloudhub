@@ -208,7 +208,12 @@ import {
   DeviceType,
 } from './logAnalysis'
 
-import {DeviceMeta, DeviceMapping, DeviceToOrgMapping} from './devicesMapping'
+import {
+  DeviceMeta,
+  DeviceMapping,
+  DeviceToOrgMapping,
+  DeviceAlias,
+} from './devicesMapping'
 
 export {
   Me,
@@ -405,4 +410,5 @@ export {
   DeviceMapping,
   DeviceType,
   DeviceToOrgMapping,
+  DeviceAlias,
 }
