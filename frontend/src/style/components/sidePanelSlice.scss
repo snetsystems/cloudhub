@@ -15,20 +15,20 @@
 
   .modal-content {
     height: auto;
-    transition: width 0.3s ease-in-out;
-    overflow: hidden;
-    padding: 10px;
-    flex: 0 0 400px;
+    transition: flex-basis 0.3s ease-in-out;
+    padding: 0 10px;
+    flex: 0 0 0px;
     box-sizing: border-box;
   }
 
-  .modal-content-inner {
-    position: fixed;
-    top: 119px;
-    width: inherit;
-    right: 0;
-    height: calc(100% - 119px);
-    overflow: hidden;
+  .modal-content.open {
+    flex: 0 0 400px;
     border-left: 1px solid $g3-castle;
+  }
+
+  .modal-content-inner {
+    top: 119px;
+    right: 0;
+    height: 100%;
   }
 }

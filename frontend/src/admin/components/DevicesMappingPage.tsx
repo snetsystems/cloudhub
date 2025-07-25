@@ -28,6 +28,7 @@ import {
   notifyDeleteDeviceSucceeded,
   notifyFetchDeviceListError,
   notifyUpdateDeviceFailed,
+  notifyUpdateDeviceSucceeded,
 } from 'src/shared/copy/notifications'
 
 interface Props {
@@ -73,26 +74,11 @@ function DevicesMappingPage({
   const getDeviceList = async (esSourceId: string) => {
     try {
       const response = await fetchDeviceList(esSourceId)
-
-      // Object.keys(response).forEach(org => {
-      //   if (org === 'default') {
-      //     tempAry['unmappedDevices'] = response[org]
-      //   } else {
-      //     tempAry['mappedDevices'] = [
-      //       ...(tempAry?.['mappedDevices'] || []),
-      //       ...response[org],
-      //     ]
-      //   }
-      // })
-
-      // const reordered = (({unmappedDevices, mappedDevices}) => ({
-      //   mappedDevices,
-      //   unmappedDevices,
-      // }))(tempAry)
-
-      // console.log('reordered', reordered)
-
-      setMappingList(response)
+      if (response.status < 300) {
+        setMappingList(response.data)
+      } else {
+        notify(notifyFetchDeviceListError(response.data.message))
+      }
     } catch (error) {
       notify(notifyFetchDeviceListError(error.message))
     }
@@ -102,10 +88,14 @@ function DevicesMappingPage({
     if (!me.superAdmin) return
 
     try {
-      await updateDeviceMapping(device)
+      const response = await updateDeviceMapping(device)
+      if (response.status < 300) {
+        notify(notifyUpdateDeviceSucceeded())
+      } else {
+        notify(notifyUpdateDeviceFailed(response.data.message))
+      }
     } catch (error) {
       notify(notifyUpdateDeviceFailed(error.message))
-      throw new Error(notifyUpdateDeviceFailed(error.message).message)
     }
     getDeviceList(esSource.id)
   }
@@ -125,11 +115,16 @@ function DevicesMappingPage({
 
   const deleteDevice = async (hostName: string) => {
     try {
-      await deleteDeviceMapping(hostName)
-      notify(notifyDeleteDeviceSucceeded())
+      const response = await deleteDeviceMapping(hostName)
+      if (response.status < 300) {
+        notify(notifyDeleteDeviceSucceeded())
+      } else {
+        console.log('response: ', response)
+        notify(notifyDeleteDeviceFailed(response.data.message))
+      }
     } catch (error) {
+      console.log('error: ', error)
       notify(notifyDeleteDeviceFailed(error.message))
-      throw new Error(notifyDeleteDeviceFailed(error.message).message)
     }
 
     getDeviceList(esSource.id)

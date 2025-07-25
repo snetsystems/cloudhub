@@ -1,19 +1,17 @@
 import AJAX from 'src/utils/ajax'
 import {AxiosResponse} from 'axios'
-import {DeviceMapping, DeviceMeta, Organization} from 'src/types'
+import {DeviceMeta, Organization} from 'src/types'
 import {orgNameToId} from 'src/admin/utils/deviceMapping'
 
 export const fetchDeviceList = async (
   esSourceId: string
-): Promise<DeviceMapping> => {
+): Promise<AxiosResponse> => {
   const response = await AJAX({
     url: `/cloudhub/v1/device-mappings/devices?es-source=${esSourceId}`,
     method: 'GET',
   })
 
-  console.log('error: ', response)
-
-  return response.data
+  return response
 }
 
 export const deleteDeviceMapping = async (
@@ -23,7 +21,7 @@ export const deleteDeviceMapping = async (
     url: `/cloudhub/v1/device-mappings/devices/${hostName}`,
     method: 'DELETE',
   })
-
+  console.log('deleteDeviceMapping response: ', response)
   return response
 }
 

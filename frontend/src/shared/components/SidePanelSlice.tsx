@@ -52,11 +52,8 @@ function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
     <div className={`modal-wrapper ${isOpen ? 'open' : ''}`}>
       {children}
       {shouldRender ? (
-        <div
-          className={`modal-content ${isOpen && isRender ? 'open' : ''}`}
-          style={{width: isOpen && isRender ? width : 0}}
-        >
-          <div className="modal-content-inner">{panelProps}</div>
+        <div className={`modal-content ${isOpen && isRender ? 'open' : ''}`}>
+          {panelProps}
         </div>
       ) : null}
     </div>
