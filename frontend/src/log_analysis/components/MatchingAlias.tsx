@@ -7,14 +7,14 @@ import {
   ComponentStatus,
 } from 'src/reusable_ui'
 import MatchingAliasDropdown from 'src/log_analysis/components/MatchingAliasDropdown'
-import {DropdownItem} from 'src/types'
+import {DropdownItem, DeviceType} from 'src/types'
 
 interface MatchingAliasProps {
+  deviceType: DeviceType
   toggleActive: boolean
   toggleDisabled?: boolean
-
-  onApply?: () => void
   onToggleChange?: (active: boolean) => void
+  onApply?: () => void
   dropdownItems: DropdownItem[]
   selectedDropdown: string
   dropdownIsOpen?: boolean
@@ -25,6 +25,7 @@ interface MatchingAliasProps {
 }
 
 const MatchingAlias: React.FC<MatchingAliasProps> = ({
+  deviceType,
   toggleActive = true,
   toggleDisabled = false,
   onApply,
@@ -52,7 +53,11 @@ const MatchingAlias: React.FC<MatchingAliasProps> = ({
           onClick={dropdownOnClick}
           onClose={dropdownOnClose}
           selected={selectedDropdown}
-          className={'dropdown matching-alias-dropdown-50'}
+          className={
+            deviceType === 'ipmi'
+              ? 'matching-alias-dropdown-ipmi'
+              : 'dropdown matching-alias-dropdown-50'
+          }
         />
         <Button
           size={ComponentSize.Small}
@@ -64,16 +69,19 @@ const MatchingAlias: React.FC<MatchingAliasProps> = ({
           }
           active={!isAuthorized}
         />
-        <span>From Agent</span>
-
-        <SlideToggle
-          active={toggleDisabled || toggleActive}
-          onChange={() => {
-            onToggleChange(!toggleActive)
-          }}
-          size={ComponentSize.ExtraSmall}
-          disabled={toggleDisabled}
-        />
+        {deviceType !== 'ipmi' && (
+          <>
+            <span>From Agent</span>
+            <SlideToggle
+              active={toggleDisabled || toggleActive}
+              onChange={() => {
+                onToggleChange(!toggleActive)
+              }}
+              size={ComponentSize.ExtraSmall}
+              disabled={toggleDisabled}
+            />
+          </>
+        )}
       </div>
     </>
   )

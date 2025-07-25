@@ -25,10 +25,7 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
-import {
-  COLLECTING_SOURCE_DROPDOWN_ITEMS,
-  VENDOR_DROPDOWN_ITEMS,
-} from 'src/log_analysis/constants'
+import {VENDOR_DROPDOWN_ITEMS} from 'src/log_analysis/constants'
 
 // Components
 import {timeRanges} from 'src/shared/data/timeRanges'
@@ -38,7 +35,7 @@ import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisD
 import MatchingAlias from 'src/log_analysis/components/MatchingAlias'
 import {Cancel} from 'src/shared/components/ConfirmOrCancel'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import VendorAndSourceDropdownWrapper from 'src/log_analysis/components/VendorAndSourceDropdownWrapper'
+import VendorDropdownWrapper from 'src/log_analysis/components/VendorDropdownWrapper'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -140,19 +137,6 @@ const LogAnalysisCellsGraphWrapper = ({
   const [selectedVendor, setSelectedVendor] = useState<string>('')
   const [vendorDropdownIsOpen, setVendorDropdownIsOpen] = useState(false)
 
-  const [
-    collectingSourceDropdownItems,
-    setCollectingSourceDropdownItems,
-  ] = useState<DropdownItem[]>([])
-  const [
-    selectedCollectingSource,
-    setSelectedCollectingSource,
-  ] = useState<string>('')
-  const [
-    collectingSourceDropdownIsOpen,
-    setCollectingSourceDropdownIsOpen,
-  ] = useState(false)
-
   useEffect(() => {
     if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
       setMatchingAliasSelectedDeviceAliasName(selectedDevice.aliasName)
@@ -185,6 +169,7 @@ const LogAnalysisCellsGraphWrapper = ({
     matchingAliasSelectedDeviceAliasName,
     deviceType,
     isFromAgent,
+    selectedVendor,
     allLayouts,
   ])
 
@@ -212,11 +197,6 @@ const LogAnalysisCellsGraphWrapper = ({
 
     fetchDropdownItems()
   }, [deviceType, isFromAgent, source, isAuthorized])
-
-  useEffect(() => {
-    setCollectingSourceDropdownItems(COLLECTING_SOURCE_DROPDOWN_ITEMS)
-    setSelectedCollectingSource('From IPMI')
-  }, [selectedDevice?.hostname])
 
   useEffect(() => {
     setVendorDropdownItems(VENDOR_DROPDOWN_ITEMS)
@@ -281,13 +261,19 @@ const LogAnalysisCellsGraphWrapper = ({
     return {filteredMeasurements}
   }
 
-  const filterLayoutsByRule = async (
-    layouts: Layout[],
-    deviceType: string,
-    isFromAgent: boolean,
-    hostID: string
-  ) => {
+  const filterLayoutsByRule = async () => {
     let filtered: Layout[] = []
+
+    if (deviceType === 'ipmi') {
+      filtered = allLayouts.filter(layout => layout.app === 'ipmi_sensor')
+      return filtered.sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+    }
 
     if (isFromAgent) {
       if (
@@ -295,27 +281,43 @@ const LogAnalysisCellsGraphWrapper = ({
         deviceType === 'vm' ||
         deviceType === 'switch'
       ) {
-        filtered = layouts.filter(
+        filtered = allLayouts.filter(
           layout => layout.app === 'system' || layout.app === 'win_system'
         )
 
-        if (filtered.length > 0 && hostID) {
-          const {filteredMeasurements} = await fetchMeasurements(hostID)
+        if (filtered.length > 0) {
+          const {filteredMeasurements} = await fetchMeasurements(
+            matchingAliasSelectedDeviceAliasName
+          )
           filtered = filtered.filter(layout =>
             filteredMeasurements.includes(layout.measurement)
           )
         }
       }
-    } else if (deviceType === 'baremetal') {
-      filtered = layouts.filter(layout => layout.app === 'ipmi_sensor')
-    } else if (deviceType === 'vm') {
-      filtered = layouts.filter(
-        layout =>
-          layout.app === 'vsphere' &&
-          layout.measurement.startsWith('vsphere_vm')
-      )
-    } else if (deviceType === 'switch') {
-      filtered = layouts.filter(layout => layout.app === 'snmp_nx')
+    } else {
+      if (deviceType === 'baremetal') {
+        filtered = allLayouts.filter(
+          layout =>
+            layout.app === 'vsphere' &&
+            layout.measurement.startsWith('vsphere_host')
+        )
+      } else if (deviceType === 'vm') {
+        if (selectedVendor === 'VMWare') {
+          filtered = allLayouts.filter(
+            layout =>
+              layout.app === 'vsphere' &&
+              layout.measurement.startsWith('vsphere_vm')
+          )
+        } else {
+          filtered = allLayouts.filter(
+            layout =>
+              layout.app === 'vsphere' &&
+              layout.measurement.startsWith('vsphere_vm')
+          )
+        }
+      } else if (deviceType === 'switch') {
+        filtered = allLayouts.filter(layout => layout.app === 'snmp_nx')
+      }
     }
 
     return filtered.sort((x, y) => {
@@ -328,12 +330,7 @@ const LogAnalysisCellsGraphWrapper = ({
   }
 
   const getLayoutForInstance = async () => {
-    const filteredLayouts = await filterLayoutsByRule(
-      allLayouts,
-      deviceType,
-      isFromAgent,
-      selectedDevice?.hostname || ''
-    )
+    const filteredLayouts = await filterLayoutsByRule()
     setLayout(filteredLayouts)
   }
 
@@ -453,16 +450,6 @@ const LogAnalysisCellsGraphWrapper = ({
   const handleVendorDropdownClick = () => setVendorDropdownIsOpen(prev => !prev)
   const handleVendorDropdownClose = () => setVendorDropdownIsOpen(false)
 
-  const handleCollectingSourceDropdownChoose = (item: DropdownItem) => {
-    setSelectedCollectingSource(item.text)
-    setCollectingSourceDropdownIsOpen(false)
-  }
-  const handleCollectingSourceDropdownClick = () =>
-    setCollectingSourceDropdownIsOpen(prev => !prev)
-
-  const handleCollectingSourceDropdownClose = () =>
-    setCollectingSourceDropdownIsOpen(false)
-
   return (
     <>
       <div
@@ -508,7 +495,20 @@ const LogAnalysisCellsGraphWrapper = ({
               autoHide={true}
             >
               {/* // TODO Consider Toggle Disabled */}
+              <VendorDropdownWrapper
+                isFromAgent={isFromAgent}
+                deviceType={deviceType}
+                vendorItems={vendorDropdownItems}
+                selectedVendor={selectedVendor}
+                vendorIsOpen={vendorDropdownIsOpen}
+                onVendorChoose={handleVendorDropdownChoose}
+                onVendorClick={handleVendorDropdownClick}
+                onVendorClose={handleVendorDropdownClose}
+                onVendorApply={handleVendorOnApply}
+                isAuthorized={isAuthorized}
+              />
               <MatchingAlias
+                deviceType={deviceType}
                 dropdownItems={matchingAliasDropdownItems}
                 dropdownIsOpen={matchingAliasDropdownIsOpen}
                 isAuthorized={isAuthorized}
@@ -520,24 +520,6 @@ const LogAnalysisCellsGraphWrapper = ({
                 toggleActive={isFromAgent}
                 onToggleChange={onToggleChange}
                 toggleDisabled={false}
-              />
-              <VendorAndSourceDropdownWrapper
-                isFromAgent={isFromAgent}
-                deviceType={deviceType}
-                vendorItems={vendorDropdownItems}
-                selectedVendor={selectedVendor}
-                vendorIsOpen={vendorDropdownIsOpen}
-                onVendorChoose={handleVendorDropdownChoose}
-                onVendorClick={handleVendorDropdownClick}
-                onVendorClose={handleVendorDropdownClose}
-                onVendorApply={handleVendorOnApply}
-                collectingSourceItems={collectingSourceDropdownItems}
-                selectedCollectingSource={selectedCollectingSource}
-                collectingSourceIsOpen={collectingSourceDropdownIsOpen}
-                onCollectingSourceChoose={handleCollectingSourceDropdownChoose}
-                onCollectingSourceClick={handleCollectingSourceDropdownClick}
-                onCollectingSourceClose={handleCollectingSourceDropdownClose}
-                isAuthorized={isAuthorized}
               />
               <div
                 className="panel-body"
