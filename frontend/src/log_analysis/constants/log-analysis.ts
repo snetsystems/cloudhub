@@ -1,4 +1,8 @@
-import {FilteredLogsForLogAnalysis, SyslogTableRows} from 'src/types'
+import {
+  DropdownItem,
+  FilteredLogsForLogAnalysis,
+  SyslogTableRows,
+} from 'src/types'
 export const DEFAULT_SYSLOG_TABLE_CHUNK_SIZE = 500
 export const DEFAULT_SYSLOG_TABLE_CHUNK_MAX_SIZE = 10000
 export const LOG_ANALYSIS_LOCAL_STORAGE_KEY = 'Log-Analysis'
@@ -145,3 +149,10 @@ export const MOCK_LOG_FILTERS: FilteredLogsForLogAnalysis = [
 export const LOG_ANALYSIS_TIME_SERIES_DEVICE_LAYOUT_IDS = {
   switch: '37b0740a-79ac-4f4c-8ca0-e223a47400b8',
 }
+
+export const COLLECTING_SOURCE_DROPDOWN_ITEMS: DropdownItem[] = [
+  {text: 'From IPMI'},
+  {text: 'From Hypervisor'},
+]
+
+export const VENDOR_DROPDOWN_ITEMS: DropdownItem[] = [{text: 'VMware'}]

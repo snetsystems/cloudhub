@@ -1702,3 +1702,8 @@ export const notifyUpdateDeviceMappingFailed = (
   message: `Failed to update Device Mapping. ${message}`,
   duration: INFINITE,
 })
+
+export const notifyUpdateDeviceMappingSuccess = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Device Data has been updated successfully.`,
+})

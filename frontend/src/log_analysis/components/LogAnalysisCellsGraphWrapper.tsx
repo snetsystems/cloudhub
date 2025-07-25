@@ -15,14 +15,20 @@ import {
   Source,
   TimeRange,
   Notification,
+  DeviceType,
 } from 'src/types'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
+
 // Constants
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
+import {
+  COLLECTING_SOURCE_DROPDOWN_ITEMS,
+  VENDOR_DROPDOWN_ITEMS,
+} from 'src/log_analysis/constants'
 
 // Components
 import {timeRanges} from 'src/shared/data/timeRanges'
@@ -32,6 +38,7 @@ import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisD
 import MatchingAlias from 'src/log_analysis/components/MatchingAlias'
 import {Cancel} from 'src/shared/components/ConfirmOrCancel'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import VendorAndSourceDropdownWrapper from 'src/log_analysis/components/VendorAndSourceDropdownWrapper'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -52,7 +59,10 @@ import {
   getRecentActiveMeasurementsForHost,
 } from 'src/hosts/apis'
 import {updateDeviceMapping} from 'src/admin/apis/deviceMapping'
-import {notifyUpdateDeviceMappingFailed} from 'src/shared/copy/notifications'
+import {
+  notifyUpdateDeviceMappingFailed,
+  notifyUpdateDeviceMappingSuccess,
+} from 'src/shared/copy/notifications'
 
 interface Props {
   ratio: Ratio
@@ -106,24 +116,50 @@ const LogAnalysisCellsGraphWrapper = ({
   }, [logTimeRange])
 
   const [allLayouts, setAllLayouts] = useState<Layout[]>([])
-  const deviceType = selectedDevice?.deviceType || 'baremetal'
+  const deviceType = (selectedDevice?.deviceType as DeviceType) || 'baremetal'
   const [isFromAgent, setIsFromAgent] = useState(deviceType === 'baremetal')
-  const [dropdownItems, setDropdownItems] = useState<DropdownItem[]>([])
-  const [selectedDeviceAliasName, setSelectedDeviceAliasName] = useState(() => {
+  const [matchingAliasDropdownItems, setMatchingAliasDropdownItems] = useState<
+    DropdownItem[]
+  >([])
+  const [
+    matchingAliasSelectedDeviceAliasName,
+    setMatchingAliasSelectedDeviceAliasName,
+  ] = useState(() => {
     if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
       return selectedDevice.aliasName
     }
     return selectedDevice?.hostname ?? ''
   })
-  const [dropdownIsOpen, setDropdownIsOpen] = useState(false)
+  const [
+    matchingAliasDropdownIsOpen,
+    setMatchingAliasDropdownIsOpen,
+  ] = useState(false)
+  const [vendorDropdownItems, setVendorDropdownItems] = useState<
+    DropdownItem[]
+  >(VENDOR_DROPDOWN_ITEMS)
+  const [selectedVendor, setSelectedVendor] = useState<string>('')
+  const [vendorDropdownIsOpen, setVendorDropdownIsOpen] = useState(false)
+
+  const [
+    collectingSourceDropdownItems,
+    setCollectingSourceDropdownItems,
+  ] = useState<DropdownItem[]>([])
+  const [
+    selectedCollectingSource,
+    setSelectedCollectingSource,
+  ] = useState<string>('')
+  const [
+    collectingSourceDropdownIsOpen,
+    setCollectingSourceDropdownIsOpen,
+  ] = useState(false)
 
   useEffect(() => {
     if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
-      setSelectedDeviceAliasName(selectedDevice.aliasName)
+      setMatchingAliasSelectedDeviceAliasName(selectedDevice.aliasName)
     } else if (selectedDevice?.hostname) {
-      setSelectedDeviceAliasName(selectedDevice.hostname)
+      setMatchingAliasSelectedDeviceAliasName(selectedDevice.hostname)
     } else {
-      setSelectedDeviceAliasName('')
+      setMatchingAliasSelectedDeviceAliasName('')
     }
   }, [selectedDevice?.hostname])
 
@@ -145,13 +181,12 @@ const LogAnalysisCellsGraphWrapper = ({
     if (allLayouts.length > 0) {
       getLayoutForInstance()
     }
-  }, [selectedDeviceAliasName, deviceType, isFromAgent, allLayouts])
-
-  useEffect(() => {
-    if (selectedDeviceAliasName) {
-      setSelectedDeviceAliasName(selectedDeviceAliasName)
-    }
-  }, [selectedDeviceAliasName])
+  }, [
+    matchingAliasSelectedDeviceAliasName,
+    deviceType,
+    isFromAgent,
+    allLayouts,
+  ])
 
   useEffect(() => {
     const fetchDropdownItems = async () => {
@@ -168,15 +203,25 @@ const LogAnalysisCellsGraphWrapper = ({
           currentDeviceType,
           tempVars
         )
-        setDropdownItems(tagValues)
+        setMatchingAliasDropdownItems(tagValues)
       } catch (error) {
         console.error('Error fetching dropdown items:', error)
-        setDropdownItems([])
+        setMatchingAliasDropdownItems([])
       }
     }
 
     fetchDropdownItems()
   }, [deviceType, isFromAgent, source, isAuthorized])
+
+  useEffect(() => {
+    setCollectingSourceDropdownItems(COLLECTING_SOURCE_DROPDOWN_ITEMS)
+    setSelectedCollectingSource('From IPMI')
+  }, [selectedDevice?.hostname])
+
+  useEffect(() => {
+    setVendorDropdownItems(VENDOR_DROPDOWN_ITEMS)
+    setSelectedVendor(selectedDevice?.vendor || 'VMware')
+  }, [selectedDevice?.hostname])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
@@ -201,13 +246,19 @@ const LogAnalysisCellsGraphWrapper = ({
         getCellsReactive(
           layout,
           source,
-          getDeviceKeyValue(selectedDeviceAliasName),
+          getDeviceKeyValue(matchingAliasSelectedDeviceAliasName),
           ratio,
           null
         )
       )
     }
-  }, [layout, selfTimeRange, selectedDeviceAliasName, deviceType, isFromAgent])
+  }, [
+    layout,
+    selfTimeRange,
+    matchingAliasSelectedDeviceAliasName,
+    deviceType,
+    isFromAgent,
+  ])
 
   const fetchMeasurements = async (hostID: string) => {
     const measurements = await getRecentActiveMeasurementsForHost(
@@ -322,29 +373,29 @@ const LogAnalysisCellsGraphWrapper = ({
     setIsFromAgent(prev => !prev)
   }
 
-  const handleDropdownOnChoose = (item: DropdownItem) => {
-    setSelectedDeviceAliasName(item.text)
-    setDropdownIsOpen(false)
+  const handleMatchingAliasDropdownOnChoose = (item: DropdownItem) => {
+    setMatchingAliasSelectedDeviceAliasName(item.text)
+    setMatchingAliasDropdownIsOpen(false)
   }
 
-  const handleDropdownOnClose = () => {
-    setDropdownIsOpen(false)
+  const handleMatchingAliasDropdownOnClose = () => {
+    setMatchingAliasDropdownIsOpen(false)
   }
 
-  const handleDropdownOnClick = () => {
-    setDropdownIsOpen(prev => !prev)
+  const handleMatchingAliasDropdownOnClick = () => {
+    setMatchingAliasDropdownIsOpen(prev => !prev)
   }
 
-  const handleOnApply = async () => {
-    if (selectedDevice?.hostname && selectedDeviceAliasName) {
+  const handleMatchingAliasOnApply = async () => {
+    if (selectedDevice?.hostname && matchingAliasSelectedDeviceAliasName) {
       try {
         const data: DeviceMeta = {
           hostname: selectedDevice.hostname,
-          aliasName: selectedDeviceAliasName,
+          aliasName: matchingAliasSelectedDeviceAliasName,
           deviceType: '',
           ip: '',
           orgId: selectedDevice.orgId,
-          vendor: '',
+          vendor: selectedDevice.vendor ?? '',
           isDeletable: false,
         }
 
@@ -352,6 +403,7 @@ const LogAnalysisCellsGraphWrapper = ({
 
         if (updatedDevice) {
           setSelectedDevice(updatedDevice.data)
+          notify(notifyUpdateDeviceMappingSuccess())
         }
       } catch (error) {
         const errorMsg =
@@ -363,6 +415,53 @@ const LogAnalysisCellsGraphWrapper = ({
       }
     }
   }
+
+  const handleVendorOnApply = async () => {
+    if (selectedDevice?.hostname && selectedVendor) {
+      try {
+        const data: DeviceMeta = {
+          hostname: selectedDevice.hostname,
+          aliasName: selectedDevice.aliasName ?? '',
+          deviceType: '',
+          ip: '',
+          orgId: selectedDevice.orgId,
+          vendor: selectedVendor,
+          isDeletable: false,
+        }
+
+        const updatedDevice = await updateDeviceMapping(data)
+
+        if (updatedDevice) {
+          setSelectedDevice(updatedDevice.data)
+          notify(notifyUpdateDeviceMappingSuccess())
+        }
+      } catch (error) {
+        const errorMsg =
+          error?.response?.data?.message ||
+          error?.data?.message ||
+          error?.message ||
+          ''
+        notify(notifyUpdateDeviceMappingFailed(errorMsg))
+      }
+    }
+  }
+
+  const handleVendorDropdownChoose = (item: DropdownItem) => {
+    setSelectedVendor(item.text)
+    setVendorDropdownIsOpen(false)
+  }
+  const handleVendorDropdownClick = () => setVendorDropdownIsOpen(prev => !prev)
+  const handleVendorDropdownClose = () => setVendorDropdownIsOpen(false)
+
+  const handleCollectingSourceDropdownChoose = (item: DropdownItem) => {
+    setSelectedCollectingSource(item.text)
+    setCollectingSourceDropdownIsOpen(false)
+  }
+  const handleCollectingSourceDropdownClick = () =>
+    setCollectingSourceDropdownIsOpen(prev => !prev)
+
+  const handleCollectingSourceDropdownClose = () =>
+    setCollectingSourceDropdownIsOpen(false)
 
   return (
     <>
@@ -396,20 +495,6 @@ const LogAnalysisCellsGraphWrapper = ({
         </LogAnalysisDashboardHeader>
         {_.isEmpty(layout) ? (
           <>
-            {/* // TODO Consider Toggle Disabled */}
-            <MatchingAlias
-              toggleActive={isFromAgent}
-              onToggleChange={onToggleChange}
-              dropdownItems={dropdownItems}
-              selectedDropdown={selectedDeviceAliasName}
-              dropdownOnChoose={handleDropdownOnChoose}
-              dropdownOnClick={handleDropdownOnClick}
-              dropdownOnClose={handleDropdownOnClose}
-              dropdownIsOpen={dropdownIsOpen}
-              isAuthorized={isAuthorized}
-              toggleDisabled={false}
-              onApply={handleOnApply}
-            />
             <div className="panel-body" style={{margin: '0 15px'}}>
               <div className="generic-empty-state">
                 <h4 style={{margin: '90px 0'}}>No Results Found</h4>
@@ -422,18 +507,36 @@ const LogAnalysisCellsGraphWrapper = ({
               style={{height: 'calc(100% - 45px)'}}
               autoHide={true}
             >
+              {/* // TODO Consider Toggle Disabled */}
               <MatchingAlias
-                dropdownItems={dropdownItems}
-                toggleActive={isFromAgent}
-                dropdownIsOpen={dropdownIsOpen}
+                dropdownItems={matchingAliasDropdownItems}
+                dropdownIsOpen={matchingAliasDropdownIsOpen}
                 isAuthorized={isAuthorized}
-                dropdownOnChoose={handleDropdownOnChoose}
-                dropdownOnClick={handleDropdownOnClick}
-                dropdownOnClose={handleDropdownOnClose}
+                dropdownOnChoose={handleMatchingAliasDropdownOnChoose}
+                dropdownOnClick={handleMatchingAliasDropdownOnClick}
+                dropdownOnClose={handleMatchingAliasDropdownOnClose}
+                selectedDropdown={matchingAliasSelectedDeviceAliasName}
+                onApply={handleMatchingAliasOnApply}
+                toggleActive={isFromAgent}
                 onToggleChange={onToggleChange}
-                selectedDropdown={selectedDeviceAliasName}
                 toggleDisabled={false}
-                onApply={handleOnApply}
+              />
+              <VendorAndSourceDropdownWrapper
+                deviceType={deviceType}
+                vendorItems={vendorDropdownItems}
+                selectedVendor={selectedVendor}
+                vendorIsOpen={vendorDropdownIsOpen}
+                onVendorChoose={handleVendorDropdownChoose}
+                onVendorClick={handleVendorDropdownClick}
+                onVendorClose={handleVendorDropdownClose}
+                onVendorApply={handleVendorOnApply}
+                collectingSourceItems={collectingSourceDropdownItems}
+                selectedCollectingSource={selectedCollectingSource}
+                collectingSourceIsOpen={collectingSourceDropdownIsOpen}
+                onCollectingSourceChoose={handleCollectingSourceDropdownChoose}
+                onCollectingSourceClick={handleCollectingSourceDropdownClick}
+                onCollectingSourceClose={handleCollectingSourceDropdownClose}
+                isAuthorized={isAuthorized}
               />
               <div
                 className="panel-body"

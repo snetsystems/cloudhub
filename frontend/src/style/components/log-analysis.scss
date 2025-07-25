@@ -48,7 +48,26 @@ $highlight: #25262e;
   flex-direction: row;
   align-items: center;
   gap: 5px;
-  padding: 5px 0px 30px 15px;
+  padding: 5px 0px 5px 15px;
+
+  > button {
+    width: 52px;
+    margin-right: 3px;
+  }
+}
+
+.vendor-source-dropdown-wrapper-title {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 0px 0px 15px;
+}
+
+.vendor-source-dropdown-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 0px 5px 15px;
 
   > button {
     width: 52px;
@@ -58,6 +77,30 @@ $highlight: #25262e;
 
 .matching-alias-dropdown-50 {
   width: 53%;
+
+  .dropdown-toggle {
+    width: 100%;
+  }
+
+  .dropdown-autocomplete {
+    width: 100%;
+  }
+}
+
+.vendor-dropdown-50 {
+  width: 53%;
+
+  .dropdown-toggle {
+    width: 100%;
+  }
+
+  .dropdown-autocomplete {
+    width: 100%;
+  }
+}
+
+.collecting-source-dropdown-50 {
+  width: 27.5%;
 
   .dropdown-toggle {
     width: 100%;
