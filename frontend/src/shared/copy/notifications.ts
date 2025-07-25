@@ -1691,7 +1691,7 @@ export const notifyFetchDeviceMappingFailed = (
   message: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `Failed to fetch device data. ${message}`,
+  message: `Failed to fetch Device Data. ${message}`,
   duration: INFINITE,
 })
 
@@ -1699,6 +1699,6 @@ export const notifyUpdateDeviceMappingFailed = (
   message: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `Failed to update device mapping. ${message}`,
+  message: `Failed to update Device Mapping. ${message}`,
   duration: INFINITE,
 })

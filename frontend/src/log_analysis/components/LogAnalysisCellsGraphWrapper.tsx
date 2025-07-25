@@ -343,7 +343,7 @@ const LogAnalysisCellsGraphWrapper = ({
           aliasName: selectedDeviceAliasName,
           deviceType: '',
           ip: '',
-          orgId: '',
+          orgId: selectedDevice.orgId,
           vendor: '',
           isDeletable: false,
         }
@@ -354,7 +354,12 @@ const LogAnalysisCellsGraphWrapper = ({
           setSelectedDevice(updatedDevice.data)
         }
       } catch (error) {
-        notify(notifyUpdateDeviceMappingFailed(error.message || ''))
+        const errorMsg =
+          error?.response?.data?.message ||
+          error?.data?.message ||
+          error?.message ||
+          ''
+        notify(notifyUpdateDeviceMappingFailed(errorMsg))
       }
     }
   }
