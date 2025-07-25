@@ -16,3 +16,9 @@ export interface DeviceToOrgMapping {
   orgId: string
   aliasName: string
 }
+
+export interface DeviceAlias {
+  aliasName: string
+  orgId: string
+  hostname: string
+}
