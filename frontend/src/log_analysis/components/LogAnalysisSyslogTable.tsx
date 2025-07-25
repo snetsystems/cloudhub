@@ -80,8 +80,8 @@ function getTimeRangeFromTimestamp(
 ): {lower: string; upper: string | null} {
   if (timestamp) {
     const centerDate = new Date(timestamp)
-    const lowerDate = new Date(centerDate.getTime() - 15 * 60 * 1000)
-    const upperDate = new Date(centerDate.getTime() + 15 * 60 * 1000)
+    const lowerDate = new Date(centerDate.getTime() - 2 * 60 * 60 * 1000)
+    const upperDate = new Date(centerDate.getTime() + 2 * 60 * 60 * 1000)
     const lower = lowerDate.toISOString()
     const upper = upperDate.toISOString()
     return {lower, upper}
