@@ -19,6 +19,7 @@ import _ from 'lodash'
 import {NewDeviceTable} from './NewDeviceTable'
 import {orgIdToName} from '../utils/deviceMapping'
 import {useDeviceType} from 'src/log_analysis/hooks/useDeviceType'
+import useDebounce from 'src/hooks/useDebounce'
 
 interface Props {
   me: Me
@@ -43,6 +44,13 @@ function DevicesMappingPage({
 
   const [mappingList, setMappingList] = useState<DeviceMapping>({
     default: [],
+  })
+
+  const debouncedSetOrg = useDebounce({
+    callback: (device: DeviceMeta) => {
+      setMappingInfo(device)
+    },
+    delay: 1000,
   })
 
   useEffect(() => {
@@ -109,20 +117,13 @@ function DevicesMappingPage({
     key: string
   ) => {
     const tempAry = _.cloneDeep(mappingList)
-    console.log('orgName', mappingList, value, rowData, rowIndex, key)
+
     tempAry[rowData.orgId][rowIndex][key] = value
 
-    // setMappingList(tempAry)
+    setMappingList(tempAry)
 
-    setMappingInfo(tempAry[rowData.orgId][rowIndex])
-
-    //todo: debounce setMappingInfo
+    debouncedSetOrg(tempAry[rowData.orgId][rowIndex])
   }
-
-  // const debouncedSetOrg = useMemo(
-  //   () => _.debounce((key: string, rowIndex: number) => {}, 1000),
-  //   [mappingList]
-  // )
 
   return (
     <div className="panel panel-solid">
