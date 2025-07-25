@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {
   Me,
   Organization,
@@ -6,6 +6,7 @@ import {
   BaseElasticSearchData,
   DeviceMeta,
   Source,
+  NotificationAction,
 } from 'src/types'
 import {mappingTableColumns} from 'src/admin/constants/mappingTableColumns'
 import TableComponent from 'src/device_management/components/TableComponent'
@@ -20,6 +21,14 @@ import {NewDeviceTable} from './NewDeviceTable'
 import {orgIdToName} from '../utils/deviceMapping'
 import {useDeviceType} from 'src/log_analysis/hooks/useDeviceType'
 import useDebounce from 'src/hooks/useDebounce'
+import {notify, notify as notifyAction} from 'src/shared/actions/notifications'
+import {bindActionCreators} from 'redux'
+import {
+  notifyDeleteDeviceFailed,
+  notifyDeleteDeviceSucceeded,
+  notifyFetchDeviceListError,
+  notifyUpdateDeviceFailed,
+} from 'src/shared/copy/notifications'
 
 interface Props {
   me: Me
@@ -27,6 +36,7 @@ interface Props {
   esSource: BaseElasticSearchData
   organizations?: Organization[]
   currentSource?: Source
+  notify?: NotificationAction
 }
 
 function DevicesMappingPage({
@@ -35,6 +45,7 @@ function DevicesMappingPage({
   esSource,
   organizations,
   currentSource,
+  notify,
 }: Props) {
   const allTagValues = useDeviceType(currentSource)
 
@@ -60,36 +71,43 @@ function DevicesMappingPage({
   }, [esSource])
 
   const getDeviceList = async (esSourceId: string) => {
-    const response = await fetchDeviceList(esSourceId)
+    try {
+      const response = await fetchDeviceList(esSourceId)
 
-    // Object.keys(response).forEach(org => {
-    //   if (org === 'default') {
-    //     tempAry['unmappedDevices'] = response[org]
-    //   } else {
-    //     tempAry['mappedDevices'] = [
-    //       ...(tempAry?.['mappedDevices'] || []),
-    //       ...response[org],
-    //     ]
-    //   }
-    // })
+      // Object.keys(response).forEach(org => {
+      //   if (org === 'default') {
+      //     tempAry['unmappedDevices'] = response[org]
+      //   } else {
+      //     tempAry['mappedDevices'] = [
+      //       ...(tempAry?.['mappedDevices'] || []),
+      //       ...response[org],
+      //     ]
+      //   }
+      // })
 
-    // const reordered = (({unmappedDevices, mappedDevices}) => ({
-    //   mappedDevices,
-    //   unmappedDevices,
-    // }))(tempAry)
+      // const reordered = (({unmappedDevices, mappedDevices}) => ({
+      //   mappedDevices,
+      //   unmappedDevices,
+      // }))(tempAry)
 
-    // console.log('reordered', reordered)
+      // console.log('reordered', reordered)
 
-    setMappingList(response)
+      setMappingList(response)
+    } catch (error) {
+      notify(notifyFetchDeviceListError(error.message))
+    }
   }
 
   const setMappingInfo = async (device: DeviceMeta) => {
     if (!me.superAdmin) return
 
-    //todo: 빈배열 지우기
-    await updateDeviceMapping(device)
-
-    await getDeviceList(esSource.id)
+    try {
+      await updateDeviceMapping(device)
+    } catch (error) {
+      notify(notifyUpdateDeviceFailed(error.message))
+      throw new Error(notifyUpdateDeviceFailed(error.message).message)
+    }
+    getDeviceList(esSource.id)
   }
 
   const addDevice = async () => {
@@ -106,7 +124,14 @@ function DevicesMappingPage({
   }
 
   const deleteDevice = async (hostName: string) => {
-    await deleteDeviceMapping(hostName)
+    try {
+      await deleteDeviceMapping(hostName)
+      notify(notifyDeleteDeviceSucceeded())
+    } catch (error) {
+      notify(notifyDeleteDeviceFailed(error.message))
+      throw new Error(notifyDeleteDeviceFailed(error.message).message)
+    }
+
     getDeviceList(esSource.id)
   }
 
@@ -119,8 +144,7 @@ function DevicesMappingPage({
     const tempAry = _.cloneDeep(mappingList)
 
     tempAry[rowData.orgId][rowIndex][key] = value
-
-    setMappingList(tempAry)
+    // setMappingList(tempAry)
 
     debouncedSetOrg(tempAry[rowData.orgId][rowIndex])
   }
@@ -148,6 +172,7 @@ function DevicesMappingPage({
           setNewDevice={setNewDevice}
           organizations={organizations || []}
           getDeviceList={() => getDeviceList(esSource.id)}
+          notify={notify}
         />
       )}
       {!!mappingList &&
@@ -204,4 +229,8 @@ const mstp = state => {
   }
 }
 
-export default connect(mstp, null)(DevicesMappingPage)
+const mdtp = dispatch => ({
+  notify: bindActionCreators(notifyAction, dispatch),
+})
+
+export default connect(mstp, mdtp, null)(DevicesMappingPage)

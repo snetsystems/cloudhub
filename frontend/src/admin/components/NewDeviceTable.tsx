@@ -1,19 +1,25 @@
 import React from 'react'
 import TableComponent from 'src/device_management/components/TableComponent'
 import {newDeviceTableColumns} from '../constants/newDviceTableColumns'
-import {DeviceMeta, Organization} from 'src/types'
+import {DeviceMeta, NotificationAction, Organization} from 'src/types'
 import {createDeviceMapping} from '../apis/deviceMapping'
+import {
+  notifyCreateDeviceFailed,
+  notifyCreateDeviceSucceeded,
+} from 'src/shared/copy/notifications'
 
 export const NewDeviceTable = ({
   newDevice,
   setNewDevice,
   organizations,
   getDeviceList,
+  notify,
 }: {
   newDevice: DeviceMeta[]
   setNewDevice: (newDevice: DeviceMeta[]) => void
   organizations: Organization[]
-  getDeviceList: () => void
+  getDeviceList: () => Promise<void>
+  notify?: NotificationAction
 }) => {
   const onChangeInput = (target: string, value: string) => {
     const device = newDevice[0]
@@ -22,15 +28,16 @@ export const NewDeviceTable = ({
   }
 
   const saveDevice = async () => {
-    await createDeviceMapping(newDevice[0], organizations)
-      .then(() => {
-        setNewDevice([])
-      })
-      .catch(err => {
-        console.log('saveDevice err', err)
-      })
+    try {
+      await createDeviceMapping(newDevice[0], organizations)
+      notify(notifyCreateDeviceSucceeded())
+    } catch (error) {
+      notify(notifyCreateDeviceFailed(error.message))
+      throw new Error(notifyCreateDeviceFailed(error.message).message)
+    }
 
-    await getDeviceList()
+    getDeviceList()
+    setNewDevice([])
   }
 
   return (

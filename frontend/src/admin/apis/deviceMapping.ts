@@ -1,16 +1,6 @@
 import AJAX from 'src/utils/ajax'
 import {AxiosResponse} from 'axios'
 import {DeviceMapping, DeviceMeta, Organization} from 'src/types'
-import {
-  notifyDeleteDeviceFailed,
-  notifyDeleteDeviceSucceeded,
-  notifyFetchDeviceListError,
-  notifyUpdateDeviceFailed,
-  notifyUpdateDeviceSucceeded,
-  notifyCreateDeviceSucceeded,
-  notifyCreateDeviceFailed,
-} from 'src/shared/copy/notifications'
-import {notify} from 'src/shared/actions/notifications'
 import {orgNameToId} from 'src/admin/utils/deviceMapping'
 
 export const fetchDeviceList = async (
@@ -23,11 +13,6 @@ export const fetchDeviceList = async (
 
   console.log('error: ', response)
 
-  if (response.status !== 200) {
-    notify(notifyFetchDeviceListError(response.data.message))
-    throw new Error(notifyFetchDeviceListError(response.data.message).message)
-  }
-
   return response.data
 }
 
@@ -39,12 +24,6 @@ export const deleteDeviceMapping = async (
     method: 'DELETE',
   })
 
-  if (response.status !== 200) {
-    notify(notifyDeleteDeviceFailed(response.data.message))
-    throw new Error(notifyDeleteDeviceFailed(response.data.message).message)
-  }
-
-  notify(notifyDeleteDeviceSucceeded())
   return response
 }
 
@@ -68,12 +47,6 @@ export const createDeviceMapping = async (
     data: param,
   })
 
-  if (response.status !== 200) {
-    notify(notifyCreateDeviceFailed(response.data.message))
-    throw new Error(notifyCreateDeviceFailed(response.data.message).message)
-  }
-
-  notify(notifyCreateDeviceSucceeded())
   return response
 }
 
@@ -94,12 +67,6 @@ export const updateDeviceMapping = async (
     data: param,
   })
 
-  if (response.status !== 200) {
-    notify(notifyUpdateDeviceFailed(response.data.message))
-    throw new Error(notifyUpdateDeviceFailed(response.data.message).message)
-  }
-
-  notify(notifyUpdateDeviceSucceeded())
   return response
 }
 
