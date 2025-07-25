@@ -4,7 +4,6 @@ import {DeviceType, DropdownItem} from 'src/types'
 
 interface CollectingSourceDropdownProps {
   deviceType: DeviceType
-  isFromAgent: boolean
   items: DropdownItem[]
   selected: string
   isOpen?: boolean
@@ -18,7 +17,6 @@ const CollectingSourceDropdown: React.FC<CollectingSourceDropdownProps> = ({
   items,
   selected,
   isOpen,
-  isFromAgent,
   deviceType,
   isAuthorized,
   onChoose,
@@ -26,7 +24,7 @@ const CollectingSourceDropdown: React.FC<CollectingSourceDropdownProps> = ({
   onClose,
 }) => (
   <>
-    {deviceType === 'baremetal' && !isFromAgent && (
+    {deviceType === 'baremetal' && (
       <MatchingAliasDropdown
         items={items}
         isOpen={isOpen}
