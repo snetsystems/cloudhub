@@ -5516,6 +5516,531 @@
           }
         }
       }
+    },
+    "/cloudhub/v1/es": {
+      "get": {
+        "tags": ["ElasticSearch"],
+        "summary": "List ElasticSearch sources",
+        "description": "Retrieve all registered ElasticSearch sources.",
+        "responses": {
+          "200": {
+            "description": "ElasticSearch sources",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "esSources": {
+                  "type": "array",
+                  "items": {"$ref": "#/definitions/EsSourceResponse"}
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "esSources": [
+                  {
+                    "id": "1",
+                    "name": "Main ES",
+                    "default": true,
+                    "role": "admin",
+                    "version": "7.10.0",
+                    "url": "https://es.example.com:9200",
+                    "insecureSkipVerify": false,
+                    "basicAuth": {"username": "elastic"},
+                    "apiKeyAuth": {"id": "api-key-id"},
+                    "indexPatterns": ["logs-*", "metrics-*"],
+                    "defaultIndex": "logs-*",
+                    "organization": "default",
+                    "authentication": "basic",
+                    "authenticationMethod": "basic",
+                    "links": {
+                      "self": "/cloudhub/v1/es/1",
+                      "health": "/cloudhub/v1/es/1/health",
+                      "proxy": "/cloudhub/v1/es/1/proxy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["ElasticSearch"],
+        "summary": "Register a new ElasticSearch source",
+        "description": "Create a new ElasticSearch source.",
+        "parameters": [
+          {
+            "name": "esSource",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EsSource"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Registered ElasticSearch source",
+            "schema": {"$ref": "#/definitions/EsSourceResponse"},
+            "examples": {
+              "application/json": {
+                "id": "1",
+                "name": "Main ES",
+                "default": true,
+                "role": "admin",
+                "version": "7.10.0",
+                "url": "https://es.example.com:9200",
+                "insecureSkipVerify": false,
+                "basicAuth": {"username": "elastic"},
+                "apiKeyAuth": {"id": "api-key-id"},
+                "indexPatterns": ["logs-*", "metrics-*"],
+                "defaultIndex": "logs-*",
+                "organization": "default",
+                "authentication": "basic",
+                "authenticationMethod": "basic",
+                "links": {
+                  "self": "/cloudhub/v1/es/1",
+                  "health": "/cloudhub/v1/es/1/health",
+                  "proxy": "/cloudhub/v1/es/1/proxy"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cloudhub/v1/es/{id}": {
+      "get": {
+        "tags": ["ElasticSearch"],
+        "summary": "Get ElasticSearch source information",
+        "description": "Retrieve information about a specific ElasticSearch source.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ElasticSearch source ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ElasticSearch source information",
+            "schema": {"$ref": "#/definitions/EsSourceResponse"},
+            "examples": {
+              "application/json": {
+                "id": "1",
+                "name": "Main ES",
+                "default": true,
+                "role": "admin",
+                "version": "7.10.0",
+                "url": "https://es.example.com:9200",
+                "insecureSkipVerify": false,
+                "basicAuth": {"username": "elastic"},
+                "apiKeyAuth": {"id": "api-key-id"},
+                "indexPatterns": ["logs-*", "metrics-*"],
+                "defaultIndex": "logs-*",
+                "organization": "default",
+                "authentication": "basic",
+                "authenticationMethod": "basic",
+                "links": {
+                  "self": "/cloudhub/v1/es/1",
+                  "health": "/cloudhub/v1/es/1/health",
+                  "proxy": "/cloudhub/v1/es/1/proxy"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ElasticSearch source not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["ElasticSearch"],
+        "summary": "Update ElasticSearch source",
+        "description": "Update an existing ElasticSearch source.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ElasticSearch source ID"
+          },
+          {
+            "name": "esSource",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EsSource"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated ElasticSearch source",
+            "schema": {"$ref": "#/definitions/EsSourceResponse"},
+            "examples": {
+              "application/json": {
+                "id": "1",
+                "name": "Main ES",
+                "default": true,
+                "role": "admin",
+                "version": "7.10.0",
+                "url": "https://es.example.com:9200",
+                "insecureSkipVerify": false,
+                "basicAuth": {"username": "elastic"},
+                "apiKeyAuth": {"id": "api-key-id"},
+                "indexPatterns": ["logs-*", "metrics-*"],
+                "defaultIndex": "logs-*",
+                "organization": "default",
+                "authentication": "basic",
+                "authenticationMethod": "basic",
+                "links": {
+                  "self": "/cloudhub/v1/es/1",
+                  "health": "/cloudhub/v1/es/1/health",
+                  "proxy": "/cloudhub/v1/es/1/proxy"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "ElasticSearch source not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["ElasticSearch"],
+        "summary": "Delete ElasticSearch source",
+        "description": "Remove an existing ElasticSearch source.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ElasticSearch source ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "ElasticSearch source deleted"
+          },
+          "404": {
+            "description": "ElasticSearch source not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cloudhub/v1/device-mappings/devices": {
+      "get": {
+        "tags": ["DeviceMappings"],
+        "summary": "List all device mappings",
+        "description": "Retrieve a list of all device mappings.",
+        "responses": {
+          "200": {
+            "description": "A list of device mappings.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "default": {
+                  "type": "array",
+                  "items": {"$ref": "#/definitions/DeviceMappingResponse"}
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "default": [
+                  {
+                    "hostname": "device1",
+                    "ip": "192.168.0.1",
+                    "alias": "router1",
+                    "organization": "default"
+                  }
+                ]
+              }
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {"$ref": "#/definitions/Error"}
+          }
+        }
+      },
+      "post": {
+        "tags": ["DeviceMappings"],
+        "summary": "Create a new device mapping",
+        "description": "Register a new device mapping.",
+        "parameters": [
+          {
+            "name": "deviceMapping",
+            "in": "body",
+            "required": true,
+            "schema": {"$ref": "#/definitions/DeviceMapping"}
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Device mapping created successfully.",
+            "schema": {"$ref": "#/definitions/DeviceMappingResponse"},
+            "examples": {
+              "application/json": {
+                "hostname": "device1",
+                "ip": "192.168.0.1",
+                "alias": "router1",
+                "organization": "default"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {"$ref": "#/definitions/Error"}
+          }
+        }
+      }
+    },
+    "/cloudhub/v1/device-mappings/devices/{hostname}": {
+      "get": {
+        "tags": ["DeviceMappings"],
+        "summary": "Get device mapping by hostname",
+        "description": "Retrieve a device mapping by hostname.",
+        "parameters": [
+          {
+            "name": "hostname",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Device hostname"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device mapping details.",
+            "schema": {"$ref": "#/definitions/DeviceMappingResponse"},
+            "examples": {
+              "application/json": {
+                "hostname": "device1",
+                "ip": "192.168.0.1",
+                "alias": "router1",
+                "organization": "default"
+              }
+            }
+          },
+          "404": {
+            "description": "Device mapping not found",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {"$ref": "#/definitions/Error"}
+          }
+        }
+      },
+      "patch": {
+        "tags": ["DeviceMappings"],
+        "summary": "Update device mapping by hostname",
+        "description": "Update the details of a device mapping by hostname.",
+        "parameters": [
+          {
+            "name": "hostname",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Device hostname"
+          },
+          {
+            "name": "deviceMapping",
+            "in": "body",
+            "required": true,
+            "schema": {"$ref": "#/definitions/DeviceMapping"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device mapping updated successfully.",
+            "schema": {"$ref": "#/definitions/DeviceMappingResponse"},
+            "examples": {
+              "application/json": {
+                "hostname": "device1",
+                "ip": "192.168.0.1",
+                "alias": "router1",
+                "organization": "default"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "404": {
+            "description": "Device mapping not found",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {"$ref": "#/definitions/Error"}
+          }
+        }
+      },
+      "delete": {
+        "tags": ["DeviceMappings"],
+        "summary": "Delete device mapping by hostname",
+        "description": "Delete a device mapping by hostname.",
+        "parameters": [
+          {
+            "name": "hostname",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Device hostname"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Device mapping deleted successfully."
+          },
+          "404": {
+            "description": "Device mapping not found",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {"$ref": "#/definitions/Error"}
+          }
+        }
+      }
+    },
+    "/cloudhub/v1/device-mappings/aliases/{aliasName}": {
+      "get": {
+        "tags": ["DeviceMappings"],
+        "summary": "Get device mapping by alias name",
+        "description": "Retrieve a device mapping by alias name.",
+        "parameters": [
+          {
+            "name": "aliasName",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Alias name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device mapping details.",
+            "schema": {"$ref": "#/definitions/DeviceMappingResponse"},
+            "examples": {
+              "application/json": {
+                "hostname": "device1",
+                "ip": "192.168.0.1",
+                "alias": "router1",
+                "organization": "default"
+              }
+            }
+          },
+          "404": {
+            "description": "Device mapping not found",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {"$ref": "#/definitions/Error"}
+          }
+        }
+      }
+    },
+    "/cloudhub/v1/device-mappings/ensure": {
+      "post": {
+        "tags": ["DeviceMappings"],
+        "summary": "Ensure device mapping",
+        "description": "Ensure the existence of a device mapping.",
+        "parameters": [
+          {
+            "name": "ensureDeviceRequest",
+            "in": "body",
+            "required": true,
+            "schema": {"$ref": "#/definitions/EnsureDeviceRequest"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device mapping ensured successfully.",
+            "schema": {"$ref": "#/definitions/DeviceMappingResponse"},
+            "examples": {
+              "application/json": {
+                "hostname": "device1",
+                "ip": "192.168.0.1",
+                "alias": "router1",
+                "organization": "default"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {"$ref": "#/definitions/Error"}
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -10056,6 +10581,288 @@
           "example": "/cloudhub/v1/ai/network/managements/devices/12345"
         }
       }
+    },
+    "EsSource": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name",
+          "example": "Main ES"
+        },
+        "default": {
+          "type": "boolean",
+          "description": "Is default source",
+          "example": true
+        },
+        "role": {
+          "type": "string",
+          "description": "Role",
+          "example": "admin"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version",
+          "example": "7.10.0"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL",
+          "example": "https://es.example.com:9200"
+        },
+        "insecureSkipVerify": {
+          "type": "boolean",
+          "description": "Insecure skip verify",
+          "example": false
+        },
+        "basicAuth": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "Username",
+              "example": "elastic"
+            },
+            "password": {
+              "type": "string",
+              "description": "Password",
+              "example": "password123"
+            }
+          }
+        },
+        "apiKeyAuth": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "API key ID",
+              "example": "api-key-id"
+            },
+            "apiKey": {
+              "type": "string",
+              "description": "API key",
+              "example": "api-key-value"
+            }
+          }
+        },
+        "indexPatterns": {
+          "type": "array",
+          "description": "Index patterns",
+          "items": {
+            "type": "string"
+          },
+          "example": ["logs-*", "metrics-*"]
+        },
+        "defaultIndex": {
+          "type": "string",
+          "description": "Default index",
+          "example": "logs-*"
+        },
+        "organization": {
+          "type": "string",
+          "description": "Organization ID",
+          "example": "org1"
+        },
+        "authentication": {
+          "type": "string",
+          "description": "Authentication method",
+          "example": "basic"
+        },
+        "authenticationMethod": {
+          "type": "string",
+          "description": "Authentication method",
+          "example": "basic"
+        }
+      },
+      "required": ["name", "url", "organization"]
+    },
+    "EsSourceResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID",
+          "example": "1"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name",
+          "example": "Main ES"
+        },
+        "default": {
+          "type": "boolean",
+          "description": "Is default source",
+          "example": true
+        },
+        "role": {
+          "type": "string",
+          "description": "Role",
+          "example": "admin"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version",
+          "example": "7.10.0"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL",
+          "example": "https://es.example.com:9200"
+        },
+        "insecureSkipVerify": {
+          "type": "boolean",
+          "description": "Insecure skip verify",
+          "example": false
+        },
+        "basicAuth": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "Username",
+              "example": "elastic"
+            },
+            "password": {
+              "type": "string",
+              "description": "Password",
+              "example": "password123"
+            }
+          }
+        },
+        "apiKeyAuth": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "API key ID",
+              "example": "api-key-id"
+            },
+            "apiKey": {
+              "type": "string",
+              "description": "API key",
+              "example": "api-key-value"
+            }
+          }
+        },
+        "indexPatterns": {
+          "type": "array",
+          "description": "Index patterns",
+          "items": {
+            "type": "string"
+          },
+          "example": ["logs-*", "metrics-*"]
+        },
+        "defaultIndex": {
+          "type": "string",
+          "description": "Default index",
+          "example": "logs-*"
+        },
+        "organization": {
+          "type": "string",
+          "description": "Organization ID",
+          "example": "org1"
+        },
+        "authentication": {
+          "type": "string",
+          "description": "Authentication method",
+          "example": "basic"
+        },
+        "authenticationMethod": {
+          "type": "string",
+          "description": "Authentication method",
+          "example": "basic"
+        },
+        "links": {
+          "$ref": "#/definitions/EsSourceLinks"
+        }
+      }
+    },
+    "EsSourceLinks": {
+      "type": "object",
+      "properties": {
+        "self": {
+          "type": "string",
+          "description": "Self link",
+          "example": "/cloudhub/v1/es/1"
+        },
+        "health": {
+          "type": "string",
+          "description": "Health link",
+          "example": "/cloudhub/v1/es/1/health"
+        },
+        "proxy": {
+          "type": "string",
+          "description": "Proxy link",
+          "example": "/cloudhub/v1/es/1/proxy"
+        }
+      }
+    },
+    "DeviceMapping": {
+      "type": "object",
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "description": "Device hostname",
+          "example": "device1"
+        },
+        "ip": {
+          "type": "string",
+          "description": "Device IP address",
+          "example": "192.168.0.1"
+        },
+        "alias": {
+          "type": "string",
+          "description": "Device alias name",
+          "example": "router1"
+        },
+        "organization": {
+          "type": "string",
+          "description": "Organization ID",
+          "example": "default"
+        }
+      },
+      "required": ["hostname", "ip", "organization"]
+    },
+    "DeviceMappingResponse": {
+      "type": "object",
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "description": "Device hostname",
+          "example": "device1"
+        },
+        "ip": {
+          "type": "string",
+          "description": "Device IP address",
+          "example": "192.168.0.1"
+        },
+        "alias": {
+          "type": "string",
+          "description": "Device alias name",
+          "example": "router1"
+        },
+        "organization": {
+          "type": "string",
+          "description": "Organization ID",
+          "example": "default"
+        }
+      }
+    },
+    "EnsureDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "description": "Device hostname",
+          "example": "device1"
+        },
+        "esSource": {
+          "type": "string",
+          "description": "Elasticsearch source ID",
+          "example": "1"
+        }
+      },
+      "required": ["hostname", "esSource"]
     }
   }
 }
