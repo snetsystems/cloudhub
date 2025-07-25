@@ -4,27 +4,31 @@ import CollectingSourceDropdown from 'src/log_analysis/components/CollectingSour
 import {DropdownItem, DeviceType} from 'src/types'
 
 interface VendorAndSourceDropdownWrapperProps {
+  isFromAgent: boolean
+  deviceType: DeviceType
+
   // VendorDropdown props
   vendorItems: DropdownItem[]
   selectedVendor: string
   vendorIsOpen?: boolean
   isAuthorized?: boolean
   onVendorChoose: (item: DropdownItem) => void
-  onVendorClick?: () => void
-  onVendorClose?: () => void
-  onVendorApply?: () => void
-  deviceType?: DeviceType
+  onVendorClick: () => void
+  onVendorClose: () => void
+  onVendorApply: () => void
 
   // CollectingSourceDropdown props
   collectingSourceItems: DropdownItem[]
   selectedCollectingSource: string
-  collectingSourceIsOpen?: boolean
+  collectingSourceIsOpen: boolean
   onCollectingSourceChoose: (item: DropdownItem) => void
-  onCollectingSourceClick?: () => void
-  onCollectingSourceClose?: () => void
+  onCollectingSourceClick: () => void
+  onCollectingSourceClose: () => void
 }
 
 const VendorAndSourceDropdownWrapper: React.FC<VendorAndSourceDropdownWrapperProps> = ({
+  deviceType,
+  isFromAgent,
   // VendorDropdown props
   vendorItems,
   selectedVendor,
@@ -34,7 +38,6 @@ const VendorAndSourceDropdownWrapper: React.FC<VendorAndSourceDropdownWrapperPro
   onVendorClick,
   onVendorClose,
   onVendorApply,
-  deviceType,
 
   // CollectingSourceDropdown props
   collectingSourceItems,
@@ -61,6 +64,7 @@ const VendorAndSourceDropdownWrapper: React.FC<VendorAndSourceDropdownWrapperPro
             onApply={onVendorApply}
           />
           <CollectingSourceDropdown
+            isFromAgent={isFromAgent}
             deviceType={deviceType}
             items={collectingSourceItems}
             selected={selectedCollectingSource}

@@ -3,11 +3,12 @@ import MatchingAliasDropdown from 'src/log_analysis/components/MatchingAliasDrop
 import {DeviceType, DropdownItem} from 'src/types'
 
 interface CollectingSourceDropdownProps {
+  deviceType: DeviceType
+  isFromAgent: boolean
   items: DropdownItem[]
   selected: string
   isOpen?: boolean
   isAuthorized?: boolean
-  deviceType: DeviceType
   onChoose: (item: DropdownItem) => void
   onClick?: () => void
   onClose?: () => void
@@ -17,6 +18,7 @@ const CollectingSourceDropdown: React.FC<CollectingSourceDropdownProps> = ({
   items,
   selected,
   isOpen,
+  isFromAgent,
   deviceType,
   isAuthorized,
   onChoose,
@@ -24,7 +26,7 @@ const CollectingSourceDropdown: React.FC<CollectingSourceDropdownProps> = ({
   onClose,
 }) => (
   <>
-    {deviceType === 'baremetal' && (
+    {deviceType === 'baremetal' && !isFromAgent && (
       <MatchingAliasDropdown
         items={items}
         isOpen={isOpen}

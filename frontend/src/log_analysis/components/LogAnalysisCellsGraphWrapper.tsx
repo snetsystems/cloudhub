@@ -522,6 +522,7 @@ const LogAnalysisCellsGraphWrapper = ({
                 toggleDisabled={false}
               />
               <VendorAndSourceDropdownWrapper
+                isFromAgent={isFromAgent}
                 deviceType={deviceType}
                 vendorItems={vendorDropdownItems}
                 selectedVendor={selectedVendor}
