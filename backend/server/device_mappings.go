@@ -503,7 +503,13 @@ func (s *Service) mergeAndUpsertDevices(
 
 	var toCreate []*cloudhub.DeviceMeta
 	for h, info := range hosts {
-		if _, ok := cache[h]; ok {
+		if existingMeta, ok := cache[h]; ok {
+			if existingMeta.IP != info.IP {
+				existingMeta.IP = info.IP
+				if err := s.Store.DeviceMappings(ctx).UpdateDevice(ctx, h, existingMeta); err != nil {
+					return nil, err
+				}
+			}
 			continue
 		}
 		meta := &cloudhub.DeviceMeta{
