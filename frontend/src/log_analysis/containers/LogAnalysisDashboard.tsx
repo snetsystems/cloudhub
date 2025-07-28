@@ -12,6 +12,7 @@ import {resetSelectedDevice} from 'src/log_analysis/actions'
 import {Page} from 'src/reusable_ui'
 import LogAnalysisSyslogTableWrapper from 'src/log_analysis/components/LogAnalysisSyslogTableWrapper'
 import LogsFilterContainer from 'src/log_analysis/components/LogsFilterContainer'
+import LogAnalysisTips from 'src/log_analysis/components/LogAnalysisTips'
 
 // Type
 import * as DashboardsModels from 'src/types/dashboards'
@@ -227,6 +228,7 @@ function LogAnalysisDashboard({
   const renderHeaderRight = () => {
     return (
       <>
+        <LogAnalysisTips />
         <SourceIndicator />
         <AutoRefreshDropdown
           onChoose={handleChooseAutoRefresh}
