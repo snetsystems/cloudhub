@@ -25,7 +25,6 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
-import {VENDOR_DROPDOWN_ITEMS} from 'src/log_analysis/constants'
 
 // Components
 import {timeRanges} from 'src/shared/data/timeRanges'
@@ -43,6 +42,7 @@ import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
 import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
+import {getVendorDropdownItemsByDeviceType} from 'src/log_analysis/util'
 
 // Actions
 import {closePanel} from 'src/shared/actions/sidePanel'
@@ -133,7 +133,7 @@ const LogAnalysisCellsGraphWrapper = ({
   ] = useState(false)
   const [vendorDropdownItems, setVendorDropdownItems] = useState<
     DropdownItem[]
-  >(VENDOR_DROPDOWN_ITEMS)
+  >(getVendorDropdownItemsByDeviceType(deviceType))
   const [selectedVendor, setSelectedVendor] = useState<string>('')
   const [vendorDropdownIsOpen, setVendorDropdownIsOpen] = useState(false)
 
@@ -199,9 +199,10 @@ const LogAnalysisCellsGraphWrapper = ({
   }, [deviceType, isFromAgent, source, isAuthorized])
 
   useEffect(() => {
-    setVendorDropdownItems(VENDOR_DROPDOWN_ITEMS)
-    setSelectedVendor(selectedDevice?.vendor || 'VMware')
-  }, [selectedDevice?.hostname])
+    const vendorItems = getVendorDropdownItemsByDeviceType(deviceType)
+    setVendorDropdownItems(vendorItems)
+    setSelectedVendor(selectedDevice?.vendor || vendorItems[0]?.text || '')
+  }, [selectedDevice?.hostname, deviceType])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
@@ -264,7 +265,7 @@ const LogAnalysisCellsGraphWrapper = ({
   const filterLayoutsByRule = async () => {
     let filtered: Layout[] = []
 
-    if (deviceType === 'ipmi') {
+    if (deviceType.toLowerCase() === 'ipmi') {
       filtered = allLayouts.filter(layout => layout.app === 'ipmi_sensor')
       return filtered.sort((x, y) => {
         return x.measurement < y.measurement
@@ -277,9 +278,9 @@ const LogAnalysisCellsGraphWrapper = ({
 
     if (isFromAgent) {
       if (
-        deviceType === 'baremetal' ||
-        deviceType === 'vm' ||
-        deviceType === 'switch'
+        deviceType.toLowerCase() === 'baremetal' ||
+        deviceType.toLowerCase() === 'vm' ||
+        deviceType.toLowerCase() === 'switch'
       ) {
         filtered = allLayouts.filter(
           layout => layout.app === 'system' || layout.app === 'win_system'
@@ -295,19 +296,15 @@ const LogAnalysisCellsGraphWrapper = ({
         }
       }
     } else {
-      if (deviceType === 'baremetal') {
+      if (deviceType.toLowerCase() === 'baremetal') {
         filtered = allLayouts.filter(
           layout =>
             layout.app === 'vsphere' &&
             layout.measurement.startsWith('vsphere_host')
         )
-      } else if (deviceType === 'vm') {
-        if (selectedVendor === 'VMWare') {
-          filtered = allLayouts.filter(
-            layout =>
-              layout.app === 'vsphere' &&
-              layout.measurement.startsWith('vsphere_vm')
-          )
+      } else if (deviceType.toLowerCase() === 'vm') {
+        if (selectedVendor.toLowerCase() === 'openstack') {
+          filtered = allLayouts.filter(layout => layout.app === 'openstack')
         } else {
           filtered = allLayouts.filter(
             layout =>
@@ -315,7 +312,7 @@ const LogAnalysisCellsGraphWrapper = ({
               layout.measurement.startsWith('vsphere_vm')
           )
         }
-      } else if (deviceType === 'switch') {
+      } else if (deviceType.toLowerCase() === 'switch') {
         filtered = allLayouts.filter(layout => layout.app === 'snmp_nx')
       }
     }

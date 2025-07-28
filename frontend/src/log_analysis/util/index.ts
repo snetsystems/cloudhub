@@ -1,6 +1,7 @@
 import moment from 'moment'
 import {CloudTimeRange} from 'src/clouds/types'
 import {
+  DropdownItem,
   FilteredLogsForLogAnalysis,
   LogsFilterClause,
   MatchPhraseFilterClause,
@@ -14,6 +15,11 @@ import {
   LogFilterClause,
 } from 'src/types/logAnalysis'
 import {timeRanges} from 'src/shared/data/timeRanges'
+import {
+  BAREMETAL_VENDOR_DROPDOWN_ITEMS,
+  VM_HYPERVISOR_DROPDOWN_ITEMS,
+  VM_LEVEL_DROPDOWN_ITEMS,
+} from 'src/log_analysis/constants/log-analysis'
 
 export const formattedTime = (
   timestampInput: string | null,
@@ -236,4 +242,22 @@ export const parseFieldOpValue = (src: string) => {
 
   const [, field, op, value] = m
   return {field, op, value}
+}
+
+export const getVendorDropdownItemsByDeviceType = (
+  deviceType: string
+): DropdownItem[] => {
+  switch (deviceType) {
+    case 'vm':
+      return VM_LEVEL_DROPDOWN_ITEMS
+    case 'baremetal':
+      return VM_HYPERVISOR_DROPDOWN_ITEMS
+    case 'ipmi':
+      return [
+        ...VM_HYPERVISOR_DROPDOWN_ITEMS,
+        ...BAREMETAL_VENDOR_DROPDOWN_ITEMS,
+      ]
+    default:
+      return []
+  }
 }

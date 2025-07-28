@@ -150,9 +150,19 @@ export const LOG_ANALYSIS_TIME_SERIES_DEVICE_LAYOUT_IDS = {
   switch: '37b0740a-79ac-4f4c-8ca0-e223a47400b8',
 }
 
-export const COLLECTING_SOURCE_DROPDOWN_ITEMS: DropdownItem[] = [
-  {text: 'From IPMI'},
-  {text: 'From Hypervisor'},
+export const VM_HYPERVISOR_DROPDOWN_ITEMS: DropdownItem[] = [
+  {text: 'VMware'},
+  // {text: 'OpenStack'},
 ]
 
-export const VENDOR_DROPDOWN_ITEMS: DropdownItem[] = [{text: 'VMware'}]
+export const VM_LEVEL_DROPDOWN_ITEMS: DropdownItem[] = [
+  {text: 'VMware'},
+  {text: 'OpenStack'},
+]
+
+export const BAREMETAL_VENDOR_DROPDOWN_ITEMS: DropdownItem[] = [
+  {text: 'Inspur'},
+  {text: 'Gigabyte'},
+  {text: 'Dell'},
+  {text: 'Supermicro'},
+]
