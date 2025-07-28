@@ -261,3 +261,26 @@ export const getVendorDropdownItemsByDeviceType = (
       return []
   }
 }
+
+export const isInvalidVendorForDeviceType = (
+  deviceType: string,
+  selectedVendor?: string
+): boolean => {
+  if (
+    deviceType === 'baremetal' &&
+    (!selectedVendor ||
+      !VM_HYPERVISOR_DROPDOWN_ITEMS.some(item => item.text === selectedVendor))
+  ) {
+    return true
+  }
+
+  if (
+    deviceType === 'vm' &&
+    (!selectedVendor ||
+      !VM_LEVEL_DROPDOWN_ITEMS.some(item => item.text === selectedVendor))
+  ) {
+    return true
+  }
+
+  return false
+}

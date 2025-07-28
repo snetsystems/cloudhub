@@ -42,7 +42,10 @@ import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
 import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
-import {getVendorDropdownItemsByDeviceType} from 'src/log_analysis/util'
+import {
+  getVendorDropdownItemsByDeviceType,
+  isInvalidVendorForDeviceType,
+} from 'src/log_analysis/util'
 
 // Actions
 import {closePanel} from 'src/shared/actions/sidePanel'
@@ -175,8 +178,6 @@ const LogAnalysisCellsGraphWrapper = ({
 
   useEffect(() => {
     const fetchDropdownItems = async () => {
-      const currentDeviceType = isFromAgent ? 'baremetal' : deviceType
-
       if (!isAuthorized) {
         return
       }
@@ -185,8 +186,10 @@ const LogAnalysisCellsGraphWrapper = ({
         const tempVars = generateForHosts(source)
         const tagValues = await getTagValuesForDeviceType(
           source,
-          currentDeviceType,
-          tempVars
+          deviceType,
+          tempVars,
+          isFromAgent,
+          selectedVendor
         )
         setMatchingAliasDropdownItems(tagValues)
       } catch (error) {
@@ -196,12 +199,12 @@ const LogAnalysisCellsGraphWrapper = ({
     }
 
     fetchDropdownItems()
-  }, [deviceType, isFromAgent, source, isAuthorized])
+  }, [deviceType, isFromAgent, source, isAuthorized, selectedVendor])
 
   useEffect(() => {
     const vendorItems = getVendorDropdownItemsByDeviceType(deviceType)
     setVendorDropdownItems(vendorItems)
-    setSelectedVendor(selectedDevice?.vendor || vendorItems[0]?.text || '')
+    setSelectedVendor(selectedDevice?.vendor || '')
   }, [selectedDevice?.hostname, deviceType])
 
   useEffect(() => {
@@ -209,11 +212,32 @@ const LogAnalysisCellsGraphWrapper = ({
   }, [cloudAutoRefresh?.logAnalysis])
 
   const getDeviceKeyValue = (selectedDeviceAliasName: string) => {
+    if (deviceType === 'ipmi') {
+      return {hostname: selectedDeviceAliasName}
+    }
+
+    if (isFromAgent) {
+      switch (deviceType) {
+        case 'baremetal':
+        case 'vm':
+        case 'switch':
+          return {host: selectedDeviceAliasName}
+        default:
+          return {host: selectedDeviceAliasName}
+      }
+    }
+
     switch (deviceType) {
       case 'baremetal':
-        return {host: selectedDeviceAliasName}
+        // TODO: Currently only VM is considered;
+        // need to add support for Hypervisors based on Vendor in the future
+        return {esxhostname: selectedDeviceAliasName}
       case 'vm':
-        return {vmname: selectedDeviceAliasName}
+        if (selectedVendor.toLowerCase() === 'openstack') {
+          return {server_id: selectedDeviceAliasName}
+        } else {
+          return {vmname: selectedDeviceAliasName}
+        }
       case 'switch':
         return {agent_host: selectedDeviceAliasName}
       default:
@@ -223,14 +247,16 @@ const LogAnalysisCellsGraphWrapper = ({
 
   useEffect(() => {
     if (!!layout) {
+      if (isInvalidVendorForDeviceType(deviceType, selectedVendor)) {
+        return
+      }
+
+      const deviceKeyValue = getDeviceKeyValue(
+        matchingAliasSelectedDeviceAliasName
+      )
+
       setLayoutCells(
-        getCellsReactive(
-          layout,
-          source,
-          getDeviceKeyValue(matchingAliasSelectedDeviceAliasName),
-          ratio,
-          null
-        )
+        getCellsReactive(layout, source, deviceKeyValue, ratio, null)
       )
     }
   }, [
@@ -239,6 +265,7 @@ const LogAnalysisCellsGraphWrapper = ({
     matchingAliasSelectedDeviceAliasName,
     deviceType,
     isFromAgent,
+    selectedVendor,
   ])
 
   const fetchMeasurements = async (hostID: string) => {
@@ -296,6 +323,10 @@ const LogAnalysisCellsGraphWrapper = ({
         }
       }
     } else {
+      if (isInvalidVendorForDeviceType(deviceType, selectedVendor)) {
+        return []
+      }
+
       if (deviceType.toLowerCase() === 'baremetal') {
         filtered = allLayouts.filter(
           layout =>
@@ -479,6 +510,32 @@ const LogAnalysisCellsGraphWrapper = ({
         </LogAnalysisDashboardHeader>
         {_.isEmpty(layout) ? (
           <>
+            <VendorDropdownWrapper
+              isFromAgent={isFromAgent}
+              deviceType={deviceType}
+              vendorItems={vendorDropdownItems}
+              selectedVendor={selectedVendor}
+              vendorIsOpen={vendorDropdownIsOpen}
+              onVendorChoose={handleVendorDropdownChoose}
+              onVendorClick={handleVendorDropdownClick}
+              onVendorClose={handleVendorDropdownClose}
+              onVendorApply={handleVendorOnApply}
+              isAuthorized={isAuthorized}
+            />
+            <MatchingAlias
+              deviceType={deviceType}
+              dropdownItems={matchingAliasDropdownItems}
+              dropdownIsOpen={matchingAliasDropdownIsOpen}
+              isAuthorized={isAuthorized}
+              dropdownOnChoose={handleMatchingAliasDropdownOnChoose}
+              dropdownOnClick={handleMatchingAliasDropdownOnClick}
+              dropdownOnClose={handleMatchingAliasDropdownOnClose}
+              selectedDropdown={matchingAliasSelectedDeviceAliasName}
+              onApply={handleMatchingAliasOnApply}
+              toggleActive={isFromAgent}
+              onToggleChange={onToggleChange}
+              toggleDisabled={false}
+            />
             <div className="panel-body" style={{margin: '0 15px'}}>
               <div className="generic-empty-state">
                 <h4 style={{margin: '90px 0'}}>No Results Found</h4>

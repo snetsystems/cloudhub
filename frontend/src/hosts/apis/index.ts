@@ -19,6 +19,7 @@ import {
   TopologyOption,
 } from 'src/hosts/types'
 import {DashboardSwitcherLinks} from 'src/types/dashboards'
+import {isInvalidVendorForDeviceType} from 'src/log_analysis/util'
 
 // APIs
 import {
@@ -1685,35 +1686,75 @@ export const getHostsInfoWithIpmi = async (
 export const getTagValuesForDeviceType = async (
   source: Source,
   deviceType: string,
-  tempVars: Template[]
+  tempVars: Template[],
+  isFromAgent?: boolean,
+  selectedVendor?: string
 ): Promise<DropdownItem[]> => {
+  if (
+    !isFromAgent &&
+    isInvalidVendorForDeviceType(deviceType, selectedVendor)
+  ) {
+    return []
+  }
+
   let query = ''
 
-  switch (deviceType) {
-    case 'baremetal':
-      query = replaceTemplate(
-        'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
-        tempVars
-      )
-      break
-    case 'vm':
-      query = replaceTemplate(
-        'SHOW TAG VALUES FROM "vsphere_vm_cpu" WITH KEY="vmname"',
-        tempVars
-      )
-      break
-    case 'switch':
-      query = replaceTemplate(
-        'SHOW TAG VALUES FROM "snmp_nx" WITH KEY="agent_host"',
-        tempVars
-      )
-      break
-    default:
-      query = replaceTemplate(
-        'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
-        tempVars
-      )
-      break
+  if (deviceType === 'ipmi') {
+    query = replaceTemplate(
+      'SHOW TAG VALUES FROM "ipmi_sensor" WITH KEY="hostname"',
+      tempVars
+    )
+  } else if (isFromAgent) {
+    switch (deviceType) {
+      case 'baremetal':
+      case 'vm':
+      case 'switch':
+        query = replaceTemplate(
+          'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
+          tempVars
+        )
+        break
+      default:
+        query = replaceTemplate(
+          'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
+          tempVars
+        )
+        break
+    }
+  } else {
+    switch (deviceType) {
+      case 'baremetal':
+        query = replaceTemplate(
+          'SHOW TAG VALUES FROM "vsphere_host_cpu" WITH KEY="esxhostname"',
+          tempVars
+        )
+        break
+      case 'vm':
+        if (selectedVendor?.toLowerCase() === 'openstack') {
+          query = replaceTemplate(
+            'SHOW TAG VALUES FROM "openstack" WITH KEY="server_id"',
+            tempVars
+          )
+        } else {
+          query = replaceTemplate(
+            'SHOW TAG VALUES FROM "vsphere_vm_cpu" WITH KEY="vmname"',
+            tempVars
+          )
+        }
+        break
+      case 'switch':
+        query = replaceTemplate(
+          'SHOW TAG VALUES FROM "snmp_nx" WITH KEY="agent_host"',
+          tempVars
+        )
+        break
+      default:
+        query = replaceTemplate(
+          'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
+          tempVars
+        )
+        break
+    }
   }
 
   try {
