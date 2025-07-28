@@ -1690,10 +1690,7 @@ export const getTagValuesForDeviceType = async (
   isFromAgent?: boolean,
   selectedVendor?: string
 ): Promise<DropdownItem[]> => {
-  if (
-    !isFromAgent &&
-    isInvalidVendorForDeviceType(deviceType, selectedVendor)
-  ) {
+  if (isInvalidVendorForDeviceType(deviceType, selectedVendor, isFromAgent)) {
     return []
   }
 

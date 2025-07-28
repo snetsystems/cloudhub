@@ -247,7 +247,9 @@ const LogAnalysisCellsGraphWrapper = ({
 
   useEffect(() => {
     if (!!layout) {
-      if (isInvalidVendorForDeviceType(deviceType, selectedVendor)) {
+      if (
+        isInvalidVendorForDeviceType(deviceType, selectedVendor, isFromAgent)
+      ) {
         return
       }
 
@@ -323,7 +325,9 @@ const LogAnalysisCellsGraphWrapper = ({
         }
       }
     } else {
-      if (isInvalidVendorForDeviceType(deviceType, selectedVendor)) {
+      if (
+        isInvalidVendorForDeviceType(deviceType, selectedVendor, isFromAgent)
+      ) {
         return []
       }
 
@@ -536,7 +540,7 @@ const LogAnalysisCellsGraphWrapper = ({
               onToggleChange={onToggleChange}
               toggleDisabled={false}
             />
-            <div className="panel-body" style={{margin: '0 15px'}}>
+            <div className="panel-body" style={{margin: '15px 15px 0 15px'}}>
               <div className="generic-empty-state">
                 <h4 style={{margin: '90px 0'}}>No Results Found</h4>
               </div>

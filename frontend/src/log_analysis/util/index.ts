@@ -264,8 +264,13 @@ export const getVendorDropdownItemsByDeviceType = (
 
 export const isInvalidVendorForDeviceType = (
   deviceType: string,
-  selectedVendor?: string
+  selectedVendor?: string,
+  isFromAgent?: boolean
 ): boolean => {
+  if (isFromAgent) {
+    return false
+  }
+
   if (
     deviceType === 'baremetal' &&
     (!selectedVendor ||
