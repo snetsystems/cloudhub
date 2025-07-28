@@ -10,19 +10,18 @@ import {
 } from 'src/types'
 import _ from 'lodash'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import MatchingAliasDropdownWrapper from 'src/log_analysis/components/MatchingAliasDropdownWrapper'
 import {orgNameToId} from '../utils/deviceMapping'
+import {
+  VM_LEVEL_DROPDOWN_ITEMS,
+  BAREMETAL_VENDOR_DROPDOWN_ITEMS,
+} from 'src/shared/constants/venders'
+import InputDropdownWrapper from 'src/shared/components/InputDropdownWrapper'
 
 export const mappingTableColumns = (
   me: Me,
   setMappingInfo: (device: DeviceMeta) => void,
   deleteDevice: (hostName: string) => void,
-  onChangeAlias: (
-    value: string,
-    rowData: DeviceMeta,
-    rowIndex: number,
-    key: string
-  ) => void,
+  onChangeAlias: (value: string, rowData: DeviceMeta, key: string) => void,
   organizations?: Organization[],
   allTagValues?: {
     [deviceType: string]: DropdownItem[]
@@ -38,9 +37,7 @@ export const mappingTableColumns = (
     },
     render: (value, rowData) => (
       <div
-        className={`input-cte__disabled ${
-          rowData.isDeletable ? 'isDeletable' : ''
-        }`}
+        className={`${rowData.isDeletable ? 'isDeletable' : ''}`}
         title={value}
       >
         {value}
@@ -57,9 +54,7 @@ export const mappingTableColumns = (
     },
     render: (value, rowData) => (
       <div
-        className={`input-cte__disabled ${
-          rowData.isDeletable ? 'isDeletable' : ''
-        }`}
+        className={`${rowData.isDeletable ? 'isDeletable' : ''}`}
         title={value}
       >
         {value}
@@ -76,9 +71,7 @@ export const mappingTableColumns = (
     },
     render: (value, rowData) => (
       <div
-        className={`input-cte__disabled ${
-          rowData.isDeletable ? 'isDeletable' : ''
-        }`}
+        className={`${rowData.isDeletable ? 'isDeletable' : ''}`}
         title={value}
       >
         {value}
@@ -93,23 +86,30 @@ export const mappingTableColumns = (
         className: 'w-15',
       },
     },
-    render: (value, rowData, _, rowIndex) => (
+    render: (value, rowData) => (
       <div className={`${rowData.isDeletable ? 'isDeletable' : ''}`}>
-        <input
+        {/* <input
           type="text"
           className="input-cte"
           value={value}
           onChange={e => {
-            onChangeAlias(e.target.value, rowData, rowIndex, 'vendor')
-          }}
-        />
-        {/* <MatchingAliasDropdownWrapper
-          items={allTagValues?.[rowData.deviceType] || []}
-          selectedItem={value}
-          setSelectedItem={text => {
-            onChangeAlias(text, rowData, rowIndex, 'vendor')
+              onChangeAlias(e.target.value, rowData, 'vendor')
           }}
         /> */}
+        <InputDropdownWrapper
+          items={[
+            ...VM_LEVEL_DROPDOWN_ITEMS,
+            ...BAREMETAL_VENDOR_DROPDOWN_ITEMS,
+          ]}
+          selectedItem={value}
+          setSelectedItem={text => {
+            onChangeAlias(text, rowData, 'vendor')
+          }}
+          onChange={text => {
+            const value = text
+            onChangeAlias(value, rowData, 'vendor')
+          }}
+        />
       </div>
     ),
   },
@@ -123,16 +123,21 @@ export const mappingTableColumns = (
         align: AlignType.CENTER,
       },
     },
-    render: (value, rowData, _, rowIndex) => (
+    render: (value, rowData) => (
       <div className={`flow-line ${rowData.isDeletable ? 'isDeletable' : ''}`}>
         <div className={'provider--arrow'}>
           <span />
-          <div className="host">
-            <MatchingAliasDropdownWrapper
+          <div className="mapping-table-host">
+            <InputDropdownWrapper
               items={allTagValues?.[rowData.deviceType] || []}
               selectedItem={value}
               setSelectedItem={text => {
-                onChangeAlias(text, rowData, rowIndex, 'aliasName')
+                onChangeAlias(text, rowData, 'aliasName')
+              }}
+              className="dropdown-stretch"
+              onChange={text => {
+                const value = text
+                onChangeAlias(value, rowData, 'aliasName')
               }}
             />
           </div>
@@ -166,7 +171,7 @@ export const mappingTableColumns = (
                 orgId: orgNameToId(e.text, organizations || []),
               })
             }} // change tenant
-            selected={org[0]?.name ?? value}
+            selected={org[0]?.name ?? value ?? ''}
             className="dropdown-stretch"
             disabled={!me.superAdmin}
           />

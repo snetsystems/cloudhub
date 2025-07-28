@@ -220,7 +220,7 @@ function TableBase({
                     }}
                     className={`${
                       isAccordionRow ? 'hover-pointer-cursor' : ''
-                    }`}
+                    } ${options?.tbodyRow?.className ?? ''}`}
                   >
                     {keys.map((key, columnIndex) => {
                       const column = columns[columnIndex]

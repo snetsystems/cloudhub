@@ -7,22 +7,22 @@
 }
 
 /* ────── 가운데 호스트 라벨 ────── */
-.host {
+.mapping-table-host {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: -16px;
+  left: calc(50% - 25%);
   width: 50%;
 
   display: inline-block;
-  padding: 2px 15px; /* 라벨 내부·선 간격 */
-  z-index: 1; /* 선 위에 겹치도록 */
+  padding: 2px 15px;
 }
 
 .mapping-table {
-  .input-cte__disabled {
+  .mapping-readonly {
     color: $g12-forge;
+    background-color: inherit;
     margin: 8px 0;
+    border: 1px solid $g4-onyx;
   }
   .table {
     > tbody {
@@ -40,10 +40,17 @@
 }
 
 .mapping-table-2 {
-  .input-cte__disabled {
+  .mapping-readonly {
     color: $g12-forge;
     background-color: inherit;
     margin: 8px 0;
+    border: none;
+    display: flex;
+    align-items: center;
+
+    .line-height {
+      line-height: 1.5;
+    }
   }
   .table {
     > tbody {
@@ -56,6 +63,45 @@
 
     .dropdown-selected {
       width: 100%;
+    }
+  }
+}
+
+.mapping-table-2 {
+  .table .isDeletable {
+    opacity: 0.4;
+    pointer-events: none;
+    //Todo: Cursor 동작 안됨
+  }
+}
+
+.table .isDeletable {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+  //Todo: Cursor 동작 안됨
+}
+
+.mapping-table {
+  .table {
+    .table-row {
+      border-bottom: 1px solid $g4-onyx;
+    }
+
+    td {
+      padding: 4px 8px;
+    }
+  }
+}
+
+.mapping-table-2 {
+  .table {
+    .table-row {
+      border-bottom: 1px solid $g4-onyx;
+    }
+
+    td {
+      padding: 8px 8px;
     }
   }
 }
@@ -75,25 +121,6 @@
   }
   .icon.trash {
     cursor: pointer;
-  }
-}
-
-.table .isDeletable {
-  background-color: $g4-onyx;
-  opacity: 0.4;
-  pointer-events: none;
-  cursor: not-allowed;
-  //Todo: Cursor 동작 안됨
-}
-
-.mapping-table-2 {
-  .table .isDeletable {
-    background-color: inherit;
-    opacity: 0.4;
-    pointer-events: none;
-    cursor: not-allowed;
-    border: 1px solid $c-fire;
-    //Todo: Cursor 동작 안됨
   }
 }
 

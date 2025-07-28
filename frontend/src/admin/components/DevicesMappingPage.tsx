@@ -21,7 +21,7 @@ import {NewDeviceTable} from './NewDeviceTable'
 import {orgIdToName} from '../utils/deviceMapping'
 import {useDeviceType} from 'src/log_analysis/hooks/useDeviceType'
 import useDebounce from 'src/hooks/useDebounce'
-import {notify, notify as notifyAction} from 'src/shared/actions/notifications'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {bindActionCreators} from 'redux'
 import {
   notifyDeleteDeviceFailed,
@@ -120,26 +120,29 @@ function DevicesMappingPage({
         notify(notifyDeleteDeviceSucceeded())
       } else {
         console.log('response: ', response)
-        notify(notifyDeleteDeviceFailed(response.data.message))
+        notify(notifyDeleteDeviceFailed(response.data.message ?? ''))
       }
     } catch (error) {
       console.log('error: ', error)
-      notify(notifyDeleteDeviceFailed(error.message))
+      notify(notifyDeleteDeviceFailed(error.message ?? ''))
     }
 
     getDeviceList(esSource.id)
   }
 
-  const onChangeAlias = (
-    value: string,
-    rowData: DeviceMeta,
-    rowIndex: number,
-    key: string
-  ) => {
+  const onChangeAlias = (value: string, rowData: DeviceMeta, key: string) => {
     const tempAry = _.cloneDeep(mappingList)
+    const valueText = value
+    const rowIndex = tempAry[rowData.orgId].findIndex(
+      (item: DeviceMeta) => item.hostname === rowData.hostname
+    )
 
-    tempAry[rowData.orgId][rowIndex][key] = value
-    // setMappingList(tempAry)
+    if (rowIndex === -1) {
+      return
+    }
+
+    tempAry[rowData.orgId][rowIndex][key] = valueText
+    setMappingList(tempAry)
 
     debouncedSetOrg(tempAry[rowData.orgId][rowIndex])
   }
@@ -153,12 +156,6 @@ function DevicesMappingPage({
               Add Device
             </button>
           )}
-          <button
-            className="btn btn-primary"
-            onClick={() => setIsStyleChanged(!isStyleChanged)}
-          >
-            Change Style
-          </button>
         </div>
       </div>
       {newDevice.length > 0 && me.superAdmin && (
@@ -199,6 +196,11 @@ function DevicesMappingPage({
                 bodyClassName={`${
                   isStyleChanged ? 'mapping-table-2' : 'mapping-table'
                 }`}
+                options={{
+                  tbodyRow: {
+                    className: 'table-row',
+                  },
+                }}
               />
             </div>
           )
