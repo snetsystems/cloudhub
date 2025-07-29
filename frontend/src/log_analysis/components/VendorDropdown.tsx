@@ -57,7 +57,7 @@ const VendorDropdown: React.FC<VendorDropdownProps> = ({
             size={ComponentSize.Small}
             color={ComponentColor.Primary}
             onClick={onVendorApply}
-            text="Apply"
+            text="Save"
             status={
               !isAuthorized ? ComponentStatus.Disabled : ComponentStatus.Default
             }

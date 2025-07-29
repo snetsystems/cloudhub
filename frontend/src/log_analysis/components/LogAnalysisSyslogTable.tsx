@@ -139,7 +139,7 @@ function LogAnalysisSyslogTable({
         isExpandable: false,
       },
       {
-        id: 'timeSeriesGraph',
+        id: 'chart',
         display: 'Chart',
         schema: 'string',
         isExpandable: false,
@@ -305,7 +305,7 @@ function LogAnalysisSyslogTable({
         )
       }
 
-      if (columnId === 'timeSeriesGraph') {
+      if (columnId === 'chart') {
         const hostname = row['host.hostname']?.[0] || ''
         const deviceType = row['deviceType']?.[0] || 'baremetal'
         const timestamp = row['@timestamp']?.[0] || null
