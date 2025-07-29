@@ -142,4 +142,4 @@ export interface BoolFilter extends Filter {
 
 export type LogAnalysisFilter = LogFilterClause | KQLFilterClause
 
-export type DeviceType = 'baremetal' | 'vm' | 'switch' | 'ipmi'
+export type DeviceType = 'baremetal' | 'vm' | 'network' | 'ipmi'

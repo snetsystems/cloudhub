@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useCallback} from 'react'
 import _ from 'lodash'
 import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
@@ -35,7 +35,7 @@ import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisD
 import MatchingAlias from 'src/log_analysis/components/MatchingAlias'
 import {Cancel} from 'src/shared/components/ConfirmOrCancel'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import VendorDropdownWrapper from 'src/log_analysis/components/VendorDropdownWrapper'
+import VendorDropdown from 'src/log_analysis/components/VendorDropdown'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -81,7 +81,6 @@ interface Props {
   timeZone?: TimeZones
 }
 
-
 const LogAnalysisCellsGraphWrapper = ({
   ratio,
   title,
@@ -95,7 +94,7 @@ const LogAnalysisCellsGraphWrapper = ({
   notify,
   setSelectedDevice,
   logTimeRange,
-  timeZone,     
+  timeZone,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (logTimeRange) {
@@ -152,7 +151,7 @@ const LogAnalysisCellsGraphWrapper = ({
     } else {
       setMatchingAliasSelectedDeviceAliasName('')
     }
-  }, [selectedDevice?.hostname])
+  }, [selectedDevice?.hostname, isFromAgent])
 
   useEffect(() => {
     const fetchAllLayouts = async () => {
@@ -216,36 +215,36 @@ const LogAnalysisCellsGraphWrapper = ({
   }, [cloudAutoRefresh?.logAnalysis])
 
   const getDeviceKeyValue = (selectedDeviceAliasName: string) => {
+    const aliasName = selectedDeviceAliasName || selectedDevice?.hostname || ''
+
     if (deviceType === 'ipmi') {
-      return {hostname: selectedDeviceAliasName}
+      return {hostname: aliasName}
     }
 
     if (isFromAgent) {
       switch (deviceType) {
         case 'baremetal':
         case 'vm':
-        case 'switch':
-          return {host: selectedDeviceAliasName}
+        case 'network':
+          return {host: aliasName}
         default:
-          return {host: selectedDeviceAliasName}
+          return {host: aliasName}
       }
     }
 
     switch (deviceType) {
       case 'baremetal':
-        // TODO: Currently only VM is considered;
-        // need to add support for Hypervisors based on Vendor in the future
-        return {esxhostname: selectedDeviceAliasName}
+        return {esxhostname: aliasName}
       case 'vm':
         if (selectedVendor.toLowerCase() === 'openstack') {
-          return {server_id: selectedDeviceAliasName}
+          return {server_id: aliasName}
         } else {
-          return {vmname: selectedDeviceAliasName}
+          return {vmname: aliasName}
         }
-      case 'switch':
-        return {agent_host: selectedDeviceAliasName}
+      case 'network':
+        return {agent_host: aliasName}
       default:
-        return {host: selectedDeviceAliasName}
+        return {host: aliasName}
     }
   }
 
@@ -313,7 +312,7 @@ const LogAnalysisCellsGraphWrapper = ({
       if (
         deviceType.toLowerCase() === 'baremetal' ||
         deviceType.toLowerCase() === 'vm' ||
-        deviceType.toLowerCase() === 'switch'
+        deviceType.toLowerCase() === 'network'
       ) {
         filtered = allLayouts.filter(
           layout => layout.app === 'system' || layout.app === 'win_system'
@@ -351,7 +350,7 @@ const LogAnalysisCellsGraphWrapper = ({
               layout.measurement.startsWith('vsphere_vm')
           )
         }
-      } else if (deviceType.toLowerCase() === 'switch') {
+      } else if (deviceType.toLowerCase() === 'network') {
         filtered = allLayouts.filter(layout => layout.app === 'snmp_nx')
       }
     }
@@ -419,8 +418,15 @@ const LogAnalysisCellsGraphWrapper = ({
     setMatchingAliasDropdownIsOpen(prev => !prev)
   }
 
+  const handleMatchingAliasInputDropdownChange = useCallback(
+    _.debounce((value: string) => {
+      setMatchingAliasSelectedDeviceAliasName(value)
+    }, 500),
+    []
+  )
+
   const handleMatchingAliasOnApply = async () => {
-    if (selectedDevice?.hostname && matchingAliasSelectedDeviceAliasName) {
+    if (selectedDevice?.hostname) {
       try {
         const data: DeviceMeta = {
           hostname: selectedDevice.hostname,
@@ -486,11 +492,18 @@ const LogAnalysisCellsGraphWrapper = ({
   const handleVendorDropdownClick = () => setVendorDropdownIsOpen(prev => !prev)
   const handleVendorDropdownClose = () => setVendorDropdownIsOpen(false)
 
+  const handleVendorInputDropdownChange = useCallback(
+    _.debounce((value: string) => {
+      setSelectedVendor(value)
+    }, 500),
+    []
+  )
+
   const getAnnotationTime = (): number | null => {
     if (!selfTimeRange.lower || !selfTimeRange.upper) {
       return null
     }
-    
+
     try {
       const lowerTime = new Date(selfTimeRange.lower).getTime()
       const upperTime = new Date(selfTimeRange.upper).getTime()
@@ -534,7 +547,7 @@ const LogAnalysisCellsGraphWrapper = ({
         </LogAnalysisDashboardHeader>
         {_.isEmpty(layout) ? (
           <>
-            <VendorDropdownWrapper
+            <VendorDropdown
               isFromAgent={isFromAgent}
               deviceType={deviceType}
               vendorItems={vendorDropdownItems}
@@ -544,6 +557,7 @@ const LogAnalysisCellsGraphWrapper = ({
               onVendorClick={handleVendorDropdownClick}
               onVendorClose={handleVendorDropdownClose}
               onVendorApply={handleVendorOnApply}
+              onVendorInputChange={handleVendorInputDropdownChange}
               isAuthorized={isAuthorized}
             />
             <MatchingAlias
@@ -559,6 +573,7 @@ const LogAnalysisCellsGraphWrapper = ({
               toggleActive={isFromAgent}
               onToggleChange={onToggleChange}
               toggleDisabled={false}
+              onInputDropdownChange={handleMatchingAliasInputDropdownChange}
             />
             <div className="panel-body" style={{margin: '15px 15px 0 15px'}}>
               <div className="generic-empty-state">
@@ -573,7 +588,7 @@ const LogAnalysisCellsGraphWrapper = ({
               autoHide={true}
             >
               {/* // TODO Consider Toggle Disabled */}
-              <VendorDropdownWrapper
+              <VendorDropdown
                 isFromAgent={isFromAgent}
                 deviceType={deviceType}
                 vendorItems={vendorDropdownItems}
@@ -583,6 +598,7 @@ const LogAnalysisCellsGraphWrapper = ({
                 onVendorClick={handleVendorDropdownClick}
                 onVendorClose={handleVendorDropdownClose}
                 onVendorApply={handleVendorOnApply}
+                onVendorInputChange={handleVendorInputDropdownChange}
                 isAuthorized={isAuthorized}
               />
               <MatchingAlias
@@ -598,6 +614,7 @@ const LogAnalysisCellsGraphWrapper = ({
                 toggleActive={isFromAgent}
                 onToggleChange={onToggleChange}
                 toggleDisabled={false}
+                onInputDropdownChange={handleMatchingAliasInputDropdownChange}
               />
               <div
                 className="panel-body"
@@ -626,16 +643,16 @@ const LogAnalysisCellsGraphWrapper = ({
                     annotationsViewMode={
                       annotationTime
                         ? [
-                          {
-                            id: matchingAliasSelectedDeviceAliasName,
-                            startTime: annotationTime,
-                            endTime: annotationTime,
-                            text: `Log Analysis Time (${timeZone})`,
-                          },  
-                        ]
+                            {
+                              id: matchingAliasSelectedDeviceAliasName,
+                              startTime: annotationTime,
+                              endTime: annotationTime,
+                              text: `Log Analysis Time (${timeZone})`,
+                            },
+                          ]
                         : undefined
                     }
-                  />  
+                  />
                 </div>
               </div>
             </FancyScrollbar>

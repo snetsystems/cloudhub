@@ -78,6 +78,18 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     }
   }
 
+  public componentDidMount() {
+    if (this.props.selected) {
+      this.setState({searchTerm: this.props.selected})
+    }
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps.selected !== this.props.selected && this.props.selected) {
+      this.setState({searchTerm: this.props.selected})
+    }
+  }
+
   public handleClickOutside = () => {
     this.props.onClose()
   }
@@ -88,6 +100,8 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     e.stopPropagation()
 
     this.props.onChoose(item)
+    this.setState({searchTerm: item.text})
+
     this.dropdownRef.focus()
   }
 
@@ -102,7 +116,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
 
     if (!this.props.isOpen) {
       this.setState({
-        searchTerm: '',
+        searchTerm: this.props.selected || '',
         filteredItems: this.props.items,
         highlightedItemIndex: null,
       })
@@ -122,6 +136,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     if (e.key === 'Enter' && filteredItems.length) {
       this.props.onClose()
       this.props.onChoose(filteredItems[highlightedItemIndex])
+      this.setState({searchTerm: filteredItems[highlightedItemIndex].text})
     }
     if (e.key === 'Escape') {
       this.props.onClose()
@@ -140,10 +155,12 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
   }
 
   public handleFilterChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
-      return this.setState({searchTerm: e.target.value}, () =>
+    const value = e.target.value
+    if (value) {
+      return this.setState({searchTerm: value}, () => {
         this.applyFilter(this.state.searchTerm)
-      )
+        this.props.onChange(value)
+      })
     }
 
     this.setState({
@@ -151,6 +168,10 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       filteredItems: this.props.items,
       highlightedItemIndex: null,
     })
+
+    if (this.props.onChange) {
+      this.props.onChange('')
+    }
   }
 
   public applyFilter = (searchTerm: string) => {

@@ -1705,7 +1705,7 @@ export const getTagValuesForDeviceType = async (
     switch (deviceType) {
       case 'baremetal':
       case 'vm':
-      case 'switch':
+      case 'network':
         query = replaceTemplate(
           'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
           tempVars
@@ -1739,7 +1739,7 @@ export const getTagValuesForDeviceType = async (
           )
         }
         break
-      case 'switch':
+      case 'network':
         query = replaceTemplate(
           'SHOW TAG VALUES FROM "snmp_nx" WITH KEY="agent_host"',
           tempVars

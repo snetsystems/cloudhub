@@ -274,7 +274,9 @@ export const isInvalidVendorForDeviceType = (
   if (
     deviceType === 'baremetal' &&
     (!selectedVendor ||
-      !VM_HYPERVISOR_DROPDOWN_ITEMS.some(item => item.text === selectedVendor))
+      !VM_HYPERVISOR_DROPDOWN_ITEMS.some(
+        item => item.text.toLowerCase() === selectedVendor.toLowerCase()
+      ))
   ) {
     return true
   }
@@ -282,7 +284,9 @@ export const isInvalidVendorForDeviceType = (
   if (
     deviceType === 'vm' &&
     (!selectedVendor ||
-      !VM_LEVEL_DROPDOWN_ITEMS.some(item => item.text === selectedVendor))
+      !VM_LEVEL_DROPDOWN_ITEMS.some(
+        item => item.text.toLowerCase() === selectedVendor.toLowerCase()
+      ))
   ) {
     return true
   }
