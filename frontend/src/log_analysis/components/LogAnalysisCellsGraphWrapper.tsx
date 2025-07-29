@@ -16,6 +16,7 @@ import {
   TimeRange,
   Notification,
   DeviceType,
+  TimeZones,
 } from 'src/types'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 
@@ -77,7 +78,9 @@ interface Props {
   notify?: (message: Notification) => void
   setSelectedDevice?: (device: DeviceMeta) => void
   logTimeRange: TimeRange
+  timeZone?: TimeZones
 }
+
 
 const LogAnalysisCellsGraphWrapper = ({
   ratio,
@@ -92,6 +95,7 @@ const LogAnalysisCellsGraphWrapper = ({
   notify,
   setSelectedDevice,
   logTimeRange,
+  timeZone,     
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (logTimeRange) {
@@ -482,6 +486,22 @@ const LogAnalysisCellsGraphWrapper = ({
   const handleVendorDropdownClick = () => setVendorDropdownIsOpen(prev => !prev)
   const handleVendorDropdownClose = () => setVendorDropdownIsOpen(false)
 
+  const getAnnotationTime = (): number | null => {
+    if (!selfTimeRange.lower || !selfTimeRange.upper) {
+      return null
+    }
+    
+    try {
+      const lowerTime = new Date(selfTimeRange.lower).getTime()
+      const upperTime = new Date(selfTimeRange.upper).getTime()
+      return (lowerTime + upperTime) / 2
+    } catch (error) {
+      return null
+    }
+  }
+
+  const annotationTime = getAnnotationTime()
+
   return (
     <>
       <div
@@ -601,8 +621,21 @@ const LogAnalysisCellsGraphWrapper = ({
                     templates={tempVars}
                     timeRange={selfTimeRange}
                     manualRefresh={logAnalysisManualRefresh}
+                    isUsingAnnotationViewer={!!annotationTime}
                     host={''}
-                  />
+                    annotationsViewMode={
+                      annotationTime
+                        ? [
+                          {
+                            id: matchingAliasSelectedDeviceAliasName,
+                            startTime: annotationTime,
+                            endTime: annotationTime,
+                            text: `Log Analysis Time (${timeZone})`,
+                          },  
+                        ]
+                        : undefined
+                    }
+                  />  
                 </div>
               </div>
             </FancyScrollbar>
@@ -628,8 +661,8 @@ const mstp = state => {
     logAnalysisDashboard: {logAnalysisManualRefresh},
   } = state
   return {
-    cloudAutoRefresh,
     timeZone,
+    cloudAutoRefresh,
     selectedDevice,
     logAnalysisManualRefresh,
   }
