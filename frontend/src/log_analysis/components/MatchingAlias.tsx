@@ -22,6 +22,7 @@ interface MatchingAliasProps {
   dropdownOnChoose: (item: DropdownItem) => void
   dropdownOnClick?: () => void
   dropdownOnClose?: () => void
+  onInputDropdownChange: (value: string) => void
 }
 
 const MatchingAlias: React.FC<MatchingAliasProps> = ({
@@ -37,6 +38,7 @@ const MatchingAlias: React.FC<MatchingAliasProps> = ({
   dropdownOnChoose = () => {},
   dropdownOnClick,
   dropdownOnClose,
+  onInputDropdownChange,
 }) => {
   return (
     <>
@@ -53,6 +55,7 @@ const MatchingAlias: React.FC<MatchingAliasProps> = ({
           onClick={dropdownOnClick}
           onClose={dropdownOnClose}
           selected={selectedDropdown}
+          onChange={onInputDropdownChange}
           className={
             deviceType === 'ipmi'
               ? 'matching-alias-dropdown-ipmi'

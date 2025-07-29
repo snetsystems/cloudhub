@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useCallback} from 'react'
 import _ from 'lodash'
 import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
@@ -81,7 +81,6 @@ interface Props {
   timeZone?: TimeZones
 }
 
-
 const LogAnalysisCellsGraphWrapper = ({
   ratio,
   title,
@@ -95,7 +94,7 @@ const LogAnalysisCellsGraphWrapper = ({
   notify,
   setSelectedDevice,
   logTimeRange,
-  timeZone,     
+  timeZone,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (logTimeRange) {
@@ -152,7 +151,7 @@ const LogAnalysisCellsGraphWrapper = ({
     } else {
       setMatchingAliasSelectedDeviceAliasName('')
     }
-  }, [selectedDevice?.hostname])
+  }, [selectedDevice?.hostname, isFromAgent])
 
   useEffect(() => {
     const fetchAllLayouts = async () => {
@@ -216,8 +215,10 @@ const LogAnalysisCellsGraphWrapper = ({
   }, [cloudAutoRefresh?.logAnalysis])
 
   const getDeviceKeyValue = (selectedDeviceAliasName: string) => {
+    const aliasName = selectedDeviceAliasName || selectedDevice?.hostname || ''
+
     if (deviceType === 'ipmi') {
-      return {hostname: selectedDeviceAliasName}
+      return {hostname: aliasName}
     }
 
     if (isFromAgent) {
@@ -225,27 +226,25 @@ const LogAnalysisCellsGraphWrapper = ({
         case 'baremetal':
         case 'vm':
         case 'switch':
-          return {host: selectedDeviceAliasName}
+          return {host: aliasName}
         default:
-          return {host: selectedDeviceAliasName}
+          return {host: aliasName}
       }
     }
 
     switch (deviceType) {
       case 'baremetal':
-        // TODO: Currently only VM is considered;
-        // need to add support for Hypervisors based on Vendor in the future
-        return {esxhostname: selectedDeviceAliasName}
+        return {esxhostname: aliasName}
       case 'vm':
         if (selectedVendor.toLowerCase() === 'openstack') {
-          return {server_id: selectedDeviceAliasName}
+          return {server_id: aliasName}
         } else {
-          return {vmname: selectedDeviceAliasName}
+          return {vmname: aliasName}
         }
       case 'switch':
-        return {agent_host: selectedDeviceAliasName}
+        return {agent_host: aliasName}
       default:
-        return {host: selectedDeviceAliasName}
+        return {host: aliasName}
     }
   }
 
@@ -419,8 +418,15 @@ const LogAnalysisCellsGraphWrapper = ({
     setMatchingAliasDropdownIsOpen(prev => !prev)
   }
 
+  const handleMatchingAliasInputDropdownChange = useCallback(
+    _.debounce((value: string) => {
+      setMatchingAliasSelectedDeviceAliasName(value)
+    }, 500),
+    []
+  )
+
   const handleMatchingAliasOnApply = async () => {
-    if (selectedDevice?.hostname && matchingAliasSelectedDeviceAliasName) {
+    if (selectedDevice?.hostname) {
       try {
         const data: DeviceMeta = {
           hostname: selectedDevice.hostname,
@@ -490,7 +496,7 @@ const LogAnalysisCellsGraphWrapper = ({
     if (!selfTimeRange.lower || !selfTimeRange.upper) {
       return null
     }
-    
+
     try {
       const lowerTime = new Date(selfTimeRange.lower).getTime()
       const upperTime = new Date(selfTimeRange.upper).getTime()
@@ -559,6 +565,7 @@ const LogAnalysisCellsGraphWrapper = ({
               toggleActive={isFromAgent}
               onToggleChange={onToggleChange}
               toggleDisabled={false}
+              onInputDropdownChange={handleMatchingAliasInputDropdownChange}
             />
             <div className="panel-body" style={{margin: '15px 15px 0 15px'}}>
               <div className="generic-empty-state">
@@ -598,6 +605,7 @@ const LogAnalysisCellsGraphWrapper = ({
                 toggleActive={isFromAgent}
                 onToggleChange={onToggleChange}
                 toggleDisabled={false}
+                onInputDropdownChange={handleMatchingAliasInputDropdownChange}
               />
               <div
                 className="panel-body"
@@ -626,16 +634,16 @@ const LogAnalysisCellsGraphWrapper = ({
                     annotationsViewMode={
                       annotationTime
                         ? [
-                          {
-                            id: matchingAliasSelectedDeviceAliasName,
-                            startTime: annotationTime,
-                            endTime: annotationTime,
-                            text: `Log Analysis Time (${timeZone})`,
-                          },  
-                        ]
+                            {
+                              id: matchingAliasSelectedDeviceAliasName,
+                              startTime: annotationTime,
+                              endTime: annotationTime,
+                              text: `Log Analysis Time (${timeZone})`,
+                            },
+                          ]
                         : undefined
                     }
-                  />  
+                  />
                 </div>
               </div>
             </FancyScrollbar>
