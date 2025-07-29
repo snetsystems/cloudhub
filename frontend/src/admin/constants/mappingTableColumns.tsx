@@ -1,5 +1,5 @@
 import React from 'react'
-import {Dropdown} from 'src/shared/components/Dropdown'
+import Dropdown from 'src/shared/components/Dropdown'
 import {
   AlignType,
   ColumnInfo,
