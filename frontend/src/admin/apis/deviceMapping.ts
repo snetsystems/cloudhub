@@ -21,7 +21,6 @@ export const deleteDeviceMapping = async (
     url: `/cloudhub/v1/device-mappings/devices/${hostName}`,
     method: 'DELETE',
   })
-  console.log('deleteDeviceMapping response: ', response)
   return response
 }
 
@@ -64,7 +63,6 @@ export const updateDeviceMapping = async (
     method: 'PATCH',
     data: param,
   })
-
   return response
 }
 

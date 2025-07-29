@@ -50,8 +50,6 @@ function DevicesMappingPage({
 }: Props) {
   const allTagValues = useDeviceType(currentSource)
 
-  const [isStyleChanged, setIsStyleChanged] = useState(false)
-
   const [newDevice, setNewDevice] = useState<DeviceMeta[]>([])
 
   const [mappingList, setMappingList] = useState<DeviceMapping>({
@@ -80,7 +78,7 @@ function DevicesMappingPage({
         notify(notifyFetchDeviceListError(response.data.message))
       }
     } catch (error) {
-      notify(notifyFetchDeviceListError(error.message))
+      notify(notifyFetchDeviceListError(error.data.message ?? ''))
     }
   }
 
@@ -92,10 +90,10 @@ function DevicesMappingPage({
       if (response.status < 300) {
         notify(notifyUpdateDeviceSucceeded())
       } else {
-        notify(notifyUpdateDeviceFailed(response.data.message))
+        notify(notifyUpdateDeviceFailed(response.data.message ?? ''))
       }
     } catch (error) {
-      notify(notifyUpdateDeviceFailed(error.message))
+      notify(notifyUpdateDeviceFailed(error.data.message ?? ''))
     }
     getDeviceList(esSource.id)
   }
@@ -124,7 +122,7 @@ function DevicesMappingPage({
       }
     } catch (error) {
       console.log('error: ', error)
-      notify(notifyDeleteDeviceFailed(error.message ?? ''))
+      notify(notifyDeleteDeviceFailed(error.data.message ?? ''))
     }
 
     getDeviceList(esSource.id)
@@ -193,9 +191,7 @@ function DevicesMappingPage({
                 )}
                 data={mappingList[org]}
                 isSearchDisplay={false}
-                bodyClassName={`${
-                  isStyleChanged ? 'mapping-table-2' : 'mapping-table'
-                }`}
+                bodyClassName={`mapping-table`}
                 options={{
                   tbodyRow: {
                     className: 'table-row',
