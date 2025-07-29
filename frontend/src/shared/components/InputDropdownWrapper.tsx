@@ -24,6 +24,20 @@ const InputDropdownWrapper = ({
     setIsOpen(false)
   }
 
+  React.useEffect(() => {
+    const handleGlobalClick = (_: MouseEvent) => {
+      if (isOpen) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('click', handleGlobalClick)
+    }
+    return () => {
+      document.removeEventListener('click', handleGlobalClick)
+    }
+  }, [isOpen])
+
   return (
     <InputDropdown
       items={items}
@@ -32,7 +46,6 @@ const InputDropdownWrapper = ({
       disabled={false}
       onChoose={handleChoose}
       onClick={() => setIsOpen(prev => !prev)}
-      onClose={() => setIsOpen(false)}
       selected={selectedItem}
       className={className ?? 'dropdown'}
       onChange={onChange}
