@@ -35,7 +35,7 @@ import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisD
 import MatchingAlias from 'src/log_analysis/components/MatchingAlias'
 import {Cancel} from 'src/shared/components/ConfirmOrCancel'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import VendorDropdownWrapper from 'src/log_analysis/components/VendorDropdownWrapper'
+import VendorDropdown from 'src/log_analysis/components/VendorDropdown'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -225,7 +225,7 @@ const LogAnalysisCellsGraphWrapper = ({
       switch (deviceType) {
         case 'baremetal':
         case 'vm':
-        case 'switch':
+        case 'network':
           return {host: aliasName}
         default:
           return {host: aliasName}
@@ -241,7 +241,7 @@ const LogAnalysisCellsGraphWrapper = ({
         } else {
           return {vmname: aliasName}
         }
-      case 'switch':
+      case 'network':
         return {agent_host: aliasName}
       default:
         return {host: aliasName}
@@ -312,7 +312,7 @@ const LogAnalysisCellsGraphWrapper = ({
       if (
         deviceType.toLowerCase() === 'baremetal' ||
         deviceType.toLowerCase() === 'vm' ||
-        deviceType.toLowerCase() === 'switch'
+        deviceType.toLowerCase() === 'network'
       ) {
         filtered = allLayouts.filter(
           layout => layout.app === 'system' || layout.app === 'win_system'
@@ -350,7 +350,7 @@ const LogAnalysisCellsGraphWrapper = ({
               layout.measurement.startsWith('vsphere_vm')
           )
         }
-      } else if (deviceType.toLowerCase() === 'switch') {
+      } else if (deviceType.toLowerCase() === 'network') {
         filtered = allLayouts.filter(layout => layout.app === 'snmp_nx')
       }
     }
@@ -492,6 +492,13 @@ const LogAnalysisCellsGraphWrapper = ({
   const handleVendorDropdownClick = () => setVendorDropdownIsOpen(prev => !prev)
   const handleVendorDropdownClose = () => setVendorDropdownIsOpen(false)
 
+  const handleVendorInputDropdownChange = useCallback(
+    _.debounce((value: string) => {
+      setSelectedVendor(value)
+    }, 500),
+    []
+  )
+
   const getAnnotationTime = (): number | null => {
     if (!selfTimeRange.lower || !selfTimeRange.upper) {
       return null
@@ -540,7 +547,7 @@ const LogAnalysisCellsGraphWrapper = ({
         </LogAnalysisDashboardHeader>
         {_.isEmpty(layout) ? (
           <>
-            <VendorDropdownWrapper
+            <VendorDropdown
               isFromAgent={isFromAgent}
               deviceType={deviceType}
               vendorItems={vendorDropdownItems}
@@ -550,6 +557,7 @@ const LogAnalysisCellsGraphWrapper = ({
               onVendorClick={handleVendorDropdownClick}
               onVendorClose={handleVendorDropdownClose}
               onVendorApply={handleVendorOnApply}
+              onVendorInputChange={handleVendorInputDropdownChange}
               isAuthorized={isAuthorized}
             />
             <MatchingAlias
@@ -580,7 +588,7 @@ const LogAnalysisCellsGraphWrapper = ({
               autoHide={true}
             >
               {/* // TODO Consider Toggle Disabled */}
-              <VendorDropdownWrapper
+              <VendorDropdown
                 isFromAgent={isFromAgent}
                 deviceType={deviceType}
                 vendorItems={vendorDropdownItems}
@@ -590,6 +598,7 @@ const LogAnalysisCellsGraphWrapper = ({
                 onVendorClick={handleVendorDropdownClick}
                 onVendorClose={handleVendorDropdownClose}
                 onVendorApply={handleVendorOnApply}
+                onVendorInputChange={handleVendorInputDropdownChange}
                 isAuthorized={isAuthorized}
               />
               <MatchingAlias

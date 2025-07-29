@@ -9,55 +9,63 @@ import {
 import {DeviceType, DropdownItem} from 'src/types'
 
 interface VendorDropdownProps {
-  items: DropdownItem[]
-  selected: string
-  isOpen?: boolean
-  isAuthorized?: boolean
+  isFromAgent: boolean
   deviceType: DeviceType
-  onChoose: (item: DropdownItem) => void
-  onClick?: () => void
-  onClose?: () => void
-  onApply?: () => void
+  vendorItems: DropdownItem[]
+  selectedVendor: string
+  vendorIsOpen?: boolean
+  isAuthorized?: boolean
+  onVendorChoose: (item: DropdownItem) => void
+  onVendorClick: () => void
+  onVendorClose: () => void
+  onVendorApply: () => void
+  onVendorInputChange?: (value: string) => void
 }
 
 const VendorDropdown: React.FC<VendorDropdownProps> = ({
-  items,
-  selected,
-  isOpen,
-  isAuthorized,
+  isFromAgent,
   deviceType,
-  onChoose,
-  onClick,
-  onClose,
-  onApply,
+  vendorItems,
+  selectedVendor,
+  vendorIsOpen,
+  isAuthorized,
+  onVendorChoose,
+  onVendorClick,
+  onVendorClose,
+  onVendorApply,
+  onVendorInputChange,
 }) => (
   <>
-    {(deviceType === 'baremetal' || deviceType === 'vm') && (
+    {deviceType === 'ipmi' ||
+    ((deviceType === 'baremetal' || deviceType === 'vm') && !isFromAgent) ? (
       <>
-        <MatchingAliasDropdown
-          items={items}
-          isOpen={isOpen}
-          useAutoComplete={true}
-          disabled={!isAuthorized}
-          onChoose={onChoose}
-          onClick={onClick}
-          onClose={onClose}
-          selected={selected}
-          className={'dropdown vendor-dropdown-50'}
-        />
-
-        <Button
-          size={ComponentSize.Small}
-          color={ComponentColor.Primary}
-          onClick={onApply}
-          text="Apply"
-          status={
-            !isAuthorized ? ComponentStatus.Disabled : ComponentStatus.Default
-          }
-          active={!isAuthorized}
-        />
+        <div className="vendor-dropdown-wrapper-title">{'Vendor'}</div>
+        <div className="vendor-dropdown-wrapper">
+          <MatchingAliasDropdown
+            items={vendorItems}
+            isOpen={vendorIsOpen}
+            useAutoComplete={true}
+            disabled={!isAuthorized}
+            onChoose={onVendorChoose}
+            onClick={onVendorClick}
+            onClose={onVendorClose}
+            selected={selectedVendor}
+            onChange={onVendorInputChange}
+            className={'dropdown vendor-dropdown-50'}
+          />
+          <Button
+            size={ComponentSize.Small}
+            color={ComponentColor.Primary}
+            onClick={onVendorApply}
+            text="Apply"
+            status={
+              !isAuthorized ? ComponentStatus.Disabled : ComponentStatus.Default
+            }
+            active={!isAuthorized}
+          />
+        </div>
       </>
-    )}
+    ) : null}
   </>
 )
 
