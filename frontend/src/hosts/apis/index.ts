@@ -1792,28 +1792,51 @@ export const getAllTagValuesForDeviceTypes = async (
   const queries = [
     {
       deviceType: 'baremetal',
-      query: replaceTemplate(
-        'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
-        tempVars
-      ),
+      queries: [
+        replaceTemplate('SHOW TAG VALUES FROM "cpu" WITH KEY="host"', tempVars),
+        replaceTemplate(
+          'SHOW TAG VALUES FROM "vsphere_host_cpu" WITH KEY="esxhostname"',
+          tempVars
+        ),
+      ],
     },
     {
       deviceType: 'vm',
-      query: replaceTemplate(
-        'SHOW TAG VALUES FROM "vsphere_vm_cpu" WITH KEY="vmname"',
-        tempVars
-      ),
+      queries: [
+        replaceTemplate('SHOW TAG VALUES FROM "cpu" WITH KEY="host"', tempVars),
+        replaceTemplate(
+          'SHOW TAG VALUES FROM "vsphere_vm_cpu" WITH KEY="vmname"',
+          tempVars
+        ),
+        replaceTemplate(
+          'SHOW TAG VALUES FROM "openstack" WITH KEY="server_id"',
+          tempVars
+        ),
+      ],
     },
     {
-      deviceType: 'switch',
-      query: replaceTemplate(
-        'SHOW TAG VALUES FROM "snmp_nx" WITH KEY="agent_host"',
-        tempVars
-      ),
+      deviceType: 'network',
+      queries: [
+        replaceTemplate('SHOW TAG VALUES FROM "cpu" WITH KEY="host"', tempVars),
+        replaceTemplate(
+          'SHOW TAG VALUES FROM "snmp_nx" WITH KEY="agent_host"',
+          tempVars
+        ),
+      ],
+    },
+    {
+      deviceType: 'ipmi',
+      queries: [
+        replaceTemplate(
+          'SHOW TAG VALUES FROM "ipmi_sensor" WITH KEY="hostname"',
+          tempVars
+        ),
+      ],
     },
   ]
 
-  const combinedQuery = queries.map(q => q.query).join('; ')
+  const allQueries = queries.flatMap(q => q.queries)
+  const combinedQuery = allQueries.join('; ')
 
   try {
     const {data} = await proxy({
@@ -1824,21 +1847,37 @@ export const getAllTagValuesForDeviceTypes = async (
 
     const result: {[deviceType: string]: DropdownItem[]} = {}
 
-    queries.forEach((queryInfo, index) => {
-      const resultData = data.results[index]
+    queries.forEach(queryInfo => {
+      result[queryInfo.deviceType] = []
+    })
 
-      if (!resultData || !resultData.series || resultData.error) {
-        result[queryInfo.deviceType] = []
-        return
-      }
+    let queryIndex = 0
+    queries.forEach(queryInfo => {
+      const deviceType = queryInfo.deviceType
 
-      const values = getDeep<string[][]>(resultData, 'series.[0].values', [])
+      queryInfo.queries.forEach(() => {
+        const resultData = data.results[queryIndex]
 
-      const tagValues = values.map(v => ({
-        text: v[1],
-      }))
+        if (resultData && resultData.series && !resultData.error) {
+          const values = getDeep<string[][]>(
+            resultData,
+            'series.[0].values',
+            []
+          )
 
-      result[queryInfo.deviceType] = tagValues
+          const tagValues = values.map(v => ({
+            text: v[1],
+          }))
+
+          const existingTexts = result[deviceType].map(item => item.text)
+          const newTagValues = tagValues.filter(
+            item => !existingTexts.includes(item.text)
+          )
+          result[deviceType] = [...result[deviceType], ...newTagValues]
+        }
+
+        queryIndex++
+      })
     })
 
     return result
@@ -1848,7 +1887,8 @@ export const getAllTagValuesForDeviceTypes = async (
     return {
       baremetal: [],
       vm: [],
-      switch: [],
+      network: [],
+      ipmi: [],
     }
   }
 }

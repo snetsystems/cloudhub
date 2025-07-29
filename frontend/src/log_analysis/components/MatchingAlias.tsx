@@ -66,7 +66,7 @@ const MatchingAlias: React.FC<MatchingAliasProps> = ({
           size={ComponentSize.Small}
           color={ComponentColor.Primary}
           onClick={onApply}
-          text="Apply"
+          text="Save"
           status={
             !isAuthorized ? ComponentStatus.Disabled : ComponentStatus.Default
           }
