@@ -26,8 +26,6 @@ const InputDropdownWrapper = ({
     setIsOpen(false)
   }
 
-
-
   const onClose = (value: string) => {
     setIsOpen(false)
     onChange(value)
@@ -41,7 +39,6 @@ const InputDropdownWrapper = ({
       disabled={false}
       onChoose={handleChoose}
       onClick={() => setIsOpen(prev => !prev)}
-      onClose={() => setIsOpen(false)}
       selected={selectedItem}
       className={className ?? 'dropdown'}
       onChange={onChange}
