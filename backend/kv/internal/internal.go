@@ -1465,7 +1465,7 @@ func MarshalDeviceMeta(meta *cloudhub.DeviceMeta) ([]byte, error) {
 		AliasName:  meta.AliasName,
 		DeviceType: meta.DeviceType,
 		OrgId:      meta.OrgID,
-		Vendor:     meta.Vendor,
+		AppName:    meta.AppName,
 	})
 }
 
@@ -1481,7 +1481,8 @@ func UnmarshalDeviceMeta(data []byte, meta *cloudhub.DeviceMeta) error {
 	meta.AliasName = pb.AliasName
 	meta.DeviceType = pb.DeviceType
 	meta.OrgID = pb.OrgId
-	meta.Vendor = pb.Vendor
+	meta.AppName = pb.AppName
+
 	return nil
 }
 

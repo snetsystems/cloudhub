@@ -292,8 +292,8 @@ func TestService_UpdateDeviceMapping(t *testing.T) {
 					if req.OrgID != nil {
 						final.OrgID = *req.OrgID
 					}
-					if req.Vendor != nil {
-						final.Vendor = *req.Vendor
+					if req.AppName != nil {
+						final.AppName = *req.AppName
 					}
 					return &final, nil
 				}

@@ -17,7 +17,7 @@ type createDeviceMappingRequest struct {
 	AliasName  string `json:"aliasName,omitempty"`
 	DeviceType string `json:"deviceType"`
 	OrgID      string `json:"orgId,omitempty"`
-	Vendor     string `json:"vendor,omitempty"`
+	AppName    string `json:"appName,omitempty"`
 }
 
 // updateDeviceMappingRequest represents a request to update device mapping
@@ -26,7 +26,7 @@ type updateDeviceMappingRequest struct {
 	AliasName  *string `json:"aliasName,omitempty"`
 	DeviceType *string `json:"deviceType,omitempty"`
 	OrgID      *string `json:"orgId,omitempty"`
-	Vendor     *string `json:"vendor,omitempty"`
+	AppName    *string `json:"appName,omitempty"`
 }
 
 // moveDeviceOrgRequest represents a request to move device to different organization
@@ -43,7 +43,7 @@ type deviceMappingResponse struct {
 	OrgID       string    `json:"orgId"`
 	Links       selfLinks `json:"links,omitempty"`
 	IsDeletable bool      `json:"isDeletable"`
-	Vendor      string    `json:"vendor"`
+	AppName     string    `json:"appName"`
 }
 
 // deviceMappingsResponse represents multiple device mappings response
@@ -102,7 +102,7 @@ func (r *createDeviceMappingRequest) ValidCreate() error {
 
 // TODO: Add validation for alias name
 func (r *updateDeviceMappingRequest) ValidUpdate() error {
-	if r.IP == nil && r.AliasName == nil && r.DeviceType == nil && r.OrgID == nil && r.Vendor == nil {
+	if r.IP == nil && r.AliasName == nil && r.DeviceType == nil && r.OrgID == nil && r.AppName == nil {
 		return fmt.Errorf("no fields to update")
 	}
 	return nil
@@ -126,7 +126,7 @@ func newDeviceMappingResponse(meta *cloudhub.DeviceMeta) *deviceMappingResponse 
 			Self: fmt.Sprintf("/cloudhub/v1/device-mappings/%s/devices/%s", meta.OrgID, meta.Hostname),
 		},
 		IsDeletable: meta.IsDeletable,
-		Vendor:      meta.Vendor,
+		AppName:     meta.AppName,
 	}
 }
 
@@ -245,7 +245,7 @@ func (s *Service) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 		AliasName:  req.AliasName,
 		DeviceType: req.DeviceType,
 		OrgID:      req.OrgID,
-		Vendor:     req.Vendor,
+		AppName:    req.AppName,
 	}
 
 	if err := s.Store.DeviceMappings(ctx).AddDevice(ctx, meta); err != nil {
@@ -332,8 +332,8 @@ func (s *Service) UpdateDeviceMapping(w http.ResponseWriter, r *http.Request) {
 	if req.OrgID != nil {
 		final.OrgID = *req.OrgID
 	}
-	if req.Vendor != nil {
-		final.Vendor = *req.Vendor
+	if req.AppName != nil {
+		final.AppName = *req.AppName
 	}
 	if err := s.Store.DeviceMappings(ctx).UpdateDevice(ctx, hostname, final); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
@@ -519,7 +519,7 @@ func (s *Service) mergeAndUpsertDevices(
 			DeviceType:  defaultDeviceType(info),
 			OrgID:       DefaultOrganizationID,
 			IsDeletable: false,
-			Vendor:      "",
+			AppName:     "",
 		}
 		toCreate = append(toCreate, meta)
 		cache[h] = meta
@@ -609,7 +609,7 @@ func (s *Service) EnsureDevice(w http.ResponseWriter, r *http.Request) {
 		DeviceType:  defaultDeviceType(esInfo),
 		OrgID:       defaultOrgID,
 		IsDeletable: false,
-		Vendor:      "",
+		AppName:     "",
 	}
 	if err := s.Store.DeviceMappings(ctx).AddDevice(ctx, meta); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)

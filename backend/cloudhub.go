@@ -1573,7 +1573,7 @@ type DeviceMeta struct {
 	AliasName   string `json:"aliasName"`  // Alias name assigned to the device where the agent is installed
 	DeviceType  string `json:"deviceType"` // Device type ["VM", "baremetal", "SWITCH", "ROUTER", "ETC", ...]
 	OrgID       string `json:"orgId"`      // Organization ID this device belongs to
-	Vendor      string `json:"vendor"`     // Device Vendor ["VM", "baremetal", "SWITCH", "ROUTER", "ETC", ...]
+	AppName     string `json:"appName"`    // Application is the user facing name of this Layout.
 	IsDeletable bool   `json:"isDeletable"`
 }
 

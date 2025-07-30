@@ -424,17 +424,17 @@ message APIKeyAuth {
 }
 
 message DeviceMappingMeta {
-  string ip         = 1; // Management IP address
-  string hostname   = 2; // Hostname (used as key leaf)
-  string aliasName  = 3; // Alias name assigned to the device where the agent is installed
-  string deviceType = 4; // Device type ["VM","baremetal","SWITCH","ROUTER","ETC"...]
-  string orgId      = 5; // Organization ID this device belongs to
-  string vendor     = 6; // Device Vender 
+  string ip         = 1;  // Management IP address
+  string hostname   = 2;  // Hostname (used as key leaf)
+  string aliasName  = 3;  // Alias name assosiated with hostname
+  string deviceType = 4;  // Device type ["VM","baremetal","SWITCH","ROUTER","ETC"...]
+  string orgId      = 5;  //  Organization ID this device belongs to
+  string appName     = 6; // Application is the user facing name of this Layout.
 }
 
 message DeviceMappingToOrg {
   string orgId     = 1; // Organization ID this device belongs to
-  string aliasName = 2; // Alias name assigned to the device where the agent is installed
+  string aliasName = 2; // Alias name assosiated with hostname
 }
 
 message AliasMappingToDevice {
