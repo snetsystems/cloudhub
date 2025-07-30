@@ -354,14 +354,16 @@ function LogAnalysisSyslogTable({
           break
         case 'log.syslog.severity.code': {
           const sev = row['log.syslog.severity.code']?.[0]
-          cellContent =
+          const severityText =
             sev == null ? '' : SYSLOG_SEVERITY_MAP[sev] || String(sev)
+          cellContent = sev == null ? '' : `${severityText} (${sev})`
           break
         }
         case 'log.syslog.facility.code': {
           const fac = row['log.syslog.facility.code']?.[0]
-          cellContent =
+          const facilityText =
             fac == null ? '' : SYSLOG_FACILITY_MAP[fac] || String(fac)
+          cellContent = fac == null ? '' : `${facilityText} (${fac})`
           break
         }
         case 'deviceType':
