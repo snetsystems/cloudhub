@@ -138,7 +138,7 @@ export const newDeviceTableColumns = (
   },
   {
     key: '_',
-    name: 'Delete',
+    name: '',
     options: {
       thead: {
         className: 'w-5',

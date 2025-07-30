@@ -167,10 +167,7 @@ function DevicesMappingPage({
       )}
       {!!mappingList &&
         Object.keys(mappingList).map((org, i) => {
-          if (
-            !me.superAdmin &&
-            org !== orgIdToName(me.currentOrganization.id, organizations || [])
-          ) {
+          if (!me.superAdmin && org !== me.currentOrganization.id) {
             return null
           }
           return (

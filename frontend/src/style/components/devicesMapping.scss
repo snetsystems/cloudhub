@@ -22,28 +22,6 @@
     color: $g12-forge;
     background-color: inherit;
     margin: 8px 0;
-    border: 1px solid $g4-onyx;
-  }
-  .table {
-    > tbody {
-      > tr {
-        &:hover {
-          background-color: $g3-castle;
-        }
-      }
-    }
-
-    .dropdown-selected {
-      width: 100%;
-    }
-  }
-}
-
-.mapping-table-2 {
-  .mapping-readonly {
-    color: $g12-forge;
-    background-color: inherit;
-    margin: 8px 0;
     border: none;
     display: flex;
     align-items: center;
@@ -67,7 +45,7 @@
   }
 }
 
-.mapping-table-2 {
+.mapping-table {
   .table .isDeletable {
     opacity: 0.4;
     pointer-events: none;
@@ -83,18 +61,6 @@
 }
 
 .mapping-table {
-  .table {
-    .table-row {
-      border-bottom: 1px solid $g4-onyx;
-    }
-
-    td {
-      padding: 4px 8px;
-    }
-  }
-}
-
-.mapping-table-2 {
   .table {
     .table-row {
       border-bottom: 1px solid $g4-onyx;

@@ -1,5 +1,5 @@
 import React from 'react'
-import {Dropdown} from 'src/shared/components/Dropdown'
+import Dropdown from 'src/shared/components/Dropdown'
 import {
   AlignType,
   ColumnInfo,
@@ -16,7 +16,6 @@ import {
   BAREMETAL_VENDOR_DROPDOWN_ITEMS,
 } from 'src/shared/constants/venders'
 import InputDropdownWrapper from 'src/shared/components/InputDropdownWrapper'
-
 export const mappingTableColumns = (
   me: Me,
   setMappingInfo: (device: DeviceMeta) => void,
@@ -88,14 +87,6 @@ export const mappingTableColumns = (
     },
     render: (value, rowData) => (
       <div className={`${rowData.isDeletable ? 'isDeletable' : ''}`}>
-        {/* <input
-          type="text"
-          className="input-cte"
-          value={value}
-          onChange={e => {
-              onChangeAlias(e.target.value, rowData, 'vendor')
-          }}
-        /> */}
         <InputDropdownWrapper
           items={[
             ...VM_LEVEL_DROPDOWN_ITEMS,
@@ -109,11 +100,21 @@ export const mappingTableColumns = (
             const value = text
             onChangeAlias(value, rowData, 'vendor')
           }}
+          placeholder={'Input Vendor'}
         />
+        {/* <MatchingAliasDropdownWrapper
+          items={[
+            ...VM_LEVEL_DROPDOWN_ITEMS,
+            ...BAREMETAL_VENDOR_DROPDOWN_ITEMS,
+          ]}
+          selectedItem={value}
+          setSelectedItem={text => {
+            onChangeAlias(text, rowData, 'vendor')
+          }}
+        /> */}
       </div>
     ),
   },
-
   {
     key: 'aliasName',
     name: 'Target',
@@ -139,6 +140,7 @@ export const mappingTableColumns = (
                 const value = text
                 onChangeAlias(value, rowData, 'aliasName')
               }}
+              placeholder={rowData.hostname}
             />
           </div>
         </div>
@@ -181,7 +183,7 @@ export const mappingTableColumns = (
   },
   {
     key: 'isDeletable',
-    name: 'Delete',
+    name: '',
     options: {
       thead: {
         className: 'w-5',
