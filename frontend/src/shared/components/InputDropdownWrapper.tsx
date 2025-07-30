@@ -8,6 +8,7 @@ interface Props {
   setSelectedItem: (item: string) => void
   className?: string
   onChange: (item: string) => void
+  placeholder?: string
 }
 
 const InputDropdownWrapper = ({
@@ -16,6 +17,7 @@ const InputDropdownWrapper = ({
   setSelectedItem,
   className,
   onChange,
+  placeholder,
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -38,6 +40,11 @@ const InputDropdownWrapper = ({
     }
   }, [isOpen])
 
+  const onClose = (value: string) => {
+    setIsOpen(false)
+    onChange(value)
+  }
+
   return (
     <InputDropdown
       items={items}
@@ -49,6 +56,8 @@ const InputDropdownWrapper = ({
       selected={selectedItem}
       className={className ?? 'dropdown'}
       onChange={onChange}
+      placeholder={placeholder}
+      onClose={onClose}
     />
   )
 }

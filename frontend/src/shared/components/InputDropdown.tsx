@@ -10,7 +10,6 @@ import DropdownMenu, {
   DropdownMenuEmpty,
 } from 'src/shared/components/DropdownMenu'
 import DropdownInput from 'src/shared/components/DropdownInput'
-import DropdownHead from 'src/shared/components/DropdownHead'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -44,8 +43,9 @@ interface Props {
   tabIndex?: number
   isOpen: boolean
   onChange?: (item: any) => any
-  onClose: () => void
+  onClose: (value: string) => void
   status?: ComponentStatus
+  placeholder?: string
 }
 
 interface State {
@@ -78,16 +78,33 @@ export class InputDropdown extends PureComponent<Props, State> {
     }
   }
 
-  public handleClickOutside = () => {
-    this.props.onClose()
+  public componentDidMount() {
+    const {selected} = this.props
+    this.setState({searchTerm: selected})
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps.selected !== this.props.selected) {
+      this.setState({searchTerm: this.props.selected})
+    }
+  }
+
+  public handleClickOutside = async () => {
+    const {searchTerm} = this.state
+
+    this.props.onClose(searchTerm)
   }
 
   public handleSelection = (item: DropdownItem) => (
     e: MouseEvent<HTMLAnchorElement>
   ) => {
     e.stopPropagation()
+    const {onClose} = this.props
 
-    this.props.onChoose(item)
+    // this.props.onChoose(item)
+    this.setState({searchTerm: item.text})
+    onClose(item.text)
+
     this.dropdownRef.focus()
   }
 
@@ -114,17 +131,22 @@ export class InputDropdown extends PureComponent<Props, State> {
   ) => {
     e.stopPropagation()
     action.handler(item)
+
+    const {onClose} = this.props
+    onClose(item.text)
   }
 
   public handleFilterKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     const {filteredItems, highlightedItemIndex} = this.state
 
-    if (e.key === 'Enter' && filteredItems.length) {
-      this.props.onClose()
-      this.props.onChoose(filteredItems[highlightedItemIndex])
+    if (e.key === 'Enter') {
+      this.setState({searchTerm: filteredItems[highlightedItemIndex].text})
+      this.props.onClose(filteredItems[highlightedItemIndex].text)
+      this.dropdownRef.focus()
     }
     if (e.key === 'Escape') {
-      this.props.onClose()
+      this.props.onClose(this.state.searchTerm)
+      this.dropdownRef.focus()
     }
     if (e.key === 'ArrowUp' && highlightedItemIndex > 0) {
       this.setState({highlightedItemIndex: highlightedItemIndex - 1})
@@ -141,18 +163,16 @@ export class InputDropdown extends PureComponent<Props, State> {
 
   public handleFilterChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    if (value) {
-      return this.setState({searchTerm: value}, () => {
-        this.applyFilter(this.state.searchTerm)
-        this.props.onChange(value)
-      })
-    }
 
-    this.setState({
-      searchTerm: '',
-      filteredItems: this.props.items,
-      highlightedItemIndex: null,
+    return this.setState({searchTerm: value}, () => {
+      this.applyFilter(this.state.searchTerm)
     })
+
+    // this.setState({
+    //   searchTerm: '',
+    //   filteredItems: this.props.items,
+    //   highlightedItemIndex: null,
+    // })
   }
 
   public applyFilter = (searchTerm: string) => {
@@ -178,9 +198,7 @@ export class InputDropdown extends PureComponent<Props, State> {
       items,
       addNew,
       actions,
-      selected,
       disabled,
-      iconName,
       tabIndex,
       className,
       menuClass,
@@ -191,12 +209,12 @@ export class InputDropdown extends PureComponent<Props, State> {
       toggleStyle,
       useAutoComplete,
       status,
+      placeholder,
     } = this.props
 
     const {searchTerm, filteredItems, highlightedItemIndex} = this.state
 
     const menuItems = useAutoComplete ? filteredItems : items
-
     return (
       <div
         onClick={this.handleClick}
@@ -213,32 +231,25 @@ export class InputDropdown extends PureComponent<Props, State> {
             <LoadingSpinner />
           </div>
         ) : null}
-        {useAutoComplete && this.props.isOpen ? (
-          <DropdownInput
-            searchTerm={searchTerm}
-            buttonSize={buttonSize}
-            buttonColor={buttonColor}
-            toggleStyle={toggleStyle}
-            disabled={disabled || status === ComponentStatus.Loading}
-            onFilterChange={this.handleFilterChange}
-            onFilterKeyPress={this.handleFilterKeyPress}
-          />
-        ) : (
-          <DropdownHead
-            iconName={iconName}
-            selected={selected}
-            buttonSize={buttonSize}
-            buttonColor={buttonColor}
-            toggleStyle={toggleStyle}
-            disabled={disabled}
-          />
-        )}
+
+        <DropdownInput
+          searchTerm={searchTerm}
+          buttonSize={buttonSize}
+          buttonColor={buttonColor}
+          toggleStyle={toggleStyle}
+          disabled={disabled || status === ComponentStatus.Loading}
+          onFilterChange={this.handleFilterChange}
+          onFilterKeyPress={this.handleFilterKeyPress}
+          placeholder={placeholder}
+          value={searchTerm}
+        />
+
         {isOpen && menuItems.length ? (
           <DropdownMenu
             addNew={addNew}
             actions={actions}
             items={menuItems}
-            selected={selected}
+            selected={searchTerm}
             menuClass={menuClass}
             menuWidth={menuWidth}
             menuLabel={menuLabel}
@@ -266,11 +277,15 @@ export class InputDropdown extends PureComponent<Props, State> {
     }
 
     if (!this.props.isOpen) {
-      this.setState({
-        searchTerm: '',
-        filteredItems: this.props.items,
-        highlightedItemIndex: null,
-      })
+      this.setState(
+        {
+          // searchTerm: '',
+          highlightedItemIndex: null,
+        },
+        () => {
+          this.applyFilter(this.state.searchTerm)
+        }
+      )
     }
 
     if (onClick) {
