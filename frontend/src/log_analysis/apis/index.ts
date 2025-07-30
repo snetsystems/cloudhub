@@ -473,6 +473,7 @@ export async function getAutoCompleteResult({
           body: {
             field,
             string: valueInput,
+            case_insensitive:true,
             size: 10,
             ...buildTimeRangeFilter(timeRange),
           },

@@ -47,7 +47,7 @@ function DevicesMappingPage({
   organizations,
   currentSource,
   notify,
-}: Props) {
+}: Props): JSX.Element {
   const allTagValues = useDeviceType(currentSource)
 
   const [newDevice, setNewDevice] = useState<DeviceMeta[]>([])

@@ -1,6 +1,6 @@
 import React, {useState} from 'react'
 import {DropdownItem} from 'src/types'
-import {InputDropdown} from './InputDropdown'
+import InputDropdown from './InputDropdown'
 
 interface Props {
   items: DropdownItem[]
@@ -26,19 +26,7 @@ const InputDropdownWrapper = ({
     setIsOpen(false)
   }
 
-  React.useEffect(() => {
-    const handleGlobalClick = (_: MouseEvent) => {
-      if (isOpen) {
-        setIsOpen(false)
-      }
-    }
-    if (isOpen) {
-      document.addEventListener('click', handleGlobalClick)
-    }
-    return () => {
-      document.removeEventListener('click', handleGlobalClick)
-    }
-  }, [isOpen])
+
 
   const onClose = (value: string) => {
     setIsOpen(false)
@@ -53,6 +41,7 @@ const InputDropdownWrapper = ({
       disabled={false}
       onChoose={handleChoose}
       onClick={() => setIsOpen(prev => !prev)}
+      onClose={() => setIsOpen(false)}
       selected={selectedItem}
       className={className ?? 'dropdown'}
       onChange={onChange}
