@@ -182,11 +182,6 @@ function LogAnalysisSyslogTable({
         isExpandable: false,
       },
       {
-        id: 'log.syslog.priority',
-        display: 'Syslog Priority',
-        isExpandable: false,
-      },
-      {
         id: 'log.syslog.facility.code',
         display: 'Syslog Facility',
         isExpandable: false,
@@ -265,7 +260,6 @@ function LogAnalysisSyslogTable({
         'host.ip',
         'process.pid',
         'log.syslog.severity.code',
-        'log.syslog.priority',
         'log.syslog.facility.code',
         'message_tokens',
       ]
@@ -368,21 +362,6 @@ function LogAnalysisSyslogTable({
           const fac = row['log.syslog.facility.code']?.[0]
           cellContent =
             fac == null ? '' : SYSLOG_FACILITY_MAP[fac] || String(fac)
-          break
-        }
-        case 'log.syslog.priority': {
-          const pri = row['log.syslog.priority']?.[0]
-          if (pri == null) {
-            cellContent = ''
-          } else {
-            const facFromPri = Math.floor(pri / 8)
-            const sevFromPri = pri % 8
-            const facText =
-              SYSLOG_FACILITY_MAP[facFromPri] || String(facFromPri)
-            const sevText =
-              SYSLOG_SEVERITY_MAP[sevFromPri] || String(sevFromPri)
-            cellContent = `${pri} (${facText} / ${sevText})`
-          }
           break
         }
         case 'deviceType':
