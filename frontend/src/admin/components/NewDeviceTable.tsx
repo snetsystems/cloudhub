@@ -32,8 +32,8 @@ export const NewDeviceTable = ({
       await createDeviceMapping(newDevice[0], organizations)
       notify(notifyCreateDeviceSucceeded())
     } catch (error) {
-      notify(notifyCreateDeviceFailed(error.message))
-      throw new Error(notifyCreateDeviceFailed(error.message).message)
+      notify(notifyCreateDeviceFailed(error.data.message ?? ''))
+      throw new Error(error.data.message ?? '')
     }
 
     getDeviceList()
