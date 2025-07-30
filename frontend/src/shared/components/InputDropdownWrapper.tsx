@@ -26,9 +26,11 @@ const InputDropdownWrapper = ({
     setIsOpen(false)
   }
 
-  const onClose = (value: string) => {
+  const onClose = (value?: string) => {
     setIsOpen(false)
-    onChange(value)
+    if (!!value) {
+      onChange(value)
+    }
   }
 
   return (
