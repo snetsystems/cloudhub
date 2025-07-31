@@ -19,7 +19,6 @@ import {
   TopologyOption,
 } from 'src/hosts/types'
 import {DashboardSwitcherLinks} from 'src/types/dashboards'
-import {isInvalidVendorForDeviceType} from 'src/log_analysis/util'
 
 // APIs
 import {
@@ -1683,104 +1682,89 @@ export const getHostsInfoWithIpmi = async (
   return hosts
 }
 
-export const getTagValuesForDeviceType = async (
+export const getTagValuesForLayoutWhereTagKeys = async (
   source: Source,
-  deviceType: string,
-  tempVars: Template[],
-  isFromAgent?: boolean,
-  selectedVendor?: string
+  layouts: Layout[],
+  tempVars: Template[]
 ): Promise<DropdownItem[]> => {
-  if (isInvalidVendorForDeviceType(deviceType, selectedVendor, isFromAgent)) {
+  if (!layouts || layouts.length === 0) {
     return []
   }
 
-  let query = ''
+  const layoutQueries = new Map<string, Set<string>>()
 
-  if (deviceType === 'ipmi') {
-    query = replaceTemplate(
-      'SHOW TAG VALUES FROM "ipmi_sensor" WITH KEY="hostname"',
-      tempVars
-    )
-  } else if (isFromAgent) {
-    switch (deviceType) {
-      case 'baremetal':
-      case 'vm':
-      case 'network':
-        query = replaceTemplate(
-          'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
-          tempVars
-        )
-        break
-      default:
-        query = replaceTemplate(
-          'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
-          tempVars
-        )
-        break
+  layouts.forEach(layout => {
+    const measurement = layout.measurement
+    if (!measurement) {
+      return
     }
-  } else {
-    switch (deviceType) {
-      case 'baremetal':
-        query = replaceTemplate(
-          'SHOW TAG VALUES FROM "vsphere_host_cpu" WITH KEY="esxhostname"',
-          tempVars
-        )
-        break
-      case 'vm':
-        if (selectedVendor?.toLowerCase() === 'openstack') {
-          query = replaceTemplate(
-            'SHOW TAG VALUES FROM "openstack" WITH KEY="server_id"',
-            tempVars
-          )
-        } else {
-          query = replaceTemplate(
-            'SHOW TAG VALUES FROM "vsphere_vm_cpu" WITH KEY="vmname"',
-            tempVars
-          )
-        }
-        break
-      case 'network':
-        query = replaceTemplate(
-          'SHOW TAG VALUES FROM "snmp_nx" WITH KEY="agent_host"',
-          tempVars
-        )
-        break
-      default:
-        query = replaceTemplate(
-          'SHOW TAG VALUES FROM "cpu" WITH KEY="host"',
-          tempVars
-        )
-        break
+
+    if (!layoutQueries.has(measurement)) {
+      layoutQueries.set(measurement, new Set<string>())
     }
+
+    if (layout.whereTagKey && Array.isArray(layout.whereTagKey)) {
+      layout.whereTagKey.forEach(key => {
+        layoutQueries.get(measurement).add(key)
+      })
+    }
+  })
+
+  if (layoutQueries.size === 0) {
+    return []
+  }
+
+  const queries: string[] = []
+
+  layoutQueries.forEach((tagKeys, measurement) => {
+    tagKeys.forEach(tagKey => {
+      const query = replaceTemplate(
+        `SHOW TAG VALUES FROM "${measurement}" WITH KEY="${tagKey}"`,
+        tempVars
+      )
+      queries.push(query)
+    })
+  })
+
+  if (queries.length === 0) {
+    return []
   }
 
   try {
+    const combinedQuery = queries.join('; ')
     const {data} = await proxy({
       source: source.links.proxy,
-      query,
+      query: combinedQuery,
       db: source.telegraf,
     })
 
-    if (isEmpty(data) || hasError(data)) {
+    if (!data || !data.results) {
       return []
     }
 
-    const values = getDeep<string[][]>(
-      data,
-      'results.[0].series.[0].values',
-      []
-    )
-    const tagValues = values.map(v => ({
-      text: v[1],
+    const allTagValues = new Set<string>()
+
+    data.results.forEach(result => {
+      if (result.error || !result.series || result.series.length === 0) {
+        return
+      }
+
+      const values = getDeep<string[][]>(result, 'series.[0].values', [])
+
+      values.forEach(v => {
+        if (v && v.length > 1) {
+          allTagValues.add(v[1])
+        }
+      })
+    })
+
+    const tagValues = Array.from(allTagValues).map(value => ({
+      text: value,
     }))
 
     return tagValues
   } catch (error) {
-    console.error(
-      'Error fetching tag values for device type:',
-      deviceType,
-      error
-    )
+    console.error('Error fetching tag values for layout whereTagKeys:', error)
     return []
   }
 }
@@ -1891,40 +1875,4 @@ export const getAllTagValuesForDeviceTypes = async (
       ipmi: [],
     }
   }
-}
-
-export const getRecentActiveMeasurementsForHost = async (
-  source: Source,
-  host: string,
-  measurements: string[] = ['win_cpu', 'cpu'],
-  minutes: number = 30
-): Promise<string[]> => {
-  const queries = measurements.map(
-    m =>
-      `SELECT * FROM "${m}" WHERE host = '${host}' AND time > now() - ${minutes}m LIMIT 1`
-  )
-
-  const combinedQuery = queries.join('; ')
-
-  const {data} = await proxy({
-    source: source.links.proxy,
-    query: combinedQuery,
-    db: source.telegraf,
-  })
-
-  const activeMeasurements: string[] = []
-  if (data && data.results) {
-    data.results.forEach((result, idx) => {
-      if (
-        result.series &&
-        result.series[0] &&
-        result.series[0].values &&
-        result.series[0].values.length > 0
-      ) {
-        activeMeasurements.push(measurements[idx])
-      }
-    })
-  }
-
-  return activeMeasurements
 }

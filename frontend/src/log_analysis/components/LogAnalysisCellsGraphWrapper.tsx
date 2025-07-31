@@ -48,9 +48,10 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {setSelectedDevice} from 'src/log_analysis/actions/'
 
 // API
-import {getLayouts} from 'src/hosts/apis'
+import {getLayouts, getTagValuesForLayoutWhereTagKeys} from 'src/hosts/apis'
 import {updateDeviceMapping} from 'src/admin/apis/deviceMapping'
 import {
+  notifyNoSelectedDevice,
   notifyUpdateDeviceMappingFailed,
   notifyUpdateDeviceMappingSuccess,
 } from 'src/shared/copy/notifications'
@@ -172,13 +173,18 @@ const LogAnalysisCellsGraphWrapper = ({
 
   useEffect(() => {
     const fetchDropdownItems = async () => {
-      if (!isAuthorized) {
+      if (!isAuthorized || !layout || layout.length === 0) {
         return
       }
 
       try {
-        //const tempVars = generateForHosts(source)
-        //setMatchingAliasDropdownItems(tagValues)
+        const tempVars = generateForHosts(source)
+        const tagValues = await getTagValuesForLayoutWhereTagKeys(
+          source,
+          layout,
+          tempVars
+        )
+        setMatchingAliasDropdownItems(tagValues)
       } catch (error) {
         console.error('Error fetching dropdown items:', error)
         setMatchingAliasDropdownItems([])
@@ -186,7 +192,7 @@ const LogAnalysisCellsGraphWrapper = ({
     }
 
     fetchDropdownItems()
-  }, [source, isAuthorized, selectedApp])
+  }, [source, isAuthorized, layout])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
@@ -194,12 +200,38 @@ const LogAnalysisCellsGraphWrapper = ({
 
   useEffect(() => {
     if (!!layout) {
-      setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
+      const whereTag = {
+        _operator: 'OR' as const,
+      }
+
+      const deviceAlias =
+        matchingAliasSelectedDeviceAliasName || selectedDevice?.hostname || ''
+
+      if (!deviceAlias) {
+        notify(notifyNoSelectedDevice())
+        return
+      }
+
+      layout.forEach(layoutItem => {
+        if (layoutItem.whereTagKey && Array.isArray(layoutItem.whereTagKey)) {
+          layoutItem.whereTagKey.forEach(key => {
+            whereTag[key] = deviceAlias
+          })
+        }
+      })
+
+      setLayoutCells(getCellsReactive(layout, source, whereTag, ratio, null))
     }
-  }, [layout, selfTimeRange, matchingAliasSelectedDeviceAliasName, selectedApp])
+  }, [selfTimeRange, matchingAliasSelectedDeviceAliasName, layout])
 
   const filterLayoutsByRule = async () => {
     let filtered: Layout[] = []
+
+    if (selectedApp && selectedApp !== '') {
+      filtered = allLayouts.filter(layout => layout.app === selectedApp)
+    } else {
+      filtered = []
+    }
 
     return filtered.sort((x, y) => {
       return x.measurement < y.measurement
@@ -248,8 +280,10 @@ const LogAnalysisCellsGraphWrapper = ({
   }
 
   const handleMatchingAliasDropdownOnChoose = (item: DropdownItem) => {
-    setMatchingAliasSelectedDeviceAliasName(item.text)
-    setMatchingAliasDropdownIsOpen(false)
+    if (item && item.text) {
+      setMatchingAliasSelectedDeviceAliasName(item.text)
+      setMatchingAliasDropdownIsOpen(false)
+    }
   }
 
   const handleMatchingAliasDropdownOnClose = () => {
@@ -263,7 +297,7 @@ const LogAnalysisCellsGraphWrapper = ({
   const handleMatchingAliasInputDropdownChange = useCallback(
     _.debounce((value: string) => {
       setMatchingAliasSelectedDeviceAliasName(value)
-    }, 500),
+    }, 1000),
     []
   )
 
@@ -378,7 +412,11 @@ const LogAnalysisCellsGraphWrapper = ({
 
             <div className="panel-body" style={{margin: '15px 15px 0 15px'}}>
               <div className="generic-empty-state">
-                <h4 style={{margin: '90px 0'}}>No Results Found</h4>
+                <h4 style={{margin: '90px 0'}}>
+                  {!selectedApp
+                    ? 'Please select an App Name'
+                    : 'No Results Found'}
+                </h4>
               </div>
             </div>
           </>

@@ -133,9 +133,12 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     const {filteredItems, highlightedItemIndex} = this.state
 
     if (e.key === 'Enter' && filteredItems.length) {
-      this.props.onClose()
-      this.props.onChoose(filteredItems[highlightedItemIndex])
-      this.setState({searchTerm: filteredItems[highlightedItemIndex].text})
+      const selectedItem = filteredItems[highlightedItemIndex]
+      if (selectedItem) {
+        this.props.onClose()
+        this.props.onChoose(selectedItem)
+        this.setState({searchTerm: selectedItem.text})
+      }
     }
     if (e.key === 'Escape') {
       this.props.onClose()

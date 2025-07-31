@@ -1707,3 +1707,9 @@ export const notifyUpdateDeviceMappingSuccess = (): Notification => ({
   ...defaultSuccessNotification,
   message: `Device Data has been updated successfully.`,
 })
+
+export const notifyNoSelectedDevice = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `There is no selected device.`,
+  duration: INFINITE,
+})

@@ -25,6 +25,7 @@ interface Ratio {
 
 interface WhereTag {
   [key: string]: string | number
+  _operator?: 'AND' | 'OR'
 }
 
 export function getCellsReactive(
@@ -135,18 +136,30 @@ function toCellQuery(
   whereTag: WhereTag,
   interval?: number
 ): CellQuery {
-  const additionalWheres = Object.keys(whereTag)
+  const {_operator = 'AND', ...filteredWhereTag} = whereTag
+
+  const additionalWheres = Object.keys(filteredWhereTag)
     .map(key => {
-      if (whereTag[key] !== '' && whereTag[key] !== -1) {
-        return `"${key}" = '${whereTag[key]}'`
+      if (filteredWhereTag[key] !== '' && filteredWhereTag[key] !== -1) {
+        return `"${key}" = '${filteredWhereTag[key]}'`
       }
       return null
     })
     .filter(i => !!i)
 
+  let combinedWhere = ''
+  if (additionalWheres.length > 1) {
+    combinedWhere = `(${additionalWheres.join(` ${_operator} `)})`
+  } else if (additionalWheres.length === 1) {
+    combinedWhere = additionalWheres[0]
+  }
+
   const filteredQuery = {
     ...layoutQuery,
-    wheres: [...(layoutQuery.wheres ?? []), ...additionalWheres],
+    wheres: [
+      ...(layoutQuery.wheres ?? []),
+      ...(combinedWhere ? [combinedWhere] : []),
+    ],
     groupbys: [
       ...(layoutQuery.groupbys ?? []),
       interval && interval > 0 ? `time(${interval}m)` : null,
@@ -154,7 +167,10 @@ function toCellQuery(
   }
 
   const cellQuery: any =
-    whereTag.host !== '' || whereTag.index !== -1 || (interval && interval > 0)
+    Object.keys(whereTag).some(
+      key => key !== '_operator' && whereTag[key] !== '' && whereTag[key] !== -1
+    ) ||
+    (interval && interval > 0)
       ? {
           ...filteredQuery,
           source: source.url,
