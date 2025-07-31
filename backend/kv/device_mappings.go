@@ -68,6 +68,33 @@ func validateHostname(hostname string) error {
 	return nil
 }
 
+// validateAliasName checks if the alias name contains valid characters for use in key paths
+func validateAliasName(aliasName string) error {
+	if aliasName == "" {
+		return nil
+	}
+
+	invalidChars := regexp.MustCompile(`[\/\\\?\*"<>|\s\x00-\x1f\x7f]`)
+
+	if invalidChars.MatchString(aliasName) {
+		return fmt.Errorf("alias name contains invalid characters. Only alphanumeric characters, hyphens, underscores, and dots are allowed")
+	}
+
+	if len(aliasName) > 255 {
+		return fmt.Errorf("alias name too long (maximum 255 characters)")
+	}
+
+	if strings.HasPrefix(aliasName, ".") || strings.HasSuffix(aliasName, ".") {
+		return fmt.Errorf("alias name cannot start or end with a dot")
+	}
+
+	if strings.Contains(aliasName, "..") {
+		return fmt.Errorf("alias name cannot contain consecutive dots")
+	}
+
+	return nil
+}
+
 // AddDevice creates a new device mapping with atomic transaction
 func (s *deviceMappingsStore) AddDevice(ctx context.Context, meta *cloudhub.DeviceMeta) error {
 	if meta == nil {
@@ -80,6 +107,11 @@ func (s *deviceMappingsStore) AddDevice(ctx context.Context, meta *cloudhub.Devi
 	if err := validateHostname(meta.Hostname); err != nil {
 		return fmt.Errorf("invalid hostname: %w", err)
 	}
+
+	if err := validateAliasName(meta.AliasName); err != nil {
+		return fmt.Errorf("invalid alias name: %w", err)
+	}
+
 	if meta.OrgID == "" {
 		meta.OrgID = defaultOrgID
 	}
@@ -238,6 +270,12 @@ func (s *deviceMappingsStore) UpdateDevice(ctx context.Context, hostname string,
 		}
 	}
 
+	if patch.AliasName != "" {
+		if err := validateAliasName(patch.AliasName); err != nil {
+			return fmt.Errorf("invalid alias name: %w", err)
+		}
+	}
+
 	// 3) Build the updated snapshot (apply non-zero patch fields)
 	updated := *current
 	if patch.IP != "" {
@@ -376,6 +414,10 @@ func (s *deviceMappingsStore) AddAlias(ctx context.Context, alias, orgID, hostna
 		return fmt.Errorf("hostname is required")
 	}
 
+	if err := validateAliasName(alias); err != nil {
+		return fmt.Errorf("invalid alias: %w", err)
+	}
+
 	return s.client.kv.Update(ctx, func(tx Tx) error {
 		// Check if alias already exists
 		aliasKey := buildAliasToDeviceKey(alias)
@@ -411,6 +453,10 @@ func (s *deviceMappingsStore) UpdateAlias(ctx context.Context, alias, orgID, hos
 	}
 	if hostname == "" {
 		return fmt.Errorf("hostname is required")
+	}
+
+	if err := validateAliasName(alias); err != nil {
+		return fmt.Errorf("invalid alias: %w", err)
 	}
 
 	return s.client.kv.Update(ctx, func(tx Tx) error {
@@ -529,6 +575,10 @@ func (s *deviceMappingsStore) BatchAddDevices(
 
 			if err := validateHostname(m.Hostname); err != nil {
 				return fmt.Errorf("invalid hostname %s: %w", m.Hostname, err)
+			}
+
+			if err := validateAliasName(m.AliasName); err != nil {
+				return fmt.Errorf("invalid alias name %s: %w", m.AliasName, err)
 			}
 
 			if m.OrgID == "" {

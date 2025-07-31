@@ -131,7 +131,66 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 		}
 	})
 
-	// Test 3: Update Device
+	// Test 3: AliasName Validation
+	t.Run("AliasNameValidation", func(t *testing.T) {
+		invalidAliasNames := []string{
+			"test/alias",                    // slash
+			"test\\alias",                   // backslash
+			"test?alias",                    // question mark
+			"test*alias",                    // asterisk
+			"test\"alias",                   // double quote
+			"test<alias",                    // less than
+			"test>alias",                    // greater than
+			"test|alias",                    // pipe
+			"test alias",                    // space
+			".testalias",                    // dot at the beginning
+			"testalias.",                    // dot at the end
+			"test..alias",                   // consecutive dots
+			"a" + string(make([]byte, 256)), // too long alias
+		}
+
+		for _, invalidAliasName := range invalidAliasNames {
+			invalidDevice := &cloudhub.DeviceMeta{
+				IP:         "192.168.1.100",
+				Hostname:   "test-server-03",
+				AliasName:  invalidAliasName,
+				DeviceType: "VM",
+				OrgID:      "org-123",
+			}
+
+			err := s.AddDevice(ctx, invalidDevice)
+			if err == nil {
+				t.Errorf("Expected error for invalid alias name '%s', but got none", invalidAliasName)
+			}
+		}
+
+		validAliasNames := []string{
+			"test-alias",
+			"test.alias",
+			"test_alias",
+			"testalias",
+			"test-alias-01",
+		}
+
+		for _, validAliasName := range validAliasNames {
+			validDevice := &cloudhub.DeviceMeta{
+				IP:         "192.168.1.100",
+				Hostname:   "test-server-03",
+				AliasName:  validAliasName,
+				DeviceType: "VM",
+				OrgID:      "org-123",
+			}
+
+			err := s.AddDevice(ctx, validDevice)
+			if err != nil {
+				t.Errorf("Expected no error for valid alias name '%s', but got: %v", validAliasName, err)
+			}
+
+			s.DeleteDevice(ctx, "test-server-03")
+		}
+	})
+
+	// Test 4: Update Device
 	t.Run("UpdateDevice", func(t *testing.T) {
 		patch := &cloudhub.DeviceMeta{
 			IP:         "192.168.1.101", // IP change
@@ -176,7 +235,7 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 		device.AppName = patch.AppName
 	})
 
-	// Test 3: Delete Device - verify all 3 keys are deleted atomically
+	// Test 5: Delete Device - verify all 3 keys are deleted atomically
 	t.Run("DeleteDevice_AtomicDeletion", func(t *testing.T) {
 		err := s.DeleteDevice(ctx, device.Hostname)
 		if err != nil {
