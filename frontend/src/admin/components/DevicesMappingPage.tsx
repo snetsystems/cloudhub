@@ -20,7 +20,6 @@ import _ from 'lodash'
 import {NewDeviceTable} from './NewDeviceTable'
 import {orgIdToName} from '../utils/deviceMapping'
 import {useDeviceType} from 'src/log_analysis/hooks/useDeviceType'
-import useDebounce from 'src/hooks/useDebounce'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {bindActionCreators} from 'redux'
 import {
@@ -99,7 +98,6 @@ function DevicesMappingPage({
       ip: '',
       orgId: 'default',
       isDeletable: false,
-      vendor: '',
     }
     setNewDevice([dummyDevice])
   }

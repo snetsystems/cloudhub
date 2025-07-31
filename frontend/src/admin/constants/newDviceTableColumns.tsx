@@ -71,27 +71,6 @@ export const newDeviceTableColumns = (
     ),
   },
   {
-    key: 'vendor',
-    name: 'Vendor',
-    options: {
-      thead: {
-        className: 'w-15',
-      },
-    },
-    render: (value, rowData) => (
-      <div className={`${rowData.isDeletable ? 'isDeletable' : ''}`}>
-        <input
-          type="text"
-          className="input-cte"
-          value={value}
-          onChange={e => {
-            onChangeInput?.('vendor', e.target.value)
-          }}
-        />
-      </div>
-    ),
-  },
-  {
     key: 'aliasName',
     name: 'Target',
     options: {
