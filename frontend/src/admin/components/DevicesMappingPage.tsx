@@ -49,9 +49,7 @@ function DevicesMappingPage({
   notify,
   links,
 }: Props): JSX.Element {
-  const devMode =
-    links.addons.find(addon => addon.name == 'dev')
-      ?.url || 'off'
+  const devMode = links.addons.find(addon => addon.name == 'dev')?.url || 'off'
 
   const allTagValues = useDeviceType(currentSource)
 
@@ -114,11 +112,9 @@ function DevicesMappingPage({
       if (response.status < 300) {
         notify(notifyDeleteDeviceSucceeded())
       } else {
-        console.log('response: ', response)
         notify(notifyDeleteDeviceFailed(response.data.message ?? ''))
       }
     } catch (error) {
-      console.log('error: ', error)
       notify(notifyDeleteDeviceFailed(error.data.message ?? ''))
     }
 

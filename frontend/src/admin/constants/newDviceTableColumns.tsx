@@ -15,7 +15,7 @@ export const newDeviceTableColumns = (
     name: 'Hostname',
     options: {
       thead: {
-        className: 'w-15',
+        className: 'w-18',
       },
     },
     render: value => (
@@ -35,7 +35,7 @@ export const newDeviceTableColumns = (
     name: 'DeviceType',
     options: {
       thead: {
-        className: 'w-10',
+        className: 'w-15',
       },
     },
     render: value => (
@@ -55,7 +55,7 @@ export const newDeviceTableColumns = (
     name: 'IP',
     options: {
       thead: {
-        className: 'w-10',
+        className: 'w-15',
       },
     },
     render: value => (
@@ -83,7 +83,7 @@ export const newDeviceTableColumns = (
       <div className={`flow-line`}>
         <div className={'provider--arrow'}>
           <span />
-          <div className="host">
+          <div className="mapping-table-host">
             <input
               type="text"
               className="input-cte"
