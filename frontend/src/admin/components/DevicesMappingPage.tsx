@@ -37,6 +37,7 @@ interface Props {
   organizations?: Organization[]
   currentSource?: Source
   notify?: NotificationAction
+  links?: any
 }
 
 function DevicesMappingPage({
@@ -46,7 +47,12 @@ function DevicesMappingPage({
   organizations,
   currentSource,
   notify,
+  links,
 }: Props): JSX.Element {
+  const devMode =
+    links.addons.find(addon => addon.name == 'dev')
+      ?.url || 'off'
+
   const allTagValues = useDeviceType(currentSource)
 
   const [newDevice, setNewDevice] = useState<DeviceMeta[]>([])
@@ -140,7 +146,7 @@ function DevicesMappingPage({
     <div className="panel panel-solid">
       <div className="panel-heading">
         <div className="panel-title-right">
-          {me.superAdmin && (
+          {me.superAdmin && devMode === 'on' && (
             <button className="btn btn-primary" onClick={() => addDevice()}>
               Add Device
             </button>
@@ -201,12 +207,14 @@ const mstp = state => {
     sources: {sourceID},
     adminCloudHub: {organizations},
     logs: {currentSource},
+    links,
   } = state
   return {
     esSource,
     organizations,
     sourceID,
     currentSource,
+    links,
   }
 }
 

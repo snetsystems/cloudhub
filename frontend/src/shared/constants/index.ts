@@ -548,6 +548,7 @@ export enum AddonType {
   osp = 'osp',
   ai = 'ai',
   nvidia = 'nvidia-gpu',
+  dev = 'dev',
 }
 
 export const COLLECTOR_SERVER = 'ch-collector'
