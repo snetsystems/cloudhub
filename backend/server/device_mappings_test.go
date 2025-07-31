@@ -654,3 +654,280 @@ func TestService_EnsureDevice(t *testing.T) {
 		})
 	}
 }
+
+func TestService_RemoveOrganizationWithDeviceMappings(t *testing.T) {
+	orgToDelete := &cloudhub.Organization{
+		ID:   "org-to-delete",
+		Name: "Organization to Delete",
+	}
+
+	deviceMappingsInOrg := []*cloudhub.DeviceMeta{
+		{
+			IP:         "192.168.1.1",
+			Hostname:   "device1",
+			AliasName:  "alias1",
+			DeviceType: "baremetal",
+			OrgID:      "org-to-delete",
+			AppName:    "app1",
+		},
+		{
+			IP:         "192.168.1.2",
+			Hostname:   "device2",
+			AliasName:  "alias2",
+			DeviceType: "baremetal",
+			OrgID:      "org-to-delete",
+			AppName:    "app2",
+		},
+	}
+
+	networkDevices := []cloudhub.NetworkDevice{
+		{
+			ID:           "net-device-1",
+			Organization: "other-org",
+			DeviceIP:     "10.0.0.1",
+			Hostname:     "net-device1",
+		},
+		{
+			ID:           "net-device-2",
+			Organization: "other-org",
+			DeviceIP:     "10.0.0.2",
+			Hostname:     "net-device2",
+		},
+	}
+
+	tests := []struct {
+		name           string
+		orgID          string
+		mockSetup      func(*mocks.Store)
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:  "successfully remove organization and move device mappings to default",
+			orgID: "org-to-delete",
+			mockSetup: func(store *mocks.Store) {
+				// Mock Organizations store
+				store.OrganizationsStore = &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						if q.ID != nil && *q.ID == "org-to-delete" {
+							return orgToDelete, nil
+						}
+						return nil, fmt.Errorf("organization not found")
+					},
+					DeleteF: func(ctx context.Context, org *cloudhub.Organization) error {
+						return nil
+					},
+				}
+
+				// Mock NetworkDevice store - no devices in the org to be deleted
+				store.NetworkDeviceStore = &mocks.NetworkDeviceStore{
+					AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+						return networkDevices, nil
+					},
+				}
+
+				// Mock DeviceMappings store
+				store.DeviceMappingsStore = &mocks.DeviceMappingsStore{
+					AllDevicesFunc: func(ctx context.Context, ac cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error) {
+						if ac.OrgID == "org-to-delete" {
+							return deviceMappingsInOrg, nil
+						}
+						return []*cloudhub.DeviceMeta{}, nil
+					},
+					UpdateDeviceFunc: func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error {
+						// Verify that devices are being moved to default organization
+						if patch.OrgID != cloudhub.DefaultOrgID {
+							t.Errorf("Expected device to be moved to default org, got %s", patch.OrgID)
+						}
+						return nil
+					},
+				}
+			},
+			expectedStatus: http.StatusNoContent,
+			expectedBody:   "",
+		},
+		{
+			name:  "organization not found",
+			orgID: "non-existent-org",
+			mockSetup: func(store *mocks.Store) {
+				store.OrganizationsStore = &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return nil, fmt.Errorf("organization not found")
+					},
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"code":404,"message":"organization not found"}`,
+		},
+		{
+			name:  "cannot delete organization with network devices",
+			orgID: "org-with-network-devices",
+			mockSetup: func(store *mocks.Store) {
+				orgWithDevices := &cloudhub.Organization{
+					ID:   "org-with-network-devices",
+					Name: "Organization with Network Devices",
+				}
+
+				store.OrganizationsStore = &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						if q.ID != nil && *q.ID == "org-with-network-devices" {
+							return orgWithDevices, nil
+						}
+						return nil, fmt.Errorf("organization not found")
+					},
+				}
+
+				// Mock NetworkDevice store - has devices in the org to be deleted
+				networkDevicesWithOrg := []cloudhub.NetworkDevice{
+					{
+						ID:           "net-device-in-org",
+						Organization: "org-with-network-devices",
+						DeviceIP:     "10.0.0.3",
+						Hostname:     "net-device-in-org",
+					},
+				}
+
+				store.NetworkDeviceStore = &mocks.NetworkDeviceStore{
+					AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+						return networkDevicesWithOrg, nil
+					},
+				}
+			},
+			expectedStatus: http.StatusConflict,
+			expectedBody:   `{"code":409,"message":"The organization cannot be deleted because there are registered devices associated with it."}`,
+		},
+		{
+			name:  "error getting device mappings",
+			orgID: "org-to-delete",
+			mockSetup: func(store *mocks.Store) {
+				store.OrganizationsStore = &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						if q.ID != nil && *q.ID == "org-to-delete" {
+							return orgToDelete, nil
+						}
+						return nil, fmt.Errorf("organization not found")
+					},
+				}
+
+				store.NetworkDeviceStore = &mocks.NetworkDeviceStore{
+					AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+						return networkDevices, nil
+					},
+				}
+
+				store.DeviceMappingsStore = &mocks.DeviceMappingsStore{
+					AllDevicesFunc: func(ctx context.Context, ac cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error) {
+						return nil, fmt.Errorf("database error")
+					},
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   `{"code":500,"message":"database error"}`,
+		},
+		{
+			name:  "error updating device mapping",
+			orgID: "org-to-delete",
+			mockSetup: func(store *mocks.Store) {
+				store.OrganizationsStore = &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						if q.ID != nil && *q.ID == "org-to-delete" {
+							return orgToDelete, nil
+						}
+						return nil, fmt.Errorf("organization not found")
+					},
+				}
+
+				store.NetworkDeviceStore = &mocks.NetworkDeviceStore{
+					AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+						return networkDevices, nil
+					},
+				}
+
+				store.DeviceMappingsStore = &mocks.DeviceMappingsStore{
+					AllDevicesFunc: func(ctx context.Context, ac cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error) {
+						if ac.OrgID == "org-to-delete" {
+							return deviceMappingsInOrg, nil
+						}
+						return []*cloudhub.DeviceMeta{}, nil
+					},
+					UpdateDeviceFunc: func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error {
+						return fmt.Errorf("update device error")
+					},
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   `{"code":500,"message":"update device error"}`,
+		},
+		{
+			name:  "error deleting organization",
+			orgID: "org-to-delete",
+			mockSetup: func(store *mocks.Store) {
+				store.OrganizationsStore = &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						if q.ID != nil && *q.ID == "org-to-delete" {
+							return orgToDelete, nil
+						}
+						return nil, fmt.Errorf("organization not found")
+					},
+					DeleteF: func(ctx context.Context, org *cloudhub.Organization) error {
+						return fmt.Errorf("delete organization error")
+					},
+				}
+
+				store.NetworkDeviceStore = &mocks.NetworkDeviceStore{
+					AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+						return networkDevices, nil
+					},
+				}
+
+				store.DeviceMappingsStore = &mocks.DeviceMappingsStore{
+					AllDevicesFunc: func(ctx context.Context, ac cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error) {
+						if ac.OrgID == "org-to-delete" {
+							return deviceMappingsInOrg, nil
+						}
+						return []*cloudhub.DeviceMeta{}, nil
+					},
+					UpdateDeviceFunc: func(ctx context.Context, hostname string, patch *cloudhub.DeviceMeta) error {
+						return nil
+					},
+				}
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   `{"code":400,"message":"delete organization error"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &mocks.Store{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(store)
+			}
+
+			s := newTestService(t, store)
+			router := httprouter.New()
+			router.DELETE("/cloudhub/v1/organizations/:oid", s.RemoveOrganization)
+
+			req := httptest.NewRequest("DELETE", "/cloudhub/v1/organizations/"+tt.orgID, nil)
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, req)
+
+			if res.Code != tt.expectedStatus {
+				t.Errorf("handler returned wrong status code: got %v want %v", res.Code, tt.expectedStatus)
+			}
+
+			if tt.expectedBody != "" {
+				var got, want interface{}
+				json.Unmarshal(res.Body.Bytes(), &got)
+				json.Unmarshal([]byte(tt.expectedBody), &want)
+
+				gotStr, _ := json.Marshal(got)
+				wantStr, _ := json.Marshal(want)
+
+				if string(gotStr) != string(wantStr) {
+					t.Errorf("handler returned unexpected body: got %s want %s", string(gotStr), string(wantStr))
+				}
+			}
+		})
+	}
+}

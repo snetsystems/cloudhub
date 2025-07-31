@@ -245,6 +245,35 @@ func (s *Service) RemoveOrganization(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Move device mappings from the organization being deleted to default organization
+	deviceMappings, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
+		IsSuperAdmin: hasSuperAdminContext(ctx),
+		OrgID:        org.ID,
+	})
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	// Update device mappings to move them to default organization
+	for _, device := range deviceMappings {
+		if device.OrgID == org.ID {
+			updatedDevice := &cloudhub.DeviceMeta{
+				IP:          device.IP,
+				Hostname:    device.Hostname,
+				AliasName:   device.AliasName,
+				DeviceType:  device.DeviceType,
+				OrgID:       cloudhub.DefaultOrgID,
+				IsDeletable: device.IsDeletable,
+				AppName:     device.AppName,
+			}
+			if err := s.Store.DeviceMappings(ctx).UpdateDevice(ctx, device.Hostname, updatedDevice); err != nil {
+				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+				return
+			}
+		}
+	}
+
 	if err := s.Store.Organizations(ctx).Delete(ctx, org); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return

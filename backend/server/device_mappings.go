@@ -74,13 +74,6 @@ type ensureDeviceResponse struct {
 	Status string                 `json:"status"` // found | auto_registered | not_found
 }
 
-var (
-	defaultDays   = 7
-	defaultIndex  = "syslog-*"
-	defaultOrgID  = "default"
-	defaultDevice = "baremetal"
-)
-
 func (r *createDeviceMappingRequest) ValidCreate() error {
 	if r.Hostname == "" {
 		return fmt.Errorf("hostname is required")
@@ -89,7 +82,7 @@ func (r *createDeviceMappingRequest) ValidCreate() error {
 		return fmt.Errorf("ip is required")
 	}
 	if r.DeviceType == "" {
-		r.DeviceType = defaultDevice // default device type
+		r.DeviceType = cloudhub.DefaultDevice // default device type
 	}
 	if r.OrgID == "" {
 		r.OrgID = "default" // default to default organization
@@ -479,7 +472,7 @@ func (s *Service) GetDeviceByAlias(w http.ResponseWriter, r *http.Request) {
 
 func defaultDeviceType(es cloudhub.ESInfo) string {
 	if es.DeviceType == "" {
-		return defaultDevice
+		return cloudhub.DefaultDevice
 	}
 	return es.DeviceType
 }
@@ -490,7 +483,7 @@ func (s *Service) mergeAndUpsertDevices(
 
 	existing, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
 		IsSuperAdmin: hasSuperAdminContext(ctx),
-		OrgID:        DefaultOrganizationID,
+		OrgID:        cloudhub.DefaultOrgID,
 	})
 	if err != nil {
 		return nil, err
@@ -517,7 +510,7 @@ func (s *Service) mergeAndUpsertDevices(
 			Hostname:    h,
 			AliasName:   "", // unknown
 			DeviceType:  defaultDeviceType(info),
-			OrgID:       DefaultOrganizationID,
+			OrgID:       cloudhub.DefaultOrgID,
 			IsDeletable: false,
 			AppName:     "",
 		}
@@ -589,7 +582,7 @@ func (s *Service) EnsureDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info, ok, err := s.GetLatestHostInfo(
-		ctx, esSourceID, defaultIndex, hostname, defaultDays,
+		ctx, esSourceID, cloudhub.DefaultIndex, hostname, cloudhub.DefaultDays,
 	)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
@@ -607,7 +600,7 @@ func (s *Service) EnsureDevice(w http.ResponseWriter, r *http.Request) {
 		Hostname:    hostname,
 		AliasName:   "",
 		DeviceType:  defaultDeviceType(esInfo),
-		OrgID:       defaultOrgID,
+		OrgID:       cloudhub.DefaultOrgID,
 		IsDeletable: false,
 		AppName:     "",
 	}
