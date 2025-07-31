@@ -5,5 +5,5 @@ export const orgNameToId = (orgName: string, orgList: Organization[]) => {
 }
 
 export const orgIdToName = (orgId: string, orgList: Organization[]) => {
-  return orgList.find(org => org.id === orgId)?.name
+  return orgList.find(org => org.id === orgId)?.name ?? 'Not Exist Org'
 }

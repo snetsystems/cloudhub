@@ -1,12 +1,11 @@
 .flow-line {
   position: relative;
-  margin: 10px 0; /* 데모용 여백 */
+  margin: 10px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* ────── 가운데 호스트 라벨 ────── */
 .mapping-table-host {
   position: absolute;
   top: -16px;
@@ -49,7 +48,6 @@
   .table .isDeletable {
     opacity: 0.4;
     pointer-events: none;
-    //Todo: Cursor 동작 안됨
   }
 }
 
@@ -57,7 +55,6 @@
   opacity: 0.4;
   pointer-events: none;
   cursor: not-allowed;
-  //Todo: Cursor 동작 안됨
 }
 
 .mapping-table {
@@ -90,22 +87,28 @@
   }
 }
 
-.table .w-20 {
-  width: 20%;
-}
+.mapping-table {
+  .w-35 {
+    width: 35%;
+  }
 
-.w-30 {
-  width: 30%;
-}
+  .w-30 {
+    width: 30%;
+  }
 
-.w-10 {
-  width: 10%;
-}
+  .w-20 {
+    width: 20%;
+  }
 
-.w-15 {
-  width: 15%;
-}
+  .w-10 {
+    width: 10%;
+  }
 
-.w-5 {
-  width: 5%;
+  .w-15 {
+    width: 15%;
+  }
+
+  .w-5 {
+    width: 5%;
+  }
 }

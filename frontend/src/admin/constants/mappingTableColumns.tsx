@@ -10,11 +10,7 @@ import {
 } from 'src/types'
 import _ from 'lodash'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import {orgNameToId} from '../utils/deviceMapping'
-import {
-  VM_LEVEL_DROPDOWN_ITEMS,
-  BAREMETAL_VENDOR_DROPDOWN_ITEMS,
-} from 'src/shared/constants/venders'
+import {orgIdToName, orgNameToId} from '../utils/deviceMapping'
 import InputDropdownWrapper from 'src/shared/components/InputDropdownWrapper'
 export const mappingTableColumns = (
   me: Me,
@@ -31,7 +27,7 @@ export const mappingTableColumns = (
     name: 'Hostname',
     options: {
       thead: {
-        className: 'w-15',
+        className: 'w-18',
       },
     },
     render: (value, rowData) => (
@@ -48,7 +44,7 @@ export const mappingTableColumns = (
     name: 'DeviceType',
     options: {
       thead: {
-        className: 'w-10',
+        className: 'w-15',
       },
     },
     render: (value, rowData) => (
@@ -65,7 +61,7 @@ export const mappingTableColumns = (
     name: 'IP',
     options: {
       thead: {
-        className: 'w-10',
+        className: 'w-15',
       },
     },
     render: (value, rowData) => (
@@ -77,44 +73,7 @@ export const mappingTableColumns = (
       </div>
     ),
   },
-  {
-    key: 'vendor',
-    name: 'Vendor',
-    options: {
-      thead: {
-        className: 'w-15',
-      },
-    },
-    render: (value, rowData) => (
-      <div className={`${rowData.isDeletable ? 'isDeletable' : ''}`}>
-        <InputDropdownWrapper
-          items={[
-            ...VM_LEVEL_DROPDOWN_ITEMS,
-            ...BAREMETAL_VENDOR_DROPDOWN_ITEMS,
-          ]}
-          selectedItem={value}
-          setSelectedItem={text => {
-            onChangeAlias(text, rowData, 'vendor')
-          }}
-          onChange={text => {
-            const value = text
-            onChangeAlias(value, rowData, 'vendor')
-          }}
-          placeholder={'Input Vendor'}
-        />
-        {/* <MatchingAliasDropdownWrapper
-          items={[
-            ...VM_LEVEL_DROPDOWN_ITEMS,
-            ...BAREMETAL_VENDOR_DROPDOWN_ITEMS,
-          ]}
-          selectedItem={value}
-          setSelectedItem={text => {
-            onChangeAlias(text, rowData, 'vendor')
-          }}
-        /> */}
-      </div>
-    ),
-  },
+
   {
     key: 'aliasName',
     name: 'Target',
@@ -128,17 +87,20 @@ export const mappingTableColumns = (
       <div className={`flow-line ${rowData.isDeletable ? 'isDeletable' : ''}`}>
         <div className={'provider--arrow'}>
           <span />
-          <div className="mapping-table-host">
+          <div title={value} className="mapping-table-host">
             <InputDropdownWrapper
               items={allTagValues?.[rowData.deviceType] || []}
               selectedItem={value}
               setSelectedItem={text => {
-                onChangeAlias(text, rowData, 'aliasName')
+                if (text !== value) {
+                  onChangeAlias(text, rowData, 'aliasName')
+                }
               }}
               className="dropdown-stretch"
               onChange={text => {
-                const value = text
-                onChangeAlias(value, rowData, 'aliasName')
+                if (text !== value) {
+                  onChangeAlias(text, rowData, 'aliasName')
+                }
               }}
               placeholder={rowData.hostname}
             />
@@ -152,18 +114,14 @@ export const mappingTableColumns = (
     key: 'orgId',
     name: 'Organization',
     render: (value, rowData) => {
-      const org =
-        organizations?.map(org => {
-          if (org.id === value) {
-            return org
-          }
-        }) || []
+      const org = organizations?.filter(org => org.id === value) || []
 
       return (
         <div
           className={`agent-select--button-box ${
             rowData.isDeletable ? 'isDeletable' : ''
           }`}
+          title={orgIdToName(value, organizations || [])}
         >
           <Dropdown
             items={organizations?.map(org => ({text: org.name})) || []}
@@ -173,7 +131,9 @@ export const mappingTableColumns = (
                 orgId: orgNameToId(e.text, organizations || []),
               })
             }} // change tenant
-            selected={org[0]?.name ?? value ?? ''}
+            selected={
+              org[0]?.name ?? orgIdToName(value, organizations || []) ?? ''
+            }
             className="dropdown-stretch"
             disabled={!me.superAdmin}
           />

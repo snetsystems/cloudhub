@@ -56,13 +56,6 @@ function DevicesMappingPage({
     default: [],
   })
 
-  const debouncedSetOrg = useDebounce({
-    callback: (device: DeviceMeta) => {
-      setMappingInfo(device)
-    },
-    delay: 1000,
-  })
-
   useEffect(() => {
     if (esSource) {
       getDeviceList(esSource.id)
@@ -142,7 +135,7 @@ function DevicesMappingPage({
     tempAry[rowData.orgId][rowIndex][key] = valueText
     setMappingList(tempAry)
 
-    debouncedSetOrg(tempAry[rowData.orgId][rowIndex])
+    setMappingInfo(tempAry[rowData.orgId][rowIndex])
   }
 
   return (

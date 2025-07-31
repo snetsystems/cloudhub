@@ -138,10 +138,13 @@ export class InputDropdown extends PureComponent<Props, State> {
 
   public handleFilterKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     const {filteredItems, highlightedItemIndex} = this.state
-
     if (e.key === 'Enter') {
-      this.setState({searchTerm: filteredItems[highlightedItemIndex].text})
-      this.props.onClose(filteredItems[highlightedItemIndex].text)
+      if (filteredItems.length > 0) {
+        this.setState({searchTerm: filteredItems[highlightedItemIndex].text})
+        this.props.onClose(filteredItems[highlightedItemIndex].text)
+      } else {
+        this.props.onClose(this.state.searchTerm)
+      }
       this.dropdownRef.focus()
     }
     if (e.key === 'Escape') {
