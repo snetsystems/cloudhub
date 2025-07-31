@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -40,6 +41,33 @@ func buildAliasToDeviceKey(aliasName string) string {
 	return fmt.Sprintf("%s/%s", aliasToDevicePrefix, aliasName)
 }
 
+// validateHostname checks if the hostname contains valid characters for use in key paths
+func validateHostname(hostname string) error {
+	if hostname == "" {
+		return fmt.Errorf("hostname cannot be empty")
+	}
+
+	invalidChars := regexp.MustCompile(`[\/\\\?\*"<>|\s\x00-\x1f\x7f]`)
+
+	if invalidChars.MatchString(hostname) {
+		return fmt.Errorf("hostname contains invalid characters. Only alphanumeric characters, hyphens, underscores, and dots are allowed")
+	}
+
+	if len(hostname) > 255 {
+		return fmt.Errorf("hostname too long (maximum 255 characters)")
+	}
+
+	if strings.HasPrefix(hostname, ".") || strings.HasSuffix(hostname, ".") {
+		return fmt.Errorf("hostname cannot start or end with a dot")
+	}
+
+	if strings.Contains(hostname, "..") {
+		return fmt.Errorf("hostname cannot contain consecutive dots")
+	}
+
+	return nil
+}
+
 // AddDevice creates a new device mapping with atomic transaction
 func (s *deviceMappingsStore) AddDevice(ctx context.Context, meta *cloudhub.DeviceMeta) error {
 	if meta == nil {
@@ -47,6 +75,10 @@ func (s *deviceMappingsStore) AddDevice(ctx context.Context, meta *cloudhub.Devi
 	}
 	if meta.Hostname == "" {
 		return fmt.Errorf("hostname is required")
+	}
+
+	if err := validateHostname(meta.Hostname); err != nil {
+		return fmt.Errorf("invalid hostname: %w", err)
 	}
 	if meta.OrgID == "" {
 		meta.OrgID = defaultOrgID
@@ -198,6 +230,12 @@ func (s *deviceMappingsStore) UpdateDevice(ctx context.Context, hostname string,
 	// 2) Basic sanity checks
 	if patch.Hostname != "" && patch.Hostname != hostname {
 		return fmt.Errorf("hostname mismatch: patch=%s request=%s", patch.Hostname, hostname)
+	}
+
+	if patch.Hostname != "" {
+		if err := validateHostname(patch.Hostname); err != nil {
+			return fmt.Errorf("invalid hostname: %w", err)
+		}
 	}
 
 	// 3) Build the updated snapshot (apply non-zero patch fields)
@@ -488,6 +526,11 @@ func (s *deviceMappingsStore) BatchAddDevices(
 			if m == nil || m.Hostname == "" {
 				continue
 			}
+
+			if err := validateHostname(m.Hostname); err != nil {
+				return fmt.Errorf("invalid hostname %s: %w", m.Hostname, err)
+			}
+
 			if m.OrgID == "" {
 				m.OrgID = defaultOrgID
 			}
