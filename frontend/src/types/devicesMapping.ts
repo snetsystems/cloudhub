@@ -5,7 +5,7 @@ export interface DeviceMeta {
   deviceType: string
   orgId: string
   isDeletable: boolean
-  vendor?: string
+  appName?: string
 }
 
 export interface DeviceMapping {

@@ -37,17 +37,62 @@ $highlight: #25262e;
   }
 }
 
-.log-analysis-matching-alias-title {
+.app-matching-alias-container {
+  width: 100%;
+}
+
+.app-matching-alias-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.app-section {
+  flex: 4.5;
+  min-width: 0;
+}
+
+.app-dropdown-wrapper-title {
   font-size: 14px;
   font-weight: 600;
   padding: 10px 0px 0px 15px;
 }
 
-.log-analysis-matching-alias {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
+.app-dropdown-wrapper {
+  padding: 5px 0px 5px 15px;
+
+  > button {
+    width: 52px;
+    margin-right: 3px;
+  }
+}
+
+.app-dropdown-50 {
+  width: 100%;
+
+  .dropdown-toggle {
+    width: 100%;
+  }
+
+  .dropdown-autocomplete {
+    width: 100%;
+  }
+}
+
+.matching-alias-section {
+  flex: 4.5;
+  min-width: 0;
+}
+
+.matching-alias-title {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 0px 0px 15px;
+}
+
+.matching-alias-dropdown-wrapper {
   padding: 5px 0px 5px 15px;
 
   > button {
@@ -57,7 +102,7 @@ $highlight: #25262e;
 }
 
 .matching-alias-dropdown-50 {
-  width: 57%;
+  width: 100%;
 
   .dropdown-toggle {
     width: 100%;
@@ -69,7 +114,7 @@ $highlight: #25262e;
 }
 
 .matching-alias-dropdown-ipmi {
-  width: 83.5%;
+  width: 100%;
 
   .dropdown-toggle {
     width: 100%;
@@ -80,34 +125,23 @@ $highlight: #25262e;
   }
 }
 
-.vendor-dropdown-wrapper-title {
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 0px 0px 15px;
-}
-
-.vendor-dropdown-wrapper {
+.apply-section {
+  flex: 0.05;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 0px 5px 15px;
-
-  > button {
-    width: 52px;
-    margin-right: 3px;
-  }
+  align-items: flex-end;
+  padding: 30px 15px 5px 0px;
 }
 
-.vendor-dropdown-50 {
-  width: 83.5%;
+.from-agent-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 15px 0px 15px;
+  font-size: 14px;
 
-  .dropdown-toggle {
-    width: 100%;
-  }
-
-  .dropdown-autocomplete {
-    width: 100%;
+  > span {
+    font-weight: 400;
   }
 }
 

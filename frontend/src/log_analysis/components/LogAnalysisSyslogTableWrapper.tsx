@@ -322,6 +322,7 @@ function LogAnalysisSyslogTableWrapper({
         deviceType: deviceType,
         orgId: '',
         isDeletable: false,
+        appName: '',
       } as DeviceMeta
     }
   }
