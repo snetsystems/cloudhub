@@ -480,10 +480,13 @@ func (s *Service) mergeAndUpsertDevices(
 	ctx context.Context,
 	hosts map[string]cloudhub.ESInfo,
 ) ([]*cloudhub.DeviceMeta, error) {
-
+	currOrg, ok := hasOrganizationContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("organization not found")
+	}
 	existing, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
 		IsSuperAdmin: hasSuperAdminContext(ctx),
-		OrgID:        cloudhub.DefaultOrgID,
+		OrgID:        currOrg,
 	})
 	if err != nil {
 		return nil, err
