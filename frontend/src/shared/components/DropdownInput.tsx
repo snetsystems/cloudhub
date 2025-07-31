@@ -44,6 +44,7 @@ const DropdownInput: FunctionComponent<Props> = ({
       onChange={onFilterChange}
       onKeyDown={onFilterKeyPress}
       value={value ?? searchTerm}
+      disabled={disabled}
     />
     <span className="caret" />
   </div>

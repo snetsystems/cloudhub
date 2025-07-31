@@ -9,6 +9,7 @@ interface Props {
   className?: string
   onChange: (item: string) => void
   placeholder?: string
+  disabled?: boolean
 }
 
 const InputDropdownWrapper = ({
@@ -18,6 +19,7 @@ const InputDropdownWrapper = ({
   className,
   onChange,
   placeholder,
+  disabled,
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -28,7 +30,7 @@ const InputDropdownWrapper = ({
 
   const onClose = (value?: string) => {
     setIsOpen(false)
-    if (!!value) {
+    if (!!value || value === '') {
       onChange(value)
     }
   }
@@ -38,7 +40,7 @@ const InputDropdownWrapper = ({
       items={items}
       isOpen={isOpen}
       useAutoComplete={true}
-      disabled={false}
+      disabled={disabled}
       onChoose={handleChoose}
       onClick={() => setIsOpen(prev => !prev)}
       selected={selectedItem}

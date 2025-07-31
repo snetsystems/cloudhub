@@ -103,6 +103,7 @@ export const mappingTableColumns = (
                 }
               }}
               placeholder={rowData.hostname}
+              disabled={!me.superAdmin || rowData.isDeletable}
             />
           </div>
         </div>
