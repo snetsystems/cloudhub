@@ -1566,6 +1566,17 @@ type DLNxRstStg struct {
 	DLThreshold            float32 `json:"dl_threshold"` // DL Threshold value
 }
 
+const (
+	// DefaultOrgID is the ID of the default organization
+	DefaultOrgID = "default"
+	// DefaultDays is the default number of days for the log analysis
+	DefaultDays = 7
+	// DefaultIndex is the default index for the log analysis
+	DefaultIndex = "syslog-*"
+	// DefaultDevice is the default device type
+	DefaultDevice = "baremetal"
+)
+
 // DeviceMeta represents metadata for a device, including network and organizational info.
 type DeviceMeta struct {
 	IP          string `json:"ip"`         // Management IP address

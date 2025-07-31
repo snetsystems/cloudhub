@@ -11,7 +11,7 @@ import (
 
 // TestDeviceMappingsStore_BasicOperations tests basic CRUD operations
 func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
-	c, err := NewTestClient()
+	c, err := NewTestClient() // ETCD Only succeeds with this test
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,6 +32,9 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 
 	// Test 1: Add Device - verify all 3 keys are created atomically
 	t.Run("AddDevice_AtomicCreation", func(t *testing.T) {
+		// delete existing device if it exists
+		s.DeleteDevice(ctx, device.Hostname)
+
 		err := s.AddDevice(ctx, device)
 		if err != nil {
 			t.Fatal("Failed to add device:", err)
@@ -47,7 +50,6 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 			t.Fatalf("Retrieved device differs: got %+v, want %+v", *retrieved, *device)
 		}
 
-		// 2. Reverse mapping 1 check (hostname -> org)
 		deviceToOrg, err := s.GetByHostname(ctx, device.Hostname)
 		if err != nil {
 			t.Fatal("Failed to get device-to-org mapping:", err)
@@ -56,7 +58,6 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 			t.Fatalf("Device-to-org mapping incorrect: got %+v", deviceToOrg)
 		}
 
-		// 3. Reverse mapping 2 check (alias -> device)
 		aliasToDevice, err := s.GetByAlias(ctx, device.AliasName)
 		if err != nil {
 			t.Fatal("Failed to get alias-to-device mapping:", err)
@@ -68,7 +69,69 @@ func TestDeviceMappingsStore_BasicOperations(t *testing.T) {
 		t.Log("Verified all 3 keys are created atomically")
 	})
 
-	// Test 2: Update Device
+	// Test 2: Hostname Validation
+	t.Run("HostnameValidation", func(t *testing.T) {
+		invalidHostnames := []string{
+			"",                              // empty string
+			"test/server",                   // slash
+			"test\\server",                  // backslash
+			"test?server",                   // question mark
+			"test*server",                   // asterisk
+			"test\"server",                  // double quote
+			"test<server",                   // less than
+			"test>server",                   // greater than
+			"test|server",                   // pipe
+			"test server",                   // space
+			".testserver",                   // dot at the beginning
+			"testserver.",                   // dot at the end
+			"test..server",                  // consecutive dots
+			"a" + string(make([]byte, 256)), // too long hostname
+		}
+
+		for _, invalidHostname := range invalidHostnames {
+			invalidDevice := &cloudhub.DeviceMeta{
+				IP:         "192.168.1.100",
+				Hostname:   invalidHostname,
+				AliasName:  "test-alias",
+				DeviceType: "VM",
+				OrgID:      "org-123",
+			}
+
+			err := s.AddDevice(ctx, invalidDevice)
+			if err == nil {
+				t.Errorf("Expected error for invalid hostname '%s', but got none", invalidHostname)
+			}
+		}
+
+		// valid hostname test
+		validHostnames := []string{
+			"test-server-02",
+			"test.server",
+			"test_server",
+			"testserver",
+			"test-server-02.example.com",
+		}
+
+		for _, validHostname := range validHostnames {
+			validDevice := &cloudhub.DeviceMeta{
+				IP:         "192.168.1.100",
+				Hostname:   validHostname,
+				AliasName:  "test-alias",
+				DeviceType: "VM",
+				OrgID:      "org-123",
+			}
+
+			err := s.AddDevice(ctx, validDevice)
+			if err != nil {
+				t.Errorf("Expected no error for valid hostname '%s', but got: %v", validHostname, err)
+			}
+
+			// clean up after test
+			s.DeleteDevice(ctx, validHostname)
+		}
+	})
+
+	// Test 3: Update Device
 	t.Run("UpdateDevice", func(t *testing.T) {
 		patch := &cloudhub.DeviceMeta{
 			IP:         "192.168.1.101", // IP change

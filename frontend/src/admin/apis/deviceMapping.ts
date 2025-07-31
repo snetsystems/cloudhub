@@ -55,7 +55,7 @@ export const updateDeviceMapping = async (
     deviceType: data.deviceType,
     ip: data.ip,
     orgId: data.orgId,
-    vendor: data.vendor,
+    appName: data.appName,
   }
 
   const response = await AJAX({

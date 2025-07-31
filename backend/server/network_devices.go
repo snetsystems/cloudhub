@@ -110,11 +110,6 @@ const (
 	CollectorSelectionRatio float64 = 0.5
 )
 
-const (
-	// DefaultOrganizationID is the id of the default organization
-	DefaultOrganizationID string = "default"
-)
-
 func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
 	deviceOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
 	MLFunction := MLFunctionLinearDescent
@@ -381,7 +376,7 @@ func (s *Service) AllDevices(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, string(cloudhub.ErrOrganizationNotFound), s.Logger)
 		return
 	}
-	if !(isSuperAdmin && currentOrg == DefaultOrganizationID) {
+	if !(isSuperAdmin && currentOrg == cloudhub.DefaultOrgID) {
 		devicesByOrg := devices[:0]
 		for _, d := range devices {
 			if d.Organization == currentOrg {
