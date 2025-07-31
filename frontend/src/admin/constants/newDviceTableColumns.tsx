@@ -72,7 +72,7 @@ export const newDeviceTableColumns = (
   },
   {
     key: 'aliasName',
-    name: 'Target',
+    name: 'Matching Alias',
     options: {
       thead: {
         className: 'w-30',
@@ -88,7 +88,7 @@ export const newDeviceTableColumns = (
               type="text"
               className="input-cte"
               value={value}
-              placeholder={'Target'}
+              placeholder={'Matching Alias'}
               onChange={e => {
                 onChangeInput?.('aliasName', e.target.value)
               }}

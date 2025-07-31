@@ -76,7 +76,7 @@ export const mappingTableColumns = (
 
   {
     key: 'aliasName',
-    name: 'Target',
+    name: 'Matching Alias',
     options: {
       thead: {
         className: 'w-30',
