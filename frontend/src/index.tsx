@@ -225,7 +225,7 @@ class Root extends PureComponent<Record<string, never>, State> {
       await this.getLinks()
       await this.checkAuth()
       await populateEnv(store.getState().links.environment)
-      await this.getEsSources()
+      // await this.getEsSources()
       this.setState({ready: true})
     } catch (error) {
       dispatch(errorThrown(error))
@@ -663,47 +663,6 @@ class Root extends PureComponent<Record<string, never>, State> {
       await this.performHeartbeat({shouldResetMe: true})
     } catch (error) {
       dispatch(errorThrown(error))
-    }
-  }
-
-  private async getEsSources() {
-    await this.handleGetElasticSearchInfo()
-
-    const esSource = store.getState().app.persisted.esSource
-    const esSources = store.getState().esSources.esSources
-    if (!!esSource) {
-      //esSource is already connected
-      if (
-        esSources?.filter(element => {
-          if (element.id === esSource.id) {
-            return true
-          }
-          return false
-        }).length === 0
-      ) {
-        this.handleDisconnectElasticSearch()
-      }
-    } else {
-      //esSource is not connected
-      const {
-        auth: {me},
-      } = store.getState()
-      if (!me) return
-
-      if (me.superAdmin) {
-        esSources?.forEach(element => {
-          if (element.default === true) {
-            this.handleConnectElasticSearch({elasticSearchInfo: element})
-          }
-        })
-      } else {
-        console.log('me.currentOrganization', esSources, me.currentOrganization)
-        esSources?.forEach(element => {
-          if (element.organization === me.currentOrganization?.id) {
-            this.handleConnectElasticSearch({elasticSearchInfo: element})
-          }
-        })
-      }
     }
   }
 }

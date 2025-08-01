@@ -234,8 +234,6 @@ export class CheckSources extends Component<Props, State> {
 
   public async componentDidUpdate() {
     const {
-      params,
-      sources,
       auth: {me},
       esSource,
       esSources,
@@ -243,10 +241,6 @@ export class CheckSources extends Component<Props, State> {
       handleDisconnectElasticSearch,
       handleConnectElasticSearch,
     } = this.props
-
-    const currentSourceID = params.sourceID
-
-    const currentSource = sources.find(s => s.id === currentSourceID)
 
     if (esSource?.organization !== me.currentOrganization?.id) {
       await checkAndConnectElasticSearch({
@@ -257,12 +251,6 @@ export class CheckSources extends Component<Props, State> {
         handleDisconnectElasticSearch,
         handleConnectElasticSearch,
       })
-    }
-
-    try {
-      await getSourceHealth(currentSource.links.health)
-    } catch (error) {
-      console.log('[check Sources] switch organization', error)
     }
   }
 

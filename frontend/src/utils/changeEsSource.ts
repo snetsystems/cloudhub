@@ -25,9 +25,6 @@ export const checkAndConnectElasticSearch = async ({
   if (!me) {
     return
   }
-
-  console.log('[checkAndConnectElasticSearch]esSource', esSource)
-
   const currentOrgID = me.currentOrganization?.id
 
   await handleGetElasticSearchInfo()
