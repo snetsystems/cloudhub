@@ -140,6 +140,7 @@ export enum IconFont {
   Zap = 'zap',
   Filter = 'filter',
   Pin = 'pin',
+  FloppyDisk = 'floppy-disk',
 }
 
 export enum Columns {

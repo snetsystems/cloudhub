@@ -130,6 +130,10 @@ $highlight: #25262e;
   display: flex;
   align-items: flex-end;
   padding: 30px 15px 5px 0px;
+
+  .button {
+    width: 33px;
+  }
 }
 
 .from-agent-toggle-container {

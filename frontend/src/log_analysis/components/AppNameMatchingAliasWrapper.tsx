@@ -4,6 +4,7 @@ import {
   ComponentSize,
   ComponentColor,
   ComponentStatus,
+  IconFont,
 } from 'src/reusable_ui'
 import MatchingAliasDropdown from 'src/log_analysis/components/MatchingAliasDropdown'
 import AppNameDropdown from 'src/log_analysis/components/AppNameDropdown'
@@ -91,7 +92,7 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
             size={ComponentSize.Small}
             color={ComponentColor.Primary}
             onClick={onApply}
-            text="Save"
+            icon={IconFont.FloppyDisk}
             status={
               !isAuthorized ? ComponentStatus.Disabled : ComponentStatus.Default
             }
