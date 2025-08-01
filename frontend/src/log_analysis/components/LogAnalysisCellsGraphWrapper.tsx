@@ -418,6 +418,7 @@ const LogAnalysisCellsGraphWrapper = ({
               onMatchingAliasInputDropdownChange={
                 handleMatchingAliasInputDropdownChange
               }
+              selectedDeviceHostname={selectedDevice?.hostname}
             />
 
             <div className="panel-body" style={{margin: '15px 15px 0 15px'}}>
@@ -462,6 +463,7 @@ const LogAnalysisCellsGraphWrapper = ({
                 onMatchingAliasInputDropdownChange={
                   handleMatchingAliasInputDropdownChange
                 }
+                selectedDeviceHostname={selectedDevice?.hostname}
               />
               <div
                 className="panel-body"
