@@ -140,7 +140,9 @@ export const DropdownMenuEmpty: FunctionComponent<DropdownMenuEmptyProps> = ({
       [menuClass]: menuClass,
     })}
   >
-    <li className="dropdown-empty">{emptyMessage}</li>
+    <li className="dropdown-empty" style={{minHeight: '20px'}}>
+      {emptyMessage}
+    </li>
   </ul>
 )
 

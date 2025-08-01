@@ -127,7 +127,9 @@ const LogAnalysisCellsGraphWrapper = ({
     setMatchingAliasDropdownIsOpen,
   ] = useState(false)
   const [appDropdownItems, setAppDropdownItems] = useState<DropdownItem[]>()
-  const [selectedApp, setSelectedApp] = useState<string>('')
+  const [selectedApp, setSelectedApp] = useState<string>(
+    selectedDevice?.appName ?? ''
+  )
   const [appDropdownIsOpen, setAppDropdownIsOpen] = useState(false)
 
   useEffect(() => {
@@ -139,6 +141,14 @@ const LogAnalysisCellsGraphWrapper = ({
       setMatchingAliasSelectedDeviceAliasName('')
     }
   }, [selectedDevice?.hostname])
+
+  useEffect(() => {
+    if (selectedDevice?.appName) {
+      setSelectedApp(selectedDevice.appName)
+    } else {
+      setSelectedApp('')
+    }
+  }, [selectedDevice?.hostname, selectedDevice?.appName])
 
   useEffect(() => {
     const fetchAllLayouts = async () => {
