@@ -13,6 +13,7 @@ import OrganizationsPage from 'src/admin/containers/cloudhub/OrganizationsPage'
 import ProvidersPage from 'src/admin/containers/ProvidersPage'
 import ProviderConfPage from 'src/admin/containers/cloudhub/ProviderConfPage'
 import DevicesMappingPage from 'src/admin/components/DevicesMappingPage'
+import SourceIndicator from 'src/shared/components/SourceIndicator'
 
 // actions
 import {
@@ -123,7 +124,9 @@ const AdminCloudHubPage = props => {
         <Page.Header.Left>
           <Page.Title title="CloudHub Admin" />
         </Page.Header.Left>
-        <Page.Header.Right />
+        <Page.Header.Right>
+          <SourceIndicator />
+        </Page.Header.Right>
       </Page.Header>
       <Page.Contents fullWidth={true}>
         <div className="container-fluid">
