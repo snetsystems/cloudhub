@@ -3,6 +3,7 @@
   "app": "oracle",
   "measurement": "oracledb",
   "autoflow": true,
+  "whereTagKey": ["server_host"],
   "cells": [
     {
       "x": 0,

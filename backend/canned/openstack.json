@@ -3,6 +3,7 @@
   "measurement": "openstack_server_diagnostics",
   "app": "openstack",
   "autoflow": true,
+  "whereTagKey": ["server_id"],
   "cells": [
     {
       "x": 0,

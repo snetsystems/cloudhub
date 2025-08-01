@@ -3,6 +3,7 @@
   "measurement": "nsq_topic",
   "app": "nsq",
   "autoflow": true,
+  "whereTagKey": ["server_host"],
   "cells": [
     {
       "x": 0,

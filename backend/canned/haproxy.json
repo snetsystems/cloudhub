@@ -3,6 +3,7 @@
   "measurement": "haproxy",
   "app": "haproxy",
   "autoflow": true,
+  "whereTagKey": ["server"],
   "cells": [
     {
       "x": 0,

@@ -2,6 +2,7 @@
   "id": "0c57a644-aa74-4ec3-b099-b44499df1159",
   "measurement": "rabbitmq_node",
   "app": "rabbitmq",
+  "whereTagKey": ["url"],
   "cells": [
     {
       "x": 0,

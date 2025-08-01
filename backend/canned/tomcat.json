@@ -3,6 +3,7 @@
   "measurement": "tomcat_connector",
   "app": "tomcat",
   "autoflow": true,
+  "whereTagKey": ["source"],
   "cells": [
     {
       "x": 0,

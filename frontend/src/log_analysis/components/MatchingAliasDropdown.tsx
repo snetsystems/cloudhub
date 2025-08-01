@@ -67,6 +67,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     tabIndex: 0,
   }
   public dropdownRef: any
+  private previousHighlightedIndex: number = 0
 
   constructor(props: Props) {
     super(props)
@@ -80,12 +81,18 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
 
   public componentDidMount() {
     const {selected} = this.props
-    this.setState({searchTerm: selected})
+    this.setState({searchTerm: selected}, () => {
+      this.applyFilter(selected)
+    })
   }
 
   public componentDidUpdate(prevProps: Props) {
     if (prevProps.selected !== this.props.selected) {
-      this.setState({searchTerm: this.props.selected})
+      this.previousHighlightedIndex = this.state.highlightedItemIndex || 0
+
+      this.setState({searchTerm: this.props.selected}, () => {
+        this.applyFilter(this.props.selected)
+      })
     }
   }
 
@@ -133,9 +140,12 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     const {filteredItems, highlightedItemIndex} = this.state
 
     if (e.key === 'Enter' && filteredItems.length) {
-      this.props.onClose()
-      this.props.onChoose(filteredItems[highlightedItemIndex])
-      this.setState({searchTerm: filteredItems[highlightedItemIndex].text})
+      const selectedItem = filteredItems[highlightedItemIndex]
+      if (selectedItem) {
+        this.props.onClose()
+        this.props.onChoose(selectedItem)
+        this.setState({searchTerm: selectedItem.text})
+      }
     }
     if (e.key === 'Escape') {
       this.props.onClose()
@@ -173,9 +183,14 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       return item.text.toLowerCase().includes(filterText)
     })
 
+    const newHighlightedIndex =
+      this.previousHighlightedIndex < matchingItems.length
+        ? this.previousHighlightedIndex
+        : 0
+
     this.setState({
       filteredItems: matchingItems,
-      highlightedItemIndex: 0,
+      highlightedItemIndex: newHighlightedIndex,
     })
   }
 
@@ -250,6 +265,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
           <DropdownMenuEmpty
             useAutoComplete={useAutoComplete}
             menuClass={menuClass}
+            emptyMessage={''}
           />
         )}
       </div>

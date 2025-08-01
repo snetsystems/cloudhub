@@ -3,6 +3,7 @@
   "measurement": "ipmi_sensor",
   "app": "ipmi_sensor",
   "autoflow": true,
+  "whereTagKey": ["hostname"],
   "cells": [
     {
       "x": 0,

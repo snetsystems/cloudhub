@@ -898,11 +898,12 @@ type Cell struct {
 
 // Layout is a collection of Cells for visualization
 type Layout struct {
-	ID          string `json:"id"`
-	Application string `json:"app"`
-	Measurement string `json:"measurement"`
-	Autoflow    bool   `json:"autoflow"`
-	Cells       []Cell `json:"cells"`
+	ID          string   `json:"id"`
+	Application string   `json:"app"`
+	Measurement string   `json:"measurement"`
+	Autoflow    bool     `json:"autoflow"`
+	Cells       []Cell   `json:"cells"`
+	WhereTagKey []string `json:"whereTagKey,omitempty"`
 }
 
 // UnmarshalJSON GraphOptions setting default values for missing fields.

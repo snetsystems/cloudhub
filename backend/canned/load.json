@@ -3,6 +3,7 @@
   "measurement": "system",
   "app": "system",
   "autoflow": true,
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

@@ -3,6 +3,7 @@
   "measurement": "nginx",
   "app": "nginx",
   "autoflow": true,
+  "whereTagKey": ["server"],
   "cells": [
     {
       "x": 0,

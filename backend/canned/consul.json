@@ -3,6 +3,7 @@
   "measurement": "consul_health_checks",
   "app": "consul",
   "autoflow": true,
+  "whereTagKey": ["node"],
   "cells": [
     {
       "x": 0,

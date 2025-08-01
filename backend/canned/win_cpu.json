@@ -3,6 +3,7 @@
   "measurement": "win_cpu",
   "app": "win_system",
   "autoflow": true,
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

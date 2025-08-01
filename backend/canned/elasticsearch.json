@@ -3,6 +3,7 @@
   "measurement": "elasticsearch_indices",
   "app": "elasticsearch",
   "autoflow": false,
+  "whereTagKey": ["node_host"],
   "cells": [
     {
       "x": 0,

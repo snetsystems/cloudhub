@@ -3,6 +3,7 @@
   "measurement": "phpfpm",
   "app": "phpfpm",
   "autoflow": true,
+  "whereTagKey": ["url"],
   "cells": [
     {
       "x": 0,
