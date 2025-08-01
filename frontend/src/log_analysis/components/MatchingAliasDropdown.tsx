@@ -253,6 +253,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
           <DropdownMenuEmpty
             useAutoComplete={useAutoComplete}
             menuClass={menuClass}
+            emptyMessage={''}
           />
         )}
       </div>

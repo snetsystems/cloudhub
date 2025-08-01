@@ -126,11 +126,13 @@ const DropdownMenu: FunctionComponent<Props> = ({
 interface DropdownMenuEmptyProps {
   useAutoComplete?: boolean
   menuClass: string
+  emptyMessage?: string
 }
 
 export const DropdownMenuEmpty: FunctionComponent<DropdownMenuEmptyProps> = ({
   useAutoComplete,
   menuClass,
+  emptyMessage = 'No matching items',
 }) => (
   <ul
     className={classnames('dropdown-menu', {
@@ -138,7 +140,7 @@ export const DropdownMenuEmpty: FunctionComponent<DropdownMenuEmptyProps> = ({
       [menuClass]: menuClass,
     })}
   >
-    <li className="dropdown-empty">No matching items</li>
+    <li className="dropdown-empty">{emptyMessage}</li>
   </ul>
 )
 
