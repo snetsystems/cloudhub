@@ -3,6 +3,7 @@
   "measurement": "vsphere_vm_cpu",
   "app": "vsphere",
   "autoflow": true,
+  "whereTagKey": ["vmname"],
   "cells": [
     {
       "x": 0,

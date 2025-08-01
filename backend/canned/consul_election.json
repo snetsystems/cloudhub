@@ -3,6 +3,7 @@
   "measurement": "consul_raft_state_candidate",
   "app": "consul_telemetry",
   "autoflow": true,
+  "whereTagKey": ["node"],
   "cells": [
     {
       "x": 0,

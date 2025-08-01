@@ -3,6 +3,7 @@
   "measurement": "cloudwatch_aws_ec2",
   "app": "cloudwatch",
   "autoflow": true,
+  "whereTagKey": ["instance_id"],
   "cells": [
     {
       "x": 0,

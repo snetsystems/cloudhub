@@ -3,6 +3,7 @@
   "measurement": "kubernetes_node",
   "app": "kubernetes",
   "autoflow": true,
+  "whereTagKey": ["node_name"],
   "cells": [
     {
       "x": 0,

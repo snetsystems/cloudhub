@@ -3,6 +3,7 @@
   "measurement": "influxdb_database",
   "app": "influxdb",
   "autoflow": true,
+  "whereTagKey": ["url"],
   "cells": [
     {
       "x": 0,

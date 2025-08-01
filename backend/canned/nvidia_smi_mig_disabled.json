@@ -3,6 +3,7 @@
   "measurement": "nvidia_smi",
   "app": "nvidia_smi_mig_disabled",
   "autoflow": true,
+  "whereTagKey": ["host"],
   "cells": [
     {
       "i": "cd9bd36b-5843-4c6d-8191-aa24e37a9e2a",

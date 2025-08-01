@@ -3,6 +3,7 @@
   "measurement": "sqlserver_performance",
   "app": "mssql",
   "autoflow": true,
+  "whereTagKey": ["sql_instance"],
   "cells": [
     {
       "x": 0,

@@ -3,6 +3,7 @@
   "measurement": "consul_serf_events",
   "app": "consul_telemetry",
   "autoflow": true,
+  "whereTagKey": ["node"],
   "cells": [
     {
       "x": 0,

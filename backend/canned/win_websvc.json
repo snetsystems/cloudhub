@@ -3,6 +3,7 @@
   "measurement": "win_websvc",
   "app": "iis",
   "autoflow": true,
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

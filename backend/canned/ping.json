@@ -3,6 +3,7 @@
   "measurement": "ping",
   "app": "ping",
   "autoflow": true,
+  "whereTagKey": ["url"],
   "cells": [
     {
       "x": 0,

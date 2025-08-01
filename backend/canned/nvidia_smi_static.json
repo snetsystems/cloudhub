@@ -3,6 +3,7 @@
   "measurement": "nvidia_smi",
   "app": "nvidia_smi_static",
   "autoflow": true,
+  "whereTagKey": ["host"],
   "templates": [
     {
       "tempVar": ":top_count:",

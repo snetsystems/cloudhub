@@ -3,6 +3,7 @@
   "measurement": "consul_memberlist_msg_alive",
   "app": "consul_telemetry",
   "autoflow": true,
+  "whereTagKey": ["node"],
   "cells": [
     {
       "x": 0,

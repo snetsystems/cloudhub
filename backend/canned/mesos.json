@@ -3,6 +3,7 @@
   "measurement": "mesos",
   "app": "mesos",
   "autoflow": true,
+  "whereTagKey": ["server"],
   "cells": [
     {
       "x": 0,

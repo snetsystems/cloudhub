@@ -3,6 +3,7 @@
   "measurement": "consul_consul_http_GET_v1_health_state__",
   "app": "consul_telemetry",
   "autoflow": true,
+  "whereTagKey": ["node"],
   "cells": [
     {
       "x": 0,

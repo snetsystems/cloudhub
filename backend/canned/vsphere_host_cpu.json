@@ -3,6 +3,7 @@
   "measurement": "vsphere_host_cpu",
   "app": "vsphere",
   "autoflow": true,
+  "whereTagKey": ["esxhostname"],
   "cells": [
     {
       "x": 0,

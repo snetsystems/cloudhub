@@ -3,6 +3,7 @@
   "measurement": "kubernetes_pod_container",
   "app": "kubernetes",
   "autoflow": true,
+  "whereTagKey": ["pod_name"],
   "cells": [
     {
       "x": 0,
