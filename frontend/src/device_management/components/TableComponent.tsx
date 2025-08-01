@@ -36,6 +36,7 @@ interface Props {
   initSort?: SortInfo
   bodyClassName?: string
   timeZone?: TimeZones
+  searchPlaceholder?: string
 }
 
 function TableComponent({
@@ -55,6 +56,7 @@ function TableComponent({
   initSort = null,
   bodyClassName,
   timeZone,
+  searchPlaceholder,
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
@@ -204,7 +206,7 @@ function TableComponent({
         <div className="table-top right">
           {isSearchDisplay && (
             <SearchBar
-              placeholder="Filter by Host..."
+              placeholder={searchPlaceholder ?? 'Filter by Host...'}
               onSearch={searchHandler}
             />
           )}

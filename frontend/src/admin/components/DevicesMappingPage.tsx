@@ -171,6 +171,7 @@ function DevicesMappingPage({
                   isDesc: false,
                 }}
                 isSearchDisplay={true}
+                searchPlaceholder="Search here..."
                 tableTitle={orgIdToName(org, organizations || [])}
                 columns={mappingTableColumns(
                   me,
