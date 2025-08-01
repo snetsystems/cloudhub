@@ -104,6 +104,7 @@ export const mappingTableColumns = (
               }}
               placeholder={rowData.hostname}
               disabled={!me.superAdmin || rowData.isDeletable}
+              autofocus={false}
             />
           </div>
         </div>

@@ -16,6 +16,7 @@ interface Props {
   onFilterKeyPress: OnFilterKeyPress
   placeholder?: string
   value?: string
+  autoFocus?: boolean
 }
 
 const DropdownInput: FunctionComponent<Props> = ({
@@ -28,6 +29,7 @@ const DropdownInput: FunctionComponent<Props> = ({
   onFilterKeyPress,
   placeholder,
   value,
+  autoFocus,
 }) => (
   <div
     className={`dropdown-autocomplete dropdown-toggle ${buttonSize} ${buttonColor}${disabledClass(
@@ -38,7 +40,7 @@ const DropdownInput: FunctionComponent<Props> = ({
     <input
       className="dropdown-autocomplete--input"
       type="text"
-      autoFocus={true}
+      autoFocus={autoFocus ?? true}
       placeholder={`${placeholder ?? 'Filter items...'}`}
       spellCheck={false}
       onChange={onFilterChange}

@@ -10,6 +10,7 @@ interface Props {
   onChange: (item: string) => void
   placeholder?: string
   disabled?: boolean
+  autofocus?: boolean
 }
 
 const InputDropdownWrapper = ({
@@ -20,6 +21,7 @@ const InputDropdownWrapper = ({
   onChange,
   placeholder,
   disabled,
+  autofocus,
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -48,6 +50,7 @@ const InputDropdownWrapper = ({
       onChange={onChange}
       placeholder={placeholder}
       onClose={onClose}
+      autofocus={autofocus}
     />
   )
 }

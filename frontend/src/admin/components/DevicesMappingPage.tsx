@@ -170,6 +170,7 @@ function DevicesMappingPage({
                   key: 'hostname',
                   isDesc: false,
                 }}
+                isSearchDisplay={true}
                 tableTitle={orgIdToName(org, organizations || [])}
                 columns={mappingTableColumns(
                   me,
@@ -180,7 +181,6 @@ function DevicesMappingPage({
                   allTagValues
                 )}
                 data={mappingList[org]}
-                isSearchDisplay={false}
                 bodyClassName={`mapping-table`}
                 options={{
                   tbodyRow: {

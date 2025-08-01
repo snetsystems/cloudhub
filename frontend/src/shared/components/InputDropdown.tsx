@@ -46,6 +46,7 @@ interface Props {
   onClose: (value: string) => void
   status?: ComponentStatus
   placeholder?: string
+  autofocus?: boolean
 }
 
 interface State {
@@ -213,6 +214,7 @@ export class InputDropdown extends PureComponent<Props, State> {
       useAutoComplete,
       status,
       placeholder,
+      autofocus,
     } = this.props
 
     const {searchTerm, filteredItems, highlightedItemIndex} = this.state
@@ -245,6 +247,7 @@ export class InputDropdown extends PureComponent<Props, State> {
           onFilterKeyPress={this.handleFilterKeyPress}
           placeholder={placeholder}
           value={searchTerm}
+          autoFocus={autofocus}
         />
 
         {isOpen && menuItems.length ? (
