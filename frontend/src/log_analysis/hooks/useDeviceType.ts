@@ -28,7 +28,6 @@ export const useDeviceType = (source: Source) => {
           layouts,
           tempVars
         )
-        console.log('tagValues', tagValues)
         setAllTagValues(tagValues)
       } catch (error) {
         console.error('Error fetching dropdown items:', error)
