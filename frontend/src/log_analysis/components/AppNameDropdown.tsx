@@ -10,7 +10,6 @@ import DropdownMenu, {
   DropdownMenuEmpty,
 } from 'src/shared/components/DropdownMenu'
 import DropdownInput from 'src/shared/components/DropdownInput'
-import DropdownHead from 'src/shared/components/DropdownHead'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -46,6 +45,7 @@ interface Props {
   onChange?: (item: any) => any
   onClose: () => void
   status?: ComponentStatus
+  placeholder?: string
 }
 
 interface State {
@@ -178,7 +178,6 @@ export class AppNameDropdown extends PureComponent<Props, State> {
       actions,
       selected,
       disabled,
-      iconName,
       tabIndex,
       className,
       menuClass,
@@ -189,6 +188,7 @@ export class AppNameDropdown extends PureComponent<Props, State> {
       toggleStyle,
       useAutoComplete,
       status,
+      placeholder,
     } = this.props
 
     const {searchTerm, filteredItems, highlightedItemIndex} = this.state
@@ -211,26 +211,18 @@ export class AppNameDropdown extends PureComponent<Props, State> {
             <LoadingSpinner />
           </div>
         ) : null}
-        {useAutoComplete && this.props.isOpen ? (
-          <DropdownInput
-            searchTerm={searchTerm}
-            buttonSize={buttonSize}
-            buttonColor={buttonColor}
-            toggleStyle={toggleStyle}
-            disabled={disabled || status === ComponentStatus.Loading}
-            onFilterChange={this.handleFilterChange}
-            onFilterKeyPress={this.handleFilterKeyPress}
-          />
-        ) : (
-          <DropdownHead
-            iconName={iconName}
-            selected={selected}
-            buttonSize={buttonSize}
-            buttonColor={buttonColor}
-            toggleStyle={toggleStyle}
-            disabled={disabled}
-          />
-        )}
+        <DropdownInput
+          searchTerm={searchTerm}
+          buttonSize={buttonSize}
+          buttonColor={buttonColor}
+          toggleStyle={toggleStyle}
+          disabled={disabled || status === ComponentStatus.Loading}
+          onFilterChange={this.handleFilterChange}
+          onFilterKeyPress={this.handleFilterKeyPress}
+          placeholder={placeholder}
+          value={selected}
+        />
+
         {isOpen && menuItems.length ? (
           <DropdownMenu
             addNew={addNew}

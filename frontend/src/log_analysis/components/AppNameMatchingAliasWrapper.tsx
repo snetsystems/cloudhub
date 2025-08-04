@@ -67,6 +67,7 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
               onClose={onAppClose}
               selected={selectedApp}
               className={'dropdown app-dropdown-50'}
+              placeholder={'Please select App Name'}
             />
           </div>
         </div>

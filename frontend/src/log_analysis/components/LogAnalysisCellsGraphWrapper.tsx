@@ -48,7 +48,11 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {setSelectedDevice} from 'src/log_analysis/actions/'
 
 // API
-import {getLayouts, getTagValuesForLayoutWhereTagKeys} from 'src/hosts/apis'
+import {
+  getLayouts,
+  getTagValuesForLayoutWhereTagKeys,
+  filterLayoutsByExistingMeasurements,
+} from 'src/hosts/apis'
 import {updateDeviceMapping} from 'src/admin/apis/deviceMapping'
 import {
   notifyNoSelectedDevice,
@@ -140,7 +144,7 @@ const LogAnalysisCellsGraphWrapper = ({
     } else {
       setMatchingAliasSelectedDeviceAliasName('')
     }
-  }, [selectedDevice?.hostname])
+  }, [selectedDevice?.hostname, selectedDevice?.aliasName])
 
   useEffect(() => {
     if (selectedDevice?.appName) {
@@ -155,15 +159,29 @@ const LogAnalysisCellsGraphWrapper = ({
       try {
         const layoutResults = await getLayouts()
         const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
-        setAllLayouts(layouts || [])
 
         if (layouts && layouts.length > 0) {
-          const uniqueApps = [
-            ...new Set(layouts.map(layout => layout.app)),
-          ].filter(Boolean)
-          const appItems: DropdownItem[] = uniqueApps.map(app => ({text: app}))
-          setAppDropdownItems(appItems)
+          const tempVars = generateForHosts(source)
+          const filteredLayouts = await filterLayoutsByExistingMeasurements(
+            layouts,
+            source,
+            tempVars
+          )
+          setAllLayouts(filteredLayouts || [])
+
+          if (filteredLayouts && filteredLayouts.length > 0) {
+            const uniqueApps = [
+              ...new Set(filteredLayouts.map(layout => layout.app)),
+            ].filter(Boolean)
+            const appItems: DropdownItem[] = uniqueApps.map(app => ({
+              text: app,
+            }))
+            setAppDropdownItems(appItems)
+          } else {
+            setAppDropdownItems([])
+          }
         } else {
+          setAllLayouts([])
           setAppDropdownItems([])
         }
       } catch (error) {
@@ -172,18 +190,18 @@ const LogAnalysisCellsGraphWrapper = ({
       }
     }
     fetchAllLayouts()
-  }, [])
+  }, [source])
 
   useEffect(() => {
     setLayout([])
     if (allLayouts.length > 0) {
       getLayoutForInstance()
     }
-  }, [matchingAliasSelectedDeviceAliasName, selectedApp, allLayouts])
+  }, [selectedApp, allLayouts])
 
   useEffect(() => {
     const fetchDropdownItems = async () => {
-      if (!isAuthorized || !layout || layout.length === 0) {
+      if (!isAuthorized || allLayouts.length === 0) {
         return
       }
 
@@ -191,7 +209,7 @@ const LogAnalysisCellsGraphWrapper = ({
         const tempVars = generateForHosts(source)
         const tagValues = await getTagValuesForLayoutWhereTagKeys(
           source,
-          layout,
+          allLayouts,
           tempVars
         )
         setMatchingAliasDropdownItems(tagValues)
@@ -202,7 +220,7 @@ const LogAnalysisCellsGraphWrapper = ({
     }
 
     fetchDropdownItems()
-  }, [source, isAuthorized, layout])
+  }, [source, isAuthorized, allLayouts])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
