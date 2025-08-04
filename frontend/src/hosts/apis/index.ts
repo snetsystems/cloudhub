@@ -1707,6 +1707,8 @@ export const getTagValuesForLayoutWhereTagKeys = async (
       layout.whereTagKey.forEach(key => {
         layoutQueries.get(measurement).add(key.trim())
       })
+    } else {
+      layoutQueries.get(measurement).add('host')
     }
   })
 
