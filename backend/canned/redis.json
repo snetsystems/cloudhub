@@ -3,7 +3,7 @@
   "measurement": "redis",
   "app": "redis",
   "autoflow": true,
-  "whereTagKey": ["server"],
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

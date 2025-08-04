@@ -3,7 +3,7 @@
   "measurement": "kubernetes_pod_network",
   "app": "kubernetes",
   "autoflow": true,
-  "whereTagKey": ["pod_name"],
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

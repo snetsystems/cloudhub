@@ -3,7 +3,7 @@
   "measurement": "riak",
   "app": "riak",
   "autoflow": true,
-  "whereTagKey": ["nodename"],
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

@@ -3,7 +3,7 @@
   "measurement": "docker_container_blkio",
   "app": "docker",
   "autoflow": true,
-  "whereTagKey": ["engine_host"],
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

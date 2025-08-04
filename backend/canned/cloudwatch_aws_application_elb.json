@@ -3,7 +3,7 @@
   "measurement": "cloudwatch_aws_application_elb",
   "app": "cloudwatch_elb",
   "autoflow": true,
-  "whereTagKey": ["load_balancer_name"],
+  "whereTagKey": ["load_balancer_name", "host"],
   "cells": [
     {
       "x": 0,

@@ -3,7 +3,7 @@
   "measurement": "mongodb",
   "app": "mongodb",
   "autoflow": true,
-  "whereTagKey": ["hostname"],
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

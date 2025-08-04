@@ -3,7 +3,7 @@
   "measurement": "memcached",
   "app": "memcached",
   "autoflow": true,
-  "whereTagKey": ["server"],
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

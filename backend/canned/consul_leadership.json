@@ -3,7 +3,7 @@
   "measurement": "consul_raft_state_leader",
   "app": "consul_telemetry",
   "autoflow": true,
-  "whereTagKey": ["node"],
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

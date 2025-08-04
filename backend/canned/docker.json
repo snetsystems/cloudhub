@@ -3,7 +3,7 @@
   "app": "docker",
   "measurement": "docker",
   "autoflow": true,
-  "whereTagKey": ["engine_host"],
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,
