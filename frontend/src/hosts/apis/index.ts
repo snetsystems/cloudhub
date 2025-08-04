@@ -1705,7 +1705,7 @@ export const getTagValuesForLayoutWhereTagKeys = async (
 
     if (layout.whereTagKey && Array.isArray(layout.whereTagKey)) {
       layout.whereTagKey.forEach(key => {
-        layoutQueries.get(measurement).add(key)
+        layoutQueries.get(measurement).add(key.trim())
       })
     }
   })
