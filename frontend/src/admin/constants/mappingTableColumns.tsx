@@ -18,9 +18,7 @@ export const mappingTableColumns = (
   deleteDevice: (hostName: string) => void,
   onChangeAlias: (value: string, rowData: DeviceMeta, key: string) => void,
   organizations?: Organization[],
-  allTagValues?: {
-    [deviceType: string]: DropdownItem[]
-  }
+  allTagValues?: DropdownItem[]
 ): ColumnInfo[] => [
   {
     key: 'hostname',
@@ -89,7 +87,7 @@ export const mappingTableColumns = (
           <span />
           <div title={value} className="mapping-table-host">
             <InputDropdownWrapper
-              items={allTagValues?.[rowData.deviceType] || []}
+              items={allTagValues || []}
               selectedItem={value}
               setSelectedItem={text => {
                 if (text !== value) {
