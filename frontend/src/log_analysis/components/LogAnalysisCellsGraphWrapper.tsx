@@ -225,7 +225,7 @@ const LogAnalysisCellsGraphWrapper = ({
       layout.forEach(layoutItem => {
         if (layoutItem.whereTagKey && Array.isArray(layoutItem.whereTagKey)) {
           layoutItem.whereTagKey.forEach(key => {
-            whereTag[key] = deviceAlias
+            whereTag[key.trim()] = deviceAlias
           })
         }
       })
