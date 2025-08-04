@@ -1,3 +1,4 @@
+// react
 import React, {useEffect, useState} from 'react'
 import {
   Me,
@@ -8,17 +9,27 @@ import {
   Source,
   NotificationAction,
 } from 'src/types'
+
+// src
 import {mappingTableColumns} from 'src/admin/constants/mappingTableColumns'
 import TableComponent from 'src/device_management/components/TableComponent'
+
+// redux
 import {connect} from 'react-redux'
+
+// apis
 import {
   deleteDeviceMapping,
   fetchDeviceList,
   updateDeviceMapping,
-} from '../apis/deviceMapping'
-import _ from 'lodash'
+} from 'src/admin/apis/deviceMapping'
+
+// components
 import {NewDeviceTable} from './NewDeviceTable'
-import {orgIdToName} from '../utils/deviceMapping'
+
+// utils
+import _ from 'lodash'
+import {orgIdToName} from 'src/admin/utils/deviceMapping'
 import {useDeviceType} from 'src/log_analysis/hooks/useDeviceType'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {bindActionCreators} from 'redux'
@@ -32,7 +43,6 @@ import {
 
 interface Props {
   me: Me
-  meCurrentOrganization: Organization
   esSource: BaseElasticSearchData
   organizations?: Organization[]
   currentSource?: Source
@@ -42,7 +52,6 @@ interface Props {
 
 function DevicesMappingPage({
   me,
-  meCurrentOrganization,
   esSource,
   organizations,
   currentSource,

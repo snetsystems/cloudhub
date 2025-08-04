@@ -79,12 +79,7 @@ const sections = (me, providers, cspProviders = []) => {
       url: 'devices-mappings',
       name: 'Devices Mapping',
       enabled: isUserAuthorized(me.role, ADMIN_ROLE),
-      component: (
-        <DevicesMappingPage
-          me={me}
-          meCurrentOrganization={me.currentOrganization}
-        />
-      ),
+      component: <DevicesMappingPage me={me} />,
     },
   ]
 
