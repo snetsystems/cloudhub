@@ -87,11 +87,7 @@ import {reducerVSphere, ResponseVSphere} from './clouds/types'
 
 import AiRoutePage from 'src/device_management/containers/AiRoutePage'
 import PredictionRulePage from 'src/device_management/containers/PredictionRulePage'
-import {
-  connectElasticSearch,
-  disconnectElasticSearch,
-  getElasticSearchInfoAsync,
-} from './shared/actions/elasticSearch'
+import {getElasticSearchInfoAsync} from 'src/shared/actions/elasticSearch'
 
 import 'src/log_analysis/util/setupOUIIcons'
 
@@ -189,16 +185,6 @@ class Root extends PureComponent<Record<string, never>, State> {
     dispatch
   )
 
-  private handleConnectElasticSearch = bindActionCreators(
-    connectElasticSearch,
-    dispatch
-  )
-
-  private handleDisconnectElasticSearch = bindActionCreators(
-    disconnectElasticSearch,
-    dispatch
-  )
-
   private heartbeatTimer: number
 
   private timeout: {
@@ -225,7 +211,7 @@ class Root extends PureComponent<Record<string, never>, State> {
       await this.getLinks()
       await this.checkAuth()
       await populateEnv(store.getState().links.environment)
-      // await this.getEsSources()
+      await this.getEsSources()
       this.setState({ready: true})
     } catch (error) {
       dispatch(errorThrown(error))
@@ -664,6 +650,10 @@ class Root extends PureComponent<Record<string, never>, State> {
     } catch (error) {
       dispatch(errorThrown(error))
     }
+  }
+
+  private getEsSources = async () => {
+    await this.handleGetElasticSearchInfo()
   }
 }
 

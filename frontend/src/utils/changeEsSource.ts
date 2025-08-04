@@ -4,7 +4,7 @@ import {BaseElasticSearchData} from 'src/types'
 interface Props {
   me: Me
   esSource: BaseElasticSearchData
-  esSources: BaseElasticSearchData[]
+  esSources?: BaseElasticSearchData[]
   handleGetElasticSearchInfo: () => void
   handleDisconnectElasticSearch: () => void
   handleConnectElasticSearch: ({
@@ -25,6 +25,7 @@ export const checkAndConnectElasticSearch = async ({
   if (!me) {
     return
   }
+
   const currentOrgID = me.currentOrganization?.id
 
   await handleGetElasticSearchInfo()
