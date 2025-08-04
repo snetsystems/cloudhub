@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useState, useCallback} from 'react'
+import React, {useEffect, useState, useCallback, useMemo} from 'react'
 import _ from 'lodash'
 import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
@@ -257,7 +257,7 @@ const LogAnalysisCellsGraphWrapper = ({
     setLayout(filteredLayouts)
   }
 
-  const tempVars = generateForHosts(source)
+  const tempVars = useMemo(() => generateForHosts(source), [source])
 
   const handleChooseTimeRange = ({lower, upper}) => {
     if (upper) {
@@ -363,6 +363,19 @@ const LogAnalysisCellsGraphWrapper = ({
   }
 
   const annotationTime = getAnnotationTime()
+
+  const annotationsViewMode = useMemo(() => {
+    if (!annotationTime) return undefined
+
+    return [
+      {
+        id: matchingAliasSelectedDeviceAliasName,
+        startTime: annotationTime,
+        endTime: annotationTime,
+        text: `Log Analysis Time (${timeZone})`,
+      },
+    ]
+  }, [annotationTime, matchingAliasSelectedDeviceAliasName, timeZone])
 
   return (
     <>
@@ -489,18 +502,7 @@ const LogAnalysisCellsGraphWrapper = ({
                     manualRefresh={logAnalysisManualRefresh}
                     isUsingAnnotationViewer={!!annotationTime}
                     host={''}
-                    annotationsViewMode={
-                      annotationTime
-                        ? [
-                            {
-                              id: matchingAliasSelectedDeviceAliasName,
-                              startTime: annotationTime,
-                              endTime: annotationTime,
-                              text: `Log Analysis Time (${timeZone})`,
-                            },
-                          ]
-                        : undefined
-                    }
+                    annotationsViewMode={annotationsViewMode}
                   />
                 </div>
               </div>
