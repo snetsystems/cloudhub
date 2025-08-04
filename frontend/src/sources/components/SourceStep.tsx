@@ -76,6 +76,17 @@ class SourceStep extends PureComponent<Props, State> {
     }
   }
 
+  public componentDidMount() {
+    const {source} = this.state
+    const {me} = this.props
+    this.setState({
+      source: {
+        ...source,
+        name: me.currentOrganization.name,
+      },
+    })
+  }
+
   public next = async (): Promise<NextReturn> => {
     const {source} = this.state
     const {notify} = this.props
