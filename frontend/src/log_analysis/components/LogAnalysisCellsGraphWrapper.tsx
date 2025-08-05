@@ -117,6 +117,7 @@ const LogAnalysisCellsGraphWrapper = ({
   }, [logTimeRange])
 
   const [allLayouts, setAllLayouts] = useState<Layout[]>([])
+  const [preFilteredLayouts, setPreFilteredLayouts] = useState<Layout[]>([])
   const [matchingAliasDropdownItems, setMatchingAliasDropdownItems] = useState<
     DropdownItem[]
   >([])
@@ -173,7 +174,11 @@ const LogAnalysisCellsGraphWrapper = ({
           source,
           tempVars
         )
-        setAllLayouts(filteredLayouts || [])
+
+        if (!_.isEqual(preFilteredLayouts, filteredLayouts || [])) {
+          setAllLayouts(filteredLayouts || [])
+          setPreFilteredLayouts(filteredLayouts || [])
+        }
 
         if (filteredLayouts && filteredLayouts.length > 0) {
           const uniqueApps = [
@@ -187,16 +192,22 @@ const LogAnalysisCellsGraphWrapper = ({
           setAppDropdownItems([])
         }
       } else {
-        setAllLayouts([])
+        if (!_.isEqual(preFilteredLayouts, [])) {
+          setAllLayouts([])
+          setPreFilteredLayouts([])
+        }
         setAppDropdownItems([])
       }
     } catch (error) {
-      setAllLayouts([])
+      if (!_.isEqual(preFilteredLayouts, [])) {
+        setAllLayouts([])
+        setPreFilteredLayouts([])
+      }
       setAppDropdownItems([])
     } finally {
       setIsAllLayoutsLoading(false)
     }
-  }, [source])
+  }, [source, preFilteredLayouts])
 
   const fetchDropdownItems = useCallback(async () => {
     if (allLayouts.length === 0) {
