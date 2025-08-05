@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useState, useCallback, useMemo} from 'react'
+import React, {useEffect, useState, useCallback, useMemo, useRef} from 'react'
 import _ from 'lodash'
 import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
@@ -109,6 +109,8 @@ const LogAnalysisCellsGraphWrapper = ({
     getTimeRangeFromLocalStorage()
   )
 
+  let intervalID: number | null = null
+
   useEffect(() => {
     setSelfTimeRange(logTimeRange)
   }, [logTimeRange])
@@ -154,43 +156,77 @@ const LogAnalysisCellsGraphWrapper = ({
     }
   }, [selectedDevice?.hostname, selectedDevice?.appName])
 
-  useEffect(() => {
-    const fetchAllLayouts = async () => {
-      try {
-        const layoutResults = await getLayouts()
-        const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+  const fetchAllLayouts = useCallback(async () => {
+    try {
+      const layoutResults = await getLayouts()
+      const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
-        if (layouts && layouts.length > 0) {
-          const tempVars = generateForHosts(source)
-          const filteredLayouts = await filterLayoutsByExistingMeasurements(
-            layouts,
-            source,
-            tempVars
-          )
-          setAllLayouts(filteredLayouts || [])
+      if (layouts && layouts.length > 0) {
+        const tempVars = generateForHosts(source)
+        const filteredLayouts = await filterLayoutsByExistingMeasurements(
+          layouts,
+          source,
+          tempVars
+        )
+        setAllLayouts(filteredLayouts || [])
 
-          if (filteredLayouts && filteredLayouts.length > 0) {
-            const uniqueApps = [
-              ...new Set(filteredLayouts.map(layout => layout.app)),
-            ].filter(Boolean)
-            const appItems: DropdownItem[] = uniqueApps.map(app => ({
-              text: app,
-            }))
-            setAppDropdownItems(appItems)
-          } else {
-            setAppDropdownItems([])
-          }
+        if (filteredLayouts && filteredLayouts.length > 0) {
+          const uniqueApps = [
+            ...new Set(filteredLayouts.map(layout => layout.app)),
+          ].filter(Boolean)
+          const appItems: DropdownItem[] = uniqueApps.map(app => ({
+            text: app,
+          }))
+          setAppDropdownItems(appItems)
         } else {
-          setAllLayouts([])
           setAppDropdownItems([])
         }
-      } catch (error) {
+      } else {
         setAllLayouts([])
         setAppDropdownItems([])
       }
+    } catch (error) {
+      setAllLayouts([])
+      setAppDropdownItems([])
     }
-    fetchAllLayouts()
   }, [source])
+
+  const fetchDropdownItems = useCallback(async () => {
+    if (allLayouts.length === 0) {
+      return
+    }
+
+    try {
+      const tempVars = generateForHosts(source)
+      const tagValues = await getTagValuesForLayoutWhereTagKeys(
+        source,
+        allLayouts,
+        tempVars
+      )
+      setMatchingAliasDropdownItems(tagValues)
+    } catch (error) {
+      console.error('Error fetching dropdown items:', error)
+      setMatchingAliasDropdownItems([])
+    }
+  }, [allLayouts])
+
+  useEffect(() => {
+    fetchAllLayouts()
+  }, [fetchAllLayouts])
+
+  const prevManualRefreshRef = useRef<number>(logAnalysisManualRefresh)
+
+  useEffect(() => {
+    const prev = prevManualRefreshRef.current
+    if (prev !== logAnalysisManualRefresh) {
+      fetchAllLayouts()
+    }
+    prevManualRefreshRef.current = logAnalysisManualRefresh
+  }, [logAnalysisManualRefresh, fetchAllLayouts])
+
+  useEffect(() => {
+    fetchDropdownItems()
+  }, [fetchDropdownItems])
 
   useEffect(() => {
     setLayout([])
@@ -200,30 +236,22 @@ const LogAnalysisCellsGraphWrapper = ({
   }, [selectedApp, allLayouts])
 
   useEffect(() => {
-    const fetchDropdownItems = async () => {
-      if (!isAuthorized || allLayouts.length === 0) {
-        return
-      }
+    GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
+    const controller = new AbortController()
 
-      try {
-        const tempVars = generateForHosts(source)
-        const tagValues = await getTagValuesForLayoutWhereTagKeys(
-          source,
-          allLayouts,
-          tempVars
-        )
-        setMatchingAliasDropdownItems(tagValues)
-      } catch (error) {
-        console.error('Error fetching dropdown items:', error)
-        setMatchingAliasDropdownItems([])
-      }
+    if (!!cloudAutoRefresh?.logAnalysis) {
+      clearInterval(intervalID)
+      intervalID = window.setInterval(() => {
+        fetchAllLayouts()
+      }, cloudAutoRefresh.logAnalysis)
     }
 
-    fetchDropdownItems()
-  }, [source, isAuthorized, allLayouts])
-
-  useEffect(() => {
-    GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
   }, [cloudAutoRefresh?.logAnalysis])
 
   useEffect(() => {
