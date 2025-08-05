@@ -223,7 +223,7 @@ export class AppNameDropdown extends PureComponent<Props, State> {
           value={selected}
         />
 
-        {isOpen && menuItems.length ? (
+        {isOpen && menuItems && menuItems.length ? (
           <DropdownMenu
             addNew={addNew}
             actions={actions}
