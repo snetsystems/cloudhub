@@ -34,6 +34,7 @@ import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisD
 import {Cancel} from 'src/shared/components/ConfirmOrCancel'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import AppNameMatchingAliasWrapper from 'src/log_analysis/components/AppNameMatchingAliasWrapper'
+import {ComponentStatus} from 'src/reusable_ui'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -138,6 +139,9 @@ const LogAnalysisCellsGraphWrapper = ({
   )
   const [appDropdownIsOpen, setAppDropdownIsOpen] = useState(false)
 
+  const [isAllLayoutsLoading, setIsAllLayoutsLoading] = useState(false)
+  const [isDropdownItemsLoading, setIsDropdownItemsLoading] = useState(false)
+
   useEffect(() => {
     if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
       setMatchingAliasSelectedDeviceAliasName(selectedDevice.aliasName)
@@ -157,6 +161,7 @@ const LogAnalysisCellsGraphWrapper = ({
   }, [selectedDevice?.hostname, selectedDevice?.appName])
 
   const fetchAllLayouts = useCallback(async () => {
+    setIsAllLayoutsLoading(true)
     try {
       const layoutResults = await getLayouts()
       const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
@@ -188,6 +193,8 @@ const LogAnalysisCellsGraphWrapper = ({
     } catch (error) {
       setAllLayouts([])
       setAppDropdownItems([])
+    } finally {
+      setIsAllLayoutsLoading(false)
     }
   }, [source])
 
@@ -196,6 +203,7 @@ const LogAnalysisCellsGraphWrapper = ({
       return
     }
 
+    setIsDropdownItemsLoading(true)
     try {
       const tempVars = generateForHosts(source)
       const tagValues = await getTagValuesForLayoutWhereTagKeys(
@@ -207,6 +215,8 @@ const LogAnalysisCellsGraphWrapper = ({
     } catch (error) {
       console.error('Error fetching dropdown items:', error)
       setMatchingAliasDropdownItems([])
+    } finally {
+      setIsDropdownItemsLoading(false)
     }
   }, [allLayouts])
 
@@ -478,6 +488,16 @@ const LogAnalysisCellsGraphWrapper = ({
                 handleMatchingAliasInputDropdownChange
               }
               selectedDeviceHostname={selectedDevice?.hostname}
+              appDropdownStatus={
+                isAllLayoutsLoading
+                  ? ComponentStatus.Loading
+                  : ComponentStatus.Default
+              }
+              matchingAliasDropdownStatus={
+                isDropdownItemsLoading
+                  ? ComponentStatus.Loading
+                  : ComponentStatus.Default
+              }
             />
 
             <div className="panel-body" style={{margin: '15px 15px 0 15px'}}>
@@ -523,6 +543,16 @@ const LogAnalysisCellsGraphWrapper = ({
                   handleMatchingAliasInputDropdownChange
                 }
                 selectedDeviceHostname={selectedDevice?.hostname}
+                appDropdownStatus={
+                  isAllLayoutsLoading
+                    ? ComponentStatus.Loading
+                    : ComponentStatus.Default
+                }
+                matchingAliasDropdownStatus={
+                  isDropdownItemsLoading
+                    ? ComponentStatus.Loading
+                    : ComponentStatus.Default
+                }
               />
               <div
                 className="panel-body"

@@ -21,6 +21,7 @@ interface AppNameMatchingAliasWrapper {
   onAppClick: () => void
   onAppClose: () => void
   onApply: () => void
+  appDropdownStatus?: ComponentStatus
 
   // MatchingAlias props
   matchingAliasDropdownItems: DropdownItem[]
@@ -31,6 +32,7 @@ interface AppNameMatchingAliasWrapper {
   matchingAliasDropdownOnClose?: () => void
   onMatchingAliasInputDropdownChange: (value: string) => void
   selectedDeviceHostname?: string
+  matchingAliasDropdownStatus?: ComponentStatus
 }
 
 const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
@@ -42,6 +44,7 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
   onAppClick,
   onAppClose,
   onApply,
+  appDropdownStatus = ComponentStatus.Default,
   matchingAliasDropdownItems = [],
   selectedMatchingAliasDropdown = '',
   matchingAliasDropdownIsOpen,
@@ -50,6 +53,7 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
   matchingAliasDropdownOnClose,
   onMatchingAliasInputDropdownChange,
   selectedDeviceHostname,
+  matchingAliasDropdownStatus = ComponentStatus.Default,
 }) => {
   return (
     <div className="app-matching-alias-container">
@@ -67,6 +71,7 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
               selected={selectedApp}
               className={'dropdown app-dropdown-50'}
               placeholder={'Please select App Name'}
+              status={appDropdownStatus}
             />
           </div>
         </div>
@@ -85,6 +90,7 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
               onChange={onMatchingAliasInputDropdownChange}
               className={'dropdown matching-alias-dropdown-50'}
               placeholder={selectedDeviceHostname}
+              status={matchingAliasDropdownStatus}
             />
           </div>
         </div>
