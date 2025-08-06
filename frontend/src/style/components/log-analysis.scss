@@ -18,6 +18,7 @@ $highlight: #25262e;
 
 .syslog-table--container {
   width: 98%;
+  height: calc(100% - 10px);
   justify-self: center;
 }
 
@@ -227,8 +228,11 @@ button[data-test-subj='pagination-button-next'][disabled] {
   font-size: 13px;
 }
 
-.ouiDataGrid__focusWrap {
-  padding-top: 10px;
+.syslog-table--container {
+  .ouiDataGrid__focusWrap {
+    padding-top: 10px;
+    height: calc(100% - 20px);
+  }
 }
 
 .livestatus-wrapper {

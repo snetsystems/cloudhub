@@ -8,6 +8,7 @@ import {
 import '@opensearch-project/oui/dist/oui_theme_dark.css'
 import {connect, useDispatch} from 'react-redux'
 import {bindActionCreators} from 'redux'
+import ReactObserver from 'react-resize-observer'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -34,6 +35,8 @@ import {
 
 // Util
 import {formattedTime} from 'src/log_analysis/util'
+import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
+import _ from 'lodash'
 
 // Constants
 import {
@@ -249,6 +252,7 @@ function LogAnalysisSyslogTable({
   }, [visibleColumns, sortColumns, pageSize])
 
   const excludedOnClickFields = ['@timestamp']
+
   const renderCellValue = useCallback(
     ({rowIndex, columnId}) => {
       const indexInPage = rowIndex - pageIndex * pageSize
@@ -425,7 +429,13 @@ function LogAnalysisSyslogTable({
   const totalPages = Math.max(1, Math.ceil(totalRowCount / pageSize))
   const isLastPage = pageIndex === totalPages - 1
 
-  const gridHeight = `${syslogTableRows.length * 35 + 150}px`
+  const debouncedFit = _.debounce(() => {
+    WindowResizeEventTrigger()
+  }, 150)
+
+  const handleOnResize = (): void => {
+    debouncedFit()
+  }
 
   return (
     <>
@@ -451,14 +461,14 @@ function LogAnalysisSyslogTable({
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
         )}
       </LogAnalysisDashboardHeader>
-
-      <FancyScrollbar style={{height: 'calc(100% - 80px)'}}>
+      <FancyScrollbar style={{height: 'calc(100% - 40px)'}}>
         <div className="syslog-table--container">
           <div className="syslog-table--total-count">
             Documents ({totalHitsValue})
           </div>
+          <ReactObserver onResize={handleOnResize} />
           <OuiDataGrid
-            key={pageSize}
+            key="unconstrained"
             aria-label="Client-side paginated syslog data grid"
             columns={columns}
             columnVisibility={{visibleColumns, setVisibleColumns}}
@@ -487,7 +497,6 @@ function LogAnalysisSyslogTable({
               rowHover: 'highlight',
               header: 'underline',
             }}
-            height={gridHeight}
           />
         </div>
         {isLastPage && hasMore && (
