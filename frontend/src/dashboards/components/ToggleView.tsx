@@ -1,5 +1,5 @@
 //Library
-import React, {useEffect, useMemo, ChangeEvent, useRef} from 'react'
+import React, {useEffect, useMemo, ChangeEvent} from 'react'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 
@@ -20,7 +20,7 @@ import {
 import {setCloudAutoRefresh, setCloudTimeRange} from 'src/clouds/actions/clouds'
 
 //Utils
-import _, {debounce} from 'lodash'
+import _ from 'lodash'
 
 //Redux
 import * as appActions from 'src/shared/actions/app'
@@ -49,7 +49,7 @@ export interface ViewConfig {
     cloudTimeRange?: CloudTimeRange,
     filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   ) => Promise<any>
-  topN?: number
+  localTopN?: number
 }
 
 export interface ToggleViewOwnProps {
@@ -57,8 +57,8 @@ export interface ToggleViewOwnProps {
   views: ViewConfig[]
   autoRefreshInterval?: number
   topN?: number
-  isMoreFetch: boolean
-  onChangeTopN?: (e: ChangeEvent<HTMLInputElement>) => void
+  localTopN?: number
+  onChangeTopN?: (number:number) => void
   handleOnBlur?: () => void
 }
 
@@ -81,7 +81,7 @@ function ToggleView<P>({
   filteredLogsForLogAnalysis,
   cloudTimeRange,
   topN = 100,
-  isMoreFetch,
+  localTopN = 100,
   onChangeTopN,
   handleOnBlur,
   logAnalysisManualRefresh,
@@ -92,7 +92,9 @@ function ToggleView<P>({
       activeView: views[0]?.key,
     }
   )
+
   const activeKey = storageObj.activeView
+
   const setActiveKey = (value: string) =>
     setStorageObj(prev => ({...prev, activeView: value}))
   const activeView = useMemo(() => views.find(v => v.key === activeKey)!, [
@@ -101,65 +103,24 @@ function ToggleView<P>({
   ])
   let intervalID
 
-  const fetchTokenDataDebounced = useRef(
-    debounce(
-      (
-        src: BaseElasticSearchData,
-        topN: number,
-        cloudTimeRange?: CloudTimeRange,
-        filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
-      ) => {
-        activeView.fetchData?.(
-          src,
-          topN,
-          cloudTimeRange,
-          filteredLogsForLogAnalysis
-        )
-      },
-      1000
-    )
-  ).current
-
-  useEffect(() => {
-    if (!isMoreFetch) return
-    if (_.isEmpty(esSource)) return
-
-    fetchTokenDataDebounced(
-      esSource,
-      topN,
-      cloudTimeRange,
-      filteredLogsForLogAnalysis
-    )
-  }, [
-    isMoreFetch,
-    esSource,
-    topN,
-    cloudTimeRange?.logAnalysis,
-    filteredLogsForLogAnalysis,
-  ])
-
-  useEffect(() => {
-    return () => {
-      fetchTokenDataDebounced.cancel()
-    }
-  }, [fetchTokenDataDebounced])
+  const handleTopNChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10)
+    onChangeTopN?.(value)
+  }
 
   useEffect(() => {
     if (_.isEmpty(esSource)) return
-
     activeView.fetchData?.(
       esSource,
-      topN,
+      localTopN, 
       cloudTimeRange,
       filteredLogsForLogAnalysis
     )
   }, [
-    cloudAutoRefresh.logAnalysis,
-    topN,
     esSource,
-    cloudTimeRange?.logAnalysis,
-    filteredLogsForLogAnalysis,
     logAnalysisManualRefresh,
+    localTopN, 
+    filteredLogsForLogAnalysis,
   ])
 
   useEffect(() => {
@@ -173,7 +134,7 @@ function ToggleView<P>({
       intervalID = window.setInterval(() => {
         activeView.fetchData?.(
           esSource,
-          topN,
+          localTopN, 
           cloudTimeRange,
           filteredLogsForLogAnalysis
         )
@@ -190,11 +151,11 @@ function ToggleView<P>({
     }
   }, [
     cloudAutoRefresh.logAnalysis,
-    topN,
     esSource,
     cloudTimeRange?.logAnalysis,
     filteredLogsForLogAnalysis,
     logAnalysisManualRefresh,
+    localTopN, 
   ])
 
   const renderToggle = () => {
@@ -245,7 +206,7 @@ function ToggleView<P>({
               type={InputType.Number}
               className="form-control input-sm"
               placeholder="Filter Tokens..."
-              onChange={onChangeTopN}
+              onChange={handleTopNChange}
               min={1}
               max={1000}
               onBlur={handleOnBlur}

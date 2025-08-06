@@ -161,7 +161,7 @@ func (s *Service) AllDeviceMappings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hosts, err := s.DistinctHostsBefore(ctx, esID, "syslog-*", 7)
+	hosts, err := s.DistinctHostsBefore(ctx, esID, "syslog-*", cloudhub.DefaultDays)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return

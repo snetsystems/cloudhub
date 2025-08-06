@@ -56,7 +56,8 @@ export default function WordCloud({
     maxFontSize,
     padding,
   })
-  const overflowCount = data.length - words.length
+  const overflowCount = Math.max(topN - words.length, 0)
+
   const palette = useMemo(
     () =>
       d3

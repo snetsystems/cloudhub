@@ -1,5 +1,5 @@
 //Library
-import React, {useEffect, useMemo, useRef, useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import * as d3 from 'd3'
 import type {HierarchyRectangularNode} from 'd3-hierarchy'
 
@@ -77,6 +77,74 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
     percent: string
   }>({visible: false, x: 0, y: 0, name: '', value: 0, percent: ''})
 
+  const calculateLayout = (
+    data: TokenData[],
+    width: number,
+    height: number,
+    topN: number,
+    minTileWidth: number,
+    minTileHeight: number
+  ) => {
+    if (!data || width === 0 || height === 0) {
+      return {
+        displayData: [],
+        effectiveData: [],
+        overflowCount: 0,
+        realTotal: 0,
+      }
+    }
+
+    const sorted = sortAndTrim(data, topN)
+    const maxTiles = Math.floor(
+      (width * height) / (minTileWidth * minTileHeight)
+    )
+
+    const overflowCnt = Math.max(sorted.length - maxTiles, 0)
+    const eff = overflowCnt > 0 ? sorted.slice(0, maxTiles) : sorted
+
+    return {
+      displayData: sorted, 
+      effectiveData: eff, 
+      overflowCount: overflowCnt, 
+      realTotal: sorted.reduce((s, d) => s + d.value, 0),
+    }
+  }
+
+  const [layoutData, setLayoutData] = useState<{
+    displayData: TokenData[]
+    effectiveData: TokenData[]
+    overflowCount: number
+    realTotal: number
+  }>({
+    displayData: [],
+    effectiveData: [],
+    overflowCount: 0,
+    realTotal: 0,
+  })
+
+  useEffect(() => {
+    const result = calculateLayout(
+      data,
+      width,
+      height,
+      topN,
+      minTileWidth,
+      minTileHeight
+    )
+    setLayoutData(result)
+  }, [
+    data,
+    width,
+    height,
+    topN,
+    minTileWidth,
+    minTileHeight,
+  ])
+
+
+
+  const {displayData, effectiveData, overflowCount, realTotal} = layoutData
+
   const sortAndTrim = (src: TokenData[], n: number): TokenData[] => {
     const sorted = [...src].sort((a, b) => b.value - a.value)
     return n > 0 && sorted.length > n ? sorted.slice(0, n) : sorted
@@ -105,31 +173,6 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
       weight: d.value < minCount ? minCount : d.value,
     }))
   }
-
-  const {displayData, effectiveData, overflowCount, realTotal} = useMemo(() => {
-    if (!data || width === 0 || height === 0)
-      return {
-        displayData: [],
-        effectiveData: [],
-        overflowCount: 0,
-        realTotal: 0,
-      }
-
-    const sorted = sortAndTrim(data, topN)
-    const maxTiles = Math.floor(
-      (width * height) / (minTileWidth * minTileHeight)
-    )
-
-    const overflowCnt = Math.max(sorted.length - maxTiles, 0)
-    const eff = overflowCnt > 0 ? sorted.slice(0, maxTiles) : sorted
-
-    return {
-      displayData: sorted,
-      effectiveData: eff,
-      overflowCount: overflowCnt,
-      realTotal: sorted.reduce((s, d) => s + d.value, 0),
-    }
-  }, [data, width, height, topN, minTileWidth, minTileHeight])
 
   useEffect(() => {
     if (effectiveData.length === 0 || width === 0 || height === 0) return

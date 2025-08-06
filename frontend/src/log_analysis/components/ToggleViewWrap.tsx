@@ -1,5 +1,6 @@
 //Library
-import React, {ChangeEvent, useCallback, useMemo, useState} from 'react'
+import React, {ChangeEvent, useCallback, useMemo, useState, useRef, useEffect} from 'react'
+import {debounce} from 'lodash'
 
 //Components
 import WordCloud from 'src/dashboards/components/WordCloud'
@@ -35,7 +36,7 @@ interface ViewProps {
   data: TokenData[]
   onRectClick: (token: string) => void
   onChangeTopN: (e: ChangeEvent<HTMLInputElement>) => void
-  topN: string
+  localTopN: number
 }
 
 const DEFAULT_TOP_N = 100
@@ -54,7 +55,10 @@ export default function ToggleViewWrap() {
   const setTopN = (value: number) =>
     setStorageObj(prev => ({...prev, filteredCount: value}))
 
-  const [isMoreFetch, setIsMoreFetch] = useState(false)
+  const [localTopN, setLocalTopN] = useState(topN)
+
+
+
 
   const fetchTokenData = useCallback(
     async (
@@ -63,26 +67,29 @@ export default function ToggleViewWrap() {
       cloudTimeRange?: CloudTimeRange,
       filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
     ) => {
+      if ((!isNaN(size) && size) < data.length) return
       setLoading(true)
+    
       try {
         const combinedFilters = buildCombinedFilters(
           filteredLogsForLogAnalysis,
           cloudTimeRange?.logAnalysis
         )
-        const {data} = await fetchMessageTokenData({
+        const {data:newData} = await fetchMessageTokenData({
           esSource: src,
           filters: combinedFilters,
           size,
         })
 
-        setData(data)
-        setIsMoreFetch(false)
+        setData(newData)
       } finally {
         setLoading(false)
       }
     },
-    []
+    [data]
   )
+
+
 
   const addMessageTokensFilter = (token): void => {
     dispatch(addLogAnalysisMatchPhraseFilterClause('message_tokens', token))
@@ -92,14 +99,28 @@ export default function ToggleViewWrap() {
     addMessageTokensFilter(token)
   }, [])
 
-  const onChangeTopN = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10)
-    setTopN(value)
-    if (!isNaN(value) && value > data.length) setIsMoreFetch(true)
+  const debouncedSetTopN = useRef(
+    debounce((value: number) => {
+      setLocalTopN(value)
+    }, 500)
+  ).current
+
+  const onChangeTopN = (number: number) => {
+    setTopN(number)
+    debouncedSetTopN(number)
   }
 
-  const handleOnBlur = () => {
-    if (isNaN(topN)) setTopN(DEFAULT_TOP_N)
+  useEffect(() => {
+    return () => {
+      debouncedSetTopN.cancel()
+    }
+  }, [debouncedSetTopN])
+
+  const handleOnBlur = () => {  
+    if (isNaN(topN)) {
+      setTopN(DEFAULT_TOP_N)
+      setLocalTopN(DEFAULT_TOP_N)
+    }
   }
 
   const views = useMemo(
@@ -111,7 +132,7 @@ export default function ToggleViewWrap() {
         props: (d: TokenData[]) => ({
           data: d,
           onRectClick: handleRectClick,
-          topN,
+          localTopN:localTopN,
         }),
         fetchData: fetchTokenData,
       },
@@ -122,12 +143,12 @@ export default function ToggleViewWrap() {
         props: (d: TokenData[]) => ({
           data: d,
           onRectClick: handleRectClick,
-          topN,
+          localTopN:localTopN,
         }),
         fetchData: fetchTokenData,
       },
     ],
-    [fetchTokenData, topN, handleRectClick]
+    [fetchTokenData, localTopN, handleRectClick,data]
   )
 
   return (
@@ -137,14 +158,14 @@ export default function ToggleViewWrap() {
         onChangeTopN={onChangeTopN}
         handleOnBlur={handleOnBlur}
         topN={topN}
-        isMoreFetch={isMoreFetch}
+        localTopN={localTopN}
         views={views.map(v => ({...v, props: v.props(data)}))}
       />
     </>
   )
 }
 
-function TreeMapComponent({data, onRectClick, topN}: ViewProps) {
+function TreeMapComponent({data, onRectClick, localTopN}: ViewProps) {
   const [ref, {width, height}] = useResizeObserver<HTMLDivElement>()
   return (
     <div ref={ref} className="relative-full">
@@ -153,7 +174,7 @@ function TreeMapComponent({data, onRectClick, topN}: ViewProps) {
           width={width}
           height={height}
           data={data}
-          topN={parseInt(topN, 10)}
+          topN={localTopN}
           onRectClick={onRectClick}
         />
       )}
@@ -161,9 +182,8 @@ function TreeMapComponent({data, onRectClick, topN}: ViewProps) {
   )
 }
 
-function TagCloudComponent({data, onRectClick, topN}: ViewProps) {
+function TagCloudComponent({data, onRectClick, localTopN}: ViewProps) {
   const [containerRef, {width, height}] = useResizeObserver<HTMLDivElement>()
-
   return (
     <div ref={containerRef} className="relative-full">
       {width > 0 && height > 0 && (
@@ -172,7 +192,7 @@ function TagCloudComponent({data, onRectClick, topN}: ViewProps) {
           width={width}
           height={height}
           onSelect={onRectClick}
-          topN={parseInt(topN, 10)}
+          topN={localTopN}
         />
       )}
     </div>
