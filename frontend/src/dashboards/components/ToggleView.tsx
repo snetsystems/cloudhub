@@ -203,6 +203,7 @@ function ToggleView<P>({
         <div className="toggle-view--header---filter">
           <div className="search-widget" style={{width: '120px'}}>
             <input
+              onMouseDown={e => e.stopPropagation()}
               type={InputType.Number}
               className="form-control input-sm"
               placeholder="Filter Tokens..."
