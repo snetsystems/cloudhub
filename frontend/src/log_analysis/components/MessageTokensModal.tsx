@@ -60,22 +60,43 @@ class MessageTokensModal extends PureComponent<Props, State> {
   private get renderBody() {
     const {tokens} = this.props
     const {selectedTokens} = this.state
+    const allSelected = tokens.length > 0 && selectedTokens.length === tokens.length
+    const someSelected = selectedTokens.length > 0 && selectedTokens.length < tokens.length
+
     return (
-      <FancyScrollbar>
-        <div>
-          {tokens.map(token => (
-            <div key={token} className="form-control-static">
+      <>
+        <div className="form-control-static select-all-container">
+          <input
+            type="checkbox"
+            id="select_all_tokens"
+            checked={allSelected}
+            ref={input => {
+              if (input) {
+                input.indeterminate = someSelected
+              }
+            }}
+            onChange={e => this.onToggleAll(e.currentTarget.checked)}
+          />
+          <label htmlFor="select_all_tokens">
+            <strong>Select All</strong>
+          </label>
+        </div>
+        <FancyScrollbar
+          style={{height: 'calc(100% - 40px)'}}
+       >
+          {tokens.map((token,idx) => (
+            <div key={`${token}_${idx}`} className="form-control-static">
               <input
                 type="checkbox"
-                id={`token_${token}`}
+                id={`token_${token}_${idx}`}
                 checked={selectedTokens.includes(token)}
                 onChange={e => this.onToggle(token, e.currentTarget.checked)}
               />
-              <label htmlFor={`token_${token}`}>{token}</label>
+              <label htmlFor={`token_${token}_${idx}`}>{token}</label>
             </div>
           ))}
-        </div>
       </FancyScrollbar>
+      </>
     )
   }
 
@@ -94,6 +115,12 @@ class MessageTokensModal extends PureComponent<Props, State> {
         </div>
       </>
     )
+  }
+
+  private onToggleAll(checked: boolean) {
+    this.setState({
+      selectedTokens: checked ? [...this.props.tokens] : []
+    })
   }
 
   private onToggle(token: string, checked: boolean) {

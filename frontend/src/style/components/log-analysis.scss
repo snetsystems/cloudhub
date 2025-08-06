@@ -184,16 +184,33 @@ $highlight: #25262e;
 
   .form-control-static {
     width: 318px;
-
+    border:1px solid #383846;
     > label {
       width: 305px;
       overflow-x: auto;
       overflow-y: hidden;
+      line-height: 20px;
+      height: 20px;
     }
   }
 
   .form-control-static:last-child {
     margin-bottom: 4px;
+  }
+
+
+  .select-all-container {
+   
+    border: none;
+    background: #292933;
+    border-radius: 0;
+    margin-bottom: 10px;
+    
+    > label {
+      font-weight: 600;
+      color: #f58220;
+      font-size: 14px;
+    }
   }
 
   .overlay--heading {
@@ -203,6 +220,8 @@ $highlight: #25262e;
   .overlay--body {
     padding-bottom: 30px;
     height: 200px;
+    padding-top: 8px;
+   
   }
 
   .btn-cancel {
