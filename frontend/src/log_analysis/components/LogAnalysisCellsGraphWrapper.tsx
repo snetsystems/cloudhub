@@ -251,6 +251,12 @@ const LogAnalysisCellsGraphWrapper = ({
             tempVars
           )
           setMatchingAliasDropdownItems(tagValues)
+
+          setTimeout(() => {
+            if (matchingAliasInputRef.current) {
+              matchingAliasInputRef.current.focus()
+            }
+          }, 0)
         } catch (error) {
           console.error('Error fetching dropdown items:', error)
           setMatchingAliasDropdownItems([])

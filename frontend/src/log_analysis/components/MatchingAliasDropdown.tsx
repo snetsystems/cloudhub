@@ -99,14 +99,6 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     if (!_.isEqual(prevProps.items, this.props.items)) {
       this.setState({filteredItems: this.props.items}, () => {
         this.applyFilter(this.state.searchTerm)
-        setTimeout(() => {
-          if (this.dropdownRef) {
-            const input = this.dropdownRef.querySelector('input')
-            if (input) {
-              input.focus()
-            }
-          }
-        }, 0)
       })
       return
     }
