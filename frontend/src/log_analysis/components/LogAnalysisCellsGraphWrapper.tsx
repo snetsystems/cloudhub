@@ -511,6 +511,9 @@ const LogAnalysisCellsGraphWrapper = ({
               }
             />
 
+            <div className="hostname-info">
+              {`Hostname: ${selectedDevice.hostname}`}
+            </div>
             <div className="panel-body" style={{margin: '15px 15px 0 15px'}}>
               <div className="generic-empty-state">
                 <h4 style={{margin: '90px 0'}}>
@@ -565,6 +568,9 @@ const LogAnalysisCellsGraphWrapper = ({
                     : ComponentStatus.Default
                 }
               />
+              <div className="hostname-info">
+                {`Hostname: ${selectedDevice.hostname}`}
+              </div>
               <div
                 className="panel-body"
                 style={{backgroundColor: GRAPH_BG_COLOR}}
