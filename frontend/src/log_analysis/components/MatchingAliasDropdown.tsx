@@ -1,10 +1,14 @@
+// Library
 import React, {
   PureComponent,
   MouseEvent,
   ChangeEvent,
   KeyboardEvent,
 } from 'react'
+import _ from 'lodash'
 import classnames from 'classnames'
+
+// Components
 import OnClickOutside from 'src/shared/components/OnClickOutside'
 import DropdownMenu, {
   DropdownMenuEmpty,
@@ -12,8 +16,10 @@ import DropdownMenu, {
 import DropdownInput from 'src/shared/components/DropdownInput'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 
+// Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+// Types
 import {DropdownItem, DropdownAction} from 'src/types'
 import {ComponentStatus} from 'src/reusable_ui'
 
@@ -88,6 +94,21 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
   }
 
   public componentDidUpdate(prevProps: Props) {
+    if (!_.isEqual(prevProps.items, this.props.items)) {
+      this.setState({filteredItems: this.props.items}, () => {
+        this.applyFilter(this.state.searchTerm)
+        setTimeout(() => {
+          if (this.dropdownRef) {
+            const input = this.dropdownRef.querySelector('input')
+            if (input) {
+              input.focus()
+            }
+          }
+        }, 0)
+      })
+      return
+    }
+
     if (prevProps.selected !== this.props.selected) {
       this.previousHighlightedIndex = this.state.highlightedItemIndex || 0
 

@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useState, useCallback, useMemo, useRef} from 'react'
+import React, {useEffect, useState, useMemo} from 'react'
 import _ from 'lodash'
 import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
@@ -110,13 +110,8 @@ const LogAnalysisCellsGraphWrapper = ({
     getTimeRangeFromLocalStorage()
   )
 
-  let intervalID: number | null = null
-
-  useEffect(() => {
-    setSelfTimeRange(logTimeRange)
-  }, [logTimeRange])
-
   const [allLayouts, setAllLayouts] = useState<Layout[]>([])
+  const [filteredLayouts, setFilteredLayouts] = useState<Layout[]>([])
   const [preFilteredLayouts, setPreFilteredLayouts] = useState<Layout[]>([])
   const [matchingAliasDropdownItems, setMatchingAliasDropdownItems] = useState<
     DropdownItem[]
@@ -141,7 +136,15 @@ const LogAnalysisCellsGraphWrapper = ({
   const [appDropdownIsOpen, setAppDropdownIsOpen] = useState(false)
 
   const [isAllLayoutsLoading, setIsAllLayoutsLoading] = useState(false)
+  const [
+    isFilterLayoutsByAppNameLoading,
+    setIsFilterLayoutsByAppNameLoading,
+  ] = useState(false)
   const [isDropdownItemsLoading, setIsDropdownItemsLoading] = useState(false)
+
+  useEffect(() => {
+    setSelfTimeRange(logTimeRange)
+  }, [logTimeRange])
 
   useEffect(() => {
     if (selectedDevice?.aliasName && selectedDevice?.aliasName !== '') {
@@ -161,118 +164,114 @@ const LogAnalysisCellsGraphWrapper = ({
     }
   }, [selectedDevice?.hostname, selectedDevice?.appName])
 
-  const fetchAllLayouts = useCallback(async () => {
+  const fetchAllLayouts = async () => {
     setIsAllLayoutsLoading(true)
     try {
       const layoutResults = await getLayouts()
       const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+      setAllLayouts(layouts || [])
 
       if (layouts && layouts.length > 0) {
-        const tempVars = generateForHosts(source)
-        const filteredLayouts = await filterLayoutsByExistingMeasurements(
-          layouts,
-          source,
-          tempVars
-        )
-
-        if (!_.isEqual(preFilteredLayouts, filteredLayouts || [])) {
-          setAllLayouts(filteredLayouts || [])
-          setPreFilteredLayouts(filteredLayouts || [])
-        }
-
-        if (filteredLayouts && filteredLayouts.length > 0) {
-          const uniqueApps = [
-            ...new Set(filteredLayouts.map(layout => layout.app)),
-          ].filter(Boolean)
-          const appItems: DropdownItem[] = uniqueApps.map(app => ({
-            text: app,
-          }))
-          setAppDropdownItems(appItems)
-        } else {
-          setAppDropdownItems([])
-        }
-      } else {
-        if (!_.isEqual(preFilteredLayouts, [])) {
-          setAllLayouts([])
-          setPreFilteredLayouts([])
-        }
-        setAppDropdownItems([])
+        await filterLayoutsByAppName(layouts)
       }
     } catch (error) {
-      if (!_.isEqual(preFilteredLayouts, [])) {
-        setAllLayouts([])
-        setPreFilteredLayouts([])
-      }
-      setAppDropdownItems([])
+      setAllLayouts([])
     } finally {
       setIsAllLayoutsLoading(false)
     }
-  }, [source, preFilteredLayouts])
-
-  const fetchDropdownItems = useCallback(async () => {
-    if (allLayouts.length === 0) {
-      return
-    }
-
-    setIsDropdownItemsLoading(true)
-    try {
-      const tempVars = generateForHosts(source)
-      const tagValues = await getTagValuesForLayoutWhereTagKeys(
-        source,
-        allLayouts,
-        tempVars
-      )
-      setMatchingAliasDropdownItems(tagValues)
-    } catch (error) {
-      console.error('Error fetching dropdown items:', error)
-      setMatchingAliasDropdownItems([])
-    } finally {
-      setIsDropdownItemsLoading(false)
-    }
-  }, [allLayouts])
+  }
 
   useEffect(() => {
     fetchAllLayouts()
-  }, [fetchAllLayouts])
+  }, [source])
 
-  const prevManualRefreshRef = useRef<number>(logAnalysisManualRefresh)
+  const filterLayoutsByAppName = async (layoutsToFilter?: Layout[]) => {
+    const layouts = layoutsToFilter || allLayouts
 
-  useEffect(() => {
-    const prev = prevManualRefreshRef.current
-    if (prev !== logAnalysisManualRefresh) {
-      fetchAllLayouts()
+    if (layouts.length === 0) {
+      setFilteredLayouts([])
+      setPreFilteredLayouts([])
+      setAppDropdownItems([])
+      return
     }
-    prevManualRefreshRef.current = logAnalysisManualRefresh
-  }, [logAnalysisManualRefresh, fetchAllLayouts])
+
+    setIsFilterLayoutsByAppNameLoading(true)
+    try {
+      const tempVars = generateForHosts(source)
+      const filteredLayouts = await filterLayoutsByExistingMeasurements(
+        layouts,
+        source,
+        tempVars
+      )
+
+      if (!_.isEqual(preFilteredLayouts, filteredLayouts || [])) {
+        setFilteredLayouts(filteredLayouts || [])
+        setPreFilteredLayouts(filteredLayouts || [])
+      }
+
+      if (filteredLayouts && filteredLayouts.length > 0) {
+        const uniqueApps = [
+          ...new Set(filteredLayouts.map(layout => layout.app)),
+        ].filter(Boolean)
+        const appItems: DropdownItem[] = uniqueApps.map(app => ({
+          text: app,
+        }))
+        setAppDropdownItems(appItems)
+      } else {
+        setAppDropdownItems([])
+      }
+    } catch (error) {
+      setFilteredLayouts([])
+      setPreFilteredLayouts([])
+      setAppDropdownItems([])
+    } finally {
+      setIsFilterLayoutsByAppNameLoading(false)
+    }
+  }
 
   useEffect(() => {
-    fetchDropdownItems()
-  }, [fetchDropdownItems])
+    if (appDropdownIsOpen && allLayouts.length > 0) {
+      filterLayoutsByAppName()
+    }
+  }, [appDropdownIsOpen])
+
+  useEffect(() => {
+    if (matchingAliasDropdownIsOpen) {
+      const fetchDropdownItems = async () => {
+        if (filteredLayouts.length === 0) {
+          return
+        }
+
+        setIsDropdownItemsLoading(true)
+        try {
+          const tempVars = generateForHosts(source)
+          const tagValues = await getTagValuesForLayoutWhereTagKeys(
+            source,
+            filteredLayouts,
+            tempVars
+          )
+          setMatchingAliasDropdownItems(tagValues)
+        } catch (error) {
+          console.error('Error fetching dropdown items:', error)
+          setMatchingAliasDropdownItems([])
+        } finally {
+          setIsDropdownItemsLoading(false)
+        }
+      }
+
+      fetchDropdownItems()
+    }
+  }, [matchingAliasDropdownIsOpen])
 
   useEffect(() => {
     setLayout([])
-    if (allLayouts.length > 0) {
+    if (filteredLayouts.length > 0) {
       getLayoutForInstance()
     }
-  }, [selectedApp, allLayouts])
+  }, [selectedApp, filteredLayouts])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)
-    const controller = new AbortController()
-
-    if (!!cloudAutoRefresh?.logAnalysis) {
-      clearInterval(intervalID)
-      intervalID = window.setInterval(() => {
-        fetchAllLayouts()
-      }, cloudAutoRefresh.logAnalysis)
-    }
-
-    return () => {
-      controller.abort()
-      clearInterval(intervalID)
-      intervalID = null
-      GlobalAutoRefresher.stopPolling()
-    }
   }, [cloudAutoRefresh?.logAnalysis])
 
   useEffect(() => {
@@ -305,7 +304,7 @@ const LogAnalysisCellsGraphWrapper = ({
     let filtered: Layout[] = []
 
     if (selectedApp && selectedApp !== '') {
-      filtered = allLayouts.filter(layout => layout.app === selectedApp)
+      filtered = filteredLayouts.filter(layout => layout.app === selectedApp)
     } else {
       filtered = []
     }
@@ -371,12 +370,9 @@ const LogAnalysisCellsGraphWrapper = ({
     setMatchingAliasDropdownIsOpen(prev => !prev)
   }
 
-  const handleMatchingAliasInputDropdownChange = useCallback(
-    _.debounce((value: string) => {
-      setMatchingAliasSelectedDeviceAliasName(value)
-    }, 1000),
-    []
-  )
+  const handleMatchingAliasInputDropdownChange = _.debounce((value: string) => {
+    setMatchingAliasSelectedDeviceAliasName(value)
+  }, 1000)
 
   const handleApply = async () => {
     if (selectedDevice?.hostname) {
@@ -501,12 +497,12 @@ const LogAnalysisCellsGraphWrapper = ({
               selectedDeviceHostname={selectedDevice?.hostname}
               serverStoredAliasName={selectedDevice?.aliasName}
               appDropdownStatus={
-                isAllLayoutsLoading
+                isAllLayoutsLoading || isFilterLayoutsByAppNameLoading
                   ? ComponentStatus.Loading
                   : ComponentStatus.Default
               }
               matchingAliasDropdownStatus={
-                isDropdownItemsLoading
+                isAllLayoutsLoading || isDropdownItemsLoading
                   ? ComponentStatus.Loading
                   : ComponentStatus.Default
               }
@@ -560,12 +556,12 @@ const LogAnalysisCellsGraphWrapper = ({
                 selectedDeviceHostname={selectedDevice?.hostname}
                 serverStoredAliasName={selectedDevice?.aliasName}
                 appDropdownStatus={
-                  isAllLayoutsLoading
+                  isAllLayoutsLoading || isFilterLayoutsByAppNameLoading
                     ? ComponentStatus.Loading
                     : ComponentStatus.Default
                 }
                 matchingAliasDropdownStatus={
-                  isDropdownItemsLoading
+                  isAllLayoutsLoading || isDropdownItemsLoading
                     ? ComponentStatus.Loading
                     : ComponentStatus.Default
                 }
