@@ -263,6 +263,10 @@ button[data-test-subj='pagination-button-next'][disabled] {
     max-width: none;
   }
 
+  .logs-viewer--filter:hover {
+    cursor: default;
+  }
+
   .logs-viewer--filter > span {
     margin: 1px 0;
     width: 100%;
