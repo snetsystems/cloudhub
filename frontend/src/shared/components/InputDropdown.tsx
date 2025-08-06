@@ -200,6 +200,10 @@ export class InputDropdown extends PureComponent<Props, State> {
     const {searchTerm} = this.state
     const {selected} = this.props
 
+    if (!searchTerm || searchTerm.trim() === '') {
+      return 'Please enter an alias'
+    }
+
     if (selected === searchTerm) {
       return selected
     }

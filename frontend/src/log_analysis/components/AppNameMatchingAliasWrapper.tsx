@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {RefObject} from 'react'
 import {
   Button,
   ComponentSize,
@@ -34,6 +34,7 @@ interface AppNameMatchingAliasWrapper {
   selectedDeviceHostname?: string
   matchingAliasDropdownStatus?: ComponentStatus
   serverStoredAliasName?: string
+  matchingAliasInputRef?: RefObject<HTMLInputElement>
 }
 
 const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
@@ -56,6 +57,7 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
   selectedDeviceHostname,
   serverStoredAliasName,
   matchingAliasDropdownStatus = ComponentStatus.Default,
+  matchingAliasInputRef,
 }) => {
   return (
     <div className="app-matching-alias-container">
@@ -94,6 +96,7 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
               placeholder={selectedDeviceHostname}
               status={matchingAliasDropdownStatus}
               serverStoredAliasName={serverStoredAliasName}
+              inputRef={matchingAliasInputRef}
             />
           </div>
         </div>

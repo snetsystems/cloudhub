@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useState, useMemo} from 'react'
+import React, {useEffect, useState, useMemo, useRef} from 'react'
 import _ from 'lodash'
 import ReactObserver from 'react-resize-observer'
 import {connect} from 'react-redux'
@@ -377,9 +377,12 @@ const LogAnalysisCellsGraphWrapper = ({
   const handleApply = async () => {
     if (selectedDevice?.hostname) {
       try {
+        const currentInputValue =
+          matchingAliasInputRef.current?.value || selectedDevice.hostname
+
         const data: DeviceMeta = {
           hostname: selectedDevice.hostname,
-          aliasName: matchingAliasSelectedDeviceAliasName,
+          aliasName: currentInputValue,
           deviceType: '',
           ip: '',
           orgId: selectedDevice.orgId,
@@ -439,6 +442,8 @@ const LogAnalysisCellsGraphWrapper = ({
       },
     ]
   }, [annotationTime, matchingAliasSelectedDeviceAliasName, timeZone])
+
+  const matchingAliasInputRef = useRef<HTMLInputElement>(null)
 
   return (
     <>
@@ -506,6 +511,7 @@ const LogAnalysisCellsGraphWrapper = ({
                   ? ComponentStatus.Loading
                   : ComponentStatus.Default
               }
+              matchingAliasInputRef={matchingAliasInputRef}
             />
 
             <div className="hostname-info">
@@ -565,6 +571,7 @@ const LogAnalysisCellsGraphWrapper = ({
                     ? ComponentStatus.Loading
                     : ComponentStatus.Default
                 }
+                matchingAliasInputRef={matchingAliasInputRef}
               />
               <div className="hostname-info">
                 {`Hostname: ${selectedDevice.hostname}`}

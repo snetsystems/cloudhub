@@ -4,6 +4,7 @@ import React, {
   MouseEvent,
   ChangeEvent,
   KeyboardEvent,
+  RefObject,
 } from 'react'
 import _ from 'lodash'
 import classnames from 'classnames'
@@ -13,8 +14,8 @@ import OnClickOutside from 'src/shared/components/OnClickOutside'
 import DropdownMenu, {
   DropdownMenuEmpty,
 } from 'src/shared/components/DropdownMenu'
-import DropdownInput from 'src/shared/components/DropdownInput'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
+import DropdownInputWithRef from 'src/shared/components/DropdownInputWithRef'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -53,6 +54,7 @@ interface Props {
   status?: ComponentStatus
   placeholder?: string
   serverStoredAliasName?: string
+  inputRef?: RefObject<HTMLInputElement>
 }
 
 interface State {
@@ -220,6 +222,10 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     const {searchTerm} = this.state
     const {serverStoredAliasName} = this.props
 
+    if (!searchTerm || searchTerm.trim() === '') {
+      return 'Please enter an alias'
+    }
+
     if (serverStoredAliasName === searchTerm) {
       return serverStoredAliasName
     }
@@ -244,6 +250,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       useAutoComplete,
       status,
       placeholder,
+      inputRef,
     } = this.props
 
     const {searchTerm, filteredItems, highlightedItemIndex} = this.state
@@ -266,7 +273,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
           </div>
         ) : null}
 
-        <DropdownInput
+        <DropdownInputWithRef
           searchTerm={searchTerm}
           buttonSize={buttonSize}
           buttonColor={buttonColor}
@@ -276,6 +283,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
           onFilterKeyPress={this.handleFilterKeyPress}
           placeholder={placeholder}
           value={searchTerm}
+          ref={inputRef}
         />
 
         {isOpen && menuItems.length ? (
