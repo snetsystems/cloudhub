@@ -46,6 +46,7 @@ interface Props {
   onClose: () => void
   status?: ComponentStatus
   placeholder?: string
+  serverStoredAliasName?: string
 }
 
 interface State {
@@ -194,6 +195,16 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     })
   }
 
+  public getEmptyMessage = () => {
+    const {searchTerm} = this.state
+    const {serverStoredAliasName} = this.props
+
+    if (serverStoredAliasName === searchTerm) {
+      return serverStoredAliasName
+    }
+    return `New alias : ${searchTerm}`
+  }
+
   public render() {
     const {
       isOpen,
@@ -265,7 +276,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
           <DropdownMenuEmpty
             useAutoComplete={useAutoComplete}
             menuClass={menuClass}
-            emptyMessage={''}
+            emptyMessage={this.getEmptyMessage()}
           />
         )}
       </div>

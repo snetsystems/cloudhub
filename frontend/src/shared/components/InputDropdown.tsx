@@ -196,6 +196,22 @@ export class InputDropdown extends PureComponent<Props, State> {
     })
   }
 
+  public getEmptyMessage = () => {
+    const {searchTerm} = this.state
+    const {selected} = this.props
+
+    if (selected === searchTerm) {
+      return selected
+    }
+    return `New alias : ${searchTerm}`
+  }
+
+  public handleEmptySelection = (e: MouseEvent<HTMLLIElement>) => {
+    e.stopPropagation()
+
+    this.props.onClose(this.state.searchTerm)
+  }
+
   public render() {
     const {
       isOpen,
@@ -269,6 +285,8 @@ export class InputDropdown extends PureComponent<Props, State> {
           <DropdownMenuEmpty
             useAutoComplete={useAutoComplete}
             menuClass={menuClass}
+            emptyMessage={this.getEmptyMessage()}
+            onClick={this.handleEmptySelection}
           />
         )}
       </div>

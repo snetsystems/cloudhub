@@ -499,6 +499,7 @@ const LogAnalysisCellsGraphWrapper = ({
                 handleMatchingAliasInputDropdownChange
               }
               selectedDeviceHostname={selectedDevice?.hostname}
+              serverStoredAliasName={selectedDevice?.aliasName}
               appDropdownStatus={
                 isAllLayoutsLoading
                   ? ComponentStatus.Loading
@@ -557,6 +558,7 @@ const LogAnalysisCellsGraphWrapper = ({
                   handleMatchingAliasInputDropdownChange
                 }
                 selectedDeviceHostname={selectedDevice?.hostname}
+                serverStoredAliasName={selectedDevice?.aliasName}
                 appDropdownStatus={
                   isAllLayoutsLoading
                     ? ComponentStatus.Loading
