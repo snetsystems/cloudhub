@@ -71,6 +71,14 @@ const logAnalysisDashboard = (
         ),
       }
     }
+    case ActionType.clearLogAnalysisMatchPhraseFilterClauses: {
+      return {
+        ...state,
+        filteredLogsForLogAnalysis: state.filteredLogsForLogAnalysis.filter(
+          c => !('match_phrase' in c)
+        ),
+      }
+    }
     case ActionType.addLogAnalysisRangeFilterClause: {
       const {clause} = (action as any).payload as {clause: RangeFilterClause}
       const field = Object.keys(clause.range)[0]
@@ -97,6 +105,14 @@ const logAnalysisDashboard = (
               'range' in c &&
               Object.keys((c as RangeFilterClause).range)[0] === field
             )
+        ),
+      }
+    }
+    case ActionType.clearLogAnalysisRangeFilterClauses: {
+      return {
+        ...state,
+        filteredLogsForLogAnalysis: state.filteredLogsForLogAnalysis.filter(
+          c => !('range' in c)
         ),
       }
     }

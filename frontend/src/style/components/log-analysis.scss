@@ -256,15 +256,11 @@ button[data-test-subj='pagination-button-next'][disabled] {
   align-self: center;
   padding-top: 5px;
   height: auto;
-
+  padding-left: 20px;
   .logs-viewer--filter {
     height: auto;
     min-height: 28px;
     max-width: none;
-  }
-
-  .logs-viewer--filter:hover {
-    cursor: default;
   }
 
   .logs-viewer--filter > span {
@@ -273,6 +269,7 @@ button[data-test-subj='pagination-button-next'][disabled] {
     white-space: inherit;
     text-overflow: inherit;
     max-width: none;
+    padding:4px 0px
   }
 }
 

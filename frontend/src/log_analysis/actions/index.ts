@@ -13,8 +13,10 @@ export enum ActionType {
   setLogAnalysisManualRefresh = 'SET_LOG_ANALYSIS_MANUAL_REFRESH',
   addLogAnalysisMatchPhraseFilterClause = 'ADD_LOG_ANALYSIS_MATCH_PHRASE_FILTER_CLAUSE',
   removeLogAnalysisMatchPhraseFilterClause = 'REMOVE_LOG_ANALYSIS_MATCH_PHRASE_FILTER_CLAUSE',
+  clearLogAnalysisMatchPhraseFilterClauses = 'CLEAR_LOG_ANALYSIS_MATCH_PHRASE_FILTER_CLAUSES',
   addLogAnalysisRangeFilterClause = 'ADD_LOG_ANALYSIS_RANGE_FILTER_CLAUSE',
   removeLogAnalysisRangeFilterClause = 'REMOVE_LOG_ANALYSIS_RANGE_FILTER_CLAUSE',
+  clearLogAnalysisRangeFilterClauses = 'CLEAR_LOG_ANALYSIS_RANGE_FILTER_CLAUSES',
   addLogAnalysisKQLFilterClause = 'ADD_LOG_ANALYSIS_KQL_FILTER_CLAUSE',
   removeLogAnalysisKQLFilterClause = 'REMOVE_LOG_ANALYSIS_KQL_FILTER_CLAUSE',
 }
@@ -25,8 +27,10 @@ export type LogAnalysisAction =
   | LogAnalysisManualRefreshAction
   | AddLogAnalysisMatchPhraseFilterClauseAction
   | RemoveLogAnalysisMatchPhraseFilterClauseAction
+  | ClearLogAnalysisMatchPhraseFilterClausesAction
   | AddLogAnalysisRangeFilterClauseAction
   | RemoveLogAnalysisRangeFilterClauseAction
+  | ClearLogAnalysisRangeFilterClausesAction
   | AddLogAnalysisKQLFilterClauseAction
   | RemoveLogAnalysisKQLFilterClauseAction
 
@@ -90,6 +94,14 @@ export const removeLogAnalysisMatchPhraseFilterClause = (
   payload: {key, value},
 })
 
+interface ClearLogAnalysisMatchPhraseFilterClausesAction {
+  type: ActionType.clearLogAnalysisMatchPhraseFilterClauses
+}
+
+export const clearLogAnalysisMatchPhraseFilterClauses = (): ClearLogAnalysisMatchPhraseFilterClausesAction => ({
+  type: ActionType.clearLogAnalysisMatchPhraseFilterClauses,
+})
+
 interface AddLogAnalysisRangeFilterClauseAction {
   type: ActionType.addLogAnalysisRangeFilterClause
   payload: {clause: RangeFilterClause}
@@ -125,6 +137,14 @@ export const removeLogAnalysisRangeFilterClause = (
 ): RemoveLogAnalysisRangeFilterClauseAction => ({
   type: ActionType.removeLogAnalysisRangeFilterClause,
   payload: {field},
+})
+
+interface ClearLogAnalysisRangeFilterClausesAction {
+  type: ActionType.clearLogAnalysisRangeFilterClauses
+}
+
+export const clearLogAnalysisRangeFilterClauses = (): ClearLogAnalysisRangeFilterClausesAction => ({
+  type: ActionType.clearLogAnalysisRangeFilterClauses,
 })
 
 interface AddLogAnalysisKQLFilterClauseAction {

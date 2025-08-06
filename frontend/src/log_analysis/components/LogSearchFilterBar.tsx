@@ -31,6 +31,8 @@ import {bindActionCreators} from 'redux'
 import {
   addLogAnalysisKQLFilterClause,
   removeLogAnalysisKQLFilterClause,
+  clearLogAnalysisMatchPhraseFilterClauses,
+  clearLogAnalysisRangeFilterClauses,
 } from 'src/log_analysis/actions'
 import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
 
@@ -55,6 +57,8 @@ interface StateProps {
 interface DispatchProps {
   addKql: (kql, dsl) => void
   removeKql: () => void
+  clearMatchPhraseFilters: () => void
+  clearRangeFilters: () => void
 }
 
 type Props = StateProps & DispatchProps
@@ -64,6 +68,8 @@ function LogSearchFilterBar({
   cloudTimeRange,
   addKql,
   removeKql,
+  clearMatchPhraseFilters,
+  clearRangeFilters,
   filteredLogsForLogAnalysis,
 }: Props) {
   const [fields, setFields] = useState<FieldInfo[]>([])
@@ -81,6 +87,17 @@ function LogSearchFilterBar({
 
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownMouseDown = useRef(false)
+
+  // match_phrase나 range 필터가 있는지 확인
+  const hasMatchPhraseOrRangeFilters = useMemo(() => {
+    if (!filteredLogsForLogAnalysis || filteredLogsForLogAnalysis.length === 0) {
+      return false
+    }
+    
+    return filteredLogsForLogAnalysis.some(filter => 
+      'match_phrase' in filter || 'range' in filter
+    )
+  }, [filteredLogsForLogAnalysis])
 
   useEffect(() => {
     setDropdownItems([
@@ -313,6 +330,12 @@ function LogSearchFilterBar({
     setDropdownOpen(false)
   }
 
+  const filterClear = () => {
+    if (!esSource) return
+    clearMatchPhraseFilters()
+    clearRangeFilters()
+  }
+
   return (
     <div className="kql-filter-bar">
       <div className="kql-input-wrap">
@@ -347,6 +370,15 @@ function LogSearchFilterBar({
           onClick={submitFilter}
           text="Search"
         />
+        {hasMatchPhraseOrRangeFilters && (
+          <Button
+            customClass="kql-input-submit"
+            size={ComponentSize.Small}
+            color={ComponentColor.Danger}
+            onClick={filterClear}
+            text="Filter Clear"
+          />
+        )}
       </div>
 
       {dropdownOpen && dropdownItems.length > 0 && (
@@ -423,6 +455,8 @@ const mdtp = dispatch =>
     {
       addKql: addLogAnalysisKQLFilterClause,
       removeKql: removeLogAnalysisKQLFilterClause,
+      clearMatchPhraseFilters: clearLogAnalysisMatchPhraseFilterClauses,
+      clearRangeFilters: clearLogAnalysisRangeFilterClauses,
     },
     dispatch
   )
