@@ -34,35 +34,37 @@ function LogsFilterContainer({
   removeLogAnalysisRangeFilterClause,
 }: Props) {
   return (
-    <div className="logs-analysis-filter-container">
-      {filteredLogsForLogAnalysis.reduce<JSX.Element[]>(
-        (acc, clause, origIdx) => {
-          if (!('kql' in clause)) {
-            acc.push(
-              <LogsFilterViewer
-                key={origIdx}
-                filter={{id: origIdx.toString(), ...clause}}
-                timeZone={timeZone}
-                onDelete={id => {
-                  const target = filteredLogsForLogAnalysis[Number(id)]
-                  if ('match_phrase' in target) {
-                    const k = Object.keys(target.match_phrase)[0]
-                    removeLogAnalysisMatchPhraseFilterClause?.(
-                      k,
-                      target.match_phrase[k]
-                    )
-                  } else if ('range' in target) {
-                    const f = Object.keys(target.range)[0]
-                    removeLogAnalysisRangeFilterClause?.(f)
-                  }
-                }}
-              />
-            )
-          }
-          return acc
-        },
-        []
-      )}
+    <div style={{width: '100%', height: 'calc(100%)', overflow: 'auto'}}>
+      <div className="logs-analysis-filter-container">
+        {filteredLogsForLogAnalysis.reduce<JSX.Element[]>(
+          (acc, clause, origIdx) => {
+            if (!('kql' in clause)) {
+              acc.push(
+                <LogsFilterViewer
+                  key={origIdx}
+                  filter={{id: origIdx.toString(), ...clause}}
+                  timeZone={timeZone}
+                  onDelete={id => {
+                    const target = filteredLogsForLogAnalysis[Number(id)]
+                    if ('match_phrase' in target) {
+                      const k = Object.keys(target.match_phrase)[0]
+                      removeLogAnalysisMatchPhraseFilterClause?.(
+                        k,
+                        target.match_phrase[k]
+                      )
+                    } else if ('range' in target) {
+                      const f = Object.keys(target.range)[0]
+                      removeLogAnalysisRangeFilterClause?.(f)
+                    }
+                  }}
+                />
+              )
+            }
+            return acc
+          },
+          []
+        )}
+      </div>
     </div>
   )
 }

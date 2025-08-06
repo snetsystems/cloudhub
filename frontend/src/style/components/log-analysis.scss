@@ -11,6 +11,9 @@ $highlight: #25262e;
       line-height: 30px;
     }
   }
+  .threesizer--division {
+    overflow: visible;
+  }
 }
 
 .syslog-table--container {
@@ -248,7 +251,7 @@ button[data-test-subj='pagination-button-next'][disabled] {
   width: 95%;
   align-self: center;
   padding-top: 5px;
-  height: 60px;
+  height: auto;
 
   .logs-viewer--filter {
     height: auto;

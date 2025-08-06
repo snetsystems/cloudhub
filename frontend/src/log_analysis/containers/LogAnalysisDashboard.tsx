@@ -1,5 +1,5 @@
 // Library
-import React, {useEffect, useMemo, useCallback} from 'react'
+import React, {useEffect, useMemo, useCallback, useState} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import _ from 'lodash'
 import {connect} from 'react-redux'
@@ -27,7 +27,11 @@ import {
 } from 'src/types'
 
 // Constants
-import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
+import {
+  DASHBOARD_LAYOUT_ROW_HEIGHT,
+  HANDLE_HORIZONTAL,
+  LAYOUT_MARGIN,
+} from 'src/shared/constants'
 import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
 import {FIXTURE_LOG_ANALYSIS_CELLS} from 'src/log_analysis/constants/fixture'
 import ToggleViewWrap from '../components/ToggleViewWrap'
@@ -47,6 +51,7 @@ import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {setStateInitAction} from 'src/device_management/actions'
 import LogAnalysisAlertBarWarpper from '../components/LogAnalysisAlertBarWrapper'
 import LogSearchFilterBar from '../components/LogSearchFilterBar'
+import Threesizer from 'src/shared/components/threesizer/Threesizer'
 
 interface TempProps {
   cell: Cell
@@ -86,6 +91,8 @@ function LogAnalysisDashboard({
   closePanel,
   resetSelectedDevice,
 }: Props) {
+  const [horizontalProportions, setHorizontalProportions] = useState([0.1, 0.9])
+
   const GridLayout = WidthProvider(ReactGridLayout)
 
   useEffect(() => {
@@ -248,6 +255,97 @@ function LogAnalysisDashboard({
     )
   }
 
+  const horizontalDivisions = useCallback(() => {
+    const [topSize, bottomSize] = horizontalProportions
+    return [
+      {
+        name: '',
+        handleDisplay: 'none',
+        headerButtons: [],
+        menuOptions: [],
+        render: () => <LogsFilterContainer />,
+        headerOrientation: HANDLE_HORIZONTAL,
+        size: topSize,
+      },
+      {
+        name: '',
+        handleDisplay: 'default',
+        handlePixels: 8,
+        headerButtons: [],
+        menuOptions: [],
+        render: useMemo(
+          () => () => (
+            <SidePanelSlice>
+              <Page.Contents
+                fullWidth={true}
+                inPresentationMode={inPresentationMode}
+              >
+                <div className="dashboard container-fluid full-width">
+                  {!!cells && cells.length > 0 && (
+                    <Authorized
+                      requiredRole={VIEWER_ROLE}
+                      propsOverride={{
+                        isDraggable: false,
+                        isResizable: false,
+                        draggableHandle: null,
+                      }}
+                    >
+                      <GridLayout
+                        className="layout"
+                        layout={cells}
+                        cols={96}
+                        rowHeight={DASHBOARD_LAYOUT_ROW_HEIGHT}
+                        margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
+                        containerPadding={[0, 0]}
+                        draggableHandle={'.log-analysis-dash-graph--draggable'}
+                        onLayoutChange={handleLayoutChange}
+                        useCSSTransforms={false}
+                        isDraggable={true}
+                        isResizable={true}
+                        onResizeStop={(
+                          _,
+                          __,
+                          ___,
+                          ____,
+                          _____,
+                          resizeHandle
+                        ) => {
+                          const parentElement = resizeHandle?.parentElement
+                          console.log('parentElement', parentElement)
+                          if (parentElement?.classList.contains('resizing')) {
+                            parentElement.classList.remove('resizing')
+                          }
+                        }}
+                      >
+                        {cells?.map(cell => {
+                          return (
+                            <div key={cell.i}>
+                              {layoutRender({
+                                cell: cell,
+                                source: source,
+                              })}
+                            </div>
+                          )
+                        })}
+                      </GridLayout>
+                    </Authorized>
+                  )}
+                </div>
+              </Page.Contents>
+            </SidePanelSlice>
+          ),
+          [cells, inPresentationMode, source]
+        ),
+        headerOrientation: HANDLE_HORIZONTAL,
+        size: bottomSize,
+      },
+    ]
+  }, [horizontalProportions])
+
+  const horizontalHandleResize = (horizontalProportions: number[]): void => {
+    setHorizontalProportions(horizontalProportions)
+  }
+
   return (
     <>
       <Page className="log-analysis-page">
@@ -259,58 +357,11 @@ function LogAnalysisDashboard({
           <Page.Header.Right>{renderHeaderRight()}</Page.Header.Right>
         </Page.Header>
         <LogSearchFilterBar />
-        <LogsFilterContainer />
-        <SidePanelSlice>
-          <Page.Contents
-            fullWidth={true}
-            inPresentationMode={inPresentationMode}
-          >
-            <div className="dashboard container-fluid full-width">
-              {!!cells && cells.length > 0 && (
-                <Authorized
-                  requiredRole={VIEWER_ROLE}
-                  propsOverride={{
-                    isDraggable: false,
-                    isResizable: false,
-                    draggableHandle: null,
-                  }}
-                >
-                  <GridLayout
-                    className="layout"
-                    layout={cells}
-                    cols={96}
-                    rowHeight={DASHBOARD_LAYOUT_ROW_HEIGHT}
-                    margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
-                    containerPadding={[0, 0]}
-                    draggableHandle={'.log-analysis-dash-graph--draggable'}
-                    onLayoutChange={handleLayoutChange}
-                    useCSSTransforms={false}
-                    isDraggable={true}
-                    isResizable={true}
-                    onResizeStop={(_, __, ___, ____, _____, resizeHandle) => {
-                      const parentElement = resizeHandle?.parentElement
-
-                      if (parentElement?.classList.contains('resizing')) {
-                        parentElement.classList.remove('resizing')
-                      }
-                    }}
-                  >
-                    {cells?.map(cell => {
-                      return (
-                        <div key={cell.i}>
-                          {layoutRender({
-                            cell: cell,
-                            source: source,
-                          })}
-                        </div>
-                      )
-                    })}
-                  </GridLayout>
-                </Authorized>
-              )}
-            </div>
-          </Page.Contents>
-        </SidePanelSlice>
+        <Threesizer
+          orientation={HANDLE_HORIZONTAL}
+          divisions={horizontalDivisions()}
+          onResize={horizontalHandleResize}
+        />
       </Page>
     </>
   )

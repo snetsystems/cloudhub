@@ -1,9 +1,11 @@
-import React, {useCallback, useEffect, useState} from 'react'
+import React, {ReactElement, useCallback, useEffect, useState} from 'react'
 import {WindowResizeEventTrigger} from '../utils/trigger'
 import _ from 'lodash'
 import {connect} from 'react-redux'
 import {closePanel} from '../actions/sidePanel'
 import {bindActionCreators} from 'redux'
+import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from '../constants'
+import Threesizer from './threesizer/Threesizer'
 
 interface Props {
   children: React.ReactNode
@@ -16,9 +18,10 @@ interface Props {
 function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
   const [shouldRender, setShouldRender] = useState(isOpen)
   const [isRender, setIsRender] = useState(isOpen)
+  const [horizontalProportions, setHorizontalProportions] = useState([1, 0])
 
   const ANIMATION_DURATION = 320
-  const LOADING_DURATION = 50
+  const LOADING_DURATION = 100
 
   useEffect(() => {
     if (isOpen) {
@@ -45,17 +48,79 @@ function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
   )
 
   useEffect(() => {
+    if (isOpen) {
+      setHorizontalProportions([0.65, 0.35])
+    } else {
+      setHorizontalProportions([1, 0])
+    }
+  }, [isOpen])
+
+  useEffect(() => {
     debouncedFit()
   }, [isOpen, debouncedFit])
 
+  const horizontalHandleResize = (horizontalProportions: number[]): void => {
+    setHorizontalProportions(horizontalProportions)
+  }
+
+  const horizontalDivisions = useCallback(() => {
+    const [leftSize, rightSize] = horizontalProportions
+    return [
+      {
+        name: '',
+        handleDisplay: 'none',
+        headerButtons: [],
+        menuOptions: [],
+        style: {
+          minWidth: '500px',
+        },
+        render: () => children as ReactElement<any>,
+        headerOrientation: HANDLE_HORIZONTAL,
+        size: leftSize,
+      },
+      {
+        name: '',
+        handlePixels: 8,
+        handleDisplay: 'default',
+        headerButtons: [],
+        menuOptions: [],
+        render: () => {
+          return shouldRender
+            ? isRender && isOpen
+              ? (panelProps as ReactElement<any>)
+              : null
+            : null
+        },
+        headerOrientation: HANDLE_HORIZONTAL,
+        size: rightSize,
+      },
+    ]
+  }, [
+    horizontalProportions,
+    children,
+    panelProps,
+    isOpen,
+    isRender,
+    shouldRender,
+  ])
+
+  // return (
+  //   <div className={`modal-wrapper ${isOpen ? 'open' : ''}`}>
+  //     {children}
+  //     {shouldRender ? (
+  //       <div className={`modal-content ${isOpen && isRender ? 'open' : ''}`}>
+  //         {panelProps}
+  //       </div>
+  //     ) : null}
+  //   </div>
+  // )
   return (
-    <div className={`modal-wrapper ${isOpen ? 'open' : ''}`}>
-      {children}
-      {shouldRender ? (
-        <div className={`modal-content ${isOpen && isRender ? 'open' : ''}`}>
-          {panelProps}
-        </div>
-      ) : null}
+    <div style={{width: '100%', height: '100%'}}>
+      <Threesizer
+        orientation={HANDLE_VERTICAL}
+        divisions={horizontalDivisions()}
+        onResize={horizontalHandleResize}
+      />
     </div>
   )
 }
