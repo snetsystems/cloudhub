@@ -75,7 +75,7 @@ export const HistogramOptions = ({
             right: 0,
             bottom: 0,
           },
-          text: 'Time Stamp',
+          text: 'Time',
         },
 
         barThickness: 1,
@@ -106,7 +106,7 @@ export const HistogramOptions = ({
           },
 
           position: 'left',
-          text: 'Logs Count',
+          text: 'Log Count',
         },
         grid: {
           color: '#383846',

@@ -314,7 +314,7 @@ function LogAnalysisAlertBarWrapper({
   return (
     <div style={{height: '100%', backgroundColor: '#292933'}}>
       <LogAnalysisDashboardHeader
-        cellName={`Anomaly LogAnalysis Counts Histogram`}
+        cellName={`LogAnalysis Count Histogram`}
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
