@@ -29,7 +29,7 @@ import {ProviderTypes} from 'src/admin/constants/providerConf'
 // utils
 import {addOnCsp} from 'src/clouds/utils/getAddOn'
 
-const sections = (me, providers, cspProviders = []) => {
+const sections = (me, providers, cspProviders = [], source) => {
   let sections = [
     {
       url: 'current-organization',
@@ -79,7 +79,7 @@ const sections = (me, providers, cspProviders = []) => {
       url: 'devices-mappings',
       name: 'Devices Mapping',
       enabled: isUserAuthorized(me.role, ADMIN_ROLE),
-      component: <DevicesMappingPage me={me} />,
+      component: <DevicesMappingPage me={me} source={source} />,
     },
   ]
 
@@ -126,7 +126,7 @@ const AdminCloudHubPage = props => {
       <Page.Contents fullWidth={true}>
         <div className="container-fluid">
           <SubSections
-            sections={sections(me, providers, cspProviders)}
+            sections={sections(me, providers, cspProviders, source)}
             activeSection={tab}
             parentUrl="admin-cloudhub"
             sourceID={source.id}

@@ -45,22 +45,22 @@ interface Props {
   me: Me
   esSource: BaseElasticSearchData
   organizations?: Organization[]
-  currentSource?: Source
   notify?: NotificationAction
   links?: any
+  source?: Source
 }
 
 function DevicesMappingPage({
   me,
   esSource,
   organizations,
-  currentSource,
   notify,
   links,
+  source,
 }: Props): JSX.Element {
   const devMode = links.addons.find(addon => addon.name == 'dev')?.url || 'off'
 
-  const allTagValues = useDeviceType(currentSource)
+  const allTagValues = useDeviceType(source)
 
   const [newDevice, setNewDevice] = useState<DeviceMeta[]>([])
 
@@ -210,16 +210,12 @@ const mstp = state => {
     app: {
       persisted: {esSource},
     },
-    sources: {sourceID},
     adminCloudHub: {organizations},
-    logs: {currentSource},
     links,
   } = state
   return {
     esSource,
     organizations,
-    sourceID,
-    currentSource,
     links,
   }
 }
