@@ -11,7 +11,15 @@ import {
   updateActiveHostLink,
 } from 'src/hosts/utils/hostsSwitcherLinks'
 // Types
-import {Template, Layout, Source, Host, Links, DropdownItem} from 'src/types'
+import {
+  Template,
+  Layout,
+  Source,
+  Host,
+  Links,
+  DropdownItem,
+  TimeRange,
+} from 'src/types'
 import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
 import {
   CloudServiceProvider,
@@ -1685,7 +1693,8 @@ export const getHostsInfoWithIpmi = async (
 export const getTagValuesForLayoutWhereTagKeys = async (
   source: Source,
   layouts: Layout[],
-  tempVars: Template[]
+  tempVars: Template[],
+  timeRange?: TimeRange
 ): Promise<DropdownItem[]> => {
   if (!layouts || layouts.length === 0) {
     return []
@@ -1720,10 +1729,21 @@ export const getTagValuesForLayoutWhereTagKeys = async (
 
   layoutQueries.forEach((tagKeys, measurement) => {
     tagKeys.forEach(tagKey => {
-      const query = replaceTemplate(
+      let query = replaceTemplate(
         `SHOW TAG VALUES FROM "${measurement}" WITH KEY="${tagKey}"`,
         tempVars
       )
+
+      if (timeRange && timeRange.lower) {
+        if (timeRange.upper === 'now()') {
+          query += ` WHERE time > '${timeRange.lower}' AND time < ${timeRange.upper}`
+        } else if (timeRange.upper) {
+          query += ` WHERE time > '${timeRange.lower}' AND time < '${timeRange.upper}'`
+        } else {
+          query += ` WHERE time > ${timeRange.lower}`
+        }
+      }
+
       queries.push(query)
     })
   })
@@ -1771,113 +1791,6 @@ export const getTagValuesForLayoutWhereTagKeys = async (
   }
 }
 
-export const getAllTagValuesForDeviceTypes = async (
-  source: Source,
-  tempVars: Template[]
-): Promise<{[deviceType: string]: DropdownItem[]}> => {
-  const queries = [
-    {
-      deviceType: 'baremetal',
-      queries: [
-        replaceTemplate('SHOW TAG VALUES FROM "cpu" WITH KEY="host"', tempVars),
-        replaceTemplate(
-          'SHOW TAG VALUES FROM "vsphere_host_cpu" WITH KEY="esxhostname"',
-          tempVars
-        ),
-      ],
-    },
-    {
-      deviceType: 'vm',
-      queries: [
-        replaceTemplate('SHOW TAG VALUES FROM "cpu" WITH KEY="host"', tempVars),
-        replaceTemplate(
-          'SHOW TAG VALUES FROM "vsphere_vm_cpu" WITH KEY="vmname"',
-          tempVars
-        ),
-        replaceTemplate(
-          'SHOW TAG VALUES FROM "openstack" WITH KEY="server_id"',
-          tempVars
-        ),
-      ],
-    },
-    {
-      deviceType: 'network',
-      queries: [
-        replaceTemplate('SHOW TAG VALUES FROM "cpu" WITH KEY="host"', tempVars),
-        replaceTemplate(
-          'SHOW TAG VALUES FROM "snmp_nx" WITH KEY="agent_host"',
-          tempVars
-        ),
-      ],
-    },
-    {
-      deviceType: 'ipmi',
-      queries: [
-        replaceTemplate(
-          'SHOW TAG VALUES FROM "ipmi_sensor" WITH KEY="hostname"',
-          tempVars
-        ),
-      ],
-    },
-  ]
-
-  const allQueries = queries.flatMap(q => q.queries)
-  const combinedQuery = allQueries.join('; ')
-
-  try {
-    const {data} = await proxy({
-      source: source.links.proxy,
-      query: combinedQuery,
-      db: source.telegraf,
-    })
-
-    const result: {[deviceType: string]: DropdownItem[]} = {}
-
-    queries.forEach(queryInfo => {
-      result[queryInfo.deviceType] = []
-    })
-
-    let queryIndex = 0
-    queries.forEach(queryInfo => {
-      const deviceType = queryInfo.deviceType
-
-      queryInfo.queries.forEach(() => {
-        const resultData = data.results[queryIndex]
-
-        if (resultData && resultData.series && !resultData.error) {
-          const values = getDeep<string[][]>(
-            resultData,
-            'series.[0].values',
-            []
-          )
-
-          const tagValues = values.map(v => ({
-            text: v[1],
-          }))
-
-          const existingTexts = result[deviceType].map(item => item.text)
-          const newTagValues = tagValues.filter(
-            item => !existingTexts.includes(item.text)
-          )
-          result[deviceType] = [...result[deviceType], ...newTagValues]
-        }
-
-        queryIndex++
-      })
-    })
-
-    return result
-  } catch (error) {
-    console.error('Error fetching tag values for all device types:', error)
-
-    return {
-      baremetal: [],
-      vm: [],
-      network: [],
-      ipmi: [],
-    }
-  }
-}
 export const filterLayoutsByExistingMeasurements = async (
   layouts: Layout[],
   source: Source,

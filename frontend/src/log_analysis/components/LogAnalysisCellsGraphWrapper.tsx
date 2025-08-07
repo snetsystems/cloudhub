@@ -248,7 +248,8 @@ const LogAnalysisCellsGraphWrapper = ({
           const tagValues = await getTagValuesForLayoutWhereTagKeys(
             source,
             filteredLayouts,
-            tempVars
+            tempVars,
+            selfTimeRange
           )
           setMatchingAliasDropdownItems(tagValues)
 
