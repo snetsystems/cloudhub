@@ -391,6 +391,19 @@ button[data-test-subj='pagination-button-next'][disabled] {
   width: 100%;
   padding: 0 20px;
   z-index: 7;
+
+  .kql-input-wrap {
+    display: flex;
+    .filter-clear-btn {
+      margin-right: 4px;
+      width: 25px;
+      > span {
+        top: 1px;
+        margin-right: 4px;
+        right: 4px;
+      }
+    }
+  }
 }
 
 .kql-box {
@@ -521,9 +534,7 @@ button[data-test-subj='pagination-button-next'][disabled] {
 .kql-value {
   color: $primary;
 }
-.kql-input-wrap {
-  display: flex;
-}
+
 .kql-input-submit {
   margin-left: 5px;
 }

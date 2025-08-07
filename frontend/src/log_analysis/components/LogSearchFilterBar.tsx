@@ -88,14 +88,16 @@ function LogSearchFilterBar({
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownMouseDown = useRef(false)
 
-  // match_phrase나 range 필터가 있는지 확인
   const hasMatchPhraseOrRangeFilters = useMemo(() => {
-    if (!filteredLogsForLogAnalysis || filteredLogsForLogAnalysis.length === 0) {
+    if (
+      !filteredLogsForLogAnalysis ||
+      filteredLogsForLogAnalysis.length === 0
+    ) {
       return false
     }
-    
-    return filteredLogsForLogAnalysis.some(filter => 
-      'match_phrase' in filter || 'range' in filter
+
+    return filteredLogsForLogAnalysis.some(
+      filter => 'match_phrase' in filter || 'range' in filter
     )
   }, [filteredLogsForLogAnalysis])
 
@@ -334,11 +336,22 @@ function LogSearchFilterBar({
     if (!esSource) return
     clearMatchPhraseFilters()
     clearRangeFilters()
+    setInputValue('')
+    removeKql()
   }
 
   return (
     <div className="kql-filter-bar">
       <div className="kql-input-wrap">
+        <button
+          onClick={filterClear}
+          className="filter-clear-btn btn button btn-sm btn-default"
+          disabled={!hasMatchPhraseOrRangeFilters && inputValue.trim() === ''}
+          title="Reset Filter"
+        >
+          <span className="icon trash" />
+        </button>
+
         <div className="kql-box">
           <OuiIcon type="search" className="kql-icon-search" />
 
@@ -370,15 +383,6 @@ function LogSearchFilterBar({
           onClick={submitFilter}
           text="Search"
         />
-        {hasMatchPhraseOrRangeFilters && (
-          <Button
-            customClass="kql-input-submit"
-            size={ComponentSize.Small}
-            color={ComponentColor.Danger}
-            onClick={filterClear}
-            text="Filter Clear"
-          />
-        )}
       </div>
 
       {dropdownOpen && dropdownItems.length > 0 && (
