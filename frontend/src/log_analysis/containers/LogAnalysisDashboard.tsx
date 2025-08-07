@@ -107,9 +107,10 @@ function LogAnalysisDashboard({
     }
   }, [])
 
-  const savedCells: DashboardsModels.Cell[] = JSON.parse(
-    localStorage.getItem('Log-Analysis-cells')
-  )
+  const savedCells = useMemo(() => {
+    const saved = localStorage.getItem('Log-Analysis-cells')
+    return saved ? JSON.parse(saved) : null
+  }, [])
 
   const cells = useMemo(() => {
     const defaultCells = FIXTURE_LOG_ANALYSIS_CELLS(source)
@@ -177,52 +178,55 @@ function LogAnalysisDashboard({
     })
   }
 
-  const layoutRender = ({cell}: TempProps) => {
-    if (!cell) return null
-    switch (cell.i) {
-      case 'log-analysis-syslog-table': {
-        return (
-          <Authorized
-            requiredRole={VIEWER_ROLE}
-            propsOverride={{
-              isEditable: false,
-            }}
-          >
-            <LogAnalysisSyslogTableWrapper
-              timeZone={timeZone}
-              source={source}
-            />
-          </Authorized>
-        )
+  const layoutRender = useCallback(
+    ({cell}: TempProps) => {
+      if (!cell) return null
+      switch (cell.i) {
+        case 'log-analysis-syslog-table': {
+          return (
+            <Authorized
+              requiredRole={VIEWER_ROLE}
+              propsOverride={{
+                isEditable: false,
+              }}
+            >
+              <LogAnalysisSyslogTableWrapper
+                timeZone={timeZone}
+                source={source}
+              />
+            </Authorized>
+          )
+        }
+        case 'log-analysis-treemap': {
+          return (
+            <Authorized
+              requiredRole={VIEWER_ROLE}
+              propsOverride={{
+                isEditable: false,
+              }}
+            >
+              <ToggleViewWrap />
+            </Authorized>
+          )
+        }
+        case 'alerts-bar-graph': {
+          return (
+            <Authorized
+              requiredRole={VIEWER_ROLE}
+              propsOverride={{
+                isEditable: false,
+              }}
+            >
+              <LogAnalysisAlertBarWarpper cell={cell} />
+            </Authorized>
+          )
+        }
+        default:
+          return null
       }
-      case 'log-analysis-treemap': {
-        return (
-          <Authorized
-            requiredRole={VIEWER_ROLE}
-            propsOverride={{
-              isEditable: false,
-            }}
-          >
-            <ToggleViewWrap />
-          </Authorized>
-        )
-      }
-      case 'alerts-bar-graph': {
-        return (
-          <Authorized
-            requiredRole={VIEWER_ROLE}
-            propsOverride={{
-              isEditable: false,
-            }}
-          >
-            <LogAnalysisAlertBarWarpper cell={cell} />
-          </Authorized>
-        )
-      }
-      default:
-        return null
-    }
-  }
+    },
+    [timeZone, source]
+  )
 
   const renderHeaderCenter = () => {
     return <div> </div>
@@ -255,92 +259,87 @@ function LogAnalysisDashboard({
     )
   }
 
-  const horizontalDivisions = useCallback(() => {
+  const renderTopSection = useCallback(() => {
+    return <LogsFilterContainer />
+  }, [])
+
+  const renderBottomSection = useCallback(() => {
+    return (
+      <SidePanelSlice>
+        <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
+          <div className="dashboard container-fluid full-width">
+            {!!cells && cells.length > 0 && (
+              <Authorized
+                requiredRole={VIEWER_ROLE}
+                propsOverride={{
+                  isDraggable: false,
+                  isResizable: false,
+                  draggableHandle: null,
+                }}
+              >
+                <GridLayout
+                  className="layout"
+                  layout={cells}
+                  cols={96}
+                  rowHeight={DASHBOARD_LAYOUT_ROW_HEIGHT}
+                  margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
+                  containerPadding={[0, 0]}
+                  draggableHandle={'.log-analysis-dash-graph--draggable'}
+                  onLayoutChange={handleLayoutChange}
+                  useCSSTransforms={false}
+                  isDraggable={true}
+                  isResizable={true}
+                  onResizeStop={(_, __, ___, ____, _____, resizeHandle) => {
+                    const parentElement = resizeHandle?.parentElement
+                    console.log('parentElement', parentElement)
+                    if (parentElement?.classList.contains('resizing')) {
+                      parentElement.classList.remove('resizing')
+                    }
+                  }}
+                >
+                  {cells?.map(cell => {
+                    return (
+                      <div key={cell.i}>
+                        {layoutRender({
+                          cell: cell,
+                          source: source,
+                        })}
+                      </div>
+                    )
+                  })}
+                </GridLayout>
+              </Authorized>
+            )}
+          </div>
+        </Page.Contents>
+      </SidePanelSlice>
+    )
+  }, [cells, inPresentationMode])
+
+  const horizontalDivisions = useMemo(() => {
     const [topSize, bottomSize] = horizontalProportions
     return [
       {
-        name: '',
+        name: 'top',
         handleDisplay: 'none',
         headerButtons: [],
         menuOptions: [],
-        render: () => <LogsFilterContainer />,
+        render: renderTopSection,
         headerOrientation: HANDLE_HORIZONTAL,
         size: topSize,
       },
       {
-        name: '',
+        name: 'bottom',
         handleDisplay: 'default',
         handlePixels: 8,
         headerButtons: [],
         menuOptions: [],
-        render: useMemo(
-          () => () => (
-            <SidePanelSlice>
-              <Page.Contents
-                fullWidth={true}
-                inPresentationMode={inPresentationMode}
-              >
-                <div className="dashboard container-fluid full-width">
-                  {!!cells && cells.length > 0 && (
-                    <Authorized
-                      requiredRole={VIEWER_ROLE}
-                      propsOverride={{
-                        isDraggable: false,
-                        isResizable: false,
-                        draggableHandle: null,
-                      }}
-                    >
-                      <GridLayout
-                        className="layout"
-                        layout={cells}
-                        cols={96}
-                        rowHeight={DASHBOARD_LAYOUT_ROW_HEIGHT}
-                        margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
-                        containerPadding={[0, 0]}
-                        draggableHandle={'.log-analysis-dash-graph--draggable'}
-                        onLayoutChange={handleLayoutChange}
-                        useCSSTransforms={false}
-                        isDraggable={true}
-                        isResizable={true}
-                        onResizeStop={(
-                          _,
-                          __,
-                          ___,
-                          ____,
-                          _____,
-                          resizeHandle
-                        ) => {
-                          const parentElement = resizeHandle?.parentElement
-                          console.log('parentElement', parentElement)
-                          if (parentElement?.classList.contains('resizing')) {
-                            parentElement.classList.remove('resizing')
-                          }
-                        }}
-                      >
-                        {cells?.map(cell => {
-                          return (
-                            <div key={cell.i}>
-                              {layoutRender({
-                                cell: cell,
-                                source: source,
-                              })}
-                            </div>
-                          )
-                        })}
-                      </GridLayout>
-                    </Authorized>
-                  )}
-                </div>
-              </Page.Contents>
-            </SidePanelSlice>
-          ),
-          [cells, inPresentationMode, source]
-        ),
+        render: renderBottomSection,
         headerOrientation: HANDLE_HORIZONTAL,
         size: bottomSize,
       },
     ]
-  }, [horizontalProportions])
+  }, [horizontalProportions, renderTopSection, renderBottomSection])
 
   const horizontalHandleResize = (horizontalProportions: number[]): void => {
     setHorizontalProportions(horizontalProportions)
@@ -359,7 +358,7 @@ function LogAnalysisDashboard({
         <LogSearchFilterBar />
         <Threesizer
           orientation={HANDLE_HORIZONTAL}
-          divisions={horizontalDivisions()}
+          divisions={horizontalDivisions}
           onResize={horizontalHandleResize}
         />
       </Page>

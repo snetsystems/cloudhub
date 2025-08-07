@@ -1,10 +1,16 @@
-import React, {ReactElement, useCallback, useEffect, useState} from 'react'
-import {WindowResizeEventTrigger} from '../utils/trigger'
+import React, {
+  ReactElement,
+  useCallback,
+  useEffect,
+  useState,
+  useMemo,
+} from 'react'
+import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import _ from 'lodash'
 import {connect} from 'react-redux'
-import {closePanel} from '../actions/sidePanel'
+import {closePanel} from 'src/shared/actions/sidePanel'
 import {bindActionCreators} from 'redux'
-import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from '../constants'
+import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
 import Threesizer from './threesizer/Threesizer'
 
 interface Props {
@@ -15,7 +21,7 @@ interface Props {
   closePanel?: () => void
 }
 
-function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
+function SidePanelSlice({children, isOpen, panelProps}: Props) {
   const [shouldRender, setShouldRender] = useState(isOpen)
   const [isRender, setIsRender] = useState(isOpen)
   const [horizontalProportions, setHorizontalProportions] = useState([1, 0])
@@ -26,13 +32,11 @@ function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true)
-      //delay for ready to render 0.05s
       const timer = setTimeout(() => {
         setIsRender(true)
       }, LOADING_DURATION)
       return () => clearTimeout(timer)
     } else {
-      //delay for unmount 0.3s(animation duration)
       const timer = setTimeout(() => {
         setIsRender(false)
         setShouldRender(false)
@@ -41,7 +45,6 @@ function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
     }
   }, [isOpen])
 
-  // the extra 20 ms buffer ensures this runs after the animation completes(300ms).
   const debouncedFit = useCallback(
     _.debounce(WindowResizeEventTrigger, ANIMATION_DURATION),
     []
@@ -63,7 +66,19 @@ function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
     setHorizontalProportions(horizontalProportions)
   }
 
-  const horizontalDivisions = useCallback(() => {
+  const renderLeftSection = useCallback(() => {
+    return children as ReactElement<any>
+  }, [children])
+
+  const renderRightSection = useCallback(() => {
+    return shouldRender
+      ? isRender && isOpen
+        ? (panelProps as ReactElement<any>)
+        : null
+      : null
+  }, [shouldRender, isRender, isOpen, panelProps])
+
+  const horizontalDivisions = useMemo(() => {
     const [leftSize, rightSize] = horizontalProportions
     return [
       {
@@ -74,7 +89,7 @@ function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
         style: {
           minWidth: '500px',
         },
-        render: () => children as ReactElement<any>,
+        render: renderLeftSection,
         headerOrientation: HANDLE_HORIZONTAL,
         size: leftSize,
       },
@@ -84,41 +99,18 @@ function SidePanelSlice({children, isOpen, panelProps, width}: Props) {
         handleDisplay: 'default',
         headerButtons: [],
         menuOptions: [],
-        render: () => {
-          return shouldRender
-            ? isRender && isOpen
-              ? (panelProps as ReactElement<any>)
-              : null
-            : null
-        },
+        render: renderRightSection,
         headerOrientation: HANDLE_HORIZONTAL,
         size: rightSize,
       },
     ]
-  }, [
-    horizontalProportions,
-    children,
-    panelProps,
-    isOpen,
-    isRender,
-    shouldRender,
-  ])
+  }, [horizontalProportions, renderLeftSection, renderRightSection])
 
-  // return (
-  //   <div className={`modal-wrapper ${isOpen ? 'open' : ''}`}>
-  //     {children}
-  //     {shouldRender ? (
-  //       <div className={`modal-content ${isOpen && isRender ? 'open' : ''}`}>
-  //         {panelProps}
-  //       </div>
-  //     ) : null}
-  //   </div>
-  // )
   return (
     <div style={{width: '100%', height: '100%'}}>
       <Threesizer
         orientation={HANDLE_VERTICAL}
-        divisions={horizontalDivisions()}
+        divisions={horizontalDivisions}
         onResize={horizontalHandleResize}
       />
     </div>
