@@ -60,8 +60,10 @@ class MessageTokensModal extends PureComponent<Props, State> {
   private get renderBody() {
     const {tokens} = this.props
     const {selectedTokens} = this.state
-    const allSelected = tokens.length > 0 && selectedTokens.length === tokens.length
-    const someSelected = selectedTokens.length > 0 && selectedTokens.length < tokens.length
+    const allSelected =
+      tokens.length > 0 && selectedTokens.length === tokens.length
+    const someSelected =
+      selectedTokens.length > 0 && selectedTokens.length < tokens.length
 
     return (
       <>
@@ -81,10 +83,8 @@ class MessageTokensModal extends PureComponent<Props, State> {
             <strong>Select All</strong>
           </label>
         </div>
-        <FancyScrollbar
-          style={{height: 'calc(100% - 40px)'}}
-       >
-          {tokens.map((token,idx) => (
+        <FancyScrollbar autoHide={false} style={{height: 'calc(100% - 40px)'}}>
+          {tokens.map((token, idx) => (
             <div key={`${token}_${idx}`} className="form-control-static">
               <input
                 type="checkbox"
@@ -95,7 +95,7 @@ class MessageTokensModal extends PureComponent<Props, State> {
               <label htmlFor={`token_${token}_${idx}`}>{token}</label>
             </div>
           ))}
-      </FancyScrollbar>
+        </FancyScrollbar>
       </>
     )
   }
@@ -119,7 +119,7 @@ class MessageTokensModal extends PureComponent<Props, State> {
 
   private onToggleAll(checked: boolean) {
     this.setState({
-      selectedTokens: checked ? [...this.props.tokens] : []
+      selectedTokens: checked ? [...this.props.tokens] : [],
     })
   }
 

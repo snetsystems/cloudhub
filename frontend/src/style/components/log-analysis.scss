@@ -206,10 +206,11 @@ $highlight: #25262e;
   z-index: 7;
 
   .form-control-static {
-    width: 318px;
+    width: calc(100% - 25px);
+    margin-left: 10px;
     border: 1px solid #383846;
     > label {
-      width: 305px;
+      width: calc(100% - 25px);
       overflow-x: auto;
       overflow-y: hidden;
       line-height: 20px;
@@ -223,14 +224,10 @@ $highlight: #25262e;
 
   .select-all-container {
     border: none;
-    background: #292933;
     border-radius: 0;
-    margin-bottom: 10px;
-
+    margin-left: 1px;
     > label {
       font-weight: 600;
-      color: #f58220;
-      font-size: 14px;
     }
   }
 
@@ -239,9 +236,8 @@ $highlight: #25262e;
   }
 
   .overlay--body {
-    padding-bottom: 30px;
+    padding: 0px;
     height: 200px;
-    padding-top: 8px;
   }
 
   .btn-cancel {
