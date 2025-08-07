@@ -221,6 +221,7 @@ export class AppNameDropdown extends PureComponent<Props, State> {
           onFilterKeyPress={this.handleFilterKeyPress}
           placeholder={placeholder}
           value={selected}
+          readOnly={true}
         />
 
         {isOpen && menuItems && menuItems.length ? (

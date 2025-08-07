@@ -17,6 +17,7 @@ interface Props {
   placeholder?: string
   value?: string
   autoFocus?: boolean
+  readOnly?: boolean
 }
 
 const DropdownInput: FunctionComponent<Props> = ({
@@ -30,6 +31,7 @@ const DropdownInput: FunctionComponent<Props> = ({
   placeholder,
   value,
   autoFocus,
+  readOnly = false,
 }) => (
   <div
     className={`dropdown-autocomplete dropdown-toggle ${buttonSize} ${buttonColor}${disabledClass(
@@ -47,6 +49,7 @@ const DropdownInput: FunctionComponent<Props> = ({
       onKeyDown={onFilterKeyPress}
       value={value ?? searchTerm}
       disabled={disabled}
+      readOnly={readOnly}
     />
     <span className="caret" />
   </div>

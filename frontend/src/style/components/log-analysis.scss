@@ -89,6 +89,15 @@ $highlight: #25262e;
   .dropdown-autocomplete {
     width: 100%;
   }
+
+  .dropdown-autocomplete--input {
+    cursor: pointer;
+    user-select: none;
+
+    &:focus {
+      outline: none;
+    }
+  }
 }
 
 .matching-alias-section {
@@ -184,7 +193,7 @@ $highlight: #25262e;
 
   .form-control-static {
     width: 318px;
-    border:1px solid #383846;
+    border: 1px solid #383846;
     > label {
       width: 305px;
       overflow-x: auto;
@@ -198,14 +207,12 @@ $highlight: #25262e;
     margin-bottom: 4px;
   }
 
-
   .select-all-container {
-   
     border: none;
     background: #292933;
     border-radius: 0;
     margin-bottom: 10px;
-    
+
     > label {
       font-weight: 600;
       color: #f58220;
@@ -221,7 +228,6 @@ $highlight: #25262e;
     padding-bottom: 30px;
     height: 200px;
     padding-top: 8px;
-   
   }
 
   .btn-cancel {
@@ -288,7 +294,7 @@ button[data-test-subj='pagination-button-next'][disabled] {
     white-space: inherit;
     text-overflow: inherit;
     max-width: none;
-    padding:4px 0px
+    padding: 4px 0px;
   }
 }
 
