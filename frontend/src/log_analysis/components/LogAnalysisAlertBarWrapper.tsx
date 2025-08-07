@@ -132,7 +132,7 @@ function LogAnalysisAlertBarWrapper({
 
   useEffect(() => {
     getLogsData(esSource)
-  }, [logAnalysisManualRefresh])
+  }, [logAnalysisManualRefresh, cloudTimeRange?.logAnalysis])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.logAnalysis)

@@ -58,7 +58,7 @@ export interface ToggleViewOwnProps {
   autoRefreshInterval?: number
   topN?: number
   localTopN?: number
-  onChangeTopN?: (number:number) => void
+  onChangeTopN?: (number: number) => void
   handleOnBlur?: () => void
 }
 
@@ -112,14 +112,15 @@ function ToggleView<P>({
     if (_.isEmpty(esSource)) return
     activeView.fetchData?.(
       esSource,
-      localTopN, 
+      localTopN,
       cloudTimeRange,
       filteredLogsForLogAnalysis
     )
   }, [
     esSource,
     logAnalysisManualRefresh,
-    localTopN, 
+    cloudTimeRange?.logAnalysis,
+    localTopN,
     filteredLogsForLogAnalysis,
   ])
 
@@ -134,7 +135,7 @@ function ToggleView<P>({
       intervalID = window.setInterval(() => {
         activeView.fetchData?.(
           esSource,
-          localTopN, 
+          localTopN,
           cloudTimeRange,
           filteredLogsForLogAnalysis
         )
@@ -155,7 +156,7 @@ function ToggleView<P>({
     cloudTimeRange?.logAnalysis,
     filteredLogsForLogAnalysis,
     logAnalysisManualRefresh,
-    localTopN, 
+    localTopN,
   ])
 
   const renderToggle = () => {

@@ -1,5 +1,12 @@
 //Library
-import React, {ChangeEvent, useCallback, useMemo, useState, useRef, useEffect} from 'react'
+import React, {
+  ChangeEvent,
+  useCallback,
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+} from 'react'
 import {debounce} from 'lodash'
 
 //Components
@@ -57,9 +64,6 @@ export default function ToggleViewWrap() {
 
   const [localTopN, setLocalTopN] = useState(topN)
 
-
-
-
   const fetchTokenData = useCallback(
     async (
       src: BaseElasticSearchData,
@@ -69,13 +73,13 @@ export default function ToggleViewWrap() {
     ) => {
       if ((!isNaN(size) && size) < data.length) return
       setLoading(true)
-    
+
       try {
         const combinedFilters = buildCombinedFilters(
           filteredLogsForLogAnalysis,
           cloudTimeRange?.logAnalysis
         )
-        const {data:newData} = await fetchMessageTokenData({
+        const {data: newData} = await fetchMessageTokenData({
           esSource: src,
           filters: combinedFilters,
           size,
@@ -88,8 +92,6 @@ export default function ToggleViewWrap() {
     },
     [data]
   )
-
-
 
   const addMessageTokensFilter = (token): void => {
     dispatch(addLogAnalysisMatchPhraseFilterClause('message_tokens', token))
@@ -116,7 +118,7 @@ export default function ToggleViewWrap() {
     }
   }, [debouncedSetTopN])
 
-  const handleOnBlur = () => {  
+  const handleOnBlur = () => {
     if (isNaN(topN)) {
       setTopN(DEFAULT_TOP_N)
       setLocalTopN(DEFAULT_TOP_N)
@@ -132,7 +134,7 @@ export default function ToggleViewWrap() {
         props: (d: TokenData[]) => ({
           data: d,
           onRectClick: handleRectClick,
-          localTopN:localTopN,
+          localTopN: localTopN,
         }),
         fetchData: fetchTokenData,
       },
@@ -143,12 +145,12 @@ export default function ToggleViewWrap() {
         props: (d: TokenData[]) => ({
           data: d,
           onRectClick: handleRectClick,
-          localTopN:localTopN,
+          localTopN: localTopN,
         }),
         fetchData: fetchTokenData,
       },
     ],
-    [fetchTokenData, localTopN, handleRectClick,data]
+    [fetchTokenData, localTopN, handleRectClick, data]
   )
 
   return (
