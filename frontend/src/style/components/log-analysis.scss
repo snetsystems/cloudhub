@@ -20,6 +20,12 @@ $highlight: #25262e;
   width: 98%;
   height: calc(100% - 10px);
   justify-self: center;
+
+  .ouiDataGrid__focusWrap {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    height: calc(100% - 20px);
+  }
 }
 
 .syslog-table--total-count {
@@ -251,13 +257,6 @@ button[data-test-subj='pagination-button-next'][disabled] {
 
 .ouiDataGridRowCell {
   font-size: 13px;
-}
-
-.syslog-table--container {
-  .ouiDataGrid__focusWrap {
-    padding-top: 10px;
-    height: calc(100% - 20px);
-  }
 }
 
 .livestatus-wrapper {
