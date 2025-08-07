@@ -153,11 +153,19 @@ $highlight: #25262e;
 .apply-section {
   flex: 0.05;
   display: flex;
-  align-items: flex-end;
-  padding: 30px 15px 5px 0px;
+  padding: 29px 15px 5px 0px;
 
   .button {
-    width: 33px;
+    width: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .button-icon {
+    position: relative;
+    right: -0.25rem;
+    top: 0.05rem;
   }
 }
 
