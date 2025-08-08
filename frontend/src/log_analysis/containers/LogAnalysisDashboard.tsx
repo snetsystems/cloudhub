@@ -291,7 +291,6 @@ function LogAnalysisDashboard({
                   isResizable={true}
                   onResizeStop={(_, __, ___, ____, _____, resizeHandle) => {
                     const parentElement = resizeHandle?.parentElement
-                    console.log('parentElement', parentElement)
                     if (parentElement?.classList.contains('resizing')) {
                       parentElement.classList.remove('resizing')
                     }
@@ -320,7 +319,6 @@ function LogAnalysisDashboard({
     const [topSize, bottomSize] = horizontalProportions
     return [
       {
-        name: 'top',
         handleDisplay: 'none',
         headerButtons: [],
         menuOptions: [],
@@ -329,7 +327,6 @@ function LogAnalysisDashboard({
         size: topSize,
       },
       {
-        name: 'bottom',
         handleDisplay: 'default',
         handlePixels: 8,
         headerButtons: [],

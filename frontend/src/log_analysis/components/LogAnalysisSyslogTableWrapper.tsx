@@ -354,7 +354,6 @@ function LogAnalysisSyslogTableWrapper({
             logTimeRange={logTimeRange}
           />
         ) as unknown) as React.ReactElement,
-        width: 400,
       })
     },
     [source, openPanel, setSelectedDevice]

@@ -22,16 +22,15 @@ interface Props {
 }
 
 function SidePanelSlice({children, isOpen, panelProps}: Props) {
-  const [shouldRender, setShouldRender] = useState(isOpen)
   const [isRender, setIsRender] = useState(isOpen)
-  const [horizontalProportions, setHorizontalProportions] = useState([1, 0])
+  const [verticalProportions, setVerticalProportions] = useState([1, 0])
 
   const ANIMATION_DURATION = 320
   const LOADING_DURATION = 100
 
   useEffect(() => {
+    // animation for open and close
     if (isOpen) {
-      setShouldRender(true)
       const timer = setTimeout(() => {
         setIsRender(true)
       }, LOADING_DURATION)
@@ -39,7 +38,6 @@ function SidePanelSlice({children, isOpen, panelProps}: Props) {
     } else {
       const timer = setTimeout(() => {
         setIsRender(false)
-        setShouldRender(false)
       }, ANIMATION_DURATION)
       return () => clearTimeout(timer)
     }
@@ -52,18 +50,18 @@ function SidePanelSlice({children, isOpen, panelProps}: Props) {
 
   useEffect(() => {
     if (isOpen) {
-      setHorizontalProportions([0.65, 0.35])
+      setVerticalProportions([0.65, 0.35])
     } else {
-      setHorizontalProportions([1, 0])
+      setVerticalProportions([1, 0])
     }
   }, [isOpen])
 
   useEffect(() => {
     debouncedFit()
-  }, [isOpen, debouncedFit])
+  }, [isOpen, debouncedFit, verticalProportions])
 
-  const horizontalHandleResize = (horizontalProportions: number[]): void => {
-    setHorizontalProportions(horizontalProportions)
+  const verticalHandleResize = (verticalProportions: number[]): void => {
+    setVerticalProportions(verticalProportions)
   }
 
   const renderLeftSection = useCallback(() => {
@@ -71,15 +69,11 @@ function SidePanelSlice({children, isOpen, panelProps}: Props) {
   }, [children])
 
   const renderRightSection = useCallback(() => {
-    return shouldRender
-      ? isRender && isOpen
-        ? (panelProps as ReactElement<any>)
-        : null
-      : null
-  }, [shouldRender, isRender, isOpen, panelProps])
+    return isRender ? (panelProps as ReactElement<any>) : null
+  }, [isRender, panelProps])
 
-  const horizontalDivisions = useMemo(() => {
-    const [leftSize, rightSize] = horizontalProportions
+  const verticalDivisions = useMemo(() => {
+    const [leftSize, rightSize] = verticalProportions
     return [
       {
         name: '',
@@ -104,14 +98,14 @@ function SidePanelSlice({children, isOpen, panelProps}: Props) {
         size: rightSize,
       },
     ]
-  }, [horizontalProportions, renderLeftSection, renderRightSection])
+  }, [verticalProportions, renderLeftSection, renderRightSection])
 
   return (
     <div style={{width: '100%', height: '100%'}}>
       <Threesizer
         orientation={HANDLE_VERTICAL}
-        divisions={horizontalDivisions}
-        onResize={horizontalHandleResize}
+        divisions={verticalDivisions}
+        onResize={verticalHandleResize}
       />
     </div>
   )
