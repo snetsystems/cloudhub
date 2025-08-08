@@ -549,3 +549,7 @@ button[data-test-subj='pagination-button-next'][disabled] {
 .kql-input-submit {
   margin-left: 5px;
 }
+
+.ouiDataGrid__controlScroll {
+  contain: none !important;
+}
