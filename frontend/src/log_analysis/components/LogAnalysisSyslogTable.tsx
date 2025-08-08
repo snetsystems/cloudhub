@@ -93,6 +93,13 @@ function getTimeRangeFromTimestamp(
   }
 }
 
+function formatNumberWithCommas(value: number | null | undefined): string {
+  if (value == null || isNaN(value)) {
+    return '0'
+  }
+  return value.toLocaleString('en-US')
+}
+
 function LogAnalysisSyslogTable({
   filteredLogsForLogAnalysis,
   chunkSize,
@@ -464,7 +471,7 @@ function LogAnalysisSyslogTable({
       <FancyScrollbar style={{height: 'calc(100% - 40px)'}}>
         <div className="syslog-table--container">
           <div className="syslog-table--total-count">
-            Documents ({totalHitsValue})
+            Documents ({formatNumberWithCommas(totalHitsValue)})
           </div>
           <ReactObserver onResize={handleOnResize} />
           <OuiDataGrid
@@ -503,8 +510,12 @@ function LogAnalysisSyslogTable({
           <div className="syslog-table-chunksize--container">
             <span>
               {totalRowCount === 1
-                ? `Search Result is limited to ${totalRowCount} document.`
-                : `Search Results are limited to ${totalRowCount} documents.`}
+                ? `Search Result is limited to ${formatNumberWithCommas(
+                    totalRowCount
+                  )} document.`
+                : `Search Results are limited to ${formatNumberWithCommas(
+                    totalRowCount
+                  )} documents.`}
             </span>
             <div className="syslog-table-chunksize--inner">
               <span
