@@ -209,12 +209,19 @@ $highlight: #25262e;
     width: calc(100% - 25px);
     margin-left: 10px;
     border: 1px solid #383846;
+    display: flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 3px 10px;
+    border-radius: 6px;
+
     > label {
       width: calc(100% - 25px);
       overflow-x: auto;
       overflow-y: hidden;
-      line-height: 20px;
-      height: 20px;
+      line-height: 1.4;
+      height: auto;
+      display: block;
     }
   }
 
@@ -399,7 +406,7 @@ button[data-test-subj='pagination-button-next'][disabled] {
   .kql-input-wrap {
     display: flex;
     .filter-clear-btn {
-      margin-right: 4px;
+      margin-left: 5px;
       width: 25px;
       > span {
         top: 1px;

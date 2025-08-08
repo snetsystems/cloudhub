@@ -343,15 +343,6 @@ function LogSearchFilterBar({
   return (
     <div className="kql-filter-bar">
       <div className="kql-input-wrap">
-        <button
-          onClick={filterClear}
-          className="filter-clear-btn btn button btn-sm btn-default"
-          disabled={!hasMatchPhraseOrRangeFilters && inputValue.trim() === ''}
-          title="Reset Filter"
-        >
-          <span className="icon trash" />
-        </button>
-
         <div className="kql-box">
           <OuiIcon type="search" className="kql-icon-search" />
 
@@ -376,6 +367,14 @@ function LogSearchFilterBar({
 
           <span className="kql-focus-bar" />
         </div>
+        <button
+          onClick={filterClear}
+          className="filter-clear-btn btn button btn-sm btn-default"
+          disabled={!hasMatchPhraseOrRangeFilters && inputValue.trim() === ''}
+          title="Reset Filter"
+        >
+          <span className="icon trash" />
+        </button>
         <Button
           customClass="kql-input-submit"
           size={ComponentSize.Small}
