@@ -20,18 +20,21 @@ import {bindActionCreators} from 'redux'
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 
-// Constants
-import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants/log-analysis'
-
 interface Props {
   children: React.ReactNode
   isOpen?: boolean
   panelProps?: React.ReactNode
   width?: number
   closePanel?: () => void
+  localStorageKey?: string
 }
 
-function SidePanelSlice({children, isOpen, panelProps}: Props) {
+function SidePanelSlice({
+  children,
+  isOpen,
+  panelProps,
+  localStorageKey,
+}: Props) {
   const [isRender, setIsRender] = useState(isOpen)
   const [verticalProportions, setVerticalProportions] = useState([1, 0])
 
@@ -116,10 +119,13 @@ function SidePanelSlice({children, isOpen, panelProps}: Props) {
   }, [verticalProportions, renderLeftSection, renderRightSection])
 
   const saveVerticalProportions = (verticalProportions: number[]): void => {
-    const store = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+    if (!localStorageKey) {
+      return
+    }
+    const store = localStorage.getItem(localStorageKey)
     const parsed = store ? JSON.parse(store) : {}
     localStorage.setItem(
-      LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+      localStorageKey,
       JSON.stringify({
         ...parsed,
         verticalProportions,
@@ -128,7 +134,10 @@ function SidePanelSlice({children, isOpen, panelProps}: Props) {
   }
 
   const loadVerticalProportions = (): number[] => {
-    const savedStore = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+    if (!localStorageKey) {
+      return [0.65, 0.35]
+    }
+    const savedStore = localStorage.getItem(localStorageKey)
     const parsed = savedStore ? JSON.parse(savedStore) : {}
 
     return parsed.verticalProportions ?? [0.65, 0.35]

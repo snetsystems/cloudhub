@@ -101,7 +101,12 @@ function LogAnalysisDashboard({
   router,
   params,
 }: Props) {
-  const [horizontalProportions, setHorizontalProportions] = useState([0.1, 0.9])
+  const [horizontalProportions, setHorizontalProportions] = useState(() => {
+    const savedStore = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+    const parsed = savedStore ? JSON.parse(savedStore) : {}
+
+    return parsed.horizontalProportions ?? [0.1, 0.9]
+  })
 
   const GridLayout = WidthProvider(ReactGridLayout)
   const isUsingLogAnalysis = useMemo(() => {
@@ -298,7 +303,7 @@ function LogAnalysisDashboard({
 
   const renderBottomSection = useCallback(() => {
     return (
-      <SidePanelSlice>
+      <SidePanelSlice localStorageKey={LOG_ANALYSIS_LOCAL_STORAGE_KEY}>
         <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
           <div className="dashboard container-fluid full-width">
             {!!cells && cells.length > 0 && (
