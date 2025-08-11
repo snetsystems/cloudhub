@@ -549,6 +549,7 @@ export enum AddonType {
   ai = 'ai',
   nvidia = 'nvidia-gpu',
   dev = 'dev',
+  logAnalysis = 'log-analysis',
 }
 
 export const COLLECTOR_SERVER = 'ch-collector'

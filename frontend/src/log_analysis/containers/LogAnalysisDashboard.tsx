@@ -3,6 +3,7 @@ import React, {useEffect, useMemo, useCallback, useState} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import _ from 'lodash'
 import {connect} from 'react-redux'
+import {withRouter, InjectedRouter} from 'react-router'
 
 // Actions
 import {setLogAnalysisManualRefresh} from 'src/log_analysis/actions'
@@ -24,6 +25,7 @@ import {
   Source,
   TimeRange,
   TimeZones,
+  Links,
 } from 'src/types'
 
 // Constants
@@ -31,6 +33,7 @@ import {
   DASHBOARD_LAYOUT_ROW_HEIGHT,
   HANDLE_HORIZONTAL,
   LAYOUT_MARGIN,
+  AddonType,
 } from 'src/shared/constants'
 import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
 import {FIXTURE_LOG_ANALYSIS_CELLS} from 'src/log_analysis/constants/fixture'
@@ -52,6 +55,7 @@ import {setStateInitAction} from 'src/device_management/actions'
 import LogAnalysisAlertBarWarpper from '../components/LogAnalysisAlertBarWrapper'
 import LogSearchFilterBar from '../components/LogSearchFilterBar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import NotFound from 'src/shared/components/NotFound'
 
 interface TempProps {
   cell: Cell
@@ -76,6 +80,9 @@ interface Props {
   removeLogAnalysisRangeFilterClause: (field: string) => void
   closePanel: typeof closePanel
   resetSelectedDevice: typeof resetSelectedDevice
+  links?: Links
+  router?: InjectedRouter
+  params: {sourceID: string}
 }
 
 function LogAnalysisDashboard({
@@ -90,10 +97,31 @@ function LogAnalysisDashboard({
   setLogAnalysisManualRefresh,
   closePanel,
   resetSelectedDevice,
+  links,
+  router,
+  params,
 }: Props) {
   const [horizontalProportions, setHorizontalProportions] = useState([0.1, 0.9])
 
   const GridLayout = WidthProvider(ReactGridLayout)
+  const isUsingLogAnalysis = useMemo(() => {
+    return (
+      links?.addons &&
+      links.addons.some(
+        item => item.name === AddonType.logAnalysis && item.url === 'on'
+      )
+    )
+  }, [links])
+
+  useEffect(() => {
+    if (links && !isUsingLogAnalysis && router) {
+      router.replace(`/sources/${params.sourceID}/status`)
+    }
+  }, [isUsingLogAnalysis, links, router, params.sourceID])
+
+  if (!isUsingLogAnalysis) {
+    return <NotFound />
+  }
 
   useEffect(() => {
     if (typeof cloudAutoRefresh?.logAnalysis !== 'number') {
@@ -369,6 +397,7 @@ const mstp = state => {
       ephemeral: {inPresentationMode},
       persisted: {timeZone, autoRefresh, cloudAutoRefresh, cloudTimeRange},
     },
+    links,
   } = state
 
   return {
@@ -377,6 +406,7 @@ const mstp = state => {
     autoRefresh,
     cloudAutoRefresh,
     cloudTimeRange,
+    links,
   }
 }
 
@@ -398,6 +428,6 @@ const isEqual = (prev, next) => {
 }
 
 export default React.memo(
-  connect(mstp, mdtp, null)(LogAnalysisDashboard),
+  withRouter(connect(mstp, mdtp, null)(LogAnalysisDashboard)),
   isEqual
 )

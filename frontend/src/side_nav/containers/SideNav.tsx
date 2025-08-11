@@ -93,6 +93,7 @@ class SideNav extends PureComponent<Props> {
     const isUsingOsp = this.isExistInLinks(AddonType.osp)
     const isUsingAI = this.isAddonUrlOn(AddonType.ai)
     const isUsingNvidiaGpu = this.isAddonUrlOn(AddonType.nvidia)
+    const isUsingLogAnalysis = this.isAddonUrlOn(AddonType.logAnalysis)
     const cloudsNavLink = (() => {
       if (isUsingVMware) {
         return 'vmware'
@@ -241,9 +242,11 @@ class SideNav extends PureComponent<Props> {
             location={location}
           >
             <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
-            <NavListItem link={`${sourcePrefix}/log-analysis`}>
-              Log Analysis
-            </NavListItem>
+            {isUsingLogAnalysis && (
+              <NavListItem link={`${sourcePrefix}/log-analysis`}>
+                Log Analysis
+              </NavListItem>
+            )}
             <NavListItem link={`${sourcePrefix}/logs`}>System Logs</NavListItem>
             <NavListItem link={`${sourcePrefix}/activity-logs`}>
               Activity Logs
