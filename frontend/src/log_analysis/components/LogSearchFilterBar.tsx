@@ -272,7 +272,17 @@ function LogSearchFilterBar({
   const handleValueSelect = (raw: string) => {
     if (!raw) return
     const q = `"${raw.replace(/"/g, '\\"')}"`
-    setInputValue(prev => prev.trimEnd() + ' ' + q + ' ')
+    setInputValue(prev => {
+      const trimmedEnd = prev.replace(/\s+$/, '')
+      const lastColonIdx = trimmedEnd.lastIndexOf(':')
+
+      if (lastColonIdx !== -1) {
+        const beforeColon = trimmedEnd.slice(0, lastColonIdx + 1)
+        return beforeColon + ' ' + q + ' '
+      }
+
+      return trimmedEnd + ' ' + q + ' '
+    })
     setAutocomplete({fields: [], operators: LOGICAL_OPERATORS, values: []})
     setDropdownOpen(true)
   }
