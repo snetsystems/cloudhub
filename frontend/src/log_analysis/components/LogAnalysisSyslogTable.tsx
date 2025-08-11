@@ -139,9 +139,15 @@ function LogAnalysisSyslogTable({
         id: '@timestamp',
         display: 'Timestamp',
         schema: 'datetime',
-        isExpandable: false,
+        isExpandable: true,
       },
       {id: 'host.ip', display: 'Host IP', schema: 'ip', isExpandable: false},
+      {
+        id: 'deviceType',
+        display: 'Device Type',
+        schema: 'string',
+        isExpandable: false,
+      },
       {
         id: 'host.hostname',
         display: 'Hostname',
@@ -194,12 +200,6 @@ function LogAnalysisSyslogTable({
       {
         id: 'log.syslog.facility.code',
         display: 'Syslog Facility',
-        isExpandable: false,
-      },
-      {
-        id: 'deviceType',
-        display: 'Device Type',
-        schema: 'string',
         isExpandable: false,
       },
     ],
