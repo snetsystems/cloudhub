@@ -213,7 +213,7 @@ class SideNav extends PureComponent<Props> {
         </NavBlock>
 
         <Authorized
-          requiredRole={SUPERADMIN_ROLE}
+          requiredRole={ADMIN_ROLE}
           replaceWithIfNotAuthorized={
             <NavBlock
               highlightWhen={['logs']}
@@ -248,9 +248,12 @@ class SideNav extends PureComponent<Props> {
               </NavListItem>
             )}
             <NavListItem link={`${sourcePrefix}/logs`}>System Logs</NavListItem>
-            <NavListItem link={`${sourcePrefix}/activity-logs`}>
-              Activity Logs
-            </NavListItem>
+
+            {_.get(me, 'role', '').includes(SUPERADMIN_ROLE) && (
+              <NavListItem link={`${sourcePrefix}/activity-logs`}>
+                Activity Logs
+              </NavListItem>
+            )}
           </NavBlock>
         </Authorized>
 
