@@ -35,7 +35,7 @@ function SidePanelSlice({
   panelProps,
   localStorageKey,
 }: Props) {
-  const [isRender, setIsRender] = useState(isOpen)
+  const [isRender, setIsRender] = useState(false)
   const [verticalProportions, setVerticalProportions] = useState([1, 0])
 
   const ANIMATION_DURATION = 320
@@ -87,8 +87,10 @@ function SidePanelSlice({
   }, [children])
 
   const renderRightSection = useCallback(() => {
-    return isRender ? (panelProps as ReactElement<any>) : null
-  }, [isRender, panelProps])
+    return isRender && verticalProportions[1] > 0.05
+      ? (panelProps as ReactElement<any>)
+      : null
+  }, [isRender, panelProps, verticalProportions])
 
   const verticalDivisions = useMemo(() => {
     const [leftSize, rightSize] = verticalProportions
@@ -116,7 +118,7 @@ function SidePanelSlice({
         size: rightSize,
       },
     ]
-  }, [verticalProportions, renderLeftSection, renderRightSection])
+  }, [isRender, verticalProportions, renderLeftSection, renderRightSection])
 
   const saveVerticalProportions = (verticalProportions: number[]): void => {
     if (!localStorageKey) {
@@ -138,9 +140,14 @@ function SidePanelSlice({
       return [0.65, 0.35]
     }
     const savedStore = localStorage.getItem(localStorageKey)
-    const parsed = savedStore ? JSON.parse(savedStore) : {}
+    const parsed = savedStore
+      ? JSON.parse(savedStore).verticalProportions
+      : [0.65, 0.35]
 
-    return parsed.verticalProportions ?? [0.65, 0.35]
+    if (_.isEqual(parsed, [1, 0])) {
+      return [0.65, 0.35]
+    }
+    return parsed
   }
 
   return (
