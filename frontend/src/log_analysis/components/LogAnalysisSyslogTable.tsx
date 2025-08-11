@@ -133,7 +133,7 @@ function LogAnalysisSyslogTable({
     []
   )
 
-  const columns = useMemo(
+  const baseColumns = useMemo(
     () => [
       {
         id: '@timestamp',
@@ -206,20 +206,85 @@ function LogAnalysisSyslogTable({
     []
   )
 
+  const [columnOrder, setColumnOrder] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed.columnOrder)) {
+          const allColumnIds = baseColumns.map(col => col.id)
+          const isValidOrder =
+            parsed.columnOrder.every(id => allColumnIds.includes(id)) &&
+            allColumnIds.every(id => parsed.columnOrder.includes(id))
+          if (isValidOrder) {
+            return parsed.columnOrder
+          }
+        }
+      }
+    } catch {
+      console.log('Failed to parse column order from LocalStorage.')
+    }
+    return baseColumns.map(col => col.id)
+  })
+
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
         if (Array.isArray(parsed.visibleColumns)) {
-          return parsed.visibleColumns
+          const allColumnIds = baseColumns.map(col => col.id)
+          const validVisibleColumns = parsed.visibleColumns.filter(id =>
+            allColumnIds.includes(id)
+          )
+          if (validVisibleColumns.length > 0) {
+            return validVisibleColumns
+          }
         }
       }
     } catch {
-      console.log('Failed to parse table state from LocalStorage.')
+      console.log('Failed to parse visible columns from LocalStorage.')
     }
-    return columns.map(col => col.id)
+    return baseColumns.map(col => col.id)
   })
+
+  const handleColumnVisibilityChange = (newVisibleColumns: string[]) => {
+    setVisibleColumns(newVisibleColumns)
+  }
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+      const parsed = stored ? JSON.parse(stored) : {}
+      localStorage.setItem(
+        LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+        JSON.stringify({
+          ...parsed,
+          columnOrder,
+          visibleColumns,
+          sortColumns,
+          pageSize,
+        })
+      )
+    } catch {
+      console.log('Failed to save table state to LocalStorage.')
+    }
+  }, [columnOrder, visibleColumns, sortColumns, pageSize])
+
+  useEffect(() => {
+    const visibleSet = new Set(visibleColumns)
+    const invisibleColumns = columnOrder.filter(id => !visibleSet.has(id))
+    const updatedColumnOrder = [...visibleColumns, ...invisibleColumns]
+
+    if (JSON.stringify(updatedColumnOrder) !== JSON.stringify(columnOrder)) {
+      setColumnOrder(updatedColumnOrder)
+    }
+  }, [visibleColumns, columnOrder])
+
+  const columns = useMemo(() => {
+    const columnMap = new Map(baseColumns.map(col => [col.id, col]))
+    return columnOrder.map(id => columnMap.get(id)).filter(Boolean)
+  }, [baseColumns, columnOrder])
 
   const [chunkSizeInputValue, setChunkSizeInputValue] = useState<string>(
     String(chunkSize)
@@ -239,24 +304,6 @@ function LogAnalysisSyslogTable({
       onChangePage(totalPages - 1)
     }
   }, [totalRowCount, pageSize, pageIndex, onChangePage])
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
-      const parsed = stored ? JSON.parse(stored) : {}
-      localStorage.setItem(
-        LOG_ANALYSIS_LOCAL_STORAGE_KEY,
-        JSON.stringify({
-          ...parsed,
-          visibleColumns,
-          sortColumns,
-          pageSize,
-        })
-      )
-    } catch {
-      console.log('Failed to save table state to LocalStorage.')
-    }
-  }, [visibleColumns, sortColumns, pageSize])
 
   const excludedOnClickFields = ['@timestamp']
 
@@ -478,7 +525,10 @@ function LogAnalysisSyslogTable({
             key="unconstrained"
             aria-label="Client-side paginated syslog data grid"
             columns={columns}
-            columnVisibility={{visibleColumns, setVisibleColumns}}
+            columnVisibility={{
+              visibleColumns,
+              setVisibleColumns: handleColumnVisibilityChange,
+            }}
             rowCount={totalRowCount}
             renderCellValue={renderCellValue}
             schemaDetectors={[ipSchema]}
