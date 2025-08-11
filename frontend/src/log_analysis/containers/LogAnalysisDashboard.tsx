@@ -4,19 +4,35 @@ import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import _ from 'lodash'
 import {connect} from 'react-redux'
 import {withRouter, InjectedRouter} from 'react-router'
+import {bindActionCreators} from 'redux'
 
 // Actions
 import {setLogAnalysisManualRefresh} from 'src/log_analysis/actions'
 import {resetSelectedDevice} from 'src/log_analysis/actions'
+import {setCloudAutoRefresh, setCloudTimeRange} from 'src/clouds/actions/clouds'
+import * as appActions from 'src/shared/actions/app'
+import {setStateInitAction} from 'src/device_management/actions'
+import {closePanel, openPanel} from 'src/shared/actions/sidePanel'
 
 // Components
 import {Page} from 'src/reusable_ui'
 import LogAnalysisSyslogTableWrapper from 'src/log_analysis/components/LogAnalysisSyslogTableWrapper'
 import LogsFilterContainer from 'src/log_analysis/components/LogsFilterContainer'
 import LogAnalysisTips from 'src/log_analysis/components/LogAnalysisTips'
+import ToggleViewWrap from 'src/log_analysis/components/ToggleViewWrap'
+import SidePanelSlice from 'src/shared/components/SidePanelSlice'
+import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
+import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
+import SourceIndicator from 'src/shared/components/SourceIndicator'
+import LogAnalysisAlertBarWarpper from 'src/log_analysis/components/LogAnalysisAlertBarWrapper'
+import LogSearchFilterBar from 'src/log_analysis/components/LogSearchFilterBar'
+import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import NotFound from 'src/shared/components/NotFound'
 
 // Type
 import * as DashboardsModels from 'src/types/dashboards'
+import {CloudTimeRange, CloudAutoRefresh} from 'src/clouds/types/type'
 import {
   Cell,
   FilteredLogsForLogAnalysis,
@@ -35,27 +51,11 @@ import {
   LAYOUT_MARGIN,
   AddonType,
 } from 'src/shared/constants'
-import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
-import {FIXTURE_LOG_ANALYSIS_CELLS} from 'src/log_analysis/constants/fixture'
-import ToggleViewWrap from '../components/ToggleViewWrap'
-import SidePanelSlice from 'src/shared/components/SidePanelSlice'
-import {bindActionCreators} from 'redux'
-import {closePanel, openPanel} from 'src/shared/actions/sidePanel'
-import {setCloudAutoRefresh, setCloudTimeRange} from 'src/clouds/actions/clouds'
-import {CloudTimeRange} from 'src/clouds/types/type'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
-import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
-import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
-import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
-import * as appActions from 'src/shared/actions/app'
-import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
-import SourceIndicator from 'src/shared/components/SourceIndicator'
-import {setStateInitAction} from 'src/device_management/actions'
-import LogAnalysisAlertBarWarpper from '../components/LogAnalysisAlertBarWrapper'
-import LogSearchFilterBar from '../components/LogSearchFilterBar'
-import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import NotFound from 'src/shared/components/NotFound'
+import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants/log-analysis'
+import {FIXTURE_LOG_ANALYSIS_CELLS} from 'src/log_analysis/constants/fixture'
+import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
+import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 
 interface TempProps {
   cell: Cell
@@ -133,6 +133,11 @@ function LogAnalysisDashboard({
       closePanel()
       resetSelectedDevice()
     }
+  }, [])
+
+  useEffect(() => {
+    const savedHorizontalProportions = loadHorizontalProportions()
+    setHorizontalProportions(savedHorizontalProportions)
   }, [])
 
   const savedCells = useMemo(() => {
@@ -367,7 +372,27 @@ function LogAnalysisDashboard({
   }, [horizontalProportions, renderTopSection, renderBottomSection])
 
   const horizontalHandleResize = (horizontalProportions: number[]): void => {
+    saveHorizontalProportions(horizontalProportions)
     setHorizontalProportions(horizontalProportions)
+  }
+
+  const saveHorizontalProportions = (horizontalProportions: number[]): void => {
+    const store = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+    const parsed = store ? JSON.parse(store) : {}
+    localStorage.setItem(
+      LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+      JSON.stringify({
+        ...parsed,
+        horizontalProportions,
+      })
+    )
+  }
+
+  const loadHorizontalProportions = (): number[] => {
+    const savedStore = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+    const parsed = savedStore ? JSON.parse(savedStore) : {}
+
+    return parsed.horizontalProportions ?? [0.1, 0.9]
   }
 
   return (

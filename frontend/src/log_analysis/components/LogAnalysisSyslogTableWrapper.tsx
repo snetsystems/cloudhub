@@ -33,6 +33,7 @@ import {
   DEFAULT_SYSLOG_TABLE_CHUNK_SIZE,
   LOG_ANALYSIS_LOCAL_STORAGE_KEY,
 } from 'src/log_analysis/constants'
+import {ADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 
 // Components
 import LogAnalysisSyslogTable from 'src/log_analysis/components/LogAnalysisSyslogTable'
@@ -49,7 +50,6 @@ import {
   notifyFetchDeviceMappingFailed,
   notifyFetchSyslogTableDataFailed,
 } from 'src/shared/copy/notifications'
-import {ADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 
 interface LogAnalysisSyslogTableOwnProps {
   timeZone?: TimeZones

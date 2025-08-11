@@ -1,3 +1,4 @@
+// Library
 import React, {
   ReactElement,
   useCallback,
@@ -5,13 +6,22 @@ import React, {
   useState,
   useMemo,
 } from 'react'
-import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import _ from 'lodash'
-import {connect} from 'react-redux'
+
+// Actions
+import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {closePanel} from 'src/shared/actions/sidePanel'
+
+// Redux
+import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
+
+// Components
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
-import Threesizer from './threesizer/Threesizer'
+import Threesizer from 'src/shared/components/threesizer/Threesizer'
+
+// Constants
+import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants/log-analysis'
 
 interface Props {
   children: React.ReactNode
@@ -50,7 +60,7 @@ function SidePanelSlice({children, isOpen, panelProps}: Props) {
 
   useEffect(() => {
     if (isOpen) {
-      setVerticalProportions([0.65, 0.35])
+      setVerticalProportions(loadVerticalProportions())
     } else {
       setVerticalProportions([1, 0])
     }
@@ -61,7 +71,12 @@ function SidePanelSlice({children, isOpen, panelProps}: Props) {
   }, [isOpen, debouncedFit, verticalProportions])
 
   const verticalHandleResize = (verticalProportions: number[]): void => {
-    setVerticalProportions(verticalProportions)
+    if (!isRender) {
+      setVerticalProportions([1, 0])
+    } else {
+      setVerticalProportions(verticalProportions)
+      saveVerticalProportions(verticalProportions)
+    }
   }
 
   const renderLeftSection = useCallback(() => {
@@ -99,6 +114,25 @@ function SidePanelSlice({children, isOpen, panelProps}: Props) {
       },
     ]
   }, [verticalProportions, renderLeftSection, renderRightSection])
+
+  const saveVerticalProportions = (verticalProportions: number[]): void => {
+    const store = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+    const parsed = store ? JSON.parse(store) : {}
+    localStorage.setItem(
+      LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+      JSON.stringify({
+        ...parsed,
+        verticalProportions,
+      })
+    )
+  }
+
+  const loadVerticalProportions = (): number[] => {
+    const savedStore = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+    const parsed = savedStore ? JSON.parse(savedStore) : {}
+
+    return parsed.verticalProportions ?? [0.65, 0.35]
+  }
 
   return (
     <div style={{width: '100%', height: '100%'}}>
