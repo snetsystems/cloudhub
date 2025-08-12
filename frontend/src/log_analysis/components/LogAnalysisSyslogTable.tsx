@@ -164,8 +164,8 @@ function LogAnalysisSyslogTable({
         initialWidth: 100,
       },
       {
-        id: 'chart',
-        display: 'Chart',
+        id: 'metrics',
+        display: 'Metrics',
         schema: 'string',
         isExpandable: false,
         isSortable: false,
@@ -427,7 +427,7 @@ function LogAnalysisSyslogTable({
         )
       }
 
-      if (columnId === 'chart') {
+      if (columnId === 'metrics') {
         const hostname = row['host.hostname']?.[0] || ''
         const deviceType = row['deviceType']?.[0] || 'baremetal'
         const timestamp = row['@timestamp']?.[0] || null
