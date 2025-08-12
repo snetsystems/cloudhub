@@ -543,10 +543,7 @@ const LogAnalysisCellsGraphWrapper = ({
           </>
         ) : (
           <>
-            <FancyScrollbar
-              style={{height: 'calc(100% - 45px)'}}
-              autoHide={true}
-            >
+            <div style={{height: 'calc(100% - 160px)'}}>
               <AppNameMatchingAliasWrapper
                 appItems={appDropdownItems}
                 selectedApp={selectedApp}
@@ -590,35 +587,37 @@ const LogAnalysisCellsGraphWrapper = ({
               <div className="hostname-info">
                 {`Hostname: ${selectedDevice.hostname}`}
               </div>
-              <div
-                className="panel-body"
-                style={{backgroundColor: GRAPH_BG_COLOR}}
-              >
+              <FancyScrollbar>
                 <div
-                  style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '100%',
-                  }}
+                  className="panel-body layout"
+                  style={{backgroundColor: GRAPH_BG_COLOR}}
                 >
-                  <ReactObserver onResize={handleOnResize} />
-                  <LayoutRenderer
-                    source={source}
-                    sources={[source]}
-                    isStatusPage={false}
-                    isStaticPage={true}
-                    isEditable={false}
-                    cells={layoutCells}
-                    templates={tempVars}
-                    timeRange={selfTimeRange}
-                    manualRefresh={logAnalysisManualRefresh}
-                    isUsingAnnotationViewer={!!annotationTime}
-                    host={''}
-                    annotationsViewMode={annotationsViewMode}
-                  />
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  >
+                    <ReactObserver onResize={handleOnResize} />
+                    <LayoutRenderer
+                      source={source}
+                      sources={[source]}
+                      isStatusPage={false}
+                      isStaticPage={true}
+                      isEditable={false}
+                      cells={layoutCells}
+                      templates={tempVars}
+                      timeRange={selfTimeRange}
+                      manualRefresh={logAnalysisManualRefresh}
+                      isUsingAnnotationViewer={!!annotationTime}
+                      host={''}
+                      annotationsViewMode={annotationsViewMode}
+                    />
+                  </div>
                 </div>
-              </div>
-            </FancyScrollbar>
+              </FancyScrollbar>
+            </div>
             <div className="dash-graph--gradient-border">
               <div className="dash-graph--gradient-top-left" />
               <div className="dash-graph--gradient-top-right" />

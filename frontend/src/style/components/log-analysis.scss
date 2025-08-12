@@ -51,7 +51,7 @@ $highlight: #25262e;
 }
 
 .hostname-info {
-  padding: 15px 0px 0px 15px;
+  padding: 15px 0px 15px 15px;
   font-size: 14px;
   font-weight: 600;
 }
@@ -555,4 +555,8 @@ button[data-test-subj='pagination-button-next'][disabled] {
 
 .ouiDataGrid__controlScroll {
   contain: none !important;
+}
+
+.panel-body.layout {
+  padding-top: 0;
 }
