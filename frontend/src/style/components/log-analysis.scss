@@ -5,6 +5,9 @@ $text: #d3dae6;
 $highlight: #25262e;
 
 .log-analysis-page {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(152, 162, 179, 0.5) transparent;
+
   .close-button {
     > button {
       height: 25px;

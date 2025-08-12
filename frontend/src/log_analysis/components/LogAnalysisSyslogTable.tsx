@@ -5,7 +5,6 @@ import {
   OuiDataGridSchemaDetector,
   OuiIcon,
 } from '@opensearch-project/oui'
-import '@opensearch-project/oui/dist/oui_theme_dark.css'
 import {connect, useDispatch} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import ReactObserver from 'react-resize-observer'
