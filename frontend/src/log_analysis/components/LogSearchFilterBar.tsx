@@ -86,6 +86,7 @@ function LogSearchFilterBar({
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const dropdownMouseDown = useRef(false)
 
   const hasMatchPhraseOrRangeFilters = useMemo(() => {
@@ -115,6 +116,25 @@ function LogSearchFilterBar({
       setInputValue(extractKqlFromFilters(filteredLogsForLogAnalysis))
     }
   }, [filteredLogsForLogAnalysis])
+
+  useEffect(() => {
+    if (activeIndex >= 0 && dropdownRef.current) {
+      const activeElement = dropdownRef.current.querySelector(
+        `.kql-item:nth-child(${activeIndex + 1})`
+      ) as HTMLElement
+      if (activeElement) {
+        const container = dropdownRef.current
+        const containerRect = container.getBoundingClientRect()
+        const elementRect = activeElement.getBoundingClientRect()
+
+        if (elementRect.bottom > containerRect.bottom) {
+          container.scrollTop += elementRect.bottom - containerRect.bottom + 10
+        } else if (elementRect.top < containerRect.top) {
+          container.scrollTop -= containerRect.top - elementRect.top + 10
+        }
+      }
+    }
+  }, [activeIndex])
 
   useEffect(() => {
     const ops = autocomplete.operators.map(o => ({
@@ -395,7 +415,11 @@ function LogSearchFilterBar({
       </div>
 
       {dropdownOpen && dropdownItems.length > 0 && (
-        <div className="kql-dropdown" onMouseDown={handleMouseDown}>
+        <div
+          className="kql-dropdown"
+          ref={dropdownRef}
+          onMouseDown={handleMouseDown}
+        >
           {dropdownItems.map((it, idx) => {
             if (it.type === 'field')
               return (
