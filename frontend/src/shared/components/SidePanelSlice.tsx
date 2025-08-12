@@ -141,7 +141,9 @@ function SidePanelSlice({
     }
     const savedStore = localStorage.getItem(localStorageKey)
     const parsed = savedStore
-      ? JSON.parse(savedStore).verticalProportions
+      ? !!JSON.parse(savedStore).verticalProportions
+        ? JSON.parse(savedStore).verticalProportions
+        : [0.65, 0.35]
       : [0.65, 0.35]
 
     if (_.isEqual(parsed, [1, 0])) {
