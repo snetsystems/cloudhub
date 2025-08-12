@@ -21,7 +21,7 @@
           "groupbys": ["\"container_name\""]
         }
       ],
-      "type": "line-stacked"
+      "type": "line"
     },
     {
       "x": 0,
@@ -39,7 +39,7 @@
           "groupbys": ["\"container_name\""]
         }
       ],
-      "type": "line-stepplot"
+      "type": "line"
     },
     {
       "x": 0,
@@ -58,7 +58,7 @@
         }
       ],
       "colors": [],
-      "type": "single-stat"
+      "type": "line"
     },
     {
       "x": 0,
@@ -76,7 +76,7 @@
         }
       ],
       "colors": [],
-      "type": "single-stat"
+      "type": "line"
     },
     {
       "x": 0,
@@ -102,7 +102,7 @@
           "groupbys": ["\"host\""]
         }
       ],
-      "type": ""
+      "type": "line"
     }
   ]
 }

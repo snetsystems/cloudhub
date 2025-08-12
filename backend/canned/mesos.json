@@ -133,7 +133,7 @@
       "i": "0fa47984-825b-46f1-9ca5-0366e3220008",
       "name": "Mesos Master Uptime",
       "colors": [],
-      "type": "single-stat",
+      "type": "line",
       "queries": [
         {
           "query": "SELECT max(\"master/uptime_secs\") AS \"uptime\" FROM \":db:\".\":rp:\".\"mesos\"",
