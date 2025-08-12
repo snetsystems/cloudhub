@@ -2,6 +2,7 @@
 import React, {useState, useEffect, useMemo, useCallback} from 'react'
 import {
   OuiDataGrid,
+  OuiDataGridOnColumnResizeHandler,
   OuiDataGridSchemaDetector,
   OuiIcon,
 } from '@opensearch-project/oui'
@@ -270,28 +271,64 @@ function LogAnalysisSyslogTable({
     return baseColumns.map(col => col.id)
   })
 
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
+    () => {
+      try {
+        const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (parsed.columnWidths && typeof parsed.columnWidths === 'object') {
+            return parsed.columnWidths
+          }
+        }
+      } catch {
+        console.log('Failed to parse column widths from LocalStorage.')
+      }
+      return {}
+    }
+  )
+
   const handleColumnVisibilityChange = (newVisibleColumns: string[]) => {
     setVisibleColumns(newVisibleColumns)
   }
 
+  const handleColumnWidthChange: OuiDataGridOnColumnResizeHandler = (data: {
+    columnId: string
+    width: number
+  }) => {
+    setColumnWidths(prev => ({
+      ...prev,
+      [data.columnId]: data.width,
+    }))
+  }
+
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
-      const parsed = stored ? JSON.parse(stored) : {}
-      localStorage.setItem(
-        LOG_ANALYSIS_LOCAL_STORAGE_KEY,
-        JSON.stringify({
-          ...parsed,
-          columnOrder,
-          visibleColumns,
-          sortColumns,
-          pageSize,
-        })
-      )
-    } catch {
-      console.log('Failed to save table state to LocalStorage.')
+    const debouncedSave = _.debounce(() => {
+      try {
+        const stored = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
+        const parsed = stored ? JSON.parse(stored) : {}
+        localStorage.setItem(
+          LOG_ANALYSIS_LOCAL_STORAGE_KEY,
+          JSON.stringify({
+            ...parsed,
+            columnOrder,
+            visibleColumns,
+            columnWidths,
+            sortColumns,
+            pageSize,
+          })
+        )
+      } catch {
+        console.log('Failed to save table state to LocalStorage.')
+      }
+    }, 300)
+
+    debouncedSave()
+
+    return () => {
+      debouncedSave.cancel()
     }
-  }, [columnOrder, visibleColumns, sortColumns, pageSize])
+  }, [columnOrder, visibleColumns, columnWidths, sortColumns, pageSize])
 
   useEffect(() => {
     const visibleSet = new Set(visibleColumns)
@@ -305,8 +342,19 @@ function LogAnalysisSyslogTable({
 
   const columns = useMemo(() => {
     const columnMap = new Map(baseColumns.map(col => [col.id, col]))
-    return columnOrder.map(id => columnMap.get(id)).filter(Boolean)
-  }, [baseColumns, columnOrder])
+    return columnOrder
+      .map(id => {
+        const column = columnMap.get(id)
+        if (column) {
+          return {
+            ...column,
+            initialWidth: columnWidths[id] || column.initialWidth,
+          }
+        }
+        return column
+      })
+      .filter(Boolean)
+  }, [baseColumns, columnOrder, columnWidths])
 
   const [chunkSizeInputValue, setChunkSizeInputValue] = useState<string>(
     String(chunkSize)
@@ -551,6 +599,7 @@ function LogAnalysisSyslogTable({
               visibleColumns,
               setVisibleColumns: handleColumnVisibilityChange,
             }}
+            onColumnResize={handleColumnWidthChange}
             rowCount={totalRowCount}
             renderCellValue={renderCellValue}
             schemaDetectors={[ipSchema]}
