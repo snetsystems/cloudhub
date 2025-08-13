@@ -306,7 +306,7 @@ function LogAnalysisAlertBarWrapper({
       //   active?.includes(i) ? '#F3852C' : 'rgba(0,0,0,0)'
       // ),
       minBarLength: 1,
-      borderRadius: key === 'info' ? 4 : 0,
+      borderRadius: 0,
     })
 
     return {
@@ -329,8 +329,9 @@ function LogAnalysisAlertBarWrapper({
       setTimeRange: setTimeRange,
       setActive: setActive,
       setDragEndTime: setDragEndTime,
+      severityLevelColors,
     })
-  }, [setTimeRange, setActive, setDragEndTime, logsData])
+  }, [setTimeRange, setActive, setDragEndTime, logsData, severityLevelColors])
 
   return (
     <div style={{height: '100%', backgroundColor: '#292933'}}>
