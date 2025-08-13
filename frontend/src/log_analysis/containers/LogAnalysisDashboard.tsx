@@ -346,6 +346,7 @@ function LogAnalysisDashboard({
           severityFormat={
             logConfig.severityFormat ?? SeverityFormatOptions.dotText
           }
+          isColorOnly={true}
         />
       </OverlayTechnology>
     )
