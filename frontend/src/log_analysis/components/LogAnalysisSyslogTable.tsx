@@ -32,11 +32,13 @@ import {
   TimeZones,
   TimeRange,
 } from 'src/types'
+import {SeverityFormat, SeverityLevelColor} from 'src/types/logs'
 
 // Util
 import {formattedTime} from 'src/log_analysis/util'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import _ from 'lodash'
+import {colorForSeverity, getBrighterColor} from 'src/logs/utils/colors'
 
 // Constants
 import {
@@ -47,8 +49,12 @@ import {
   LOG_ANALYSIS_LOCAL_STORAGE_KEY,
   LOG_ANALYSIS_SYSLOG_TABLE_PAGE_SIZE_OPTIONS,
   SYSLOG_FACILITY_MAP,
-  SYSLOG_SEVERITY_MAP,
 } from 'src/log_analysis/constants'
+import {
+  SeverityColorOptions,
+  SeverityLevelOptions,
+  SeverityFormatOptions,
+} from 'src/logs/constants'
 
 interface Props {
   chunkSize: number
@@ -63,6 +69,8 @@ interface Props {
   pageIndex: number
   pageSize: number
   sortColumns: {id: string; direction: 'asc' | 'desc'}[]
+  severityFormat?: SeverityFormat
+  severityLevelColors?: SeverityLevelColor[]
   onChunkSizeChange: (value: number) => void
   onChunkSizeBlur: (value: number) => void
   onChangeLiveUpdatingStatus: () => void
@@ -112,6 +120,8 @@ function LogAnalysisSyslogTable({
   autoRefreshNumberValue,
   pageIndex,
   pageSize,
+  severityFormat = SeverityFormatOptions.dotText,
+  severityLevelColors = [],
   onChunkSizeChange,
   onChunkSizeBlur,
   sortColumns = [],
@@ -377,6 +387,50 @@ function LogAnalysisSyslogTable({
 
   const excludedOnClickFields = ['@timestamp']
 
+  const severityDotStyle = (colorName: string, level: string) => {
+    const severityColor = colorForSeverity(colorName, level)
+    const brightSeverityColor = getBrighterColor(0.5, severityColor)
+
+    return {
+      background: `linear-gradient(45deg, ${severityColor}, ${brightSeverityColor})`,
+    }
+  }
+
+  const getSeverityLevelFromCode = (code: number): string => {
+    switch (code) {
+      case 0:
+        return SeverityLevelOptions.emerg
+      case 1:
+        return SeverityLevelOptions.alert
+      case 2:
+        return SeverityLevelOptions.crit
+      case 3:
+        return SeverityLevelOptions.err
+      case 4:
+        return SeverityLevelOptions.warning
+      case 5:
+        return SeverityLevelOptions.notice
+      case 6:
+        return SeverityLevelOptions.info
+      case 7:
+        return SeverityLevelOptions.debug
+      default:
+        return SeverityLevelOptions.info
+    }
+  }
+
+  const getSeverityColorFromLevel = (level: string): string => {
+    const colorLevel = severityLevelColors.find(lc => lc.level === level)
+    return colorLevel ? colorLevel.color : SeverityColorOptions.star
+  }
+
+  const getSeverityDotText = (text: string): JSX.Element | null => {
+    if (severityFormat === SeverityFormatOptions.dotText) {
+      return <span className="logs-viewer--severity-text">{text}</span>
+    }
+    return null
+  }
+
   const renderCellValue = useCallback(
     ({rowIndex, columnId}) => {
       const indexInPage = rowIndex - pageIndex * pageSize
@@ -455,70 +509,110 @@ function LogAnalysisSyslogTable({
       }
 
       let cellContent: React.ReactNode
+      let filterKey: string = columnId
+      let filterValue: string | number = ''
+
       switch (columnId) {
         case '@timestamp':
           cellContent = formattedTime(row['@timestamp']?.[0] || null, timeZone)
+          filterValue = row['@timestamp']?.[0] || ''
           break
         case 'host.ip':
           cellContent = row['host.ip']?.[0] || ''
+          filterValue = row['host.ip']?.[0] || ''
           break
         case 'host.hostname':
           cellContent = row['host.hostname']?.[0] || ''
+          filterValue = row['host.hostname']?.[0] || ''
           break
         case 'message':
           cellContent = row['message']?.[0] || ''
+          filterValue = row['message']?.[0] || ''
           break
         case 'event.original':
           cellContent = row['event.original']?.[0] || ''
+          filterValue = row['event.original']?.[0] || ''
           break
         case 'service.type':
           cellContent = row['service.type']?.[0] || ''
+          filterValue = row['service.type']?.[0] || ''
           break
         case 'process.name':
           cellContent = row['process.name']?.[0] || ''
+          filterValue = row['process.name']?.[0] || ''
           break
         case 'process.pid':
           cellContent = row['process.pid']?.[0] || ''
+          filterValue = row['process.pid']?.[0] || ''
           break
         case 'severity.code': {
           const sev = row['log.syslog.severity.code']?.[0]
-          const severityText =
-            sev == null ? '' : SYSLOG_SEVERITY_MAP[sev] || String(sev)
-          cellContent = sev == null ? '' : `${severityText} (${sev})`
+          if (sev != null) {
+            const severityLevel = getSeverityLevelFromCode(Number(sev))
+            const severityColor = getSeverityColorFromLevel(severityLevel)
+            const severityText = severityLevel
+
+            const isDotNeeded =
+              severityFormat === SeverityFormatOptions.dot ||
+              severityFormat === SeverityFormatOptions.dotText
+
+            if (isDotNeeded) {
+              cellContent = (
+                <>
+                  <div
+                    className={`logs-viewer--dot ${severityLevel}-severity`}
+                    title={severityText}
+                    data-index={rowIndex}
+                    style={severityDotStyle(severityColor, severityLevel)}
+                  />
+                  {getSeverityDotText(severityText)}
+                </>
+              )
+            } else {
+              cellContent = severityText
+            }
+            filterKey = 'log.syslog.severity.code'
+            filterValue = Number(sev)
+          } else {
+            cellContent = ''
+            filterValue = ''
+          }
           break
         }
         case 'facility.code': {
           const fac = row['log.syslog.facility.code']?.[0]
           const facilityText = fac != null ? SYSLOG_FACILITY_MAP[fac] || '' : ''
           cellContent = facilityText
+          filterKey = 'log.syslog.facility.code'
+          filterValue = fac != null ? Number(fac) : ''
           break
         }
         case 'deviceType':
           cellContent = row['deviceType']?.[0] || ''
+          filterValue = row['deviceType']?.[0] || ''
           break
         default:
           cellContent = null
+          filterValue = ''
       }
-
-      const rawValue = (row as any)[columnId]
-      const filterValue =
-        Array.isArray(rawValue) && rawValue.length > 0
-          ? rawValue[0]
-          : rawValue ?? ''
 
       return (
         <span
           style={{
-            cursor: excludedOnClickFields.includes(columnId)
-              ? 'default'
-              : 'pointer',
+            cursor:
+              excludedOnClickFields.includes(columnId) || filterValue === ''
+                ? 'default'
+                : 'pointer',
           }}
           onClick={
-            excludedOnClickFields.includes(columnId)
+            excludedOnClickFields.includes(columnId) || filterValue === ''
               ? undefined
               : () =>
                   dispatch(
-                    addLogAnalysisMatchPhraseFilterClause(columnId, filterValue)
+                    addLogAnalysisMatchPhraseFilterClause(
+                      filterKey,
+                      filterValue
+                    )
                   )
           }
         >
@@ -526,7 +620,16 @@ function LogAnalysisSyslogTable({
         </span>
       )
     },
-    [items, timeZone, pageIndex, pageSize, dispatch, handleExpandSideBar]
+    [
+      items,
+      timeZone,
+      pageIndex,
+      pageSize,
+      dispatch,
+      handleExpandSideBar,
+      severityFormat,
+      severityLevelColors,
+    ]
   )
 
   const ipSchema: OuiDataGridSchemaDetector = {

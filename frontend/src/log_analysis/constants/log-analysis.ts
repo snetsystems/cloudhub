@@ -15,17 +15,6 @@ export const LOG_ANALYSIS_SYSLOG_TABLE_PAGE_SIZE_OPTIONS = [
   100,
 ]
 
-export const SYSLOG_SEVERITY_MAP: Record<number, string> = {
-  0: 'Emergency',
-  1: 'Alert',
-  2: 'Critical',
-  3: 'Error',
-  4: 'Warning',
-  5: 'Notice',
-  6: 'Informational',
-  7: 'Debug',
-}
-
 export const SYSLOG_FACILITY_MAP: Record<number, string> = {
   0: 'kern',
   1: 'user',
