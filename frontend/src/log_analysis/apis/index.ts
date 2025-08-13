@@ -24,6 +24,7 @@ import {
   getFieldOperatorsWithLogical,
   parseFieldOpValue,
 } from 'src/log_analysis/util'
+import {SEVERITY_SORTING_ORDER, SeverityLevelOptions} from 'src/logs/constants'
 
 export async function fetchMessageTokenData({
   esSource,
@@ -310,16 +311,51 @@ export async function fetchLogsCount({
   lteISO: string
   filters: FilteredLogsForLogAnalysis
 }): Promise<{data: LogCountData[]}> {
-  const body = {
+  type ESBody = {
+    aggs: any
+    size: number
+    _source: {excludes: string[]}
+    query: any
+    stored_fields: string[]
+    runtime_mappings: Record<string, any>
+    script_fields: Record<string, any>
+    fields: Array<{field: string; format: string}>
+  }
+
+  const severityCodeMap = Object.entries(SEVERITY_SORTING_ORDER).reduce(
+    (acc, [key, value]) => {
+      acc[key] = value
+      return acc
+    },
+    {} as Record<SeverityLevelOptions, number>
+  )
+
+  const severityFilters = {
+    emerg: {term: {'log.syslog.severity.code': severityCodeMap.emerg}},
+    alert: {term: {'log.syslog.severity.code': severityCodeMap.alert}},
+    crit: {term: {'log.syslog.severity.code': severityCodeMap.crit}},
+    err: {term: {'log.syslog.severity.code': severityCodeMap.err}},
+    warning: {
+      term: {'log.syslog.severity.code': severityCodeMap.warning},
+    },
+    notice: {term: {'log.syslog.severity.code': severityCodeMap.notice}},
+    info: {term: {'log.syslog.severity.code': severityCodeMap.info}},
+    debug: {term: {'log.syslog.severity.code': severityCodeMap.debug}},
+  }
+
+  const body: ESBody = {
     aggs: {
       '0': {
         date_histogram: {
           field: '@timestamp',
           calendar_interval: '1d',
           time_zone: 'UTC',
-          extended_bounds: {
-            min: gteISO,
-            max: lteISO,
+          min_doc_count: 0,
+          extended_bounds: {min: gteISO, max: lteISO},
+        },
+        aggs: {
+          '1': {
+            filters: {filters: severityFilters},
           },
         },
       },
@@ -341,7 +377,7 @@ export async function fetchLogsCount({
               },
             },
           },
-          ...filters,
+          ...filters, // 기존 필터 유지
         ],
       },
     },
@@ -358,9 +394,16 @@ export async function fetchLogsCount({
   })
 
   const data: LogCountData[] = res.rawResponse.aggregations['0'].buckets.map(
-    (b: {key: string; doc_count: number}) => ({
+    (b: {
+      key: string
+      doc_count: number
+      1: {
+        buckets: Record<keyof typeof SeverityLevelOptions, {doc_count: number}>
+      }
+    }) => ({
       time: b.key,
       value: b.doc_count,
+      buckets: b['1'].buckets,
     })
   )
 
@@ -473,7 +516,7 @@ export async function getAutoCompleteResult({
           body: {
             field,
             string: valueInput,
-            case_insensitive:true,
+            case_insensitive: true,
             size: 10,
             ...buildTimeRangeFilter(timeRange),
           },

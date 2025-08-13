@@ -15,7 +15,7 @@ import {setStateInitAction} from 'src/device_management/actions'
 import {closePanel, openPanel} from 'src/shared/actions/sidePanel'
 
 // Components
-import {Page} from 'src/reusable_ui'
+import {OverlayTechnology, Page} from 'src/reusable_ui'
 import LogAnalysisSyslogTableWrapper from 'src/log_analysis/components/LogAnalysisSyslogTableWrapper'
 import LogsFilterContainer from 'src/log_analysis/components/LogsFilterContainer'
 import LogAnalysisTips from 'src/log_analysis/components/LogAnalysisTips'
@@ -43,6 +43,7 @@ import {
   TimeZones,
   Links,
 } from 'src/types'
+import {LogConfig, SeverityFormat, LogsTableColumn} from 'src/types/logs'
 
 // Constants
 import {
@@ -54,8 +55,12 @@ import {
 import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
 import {LOG_ANALYSIS_LOCAL_STORAGE_KEY} from 'src/log_analysis/constants/log-analysis'
 import {FIXTURE_LOG_ANALYSIS_CELLS} from 'src/log_analysis/constants/fixture'
-import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
+import Authorized, {EDITOR_ROLE, VIEWER_ROLE} from 'src/auth/Authorized'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
+import OptionsOverlay from 'src/logs/components/OptionsOverlay'
+import {SeverityLevelColor} from 'src/types/logs'
+import {updateLogConfigAsync} from 'src/logs/actions'
+import {SeverityFormatOptions} from 'src/logs/constants'
 
 interface TempProps {
   cell: Cell
@@ -66,6 +71,7 @@ interface Props {
   inPresentationMode: boolean
   timeZone: TimeZones
   setTimeZone: typeof appActions.setTimeZone
+  logConfig: LogConfig
   source: Source
   cloudTimeRange: CloudTimeRange
   cloudAutoRefresh: CloudAutoRefresh
@@ -83,6 +89,8 @@ interface Props {
   links?: Links
   router?: InjectedRouter
   params: {sourceID: string}
+  updateConfig: typeof updateLogConfigAsync
+  logConfigLink: string
 }
 
 function LogAnalysisDashboard({
@@ -100,7 +108,12 @@ function LogAnalysisDashboard({
   links,
   router,
   params,
+  logConfig,
+  logConfigLink,
+  updateConfig,
 }: Props) {
+  const [isOverlayVisible, setIsOverlayVisible] = useState(false)
+
   const [horizontalProportions, setHorizontalProportions] = useState(() => {
     const savedStore = localStorage.getItem(LOG_ANALYSIS_LOCAL_STORAGE_KEY)
     const parsed = savedStore ? JSON.parse(savedStore) : {}
@@ -274,11 +287,23 @@ function LogAnalysisDashboard({
     setLogAnalysisManualRefresh()
   }, [setLogAnalysisManualRefresh])
 
+  const handleToggleOverlay = (): void => {
+    setIsOverlayVisible(!isOverlayVisible)
+  }
+
   const renderHeaderRight = () => {
     return (
       <>
         <LogAnalysisTips />
         <SourceIndicator />
+        <Authorized requiredRole={EDITOR_ROLE}>
+          <button
+            className="btn btn-sm btn-square btn-default"
+            onClick={handleToggleOverlay}
+          >
+            <span className="icon cog-thick" />
+          </button>
+        </Authorized>
         <AutoRefreshDropdown
           onChoose={handleChooseAutoRefresh}
           selected={0}
@@ -294,6 +319,35 @@ function LogAnalysisDashboard({
 
         <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
       </>
+    )
+  }
+
+  const handleUpdateOptions = async (
+    severityLevelColors: SeverityLevelColor[],
+    severityFormat: SeverityFormat,
+    tableColumns: LogsTableColumn[]
+  ): Promise<void> => {
+    await updateConfig(logConfigLink, {
+      ...logConfig,
+      severityLevelColors,
+      severityFormat,
+      tableColumns,
+    })
+  }
+
+  const renderImportOverlay = (): JSX.Element => {
+    return (
+      <OverlayTechnology visible={isOverlayVisible}>
+        <OptionsOverlay
+          severityLevelColors={logConfig.severityLevelColors}
+          onUpdate={handleUpdateOptions}
+          onDismissOverlay={handleToggleOverlay}
+          columns={logConfig.tableColumns}
+          severityFormat={
+            logConfig.severityFormat ?? SeverityFormatOptions.dotText
+          }
+        />
+      </OverlayTechnology>
     )
   }
 
@@ -417,6 +471,7 @@ function LogAnalysisDashboard({
           onResize={horizontalHandleResize}
         />
       </Page>
+      {renderImportOverlay()}
     </>
   )
 }
@@ -428,6 +483,7 @@ const mstp = state => {
       persisted: {timeZone, autoRefresh, cloudAutoRefresh, cloudTimeRange},
     },
     links,
+    logs: {logConfig},
   } = state
 
   return {
@@ -437,6 +493,8 @@ const mstp = state => {
     cloudAutoRefresh,
     cloudTimeRange,
     links,
+    logConfigLink: links.orgConfig.logViewer,
+    logConfig,
   }
 }
 
@@ -451,6 +509,7 @@ const mdtp = dispatch => ({
     setLogAnalysisManualRefresh,
     dispatch
   ),
+  updateConfig: bindActionCreators(updateLogConfigAsync, dispatch),
 })
 
 const isEqual = (prev, next) => {

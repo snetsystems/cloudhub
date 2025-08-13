@@ -18,6 +18,7 @@ export const HistogramOptions = ({
     },
     maintainAspectRatio: false,
     responsive: true,
+    interaction: {mode: 'index' as const, intersect: false},
     plugins: {
       'stable-selection': {
         threshold: 8,
@@ -54,7 +55,16 @@ export const HistogramOptions = ({
         usePointStyle: true,
         boxWidth: 10,
         boxHeight: 10,
-        callbacks: {},
+        displayColors: true,
+        filter: item => (item.parsed.y ?? 0) > 0,
+
+        callbacks: {
+          label: ctx => {
+            const v = ctx.parsed.y ?? 0
+            return `${ctx.dataset.label}: ${v.toLocaleString()}`
+          },
+          labelTextColor: ctx => ctx.dataset.backgroundColor ?? '#fff',
+        },
       },
       legend: {
         display: false,
@@ -94,7 +104,7 @@ export const HistogramOptions = ({
           autoSkipPadding: 25,
           sampleSize: 8,
         },
-        stacked: false,
+        stacked: true,
       },
       y: {
         title: {
@@ -117,7 +127,7 @@ export const HistogramOptions = ({
             weight: '600',
           },
         },
-        stacked: false,
+        stacked: true,
       },
     },
   }

@@ -48,6 +48,9 @@ import {FilteredLogsForLogAnalysis} from 'src/types/logAnalysis'
 import {stableSelectionPlugin} from 'src/shared/utils/esChart'
 import {HistogramOptions} from 'src/log_analysis/util/HistogramOptions'
 import LoadingDots from 'src/shared/components/LoadingDots'
+import {SeverityLevelOptions} from 'src/logs/constants'
+import {SeverityLevelColor} from 'src/types/logs'
+import {SeverityColorValues} from 'src/logs/constants'
 
 ChartJS.register(stableSelectionPlugin)
 
@@ -67,6 +70,7 @@ interface Props {
   filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   removeLogAnalysisRangeFilterClause?: (field: string) => void
   logAnalysisManualRefresh?: number
+  severityLevelColors?: SeverityLevelColor[]
 }
 function LogAnalysisAlertBarWrapper({
   cell,
@@ -77,6 +81,7 @@ function LogAnalysisAlertBarWrapper({
   removeLogAnalysisRangeFilterClause,
   filteredLogsForLogAnalysis,
   logAnalysisManualRefresh,
+  severityLevelColors,
 }: Props) {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
 
@@ -171,7 +176,6 @@ function LogAnalysisAlertBarWrapper({
 
   useEffect(() => {
     if (!logsData) return
-
     let result = filteredLogsForLogAnalysis.filter(filter => {
       if ('range' in filter) {
         const {gte, lte} = filter.range['@timestamp']
@@ -276,32 +280,49 @@ function LogAnalysisAlertBarWrapper({
       }
     }
 
+    const ds = (key: keyof typeof SeverityLevelOptions, label: string) => ({
+      label,
+      data: logsData.map(r => r.buckets[key]?.doc_count ?? 0),
+      stack: 'sev',
+
+      borderSkipped: false,
+      borderWidth: 0,
+      backgroundColor: logsData.map((_, i) =>
+        active?.includes(i)
+          ? '#F3852C'
+          : logsData.length === 1
+          ? SeverityColorValues[
+              severityLevelColors.find(i => i.level == key).color
+            ]
+          : i === 0
+          ? SeverityColorValues[
+              severityLevelColors.find(i => i.level == key).color
+            ] + 'B3' //opacity 70%
+          : SeverityColorValues[
+              severityLevelColors.find(i => i.level == key).color
+            ]
+      ),
+      // borderColor: logsData.map((_, i) =>
+      //   active?.includes(i) ? '#F3852C' : 'rgba(0,0,0,0)'
+      // ),
+      minBarLength: 1,
+      borderRadius: key === 'info' ? 4 : 0,
+    })
+
     return {
       datasets: [
-        {
-          label: 'Count',
-          data: logsData.map(i => ({x: i?.time, y: i?.value})),
-          borderSkipped: false,
-          backgroundColor: logsData.map((_, i) =>
-            active?.includes(i)
-              ? '#F3852C'
-              : logsData.length === 1
-              ? 'rgba(49, 192, 246, 0.8)'
-              : i === 0
-              ? 'rgba(49, 192, 246, 0.3)'
-              : 'rgba(49, 192, 246, 0.8)'
-          ),
-          borderColor: logsData.map((_, i) =>
-            active?.includes(i) ? '#F3852C' : 'rgba(0,0,0,0)'
-          ),
-          minBarLength: 5,
-          borderWidth: logsData.map((_, i) => (active?.includes(i) ? 2 : 1)),
-          borderRadius: 4,
-        },
+        ds('emerg', 'emerg'),
+        ds('alert', 'alert'),
+        ds('crit', 'crit'),
+        ds('err', 'err'),
+        ds('warning', 'warning'),
+        ds('notice', 'notice'),
+        ds('info', 'info'),
+        ds('debug', 'debug'),
       ],
       labels: logsData.map(i => moment(i?.time).format('MMM DD')),
     }
-  }, [logsData, active])
+  }, [logsData, active, severityLevelColors])
 
   const options = useMemo(() => {
     return HistogramOptions({
@@ -343,6 +364,9 @@ const mstp = state => {
     app: {
       persisted: {cloudAutoRefresh, timeZone, cloudTimeRange, esSource},
     },
+    logs: {
+      logConfig: {severityLevelColors},
+    },
     logAnalysisDashboard: {
       filteredLogsForLogAnalysis,
       logAnalysisManualRefresh,
@@ -355,6 +379,7 @@ const mstp = state => {
     esSource,
     filteredLogsForLogAnalysis,
     logAnalysisManualRefresh,
+    severityLevelColors,
   }
 }
 
