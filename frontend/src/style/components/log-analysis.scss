@@ -572,13 +572,6 @@ button[data-test-subj='pagination-button-next'][disabled] {
   box-sizing: border-box;
   cursor: pointer;
 
-  &.truncated {
-    max-height: 34px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
   &.not-truncated {
     max-height: none;
     overflow: visible;
