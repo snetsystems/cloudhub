@@ -27,6 +27,7 @@ import {
   TimeRange,
 } from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
+import {SeverityLevelColor} from 'src/types/logs'
 
 // Constants
 import {
@@ -34,6 +35,7 @@ import {
   LOG_ANALYSIS_LOCAL_STORAGE_KEY,
 } from 'src/log_analysis/constants'
 import {ADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
+import {SeverityFormatOptions} from 'src/logs/constants'
 
 // Components
 import LogAnalysisSyslogTable from 'src/log_analysis/components/LogAnalysisSyslogTable'
@@ -70,6 +72,10 @@ interface StateProps {
   openPanel?: typeof openPanel
   setSelectedDevice?: typeof setSelectedDevice
   notify?: (message: Notification) => void
+  logConfig?: {
+    severityFormat?: SeverityFormatOptions
+    severityLevelColors?: SeverityLevelColor[]
+  }
 }
 
 type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps & StateProps
@@ -86,6 +92,7 @@ function LogAnalysisSyslogTableWrapper({
   openPanel,
   setSelectedDevice,
   notify,
+  logConfig,
 }: LogAnalysisSyslogTableProps) {
   const [syslogTableChunkSize, setSyslogTableChunkSize] = useState<number>(
     () => {
@@ -410,6 +417,10 @@ function LogAnalysisSyslogTableWrapper({
       onSort={onSort}
       onLoadMore={onLoadMore}
       hasMore={rows.length < totalRowCount}
+      severityFormat={
+        logConfig?.severityFormat || SeverityFormatOptions.dotText
+      }
+      severityLevelColors={logConfig?.severityLevelColors || []}
       onChangeLiveUpdatingStatus={onChangeLiveUpdatingStatus}
     />
   )
@@ -424,6 +435,7 @@ const mstp = state => {
       filteredLogsForLogAnalysis,
       logAnalysisManualRefresh,
     },
+    logs: {logConfig},
     auth,
   } = state
   return {
@@ -433,6 +445,7 @@ const mstp = state => {
     esSource,
     filteredLogsForLogAnalysis,
     logAnalysisManualRefresh,
+    logConfig,
     auth,
   }
 }
