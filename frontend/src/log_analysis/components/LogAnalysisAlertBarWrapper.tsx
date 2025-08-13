@@ -311,14 +311,14 @@ function LogAnalysisAlertBarWrapper({
 
     return {
       datasets: [
-        ds('emerg', 'emerg'),
-        ds('alert', 'alert'),
-        ds('crit', 'crit'),
-        ds('err', 'err'),
-        ds('warning', 'warning'),
-        ds('notice', 'notice'),
-        ds('info', 'info'),
         ds('debug', 'debug'),
+        ds('info', 'info'),
+        ds('notice', 'notice'),
+        ds('warning', 'warning'),
+        ds('err', 'err'),
+        ds('crit', 'crit'),
+        ds('alert', 'alert'),
+        ds('emerg', 'emerg'),
       ],
       labels: logsData.map(i => moment(i?.time).format('MMM DD')),
     }

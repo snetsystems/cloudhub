@@ -68,6 +68,7 @@ export const HistogramOptions = ({
         footerMarginTop: 8,
         filter: item => (item.parsed.y ?? 0) > 0,
         footerFont: {weight: '600'},
+        itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
         callbacks: {
           label: ctx => {
             const v = ctx.parsed.y ?? 0
