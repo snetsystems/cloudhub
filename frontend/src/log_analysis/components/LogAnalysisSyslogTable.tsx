@@ -489,9 +489,8 @@ function LogAnalysisSyslogTable({
         }
         case 'facility.code': {
           const fac = row['log.syslog.facility.code']?.[0]
-          const facilityText =
-            fac == null ? '' : SYSLOG_FACILITY_MAP[fac] || String(fac)
-          cellContent = fac == null ? '' : `${facilityText} (${fac})`
+          const facilityText = fac != null ? SYSLOG_FACILITY_MAP[fac] || '' : ''
+          cellContent = facilityText
           break
         }
         case 'deviceType':
