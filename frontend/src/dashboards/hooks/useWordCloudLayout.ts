@@ -34,7 +34,7 @@ export function useWordCloudLayout({
   const [words, setWords] = useState<CloudWord[]>([])
 
   useEffect(() => {
-    if (!width || !height || !data.length) {
+    if (!width || !height || !data.length || data.length === 0) {
       setWords([])
       return
     }

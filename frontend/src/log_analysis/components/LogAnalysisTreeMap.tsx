@@ -85,7 +85,7 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
     minTileWidth: number,
     minTileHeight: number
   ) => {
-    if (!data || width === 0 || height === 0) {
+    if (!data || width === 0 || height === 0 || data.length === 0) {
       return {
         displayData: [],
         effectiveData: [],
@@ -103,9 +103,9 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
     const eff = overflowCnt > 0 ? sorted.slice(0, maxTiles) : sorted
 
     return {
-      displayData: sorted, 
-      effectiveData: eff, 
-      overflowCount: overflowCnt, 
+      displayData: sorted,
+      effectiveData: eff,
+      overflowCount: overflowCnt,
       realTotal: sorted.reduce((s, d) => s + d.value, 0),
     }
   }
@@ -132,16 +132,7 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
       minTileHeight
     )
     setLayoutData(result)
-  }, [
-    data,
-    width,
-    height,
-    topN,
-    minTileWidth,
-    minTileHeight,
-  ])
-
-
+  }, [data, width, height, topN, minTileWidth, minTileHeight])
 
   const {displayData, effectiveData, overflowCount, realTotal} = layoutData
 
@@ -175,7 +166,18 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
   }
 
   useEffect(() => {
-    if (effectiveData.length === 0 || width === 0 || height === 0) return
+    const svg = d3.select(svgRef.current)
+
+    if (
+      effectiveData.length === 0 ||
+      width === 0 ||
+      height === 0 ||
+      data.length === 0
+    ) {
+      svg.selectAll('*').remove()
+      setTooltip(t => ({...t, visible: false}))
+      return
+    }
 
     const weighted = addWeights(
       effectiveData,
@@ -207,7 +209,6 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
       .domain(leaves.map(l => l.data.name))
       .range(colorPalette)
 
-    const svg = d3.select(svgRef.current)
     svg.selectAll('*').remove()
 
     const nodes = svg
@@ -289,6 +290,7 @@ const LogAnalysisTreeMap: React.FC<LogAnalysisTreeMapProps> = ({
     minTileWidth,
     minTileHeight,
     onRectClick,
+    data,
   ])
   return (
     <div className="relative-full">
