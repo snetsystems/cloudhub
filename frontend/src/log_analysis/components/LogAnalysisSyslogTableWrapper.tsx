@@ -72,10 +72,6 @@ interface StateProps {
   openPanel?: typeof openPanel
   setSelectedDevice?: typeof setSelectedDevice
   notify?: (message: Notification) => void
-  logConfig?: {
-    severityFormat?: SeverityFormatOptions
-    severityLevelColors?: SeverityLevelColor[]
-  }
 }
 
 type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps & StateProps
@@ -92,7 +88,6 @@ function LogAnalysisSyslogTableWrapper({
   openPanel,
   setSelectedDevice,
   notify,
-  logConfig,
 }: LogAnalysisSyslogTableProps) {
   const [syslogTableChunkSize, setSyslogTableChunkSize] = useState<number>(
     () => {
@@ -417,10 +412,6 @@ function LogAnalysisSyslogTableWrapper({
       onSort={onSort}
       onLoadMore={onLoadMore}
       hasMore={rows.length < totalRowCount}
-      severityFormat={
-        logConfig?.severityFormat || SeverityFormatOptions.dotText
-      }
-      severityLevelColors={logConfig?.severityLevelColors || []}
       onChangeLiveUpdatingStatus={onChangeLiveUpdatingStatus}
     />
   )

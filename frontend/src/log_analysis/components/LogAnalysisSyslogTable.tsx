@@ -9,6 +9,7 @@ import {
 import {connect, useDispatch} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import ReactObserver from 'react-resize-observer'
+import {Radio} from 'src/reusable_ui'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -23,6 +24,7 @@ import {
   addLogAnalysisRangeFilterClause,
   removeLogAnalysisMatchPhraseFilterClause,
 } from 'src/log_analysis/actions'
+import {updateLogConfigAsync} from 'src/logs/actions'
 
 // Type
 import {
@@ -32,7 +34,7 @@ import {
   TimeZones,
   TimeRange,
 } from 'src/types'
-import {SeverityFormat, SeverityLevelColor} from 'src/types/logs'
+import {LogConfig} from 'src/types/logs'
 
 // Util
 import {formattedTime} from 'src/log_analysis/util'
@@ -57,9 +59,8 @@ import {
   DEFAULT_SEVERITY_LEVELS,
 } from 'src/logs/constants'
 
-interface Props {
+interface LogAnalysisSyslogTableOwnProps {
   chunkSize: number
-  filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
   isLoading: boolean
   isLiveUpdating: boolean
   syslogTableRows: (SyslogTableRows & {_highlight?: Record<string, string[]>})[]
@@ -70,8 +71,6 @@ interface Props {
   pageIndex: number
   pageSize: number
   sortColumns: {id: string; direction: 'asc' | 'desc'}[]
-  severityFormat?: SeverityFormat
-  severityLevelColors?: SeverityLevelColor[]
   onChunkSizeChange: (value: number) => void
   onChunkSizeBlur: (value: number) => void
   onChangeLiveUpdatingStatus: () => void
@@ -86,6 +85,21 @@ interface Props {
   ) => void
   hasMore: boolean
 }
+
+interface StateProps {
+  filteredLogsForLogAnalysis?: FilteredLogsForLogAnalysis
+  isTruncated: boolean
+  logConfigLink: string
+  logConfig: LogConfig
+}
+
+interface DispatchProps {
+  updateLogConfigAsync: (url: string, config: any) => Promise<void>
+}
+
+type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps &
+  StateProps &
+  DispatchProps
 
 function getTimeRangeFromTimestamp(
   timestamp: string | null
@@ -109,7 +123,7 @@ function formatNumberWithCommas(value: number | null | undefined): string {
   return value.toLocaleString('en-US')
 }
 
-function LogAnalysisSyslogTable({
+function LogAnalysisSyslogTable<_>({
   filteredLogsForLogAnalysis,
   chunkSize,
   isLiveUpdating,
@@ -121,8 +135,9 @@ function LogAnalysisSyslogTable({
   autoRefreshNumberValue,
   pageIndex,
   pageSize,
-  severityFormat = SeverityFormatOptions.dotText,
-  severityLevelColors = [],
+  isTruncated,
+  logConfigLink,
+  logConfig,
   onChunkSizeChange,
   onChunkSizeBlur,
   sortColumns = [],
@@ -133,9 +148,9 @@ function LogAnalysisSyslogTable({
   onLoadMore,
   handleExpandSideBar,
   hasMore,
-}: Props) {
+  updateLogConfigAsync,
+}: LogAnalysisSyslogTableProps) {
   const dispatch = useDispatch()
-
   const [
     isMessageTokensModalVisible,
     setIsMessageTokensModalVisible,
@@ -339,7 +354,14 @@ function LogAnalysisSyslogTable({
     return () => {
       debouncedSave.cancel()
     }
-  }, [columnOrder, visibleColumns, columnWidths, sortColumns, pageSize])
+  }, [
+    columnOrder,
+    visibleColumns,
+    columnWidths,
+    sortColumns,
+    pageSize,
+    isTruncated,
+  ])
 
   useEffect(() => {
     const visibleSet = new Set(visibleColumns)
@@ -384,7 +406,7 @@ function LogAnalysisSyslogTable({
     if (pageIndex >= totalPages) {
       onChangePage(totalPages - 1)
     }
-  }, [totalRowCount, pageSize, pageIndex, onChangePage])
+  }, [totalRowCount, pageSize, pageIndex, onChangePage, isTruncated])
 
   const excludedOnClickFields = ['@timestamp']
 
@@ -421,14 +443,16 @@ function LogAnalysisSyslogTable({
   }
 
   const getSeverityColorFromLevel = (level: string): string => {
-    const colorLevel = severityLevelColors.find(lc => lc.level === level)
+    const colorLevel = logConfig?.severityLevelColors.find(
+      lc => lc.level === level
+    )
     return colorLevel
       ? colorLevel.color
       : DEFAULT_SEVERITY_LEVELS[level] || SeverityColorOptions.star
   }
 
   const getSeverityDotText = (text: string): JSX.Element | null => {
-    if (severityFormat === SeverityFormatOptions.dotText) {
+    if (logConfig?.severityFormat === SeverityFormatOptions.dotText) {
       return <span className="logs-viewer--severity-text">{text}</span>
     }
     return null
@@ -473,7 +497,9 @@ function LogAnalysisSyslogTable({
 
         return (
           <span
-            style={{cursor: 'pointer'}}
+            className={`log-analysis-table-cell ${
+              isTruncated ? 'truncated' : 'not-truncated'
+            }`}
             onClick={() => {
               setMessageTokensForModal(tokens)
               setIsMessageTokensModalVisible(true)
@@ -529,8 +555,9 @@ function LogAnalysisSyslogTable({
           filterValue = row['host.hostname']?.[0] || ''
           break
         case 'message':
-          cellContent = row['message']?.[0] || ''
-          filterValue = row['message']?.[0] || ''
+          const messageText = row['message']?.[0] || ''
+          cellContent = messageText
+          filterValue = messageText
           break
         case 'event.original':
           cellContent = row['event.original']?.[0] || ''
@@ -556,8 +583,8 @@ function LogAnalysisSyslogTable({
             const severityText = severityLevel
 
             const isDotNeeded =
-              severityFormat === SeverityFormatOptions.dot ||
-              severityFormat === SeverityFormatOptions.dotText
+              logConfig?.severityFormat === SeverityFormatOptions.dot ||
+              logConfig?.severityFormat === SeverityFormatOptions.dotText
 
             if (isDotNeeded) {
               cellContent = (
@@ -599,16 +626,21 @@ function LogAnalysisSyslogTable({
           filterValue = ''
       }
 
+      const isDisabled =
+        excludedOnClickFields.includes(columnId) || filterValue === ''
+
       return (
         <span
-          style={{
-            cursor:
-              excludedOnClickFields.includes(columnId) || filterValue === ''
-                ? 'default'
-                : 'pointer',
-          }}
+          className={`log-analysis-table-cell ${
+            isTruncated ? 'truncated' : 'not-truncated'
+          } ${isDisabled ? 'disabled' : ''}`}
+          title={
+            isTruncated && columnId === 'message'
+              ? String(filterValue)
+              : undefined
+          }
           onClick={
-            excludedOnClickFields.includes(columnId) || filterValue === ''
+            isDisabled
               ? undefined
               : () =>
                   dispatch(
@@ -630,8 +662,9 @@ function LogAnalysisSyslogTable({
       pageSize,
       dispatch,
       handleExpandSideBar,
-      severityFormat,
-      severityLevelColors,
+      logConfig?.isTruncated,
+      logConfig?.severityFormat,
+      logConfig?.severityLevelColors,
     ]
   )
 
@@ -666,6 +699,41 @@ function LogAnalysisSyslogTable({
     debouncedFit()
   }
 
+  const rowHeightsOptions = useMemo(() => {
+    if (isTruncated) {
+      return {
+        defaultHeight: {
+          lineCount: 1,
+        },
+      }
+    }
+
+    const rowHeights: Record<number, any> = {}
+    items.forEach((_, index) => {
+      const globalIndex = pageIndex * pageSize + index
+
+      rowHeights[globalIndex] = {
+        lineCount: 3,
+      }
+    })
+
+    return {
+      defaultHeight: {
+        lineCount: 1,
+      },
+      rowHeights,
+    }
+  }, [isTruncated, items, pageIndex, pageSize])
+
+  const handleUpdateTruncation = async (
+    isTruncated: boolean
+  ): Promise<void> => {
+    await updateLogConfigAsync(logConfigLink, {
+      ...logConfig,
+      isTruncated,
+    })
+  }
+
   return (
     <>
       <LogAnalysisDashboardHeader
@@ -693,7 +761,29 @@ function LogAnalysisSyslogTable({
       <FancyScrollbar style={{height: 'calc(100% - 40px)'}}>
         <div className="syslog-table--container">
           <div className="syslog-table--total-count">
-            Documents ({formatNumberWithCommas(totalHitsValue)})
+            <span>Documents ({formatNumberWithCommas(totalHitsValue)})</span>
+            <div className="page-header--right">
+              <Radio>
+                <Radio.Button
+                  id="syslog-truncation--truncate"
+                  active={isTruncated === true}
+                  value={true}
+                  titleText="Truncate log messages when they exceed 1 line"
+                  onClick={handleUpdateTruncation}
+                >
+                  Truncate
+                </Radio.Button>
+                <Radio.Button
+                  id="syslog-truncation--multi"
+                  active={isTruncated === false}
+                  value={false}
+                  titleText="Allow log messages to wrap text"
+                  onClick={handleUpdateTruncation}
+                >
+                  Wrap
+                </Radio.Button>
+              </Radio>
+            </div>
           </div>
           <ReactObserver onResize={handleOnResize} />
           <OuiDataGrid
@@ -730,6 +820,7 @@ function LogAnalysisSyslogTable({
               rowHover: 'highlight',
               header: 'underline',
             }}
+            rowHeightsOptions={rowHeightsOptions}
           />
         </div>
         {isLastPage && hasMore && (
@@ -829,9 +920,16 @@ function LogAnalysisSyslogTable({
 const mstp = state => {
   const {
     logAnalysisDashboard: {filteredLogsForLogAnalysis},
+    logs: {logConfig},
+    links: {
+      orgConfig: {logViewer},
+    },
   } = state
   return {
     filteredLogsForLogAnalysis,
+    isTruncated: logConfig?.isTruncated,
+    logConfigLink: logViewer,
+    logConfig,
   }
 }
 
@@ -840,6 +938,11 @@ const mdtp = dispatch => ({
     addLogAnalysisRangeFilterClause,
     dispatch
   ),
+  updateLogConfigAsync: bindActionCreators(updateLogConfigAsync, dispatch),
 })
 
-export default connect(mstp, mdtp, null)(LogAnalysisSyslogTable)
+export default connect(
+  mstp,
+  mdtp,
+  null
+)(LogAnalysisSyslogTable) as React.ComponentType<LogAnalysisSyslogTableOwnProps>

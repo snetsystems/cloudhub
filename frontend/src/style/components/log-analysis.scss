@@ -34,6 +34,9 @@ $highlight: #25262e;
 .syslog-table--total-count {
   padding: 10px 0px 0px 10px;
   font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .syslog-table-chunksize--container {
@@ -559,4 +562,31 @@ button[data-test-subj='pagination-button-next'][disabled] {
 
 .panel-body.layout {
   padding-top: 0;
+}
+
+.log-analysis-table-cell {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+
+  &.truncated {
+    max-height: 34px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &.not-truncated {
+    max-height: none;
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+  }
+
+  &.disabled {
+    cursor: default;
+  }
 }
