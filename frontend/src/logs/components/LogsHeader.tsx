@@ -77,7 +77,7 @@ class LogsHeader extends PureComponent<Props> {
                   className="btn btn-sm btn-square btn-default"
                   onClick={onShowOptionsOverlay}
                 >
-                  <span className="icon cog-thick" />
+                  <span className="icon cog-thick" style={{top: '0.1em'}} />
                 </button>
               </Authorized>
             </>

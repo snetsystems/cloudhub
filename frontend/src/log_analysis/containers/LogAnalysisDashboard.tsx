@@ -301,7 +301,7 @@ function LogAnalysisDashboard({
             className="btn btn-sm btn-square btn-default"
             onClick={handleToggleOverlay}
           >
-            <span className="icon cog-thick" />
+            <span className="icon cog-thick" style={{top: '0.1em'}} />
           </button>
         </Authorized>
         <AutoRefreshDropdown

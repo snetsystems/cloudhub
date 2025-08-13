@@ -869,7 +869,7 @@ class LogsPage extends Component<Props, State> {
             onClick={this.handleHideHistogram}
             title="Hide Histogram"
           >
-            <span className="icon eye-closed" />
+            <span className="icon eye-closed" style={{top: '0.1em'}} />
           </button>
           <TimeWindowDropdown
             selectedTimeWindow={timeRange}
