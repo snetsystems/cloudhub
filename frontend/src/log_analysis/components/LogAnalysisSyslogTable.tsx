@@ -214,14 +214,14 @@ function LogAnalysisSyslogTable({
         initialWidth: 105,
       },
       {
-        id: 'log.syslog.severity.code',
-        display: 'Syslog Severity',
+        id: 'severity.code',
+        display: 'Severity',
         isExpandable: false,
-        initialWidth: 128,
+        initialWidth: 110,
       },
       {
-        id: 'log.syslog.facility.code',
-        display: 'Syslog Facility',
+        id: 'facility.code',
+        display: 'Facility',
         isExpandable: false,
         initialWidth: 132,
       },
@@ -387,8 +387,8 @@ function LogAnalysisSyslogTable({
         '@timestamp',
         'host.ip',
         'process.pid',
-        'log.syslog.severity.code',
-        'log.syslog.facility.code',
+        'severity.code',
+        'facility.code',
         'message_tokens',
       ]
 
@@ -480,14 +480,14 @@ function LogAnalysisSyslogTable({
         case 'process.pid':
           cellContent = row['process.pid']?.[0] || ''
           break
-        case 'log.syslog.severity.code': {
+        case 'severity.code': {
           const sev = row['log.syslog.severity.code']?.[0]
           const severityText =
             sev == null ? '' : SYSLOG_SEVERITY_MAP[sev] || String(sev)
           cellContent = sev == null ? '' : `${severityText} (${sev})`
           break
         }
-        case 'log.syslog.facility.code': {
+        case 'facility.code': {
           const fac = row['log.syslog.facility.code']?.[0]
           const facilityText =
             fac == null ? '' : SYSLOG_FACILITY_MAP[fac] || String(fac)
