@@ -54,6 +54,7 @@ import {
   SeverityColorOptions,
   SeverityLevelOptions,
   SeverityFormatOptions,
+  DEFAULT_SEVERITY_LEVELS,
 } from 'src/logs/constants'
 
 interface Props {
@@ -421,7 +422,9 @@ function LogAnalysisSyslogTable({
 
   const getSeverityColorFromLevel = (level: string): string => {
     const colorLevel = severityLevelColors.find(lc => lc.level === level)
-    return colorLevel ? colorLevel.color : SeverityColorOptions.star
+    return colorLevel
+      ? colorLevel.color
+      : DEFAULT_SEVERITY_LEVELS[level] || SeverityColorOptions.star
   }
 
   const getSeverityDotText = (text: string): JSX.Element | null => {
