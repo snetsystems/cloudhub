@@ -24,7 +24,7 @@ import {
   getFieldOperatorsWithLogical,
   parseFieldOpValue,
 } from 'src/log_analysis/util'
-import {SEVERITY_SORTING_ORDER, SeverityLevelOptions} from 'src/logs/constants'
+import {SeverityLevelOptions} from 'src/logs/constants'
 
 export async function fetchMessageTokenData({
   esSource,
@@ -322,25 +322,15 @@ export async function fetchLogsCount({
     fields: Array<{field: string; format: string}>
   }
 
-  const severityCodeMap = Object.entries(SEVERITY_SORTING_ORDER).reduce(
-    (acc, [key, value]) => {
-      acc[key] = value
-      return acc
-    },
-    {} as Record<SeverityLevelOptions, number>
-  )
-
   const severityFilters = {
-    emerg: {term: {'log.syslog.severity.code': severityCodeMap.emerg}},
-    alert: {term: {'log.syslog.severity.code': severityCodeMap.alert}},
-    crit: {term: {'log.syslog.severity.code': severityCodeMap.crit}},
-    err: {term: {'log.syslog.severity.code': severityCodeMap.err}},
-    warning: {
-      term: {'log.syslog.severity.code': severityCodeMap.warning},
-    },
-    notice: {term: {'log.syslog.severity.code': severityCodeMap.notice}},
-    info: {term: {'log.syslog.severity.code': severityCodeMap.info}},
-    debug: {term: {'log.syslog.severity.code': severityCodeMap.debug}},
+    emerg: {term: {'log.syslog.severity.code': 0}},
+    alert: {term: {'log.syslog.severity.code': 1}},
+    crit: {term: {'log.syslog.severity.code': 2}},
+    err: {term: {'log.syslog.severity.code': 3}},
+    warning: {term: {'log.syslog.severity.code': 4}},
+    notice: {term: {'log.syslog.severity.code': 5}},
+    info: {term: {'log.syslog.severity.code': 6}},
+    debug: {term: {'log.syslog.severity.code': 7}},
   }
 
   const body: ESBody = {
