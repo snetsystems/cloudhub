@@ -20,11 +20,6 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
 
   keyword: [
     {op: ':', label: 'equals', description: 'equals some value'},
-    {
-      op: '!=',
-      label: 'not equals',
-      description: 'does not equal the given value',
-    },
     {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
 
@@ -57,11 +52,7 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
 
   long: [
     {op: ':', label: 'equals', description: 'equals some value'},
-    {
-      op: '!=',
-      label: 'not equals',
-      description: 'does not equal the given value',
-    },
+
     {op: '<', label: 'less than', description: 'is less than some value'},
     {
       op: '<=',
@@ -78,11 +69,6 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
   ],
   integer: [
     {op: ':', label: 'equals', description: 'equals some value'},
-    {
-      op: '!=',
-      label: 'not equals',
-      description: 'does not equal the given value',
-    },
     {op: '<', label: 'less than', description: 'is less than some value'},
     {
       op: '<=',
@@ -99,11 +85,6 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
   ],
   float: [
     {op: ':', label: 'equals', description: 'equals some value'},
-    {
-      op: '!=',
-      label: 'not equals',
-      description: 'does not equal the given value',
-    },
     {op: '<', label: 'less than', description: 'is less than some value'},
     {
       op: '<=',
@@ -120,11 +101,7 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
   ],
   double: [
     {op: ':', label: 'equals', description: 'equals some value'},
-    {
-      op: '!=',
-      label: 'not equals',
-      description: 'does not equal the given value',
-    },
+
     {op: '<', label: 'less than', description: 'is less than some value'},
     {
       op: '<=',
@@ -142,11 +119,6 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
 
   date: [
     {op: ':', label: 'equals', description: 'equals some value'},
-    {
-      op: '!=',
-      label: 'not equals',
-      description: 'does not equal the given value',
-    },
     {op: '<', label: 'before', description: 'is before some value'},
     {
       op: '<=',
@@ -160,7 +132,6 @@ export const FIELD_OPERATOR_META: Record<string, OperatorMeta[]> = {
   ],
   boolean: [
     {op: ':', label: 'equals', description: 'is true or false'},
-    {op: '!=', label: 'not equals', description: 'is not true or false'},
     {op: ': *', label: 'exists', description: 'exists in any form'},
   ],
 }
