@@ -744,7 +744,7 @@ function LogAnalysisSyslogTable<_>({
             } flex`}
             onClick={shouldAutoRefresh ? onChangeLiveUpdatingStatus : undefined}
           >
-            Syslog Table
+            Log Table
             <RefreshSpinner
               isActive={isLoading || (shouldAutoRefresh && isLiveUpdating)}
               isHighlighted={!!autoRefreshNumberValue && isLiveUpdating}
