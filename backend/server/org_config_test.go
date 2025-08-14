@@ -1075,3 +1075,345 @@ func Test_validLogViewerConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestLogAnalysisOrganizationConfig(t *testing.T) {
+	type args struct {
+		organizationID string
+	}
+	type fields struct {
+		organizationConfigStore cloudhub.OrganizationConfigStore
+	}
+	type wants struct {
+		statusCode  int
+		contentType string
+		body        string
+	}
+
+	tests := []struct {
+		name   string
+		args   args
+		fields fields
+		wants  wants
+	}{
+		{
+			name: "Get log analysis configuration",
+			args: args{
+				organizationID: "default",
+			},
+			fields: fields{
+				organizationConfigStore: &mocks.OrganizationConfigStore{
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+						switch orgID {
+						case "default":
+							return &cloudhub.OrganizationConfig{
+								LogAnalysis: cloudhub.LogAnalysisConfig{
+									AnnotationPadding: "2h",
+									QueryFillOption:   "none",
+								},
+							}, nil
+						default:
+							return nil, cloudhub.ErrOrganizationConfigNotFound
+						}
+					},
+				},
+			},
+			wants: wants{
+				statusCode:  200,
+				contentType: "application/json",
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"2h","queryFillOption":"none"}`,
+			},
+		},
+		{
+			name: "Get log analysis configuration with empty values - should return defaults",
+			args: args{
+				organizationID: "default",
+			},
+			fields: fields{
+				organizationConfigStore: &mocks.OrganizationConfigStore{
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+						switch orgID {
+						case "default":
+							return &cloudhub.OrganizationConfig{
+								LogAnalysis: cloudhub.LogAnalysisConfig{
+									AnnotationPadding: "",
+									QueryFillOption:   "",
+								},
+							}, nil
+						default:
+							return nil, cloudhub.ErrOrganizationConfigNotFound
+						}
+					},
+				},
+			},
+			wants: wants{
+				statusCode:  200,
+				contentType: "application/json",
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"2h","queryFillOption":"none"}`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Service{
+				Store: &mocks.Store{
+					OrganizationConfigStore: tt.fields.organizationConfigStore,
+				},
+				Logger: log.New(log.DebugLevel),
+			}
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "http://any.url", nil)
+			ctx := context.WithValue(r.Context(), organizations.ContextKey, tt.args.organizationID)
+			r = r.WithContext(ctx)
+
+			s.OrganizationLogAnalysisConfig(w, r)
+
+			resp := w.Result()
+			content := resp.Header.Get("Content-Type")
+			body, _ := ioutil.ReadAll(resp.Body)
+
+			if resp.StatusCode != tt.wants.statusCode {
+				t.Errorf("%q. LogAnalysisOrganizationConfig() = %v, want %v", tt.name, resp.StatusCode, tt.wants.statusCode)
+			}
+			if tt.wants.contentType != "" && content != tt.wants.contentType {
+				t.Errorf("%q. LogAnalysisOrganizationConfig() = %v, want %v", tt.name, content, tt.wants.contentType)
+			}
+			if eq, _ := jsonEqual(string(body), tt.wants.body); tt.wants.body != "" && !eq {
+				t.Errorf("%q. LogAnalysisOrganizationConfig() = \n***%v***\n,\nwant\n***%v***", tt.name, string(body), tt.wants.body)
+			}
+		})
+	}
+}
+
+func TestReplaceLogAnalysisOrganizationConfig(t *testing.T) {
+	type fields struct {
+		organizationConfigStore cloudhub.OrganizationConfigStore
+	}
+	type args struct {
+		payload        interface{} // expects JSON serializable struct
+		organizationID string
+	}
+	type wants struct {
+		statusCode  int
+		contentType string
+		body        string
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		wants  wants
+	}{
+		{
+			name: "Set log analysis configuration - full update",
+			fields: fields{
+				organizationConfigStore: &mocks.OrganizationConfigStore{
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+						switch orgID {
+						case "1337":
+							return &cloudhub.OrganizationConfig{
+								LogAnalysis: cloudhub.LogAnalysisConfig{
+									AnnotationPadding: "1h",
+									QueryFillOption:   "null",
+								},
+							}, nil
+						default:
+							return nil, cloudhub.ErrOrganizationConfigNotFound
+						}
+					},
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				payload: cloudhub.LogAnalysisConfig{
+					AnnotationPadding: "3h",
+					QueryFillOption:   "linear",
+				},
+				organizationID: "1337",
+			},
+			wants: wants{
+				statusCode:  200,
+				contentType: "application/json",
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"3h","queryFillOption":"linear"}`,
+			},
+		},
+		{
+			name: "Set log analysis configuration with empty values - should keep existing values",
+			fields: fields{
+				organizationConfigStore: &mocks.OrganizationConfigStore{
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+						switch orgID {
+						case "1337":
+							return &cloudhub.OrganizationConfig{
+								LogAnalysis: cloudhub.LogAnalysisConfig{
+									AnnotationPadding: "1h",
+									QueryFillOption:   "null",
+								},
+							}, nil
+						default:
+							return nil, cloudhub.ErrOrganizationConfigNotFound
+						}
+					},
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				payload: cloudhub.LogAnalysisConfig{
+					AnnotationPadding: "",
+					QueryFillOption:   "",
+				},
+				organizationID: "1337",
+			},
+			wants: wants{
+				statusCode:  200,
+				contentType: "application/json",
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"1h","queryFillOption":"null"}`,
+			},
+		},
+		{
+			name: "Set log analysis configuration with partial empty values - should update only non-empty fields",
+			fields: fields{
+				organizationConfigStore: &mocks.OrganizationConfigStore{
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+						switch orgID {
+						case "1337":
+							return &cloudhub.OrganizationConfig{
+								LogAnalysis: cloudhub.LogAnalysisConfig{
+									AnnotationPadding: "1h",
+									QueryFillOption:   "null",
+								},
+							}, nil
+						default:
+							return nil, cloudhub.ErrOrganizationConfigNotFound
+						}
+					},
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				payload: cloudhub.LogAnalysisConfig{
+					AnnotationPadding: "5h",
+					QueryFillOption:   "",
+				},
+				organizationID: "1337",
+			},
+			wants: wants{
+				statusCode:  200,
+				contentType: "application/json",
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"5h","queryFillOption":"null"}`,
+			},
+		},
+		{
+			name: "Set log analysis configuration with empty existing values - should keep empty values",
+			fields: fields{
+				organizationConfigStore: &mocks.OrganizationConfigStore{
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+						switch orgID {
+						case "1337":
+							return &cloudhub.OrganizationConfig{
+								LogAnalysis: cloudhub.LogAnalysisConfig{
+									AnnotationPadding: "",
+									QueryFillOption:   "",
+								},
+							}, nil
+						default:
+							return nil, cloudhub.ErrOrganizationConfigNotFound
+						}
+					},
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				payload: cloudhub.LogAnalysisConfig{
+					AnnotationPadding: "",
+					QueryFillOption:   "linear",
+				},
+				organizationID: "1337",
+			},
+			wants: wants{
+				statusCode:  200,
+				contentType: "application/json",
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"","queryFillOption":"linear"}`,
+			},
+		},
+		{
+			name: "Set log analysis configuration with empty existing values and empty request - should keep empty values",
+			fields: fields{
+				organizationConfigStore: &mocks.OrganizationConfigStore{
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+						switch orgID {
+						case "1337":
+							return &cloudhub.OrganizationConfig{
+								LogAnalysis: cloudhub.LogAnalysisConfig{
+									AnnotationPadding: "",
+									QueryFillOption:   "",
+								},
+							}, nil
+						default:
+							return nil, cloudhub.ErrOrganizationConfigNotFound
+						}
+					},
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				payload: cloudhub.LogAnalysisConfig{
+					AnnotationPadding: "",
+					QueryFillOption:   "",
+				},
+				organizationID: "1337",
+			},
+			wants: wants{
+				statusCode:  200,
+				contentType: "application/json",
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"","queryFillOption":""}`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Service{
+				Store: &mocks.Store{
+					OrganizationConfigStore: tt.fields.organizationConfigStore,
+				},
+				Logger: log.New(log.DebugLevel),
+			}
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("PUT", "http://any.url", nil)
+			ctx := context.WithValue(r.Context(), organizations.ContextKey, tt.args.organizationID)
+			r = r.WithContext(ctx)
+			buf, _ := json.Marshal(tt.args.payload)
+			r.Body = ioutil.NopCloser(bytes.NewReader(buf))
+
+			s.ReplaceOrganizationLogAnalysisConfig(w, r)
+
+			resp := w.Result()
+			content := resp.Header.Get("Content-Type")
+			body, _ := ioutil.ReadAll(resp.Body)
+
+			if resp.StatusCode != tt.wants.statusCode {
+				t.Errorf("%q. ReplaceLogAnalysisOrganizationConfig() = %v, want %v", tt.name, resp.StatusCode, tt.wants.statusCode)
+			}
+			if tt.wants.contentType != "" && content != tt.wants.contentType {
+				t.Errorf("%q. ReplaceLogAnalysisOrganizationConfig() = %v, want %v", tt.name, content, tt.wants.contentType)
+			}
+			if eq, _ := jsonEqual(string(body), tt.wants.body); tt.wants.body != "" && !eq {
+				t.Errorf("%q. ReplaceLogAnalysisOrganizationConfig() = \n***%v***\n,\nwant\n***%v***", tt.name, string(body), tt.wants.body)
+			}
+		})
+	}
+}

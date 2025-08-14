@@ -374,6 +374,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v1/org_config", EnsureViewer(service.OrganizationConfig))
 	router.GET("/cloudhub/v1/org_config/logviewer", EnsureViewer(service.OrganizationLogViewerConfig))
 	router.PUT("/cloudhub/v1/org_config/logviewer", EnsureEditor(service.ReplaceOrganizationLogViewerConfig))
+	router.GET("/cloudhub/v1/org_config/log-analysis", EnsureViewer(service.OrganizationLogAnalysisConfig))
+	router.PUT("/cloudhub/v1/org_config/log-analysis", EnsureEditor(service.ReplaceOrganizationLogAnalysisConfig))
 
 	router.GET("/cloudhub/v1/env", EnsureViewer(service.Environment))
 

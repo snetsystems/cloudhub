@@ -9,8 +9,9 @@ import (
 )
 
 type organizationConfigLinks struct {
-	Self      string `json:"self"`      // Self link mapping to this resource
-	LogViewer string `json:"logViewer"` // LogViewer link to the organization log viewer config endpoint
+	Self        string `json:"self"`        // Self link mapping to this resource
+	LogViewer   string `json:"logViewer"`   // LogViewer link to the organization log viewer config endpoint
+	LogAnalysis string `json:"logAnalysis"` // LogAnalysis link to the organization log analysis config endpoint
 }
 
 type organizationConfigResponse struct {
@@ -21,8 +22,9 @@ type organizationConfigResponse struct {
 func newOrganizationConfigResponse(c cloudhub.OrganizationConfig) *organizationConfigResponse {
 	return &organizationConfigResponse{
 		Links: organizationConfigLinks{
-			Self:      "/cloudhub/v1/org_config",
-			LogViewer: "/cloudhub/v1/org_config/logviewer",
+			Self:        "/cloudhub/v1/org_config",
+			LogViewer:   "/cloudhub/v1/org_config/logviewer",
+			LogAnalysis: "/cloudhub/v1/org_config/log-analysis",
 		},
 		OrganizationConfig: c,
 	}
@@ -39,6 +41,27 @@ func newLogViewerConfigResponse(c cloudhub.LogViewerConfig) *logViewerConfigResp
 			Self: "/cloudhub/v1/org_config/logviewer",
 		},
 		LogViewerConfig: c,
+	}
+}
+
+type logAnalysisConfigResponse struct {
+	Links selfLinks `json:"links"`
+	cloudhub.LogAnalysisConfig
+}
+
+func newLogAnalysisConfigResponse(c cloudhub.LogAnalysisConfig) *logAnalysisConfigResponse {
+	if c.AnnotationPadding == "" {
+		c.AnnotationPadding = cloudhub.DefaultAnnotationPadding
+	}
+	if c.QueryFillOption == "" {
+		c.QueryFillOption = cloudhub.DefaultQueryFillOption
+	}
+
+	return &logAnalysisConfigResponse{
+		Links: selfLinks{
+			Self: "/cloudhub/v1/org_config/log-analysis",
+		},
+		LogAnalysisConfig: c,
 	}
 }
 
@@ -117,6 +140,65 @@ func (s *Service) ReplaceOrganizationLogViewerConfig(w http.ResponseWriter, r *h
 	}
 
 	res := newLogViewerConfigResponse(config.LogViewer)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// OrganizationLogAnalysisConfig retrieves the log analysis UI section of the organization config
+func (s *Service) OrganizationLogAnalysisConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	orgID, ok := hasOrganizationContext(ctx)
+	if !ok {
+		Error(w, http.StatusBadRequest, "Organization not found on context", s.Logger)
+		return
+	}
+
+	config, err := s.Store.OrganizationConfig(ctx).FindOrCreate(ctx, orgID)
+	if err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	res := newLogAnalysisConfigResponse(config.LogAnalysis)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// ReplaceOrganizationLogAnalysisConfig replaces the log analysis UI section of the organization config
+func (s *Service) ReplaceOrganizationLogAnalysisConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	orgID, ok := hasOrganizationContext(ctx)
+	if !ok {
+		Error(w, http.StatusBadRequest, "Organization not found on context", s.Logger)
+		return
+	}
+
+	var logAnalysisConfig cloudhub.LogAnalysisConfig
+	if err := json.NewDecoder(r.Body).Decode(&logAnalysisConfig); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	config, err := s.Store.OrganizationConfig(ctx).FindOrCreate(ctx, orgID)
+	if err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	// Only update fields that are not empty, keep existing values for empty fields
+	if logAnalysisConfig.AnnotationPadding != "" {
+		config.LogAnalysis.AnnotationPadding = logAnalysisConfig.AnnotationPadding
+	}
+	if logAnalysisConfig.QueryFillOption != "" {
+		config.LogAnalysis.QueryFillOption = logAnalysisConfig.QueryFillOption
+	}
+
+	if err := s.Store.OrganizationConfig(ctx).Put(ctx, config); err != nil {
+		unknownErrorWithMessage(w, err, s.Logger)
+		return
+	}
+
+	res := newLogAnalysisConfigResponse(config.LogAnalysis)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 

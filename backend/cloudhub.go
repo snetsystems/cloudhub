@@ -1106,8 +1106,9 @@ type ConfigStore interface {
 // OrganizationConfig is the organization config for parameters that can
 // be set via API, with different sections, such as LogViewer
 type OrganizationConfig struct {
-	OrganizationID string          `json:"organization"`
-	LogViewer      LogViewerConfig `json:"logViewer"`
+	OrganizationID string            `json:"organization"`
+	LogViewer      LogViewerConfig   `json:"logViewer"`
+	LogAnalysis    LogAnalysisConfig `json:"logAnalysis"`
 }
 
 // LogViewerConfig is the configuration settings for the Log Viewer UI
@@ -1127,6 +1128,12 @@ type ColumnEncoding struct {
 	Type  string `json:"type"`
 	Value string `json:"value"`
 	Name  string `json:"name,omitempty"`
+}
+
+// LogAnalysisConfig is the configuration settings for the Log Analysis UI
+type LogAnalysisConfig struct {
+	AnnotationPadding string `json:"annotationPadding"`
+	QueryFillOption   string `json:"queryFillOption"`
 }
 
 // OrganizationConfigStore is the storage and retrieval of organization Configs
@@ -1576,6 +1583,10 @@ const (
 	DefaultIndex = "syslog-*"
 	// DefaultDevice is the default device type
 	DefaultDevice = "baremetal"
+	// DefaultAnnotationPadding is the default time padding around annotations
+	DefaultAnnotationPadding = "2h"
+	// DefaultQueryFillOption is the default fill option for influx queries
+	DefaultQueryFillOption = "none"
 )
 
 // DeviceMeta represents metadata for a device, including network and organizational info.

@@ -246,5 +246,9 @@ func newOrganizationConfig(orgID string) cloudhub.OrganizationConfig {
 				},
 			},
 		},
+		LogAnalysis: cloudhub.LogAnalysisConfig{
+			AnnotationPadding: cloudhub.DefaultAnnotationPadding,
+			QueryFillOption:   cloudhub.DefaultQueryFillOption,
+		},
 	}
 }

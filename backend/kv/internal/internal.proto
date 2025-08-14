@@ -244,10 +244,16 @@ message AuthConfig {
 message OrganizationConfig {
 	string OrganizationID                   = 1; // OrganizationID is the ID of the organization this config belogs to
 	LogViewerConfig LogViewer              	= 2; // LogViewer is the organization configuration for log viewer
+	LogAnalysisConfig LogAnalysis           = 3; // LogAnalysis is the organization configuration for log analysis
 }
 
 message LogViewerConfig {
 	repeated LogViewerColumn Columns               = 1; // Columns is the array of columns in the log viewer
+}
+
+message LogAnalysisConfig {
+	string AnnotationPadding                       = 1; // AnnotationPadding is the time padding around annotations (e.g., "2h" for 2 hours before/after)
+	string QueryFillOption                         = 2; // QueryFillOption is the fill option for influx queries
 }
 
 message LogViewerColumn {
