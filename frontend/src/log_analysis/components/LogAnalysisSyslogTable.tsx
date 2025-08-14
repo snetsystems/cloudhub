@@ -410,6 +410,27 @@ function LogAnalysisSyslogTable<_>({
 
   const excludedOnClickFields = ['@timestamp']
 
+  const debouncedFilterAction = useMemo(
+    () =>
+      _.debounce((filterKey: string, filterValue: string | number) => {
+        dispatch(addLogAnalysisMatchPhraseFilterClause(filterKey, filterValue))
+      }, 300),
+    [dispatch]
+  )
+
+  const handleCellClick = useCallback(
+    (filterKey: string, filterValue: string | number) => {
+      debouncedFilterAction(filterKey, filterValue)
+    },
+    [debouncedFilterAction]
+  )
+
+  useEffect(() => {
+    return () => {
+      debouncedFilterAction.cancel()
+    }
+  }, [debouncedFilterAction])
+
   const severityDotStyle = (colorName: string, level: string) => {
     const severityColor = colorForSeverity(colorName, level)
     const brightSeverityColor = getBrighterColor(0.5, severityColor)
@@ -642,13 +663,7 @@ function LogAnalysisSyslogTable<_>({
           onClick={
             isDisabled
               ? undefined
-              : () =>
-                  dispatch(
-                    addLogAnalysisMatchPhraseFilterClause(
-                      filterKey,
-                      filterValue
-                    )
-                  )
+              : () => handleCellClick(filterKey, filterValue)
           }
         >
           {cellContent}
@@ -660,7 +675,7 @@ function LogAnalysisSyslogTable<_>({
       timeZone,
       pageIndex,
       pageSize,
-      dispatch,
+      handleCellClick,
       handleExpandSideBar,
       logConfig?.isTruncated,
       logConfig?.severityFormat,
