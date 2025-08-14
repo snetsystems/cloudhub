@@ -20,14 +20,15 @@ $highlight: #25262e;
 }
 
 .syslog-table--container {
-  width: 98%;
+  width: 100%;
   height: calc(100% - 10px);
   justify-self: center;
+  padding: 0 8px;
 
   .ouiDataGrid__focusWrap {
     padding-top: 10px;
     padding-bottom: 10px;
-    height: calc(100% - 20px);
+    height: calc(100% - 30px);
   }
 }
 
