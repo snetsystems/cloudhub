@@ -27,7 +27,6 @@ import {
   TimeRange,
 } from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
-import {SeverityLevelColor} from 'src/types/logs'
 
 // Constants
 import {
@@ -35,7 +34,6 @@ import {
   LOG_ANALYSIS_LOCAL_STORAGE_KEY,
 } from 'src/log_analysis/constants'
 import {ADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
-import {SeverityFormatOptions} from 'src/logs/constants'
 
 // Components
 import LogAnalysisSyslogTable from 'src/log_analysis/components/LogAnalysisSyslogTable'
@@ -47,7 +45,7 @@ import {ensureDeviceMapping} from 'src/admin/apis/deviceMapping'
 
 // Utils
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {buildCombinedFilters} from 'src/log_analysis/util'
+import {buildCombinedFilters, lowerToESRange} from 'src/log_analysis/util'
 import {
   notifyFetchDeviceMappingFailed,
   notifyFetchSyslogTableDataFailed,
@@ -182,12 +180,32 @@ function LogAnalysisSyslogTableWrapper({
     prevAutoRefreshRef.current = current
   }, [cloudAutoRefresh?.logAnalysis])
 
+  const fixedTimeRangeRef = useRef<{
+    gteISO: string
+    lteISO: string
+  } | null>(null)
+
   const getSyslogTableData = useCallback(
     async (reset: boolean = false) => {
       if (_.isEmpty(esSource)) return
+      let timeRangeToUse:
+        | {lower: string; upper?: string | null}
+        | {gteISO: string; lteISO: string}
+        | undefined
+
+      if (reset) {
+        timeRangeToUse = cloudTimeRange?.logAnalysis
+        if (timeRangeToUse) {
+          fixedTimeRangeRef.current = lowerToESRange(timeRangeToUse)
+        }
+      } else {
+        timeRangeToUse = fixedTimeRangeRef.current
+      }
+
       const combinedFilters = buildCombinedFilters(
         filteredLogsForLogAnalysis,
-        cloudTimeRange?.logAnalysis
+        timeRangeToUse,
+        !reset
       )
       setIsLoading(true)
       try {
@@ -201,15 +219,20 @@ function LogAnalysisSyslogTableWrapper({
           sortColumns,
           reset ? undefined : prevSortValuesRef.current
         )
-        setTotalRowCount(total)
-        if (reset) setRows(data)
-        else setRows(prev => [...prev, ...data])
+        if (reset) {
+          setTotalRowCount(total)
+          setRows(data)
+        } else {
+          setRows(prev => [...prev, ...data])
+        }
         if (lastSortValues) prevSortValuesRef.current = lastSortValues
       } catch (error) {
         notify(notifyFetchSyslogTableDataFailed(error.message))
 
-        setTotalRowCount(0)
-        if (reset) setRows([])
+        if (reset) {
+          setTotalRowCount(0)
+          setRows([])
+        }
       } finally {
         setIsLoading(false)
       }

@@ -49,9 +49,25 @@ export const unwrapDsl = (clause: LogAnalysisFilter): LogFilterClause =>
 
 export const buildCombinedFilters = (
   baseFilters: FilteredLogsForLogAnalysis,
-  timeRange?: CloudTimeRange['logAnalysis']
+  timeRange?: CloudTimeRange['logAnalysis'] | ESRange,
+  skipTimeRangeConversion: boolean = false
 ): LogFilterClause[] => {
-  const {gteISO, lteISO} = lowerToESRange(timeRange)
+  let gteISO: string
+  let lteISO: string
+
+  if (
+    skipTimeRangeConversion &&
+    timeRange &&
+    'gteISO' in timeRange &&
+    'lteISO' in timeRange
+  ) {
+    gteISO = (timeRange as ESRange).gteISO
+    lteISO = (timeRange as ESRange).lteISO
+  } else {
+    const esRange = lowerToESRange(timeRange as CloudTimeRange['logAnalysis'])
+    gteISO = esRange.gteISO
+    lteISO = esRange.lteISO
+  }
 
   const combined: LogFilterClause[] = baseFilters.map(unwrapDsl)
   const hasTime = combined.some(
