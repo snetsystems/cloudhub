@@ -196,6 +196,11 @@ $highlight: #25262e;
 
   > span {
     cursor: pointer;
+
+    > svg {
+      width: 24px;
+      height: 18px;
+    }
   }
   path {
     fill: $primary;
@@ -263,6 +268,14 @@ button[data-test-subj='pagination-button-next'][disabled] {
   cursor: not-allowed;
   pointer-events: none;
   opacity: 0.5;
+}
+
+.ouiPagination__list {
+  padding-left: 0px;
+}
+
+.ouiPagination__item {
+  padding-left: 4px;
 }
 
 .ouiFlexItem.ouiSearchBar__searchHolder {
