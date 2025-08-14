@@ -20,6 +20,14 @@ type organizationConfigResponse struct {
 }
 
 func newOrganizationConfigResponse(c cloudhub.OrganizationConfig) *organizationConfigResponse {
+
+	if c.LogAnalysis.AnnotationPadding == "" {
+		c.LogAnalysis.AnnotationPadding = cloudhub.DefaultAnnotationPadding
+	}
+	if c.LogAnalysis.QueryFillOption == "" {
+		c.LogAnalysis.QueryFillOption = cloudhub.DefaultQueryFillOption
+	}
+
 	return &organizationConfigResponse{
 		Links: organizationConfigLinks{
 			Self:        "/cloudhub/v1/org_config",
