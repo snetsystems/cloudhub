@@ -60,6 +60,8 @@ import {
   notifyUpdateDeviceMappingFailed,
   notifyUpdateDeviceMappingSuccess,
 } from 'src/shared/copy/notifications'
+import ChartOptionsOverlay from './ChartOptionsOverlay'
+import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 
 interface Props {
   ratio: Ratio
@@ -141,6 +143,9 @@ const LogAnalysisCellsGraphWrapper = ({
     setIsFilterLayoutsByAppNameLoading,
   ] = useState(false)
   const [isDropdownItemsLoading, setIsDropdownItemsLoading] = useState(false)
+  const [isChartOptionsOverlayOpen, setIsChartOptionsOverlayOpen] = useState(
+    false
+  )
 
   useEffect(() => {
     setSelfTimeRange(logTimeRange)
@@ -468,9 +473,17 @@ const LogAnalysisCellsGraphWrapper = ({
               onChooseTimeRange={handleChooseTimeRange}
               selected={selfTimeRange}
             />
+            <Authorized requiredRole={EDITOR_ROLE}>
+              <button
+                className="btn btn-sm btn-square btn-default"
+                onClick={() => setIsChartOptionsOverlayOpen(true)}
+              >
+                <span className="icon cog-thick" style={{top: '0.1em'}} />
+              </button>
+            </Authorized>
             <div className="close-button">
               <Cancel
-                buttonSize="btn-xs"
+                buttonSize="btn-sm"
                 onCancel={closePanel}
                 icon="icon remove"
                 title="close"
@@ -608,6 +621,12 @@ const LogAnalysisCellsGraphWrapper = ({
           </>
         )}
       </div>
+      {isChartOptionsOverlayOpen && (
+        <ChartOptionsOverlay
+          isOpen={isChartOptionsOverlayOpen}
+          onClose={() => setIsChartOptionsOverlayOpen(false)}
+        />
+      )}
     </>
   )
 }

@@ -59,7 +59,7 @@ import Authorized, {EDITOR_ROLE, VIEWER_ROLE} from 'src/auth/Authorized'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import OptionsOverlay from 'src/logs/components/OptionsOverlay'
 import {SeverityLevelColor} from 'src/types/logs'
-import {updateLogConfigAsync} from 'src/logs/actions'
+import {getLogConfigAsync, updateLogConfigAsync} from 'src/logs/actions'
 import {SeverityFormatOptions} from 'src/logs/constants'
 
 interface TempProps {
@@ -91,6 +91,7 @@ interface Props {
   params: {sourceID: string}
   updateConfig: typeof updateLogConfigAsync
   logConfigLink: string
+  getConfig?: typeof getLogConfigAsync
 }
 
 function LogAnalysisDashboard({
@@ -111,6 +112,7 @@ function LogAnalysisDashboard({
   logConfig,
   logConfigLink,
   updateConfig,
+  getConfig,
 }: Props) {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false)
 
@@ -156,6 +158,14 @@ function LogAnalysisDashboard({
   useEffect(() => {
     const savedHorizontalProportions = loadHorizontalProportions()
     setHorizontalProportions(savedHorizontalProportions)
+  }, [])
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      await getConfig(logConfigLink)
+    }
+
+    fetchConfig()
   }, [])
 
   const savedCells = useMemo(() => {
@@ -511,6 +521,7 @@ const mdtp = dispatch => ({
     dispatch
   ),
   updateConfig: bindActionCreators(updateLogConfigAsync, dispatch),
+  getConfig: bindActionCreators(getLogConfigAsync, dispatch),
 })
 
 const isEqual = (prev, next) => {

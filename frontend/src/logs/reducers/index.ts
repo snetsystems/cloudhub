@@ -18,6 +18,7 @@ import {
   DEFAULT_OLDER_CHUNK_DURATION_MS,
   DEFAULT_NEWER_CHUNK_DURATION_MS,
   defaultTableData,
+  DEFAULT_CHART_OPTIONS,
 } from 'src/logs/constants'
 import {LogsState, SearchStatus} from 'src/types/logs'
 
@@ -47,6 +48,7 @@ export const defaultState: LogsState = {
     severityFormat: SeverityFormatOptions.dotText,
     severityLevelColors: [],
     isTruncated: DEFAULT_TRUNCATION,
+    chartOptions: DEFAULT_CHART_OPTIONS,
   },
   tableTime: {
     custom: '',
@@ -176,10 +178,17 @@ const prependMoreLogs = (
 export const setConfigs = (state: LogsState, action: SetConfigAction) => {
   const {logConfig} = state
   const {
-    logConfig: {tableColumns, severityFormat, severityLevelColors, isTruncated},
+    logConfig: {
+      tableColumns,
+      severityFormat,
+      severityLevelColors,
+      isTruncated,
+      chartOptions,
+    },
   } = action.payload
   const updatedLogConfig = {
     ...logConfig,
+    chartOptions,
     tableColumns,
     severityFormat,
     severityLevelColors,

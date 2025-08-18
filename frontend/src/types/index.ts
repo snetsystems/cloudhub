@@ -206,6 +206,7 @@ import {
   KQLFilterClause,
   LogsFilterClause,
   DeviceType,
+  ChartOptions,
 } from './logAnalysis'
 
 import {
@@ -411,4 +412,5 @@ export {
   DeviceType,
   DeviceToOrgMapping,
   DeviceAlias,
+  ChartOptions,
 }

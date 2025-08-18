@@ -5,7 +5,7 @@ import {
   SeverityColorOptions,
   SeverityLevelOptions,
 } from 'src/logs/constants'
-import {QueryConfig, Namespace, Source} from 'src/types'
+import {QueryConfig, Namespace, Source, ChartOptions} from 'src/types'
 import {FieldOption} from 'src/types/dashboards'
 import {TimeSeriesValue} from 'src/types/series'
 
@@ -74,6 +74,7 @@ export interface LogConfig {
   severityFormat: SeverityFormat
   severityLevelColors: SeverityLevelColor[]
   isTruncated: boolean
+  chartOptions: ChartOptions
 }
 
 export interface SeverityLevelColor {

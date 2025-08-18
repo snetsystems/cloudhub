@@ -10,8 +10,12 @@ $highlight: #25262e;
 
   .close-button {
     > button {
-      height: 25px;
+      height: 30px;
       line-height: 30px;
+    }
+
+    .icon {
+      top: 0.1em;
     }
   }
   .threesizer--division {
@@ -23,7 +27,7 @@ $highlight: #25262e;
   width: 100%;
   height: calc(100% - 10px);
   justify-self: center;
-  padding: 0 8px;
+  padding: 0 12px;
 
   .ouiDataGrid__focusWrap {
     padding-top: 10px;
