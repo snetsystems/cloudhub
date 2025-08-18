@@ -1794,7 +1794,8 @@ export const getTagValuesForLayoutWhereTagKeys = async (
 export const filterLayoutsByExistingMeasurements = async (
   layouts: Layout[],
   source: Source,
-  tempVars: Template[]
+  tempVars: Template[],
+  matchingAliasSelectedDeviceAliasName?: string
 ): Promise<Layout[]> => {
   try {
     const layoutsWithMeasurement = layouts.filter(layout => layout.measurement)
@@ -1803,7 +1804,57 @@ export const filterLayoutsByExistingMeasurements = async (
       return layouts
     }
 
-    const query = replaceTemplate(`SHOW MEASUREMENTS`, tempVars)
+    const measurementQueries = new Map<string, Set<string>>()
+
+    layoutsWithMeasurement.forEach(layout => {
+      const measurement = layout.measurement
+      if (!measurement) {
+        return
+      }
+
+      if (!measurementQueries.has(measurement)) {
+        measurementQueries.set(measurement, new Set<string>())
+      }
+
+      if (layout.whereTagKey && Array.isArray(layout.whereTagKey)) {
+        layout.whereTagKey.forEach(key => {
+          measurementQueries.get(measurement).add(key)
+        })
+      }
+    })
+
+    let query: string
+
+    if (matchingAliasSelectedDeviceAliasName) {
+      const uniqueConditions = new Set<string>()
+
+      measurementQueries.forEach(tagKeys => {
+        if (tagKeys.size > 0) {
+          tagKeys.forEach(tagKey => {
+            uniqueConditions.add(
+              `"${tagKey}" = '${matchingAliasSelectedDeviceAliasName}'`
+            )
+          })
+        } else {
+          uniqueConditions.add(
+            `"host" = '${matchingAliasSelectedDeviceAliasName}'`
+          )
+        }
+      })
+
+      if (uniqueConditions.size > 0) {
+        query = replaceTemplate(
+          `SHOW MEASUREMENTS WHERE ${Array.from(uniqueConditions).join(
+            ' OR '
+          )}`,
+          tempVars
+        )
+      } else {
+        query = replaceTemplate(`SHOW MEASUREMENTS`, tempVars)
+      }
+    } else {
+      query = replaceTemplate(`SHOW MEASUREMENTS`, tempVars)
+    }
 
     const {data} = await proxy({
       source: source.links.proxy,
@@ -1811,19 +1862,32 @@ export const filterLayoutsByExistingMeasurements = async (
       db: source.telegraf,
     })
 
-    if (!data || !data.results || !data.results[0] || data.results[0].error) {
+    if (!data || !data.results) {
       return layouts
     }
 
-    const availableMeasurements = getDeep<string[][]>(
-      data.results[0],
-      'series.[0].values',
-      []
-    ).map(m => m[0])
+    const availableMeasurements = new Set<string>()
+
+    data.results.forEach(result => {
+      if (result.error || !result.series || result.series.length === 0) {
+        return
+      }
+
+      const values = getDeep<string[][]>(result, 'series.[0].values', [])
+      values.forEach(m => {
+        if (m && m.length > 0) {
+          availableMeasurements.add(m[0])
+        }
+      })
+    })
 
     const filteredLayouts = layoutsWithMeasurement.filter(layout =>
-      availableMeasurements.includes(layout.measurement)
+      availableMeasurements.has(layout.measurement)
     )
+
+    if (filteredLayouts.length === 0) {
+      return layouts
+    }
 
     return filteredLayouts
   } catch (error) {

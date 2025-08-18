@@ -78,6 +78,24 @@ export class AppNameDropdown extends PureComponent<Props, State> {
     }
   }
 
+  public componentDidUpdate(prevProps: Props) {
+    if (
+      prevProps.status !== this.props.status &&
+      this.props.status === ComponentStatus.Loading
+    ) {
+      this.setState({filteredItems: []})
+    }
+
+    if (
+      prevProps.status === ComponentStatus.Loading &&
+      this.props.status !== ComponentStatus.Loading
+    ) {
+      this.setState({filteredItems: this.props.items}, () => {
+        this.applyFilter(this.state.searchTerm)
+      })
+    }
+  }
+
   public handleClickOutside = () => {
     this.props.onClose()
   }
@@ -103,7 +121,7 @@ export class AppNameDropdown extends PureComponent<Props, State> {
     if (!this.props.isOpen) {
       this.setState({
         searchTerm: '',
-        filteredItems: this.props.items,
+        filteredItems: [],
         highlightedItemIndex: null,
       })
     }
@@ -243,6 +261,9 @@ export class AppNameDropdown extends PureComponent<Props, State> {
           <DropdownMenuEmpty
             useAutoComplete={useAutoComplete}
             menuClass={menuClass}
+            emptyMessage={
+              status === ComponentStatus.Loading ? 'Loading' : undefined
+            }
           />
         )}
       </div>
@@ -259,7 +280,7 @@ export class AppNameDropdown extends PureComponent<Props, State> {
     if (!this.props.isOpen) {
       this.setState({
         searchTerm: '',
-        filteredItems: this.props.items,
+        filteredItems: [],
         highlightedItemIndex: null,
       })
     }

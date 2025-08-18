@@ -79,7 +79,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     super(props)
     this.state = {
       searchTerm: '',
-      filteredItems: this.props.items,
+      filteredItems: [],
       highlightedItemIndex: null,
     }
   }
@@ -102,6 +102,22 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     if (prevProps.selected !== this.props.selected) {
       this.setState({searchTerm: this.props.selected}, () => {
         this.applyFilter(this.props.selected)
+      })
+    }
+
+    if (
+      prevProps.status !== this.props.status &&
+      this.props.status === ComponentStatus.Loading
+    ) {
+      this.setState({filteredItems: []})
+    }
+
+    if (
+      prevProps.status === ComponentStatus.Loading &&
+      this.props.status !== ComponentStatus.Loading
+    ) {
+      this.setState({filteredItems: this.props.items}, () => {
+        this.applyFilter(this.state.searchTerm)
       })
     }
   }
@@ -134,7 +150,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     if (!this.props.isOpen) {
       this.setState({
         searchTerm: '',
-        filteredItems: this.props.items,
+        filteredItems: [],
         highlightedItemIndex: null,
       })
     }
@@ -278,7 +294,9 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
             useAutoComplete={useAutoComplete}
             menuClass={menuClass}
             emptyMessage={
-              searchTerm === serverStoredAliasName
+              status === ComponentStatus.Loading
+                ? 'Loading'
+                : searchTerm === serverStoredAliasName
                 ? serverStoredAliasName
                 : undefined
             }

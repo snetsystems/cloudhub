@@ -206,7 +206,8 @@ const LogAnalysisCellsGraphWrapper = ({
       const filteredLayouts = await filterLayoutsByExistingMeasurements(
         layouts,
         source,
-        tempVars
+        tempVars,
+        matchingAliasSelectedDeviceAliasName
       )
 
       if (!_.isEqual(preFilteredLayouts, filteredLayouts || [])) {
