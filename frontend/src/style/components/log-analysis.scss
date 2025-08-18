@@ -606,3 +606,28 @@ button[data-test-subj='pagination-button-next'][disabled] {
     cursor: default;
   }
 }
+
+.chart-options-container {
+  .option-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 0 0 12px 15px;
+  }
+
+  .radio-btn-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .radio-btn-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+.chart-options-container > * {
+  padding: 12px 0;
+}

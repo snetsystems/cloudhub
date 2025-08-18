@@ -162,3 +162,15 @@ export const BAREMETAL_VENDOR_DROPDOWN_ITEMS: DropdownItem[] = [
   {text: 'Dell'},
   {text: 'Supermicro'},
 ]
+
+export const DEFAULT_TIME_RANGE_OPTIONS = [
+  {text: '1h'},
+  {text: '2h'},
+  {text: '3h'},
+  {text: '4h'},
+  {text: '5h'},
+  {text: '6h'},
+]
+
+export const DEFAULT_TIME_RANGE_OPTIONS_PLACEHOLDER =
+  'Time range (e.g., 2h, 30m, 1d)'

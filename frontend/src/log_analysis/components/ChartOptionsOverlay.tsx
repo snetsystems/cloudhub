@@ -10,6 +10,10 @@ import {saveChartOptions} from '../apis/chartOptions'
 import InputDropdownWrapper from 'src/shared/components/InputDropdownWrapper'
 import {bindActionCreators} from 'redux'
 import {getLogConfigAsync, setConfig} from 'src/logs/actions'
+import {
+  DEFAULT_TIME_RANGE_OPTIONS,
+  DEFAULT_TIME_RANGE_OPTIONS_PLACEHOLDER,
+} from 'src/log_analysis/constants'
 
 interface Props {
   isOpen: boolean
@@ -74,15 +78,15 @@ function ChartOptionsOverlay({
       <Container maxWidth={500}>
         <Heading title="Chart Options">{overlayActionButtons()}</Heading>
         <Body>
-          <div className="row">
+          <div className="row chart-options-container">
             <div className={`col-sm-12`}>
               <label className="form-label">Fill Option</label>
             </div>
-            <div className={`col-sm-12`}>
+            <div className={`col-sm-12 option-section`}>
               {/* radio button */}
-              <div className="app-section col-sm-6">
-                <div className="app-dropdown-wrapper-title">{'None'}</div>
-                <div className="app-dropdown-wrapper">
+              <div className="radio-btn-container">
+                <div className="radio-btn-title">{'None'}</div>
+                <div className="radio-btn-item">
                   <TopologyRadioButton
                     id="none"
                     checked={fillOption === 'none'}
@@ -95,9 +99,9 @@ function ChartOptionsOverlay({
                 </div>
               </div>
 
-              <div className="app-section col-sm-6">
-                <div className="app-dropdown-wrapper-title">{'Null'}</div>
-                <div className="app-dropdown-wrapper">
+              <div className="radio-btn-container">
+                <div className="radio-btn-title">{'Null'}</div>
+                <div className="radio-btn-item">
                   <TopologyRadioButton
                     id="null"
                     checked={fillOption === 'null'}
@@ -113,21 +117,14 @@ function ChartOptionsOverlay({
             <div className={`col-sm-12`}>
               <label className="form-label">Annotation Time Range</label>
             </div>
-            <div className={`col-sm-12`}>
+            <div className={`col-sm-12 option-section`}>
               <InputDropdownWrapper
                 selectedItem={annotationTimeRange}
                 setSelectedItem={text => {
                   setAnnotationTimeRange(text)
                 }}
-                placeholder="Time range (e.g., 2h, 30m, 1d)"
-                items={[
-                  {text: '1h'},
-                  {text: '2h'},
-                  {text: '3h'},
-                  {text: '4h'},
-                  {text: '5h'},
-                  {text: '6h'},
-                ]}
+                placeholder={DEFAULT_TIME_RANGE_OPTIONS_PLACEHOLDER}
+                items={DEFAULT_TIME_RANGE_OPTIONS}
                 onChange={text => setAnnotationTimeRange(text)}
               />
             </div>
