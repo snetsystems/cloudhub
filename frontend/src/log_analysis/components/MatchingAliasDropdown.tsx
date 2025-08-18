@@ -49,7 +49,6 @@ interface Props {
   disabled?: boolean
   tabIndex?: number
   isOpen: boolean
-  onChange?: (item: any) => any
   onClose: () => void
   status?: ComponentStatus
   placeholder?: string
@@ -61,7 +60,6 @@ interface State {
   searchTerm: string
   filteredItems: DropdownItem[]
   highlightedItemIndex: number
-  isSelecting: boolean
 }
 
 @ErrorHandling
@@ -76,7 +74,6 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     tabIndex: 0,
   }
   public dropdownRef: any
-  private previousHighlightedIndex: number = 0
 
   constructor(props: Props) {
     super(props)
@@ -84,7 +81,6 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       searchTerm: '',
       filteredItems: this.props.items,
       highlightedItemIndex: null,
-      isSelecting: false,
     }
   }
 
@@ -104,8 +100,6 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     }
 
     if (prevProps.selected !== this.props.selected) {
-      this.previousHighlightedIndex = this.state.highlightedItemIndex || 0
-
       this.setState({searchTerm: this.props.selected}, () => {
         this.applyFilter(this.props.selected)
       })
@@ -113,6 +107,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
   }
 
   public handleClickOutside = () => {
+    this.setState({searchTerm: this.props.selected})
     this.props.onClose()
   }
 
@@ -164,6 +159,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       }
     }
     if (e.key === 'Escape') {
+      this.setState({searchTerm: this.props.selected})
       this.props.onClose()
     }
     if (e.key === 'ArrowUp' && highlightedItemIndex > 0) {
@@ -184,7 +180,6 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
 
     return this.setState({searchTerm: value}, () => {
       this.applyFilter(this.state.searchTerm)
-      this.props.onChange(value)
     })
   }
 
@@ -199,29 +194,12 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       return item.text.toLowerCase().includes(filterText)
     })
 
-    const newHighlightedIndex =
-      this.previousHighlightedIndex < matchingItems.length
-        ? this.previousHighlightedIndex
-        : 0
+    const newHighlightedIndex = matchingItems.length > 0 ? 0 : null
 
     this.setState({
       filteredItems: matchingItems,
       highlightedItemIndex: newHighlightedIndex,
     })
-  }
-
-  public getEmptyMessage = () => {
-    const {searchTerm} = this.state
-    const {serverStoredAliasName} = this.props
-
-    if (!searchTerm || searchTerm.trim() === '') {
-      return 'Please enter an alias'
-    }
-
-    if (serverStoredAliasName === searchTerm) {
-      return serverStoredAliasName
-    }
-    return `New alias : ${searchTerm}`
   }
 
   public render() {
@@ -241,7 +219,9 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       toggleStyle,
       useAutoComplete,
       status,
+      selected,
       placeholder,
+      serverStoredAliasName,
       inputRef,
     } = this.props
 
@@ -278,12 +258,12 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
           ref={inputRef}
         />
 
-        {isOpen && menuItems.length ? (
+        {isOpen && menuItems && menuItems.length ? (
           <DropdownMenu
             addNew={addNew}
             actions={actions}
             items={menuItems}
-            selected={searchTerm}
+            selected={selected}
             menuClass={menuClass}
             menuWidth={menuWidth}
             menuLabel={menuLabel}
@@ -297,7 +277,11 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
           <DropdownMenuEmpty
             useAutoComplete={useAutoComplete}
             menuClass={menuClass}
-            emptyMessage={this.getEmptyMessage()}
+            emptyMessage={
+              searchTerm === serverStoredAliasName
+                ? serverStoredAliasName
+                : undefined
+            }
           />
         )}
       </div>
@@ -320,6 +304,8 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
           this.applyFilter(this.state.searchTerm)
         }
       )
+    } else {
+      this.setState({searchTerm: this.props.selected})
     }
 
     if (onClick) {

@@ -362,19 +362,8 @@ const LogAnalysisCellsGraphWrapper = ({
     debouncedFit()
   }
 
-  const debouncedInputChange = useRef(
-    _.debounce((value: string) => {
-      setMatchingAliasSelectedDeviceAliasName(value)
-    }, 1000)
-  )
-
-  const handleMatchingAliasInputDropdownChange = (value: string) => {
-    debouncedInputChange.current(value)
-  }
-
   const handleMatchingAliasDropdownOnChoose = (item: DropdownItem) => {
     if (item && item.text) {
-      debouncedInputChange.current.cancel()
       setMatchingAliasSelectedDeviceAliasName(item.text)
       setMatchingAliasDropdownIsOpen(false)
     }
@@ -510,10 +499,6 @@ const LogAnalysisCellsGraphWrapper = ({
               }
               matchingAliasDropdownOnClick={handleMatchingAliasDropdownOnClick}
               matchingAliasDropdownOnClose={handleMatchingAliasDropdownOnClose}
-              onMatchingAliasInputDropdownChange={
-                handleMatchingAliasInputDropdownChange
-              }
-              selectedDeviceHostname={selectedDevice?.hostname}
               serverStoredAliasName={selectedDevice?.aliasName}
               appDropdownStatus={
                 isAllLayoutsLoading || isFilterLayoutsByAppNameLoading
@@ -567,10 +552,6 @@ const LogAnalysisCellsGraphWrapper = ({
                 matchingAliasDropdownOnClose={
                   handleMatchingAliasDropdownOnClose
                 }
-                onMatchingAliasInputDropdownChange={
-                  handleMatchingAliasInputDropdownChange
-                }
-                selectedDeviceHostname={selectedDevice?.hostname}
                 serverStoredAliasName={selectedDevice?.aliasName}
                 appDropdownStatus={
                   isAllLayoutsLoading || isFilterLayoutsByAppNameLoading

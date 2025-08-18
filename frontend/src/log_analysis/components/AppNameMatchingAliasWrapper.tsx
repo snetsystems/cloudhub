@@ -30,8 +30,6 @@ interface AppNameMatchingAliasWrapper {
   matchingAliasDropdownOnChoose: (item: DropdownItem) => void
   matchingAliasDropdownOnClick?: () => void
   matchingAliasDropdownOnClose?: () => void
-  onMatchingAliasInputDropdownChange: (value: string) => void
-  selectedDeviceHostname?: string
   matchingAliasDropdownStatus?: ComponentStatus
   serverStoredAliasName?: string
   matchingAliasInputRef?: RefObject<HTMLInputElement>
@@ -53,8 +51,6 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
   matchingAliasDropdownOnChoose = () => {},
   matchingAliasDropdownOnClick,
   matchingAliasDropdownOnClose,
-  onMatchingAliasInputDropdownChange,
-  selectedDeviceHostname,
   serverStoredAliasName,
   matchingAliasDropdownStatus = ComponentStatus.Default,
   matchingAliasInputRef,
@@ -91,9 +87,8 @@ const AppNameMatchingAliasWrapper: React.FC<AppNameMatchingAliasWrapper> = ({
               onClick={matchingAliasDropdownOnClick}
               onClose={matchingAliasDropdownOnClose}
               selected={selectedMatchingAliasDropdown}
-              onChange={onMatchingAliasInputDropdownChange}
               className={'dropdown matching-alias-dropdown-50'}
-              placeholder={selectedDeviceHostname}
+              placeholder={selectedMatchingAliasDropdown}
               status={matchingAliasDropdownStatus}
               serverStoredAliasName={serverStoredAliasName}
               inputRef={matchingAliasInputRef}
