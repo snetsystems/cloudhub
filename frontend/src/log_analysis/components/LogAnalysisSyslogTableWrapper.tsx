@@ -180,10 +180,36 @@ function LogAnalysisSyslogTableWrapper({
     prevAutoRefreshRef.current = current
   }, [cloudAutoRefresh?.logAnalysis])
 
+  const [fixedTimeRange, setFixedTimeRange] = useState<{
+    gteISO: string
+    lteISO: string
+  } | null>(null)
   const fixedTimeRangeRef = useRef<{
     gteISO: string
     lteISO: string
   } | null>(null)
+
+  const hasTimeFilter = useCallback(() => {
+    return filteredLogsForLogAnalysis.some(
+      clause =>
+        'range' in clause && Object.keys(clause.range)[0] === '@timestamp'
+    )
+  }, [filteredLogsForLogAnalysis])
+
+  const getTimeFilterFromLogs = useCallback(() => {
+    const timeFilter = filteredLogsForLogAnalysis.find(
+      clause =>
+        'range' in clause && Object.keys(clause.range)[0] === '@timestamp'
+    )
+    if (timeFilter && 'range' in timeFilter) {
+      const timestampRange = timeFilter.range['@timestamp']
+      return {
+        gteISO: timestampRange.gte,
+        lteISO: timestampRange.lte,
+      }
+    }
+    return null
+  }, [filteredLogsForLogAnalysis])
 
   const getSyslogTableData = useCallback(
     async (reset: boolean = false) => {
@@ -194,18 +220,33 @@ function LogAnalysisSyslogTableWrapper({
         | undefined
 
       if (reset) {
-        timeRangeToUse = cloudTimeRange?.logAnalysis
-        if (timeRangeToUse) {
-          fixedTimeRangeRef.current = lowerToESRange(timeRangeToUse)
+        if (hasTimeFilter()) {
+          const timeFilter = getTimeFilterFromLogs()
+          if (timeFilter) {
+            fixedTimeRangeRef.current = timeFilter
+            setFixedTimeRange(timeFilter)
+            timeRangeToUse = timeFilter
+          } else {
+            timeRangeToUse = cloudTimeRange?.logAnalysis
+          }
+        } else {
+          timeRangeToUse = cloudTimeRange?.logAnalysis
+          if (timeRangeToUse) {
+            const newFixedTimeRange = lowerToESRange(timeRangeToUse)
+            fixedTimeRangeRef.current = newFixedTimeRange
+            setFixedTimeRange(newFixedTimeRange)
+            timeRangeToUse = newFixedTimeRange
+          }
         }
       } else {
-        timeRangeToUse = fixedTimeRangeRef.current
+        timeRangeToUse =
+          fixedTimeRangeRef.current || cloudTimeRange?.logAnalysis
       }
 
       const combinedFilters = buildCombinedFilters(
         filteredLogsForLogAnalysis,
         timeRangeToUse,
-        !reset
+        true
       )
       setIsLoading(true)
       try {
@@ -436,6 +477,7 @@ function LogAnalysisSyslogTableWrapper({
       onLoadMore={onLoadMore}
       hasMore={rows.length < totalRowCount}
       onChangeLiveUpdatingStatus={onChangeLiveUpdatingStatus}
+      fixedTimeRange={fixedTimeRange}
     />
   )
 }

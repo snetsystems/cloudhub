@@ -84,6 +84,7 @@ interface LogAnalysisSyslogTableOwnProps {
     logTimeRange: TimeRange
   ) => void
   hasMore: boolean
+  fixedTimeRange?: {gteISO: string; lteISO: string} | null
 }
 
 interface StateProps {
@@ -149,6 +150,7 @@ function LogAnalysisSyslogTable<_>({
   handleExpandSideBar,
   hasMore,
   updateLogConfigAsync,
+  fixedTimeRange,
 }: LogAnalysisSyslogTableProps) {
   const dispatch = useDispatch()
   const [
@@ -749,6 +751,15 @@ function LogAnalysisSyslogTable<_>({
     })
   }
 
+  const formatFixedTimeRange = useCallback(() => {
+    if (!fixedTimeRange) return null
+
+    const startTime = formattedTime(fixedTimeRange.gteISO, timeZone)
+    const endTime = formattedTime(fixedTimeRange.lteISO, timeZone)
+
+    return `${startTime} ~ ${endTime}`
+  }, [fixedTimeRange, timeZone])
+
   return (
     <>
       <LogAnalysisDashboardHeader
@@ -760,6 +771,11 @@ function LogAnalysisSyslogTable<_>({
             onClick={shouldAutoRefresh ? onChangeLiveUpdatingStatus : undefined}
           >
             Log Table
+            {!isLiveUpdating && fixedTimeRange && (
+              <span className="fixed-time-range--display">
+                ({formatFixedTimeRange()})
+              </span>
+            )}
             <RefreshSpinner
               isActive={isLoading || (shouldAutoRefresh && isLiveUpdating)}
               isHighlighted={!!autoRefreshNumberValue && isLiveUpdating}

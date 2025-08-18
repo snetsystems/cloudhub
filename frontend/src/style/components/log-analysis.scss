@@ -299,6 +299,11 @@ button[data-test-subj='pagination-button-next'][disabled] {
   cursor: not-allowed;
 }
 
+.fixed-time-range--display {
+  font-size: 12px;
+  color: #8b8b8b;
+}
+
 .logs-analysis-filter-container {
   display: flex;
   flex-direction: row;
