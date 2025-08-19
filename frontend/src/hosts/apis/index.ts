@@ -1794,6 +1794,47 @@ export const getTagValuesForLayoutWhereTagKeys = async (
 export const filterLayoutsByExistingMeasurements = async (
   layouts: Layout[],
   source: Source,
+  tempVars: Template[]
+): Promise<Layout[]> => {
+  try {
+    const layoutsWithMeasurement = layouts.filter(layout => layout.measurement)
+
+    if (layoutsWithMeasurement.length === 0) {
+      return layouts
+    }
+
+    const query = replaceTemplate(`SHOW MEASUREMENTS`, tempVars)
+
+    const {data} = await proxy({
+      source: source.links.proxy,
+      query,
+      db: source.telegraf,
+    })
+
+    if (!data || !data.results || !data.results[0] || data.results[0].error) {
+      return layouts
+    }
+
+    const availableMeasurements = getDeep<string[][]>(
+      data.results[0],
+      'series.[0].values',
+      []
+    ).map(m => m[0])
+
+    const filteredLayouts = layoutsWithMeasurement.filter(layout =>
+      availableMeasurements.includes(layout.measurement)
+    )
+
+    return filteredLayouts
+  } catch (error) {
+    console.error('Error filtering layouts by measurements:', error)
+    return layouts
+  }
+}
+
+export const filterLayoutsByExistingMeasurementsWithAlias = async (
+  layouts: Layout[],
+  source: Source,
   tempVars: Template[],
   matchingAliasSelectedDeviceAliasName?: string
 ): Promise<Layout[]> => {

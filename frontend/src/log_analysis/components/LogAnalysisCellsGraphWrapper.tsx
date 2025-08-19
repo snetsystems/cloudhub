@@ -54,6 +54,7 @@ import {
   getLayouts,
   getTagValuesForLayoutWhereTagKeys,
   filterLayoutsByExistingMeasurements,
+  filterLayoutsByExistingMeasurementsWithAlias,
 } from 'src/hosts/apis'
 import {updateDeviceMapping} from 'src/admin/apis/deviceMapping'
 import {
@@ -137,7 +138,7 @@ const LogAnalysisCellsGraphWrapper = ({
     matchingAliasDropdownIsOpen,
     setMatchingAliasDropdownIsOpen,
   ] = useState(false)
-  const [appDropdownItems, setAppDropdownItems] = useState<DropdownItem[]>()
+  const [appDropdownItems, setAppDropdownItems] = useState<DropdownItem[]>([])
   const [selectedApp, setSelectedApp] = useState<string>(
     selectedDevice?.appName ?? ''
   )
@@ -183,7 +184,13 @@ const LogAnalysisCellsGraphWrapper = ({
       setAllLayouts(layouts || [])
 
       if (layouts && layouts.length > 0) {
-        await filterLayoutsByAppName(layouts)
+        const tempVars = generateForHosts(source)
+        const filteredLayouts = await filterLayoutsByExistingMeasurements(
+          layouts,
+          source,
+          tempVars
+        )
+        setFilteredLayouts(filteredLayouts || [])
       }
     } catch (error) {
       setAllLayouts([])
@@ -209,7 +216,7 @@ const LogAnalysisCellsGraphWrapper = ({
     setIsFilterLayoutsByAppNameLoading(true)
     try {
       const tempVars = generateForHosts(source)
-      const filteredLayouts = await filterLayoutsByExistingMeasurements(
+      const filteredLayouts = await filterLayoutsByExistingMeasurementsWithAlias(
         layouts,
         source,
         tempVars,
@@ -257,9 +264,16 @@ const LogAnalysisCellsGraphWrapper = ({
         setIsDropdownItemsLoading(true)
         try {
           const tempVars = generateForHosts(source)
+
+          const filteredLayoutsByMeasurements = await filterLayoutsByExistingMeasurements(
+            allLayouts,
+            source,
+            tempVars
+          )
+
           const tagValues = await getTagValuesForLayoutWhereTagKeys(
             source,
-            filteredLayouts,
+            filteredLayoutsByMeasurements,
             tempVars,
             selfTimeRange
           )
@@ -281,6 +295,29 @@ const LogAnalysisCellsGraphWrapper = ({
       fetchDropdownItems()
     }
   }, [matchingAliasDropdownIsOpen])
+
+  const filterLayoutsByRule = () => {
+    let filtered: Layout[] = []
+
+    if (selectedApp && selectedApp !== '') {
+      filtered = filteredLayouts.filter(layout => layout.app === selectedApp)
+    } else {
+      filtered = []
+    }
+
+    return filtered.sort((x, y) => {
+      return x.measurement < y.measurement
+        ? -1
+        : x.measurement > y.measurement
+        ? 1
+        : 0
+    })
+  }
+
+  const getLayoutForInstance = async () => {
+    const filteredLayouts = filterLayoutsByRule()
+    setLayout(filteredLayouts)
+  }
 
   useEffect(() => {
     setLayout([])
@@ -346,29 +383,6 @@ const LogAnalysisCellsGraphWrapper = ({
     return queries
   }
 
-  const filterLayoutsByRule = async () => {
-    let filtered: Layout[] = []
-
-    if (selectedApp && selectedApp !== '') {
-      filtered = filteredLayouts.filter(layout => layout.app === selectedApp)
-    } else {
-      filtered = []
-    }
-
-    return filtered.sort((x, y) => {
-      return x.measurement < y.measurement
-        ? -1
-        : x.measurement > y.measurement
-        ? 1
-        : 0
-    })
-  }
-
-  const getLayoutForInstance = async () => {
-    const filteredLayouts = await filterLayoutsByRule()
-    setLayout(filteredLayouts)
-  }
-
   const tempVars = useMemo(() => generateForHosts(source), [source])
 
   const handleChooseTimeRange = ({lower, upper}) => {
@@ -420,7 +434,7 @@ const LogAnalysisCellsGraphWrapper = ({
     if (selectedDevice?.hostname) {
       try {
         const currentInputValue =
-          matchingAliasInputRef.current?.value || selectedDevice.hostname
+          matchingAliasSelectedDeviceAliasName || selectedDevice.hostname
 
         const data: DeviceMeta = {
           hostname: selectedDevice.hostname,
