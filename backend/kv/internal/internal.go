@@ -902,11 +902,17 @@ func MarshalOrganizationConfig(c *cloudhub.OrganizationConfig) ([]byte, error) {
 		}
 	}
 
+	logAnalysis := &LogAnalysisConfig{
+		AnnotationPadding: c.LogAnalysis.AnnotationPadding,
+		QueryFillOption:   c.LogAnalysis.QueryFillOption,
+	}
+
 	return MarshalOrganizationConfigPB(&OrganizationConfig{
 		OrganizationID: c.OrganizationID,
 		LogViewer: &LogViewerConfig{
 			Columns: columns,
 		},
+		LogAnalysis: logAnalysis,
 	})
 }
 
@@ -946,6 +952,11 @@ func UnmarshalOrganizationConfig(data []byte, c *cloudhub.OrganizationConfig) er
 	}
 
 	c.LogViewer.Columns = columns
+
+	if pb.LogAnalysis != nil {
+		c.LogAnalysis.AnnotationPadding = pb.LogAnalysis.AnnotationPadding
+		c.LogAnalysis.QueryFillOption = pb.LogAnalysis.QueryFillOption
+	}
 
 	ensureHostnameColumn(c)
 
