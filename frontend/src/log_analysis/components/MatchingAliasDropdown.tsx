@@ -295,7 +295,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
             menuClass={menuClass}
             emptyMessage={
               status === ComponentStatus.Loading
-                ? 'Loading'
+                ? ' '
                 : searchTerm === serverStoredAliasName
                 ? serverStoredAliasName
                 : undefined

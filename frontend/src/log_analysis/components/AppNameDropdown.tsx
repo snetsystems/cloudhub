@@ -261,9 +261,7 @@ export class AppNameDropdown extends PureComponent<Props, State> {
           <DropdownMenuEmpty
             useAutoComplete={useAutoComplete}
             menuClass={menuClass}
-            emptyMessage={
-              status === ComponentStatus.Loading ? 'Loading' : undefined
-            }
+            emptyMessage={' '}
           />
         )}
       </div>
