@@ -67,24 +67,19 @@ class SourceStep extends PureComponent<Props, State> {
   }
   constructor(props: Props) {
     super(props)
+
+    const defaultSourceWithOrgName = {
+      ...DEFAULT_SOURCE,
+      name: props.me?.currentOrganization?.name || DEFAULT_SOURCE.name,
+    }
+
     this.state = {
-      source: this.props.source || DEFAULT_SOURCE,
+      source: this.props.source || defaultSourceWithOrgName,
     }
 
     if (!this.props.source && props.isUsingAuth) {
       this.state.source.telegraf = props.me.currentOrganization.name
     }
-  }
-
-  public componentDidMount() {
-    const {source} = this.state
-    const {me} = this.props
-    this.setState({
-      source: {
-        ...source,
-        name: me.currentOrganization.name,
-      },
-    })
   }
 
   public next = async (): Promise<NextReturn> => {
