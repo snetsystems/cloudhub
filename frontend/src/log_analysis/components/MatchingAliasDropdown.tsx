@@ -16,6 +16,7 @@ import DropdownMenu, {
 } from 'src/shared/components/DropdownMenu'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 import DropdownInputWithRef from 'src/shared/components/DropdownInputWithRef'
+import DropdownHead from 'src/shared/components/DropdownHead'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -60,6 +61,7 @@ interface State {
   searchTerm: string
   filteredItems: DropdownItem[]
   highlightedItemIndex: number
+  showEmptyMessage: boolean
 }
 
 @ErrorHandling
@@ -81,14 +83,8 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       searchTerm: '',
       filteredItems: [],
       highlightedItemIndex: null,
+      showEmptyMessage: false,
     }
-  }
-
-  public componentDidMount() {
-    const {selected} = this.props
-    this.setState({searchTerm: selected}, () => {
-      this.applyFilter(selected)
-    })
   }
 
   public componentDidUpdate(prevProps: Props) {
@@ -100,16 +96,8 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     }
 
     if (prevProps.selected !== this.props.selected) {
-      this.setState({searchTerm: this.props.selected}, () => {
-        this.applyFilter(this.props.selected)
-      })
-    }
-
-    if (
-      prevProps.status !== this.props.status &&
-      this.props.status === ComponentStatus.Loading
-    ) {
       this.setState({filteredItems: []})
+      return
     }
 
     if (
@@ -123,7 +111,6 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
   }
 
   public handleClickOutside = () => {
-    this.setState({searchTerm: this.props.selected})
     this.props.onClose()
   }
 
@@ -133,7 +120,6 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     e.stopPropagation()
 
     this.props.onChoose(item)
-    this.setState({searchTerm: item.text})
 
     this.dropdownRef.focus()
   }
@@ -171,11 +157,9 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       if (selectedItem) {
         this.props.onClose()
         this.props.onChoose(selectedItem)
-        this.setState({searchTerm: selectedItem.text})
       }
     }
     if (e.key === 'Escape') {
-      this.setState({searchTerm: this.props.selected})
       this.props.onClose()
     }
     if (e.key === 'ArrowUp' && highlightedItemIndex > 0) {
@@ -218,13 +202,34 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
     })
   }
 
+  public getEmptyMessage = () => {
+    const {searchTerm} = this.state
+    const {serverStoredAliasName, status} = this.props
+
+    if (!this.state.showEmptyMessage) {
+      return ' '
+    }
+
+    if (status === ComponentStatus.Loading) {
+      return ' '
+    }
+
+    if (searchTerm === serverStoredAliasName) {
+      return serverStoredAliasName
+    }
+
+    return undefined
+  }
+
   public render() {
     const {
       isOpen,
       items,
       addNew,
       actions,
+      selected,
       disabled,
+      iconName,
       tabIndex,
       className,
       menuClass,
@@ -235,15 +240,14 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       toggleStyle,
       useAutoComplete,
       status,
-      selected,
       placeholder,
-      serverStoredAliasName,
       inputRef,
     } = this.props
 
     const {searchTerm, filteredItems, highlightedItemIndex} = this.state
 
     const menuItems = useAutoComplete ? filteredItems : items
+
     return (
       <div
         onClick={this.handleClick}
@@ -260,19 +264,28 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
             <LoadingSpinner />
           </div>
         ) : null}
-
-        <DropdownInputWithRef
-          searchTerm={searchTerm}
-          buttonSize={buttonSize}
-          buttonColor={buttonColor}
-          toggleStyle={toggleStyle}
-          disabled={disabled || status === ComponentStatus.Loading}
-          onFilterChange={this.handleFilterChange}
-          onFilterKeyPress={this.handleFilterKeyPress}
-          placeholder={placeholder}
-          value={searchTerm}
-          ref={inputRef}
-        />
+        {useAutoComplete && this.props.isOpen ? (
+          <DropdownInputWithRef
+            searchTerm={searchTerm}
+            buttonSize={buttonSize}
+            buttonColor={buttonColor}
+            toggleStyle={toggleStyle}
+            disabled={disabled || status === ComponentStatus.Loading}
+            onFilterChange={this.handleFilterChange}
+            onFilterKeyPress={this.handleFilterKeyPress}
+            placeholder={placeholder}
+            ref={inputRef}
+          />
+        ) : (
+          <DropdownHead
+            iconName={iconName}
+            selected={selected}
+            buttonSize={buttonSize}
+            buttonColor={buttonColor}
+            toggleStyle={toggleStyle}
+            disabled={disabled}
+          />
+        )}
 
         {isOpen && menuItems && menuItems.length ? (
           <DropdownMenu
@@ -293,13 +306,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
           <DropdownMenuEmpty
             useAutoComplete={useAutoComplete}
             menuClass={menuClass}
-            emptyMessage={
-              status === ComponentStatus.Loading
-                ? ' '
-                : searchTerm === serverStoredAliasName
-                ? serverStoredAliasName
-                : undefined
-            }
+            emptyMessage={this.getEmptyMessage()}
           />
         )}
       </div>
@@ -313,19 +320,7 @@ export class MatchingAliasDropdown extends PureComponent<Props, State> {
       return
     }
 
-    if (!this.props.isOpen) {
-      this.setState(
-        {
-          highlightedItemIndex: null,
-        },
-        () => {
-          this.applyFilter(this.state.searchTerm)
-        }
-      )
-    } else {
-      this.setState({searchTerm: this.props.selected})
-    }
-
+    this.toggleMenu(e)
     if (onClick) {
       onClick(e)
     }
