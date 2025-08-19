@@ -59,8 +59,13 @@ import Authorized, {EDITOR_ROLE, VIEWER_ROLE} from 'src/auth/Authorized'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import OptionsOverlay from 'src/logs/components/OptionsOverlay'
 import {SeverityLevelColor} from 'src/types/logs'
-import {getLogConfigAsync, updateLogConfigAsync} from 'src/logs/actions'
+import {
+  getLogConfigAsync,
+  setConfig,
+  updateLogConfigAsync,
+} from 'src/logs/actions'
 import {SeverityFormatOptions} from 'src/logs/constants'
+import {getChartOptions} from 'src/log_analysis/apis/chartOptions'
 
 interface TempProps {
   cell: Cell
@@ -92,6 +97,7 @@ interface Props {
   updateConfig: typeof updateLogConfigAsync
   logConfigLink: string
   getConfig?: typeof getLogConfigAsync
+  setConfig?: typeof setConfig
 }
 
 function LogAnalysisDashboard({
@@ -113,6 +119,7 @@ function LogAnalysisDashboard({
   logConfigLink,
   updateConfig,
   getConfig,
+  setConfig,
 }: Props) {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false)
 
@@ -161,12 +168,24 @@ function LogAnalysisDashboard({
   }, [])
 
   useEffect(() => {
-    const fetchConfig = async () => {
-      await getConfig(logConfigLink)
-    }
-
     fetchConfig()
+    fetchChartOptions()
   }, [])
+
+  const fetchConfig = async () => {
+    await getConfig(logConfigLink)
+  }
+
+  const fetchChartOptions = async () => {
+    const {data} = await getChartOptions()
+    setConfig({
+      ...logConfig,
+      chartOptions: {
+        queryFillOption: data.queryFillOption,
+        annotationPadding: data.annotationPadding,
+      },
+    })
+  }
 
   const savedCells = useMemo(() => {
     const saved = localStorage.getItem('Log-Analysis-cells')
@@ -522,6 +541,7 @@ const mdtp = dispatch => ({
   ),
   updateConfig: bindActionCreators(updateLogConfigAsync, dispatch),
   getConfig: bindActionCreators(getLogConfigAsync, dispatch),
+  setConfig: bindActionCreators(setConfig, dispatch),
 })
 
 const isEqual = (prev, next) => {
