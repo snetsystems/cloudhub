@@ -397,7 +397,8 @@ function LogAnalysisSyslogTableWrapper({
     async (
       hostname: string,
       deviceType: DeviceType,
-      logTimeRange: TimeRange
+      logTimeRange: TimeRange,
+      timeStamp: string
     ) => {
       const deviceMeta = await getDeviceMapping(hostname, deviceType)
 
@@ -418,6 +419,7 @@ function LogAnalysisSyslogTableWrapper({
               ADMIN_ROLE
             )}
             logTimeRange={logTimeRange}
+            timeStamp={timeStamp}
           />
         ) as unknown) as React.ReactElement,
       })

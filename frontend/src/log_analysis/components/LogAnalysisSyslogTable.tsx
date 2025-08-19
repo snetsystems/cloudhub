@@ -81,7 +81,8 @@ interface LogAnalysisSyslogTableOwnProps {
   handleExpandSideBar: (
     hostname: string,
     deviceType: DeviceType,
-    logTimeRange: TimeRange
+    logTimeRange: TimeRange,
+    timeStamp: string
   ) => void
   hasMore: boolean
   fixedTimeRange?: {gteISO: string; lteISO: string} | null
@@ -102,19 +103,39 @@ type LogAnalysisSyslogTableProps = LogAnalysisSyslogTableOwnProps &
   StateProps &
   DispatchProps
 
-function getTimeRangeFromTimestamp(
-  timestamp: string | null
+const UNIT_MS: Record<string, number> = {
+  d: 24 * 60 * 60 * 1000,
+  h: 60 * 60 * 1000,
+  m: 60 * 1000,
+}
+
+export function getTimeRangeFromTimestamp(
+  timestamp: string | null,
+  logConfig: LogConfig
 ): {lower: string; upper: string | null} {
   if (timestamp) {
     const centerDate = new Date(timestamp)
-    const lowerDate = new Date(centerDate.getTime() - 2 * 60 * 60 * 1000)
-    const upperDate = new Date(centerDate.getTime() + 2 * 60 * 60 * 1000)
+    const padding = parseDurationToMs(
+      logConfig.chartOptions?.annotationPadding || '2h'
+    )
+    const lowerDate = new Date(centerDate.getTime() - padding)
+    const upperDate = new Date(centerDate.getTime() + padding)
     const lower = lowerDate.toISOString()
     const upper = upperDate.toISOString()
     return {lower, upper}
   } else {
     return {lower: 'now() - 1h', upper: null}
   }
+}
+
+function parseDurationToMs(input: string): number {
+  const m = String(input)
+    .trim()
+    .match(/^(\d+(?:\.\d+)?)\s*([dhm])$/i)
+  if (!m) throw new Error('Use format like 2h, 30m, 1d')
+  const value = parseFloat(m[1])
+  const unit = m[2].toLowerCase()
+  return value * UNIT_MS[unit]
 }
 
 function formatNumberWithCommas(value: number | null | undefined): string {
@@ -537,12 +558,17 @@ function LogAnalysisSyslogTable<_>({
         const hostname = row['host.hostname']?.[0] || ''
         const deviceType = row['deviceType']?.[0] || 'baremetal'
         const timestamp = row['@timestamp']?.[0] || null
-        const logTimeRange = getTimeRangeFromTimestamp(timestamp)
+        const logTimeRange = getTimeRangeFromTimestamp(timestamp, logConfig)
         return (
           <div className="syslog-table-expand--icon">
             <span
               onClick={() =>
-                handleExpandSideBar(hostname, deviceType, logTimeRange)
+                handleExpandSideBar(
+                  hostname,
+                  deviceType,
+                  logTimeRange,
+                  timestamp
+                )
               }
             >
               <OuiIcon
@@ -682,6 +708,7 @@ function LogAnalysisSyslogTable<_>({
       logConfig?.isTruncated,
       logConfig?.severityFormat,
       logConfig?.severityLevelColors,
+      logConfig?.chartOptions?.annotationPadding,
     ]
   )
 

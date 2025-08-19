@@ -17,6 +17,7 @@ import {
   Notification,
   TimeZones,
 } from 'src/types'
+import {LogConfig} from 'src/types/logs'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 // Constants
@@ -62,6 +63,7 @@ import {
 } from 'src/shared/copy/notifications'
 import ChartOptionsOverlay from './ChartOptionsOverlay'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
+import {getTimeRangeFromTimestamp} from './LogAnalysisSyslogTable'
 
 interface Props {
   ratio: Ratio
@@ -77,6 +79,8 @@ interface Props {
   setSelectedDevice?: (device: DeviceMeta) => void
   logTimeRange: TimeRange
   timeZone?: TimeZones
+  logConfig?: LogConfig
+  timeStamp?: string
 }
 
 const LogAnalysisCellsGraphWrapper = ({
@@ -93,6 +97,8 @@ const LogAnalysisCellsGraphWrapper = ({
   setSelectedDevice,
   logTimeRange,
   timeZone,
+  logConfig,
+  timeStamp,
 }: Props) => {
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (logTimeRange) {
@@ -309,9 +315,36 @@ const LogAnalysisCellsGraphWrapper = ({
         }
       })
 
-      setLayoutCells(getCellsReactive(layout, source, whereTag, ratio, null))
+      const cells = getCellsReactive(layout, source, whereTag, ratio, null)
+
+      setLayoutCells(queriesFillHandler(cells))
     }
-  }, [selfTimeRange, matchingAliasSelectedDeviceAliasName, layout])
+  }, [
+    selfTimeRange,
+    matchingAliasSelectedDeviceAliasName,
+    layout,
+    logConfig?.chartOptions?.queryFillOption,
+  ])
+
+  useEffect(() => {
+    setSelfTimeRange(getTimeRangeFromTimestamp(timeStamp, logConfig))
+  }, [logConfig?.chartOptions?.annotationPadding])
+
+  const queriesFillHandler = (layout: Cell[]) => {
+    const queries = layout.map(cell => {
+      return {
+        ...cell,
+        queries: cell.queries.map(query => {
+          return {
+            ...query,
+            fill: logConfig?.chartOptions?.queryFillOption ?? 'null',
+          }
+        }),
+      }
+    })
+
+    return queries
+  }
 
   const filterLayoutsByRule = async () => {
     let filtered: Layout[] = []
@@ -424,14 +457,13 @@ const LogAnalysisCellsGraphWrapper = ({
   const handleAppDropdownClose = () => setAppDropdownIsOpen(false)
 
   const getAnnotationTime = (): number | null => {
-    if (!selfTimeRange.lower || !selfTimeRange.upper) {
+    if (!timeStamp) {
       return null
     }
 
     try {
-      const lowerTime = new Date(selfTimeRange.lower).getTime()
-      const upperTime = new Date(selfTimeRange.upper).getTime()
-      return (lowerTime + upperTime) / 2
+      const lowerTime = new Date(timeStamp).getTime()
+      return lowerTime
     } catch (error) {
       return null
     }
@@ -447,7 +479,7 @@ const LogAnalysisCellsGraphWrapper = ({
         id: matchingAliasSelectedDeviceAliasName,
         startTime: annotationTime,
         endTime: annotationTime,
-        text: `Log Analysis Time (${timeZone})`,
+        text: `Select Log Time (${timeZone})`,
       },
     ]
   }, [annotationTime, matchingAliasSelectedDeviceAliasName, timeZone])
@@ -639,12 +671,14 @@ const mstp = state => {
     },
     selectedDevice: {selectedDevice},
     logAnalysisDashboard: {logAnalysisManualRefresh},
+    logs: {logConfig},
   } = state
   return {
     timeZone,
     cloudAutoRefresh,
     selectedDevice,
     logAnalysisManualRefresh,
+    logConfig,
   }
 }
 
