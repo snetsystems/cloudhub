@@ -112,3 +112,15 @@ func NewAIConfig(aiConfig map[string]string) cloudhub.AIConfig {
 
 	return newAiConfig
 }
+
+// NewDellPowerFlexConfig converts map to Dell PowerFlex Struct
+func NewDellPowerFlexConfig(dellPowerFlexConfig map[string]string) cloudhub.DellPowerFlexConfig {
+	var newDellPowerFlexConfig cloudhub.DellPowerFlexConfig
+	if len(dellPowerFlexConfig) > 0 {
+		newDellPowerFlexConfig.URL = dellPowerFlexConfig["url"]
+		newDellPowerFlexConfig.Username = dellPowerFlexConfig["username"]
+		newDellPowerFlexConfig.Password = dellPowerFlexConfig["password"]
+	}
+
+	return newDellPowerFlexConfig
+}

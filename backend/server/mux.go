@@ -470,6 +470,10 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Ensure device
 	router.POST("/cloudhub/v1/device-mappings/ensure", EnsureViewer(service.EnsureDevice))
 
+	// Dell PowerFlex API Proxy
+	dellPowerFlex := http.HandlerFunc(service.DellPowerFlexProxy)
+	registerAllMethods(router, "/cloudhub/v1/powerflex/proxy/*path", dellPowerFlex)
+
 	allRoutes := &AllRoutes{
 		Logger:                opts.Logger,
 		StatusFeed:            opts.StatusFeedURL,

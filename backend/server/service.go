@@ -4,6 +4,7 @@ import (
 	"context"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/dellpowerflex"
 	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
@@ -27,6 +28,7 @@ type Service struct {
 	AddonTokens              map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
 	OSP                      OSP
 	InternalENV              cloudhub.InternalEnvironment
+	DellPowerFlexClient      *dellpowerflex.Client
 }
 
 type superAdminProviderGroups struct {
