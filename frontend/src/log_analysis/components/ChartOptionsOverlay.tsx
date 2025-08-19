@@ -75,7 +75,7 @@ function ChartOptionsOverlay({
 
   return (
     <OverlayTechnology visible={isOpen}>
-      <Container maxWidth={500}>
+      <Container maxWidth={300}>
         <Heading title="Chart Options">{overlayActionButtons()}</Heading>
         <Body>
           <div className="row chart-options-container">
@@ -85,7 +85,6 @@ function ChartOptionsOverlay({
             <div className={`col-sm-12 option-section`}>
               {/* radio button */}
               <div className="radio-btn-container">
-                <div className="radio-btn-title">{'None'}</div>
                 <div className="radio-btn-item">
                   <TopologyRadioButton
                     id="none"
@@ -97,10 +96,10 @@ function ChartOptionsOverlay({
                     }}
                   />
                 </div>
+                <div className="radio-btn-title">{'None'}</div>
               </div>
 
               <div className="radio-btn-container">
-                <div className="radio-btn-title">{'Null'}</div>
                 <div className="radio-btn-item">
                   <TopologyRadioButton
                     id="null"
@@ -112,6 +111,7 @@ function ChartOptionsOverlay({
                     }}
                   />
                 </div>
+                <div className="radio-btn-title">{'Null'}</div>
               </div>
             </div>
             <div className={`col-sm-12`}>
@@ -119,6 +119,7 @@ function ChartOptionsOverlay({
             </div>
             <div className={`col-sm-12 option-section`}>
               <InputDropdownWrapper
+                className="dropdown-230"
                 selectedItem={annotationTimeRange}
                 setSelectedItem={text => {
                   setAnnotationTimeRange(text)

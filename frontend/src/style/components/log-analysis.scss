@@ -611,7 +611,7 @@ button[data-test-subj='pagination-button-next'][disabled] {
   .option-section {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 20px;
     width: 100%;
     padding: 0 0 12px 15px;
   }
@@ -619,7 +619,6 @@ button[data-test-subj='pagination-button-next'][disabled] {
   .radio-btn-container {
     display: flex;
     align-items: center;
-    gap: 8px;
   }
 
   .radio-btn-title {

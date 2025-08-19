@@ -41,7 +41,7 @@ const InputDropdownWrapper = ({
     <InputDropdown
       items={items}
       isOpen={isOpen}
-      useAutoComplete={true}
+      useAutoComplete={false}
       disabled={disabled}
       onChoose={handleChoose}
       onClick={() => setIsOpen(prev => !prev)}
