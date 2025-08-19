@@ -1713,3 +1713,9 @@ export const notifyNoSelectedDevice = (): Notification => ({
   message: `There is no selected device.`,
   duration: INFINITE,
 })
+
+export const notifyInvalidDurationFormat = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Invalid duration format. Use format like 2h, 30m, 1d Default is 2h`,
+  duration: 3000,
+})

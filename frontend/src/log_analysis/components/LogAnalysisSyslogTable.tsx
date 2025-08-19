@@ -58,6 +58,7 @@ import {
   SeverityFormatOptions,
   DEFAULT_SEVERITY_LEVELS,
 } from 'src/logs/constants'
+import {notify} from 'src/shared/actions/notifications'
 
 interface LogAnalysisSyslogTableOwnProps {
   chunkSize: number
@@ -132,7 +133,10 @@ function parseDurationToMs(input: string): number {
   const m = String(input)
     .trim()
     .match(/^(\d+(?:\.\d+)?)\s*([dhm])$/i)
-  if (!m) throw new Error('Use format like 2h, 30m, 1d')
+
+  if (!m) {
+    return 2 * 60 * 60 * 1000 //default 2h
+  }
   const value = parseFloat(m[1])
   const unit = m[2].toLowerCase()
   return value * UNIT_MS[unit]
@@ -997,6 +1001,7 @@ const mdtp = dispatch => ({
     dispatch
   ),
   updateLogConfigAsync: bindActionCreators(updateLogConfigAsync, dispatch),
+  notify: bindActionCreators(notify, dispatch),
 })
 
 export default connect(

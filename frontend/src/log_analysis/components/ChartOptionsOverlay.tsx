@@ -14,6 +14,9 @@ import {
   DEFAULT_TIME_RANGE_OPTIONS,
   DEFAULT_TIME_RANGE_OPTIONS_PLACEHOLDER,
 } from 'src/log_analysis/constants'
+import {notifyInvalidDurationFormat} from 'src/shared/copy/notifications'
+import {Notification} from 'src/types/notifications'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 interface Props {
   isOpen: boolean
@@ -22,6 +25,7 @@ interface Props {
   setConfig?: typeof setConfig
   getConfig?: typeof getLogConfigAsync
   logConfigLink?: string
+  notify?: (message: Notification) => void
 }
 
 function ChartOptionsOverlay({
@@ -31,6 +35,7 @@ function ChartOptionsOverlay({
   setConfig,
   getConfig,
   logConfigLink,
+  notify,
 }: Props) {
   const [fillOption, setFillOption] = useState(
     logConfig?.chartOptions?.queryFillOption ?? 'none'
@@ -44,6 +49,11 @@ function ChartOptionsOverlay({
   }, [])
 
   const handleSave = () => {
+    const reg = annotationTimeRange.match(/^(\d+(?:\.\d+)?)\s*([dhm])$/i)
+    if (!reg) {
+      notify(notifyInvalidDurationFormat())
+      return
+    }
     saveChartOptions({
       queryFillOption: fillOption,
       annotationPadding: annotationTimeRange,
@@ -153,6 +163,7 @@ const mstp = state => {
 const mdtp = dispatch => ({
   setConfig: bindActionCreators(setConfig, dispatch),
   getConfig: bindActionCreators(getLogConfigAsync, dispatch),
+  notify: bindActionCreators(notifyAction, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(ChartOptionsOverlay)
