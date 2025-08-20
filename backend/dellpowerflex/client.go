@@ -16,15 +16,16 @@ import (
 
 // Token represents the Dell PowerFlex authentication token
 type Token struct {
-	AccessToken      string `json:"access_token"`
-	ExpiresIn        int    `json:"expires_in"`
-	RefreshToken     string `json:"refresh_token"`
-	RefreshExpiresIn int    `json:"refresh_expires_in"`
-	TokenType        string `json:"token_type"`
-	IDToken          string `json:"id_token"`
-	NotBeforePolicy  int    `json:"not-before-policy"`
-	SessionState     string `json:"session_state"`
-	Scope            string `json:"scope"`
+	AccessToken      string    `json:"access_token"`
+	ExpiresIn        int       `json:"expires_in"`
+	RefreshToken     string    `json:"refresh_token"`
+	RefreshExpiresIn int       `json:"refresh_expires_in"`
+	TokenType        string    `json:"token_type"`
+	IDToken          string    `json:"id_token"`
+	NotBeforePolicy  int       `json:"not-before-policy"`
+	SessionState     string    `json:"session_state"`
+	Scope            string    `json:"scope"`
+	CreatedAt        time.Time `json:"-"`
 }
 
 // LoginRequest represents the login request
@@ -125,6 +126,9 @@ func (c *Client) Login(ctx context.Context) error {
 		c.logger.Error("Unexpected token type: ", token.TokenType, ", expected 'bearer'")
 	}
 
+	// 토큰을 받은 후 생성 시간 설정
+	token.CreatedAt = time.Now()
+
 	c.tokenMutex.Lock()
 	c.token = &token
 	c.tokenMutex.Unlock()
@@ -179,6 +183,9 @@ func (c *Client) RefreshToken(ctx context.Context) error {
 		return fmt.Errorf("failed to decode refresh response: %w", err)
 	}
 
+	// 새 토큰을 받은 후 생성 시간 설정
+	token.CreatedAt = time.Now()
+
 	c.tokenMutex.Lock()
 	c.token = &token
 	c.tokenMutex.Unlock()
@@ -207,12 +214,14 @@ func (c *Client) GetToken(ctx context.Context) (string, error) {
 	// Check if token is expired (with 30 second buffer)
 	// Dell PowerFlex tokens expire in 5 minutes (300 seconds)
 	if token.ExpiresIn > 0 {
-		// If token expires in less than 30 seconds, refresh it
-		if token.ExpiresIn < 30 {
-			c.logger.Info("Token expiring soon (expires in ", token.ExpiresIn, " seconds), attempting refresh")
+
+		timeSinceCreation := time.Since(token.CreatedAt)
+		remainingTime := time.Duration(token.ExpiresIn)*time.Second - timeSinceCreation
+
+		if remainingTime < 30*time.Second {
+			c.logger.Info("Token expiring soon (expires in ", remainingTime.Seconds(), " seconds), attempting refresh")
 			if err := c.RefreshToken(ctx); err != nil {
 				c.logger.Error("Failed to refresh token, attempting re-login: ", err)
-				// If refresh fails, try to login again
 				if err := c.Login(ctx); err != nil {
 					return "", fmt.Errorf("failed to re-login after refresh failure: %w", err)
 				}

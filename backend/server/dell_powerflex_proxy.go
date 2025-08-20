@@ -88,7 +88,6 @@ func (s *Service) DellPowerFlexProxy(w http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusBadGateway)
 		}
 
-		// Set up the request URL like Elasticsearch proxy
 		r.URL.Scheme = "" // overwritten by Director
 		r.URL.Host = ""
 		r.URL.Path = tail  // "/rest/v1/users" …
@@ -157,11 +156,6 @@ func buildDellPowerFlexReverseProxy(targetURL, token string) *httputil.ReversePr
 			req.Header.Set("Content-Type", "application/json")
 		}
 
-		// Log the request details for debugging
-		fmt.Printf("Dell PowerFlex Request: %s %s\n", req.Method, req.URL.Path)
-		fmt.Printf("Authorization Header: %s\n", authHeader)
-		fmt.Printf("Accept Header: %s\n", req.Header.Get("Accept"))
-		fmt.Printf("Content-Type Header: %s\n", req.Header.Get("Content-Type"))
 	}
 
 	return rp
