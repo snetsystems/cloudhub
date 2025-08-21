@@ -48,7 +48,7 @@ export const transToCPUMillCore = (param: string, objKind: string) => {
       result =
         unit !== 'm'
           ? parseFloat(param) * 1000
-          : parseFloat(param.substr(0, param.length - 2))
+          : parseFloat(param.substr(0, param.length - 1))
     } else if (objKind === 'node') {
       result = parseFloat(param) * 1000
     }

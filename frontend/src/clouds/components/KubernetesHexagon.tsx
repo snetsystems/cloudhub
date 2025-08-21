@@ -189,7 +189,8 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           d.depth > 0 &&
           d.depth < 3 &&
           d.data.type !== 'CR' &&
-          d.data.type !== 'CRB'
+          d.data.type !== 'CRB' &&
+          d.data.type !== 'PV'
       )
       .append('circle')
       .attr('data-name', d => d.data.name)
@@ -218,7 +219,10 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .filter(
         d =>
           d.depth === 3 ||
-          (d.depth === 2 && (d.data.type === 'CR' || d.data.type === 'CRB'))
+          (d.depth === 2 &&
+            (d.data.type === 'CR' ||
+              d.data.type === 'CRB' ||
+              d.data.type === 'PV'))
       )
       .append('path')
       .attr('class', 'hexagon')
@@ -282,7 +286,10 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         d =>
           !(
             d.depth === 3 ||
-            (d.depth === 2 && (d.data.type === 'CR' || d.data.type === 'CRB'))
+            (d.depth === 2 &&
+              (d.data.type === 'CR' ||
+                d.data.type === 'CRB' ||
+                d.data.type === 'PV'))
           )
       )
       .append('text')
