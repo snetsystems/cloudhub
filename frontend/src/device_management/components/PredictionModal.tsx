@@ -46,9 +46,10 @@ export const PredictionModal = ({
       <FancyScrollbar autoHeight={true} maxHeight={height} autoHide={false}>
         <div className={'overlay--heading'}>
           <div className="overlay--title">{'Learning Plot'}</div>
-          <button className="overlay--dismiss" onClick={() => setIsOpen(false)}>
-            close
-          </button>
+          <button
+            className="overlay--dismiss"
+            onClick={() => setIsOpen(false)}
+          ></button>
         </div>
 
         <div className="overlay--body">

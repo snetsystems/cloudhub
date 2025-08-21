@@ -1969,9 +1969,18 @@ class KubernetesPage extends PureComponent<Props, State> {
               )
             ) {
               namespaces[namespace]['ReplicaSet'][ownerName] = {
-                metadata: replicaSets[ownerName].metadata,
-                spec: replicaSets[ownerName].spec,
-                status: replicaSets[ownerName].status,
+                metadata:
+                  replicaSets[ownerName] !== undefined
+                    ? replicaSets[ownerName].metadata
+                    : {},
+                spec:
+                  replicaSets[ownerName] !== undefined
+                    ? replicaSets[ownerName].spec
+                    : {},
+                status:
+                  replicaSets[ownerName] !== undefined
+                    ? replicaSets[ownerName].status
+                    : {},
                 Pod: [],
               }
               namespaces[namespace]['ReplicaSet'][ownerName]['Pod'].push({
@@ -2781,7 +2790,7 @@ class KubernetesPage extends PureComponent<Props, State> {
                     )
                     .attr('data-limit-cpu')
                 )) *
-              100
+              100.0
             const memoryUsage =
               (parseFloat(m['memory']) /
                 parseFloat(
@@ -2794,7 +2803,7 @@ class KubernetesPage extends PureComponent<Props, State> {
                     )
                     .attr('data-limit-memory')
                 )) *
-              100
+              100.0
 
             node
               .select(
@@ -2829,6 +2838,17 @@ class KubernetesPage extends PureComponent<Props, State> {
               podData => podData.data.label === m['name']
             )
           ) {
+            console.log("m['cpu'])", m['cpu'])
+            console.log(
+              node
+                .select(
+                  `path[data-label=${String(m['name']).replace(
+                    /[.:*+?^${}()|[\]\\]/g,
+                    '\\$&'
+                  )}]`
+                )
+                .attr('data-limit-cpu')
+            )
             const cpuUsage =
               (parseFloat(m['cpu']) /
                 parseFloat(
@@ -2841,7 +2861,7 @@ class KubernetesPage extends PureComponent<Props, State> {
                     )
                     .attr('data-limit-cpu')
                 )) *
-              100
+              100.0
             const memoryUsage =
               (parseFloat(m['memory']) /
                 parseFloat(
@@ -2854,7 +2874,7 @@ class KubernetesPage extends PureComponent<Props, State> {
                     )
                     .attr('data-limit-memory')
                 )) *
-              100
+              100.0
 
             node
               .select(
@@ -3426,7 +3446,9 @@ class KubernetesPage extends PureComponent<Props, State> {
     if (
       data.depth === 3 ||
       (data.depth === 2 &&
-        (data.data.type === 'CR' || data.data.type === 'CRB'))
+        (data.data.type === 'CR' ||
+          data.data.type === 'CRB' ||
+          data.data.type === 'PV'))
     ) {
       const pinNode = this.parentNavigation(data)
       const target = d3.select(`[data-name=${pinNode[0]}]`)

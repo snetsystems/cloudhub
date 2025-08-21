@@ -29,6 +29,10 @@ $highlight: #25262e;
   justify-self: center;
   padding: 0 12px;
 
+  button {
+    color: inherit;
+  }
+
   .ouiDataGrid__focusWrap {
     padding-top: 10px;
     padding-bottom: 10px;
