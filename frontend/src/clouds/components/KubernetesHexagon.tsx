@@ -42,9 +42,9 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
   private ref = createRef<HTMLDivElement>()
 
-  private clickedTarget = null
+  private clickedTarget: any = null
   private clickedOnce = false
-  private timeout = null
+  private timeout: ReturnType<typeof setTimeout> | null = null
 
   private dbClickJudgementTimer = 300
 
@@ -123,14 +123,14 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       focuseNode,
     } = _this.props
 
-    const dimensions = this.ref.current.getBoundingClientRect()
+    const dimensions = this.ref.current!.getBoundingClientRect()
     const data = d3
       .pack()
       .size([dimensions.width, dimensions.height])
       .padding(40)(
       d3
         .hierarchy(kubernetesD3Data)
-        .sum(d => d.value)
+        .sum((d: any) => d.value || 0)
         .sort((a, b) => b.value - a.value)
     )
 
@@ -145,7 +145,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       [SQRT3 / 2, -0.5],
     ]
 
-    const generateHexagon = hexRadius => {
+    const generateHexagon = (hexRadius: number) => {
       const hexagonPath =
         'm' +
         hexagonPoly
@@ -160,7 +160,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     const circle = d3
       .arc()
       .innerRadius(0)
-      .outerRadius(d => d)
+      .outerRadius((d: any) => d)
       .startAngle(-Math.PI)
       .endAngle(Math.PI)
 
@@ -175,17 +175,17 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .selectAll('g')
       .data(data.descendants().slice(1))
       .join('g')
-      .attr('transform', d => `translate(${d.x},${d.y})`)
+      .attr('transform', (d: any) => `translate(${d.x},${d.y})`)
 
     node
       .append('path')
-      .attr('id', d => d.data.name)
-      .attr('d', d => circle(d.r + 4))
+      .attr('id', (d: any) => d.data.name)
+      .attr('d', (d: any) => circle(d.r + 4))
       .attr('display', 'none')
 
     node
       .filter(
-        d =>
+        (d: any) =>
           d.depth > 0 &&
           d.depth < 3 &&
           d.data.type !== 'CR' &&
@@ -193,14 +193,14 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           d.data.type !== 'PV'
       )
       .append('circle')
-      .attr('data-name', d => d.data.name)
-      .attr('data-label', d => d.data.label)
-      .attr('data-type', d => d.data.type)
-      .attr('data-limit-cpu', d => _.get(d.data, 'data.cpu'))
-      .attr('data-limit-memory', d => _.get(d.data, 'data.memory'))
+      .attr('data-name', (d: any) => d.data.name)
+      .attr('data-label', (d: any) => d.data.label)
+      .attr('data-type', (d: any) => d.data.type)
+      .attr('data-limit-cpu', (d: any) => _.get(d.data, 'data.cpu'))
+      .attr('data-limit-memory', (d: any) => _.get(d.data, 'data.memory'))
       .attr('class', 'nodeWrapper')
-      .attr('r', d => d.r)
-      .attr('fill', d => clusterTypeColorset[d.data.type])
+      .attr('r', (d: any) => d.r)
+      .attr('fill', (d: any) => clusterTypeColorset[d.data.type])
       .attr('stroke', 'black')
       .on('mouseover', function () {
         onMouseOver(this)
@@ -208,16 +208,16 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .on('mouseleave', function () {
         onMouseLeave(this)
       })
-      .on('click', function (data) {
+      .on('click', function (event: any, data: any) {
         onMouseClick(this, data)
       })
-      .on('mousedown', function () {
-        d3.event.preventDefault()
+      .on('mousedown', function (event: any) {
+        event.preventDefault()
       })
 
     node
       .filter(
-        d =>
+        (d: any) =>
           d.depth === 3 ||
           (d.depth === 2 &&
             (d.data.type === 'CR' ||
@@ -226,13 +226,13 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       )
       .append('path')
       .attr('class', 'hexagon')
-      .attr('data-name', d => d.data.name)
-      .attr('data-label', d => d.data.label)
-      .attr('data-type', d => d.data.type)
-      .attr('data-limit-cpu', d => _.get(d.data, 'data.cpu'))
-      .attr('data-limit-memory', d => _.get(d.data, 'data.memory'))
-      .attr('d', d => generateHexagon(d.r + 5))
-      .classed('hexagon-alert', d => {
+      .attr('data-name', (d: any) => d.data.name)
+      .attr('data-label', (d: any) => d.data.label)
+      .attr('data-type', (d: any) => d.data.type)
+      .attr('data-limit-cpu', (d: any) => _.get(d.data, 'data.cpu'))
+      .attr('data-limit-memory', (d: any) => _.get(d.data, 'data.memory'))
+      .attr('d', (d: any) => generateHexagon(d.r + 5))
+      .classed('hexagon-alert', (d: any) => {
         let isAlert = false
 
         if (
@@ -254,11 +254,11 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .on('mouseleave', function () {
         onMouseLeave(this)
       })
-      .on('click', function (data) {
+      .on('click', function (event: any, data: any) {
         onMouseClick(this, data)
       })
-      .on('mousedown', function () {
-        d3.event.preventDefault()
+      .on('mousedown', function (event: any) {
+        event.preventDefault()
       })
 
     d3.select(`path`).classed('kubernetes-focuse', false)
@@ -279,11 +279,11 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .selectAll('g')
       .data(data.descendants().slice(1))
       .join('g')
-      .attr('transform', d => `translate(${d.x},${d.y})`)
+      .attr('transform', (d: any) => `translate(${d.x},${d.y})`)
 
     textNode
       .filter(
-        d =>
+        (d: any) =>
           !(
             d.depth === 3 ||
             (d.depth === 2 &&
@@ -295,16 +295,16 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .append('text')
       .attr('fill', 'white')
       .append('textPath')
-      .attr('xlink:href', d => '#' + d.data.name)
+      .attr('xlink:href', (d: any) => '#' + d.data.name)
       .attr('startOffset', '50%')
-      .attr('font-size', d => (d.depth == 1 ? '12px' : '9px'))
-      .text(d => d.data.label)
+      .attr('font-size', (d: any) => (d.depth == 1 ? '12px' : '9px'))
+      .text((d: any) => d.data.label)
 
-    let d3NodeObject = {}
+    let d3NodeObject: any = {}
     node
       .select(`circle[data-type=${'Node'}]`)
       .data()
-      .forEach(s => {
+      .forEach((s: any) => {
         d3NodeObject[s.data.label] = {
           ...d3NodeObject[s.data.label],
           name: s.data.label,
@@ -313,11 +313,11 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         }
       })
 
-    let d3PodObject = {}
+    let d3PodObject: any = {}
     node
       .select(`path[data-type=${'Pod'}]`)
       .data()
-      .forEach(s => {
+      .forEach((s: any) => {
         d3PodObject[s.data.label] = {
           ...d3PodObject[s.data.label],
           name: s.data.label,
@@ -373,7 +373,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         if (
           _.find(
             node.select(`circle[data-type=${'Node'}]`).data(),
-            nodeData => nodeData.data.label === m['name']
+            (nodeData: any) => nodeData.data.label === m['name']
           )
         ) {
           const cpuUsage =
@@ -419,13 +419,16 @@ class KubernetesHexagon extends PureComponent<Props, State> {
               )}]`
             )
             .attr('data-memory', `${memoryUsage}`)
-            .attr('fill', kubernetesStatusColor(pick / 100))
+            .attr(
+              'fill',
+              (kubernetesStatusColor(pick / 100) as unknown) as string
+            )
         }
       } else {
         if (
           _.find(
             node.select(`path[data-type=${'Pod'}]`).data(),
-            podData => podData.data.label === m['name']
+            (podData: any) => podData.data.label === m['name']
           )
         ) {
           const cpuUsage =
@@ -472,19 +475,24 @@ class KubernetesHexagon extends PureComponent<Props, State> {
               )}]`
             )
             .attr('data-memory', `${memoryUsage}`)
-            .attr('fill', kubernetesStatusColor(pick / 100))
+            .attr(
+              'fill',
+              (kubernetesStatusColor(pick / 100) as unknown) as string
+            )
         }
       }
     })
 
     const autoBox = () => {
-      this.ref.current.appendChild(svg.node())
-      const {x, y, width, height} = svg.node().getBBox()
-      this.ref.current.removeChild(svg.node())
+      const svgNode = svg.node() as SVGSVGElement
+      this.ref.current!.appendChild(svgNode)
+      const {x, y, width, height} = svgNode.getBBox()
+      this.ref.current!.removeChild(svgNode)
       return [x, y, width, height]
     }
 
-    return this.ref.current.append(svg.attr('viewBox', `${autoBox()}`).node())
+    const svgNode = svg.attr('viewBox', `${autoBox()}`).node() as SVGSVGElement
+    return this.ref.current!.appendChild(svgNode)
   }
 
   private runOnSingleClick = (data: any) => {
@@ -496,11 +504,13 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   private runOnDBClick = (data: any) => {
     this.clickedOnce = false
     this.clickedTarget = null
-    clearTimeout(this.timeout)
+    if (this.timeout) {
+      clearTimeout(this.timeout)
+    }
     this.onMouseDBClick(data)
   }
 
-  private onMouseClick = (target: SVGSVGElement, data: D3K8sData) => {
+  private onMouseClick = (target: any, data: D3K8sData) => {
     if (this.clickedTarget === target && this.clickedOnce) {
       this.runOnDBClick(data)
     } else if (
@@ -521,12 +531,12 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     this.props.handleOnClickVisualizePod(data)
   }
 
-  private onMouseOver = (target: SVGSVGElement) => {
+  private onMouseOver = (target: any) => {
     this.props.handleOpenTooltip(target)
     d3.select(target).classed('kubernetes-hover', true)
   }
 
-  private onMouseLeave = (target: SVGSVGElement) => {
+  private onMouseLeave = (target: any) => {
     this.props.handleCloseTooltip()
     d3.select(target).classed('kubernetes-hover', false)
   }
