@@ -2708,7 +2708,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     if (!(node.data().length > 0)) return
 
     let d3NodeObject = {}
-    _.forEach(node.select(`circle[data-type=${'Node'}]`).data(), s => {
+    _.forEach(node.select(`circle[data-type=${'Node'}]`).data() as any[], s => {
       d3NodeObject[s.data.label] = {
         ...d3NodeObject[s.data.label],
         name: s.data.label,
@@ -2719,7 +2719,7 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     let d3PodObject = {}
     const pod = node.select(`path[data-type=${'Pod'}]`)
-    _.forEach(pod.data(), s => {
+    _.forEach(pod.data() as any[], s => {
       d3PodObject[s.data.label] = {
         ...d3PodObject[s.data.label],
         name: s.data.label,
@@ -2774,7 +2774,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         if (m['type'] === 'Node') {
           if (
             _.find(
-              node.select(`circle[data-type=${'Node'}]`).data(),
+              node.select(`circle[data-type=${'Node'}]`).data() as any[],
               nodeData => nodeData.data.label === m['name']
             )
           ) {
@@ -2829,12 +2829,15 @@ class KubernetesPage extends PureComponent<Props, State> {
                   '\\$&'
                 )}]`
               )
-              .attr('fill', kubernetesStatusColor(pick / 100))
+              .attr(
+                'fill',
+                (kubernetesStatusColor(pick / 100) as unknown) as string
+              )
           }
         } else {
           if (
             _.find(
-              node.select(`path[data-type=${'Pod'}]`).data(),
+              node.select(`path[data-type=${'Pod'}]`).data() as any[],
               podData => podData.data.label === m['name']
             )
           ) {
@@ -2901,7 +2904,10 @@ class KubernetesPage extends PureComponent<Props, State> {
                   '\\$&'
                 )}]`
               )
-              .attr('fill', kubernetesStatusColor(pick / 100))
+              .attr(
+                'fill',
+                (kubernetesStatusColor(pick / 100) as unknown) as string
+              )
           }
         }
       })
@@ -3452,7 +3458,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     ) {
       const pinNode = this.parentNavigation(data)
       const target = d3.select(`[data-name=${pinNode[0]}]`)
-      const isNull = _.isNull(_.flatMapDeep(target._groups)[0])
+      const isNull = _.isNull(_.flatMapDeep((target as any)._groups)[0])
       const isPin = isNull || target.classed('kubernetes-pin')
       this.setState({pinNode: isPin ? [] : pinNode})
     } else {
