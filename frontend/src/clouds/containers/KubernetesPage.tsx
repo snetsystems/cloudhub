@@ -3526,9 +3526,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       (data.depth === 2 &&
         (data.data.type === 'CR' ||
           data.data.type === 'CRB' ||
-          data.data.type === 'PV' ||
-          data.data.type === 'RS' ||
-          data.data.type === 'ReplicaSet'))
+          data.data.type === 'PV'))
     ) {
       const pinNode = this.parentNavigation(data)
       const target = d3.select(`[data-name=${pinNode[0]}]`)
