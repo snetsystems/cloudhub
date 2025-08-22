@@ -208,7 +208,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .on('mouseleave', function () {
         onMouseLeave(this)
       })
-      .on('click', function (event: any, data: any) {
+      .on('click', function (_: any, data: any) {
         onMouseClick(this, data)
       })
       .on('mousedown', function (event: any) {
@@ -423,6 +423,75 @@ class KubernetesHexagon extends PureComponent<Props, State> {
               'fill',
               (kubernetesStatusColor(pick / 100) as unknown) as string
             )
+        }
+      } else if (m['type'] === 'PersistentVolume') {
+        if (
+          _.find(
+            node.select(`path[data-type=${'PV'}]`).data(),
+            (pvData: any) => pvData.data.label === m['name']
+          )
+        ) {
+          const iopsUsage = ((m['iops'] || 0) / 1000) * 100
+          const bandwidthUsage = ((m['bandwidth'] || 0) / 100) * 100
+          const latencyUsage = Math.max(
+            0,
+            100 - ((m['latency'] || 0) / 50) * 100
+          )
+          const pick = Math.max(iopsUsage, bandwidthUsage, latencyUsage)
+
+          node
+            .select(
+              `path[data-label=${String(m['name']).replace(
+                /[.:*+?^${}()|[\]\\]/g,
+                '\\$&'
+              )}]`
+            )
+            .attr('data-iops', `${iopsUsage}`)
+            .attr('data-bandwidth', `${bandwidthUsage}`)
+            .attr('data-latency', `${latencyUsage}`)
+            .attr(
+              'fill',
+              (kubernetesStatusColor(pick / 100) as unknown) as string
+            )
+        }
+
+        if (
+          _.find(
+            node.select(`circle[data-type=${'PersistentVolume'}]`).data(),
+            (pvData: any) => pvData.data.label === 'PersistentVolume'
+          )
+        ) {
+          const allPVs = _.filter(
+            kubernetesObject,
+            obj => obj.type === 'PersistentVolume'
+          )
+          if (allPVs.length > 0) {
+            const avgIops = _.meanBy(allPVs, 'iops') || 0
+            const avgBandwidth = _.meanBy(allPVs, 'bandwidth') || 0
+            const avgLatency = _.meanBy(allPVs, 'latency') || 0
+
+            const avgIopsUsage = (avgIops / 1000) * 100
+            const avgBandwidthUsage = (avgBandwidth / 100) * 100
+            const avgLatencyUsage = Math.max(0, 100 - (avgLatency / 50) * 100)
+
+            const avgPick = Math.max(
+              avgIopsUsage,
+              avgBandwidthUsage,
+              avgLatencyUsage
+            )
+
+            node
+              .select(
+                `circle[data-label=${String('PersistentVolume').replace(
+                  /[.:*+?^${}()|[\]\\]/g,
+                  '\\$&'
+                )}]`
+              )
+              .attr(
+                'fill',
+                (kubernetesStatusColor(avgPick / 100) as unknown) as string
+              )
+          }
         }
       } else {
         if (

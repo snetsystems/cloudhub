@@ -36,6 +36,9 @@ export interface Kubernetes {
   type: string
   cpu: string
   memory: string
+  iops?: number
+  bandwidth?: number
+  latency?: number
 }
 export interface KubernetesObject {
   [key: string]: Kubernetes
@@ -58,6 +61,9 @@ export interface TooltipNode {
   name: string
   cpu: number
   memory: number
+  iops?: number
+  bandwidth?: number
+  latency?: number
 }
 
 export interface KubernetesProps {

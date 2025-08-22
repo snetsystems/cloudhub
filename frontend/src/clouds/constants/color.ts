@@ -47,6 +47,8 @@ export const clusterTypeColorset = {
   RB: '#5f5f5f',
   DaemonSet: '#5f5f5f',
   DS: '#5f5f5f',
+  PersistentVolume: '#5f5f5f',
+  PV: '#5f5f5f',
 }
 
 export const kubernetesStatusColor = chroma

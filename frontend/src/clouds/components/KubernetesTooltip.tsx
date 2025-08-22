@@ -61,7 +61,7 @@ class KubernetesTooltip extends PureComponent<Props, State> {
   public render() {
     const {tooltipNode, statusColor} = this.props
     const {top, bottom, left, right} = this.state
-    const {name, cpu, memory} = tooltipNode
+    const {name, cpu, memory, iops, bandwidth, latency} = tooltipNode
 
     return (
       <div
@@ -118,6 +118,78 @@ class KubernetesTooltip extends PureComponent<Props, State> {
                       className={'UsageIndacator'}
                       style={{
                         background: `${statusColor(memory / 100)}`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {!_.isNaN(iops) && _.isNumber(iops) ? (
+              <div className={'hosts-table--tr'}>
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: this.tableSize.header}}
+                >
+                  IOPS
+                </div>
+                <div
+                  className={'hosts-table--td align--start'}
+                  style={{width: this.tableSize.body}}
+                >
+                  <div className={'UsageIndacator-container'}>
+                    <div className={'UsageIndacator-value'}>{iops} %</div>
+                    <div
+                      className={'UsageIndacator'}
+                      style={{
+                        background: `${statusColor(iops / 100)}`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {!_.isNaN(bandwidth) && _.isNumber(bandwidth) ? (
+              <div className={'hosts-table--tr'}>
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: this.tableSize.header}}
+                >
+                  Bandwidth
+                </div>
+                <div
+                  className={'hosts-table--td align--start'}
+                  style={{width: this.tableSize.body}}
+                >
+                  <div className={'UsageIndacator-container'}>
+                    <div className={'UsageIndacator-value'}>{bandwidth} %</div>
+                    <div
+                      className={'UsageIndacator'}
+                      style={{
+                        background: `${statusColor(bandwidth / 100)}`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {!_.isNaN(latency) && _.isNumber(latency) ? (
+              <div className={'hosts-table--tr'}>
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: this.tableSize.header}}
+                >
+                  Latency
+                </div>
+                <div
+                  className={'hosts-table--td align--start'}
+                  style={{width: this.tableSize.body}}
+                >
+                  <div className={'UsageIndacator-container'}>
+                    <div className={'UsageIndacator-value'}>{latency} %</div>
+                    <div
+                      className={'UsageIndacator'}
+                      style={{
+                        background: `${statusColor(latency / 100)}`,
                       }}
                     ></div>
                   </div>
