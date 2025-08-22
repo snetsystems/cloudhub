@@ -1100,10 +1100,17 @@ class KubernetesPage extends PureComponent<Props, State> {
     const findData = []
 
     findData.push(d.data.name)
-
     if (_.get(kubernetesData, d.data.owner)) {
       if (d.parent.data.type === 'Ingress') {
-        const spec = _.get(kubernetesData, d.data.owner)
+        const namespace = d.data.namespace
+        const ingressName = d.data.label
+        const spec = _.get(kubernetesData, [
+          'Namespace',
+          namespace,
+          'Ingress',
+          ingressName,
+        ])
+
         if (_.get(spec, 'rules')) {
           const objKind = _.get(d, 'parent.parent.data.type')
           const objLabel = _.get(d, 'parent.parent.data.label')
@@ -1128,15 +1135,23 @@ class KubernetesPage extends PureComponent<Props, State> {
               `${objKind}_${objLabel}_${owner['kind']}_${owner['name']}`
             )
             if (
-              _.get(
-                kubernetesData,
-                `${objKind}.${objLabel}.${owner['kind']}.${owner['name']}.metadata.owner_references`
-              )
+              _.get(kubernetesData, [
+                objKind,
+                objLabel,
+                owner['kind'],
+                owner['name'],
+                'metadata',
+                'owner_references',
+              ])
             ) {
-              const parentOwner = _.get(
-                kubernetesData,
-                `${objKind}.${objLabel}.${owner['kind']}.${owner['name']}.metadata.owner_references`
-              )
+              const parentOwner = _.get(kubernetesData, [
+                objKind,
+                objLabel,
+                owner['kind'],
+                owner['name'],
+                'metadata',
+                'owner_references',
+              ])
               _.map(parentOwner, parentOwner => {
                 if (parentOwner['kind'] !== d.parent.data.type) {
                   findData.push(
@@ -1151,8 +1166,9 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (_.get(d, 'data.child')) {
-      if (_.get(kubernetesData, _.get(d, 'data.child'))) {
-        const pod = _.get(kubernetesData, _.get(d, 'data.child'))
+      const childPath = _.get(d, 'data.child')
+      if (_.get(kubernetesData, childPath)) {
+        const pod = _.get(kubernetesData, childPath)
         _.map(pod, pod => {
           if (_.get(d, 'parent')) {
             if (_.get(d, 'parent.parent')) {
@@ -1181,17 +1197,25 @@ class KubernetesPage extends PureComponent<Props, State> {
                   }
                 )
               } else {
-                _.map(
-                  _.get(
-                    kubernetesData,
-                    `${objKind}.${objLabel}.Node.${pod['node_name']}.Pod.${pod['name']}.metadata.owner_references`
-                  ),
-                  owner => {
-                    findData.push(
-                      `${objKind}_${objLabel}_${owner['kind']}_${owner['name']}`
-                    )
-                  }
-                )
+                const namespace = d.data.namespace
+                const nodeName = pod['node_name']
+                const podName = pod['name']
+                const podOwnerRefs = _.get(kubernetesData, [
+                  'Namespace',
+                  namespace,
+                  'Node',
+                  nodeName,
+                  'Pod',
+                  podName,
+                  'metadata',
+                  'owner_references',
+                ])
+
+                _.map(podOwnerRefs, owner => {
+                  findData.push(
+                    `${objKind}_${objLabel}_${owner['kind']}_${owner['name']}`
+                  )
+                })
               }
 
               findData.push(
@@ -1995,8 +2019,15 @@ class KubernetesPage extends PureComponent<Props, State> {
                 })
               ].children.push({
                 name: `Namespace_${namespace}_ReplicaSet_${ownerName}`,
-                owner: `Namespace.${namespace}.ReplicaSet.${ownerName}.metadata.owner_references`,
-                child: `Namespace.${namespace}.ReplicaSet.${ownerName}.Pod`,
+                owner: [
+                  'Namespace',
+                  namespace,
+                  'ReplicaSet',
+                  ownerName,
+                  'metadata',
+                  'owner_references',
+                ],
+                child: ['Namespace', namespace, 'ReplicaSet', ownerName, 'Pod'],
                 label: ownerName,
                 type: 'RS',
                 namespace: `${namespace}`,
@@ -2051,7 +2082,13 @@ class KubernetesPage extends PureComponent<Props, State> {
                     ].children.push({
                       name: `Namespace_${namespace}_Deployment_${ownerName}`,
                       label: ownerName,
-                      child: `Namespace.${namespace}.Deployment.${ownerName}.Pod`,
+                      child: [
+                        'Namespace',
+                        namespace,
+                        'Deployment',
+                        ownerName,
+                        'Pod',
+                      ],
                       type: 'DP',
                       namespace: `${namespace}`,
                       status:
@@ -2368,8 +2405,15 @@ class KubernetesPage extends PureComponent<Props, State> {
                 label: ownerName,
                 type: 'Job',
                 namespace: `${namespace}`,
-                owner: `Namespace.${namespace}.Job.${ownerName}.metadata.owner_references`,
-                child: `Namespace.${namespace}.Job.${ownerName}.Pod`,
+                owner: [
+                  'Namespace',
+                  namespace,
+                  'Job',
+                  ownerName,
+                  'metadata',
+                  'owner_references',
+                ],
+                child: ['Namespace', namespace, 'Job', ownerName, 'Pod'],
                 status:
                   _.get(jobs[ownerName], 'status.failed') &&
                   _.get(jobs[ownerName], 'status.failed ') > 0
@@ -2541,7 +2585,16 @@ class KubernetesPage extends PureComponent<Props, State> {
           ].children.push({
             name: `Namespace_${namespace}_${nodeName}_${podName}`,
             label: podName,
-            owner: `Namespace.${namespace}.Node.${nodeName}.Pod.${podName}.metadata.owner_references`,
+            owner: [
+              'Namespace',
+              namespace,
+              'Node',
+              nodeName,
+              'Pod',
+              podName,
+              'metadata',
+              'owner_references',
+            ],
             type: 'Pod',
             namespace: `${namespace}`,
             data: {
@@ -2666,8 +2719,20 @@ class KubernetesPage extends PureComponent<Props, State> {
                         ] = {
                           ...d3Namespaces[namespace].children[ingressIndex]
                             .children[ingressChildrenIndex],
-                          owner: `Namespace.${namespace}.Ingress.${ingressName}.spec`,
-                          child: `Namespace.${namespace}.Ingress.${ingressName}.Pod`,
+                          owner: [
+                            'Namespace',
+                            namespace,
+                            'Ingress',
+                            ingressName,
+                            'spec',
+                          ],
+                          child: [
+                            'Namespace',
+                            namespace,
+                            'Ingress',
+                            ingressName,
+                            'Pod',
+                          ],
                         }
                       } else {
                         namespaces[namespace]['Ingress'][ingressName].Pod.push({
@@ -2841,17 +2906,6 @@ class KubernetesPage extends PureComponent<Props, State> {
               podData => podData.data.label === m['name']
             )
           ) {
-            console.log("m['cpu'])", m['cpu'])
-            console.log(
-              node
-                .select(
-                  `path[data-label=${String(m['name']).replace(
-                    /[.:*+?^${}()|[\]\\]/g,
-                    '\\$&'
-                  )}]`
-                )
-                .attr('data-limit-cpu')
-            )
             const cpuUsage =
               (parseFloat(m['cpu']) /
                 parseFloat(
@@ -3454,7 +3508,9 @@ class KubernetesPage extends PureComponent<Props, State> {
       (data.depth === 2 &&
         (data.data.type === 'CR' ||
           data.data.type === 'CRB' ||
-          data.data.type === 'PV'))
+          data.data.type === 'PV' ||
+          data.data.type === 'RS' ||
+          data.data.type === 'ReplicaSet'))
     ) {
       const pinNode = this.parentNavigation(data)
       const target = d3.select(`[data-name=${pinNode[0]}]`)
