@@ -215,7 +215,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         event.preventDefault()
       })
 
-    node
+    const hex = node
       .filter(
         (d: any) =>
           d.depth === 3 ||
@@ -254,12 +254,39 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .on('mouseleave', function () {
         onMouseLeave(this)
       })
-      .on('click', function (event: any, data: any) {
+      .on('click', function (_: any, data: any) {
         onMouseClick(this, data)
       })
       .on('mousedown', function (event: any) {
         event.preventDefault()
       })
+
+    hex.each(function (d: any) {
+      const r = d.r
+      const g = d3.select(this.parentNode as SVGGElement)
+
+      // 이미 체크가 있으면 중복 생성 방지
+      if (!g.select('path.checkmark').empty()) return
+
+      const x1 = -r * 0.9
+      const y1 = -r * 0.2 // P1: left -80%, top -20%
+      const x2 = -r * 0.15
+      const y2 = r * 0.55 // P2: left -15%, top 55%
+      const x3 = r * 0.9
+      const y3 = -r * 0.4 // P3: left  80%, top -40%
+
+      const pathD = `M ${x1},${y1} L ${x2},${y2} L ${x3},${y3}`
+
+      g.append('path')
+        .attr('class', 'checkmark')
+        .attr('d', pathD)
+        .attr('fill', 'none')
+        .attr('stroke', '#F27E2F')
+        .attr('stroke-width', Math.max(2, r * 0.08))
+        .attr('stroke-linecap', 'round')
+        .attr('stroke-linejoin', 'round')
+        .style('pointer-events', 'none')
+    })
 
     d3.select(`path`).classed('kubernetes-focuse', false)
     d3.select(`path[data-name=${focuseNode.name}]`).classed(
