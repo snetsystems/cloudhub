@@ -47,7 +47,7 @@ export const clusterTypeColorset = {
   RB: '#5f5f5f',
   DaemonSet: '#5f5f5f',
   DS: '#5f5f5f',
-  PersistentVolume: '#5f5f5f',
+  PersistentVolume: '#0f0e15',
   PV: '#5f5f5f',
 }
 

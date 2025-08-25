@@ -486,45 +486,6 @@ class KubernetesHexagon extends PureComponent<Props, State> {
               (kubernetesStatusColor(pick / 100) as unknown) as string
             )
         }
-
-        if (
-          _.find(
-            node.select(`circle[data-type=${'PersistentVolume'}]`).data(),
-            (pvData: any) => pvData.data.label === 'PersistentVolume'
-          )
-        ) {
-          const allPVs = _.filter(
-            kubernetesObject,
-            obj => obj.type === 'PersistentVolume'
-          )
-          if (allPVs.length > 0) {
-            const avgIops = _.meanBy(allPVs, 'iops') || 0
-            const avgBandwidth = _.meanBy(allPVs, 'bandwidth') || 0
-            const avgLatency = _.meanBy(allPVs, 'latency') || 0
-
-            const avgIopsUsage = (avgIops / 1000) * 100
-            const avgBandwidthUsage = (avgBandwidth / 100) * 100
-            const avgLatencyUsage = Math.max(0, 100 - (avgLatency / 50) * 100)
-
-            const avgPick = Math.max(
-              avgIopsUsage,
-              avgBandwidthUsage,
-              avgLatencyUsage
-            )
-
-            node
-              .select(
-                `circle[data-label=${String('PersistentVolume').replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
-              .attr(
-                'fill',
-                (kubernetesStatusColor(avgPick / 100) as unknown) as string
-              )
-          }
-        }
       } else {
         if (
           _.find(
