@@ -557,21 +557,23 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     return this.ref.current!.appendChild(svgNode)
   }
 
-  private runOnSingleClick = (data: any) => {
+  private handlePersistentVolumeSelection = (data: any) => {
     if (data.data && data.data.type === 'PV') {
       this.props.dispatch(setSelectedPersistentVolume(data.data.label))
+    } else {
+      this.props.dispatch(setSelectedPersistentVolume(null))
     }
+  }
 
+  private runOnSingleClick = (data: any) => {
+    this.handlePersistentVolumeSelection(data)
     this.props.handleOnClickVisualizePod(data)
     this.clickedOnce = false
     this.clickedTarget = null
   }
 
   private runOnDBClick = (data: any) => {
-    if (data.data && data.data.type === 'PV') {
-      this.props.dispatch(setSelectedPersistentVolume(data.data.label))
-    }
-
+    this.handlePersistentVolumeSelection(data)
     this.clickedOnce = false
     this.clickedTarget = null
     if (this.timeout) {
@@ -597,6 +599,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   }
 
   private onMouseDBClick = (data: any) => {
+    this.handlePersistentVolumeSelection(data)
     this.props.handleDBClick(data)
     this.props.handleOnClickVisualizePod(data)
   }
