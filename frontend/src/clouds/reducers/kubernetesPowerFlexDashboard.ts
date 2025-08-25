@@ -2,10 +2,12 @@ import {Action, ActionType} from 'src/clouds/actions/kubernetesPowerFlex'
 
 interface PowerFlexState {
   powerFlexMetricsChartHeight: number
+  selectedPersistentVolume: string | null
 }
 
 const initialState: PowerFlexState = {
   powerFlexMetricsChartHeight: 17,
+  selectedPersistentVolume: null,
 }
 
 const kubernetesPowerFlexDashboard = (
@@ -16,6 +18,10 @@ const kubernetesPowerFlexDashboard = (
     case ActionType.setPowerFlexMetricsChartHeight: {
       const {powerFlexMetricsChartHeight} = action.payload
       return {...state, powerFlexMetricsChartHeight}
+    }
+    case ActionType.setSelectedPersistentVolume: {
+      const {selectedPersistentVolume} = action.payload
+      return {...state, selectedPersistentVolume}
     }
     default:
       return state

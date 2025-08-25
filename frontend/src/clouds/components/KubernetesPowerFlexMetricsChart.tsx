@@ -31,6 +31,7 @@ interface Props {
   timeRange: TimeRange
   manualRefresh: number
   powerFlexMetricsChartHeight?: number
+  selectedPersistentVolume?: string | null
 }
 
 function KubernetesPowerFlexMetricsChart({
@@ -38,6 +39,7 @@ function KubernetesPowerFlexMetricsChart({
   timeRange,
   manualRefresh,
   powerFlexMetricsChartHeight = 17,
+  selectedPersistentVolume = null,
 }: Props) {
   const [layout, setLayout] = useState<Layout[]>()
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
@@ -49,7 +51,7 @@ function KubernetesPowerFlexMetricsChart({
 
   useEffect(() => {
     getLayoutForInstance()
-  }, [])
+  }, [selectedPersistentVolume])
 
   useEffect(() => {
     const ratio = {
@@ -98,9 +100,9 @@ function KubernetesPowerFlexMetricsChart({
                   'SELECT mean("memory_usage_bytes") AS "memory_usage_bytes" FROM ":db:".":rp:"."kubernetes_pod_container"',
                 label: 'Latency (ms)',
                 groupbys: ['"pod_name"'],
-                wheres: [
-                  `"pod_name"='gitlab-gitlab-exporter-56499b7c7b-mbrpg'`,
-                ],
+                wheres: selectedPersistentVolume
+                  ? [`"persistent_volume_name"='${selectedPersistentVolume}'`]
+                  : [`"pod_name"='gitlab-gitlab-exporter-56499b7c7b-mbrpg'`],
               } as any,
             ],
             colors: ['#8F8AF4'],
@@ -137,9 +139,9 @@ function KubernetesPowerFlexMetricsChart({
                   'SELECT mean("memory_usage_bytes") AS "memory_usage_bytes" FROM ":db:".":rp:"."kubernetes_pod_container"',
                 label: 'IOPS (kIOPS)',
                 groupbys: ['"pod_name"'],
-                wheres: [
-                  `"pod_name"='gitlab-gitlab-exporter-56499b7c7b-mbrpg'`,
-                ],
+                wheres: selectedPersistentVolume
+                  ? [`"persistent_volume_name"='${selectedPersistentVolume}'`]
+                  : [`"pod_name"='gitlab-gitlab-exporter-56499b7c7b-mbrpg'`],
               } as any,
             ],
             colors: ['#F4CF31'],
@@ -176,9 +178,9 @@ function KubernetesPowerFlexMetricsChart({
                   'SELECT mean("memory_usage_bytes") AS "memory_usage_bytes" FROM ":db:".":rp:"."kubernetes_pod_container"',
                 label: 'Bandwidth (KB/s)',
                 groupbys: ['"pod_name"'],
-                wheres: [
-                  `"pod_name"='gitlab-gitlab-exporter-56499b7c7b-mbrpg'`,
-                ],
+                wheres: selectedPersistentVolume
+                  ? [`"persistent_volume_name"='${selectedPersistentVolume}'`]
+                  : [`"pod_name"='gitlab-gitlab-exporter-56499b7c7b-mbrpg'`],
               } as any,
             ],
             colors: ['#F48F8F'],
@@ -242,7 +244,11 @@ function KubernetesPowerFlexMetricsChart({
       }}
     >
       <KubernetesPowerFlexDashboardHeader
-        cellName="Performance"
+        cellName={
+          selectedPersistentVolume
+            ? `Performance - ${selectedPersistentVolume}`
+            : 'Performance'
+        }
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
@@ -306,13 +312,17 @@ const mstp = state => {
       persisted: {autoRefresh, timeZone},
     },
     links,
-    kubernetesPowerFlexDashboard: {powerFlexMetricsChartHeight},
+    kubernetesPowerFlexDashboard: {
+      powerFlexMetricsChartHeight,
+      selectedPersistentVolume,
+    },
   } = state
   return {
     links,
     timeZone,
     autoRefresh,
     powerFlexMetricsChartHeight,
+    selectedPersistentVolume,
   }
 }
 

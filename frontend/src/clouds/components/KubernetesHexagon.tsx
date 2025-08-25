@@ -2,6 +2,7 @@
 import React, {PureComponent, createRef} from 'react'
 import * as d3 from 'd3'
 import _ from 'lodash'
+import {connect} from 'react-redux'
 
 // Components
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -13,6 +14,9 @@ import {
   kubernetesStatusColor,
   clusterTypeColorset,
 } from 'src/clouds/constants/color'
+
+// Actions
+import {setSelectedPersistentVolume} from 'src/clouds/actions/kubernetesPowerFlex'
 
 // Types
 import {D3K8sData, FocuseNode, KubernetesObject} from 'src/clouds/types'
@@ -29,6 +33,7 @@ interface Props {
   focuseNode: FocuseNode
   pinNode: string[]
   remoteDataState: RemoteDataState
+  dispatch: (action: any) => void
 }
 
 interface State {}
@@ -592,12 +597,20 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   }
 
   private runOnSingleClick = (data: any) => {
+    if (data.data && data.data.type === 'PV') {
+      this.props.dispatch(setSelectedPersistentVolume(data.data.label))
+    }
+
     this.props.handleOnClickVisualizePod(data)
     this.clickedOnce = false
     this.clickedTarget = null
   }
 
   private runOnDBClick = (data: any) => {
+    if (data.data && data.data.type === 'PV') {
+      this.props.dispatch(setSelectedPersistentVolume(data.data.label))
+    }
+
     this.clickedOnce = false
     this.clickedTarget = null
     if (this.timeout) {
@@ -638,4 +651,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   }
 }
 
-export default KubernetesHexagon
+const mstp = () => ({})
+const mdtp = (dispatch: any) => ({dispatch})
+
+export default connect(mstp, mdtp)(KubernetesHexagon)
