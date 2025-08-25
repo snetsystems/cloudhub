@@ -1,6 +1,7 @@
 // Library
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
+import {connect} from 'react-redux'
 
 // Component
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -57,6 +58,7 @@ interface Props {
   host: string
   selectMinion: string
   remoteDataState: RemoteDataState
+  selectedPersistentVolume?: string | null
 }
 
 interface State {}
@@ -104,7 +106,7 @@ class KubernetesContents extends PureComponent<Props, State> {
     ]
   }
 
-  private KubernetesVisualize = () => {
+  private renderBottomSection = () => {
     const {
       source,
       sources,
@@ -114,9 +116,47 @@ class KubernetesContents extends PureComponent<Props, State> {
       manualRefresh,
       host,
       focuseNode,
-      pinNode,
+      selectedPersistentVolume,
+    } = this.props
+
+    if (selectedPersistentVolume) {
+      return (
+        <KubernetesPowerFlexSection
+          source={source}
+          timeRange={timeRange}
+          manualRefresh={manualRefresh}
+        />
+      )
+    }
+
+    if (focuseNode.name && cells.length > 0) {
+      return (
+        <div className="kubernetes-dashboard">
+          <LayoutRenderer
+            source={source}
+            sources={sources}
+            isStatusPage={false}
+            isStaticPage={true}
+            isEditable={false}
+            cells={cells}
+            templates={templates}
+            timeRange={timeRange}
+            manualRefresh={manualRefresh}
+            host={host}
+          />
+        </div>
+      )
+    }
+
+    return <NoHostsState style={{height: '50px'}} />
+  }
+
+  private KubernetesVisualize = () => {
+    const {
       kubernetesObject,
       kubernetesD3Data,
+      focuseNode,
+      pinNode,
       handleDBClick,
       handleOnClickVisualizePod,
       handleResize,
@@ -142,29 +182,8 @@ class KubernetesContents extends PureComponent<Props, State> {
 
           {this.tooltip}
         </div>
-        <KubernetesPowerFlexSection
-          source={source}
-          timeRange={timeRange}
-          manualRefresh={manualRefresh}
-        />
-        {focuseNode.name && cells.length > 0 ? (
-          <div className="kubernetes-dashboard">
-            <LayoutRenderer
-              source={source}
-              sources={sources}
-              isStatusPage={false}
-              isStaticPage={true}
-              isEditable={false}
-              cells={cells}
-              templates={templates}
-              timeRange={timeRange}
-              manualRefresh={manualRefresh}
-              host={host}
-            />
-          </div>
-        ) : (
-          <NoHostsState style={{height: '50px'}} />
-        )}
+
+        {this.renderBottomSection()}
       </FancyScrollbar>
     )
   }
@@ -233,4 +252,13 @@ class KubernetesContents extends PureComponent<Props, State> {
   }
 }
 
-export default KubernetesContents
+const mstp = state => {
+  const {
+    kubernetesPowerFlexDashboard: {selectedPersistentVolume},
+  } = state
+  return {
+    selectedPersistentVolume,
+  }
+}
+
+export default connect(mstp)(KubernetesContents)
