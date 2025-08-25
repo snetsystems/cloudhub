@@ -13,6 +13,7 @@ import KubernetesTooltip from 'src/clouds/components/KubernetesTooltip'
 import KubernetesHexagon from 'src/clouds/components/KubernetesHexagon'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import {NoHostsState} from 'src/addon/128t/reusable'
+import KubernetesPowerFlexSection from 'src/clouds/components/KubernetesPowerFlexSection'
 
 // Constants
 import {HANDLE_VERTICAL} from 'src/shared/constants'
@@ -141,6 +142,11 @@ class KubernetesContents extends PureComponent<Props, State> {
 
           {this.tooltip}
         </div>
+        <KubernetesPowerFlexSection
+          source={source}
+          timeRange={timeRange}
+          manualRefresh={manualRefresh}
+        />
         {focuseNode.name && cells.length > 0 ? (
           <div className="kubernetes-dashboard">
             <LayoutRenderer

@@ -2982,7 +2982,11 @@ class KubernetesPage extends PureComponent<Props, State> {
       )
 
       const persistentVolumes = await this.getPersistentVolumes()
-      if (persistentVolumes && persistentVolumes.length > 0) {
+      if (
+        persistentVolumes &&
+        Array.isArray(persistentVolumes) &&
+        persistentVolumes.length > 0
+      ) {
         persistentVolumes.forEach((pv: any) => {
           const pvName = _.get(pv, 'metadata.name')
           if (pvName) {
