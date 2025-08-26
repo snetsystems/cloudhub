@@ -12,8 +12,7 @@ import KubernetesBasicsTable from 'src/clouds/components/KubernetesBasicsTable'
 import KubernetesRawData from 'src/clouds/components/KubernetesRawData'
 import KubernetesTooltip from 'src/clouds/components/KubernetesTooltip'
 import KubernetesHexagon from 'src/clouds/components/KubernetesHexagon'
-import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-import {NoHostsState} from 'src/addon/128t/reusable'
+
 import KubernetesPowerFlexSection from 'src/clouds/components/KubernetesPowerFlexSection'
 
 // Constants
@@ -30,6 +29,7 @@ import {
   KubernetesObject,
 } from 'src/clouds/types'
 import {Source, TimeRange, Cell, Template, RemoteDataState} from 'src/types'
+import KubernetesDashboardSection from './KubernetesDashboardSection'
 
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
@@ -129,26 +129,18 @@ class KubernetesContents extends PureComponent<Props, State> {
       )
     }
 
-    if (focuseNode.name && cells.length > 0) {
-      return (
-        <div className="kubernetes-dashboard">
-          <LayoutRenderer
-            source={source}
-            sources={sources}
-            isStatusPage={false}
-            isStaticPage={true}
-            isEditable={false}
-            cells={cells}
-            templates={templates}
-            timeRange={timeRange}
-            manualRefresh={manualRefresh}
-            host={host}
-          />
-        </div>
-      )
-    }
-
-    return <NoHostsState style={{height: '50px'}} />
+    return (
+      <KubernetesDashboardSection
+        source={source}
+        sources={sources}
+        cells={cells}
+        templates={templates}
+        timeRange={timeRange}
+        manualRefresh={manualRefresh}
+        host={host}
+        focuseNode={focuseNode}
+      />
+    )
   }
 
   private KubernetesVisualize = () => {
