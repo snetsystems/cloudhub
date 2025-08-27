@@ -1953,12 +1953,17 @@ class KubernetesPage extends PureComponent<Props, State> {
         let podMemory = 0
 
         _.map(podContainers, podCont => {
-          podCPU =
-            podCPU +
-            transToCPUMillCore(_.get(podCont, 'resources.limits.cpu'), 'pod')
-          podMemory =
-            podMemory +
-            transMemoryToBytes(_.get(podCont, 'resources.limits.memory'))
+          const cpuRequest = _.get(podCont, 'resources.requests.cpu')
+          const cpuLimit = _.get(podCont, 'resources.limits.cpu')
+          const cpuAllocation = cpuRequest || cpuLimit
+
+          podCPU = podCPU + transToCPUMillCore(cpuAllocation, 'pod')
+
+          const memoryRequest = _.get(podCont, 'resources.requests.memory')
+          const memoryLimit = _.get(podCont, 'resources.limits.memory')
+          const memoryAllocation = memoryRequest || memoryLimit
+
+          podMemory = podMemory + transMemoryToBytes(memoryAllocation)
         })
 
         if (!_.includes(_.keys(namespaces[namespace]), 'Node'))
