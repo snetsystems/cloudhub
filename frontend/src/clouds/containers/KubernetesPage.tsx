@@ -142,6 +142,10 @@ interface State {
   kubernetesD3Data: D3K8sData
   kubernetesObject: KubernetesObject
   remoteDataState: RemoteDataState
+  volumeMapping: {
+    [key: string]: string
+  }
+  highlightVolumes: string[]
 }
 
 @ErrorHandling
@@ -200,6 +204,8 @@ class KubernetesPage extends PureComponent<Props, State> {
       kubernetesData: null,
       kubernetesObject: null,
       remoteDataState: RemoteDataState.NotStarted,
+      highlightVolumes: [],
+      volumeMapping: {},
     }
   }
 
@@ -1114,49 +1120,41 @@ class KubernetesPage extends PureComponent<Props, State> {
         if (_.get(spec, 'rules')) {
           const objKind = _.get(d, 'parent.parent.data.type')
           const objLabel = _.get(d, 'parent.parent.data.label')
+
           _.map(_.get(spec, 'rules'), rule => {
             _.map(_.get(rule, 'http.paths'), service => {
-              findData.push(
-                `${objKind}_${objLabel}_Service_${_.get(
-                  service,
-                  'backend.service_name'
-                )}`
-              )
+              const serviceName = _.get(service, 'backend.service_name')
+              const newData = `${objKind}_${objLabel}_Service_${serviceName}`
+              findData.push(newData)
             })
           })
         }
       } else {
         const owner = _.get(kubernetesData, d.data.owner)
-        _.map(owner, owner => {
-          if (owner['kind'] !== d.parent.data.type) {
+
+        _.map(owner, ownerItem => {
+          if (ownerItem['kind'] !== d.parent.data.type) {
             const objKind = _.get(d, 'parent.parent.data.type')
             const objLabel = _.get(d, 'parent.parent.data.label')
-            findData.push(
-              `${objKind}_${objLabel}_${owner['kind']}_${owner['name']}`
-            )
-            if (
-              _.get(kubernetesData, [
-                objKind,
-                objLabel,
-                owner['kind'],
-                owner['name'],
-                'metadata',
-                'owner_references',
-              ])
-            ) {
-              const parentOwner = _.get(kubernetesData, [
-                objKind,
-                objLabel,
-                owner['kind'],
-                owner['name'],
-                'metadata',
-                'owner_references',
-              ])
-              _.map(parentOwner, parentOwner => {
-                if (parentOwner['kind'] !== d.parent.data.type) {
-                  findData.push(
-                    `${objKind}_${objLabel}_${parentOwner['kind']}_${parentOwner['name']}`
-                  )
+            const newData = `${objKind}_${objLabel}_${ownerItem['kind']}_${ownerItem['name']}`
+            findData.push(newData)
+
+            const parentOwnerPath = [
+              objKind,
+              objLabel,
+              ownerItem['kind'],
+              ownerItem['name'],
+              'metadata',
+              'owner_references',
+            ]
+
+            if (_.get(kubernetesData, parentOwnerPath)) {
+              const parentOwner = _.get(kubernetesData, parentOwnerPath)
+
+              _.map(parentOwner, parentOwnerItem => {
+                if (parentOwnerItem['kind'] !== d.parent.data.type) {
+                  const parentNewData = `${objKind}_${objLabel}_${parentOwnerItem['kind']}_${parentOwnerItem['name']}`
+                  findData.push(parentNewData)
                 }
               })
             }
@@ -1167,40 +1165,42 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     if (_.get(d, 'data.child')) {
       const childPath = _.get(d, 'data.child')
+
       if (_.get(kubernetesData, childPath)) {
         const pod = _.get(kubernetesData, childPath)
-        _.map(pod, pod => {
+
+        _.map(pod, podItem => {
           if (_.get(d, 'parent')) {
             if (_.get(d, 'parent.parent')) {
               const objKind = _.get(d, 'parent.parent.data.type')
               const objLabel = _.get(d, 'parent.parent.data.label')
 
               if (_.get(d, 'parent.data.type') === 'Service') {
-                _.map(
-                  _.get(kubernetesData, `${objKind}.${objLabel}.Ingress`),
-                  ingress => {
-                    _.map(_.get(ingress.spec, 'rules'), rule => {
-                      _.map(_.get(rule, 'http.paths'), service => {
-                        if (
-                          _.get(service, 'backend.service_name') ===
-                          _.get(d, 'data.label')
-                        ) {
-                          findData.push(
-                            `${objKind}_${objLabel}_Ingress_${_.get(
-                              ingress,
-                              'metadata.name'
-                            )}`
-                          )
-                        }
-                      })
+                const ingressPath = `${objKind}.${objLabel}.Ingress`
+                const ingresses = _.get(kubernetesData, ingressPath)
+
+                _.map(ingresses, ingress => {
+                  _.map(_.get(ingress.spec, 'rules'), rule => {
+                    _.map(_.get(rule, 'http.paths'), service => {
+                      const serviceName = _.get(service, 'backend.service_name')
+                      const currentLabel = _.get(d, 'data.label')
+
+                      if (serviceName === currentLabel) {
+                        const newData = `${objKind}_${objLabel}_Ingress_${_.get(
+                          ingress,
+                          'metadata.name'
+                        )}`
+
+                        findData.push(newData)
+                      }
                     })
-                  }
-                )
+                  })
+                })
               } else {
                 const namespace = d.data.namespace
-                const nodeName = pod['node_name']
-                const podName = pod['name']
-                const podOwnerRefs = _.get(kubernetesData, [
+                const nodeName = podItem['node_name']
+                const podName = podItem['name']
+                const podOwnerRefsPath = [
                   'Namespace',
                   namespace,
                   'Node',
@@ -1209,24 +1209,22 @@ class KubernetesPage extends PureComponent<Props, State> {
                   podName,
                   'metadata',
                   'owner_references',
-                ])
+                ]
+                const podOwnerRefs = _.get(kubernetesData, podOwnerRefsPath)
 
                 _.map(podOwnerRefs, owner => {
-                  findData.push(
-                    `${objKind}_${objLabel}_${owner['kind']}_${owner['name']}`
-                  )
+                  const newData = `${objKind}_${objLabel}_${owner['kind']}_${owner['name']}`
+                  findData.push(newData)
                 })
               }
 
-              findData.push(
-                `${objKind}_${objLabel}_${pod['node_name']}_${pod['name']}`
-              )
+              const podData = `${objKind}_${objLabel}_${podItem['node_name']}_${podItem['name']}`
+              findData.push(podData)
             }
           }
         })
       }
     }
-
     const relation = _.map(_.unionBy(findData), (name: string): string =>
       name.replace(/[.:*+?^${}()|[\]\\]/g, '\\$&')
     )
@@ -1764,6 +1762,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     _.map(info[12], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const persistentVolumeClaimName = _.get(m, 'metadata.name')
+      const volumeName = _.get(m, 'spec.volume_name')
       if (
         info[12] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'PersistentVolumeClaim')
@@ -1796,14 +1795,26 @@ class KubernetesPage extends PureComponent<Props, State> {
         label: persistentVolumeClaimName,
         type: 'PVC',
         namespace: `${namespaceName}`,
+        volume_name: volumeName,
         value: 10,
       }
+
+      const volumeMapping = {}
+      volumeMapping[persistentVolumeClaimName] = volumeName ?? ''
+      // pod - pvc - pv 구조가 그려져야함.
 
       d3Namespaces[namespaceName].children[
         _.findIndex(d3Namespaces[namespaceName].children, {
           name: `Namespace_${namespaceName}_PersistentVolumeClaim`,
         })
       ].children.push(d3DataDepth3)
+
+      this.setState({
+        volumeMapping: {
+          ...this.state.volumeMapping,
+          ...volumeMapping,
+        },
+      })
     })
 
     const nodes = _.reduce(
@@ -1948,6 +1959,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         const nodeName = _.get(pod, 'spec.node_name')
         const podContainers = _.get(pod, 'spec.containers')
         const podStatus = _.get(pod, 'status.phase')
+        const volumeArray = _.get(pod, 'spec.volumes')
 
         let podCPU = 0
         let podMemory = 0
@@ -2016,6 +2028,7 @@ class KubernetesPage extends PureComponent<Props, State> {
                 name: podName,
                 node_name: nodeName,
                 namespaces: namespace,
+                volumes: volumeArray,
               })
 
               d3Namespaces[namespace].children[
@@ -2622,6 +2635,7 @@ class KubernetesPage extends PureComponent<Props, State> {
             time: new Date().getSeconds(),
             status: `${podStatus}`,
             value: 10,
+            volumes: volumeArray,
           })
         }
 
@@ -2795,6 +2809,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         name: s.data.label,
         cpu: s.data.data.cpu,
         memory: s.data.data.memory,
+        volumes: s.data.data.volumes,
       }
     })
 
@@ -3067,6 +3082,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNode,
       filterLabelKey,
       filterLabelValue,
+      highlightVolumes,
     } = this.state
 
     if (
@@ -3112,6 +3128,22 @@ class KubernetesPage extends PureComponent<Props, State> {
       d3.selectAll(`path`).classed('kubernetes-pin', false)
       _.forEach(pinNode, pin => {
         d3.select(`[data-name=${pin}]`).classed('kubernetes-pin', true)
+      })
+    }
+
+    if (
+      highlightVolumes.length > 0 &&
+      prevState.highlightVolumes.length !== highlightVolumes.length
+    ) {
+      d3.selectAll(`path`).classed('kubernetes-volume', false)
+      _.forEach(highlightVolumes, volume => {
+        // 쉼표(,)를 사용해 두 개의 선택자 그룹을 지정
+        d3.selectAll(
+          `
+            path[data-name*="PersistentVolumeClaim_"][data-name$="${volume}"],
+            path[data-name*="PersistentVolume_"][data-name$="${volume}"]
+          `
+        ).classed('kubernetes-volume', true)
       })
     }
 
@@ -3184,6 +3216,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       isDisabledMinions,
       selectedAutoRefresh,
       layouts,
+      highlightVolumes,
     } = this.state
 
     const layoutCells = getCells(layouts, source)
@@ -3252,6 +3285,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           host={''}
           selectMinion={selectMinion}
           remoteDataState={this.state.remoteDataState}
+          highlightVolumes={highlightVolumes}
         />
       </>
     )
@@ -3466,6 +3500,12 @@ class KubernetesPage extends PureComponent<Props, State> {
     const focuseNodeLabel = _.get(data, 'data.label')
     const focuseNodeType = _.get(data, 'data.type')
     const focuseNamespace = _.get(data, 'data.namespace')
+    const focuseVolumes = _.get(data, 'data.volumes')
+    if (!!focuseVolumes) {
+      this.handleVolumeSpec(focuseVolumes.map((volume: any) => volume.name))
+    } else {
+      this.setState({highlightVolumes: []})
+    }
 
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -3525,6 +3565,22 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private onDBClick = (data: any) => {
     this.handlePinNode(data)
+  }
+
+  private handleVolumeSpec = (volumes: string[]) => {
+    const volumeMapping = this.state.volumeMapping || {}
+
+    if (!Array.isArray(volumes) || volumes.length === 0) {
+      this.setState({highlightVolumes: []})
+      return
+    }
+
+    const highlightVolumes = _.uniq([
+      ...volumes,
+      ..._.map(volumes, volume => volumeMapping[volume]).filter(Boolean),
+    ])
+
+    this.setState({highlightVolumes: highlightVolumes || []})
   }
 
   private handlePinNode = (data: any) => {

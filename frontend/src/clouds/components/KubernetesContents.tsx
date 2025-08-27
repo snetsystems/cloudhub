@@ -58,6 +58,7 @@ interface Props {
   selectMinion: string
   remoteDataState: RemoteDataState
   selectedPersistentVolume?: string | null
+  highlightVolumes: string[]
 }
 
 interface State {}
@@ -153,6 +154,7 @@ class KubernetesContents extends PureComponent<Props, State> {
       handleResize,
       handleOpenTooltip,
       handleCloseTooltip,
+      highlightVolumes,
     } = this.props
 
     return (
@@ -169,6 +171,7 @@ class KubernetesContents extends PureComponent<Props, State> {
             handleOpenTooltip={handleOpenTooltip}
             handleCloseTooltip={handleCloseTooltip}
             remoteDataState={this.props.remoteDataState}
+            highlightVolumes={highlightVolumes}
           />
 
           {this.tooltip}

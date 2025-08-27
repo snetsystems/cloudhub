@@ -29,6 +29,7 @@ export interface D3DataDepth3 {
   value: number
   owner?: string
   namespace?: string
+  volume_name?: string
 }
 
 export interface Kubernetes {

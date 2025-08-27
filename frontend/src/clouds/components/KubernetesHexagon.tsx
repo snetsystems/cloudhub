@@ -34,6 +34,7 @@ interface Props {
   pinNode: string[]
   remoteDataState: RemoteDataState
   dispatch: (action: any) => void
+  highlightVolumes: string[]
 }
 
 interface State {}
@@ -126,6 +127,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       kubernetesObject,
       pinNode,
       focuseNode,
+      highlightVolumes,
     } = _this.props
 
     const dimensions = this.ref.current!.getBoundingClientRect()
@@ -234,6 +236,10 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('data-name', (d: any) => d.data.name)
       .attr('data-label', (d: any) => d.data.label)
       .attr('data-type', (d: any) => d.data.type)
+      .attr('data-volume-spec', (d: any) => {
+        const volumeSpec = d.data.volume_spec?.trim()
+        return volumeSpec || null
+      })
       .attr('data-limit-cpu', (d: any) => _.get(d.data, 'data.cpu'))
       .attr('data-limit-memory', (d: any) => _.get(d.data, 'data.memory'))
       .attr('d', (d: any) => generateHexagon(d.r + 5))
@@ -270,26 +276,27 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       const r = d.r
       const g = d3.select(this.parentNode as SVGGElement)
 
-      // 이미 체크가 있으면 중복 생성 방지
       if (!g.select('path.checkmark').empty()) return
+      const x1 = -0.82 * r
+      const y1 = -0.12 * r
+      const x2 = -0.24 * r
+      const y2 = 0.68 * r
+      const x3 = 0.66 * r
+      const y3 = -0.7 * r
 
-      const x1 = -r * 0.9
-      const y1 = -r * 0.2 // P1: left -80%, top -20%
-      const x2 = -r * 0.15
-      const y2 = r * 0.55 // P2: left -15%, top 55%
-      const x3 = r * 0.9
-      const y3 = -r * 0.4 // P3: left  80%, top -40%
-
-      const pathD = `M ${x1},${y1} L ${x2},${y2} L ${x3},${y3}`
+      const q1x = -0.6 * r
+      const q1y = 0.02 * r
+      const pathD = `M ${x1},${y1} Q ${q1x},${q1y} ${x2},${y2} L ${x3},${y3}`
 
       g.append('path')
         .attr('class', 'checkmark')
         .attr('d', pathD)
         .attr('fill', 'none')
-        .attr('stroke', '#F27E2F')
-        .attr('stroke-width', Math.max(2, r * 0.08))
+        .attr('stroke', '#22adf6')
+        .attr('stroke-width', Math.max(3, 0.15 * r))
+        .attr('stroke-linejoin', 'miter')
+        .attr('stroke-miterlimit', 10)
         .attr('stroke-linecap', 'round')
-        .attr('stroke-linejoin', 'round')
         .style('pointer-events', 'none')
     })
 
@@ -302,6 +309,14 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     d3.select(`path`).classed('kubernetes-pin', false)
     _.forEach(pinNode, pin => {
       d3.select(`path[data-name=${pin}]`).classed('kubernetes-pin', true)
+    })
+
+    d3.select(`path`).classed('kubernetes-volume', false)
+    _.forEach(highlightVolumes, volume => {
+      d3.select(`path[data-name=PersistentVolume_${volume}]`).classed(
+        'kubernetes-volume',
+        true
+      )
     })
 
     const textNode = svg
