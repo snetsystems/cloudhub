@@ -6,10 +6,9 @@ import {connect} from 'react-redux'
 
 // Types
 import {Cell, Layout, TimeRange, Source} from 'src/types'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 // Components
-import {timeRanges} from 'src/shared/data/timeRanges'
-import TimeRangeShiftDropdown from 'src/shared/components/TimeRangeShiftDropdown'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import KubernetesPowerFlexDashboardHeader from 'src/clouds/components/KubernetesPowerFlexDashboardHeader'
 import {
@@ -22,6 +21,7 @@ import {
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHostsForStatisticalGraph} from 'src/utils/tempVars'
 import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 // Layout ID for Kubernetes Metrics
 const KUBERNETES_METRICS_LAYOUT_ID = 'mock-kubernetes-layout'
@@ -32,6 +32,7 @@ interface Props {
   manualRefresh: number
   powerFlexMetricsChartHeight?: number
   selectedPersistentVolume?: string | null
+  cloudAutoRefresh?: CloudAutoRefresh
 }
 
 function KubernetesPowerFlexMetricsChart({
@@ -40,14 +41,13 @@ function KubernetesPowerFlexMetricsChart({
   manualRefresh,
   powerFlexMetricsChartHeight = 17,
   selectedPersistentVolume = null,
+  cloudAutoRefresh,
 }: Props) {
   const [layout, setLayout] = useState<Layout[]>()
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
-  const [selfTimeRange, setSelfTimeRange] = useState<TimeRange>(
-    timeRange || timeRanges[0]
-  )
 
   const instance = []
+  let intervalID
 
   useEffect(() => {
     getLayoutForInstance()
@@ -75,7 +75,24 @@ function KubernetesPowerFlexMetricsChart({
     if (!!layout) {
       setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
     }
-  }, [layout, selfTimeRange])
+  }, [layout])
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    if (!!cloudAutoRefresh?.kubernetes) {
+      clearInterval(intervalID)
+    }
+
+    GlobalAutoRefresher.poll(cloudAutoRefresh?.kubernetes)
+
+    return () => {
+      controller.abort()
+      clearInterval(intervalID)
+      intervalID = null
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [cloudAutoRefresh?.kubernetes])
 
   const getLayoutForInstance = async () => {
     try {
@@ -218,15 +235,6 @@ function KubernetesPowerFlexMetricsChart({
 
   const tempVars = generateForHostsForStatisticalGraph(source)
 
-  const handleChooseTimeRange = ({lower, upper}) => {
-    if (upper) {
-      setSelfTimeRange({lower, upper})
-    } else {
-      const timeRange = timeRanges.find(range => range.lower === lower)
-      setSelfTimeRange(timeRange)
-    }
-  }
-
   const debouncedFit = _.debounce(() => {
     WindowResizeEventTrigger()
   }, 150)
@@ -252,16 +260,7 @@ function KubernetesPowerFlexMetricsChart({
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
-        <div
-          onMouseDown={e => e.stopPropagation()}
-          className="page-header--right"
-          style={{zIndex: 3, marginRight: '4px'}}
-        >
-          <TimeRangeShiftDropdown
-            onChooseTimeRange={handleChooseTimeRange}
-            selected={selfTimeRange}
-          />
-        </div>
+        <></>
       </KubernetesPowerFlexDashboardHeader>
       {!_.isEmpty(instance) ? (
         <div className="panel-body">
@@ -272,28 +271,21 @@ function KubernetesPowerFlexMetricsChart({
       ) : (
         <>
           <div className="panel-body" style={{backgroundColor: GRAPH_BG_COLOR}}>
-            <div
-              style={{
-                position: 'relative',
-                width: '100%',
-                height: '100%',
-              }}
-            >
-              <ReactObserver onResize={handleOnResize} />
-              <LayoutRenderer
-                source={source}
-                sources={[source]}
-                isStatusPage={false}
-                isStaticPage={true}
-                isEditable={false}
-                cells={layoutCells}
-                templates={tempVars}
-                timeRange={selfTimeRange}
-                manualRefresh={manualRefresh}
-                host={''}
-              />
-            </div>
+            <ReactObserver onResize={handleOnResize} />
+            <LayoutRenderer
+              source={source}
+              sources={[source]}
+              isStatusPage={false}
+              isStaticPage={true}
+              isEditable={false}
+              cells={layoutCells}
+              templates={tempVars}
+              timeRange={timeRange}
+              manualRefresh={manualRefresh}
+              host={''}
+            />
           </div>
+
           <div className="dash-graph--gradient-border">
             <div className="dash-graph--gradient-top-left" />
             <div className="dash-graph--gradient-top-right" />
@@ -309,7 +301,7 @@ function KubernetesPowerFlexMetricsChart({
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh, timeZone},
+      persisted: {cloudAutoRefresh, timeZone},
     },
     links,
     kubernetesPowerFlexDashboard: {
@@ -320,7 +312,7 @@ const mstp = state => {
   return {
     links,
     timeZone,
-    autoRefresh,
+    cloudAutoRefresh,
     powerFlexMetricsChartHeight,
     selectedPersistentVolume,
   }

@@ -14,8 +14,6 @@ import {Cell, Source} from 'src/types'
 // Components
 import {Page} from 'src/reusable_ui'
 import KubernetesPowerFlexMetricsChart from 'src/clouds/components/KubernetesPowerFlexMetricsChart'
-import KubernetesPowerFlexStatusSummaryChart from 'src/clouds/components/KubernetesPowerFlexStatusSummaryChart'
-import KubernetesPowerFlexResourceUsageChart from 'src/clouds/components/KubernetesPowerFlexResourceUsageChart'
 
 // Constants
 import {FIXTURE_KUBERNETES_POWERFLEX_CELLS} from 'src/clouds/constants/fixture'
@@ -119,88 +117,60 @@ function KubernetesPowerFlexDashboard({
           </Authorized>
         )
       }
-      case 'kubernetes-powerflex-status-summary': {
-        return (
-          <Authorized
-            requiredRole={VIEWER_ROLE}
-            propsOverride={{
-              isEditable: false,
-            }}
-          >
-            <KubernetesPowerFlexStatusSummaryChart />
-          </Authorized>
-        )
-      }
-      case 'kubernetes-powerflex-resource-usage': {
-        return (
-          <Authorized
-            requiredRole={VIEWER_ROLE}
-            propsOverride={{
-              isEditable: false,
-            }}
-          >
-            <KubernetesPowerFlexResourceUsageChart />
-          </Authorized>
-        )
-      }
       default:
         return null
     }
   }
 
   return (
-    <>
-      <Page className="kubernetes-powerflex-page">
-        <Page.Contents fullWidth={true}>
-          <div className="dashboard container-fluid full-width">
-            {!!cells && cells.length > 0 && (
-              <Authorized
-                requiredRole={VIEWER_ROLE}
-                propsOverride={{
-                  isDraggable: false,
-                  isResizable: false,
-                  draggableHandle: null,
+    <Page className="kubernetes-powerflex-page">
+      <Page.Contents fullWidth={true}>
+        <div className="dashboard container-fluid full-width">
+          {!!cells && cells.length > 0 && (
+            <Authorized
+              requiredRole={VIEWER_ROLE}
+              propsOverride={{
+                isDraggable: false,
+                isResizable: false,
+                draggableHandle: null,
+              }}
+            >
+              <GridLayout
+                className="layout"
+                layout={cells}
+                cols={96}
+                rowHeight={DASHBOARD_LAYOUT_ROW_HEIGHT}
+                margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
+                containerPadding={[0, 0]}
+                draggableHandle={'.kubernetes-powerflex-dash-graph--draggable'}
+                onLayoutChange={handleLayoutChange}
+                useCSSTransforms={false}
+                isDraggable={true}
+                isResizable={true}
+                onResizeStop={(_, __, ___, ____, _____, resizeHandle) => {
+                  const parentElement = resizeHandle?.parentElement
+
+                  if (parentElement?.classList.contains('resizing')) {
+                    parentElement.classList.remove('resizing')
+                  }
                 }}
               >
-                <GridLayout
-                  className="layout"
-                  layout={cells}
-                  cols={96}
-                  rowHeight={DASHBOARD_LAYOUT_ROW_HEIGHT}
-                  margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
-                  containerPadding={[0, 0]}
-                  draggableHandle={
-                    '.kubernetes-powerflex-dash-graph--draggable'
-                  }
-                  onLayoutChange={handleLayoutChange}
-                  useCSSTransforms={false}
-                  isDraggable={true}
-                  isResizable={true}
-                  onResizeStop={(_, __, ___, ____, _____, resizeHandle) => {
-                    const parentElement = resizeHandle?.parentElement
-
-                    if (parentElement?.classList.contains('resizing')) {
-                      parentElement.classList.remove('resizing')
-                    }
-                  }}
-                >
-                  {cells?.map(cell => {
-                    return (
-                      <div key={cell.i}>
-                        {layoutRender({
-                          cell: cell,
-                          source: source,
-                        })}
-                      </div>
-                    )
-                  })}
-                </GridLayout>
-              </Authorized>
-            )}
-          </div>
-        </Page.Contents>
-      </Page>
-    </>
+                {cells?.map(cell => {
+                  return (
+                    <div key={cell.i}>
+                      {layoutRender({
+                        cell: cell,
+                        source: source,
+                      })}
+                    </div>
+                  )
+                })}
+              </GridLayout>
+            </Authorized>
+          )}
+        </div>
+      </Page.Contents>
+    </Page>
   )
 }
 

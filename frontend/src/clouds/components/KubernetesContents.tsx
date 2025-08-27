@@ -7,13 +7,13 @@ import {connect} from 'react-redux'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
+import KubernetesDashboardSection from 'src/clouds/components/KubernetesDashboardSection'
+import KubernetesPowerFlexDashboard from 'src/clouds/components/KubernetesPowerFlexDashboard'
 
 import KubernetesBasicsTable from 'src/clouds/components/KubernetesBasicsTable'
 import KubernetesRawData from 'src/clouds/components/KubernetesRawData'
 import KubernetesTooltip from 'src/clouds/components/KubernetesTooltip'
 import KubernetesHexagon from 'src/clouds/components/KubernetesHexagon'
-
-import KubernetesPowerFlexSection from 'src/clouds/components/KubernetesPowerFlexSection'
 
 // Constants
 import {HANDLE_VERTICAL} from 'src/shared/constants'
@@ -29,7 +29,6 @@ import {
   KubernetesObject,
 } from 'src/clouds/types'
 import {Source, TimeRange, Cell, Template, RemoteDataState} from 'src/types'
-import KubernetesDashboardSection from './KubernetesDashboardSection'
 
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
@@ -121,7 +120,7 @@ class KubernetesContents extends PureComponent<Props, State> {
 
     if (selectedPersistentVolume) {
       return (
-        <KubernetesPowerFlexSection
+        <KubernetesPowerFlexDashboard
           source={source}
           timeRange={timeRange}
           manualRefresh={manualRefresh}

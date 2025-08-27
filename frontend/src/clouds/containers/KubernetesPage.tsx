@@ -2981,24 +2981,22 @@ class KubernetesPage extends PureComponent<Props, State> {
         tempVars
       )
 
-      const persistentVolumes = await this.getPersistentVolumes()
+      const persistentVolumes = (this.state.kubernetesData as any)
+        ?.PersistentVolume
       if (
         persistentVolumes &&
-        Array.isArray(persistentVolumes) &&
-        persistentVolumes.length > 0
+        typeof persistentVolumes === 'object' &&
+        Object.keys(persistentVolumes).length > 0
       ) {
-        persistentVolumes.forEach((pv: any) => {
-          const pvName = _.get(pv, 'metadata.name')
-          if (pvName) {
-            kubernetesObject[pvName] = {
-              name: pvName,
-              type: 'PersistentVolume',
-              cpu: '0',
-              memory: '0',
-              iops: Math.floor(Math.random() * 1000) + 100,
-              bandwidth: Math.floor(Math.random() * 100) + 10,
-              latency: Math.floor(Math.random() * 50) + 1,
-            }
+        Object.keys(persistentVolumes).forEach((pvName: string) => {
+          kubernetesObject[pvName] = {
+            name: pvName,
+            type: 'PersistentVolume',
+            cpu: '0',
+            memory: '0',
+            iops: Math.floor(Math.random() * 1000) + 100,
+            bandwidth: Math.floor(Math.random() * 100) + 10,
+            latency: Math.floor(Math.random() * 50) + 1,
           }
         })
       }
