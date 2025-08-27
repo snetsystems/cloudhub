@@ -3131,13 +3131,9 @@ class KubernetesPage extends PureComponent<Props, State> {
       })
     }
 
-    if (
-      highlightVolumes.length > 0 &&
-      prevState.highlightVolumes.length !== highlightVolumes.length
-    ) {
+    if (prevState.highlightVolumes !== highlightVolumes) {
       d3.selectAll(`path`).classed('kubernetes-volume', false)
       _.forEach(highlightVolumes, volume => {
-        // 쉼표(,)를 사용해 두 개의 선택자 그룹을 지정
         d3.selectAll(
           `
             path[data-name*="PersistentVolumeClaim_"][data-name$="${volume}"],
@@ -3501,6 +3497,9 @@ class KubernetesPage extends PureComponent<Props, State> {
     const focuseNodeType = _.get(data, 'data.type')
     const focuseNamespace = _.get(data, 'data.namespace')
     const focuseVolumes = _.get(data, 'data.volumes')
+
+    console.log('onClick Pod', data)
+
     if (!!focuseVolumes) {
       this.handleVolumeSpec(focuseVolumes.map((volume: any) => volume.name))
     } else {
@@ -3565,6 +3564,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private onDBClick = (data: any) => {
     this.handlePinNode(data)
+    const focuseVolumes = _.get(data, 'data.volumes')
+    if (!!focuseVolumes) {
+      this.handleVolumeSpec(focuseVolumes.map((volume: any) => volume.name))
+    } else {
+      this.setState({highlightVolumes: []})
+    }
   }
 
   private handleVolumeSpec = (volumes: string[]) => {
