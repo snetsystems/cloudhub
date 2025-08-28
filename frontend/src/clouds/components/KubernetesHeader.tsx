@@ -9,7 +9,7 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 // Contants
-import {autoRefreshOptions} from 'src/clouds/constants/autoRefresh'
+import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 
 interface Props {
   handleChooseNamespace: (select: {text: string}) => void
@@ -153,7 +153,12 @@ class KubernetesHeader extends PureComponent<Props> {
               selected={selectedAutoRefresh}
               onChoose={handleChooseKubernetesAutoRefresh}
               onManualRefresh={handleKubernetesRefresh}
-              userAutoRefreshOptions={autoRefreshOptions}
+              customAutoRefreshOptions={getTimeOptionByGroup(
+                'kubernetesHeader'
+              )}
+              customAutoRefreshSelected={{
+                kubernetesHeader: selectedAutoRefresh,
+              }}
             />
           </div>
         </div>
