@@ -40,10 +40,10 @@ export const getCpuAndLoadForK8s = async (
   tempVars: Template[]
 ): Promise<KubernetesObject> => {
   const query = replaceTemplate(
-    `SELECT mean("cpu_usage_nanocores") / 1000000 FROM \":db:\".\":rp:\".\"kubernetes_node\" WHERE time > now() - 5m GROUP BY node_name;
-      SELECT mean("memory_rss_bytes"), mean("memory_working_set_bytes") FROM \":db:\".\":rp:\".\"kubernetes_node\" WHERE time > now() - 5m GROUP BY node_name;
-      SELECT mean("cpu_usage_nanocores") / 1000000 FROM \":db:\".\":rp:\".\"kubernetes_pod_container\" WHERE time > now() - 5m GROUP BY pod_name;
-      SELECT mean("memory_rss_bytes"), mean("memory_working_set_bytes") FROM \":db:\".\":rp:\".\"kubernetes_pod_container\" WHERE time > now() - 5m GROUP BY pod_name;`,
+    `SELECT last("cpu_usage_nanocores") / 1000000 FROM \":db:\".\":rp:\".\"kubernetes_node\" WHERE time > now() - 10m GROUP BY node_name;
+      SELECT last("memory_rss_bytes"), last("memory_working_set_bytes") FROM \":db:\".\":rp:\".\"kubernetes_node\" WHERE time > now() - 10m GROUP BY node_name;
+      SELECT last("cpu_usage_nanocores") / 1000000 FROM \":db:\".\":rp:\".\"kubernetes_pod_container\" WHERE time > now() - 10m GROUP BY pod_name;
+      SELECT last("memory_rss_bytes"), last("memory_working_set_bytes") FROM \":db:\".\":rp:\".\"kubernetes_pod_container\" WHERE time > now() - 10m GROUP BY pod_name;`,
     tempVars
   )
 
@@ -68,18 +68,18 @@ export const getCpuAndLoadForK8s = async (
   )
 
   _.forEach(nodeCpuSeries, s => {
-    const meanIndex = _.findIndex(s.columns, col => col === 'mean')
+    const lastIndex = _.findIndex(s.columns, col => col === 'last')
     k8sObject[s.tags.node_name] = {
       ...EmptyK8s,
       name: s.tags.node_name,
       type: 'Node',
-      cpu: Number(s.values[0][meanIndex]),
+      cpu: Number(s.values[0][lastIndex]),
     }
   })
 
   _.forEach(nodeMemorySeries, s => {
-    const rssIndex = _.findIndex(s.columns, col => col === 'mean')
-    const workingIndex = _.findIndex(s.columns, col => col === 'mean_1')
+    const rssIndex = _.findIndex(s.columns, col => col === 'last')
+    const workingIndex = _.findIndex(s.columns, col => col === 'last_1')
     k8sObject[s.tags.node_name].memory = Math.max(
       Number(s.values[0][rssIndex]),
       Number(s.values[0][workingIndex])
@@ -87,18 +87,18 @@ export const getCpuAndLoadForK8s = async (
   })
 
   _.forEach(podCpuSeries, s => {
-    const meanIndex = _.findIndex(s.columns, col => col === 'mean')
+    const lastIndex = _.findIndex(s.columns, col => col === 'last')
     k8sObject[s.tags.pod_name] = {
       ...EmptyK8s,
       name: s.tags.pod_name,
       type: 'Pod',
-      cpu: Number(s.values[0][meanIndex]),
+      cpu: Number(s.values[0][lastIndex]),
     }
   })
 
   _.forEach(podMemorySeries, s => {
-    const rssIndex = _.findIndex(s.columns, col => col === 'mean')
-    const workingIndex = _.findIndex(s.columns, col => col === 'mean_1')
+    const rssIndex = _.findIndex(s.columns, col => col === 'last')
+    const workingIndex = _.findIndex(s.columns, col => col === 'last_1')
     k8sObject[s.tags.pod_name].memory = k8sObject[
       s.tags.pod_name
     ].memory = Math.max(
