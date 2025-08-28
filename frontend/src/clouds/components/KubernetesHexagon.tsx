@@ -292,7 +292,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         .attr('class', 'checkmark')
         .attr('d', pathD)
         .attr('fill', 'none')
-        .attr('stroke', '#22adf6')
+        .attr('stroke', '#000')
         .attr('stroke-width', Math.max(3, 0.15 * r))
         .attr('stroke-linejoin', 'miter')
         .attr('stroke-miterlimit', 10)

@@ -1801,7 +1801,6 @@ class KubernetesPage extends PureComponent<Props, State> {
 
       const volumeMapping = {}
       volumeMapping[persistentVolumeClaimName] = volumeName ?? ''
-      // pod - pvc - pv 구조가 그려져야함.
 
       d3Namespaces[namespaceName].children[
         _.findIndex(d3Namespaces[namespaceName].children, {
@@ -3498,10 +3497,14 @@ class KubernetesPage extends PureComponent<Props, State> {
     const focuseNamespace = _.get(data, 'data.namespace')
     const focuseVolumes = _.get(data, 'data.volumes')
 
-    console.log('onClick Pod', data)
-
-    if (!!focuseVolumes) {
-      this.handleVolumeSpec(focuseVolumes.map((volume: any) => volume.name))
+    if (this.checkHighlightVolumes(focuseNodeName)) {
+      null
+    } else if (!!focuseVolumes) {
+      this.handleVolumeSpec(
+        focuseVolumes
+          .map((volume: any) => volume?.persistent_volume_claim?.claim_name)
+          .filter((item: any) => !!item)
+      )
     } else {
       this.setState({highlightVolumes: []})
     }
@@ -3564,9 +3567,18 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private onDBClick = (data: any) => {
     this.handlePinNode(data)
+
     const focuseVolumes = _.get(data, 'data.volumes')
-    if (!!focuseVolumes) {
-      this.handleVolumeSpec(focuseVolumes.map((volume: any) => volume.name))
+    const focuseNodeName = _.get(data, 'data.data.name') ?? ''
+
+    if (this.checkHighlightVolumes(focuseNodeName)) {
+      return
+    } else if (!!focuseVolumes) {
+      this.handleVolumeSpec(
+        focuseVolumes
+          .map((volume: any) => volume?.persistent_volume_claim?.claim_name)
+          .filter((item: any) => !!item)
+      )
     } else {
       this.setState({highlightVolumes: []})
     }
@@ -3604,6 +3616,13 @@ class KubernetesPage extends PureComponent<Props, State> {
     } else {
       this.setState({pinNode: []})
     }
+  }
+
+  private checkHighlightVolumes = (name: string) => {
+    const {highlightVolumes} = this.state
+
+    const isIncluded = highlightVolumes.some(sub => name.includes(sub))
+    return isIncluded
   }
 
   private debouncedResizeTrigger = _.debounce(() => {
