@@ -1286,8 +1286,8 @@ class KubernetesPage extends PureComponent<Props, State> {
       this.getNodes(),
       this.getServices(true),
       this.getIngresses(true),
-      this.getConfigmaps(),
-      this.getSecrets(),
+      // this.getConfigmaps(),
+      // this.getSecrets(),
       this.getServiceAccounts(),
       // this.getClusterRoles(),
       // this.getClusterRoleBindings(),
@@ -1339,6 +1339,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       _.get(namespace, 'metadata.name')
     )
 
+    // service
     _.map(info[2], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const serviceName = _.get(m, 'metadata.name')
@@ -1381,6 +1382,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
+    // ingress
     _.map(info[3], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const ingressName = _.get(m, 'metadata.name')
@@ -1424,97 +1426,100 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
+    // configmap
+    // _.map(info[4], m => {
+    //   const namespaceName = _.get(m, 'metadata.namespace')
+    //   const configmapName = _.get(m, 'metadata.name')
+    //   if (
+    //     info[4] !== null &&
+    //     !_.includes(_.keys(namespaces[namespaceName]), 'Configmap')
+    //   ) {
+    //     namespaces[namespaceName] = {
+    //       ...namespaces[namespaceName],
+    //       Configmap: {},
+    //     }
+
+    //     const d3DataDepth2: D3DataDepth2 = {
+    //       name: `Namespace_${namespaceName}_Configmap`,
+    //       label: 'Configmap',
+    //       type: 'Configmap',
+    //       children: [],
+    //     }
+
+    //     d3Namespaces[namespaceName].children.push(d3DataDepth2)
+    //   }
+
+    //   namespaces[namespaceName]['Configmap'][configmapName] = {
+    //     metadata: _.get(m, 'metadata'),
+    //     spec: _.get(m, 'spec'),
+    //     status: _.get(m, 'status'),
+    //   }
+
+    //   const d3DataDepth3: D3DataDepth3 = {
+    //     name: `Namespace_${namespaceName}_Configmap_${configmapName}`,
+    //     label: configmapName,
+    //     type: 'CM',
+    //     namespace: `${namespaceName}`,
+    //     value: 10,
+    //   }
+
+    //   d3Namespaces[namespaceName].children[
+    //     _.findIndex(d3Namespaces[namespaceName].children, {
+    //       name: `Namespace_${namespaceName}_Configmap`,
+    //     })
+    //   ].children.push(d3DataDepth3)
+    // })
+
+    // secret
+    // _.map(info[5], m => {
+    //   const namespaceName = _.get(m, 'metadata.namespace')
+    //   const secretName = _.get(m, 'metadata.name')
+    //   if (
+    //     info[5] !== null &&
+    //     !_.includes(_.keys(namespaces[namespaceName]), 'Secret')
+    //   ) {
+    //     namespaces[namespaceName] = {
+    //       ...namespaces[namespaceName],
+    //       Secret: {},
+    //     }
+
+    //     const d3DataDepth2: D3DataDepth2 = {
+    //       name: `Namespace_${namespaceName}_Secret`,
+    //       label: 'Secret',
+    //       type: 'Secret',
+    //       children: [],
+    //     }
+
+    //     d3Namespaces[namespaceName].children.push(d3DataDepth2)
+    //   }
+
+    //   namespaces[namespaceName]['Secret'][secretName] = {
+    //     metadata: _.get(m, 'metadata'),
+    //     spec: _.get(m, 'spec'),
+    //     status: _.get(m, 'status'),
+    //   }
+
+    //   const d3DataDepth3: D3DataDepth3 = {
+    //     name: `Namespace_${namespaceName}_Secret_${secretName}`,
+    //     label: secretName,
+    //     type: 'SR',
+    //     namespace: `${namespaceName}`,
+    //     value: 10,
+    //   }
+
+    //   d3Namespaces[namespaceName].children[
+    //     _.findIndex(d3Namespaces[namespaceName].children, {
+    //       name: `Namespace_${namespaceName}_Secret`,
+    //     })
+    //   ].children.push(d3DataDepth3)
+    // })
+
+    // serviceaccount
     _.map(info[4], m => {
-      const namespaceName = _.get(m, 'metadata.namespace')
-      const configmapName = _.get(m, 'metadata.name')
-      if (
-        info[4] !== null &&
-        !_.includes(_.keys(namespaces[namespaceName]), 'Configmap')
-      ) {
-        namespaces[namespaceName] = {
-          ...namespaces[namespaceName],
-          Configmap: {},
-        }
-
-        const d3DataDepth2: D3DataDepth2 = {
-          name: `Namespace_${namespaceName}_Configmap`,
-          label: 'Configmap',
-          type: 'Configmap',
-          children: [],
-        }
-
-        d3Namespaces[namespaceName].children.push(d3DataDepth2)
-      }
-
-      namespaces[namespaceName]['Configmap'][configmapName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth3: D3DataDepth3 = {
-        name: `Namespace_${namespaceName}_Configmap_${configmapName}`,
-        label: configmapName,
-        type: 'CM',
-        namespace: `${namespaceName}`,
-        value: 10,
-      }
-
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_Configmap`,
-        })
-      ].children.push(d3DataDepth3)
-    })
-
-    _.map(info[5], m => {
-      const namespaceName = _.get(m, 'metadata.namespace')
-      const secretName = _.get(m, 'metadata.name')
-      if (
-        info[5] !== null &&
-        !_.includes(_.keys(namespaces[namespaceName]), 'Secret')
-      ) {
-        namespaces[namespaceName] = {
-          ...namespaces[namespaceName],
-          Secret: {},
-        }
-
-        const d3DataDepth2: D3DataDepth2 = {
-          name: `Namespace_${namespaceName}_Secret`,
-          label: 'Secret',
-          type: 'Secret',
-          children: [],
-        }
-
-        d3Namespaces[namespaceName].children.push(d3DataDepth2)
-      }
-
-      namespaces[namespaceName]['Secret'][secretName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth3: D3DataDepth3 = {
-        name: `Namespace_${namespaceName}_Secret_${secretName}`,
-        label: secretName,
-        type: 'SR',
-        namespace: `${namespaceName}`,
-        value: 10,
-      }
-
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_Secret`,
-        })
-      ].children.push(d3DataDepth3)
-    })
-
-    _.map(info[6], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const serviceAccountName = _.get(m, 'metadata.name')
       if (
-        info[6] !== null &&
+        info[4] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'ServiceAccount')
       ) {
         namespaces[namespaceName] = {
@@ -1552,6 +1557,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
+    // clusterrole
     // _.map(info[7], m => {
     //   const clusterRoleName = _.get(m, 'metadata.name')
     //   if (
@@ -1634,11 +1640,12 @@ class KubernetesPage extends PureComponent<Props, State> {
     //   ].children.push(d3DataDepth2)
     // })
 
-    _.map(info[7], m => {
+    // role
+    _.map(info[5], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const roleName = _.get(m, 'metadata.name')
       if (
-        info[7] !== null &&
+        info[5] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'Role')
       ) {
         namespaces[namespaceName] = {
@@ -1675,11 +1682,12 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
-    _.map(info[8], m => {
+    // rolebinding
+    _.map(info[6], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const roleBindingName = _.get(m, 'metadata.name')
       if (
-        info[8] !== null &&
+        info[6] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'RoleBinding')
       ) {
         namespaces[namespaceName] = {
@@ -1718,10 +1726,11 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
-    _.map(info[9], m => {
+    // persistentvolume
+    _.map(info[7], m => {
       const persistentVolumeName = _.get(m, 'metadata.name')
       if (
-        info[9] !== null &&
+        info[7] !== null &&
         !_.includes(_.keys(kubernetesData), 'PersistentVolume')
       ) {
         kubernetesData = {
@@ -1759,12 +1768,13 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth2)
     })
 
-    _.map(info[10], m => {
+    // persistentvolumeclaim
+    _.map(info[8], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const persistentVolumeClaimName = _.get(m, 'metadata.name')
       const volumeName = _.get(m, 'spec.volume_name')
       if (
-        info[10] !== null &&
+        info[8] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'PersistentVolumeClaim')
       ) {
         namespaces[namespaceName] = {
