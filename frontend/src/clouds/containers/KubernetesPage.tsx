@@ -1289,8 +1289,8 @@ class KubernetesPage extends PureComponent<Props, State> {
       this.getConfigmaps(),
       this.getSecrets(),
       this.getServiceAccounts(),
-      this.getClusterRoles(),
-      this.getClusterRoleBindings(),
+      // this.getClusterRoles(),
+      // this.getClusterRoleBindings(),
       this.getRoles(),
       this.getRoleBindings(),
       this.getPersistentVolumes(),
@@ -1552,93 +1552,93 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
+    // _.map(info[7], m => {
+    //   const clusterRoleName = _.get(m, 'metadata.name')
+    //   if (
+    //     info[7] !== null &&
+    //     !_.includes(_.keys(kubernetesData), 'ClusterRole')
+    //   ) {
+    //     kubernetesData = {
+    //       ...kubernetesData,
+    //       ClusterRole: {},
+    //     }
+
+    //     const d3DataDepth1: D3DataDepth1 = {
+    //       name: 'ClusterRole',
+    //       label: 'ClusterRole',
+    //       type: 'ClusterRole',
+    //       children: [],
+    //     }
+
+    //     kubernetesD3Data.children.push(d3DataDepth1)
+    //   }
+
+    //   kubernetesData['ClusterRole'][clusterRoleName] = {
+    //     metadata: _.get(m, 'metadata'),
+    //     spec: _.get(m, 'spec'),
+    //     status: _.get(m, 'status'),
+    //   }
+
+    //   const d3DataDepth2: D3DataDepth2 = {
+    //     name: `ClusterRole_${clusterRoleName}`,
+    //     label: clusterRoleName,
+    //     type: 'CR',
+    //     value: 10,
+    //   }
+
+    //   kubernetesD3Data.children[
+    //     _.findIndex(kubernetesD3Data.children, {
+    //       name: 'ClusterRole',
+    //     })
+    //   ].children.push(d3DataDepth2)
+    // })
+
+    // _.map(info[8], m => {
+    //   const clusterRoleBindingName = _.get(m, 'metadata.name')
+    //   if (
+    //     info[8] !== null &&
+    //     !_.includes(_.keys(kubernetesData), 'ClusterRoleBinding')
+    //   ) {
+    //     kubernetesData = {
+    //       ...kubernetesData,
+    //       ClusterRoleBinding: {},
+    //     }
+
+    //     const d3DataDepth1: D3DataDepth1 = {
+    //       name: 'ClusterRoleBinding',
+    //       label: 'ClusterRoleBinding',
+    //       type: 'ClusterRoleBinding',
+    //       children: [],
+    //     }
+
+    //     kubernetesD3Data.children.push(d3DataDepth1)
+    //   }
+
+    //   kubernetesData['ClusterRoleBinding'][clusterRoleBindingName] = {
+    //     metadata: _.get(m, 'metadata'),
+    //     spec: _.get(m, 'spec'),
+    //     status: _.get(m, 'status'),
+    //   }
+
+    //   const d3DataDepth2: D3DataDepth2 = {
+    //     name: `ClusterRoleBinding_${clusterRoleBindingName}`,
+    //     label: clusterRoleBindingName,
+    //     type: 'CRB',
+    //     value: 10,
+    //   }
+
+    //   kubernetesD3Data.children[
+    //     _.findIndex(kubernetesD3Data.children, {
+    //       name: 'ClusterRoleBinding',
+    //     })
+    //   ].children.push(d3DataDepth2)
+    // })
+
     _.map(info[7], m => {
-      const clusterRoleName = _.get(m, 'metadata.name')
-      if (
-        info[7] !== null &&
-        !_.includes(_.keys(kubernetesData), 'ClusterRole')
-      ) {
-        kubernetesData = {
-          ...kubernetesData,
-          ClusterRole: {},
-        }
-
-        const d3DataDepth1: D3DataDepth1 = {
-          name: 'ClusterRole',
-          label: 'ClusterRole',
-          type: 'ClusterRole',
-          children: [],
-        }
-
-        kubernetesD3Data.children.push(d3DataDepth1)
-      }
-
-      kubernetesData['ClusterRole'][clusterRoleName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth2: D3DataDepth2 = {
-        name: `ClusterRole_${clusterRoleName}`,
-        label: clusterRoleName,
-        type: 'CR',
-        value: 10,
-      }
-
-      kubernetesD3Data.children[
-        _.findIndex(kubernetesD3Data.children, {
-          name: 'ClusterRole',
-        })
-      ].children.push(d3DataDepth2)
-    })
-
-    _.map(info[8], m => {
-      const clusterRoleBindingName = _.get(m, 'metadata.name')
-      if (
-        info[8] !== null &&
-        !_.includes(_.keys(kubernetesData), 'ClusterRoleBinding')
-      ) {
-        kubernetesData = {
-          ...kubernetesData,
-          ClusterRoleBinding: {},
-        }
-
-        const d3DataDepth1: D3DataDepth1 = {
-          name: 'ClusterRoleBinding',
-          label: 'ClusterRoleBinding',
-          type: 'ClusterRoleBinding',
-          children: [],
-        }
-
-        kubernetesD3Data.children.push(d3DataDepth1)
-      }
-
-      kubernetesData['ClusterRoleBinding'][clusterRoleBindingName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth2: D3DataDepth2 = {
-        name: `ClusterRoleBinding_${clusterRoleBindingName}`,
-        label: clusterRoleBindingName,
-        type: 'CRB',
-        value: 10,
-      }
-
-      kubernetesD3Data.children[
-        _.findIndex(kubernetesD3Data.children, {
-          name: 'ClusterRoleBinding',
-        })
-      ].children.push(d3DataDepth2)
-    })
-
-    _.map(info[9], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const roleName = _.get(m, 'metadata.name')
       if (
-        info[9] !== null &&
+        info[7] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'Role')
       ) {
         namespaces[namespaceName] = {
@@ -1675,11 +1675,11 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
-    _.map(info[10], m => {
+    _.map(info[8], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const roleBindingName = _.get(m, 'metadata.name')
       if (
-        info[10] !== null &&
+        info[8] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'RoleBinding')
       ) {
         namespaces[namespaceName] = {
@@ -1718,10 +1718,10 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
-    _.map(info[11], m => {
+    _.map(info[9], m => {
       const persistentVolumeName = _.get(m, 'metadata.name')
       if (
-        info[11] !== null &&
+        info[9] !== null &&
         !_.includes(_.keys(kubernetesData), 'PersistentVolume')
       ) {
         kubernetesData = {
@@ -1759,12 +1759,12 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth2)
     })
 
-    _.map(info[12], m => {
+    _.map(info[10], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const persistentVolumeClaimName = _.get(m, 'metadata.name')
       const volumeName = _.get(m, 'spec.volume_name')
       if (
-        info[12] !== null &&
+        info[10] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'PersistentVolumeClaim')
       ) {
         namespaces[namespaceName] = {
