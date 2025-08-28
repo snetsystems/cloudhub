@@ -194,7 +194,7 @@ function ToggleView<P>({
   return (
     <div className="w-full h-full background-grid-header">
       <LogAnalysisDashboardHeader
-        cellName="Log Analysis TreeMap"
+        cellName={`Log ${activeView.label}`}
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
