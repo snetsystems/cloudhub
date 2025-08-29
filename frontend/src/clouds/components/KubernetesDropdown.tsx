@@ -21,9 +21,6 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {DropdownItem, DropdownAction} from 'src/types'
 import {ComponentStatus} from 'src/reusable_ui'
 
-//constants
-import {COLLECTOR_SERVER} from 'src/shared/constants'
-
 interface AddNew {
   url?: string
   text: string
@@ -52,6 +49,7 @@ interface Props {
   onChange?: (item: any) => any
   onClose: () => void
   status?: ComponentStatus
+  filterPrefix?: string
 }
 
 interface State {
@@ -162,7 +160,7 @@ export class KubernetesDropdown extends PureComponent<Props, State> {
         return false
       }
 
-      return item.text.toLowerCase().includes(filterText)
+      return item.text && item.text.toLowerCase().includes(filterText)
     })
 
     this.setState({
@@ -190,14 +188,17 @@ export class KubernetesDropdown extends PureComponent<Props, State> {
       toggleStyle,
       useAutoComplete,
       status,
+      filterPrefix,
     } = this.props
 
     const {searchTerm, filteredItems, highlightedItemIndex} = this.state
 
-    const minions = useAutoComplete ? filteredItems : items
-    const menuItems = _.filter(minions, (item: string) =>
-      _.startsWith(item, COLLECTOR_SERVER)
-    ) as DropdownItem[]
+    const dropdownItems = useAutoComplete ? filteredItems : items
+    const menuItems = filterPrefix
+      ? (_.filter(dropdownItems, (item: string) =>
+          _.startsWith(item, filterPrefix)
+        ) as DropdownItem[])
+      : dropdownItems
 
     return (
       <div

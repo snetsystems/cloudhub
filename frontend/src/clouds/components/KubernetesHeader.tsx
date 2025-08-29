@@ -10,6 +10,7 @@ import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/aut
 
 // Contants
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
+import {COLLECTOR_SERVER} from 'src/shared/constants'
 
 interface Props {
   handleChooseNamespace: (select: {text: string}) => void
@@ -39,9 +40,37 @@ interface Props {
   handleChooseKubernetesAutoRefresh: (options: AutoRefreshOption) => void
   handleKubernetesRefresh: () => void
 }
-class KubernetesHeader extends PureComponent<Props> {
+
+interface State {
+  isOpenNamespacesDropdown: boolean
+  isOpenNodesDropdown: boolean
+}
+
+class KubernetesHeader extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
+    this.state = {
+      isOpenNamespacesDropdown: false,
+      isOpenNodesDropdown: false,
+    }
+  }
+
+  private handleCloseNamespacesDropdown = () => {
+    this.setState({isOpenNamespacesDropdown: false})
+  }
+
+  private handleClickNamespacesDropdown = () => {
+    this.setState({
+      isOpenNamespacesDropdown: !this.state.isOpenNamespacesDropdown,
+    })
+  }
+
+  private handleCloseNodesDropdown = () => {
+    this.setState({isOpenNodesDropdown: false})
+  }
+
+  private handleClickNodesDropdown = () => {
+    this.setState({isOpenNodesDropdown: !this.state.isOpenNodesDropdown})
   }
 
   public render() {
@@ -73,6 +102,15 @@ class KubernetesHeader extends PureComponent<Props> {
       handleKubernetesRefresh,
       selectedAutoRefresh,
     } = this.props
+
+    const {isOpenNamespacesDropdown, isOpenNodesDropdown} = this.state
+    const namespaceItems = namespaces.map(namespace => ({
+      text: namespace,
+    }))
+    const nodeItems = nodes.map(node => ({
+      text: node,
+    }))
+
     return (
       <div
         className={'content-header kubernetes-header--bar'}
@@ -80,21 +118,29 @@ class KubernetesHeader extends PureComponent<Props> {
       >
         <div className={'kubernetes-header--left'}>
           <div className={'kubernetes-header--bar-item'}>
-            <Dropdown
-              items={namespaces}
+            <KubernetesDropdown
+              items={namespaceItems}
               onChoose={handleChooseNamespace}
+              onClick={this.handleClickNamespacesDropdown}
+              isOpen={isOpenNamespacesDropdown}
               selected={selectedNamespace}
+              onClose={this.handleCloseNamespacesDropdown}
               className="dropdown-menu"
               disabled={false}
+              useAutoComplete={true}
             />
           </div>
           <div className={'kubernetes-header--bar-item'}>
-            <Dropdown
-              items={nodes}
+            <KubernetesDropdown
+              items={nodeItems}
               onChoose={handleChooseNode}
+              onClick={this.handleClickNodesDropdown}
+              isOpen={isOpenNodesDropdown}
               selected={selectedNode}
+              onClose={this.handleCloseNodesDropdown}
               className="dropdown-menu"
               disabled={false}
+              useAutoComplete={true}
             />
           </div>
           <div className={'kubernetes-header--bar-item'}>
@@ -146,6 +192,7 @@ class KubernetesHeader extends PureComponent<Props> {
               className="dropdown-menu"
               disabled={isDisabledMinions}
               status={minionsStatus}
+              filterPrefix={COLLECTOR_SERVER}
             />
           </div>
           <div className={'kubernetes-header--bar-item'}>
