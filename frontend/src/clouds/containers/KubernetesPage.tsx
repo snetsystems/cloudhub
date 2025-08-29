@@ -3146,12 +3146,12 @@ class KubernetesPage extends PureComponent<Props, State> {
         d3.selectAll(
           `
             path[data-name*="PersistentVolumeClaim_"][data-name$="${volume}"],
-            path[data-name*="PersistentVolume_"][data-name$="${volume}"]
+            path[data-name*="PersistentVolume_"][data-name$="${volume}"],
+            path[data-name*="Namespace_"][data-name$="${volume}"]
           `
         ).classed('kubernetes-volume', true)
       })
     }
-
     if (prevProps.autoRefresh !== autoRefresh) {
       GlobalAutoRefresher.poll(autoRefresh)
     }
@@ -3505,19 +3505,18 @@ class KubernetesPage extends PureComponent<Props, State> {
     const focuseNodeLabel = _.get(data, 'data.label')
     const focuseNodeType = _.get(data, 'data.type')
     const focuseNamespace = _.get(data, 'data.namespace')
-    const focuseVolumes = _.get(data, 'data.volumes')
-
-    if (this.checkHighlightVolumes(focuseNodeName)) {
-      null
-    } else if (!!focuseVolumes) {
-      this.handleVolumeSpec(
-        focuseVolumes
-          .map((volume: any) => volume?.persistent_volume_claim?.claim_name)
-          .filter((item: any) => !!item)
-      )
-    } else {
-      this.setState({highlightVolumes: []})
-    }
+    // const focuseVolumes = _.get(data, 'data.volumes')
+    // if (this.checkHighlightVolumes(focuseNodeName)) {
+    //   null
+    // } else if (!!focuseVolumes) {
+    //   this.handleVolumeSpec(
+    //     focuseVolumes
+    //       .map((volume: any) => volume?.persistent_volume_claim?.claim_name)
+    //       .filter((item: any) => !!item)
+    //   )
+    // } else {
+    //   this.setState({highlightVolumes: []})
+    // }
 
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -3576,10 +3575,17 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   private onDBClick = (data: any) => {
-    this.handlePinNode(data)
-
+    const {pinNode} = this.state
     const focuseVolumes = _.get(data, 'data.volumes')
-    const focuseNodeName = _.get(data, 'data.data.name') ?? ''
+    const focuseNodeName = _.get(data, 'data.name') ?? ''
+    const focuseNodeType = _.get(data, 'data.type') ?? ''
+
+    if (
+      !this.findStringInArray(pinNode, focuseNodeName) ||
+      focuseNodeType !== 'Pod'
+    ) {
+      this.handlePinNode(data)
+    }
 
     if (this.checkHighlightVolumes(focuseNodeName)) {
       return
@@ -3587,14 +3593,15 @@ class KubernetesPage extends PureComponent<Props, State> {
       this.handleVolumeSpec(
         focuseVolumes
           .map((volume: any) => volume?.persistent_volume_claim?.claim_name)
-          .filter((item: any) => !!item)
+          .filter((item: any) => !!item),
+        focuseNodeName
       )
     } else {
       this.setState({highlightVolumes: []})
     }
   }
 
-  private handleVolumeSpec = (volumes: string[]) => {
+  private handleVolumeSpec = (volumes: string[], focuseNodeName: string) => {
     const volumeMapping = this.state.volumeMapping || {}
 
     if (!Array.isArray(volumes) || volumes.length === 0) {
@@ -3605,9 +3612,20 @@ class KubernetesPage extends PureComponent<Props, State> {
     const highlightVolumes = _.uniq([
       ...volumes,
       ..._.map(volumes, volume => volumeMapping[volume]).filter(Boolean),
+      focuseNodeName,
     ])
-
     this.setState({highlightVolumes: highlightVolumes || []})
+  }
+
+  private findStringInArray(sourceArray: string[], targetString: string) {
+    if (!Array.isArray(sourceArray) || typeof targetString !== 'string') {
+      return false
+    }
+
+    return sourceArray.some(element => {
+      const unescapedElement = element.replaceAll('\\.', '.')
+      return unescapedElement === targetString
+    })
   }
 
   private handlePinNode = (data: any) => {

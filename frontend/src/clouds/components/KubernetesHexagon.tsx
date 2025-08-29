@@ -588,7 +588,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   }
 
   private runOnDBClick = (data: any) => {
-    this.handlePersistentVolumeSelection(data)
+    // this.handlePersistentVolumeSelection(data)
     this.clickedOnce = false
     this.clickedTarget = null
     if (this.timeout) {
@@ -614,9 +614,9 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   }
 
   private onMouseDBClick = (data: any) => {
-    this.handlePersistentVolumeSelection(data)
+    // this.handlePersistentVolumeSelection(data)
     this.props.handleDBClick(data)
-    this.props.handleOnClickVisualizePod(data)
+    // this.props.handleOnClickVisualizePod(data)
   }
 
   private onMouseOver = (target: any) => {
