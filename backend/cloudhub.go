@@ -1200,6 +1200,7 @@ type InternalEnvironment struct {
 	TemplatesManager    TemplatesManager
 	AIConfig            AIConfig
 	DellPowerFlexConfig DellPowerFlexConfig
+	KubernetesConfig    KubernetesConfig
 }
 
 // Topology is represents represents an topology
@@ -1496,6 +1497,13 @@ type DellPowerFlexConfig struct {
 	URL      string `json:"url"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+// KubernetesConfig is the configuration for Kubernetes API access
+type KubernetesConfig struct {
+	URL                string `json:"url"`
+	Token              string `json:"token"`
+	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
 }
 
 // MLNxRstQuery represents the attributes that a MLNxRst may be retrieved by.

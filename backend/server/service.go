@@ -6,6 +6,7 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/dellpowerflex"
 	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/kubernetes"
 )
 
 // Service handles REST calls to the persistence
@@ -29,6 +30,7 @@ type Service struct {
 	OSP                      OSP
 	InternalENV              cloudhub.InternalEnvironment
 	DellPowerFlexClient      *dellpowerflex.Client
+	KubernetesClient         *kubernetes.Client
 }
 
 type superAdminProviderGroups struct {

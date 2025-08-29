@@ -474,6 +474,10 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	dellPowerFlex := http.HandlerFunc(service.DellPowerFlexProxy)
 	registerAllMethods(router, "/cloudhub/v1/powerflex/proxy/*path", dellPowerFlex)
 
+	// Kubernetes API Proxy
+	kubernetes := http.HandlerFunc(service.KubernetesProxy)
+	registerAllMethods(router, "/cloudhub/v1/kubernetes/proxy/*path", kubernetes)
+
 	allRoutes := &AllRoutes{
 		Logger:                opts.Logger,
 		StatusFeed:            opts.StatusFeedURL,

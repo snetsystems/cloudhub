@@ -53,6 +53,7 @@ interface Params {
     fieldselector?: any
     labelselector?: any
     limit?: number
+    namespaces?: string[]
     dir_path?: string
     mode?: string
     name_or_id?: string
@@ -2717,6 +2718,680 @@ export async function getLocalSaltCmdTelegraf(
     return result
   } catch (error) {
     console.error(error)
+    throw error
+  }
+}
+
+async function kubernetesProxyRequest(
+  endpoint: string,
+  queryParams?: Record<string, string>
+) {
+  try {
+    const proxyUrl = `/cloudhub/v1/kubernetes/proxy${endpoint}`
+
+    let finalUrl = proxyUrl
+    if (queryParams && Object.keys(queryParams).length > 0) {
+      const params = new URLSearchParams()
+      Object.entries(queryParams).forEach(([key, value]) => {
+        if (value) {
+          params.append(key, value)
+        }
+      })
+      finalUrl = `${proxyUrl}?${params.toString()}`
+    }
+
+    const ajaxResult = await AJAX({
+      method: 'GET',
+      url: finalUrl,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+
+    return ajaxResult.data
+  } catch (error) {
+    console.error('Kubernetes Proxy API error:', error)
+    throw error
+  }
+}
+
+async function k8sListWithNamespaces(
+  clusterPath: string,
+  nsPathTemplate: string,
+  namespaces?: string[],
+  queryParams?: Record<string, string>
+) {
+  if (Array.isArray(namespaces) && namespaces.length > 0) {
+    const results = await Promise.all(
+      namespaces.map(ns =>
+        kubernetesProxyRequest(nsPathTemplate.replace('{ns}', ns), queryParams)
+      )
+    )
+
+    const mergedItems = results.flatMap(res => {
+      const body =
+        res && typeof res === 'object' && 'data' in res
+          ? (res as any).data
+          : res
+      return body?.items || []
+    })
+
+    return {items: mergedItems}
+  }
+
+  return await kubernetesProxyRequest(clusterPath, queryParams)
+}
+
+function convertToSaltStackFormat(data: any, resourceType: string) {
+  const body =
+    data && typeof data === 'object' && 'data' in data
+      ? (data as any).data
+      : data
+  if (!body?.items) return body
+
+  const toSnakeForUI = (type: string, item: any) => {
+    const obj = _.cloneDeep(item)
+
+    if (obj.metadata) {
+      const m = obj.metadata
+      if (m.resourceVersion && !m.resource_version)
+        m.resource_version = m.resourceVersion
+      if (m.creationTimestamp && !m.creation_timestamp)
+        m.creation_timestamp = m.creationTimestamp
+      if (m.ownerReferences && !m.owner_references)
+        m.owner_references = m.ownerReferences
+      if (m.managedFields && !m.managed_fields)
+        m.managed_fields = m.managedFields
+    }
+
+    if (type === 'pods' && obj.spec) {
+      if (obj.spec.nodeName && !obj.spec.node_name)
+        obj.spec.node_name = obj.spec.nodeName
+      if (Array.isArray(obj.spec.volumes)) {
+        obj.spec.volumes = obj.spec.volumes.map(v => {
+          const vol = _.cloneDeep(v)
+          if (vol.persistentVolumeClaim) {
+            vol.persistent_volume_claim = vol.persistentVolumeClaim
+            if (
+              vol.persistent_volume_claim.claimName &&
+              !vol.persistent_volume_claim.claim_name
+            ) {
+              vol.persistent_volume_claim.claim_name =
+                vol.persistent_volume_claim.claimName
+            }
+          }
+          return vol
+        })
+      }
+    }
+
+    if (type === 'services' && obj.spec) {
+      if (obj.spec.clusterIP && !obj.spec.cluster_ip)
+        obj.spec.cluster_ip = obj.spec.clusterIP
+    }
+
+    if (obj.status) {
+      if (
+        obj.status.availableReplicas !== undefined &&
+        obj.status.available_replicas === undefined
+      ) {
+        obj.status.available_replicas = obj.status.availableReplicas
+      }
+    }
+
+    if (type === 'ingresses' && obj.spec?.rules) {
+      obj.spec.rules = obj.spec.rules.map((rule: any) => {
+        const r = _.cloneDeep(rule)
+        if (r.http?.paths) {
+          r.http.paths = r.http.paths.map((p: any) => {
+            const path = _.cloneDeep(p)
+            const svcName =
+              path.backend?.service?.name || path.backend?.serviceName
+            if (svcName && !path.backend?.service_name) {
+              path.backend = {...path.backend, service_name: svcName}
+            }
+            return path
+          })
+        }
+        return r
+      })
+    }
+
+    if (type === 'persistentvolumeclaims' && obj.spec) {
+      if (obj.spec.volumeName && !obj.spec.volume_name)
+        obj.spec.volume_name = obj.spec.volumeName
+    }
+
+    if (type === 'persistentvolumes' && obj.spec) {
+      if (obj.spec.accessModes && !obj.spec.access_modes)
+        obj.spec.access_modes = obj.spec.accessModes
+    }
+
+    return obj
+  }
+
+  return body.items.map((it: any) => toSnakeForUI(resourceType, it))
+}
+
+export async function getKubernetesNamespacesProxy(pParam: Params) {
+  try {
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await kubernetesProxyRequest('/api/v1/namespaces', queryParams)
+    return convertToSaltStackFormat(data, 'namespaces')
+  } catch (error) {
+    console.error('Kubernetes Namespaces Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesPodsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const namespaces = (pParam.kwarg?.namespaces as string[]) || []
+    const endpoint = namespace
+      ? `/api/v1/namespaces/${namespace}/pods`
+      : '/api/v1/pods'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await (namespaces.length
+      ? k8sListWithNamespaces(
+          '/api/v1/pods',
+          '/api/v1/namespaces/{ns}/pods',
+          namespaces,
+          queryParams
+        )
+      : kubernetesProxyRequest(endpoint, queryParams))
+    return convertToSaltStackFormat(data, 'pods')
+  } catch (error) {
+    console.error('Kubernetes Pods Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesServicesProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const namespaces = (pParam.kwarg?.namespaces as string[]) || []
+    const endpoint = namespace
+      ? `/api/v1/namespaces/${namespace}/services`
+      : '/api/v1/services'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await (namespaces.length
+      ? k8sListWithNamespaces(
+          '/api/v1/services',
+          '/api/v1/namespaces/{ns}/services',
+          namespaces,
+          queryParams
+        )
+      : kubernetesProxyRequest(endpoint, queryParams))
+    return convertToSaltStackFormat(data, 'services')
+  } catch (error) {
+    console.error('Kubernetes Services Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesDeploymentsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/apis/apps/v1/namespaces/${namespace}/deployments`
+      : '/apis/apps/v1/deployments'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'deployments')
+  } catch (error) {
+    console.error('Kubernetes Deployments Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesReplicaSetsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/apis/apps/v1/namespaces/${namespace}/replicasets`
+      : '/apis/apps/v1/replicasets'
+
+    const queryParams: Record<string, string> = {}
+    if (pParam.kwarg?.limit) queryParams.limit = pParam.kwarg.limit.toString()
+    if (pParam.kwarg?.fieldselector)
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    if (pParam.kwarg?.labelselector)
+      queryParams.labelSelector = pParam.kwarg.labelselector
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'replicasets')
+  } catch (error) {
+    console.error('Kubernetes ReplicaSets Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesReplicationControllersProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/api/v1/namespaces/${namespace}/replicationcontrollers`
+      : '/api/v1/replicationcontrollers'
+
+    const queryParams: Record<string, string> = {}
+    if (pParam.kwarg?.limit) queryParams.limit = pParam.kwarg.limit.toString()
+    if (pParam.kwarg?.fieldselector)
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    if (pParam.kwarg?.labelselector)
+      queryParams.labelSelector = pParam.kwarg.labelselector
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'replicationcontrollers')
+  } catch (error) {
+    console.error('Kubernetes ReplicationControllers Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesDaemonSetsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/apis/apps/v1/namespaces/${namespace}/daemonsets`
+      : '/apis/apps/v1/daemonsets'
+
+    const queryParams: Record<string, string> = {}
+    if (pParam.kwarg?.limit) queryParams.limit = pParam.kwarg.limit.toString()
+    if (pParam.kwarg?.fieldselector)
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    if (pParam.kwarg?.labelselector)
+      queryParams.labelSelector = pParam.kwarg.labelselector
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'daemonsets')
+  } catch (error) {
+    console.error('Kubernetes DaemonSets Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesStatefulSetsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/apis/apps/v1/namespaces/${namespace}/statefulsets`
+      : '/apis/apps/v1/statefulsets'
+
+    const queryParams: Record<string, string> = {}
+    if (pParam.kwarg?.limit) queryParams.limit = pParam.kwarg.limit.toString()
+    if (pParam.kwarg?.fieldselector)
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    if (pParam.kwarg?.labelselector)
+      queryParams.labelSelector = pParam.kwarg.labelselector
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'statefulsets')
+  } catch (error) {
+    console.error('Kubernetes StatefulSets Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesJobsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/apis/batch/v1/namespaces/${namespace}/jobs`
+      : '/apis/batch/v1/jobs'
+
+    const queryParams: Record<string, string> = {}
+    if (pParam.kwarg?.limit) queryParams.limit = pParam.kwarg.limit.toString()
+    if (pParam.kwarg?.fieldselector)
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    if (pParam.kwarg?.labelselector)
+      queryParams.labelSelector = pParam.kwarg.labelselector
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'jobs')
+  } catch (error) {
+    console.error('Kubernetes Jobs Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesCronJobsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/apis/batch/v1/namespaces/${namespace}/cronjobs`
+      : '/apis/batch/v1/cronjobs'
+
+    const queryParams: Record<string, string> = {}
+    if (pParam.kwarg?.limit) queryParams.limit = pParam.kwarg.limit.toString()
+    if (pParam.kwarg?.fieldselector)
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    if (pParam.kwarg?.labelselector)
+      queryParams.labelSelector = pParam.kwarg.labelselector
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'cronjobs')
+  } catch (error) {
+    console.error('Kubernetes CronJobs Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesNodesProxy(pParam: Params) {
+  try {
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await kubernetesProxyRequest('/api/v1/nodes', queryParams)
+    return convertToSaltStackFormat(data, 'nodes')
+  } catch (error) {
+    console.error('Kubernetes Nodes Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesIngressesProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const namespaces = (pParam.kwarg?.namespaces as string[]) || []
+    const endpoint = namespace
+      ? `/apis/networking.k8s.io/v1/namespaces/${namespace}/ingresses`
+      : '/apis/networking.k8s.io/v1/ingresses'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await (namespaces.length
+      ? k8sListWithNamespaces(
+          '/apis/networking.k8s.io/v1/ingresses',
+          '/apis/networking.k8s.io/v1/namespaces/{ns}/ingresses',
+          namespaces,
+          queryParams
+        )
+      : kubernetesProxyRequest(endpoint, queryParams))
+    return convertToSaltStackFormat(data, 'ingresses')
+  } catch (error) {
+    console.error('Kubernetes Ingresses Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesServiceAccountsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const namespaces = (pParam.kwarg?.namespaces as string[]) || []
+    const endpoint = namespace
+      ? `/api/v1/namespaces/${namespace}/serviceaccounts`
+      : '/api/v1/serviceaccounts'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await (namespaces.length
+      ? k8sListWithNamespaces(
+          '/api/v1/serviceaccounts',
+          '/api/v1/namespaces/{ns}/serviceaccounts',
+          namespaces,
+          queryParams
+        )
+      : kubernetesProxyRequest(endpoint, queryParams))
+    return convertToSaltStackFormat(data, 'serviceaccounts')
+  } catch (error) {
+    console.error('Kubernetes ServiceAccounts Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesRolesProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const namespaces = (pParam.kwarg?.namespaces as string[]) || []
+    const endpoint = namespace
+      ? `/apis/rbac.authorization.k8s.io/v1/namespaces/${namespace}/roles`
+      : '/apis/rbac.authorization.k8s.io/v1/roles'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await (namespaces.length
+      ? k8sListWithNamespaces(
+          '/apis/rbac.authorization.k8s.io/v1/roles',
+          '/apis/rbac.authorization.k8s.io/v1/namespaces/{ns}/roles',
+          namespaces,
+          queryParams
+        )
+      : kubernetesProxyRequest(endpoint, queryParams))
+    return convertToSaltStackFormat(data, 'roles')
+  } catch (error) {
+    console.error('Kubernetes Roles Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesRoleBindingsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const namespaces = (pParam.kwarg?.namespaces as string[]) || []
+    const endpoint = namespace
+      ? `/apis/rbac.authorization.k8s.io/v1/namespaces/${namespace}/rolebindings`
+      : '/apis/rbac.authorization.k8s.io/v1/rolebindings'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await (namespaces.length
+      ? k8sListWithNamespaces(
+          '/apis/rbac.authorization.k8s.io/v1/rolebindings',
+          '/apis/rbac.authorization.k8s.io/v1/namespaces/{ns}/rolebindings',
+          namespaces,
+          queryParams
+        )
+      : kubernetesProxyRequest(endpoint, queryParams))
+    return convertToSaltStackFormat(data, 'rolebindings')
+  } catch (error) {
+    console.error('Kubernetes RoleBindings Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesPersistentVolumesProxy(pParam: Params) {
+  try {
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await kubernetesProxyRequest(
+      '/api/v1/persistentvolumes',
+      queryParams
+    )
+    return convertToSaltStackFormat(data, 'persistentvolumes')
+  } catch (error) {
+    console.error('Kubernetes PersistentVolumes Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesPersistentVolumeClaimsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/api/v1/namespaces/${namespace}/persistentvolumeclaims`
+      : '/api/v1/persistentvolumeclaims'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'persistentvolumeclaims')
+  } catch (error) {
+    console.error('Kubernetes PersistentVolumeClaims Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesNamespacesMultiProxy(pParam: Params) {
+  try {
+    const namespaceNames = pParam.kwarg?.namespaces || [
+      'default',
+      'kube-system',
+    ]
+
+    const promises = namespaceNames.map(async (name: string) => {
+      try {
+        const data = await kubernetesProxyRequest(`/api/v1/namespaces/${name}`)
+        const body =
+          data && typeof data === 'object' && 'data' in data ? data.data : data
+
+        return {
+          name: body.metadata?.name,
+          uid: body.metadata?.uid,
+          resource_version: body.metadata?.resourceVersion,
+          creation_timestamp: body.metadata?.creationTimestamp,
+          labels: body.metadata?.labels || {},
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch namespace ${name}:`, error)
+        return null
+      }
+    })
+
+    const results = await Promise.all(promises)
+
+    return results.filter(result => result !== null)
+  } catch (error) {
+    console.error('Kubernetes Multi Proxy API error:', error)
     throw error
   }
 }

@@ -37,6 +37,27 @@ import {
   getLocalK8sPersistentVolumeClaimsAsync,
   getLocalK8sDetailAsync,
 } from 'src/clouds/actions/kubernetes'
+
+// Kubernetes Proxy API
+import {
+  getKubernetesNamespacesProxy,
+  getKubernetesNodesProxy,
+  getKubernetesPodsProxy,
+  getKubernetesServicesProxy,
+  getKubernetesIngressesProxy,
+  getKubernetesServiceAccountsProxy,
+  getKubernetesRolesProxy,
+  getKubernetesRoleBindingsProxy,
+  getKubernetesPersistentVolumesProxy,
+  getKubernetesPersistentVolumeClaimsProxy,
+  getKubernetesDeploymentsProxy,
+  getKubernetesReplicaSetsProxy,
+  getKubernetesReplicationControllersProxy,
+  getKubernetesDaemonSetsProxy,
+  getKubernetesStatefulSetsProxy,
+  getKubernetesCronJobsProxy,
+  getKubernetesJobsProxy,
+} from 'src/shared/apis/saltStack'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 //Middleware
@@ -210,27 +231,11 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public getNodes = async (detail: boolean = true) => {
-    const {selectMinion} = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {kwarg: {detail}}
 
-    const target =
-      !selectMinion || selectMinion === this.noSelect ? '*' : selectMinion
-
     try {
-      const nodes = await this.props.handleGetNodes(
-        saltMasterUrl,
-        saltMasterToken,
-        target,
-        pParam
-      )
-
-      return this.yamltoJson(nodes)
+      const nodes = await getKubernetesNodesProxy(pParam)
+      return nodes
     } catch (error) {
       console.error(error)
       return null
@@ -239,28 +244,21 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getPods = async (node: string) => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
 
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
-        fieldselector: `spec.nodeName=${node}`,
+        fieldselector: node ? `spec.nodeName=${node}` : '',
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-
         limit:
           filterLimit !== '' && filterLimit !== 'Unlimited'
             ? parseInt(filterLimit)
@@ -270,14 +268,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const pods = await this.props.handleGetPods(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(pods)
+      const pods = await getKubernetesPodsProxy(pParam)
+      return pods
     } catch (error) {
       console.error(error)
       return null
@@ -286,19 +278,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getDeployments = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -315,14 +300,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const deployments = await this.props.handleGetDeployments(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(deployments)
+      const deployments = await getKubernetesDeploymentsProxy(pParam)
+      return deployments
     } catch (error) {
       console.error(error)
       return null
@@ -331,19 +310,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getReplicaSets = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -360,14 +332,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const replicaSets = await this.props.handleGetReplicaSets(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(replicaSets)
+      const replicaSets = await getKubernetesReplicaSetsProxy(pParam)
+      return replicaSets
     } catch (error) {
       console.error(error)
       return null
@@ -376,19 +342,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getReplicationControllers = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -405,14 +364,10 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const replicationControllers = await this.props.handleGetReplicationControllers(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
+      const replicationControllers = await getKubernetesReplicationControllersProxy(
         pParam
       )
-
-      return this.yamltoJson(replicationControllers)
+      return replicationControllers
     } catch (error) {
       console.error(error)
       return null
@@ -421,19 +376,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getDaemonSets = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -450,14 +398,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const daemonSets = await this.props.handleGetDaemonSets(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(daemonSets)
+      const daemonSets = await getKubernetesDaemonSetsProxy(pParam)
+      return daemonSets
     } catch (error) {
       console.error(error)
       return null
@@ -466,19 +408,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getStatefulSets = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -495,14 +430,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const statefulSets = await this.props.handleGetStatefulSets(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(statefulSets)
+      const statefulSets = await getKubernetesStatefulSetsProxy(pParam)
+      return statefulSets
     } catch (error) {
       console.error(error)
       return null
@@ -511,19 +440,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getCronJobs = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -540,14 +462,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const cronJobs = await this.props.handleGetCronJobs(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(cronJobs)
+      const cronJobs = await getKubernetesCronJobsProxy(pParam)
+      return cronJobs
     } catch (error) {
       console.error(error)
       return null
@@ -556,19 +472,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getJobs = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -585,14 +494,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const jobs = await this.props.handleGetJobs(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(jobs)
+      const jobs = await getKubernetesJobsProxy(pParam)
+      return jobs
     } catch (error) {
       console.error(error)
       return null
@@ -601,19 +504,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getServices = async flag => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -631,14 +527,8 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     if (flag) {
       try {
-        const services = await this.props.handleGetServices(
-          saltMasterUrl,
-          saltMasterToken,
-          selectMinion,
-          pParam
-        )
-
-        return this.yamltoJson(services)
+        const services = await getKubernetesServicesProxy(pParam)
+        return services
       } catch (error) {
         console.error(error)
         return null
@@ -649,19 +539,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getIngresses = async flag => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -679,14 +562,8 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     if (flag) {
       try {
-        const ingresses = await this.props.handleGetIngresses(
-          saltMasterUrl,
-          saltMasterToken,
-          selectMinion,
-          pParam
-        )
-
-        return this.yamltoJson(ingresses)
+        const ingresses = await getKubernetesIngressesProxy(pParam)
+        return ingresses
       } catch (error) {
         console.error(error)
         return null
@@ -789,19 +666,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getServiceAccounts = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -818,14 +688,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const serviceAccounts = await this.props.handleGetServiceAccounts(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(serviceAccounts)
+      const serviceAccounts = await getKubernetesServiceAccountsProxy(pParam)
+      return serviceAccounts
     } catch (error) {
       console.error(error)
       return null
@@ -920,19 +784,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getRoles = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -949,14 +806,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const roles = await this.props.handleGetRoles(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(roles)
+      const roles = await getKubernetesRolesProxy(pParam)
+      return roles
     } catch (error) {
       console.error(error)
       return null
@@ -965,19 +816,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getRoleBindings = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -994,14 +838,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const roleBindings = await this.props.handleGetRoleBindings(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(roleBindings)
+      const roleBindings = await getKubernetesRoleBindingsProxy(pParam)
+      return roleBindings
     } catch (error) {
       console.error(error)
       return null
@@ -1010,18 +848,11 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getPersistentVolumes = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         labelselector:
@@ -1037,14 +868,10 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const persistentVolumes = await this.props.handleGetPersistentVolumes(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
+      const persistentVolumes = await getKubernetesPersistentVolumesProxy(
         pParam
       )
-
-      return this.yamltoJson(persistentVolumes)
+      return persistentVolumes
     } catch (error) {
       console.error(error)
       return null
@@ -1053,19 +880,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public getPersistentVolumeClaims = async () => {
     const {
-      selectMinion,
       selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
         namespace: `${filterNamespace}`,
@@ -1082,14 +902,10 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     try {
-      const persistentVolumeClaims = await this.props.handleGetPersistentVolumeClaims(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
+      const persistentVolumeClaims = await getKubernetesPersistentVolumeClaimsProxy(
         pParam
       )
-
-      return this.yamltoJson(persistentVolumeClaims)
+      return persistentVolumeClaims
     } catch (error) {
       console.error(error)
       return null
@@ -1252,26 +1068,13 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public getNamespaces = async () => {
-    const {selectMinion} = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {namespace: '', detail: true},
     }
 
     try {
-      const namespaces = await this.props.handleGetNamespaces(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(namespaces)
+      const namespaces = await getKubernetesNamespacesProxy(pParam)
+      return namespaces
     } catch (error) {
       console.error(error)
       return null
@@ -1301,7 +1104,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       this.setState({remoteDataState: RemoteDataState.Error})
       return
     }
-
+    console.log('info[0]', info[0])
     let kubernetesData = {}
     const kubernetesD3Data: D3K8sData = {name: 'k8s', children: []}
     const d3Namespaces = {}
