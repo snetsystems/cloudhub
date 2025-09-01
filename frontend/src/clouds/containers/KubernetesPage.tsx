@@ -1104,7 +1104,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       this.setState({remoteDataState: RemoteDataState.Error})
       return
     }
-    console.log('info[0]', info[0])
     let kubernetesData = {}
     const kubernetesD3Data: D3K8sData = {name: 'k8s', children: []}
     const d3Namespaces = {}
@@ -2603,6 +2602,13 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     if (!(node.data().length > 0)) return
 
+    // Safely escape dynamic values for CSS selectors
+    const esc = (v: any) =>
+      typeof (window as any).CSS !== 'undefined' &&
+      typeof (window as any).CSS.escape === 'function'
+        ? (window as any).CSS.escape(String(v))
+        : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+
     let d3NodeObject = {}
     _.forEach(node.select(`circle[data-type=${'Node'}]`).data() as any[], s => {
       d3NodeObject[s.data.label] = {
@@ -2636,12 +2642,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       ),
       d3ModNod => {
         node
-          .select(
-            `circle[data-label=${String(d3ModNod['name']).replace(
-              /[.:*+?^${}()|[\]\\]/g,
-              '\\$&'
-            )}]`
-          )
+          .select(`circle[data-label=${esc(d3ModNod['name'])}]`)
           .attr('fill', 'gray')
       }
     )
@@ -2657,12 +2658,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       ),
       d3ModPod => {
         node
-          .select(
-            `path[data-label=${String(d3ModPod['name']).replace(
-              /[.:*+?^${}()|[\]\\]/g,
-              '\\$&'
-            )}]`
-          )
+          .select(`path[data-label=${esc(d3ModPod['name'])}]`)
           .attr('fill', 'gray')
       }
     )
@@ -2679,12 +2675,7 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['cpu']) /
                 parseFloat(
                   node
-                    .select(
-                      `circle[data-label=${String(m['name']).replace(
-                        /[.:*+?^${}()|[\]\\]/g,
-                        '\\$&'
-                      )}]`
-                    )
+                    .select(`circle[data-label=${esc(m['name'])}]`)
                     .attr('data-limit-cpu')
                 )) *
               100.0
@@ -2692,40 +2683,20 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['memory']) /
                 parseFloat(
                   node
-                    .select(
-                      `circle[data-label=${String(m['name']).replace(
-                        /[.:*+?^${}()|[\]\\]/g,
-                        '\\$&'
-                      )}]`
-                    )
+                    .select(`circle[data-label=${esc(m['name'])}]`)
                     .attr('data-limit-memory')
                 )) *
               100.0
 
             node
-              .select(
-                `circle[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`circle[data-label=${esc(m['name'])}]`)
               .attr('data-cpu', `${cpuUsage}`)
             node
-              .select(
-                `circle[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`circle[data-label=${esc(m['name'])}]`)
               .attr('data-memory', `${memoryUsage}`)
             const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
             node
-              .select(
-                `circle[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`circle[data-label=${esc(m['name'])}]`)
               .attr(
                 'fill',
                 (kubernetesStatusColor(pick / 100) as unknown) as string
@@ -2742,12 +2713,7 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['cpu']) /
                 parseFloat(
                   node
-                    .select(
-                      `path[data-label=${String(m['name']).replace(
-                        /[.:*+?^${}()|[\]\\]/g,
-                        '\\$&'
-                      )}]`
-                    )
+                    .select(`path[data-label=${esc(m['name'])}]`)
                     .attr('data-limit-cpu')
                 )) *
               100.0
@@ -2755,41 +2721,21 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['memory']) /
                 parseFloat(
                   node
-                    .select(
-                      `path[data-label=${String(m['name']).replace(
-                        /[.:*+?^${}()|[\]\\]/g,
-                        '\\$&'
-                      )}]`
-                    )
+                    .select(`path[data-label=${esc(m['name'])}]`)
                     .attr('data-limit-memory')
                 )) *
               100.0
 
             node
-              .select(
-                `path[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`path[data-label=${esc(m['name'])}]`)
               .attr('data-cpu', `${cpuUsage}`)
             node
-              .select(
-                `path[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`path[data-label=${esc(m['name'])}]`)
               .attr('data-memory', `${memoryUsage}`)
 
             const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
             node
-              .select(
-                `path[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`path[data-label=${esc(m['name'])}]`)
               .attr(
                 'fill',
                 (kubernetesStatusColor(pick / 100) as unknown) as string
@@ -2928,8 +2874,13 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (focuseNode.name && prevState.focuseNode.name !== focuseNode.name) {
+      const esc = (v: any) =>
+        typeof (window as any).CSS !== 'undefined' &&
+        typeof (window as any).CSS.escape === 'function'
+          ? (window as any).CSS.escape(String(v))
+          : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
       d3.selectAll(`path`).classed('kubernetes-focuse', false)
-      d3.select(`path[data-name=${this.state.focuseNode.name}]`).classed(
+      d3.select(`path[data-name=${esc(this.state.focuseNode.name)}]`).classed(
         'kubernetes-focuse',
         true
       )
@@ -2939,18 +2890,30 @@ class KubernetesPage extends PureComponent<Props, State> {
       const {pinNode} = this.state
       d3.selectAll(`path`).classed('kubernetes-pin', false)
       _.forEach(pinNode, pin => {
-        d3.select(`[data-name=${pin}]`).classed('kubernetes-pin', true)
+        const esc = (v: any) =>
+          typeof (window as any).CSS !== 'undefined' &&
+          typeof (window as any).CSS.escape === 'function'
+            ? (window as any).CSS.escape(String(v))
+            : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+        d3.select(`[data-name=${esc(pin)}]`).classed('kubernetes-pin', true)
       })
     }
 
     if (prevState.highlightVolumes !== highlightVolumes) {
       d3.selectAll(`path`).classed('kubernetes-volume', false)
       _.forEach(highlightVolumes, volume => {
+        const esc = (v: any) =>
+          typeof (window as any).CSS !== 'undefined' &&
+          typeof (window as any).CSS.escape === 'function'
+            ? (window as any).CSS.escape(String(v))
+            : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
         d3.selectAll(
           `
-            path[data-name*="PersistentVolumeClaim_"][data-name$="${volume}"],
-            path[data-name*="PersistentVolume_"][data-name$="${volume}"],
-            path[data-name*="Namespace_"][data-name$="${volume}"]
+            path[data-name*="PersistentVolumeClaim_"][data-name$="${esc(
+              volume
+            )}"],
+            path[data-name*="PersistentVolume_"][data-name$="${esc(volume)}"],
+            path[data-name*="Namespace_"][data-name$="${esc(volume)}"]
           `
         ).classed('kubernetes-volume', true)
       })
@@ -3440,7 +3403,12 @@ class KubernetesPage extends PureComponent<Props, State> {
           data.data.type === 'PV'))
     ) {
       const pinNode = this.parentNavigation(data)
-      const target = d3.select(`[data-name=${pinNode[0]}]`)
+      const esc = (v: any) =>
+        typeof (window as any).CSS !== 'undefined' &&
+        typeof (window as any).CSS.escape === 'function'
+          ? (window as any).CSS.escape(String(v))
+          : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+      const target = d3.select(`[data-name=${esc(pinNode[0])}]`)
       const isNull = _.isNull(_.flatMapDeep((target as any)._groups)[0])
       const isPin = isNull || target.classed('kubernetes-pin')
       this.setState({pinNode: isPin ? [] : pinNode})

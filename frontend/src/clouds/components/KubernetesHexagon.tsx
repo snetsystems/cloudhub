@@ -130,6 +130,12 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       highlightVolumes,
     } = _this.props
 
+    const esc = (v: any) =>
+      typeof (window as any).CSS !== 'undefined' &&
+      typeof (window as any).CSS.escape === 'function'
+        ? (window as any).CSS.escape(String(v))
+        : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+
     const dimensions = this.ref.current!.getBoundingClientRect()
     const data = d3
       .pack()
@@ -301,19 +307,19 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     })
 
     d3.select(`path`).classed('kubernetes-focuse', false)
-    d3.select(`path[data-name=${focuseNode.name}]`).classed(
+    d3.select(`path[data-name=${esc(focuseNode.name)}]`).classed(
       'kubernetes-focuse',
       true
     )
 
     d3.select(`path`).classed('kubernetes-pin', false)
     _.forEach(pinNode, pin => {
-      d3.select(`path[data-name=${pin}]`).classed('kubernetes-pin', true)
+      d3.select(`path[data-name=${esc(pin)}]`).classed('kubernetes-pin', true)
     })
 
     d3.select(`path`).classed('kubernetes-volume', false)
     _.forEach(highlightVolumes, volume => {
-      d3.select(`path[data-name=PersistentVolume_${volume}]`).classed(
+      d3.select(`path[data-name=${esc(`PersistentVolume_${volume}`)}]`).classed(
         'kubernetes-volume',
         true
       )
@@ -384,12 +390,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       ),
       d3ModNod => {
         node
-          .select(
-            `circle[data-label=${String(d3ModNod['name']).replace(
-              /[.:*+?^${}()|[\]\\]/g,
-              '\\$&'
-            )}]`
-          )
+          .select(`circle[data-label=${esc(d3ModNod['name'])}]`)
           .attr('fill', 'gray')
       }
     )
@@ -405,12 +406,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       ),
       d3ModPod => {
         node
-          .select(
-            `path[data-label=${String(d3ModPod['name']).replace(
-              /[.:*+?^${}()|[\]\\]/g,
-              '\\$&'
-            )}]`
-          )
+          .select(`path[data-label=${esc(d3ModPod['name'])}]`)
           .attr('fill', 'gray')
       }
     )
@@ -427,12 +423,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (parseFloat(m['cpu']) /
               parseFloat(
                 node
-                  .select(
-                    `circle[data-label=${String(m['name']).replace(
-                      /[.:*+?^${}()|[\]\\]/g,
-                      '\\$&'
-                    )}]`
-                  )
+                  .select(`circle[data-label=${esc(m['name'])}]`)
                   .attr('data-limit-cpu')
               )) *
             100
@@ -440,31 +431,16 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (parseFloat(m['memory']) /
               parseFloat(
                 node
-                  .select(
-                    `circle[data-label=${String(m['name']).replace(
-                      /[.:*+?^${}()|[\]\\]/g,
-                      '\\$&'
-                    )}]`
-                  )
+                  .select(`circle[data-label=${esc(m['name'])}]`)
                   .attr('data-limit-memory')
               )) *
             100
           const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
           node
-            .select(
-              `circle[data-label=${String(m['name']).replace(
-                /[.:*+?^${}()|[\]\\]/g,
-                '\\$&'
-              )}]`
-            )
+            .select(`circle[data-label=${esc(m['name'])}]`)
             .attr('data-cpu', `${cpuUsage}`)
           node
-            .select(
-              `circle[data-label=${String(m['name']).replace(
-                /[.:*+?^${}()|[\]\\]/g,
-                '\\$&'
-              )}]`
-            )
+            .select(`circle[data-label=${esc(m['name'])}]`)
             .attr('data-memory', `${memoryUsage}`)
             .attr(
               'fill',
@@ -487,12 +463,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           const pick = Math.max(iopsUsage, bandwidthUsage, latencyUsage)
 
           node
-            .select(
-              `path[data-label=${String(m['name']).replace(
-                /[.:*+?^${}()|[\]\\]/g,
-                '\\$&'
-              )}]`
-            )
+            .select(`path[data-label=${esc(m['name'])}]`)
             .attr('data-iops', `${iopsUsage}`)
             .attr('data-bandwidth', `${bandwidthUsage}`)
             .attr('data-latency', `${latencyUsage}`)
@@ -512,12 +483,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (parseFloat(m['cpu']) /
               parseFloat(
                 node
-                  .select(
-                    `path[data-label=${String(m['name']).replace(
-                      /[.:*+?^${}()|[\]\\]/g,
-                      '\\$&'
-                    )}]`
-                  )
+                  .select(`path[data-label=${esc(m['name'])}]`)
                   .attr('data-limit-cpu')
               )) *
             100
@@ -525,32 +491,17 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (parseFloat(m['memory']) /
               parseFloat(
                 node
-                  .select(
-                    `path[data-label=${String(m['name']).replace(
-                      /[.:*+?^${}()|[\]\\]/g,
-                      '\\$&'
-                    )}]`
-                  )
+                  .select(`path[data-label=${esc(m['name'])}]`)
                   .attr('data-limit-memory')
               )) *
             100
 
           const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
           node
-            .select(
-              `path[data-label=${String(m['name']).replace(
-                /[.:*+?^${}()|[\]\\]/g,
-                '\\$&'
-              )}]`
-            )
+            .select(`path[data-label=${esc(m['name'])}]`)
             .attr('data-cpu', `${cpuUsage}`)
           node
-            .select(
-              `path[data-label=${String(m['name']).replace(
-                /[.:*+?^${}()|[\]\\]/g,
-                '\\$&'
-              )}]`
-            )
+            .select(`path[data-label=${esc(m['name'])}]`)
             .attr('data-memory', `${memoryUsage}`)
             .attr(
               'fill',
