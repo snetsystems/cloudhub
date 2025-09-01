@@ -1,5 +1,6 @@
 // Library
 import React, {PureComponent, ChangeEvent} from 'react'
+import _ from 'lodash'
 
 // Component
 import {Button, ButtonShape, IconFont, ComponentStatus} from 'src/reusable_ui'
@@ -7,19 +8,21 @@ import Dropdown from 'src/shared/components/Dropdown'
 import KubernetesDropdown from 'src/clouds/components/KubernetesDropdown'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
+import MultiSelectAutoCompleteDropdown from 'src/reusable_ui/components/dropdowns/MultiSelectAutoCompleteDropdown'
+import DropdownItem from 'src/reusable_ui/components/dropdowns/DropdownItem'
 
 // Contants
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import {COLLECTOR_SERVER} from 'src/shared/constants'
 
 interface Props {
-  handleChooseNamespace: (select: {text: string}) => void
+  handleChooseNamespace: (selectedIDs: string[], value: {id: string}) => void
   handleChooseNode: (select: {text: string}) => void
   handleChooseLimit: (select: {text: string}) => void
   handleChangeLabelkey: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangeLabelValue: (e: ChangeEvent<HTMLInputElement>) => void
   handleClickFilter: () => void
-  selectedNamespace: string
+  selectedNamespace: string[]
   selectedNode: string
   selectedLimit: string
   labelKey: string
@@ -42,7 +45,6 @@ interface Props {
 }
 
 interface State {
-  isOpenNamespacesDropdown: boolean
   isOpenNodesDropdown: boolean
 }
 
@@ -50,19 +52,8 @@ class KubernetesHeader extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      isOpenNamespacesDropdown: false,
       isOpenNodesDropdown: false,
     }
-  }
-
-  private handleCloseNamespacesDropdown = () => {
-    this.setState({isOpenNamespacesDropdown: false})
-  }
-
-  private handleClickNamespacesDropdown = () => {
-    this.setState({
-      isOpenNamespacesDropdown: !this.state.isOpenNamespacesDropdown,
-    })
   }
 
   private handleCloseNodesDropdown = () => {
@@ -103,7 +94,7 @@ class KubernetesHeader extends PureComponent<Props, State> {
       selectedAutoRefresh,
     } = this.props
 
-    const {isOpenNamespacesDropdown, isOpenNodesDropdown} = this.state
+    const {isOpenNodesDropdown} = this.state
     const namespaceItems = namespaces.map(namespace => ({
       text: namespace,
     }))
@@ -117,18 +108,26 @@ class KubernetesHeader extends PureComponent<Props, State> {
         style={{height: `${height}px`}}
       >
         <div className={'kubernetes-header--left'}>
-          <div className={'kubernetes-header--bar-item'}>
-            <KubernetesDropdown
-              items={namespaceItems}
-              onChoose={handleChooseNamespace}
-              onClick={this.handleClickNamespacesDropdown}
-              isOpen={isOpenNamespacesDropdown}
-              selected={selectedNamespace}
-              onClose={this.handleCloseNamespacesDropdown}
-              className="dropdown-menu"
-              disabled={false}
-              useAutoComplete={true}
-            />
+          <div
+            className={'kubernetes-header--bar-item'}
+            style={{width: '200px'}}
+          >
+            <MultiSelectAutoCompleteDropdown
+              selectedIDs={selectedNamespace}
+              onChange={handleChooseNamespace}
+              emptyText={'Choose Namespace'}
+              maxMenuHeight={145}
+            >
+              {namespaceItems.map(item => (
+                <DropdownItem
+                  key={item.text}
+                  id={item.text}
+                  value={{id: item.text}}
+                >
+                  {item.text}
+                </DropdownItem>
+              ))}
+            </MultiSelectAutoCompleteDropdown>
           </div>
           <div className={'kubernetes-header--bar-item'}>
             <KubernetesDropdown

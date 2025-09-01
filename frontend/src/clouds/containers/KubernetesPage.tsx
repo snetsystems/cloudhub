@@ -118,6 +118,7 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 // Error
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {notifyNamespaceRequired} from 'src/shared/copy/notifications'
 
 interface Props extends KubernetesProps {
   source: Source
@@ -136,12 +137,12 @@ interface State {
   script: string
   labelKey: string
   labelValue: string
-  selectedNamespace: string
+  selectedNamespaces: string[]
   selectedNode: string
   selectedLimit: string
   filterLabelKey: string
   filterLabelValue: string
-  filterNamespace: string
+  filterNamespace: string[]
   filterNode: string
   filterLimit: string
   namespaces: string[]
@@ -189,7 +190,7 @@ class KubernetesPage extends PureComponent<Props, State> {
 
       activeEditorTab: 'Detail',
       script: '',
-      selectedNamespace: 'All namespaces',
+      selectedNamespaces: ['All namespaces'],
       selectedNode: 'All nodes',
       selectedLimit: '20',
       labelKey: '',
@@ -199,7 +200,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       limits: ['20', '50', '100', 'Unlimited'],
       filterLabelKey: '',
       filterLabelValue: '',
-      filterNamespace: '',
+      filterNamespace: [],
       filterNode: '',
       filterLimit: '',
       focuseNode: {name: null, label: null, type: null},
@@ -242,115 +243,162 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
   }
 
-  public getPods = async (node: string) => {
+  public getPodsForNode = async (
+    node: string,
+    selectedNamespaces: string[],
+    isAllNamespaces: boolean = false
+  ) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
 
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        fieldselector: node ? `spec.nodeName=${node}` : '',
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+    if (isAllNamespaces) {
+      const pParam: SaltStack = {
+        kwarg: {
+          namespace: '',
+          fieldselector: node ? `spec.nodeName=${node}` : '',
+          labelselector:
+            !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+              ? `${filterLabelKey}=${filterLabelValue}`
+              : '',
+          limit:
+            filterLimit !== '' && filterLimit !== 'Unlimited'
+              ? parseInt(filterLimit)
+              : parseInt(selectedLimit),
+          detail: true,
+        },
+      }
+
+      try {
+        const pods = await getKubernetesPodsProxy(pParam)
+        return pods || []
+      } catch (error) {
+        console.error(error)
+        return []
+      }
     }
 
+    const podPromises = selectedNamespaces.map(async namespace => {
+      const pParam: SaltStack = {
+        kwarg: {
+          namespace: namespace,
+          fieldselector: node ? `spec.nodeName=${node}` : '',
+          labelselector:
+            !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+              ? `${filterLabelKey}=${filterLabelValue}`
+              : '',
+          limit:
+            filterLimit !== '' && filterLimit !== 'Unlimited'
+              ? parseInt(filterLimit)
+              : parseInt(selectedLimit),
+          detail: true,
+        },
+      }
+
+      try {
+        const pods = await getKubernetesPodsProxy(pParam)
+        return pods || []
+      } catch (error) {
+        console.error(error)
+        return []
+      }
+    })
+
     try {
-      const pods = await getKubernetesPodsProxy(pParam)
-      return pods
+      const results = await Promise.allSettled(podPromises)
+      const successfulResults = results
+        .filter(result => result.status === 'fulfilled')
+        .map(result => result.value)
+      return successfulResults.flat()
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getDeployments = async () => {
+  public getDeploymentsForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: SaltStack = {kwarg}
 
     try {
       const deployments = await getKubernetesDeploymentsProxy(pParam)
-      return deployments
+      return deployments || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getReplicaSets = async () => {
+  public getReplicaSetsForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: SaltStack = {kwarg}
 
     try {
       const replicaSets = await getKubernetesReplicaSetsProxy(pParam)
-      return replicaSets
+      return replicaSets || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getReplicationControllers = async () => {
+  public getReplicationControllersForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
     const pParam: SaltStack = {
       kwarg: {
-        namespace: `${filterNamespace}`,
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -362,29 +410,27 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
       const replicationControllers = await getKubernetesReplicationControllersProxy(
         pParam
       )
-      return replicationControllers
+      return replicationControllers || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getDaemonSets = async () => {
+  public getDaemonSetsForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
     const pParam: SaltStack = {
       kwarg: {
-        namespace: `${filterNamespace}`,
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -396,27 +442,25 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
       const daemonSets = await getKubernetesDaemonSetsProxy(pParam)
-      return daemonSets
+      return daemonSets || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getStatefulSets = async () => {
+  public getStatefulSetsForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
     const pParam: SaltStack = {
       kwarg: {
-        namespace: `${filterNamespace}`,
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -428,27 +472,25 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
       const statefulSets = await getKubernetesStatefulSetsProxy(pParam)
-      return statefulSets
+      return statefulSets || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getCronJobs = async () => {
+  public getCronJobsForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
     const pParam: SaltStack = {
       kwarg: {
-        namespace: `${filterNamespace}`,
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -460,27 +502,25 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
       const cronJobs = await getKubernetesCronJobsProxy(pParam)
-      return cronJobs
+      return cronJobs || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getJobs = async () => {
+  public getJobsForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
     const pParam: SaltStack = {
       kwarg: {
-        namespace: `${filterNamespace}`,
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -492,84 +532,83 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
       const jobs = await getKubernetesJobsProxy(pParam)
-      return jobs
+      return jobs || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getServices = async flag => {
+  public getServicesForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
 
-    if (flag) {
-      try {
-        const services = await getKubernetesServicesProxy(pParam)
-        return services
-      } catch (error) {
-        console.error(error)
-        return null
-      }
+    if (namespace !== '') {
+      kwarg.namespace = namespace
     }
-    return null
+
+    const pParam: SaltStack = {kwarg}
+
+    try {
+      const services = await getKubernetesServicesProxy(pParam)
+      return services || []
+    } catch (error) {
+      console.error(error)
+      return []
+    }
   }
 
-  public getIngresses = async flag => {
+  public getIngressesForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
 
-    if (flag) {
-      try {
-        const ingresses = await getKubernetesIngressesProxy(pParam)
-        return ingresses
-      } catch (error) {
-        console.error(error)
-        return null
-      }
+    if (namespace !== '') {
+      kwarg.namespace = namespace
     }
-    return null
+
+    const pParam: SaltStack = {kwarg}
+
+    try {
+      const ingresses = await getKubernetesIngressesProxy(pParam)
+      return ingresses || []
+    } catch (error) {
+      console.error(error)
+      return []
+    }
   }
 
   public getConfigmaps = async () => {
@@ -664,35 +703,38 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
   }
 
-  public getServiceAccounts = async () => {
+  public getServiceAccountsForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: SaltStack = {kwarg}
 
     try {
       const serviceAccounts = await getKubernetesServiceAccountsProxy(pParam)
-      return serviceAccounts
+      return serviceAccounts || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
@@ -782,67 +824,73 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
   }
 
-  public getRoles = async () => {
+  public getRolesForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: SaltStack = {kwarg}
 
     try {
       const roles = await getKubernetesRolesProxy(pParam)
-      return roles
+      return roles || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getRoleBindings = async () => {
+  public getRoleBindingsForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: SaltStack = {kwarg}
 
     try {
       const roleBindings = await getKubernetesRoleBindingsProxy(pParam)
-      return roleBindings
+      return roleBindings || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
@@ -878,43 +926,105 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
   }
 
-  public getPersistentVolumeClaims = async () => {
+  public getPersistentVolumeClaimsForNamespace = async (namespace: string) => {
     const {
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: SaltStack = {kwarg}
 
     try {
       const persistentVolumeClaims = await getKubernetesPersistentVolumeClaimsProxy(
         pParam
       )
-      return persistentVolumeClaims
+      return persistentVolumeClaims || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
   public jsonRemoveNull = (key: string, value: any) => {
     if (value !== null && key !== 'managed_fields' && key !== 'annotations')
       return value
+  }
+
+  public combineNamespaceResults = (
+    results: any[],
+    selectedNamespaces: string[],
+    type: string
+  ) => {
+    const itemsPerNamespace = 6
+    const typeIndex = {
+      services: 0,
+      ingresses: 1,
+      serviceAccounts: 2,
+      roles: 3,
+      roleBindings: 4,
+      persistentVolumeClaims: 5,
+    }
+
+    const index = typeIndex[type]
+    if (index === undefined) return []
+
+    const combinedResults = []
+    for (let i = 0; i < selectedNamespaces.length; i++) {
+      const resultIndex = i * itemsPerNamespace + index
+      if (results[resultIndex]) {
+        combinedResults.push(...results[resultIndex])
+      }
+    }
+
+    return combinedResults
+  }
+
+  public combineWorkloadResults = (
+    results: any[],
+    selectedNamespaces: string[],
+    type: string
+  ) => {
+    const itemsPerNamespace = 7
+    const typeIndex = {
+      deployments: 0,
+      replicaSets: 1,
+      replicationControllers: 2,
+      daemonSets: 3,
+      statefulSets: 4,
+      cronJobs: 5,
+      jobs: 6,
+    }
+
+    const index = typeIndex[type]
+    if (index === undefined) return []
+
+    const combinedResults = []
+    for (let i = 0; i < selectedNamespaces.length; i++) {
+      const resultIndex = i * itemsPerNamespace + index
+      if (results[resultIndex]) {
+        combinedResults.push(...results[resultIndex])
+      }
+    }
+
+    return combinedResults
   }
 
   public parentNavigation = d => {
@@ -1084,36 +1194,143 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getK8sObject = async () => {
     this.setState({remoteDataState: RemoteDataState.Loading})
 
-    const info = await Promise.all([
+    const basicResults = await Promise.allSettled([
       this.getNamespaces(),
       this.getNodes(),
-      this.getServices(true),
-      this.getIngresses(true),
-      // this.getConfigmaps(),
-      // this.getSecrets(),
-      this.getServiceAccounts(),
-      // this.getClusterRoles(),
-      // this.getClusterRoleBindings(),
-      this.getRoles(),
-      this.getRoleBindings(),
-      this.getPersistentVolumes(),
-      this.getPersistentVolumeClaims(),
     ])
 
-    if (typeof info[0] !== 'object') {
+    const namespacesResult =
+      basicResults[0].status === 'fulfilled' ? basicResults[0].value : null
+    const nodesResult =
+      basicResults[1].status === 'fulfilled' ? basicResults[1].value : null
+
+    if (typeof namespacesResult !== 'object') {
       this.setState({remoteDataState: RemoteDataState.Error})
       return
     }
+
+    const isAllNamespaces = _.includes(
+      this.state.selectedNamespaces,
+      'All namespaces'
+    )
+    const selectedNamespaces = isAllNamespaces
+      ? ['']
+      : !_.isEmpty(this.state.selectedNamespaces)
+      ? this.state.selectedNamespaces
+      : _.map(namespacesResult, namespace => _.get(namespace, 'metadata.name'))
+
+    let namespaceResults = []
+    let clusterResults = []
+
+    if (isAllNamespaces) {
+      const allNamespacePromises = [
+        this.getServicesForNamespace(''),
+        this.getIngressesForNamespace(''),
+        this.getServiceAccountsForNamespace(''),
+        this.getRolesForNamespace(''),
+        this.getRoleBindingsForNamespace(''),
+        this.getPersistentVolumeClaimsForNamespace(''),
+        this.getPersistentVolumes(),
+      ]
+
+      const allResults = await Promise.allSettled(allNamespacePromises)
+      namespaceResults = allResults
+        .slice(0, 6)
+        .map(result => (result.status === 'fulfilled' ? result.value : []))
+      clusterResults = [
+        allResults[6].status === 'fulfilled' ? allResults[6].value : [],
+      ]
+    } else {
+      const namespaceBasedPromises = selectedNamespaces.flatMap(namespace => [
+        this.getServicesForNamespace(namespace),
+        this.getIngressesForNamespace(namespace),
+        this.getServiceAccountsForNamespace(namespace),
+        this.getRolesForNamespace(namespace),
+        this.getRoleBindingsForNamespace(namespace),
+        this.getPersistentVolumeClaimsForNamespace(namespace),
+      ])
+
+      const clusterPromises = [this.getPersistentVolumes()]
+
+      const [nsResults, clResults] = await Promise.allSettled([
+        Promise.allSettled(namespaceBasedPromises),
+        Promise.allSettled(clusterPromises),
+      ])
+
+      namespaceResults =
+        nsResults.status === 'fulfilled'
+          ? nsResults.value.map(result =>
+              result.status === 'fulfilled' ? result.value : []
+            )
+          : []
+      clusterResults =
+        clResults.status === 'fulfilled'
+          ? clResults.value.map(result =>
+              result.status === 'fulfilled' ? result.value : []
+            )
+          : []
+    }
+
+    const info = [
+      namespacesResult,
+      nodesResult,
+      isAllNamespaces
+        ? namespaceResults[0]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespaces,
+            'services'
+          ),
+      isAllNamespaces
+        ? namespaceResults[1]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespaces,
+            'ingresses'
+          ),
+      isAllNamespaces
+        ? namespaceResults[2]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespaces,
+            'serviceAccounts'
+          ),
+      isAllNamespaces
+        ? namespaceResults[3]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespaces,
+            'roles'
+          ),
+      isAllNamespaces
+        ? namespaceResults[4]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespaces,
+            'roleBindings'
+          ),
+      clusterResults[0],
+      isAllNamespaces
+        ? namespaceResults[5]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespaces,
+            'persistentVolumeClaims'
+          ),
+    ]
+
     let kubernetesData = {}
     const kubernetesD3Data: D3K8sData = {name: 'k8s', children: []}
     const d3Namespaces = {}
 
     const namespaces = _.reduce(
-      !_.isEmpty(this.state.filterNamespace)
-        ? _.filter(
-            info[0],
-            namespace =>
-              namespace['metadata']['name'] === this.state.filterNamespace
+      !_.isEmpty(this.state.selectedNamespaces) &&
+        !_.includes(this.state.selectedNamespaces, 'All namespaces')
+        ? _.filter(info[0], namespace =>
+            _.includes(
+              this.state.selectedNamespaces,
+              namespace['metadata']['name']
+            )
           )
         : info[0],
       (namespaces: object, namespace) => {
@@ -1145,6 +1362,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     _.map(info[2], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const serviceName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
         info[2] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'Service')
@@ -1177,17 +1399,27 @@ class KubernetesPage extends PureComponent<Props, State> {
         namespace: `${namespaceName}`,
         value: 10,
       }
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_Service`,
-        })
-      ].children.push(d3DataDepth3)
+
+      const serviceIndex = _.findIndex(d3Namespaces[namespaceName].children, {
+        name: `Namespace_${namespaceName}_Service`,
+      })
+
+      if (serviceIndex !== -1) {
+        d3Namespaces[namespaceName].children[serviceIndex].children.push(
+          d3DataDepth3
+        )
+      }
     })
 
     // ingress
     _.map(info[3], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const ingressName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
         info[3] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'Ingress')
@@ -1221,11 +1453,15 @@ class KubernetesPage extends PureComponent<Props, State> {
         value: 10,
       }
 
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_Ingress`,
-        })
-      ].children.push(d3DataDepth3)
+      const ingressIndex = _.findIndex(d3Namespaces[namespaceName].children, {
+        name: `Namespace_${namespaceName}_Ingress`,
+      })
+
+      if (ingressIndex !== -1) {
+        d3Namespaces[namespaceName].children[ingressIndex].children.push(
+          d3DataDepth3
+        )
+      }
     })
 
     // configmap
@@ -1320,6 +1556,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     _.map(info[4], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const serviceAccountName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
         info[4] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'ServiceAccount')
@@ -1352,11 +1593,18 @@ class KubernetesPage extends PureComponent<Props, State> {
         value: 10,
       }
 
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
+      const serviceAccountIndex = _.findIndex(
+        d3Namespaces[namespaceName].children,
+        {
           name: `Namespace_${namespaceName}_ServiceAccount`,
-        })
-      ].children.push(d3DataDepth3)
+        }
+      )
+
+      if (serviceAccountIndex !== -1) {
+        d3Namespaces[namespaceName].children[serviceAccountIndex].children.push(
+          d3DataDepth3
+        )
+      }
     })
 
     // clusterrole
@@ -1446,6 +1694,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     _.map(info[5], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const roleName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
         info[5] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'Role')
@@ -1477,17 +1730,27 @@ class KubernetesPage extends PureComponent<Props, State> {
         namespace: `${namespaceName}`,
         value: 10,
       }
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_Role`,
-        })
-      ].children.push(d3DataDepth3)
+
+      const roleIndex = _.findIndex(d3Namespaces[namespaceName].children, {
+        name: `Namespace_${namespaceName}_Role`,
+      })
+
+      if (roleIndex !== -1) {
+        d3Namespaces[namespaceName].children[roleIndex].children.push(
+          d3DataDepth3
+        )
+      }
     })
 
     // rolebinding
     _.map(info[6], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const roleBindingName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
         info[6] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'RoleBinding')
@@ -1521,11 +1784,18 @@ class KubernetesPage extends PureComponent<Props, State> {
         value: 10,
       }
 
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
+      const roleBindingIndex = _.findIndex(
+        d3Namespaces[namespaceName].children,
+        {
           name: `Namespace_${namespaceName}_RoleBinding`,
-        })
-      ].children.push(d3DataDepth3)
+        }
+      )
+
+      if (roleBindingIndex !== -1) {
+        d3Namespaces[namespaceName].children[roleBindingIndex].children.push(
+          d3DataDepth3
+        )
+      }
     })
 
     // persistentvolume
@@ -1575,6 +1845,11 @@ class KubernetesPage extends PureComponent<Props, State> {
       const namespaceName = _.get(m, 'metadata.namespace')
       const persistentVolumeClaimName = _.get(m, 'metadata.name')
       const volumeName = _.get(m, 'spec.volume_name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
         info[8] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'PersistentVolumeClaim')
@@ -1614,11 +1889,15 @@ class KubernetesPage extends PureComponent<Props, State> {
       const volumeMapping = {}
       volumeMapping[persistentVolumeClaimName] = volumeName ?? ''
 
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_PersistentVolumeClaim`,
-        })
-      ].children.push(d3DataDepth3)
+      const pvcIndex = _.findIndex(d3Namespaces[namespaceName].children, {
+        name: `Namespace_${namespaceName}_PersistentVolumeClaim`,
+      })
+
+      if (pvcIndex !== -1) {
+        d3Namespaces[namespaceName].children[pvcIndex].children.push(
+          d3DataDepth3
+        )
+      }
 
       this.setState({
         volumeMapping: {
@@ -1649,18 +1928,86 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     const allNodes = _.map(info[1], node => _.get(node, 'metadata.name'))
 
-    const podsPromises = _.map(_.keys(nodes), this.getPods)
-    const pods = await Promise.all(podsPromises)
+    const podsPromises = _.map(_.keys(nodes), nodeName =>
+      this.getPodsForNode(nodeName, selectedNamespaces, isAllNamespaces)
+    )
+    const podsResults = await Promise.allSettled(podsPromises)
+    const pods = podsResults.map(result =>
+      result.status === 'fulfilled' ? result.value : []
+    )
 
-    const etcObject = await Promise.all([
-      this.getDeployments(),
-      this.getReplicaSets(),
-      this.getReplicationControllers(),
-      this.getDaemonSets(),
-      this.getStatefulSets(),
-      this.getCronJobs(),
-      this.getJobs(),
-    ])
+    let workloadResults = []
+    let etcObject = []
+
+    if (isAllNamespaces) {
+      const workloadPromises = [
+        this.getDeploymentsForNamespace(''),
+        this.getReplicaSetsForNamespace(''),
+        this.getReplicationControllersForNamespace(''),
+        this.getDaemonSetsForNamespace(''),
+        this.getStatefulSetsForNamespace(''),
+        this.getCronJobsForNamespace(''),
+        this.getJobsForNamespace(''),
+      ]
+
+      const workloadSettledResults = await Promise.allSettled(workloadPromises)
+      etcObject = workloadSettledResults.map(result =>
+        result.status === 'fulfilled' ? result.value : []
+      )
+    } else {
+      const workloadPromises = selectedNamespaces.flatMap(namespace => [
+        this.getDeploymentsForNamespace(namespace),
+        this.getReplicaSetsForNamespace(namespace),
+        this.getReplicationControllersForNamespace(namespace),
+        this.getDaemonSetsForNamespace(namespace),
+        this.getStatefulSetsForNamespace(namespace),
+        this.getCronJobsForNamespace(namespace),
+        this.getJobsForNamespace(namespace),
+      ])
+
+      const workloadSettledResults = await Promise.allSettled(workloadPromises)
+      workloadResults = workloadSettledResults.map(result =>
+        result.status === 'fulfilled' ? result.value : []
+      )
+
+      etcObject = [
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespaces,
+          'deployments'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespaces,
+          'replicaSets'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespaces,
+          'replicationControllers'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespaces,
+          'daemonSets'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespaces,
+          'statefulSets'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespaces,
+          'cronJobs'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespaces,
+          'jobs'
+        ),
+      ]
+    }
 
     const deployments = _.reduce(
       etcObject[0],
@@ -1771,6 +2118,10 @@ class KubernetesPage extends PureComponent<Props, State> {
         const podContainers = _.get(pod, 'spec.containers')
         const podStatus = _.get(pod, 'status.phase')
         const volumeArray = _.get(pod, 'spec.volumes')
+
+        if (!d3Namespaces[namespace]) {
+          return
+        }
 
         let podCPU = 0
         let podMemory = 0
@@ -2947,7 +3298,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (
-      prevState.filterNamespace !== filterNamespace ||
+      !_.isEqual(prevState.filterNamespace, filterNamespace) ||
       prevState.filterNode !== filterNode ||
       prevState.filterLabelKey !== filterLabelKey ||
       prevState.filterLabelValue !== filterLabelValue ||
@@ -2965,7 +3316,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public render() {
     const {source, manualRefresh, timeRange} = this.props
     const {
-      selectedNamespace,
+      selectedNamespaces,
       selectedNode,
       selectedLimit,
       labelKey,
@@ -3002,7 +3353,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           handleChangeLabelkey={this.onChangeLabelKey}
           handleChangeLabelValue={this.onChangeLabelValue}
           handleClickFilter={this.onClickFilter}
-          selectedNamespace={selectedNamespace}
+          selectedNamespace={selectedNamespaces}
           selectedNode={selectedNode}
           selectedLimit={selectedLimit}
           labelKey={labelKey}
@@ -3219,9 +3570,32 @@ class KubernetesPage extends PureComponent<Props, State> {
     this.setState({isOpenMinions: false})
   }
 
-  private onChooseNamespace = (namespace: {text: string}) => {
+  private onChooseNamespace = (selectedIDs: string[], value?: {id: string}) => {
+    let finalSelection: string[]
+
+    if (value) {
+      if (value.id === 'All namespaces') {
+        finalSelection = ['All namespaces']
+      } else {
+        let updatedSelection = selectedIDs
+        if (
+          _.includes(selectedIDs, 'All namespaces') &&
+          value.id !== 'All namespaces'
+        ) {
+          updatedSelection = selectedIDs.filter(id => id !== 'All namespaces')
+        }
+        if (updatedSelection.length === 0) {
+          finalSelection = []
+        } else {
+          finalSelection = updatedSelection
+        }
+      }
+    } else {
+      finalSelection = (selectedIDs as any).text || selectedIDs
+    }
+
     this.setState({
-      selectedNamespace: namespace.text,
+      selectedNamespaces: finalSelection,
     })
   }
 
@@ -3249,15 +3623,21 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private onClickFilter = (): void => {
     const {
-      selectedNamespace,
       selectedNode,
       labelKey,
       labelValue,
       selectedLimit,
+      selectedNamespaces,
     } = this.state
+    const {notify} = this.props
+
+    if (selectedNamespaces.length === 0) {
+      notify(notifyNamespaceRequired())
+      return
+    }
+
     this.setState({
-      filterNamespace:
-        selectedNamespace !== 'All namespaces' ? selectedNamespace : '',
+      filterNamespace: selectedNamespaces,
       filterNode: selectedNode !== 'All nodes' ? selectedNode : '',
       filterLabelKey: labelKey,
       filterLabelValue: labelValue,
