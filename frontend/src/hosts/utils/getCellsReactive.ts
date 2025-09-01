@@ -46,7 +46,7 @@ function getLayoutCells(layouts: Layout[], ratio: Ratio): LayoutCell[] {
     return []
   }
 
-  const autoflowLayouts = layouts.filter(l => (l.autoflow = true))
+  const autoflowLayouts = layouts.filter(l => l.autoflow === true)
   // const autoflowCells = flatten(autoflowLayouts.map(l => l.cells))
 
   const autoflowCells = flatten(

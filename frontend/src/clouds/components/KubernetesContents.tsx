@@ -29,6 +29,8 @@ import {
   KubernetesObject,
 } from 'src/clouds/types'
 import {Source, TimeRange, Cell, Template, RemoteDataState} from 'src/types'
+import KubernetesPodDashboardSection from './KubernetesPodDashboardSection'
+import {Layout} from 'src/types/hosts'
 
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
@@ -59,6 +61,7 @@ interface Props {
   remoteDataState: RemoteDataState
   selectedPersistentVolume?: string | null
   highlightVolumes: string[]
+  layouts: Layout[]
 }
 
 interface State {}
@@ -117,6 +120,7 @@ class KubernetesContents extends PureComponent<Props, State> {
       host,
       focuseNode,
       selectedPersistentVolume,
+      layouts,
     } = this.props
 
     if (selectedPersistentVolume) {
@@ -125,6 +129,17 @@ class KubernetesContents extends PureComponent<Props, State> {
           source={source}
           timeRange={timeRange}
           manualRefresh={manualRefresh}
+        />
+      )
+    }
+
+    if (focuseNode.type === 'Pod') {
+      return (
+        <KubernetesPodDashboardSection
+          source={source}
+          timeRange={timeRange}
+          manualRefresh={manualRefresh}
+          podLayouts={layouts}
         />
       )
     }

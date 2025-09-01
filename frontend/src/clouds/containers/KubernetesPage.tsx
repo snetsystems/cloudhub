@@ -3408,6 +3408,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           selectMinion={selectMinion}
           remoteDataState={this.state.remoteDataState}
           highlightVolumes={highlightVolumes}
+          layouts={layouts}
         />
       </>
     )

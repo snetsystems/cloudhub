@@ -79,7 +79,10 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   }
 
   private get renderKubernetes() {
-    if (_.isEmpty(this.props.kubernetesD3Data.name)) {
+    if (
+      _.isEmpty(this.props.kubernetesD3Data.name) ||
+      this.props.kubernetesD3Data.children.length === 0
+    ) {
       return (
         <>
           {this.props.remoteDataState === RemoteDataState.Loading ? (

@@ -33,6 +33,7 @@ interface Props {
   powerFlexMetricsChartHeight?: number
   selectedPersistentVolume?: string | null
   cloudAutoRefresh?: CloudAutoRefresh
+  podChartHeight?: number
 }
 
 function KubernetesPowerFlexMetricsChart({
@@ -42,6 +43,7 @@ function KubernetesPowerFlexMetricsChart({
   powerFlexMetricsChartHeight = 17,
   selectedPersistentVolume = null,
   cloudAutoRefresh,
+  podChartHeight,
 }: Props) {
   const [layout, setLayout] = useState<Layout[]>()
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
@@ -50,32 +52,32 @@ function KubernetesPowerFlexMetricsChart({
   let intervalID
 
   useEffect(() => {
-    getLayoutForInstance()
+    getLayoutForInstance(selectedPersistentVolume)
   }, [selectedPersistentVolume])
 
   useEffect(() => {
     const ratio = {
-      xNum: 3,
-      yNum: 1,
-      height: powerFlexMetricsChartHeight,
+      xNum: 2,
+      yNum: 4,
+      height: podChartHeight ?? powerFlexMetricsChartHeight,
     }
 
     if (!!layout) {
       setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
     }
-  }, [layout, source, powerFlexMetricsChartHeight])
+  }, [layout, source, podChartHeight, powerFlexMetricsChartHeight])
 
-  useEffect(() => {
-    const ratio = {
-      xNum: 3,
-      yNum: 1,
-      height: powerFlexMetricsChartHeight,
-    }
+  // useEffect(() => {
+  //   const ratio = {
+  //     xNum: 3,
+  //     yNum: 1,
+  //     height: podChartHeight ?? powerFlexMetricsChartHeight,
+  //   }
 
-    if (!!layout) {
-      setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
-    }
-  }, [layout])
+  //   if (!!layout) {
+  //     setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
+  //   }
+  // }, [layout])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -94,7 +96,11 @@ function KubernetesPowerFlexMetricsChart({
     }
   }, [cloudAutoRefresh?.kubernetes])
 
-  const getLayoutForInstance = async () => {
+  const getLayoutForInstance = async (selectedPersistentVolume: string) => {
+    const wheres = selectedPersistentVolume
+      ? [`"volume_name"='${selectedPersistentVolume}'`]
+      : []
+
     try {
       const mockLayout: Layout = {
         id: KUBERNETES_METRICS_LAYOUT_ID,
@@ -104,118 +110,318 @@ function KubernetesPowerFlexMetricsChart({
         whereTagKey: ['host'],
         cells: [
           {
-            i: 'latency',
+            i: 'd68ec478-6fc9-4c5e-bf94-ed51db0ab311',
             x: 0,
             y: 0,
             w: 8,
             h: powerFlexMetricsChartHeight,
-            name: 'Latency (ms)',
+            name: 'Average Read Block Size per Volume',
             type: 'line',
+
             queries: [
               {
                 query:
-                  'SELECT mean("memory_usage_bytes") AS "memory_usage_bytes" FROM ":db:".":rp:"."kubernetes_pod_container"',
-                label: 'Latency (ms)',
-                groupbys: ['"pod_name"'],
-                wheres: selectedPersistentVolume
-                  ? [`"persistent_volume_name"='${selectedPersistentVolume}'`]
-                  : [`"pod_name"='gitlab-gitlab-exporter-56499b7c7b-mbrpg'`],
+                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.iosize.read"',
+
+                wheres: [...wheres],
+                groupbys: ['"volume_name"'],
               } as any,
             ],
-            colors: ['#8F8AF4'],
+            colors: ['#31C0F6', '#A500A5', '#FF7E27'] as any,
             axes: {
               x: {
                 bounds: ['', ''],
                 label: '',
                 prefix: '',
                 suffix: '',
-                base: 'raw',
+                base: '10',
                 scale: 'linear',
               },
               y: {
                 bounds: ['', ''],
-                label: 'Latency (ms)',
+                label: 'Bandwidth',
                 prefix: '',
-                suffix: '',
-                base: 'raw',
+                suffix: 'KiB',
+                base: '2',
                 scale: 'linear',
               },
-            },
+            } as any,
           },
           {
-            i: 'IOPS (kIOPS)',
-            x: 8,
-            y: 0,
-            w: 8,
-            h: powerFlexMetricsChartHeight,
-            name: 'IOPS (kIOPS)',
-            type: 'line',
-            queries: [
-              {
-                query:
-                  'SELECT mean("memory_usage_bytes") AS "memory_usage_bytes" FROM ":db:".":rp:"."kubernetes_pod_container"',
-                label: 'IOPS (kIOPS)',
-                groupbys: ['"pod_name"'],
-                wheres: selectedPersistentVolume
-                  ? [`"persistent_volume_name"='${selectedPersistentVolume}'`]
-                  : [`"pod_name"='gitlab-gitlab-exporter-56499b7c7b-mbrpg'`],
-              } as any,
-            ],
-            colors: ['#F4CF31'],
-            axes: {
-              x: {
-                bounds: ['', ''],
-                label: '',
-                prefix: '',
-                suffix: '',
-                base: 'raw',
-                scale: 'linear',
-              },
-              y: {
-                bounds: ['', ''],
-                label: 'IOPS (kIOPS)',
-                prefix: '',
-                suffix: '',
-                base: 'raw',
-                scale: 'linear',
-              },
-            },
-          },
-          {
-            i: 'IOPS',
+            i: 'ca47dfab-33a2-45b7-bae5-76478c815025',
             x: 16,
             y: 0,
             w: 8,
             h: powerFlexMetricsChartHeight,
-            name: 'Bandwidth (KB/s)',
+            name: 'Write Bandwidth per Volume',
             type: 'line',
             queries: [
               {
                 query:
-                  'SELECT mean("memory_usage_bytes") AS "memory_usage_bytes" FROM ":db:".":rp:"."kubernetes_pod_container"',
-                label: 'Bandwidth (KB/s)',
-                groupbys: ['"pod_name"'],
-                wheres: selectedPersistentVolume
-                  ? [`"persistent_volume_name"='${selectedPersistentVolume}'`]
-                  : [`"pod_name"='gitlab-gitlab-exporter-56499b7c7b-mbrpg'`],
-              } as any,
+                  'SELECT mean("userData")/1000 AS "userData" FROM ":db:"."autogen"."scaleio.volume.bw.write"',
+                wheres: [...wheres],
+                groupbys: ['"volume_name"'],
+              },
             ],
-            colors: ['#F48F8F'],
             axes: {
               x: {
                 bounds: ['', ''],
                 label: '',
                 prefix: '',
                 suffix: '',
-                base: 'raw',
+                base: '10',
                 scale: 'linear',
               },
               y: {
                 bounds: ['', ''],
-                label: 'Bandwidth (KB/s)',
+                label: 'Bandwidth',
+                prefix: '',
+                suffix: ' MB/s',
+                base: '2',
+                scale: 'linear',
+              },
+            },
+            colors: ['#31C0F6', '#A500A5', '#FF7E27'],
+          },
+          {
+            i: '77c1ea51-cdc2-4522-8ffd-3806d21c2728',
+            x: 16,
+            y: 0,
+            w: 8,
+            h: powerFlexMetricsChartHeight,
+            name: 'Read Bandwidth per Volume',
+            type: 'line',
+
+            queries: [
+              {
+                query:
+                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.bw.read"',
+                wheres: [...wheres],
+                groupbys: ['"volume_name"'],
+              },
+            ],
+            axes: {
+              x: {
+                bounds: ['', ''],
+                label: '',
                 prefix: '',
                 suffix: '',
-                base: 'raw',
+                base: '10',
+                scale: 'linear',
+              },
+              y: {
+                bounds: ['', ''],
+                label: 'Bandwidth',
+                prefix: '',
+                suffix: ' kB/s',
+                base: '2',
+                scale: 'linear',
+              },
+            },
+            colors: [
+              {
+                id: '9eec6dc1-ed44-4de8-b554-be0eb49c6511',
+                type: 'scale',
+                hex: '#31C0F6',
+                name: 'Nineteen Eighty Four',
+                value: '0',
+              },
+              {
+                id: 'f654c97e-dbe0-4de6-b2fe-90dd1ab0c7c0',
+                type: 'scale',
+                hex: '#A500A5',
+                name: 'Nineteen Eighty Four',
+                value: '0',
+              },
+              {
+                id: '5647ce46-b814-4813-8be2-d3144c7565af',
+                type: 'scale',
+                hex: '#FF7E27',
+                name: 'Nineteen Eighty Four',
+                value: '0',
+              },
+            ],
+          },
+
+          {
+            i: '5cd2868d-fb6d-474e-bd67-d87da6ef4ff7',
+            x: 0,
+            y: 0,
+            w: 8,
+            h: powerFlexMetricsChartHeight,
+            name: 'Write IOPS per Volume',
+            type: 'line',
+            queries: [
+              {
+                query:
+                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.iops.write"',
+                wheres: [...wheres],
+                groupbys: ['"volume_name"'],
+              } as any,
+            ],
+            colors: ['#31C0F6', '#A500A5', '#FF7E27'],
+            axes: {
+              x: {
+                bounds: ['', ''],
+                label: '',
+                prefix: '',
+                suffix: '',
+                base: '10',
+                scale: 'linear',
+              },
+              y: {
+                bounds: ['', ''],
+                label: 'IOPS',
+                prefix: '',
+                suffix: ' ms',
+                base: '2',
+                scale: 'linear',
+              },
+            },
+          },
+          {
+            i: 'b3da8160-a956-4680-8c28-bc3f0fec6812',
+            x: 0,
+            y: 0,
+            w: 8,
+            h: powerFlexMetricsChartHeight,
+            name: 'Read IOPS per Volume',
+            type: 'line',
+            queries: [
+              {
+                query:
+                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.iops.read"',
+                wheres: [...wheres],
+                groupbys: ['"volume_name"'],
+              } as any,
+            ],
+            colors: ['#31C0F6', '#A500A5', '#FF7E27'],
+            axes: {
+              x: {
+                bounds: ['', ''],
+                label: '',
+                prefix: '',
+                suffix: '',
+                base: '10',
+                scale: 'linear',
+              },
+              y: {
+                bounds: ['', ''],
+                label: 'IOPS',
+                prefix: '',
+                suffix: ' io/s',
+                base: '2',
+                scale: 'linear',
+              },
+            },
+          },
+          {
+            i: 'b8a16d86-8081-47fc-ae7c-84639ede6cb4',
+            x: 0,
+            y: 0,
+            w: 8,
+            h: powerFlexMetricsChartHeight,
+            name: 'Average Write Latency per Volume',
+            type: 'line',
+            queries: [
+              {
+                query:
+                  'SELECT mean("userDataSdc")/1000 AS "userDataSdc" FROM ":db:"."autogen"."scaleio.volume.latency.write"',
+                label: 'Average Write Latency per Volume',
+                wheres: [...wheres],
+                groupbys: ['"volume_name"'],
+              } as any,
+            ],
+            colors: ['#31C0F6', '#A500A5', '#FF7E27'],
+            axes: {
+              x: {
+                bounds: ['', ''],
+                label: '',
+                prefix: '',
+                suffix: '',
+                base: '10',
+                scale: 'linear',
+              },
+              y: {
+                bounds: ['', ''],
+                label: 'Latency',
+                prefix: '',
+                suffix: ' ms',
+                base: '2',
+                scale: 'linear',
+              },
+            },
+          },
+          {
+            i: '5e985410-3dc0-469c-84bc-7523d299fd5a',
+            x: 0,
+            y: 0,
+            w: 8,
+            h: powerFlexMetricsChartHeight,
+            name: 'Average Read Latency per Volume',
+            type: 'line',
+            queries: [
+              {
+                query:
+                  'SELECT mean("userDataSdc")/1000 AS "userDataSdc" FROM ":db:"."autogen"."scaleio.volume.latency.read"',
+
+                label: 'Average Read Latency per Volume',
+                groupbys: ['"volume_name"'],
+                wheres: [...wheres],
+              } as any,
+            ],
+            colors: ['#F4CF31', '#A500A5', '#FF7E27'],
+            axes: {
+              x: {
+                bounds: ['', ''],
+                label: '',
+                prefix: '',
+                suffix: '',
+                base: '10',
+                scale: 'linear',
+              },
+              y: {
+                bounds: ['', ''],
+                label: 'Latency',
+                prefix: '',
+                suffix: ' ms',
+                base: '2',
+                scale: 'linear',
+              },
+            },
+          },
+          {
+            i: 'cbcf2564-80e7-4316-a572-41d04b68274c',
+            x: 0,
+            y: 0,
+            w: 8,
+            h: powerFlexMetricsChartHeight,
+            name: 'Average Write Block Size per Volume',
+            type: 'line',
+            queries: [
+              {
+                query:
+                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.iosize.write"',
+                groupbys: ['"volume_name"'],
+                wheres: [...wheres],
+              } as any,
+            ],
+            colors: ['#F4CF31', '#A500A5', '#FF7E27'],
+            axes: {
+              x: {
+                bounds: ['', ''],
+                label: '',
+                prefix: '',
+                suffix: '',
+                base: '10',
+                scale: 'linear',
+              },
+              y: {
+                bounds: ['', ''],
+                label: 'Bandwidth',
+                prefix: '',
+                suffix: 'KiB',
+                base: '10',
                 scale: 'linear',
               },
             },
@@ -252,11 +458,7 @@ function KubernetesPowerFlexMetricsChart({
       }}
     >
       <KubernetesPowerFlexDashboardHeader
-        cellName={
-          selectedPersistentVolume
-            ? `Performance - ${selectedPersistentVolume}`
-            : 'Performance'
-        }
+        cellName={'Performance'}
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >

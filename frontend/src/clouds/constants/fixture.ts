@@ -36,3 +36,50 @@ export const FIXTURE_KUBERNETES_POWERFLEX_CELLS = (): Cell[] => {
     },
   ]
 }
+
+export const FIXTURE_KUBERNETES_POD_VOLUME_CELLS = (): Cell[] => {
+  return [
+    {
+      ...NEW_DEFAULT_DASHBOARD_CELL,
+      i: 'kubernetes-pod-chart',
+      x: 0,
+      y: 0,
+      w: 96,
+      h: 17,
+      minW: 12,
+      minH: 17,
+      name: '',
+      queries: [],
+      type: CellType.Table,
+      axes: emptyAxes,
+      colors: DEFAULT_LINE_COLORS,
+      legend: {},
+      timeFormat: '',
+      note: '',
+      links: {
+        self: '',
+      },
+    },
+    {
+      ...NEW_DEFAULT_DASHBOARD_CELL,
+      i: 'kubernetes-volume-chart',
+      x: 0,
+      y: 18,
+      w: 96,
+      h: 17,
+      minW: 12,
+      minH: 17,
+      name: '',
+      queries: [],
+      type: CellType.Table,
+      axes: emptyAxes,
+      colors: DEFAULT_LINE_COLORS,
+      legend: {},
+      timeFormat: '',
+      note: '',
+      links: {
+        self: '',
+      },
+    },
+  ]
+}
