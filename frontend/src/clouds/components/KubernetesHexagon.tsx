@@ -242,7 +242,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       )
       .append('path')
       .attr('class', 'hexagon')
-      .attr('data-name', (d: any) => d.data.name)
+      .attr('data-name', (d: any) => esc(d.data.name))
       .attr('data-label', (d: any) => d.data.label)
       .attr('data-type', (d: any) => d.data.type)
       .attr('data-volume-spec', (d: any) => {
@@ -528,7 +528,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
   private handlePersistentVolumeSelection = (data: any) => {
     if (data.data && data.data.type === 'PV') {
-      this.props.dispatch(setSelectedPersistentVolume(data.data.label))
+      this.props.dispatch(setSelectedPersistentVolume([data.data.label]))
     } else {
       this.props.dispatch(setSelectedPersistentVolume(null))
     }

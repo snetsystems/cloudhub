@@ -59,7 +59,7 @@ interface Props {
   host: string
   selectMinion: string
   remoteDataState: RemoteDataState
-  selectedPersistentVolume?: string | null
+  selectedPersistentVolume?: string[] | null
   highlightVolumes: string[]
   layouts: Layout[]
 }
@@ -123,16 +123,6 @@ class KubernetesContents extends PureComponent<Props, State> {
       layouts,
     } = this.props
 
-    if (selectedPersistentVolume) {
-      return (
-        <KubernetesPowerFlexDashboard
-          source={source}
-          timeRange={timeRange}
-          manualRefresh={manualRefresh}
-        />
-      )
-    }
-
     if (focuseNode.type === 'Pod') {
       return (
         <KubernetesPodDashboardSection
@@ -140,6 +130,16 @@ class KubernetesContents extends PureComponent<Props, State> {
           timeRange={timeRange}
           manualRefresh={manualRefresh}
           podLayouts={layouts}
+        />
+      )
+    }
+
+    if (selectedPersistentVolume && selectedPersistentVolume.length > 0) {
+      return (
+        <KubernetesPowerFlexDashboard
+          source={source}
+          timeRange={timeRange}
+          manualRefresh={manualRefresh}
         />
       )
     }

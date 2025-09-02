@@ -2,7 +2,7 @@ import {Action, ActionType} from 'src/clouds/actions/kubernetesPowerFlex'
 
 interface PowerFlexState {
   powerFlexMetricsChartHeight: number
-  selectedPersistentVolume: string | null
+  selectedPersistentVolume: string[] | null
 
   podChartHeight: number
   volumeChartHeight: number

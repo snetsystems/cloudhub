@@ -21,7 +21,6 @@ interface Props {
   title: string
   timeRange: TimeRange
   manualRefresh: number
-  chartHeight: string
   layout: Layout[]
   cloudAutoRefresh?: CloudAutoRefresh
   podChartHeight?: number
@@ -32,7 +31,6 @@ function KubernetesInstanceChart({
   title,
   timeRange,
   manualRefresh,
-  chartHeight,
   layout,
   cloudAutoRefresh,
   podChartHeight,

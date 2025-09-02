@@ -234,13 +234,11 @@
   top: 10px !important;
 }
 
-/* 기본은 숨김 */
 svg.kubernetes-svg path.checkmark,
 svg.kubernetes-svg path.checkmark-bg {
   display: none;
 }
 
-/* 같은 g 안에 "hexagon"이면서 "kubernetes-focuse"인 path가 있을 때만 표시 */
 svg.kubernetes-svg g:has(> path.hexagon.kubernetes-focuse) path.checkmark,
 svg.kubernetes-svg g:has(> path.hexagon.kubernetes-focuse) path.checkmark-bg {
   display: block;

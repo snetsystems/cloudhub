@@ -20,7 +20,7 @@ interface PowerFlexMetricsChartHeightAction {
 interface SelectedPersistentVolumeAction {
   type: ActionType.setSelectedPersistentVolume
   payload: {
-    selectedPersistentVolume: string | null
+    selectedPersistentVolume: string[] | null
   }
 }
 
@@ -48,7 +48,7 @@ export const setPowerFlexMetricsChartHeight = (
 })
 
 export const setSelectedPersistentVolume = (
-  persistentVolumeName: string | null
+  persistentVolumeName: string[] | null
 ): SelectedPersistentVolumeAction => ({
   type: ActionType.setSelectedPersistentVolume,
   payload: {

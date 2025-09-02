@@ -122,6 +122,7 @@ import {
   notifyNamespaceRequired,
   notifySelectedNamespacesAreNotValid,
 } from 'src/shared/copy/notifications'
+import {setSelectedPersistentVolume} from '../actions/kubernetesPowerFlex'
 
 interface Props extends KubernetesProps {
   source: Source
@@ -132,6 +133,7 @@ interface Props extends KubernetesProps {
   autoRefresh: number
   links: Links
   meRole: string
+  setSelectedPersistentVolume?: (persistentVolumeName: string[] | null) => void
 }
 
 interface State {
@@ -3279,30 +3281,26 @@ class KubernetesPage extends PureComponent<Props, State> {
       const {pinNode} = this.state
       d3.selectAll(`path`).classed('kubernetes-pin', false)
       _.forEach(pinNode, pin => {
-        const esc = (v: any) =>
-          typeof (window as any).CSS !== 'undefined' &&
-          typeof (window as any).CSS.escape === 'function'
-            ? (window as any).CSS.escape(String(v))
-            : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
-        d3.select(`[data-name=${esc(pin)}]`).classed('kubernetes-pin', true)
+        d3.select(`[data-name=${this.esc(pin)}]`).classed(
+          'kubernetes-pin',
+          true
+        )
       })
     }
 
     if (prevState.highlightVolumes !== highlightVolumes) {
+      console.log('highlightVolumes : ', highlightVolumes)
       d3.selectAll(`path`).classed('kubernetes-volume', false)
       _.forEach(highlightVolumes, volume => {
-        const esc = (v: any) =>
-          typeof (window as any).CSS !== 'undefined' &&
-          typeof (window as any).CSS.escape === 'function'
-            ? (window as any).CSS.escape(String(v))
-            : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
         d3.selectAll(
           `
-            path[data-name*="PersistentVolumeClaim_"][data-name$="${esc(
+            path[data-name*="PersistentVolumeClaim_"][data-name$="${this.esc(
               volume
             )}"],
-            path[data-name*="PersistentVolume_"][data-name$="${esc(volume)}"],
-            path[data-name*="Namespace_"][data-name$="${esc(volume)}"]
+            path[data-name*="PersistentVolume_"][data-name$="${this.esc(
+              volume
+            )}"],
+            path[data-name*="Namespace_"][data-name$="${this.esc(volume)}"]
           `
         ).classed('kubernetes-volume', true)
       })
@@ -3690,12 +3688,24 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   private onClickVisualizePod = async (data: any) => {
-    const {selectMinion} = this.state
+    const {selectMinion, volumeMapping} = this.state
+    const {setSelectedPersistentVolume} = this.props
+
     const focuseNodeName = _.get(data, 'data.name')
     const focuseNodeLabel = _.get(data, 'data.label')
     const focuseNodeType = _.get(data, 'data.type')
     const focuseNamespace = _.get(data, 'data.namespace')
-    // const focuseVolumes = _.get(data, 'data.volumes')
+    const focuseVolumes = _.get(data, 'data.volumes')
+
+    if (focuseNodeType === 'Pod') {
+      const selectedVolumes = focuseVolumes
+        .map((volume: any) => volume?.persistent_volume_claim?.claim_name)
+        .filter((item: any) => !!item)
+
+      setSelectedPersistentVolume(
+        selectedVolumes.map(volume => volumeMapping[volume])
+      )
+    }
     // if (this.checkHighlightVolumes(focuseNodeName)) {
     //   null
     // } else if (!!focuseVolumes) {
@@ -3800,9 +3810,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     const highlightVolumes = _.uniq([
-      ...volumes,
-      ..._.map(volumes, volume => volumeMapping[volume]).filter(Boolean),
-      focuseNodeName,
+      ...volumes.map(volume => this.esc(volume)),
+      ..._.map(volumes, volume => this.esc(volumeMapping[volume])).filter(
+        Boolean
+      ),
+      this.esc(focuseNodeName),
     ])
     this.setState({highlightVolumes: highlightVolumes || []})
   }
@@ -3912,6 +3924,12 @@ class KubernetesPage extends PureComponent<Props, State> {
       return null
     }
   }
+
+  private esc = (v: any) =>
+    typeof (window as any).CSS !== 'undefined' &&
+    typeof (window as any).CSS.escape === 'function'
+      ? (window as any).CSS.escape(String(v))
+      : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
 }
 
 const mstp = ({links: {addons}, auth: {me}}) => {
@@ -3947,6 +3965,7 @@ const mdtp = {
   handleGetPersistentVolumeClaims: getLocalK8sPersistentVolumeClaimsAsync,
   handleGetK8sDetail: getLocalK8sDetailAsync,
   notify: notifyAction,
+  setSelectedPersistentVolume: setSelectedPersistentVolume,
 }
 
 export default connect(mstp, mdtp, null)(KubernetesPage)

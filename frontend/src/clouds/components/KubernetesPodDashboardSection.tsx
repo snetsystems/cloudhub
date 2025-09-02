@@ -48,36 +48,46 @@ function KubernetesPodDashboardSection({
   podLayouts,
   setPodChartHeight,
   setVolumeChartHeight,
-  podChartHeight,
   volumeChartHeight,
 }: Props) {
   const GridLayout = WidthProvider(ReactGridLayout)
 
-  const savedCells = JSON.parse(
-    localStorage.getItem('Kubernetes-pod-volume-cells')
-  )
+  const savedCells = useMemo(() => {
+    const saved = localStorage.getItem('Kubernetes-pod-volume-cells')
+    console.log('savedCells 2: ', saved)
+    return saved ? JSON.parse(saved) : null
+  }, [])
+
+  // const cells = useMemo(() => {
+  //   const defaultCells = FIXTURE_KUBERNETES_POD_VOLUME_CELLS()
+  //   const baseCells = savedCells || defaultCells
+
+  //   return baseCells.map(cell => {
+  //     if (cell.i === 'kubernetes-pod-chart') {
+  //       return {
+  //         ...cell,
+  //         h: podChartHeight ?? cell.h,
+  //       }
+  //     }
+  //     if (cell.i === 'kubernetes-volume-chart') {
+  //       return {
+  //         ...cell,
+  //         h: volumeChartHeight ?? cell.h,
+  //       }
+  //     }
+  //     return cell
+  //   })
+  // }, [savedCells, podChartHeight, volumeChartHeight])
 
   const cells = useMemo(() => {
     const defaultCells = FIXTURE_KUBERNETES_POD_VOLUME_CELLS()
-    const baseCells = savedCells || defaultCells
-
-    // 반영 지연을 없애기 위해 Redux 높이를 즉시 layout.h에 주입
-    return baseCells.map(cell => {
-      if (cell.i === 'kubernetes-pod-chart') {
-        return {
-          ...cell,
-          h: podChartHeight ?? cell.h,
-        }
-      }
-      if (cell.i === 'kubernetes-volume-chart') {
-        return {
-          ...cell,
-          h: volumeChartHeight ?? cell.h,
-        }
-      }
-      return cell
-    })
-  }, [savedCells, podChartHeight, volumeChartHeight])
+    console.log('savedCells 3: ', savedCells)
+    if (!!savedCells) {
+      return savedCells
+    } else {
+      return defaultCells
+    }
+  }, [savedCells])
 
   const setLocalCells = (cells: DashboardsModels.Cell[]) => {
     localStorage.setItem('Kubernetes-pod-volume-cells', JSON.stringify(cells))
@@ -85,6 +95,7 @@ function KubernetesPodDashboardSection({
 
   const handleLayoutChange = layout => {
     let changed = false
+    console.log('cells 1: ', cells)
     const newCells = cells.map(cell => {
       const l = layout.find(ly => ly.i === cell.i)
 
@@ -141,7 +152,6 @@ function KubernetesPodDashboardSection({
               timeRange={timeRange}
               manualRefresh={manualRefresh}
               layout={podLayouts}
-              chartHeight={'podChartHeight'}
             />
           </Authorized>
         )
@@ -160,6 +170,7 @@ function KubernetesPodDashboardSection({
               source={source}
               timeRange={timeRange}
               manualRefresh={manualRefresh}
+              volumeChartHeight={volumeChartHeight}
             />
           </Authorized>
         )

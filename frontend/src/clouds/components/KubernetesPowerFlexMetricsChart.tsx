@@ -31,9 +31,9 @@ interface Props {
   timeRange: TimeRange
   manualRefresh: number
   powerFlexMetricsChartHeight?: number
-  selectedPersistentVolume?: string | null
+  selectedPersistentVolume?: string[] | null
   cloudAutoRefresh?: CloudAutoRefresh
-  podChartHeight?: number
+  volumeChartHeight?: number
 }
 
 function KubernetesPowerFlexMetricsChart({
@@ -43,7 +43,7 @@ function KubernetesPowerFlexMetricsChart({
   powerFlexMetricsChartHeight = 17,
   selectedPersistentVolume = null,
   cloudAutoRefresh,
-  podChartHeight,
+  volumeChartHeight,
 }: Props) {
   const [layout, setLayout] = useState<Layout[]>()
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
@@ -59,13 +59,13 @@ function KubernetesPowerFlexMetricsChart({
     const ratio = {
       xNum: 2,
       yNum: 4,
-      height: podChartHeight ?? powerFlexMetricsChartHeight,
+      height: volumeChartHeight ?? powerFlexMetricsChartHeight,
     }
 
     if (!!layout) {
       setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
     }
-  }, [layout, source, podChartHeight, powerFlexMetricsChartHeight])
+  }, [layout, source, volumeChartHeight, powerFlexMetricsChartHeight])
 
   // useEffect(() => {
   //   const ratio = {
@@ -96,9 +96,11 @@ function KubernetesPowerFlexMetricsChart({
     }
   }, [cloudAutoRefresh?.kubernetes])
 
-  const getLayoutForInstance = async (selectedPersistentVolume: string) => {
+  const getLayoutForInstance = async (
+    selectedPersistentVolume: string[] | null
+  ) => {
     const wheres = selectedPersistentVolume
-      ? [`"volume_name"='${selectedPersistentVolume}'`]
+      ? [`"volume_name"='${selectedPersistentVolume.join("','")}'`]
       : []
 
     try {
