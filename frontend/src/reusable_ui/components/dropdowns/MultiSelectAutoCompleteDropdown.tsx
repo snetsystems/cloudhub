@@ -37,6 +37,7 @@ interface Props {
   maxMenuHeight?: number
   emptyText?: string
   separatorText?: string
+  maxSelections?: number
 }
 
 interface State {
@@ -54,6 +55,7 @@ class MultiSelectAutoCompleteDropdown extends Component<Props, State> {
     menuColor: DropdownMenuColors.Sapphire,
     emptyText: 'Choose an item',
     separatorText: ', ',
+    maxSelections: undefined,
   }
 
   public static Button = DropdownButton
@@ -171,7 +173,13 @@ class MultiSelectAutoCompleteDropdown extends Component<Props, State> {
   }
 
   private get menuItems(): JSX.Element {
-    const {selectedIDs, maxMenuHeight, menuColor, children} = this.props
+    const {
+      selectedIDs,
+      maxMenuHeight,
+      menuColor,
+      children,
+      maxSelections,
+    } = this.props
     const {expanded} = this.state
 
     if (expanded) {
@@ -189,17 +197,40 @@ class MultiSelectAutoCompleteDropdown extends Component<Props, State> {
               {React.Children.map(children, (child: JSX.Element) => {
                 if (this.childTypeIsValid(child)) {
                   if (child.type === DropdownItem) {
-                    return (
+                    const isSelected = _.includes(selectedIDs, child.props.id)
+                    const isDisabled =
+                      maxSelections &&
+                      selectedIDs.length >= maxSelections &&
+                      !isSelected
+
+                    const dropdownItem = (
                       <DropdownItem
                         {...child.props}
                         key={child.props.id}
                         checkbox={true}
-                        selected={_.includes(selectedIDs, child.props.id)}
-                        onClick={this.handleItemClick}
+                        selected={isSelected}
+                        onClick={isDisabled ? undefined : this.handleItemClick}
                       >
                         {child.props.children}
                       </DropdownItem>
                     )
+
+                    if (isDisabled) {
+                      return (
+                        <div
+                          key={child.props.id}
+                          style={{
+                            opacity: 0.5,
+                            cursor: 'not-allowed',
+                            pointerEvents: 'none',
+                          }}
+                        >
+                          {dropdownItem}
+                        </div>
+                      )
+                    }
+
+                    return dropdownItem
                   }
 
                   return (
@@ -249,12 +280,15 @@ class MultiSelectAutoCompleteDropdown extends Component<Props, State> {
   }
 
   private handleItemClick = (value: any): void => {
-    const {onChange, selectedIDs} = this.props
+    const {onChange, selectedIDs, maxSelections} = this.props
     let updatedSelection
 
     if (_.includes(selectedIDs, value.id)) {
       updatedSelection = selectedIDs.filter(id => id !== value.id)
     } else {
+      if (maxSelections && selectedIDs.length >= maxSelections) {
+        return
+      }
       updatedSelection = [...selectedIDs, value.id]
     }
 
