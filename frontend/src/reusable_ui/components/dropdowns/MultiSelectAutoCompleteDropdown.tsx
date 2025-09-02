@@ -38,6 +38,7 @@ interface Props {
   emptyText?: string
   separatorText?: string
   maxSelections?: number
+  exemptFromLimit?: string[]
 }
 
 interface State {
@@ -56,6 +57,7 @@ class MultiSelectAutoCompleteDropdown extends Component<Props, State> {
     emptyText: 'Choose an item',
     separatorText: ', ',
     maxSelections: undefined,
+    exemptFromLimit: [],
   }
 
   public static Button = DropdownButton
@@ -179,6 +181,7 @@ class MultiSelectAutoCompleteDropdown extends Component<Props, State> {
       menuColor,
       children,
       maxSelections,
+      exemptFromLimit,
     } = this.props
     const {expanded} = this.state
 
@@ -198,10 +201,12 @@ class MultiSelectAutoCompleteDropdown extends Component<Props, State> {
                 if (this.childTypeIsValid(child)) {
                   if (child.type === DropdownItem) {
                     const isSelected = _.includes(selectedIDs, child.props.id)
+                    const isExempt = _.includes(exemptFromLimit, child.props.id)
                     const isDisabled =
                       maxSelections &&
                       selectedIDs.length >= maxSelections &&
-                      !isSelected
+                      !isSelected &&
+                      !isExempt
 
                     const dropdownItem = (
                       <DropdownItem
@@ -280,13 +285,14 @@ class MultiSelectAutoCompleteDropdown extends Component<Props, State> {
   }
 
   private handleItemClick = (value: any): void => {
-    const {onChange, selectedIDs, maxSelections} = this.props
+    const {onChange, selectedIDs, maxSelections, exemptFromLimit} = this.props
     let updatedSelection
 
     if (_.includes(selectedIDs, value.id)) {
       updatedSelection = selectedIDs.filter(id => id !== value.id)
     } else {
-      if (maxSelections && selectedIDs.length >= maxSelections) {
+      const isExempt = _.includes(exemptFromLimit, value.id)
+      if (maxSelections && selectedIDs.length >= maxSelections && !isExempt) {
         return
       }
       updatedSelection = [...selectedIDs, value.id]

@@ -118,6 +118,7 @@ class KubernetesHeader extends PureComponent<Props, State> {
               emptyText={'Choose Namespace'}
               maxMenuHeight={145}
               maxSelections={5}
+              exemptFromLimit={['All namespaces']}
             >
               {namespaceItems.map(item => (
                 <DropdownItem
