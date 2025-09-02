@@ -118,7 +118,10 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 // Error
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {notifyNamespaceRequired} from 'src/shared/copy/notifications'
+import {
+  notifyNamespaceRequired,
+  notifySelectedNamespacesAreNotValid,
+} from 'src/shared/copy/notifications'
 
 interface Props extends KubernetesProps {
   source: Source
@@ -1209,14 +1212,44 @@ class KubernetesPage extends PureComponent<Props, State> {
       return
     }
 
+    const {selectedNamespaces} = this.state
+    let validatedSelectedNamespaces = selectedNamespaces
+
+    if (!_.includes(selectedNamespaces, 'All namespaces')) {
+      const availableNamespaces = _.map(namespacesResult, namespace =>
+        _.get(namespace, 'metadata.name')
+      )
+
+      const validNamespaces = selectedNamespaces.filter(ns =>
+        availableNamespaces.includes(ns)
+      )
+
+      if (validNamespaces.length === 0) {
+        this.props.notify(notifySelectedNamespacesAreNotValid())
+        this.setState({remoteDataState: RemoteDataState.Error})
+        return
+      } else if (validNamespaces.length < selectedNamespaces.length) {
+        validatedSelectedNamespaces = validNamespaces
+      }
+
+      if (!_.isEqual(selectedNamespaces, validatedSelectedNamespaces)) {
+        this.setState({selectedNamespaces: validatedSelectedNamespaces})
+        const getLocal = getLocalStorage('kubernetes')
+        setLocalStorage('kubernetes', {
+          ...getLocal,
+          selectedNamespaces: validatedSelectedNamespaces,
+        })
+      }
+    }
+
     const isAllNamespaces = _.includes(
-      this.state.selectedNamespaces,
+      validatedSelectedNamespaces,
       'All namespaces'
     )
-    const selectedNamespaces = isAllNamespaces
+    const selectedNamespacesForQuery = isAllNamespaces
       ? ['']
-      : !_.isEmpty(this.state.selectedNamespaces)
-      ? this.state.selectedNamespaces
+      : !_.isEmpty(validatedSelectedNamespaces)
+      ? validatedSelectedNamespaces
       : _.map(namespacesResult, namespace => _.get(namespace, 'metadata.name'))
 
     let namespaceResults = []
@@ -1241,14 +1274,16 @@ class KubernetesPage extends PureComponent<Props, State> {
         allResults[6].status === 'fulfilled' ? allResults[6].value : [],
       ]
     } else {
-      const namespaceBasedPromises = selectedNamespaces.flatMap(namespace => [
-        this.getServicesForNamespace(namespace),
-        this.getIngressesForNamespace(namespace),
-        this.getServiceAccountsForNamespace(namespace),
-        this.getRolesForNamespace(namespace),
-        this.getRoleBindingsForNamespace(namespace),
-        this.getPersistentVolumeClaimsForNamespace(namespace),
-      ])
+      const namespaceBasedPromises = selectedNamespacesForQuery.flatMap(
+        namespace => [
+          this.getServicesForNamespace(namespace),
+          this.getIngressesForNamespace(namespace),
+          this.getServiceAccountsForNamespace(namespace),
+          this.getRolesForNamespace(namespace),
+          this.getRoleBindingsForNamespace(namespace),
+          this.getPersistentVolumeClaimsForNamespace(namespace),
+        ]
+      )
 
       const clusterPromises = [this.getPersistentVolumes()]
 
@@ -1278,35 +1313,35 @@ class KubernetesPage extends PureComponent<Props, State> {
         ? namespaceResults[0]
         : this.combineNamespaceResults(
             namespaceResults,
-            selectedNamespaces,
+            selectedNamespacesForQuery,
             'services'
           ),
       isAllNamespaces
         ? namespaceResults[1]
         : this.combineNamespaceResults(
             namespaceResults,
-            selectedNamespaces,
+            selectedNamespacesForQuery,
             'ingresses'
           ),
       isAllNamespaces
         ? namespaceResults[2]
         : this.combineNamespaceResults(
             namespaceResults,
-            selectedNamespaces,
+            selectedNamespacesForQuery,
             'serviceAccounts'
           ),
       isAllNamespaces
         ? namespaceResults[3]
         : this.combineNamespaceResults(
             namespaceResults,
-            selectedNamespaces,
+            selectedNamespacesForQuery,
             'roles'
           ),
       isAllNamespaces
         ? namespaceResults[4]
         : this.combineNamespaceResults(
             namespaceResults,
-            selectedNamespaces,
+            selectedNamespacesForQuery,
             'roleBindings'
           ),
       clusterResults[0],
@@ -1314,7 +1349,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         ? namespaceResults[5]
         : this.combineNamespaceResults(
             namespaceResults,
-            selectedNamespaces,
+            selectedNamespacesForQuery,
             'persistentVolumeClaims'
           ),
     ]
@@ -1324,11 +1359,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     const d3Namespaces = {}
 
     const namespaces = _.reduce(
-      !_.isEmpty(this.state.selectedNamespaces) &&
-        !_.includes(this.state.selectedNamespaces, 'All namespaces')
+      !_.isEmpty(selectedNamespacesForQuery) &&
+        !_.includes(validatedSelectedNamespaces, 'All namespaces')
         ? _.filter(info[0], namespace =>
             _.includes(
-              this.state.selectedNamespaces,
+              selectedNamespacesForQuery,
               namespace['metadata']['name']
             )
           )
@@ -1929,7 +1964,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     const allNodes = _.map(info[1], node => _.get(node, 'metadata.name'))
 
     const podsPromises = _.map(_.keys(nodes), nodeName =>
-      this.getPodsForNode(nodeName, selectedNamespaces, isAllNamespaces)
+      this.getPodsForNode(nodeName, selectedNamespacesForQuery, isAllNamespaces)
     )
     const podsResults = await Promise.allSettled(podsPromises)
     const pods = podsResults.map(result =>
@@ -1955,7 +1990,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         result.status === 'fulfilled' ? result.value : []
       )
     } else {
-      const workloadPromises = selectedNamespaces.flatMap(namespace => [
+      const workloadPromises = selectedNamespacesForQuery.flatMap(namespace => [
         this.getDeploymentsForNamespace(namespace),
         this.getReplicaSetsForNamespace(namespace),
         this.getReplicationControllersForNamespace(namespace),
@@ -1973,37 +2008,37 @@ class KubernetesPage extends PureComponent<Props, State> {
       etcObject = [
         this.combineWorkloadResults(
           workloadResults,
-          selectedNamespaces,
+          selectedNamespacesForQuery,
           'deployments'
         ),
         this.combineWorkloadResults(
           workloadResults,
-          selectedNamespaces,
+          selectedNamespacesForQuery,
           'replicaSets'
         ),
         this.combineWorkloadResults(
           workloadResults,
-          selectedNamespaces,
+          selectedNamespacesForQuery,
           'replicationControllers'
         ),
         this.combineWorkloadResults(
           workloadResults,
-          selectedNamespaces,
+          selectedNamespacesForQuery,
           'daemonSets'
         ),
         this.combineWorkloadResults(
           workloadResults,
-          selectedNamespaces,
+          selectedNamespacesForQuery,
           'statefulSets'
         ),
         this.combineWorkloadResults(
           workloadResults,
-          selectedNamespaces,
+          selectedNamespacesForQuery,
           'cronJobs'
         ),
         this.combineWorkloadResults(
           workloadResults,
-          selectedNamespaces,
+          selectedNamespacesForQuery,
           'jobs'
         ),
       ]
@@ -3159,6 +3194,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       proportions,
       selectedAutoRefresh,
       selectMinion: storedSelectMinion,
+      selectedNamespaces: storedSelectedNamespaces = ['All namespaces'],
     } = getLocal
 
     const minions = await this.getMinionKeyAcceptedList()
@@ -3174,6 +3210,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       selectMinion,
       proportions,
       selectedAutoRefresh,
+      selectedNamespaces: storedSelectedNamespaces || ['All namespaces'],
       remoteDataState: RemoteDataState.Loading,
     })
   }
@@ -3186,6 +3223,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       focuseNode,
       selectedAutoRefresh,
       selectMinion,
+      selectedNamespaces,
       filterNamespace,
       filterLimit,
       filterNode,
@@ -3295,6 +3333,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     if (prevState.selectMinion !== selectMinion) {
       const getLocal = getLocalStorage('kubernetes')
       setLocalStorage('kubernetes', {...getLocal, selectMinion})
+    }
+
+    if (!_.isEqual(prevState.selectedNamespaces, selectedNamespaces)) {
+      const getLocal = getLocalStorage('kubernetes')
+      setLocalStorage('kubernetes', {...getLocal, selectedNamespaces})
     }
 
     if (
