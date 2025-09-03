@@ -53,8 +53,10 @@ export const clusterTypeColorset = {
 // Namespace: '#31313d',
 // #5f5f5f -> #000
 
+// Status gradient aligned with UsageIndicator semantics
+// good -> caution (yellow) -> warning (orange) -> danger (red)
 export const kubernetesStatusColor = chroma
-  .scale(['#30e7f1', '#00cc2c', '#ff9e00', '#ff0000'])
+  .scale(['#2de5a5', '#F4CF31', '#FF7E27', '#FF0000'])
   .mode('lrgb')
 
 export const OPENSTACK_GAUGE_COLORS = [

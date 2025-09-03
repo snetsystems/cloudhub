@@ -245,6 +245,11 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('data-name', (d: any) => esc(d.data.name))
       .attr('data-label', (d: any) => d.data.label)
       .attr('data-type', (d: any) => d.data.type)
+
+      .attr(
+        'data-volume-name',
+        (d: any) => (d.data && d.data.volume_name) || null
+      )
       .attr('data-volume-spec', (d: any) => {
         const volumeSpec = d.data.volume_spec?.trim()
         return volumeSpec || null
@@ -450,30 +455,39 @@ class KubernetesHexagon extends PureComponent<Props, State> {
               (kubernetesStatusColor(pick / 100) as unknown) as string
             )
         }
-      } else if (m['type'] === 'PersistentVolume') {
+      } else if (m['type'] === 'PV') {
         if (
           _.find(
             node.select(`path[data-type=${'PV'}]`).data(),
             (pvData: any) => pvData.data.label === m['name']
           )
         ) {
-          const iopsUsage = ((m['iops'] || 0) / 1000) * 100
-          const bandwidthUsage = ((m['bandwidth'] || 0) / 100) * 100
-          const latencyUsage = Math.max(
-            0,
-            100 - ((m['latency'] || 0) / 50) * 100
-          )
-          const pick = Math.max(iopsUsage, bandwidthUsage, latencyUsage)
+          const iopsValue = m['iops'] || 0
+          const bandwidthValue = m['bandwidth'] || 0
+          const latencyValue = m['latency'] || 0
+
+          const iopsUsage = (iopsValue / 100000) * 100
+          const bandwidthUsage = (bandwidthValue / 700000) * 100
+
+          const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
+          const fillColor = (kubernetesStatusColor(
+            pick / 100
+          ) as unknown) as string
 
           node
             .select(`path[data-label=${esc(m['name'])}]`)
-            .attr('data-iops', `${iopsUsage}`)
-            .attr('data-bandwidth', `${bandwidthUsage}`)
-            .attr('data-latency', `${latencyUsage}`)
-            .attr(
-              'fill',
-              (kubernetesStatusColor(pick / 100) as unknown) as string
-            )
+            .attr('data-iops', `${iopsValue}`)
+            .attr('data-bandwidth', `${bandwidthValue}`)
+            .attr('data-latency', `${latencyValue}`)
+            .attr('fill', fillColor)
+
+          // Color mapped PVCs that reference this PV (via data-volume-name)
+          node
+            .selectAll(`path[data-type=${'PVC'}]`)
+            .filter(function () {
+              return d3.select(this).attr('data-volume-name') === m['name']
+            })
+            .attr('fill', fillColor)
         }
       } else {
         if (

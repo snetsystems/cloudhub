@@ -6,7 +6,7 @@ import _ from 'lodash'
 import {DropdownItem} from 'src/types'
 
 // Component
-import {Button, ButtonShape, IconFont, ComponentStatus} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
 import Dropdown from 'src/shared/components/Dropdown'
 import KubernetesDropdown from 'src/clouds/components/KubernetesDropdown'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
@@ -15,7 +15,6 @@ import MultiSelectAutoCompleteDropdown from 'src/reusable_ui/components/dropdown
 
 // Contants
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
-import {COLLECTOR_SERVER} from 'src/shared/constants'
 
 interface Props {
   handleChooseNamespace: (selectedIDs: string[], value: {id: string}) => void
@@ -33,14 +32,7 @@ interface Props {
   nodes: string[]
   limits: string[]
   height: number
-  minions: string[]
-  selectMinion: string
-  handleChoosMinion: (select: {text: string}) => void
-  isOpenMinions: boolean
-  isDisabledMinions: boolean
-  minionsStatus: ComponentStatus
-  handleCloseMinionsDropdown: () => void
-  onClickMinionsDropdown: () => void
+
   selectedAutoRefresh: number
   handleChooseKubernetesAutoRefresh: (options: AutoRefreshOption) => void
   handleKubernetesRefresh: () => void
@@ -83,14 +75,7 @@ class KubernetesHeader extends PureComponent<Props, State> {
       nodes,
       limits,
       height,
-      minions,
-      selectMinion,
-      handleChoosMinion,
-      isOpenMinions,
-      isDisabledMinions,
-      handleCloseMinionsDropdown,
-      onClickMinionsDropdown,
-      minionsStatus,
+
       handleChooseKubernetesAutoRefresh,
       handleKubernetesRefresh,
       selectedAutoRefresh,
@@ -176,20 +161,6 @@ class KubernetesHeader extends PureComponent<Props, State> {
           </div>
         </div>
         <div className={'kubernetes-header--right'}>
-          <div className={'kubernetes-header--bar-item'}>
-            <KubernetesDropdown
-              items={minions}
-              onChoose={handleChoosMinion}
-              onClick={onClickMinionsDropdown}
-              isOpen={isOpenMinions}
-              selected={selectMinion}
-              onClose={handleCloseMinionsDropdown}
-              className="dropdown-menu"
-              disabled={isDisabledMinions}
-              status={minionsStatus}
-              filterPrefix={COLLECTOR_SERVER}
-            />
-          </div>
           <div className={'kubernetes-header--bar-item'}>
             <AutoRefreshDropdown
               selected={selectedAutoRefresh}

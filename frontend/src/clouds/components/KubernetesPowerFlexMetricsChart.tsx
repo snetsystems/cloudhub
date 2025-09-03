@@ -160,7 +160,7 @@ function KubernetesPowerFlexMetricsChart({
             queries: [
               {
                 query:
-                  'SELECT mean("userData")/1000 AS "userData" FROM ":db:"."autogen"."scaleio.volume.bw.write"',
+                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.bw.write"',
                 wheres: [...wheres],
                 groupbys: ['"volume_name"'],
               },
@@ -178,7 +178,7 @@ function KubernetesPowerFlexMetricsChart({
                 bounds: ['', ''],
                 label: 'Bandwidth',
                 prefix: '',
-                suffix: ' MB/s',
+                suffix: ' kB/s',
                 base: '2',
                 scale: 'linear',
               },
@@ -275,7 +275,7 @@ function KubernetesPowerFlexMetricsChart({
                 bounds: ['', ''],
                 label: 'IOPS',
                 prefix: '',
-                suffix: ' ms',
+                suffix: ' io/s',
                 base: '2',
                 scale: 'linear',
               },

@@ -27,8 +27,8 @@ interface State {
 class KubernetesTooltip extends PureComponent<Props, State> {
   private tooltipRef = createRef<HTMLDivElement>()
   private tableSize = {
-    header: '40%',
-    body: '60%',
+    header: '35%',
+    body: '65%',
   }
 
   public constructor(props: Props) {
@@ -63,16 +63,38 @@ class KubernetesTooltip extends PureComponent<Props, State> {
     const {top, bottom, left, right} = this.state
     const {name, cpu, memory, iops, bandwidth, latency} = tooltipNode
 
+    const iopsPercent = _.isNumber(iops)
+      ? Math.min((iops / 100000) * 100, 100)
+      : 0
+    const bandwidthPercent = _.isNumber(bandwidth)
+      ? Math.min((bandwidth / 700000) * 100, 100)
+      : 0
+
+    const fmt = (v: number, frac: number) =>
+      _.isNumber(v) && Number.isFinite(v)
+        ? Number(v).toLocaleString('en-US', {
+            minimumFractionDigits: frac,
+            maximumFractionDigits: frac,
+            useGrouping: true,
+          })
+        : `0.${'0'.repeat(frac)}`
+    const iopsDisplay = fmt(iops as number, 1)
+    const bandwidthDisplay = fmt(bandwidth as number, 1)
+    const latencyDisplay = fmt(latency as number, 3)
+
     return (
       <div
         style={{top, bottom, left, right}}
         className={this.handleToolTipClassName}
         ref={this.tooltipRef}
       >
-        <div className="kubernetes-toolbar--tooltip-contents">
+        <div
+          className="kubernetes-toolbar--tooltip-contents"
+          style={{minWidth: '280px'}}
+        >
           <div className={'hosts-table--tbody'}>
             {name ? (
-              <div className={'hosts-table--tr'}>
+              <div className={'hosts-table--tr'} style={{minHeight: '24px'}}>
                 <div className={'hosts-table--td align--start'}>{name}</div>
               </div>
             ) : null}
@@ -137,11 +159,13 @@ class KubernetesTooltip extends PureComponent<Props, State> {
                   style={{width: this.tableSize.body}}
                 >
                   <div className={'UsageIndacator-container'}>
-                    <div className={'UsageIndacator-value'}>{iops} %</div>
+                    <div className={'UsageIndacator-value'}>
+                      {iopsDisplay} io/s
+                    </div>
                     <div
                       className={'UsageIndacator'}
                       style={{
-                        background: `${statusColor(iops / 100)}`,
+                        background: `${statusColor(iopsPercent / 100)}`,
                       }}
                     ></div>
                   </div>
@@ -161,11 +185,13 @@ class KubernetesTooltip extends PureComponent<Props, State> {
                   style={{width: this.tableSize.body}}
                 >
                   <div className={'UsageIndacator-container'}>
-                    <div className={'UsageIndacator-value'}>{bandwidth} %</div>
+                    <div className={'UsageIndacator-value'}>
+                      {bandwidthDisplay} kB/s
+                    </div>
                     <div
                       className={'UsageIndacator'}
                       style={{
-                        background: `${statusColor(bandwidth / 100)}`,
+                        background: `${statusColor(bandwidthPercent / 100)}`,
                       }}
                     ></div>
                   </div>
@@ -185,11 +211,15 @@ class KubernetesTooltip extends PureComponent<Props, State> {
                   style={{width: this.tableSize.body}}
                 >
                   <div className={'UsageIndacator-container'}>
-                    <div className={'UsageIndacator-value'}>{latency} %</div>
+                    <div className={'UsageIndacator-value'}>
+                      {latencyDisplay} ms
+                    </div>
                     <div
                       className={'UsageIndacator'}
                       style={{
-                        background: `${statusColor(latency / 100)}`,
+                        background: `${statusColor(
+                          Math.min(latency / 100, 1)
+                        )}`,
                       }}
                     ></div>
                   </div>

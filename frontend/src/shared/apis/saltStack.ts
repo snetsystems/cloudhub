@@ -3395,3 +3395,157 @@ export async function getKubernetesNamespacesMultiProxy(pParam: Params) {
     throw error
   }
 }
+
+export async function getKubernetesDetailProxy(pParam: Params) {
+  try {
+    const fun = pParam.fun || ''
+    const namespace = pParam.kwarg?.namespace || ''
+    const name = pParam.kwarg?.name || ''
+
+    if (!fun || !name) {
+      throw new Error('Function and name are required')
+    }
+
+    const resourceType = fun
+      .replace('kubernetes.show_', '')
+      .replace('kubernetes.', '')
+
+    let endpoint = ''
+
+    switch (resourceType.toLowerCase()) {
+      case 'pod':
+        endpoint = namespace
+          ? `/api/v1/namespaces/${namespace}/pods/${name}`
+          : `/api/v1/pods/${name}`
+        break
+      case 'service':
+        endpoint = namespace
+          ? `/api/v1/namespaces/${namespace}/services/${name}`
+          : `/api/v1/services/${name}`
+        break
+      case 'deployment':
+        endpoint = namespace
+          ? `/apis/apps/v1/namespaces/${namespace}/deployments/${name}`
+          : `/apis/apps/v1/deployments/${name}`
+        break
+      case 'replication_controller':
+        endpoint = namespace
+          ? `/api/v1/namespaces/${namespace}/replicationcontrollers/${name}`
+          : `/api/v1/replicationcontrollers/${name}`
+        break
+      case 'replica_set':
+        endpoint = namespace
+          ? `/apis/apps/v1/namespaces/${namespace}/replicasets/${name}`
+          : `/apis/apps/v1/replicasets/${name}`
+        break
+      case 'daemon_set':
+        endpoint = namespace
+          ? `/apis/apps/v1/namespaces/${namespace}/daemonsets/${name}`
+          : `/apis/apps/v1/daemonsets/${name}`
+        break
+      case 'stateful_set':
+        endpoint = namespace
+          ? `/apis/apps/v1/namespaces/${namespace}/statefulsets/${name}`
+          : `/apis/apps/v1/statefulsets/${name}`
+        break
+      case 'job':
+        endpoint = namespace
+          ? `/apis/batch/v1/namespaces/${namespace}/jobs/${name}`
+          : `/apis/batch/v1/jobs/${name}`
+        break
+      case 'cron_job':
+        endpoint = namespace
+          ? `/apis/batch/v1/namespaces/${namespace}/cronjobs/${name}`
+          : `/apis/apps/v1/cronjobs/${name}`
+        break
+      case 'persistent_volume':
+        endpoint = `/api/v1/persistentvolumes/${name}`
+        break
+      case 'persistent_volume_claim':
+        endpoint = namespace
+          ? `/api/v1/namespaces/${namespace}/persistentvolumeclaims/${name}`
+          : `/api/v1/persistentvolumeclaims/${name}`
+        break
+      case 'config_map':
+        endpoint = namespace
+          ? `/api/v1/namespaces/${namespace}/configmaps/${name}`
+          : `/api/v1/configmaps/${name}`
+        break
+      case 'secret':
+        endpoint = namespace
+          ? `/api/v1/namespaces/${namespace}/secrets/${name}`
+          : `/api/v1/secrets/${name}`
+        break
+      case 'ingress':
+        endpoint = namespace
+          ? `/apis/networking.k8s.io/v1/namespaces/${namespace}/ingresses/${name}`
+          : `/apis/networking.k8s.io/v1/ingresses/${name}`
+        break
+      case 'service_account':
+        endpoint = namespace
+          ? `/api/v1/namespaces/${namespace}/serviceaccounts/${name}`
+          : `/api/v1/serviceaccounts/${name}`
+        break
+      case 'role':
+        endpoint = namespace
+          ? `/apis/rbac.authorization.k8s.io/v1/namespaces/${namespace}/roles/${name}`
+          : `/apis/rbac.authorization.k8s.io/v1/roles/${name}`
+        break
+      case 'role_binding':
+        endpoint = namespace
+          ? `/apis/rbac.authorization.k8s.io/v1/namespaces/${namespace}/rolebindings/${name}`
+          : `/apis/rbac.authorization.k8s.io/v1/rolebindings/${name}`
+        break
+      case 'cluster_role':
+        endpoint = `/apis/rbac.authorization.k8s.io/v1/clusterroles/${name}`
+        break
+      case 'cluster_role_binding':
+        endpoint = `/apis/rbac.authorization.k8s.io/v1/clusterrolebindings/${name}`
+        break
+      case 'node':
+        endpoint = `/api/v1/nodes/${name}`
+        break
+      case 'namespace':
+        endpoint = `/api/v1/namespaces/${name}`
+        break
+      default:
+        throw new Error(`Unsupported resource type: ${resourceType}`)
+    }
+
+    const data = await kubernetesProxyRequest(endpoint)
+
+    let cleanedData = {...data}
+
+    delete cleanedData.managed_fields
+    delete cleanedData.annotations
+    delete cleanedData.managedFields
+    delete cleanedData.annotations
+
+    if (cleanedData.metadata) {
+      delete cleanedData.metadata.managed_fields
+      delete cleanedData.metadata.annotations
+      delete cleanedData.metadata.managedFields
+      delete cleanedData.metadata.annotations
+    }
+
+    const cleanedDataWithoutNull = JSON.parse(
+      JSON.stringify(cleanedData, (_, value) => {
+        if (value === null) return undefined
+        if (
+          value &&
+          typeof value === 'object' &&
+          Object.keys(value).length === 0
+        )
+          return undefined
+        return value
+      })
+    )
+
+    return {
+      data: cleanedDataWithoutNull,
+    }
+  } catch (error) {
+    console.error('Kubernetes Detail Proxy API error:', error)
+    throw error
+  }
+}

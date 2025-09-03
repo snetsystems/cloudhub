@@ -57,7 +57,6 @@ interface Props {
   cells: Cell[]
   manualRefresh: number
   host: string
-  selectMinion: string
   remoteDataState: RemoteDataState
   selectedPersistentVolume?: string[] | null
   highlightVolumes: string[]

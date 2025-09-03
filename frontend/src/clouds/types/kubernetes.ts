@@ -198,10 +198,4 @@ export interface KubernetesProps {
     targetMinion: string,
     pParam?: SaltStack
   ) => Promise<any>
-  handleGetK8sDetail: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    targetMinion: string,
-    pParam?: SaltStack
-  ) => Promise<any>
 }

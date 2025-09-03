@@ -3,40 +3,12 @@ import React, {PureComponent, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import * as d3 from 'd3'
-import yaml from 'js-yaml'
 
 // Component
 import KubernetesHeader from 'src/clouds/components/KubernetesHeader'
 import KubernetesContents from 'src/clouds/components/KubernetesContents'
-import {ComponentStatus} from 'src/reusable_ui'
-import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
-// Actions
-import {getMinionKeyAcceptedListAsync} from 'src/clouds/actions'
-import {
-  getLocalK8sNamespacesAsync,
-  getLocalK8sNodesAsync,
-  getLocalK8sPodsAsync,
-  getLocalK8sDeploymentsAsync,
-  getLocalK8sReplicaSetsAsync,
-  getLocalK8sReplicationControllersAsync,
-  getLocalK8sDaemonSetsAsync,
-  getLocalK8sStatefulSetsAsync,
-  getLocalK8sJobsAsync,
-  getLocalK8sCronJobsAsync,
-  getLocalK8sServicesAsync,
-  getLocalK8sIngressesAsync,
-  getLocalK8sConfigmapsAsync,
-  getLocalK8sSecretsAsync,
-  getLocalK8sServiceAccountsAsync,
-  getLocalK8sClusterRolesAsync,
-  getLocalK8sClusterRoleBindingsAsync,
-  getLocalK8sRolesAsync,
-  getLocalK8sRoleBindingsAsync,
-  getLocalK8sPersistentVolumesAsync,
-  getLocalK8sPersistentVolumeClaimsAsync,
-  getLocalK8sDetailAsync,
-} from 'src/clouds/actions/kubernetes'
+import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 // Kubernetes Proxy API
 import {
@@ -57,6 +29,7 @@ import {
   getKubernetesStatefulSetsProxy,
   getKubernetesCronJobsProxy,
   getKubernetesJobsProxy,
+  getKubernetesDetailProxy,
 } from 'src/shared/apis/saltStack'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
@@ -103,8 +76,6 @@ import {
   D3DataDepth3,
   KubernetesObject,
 } from 'src/clouds/types'
-import {AddonType} from 'src/shared/constants'
-import {SaltStack} from 'src/types/saltstack'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -158,11 +129,7 @@ interface State {
   isToolipActive: boolean
   targetPosition: TooltipPosition
   tooltipNode: TooltipNode
-  minions: string[]
-  selectMinion: string
   selectedAutoRefresh: AutoRefreshOption['milliseconds']
-  isOpenMinions: boolean
-  isDisabledMinions: boolean
   layouts: Layout[]
   hostLinks: DashboardSwitcherLinks
   kubernetesData: object
@@ -180,10 +147,8 @@ class KubernetesPage extends PureComponent<Props, State> {
   private height = 40
   private getKubernetesObjectInterval: NodeJS.Timer = null
   private getKubernetesResourceInterval: NodeJS.Timer = null
-  private noSelect: string = 'no select'
   private defaultState = {
     proportions: [0.75, 0.25],
-    selectMinion: this.noSelect,
     selectedAutoRefresh: 0,
   }
 
@@ -222,9 +187,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         cpu: null,
         memory: null,
       },
-      minions: [],
-      isOpenMinions: false,
-      isDisabledMinions: false,
+
       kubernetesD3Data: {name: null, children: []},
       layouts: [],
       hostLinks: EMPTY_LINKS,
@@ -237,7 +200,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public getNodes = async (detail: boolean = true) => {
-    const pParam: SaltStack = {kwarg: {detail}}
+    const pParam: any = {kwarg: {detail}}
 
     try {
       const nodes = await getKubernetesNodesProxy(pParam)
@@ -261,7 +224,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     } = this.state
 
     if (isAllNamespaces) {
-      const pParam: SaltStack = {
+      const pParam: any = {
         kwarg: {
           namespace: '',
           fieldselector: node ? `spec.nodeName=${node}` : '',
@@ -287,7 +250,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     const podPromises = selectedNamespaces.map(async namespace => {
-      const pParam: SaltStack = {
+      const pParam: any = {
         kwarg: {
           namespace: namespace,
           fieldselector: node ? `spec.nodeName=${node}` : '',
@@ -348,7 +311,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       kwarg.namespace = namespace
     }
 
-    const pParam: SaltStack = {kwarg}
+    const pParam: any = {kwarg}
 
     try {
       const deployments = await getKubernetesDeploymentsProxy(pParam)
@@ -383,7 +346,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       kwarg.namespace = namespace
     }
 
-    const pParam: SaltStack = {kwarg}
+    const pParam: any = {kwarg}
 
     try {
       const replicaSets = await getKubernetesReplicaSetsProxy(pParam)
@@ -401,7 +364,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
+    const pParam: any = {
       kwarg: {
         namespace: namespace,
         labelselector:
@@ -433,7 +396,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
+    const pParam = {
       kwarg: {
         namespace: namespace,
         labelselector:
@@ -463,7 +426,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
+    const pParam = {
       kwarg: {
         namespace: namespace,
         labelselector:
@@ -493,7 +456,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
+    const pParam = {
       kwarg: {
         namespace: namespace,
         labelselector:
@@ -523,7 +486,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterLabelValue,
       filterLimit,
     } = this.state
-    const pParam: SaltStack = {
+    const pParam = {
       kwarg: {
         namespace: namespace,
         labelselector:
@@ -570,7 +533,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       kwarg.namespace = namespace
     }
 
-    const pParam: SaltStack = {kwarg}
+    const pParam: any = {kwarg}
 
     try {
       const services = await getKubernetesServicesProxy(pParam)
@@ -605,7 +568,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       kwarg.namespace = namespace
     }
 
-    const pParam: SaltStack = {kwarg}
+    const pParam: any = {kwarg}
 
     try {
       const ingresses = await getKubernetesIngressesProxy(pParam)
@@ -613,98 +576,6 @@ class KubernetesPage extends PureComponent<Props, State> {
     } catch (error) {
       console.error(error)
       return []
-    }
-  }
-
-  public getConfigmaps = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const configmaps = await this.props.handleGetConfigmaps(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(configmaps)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-
-    return null
-  }
-
-  public getSecrets = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const secrets = await this.props.handleGetSecrets(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(secrets)
-    } catch (error) {
-      console.error(error)
-      return null
     }
   }
 
@@ -732,7 +603,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       kwarg.namespace = namespace
     }
 
-    const pParam: SaltStack = {kwarg}
+    const pParam: any = {kwarg}
 
     try {
       const serviceAccounts = await getKubernetesServiceAccountsProxy(pParam)
@@ -740,92 +611,6 @@ class KubernetesPage extends PureComponent<Props, State> {
     } catch (error) {
       console.error(error)
       return []
-    }
-  }
-
-  public getClusterRoles = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const clusterRoles = await this.props.handleGetClusterRoles(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(clusterRoles)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-  }
-
-  public getClusterRoleBindings = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const clusterRoleBindings = await this.props.handleGetClusterRoleBindings(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(clusterRoleBindings)
-    } catch (error) {
-      console.error(error)
-      return null
     }
   }
 
@@ -853,7 +638,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       kwarg.namespace = namespace
     }
 
-    const pParam: SaltStack = {kwarg}
+    const pParam: any = {kwarg}
 
     try {
       const roles = await getKubernetesRolesProxy(pParam)
@@ -888,7 +673,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       kwarg.namespace = namespace
     }
 
-    const pParam: SaltStack = {kwarg}
+    const pParam: any = {kwarg}
 
     try {
       const roleBindings = await getKubernetesRoleBindingsProxy(pParam)
@@ -900,22 +685,13 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public getPersistentVolumes = async () => {
-    const {
-      selectedLimit,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const pParam: SaltStack = {
+    const {filterLabelKey, filterLabelValue} = this.state
+    const pParam: any = {
       kwarg: {
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -955,7 +731,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       kwarg.namespace = namespace
     }
 
-    const pParam: SaltStack = {kwarg}
+    const pParam = {kwarg}
 
     try {
       const persistentVolumeClaims = await getKubernetesPersistentVolumeClaimsProxy(
@@ -1163,27 +939,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     return relation
   }
 
-  public getMinionKeyAcceptedList = async () => {
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    try {
-      const minions = await this.props.handleGetMinionKeyAcceptedList(
-        saltMasterUrl,
-        saltMasterToken
-      )
-
-      return minions
-    } catch (error) {
-      return []
-    }
-  }
-
   public getNamespaces = async () => {
-    const pParam: SaltStack = {
+    const pParam: any = {
       kwarg: {namespace: '', detail: true},
     }
 
@@ -3090,6 +2847,42 @@ class KubernetesPage extends PureComponent<Props, State> {
                 (kubernetesStatusColor(pick / 100) as unknown) as string
               )
           }
+        } else if (m['type'] === 'PV') {
+          if (
+            _.find(
+              node.select(`path[data-type=${'PV'}]`).data() as any[],
+              pvData => pvData.data.label === m['name']
+            )
+          ) {
+            const iopsValue = m['iops'] || 0
+            const bandwidthValue = m['bandwidth'] || 0
+            const latencyValue = m['latency'] || 0
+
+            const iopsUsage = (iopsValue / 100000) * 100
+            const bandwidthUsage = (bandwidthValue / 700000) * 100
+
+            const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
+            const fillColor = (kubernetesStatusColor(
+              pick / 100
+            ) as unknown) as string
+
+            node
+              .select(`path[data-label=${esc(m['name'])}]`)
+              .attr('data-iops', `${iopsValue}`)
+              .attr('data-bandwidth', `${bandwidthValue}`)
+              .attr('data-latency', `${latencyValue}`)
+              .attr('fill', fillColor)
+
+            const volumeMapping = this.state.volumeMapping || {}
+            const mappedPVCs = Object.keys(volumeMapping).filter(
+              pvcName => volumeMapping[pvcName] === m['name']
+            )
+            mappedPVCs.forEach(pvcName => {
+              node
+                .select(`path[data-type=${'PVC'}][data-label=${esc(pvcName)}]`)
+                .attr('fill', fillColor)
+            })
+          }
         } else {
           if (
             _.find(
@@ -3146,35 +2939,10 @@ class KubernetesPage extends PureComponent<Props, State> {
         source.telegraf,
         tempVars
       )
-
-      const persistentVolumes = (this.state.kubernetesData as any)
-        ?.PersistentVolume
-      if (
-        persistentVolumes &&
-        typeof persistentVolumes === 'object' &&
-        Object.keys(persistentVolumes).length > 0
-      ) {
-        Object.keys(persistentVolumes).forEach((pvName: string) => {
-          kubernetesObject[pvName] = {
-            name: pvName,
-            type: 'PersistentVolume',
-            cpu: '0',
-            memory: '0',
-            iops: Math.floor(Math.random() * 1000) + 100,
-            bandwidth: Math.floor(Math.random() * 100) + 10,
-            latency: Math.floor(Math.random() * 50) + 1,
-          }
-        })
-      }
-
       this.setState({kubernetesObject})
     } catch (error) {
       console.error(error)
     }
-  }
-
-  public getFirstMinion = (minions: string[]) => {
-    return _.isEmpty(minions) ? this.noSelect : minions[0]
   }
 
   public async componentDidMount() {
@@ -3195,26 +2963,15 @@ class KubernetesPage extends PureComponent<Props, State> {
     const {
       proportions,
       selectedAutoRefresh,
-      selectMinion: storedSelectMinion,
       selectedNamespaces: storedSelectedNamespaces = ['All namespaces'],
     } = getLocal
 
-    const minions = await this.getMinionKeyAcceptedList()
-
-    const selectMinion = _.includes(minions, storedSelectMinion)
-      ? storedSelectMinion
-      : this.getFirstMinion(minions)
-
-    this.handleKubernetesResourceAutoRefresh()
-
     this.setState({
-      minions,
-      selectMinion,
       proportions,
       selectedAutoRefresh,
       selectedNamespaces: storedSelectedNamespaces || ['All namespaces'],
-      remoteDataState: RemoteDataState.Loading,
     })
+    await this.getK8sObject()
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -3224,7 +2981,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       kubernetesData,
       focuseNode,
       selectedAutoRefresh,
-      selectMinion,
       selectedNamespaces,
       filterNamespace,
       filterLimit,
@@ -3233,14 +2989,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterLabelValue,
       highlightVolumes,
     } = this.state
-
-    if (
-      prevState.selectMinion !== selectMinion &&
-      this.noSelect !== selectMinion &&
-      selectedAutoRefresh === 0
-    ) {
-      this.debouncedHandleKubernetesRefresh()
-    }
 
     if (prevProps.manualRefresh !== manualRefresh) {
       this.handleKubernetesResourceRefresh()
@@ -3308,10 +3056,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       GlobalAutoRefresher.poll(autoRefresh)
     }
 
-    if (
-      prevState.selectedAutoRefresh !== selectedAutoRefresh ||
-      prevState.selectMinion !== selectMinion
-    ) {
+    if (prevState.selectedAutoRefresh !== selectedAutoRefresh) {
       this.handleKubernetesAutoRefresh()
     }
 
@@ -3325,11 +3070,6 @@ class KubernetesPage extends PureComponent<Props, State> {
     if (prevState.selectedAutoRefresh !== selectedAutoRefresh) {
       const getLocal = getLocalStorage('kubernetes')
       setLocalStorage('kubernetes', {...getLocal, selectedAutoRefresh})
-    }
-
-    if (prevState.selectMinion !== selectMinion) {
-      const getLocal = getLocalStorage('kubernetes')
-      setLocalStorage('kubernetes', {...getLocal, selectMinion})
     }
 
     if (!_.isEqual(prevState.selectedNamespaces, selectedNamespaces)) {
@@ -3372,10 +3112,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       isToolipActive,
       targetPosition,
       tooltipNode,
-      minions,
-      selectMinion,
-      isOpenMinions,
-      isDisabledMinions,
+
       selectedAutoRefresh,
       layouts,
       highlightVolumes,
@@ -3402,18 +3139,6 @@ class KubernetesPage extends PureComponent<Props, State> {
           nodes={['All nodes', ...nodes]}
           limits={limits}
           height={this.height}
-          minions={minions}
-          selectMinion={selectMinion}
-          handleChoosMinion={this.onChooseMinion}
-          isOpenMinions={isOpenMinions}
-          isDisabledMinions={isDisabledMinions}
-          minionsStatus={
-            isDisabledMinions
-              ? ComponentStatus.Loading
-              : ComponentStatus.Default
-          }
-          handleCloseMinionsDropdown={this.handleCloseMinionsDropdown}
-          onClickMinionsDropdown={this.onClickMinionsDropdown}
           handleChooseKubernetesAutoRefresh={
             this.handleChooseKubernetesAutoRefresh
           }
@@ -3445,7 +3170,6 @@ class KubernetesPage extends PureComponent<Props, State> {
           timeRange={timeRange}
           manualRefresh={manualRefresh}
           host={''}
-          selectMinion={selectMinion}
           remoteDataState={this.state.remoteDataState}
           highlightVolumes={highlightVolumes}
           layouts={layouts}
@@ -3556,10 +3280,10 @@ class KubernetesPage extends PureComponent<Props, State> {
   )
 
   private handleKubernetesAutoRefresh = async () => {
-    const {selectMinion, selectedAutoRefresh} = this.state
+    const {selectedAutoRefresh} = this.state
 
     this.clearKubernetesObjectInterval()
-    if (selectMinion === null || selectedAutoRefresh === 0) return
+    if (selectedAutoRefresh === 0) return
 
     await this.getK8sObject()
     this.getKubernetesObjectInterval = setTimeout(() => {
@@ -3584,31 +3308,6 @@ class KubernetesPage extends PureComponent<Props, State> {
     milliseconds: AutoRefreshOption['milliseconds']
   }) => {
     this.setState({selectedAutoRefresh: milliseconds})
-  }
-
-  private onClickMinionsDropdown = async () => {
-    const {isOpenMinions, selectMinion} = this.state
-
-    if (!isOpenMinions) {
-      this.setState({isDisabledMinions: true})
-      const minions: string[] = _.uniq(await this.getMinionKeyAcceptedList())
-      if (_.indexOf(minions, selectMinion) === -1) {
-        this.setState({selectMinion: null})
-      }
-
-      this.handleOpenMinionsDropdown()
-      this.setState({minions, isDisabledMinions: false})
-    } else {
-      this.handleCloseMinionsDropdown()
-    }
-  }
-
-  private handleOpenMinionsDropdown = () => {
-    this.setState({isOpenMinions: true})
-  }
-
-  private handleCloseMinionsDropdown = () => {
-    this.setState({isOpenMinions: false})
   }
 
   private onChooseNamespace = (selectedIDs: string[], value?: {id: string}) => {
@@ -3687,7 +3386,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   private onClickVisualizePod = async (data: any) => {
-    const {selectMinion, volumeMapping} = this.state
+    const {volumeMapping} = this.state
     const {setSelectedPersistentVolume} = this.props
 
     const focuseNodeName = _.get(data, 'data.name')
@@ -3717,13 +3416,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     //   this.setState({highlightVolumes: []})
     // }
 
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    let pParam: SaltStack = {}
+    let pParam: any = {}
 
     pParam = k8sNodeTypeAttrs?.[focuseNodeType]?.saltParam
 
@@ -3747,19 +3440,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     if (_.isEmpty(pParam)) return
 
-    const k8sDetail = await this.props.handleGetK8sDetail(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
+    const k8sDetail = await getKubernetesDetailProxy({
+      ...pParam,
+      fun: pParam.fun || 'kubernetes.show_pod',
+    })
 
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(k8sDetail.data).return[0])[0],
-        this.jsonRemoveNull
-      )
-    )
+    const resultJson = k8sDetail.data
 
     if (focuseNodeName) {
       this.setState({
@@ -3891,9 +3577,9 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (dataType === 'PV') {
-      tooltipNode.iops = parseInt(target.getAttribute('data-iops'))
-      tooltipNode.bandwidth = parseInt(target.getAttribute('data-bandwidth'))
-      tooltipNode.latency = parseInt(target.getAttribute('data-latency'))
+      tooltipNode.iops = parseFloat(target.getAttribute('data-iops'))
+      tooltipNode.bandwidth = parseFloat(target.getAttribute('data-bandwidth'))
+      tooltipNode.latency = parseFloat(target.getAttribute('data-latency'))
     }
 
     this.setState({
@@ -3908,29 +3594,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       isToolipActive: false,
       targetPosition: {top: null, right: null, left: null, width: null},
     })
-  }
-
-  private onChooseMinion = (minion: {text: string}) => {
-    this.setState({selectMinion: minion.text})
-  }
-
-  private yamltoJson = (pData: any) => {
-    try {
-      const jsonData = _.values(yaml.safeLoad(pData.data).return[0])[0]
-
-      if (jsonData !== null && jsonData !== undefined) {
-        const resultJson = JSON.parse(
-          JSON.stringify(jsonData, this.jsonRemoveNull)
-        )
-
-        return resultJson
-      }
-
-      return null
-    } catch (error) {
-      console.log(error)
-      return null
-    }
   }
 
   private esc = (v: any) =>
@@ -3949,29 +3612,6 @@ const mstp = ({links: {addons}, auth: {me}}) => {
 }
 
 const mdtp = {
-  handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
-  handleGetNamespaces: getLocalK8sNamespacesAsync,
-  handleGetNodes: getLocalK8sNodesAsync,
-  handleGetPods: getLocalK8sPodsAsync,
-  handleGetDeployments: getLocalK8sDeploymentsAsync,
-  handleGetReplicaSets: getLocalK8sReplicaSetsAsync,
-  handleGetReplicationControllers: getLocalK8sReplicationControllersAsync,
-  handleGetDaemonSets: getLocalK8sDaemonSetsAsync,
-  handleGetStatefulSets: getLocalK8sStatefulSetsAsync,
-  handleGetCronJobs: getLocalK8sCronJobsAsync,
-  handleGetJobs: getLocalK8sJobsAsync,
-  handleGetServices: getLocalK8sServicesAsync,
-  handleGetIngresses: getLocalK8sIngressesAsync,
-  handleGetConfigmaps: getLocalK8sConfigmapsAsync,
-  handleGetSecrets: getLocalK8sSecretsAsync,
-  handleGetServiceAccounts: getLocalK8sServiceAccountsAsync,
-  handleGetClusterRoles: getLocalK8sClusterRolesAsync,
-  handleGetClusterRoleBindings: getLocalK8sClusterRoleBindingsAsync,
-  handleGetRoles: getLocalK8sRolesAsync,
-  handleGetRoleBindings: getLocalK8sRoleBindingsAsync,
-  handleGetPersistentVolumes: getLocalK8sPersistentVolumesAsync,
-  handleGetPersistentVolumeClaims: getLocalK8sPersistentVolumeClaimsAsync,
-  handleGetK8sDetail: getLocalK8sDetailAsync,
   notify: notifyAction,
   setSelectedPersistentVolume: setSelectedPersistentVolume,
 }
