@@ -95,6 +95,7 @@ import {
   Instance,
   PreferenceType,
   TopologyOption,
+  SelectedCellStatus,
 } from 'src/hosts/types'
 import {
   default as mxgraph,
@@ -428,6 +429,7 @@ interface State {
   isMouseUp: boolean
   isSettingOverlayOpen: boolean
   topologyOption: TopologyOption
+  selectedCellStatus: SelectedCellStatus
 }
 
 @ErrorHandling
@@ -560,6 +562,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         linkVisible: true,
         hostStatusVisible: true,
       },
+      selectedCellStatus: 'Agent',
     }
   }
 
@@ -675,6 +678,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isDetectedServer,
       activeEditorTab,
       topologyOption,
+      selectedCellStatus,
     } = this.state
 
     if (layouts) {
@@ -789,6 +793,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
         isGetHostDetailInfo: RemoteDataState.Done,
       })
     }
+
+    if (prevState.selectedCellStatus !== selectedCellStatus) {
+      const getFromItems = getFromOptions(focusedInstance)
+
+      if (getFromItems.includes(selectedCellStatus)) {
+        this.setState({selected: selectedCellStatus})
+      }
+    }
   }
 
   public componentWillUnmount() {
@@ -854,6 +866,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     } = this.state
     const {notify} = this.props
     const isExportXML = modalTitle === 'Export XML'
+
     return (
       <div id="containerWrapper" style={{userSelect: 'none'}}>
         {!mxClient.isBrowserSupported() ? (

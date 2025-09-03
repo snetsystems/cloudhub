@@ -7,6 +7,7 @@ import {
   TopologyOption,
 } from 'src/hosts/types/cloud'
 import {PreferenceType} from 'src/hosts/types/preferences'
+import {SelectedCellStatus} from 'src/hosts/types/agent'
 
 export {
   LayoutCell,
@@ -16,4 +17,5 @@ export {
   Instance,
   PreferenceType,
   TopologyOption,
+  SelectedCellStatus,
 }

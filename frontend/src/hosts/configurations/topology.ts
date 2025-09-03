@@ -53,7 +53,7 @@ import {
 } from 'src/hosts/constants/topology'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 import {COLLECTOR_SERVER} from 'src/shared/constants'
-import {PreferenceType} from 'src/hosts/types'
+import {PreferenceType, SelectedCellStatus} from 'src/hosts/types'
 
 import {notifyDecryptedBytesFailed} from 'src/shared/copy/notifications'
 
@@ -238,6 +238,23 @@ export const createForm = function (
       const form = new mxForm('properties-table')
       const containerElement = getContainerElement(cell.value)
 
+      const dataStatus = containerElement.getAttribute('data-status')
+      if (this.setState) {
+        let selectedStatus: SelectedCellStatus = 'None'
+
+        if (dataStatus === null || dataStatus === undefined) {
+          selectedStatus = 'None'
+        } else if (dataStatus.toLowerCase() === 'agent') {
+          selectedStatus = 'Agent'
+        } else if (dataStatus.toLowerCase() === 'ipmi') {
+          selectedStatus = 'IPMI'
+        } else {
+          selectedStatus = 'None'
+        }
+
+        this.setState({selectedCellStatus: selectedStatus})
+      }
+
       let attrs = []
 
       const getNodeType =
@@ -307,6 +324,9 @@ export const createForm = function (
       model.endUpdate()
     }
   } else {
+    if (this.setState) {
+      this.setState({selectedCellStatus: 'None'})
+    }
     mxUtils.writeln(properties, 'Nothing selected.')
   }
 }
