@@ -3289,7 +3289,6 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (prevState.highlightVolumes !== highlightVolumes) {
-      console.log('highlightVolumes : ', highlightVolumes)
       d3.selectAll(`path`).classed('kubernetes-volume', false)
       _.forEach(highlightVolumes, volume => {
         d3.selectAll(
@@ -3779,6 +3778,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     const focuseVolumes = _.get(data, 'data.volumes')
     const focuseNodeName = _.get(data, 'data.name') ?? ''
     const focuseNodeType = _.get(data, 'data.type') ?? ''
+    const focuseVolumeName = _.get(data, 'data.volume_name') ?? ''
 
     if (
       !this.findStringInArray(pinNode, focuseNodeName) ||
@@ -3796,6 +3796,14 @@ class KubernetesPage extends PureComponent<Props, State> {
           .filter((item: any) => !!item),
         focuseNodeName
       )
+    } else if (!!focuseVolumeName) {
+      // this.handleVolumeSpec([focuseVolumeName], focuseNodeName)
+      this.setState({
+        highlightVolumes: [
+          this.esc(focuseVolumeName),
+          this.esc(focuseNodeName),
+        ],
+      })
     } else {
       this.setState({highlightVolumes: []})
     }

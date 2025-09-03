@@ -50,8 +50,8 @@ export const clusterTypeColorset = {
   PersistentVolume: '#31313d',
   PV: '#000',
 }
-// Namespace: '#7f7f7f',
-// #5f5f5f -> #282828
+// Namespace: '#31313d',
+// #5f5f5f -> #000
 
 export const kubernetesStatusColor = chroma
   .scale(['#30e7f1', '#00cc2c', '#ff9e00', '#ff0000'])
