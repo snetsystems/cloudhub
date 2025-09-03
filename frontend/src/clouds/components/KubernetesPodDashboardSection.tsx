@@ -149,6 +149,7 @@ function KubernetesPodDashboardSection({
             }}
           >
             <KubernetesPowerFlexMetricsChart
+              title="Volume Chart"
               source={source}
               timeRange={timeRange}
               manualRefresh={manualRefresh}

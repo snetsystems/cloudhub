@@ -28,6 +28,7 @@ const KUBERNETES_METRICS_LAYOUT_ID = 'mock-kubernetes-layout'
 
 interface Props {
   source: Source
+  title: string
   timeRange: TimeRange
   manualRefresh: number
   powerFlexMetricsChartHeight?: number
@@ -38,6 +39,7 @@ interface Props {
 
 function KubernetesPowerFlexMetricsChart({
   source,
+  title,
   timeRange,
   manualRefresh,
   powerFlexMetricsChartHeight = 17,
@@ -100,7 +102,11 @@ function KubernetesPowerFlexMetricsChart({
     selectedPersistentVolume: string[] | null
   ) => {
     const wheres = selectedPersistentVolume
-      ? [`"volume_name"='${selectedPersistentVolume.join("','")}'`]
+      ? [
+          `("volume_name"='${selectedPersistentVolume.join(
+            '\' OR "volume_name"=\''
+          )}')`,
+        ]
       : []
 
     try {
@@ -460,7 +466,7 @@ function KubernetesPowerFlexMetricsChart({
       }}
     >
       <KubernetesPowerFlexDashboardHeader
-        cellName={'Performance'}
+        cellName={title}
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >

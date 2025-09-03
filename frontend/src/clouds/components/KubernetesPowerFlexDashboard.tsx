@@ -110,6 +110,7 @@ function KubernetesPowerFlexDashboard({
             }}
           >
             <KubernetesPowerFlexMetricsChart
+              title="Performance"
               source={source}
               timeRange={timeRange}
               manualRefresh={manualRefresh}
