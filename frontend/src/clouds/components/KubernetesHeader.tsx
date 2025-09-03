@@ -2,6 +2,9 @@
 import React, {PureComponent, ChangeEvent} from 'react'
 import _ from 'lodash'
 
+// Types
+import {DropdownItem} from 'src/types'
+
 // Component
 import {Button, ButtonShape, IconFont, ComponentStatus} from 'src/reusable_ui'
 import Dropdown from 'src/shared/components/Dropdown'
@@ -9,7 +12,6 @@ import KubernetesDropdown from 'src/clouds/components/KubernetesDropdown'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 import MultiSelectAutoCompleteDropdown from 'src/reusable_ui/components/dropdowns/MultiSelectAutoCompleteDropdown'
-import DropdownItem from 'src/reusable_ui/components/dropdowns/DropdownItem'
 
 // Contants
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
@@ -95,10 +97,10 @@ class KubernetesHeader extends PureComponent<Props, State> {
     } = this.props
 
     const {isOpenNodesDropdown} = this.state
-    const namespaceItems = namespaces.map(namespace => ({
+    const namespaceItems: DropdownItem[] = namespaces.map(namespace => ({
       text: namespace,
     }))
-    const nodeItems = nodes.map(node => ({
+    const nodeItems: DropdownItem[] = nodes.map(node => ({
       text: node,
     }))
 
@@ -110,7 +112,7 @@ class KubernetesHeader extends PureComponent<Props, State> {
         <div className={'kubernetes-header--left'}>
           <div
             className={'kubernetes-header--bar-item'}
-            style={{width: '200px'}}
+            style={{width: '300px'}}
           >
             <MultiSelectAutoCompleteDropdown
               selectedIDs={selectedNamespace}
@@ -119,17 +121,9 @@ class KubernetesHeader extends PureComponent<Props, State> {
               maxMenuHeight={145}
               maxSelections={5}
               exemptFromLimit={['All namespaces']}
-            >
-              {namespaceItems.map(item => (
-                <DropdownItem
-                  key={item.text}
-                  id={item.text}
-                  value={{id: item.text}}
-                >
-                  {item.text}
-                </DropdownItem>
-              ))}
-            </MultiSelectAutoCompleteDropdown>
+              useAutoComplete={true}
+              items={namespaceItems}
+            />
           </div>
           <div className={'kubernetes-header--bar-item'}>
             <KubernetesDropdown
