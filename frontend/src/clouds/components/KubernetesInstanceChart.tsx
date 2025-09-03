@@ -42,15 +42,15 @@ function KubernetesInstanceChart({
 
   useEffect(() => {
     const ratio = {
-      xNum: 3,
-      yNum: 2,
+      xNum: 4,
+      yNum: 1,
       height: podChartHeight,
     }
 
     if (!!layout) {
       setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
     }
-  }, [layout])
+  }, [layout, source, podChartHeight])
 
   useEffect(() => {
     const controller = new AbortController()

@@ -174,7 +174,15 @@ class KubernetesContents extends PureComponent<Props, State> {
 
     return (
       <FancyScrollbar>
-        <div style={{width: '100%', height: 'calc(100% - 50px)'}}>
+        <div
+          style={{
+            width: '100%',
+            height: 'calc(100% - 50px)',
+            paddingBottom: '8px',
+            backgroundColor: '#292933',
+            borderBottom: '4px solid #1F1F27',
+          }}
+        >
           <KubernetesHexagon
             kubernetesObject={kubernetesObject}
             kubernetesD3Data={kubernetesD3Data}

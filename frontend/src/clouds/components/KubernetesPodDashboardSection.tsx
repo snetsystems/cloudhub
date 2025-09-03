@@ -1,5 +1,5 @@
 // Library
-import React, {useMemo} from 'react'
+import React, {useCallback, useEffect, useMemo} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
@@ -24,6 +24,8 @@ import {
   setVolumeChartHeight,
 } from 'src/clouds/actions/kubernetesPowerFlex'
 import KubernetesPowerFlexMetricsChart from './KubernetesPowerFlexMetricsChart'
+
+const GridLayout = WidthProvider(ReactGridLayout)
 
 interface Props {
   source: Source
@@ -50,87 +52,71 @@ function KubernetesPodDashboardSection({
   setVolumeChartHeight,
   volumeChartHeight,
 }: Props) {
-  const GridLayout = WidthProvider(ReactGridLayout)
-
-  const savedCells = useMemo(() => {
-    const saved = localStorage.getItem('Kubernetes-pod-volume-cells')
-    console.log('savedCells 2: ', saved)
-    return saved ? JSON.parse(saved) : null
-  }, [])
-
-  // const cells = useMemo(() => {
-  //   const defaultCells = FIXTURE_KUBERNETES_POD_VOLUME_CELLS()
-  //   const baseCells = savedCells || defaultCells
-
-  //   return baseCells.map(cell => {
-  //     if (cell.i === 'kubernetes-pod-chart') {
-  //       return {
-  //         ...cell,
-  //         h: podChartHeight ?? cell.h,
-  //       }
-  //     }
-  //     if (cell.i === 'kubernetes-volume-chart') {
-  //       return {
-  //         ...cell,
-  //         h: volumeChartHeight ?? cell.h,
-  //       }
-  //     }
-  //     return cell
-  //   })
-  // }, [savedCells, podChartHeight, volumeChartHeight])
+  const LS_KEY = 'Kubernetes-pod-volume-cells'
 
   const cells = useMemo(() => {
     const defaultCells = FIXTURE_KUBERNETES_POD_VOLUME_CELLS()
-    console.log('savedCells 3: ', savedCells)
+
+    const savedCells = JSON.parse(localStorage.getItem(LS_KEY))
+
     if (!!savedCells) {
       return savedCells
     } else {
       return defaultCells
     }
-  }, [savedCells])
+  }, [])
+
+  useEffect(() => {
+    setPodChartHeight(cells.find(cell => cell.i === 'kubernetes-pod-chart')?.h)
+
+    setVolumeChartHeight(
+      cells.find(cell => cell.i === 'kubernetes-volume-chart')?.h
+    )
+  }, [])
 
   const setLocalCells = (cells: DashboardsModels.Cell[]) => {
-    localStorage.setItem('Kubernetes-pod-volume-cells', JSON.stringify(cells))
+    localStorage.setItem(LS_KEY, JSON.stringify(cells))
   }
 
-  const handleLayoutChange = layout => {
-    let changed = false
-    console.log('cells 1: ', cells)
-    const newCells = cells.map(cell => {
-      const l = layout.find(ly => ly.i === cell.i)
+  const handleLayoutChange = useCallback(
+    layout => {
+      let changed = false
+      const newCells = cells.map(cell => {
+        const l = layout.find(ly => ly.i === cell.i)
+        if (l.i === 'kubernetes-pod-chart' && cell.h !== l.h) {
+          setPodChartHeight(l.h)
+        } else if (l.i === 'kubernetes-volume-chart' && cell.h !== l.h) {
+          setVolumeChartHeight(l.h)
+        }
 
-      if (l.i === 'kubernetes-pod-chart' && cell.h !== l.h) {
-        setPodChartHeight(l.h)
-      } else if (l.i === 'kubernetes-volume-chart' && cell.h !== l.h) {
-        setVolumeChartHeight(l.h)
+        if (
+          cell.x !== l.x ||
+          cell.y !== l.y ||
+          cell.h !== l.h ||
+          cell.w !== l.w
+        ) {
+          changed = true
+        }
+
+        const newLayout = {
+          x: l.x,
+          y: l.y,
+          h: l.h,
+          w: l.w,
+        }
+
+        return {
+          ...cell,
+          ...newLayout,
+        }
+      })
+
+      if (changed) {
+        setLocalCells(newCells as DashboardsModels.Cell[])
       }
-
-      if (
-        cell.x !== l.x ||
-        cell.y !== l.y ||
-        cell.h !== l.h ||
-        cell.w !== l.w
-      ) {
-        changed = true
-      }
-
-      const newLayout = {
-        x: l.x,
-        y: l.y,
-        h: l.h,
-        w: l.w,
-      }
-
-      return {
-        ...cell,
-        ...newLayout,
-      }
-    })
-
-    if (changed) {
-      setLocalCells(newCells as DashboardsModels.Cell[])
-    }
-  }
+    },
+    [cells]
+  )
 
   const layoutRender = ({cell, source}: TempProps) => {
     if (!cell) return null
@@ -141,9 +127,7 @@ function KubernetesPodDashboardSection({
           <Authorized
             requiredRole={VIEWER_ROLE}
             propsOverride={{
-              isDraggable: true,
-              isResizable: false,
-              draggableHandle: null,
+              isEditable: false,
             }}
           >
             <KubernetesInstanceChart
@@ -161,9 +145,7 @@ function KubernetesPodDashboardSection({
           <Authorized
             requiredRole={VIEWER_ROLE}
             propsOverride={{
-              isDraggable: true,
-              isResizable: false,
-              draggableHandle: null,
+              isEditable: false,
             }}
           >
             <KubernetesPowerFlexMetricsChart
@@ -188,7 +170,7 @@ function KubernetesPodDashboardSection({
             <Authorized
               requiredRole={VIEWER_ROLE}
               propsOverride={{
-                isDraggable: true,
+                isDraggable: false,
                 isResizable: false,
                 draggableHandle: null,
               }}

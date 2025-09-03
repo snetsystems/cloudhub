@@ -53,7 +53,7 @@ function KubernetesPowerFlexDashboardHeader(props: Props) {
   return (
     <div
       className={
-        'dash-graph--draggable dash-graph--heading dash-graph--heading-draggable gpu-monitoring-dash-graph--draggable'
+        'dash-graph--draggable dash-graph--heading dash-graph--heading-draggable kubernetes-powerflex-dash-graph--draggable'
       }
       style={{
         margin: 0,

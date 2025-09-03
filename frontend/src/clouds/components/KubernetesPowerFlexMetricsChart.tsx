@@ -57,8 +57,8 @@ function KubernetesPowerFlexMetricsChart({
 
   useEffect(() => {
     const ratio = {
-      xNum: 2,
-      yNum: 4,
+      xNum: 4,
+      yNum: 2,
       height: volumeChartHeight ?? powerFlexMetricsChartHeight,
     }
 
