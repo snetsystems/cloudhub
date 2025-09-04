@@ -57,6 +57,8 @@ func (s *EsSourcesStore) Add(ctx context.Context, d cloudhub.EsSource) (cloudhub
 	if err != nil {
 		return cloudhub.EsSource{}, err
 	}
+
+	d.Organization = s.organization
 	return s.store.Add(ctx, d)
 }
 
