@@ -95,6 +95,7 @@ import {
   Instance,
   PreferenceType,
   TopologyOption,
+  SelectedCellStatus,
 } from 'src/hosts/types'
 import {
   default as mxgraph,
@@ -1940,6 +1941,44 @@ export class InventoryTopology extends PureComponent<Props, State> {
       const cellElement = getContainerElement(selectionCells[0].value)
       const dataNavi = cellElement.getAttribute('data-data_navi')
 
+      const dataStatus = cellElement.getAttribute('data-status')
+      let selectedStatus: SelectedCellStatus = 'None'
+
+      if (dataStatus === null || dataStatus === undefined) {
+        selectedStatus = 'None'
+      } else if (dataStatus.toLowerCase() === 'agent') {
+        selectedStatus = 'Agent'
+      } else if (dataStatus.toLowerCase() === 'ipmi') {
+        selectedStatus = 'IPMI'
+      } else {
+        selectedStatus = 'None'
+      }
+
+      let getFromItems: string[]
+
+      if (dataNavi) {
+        const instancename = cellElement.getAttribute('data-name')
+        const navi = dataNavi.split('.')
+        const provider = navi[0]
+        const namespace = navi[2]
+        const instanceid = navi[4]
+
+        getFromItems = getFromOptions({
+          provider,
+          namespace,
+          instanceid,
+          instancename: instancename || '',
+        })
+      } else {
+        getFromItems = getFromOptions()
+      }
+
+      let newSelected = this.state.selected
+
+      if (getFromItems.includes(selectedStatus)) {
+        newSelected = selectedStatus
+      }
+
       if (dataNavi) {
         const {cloudAccessInfos} = this.state
 
@@ -2015,6 +2054,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
             instancename,
           },
           focusedHost: null,
+          selected: newSelected,
+          filteredLayouts: [],
         })
       } else {
         const containerElement = getContainerElement(selectionCells[0].value)
@@ -2033,6 +2074,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
           isDetectedServer,
           focusedHost: focusedHost,
           activeEditorTab: activeEditorTab,
+          selected: newSelected,
+          filteredLayouts: [],
         })
       }
     } else {
