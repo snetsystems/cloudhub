@@ -7,7 +7,6 @@ import {
   createElasticSearchInfo,
   updateElasticSearchInfo,
 } from 'src/shared/apis/elasticSearch'
-import Dropdown from 'src/shared/components/Dropdown'
 import {
   notifySourceUpdateFailed,
   notifySourceCreationFailed,
@@ -20,9 +19,9 @@ import {
   Organization,
 } from 'src/types'
 import {NextReturn} from 'src/types/wizard'
-import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {getDeep} from 'src/utils/wrappers'
 import _ from 'lodash'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
   connectElasticSearch,
   getElasticSearchInfoAsync,
@@ -77,6 +76,7 @@ class ElasticStep extends PureComponent<Props, State> {
       this.setState({esSource})
     }
   }
+
   public next = async (): Promise<NextReturn> => {
     const {esSource, authToggle} = this.state
     const {notify} = this.props
@@ -104,6 +104,15 @@ class ElasticStep extends PureComponent<Props, State> {
       }
     } else {
       if (!!esSource.id) {
+        if (!esSource.url) {
+          notify(notifySourceCreationFailed(esSource.name, 'Url is required'))
+          return
+        }
+        if (!esSource.name) {
+          notify(notifySourceCreationFailed(esSource.name, 'Name is required'))
+          return
+        }
+
         try {
           const sourceFromServer = await updateElasticSearchInfo(esSource)
           await this.props.getElasticSearchInfoAsync()
@@ -134,25 +143,6 @@ class ElasticStep extends PureComponent<Props, State> {
 
   public render() {
     const {esSource, authToggle} = this.state
-    const {isUsingAuth, me, organizations} = this.props
-
-    let dropdownCurOrg: any = null
-    if (isUsingAuth) {
-      dropdownCurOrg = [
-        {
-          ...me.currentOrganization,
-          text: me.currentOrganization.name,
-        },
-      ]
-    }
-
-    let dropdownOrg: any = null
-    if (organizations) {
-      dropdownOrg = organizations.map(role => ({
-        ...role,
-        text: role.name,
-      }))
-    }
 
     return (
       <div className="form-group">
@@ -198,15 +188,7 @@ class ElasticStep extends PureComponent<Props, State> {
             />
           </>
         )}
-        <div className="form-group col-xs-6">
-          <label>Organization</label>
-          <Dropdown
-            items={!isUsingAuth || me.superAdmin ? dropdownOrg : dropdownCurOrg}
-            onChoose={this.onChooseDropdown('organization')}
-            selected={esSource.organization}
-            className="dropdown-stretch"
-          />
-        </div>
+
         <WizardCheckbox
           halfWidth={true}
           isChecked={authToggle}
@@ -237,7 +219,7 @@ class ElasticStep extends PureComponent<Props, State> {
       this.setState({
         esSource: {
           ...this.state.esSource,
-          organization: me.currentOrganization.name,
+          organization: me.currentOrganization.id,
           name: me.currentOrganization.name,
         },
       })
@@ -245,7 +227,7 @@ class ElasticStep extends PureComponent<Props, State> {
       this.setState({
         esSource: {
           ...this.state.esSource,
-          organization: organizations[0].name,
+          organization: organizations[0].id,
           name: organizations[0].name,
         },
       })
@@ -290,17 +272,6 @@ class ElasticStep extends PureComponent<Props, State> {
     return getDeep<string>(error, 'data.message', error)
   }
 
-  private onChooseDropdown = (key: string) => (org: Organization) => {
-    const {esSource} = this.state
-    const {setError} = this.props
-
-    this.setState({
-      esSource: {...esSource, [key]: org.name, name: org.name},
-    })
-
-    setError(false)
-  }
-
   private get passwordPlaceholder() {
     const {esSource} = this.state
 
@@ -335,6 +306,11 @@ class ElasticStep extends PureComponent<Props, State> {
     if (esSource.url === '') {
       notify(notifySourceCreationFailed(esSource.name, 'Url is required'))
       return false
+    }
+
+    if (!esSource.name) {
+      notify(notifySourceCreationFailed(esSource.name, 'Name is required'))
+      return
     }
 
     if (esSource.organization === '') {
@@ -377,6 +353,7 @@ class ElasticStep extends PureComponent<Props, State> {
 
   private connectDefaultEsSource = (result: BaseElasticSearchData) => {
     const {connectElasticSearch} = this.props
+
     if (result.default) {
       connectElasticSearch({elasticSearchInfo: result})
     }

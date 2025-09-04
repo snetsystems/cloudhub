@@ -232,7 +232,7 @@ export class CheckSources extends Component<Props, State> {
     }
   }
 
-  public async componentDidUpdate() {
+  public async componentDidUpdate(prevProps) {
     const {
       auth: {me},
       esSource,
@@ -242,7 +242,10 @@ export class CheckSources extends Component<Props, State> {
       handleConnectElasticSearch,
     } = this.props
 
-    if (esSource?.organization !== me.currentOrganization?.id) {
+    if (
+      esSource?.organization !== me.currentOrganization?.id ||
+      esSources.length !== prevProps.esSources.length
+    ) {
       await checkAndConnectElasticSearch({
         me,
         esSource,

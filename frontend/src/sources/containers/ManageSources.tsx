@@ -29,6 +29,13 @@ import {
 import {ToggleWizard} from 'src/types/wizard'
 import ElasticTable from '../components/ElasticTable'
 import EsConnectionWizard from '../components/EsConnectionWizard'
+import {checkAndConnectElasticSearch} from 'src/utils/changeEsSource'
+import {
+  connectElasticSearch,
+  getElasticSearchInfoAsync,
+} from 'src/shared/actions/elasticSearch'
+import {disconnectElasticSearch} from 'src/shared/actions/elasticSearch'
+import _ from 'lodash'
 
 interface State {
   wizardVisibility: boolean
@@ -55,6 +62,14 @@ interface Props {
     requireRole: UserRole,
     isNoAuthOuting?: boolean
   ) => void
+
+  esSource?: BaseElasticSearchData
+  esSources?: BaseElasticSearchData[]
+  handleGetElasticSearchInfo?: () => void
+  handleDisconnectElasticSearch?: () => void
+  handleConnectElasticSearch?: (params: {
+    elasticSearchInfo?: BaseElasticSearchData
+  }) => void
 }
 
 const VERSION = process.env.npm_package_version
@@ -83,6 +98,17 @@ class ManageSources extends PureComponent<Props, State> {
   public componentDidUpdate(prevProps: Props) {
     if (prevProps.sources.length !== this.props.sources.length) {
       this.fetchKapacitors()
+    }
+
+    if (!_.isEqual(prevProps.esSources.length, this.props.esSources.length)) {
+      checkAndConnectElasticSearch({
+        me: this.props.me,
+        esSource: this.props.esSource,
+        esSources: this.props.esSources,
+        handleGetElasticSearchInfo: this.props.handleGetElasticSearchInfo,
+        handleDisconnectElasticSearch: this.props.handleDisconnectElasticSearch,
+        handleConnectElasticSearch: this.props.handleConnectElasticSearch,
+      })
     }
   }
 
@@ -231,6 +257,18 @@ const mdtp = (dispatch: any) => ({
   connectedSource: bindActionCreators(connectedSource, dispatch),
   ForceSessionAbortInputRole: bindActionCreators(
     ForceSessionAbortInputRole,
+    dispatch
+  ),
+  handleGetElasticSearchInfo: bindActionCreators(
+    getElasticSearchInfoAsync,
+    dispatch
+  ),
+  handleDisconnectElasticSearch: bindActionCreators(
+    disconnectElasticSearch,
+    dispatch
+  ),
+  handleConnectElasticSearch: bindActionCreators(
+    connectElasticSearch,
     dispatch
   ),
 })
