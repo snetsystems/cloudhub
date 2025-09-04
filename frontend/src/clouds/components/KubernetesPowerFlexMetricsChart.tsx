@@ -118,80 +118,6 @@ function KubernetesPowerFlexMetricsChart({
         whereTagKey: ['host'],
         cells: [
           {
-            i: 'd68ec478-6fc9-4c5e-bf94-ed51db0ab311',
-            x: 0,
-            y: 0,
-            w: 8,
-            h: powerFlexMetricsChartHeight,
-            name: 'Average Read Block Size per Volume',
-            type: 'line',
-
-            queries: [
-              {
-                query:
-                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.iosize.read"',
-
-                wheres: [...wheres],
-                groupbys: ['"volume_name"'],
-              } as any,
-            ],
-            colors: ['#31C0F6', '#A500A5', '#FF7E27'] as any,
-            axes: {
-              x: {
-                bounds: ['', ''],
-                label: '',
-                prefix: '',
-                suffix: '',
-                base: '10',
-                scale: 'linear',
-              },
-              y: {
-                bounds: ['', ''],
-                label: 'Bandwidth',
-                prefix: '',
-                suffix: 'KiB',
-                base: '2',
-                scale: 'linear',
-              },
-            } as any,
-          },
-          {
-            i: 'ca47dfab-33a2-45b7-bae5-76478c815025',
-            x: 16,
-            y: 0,
-            w: 8,
-            h: powerFlexMetricsChartHeight,
-            name: 'Write Bandwidth per Volume',
-            type: 'line',
-            queries: [
-              {
-                query:
-                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.bw.write"',
-                wheres: [...wheres],
-                groupbys: ['"volume_name"'],
-              },
-            ],
-            axes: {
-              x: {
-                bounds: ['', ''],
-                label: '',
-                prefix: '',
-                suffix: '',
-                base: '10',
-                scale: 'linear',
-              },
-              y: {
-                bounds: ['', ''],
-                label: 'Bandwidth',
-                prefix: '',
-                suffix: ' kB/s',
-                base: '2',
-                scale: 'linear',
-              },
-            },
-            colors: ['#31C0F6', '#A500A5', '#FF7E27'],
-          },
-          {
             i: '77c1ea51-cdc2-4522-8ffd-3806d21c2728',
             x: 16,
             y: 0,
@@ -250,7 +176,78 @@ function KubernetesPowerFlexMetricsChart({
               },
             ],
           },
-
+          {
+            i: 'ca47dfab-33a2-45b7-bae5-76478c815025',
+            x: 16,
+            y: 0,
+            w: 8,
+            h: powerFlexMetricsChartHeight,
+            name: 'Write Bandwidth per Volume',
+            type: 'line',
+            queries: [
+              {
+                query:
+                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.bw.write"',
+                wheres: [...wheres],
+                groupbys: ['"volume_name"'],
+              },
+            ],
+            axes: {
+              x: {
+                bounds: ['', ''],
+                label: '',
+                prefix: '',
+                suffix: '',
+                base: '10',
+                scale: 'linear',
+              },
+              y: {
+                bounds: ['', ''],
+                label: 'Bandwidth',
+                prefix: '',
+                suffix: ' kB/s',
+                base: '2',
+                scale: 'linear',
+              },
+            },
+            colors: ['#31C0F6', '#A500A5', '#FF7E27'],
+          },
+          {
+            i: 'b3da8160-a956-4680-8c28-bc3f0fec6812',
+            x: 0,
+            y: 0,
+            w: 8,
+            h: powerFlexMetricsChartHeight,
+            name: 'Read IOPS per Volume',
+            type: 'line',
+            queries: [
+              {
+                query:
+                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.iops.read"',
+                wheres: [...wheres],
+                groupbys: ['"volume_name"'],
+              } as any,
+            ],
+            colors: ['#31C0F6', '#A500A5', '#FF7E27'],
+            axes: {
+              x: {
+                bounds: ['', ''],
+                label: '',
+                prefix: '',
+                suffix: '',
+                base: '10',
+                scale: 'linear',
+              },
+              y: {
+                bounds: ['', ''],
+                label: 'IOPS',
+                prefix: '',
+                suffix: ' io/s',
+                base: '2',
+                scale: 'linear',
+              },
+            },
+          },
           {
             i: '5cd2868d-fb6d-474e-bd67-d87da6ef4ff7',
             x: 0,
@@ -288,22 +285,24 @@ function KubernetesPowerFlexMetricsChart({
             },
           },
           {
-            i: 'b3da8160-a956-4680-8c28-bc3f0fec6812',
+            i: '5e985410-3dc0-469c-84bc-7523d299fd5a',
             x: 0,
             y: 0,
             w: 8,
             h: powerFlexMetricsChartHeight,
-            name: 'Read IOPS per Volume',
+            name: 'Average Read Latency per Volume',
             type: 'line',
             queries: [
               {
                 query:
-                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.iops.read"',
-                wheres: [...wheres],
+                  'SELECT mean("userDataSdc")/1000 AS "userDataSdc" FROM ":db:"."autogen"."scaleio.volume.latency.read"',
+
+                label: 'Average Read Latency per Volume',
                 groupbys: ['"volume_name"'],
+                wheres: [...wheres],
               } as any,
             ],
-            colors: ['#31C0F6', '#A500A5', '#FF7E27'],
+            colors: ['#F4CF31', '#A500A5', '#FF7E27'],
             axes: {
               x: {
                 bounds: ['', ''],
@@ -315,9 +314,9 @@ function KubernetesPowerFlexMetricsChart({
               },
               y: {
                 bounds: ['', ''],
-                label: 'IOPS',
+                label: 'Latency',
                 prefix: '',
-                suffix: ' io/s',
+                suffix: ' ms',
                 base: '2',
                 scale: 'linear',
               },
@@ -361,24 +360,24 @@ function KubernetesPowerFlexMetricsChart({
             },
           },
           {
-            i: '5e985410-3dc0-469c-84bc-7523d299fd5a',
+            i: 'd68ec478-6fc9-4c5e-bf94-ed51db0ab311',
             x: 0,
             y: 0,
             w: 8,
             h: powerFlexMetricsChartHeight,
-            name: 'Average Read Latency per Volume',
+            name: 'Average Read Block Size per Volume',
             type: 'line',
+
             queries: [
               {
                 query:
-                  'SELECT mean("userDataSdc")/1000 AS "userDataSdc" FROM ":db:"."autogen"."scaleio.volume.latency.read"',
+                  'SELECT mean("userData") AS "userData" FROM ":db:"."autogen"."scaleio.volume.iosize.read"',
 
-                label: 'Average Read Latency per Volume',
-                groupbys: ['"volume_name"'],
                 wheres: [...wheres],
+                groupbys: ['"volume_name"'],
               } as any,
             ],
-            colors: ['#F4CF31', '#A500A5', '#FF7E27'],
+            colors: ['#31C0F6', '#A500A5', '#FF7E27'] as any,
             axes: {
               x: {
                 bounds: ['', ''],
@@ -390,13 +389,13 @@ function KubernetesPowerFlexMetricsChart({
               },
               y: {
                 bounds: ['', ''],
-                label: 'Latency',
+                label: 'Bandwidth',
                 prefix: '',
-                suffix: ' ms',
+                suffix: 'KiB',
                 base: '2',
                 scale: 'linear',
               },
-            },
+            } as any,
           },
           {
             i: 'cbcf2564-80e7-4316-a572-41d04b68274c',
