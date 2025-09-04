@@ -140,7 +140,7 @@ export default function ToggleViewWrap() {
       },
       {
         key: 'word-cloud',
-        label: 'Tag Cloud',
+        label: 'Word Cloud',
         Component: TagCloudComponent,
         props: (d: TokenData[]) => ({
           data: d,
