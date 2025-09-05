@@ -2,6 +2,7 @@ import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {Location} from 'history'
 
 import * as sourcesActions from 'src/shared/actions/sources'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -62,7 +63,7 @@ interface Props {
     requireRole: UserRole,
     isNoAuthOuting?: boolean
   ) => void
-
+  location: Location
   esSource?: BaseElasticSearchData
   esSources?: BaseElasticSearchData[]
   handleGetElasticSearchInfo?: () => void
@@ -89,7 +90,14 @@ class ManageSources extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {ForceSessionAbortInputRole} = this.props
+    const {ForceSessionAbortInputRole, location} = this.props
+
+    if (location.query.esPopup === 'true') {
+      setTimeout(() => {
+        this.setState({esWizardVisibility: true})
+      }, 500)
+      // this.setState({esWizardVisibility: true})
+    }
 
     ForceSessionAbortInputRole(SUPERADMIN_ROLE)
     this.fetchKapacitors()
