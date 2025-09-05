@@ -41,6 +41,12 @@ import {
   notifyUpdateDeviceSucceeded,
 } from 'src/shared/copy/notifications'
 import {InjectedRouter, WithRouterProps} from 'react-router'
+import {
+  connectElasticSearch,
+  disconnectElasticSearch,
+  getElasticSearchInfoAsync,
+} from 'src/shared/actions/elasticSearch'
+import {checkAndConnectElasticSearch} from 'src/utils/changeEsSource'
 
 interface Props extends WithRouterProps {
   me: Me
@@ -50,11 +56,23 @@ interface Props extends WithRouterProps {
   links?: any
   source?: Source
   router: InjectedRouter
+  esSources?: BaseElasticSearchData[]
+  handleGetElasticSearchInfo?: () => void
+  handleDisconnectElasticSearch?: () => void
+  handleConnectElasticSearch?: ({
+    elasticSearchInfo,
+  }: {
+    elasticSearchInfo: BaseElasticSearchData
+  }) => void
 }
 
 function DevicesMappingPage({
   me,
   esSource,
+  esSources,
+  handleGetElasticSearchInfo,
+  handleDisconnectElasticSearch,
+  handleConnectElasticSearch,
   organizations,
   notify,
   links,
@@ -75,6 +93,15 @@ function DevicesMappingPage({
     if (esSource) {
       getDeviceList(esSource.id)
     }
+
+    checkAndConnectElasticSearch({
+      me,
+      esSource,
+      esSources,
+      handleGetElasticSearchInfo,
+      handleDisconnectElasticSearch,
+      handleConnectElasticSearch,
+    })
   }, [esSource])
 
   const getDeviceList = async (esSourceId: string) => {
@@ -83,9 +110,11 @@ function DevicesMappingPage({
       if (response.status < 300) {
         setMappingList(response.data)
       } else {
+        setMappingList({default: []})
         notify(notifyFetchDeviceListError(response.data.message))
       }
     } catch (error) {
+      setMappingList({default: []})
       notify(notifyFetchDeviceListError(error.data.message ?? ''))
     }
   }
@@ -246,16 +275,30 @@ const mstp = state => {
     },
     adminCloudHub: {organizations},
     links,
+    esSources: {esSources},
   } = state
   return {
     esSource,
     organizations,
     links,
+    esSources,
   }
 }
 
 const mdtp = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
+  handleGetElasticSearchInfo: bindActionCreators(
+    getElasticSearchInfoAsync,
+    dispatch
+  ),
+  handleDisconnectElasticSearch: bindActionCreators(
+    disconnectElasticSearch,
+    dispatch
+  ),
+  handleConnectElasticSearch: bindActionCreators(
+    connectElasticSearch,
+    dispatch
+  ),
 })
 
 export default connect(mstp, mdtp, null)(DevicesMappingPage)
