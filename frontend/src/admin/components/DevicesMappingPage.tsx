@@ -40,14 +40,16 @@ import {
   notifyUpdateDeviceFailed,
   notifyUpdateDeviceSucceeded,
 } from 'src/shared/copy/notifications'
+import {InjectedRouter, WithRouterProps} from 'react-router'
 
-interface Props {
+interface Props extends WithRouterProps {
   me: Me
   esSource: BaseElasticSearchData
   organizations?: Organization[]
   notify?: NotificationAction
   links?: any
   source?: Source
+  router: InjectedRouter
 }
 
 function DevicesMappingPage({
@@ -57,6 +59,7 @@ function DevicesMappingPage({
   notify,
   links,
   source,
+  router,
 }: Props): JSX.Element {
   const devMode = links.addons.find(addon => addon.name == 'dev')?.url || 'off'
 
@@ -148,60 +151,91 @@ function DevicesMappingPage({
   }
 
   return (
-    <div className="panel panel-solid">
-      <div className="panel-heading">
-        <div className="panel-title-right">
-          {me.superAdmin && devMode === 'on' && (
-            <button className="btn btn-primary" onClick={() => addDevice()}>
-              Add Device
-            </button>
+    <>
+      {!!esSource ? (
+        <div className="panel panel-solid">
+          <div className="panel-heading">
+            <div className="panel-title-right">
+              {me.superAdmin && devMode === 'on' && (
+                <button className="btn btn-primary" onClick={() => addDevice()}>
+                  Add Device
+                </button>
+              )}
+            </div>
+          </div>
+          {newDevice.length > 0 && me.superAdmin && (
+            <NewDeviceTable
+              newDevice={newDevice}
+              setNewDevice={setNewDevice}
+              organizations={organizations || []}
+              getDeviceList={() => getDeviceList(esSource.id)}
+              notify={notify}
+            />
+          )}
+          {!!mappingList &&
+            Object.keys(mappingList).map((org, i) => {
+              if (!me.superAdmin && org !== me.currentOrganization.id) {
+                return null
+              }
+              return (
+                <div key={org + i} className="panel-body">
+                  <TableComponent
+                    initSort={{
+                      key: 'hostname',
+                      isDesc: false,
+                    }}
+                    isSearchDisplay={true}
+                    searchPlaceholder="Search here..."
+                    tableTitle={orgIdToName(org, organizations || [])}
+                    columns={mappingTableColumns(
+                      me,
+                      setMappingInfo,
+                      deleteDevice,
+                      onChangeAlias,
+                      organizations || [],
+                      allTagValues
+                    )}
+                    data={mappingList[org]}
+                    bodyClassName={`mapping-table`}
+                    options={{
+                      tbodyRow: {
+                        className: 'table-row',
+                      },
+                    }}
+                  />
+                </div>
+              )
+            })}
+        </div>
+      ) : (
+        <div className="panel panel-solid">
+          <div className="panel-heading">
+            <h2 className="panel-title">No ES Source Connected</h2>
+          </div>
+          {me.superAdmin ? (
+            <div className="no-es-source">
+              <button
+                className="btn btn-primary"
+                onClick={() =>
+                  router.push(
+                    `/sources/${source.id}/manage-sources?esPopup=true`
+                  )
+                }
+              >
+                Connect ElasticSearch Source
+              </button>
+            </div>
+          ) : (
+            <div className="no-es-source">
+              <h2 className="panel-title">
+                No connected Elasticsearch source found. Please contact your
+                administrator or operator.
+              </h2>
+            </div>
           )}
         </div>
-      </div>
-      {newDevice.length > 0 && me.superAdmin && (
-        <NewDeviceTable
-          newDevice={newDevice}
-          setNewDevice={setNewDevice}
-          organizations={organizations || []}
-          getDeviceList={() => getDeviceList(esSource.id)}
-          notify={notify}
-        />
       )}
-      {!!mappingList &&
-        Object.keys(mappingList).map((org, i) => {
-          if (!me.superAdmin && org !== me.currentOrganization.id) {
-            return null
-          }
-          return (
-            <div key={org + i} className="panel-body">
-              <TableComponent
-                initSort={{
-                  key: 'hostname',
-                  isDesc: false,
-                }}
-                isSearchDisplay={true}
-                searchPlaceholder="Search here..."
-                tableTitle={orgIdToName(org, organizations || [])}
-                columns={mappingTableColumns(
-                  me,
-                  setMappingInfo,
-                  deleteDevice,
-                  onChangeAlias,
-                  organizations || [],
-                  allTagValues
-                )}
-                data={mappingList[org]}
-                bodyClassName={`mapping-table`}
-                options={{
-                  tbodyRow: {
-                    className: 'table-row',
-                  },
-                }}
-              />
-            </div>
-          )
-        })}
-    </div>
+    </>
   )
 }
 
