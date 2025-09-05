@@ -100,7 +100,10 @@ class ManageSources extends PureComponent<Props, State> {
       this.fetchKapacitors()
     }
 
-    if (!_.isEqual(prevProps.esSources.length, this.props.esSources.length)) {
+    if (
+      !_.isEqual(prevProps.esSources.length, this.props.esSources.length) ||
+      !_.isEqual(prevProps.esSource, this.props.esSource)
+    ) {
       checkAndConnectElasticSearch({
         me: this.props.me,
         esSource: this.props.esSource,

@@ -1,4 +1,4 @@
-import React, {FunctionComponent} from 'react'
+import React, {FunctionComponent, useEffect, useCallback} from 'react'
 import _ from 'lodash'
 import uuid from 'uuid'
 
@@ -12,32 +12,35 @@ interface Props {
   esSource?: BaseElasticSearchData
 }
 
-const getTooltipText = (
-  source: Source,
-  sourceOverride: Source,
-  esSource: BaseElasticSearchData
-): string => {
-  const {name, url} = source
-
-  const sourceName: string = _.get(sourceOverride, 'name', name)
-  const sourceUrl: string = _.get(sourceOverride, 'url', url)
-  const sourceText = `<h1>Connected to Source:</h1><p><code>${sourceName} @ ${sourceUrl}</code></p>`
-
-  if (!esSource) {
-    return `${sourceText}`
-  } else {
-    const {name: esSourceName, url: esSourceUrl} = esSource
-    const esSourceText = `<h1>Connected to Elastic Search:</h1><p><code>${esSourceName} @ ${esSourceUrl}</code></p>`
-
-    return `${sourceText}${esSourceText}`
-  }
-}
-
 const SourceIndicator: FunctionComponent<Props> = ({
   sourceOverride,
   esSource,
 }) => {
   const uuidTooltip: string = uuid.v4()
+
+  const getTooltipText = useCallback(
+    (
+      source: Source,
+      sourceOverride: Source,
+      esSource: BaseElasticSearchData
+    ): string => {
+      const {name, url} = source
+
+      const sourceName: string = _.get(sourceOverride, 'name', name)
+      const sourceUrl: string = _.get(sourceOverride, 'url', url)
+      const sourceText = `<h1>Connected to Source:</h1><p><code>${sourceName} @ ${sourceUrl}</code></p>`
+
+      if (!esSource) {
+        return `${sourceText}`
+      } else {
+        const {name: esSourceName, url: esSourceUrl} = esSource
+        const esSourceText = `<h1>Connected to Elastic Search:</h1><p><code>${esSourceName} @ ${esSourceUrl}</code></p>`
+
+        return `${sourceText}${esSourceText}`
+      }
+    },
+    [esSource]
+  )
 
   return (
     <SourceContext.Consumer>
