@@ -32,6 +32,7 @@ import {
   getKubernetesCronJobsProxy,
   getKubernetesJobsProxy,
   getKubernetesDetailProxy,
+  getKubernetesCustomObjectDetail,
 } from 'src/shared/apis/saltStack'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
@@ -2467,6 +2468,7 @@ class KubernetesPage extends PureComponent<Props, State> {
                 status: _.get(jobs[ownerName], 'status'),
                 Pod: [],
               }
+
               namespaces[namespace]['Job'][ownerName]['Pod'].push({
                 name: podName,
                 node_name: nodeName,
@@ -2500,7 +2502,60 @@ class KubernetesPage extends PureComponent<Props, State> {
               })
 
               _.map(_.get(jobs[ownerName], 'metadata.owner_references'), ro => {
+                const parentKind = _.get(ro, 'kind')
                 const name = _.get(ro, 'name')
+                if (parentKind !== 'CronJob') {
+                  if (!_.includes(_.keys(namespaces[namespace]), parentKind)) {
+                    namespaces[namespace] = {
+                      ...namespaces[namespace],
+                      [parentKind]: {},
+                    }
+
+                    d3Namespaces[namespace].children.push({
+                      name: `Namespace_${namespace}_${parentKind}`,
+                      label: parentKind,
+                      type: parentKind,
+                      children: [],
+                    })
+                  }
+
+                  if (
+                    !_.includes(_.keys(namespaces[namespace][parentKind]), name)
+                  ) {
+                    namespaces[namespace][parentKind][name] = {
+                      metadata: {name, api_version: _.get(ro, 'apiVersion')},
+                      spec: {},
+                      status: {},
+                      Pod: [],
+                    }
+                    namespaces[namespace][parentKind][name]['Pod'].push({
+                      name: podName,
+                      node_name: nodeName,
+                      namespaces: namespace,
+                    })
+
+                    d3Namespaces[namespace].children[
+                      _.findIndex(d3Namespaces[namespace].children, {
+                        name: `Namespace_${namespace}_${parentKind}`,
+                      })
+                    ].children.push({
+                      name: `Namespace_${namespace}_${parentKind}_${name}`,
+                      label: name,
+                      type: parentKind,
+                      apiVersion: _.get(ro, 'apiVersion'),
+                      namespace: `${namespace}`,
+                      child: `Namespace.${namespace}.${parentKind}.${name}.Pod`,
+                      value: 10,
+                    })
+                  } else {
+                    namespaces[namespace][parentKind][name]['Pod'].push({
+                      name: podName,
+                      node_name: nodeName,
+                      namespaces: namespace,
+                    })
+                  }
+                  return
+                }
                 if (!_.includes(_.keys(namespaces[namespace]), 'CronJob')) {
                   namespaces[namespace] = {
                     ...namespaces[namespace],
@@ -2562,7 +2617,58 @@ class KubernetesPage extends PureComponent<Props, State> {
               })
 
               _.map(jobs[ownerName].metadata.owner_references, ro => {
+                const parentKind = _.get(ro, 'kind')
                 const name = _.get(ro, 'name')
+                if (parentKind !== 'CronJob') {
+                  if (!_.includes(_.keys(namespaces[namespace]), parentKind)) {
+                    namespaces[namespace] = {
+                      ...namespaces[namespace],
+                      [parentKind]: {},
+                    }
+
+                    d3Namespaces[namespace].children.push({
+                      name: `Namespace_${namespace}_${parentKind}`,
+                      label: parentKind,
+                      type: parentKind,
+                      children: [],
+                    })
+                  }
+
+                  if (
+                    !_.includes(_.keys(namespaces[namespace][parentKind]), name)
+                  ) {
+                    namespaces[namespace][parentKind][name] = {
+                      metadata: {name, api_version: _.get(ro, 'apiVersion')},
+                      spec: {},
+                      status: {},
+                      Pod: [],
+                    }
+                    namespaces[namespace][parentKind][name]['Pod'].push({
+                      name: podName,
+                      node_name: nodeName,
+                    })
+
+                    d3Namespaces[namespace].children[
+                      _.findIndex(d3Namespaces[namespace].children, {
+                        name: `Namespace_${namespace}_${parentKind}`,
+                      })
+                    ].children.push({
+                      name: `Namespace_${namespace}_${parentKind}_${name}`,
+                      label: name,
+                      type: parentKind,
+                      apiVersion: _.get(ro, 'apiVersion'),
+                      namespace: `${namespace}`,
+                      child: `Namespace.${namespace}.${parentKind}.${name}.Pod`,
+                      value: 10,
+                    })
+                  } else {
+                    namespaces[namespace][parentKind][name]['Pod'].push({
+                      name: podName,
+                      node_name: nodeName,
+                    })
+                  }
+                  return
+                }
                 if (!_.includes(_.keys(namespaces[namespace]), 'CronJob')) {
                   namespaces[namespace] = {
                     ...namespaces[namespace],
@@ -3541,7 +3647,46 @@ class KubernetesPage extends PureComponent<Props, State> {
       }
     }
 
-    if (_.isEmpty(pParam)) return
+    if (_.isEmpty(pParam)) {
+      // Fallback for dynamic parent kinds (e.g., CRDs like GitLab)
+      const apiVersion = _.get(data, 'data.apiVersion') as string
+      const label = focuseNodeLabel
+      const ns = focuseNamespace
+      if (!apiVersion || !label) return
+      const [group, version] = apiVersion.includes('/')
+        ? apiVersion.split('/')
+        : ['', apiVersion]
+
+      const pluralizeKind = (kind: string) => {
+        const k = (kind || '').toLowerCase()
+        if (/(s|x|z|ch|sh)$/.test(k)) return `${k}es`
+        if (/(?:[^aeiou])y$/.test(k)) return `${k.replace(/y$/, 'ies')}`
+        return `${k}s`
+      }
+
+      const plural = pluralizeKind(focuseNodeType)
+      try {
+        const detail = await getKubernetesCustomObjectDetail({
+          group,
+          version,
+          name: label,
+          namespace: ns,
+          plural,
+        })
+        const resultJson = detail.data
+        if (focuseNodeName) {
+          this.setState({
+            focuseNode: {
+              name: focuseNodeName.replace(/[.:*+?^${}()|[\]\\]/g, '\\$&'),
+              label: label,
+              type: focuseNodeType,
+            },
+            script: resultJson,
+          })
+        }
+      } catch (e) {}
+      return
+    }
 
     const k8sDetail = await getKubernetesDetailProxy({
       ...pParam,

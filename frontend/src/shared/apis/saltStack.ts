@@ -3456,7 +3456,7 @@ export async function getKubernetesDetailProxy(pParam: Params) {
       case 'cron_job':
         endpoint = namespace
           ? `/apis/batch/v1/namespaces/${namespace}/cronjobs/${name}`
-          : `/apis/apps/v1/cronjobs/${name}`
+          : `/apis/batch/v1/cronjobs/${name}`
         break
       case 'persistent_volume':
         endpoint = `/api/v1/persistentvolumes/${name}`
@@ -3548,6 +3548,45 @@ export async function getKubernetesDetailProxy(pParam: Params) {
     console.error('Kubernetes Detail Proxy API error:', error)
     throw error
   }
+}
+
+export async function getKubernetesCustomObjectDetail(params: {
+  group: string
+  version: string
+  name: string
+  namespace?: string
+  plural: string
+}) {
+  const {group, version, name, namespace, plural} = params
+  if (!group || !version || !name || !plural) {
+    throw new Error('group, version, name, plural are required')
+  }
+  const base = `/apis/${group}/${version}`
+  const endpoint = namespace
+    ? `${base}/namespaces/${namespace}/${plural}/${name}`
+    : `${base}/${plural}/${name}`
+  const data = await kubernetesProxyRequest(endpoint)
+
+  let cleanedData: any = {...data}
+  delete cleanedData.managed_fields
+  delete cleanedData.managedFields
+  delete cleanedData.annotations
+  if (cleanedData.metadata) {
+    delete cleanedData.metadata.managed_fields
+    delete cleanedData.metadata.managedFields
+    delete cleanedData.metadata.annotations
+  }
+
+  const cleanedDataWithoutNull = JSON.parse(
+    JSON.stringify(cleanedData, (_, value) => {
+      if (value === null) return undefined
+      if (value && typeof value === 'object' && Object.keys(value).length === 0)
+        return undefined
+      return value
+    })
+  )
+
+  return {data: cleanedDataWithoutNull}
 }
 
 export async function getKubernetesConfigMapsProxy(pParam: Params) {
