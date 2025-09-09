@@ -3049,7 +3049,7 @@ class KubernetesPage extends PureComponent<Props, State> {
             path[data-name*="PersistentVolume_"][data-name$="${this.esc(
               volume
             )}"],
-            path[data-name*="Namespace_"][data-name$="${this.esc(volume)}"]
+            path[data-name="${this.esc(volume)}"]
           `
         ).classed('kubernetes-volume', true)
       })
