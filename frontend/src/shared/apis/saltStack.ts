@@ -3549,3 +3549,61 @@ export async function getKubernetesDetailProxy(pParam: Params) {
     throw error
   }
 }
+
+export async function getKubernetesConfigMapsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/api/v1/namespaces/${namespace}/configmaps`
+      : '/api/v1/configmaps'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'configmaps')
+  } catch (error) {
+    console.error('Kubernetes ConfigMaps Proxy API error:', error)
+    throw error
+  }
+}
+
+export async function getKubernetesSecretsProxy(pParam: Params) {
+  try {
+    const namespace = pParam.kwarg?.namespace || ''
+    const endpoint = namespace
+      ? `/api/v1/namespaces/${namespace}/secrets`
+      : '/api/v1/secrets'
+
+    const queryParams: Record<string, string> = {}
+
+    if (pParam.kwarg?.limit) {
+      queryParams.limit = pParam.kwarg.limit.toString()
+    }
+
+    if (pParam.kwarg?.fieldselector) {
+      queryParams.fieldSelector = pParam.kwarg.fieldselector
+    }
+
+    if (pParam.kwarg?.labelselector) {
+      queryParams.labelSelector = pParam.kwarg.labelselector
+    }
+
+    const data = await kubernetesProxyRequest(endpoint, queryParams)
+    return convertToSaltStackFormat(data, 'secrets')
+  } catch (error) {
+    console.error('Kubernetes Secrets Proxy API error:', error)
+    throw error
+  }
+}
