@@ -823,14 +823,16 @@ class KubernetesPage extends PureComponent<Props, State> {
           'Ingress',
           ingressName,
         ])
-
-        if (_.get(spec, 'rules')) {
+        const rules = _.get(spec, 'spec.rules') || _.get(spec, 'rules')
+        if (rules.length > 0) {
           const objKind = _.get(d, 'parent.parent.data.type')
           const objLabel = _.get(d, 'parent.parent.data.label')
 
-          _.map(_.get(spec, 'rules'), rule => {
+          _.map(rules, rule => {
             _.map(_.get(rule, 'http.paths'), service => {
-              const serviceName = _.get(service, 'backend.service_name')
+              const serviceName =
+                _.get(service, 'backend.service.name') ||
+                _.get(service, 'backend.service_name')
               const newData = `${objKind}_${objLabel}_Service_${serviceName}`
               findData.push(newData)
             })
