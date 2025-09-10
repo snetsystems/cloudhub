@@ -3198,9 +3198,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNode,
       filterLabelKey,
       filterLabelValue,
-      highlightVolumes,
     } = this.state
-
     if (prevProps.manualRefresh !== manualRefresh) {
       this.handleKubernetesResourceRefresh()
     }
@@ -3247,21 +3245,9 @@ class KubernetesPage extends PureComponent<Props, State> {
       })
     }
 
-    if (prevState.highlightVolumes !== highlightVolumes) {
-      d3.selectAll(`path`).classed('kubernetes-volume', false)
-      _.forEach(highlightVolumes, volume => {
-        d3.selectAll(
-          `
-            path[data-name*="PersistentVolumeClaim_"][data-name$="${this.esc(
-              volume
-            )}"],
-            path[data-name*="PersistentVolume_"][data-name$="${this.esc(
-              volume
-            )}"],
-            path[data-name="${this.esc(volume)}"]
-          `
-        ).classed('kubernetes-volume', true)
-      })
+    if (prevState.highlightVolumes !== this.state.highlightVolumes) {
+      const {highlightVolumes} = this.state
+      this.handleHighlightVolumes(highlightVolumes)
     }
     if (prevProps.autoRefresh !== autoRefresh) {
       GlobalAutoRefresher.poll(autoRefresh)
@@ -3384,6 +3370,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           remoteDataState={this.state.remoteDataState}
           highlightVolumes={highlightVolumes}
           layouts={layouts}
+          handleHighlightVolumes={this.handleHighlightVolumes}
         />
       </>
     )
@@ -3707,6 +3694,23 @@ class KubernetesPage extends PureComponent<Props, State> {
         script: resultJson,
       })
     }
+  }
+
+  private handleHighlightVolumes = (highlightVolumes: any) => {
+    d3.selectAll(`path`).classed('kubernetes-volume', false)
+    _.forEach(highlightVolumes, volume => {
+      d3.selectAll(
+        `
+            path[data-name*="PersistentVolumeClaim_"][data-name$="${this.esc(
+              volume
+            )}"],
+            path[data-name*="PersistentVolume_"][data-name$="${this.esc(
+              volume
+            )}"],
+            path[data-name="${this.esc(volume)}"]
+          `
+      ).classed('kubernetes-volume', true)
+    })
   }
 
   private onDBClick = (data: any) => {

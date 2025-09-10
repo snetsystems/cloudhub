@@ -61,6 +61,7 @@ interface Props {
   selectedPersistentVolume?: string[] | null
   highlightVolumes: string[]
   layouts: Layout[]
+  handleHighlightVolumes: (highlightVolumes: any) => void
 }
 
 interface State {}
@@ -169,6 +170,7 @@ class KubernetesContents extends PureComponent<Props, State> {
       handleOpenTooltip,
       handleCloseTooltip,
       highlightVolumes,
+      handleHighlightVolumes,
     } = this.props
 
     return (
@@ -194,6 +196,7 @@ class KubernetesContents extends PureComponent<Props, State> {
             handleCloseTooltip={handleCloseTooltip}
             remoteDataState={this.props.remoteDataState}
             highlightVolumes={highlightVolumes}
+            handleHighlightVolumes={handleHighlightVolumes}
           />
 
           {this.tooltip}

@@ -35,6 +35,7 @@ interface Props {
   remoteDataState: RemoteDataState
   dispatch: (action: any) => void
   highlightVolumes: string[]
+  handleHighlightVolumes: (highlightVolumes: any) => void
 }
 
 interface State {}
@@ -131,6 +132,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       pinNode,
       focuseNode,
       highlightVolumes,
+      handleHighlightVolumes,
     } = _this.props
 
     const esc = (v: any) =>
@@ -325,13 +327,14 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       d3.select(`path[data-name=${esc(pin)}]`).classed('kubernetes-pin', true)
     })
 
-    d3.select(`path`).classed('kubernetes-volume', false)
-    _.forEach(highlightVolumes, volume => {
-      d3.select(`path[data-name=${esc(`PersistentVolume_${volume}`)}]`).classed(
-        'kubernetes-volume',
-        true
-      )
-    })
+    handleHighlightVolumes(highlightVolumes)
+    // d3.select(`path`).classed('kubernetes-volume', false)
+    // _.forEach(highlightVolumes, volume => {
+    //   d3.select(`path[data-name=${esc(`PersistentVolume_${volume}`)}]`).classed(
+    //     'kubernetes-volume',
+    //     true
+    //   )
+    // })
 
     const textNode = svg
       .append('g')
