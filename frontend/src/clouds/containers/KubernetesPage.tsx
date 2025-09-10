@@ -2505,56 +2505,57 @@ class KubernetesPage extends PureComponent<Props, State> {
                 const parentKind = _.get(ro, 'kind')
                 const name = _.get(ro, 'name')
                 if (parentKind !== 'CronJob') {
-                  if (!_.includes(_.keys(namespaces[namespace]), parentKind)) {
-                    namespaces[namespace] = {
-                      ...namespaces[namespace],
-                      [parentKind]: {},
-                    }
-
-                    d3Namespaces[namespace].children.push({
-                      name: `Namespace_${namespace}_${parentKind}`,
-                      label: parentKind,
-                      type: parentKind,
-                      children: [],
-                    })
-                  }
-
-                  if (
-                    !_.includes(_.keys(namespaces[namespace][parentKind]), name)
-                  ) {
-                    namespaces[namespace][parentKind][name] = {
-                      metadata: {name, api_version: _.get(ro, 'apiVersion')},
-                      spec: {},
-                      status: {},
-                      Pod: [],
-                    }
-                    namespaces[namespace][parentKind][name]['Pod'].push({
-                      name: podName,
-                      node_name: nodeName,
-                      namespaces: namespace,
-                    })
-
-                    d3Namespaces[namespace].children[
-                      _.findIndex(d3Namespaces[namespace].children, {
-                        name: `Namespace_${namespace}_${parentKind}`,
-                      })
-                    ].children.push({
-                      name: `Namespace_${namespace}_${parentKind}_${name}`,
-                      label: name,
-                      type: parentKind,
-                      apiVersion: _.get(ro, 'apiVersion'),
-                      namespace: `${namespace}`,
-                      child: `Namespace.${namespace}.${parentKind}.${name}.Pod`,
-                      value: 10,
-                    })
-                  } else {
-                    namespaces[namespace][parentKind][name]['Pod'].push({
-                      name: podName,
-                      node_name: nodeName,
-                      namespaces: namespace,
-                    })
-                  }
                   return
+                  // if (!_.includes(_.keys(namespaces[namespace]), parentKind)) {
+                  //   namespaces[namespace] = {
+                  //     ...namespaces[namespace],
+                  //     [parentKind]: {},
+                  //   }
+
+                  //   d3Namespaces[namespace].children.push({
+                  //     name: `Namespace_${namespace}_${parentKind}`,
+                  //     label: parentKind,
+                  //     type: parentKind,
+                  //     children: [],
+                  //   })
+                  // }
+
+                  // if (
+                  //   !_.includes(_.keys(namespaces[namespace][parentKind]), name)
+                  // ) {
+                  //   namespaces[namespace][parentKind][name] = {
+                  //     metadata: {name, api_version: _.get(ro, 'apiVersion')},
+                  //     spec: {},
+                  //     status: {},
+                  //     Pod: [],
+                  //   }
+                  //   namespaces[namespace][parentKind][name]['Pod'].push({
+                  //     name: podName,
+                  //     node_name: nodeName,
+                  //     namespaces: namespace,
+                  //   })
+
+                  //   d3Namespaces[namespace].children[
+                  //     _.findIndex(d3Namespaces[namespace].children, {
+                  //       name: `Namespace_${namespace}_${parentKind}`,
+                  //     })
+                  //   ].children.push({
+                  //     name: `Namespace_${namespace}_${parentKind}_${name}`,
+                  //     label: name,
+                  //     type: parentKind,
+                  //     apiVersion: _.get(ro, 'apiVersion'),
+                  //     namespace: `${namespace}`,
+                  //     child: `Namespace.${namespace}.${parentKind}.${name}.Pod`,
+                  //     value: 10,
+                  //   })
+                  // } else {
+                  //   namespaces[namespace][parentKind][name]['Pod'].push({
+                  //     name: podName,
+                  //     node_name: nodeName,
+                  //     namespaces: namespace,
+                  //   })
+                  // }
+                  // return
                 }
                 if (!_.includes(_.keys(namespaces[namespace]), 'CronJob')) {
                   namespaces[namespace] = {
@@ -2620,54 +2621,55 @@ class KubernetesPage extends PureComponent<Props, State> {
                 const parentKind = _.get(ro, 'kind')
                 const name = _.get(ro, 'name')
                 if (parentKind !== 'CronJob') {
-                  if (!_.includes(_.keys(namespaces[namespace]), parentKind)) {
-                    namespaces[namespace] = {
-                      ...namespaces[namespace],
-                      [parentKind]: {},
-                    }
-
-                    d3Namespaces[namespace].children.push({
-                      name: `Namespace_${namespace}_${parentKind}`,
-                      label: parentKind,
-                      type: parentKind,
-                      children: [],
-                    })
-                  }
-
-                  if (
-                    !_.includes(_.keys(namespaces[namespace][parentKind]), name)
-                  ) {
-                    namespaces[namespace][parentKind][name] = {
-                      metadata: {name, api_version: _.get(ro, 'apiVersion')},
-                      spec: {},
-                      status: {},
-                      Pod: [],
-                    }
-                    namespaces[namespace][parentKind][name]['Pod'].push({
-                      name: podName,
-                      node_name: nodeName,
-                    })
-
-                    d3Namespaces[namespace].children[
-                      _.findIndex(d3Namespaces[namespace].children, {
-                        name: `Namespace_${namespace}_${parentKind}`,
-                      })
-                    ].children.push({
-                      name: `Namespace_${namespace}_${parentKind}_${name}`,
-                      label: name,
-                      type: parentKind,
-                      apiVersion: _.get(ro, 'apiVersion'),
-                      namespace: `${namespace}`,
-                      child: `Namespace.${namespace}.${parentKind}.${name}.Pod`,
-                      value: 10,
-                    })
-                  } else {
-                    namespaces[namespace][parentKind][name]['Pod'].push({
-                      name: podName,
-                      node_name: nodeName,
-                    })
-                  }
                   return
+                  // if (!_.includes(_.keys(namespaces[namespace]), parentKind)) {
+                  //   namespaces[namespace] = {
+                  //     ...namespaces[namespace],
+                  //     [parentKind]: {},
+                  //   }
+
+                  //   d3Namespaces[namespace].children.push({
+                  //     name: `Namespace_${namespace}_${parentKind}`,
+                  //     label: parentKind,
+                  //     type: parentKind,
+                  //     children: [],
+                  //   })
+                  // }
+
+                  // if (
+                  //   !_.includes(_.keys(namespaces[namespace][parentKind]), name)
+                  // ) {
+                  //   namespaces[namespace][parentKind][name] = {
+                  //     metadata: {name, api_version: _.get(ro, 'apiVersion')},
+                  //     spec: {},
+                  //     status: {},
+                  //     Pod: [],
+                  //   }
+                  //   namespaces[namespace][parentKind][name]['Pod'].push({
+                  //     name: podName,
+                  //     node_name: nodeName,
+                  //   })
+
+                  //   d3Namespaces[namespace].children[
+                  //     _.findIndex(d3Namespaces[namespace].children, {
+                  //       name: `Namespace_${namespace}_${parentKind}`,
+                  //     })
+                  //   ].children.push({
+                  //     name: `Namespace_${namespace}_${parentKind}_${name}`,
+                  //     label: name,
+                  //     type: parentKind,
+                  //     apiVersion: _.get(ro, 'apiVersion'),
+                  //     namespace: `${namespace}`,
+                  //     child: `Namespace.${namespace}.${parentKind}.${name}.Pod`,
+                  //     value: 10,
+                  //   })
+                  // } else {
+                  //   namespaces[namespace][parentKind][name]['Pod'].push({
+                  //     name: podName,
+                  //     node_name: nodeName,
+                  //   })
+                  // }
+                  // return
                 }
                 if (!_.includes(_.keys(namespaces[namespace]), 'CronJob')) {
                   namespaces[namespace] = {
