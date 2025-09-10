@@ -3715,8 +3715,9 @@ class KubernetesPage extends PureComponent<Props, State> {
     const focuseNodeName = _.get(data, 'data.name') ?? ''
     const focuseNodeType = _.get(data, 'data.type') ?? ''
     const focuseVolumeName = _.get(data, 'data.volume_name') ?? ''
+    const focuseLabelName = _.get(data, 'data.label') ?? ''
 
-    if (focuseNodeType === 'PersistentVolume' || focuseNodeType === 'PVC') {
+    if (focuseNodeType === 'PV' || focuseNodeType === 'PVC') {
     } else if (
       !this.findStringInArray(pinNode, focuseNodeName) ||
       focuseNodeType !== 'Pod'
@@ -3747,6 +3748,11 @@ class KubernetesPage extends PureComponent<Props, State> {
           this.esc(focuseVolumeName),
           this.esc(focuseNodeName),
         ],
+        pinNode: [],
+      })
+    } else if (focuseNodeType === 'PV') {
+      this.setState({
+        highlightVolumes: [this.esc(focuseLabelName)],
         pinNode: [],
       })
     } else {
