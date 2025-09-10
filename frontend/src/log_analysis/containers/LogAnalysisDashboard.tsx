@@ -165,6 +165,10 @@ function LogAnalysisDashboard({
   }, [links])
 
   useEffect(() => {
+    fetchConfig()
+  }, [])
+
+  useEffect(() => {
     if (links && !isUsingLogAnalysis && router) {
       router.replace(`/sources/${params.sourceID}/status`)
     }
@@ -192,11 +196,6 @@ function LogAnalysisDashboard({
   }, [])
 
   useEffect(() => {
-    fetchConfig()
-    fetchChartOptions()
-  }, [])
-
-  useEffect(() => {
     checkAndConnectElasticSearch({
       me,
       esSource,
@@ -221,6 +220,18 @@ function LogAnalysisDashboard({
       },
     })
   }
+
+  useEffect(() => {
+    const hasColors =
+      Array.isArray(logConfig?.severityLevelColors) &&
+      logConfig.severityLevelColors.length > 0
+    const hasColumns =
+      Array.isArray(logConfig?.tableColumns) &&
+      logConfig.tableColumns.length > 0
+    if (hasColors || hasColumns) {
+      fetchChartOptions()
+    }
+  }, [logConfig?.severityLevelColors?.length, logConfig?.tableColumns?.length])
 
   const savedCells = useMemo(() => {
     const saved = localStorage.getItem('Log-Analysis-cells')
