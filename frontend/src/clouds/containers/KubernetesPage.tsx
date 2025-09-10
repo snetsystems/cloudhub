@@ -3716,15 +3716,24 @@ class KubernetesPage extends PureComponent<Props, State> {
     const focuseNodeType = _.get(data, 'data.type') ?? ''
     const focuseVolumeName = _.get(data, 'data.volume_name') ?? ''
 
-    if (
+    if (focuseNodeType === 'PersistentVolume' || focuseNodeType === 'PVC') {
+    } else if (
       !this.findStringInArray(pinNode, focuseNodeName) ||
       focuseNodeType !== 'Pod'
     ) {
       this.handlePinNode(data)
     }
 
-    if (this.checkHighlightVolumes(focuseNodeName)) {
-      return
+    if (
+      (focuseNodeType === 'PV' || focuseNodeType === 'PVC') &&
+      this.checkHighlightVolumes(focuseNodeName)
+    ) {
+      this.setState({highlightVolumes: [], pinNode: []})
+    } else if (
+      focuseNodeType === 'Pod' &&
+      this.checkHighlightVolumesExact(focuseNodeName)
+    ) {
+      this.setState({highlightVolumes: [], pinNode: []})
     } else if (!!focuseVolumes) {
       this.handleVolumeSpec(
         focuseVolumes
@@ -3733,12 +3742,12 @@ class KubernetesPage extends PureComponent<Props, State> {
         focuseNodeName
       )
     } else if (!!focuseVolumeName) {
-      // this.handleVolumeSpec([focuseVolumeName], focuseNodeName)
       this.setState({
         highlightVolumes: [
           this.esc(focuseVolumeName),
           this.esc(focuseNodeName),
         ],
+        pinNode: [],
       })
     } else {
       this.setState({highlightVolumes: []})
@@ -3801,6 +3810,13 @@ class KubernetesPage extends PureComponent<Props, State> {
     const {highlightVolumes} = this.state
 
     const isIncluded = highlightVolumes.some(sub => name.includes(sub))
+    return isIncluded
+  }
+
+  private checkHighlightVolumesExact = (name: string) => {
+    const {highlightVolumes} = this.state
+
+    const isIncluded = highlightVolumes.some(sub => name === sub)
     return isIncluded
   }
 
