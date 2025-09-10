@@ -3800,9 +3800,12 @@ class KubernetesPage extends PureComponent<Props, State> {
       const target = d3.select(`[data-name=${esc(pinNode[0])}]`)
       const isNull = _.isNull(_.flatMapDeep((target as any)._groups)[0])
       const isPin = isNull || target.classed('kubernetes-pin')
-      this.setState({pinNode: isPin ? [] : pinNode})
+      this.setState({
+        pinNode: isPin ? [] : pinNode,
+        highlightVolumes: [],
+      })
     } else {
-      this.setState({pinNode: []})
+      this.setState({pinNode: [], highlightVolumes: []})
     }
   }
 
