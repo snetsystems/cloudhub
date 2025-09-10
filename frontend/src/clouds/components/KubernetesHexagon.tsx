@@ -362,7 +362,28 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('xlink:href', (d: any) => '#' + d.data.name)
       .attr('startOffset', '50%')
       .attr('font-size', (d: any) => (d.depth == 1 ? '12px' : '9px'))
-      .text((d: any) => d.data.label)
+      .text((d: any) => {
+        const label = d.data.label || ''
+
+        if (d.depth === 1) {
+          const r = d.r || 0
+          if (r < 14) return ''
+
+          let maxLen = 8
+          if (r >= 40) maxLen = 22
+          else if (r >= 32) maxLen = 16
+          else if (r >= 24) maxLen = 12
+          else if (r >= 18) maxLen = 10
+
+          if (label.length > maxLen) {
+            const head = Math.max(0, maxLen - 3)
+            return label.substring(0, head) + '...'
+          }
+          return label
+        }
+
+        return label
+      })
 
     let d3NodeObject: any = {}
     node
