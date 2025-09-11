@@ -3411,7 +3411,6 @@ export async function getKubernetesDetailProxy(pParam: Params) {
       .replace('kubernetes.', '')
 
     let endpoint = ''
-
     switch (resourceType.toLowerCase()) {
       case 'pod':
         endpoint = namespace
@@ -3466,7 +3465,7 @@ export async function getKubernetesDetailProxy(pParam: Params) {
           ? `/api/v1/namespaces/${namespace}/persistentvolumeclaims/${name}`
           : `/api/v1/persistentvolumeclaims/${name}`
         break
-      case 'config_map':
+      case 'configmap':
         endpoint = namespace
           ? `/api/v1/namespaces/${namespace}/configmaps/${name}`
           : `/api/v1/configmaps/${name}`
