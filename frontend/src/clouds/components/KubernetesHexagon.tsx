@@ -36,6 +36,14 @@ interface Props {
   dispatch: (action: any) => void
   highlightVolumes: string[]
   handleHighlightVolumes: (highlightVolumes: any) => void
+  onZoomIn?: () => void
+  onZoomOut?: () => void
+  onZoomReset?: () => void
+  setZoomMethods?: (methods: {
+    zoomIn: () => void
+    zoomOut: () => void
+    zoomReset: () => void
+  }) => void
 }
 
 interface State {}
@@ -45,6 +53,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     width: '100%',
     height: '100%',
     backgroundColor: '#292933',
+    overflow: 'hidden',
   }
 
   private ref = createRef<HTMLDivElement>()
@@ -52,11 +61,23 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   private clickedTarget: any = null
   private clickedOnce = false
   private timeout: ReturnType<typeof setTimeout> | null = null
+  private currentZoomTransform: any = null
+  private zoomBehavior: any = null
 
   private dbClickJudgementTimer = 300
 
   constructor(props: Props) {
     super(props)
+  }
+
+  public componentDidMount() {
+    if (this.props.setZoomMethods) {
+      this.props.setZoomMethods({
+        zoomIn: this.zoomIn,
+        zoomOut: this.zoomOut,
+        zoomReset: this.zoomReset,
+      })
+    }
   }
 
   public componentDidUpdate(prevProps: Props) {
@@ -65,6 +86,12 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       JSON.stringify(prevProps.kubernetesD3Data) !==
         JSON.stringify(this.props.kubernetesD3Data)
     ) {
+      const svg = d3.select('svg.kubernetes-svg')
+      const zoomGroup = svg.select('.zoom-group')
+      if (!zoomGroup.empty()) {
+        this.currentZoomTransform = zoomGroup.attr('transform')
+      }
+
       d3.select('svg.kubernetes-svg').selectAll('g').remove()
 
       this.drawChart()
@@ -114,7 +141,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
               width: '100%',
               height: '100%',
               font: '10px sans-serif',
-              overflow: 'visible',
+              overflow: 'hidden',
               textAnchor: 'middle',
             }}
           />
@@ -184,9 +211,37 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
     const svg = d3.select('svg')
 
+    const zoom = d3
+      .zoom()
+      .filter((event: any) => {
+        if (event.type === 'wheel') {
+          return (
+            !!event.shiftKey &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.altKey
+          )
+        }
+        if (event.type === 'dblclick') return false
+        if (event.type === 'mousedown') return event.button === 0
+        return true
+      })
+      .scaleExtent([0.1, 10])
+      .on('zoom', event => {
+        const {transform} = event
+        svg.select('.zoom-group').attr('transform', transform)
+        this.currentZoomTransform = transform.toString()
+      })
+
+    svg.call(zoom as any)
+
+    this.zoomBehavior = zoom
+
     svg.selectAll('g').remove()
 
-    const node = svg
+    const zoomGroup = svg.append('g').classed('zoom-group', true)
+
+    const node = zoomGroup
       .append('g')
       .attr('pointer-events', 'all')
       .classed('top-group', true)
@@ -316,15 +371,16 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         .style('pointer-events', 'none')
     })
 
-    d3.select(`path`).classed('kubernetes-focuse', false)
-    d3.select(`path[data-name=${esc(focuseNode.name)}]`).classed(
-      'kubernetes-focuse',
-      true
-    )
+    zoomGroup.select(`path`).classed('kubernetes-focuse', false)
+    zoomGroup
+      .select(`path[data-name=${esc(focuseNode.name)}]`)
+      .classed('kubernetes-focuse', true)
 
-    d3.select(`path`).classed('kubernetes-pin', false)
+    zoomGroup.select(`path`).classed('kubernetes-pin', false)
     _.forEach(pinNode, pin => {
-      d3.select(`path[data-name=${esc(pin)}]`).classed('kubernetes-pin', true)
+      zoomGroup
+        .select(`path[data-name=${esc(pin)}]`)
+        .classed('kubernetes-pin', true)
     })
 
     handleHighlightVolumes(highlightVolumes)
@@ -336,7 +392,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     //   )
     // })
 
-    const textNode = svg
+    const textNode = zoomGroup
       .append('g')
       .attr('pointer-events', 'all')
       .classed('top-group', true)
@@ -386,7 +442,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       })
 
     let d3NodeObject: any = {}
-    node
+    zoomGroup
       .select(`circle[data-type=${'Node'}]`)
       .data()
       .forEach((s: any) => {
@@ -399,7 +455,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       })
 
     let d3PodObject: any = {}
-    node
+    zoomGroup
       .select(`path[data-type=${'Pod'}]`)
       .data()
       .forEach((s: any) => {
@@ -421,7 +477,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           ).includes(f['name'])
       ),
       d3ModNod => {
-        node
+        zoomGroup
           .select(`circle[data-label=${esc(d3ModNod['name'])}]`)
           .attr('fill', 'gray')
       }
@@ -437,7 +493,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           ).includes(f['name'])
       ),
       d3ModPod => {
-        node
+        zoomGroup
           .select(`path[data-label=${esc(d3ModPod['name'])}]`)
           .attr('fill', 'gray')
       }
@@ -447,14 +503,14 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       if (m['type'] === 'Node') {
         if (
           _.find(
-            node.select(`circle[data-type=${'Node'}]`).data(),
+            zoomGroup.select(`circle[data-type=${'Node'}]`).data(),
             (nodeData: any) => nodeData.data.label === m['name']
           )
         ) {
           const cpuUsage =
             (parseFloat(m['cpu']) /
               parseFloat(
-                node
+                zoomGroup
                   .select(`circle[data-label=${esc(m['name'])}]`)
                   .attr('data-limit-cpu')
               )) *
@@ -462,16 +518,16 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           const memoryUsage =
             (parseFloat(m['memory']) /
               parseFloat(
-                node
+                zoomGroup
                   .select(`circle[data-label=${esc(m['name'])}]`)
                   .attr('data-limit-memory')
               )) *
             100
           const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
-          node
+          zoomGroup
             .select(`circle[data-label=${esc(m['name'])}]`)
             .attr('data-cpu', `${cpuUsage}`)
-          node
+          zoomGroup
             .select(`circle[data-label=${esc(m['name'])}]`)
             .attr('data-memory', `${memoryUsage}`)
             .attr(
@@ -482,7 +538,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       } else if (m['type'] === 'PV') {
         if (
           _.find(
-            node.select(`path[data-type=${'PV'}]`).data(),
+            zoomGroup.select(`path[data-type=${'PV'}]`).data(),
             (pvData: any) => pvData.data.label === m['name']
           )
         ) {
@@ -498,15 +554,14 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             pick / 100
           ) as unknown) as string
 
-          node
+          zoomGroup
             .select(`path[data-label=${esc(m['name'])}]`)
             .attr('data-iops', `${iopsValue}`)
             .attr('data-bandwidth', `${bandwidthValue}`)
             .attr('data-latency', `${latencyValue}`)
             .attr('fill', fillColor)
 
-          // Color mapped PVCs that reference this PV (via data-volume-name)
-          node
+          zoomGroup
             .selectAll(`path[data-type=${'PVC'}]`)
             .filter(function () {
               return d3.select(this).attr('data-volume-name') === m['name']
@@ -516,14 +571,14 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       } else {
         if (
           _.find(
-            node.select(`path[data-type=${'Pod'}]`).data(),
+            zoomGroup.select(`path[data-type=${'Pod'}]`).data(),
             (podData: any) => podData.data.label === m['name']
           )
         ) {
           const cpuUsage =
             (parseFloat(m['cpu']) /
               parseFloat(
-                node
+                zoomGroup
                   .select(`path[data-label=${esc(m['name'])}]`)
                   .attr('data-limit-cpu')
               )) *
@@ -531,17 +586,17 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           const memoryUsage =
             (parseFloat(m['memory']) /
               parseFloat(
-                node
+                zoomGroup
                   .select(`path[data-label=${esc(m['name'])}]`)
                   .attr('data-limit-memory')
               )) *
             100
 
           const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
-          node
+          zoomGroup
             .select(`path[data-label=${esc(m['name'])}]`)
             .attr('data-cpu', `${cpuUsage}`)
-          node
+          zoomGroup
             .select(`path[data-label=${esc(m['name'])}]`)
             .attr('data-memory', `${memoryUsage}`)
             .attr(
@@ -561,7 +616,21 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     }
 
     const svgNode = svg.attr('viewBox', `${autoBox()}`).node() as SVGSVGElement
-    return this.ref.current!.appendChild(svgNode)
+    this.ref.current!.appendChild(svgNode)
+
+    if (this.currentZoomTransform) {
+      const transformMatch = this.currentZoomTransform.match(
+        /translate\(([^,]+),([^)]+)\)\s*scale\(([^)]+)\)/
+      )
+      if (transformMatch) {
+        const [, tx, ty, scale] = transformMatch
+        const transform = d3.zoomIdentity
+          .translate(parseFloat(tx), parseFloat(ty))
+          .scale(parseFloat(scale))
+
+        svg.call((zoom as any).transform, transform)
+      }
+    }
   }
 
   private handlePersistentVolumeSelection = (data: any) => {
@@ -619,6 +688,39 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   private onMouseLeave = (target: any) => {
     this.props.handleCloseTooltip()
     d3.select(target).classed('kubernetes-hover', false)
+  }
+
+  public zoomIn = () => {
+    const svg = d3.select('svg.kubernetes-svg')
+
+    if (!svg.empty() && this.zoomBehavior) {
+      const dimensions = this.ref.current!.getBoundingClientRect()
+      const centerX = dimensions.width / 2
+      const centerY = dimensions.height / 2
+
+      svg.call(this.zoomBehavior.scaleBy, 1.2, [centerX, centerY])
+    }
+  }
+
+  public zoomOut = () => {
+    const svg = d3.select('svg.kubernetes-svg')
+
+    if (!svg.empty() && this.zoomBehavior) {
+      const dimensions = this.ref.current!.getBoundingClientRect()
+      const centerX = dimensions.width / 2
+      const centerY = dimensions.height / 2
+
+      svg.call(this.zoomBehavior.scaleBy, 0.8, [centerX, centerY])
+    }
+  }
+
+  public zoomReset = () => {
+    const svg = d3.select('svg.kubernetes-svg')
+
+    if (!svg.empty() && this.zoomBehavior) {
+      svg.call(this.zoomBehavior.transform, d3.zoomIdentity)
+      this.currentZoomTransform = null
+    }
   }
 }
 

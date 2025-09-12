@@ -10,7 +10,9 @@ const kubernetesTipsText = `
  <code>Double Click</code> Highlights elements related to the selected one.<br/>
  - <b>Yellow</b>: Parent–Child relationship<br/>
  - <b>Blue</b>: Pod → PVC → PV relationship<br/><br/>
- <code>Hover</code> Shows the name and status of the element on mouse over.<br/><br/></p>
+ <code>Hover</code> Shows the name and status of the element on mouse over.<br/><br/>
+ <code>Shift + Scroll</code> Zoom in/out the Kubernetes visualization.<br/>
+ <code>Drag</code> Pan the Kubernetes visualization.<br/><br/></p>
 `
 
 const KubernetesTip: FunctionComponent = () => (
