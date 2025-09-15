@@ -223,7 +223,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           )
         }
         if (event.type === 'dblclick') return false
-        if (event.type === 'mousedown') return event.button === 0
+        if (event.type === 'mousedown') return event.button === 2
         return true
       })
       .scaleExtent([0.1, 10])
@@ -234,6 +234,10 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       })
 
     svg.call(zoom as any)
+
+    svg.on('contextmenu', event => {
+      event.preventDefault()
+    })
 
     this.zoomBehavior = zoom
 

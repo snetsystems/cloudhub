@@ -219,118 +219,25 @@ class KubernetesContents extends PureComponent<Props, State> {
             }}
           >
             <button
+              className="button button-sm button-default button-square"
               onClick={this.handleZoomIn}
-              style={{
-                width: '32px',
-                height: '32px',
-                border: '1px solid #555',
-                borderRadius: '6px',
-                backgroundColor: '#2a2a2a',
-                color: '#fff',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = '#3a3a3a'
-                e.currentTarget.style.borderColor = '#777'
-                e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.5)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = '#2a2a2a'
-                e.currentTarget.style.borderColor = '#555'
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.4)'
-              }}
               title="Zoom in"
             >
-              <span style={{fontSize: '16px', fontWeight: 'bold'}}>+</span>
+              <span className="button-icon icon zoom-in"></span>
             </button>
             <button
+              className="button button-sm button-default button-square"
               onClick={this.handleZoomOut}
-              style={{
-                width: '32px',
-                height: '32px',
-                border: '1px solid #555',
-                borderRadius: '6px',
-                backgroundColor: '#2a2a2a',
-                color: '#fff',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = '#3a3a3a'
-                e.currentTarget.style.borderColor = '#777'
-                e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.5)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = '#2a2a2a'
-                e.currentTarget.style.borderColor = '#555'
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.4)'
-              }}
               title="Zoom out"
             >
-              <span style={{fontSize: '16px', fontWeight: 'bold'}}>−</span>
+              <span className="button-icon icon zoom-out"></span>
             </button>
             <button
+              className="button button-sm button-default button-square"
               onClick={this.handleZoomReset}
-              style={{
-                width: '32px',
-                height: '32px',
-                border: '1px solid #555',
-                borderRadius: '6px',
-                backgroundColor: '#2a2a2a',
-                color: '#fff',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = '#3a3a3a'
-                e.currentTarget.style.borderColor = '#777'
-                e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.5)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = '#2a2a2a'
-                e.currentTarget.style.borderColor = '#555'
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.4)'
-              }}
               title="Reset zoom (1:1)"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <path
-                  d="
-                    M3 3 H6
-                    M3 3 V6
-                    M13 3 H10
-                    M13 3 V6
-                    M3 13 H6
-                    M3 13 V10
-                    M13 13 H10
-                    M13 13 V10
-                  "
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <span className="button-icon icon fit"></span>
             </button>
           </div>
 
@@ -364,24 +271,18 @@ class KubernetesContents extends PureComponent<Props, State> {
   }
 
   private handleZoomIn = () => {
-    console.log('handleZoomIn called')
-    console.log('zoomMethods:', this.zoomMethods)
     if (this.zoomMethods) {
       this.zoomMethods.zoomIn()
     }
   }
 
   private handleZoomOut = () => {
-    console.log('handleZoomOut called')
-    console.log('zoomMethods:', this.zoomMethods)
     if (this.zoomMethods) {
       this.zoomMethods.zoomOut()
     }
   }
 
   private handleZoomReset = () => {
-    console.log('handleZoomReset called')
-    console.log('zoomMethods:', this.zoomMethods)
     if (this.zoomMethods) {
       this.zoomMethods.zoomReset()
     }
