@@ -273,7 +273,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         .attr('x2', 0)
         .attr('y2', 10)
         .attr('stroke', '#f58220')
-        .attr('stroke-width', 1)
+        .attr('stroke-width', 3)
         .attr('stroke-opacity', 0.55)
       pattern
         .append('line')
@@ -282,7 +282,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         .attr('x2', 5)
         .attr('y2', 10)
         .attr('stroke', '#f58220')
-        .attr('stroke-width', 1)
+        .attr('stroke-width', 3)
         .attr('stroke-opacity', 0.55)
     }
 
@@ -761,7 +761,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
               .attr('d', d3.select(this).attr('d'))
               .attr('fill', 'url(#k8s-search-hatch)')
               .attr('stroke', '#f58220')
-              .attr('stroke-width', 1)
+              .attr('stroke-width', 3)
               .style('pointer-events', 'none')
           } else if (tag === 'circle') {
             g.append('circle')
@@ -769,7 +769,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
               .attr('r', d.r)
               .attr('fill', 'url(#k8s-search-hatch)')
               .attr('stroke', '#f58220')
-              .attr('stroke-width', 1)
+              .attr('stroke-width', 3)
               .style('pointer-events', 'none')
           }
         })
