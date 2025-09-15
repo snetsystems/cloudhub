@@ -143,6 +143,8 @@ interface State {
     [key: string]: string
   }
   highlightVolumes: string[]
+  searchName: string
+  searchNameApplied: string
 }
 
 @ErrorHandling
@@ -199,6 +201,8 @@ class KubernetesPage extends PureComponent<Props, State> {
       remoteDataState: RemoteDataState.NotStarted,
       highlightVolumes: [],
       volumeMapping: {},
+      searchName: '',
+      searchNameApplied: '',
     }
   }
 
@@ -3371,6 +3375,11 @@ class KubernetesPage extends PureComponent<Props, State> {
           highlightVolumes={highlightVolumes}
           layouts={layouts}
           handleHighlightVolumes={this.handleHighlightVolumes}
+          searchName={this.state.searchName}
+          handleChangeSearchName={this.handleChangeSearchName}
+          handleApplySearchName={this.handleApplySearchName}
+          handleClearSearchName={this.handleClearSearchName}
+          searchNameHighlight={this.state.searchNameApplied}
         />
       </>
     )
@@ -3551,6 +3560,19 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private onChangeLabelValue = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({labelValue: e.target.value})
+  }
+
+  private handleChangeSearchName = (e: ChangeEvent<HTMLInputElement>) => {
+    this.setState({searchName: e.target.value})
+  }
+
+  private handleApplySearchName = () => {
+    const {searchName} = this.state
+    this.setState({searchNameApplied: searchName})
+  }
+
+  private handleClearSearchName = () => {
+    this.setState({searchName: '', searchNameApplied: ''})
   }
 
   private onSetActiveEditorTab = (activeEditorTab: string): void => {

@@ -44,6 +44,8 @@ interface Props {
     zoomOut: () => void
     zoomReset: () => void
   }) => void
+
+  searchNameHighlight?: string
 }
 
 interface State {}
@@ -95,6 +97,10 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       d3.select('svg.kubernetes-svg').selectAll('g').remove()
 
       this.drawChart()
+    }
+
+    if (prevProps.searchNameHighlight !== this.props.searchNameHighlight) {
+      this.applySearchHighlight()
     }
   }
 
@@ -242,6 +248,43 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     this.zoomBehavior = zoom
 
     svg.selectAll('g').remove()
+
+    let defs = svg.select('defs#k8s-search-defs')
+    if (defs.empty()) {
+      defs = svg.append('defs').attr('id', 'k8s-search-defs')
+      const pattern = defs
+        .append('pattern')
+        .attr('id', 'k8s-search-hatch')
+        .attr('patternUnits', 'userSpaceOnUse')
+        .attr('width', 10)
+        .attr('height', 10)
+        .attr('patternTransform', 'rotate(45)')
+
+      pattern
+        .append('rect')
+        .attr('width', 6)
+        .attr('height', 6)
+        .attr('fill', 'transparent')
+
+      pattern
+        .append('line')
+        .attr('x1', 0)
+        .attr('y1', 0)
+        .attr('x2', 0)
+        .attr('y2', 10)
+        .attr('stroke', '#f58220')
+        .attr('stroke-width', 1)
+        .attr('stroke-opacity', 0.55)
+      pattern
+        .append('line')
+        .attr('x1', 5)
+        .attr('y1', 0)
+        .attr('x2', 5)
+        .attr('y2', 10)
+        .attr('stroke', '#f58220')
+        .attr('stroke-width', 1)
+        .attr('stroke-opacity', 0.55)
+    }
 
     const zoomGroup = svg.append('g').classed('zoom-group', true)
 
@@ -635,6 +678,8 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         svg.call((zoom as any).transform, transform)
       }
     }
+
+    this.applySearchHighlight()
   }
 
   private handlePersistentVolumeSelection = (data: any) => {
@@ -692,6 +737,43 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   private onMouseLeave = (target: any) => {
     this.props.handleCloseTooltip()
     d3.select(target).classed('kubernetes-hover', false)
+  }
+
+  private applySearchHighlight = () => {
+    const {searchNameHighlight} = this.props
+    const svg = d3.select('svg.kubernetes-svg')
+
+    svg.selectAll('.k8s-search-overlay').remove()
+
+    if (searchNameHighlight && String(searchNameHighlight).trim() !== '') {
+      const nameToFind = String(searchNameHighlight).trim().toLowerCase()
+      d3.selectAll('path.hexagon, circle.nodeWrapper')
+        .filter(function () {
+          const label = (d3.select(this).attr('data-label') || '').toLowerCase()
+          return label.includes(nameToFind)
+        })
+        .each(function (d: any) {
+          const g = d3.select((this as any).parentNode as SVGGElement)
+          const tag = (this as any).tagName
+          if (tag === 'path') {
+            g.append('path')
+              .attr('class', 'k8s-search-overlay')
+              .attr('d', d3.select(this).attr('d'))
+              .attr('fill', 'url(#k8s-search-hatch)')
+              .attr('stroke', '#f58220')
+              .attr('stroke-width', 1)
+              .style('pointer-events', 'none')
+          } else if (tag === 'circle') {
+            g.append('circle')
+              .attr('class', 'k8s-search-overlay')
+              .attr('r', d.r)
+              .attr('fill', 'url(#k8s-search-hatch)')
+              .attr('stroke', '#f58220')
+              .attr('stroke-width', 1)
+              .style('pointer-events', 'none')
+          }
+        })
+    }
   }
 
   public zoomIn = () => {

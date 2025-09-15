@@ -1,5 +1,5 @@
 // Library
-import React, {PureComponent} from 'react'
+import React, {PureComponent, ChangeEvent} from 'react'
 import _ from 'lodash'
 import {connect} from 'react-redux'
 
@@ -62,6 +62,12 @@ interface Props {
   highlightVolumes: string[]
   layouts: Layout[]
   handleHighlightVolumes: (highlightVolumes: any) => void
+
+  searchName: string
+  handleChangeSearchName: (e: ChangeEvent<HTMLInputElement>) => void
+  handleApplySearchName: () => void
+  handleClearSearchName: () => void
+  searchNameHighlight?: string
 }
 
 interface State {}
@@ -177,6 +183,11 @@ class KubernetesContents extends PureComponent<Props, State> {
       handleCloseTooltip,
       highlightVolumes,
       handleHighlightVolumes,
+      searchName,
+      handleChangeSearchName,
+      handleApplySearchName,
+      handleClearSearchName,
+      searchNameHighlight,
     } = this.props
 
     return (
@@ -205,12 +216,13 @@ class KubernetesContents extends PureComponent<Props, State> {
             highlightVolumes={highlightVolumes}
             handleHighlightVolumes={handleHighlightVolumes}
             setZoomMethods={this.setZoomMethods}
+            searchNameHighlight={searchNameHighlight}
           />
 
           <div
             style={{
               position: 'absolute',
-              top: '12px',
+              top: '5px',
               right: '12px',
               display: 'flex',
               gap: '4px',
@@ -218,6 +230,36 @@ class KubernetesContents extends PureComponent<Props, State> {
               zIndex: 1000,
             }}
           >
+            <input
+              type="text"
+              className="form-control input-sm"
+              placeholder="Find by name..."
+              onChange={handleChangeSearchName}
+              value={searchName}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  handleApplySearchName()
+                }
+              }}
+              style={{
+                width: '200px',
+              }}
+            />
+            <button
+              className="button button-sm button-default button-square"
+              onClick={handleApplySearchName}
+              title="Find by name"
+            >
+              <span className="button-icon icon search"></span>
+            </button>
+            <button
+              style={{marginRight: '8px'}}
+              className="button button-sm button-default button-square"
+              onClick={handleClearSearchName}
+              title="Clear highlight"
+            >
+              <span className="button-icon icon remove"></span>
+            </button>
             <button
               className="button button-sm button-default button-square"
               onClick={this.handleZoomIn}
@@ -233,6 +275,7 @@ class KubernetesContents extends PureComponent<Props, State> {
               <span className="button-icon icon zoom-out"></span>
             </button>
             <button
+              style={{marginRight: '4px'}}
               className="button button-sm button-default button-square"
               onClick={this.handleZoomReset}
               title="Reset zoom (1:1)"
