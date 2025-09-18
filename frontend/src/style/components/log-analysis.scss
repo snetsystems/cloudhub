@@ -4,6 +4,12 @@ $primary: #f58220;
 $text: #d3dae6;
 $highlight: #25262e;
 
+.ouiDataGridColumnSorting__fieldList {
+  button {
+    color: #bec2cc;
+  }
+}
+
 .log-analysis-page {
   scrollbar-width: thin;
   scrollbar-color: rgba(152, 162, 179, 0.5) transparent;
