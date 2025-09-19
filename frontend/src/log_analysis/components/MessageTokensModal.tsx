@@ -2,19 +2,21 @@ import _ from 'lodash'
 import React, {PureComponent} from 'react'
 import Container from 'src/reusable_ui/components/overlays/OverlayContainer'
 import Body from 'src/reusable_ui/components/overlays/OverlayBody'
-import {Button, ComponentColor} from 'src/reusable_ui'
+import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import SlideToggle from 'src/reusable_ui/components/slide_toggle/SlideToggle'
 
 interface Props {
   isVisible: boolean
   tokens: string[]
-  onConfirm: (selected: string[]) => void
+  onConfirm: (selected: string[], useMessageTokens: boolean) => void
   onClose: () => void
 }
 
 interface State {
   selectedTokens: string[]
   prevTokens: string[]
+  useMessageTokens: boolean
 }
 
 class MessageTokensModal extends PureComponent<Props, State> {
@@ -23,6 +25,7 @@ class MessageTokensModal extends PureComponent<Props, State> {
     this.state = {
       selectedTokens: [...props.tokens],
       prevTokens: [...props.tokens],
+      useMessageTokens: true,
     }
   }
 
@@ -35,10 +38,24 @@ class MessageTokensModal extends PureComponent<Props, State> {
     }
   }
   private get renderHeader() {
+    const {useMessageTokens} = this.state
+    const title = useMessageTokens
+      ? 'Select filter(s) in Message Tokens'
+      : 'Select filter(s) in Message'
+
     return (
       <div className="overlay--heading">
         <div id="setting-title" className="overlay--title">
-          {'Select filters to apply'}
+          {title}
+        </div>
+        <div>
+          <SlideToggle
+            active={useMessageTokens}
+            onChange={() =>
+              this.setState({useMessageTokens: !useMessageTokens})
+            }
+            size={ComponentSize.ExtraSmall}
+          />
         </div>
         <Button
           onClick={() => this.onCancel()}
@@ -134,7 +151,7 @@ class MessageTokensModal extends PureComponent<Props, State> {
   }
 
   private onOk() {
-    this.props.onConfirm(this.state.selectedTokens)
+    this.props.onConfirm(this.state.selectedTokens, this.state.useMessageTokens)
     this.props.onClose()
   }
 

@@ -227,7 +227,7 @@ $highlight: #25262e;
   top: 27.5vh;
   left: 50vw;
   transform: translate(-50%, -50%);
-  width: 385px;
+  width: 440px;
   border: 2px solid $g5-pepper;
   z-index: 7;
 
@@ -265,7 +265,19 @@ $highlight: #25262e;
   }
 
   .overlay--heading {
-    justify-content: flex-start;
+    padding: 0 15px;
+
+    .overlay--title {
+      display: flex;
+      align-items: center;
+      font-size: 17px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .slide-toggle {
+      margin-top: 4px;
+    }
   }
 
   .overlay--body {
@@ -274,7 +286,7 @@ $highlight: #25262e;
   }
 
   .btn-cancel {
-    margin-left: 66px;
+    margin-left: 10px;
   }
 }
 

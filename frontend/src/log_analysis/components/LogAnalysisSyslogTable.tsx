@@ -948,11 +948,10 @@ function LogAnalysisSyslogTable<_>({
           isVisible={isMessageTokensModalVisible}
           tokens={messageTokensForModal}
           onClose={() => setIsMessageTokensModalVisible(false)}
-          onConfirm={selectedTokens => {
+          onConfirm={(selectedTokens, useMessageTokens) => {
+            const filterKey = useMessageTokens ? 'message_tokens' : 'message'
             selectedTokens.forEach(token => {
-              dispatch(
-                addLogAnalysisMatchPhraseFilterClause('message_tokens', token)
-              )
+              dispatch(addLogAnalysisMatchPhraseFilterClause(filterKey, token))
             })
             messageTokensForModal
               .filter(token => !selectedTokens.includes(token))
@@ -960,14 +959,11 @@ function LogAnalysisSyslogTable<_>({
                 const exists = filteredLogsForLogAnalysis.some(
                   clause =>
                     'match_phrase' in clause &&
-                    clause.match_phrase['message_tokens'] === token
+                    clause.match_phrase[filterKey] === token
                 )
                 if (exists) {
                   dispatch(
-                    removeLogAnalysisMatchPhraseFilterClause(
-                      'message_tokens',
-                      token
-                    )
+                    removeLogAnalysisMatchPhraseFilterClause(filterKey, token)
                   )
                 }
               })
