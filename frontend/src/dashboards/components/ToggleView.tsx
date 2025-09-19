@@ -167,32 +167,21 @@ function ToggleView<P>({
       <>
         <div
           onMouseDown={e => e.stopPropagation()}
-          className={`z-index-3 prediction ${
-            isSecondActive ? 'page-header--left' : 'page-header--right'
-          } `}
+          className={'toggle-view--toggle'}
         >
-          <div
-            className={`header ${
-              isSecondActive ? 'page-header--left' : 'page-header--right'
-            }`}
-          >
-            <label className="hexbin-header--label">
-              {isSecondActive ? second.label : first.label}
-            </label>
-            <SlideToggle
-              active={isSecondActive}
-              onChange={() =>
-                setActiveKey(isSecondActive ? first.key : second.key)
-              }
-              size={ComponentSize.ExtraSmall}
-            />
-          </div>
+          <SlideToggle
+            active={isSecondActive}
+            onChange={() =>
+              setActiveKey(isSecondActive ? first.key : second.key)
+            }
+            size={ComponentSize.ExtraSmall}
+          />
         </div>
       </>
     )
   }
   return (
-    <div className="w-full h-full background-grid-header">
+    <div className="w-full h-full toggle-view--header">
       <LogAnalysisDashboardHeader
         cellName={`Log ${activeView.label}`}
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
@@ -201,6 +190,7 @@ function ToggleView<P>({
         {loading && (
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
         )}
+        {renderToggle()}
         <div className="toggle-view--header---filter">
           <div className="search-widget" style={{width: '120px'}}>
             <input
@@ -217,7 +207,6 @@ function ToggleView<P>({
             <span className="icon filter" />
           </div>
         </div>
-        {renderToggle()}
       </LogAnalysisDashboardHeader>
       <div className="toggle-view--content">
         <activeView.Component {...(activeView.props as P)} />

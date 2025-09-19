@@ -374,9 +374,7 @@ button[data-test-subj='pagination-button-next'][disabled] {
 .h-full {
   height: 100%;
 }
-.background-grid-header {
-  background-color: #292933;
-}
+
 .z-index-3 {
   z-index: 3;
 }
@@ -394,6 +392,22 @@ button[data-test-subj='pagination-button-next'][disabled] {
   user-select: none;
   pointer-events: none;
 }
+
+.toggle-view--header {
+  background-color: #292933;
+
+  .dash-graph--name {
+    width: 115px;
+    margin-top: 2px;
+  }
+
+  .toggle-view--toggle {
+    margin-top: 2px;
+    z-index: 3;
+    margin-right: calc(100% - 280px);
+  }
+}
+
 .toggle-view--header---filter {
   z-index: 3;
   max-width: 120px;
