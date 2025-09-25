@@ -40,10 +40,16 @@ export const getCpuAndLoadForK8s = async (
   tempVars: Template[]
 ): Promise<KubernetesObject> => {
   const query = replaceTemplate(
-    `SELECT last("cpu_usage_nanocores") / 1000000 FROM \":db:\".\":rp:\".\"kubernetes_node\" WHERE time > now() - 10m GROUP BY node_name;
-      SELECT last("memory_rss_bytes"), last("memory_working_set_bytes") FROM \":db:\".\":rp:\".\"kubernetes_node\" WHERE time > now() - 10m GROUP BY node_name;
-      SELECT last("cpu_usage_nanocores") / 1000000 FROM \":db:\".\":rp:\".\"kubernetes_pod_container\" WHERE time > now() - 10m GROUP BY pod_name;
-      SELECT last("memory_rss_bytes"), last("memory_working_set_bytes") FROM \":db:\".\":rp:\".\"kubernetes_pod_container\" WHERE time > now() - 10m GROUP BY pod_name;`,
+    `SELECT last("cpu_usage_nanocores") / 1000000 FROM ":db:".":rp:"."kubernetes_node" WHERE time > now() - 10m GROUP BY node_name;
+      SELECT last("memory_rss_bytes"), last("memory_working_set_bytes") FROM ":db:".":rp:"."kubernetes_node" WHERE time > now() - 10m GROUP BY node_name;
+      SELECT last("cpu_usage_nanocores") / 1000000 FROM ":db:".":rp:"."kubernetes_pod_container" WHERE time > now() - 10m GROUP BY pod_name;
+      SELECT last("memory_rss_bytes"), last("memory_working_set_bytes") FROM ":db:".":rp:"."kubernetes_pod_container" WHERE time > now() - 10m GROUP BY pod_name;
+      SELECT last("userDataSdc")/1000 AS "userDataSdc" FROM ":db:".":rp:"."scaleio.volume.latency.read" WHERE time > now() - 10m GROUP BY volume_name;
+      SELECT last("userDataSdc")/1000 AS "userDataSdc" FROM ":db:".":rp:"."scaleio.volume.latency.write" WHERE time > now() - 10m GROUP BY volume_name;
+      SELECT last("userData") AS "userData" FROM ":db:".":rp:"."scaleio.volume.iops.read" WHERE time > now() - 10m GROUP BY volume_name;
+      SELECT last("userData") AS "userData" FROM ":db:".":rp:"."scaleio.volume.iops.write" WHERE time > now() - 10m GROUP BY volume_name;
+      SELECT last("userData") AS "userData" FROM ":db:".":rp:"."scaleio.volume.bw.read" WHERE time > now() - 10m GROUP BY volume_name;
+      SELECT last("userData") AS "userData" FROM ":db:".":rp:"."scaleio.volume.bw.write" WHERE time > now() - 10m GROUP BY volume_name;`,
     tempVars
   )
 
@@ -66,6 +72,12 @@ export const getCpuAndLoadForK8s = async (
     'results.[3].series',
     []
   )
+  const volLatencyReadSeries = getDeep<any[]>(data, 'results.[4].series', [])
+  const volLatencyWriteSeries = getDeep<any[]>(data, 'results.[5].series', [])
+  const volIopsReadSeries = getDeep<any[]>(data, 'results.[6].series', [])
+  const volIopsWriteSeries = getDeep<any[]>(data, 'results.[7].series', [])
+  const volBwReadSeries = getDeep<any[]>(data, 'results.[8].series', [])
+  const volBwWriteSeries = getDeep<any[]>(data, 'results.[9].series', [])
 
   _.forEach(nodeCpuSeries, s => {
     const lastIndex = _.findIndex(s.columns, col => col === 'last')
@@ -105,6 +117,98 @@ export const getCpuAndLoadForK8s = async (
       Number(s.values[0][rssIndex]),
       Number(s.values[0][workingIndex])
     )
+  })
+
+  const getLastValue = (series: any) => {
+    const idx = _.findIndex(
+      series.columns,
+      col =>
+        col === 'last' ||
+        col === 'mean' ||
+        col === 'userData' ||
+        col === 'userDataSdc'
+    )
+    const values = series.values || []
+    const last = values.length > 0 ? values[values.length - 1] : null
+    return last && idx >= 0 ? Number(last[idx]) : 0
+  }
+
+  const volumeMetrics: Record<
+    string,
+    {
+      iopsRead?: number
+      iopsWrite?: number
+      bwRead?: number
+      bwWrite?: number
+      latRead?: number
+      latWrite?: number
+    }
+  > = {}
+
+  _.forEach(volIopsReadSeries, s => {
+    const v = getLastValue(s)
+    volumeMetrics[s.tags.volume_name] = {
+      ...volumeMetrics[s.tags.volume_name],
+      iopsRead: v,
+    }
+  })
+  _.forEach(volIopsWriteSeries, s => {
+    const v = getLastValue(s)
+    volumeMetrics[s.tags.volume_name] = {
+      ...volumeMetrics[s.tags.volume_name],
+      iopsWrite: v,
+    }
+  })
+  _.forEach(volBwReadSeries, s => {
+    const v = getLastValue(s)
+    volumeMetrics[s.tags.volume_name] = {
+      ...volumeMetrics[s.tags.volume_name],
+      bwRead: v,
+    }
+  })
+  _.forEach(volBwWriteSeries, s => {
+    const v = getLastValue(s)
+    volumeMetrics[s.tags.volume_name] = {
+      ...volumeMetrics[s.tags.volume_name],
+      bwWrite: v,
+    }
+  })
+  _.forEach(volLatencyReadSeries, s => {
+    const v = getLastValue(s)
+    volumeMetrics[s.tags.volume_name] = {
+      ...volumeMetrics[s.tags.volume_name],
+      latRead: v,
+    }
+  })
+  _.forEach(volLatencyWriteSeries, s => {
+    const v = getLastValue(s)
+    volumeMetrics[s.tags.volume_name] = {
+      ...volumeMetrics[s.tags.volume_name],
+      latWrite: v,
+    }
+  })
+
+  _.forEach(volumeMetrics, (vm, volName) => {
+    const iops = (vm.iopsRead || 0) + (vm.iopsWrite || 0)
+    const bandwidth = (vm.bwRead || 0) + (vm.bwWrite || 0)
+    const r = vm.latRead || 0
+    const w = vm.latWrite || 0
+    const rIOPS = vm.iopsRead || 0
+    const wIOPS = vm.iopsWrite || 0
+    const totalIOPS = rIOPS + wIOPS
+    const latency =
+      totalIOPS > 0
+        ? (r * rIOPS + w * wIOPS) / totalIOPS
+        : _.mean([r, w].filter(v => v > 0)) || 0
+
+    k8sObject[volName] = {
+      ...EmptyK8s,
+      name: volName,
+      type: 'PV',
+      iops,
+      bandwidth,
+      latency,
+    }
   })
 
   return k8sObject

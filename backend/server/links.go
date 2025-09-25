@@ -112,3 +112,29 @@ func NewAIConfig(aiConfig map[string]string) cloudhub.AIConfig {
 
 	return newAiConfig
 }
+
+// NewDellPowerFlexConfig converts map to Dell PowerFlex Struct
+func NewDellPowerFlexConfig(dellPowerFlexConfig map[string]string) cloudhub.DellPowerFlexConfig {
+	var newDellPowerFlexConfig cloudhub.DellPowerFlexConfig
+	if len(dellPowerFlexConfig) > 0 {
+		newDellPowerFlexConfig.URL = dellPowerFlexConfig["url"]
+		newDellPowerFlexConfig.Username = dellPowerFlexConfig["username"]
+		newDellPowerFlexConfig.Password = dellPowerFlexConfig["password"]
+	}
+
+	return newDellPowerFlexConfig
+}
+
+// NewKubernetesConfig converts map to Kubernetes Struct
+func NewKubernetesConfig(kubernetesConfig map[string]string) cloudhub.KubernetesConfig {
+	var newKubernetesConfig cloudhub.KubernetesConfig
+	if len(kubernetesConfig) > 0 {
+		newKubernetesConfig.URL = kubernetesConfig["url"]
+		newKubernetesConfig.Token = kubernetesConfig["token"]
+		if kubernetesConfig["insecure-skip-verify"] == "true" {
+			newKubernetesConfig.InsecureSkipVerify = true
+		}
+	}
+
+	return newKubernetesConfig
+}

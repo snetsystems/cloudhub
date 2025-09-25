@@ -1719,3 +1719,15 @@ export const notifyInvalidDurationFormat = (): Notification => ({
   message: `Invalid duration format. Use format like 2h, 30m, 1d Default is 2h`,
   duration: 3000,
 })
+
+export const notifyNamespaceRequired = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `There is no selected namespace.`,
+  duration: INFINITE,
+})
+
+export const notifySelectedNamespacesAreNotValid = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Selected namespaces are not valid.`,
+  duration: INFINITE,
+})

@@ -199,7 +199,7 @@ class SideNav extends PureComponent<Props> {
 
         <NavBlock
           highlightWhen={['alerts', 'alert-rules', 'tickscript']}
-          icon="alerts"
+          icon="bell"
           link={`${sourcePrefix}/alert-rules`}
           location={location}
         >
@@ -217,7 +217,7 @@ class SideNav extends PureComponent<Props> {
           replaceWithIfNotAuthorized={
             <NavBlock
               highlightWhen={['logs']}
-              icon="eye"
+              icon="document"
               link={`${sourcePrefix}/logs`}
               location={location}
             >
@@ -227,7 +227,7 @@ class SideNav extends PureComponent<Props> {
           replaceWithIfNotUsingAuth={
             <NavBlock
               highlightWhen={['logs']}
-              icon="eye"
+              icon="document"
               link={`${sourcePrefix}/logs`}
               location={location}
             >
@@ -237,7 +237,7 @@ class SideNav extends PureComponent<Props> {
         >
           <NavBlock
             highlightWhen={['log-analysis', 'logs', 'activity-logs']}
-            icon="eye"
+            icon="document"
             link={
               isUsingLogAnalysis
                 ? `${sourcePrefix}/log-analysis`

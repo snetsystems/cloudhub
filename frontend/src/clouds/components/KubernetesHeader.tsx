@@ -1,24 +1,29 @@
 // Library
 import React, {PureComponent, ChangeEvent} from 'react'
+import _ from 'lodash'
+
+// Types
+import {DropdownItem} from 'src/types'
 
 // Component
-import {Button, ButtonShape, IconFont, ComponentStatus} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
 import Dropdown from 'src/shared/components/Dropdown'
 import KubernetesDropdown from 'src/clouds/components/KubernetesDropdown'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
+import MultiSelectAutoCompleteDropdown from 'src/reusable_ui/components/dropdowns/MultiSelectAutoCompleteDropdown'
 
 // Contants
-import {autoRefreshOptions} from 'src/clouds/constants/autoRefresh'
+import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 
 interface Props {
-  handleChooseNamespace: (select: {text: string}) => void
+  handleChooseNamespace: (selectedIDs: string[], value: {id: string}) => void
   handleChooseNode: (select: {text: string}) => void
   handleChooseLimit: (select: {text: string}) => void
   handleChangeLabelkey: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangeLabelValue: (e: ChangeEvent<HTMLInputElement>) => void
   handleClickFilter: () => void
-  selectedNamespace: string
+  selectedNamespace: string[]
   selectedNode: string
   selectedLimit: string
   labelKey: string
@@ -27,21 +32,30 @@ interface Props {
   nodes: string[]
   limits: string[]
   height: number
-  minions: string[]
-  selectMinion: string
-  handleChoosMinion: (select: {text: string}) => void
-  isOpenMinions: boolean
-  isDisabledMinions: boolean
-  minionsStatus: ComponentStatus
-  handleCloseMinionsDropdown: () => void
-  onClickMinionsDropdown: () => void
+
   selectedAutoRefresh: number
   handleChooseKubernetesAutoRefresh: (options: AutoRefreshOption) => void
   handleKubernetesRefresh: () => void
 }
-class KubernetesHeader extends PureComponent<Props> {
+
+interface State {
+  isOpenNodesDropdown: boolean
+}
+
+class KubernetesHeader extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
+    this.state = {
+      isOpenNodesDropdown: false,
+    }
+  }
+
+  private handleCloseNodesDropdown = () => {
+    this.setState({isOpenNodesDropdown: false})
+  }
+
+  private handleClickNodesDropdown = () => {
+    this.setState({isOpenNodesDropdown: !this.state.isOpenNodesDropdown})
   }
 
   public render() {
@@ -61,40 +75,52 @@ class KubernetesHeader extends PureComponent<Props> {
       nodes,
       limits,
       height,
-      minions,
-      selectMinion,
-      handleChoosMinion,
-      isOpenMinions,
-      isDisabledMinions,
-      handleCloseMinionsDropdown,
-      onClickMinionsDropdown,
-      minionsStatus,
+
       handleChooseKubernetesAutoRefresh,
       handleKubernetesRefresh,
       selectedAutoRefresh,
     } = this.props
+
+    const {isOpenNodesDropdown} = this.state
+    const namespaceItems: DropdownItem[] = namespaces.map(namespace => ({
+      text: namespace,
+    }))
+    const nodeItems: DropdownItem[] = nodes.map(node => ({
+      text: node,
+    }))
+
     return (
       <div
         className={'content-header kubernetes-header--bar'}
         style={{height: `${height}px`}}
       >
         <div className={'kubernetes-header--left'}>
-          <div className={'kubernetes-header--bar-item'}>
-            <Dropdown
-              items={namespaces}
-              onChoose={handleChooseNamespace}
-              selected={selectedNamespace}
-              className="dropdown-menu"
-              disabled={false}
+          <div
+            className={'kubernetes-header--bar-item'}
+            style={{width: '300px'}}
+          >
+            <MultiSelectAutoCompleteDropdown
+              selectedIDs={selectedNamespace}
+              onChange={handleChooseNamespace}
+              emptyText={'Choose Namespace'}
+              maxMenuHeight={145}
+              maxSelections={5}
+              exemptFromLimit={['All namespaces']}
+              useAutoComplete={true}
+              items={namespaceItems}
             />
           </div>
           <div className={'kubernetes-header--bar-item'}>
-            <Dropdown
-              items={nodes}
+            <KubernetesDropdown
+              items={nodeItems}
               onChoose={handleChooseNode}
+              onClick={this.handleClickNodesDropdown}
+              isOpen={isOpenNodesDropdown}
               selected={selectedNode}
+              onClose={this.handleCloseNodesDropdown}
               className="dropdown-menu"
               disabled={false}
+              useAutoComplete={true}
             />
           </div>
           <div className={'kubernetes-header--bar-item'}>
@@ -136,24 +162,16 @@ class KubernetesHeader extends PureComponent<Props> {
         </div>
         <div className={'kubernetes-header--right'}>
           <div className={'kubernetes-header--bar-item'}>
-            <KubernetesDropdown
-              items={minions}
-              onChoose={handleChoosMinion}
-              onClick={onClickMinionsDropdown}
-              isOpen={isOpenMinions}
-              selected={selectMinion}
-              onClose={handleCloseMinionsDropdown}
-              className="dropdown-menu"
-              disabled={isDisabledMinions}
-              status={minionsStatus}
-            />
-          </div>
-          <div className={'kubernetes-header--bar-item'}>
             <AutoRefreshDropdown
               selected={selectedAutoRefresh}
               onChoose={handleChooseKubernetesAutoRefresh}
               onManualRefresh={handleKubernetesRefresh}
-              userAutoRefreshOptions={autoRefreshOptions}
+              customAutoRefreshOptions={getTimeOptionByGroup(
+                'kubernetesHeader'
+              )}
+              customAutoRefreshSelected={{
+                kubernetesHeader: selectedAutoRefresh,
+              }}
             />
           </div>
         </div>

@@ -77,7 +77,7 @@ export const HistogramOptions = ({
 
           labelTextColor: ctx => {
             return SeverityColorValues[
-              severityLevelColors.find(i => i.level == ctx.dataset.label).color
+              severityLevelColors.find(i => i.level == ctx.dataset.label)?.color
             ]
           },
 
@@ -85,7 +85,7 @@ export const HistogramOptions = ({
             const bg =
               SeverityColorValues[
                 severityLevelColors.find(i => i.level == ctx.dataset.label)
-                  .color
+                  ?.color
               ]
 
             return {

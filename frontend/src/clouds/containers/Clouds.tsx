@@ -12,7 +12,7 @@ import ManualRefresh, {
 import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
-import GraphTips from 'src/shared/components/GraphTips'
+import KubernetesTip from 'src/shared/components/KubernetesTip'
 
 import VMHostPage from 'src/clouds/containers/VMHostsPage'
 import KubernetesPage from 'src/clouds/containers/KubernetesPage'
@@ -144,7 +144,7 @@ class Clouds extends PureComponent<Props, State> {
             />
           </Page.Header.Left>
           <Page.Header.Right showSourceIndicator={true}>
-            <GraphTips />
+            <KubernetesTip />
             <AutoRefreshDropdown
               selected={autoRefresh}
               onChoose={this.handleChooseAutoRefresh}

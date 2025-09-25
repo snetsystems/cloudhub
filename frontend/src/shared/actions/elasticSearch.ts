@@ -61,8 +61,8 @@ export const getElasticSearchInfoAsync = () => async (
     dispatch(elasticSearchGetCompleted({elasticSearchInfo}))
   } catch (error) {
     const message = `Failed to retrieve ElasticSearch information`
-    dispatch(errorThrown(error, message))
     dispatch(elasticSearchGetFailed())
+    dispatch(errorThrown(error, message))
   }
 }
 

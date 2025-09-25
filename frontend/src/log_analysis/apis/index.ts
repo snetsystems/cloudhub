@@ -66,12 +66,13 @@ export async function fetchMessageTokenData({
     body,
   })
 
-  const data: TokenData[] = res.rawResponse.aggregations[
-    'token_stat'
-  ].buckets.map((b: {key: string; doc_count: number}) => ({
-    text: b.key,
-    value: b.doc_count,
-  }))
+  const data: TokenData[] =
+    res?.rawResponse?.aggregations?.['token_stat']?.buckets?.map(
+      (b: {key: string; doc_count: number}) => ({
+        text: b.key,
+        value: b.doc_count,
+      })
+    ) || []
 
   return {data}
 }
@@ -367,7 +368,7 @@ export async function fetchLogsCount({
               },
             },
           },
-          ...filters, // 기존 필터 유지
+          ...filters,
         ],
       },
     },
@@ -383,7 +384,9 @@ export async function fetchLogsCount({
     body,
   })
 
-  const data: LogCountData[] = res.rawResponse.aggregations['0'].buckets.map(
+  const data: LogCountData[] = res?.rawResponse?.aggregations?.[
+    '0'
+  ]?.buckets?.map(
     (b: {
       key: string
       doc_count: number

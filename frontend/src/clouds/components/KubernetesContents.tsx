@@ -1,18 +1,19 @@
 // Library
-import React, {PureComponent} from 'react'
+import React, {PureComponent, ChangeEvent} from 'react'
 import _ from 'lodash'
+import {connect} from 'react-redux'
 
 // Component
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
+import KubernetesDashboardSection from 'src/clouds/components/KubernetesDashboardSection'
+import KubernetesPowerFlexDashboard from 'src/clouds/components/KubernetesPowerFlexDashboard'
 
 import KubernetesBasicsTable from 'src/clouds/components/KubernetesBasicsTable'
 import KubernetesRawData from 'src/clouds/components/KubernetesRawData'
 import KubernetesTooltip from 'src/clouds/components/KubernetesTooltip'
 import KubernetesHexagon from 'src/clouds/components/KubernetesHexagon'
-import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-import {NoHostsState} from 'src/addon/128t/reusable'
 
 // Constants
 import {HANDLE_VERTICAL} from 'src/shared/constants'
@@ -28,6 +29,8 @@ import {
   KubernetesObject,
 } from 'src/clouds/types'
 import {Source, TimeRange, Cell, Template, RemoteDataState} from 'src/types'
+import KubernetesPodDashboardSection from './KubernetesPodDashboardSection'
+import {Layout} from 'src/types/hosts'
 
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
@@ -54,13 +57,28 @@ interface Props {
   cells: Cell[]
   manualRefresh: number
   host: string
-  selectMinion: string
   remoteDataState: RemoteDataState
+  selectedPersistentVolume?: string[] | null
+  highlightVolumes: string[]
+  layouts: Layout[]
+  handleHighlightVolumes: (highlightVolumes: any) => void
+
+  searchName: string
+  handleChangeSearchName: (e: ChangeEvent<HTMLInputElement>) => void
+  handleApplySearchName: () => void
+  handleClearSearchName: () => void
+  searchNameHighlight?: string
 }
 
 interface State {}
 
 class KubernetesContents extends PureComponent<Props, State> {
+  private zoomMethods: {
+    zoomIn: () => void
+    zoomOut: () => void
+    zoomReset: () => void
+  } | null = null
+
   constructor(props: Props) {
     super(props)
     this.state = {}
@@ -103,7 +121,7 @@ class KubernetesContents extends PureComponent<Props, State> {
     ]
   }
 
-  private KubernetesVisualize = () => {
+  private renderBottomSection = () => {
     const {
       source,
       sources,
@@ -113,19 +131,77 @@ class KubernetesContents extends PureComponent<Props, State> {
       manualRefresh,
       host,
       focuseNode,
-      pinNode,
+      selectedPersistentVolume,
+      layouts,
+    } = this.props
+
+    if (focuseNode.type === 'Pod') {
+      return (
+        <KubernetesPodDashboardSection
+          source={source}
+          timeRange={timeRange}
+          manualRefresh={manualRefresh}
+          podLayouts={layouts}
+        />
+      )
+    }
+
+    if (selectedPersistentVolume && selectedPersistentVolume.length > 0) {
+      return (
+        <KubernetesPowerFlexDashboard
+          source={source}
+          timeRange={timeRange}
+          manualRefresh={manualRefresh}
+        />
+      )
+    }
+
+    return (
+      <KubernetesDashboardSection
+        source={source}
+        sources={sources}
+        cells={cells}
+        templates={templates}
+        timeRange={timeRange}
+        manualRefresh={manualRefresh}
+        host={host}
+        focuseNode={focuseNode}
+      />
+    )
+  }
+
+  private KubernetesVisualize = () => {
+    const {
       kubernetesObject,
       kubernetesD3Data,
+      focuseNode,
+      pinNode,
       handleDBClick,
       handleOnClickVisualizePod,
       handleResize,
       handleOpenTooltip,
       handleCloseTooltip,
+      highlightVolumes,
+      handleHighlightVolumes,
+      searchName,
+      handleChangeSearchName,
+      handleApplySearchName,
+      handleClearSearchName,
+      searchNameHighlight,
     } = this.props
 
     return (
       <FancyScrollbar>
-        <div style={{width: '100%', height: 'calc(100% - 50px)'}}>
+        <div
+          style={{
+            width: '100%',
+            height: 'calc(100% - 50px)',
+            paddingBottom: '8px',
+            backgroundColor: '#292933',
+            borderBottom: '4px solid #1F1F27',
+            position: 'relative',
+          }}
+        >
           <KubernetesHexagon
             kubernetesObject={kubernetesObject}
             kubernetesD3Data={kubernetesD3Data}
@@ -137,28 +213,81 @@ class KubernetesContents extends PureComponent<Props, State> {
             handleOpenTooltip={handleOpenTooltip}
             handleCloseTooltip={handleCloseTooltip}
             remoteDataState={this.props.remoteDataState}
+            highlightVolumes={highlightVolumes}
+            handleHighlightVolumes={handleHighlightVolumes}
+            setZoomMethods={this.setZoomMethods}
+            searchNameHighlight={searchNameHighlight}
           />
+
+          <div
+            style={{
+              position: 'absolute',
+              top: '5px',
+              right: '12px',
+              display: 'flex',
+              gap: '4px',
+              alignItems: 'center',
+              zIndex: 1000,
+            }}
+          >
+            <input
+              type="text"
+              className="form-control input-sm"
+              placeholder="Find by name..."
+              onChange={handleChangeSearchName}
+              value={searchName}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  handleApplySearchName()
+                }
+              }}
+              style={{
+                width: '200px',
+              }}
+            />
+            <button
+              className="button button-sm button-default button-square"
+              onClick={handleApplySearchName}
+              title="Find by name"
+            >
+              <span className="button-icon icon search"></span>
+            </button>
+            <button
+              style={{marginRight: '8px'}}
+              className="button button-sm button-default button-square"
+              onClick={handleClearSearchName}
+              title="Clear highlight"
+            >
+              <span className="button-icon icon remove"></span>
+            </button>
+            <button
+              className="button button-sm button-default button-square"
+              onClick={this.handleZoomIn}
+              title="Zoom in"
+            >
+              <span className="button-icon icon zoom-in"></span>
+            </button>
+            <button
+              className="button button-sm button-default button-square"
+              onClick={this.handleZoomOut}
+              title="Zoom out"
+            >
+              <span className="button-icon icon zoom-out"></span>
+            </button>
+            <button
+              style={{marginRight: '4px'}}
+              className="button button-sm button-default button-square"
+              onClick={this.handleZoomReset}
+              title="Reset zoom (1:1)"
+            >
+              <span className="button-icon icon fit"></span>
+            </button>
+          </div>
 
           {this.tooltip}
         </div>
-        {focuseNode.name && cells.length > 0 ? (
-          <div className="kubernetes-dashboard">
-            <LayoutRenderer
-              source={source}
-              sources={sources}
-              isStatusPage={false}
-              isStaticPage={true}
-              isEditable={false}
-              cells={cells}
-              templates={templates}
-              timeRange={timeRange}
-              manualRefresh={manualRefresh}
-              host={host}
-            />
-          </div>
-        ) : (
-          <NoHostsState style={{height: '50px'}} />
-        )}
+
+        {this.renderBottomSection()}
       </FancyScrollbar>
     )
   }
@@ -173,6 +302,32 @@ class KubernetesContents extends PureComponent<Props, State> {
           statusColor={kubernetesStatusColor}
         />
       )
+    }
+  }
+
+  private setZoomMethods = (methods: {
+    zoomIn: () => void
+    zoomOut: () => void
+    zoomReset: () => void
+  }) => {
+    this.zoomMethods = methods
+  }
+
+  private handleZoomIn = () => {
+    if (this.zoomMethods) {
+      this.zoomMethods.zoomIn()
+    }
+  }
+
+  private handleZoomOut = () => {
+    if (this.zoomMethods) {
+      this.zoomMethods.zoomOut()
+    }
+  }
+
+  private handleZoomReset = () => {
+    if (this.zoomMethods) {
+      this.zoomMethods.zoomReset()
     }
   }
 
@@ -227,4 +382,13 @@ class KubernetesContents extends PureComponent<Props, State> {
   }
 }
 
-export default KubernetesContents
+const mstp = state => {
+  const {
+    kubernetesPowerFlexDashboard: {selectedPersistentVolume},
+  } = state
+  return {
+    selectedPersistentVolume,
+  }
+}
+
+export default connect(mstp)(KubernetesContents)

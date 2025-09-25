@@ -292,15 +292,15 @@ function LogAnalysisAlertBarWrapper({
           ? '#F3852C'
           : logsData.length === 1
           ? SeverityColorValues[
-              severityLevelColors.find(i => i.level == key).color
+              severityLevelColors?.find(i => i.level == key)?.color
             ]
           : i === 0
           ? SeverityColorValues[
-              severityLevelColors.find(i => i.level == key).color
+              severityLevelColors?.find(i => i.level == key)?.color
             ] + 'B3' //opacity 70%
           : SeverityColorValues[
-              severityLevelColors.find(i => i.level == key).color
-            ]
+              severityLevelColors?.find(i => i.level == key)?.color
+            ] || '#F3852C'
       ),
       // borderColor: logsData.map((_, i) =>
       //   active?.includes(i) ? '#F3852C' : 'rgba(0,0,0,0)'

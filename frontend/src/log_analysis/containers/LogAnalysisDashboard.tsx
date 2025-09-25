@@ -42,6 +42,8 @@ import {
   TimeRange,
   TimeZones,
   Links,
+  BaseElasticSearchData,
+  Me,
 } from 'src/types'
 import {LogConfig, SeverityFormat, LogsTableColumn} from 'src/types/logs'
 
@@ -66,6 +68,12 @@ import {
 } from 'src/logs/actions'
 import {SeverityFormatOptions} from 'src/logs/constants'
 import {getChartOptions} from 'src/log_analysis/apis/chartOptions'
+import {checkAndConnectElasticSearch} from 'src/utils/changeEsSource'
+import {
+  connectElasticSearch,
+  disconnectElasticSearch,
+  getElasticSearchInfoAsync,
+} from 'src/shared/actions/elasticSearch'
 
 interface TempProps {
   cell: Cell
@@ -73,6 +81,7 @@ interface TempProps {
 }
 
 interface Props {
+  me: Me
   inPresentationMode: boolean
   timeZone: TimeZones
   setTimeZone: typeof appActions.setTimeZone
@@ -98,9 +107,19 @@ interface Props {
   logConfigLink: string
   getConfig?: typeof getLogConfigAsync
   setConfig?: typeof setConfig
+  esSource?: BaseElasticSearchData
+  esSources?: BaseElasticSearchData[]
+  handleGetElasticSearchInfo?: () => void
+  handleDisconnectElasticSearch?: () => void
+  handleConnectElasticSearch?: ({
+    elasticSearchInfo,
+  }: {
+    elasticSearchInfo: BaseElasticSearchData
+  }) => void
 }
 
 function LogAnalysisDashboard({
+  me,
   inPresentationMode,
   source,
   cloudTimeRange,
@@ -120,6 +139,11 @@ function LogAnalysisDashboard({
   updateConfig,
   getConfig,
   setConfig,
+  esSource,
+  esSources,
+  handleGetElasticSearchInfo,
+  handleDisconnectElasticSearch,
+  handleConnectElasticSearch,
 }: Props) {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false)
 
@@ -139,6 +163,10 @@ function LogAnalysisDashboard({
       )
     )
   }, [links])
+
+  useEffect(() => {
+    fetchConfig()
+  }, [])
 
   useEffect(() => {
     if (links && !isUsingLogAnalysis && router) {
@@ -168,9 +196,15 @@ function LogAnalysisDashboard({
   }, [])
 
   useEffect(() => {
-    fetchConfig()
-    fetchChartOptions()
-  }, [])
+    checkAndConnectElasticSearch({
+      me,
+      esSource,
+      esSources,
+      handleGetElasticSearchInfo,
+      handleDisconnectElasticSearch,
+      handleConnectElasticSearch,
+    })
+  }, [esSource])
 
   const fetchConfig = async () => {
     await getConfig(logConfigLink)
@@ -186,6 +220,18 @@ function LogAnalysisDashboard({
       },
     })
   }
+
+  useEffect(() => {
+    const hasColors =
+      Array.isArray(logConfig?.severityLevelColors) &&
+      logConfig.severityLevelColors.length > 0
+    const hasColumns =
+      Array.isArray(logConfig?.tableColumns) &&
+      logConfig.tableColumns.length > 0
+    if (hasColors || hasColumns) {
+      fetchChartOptions()
+    }
+  }, [logConfig?.severityLevelColors?.length, logConfig?.tableColumns?.length])
 
   const savedCells = useMemo(() => {
     const saved = localStorage.getItem('Log-Analysis-cells')
@@ -510,8 +556,15 @@ const mstp = state => {
   const {
     app: {
       ephemeral: {inPresentationMode},
-      persisted: {timeZone, autoRefresh, cloudAutoRefresh, cloudTimeRange},
+      persisted: {
+        timeZone,
+        autoRefresh,
+        cloudAutoRefresh,
+        cloudTimeRange,
+        esSource,
+      },
     },
+    esSources: {esSources},
     links,
     logs: {logConfig},
   } = state
@@ -525,6 +578,8 @@ const mstp = state => {
     links,
     logConfigLink: links.orgConfig.logViewer,
     logConfig,
+    esSource,
+    esSources,
   }
 }
 
@@ -542,6 +597,18 @@ const mdtp = dispatch => ({
   updateConfig: bindActionCreators(updateLogConfigAsync, dispatch),
   getConfig: bindActionCreators(getLogConfigAsync, dispatch),
   setConfig: bindActionCreators(setConfig, dispatch),
+  handleGetElasticSearchInfo: bindActionCreators(
+    getElasticSearchInfoAsync,
+    dispatch
+  ),
+  handleDisconnectElasticSearch: bindActionCreators(
+    disconnectElasticSearch,
+    dispatch
+  ),
+  handleConnectElasticSearch: bindActionCreators(
+    connectElasticSearch,
+    dispatch
+  ),
 })
 
 const isEqual = (prev, next) => {

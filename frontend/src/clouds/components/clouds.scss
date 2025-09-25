@@ -186,17 +186,22 @@
 }
 
 .kubernetes-hover {
-  stroke: black;
+  stroke: $s-orange;
   stroke-width: 3px;
 }
 
 .kubernetes-focuse {
-  stroke: #545454;
-  stroke-width: 3px;
+  // stroke: #545454;
+  // stroke-width: 3px;
 }
 
 .kubernetes-pin {
   stroke: #ffff00;
+  stroke-width: 3px;
+}
+
+.kubernetes-volume {
+  stroke: #22adf6;
   stroke-width: 3px;
 }
 
@@ -227,4 +232,14 @@
 
 .openstack-dots--loading {
   top: 10px !important;
+}
+
+svg.kubernetes-svg path.checkmark,
+svg.kubernetes-svg path.checkmark-bg {
+  display: none;
+}
+
+svg.kubernetes-svg g:has(> path.hexagon.kubernetes-focuse) path.checkmark,
+svg.kubernetes-svg g:has(> path.hexagon.kubernetes-focuse) path.checkmark-bg {
+  display: block;
 }

@@ -169,6 +169,9 @@ type Server struct {
 	EsAPIKeySecret       string   `long:"es-apikey-secret"  description:"Elasticsearch API-Key secret"                     env:"ES_APIKEY_SECRET"`
 	EsDefaultIndex       string   `long:"es-default-index"  description:"Default index name or pattern for queries"        env:"ES_DEFAULT_INDEX" default:"*"`
 	EsInsecureSkipVerify bool     `long:"es-insecure-skip-verify" description:"Skip TLS cert verification for Elasticsearch" env:"ES_INSECURE_SKIP_VERIFY"`
+
+	DellPowerFlex map[string]string `long:"dell-powerflex" description:"The Information to access to Dell PowerFlex API. '--dell-powerflex=url:{server URL} --dell-powerflex=username:{username} --dell-powerflex=password:{password}'. E.g. via environment variable" env:"DELL_POWERFLEX" env-delim:","`
+	Kubernetes    map[string]string `long:"kubernetes" description:"The Information to access to Kubernetes API. '--kubernetes=url:{server URL} --kubernetes=token:{service account token} --kubernetes=insecure-skip-verify:{true/false}'. E.g. via environment variable" env:"KUBERNETES" env-delim:","`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -605,6 +608,8 @@ func (s *Server) Serve(ctx context.Context) {
 
 	osp := NewOSP(s.OSP)
 	aiConfig := NewAIConfig(s.AI)
+	dellPowerFlexConfig := NewDellPowerFlexConfig(s.DellPowerFlex)
+	kubernetesConfig := NewKubernetesConfig(s.Kubernetes)
 
 	var db kv.Store
 	if len(s.EtcdEndpoints) == 0 {
@@ -687,10 +692,12 @@ func (s *Server) Serve(ctx context.Context) {
 		CustomAutoRefresh:      s.CustomAutoRefresh,
 	}
 	service.InternalENV = cloudhub.InternalEnvironment{
-		EtcdEndpoints:    s.EtcdEndpoints,
-		TemplatesPath:    s.TemplatesPath,
-		TemplatesManager: templatesManager,
-		AIConfig:         aiConfig,
+		EtcdEndpoints:       s.EtcdEndpoints,
+		TemplatesPath:       s.TemplatesPath,
+		TemplatesManager:    templatesManager,
+		AIConfig:            aiConfig,
+		DellPowerFlexConfig: dellPowerFlexConfig,
+		KubernetesConfig:    kubernetesConfig,
 	}
 	if !validBasepath(s.Basepath) {
 		err := fmt.Errorf("invalid basepath, must follow format \"/mybasepath\"")
@@ -941,6 +948,7 @@ func openService(
 		AddonURLs:              addonURLs,
 		AddonTokens:            addonTokens,
 		OSP:                    osp,
+		DellPowerFlexClient:    nil, // Will be created when needed in proxy
 	}
 }
 

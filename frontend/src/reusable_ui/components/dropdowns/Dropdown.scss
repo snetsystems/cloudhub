@@ -97,6 +97,13 @@
   padding-left: 28px;
 }
 
+.dropdown-item--multi-select--wrapper {
+  &.highlight,
+  &.highlight:hover {
+    @include gradient-h($dropdown-default-hover, $dropdown-default-bg);
+  }
+}
+
 .dropdown-item--checkbox {
   position: absolute;
   left: 11px;

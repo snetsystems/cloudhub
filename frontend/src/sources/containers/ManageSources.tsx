@@ -2,6 +2,7 @@ import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {Location} from 'history'
 
 import * as sourcesActions from 'src/shared/actions/sources'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -29,6 +30,13 @@ import {
 import {ToggleWizard} from 'src/types/wizard'
 import ElasticTable from '../components/ElasticTable'
 import EsConnectionWizard from '../components/EsConnectionWizard'
+import {checkAndConnectElasticSearch} from 'src/utils/changeEsSource'
+import {
+  connectElasticSearch,
+  getElasticSearchInfoAsync,
+} from 'src/shared/actions/elasticSearch'
+import {disconnectElasticSearch} from 'src/shared/actions/elasticSearch'
+import _ from 'lodash'
 
 interface State {
   wizardVisibility: boolean
@@ -55,6 +63,14 @@ interface Props {
     requireRole: UserRole,
     isNoAuthOuting?: boolean
   ) => void
+  location: Location
+  esSource?: BaseElasticSearchData
+  esSources?: BaseElasticSearchData[]
+  handleGetElasticSearchInfo?: () => void
+  handleDisconnectElasticSearch?: () => void
+  handleConnectElasticSearch?: (params: {
+    elasticSearchInfo?: BaseElasticSearchData
+  }) => void
 }
 
 const VERSION = process.env.npm_package_version
@@ -74,7 +90,14 @@ class ManageSources extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {ForceSessionAbortInputRole} = this.props
+    const {ForceSessionAbortInputRole, location} = this.props
+
+    if (location.query.esPopup === 'true') {
+      setTimeout(() => {
+        this.setState({esWizardVisibility: true})
+      }, 500)
+      // this.setState({esWizardVisibility: true})
+    }
 
     ForceSessionAbortInputRole(SUPERADMIN_ROLE)
     this.fetchKapacitors()
@@ -83,6 +106,20 @@ class ManageSources extends PureComponent<Props, State> {
   public componentDidUpdate(prevProps: Props) {
     if (prevProps.sources.length !== this.props.sources.length) {
       this.fetchKapacitors()
+    }
+
+    if (
+      !_.isEqual(prevProps.esSources.length, this.props.esSources.length) ||
+      !_.isEqual(prevProps.esSource, this.props.esSource)
+    ) {
+      checkAndConnectElasticSearch({
+        me: this.props.me,
+        esSource: this.props.esSource,
+        esSources: this.props.esSources,
+        handleGetElasticSearchInfo: this.props.handleGetElasticSearchInfo,
+        handleDisconnectElasticSearch: this.props.handleDisconnectElasticSearch,
+        handleConnectElasticSearch: this.props.handleConnectElasticSearch,
+      })
     }
   }
 
@@ -231,6 +268,18 @@ const mdtp = (dispatch: any) => ({
   connectedSource: bindActionCreators(connectedSource, dispatch),
   ForceSessionAbortInputRole: bindActionCreators(
     ForceSessionAbortInputRole,
+    dispatch
+  ),
+  handleGetElasticSearchInfo: bindActionCreators(
+    getElasticSearchInfoAsync,
+    dispatch
+  ),
+  handleDisconnectElasticSearch: bindActionCreators(
+    disconnectElasticSearch,
+    dispatch
+  ),
+  handleConnectElasticSearch: bindActionCreators(
+    connectElasticSearch,
     dispatch
   ),
 })

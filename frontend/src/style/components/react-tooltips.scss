@@ -29,6 +29,7 @@ $tooltip-code-color: $c-potassium;
   text-align: left;
   cursor: default;
   pointer-events: auto;
+  z-index: 9999; // ensure tooltip overlays controls
 
   &.place-bottom {
     margin-top: 5px;

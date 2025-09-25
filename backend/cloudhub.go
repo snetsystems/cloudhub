@@ -1195,10 +1195,12 @@ type Environment struct {
 
 // The InternalEnvironment variable is an internally shared environment variable within the server.
 type InternalEnvironment struct {
-	EtcdEndpoints    []string
-	TemplatesPath    string
-	TemplatesManager TemplatesManager
-	AIConfig         AIConfig
+	EtcdEndpoints       []string
+	TemplatesPath       string
+	TemplatesManager    TemplatesManager
+	AIConfig            AIConfig
+	DellPowerFlexConfig DellPowerFlexConfig
+	KubernetesConfig    KubernetesConfig
 }
 
 // Topology is represents represents an topology
@@ -1488,6 +1490,20 @@ type AIConfig struct {
 	DockerCmd       string `json:"docker-cmd"`
 	LogstashPath    string `json:"logstash-path"`
 	PredictionRegex string `json:"prediction-regex"`
+}
+
+// DellPowerFlexConfig is the configuration for Dell PowerFlex API access
+type DellPowerFlexConfig struct {
+	URL      string `json:"url"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// KubernetesConfig is the configuration for Kubernetes API access
+type KubernetesConfig struct {
+	URL                string `json:"url"`
+	Token              string `json:"token"`
+	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
 }
 
 // MLNxRstQuery represents the attributes that a MLNxRst may be retrieved by.

@@ -1,0 +1,159 @@
+.page .kubernetes-powerflex-page {
+  height: 100%;
+  width: 100%;
+  max-height: 48%;
+  padding-right: 8px;
+}
+
+.page .kubernetes-pod-volume-page {
+  height: 100%;
+  width: 100%;
+  max-height: 60%;
+  padding-right: 8px;
+}
+
+.kubernetes-powerflex-dash-graph--draggable {
+  cursor: move;
+  user-select: none;
+}
+
+.kubernetes-powerflex-dash-graph--draggable:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.kubernetes-powerflex-dashboard {
+  height: 100%;
+  width: 100%;
+  background-color: #292933;
+}
+
+.kubernetes-powerflex-panel {
+  background-color: #292933;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.kubernetes-powerflex-panel-header {
+  background-color: #404040;
+  padding: 8px 12px;
+  border-bottom: 1px solid #404040;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kubernetes-powerflex-panel-body {
+  padding: 12px;
+  background-color: #292933;
+  border-radius: 0 0 4px 4px;
+}
+
+.kubernetes-powerflex-chart {
+  height: 100%;
+  width: 100%;
+  background-color: #292933;
+}
+
+.kubernetes-powerflex-metrics-chart {
+  height: 100%;
+  width: 100%;
+  background-color: #292933;
+}
+
+.kubernetes-powerflex-status-summary {
+  height: 100%;
+  width: 100%;
+  background-color: #292933;
+}
+
+.kubernetes-powerflex-resource-usage {
+  height: 100%;
+  width: 100%;
+  background-color: #292933;
+}
+
+.kubernetes-powerflex-dashboard-header {
+  background-color: #404040;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-bottom: 1px solid #404040;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.kubernetes-powerflex-dashboard-content {
+  padding: 12px;
+  background-color: #292933;
+  height: calc(100% - 40px);
+  overflow: auto;
+}
+
+.kubernetes-powerflex-grid-layout {
+  background-color: #292933;
+  min-height: 100%;
+}
+
+.kubernetes-powerflex-grid-item {
+  background-color: #404040;
+  border: 1px solid #505050;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.kubernetes-powerflex-grid-item:hover {
+  border-color: #606060;
+}
+
+.kubernetes-powerflex-resize-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+  z-index: 10;
+}
+
+.kubernetes-powerflex-resize-handle::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.kubernetes-powerflex-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.kubernetes-powerflex-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #ff6b6b;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
+
+.kubernetes-powerflex-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #888888;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
