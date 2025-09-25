@@ -1,19 +1,19 @@
 export type Action =
-  | PowerFlexMetricsChartHeightAction
+  | ProxyMetricsChartHeightAction
   | SelectedPersistentVolumeAction
   | PodChartHeightAction
   | VolumeChartHeightAction
 export enum ActionType {
-  setPowerFlexMetricsChartHeight = 'SET_POWERFLEX_METRICS_CHART_HEIGHT',
+  setProxyMetricsChartHeight = 'SET_PROXY_METRICS_CHART_HEIGHT',
   setSelectedPersistentVolume = 'SET_SELECTED_PERSISTENT_VOLUME',
   setPodChartHeight = 'SET_POD_CHART_HEIGHT',
   setVolumeChartHeight = 'SET_VOLUME_CHART_HEIGHT',
 }
 
-interface PowerFlexMetricsChartHeightAction {
-  type: ActionType.setPowerFlexMetricsChartHeight
+interface ProxyMetricsChartHeightAction {
+  type: ActionType.setProxyMetricsChartHeight
   payload: {
-    powerFlexMetricsChartHeight: number
+    proxyMetricsChartHeight: number
   }
 }
 
@@ -38,12 +38,12 @@ interface VolumeChartHeightAction {
   }
 }
 
-export const setPowerFlexMetricsChartHeight = (
+export const setProxyMetricsChartHeight = (
   height: number
-): PowerFlexMetricsChartHeightAction => ({
-  type: ActionType.setPowerFlexMetricsChartHeight,
+): ProxyMetricsChartHeightAction => ({
+  type: ActionType.setProxyMetricsChartHeight,
   payload: {
-    powerFlexMetricsChartHeight: height,
+    proxyMetricsChartHeight: height,
   },
 })
 

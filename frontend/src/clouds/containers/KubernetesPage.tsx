@@ -33,7 +33,7 @@ import {
   getKubernetesJobsProxy,
   getKubernetesDetailProxy,
   getKubernetesCustomObjectDetail,
-} from 'src/shared/apis/saltStack'
+} from 'src/shared/apis/proxy'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 //Middleware
@@ -96,7 +96,7 @@ import {
   notifyNamespaceRequired,
   notifySelectedNamespacesAreNotValid,
 } from 'src/shared/copy/notifications'
-import {setSelectedPersistentVolume} from '../actions/kubernetesPowerFlex'
+import {setSelectedPersistentVolume} from 'src/clouds/actions/kubernetesProxy'
 
 interface Props extends KubernetesProps {
   source: Source
@@ -1251,7 +1251,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       _.get(namespace, 'metadata.name')
     )
 
-    // service
     _.map(info[2], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const serviceName = _.get(m, 'metadata.name')
@@ -1304,7 +1303,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       }
     })
 
-    // ingress
     _.map(info[3], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const ingressName = _.get(m, 'metadata.name')
@@ -1356,7 +1354,6 @@ class KubernetesPage extends PureComponent<Props, State> {
         )
       }
     })
-    // serviceaccount
     _.map(info[4], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const serviceAccountName = _.get(m, 'metadata.name')
@@ -1411,90 +1408,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       }
     })
 
-    // clusterrole
-    // _.map(info[7], m => {
-    //   const clusterRoleName = _.get(m, 'metadata.name')
-    //   if (
-    //     info[7] !== null &&
-    //     !_.includes(_.keys(kubernetesData), 'ClusterRole')
-    //   ) {
-    //     kubernetesData = {
-    //       ...kubernetesData,
-    //       ClusterRole: {},
-    //     }
-
-    //     const d3DataDepth1: D3DataDepth1 = {
-    //       name: 'ClusterRole',
-    //       label: 'ClusterRole',
-    //       type: 'ClusterRole',
-    //       children: [],
-    //     }
-
-    //     kubernetesD3Data.children.push(d3DataDepth1)
-    //   }
-
-    //   kubernetesData['ClusterRole'][clusterRoleName] = {
-    //     metadata: _.get(m, 'metadata'),
-    //     spec: _.get(m, 'spec'),
-    //     status: _.get(m, 'status'),
-    //   }
-
-    //   const d3DataDepth2: D3DataDepth2 = {
-    //     name: `ClusterRole_${clusterRoleName}`,
-    //     label: clusterRoleName,
-    //     type: 'CR',
-    //     value: 10,
-    //   }
-
-    //   kubernetesD3Data.children[
-    //     _.findIndex(kubernetesD3Data.children, {
-    //       name: 'ClusterRole',
-    //     })
-    //   ].children.push(d3DataDepth2)
-    // })
-
-    // _.map(info[8], m => {
-    //   const clusterRoleBindingName = _.get(m, 'metadata.name')
-    //   if (
-    //     info[8] !== null &&
-    //     !_.includes(_.keys(kubernetesData), 'ClusterRoleBinding')
-    //   ) {
-    //     kubernetesData = {
-    //       ...kubernetesData,
-    //       ClusterRoleBinding: {},
-    //     }
-
-    //     const d3DataDepth1: D3DataDepth1 = {
-    //       name: 'ClusterRoleBinding',
-    //       label: 'ClusterRoleBinding',
-    //       type: 'ClusterRoleBinding',
-    //       children: [],
-    //     }
-
-    //     kubernetesD3Data.children.push(d3DataDepth1)
-    //   }
-
-    //   kubernetesData['ClusterRoleBinding'][clusterRoleBindingName] = {
-    //     metadata: _.get(m, 'metadata'),
-    //     spec: _.get(m, 'spec'),
-    //     status: _.get(m, 'status'),
-    //   }
-
-    //   const d3DataDepth2: D3DataDepth2 = {
-    //     name: `ClusterRoleBinding_${clusterRoleBindingName}`,
-    //     label: clusterRoleBindingName,
-    //     type: 'CRB',
-    //     value: 10,
-    //   }
-
-    //   kubernetesD3Data.children[
-    //     _.findIndex(kubernetesD3Data.children, {
-    //       name: 'ClusterRoleBinding',
-    //     })
-    //   ].children.push(d3DataDepth2)
-    // })
-
-    // role
     _.map(info[5], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const roleName = _.get(m, 'metadata.name')
@@ -1546,7 +1459,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       }
     })
 
-    // rolebinding
     _.map(info[6], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const roleBindingName = _.get(m, 'metadata.name')
@@ -1602,7 +1514,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       }
     })
 
-    // persistentvolume
     _.map(info[7], m => {
       const persistentVolumeName = _.get(m, 'metadata.name')
       if (
@@ -1644,7 +1555,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth2)
     })
 
-    // persistentvolumeclaim
     _.map(info[8], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const persistentVolumeClaimName = _.get(m, 'metadata.name')
@@ -1711,7 +1621,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       })
     })
 
-    // configmap
     _.map(info[9], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const configmapName = _.get(m, 'metadata.name')
@@ -1760,7 +1669,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
-    // secret
     _.map(info[10], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const secretName = _.get(m, 'metadata.name')
@@ -2510,56 +2418,6 @@ class KubernetesPage extends PureComponent<Props, State> {
                 const name = _.get(ro, 'name')
                 if (parentKind !== 'CronJob') {
                   return
-                  // if (!_.includes(_.keys(namespaces[namespace]), parentKind)) {
-                  //   namespaces[namespace] = {
-                  //     ...namespaces[namespace],
-                  //     [parentKind]: {},
-                  //   }
-
-                  //   d3Namespaces[namespace].children.push({
-                  //     name: `Namespace_${namespace}_${parentKind}`,
-                  //     label: parentKind,
-                  //     type: parentKind,
-                  //     children: [],
-                  //   })
-                  // }
-
-                  // if (
-                  //   !_.includes(_.keys(namespaces[namespace][parentKind]), name)
-                  // ) {
-                  //   namespaces[namespace][parentKind][name] = {
-                  //     metadata: {name, api_version: _.get(ro, 'apiVersion')},
-                  //     spec: {},
-                  //     status: {},
-                  //     Pod: [],
-                  //   }
-                  //   namespaces[namespace][parentKind][name]['Pod'].push({
-                  //     name: podName,
-                  //     node_name: nodeName,
-                  //     namespaces: namespace,
-                  //   })
-
-                  //   d3Namespaces[namespace].children[
-                  //     _.findIndex(d3Namespaces[namespace].children, {
-                  //       name: `Namespace_${namespace}_${parentKind}`,
-                  //     })
-                  //   ].children.push({
-                  //     name: `Namespace_${namespace}_${parentKind}_${name}`,
-                  //     label: name,
-                  //     type: parentKind,
-                  //     apiVersion: _.get(ro, 'apiVersion'),
-                  //     namespace: `${namespace}`,
-                  //     child: `Namespace.${namespace}.${parentKind}.${name}.Pod`,
-                  //     value: 10,
-                  //   })
-                  // } else {
-                  //   namespaces[namespace][parentKind][name]['Pod'].push({
-                  //     name: podName,
-                  //     node_name: nodeName,
-                  //     namespaces: namespace,
-                  //   })
-                  // }
-                  // return
                 }
                 if (!_.includes(_.keys(namespaces[namespace]), 'CronJob')) {
                   namespaces[namespace] = {
@@ -2626,54 +2484,6 @@ class KubernetesPage extends PureComponent<Props, State> {
                 const name = _.get(ro, 'name')
                 if (parentKind !== 'CronJob') {
                   return
-                  // if (!_.includes(_.keys(namespaces[namespace]), parentKind)) {
-                  //   namespaces[namespace] = {
-                  //     ...namespaces[namespace],
-                  //     [parentKind]: {},
-                  //   }
-
-                  //   d3Namespaces[namespace].children.push({
-                  //     name: `Namespace_${namespace}_${parentKind}`,
-                  //     label: parentKind,
-                  //     type: parentKind,
-                  //     children: [],
-                  //   })
-                  // }
-
-                  // if (
-                  //   !_.includes(_.keys(namespaces[namespace][parentKind]), name)
-                  // ) {
-                  //   namespaces[namespace][parentKind][name] = {
-                  //     metadata: {name, api_version: _.get(ro, 'apiVersion')},
-                  //     spec: {},
-                  //     status: {},
-                  //     Pod: [],
-                  //   }
-                  //   namespaces[namespace][parentKind][name]['Pod'].push({
-                  //     name: podName,
-                  //     node_name: nodeName,
-                  //   })
-
-                  //   d3Namespaces[namespace].children[
-                  //     _.findIndex(d3Namespaces[namespace].children, {
-                  //       name: `Namespace_${namespace}_${parentKind}`,
-                  //     })
-                  //   ].children.push({
-                  //     name: `Namespace_${namespace}_${parentKind}_${name}`,
-                  //     label: name,
-                  //     type: parentKind,
-                  //     apiVersion: _.get(ro, 'apiVersion'),
-                  //     namespace: `${namespace}`,
-                  //     child: `Namespace.${namespace}.${parentKind}.${name}.Pod`,
-                  //     value: 10,
-                  //   })
-                  // } else {
-                  //   namespaces[namespace][parentKind][name]['Pod'].push({
-                  //     name: podName,
-                  //     node_name: nodeName,
-                  //   })
-                  // }
-                  // return
                 }
                 if (!_.includes(_.keys(namespaces[namespace]), 'CronJob')) {
                   namespaces[namespace] = {
@@ -2962,7 +2772,6 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     if (!(node.data().length > 0)) return
 
-    // Safely escape dynamic values for CSS selectors
     const esc = (v: any) =>
       typeof (window as any).CSS !== 'undefined' &&
       typeof (window as any).CSS.escape === 'function'
@@ -3624,17 +3433,6 @@ class KubernetesPage extends PureComponent<Props, State> {
         selectedVolumes.map(volume => volumeMapping[volume])
       )
     }
-    // if (this.checkHighlightVolumes(focuseNodeName)) {
-    //   null
-    // } else if (!!focuseVolumes) {
-    //   this.handleVolumeSpec(
-    //     focuseVolumes
-    //       .map((volume: any) => volume?.persistent_volume_claim?.claim_name)
-    //       .filter((item: any) => !!item)
-    //   )
-    // } else {
-    //   this.setState({highlightVolumes: []})
-    // }
 
     let pParam: any = {}
 
@@ -3659,7 +3457,6 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (_.isEmpty(pParam)) {
-      // Fallback for dynamic parent kinds (e.g., CRDs like GitLab)
       const apiVersion = _.get(data, 'data.apiVersion') as string
       const label = focuseNodeLabel
       const ns = focuseNamespace

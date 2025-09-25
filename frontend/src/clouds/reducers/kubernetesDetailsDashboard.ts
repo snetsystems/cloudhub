@@ -1,28 +1,28 @@
-import {Action, ActionType} from 'src/clouds/actions/kubernetesPowerFlex'
+import {Action, ActionType} from 'src/clouds/actions/kubernetesProxy'
 
-interface PowerFlexState {
-  powerFlexMetricsChartHeight: number
+interface ProxyState {
+  proxyMetricsChartHeight: number
   selectedPersistentVolume: string[] | null
 
   podChartHeight: number
   volumeChartHeight: number
 }
 
-const initialState: PowerFlexState = {
-  powerFlexMetricsChartHeight: 34,
+const initialState: ProxyState = {
+  proxyMetricsChartHeight: 34,
   selectedPersistentVolume: null,
   podChartHeight: 17,
   volumeChartHeight: 34,
 }
 
-const kubernetesPowerFlexDashboard = (
-  state: PowerFlexState = initialState,
+const kubernetesDetailsDashboard = (
+  state: ProxyState = initialState,
   action: Action
 ) => {
   switch (action.type) {
-    case ActionType.setPowerFlexMetricsChartHeight: {
-      const {powerFlexMetricsChartHeight} = action.payload
-      return {...state, powerFlexMetricsChartHeight}
+    case ActionType.setProxyMetricsChartHeight: {
+      const {proxyMetricsChartHeight} = action.payload
+      return {...state, proxyMetricsChartHeight}
     }
     case ActionType.setSelectedPersistentVolume: {
       const {selectedPersistentVolume} = action.payload
@@ -47,4 +47,4 @@ const kubernetesPowerFlexDashboard = (
   }
 }
 
-export default kubernetesPowerFlexDashboard
+export default kubernetesDetailsDashboard

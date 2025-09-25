@@ -13,19 +13,19 @@ import {Cell, Source} from 'src/types'
 
 // Components
 import {Page} from 'src/reusable_ui'
-import KubernetesPowerFlexMetricsChart from 'src/clouds/components/KubernetesPowerFlexMetricsChart'
+import KubernetesDetailMetricsChart from 'src/clouds/components/KubernetesDetailMetricsChart'
 
 // Constants
 import {FIXTURE_KUBERNETES_POWERFLEX_CELLS} from 'src/clouds/constants/fixture'
 
 // Actions
-import {setPowerFlexMetricsChartHeight} from 'src/clouds/actions/kubernetesPowerFlex'
+import {setProxyMetricsChartHeight} from 'src/clouds/actions/kubernetesProxy'
 
 interface Props {
   source: Source
   timeRange: any
   manualRefresh: any
-  setPowerFlexMetricsChartHeight?: (height: number) => void
+  setProxyMetricsChartHeight?: (height: number) => void
 }
 
 interface TempProps {
@@ -33,17 +33,15 @@ interface TempProps {
   source: Source
 }
 
-function KubernetesPowerFlexDashboard({
+function KubernetesDetailDashboard({
   source,
   timeRange,
   manualRefresh,
-  setPowerFlexMetricsChartHeight,
+  setProxyMetricsChartHeight,
 }: Props) {
   const GridLayout = WidthProvider(ReactGridLayout)
 
-  const savedCells = JSON.parse(
-    localStorage.getItem('Kubernetes-PowerFlex-cells')
-  )
+  const savedCells = JSON.parse(localStorage.getItem('Kubernetes-Detail-cells'))
 
   const cells = useMemo(() => {
     const defaultCells = FIXTURE_KUBERNETES_POWERFLEX_CELLS()
@@ -56,7 +54,7 @@ function KubernetesPowerFlexDashboard({
   }, [savedCells])
 
   const setLocalCells = (cells: DashboardsModels.Cell[]) => {
-    localStorage.setItem('Kubernetes-PowerFlex-cells', JSON.stringify(cells))
+    localStorage.setItem('Kubernetes-Detail-cells', JSON.stringify(cells))
   }
 
   const handleLayoutChange = layout => {
@@ -64,8 +62,8 @@ function KubernetesPowerFlexDashboard({
     const newCells = cells.map(cell => {
       const l = layout.find(ly => ly.i === cell.i)
 
-      if (l.i === 'kubernetes-powerflex-metrics-chart') {
-        setPowerFlexMetricsChartHeight(l.h)
+      if (l.i === 'kubernetes-detail-metrics-chart') {
+        setProxyMetricsChartHeight(l.h)
       }
 
       if (
@@ -99,7 +97,7 @@ function KubernetesPowerFlexDashboard({
     if (!cell) return null
 
     switch (cell.i) {
-      case 'kubernetes-powerflex-metrics-chart': {
+      case 'kubernetes-detail-metrics-chart': {
         return (
           <Authorized
             requiredRole={VIEWER_ROLE}
@@ -109,7 +107,7 @@ function KubernetesPowerFlexDashboard({
               draggableHandle: null,
             }}
           >
-            <KubernetesPowerFlexMetricsChart
+            <KubernetesDetailMetricsChart
               title="Performance"
               source={source}
               timeRange={timeRange}
@@ -124,7 +122,7 @@ function KubernetesPowerFlexDashboard({
   }
 
   return (
-    <Page className="kubernetes-powerflex-page">
+    <Page className="kubernetes-detail-page">
       <Page.Contents fullWidth={true}>
         <div className="dashboard container-fluid full-width">
           {!!cells && cells.length > 0 && (
@@ -143,7 +141,7 @@ function KubernetesPowerFlexDashboard({
                 rowHeight={DASHBOARD_LAYOUT_ROW_HEIGHT}
                 margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
                 containerPadding={[0, 0]}
-                draggableHandle={'.kubernetes-powerflex-dash-graph--draggable'}
+                draggableHandle={'.kubernetes-detail-dash-graph--draggable'}
                 onLayoutChange={handleLayoutChange}
                 useCSSTransforms={false}
                 isDraggable={true}
@@ -180,8 +178,8 @@ const mstp = _ => {
 }
 
 const mdtp = dispatch => ({
-  setPowerFlexMetricsChartHeight: bindActionCreators(
-    setPowerFlexMetricsChartHeight,
+  setProxyMetricsChartHeight: bindActionCreators(
+    setProxyMetricsChartHeight,
     dispatch
   ),
 })
@@ -191,6 +189,6 @@ const isEqual = (prev, next) => {
 }
 
 export default React.memo(
-  connect(mstp, mdtp, null)(KubernetesPowerFlexDashboard),
+  connect(mstp, mdtp, null)(KubernetesDetailDashboard),
   isEqual
 )

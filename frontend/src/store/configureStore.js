@@ -20,7 +20,7 @@ import persistStateEnhancer from './persistStateEnhancer'
 import servicesReducer from 'src/shared/reducers/services'
 import envReducer from 'src/shared/reducers/env'
 import {vspheres} from 'src/clouds/reducers'
-import kubernetesPowerFlexDashboard from 'src/clouds/reducers/kubernetesPowerFlexDashboard'
+import kubernetesDetailsDashboard from 'src/clouds/reducers/kubernetesDetailsDashboard'
 import source from 'src/sources/reducers'
 import aiModal from 'src/shared/reducers/aiModal'
 import predictionDashboard from 'src/device_management/reducers/predictionDashboard'
@@ -50,7 +50,7 @@ const rootReducer = combineReducers({
   routing: routerReducer,
   services: servicesReducer,
   vspheres,
-  kubernetesPowerFlexDashboard,
+  kubernetesDetailsDashboard,
   lastAction,
   source,
   aiModal,

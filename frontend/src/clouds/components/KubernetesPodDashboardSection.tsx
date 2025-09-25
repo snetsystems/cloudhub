@@ -22,8 +22,8 @@ import {FIXTURE_KUBERNETES_POD_VOLUME_CELLS} from 'src/clouds/constants/fixture'
 import {
   setPodChartHeight,
   setVolumeChartHeight,
-} from 'src/clouds/actions/kubernetesPowerFlex'
-import KubernetesPowerFlexMetricsChart from './KubernetesPowerFlexMetricsChart'
+} from 'src/clouds/actions/kubernetesProxy'
+import KubernetesDetailMetricsChart from './KubernetesDetailMetricsChart'
 
 const GridLayout = WidthProvider(ReactGridLayout)
 
@@ -148,7 +148,7 @@ function KubernetesPodDashboardSection({
               isEditable: false,
             }}
           >
-            <KubernetesPowerFlexMetricsChart
+            <KubernetesDetailMetricsChart
               title="Volume Chart"
               source={source}
               timeRange={timeRange}
@@ -217,8 +217,8 @@ function KubernetesPodDashboardSection({
 
 const mstp = state => {
   return {
-    podChartHeight: state.kubernetesPowerFlexDashboard.podChartHeight,
-    volumeChartHeight: state.kubernetesPowerFlexDashboard.volumeChartHeight,
+    podChartHeight: state.kubernetesDetailsDashboard.podChartHeight,
+    volumeChartHeight: state.kubernetesDetailsDashboard.volumeChartHeight,
   }
 }
 const mdtp = dispatch => ({

@@ -136,7 +136,7 @@ const mstp = state => {
       persisted: {cloudAutoRefresh, timeZone},
     },
     links,
-    kubernetesPowerFlexDashboard: {podChartHeight},
+    kubernetesDetailsDashboard: {podChartHeight},
   } = state
   return {
     links,

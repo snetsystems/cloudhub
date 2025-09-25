@@ -31,18 +31,18 @@ interface Props {
   title: string
   timeRange: TimeRange
   manualRefresh: number
-  powerFlexMetricsChartHeight?: number
+  detailMetricsChartHeight?: number
   selectedPersistentVolume?: string[] | null
   cloudAutoRefresh?: CloudAutoRefresh
   volumeChartHeight?: number
 }
 
-function KubernetesPowerFlexMetricsChart({
+function KubernetesDetailMetricsChart({
   source,
   title,
   timeRange,
   manualRefresh,
-  powerFlexMetricsChartHeight = 17,
+  detailMetricsChartHeight = 17,
   selectedPersistentVolume = null,
   cloudAutoRefresh,
   volumeChartHeight,
@@ -61,19 +61,19 @@ function KubernetesPowerFlexMetricsChart({
     const ratio = {
       xNum: 4,
       yNum: 2,
-      height: volumeChartHeight ?? powerFlexMetricsChartHeight,
+      height: volumeChartHeight ?? detailMetricsChartHeight,
     }
 
     if (!!layout) {
       setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
     }
-  }, [layout, source, volumeChartHeight, powerFlexMetricsChartHeight])
+  }, [layout, source, volumeChartHeight, detailMetricsChartHeight])
 
   // useEffect(() => {
   //   const ratio = {
   //     xNum: 3,
   //     yNum: 1,
-  //     height: podChartHeight ?? powerFlexMetricsChartHeight,
+  //     height: podChartHeight ?? detailMetricsChartHeight,
   //   }
 
   //   if (!!layout) {
@@ -122,7 +122,7 @@ function KubernetesPowerFlexMetricsChart({
             x: 16,
             y: 0,
             w: 8,
-            h: powerFlexMetricsChartHeight,
+            h: detailMetricsChartHeight,
             name: 'Read Bandwidth per Volume',
             type: 'line',
 
@@ -181,7 +181,7 @@ function KubernetesPowerFlexMetricsChart({
             x: 16,
             y: 0,
             w: 8,
-            h: powerFlexMetricsChartHeight,
+            h: detailMetricsChartHeight,
             name: 'Write Bandwidth per Volume',
             type: 'line',
             queries: [
@@ -217,7 +217,7 @@ function KubernetesPowerFlexMetricsChart({
             x: 0,
             y: 0,
             w: 8,
-            h: powerFlexMetricsChartHeight,
+            h: detailMetricsChartHeight,
             name: 'Read IOPS per Volume',
             type: 'line',
             queries: [
@@ -253,7 +253,7 @@ function KubernetesPowerFlexMetricsChart({
             x: 0,
             y: 0,
             w: 8,
-            h: powerFlexMetricsChartHeight,
+            h: detailMetricsChartHeight,
             name: 'Write IOPS per Volume',
             type: 'line',
             queries: [
@@ -289,7 +289,7 @@ function KubernetesPowerFlexMetricsChart({
             x: 0,
             y: 0,
             w: 8,
-            h: powerFlexMetricsChartHeight,
+            h: detailMetricsChartHeight,
             name: 'Average Read Latency per Volume',
             type: 'line',
             queries: [
@@ -327,7 +327,7 @@ function KubernetesPowerFlexMetricsChart({
             x: 0,
             y: 0,
             w: 8,
-            h: powerFlexMetricsChartHeight,
+            h: detailMetricsChartHeight,
             name: 'Average Write Latency per Volume',
             type: 'line',
             queries: [
@@ -364,7 +364,7 @@ function KubernetesPowerFlexMetricsChart({
             x: 0,
             y: 0,
             w: 8,
-            h: powerFlexMetricsChartHeight,
+            h: detailMetricsChartHeight,
             name: 'Average Read Block Size per Volume',
             type: 'line',
 
@@ -402,7 +402,7 @@ function KubernetesPowerFlexMetricsChart({
             x: 0,
             y: 0,
             w: 8,
-            h: powerFlexMetricsChartHeight,
+            h: detailMetricsChartHeight,
             name: 'Average Write Block Size per Volume',
             type: 'line',
             queries: [
@@ -513,8 +513,8 @@ const mstp = state => {
       persisted: {cloudAutoRefresh, timeZone},
     },
     links,
-    kubernetesPowerFlexDashboard: {
-      powerFlexMetricsChartHeight,
+    kubernetesDetailsDashboard: {
+      proxyMetricsChartHeight,
       selectedPersistentVolume,
     },
   } = state
@@ -522,7 +522,7 @@ const mstp = state => {
     links,
     timeZone,
     cloudAutoRefresh,
-    powerFlexMetricsChartHeight,
+    detailMetricsChartHeight: proxyMetricsChartHeight,
     selectedPersistentVolume,
   }
 }
@@ -532,6 +532,6 @@ const isEqual = (prev, next) => {
 }
 
 export default React.memo(
-  connect(mstp, null, null)(KubernetesPowerFlexMetricsChart),
+  connect(mstp, null, null)(KubernetesDetailMetricsChart),
   isEqual
 )

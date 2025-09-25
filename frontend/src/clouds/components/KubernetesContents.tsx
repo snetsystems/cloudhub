@@ -8,7 +8,7 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 import KubernetesDashboardSection from 'src/clouds/components/KubernetesDashboardSection'
-import KubernetesPowerFlexDashboard from 'src/clouds/components/KubernetesPowerFlexDashboard'
+import KubernetesDetailDashboard from 'src/clouds/components/KubernetesDetailDashboard'
 
 import KubernetesBasicsTable from 'src/clouds/components/KubernetesBasicsTable'
 import KubernetesRawData from 'src/clouds/components/KubernetesRawData'
@@ -148,7 +148,7 @@ class KubernetesContents extends PureComponent<Props, State> {
 
     if (selectedPersistentVolume && selectedPersistentVolume.length > 0) {
       return (
-        <KubernetesPowerFlexDashboard
+        <KubernetesDetailDashboard
           source={source}
           timeRange={timeRange}
           manualRefresh={manualRefresh}
@@ -384,7 +384,7 @@ class KubernetesContents extends PureComponent<Props, State> {
 
 const mstp = state => {
   const {
-    kubernetesPowerFlexDashboard: {selectedPersistentVolume},
+    kubernetesDetailsDashboard: {selectedPersistentVolume},
   } = state
   return {
     selectedPersistentVolume,

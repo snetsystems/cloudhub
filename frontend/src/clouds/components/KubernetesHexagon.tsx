@@ -16,7 +16,7 @@ import {
 } from 'src/clouds/constants/color'
 
 // Actions
-import {setSelectedPersistentVolume} from 'src/clouds/actions/kubernetesPowerFlex'
+import {setSelectedPersistentVolume} from 'src/clouds/actions/kubernetesProxy'
 
 // Types
 import {D3K8sData, FocuseNode, KubernetesObject} from 'src/clouds/types'
@@ -656,6 +656,9 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
     const autoBox = () => {
       const svgNode = svg.node() as SVGSVGElement
+      if (!svgNode) {
+        return [0, 0, 100, 100] // 기본값 반환
+      }
       this.ref.current!.appendChild(svgNode)
       const {x, y, width, height} = svgNode.getBBox()
       this.ref.current!.removeChild(svgNode)
@@ -663,7 +666,9 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     }
 
     const svgNode = svg.attr('viewBox', `${autoBox()}`).node() as SVGSVGElement
-    this.ref.current!.appendChild(svgNode)
+    if (svgNode && this.ref.current) {
+      this.ref.current.appendChild(svgNode)
+    }
 
     if (this.currentZoomTransform) {
       const transformMatch = this.currentZoomTransform.match(
