@@ -18,7 +18,6 @@ interface Props {
 
 interface State {
   selectedTokens: string[]
-  prevTokens: string[]
   useMessageTokens: boolean
 }
 
@@ -26,17 +25,15 @@ class MessageTokensModal extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      selectedTokens: [...props.tokens],
-      prevTokens: [...props.tokens],
-      useMessageTokens: true,
+      selectedTokens: [],
+      useMessageTokens: false,
     }
   }
 
   componentDidUpdate(prevProps: Props) {
     if (!_.isEqual(prevProps.tokens, this.props.tokens)) {
       this.setState({
-        selectedTokens: [...this.props.tokens],
-        prevTokens: [...this.props.tokens],
+        selectedTokens: [],
       })
     }
   }
