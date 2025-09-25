@@ -1,9 +1,12 @@
+// Libraries
 import React, {
   PureComponent,
   MouseEvent,
   ChangeEvent,
   KeyboardEvent,
 } from 'react'
+
+// Components
 import classnames from 'classnames'
 import OnClickOutside from 'src/shared/components/OnClickOutside'
 import DropdownMenu, {
@@ -12,6 +15,7 @@ import DropdownMenu, {
 import DropdownInput from 'src/shared/components/DropdownInput'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 
+// Types
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {DropdownItem, DropdownAction} from 'src/types'

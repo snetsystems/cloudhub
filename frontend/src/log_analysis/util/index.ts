@@ -1,4 +1,7 @@
+// Libraries
 import moment from 'moment'
+
+// Types
 import {CloudTimeRange} from 'src/clouds/types'
 import {
   DropdownItem,
@@ -7,14 +10,22 @@ import {
   MatchPhraseFilterClause,
   TimeZones,
 } from 'src/types'
+
+// Constants
 import {OperatorMeta, FIELD_OPERATOR_META} from '../constants/search-filter'
+
+// Types
 import {
   BoolShouldClause,
   KQLFilterClause,
   LogAnalysisFilter,
   LogFilterClause,
 } from 'src/types/logAnalysis'
+
+// Constants
 import {timeRanges} from 'src/shared/data/timeRanges'
+
+// Constants
 import {
   BAREMETAL_VENDOR_DROPDOWN_ITEMS,
   VM_HYPERVISOR_DROPDOWN_ITEMS,

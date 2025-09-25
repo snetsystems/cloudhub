@@ -1,5 +1,8 @@
+// Libraries
 import React, {useState} from 'react'
 import MatchingAliasDropdown from './MatchingAliasDropdown'
+
+// Types
 import {DropdownItem} from 'src/types'
 
 const MatchingAliasDropdownWrapper = ({

@@ -1,5 +1,7 @@
+// Libraries
 import {appendIconComponentCache} from '@opensearch-project/oui/es/components/icon/icon'
 
+// Constants
 import {icon as ouiSearch} from '@opensearch-project/oui/es/components/icon/assets/search'
 import {icon as ouiDot} from '@opensearch-project/oui/es/components/icon/assets/dot'
 import {icon as ouiArrowDown} from '@opensearch-project/oui/es/components/icon/assets/arrow_down'
@@ -13,19 +15,24 @@ import {icon as ouiExpandMini} from '@opensearch-project/oui/es/components/icon/
 import {icon as ouiListAdd} from '@opensearch-project/oui/es/components/icon/assets/list_add'
 import {icon as ouiSortable} from '@opensearch-project/oui/es/components/icon/assets/sortable'
 
+// Constants
 import {icon as ouiSortLeft} from '@opensearch-project/oui/es/components/icon/assets/sortLeft'
 import {icon as ouiSortRight} from '@opensearch-project/oui/es/components/icon/assets/sortRight'
 import {icon as ouiEyeClosed} from '@opensearch-project/oui/es/components/icon/assets/eye_closed'
+
+// Constants
 import {icon as ouiTokenDate} from '@opensearch-project/oui/es/components/icon/assets/tokens/tokenDate'
 import {icon as ouiTokenString} from '@opensearch-project/oui/es/components/icon/assets/tokens/tokenString'
 import {icon as ouiTokenNumber} from '@opensearch-project/oui/es/components/icon/assets/tokens/tokenNumber'
 import {icon as ouiCheck} from '@opensearch-project/oui/es/components/icon/assets/check'
+
+// Constants
 import {icon as ouiEmpty} from '@opensearch-project/oui/es/components/icon/assets/empty'
 import {icon as kqlValue} from '@opensearch-project/oui/es/components/icon/assets/kql_value'
 import {icon as kqlOperand} from '@opensearch-project/oui/es/components/icon/assets/kql_operand'
 import {icon as kqlField} from '@opensearch-project/oui/es/components/icon/assets/kql_field'
 import {icon as kqlSelector} from '@opensearch-project/oui/es/components/icon/assets/kql_selector'
-import {icon as lineChart} from '@opensearch-project/oui/es/components/icon/assets/lineChart' 
+import {icon as lineChart} from '@opensearch-project/oui/es/components/icon/assets/lineChart'
 
 appendIconComponentCache({
   search: ouiSearch,
@@ -52,5 +59,5 @@ appendIconComponentCache({
   kqlOperand: kqlOperand,
   kqlField: kqlField,
   kqlSelector: kqlSelector,
-  lineChart: lineChart
+  lineChart: lineChart,
 })

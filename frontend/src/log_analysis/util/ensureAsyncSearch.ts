@@ -1,7 +1,9 @@
+// Libraries
 import {esProxy, ESProxyQuery} from 'src/utils/esQueryUrlGenerator'
 import _ from 'lodash'
 import CryptoJS from 'crypto-js'
 
+// Constants
 const cache = new Map<string, {id: string; data?: any}>()
 
 export interface AsyncSearchResult<T = any> {

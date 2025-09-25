@@ -1,5 +1,7 @@
+// Libraries
 import React, {useState} from 'react'
 
+// Types
 interface ExpandableCellProps {
   text: string
   width: string

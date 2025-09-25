@@ -1,6 +1,8 @@
+// Libraries
 import {useCallback, useState} from 'react'
 import _ from 'lodash'
 
+// Types
 export function useLocalStorage<T extends object>(
   key: string,
   initialValue: T

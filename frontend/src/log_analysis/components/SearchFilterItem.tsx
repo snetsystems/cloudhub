@@ -1,7 +1,11 @@
+// Libraries
 import React from 'react'
 import {OuiIcon} from '@opensearch-project/oui'
+
+// Components
 import 'src/log_analysis/util/setupOUIIcons'
 
+// Types
 export interface SearchFilterItemProps {
   iconType: string
   label: React.ReactNode
@@ -9,7 +13,7 @@ export interface SearchFilterItemProps {
   itemProps: React.HTMLAttributes<HTMLDivElement>
 }
 
-export default function SearchFilterItem({
+function SearchFilterItem({
   iconType,
   label,
   description,
@@ -25,3 +29,5 @@ export default function SearchFilterItem({
     </div>
   )
 }
+
+export default SearchFilterItem

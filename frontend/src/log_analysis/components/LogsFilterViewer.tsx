@@ -1,6 +1,11 @@
+// Libraries
 import React from 'react'
 import classnames from 'classnames'
+
+// Types
 import {LogsFilterClause, TimeZones} from 'src/types'
+
+// Components
 import {ClickOutside} from 'src/shared/components/ClickOutside'
 import {getLogsFilterLabel} from 'src/log_analysis/util'
 

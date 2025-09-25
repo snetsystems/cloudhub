@@ -1,5 +1,8 @@
+// Libraries
 import _ from 'lodash'
 import React, {PureComponent} from 'react'
+
+// Components
 import Container from 'src/reusable_ui/components/overlays/OverlayContainer'
 import Body from 'src/reusable_ui/components/overlays/OverlayBody'
 import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'

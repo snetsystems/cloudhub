@@ -1,20 +1,33 @@
+// Libraries
 import React, {useEffect, useState} from 'react'
+
+// Components
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
 import Body from 'src/reusable_ui/components/overlays/OverlayBody'
 import Heading from 'src/reusable_ui/components/overlays/OverlayHeading'
 import Container from 'src/reusable_ui/components/overlays/OverlayContainer'
 import TopologyRadioButton from 'src/hosts/components/TopologyRadioButton'
+
+// Types
 import {connect} from 'react-redux'
 import {LogConfig} from 'src/types/logs'
 import {saveChartOptions} from '../apis/chartOptions'
+
+// Components
 import InputDropdownWrapper from 'src/shared/components/InputDropdownWrapper'
 import {bindActionCreators} from 'redux'
 import {getLogConfigAsync, setConfig} from 'src/logs/actions'
+
+// Constants
 import {
   DEFAULT_TIME_RANGE_OPTIONS,
   DEFAULT_TIME_RANGE_OPTIONS_PLACEHOLDER,
 } from 'src/log_analysis/constants'
+
+// Components
 import {notifyInvalidDurationFormat} from 'src/shared/copy/notifications'
+
+// Types
 import {Notification} from 'src/types/notifications'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
@@ -93,7 +106,6 @@ function ChartOptionsOverlay({
               <label className="form-label">Fill Option</label>
             </div>
             <div className={`col-sm-12 option-section`}>
-              {/* radio button */}
               <div className="radio-btn-container">
                 <div className="radio-btn-item">
                   <TopologyRadioButton

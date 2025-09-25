@@ -1,16 +1,23 @@
+// Types
 import {TokenData, LogCountData} from 'src/dashboards/types'
 import {
   BaseElasticSearchData,
   FilteredLogsForLogAnalysis,
   SyslogTableRows,
 } from 'src/types'
+
+// Utils
 import {asyncSearch, DEFAULT_OPTS} from '../util/ensureAsyncSearch'
 import {esProxy} from 'src/utils/esQueryUrlGenerator'
+
+// Types
 import {
   AutoCompleteResult,
   FieldInfo,
   FieldListResponse,
 } from 'src/types/elasticSearch'
+
+// Constants
 import {
   ALWAYS_TOP_FIELDS,
   KNOWN_ES_FIELD_TYPES,

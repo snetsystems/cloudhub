@@ -1,4 +1,7 @@
+// Libraries
 import React, {RefObject} from 'react'
+
+// Components
 import {
   Button,
   ComponentSize,
@@ -8,6 +11,8 @@ import {
 } from 'src/reusable_ui'
 import MatchingAliasDropdown from 'src/log_analysis/components/MatchingAliasDropdown'
 import AppNameDropdown from 'src/log_analysis/components/AppNameDropdown'
+
+// Types
 import {DropdownItem} from 'src/types'
 
 interface AppNameMatchingAliasWrapper {

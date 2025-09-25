@@ -1,4 +1,4 @@
-// src/log_analysis/reducers/logAnalysisDashboard.ts
+// Libraries
 import {LogAnalysisAction, ActionType} from 'src/log_analysis/actions'
 import {
   FilteredLogsForLogAnalysis,
@@ -6,11 +6,13 @@ import {
   RangeFilterClause,
 } from 'src/types'
 
+// Types
 interface LogAnalysisState {
   filteredLogsForLogAnalysis: FilteredLogsForLogAnalysis
   logAnalysisManualRefresh: number
 }
 
+// Constants
 const initialState: LogAnalysisState = {
   filteredLogsForLogAnalysis: [],
   logAnalysisManualRefresh: 0,

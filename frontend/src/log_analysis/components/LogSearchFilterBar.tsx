@@ -1,20 +1,28 @@
+// Libraries
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {connect} from 'react-redux'
 import {buildOpenSearchQuery} from 'dsl-builder'
 
+// Types
 import type {
   BaseElasticSearchData,
   FieldInfo,
   AutoCompleteResult,
 } from 'src/types/elasticSearch'
+
+// APIs
 import {
   fetchKibanaFieldList,
   getAutoCompleteResult,
 } from 'src/log_analysis/apis'
+
+// Constants
 import {
   OperatorMeta,
   LOGICAL_OPERATORS,
 } from 'src/log_analysis/constants/search-filter'
+
+// Utils
 import {
   ESRange,
   defaultTimeRange,
@@ -22,18 +30,25 @@ import {
   lowerToESRange,
 } from 'src/log_analysis/util'
 
+// Components
 import {OuiIcon} from '@opensearch-project/oui'
 import 'src/log_analysis/util/setupOUIIcons'
 import SearchFilterItem from './SearchFilterItem'
+
+// Types
 import {CloudTimeRange} from 'src/clouds/types'
 import {FilteredLogsForLogAnalysis} from 'src/types'
 import {bindActionCreators} from 'redux'
+
+// Actions
 import {
   addLogAnalysisKQLFilterClause,
   removeLogAnalysisKQLFilterClause,
   clearLogAnalysisMatchPhraseFilterClauses,
   clearLogAnalysisRangeFilterClauses,
 } from 'src/log_analysis/actions'
+
+// Components
 import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
 
 interface ReduxState {

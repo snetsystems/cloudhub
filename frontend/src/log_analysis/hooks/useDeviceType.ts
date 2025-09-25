@@ -1,7 +1,12 @@
+// Libraries
 import {useEffect, useState} from 'react'
+
+// APIs
 import {getTagValuesForLayoutWhereTagKeys, getLayouts} from 'src/hosts/apis'
 import {generateForHosts} from 'src/utils/tempVars'
 import {getDeep} from 'src/utils/wrappers'
+
+// Types
 import {DropdownItem, Source, Layout} from 'src/types'
 
 export const useDeviceType = (source: Source) => {
