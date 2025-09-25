@@ -1,20 +1,29 @@
+// Library
 import React, {useEffect, useState} from 'react'
+import {connect} from 'react-redux'
+import _ from 'lodash'
+import ReactObserver from 'react-resize-observer'
+
+// Types
+import {Cell, Layout, Source, TimeRange} from 'src/types'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
+
+// Constants
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
+
+// Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
-import KubernetesPowerFlexDashboardHeader from './KubernetesPowerFlexDashboardHeader'
 import {generateForHostsForStatisticalGraph} from 'src/utils/tempVars'
-import {Cell, Layout, Source, TimeRange} from 'src/types'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
-import {connect} from 'react-redux'
-import _ from 'lodash'
-import ReactObserver from 'react-resize-observer'
-import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getCellsReactive} from 'src/hosts/utils/getCellsReactive'
+
+// Components
+import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import KubernetesPowerFlexDashboardHeader from './KubernetesPowerFlexDashboardHeader'
 
 interface Props {
   source: Source
