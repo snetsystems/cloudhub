@@ -104,12 +104,25 @@ function PredictionDashBoard({
     const defaultCells = fixturePredictionPageCells(source)
 
     if (!!savedCells) {
-      return savedCells
+      return savedCells.map(cell => {
+        if (cell.queries && cell.queries.length > 0) {
+          return {
+            ...cell,
+            queries: cell.queries.map(query => ({
+              ...query,
+              query: query.query.replace(
+                /FROM\s+"[^"]*"\./g,
+                `FROM "${source.telegraf}".`
+              ),
+            })),
+          }
+        }
+        return cell
+      })
     } else {
       return defaultCells
     }
-  }, [savedCells])
-
+  }, [savedCells, source.links.proxy, source.telegraf])
   const setLocalCells = (cells: DashboardsModels.Cell[]) => {
     localStorage.setItem('Prediction-cells', JSON.stringify(cells))
   }

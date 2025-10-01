@@ -127,9 +127,9 @@ function PredictionAlertHistoryWrapper({
     cloudTimeRange?.prediction?.lower,
     source.links.proxy,
     filteredHexbinHost,
+    source.telegraf,
   ])
 
-  // alert List get api
   useEffect(() => {
     fetchAlerts()
   }, [
@@ -196,8 +196,6 @@ function PredictionAlertHistoryWrapper({
         })
       }
     })
-
-    //org, source ip dep -> redux init
 
     setAlertHostList(
       setArrayHostList(alertHostListTemp.reverse(), alertHostList)
