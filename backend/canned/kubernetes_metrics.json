@@ -1,0 +1,683 @@
+{
+  "id": "37bbdd01-d88c-4a68-b0d9-960537e9b64d",
+  "app": "kubernetes",
+  "measurement": "kubernetes_metrics",
+  "autoflow": true,
+  "whereTagKey": ["host"],
+  "cells": [
+    {
+      "i": "77c1ea51-cdc2-4522-8ffd-3806d21c2728",
+      "x": 16,
+      "y": 0,
+      "w": 8,
+      "h": 0,
+      "name": "Read Bandwidth per Volume",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"userData\") AS \"userData\" FROM \":db:\".\"autogen\".\"scaleio.volume.bw.read\"",
+          "wheres": [],
+          "groupbys": ["\"volume_name\""]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Bandwidth",
+          "prefix": "",
+          "suffix": " kB/s",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
+      "colors": [
+        {
+          "id": "1bd18cbe-9aef-4fb1-90ba-859aa83b3977",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "e85209c1-66f4-4d87-a4d0-cb3c5d217797",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "eaf69118-4ba4-4071-871a-5651b2ac7733",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "ca47dfab-33a2-45b7-bae5-76478c815025",
+      "x": 16,
+      "y": 0,
+      "w": 8,
+      "h": 0,
+      "name": "Write Bandwidth per Volume",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"userData\") AS \"userData\" FROM \":db:\".\"autogen\".\"scaleio.volume.bw.write\"",
+          "wheres": [],
+          "groupbys": ["\"volume_name\""]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Bandwidth",
+          "prefix": "",
+          "suffix": " kB/s",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
+      "colors": [
+        {
+          "id": "3d41435a-edc0-49a2-8e1f-2cbaa8d6ce78",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "df950c4a-4839-4a55-92ec-b168b5277c09",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "8ff7c85d-7f1c-4910-b075-94735c83b96b",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "b3da8160-a956-4680-8c28-bc3f0fec6812",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 0,
+      "name": "Read IOPS per Volume",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"userData\") AS \"userData\" FROM \":db:\".\"autogen\".\"scaleio.volume.iops.read\"",
+          "wheres": [],
+          "groupbys": ["\"volume_name\""]
+        }
+      ],
+      "colors": [
+        {
+          "id": "d2bd2641-74ea-46cc-9764-07b45f495e8a",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0e27177a-d9c3-49bf-8d8d-f248d50d1222",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "59016259-9475-4930-99fd-5034a5e12927",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "IOPS",
+          "prefix": "",
+          "suffix": " io/s",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "5cd2868d-fb6d-474e-bd67-d87da6ef4ff7",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 0,
+      "name": "Write IOPS per Volume",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"userData\") AS \"userData\" FROM \":db:\".\"autogen\".\"scaleio.volume.iops.write\"",
+          "wheres": [],
+          "groupbys": ["\"volume_name\""]
+        }
+      ],
+      "colors": [
+        {
+          "id": "520ce3c8-4d44-47b0-b85d-e7e0eb473742",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "6cd0c5d4-31f3-4898-aa5f-227369c8d4de",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "3d1c8b8e-c4e4-4c76-b248-ca96d3522c17",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "IOPS",
+          "prefix": "",
+          "suffix": " io/s",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "5e985410-3dc0-469c-84bc-7523d299fd5a",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 0,
+      "name": "Average Read Latency per Volume",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"userDataSdc\")/1000 AS \"userDataSdc\" FROM \":db:\".\"autogen\".\"scaleio.volume.latency.read\"",
+          "label": "Average Read Latency per Volume",
+          "groupbys": ["\"volume_name\""],
+          "wheres": []
+        }
+      ],
+      "colors": [
+        {
+          "id": "cc8a2461-8572-4537-b71b-8e34d4490553",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "c8524ccf-beed-41ec-a2cf-6692889978fe",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "533fbe66-2288-408b-b3a8-76afa0602612",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Latency",
+          "prefix": "",
+          "suffix": " ms",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "b8a16d86-8081-47fc-ae7c-84639ede6cb4",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 0,
+      "name": "Average Write Latency per Volume",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"userDataSdc\")/1000 AS \"userDataSdc\" FROM \":db:\".\"autogen\".\"scaleio.volume.latency.write\"",
+          "label": "Average Write Latency per Volume",
+          "wheres": [],
+          "groupbys": ["\"volume_name\""]
+        }
+      ],
+      "colors": [
+        {
+          "id": "eb77903e-51e1-4b44-8b04-90c198a84999",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "a43eb7ca-f757-46fe-9fe3-20057c77a503",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "8d32ecf1-daa0-41a0-bf66-159216f51be3",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Latency",
+          "prefix": "",
+          "suffix": " ms",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "d68ec478-6fc9-4c5e-bf94-ed51db0ab311",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 0,
+      "name": "Average Read Block Size per Volume",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"userData\") AS \"userData\" FROM \":db:\".\"autogen\".\"scaleio.volume.iosize.read\"",
+          "wheres": [],
+          "groupbys": ["\"volume_name\""]
+        }
+      ],
+      "colors": [
+        {
+          "id": "9eec6dc1-ed44-4de8-b554-be0eb49c6511",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "f654c97e-dbe0-4de6-b2fe-90dd1ab0c7c0",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "5647ce46-b814-4813-8be2-d3144c7565af",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Bandwidth",
+          "prefix": "",
+          "suffix": "KiB",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "cbcf2564-80e7-4316-a572-41d04b68274c",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 0,
+      "name": "Average Write Block Size per Volume",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"userData\") AS \"userData\" FROM \":db:\".\"autogen\".\"scaleio.volume.iosize.write\"",
+          "groupbys": ["\"volume_name\""],
+          "wheres": []
+        }
+      ],
+      "colors": [
+        {
+          "id": "9eec6dc1-ed44-4de8-b554-be0eb49c6511",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "f654c97e-dbe0-4de6-b2fe-90dd1ab0c7c0",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "5647ce46-b814-4813-8be2-d3144c7565af",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Bandwidth",
+          "prefix": "",
+          "suffix": "KiB",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    }
+  ]
+}
