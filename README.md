@@ -94,6 +94,13 @@ Infrastructure Topology Map authoring feature by user group.
 </p>
 <br>
 
+## Log Analysis
+### Morphology-based indexing for log search and time-series visualization
+<p align="center">
+  <img src="./docs/images/log-analysis.png"/>
+</p>
+<br>
+
 ## Change log
 
 You could know the changelog by versions via the follows.<br>
@@ -147,7 +154,7 @@ Version >= v1.3.0: [Projects(Newly)](https://github.com/snetsystems?tab=projects
 
 ### Preparing dependencies
 
-- CloudHub works with **go 1.21.x**, **node 12.x ~ node 14.x**, and **yarn 1.15.x ~ 1.22.x**. Thus, you have to install that according to each offcial guide.<br>
+- CloudHub works with **go 1.21.x**, **node 14.x**, and **yarn 1.15.x ~ 1.22.x**. Thus, you have to install that according to each offcial guide.<br>
   - Yarn install example:
     ```bash
     $ npm install --global yarn@1.22.18
