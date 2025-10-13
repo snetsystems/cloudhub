@@ -89,6 +89,8 @@ function LogAnalysisAlertBarWrapper({
 
   const prevTimeRangeRef = useRef<{gte: number; lte: number} | undefined>()
 
+  const prevActiveRef = useRef<number[]>([])
+
   const [logsData, setLogsData] = useState<LogCountData[]>([])
 
   const [timeRange, setTimeRange] = useState<{gte: number; lte: number}>()
@@ -204,6 +206,11 @@ function LogAnalysisAlertBarWrapper({
     const hasTimeRangeChanged =
       JSON.stringify(prevTimeRangeRef.current) !== JSON.stringify(timeRange)
 
+    if (active.length === 0) {
+      prevTimeRangeRef.current = undefined
+      return
+    }
+
     if (
       hasTimeRangeChanged &&
       timeRange &&
@@ -224,6 +231,7 @@ function LogAnalysisAlertBarWrapper({
     logsData,
     addLogAnalysisRangeFilter,
     removeLogAnalysisRangeFilterClause,
+    active,
   ])
 
   const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
@@ -300,7 +308,7 @@ function LogAnalysisAlertBarWrapper({
             ] + 'B3' //opacity 70%
           : SeverityColorValues[
               severityLevelColors?.find(i => i.level == key)?.color
-            ] || '#F3852C'
+            ] || '#6349FA'
       ),
       // borderColor: logsData.map((_, i) =>
       //   active?.includes(i) ? '#F3852C' : 'rgba(0,0,0,0)'
@@ -324,6 +332,17 @@ function LogAnalysisAlertBarWrapper({
     }
   }, [logsData, active, severityLevelColors])
 
+  useEffect(() => {
+    const prevActive = prevActiveRef.current
+    const selectionCleared = prevActive.length > 0 && active.length === 0
+
+    if (selectionCleared) {
+      prevTimeRangeRef.current = undefined
+    }
+
+    prevActiveRef.current = active
+  }, [active])
+
   const options = useMemo(() => {
     return HistogramOptions({
       setTimeRange: setTimeRange,
@@ -340,7 +359,6 @@ function LogAnalysisAlertBarWrapper({
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
         cellTextColor={DEFAULT_CELL_TEXT_COLOR}
       >
-        <div className="dash-graph--name"></div>
         {loading && (
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
         )}
