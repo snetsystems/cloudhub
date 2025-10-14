@@ -1,21 +1,35 @@
-.refresh-spinner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  padding: 4px;
+.refresh-spinner-icon.refresh::before {
+  content: '\e949';
+  display: block;
+  transform: translate(-0.2px, -2px);
 }
 
-.spinning.slow {
-  .refresh-spinner-icon {
-    animation: spin 5s linear infinite;
+.refresh-spinner-icon {
+  display: inline-block;
+  font-size: 20px;
+  line-height: 1;
+  width: 1em;
+  height: 1em;
+  text-align: center;
+  transform-origin: center;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.refresh-spinner {
+  .button-icon {
+    transform: none;
   }
 }
 
 .spinning {
   .refresh-spinner-icon {
     animation: spin 2s linear infinite;
+  }
+}
+.spinning.slow {
+  .refresh-spinner-icon {
+    animation: spin 5s linear infinite;
   }
 }
 
