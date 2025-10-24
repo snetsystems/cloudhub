@@ -13,21 +13,105 @@
       "minW": 10,
       "minH": 4,
       "i": "5825a4dd-df97-4e99-a99d-67b68833c183",
-      "name": "System - Disk used %",
+      "name": "System – Disk Usage (%)",
       "queries": [
         {
           "query": "SELECT mean(\"used_percent\") AS \"used_percent\" FROM \":db:\".\":rp:\".\"disk\"",
-          "label": "% used",
+          "label": "% Used (Linux)",
           "groupbys": ["\"path\""],
           "wheres": []
         },
         {
-          "query": "SELECT 100 - mean(\"Percent_Free_Space\") AS \"Percent_Free_Space\" FROM \":db:\".\":rp:\".\"win_disk\"",
-          "label": "% used",
+          "query": "SELECT 100 - mean(\"Percent_Free_Space\") AS \"used_percent\" FROM \":db:\".\":rp:\".\"win_disk\"",
+          "label": "% Used (Windows)",
           "groupbys": ["\"instance\""],
           "wheres": []
         }
-      ]
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Time",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "Disk Usage (%)",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "fcb1a3c8-4515-4b83-a82a-1a0a9371a3b0",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "e5e0a6d4-7b4f-4ab0-bb30-1db6f537a541",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "b4e58d3c-8c24-478d-a2f3-3c5b2fd5c08e",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "Time",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "Time",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "used_percent",
+          "displayName": "Disk Usage (%)",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": true,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     }
   ]
 }

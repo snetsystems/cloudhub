@@ -82,6 +82,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "This dashboard gives you an overview of your MySQL Server and includes metrics from the `mysql_*` measurement populated by the [Telegraf MySQL Input Plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -178,6 +184,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -260,6 +272,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -356,6 +374,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -438,6 +462,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -555,6 +585,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -651,6 +687,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -747,6 +789,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -843,6 +891,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -939,6 +993,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -1035,6 +1095,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -1131,6 +1197,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `net` plugin. For more information, please visit the [Telegraf Net plugin documentation](https://github.com/snetsystems/telegraf/blob/master/plugins/inputs/net/NET_README.md).",
@@ -1213,6 +1285,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mem).",
@@ -1300,6 +1378,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 1},
         "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
@@ -1396,6 +1480,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `diskio` plugin. For more information, please visit the [Telegraf DiskIO plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/diskio).",
@@ -1492,6 +1582,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
@@ -1574,6 +1670,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": false, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
@@ -1661,6 +1763,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 1},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -1757,6 +1865,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
         "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mem).",
@@ -1839,6 +1953,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
         "note": "To enable this graph, you will need to configure the Telegraf `mysql` plugin. For more information, please visit the [Telegraf MySQL plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mysql).",
@@ -1848,7 +1968,7 @@
     "templates": [
       {
         "tempVar": ":host:",
-        "id": "",
+        "id": "template-host-$(date +%s)",
         "type": "tagValues",
         "label": "",
         "values": [],

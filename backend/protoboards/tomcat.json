@@ -111,6 +111,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -217,6 +223,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -323,6 +335,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -429,6 +447,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -442,7 +466,7 @@
       {
         "tempVar": ":host:",
         "values": [],
-        "id": "",
+        "id": "template-host-004",
         "type": "tagValues",
         "label": "",
         "query": {

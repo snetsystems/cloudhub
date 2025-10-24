@@ -17,7 +17,6 @@
       "queries": [
         {
           "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
-          "label": "CPU Usage",
           "groupbys": [],
           "wheres": ["\"name\" = 'cpu_usage'"]
         }
@@ -48,7 +47,57 @@
           "scale": "linear"
         }
       },
-      "type": "line"
+      "type": "line",
+      "colors": [
+        {
+          "id": "633ffbf8-a53d-4601-b123-e8cfa58ca741",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "557f1e62-b704-47cb-940b-1a97cfe6097c",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "46990f29-93bd-4c15-aec0-0098b9add898",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     },
     {
       "x": 0,
@@ -62,7 +111,6 @@
       "queries": [
         {
           "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
-          "label": "Memory Usage",
           "groupbys": [],
           "wheres": ["\"name\" = 'mem_usage'"]
         }
@@ -93,7 +141,57 @@
           "scale": "linear"
         }
       },
-      "type": "line"
+      "type": "line",
+      "colors": [
+        {
+          "id": "2302e351-d61a-4d21-865e-6e842cad9ed3",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "2944c08f-b8a0-4ed7-b7a5-6b6d0f0b6da3",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "43f6c281-fc4e-4cc0-af2a-57103b5a4566",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     },
     {
       "x": 0,
@@ -107,7 +205,6 @@
       "queries": [
         {
           "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
-          "label": "System Usage",
           "groupbys": [],
           "wheres": ["\"name\" = 'sys_usage'"]
         }
@@ -138,7 +235,57 @@
           "scale": "linear"
         }
       },
-      "type": "line"
+      "type": "line",
+      "colors": [
+        {
+          "id": "7c5a2ee2-4a59-40bd-b77a-5cd656473803",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0628143e-cbf4-4696-81ce-9ce3fd52deaf",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "3ee4475d-4ffb-4d76-9389-01c9b9fe5a61",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     },
     {
       "x": 0,
@@ -152,7 +299,6 @@
       "queries": [
         {
           "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
-          "label": "I/O Usage",
           "groupbys": [],
           "wheres": ["\"name\" = 'io_usage'"]
         }
@@ -183,7 +329,57 @@
           "scale": "linear"
         }
       },
-      "type": "line"
+      "type": "line",
+      "colors": [
+        {
+          "id": "2482fd83-73f1-40ff-bfc8-e8cf2ffcbee4",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "ca7ed23f-1992-4265-ac7f-f068d214362a",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "44442a76-6f2e-4cb8-a3e9-8bac2229f428",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     },
     {
       "x": 0,
@@ -197,7 +393,6 @@
       "queries": [
         {
           "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
-          "label": "Temperature",
           "groupbys": ["\"name\""],
           "wheres": ["\"unit\" = 'degrees_c'"]
         }
@@ -228,7 +423,57 @@
           "scale": "linear"
         }
       },
-      "type": "line"
+      "type": "line",
+      "colors": [
+        {
+          "id": "2f807a4e-a336-4105-8598-ef8325f7fdfc",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0a825194-2deb-4dd5-b9a8-cfceab339992",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "8489d16b-98d1-4935-a721-3d176b7db199",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     },
     {
       "x": 0,
@@ -242,7 +487,6 @@
       "queries": [
         {
           "query": "SELECT mean(\"value\") AS \"mean_power_consumption\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
-          "label": "Power Consumption",
           "groupbys": ["\"name\""],
           "wheres": [
             "(\"name\" = 'total_power' OR \"name\" = 'pwr_consumption' OR \"name\" = 'pw_consumption' OR \"name\" = 'pwr_system' OR (\"name\" =~ /^psu\\d+_pwr_in$/) )"
@@ -275,7 +519,57 @@
           "scale": "linear"
         }
       },
-      "type": "line"
+      "type": "line",
+      "colors": [
+        {
+          "id": "2b732f3b-e35b-487b-bc32-7a7c07320ca5",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "c704ff8d-5596-4c21-84bd-5be6d6d682a8",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "573fb3b0-7e4c-41b2-a470-4f903a139604",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     }
   ]
 }

@@ -13,19 +13,69 @@
       "minW": 10,
       "minH": 4,
       "i": "4c79cefb-5152-410c-9b88-74f9bff7ef23",
-      "name": "Docker - Container Network",
+      "name": "Docker – Container Network Traffic (bytes/sec)",
       "queries": [
         {
-          "query": "SELECT derivative(mean(\"tx_bytes\"), 10s) AS \"net_tx_bytes\" FROM \":db:\".\":rp:\".\"docker_container_net\"",
+          "query": "SELECT derivative(mean(\"tx_bytes\"), 10s) AS \"tx_bytes_per_sec\" FROM \":db:\".\":rp:\".\"docker_container_net\"",
           "groupbys": ["\"container_name\""],
-          "wheres": []
+          "wheres": [],
+          "label": "TX Bytes/s"
         },
         {
-          "query": "SELECT derivative(mean(\"rx_bytes\"), 10s) AS \"net_rx_bytes\" FROM \":db:\".\":rp:\".\"docker_container_net\"",
+          "query": "SELECT derivative(mean(\"rx_bytes\"), 10s) AS \"rx_bytes_per_sec\" FROM \":db:\".\":rp:\".\"docker_container_net\"",
           "groupbys": ["\"container_name\""],
-          "wheres": []
+          "wheres": [],
+          "label": "RX Bytes/s"
         }
-      ]
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Time",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", ""],
+          "label": "Network Traffic (Bytes/s)",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "21c6f8d2-60cb-48a1-8b61-5edb8a6c9311",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "TX Bytes",
+          "value": "0"
+        },
+        {
+          "id": "fe791b11-4a56-46b4-b8cc-94c256bb5e54",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "RX Bytes",
+          "value": "0"
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false
+      }
     }
   ]
 }

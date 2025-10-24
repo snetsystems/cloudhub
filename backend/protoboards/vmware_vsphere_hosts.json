@@ -103,6 +103,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
@@ -199,6 +205,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
@@ -295,6 +307,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
@@ -391,6 +409,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
@@ -487,6 +511,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the [Telegraf vSphere Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/vsphere).",
@@ -816,7 +846,7 @@
     "templates": [
       {
         "tempVar": ":esxhostname:",
-        "id": "",
+        "id": "template-host-$(date +%s)",
         "type": "tagValues",
         "label": "",
         "values": [],
