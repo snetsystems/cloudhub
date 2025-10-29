@@ -262,7 +262,8 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
   height: $dash-graph-heading;
   color: $g13-mist;
   line-height: $dash-graph-heading;
-  width: calc(100% - 78px);
+  flex: 1 1 auto;
+  min-width: 0;
   padding-left: 10px;
   transition: color 0.25s ease, opacity 0.25s ease;
 
@@ -277,7 +278,8 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
 }
 
 .dash-graph--name.dash-graph--name__note {
-  width: calc(100% - (78px + 22px));
+  flex: 1 1 auto;
+  min-width: 0;
   margin-left: 20px;
 }
 

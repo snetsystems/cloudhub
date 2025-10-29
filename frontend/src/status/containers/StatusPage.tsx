@@ -9,6 +9,7 @@ import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 
 // Actions
 import * as appActions from 'src/shared/actions/app'
+import {resetStatusDashboard} from 'src/status/actions'
 
 // Constants
 import {STATUS_PAGE_TIME_RANGE} from 'src/shared/data/timeRanges'
@@ -38,6 +39,7 @@ interface OwnProps {
 interface StateProps {
   timeZone: TimeZones
   onSetTimeZone: typeof appActions.setTimeZone
+  onResetStatusDashboard: typeof resetStatusDashboard
 }
 
 const timeRange = STATUS_PAGE_TIME_RANGE
@@ -52,6 +54,10 @@ class StatusPage extends Component<Props> {
     this.state = {
       shellModalVisible: false,
     }
+  }
+
+  componentDidMount() {
+    this.props.onResetStatusDashboard()
   }
 
   //Todo: connect elasticsearch
@@ -160,6 +166,7 @@ const mstp = ({app}) => ({
 
 const mdtp = dispatch => ({
   onSetTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
+  onResetStatusDashboard: bindActionCreators(resetStatusDashboard, dispatch),
 })
 
 export default connect(mstp, mdtp)(StatusPage)

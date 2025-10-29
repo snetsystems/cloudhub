@@ -1,6 +1,8 @@
 // Libraries
 import React, {useEffect, useMemo, useRef, useState} from 'react'
+
 import {Bar} from 'react-chartjs-2'
+import _ from 'lodash'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,8 +13,6 @@ import {
   Legend,
   LogarithmicScale,
 } from 'chart.js'
-import zoomPlugin from 'chartjs-plugin-zoom'
-import _ from 'lodash'
 
 // Types
 import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
@@ -47,8 +47,7 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend,
-  zoomPlugin
+  Legend
 )
 
 interface Props {
@@ -82,9 +81,8 @@ const StackedChart = ({
   decimalPlaces,
 }: Props) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
-  const [chartInstance, setChartInstance] = useState<
-    ChartJS<'bar', [], unknown>
-  >(null)
+  const [chartInstance, setChartInstance] =
+    useState<ChartJS<'bar', [], unknown>>(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
 
   const rawData: TimeSeriesSeries[] = _.get(
@@ -130,23 +128,12 @@ const StackedChart = ({
     }
   }, [chartRef.current])
 
-  const onResetZoom = () => {
-    if (chartRef && chartRef.current) {
-      chartRef.current.resetZoom()
-    }
-  }
-
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
         <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
-            <Bar
-              ref={chartRef}
-              options={dynamicOption}
-              data={chartData}
-              onDoubleClick={onResetZoom}
-            />
+            <Bar ref={chartRef} options={dynamicOption} data={chartData} />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend

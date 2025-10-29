@@ -35,6 +35,7 @@ interface OwnProps {
   isAlertsMaxedOut: boolean
   alertsCount: number
   onGetMoreAlerts: () => void
+  title?: string
 }
 
 interface StateProps {
@@ -74,10 +75,16 @@ class AlertsTable extends PureComponent<Props, State> {
       onGetMoreAlerts,
       isAlertsMaxedOut,
       alertsCount,
+      title,
     } = this.props
 
     return shouldNotBeFilterable ? (
       <div className="alerts-widget">
+        {title && (
+          <div className="panel-heading">
+            <h2 className="panel-title">{title}</h2>
+          </div>
+        )}
         {this.renderTable()}
         {limit && alertsCount ? (
           <button
@@ -118,18 +125,19 @@ class AlertsTable extends PureComponent<Props, State> {
     this.setState({searchTerm, filteredAlerts})
   }
 
-  private changeSort = (key: string): (() => void) => (): void => {
-    // if we're using the key, reverse order; otherwise, set it with ascending
-    if (this.state.sortKey === key) {
-      const reverseDirection: Direction =
-        this.state.sortDirection === Direction.ASC
-          ? Direction.DESC
-          : Direction.ASC
-      this.setState({sortDirection: reverseDirection})
-    } else {
-      this.setState({sortKey: key, sortDirection: Direction.ASC})
+  private changeSort =
+    (key: string): (() => void) =>
+    (): void => {
+      if (this.state.sortKey === key) {
+        const reverseDirection: Direction =
+          this.state.sortDirection === Direction.ASC
+            ? Direction.DESC
+            : Direction.ASC
+        this.setState({sortDirection: reverseDirection})
+      } else {
+        this.setState({sortKey: key, sortDirection: Direction.ASC})
+      }
     }
-  }
 
   private sortableClasses = (key: string): string => {
     if (this.state.sortKey === key) {

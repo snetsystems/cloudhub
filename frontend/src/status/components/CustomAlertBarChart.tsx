@@ -1,0 +1,501 @@
+//Library
+import React, {useEffect, useState, useMemo, useRef, MouseEvent} from 'react'
+import {Bar, getElementAtEvent} from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+import moment from 'moment'
+import {v4 as uuidv4} from 'uuid'
+
+//Redux bindings
+import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
+import {
+  setStatusSelectedAnomaly,
+  setStatusHistogramDate,
+  setStatusAlertHostList,
+} from 'src/status/actions'
+
+//API
+import {api} from 'src/status/apis'
+
+//Types
+import {INPUT_TIME_TYPE} from 'src/types'
+import {TimeRange} from 'src/types/queries'
+import {Cell} from 'src/types/dashboards'
+import {Source} from 'src/types/sources'
+
+//Utils
+import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
+import {convertTimeFormat} from 'src/utils/timeSeriesTransformers'
+import {stableSelectionPlugin} from 'src/shared/utils/esChart'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  stableSelectionPlugin
+)
+
+interface OwnProps {
+  cell: Cell
+  source: Source
+}
+
+interface StateProps {
+  timeZone?: string
+}
+
+interface DispatchProps {
+  setStatusSelectedAnomaly: (value: {host: string; time: string}) => void
+  setStatusHistogramDate: (value: TimeRange) => void
+  setStatusAlertHostList: (value: {
+    warning: string[]
+    critical: string[]
+  }) => void
+}
+
+type Props = OwnProps & StateProps & DispatchProps
+
+const CustomAlertBarChart = ({
+  cell,
+  source,
+  setStatusSelectedAnomaly,
+  setStatusHistogramDate,
+  setStatusAlertHostList,
+  timeZone = 'UTC',
+}: Props) => {
+  const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
+  const [data, setData] = useState<
+    {time: string; CRITICAL: number; WARNING: number; OK: number}[]
+  >([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [active, setActive] = useState<number[]>([])
+  const [dragEndTime, setDragEndTime] = useState(0)
+
+  const handleClickDate = (time: number) => {
+    if (
+      !setStatusSelectedAnomaly ||
+      !setStatusHistogramDate ||
+      !setStatusAlertHostList
+    )
+      return
+
+    setStatusSelectedAnomaly({
+      host: '',
+      time: '',
+    })
+    setStatusAlertHostList({critical: [], warning: []})
+
+    if (timeZone === 'UTC') {
+      setStatusHistogramDate({
+        lower: convertTimeFormat(time),
+        upper: null,
+        format: INPUT_TIME_TYPE.TIMESTAMP,
+      })
+    } else {
+      setStatusHistogramDate({
+        lower: convertTimeFormat(moment(time).format('YYYY-MM-DD')),
+        upper: null,
+        format: INPUT_TIME_TYPE.TIMESTAMP,
+      })
+    }
+  }
+
+  const handleDragDateRange = (startTime: number, endTime: number) => {
+    if (
+      !setStatusSelectedAnomaly ||
+      !setStatusHistogramDate ||
+      !setStatusAlertHostList
+    )
+      return
+
+    setStatusSelectedAnomaly({
+      host: '',
+      time: '',
+    })
+    setStatusAlertHostList({critical: [], warning: []})
+
+    const endTimePlusOneDay = endTime + 86400000
+
+    if (timeZone === 'UTC') {
+      setStatusHistogramDate({
+        lower: convertTimeFormat(startTime),
+        upper: convertTimeFormat(endTimePlusOneDay),
+        format: INPUT_TIME_TYPE.TIMESTAMP,
+      })
+    } else {
+      setStatusHistogramDate({
+        lower: convertTimeFormat(moment(startTime).format('YYYY-MM-DD')),
+        upper: convertTimeFormat(
+          moment(endTimePlusOneDay).format('YYYY-MM-DD')
+        ),
+        format: INPUT_TIME_TYPE.TIMESTAMP,
+      })
+    }
+  }
+
+  const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
+    if (Date.now() - dragEndTime < 200) {
+      return
+    }
+
+    const elem = getElementAtEvent(chartRef.current, e)[0]
+    if (!elem) {
+      if (active.length > 0) {
+        setActive([])
+        setStatusSelectedAnomaly({
+          host: '',
+          time: '',
+        })
+        setStatusAlertHostList({critical: [], warning: []})
+        setStatusHistogramDate(null)
+      }
+      return
+    }
+
+    const {index} = elem
+
+    if (!data || !data[index] || !data[index].time) {
+      return
+    }
+
+    if (active && active.includes(index) && active.length === 1) {
+      setActive([])
+      setStatusSelectedAnomaly({
+        host: '',
+        time: '',
+      })
+      setStatusAlertHostList({critical: [], warning: []})
+      setStatusHistogramDate(null)
+    } else {
+      setActive([index])
+      const timestamp = moment(data[index].time).valueOf()
+      handleClickDate(timestamp)
+    }
+  }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!cell?.queries?.[0]?.query || !source?.id) return
+      try {
+        setLoading(true)
+        setError(null)
+
+        const tz =
+          (cell.queries?.[0] as any)?.tz ||
+          Intl.DateTimeFormat().resolvedOptions().timeZone
+        const fullQuery = `
+          SELECT count("value") AS "count_value"
+          FROM "Default"."autogen"."cloudhub_alerts"
+          WHERE time > now() - 30d
+          GROUP BY time(1d), "level"
+          tz('${tz}')
+        `.trim()
+
+        const proxyUrl = `/cloudhub/v1/sources/${source.id}/proxy`
+        const payload = {
+          url: proxyUrl,
+          query: fullQuery,
+          uuid: uuidv4(),
+        }
+
+        const {data: res} = await api.post(proxyUrl, payload)
+        const series = res?.results?.[0]?.series ?? []
+
+        if (!series.length) {
+          setData([])
+          return
+        }
+
+        const allDates = Array.from(
+          new Set(
+            series.flatMap(s =>
+              s.values.map(([time]) => moment(time).format('YYYY-MM-DD'))
+            )
+          )
+        ).sort()
+
+        const grouped = allDates.map(date => ({
+          time: date,
+          CRITICAL: 0,
+          WARNING: 0,
+          OK: 0,
+        }))
+
+        series.forEach(s => {
+          const level = (s.tags?.level || 'OK').toUpperCase()
+          s.values.forEach(([time, value]) => {
+            const dateKey = moment(time).format('YYYY-MM-DD')
+            const target = grouped.find(d => d.time === dateKey)
+            if (!target) return
+            if (level.includes('CRIT')) target.CRITICAL += value || 0
+            else if (level.includes('WARN')) target.WARNING += value || 0
+            else target.OK += value || 0
+          })
+        })
+
+        setData(
+          grouped as {
+            time: string
+            CRITICAL: number
+            WARNING: number
+            OK: number
+          }[]
+        )
+      } catch (err: any) {
+        console.error('Query failed:', err)
+        setError('Query failed.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [cell, source])
+
+  const chartData = useMemo(() => {
+    if (!data.length) return {labels: [], datasets: []}
+    return {
+      labels: data.map(d => moment(d.time).format('DD / MMM').toUpperCase()),
+      datasets: [
+        {
+          label: 'ok',
+          data: data.map(d => d.OK),
+          backgroundColor: data.map((_, i) =>
+            active?.includes(i) ? '#F3852C' : '#4ed8a0'
+          ),
+          stack: 'alerts',
+        },
+        {
+          label: 'warning',
+          data: data.map(d => d.WARNING),
+          backgroundColor: data.map((_, i) =>
+            active?.includes(i) ? '#F3852C' : '#ffb94a'
+          ),
+          stack: 'alerts',
+        },
+        {
+          label: 'critical',
+          data: data.map(d => d.CRITICAL),
+          backgroundColor: data.map((_, i) =>
+            active?.includes(i) ? '#F3852C' : '#BF3D5E'
+          ),
+          stack: 'alerts',
+        },
+      ],
+    }
+  }, [data, active])
+
+  const options = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {mode: 'index' as const, intersect: false},
+      plugins: {
+        'stable-selection': {
+          threshold: 8,
+          onSelect: ({gte, lte, indices}) => {
+            if (gte >= 0 && lte >= 0) {
+              if (indices.length > 1 && data && data.length > 0) {
+                setActive(indices)
+                const sortedIndices = [...indices].sort((a, b) => a - b)
+                const startIndex = sortedIndices[0]
+                const endIndex = sortedIndices[sortedIndices.length - 1]
+
+                if (data[startIndex] && data[endIndex]) {
+                  const startTime = moment(data[startIndex].time).valueOf()
+                  const endTime = moment(data[endIndex].time).valueOf()
+                  handleDragDateRange(startTime, endTime)
+                }
+              }
+            } else {
+              setActive([])
+              setStatusSelectedAnomaly({
+                host: '',
+                time: '',
+              })
+              setStatusAlertHostList({critical: [], warning: []})
+              setStatusHistogramDate(null)
+            }
+          },
+          onDragEnd: () => {
+            setDragEndTime(Date.now())
+          },
+        },
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          mode: 'index' as const,
+          intersect: false,
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          padding: {top: 8, bottom: 8, left: 10, right: 10},
+          bodyFont: {size: 11},
+          titleFont: {size: 11, weight: '600'},
+          footerFont: {size: 12, weight: '600'},
+          itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y ?? 0
+              return `${ctx.dataset.label}: ${v.toLocaleString()}`
+            },
+
+            labelFont: () => {
+              return {
+                size: 5,
+                weight: '500',
+              }
+            },
+
+            labelTextColor: ctx => {
+              const fixedColors: Record<string, string> = {
+                ok: '#4ed8a0',
+                warning: '#ffb94a',
+                critical: '#BF3D5E',
+              }
+              return fixedColors[ctx.dataset.label.toLowerCase()] || '#fff'
+            },
+
+            labelColor: ctx => {
+              const fixedColors: Record<string, string> = {
+                ok: '#4ed8a0',
+                warning: '#ffb94a',
+                critical: '#BF3D5E',
+              }
+              const color =
+                fixedColors[ctx.dataset.label.toLowerCase()] || '#ccc'
+              return {
+                borderColor: color,
+                backgroundColor: color,
+              }
+            },
+
+            footer: ctx => {
+              if (!ctx.length) return ''
+              const total = ctx.reduce((sum, i) => sum + (i.parsed.y ?? 0), 0)
+              return `Total: ${total.toLocaleString()}`
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: {
+            color: '#ccc',
+            maxTicksLimit: 8,
+            font: {
+              size: 11,
+              weight: '600',
+            },
+            maxRotation: 0,
+            minRotation: 0,
+          },
+          grid: {display: false},
+        },
+        y: {
+          stacked: true,
+          title: {
+            display: true,
+            text: 'Alert Count',
+            color: '#ddd',
+            font: {
+              size: 13,
+              weight: '600',
+            },
+          },
+          ticks: {color: '#ccc', padding: 6},
+          grid: {
+            color: 'rgba(255,255,255,0.1)',
+          },
+        },
+      },
+      animation: false as const,
+    }),
+    [data, handleClickDate, setActive, setDragEndTime]
+  )
+
+  return (
+    <div
+      style={{
+        height: '100%',
+        width: '100%',
+        backgroundColor: DEFAULT_CELL_BG_COLOR,
+        padding: '8px',
+      }}
+    >
+      {loading ? (
+        <div
+          style={{
+            color: '#aaa',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
+          Loading...
+        </div>
+      ) : error ? (
+        <div
+          style={{
+            color: 'red',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
+          {error}
+        </div>
+      ) : !data.length ? (
+        <div
+          style={{
+            color: '#aaa',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
+          No data available
+        </div>
+      ) : (
+        <Bar
+          ref={chartRef}
+          data={chartData}
+          options={options}
+          onClick={handleClick}
+        />
+      )}
+    </div>
+  )
+}
+
+const mstp = (state: any) => ({
+  timeZone: state.app?.persisted?.timeZone || 'UTC',
+})
+
+const mdtp = (dispatch: any) => ({
+  setStatusSelectedAnomaly: bindActionCreators(
+    setStatusSelectedAnomaly,
+    dispatch
+  ),
+  setStatusHistogramDate: bindActionCreators(setStatusHistogramDate, dispatch),
+  setStatusAlertHostList: bindActionCreators(setStatusAlertHostList, dispatch),
+})
+
+export default connect(mstp, mdtp)(CustomAlertBarChart)

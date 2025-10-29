@@ -3,8 +3,6 @@ import _ from 'lodash'
 
 // Type
 import {
-  AlertHostList,
-  AnomalyFactor,
   HostState,
   INPUT_TIME_TYPE,
   Source,
@@ -31,12 +29,12 @@ import {
 import {getPredictionAlert} from 'src/device_management/apis'
 
 // Redux
+import {setFilteredHexbin} from 'src/device_management/actions'
 import {
-  setAlertHostList,
-  setFilteredHexbin,
-  setHistogramDate,
-  setSelectedAnomaly,
-} from 'src/device_management/actions'
+  setStatusAlertHostList,
+  setStatusHistogramDate,
+  setStatusSelectedAnomaly,
+} from 'src/status/actions'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 
@@ -45,34 +43,34 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {setArrayHostList} from 'src/device_management/utils'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
 import {timeRanges} from 'src/shared/data/timeRanges'
-import {ANOMALY_INITIAL} from '../constants'
 
 interface Props {
   source: Source
   limit: number
   timeZone?: TimeZones
-  alertHostList?: AlertHostList
-  histogramDate?: TimeRange
+  statusHistogramDate?: TimeRange
   filteredHexbinHost?: string
   cloudTimeRange?: CloudTimeRange
   predictionManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
-  setHistogramDate?: (value: TimeRange) => void
-  setAlertHostList?: (value: AlertHostList) => void
-  setSelectedAnomaly?: (value: AnomalyFactor) => void
+  setStatusHistogramDate?: (value: TimeRange) => void
+  setStatusAlertHostList?: (value: {
+    warning: string[]
+    critical: string[]
+  }) => void
+  setStatusSelectedAnomaly?: (value: {host: string; time: string}) => void
   onChooseCloudTimeRange?: (value: CloudTimeRange) => void
 }
 
 function PredictionAlertHistoryWrapper({
   source,
   timeZone,
-  alertHostList,
-  histogramDate,
+  statusHistogramDate,
   cloudTimeRange,
   cloudAutoRefresh,
-  setAlertHostList,
-  setHistogramDate,
-  setSelectedAnomaly,
+  setStatusAlertHostList,
+  setStatusHistogramDate,
+  setStatusSelectedAnomaly,
   filteredHexbinHost,
   onChooseCloudTimeRange,
   predictionManualRefresh,
@@ -95,7 +93,7 @@ function PredictionAlertHistoryWrapper({
   const fetchAlerts = useCallback((): void => {
     getPredictionAlert(
       source.links.proxy,
-      histogramDate ??
+      statusHistogramDate ??
         cloudTimeRange?.prediction ??
         timeRanges.find(i => i.inputValue === 'Past 30d'),
       limit * limitMultiplier,
@@ -123,7 +121,7 @@ function PredictionAlertHistoryWrapper({
       })
   }, [
     limitMultiplier,
-    histogramDate?.lower,
+    statusHistogramDate?.lower,
     cloudTimeRange?.prediction?.lower,
     source.links.proxy,
     filteredHexbinHost,
@@ -133,7 +131,7 @@ function PredictionAlertHistoryWrapper({
   useEffect(() => {
     fetchAlerts()
   }, [
-    histogramDate,
+    statusHistogramDate,
     fetchAlerts,
     filteredHexbinHost,
     timeZone,
@@ -197,9 +195,14 @@ function PredictionAlertHistoryWrapper({
       }
     })
 
-    setAlertHostList(
-      setArrayHostList(alertHostListTemp.reverse(), alertHostList)
-    )
+    if (setStatusAlertHostList) {
+      setStatusAlertHostList(
+        setArrayHostList(alertHostListTemp.reverse(), {
+          warning: [],
+          critical: [],
+        })
+      )
+    }
 
     setAlertsData(filterSelectedHost(results))
 
@@ -216,12 +219,37 @@ function PredictionAlertHistoryWrapper({
 
   const getDate = (date: string) => {
     const time = new Date(date)
-    return `${time.getFullYear()}-${time.getMonth() + 1}-${time.getDate()}`
+    const year = time.getFullYear()
+    const month = String(time.getMonth() + 1).padStart(2, '0')
+    const day = String(time.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const getDateRange = (histogramDate: TimeRange) => {
+    if (!histogramDate?.lower) return ''
+
+    const startDate = getDate(histogramDate.lower)
+
+    if (histogramDate.upper) {
+      const endDate = getDate(
+        new Date(
+          new Date(histogramDate.upper).getTime() - 86400000
+        ).toISOString()
+      )
+      return `${startDate} ~ ${endDate}`
+    } else {
+      return startDate
+    }
   }
 
   const onClickReset = () => {
-    setHistogramDate(null)
-    setSelectedAnomaly(ANOMALY_INITIAL)
+    if (setStatusHistogramDate) {
+      setStatusHistogramDate(null)
+    }
+
+    if (setStatusSelectedAnomaly) {
+      setStatusSelectedAnomaly({host: '', time: ''})
+    }
 
     onChooseCloudTimeRange({
       prediction: {
@@ -242,8 +270,8 @@ function PredictionAlertHistoryWrapper({
           cellName={
             <p>
               Anomaly Prediction History{' '}
-              {!!histogramDate
-                ? `Filtering: ${getDate(histogramDate?.lower)}`
+              {!!statusHistogramDate
+                ? `Filtering: ${getDateRange(statusHistogramDate)}`
                 : ''}
             </p>
           }
@@ -289,12 +317,8 @@ function PredictionAlertHistoryWrapper({
 
 const mstp = state => {
   const {
-    predictionDashboard: {
-      alertHostList,
-      histogramDate,
-      filteredHexbinHost,
-      predictionManualRefresh,
-    },
+    predictionDashboard: {filteredHexbinHost, predictionManualRefresh},
+    statusDashboard: {histogramDate: statusHistogramDate},
     app: {
       persisted: {autoRefresh, cloudTimeRange, cloudAutoRefresh, timeZone},
     },
@@ -302,9 +326,8 @@ const mstp = state => {
 
   return {
     autoRefresh,
-    histogramDate,
+    statusHistogramDate,
     cloudAutoRefresh,
-    alertHostList,
     filteredHexbinHost,
     timeZone,
     cloudTimeRange,
@@ -314,10 +337,13 @@ const mstp = state => {
 
 const mdtp = (dispatch: any) => ({
   onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
-  setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
+  setStatusAlertHostList: bindActionCreators(setStatusAlertHostList, dispatch),
   setFilteredHexbin: bindActionCreators(setFilteredHexbin, dispatch),
-  setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
-  setSelectedAnomaly: bindActionCreators(setSelectedAnomaly, dispatch),
+  setStatusHistogramDate: bindActionCreators(setStatusHistogramDate, dispatch),
+  setStatusSelectedAnomaly: bindActionCreators(
+    setStatusSelectedAnomaly,
+    dispatch
+  ),
 })
 
 const areEqual = (prev, next) => {
