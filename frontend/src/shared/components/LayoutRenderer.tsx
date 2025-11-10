@@ -54,7 +54,6 @@ interface Props {
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   isUsingAnnotationViewer?: boolean
   annotationsViewMode?: AnnotationViewer[]
-  CustomLayout?: React.ComponentType<any>
 }
 
 interface State {
@@ -91,7 +90,6 @@ class LayoutRenderer extends Component<Props, State> {
 
     const {rowHeight} = this.state
     const isDashboard = !!this.props.onPositionChange
-    const UsedLayout = this.props.CustomLayout ?? Layout
     return (
       <Authorized
         requiredRole={EDITOR_ROLE}
@@ -121,7 +119,7 @@ class LayoutRenderer extends Component<Props, State> {
                   isEditable: false,
                 }}
               >
-                <UsedLayout
+                <Layout
                   key={cell.i}
                   cell={cell}
                   host={host}

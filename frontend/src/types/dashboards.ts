@@ -63,6 +63,7 @@ export interface CellQuery {
   text?: string // doesn't come from server
   id?: string
   type: string // flux or influxql
+  tz?: string // timezone for query (added at runtime by components)
 }
 
 export interface Legend {

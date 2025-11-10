@@ -1,14 +1,11 @@
 // Libraries
 import React, {Component} from 'react'
 import _ from 'lodash'
-import {connect} from 'react-redux'
-import moment from 'moment'
 
 // Components
 import WidgetCell from 'src/shared/components/WidgetCell'
 import LayoutCell from 'src/shared/components/LayoutCell'
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
-import CustomAlertBarChart from 'src/status/components/CustomAlertBarChart'
 
 // Utils
 import {buildQueriesForLayouts} from 'src/utils/buildQueriesForLayouts'
@@ -53,8 +50,6 @@ interface Props {
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   isUsingAnnotationViewer?: boolean
   annotationsViewMode?: AnnotationViewer[]
-  histogramDate?: TimeRange
-  statusHistogramDate?: TimeRange
 }
 
 interface State {
@@ -79,38 +74,12 @@ class Layout extends Component<Props, State> {
       onCloneCell,
       onDeleteCell,
       onSummonOverlayTechnologies,
-      histogramDate,
-      statusHistogramDate,
     } = this.props
     const {cellData, cellFluxData} = this.state
 
-    const currentHistogramDate = statusHistogramDate || histogramDate
-    const getDateRangeText = (histogramDate: TimeRange) => {
-      if (!histogramDate?.lower) return ''
-
-      const startDate = moment(histogramDate.lower).format('YYYY-MM-DD')
-
-      if (histogramDate.upper) {
-        const endDate = moment(histogramDate.upper)
-          .subtract(1, 'day')
-          .format('YYYY-MM-DD')
-        return `${startDate} ~ ${endDate}`
-      } else {
-        return startDate
-      }
-    }
-
-    const updatedCell =
-      cell.i === 'recent-alerts' && currentHistogramDate?.lower
-        ? {
-            ...cell,
-            name: `Alerts – ${getDateRangeText(currentHistogramDate)}`,
-          }
-        : cell
-
     return (
       <LayoutCell
-        cell={updatedCell}
+        cell={cell}
         cellData={cellData}
         cellFluxData={cellFluxData}
         templates={templates}
@@ -229,12 +198,6 @@ class Layout extends Component<Props, State> {
   }
 
   private get visualization(): JSX.Element {
-    const {cell, source} = this.props
-
-    if (cell.i === 'alerts-bar-graph') {
-      return <CustomAlertBarChart cell={cell} source={source} />
-    }
-
     if (this.isFluxQuery) {
       return this.fluxVis
     }
@@ -271,9 +234,4 @@ class Layout extends Component<Props, State> {
   }
 }
 
-const mstp = (state: any) => ({
-  histogramDate: state.predictionDashboard?.histogramDate,
-  statusHistogramDate: state.statusDashboard?.histogramDate,
-})
-
-export default connect(mstp)(Layout)
+export default Layout
