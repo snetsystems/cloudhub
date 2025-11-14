@@ -105,8 +105,6 @@ function GPUMonitoringTreeMapWrapper({
   useEffect(() => {
     fetchAllGpuData()
     fetchNvidiaLocalGrainItems()
-    return () =>
-      setFilteredHostForGPUMonitoring(EMPTY_FILTERED_HOST_FOR_GPU_MONITORING)
   }, [gpuMonitoringManualRefresh])
 
   useEffect(() => {
@@ -255,7 +253,6 @@ function GPUMonitoringTreeMapWrapper({
     if (typeof filteredHost !== 'string' || filteredHost.trim() === '') {
       return
     }
-
     const isSameHostAndGPUIndex =
       filteredHostForGPUMonitoring?.hostname === filteredHost &&
       filteredHostForGPUMonitoring?.gpuIndex === filteredGPUIndex
@@ -264,7 +261,6 @@ function GPUMonitoringTreeMapWrapper({
       setFilteredHostForGPUMonitoring(EMPTY_FILTERED_HOST_FOR_GPU_MONITORING)
       return
     }
-
     setFilteredHostForGPUMonitoring({
       hostname: filteredHost,
       gpuIndex: -1,
