@@ -8,6 +8,7 @@ import _ from 'lodash'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import KapacitorDropdown from 'src/sources/components/KapacitorDropdown'
 import KapacitorForm from 'src/sources/components/KapacitorForm'
+import HostModal from 'src/hosts/components/HostModal'
 
 // Utils
 import ActiveKapacitorFromSources from 'src/kapacitor/utils/ActiveKapacitorFromSources'
@@ -31,6 +32,7 @@ import {DEFAULT_KAPACITOR} from 'src/shared/constants'
 // Types
 import {Kapacitor, Source} from 'src/types'
 import {NextReturn} from 'src/types/wizard'
+import {ComponentStatus} from 'src/reusable_ui/types'
 
 interface Props {
   notify: typeof notifyAction
@@ -48,6 +50,8 @@ interface Props {
 
 interface State {
   kapacitor: Kapacitor
+  showAlert: boolean
+  alertMessage: string
 }
 
 const syncHostnames = (source: Source, kapacitor: Kapacitor) => {
@@ -84,12 +88,20 @@ class KapacitorStep extends Component<Props, State> {
       kapacitor = activeKapacitor
     }
 
-    this.state = {kapacitor}
+    this.state = {kapacitor, showAlert: false, alertMessage: ''}
   }
 
   public next = async (): Promise<NextReturn> => {
     const {kapacitor} = this.state
-    const {notify, source} = this.props
+    const {notify, source, setError} = this.props
+
+    // Validate name field is required
+    if (!kapacitor.name || !kapacitor.name.trim()) {
+      setError(true)
+      this.setState({showAlert: true, alertMessage: 'Name is required'})
+      return {error: true, payload: null}
+    }
+
     const kapacitorExists = kapacitor.id
     if (kapacitorExists) {
       if (this.existingKapacitorHasChanged) {
@@ -134,7 +146,7 @@ class KapacitorStep extends Component<Props, State> {
 
   public render() {
     const {onBoarding} = this.props
-    const {kapacitor} = this.state
+    const {kapacitor, showAlert, alertMessage} = this.state
 
     return (
       <>
@@ -143,8 +155,30 @@ class KapacitorStep extends Component<Props, State> {
           kapacitor={kapacitor}
           onChangeInput={this.onChangeInput}
         />
+        <HostModal
+          isVisible={showAlert}
+          headingTitle="알림"
+          message={
+            <div
+              style={{textAlign: 'center', padding: '20px', fontSize: '16px'}}
+            >
+              {alertMessage}
+            </div>
+          }
+          confirmText="확인"
+          confirmButtonStatus={ComponentStatus.Default}
+          onConfirm={this.handleCloseAlert}
+          onCancel={this.handleCloseAlert}
+        />
       </>
     )
+  }
+
+  private handleCloseAlert = () => {
+    this.setState({showAlert: false})
+    setTimeout(() => {
+      this.setState({alertMessage: ''})
+    }, 500)
   }
 
   private onChangeInput = (key: string) => (value: string | boolean) => {
