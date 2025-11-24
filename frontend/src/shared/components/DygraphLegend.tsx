@@ -63,7 +63,7 @@ class DygraphLegend extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
-    this.applyFilterDebounced = debounce(this.applyFilter.bind(this), 1000)
+    this.applyFilterDebounced = debounce(this.applyFilter.bind(this), 500)
 
     this.props.dygraph.updateOptions({
       legendFormatter: this.legendFormatter,
