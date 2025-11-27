@@ -83,6 +83,13 @@ class KapacitorStep extends Component<Props, State> {
 
     if (!props.showNewKapacitor && activeKapacitor) {
       kapacitor = activeKapacitor
+    } else if (!kapacitor.name) {
+      try {
+        const kapacitorURL = new URL(kapacitor.url)
+        kapacitor = {...kapacitor, name: kapacitorURL.hostname}
+      } catch (e) {
+        kapacitor = {...kapacitor, name: kapacitor.url}
+      }
     }
 
     this.state = {kapacitor}
