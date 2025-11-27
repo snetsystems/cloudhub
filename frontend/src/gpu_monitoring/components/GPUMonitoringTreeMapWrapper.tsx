@@ -6,7 +6,12 @@ import {connect} from 'react-redux'
 import LoadingDots from 'src/shared/components/LoadingDots'
 import GPUMonitoringDashboardHeader from 'src/gpu_monitoring/components/GPUMonitoringDashboardHeader'
 import GPUMonitoringTreeMap from 'src/gpu_monitoring/components/GPUMonitoringTreeMap'
-import {ComponentSize, SlideToggle} from 'src/reusable_ui'
+import {
+  ComponentSize,
+  ComponentColor,
+  SlideToggle,
+  Dropdown,
+} from 'src/reusable_ui'
 
 // Types
 import {
@@ -96,16 +101,34 @@ function GPUMonitoringTreeMapWrapper({
     Record<string, MigProfile[]>
   >({})
   const [error, setError] = useState<string>('')
+  const [selectedInterval, setSelectedInterval] = useState<string>(
+    'interval-10m'
+  )
 
   const isUsingNvidiaGpu = isAddonUrlOn(AddonType.nvidia, addons)
   const isUsingNvidiaProd = getAddonToken(AddonType.nvidia, addons)
 
   let intervalID
 
+  const getTimeRangeFromInterval = (intervalId: string): string => {
+    switch (intervalId) {
+      case 'interval-1m':
+        return '1m'
+      case 'interval-3m':
+        return '3m'
+      case 'interval-5m':
+        return '5m'
+      case 'interval-10m':
+        return '10m'
+      default:
+        return '10m'
+    }
+  }
+
   useEffect(() => {
     fetchAllGpuData()
     fetchNvidiaLocalGrainItems()
-  }, [gpuMonitoringManualRefresh])
+  }, [gpuMonitoringManualRefresh, selectedInterval])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -128,20 +151,24 @@ function GPUMonitoringTreeMapWrapper({
 
   const fetchNVidiaSmiDataForHosts = async () => {
     const tempVars = generateForHosts(source)
+    const timeRange = getTimeRangeFromInterval(selectedInterval)
     const resp = await getNVidiaSmiDataForHosts(
       source.links.proxy,
       source.telegraf,
-      tempVars
+      tempVars,
+      timeRange
     )
     return resp
   }
 
   const fetchNVidiaSmiMIGDataForHosts = async () => {
     const tempVars = generateForHosts(source)
+    const timeRange = getTimeRangeFromInterval(selectedInterval)
     const resp = await getNVidiaSmiMIGDataForHosts(
       source.links.proxy,
       source.telegraf,
-      tempVars
+      tempVars,
+      timeRange
     )
     return resp
   }
@@ -337,6 +364,44 @@ function GPUMonitoringTreeMapWrapper({
     )
   }
 
+  const handleIntervalDropdownChange = (value: {id: string}) => {
+    setSelectedInterval(value.id)
+  }
+
+  const renderIntervalDropdown = (): JSX.Element => {
+    return (
+      <div className="gpu-monitoring-slide--inner">
+        <div
+          className="gpu-monitoring-host-dropdown-wrapper"
+          onClick={e => e.stopPropagation()}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <Dropdown
+            onChange={handleIntervalDropdownChange}
+            selectedID={selectedInterval}
+            buttonSize={ComponentSize.Small}
+            buttonColor={ComponentColor.Default}
+            widthPixels={130}
+            customClass="dropdown dropdown-sm dropdown-default"
+          >
+            <Dropdown.Item id="interval-1m" value={{id: 'interval-1m'}}>
+              Last 1 minutes
+            </Dropdown.Item>
+            <Dropdown.Item id="interval-3m" value={{id: 'interval-3m'}}>
+              Last 3 minutes
+            </Dropdown.Item>
+            <Dropdown.Item id="interval-5m" value={{id: 'interval-5m'}}>
+              Last 5 minutes
+            </Dropdown.Item>
+            <Dropdown.Item id="interval-10m" value={{id: 'interval-10m'}}>
+              Last 10 minutes
+            </Dropdown.Item>
+          </Dropdown>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div style={{height: '100%', backgroundColor: '#292933'}}>
@@ -353,6 +418,7 @@ function GPUMonitoringTreeMapWrapper({
           {isUsingNvidiaGpu &&
             isUsingNvidiaProd === 'dev' &&
             renderMockSlideToggle()}
+          {renderIntervalDropdown()}
         </GPUMonitoringDashboardHeader>
 
         {error ? (

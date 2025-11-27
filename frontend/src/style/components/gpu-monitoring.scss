@@ -226,6 +226,24 @@
   margin-left: 12px;
 }
 
+.gpu-monitoring-host-dropdown-wrapper {
+  margin-left: 0px;
+  display: inline-block;
+  position: relative;
+  z-index: 10;
+  pointer-events: all;
+  width: 135px;
+
+  .gpu-monitoring-host-dropdown {
+    .dropdown-toggle {
+      padding: 4px 8px;
+      font-size: 12px;
+      height: 24px;
+      line-height: 16px;
+    }
+  }
+}
+
 .gpu-monitoring-detail-empty {
   display: flex;
   justify-content: center;
