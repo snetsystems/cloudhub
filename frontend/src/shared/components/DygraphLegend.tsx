@@ -87,16 +87,45 @@ class DygraphLegend extends PureComponent<Props, State> {
       cellID: null,
     }
   }
+  public componentDidMount() {
+    const {graphDiv} = this.props.dygraph
+    if (graphDiv) {
+      graphDiv.addEventListener('mousemove', this.handleGraphMouseMove)
+    }
+  }
 
   public componentWillUnmount() {
+    const {graphDiv} = this.props.dygraph
+    if (graphDiv) {
+      graphDiv.removeEventListener('mousemove', this.handleGraphMouseMove)
+    }
+
     if (
       !this.props.dygraph.graphDiv ||
       !this.props.dygraph.visibility().find(bool => bool === true)
     ) {
-      this.setState({filterText: '', appliedFilterText: ''})
+      this.setState({filterText: ''})
     }
   }
 
+  private handleGraphMouseMove = (e: MouseEvent) => {
+    const {dygraph, onShow, setActiveCell, cellID} = this.props
+    const {filterText} = this.state
+
+    if (this.filtered.length === 0 && filterText) {
+      const area = dygraph.getArea()
+      const {x, y, w, h} = area
+      const rect = dygraph.graphDiv.getBoundingClientRect()
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
+
+      if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
+        this.setState({pageX: e.pageX})
+        setActiveCell(cellID)
+        onShow(e)
+      }
+    }
+  }
   public render() {
     const {onMouseEnter} = this.props
     const {legend, filterText, isAscending, isFilterVisible} = this.state
@@ -146,17 +175,21 @@ class DygraphLegend extends PureComponent<Props, State> {
           />
         )}
         <div className="dygraph-legend--contents">
-          {this.filtered.map(({label, color, yHTML, isHighlighted}) => {
-            const seriesClass = isHighlighted
-              ? 'dygraph-legend--row highlight'
-              : 'dygraph-legend--row'
-            return (
-              <div key={uuid.v4()} className={seriesClass}>
-                <span style={{color}}>{label}</span>
-                <figure>{yHTML || 'no value'}</figure>
-              </div>
-            )
-          })}
+          {this.filtered.length === 0 && filterText ? (
+            <div className="dygraph-legend--empty">No results found</div>
+          ) : (
+            this.filtered.map(({label, color, yHTML, isHighlighted}) => {
+              const seriesClass = isHighlighted
+                ? 'dygraph-legend--row highlight'
+                : 'dygraph-legend--row'
+              return (
+                <div key={uuid.v4()} className={seriesClass}>
+                  <span style={{color}}>{label}</span>
+                  <figure>{yHTML || 'no value'}</figure>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
     )
@@ -206,7 +239,6 @@ class DygraphLegend extends PureComponent<Props, State> {
     if (this.props.activeCellID !== this.props.cellID) {
       this.props.setActiveCell(this.props.cellID)
     }
-
     this.setState({pageX: e.pageX})
     this.props.onShow(e)
   }
@@ -222,13 +254,17 @@ class DygraphLegend extends PureComponent<Props, State> {
 
     const yVal = highlighted && highlighted.y
     const prevY = prevHighlighted && prevHighlighted.y
-
     if (legend.x === prevLegend.x && yVal === prevY) {
       return ''
     }
 
     this.setState({legend})
     return ''
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.hoverTime !== this.props.hoverTime) {
+    }
   }
 
   private unhighlightCallback = (e: MouseEvent) => {
