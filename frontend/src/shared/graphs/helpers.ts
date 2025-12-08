@@ -148,43 +148,50 @@ export const makeLegendStyles = (
 
     return {parentTop, parentLeft}
   }
+
   const {parentTop, parentLeft} = getParentPosition(graphDiv)
 
   const normalizedLegendMouseX = legendMouseX > 0 ? legendMouseX : 0
   const mouseX = normalizedLegendMouseX + graphRect.left
   const halfLegendWidth = legendRect.width / 2
-  const pageHeaderHeight = 60
+  const LEGEND_BUFFER = 12
+  const NAV_BUFFER = 55
 
   const minimumX = graphRect.left
-  const maximumX = Math.max(
-    graphRect.left + graphRect.width - halfLegendWidth,
-    minimumX
-  )
-
-  const minimumY = graphRect.top - pageHeaderHeight
 
   let translateX = mouseX - halfLegendWidth
-  let translateY = graphRect.height + graphRect.top
+  let translateY = graphRect.bottom + LEGEND_BUFFER - 8
 
-  // Enforce Left Edge of Graph
   if (mouseX - halfLegendWidth < minimumX) {
     translateX = minimumX
   }
 
-  // Enforce Right Edge of Graph
-  if (mouseX > maximumX) {
-    translateX = Math.max(maximumX - halfLegendWidth, minimumX)
+  const maxGraphX = graphRect.left + graphRect.width - legendRect.width
+  if (translateX > maxGraphX) {
+    translateX = maxGraphX
   }
 
-  // Prevent Legend from rendering off screen
-  const rightMargin = window.innerWidth - (mouseX + graphRect.left)
-  const LEGEND_BUFFER = 12
-  if (window.innerHeight - graphRect.bottom < legendRect.height) {
-    translateX = mouseX + LEGEND_BUFFER
-    translateY = Math.max(minimumY, pageHeaderHeight + LEGEND_BUFFER)
+  const screenLeft = LEGEND_BUFFER + NAV_BUFFER
+  const screenRight = window.innerWidth - legendRect.width - LEGEND_BUFFER
 
-    if (rightMargin < legendRect.width + LEGEND_BUFFER) {
-      translateX = mouseX - (legendRect.width + LEGEND_BUFFER)
+  translateX = Math.max(translateX, screenLeft)
+  translateX = Math.min(translateX, screenRight)
+
+  const spaceBelow = window.innerHeight - graphRect.bottom
+  const spaceAbove = graphRect.top
+
+  if (spaceBelow < legendRect.height) {
+    translateY = graphRect.top - legendRect.height - LEGEND_BUFFER
+  }
+
+  if (
+    translateY + legendRect.height > graphRect.top &&
+    translateY < graphRect.bottom
+  ) {
+    if (spaceBelow > spaceAbove) {
+      translateY = graphRect.bottom + LEGEND_BUFFER
+    } else {
+      translateY = graphRect.top - legendRect.height - LEGEND_BUFFER
     }
   }
 
