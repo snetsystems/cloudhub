@@ -1,13 +1,13 @@
-import {TimeRange} from 'src/types'
+import {AlertHostList, AnomalyFactor, TimeRange} from 'src/types'
 import {Action, ActionTypes} from 'src/status/actions'
 
 interface StatusDashboardState {
   histogramDate: TimeRange | null
-  selectedAnomaly: {host: string; time: string}
-  alertHostList: {warning: string[]; critical: string[]}
+  selectedAnomaly: AnomalyFactor
+  alertHostList: AlertHostList
 }
 
-const initialState: StatusDashboardState = {
+export const initialState: StatusDashboardState = {
   histogramDate: null,
   selectedAnomaly: {host: '', time: ''},
   alertHostList: {warning: [], critical: []},

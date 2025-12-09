@@ -13,17 +13,8 @@ import {
 import moment from 'moment'
 import {v4 as uuidv4} from 'uuid'
 
-//Redux bindings
-import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
-import {
-  setStatusSelectedAnomaly,
-  setStatusHistogramDate,
-  setStatusAlertHostList,
-} from 'src/status/actions'
-
 //API
-import {api} from 'src/status/apis'
+import {proxy} from 'src/utils/queryUrlGenerator'
 
 //Types
 import {INPUT_TIME_TYPE} from 'src/types'
@@ -46,34 +37,25 @@ ChartJS.register(
   stableSelectionPlugin
 )
 
-interface OwnProps {
+export interface ChartJSAlertBarChartProps {
   cell: Cell
   source: Source
-}
-
-interface StateProps {
   timeZone?: string
+  onDateClick?: (timeRange: TimeRange) => void
+  onDateRangeSelect?: (timeRange: TimeRange) => void
+  onDateClear?: () => void
+  onLoadingChange?: (loading: boolean) => void
 }
 
-interface DispatchProps {
-  setStatusSelectedAnomaly: (value: {host: string; time: string}) => void
-  setStatusHistogramDate: (value: TimeRange) => void
-  setStatusAlertHostList: (value: {
-    warning: string[]
-    critical: string[]
-  }) => void
-}
-
-type Props = OwnProps & StateProps & DispatchProps
-
-const CustomAlertBarChart = ({
+export const ChartJSAlertBarChart = ({
   cell,
   source,
-  setStatusSelectedAnomaly,
-  setStatusHistogramDate,
-  setStatusAlertHostList,
+  onDateClick,
+  onDateRangeSelect,
+  onDateClear,
+  onLoadingChange,
   timeZone = 'UTC',
-}: Props) => {
+}: ChartJSAlertBarChartProps) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
   const [data, setData] = useState<
     {time: string; CRITICAL: number; WARNING: number; OK: number}[]
@@ -84,65 +66,46 @@ const CustomAlertBarChart = ({
   const [dragEndTime, setDragEndTime] = useState(0)
 
   const handleClickDate = (time: number) => {
-    if (
-      !setStatusSelectedAnomaly ||
-      !setStatusHistogramDate ||
-      !setStatusAlertHostList
-    )
-      return
+    if (!onDateClick) return
 
-    setStatusSelectedAnomaly({
-      host: '',
-      time: '',
-    })
-    setStatusAlertHostList({critical: [], warning: []})
+    const oneDayLater = time + 86400000
+    const timeRange: TimeRange =
+      timeZone === 'UTC'
+        ? {
+            lower: convertTimeFormat(time),
+            upper: convertTimeFormat(oneDayLater),
+            format: INPUT_TIME_TYPE.TIMESTAMP,
+          }
+        : {
+            lower: convertTimeFormat(moment(time).format('YYYY-MM-DD')),
+            upper: convertTimeFormat(moment(oneDayLater).format('YYYY-MM-DD')),
+            format: INPUT_TIME_TYPE.TIMESTAMP,
+          }
 
-    if (timeZone === 'UTC') {
-      setStatusHistogramDate({
-        lower: convertTimeFormat(time),
-        upper: null,
-        format: INPUT_TIME_TYPE.TIMESTAMP,
-      })
-    } else {
-      setStatusHistogramDate({
-        lower: convertTimeFormat(moment(time).format('YYYY-MM-DD')),
-        upper: null,
-        format: INPUT_TIME_TYPE.TIMESTAMP,
-      })
-    }
+    onDateClick(timeRange)
   }
 
   const handleDragDateRange = (startTime: number, endTime: number) => {
-    if (
-      !setStatusSelectedAnomaly ||
-      !setStatusHistogramDate ||
-      !setStatusAlertHostList
-    )
-      return
-
-    setStatusSelectedAnomaly({
-      host: '',
-      time: '',
-    })
-    setStatusAlertHostList({critical: [], warning: []})
+    if (!onDateRangeSelect) return
 
     const endTimePlusOneDay = endTime + 86400000
 
-    if (timeZone === 'UTC') {
-      setStatusHistogramDate({
-        lower: convertTimeFormat(startTime),
-        upper: convertTimeFormat(endTimePlusOneDay),
-        format: INPUT_TIME_TYPE.TIMESTAMP,
-      })
-    } else {
-      setStatusHistogramDate({
-        lower: convertTimeFormat(moment(startTime).format('YYYY-MM-DD')),
-        upper: convertTimeFormat(
-          moment(endTimePlusOneDay).format('YYYY-MM-DD')
-        ),
-        format: INPUT_TIME_TYPE.TIMESTAMP,
-      })
-    }
+    const timeRange: TimeRange =
+      timeZone === 'UTC'
+        ? {
+            lower: convertTimeFormat(startTime),
+            upper: convertTimeFormat(endTimePlusOneDay),
+            format: INPUT_TIME_TYPE.TIMESTAMP,
+          }
+        : {
+            lower: convertTimeFormat(moment(startTime).format('YYYY-MM-DD')),
+            upper: convertTimeFormat(
+              moment(endTimePlusOneDay).format('YYYY-MM-DD')
+            ),
+            format: INPUT_TIME_TYPE.TIMESTAMP,
+          }
+
+    onDateRangeSelect(timeRange)
   }
 
   const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
@@ -154,12 +117,9 @@ const CustomAlertBarChart = ({
     if (!elem) {
       if (active.length > 0) {
         setActive([])
-        setStatusSelectedAnomaly({
-          host: '',
-          time: '',
-        })
-        setStatusAlertHostList({critical: [], warning: []})
-        setStatusHistogramDate(null)
+        if (onDateClear) {
+          onDateClear()
+        }
       }
       return
     }
@@ -172,12 +132,9 @@ const CustomAlertBarChart = ({
 
     if (active && active.includes(index) && active.length === 1) {
       setActive([])
-      setStatusSelectedAnomaly({
-        host: '',
-        time: '',
-      })
-      setStatusAlertHostList({critical: [], warning: []})
-      setStatusHistogramDate(null)
+      if (onDateClear) {
+        onDateClear()
+      }
     } else {
       setActive([index])
       const timestamp = moment(data[index].time).valueOf()
@@ -187,14 +144,18 @@ const CustomAlertBarChart = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!cell?.queries?.[0]?.query || !source?.id) return
+      if (!cell?.queries?.[0] || !source?.id) return
       try {
         setLoading(true)
+        onLoadingChange?.(true)
         setError(null)
 
         const tz =
-          (cell.queries?.[0] as any)?.tz ||
-          Intl.DateTimeFormat().resolvedOptions().timeZone
+          cell.queries[0]?.tz ||
+          (timeZone === 'UTC'
+            ? 'UTC'
+            : Intl.DateTimeFormat().resolvedOptions().timeZone)
+
         const fullQuery = `
           SELECT count("value") AS "count_value"
           FROM "Default"."autogen"."cloudhub_alerts"
@@ -203,14 +164,12 @@ const CustomAlertBarChart = ({
           tz('${tz}')
         `.trim()
 
-        const proxyUrl = `/cloudhub/v1/sources/${source.id}/proxy`
-        const payload = {
-          url: proxyUrl,
+        const {data: res} = await proxy({
+          source: source.links.proxy,
           query: fullQuery,
+          db: 'Default',
           uuid: uuidv4(),
-        }
-
-        const {data: res} = await api.post(proxyUrl, payload)
+        })
         const series = res?.results?.[0]?.series ?? []
 
         if (!series.length) {
@@ -253,16 +212,17 @@ const CustomAlertBarChart = ({
             OK: number
           }[]
         )
-      } catch (err: any) {
-        console.error('Query failed:', err)
+      } catch (e) {
+        console.error('Query failed:', e)
         setError('Query failed.')
       } finally {
         setLoading(false)
+        onLoadingChange?.(false)
       }
     }
 
     fetchData()
-  }, [cell, source])
+  }, [cell?.queries?.[0]?.query, cell?.queries?.[0]?.tz, source?.id, timeZone])
 
   const chartData = useMemo(() => {
     if (!data.length) return {labels: [], datasets: []}
@@ -321,12 +281,9 @@ const CustomAlertBarChart = ({
               }
             } else {
               setActive([])
-              setStatusSelectedAnomaly({
-                host: '',
-                time: '',
-              })
-              setStatusAlertHostList({critical: [], warning: []})
-              setStatusHistogramDate(null)
+              if (onDateClear) {
+                onDateClear()
+              }
             }
           },
           onDragEnd: () => {
@@ -425,7 +382,7 @@ const CustomAlertBarChart = ({
       },
       animation: false as const,
     }),
-    [data, handleClickDate, setActive, setDragEndTime]
+    [data, handleDragDateRange, onDateClear]
   )
 
   return (
@@ -484,18 +441,3 @@ const CustomAlertBarChart = ({
     </div>
   )
 }
-
-const mstp = (state: any) => ({
-  timeZone: state.app?.persisted?.timeZone || 'UTC',
-})
-
-const mdtp = (dispatch: any) => ({
-  setStatusSelectedAnomaly: bindActionCreators(
-    setStatusSelectedAnomaly,
-    dispatch
-  ),
-  setStatusHistogramDate: bindActionCreators(setStatusHistogramDate, dispatch),
-  setStatusAlertHostList: bindActionCreators(setStatusAlertHostList, dispatch),
-})
-
-export default connect(mstp, mdtp)(CustomAlertBarChart)

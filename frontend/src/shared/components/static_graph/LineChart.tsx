@@ -11,6 +11,7 @@ import {
   LogarithmicScale,
   LineElement,
 } from 'chart.js'
+import zoomPlugin from 'chartjs-plugin-zoom'
 import _ from 'lodash'
 
 // Types
@@ -47,7 +48,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  zoomPlugin
 )
 
 interface Props {
@@ -87,8 +89,10 @@ const LineChart = ({
   decimalPlaces,
 }: Props) => {
   const chartRef = useRef<ChartJS<'line', [], unknown>>(null)
-  const [chartInstance, setChartInstance] =
-    useState<ChartJS<'line', [], unknown>>(null)
+  const [chartInstance, setChartInstance] = useState<
+    ChartJS<'line', [], unknown>
+  >(null)
+
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
   const rawData: TimeSeriesSeries[] = _.get(
     data,
@@ -144,12 +148,23 @@ const LineChart = ({
     }
   }, [chartRef.current])
 
+  const onResetZoom = () => {
+    if (chartRef && chartRef.current) {
+      chartRef.current.resetZoom()
+    }
+  }
+
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
         <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
-            <Line ref={chartRef} options={dynamicOption} data={chartData} />
+            <Line
+              ref={chartRef}
+              options={dynamicOption}
+              data={chartData}
+              onDoubleClick={onResetZoom}
+            />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend

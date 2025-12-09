@@ -4,6 +4,7 @@ import {connect} from 'react-redux'
 import _ from 'lodash'
 import classnames from 'classnames'
 import uuid from 'uuid'
+import debounce from 'lodash/debounce'
 
 // Components
 import DygraphLegendSort from 'src/shared/components/DygraphLegendSort'
@@ -46,6 +47,7 @@ interface State {
   sortType: string
   isAscending: boolean
   filterText: string
+  appliedFilterText: string
   isFilterVisible: boolean
   legendStyles: Record<string, unknown>
   pageX: number | null
@@ -56,8 +58,12 @@ interface State {
 class DygraphLegend extends PureComponent<Props, State> {
   private legendRef: HTMLElement | null = null
 
+  private applyFilterDebounced: (filterText: string) => void
+
   constructor(props: Props) {
     super(props)
+
+    this.applyFilterDebounced = debounce(this.applyFilter.bind(this), 500)
 
     this.props.dygraph.updateOptions({
       legendFormatter: this.legendFormatter,
@@ -74,6 +80,7 @@ class DygraphLegend extends PureComponent<Props, State> {
       sortType: 'numeric',
       isAscending: false,
       filterText: '',
+      appliedFilterText: '',
       isFilterVisible: false,
       legendStyles: {},
       pageX: null,
@@ -86,7 +93,7 @@ class DygraphLegend extends PureComponent<Props, State> {
       !this.props.dygraph.graphDiv ||
       !this.props.dygraph.visibility().find(bool => bool === true)
     ) {
-      this.setState({filterText: ''})
+      this.setState({filterText: '', appliedFilterText: ''})
     }
   }
 
@@ -164,25 +171,31 @@ class DygraphLegend extends PureComponent<Props, State> {
     this.setState({
       isFilterVisible: !this.state.isFilterVisible,
       filterText: '',
+      appliedFilterText: '',
     })
   }
 
-  private handleLegendInputChange = (
-    e: ChangeEvent<HTMLInputElement>
-  ): void => {
+  private applyFilter(filterText: string) {
     const {dygraph} = this.props
     const {legend} = this.state
-    const filterText = e.target.value
 
     legend.series.map((__, i) => {
       if (!legend.series[i]) {
         return dygraph.setVisibility(i, true)
       }
-
       dygraph.setVisibility(i, !!legend.series[i].label.match(filterText))
     })
 
+    this.setState({appliedFilterText: filterText})
+  }
+
+  private handleLegendInputChange = (
+    e: ChangeEvent<HTMLInputElement>
+  ): void => {
+    const filterText = e.target.value
+
     this.setState({filterText})
+    this.applyFilterDebounced(filterText)
   }
 
   private handleSortLegend = (sortType: string) => () => {
@@ -235,14 +248,14 @@ class DygraphLegend extends PureComponent<Props, State> {
   }
 
   private get filtered(): SeriesLegendData[] {
-    const {legend, sortType, isAscending, filterText} = this.state
+    const {legend, sortType, isAscending, appliedFilterText} = this.state
     const withValues = legend.series.filter(s => !_.isNil(s.y))
     const sorted = _.sortBy(withValues, ({y, label}) =>
       sortType === 'numeric' ? y : label
     )
 
     const ordered = isAscending ? sorted : sorted.reverse()
-    return ordered.filter(s => s.label.match(filterText))
+    return ordered.filter(s => s.label.match(appliedFilterText))
   }
 
   private get isAphaSort(): boolean {

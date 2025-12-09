@@ -23,7 +23,11 @@ import Authorized, {VIEWER_ROLE} from 'src/auth/Authorized'
 // Util
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {bindActionCreators} from 'redux'
-import {setStatisticGraphHeight, setTimeSeriesGraphHeight} from '../actions'
+import {
+  setStatisticGraphHeight,
+  setTimeSeriesGraphHeight,
+  setGPUMonitoringStateInit,
+} from '../actions'
 
 interface Props {
   source: Source
@@ -32,6 +36,7 @@ interface Props {
   inPresentationMode?: boolean
   setTimeSeriesHeight?: (height: number) => void
   setStatisticHeight?: (height: number) => void
+  setGPUMonitoringStateInit?: () => void
 }
 
 interface TempProps {
@@ -45,6 +50,7 @@ function GPUMonitoringDashBoard({
   cloudAutoRefresh,
   setTimeSeriesHeight,
   setStatisticHeight,
+  setGPUMonitoringStateInit,
 }: Props) {
   const GridLayout = WidthProvider(ReactGridLayout)
   const savedCells: DashboardsModels.Cell[] = JSON.parse(
@@ -68,6 +74,14 @@ function GPUMonitoringDashBoard({
       GlobalAutoRefresher.stopPolling()
     }
   }, [cloudAutoRefresh.gpuMonitoring])
+
+  useEffect(() => {
+    return () => {
+      if (setGPUMonitoringStateInit) {
+        setGPUMonitoringStateInit()
+      }
+    }
+  }, [setGPUMonitoringStateInit])
 
   const cells = useMemo(() => {
     const defaultCells = FIXTURE_GPU_MONITORING_CELLS()
@@ -253,6 +267,10 @@ const mstp = state => {
 const mdtp = dispatch => ({
   setTimeSeriesHeight: bindActionCreators(setTimeSeriesGraphHeight, dispatch),
   setStatisticHeight: bindActionCreators(setStatisticGraphHeight, dispatch),
+  setGPUMonitoringStateInit: bindActionCreators(
+    setGPUMonitoringStateInit,
+    dispatch
+  ),
 })
 
 const isEqual = (prev, next) => {

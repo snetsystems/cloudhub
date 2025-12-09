@@ -13,8 +13,8 @@ import {
   PointElement,
   DefaultDataPoint,
 } from 'chart.js'
-
 import _ from 'lodash'
+import zoomPlugin from 'chartjs-plugin-zoom'
 
 // Types
 import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
@@ -36,7 +36,15 @@ import {CellType, DecimalPlaces} from 'src/types/dashboards'
 // Utils
 import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
 
-ChartJS.register(LineElement, LinearScale, PointElement, Title, Tooltip, Legend)
+ChartJS.register(
+  LineElement,
+  LinearScale,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend,
+  zoomPlugin
+)
 
 interface Props {
   axes: Axes
@@ -64,10 +72,12 @@ const ScatterChart = ({
   showCount,
   decimalPlaces,
 }: Props) => {
-  const chartRef =
-    useRef<ChartJS<'scatter', DefaultDataPoint<'scatter'>[], unknown>>(null)
-  const [chartInstance, setChartInstance] =
-    useState<ChartJS<'scatter', DefaultDataPoint<'scatter'>[], unknown>>(null)
+  const chartRef = useRef<
+    ChartJS<'scatter', DefaultDataPoint<'scatter'>[], unknown>
+  >(null)
+  const [chartInstance, setChartInstance] = useState<
+    ChartJS<'scatter', DefaultDataPoint<'scatter'>[], unknown>
+  >(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
 
   const rawData: TimeSeriesSeries[] = _.get(
@@ -109,12 +119,23 @@ const ScatterChart = ({
     }
   }, [chartRef.current])
 
+  const onResetZoom = () => {
+    if (chartRef && chartRef.current) {
+      chartRef.current.resetZoom()
+    }
+  }
+
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
         <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
-            <Scatter ref={chartRef} options={dynamicOption} data={chartData} />
+            <Scatter
+              ref={chartRef}
+              options={dynamicOption}
+              data={chartData}
+              onDoubleClick={onResetZoom}
+            />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend

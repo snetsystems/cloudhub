@@ -4,7 +4,7 @@ import {Dispatch} from 'redux'
 
 import {fetchJSONFeed as fetchJSONFeedAJAX} from 'src/status/apis'
 
-import {JSONFeedData, TimeRange} from 'src/types'
+import {AlertHostList, AnomalyFactor, JSONFeedData, TimeRange} from 'src/types'
 
 export enum ActionTypes {
   FETCH_JSON_FEED_REQUESTED = 'FETCH_JSON_FEED_REQUESTED',
@@ -41,14 +41,14 @@ interface StatusHistogramDateAction {
 interface StatusSelectedAnomalyAction {
   type: ActionTypes.SET_STATUS_SELECTED_ANOMALY
   payload: {
-    selectedAnomaly: {host: string; time: string}
+    selectedAnomaly: AnomalyFactor
   }
 }
 
 interface StatusAlertHostListAction {
   type: ActionTypes.SET_STATUS_ALERT_HOST_LIST
   payload: {
-    alertHostList: {warning: string[]; critical: string[]}
+    alertHostList: AlertHostList
   }
 }
 
@@ -80,32 +80,32 @@ const fetchJSONFeedFailed = (): FetchJSONFeedFailedAction => ({
   type: ActionTypes.FETCH_JSON_FEED_FAILED,
 })
 
-export const fetchJSONFeedAsync =
-  (url: string) =>
-  async (dispatch: Dispatch<Action>): Promise<void> => {
-    dispatch(fetchJSONFeedRequested())
-    try {
-      const data = (await fetchJSONFeedAJAX(url)) as JSONFeedData
-      // data could be from a webpage, and thus would be HTML
-      if (typeof data === 'string' || !data) {
-        dispatch(fetchJSONFeedFailed())
-      } else {
-        // decode HTML entities from response text
-        const decodedData = {
-          ...data,
-          items: data.items.map(item => {
-            item.title = he.decode(item.title)
-            item.content_text = he.decode(item.content_text)
-            return item
-          }),
-        }
-        dispatch(fetchJSONFeedCompleted(decodedData))
-      }
-    } catch (error) {
-      console.error(error)
+export const fetchJSONFeedAsync = (url: string) => async (
+  dispatch: Dispatch<Action>
+): Promise<void> => {
+  dispatch(fetchJSONFeedRequested())
+  try {
+    const data = (await fetchJSONFeedAJAX(url)) as JSONFeedData
+    // data could be from a webpage, and thus would be HTML
+    if (typeof data === 'string' || !data) {
       dispatch(fetchJSONFeedFailed())
+    } else {
+      // decode HTML entities from response text
+      const decodedData = {
+        ...data,
+        items: data.items.map(item => {
+          item.title = he.decode(item.title)
+          item.content_text = he.decode(item.content_text)
+          return item
+        }),
+      }
+      dispatch(fetchJSONFeedCompleted(decodedData))
     }
+  } catch (error) {
+    console.error(error)
+    dispatch(fetchJSONFeedFailed())
   }
+}
 
 // Status Dashboard Action Creators
 export const setStatusHistogramDate = (
@@ -117,20 +117,18 @@ export const setStatusHistogramDate = (
   },
 })
 
-export const setStatusSelectedAnomaly = (selectedAnomaly: {
-  host: string
-  time: string
-}): StatusSelectedAnomalyAction => ({
+export const setStatusSelectedAnomaly = (
+  selectedAnomaly: AnomalyFactor
+): StatusSelectedAnomalyAction => ({
   type: ActionTypes.SET_STATUS_SELECTED_ANOMALY,
   payload: {
     selectedAnomaly,
   },
 })
 
-export const setStatusAlertHostList = (alertHostList: {
-  warning: string[]
-  critical: string[]
-}): StatusAlertHostListAction => ({
+export const setStatusAlertHostList = (
+  alertHostList: AlertHostList
+): StatusAlertHostListAction => ({
   type: ActionTypes.SET_STATUS_ALERT_HOST_LIST,
   payload: {
     alertHostList,
