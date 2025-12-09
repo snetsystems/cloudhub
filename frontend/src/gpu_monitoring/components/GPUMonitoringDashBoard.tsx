@@ -52,8 +52,6 @@ function GPUMonitoringDashBoard({
   setStatisticHeight,
   setGPUMonitoringStateInit,
 }: Props) {
-  const [isMockActive, setIsMockActive] = useState(false)
-
   const GridLayout = WidthProvider(ReactGridLayout)
   const savedCells: DashboardsModels.Cell[] = JSON.parse(
     localStorage.getItem('GPU-Monitoring-cells')
@@ -151,13 +149,12 @@ function GPUMonitoringDashBoard({
               isEditable: false,
             }}
           >
-            <GPUMonitoringTreeMapWrapper
-              isMockActive={isMockActive}
-              setIsMockActive={setIsMockActive}
-              source={source}
-            />
+            <GPUMonitoringTreeMapWrapper source={source} />
           </Authorized>
         )
+      }
+      case 'gpu-monitoring-details': {
+        return <GPUMonitoringDetailsWrapper />
       }
       case 'gpu-time-series': {
         return (
@@ -175,9 +172,6 @@ function GPUMonitoringDashBoard({
             />
           </Authorized>
         )
-      }
-      case 'gpu-monitoring-details': {
-        return <GPUMonitoringDetailsWrapper />
       }
       case 'gpu-statistics': {
         return (

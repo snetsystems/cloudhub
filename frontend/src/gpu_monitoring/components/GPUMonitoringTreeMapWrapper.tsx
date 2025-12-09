@@ -57,14 +57,12 @@ import {EMPTY_FILTERED_HOST_FOR_GPU_MONITORING} from 'src/gpu_monitoring/constan
 import {AddonType} from 'src/shared/constants'
 
 interface Props {
-  isMockActive: boolean
   source: Source
   addons?: Addon[]
   gpuMonitoringManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
   filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
   notify?: NotificationAction
-  setIsMockActive: React.Dispatch<React.SetStateAction<boolean>>
   setFilteredHostForGPUMonitoring?: (
     filteredHostForGPUMonitoring: FilteredHostForGPUMonitoring
   ) => void
@@ -79,15 +77,15 @@ const getAddonToken = (name: string, addons): string => {
 
 function GPUMonitoringTreeMapWrapper({
   filteredHostForGPUMonitoring,
-  isMockActive,
   cloudAutoRefresh,
   addons,
   gpuMonitoringManualRefresh,
   source,
   notify,
   setFilteredHostForGPUMonitoring,
-  setIsMockActive,
 }: Props) {
+  const [isMockActive, setIsMockActive] = useState(false)
+
   const [hostsForGPUSmiData, setHostsForGPUSmiData] = useState<any>({})
   const [hostsForGPUSmiMIGData, setHostsForGPUSmiMIGData] = useState<any>({})
   const [
