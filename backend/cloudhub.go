@@ -1200,6 +1200,7 @@ type InternalEnvironment struct {
 	TemplatesManager TemplatesManager
 	AIConfig         AIConfig
 	KubernetesConfig KubernetesConfig
+	Platform         Platform
 }
 
 // Topology is represents represents an topology
@@ -1442,6 +1443,14 @@ type NetworkDevice struct {
 	LearningBeginDatetime  string     `json:"learning_begin_datetime"`
 	LearningFinishDatetime string     `json:"learning_finish_datetime"`
 	IsLearning             bool       `json:"is_learning"`
+}
+
+// Platform defines the interface for platform-specific operations.
+type Platform interface {
+	DeployLogstashConfig(ctx context.Context, collectorName string, configName string, content string) error
+	RemoveLogstashConfig(ctx context.Context, collectorName string, configName string) error
+	RestartCollector(ctx context.Context, collectorName string) error
+	GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error)
 }
 
 // NetworkDeviceStore is the Storage and retrieval of information

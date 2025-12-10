@@ -27,11 +27,14 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	idgen "github.com/snetsystems/cloudhub/backend/id"
 	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/kubernetes"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/kv/bolt"
 	"github.com/snetsystems/cloudhub/backend/kv/etcd"
 	clog "github.com/snetsystems/cloudhub/backend/log"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/platform/baremetal"
+	"github.com/snetsystems/cloudhub/backend/platform/k8s"
 	"github.com/snetsystems/cloudhub/backend/server/config"
 )
 
@@ -170,7 +173,10 @@ type Server struct {
 	EsDefaultIndex       string   `long:"es-default-index"  description:"Default index name or pattern for queries"        env:"ES_DEFAULT_INDEX" default:"*"`
 	EsInsecureSkipVerify bool     `long:"es-insecure-skip-verify" description:"Skip TLS cert verification for Elasticsearch" env:"ES_INSECURE_SKIP_VERIFY"`
 
-	Kubernetes map[string]string `long:"kubernetes" description:"The Information to access to Kubernetes API. '--kubernetes=url:{server URL} --kubernetes=token:{service account token} --kubernetes=insecure-skip-verify:{true/false}'. E.g. via environment variable" env:"KUBERNETES" env-delim:","`
+	Kubernetes           map[string]string `long:"kubernetes" description:"The Information to access to Kubernetes API. '--kubernetes=url:{server URL} --kubernetes=token:{service account token} --kubernetes=insecure-skip-verify:{true/false}'. E.g. via environment variable" env:"KUBERNETES" env-delim:","`
+	DeployPlatform       string            `long:"deploy-platform" description:"The deployment platform (k8s or baremetal)" env:"DEPLOY_PLATFORM"`
+	K8sLogstashNamespace string            `long:"k8s-logstash-namespace" description:"Kubernetes namespace for Logstash ConfigMap" env:"K8S_LOGSTASH_NAMESPACE" default:"default"`
+	K8sLogstashConfigMap string            `long:"k8s-logstash-configmap" description:"Kubernetes ConfigMap name for Logstash pipeline" env:"K8S_LOGSTASH_CONFIGMAP" default:"logstash-pipeline"`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -704,6 +710,33 @@ func (s *Server) Serve(ctx context.Context) {
 			Error(err)
 		return
 	}
+
+	k8sCfg := kubernetes.Config{
+		URL:                kubernetesConfig.URL,
+		Token:              kubernetesConfig.Token,
+		InsecureSkipVerify: kubernetesConfig.InsecureSkipVerify,
+	}
+
+	if service.KubernetesClient == nil {
+		service.KubernetesClient = kubernetes.NewClient(k8sCfg, logger)
+	}
+
+	if err := service.KubernetesClient.TestConnection(ctx); err != nil {
+		logger.Error("Failed to connect to Kubernetes API during startup: ", err)
+	}
+
+	var p cloudhub.Platform
+	if s.DeployPlatform == "k8s" {
+		p = k8s.NewManager(service.KubernetesClient, s.K8sLogstashNamespace, s.K8sLogstashConfigMap)
+	} else {
+		p = baremetal.NewManager(
+			&service,
+			aiConfig.LogstashPath,
+			aiConfig.DockerPath,
+			aiConfig.DockerCmd,
+		)
+	}
+	service.InternalENV.Platform = p
 
 	if err = s.validateAuth(); err != nil {
 		logger.

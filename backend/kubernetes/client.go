@@ -71,7 +71,11 @@ func (c *Client) Do(ctx context.Context, method, path string, body interface{}) 
 	var err error
 
 	if body != nil {
-		req, err = http.NewRequestWithContext(ctx, method, url, strings.NewReader(fmt.Sprintf("%v", body)))
+		bodyStr, ok := body.(string)
+		if !ok {
+			return nil, fmt.Errorf("body must be a string")
+		}
+		req, err = http.NewRequestWithContext(ctx, method, url, strings.NewReader(bodyStr))
 	} else {
 		req, err = http.NewRequestWithContext(ctx, method, url, nil)
 	}
@@ -117,4 +121,26 @@ func (c *Client) TestConnection(ctx context.Context) error {
 
 	c.logger.Info("Successfully connected to Kubernetes API")
 	return nil
+}
+
+// Patch performs a PATCH request to the Kubernetes API
+func (c *Client) Patch(ctx context.Context, path string, body string, contentType string) (*http.Response, error) {
+	url := fmt.Sprintf("%s%s", strings.TrimSuffix(c.config.URL, "/"), path)
+
+	req, err := http.NewRequestWithContext(ctx, "PATCH", url, strings.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	if c.config.Token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.config.Token))
+	}
+
+	req.Header.Set("Accept", "application/json")
+	if contentType == "" {
+		contentType = "application/merge-patch+json"
+	}
+	req.Header.Set("Content-Type", contentType)
+
+	return c.httpClient.Do(req)
 }

@@ -6,11 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"path"
 	"reflect"
-	"regexp"
 	"strings"
-	"sync"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -437,23 +434,26 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		deviceOrgMap[deviceID] = device.Organization
 	}
 
-	activeCollectorKeys := &sync.Map{}
+	activeCollectorKeys := make(map[string]bool)
+	isK8s := false
 
 	for orgID, devices := range devicesGroupByOrg {
 		org, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
 		if org != nil && len(org.CollectedDevicesIDs) > 0 {
-			var activeCollectorsErr error
-			_, activeCollectorKeys, activeCollectorsErr = s.getCollectorServers()
-			if activeCollectorsErr != nil {
+
+			collectorKeys, activeCollectorMap, err := s.InternalENV.Platform.GetActiveCollectors(ctx)
+			if err != nil {
 				for _, id := range devices {
 					addFailedDevice(failedDevices, id, fmt.Errorf("Failed to access active collector-server"))
 				}
-
+				s.logRegistration(ctx, "NetWorkDeviceConf", fmt.Sprintf("Failed to get active collector keys. err=%v", err))
 				response := make(map[string]interface{})
 				response["failed_devices"] = convertFailedDevicesToArray(failedDevices)
 				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 				return
 			}
+			activeCollectorKeys = activeCollectorMap
+			isK8s = len(collectorKeys) == 0 && len(activeCollectorMap) == 0
 		}
 	}
 
@@ -462,13 +462,18 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 	for orgID, devicesIDs := range devicesGroupByOrg {
 		org, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
 		if org != nil {
-			_, exists := activeCollectorKeys.Load(org.CollectorServer)
-			if !exists && len(org.CollectedDevicesIDs) > 0 {
-				for _, id := range devicesIDs {
-					addFailedDevice(failedDevices, id, fmt.Errorf("collector server not active"))
+			if !isK8s {
+				if val, ok := activeCollectorKeys[org.CollectorServer]; ok {
+					if !val {
+						for _, id := range devicesIDs {
+							addFailedDevice(failedDevices, id, fmt.Errorf("Failed to access active collector-server"))
+						}
+					}
+				} else {
+					for _, id := range devicesIDs {
+						addFailedDevice(failedDevices, id, fmt.Errorf("Failed to access active collector-server"))
+					}
 				}
-				continue
-
 			}
 			previousLearnedDevicesIDs := org.LearnedDevicesIDs
 			previousCollectedDevicesIDs := org.CollectedDevicesIDs
@@ -500,8 +505,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			}
 			if _, exists := restartCollectorServers[org.CollectorServer]; !exists {
 				restartCollectorServers[org.CollectorServer] = org.CollectorServer
-				_, _, err := s.restartDocker(org.CollectorServer)
-				if err != nil {
+				if err := s.InternalENV.Platform.RestartCollector(ctx, org.CollectorServer); err != nil {
 					for _, devicesIDs := range devicesGroupByOrg {
 						for _, id := range devicesIDs {
 							addFailedDevice(failedDevices, id, err)
@@ -808,11 +812,13 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	collectorKeys, activeCollectorKeys, err := s.getCollectorServers()
+	collectorKeys, activeCollectorKeys, err := s.InternalENV.Platform.GetActiveCollectors(ctx)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+
+	isK8s := len(collectorKeys) == 0 && len(activeCollectorKeys) == 0
 
 	_, _, serverDeviceCount, orgToCollector := computeThreshold(existingDevicesOrg, devicesData.devicesGroupByOrg, CollectorSelectionRatio)
 
@@ -822,7 +828,6 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Assign devices to collectors and update org information
 	for org, devices := range devicesData.devicesGroupByOrg {
 		selectedServer := findLeastLoadedCollectorServer(
 			org,
@@ -836,15 +841,26 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 	for org, devices := range devicesData.devicesGroupByOrg {
 		collectorServer := orgToCollector[org]
-
-		// Skip this organization if its collector server is not active
-		if _, exists := activeCollectorKeys.Load(collectorServer); !exists {
-			for _, device := range devices {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = "Failed to access active collector-server"
-				}
+		if !isK8s && (strings.HasPrefix(collectorServer, "ch-k8s") || strings.HasPrefix(collectorServer, "k8s-collector")) {
+			delete(orgToCollector, org)
+			newCollector := findLeastLoadedCollectorServer(org, collectorKeys, serverDeviceCount, orgToCollector)
+			if newCollector != "" {
+				collectorServer = newCollector
+				orgToCollector[org] = newCollector
+			} else {
+				orgToCollector[org] = collectorServer
 			}
-			continue
+		}
+
+		if !isK8s {
+			if _, exists := activeCollectorKeys[collectorServer]; !exists {
+				for _, device := range devices {
+					if _, exists := failedDevices[device.ID]; !exists {
+						failedDevices[device.ID] = "Failed to access active collector-server"
+					}
+				}
+				continue
+			}
 		}
 		orgInfo, exists := orgsToUpdate[org]
 		if !exists {
@@ -898,17 +914,18 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 			continue
 		}
 
-		// Save unique collector servers to restartCollectorServers map
-		if _, exists := restartCollectorServers[orgInfo.CollectorServer]; !exists {
-			restartCollectorServers[orgInfo.CollectorServer] = orgInfo.CollectorServer
-			_, _, err := s.restartDocker(orgInfo.CollectorServer)
-			if err != nil {
-				for _, device := range devicesData.devicesGroupByOrg[org] {
-					if _, exists := failedDevices[device.ID]; !exists {
-						failedDevices[device.ID] = err.Error()
+		// Save unique collector servers to restartCollectorServers map (Baremetal only)
+		if !isK8s && orgInfo.CollectorServer != "" {
+			if _, exists := restartCollectorServers[orgInfo.CollectorServer]; !exists {
+				restartCollectorServers[orgInfo.CollectorServer] = orgInfo.CollectorServer
+				if err := s.InternalENV.Platform.RestartCollector(ctx, orgInfo.CollectorServer); err != nil {
+					for _, device := range devicesData.devicesGroupByOrg[org] {
+						if _, exists := failedDevices[device.ID]; !exists {
+							failedDevices[device.ID] = err.Error()
+						}
 					}
+					continue
 				}
-				continue
 			}
 		}
 
@@ -1169,64 +1186,6 @@ func findLeastLoadedCollectorServer(
 	return selectedServer
 }
 
-func (s *Service) getCollectorServers() ([]string, *sync.Map, error) {
-	status, responseBody, err := s.GetWheelKeyAcceptedListAll()
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if status != 200 {
-		return nil, nil, fmt.Errorf("failed to retrieve keys, status code: %d", status)
-	}
-
-	var response struct {
-		Return []struct {
-			Data struct {
-				Return struct {
-					Minions []string `json:"minions"`
-				} `json:"return"`
-			} `json:"data"`
-		} `json:"return"`
-	}
-
-	err = json.Unmarshal(responseBody, &response)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal response: %v", err)
-	}
-
-	var collectorKeys []string
-	activeCollectorKeys := &sync.Map{}
-	var wg sync.WaitGroup
-
-	for _, minion := range response.Return[0].Data.Return.Minions {
-		if strings.HasPrefix(minion, "ch-collector") {
-			collectorKeys = append(collectorKeys, minion)
-			wg.Add(1)
-			go func(minion string) {
-				defer wg.Done()
-				if statusCode, resp, err := s.IsActiveMinionPingTest(minion); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-					activeCollectorKeys.Store(minion, false)
-				} else if resp != nil {
-					r := &struct {
-						Return []map[string]bool `json:"return"`
-					}{}
-
-					if err := json.Unmarshal(resp, r); err != nil || !r.Return[0][minion] {
-						activeCollectorKeys.Store(minion, false)
-						return
-					}
-					activeCollectorKeys.Store(minion, true)
-				}
-			}(minion)
-		}
-	}
-
-	wg.Wait()
-
-	return collectorKeys, activeCollectorKeys, nil
-}
-
 func computeThreshold(existingDevicesOrg []cloudhub.NetworkDeviceOrg, groupedDevices deviceGroupByOrg, ratio float64) (int, map[string]int, map[string]int, map[string]string) {
 	totalDevices := 0
 	orgDeviceCount := make(map[string]int)
@@ -1271,43 +1230,14 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return http.StatusInternalServerError, nil, err
 	}
 
-	aiConfig := s.InternalENV.AIConfig
-	dirPath := aiConfig.LogstashPath
 	fileName := fmt.Sprintf("%s_snmp_nx.rb", org.Name)
-	filePath := path.Join(dirPath, fileName)
-
-	var statusCode int
-	var resp []byte
-
-	if statusCode, resp, err := s.DirectoryExistsWithLocalClient(dirPath, devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-		return statusCode, nil, err
-	} else if resp != nil {
-		r := &struct {
-			Return []map[string]bool `json:"return"`
-		}{}
-
-		if err := json.Unmarshal(resp, r); err != nil {
-			return http.StatusInternalServerError, nil, err
-		}
-
-		if !r.Return[0][devOrg.CollectorServer] {
-			if statusCode, _, err := s.MkdirWithLocalClient(dirPath, devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-				return statusCode, nil, err
-			}
-		}
-	} else {
-		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error occurred at DirectoryExists() func")
-	}
 
 	// If there are no devices to collect data from, remove the configuration file
 	if len(devicesIDs) < 1 {
-		statusCode, resp, err = s.RemoveFileWithLocalClient(filePath, devOrg.CollectorServer)
-		if err != nil {
+		if err = s.InternalENV.Platform.RemoveLogstashConfig(ctx, devOrg.CollectorServer, fileName); err != nil {
 			return http.StatusInternalServerError, nil, err
-		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-			return statusCode, resp, err
 		}
-		return statusCode, resp, nil
+		return http.StatusOK, nil, nil
 	}
 
 	var hostEntriesV1AndV2 []string
@@ -1329,13 +1259,13 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		}
 
 		filter := fmt.Sprintf(`
-		if [host] == "%s" {
-			mutate {
-				add_field => {
-					"dev_id" => %s
-				}
-			}
-		}`, device.DeviceIP, device.ID)
+        if [host] == "%s" {
+            mutate {
+                add_field => {
+                    "dev_id" => %s
+                }
+            }
+        }`, device.DeviceIP, device.ID)
 		deviceFilters = append(deviceFilters, filter)
 	}
 
@@ -1390,48 +1320,13 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return http.StatusInternalServerError, nil, err
 	}
 
-	statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{configString}, devOrg.CollectorServer)
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-		return statusCode, resp, err
+	if err := s.InternalENV.Platform.DeployLogstashConfig(ctx, devOrg.CollectorServer, fileName, configString); err != nil {
+		return http.StatusMultiStatus, []byte(err.Error()), err
 	}
-	// Log the successful creation of the config
+
 	msg := fmt.Sprintf(MsgNetWorkDeviceConfCreated.String(), org.ID)
 	s.logRegistration(ctx, "NetWorkDeviceConf", msg)
 	return http.StatusOK, nil, err
-}
-
-func (s *Service) restartDocker(collectorServer string) (int, []byte, error) {
-	aiConfig := s.InternalENV.AIConfig
-	dockerPath := aiConfig.DockerPath
-	dockerCmd := aiConfig.DockerCmd
-
-	statusCode, resp, err := s.DockerRestart(dockerPath, collectorServer, dockerCmd)
-	if err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-		return statusCode, nil, err
-	} else if resp != nil {
-		r := &struct {
-			Return []map[string]string `json:"return"`
-		}{}
-		if err := json.Unmarshal(resp, r); err != nil {
-			return http.StatusInternalServerError, nil, err
-		}
-		// Check for the success message using regex
-		re := regexp.MustCompile(`(?i)(Restarting.*Started|Stopping .* done|Starting .* done)`)
-		for _, item := range r.Return {
-			for _, value := range item {
-				cleanedValue := strings.ReplaceAll(strings.ReplaceAll(value, "\n", ""), " ", "")
-				if !re.MatchString(cleanedValue) {
-					message := fmt.Errorf(value)
-					return http.StatusInternalServerError, nil, message
-				}
-			}
-		}
-	} else {
-		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error occurred at DirectoryExists() func")
-	}
-	return statusCode, resp, nil
 }
 
 // RemoveElements removes elements from the origin slice that are present in the delete slice.
