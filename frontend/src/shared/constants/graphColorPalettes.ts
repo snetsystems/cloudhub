@@ -173,6 +173,54 @@ export const LINE_COLORS_G = [
   },
 ]
 
+export const LINE_COLORS_H = [
+  {
+    type: COLOR_TYPE_SCALE,
+    hex: '#DC4E58',
+    id: uuid.v4(),
+    name: 'Danger-Safe',
+    value: '0',
+  },
+  {
+    type: COLOR_TYPE_SCALE,
+    hex: '#F9D03C',
+    id: uuid.v4(),
+    name: 'Danger-Safe',
+    value: '50',
+  },
+  {
+    type: COLOR_TYPE_SCALE,
+    hex: '#32B08C',
+    id: uuid.v4(),
+    name: 'Danger-Safe',
+    value: '100',
+  },
+]
+
+export const LINE_COLORS_I = [
+  {
+    type: COLOR_TYPE_SCALE,
+    hex: '#32B08C',
+    id: uuid.v4(),
+    name: 'Safe-Danger',
+    value: '100',
+  },
+  {
+    type: COLOR_TYPE_SCALE,
+    hex: '#F9D03C',
+    id: uuid.v4(),
+    name: 'Safe-Danger',
+    value: '50',
+  },
+  {
+    type: COLOR_TYPE_SCALE,
+    hex: '#DC4E58',
+    id: uuid.v4(),
+    name: 'Safe-Danger',
+    value: '0',
+  },
+]
+
 export const LINE_COLORS_RULE_GRAPH = [
   {
     type: COLOR_TYPE_SCALE,
@@ -200,6 +248,8 @@ export const LINE_COLOR_SCALES = [
   LINE_COLORS_E,
   LINE_COLORS_F,
   LINE_COLORS_G,
+  LINE_COLORS_H,
+  LINE_COLORS_I,
 ].map(colorScale => {
   const name = colorScale[0].name
   const colors = colorScale
@@ -237,8 +287,5 @@ export const getLineColorsHexes = (
   if (numSeries === 2) {
     return [colorsHexArray[0], colorsHexArray[1]]
   }
-  return chroma
-    .scale(colorsHexArray)
-    .mode('lch')
-    .colors(numSeries)
+  return chroma.scale(colorsHexArray).mode('lch').colors(numSeries)
 }

@@ -16,6 +16,7 @@ import DoughnutPieChartOptions from 'src/dashboards/components/DoughnutPieChartO
 import LineChartOptions from 'src/dashboards/components/LineChartOptions'
 import RadarChartOptions from 'src/dashboards/components/RadarChartOptions'
 import ScatterChartOptions from 'src/dashboards/components/ScatterChartOptions'
+import TableGaugeChartOptions from 'src/dashboards/components/TableGaugeChartOptions'
 
 // Utils
 import {
@@ -52,6 +53,7 @@ import {
   GraphOptions,
 } from 'src/types/dashboards'
 import {ColorNumber, ColorString} from 'src/types/colors'
+import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 
 interface ConnectedProps {
   type: CellType
@@ -70,6 +72,7 @@ interface ConnectedProps {
   graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
   onUpdateStaticLegendPosition: (
     staticLegendPosition: StaticLegendPositionType
   ) => void
@@ -87,6 +90,7 @@ interface ConnectedProps {
   onUpdateNoteVisibility: TimeMachineContainer['handleUpdateNoteVisibility']
   onUpdateThresholdsListColors: TimeMachineContainer['handleUpdateThresholdsListColors']
   onUpdateThresholdsListType: TimeMachineContainer['handleUpdateThresholdsListType']
+  onUpdateTableGaugeChartOptions: TimeMachineContainer['handleUpdateTableGaugeChartOptions']
 }
 
 interface PassedProps {
@@ -220,11 +224,28 @@ class DisplayOptions extends Component<Props, State> {
       onUpdateLineColors,
       onUpdateTableOptions,
       onUpdateTimeFormat,
+      tableGaugeChartOptions,
+      onUpdateTableGaugeChartOptions,
     } = this.props
 
     const {defaultXLabel, defaultYLabel} = this.state
 
     switch (type) {
+      case CellType.StaticTableGaugeChart:
+        return (
+          <TableGaugeChartOptions
+            groupByTag={this.groupByTag}
+            fieldOptions={fieldOptions}
+            tableOptions={tableOptions}
+            decimalPlaces={decimalPlaces}
+            tableGaugeChartOptions={tableGaugeChartOptions}
+            onResetFocus={onResetFocus}
+            onUpdateTableOptions={onUpdateTableOptions}
+            onUpdateFieldOptions={onUpdateFieldOptions}
+            onUpdateDecimalPlaces={onUpdateDecimalPlaces}
+            onUpdateTableGaugeChartOptions={onUpdateTableGaugeChartOptions}
+          />
+        )
       case CellType.Gauge:
         return (
           <GaugeOptions
@@ -471,6 +492,12 @@ const ConnectedDisplayOptions = (props: PassedProps) => {
           }
           onToggleStaticLegend={timeMachineContainer.handleToggleStaticLegend}
           onUpdateGraphOptions={timeMachineContainer.handleUpdateGraphOptions}
+          tableGaugeChartOptions={
+            timeMachineContainer.state.tableGaugeChartOptions
+          }
+          onUpdateTableGaugeChartOptions={
+            timeMachineContainer.handleUpdateTableGaugeChartOptions
+          }
           onUpdateType={timeMachineContainer.handleUpdateType}
           onUpdateAxes={timeMachineContainer.handleUpdateAxes}
           onUpdateTableOptions={timeMachineContainer.handleUpdateTableOptions}

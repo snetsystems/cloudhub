@@ -2,6 +2,14 @@ import _ from 'lodash'
 
 import {TemplateValueType, TemplateType, Template} from 'src/types'
 import {CellType} from 'src/types/dashboards'
+import {
+  ColumnSettingInterface,
+  TableGaugeChartOptionsInterface,
+  CHART_TYPE_MODES,
+  BACKGROUND_TYPE_MODES,
+} from 'src/types/statisticalgraph'
+import {LINE_COLORS_I} from 'src/shared/constants/graphColorPalettes'
+import {DEFAULT_GAUGE_COLORS} from './thresholds'
 
 export const VERSION = process.env.npm_package_version
 export const GIT_SHA = process.env.GIT_SHA
@@ -554,3 +562,31 @@ export enum AddonType {
 
 export const COLLECTOR_SERVER = 'ch-collector'
 export const DEFAULT_ORGANIZATION = 'Default'
+
+export const DEFAULT_TABLE_GAUGE_CHART_OPTIONS: TableGaugeChartOptionsInterface = {
+  columnSettings: [],
+  decimalPlaces: {
+    digits: 0,
+    isEnforced: false,
+  },
+  isShowValues: true,
+  sortBy: 'name',
+  sortByDirection: 'asc',
+}
+
+export const DEFAULT_COLUMN_SETTING: ColumnSettingInterface = {
+  internalName: '',
+  displayName: '',
+  visible: false,
+  min: 0,
+  max: 100,
+  colors: LINE_COLORS_I,
+  thresholdColors: DEFAULT_GAUGE_COLORS,
+  unit: '',
+  prefix: '',
+  suffix: '',
+  chartType: CHART_TYPE_MODES.CONTINUOUS,
+  isShowChart: true,
+  isPercent: true,
+  backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
+}
