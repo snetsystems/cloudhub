@@ -1,5 +1,7 @@
 import {ReactNode} from 'react'
 import {TimeZones} from 'src/types'
+import {ColorNumber, ColorString} from 'src/types/colors'
+import {BackgroundTypeMode, ChartTypeMode} from 'src/types/statisticalgraph'
 
 export enum SortType {
   NONE = 'NONE',
@@ -18,6 +20,7 @@ export interface ColumnBaseInfo {
   onClick?: (item: any) => void
   sort?: SortType
   align?: AlignType
+  style?: React.CSSProperties
 }
 
 export interface ColumnInfoOptions {
@@ -26,6 +29,8 @@ export interface ColumnInfoOptions {
   sorting?: boolean
   checkbox?: boolean
   isIP?: boolean
+  isGauge?: boolean
+  gaugeOptions?: GaugeOptions
 }
 
 export interface ColumnInfo extends ColumnBaseInfo {
@@ -60,4 +65,24 @@ export interface SortInfo {
   key: string
   isDesc: boolean
   isIP?: boolean
+}
+
+export interface GaugeOptions {
+  isPercent?: boolean // percent / raw value
+  chartType?: ChartTypeMode
+  backgroundType?: BackgroundTypeMode
+  decimalPlaces?: number
+  min?: number
+  max?: number
+  colors?: ColorString[]
+  thresholdColors?: ColorNumber[]
+  prefix?: string
+  suffix?: string
+}
+
+export interface Column {
+  name: string
+  min: number
+  max: number
+  color?: string
 }

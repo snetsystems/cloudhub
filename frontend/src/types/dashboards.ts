@@ -127,6 +127,7 @@ export enum CellType {
   StaticRadar = 'staticRadar',
   StaticStackedBar = 'staticStackedBar',
   StaticLineChart = 'staticLineChart',
+  StaticTableGaugeChart = 'staticTableGaugeChart',
 }
 
 interface DashboardLinks {

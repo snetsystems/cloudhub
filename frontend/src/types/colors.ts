@@ -14,3 +14,8 @@ export interface ThresholdColor {
   hex: string
   name: string
 }
+
+export interface ColorStop {
+  color: ColorString | ColorNumber
+  percent: number
+}

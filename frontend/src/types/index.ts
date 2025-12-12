@@ -96,6 +96,8 @@ import {
   DataTableOptions,
   RowInfo,
   SortInfo,
+  Column,
+  GaugeOptions,
 } from './tableType'
 import {
   DeviceData,
@@ -413,4 +415,6 @@ export {
   DeviceToOrgMapping,
   DeviceAlias,
   ChartOptions,
+  Column,
+  GaugeOptions,
 }
