@@ -1,6 +1,11 @@
+// Libraries
 import React, {useEffect, useMemo, useState} from 'react'
 
-// Type
+// Components
+import AccordionTable from 'src/device_management/components/AccordionTable'
+import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
+
+// Types
 import {
   AlignType,
   ColumnInfo,
@@ -9,9 +14,6 @@ import {
   SortInfo,
   TimeZones,
 } from 'src/types'
-
-import AccordionTable from 'src/device_management/components/AccordionTable'
-
 interface Props {
   columns: ColumnInfo[]
   data: DataTableObject[]
@@ -153,11 +155,12 @@ function TableBase({
               ?.map((column, index) => {
                 return (
                   <th
-                    className={`${getAlignClassName(column?.align)} ${
-                      options?.theadRow?.className ?? ''
-                    } ${column.options?.thead?.className ?? ''} ${
-                      column.options?.checkbox ? 'checkbox' : ''
-                    }`}
+                    style={column.options?.thead?.style}
+                    className={`${getAlignClassName(
+                      column?.options?.thead?.align
+                    )} ${options?.theadRow?.className ?? ''} ${
+                      column.options?.thead?.className ?? ''
+                    } ${column.options?.checkbox ? 'checkbox' : ''}`}
                     key={index}
                     onClick={() => onClickTh(column)}
                   >
@@ -228,7 +231,9 @@ function TableBase({
                         <td
                           key={columnIndex}
                           onClick={() => columns[columnIndex].onClick}
-                          className={`${getAlignClassName(column?.align)}`}
+                          className={`${getAlignClassName(
+                            column?.options?.thead?.align
+                          )}`}
                         >
                           {column?.options?.checkbox ? (
                             <div className="dark-checkbox">
@@ -249,6 +254,11 @@ function TableBase({
                                 htmlFor={`agent-control--${rowIndex}`}
                               />
                             </div>
+                          ) : column?.options?.isGauge ? (
+                            <TableGaugeCell
+                              options={column.options?.gaugeOptions}
+                              value={getValue(item, key) as number}
+                            />
                           ) : column?.render ? (
                             column.render(
                               getValue(item, key),
@@ -258,7 +268,11 @@ function TableBase({
                               timeZone
                             )
                           ) : (
-                            getValue(item, key)
+                            <>
+                              {(column?.options?.gaugeOptions?.prefix ?? '') +
+                                getValue(item, key) +
+                                (column?.options?.gaugeOptions?.suffix ?? '')}
+                            </>
                           )}
                         </td>
                       )

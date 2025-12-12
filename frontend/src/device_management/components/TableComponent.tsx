@@ -1,3 +1,4 @@
+// Libraries
 import React, {
   ReactNode,
   useCallback,
@@ -6,7 +7,11 @@ import React, {
   useState,
 } from 'react'
 
-//Type
+// Components
+import SearchBar from 'src/hosts/components/SearchBar'
+import TableBase from 'src/device_management/components/TableBase'
+
+// Types
 import {
   ColumnInfo,
   SortInfo,
@@ -14,10 +19,6 @@ import {
   DataTableOptions,
   TimeZones,
 } from 'src/types'
-
-// Components
-import SearchBar from 'src/hosts/components/SearchBar'
-import TableBase from 'src/device_management/components/TableBase'
 
 interface Props {
   data: DataTableObject[]
@@ -165,7 +166,6 @@ function TableComponent({
   const onSort = useCallback(
     (column: ColumnInfo) => {
       const target = JSON.parse(JSON.stringify(sortTarget))
-
       if (sortTarget === null) {
         setSortTarget({
           key: column.key,
@@ -197,23 +197,28 @@ function TableComponent({
 
   return (
     <div className="panel panel-solid">
-      <div className="panel-heading">
-        <div className="table-top left">
-          <h2 className="panel-title">{tableTitle}</h2>
-          {/* left custom node */}
-          {topLeftRender}
+      {(!!tableTitle ||
+        !!topLeftRender ||
+        !!toprightRender ||
+        isSearchDisplay) && (
+        <div className="panel-heading">
+          <div className="table-top left">
+            <h2 className="panel-title">{tableTitle}</h2>
+            {/* left custom node */}
+            {topLeftRender}
+          </div>
+          <div className="table-top right">
+            {isSearchDisplay && (
+              <SearchBar
+                placeholder={searchPlaceholder ?? 'Filter by Host...'}
+                onSearch={searchHandler}
+              />
+            )}
+            {/* right custom node */}
+            {toprightRender}
+          </div>
         </div>
-        <div className="table-top right">
-          {isSearchDisplay && (
-            <SearchBar
-              placeholder={searchPlaceholder ?? 'Filter by Host...'}
-              onSearch={searchHandler}
-            />
-          )}
-          {/* right custom node */}
-          {toprightRender}
-        </div>
-      </div>
+      )}
       <div className={`panel-body ${bodyClassName ?? ''}`}>
         <TableBase
           columns={columns}

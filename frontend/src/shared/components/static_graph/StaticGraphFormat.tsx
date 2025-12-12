@@ -18,7 +18,7 @@ import {
 } from 'src/shared/components/static_graph/StaticGraphTransform'
 
 // Constants
-import {DataType} from 'src/shared/constants'
+import {DataType, DEFAULT_COLUMN_SETTING} from 'src/shared/constants'
 
 // Types
 import {
@@ -27,9 +27,14 @@ import {
   InfluxQLQueryType,
 } from 'src/types/series'
 import {FieldOption} from 'src/types/dashboards'
+import {
+  ColumnSettingInterface,
+  TableGaugeChartOptionsInterface,
+} from 'src/types/statisticalgraph'
 
 interface FormatProperties {
   fieldOptions: FieldOption[]
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
   uuid: string
 }
 
@@ -37,12 +42,10 @@ const areFormatPropertiesEqual = (
   prevProperties: FormatProperties,
   newProperties: FormatProperties
 ) => {
-  const formatProps = ['uuid', 'fieldOptions']
-
+  const formatProps = ['uuid', 'fieldOptions', 'tableGaugeChartOptions']
   const areEqual = formatProps.every(k =>
     _.isEqual(prevProperties[k], newProperties[k])
   )
-
   return areEqual
 }
 
@@ -50,13 +53,18 @@ interface Props {
   data: TimeSeriesServerResponse[]
   dataType: DataType
   fieldOptions: FieldOption[]
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
   uuid: string
-  children: (computedFieldOptions: FieldOption[]) => JSX.Element
+  children: (
+    computedFieldOptions: FieldOption[],
+    tableGaugeChartOptions: TableGaugeChartOptionsInterface
+  ) => JSX.Element
 }
 
 interface State {
   computedFieldOptions: FieldOption[]
   invalidDataError: ErrorTypes
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
 }
 
 class StaticGraphFormat extends PureComponent<Props, State> {
@@ -67,6 +75,7 @@ class StaticGraphFormat extends PureComponent<Props, State> {
 
     this.state = {
       computedFieldOptions: props.fieldOptions,
+      tableGaugeChartOptions: props.tableGaugeChartOptions,
       invalidDataError: null,
     }
   }
@@ -80,7 +89,10 @@ class StaticGraphFormat extends PureComponent<Props, State> {
       )
     }
 
-    return this.props.children(this.state.computedFieldOptions)
+    return this.props.children(
+      this.state.computedFieldOptions,
+      this.state.tableGaugeChartOptions
+    )
   }
 
   public componentDidMount() {
@@ -101,7 +113,7 @@ class StaticGraphFormat extends PureComponent<Props, State> {
 
   private formatStaticGraphData = async () => {
     const computedFieldOptions = this.makeStaticGraphFieldOptions()
-
+    const tableGaugeChartOptions = this.makeTableGaugeChartOptions()
     try {
       if (!this.isComponentMounted) {
         return
@@ -110,6 +122,7 @@ class StaticGraphFormat extends PureComponent<Props, State> {
       this.setState({
         computedFieldOptions,
         invalidDataError: null,
+        tableGaugeChartOptions,
       })
     } catch (err) {
       if (!this.isComponentMounted) {
@@ -161,6 +174,55 @@ class StaticGraphFormat extends PureComponent<Props, State> {
     })
 
     return [...intersection, ...newFields]
+  }
+
+  // tableGaugeChartOptions 초기값 설정
+  private makeTableGaugeChartOptions = (): TableGaugeChartOptionsInterface => {
+    const {tableGaugeChartOptions, dataType, data} = this.props
+    const {sortedLabels, queryType} = this.getSortedLabelsAndQueryType()
+
+    const defaultTimeField = _.get(data, '0.response.results.0.series', '')
+    const setName = Object.keys(defaultTimeField[0].tags)
+
+    let tempOptions: ColumnSettingInterface[] = []
+
+    sortedLabels.forEach(({label}) => {
+      const option: ColumnSettingInterface = {
+        ...DEFAULT_COLUMN_SETTING,
+        internalName: label,
+      }
+
+      if (setName.includes(option.internalName) || option.internalName === '') {
+        tempOptions = [...tempOptions]
+      } else {
+        tempOptions = [...tempOptions, option]
+      }
+    })
+
+    if (
+      dataType === DataType.influxQL &&
+      queryType === InfluxQLQueryType.MetaQuery
+    ) {
+      return {
+        ...tableGaugeChartOptions,
+        columnSettings: tempOptions,
+      }
+    }
+
+    const intersection = tableGaugeChartOptions.columnSettings.filter(f => {
+      return tempOptions.find(a => a.internalName === f.internalName)
+    })
+
+    const newFields = tempOptions.filter(a => {
+      return !tableGaugeChartOptions.columnSettings.find(
+        f => f.internalName === a.internalName
+      )
+    })
+
+    return {
+      ...tableGaugeChartOptions,
+      columnSettings: [...intersection, ...newFields],
+    }
   }
 
   private getSortedLabelsAndQueryType = (): {
