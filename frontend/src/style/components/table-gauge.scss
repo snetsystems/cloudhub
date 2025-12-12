@@ -1,0 +1,162 @@
+.table-gauge-cell-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 2px 0;
+}
+
+.table-gauge-cell-gauge {
+  flex: 1;
+  height: 20px;
+  background-color: $g5-pepper;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.table-gauge-cell-gauge--segmented {
+  background-color: transparent;
+}
+
+.table-gauge-cell-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.table-gauge-cell-segments {
+  display: flex;
+  gap: 1px;
+  width: 100%;
+  height: 100%;
+}
+
+.table-gauge-cell-segment {
+  flex: 1;
+  border-radius: 1px;
+  border: 1px solid rgba($g18-cloud, 0.15);
+  background-color: rgba($g18-cloud, 0.05);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.table-gauge-cell-segment--active {
+  border-color: transparent;
+}
+
+.table-gauge-cell-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: $g13-mist;
+  min-width: 45px;
+  flex: 0 0 45px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/*
+  Table Gauge Chart
+  ------------------------------------------------------------------------------
+*/
+.table-gauge-chart {
+  width: 100%;
+  height: 100%;
+  background-color: $g3-castle;
+}
+
+.table-gauge-chart--wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+}
+
+.static-graph-container {
+  width: 100%;
+  height: 100%;
+  .panel.panel-solid {
+    width: 100%;
+
+    .panel-body {
+      width: 100%;
+
+      tr {
+        th {
+          background-color: $g4-onyx;
+          border: $ix-border solid $g5-pepper;
+          color: $g14-chromium;
+        }
+        td {
+          padding: 4px 12px;
+          border: $ix-border solid $g5-pepper;
+          color: $g13-mist;
+        }
+      }
+    }
+  }
+}
+
+.table-gauge-chart {
+  .display-flex {
+    display: flex;
+  }
+}
+
+.gauge-controls {
+  .form-group-wrapper {
+    .form-group-wrapper-label-container {
+      margin-bottom: 12px;
+      margin-left: 12px;
+
+      .form-group-wrapper-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: $g11-sidewalk;
+
+        line-height: 1.5;
+      }
+    }
+
+    .form-group-wrapper-content {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .column-controls {
+    border-bottom: 1px solid $g5-pepper;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+}
+
+.form-group-wrapper.column-settings {
+  gap: 16px;
+}
+
+.form-group-wrapper.column-settings > .form-group {
+  border-bottom: 1px solid $g5-pepper;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.form-group.disabled-form-group {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+
+  label {
+    color: $g9-mountain;
+  }
+}
+
+.form-group {
+  .text-right .justify-end {
+    text-align: right;
+    justify-content: flex-end;
+  }
+}
