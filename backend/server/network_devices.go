@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/platform/k8s"
 )
 
 type createDeviceRequest struct {
@@ -441,7 +442,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		org, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
 		if org != nil && len(org.CollectedDevicesIDs) > 0 {
 
-			collectorKeys, activeCollectorMap, err := s.InternalENV.Platform.GetActiveCollectors(ctx)
+			_, activeCollectorMap, err := s.InternalENV.Platform.GetActiveCollectors(ctx)
 			if err != nil {
 				for _, id := range devices {
 					addFailedDevice(failedDevices, id, fmt.Errorf("Failed to access active collector-server"))
@@ -453,7 +454,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			activeCollectorKeys = activeCollectorMap
-			isK8s = len(collectorKeys) == 0 && len(activeCollectorMap) == 0
+			_, isK8s = s.InternalENV.Platform.(*k8s.Manager)
 		}
 	}
 
@@ -818,7 +819,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	isK8s := len(collectorKeys) == 0 && len(activeCollectorKeys) == 0
+	_, isK8s := s.InternalENV.Platform.(*k8s.Manager)
 
 	_, _, serverDeviceCount, orgToCollector := computeThreshold(existingDevicesOrg, devicesData.devicesGroupByOrg, CollectorSelectionRatio)
 
