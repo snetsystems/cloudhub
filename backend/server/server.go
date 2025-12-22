@@ -717,7 +717,7 @@ func (s *Server) Serve(ctx context.Context) {
 	k8sCfg := kubernetes.Config{
 		URL:                kubernetesConfig.URL,
 		Token:              kubernetesConfig.Token,
-		InsecureSkipVerify: s.Kubernetes["insecure-skip-verify"] == "true",
+		InsecureSkipVerify: kubernetesConfig.InsecureSkipVerify,
 	}
 
 	if service.KubernetesClient == nil {
