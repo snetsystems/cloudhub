@@ -17,4 +17,7 @@ type Platform interface {
 
 	// GetActiveCollectors returns the list of all collectors and a map of their active status.
 	GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error)
+
+	// GetCollectorReplicas returns the current number of replicas for the collector service.
+	GetCollectorReplicas(ctx context.Context) (int, error)
 }

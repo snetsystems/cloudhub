@@ -59,6 +59,9 @@ const (
 	ErrMLNxRstNotFound                 = Error("MLNxRet not found")
 	ErrDLNxRstNotFound                 = Error("DLNxRet not found")
 	ErrDeviceAlreadyExists             = Error("device already exists")
+	ErrK8sStatefulSetFetch             = Error("failed to get statefulset")
+	ErrK8sStatefulSetDecode            = Error("failed to decode statefulset")
+	ErrFailedToGetReplicas             = Error("Failed to get current replicas")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -1451,6 +1454,8 @@ type Platform interface {
 	RemoveLogstashConfig(ctx context.Context, collectorName string, configName string) error
 	RestartCollector(ctx context.Context, collectorName string) error
 	GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error)
+
+	GetCollectorReplicas(ctx context.Context) (int, error)
 }
 
 // NetworkDeviceStore is the Storage and retrieval of information
@@ -1505,6 +1510,7 @@ type KubernetesConfig struct {
 	URL                string `json:"url"`
 	Token              string `json:"token"`
 	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
+	CollectorAuthToken string `json:"collector_auth_token"`
 }
 
 // MLNxRstQuery represents the attributes that a MLNxRst may be retrieved by.

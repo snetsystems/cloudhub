@@ -147,6 +147,23 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		)
 	}
 
+	EnsureCollectorAuth := func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			authToken := service.InternalENV.KubernetesConfig.CollectorAuthToken
+			if authToken == "" {
+				next(w, r)
+				return
+			}
+
+			token := r.Header.Get("X-CloudHub-Token")
+			if token != authToken {
+				http.Error(w, "Unauthorized: Invalid Collector Token", http.StatusUnauthorized)
+				return
+			}
+			next(w, r)
+		}
+	}
+
 	if opts.PprofEnabled {
 		// add profiling routes
 		router.GET("/debug/pprof/:thing", http.DefaultServeMux.ServeHTTP)
@@ -412,6 +429,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// Device Management Learning
 	router.POST("/cloudhub/v1/ai/network/managements/learning/config", EnsureAdmin(service.LearningDeviceManagement))
+
+	// This endpoint is used by sidecars to pull their specific shard configuration.
+	router.GET("/api/v1/collectors/config/:shardID", EnsureCollectorAuth(service.GetCollectorConfig))
 
 	// Device Learning Result
 	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/ml", EnsureViewer(service.GetMLNxRst))
