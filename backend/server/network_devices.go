@@ -7,7 +7,13 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
+
+	"crypto/sha256"
+	"encoding/hex"
+	"hash/crc32"
+	"sort"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/platform/k8s"
@@ -813,13 +819,29 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	_, isK8s := s.InternalENV.Platform.(*k8s.Manager)
+	if isK8s {
+		totalDevices := 0
+		for _, orgData := range devicesData.devicesGroupByOrg {
+			totalDevices += len(orgData)
+		}
+
+		currentReplicas, err := s.InternalENV.Platform.GetCollectorReplicas(ctx)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("Failed to get current replicas: %v", err))
+			currentReplicas = 1
+		}
+		if currentReplicas < 1 {
+			currentReplicas = 1
+		}
+
+	}
+
 	collectorKeys, activeCollectorKeys, err := s.InternalENV.Platform.GetActiveCollectors(ctx)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-
-	_, isK8s := s.InternalENV.Platform.(*k8s.Manager)
 
 	_, _, serverDeviceCount, orgToCollector := computeThreshold(existingDevicesOrg, devicesData.devicesGroupByOrg, CollectorSelectionRatio)
 
@@ -898,21 +920,23 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 
 	// Update the store only for successful orgInfos
 	for org, orgInfo := range orgsToUpdate {
-		statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo)
-		if err != nil {
-			for _, device := range devicesData.devicesGroupByOrg[org] {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = err.Error()
+		if !isK8s {
+			statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo)
+			if err != nil {
+				for _, device := range devicesData.devicesGroupByOrg[org] {
+					if _, exists := failedDevices[device.ID]; !exists {
+						failedDevices[device.ID] = err.Error()
+					}
 				}
-			}
-			continue
-		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-			for _, device := range devicesData.devicesGroupByOrg[org] {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = string(resp)
+				continue
+			} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+				for _, device := range devicesData.devicesGroupByOrg[org] {
+					if _, exists := failedDevices[device.ID]; !exists {
+						failedDevices[device.ID] = string(resp)
+					}
 				}
+				continue
 			}
-			continue
 		}
 
 		// Save unique collector servers to restartCollectorServers map (Baremetal only)
@@ -1389,4 +1413,200 @@ func (s *Service) filterDeviceBySNMPConfigV3(device cloudhub.NetworkDevice, orgN
 		SecurityLevel: reqConfig.SecurityLevel,
 		OrgName:       orgName,
 	}
+}
+
+// GetCollectorConfig handles the sidecar polling request for Logstash configuration.
+func (s *Service) GetCollectorConfig(w http.ResponseWriter, r *http.Request) {
+	shardIDStr, err := paramStr("shardID", r)
+	if err != nil {
+		Error(w, http.StatusBadRequest, "Missing or invalid shardID", s.Logger)
+		return
+	}
+
+	parts := strings.Split(shardIDStr, "-")
+	ordinalStr := parts[len(parts)-1]
+	shardIndex, err := strconv.Atoi(ordinalStr)
+	if err != nil {
+		Error(w, http.StatusBadRequest, fmt.Sprintf("Invalid shard ID format: %s", shardIDStr), s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	serverCtx := serverContext(ctx)
+
+	allOrgs, err := s.Store.NetworkDeviceOrg(serverCtx).All(serverCtx)
+	if err != nil {
+		if strings.Contains(err.Error(), "no Network Device found") {
+			allOrgs = []cloudhub.NetworkDeviceOrg{}
+		} else {
+			s.Logger.WithField("error", err).Error("GetCollectorConfig: Failed to fetch NetworkDeviceOrg.All")
+			Error(w, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch orgs: %v", err), s.Logger)
+			return
+		}
+	}
+
+	var allDeviceIDs []string
+	deviceOrgMap := make(map[string]string)
+	for _, org := range allOrgs {
+		for _, devID := range org.CollectedDevicesIDs {
+			allDeviceIDs = append(allDeviceIDs, devID)
+			deviceOrgMap[devID] = org.ID
+		}
+	}
+	s.Logger.WithField("total_devices", len(allDeviceIDs)).Info("GetCollectorConfig: Fetched devices from DB")
+
+	sort.Strings(allDeviceIDs)
+
+	totalShards := 1
+	if _, isK8s := s.InternalENV.Platform.(*k8s.Manager); isK8s {
+		replicas, err := s.InternalENV.Platform.GetCollectorReplicas(serverCtx)
+		if err == nil && replicas > 0 {
+			totalShards = replicas
+		} else {
+			s.Logger.Info(fmt.Sprintf("GetCollectorConfig: Failed to get replicas (err=%v), defaulting to 1", err))
+		}
+	}
+
+	var shardDeviceIDs []string
+	for _, devID := range allDeviceIDs {
+		hash := crc32.ChecksumIEEE([]byte(devID))
+		if int(hash)%totalShards == shardIndex {
+			shardDeviceIDs = append(shardDeviceIDs, devID)
+		}
+	}
+
+	shardDevicesByOrg := make(map[string][]string)
+	for _, devID := range shardDeviceIDs {
+		orgID := deviceOrgMap[devID]
+		shardDevicesByOrg[orgID] = append(shardDevicesByOrg[orgID], devID)
+	}
+
+	var fullConfigBuilder strings.Builder
+
+	var orgIDs []string
+	for orgID := range shardDevicesByOrg {
+		orgIDs = append(orgIDs, orgID)
+	}
+	sort.Strings(orgIDs)
+
+	for _, orgID := range orgIDs {
+		devIDs := shardDevicesByOrg[orgID]
+		org, err := s.Store.Organizations(serverCtx).Get(serverCtx, cloudhub.OrganizationQuery{ID: &orgID})
+		if err != nil {
+			s.Logger.Error("Failed to get org: ", orgID)
+			continue
+		}
+
+		var hostEntriesV1AndV2 []string
+		var deviceFilters []string
+		filteredDevices := make(map[cloudhub.SNMPConfig]FilteredDeviceV3)
+
+		for _, deviceID := range devIDs {
+			device, err := s.Store.NetworkDevice(serverCtx).Get(serverCtx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
+			if err != nil {
+				continue
+			}
+
+			if device.SNMPConfig.Version == "v3" || device.SNMPConfig.Version == "3" {
+				s.filterDeviceBySNMPConfigV3(*device, org.Name, &filteredDevices)
+			} else {
+				host := fmt.Sprintf("%s:%s/%d", strings.ToLower(device.SNMPConfig.Protocol), device.DeviceIP, device.SNMPConfig.Port)
+				hostEntry := fmt.Sprintf("{host => \"%s\" community => \"%s\" version => \"%s\" timeout => %d}",
+					host, device.SNMPConfig.Community, device.SNMPConfig.Version, 50000)
+				hostEntriesV1AndV2 = append(hostEntriesV1AndV2, hostEntry)
+			}
+
+			filter := fmt.Sprintf(`
+        if [host] == "%s" {
+            mutate {
+                add_field => {
+                    "dev_id" => "%s"
+                    "org_id" => "%s"
+                }
+            }
+        }`, device.DeviceIP, device.ID, org.ID)
+			deviceFilters = append(deviceFilters, filter)
+		}
+
+		snmpV1AndV2Hosts := strings.Join(hostEntriesV1AndV2, ",\n")
+		filters := strings.Join(deviceFilters, "\n")
+		influxDBs, _ := GetServerInfluxDBs(serverCtx, s)
+
+		influxOrigin, influxPort, influxUser, influxPass := "", "", "", ""
+		if len(influxDBs) > 0 {
+			influxOrigin = influxDBs[0].Origin
+			influxPort = influxDBs[0].Port
+			influxUser = influxDBs[0].Username
+			influxPass = influxDBs[0].Password
+		}
+
+		filteredDevicesArray := make([]FilteredDeviceV3, 0, len(filteredDevices))
+		for _, fd := range filteredDevices {
+			fd.HostEntries = strings.TrimSuffix(fd.HostEntries, "\n")
+			filteredDevicesArray = append(filteredDevicesArray, fd)
+		}
+
+		sort.Slice(filteredDevicesArray, func(i, j int) bool {
+			return filteredDevicesArray[i].SecurityName < filteredDevicesArray[j].SecurityName
+		})
+
+		tmplParams := []cloudhub.TemplateBlock{
+			{Name: "comment", Params: cloudhub.TemplateParamsMap{}},
+			{
+				Name: "input",
+				Params: cloudhub.TemplateParamsMap{
+					"DeviceHostsV1AndV2": snmpV1AndV2Hosts,
+					"OrgName":            org.Name,
+				},
+			},
+			{
+				Name: "snmp_v3_input",
+				Params: cloudhub.TemplateParamsMap{
+					"RefeatV3": filteredDevicesArray,
+				},
+			},
+			{
+				Name: "filter_ouput",
+				Params: cloudhub.TemplateParamsMap{
+					"OrgName":        org.Name,
+					"DeviceFilter":   filters,
+					"InfluxOrigin":   influxOrigin,
+					"InfluxPort":     influxPort,
+					"InfluxUsername": influxUser,
+					"InfluxPassword": influxPass,
+				},
+			},
+		}
+
+		tm := s.InternalENV.TemplatesManager
+		t, err := tm.Get(ctx, string(LogstashTemplateField))
+		if err != nil {
+			continue
+		}
+		templateService := &TemplateService{}
+		configPart, err := templateService.LoadTemplate(cloudhub.LoadTemplateConfig{
+			Field:          LogstashTemplateField,
+			TemplateString: t.Template,
+		}, tmplParams)
+
+		if err == nil {
+			fullConfigBuilder.WriteString(fmt.Sprintf("\n# Configuration for Org: %s\n", org.Name))
+			fullConfigBuilder.WriteString(configPart)
+		}
+	}
+
+	finalConfig := fullConfigBuilder.String()
+	hash := sha256.Sum256([]byte(finalConfig))
+	etag := hex.EncodeToString(hash[:])
+
+	w.Header().Set("ETag", etag)
+
+	if match := r.Header.Get("If-None-Match"); match == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(finalConfig))
 }

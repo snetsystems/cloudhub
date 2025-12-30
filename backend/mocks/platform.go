@@ -10,6 +10,7 @@ type MockPlatform struct {
 	RemoveLogstashConfigFunc func(ctx context.Context, target string, configName string) error
 	RestartCollectorFunc     func(ctx context.Context, target string) error
 	GetActiveCollectorsFunc  func(ctx context.Context) ([]string, map[string]bool, error)
+	GetCollectorReplicasFunc func(ctx context.Context) (int, error)
 }
 
 func (m *MockPlatform) DeployLogstashConfig(ctx context.Context, target string, configName string, content string) error {
@@ -38,4 +39,11 @@ func (m *MockPlatform) GetActiveCollectors(ctx context.Context) ([]string, map[s
 		return m.GetActiveCollectorsFunc(ctx)
 	}
 	return nil, nil, nil
+}
+
+func (m *MockPlatform) GetCollectorReplicas(ctx context.Context) (int, error) {
+	if m.GetCollectorReplicasFunc != nil {
+		return m.GetCollectorReplicasFunc(ctx)
+	}
+	return 0, nil
 }

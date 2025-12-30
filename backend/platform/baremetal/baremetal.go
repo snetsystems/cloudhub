@@ -179,3 +179,8 @@ func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string
 	wg.Wait()
 	return collectorKeys, activeCollectorKeys, nil
 }
+
+// GetCollectorReplicas for baremetal returns 0 as it's not applicable.
+func (p *Manager) GetCollectorReplicas(ctx context.Context) (int, error) {
+	return 0, nil
+}

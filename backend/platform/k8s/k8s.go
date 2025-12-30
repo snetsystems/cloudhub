@@ -6,122 +6,78 @@ import (
 	"fmt"
 	"net/http"
 
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kubernetes"
 )
 
 // Manager for handling Logstash configuration in a Kubernetes environment
 type Manager struct {
-	client        *kubernetes.Client
-	namespace     string
-	configMapName string
+	client          *kubernetes.Client
+	namespace       string
+	statefulSetName string
 }
 
 // NewManager creates a new Manager for handling Logstash configuration in a Kubernetes environment
-func NewManager(client *kubernetes.Client, namespace string, configMapName string) *Manager {
+func NewManager(client *kubernetes.Client, namespace string, statefulSetName string) *Manager {
 	return &Manager{
-		client:        client,
-		namespace:     namespace,
-		configMapName: configMapName,
+		client:          client,
+		namespace:       namespace,
+		statefulSetName: statefulSetName,
 	}
 }
 
 // DeployLogstashConfig deploys a Logstash configuration to a Kubernetes ConfigMap
 func (p *Manager) DeployLogstashConfig(ctx context.Context, target string, configName string, content string) error {
-
-	payloadMap := map[string]interface{}{
-		"data": map[string]string{
-			configName: content,
-		},
-	}
-	payloadBytes, err := json.Marshal(payloadMap)
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	path := fmt.Sprintf("/api/v1/namespaces/%s/configmaps/%s", p.namespace, p.configMapName)
-	resp, err := p.client.Patch(ctx, path, string(payloadBytes), "application/merge-patch+json")
-	if err != nil {
-		return fmt.Errorf("failed to patch configmap: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-
-		createPayload := map[string]interface{}{
-			"apiVersion": "v1",
-			"kind":       "ConfigMap",
-			"metadata": map[string]string{
-				"name":      p.configMapName,
-				"namespace": p.namespace,
-			},
-			"data": map[string]string{
-				configName: content,
-			},
-		}
-		createBytes, err := json.Marshal(createPayload)
-		if err != nil {
-			return fmt.Errorf("failed to marshal create payload: %w", err)
-		}
-		createPath := fmt.Sprintf("/api/v1/namespaces/%s/configmaps", p.namespace)
-
-		respCreate, errCreate := p.client.Do(ctx, "POST", createPath, string(createBytes))
-		if errCreate != nil {
-			return fmt.Errorf("failed to create configmap: %w", errCreate)
-		}
-		defer respCreate.Body.Close()
-		if respCreate.StatusCode < 200 || respCreate.StatusCode >= 300 {
-			return fmt.Errorf("failed to create configmap: status %d", respCreate.StatusCode)
-		}
-		return nil
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("failed to patch configmap: status %d", resp.StatusCode)
-	}
-
+	// In the sidecar pull model, the configuration is served via API,
+	// so we don't need to push configs to ConfigMaps anymore.
+	// This is a no-op.
 	return nil
 }
 
 // RemoveLogstashConfig removes a Logstash configuration from a Kubernetes ConfigMap
 func (p *Manager) RemoveLogstashConfig(ctx context.Context, target string, configName string) error {
-	// To remove a key in merge-patch, set it to null
-	payloadMap := map[string]interface{}{
-		"data": map[string]interface{}{
-			configName: nil,
-		},
-	}
-	payloadBytes, err := json.Marshal(payloadMap)
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	path := fmt.Sprintf("/api/v1/namespaces/%s/configmaps/%s", p.namespace, p.configMapName)
-	resp, err := p.client.Patch(ctx, path, string(payloadBytes), "application/merge-patch+json")
-	if err != nil {
-		return fmt.Errorf("failed to patch configmap for removal: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		if resp.StatusCode == http.StatusNotFound {
-			return nil
-		}
-		return fmt.Errorf("failed to remove config from configmap: status %d", resp.StatusCode)
-	}
+	// In the sidecar pull model, this is also a no-op.
 	return nil
 }
 
 // RestartCollector restarts the Logstash collector in a Kubernetes environment
 func (p *Manager) RestartCollector(ctx context.Context, target string) error {
-	// K8s environment typically handles config reloading automatically.
-	// No-op for now.
+	// K8s environment handles config reloading automatically via sidecar/hot-reload.
+	// No-op.
 	return nil
 }
 
 // GetActiveCollectors returns the active Logstash collectors in a Kubernetes environment
 func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error) {
-	// For K8s, we assume the collector service is managed by K8s.
-	// We return a default collector "k8s-collector" as active.
-	// In the future, this could list pods matching value.
-	return []string{"k8s-collector"}, map[string]bool{"k8s-collector": true}, nil
+	// For K8s, active collectors are managed by scaling.
+	// This method might need to query the actual Pods if we want strict verification,
+	// but for now, the backend logic constructs shard list based on total devices.
+	// Returning empty here as the backend will self-calculate "shard-0", "shard-1" etc.
+	return []string{}, map[string]bool{}, nil
+}
+
+// GetCollectorReplicas returns the current number of replicas for the collector service.
+func (p *Manager) GetCollectorReplicas(ctx context.Context) (int, error) {
+	path := fmt.Sprintf("/apis/apps/v1/namespaces/%s/statefulsets/%s", p.namespace, p.statefulSetName)
+
+	getResp, err := p.client.Do(ctx, "GET", path, nil)
+	if err != nil {
+		return 0, fmt.Errorf("%w: %v", cloudhub.ErrK8sStatefulSetFetch, err)
+	}
+	defer getResp.Body.Close()
+
+	if getResp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("%w, status: %d", cloudhub.ErrK8sStatefulSetFetch, getResp.StatusCode)
+	}
+
+	var sts struct {
+		Spec struct {
+			Replicas int `json:"replicas"`
+		} `json:"spec"`
+	}
+	if err := json.NewDecoder(getResp.Body).Decode(&sts); err != nil {
+		return 0, fmt.Errorf("%w: %v", cloudhub.ErrK8sStatefulSetDecode, err)
+	}
+
+	return sts.Spec.Replicas, nil
 }
