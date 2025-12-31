@@ -189,15 +189,17 @@ function TableGaugeCell({options, value}: Props) {
           />
         )}
       </div>
-      <div
-        title={formattedValue}
-        className="table-gauge-cell-value"
-        style={{color: textColor}}
-      >
-        {options?.prefix ?? ''}
-        {formattedValue}
-        {options?.suffix ?? ''}
-      </div>
+      {options?.isValuesVisible && (
+        <div
+          title={formattedValue}
+          className="table-gauge-cell-value"
+          style={{color: textColor}}
+        >
+          {options?.prefix ?? ''}
+          {formattedValue}
+          {options?.suffix ?? ''}
+        </div>
+      )}
     </div>
   )
 }

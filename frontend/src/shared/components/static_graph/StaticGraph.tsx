@@ -389,6 +389,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
         ...this.containerStyle,
         zIndex: 2,
         height: `calc(100% - ${staticLegendHeight + cellVerticalPadding}px)`,
+        borderBottom: `2px solid #383846`,
       }
     }
 

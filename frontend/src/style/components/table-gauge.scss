@@ -65,6 +65,7 @@
   width: 100%;
   height: 100%;
   background-color: $g3-castle;
+  border-bottom: $ix-border solid $g5-pepper;
 }
 
 .table-gauge-chart--wrapper {
@@ -83,17 +84,33 @@
 
     .panel-body {
       width: 100%;
+      padding: 0;
+
+      table {
+        border-collapse: separate;
+        border-left: $ix-border solid $g5-pepper;
+      }
 
       tr {
         th {
+          position: sticky;
+          top: 0;
+          z-index: 10;
           background-color: $g4-onyx;
-          border: $ix-border solid $g5-pepper;
           color: $g14-chromium;
+          border: 0; /* 전체 border 제거 */
+          border-top: $ix-border solid $g5-pepper;
+          border-right: $ix-border solid $g5-pepper;
+          border-bottom: $ix-border solid $g5-pepper;
         }
+
         td {
+          white-space: pre;
           padding: 4px 12px;
-          border: $ix-border solid $g5-pepper;
-          color: $g13-mist;
+          color: $g12-forge;
+          border: 0; /* 전체 border 제거 */
+          border-right: $ix-border solid $g5-pepper;
+          border-bottom: $ix-border solid $g5-pepper;
         }
       }
     }
