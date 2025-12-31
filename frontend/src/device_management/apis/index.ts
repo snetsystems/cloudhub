@@ -355,7 +355,7 @@ export const getPredictionAlert = (
   db: string
 ) => {
   if (timeRange.format === INPUT_TIME_TYPE.TIMESTAMP) {
-    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE time >= '${
+    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE triggerType = 'anomaly_predict' AND time >= '${
       timeRange.lower
     }' ${validateUpperTime(timeRange.upper)} ORDER BY time desc ${
       limit ? `LIMIT ${limit}` : ''
@@ -367,7 +367,7 @@ export const getPredictionAlert = (
       db,
     })
   } else {
-    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE time >= ${
+    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE triggerType = 'anomaly_predict' AND time >= ${
       timeRange.lower
     } AND time <= ${timeRange.upper ?? 'now()'} ORDER BY time desc ${
       limit ? `LIMIT ${limit}` : ''
