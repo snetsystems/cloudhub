@@ -108,6 +108,7 @@ export const convertTimeSeriesDataToColumns = (
         backgroundType: columnSetting?.backgroundType,
         prefix: columnSetting?.prefix,
         suffix: columnSetting?.suffix,
+        isValuesVisible: tableGaugeChartOptions?.isShowValues,
       }
 
       return {
@@ -157,8 +158,12 @@ export const convertTimeSeriesDataToColumns = (
 
 export const matchedColumn = (
   data: TimeSeriesSeries[],
-  columnSettings: ColumnSettingInterface[]
+  columnSettings?: ColumnSettingInterface[]
 ) => {
+  if (!columnSettings) {
+    return []
+  }
+
   const firstSeries = data[0]
   const columnNames = (firstSeries?.columns || []).filter(col => col !== 'time')
   const tagName = firstSeries?.name || ''
