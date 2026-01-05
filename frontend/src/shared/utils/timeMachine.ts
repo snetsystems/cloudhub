@@ -13,6 +13,7 @@ import {
   GET_STATIC_LEGEND_POSITION,
   GIT_SHA,
   IS_STATIC_LEGEND,
+  DEFAULT_TABLE_GAUGE_CHART_OPTIONS,
 } from 'src/shared/constants'
 
 // Utils
@@ -37,6 +38,8 @@ export function initialStateFromCell(
   const legend = getDeep<Legend | null>(cell, 'legend', null)
   const isStaticLegend = IS_STATIC_LEGEND(legend)
   const staticLegendPosition = GET_STATIC_LEGEND_POSITION(legend)
+  const tableGaugeChartOptions =
+    cell.tableGaugeChartOptions || DEFAULT_TABLE_GAUGE_CHART_OPTIONS
 
   const initialState: Partial<TimeMachineState> = {
     queryDrafts,
@@ -50,6 +53,7 @@ export function initialStateFromCell(
     graphOptions: cell.graphOptions,
     isStaticLegend,
     staticLegendPosition,
+    tableGaugeChartOptions,
   }
 
   if (get(cell, 'queries.0.type') === QueryType.Flux) {

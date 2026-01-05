@@ -189,11 +189,26 @@ function StaticTableGaugeChart({
     // width setting
     const matchedColumns = matchedColumn(
       convertData,
-      tableGaugeChartOptions.columnSettings
+      tableGaugeChartOptions?.columnSettings
     )
 
-    return reorderColumns(baseColumns, normalizedFields, matchedColumns)
+    const returnColumns = reorderColumns(
+      baseColumns,
+      normalizedFields,
+      matchedColumns
+    )
+    return returnColumns
   }, [convertData, isUpdated, tableGaugeChartOptions, originFiledOptions])
+
+  const initSort = useMemo(() => {
+    const keyName = convertData?.[0]?.name
+    return tableGaugeChartOptions?.sortBy
+      ? {
+          key: tableGaugeChartOptions?.sortBy.replace(`${keyName}.`, ''),
+          isDesc: tableGaugeChartOptions?.sortByDirection === 'desc',
+        }
+      : null
+  }, [tableGaugeChartOptions, convertData])
 
   return (
     <div className="dygraph-child">
@@ -205,10 +220,7 @@ function StaticTableGaugeChart({
                 data={tableData || []}
                 columns={columns}
                 isSearchDisplay={false}
-                initSort={{
-                  key: tableGaugeChartOptions.sortBy ?? 'name',
-                  isDesc: tableGaugeChartOptions.sortByDirection === 'desc',
-                }}
+                initSort={initSort}
               />
             )}
           </div>

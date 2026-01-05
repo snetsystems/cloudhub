@@ -54,6 +54,7 @@ import {
   QueryType,
   TemplateValue,
   AnnotationViewer,
+  Status,
   // AnnotationViewer
 } from 'src/types'
 import {
@@ -100,7 +101,7 @@ interface Props {
   resizerTopHeight: number
   fluxASTLink: string
   onZoom: () => void
-  editQueryStatus: () => void
+  editQueryStatus: (queryID: string, status: Status) => void
   onSetResolution: () => void
   handleSetHoverTime: () => void
   onNotify: typeof notify

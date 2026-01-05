@@ -193,6 +193,7 @@ class Layout extends Component<Props, State> {
         graphOptions={cell.graphOptions}
         isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
         annotationsViewMode={this.props.annotationsViewMode}
+        tableGaugeChartOptions={cell.tableGaugeChartOptions}
       />
     )
   }

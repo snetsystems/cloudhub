@@ -176,13 +176,15 @@ class StaticGraphFormat extends PureComponent<Props, State> {
     return [...intersection, ...newFields]
   }
 
-  // tableGaugeChartOptions 초기값 설정
   private makeTableGaugeChartOptions = (): TableGaugeChartOptionsInterface => {
     const {tableGaugeChartOptions, dataType, data} = this.props
     const {sortedLabels, queryType} = this.getSortedLabelsAndQueryType()
 
     const defaultTimeField = _.get(data, '0.response.results.0.series', '')
-    const setName = Object.keys(defaultTimeField[0].tags)
+    const setName =
+      Array.isArray(defaultTimeField) && defaultTimeField[0]?.tags
+        ? Object.keys(defaultTimeField[0].tags)
+        : []
 
     let tempOptions: ColumnSettingInterface[] = []
 
@@ -209,15 +211,16 @@ class StaticGraphFormat extends PureComponent<Props, State> {
       }
     }
 
-    const intersection = tableGaugeChartOptions.columnSettings.filter(f => {
-      return tempOptions.find(a => a.internalName === f.internalName)
-    })
+    const intersection = (
+      tableGaugeChartOptions?.columnSettings || []
+    ).filter(f => tempOptions.find(a => a.internalName === f.internalName))
 
-    const newFields = tempOptions.filter(a => {
-      return !tableGaugeChartOptions.columnSettings.find(
-        f => f.internalName === a.internalName
-      )
-    })
+    const newFields = tempOptions.filter(
+      a =>
+        !(tableGaugeChartOptions?.columnSettings || []).find(
+          f => f.internalName === a.internalName
+        )
+    )
 
     return {
       ...tableGaugeChartOptions,

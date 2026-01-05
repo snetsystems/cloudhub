@@ -1,6 +1,7 @@
 import {Template, TimeRange, QueryConfig, Status} from 'src/types'
 import {ColorString} from 'src/types/colors'
 import {Point} from './dygraphs'
+import {TableGaugeChartOptionsInterface} from './statisticalgraph'
 
 export interface Axis {
   label: string
@@ -105,6 +106,7 @@ export interface Cell {
   note: string
   noteVisibility: NoteVisibility
   graphOptions?: GraphOptions
+  tableGaugeChartOptions?: TableGaugeChartOptionsInterface
 }
 
 export enum CellType {
