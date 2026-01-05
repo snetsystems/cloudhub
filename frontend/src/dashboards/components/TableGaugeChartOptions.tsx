@@ -73,10 +73,12 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
       onResetFocus,
     } = this.props
 
-    const tableSortByOptions = fieldOptions.map(field => ({
-      key: field.internalName,
-      text: field.displayName || field.internalName,
-    }))
+    const tableSortByOptions = fieldOptions
+      .filter(field => field.internalName !== 'time')
+      .map(field => ({
+        key: field.internalName,
+        text: field.displayName || field.internalName,
+      }))
 
     const customizeFieldOptions = fieldOptions.filter(fieldOption => {
       if (fieldOption.internalName === 'time') {
@@ -92,7 +94,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
           <div className="form-group-wrapper column-controls">
             <GraphOptionsSortBy
               selected={tableOptions.sortBy || DEFAULT_INFLUXQL_TIME_FIELD}
-              selectedDirection={tableOptions?.sortBy?.direction || 'asc'}
+              selectedDirection={tableOptions?.sortBy.direction || 'asc'} //direction 확인하기
               sortByOptions={tableSortByOptions}
               onChooseSortBy={this.handleChooseSortBy}
               onChooseSortByDirection={this.handleChooseSortByDirection}
@@ -414,21 +416,54 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
   }
 
   private handleChooseSortBy = (option: DropdownOption) => {
-    const {tableOptions, onUpdateTableOptions, fieldOptions} = this.props
+    const {
+      tableOptions,
+      onUpdateTableOptions,
+      fieldOptions,
+      tableGaugeChartOptions,
+      onUpdateTableGaugeChartOptions,
+    } = this.props
     const sortBy = fieldOptions.find(f => f.internalName === option.key)
     const setOptions = {...tableOptions, sortBy}
     onUpdateTableOptions(setOptions)
+
+    console.log('option', option)
+    console.log('sortBy', sortBy)
+
+    const targetSetting = tableGaugeChartOptions.columnSettings.find(
+      setting => setting.internalName === option.key
+    )
+    const setGaugeChartOptions = {
+      ...tableGaugeChartOptions,
+      sortBy: targetSetting?.displayName || option.key,
+      sortByDirection: 'asc' as 'asc' | 'desc',
+    }
+
+    console.log('setGaugeChartOptions', setGaugeChartOptions)
+    onUpdateTableGaugeChartOptions(setGaugeChartOptions)
   }
 
   private handleChooseSortByDirection = (direction: 'asc' | 'desc') => {
-    const {tableOptions, onUpdateTableOptions, fieldOptions} = this.props
+    const {
+      tableOptions,
+      onUpdateTableOptions,
+      fieldOptions,
+      tableGaugeChartOptions,
+      onUpdateTableGaugeChartOptions,
+    } = this.props
     const sortBy = fieldOptions.find(
       f => f.internalName === tableOptions.sortBy.internalName
     )
-    const updatedSortBy = {...sortBy, direction: direction}
+    const updatedSortBy = {...sortBy, direction}
 
     const setOptions = {...tableOptions, sortBy: updatedSortBy}
     onUpdateTableOptions(setOptions)
+
+    const setGaugeChartOptions = {
+      ...tableGaugeChartOptions,
+      sortByDirection: direction,
+    }
+    onUpdateTableGaugeChartOptions(setGaugeChartOptions)
   }
 
   private handleFieldUpdate = field => {

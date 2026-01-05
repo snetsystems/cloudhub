@@ -68,6 +68,12 @@ function TableComponent({
   }, [isCheckInit])
 
   useEffect(() => {
+    if (initSort) {
+      setSortTarget(initSort)
+    }
+  }, [initSort])
+
+  useEffect(() => {
     !!setCheckedArray && setCheckedArray(checkedArray)
   }, [checkedArray])
 

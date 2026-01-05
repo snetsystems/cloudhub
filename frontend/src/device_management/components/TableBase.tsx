@@ -182,7 +182,13 @@ function TableBase({
                         ) : null}
                       </>
                     ) : column.options?.sorting ? (
-                      <div>
+                      <div
+                        className={`${
+                          !!sortTarget && sortTarget.key === column.key
+                            ? 'sorted'
+                            : ''
+                        }`}
+                      >
                         <span>{column.name}</span>
 
                         {!!sortTarget &&
