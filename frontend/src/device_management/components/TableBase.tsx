@@ -54,30 +54,32 @@ function TableBase({
   }, [columns])
 
   const getValue = (item: DataTableObject, key: string) => {
-    let target
-    if (
-      key.includes('.') &&
-      typeof target !== 'string' &&
-      typeof target !== 'number' &&
-      typeof target !== 'boolean'
-    ) {
+    // If the exact key exists on the object, return it directly (even if it contains dots)
+    if (Object.prototype.hasOwnProperty.call(item, key)) {
+      return item[key] as string | number | boolean | DataTableObject[]
+    }
+
+    // Otherwise, when not explicitly told to treat dots as literal, treat dots as path separators.
+    if (key.includes('.')) {
       const splitKey = key.split('.')
-      target = item[splitKey[0]]
+      let target: any = item[splitKey.shift() as string]
+
       while (
-        splitKey.length > 1 &&
+        splitKey.length > 0 &&
+        target !== null &&
+        target !== undefined &&
         typeof target !== 'string' &&
         typeof target !== 'number' &&
         typeof target !== 'boolean'
       ) {
-        target = target[splitKey[1]]
-        splitKey.splice(0, 1)
+        const nextKey = splitKey.shift() as string
+        target = target?.[nextKey]
       }
 
       return target as string | number | boolean | DataTableObject[]
-    } else {
-      target = item[key]
-      return target as string | number | boolean | DataTableObject[]
     }
+
+    return item[key] as string | number | boolean | DataTableObject[]
   }
 
   const openAccordion = rowIndex => {
