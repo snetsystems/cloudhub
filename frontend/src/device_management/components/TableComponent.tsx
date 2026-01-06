@@ -143,10 +143,33 @@ function TableComponent({
         dataB = (b[sortTarget.key] as any) ?? ''
       }
       const isDesc = sortTarget.isDesc
+      const toNumber = (val: any) => {
+        if (typeof val === 'number' && Number.isFinite(val)) {
+          return val
+        }
+        if (
+          typeof val === 'string' &&
+          val.trim() !== '' &&
+          !Number.isNaN(Number(val))
+        ) {
+          return Number(val)
+        }
+        return null
+      }
+      const numA = toNumber(dataA)
+      const numB = toNumber(dataB)
+      const bothNumeric = numA !== null && numB !== null
 
       if (isDesc) {
         if (sortTarget.isIP) {
           return sortIp(dataA, dataB) * -1
+        }
+        if (bothNumeric) {
+          if (numA > numB) {
+            return -1
+          } else if (numA < numB) {
+            return 1
+          }
         }
         if (dataA > dataB) {
           return -1
@@ -156,6 +179,13 @@ function TableComponent({
       } else {
         if (sortTarget.isIP) {
           return sortIp(dataA, dataB)
+        }
+        if (bothNumeric) {
+          if (numA > numB) {
+            return 1
+          } else if (numA < numB) {
+            return -1
+          }
         }
         if (dataA > dataB) {
           return 1
