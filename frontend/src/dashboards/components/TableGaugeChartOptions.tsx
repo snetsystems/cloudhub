@@ -1,6 +1,5 @@
 // Libraries
 import React, {ChangeEvent, PureComponent} from 'react'
-import _ from 'lodash'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -104,14 +103,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
               isEnforced={decimalPlaces.isEnforced}
               onDecimalPlacesChange={this.handleDecimalPlacesChange}
             />
-            <GraphOptionsBooleanOption
-              colWidth="col-xs-6"
-              title="Display Values"
-              value={tableGaugeChartOptions.isShowValues}
-              onToggleActive={this.handleToggleValues}
-              labelTextActive="Display"
-              labelTextInactive="Hide"
-            />
+
             <div className="form-group col-xs-12">
               <GraphOptionsCustomizeFields
                 fields={customizeFieldOptions}
@@ -143,6 +135,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     this.handleSetColumnValue('prefix', e.target.value, index)
                   }
+                  colWidth="col-xs-3"
                 />
                 <Input
                   name="y-suffix"
@@ -152,6 +145,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     this.handleSetColumnValue('suffix', e.target.value, index)
                   }
+                  colWidth="col-xs-3"
                 />
                 <GraphOptionsBooleanOption
                   colWidth="col-xs-6"
@@ -165,6 +159,17 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                 />
                 <GraphOptionsBooleanOption
                   colWidth="col-xs-6"
+                  title="Display Values"
+                  value={setting.isShowValues}
+                  onToggleActive={(value: boolean) =>
+                    this.handleToggleValues(value, index)
+                  }
+                  labelTextActive="Display"
+                  labelTextInactive="Hide"
+                  disabled={!setting.isShowChart}
+                />
+                <GraphOptionsBooleanOption
+                  colWidth="col-xs-6"
                   title="Percent"
                   value={setting.isPercent}
                   onToggleActive={(value: boolean) =>
@@ -172,6 +177,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   }
                   labelTextActive="Percent"
                   labelTextInactive="Raw Value"
+                  disabled={!setting.isShowChart || !setting.isShowValues}
                 />
                 <GraphOptionsBooleanOption
                   colWidth="col-xs-6"
@@ -195,8 +201,32 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   }
                   labelTextActive="Gradient"
                   labelTextInactive="Solid"
+                  disabled={!setting.isShowChart}
                 />
-
+                {/* <div className="form-group col-sm-6">
+                  <label htmlFor="min">Min</label>
+                  <OptIn
+                    customPlaceholder={'min'}
+                    customValue={setting.min ? setting.min.toString() : ''}
+                    onSetValue={(value: string) =>
+                      this.handleSetColumnMinMax(value, index, 'min')
+                    }
+                    type="number"
+                    min={getInputMin()}
+                  />
+                </div>
+                <div className="form-group col-sm-6">
+                  <label htmlFor="max">Max</label>
+                  <OptIn
+                    customPlaceholder="max"
+                    customValue={setting.max ? setting.max.toString() : ''}
+                    onSetValue={(value: string) =>
+                      this.handleSetColumnMinMax(value, index, 'max')
+                    }
+                    type="number"
+                    min={getInputMin()}
+                  />
+                </div> */}
                 <Input
                   colWidth="col-xs-6"
                   name={`${setting.internalName}-min`}
@@ -334,8 +364,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
     key: 'min' | 'max'
   ): void => {
     const {onUpdateTableGaugeChartOptions, tableGaugeChartOptions} = this.props
-    const {value} = e.target
-
+    const value = e.target.value
     const numericLikePattern = /^-?\d*\.?\d*$/
     if (!numericLikePattern.test(value)) {
       return
@@ -427,9 +456,6 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
     const setOptions = {...tableOptions, sortBy}
     onUpdateTableOptions(setOptions)
 
-    console.log('option', option)
-    console.log('sortBy', sortBy)
-
     const targetSetting = tableGaugeChartOptions.columnSettings.find(
       setting => setting.internalName === option.key
     )
@@ -439,7 +465,6 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
       sortByDirection: 'asc' as 'asc' | 'desc',
     }
 
-    console.log('setGaugeChartOptions', setGaugeChartOptions)
     onUpdateTableGaugeChartOptions(setGaugeChartOptions)
   }
 
@@ -500,7 +525,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
   }
 
   private findActualIndex(filteredFieldOptions, filteredIndex) {
-    return _.get(filteredFieldOptions, `[${filteredIndex}].originalIndex`, 0)
+    return getDeep(filteredFieldOptions, `[${filteredIndex}].originalIndex`, 0)
   }
 
   private moveField = (dragIndex: number, hoverIndex: number) => {
@@ -575,12 +600,17 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
     onUpdateDecimalPlaces(decimalPlaces)
   }
 
-  private handleToggleValues = (isDisplay: boolean) => {
+  private handleToggleValues = (isDisplay: boolean, index: number) => {
     const {onUpdateTableGaugeChartOptions, tableGaugeChartOptions} = this.props
+    const updatedColumnSettings = tableGaugeChartOptions.columnSettings.map(
+      (setting, i) =>
+        i === index ? {...setting, isShowValues: isDisplay} : setting
+    )
     const setOptions = {
       ...tableGaugeChartOptions,
-      isShowValues: isDisplay,
+      columnSettings: updatedColumnSettings,
     }
+
     onUpdateTableGaugeChartOptions(setOptions)
   }
 }

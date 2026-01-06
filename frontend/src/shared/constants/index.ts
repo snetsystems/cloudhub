@@ -589,4 +589,5 @@ export const DEFAULT_COLUMN_SETTING: ColumnSettingInterface = {
   isShowChart: true,
   isPercent: true,
   backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
+  isShowValues: true,
 }

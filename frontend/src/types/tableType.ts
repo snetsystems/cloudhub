@@ -78,7 +78,7 @@ export interface GaugeOptions {
   thresholdColors?: ColorNumber[]
   prefix?: string
   suffix?: string
-  isValuesVisible?: boolean
+  isShowValues?: boolean
 }
 
 export interface Column {

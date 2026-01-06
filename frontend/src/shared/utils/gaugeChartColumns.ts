@@ -1,4 +1,4 @@
-import {AlignType, ColumnInfo, TimeZones} from 'src/types'
+import {AlignType, ColumnInfo} from 'src/types'
 import {TimeSeriesSeries} from 'src/types/series'
 
 import {
@@ -109,6 +109,7 @@ export const convertTimeSeriesDataToColumns = (
         prefix: columnSetting?.prefix,
         suffix: columnSetting?.suffix,
         isValuesVisible: tableGaugeChartOptions?.isShowValues,
+        isShowValues: columnSetting?.isShowValues,
       }
 
       return {
@@ -120,7 +121,6 @@ export const convertTimeSeriesDataToColumns = (
           },
           isGauge: isShowChart,
           sorting: true,
-
           gaugeOptions,
         },
       }

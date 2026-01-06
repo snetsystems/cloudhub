@@ -76,6 +76,7 @@ export interface ColumnSettingInterface extends RenamableField {
   isPercent: boolean
   chartType: ChartTypeMode
   backgroundType: BackgroundTypeMode
+  isShowValues: boolean
 }
 
 export type ChartTypeMode =
