@@ -371,6 +371,7 @@ message NetworkDevice {
   string LearningBeginDatetime  = 14; // TZ=UTC, Format=RFC3339
   string LearningFinishDatetime = 15; // TZ=UTC, Format=RFC3339
   bool IsLearning               = 16; //  Indicates whether to create a learning model
+  int32 ShardID                 = 17; // assigned collector shard ID
 }
 
 message MLNxRst {

@@ -29,6 +29,13 @@ type Service struct {
 	OSP                      OSP
 	InternalENV              cloudhub.InternalEnvironment
 	KubernetesClient         *kubernetes.Client
+	KafkaProducer            KafkaProducer
+}
+
+// KafkaProducer defines the interface for publishing configuration updates
+type KafkaProducer interface {
+	PublishConfig(shardID int, configContent string) error
+	Close() error
 }
 
 type superAdminProviderGroups struct {
