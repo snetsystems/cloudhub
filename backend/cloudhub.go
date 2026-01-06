@@ -1446,6 +1446,19 @@ type NetworkDevice struct {
 	LearningBeginDatetime  string     `json:"learning_begin_datetime"`
 	LearningFinishDatetime string     `json:"learning_finish_datetime"`
 	IsLearning             bool       `json:"is_learning"`
+	ShardID                int        `json:"shard_id"`
+}
+
+// KafkaProducer defines the interface for publishing configuration updates to Kafka.
+type KafkaProducer interface {
+	PublishConfig(shardID int, configContent string) error
+}
+
+// ConfigGenerator defines the interface for generating shard-specific Logstash configurations.
+type ConfigGenerator interface {
+	GetAllNetworkDeviceOrgs(ctx context.Context) ([]NetworkDeviceOrg, error)
+	GetAllNetworkDevices(ctx context.Context) ([]NetworkDevice, error)
+	GenerateOrgConfig(ctx context.Context, org *NetworkDeviceOrg) (string, error)
 }
 
 // Platform defines the interface for platform-specific operations.
@@ -1456,6 +1469,11 @@ type Platform interface {
 	GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error)
 
 	GetCollectorReplicas(ctx context.Context) (int, error)
+	GetTotalShards(ctx context.Context) int
+	GetShardID(deviceID string, totalShards int) int
+	PushConfigUpdates(ctx context.Context, shardIDs []int)
+	VerifyCollectorReady(ctx context.Context, collectorName string) error
+	GenerateShardConfig(ctx context.Context, shardID int) (string, error)
 }
 
 // NetworkDeviceStore is the Storage and retrieval of information

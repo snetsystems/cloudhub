@@ -1191,6 +1191,7 @@ func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
 		LearningBeginDatetime:  t.LearningBeginDatetime,
 		LearningFinishDatetime: t.LearningFinishDatetime,
 		IsLearning:             t.IsLearning,
+		ShardID:                int32(t.ShardID),
 	})
 }
 
@@ -1242,6 +1243,7 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 	t.LearningBeginDatetime = pb.LearningBeginDatetime
 	t.LearningFinishDatetime = pb.LearningFinishDatetime
 	t.IsLearning = pb.IsLearning
+	t.ShardID = int(pb.ShardID)
 
 	return nil
 }

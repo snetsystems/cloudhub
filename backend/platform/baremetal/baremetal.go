@@ -180,7 +180,40 @@ func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string
 	return collectorKeys, activeCollectorKeys, nil
 }
 
+// PushConfigUpdates for baremetal is a no-op as it uses direct file deployment.
+func (p *Manager) PushConfigUpdates(ctx context.Context, shardIDs []int) {}
+
 // GetCollectorReplicas for baremetal returns 0 as it's not applicable.
 func (p *Manager) GetCollectorReplicas(ctx context.Context) (int, error) {
 	return 0, nil
+}
+
+// GetTotalShards for baremetal always returns 1 as it doesn't use sharding.
+func (p *Manager) GetTotalShards(ctx context.Context) int {
+	return 1
+}
+
+// GetShardID for baremetal always returns 0.
+func (p *Manager) GetShardID(deviceID string, totalShards int) int {
+	return 0
+}
+
+// VerifyCollectorReady for Baremetal checks if the specific collector minion is active via Salt-ping.
+func (p *Manager) VerifyCollectorReady(ctx context.Context, collectorName string) error {
+	if collectorName == "" {
+		return fmt.Errorf("collector-server name is empty")
+	}
+	status, _, err := p.client.IsActiveMinionPingTest(collectorName)
+	if err != nil {
+		return fmt.Errorf("failed to ping collector-server: %w", err)
+	}
+	if status != http.StatusOK {
+		return fmt.Errorf("collector-server is not active")
+	}
+	return nil
+}
+
+// GenerateShardConfig for baremetal is not supported as it doesn't use sharding.
+func (p *Manager) GenerateShardConfig(ctx context.Context, shardID int) (string, error) {
+	return "", fmt.Errorf("sharding is not supported in baremetal environment")
 }

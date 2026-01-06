@@ -2,7 +2,6 @@ package kv_test
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -40,9 +39,10 @@ func TestNetworkDeviceStore(t *testing.T) {
 				Port:      161,
 				Protocol:  "udp",
 			},
+			ShardID: 10, // Added ShardID for testing
 		},
 		{
-			ID:                     "547",
+			ID:                     "547", // ID will be reassigned by Add()
 			Organization:           "1",
 			DeviceIP:               "192.168.1.2",
 			Hostname:               "device02",
@@ -61,6 +61,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 				Port:      162,
 				Protocol:  "udp",
 			},
+			ShardID: 20, // Added ShardID for testing
 		},
 	}
 
@@ -83,6 +84,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 
 	// Update Device.
 	devices[1].Hostname = "device02_updated"
+	devices[1].ShardID = 30 // Test updating ShardID as well
 	if err := s.Update(ctx, &devices[1]); err != nil {
 		t.Fatal(err)
 	}
@@ -98,17 +100,17 @@ func TestNetworkDeviceStore(t *testing.T) {
 
 	// Get test.
 	device, err := s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &devices[1].ID})
-	fmt.Println(device)
 	if err != nil {
 		t.Fatal(err)
 	} else if device.Hostname != "device02_updated" {
 		t.Fatalf("Device update error: got %v, expected %v", device.Hostname, "device02_updated")
+	} else if device.ShardID != 30 {
+		t.Fatalf("Device ShardID update error: got %d, expected %d", device.ShardID, 30)
 	}
 
 	// Getting test for a wrong id.
 	id := "1000"
-	empty_device, err := s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
-	fmt.Println(empty_device)
+	_, err = s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
 	if err == nil {
 		t.Fatalf("Must be occured error for a wrong id=%v, message=\"Device not found\"", id)
 	}

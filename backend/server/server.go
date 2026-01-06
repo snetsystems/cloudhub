@@ -27,6 +27,7 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	idgen "github.com/snetsystems/cloudhub/backend/id"
 	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/kafka"
 	"github.com/snetsystems/cloudhub/backend/kubernetes"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/kv/bolt"
@@ -179,6 +180,8 @@ type Server struct {
 	K8sLogstashStatefulSet string            `long:"k8s-logstash-statefulset" description:"Kubernetes StatefulSet name for Logstash collector" env:"K8S_LOGSTASH_STATEFULSET" default:"logstash-logstash"`
 
 	CollectorAuthToken string `long:"collector-auth-token" description:"Shared secret token for Collector Sidecar authentication" env:"COLLECTOR_AUTH_TOKEN"`
+	KafkaBrokers       string `long:"kafka-brokers" description:"Comma-separated list of Kafka brokers" env:"KAFKA_BROKERS"`
+	KafkaTopic         string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -730,7 +733,7 @@ func (s *Server) Serve(ctx context.Context) {
 
 	var p cloudhub.Platform
 	if s.DeployPlatform == "k8s" {
-		p = k8s.NewManager(service.KubernetesClient, s.K8sLogstashNamespace, s.K8sLogstashStatefulSet)
+		p = k8s.NewManager(service.KubernetesClient, s.K8sLogstashNamespace, s.K8sLogstashStatefulSet, logger)
 	} else {
 		p = baremetal.NewManager(
 			&service,
@@ -740,6 +743,22 @@ func (s *Server) Serve(ctx context.Context) {
 		)
 	}
 	service.InternalENV.Platform = p
+
+	if s.KafkaBrokers != "" {
+		brokers := strings.Split(s.KafkaBrokers, ",")
+		producer, err := kafka.NewConfigProducer(brokers, s.KafkaTopic)
+		if err != nil {
+			logger.Error(fmt.Errorf("failed to initialize Kafka producer: %w", err))
+		} else {
+			service.KafkaProducer = producer
+			logger.Info(fmt.Sprintf("Kafka producer initialized with brokers: %s, topic: %s", s.KafkaBrokers, s.KafkaTopic))
+
+			if k8sManager, ok := service.InternalENV.Platform.(*k8s.Manager); ok {
+				k8sManager.KafkaProducer = producer
+				k8sManager.ConfigGenerator = &service
+			}
+		}
+	}
 
 	if err = s.validateAuth(); err != nil {
 		logger.

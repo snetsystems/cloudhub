@@ -155,7 +155,16 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 				return
 			}
 
+			// Check custom header first
 			token := r.Header.Get("X-CloudHub-Token")
+			if token == "" {
+				// Fallback to standard Authorization header
+				authHeader := r.Header.Get("Authorization")
+				if strings.HasPrefix(authHeader, "Bearer ") {
+					token = strings.TrimPrefix(authHeader, "Bearer ")
+				}
+			}
+
 			if token != authToken {
 				http.Error(w, "Unauthorized: Invalid Collector Token", http.StatusUnauthorized)
 				return
