@@ -203,6 +203,22 @@ func Test_MarshalDashboard(t *testing.T) {
 				TableOptions: cloudhub.TableOptions{},
 				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -270,6 +286,22 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 				TimeFormat:   "MM:DD:YYYY",
 				FieldOptions: []cloudhub.RenamableField{},
 				Type:         "line",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -327,6 +359,22 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "MM:DD:YYYY",
 				Type:         "line",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -340,6 +388,97 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 		t.Fatal("Error unmarshaling dashboard: err:", err)
 	} else if !gocmp.Equal(expected, actual) {
 		t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(expected, actual))
+	}
+}
+
+func Test_MarshalDashboard_WithTableGaugeChartOptions(t *testing.T) {
+	dashboard := cloudhub.Dashboard{
+		ID: 1,
+		Cells: []cloudhub.DashboardCell{
+			{
+				ID:   "cell-table-gauge",
+				X:    0,
+				Y:    0,
+				W:    4,
+				H:    4,
+				MinW: 2,
+				MinH: 2,
+				Name: "Table gauge",
+				Type: "table-gauge",
+				Axes: map[string]cloudhub.Axis{
+					"y": {
+						Bounds: []string{"", ""},
+						Base:   "10",
+						Scale:  "linear",
+					},
+				},
+				Queries: []cloudhub.DashboardQuery{
+					{
+						Command: "SELECT * FROM cpu",
+						Label:   "cpu",
+						Type:    "influxql",
+						Shifts:  []cloudhub.TimeShift{},
+					},
+				},
+				CellColors: []cloudhub.CellColor{
+					{ID: "c1", Type: "min", Hex: "#00FF00", Name: "min", Value: "0"},
+				},
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{
+						{
+							InternalName: "cpu",
+							DisplayName:  "CPU",
+							Visible:      true,
+							Direction:    "asc",
+							Min:          0,
+							Max:          100,
+							Colors: []cloudhub.CellColor{
+								{ID: "gc1", Type: "min", Hex: "#00C9FF", Name: "laser", Value: "0"},
+							},
+							ThresholdColors: []cloudhub.CellColor{
+								{ID: "gt1", Type: "max", Hex: "#9394FF", Name: "comet", Value: "100"},
+						},
+						Unit:           "%",
+						Prefix:         "",
+						Suffix:         "%",
+						IsShowChart:    true,
+						IsPercent:      true,
+						ChartType:      "continuous",
+						BackgroundType: "gradient",
+						IsShowValues:   true,
+					},
+				},
+				DecimalPlaces: cloudhub.DecimalPlaces{
+					IsEnforced: true,
+					Digits:     2,
+					},
+					IsShowValues:    true,
+					SortBy:          "cpu",
+					SortByDirection: "desc",
+				},
+				FieldOptions: []cloudhub.RenamableField{},
+			},
+		},
+		Templates: []cloudhub.Template{},
+	}
+
+	var actual cloudhub.Dashboard
+	buf, err := internal.MarshalDashboard(dashboard)
+	if err != nil {
+		t.Fatal("Error marshaling dashboard with table gauge options:", err)
+	}
+	if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
+		t.Fatal("Error unmarshaling dashboard with table gauge options:", err)
+	}
+
+	if !gocmp.Equal(dashboard, actual) {
+		t.Fatalf("Dashboard protobuf copy error with table gauge options: diff follows:\n%s", gocmp.Diff(dashboard, actual))
 	}
 }
 
@@ -390,6 +529,22 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 				TableOptions: cloudhub.TableOptions{},
 				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "MM:DD:YYYY",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -443,6 +598,22 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "MM:DD:YYYY",
 				Type:         "line",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -465,6 +636,22 @@ func Test_MarshalDashboard_WithEmptyCellType(t *testing.T) {
 		Cells: []cloudhub.DashboardCell{
 			{
 				ID: "9b5367de-c552-4322-a9e8-7f384cbd235c",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 	}
@@ -480,6 +667,22 @@ func Test_MarshalDashboard_WithEmptyCellType(t *testing.T) {
 				CellColors:   []cloudhub.CellColor{},
 				TableOptions: cloudhub.TableOptions{},
 				FieldOptions: []cloudhub.RenamableField{},
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},

@@ -813,26 +813,56 @@ type Legend struct {
 
 // DashboardCell holds visual and query information for a cell
 type DashboardCell struct {
-	ID             string           `json:"i"`
-	X              int32            `json:"x"`
-	Y              int32            `json:"y"`
-	W              int32            `json:"w"`
-	H              int32            `json:"h"`
-	MinW           int32            `json:"minW"`
-	MinH           int32            `json:"minH"`
-	Name           string           `json:"name"`
-	Queries        []DashboardQuery `json:"queries"`
-	Axes           map[string]Axis  `json:"axes"`
-	Type           string           `json:"type"`
-	CellColors     []CellColor      `json:"colors"`
-	Legend         Legend           `json:"legend"`
-	TableOptions   TableOptions     `json:"tableOptions,omitempty"`
-	FieldOptions   []RenamableField `json:"fieldOptions"`
-	TimeFormat     string           `json:"timeFormat"`
-	DecimalPlaces  DecimalPlaces    `json:"decimalPlaces"`
-	Note           string           `json:"note"`
-	NoteVisibility string           `json:"noteVisibility"`
-	GraphOptions   GraphOptions     `json:"graphOptions"`
+	ID                     string                 `json:"i"`
+	X                      int32                  `json:"x"`
+	Y                      int32                  `json:"y"`
+	W                      int32                  `json:"w"`
+	H                      int32                  `json:"h"`
+	MinW                   int32                  `json:"minW"`
+	MinH                   int32                  `json:"minH"`
+	Name                   string                 `json:"name"`
+	Queries                []DashboardQuery       `json:"queries"`
+	Axes                   map[string]Axis        `json:"axes"`
+	Type                   string                 `json:"type"`
+	CellColors             []CellColor            `json:"colors"`
+	Legend                 Legend                 `json:"legend"`
+	TableOptions           TableOptions           `json:"tableOptions,omitempty"`
+	FieldOptions           []RenamableField       `json:"fieldOptions"`
+	TimeFormat             string                 `json:"timeFormat"`
+	DecimalPlaces          DecimalPlaces          `json:"decimalPlaces"`
+	Note                   string                 `json:"note"`
+	NoteVisibility         string                 `json:"noteVisibility"`
+	GraphOptions           GraphOptions           `json:"graphOptions"`
+	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
+}
+
+// TableGaugeChartOptions is the options for the table gauge chart
+type TableGaugeChartOptions struct {
+	ColumnSettings  []ColumnSetting `json:"columnSettings"`
+	DecimalPlaces   DecimalPlaces   `json:"decimalPlaces"`
+	IsShowValues    bool            `json:"isShowValues"`
+	SortBy          string          `json:"sortBy"`
+	SortByDirection string          `json:"sortByDirection"`
+}
+
+// ColumnSetting is the setting for a column in the table gauge chart
+type ColumnSetting struct {
+	InternalName    string      `json:"internalName"`
+	DisplayName     string      `json:"displayName"`
+	Visible         bool        `json:"visible"`
+	Direction       string      `json:"direction"`
+	Min             float64     `json:"min"`
+	Max             float64     `json:"max"`
+	Colors          []CellColor `json:"colors"`
+	ThresholdColors []CellColor `json:"thresholdColors"`
+	Unit            string      `json:"unit"`
+	Prefix          string      `json:"prefix"`
+	Suffix          string      `json:"suffix"`
+	IsShowChart     bool        `json:"isShowChart"`
+	IsPercent       bool        `json:"isPercent"`
+	ChartType       string      `json:"chartType"`
+	BackgroundType  string      `json:"backgroundType"`
+	IsShowValues    bool        `json:"isShowValues"`
 }
 
 // RenamableField is a column/row field in a DashboardCell of type Table
@@ -882,21 +912,22 @@ type DashboardsStore interface {
 
 // Cell is a rectangle and multiple time series queries to visualize.
 type Cell struct {
-	X             int32            `json:"x"`
-	Y             int32            `json:"y"`
-	W             int32            `json:"w"`
-	H             int32            `json:"h"`
-	I             string           `json:"i"`
-	Name          string           `json:"name"`
-	Queries       []Query          `json:"queries"`
-	Axes          map[string]Axis  `json:"axes"`
-	Type          string           `json:"type"`
-	CellColors    []CellColor      `json:"colors"`
-	GraphOptions  GraphOptions     `json:"graphOptions"`
-	DecimalPlaces DecimalPlaces    `json:"decimalPlaces"`
-	TableOptions  TableOptions     `json:"tableOptions,omitempty"`
-	FieldOptions  []RenamableField `json:"fieldOptions,omitempty"`
-	Legend        Legend           `json:"legend"`
+	X                      int32                  `json:"x"`
+	Y                      int32                  `json:"y"`
+	W                      int32                  `json:"w"`
+	H                      int32                  `json:"h"`
+	I                      string                 `json:"i"`
+	Name                   string                 `json:"name"`
+	Queries                []Query                `json:"queries"`
+	Axes                   map[string]Axis        `json:"axes"`
+	Type                   string                 `json:"type"`
+	CellColors             []CellColor            `json:"colors"`
+	GraphOptions           GraphOptions           `json:"graphOptions"`
+	DecimalPlaces          DecimalPlaces          `json:"decimalPlaces"`
+	TableOptions           TableOptions           `json:"tableOptions,omitempty"`
+	FieldOptions           []RenamableField       `json:"fieldOptions,omitempty"`
+	Legend                 Legend                 `json:"legend"`
+	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
 }
 
 // Layout is a collection of Cells for visualization
@@ -957,25 +988,26 @@ type ProtoboardMeta struct {
 
 // ProtoboardCell holds visual and query information for a cell
 type ProtoboardCell struct {
-	X              int32            `json:"x"`
-	Y              int32            `json:"y"`
-	W              int32            `json:"w"`
-	H              int32            `json:"h"`
-	MinW           int32            `json:"minW"`
-	MinH           int32            `json:"minH"`
-	Name           string           `json:"name"`
-	Queries        []DashboardQuery `json:"queries"`
-	Axes           map[string]Axis  `json:"axes"`
-	Type           string           `json:"type"`
-	CellColors     []CellColor      `json:"colors"`
-	Legend         Legend           `json:"legend"`
-	TableOptions   TableOptions     `json:"tableOptions,omitempty"`
-	FieldOptions   []RenamableField `json:"fieldOptions"`
-	TimeFormat     string           `json:"timeFormat"`
-	DecimalPlaces  DecimalPlaces    `json:"decimalPlaces"`
-	Note           string           `json:"note"`
-	NoteVisibility string           `json:"noteVisibility"`
-	GraphOptions   GraphOptions     `json:"graphOptions"`
+	X                      int32                  `json:"x"`
+	Y                      int32                  `json:"y"`
+	W                      int32                  `json:"w"`
+	H                      int32                  `json:"h"`
+	MinW                   int32                  `json:"minW"`
+	MinH                   int32                  `json:"minH"`
+	Name                   string                 `json:"name"`
+	Queries                []DashboardQuery       `json:"queries"`
+	Axes                   map[string]Axis        `json:"axes"`
+	Type                   string                 `json:"type"`
+	CellColors             []CellColor            `json:"colors"`
+	Legend                 Legend                 `json:"legend"`
+	TableOptions           TableOptions           `json:"tableOptions,omitempty"`
+	FieldOptions           []RenamableField       `json:"fieldOptions"`
+	TimeFormat             string                 `json:"timeFormat"`
+	DecimalPlaces          DecimalPlaces          `json:"decimalPlaces"`
+	Note                   string                 `json:"note"`
+	NoteVisibility         string                 `json:"noteVisibility"`
+	GraphOptions           GraphOptions           `json:"graphOptions"`
+	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
 }
 
 // ProtoboardData is the data of a Protoboard that can be instantiated into a dashboard, including a collection of cells

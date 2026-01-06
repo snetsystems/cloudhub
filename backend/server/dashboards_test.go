@@ -128,8 +128,13 @@ func TestDashboardDefaults(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if actual := DashboardDefaults(tt.d); !reflect.DeepEqual(actual, tt.want) {
-			t.Errorf("%q. DashboardDefaults() = %v, want %v", tt.name, tt.d, tt.want)
+		actual := DashboardDefaults(tt.d)
+		want := tt.want
+		for i := range want.Cells {
+			applyTableGaugeDefaults(&want.Cells[i])
+		}
+		if !reflect.DeepEqual(actual, want) {
+			t.Errorf("%q. DashboardDefaults() = %v, want %v", tt.name, actual, want)
 		}
 	}
 }
@@ -203,6 +208,9 @@ func TestValidDashboardRequest(t *testing.T) {
 		if (err != nil) != tt.wantErr {
 			t.Errorf("%q. ValidDashboardRequest() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
+		}
+		for i := range tt.want.Cells {
+			applyTableGaugeDefaults(&tt.want.Cells[i])
 		}
 		if diff := gocmp.Diff(tt.d, tt.want); diff != "" {
 			t.Errorf("%q. ValidDashboardRequest(). got/want diff:\n%s", tt.name, diff)
@@ -371,6 +379,9 @@ func Test_newDashboardResponse(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		for i := range tt.want.Cells {
+			applyTableGaugeDefaults(&tt.want.Cells[i].DashboardCell)
+		}
 		if got := newDashboardResponse(tt.d); !gocmp.Equal(got, tt.want) {
 			t.Errorf("%q. newDashboardResponse() = diff:\n%s", tt.name, gocmp.Diff(got, tt.want))
 		}

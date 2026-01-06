@@ -48,6 +48,7 @@ message DashboardCell {
 	int32 minW                           = 18; // Min Width of Cell in the Dashboard
 	int32 minH                           = 19; // Min Height of Cell in the Dashboard
 	GraphOptions graphOptions            = 20; // GraphOptions for visualization of cell
+	TableGaugeChartOptions tableGaugeChartOptions = 21; // TableGaugeChartOptions for table gauge visualization
 }
 
 message GraphOptions {
@@ -55,6 +56,33 @@ message GraphOptions {
 	bool showLine 		             = 2; // Whether to show graph lines in Graph
 	bool showPoint 		         = 3; // Whether to show graph points in Graph
 	string showTempVarCount 		     = 4; // Refer the numeric value of the Template Variable indicating the number of Graphs to show
+}
+
+message TableGaugeChartOptions {
+	repeated ColumnSetting columnSettings = 1; // Column-specific settings
+	DecimalPlaces decimalPlaces           = 2; // Decimal places for displayed values
+	bool isShowValues                     = 3; // Whether to show value text
+	string sortBy                         = 4; // Column key to sort by
+	string sortByDirection                = 5; // Sort direction ('asc'|'desc')
+}
+
+message ColumnSetting {
+	string internalName     = 1; // Internal column key
+	string displayName      = 2; // Display name for column
+	bool visible            = 3; // Whether column is visible
+	string direction        = 4; // Sort direction for column
+	double min              = 5; // Minimum value for gauge scaling
+	double max              = 6; // Maximum value for gauge scaling
+	repeated Color colors   = 7; // Colors used for the gauge bar
+	repeated Color thresholdColors = 8; // Threshold colors
+	string unit             = 9; // Unit suffix
+	string prefix           = 10; // Value prefix
+	string suffix           = 11; // Value suffix
+	bool isShowChart        = 12; // Whether to render chart bar
+	bool isPercent          = 13; // Whether values are percentage-based
+	string chartType        = 14; // Chart type (e.g., continuous/segmented)
+	string backgroundType   = 15; // Background type (e.g., gradient/solid)
+	bool isShowValues		= 16; // Display value next to chart 
 }
 
 message DecimalPlaces {

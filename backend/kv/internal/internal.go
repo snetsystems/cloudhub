@@ -398,6 +398,63 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			ShowTempVarCount: c.GraphOptions.ShowTempVarCount,
 		}
 
+		tableGaugeDecimalPlaces := &DecimalPlaces{
+			IsEnforced: c.TableGaugeChartOptions.DecimalPlaces.IsEnforced,
+			Digits:     c.TableGaugeChartOptions.DecimalPlaces.Digits,
+		}
+
+		columnSettings := make([]*ColumnSetting, len(c.TableGaugeChartOptions.ColumnSettings))
+		for idx, setting := range c.TableGaugeChartOptions.ColumnSettings {
+			colors := make([]*Color, len(setting.Colors))
+			for j, color := range setting.Colors {
+				colors[j] = &Color{
+					ID:    color.ID,
+					Type:  color.Type,
+					Hex:   color.Hex,
+					Name:  color.Name,
+					Value: color.Value,
+				}
+			}
+
+			thresholdColors := make([]*Color, len(setting.ThresholdColors))
+			for j, color := range setting.ThresholdColors {
+				thresholdColors[j] = &Color{
+					ID:    color.ID,
+					Type:  color.Type,
+					Hex:   color.Hex,
+					Name:  color.Name,
+					Value: color.Value,
+				}
+			}
+
+			columnSettings[idx] = &ColumnSetting{
+				InternalName:    setting.InternalName,
+				DisplayName:     setting.DisplayName,
+				Visible:         setting.Visible,
+				Direction:       setting.Direction,
+				Min:             setting.Min,
+				Max:             setting.Max,
+				Colors:          colors,
+				ThresholdColors: thresholdColors,
+				Unit:            setting.Unit,
+				Prefix:          setting.Prefix,
+				Suffix:          setting.Suffix,
+				IsShowChart:     setting.IsShowChart,
+				IsPercent:       setting.IsPercent,
+				ChartType:       setting.ChartType,
+				BackgroundType:  setting.BackgroundType,
+				IsShowValues:    setting.IsShowValues,
+			}
+		}
+
+		tableGaugeChartOptions := &TableGaugeChartOptions{
+			ColumnSettings:  columnSettings,
+			DecimalPlaces:   tableGaugeDecimalPlaces,
+			IsShowValues:    c.TableGaugeChartOptions.IsShowValues,
+			SortBy:          c.TableGaugeChartOptions.SortBy,
+			SortByDirection: c.TableGaugeChartOptions.SortByDirection,
+		}
+
 		note := c.Note
 		noteVisibility := c.NoteVisibility
 
@@ -418,13 +475,14 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				Type:        c.Legend.Type,
 				Orientation: c.Legend.Orientation,
 			},
-			TableOptions:   tableOptions,
-			FieldOptions:   fieldOptions,
-			TimeFormat:     c.TimeFormat,
-			DecimalPlaces:  decimalPlaces,
-			Note:           note,
-			NoteVisibility: noteVisibility,
-			GraphOptions:   graphOptions,
+			TableOptions:           tableOptions,
+			FieldOptions:           fieldOptions,
+			TimeFormat:             c.TimeFormat,
+			DecimalPlaces:          decimalPlaces,
+			Note:                   note,
+			NoteVisibility:         noteVisibility,
+			GraphOptions:           graphOptions,
+			TableGaugeChartOptions: tableGaugeChartOptions,
 		}
 	}
 	templates := make([]*Template, len(d.Templates))
@@ -599,6 +657,85 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			graphOptions.ShowTempVarCount = ""
 		}
 
+		tableGaugeChartOptions := cloudhub.TableGaugeChartOptions{}
+		if c.TableGaugeChartOptions != nil {
+			columnSettings := make([]cloudhub.ColumnSetting, len(c.TableGaugeChartOptions.ColumnSettings))
+			for idx, setting := range c.TableGaugeChartOptions.ColumnSettings {
+				colors := make([]cloudhub.CellColor, len(setting.Colors))
+				for j, color := range setting.Colors {
+					colors[j] = cloudhub.CellColor{
+						ID:    color.ID,
+						Type:  color.Type,
+						Hex:   color.Hex,
+						Name:  color.Name,
+						Value: color.Value,
+					}
+				}
+
+				thresholdColors := make([]cloudhub.CellColor, len(setting.ThresholdColors))
+				for j, color := range setting.ThresholdColors {
+					thresholdColors[j] = cloudhub.CellColor{
+						ID:    color.ID,
+						Type:  color.Type,
+						Hex:   color.Hex,
+						Name:  color.Name,
+						Value: color.Value,
+					}
+				}
+
+				columnSettings[idx] = cloudhub.ColumnSetting{
+					InternalName:    setting.InternalName,
+					DisplayName:     setting.DisplayName,
+					Visible:         setting.Visible,
+					Direction:       setting.Direction,
+					Min:             setting.Min,
+					Max:             setting.Max,
+					Colors:          colors,
+					ThresholdColors: thresholdColors,
+					Unit:            setting.Unit,
+					Prefix:          setting.Prefix,
+					Suffix:          setting.Suffix,
+					IsShowChart:     setting.IsShowChart,
+					IsPercent:       setting.IsPercent,
+					ChartType:       setting.ChartType,
+					BackgroundType:  setting.BackgroundType,
+					IsShowValues:    setting.IsShowValues,
+				}
+			}
+
+			decimalPlaces := cloudhub.DecimalPlaces{}
+			if c.TableGaugeChartOptions.DecimalPlaces != nil {
+				decimalPlaces.IsEnforced = c.TableGaugeChartOptions.DecimalPlaces.IsEnforced
+				decimalPlaces.Digits = c.TableGaugeChartOptions.DecimalPlaces.Digits
+			} else {
+				decimalPlaces.IsEnforced = false
+				decimalPlaces.Digits = 0
+			}
+
+			tableGaugeChartOptions.ColumnSettings = columnSettings
+			tableGaugeChartOptions.DecimalPlaces = decimalPlaces
+			tableGaugeChartOptions.IsShowValues = c.TableGaugeChartOptions.IsShowValues
+			tableGaugeChartOptions.SortBy = c.TableGaugeChartOptions.SortBy
+			tableGaugeChartOptions.SortByDirection = c.TableGaugeChartOptions.SortByDirection
+		} else {
+			tableGaugeChartOptions.ColumnSettings = []cloudhub.ColumnSetting{}
+			tableGaugeChartOptions.DecimalPlaces = cloudhub.DecimalPlaces{
+				IsEnforced: false,
+				Digits:     0,
+			}
+			tableGaugeChartOptions.IsShowValues = true
+			tableGaugeChartOptions.SortBy = "name"
+			tableGaugeChartOptions.SortByDirection = "asc"
+		}
+
+		if tableGaugeChartOptions.SortBy == "" {
+			tableGaugeChartOptions.SortBy = "name"
+		}
+
+		if tableGaugeChartOptions.SortByDirection == "" {
+			tableGaugeChartOptions.SortByDirection = "asc"
+		}
+
 		note := c.Note
 		noteVisibility := c.NoteVisibility
 
@@ -610,26 +747,27 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 		}
 
 		cells[i] = cloudhub.DashboardCell{
-			ID:             c.ID,
-			X:              c.X,
-			Y:              c.Y,
-			W:              c.W,
-			H:              c.H,
-			MinW:           c.MinW,
-			MinH:           c.MinH,
-			Name:           c.Name,
-			Queries:        queries,
-			Type:           cellType,
-			Axes:           axes,
-			CellColors:     colors,
-			Legend:         legend,
-			TableOptions:   tableOptions,
-			FieldOptions:   fieldOptions,
-			TimeFormat:     c.TimeFormat,
-			DecimalPlaces:  decimalPlaces,
-			Note:           note,
-			NoteVisibility: noteVisibility,
-			GraphOptions:   graphOptions,
+			ID:                     c.ID,
+			X:                      c.X,
+			Y:                      c.Y,
+			W:                      c.W,
+			H:                      c.H,
+			MinW:                   c.MinW,
+			MinH:                   c.MinH,
+			Name:                   c.Name,
+			Queries:                queries,
+			Type:                   cellType,
+			Axes:                   axes,
+			CellColors:             colors,
+			Legend:                 legend,
+			TableOptions:           tableOptions,
+			FieldOptions:           fieldOptions,
+			TimeFormat:             c.TimeFormat,
+			DecimalPlaces:          decimalPlaces,
+			Note:                   note,
+			NoteVisibility:         noteVisibility,
+			GraphOptions:           graphOptions,
+			TableGaugeChartOptions: tableGaugeChartOptions,
 		}
 	}
 

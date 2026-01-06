@@ -274,9 +274,22 @@ func Test_Service_DashboardCells(t *testing.T) {
 				actual = append(actual, rsp.DashboardCell)
 			}
 
+			if actual == nil {
+				actual = []cloudhub.DashboardCell{}
+			}
+
+			// normalize defaults for comparison
+			expected := append([]cloudhub.DashboardCell(nil), test.expected...)
+			normalizeDashboardCells(expected)
+			normalizeDashboardCells(actual)
+
+			if len(actual) == 0 && len(expected) == 0 {
+				return
+			}
+
 			// compare actual and expected
-			if !gocmp.Equal(actual, test.expected) {
-				t.Fatalf("%q - Dashboard Cells do not match: diff: %s", test.name, gocmp.Diff(actual, test.expected))
+			if !gocmp.Equal(actual, expected) {
+				t.Fatalf("%q - Dashboard Cells do not match: diff: %s", test.name, gocmp.Diff(actual, expected))
 			}
 		})
 	}
@@ -547,7 +560,7 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 					}
 				  }
 				  `))),
-			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user",args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","graphOptions":{"fillArea":true,"showLine":true,"showPoint":true,"showTempVarCount":":top_count:"},"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
+			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user",args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","graphOptions":{"fillArea":true,"showLine":true,"showPoint":true,"showTempVarCount":":top_count:"},"tableGaugeChartOptions":{"columnSettings":[],"decimalPlaces":{"isEnforced":false,"digits":0},"isShowValues":true,"sortBy":"name","sortByDirection":"asc"},"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
 `,
 		},
 		{
@@ -729,7 +742,7 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 					}
 				  }
 				  `))),
-			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user","args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","graphOptions":{"fillArea":true,"showLine":true,"showPoint":true,"showTempVarCount":":top_count:"},"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
+			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user","args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","graphOptions":{"fillArea":true,"showLine":true,"showPoint":true,"showTempVarCount":":top_count:"},"tableGaugeChartOptions":{"columnSettings":[],"decimalPlaces":{"isEnforced":false,"digits":0},"isShowValues":true,"sortBy":"name","sortByDirection":"asc"},"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
 `,
 		},
 		{
@@ -882,6 +895,29 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 
 func strPtr(s string) *string {
 	return &s
+}
+
+func normalizeDashboardCells(cells []cloudhub.DashboardCell) {
+	for i := range cells {
+		applyTableGaugeDefaults(&cells[i])
+	}
+}
+
+func normalizeDashboardCellResponses(res []dashboardCellResponse) {
+	for i := range res {
+		applyTableGaugeDefaults(&res[i].DashboardCell)
+	}
+}
+
+// decodeAndNormalizeDashboardCell decodes a dashboard cell response JSON and normalizes defaults.
+func decodeAndNormalizeDashboardCell(t *testing.T, body []byte) cloudhub.DashboardCell {
+	t.Helper()
+	var resp dashboardCellResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		t.Fatalf("failed to decode dashboard cell response: %v", err)
+	}
+	applyTableGaugeDefaults(&resp.DashboardCell)
+	return resp.DashboardCell
 }
 
 func Test_newCellResponses(t *testing.T) {
@@ -1103,8 +1139,12 @@ func Test_newCellResponses(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newCellResponses(tt.dID, tt.dcells); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newCellResponses() = got-/want+ %s", gocmp.Diff(got, tt.want))
+			got := newCellResponses(tt.dID, tt.dcells)
+			want := append([]dashboardCellResponse(nil), tt.want...)
+			normalizeDashboardCellResponses(got)
+			normalizeDashboardCellResponses(want)
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("newCellResponses() = got-/want+ %s", gocmp.Diff(got, want))
 			}
 		})
 	}
@@ -1329,8 +1369,12 @@ func Test_newAddSubFunc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newCellResponses(tt.dID, tt.dcells); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newCellResponses() = got-/want+ %s", gocmp.Diff(got, tt.want))
+			got := newCellResponses(tt.dID, tt.dcells)
+			want := append([]dashboardCellResponse(nil), tt.want...)
+			normalizeDashboardCellResponses(got)
+			normalizeDashboardCellResponses(want)
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("newCellResponses() = got-/want+ %s", gocmp.Diff(got, want))
 			}
 		})
 	}
@@ -1581,4 +1625,61 @@ func TestHasCorrectQueryType(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_newCellResponse_TableGaugeDefaults(t *testing.T) {
+	t.Run("zero value gets defaults", func(t *testing.T) {
+		cell := cloudhub.DashboardCell{ID: "cell-defaults"}
+
+		resp := newCellResponse(1, cell)
+
+		if resp.TableGaugeChartOptions.ColumnSettings == nil {
+			t.Fatalf("ColumnSettings should default to empty slice, got nil")
+		}
+		if !resp.TableGaugeChartOptions.IsShowValues {
+			t.Fatalf("IsShowValues default = true, got %v", resp.TableGaugeChartOptions.IsShowValues)
+		}
+		if resp.TableGaugeChartOptions.SortBy != "name" {
+			t.Fatalf("SortBy default = name, got %q", resp.TableGaugeChartOptions.SortBy)
+		}
+		if resp.TableGaugeChartOptions.SortByDirection != "asc" {
+			t.Fatalf("SortByDirection default = asc, got %q", resp.TableGaugeChartOptions.SortByDirection)
+		}
+		if resp.TableGaugeChartOptions.DecimalPlaces.IsEnforced != false || resp.TableGaugeChartOptions.DecimalPlaces.Digits != 0 {
+			t.Fatalf("DecimalPlaces default = {false 0}, got %+v", resp.TableGaugeChartOptions.DecimalPlaces)
+		}
+	})
+
+	t.Run("preserves provided values", func(t *testing.T) {
+		cell := cloudhub.DashboardCell{
+			ID: "cell-custom",
+			TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+				ColumnSettings: []cloudhub.ColumnSetting{
+					{InternalName: "cpu", DisplayName: "CPU"},
+				},
+				DecimalPlaces: cloudhub.DecimalPlaces{
+					IsEnforced: true,
+					Digits:     3,
+				},
+				IsShowValues:    false,
+				SortBy:          "cpu",
+				SortByDirection: "desc",
+			},
+		}
+
+		resp := newCellResponse(2, cell)
+
+		if len(resp.TableGaugeChartOptions.ColumnSettings) != 1 || resp.TableGaugeChartOptions.ColumnSettings[0].InternalName != "cpu" {
+			t.Fatalf("ColumnSettings should be preserved, got %+v", resp.TableGaugeChartOptions.ColumnSettings)
+		}
+		if resp.TableGaugeChartOptions.DecimalPlaces.IsEnforced != true || resp.TableGaugeChartOptions.DecimalPlaces.Digits != 3 {
+			t.Fatalf("DecimalPlaces should be preserved, got %+v", resp.TableGaugeChartOptions.DecimalPlaces)
+		}
+		if resp.TableGaugeChartOptions.IsShowValues != false {
+			t.Fatalf("IsShowValues should be preserved as false, got %v", resp.TableGaugeChartOptions.IsShowValues)
+		}
+		if resp.TableGaugeChartOptions.SortBy != "cpu" || resp.TableGaugeChartOptions.SortByDirection != "desc" {
+			t.Fatalf("Sort fields should be preserved, got sortBy=%q sortDir=%q", resp.TableGaugeChartOptions.SortBy, resp.TableGaugeChartOptions.SortByDirection)
+		}
+	})
 }

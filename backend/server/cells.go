@@ -29,6 +29,7 @@ type dashboardCellResponse struct {
 
 func newCellResponse(dID cloudhub.DashboardID, cell cloudhub.DashboardCell) dashboardCellResponse {
 	base := "/cloudhub/v1/dashboards"
+	applyTableGaugeDefaults(&cell)
 	if cell.Queries == nil {
 		cell.Queries = []cloudhub.DashboardQuery{}
 	}
@@ -85,6 +86,8 @@ func ValidDashboardCellRequest(c *cloudhub.DashboardCell) error {
 	if c == nil {
 		return fmt.Errorf("CloudHub dashboard cell was nil")
 	}
+
+	applyTableGaugeDefaults(c)
 
 	if err := ValidateNote(c); err != nil {
 		return err
@@ -195,6 +198,39 @@ func CorrectWidthHeight(c *cloudhub.DashboardCell) {
 	}
 	if c.H < 1 {
 		c.H = DefaultHeight
+	}
+}
+
+// applyTableGaugeDefaults sets default values for table gauge chart options.
+func applyTableGaugeDefaults(c *cloudhub.DashboardCell) {
+	// ColumnSettings should be an empty slice, not nil, for consistent JSON output.
+	if c.TableGaugeChartOptions.ColumnSettings == nil {
+		c.TableGaugeChartOptions.ColumnSettings = []cloudhub.ColumnSetting{}
+	}
+
+	// Default decimal places: not enforced, 0 digits.
+	if c.TableGaugeChartOptions.DecimalPlaces == (cloudhub.DecimalPlaces{}) {
+		c.TableGaugeChartOptions.DecimalPlaces = cloudhub.DecimalPlaces{
+			IsEnforced: false,
+			Digits:     0,
+		}
+	}
+
+	// Default sorting settings.
+	if c.TableGaugeChartOptions.SortBy == "" {
+		c.TableGaugeChartOptions.SortBy = "name"
+	}
+	if c.TableGaugeChartOptions.SortByDirection == "" {
+		c.TableGaugeChartOptions.SortByDirection = "asc"
+	}
+
+	// If no options are provided at all (zero-value struct), default to showing values.
+	if len(c.TableGaugeChartOptions.ColumnSettings) == 0 &&
+		c.TableGaugeChartOptions.SortBy == "name" &&
+		c.TableGaugeChartOptions.SortByDirection == "asc" &&
+		c.TableGaugeChartOptions.DecimalPlaces.IsEnforced == false &&
+		c.TableGaugeChartOptions.DecimalPlaces.Digits == 0 {
+		c.TableGaugeChartOptions.IsShowValues = true
 	}
 }
 
