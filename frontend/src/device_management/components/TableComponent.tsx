@@ -38,6 +38,7 @@ interface Props {
   bodyClassName?: string
   timeZone?: TimeZones
   searchPlaceholder?: string
+  isDotKey?: boolean
 }
 
 function TableComponent({
@@ -58,6 +59,7 @@ function TableComponent({
   bodyClassName,
   timeZone,
   searchPlaceholder,
+  isDotKey = false,
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
@@ -126,12 +128,13 @@ function TableComponent({
     newData?.sort((a, b) => {
       let dataA = ''
       let dataB = ''
-
-      if (sortTarget?.key.includes('.')) {
+      if (sortTarget?.key.includes('.') && !isDotKey) {
         const keyAry = sortTarget?.key.split('.')
         let resultA: any = a
         let resultB: any = b
         keyAry.map(keyItem => {
+          console.log('keyItem', keyItem)
+
           resultA = resultA[keyItem]
           resultB = resultB[keyItem]
           return

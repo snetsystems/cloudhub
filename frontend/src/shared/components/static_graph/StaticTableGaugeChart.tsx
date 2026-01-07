@@ -221,6 +221,7 @@ function StaticTableGaugeChart({
                 columns={columns}
                 isSearchDisplay={false}
                 initSort={initSort}
+                isDotKey={true}
               />
             )}
           </div>

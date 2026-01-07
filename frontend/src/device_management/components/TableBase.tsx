@@ -25,6 +25,7 @@ interface Props {
   checkedTargets?: string[]
   isMultiSelect?: boolean
   timeZone: TimeZones
+  isDotKey?: boolean
 }
 
 function TableBase({
@@ -38,6 +39,7 @@ function TableBase({
   sortTarget,
   onSort,
   timeZone,
+  isDotKey = false,
 }: Props) {
   const [openRowAccor, setOpenRowAccor] = useState<number | null>(null)
 
@@ -54,16 +56,13 @@ function TableBase({
   }, [columns])
 
   const getValue = (item: DataTableObject, key: string) => {
-    // If the exact key exists on the object, return it directly (even if it contains dots)
-    if (Object.prototype.hasOwnProperty.call(item, key)) {
+    if (!isDotKey && Object.prototype.hasOwnProperty.call(item, key)) {
       return item[key] as string | number | boolean | DataTableObject[]
     }
 
-    // Otherwise, when not explicitly told to treat dots as literal, treat dots as path separators.
     if (key.includes('.')) {
       const splitKey = key.split('.')
       let target: any = item[splitKey.shift() as string]
-
       while (
         splitKey.length > 0 &&
         target !== null &&
