@@ -470,3 +470,16 @@ $wordBreak: break-word;
     width: 30px;
   }
 }
+
+.table > thead > tr > th {
+  .sorted {
+    color: $c-pool;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.no-data {
+  height: 100px;
+}

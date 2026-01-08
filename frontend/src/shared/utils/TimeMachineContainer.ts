@@ -47,6 +47,7 @@ import {
   DEFAULT_GRAPH_OPTIONS,
   DEFAULT_SHOW_STATIC_LEGEND,
   DEFAULT_STATIC_LEGEND_POSITION,
+  DEFAULT_TABLE_GAUGE_CHART_OPTIONS,
 } from 'src/shared/constants'
 
 // Types
@@ -76,6 +77,7 @@ import {
 import {ColorString, ColorNumber} from 'src/types/colors'
 import recordProperty from 'src/flux/helpers/recordProperty'
 import {TIMERANGE_START} from 'src/flux/helpers/templates'
+import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 
 const LOCAL_STORAGE_DELAY_MS = 1000
 
@@ -102,6 +104,7 @@ const DEFAULT_STATE = (): TimeMachineState => ({
   graphOptions: DEFAULT_GRAPH_OPTIONS,
   isStaticLegend: DEFAULT_SHOW_STATIC_LEGEND,
   staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
+  tableGaugeChartOptions: DEFAULT_TABLE_GAUGE_CHART_OPTIONS,
 })
 
 export interface TimeMachineState {
@@ -127,6 +130,7 @@ export interface TimeMachineState {
   graphOptions: GraphOptions
   isStaticLegend?: boolean
   staticLegendPosition?: StaticLegendPositionType
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
 }
 
 export class TimeMachineContainer {
@@ -404,6 +408,12 @@ export class TimeMachineContainer {
     staticLegendPosition: StaticLegendPositionType
   ) => {
     return this.setAndPersistState({staticLegendPosition})
+  }
+
+  public handleUpdateTableGaugeChartOptions = (
+    tableGaugeChartOptions: TableGaugeChartOptionsInterface
+  ) => {
+    return this.setAndPersistState({tableGaugeChartOptions})
   }
 
   private updateQueryDrafts = (

@@ -34,6 +34,7 @@ import {Clouds} from 'src/clouds'
 import {Applications} from 'src/applications'
 import {LogsPage} from 'src/logs'
 import {ActivityLogsPage} from 'src/activitylogs'
+import LogAnalysisDashboard from 'src/log_analysis/containers/LogAnalysisDashboard'
 import AlertsApp from 'src/alerts'
 import {
   KapacitorPage,
@@ -86,6 +87,9 @@ import {reducerVSphere, ResponseVSphere} from './clouds/types'
 
 import AiRoutePage from 'src/device_management/containers/AiRoutePage'
 import PredictionRulePage from 'src/device_management/containers/PredictionRulePage'
+import {getElasticSearchInfoAsync} from 'src/shared/actions/elasticSearch'
+
+import 'src/log_analysis/util/setupOUIIcons'
 
 const errorsQueue = []
 
@@ -176,6 +180,11 @@ class Root extends PureComponent<Record<string, never>, State> {
     dispatch
   )
 
+  private handleGetElasticSearchInfo = bindActionCreators(
+    getElasticSearchInfoAsync,
+    dispatch
+  )
+
   private heartbeatTimer: number
 
   private timeout: {
@@ -202,6 +211,7 @@ class Root extends PureComponent<Record<string, never>, State> {
       await this.getLinks()
       await this.checkAuth()
       await populateEnv(store.getState().links.environment)
+      await this.getEsSources()
       this.setState({ready: true})
     } catch (error) {
       dispatch(errorThrown(error))
@@ -295,6 +305,7 @@ class Root extends PureComponent<Record<string, never>, State> {
                   path="alert-rules/:ruleID"
                   component={KapacitorRulePage}
                 />
+                <Route path="log-analysis" component={LogAnalysisDashboard} />
                 <Route path="activity-logs" component={ActivityLogsPage} />
                 <Route path="logs" component={LogsPage} />
                 <Route
@@ -639,6 +650,10 @@ class Root extends PureComponent<Record<string, never>, State> {
     } catch (error) {
       dispatch(errorThrown(error))
     }
+  }
+
+  private getEsSources = async () => {
+    await this.handleGetElasticSearchInfo()
   }
 }
 

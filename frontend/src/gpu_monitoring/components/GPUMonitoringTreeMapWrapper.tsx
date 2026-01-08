@@ -6,7 +6,12 @@ import {connect} from 'react-redux'
 import LoadingDots from 'src/shared/components/LoadingDots'
 import GPUMonitoringDashboardHeader from 'src/gpu_monitoring/components/GPUMonitoringDashboardHeader'
 import GPUMonitoringTreeMap from 'src/gpu_monitoring/components/GPUMonitoringTreeMap'
-import {ComponentSize, SlideToggle} from 'src/reusable_ui'
+import {
+  ComponentSize,
+  ComponentColor,
+  SlideToggle,
+  Dropdown,
+} from 'src/reusable_ui'
 
 // Types
 import {
@@ -41,6 +46,7 @@ import {
   notifyGetNVidiaSmiDataForHostsFailed,
   notifyGetNVidiaSmiMIGDataForHostsFailed,
 } from 'src/shared/copy/notifications'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Constants
 import {
@@ -51,14 +57,12 @@ import {EMPTY_FILTERED_HOST_FOR_GPU_MONITORING} from 'src/gpu_monitoring/constan
 import {AddonType} from 'src/shared/constants'
 
 interface Props {
-  isMockActive: boolean
   source: Source
   addons?: Addon[]
   gpuMonitoringManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
   filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
   notify?: NotificationAction
-  setIsMockActive: React.Dispatch<React.SetStateAction<boolean>>
   setFilteredHostForGPUMonitoring?: (
     filteredHostForGPUMonitoring: FilteredHostForGPUMonitoring
   ) => void
@@ -73,15 +77,15 @@ const getAddonToken = (name: string, addons): string => {
 
 function GPUMonitoringTreeMapWrapper({
   filteredHostForGPUMonitoring,
-  isMockActive,
   cloudAutoRefresh,
   addons,
   gpuMonitoringManualRefresh,
   source,
   notify,
   setFilteredHostForGPUMonitoring,
-  setIsMockActive,
 }: Props) {
+  const [isMockActive, setIsMockActive] = useState(false)
+
   const [hostsForGPUSmiData, setHostsForGPUSmiData] = useState<any>({})
   const [hostsForGPUSmiMIGData, setHostsForGPUSmiMIGData] = useState<any>({})
   const [
@@ -95,18 +99,34 @@ function GPUMonitoringTreeMapWrapper({
     Record<string, MigProfile[]>
   >({})
   const [error, setError] = useState<string>('')
+  const [selectedInterval, setSelectedInterval] = useState<string>(
+    'interval-10m'
+  )
 
   const isUsingNvidiaGpu = isAddonUrlOn(AddonType.nvidia, addons)
   const isUsingNvidiaProd = getAddonToken(AddonType.nvidia, addons)
 
   let intervalID
 
+  const getTimeRangeFromInterval = (intervalId: string): string => {
+    switch (intervalId) {
+      case 'interval-1m':
+        return '1m'
+      case 'interval-3m':
+        return '3m'
+      case 'interval-5m':
+        return '5m'
+      case 'interval-10m':
+        return '10m'
+      default:
+        return '10m'
+    }
+  }
+
   useEffect(() => {
     fetchAllGpuData()
     fetchNvidiaLocalGrainItems()
-    return () =>
-      setFilteredHostForGPUMonitoring(EMPTY_FILTERED_HOST_FOR_GPU_MONITORING)
-  }, [gpuMonitoringManualRefresh])
+  }, [gpuMonitoringManualRefresh, selectedInterval])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -129,20 +149,24 @@ function GPUMonitoringTreeMapWrapper({
 
   const fetchNVidiaSmiDataForHosts = async () => {
     const tempVars = generateForHosts(source)
+    const timeRange = getTimeRangeFromInterval(selectedInterval)
     const resp = await getNVidiaSmiDataForHosts(
       source.links.proxy,
       source.telegraf,
-      tempVars
+      tempVars,
+      timeRange
     )
     return resp
   }
 
   const fetchNVidiaSmiMIGDataForHosts = async () => {
     const tempVars = generateForHosts(source)
+    const timeRange = getTimeRangeFromInterval(selectedInterval)
     const resp = await getNVidiaSmiMIGDataForHosts(
       source.links.proxy,
       source.telegraf,
-      tempVars
+      tempVars,
+      timeRange
     )
     return resp
   }
@@ -254,7 +278,6 @@ function GPUMonitoringTreeMapWrapper({
     if (typeof filteredHost !== 'string' || filteredHost.trim() === '') {
       return
     }
-
     const isSameHostAndGPUIndex =
       filteredHostForGPUMonitoring?.hostname === filteredHost &&
       filteredHostForGPUMonitoring?.gpuIndex === filteredGPUIndex
@@ -263,7 +286,6 @@ function GPUMonitoringTreeMapWrapper({
       setFilteredHostForGPUMonitoring(EMPTY_FILTERED_HOST_FOR_GPU_MONITORING)
       return
     }
-
     setFilteredHostForGPUMonitoring({
       hostname: filteredHost,
       gpuIndex: -1,
@@ -340,6 +362,44 @@ function GPUMonitoringTreeMapWrapper({
     )
   }
 
+  const handleIntervalDropdownChange = (value: {id: string}) => {
+    setSelectedInterval(value.id)
+  }
+
+  const renderIntervalDropdown = (): JSX.Element => {
+    return (
+      <div className="gpu-monitoring-slide--inner">
+        <div
+          className="gpu-monitoring-host-dropdown-wrapper"
+          onClick={e => e.stopPropagation()}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <Dropdown
+            onChange={handleIntervalDropdownChange}
+            selectedID={selectedInterval}
+            buttonSize={ComponentSize.Small}
+            buttonColor={ComponentColor.Default}
+            widthPixels={130}
+            customClass="dropdown dropdown-sm dropdown-default"
+          >
+            <Dropdown.Item id="interval-1m" value={{id: 'interval-1m'}}>
+              Last 1 minutes
+            </Dropdown.Item>
+            <Dropdown.Item id="interval-3m" value={{id: 'interval-3m'}}>
+              Last 3 minutes
+            </Dropdown.Item>
+            <Dropdown.Item id="interval-5m" value={{id: 'interval-5m'}}>
+              Last 5 minutes
+            </Dropdown.Item>
+            <Dropdown.Item id="interval-10m" value={{id: 'interval-10m'}}>
+              Last 10 minutes
+            </Dropdown.Item>
+          </Dropdown>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div style={{height: '100%', backgroundColor: '#292933'}}>
@@ -356,6 +416,7 @@ function GPUMonitoringTreeMapWrapper({
           {isUsingNvidiaGpu &&
             isUsingNvidiaProd === 'dev' &&
             renderMockSlideToggle()}
+          {renderIntervalDropdown()}
         </GPUMonitoringDashboardHeader>
 
         {error ? (
@@ -403,6 +464,7 @@ const mdtp = dispatch => ({
     setFilteredHostForGPUMonitoring,
     dispatch
   ),
+  notify: bindActionCreators(notifyAction, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(GPUMonitoringTreeMapWrapper)

@@ -12,12 +12,13 @@ import {WizardStepProps} from 'src/reusable_ui/components/wizard/WizardStep'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {ToggleWizard} from 'src/types/wizard'
+import {ToggleEsWizard} from 'src/types'
 
 interface Props {
   children: Array<ReactElement<WizardStepProps>>
   visible: boolean
   title: string
-  toggleVisibility: ToggleWizard
+  toggleVisibility: ToggleWizard | ToggleEsWizard
   resetWizardState: () => void
   skipLinkText?: string
   maxWidth?: number

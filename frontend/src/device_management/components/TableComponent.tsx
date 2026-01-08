@@ -1,3 +1,4 @@
+// Libraries
 import React, {
   ReactNode,
   useCallback,
@@ -6,7 +7,11 @@ import React, {
   useState,
 } from 'react'
 
-//Type
+// Components
+import SearchBar from 'src/hosts/components/SearchBar'
+import TableBase from 'src/device_management/components/TableBase'
+
+// Types
 import {
   ColumnInfo,
   SortInfo,
@@ -14,10 +19,6 @@ import {
   DataTableOptions,
   TimeZones,
 } from 'src/types'
-
-// Components
-import SearchBar from 'src/hosts/components/SearchBar'
-import TableBase from 'src/device_management/components/TableBase'
 
 interface Props {
   data: DataTableObject[]
@@ -36,6 +37,8 @@ interface Props {
   initSort?: SortInfo
   bodyClassName?: string
   timeZone?: TimeZones
+  searchPlaceholder?: string
+  isDotKey?: boolean
 }
 
 function TableComponent({
@@ -55,6 +58,8 @@ function TableComponent({
   initSort = null,
   bodyClassName,
   timeZone,
+  searchPlaceholder,
+  isDotKey = false,
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
@@ -63,6 +68,12 @@ function TableComponent({
   useEffect(() => {
     !!setCheckedArray && setCheckedArray([])
   }, [isCheckInit])
+
+  useEffect(() => {
+    if (initSort) {
+      setSortTarget(initSort)
+    }
+  }, [initSort])
 
   useEffect(() => {
     !!setCheckedArray && setCheckedArray(checkedArray)
@@ -117,12 +128,13 @@ function TableComponent({
     newData?.sort((a, b) => {
       let dataA = ''
       let dataB = ''
-
-      if (sortTarget?.key.includes('.')) {
+      if (sortTarget?.key.includes('.') && !isDotKey) {
         const keyAry = sortTarget?.key.split('.')
         let resultA: any = a
         let resultB: any = b
         keyAry.map(keyItem => {
+          console.log('keyItem', keyItem)
+
           resultA = resultA[keyItem]
           resultB = resultB[keyItem]
           return
@@ -134,10 +146,33 @@ function TableComponent({
         dataB = (b[sortTarget.key] as any) ?? ''
       }
       const isDesc = sortTarget.isDesc
+      const toNumber = (val: any) => {
+        if (typeof val === 'number' && Number.isFinite(val)) {
+          return val
+        }
+        if (
+          typeof val === 'string' &&
+          val.trim() !== '' &&
+          !Number.isNaN(Number(val))
+        ) {
+          return Number(val)
+        }
+        return null
+      }
+      const numA = toNumber(dataA)
+      const numB = toNumber(dataB)
+      const bothNumeric = numA !== null && numB !== null
 
       if (isDesc) {
         if (sortTarget.isIP) {
           return sortIp(dataA, dataB) * -1
+        }
+        if (bothNumeric) {
+          if (numA > numB) {
+            return -1
+          } else if (numA < numB) {
+            return 1
+          }
         }
         if (dataA > dataB) {
           return -1
@@ -147,6 +182,13 @@ function TableComponent({
       } else {
         if (sortTarget.isIP) {
           return sortIp(dataA, dataB)
+        }
+        if (bothNumeric) {
+          if (numA > numB) {
+            return 1
+          } else if (numA < numB) {
+            return -1
+          }
         }
         if (dataA > dataB) {
           return 1
@@ -163,7 +205,6 @@ function TableComponent({
   const onSort = useCallback(
     (column: ColumnInfo) => {
       const target = JSON.parse(JSON.stringify(sortTarget))
-
       if (sortTarget === null) {
         setSortTarget({
           key: column.key,
@@ -195,23 +236,28 @@ function TableComponent({
 
   return (
     <div className="panel panel-solid">
-      <div className="panel-heading">
-        <div className="table-top left">
-          <h2 className="panel-title">{tableTitle}</h2>
-          {/* left custom node */}
-          {topLeftRender}
+      {(!!tableTitle ||
+        !!topLeftRender ||
+        !!toprightRender ||
+        isSearchDisplay) && (
+        <div className="panel-heading">
+          <div className="table-top left">
+            <h2 className="panel-title">{tableTitle}</h2>
+            {/* left custom node */}
+            {topLeftRender}
+          </div>
+          <div className="table-top right">
+            {isSearchDisplay && (
+              <SearchBar
+                placeholder={searchPlaceholder ?? 'Filter by Host...'}
+                onSearch={searchHandler}
+              />
+            )}
+            {/* right custom node */}
+            {toprightRender}
+          </div>
         </div>
-        <div className="table-top right">
-          {isSearchDisplay && (
-            <SearchBar
-              placeholder="Filter by Host..."
-              onSearch={searchHandler}
-            />
-          )}
-          {/* right custom node */}
-          {toprightRender}
-        </div>
-      </div>
+      )}
       <div className={`panel-body ${bodyClassName ?? ''}`}>
         <TableBase
           columns={columns}

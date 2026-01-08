@@ -20,10 +20,15 @@ import persistStateEnhancer from './persistStateEnhancer'
 import servicesReducer from 'src/shared/reducers/services'
 import envReducer from 'src/shared/reducers/env'
 import {vspheres} from 'src/clouds/reducers'
+import kubernetesDetailsDashboard from 'src/clouds/reducers/kubernetesDetailsDashboard'
 import source from 'src/sources/reducers'
 import aiModal from 'src/shared/reducers/aiModal'
 import predictionDashboard from 'src/device_management/reducers/predictionDashboard'
 import gpuMonitoringDashboard from 'src/gpu_monitoring/reducers/gpuMonitoringDashboard'
+import esSourcesReducer from 'src/shared/reducers/esSources'
+import sidePanelReducer from 'src/shared/reducers/sidePanel'
+import logAnalysisDashboard from 'src/log_analysis/reducers/logAnalysis'
+import selectedDeviceReducer from 'src/log_analysis/reducers/deviceMeta'
 
 // eslint-disable-next-line no-unused-vars
 function lastAction(state = {}, action) {
@@ -45,11 +50,16 @@ const rootReducer = combineReducers({
   routing: routerReducer,
   services: servicesReducer,
   vspheres,
+  kubernetesDetailsDashboard,
   lastAction,
   source,
   aiModal,
   predictionDashboard,
   gpuMonitoringDashboard,
+  esSources: esSourcesReducer,
+  sidePanel: sidePanelReducer,
+  logAnalysisDashboard,
+  selectedDevice: selectedDeviceReducer,
 })
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose

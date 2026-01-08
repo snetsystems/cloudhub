@@ -27,11 +27,15 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	idgen "github.com/snetsystems/cloudhub/backend/id"
 	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/kafka"
+	"github.com/snetsystems/cloudhub/backend/kubernetes"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/kv/bolt"
 	"github.com/snetsystems/cloudhub/backend/kv/etcd"
 	clog "github.com/snetsystems/cloudhub/backend/log"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/platform/baremetal"
+	"github.com/snetsystems/cloudhub/backend/platform/k8s"
 	"github.com/snetsystems/cloudhub/backend/server/config"
 )
 
@@ -139,7 +143,7 @@ type Server struct {
 	CustomAutoRefresh      string            `long:"custom-auto-refresh" description:"Adds custom auto refresh options using semicolon separated list of label=milliseconds pairs" env:"CUSTOM_AUTO_REFRESH"`
 
 	ReportingDisabled bool   `short:"r" long:"reporting-disabled" description:"Disable reporting of usage stats (os,arch,version,cluster_id,uptime) once every 24hr" env:"REPORTING_DISABLED"`
-	LogLevel          string `short:"l" long:"log-level" value-name:"choice" choice:"debug" choice:"info" choice:"error" default:"info" description:"Set the logging level" env:"LOG_LEVEL"`
+	LogLevel          string `short:"l" long:"log-level" value-name:"choice" choice:"debug" choice:"info" choice:"error" choice:"warn" default:"info" description:"Set the logging level" env:"LOG_LEVEL"`
 	Basepath          string `short:"p" long:"basepath" description:"A URL path prefix under which all CloudHub routes will be mounted. (Note: PREFIX_ROUTES has been deprecated. Now, if basepath is set, all routes will be prefixed with it.)" env:"BASE_PATH"`
 	ShowVersion       bool   `short:"v" long:"version" description:"Show CloudHub version info"`
 	BuildInfo         cloudhub.BuildInfo
@@ -153,14 +157,30 @@ type Server struct {
 
 	oauthClient http.Client
 
-	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, gcp, osp, k8s, swan, oncue, ipmi-secret-key, ai]. Actually, this is a key-value extensional option not only url but also any key-value. Refer to the following usage samples. E.g., via flags: '-u=salt:{url} -u=salt_config_path:{path} -u=aws:on[off] -u=gcp:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key} -u=ai:on[off]'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
-	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"The token associated with addon [salt, swan]. E.g. via flags: '-k=salt:{token} -k=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
+	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, gcp, osp, k8s, swan, oncue, ipmi-secret-key, ai, nvidia-gpu, dev-mode]. Actually, this is a key-value extensional option not only url but also any key-value. Refer to the following usage samples. E.g., via flags: '-u=salt:{url} -u=salt_config_path:{path} -u=aws:on[off] -u=gcp:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key} -u=ai:on[off] -u=nvidia-gpu:on -u=dev:on'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
+	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"The token associated with addon [salt, swan, nvidia-gpu, dev-mode]. E.g. via flags: '-k=salt:{token} -k=swan:{token} -k=nvidia-gpu:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token},nvidia-gpu:{token},'" env:"ADDON_TOKENS" env-delim:","`
 
 	OSP map[string]string `long:"osp" description:"The Informations to access to OSP API. '--osp=admin-provider:{salt admin provider} --osp=admin-user:{admin user name} --osp=admin-pw:{admin user password} --osp=auth-url:{keystone url} --osp=pj-domain-id:{project domain id} --osp=user-domain-id:{user domain id}'. E.g. via environment variable: 'export OSP=admin:{salt admin provider},admin-user:{admin user name}', etc." env:"OSP" env-delim:","`
 
 	AI map[string]string `long:"ai" description:"The Information to access to cloudhub AI. '--ai=docker-path:{specifies the path to the Docker Compose file used for restarting the Logstash container} --ai=docker-cmd:{docker restart command} --ai=logstash-path:{The logstash-path variable is used to specify the directory where your Logstash pipeline configuration} --ai=prediction-regex:{parsing tickScript}'. E.g. via environment variable" env:"AI" env-delim:","`
 
 	TemplatesPath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/cloudhub-templates)" env:"TEMPLATES_PATH" default:"templates"`
+
+	EsURLs               []string `long:"es-urls"           description:"Comma-separated list of Elasticsearch endpoints"   env:"ES_URLS"           default:"http://localhost:9200"`
+	EsUsername           string   `long:"es-username"       description:"Elasticsearch basic-auth username"                env:"ES_USERNAME"`
+	EsPassword           string   `long:"es-password"       description:"Elasticsearch basic-auth password"                env:"ES_PASSWORD"`
+	EsAPIKeyID           string   `long:"es-apikey-id"      description:"Elasticsearch API-Key ID"                         env:"ES_APIKEY_ID"`
+	EsAPIKeySecret       string   `long:"es-apikey-secret"  description:"Elasticsearch API-Key secret"                     env:"ES_APIKEY_SECRET"`
+	EsDefaultIndex       string   `long:"es-default-index"  description:"Default index name or pattern for queries"        env:"ES_DEFAULT_INDEX" default:"*"`
+	EsInsecureSkipVerify bool     `long:"es-insecure-skip-verify" description:"Skip TLS cert verification for Elasticsearch" env:"ES_INSECURE_SKIP_VERIFY"`
+
+	Kubernetes     map[string]string `long:"kubernetes" description:"The Information to access to Kubernetes API. '--kubernetes=url:{server URL} --kubernetes=token:{service account token} --kubernetes=insecure-skip-verify:{true/false}'. E.g. via environment variable" env:"KUBERNETES" env-delim:","`
+	DeployPlatform string            `long:"deploy-platform" description:"The deployment platform (k8s or baremetal)" env:"DEPLOY_PLATFORM"`
+
+	CollectorAuthToken string `long:"collector-auth-token" description:"Shared secret token for Collector Sidecar authentication" env:"COLLECTOR_AUTH_TOKEN"`
+	KafkaBrokers       string `long:"kafka-brokers" description:"Comma-separated list of Kafka brokers" env:"KAFKA_BROKERS"`
+	KafkaTopic         string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`
+	MaxShards          int    `long:"max-shards" description:"Max number of shards (virtual partitions) for fallback" env:"MAX_SHARDS" default:"10"`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -597,6 +617,8 @@ func (s *Server) Serve(ctx context.Context) {
 
 	osp := NewOSP(s.OSP)
 	aiConfig := NewAIConfig(s.AI)
+	kubernetesConfig := NewKubernetesConfig(s.Kubernetes)
+	kubernetesConfig.CollectorAuthToken = s.CollectorAuthToken
 
 	var db kv.Store
 	if len(s.EtcdEndpoints) == 0 {
@@ -683,6 +705,7 @@ func (s *Server) Serve(ctx context.Context) {
 		TemplatesPath:    s.TemplatesPath,
 		TemplatesManager: templatesManager,
 		AIConfig:         aiConfig,
+		KubernetesConfig: kubernetesConfig,
 	}
 	if !validBasepath(s.Basepath) {
 		err := fmt.Errorf("invalid basepath, must follow format \"/mybasepath\"")
@@ -691,6 +714,49 @@ func (s *Server) Serve(ctx context.Context) {
 			WithField("basepath", "invalid").
 			Error(err)
 		return
+	}
+
+	k8sCfg := kubernetes.Config{
+		URL:                kubernetesConfig.URL,
+		Token:              kubernetesConfig.Token,
+		InsecureSkipVerify: kubernetesConfig.InsecureSkipVerify,
+	}
+
+	if service.KubernetesClient == nil {
+		service.KubernetesClient = kubernetes.NewClient(k8sCfg, logger)
+	}
+
+	if err := service.KubernetesClient.TestConnection(ctx); err != nil {
+		logger.Error("Failed to connect to Kubernetes API during startup: ", err)
+	}
+
+	var p cloudhub.Platform
+	if s.DeployPlatform == "k8s" {
+		p = k8s.NewManager(service.KubernetesClient, s.MaxShards, logger)
+	} else {
+		p = baremetal.NewManager(
+			&service,
+			aiConfig.LogstashPath,
+			aiConfig.DockerPath,
+			aiConfig.DockerCmd,
+		)
+	}
+	service.InternalENV.Platform = p
+
+	if s.KafkaBrokers != "" {
+		brokers := strings.Split(s.KafkaBrokers, ",")
+		producer, err := kafka.NewConfigProducer(brokers, s.KafkaTopic)
+		if err != nil {
+			logger.Error(fmt.Errorf("failed to initialize Kafka producer: %w", err))
+		} else {
+			service.KafkaProducer = producer
+			logger.Info(fmt.Sprintf("Kafka producer initialized with brokers: %s, topic: %s", s.KafkaBrokers, s.KafkaTopic))
+
+			if k8sManager, ok := service.InternalENV.Platform.(*k8s.Manager); ok {
+				k8sManager.KafkaProducer = producer
+				k8sManager.ConfigGenerator = &service
+			}
+		}
 	}
 
 	if err = s.validateAuth(); err != nil {
@@ -917,6 +983,8 @@ func openService(
 			MLNxRstStore:            svc.MLNxRstStore(),
 			DLNxRstStore:            svc.DLNxRstStore(),
 			DLNxRstStgStore:         svc.DLNxRstStgStore(),
+			EsSourcesStore:          svc.EsSourcesStore(),
+			DeviceMappingsStore:     svc.DeviceMappingsStore(),
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,

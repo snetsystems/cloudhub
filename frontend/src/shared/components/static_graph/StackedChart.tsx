@@ -1,6 +1,8 @@
 // Libraries
 import React, {useEffect, useMemo, useRef, useState} from 'react'
+
 import {Bar} from 'react-chartjs-2'
+import _ from 'lodash'
 import {
   Chart as ChartJS,
   CategoryScale,

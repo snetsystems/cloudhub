@@ -3,6 +3,7 @@
   "measurement": "snmp_nx",
   "app": "snmp_nx_static",
   "autoflow": true,
+  "whereTagKey": ["agent_host"],
   "cells": [
     {
       "i": "a722c51a-2879-47c2-b16e-79d0663d832b",

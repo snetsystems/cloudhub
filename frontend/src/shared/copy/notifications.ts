@@ -1665,3 +1665,69 @@ export const notifyGetNVidiaGPUMigLgipFailed = (): Notification => ({
   message: `Failed to Get NVIDIA SMI MIG Profile Data.`,
   duration: INFINITE,
 })
+
+export const notifyFetchSyslogTableDataFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to fetch syslog table data. ${message}`,
+  duration: INFINITE,
+})
+
+export const notifyDeleteDeviceFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Delete Unmapped Device. ${errorMessage}`,
+})
+
+export const notifyDeleteDeviceSucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Unmapped Device deleted successfully.`,
+})
+
+export const notifyFetchDeviceMappingFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to fetch Device Data. ${message}`,
+  duration: INFINITE,
+})
+
+export const notifyUpdateDeviceMappingFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to update Device Mapping. ${message}`,
+  duration: INFINITE,
+})
+
+export const notifyUpdateDeviceMappingSuccess = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Device Data has been updated successfully.`,
+})
+
+export const notifyNoSelectedDevice = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `There is no selected device.`,
+  duration: INFINITE,
+})
+
+export const notifyInvalidDurationFormat = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Invalid duration format. Use format like 2h, 30m, 1d Default is 2h`,
+  duration: 3000,
+})
+
+export const notifyNamespaceRequired = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `There is no selected namespace.`,
+  duration: INFINITE,
+})
+
+export const notifySelectedNamespacesAreNotValid = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Selected namespaces are not valid.`,
+  duration: INFINITE,
+})

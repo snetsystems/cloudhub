@@ -37,10 +37,7 @@ import {
   setPredictionManualRefresh,
   setStateInitAction,
 } from 'src/device_management/actions'
-import {
-  setGPUMonitoringManualRefresh,
-  setGPUMonitoringStateInit,
-} from 'src/gpu_monitoring/actions'
+import {setGPUMonitoringManualRefresh} from 'src/gpu_monitoring/actions'
 
 //component
 import ManualRefresh, {
@@ -78,7 +75,6 @@ interface Props extends ManualRefreshProps {
   setStateInitAction: () => void
   setHistogramDate: (value: TimeRange) => void
   setGPUMonitoringManualRefresh: () => void
-  setGPUMonitoringStateInit: () => void
 }
 
 const defaultHeaderRadioButtons: HeaderNavigationObj[] = [
@@ -118,7 +114,6 @@ const AiRoutePage = (props: Props) => {
     setStateInitAction,
     setHistogramDate,
     setGPUMonitoringManualRefresh,
-    setGPUMonitoringStateInit,
   } = props
 
   const currentRoute = router.params?.tab
@@ -183,7 +178,6 @@ const AiRoutePage = (props: Props) => {
 
   const handleManualRefreshForGPUMonitoring = () => {
     setGPUMonitoringManualRefresh()
-    setGPUMonitoringStateInit()
   }
 
   const onChooseActiveTab = (activeTab: string) => {
@@ -344,10 +338,6 @@ const mdtp = dispatch => ({
   setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
   setGPUMonitoringManualRefresh: bindActionCreators(
     setGPUMonitoringManualRefresh,
-    dispatch
-  ),
-  setGPUMonitoringStateInit: bindActionCreators(
-    setGPUMonitoringStateInit,
     dispatch
   ),
 })

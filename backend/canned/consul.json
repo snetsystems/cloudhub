@@ -3,6 +3,7 @@
   "measurement": "consul_health_checks",
   "app": "consul",
   "autoflow": true,
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,
@@ -16,11 +17,87 @@
       "queries": [
         {
           "query": "SELECT count(\"check_id\") AS \"Number Critical\" FROM \":db:\".\":rp:\".\"consul_health_checks\"",
-          "label": "count",
           "groupbys": ["\"service_name\""],
           "wheres": ["\"status\" = 'critical'"]
         }
-      ]
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Service Name",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Count",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticBar",
+      "colors": [
+        {
+          "id": "221a7929-28cf-4b24-a8d0-4b98a5f27d66",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "2c79244d-3810-4251-a92f-67c1855b309e",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "ae9b354f-a8c3-458d-aaa2-caa00f913d6d",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     },
     {
       "x": 0,
@@ -34,11 +111,87 @@
       "queries": [
         {
           "query": "SELECT count(\"check_id\") AS \"Number Warning\" FROM \":db:\".\":rp:\".\"consul_health_checks\"",
-          "label": "count",
           "groupbys": ["\"service_name\""],
           "wheres": ["\"status\" = 'warning'"]
         }
-      ]
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Service Name",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Count",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticBar",
+      "colors": [
+        {
+          "id": "651e1d16-74ab-4b84-8a0e-27db05d58b4c",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "c1ef0d1c-bbe7-4fbe-ac39-a3a3c709f6b1",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "fe49c25e-df28-4592-8be3-d7071d10e067",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     }
   ]
 }

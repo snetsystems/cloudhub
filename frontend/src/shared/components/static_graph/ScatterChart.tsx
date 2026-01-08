@@ -1,6 +1,8 @@
 // Library
 import React, {useEffect, useMemo, useRef, useState} from 'react'
+
 import {Scatter} from 'react-chartjs-2'
+
 import {
   Chart as ChartJS,
   LinearScale,

@@ -1,4 +1,10 @@
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react'
+import React, {
+  MouseEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import * as d3 from 'd3'
 
 // Components
@@ -256,10 +262,8 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
       .attr('class', 'treemap-hostname')
       .attr('title', (d: any) => d.name)
       .text((d: any) => d.name)
-      .on('click', function (d: any) {
-        if (d3.event && typeof d3.event.stopPropagation === 'function') {
-          d3.event.stopPropagation()
-        }
+      .on('click', function (event: MouseEvent, d: any) {
+        event.stopPropagation()
         onHostnameNodeClick(d.originalHostname, -1)
       })
 
@@ -284,10 +288,8 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
             }
             return null
           })
-          .on('click', function () {
-            if (d3.event && typeof d3.event.stopPropagation === 'function') {
-              d3.event.stopPropagation()
-            }
+          .on('click', function (event: MouseEvent) {
+            event.stopPropagation()
             onGPUIndexNodeClick(hostData.originalHostname, gpuData.gpuIndex)
           })
 
@@ -370,12 +372,12 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
           }
 
           gpuDiv
-            .on('mouseenter', function () {
+            .on('mouseenter', function (event: MouseEvent) {
               if (!parentRef.current) return
               const parentRect = parentRef.current.getBoundingClientRect()
               const tempPosition = {
-                x: d3.event.clientX - parentRect.left,
-                y: d3.event.clientY - parentRect.top,
+                x: event.clientX - parentRect.left,
+                y: event.clientY - parentRect.top,
               }
               const trimmedHostName = hostData.name.split(':')[0].trim()
               const tooltipRows = [
@@ -509,16 +511,17 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
               }
               return colorScaleForGPUMonitoring(usage)
             })
-            .classed('gpu-monitoring-tooltip--blink', (d: any) => {
-              return computeGiCiUsage(d) >= GPU_MONITORING_CRITICAL_VALUE
-            })
-            .on('mouseenter', function (d: any) {
+            .classed(
+              'gpu-monitoring-tooltip--blink',
+              (d: any) => computeGiCiUsage(d) >= GPU_MONITORING_CRITICAL_VALUE
+            )
+            .on('mouseenter', function (event: MouseEvent, d: any) {
               if (d.data.unused) return
               if (!parentRef.current) return
               const parentRect = parentRef.current.getBoundingClientRect()
               const tempPosition = {
-                x: d3.event.clientX - parentRect.left,
-                y: d3.event.clientY - parentRect.top,
+                x: event.clientX - parentRect.left,
+                y: event.clientY - parentRect.top,
               }
               let tooltipRows = []
 
@@ -580,7 +583,7 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
               setTooltipPosition(tempPosition)
               setIsMouseOn(true)
             })
-            .on('mouseleave', function (d: any) {
+            .on('mouseleave', function (_, d: any) {
               if (d.data.unused) return
               setIsMouseOn(false)
             })
@@ -604,7 +607,6 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
       const bar1Usage = d.data.bar1MemoryTotalGB
         ? (d.data.bar1MemoryUsedGB / d.data.bar1MemoryTotalGB) * 100
         : 0
-
       return Math.max(fbUsage, bar1Usage)
     } else if (d.data.gi !== undefined && d.data.ci === undefined) {
       const fbUsage = d.data.frameBufferTotalGB
@@ -613,7 +615,6 @@ const GPUMonitoringTreeMap: React.FC<Props> = ({
       const bar1Usage = d.data.bar1MemoryTotalGB
         ? (d.data.bar1MemoryUsedGB / d.data.bar1MemoryTotalGB) * 100
         : 0
-
       return Math.max(fbUsage, bar1Usage)
     } else if (
       d.data.used !== undefined &&

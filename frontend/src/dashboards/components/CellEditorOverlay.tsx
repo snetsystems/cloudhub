@@ -19,7 +19,10 @@ import {initialStateFromCell} from 'src/shared/utils/timeMachine'
 import {editCellQueryStatus} from 'src/dashboards/actions'
 
 // Constants
-import {getCellTypeColors} from 'src/dashboards/constants/cellEditor'
+import {
+  getCellTypeColors,
+  normalizeTableGaugeChartOptions,
+} from 'src/dashboards/constants/cellEditor'
 import {STATIC_LEGEND} from 'src/dashboards/constants/cellEditor'
 
 // Types
@@ -50,6 +53,7 @@ import {
 import {Links, ScriptStatus} from 'src/types/flux'
 import {ColorString, ColorNumber} from 'src/types/colors'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
+import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 
 interface ConnectedProps {
   queryType: QueryType
@@ -74,6 +78,7 @@ interface ConnectedProps {
   graphOptions: GraphOptions
   isStaticLegend?: boolean
   staticLegendPosition: StaticLegendPositionType
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
 }
 
 interface PassedProps {
@@ -254,6 +259,7 @@ class CellEditorOverlay extends Component<Props, State> {
       graphOptions,
       isStaticLegend,
       staticLegendPosition,
+      tableGaugeChartOptions,
     } = this.props
     const {draftCellName} = this.state
 
@@ -294,6 +300,9 @@ class CellEditorOverlay extends Component<Props, State> {
         ? {...STATIC_LEGEND, orientation: staticLegendPosition}
         : {orientation: staticLegendPosition},
       graphOptions,
+      tableGaugeChartOptions: normalizeTableGaugeChartOptions(
+        tableGaugeChartOptions
+      ),
     }
 
     return newCell
@@ -381,6 +390,7 @@ const ConnectedCellEditorOverlay = (props: PassedProps & Auth) => {
             ceoTimeRange={state.timeRange}
             isStaticLegend={state.isStaticLegend}
             staticLegendPosition={state.staticLegendPosition}
+            tableGaugeChartOptions={state.tableGaugeChartOptions}
           />
         )
       }}

@@ -3,6 +3,7 @@
   "measurement": "apache",
   "app": "apache",
   "autoflow": false,
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,

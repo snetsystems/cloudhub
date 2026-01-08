@@ -67,8 +67,14 @@ class SourceStep extends PureComponent<Props, State> {
   }
   constructor(props: Props) {
     super(props)
+
+    const defaultSourceWithOrgName = {
+      ...DEFAULT_SOURCE,
+      name: props.me?.currentOrganization?.name || DEFAULT_SOURCE.name,
+    }
+
     this.state = {
-      source: this.props.source || DEFAULT_SOURCE,
+      source: this.props.source || defaultSourceWithOrgName,
     }
 
     if (!this.props.source && props.isUsingAuth) {

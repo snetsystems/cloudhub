@@ -1,0 +1,34 @@
+.custom {
+  flex-grow: 1;
+}
+
+.modal-wrapper {
+  width: 100%;
+  transition: width 0.3s ease-in-out;
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+
+  > * {
+    width: 100%;
+  }
+
+  .modal-content {
+    height: auto;
+    transition: flex-basis 0.3s ease-in-out;
+    padding: 0 10px;
+    flex: 0 0 0px;
+    box-sizing: border-box;
+  }
+
+  .modal-content.open {
+    // flex: 0 0 500px;
+    border-left: 1px solid $g3-castle;
+  }
+
+  .modal-content-inner {
+    top: 119px;
+    right: 0;
+    height: 100%;
+  }
+}

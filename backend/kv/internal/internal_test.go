@@ -203,6 +203,22 @@ func Test_MarshalDashboard(t *testing.T) {
 				TableOptions: cloudhub.TableOptions{},
 				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -270,6 +286,22 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 				TimeFormat:   "MM:DD:YYYY",
 				FieldOptions: []cloudhub.RenamableField{},
 				Type:         "line",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -327,6 +359,22 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "MM:DD:YYYY",
 				Type:         "line",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -340,6 +388,97 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 		t.Fatal("Error unmarshaling dashboard: err:", err)
 	} else if !gocmp.Equal(expected, actual) {
 		t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(expected, actual))
+	}
+}
+
+func Test_MarshalDashboard_WithTableGaugeChartOptions(t *testing.T) {
+	dashboard := cloudhub.Dashboard{
+		ID: 1,
+		Cells: []cloudhub.DashboardCell{
+			{
+				ID:   "cell-table-gauge",
+				X:    0,
+				Y:    0,
+				W:    4,
+				H:    4,
+				MinW: 2,
+				MinH: 2,
+				Name: "Table gauge",
+				Type: "table-gauge",
+				Axes: map[string]cloudhub.Axis{
+					"y": {
+						Bounds: []string{"", ""},
+						Base:   "10",
+						Scale:  "linear",
+					},
+				},
+				Queries: []cloudhub.DashboardQuery{
+					{
+						Command: "SELECT * FROM cpu",
+						Label:   "cpu",
+						Type:    "influxql",
+						Shifts:  []cloudhub.TimeShift{},
+					},
+				},
+				CellColors: []cloudhub.CellColor{
+					{ID: "c1", Type: "min", Hex: "#00FF00", Name: "min", Value: "0"},
+				},
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{
+						{
+							InternalName: "cpu",
+							DisplayName:  "CPU",
+							Visible:      true,
+							Direction:    "asc",
+							Min:          0,
+							Max:          100,
+							Colors: []cloudhub.CellColor{
+								{ID: "gc1", Type: "min", Hex: "#00C9FF", Name: "laser", Value: "0"},
+							},
+							ThresholdColors: []cloudhub.CellColor{
+								{ID: "gt1", Type: "max", Hex: "#9394FF", Name: "comet", Value: "100"},
+						},
+						Unit:           "%",
+						Prefix:         "",
+						Suffix:         "%",
+						IsShowChart:    true,
+						IsPercent:      true,
+						ChartType:      "continuous",
+						BackgroundType: "gradient",
+						IsShowValues:   true,
+					},
+				},
+				DecimalPlaces: cloudhub.DecimalPlaces{
+					IsEnforced: true,
+					Digits:     2,
+					},
+					IsShowValues:    true,
+					SortBy:          "cpu",
+					SortByDirection: "desc",
+				},
+				FieldOptions: []cloudhub.RenamableField{},
+			},
+		},
+		Templates: []cloudhub.Template{},
+	}
+
+	var actual cloudhub.Dashboard
+	buf, err := internal.MarshalDashboard(dashboard)
+	if err != nil {
+		t.Fatal("Error marshaling dashboard with table gauge options:", err)
+	}
+	if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
+		t.Fatal("Error unmarshaling dashboard with table gauge options:", err)
+	}
+
+	if !gocmp.Equal(dashboard, actual) {
+		t.Fatalf("Dashboard protobuf copy error with table gauge options: diff follows:\n%s", gocmp.Diff(dashboard, actual))
 	}
 }
 
@@ -390,6 +529,22 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 				TableOptions: cloudhub.TableOptions{},
 				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "MM:DD:YYYY",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -443,6 +598,22 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "MM:DD:YYYY",
 				Type:         "line",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -465,6 +636,22 @@ func Test_MarshalDashboard_WithEmptyCellType(t *testing.T) {
 		Cells: []cloudhub.DashboardCell{
 			{
 				ID: "9b5367de-c552-4322-a9e8-7f384cbd235c",
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 	}
@@ -480,6 +667,22 @@ func Test_MarshalDashboard_WithEmptyCellType(t *testing.T) {
 				CellColors:   []cloudhub.CellColor{},
 				TableOptions: cloudhub.TableOptions{},
 				FieldOptions: []cloudhub.RenamableField{},
+				GraphOptions: cloudhub.GraphOptions{
+					FillArea:         true,
+					ShowLine:         true,
+					ShowPoint:        false,
+					ShowTempVarCount: "",
+				},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: false,
+						Digits:     0,
+					},
+					IsShowValues:    true,
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
 			},
 		},
 		Templates: []cloudhub.Template{},
@@ -700,5 +903,145 @@ func TestMarshalDLNxRstStg(t *testing.T) {
 		t.Fatal("Unmarshal failed:", err)
 	} else if !reflect.DeepEqual(v, vv) {
 		t.Fatalf("Mismatch in original and copied DLNxRstStg struct: got %#v, want %#v", vv, v)
+	}
+}
+
+// TestMarshalMarshalEsSource verifies that an EsSource can be
+// marshaled to protobuf and unmarshaled back without loss.
+func TestMarshalMarshalEsSource(t *testing.T) {
+	cases := []struct {
+		name string
+		src  cloudhub.EsSource
+	}{
+		{
+			name: "NoAuth",
+			src: cloudhub.EsSource{
+				ID:                 1,
+				Name:               "no-auth",
+				Default:            true,
+				Role:               "viewer",
+				Version:            "7.10.2",
+				URL:                "https://es.local:9200",
+				InsecureSkipVerify: false,
+				IndexPatterns:      []string{"index-*"},
+				DefaultIndex:       "index-1",
+				Organization:       "org-000",
+			},
+		},
+		{
+			name: "BasicAuth",
+			src: cloudhub.EsSource{
+				ID:                 2,
+				Name:               "with-basic",
+				Default:            false,
+				Role:               "admin",
+				Version:            "8.0.0",
+				URL:                "https://secure-es:9200",
+				InsecureSkipVerify: true,
+				IndexPatterns:      []string{"logs-*", "metrics-*"},
+				DefaultIndex:       "logs-2025",
+				Organization:       "org-123",
+				BasicAuth: &cloudhub.BasicAuth{
+					Username: "elastic",
+					Password: "changeme",
+				},
+			},
+		},
+		{
+			name: "APIKeyAuth",
+			src: cloudhub.EsSource{
+				ID:                 3,
+				Name:               "with-apikey",
+				Default:            false,
+				Role:               "reader",
+				Version:            "7.9.3",
+				URL:                "https://api-es:9200",
+				InsecureSkipVerify: false,
+				IndexPatterns:      []string{"*"},
+				DefaultIndex:       "default",
+				Organization:       "org-456",
+				APIKeyAuth: &cloudhub.APIKeyAuth{
+					ID:     "key-id-xyz",
+					APIKey: "secret-key-abc",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Marshal to protobuf
+			buf, err := internal.MarshalEsSource(tc.src)
+			if err != nil {
+				t.Fatalf("MarshalEsSource failed: %v", err)
+			}
+			if len(buf) == 0 {
+				t.Fatal("MarshalEsSource returned empty buffer")
+			}
+
+			// Unmarshal back into a fresh struct
+			var got cloudhub.EsSource
+			if err := internal.UnmarshalEsSource(buf, &got); err != nil {
+				t.Fatalf("UnmarshalEsSource failed: %v", err)
+			}
+
+			// Compare original vs round-tripped
+			if !reflect.DeepEqual(tc.src, got) {
+				t.Fatalf("Round-trip mismatch for %q:\n got: %+v\nwant: %+v",
+					tc.name, got, tc.src)
+			}
+		})
+	}
+}
+
+func TestMarshalDeviceMeta(t *testing.T) {
+	v := &cloudhub.DeviceMeta{
+		IP:         "192.168.1.100",
+		Hostname:   "test-host",
+		AliasName:  "testhost",
+		DeviceType: "switch",
+		OrgID:      "org123",
+		AppName:    "Cloudhub",
+	}
+
+	var vv cloudhub.DeviceMeta
+	if buf, err := internal.MarshalDeviceMeta(v); err != nil {
+		t.Fatal(err)
+	} else if err := internal.UnmarshalDeviceMeta(buf, &vv); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(*v, vv) {
+		t.Fatalf("DeviceMeta protobuf copy error: got %#v, expected %#v", vv, *v)
+	}
+}
+
+func TestMarshalDeviceToOrg(t *testing.T) {
+	v := &cloudhub.DeviceToOrg{
+		OrgID:     "org123",
+		AliasName: "testhost",
+	}
+
+	var vv cloudhub.DeviceToOrg
+	if buf, err := internal.MarshalDeviceToOrg(v); err != nil {
+		t.Fatal(err)
+	} else if err := internal.UnmarshalDeviceToOrg(buf, &vv); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(*v, vv) {
+		t.Fatalf("DeviceToOrg protobuf copy error: got %#v, expected %#v", vv, *v)
+	}
+}
+
+func TestMarshalAliasToDevice(t *testing.T) {
+	v := &cloudhub.AliasToDevice{
+		OrgID:    "org123",
+		Hostname: "test-host",
+	}
+
+	var vv cloudhub.AliasToDevice
+	if buf, err := internal.MarshalAliasToDevice(v); err != nil {
+		t.Fatal(err)
+	} else if err := internal.UnmarshalAliasToDevice(buf, &vv); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(*v, vv) {
+		t.Fatalf("AliasToDevice protobuf copy error: got %#v, expected %#v", vv, *v)
 	}
 }

@@ -93,6 +93,7 @@ class SideNav extends PureComponent<Props> {
     const isUsingOsp = this.isExistInLinks(AddonType.osp)
     const isUsingAI = this.isAddonUrlOn(AddonType.ai)
     const isUsingNvidiaGpu = this.isAddonUrlOn(AddonType.nvidia)
+    const isUsingLogAnalysis = this.isAddonUrlOn(AddonType.logAnalysis)
     const cloudsNavLink = (() => {
       if (isUsingVMware) {
         return 'vmware'
@@ -198,7 +199,7 @@ class SideNav extends PureComponent<Props> {
 
         <NavBlock
           highlightWhen={['alerts', 'alert-rules', 'tickscript']}
-          icon="alerts"
+          icon="bell"
           link={`${sourcePrefix}/alert-rules`}
           location={location}
         >
@@ -212,11 +213,11 @@ class SideNav extends PureComponent<Props> {
         </NavBlock>
 
         <Authorized
-          requiredRole={SUPERADMIN_ROLE}
+          requiredRole={ADMIN_ROLE}
           replaceWithIfNotAuthorized={
             <NavBlock
               highlightWhen={['logs']}
-              icon="eye"
+              icon="document"
               link={`${sourcePrefix}/logs`}
               location={location}
             >
@@ -226,7 +227,7 @@ class SideNav extends PureComponent<Props> {
           replaceWithIfNotUsingAuth={
             <NavBlock
               highlightWhen={['logs']}
-              icon="eye"
+              icon="document"
               link={`${sourcePrefix}/logs`}
               location={location}
             >
@@ -235,16 +236,35 @@ class SideNav extends PureComponent<Props> {
           }
         >
           <NavBlock
-            highlightWhen={['logs', 'activity-logs']}
-            icon="eye"
-            link={`${sourcePrefix}/logs`}
+            highlightWhen={['log-analysis', 'logs', 'activity-logs']}
+            icon="document"
+            link={
+              isUsingLogAnalysis
+                ? `${sourcePrefix}/log-analysis`
+                : `${sourcePrefix}/logs`
+            }
             location={location}
           >
-            <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+            <NavHeader
+              link={
+                isUsingLogAnalysis
+                  ? `${sourcePrefix}/log-analysis`
+                  : `${sourcePrefix}/logs`
+              }
+              title="Log Viewer"
+            />
+            {isUsingLogAnalysis && (
+              <NavListItem link={`${sourcePrefix}/log-analysis`}>
+                Log Analysis
+              </NavListItem>
+            )}
             <NavListItem link={`${sourcePrefix}/logs`}>System Logs</NavListItem>
-            <NavListItem link={`${sourcePrefix}/activity-logs`}>
-              Activity Logs
-            </NavListItem>
+
+            {_.get(me, 'role', '').includes(SUPERADMIN_ROLE) && (
+              <NavListItem link={`${sourcePrefix}/activity-logs`}>
+                Activity Logs
+              </NavListItem>
+            )}
           </NavBlock>
         </Authorized>
 

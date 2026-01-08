@@ -55,6 +55,33 @@
             "label": "",
             "bounds": ["", ""]
           }
+        },
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          }
+        ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
         }
       },
       {
@@ -94,6 +121,33 @@
             "label": "",
             "bounds": ["", ""]
           }
+        },
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          }
+        ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
         }
       },
       {
@@ -133,6 +187,33 @@
             "label": "",
             "bounds": ["", ""]
           }
+        },
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          }
+        ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
         }
       },
       {
@@ -173,6 +254,33 @@
             "label": "",
             "bounds": ["", ""]
           }
+        },
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          }
+        ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
         }
       },
       {
@@ -213,6 +321,33 @@
             "label": "",
             "bounds": ["", ""]
           }
+        },
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          }
+        ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
         }
       },
       {
@@ -253,6 +388,33 @@
             "label": "",
             "bounds": ["", ""]
           }
+        },
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          }
+        ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
         }
       },
       {
@@ -293,6 +455,33 @@
             "label": "",
             "bounds": ["", ""]
           }
+        },
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          }
+        ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
         }
       },
       {
@@ -333,13 +522,40 @@
             "label": "",
             "bounds": ["", ""]
           }
+        },
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true,
+            "direction": "asc",
+            "tempVar": ""
+          }
+        ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
         }
       }
     ],
     "templates": [
       {
         "tempVar": ":host:",
-        "id": "",
+        "id": "template-host-$(date +%s)",
         "type": "tagValues",
         "label": "",
         "values": [],

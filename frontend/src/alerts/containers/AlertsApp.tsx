@@ -17,8 +17,9 @@ import moment from 'moment'
 import {timeRanges} from 'src/shared/data/timeRanges'
 
 import {Source, TimeRange, Me, TimeZones} from 'src/types'
-import {Alert} from '../../types/alerts'
+import {Alert} from 'src/types/alerts'
 import {alertValueStatus} from 'src/shared/utils/alertValueStatus'
+import {TimeRange as PredictionTimeRange} from 'src/types/queries'
 
 interface Props {
   source: Source
@@ -27,6 +28,8 @@ interface Props {
   limit: number
   me: Me
   timeZone?: TimeZones
+  histogramDate?: PredictionTimeRange
+  statusHistogramDate?: PredictionTimeRange
 }
 
 interface State {
@@ -60,9 +63,9 @@ class AlertsApp extends PureComponent<Props, State> {
           .subtract(lowerInSec || oneDayInSec, 'seconds')
           .format(),
       },
-      limit: props.limit || 0, // only used if AlertsApp receives a limit prop
-      limitMultiplier: 1, // only used if AlertsApp receives a limit prop
-      isAlertsMaxedOut: false, // only used if AlertsApp receives a limit prop
+      limit: props.limit || 0,
+      limitMultiplier: 1,
+      isAlertsMaxedOut: false,
     }
   }
 
@@ -92,6 +95,14 @@ class AlertsApp extends PureComponent<Props, State> {
       this.fetchAlerts()
     }
     if (!_.isEqual(prevState.timeRange, this.state.timeRange)) {
+      this.fetchAlerts()
+    }
+    if (!_.isEqual(prevProps.histogramDate, this.props.histogramDate)) {
+      this.fetchAlerts()
+    }
+    if (
+      !_.isEqual(prevProps.statusHistogramDate, this.props.statusHistogramDate)
+    ) {
       this.fetchAlerts()
     }
   }
@@ -127,9 +138,25 @@ class AlertsApp extends PureComponent<Props, State> {
   }
 
   private fetchAlerts = (): void => {
+    let timeRangeToUse =
+      this.props.statusHistogramDate ||
+      this.props.histogramDate ||
+      this.state.timeRange
+
+    if (
+      (this.props.statusHistogramDate || this.props.histogramDate) &&
+      !timeRangeToUse.upper
+    ) {
+      const lowerTime = moment(timeRangeToUse.lower)
+      timeRangeToUse = {
+        ...timeRangeToUse,
+        upper: lowerTime.add(1, 'day').format(),
+      }
+    }
+
     getAlerts(
       this.props.source.links.proxy,
-      this.state.timeRange,
+      timeRangeToUse,
       this.state.limit * this.state.limitMultiplier,
       this.props.source.telegraf
     )
@@ -193,7 +220,6 @@ class AlertsApp extends PureComponent<Props, State> {
           error: false,
           loading: false,
           alerts: results,
-          // this.state.alerts.length === results.length ||
           isAlertsMaxedOut:
             results.length !== this.props.limit * this.state.limitMultiplier,
         })
@@ -250,6 +276,13 @@ const mapStateToProps = ({
   app: {
     persisted: {timeZone},
   },
-}) => ({me, timeZone})
+  predictionDashboard,
+  statusDashboard,
+}) => ({
+  me,
+  timeZone,
+  histogramDate: predictionDashboard?.histogramDate,
+  statusHistogramDate: statusDashboard?.histogramDate,
+})
 
 export default connect(mapStateToProps, null)(AlertsApp)

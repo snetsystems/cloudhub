@@ -3,6 +3,7 @@
   "measurement": "docker_container_blkio",
   "app": "docker",
   "autoflow": true,
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,
@@ -12,29 +13,79 @@
       "minW": 10,
       "minH": 4,
       "i": "4c79cefb-5152-410c-9b88-74f9bff7ef50",
-      "name": "Docker - Container Block IO",
+      "name": "Docker – Container Block IO (per container)",
       "queries": [
         {
-          "query": "SELECT max(\"io_serviced_recursive_read\") AS \"max_io_read\" FROM \":db:\".\":rp:\".\"docker_container_blkio\"",
+          "query": "SELECT max(\"io_serviced_recursive_read\") AS \"io_read\" FROM \":db:\".\":rp:\".\"docker_container_blkio\"",
           "groupbys": ["\"container_name\""],
           "wheres": []
         },
         {
-          "query": "SELECT max(\"io_serviced_recursive_sync\") AS \"max_io_sync\" FROM \":db:\".\":rp:\".\"docker_container_blkio\"",
+          "query": "SELECT max(\"io_serviced_recursive_write\") AS \"io_write\" FROM \":db:\".\":rp:\".\"docker_container_blkio\"",
           "groupbys": ["\"container_name\""],
           "wheres": []
         },
         {
-          "query": "SELECT max(\"io_serviced_recursive_write\") AS \"max_io_write\" FROM \":db:\".\":rp:\".\"docker_container_blkio\"",
-          "groupbys": ["\"container_name\""],
-          "wheres": []
-        },
-        {
-          "query": "SELECT max(\"io_serviced_recursive_total\") AS \"max_io_total\" FROM \":db:\".\":rp:\".\"docker_container_blkio\"",
+          "query": "SELECT max(\"io_serviced_recursive_total\") AS \"io_total\" FROM \":db:\".\":rp:\".\"docker_container_blkio\"",
           "groupbys": ["\"container_name\""],
           "wheres": []
         }
-      ]
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Container Name",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "ordinal"
+        },
+        "y": {
+          "bounds": ["0", ""],
+          "label": "I/O Count",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "staticBar",
+      "colors": [
+        {
+          "id": "cb5a7c4d-45f1-4cbe-8a3b-89b4ad8ebed1",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Read",
+          "value": "0"
+        },
+        {
+          "id": "c37bba11-c67e-4cc1-b6e3-fbc1a6d7a278",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Write",
+          "value": "0"
+        },
+        {
+          "id": "de14b7f9-7b82-4b85-8c51-9c054f2d6da1",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Total",
+          "value": "0"
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": false,
+        "showPoint": false
+      }
     }
   ]
 }

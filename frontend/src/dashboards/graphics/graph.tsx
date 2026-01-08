@@ -1,5 +1,7 @@
+// Libraries
 import React, {ReactElement} from 'react'
 
+// Types
 import {CellType} from 'src/types/dashboards'
 
 type Graphic = ReactElement<HTMLDivElement>
@@ -21,8 +23,157 @@ interface GraphSVGs {
   [CellType.StaticStackedBar]: Graphic
   [CellType.StaticLineChart]: Graphic
   [CellType.StaticBar]: Graphic
+  [CellType.StaticTableGaugeChart]: Graphic
 }
 const GRAPH_SVGS: GraphSVGs = {
+  staticTableGaugeChart: (
+    <div className="graph-type-selector--graphic">
+      <svg
+        id="TableGauge"
+        x="0px"
+        y="0px"
+        width="100%"
+        height="100%"
+        viewBox="0 0 150 150"
+      >
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="M55.5,115H19.7c-1.7,0-3.1-1.4-3.1-3.1V61.7h38.9V115z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="M133.4,61.7H55.5V35h74.8c1.7,0,3.1,1.4,3.1,3.1V61.7z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="M55.5,61.7H16.6V38.1c0-1.7,1.4-3.1,3.1-3.1h35.9V61.7z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="M16.6,88.3v23.6c0,1.7,1.4,3.1,3.1,3.1h35.9V88.3H16.6z"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-c"
+          x="16.6"
+          y="61.7"
+          width="38.9"
+          height="26.7"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="M94.5,35v26.7h38.9V38.1c0-1.7-1.4-3.1-3.1-3.1H94.5z"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          x="55.5"
+          y="35"
+          width="38.9"
+          height="26.7"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-d"
+          d="M94.5,115h35.9c1.7,0,3.1-1.4,3.1-3.1V88.3H94.5V115z"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-d"
+          x="55.5"
+          y="88.3"
+          width="38.9"
+          height="26.7"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-d"
+          x="94.5"
+          y="61.7"
+          width="38.9"
+          height="26.7"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-d"
+          x="55.5"
+          y="61.7"
+          width="38.9"
+          height="26.7"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="M55.5,35H19.7c-1.7,0-3.1,1.4-3.1,3.1v23.6h38.9V35z"
+        />
+
+        {/* Row 1 Gauge (Top row) */}
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          x="60"
+          y="68"
+          width="30"
+          height="12"
+          rx="2"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          x="60"
+          y="68"
+          width="22"
+          height="12"
+          rx="2"
+        />
+        {/* Row 1 Gauge (Top row) */}
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          x="60"
+          y="95"
+          width="30"
+          height="12"
+          rx="2"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          x="60"
+          y="95"
+          width="12"
+          height="12"
+          rx="2"
+        />
+
+        {/* Row 2 Gauge (Middle row) */}
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          x="98"
+          y="68"
+          width="30"
+          height="12"
+          rx="2"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          x="98"
+          y="68"
+          width="17"
+          height="12"
+          rx="2"
+        />
+
+        {/* Row 3 Gauge (Bottom row) */}
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          x="98"
+          y="95"
+          width="30"
+          height="12"
+          rx="2"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          x="98"
+          y="95"
+          width="10"
+          height="12"
+          rx="2"
+        />
+      </svg>
+    </div>
+  ),
+
   staticLineChart: (
     <div className="graph-type-selector--graphic">
       <svg
@@ -1341,5 +1492,10 @@ export const STATISTICAL_GRAPH_TYPES: GraphType[] = [
     type: CellType.StaticLineChart,
     menuOption: 'Line',
     graphic: GRAPH_SVGS[CellType.StaticLineChart],
+  },
+  {
+    type: CellType.StaticTableGaugeChart,
+    menuOption: 'Table Gauge',
+    graphic: GRAPH_SVGS[CellType.StaticTableGaugeChart],
   },
 ]

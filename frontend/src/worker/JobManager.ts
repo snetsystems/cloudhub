@@ -18,6 +18,7 @@ import {getBasepath} from 'src/utils/basepath'
 import {TimeSeriesToDyGraphReturnType} from 'src/worker/jobs/timeSeriesToDygraph'
 import {FluxTablesToDygraphResult} from 'src/worker/jobs/fluxTablesToDygraph'
 import {LastValues} from 'src/worker/jobs/fluxTablesToSingleStat'
+import {ESProxyQuery} from 'src/utils/esQueryUrlGenerator'
 
 const workerCount = navigator.hardwareConcurrency - 1 || 2
 
@@ -53,6 +54,12 @@ class JobManager {
       url = `${getBasepath()}${url}`
     }
     return this.publishJob('PROXY', {url, query, db, rp, uuid})
+  }
+
+  public esProxy = (proxyUrl: string, esReq: ESProxyQuery): Promise<any> => {
+    const url = getBasepath() !== '' ? `${getBasepath()}${proxyUrl}` : proxyUrl
+
+    return this.publishJob('ESPROXY', {url: url, esReq})
   }
 
   public postJSON(url, body): Promise<any> {

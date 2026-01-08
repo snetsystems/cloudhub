@@ -3,40 +3,37 @@ import React, {PureComponent, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import * as d3 from 'd3'
-import yaml from 'js-yaml'
 
 // Component
 import KubernetesHeader from 'src/clouds/components/KubernetesHeader'
 import KubernetesContents from 'src/clouds/components/KubernetesContents'
-import {ComponentStatus} from 'src/reusable_ui'
+
 import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
-// Actions
-import {getMinionKeyAcceptedListAsync} from 'src/clouds/actions'
+// Kubernetes Proxy API
 import {
-  getLocalK8sNamespacesAsync,
-  getLocalK8sNodesAsync,
-  getLocalK8sPodsAsync,
-  getLocalK8sDeploymentsAsync,
-  getLocalK8sReplicaSetsAsync,
-  getLocalK8sReplicationControllersAsync,
-  getLocalK8sDaemonSetsAsync,
-  getLocalK8sStatefulSetsAsync,
-  getLocalK8sJobsAsync,
-  getLocalK8sCronJobsAsync,
-  getLocalK8sServicesAsync,
-  getLocalK8sIngressesAsync,
-  getLocalK8sConfigmapsAsync,
-  getLocalK8sSecretsAsync,
-  getLocalK8sServiceAccountsAsync,
-  getLocalK8sClusterRolesAsync,
-  getLocalK8sClusterRoleBindingsAsync,
-  getLocalK8sRolesAsync,
-  getLocalK8sRoleBindingsAsync,
-  getLocalK8sPersistentVolumesAsync,
-  getLocalK8sPersistentVolumeClaimsAsync,
-  getLocalK8sDetailAsync,
-} from 'src/clouds/actions/kubernetes'
+  getKubernetesNamespacesProxy,
+  getKubernetesNodesProxy,
+  getKubernetesPodsProxy,
+  getKubernetesServicesProxy,
+  getKubernetesIngressesProxy,
+  getKubernetesServiceAccountsProxy,
+  getKubernetesRolesProxy,
+  getKubernetesRoleBindingsProxy,
+  getKubernetesPersistentVolumesProxy,
+  getKubernetesPersistentVolumeClaimsProxy,
+  getKubernetesConfigMapsProxy,
+  getKubernetesSecretsProxy,
+  getKubernetesDeploymentsProxy,
+  getKubernetesReplicaSetsProxy,
+  getKubernetesReplicationControllersProxy,
+  getKubernetesDaemonSetsProxy,
+  getKubernetesStatefulSetsProxy,
+  getKubernetesCronJobsProxy,
+  getKubernetesJobsProxy,
+  getKubernetesDetailProxy,
+  getKubernetesCustomObjectDetail,
+} from 'src/shared/apis/proxy'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 //Middleware
@@ -82,8 +79,6 @@ import {
   D3DataDepth3,
   KubernetesObject,
 } from 'src/clouds/types'
-import {AddonType} from 'src/shared/constants'
-import {SaltStack} from 'src/types/saltstack'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -97,6 +92,11 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 // Error
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {
+  notifyNamespaceRequired,
+  notifySelectedNamespacesAreNotValid,
+} from 'src/shared/copy/notifications'
+import {setSelectedPersistentVolume} from 'src/clouds/actions/kubernetesProxy'
 
 interface Props extends KubernetesProps {
   source: Source
@@ -107,6 +107,7 @@ interface Props extends KubernetesProps {
   autoRefresh: number
   links: Links
   meRole: string
+  setSelectedPersistentVolume?: (persistentVolumeName: string[] | null) => void
 }
 
 interface State {
@@ -115,12 +116,12 @@ interface State {
   script: string
   labelKey: string
   labelValue: string
-  selectedNamespace: string
+  selectedNamespaces: string[]
   selectedNode: string
   selectedLimit: string
   filterLabelKey: string
   filterLabelValue: string
-  filterNamespace: string
+  filterNamespace: string[]
   filterNode: string
   filterLimit: string
   namespaces: string[]
@@ -131,17 +132,19 @@ interface State {
   isToolipActive: boolean
   targetPosition: TooltipPosition
   tooltipNode: TooltipNode
-  minions: string[]
-  selectMinion: string
   selectedAutoRefresh: AutoRefreshOption['milliseconds']
-  isOpenMinions: boolean
-  isDisabledMinions: boolean
   layouts: Layout[]
   hostLinks: DashboardSwitcherLinks
   kubernetesData: object
   kubernetesD3Data: D3K8sData
   kubernetesObject: KubernetesObject
   remoteDataState: RemoteDataState
+  volumeMapping: {
+    [key: string]: string
+  }
+  highlightVolumes: string[]
+  searchName: string
+  searchNameApplied: string
 }
 
 @ErrorHandling
@@ -149,10 +152,8 @@ class KubernetesPage extends PureComponent<Props, State> {
   private height = 40
   private getKubernetesObjectInterval: NodeJS.Timer = null
   private getKubernetesResourceInterval: NodeJS.Timer = null
-  private noSelect: string = 'no select'
   private defaultState = {
     proportions: [0.75, 0.25],
-    selectMinion: this.noSelect,
     selectedAutoRefresh: 0,
   }
 
@@ -164,7 +165,7 @@ class KubernetesPage extends PureComponent<Props, State> {
 
       activeEditorTab: 'Detail',
       script: '',
-      selectedNamespace: 'All namespaces',
+      selectedNamespaces: ['All namespaces'],
       selectedNode: 'All nodes',
       selectedLimit: '20',
       labelKey: '',
@@ -174,7 +175,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       limits: ['20', '50', '100', 'Unlimited'],
       filterLabelKey: '',
       filterLabelValue: '',
-      filterNamespace: '',
+      filterNamespace: [],
       filterNode: '',
       filterLimit: '',
       focuseNode: {name: null, label: null, type: null},
@@ -191,522 +192,188 @@ class KubernetesPage extends PureComponent<Props, State> {
         cpu: null,
         memory: null,
       },
-      minions: [],
-      isOpenMinions: false,
-      isDisabledMinions: false,
+
       kubernetesD3Data: {name: null, children: []},
       layouts: [],
       hostLinks: EMPTY_LINKS,
       kubernetesData: null,
       kubernetesObject: null,
       remoteDataState: RemoteDataState.NotStarted,
+      highlightVolumes: [],
+      volumeMapping: {},
+      searchName: '',
+      searchNameApplied: '',
     }
   }
 
   public getNodes = async (detail: boolean = true) => {
-    const {selectMinion} = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {kwarg: {detail}}
-
-    const target =
-      !selectMinion || selectMinion === this.noSelect ? '*' : selectMinion
+    const pParam: any = {kwarg: {detail}}
 
     try {
-      const nodes = await this.props.handleGetNodes(
-        saltMasterUrl,
-        saltMasterToken,
-        target,
-        pParam
-      )
-
-      return this.yamltoJson(nodes)
+      const nodes = await getKubernetesNodesProxy(pParam)
+      return nodes
     } catch (error) {
       console.error(error)
       return null
     }
   }
 
-  public getPods = async (node: string) => {
+  public getPodsForNode = async (
+    node: string,
+    selectedNamespaces: string[],
+    isAllNamespaces: boolean = false
+  ) => {
     const {
-      selectMinion,
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
 
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        fieldselector: `spec.nodeName=${node}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
+    if (isAllNamespaces) {
+      const pParam: any = {
+        kwarg: {
+          namespace: '',
+          fieldselector: node ? `spec.nodeName=${node}` : '',
+          labelselector:
+            !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+              ? `${filterLabelKey}=${filterLabelValue}`
+              : '',
+          limit:
+            filterLimit !== '' && filterLimit !== 'Unlimited'
+              ? parseInt(filterLimit)
+              : parseInt(selectedLimit),
+          detail: true,
+        },
+      }
 
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const pods = await this.props.handleGetPods(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(pods)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-  }
-
-  public getDeployments = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const deployments = await this.props.handleGetDeployments(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(deployments)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-  }
-
-  public getReplicaSets = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const replicaSets = await this.props.handleGetReplicaSets(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(replicaSets)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-  }
-
-  public getReplicationControllers = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const replicationControllers = await this.props.handleGetReplicationControllers(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(replicationControllers)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-  }
-
-  public getDaemonSets = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const daemonSets = await this.props.handleGetDaemonSets(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(daemonSets)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-  }
-
-  public getStatefulSets = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const statefulSets = await this.props.handleGetStatefulSets(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(statefulSets)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-  }
-
-  public getCronJobs = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const cronJobs = await this.props.handleGetCronJobs(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(cronJobs)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-  }
-
-  public getJobs = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    try {
-      const jobs = await this.props.handleGetJobs(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(jobs)
-    } catch (error) {
-      console.error(error)
-      return null
-    }
-  }
-
-  public getServices = async flag => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    if (flag) {
       try {
-        const services = await this.props.handleGetServices(
-          saltMasterUrl,
-          saltMasterToken,
-          selectMinion,
-          pParam
-        )
-
-        return this.yamltoJson(services)
+        const pods = await getKubernetesPodsProxy(pParam)
+        return pods || []
       } catch (error) {
         console.error(error)
-        return null
+        return []
       }
     }
-    return null
-  }
 
-  public getIngresses = async flag => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterNamespace,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
+    const podPromises = selectedNamespaces.map(async namespace => {
+      const pParam: any = {
+        kwarg: {
+          namespace: namespace,
+          fieldselector: node ? `spec.nodeName=${node}` : '',
+          labelselector:
+            !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+              ? `${filterLabelKey}=${filterLabelValue}`
+              : '',
+          limit:
+            filterLimit !== '' && filterLimit !== 'Unlimited'
+              ? parseInt(filterLimit)
+              : parseInt(selectedLimit),
+          detail: true,
+        },
+      }
 
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
-    }
-
-    if (flag) {
       try {
-        const ingresses = await this.props.handleGetIngresses(
-          saltMasterUrl,
-          saltMasterToken,
-          selectMinion,
-          pParam
-        )
-
-        return this.yamltoJson(ingresses)
+        const pods = await getKubernetesPodsProxy(pParam)
+        return pods || []
       } catch (error) {
         console.error(error)
-        return null
+        return []
       }
+    })
+
+    try {
+      const results = await Promise.allSettled(podPromises)
+      const successfulResults = results
+        .filter(result => result.status === 'fulfilled')
+        .map(result => result.value)
+      return successfulResults.flat()
+    } catch (error) {
+      console.error(error)
+      return []
     }
-    return null
   }
 
-  public getConfigmaps = async () => {
+  public getDeploymentsForNamespace = async (namespace: string) => {
     const {
-      selectMinion,
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
 
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
+    }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: any = {kwarg}
+
+    try {
+      const deployments = await getKubernetesDeploymentsProxy(pParam)
+      return deployments || []
+    } catch (error) {
+      console.error(error)
+      return []
+    }
+  }
+
+  public getReplicaSetsForNamespace = async (namespace: string) => {
+    const {
+      selectedLimit,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
+    }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: any = {kwarg}
+
+    try {
+      const replicaSets = await getKubernetesReplicaSetsProxy(pParam)
+      return replicaSets || []
+    } catch (error) {
+      console.error(error)
+      return []
+    }
+  }
+
+  public getReplicationControllersForNamespace = async (namespace: string) => {
+    const {
+      selectedLimit,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
+    const pParam: any = {
       kwarg: {
-        namespace: `${filterNamespace}`,
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -718,42 +385,27 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
-      const configmaps = await this.props.handleGetConfigmaps(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
+      const replicationControllers = await getKubernetesReplicationControllersProxy(
         pParam
       )
-
-      return this.yamltoJson(configmaps)
+      return replicationControllers || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
-
-    return null
   }
 
-  public getSecrets = async () => {
+  public getDaemonSetsForNamespace = async (namespace: string) => {
     const {
-      selectMinion,
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
+    const pParam = {
       kwarg: {
-        namespace: `${filterNamespace}`,
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -765,40 +417,25 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
-      const secrets = await this.props.handleGetSecrets(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(secrets)
+      const daemonSets = await getKubernetesDaemonSetsProxy(pParam)
+      return daemonSets || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getServiceAccounts = async () => {
+  public getStatefulSetsForNamespace = async (namespace: string) => {
     const {
-      selectMinion,
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
+    const pParam = {
       kwarg: {
-        namespace: `${filterNamespace}`,
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -810,38 +447,25 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
-      const serviceAccounts = await this.props.handleGetServiceAccounts(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(serviceAccounts)
+      const statefulSets = await getKubernetesStatefulSetsProxy(pParam)
+      return statefulSets || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getClusterRoles = async () => {
+  public getCronJobsForNamespace = async (namespace: string) => {
     const {
-      selectMinion,
       selectedLimit,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
+    const pParam = {
       kwarg: {
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -853,38 +477,25 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
-      const clusterRoles = await this.props.handleGetClusterRoles(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(clusterRoles)
+      const cronJobs = await getKubernetesCronJobsProxy(pParam)
+      return cronJobs || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getClusterRoleBindings = async () => {
+  public getJobsForNamespace = async (namespace: string) => {
     const {
-      selectMinion,
       selectedLimit,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
+    const pParam = {
       kwarg: {
+        namespace: namespace,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
@@ -896,197 +507,317 @@ class KubernetesPage extends PureComponent<Props, State> {
         detail: true,
       },
     }
-
     try {
-      const clusterRoleBindings = await this.props.handleGetClusterRoleBindings(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(clusterRoleBindings)
+      const jobs = await getKubernetesJobsProxy(pParam)
+      return jobs || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getRoles = async () => {
+  public getServicesForNamespace = async (namespace: string) => {
     const {
-      selectMinion,
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
 
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
 
-    try {
-      const roles = await this.props.handleGetRoles(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
 
-      return this.yamltoJson(roles)
+    const pParam: any = {kwarg}
+
+    try {
+      const services = await getKubernetesServicesProxy(pParam)
+      return services || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
     }
   }
 
-  public getRoleBindings = async () => {
+  public getIngressesForNamespace = async (namespace: string) => {
     const {
-      selectMinion,
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
 
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
 
-    try {
-      const roleBindings = await this.props.handleGetRoleBindings(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
 
-      return this.yamltoJson(roleBindings)
+    const pParam: any = {kwarg}
+
+    try {
+      const ingresses = await getKubernetesIngressesProxy(pParam)
+      return ingresses || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
+    }
+  }
+
+  public getServiceAccountsForNamespace = async (namespace: string) => {
+    const {
+      selectedLimit,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
+    }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: any = {kwarg}
+
+    try {
+      const serviceAccounts = await getKubernetesServiceAccountsProxy(pParam)
+      return serviceAccounts || []
+    } catch (error) {
+      console.error(error)
+      return []
+    }
+  }
+
+  public getRolesForNamespace = async (namespace: string) => {
+    const {
+      selectedLimit,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
+    }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: any = {kwarg}
+
+    try {
+      const roles = await getKubernetesRolesProxy(pParam)
+      return roles || []
+    } catch (error) {
+      console.error(error)
+      return []
+    }
+  }
+
+  public getRoleBindingsForNamespace = async (namespace: string) => {
+    const {
+      selectedLimit,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
+    }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam: any = {kwarg}
+
+    try {
+      const roleBindings = await getKubernetesRoleBindingsProxy(pParam)
+      return roleBindings || []
+    } catch (error) {
+      console.error(error)
+      return []
     }
   }
 
   public getPersistentVolumes = async () => {
-    const {
-      selectMinion,
-      selectedLimit,
-      filterLabelKey,
-      filterLabelValue,
-      filterLimit,
-    } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
+    const {filterLabelKey, filterLabelValue} = this.state
+    const pParam: any = {
       kwarg: {
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
         detail: true,
       },
     }
 
     try {
-      const persistentVolumes = await this.props.handleGetPersistentVolumes(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
+      const persistentVolumes = await getKubernetesPersistentVolumesProxy(
         pParam
       )
-
-      return this.yamltoJson(persistentVolumes)
+      return persistentVolumes
     } catch (error) {
       console.error(error)
       return null
     }
   }
 
-  public getPersistentVolumeClaims = async () => {
+  public getPersistentVolumeClaimsForNamespace = async (namespace: string) => {
     const {
-      selectMinion,
       selectedLimit,
-      filterNamespace,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
     } = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
 
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
-      kwarg: {
-        namespace: `${filterNamespace}`,
-        labelselector:
-          !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
-            ? `${filterLabelKey}=${filterLabelValue}`
-            : '',
-        limit:
-          filterLimit !== '' && filterLimit !== 'Unlimited'
-            ? parseInt(filterLimit)
-            : parseInt(selectedLimit),
-        detail: true,
-      },
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
     }
 
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam = {kwarg}
+
     try {
-      const persistentVolumeClaims = await this.props.handleGetPersistentVolumeClaims(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
+      const persistentVolumeClaims = await getKubernetesPersistentVolumeClaimsProxy(
         pParam
       )
-
-      return this.yamltoJson(persistentVolumeClaims)
+      return persistentVolumeClaims || []
     } catch (error) {
       console.error(error)
-      return null
+      return []
+    }
+  }
+
+  public getConfigMapsForNamespace = async (namespace: string) => {
+    const {
+      selectedLimit,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
+    }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam = {kwarg}
+
+    try {
+      const configMaps = await getKubernetesConfigMapsProxy(pParam)
+      return configMaps || []
+    } catch (error) {
+      console.error(error)
+      return []
+    }
+  }
+
+  public getSecretsForNamespace = async (namespace: string) => {
+    const {
+      selectedLimit,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
+
+    const kwarg: any = {
+      labelselector:
+        !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
+          ? `${filterLabelKey}=${filterLabelValue}`
+          : '',
+      limit:
+        filterLimit !== '' && filterLimit !== 'Unlimited'
+          ? parseInt(filterLimit)
+          : parseInt(selectedLimit),
+      detail: true,
+    }
+
+    if (namespace !== '') {
+      kwarg.namespace = namespace
+    }
+
+    const pParam = {kwarg}
+
+    try {
+      const secrets = await getKubernetesSecretsProxy(pParam)
+      return secrets || []
+    } catch (error) {
+      console.error(error)
+      return []
     }
   }
 
@@ -1095,53 +826,123 @@ class KubernetesPage extends PureComponent<Props, State> {
       return value
   }
 
+  public combineNamespaceResults = (
+    results: any[],
+    selectedNamespaces: string[],
+    type: string
+  ) => {
+    const itemsPerNamespace = 8
+    const typeIndex = {
+      services: 0,
+      ingresses: 1,
+      serviceAccounts: 2,
+      roles: 3,
+      roleBindings: 4,
+      persistentVolumeClaims: 5,
+      configmaps: 6,
+      secrets: 7,
+    }
+
+    const index = typeIndex[type]
+    if (index === undefined) return []
+
+    const combinedResults = []
+    for (let i = 0; i < selectedNamespaces.length; i++) {
+      const resultIndex = i * itemsPerNamespace + index
+      if (results[resultIndex]) {
+        combinedResults.push(...results[resultIndex])
+      }
+    }
+
+    return combinedResults
+  }
+
+  public combineWorkloadResults = (
+    results: any[],
+    selectedNamespaces: string[],
+    type: string
+  ) => {
+    const itemsPerNamespace = 7
+    const typeIndex = {
+      deployments: 0,
+      replicaSets: 1,
+      replicationControllers: 2,
+      daemonSets: 3,
+      statefulSets: 4,
+      cronJobs: 5,
+      jobs: 6,
+    }
+
+    const index = typeIndex[type]
+    if (index === undefined) return []
+
+    const combinedResults = []
+    for (let i = 0; i < selectedNamespaces.length; i++) {
+      const resultIndex = i * itemsPerNamespace + index
+      if (results[resultIndex]) {
+        combinedResults.push(...results[resultIndex])
+      }
+    }
+
+    return combinedResults
+  }
+
   public parentNavigation = d => {
     const {kubernetesData} = this.state
     const findData = []
 
     findData.push(d.data.name)
-
     if (_.get(kubernetesData, d.data.owner)) {
       if (d.parent.data.type === 'Ingress') {
-        const spec = _.get(kubernetesData, d.data.owner)
-        if (_.get(spec, 'rules')) {
+        const namespace = d.data.namespace
+        const ingressName = d.data.label
+        const spec = _.get(kubernetesData, [
+          'Namespace',
+          namespace,
+          'Ingress',
+          ingressName,
+        ])
+        const rules = _.get(spec, 'spec.rules') || _.get(spec, 'rules')
+        if (rules.length > 0) {
           const objKind = _.get(d, 'parent.parent.data.type')
           const objLabel = _.get(d, 'parent.parent.data.label')
-          _.map(_.get(spec, 'rules'), rule => {
+
+          _.map(rules, rule => {
             _.map(_.get(rule, 'http.paths'), service => {
-              findData.push(
-                `${objKind}_${objLabel}_Service_${_.get(
-                  service,
-                  'backend.service_name'
-                )}`
-              )
+              const serviceName =
+                _.get(service, 'backend.service.name') ||
+                _.get(service, 'backend.service_name')
+              const newData = `${objKind}_${objLabel}_Service_${serviceName}`
+              findData.push(newData)
             })
           })
         }
       } else {
         const owner = _.get(kubernetesData, d.data.owner)
-        _.map(owner, owner => {
-          if (owner['kind'] !== d.parent.data.type) {
+
+        _.map(owner, ownerItem => {
+          if (ownerItem['kind'] !== d.parent.data.type) {
             const objKind = _.get(d, 'parent.parent.data.type')
             const objLabel = _.get(d, 'parent.parent.data.label')
-            findData.push(
-              `${objKind}_${objLabel}_${owner['kind']}_${owner['name']}`
-            )
-            if (
-              _.get(
-                kubernetesData,
-                `${objKind}.${objLabel}.${owner['kind']}.${owner['name']}.metadata.owner_references`
-              )
-            ) {
-              const parentOwner = _.get(
-                kubernetesData,
-                `${objKind}.${objLabel}.${owner['kind']}.${owner['name']}.metadata.owner_references`
-              )
-              _.map(parentOwner, parentOwner => {
-                if (parentOwner['kind'] !== d.parent.data.type) {
-                  findData.push(
-                    `${objKind}_${objLabel}_${parentOwner['kind']}_${parentOwner['name']}`
-                  )
+            const newData = `${objKind}_${objLabel}_${ownerItem['kind']}_${ownerItem['name']}`
+            findData.push(newData)
+
+            const parentOwnerPath = [
+              objKind,
+              objLabel,
+              ownerItem['kind'],
+              ownerItem['name'],
+              'metadata',
+              'owner_references',
+            ]
+
+            if (_.get(kubernetesData, parentOwnerPath)) {
+              const parentOwner = _.get(kubernetesData, parentOwnerPath)
+
+              _.map(parentOwner, parentOwnerItem => {
+                if (parentOwnerItem['kind'] !== d.parent.data.type) {
+                  const parentNewData = `${objKind}_${objLabel}_${parentOwnerItem['kind']}_${parentOwnerItem['name']}`
+                  findData.push(parentNewData)
                 }
               })
             }
@@ -1151,58 +952,67 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (_.get(d, 'data.child')) {
-      if (_.get(kubernetesData, _.get(d, 'data.child'))) {
-        const pod = _.get(kubernetesData, _.get(d, 'data.child'))
-        _.map(pod, pod => {
+      const childPath = _.get(d, 'data.child')
+
+      if (_.get(kubernetesData, childPath)) {
+        const pod = _.get(kubernetesData, childPath)
+
+        _.map(pod, podItem => {
           if (_.get(d, 'parent')) {
             if (_.get(d, 'parent.parent')) {
               const objKind = _.get(d, 'parent.parent.data.type')
               const objLabel = _.get(d, 'parent.parent.data.label')
 
               if (_.get(d, 'parent.data.type') === 'Service') {
-                _.map(
-                  _.get(kubernetesData, `${objKind}.${objLabel}.Ingress`),
-                  ingress => {
-                    _.map(_.get(ingress.spec, 'rules'), rule => {
-                      _.map(_.get(rule, 'http.paths'), service => {
-                        if (
-                          _.get(service, 'backend.service_name') ===
-                          _.get(d, 'data.label')
-                        ) {
-                          findData.push(
-                            `${objKind}_${objLabel}_Ingress_${_.get(
-                              ingress,
-                              'metadata.name'
-                            )}`
-                          )
-                        }
-                      })
+                const ingressPath = `${objKind}.${objLabel}.Ingress`
+                const ingresses = _.get(kubernetesData, ingressPath)
+
+                _.map(ingresses, ingress => {
+                  _.map(_.get(ingress.spec, 'rules'), rule => {
+                    _.map(_.get(rule, 'http.paths'), service => {
+                      const serviceName = _.get(service, 'backend.service_name')
+                      const currentLabel = _.get(d, 'data.label')
+
+                      if (serviceName === currentLabel) {
+                        const newData = `${objKind}_${objLabel}_Ingress_${_.get(
+                          ingress,
+                          'metadata.name'
+                        )}`
+
+                        findData.push(newData)
+                      }
                     })
-                  }
-                )
+                  })
+                })
               } else {
-                _.map(
-                  _.get(
-                    kubernetesData,
-                    `${objKind}.${objLabel}.Node.${pod['node_name']}.Pod.${pod['name']}.metadata.owner_references`
-                  ),
-                  owner => {
-                    findData.push(
-                      `${objKind}_${objLabel}_${owner['kind']}_${owner['name']}`
-                    )
-                  }
-                )
+                const namespace = d.data.namespace
+                const nodeName = podItem['node_name']
+                const podName = podItem['name']
+                const podOwnerRefsPath = [
+                  'Namespace',
+                  namespace,
+                  'Node',
+                  nodeName,
+                  'Pod',
+                  podName,
+                  'metadata',
+                  'owner_references',
+                ]
+                const podOwnerRefs = _.get(kubernetesData, podOwnerRefsPath)
+
+                _.map(podOwnerRefs, owner => {
+                  const newData = `${objKind}_${objLabel}_${owner['kind']}_${owner['name']}`
+                  findData.push(newData)
+                })
               }
 
-              findData.push(
-                `${objKind}_${objLabel}_${pod['node_name']}_${pod['name']}`
-              )
+              const podData = `${objKind}_${objLabel}_${podItem['node_name']}_${podItem['name']}`
+              findData.push(podData)
             }
           }
         })
       }
     }
-
     const relation = _.map(_.unionBy(findData), (name: string): string =>
       name.replace(/[.:*+?^${}()|[\]\\]/g, '\\$&')
     )
@@ -1210,46 +1020,14 @@ class KubernetesPage extends PureComponent<Props, State> {
     return relation
   }
 
-  public getMinionKeyAcceptedList = async () => {
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    try {
-      const minions = await this.props.handleGetMinionKeyAcceptedList(
-        saltMasterUrl,
-        saltMasterToken
-      )
-
-      return minions
-    } catch (error) {
-      return []
-    }
-  }
-
   public getNamespaces = async () => {
-    const {selectMinion} = this.state
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const pParam: SaltStack = {
+    const pParam: any = {
       kwarg: {namespace: '', detail: true},
     }
 
     try {
-      const namespaces = await this.props.handleGetNamespaces(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      return this.yamltoJson(namespaces)
+      const namespaces = await getKubernetesNamespacesProxy(pParam)
+      return namespaces
     } catch (error) {
       console.error(error)
       return null
@@ -1259,37 +1037,193 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getK8sObject = async () => {
     this.setState({remoteDataState: RemoteDataState.Loading})
 
-    const info = await Promise.all([
+    const basicResults = await Promise.allSettled([
       this.getNamespaces(),
       this.getNodes(),
-      this.getServices(true),
-      this.getIngresses(true),
-      this.getConfigmaps(),
-      this.getSecrets(),
-      this.getServiceAccounts(),
-      this.getClusterRoles(),
-      this.getClusterRoleBindings(),
-      this.getRoles(),
-      this.getRoleBindings(),
-      this.getPersistentVolumes(),
-      this.getPersistentVolumeClaims(),
     ])
 
-    if (typeof info[0] !== 'object') {
+    const namespacesResult =
+      basicResults[0].status === 'fulfilled' ? basicResults[0].value : null
+    const nodesResult =
+      basicResults[1].status === 'fulfilled' ? basicResults[1].value : null
+
+    if (typeof namespacesResult !== 'object') {
       this.setState({remoteDataState: RemoteDataState.Error})
       return
     }
+
+    const {selectedNamespaces} = this.state
+    let validatedSelectedNamespaces = selectedNamespaces
+
+    if (!_.includes(selectedNamespaces, 'All namespaces')) {
+      const availableNamespaces = _.map(namespacesResult, namespace =>
+        _.get(namespace, 'metadata.name')
+      )
+
+      const validNamespaces = selectedNamespaces.filter(ns =>
+        availableNamespaces.includes(ns)
+      )
+
+      if (validNamespaces.length === 0) {
+        this.props.notify(notifySelectedNamespacesAreNotValid())
+        this.setState({remoteDataState: RemoteDataState.Error})
+        return
+      } else if (validNamespaces.length < selectedNamespaces.length) {
+        validatedSelectedNamespaces = validNamespaces
+      }
+
+      if (!_.isEqual(selectedNamespaces, validatedSelectedNamespaces)) {
+        this.setState({selectedNamespaces: validatedSelectedNamespaces})
+        const getLocal = getLocalStorage('kubernetes')
+        setLocalStorage('kubernetes', {
+          ...getLocal,
+          selectedNamespaces: validatedSelectedNamespaces,
+        })
+      }
+    }
+
+    const isAllNamespaces = _.includes(
+      validatedSelectedNamespaces,
+      'All namespaces'
+    )
+    const selectedNamespacesForQuery = isAllNamespaces
+      ? ['']
+      : !_.isEmpty(validatedSelectedNamespaces)
+      ? validatedSelectedNamespaces
+      : _.map(namespacesResult, namespace => _.get(namespace, 'metadata.name'))
+
+    let namespaceResults = []
+    let clusterResults = []
+
+    if (isAllNamespaces) {
+      const allNamespacePromises = [
+        this.getServicesForNamespace(''),
+        this.getIngressesForNamespace(''),
+        this.getServiceAccountsForNamespace(''),
+        this.getRolesForNamespace(''),
+        this.getRoleBindingsForNamespace(''),
+        this.getPersistentVolumeClaimsForNamespace(''),
+        this.getConfigMapsForNamespace(''),
+        this.getSecretsForNamespace(''),
+        this.getPersistentVolumes(),
+      ]
+
+      const allResults = await Promise.allSettled(allNamespacePromises)
+      namespaceResults = allResults
+        .slice(0, 8)
+        .map(result => (result.status === 'fulfilled' ? result.value : []))
+      clusterResults = [
+        allResults[8].status === 'fulfilled' ? allResults[8].value : [],
+      ]
+    } else {
+      const namespaceBasedPromises = selectedNamespacesForQuery.flatMap(
+        namespace => [
+          this.getServicesForNamespace(namespace),
+          this.getIngressesForNamespace(namespace),
+          this.getServiceAccountsForNamespace(namespace),
+          this.getRolesForNamespace(namespace),
+          this.getRoleBindingsForNamespace(namespace),
+          this.getPersistentVolumeClaimsForNamespace(namespace),
+          this.getConfigMapsForNamespace(namespace),
+          this.getSecretsForNamespace(namespace),
+        ]
+      )
+
+      const clusterPromises = [this.getPersistentVolumes()]
+
+      const [nsResults, clResults] = await Promise.allSettled([
+        Promise.allSettled(namespaceBasedPromises),
+        Promise.allSettled(clusterPromises),
+      ])
+
+      namespaceResults =
+        nsResults.status === 'fulfilled'
+          ? nsResults.value.map(result =>
+              result.status === 'fulfilled' ? result.value : []
+            )
+          : []
+      clusterResults =
+        clResults.status === 'fulfilled'
+          ? clResults.value.map(result =>
+              result.status === 'fulfilled' ? result.value : []
+            )
+          : []
+    }
+
+    const info = [
+      namespacesResult,
+      nodesResult,
+      isAllNamespaces
+        ? namespaceResults[0]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespacesForQuery,
+            'services'
+          ),
+      isAllNamespaces
+        ? namespaceResults[1]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespacesForQuery,
+            'ingresses'
+          ),
+      isAllNamespaces
+        ? namespaceResults[2]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespacesForQuery,
+            'serviceAccounts'
+          ),
+      isAllNamespaces
+        ? namespaceResults[3]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespacesForQuery,
+            'roles'
+          ),
+      isAllNamespaces
+        ? namespaceResults[4]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespacesForQuery,
+            'roleBindings'
+          ),
+      clusterResults[0],
+      isAllNamespaces
+        ? namespaceResults[5]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespacesForQuery,
+            'persistentVolumeClaims'
+          ),
+      isAllNamespaces
+        ? namespaceResults[6]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespacesForQuery,
+            'configmaps'
+          ),
+      isAllNamespaces
+        ? namespaceResults[7]
+        : this.combineNamespaceResults(
+            namespaceResults,
+            selectedNamespacesForQuery,
+            'secrets'
+          ),
+    ]
 
     let kubernetesData = {}
     const kubernetesD3Data: D3K8sData = {name: 'k8s', children: []}
     const d3Namespaces = {}
 
     const namespaces = _.reduce(
-      !_.isEmpty(this.state.filterNamespace)
-        ? _.filter(
-            info[0],
-            namespace =>
-              namespace['metadata']['name'] === this.state.filterNamespace
+      !_.isEmpty(selectedNamespacesForQuery) &&
+        !_.includes(validatedSelectedNamespaces, 'All namespaces')
+        ? _.filter(info[0], namespace =>
+            _.includes(
+              selectedNamespacesForQuery,
+              namespace['metadata']['name']
+            )
           )
         : info[0],
       (namespaces: object, namespace) => {
@@ -1320,6 +1254,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     _.map(info[2], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const serviceName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
         info[2] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'Service')
@@ -1352,16 +1291,26 @@ class KubernetesPage extends PureComponent<Props, State> {
         namespace: `${namespaceName}`,
         value: 10,
       }
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_Service`,
-        })
-      ].children.push(d3DataDepth3)
+
+      const serviceIndex = _.findIndex(d3Namespaces[namespaceName].children, {
+        name: `Namespace_${namespaceName}_Service`,
+      })
+
+      if (serviceIndex !== -1) {
+        d3Namespaces[namespaceName].children[serviceIndex].children.push(
+          d3DataDepth3
+        )
+      }
     })
 
     _.map(info[3], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const ingressName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
         info[3] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'Ingress')
@@ -1395,18 +1344,293 @@ class KubernetesPage extends PureComponent<Props, State> {
         value: 10,
       }
 
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_Ingress`,
-        })
-      ].children.push(d3DataDepth3)
-    })
+      const ingressIndex = _.findIndex(d3Namespaces[namespaceName].children, {
+        name: `Namespace_${namespaceName}_Ingress`,
+      })
 
+      if (ingressIndex !== -1) {
+        d3Namespaces[namespaceName].children[ingressIndex].children.push(
+          d3DataDepth3
+        )
+      }
+    })
     _.map(info[4], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
-      const configmapName = _.get(m, 'metadata.name')
+      const serviceAccountName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
         info[4] !== null &&
+        !_.includes(_.keys(namespaces[namespaceName]), 'ServiceAccount')
+      ) {
+        namespaces[namespaceName] = {
+          ...namespaces[namespaceName],
+          ServiceAccount: {},
+        }
+
+        const d3DataDepth2: D3DataDepth2 = {
+          name: `Namespace_${namespaceName}_ServiceAccount`,
+          label: 'ServiceAccount',
+          type: 'ServiceAccount',
+          children: [],
+        }
+        d3Namespaces[namespaceName].children.push(d3DataDepth2)
+      }
+
+      namespaces[namespaceName]['ServiceAccount'][serviceAccountName] = {
+        metadata: _.get(m, 'metadata'),
+        spec: _.get(m, 'spec'),
+        status: _.get(m, 'status'),
+      }
+
+      const d3DataDepth3: D3DataDepth3 = {
+        name: `Namespace_${namespaceName}_ServiceAccount_${serviceAccountName}`,
+        label: serviceAccountName,
+        type: 'SA',
+        namespace: `${namespaceName}`,
+        value: 10,
+      }
+
+      const serviceAccountIndex = _.findIndex(
+        d3Namespaces[namespaceName].children,
+        {
+          name: `Namespace_${namespaceName}_ServiceAccount`,
+        }
+      )
+
+      if (serviceAccountIndex !== -1) {
+        d3Namespaces[namespaceName].children[serviceAccountIndex].children.push(
+          d3DataDepth3
+        )
+      }
+    })
+
+    _.map(info[5], m => {
+      const namespaceName = _.get(m, 'metadata.namespace')
+      const roleName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
+      if (
+        info[5] !== null &&
+        !_.includes(_.keys(namespaces[namespaceName]), 'Role')
+      ) {
+        namespaces[namespaceName] = {
+          ...namespaces[namespaceName],
+          Role: {},
+        }
+
+        const d3DataDepth2: D3DataDepth2 = {
+          name: `Namespace_${namespaceName}_Role`,
+          label: 'Role',
+          type: 'Role',
+          children: [],
+        }
+        d3Namespaces[namespaceName].children.push(d3DataDepth2)
+      }
+
+      namespaces[namespaceName]['Role'][roleName] = {
+        metadata: _.get(m, 'metadata'),
+        spec: _.get(m, 'spec'),
+        status: _.get(m, 'status'),
+      }
+
+      const d3DataDepth3: D3DataDepth3 = {
+        name: `Namespace_${namespaceName}_Role_${roleName}`,
+        label: roleName,
+        type: 'RL',
+        namespace: `${namespaceName}`,
+        value: 10,
+      }
+
+      const roleIndex = _.findIndex(d3Namespaces[namespaceName].children, {
+        name: `Namespace_${namespaceName}_Role`,
+      })
+
+      if (roleIndex !== -1) {
+        d3Namespaces[namespaceName].children[roleIndex].children.push(
+          d3DataDepth3
+        )
+      }
+    })
+
+    _.map(info[6], m => {
+      const namespaceName = _.get(m, 'metadata.namespace')
+      const roleBindingName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
+      if (
+        info[6] !== null &&
+        !_.includes(_.keys(namespaces[namespaceName]), 'RoleBinding')
+      ) {
+        namespaces[namespaceName] = {
+          ...namespaces[namespaceName],
+          RoleBinding: {},
+        }
+
+        const d3DataDepth2: D3DataDepth2 = {
+          name: `Namespace_${namespaceName}_RoleBinding`,
+          label: 'RoleBinding',
+          type: 'RoleBinding',
+          children: [],
+        }
+
+        d3Namespaces[namespaceName].children.push(d3DataDepth2)
+      }
+
+      namespaces[namespaceName]['RoleBinding'][roleBindingName] = {
+        metadata: _.get(m, 'metadata'),
+        spec: _.get(m, 'spec'),
+        status: _.get(m, 'status'),
+      }
+
+      const d3DataDepth3: D3DataDepth3 = {
+        name: `Namespace_${namespaceName}_RoleBinding_${roleBindingName}`,
+        label: roleBindingName,
+        type: 'RB',
+        namespace: `${namespaceName}`,
+        value: 10,
+      }
+
+      const roleBindingIndex = _.findIndex(
+        d3Namespaces[namespaceName].children,
+        {
+          name: `Namespace_${namespaceName}_RoleBinding`,
+        }
+      )
+
+      if (roleBindingIndex !== -1) {
+        d3Namespaces[namespaceName].children[roleBindingIndex].children.push(
+          d3DataDepth3
+        )
+      }
+    })
+
+    _.map(info[7], m => {
+      const persistentVolumeName = _.get(m, 'metadata.name')
+      if (
+        info[7] !== null &&
+        !_.includes(_.keys(kubernetesData), 'PersistentVolume')
+      ) {
+        kubernetesData = {
+          ...kubernetesData,
+          PersistentVolume: {},
+        }
+
+        const d3DataDepth1: D3DataDepth1 = {
+          name: 'PersistentVolume',
+          label: 'PersistentVolume',
+          type: 'PersistentVolume',
+          children: [],
+        }
+
+        kubernetesD3Data.children.push(d3DataDepth1)
+      }
+
+      kubernetesData['PersistentVolume'][persistentVolumeName] = {
+        metadata: _.get(m, 'metadata'),
+        spec: _.get(m, 'spec'),
+        status: _.get(m, 'status'),
+      }
+
+      const d3DataDepth2: D3DataDepth2 = {
+        name: `PersistentVolume_${persistentVolumeName}`,
+        label: persistentVolumeName,
+        type: 'PV',
+        value: 10,
+      }
+
+      kubernetesD3Data.children[
+        _.findIndex(kubernetesD3Data.children, {
+          name: 'PersistentVolume',
+        })
+      ].children.push(d3DataDepth2)
+    })
+
+    _.map(info[8], m => {
+      const namespaceName = _.get(m, 'metadata.namespace')
+      const persistentVolumeClaimName = _.get(m, 'metadata.name')
+      const volumeName = _.get(m, 'spec.volume_name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
+      if (
+        info[8] !== null &&
+        !_.includes(_.keys(namespaces[namespaceName]), 'PersistentVolumeClaim')
+      ) {
+        namespaces[namespaceName] = {
+          ...namespaces[namespaceName],
+          PersistentVolumeClaim: {},
+        }
+
+        const d3DataDepth2: D3DataDepth2 = {
+          name: `Namespace_${namespaceName}_PersistentVolumeClaim`,
+          label: 'PersistentVolumeClaim',
+          type: 'PersistentVolumeClaim',
+          children: [],
+        }
+
+        d3Namespaces[namespaceName].children.push(d3DataDepth2)
+      }
+
+      namespaces[namespaceName]['PersistentVolumeClaim'][
+        persistentVolumeClaimName
+      ] = {
+        metadata: _.get(m, 'metadata'),
+        spec: _.get(m, 'spec'),
+        status: _.get(m, 'status'),
+      }
+
+      const d3DataDepth3: D3DataDepth3 = {
+        name: `Namespace_${namespaceName}_PersistentVolumeClaim_${persistentVolumeClaimName}`,
+        label: persistentVolumeClaimName,
+        type: 'PVC',
+        namespace: `${namespaceName}`,
+        volume_name: volumeName,
+        value: 10,
+      }
+
+      const volumeMapping = {}
+      volumeMapping[persistentVolumeClaimName] = volumeName ?? ''
+
+      const pvcIndex = _.findIndex(d3Namespaces[namespaceName].children, {
+        name: `Namespace_${namespaceName}_PersistentVolumeClaim`,
+      })
+
+      if (pvcIndex !== -1) {
+        d3Namespaces[namespaceName].children[pvcIndex].children.push(
+          d3DataDepth3
+        )
+      }
+
+      this.setState({
+        volumeMapping: {
+          ...this.state.volumeMapping,
+          ...volumeMapping,
+        },
+      })
+    })
+
+    _.map(info[9], m => {
+      const namespaceName = _.get(m, 'metadata.namespace')
+      const configmapName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
+      if (
+        info[9] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'Configmap')
       ) {
         namespaces[namespaceName] = {
@@ -1445,11 +1669,16 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
-    _.map(info[5], m => {
+    _.map(info[10], m => {
       const namespaceName = _.get(m, 'metadata.namespace')
       const secretName = _.get(m, 'metadata.name')
+
+      if (!d3Namespaces[namespaceName]) {
+        return
+      }
+
       if (
-        info[5] !== null &&
+        info[10] !== null &&
         !_.includes(_.keys(namespaces[namespaceName]), 'Secret')
       ) {
         namespaces[namespaceName] = {
@@ -1488,300 +1717,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       ].children.push(d3DataDepth3)
     })
 
-    _.map(info[6], m => {
-      const namespaceName = _.get(m, 'metadata.namespace')
-      const serviceAccountName = _.get(m, 'metadata.name')
-      if (
-        info[6] !== null &&
-        !_.includes(_.keys(namespaces[namespaceName]), 'ServiceAccount')
-      ) {
-        namespaces[namespaceName] = {
-          ...namespaces[namespaceName],
-          ServiceAccount: {},
-        }
-
-        const d3DataDepth2: D3DataDepth2 = {
-          name: `Namespace_${namespaceName}_ServiceAccount`,
-          label: 'ServiceAccount',
-          type: 'ServiceAccount',
-          children: [],
-        }
-        d3Namespaces[namespaceName].children.push(d3DataDepth2)
-      }
-
-      namespaces[namespaceName]['ServiceAccount'][serviceAccountName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth3: D3DataDepth3 = {
-        name: `Namespace_${namespaceName}_ServiceAccount_${serviceAccountName}`,
-        label: serviceAccountName,
-        type: 'SA',
-        namespace: `${namespaceName}`,
-        value: 10,
-      }
-
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_ServiceAccount`,
-        })
-      ].children.push(d3DataDepth3)
-    })
-
-    _.map(info[7], m => {
-      const clusterRoleName = _.get(m, 'metadata.name')
-      if (
-        info[7] !== null &&
-        !_.includes(_.keys(kubernetesData), 'ClusterRole')
-      ) {
-        kubernetesData = {
-          ...kubernetesData,
-          ClusterRole: {},
-        }
-
-        const d3DataDepth1: D3DataDepth1 = {
-          name: 'ClusterRole',
-          label: 'ClusterRole',
-          type: 'ClusterRole',
-          children: [],
-        }
-
-        kubernetesD3Data.children.push(d3DataDepth1)
-      }
-
-      kubernetesData['ClusterRole'][clusterRoleName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth2: D3DataDepth2 = {
-        name: `ClusterRole_${clusterRoleName}`,
-        label: clusterRoleName,
-        type: 'CR',
-        value: 10,
-      }
-
-      kubernetesD3Data.children[
-        _.findIndex(kubernetesD3Data.children, {
-          name: 'ClusterRole',
-        })
-      ].children.push(d3DataDepth2)
-    })
-
-    _.map(info[8], m => {
-      const clusterRoleBindingName = _.get(m, 'metadata.name')
-      if (
-        info[8] !== null &&
-        !_.includes(_.keys(kubernetesData), 'ClusterRoleBinding')
-      ) {
-        kubernetesData = {
-          ...kubernetesData,
-          ClusterRoleBinding: {},
-        }
-
-        const d3DataDepth1: D3DataDepth1 = {
-          name: 'ClusterRoleBinding',
-          label: 'ClusterRoleBinding',
-          type: 'ClusterRoleBinding',
-          children: [],
-        }
-
-        kubernetesD3Data.children.push(d3DataDepth1)
-      }
-
-      kubernetesData['ClusterRoleBinding'][clusterRoleBindingName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth2: D3DataDepth2 = {
-        name: `ClusterRoleBinding_${clusterRoleBindingName}`,
-        label: clusterRoleBindingName,
-        type: 'CRB',
-        value: 10,
-      }
-
-      kubernetesD3Data.children[
-        _.findIndex(kubernetesD3Data.children, {
-          name: 'ClusterRoleBinding',
-        })
-      ].children.push(d3DataDepth2)
-    })
-
-    _.map(info[9], m => {
-      const namespaceName = _.get(m, 'metadata.namespace')
-      const roleName = _.get(m, 'metadata.name')
-      if (
-        info[9] !== null &&
-        !_.includes(_.keys(namespaces[namespaceName]), 'Role')
-      ) {
-        namespaces[namespaceName] = {
-          ...namespaces[namespaceName],
-          Role: {},
-        }
-
-        const d3DataDepth2: D3DataDepth2 = {
-          name: `Namespace_${namespaceName}_Role`,
-          label: 'Role',
-          type: 'Role',
-          children: [],
-        }
-        d3Namespaces[namespaceName].children.push(d3DataDepth2)
-      }
-
-      namespaces[namespaceName]['Role'][roleName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth3: D3DataDepth3 = {
-        name: `Namespace_${namespaceName}_Role_${roleName}`,
-        label: roleName,
-        type: 'RL',
-        namespace: `${namespaceName}`,
-        value: 10,
-      }
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_Role`,
-        })
-      ].children.push(d3DataDepth3)
-    })
-
-    _.map(info[10], m => {
-      const namespaceName = _.get(m, 'metadata.namespace')
-      const roleBindingName = _.get(m, 'metadata.name')
-      if (
-        info[10] !== null &&
-        !_.includes(_.keys(namespaces[namespaceName]), 'RoleBinding')
-      ) {
-        namespaces[namespaceName] = {
-          ...namespaces[namespaceName],
-          RoleBinding: {},
-        }
-
-        const d3DataDepth2: D3DataDepth2 = {
-          name: `Namespace_${namespaceName}_RoleBinding`,
-          label: 'RoleBinding',
-          type: 'RoleBinding',
-          children: [],
-        }
-
-        d3Namespaces[namespaceName].children.push(d3DataDepth2)
-      }
-
-      namespaces[namespaceName]['RoleBinding'][roleBindingName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth3: D3DataDepth3 = {
-        name: `Namespace_${namespaceName}_RoleBinding_${roleBindingName}`,
-        label: roleBindingName,
-        type: 'RB',
-        namespace: `${namespaceName}`,
-        value: 10,
-      }
-
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_RoleBinding`,
-        })
-      ].children.push(d3DataDepth3)
-    })
-
-    _.map(info[11], m => {
-      const persistentVolumeName = _.get(m, 'metadata.name')
-      if (
-        info[11] !== null &&
-        !_.includes(_.keys(kubernetesData), 'PersistentVolume')
-      ) {
-        kubernetesData = {
-          ...kubernetesData,
-          PersistentVolume: {},
-        }
-
-        const d3DataDepth1: D3DataDepth1 = {
-          name: 'PersistentVolume',
-          label: 'PersistentVolume',
-          type: 'PersistentVolume',
-          children: [],
-        }
-
-        kubernetesD3Data.children.push(d3DataDepth1)
-      }
-
-      kubernetesData['PersistentVolume'][persistentVolumeName] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth2: D3DataDepth2 = {
-        name: `PersistentVolume_${persistentVolumeName}`,
-        label: persistentVolumeName,
-        type: 'PV',
-        value: 10,
-      }
-
-      kubernetesD3Data.children[
-        _.findIndex(kubernetesD3Data.children, {
-          name: 'PersistentVolume',
-        })
-      ].children.push(d3DataDepth2)
-    })
-
-    _.map(info[12], m => {
-      const namespaceName = _.get(m, 'metadata.namespace')
-      const persistentVolumeClaimName = _.get(m, 'metadata.name')
-      if (
-        info[12] !== null &&
-        !_.includes(_.keys(namespaces[namespaceName]), 'PersistentVolumeClaim')
-      ) {
-        namespaces[namespaceName] = {
-          ...namespaces[namespaceName],
-          PersistentVolumeClaim: {},
-        }
-
-        const d3DataDepth2: D3DataDepth2 = {
-          name: `Namespace_${namespaceName}_PersistentVolumeClaim`,
-          label: 'PersistentVolumeClaim',
-          type: 'PersistentVolumeClaim',
-          children: [],
-        }
-
-        d3Namespaces[namespaceName].children.push(d3DataDepth2)
-      }
-
-      namespaces[namespaceName]['PersistentVolumeClaim'][
-        persistentVolumeClaimName
-      ] = {
-        metadata: _.get(m, 'metadata'),
-        spec: _.get(m, 'spec'),
-        status: _.get(m, 'status'),
-      }
-
-      const d3DataDepth3: D3DataDepth3 = {
-        name: `Namespace_${namespaceName}_PersistentVolumeClaim_${persistentVolumeClaimName}`,
-        label: persistentVolumeClaimName,
-        type: 'PVC',
-        namespace: `${namespaceName}`,
-        value: 10,
-      }
-
-      d3Namespaces[namespaceName].children[
-        _.findIndex(d3Namespaces[namespaceName].children, {
-          name: `Namespace_${namespaceName}_PersistentVolumeClaim`,
-        })
-      ].children.push(d3DataDepth3)
-    })
-
     const nodes = _.reduce(
       !_.isEmpty(this.state.filterNode)
         ? _.filter(
@@ -1803,18 +1738,86 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     const allNodes = _.map(info[1], node => _.get(node, 'metadata.name'))
 
-    const podsPromises = _.map(_.keys(nodes), this.getPods)
-    const pods = await Promise.all(podsPromises)
+    const podsPromises = _.map(_.keys(nodes), nodeName =>
+      this.getPodsForNode(nodeName, selectedNamespacesForQuery, isAllNamespaces)
+    )
+    const podsResults = await Promise.allSettled(podsPromises)
+    const pods = podsResults.map(result =>
+      result.status === 'fulfilled' ? result.value : []
+    )
 
-    const etcObject = await Promise.all([
-      this.getDeployments(),
-      this.getReplicaSets(),
-      this.getReplicationControllers(),
-      this.getDaemonSets(),
-      this.getStatefulSets(),
-      this.getCronJobs(),
-      this.getJobs(),
-    ])
+    let workloadResults = []
+    let etcObject = []
+
+    if (isAllNamespaces) {
+      const workloadPromises = [
+        this.getDeploymentsForNamespace(''),
+        this.getReplicaSetsForNamespace(''),
+        this.getReplicationControllersForNamespace(''),
+        this.getDaemonSetsForNamespace(''),
+        this.getStatefulSetsForNamespace(''),
+        this.getCronJobsForNamespace(''),
+        this.getJobsForNamespace(''),
+      ]
+
+      const workloadSettledResults = await Promise.allSettled(workloadPromises)
+      etcObject = workloadSettledResults.map(result =>
+        result.status === 'fulfilled' ? result.value : []
+      )
+    } else {
+      const workloadPromises = selectedNamespacesForQuery.flatMap(namespace => [
+        this.getDeploymentsForNamespace(namespace),
+        this.getReplicaSetsForNamespace(namespace),
+        this.getReplicationControllersForNamespace(namespace),
+        this.getDaemonSetsForNamespace(namespace),
+        this.getStatefulSetsForNamespace(namespace),
+        this.getCronJobsForNamespace(namespace),
+        this.getJobsForNamespace(namespace),
+      ])
+
+      const workloadSettledResults = await Promise.allSettled(workloadPromises)
+      workloadResults = workloadSettledResults.map(result =>
+        result.status === 'fulfilled' ? result.value : []
+      )
+
+      etcObject = [
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespacesForQuery,
+          'deployments'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespacesForQuery,
+          'replicaSets'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespacesForQuery,
+          'replicationControllers'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespacesForQuery,
+          'daemonSets'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespacesForQuery,
+          'statefulSets'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespacesForQuery,
+          'cronJobs'
+        ),
+        this.combineWorkloadResults(
+          workloadResults,
+          selectedNamespacesForQuery,
+          'jobs'
+        ),
+      ]
+    }
 
     const deployments = _.reduce(
       etcObject[0],
@@ -1924,17 +1927,27 @@ class KubernetesPage extends PureComponent<Props, State> {
         const nodeName = _.get(pod, 'spec.node_name')
         const podContainers = _.get(pod, 'spec.containers')
         const podStatus = _.get(pod, 'status.phase')
+        const volumeArray = _.get(pod, 'spec.volumes')
+
+        if (!d3Namespaces[namespace]) {
+          return
+        }
 
         let podCPU = 0
         let podMemory = 0
 
         _.map(podContainers, podCont => {
-          podCPU =
-            podCPU +
-            transToCPUMillCore(_.get(podCont, 'resources.limits.cpu'), 'pod')
-          podMemory =
-            podMemory +
-            transMemoryToBytes(_.get(podCont, 'resources.limits.memory'))
+          const cpuRequest = _.get(podCont, 'resources.requests.cpu')
+          const cpuLimit = _.get(podCont, 'resources.limits.cpu')
+          const cpuAllocation = cpuRequest || cpuLimit
+
+          podCPU = podCPU + transToCPUMillCore(cpuAllocation, 'pod')
+
+          const memoryRequest = _.get(podCont, 'resources.requests.memory')
+          const memoryLimit = _.get(podCont, 'resources.limits.memory')
+          const memoryAllocation = memoryRequest || memoryLimit
+
+          podMemory = podMemory + transMemoryToBytes(memoryAllocation)
         })
 
         if (!_.includes(_.keys(namespaces[namespace]), 'Node'))
@@ -1969,15 +1982,25 @@ class KubernetesPage extends PureComponent<Props, State> {
               )
             ) {
               namespaces[namespace]['ReplicaSet'][ownerName] = {
-                metadata: replicaSets[ownerName].metadata,
-                spec: replicaSets[ownerName].spec,
-                status: replicaSets[ownerName].status,
+                metadata:
+                  replicaSets[ownerName] !== undefined
+                    ? replicaSets[ownerName].metadata
+                    : {},
+                spec:
+                  replicaSets[ownerName] !== undefined
+                    ? replicaSets[ownerName].spec
+                    : {},
+                status:
+                  replicaSets[ownerName] !== undefined
+                    ? replicaSets[ownerName].status
+                    : {},
                 Pod: [],
               }
               namespaces[namespace]['ReplicaSet'][ownerName]['Pod'].push({
                 name: podName,
                 node_name: nodeName,
                 namespaces: namespace,
+                volumes: volumeArray,
               })
 
               d3Namespaces[namespace].children[
@@ -1986,8 +2009,15 @@ class KubernetesPage extends PureComponent<Props, State> {
                 })
               ].children.push({
                 name: `Namespace_${namespace}_ReplicaSet_${ownerName}`,
-                owner: `Namespace.${namespace}.ReplicaSet.${ownerName}.metadata.owner_references`,
-                child: `Namespace.${namespace}.ReplicaSet.${ownerName}.Pod`,
+                owner: [
+                  'Namespace',
+                  namespace,
+                  'ReplicaSet',
+                  ownerName,
+                  'metadata',
+                  'owner_references',
+                ],
+                child: ['Namespace', namespace, 'ReplicaSet', ownerName, 'Pod'],
                 label: ownerName,
                 type: 'RS',
                 namespace: `${namespace}`,
@@ -2042,7 +2072,13 @@ class KubernetesPage extends PureComponent<Props, State> {
                     ].children.push({
                       name: `Namespace_${namespace}_Deployment_${ownerName}`,
                       label: ownerName,
-                      child: `Namespace.${namespace}.Deployment.${ownerName}.Pod`,
+                      child: [
+                        'Namespace',
+                        namespace,
+                        'Deployment',
+                        ownerName,
+                        'Pod',
+                      ],
                       type: 'DP',
                       namespace: `${namespace}`,
                       status:
@@ -2344,6 +2380,7 @@ class KubernetesPage extends PureComponent<Props, State> {
                 status: _.get(jobs[ownerName], 'status'),
                 Pod: [],
               }
+
               namespaces[namespace]['Job'][ownerName]['Pod'].push({
                 name: podName,
                 node_name: nodeName,
@@ -2359,8 +2396,15 @@ class KubernetesPage extends PureComponent<Props, State> {
                 label: ownerName,
                 type: 'Job',
                 namespace: `${namespace}`,
-                owner: `Namespace.${namespace}.Job.${ownerName}.metadata.owner_references`,
-                child: `Namespace.${namespace}.Job.${ownerName}.Pod`,
+                owner: [
+                  'Namespace',
+                  namespace,
+                  'Job',
+                  ownerName,
+                  'metadata',
+                  'owner_references',
+                ],
+                child: ['Namespace', namespace, 'Job', ownerName, 'Pod'],
                 status:
                   _.get(jobs[ownerName], 'status.failed') &&
                   _.get(jobs[ownerName], 'status.failed ') > 0
@@ -2370,7 +2414,11 @@ class KubernetesPage extends PureComponent<Props, State> {
               })
 
               _.map(_.get(jobs[ownerName], 'metadata.owner_references'), ro => {
+                const parentKind = _.get(ro, 'kind')
                 const name = _.get(ro, 'name')
+                if (parentKind !== 'CronJob') {
+                  return
+                }
                 if (!_.includes(_.keys(namespaces[namespace]), 'CronJob')) {
                   namespaces[namespace] = {
                     ...namespaces[namespace],
@@ -2432,7 +2480,11 @@ class KubernetesPage extends PureComponent<Props, State> {
               })
 
               _.map(jobs[ownerName].metadata.owner_references, ro => {
+                const parentKind = _.get(ro, 'kind')
                 const name = _.get(ro, 'name')
+                if (parentKind !== 'CronJob') {
+                  return
+                }
                 if (!_.includes(_.keys(namespaces[namespace]), 'CronJob')) {
                   namespaces[namespace] = {
                     ...namespaces[namespace],
@@ -2532,7 +2584,16 @@ class KubernetesPage extends PureComponent<Props, State> {
           ].children.push({
             name: `Namespace_${namespace}_${nodeName}_${podName}`,
             label: podName,
-            owner: `Namespace.${namespace}.Node.${nodeName}.Pod.${podName}.metadata.owner_references`,
+            owner: [
+              'Namespace',
+              namespace,
+              'Node',
+              nodeName,
+              'Pod',
+              podName,
+              'metadata',
+              'owner_references',
+            ],
             type: 'Pod',
             namespace: `${namespace}`,
             data: {
@@ -2555,6 +2616,7 @@ class KubernetesPage extends PureComponent<Props, State> {
             time: new Date().getSeconds(),
             status: `${podStatus}`,
             value: 10,
+            volumes: volumeArray,
           })
         }
 
@@ -2657,8 +2719,20 @@ class KubernetesPage extends PureComponent<Props, State> {
                         ] = {
                           ...d3Namespaces[namespace].children[ingressIndex]
                             .children[ingressChildrenIndex],
-                          owner: `Namespace.${namespace}.Ingress.${ingressName}.spec`,
-                          child: `Namespace.${namespace}.Ingress.${ingressName}.Pod`,
+                          owner: [
+                            'Namespace',
+                            namespace,
+                            'Ingress',
+                            ingressName,
+                            'spec',
+                          ],
+                          child: [
+                            'Namespace',
+                            namespace,
+                            'Ingress',
+                            ingressName,
+                            'Pod',
+                          ],
                         }
                       } else {
                         namespaces[namespace]['Ingress'][ingressName].Pod.push({
@@ -2698,8 +2772,14 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     if (!(node.data().length > 0)) return
 
+    const esc = (v: any) =>
+      typeof (window as any).CSS !== 'undefined' &&
+      typeof (window as any).CSS.escape === 'function'
+        ? (window as any).CSS.escape(String(v))
+        : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+
     let d3NodeObject = {}
-    _.forEach(node.select(`circle[data-type=${'Node'}]`).data(), s => {
+    _.forEach(node.select(`circle[data-type=${'Node'}]`).data() as any[], s => {
       d3NodeObject[s.data.label] = {
         ...d3NodeObject[s.data.label],
         name: s.data.label,
@@ -2710,12 +2790,13 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     let d3PodObject = {}
     const pod = node.select(`path[data-type=${'Pod'}]`)
-    _.forEach(pod.data(), s => {
+    _.forEach(pod.data() as any[], s => {
       d3PodObject[s.data.label] = {
         ...d3PodObject[s.data.label],
         name: s.data.label,
         cpu: s.data.data.cpu,
         memory: s.data.data.memory,
+        volumes: s.data.data.volumes,
       }
     })
 
@@ -2730,12 +2811,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       ),
       d3ModNod => {
         node
-          .select(
-            `circle[data-label=${String(d3ModNod['name']).replace(
-              /[.:*+?^${}()|[\]\\]/g,
-              '\\$&'
-            )}]`
-          )
+          .select(`circle[data-label=${esc(d3ModNod['name'])}]`)
           .attr('fill', 'gray')
       }
     )
@@ -2751,12 +2827,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       ),
       d3ModPod => {
         node
-          .select(
-            `path[data-label=${String(d3ModPod['name']).replace(
-              /[.:*+?^${}()|[\]\\]/g,
-              '\\$&'
-            )}]`
-          )
+          .select(`path[data-label=${esc(d3ModPod['name'])}]`)
           .attr('fill', 'gray')
       }
     )
@@ -2765,7 +2836,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         if (m['type'] === 'Node') {
           if (
             _.find(
-              node.select(`circle[data-type=${'Node'}]`).data(),
+              node.select(`circle[data-type=${'Node'}]`).data() as any[],
               nodeData => nodeData.data.label === m['name']
             )
           ) {
@@ -2773,59 +2844,73 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['cpu']) /
                 parseFloat(
                   node
-                    .select(
-                      `circle[data-label=${String(m['name']).replace(
-                        /[.:*+?^${}()|[\]\\]/g,
-                        '\\$&'
-                      )}]`
-                    )
+                    .select(`circle[data-label=${esc(m['name'])}]`)
                     .attr('data-limit-cpu')
                 )) *
-              100
+              100.0
             const memoryUsage =
               (parseFloat(m['memory']) /
                 parseFloat(
                   node
-                    .select(
-                      `circle[data-label=${String(m['name']).replace(
-                        /[.:*+?^${}()|[\]\\]/g,
-                        '\\$&'
-                      )}]`
-                    )
+                    .select(`circle[data-label=${esc(m['name'])}]`)
                     .attr('data-limit-memory')
                 )) *
-              100
+              100.0
 
             node
-              .select(
-                `circle[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`circle[data-label=${esc(m['name'])}]`)
               .attr('data-cpu', `${cpuUsage}`)
             node
-              .select(
-                `circle[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`circle[data-label=${esc(m['name'])}]`)
               .attr('data-memory', `${memoryUsage}`)
             const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
             node
-              .select(
-                `circle[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
+              .select(`circle[data-label=${esc(m['name'])}]`)
+              .attr(
+                'fill',
+                (kubernetesStatusColor(pick / 100) as unknown) as string
               )
-              .attr('fill', kubernetesStatusColor(pick / 100))
+          }
+        } else if (m['type'] === 'PV') {
+          if (
+            _.find(
+              node.select(`path[data-type=${'PV'}]`).data() as any[],
+              pvData => pvData.data.label === m['name']
+            )
+          ) {
+            const iopsValue = m['iops'] || 0
+            const bandwidthValue = m['bandwidth'] || 0
+            const latencyValue = m['latency'] || 0
+
+            const iopsUsage = (iopsValue / 100000) * 100
+            const bandwidthUsage = (bandwidthValue / 700000) * 100
+
+            const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
+            const fillColor = (kubernetesStatusColor(
+              pick / 100
+            ) as unknown) as string
+
+            node
+              .select(`path[data-label=${esc(m['name'])}]`)
+              .attr('data-iops', `${iopsValue}`)
+              .attr('data-bandwidth', `${bandwidthValue}`)
+              .attr('data-latency', `${latencyValue}`)
+              .attr('fill', fillColor)
+
+            const volumeMapping = this.state.volumeMapping || {}
+            const mappedPVCs = Object.keys(volumeMapping).filter(
+              pvcName => volumeMapping[pvcName] === m['name']
+            )
+            mappedPVCs.forEach(pvcName => {
+              node
+                .select(`path[data-type=${'PVC'}][data-label=${esc(pvcName)}]`)
+                .attr('fill', fillColor)
+            })
           }
         } else {
           if (
             _.find(
-              node.select(`path[data-type=${'Pod'}]`).data(),
+              node.select(`path[data-type=${'Pod'}]`).data() as any[],
               podData => podData.data.label === m['name']
             )
           ) {
@@ -2833,55 +2918,33 @@ class KubernetesPage extends PureComponent<Props, State> {
               (parseFloat(m['cpu']) /
                 parseFloat(
                   node
-                    .select(
-                      `path[data-label=${String(m['name']).replace(
-                        /[.:*+?^${}()|[\]\\]/g,
-                        '\\$&'
-                      )}]`
-                    )
+                    .select(`path[data-label=${esc(m['name'])}]`)
                     .attr('data-limit-cpu')
                 )) *
-              100
+              100.0
             const memoryUsage =
               (parseFloat(m['memory']) /
                 parseFloat(
                   node
-                    .select(
-                      `path[data-label=${String(m['name']).replace(
-                        /[.:*+?^${}()|[\]\\]/g,
-                        '\\$&'
-                      )}]`
-                    )
+                    .select(`path[data-label=${esc(m['name'])}]`)
                     .attr('data-limit-memory')
                 )) *
-              100
+              100.0
 
             node
-              .select(
-                `path[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`path[data-label=${esc(m['name'])}]`)
               .attr('data-cpu', `${cpuUsage}`)
             node
-              .select(
-                `path[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
-              )
+              .select(`path[data-label=${esc(m['name'])}]`)
               .attr('data-memory', `${memoryUsage}`)
 
             const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
             node
-              .select(
-                `path[data-label=${String(m['name']).replace(
-                  /[.:*+?^${}()|[\]\\]/g,
-                  '\\$&'
-                )}]`
+              .select(`path[data-label=${esc(m['name'])}]`)
+              .attr(
+                'fill',
+                (kubernetesStatusColor(pick / 100) as unknown) as string
               )
-              .attr('fill', kubernetesStatusColor(pick / 100))
           }
         }
       })
@@ -2900,15 +2963,10 @@ class KubernetesPage extends PureComponent<Props, State> {
         source.telegraf,
         tempVars
       )
-
       this.setState({kubernetesObject})
     } catch (error) {
       console.error(error)
     }
-  }
-
-  public getFirstMinion = (minions: string[]) => {
-    return _.isEmpty(minions) ? this.noSelect : minions[0]
   }
 
   public async componentDidMount() {
@@ -2929,24 +2987,15 @@ class KubernetesPage extends PureComponent<Props, State> {
     const {
       proportions,
       selectedAutoRefresh,
-      selectMinion: storedSelectMinion,
+      selectedNamespaces: storedSelectedNamespaces = ['All namespaces'],
     } = getLocal
 
-    const minions = await this.getMinionKeyAcceptedList()
-
-    const selectMinion = _.includes(minions, storedSelectMinion)
-      ? storedSelectMinion
-      : this.getFirstMinion(minions)
-
-    this.handleKubernetesResourceAutoRefresh()
-
     this.setState({
-      minions,
-      selectMinion,
       proportions,
       selectedAutoRefresh,
-      remoteDataState: RemoteDataState.Loading,
+      selectedNamespaces: storedSelectedNamespaces || ['All namespaces'],
     })
+    await this.getK8sObject()
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -2956,22 +3005,13 @@ class KubernetesPage extends PureComponent<Props, State> {
       kubernetesData,
       focuseNode,
       selectedAutoRefresh,
-      selectMinion,
+      selectedNamespaces,
       filterNamespace,
       filterLimit,
       filterNode,
       filterLabelKey,
       filterLabelValue,
     } = this.state
-
-    if (
-      prevState.selectMinion !== selectMinion &&
-      this.noSelect !== selectMinion &&
-      selectedAutoRefresh === 0
-    ) {
-      this.debouncedHandleKubernetesRefresh()
-    }
-
     if (prevProps.manualRefresh !== manualRefresh) {
       this.handleKubernetesResourceRefresh()
     }
@@ -2995,8 +3035,13 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (focuseNode.name && prevState.focuseNode.name !== focuseNode.name) {
+      const esc = (v: any) =>
+        typeof (window as any).CSS !== 'undefined' &&
+        typeof (window as any).CSS.escape === 'function'
+          ? (window as any).CSS.escape(String(v))
+          : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
       d3.selectAll(`path`).classed('kubernetes-focuse', false)
-      d3.select(`path[data-name=${this.state.focuseNode.name}]`).classed(
+      d3.select(`path[data-name=${esc(this.state.focuseNode.name)}]`).classed(
         'kubernetes-focuse',
         true
       )
@@ -3006,18 +3051,22 @@ class KubernetesPage extends PureComponent<Props, State> {
       const {pinNode} = this.state
       d3.selectAll(`path`).classed('kubernetes-pin', false)
       _.forEach(pinNode, pin => {
-        d3.select(`[data-name=${pin}]`).classed('kubernetes-pin', true)
+        d3.select(`[data-name=${this.esc(pin)}]`).classed(
+          'kubernetes-pin',
+          true
+        )
       })
     }
 
+    if (prevState.highlightVolumes !== this.state.highlightVolumes) {
+      const {highlightVolumes} = this.state
+      this.handleHighlightVolumes(highlightVolumes)
+    }
     if (prevProps.autoRefresh !== autoRefresh) {
       GlobalAutoRefresher.poll(autoRefresh)
     }
 
-    if (
-      prevState.selectedAutoRefresh !== selectedAutoRefresh ||
-      prevState.selectMinion !== selectMinion
-    ) {
+    if (prevState.selectedAutoRefresh !== selectedAutoRefresh) {
       this.handleKubernetesAutoRefresh()
     }
 
@@ -3033,13 +3082,13 @@ class KubernetesPage extends PureComponent<Props, State> {
       setLocalStorage('kubernetes', {...getLocal, selectedAutoRefresh})
     }
 
-    if (prevState.selectMinion !== selectMinion) {
+    if (!_.isEqual(prevState.selectedNamespaces, selectedNamespaces)) {
       const getLocal = getLocalStorage('kubernetes')
-      setLocalStorage('kubernetes', {...getLocal, selectMinion})
+      setLocalStorage('kubernetes', {...getLocal, selectedNamespaces})
     }
 
     if (
-      prevState.filterNamespace !== filterNamespace ||
+      !_.isEqual(prevState.filterNamespace, filterNamespace) ||
       prevState.filterNode !== filterNode ||
       prevState.filterLabelKey !== filterLabelKey ||
       prevState.filterLabelValue !== filterLabelValue ||
@@ -3057,7 +3106,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public render() {
     const {source, manualRefresh, timeRange} = this.props
     const {
-      selectedNamespace,
+      selectedNamespaces,
       selectedNode,
       selectedLimit,
       labelKey,
@@ -3073,12 +3122,10 @@ class KubernetesPage extends PureComponent<Props, State> {
       isToolipActive,
       targetPosition,
       tooltipNode,
-      minions,
-      selectMinion,
-      isOpenMinions,
-      isDisabledMinions,
+
       selectedAutoRefresh,
       layouts,
+      highlightVolumes,
     } = this.state
 
     const layoutCells = getCells(layouts, source)
@@ -3093,7 +3140,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           handleChangeLabelkey={this.onChangeLabelKey}
           handleChangeLabelValue={this.onChangeLabelValue}
           handleClickFilter={this.onClickFilter}
-          selectedNamespace={selectedNamespace}
+          selectedNamespace={selectedNamespaces}
           selectedNode={selectedNode}
           selectedLimit={selectedLimit}
           labelKey={labelKey}
@@ -3102,18 +3149,6 @@ class KubernetesPage extends PureComponent<Props, State> {
           nodes={['All nodes', ...nodes]}
           limits={limits}
           height={this.height}
-          minions={minions}
-          selectMinion={selectMinion}
-          handleChoosMinion={this.onChooseMinion}
-          isOpenMinions={isOpenMinions}
-          isDisabledMinions={isDisabledMinions}
-          minionsStatus={
-            isDisabledMinions
-              ? ComponentStatus.Loading
-              : ComponentStatus.Default
-          }
-          handleCloseMinionsDropdown={this.handleCloseMinionsDropdown}
-          onClickMinionsDropdown={this.onClickMinionsDropdown}
           handleChooseKubernetesAutoRefresh={
             this.handleChooseKubernetesAutoRefresh
           }
@@ -3145,8 +3180,15 @@ class KubernetesPage extends PureComponent<Props, State> {
           timeRange={timeRange}
           manualRefresh={manualRefresh}
           host={''}
-          selectMinion={selectMinion}
           remoteDataState={this.state.remoteDataState}
+          highlightVolumes={highlightVolumes}
+          layouts={layouts}
+          handleHighlightVolumes={this.handleHighlightVolumes}
+          searchName={this.state.searchName}
+          handleChangeSearchName={this.handleChangeSearchName}
+          handleApplySearchName={this.handleApplySearchName}
+          handleClearSearchName={this.handleClearSearchName}
+          searchNameHighlight={this.state.searchNameApplied}
         />
       </>
     )
@@ -3254,10 +3296,10 @@ class KubernetesPage extends PureComponent<Props, State> {
   )
 
   private handleKubernetesAutoRefresh = async () => {
-    const {selectMinion, selectedAutoRefresh} = this.state
+    const {selectedAutoRefresh} = this.state
 
     this.clearKubernetesObjectInterval()
-    if (selectMinion === null || selectedAutoRefresh === 0) return
+    if (selectedAutoRefresh === 0) return
 
     await this.getK8sObject()
     this.getKubernetesObjectInterval = setTimeout(() => {
@@ -3284,34 +3326,32 @@ class KubernetesPage extends PureComponent<Props, State> {
     this.setState({selectedAutoRefresh: milliseconds})
   }
 
-  private onClickMinionsDropdown = async () => {
-    const {isOpenMinions, selectMinion} = this.state
+  private onChooseNamespace = (selectedIDs: string[], value?: {id: string}) => {
+    let finalSelection: string[]
 
-    if (!isOpenMinions) {
-      this.setState({isDisabledMinions: true})
-      const minions: string[] = _.uniq(await this.getMinionKeyAcceptedList())
-      if (_.indexOf(minions, selectMinion) === -1) {
-        this.setState({selectMinion: null})
+    if (value) {
+      if (value.id === 'All namespaces') {
+        finalSelection = ['All namespaces']
+      } else {
+        let updatedSelection = selectedIDs
+        if (
+          _.includes(selectedIDs, 'All namespaces') &&
+          value.id !== 'All namespaces'
+        ) {
+          updatedSelection = selectedIDs.filter(id => id !== 'All namespaces')
+        }
+        if (updatedSelection.length === 0) {
+          finalSelection = []
+        } else {
+          finalSelection = updatedSelection
+        }
       }
-
-      this.handleOpenMinionsDropdown()
-      this.setState({minions, isDisabledMinions: false})
     } else {
-      this.handleCloseMinionsDropdown()
+      finalSelection = (selectedIDs as any).text || selectedIDs
     }
-  }
 
-  private handleOpenMinionsDropdown = () => {
-    this.setState({isOpenMinions: true})
-  }
-
-  private handleCloseMinionsDropdown = () => {
-    this.setState({isOpenMinions: false})
-  }
-
-  private onChooseNamespace = (namespace: {text: string}) => {
     this.setState({
-      selectedNamespace: namespace.text,
+      selectedNamespaces: finalSelection,
     })
   }
 
@@ -3331,6 +3371,19 @@ class KubernetesPage extends PureComponent<Props, State> {
     this.setState({labelValue: e.target.value})
   }
 
+  private handleChangeSearchName = (e: ChangeEvent<HTMLInputElement>) => {
+    this.setState({searchName: e.target.value})
+  }
+
+  private handleApplySearchName = () => {
+    const {searchName} = this.state
+    this.setState({searchNameApplied: searchName})
+  }
+
+  private handleClearSearchName = () => {
+    this.setState({searchName: '', searchNameApplied: ''})
+  }
+
   private onSetActiveEditorTab = (activeEditorTab: string): void => {
     this.setState({
       activeEditorTab,
@@ -3339,15 +3392,21 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private onClickFilter = (): void => {
     const {
-      selectedNamespace,
       selectedNode,
       labelKey,
       labelValue,
       selectedLimit,
+      selectedNamespaces,
     } = this.state
+    const {notify} = this.props
+
+    if (selectedNamespaces.length === 0) {
+      notify(notifyNamespaceRequired())
+      return
+    }
+
     this.setState({
-      filterNamespace:
-        selectedNamespace !== 'All namespaces' ? selectedNamespace : '',
+      filterNamespace: selectedNamespaces,
       filterNode: selectedNode !== 'All nodes' ? selectedNode : '',
       filterLabelKey: labelKey,
       filterLabelValue: labelValue,
@@ -3356,19 +3415,26 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   private onClickVisualizePod = async (data: any) => {
-    const {selectMinion} = this.state
+    const {volumeMapping} = this.state
+    const {setSelectedPersistentVolume} = this.props
+
     const focuseNodeName = _.get(data, 'data.name')
     const focuseNodeLabel = _.get(data, 'data.label')
     const focuseNodeType = _.get(data, 'data.type')
     const focuseNamespace = _.get(data, 'data.namespace')
+    const focuseVolumes = _.get(data, 'data.volumes')
 
-    const addon = this.props.addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
+    if (focuseNodeType === 'Pod') {
+      const selectedVolumes = focuseVolumes
+        .map((volume: any) => volume?.persistent_volume_claim?.claim_name)
+        .filter((item: any) => !!item)
 
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    let pParam: SaltStack = {}
+      setSelectedPersistentVolume(
+        selectedVolumes.map(volume => volumeMapping[volume])
+      )
+    }
+
+    let pParam: any = {}
 
     pParam = k8sNodeTypeAttrs?.[focuseNodeType]?.saltParam
 
@@ -3390,21 +3456,52 @@ class KubernetesPage extends PureComponent<Props, State> {
       }
     }
 
-    if (_.isEmpty(pParam)) return
+    if (_.isEmpty(pParam)) {
+      const apiVersion = _.get(data, 'data.apiVersion') as string
+      const label = focuseNodeLabel
+      const ns = focuseNamespace
+      if (!apiVersion || !label) return
+      const [group, version] = apiVersion.includes('/')
+        ? apiVersion.split('/')
+        : ['', apiVersion]
 
-    const k8sDetail = await this.props.handleGetK8sDetail(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
+      const pluralizeKind = (kind: string) => {
+        const k = (kind || '').toLowerCase()
+        if (/(s|x|z|ch|sh)$/.test(k)) return `${k}es`
+        if (/(?:[^aeiou])y$/.test(k)) return `${k.replace(/y$/, 'ies')}`
+        return `${k}s`
+      }
 
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(k8sDetail.data).return[0])[0],
-        this.jsonRemoveNull
-      )
-    )
+      const plural = pluralizeKind(focuseNodeType)
+      try {
+        const detail = await getKubernetesCustomObjectDetail({
+          group,
+          version,
+          name: label,
+          namespace: ns,
+          plural,
+        })
+        const resultJson = detail.data
+        if (focuseNodeName) {
+          this.setState({
+            focuseNode: {
+              name: focuseNodeName.replace(/[.:*+?^${}()|[\]\\]/g, '\\$&'),
+              label: label,
+              type: focuseNodeType,
+            },
+            script: resultJson,
+          })
+        }
+      } catch (e) {}
+      return
+    }
+
+    const k8sDetail = await getKubernetesDetailProxy({
+      ...pParam,
+      fun: pParam.fun || 'kubernetes.show_pod',
+    })
+
+    const resultJson = k8sDetail.data
 
     if (focuseNodeName) {
       this.setState({
@@ -3418,24 +3515,141 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
   }
 
+  private handleHighlightVolumes = (highlightVolumes: any) => {
+    d3.selectAll(`path`).classed('kubernetes-volume', false)
+    _.forEach(highlightVolumes, volume => {
+      d3.selectAll(
+        `
+            path[data-name*="PersistentVolumeClaim_"][data-name$="${this.esc(
+              volume
+            )}"],
+            path[data-name*="PersistentVolume_"][data-name$="${this.esc(
+              volume
+            )}"],
+            path[data-name="${this.esc(volume)}"]
+          `
+      ).classed('kubernetes-volume', true)
+    })
+  }
+
   private onDBClick = (data: any) => {
-    this.handlePinNode(data)
+    const {pinNode} = this.state
+    const focuseVolumes = _.get(data, 'data.volumes')
+    const focuseNodeName = _.get(data, 'data.name') ?? ''
+    const focuseNodeType = _.get(data, 'data.type') ?? ''
+    const focuseVolumeName = _.get(data, 'data.volume_name') ?? ''
+    const focuseLabelName = _.get(data, 'data.label') ?? ''
+
+    if (focuseNodeType === 'PV' || focuseNodeType === 'PVC') {
+    } else if (
+      !this.findStringInArray(pinNode, focuseNodeName) ||
+      focuseNodeType !== 'Pod'
+    ) {
+      this.handlePinNode(data)
+    }
+
+    if (
+      (focuseNodeType === 'PV' || focuseNodeType === 'PVC') &&
+      this.checkHighlightVolumes(focuseNodeName)
+    ) {
+      this.setState({highlightVolumes: [], pinNode: []})
+    } else if (
+      focuseNodeType === 'Pod' &&
+      this.checkHighlightVolumesExact(focuseNodeName)
+    ) {
+      this.setState({highlightVolumes: [], pinNode: []})
+    } else if (!!focuseVolumes) {
+      this.handleVolumeSpec(
+        focuseVolumes
+          .map((volume: any) => volume?.persistent_volume_claim?.claim_name)
+          .filter((item: any) => !!item),
+        focuseNodeName
+      )
+    } else if (!!focuseVolumeName) {
+      this.setState({
+        highlightVolumes: [
+          this.esc(focuseVolumeName),
+          this.esc(focuseNodeName),
+        ],
+        pinNode: [],
+      })
+    } else if (focuseNodeType === 'PV') {
+      this.setState({
+        highlightVolumes: [this.esc(focuseLabelName)],
+        pinNode: [],
+      })
+    } else {
+      this.setState({highlightVolumes: []})
+    }
+  }
+
+  private handleVolumeSpec = (volumes: string[], focuseNodeName: string) => {
+    const volumeMapping = this.state.volumeMapping || {}
+
+    if (!Array.isArray(volumes) || volumes.length === 0) {
+      this.setState({highlightVolumes: []})
+      return
+    }
+
+    const highlightVolumes = _.uniq([
+      ...volumes.map(volume => this.esc(volume)),
+      ..._.map(volumes, volume => this.esc(volumeMapping[volume])).filter(
+        Boolean
+      ),
+      this.esc(focuseNodeName),
+    ])
+    this.setState({highlightVolumes: highlightVolumes || []})
+  }
+
+  private findStringInArray(sourceArray: string[], targetString: string) {
+    if (!Array.isArray(sourceArray) || typeof targetString !== 'string') {
+      return false
+    }
+
+    return sourceArray.some(element => {
+      const unescapedElement = element.replaceAll('\\.', '.')
+      return unescapedElement === targetString
+    })
   }
 
   private handlePinNode = (data: any) => {
     if (
       data.depth === 3 ||
       (data.depth === 2 &&
-        (data.data.type === 'CR' || data.data.type === 'CRB'))
+        (data.data.type === 'CR' ||
+          data.data.type === 'CRB' ||
+          data.data.type === 'PV'))
     ) {
       const pinNode = this.parentNavigation(data)
-      const target = d3.select(`[data-name=${pinNode[0]}]`)
-      const isNull = _.isNull(_.flatMapDeep(target._groups)[0])
+      const esc = (v: any) =>
+        typeof (window as any).CSS !== 'undefined' &&
+        typeof (window as any).CSS.escape === 'function'
+          ? (window as any).CSS.escape(String(v))
+          : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+      const target = d3.select(`[data-name=${esc(pinNode[0])}]`)
+      const isNull = _.isNull(_.flatMapDeep((target as any)._groups)[0])
       const isPin = isNull || target.classed('kubernetes-pin')
-      this.setState({pinNode: isPin ? [] : pinNode})
+      this.setState({
+        pinNode: isPin ? [] : pinNode,
+        highlightVolumes: [],
+      })
     } else {
-      this.setState({pinNode: []})
+      this.setState({pinNode: [], highlightVolumes: []})
     }
+  }
+
+  private checkHighlightVolumes = (name: string) => {
+    const {highlightVolumes} = this.state
+
+    const isIncluded = highlightVolumes.some(sub => name.includes(sub))
+    return isIncluded
+  }
+
+  private checkHighlightVolumesExact = (name: string) => {
+    const {highlightVolumes} = this.state
+
+    const isIncluded = highlightVolumes.some(sub => name === sub)
+    return isIncluded
   }
 
   private debouncedResizeTrigger = _.debounce(() => {
@@ -3452,14 +3666,24 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private handleOpenTooltip = (target: HTMLElement) => {
     const {width, top, right, left} = target.getBoundingClientRect()
+    const dataType = target.getAttribute('data-type')
+
+    const tooltipNode: any = {
+      name: target.getAttribute('data-label'),
+      cpu: parseInt(target.getAttribute('data-cpu')),
+      memory: parseInt(target.getAttribute('data-memory')),
+    }
+
+    if (dataType === 'PV') {
+      tooltipNode.iops = parseFloat(target.getAttribute('data-iops'))
+      tooltipNode.bandwidth = parseFloat(target.getAttribute('data-bandwidth'))
+      tooltipNode.latency = parseFloat(target.getAttribute('data-latency'))
+    }
+
     this.setState({
       isToolipActive: true,
       targetPosition: {width, top, right, left},
-      tooltipNode: {
-        name: target.getAttribute('data-label'),
-        cpu: parseInt(target.getAttribute('data-cpu')),
-        memory: parseInt(target.getAttribute('data-memory')),
-      },
+      tooltipNode,
     })
   }
 
@@ -3470,28 +3694,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     })
   }
 
-  private onChooseMinion = (minion: {text: string}) => {
-    this.setState({selectMinion: minion.text})
-  }
-
-  private yamltoJson = (pData: any) => {
-    try {
-      const jsonData = _.values(yaml.safeLoad(pData.data).return[0])[0]
-
-      if (jsonData !== null && jsonData !== undefined) {
-        const resultJson = JSON.parse(
-          JSON.stringify(jsonData, this.jsonRemoveNull)
-        )
-
-        return resultJson
-      }
-
-      return null
-    } catch (error) {
-      console.log(error)
-      return null
-    }
-  }
+  private esc = (v: any) =>
+    typeof (window as any).CSS !== 'undefined' &&
+    typeof (window as any).CSS.escape === 'function'
+      ? (window as any).CSS.escape(String(v))
+      : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
 }
 
 const mstp = ({links: {addons}, auth: {me}}) => {
@@ -3503,30 +3710,8 @@ const mstp = ({links: {addons}, auth: {me}}) => {
 }
 
 const mdtp = {
-  handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
-  handleGetNamespaces: getLocalK8sNamespacesAsync,
-  handleGetNodes: getLocalK8sNodesAsync,
-  handleGetPods: getLocalK8sPodsAsync,
-  handleGetDeployments: getLocalK8sDeploymentsAsync,
-  handleGetReplicaSets: getLocalK8sReplicaSetsAsync,
-  handleGetReplicationControllers: getLocalK8sReplicationControllersAsync,
-  handleGetDaemonSets: getLocalK8sDaemonSetsAsync,
-  handleGetStatefulSets: getLocalK8sStatefulSetsAsync,
-  handleGetCronJobs: getLocalK8sCronJobsAsync,
-  handleGetJobs: getLocalK8sJobsAsync,
-  handleGetServices: getLocalK8sServicesAsync,
-  handleGetIngresses: getLocalK8sIngressesAsync,
-  handleGetConfigmaps: getLocalK8sConfigmapsAsync,
-  handleGetSecrets: getLocalK8sSecretsAsync,
-  handleGetServiceAccounts: getLocalK8sServiceAccountsAsync,
-  handleGetClusterRoles: getLocalK8sClusterRolesAsync,
-  handleGetClusterRoleBindings: getLocalK8sClusterRoleBindingsAsync,
-  handleGetRoles: getLocalK8sRolesAsync,
-  handleGetRoleBindings: getLocalK8sRoleBindingsAsync,
-  handleGetPersistentVolumes: getLocalK8sPersistentVolumesAsync,
-  handleGetPersistentVolumeClaims: getLocalK8sPersistentVolumeClaimsAsync,
-  handleGetK8sDetail: getLocalK8sDetailAsync,
   notify: notifyAction,
+  setSelectedPersistentVolume: setSelectedPersistentVolume,
 }
 
 export default connect(mstp, mdtp, null)(KubernetesPage)

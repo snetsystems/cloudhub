@@ -26,8 +26,21 @@ import {DEFAULT_HOME_PAGE} from 'src/shared/constants'
 
 import * as copy from 'src/shared/copy/notifications'
 
-import {Source, Me, Links, Notification, NotificationFunc} from 'src/types'
+import {
+  Source,
+  Me,
+  Links,
+  Notification,
+  NotificationFunc,
+  BaseElasticSearchData,
+} from 'src/types'
 import {connectedSourceAction, connectedSource} from 'src/sources/actions'
+import {
+  connectElasticSearch,
+  getElasticSearchInfoAsync,
+  disconnectElasticSearch,
+} from 'src/shared/actions/elasticSearch'
+import {checkAndConnectElasticSearch} from 'src/utils/changeEsSource'
 
 interface Auth {
   isUsingAuth: boolean
@@ -55,6 +68,15 @@ interface Props {
   auth: Auth
   notify: (message: Notification | NotificationFunc) => void
   connectedSource: connectedSourceAction
+  esSource: BaseElasticSearchData
+  esSources: BaseElasticSearchData[]
+  handleGetElasticSearchInfo: () => void
+  handleDisconnectElasticSearch: () => void
+  handleConnectElasticSearch: ({
+    elasticSearchInfo,
+  }: {
+    elasticSearchInfo: BaseElasticSearchData
+  }) => void
 }
 
 export const SourceContext = React.createContext(undefined)
@@ -210,6 +232,28 @@ export class CheckSources extends Component<Props, State> {
     }
   }
 
+  public async componentDidUpdate() {
+    const {
+      auth: {me},
+      esSource,
+      esSources,
+      handleGetElasticSearchInfo,
+      handleDisconnectElasticSearch,
+      handleConnectElasticSearch,
+    } = this.props
+
+    if (esSource?.organization !== me.currentOrganization?.id) {
+      await checkAndConnectElasticSearch({
+        me,
+        esSource,
+        esSources,
+        handleGetElasticSearchInfo,
+        handleDisconnectElasticSearch,
+        handleConnectElasticSearch,
+      })
+    }
+  }
+
   public render() {
     const {
       params,
@@ -235,10 +279,13 @@ export class CheckSources extends Component<Props, State> {
   }
 }
 
-const mapStateToProps = ({sources, auth, links}) => ({
+const mapStateToProps = ({sources, auth, links, app, esSources}) => ({
   sources,
   auth,
   links,
+  esSource: app.persisted.esSource,
+  esSources: esSources.esSources,
+  organizationId: auth.me.currentOrganization?.id,
 })
 
 const mapDispatchToProps = dispatch => ({
@@ -246,6 +293,18 @@ const mapDispatchToProps = dispatch => ({
   getOrgAll: bindActionCreators(loadOrganizationsAsync, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
   connectedSource: bindActionCreators(connectedSource, dispatch),
+  handleGetElasticSearchInfo: bindActionCreators(
+    getElasticSearchInfoAsync,
+    dispatch
+  ),
+  handleDisconnectElasticSearch: bindActionCreators(
+    disconnectElasticSearch,
+    dispatch
+  ),
+  handleConnectElasticSearch: bindActionCreators(
+    connectElasticSearch,
+    dispatch
+  ),
 })
 
 export default connect(

@@ -1,0 +1,709 @@
+{
+  "id": "d402f45f-51cb-486e-9b52-ddda39d71f36",
+  "measurement": "nutanix_vms",
+  "app": "nutanix_vms",
+  "autoflow": true,
+  "whereTagKey": ["vm_name"],
+  "cells": [
+    {
+      "i": "bb2661e1-d96a-4823-be21-05f33d3b8a67",
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 19,
+      "minW": 10,
+      "minH": 4,
+      "name": "CPU Usage (%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"hypervisor_cpu_usage_percent\") AS \"mean_hypervisor_cpu_usage_percent\" FROM \":db:\".\":rp:\".\"nutanix_vms\"",
+          "groupbys": ["\"cluster_name\"", "\"node_name\"", "\"vm_name\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "3c8eed37-f86d-47d9-9537-bd77a1a8ea0b",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "e96ca584-a0e0-46f7-98ea-1baf7d5ec723",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "aff6b18f-c6dc-412f-bb80-188a98eeac0c",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nutanix_cluster.mean_hypervisor_cpu_usage_percent",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 2
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "b088ff09-3ffd-48fb-855b-3f387d23af37",
+      "x": 32,
+      "y": 0,
+      "w": 32,
+      "h": 19,
+      "minW": 10,
+      "minH": 4,
+      "name": "CPU Ready Time",
+      "queries": [
+        {
+          "query": "SELECT mean(\"hypervisor_cpu_ready_time_percent\") AS \"mean_hypervisor_cpu_ready_time_percent\" FROM \":db:\".\":rp:\".\"nutanix_vms\"",
+          "groupbys": ["\"cluster_name\"", "\"node_name\"", "\"vm_name\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "a55f7803-33bd-4fcd-982c-debbe80e6183",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "90d42667-f03d-455e-948b-a728a5d002f5",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "ecdb95dc-9f97-4575-b4b1-00a0a689af7d",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "nutanix_cluster.mean_hypervisor_cpu_usage_percent",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 2
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "954e6c0d-76eb-4545-868a-fbe8ab72f841",
+      "x": 64,
+      "y": 0,
+      "w": 32,
+      "h": 19,
+      "minW": 10,
+      "minH": 4,
+      "name": "Memory Usage (%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"memory_usage_percent\") AS \"mean_memory_usage_percent\" FROM \":db:\".\":rp:\".\"nutanix_vms\"",
+          "groupbys": ["\"cluster_name\"", "\"node_name\"", "\"vm_name\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "553d6354-63ed-4972-a832-7771223263d6",
+          "type": "scale",
+          "hex": "#74D495",
+          "name": "Atlantis",
+          "value": "0"
+        },
+        {
+          "id": "e7e0b259-66aa-43c4-8b93-3e4d5197340a",
+          "type": "scale",
+          "hex": "#3F3FBA",
+          "name": "Atlantis",
+          "value": "0"
+        },
+        {
+          "id": "74906787-a548-4bf0-861c-def466a6a5e3",
+          "type": "scale",
+          "hex": "#FF4D9E",
+          "name": "Atlantis",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 2
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "6731b4e6-dda8-4ba9-829c-1f54625d79d4",
+      "x": 0,
+      "y": 19,
+      "w": 32,
+      "h": 19,
+      "minW": 10,
+      "minH": 4,
+      "name": "Controller IOPS",
+      "queries": [
+        {
+          "query": "SELECT mean(\"controller_num_iops\") AS \"mean_controller_num_iops\" FROM \":db:\".\":rp:\".\"nutanix_vms\"",
+          "groupbys": ["\"cluster_name\"", "\"node_name\"", "\"vm_name\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": " IOPS",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "7f0d1f28-7461-4e19-bc62-989de128ee09",
+          "type": "scale",
+          "hex": "#8F8AF4",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        },
+        {
+          "id": "5c5b0efc-736d-4f54-959a-c7c400260d5a",
+          "type": "scale",
+          "hex": "#A51414",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        },
+        {
+          "id": "5475e28d-aaf9-4c70-99cd-4236a995d490",
+          "type": "scale",
+          "hex": "#F4CF31",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 2
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "1aecb7ff-468d-43ca-8acc-c12f8a98635f",
+      "x": 0,
+      "y": 38,
+      "w": 32,
+      "h": 19,
+      "minW": 10,
+      "minH": 4,
+      "name": "Controller AVG I/O Latency",
+      "queries": [
+        {
+          "query": "SELECT mean(\"controller_avg_io_latency_usecs\") / 1000 AS \"mean_controller_avg_io_latency_usecs\" FROM \":db:\".\":rp:\".\"nutanix_vms\"",
+          "groupbys": ["\"cluster_name\"", "\"node_name\"", "\"vm_name\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "ms",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "7f0d1f28-7461-4e19-bc62-989de128ee09",
+          "type": "scale",
+          "hex": "#8F8AF4",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        },
+        {
+          "id": "5c5b0efc-736d-4f54-959a-c7c400260d5a",
+          "type": "scale",
+          "hex": "#A51414",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        },
+        {
+          "id": "5475e28d-aaf9-4c70-99cd-4236a995d490",
+          "type": "scale",
+          "hex": "#F4CF31",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 2
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "5dda7fe8-4867-49d4-b33c-51c04768d5ec",
+      "x": 0,
+      "y": 57,
+      "w": 32,
+      "h": 19,
+      "minW": 10,
+      "minH": 4,
+      "name": "Controller I/O Bandwidth",
+      "queries": [
+        {
+          "query": "SELECT mean(\"controller_io_bandwidth_kBps\") / 1000 AS \"mean_controller_io_bandwidth_kBps\" FROM \":db:\".\":rp:\".\"nutanix_vms\"",
+          "groupbys": ["\"cluster_name\"", "\"node_name\"", "\"vm_name\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": " MBps",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "7f0d1f28-7461-4e19-bc62-989de128ee09",
+          "type": "scale",
+          "hex": "#8F8AF4",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        },
+        {
+          "id": "5c5b0efc-736d-4f54-959a-c7c400260d5a",
+          "type": "scale",
+          "hex": "#A51414",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        },
+        {
+          "id": "5475e28d-aaf9-4c70-99cd-4236a995d490",
+          "type": "scale",
+          "hex": "#F4CF31",
+          "name": "Do Androids Dream of Electric Sheep?",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 2
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    },
+    {
+      "i": "2a76d5fe-80f0-43dd-ba4a-24ff57bb99b6",
+      "x": 0,
+      "y": 114,
+      "w": 32,
+      "h": 19,
+      "minW": 10,
+      "minH": 4,
+      "name": "Disk Usage (%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"disk_usage_percent\") AS \"mean_disk_usage_percent\" FROM \":db:\".\":rp:\".\"nutanix_vms\"",
+          "groupbys": ["\"cluster_name\"", "\"node_name\"", "\"vm_name\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": " %",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "ddbaf55f-8794-41c1-bb05-14eb09b8f027",
+          "type": "scale",
+          "hex": "#FDC44F",
+          "name": "Cthulhu",
+          "value": "0"
+        },
+        {
+          "id": "7ee62d79-30b3-4e4c-8413-908d92a18b13",
+          "type": "scale",
+          "hex": "#007C76",
+          "name": "Cthulhu",
+          "value": "0"
+        },
+        {
+          "id": "1ebef627-76f8-4cd2-9995-4c3ec76aceed",
+          "type": "scale",
+          "hex": "#8983FF",
+          "name": "Cthulhu",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "decimalPlaces": {
+        "isEnforced": true,
+        "digits": 2
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
+    }
+  ]
+}

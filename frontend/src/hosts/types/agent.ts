@@ -46,3 +46,5 @@ export type HostDetailTable = {
     }
   }
 }
+
+export type SelectedCellStatus = 'Agent' | 'IPMI' | 'None'

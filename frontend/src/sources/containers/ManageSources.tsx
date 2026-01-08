@@ -2,6 +2,7 @@ import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {Location} from 'history'
 
 import * as sourcesActions from 'src/shared/actions/sources'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -18,11 +19,29 @@ import {
   notifySourceDeleteFailed,
 } from 'src/shared/copy/notifications'
 
-import {Me, Source, Notification, Organization} from 'src/types'
+import {
+  Me,
+  Source,
+  Notification,
+  Organization,
+  BaseElasticSearchData,
+  ToggleEsWizard,
+} from 'src/types'
 import {ToggleWizard} from 'src/types/wizard'
+import ElasticTable from '../components/ElasticTable'
+import EsConnectionWizard from '../components/EsConnectionWizard'
+import {checkAndConnectElasticSearch} from 'src/utils/changeEsSource'
+import {
+  connectElasticSearch,
+  getElasticSearchInfoAsync,
+} from 'src/shared/actions/elasticSearch'
+import {disconnectElasticSearch} from 'src/shared/actions/elasticSearch'
+import _ from 'lodash'
 
 interface State {
   wizardVisibility: boolean
+  esWizardVisibility: boolean
+  esSourceInWizard: BaseElasticSearchData
   sourceInWizard: Source
   jumpStep: number
   showNewKapacitor: boolean
@@ -44,6 +63,14 @@ interface Props {
     requireRole: UserRole,
     isNoAuthOuting?: boolean
   ) => void
+  location: Location
+  esSource?: BaseElasticSearchData
+  esSources?: BaseElasticSearchData[]
+  handleGetElasticSearchInfo?: () => void
+  handleDisconnectElasticSearch?: () => void
+  handleConnectElasticSearch?: (params: {
+    elasticSearchInfo?: BaseElasticSearchData
+  }) => void
 }
 
 const VERSION = process.env.npm_package_version
@@ -54,14 +81,23 @@ class ManageSources extends PureComponent<Props, State> {
     super(props)
     this.state = {
       wizardVisibility: false,
+      esWizardVisibility: false,
       sourceInWizard: null,
       jumpStep: null,
       showNewKapacitor: null,
+      esSourceInWizard: null,
     }
   }
 
   public async componentDidMount() {
-    const {ForceSessionAbortInputRole} = this.props
+    const {ForceSessionAbortInputRole, location} = this.props
+
+    if (location.query.esPopup === 'true') {
+      setTimeout(() => {
+        this.setState({esWizardVisibility: true})
+      }, 500)
+      // this.setState({esWizardVisibility: true})
+    }
 
     ForceSessionAbortInputRole(SUPERADMIN_ROLE)
     this.fetchKapacitors()
@@ -70,6 +106,20 @@ class ManageSources extends PureComponent<Props, State> {
   public componentDidUpdate(prevProps: Props) {
     if (prevProps.sources.length !== this.props.sources.length) {
       this.fetchKapacitors()
+    }
+
+    if (
+      !_.isEqual(prevProps.esSources.length, this.props.esSources.length) ||
+      !_.isEqual(prevProps.esSource, this.props.esSource)
+    ) {
+      checkAndConnectElasticSearch({
+        me: this.props.me,
+        esSource: this.props.esSource,
+        esSources: this.props.esSources,
+        handleGetElasticSearchInfo: this.props.handleGetElasticSearchInfo,
+        handleDisconnectElasticSearch: this.props.handleDisconnectElasticSearch,
+        handleConnectElasticSearch: this.props.handleConnectElasticSearch,
+      })
     }
   }
 
@@ -85,9 +135,11 @@ class ManageSources extends PureComponent<Props, State> {
     } = this.props
     const {
       wizardVisibility,
+      esWizardVisibility,
       sourceInWizard,
       jumpStep,
       showNewKapacitor,
+      esSourceInWizard,
     } = this.state
     return (
       <Page>
@@ -107,6 +159,7 @@ class ManageSources extends PureComponent<Props, State> {
             toggleWizard={this.toggleWizard}
             connectedSource={connectedSource}
           />
+          <ElasticTable toggleEsWizard={this.toggleEsWizard} />
           <p className="version-number">CloudHub Version: {VERSION}</p>
         </Page.Contents>
         <ConnectionWizard
@@ -118,6 +171,11 @@ class ManageSources extends PureComponent<Props, State> {
           source={sourceInWizard}
           jumpStep={jumpStep}
           showNewKapacitor={showNewKapacitor}
+        />
+        <EsConnectionWizard
+          isVisible={esWizardVisibility}
+          toggleEsWizard={this.toggleEsWizard}
+          esSource={esSourceInWizard}
         />
       </Page>
     )
@@ -157,6 +215,16 @@ class ManageSources extends PureComponent<Props, State> {
     })
   }
 
+  private toggleEsWizard: ToggleEsWizard = (
+    isVisible,
+    esSource = null
+  ) => () => {
+    this.setState({
+      esWizardVisibility: isVisible,
+      esSourceInWizard: esSource,
+    })
+  }
+
   private handleSetActiveKapacitor = kapacitor => {
     this.props.setActiveKapacitor(kapacitor)
   }
@@ -164,13 +232,19 @@ class ManageSources extends PureComponent<Props, State> {
 
 const mstp = ({
   adminCloudHub: {organizations},
+  app: {
+    persisted: {esSource},
+  },
   auth: {isUsingAuth, me},
   sources,
+  esSources: {esSources},
 }) => ({
   organizations,
   isUsingAuth,
   me,
   sources,
+  esSources,
+  esSource,
 })
 
 const mdtp = (dispatch: any) => ({
@@ -194,6 +268,18 @@ const mdtp = (dispatch: any) => ({
   connectedSource: bindActionCreators(connectedSource, dispatch),
   ForceSessionAbortInputRole: bindActionCreators(
     ForceSessionAbortInputRole,
+    dispatch
+  ),
+  handleGetElasticSearchInfo: bindActionCreators(
+    getElasticSearchInfoAsync,
+    dispatch
+  ),
+  handleDisconnectElasticSearch: bindActionCreators(
+    disconnectElasticSearch,
+    dispatch
+  ),
+  handleConnectElasticSearch: bindActionCreators(
+    connectElasticSearch,
     dispatch
   ),
 })

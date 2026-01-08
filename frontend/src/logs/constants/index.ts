@@ -44,6 +44,11 @@ export enum SeverityColorOptions {
 
 export const DEFAULT_TRUNCATION = true
 
+export const DEFAULT_CHART_OPTIONS = {
+  queryFillOption: 'none',
+  annotationPadding: '2h',
+}
+
 export const SeverityColorValues = {
   [SeverityColorOptions.ruby]: '#BF3D5E',
   [SeverityColorOptions.fire]: '#DC4E58',

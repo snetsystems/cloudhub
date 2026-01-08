@@ -1,5 +1,5 @@
 // Types
-import {ColorString} from 'src/types/colors'
+import {ColorNumber, ColorString} from 'src/types/colors'
 import {TimeSeriesSeries} from 'src/types/series'
 import {DecimalPlaces} from 'src/types/dashboards'
 
@@ -55,3 +55,44 @@ export interface DropdownOption {
   text: string
   key: string
 }
+
+export interface TableGaugeChartOptionsInterface {
+  columnSettings: ColumnSettingInterface[]
+  decimalPlaces: DecimalPlaces
+  isShowValues: boolean
+  sortBy: string
+  sortByDirection: 'asc' | 'desc'
+}
+
+export interface ColumnSettingInterface extends RenamableField {
+  min?: number
+  max?: number
+  colors: ColorString[]
+  thresholdColors: ColorNumber[]
+  unit?: string
+  prefix?: string
+  suffix?: string
+  isShowChart: boolean
+  isPercent: boolean
+  chartType: ChartTypeMode
+  backgroundType: BackgroundTypeMode
+  isShowValues: boolean
+}
+
+export type ChartTypeMode =
+  | typeof CHART_TYPE_MODES.CONTINUOUS
+  | typeof CHART_TYPE_MODES.SEGMENTED
+
+export const CHART_TYPE_MODES = {
+  CONTINUOUS: 'continuous',
+  SEGMENTED: 'segmented',
+} as const
+
+export const BACKGROUND_TYPE_MODES = {
+  GRADIENT: 'gradient',
+  SOLID: 'solid',
+} as const
+
+export type BackgroundTypeMode =
+  | typeof BACKGROUND_TYPE_MODES.GRADIENT
+  | typeof BACKGROUND_TYPE_MODES.SOLID

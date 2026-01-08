@@ -92,6 +92,7 @@ const LineChart = ({
   const [chartInstance, setChartInstance] = useState<
     ChartJS<'line', [], unknown>
   >(null)
+
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
   const rawData: TimeSeriesSeries[] = _.get(
     data,

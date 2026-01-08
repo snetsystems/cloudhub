@@ -147,6 +147,32 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		)
 	}
 
+	EnsureCollectorAuth := func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			authToken := service.InternalENV.KubernetesConfig.CollectorAuthToken
+			if authToken == "" {
+				next(w, r)
+				return
+			}
+
+			// Check custom header first
+			token := r.Header.Get("X-CloudHub-Token")
+			if token == "" {
+				// Fallback to standard Authorization header
+				authHeader := r.Header.Get("Authorization")
+				if strings.HasPrefix(authHeader, "Bearer ") {
+					token = strings.TrimPrefix(authHeader, "Bearer ")
+				}
+			}
+
+			if token != authToken {
+				http.Error(w, "Unauthorized: Invalid Collector Token", http.StatusUnauthorized)
+				return
+			}
+			next(w, r)
+		}
+	}
+
 	if opts.PprofEnabled {
 		// add profiling routes
 		router.GET("/debug/pprof/:thing", http.DefaultServeMux.ServeHTTP)
@@ -374,6 +400,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v1/org_config", EnsureViewer(service.OrganizationConfig))
 	router.GET("/cloudhub/v1/org_config/logviewer", EnsureViewer(service.OrganizationLogViewerConfig))
 	router.PUT("/cloudhub/v1/org_config/logviewer", EnsureEditor(service.ReplaceOrganizationLogViewerConfig))
+	router.GET("/cloudhub/v1/org_config/log-analysis", EnsureViewer(service.OrganizationLogAnalysisConfig))
+	router.PUT("/cloudhub/v1/org_config/log-analysis", EnsureEditor(service.ReplaceOrganizationLogAnalysisConfig))
 
 	router.GET("/cloudhub/v1/env", EnsureViewer(service.Environment))
 
@@ -411,6 +439,12 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Device Management Learning
 	router.POST("/cloudhub/v1/ai/network/managements/learning/config", EnsureAdmin(service.LearningDeviceManagement))
 
+	// This endpoint is used by sidecars to pull their specific shard configuration.
+	router.GET("/api/v1/collectors/config/:shardID", EnsureCollectorAuth(service.GetCollectorConfig))
+
+	// This endpoint is used by sidecars to request a sync for multiple shards via Kafka.
+	router.POST("/api/v1/collectors/shard/sync", EnsureCollectorAuth(service.SyncCollectorShards))
+
 	// Device Learning Result
 	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/ml", EnsureViewer(service.GetMLNxRst))
 	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/dl", EnsureViewer(service.GetDLNxRst))
@@ -438,6 +472,39 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// Validates go templates for the js client
 	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))
+
+	// ElasticSearch Sources
+	router.GET("/cloudhub/v1/es", EnsureViewer(service.EsSources))
+	router.GET("/cloudhub/v1/es/:id", EnsureViewer(service.EsSourcesID))
+	router.POST("/cloudhub/v1/es", EnsureViewer(service.NewEsSource))
+	router.PATCH("/cloudhub/v1/es/:id", EnsureEditor(service.UpdateEsSource))
+	router.DELETE("/cloudhub/v1/es/:id", EnsureAdmin(service.RemoveEsSource))
+
+	// Source Proxy to Influx; Has gzip compression around the handler
+	elastic := gziphandler.GzipHandler(EnsureViewer(service.Elastic))
+	registerAllMethods(router, "/cloudhub/v1/es/:id/proxy/*path", elastic)
+
+	router.POST("/cloudhub/v1/proxy/multi/es", EnsureViewer(service.MultiElasticProxy))
+
+	// DeviceMappings (context-scoped collection)
+	// SuperAdmin: all orgs; Regular/Admin: currentOrg only
+	router.GET("/cloudhub/v1/device-mappings/devices", EnsureViewer(service.AllDeviceMappings))
+	router.POST("/cloudhub/v1/device-mappings/devices", EnsureAdmin(service.RegisterDevice))
+
+	// Single device (moved under /devices to avoid httprouter wildcard conflicts)
+	router.GET("/cloudhub/v1/device-mappings/devices/:hostname", EnsureViewer(service.GetDeviceMapping))
+	router.PATCH("/cloudhub/v1/device-mappings/devices/:hostname", EnsureAdmin(service.UpdateDeviceMapping))
+	router.DELETE("/cloudhub/v1/device-mappings/devices/:hostname", EnsureAdmin(service.DeleteDeviceMapping))
+
+	// Alias lookup
+	router.GET("/cloudhub/v1/device-mappings/aliases/:aliasName", EnsureViewer(service.GetDeviceByAlias))
+
+	// Ensure device
+	router.POST("/cloudhub/v1/device-mappings/ensure", EnsureViewer(service.EnsureDevice))
+
+	// Kubernetes API Proxy
+	kubernetes := http.HandlerFunc(service.KubernetesProxy)
+	registerAllMethods(router, "/cloudhub/v1/kubernetes/proxy/*path", kubernetes)
 
 	allRoutes := &AllRoutes{
 		Logger:                opts.Logger,
@@ -656,6 +723,59 @@ func paramStr(key string, r *http.Request) (string, error) {
 	ctx := r.Context()
 	param := httprouter.GetParamFromContext(ctx, key)
 	return param, nil
+}
+
+// bodyInt64 converts a string field from the parsed JSON struct to int64.
+func bodyInt64(s string, fieldName string) (int64, error) {
+	if s == "" {
+		return 0, fmt.Errorf("%s is required", fieldName)
+	}
+	v, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s: %v", fieldName, err)
+	}
+	return v, nil
+}
+func bodyInt(raw interface{}, fieldName string) (int, error) {
+	switch v := raw.(type) {
+	case float64:
+		return int(v), nil
+	case string:
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			return 0, fmt.Errorf("invalid %s: %v", fieldName, err)
+		}
+		return i, nil
+	default:
+		return 0, fmt.Errorf("%s must be number or string", fieldName)
+	}
+}
+
+// queryInt returns the integer value of a query‑string parameter.
+// Example:  /foo?es-source=42            →  queryInt("es-source", r) == 42
+func queryInt(key string, r *http.Request) (int, error) {
+	val := r.URL.Query().Get(key)
+	if val == "" {
+		return -1, nil
+	}
+	n, err := strconv.Atoi(val)
+	if err != nil {
+		return -1, fmt.Errorf("invalid integer for %q: %s", key, val)
+	}
+	return n, nil
+}
+
+// queryInt64 works like queryInt but for 64‑bit ints.
+func queryInt64(key string, r *http.Request) (int64, error) {
+	val := r.URL.Query().Get(key)
+	if val == "" {
+		return -1, nil
+	}
+	n, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return -1, fmt.Errorf("invalid int64 for %q: %s", key, val)
+	}
+	return n, nil
 }
 
 // decodeRequest is a generic function to decode JSON request bodies

@@ -2,7 +2,6 @@ package kv_test
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -40,9 +39,10 @@ func TestNetworkDeviceStore(t *testing.T) {
 				Port:      161,
 				Protocol:  "udp",
 			},
+			ShardID: 10, // Added ShardID for testing
 		},
 		{
-			ID:                     "547",
+			ID:                     "547", // ID will be reassigned by Add()
 			Organization:           "1",
 			DeviceIP:               "192.168.1.2",
 			Hostname:               "device02",
@@ -61,6 +61,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 				Port:      162,
 				Protocol:  "udp",
 			},
+			ShardID: 20, // Added ShardID for testing
 		},
 	}
 
@@ -83,6 +84,7 @@ func TestNetworkDeviceStore(t *testing.T) {
 
 	// Update Device.
 	devices[1].Hostname = "device02_updated"
+	devices[1].ShardID = 30 // Test updating ShardID as well
 	if err := s.Update(ctx, &devices[1]); err != nil {
 		t.Fatal(err)
 	}
@@ -98,17 +100,17 @@ func TestNetworkDeviceStore(t *testing.T) {
 
 	// Get test.
 	device, err := s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &devices[1].ID})
-	fmt.Println(device)
 	if err != nil {
 		t.Fatal(err)
 	} else if device.Hostname != "device02_updated" {
 		t.Fatalf("Device update error: got %v, expected %v", device.Hostname, "device02_updated")
+	} else if device.ShardID != 30 {
+		t.Fatalf("Device ShardID update error: got %d, expected %d", device.ShardID, 30)
 	}
 
 	// Getting test for a wrong id.
 	id := "1000"
-	empty_device, err := s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
-	fmt.Println(empty_device)
+	_, err = s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
 	if err == nil {
 		t.Fatalf("Must be occured error for a wrong id=%v, message=\"Device not found\"", id)
 	}
@@ -121,5 +123,43 @@ func TestNetworkDeviceStore(t *testing.T) {
 	// Check out Device has been deleted.
 	if _, err := s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &devices[1].ID}); err != cloudhub.ErrDeviceNotFound {
 		t.Fatalf("Device delete error: got %v, expected %v", err, cloudhub.ErrDeviceNotFound)
+	}
+}
+
+func TestNetworkDeviceShardIDMarshaling(t *testing.T) {
+	c, err := NewTestClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	s := c.NetworkDeviceStore()
+	ctx := context.Background()
+
+	original := cloudhub.NetworkDevice{
+		Organization: "test-org",
+		DeviceIP:     "1.1.1.1",
+		Hostname:     "test-device",
+		ShardID:      5, // Important test value
+	}
+
+	// Add to store (Marshaling happen here)
+	added, err := s.Add(ctx, &original)
+	if err != nil {
+		t.Fatalf("Failed to add device: %v", err)
+	}
+
+	// Get from store (Unmarshaling happen here)
+	retrieved, err := s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &added.ID})
+	if err != nil {
+		t.Fatalf("Failed to retrieve device: %v", err)
+	}
+
+	if retrieved.ShardID != 5 {
+		t.Errorf("ShardID mismatch! expected 5, got %d", retrieved.ShardID)
+	}
+
+	if !reflect.DeepEqual(*retrieved, *added) {
+		t.Errorf("Devices are not equal after marshaling/unmarshaling")
 	}
 }

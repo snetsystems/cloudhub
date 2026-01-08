@@ -16,6 +16,7 @@ import {
   EncodingLabelOptions,
   EncodingVisibilityOptions,
   DEFAULT_TRUNCATION,
+  DEFAULT_CHART_OPTIONS,
 } from 'src/logs/constants'
 
 export const logConfigServerToUI = (
@@ -44,6 +45,7 @@ export const logConfigServerToUI = (
     severityFormat,
     severityLevelColors,
     isTruncated: DEFAULT_TRUNCATION,
+    chartOptions: DEFAULT_CHART_OPTIONS,
   }
 }
 

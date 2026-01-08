@@ -1554,7 +1554,7 @@
       {
         "tempVar": ":host:",
         "values": [],
-        "id": "",
+        "id": "template-host-$(date +%s)",
         "type": "tagValues",
         "label": "",
         "query": {

@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useEffect, useState} from 'react'
 
 // Library
 import _ from 'lodash'
@@ -18,7 +18,7 @@ import {
   TimeZones,
 } from 'src/types'
 import ReactObserver from 'react-resize-observer'
-import {timeRanges, timeRangesGroupBys} from 'src/shared/data/timeRanges'
+import {timeRanges} from 'src/shared/data/timeRanges'
 
 // Redux
 import {bindActionCreators} from 'redux'
@@ -31,7 +31,7 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
-import {DEFAULT_GROUP_BY, TIME_GAP} from 'src/device_management/constants'
+import {TIME_GAP} from 'src/device_management/constants'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -65,8 +65,6 @@ const PredictionInstanceWrapper = ({
   selectedAnomaly,
   timeZone,
 }: Props) => {
-  const intervalRef = useRef(null)
-
   const getTimeRangeFromLocalStorage = (): TimeRange => {
     if (!!localStorage.getItem('monitoring-chart')) {
       return JSON.parse(localStorage.getItem('monitoring-chart'))
@@ -74,12 +72,6 @@ const PredictionInstanceWrapper = ({
       return timeRanges.find(tr => tr.lower === 'now() - 1h')
     }
   }
-
-  const [tempInterval, setTempInterval] = useState(DEFAULT_GROUP_BY)
-
-  const [interval, setInterval] = useState(DEFAULT_GROUP_BY)
-
-  const [isIntervalManual, setIsIntervalManual] = useState(false)
 
   const [
     showFilteredHostLayoutsByInterfaces,
@@ -117,7 +109,6 @@ const PredictionInstanceWrapper = ({
       })
     } else {
       setSelfTimeRange(getTimeRangeFromLocalStorage())
-      setIsIntervalManual(false)
     }
   }, [selectedAnomaly])
 
@@ -149,17 +140,15 @@ const PredictionInstanceWrapper = ({
         getCellsReactive(
           currentLayouts,
           source,
-          filteredHexbinHost ?? '',
+          {agent_host: filteredHexbinHost ?? ''},
           ratio,
-          isIntervalManual ? interval : null
+          null
         )
       )
     }
   }, [
     layouts,
-    interval,
     filteredHexbinHost,
-    isIntervalManual,
     selfTimeRange,
     showFilteredHostLayoutsByInterfaces,
     timeSeriesHeight,
@@ -227,7 +216,6 @@ const PredictionInstanceWrapper = ({
       setSelfTimeRange({lower, upper})
       // saveTimeRangeToLocalStorage({lower, upper})
     } else {
-      setIsIntervalManual(false)
       const timeRange = timeRanges.find(range => range.lower === lower)
       setSelfTimeRange(timeRange)
       saveTimeRangeToLocalStorage(timeRange)
@@ -236,40 +224,6 @@ const PredictionInstanceWrapper = ({
 
   const onToggleShowFilteredHostDerivativeLayouts = () => {
     setShowFilteredHostLayoutsByInterfaces(prevState => !prevState)
-  }
-
-  const onToggleChangeHandler = () => {
-    const groupBy =
-      timeRangesGroupBys.find(tr => tr.lower === selfTimeRange.lower)
-        ?.defaultGroupBy ?? DEFAULT_GROUP_BY
-    setIsIntervalManual(!isIntervalManual)
-    setTempInterval(groupBy)
-    setInterval(groupBy)
-  }
-
-  const onIntervalHandler = value => {
-    const numericValue = Number(value)
-    if (!isNaN(numericValue)) {
-      setTempInterval(numericValue)
-    } else {
-      setTempInterval(0)
-    }
-  }
-
-  const onFocusOutHandler = () => {
-    if (tempInterval > 0) {
-      setInterval(tempInterval)
-    } else {
-      setIsIntervalManual(false)
-    }
-  }
-
-  const onKeyUpHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!!intervalRef.current) {
-      if (e.keyCode === 13) {
-        intervalRef.current.blur()
-      }
-    }
   }
 
   const isFilteredHost = (filteredHexbinHost: string | undefined): boolean => {
@@ -300,37 +254,7 @@ const PredictionInstanceWrapper = ({
               }}
               label="By Interfaces"
             />
-            {/* Deprecated */}
-            <PredictionHexbinToggle
-              isHide={true}
-              isActive={isIntervalManual}
-              onChange={() => {
-                onToggleChangeHandler()
-              }}
-              label="Manual Interval"
-            />
-            {isIntervalManual && (
-              <>
-                <input
-                  ref={intervalRef}
-                  type="number"
-                  min="1"
-                  className="form-control input-sm prediction-interval--input"
-                  placeholder="Interval..."
-                  onChange={e => onIntervalHandler(e.currentTarget.value)}
-                  value={`${tempInterval}`}
-                  autoComplete={'off'}
-                  spellCheck={false}
-                  onBlur={() => {
-                    onFocusOutHandler()
-                  }}
-                  onKeyUp={e => {
-                    onKeyUpHandler(e)
-                  }}
-                />
-                <span>min</span>
-              </>
-            )}
+
             <TimeRangeShiftDropdown
               onChooseTimeRange={handleChooseTimeRange}
               selected={selfTimeRange}

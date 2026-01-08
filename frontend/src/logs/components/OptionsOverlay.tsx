@@ -25,6 +25,7 @@ interface Props {
   onDismissOverlay: () => void
   columns: LogsTableColumn[]
   severityFormat: SeverityFormat
+  isColorOnly?: boolean
 }
 
 interface State {
@@ -66,15 +67,16 @@ class OptionsOverlay extends Component<Props, State> {
   }
 
   public render() {
+    const {isColorOnly} = this.props
     const {workingLevelColumns, workingColumns, workingFormat} = this.state
     return (
-      <Container maxWidth={800}>
+      <Container maxWidth={isColorOnly ? 500 : 800}>
         <Heading title="Configure Log Viewer">
           {this.overlayActionButtons}
         </Heading>
         <Body>
           <div className="row">
-            <div className="col-sm-5">
+            <div className={`col-sm-${isColorOnly ? '12' : '5'}`}>
               <SeverityOptions
                 severityLevelColors={workingLevelColumns}
                 onReset={this.handleResetSeverityLevels}
@@ -83,13 +85,15 @@ class OptionsOverlay extends Component<Props, State> {
                 onChangeSeverityFormat={this.handleChangeSeverityFormat}
               />
             </div>
-            <div className="col-sm-7">
-              <ColumnsOptions
-                columns={workingColumns}
-                onMoveColumn={this.handleMoveColumn}
-                onUpdateColumn={this.handleUpdateColumn}
-              />
-            </div>
+            {!isColorOnly && (
+              <div className="col-sm-7">
+                <ColumnsOptions
+                  columns={workingColumns}
+                  onMoveColumn={this.handleMoveColumn}
+                  onUpdateColumn={this.handleUpdateColumn}
+                />
+              </div>
+            )}
           </div>
         </Body>
       </Container>

@@ -81,7 +81,60 @@ export const getCellTypeColors = ({
   }
 }
 
+// normalizeTableGaugeChartOptions ensures threshold color values are strings for API payloads.
+export const normalizeTableGaugeChartOptions = options => {
+  if (!options || !Array.isArray(options.columnSettings)) {
+    return options
+  }
+
+  const columnSettings = options.columnSettings.map(setting => {
+    if (!setting || !Array.isArray(setting.thresholdColors)) {
+      return setting
+    }
+
+    // Convert threshold color values to strings
+    let thresholdColors = setting.thresholdColors
+    if (Array.isArray(setting.thresholdColors)) {
+      thresholdColors = setting.thresholdColors.map(color => ({
+        ...color,
+        value: `${color?.value ?? ''}`,
+      }))
+    }
+
+    const min = convertToNumber(setting.min)
+    const max = convertToNumber(setting.max)
+
+    return {
+      ...setting,
+      min,
+      max,
+      thresholdColors,
+    }
+  })
+
+  return {...options, columnSettings}
+}
+
 export const STATIC_LEGEND: Legend = {
   type: 'static',
   orientation: 'bottom',
+}
+
+// Convert min/max from string to number (null for empty/invalid values)
+// Also convert undefined to null as defensive code
+const convertToNumber = (
+  value: string | number | null | undefined
+): number | null => {
+  // Defensive code: convert undefined to null
+  if (value === undefined) {
+    return null
+  }
+  if (value === null || value === '') {
+    return null
+  }
+  if (typeof value === 'number') {
+    return isNaN(value) ? null : value
+  }
+  const parsed = parseFloat(value as string)
+  return isNaN(parsed) ? null : parsed
 }

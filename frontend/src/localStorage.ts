@@ -56,6 +56,7 @@ export const saveToLocalStorage = ({
   logs,
   activitylogs,
   script,
+  logAnalysisDashboard,
 }: LocalStorage): void => {
   try {
     const dashTimeV1 = {
@@ -113,6 +114,7 @@ export const saveToLocalStorage = ({
         timeRange,
         dashTimeV1,
         script,
+        logAnalysisDashboard,
         logs: {
           ...minimalLogs,
           histogramData: [],

@@ -552,8 +552,7 @@ def build(version=None,
         elif "arm" in arch:
             arch = "arm"
         build_command += "cd backend && "
-        if static:
-            build_command += "CGO_ENABLED=0 "
+        build_command += "CGO_ENABLED=0 "
         build_command += "GOOS={} GOARCH={} ".format(platform, arch)
 
         if "arm" in fullarch:

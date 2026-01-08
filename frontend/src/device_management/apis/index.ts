@@ -355,7 +355,7 @@ export const getPredictionAlert = (
   db: string
 ) => {
   if (timeRange.format === INPUT_TIME_TYPE.TIMESTAMP) {
-    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE time >= '${
+    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE triggerType = 'anomaly_predict' AND time >= '${
       timeRange.lower
     }' ${validateUpperTime(timeRange.upper)} ORDER BY time desc ${
       limit ? `LIMIT ${limit}` : ''
@@ -367,7 +367,7 @@ export const getPredictionAlert = (
       db,
     })
   } else {
-    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE time >= ${
+    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE triggerType = 'anomaly_predict' AND time >= ${
       timeRange.lower
     } AND time <= ${timeRange.upper ?? 'now()'} ORDER BY time desc ${
       limit ? `LIMIT ${limit}` : ''
@@ -405,9 +405,12 @@ export const getLiveDeviceInfo = async (
   const query = replaceTemplate(
     `SELECT mean("cpu1min") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
     SELECT mean("mem_usage") FROM \":db:\".\"autogen\".\"snmp_nx\" WHERE time > now() - 5m GROUP BY agent_host;
-    SELECT last("tff_volume") from (SELECT non_negative_derivative(mean("total_ifHCOutOctets"),1s) + non_negative_derivative(mean("total_ifHCInOctets"),1s) AS "tff_volume" FROM \":db:\"."autogen"."snmp_nx" WHERE "time" > now()-5m GROUP BY time(1m), "agent_host") GROUP BY "agent_host";
-   
-      `,
+    SELECT non_negative_derivative(mean("total_ifHCOutOctets"), 1s) + non_negative_derivative(mean("total_ifHCInOctets"), 1s) AS "last_tff_volume"
+    FROM \":db:\".\"autogen\".\"snmp_nx\"
+    WHERE time > now() - 5m
+    GROUP BY time(1m), "agent_host"
+    FILL(none)
+    LIMIT 1;`,
     tempVars
   )
   // SHOW TAG VALUES WITH KEY = "agent_host" WHERE TIME > now() - 10m;
@@ -457,7 +460,7 @@ export const getLiveDeviceInfo = async (
   })
 
   trafficSeries?.forEach(s => {
-    const meanIndex = s.columns?.findIndex(col => col === 'last')
+    const meanIndex = s.columns?.findIndex(col => col === 'last_tff_volume')
 
     if (deviceIpList.includes(s.tags.agent_host)) {
       hosts[s.tags.agent_host] = {

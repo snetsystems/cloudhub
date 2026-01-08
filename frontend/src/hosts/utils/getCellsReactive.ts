@@ -22,10 +22,16 @@ interface Ratio {
   yNum: number
   height: number
 }
+
+interface WhereTag {
+  [key: string]: string | number
+  _operator?: 'AND' | 'OR'
+}
+
 export function getCellsReactive(
   layouts: Layout[],
   source: Source,
-  whereTag: string,
+  whereTag: WhereTag,
   ratio: Ratio,
   interval?: number
 ): Cell[] {
@@ -40,7 +46,7 @@ function getLayoutCells(layouts: Layout[], ratio: Ratio): LayoutCell[] {
     return []
   }
 
-  const autoflowLayouts = layouts.filter(l => (l.autoflow = true))
+  const autoflowLayouts = layouts.filter(l => l.autoflow === true)
   // const autoflowCells = flatten(autoflowLayouts.map(l => l.cells))
 
   const autoflowCells = flatten(
@@ -103,7 +109,7 @@ function translateCellGroups(groups: LayoutCell[][]): LayoutCell[] {
 function toCell(
   layoutCell: LayoutCell,
   source: Source,
-  whereTag: string,
+  whereTag: WhereTag,
   interval?: number
 ): Cell {
   const queries = layoutCell.queries.map(d =>
@@ -115,10 +121,10 @@ function toCell(
     queries,
 
     links: {},
-    legend: {},
+    legend: layoutCell?.legend || {},
     type: (layoutCell?.type as CellType) || CellType.Line,
     colors: ((layoutCell?.colors as unknown) as ColorString[]) || [],
-    decimalPlaces: layoutCell.decimalPlaces || DEFAULT_DECIMAL_PLACES,
+    decimalPlaces: layoutCell?.decimalPlaces || DEFAULT_DECIMAL_PLACES,
   }
 
   return cell
@@ -127,16 +133,33 @@ function toCell(
 function toCellQuery(
   layoutQuery: LayoutQuery & queryWithWhereGroupby,
   source: Source,
-  whereTag: string,
+  whereTag: WhereTag,
   interval?: number
 ): CellQuery {
-  const additionalWheres = [
-    whereTag !== '' ? `"host" = '${whereTag}'` : null,
-  ].filter(i => !!i)
+  const {_operator = 'AND', ...filteredWhereTag} = whereTag
+
+  const additionalWheres = Object.keys(filteredWhereTag)
+    .map(key => {
+      if (filteredWhereTag[key] !== '' && filteredWhereTag[key] !== -1) {
+        return `"${key}" = '${filteredWhereTag[key]}'`
+      }
+      return null
+    })
+    .filter(i => !!i)
+
+  let combinedWhere = ''
+  if (additionalWheres.length > 1) {
+    combinedWhere = `(${additionalWheres.join(` ${_operator} `)})`
+  } else if (additionalWheres.length === 1) {
+    combinedWhere = additionalWheres[0]
+  }
 
   const filteredQuery = {
     ...layoutQuery,
-    wheres: [...(layoutQuery.wheres ?? []), ...additionalWheres],
+    wheres: [
+      ...(layoutQuery.wheres ?? []),
+      ...(combinedWhere ? [combinedWhere] : []),
+    ],
     groupbys: [
       ...(layoutQuery.groupbys ?? []),
       interval && interval > 0 ? `time(${interval}m)` : null,
@@ -144,7 +167,10 @@ function toCellQuery(
   }
 
   const cellQuery: any =
-    whereTag !== '' || (interval && interval > 0)
+    Object.keys(whereTag).some(
+      key => key !== '_operator' && whereTag[key] !== '' && whereTag[key] !== -1
+    ) ||
+    (interval && interval > 0)
       ? {
           ...filteredQuery,
           source: source.url,

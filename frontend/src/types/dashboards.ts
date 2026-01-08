@@ -1,6 +1,7 @@
 import {Template, TimeRange, QueryConfig, Status} from 'src/types'
 import {ColorString} from 'src/types/colors'
 import {Point} from './dygraphs'
+import {TableGaugeChartOptionsInterface} from './statisticalgraph'
 
 export interface Axis {
   label: string
@@ -63,6 +64,7 @@ export interface CellQuery {
   text?: string // doesn't come from server
   id?: string
   type: string // flux or influxql
+  tz?: string // timezone for query (added at runtime by components)
 }
 
 export interface Legend {
@@ -104,6 +106,7 @@ export interface Cell {
   note: string
   noteVisibility: NoteVisibility
   graphOptions?: GraphOptions
+  tableGaugeChartOptions?: TableGaugeChartOptionsInterface
 }
 
 export enum CellType {
@@ -126,6 +129,7 @@ export enum CellType {
   StaticRadar = 'staticRadar',
   StaticStackedBar = 'staticStackedBar',
   StaticLineChart = 'staticLineChart',
+  StaticTableGaugeChart = 'staticTableGaugeChart',
 }
 
 interface DashboardLinks {

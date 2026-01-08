@@ -41,7 +41,8 @@ cat > $APP_FILE << EOF
 	"id": "$UUID",
 	"measurement": "$measurement",
 	"app": "$measurement",
-			"cells": [{
+	"whereTagKey": ["host"],
+	"cells": [{
 		"x": 0,
 		"y": 0,
 		"w": 32,

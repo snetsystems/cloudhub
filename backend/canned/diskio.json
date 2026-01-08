@@ -3,6 +3,7 @@
   "measurement": "diskio",
   "app": "system",
   "autoflow": true,
+  "whereTagKey": ["host"],
   "cells": [
     {
       "x": 0,
@@ -12,20 +13,105 @@
       "minW": 10,
       "minH": 4,
       "i": "7f647740-d9f0-4012-8e7a-5d898c8f271e",
-      "name": "System – Disk MB/s",
+      "name": "System – Disk Throughput (MB/s)",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"read_bytes\"), 1s) / 1000000 AS \"read_megabytes_per_second\" FROM \":db:\".\":rp:\".\"diskio\"",
+          "query": "SELECT non_negative_derivative(max(\"read_bytes\"), 1s) / 1000000 AS \"read_MBps\" FROM \":db:\".\":rp:\".\"diskio\"",
           "groupbys": ["\"name\""],
           "wheres": [],
-          "label": "MB/s"
+          "label": "Read (MB/s)"
         },
         {
-          "query": "SELECT non_negative_derivative(max(\"write_bytes\"), 1s) / 1000000 AS \"write_megabytes_per_second\" FROM \":db:\".\":rp:\".\"diskio\"",
+          "query": "SELECT non_negative_derivative(max(\"write_bytes\"), 1s) / 1000000 AS \"write_MBps\" FROM \":db:\".\":rp:\".\"diskio\"",
           "groupbys": ["\"name\""],
-          "wheres": []
+          "wheres": [],
+          "label": "Write (MB/s)"
         }
-      ]
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "Time",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", ""],
+          "label": "Throughput (MB/s)",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "a2b3f4de-90ac-4fd2-8f4b-7b61cfaa34c9",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "8a9f2cde-1f43-46d8-b61a-3431e2c9f7ae",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "Time",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "Time",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "read_MBps",
+          "displayName": "Read (MB/s)",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        {
+          "internalName": "write_MBps",
+          "displayName": "Write (MB/s)",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      }
     }
   ]
 }

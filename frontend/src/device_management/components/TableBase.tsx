@@ -1,6 +1,11 @@
+// Libraries
 import React, {useEffect, useMemo, useState} from 'react'
 
-// Type
+// Components
+import AccordionTable from 'src/device_management/components/AccordionTable'
+import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
+
+// Types
 import {
   AlignType,
   ColumnInfo,
@@ -9,9 +14,6 @@ import {
   SortInfo,
   TimeZones,
 } from 'src/types'
-
-import AccordionTable from 'src/device_management/components/AccordionTable'
-
 interface Props {
   columns: ColumnInfo[]
   data: DataTableObject[]
@@ -23,6 +25,7 @@ interface Props {
   checkedTargets?: string[]
   isMultiSelect?: boolean
   timeZone: TimeZones
+  isDotKey?: boolean
 }
 
 function TableBase({
@@ -36,6 +39,7 @@ function TableBase({
   sortTarget,
   onSort,
   timeZone,
+  isDotKey = false,
 }: Props) {
   const [openRowAccor, setOpenRowAccor] = useState<number | null>(null)
 
@@ -52,30 +56,29 @@ function TableBase({
   }, [columns])
 
   const getValue = (item: DataTableObject, key: string) => {
-    let target
-    if (
-      key.includes('.') &&
-      typeof target !== 'string' &&
-      typeof target !== 'number' &&
-      typeof target !== 'boolean'
-    ) {
+    if (!isDotKey && Object.prototype.hasOwnProperty.call(item, key)) {
+      return item[key] as string | number | boolean | DataTableObject[]
+    }
+
+    if (key.includes('.')) {
       const splitKey = key.split('.')
-      target = item[splitKey[0]]
+      let target: any = item[splitKey.shift() as string]
       while (
-        splitKey.length > 1 &&
+        splitKey.length > 0 &&
+        target !== null &&
+        target !== undefined &&
         typeof target !== 'string' &&
         typeof target !== 'number' &&
         typeof target !== 'boolean'
       ) {
-        target = target[splitKey[1]]
-        splitKey.splice(0, 1)
+        const nextKey = splitKey.shift() as string
+        target = target?.[nextKey]
       }
 
       return target as string | number | boolean | DataTableObject[]
-    } else {
-      target = item[key]
-      return target as string | number | boolean | DataTableObject[]
     }
+
+    return item[key] as string | number | boolean | DataTableObject[]
   }
 
   const openAccordion = rowIndex => {
@@ -153,8 +156,11 @@ function TableBase({
               ?.map((column, index) => {
                 return (
                   <th
-                    className={`${getAlignClassName(column?.align)} ${
-                      options?.theadRow?.className ?? ''
+                    style={column.options?.thead?.style}
+                    className={`${getAlignClassName(
+                      column?.options?.thead?.align
+                    )} ${options?.theadRow?.className ?? ''} ${
+                      column.options?.thead?.className ?? ''
                     } ${column.options?.checkbox ? 'checkbox' : ''}`}
                     key={index}
                     onClick={() => onClickTh(column)}
@@ -177,7 +183,13 @@ function TableBase({
                         ) : null}
                       </>
                     ) : column.options?.sorting ? (
-                      <div>
+                      <div
+                        className={`${
+                          !!sortTarget && sortTarget.key === column.key
+                            ? 'sorted'
+                            : ''
+                        }`}
+                      >
                         <span>{column.name}</span>
 
                         {!!sortTarget &&
@@ -199,93 +211,112 @@ function TableBase({
           </tr>
         </thead>
         <tbody>
-          {data?.map((item, rowIndex) => {
-            const isAccordionRow =
-              !!accordionColumns && accordionColumns.length > 0
-            return (
-              <React.Fragment key={rowIndex}>
-                <tr
-                  onClick={e => {
-                    if (isAccordionRow) {
-                      e.stopPropagation()
-                      openAccordion(rowIndex)
-                    } else if (!!options?.tbodyRow?.onClick) {
-                      options?.tbodyRow?.onClick?.(item, rowIndex)
-                    } else {
-                      null
-                    }
-                  }}
-                  className={`${isAccordionRow ? 'hover-pointer-cursor' : ''}`}
-                >
-                  {keys.map((key, columnIndex) => {
-                    const column = columns[columnIndex]
-                    return (
-                      <td
-                        key={columnIndex}
-                        onClick={() => columns[columnIndex].onClick}
-                        className={`${
-                          column.options?.thead?.className ?? ''
-                        } ${getAlignClassName(column?.align)}`}
-                      >
-                        {column?.options?.checkbox ? (
-                          <div className="dark-checkbox">
-                            <input
-                              type={'checkbox'}
-                              id={`agent-control--${rowIndex}`}
-                              className="checkbox-primary checkbox checkbox-sm"
-                              checked={checkedTargets?.includes(
-                                `${getValue(item, key)}`
-                              )}
-                              onClick={event => event.stopPropagation()}
-                              onChange={() =>
-                                onChangeCheck(`${getValue(item, key)}`)
-                              }
-                            />
-                            <label
-                              onClick={e => e.stopPropagation()}
-                              htmlFor={`agent-control--${rowIndex}`}
-                            />
-                          </div>
-                        ) : column?.render ? (
-                          column.render(
-                            getValue(item, key),
-                            item,
-                            columnIndex,
-                            rowIndex,
-                            timeZone
-                          )
-                        ) : (
-                          getValue(item, key)
-                        )}
-                      </td>
-                    )
-                  })}
-                </tr>
-                {isAccordionRow && rowIndex === openRowAccor && (
+          {data?.length > 0 ? (
+            data?.map((item, rowIndex) => {
+              const isAccordionRow =
+                !!accordionColumns && accordionColumns.length > 0
+              return (
+                <React.Fragment key={rowIndex}>
                   <tr
-                    key={`${rowIndex}-accordion`}
-                    className="table-accordion-tr"
+                    onClick={e => {
+                      if (isAccordionRow) {
+                        e.stopPropagation()
+                        openAccordion(rowIndex)
+                      } else if (!!options?.tbodyRow?.onClick) {
+                        options?.tbodyRow?.onClick?.(item, rowIndex)
+                      } else {
+                        null
+                      }
+                    }}
+                    className={`${
+                      isAccordionRow ? 'hover-pointer-cursor' : ''
+                    } ${options?.tbodyRow?.className ?? ''}`}
                   >
-                    <td className="table-accordion-td" colSpan={keys.length}>
-                      <div
-                        className={`table-accordion-div panel-body ${
-                          rowIndex === openRowAccor ? 'open' : 'close'
-                        }`}
-                      >
-                        <AccordionTable
-                          timeZone={timeZone}
-                          tableData={
-                            getValue(item, accordionKey) as DataTableObject[]
-                          }
-                          accordionColumns={accordionColumns}
-                        />
-                      </div>
-                    </td>
+                    {keys.map((key, columnIndex) => {
+                      const column = columns[columnIndex]
+                      return (
+                        <td
+                          key={columnIndex}
+                          onClick={() => columns[columnIndex].onClick}
+                          className={`${getAlignClassName(
+                            column?.options?.thead?.align
+                          )}`}
+                        >
+                          {column?.options?.checkbox ? (
+                            <div className="dark-checkbox">
+                              <input
+                                type={'checkbox'}
+                                id={`agent-control--${rowIndex}`}
+                                className="checkbox-primary checkbox checkbox-sm"
+                                checked={checkedTargets?.includes(
+                                  `${getValue(item, key)}`
+                                )}
+                                onClick={event => event.stopPropagation()}
+                                onChange={() =>
+                                  onChangeCheck(`${getValue(item, key)}`)
+                                }
+                              />
+                              <label
+                                onClick={e => e.stopPropagation()}
+                                htmlFor={`agent-control--${rowIndex}`}
+                              />
+                            </div>
+                          ) : column?.options?.isGauge ? (
+                            <TableGaugeCell
+                              options={column.options?.gaugeOptions}
+                              value={getValue(item, key) as number}
+                            />
+                          ) : column?.render ? (
+                            column.render(
+                              getValue(item, key),
+                              item,
+                              columnIndex,
+                              rowIndex,
+                              timeZone
+                            )
+                          ) : (
+                            <>
+                              {(column?.options?.gaugeOptions?.prefix ?? '') +
+                                getValue(item, key) +
+                                (column?.options?.gaugeOptions?.suffix ?? '')}
+                            </>
+                          )}
+                        </td>
+                      )
+                    })}
                   </tr>
-                )}
-              </React.Fragment>
-            )
-          })}
+                  {isAccordionRow && rowIndex === openRowAccor && (
+                    <tr
+                      key={`${rowIndex}-accordion`}
+                      className="table-accordion-tr"
+                    >
+                      <td className="table-accordion-td" colSpan={keys.length}>
+                        <div
+                          className={`table-accordion-div panel-body ${
+                            rowIndex === openRowAccor ? 'open' : 'close'
+                          }`}
+                        >
+                          <AccordionTable
+                            timeZone={timeZone}
+                            tableData={
+                              getValue(item, accordionKey) as DataTableObject[]
+                            }
+                            accordionColumns={accordionColumns}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              )
+            })
+          ) : (
+            <tr className="no-data">
+              <td colSpan={keys.length} className="text-center">
+                {options?.noDataMessage || <span>No data</span>}
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

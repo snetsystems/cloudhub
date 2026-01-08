@@ -58,6 +58,13 @@ const (
 	ErrTemplateNotFound                = Error("template not found")
 	ErrMLNxRstNotFound                 = Error("MLNxRet not found")
 	ErrDLNxRstNotFound                 = Error("DLNxRet not found")
+	ErrDeviceAlreadyExists             = Error("device already exists")
+	ErrConfigGeneratorUninitialized    = Error("config generator not initialized")
+	ErrFailedToFetchAccounts           = Error("failed to fetch accounts")
+	ErrFailedToFetchDevices            = Error("failed to fetch devices")
+	ErrInvalidShardID                  = Error("invalid shard ID")
+	ErrKafkaPublishFailed              = Error("failed to publish config to kafka")
+	ErrKafkaPartitionCountFetchFailed  = Error("failed to get kafka partition count")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -276,6 +283,75 @@ type SourcesStore interface {
 	Get(ctx context.Context, ID int) (Source, error)
 	// Update the Source in the store.
 	Update(context.Context, Source) error
+}
+
+// The kinds of authentication method.
+const (
+	BasicMethod  = "basic"
+	APIkeyMethod = "apiKey"
+)
+
+// EsSource holds connection info for Elasticsearch.
+type EsSource struct {
+	ID                 int    `json:"id,string"`                    // Unique ID (primary key)
+	Name               string `json:"name"`                         // User-defined name
+	Default            bool   `json:"default"`                      // Flag indicating default source
+	Role               string `json:"role,omitempty"`               // Minimum user role for access
+	Version            string `json:"version,omitempty"`            // ES version ("unknown" if not detected)
+	URL                string `json:"url"`                          // e.g. "https://es-host:9200"
+	InsecureSkipVerify bool   `json:"insecureSkipVerify,omitempty"` // Disable TLS cert verification
+
+	BasicAuth  *BasicAuth  `json:"basicAuth,omitempty"`
+	APIKeyAuth *APIKeyAuth `json:"apiKeyAuth,omitempty"`
+
+	IndexPatterns []string `json:"indexPatterns,omitempty"` // e.g. ["logs-*", "metrics-*"]
+	DefaultIndex  string   `json:"defaultIndex,omitempty"`  // Default index to query
+
+	Organization   string `json:"organization"`   // Organization is the organization ID that resource
+	Authentication string `json:"authentication"` // Authentication method ["basic", "apiKey"]
+}
+
+// BasicAuth carries username/password credentials.
+type BasicAuth struct {
+	Username string `json:"username"` // Basic auth username
+	Password string `json:"password"` // Basic auth password
+}
+
+// APIKeyAuth carries API-Key credentials.
+type APIKeyAuth struct {
+	ID     string `json:"id"`     // API key ID
+	APIKey string `json:"apiKey"` // Secret API key
+}
+
+// EsSourcesStore stores connection information for a `TimeSeries`
+type EsSourcesStore interface {
+	// All returns all sources in the store
+	All(context.Context) ([]EsSource, error)
+	// Add creates a new source in the SourcesStore and returns Source with ID
+	Add(context.Context, EsSource) (EsSource, error)
+	// Delete the Source from the store
+	Delete(context.Context, EsSource) error
+	// Get retrieves Source if `ID` exists
+	Get(ctx context.Context, ID int) (EsSource, error)
+	// Update the Source in the store.
+	Update(context.Context, EsSource) error
+}
+
+// MultiProxyRequest represents a batch request to proxy a single Elasticsearch API call to multiple sources.
+type MultiProxyRequest struct {
+	SourceIds []string          `json:"sourceIds"`
+	Method    string            `json:"method"`
+	Path      string            `json:"path"`
+	Query     map[string]string `json:"query"`
+	Body      interface{}       `json:"body"`
+}
+
+// MultiProxyResult contains the outcome of a proxy request to a single Elasticsearch source.
+type MultiProxyResult struct {
+	SourceID string      `json:"sourceId"`
+	Status   int         `json:"status"`
+	Data     interface{} `json:"data,omitempty"`
+	Error    string      `json:"error,omitempty"`
 }
 
 // DBRP represents a database and retention policy for a time series source
@@ -740,26 +816,56 @@ type Legend struct {
 
 // DashboardCell holds visual and query information for a cell
 type DashboardCell struct {
-	ID             string           `json:"i"`
-	X              int32            `json:"x"`
-	Y              int32            `json:"y"`
-	W              int32            `json:"w"`
-	H              int32            `json:"h"`
-	MinW           int32            `json:"minW"`
-	MinH           int32            `json:"minH"`
-	Name           string           `json:"name"`
-	Queries        []DashboardQuery `json:"queries"`
-	Axes           map[string]Axis  `json:"axes"`
-	Type           string           `json:"type"`
-	CellColors     []CellColor      `json:"colors"`
-	Legend         Legend           `json:"legend"`
-	TableOptions   TableOptions     `json:"tableOptions,omitempty"`
-	FieldOptions   []RenamableField `json:"fieldOptions"`
-	TimeFormat     string           `json:"timeFormat"`
-	DecimalPlaces  DecimalPlaces    `json:"decimalPlaces"`
-	Note           string           `json:"note"`
-	NoteVisibility string           `json:"noteVisibility"`
-	GraphOptions   GraphOptions     `json:"graphOptions"`
+	ID                     string                 `json:"i"`
+	X                      int32                  `json:"x"`
+	Y                      int32                  `json:"y"`
+	W                      int32                  `json:"w"`
+	H                      int32                  `json:"h"`
+	MinW                   int32                  `json:"minW"`
+	MinH                   int32                  `json:"minH"`
+	Name                   string                 `json:"name"`
+	Queries                []DashboardQuery       `json:"queries"`
+	Axes                   map[string]Axis        `json:"axes"`
+	Type                   string                 `json:"type"`
+	CellColors             []CellColor            `json:"colors"`
+	Legend                 Legend                 `json:"legend"`
+	TableOptions           TableOptions           `json:"tableOptions,omitempty"`
+	FieldOptions           []RenamableField       `json:"fieldOptions"`
+	TimeFormat             string                 `json:"timeFormat"`
+	DecimalPlaces          DecimalPlaces          `json:"decimalPlaces"`
+	Note                   string                 `json:"note"`
+	NoteVisibility         string                 `json:"noteVisibility"`
+	GraphOptions           GraphOptions           `json:"graphOptions"`
+	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
+}
+
+// TableGaugeChartOptions is the options for the table gauge chart
+type TableGaugeChartOptions struct {
+	ColumnSettings  []ColumnSetting `json:"columnSettings"`
+	DecimalPlaces   DecimalPlaces   `json:"decimalPlaces"`
+	IsShowValues    bool            `json:"isShowValues"`
+	SortBy          string          `json:"sortBy"`
+	SortByDirection string          `json:"sortByDirection"`
+}
+
+// ColumnSetting is the setting for a column in the table gauge chart
+type ColumnSetting struct {
+	InternalName    string      `json:"internalName"`
+	DisplayName     string      `json:"displayName"`
+	Visible         bool        `json:"visible"`
+	Direction       string      `json:"direction"`
+	Min             float64     `json:"min"`
+	Max             float64     `json:"max"`
+	Colors          []CellColor `json:"colors"`
+	ThresholdColors []CellColor `json:"thresholdColors"`
+	Unit            string      `json:"unit"`
+	Prefix          string      `json:"prefix"`
+	Suffix          string      `json:"suffix"`
+	IsShowChart     bool        `json:"isShowChart"`
+	IsPercent       bool        `json:"isPercent"`
+	ChartType       string      `json:"chartType"`
+	BackgroundType  string      `json:"backgroundType"`
+	IsShowValues    bool        `json:"isShowValues"`
 }
 
 // RenamableField is a column/row field in a DashboardCell of type Table
@@ -809,30 +915,32 @@ type DashboardsStore interface {
 
 // Cell is a rectangle and multiple time series queries to visualize.
 type Cell struct {
-	X             int32            `json:"x"`
-	Y             int32            `json:"y"`
-	W             int32            `json:"w"`
-	H             int32            `json:"h"`
-	I             string           `json:"i"`
-	Name          string           `json:"name"`
-	Queries       []Query          `json:"queries"`
-	Axes          map[string]Axis  `json:"axes"`
-	Type          string           `json:"type"`
-	CellColors    []CellColor      `json:"colors"`
-	GraphOptions  GraphOptions     `json:"graphOptions"`
-	DecimalPlaces DecimalPlaces    `json:"decimalPlaces"`
-	TableOptions  TableOptions     `json:"tableOptions,omitempty"`
-	FieldOptions  []RenamableField `json:"fieldOptions,omitempty"`
-	Legend        Legend           `json:"legend"`
+	X                      int32                  `json:"x"`
+	Y                      int32                  `json:"y"`
+	W                      int32                  `json:"w"`
+	H                      int32                  `json:"h"`
+	I                      string                 `json:"i"`
+	Name                   string                 `json:"name"`
+	Queries                []Query                `json:"queries"`
+	Axes                   map[string]Axis        `json:"axes"`
+	Type                   string                 `json:"type"`
+	CellColors             []CellColor            `json:"colors"`
+	GraphOptions           GraphOptions           `json:"graphOptions"`
+	DecimalPlaces          DecimalPlaces          `json:"decimalPlaces"`
+	TableOptions           TableOptions           `json:"tableOptions,omitempty"`
+	FieldOptions           []RenamableField       `json:"fieldOptions,omitempty"`
+	Legend                 Legend                 `json:"legend"`
+	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
 }
 
 // Layout is a collection of Cells for visualization
 type Layout struct {
-	ID          string `json:"id"`
-	Application string `json:"app"`
-	Measurement string `json:"measurement"`
-	Autoflow    bool   `json:"autoflow"`
-	Cells       []Cell `json:"cells"`
+	ID          string   `json:"id"`
+	Application string   `json:"app"`
+	Measurement string   `json:"measurement"`
+	Autoflow    bool     `json:"autoflow"`
+	Cells       []Cell   `json:"cells"`
+	WhereTagKey []string `json:"whereTagKey,omitempty"`
 }
 
 // UnmarshalJSON GraphOptions setting default values for missing fields.
@@ -883,25 +991,26 @@ type ProtoboardMeta struct {
 
 // ProtoboardCell holds visual and query information for a cell
 type ProtoboardCell struct {
-	X              int32            `json:"x"`
-	Y              int32            `json:"y"`
-	W              int32            `json:"w"`
-	H              int32            `json:"h"`
-	MinW           int32            `json:"minW"`
-	MinH           int32            `json:"minH"`
-	Name           string           `json:"name"`
-	Queries        []DashboardQuery `json:"queries"`
-	Axes           map[string]Axis  `json:"axes"`
-	Type           string           `json:"type"`
-	CellColors     []CellColor      `json:"colors"`
-	Legend         Legend           `json:"legend"`
-	TableOptions   TableOptions     `json:"tableOptions,omitempty"`
-	FieldOptions   []RenamableField `json:"fieldOptions"`
-	TimeFormat     string           `json:"timeFormat"`
-	DecimalPlaces  DecimalPlaces    `json:"decimalPlaces"`
-	Note           string           `json:"note"`
-	NoteVisibility string           `json:"noteVisibility"`
-	GraphOptions   GraphOptions     `json:"graphOptions"`
+	X                      int32                  `json:"x"`
+	Y                      int32                  `json:"y"`
+	W                      int32                  `json:"w"`
+	H                      int32                  `json:"h"`
+	MinW                   int32                  `json:"minW"`
+	MinH                   int32                  `json:"minH"`
+	Name                   string                 `json:"name"`
+	Queries                []DashboardQuery       `json:"queries"`
+	Axes                   map[string]Axis        `json:"axes"`
+	Type                   string                 `json:"type"`
+	CellColors             []CellColor            `json:"colors"`
+	Legend                 Legend                 `json:"legend"`
+	TableOptions           TableOptions           `json:"tableOptions,omitempty"`
+	FieldOptions           []RenamableField       `json:"fieldOptions"`
+	TimeFormat             string                 `json:"timeFormat"`
+	DecimalPlaces          DecimalPlaces          `json:"decimalPlaces"`
+	Note                   string                 `json:"note"`
+	NoteVisibility         string                 `json:"noteVisibility"`
+	GraphOptions           GraphOptions           `json:"graphOptions"`
+	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
 }
 
 // ProtoboardData is the data of a Protoboard that can be instantiated into a dashboard, including a collection of cells
@@ -1035,8 +1144,9 @@ type ConfigStore interface {
 // OrganizationConfig is the organization config for parameters that can
 // be set via API, with different sections, such as LogViewer
 type OrganizationConfig struct {
-	OrganizationID string          `json:"organization"`
-	LogViewer      LogViewerConfig `json:"logViewer"`
+	OrganizationID string            `json:"organization"`
+	LogViewer      LogViewerConfig   `json:"logViewer"`
+	LogAnalysis    LogAnalysisConfig `json:"logAnalysis"`
 }
 
 // LogViewerConfig is the configuration settings for the Log Viewer UI
@@ -1056,6 +1166,12 @@ type ColumnEncoding struct {
 	Type  string `json:"type"`
 	Value string `json:"value"`
 	Name  string `json:"name,omitempty"`
+}
+
+// LogAnalysisConfig is the configuration settings for the Log Analysis UI
+type LogAnalysisConfig struct {
+	AnnotationPadding string `json:"annotationPadding"`
+	QueryFillOption   string `json:"queryFillOption"`
 }
 
 // OrganizationConfigStore is the storage and retrieval of organization Configs
@@ -1121,6 +1237,8 @@ type InternalEnvironment struct {
 	TemplatesPath    string
 	TemplatesManager TemplatesManager
 	AIConfig         AIConfig
+	KubernetesConfig KubernetesConfig
+	Platform         Platform
 }
 
 // Topology is represents represents an topology
@@ -1246,6 +1364,8 @@ type KVClient interface {
 	NetworkDeviceOrgStore() NetworkDeviceOrgStore
 	// MLNxRstStore returns the kv's MLNxRstStore type.
 	MLNxRstStore() MLNxRstStore
+	// EsSourcesStore returns the kv's EsSourcesStore type.
+	EsSourcesStore() EsSourcesStore
 }
 
 // NetworkDeviceOrgQuery represents the attributes that a networkDeviceOrg may be retrieved by.
@@ -1361,6 +1481,34 @@ type NetworkDevice struct {
 	LearningBeginDatetime  string     `json:"learning_begin_datetime"`
 	LearningFinishDatetime string     `json:"learning_finish_datetime"`
 	IsLearning             bool       `json:"is_learning"`
+	ShardID                int        `json:"shard_id"`
+}
+
+// KafkaProducer defines the interface for publishing configuration updates to Kafka.
+type KafkaProducer interface {
+	PublishConfig(shardID int, configContent string) error
+	GetPartitionCount() (int, error)
+}
+
+// ConfigGenerator defines the interface for generating shard-specific Logstash configurations.
+type ConfigGenerator interface {
+	GetAllNetworkDeviceOrgs(ctx context.Context) ([]NetworkDeviceOrg, error)
+	GetAllNetworkDevices(ctx context.Context) ([]NetworkDevice, error)
+	GenerateOrgConfig(ctx context.Context, org *NetworkDeviceOrg) (string, error)
+}
+
+// Platform defines the interface for platform-specific operations.
+type Platform interface {
+	DeployLogstashConfig(ctx context.Context, collectorName string, configName string, content string) error
+	RemoveLogstashConfig(ctx context.Context, collectorName string, configName string) error
+	RestartCollector(ctx context.Context, collectorName string) error
+	GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error)
+
+	GetTotalShards(ctx context.Context) int
+	GetShardID(deviceID string, totalShards int) int
+	PushConfigUpdates(ctx context.Context, shardIDs []int)
+	VerifyCollectorReady(ctx context.Context, collectorName string) error
+	GenerateShardConfig(ctx context.Context, shardID int) (string, error)
 }
 
 // NetworkDeviceStore is the Storage and retrieval of information
@@ -1408,6 +1556,14 @@ type AIConfig struct {
 	DockerCmd       string `json:"docker-cmd"`
 	LogstashPath    string `json:"logstash-path"`
 	PredictionRegex string `json:"prediction-regex"`
+}
+
+// KubernetesConfig is the configuration for Kubernetes API access
+type KubernetesConfig struct {
+	URL                string `json:"url"`
+	Token              string `json:"token"`
+	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
+	CollectorAuthToken string `json:"collector_auth_token"`
 }
 
 // MLNxRstQuery represents the attributes that a MLNxRst may be retrieved by.
@@ -1492,4 +1648,90 @@ type DLNxRstStg struct {
 	Scaler                 []byte  `json:"scaler"`
 	Model                  []byte  `json:"model"`
 	DLThreshold            float32 `json:"dl_threshold"` // DL Threshold value
+}
+
+const (
+	// DefaultOrgID is the ID of the default organization
+	DefaultOrgID = "default"
+	// DefaultDays is the default number of days for the log analysis
+	DefaultDays = 7
+	// DefaultIndex is the default index for the log analysis
+	DefaultIndex = "syslog-*"
+	// DefaultDevice is the default device type
+	DefaultDevice = "baremetal"
+	// DefaultAnnotationPadding is the default time padding around annotations
+	DefaultAnnotationPadding = "2h"
+	// DefaultQueryFillOption is the default fill option for influx queries
+	DefaultQueryFillOption = "none"
+)
+
+// DeviceMeta represents metadata for a device, including network and organizational info.
+type DeviceMeta struct {
+	IP          string `json:"ip"`         // Management IP address
+	Hostname    string `json:"hostname"`   // Hostname (used as key leaf)
+	AliasName   string `json:"aliasName"`  // Alias name assigned to the device where the agent is installed
+	DeviceType  string `json:"deviceType"` // Device type ["VM", "baremetal", "SWITCH", "ROUTER", "ETC", ...]
+	OrgID       string `json:"orgId"`      // Organization ID this device belongs to
+	AppName     string `json:"appName"`    // Application is the user facing name of this Layout.
+	IsDeletable bool   `json:"isDeletable"`
+}
+
+// DeviceToOrg maps a device to its organization and alias name.
+type DeviceToOrg struct {
+	OrgID     string `json:"orgId"`     // Organization ID this device belongs to
+	AliasName string `json:"aliasName"` // Alias name assigned to the device where the agent is installed
+}
+
+// AliasToDevice maps an alias name to its corresponding organization and hostname.
+type AliasToDevice struct {
+	OrgID    string `json:"orgId"`    // Organization ID this device belongs to
+	Hostname string `json:"hostname"` // Original DeviceMeta.hostname
+}
+
+// AccessContext represents the access context of the user.
+type AccessContext struct {
+	IsSuperAdmin bool
+	OrgID        string
+}
+
+// ESInfo models the JSON structure of the ES Info API response.
+type ESInfo struct {
+	IP         string
+	DeviceType string
+}
+
+// DeviceMappingsStore defines methods for managing device <-> org/alias mappings in etcd.
+type DeviceMappingsStore interface {
+	// AddDevice creates a new device mapping (with alias, org, hostname keys). Returns error if device already exists.
+	AddDevice(ctx context.Context, meta *DeviceMeta) error
+
+	// GetDevice retrieves a device's metadata by hostname.
+	GetDevice(ctx context.Context, hostname string) (*DeviceMeta, error)
+
+	// AllDevices returns all devices across all orgs.
+	AllDevices(ctx context.Context, access AccessContext) ([]*DeviceMeta, error)
+
+	// UpdateDevice updates the metadata of a device (partial update, e.g., alias/org).
+	UpdateDevice(ctx context.Context, hostname string, patch *DeviceMeta) error
+
+	// DeleteDevice deletes a device and all associated mappings (alias/org/hostname keys) in a transaction.
+	DeleteDevice(ctx context.Context, hostname string) error
+
+	// AddAlias adds a new alias mapping (alias -> device).
+	AddAlias(ctx context.Context, alias, orgID, hostname string) error
+
+	// UpdateAlias updates the device mapped to an alias.
+	UpdateAlias(ctx context.Context, alias, orgID, hostname string) error
+
+	// DeleteAlias removes an alias mapping.
+	DeleteAlias(ctx context.Context, alias string) error
+
+	// GetByAlias retrieves orgId and hostname by alias.
+	GetByAlias(ctx context.Context, alias string) (*AliasToDevice, error)
+
+	// GetByHostname retrieves orgId and aliasName by hostname.
+	GetByHostname(ctx context.Context, hostname string) (*DeviceToOrg, error)
+
+	// BatchAddDevices adds multiple devices in a single transaction.
+	BatchAddDevices(ctx context.Context, metas []*DeviceMeta) error
 }

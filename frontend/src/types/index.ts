@@ -96,6 +96,8 @@ import {
   DataTableOptions,
   RowInfo,
   SortInfo,
+  Column,
+  GaugeOptions,
 } from './tableType'
 import {
   DeviceData,
@@ -179,6 +181,42 @@ import {
   FetchNVidiaGPUMigLgipResponse,
   MigProfile,
 } from './gpuMonitoring'
+
+import {
+  BasicAuth,
+  ApiKeyAuth,
+  EsLinks,
+  BaseElasticSearchData,
+  AllGetResponse,
+  ElasticSearchState,
+  CreateElasticSearchParams,
+  ToggleEsWizard,
+} from './elasticSearch'
+
+import {SidePanelState, OpenPanelPayload} from './sidePanel'
+
+import {
+  Ratio,
+  LogAnalysisManualRefresh,
+  ESResponse,
+  HitFields,
+  FilteredLogsForLogAnalysis,
+  SyslogTableRows,
+  MatchPhraseFilterClause,
+  RangeFilterClause,
+  BaseFilter,
+  KQLFilterClause,
+  LogsFilterClause,
+  DeviceType,
+  ChartOptions,
+} from './logAnalysis'
+
+import {
+  DeviceMeta,
+  DeviceMapping,
+  DeviceToOrgMapping,
+  DeviceAlias,
+} from './devicesMapping'
 
 export {
   Me,
@@ -350,4 +388,33 @@ export {
   NvidiaLocalGrainItemForGPU,
   FetchNVidiaGPUMigLgipResponse,
   MigProfile,
+  BasicAuth,
+  ApiKeyAuth,
+  EsLinks,
+  BaseElasticSearchData,
+  AllGetResponse,
+  ElasticSearchState,
+  CreateElasticSearchParams,
+  ToggleEsWizard,
+  SidePanelState,
+  OpenPanelPayload,
+  Ratio,
+  LogAnalysisManualRefresh,
+  ESResponse,
+  HitFields,
+  FilteredLogsForLogAnalysis,
+  SyslogTableRows,
+  MatchPhraseFilterClause,
+  RangeFilterClause,
+  BaseFilter,
+  KQLFilterClause,
+  LogsFilterClause,
+  DeviceMeta,
+  DeviceMapping,
+  DeviceType,
+  DeviceToOrgMapping,
+  DeviceAlias,
+  ChartOptions,
+  Column,
+  GaugeOptions,
 }

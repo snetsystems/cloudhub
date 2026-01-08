@@ -4,7 +4,10 @@ import _ from 'lodash'
 
 // Utils
 import {getNewDashboardCell} from 'src/dashboards/utils/cellGetters'
-import {getCellTypeColors} from 'src/dashboards/constants/cellEditor'
+import {
+  getCellTypeColors,
+  normalizeTableGaugeChartOptions,
+} from 'src/dashboards/constants/cellEditor'
 import {
   TimeMachineContainer,
   TimeMachineContextConsumer,
@@ -50,6 +53,7 @@ import {
 import {VisualizationOptions} from 'src/types/dataExplorer'
 import {ColorString} from 'src/types/colors'
 import {GraphOptions} from 'src/types/dashboards'
+import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 
 interface PassedProps {
   dashboards: Dashboard[]
@@ -73,6 +77,7 @@ interface ConnectedProps {
   timeRange: TimeRange
   visualizationOptions: VisualizationOptions
   script: string // flux script
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
 }
 
 type Props = PassedProps & ConnectedProps
@@ -365,6 +370,7 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       isStaticLegend,
       staticLegendPosition,
       queryDrafts,
+      tableGaugeChartOptions,
     } = this.props
     const {
       type,
@@ -379,7 +385,6 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       fieldOptions,
       tableOptions,
     } = visualizationOptions
-
     const isFluxQuery = queryType === QueryType.Flux
 
     let newCellQueries: CellQuery[]
@@ -461,7 +466,11 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
           fieldOptions,
           tableOptions,
           graphOptions,
+          tableGaugeChartOptions: normalizeTableGaugeChartOptions(
+            tableGaugeChartOptions
+          ),
         }
+
         return sendDashboardCell(dashboard, newCell)
       })
     )
@@ -494,6 +503,7 @@ const ConnectedSendToDashboardOverlay = (props: PassedProps) => {
           graphOptions,
           isStaticLegend,
           staticLegendPosition,
+          tableGaugeChartOptions,
         } = timeMachineContainer.state
 
         const visualizationOptions = {
@@ -522,6 +532,7 @@ const ConnectedSendToDashboardOverlay = (props: PassedProps) => {
             visualizationOptions={visualizationOptions}
             isStaticLegend={isStaticLegend}
             staticLegendPosition={staticLegendPosition}
+            tableGaugeChartOptions={tableGaugeChartOptions}
           />
         )
       }}

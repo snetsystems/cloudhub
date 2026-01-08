@@ -37,6 +37,7 @@ export interface Layout {
   cells: LayoutCell[]
   link: LayoutLink
   autoflow: boolean
+  whereTagKey?: string[]
 }
 
 interface LayoutLink {

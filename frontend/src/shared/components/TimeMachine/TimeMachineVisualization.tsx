@@ -1,13 +1,20 @@
+// Libraries
 import React, {FunctionComponent} from 'react'
 
+// Components
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
 
+// Utils
 import {
   TimeMachineContainer,
   TimeMachineContextConsumer,
 } from 'src/shared/utils/TimeMachineContext'
+import {AutoRefresher} from 'src/utils/AutoRefresher'
+
+// Constants
 import {getCellTypeColors} from 'src/dashboards/constants/cellEditor'
 
+// Types
 import {
   CellType,
   Axes,
@@ -29,7 +36,7 @@ import {
   StaticLegendPositionType,
   GraphOptions,
 } from 'src/types/dashboards'
-import {AutoRefresher} from 'src/utils/AutoRefresher'
+import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 
 interface ConnectedProps {
   timeRange: TimeRange
@@ -51,6 +58,10 @@ interface ConnectedProps {
   graphOptions: GraphOptions
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
+  onUpdateTableGaugeChartOptions: (
+    tableGaugeChartOptions: TableGaugeChartOptionsInterface
+  ) => void
 }
 
 interface PassedProps {
@@ -87,6 +98,10 @@ const TimeMachineVisualization: FunctionComponent<Props> = props => {
             templates={props.templates}
             editQueryStatus={props.onEditQueryStatus}
             graphOptions={props.graphOptions}
+            tableGaugeChartOptions={props.tableGaugeChartOptions}
+            onUpdateTableGaugeChartOptions={
+              props.onUpdateTableGaugeChartOptions
+            }
             staticLegendPosition={props.staticLegendPosition}
             staticLegend={props.staticLegend}
             timeRange={props.timeRange}
@@ -99,8 +114,6 @@ const TimeMachineVisualization: FunctionComponent<Props> = props => {
             fieldOptions={props.fieldOptions}
             timeFormat={props.timeFormat}
             decimalPlaces={props.decimalPlaces}
-            gaugeColors={props.gaugeColors}
-            lineColors={props.lineColors}
             cellNote={props.note}
             cellNoteVisibility={props.noteVisibility}
             onUpdateFieldOptions={props.onUpdateFieldOptions}
@@ -139,6 +152,10 @@ const ConnectedTimeMachineVisualization = (props: PassedProps) => (
           staticLegendPosition={state.staticLegendPosition}
           onUpdateFieldOptions={container.handleUpdateFieldOptions}
           onUpdateVisType={container.handleUpdateType}
+          tableGaugeChartOptions={state.tableGaugeChartOptions}
+          onUpdateTableGaugeChartOptions={
+            container.handleUpdateTableGaugeChartOptions
+          }
         />
       )
     }}

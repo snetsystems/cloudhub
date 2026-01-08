@@ -29,6 +29,8 @@ var (
 	mlNxRstBucket            = []byte("MLNxRst")
 	dlNxRstBucket            = []byte("DLNxRst")
 	dLNxRstStgBucket         = []byte("DLNxRstStg")
+	esSourcesBucket          = []byte("EsSources")
+	deviceMappingsBucket     = []byte("DeviceMappings")
 )
 
 // Store is an interface for a generic key value store. It is modeled after
@@ -46,7 +48,7 @@ type Store interface {
 // Tx is a transaction in the store.
 type Tx interface {
 	// Bucket creates and returns bucket, b.
-	Bucket(b []byte) Bucket
+	Bucket(b []byte, extraPrefix ...string) Bucket
 	// CreateBucketIfNotExists creates a new bucket if it doesn't already exist.
 	// Returns an error if the bucket name is blank, or if the bucket name is too long.
 	// The bucket instance is only valid for the lifetime of the transaction.
@@ -136,6 +138,8 @@ func (s *Service) initialize(ctx context.Context, tx Tx) error {
 		mlNxRstBucket,
 		dlNxRstBucket,
 		dLNxRstStgBucket,
+		esSourcesBucket,
+		deviceMappingsBucket,
 	}
 
 	for i := range buckets {
@@ -226,6 +230,11 @@ func (s *Service) NetworkDeviceOrgStore() cloudhub.NetworkDeviceOrgStore {
 	return &NetworkDeviceOrgStore{client: s}
 }
 
+// DeviceMappingsStore returns a cloudhub.DeviceMappingsStore.
+func (s *Service) DeviceMappingsStore() cloudhub.DeviceMappingsStore {
+	return &deviceMappingsStore{client: s}
+}
+
 // MLNxRstStore returns a cloudhub.MLNxRstStore.
 func (s *Service) MLNxRstStore() cloudhub.MLNxRstStore {
 	return &MLNxRstStore{client: s}
@@ -239,4 +248,9 @@ func (s *Service) DLNxRstStore() cloudhub.DLNxRstStore {
 // DLNxRstStgStore returns a cloudhub.DLNxRstStgStore.
 func (s *Service) DLNxRstStgStore() cloudhub.DLNxRstStgStore {
 	return &DLNxRstStgStore{client: s}
+}
+
+// EsSourcesStore returns a cloudhub.SourcesStore.
+func (s *Service) EsSourcesStore() cloudhub.EsSourcesStore {
+	return &esSourcesStore{client: s}
 }

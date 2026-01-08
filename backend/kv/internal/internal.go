@@ -398,6 +398,63 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			ShowTempVarCount: c.GraphOptions.ShowTempVarCount,
 		}
 
+		tableGaugeDecimalPlaces := &DecimalPlaces{
+			IsEnforced: c.TableGaugeChartOptions.DecimalPlaces.IsEnforced,
+			Digits:     c.TableGaugeChartOptions.DecimalPlaces.Digits,
+		}
+
+		columnSettings := make([]*ColumnSetting, len(c.TableGaugeChartOptions.ColumnSettings))
+		for idx, setting := range c.TableGaugeChartOptions.ColumnSettings {
+			colors := make([]*Color, len(setting.Colors))
+			for j, color := range setting.Colors {
+				colors[j] = &Color{
+					ID:    color.ID,
+					Type:  color.Type,
+					Hex:   color.Hex,
+					Name:  color.Name,
+					Value: color.Value,
+				}
+			}
+
+			thresholdColors := make([]*Color, len(setting.ThresholdColors))
+			for j, color := range setting.ThresholdColors {
+				thresholdColors[j] = &Color{
+					ID:    color.ID,
+					Type:  color.Type,
+					Hex:   color.Hex,
+					Name:  color.Name,
+					Value: color.Value,
+				}
+			}
+
+			columnSettings[idx] = &ColumnSetting{
+				InternalName:    setting.InternalName,
+				DisplayName:     setting.DisplayName,
+				Visible:         setting.Visible,
+				Direction:       setting.Direction,
+				Min:             setting.Min,
+				Max:             setting.Max,
+				Colors:          colors,
+				ThresholdColors: thresholdColors,
+				Unit:            setting.Unit,
+				Prefix:          setting.Prefix,
+				Suffix:          setting.Suffix,
+				IsShowChart:     setting.IsShowChart,
+				IsPercent:       setting.IsPercent,
+				ChartType:       setting.ChartType,
+				BackgroundType:  setting.BackgroundType,
+				IsShowValues:    setting.IsShowValues,
+			}
+		}
+
+		tableGaugeChartOptions := &TableGaugeChartOptions{
+			ColumnSettings:  columnSettings,
+			DecimalPlaces:   tableGaugeDecimalPlaces,
+			IsShowValues:    c.TableGaugeChartOptions.IsShowValues,
+			SortBy:          c.TableGaugeChartOptions.SortBy,
+			SortByDirection: c.TableGaugeChartOptions.SortByDirection,
+		}
+
 		note := c.Note
 		noteVisibility := c.NoteVisibility
 
@@ -418,13 +475,14 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				Type:        c.Legend.Type,
 				Orientation: c.Legend.Orientation,
 			},
-			TableOptions:   tableOptions,
-			FieldOptions:   fieldOptions,
-			TimeFormat:     c.TimeFormat,
-			DecimalPlaces:  decimalPlaces,
-			Note:           note,
-			NoteVisibility: noteVisibility,
-			GraphOptions:   graphOptions,
+			TableOptions:           tableOptions,
+			FieldOptions:           fieldOptions,
+			TimeFormat:             c.TimeFormat,
+			DecimalPlaces:          decimalPlaces,
+			Note:                   note,
+			NoteVisibility:         noteVisibility,
+			GraphOptions:           graphOptions,
+			TableGaugeChartOptions: tableGaugeChartOptions,
 		}
 	}
 	templates := make([]*Template, len(d.Templates))
@@ -599,6 +657,85 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			graphOptions.ShowTempVarCount = ""
 		}
 
+		tableGaugeChartOptions := cloudhub.TableGaugeChartOptions{}
+		if c.TableGaugeChartOptions != nil {
+			columnSettings := make([]cloudhub.ColumnSetting, len(c.TableGaugeChartOptions.ColumnSettings))
+			for idx, setting := range c.TableGaugeChartOptions.ColumnSettings {
+				colors := make([]cloudhub.CellColor, len(setting.Colors))
+				for j, color := range setting.Colors {
+					colors[j] = cloudhub.CellColor{
+						ID:    color.ID,
+						Type:  color.Type,
+						Hex:   color.Hex,
+						Name:  color.Name,
+						Value: color.Value,
+					}
+				}
+
+				thresholdColors := make([]cloudhub.CellColor, len(setting.ThresholdColors))
+				for j, color := range setting.ThresholdColors {
+					thresholdColors[j] = cloudhub.CellColor{
+						ID:    color.ID,
+						Type:  color.Type,
+						Hex:   color.Hex,
+						Name:  color.Name,
+						Value: color.Value,
+					}
+				}
+
+				columnSettings[idx] = cloudhub.ColumnSetting{
+					InternalName:    setting.InternalName,
+					DisplayName:     setting.DisplayName,
+					Visible:         setting.Visible,
+					Direction:       setting.Direction,
+					Min:             setting.Min,
+					Max:             setting.Max,
+					Colors:          colors,
+					ThresholdColors: thresholdColors,
+					Unit:            setting.Unit,
+					Prefix:          setting.Prefix,
+					Suffix:          setting.Suffix,
+					IsShowChart:     setting.IsShowChart,
+					IsPercent:       setting.IsPercent,
+					ChartType:       setting.ChartType,
+					BackgroundType:  setting.BackgroundType,
+					IsShowValues:    setting.IsShowValues,
+				}
+			}
+
+			decimalPlaces := cloudhub.DecimalPlaces{}
+			if c.TableGaugeChartOptions.DecimalPlaces != nil {
+				decimalPlaces.IsEnforced = c.TableGaugeChartOptions.DecimalPlaces.IsEnforced
+				decimalPlaces.Digits = c.TableGaugeChartOptions.DecimalPlaces.Digits
+			} else {
+				decimalPlaces.IsEnforced = false
+				decimalPlaces.Digits = 0
+			}
+
+			tableGaugeChartOptions.ColumnSettings = columnSettings
+			tableGaugeChartOptions.DecimalPlaces = decimalPlaces
+			tableGaugeChartOptions.IsShowValues = c.TableGaugeChartOptions.IsShowValues
+			tableGaugeChartOptions.SortBy = c.TableGaugeChartOptions.SortBy
+			tableGaugeChartOptions.SortByDirection = c.TableGaugeChartOptions.SortByDirection
+		} else {
+			tableGaugeChartOptions.ColumnSettings = []cloudhub.ColumnSetting{}
+			tableGaugeChartOptions.DecimalPlaces = cloudhub.DecimalPlaces{
+				IsEnforced: false,
+				Digits:     0,
+			}
+			tableGaugeChartOptions.IsShowValues = true
+			tableGaugeChartOptions.SortBy = "name"
+			tableGaugeChartOptions.SortByDirection = "asc"
+		}
+
+		if tableGaugeChartOptions.SortBy == "" {
+			tableGaugeChartOptions.SortBy = "name"
+		}
+
+		if tableGaugeChartOptions.SortByDirection == "" {
+			tableGaugeChartOptions.SortByDirection = "asc"
+		}
+
 		note := c.Note
 		noteVisibility := c.NoteVisibility
 
@@ -610,26 +747,27 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 		}
 
 		cells[i] = cloudhub.DashboardCell{
-			ID:             c.ID,
-			X:              c.X,
-			Y:              c.Y,
-			W:              c.W,
-			H:              c.H,
-			MinW:           c.MinW,
-			MinH:           c.MinH,
-			Name:           c.Name,
-			Queries:        queries,
-			Type:           cellType,
-			Axes:           axes,
-			CellColors:     colors,
-			Legend:         legend,
-			TableOptions:   tableOptions,
-			FieldOptions:   fieldOptions,
-			TimeFormat:     c.TimeFormat,
-			DecimalPlaces:  decimalPlaces,
-			Note:           note,
-			NoteVisibility: noteVisibility,
-			GraphOptions:   graphOptions,
+			ID:                     c.ID,
+			X:                      c.X,
+			Y:                      c.Y,
+			W:                      c.W,
+			H:                      c.H,
+			MinW:                   c.MinW,
+			MinH:                   c.MinH,
+			Name:                   c.Name,
+			Queries:                queries,
+			Type:                   cellType,
+			Axes:                   axes,
+			CellColors:             colors,
+			Legend:                 legend,
+			TableOptions:           tableOptions,
+			FieldOptions:           fieldOptions,
+			TimeFormat:             c.TimeFormat,
+			DecimalPlaces:          decimalPlaces,
+			Note:                   note,
+			NoteVisibility:         noteVisibility,
+			GraphOptions:           graphOptions,
+			TableGaugeChartOptions: tableGaugeChartOptions,
 		}
 	}
 
@@ -902,11 +1040,17 @@ func MarshalOrganizationConfig(c *cloudhub.OrganizationConfig) ([]byte, error) {
 		}
 	}
 
+	logAnalysis := &LogAnalysisConfig{
+		AnnotationPadding: c.LogAnalysis.AnnotationPadding,
+		QueryFillOption:   c.LogAnalysis.QueryFillOption,
+	}
+
 	return MarshalOrganizationConfigPB(&OrganizationConfig{
 		OrganizationID: c.OrganizationID,
 		LogViewer: &LogViewerConfig{
 			Columns: columns,
 		},
+		LogAnalysis: logAnalysis,
 	})
 }
 
@@ -946,6 +1090,11 @@ func UnmarshalOrganizationConfig(data []byte, c *cloudhub.OrganizationConfig) er
 	}
 
 	c.LogViewer.Columns = columns
+
+	if pb.LogAnalysis != nil {
+		c.LogAnalysis.AnnotationPadding = pb.LogAnalysis.AnnotationPadding
+		c.LogAnalysis.QueryFillOption = pb.LogAnalysis.QueryFillOption
+	}
 
 	ensureHostnameColumn(c)
 
@@ -1180,6 +1329,7 @@ func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
 		LearningBeginDatetime:  t.LearningBeginDatetime,
 		LearningFinishDatetime: t.LearningFinishDatetime,
 		IsLearning:             t.IsLearning,
+		ShardID:                int32(t.ShardID),
 	})
 }
 
@@ -1231,6 +1381,7 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 	t.LearningBeginDatetime = pb.LearningBeginDatetime
 	t.LearningFinishDatetime = pb.LearningFinishDatetime
 	t.IsLearning = pb.IsLearning
+	t.ShardID = int(pb.ShardID)
 
 	return nil
 }
@@ -1382,5 +1533,144 @@ func UnmarshalDLNxRstStg(data []byte, t *cloudhub.DLNxRstStg) error {
 	t.Model = pb.Model
 	t.DLThreshold = pb.DLThreshold
 
+	return nil
+}
+
+// MarshalEsSource encodes a cloudhub.EsSource into its protobuf representation.
+func MarshalEsSource(s cloudhub.EsSource) ([]byte, error) {
+	pb := &EsSource{
+		ID:                 int64(s.ID),
+		Name:               s.Name,
+		Default:            s.Default,
+		Role:               s.Role,
+		Version:            s.Version,
+		URL:                s.URL,
+		InsecureSkipVerify: s.InsecureSkipVerify,
+		IndexPatterns:      s.IndexPatterns,
+		DefaultIndex:       s.DefaultIndex,
+		Organization:       s.Organization,
+		Authentication:     s.Authentication,
+	}
+
+	if s.BasicAuth != nil {
+		pb.BasicAuth = &BasicAuth{
+			Username: s.BasicAuth.Username,
+			Password: s.BasicAuth.Password,
+		}
+	}
+	if s.APIKeyAuth != nil {
+		pb.APIKeyAuth = &APIKeyAuth{
+			ID:     s.APIKeyAuth.ID,
+			APIKey: s.APIKeyAuth.APIKey,
+		}
+	}
+
+	return proto.Marshal(pb)
+}
+
+// UnmarshalEsSource decodes protobuf data into a cloudhub.EsSource.
+func UnmarshalEsSource(data []byte, s *cloudhub.EsSource) error {
+	var pb EsSource
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	s.ID = int(pb.ID)
+	s.Name = pb.Name
+	s.Default = pb.Default
+	s.Role = pb.Role
+	s.Version = pb.Version
+	s.URL = pb.URL
+	s.InsecureSkipVerify = pb.InsecureSkipVerify
+	s.IndexPatterns = pb.IndexPatterns
+	s.DefaultIndex = pb.DefaultIndex
+	s.Organization = pb.Organization
+	s.Authentication = pb.Authentication
+
+	if pb.BasicAuth != nil {
+		s.BasicAuth = &cloudhub.BasicAuth{
+			Username: pb.BasicAuth.Username,
+			Password: pb.BasicAuth.Password,
+		}
+	} else {
+		s.BasicAuth = nil
+	}
+
+	if pb.APIKeyAuth != nil {
+		s.APIKeyAuth = &cloudhub.APIKeyAuth{
+			ID:     pb.APIKeyAuth.ID,
+			APIKey: pb.APIKeyAuth.APIKey,
+		}
+	} else {
+		s.APIKeyAuth = nil
+	}
+
+	return nil
+}
+
+// MarshalDeviceMeta encodes a DeviceMeta struct to binary protobuf format.
+func MarshalDeviceMeta(meta *cloudhub.DeviceMeta) ([]byte, error) {
+	return proto.Marshal(&DeviceMappingMeta{
+		Ip:         meta.IP,
+		Hostname:   meta.Hostname,
+		AliasName:  meta.AliasName,
+		DeviceType: meta.DeviceType,
+		OrgId:      meta.OrgID,
+		AppName:    meta.AppName,
+	})
+}
+
+// UnmarshalDeviceMeta decodes a DeviceMeta from binary protobuf data.
+func UnmarshalDeviceMeta(data []byte, meta *cloudhub.DeviceMeta) error {
+	var pb DeviceMappingMeta
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	meta.IP = pb.Ip
+	meta.Hostname = pb.Hostname
+	meta.AliasName = pb.AliasName
+	meta.DeviceType = pb.DeviceType
+	meta.OrgID = pb.OrgId
+	meta.AppName = pb.AppName
+
+	return nil
+}
+
+// MarshalDeviceToOrg encodes a DeviceToOrg struct to binary protobuf format.
+func MarshalDeviceToOrg(dto *cloudhub.DeviceToOrg) ([]byte, error) {
+	return proto.Marshal(&DeviceMappingToOrg{
+		OrgId:     dto.OrgID,
+		AliasName: dto.AliasName,
+	})
+}
+
+// UnmarshalDeviceToOrg decodes a DeviceToOrg from binary protobuf data.
+func UnmarshalDeviceToOrg(data []byte, dto *cloudhub.DeviceToOrg) error {
+	var pb DeviceMappingToOrg
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	dto.OrgID = pb.OrgId
+	dto.AliasName = pb.AliasName
+	return nil
+}
+
+// MarshalAliasToDevice encodes an AliasToDevice struct to binary protobuf format.
+func MarshalAliasToDevice(atd *cloudhub.AliasToDevice) ([]byte, error) {
+	return proto.Marshal(&AliasMappingToDevice{
+		OrgId:    atd.OrgID,
+		Hostname: atd.Hostname,
+	})
+}
+
+// UnmarshalAliasToDevice decodes an AliasToDevice from binary protobuf data.
+func UnmarshalAliasToDevice(data []byte, atd *cloudhub.AliasToDevice) error {
+	var pb AliasMappingToDevice
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	atd.OrgID = pb.OrgId
+	atd.Hostname = pb.Hostname
 	return nil
 }

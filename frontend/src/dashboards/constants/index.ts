@@ -12,6 +12,7 @@ import {
   NewDefaultCell,
   NoteVisibility,
 } from 'src/types/dashboards'
+import {RenamableField} from 'src/types/statisticalgraph'
 
 export const UNTITLED_GRAPH: string = 'Untitled Graph'
 
@@ -78,6 +79,14 @@ export const FORMAT_OPTIONS: Array<{text?: string; format: string}> = [
 ]
 
 export const DEFAULT_FIELD_OPTIONS = [DEFAULT_INFLUXQL_TIME_FIELD]
+export const DEFAULT_NAME_OPTIONS: RenamableField[] = [
+  {
+    internalName: 'name',
+    displayName: '',
+    visible: true,
+    direction: 'asc',
+  },
+]
 
 export const NEW_DEFAULT_DASHBOARD_CELL: NewDefaultCell = {
   x: 0,

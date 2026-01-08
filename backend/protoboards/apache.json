@@ -90,6 +90,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
@@ -316,6 +322,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
@@ -412,6 +424,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `logparser` plugin to read your Apache Access Logs. For more information, please visit the [Telegraf Logparser plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/logparser).",
@@ -672,6 +690,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
@@ -768,6 +792,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `apache` plugin. For more information, please visit the [Telegraf Apache plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/apache).",
@@ -938,6 +968,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `net` plugin. For more information, please visit the [Telegraf Net plugin documentation](https://github.com/snetsystems/telegraf/blob/master/plugins/inputs/net/NET_README.md).",
@@ -1034,6 +1070,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `diskio` plugin. For more information, please visit the [Telegraf Disk IO plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/diskio).",
@@ -1130,6 +1172,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the Telegraf `system` plugin. For more information, please visit the [Telegraf System plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/system).",
@@ -1226,6 +1274,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 0},
         "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mem).",
@@ -1481,7 +1535,7 @@
     "templates": [
       {
         "tempVar": ":host:",
-        "id": "",
+        "id": "template-host-$(date +%s)",
         "type": "tagValues",
         "label": "",
         "values": [],

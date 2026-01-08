@@ -10,6 +10,7 @@ import classnames from 'classnames'
 
 // Types
 import {ComponentStatus, ComponentSize, IconFont} from 'src/reusable_ui/types'
+import uuid from 'uuid'
 
 export enum InputType {
   Text = 'text',
@@ -38,6 +39,8 @@ interface Props {
   titleText?: string
   disabledTitleText?: string
   customClass?: string
+  min?: number
+  max?: number
 }
 
 class Input extends Component<Props> {
@@ -52,6 +55,11 @@ class Input extends Component<Props> {
     spellCheck: false,
     type: InputType.Text,
   }
+  private id: string
+  constructor(props) {
+    super(props)
+    this.id = uuid.v4()
+  }
 
   public render() {
     const {
@@ -61,6 +69,8 @@ class Input extends Component<Props> {
       placeholder,
       autoFocus,
       spellCheck,
+      min,
+      max,
       onChange,
       onBlur,
       onFocus,
@@ -73,6 +83,7 @@ class Input extends Component<Props> {
     return (
       <div className={this.className} style={this.containerStyle}>
         <input
+          id={this.id}
           title={this.title}
           type={type}
           value={value}
@@ -87,6 +98,8 @@ class Input extends Component<Props> {
           onKeyDown={onKeyDown}
           onMouseDown={onMouseDown}
           className="input-field"
+          min={min}
+          max={max}
           disabled={status === ComponentStatus.Disabled}
         />
         {this.icon}

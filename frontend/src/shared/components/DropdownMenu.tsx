@@ -126,11 +126,15 @@ const DropdownMenu: FunctionComponent<Props> = ({
 interface DropdownMenuEmptyProps {
   useAutoComplete?: boolean
   menuClass: string
+  emptyMessage?: string
+  onClick?: (e: React.MouseEvent<HTMLLIElement>) => void
 }
 
 export const DropdownMenuEmpty: FunctionComponent<DropdownMenuEmptyProps> = ({
   useAutoComplete,
   menuClass,
+  emptyMessage = 'No matching items',
+  onClick,
 }) => (
   <ul
     className={classnames('dropdown-menu', {
@@ -138,7 +142,16 @@ export const DropdownMenuEmpty: FunctionComponent<DropdownMenuEmptyProps> = ({
       [menuClass]: menuClass,
     })}
   >
-    <li className="dropdown-empty">No matching items</li>
+    <li
+      className="dropdown-empty"
+      style={{
+        minHeight: '20px',
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+      onClick={onClick}
+    >
+      {emptyMessage}
+    </li>
   </ul>
 )
 

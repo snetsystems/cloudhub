@@ -27,8 +27,8 @@ interface State {
 class KubernetesTooltip extends PureComponent<Props, State> {
   private tooltipRef = createRef<HTMLDivElement>()
   private tableSize = {
-    header: '40%',
-    body: '60%',
+    header: '35%',
+    body: '65%',
   }
 
   public constructor(props: Props) {
@@ -61,7 +61,26 @@ class KubernetesTooltip extends PureComponent<Props, State> {
   public render() {
     const {tooltipNode, statusColor} = this.props
     const {top, bottom, left, right} = this.state
-    const {name, cpu, memory} = tooltipNode
+    const {name, cpu, memory, iops, bandwidth, latency} = tooltipNode
+
+    const iopsPercent = _.isNumber(iops)
+      ? Math.min((iops / 100000) * 100, 100)
+      : 0
+    const bandwidthPercent = _.isNumber(bandwidth)
+      ? Math.min((bandwidth / 700000) * 100, 100)
+      : 0
+
+    const fmt = (v: number, frac: number) =>
+      _.isNumber(v) && Number.isFinite(v)
+        ? Number(v).toLocaleString('en-US', {
+            minimumFractionDigits: frac,
+            maximumFractionDigits: frac,
+            useGrouping: true,
+          })
+        : `0.${'0'.repeat(frac)}`
+    const iopsDisplay = fmt(iops as number, 1)
+    const bandwidthDisplay = fmt(bandwidth as number, 1)
+    const latencyDisplay = fmt(latency as number, 3)
 
     return (
       <div
@@ -69,10 +88,13 @@ class KubernetesTooltip extends PureComponent<Props, State> {
         className={this.handleToolTipClassName}
         ref={this.tooltipRef}
       >
-        <div className="kubernetes-toolbar--tooltip-contents">
+        <div
+          className="kubernetes-toolbar--tooltip-contents"
+          style={{minWidth: '280px'}}
+        >
           <div className={'hosts-table--tbody'}>
             {name ? (
-              <div className={'hosts-table--tr'}>
+              <div className={'hosts-table--tr'} style={{minHeight: '24px'}}>
                 <div className={'hosts-table--td align--start'}>{name}</div>
               </div>
             ) : null}
@@ -118,6 +140,86 @@ class KubernetesTooltip extends PureComponent<Props, State> {
                       className={'UsageIndacator'}
                       style={{
                         background: `${statusColor(memory / 100)}`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {!_.isNaN(iops) && _.isNumber(iops) ? (
+              <div className={'hosts-table--tr'}>
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: this.tableSize.header}}
+                >
+                  IOPS
+                </div>
+                <div
+                  className={'hosts-table--td align--start'}
+                  style={{width: this.tableSize.body}}
+                >
+                  <div className={'UsageIndacator-container'}>
+                    <div className={'UsageIndacator-value'}>
+                      {iopsDisplay} io/s
+                    </div>
+                    <div
+                      className={'UsageIndacator'}
+                      style={{
+                        background: `${statusColor(iopsPercent / 100)}`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {!_.isNaN(bandwidth) && _.isNumber(bandwidth) ? (
+              <div className={'hosts-table--tr'}>
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: this.tableSize.header}}
+                >
+                  Bandwidth
+                </div>
+                <div
+                  className={'hosts-table--td align--start'}
+                  style={{width: this.tableSize.body}}
+                >
+                  <div className={'UsageIndacator-container'}>
+                    <div className={'UsageIndacator-value'}>
+                      {bandwidthDisplay} kB/s
+                    </div>
+                    <div
+                      className={'UsageIndacator'}
+                      style={{
+                        background: `${statusColor(bandwidthPercent / 100)}`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {!_.isNaN(latency) && _.isNumber(latency) ? (
+              <div className={'hosts-table--tr'}>
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: this.tableSize.header}}
+                >
+                  Latency
+                </div>
+                <div
+                  className={'hosts-table--td align--start'}
+                  style={{width: this.tableSize.body}}
+                >
+                  <div className={'UsageIndacator-container'}>
+                    <div className={'UsageIndacator-value'}>
+                      {latencyDisplay} ms
+                    </div>
+                    <div
+                      className={'UsageIndacator'}
+                      style={{
+                        background: `${statusColor(
+                          Math.min(latency / 100, 1)
+                        )}`,
                       }}
                     ></div>
                   </div>

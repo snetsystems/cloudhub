@@ -125,6 +125,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -218,6 +224,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -325,6 +337,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -423,6 +441,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -530,6 +554,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -637,6 +667,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -744,6 +780,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -851,6 +893,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -958,6 +1006,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -1065,6 +1119,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -1265,6 +1325,12 @@
             "visible": true
           }
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {
           "isEnforced": true,
@@ -1278,7 +1344,7 @@
       {
         "tempVar": ":project_id:",
         "values": [],
-        "id": "",
+        "id": "template-host-$(date +%s)",
         "type": "tagValues",
         "label": "",
         "query": {

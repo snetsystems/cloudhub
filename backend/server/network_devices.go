@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"path"
 	"reflect"
-	"regexp"
+	"strconv"
 	"strings"
-	"sync"
+
+	"crypto/sha256"
+	"encoding/hex"
+	"sort"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -110,11 +112,6 @@ const (
 	CollectorSelectionRatio float64 = 0.5
 )
 
-const (
-	// DefaultOrganizationID is the id of the default organization
-	DefaultOrganizationID string = "default"
-)
-
 func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.NetworkDevice) (*deviceResponse, error) {
 	deviceOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
 	MLFunction := MLFunctionLinearDescent
@@ -191,7 +188,7 @@ func (r *createDeviceRequest) validCreate() error {
 
 	err := ValidateDeviceIP(r.DeviceIP)
 	if err != nil {
-		return fmt.Errorf(err.Error())
+		return fmt.Errorf("failed to validate device IP: %w", err)
 	}
 	return nil
 }
@@ -241,6 +238,8 @@ func (s *Service) createDevice(ctx context.Context, req createDeviceRequest) (*c
 		return nil, err
 	}
 
+	device.ShardID = -1
+
 	res, err := s.Store.NetworkDevice(ctx).Add(ctx, device)
 	if err != nil {
 		return nil, err
@@ -271,6 +270,7 @@ func (s *Service) NewDevice(w http.ResponseWriter, r *http.Request) {
 		existingIPs[device.DeviceIP] = true
 	}
 
+	var succeededShards []int
 	var failedDeviceList []createDeviceError
 	for i, req := range reqs {
 		if _, exists := existingIPs[req.DeviceIP]; exists {
@@ -281,15 +281,19 @@ func (s *Service) NewDevice(w http.ResponseWriter, r *http.Request) {
 			})
 			continue
 		}
-		_, err = s.createDevice(ctx, req)
+		device, err := s.createDevice(ctx, req)
 		if err != nil {
 			failedDeviceList = append(failedDeviceList, createDeviceError{
 				Index:        i,
 				DeviceIP:     req.DeviceIP,
 				ErrorMessage: err.Error(),
 			})
+		} else {
+			succeededShards = append(succeededShards, device.ShardID)
 		}
 	}
+
+	s.pushUniqueShards(ctx, succeededShards)
 
 	response := map[string]interface{}{
 		"failed_devices": failedDeviceList,
@@ -323,10 +327,11 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 		existingIPs[device.DeviceIP] = device.ID
 	}
 
+	var succeededShards []int
 	for i, req := range reqs {
 		currentReq := req
 		if id, exists := existingIPs[currentReq.DeviceIP]; exists {
-			_, err := s.UpdateDevice(ctx, &updateDeviceData{
+			dev, err := s.UpdateDevice(ctx, &updateDeviceData{
 				id: id,
 				updateDeviceRequest: updateDeviceRequest{
 					Organization: &currentReq.Organization,
@@ -344,18 +349,24 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 					DeviceIP:     currentReq.DeviceIP,
 					ErrorMessage: err.Error(),
 				})
+			} else {
+				succeededShards = append(succeededShards, dev.ShardID)
 			}
 		} else {
-			_, err = s.createDevice(ctx, currentReq)
+			dev, err := s.createDevice(ctx, currentReq)
 			if err != nil {
 				failedDeviceList = append(failedDeviceList, createDeviceError{
 					Index:        i,
 					DeviceIP:     currentReq.DeviceIP,
 					ErrorMessage: err.Error(),
 				})
+			} else {
+				succeededShards = append(succeededShards, dev.ShardID)
 			}
 		}
 	}
+
+	s.pushUniqueShards(ctx, succeededShards)
 
 	response := map[string]interface{}{
 		"failed_devices": failedDeviceList,
@@ -381,7 +392,7 @@ func (s *Service) AllDevices(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, string(cloudhub.ErrOrganizationNotFound), s.Logger)
 		return
 	}
-	if !(isSuperAdmin && currentOrg == DefaultOrganizationID) {
+	if !(isSuperAdmin && currentOrg == cloudhub.DefaultOrgID) {
 		devicesByOrg := devices[:0]
 		for _, d := range devices {
 			if d.Organization == currentOrg {
@@ -442,39 +453,26 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		deviceOrgMap[deviceID] = device.Organization
 	}
 
-	activeCollectorKeys := &sync.Map{}
-
-	for orgID, devices := range devicesGroupByOrg {
-		org, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
-		if org != nil && len(org.CollectedDevicesIDs) > 0 {
-			var activeCollectorsErr error
-			_, activeCollectorKeys, activeCollectorsErr = s.getCollectorServers()
-			if activeCollectorsErr != nil {
-				for _, id := range devices {
-					addFailedDevice(failedDevices, id, fmt.Errorf("Failed to access active collector-server"))
-				}
-
-				response := make(map[string]interface{})
-				response["failed_devices"] = convertFailedDevicesToArray(failedDevices)
-				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
-				return
-			}
-		}
-	}
-
 	orgsToUpdate, err := removeDeviceIDsFromPreviousOrg(ctx, s, deviceOrgMap)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 
 	for orgID, devicesIDs := range devicesGroupByOrg {
 		org, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgID})
 		if org != nil {
-			_, exists := activeCollectorKeys.Load(org.CollectorServer)
-			if !exists && len(org.CollectedDevicesIDs) > 0 {
+			// Verify if the collector server is available.
+			// This is a no-op on K8s but performs a Salt-ping check on Baremetal.
+			if err := s.InternalENV.Platform.VerifyCollectorReady(ctx, org.CollectorServer); err != nil {
 				for _, id := range devicesIDs {
-					addFailedDevice(failedDevices, id, fmt.Errorf("collector server not active"))
+					addFailedDevice(failedDevices, id, err)
 				}
-				continue
-
+				response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+				return
 			}
+
 			previousLearnedDevicesIDs := org.LearnedDevicesIDs
 			previousCollectedDevicesIDs := org.CollectedDevicesIDs
 			org.LearnedDevicesIDs = RemoveElements(previousLearnedDevicesIDs, devicesIDs)
@@ -489,60 +487,60 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		if currentOrg != nil && !reflect.DeepEqual(org.CollectedDevicesIDs, currentOrg.CollectedDevicesIDs) {
 			statusCode, resp, err := s.manageLogstashConfig(ctx, &org)
 			if err != nil {
-				for _, devicesIDs := range devicesGroupByOrg {
-					for _, id := range devicesIDs {
-						addFailedDevice(failedDevices, id, err)
-					}
+				for _, id := range devicesGroupByOrg[org.ID] {
+					addFailedDevice(failedDevices, id, err)
 				}
-				continue
+				response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+				return
 			} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-				for _, devicesIDs := range devicesGroupByOrg {
-					for _, id := range devicesIDs {
-						addFailedDevice(failedDevices, id, fmt.Errorf(string(resp)))
-					}
+				for _, id := range devicesGroupByOrg[org.ID] {
+					addFailedDevice(failedDevices, id, fmt.Errorf(string(resp)))
 				}
-				continue
+				response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+				return
 			}
 			if _, exists := restartCollectorServers[org.CollectorServer]; !exists {
 				restartCollectorServers[org.CollectorServer] = org.CollectorServer
-				_, _, err := s.restartDocker(org.CollectorServer)
-				if err != nil {
-					for _, devicesIDs := range devicesGroupByOrg {
-						for _, id := range devicesIDs {
-							addFailedDevice(failedDevices, id, err)
-						}
+				if err := s.InternalENV.Platform.RestartCollector(ctx, org.CollectorServer); err != nil {
+					for _, id := range devicesGroupByOrg[org.ID] {
+						addFailedDevice(failedDevices, id, err)
 					}
-					continue
+					response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+					encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+					return
 				}
 			}
 		}
 		if currentOrg != nil {
 			err = s.Store.NetworkDeviceOrg(ctx).Update(ctx, &org)
+			if err != nil {
+				for _, id := range devicesGroupByOrg[org.ID] {
+					addFailedDevice(failedDevices, id, err)
+				}
+				response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
+				return
+			}
 			msg := fmt.Sprintf(MsgNetWorkDeviceOrgModified.String(), org.ID)
 			s.logRegistration(ctx, "NetWorkDeviceOrg", msg)
-			if err != nil {
-				for _, devicesIDs := range devicesGroupByOrg {
-					for _, id := range devicesIDs {
-						addFailedDevice(failedDevices, id, err)
-					}
-				}
-				continue
-			}
 		}
 	}
 
+	var succeededShards []int
 	for _, id := range request.DevicesIDs {
-		if _, exists := failedDevices[id]; exists {
-			return
-		}
-
 		device, err := s.Store.NetworkDevice(ctx).Get(ctx, cloudhub.NetworkDeviceQuery{ID: &id})
 		if err != nil {
 			addFailedDevice(failedDevices, id, err)
+			response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+			encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 			return
 		}
 		if err := s.OrganizationExists(ctx, device.Organization); err != nil {
 			addFailedDevice(failedDevices, id, err)
+			response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+			encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 			return
 		}
 		serverCtx := serverContext(ctx)
@@ -551,6 +549,8 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			err = s.Store.MLNxRst(serverCtx).Delete(serverCtx, MLRst)
 			if err != nil {
 				addFailedDevice(failedDevices, id, err)
+				response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 				return
 			}
 		}
@@ -559,30 +559,33 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 			err = s.Store.DLNxRst(serverCtx).Delete(serverCtx, DLRst)
 			if err != nil {
 				addFailedDevice(failedDevices, id, err)
+				response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 				return
 			}
 		}
 		err = s.Store.DLNxRstStg(serverCtx).Delete(serverCtx, cloudhub.DLNxRstStgQuery{ID: &device.DeviceIP})
 		if err != nil {
 			addFailedDevice(failedDevices, id, err)
+			response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+			encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 			return
 		}
 		err = s.Store.NetworkDevice(ctx).Delete(ctx, device)
 		if err != nil {
-			addFailedDevice(failedDevices, id, err)
+			addFailedDevice(failedDevices, id, fmt.Errorf("failed to delete device from store: %w", err))
+			response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
+			encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
 			return
 		}
 		msg := fmt.Sprintf(MsgNetWorkDeviceDeleted.String(), id)
 		s.logRegistration(ctx, "NetWorkDevice", msg)
+		succeededShards = append(succeededShards, device.ShardID)
 	}
 
-	response := make(map[string]interface{})
-	if len(failedDevices) > 0 {
-		response["failed_devices"] = convertFailedDevicesToArray(failedDevices)
-		encodeJSON(w, http.StatusMultiStatus, response, s.Logger)
-	} else {
-		encodeJSON(w, http.StatusNoContent, response, s.Logger)
-	}
+	s.pushUniqueShards(ctx, succeededShards)
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // UpdateNetworkDevice completely updates either the Device
@@ -613,6 +616,8 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.pushUniqueShards(ctx, []int{device.ShardID})
+
 	res, err := newDeviceResponse(ctx, s, device)
 	if err != nil {
 		notFound(w, id, s.Logger)
@@ -629,6 +634,7 @@ func (s *Service) UpdateDevice(ctx context.Context, req *updateDeviceData) (*clo
 		return nil, fmt.Errorf("device not found: %v", err)
 	}
 
+	originalOrgID := device.Organization
 	isModified := false
 	if req.DeviceIP != nil && device.DeviceIP != *req.DeviceIP {
 		device.DeviceIP = *req.DeviceIP
@@ -726,7 +732,7 @@ func (s *Service) UpdateDevice(ctx context.Context, req *updateDeviceData) (*clo
 	if isModified {
 		device.IsCollectingCfgWritten = false
 
-		devOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &device.Organization})
+		devOrg, _ := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &originalOrgID})
 		if devOrg != nil {
 			for _, id := range devOrg.CollectedDevicesIDs {
 				if id == device.ID {
@@ -813,11 +819,12 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	collectorKeys, activeCollectorKeys, err := s.getCollectorServers()
+	collectorKeys, _, err := s.InternalENV.Platform.GetActiveCollectors(ctx)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	totalShards := s.InternalENV.Platform.GetTotalShards(ctx)
 
 	_, _, serverDeviceCount, orgToCollector := computeThreshold(existingDevicesOrg, devicesData.devicesGroupByOrg, CollectorSelectionRatio)
 
@@ -827,7 +834,6 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Assign devices to collectors and update org information
 	for org, devices := range devicesData.devicesGroupByOrg {
 		selectedServer := findLeastLoadedCollectorServer(
 			org,
@@ -842,15 +848,16 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 	for org, devices := range devicesData.devicesGroupByOrg {
 		collectorServer := orgToCollector[org]
 
-		// Skip this organization if its collector server is not active
-		if _, exists := activeCollectorKeys.Load(collectorServer); !exists {
+		// Verify if the collector server is available.
+		if err := s.InternalENV.Platform.VerifyCollectorReady(ctx, collectorServer); err != nil {
 			for _, device := range devices {
 				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = "Failed to access active collector-server"
+					failedDevices[device.ID] = err.Error()
 				}
 			}
 			continue
 		}
+
 		orgInfo, exists := orgsToUpdate[org]
 		if !exists {
 			existingDeviceOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &org})
@@ -874,70 +881,71 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		for _, device := range devices {
 			if device.IsCollecting {
 				existingCollectingDeviceIDs = appendUnique(existingCollectingDeviceIDs, device.ID)
+				// Update ShardID when monitoring starts
+				if nd, ok := devicesData.networkDevicesMap[device.ID]; ok {
+					nd.ShardID = s.InternalENV.Platform.GetShardID(nd.ID, totalShards)
+				}
 			} else {
 				existingCollectingDeviceIDs = removeDeviceID(existingCollectingDeviceIDs, device.ID)
 			}
-
 		}
 		orgInfo.CollectedDevicesIDs = existingCollectingDeviceIDs
 		orgsToUpdate[org] = orgInfo
 
 	}
 
-	// Update the store only for successful orgInfos
+	succeededShardsMap := make(map[int]bool)
+	// Update the store and handle config/restarts for each org
 	for org, orgInfo := range orgsToUpdate {
 		statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo)
 		if err != nil {
 			for _, device := range devicesData.devicesGroupByOrg[org] {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = err.Error()
-				}
+				addFailedDevice(failedDevices, device.ID, err)
 			}
 			continue
 		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 			for _, device := range devicesData.devicesGroupByOrg[org] {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = string(resp)
-				}
+				addFailedDevice(failedDevices, device.ID, fmt.Errorf("%s", string(resp)))
 			}
 			continue
 		}
 
-		// Save unique collector servers to restartCollectorServers map
-		if _, exists := restartCollectorServers[orgInfo.CollectorServer]; !exists {
-			restartCollectorServers[orgInfo.CollectorServer] = orgInfo.CollectorServer
-			_, _, err := s.restartDocker(orgInfo.CollectorServer)
-			if err != nil {
-				for _, device := range devicesData.devicesGroupByOrg[org] {
-					if _, exists := failedDevices[device.ID]; !exists {
-						failedDevices[device.ID] = err.Error()
+		// Save unique collector servers to restartCollectorServers map (Handled by Platform interface internally)
+		if orgInfo.CollectorServer != "" {
+			if _, exists := restartCollectorServers[orgInfo.CollectorServer]; !exists {
+				restartCollectorServers[orgInfo.CollectorServer] = orgInfo.CollectorServer
+				if err := s.InternalENV.Platform.RestartCollector(ctx, orgInfo.CollectorServer); err != nil {
+					for _, device := range devicesData.devicesGroupByOrg[org] {
+						addFailedDevice(failedDevices, device.ID, err)
 					}
+					continue
 				}
-				continue
 			}
 		}
 
+		// Update Org in store
 		existOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &org})
 		if err != nil && existOrg == nil {
 			s.Store.NetworkDeviceOrg(ctx).Add(ctx, &orgInfo)
 		} else {
 			s.Store.NetworkDeviceOrg(ctx).Update(ctx, &orgInfo)
 		}
+
+		// Update Devices and record succeeded shards
 		for _, device := range devicesData.devicesGroupByOrg[org] {
 			networkDevice := devicesData.networkDevicesMap[device.ID]
-			if device.IsCollectingCfgWritten == false {
-				networkDevice.IsCollectingCfgWritten = true
-			}
+			networkDevice.IsCollectingCfgWritten = true
 
-			err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice)
-			if err != nil {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = err.Error()
-				}
+			if err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice); err != nil {
+				addFailedDevice(failedDevices, device.ID, err)
+			} else {
+				succeededShardsMap[networkDevice.ShardID] = true
 			}
 		}
-
 	}
+
+	// Notify Kafka for all succeeded shards
+	s.pushUniqueShardsMap(ctx, succeededShardsMap)
 
 	response := map[string]interface{}{
 		"failed_devices": convertFailedDevicesToArray(failedDevices),
@@ -965,6 +973,7 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	totalShards := s.InternalENV.Platform.GetTotalShards(ctx)
 	for org, devices := range devicesData.learningDevicesGroupByOrg {
 		orgInfo, exists := orgsToUpdate[org]
 		if !exists {
@@ -988,6 +997,10 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 		for _, device := range devices {
 			if device.IsLearning {
 				existingLearningDeviceIDs = appendUnique(existingLearningDeviceIDs, device.ID)
+				// Update ShardID when learning starts
+				if nd, ok := devicesData.networkDevicesMap[device.ID]; ok {
+					nd.ShardID = s.InternalENV.Platform.GetShardID(nd.ID, totalShards)
+				}
 			} else {
 				existingLearningDeviceIDs = removeDeviceID(existingLearningDeviceIDs, device.ID)
 			}
@@ -996,28 +1009,29 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 		orgsToUpdate[org] = orgInfo
 	}
 
-	// Update the store only for successful orgInfos
+	succeededShardsMap := make(map[int]bool)
 	for org, orgInfo := range orgsToUpdate {
-		existOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &org})
-		if err != nil && existOrg == nil {
-			s.Store.NetworkDeviceOrg(ctx).Add(ctx, &orgInfo)
-		} else {
-			s.Store.NetworkDeviceOrg(ctx).Update(ctx, &orgInfo)
+		if err := s.Store.NetworkDeviceOrg(ctx).Update(ctx, &orgInfo); err != nil {
+			s.Logger.WithField("org", org).Error("Failed to update org info")
+			continue
 		}
+
+		// Save updated devices (in case ShardID changed) and collect shards for notification
 		for _, device := range devicesData.learningDevicesGroupByOrg[org] {
-			networkDevice := devicesData.networkDevicesMap[device.ID]
-			networkDevice.IsLearning = device.IsLearning
-			if device.IsLearning && networkDevice.LearningState == "" {
-				networkDevice.LearningState = Ready
-			}
-			err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice)
-			if err != nil {
+			if networkDevice, ok := devicesData.networkDevicesMap[device.ID]; ok {
+				// Save device to persistent store (important if ShardID was updated)
+				if err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice); err != nil {
+					addFailedDevice(failedDevices, device.ID, err)
+					continue
+				}
+
 				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = err.Error()
+					succeededShardsMap[networkDevice.ShardID] = true
 				}
 			}
 		}
 	}
+	s.pushUniqueShardsMap(ctx, succeededShardsMap)
 
 	response := map[string]interface{}{
 		"failed_devices": convertFailedDevicesToArray(failedDevices),
@@ -1174,64 +1188,6 @@ func findLeastLoadedCollectorServer(
 	return selectedServer
 }
 
-func (s *Service) getCollectorServers() ([]string, *sync.Map, error) {
-	status, responseBody, err := s.GetWheelKeyAcceptedListAll()
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if status != 200 {
-		return nil, nil, fmt.Errorf("failed to retrieve keys, status code: %d", status)
-	}
-
-	var response struct {
-		Return []struct {
-			Data struct {
-				Return struct {
-					Minions []string `json:"minions"`
-				} `json:"return"`
-			} `json:"data"`
-		} `json:"return"`
-	}
-
-	err = json.Unmarshal(responseBody, &response)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal response: %v", err)
-	}
-
-	var collectorKeys []string
-	activeCollectorKeys := &sync.Map{}
-	var wg sync.WaitGroup
-
-	for _, minion := range response.Return[0].Data.Return.Minions {
-		if strings.HasPrefix(minion, "ch-collector") {
-			collectorKeys = append(collectorKeys, minion)
-			wg.Add(1)
-			go func(minion string) {
-				defer wg.Done()
-				if statusCode, resp, err := s.IsActiveMinionPingTest(minion); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-					activeCollectorKeys.Store(minion, false)
-				} else if resp != nil {
-					r := &struct {
-						Return []map[string]bool `json:"return"`
-					}{}
-
-					if err := json.Unmarshal(resp, r); err != nil || !r.Return[0][minion] {
-						activeCollectorKeys.Store(minion, false)
-						return
-					}
-					activeCollectorKeys.Store(minion, true)
-				}
-			}(minion)
-		}
-	}
-
-	wg.Wait()
-
-	return collectorKeys, activeCollectorKeys, nil
-}
-
 func computeThreshold(existingDevicesOrg []cloudhub.NetworkDeviceOrg, groupedDevices deviceGroupByOrg, ratio float64) (int, map[string]int, map[string]int, map[string]string) {
 	totalDevices := 0
 	orgDeviceCount := make(map[string]int)
@@ -1276,43 +1232,14 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return http.StatusInternalServerError, nil, err
 	}
 
-	aiConfig := s.InternalENV.AIConfig
-	dirPath := aiConfig.LogstashPath
 	fileName := fmt.Sprintf("%s_snmp_nx.rb", org.Name)
-	filePath := path.Join(dirPath, fileName)
-
-	var statusCode int
-	var resp []byte
-
-	if statusCode, resp, err := s.DirectoryExistsWithLocalClient(dirPath, devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-		return statusCode, nil, err
-	} else if resp != nil {
-		r := &struct {
-			Return []map[string]bool `json:"return"`
-		}{}
-
-		if err := json.Unmarshal(resp, r); err != nil {
-			return http.StatusInternalServerError, nil, err
-		}
-
-		if !r.Return[0][devOrg.CollectorServer] {
-			if statusCode, _, err := s.MkdirWithLocalClient(dirPath, devOrg.CollectorServer); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-				return statusCode, nil, err
-			}
-		}
-	} else {
-		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error occurred at DirectoryExists() func")
-	}
 
 	// If there are no devices to collect data from, remove the configuration file
 	if len(devicesIDs) < 1 {
-		statusCode, resp, err = s.RemoveFileWithLocalClient(filePath, devOrg.CollectorServer)
-		if err != nil {
+		if err = s.InternalENV.Platform.RemoveLogstashConfig(ctx, devOrg.CollectorServer, fileName); err != nil {
 			return http.StatusInternalServerError, nil, err
-		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-			return statusCode, resp, err
 		}
-		return statusCode, resp, nil
+		return http.StatusOK, nil, nil
 	}
 
 	var hostEntriesV1AndV2 []string
@@ -1334,13 +1261,13 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		}
 
 		filter := fmt.Sprintf(`
-		if [host] == "%s" {
-			mutate {
-				add_field => {
-					"dev_id" => %s
-				}
-			}
-		}`, device.DeviceIP, device.ID)
+        if [host] == "%s" {
+            mutate {
+                add_field => {
+                    "dev_id" => %s
+                }
+            }
+        }`, device.DeviceIP, device.ID)
 		deviceFilters = append(deviceFilters, filter)
 	}
 
@@ -1395,48 +1322,13 @@ func (s *Service) manageLogstashConfig(ctx context.Context, devOrg *cloudhub.Net
 		return http.StatusInternalServerError, nil, err
 	}
 
-	statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{configString}, devOrg.CollectorServer)
-	if err != nil {
-		return http.StatusInternalServerError, nil, err
-	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-		return statusCode, resp, err
+	if err := s.InternalENV.Platform.DeployLogstashConfig(ctx, devOrg.CollectorServer, fileName, configString); err != nil {
+		return http.StatusMultiStatus, []byte(err.Error()), err
 	}
-	// Log the successful creation of the config
+
 	msg := fmt.Sprintf(MsgNetWorkDeviceConfCreated.String(), org.ID)
 	s.logRegistration(ctx, "NetWorkDeviceConf", msg)
 	return http.StatusOK, nil, err
-}
-
-func (s *Service) restartDocker(collectorServer string) (int, []byte, error) {
-	aiConfig := s.InternalENV.AIConfig
-	dockerPath := aiConfig.DockerPath
-	dockerCmd := aiConfig.DockerCmd
-
-	statusCode, resp, err := s.DockerRestart(dockerPath, collectorServer, dockerCmd)
-	if err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-		return statusCode, nil, err
-	} else if resp != nil {
-		r := &struct {
-			Return []map[string]string `json:"return"`
-		}{}
-		if err := json.Unmarshal(resp, r); err != nil {
-			return http.StatusInternalServerError, nil, err
-		}
-		// Check for the success message using regex
-		re := regexp.MustCompile(`(?i)(Restarting.*Started|Stopping .* done|Starting .* done)`)
-		for _, item := range r.Return {
-			for _, value := range item {
-				cleanedValue := strings.ReplaceAll(strings.ReplaceAll(value, "\n", ""), " ", "")
-				if !re.MatchString(cleanedValue) {
-					message := fmt.Errorf(value)
-					return http.StatusInternalServerError, nil, message
-				}
-			}
-		}
-	} else {
-		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error occurred at DirectoryExists() func")
-	}
-	return statusCode, resp, nil
 }
 
 // RemoveElements removes elements from the origin slice that are present in the delete slice.
@@ -1497,5 +1389,262 @@ func (s *Service) filterDeviceBySNMPConfigV3(device cloudhub.NetworkDevice, orgN
 		PrivPass:      reqConfig.PrivPass,
 		SecurityLevel: reqConfig.SecurityLevel,
 		OrgName:       orgName,
+	}
+}
+
+// GetCollectorConfig handles the sidecar polling request for Logstash configuration.
+func (s *Service) GetCollectorConfig(w http.ResponseWriter, r *http.Request) {
+	shardIDStr, err := paramStr("shardID", r)
+	if err != nil {
+		Error(w, http.StatusBadRequest, cloudhub.ErrInvalidShardID.Error(), s.Logger)
+		return
+	}
+
+	parts := strings.Split(shardIDStr, "-")
+	ordinalStr := parts[len(parts)-1]
+	shardIndex, err := strconv.Atoi(ordinalStr)
+	if err != nil {
+		Error(w, http.StatusBadRequest, cloudhub.ErrInvalidShardID.Error(), s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	finalConfig, err := s.InternalENV.Platform.GenerateShardConfig(ctx, shardIndex)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	hash := sha256.Sum256([]byte(finalConfig))
+	etag := hex.EncodeToString(hash[:])
+
+	w.Header().Set("ETag", etag)
+
+	if match := r.Header.Get("If-None-Match"); match == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(finalConfig))
+}
+
+// SyncCollectorShards handles a bulk synchronization request for multiple Kafka partitions.
+func (s *Service) SyncCollectorShards(w http.ResponseWriter, r *http.Request) {
+	type requestData struct {
+		Partitions []string `json:"partitions"`
+	}
+
+	request, ctx, err := decodeRequest[requestData](r)
+	if err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	var partitionIndices []int
+	for _, pID := range request.Partitions {
+		// Support both "partition-0" and "0" formats
+		parts := strings.Split(pID, "-")
+		ordinalStr := parts[len(parts)-1]
+		idx, err := strconv.Atoi(ordinalStr)
+		if err != nil {
+			Error(w, http.StatusBadRequest, fmt.Sprintf("Invalid partition ID format: %s", pID), s.Logger)
+			return
+		}
+		partitionIndices = append(partitionIndices, idx)
+	}
+
+	if len(partitionIndices) == 0 {
+		Error(w, http.StatusBadRequest, "No partitions specified", s.Logger)
+		return
+	}
+
+	// Trigger Kafka push for these partitions (Mapping 1:1 to ShardIDs)
+	s.InternalENV.Platform.PushConfigUpdates(ctx, partitionIndices)
+
+	// Fetch all devices to identify which ones belong to these partitions
+	allDevices, err := s.GetAllNetworkDevices(ctx)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, "Failed to retrieve devices", s.Logger)
+		return
+	}
+
+	var affectedDeviceIDs []string
+	partitionMap := make(map[int]bool)
+	for _, idx := range partitionIndices {
+		partitionMap[idx] = true
+	}
+
+	for _, dev := range allDevices {
+		if partitionMap[dev.ShardID] {
+			affectedDeviceIDs = append(affectedDeviceIDs, dev.ID)
+		}
+	}
+
+	response := map[string]interface{}{
+		"devices": affectedDeviceIDs,
+		"message": "Partition sync initiated via Kafka",
+	}
+	encodeJSON(w, http.StatusOK, response, s.Logger)
+}
+
+// GetAllNetworkDeviceOrgs fetches all organization configurations from the store.
+func (s *Service) GetAllNetworkDeviceOrgs(ctx context.Context) ([]cloudhub.NetworkDeviceOrg, error) {
+	serverCtx := serverContext(ctx)
+	allOrgs, err := s.Store.NetworkDeviceOrg(serverCtx).All(serverCtx)
+	if err != nil {
+		if strings.Contains(err.Error(), "no Network Device found") {
+			return []cloudhub.NetworkDeviceOrg{}, nil
+		}
+		return nil, fmt.Errorf("failed to fetch accounts: %w", err)
+	}
+	return allOrgs, nil
+}
+
+// GetAllNetworkDevices fetches all network devices from the store.
+func (s *Service) GetAllNetworkDevices(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+	serverCtx := serverContext(ctx)
+	allDevices, err := s.Store.NetworkDevice(serverCtx).All(serverCtx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch devices: %w", err)
+	}
+	return allDevices, nil
+}
+
+// GenerateOrgConfig generates the Logstash configuration for a specific organization's devices.
+func (s *Service) GenerateOrgConfig(ctx context.Context, orgInfo *cloudhub.NetworkDeviceOrg) (string, error) {
+	serverCtx := serverContext(ctx)
+	org, err := s.Store.Organizations(serverCtx).Get(serverCtx, cloudhub.OrganizationQuery{ID: &orgInfo.ID})
+	if err != nil {
+		return "", fmt.Errorf("failed to get org %s: %w", orgInfo.ID, err)
+	}
+
+	var hostEntriesV1AndV2 []string
+	var deviceFilters []string
+	filteredDevices := make(map[cloudhub.SNMPConfig]FilteredDeviceV3)
+
+	for _, deviceID := range orgInfo.CollectedDevicesIDs {
+		device, err := s.Store.NetworkDevice(serverCtx).Get(serverCtx, cloudhub.NetworkDeviceQuery{ID: &deviceID})
+		if err != nil {
+			continue
+		}
+
+		if device.SNMPConfig.Version == "v3" || device.SNMPConfig.Version == "3" {
+			s.filterDeviceBySNMPConfigV3(*device, org.Name, &filteredDevices)
+		} else {
+			host := fmt.Sprintf("%s:%s/%d", strings.ToLower(device.SNMPConfig.Protocol), device.DeviceIP, device.SNMPConfig.Port)
+			hostEntry := fmt.Sprintf("{host => \"%s\" community => \"%s\" version => \"%s\" timeout => %d}",
+				host, device.SNMPConfig.Community, device.SNMPConfig.Version, 50000)
+			hostEntriesV1AndV2 = append(hostEntriesV1AndV2, hostEntry)
+		}
+
+		filter := fmt.Sprintf(`
+        if [host] == "%s" {
+            mutate {
+                add_field => {
+                    "dev_id" => "%s"
+                    "org_id" => "%s"
+                }
+            }
+        }`, device.DeviceIP, device.ID, org.ID)
+		deviceFilters = append(deviceFilters, filter)
+	}
+
+	if len(hostEntriesV1AndV2) == 0 && len(filteredDevices) == 0 {
+		return "", nil
+	}
+
+	snmpV1AndV2Hosts := strings.Join(hostEntriesV1AndV2, ",\n")
+	filters := strings.Join(deviceFilters, "\n")
+	influxDBs, _ := GetServerInfluxDBs(serverCtx, s)
+
+	influxOrigin, influxPort, influxUser, influxPass := "", "", "", ""
+	if len(influxDBs) > 0 {
+		influxOrigin = influxDBs[0].Origin
+		influxPort = influxDBs[0].Port
+		influxUser = influxDBs[0].Username
+		influxPass = influxDBs[0].Password
+	}
+
+	filteredDevicesArray := make([]FilteredDeviceV3, 0, len(filteredDevices))
+	for _, fd := range filteredDevices {
+		fd.HostEntries = strings.TrimSuffix(fd.HostEntries, "\n")
+		filteredDevicesArray = append(filteredDevicesArray, fd)
+	}
+
+	sort.Slice(filteredDevicesArray, func(i, j int) bool {
+		return filteredDevicesArray[i].SecurityName < filteredDevicesArray[j].SecurityName
+	})
+
+	tmplParams := []cloudhub.TemplateBlock{
+		{Name: "comment", Params: cloudhub.TemplateParamsMap{}},
+		{
+			Name: "input",
+			Params: cloudhub.TemplateParamsMap{
+				"DeviceHostsV1AndV2": snmpV1AndV2Hosts,
+				"OrgName":            org.Name,
+			},
+		},
+		{
+			Name: "snmp_v3_input",
+			Params: cloudhub.TemplateParamsMap{
+				"RefeatV3": filteredDevicesArray,
+			},
+		},
+		{
+			Name: "filter_ouput",
+			Params: cloudhub.TemplateParamsMap{
+				"OrgName":        org.Name,
+				"DeviceFilter":   filters,
+				"InfluxOrigin":   influxOrigin,
+				"InfluxPort":     influxPort,
+				"InfluxUsername": influxUser,
+				"InfluxPassword": influxPass,
+			},
+		},
+	}
+
+	tm := s.InternalENV.TemplatesManager
+	t, err := tm.Get(ctx, string(LogstashTemplateField))
+	if err != nil {
+		return "", fmt.Errorf("failed to get logstash template: %w", err)
+	}
+	templateService := &TemplateService{}
+	configPart, err := templateService.LoadTemplate(cloudhub.LoadTemplateConfig{
+		Field:          LogstashTemplateField,
+		TemplateString: t.Template,
+	}, tmplParams)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to load template: %w", err)
+	}
+
+	return fmt.Sprintf("\n# Configuration for Org: %s\n%s", org.Name, configPart), nil
+}
+
+func (s *Service) pushUniqueShards(ctx context.Context, shards []int) {
+	if len(shards) == 0 {
+		return
+	}
+	shardsMap := make(map[int]bool)
+	for _, sid := range shards {
+		shardsMap[sid] = true
+	}
+	s.pushUniqueShardsMap(ctx, shardsMap)
+}
+
+func (s *Service) pushUniqueShardsMap(ctx context.Context, shardsMap map[int]bool) {
+	if len(shardsMap) == 0 {
+		return
+	}
+	var validShards []int
+	for sid := range shardsMap {
+		if sid >= 0 {
+			validShards = append(validShards, sid)
+		}
+	}
+	if len(validShards) > 0 {
+		s.InternalENV.Platform.PushConfigUpdates(ctx, validShards)
 	}
 }

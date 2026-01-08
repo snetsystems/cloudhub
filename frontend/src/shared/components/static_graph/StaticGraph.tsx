@@ -46,9 +46,13 @@ import {
   buildScatterChartDefaultYLabel,
 } from 'src/shared/presenters'
 import {fastMap} from 'src/utils/fast'
-import {StatisticalGraphFieldOption} from 'src/types/statisticalgraph'
+import {
+  StatisticalGraphFieldOption,
+  TableGaugeChartOptionsInterface,
+} from 'src/types/statisticalgraph'
 import _ from 'lodash'
 import {parseIfPositiveNumber} from 'src/shared/utils/staticGraph'
+import StaticTableGaugeChart from './StaticTableGaugeChart'
 
 ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#999dab'
@@ -72,6 +76,11 @@ interface Props {
   templates?: Template[]
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
+  onUpdateTableGaugeChartOptions?: (
+    tableGaugeChartOptions: TableGaugeChartOptionsInterface
+  ) => void
+  originFiledOptions: FieldOption[]
 }
 
 type StaticGraphProps = Props & RouteComponentProps<any, any>
@@ -94,16 +103,21 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
     }
   }
   public componentDidMount() {
-    const {fieldOptions} = this.props
+    const {fieldOptions, tableGaugeChartOptions} = this.props
 
     this.handleUpdateFieldOptions(fieldOptions)
+    this.handleUpdateTableGaugeChartOptions(tableGaugeChartOptions)
   }
 
   public componentDidUpdate(prevProps: Props) {
-    const {fieldOptions} = this.props
+    const {fieldOptions, tableGaugeChartOptions} = this.props
 
     if (!_.isEqual(fieldOptions, prevProps.fieldOptions)) {
       this.handleUpdateFieldOptions(fieldOptions)
+    }
+
+    if (!_.isEqual(tableGaugeChartOptions, prevProps.tableGaugeChartOptions)) {
+      this.handleUpdateTableGaugeChartOptions(tableGaugeChartOptions)
     }
   }
 
@@ -112,6 +126,15 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
     if (onUpdateFieldOptions) {
       onUpdateFieldOptions(fieldOptions)
+    }
+  }
+
+  private handleUpdateTableGaugeChartOptions = (
+    tableGaugeChartOptions: TableGaugeChartOptionsInterface
+  ): void => {
+    const {onUpdateTableGaugeChartOptions} = this.props
+    if (onUpdateTableGaugeChartOptions) {
+      onUpdateTableGaugeChartOptions(tableGaugeChartOptions)
     }
   }
 
@@ -158,6 +181,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       fieldOptions,
       templates,
       decimalPlaces,
+      tableGaugeChartOptions,
+      originFiledOptions,
     } = this.props
     const {fillArea, showLine, showPoint} = graphOptions
 
@@ -325,6 +350,16 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             decimalPlaces={decimalPlaces}
           />
         )
+      case CellType.StaticTableGaugeChart:
+        return (
+          <StaticTableGaugeChart
+            data={data}
+            decimalPlaces={decimalPlaces}
+            staticGraphStyle={this.staticGraphStyle}
+            tableGaugeChartOptions={tableGaugeChartOptions}
+            originFiledOptions={originFiledOptions}
+          />
+        )
       default:
         break
     }
@@ -354,6 +389,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
         ...this.containerStyle,
         zIndex: 2,
         height: `calc(100% - ${staticLegendHeight + cellVerticalPadding}px)`,
+        borderBottom: `2px solid #383846`,
       }
     }
 

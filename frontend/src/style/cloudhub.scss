@@ -11,6 +11,7 @@
 @import 'fonts/icon-font';
 
 // Theme
+@import 'theme/oui_theme';
 @import 'theme/cloudhub-theme';
 
 // Vendor
@@ -64,6 +65,7 @@
 @import 'components/source-selector';
 @import 'components/tables';
 @import 'components/table-graph';
+@import 'components/table-gauge';
 @import 'components/threesizer';
 @import 'components/threshold-controls';
 @import 'components/kapacitor-logs-table';
@@ -100,6 +102,10 @@
 @import 'components/device-management.scss';
 @import 'components/prediction.scss';
 @import 'components/gpu-monitoring.scss';
+@import 'components/kubernetes-powerflex.scss';
+@import 'components/sidePanelSlice.scss';
+@import 'components/log-analysis.scss';
+@import 'components/devicesMapping.scss';
 
 // Reusable UI Components
 @import '../reusable_ui/components/panel/Panel.scss';
@@ -126,6 +132,7 @@
 @import '../reusable_ui/components/page_layout/Page.scss';
 @import '../reusable_ui/components/treemenu/sass/treemenu.scss';
 @import '../reusable_ui/components/spinners/loadingSpinner.scss';
+@import '../reusable_ui/components/spinners/refreshSpinner.scss';
 
 // Pages
 @import 'pages/auth-page';

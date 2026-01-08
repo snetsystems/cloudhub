@@ -87,6 +87,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "This dashboard gives you an overview of your Kubernetes Cluster and includes metrics from `kubernetes_*` set of measurements populated by the [Telegraf Kubernetes Input Plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -169,6 +175,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -251,6 +263,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -333,6 +351,12 @@
         "fieldOptions": [
           {"internalName": "time", "displayName": "", "visible": true}
         ],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "MM/DD/YYYY HH:mm:ss",
         "decimalPlaces": {"isEnforced": true, "digits": 2},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -423,6 +447,12 @@
           "fixFirstColumn": false
         },
         "fieldOptions": [],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "",
         "decimalPlaces": {"isEnforced": false, "digits": 0},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -527,6 +557,12 @@
           "fixFirstColumn": false
         },
         "fieldOptions": [],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "",
         "decimalPlaces": {"isEnforced": false, "digits": 0},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -617,6 +653,12 @@
           "fixFirstColumn": false
         },
         "fieldOptions": [],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "",
         "decimalPlaces": {"isEnforced": false, "digits": 0},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -721,6 +763,12 @@
           "fixFirstColumn": false
         },
         "fieldOptions": [],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "",
         "decimalPlaces": {"isEnforced": false, "digits": 0},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -811,6 +859,12 @@
           "fixFirstColumn": false
         },
         "fieldOptions": [],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "",
         "decimalPlaces": {"isEnforced": false, "digits": 0},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -901,6 +955,12 @@
           "fixFirstColumn": false
         },
         "fieldOptions": [],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "",
         "decimalPlaces": {"isEnforced": false, "digits": 0},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -991,6 +1051,12 @@
           "fixFirstColumn": false
         },
         "fieldOptions": [],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "",
         "decimalPlaces": {"isEnforced": false, "digits": 0},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",
@@ -1095,6 +1161,12 @@
           "fixFirstColumn": false
         },
         "fieldOptions": [],
+        "graphOptions": {
+          "fillArea": false,
+          "showLine": true,
+          "showPoint": false,
+          "showTempVarCount": null
+        },
         "timeFormat": "",
         "decimalPlaces": {"isEnforced": false, "digits": 0},
         "note": "To enable this graph, you will need to configure the [Telegraf Kubernetes Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/kubernetes).",

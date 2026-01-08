@@ -25,6 +25,7 @@ import {
   notifyKapacitorUpdated,
   notifyCouldNotConnectToUpdatedKapacitor,
   notifyCouldNotConnectToKapacitor,
+  notifyError,
 } from 'src/shared/copy/notifications'
 import {DEFAULT_KAPACITOR} from 'src/shared/constants'
 
@@ -82,6 +83,13 @@ class KapacitorStep extends Component<Props, State> {
 
     if (!props.showNewKapacitor && activeKapacitor) {
       kapacitor = activeKapacitor
+    } else if (!kapacitor.name) {
+      try {
+        const kapacitorURL = new URL(kapacitor.url)
+        kapacitor = {...kapacitor, name: kapacitorURL.hostname}
+      } catch (e) {
+        kapacitor = {...kapacitor, name: kapacitor.url}
+      }
     }
 
     this.state = {kapacitor}
@@ -89,7 +97,15 @@ class KapacitorStep extends Component<Props, State> {
 
   public next = async (): Promise<NextReturn> => {
     const {kapacitor} = this.state
-    const {notify, source} = this.props
+    const {notify, source, setError} = this.props
+
+    // Validate name field is required
+    if (!kapacitor.name || !kapacitor.name.trim()) {
+      setError(true)
+      notify(notifyError('Name is required'))
+      return {error: true, payload: null}
+    }
+
     const kapacitorExists = kapacitor.id
     if (kapacitorExists) {
       if (this.existingKapacitorHasChanged) {

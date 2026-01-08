@@ -6,7 +6,14 @@ import ReactJson from 'react-json-view'
 // Components
 import LoadingDots from 'src/shared/components/LoadingDots'
 import GPUMonitoringDashboardHeader from 'src/gpu_monitoring/components/GPUMonitoringDashboardHeader'
-import {Page, Radio} from 'src/reusable_ui'
+import {
+  Page,
+  Radio,
+  Button,
+  ButtonShape,
+  IconFont,
+  ComponentStatus,
+} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import GPUMonitoringDetailsHost from 'src/gpu_monitoring/components/GPUMonitoringDetailsHost'
 import {Addon} from 'src/types/auth'
@@ -32,11 +39,13 @@ import {getGpuDetails} from 'src/gpu_monitoring/utils'
 interface Props {
   filteredHostForGPUMonitoring?: FilteredHostForGPUMonitoring
   addons?: Addon[]
+  gpuMonitoringManualRefresh?: number
 }
 
 function GPUMonitoringDetailsWrapper({
   addons,
   filteredHostForGPUMonitoring,
+  gpuMonitoringManualRefresh,
 }: Props) {
   const [activeEditorTab, setActiveEditorTab] = useState<GPU_DETAIL_TAB_TYPES>(
     GPU_DETAIL_TAB_TYPES.GPU
@@ -73,6 +82,13 @@ function GPUMonitoringDetailsWrapper({
       previousHost.current = focusedHost
     }
   }, [focusedHost, shouldUpdateHost, activeEditorTab])
+
+  useEffect(() => {
+    if (focusedHost) {
+      fetchHostDetails()
+      fetchNVidiaInfoJSON()
+    }
+  }, [gpuMonitoringManualRefresh])
 
   useEffect(() => {
     if (focusedHostGPU !== -1 && originalHostNvidiaInfo?.gpu) {
@@ -146,6 +162,14 @@ function GPUMonitoringDetailsWrapper({
 
   const handleActiveEditorTab = (tab: GPU_DETAIL_TAB_TYPES) => {
     setActiveEditorTab(tab)
+  }
+
+  const handleRefresh = () => {
+    if (!focusedHost) {
+      return
+    }
+    fetchHostDetails()
+    fetchNVidiaInfoJSON()
   }
 
   const renderEmptyContent = (message: string) => {
@@ -268,6 +292,16 @@ function GPUMonitoringDetailsWrapper({
               GPU Details
             </span>
           </Radio.Button>
+          <Button
+            shape={ButtonShape.Square}
+            icon={IconFont.Refresh}
+            onClick={handleRefresh}
+            titleText="Refresh"
+            status={
+              isLoading ? ComponentStatus.Loading : ComponentStatus.Default
+            }
+            customClass="gpu-monitoring-refresh-button"
+          />
         </div>
         {isLoading && (
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
@@ -285,6 +319,8 @@ const mstp = state => ({
   filteredHostForGPUMonitoring:
     state.gpuMonitoringDashboard.filteredHostForGPUMonitoring,
   addons: state.links.addons,
+  gpuMonitoringManualRefresh:
+    state.gpuMonitoringDashboard.gpuMonitoringManualRefresh,
 })
 
 export default connect(mstp, null, null)(GPUMonitoringDetailsWrapper)

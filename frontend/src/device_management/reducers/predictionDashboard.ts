@@ -17,7 +17,7 @@ interface TimeRangeState {
   timeSeriesHeight: number
   statisticHeight: number
 }
-const initialState: TimeRangeState = {
+export const initialState: TimeRangeState = {
   predictionTimeRange: {
     lower: 'now() - 30d',
     lowerFlux: '-30d',
@@ -65,9 +65,9 @@ const predictionDashboard = (
     case ActionType.setStateInit: {
       return {
         ...state,
-        filteredHexbinHost: '',
-        selectedAnomaly: ANOMALY_INITIAL,
-        histogramDate: null,
+        filteredHexbinHost: initialState.filteredHexbinHost,
+        selectedAnomaly: initialState.selectedAnomaly,
+        histogramDate: initialState.histogramDate,
       }
     }
     case ActionType.setTimeSeriesHeight: {

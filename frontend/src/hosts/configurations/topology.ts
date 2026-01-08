@@ -1686,7 +1686,7 @@ export const detectedHostsStatus = function (
   return [nodeCount, error]
 }
 
-export const getFromOptions = (focusedInstance: Instance) => {
+export const getFromOptions = (focusedInstance?: Instance) => {
   switch (_.get(focusedInstance, 'provider')) {
     case CloudServiceProvider.AWS: {
       return agentFilter[CloudServiceProvider.AWS]

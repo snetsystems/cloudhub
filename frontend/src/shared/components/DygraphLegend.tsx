@@ -4,6 +4,7 @@ import {connect} from 'react-redux'
 import _ from 'lodash'
 import classnames from 'classnames'
 import uuid from 'uuid'
+import debounce from 'lodash/debounce'
 
 // Components
 import DygraphLegendSort from 'src/shared/components/DygraphLegendSort'
@@ -46,6 +47,7 @@ interface State {
   sortType: string
   isAscending: boolean
   filterText: string
+  appliedFilterText: string
   isFilterVisible: boolean
   legendStyles: Record<string, unknown>
   pageX: number | null
@@ -56,8 +58,12 @@ interface State {
 class DygraphLegend extends PureComponent<Props, State> {
   private legendRef: HTMLElement | null = null
 
+  private applyFilterDebounced: (filterText: string) => void
+
   constructor(props: Props) {
     super(props)
+
+    this.applyFilterDebounced = debounce(this.applyFilter.bind(this), 500)
 
     this.props.dygraph.updateOptions({
       legendFormatter: this.legendFormatter,
@@ -74,14 +80,26 @@ class DygraphLegend extends PureComponent<Props, State> {
       sortType: 'numeric',
       isAscending: false,
       filterText: '',
+      appliedFilterText: '',
       isFilterVisible: false,
       legendStyles: {},
       pageX: null,
       cellID: null,
     }
   }
+  public componentDidMount() {
+    const {graphDiv} = this.props.dygraph
+    if (graphDiv) {
+      graphDiv.addEventListener('mousemove', this.handleGraphMouseMove)
+    }
+  }
 
   public componentWillUnmount() {
+    const {graphDiv} = this.props.dygraph
+    if (graphDiv) {
+      graphDiv.removeEventListener('mousemove', this.handleGraphMouseMove)
+    }
+
     if (
       !this.props.dygraph.graphDiv ||
       !this.props.dygraph.visibility().find(bool => bool === true)
@@ -90,6 +108,24 @@ class DygraphLegend extends PureComponent<Props, State> {
     }
   }
 
+  private handleGraphMouseMove = (e: MouseEvent) => {
+    const {dygraph, onShow, setActiveCell, cellID} = this.props
+    const {filterText} = this.state
+
+    if (this.filtered.length === 0 && filterText) {
+      const area = dygraph.getArea()
+      const {x, y, w, h} = area
+      const rect = dygraph.graphDiv.getBoundingClientRect()
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
+
+      if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
+        this.setState({pageX: e.pageX})
+        setActiveCell(cellID)
+        onShow(e)
+      }
+    }
+  }
   public render() {
     const {onMouseEnter} = this.props
     const {legend, filterText, isAscending, isFilterVisible} = this.state
@@ -139,17 +175,21 @@ class DygraphLegend extends PureComponent<Props, State> {
           />
         )}
         <div className="dygraph-legend--contents">
-          {this.filtered.map(({label, color, yHTML, isHighlighted}) => {
-            const seriesClass = isHighlighted
-              ? 'dygraph-legend--row highlight'
-              : 'dygraph-legend--row'
-            return (
-              <div key={uuid.v4()} className={seriesClass}>
-                <span style={{color}}>{label}</span>
-                <figure>{yHTML || 'no value'}</figure>
-              </div>
-            )
-          })}
+          {this.filtered.length === 0 && filterText ? (
+            <div className="dygraph-legend--empty">No results found</div>
+          ) : (
+            this.filtered.map(({label, color, yHTML, isHighlighted}) => {
+              const seriesClass = isHighlighted
+                ? 'dygraph-legend--row highlight'
+                : 'dygraph-legend--row'
+              return (
+                <div key={uuid.v4()} className={seriesClass}>
+                  <span style={{color}}>{label}</span>
+                  <figure>{yHTML || 'no value'}</figure>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
     )
@@ -164,25 +204,31 @@ class DygraphLegend extends PureComponent<Props, State> {
     this.setState({
       isFilterVisible: !this.state.isFilterVisible,
       filterText: '',
+      appliedFilterText: '',
     })
   }
 
-  private handleLegendInputChange = (
-    e: ChangeEvent<HTMLInputElement>
-  ): void => {
+  private applyFilter(filterText: string) {
     const {dygraph} = this.props
     const {legend} = this.state
-    const filterText = e.target.value
 
     legend.series.map((__, i) => {
       if (!legend.series[i]) {
         return dygraph.setVisibility(i, true)
       }
-
       dygraph.setVisibility(i, !!legend.series[i].label.match(filterText))
     })
 
+    this.setState({appliedFilterText: filterText})
+  }
+
+  private handleLegendInputChange = (
+    e: ChangeEvent<HTMLInputElement>
+  ): void => {
+    const filterText = e.target.value
+
     this.setState({filterText})
+    this.applyFilterDebounced(filterText)
   }
 
   private handleSortLegend = (sortType: string) => () => {
@@ -193,7 +239,6 @@ class DygraphLegend extends PureComponent<Props, State> {
     if (this.props.activeCellID !== this.props.cellID) {
       this.props.setActiveCell(this.props.cellID)
     }
-
     this.setState({pageX: e.pageX})
     this.props.onShow(e)
   }
@@ -209,13 +254,17 @@ class DygraphLegend extends PureComponent<Props, State> {
 
     const yVal = highlighted && highlighted.y
     const prevY = prevHighlighted && prevHighlighted.y
-
     if (legend.x === prevLegend.x && yVal === prevY) {
       return ''
     }
 
     this.setState({legend})
     return ''
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.hoverTime !== this.props.hoverTime) {
+    }
   }
 
   private unhighlightCallback = (e: MouseEvent) => {
@@ -235,14 +284,14 @@ class DygraphLegend extends PureComponent<Props, State> {
   }
 
   private get filtered(): SeriesLegendData[] {
-    const {legend, sortType, isAscending, filterText} = this.state
+    const {legend, sortType, isAscending, appliedFilterText} = this.state
     const withValues = legend.series.filter(s => !_.isNil(s.y))
     const sorted = _.sortBy(withValues, ({y, label}) =>
       sortType === 'numeric' ? y : label
     )
 
     const ordered = isAscending ? sorted : sorted.reverse()
-    return ordered.filter(s => s.label.match(filterText))
+    return ordered.filter(s => s.label.match(appliedFilterText))
   }
 
   private get isAphaSort(): boolean {

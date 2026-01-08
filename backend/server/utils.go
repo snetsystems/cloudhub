@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"reflect"
 	"strconv"
+
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // FormatTestResultJSON is Test Result string to json format convert
@@ -103,4 +106,28 @@ func compareJSON(obj1, obj2 map[string]interface{}) map[string]interface{} {
 	}
 
 	return diff
+}
+
+// registerAllMethods maps handler h to the common HTTP verbs on the given path.
+//
+// This avoids adding an Any() method to the Router interface or bringing in
+// new dependencies.
+//
+// Usage:
+//
+//	elastic := gziphandler.GzipHandler(EnsureViewer(service.Elastic))
+//	registerAllMethods(router, "/cloudhub/v1/es/:id/proxy/*path", elastic)
+func registerAllMethods(r cloudhub.Router, path string, h http.Handler) {
+	verbs := []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodDelete,
+		http.MethodHead,
+		http.MethodOptions,
+	}
+	for _, v := range verbs {
+		r.Handler(v, path, h)
+	}
 }

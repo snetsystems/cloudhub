@@ -5,6 +5,7 @@ import (
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/kubernetes"
 )
 
 // Service handles REST calls to the persistence
@@ -27,6 +28,14 @@ type Service struct {
 	AddonTokens              map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
 	OSP                      OSP
 	InternalENV              cloudhub.InternalEnvironment
+	KubernetesClient         *kubernetes.Client
+	KafkaProducer            KafkaProducer
+}
+
+// KafkaProducer defines the interface for publishing configuration updates
+type KafkaProducer interface {
+	PublishConfig(shardID int, configContent string) error
+	Close() error
 }
 
 type superAdminProviderGroups struct {

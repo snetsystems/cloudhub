@@ -46,7 +46,6 @@ import {
   CHART_HEIGHT,
   ANOMALY_INITIAL,
   TIME_GAP,
-  DEFAULT_GROUP_BY,
 } from './prediction'
 export {
   DEFAULT_NETWORK_DEVICE_DATA,
@@ -92,6 +91,5 @@ export {
   CHART_HEIGHT,
   ANOMALY_INITIAL,
   TIME_GAP,
-  DEFAULT_GROUP_BY,
   // fixturePredictionPageCells,
 }

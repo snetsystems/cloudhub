@@ -12,6 +12,8 @@ import AllUsersPage from 'src/admin/containers/cloudhub/AllUsersPage'
 import OrganizationsPage from 'src/admin/containers/cloudhub/OrganizationsPage'
 import ProvidersPage from 'src/admin/containers/ProvidersPage'
 import ProviderConfPage from 'src/admin/containers/cloudhub/ProviderConfPage'
+import DevicesMappingPage from 'src/admin/components/DevicesMappingPage'
+import SourceIndicator from 'src/shared/components/SourceIndicator'
 
 // actions
 import {
@@ -27,7 +29,7 @@ import {ProviderTypes} from 'src/admin/constants/providerConf'
 // utils
 import {addOnCsp} from 'src/clouds/utils/getAddOn'
 
-const sections = (me, providers, cspProviders = []) => {
+const sections = (me, providers, cspProviders = [], source, router) => {
   let sections = [
     {
       url: 'current-organization',
@@ -73,6 +75,12 @@ const sections = (me, providers, cspProviders = []) => {
         />
       ),
     },
+    {
+      url: 'devices-mappings',
+      name: 'Devices Mapping',
+      enabled: isUserAuthorized(me.role, ADMIN_ROLE),
+      component: <DevicesMappingPage me={me} source={source} router={router} />,
+    },
   ]
 
   sections = _.map(sections, component => {
@@ -90,6 +98,7 @@ const AdminCloudHubPage = props => {
     source,
     params: {tab},
     links: {auth, loginAuthType, addons},
+    router,
   } = props
 
   let providers = []
@@ -111,12 +120,14 @@ const AdminCloudHubPage = props => {
         <Page.Header.Left>
           <Page.Title title="CloudHub Admin" />
         </Page.Header.Left>
-        <Page.Header.Right />
+        <Page.Header.Right>
+          <SourceIndicator />
+        </Page.Header.Right>
       </Page.Header>
       <Page.Contents fullWidth={true}>
         <div className="container-fluid">
           <SubSections
-            sections={sections(me, providers, cspProviders)}
+            sections={sections(me, providers, cspProviders, source, router)}
             activeSection={tab}
             parentUrl="admin-cloudhub"
             sourceID={source.id}

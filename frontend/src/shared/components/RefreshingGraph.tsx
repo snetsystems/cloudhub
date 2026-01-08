@@ -54,6 +54,7 @@ import {
   QueryType,
   TemplateValue,
   AnnotationViewer,
+  Status,
   // AnnotationViewer
 } from 'src/types'
 import {
@@ -68,6 +69,7 @@ import {GrabDataForDownloadHandler} from 'src/types/layout'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import StaticGraph from 'src/shared/components/static_graph/StaticGraph'
 import StaticGraphFormat from 'src/shared/components/static_graph/StaticGraphFormat'
+import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 
 interface TypeAndData {
   dataType: DataType
@@ -99,7 +101,7 @@ interface Props {
   resizerTopHeight: number
   fluxASTLink: string
   onZoom: () => void
-  editQueryStatus: () => void
+  editQueryStatus: (queryID: string, status: Status) => void
   onSetResolution: () => void
   handleSetHoverTime: () => void
   onNotify: typeof notify
@@ -114,6 +116,10 @@ interface Props {
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   isUsingAnnotationViewer?: boolean
   annotationsViewMode?: AnnotationViewer[]
+  tableGaugeChartOptions: TableGaugeChartOptionsInterface
+  onUpdateTableGaugeChartOptions?: (
+    tableGaugeChartOptions: TableGaugeChartOptionsInterface
+  ) => void
 }
 class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
@@ -274,6 +280,7 @@ class RefreshingGraph extends Component<Props> {
                       case CellType.StaticRadar:
                       case CellType.StaticStackedBar:
                       case CellType.StaticLineChart:
+                      case CellType.StaticTableGaugeChart:
                         return this.StaticGraph(
                           timeSeriesInfluxQL,
                           timeSeriesFlux,
@@ -338,6 +345,7 @@ class RefreshingGraph extends Component<Props> {
       'staticLegend',
       'staticLegendPosition',
       'graphOptions',
+      'tableGaugeChartOptions',
     ]
 
     const prevVisValues = _.pick(prevProps, visProps)
@@ -563,6 +571,8 @@ class RefreshingGraph extends Component<Props> {
       templates,
       onUpdateFieldOptions,
       onPickTemplate,
+      tableGaugeChartOptions,
+      onUpdateTableGaugeChartOptions,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
@@ -573,8 +583,9 @@ class RefreshingGraph extends Component<Props> {
         dataType={dataType}
         fieldOptions={fieldOptions}
         uuid={uuid}
+        tableGaugeChartOptions={tableGaugeChartOptions}
       >
-        {computedFieldOptions => (
+        {(computedFieldOptions, tableGaugeChartOptions) => (
           <StaticGraph
             data={data}
             type={type}
@@ -594,6 +605,9 @@ class RefreshingGraph extends Component<Props> {
             onUpdateFieldOptions={onUpdateFieldOptions}
             onPickTemplate={onPickTemplate}
             templates={templates}
+            tableGaugeChartOptions={tableGaugeChartOptions}
+            onUpdateTableGaugeChartOptions={onUpdateTableGaugeChartOptions}
+            originFiledOptions={fieldOptions}
           />
         )}
       </StaticGraphFormat>
@@ -650,4 +664,4 @@ const mdtp = {
   onNotify: notify,
 }
 
-export default connect(mapStateToProps, mdtp)(RefreshingGraph)
+export default connect(mapStateToProps, mdtp, null)(RefreshingGraph)

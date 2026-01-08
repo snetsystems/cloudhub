@@ -4,7 +4,7 @@ import _ from 'lodash'
 import {Dispatch} from 'redux'
 import {ThunkDispatch} from 'redux-thunk'
 
-import {Source, Namespace, QueryConfig} from 'src/types'
+import {Source, Namespace, QueryConfig, ChartOptions} from 'src/types'
 import {getSource} from 'src/shared/apis'
 import {getDatabasesWithRetentionPolicies} from 'src/shared/apis/databases'
 import {
@@ -340,6 +340,9 @@ export type Action =
 
 const getIsTruncated = (state: State): boolean =>
   state.logs.logConfig.isTruncated
+
+const getLogConfigChartOptions = (state: State): ChartOptions =>
+  state.logs.logConfig.chartOptions
 
 const getForwardTableData = (state: State): TableData =>
   state.logs.tableInfiniteData.forward
@@ -1013,13 +1016,14 @@ export const getLogConfigAsync = (url: string) => async (
 ): Promise<void> => {
   const state = getState()
   const isTruncated = getIsTruncated(state)
-
+  const chartOptions = getLogConfigChartOptions(state)
   try {
     const {data} = await getLogConfigAJAX(url)
 
     const logConfig = {
       ...logConfigServerToUI(data),
       isTruncated,
+      chartOptions,
     }
 
     await dispatch(setConfig(logConfig))
@@ -1034,10 +1038,11 @@ export const updateLogConfigAsync = (url: string, config: LogConfig) => async (
   try {
     const configForServer = logConfigUIToServer(config)
     await updateLogConfigAJAX(url, configForServer)
+
     dispatch(setConfig(config))
   } catch (error) {
     dispatch(
-      notify(notifyHttpErrorRespose(error.data.code, error.data.message))
+      notify(notifyHttpErrorRespose(error.data?.code, error.data?.message))
     )
     console.error(error)
   }

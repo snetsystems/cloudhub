@@ -423,4 +423,12 @@
   &.ai-icon::before {
     content: '\e938';
   }
+
+  &.bell:before {
+    content: '\e954';
+  }
+
+  &.document::before {
+    content: '\e939';
+  }
 }

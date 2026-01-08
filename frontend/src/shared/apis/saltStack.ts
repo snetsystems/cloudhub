@@ -53,6 +53,7 @@ interface Params {
     fieldselector?: any
     labelselector?: any
     limit?: number
+    namespaces?: string[]
     dir_path?: string
     mode?: string
     name_or_id?: string
@@ -2351,6 +2352,11 @@ export async function getLocalK8sPersistentVolumeClaims(
       fun: 'kubernetes.persistent_volume_claims',
       tgt: pMinionId,
       kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
         labelselector: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('labelselector')
             ? pParam.kwarg.labelselector

@@ -1,7 +1,13 @@
+// Libraries
 import React, {PureComponent, ChangeEvent, KeyboardEvent} from 'react'
 
+// Components
 import ColorDropdown from 'src/shared/components/ColorDropdown'
+
+// Constants
 import {THRESHOLD_COLORS} from 'src/shared/constants/thresholds'
+
+// Types
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {ColorNumber, ThresholdColor} from 'src/types/colors'
 
@@ -15,6 +21,8 @@ interface Props {
   onDeleteThreshold: (threshold: ColorNumber) => void
   isMin: boolean
   isMax: boolean
+  maximum?: number
+  minimum?: number
 }
 
 interface State {
@@ -36,9 +44,13 @@ class Threshold extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {disableMaxColor, isMax} = this.props
-    const {workingValue} = this.state
+    const {disableMaxColor, isMax, maximum, minimum} = this.props
+    const regex = /^-?\d*\.?\d*$/
 
+    const disabled =
+      regex.test(`${maximum}`) || regex.test(`${minimum}`) ? true : false
+
+    const {workingValue} = this.state
     return (
       <div className="threshold-item">
         <div className={this.labelClass}>{this.label}</div>
@@ -51,13 +63,14 @@ class Threshold extends PureComponent<Props, State> {
           </button>
         ) : null}
         <input
-          value={workingValue}
+          value={!disabled ? workingValue : maximum || minimum || workingValue}
           className={this.inputClass}
           type="number"
           onChange={this.handleChangeWorkingValue}
           onBlur={this.handleBlur}
           onKeyUp={this.handleKeyUp}
           ref={this.handleInputRef}
+          disabled={disabled}
         />
         <ColorDropdown
           colors={THRESHOLD_COLORS}
@@ -135,7 +148,12 @@ class Threshold extends PureComponent<Props, State> {
   }
 
   private handleChangeWorkingValue = (e: ChangeEvent<HTMLInputElement>) => {
-    const {threshold, onValidateColorValue} = this.props
+    const {threshold, onValidateColorValue, maximum} = this.props
+
+    if (maximum > 0) {
+      return
+    }
+
     const targetValue = e.target.value
 
     const valid = onValidateColorValue(threshold, Number(targetValue))
