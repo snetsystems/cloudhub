@@ -126,11 +126,7 @@ func TestGetCollectorConfig_Sharding(t *testing.T) {
 		Store: mockStore,
 		InternalENV: cloudhub.InternalEnvironment{
 			TemplatesManager: mockTemplatesManager,
-			Platform: &mocks.MockPlatform{
-				GetCollectorReplicasFunc: func(ctx context.Context) (int, error) {
-					return 2, nil
-				},
-			},
+			Platform: &mocks.MockPlatform{},
 		},
 		Logger: mockLogger, // Use our mock logger
 	}

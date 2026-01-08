@@ -174,14 +174,13 @@ type Server struct {
 	EsDefaultIndex       string   `long:"es-default-index"  description:"Default index name or pattern for queries"        env:"ES_DEFAULT_INDEX" default:"*"`
 	EsInsecureSkipVerify bool     `long:"es-insecure-skip-verify" description:"Skip TLS cert verification for Elasticsearch" env:"ES_INSECURE_SKIP_VERIFY"`
 
-	Kubernetes             map[string]string `long:"kubernetes" description:"The Information to access to Kubernetes API. '--kubernetes=url:{server URL} --kubernetes=token:{service account token} --kubernetes=insecure-skip-verify:{true/false}'. E.g. via environment variable" env:"KUBERNETES" env-delim:","`
-	DeployPlatform         string            `long:"deploy-platform" description:"The deployment platform (k8s or baremetal)" env:"DEPLOY_PLATFORM"`
-	K8sLogstashNamespace   string            `long:"k8s-logstash-namespace" description:"Kubernetes namespace for Logstash ConfigMap" env:"K8S_LOGSTASH_NAMESPACE" default:"default"`
-	K8sLogstashStatefulSet string            `long:"k8s-logstash-statefulset" description:"Kubernetes StatefulSet name for Logstash collector" env:"K8S_LOGSTASH_STATEFULSET" default:"logstash-logstash"`
+	Kubernetes     map[string]string `long:"kubernetes" description:"The Information to access to Kubernetes API. '--kubernetes=url:{server URL} --kubernetes=token:{service account token} --kubernetes=insecure-skip-verify:{true/false}'. E.g. via environment variable" env:"KUBERNETES" env-delim:","`
+	DeployPlatform string            `long:"deploy-platform" description:"The deployment platform (k8s or baremetal)" env:"DEPLOY_PLATFORM"`
 
 	CollectorAuthToken string `long:"collector-auth-token" description:"Shared secret token for Collector Sidecar authentication" env:"COLLECTOR_AUTH_TOKEN"`
 	KafkaBrokers       string `long:"kafka-brokers" description:"Comma-separated list of Kafka brokers" env:"KAFKA_BROKERS"`
 	KafkaTopic         string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`
+	MaxShards          int    `long:"max-shards" description:"Max number of shards (virtual partitions) for fallback" env:"MAX_SHARDS" default:"10"`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -733,7 +732,7 @@ func (s *Server) Serve(ctx context.Context) {
 
 	var p cloudhub.Platform
 	if s.DeployPlatform == "k8s" {
-		p = k8s.NewManager(service.KubernetesClient, s.K8sLogstashNamespace, s.K8sLogstashStatefulSet, logger)
+		p = k8s.NewManager(service.KubernetesClient, s.MaxShards, logger)
 	} else {
 		p = baremetal.NewManager(
 			&service,

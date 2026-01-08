@@ -183,11 +183,6 @@ func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string
 // PushConfigUpdates for baremetal is a no-op as it uses direct file deployment.
 func (p *Manager) PushConfigUpdates(ctx context.Context, shardIDs []int) {}
 
-// GetCollectorReplicas for baremetal returns 0 as it's not applicable.
-func (p *Manager) GetCollectorReplicas(ctx context.Context) (int, error) {
-	return 0, nil
-}
-
 // GetTotalShards for baremetal always returns 1 as it doesn't use sharding.
 func (p *Manager) GetTotalShards(ctx context.Context) int {
 	return 1

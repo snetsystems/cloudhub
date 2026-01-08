@@ -20,6 +20,7 @@ type MockKafkaProducer struct {
 	mu           sync.Mutex
 	PublishCalls []PublishCall
 	NotifyChan   chan bool
+	PartitionCount int
 }
 
 type PublishCall struct {
@@ -46,6 +47,13 @@ func (m *MockKafkaProducer) PublishConfig(shardID int, configContent string) err
 
 func (m *MockKafkaProducer) Close() error {
 	return nil
+}
+
+func (m *MockKafkaProducer) GetPartitionCount() (int, error) {
+	if m.PartitionCount == 0 {
+		return 1, nil
+	}
+	return m.PartitionCount, nil
 }
 
 func (m *MockKafkaProducer) GetCalls() []PublishCall {

@@ -1550,7 +1550,7 @@ func TestManagedSharding_Verified(t *testing.T) {
 	service.InternalENV.TemplatesManager = MockTemplatesManagerSetup()
 
 	k8sClient := kubernetes.NewClient(kubernetes.Config{URL: "http://localhost"}, service.Logger)
-	k8sMgr := k8s.NewManager(k8sClient, "ns", "sts", service.Logger)
+	k8sMgr := k8s.NewManager(k8sClient, 0, service.Logger)
 	k8sMgr.ConfigGenerator = service
 	service.InternalENV.Platform = k8sMgr
 

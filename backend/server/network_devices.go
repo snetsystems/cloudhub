@@ -238,8 +238,7 @@ func (s *Service) createDevice(ctx context.Context, req createDeviceRequest) (*c
 		return nil, err
 	}
 
-	totalShards := s.InternalENV.Platform.GetTotalShards(ctx)
-	device.ShardID = s.InternalENV.Platform.GetShardID(device.ID, totalShards)
+	device.ShardID = -1
 
 	res, err := s.Store.NetworkDevice(ctx).Add(ctx, device)
 	if err != nil {
@@ -294,9 +293,7 @@ func (s *Service) NewDevice(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if len(succeededShards) > 0 {
-		s.InternalENV.Platform.PushConfigUpdates(ctx, succeededShards)
-	}
+	s.pushUniqueShards(ctx, succeededShards)
 
 	response := map[string]interface{}{
 		"failed_devices": failedDeviceList,
@@ -369,9 +366,7 @@ func (s *Service) NewDevices(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if len(succeededShards) > 0 {
-		s.InternalENV.Platform.PushConfigUpdates(ctx, succeededShards)
-	}
+	s.pushUniqueShards(ctx, succeededShards)
 
 	response := map[string]interface{}{
 		"failed_devices": failedDeviceList,
@@ -588,9 +583,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 		succeededShards = append(succeededShards, device.ShardID)
 	}
 
-	if len(succeededShards) > 0 {
-		s.InternalENV.Platform.PushConfigUpdates(ctx, succeededShards)
-	}
+	s.pushUniqueShards(ctx, succeededShards)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -623,7 +616,7 @@ func (s *Service) UpdateNetworkDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.InternalENV.Platform.PushConfigUpdates(ctx, []int{device.ShardID})
+	s.pushUniqueShards(ctx, []int{device.ShardID})
 
 	res, err := newDeviceResponse(ctx, s, device)
 	if err != nil {
@@ -831,6 +824,7 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	totalShards := s.InternalENV.Platform.GetTotalShards(ctx)
 
 	_, _, serverDeviceCount, orgToCollector := computeThreshold(existingDevicesOrg, devicesData.devicesGroupByOrg, CollectorSelectionRatio)
 
@@ -887,31 +881,31 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 		for _, device := range devices {
 			if device.IsCollecting {
 				existingCollectingDeviceIDs = appendUnique(existingCollectingDeviceIDs, device.ID)
+				// Update ShardID when monitoring starts
+				if nd, ok := devicesData.networkDevicesMap[device.ID]; ok {
+					nd.ShardID = s.InternalENV.Platform.GetShardID(nd.ID, totalShards)
+				}
 			} else {
 				existingCollectingDeviceIDs = removeDeviceID(existingCollectingDeviceIDs, device.ID)
 			}
-
 		}
 		orgInfo.CollectedDevicesIDs = existingCollectingDeviceIDs
 		orgsToUpdate[org] = orgInfo
 
 	}
 
-	// Update the store only for successful orgInfos
+	succeededShardsMap := make(map[int]bool)
+	// Update the store and handle config/restarts for each org
 	for org, orgInfo := range orgsToUpdate {
 		statusCode, resp, err := s.manageLogstashConfig(ctx, &orgInfo)
 		if err != nil {
 			for _, device := range devicesData.devicesGroupByOrg[org] {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = err.Error()
-				}
+				addFailedDevice(failedDevices, device.ID, err)
 			}
 			continue
 		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 			for _, device := range devicesData.devicesGroupByOrg[org] {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = string(resp)
-				}
+				addFailedDevice(failedDevices, device.ID, fmt.Errorf("%s", string(resp)))
 			}
 			continue
 		}
@@ -922,51 +916,36 @@ func (s *Service) MonitoringConfigManagement(w http.ResponseWriter, r *http.Requ
 				restartCollectorServers[orgInfo.CollectorServer] = orgInfo.CollectorServer
 				if err := s.InternalENV.Platform.RestartCollector(ctx, orgInfo.CollectorServer); err != nil {
 					for _, device := range devicesData.devicesGroupByOrg[org] {
-						if _, exists := failedDevices[device.ID]; !exists {
-							failedDevices[device.ID] = err.Error()
-						}
+						addFailedDevice(failedDevices, device.ID, err)
 					}
 					continue
 				}
 			}
 		}
 
+		// Update Org in store
 		existOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &org})
 		if err != nil && existOrg == nil {
 			s.Store.NetworkDeviceOrg(ctx).Add(ctx, &orgInfo)
 		} else {
 			s.Store.NetworkDeviceOrg(ctx).Update(ctx, &orgInfo)
 		}
+
+		// Update Devices and record succeeded shards
 		for _, device := range devicesData.devicesGroupByOrg[org] {
 			networkDevice := devicesData.networkDevicesMap[device.ID]
-			if device.IsCollectingCfgWritten == false {
-				networkDevice.IsCollectingCfgWritten = true
-			}
+			networkDevice.IsCollectingCfgWritten = true
 
-			err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice)
-			if err != nil {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = err.Error()
-				}
-			}
-		}
-
-	}
-
-	var succeededShards []int
-	for _, devGroup := range devicesData.devicesGroupByOrg {
-		for _, dev := range devGroup {
-			if _, exists := failedDevices[dev.ID]; !exists {
-				// We need to find the device object to get its ShardID
-				if nd, ok := devicesData.networkDevicesMap[dev.ID]; ok {
-					succeededShards = append(succeededShards, nd.ShardID)
-				}
+			if err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice); err != nil {
+				addFailedDevice(failedDevices, device.ID, err)
+			} else {
+				succeededShardsMap[networkDevice.ShardID] = true
 			}
 		}
 	}
-	if len(succeededShards) > 0 {
-		s.InternalENV.Platform.PushConfigUpdates(ctx, succeededShards)
-	}
+
+	// Notify Kafka for all succeeded shards
+	s.pushUniqueShardsMap(ctx, succeededShardsMap)
 
 	response := map[string]interface{}{
 		"failed_devices": convertFailedDevicesToArray(failedDevices),
@@ -994,6 +973,7 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	totalShards := s.InternalENV.Platform.GetTotalShards(ctx)
 	for org, devices := range devicesData.learningDevicesGroupByOrg {
 		orgInfo, exists := orgsToUpdate[org]
 		if !exists {
@@ -1017,6 +997,10 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 		for _, device := range devices {
 			if device.IsLearning {
 				existingLearningDeviceIDs = appendUnique(existingLearningDeviceIDs, device.ID)
+				// Update ShardID when learning starts
+				if nd, ok := devicesData.networkDevicesMap[device.ID]; ok {
+					nd.ShardID = s.InternalENV.Platform.GetShardID(nd.ID, totalShards)
+				}
 			} else {
 				existingLearningDeviceIDs = removeDeviceID(existingLearningDeviceIDs, device.ID)
 			}
@@ -1025,35 +1009,29 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 		orgsToUpdate[org] = orgInfo
 	}
 
-	var succeededShards []int
-	// Update the store only for successful orgInfos
+	succeededShardsMap := make(map[int]bool)
 	for org, orgInfo := range orgsToUpdate {
-		existOrg, err := s.Store.NetworkDeviceOrg(ctx).Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &org})
-		if err != nil && existOrg == nil {
-			s.Store.NetworkDeviceOrg(ctx).Add(ctx, &orgInfo)
-		} else {
-			s.Store.NetworkDeviceOrg(ctx).Update(ctx, &orgInfo)
+		if err := s.Store.NetworkDeviceOrg(ctx).Update(ctx, &orgInfo); err != nil {
+			s.Logger.WithField("org", org).Error("Failed to update org info")
+			continue
 		}
-		for _, device := range devicesData.learningDevicesGroupByOrg[org] {
-			networkDevice := devicesData.networkDevicesMap[device.ID]
-			networkDevice.IsLearning = device.IsLearning
-			if device.IsLearning && networkDevice.LearningState == "" {
-				networkDevice.LearningState = Ready
-			}
-			err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice)
-			if err != nil {
-				if _, exists := failedDevices[device.ID]; !exists {
-					failedDevices[device.ID] = err.Error()
-				}
-			} else {
-				succeededShards = append(succeededShards, networkDevice.ShardID)
-			}
-		}
-	}
 
-	if len(succeededShards) > 0 {
-		s.InternalENV.Platform.PushConfigUpdates(ctx, succeededShards)
+		// Save updated devices (in case ShardID changed) and collect shards for notification
+		for _, device := range devicesData.learningDevicesGroupByOrg[org] {
+			if networkDevice, ok := devicesData.networkDevicesMap[device.ID]; ok {
+				// Save device to persistent store (important if ShardID was updated)
+				if err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice); err != nil {
+					addFailedDevice(failedDevices, device.ID, err)
+					continue
+				}
+
+				if _, exists := failedDevices[device.ID]; !exists {
+					succeededShardsMap[networkDevice.ShardID] = true
+				}
+			}
+		}
 	}
+	s.pushUniqueShardsMap(ctx, succeededShardsMap)
 
 	response := map[string]interface{}{
 		"failed_devices": convertFailedDevicesToArray(failedDevices),
@@ -1418,7 +1396,7 @@ func (s *Service) filterDeviceBySNMPConfigV3(device cloudhub.NetworkDevice, orgN
 func (s *Service) GetCollectorConfig(w http.ResponseWriter, r *http.Request) {
 	shardIDStr, err := paramStr("shardID", r)
 	if err != nil {
-		Error(w, http.StatusBadRequest, "Missing or invalid shardID", s.Logger)
+		Error(w, http.StatusBadRequest, cloudhub.ErrInvalidShardID.Error(), s.Logger)
 		return
 	}
 
@@ -1426,7 +1404,7 @@ func (s *Service) GetCollectorConfig(w http.ResponseWriter, r *http.Request) {
 	ordinalStr := parts[len(parts)-1]
 	shardIndex, err := strconv.Atoi(ordinalStr)
 	if err != nil {
-		Error(w, http.StatusBadRequest, fmt.Sprintf("Invalid shard ID format: %s", shardIDStr), s.Logger)
+		Error(w, http.StatusBadRequest, cloudhub.ErrInvalidShardID.Error(), s.Logger)
 		return
 	}
 
@@ -1584,4 +1562,30 @@ func (s *Service) GenerateOrgConfig(ctx context.Context, orgInfo *cloudhub.Netwo
 	}
 
 	return fmt.Sprintf("\n# Configuration for Org: %s\n%s", org.Name, configPart), nil
+}
+
+func (s *Service) pushUniqueShards(ctx context.Context, shards []int) {
+	if len(shards) == 0 {
+		return
+	}
+	shardsMap := make(map[int]bool)
+	for _, sid := range shards {
+		shardsMap[sid] = true
+	}
+	s.pushUniqueShardsMap(ctx, shardsMap)
+}
+
+func (s *Service) pushUniqueShardsMap(ctx context.Context, shardsMap map[int]bool) {
+	if len(shardsMap) == 0 {
+		return
+	}
+	var validShards []int
+	for sid := range shardsMap {
+		if sid >= 0 {
+			validShards = append(validShards, sid)
+		}
+	}
+	if len(validShards) > 0 {
+		s.InternalENV.Platform.PushConfigUpdates(ctx, validShards)
+	}
 }

@@ -2,10 +2,8 @@ package k8s
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"hash/crc32"
-	"net/http"
 	"sort"
 	"strings"
 
@@ -16,20 +14,18 @@ import (
 // Manager for handling Logstash configuration in a Kubernetes environment
 type Manager struct {
 	client          *kubernetes.Client
-	namespace       string
-	statefulSetName string
+	MaxShards       int
 	KafkaProducer   cloudhub.KafkaProducer
 	ConfigGenerator cloudhub.ConfigGenerator
 	Logger          cloudhub.Logger
 }
 
 // NewManager creates a new Manager for handling Logstash configuration in a Kubernetes environment
-func NewManager(client *kubernetes.Client, namespace string, statefulSetName string, logger cloudhub.Logger) *Manager {
+func NewManager(client *kubernetes.Client, maxShards int, logger cloudhub.Logger) *Manager {
 	return &Manager{
-		client:          client,
-		namespace:       namespace,
-		statefulSetName: statefulSetName,
-		Logger:          logger,
+		client:    client,
+		MaxShards: maxShards,
+		Logger:    logger,
 	}
 }
 
@@ -75,16 +71,26 @@ func (p *Manager) GetShardID(deviceID string, totalShards int) int {
 	return int(hash) % totalShards
 }
 
-// GetTotalShards returns the current number of collector shards/replicas
+// GetTotalShards returns the total number of shards using Dynamic Partition Discovery.
+// It prioritizes Kafka Partition Count -> Configured MaxShards -> Physical Replicas.
 func (p *Manager) GetTotalShards(ctx context.Context) int {
-	totalShards := 1
-	replicas, err := p.GetCollectorReplicas(ctx)
-	if err == nil && replicas > 0 {
-		totalShards = replicas
-	} else {
-		p.Logger.Info(fmt.Sprintf("Failed to get replicas (err=%v), defaulting to 1", err))
+	// 1. Try to get partition count from Kafka (Source of Truth for Virtual Sharding)
+	if p.KafkaProducer != nil {
+		count, err := p.KafkaProducer.GetPartitionCount()
+		if err == nil && count > 0 {
+			return count
+		}
+		p.Logger.Info(fmt.Sprintf("Failed to get Kafka partition count (err=%v). Falling back to static configuration.", err))
 	}
-	return totalShards
+
+	// 2. Fallback to configured MaxShards (Stable Configuration)
+	if p.MaxShards > 0 {
+		return p.MaxShards
+	}
+
+	// Default to 1 if everything else fails
+	p.Logger.Info("No Kafka partitions found and MaxShards not configured, defaulting to 1")
+	return 1
 }
 
 // DeployLogstashConfig deploys a Logstash configuration to a Kubernetes ConfigMap
@@ -117,46 +123,20 @@ func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string
 	return []string{}, map[string]bool{}, nil
 }
 
-// GetCollectorReplicas returns the current number of replicas for the collector service.
-func (p *Manager) GetCollectorReplicas(ctx context.Context) (int, error) {
-	path := fmt.Sprintf("/apis/apps/v1/namespaces/%s/statefulsets/%s", p.namespace, p.statefulSetName)
-
-	getResp, err := p.client.Do(ctx, "GET", path, nil)
-	if err != nil {
-		return 0, fmt.Errorf("%w: %v", cloudhub.ErrK8sStatefulSetFetch, err)
-	}
-	defer getResp.Body.Close()
-
-	if getResp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("%w, status: %d", cloudhub.ErrK8sStatefulSetFetch, getResp.StatusCode)
-	}
-
-	var sts struct {
-		Spec struct {
-			Replicas int `json:"replicas"`
-		} `json:"spec"`
-	}
-	if err := json.NewDecoder(getResp.Body).Decode(&sts); err != nil {
-		return 0, fmt.Errorf("%w: %v", cloudhub.ErrK8sStatefulSetDecode, err)
-	}
-
-	return sts.Spec.Replicas, nil
-}
-
 // GenerateShardConfig generates the Logstash configuration for a specific shard in a Kubernetes environment.
 func (p *Manager) GenerateShardConfig(ctx context.Context, shardID int) (string, error) {
 	if p.ConfigGenerator == nil {
-		return "", fmt.Errorf("config generator not initialized")
+		return "", cloudhub.ErrConfigGeneratorUninitialized
 	}
 
 	allOrgs, err := p.ConfigGenerator.GetAllNetworkDeviceOrgs(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch accounts: %w", err)
+		return "", fmt.Errorf("%w: %v", cloudhub.ErrFailedToFetchAccounts, err)
 	}
 
 	allDevices, err := p.ConfigGenerator.GetAllNetworkDevices(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch devices: %w", err)
+		return "", fmt.Errorf("%w: %v", cloudhub.ErrFailedToFetchDevices, err)
 	}
 
 	// Build a map for quick lookup of which devices are active in which org

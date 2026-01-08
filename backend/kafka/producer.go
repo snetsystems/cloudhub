@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // ConfigProducer wraps the sarama SyncProducer for CloudHub configuration updates
 type ConfigProducer struct {
+	client   sarama.Client
 	producer sarama.SyncProducer
 	topic    string
 }
@@ -25,23 +27,52 @@ func NewConfigProducer(brokers []string, topic string) (*ConfigProducer, error) 
 	config.Producer.RequiredAcks = sarama.WaitForAll // Wait for all replicas
 	config.Producer.Retry.Max = 5
 
-	producer, err := sarama.NewSyncProducer(brokers, config)
+	client, err := sarama.NewClient(brokers, config)
 	if err != nil {
+		return nil, fmt.Errorf("failed to create kafka client: %w", err)
+	}
+
+	producer, err := sarama.NewSyncProducerFromClient(client)
+	if err != nil {
+		client.Close()
 		return nil, fmt.Errorf("failed to create kafka producer: %w", err)
 	}
 
 	return &ConfigProducer{
+		client:   client,
 		producer: producer,
 		topic:    topic,
 	}, nil
 }
 
-// Close closes the producer
+// Close closes the producer and client
 func (p *ConfigProducer) Close() error {
-	if p == nil || p.producer == nil {
+	if p == nil {
 		return nil
 	}
-	return p.producer.Close()
+	if p.producer != nil {
+		if err := p.producer.Close(); err != nil {
+			return err
+		}
+	}
+	if p.client != nil {
+		if err := p.client.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetPartitionCount returns the number of partitions for the configured topic
+func (p *ConfigProducer) GetPartitionCount() (int, error) {
+	if p == nil || p.client == nil {
+		return 0, cloudhub.ErrKafkaPartitionCountFetchFailed
+	}
+	partitions, err := p.client.Partitions(p.topic)
+	if err != nil {
+		return 0, err
+	}
+	return len(partitions), nil
 }
 
 // PublishConfig publishes a configuration update for a specific shard
@@ -79,7 +110,7 @@ func (p *ConfigProducer) PublishConfig(shardID int, configContent string) error 
 
 	_, _, err = p.producer.SendMessage(msg)
 	if err != nil {
-		return fmt.Errorf("failed to send message to kafka: %w", err)
+		return fmt.Errorf("%w: %v", cloudhub.ErrKafkaPublishFailed, err)
 	}
 
 	return nil

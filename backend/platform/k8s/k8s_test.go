@@ -18,7 +18,7 @@ func (m *MockLogger) Writer() *io.PipeWriter                        { return nil
 
 func TestDeployLogstashConfig_NoOp(t *testing.T) {
 	// Since we moved to pull model, this should just return nil without any API calls.
-	p := NewManager(nil, "default", "logstash-logstash")
+	p := NewManager(nil, 0, &MockLogger{})
 	err := p.DeployLogstashConfig(context.Background(), "target", "config.rb", "content")
 	if err != nil {
 		t.Errorf("expected no error from no-op, got: %v", err)
@@ -27,7 +27,7 @@ func TestDeployLogstashConfig_NoOp(t *testing.T) {
 
 func TestRemoveLogstashConfig_NoOp(t *testing.T) {
 	// Since we moved to pull model, this should just return nil without any API calls.
-	p := NewManager(nil, "default", "logstash-logstash")
+	p := NewManager(nil, 0, &MockLogger{})
 	err := p.RemoveLogstashConfig(context.Background(), "target", "config.rb")
 	if err != nil {
 		t.Errorf("expected no error from no-op, got: %v", err)

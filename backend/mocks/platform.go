@@ -14,7 +14,6 @@ type MockPlatform struct {
 	GetActiveCollectorsFunc  func(ctx context.Context) ([]string, map[string]bool, error)
 	GetAllNetworkDeviceOrgsesFunc func(ctx context.Context) ([]cloudhub.NetworkDeviceOrg, error)
 	GetAllNetworkDevicesFunc     func(ctx context.Context) ([]cloudhub.NetworkDevice, error)
-	GetCollectorReplicasFunc     func(ctx context.Context) (int, error)
 	GetTotalShardsFunc           func(ctx context.Context) int
 	GetShardIDFunc               func(deviceID string, totalShards int) int
 	PushConfigUpdatesFunc        func(ctx context.Context, shardIDs []int)
@@ -67,13 +66,6 @@ func (m *MockPlatform) GetActiveCollectors(ctx context.Context) ([]string, map[s
 		return m.GetActiveCollectorsFunc(ctx)
 	}
 	return nil, nil, nil
-}
-
-func (m *MockPlatform) GetCollectorReplicas(ctx context.Context) (int, error) {
-	if m.GetCollectorReplicasFunc != nil {
-		return m.GetCollectorReplicasFunc(ctx)
-	}
-	return 0, nil
 }
 
 func (m *MockPlatform) GetTotalShards(ctx context.Context) int {

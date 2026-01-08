@@ -59,9 +59,12 @@ const (
 	ErrMLNxRstNotFound                 = Error("MLNxRet not found")
 	ErrDLNxRstNotFound                 = Error("DLNxRet not found")
 	ErrDeviceAlreadyExists             = Error("device already exists")
-	ErrK8sStatefulSetFetch             = Error("failed to get statefulset")
-	ErrK8sStatefulSetDecode            = Error("failed to decode statefulset")
-	ErrFailedToGetReplicas             = Error("Failed to get current replicas")
+	ErrConfigGeneratorUninitialized    = Error("config generator not initialized")
+	ErrFailedToFetchAccounts           = Error("failed to fetch accounts")
+	ErrFailedToFetchDevices            = Error("failed to fetch devices")
+	ErrInvalidShardID                  = Error("invalid shard ID")
+	ErrKafkaPublishFailed              = Error("failed to publish config to kafka")
+	ErrKafkaPartitionCountFetchFailed  = Error("failed to get kafka partition count")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -1484,6 +1487,7 @@ type NetworkDevice struct {
 // KafkaProducer defines the interface for publishing configuration updates to Kafka.
 type KafkaProducer interface {
 	PublishConfig(shardID int, configContent string) error
+	GetPartitionCount() (int, error)
 }
 
 // ConfigGenerator defines the interface for generating shard-specific Logstash configurations.
@@ -1500,7 +1504,6 @@ type Platform interface {
 	RestartCollector(ctx context.Context, collectorName string) error
 	GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error)
 
-	GetCollectorReplicas(ctx context.Context) (int, error)
 	GetTotalShards(ctx context.Context) int
 	GetShardID(deviceID string, totalShards int) int
 	PushConfigUpdates(ctx context.Context, shardIDs []int)

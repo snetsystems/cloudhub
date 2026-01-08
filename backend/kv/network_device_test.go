@@ -125,3 +125,41 @@ func TestNetworkDeviceStore(t *testing.T) {
 		t.Fatalf("Device delete error: got %v, expected %v", err, cloudhub.ErrDeviceNotFound)
 	}
 }
+
+func TestNetworkDeviceShardIDMarshaling(t *testing.T) {
+	c, err := NewTestClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	s := c.NetworkDeviceStore()
+	ctx := context.Background()
+
+	original := cloudhub.NetworkDevice{
+		Organization: "test-org",
+		DeviceIP:     "1.1.1.1",
+		Hostname:     "test-device",
+		ShardID:      5, // Important test value
+	}
+
+	// Add to store (Marshaling happen here)
+	added, err := s.Add(ctx, &original)
+	if err != nil {
+		t.Fatalf("Failed to add device: %v", err)
+	}
+
+	// Get from store (Unmarshaling happen here)
+	retrieved, err := s.Get(ctx, cloudhub.NetworkDeviceQuery{ID: &added.ID})
+	if err != nil {
+		t.Fatalf("Failed to retrieve device: %v", err)
+	}
+
+	if retrieved.ShardID != 5 {
+		t.Errorf("ShardID mismatch! expected 5, got %d", retrieved.ShardID)
+	}
+
+	if !reflect.DeepEqual(*retrieved, *added) {
+		t.Errorf("Devices are not equal after marshaling/unmarshaling")
+	}
+}
