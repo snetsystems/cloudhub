@@ -442,6 +442,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// This endpoint is used by sidecars to pull their specific shard configuration.
 	router.GET("/api/v1/collectors/config/:shardID", EnsureCollectorAuth(service.GetCollectorConfig))
 
+	// This endpoint is used by sidecars to request a sync for multiple shards via Kafka.
+	router.POST("/api/v1/collectors/shard/sync", EnsureCollectorAuth(service.SyncCollectorShards))
+
 	// Device Learning Result
 	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/ml", EnsureViewer(service.GetMLNxRst))
 	router.GET("/cloudhub/v1/ai/network/managements/learning/rst/dl", EnsureViewer(service.GetDLNxRst))

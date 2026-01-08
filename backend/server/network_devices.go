@@ -1430,6 +1430,65 @@ func (s *Service) GetCollectorConfig(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(finalConfig))
 }
 
+// SyncCollectorShards handles a bulk synchronization request for multiple Kafka partitions.
+func (s *Service) SyncCollectorShards(w http.ResponseWriter, r *http.Request) {
+	type requestData struct {
+		Partitions []string `json:"partitions"`
+	}
+
+	request, ctx, err := decodeRequest[requestData](r)
+	if err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	var partitionIndices []int
+	for _, pID := range request.Partitions {
+		// Support both "partition-0" and "0" formats
+		parts := strings.Split(pID, "-")
+		ordinalStr := parts[len(parts)-1]
+		idx, err := strconv.Atoi(ordinalStr)
+		if err != nil {
+			Error(w, http.StatusBadRequest, fmt.Sprintf("Invalid partition ID format: %s", pID), s.Logger)
+			return
+		}
+		partitionIndices = append(partitionIndices, idx)
+	}
+
+	if len(partitionIndices) == 0 {
+		Error(w, http.StatusBadRequest, "No partitions specified", s.Logger)
+		return
+	}
+
+	// Trigger Kafka push for these partitions (Mapping 1:1 to ShardIDs)
+	s.InternalENV.Platform.PushConfigUpdates(ctx, partitionIndices)
+
+	// Fetch all devices to identify which ones belong to these partitions
+	allDevices, err := s.GetAllNetworkDevices(ctx)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, "Failed to retrieve devices", s.Logger)
+		return
+	}
+
+	var affectedDeviceIDs []string
+	partitionMap := make(map[int]bool)
+	for _, idx := range partitionIndices {
+		partitionMap[idx] = true
+	}
+
+	for _, dev := range allDevices {
+		if partitionMap[dev.ShardID] {
+			affectedDeviceIDs = append(affectedDeviceIDs, dev.ID)
+		}
+	}
+
+	response := map[string]interface{}{
+		"devices": affectedDeviceIDs,
+		"message": "Partition sync initiated via Kafka",
+	}
+	encodeJSON(w, http.StatusOK, response, s.Logger)
+}
+
 // GetAllNetworkDeviceOrgs fetches all organization configurations from the store.
 func (s *Service) GetAllNetworkDeviceOrgs(ctx context.Context) ([]cloudhub.NetworkDeviceOrg, error) {
 	serverCtx := serverContext(ctx)
