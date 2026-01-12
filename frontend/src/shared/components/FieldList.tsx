@@ -135,17 +135,19 @@ class FieldList extends PureComponent<Props, State> {
       <div className="query-builder--column">
         <div className="query-builder--heading">
           <span>Fields</span>
-          {hasAggregates && !isStaticalGraph ? (
-            <QueryOptions
-              fill={fill}
-              shift={_.first(shifts)}
-              groupBy={groupBy}
-              onFill={this.handleFill}
-              isKapacitorRule={isKapacitorRule}
-              onTimeShift={this.handleTimeShift}
-              onGroupByTime={this.handleGroupByTime}
-              isDisabled={isDisabled}
-            />
+          {hasAggregates ? (
+            !isStaticalGraph && (
+              <QueryOptions
+                fill={fill}
+                shift={_.first(shifts)}
+                groupBy={groupBy}
+                onFill={this.handleFill}
+                isKapacitorRule={isKapacitorRule}
+                onTimeShift={this.handleTimeShift}
+                onGroupByTime={this.handleGroupByTime}
+                isDisabled={isDisabled}
+              />
+            )
           ) : (
             <QueryBuilderFilter
               filterText={this.state.filterText}
