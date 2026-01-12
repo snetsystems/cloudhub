@@ -23,6 +23,8 @@ import {
   CHART_TYPE_MODES,
   BACKGROUND_TYPE_MODES,
   ColumnSettingInterface,
+  FORMAT_OPTIONS,
+  FormatOption,
 } from 'src/types/statisticalgraph'
 
 // Constants
@@ -30,6 +32,7 @@ import {DEFAULT_INFLUXQL_TIME_FIELD} from 'src/dashboards/constants'
 
 // Utils
 import {getDeep} from 'src/utils/wrappers'
+import GraphOptionsToggleBtn from './GraphOptionsToggleBtn'
 
 interface Props {
   groupByTag: string[]
@@ -135,7 +138,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     this.handleSetColumnValue('prefix', e.target.value, index)
                   }
-                  colWidth="col-xs-3"
+                  colWidth="col-xs-6"
                 />
                 <Input
                   name="y-suffix"
@@ -145,7 +148,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     this.handleSetColumnValue('suffix', e.target.value, index)
                   }
-                  colWidth="col-xs-3"
+                  colWidth="col-xs-6"
                 />
                 <GraphOptionsBooleanOption
                   colWidth="col-xs-6"
@@ -156,6 +159,36 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   }
                   labelTextActive="Chart"
                   labelTextInactive="Value"
+                />
+                <GraphOptionsToggleBtn
+                  title="Value's Format"
+                  colWidth="col-xs-6"
+                  GraphOptionsOptions={[
+                    {
+                      value: FORMAT_OPTIONS.RAW,
+                      active: setting.valueFormat === FORMAT_OPTIONS.RAW,
+                      onClick: () =>
+                        this.handleToggleValueFormat(FORMAT_OPTIONS.RAW, index),
+                      titleText: "Don't format values",
+                      title: 'Raw',
+                    },
+                    {
+                      value: FORMAT_OPTIONS.KMB,
+                      active: setting.valueFormat === FORMAT_OPTIONS.KMB,
+                      onClick: () =>
+                        this.handleToggleValueFormat(FORMAT_OPTIONS.KMB, index),
+                      titleText: 'K/M/B',
+                      title: 'K/M/B',
+                    },
+                    {
+                      value: FORMAT_OPTIONS.KMG,
+                      active: setting.valueFormat === FORMAT_OPTIONS.KMG,
+                      onClick: () =>
+                        this.handleToggleValueFormat(FORMAT_OPTIONS.KMG, index),
+                      titleText: 'K/M/G',
+                      title: 'K/M/G',
+                    },
+                  ]}
                 />
                 <GraphOptionsBooleanOption
                   colWidth="col-xs-6"
@@ -179,6 +212,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   labelTextInactive="Raw Value"
                   disabled={!setting.isShowChart || !setting.isShowValues}
                 />
+
                 <GraphOptionsBooleanOption
                   colWidth="col-xs-6"
                   title="Chart Type"
@@ -273,6 +307,18 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
         </div>
       </FancyScrollbar>
     )
+  }
+
+  private handleToggleValueFormat = (value: FormatOption, index: number) => {
+    const {onUpdateTableGaugeChartOptions, tableGaugeChartOptions} = this.props
+    const updatedColumnSettings = tableGaugeChartOptions.columnSettings.map(
+      (setting, i) => (i === index ? {...setting, valueFormat: value} : setting)
+    )
+    const setOptions = {
+      ...tableGaugeChartOptions,
+      columnSettings: updatedColumnSettings,
+    }
+    onUpdateTableGaugeChartOptions(setOptions)
   }
 
   private handleToggleBackgroundType = (value: boolean, index: number) => {

@@ -77,11 +77,10 @@ export interface ColumnSettingInterface extends RenamableField {
   chartType: ChartTypeMode
   backgroundType: BackgroundTypeMode
   isShowValues: boolean
+  valueFormat: FormatOption
 }
 
-export type ChartTypeMode =
-  | typeof CHART_TYPE_MODES.CONTINUOUS
-  | typeof CHART_TYPE_MODES.SEGMENTED
+export type ChartTypeMode = typeof CHART_TYPE_MODES[keyof typeof CHART_TYPE_MODES]
 
 export const CHART_TYPE_MODES = {
   CONTINUOUS: 'continuous',
@@ -93,6 +92,12 @@ export const BACKGROUND_TYPE_MODES = {
   SOLID: 'solid',
 } as const
 
-export type BackgroundTypeMode =
-  | typeof BACKGROUND_TYPE_MODES.GRADIENT
-  | typeof BACKGROUND_TYPE_MODES.SOLID
+export type BackgroundTypeMode = typeof BACKGROUND_TYPE_MODES[keyof typeof BACKGROUND_TYPE_MODES]
+
+export const FORMAT_OPTIONS = {
+  RAW: 'Raw',
+  KMB: 'KMB',
+  KMG: 'KMG',
+} as const
+
+export type FormatOption = typeof FORMAT_OPTIONS[keyof typeof FORMAT_OPTIONS]

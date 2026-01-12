@@ -46,14 +46,11 @@ function StaticTableGaugeChart({
 
   useEffect(() => {
     if (convertData) {
-      setTableData(decimalizeTableData(convertData, decimalPlaces))
+      setTableData(decimalizeTableData(convertData))
     }
-  }, [convertData, decimalPlaces])
+  }, [convertData])
 
-  const decimalizeTableData = (
-    data: TimeSeriesSeries[],
-    decimalPlaces: DecimalPlaces
-  ) => {
+  const decimalizeTableData = (data: TimeSeriesSeries[]) => {
     const newData = data.map(item => {
       const row: DataTableObject = {
         ...item.tags,
@@ -61,13 +58,7 @@ function StaticTableGaugeChart({
 
       item.columns.forEach((column, index) => {
         if (index > 0) {
-          if (decimalPlaces?.isEnforced) {
-            row[column] = Number(item.values[0][index]).toFixed(
-              decimalPlaces.digits
-            )
-          } else {
-            row[column] = item.values[0][index]
-          }
+          row[column] = item.values[0][index]
         }
       })
 
@@ -180,7 +171,8 @@ function StaticTableGaugeChart({
         defaultMax: 100,
       },
       tableGaugeChartOptions,
-      originFiledOptions
+      originFiledOptions,
+      decimalPlaces
     )
 
     const tagName = convertData?.[0]?.name
@@ -198,7 +190,13 @@ function StaticTableGaugeChart({
       matchedColumns
     )
     return returnColumns
-  }, [convertData, isUpdated, tableGaugeChartOptions, originFiledOptions])
+  }, [
+    convertData,
+    isUpdated,
+    tableGaugeChartOptions,
+    decimalPlaces,
+    originFiledOptions,
+  ])
 
   const initSort = useMemo(() => {
     const keyName = convertData?.[0]?.name
@@ -212,7 +210,16 @@ function StaticTableGaugeChart({
 
   return (
     <div className="dygraph-child">
-      <div className="dygraph-child-container" style={{...staticGraphStyle}}>
+      <div
+        className="dygraph-child-container"
+        style={{
+          ...staticGraphStyle,
+          borderBottom: `2px solid #383846`,
+          borderBottomWidth: `2px`,
+          borderBottomStyle: `solid`,
+          borderBottomColor: `#383846`,
+        }}
+      >
         <FancyScrollbar className="display-options" autoHide={true}>
           <div className="static-graph-container table-gauge-chart">
             {columns.length > 0 && tableData.length > 0 && (

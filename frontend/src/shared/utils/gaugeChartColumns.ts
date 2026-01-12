@@ -8,7 +8,7 @@ import {
 import {ColorString, ColorNumber} from 'src/types/colors'
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 import {DEFAULT_GAUGE_COLORS} from '../constants/thresholds'
-import {FieldOption} from 'src/types/dashboards'
+import {DecimalPlaces, FieldOption} from 'src/types/dashboards'
 
 interface ConvertOptions {
   defaultMin?: number
@@ -19,7 +19,8 @@ export const convertTimeSeriesDataToColumns = (
   data: TimeSeriesSeries[],
   options?: ConvertOptions,
   tableGaugeChartOptions?: TableGaugeChartOptionsInterface,
-  originFiledOptions?: FieldOption[]
+  originFiledOptions?: FieldOption[],
+  decimalPlaces?: DecimalPlaces
 ): ColumnInfo[] => {
   if (!data || data.length === 0) {
     return []
@@ -100,7 +101,7 @@ export const convertTimeSeriesDataToColumns = (
       const gaugeOptions = {
         min,
         max,
-        decimalPlaces: tableGaugeChartOptions?.decimalPlaces?.digits,
+        decimalPlaces: decimalPlaces?.isEnforced ? decimalPlaces?.digits : 0,
         colors,
         thresholdColors,
         chartType: columnSetting?.chartType,
@@ -110,6 +111,7 @@ export const convertTimeSeriesDataToColumns = (
         suffix: columnSetting?.suffix,
         isValuesVisible: tableGaugeChartOptions?.isShowValues,
         isShowValues: columnSetting?.isShowValues,
+        valueFormat: columnSetting?.valueFormat,
       }
 
       return {

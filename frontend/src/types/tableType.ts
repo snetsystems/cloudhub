@@ -1,7 +1,11 @@
 import {ReactNode} from 'react'
 import {TimeZones} from 'src/types'
 import {ColorNumber, ColorString} from 'src/types/colors'
-import {BackgroundTypeMode, ChartTypeMode} from 'src/types/statisticalgraph'
+import {
+  BackgroundTypeMode,
+  ChartTypeMode,
+  FormatOption,
+} from 'src/types/statisticalgraph'
 
 export enum SortType {
   NONE = 'NONE',
@@ -78,6 +82,7 @@ export interface GaugeOptions {
   thresholdColors?: ColorNumber[]
   prefix?: string
   suffix?: string
+  valueFormat?: FormatOption
   isShowValues?: boolean
 }
 

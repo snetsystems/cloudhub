@@ -7,6 +7,7 @@ import {
   TableGaugeChartOptionsInterface,
   CHART_TYPE_MODES,
   BACKGROUND_TYPE_MODES,
+  FORMAT_OPTIONS,
 } from 'src/types/statisticalgraph'
 import {LINE_COLORS_I} from 'src/shared/constants/graphColorPalettes'
 import {DEFAULT_GAUGE_COLORS} from './thresholds'
@@ -590,4 +591,5 @@ export const DEFAULT_COLUMN_SETTING: ColumnSettingInterface = {
   isPercent: true,
   backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
   isShowValues: true,
+  valueFormat: FORMAT_OPTIONS.RAW,
 }

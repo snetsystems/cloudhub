@@ -14,6 +14,7 @@ import {
   SortInfo,
   TimeZones,
 } from 'src/types'
+import {formatValueWithUnit} from 'src/dashboards/utils/gaugeCell'
 interface Props {
   columns: ColumnInfo[]
   data: DataTableObject[]
@@ -274,6 +275,16 @@ function TableBase({
                               rowIndex,
                               timeZone
                             )
+                          ) : !!column?.options?.gaugeOptions?.valueFormat ? (
+                            <>
+                              {(column?.options?.gaugeOptions?.prefix ?? '') +
+                                formatValueWithUnit(
+                                  getValue(item, key) as number,
+                                  column?.options?.gaugeOptions?.decimalPlaces,
+                                  column?.options?.gaugeOptions?.valueFormat
+                                ) +
+                                (column?.options?.gaugeOptions?.suffix ?? '')}
+                            </>
                           ) : (
                             <>
                               {(column?.options?.gaugeOptions?.prefix ?? '') +

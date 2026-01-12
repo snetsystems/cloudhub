@@ -1,4 +1,5 @@
 import {COLOR_TYPE_MAX} from 'src/shared/constants/thresholds'
+import {FormatOption, FORMAT_OPTIONS} from 'src/types/statisticalgraph'
 import {ColorNumber, ColorString, ColorStop} from 'src/types/colors'
 
 export const clampPercent = (percent: number): number =>
@@ -217,38 +218,101 @@ export const rgbToHex = (r: number, g: number, b: number): string => {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 
-export const formatDisplayValue = (
-  value: number | null,
-  isPercent: boolean,
-  decimalPlaces: number
-): string => {
-  if (!Number.isFinite(value) || value === null) {
-    return '--'
+const KMB_LABELS = ['K', 'M', 'B', 'T']
+const KMG_LABELS = ['KB', 'MB', 'GB', 'TB']
+
+const formatNumber = (value: number, decimalPlaces: number): string => {
+  const absValue = Math.abs(value)
+
+  if (!(decimalPlaces > 0 && decimalPlaces < 100)) {
+    return value.toString()
   }
 
-  if (isPercent) {
-    return `${value.toFixed(1)}%`
+  if (absValue >= 1) {
+    return value.toLocaleString(undefined, {
+      minimumFractionDigits: Math.max(decimalPlaces, 0),
+      maximumFractionDigits: decimalPlaces,
+    })
+  }
+  return value.toFixed(Math.max(decimalPlaces, 0))
+}
+
+const scaleByUnit = (
+  value: number,
+  valueFormat: FormatOption
+): {value: number; unit: string} => {
+  if (valueFormat === FORMAT_OPTIONS.RAW) {
+    return {value, unit: ''}
   }
 
-  if (value === 0) {
-    return '0'
+  let base = 0
+  let labels: string[] = []
+
+  if (valueFormat === FORMAT_OPTIONS.KMB) {
+    base = 1000
+    labels = KMB_LABELS
+  } else if (valueFormat === FORMAT_OPTIONS.KMG) {
+    base = 1024
+    labels = KMG_LABELS
   }
 
   const absValue = Math.abs(value)
-
-  if (absValue < 10000) {
-    if (!decimalPlaces) {
-      return value.toString()
-    }
-
-    if (absValue >= 1) {
-      return value.toLocaleString(undefined, {
-        minimumFractionDigits: Math.max(decimalPlaces, 0),
-        maximumFractionDigits: decimalPlaces,
-      })
-    }
-    return value.toPrecision(decimalPlaces)
+  if (!base || absValue < base) {
+    return {value, unit: ''}
   }
 
-  return value.toExponential(decimalPlaces)
+  let unitIndex = -1
+  let divisor = 1
+  for (let i = 0; i < labels.length; i++) {
+    if (absValue < divisor * base) {
+      break
+    }
+    divisor *= base
+    unitIndex = i
+  }
+
+  if (unitIndex === -1) {
+    return {value, unit: ''}
+  }
+
+  return {value: value / divisor, unit: labels[unitIndex]}
+}
+
+export const formatValueWithUnit = (
+  value: number | null,
+  decimalPlaces: number,
+  valueFormat: FormatOption = FORMAT_OPTIONS.RAW
+): string => {
+  if (value === null || value === undefined) {
+    return '--'
+  }
+
+  const numericValue = Number(String(value).replace(/,/g, ''))
+
+  if (!Number.isFinite(numericValue)) {
+    return '--'
+  }
+
+  if (numericValue === 0) {
+    return '0'
+  }
+
+  const {value: scaledValue, unit} = scaleByUnit(numericValue, valueFormat)
+  return `${formatNumber(scaledValue, decimalPlaces)}${unit}`
+}
+
+export const formatDisplayValue = (
+  value: number | null,
+  isPercent: boolean,
+  decimalPlaces: number,
+  valueFormat: FormatOption = FORMAT_OPTIONS.RAW
+): string => {
+  if (isPercent) {
+    if (!Number.isFinite(value) || value === null) {
+      return '--'
+    }
+    return `${value.toFixed(1)}%`
+  }
+
+  return formatValueWithUnit(value, decimalPlaces, valueFormat)
 }

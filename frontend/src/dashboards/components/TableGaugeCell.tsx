@@ -149,7 +149,8 @@ function TableGaugeCell({options, value}: Props) {
   const formattedValue = formatDisplayValue(
     valueToDisplay,
     isPercent,
-    decimalPlaces
+    decimalPlaces,
+    options?.valueFormat
   )
 
   return (
