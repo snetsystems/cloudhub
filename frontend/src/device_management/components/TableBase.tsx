@@ -275,22 +275,8 @@ function TableBase({
                               rowIndex,
                               timeZone
                             )
-                          ) : !!column?.options?.gaugeOptions?.valueFormat ? (
-                            <>
-                              {(column?.options?.gaugeOptions?.prefix ?? '') +
-                                formatValueWithUnit(
-                                  getValue(item, key) as number,
-                                  column?.options?.gaugeOptions?.decimalPlaces,
-                                  column?.options?.gaugeOptions?.valueFormat
-                                ) +
-                                (column?.options?.gaugeOptions?.suffix ?? '')}
-                            </>
                           ) : (
-                            <>
-                              {(column?.options?.gaugeOptions?.prefix ?? '') +
-                                getValue(item, key) +
-                                (column?.options?.gaugeOptions?.suffix ?? '')}
-                            </>
+                            <>getValue(item, key)</>
                           )}
                         </td>
                       )

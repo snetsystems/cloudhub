@@ -84,6 +84,7 @@ export interface GaugeOptions {
   suffix?: string
   valueFormat?: FormatOption
   isShowValues?: boolean
+  isGauge?: boolean
 }
 
 export interface Column {

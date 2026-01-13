@@ -298,7 +298,7 @@ export const formatValueWithUnit = (
   }
 
   const {value: scaledValue, unit} = scaleByUnit(numericValue, valueFormat)
-  return `${formatNumber(scaledValue, decimalPlaces)}${unit}`
+  return `${formatNumber(scaledValue, decimalPlaces)} ${unit}`
 }
 
 export const formatDisplayValue = (

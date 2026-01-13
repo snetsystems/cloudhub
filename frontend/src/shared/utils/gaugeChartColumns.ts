@@ -112,6 +112,7 @@ export const convertTimeSeriesDataToColumns = (
         isValuesVisible: tableGaugeChartOptions?.isShowValues,
         isShowValues: columnSetting?.isShowValues,
         valueFormat: columnSetting?.valueFormat,
+        isGauge: isShowChart,
       }
 
       return {
@@ -121,7 +122,7 @@ export const convertTimeSeriesDataToColumns = (
           thead: {
             align: AlignType.RIGHT,
           },
-          isGauge: isShowChart,
+          isGauge: true,
           sorting: true,
           gaugeOptions,
         },

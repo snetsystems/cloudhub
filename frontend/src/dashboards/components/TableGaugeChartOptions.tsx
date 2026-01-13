@@ -210,7 +210,6 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   }
                   labelTextActive="Percent"
                   labelTextInactive="Raw Value"
-                  disabled={!setting.isShowChart || !setting.isShowValues}
                 />
 
                 <GraphOptionsBooleanOption
@@ -381,7 +380,10 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
   private handleToggleShowChart = (value: boolean, index: number) => {
     const {onUpdateTableGaugeChartOptions, tableGaugeChartOptions} = this.props
     const updatedColumnSettings = tableGaugeChartOptions.columnSettings.map(
-      (setting, i) => (i === index ? {...setting, isShowChart: value} : setting)
+      (setting, i) =>
+        i === index
+          ? {...setting, isShowChart: value, isShowValues: true}
+          : setting
     )
 
     const setOptions = {

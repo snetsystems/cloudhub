@@ -6,6 +6,10 @@
   padding: 2px 0;
 }
 
+.table-gauge-cell-container.only-value {
+  display: block;
+}
+
 .table-gauge-cell-gauge {
   flex: 1;
   height: 20px;
@@ -55,6 +59,11 @@
   display: inline-block;
   text-align: right;
   white-space: nowrap;
+}
+
+.table-gauge-cell-value.only-value {
+  min-width: auto;
+  flex: 0 0 auto;
 }
 
 /*

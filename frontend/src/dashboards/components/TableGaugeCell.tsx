@@ -154,46 +154,54 @@ function TableGaugeCell({options, value}: Props) {
   )
 
   return (
-    <div className="table-gauge-cell-container">
-      <div
-        ref={gaugeRef}
-        className={`table-gauge-cell-gauge${
-          chartType === CHART_TYPE_MODES.SEGMENTED
-            ? ' table-gauge-cell-gauge--segmented'
-            : ''
-        }`}
-      >
-        {chartType === CHART_TYPE_MODES.SEGMENTED ? (
-          <div className="table-gauge-cell-segments">
-            {buildSegments(
-              clampedPercentage,
-              segmentCount,
-              backgroundType,
-              isGradientBackground ? gradientColorStops : solidColorStops
-            )}
-          </div>
-        ) : (
-          <div
-            className="table-gauge-cell-bar"
-            style={{
-              width: `${clampedPercentage}%`,
-              ...(barGradient && {
-                backgroundImage: barGradient,
-                backgroundSize: backgroundSize,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: '0 0',
-              }),
-              ...(!barGradient && {
-                backgroundColor: solidBarColor,
-              }),
-            }}
-          />
-        )}
-      </div>
+    <div
+      className={`table-gauge-cell-container ${
+        !options?.isGauge ? 'only-value' : ''
+      }`}
+    >
+      {options.isGauge && (
+        <div
+          ref={gaugeRef}
+          className={`table-gauge-cell-gauge${
+            chartType === CHART_TYPE_MODES.SEGMENTED
+              ? ' table-gauge-cell-gauge--segmented'
+              : ''
+          }`}
+        >
+          {chartType === CHART_TYPE_MODES.SEGMENTED ? (
+            <div className="table-gauge-cell-segments">
+              {buildSegments(
+                clampedPercentage,
+                segmentCount,
+                backgroundType,
+                isGradientBackground ? gradientColorStops : solidColorStops
+              )}
+            </div>
+          ) : (
+            <div
+              className="table-gauge-cell-bar"
+              style={{
+                width: `${clampedPercentage}%`,
+                ...(barGradient && {
+                  backgroundImage: barGradient,
+                  backgroundSize: backgroundSize,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: '0 0',
+                }),
+                ...(!barGradient && {
+                  backgroundColor: solidBarColor,
+                }),
+              }}
+            />
+          )}
+        </div>
+      )}
       {options?.isShowValues && (
         <div
           title={options?.prefix + formattedValue + options?.suffix}
-          className="table-gauge-cell-value"
+          className={`table-gauge-cell-value ${
+            !options?.isGauge ? 'only-value' : ''
+          }`}
           style={{color: textColor}}
         >
           {options?.prefix ?? ''}
