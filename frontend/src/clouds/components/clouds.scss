@@ -99,6 +99,8 @@
   justify-self: auto;
   padding: 5px 20px;
   background-color: $g4-onyx;
+  position: relative;
+  z-index: 1100;
 
   .kubernetes-header--bar-item {
     margin-right: 5px;
