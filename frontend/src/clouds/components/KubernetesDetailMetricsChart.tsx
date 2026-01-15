@@ -34,7 +34,6 @@ interface Props {
   timeRange: TimeRange
   manualRefresh: number
   detailMetricsChartHeight?: number
-  selectedPersistentVolume?: string[] | null
   cloudAutoRefresh?: CloudAutoRefresh
   volumeChartHeight?: number
 }
@@ -45,7 +44,6 @@ function KubernetesDetailMetricsChart({
   timeRange,
   manualRefresh,
   detailMetricsChartHeight = 17,
-  selectedPersistentVolume = null,
   cloudAutoRefresh,
   volumeChartHeight,
 }: Props) {
@@ -56,8 +54,8 @@ function KubernetesDetailMetricsChart({
   let intervalID
 
   useEffect(() => {
-    getLayoutForInstance(selectedPersistentVolume)
-  }, [selectedPersistentVolume])
+    getLayoutForInstance()
+  }, [])
 
   useEffect(() => {
     const ratio = {
@@ -70,18 +68,6 @@ function KubernetesDetailMetricsChart({
       setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
     }
   }, [layout, source, volumeChartHeight, detailMetricsChartHeight])
-
-  // useEffect(() => {
-  //   const ratio = {
-  //     xNum: 3,
-  //     yNum: 1,
-  //     height: podChartHeight ?? detailMetricsChartHeight,
-  //   }
-
-  //   if (!!layout) {
-  //     setLayoutCells(getCellsReactive(layout, source, {}, ratio, null))
-  //   }
-  // }, [layout])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -100,17 +86,7 @@ function KubernetesDetailMetricsChart({
     }
   }, [cloudAutoRefresh?.kubernetes])
 
-  const getLayoutForInstance = async (
-    selectedPersistentVolume: string[] | null
-  ) => {
-    const wheres = selectedPersistentVolume
-      ? [
-          `("volume_name"='${selectedPersistentVolume.join(
-            '\' OR "volume_name"=\''
-          )}')`,
-        ]
-      : []
-
+  const getLayoutForInstance = async () => {
     try {
       const layoutResults = await getLayout(KUBERNETES_METRICS_LAYOUT_ID)
       const layout = getDeep<Layout>(layoutResults, 'data', null)
