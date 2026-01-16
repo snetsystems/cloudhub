@@ -25,6 +25,7 @@ interface Props {
     category: string
     idx: number
   }) => Promise<void>
+  githubRef?: string
 }
 
 interface State {
@@ -68,7 +69,9 @@ class AgentToolbarFunction extends PureComponent<Props, State> {
                   : 'btn btn-primary item'
               }
               target="_blank"
-              href={`https://github.com/snetsystems/telegraf/blob/v${version}/plugins/${category}/${name}/README.md`}
+              href={`https://github.com/snetsystems/telegraf/blob/${
+                this.props.githubRef || `v${version}`
+              }/plugins/${category}/${name}/README.md`}
             >
               <span
                 style={{transform: 'none', margin: '0', fontSize: '11px'}}
