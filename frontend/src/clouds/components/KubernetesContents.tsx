@@ -68,6 +68,7 @@ interface Props {
   handleApplySearchName: () => void
   handleClearSearchName: () => void
   searchNameHighlight?: string
+  isPowerFlexActive?: boolean
 }
 
 interface State {}
@@ -146,7 +147,11 @@ class KubernetesContents extends PureComponent<Props, State> {
       )
     }
 
-    if (selectedPersistentVolume && selectedPersistentVolume.length > 0) {
+    if (
+      this.props.isPowerFlexActive &&
+      selectedPersistentVolume &&
+      selectedPersistentVolume.length > 0
+    ) {
       return (
         <KubernetesDetailDashboard
           source={source}
@@ -227,7 +232,7 @@ class KubernetesContents extends PureComponent<Props, State> {
               display: 'flex',
               gap: '4px',
               alignItems: 'center',
-              zIndex: 1000,
+              zIndex: 10,
             }}
           >
             <input
@@ -384,10 +389,18 @@ class KubernetesContents extends PureComponent<Props, State> {
 
 const mstp = state => {
   const {
+    links: {addons},
     kubernetesDetailsDashboard: {selectedPersistentVolume},
   } = state
+
+  const isPowerFlexActive = !!_.find(
+    addons,
+    addon => addon.name === 'powerflex' && addon.url === 'on'
+  )
+
   return {
     selectedPersistentVolume,
+    isPowerFlexActive,
   }
 }
 

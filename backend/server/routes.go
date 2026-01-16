@@ -182,8 +182,8 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			switch name {
 			case "salt":
 				emitURL = "/cloudhub/v1/proxy/salt"
-			case "nvidia-gpu":
-				token = a.AddonTokens["nvidia-gpu"]
+			case "nvidia-gpu", "powerflex":
+				token = a.AddonTokens[name]
 				emitURL = url
 			default:
 				emitURL = url

@@ -282,7 +282,7 @@
       ],
       "graphOptions": {
         "fillArea": false,
-        "showLine": tr
+        "showLine": true,
         "showPoint": false,
         "showTempVarCount": ""
       }

@@ -559,6 +559,7 @@ export enum AddonType {
   nvidia = 'nvidia-gpu',
   dev = 'dev',
   logAnalysis = 'log-analysis',
+  powerflex = 'powerflex',
 }
 
 export const COLLECTOR_SERVER = 'ch-collector'

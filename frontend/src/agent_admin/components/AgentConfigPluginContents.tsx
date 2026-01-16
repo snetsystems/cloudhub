@@ -30,6 +30,7 @@ interface AgentConfigPluginContentsProps {
     category: string
     idx: number
   }) => Promise<void>
+  githubRef: string
 }
 
 const pluginFilter = (
@@ -82,6 +83,7 @@ const AgentConfigPluginContents = ({
   telegrafVersion,
   toggleCategory,
   handleFocusedPlugin,
+  githubRef,
 }: AgentConfigPluginContentsProps) => {
   if (measurementsStatus === RemoteDataState.Error)
     return <>{errorStateComponent}</>
@@ -144,6 +146,7 @@ const AgentConfigPluginContents = ({
                       }
                       description={description}
                       focusedMeasure={focusedMeasure}
+                      githubRef={githubRef}
                     />
                   )
                 })}

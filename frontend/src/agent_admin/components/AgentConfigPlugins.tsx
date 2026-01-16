@@ -58,6 +58,12 @@ const AgentConfigPlugin = ({
     Record<string, TelegrafPlugin[]>
   >({})
   const [defaultTelegrafVersion, setDefaultTelegrafVersion] = useState('')
+  const [verifiedVersions, setVerifiedVersions] = useState<
+    Record<string, string>
+  >({})
+
+  const currentVersion =
+    minionsObject?.telegrafVersion || defaultTelegrafVersion
 
   const pluginSearchTerm = (term: string) => {
     setSearchTerm(term)
@@ -231,6 +237,24 @@ const AgentConfigPlugin = ({
     }
   }
 
+  const verifyVersion = async (version: string) => {
+    if (!version || verifiedVersions[version]) return
+
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/snetsystems/telegraf/git/ref/tags/v${version}`
+      )
+      if (response.ok) {
+        setVerifiedVersions(prev => ({...prev, [version]: `v${version}`}))
+      } else {
+        setVerifiedVersions(prev => ({...prev, [version]: 'HEAD'}))
+      }
+    } catch (error) {
+      console.warn('Error verifying version:', error)
+      setVerifiedVersions(prev => ({...prev, [version]: 'HEAD'}))
+    }
+  }
+
   useEffect(() => {
     setMeasurementsStatus(RemoteDataState.Loading)
     getTelegrafPlugin()
@@ -244,6 +268,12 @@ const AgentConfigPlugin = ({
       getTelegrafInfoWithVersion(version)
     }
   }, [minionsObject, pluginsObject])
+
+  useEffect(() => {
+    if (currentVersion) {
+      verifyVersion(currentVersion)
+    }
+  }, [currentVersion])
 
   return (
     <div className="panel">
@@ -279,6 +309,9 @@ const AgentConfigPlugin = ({
               errorStateComponent={errorStateComponent}
               description={description}
               collapsedCategories={collapsedCategories}
+              githubRef={
+                verifiedVersions[currentVersion] || `v${currentVersion}`
+              }
             />
           </div>
           <div>

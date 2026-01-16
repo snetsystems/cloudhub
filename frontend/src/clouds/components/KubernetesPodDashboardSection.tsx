@@ -36,6 +36,7 @@ interface Props {
   setVolumeChartHeight?: (height: number) => void
   podChartHeight?: number
   volumeChartHeight?: number
+  isPowerFlexActive?: boolean
 }
 
 interface TempProps {
@@ -51,20 +52,30 @@ function KubernetesPodDashboardSection({
   setPodChartHeight,
   setVolumeChartHeight,
   volumeChartHeight,
+  isPowerFlexActive,
 }: Props) {
   const LS_KEY = 'Kubernetes-pod-volume-cells'
 
   const cells = useMemo(() => {
-    const defaultCells = FIXTURE_KUBERNETES_POD_VOLUME_CELLS()
+    let defaultCells = FIXTURE_KUBERNETES_POD_VOLUME_CELLS()
+
+    if (!isPowerFlexActive) {
+      defaultCells = defaultCells.filter(
+        cell => cell.i !== 'kubernetes-volume-chart'
+      )
+    }
 
     const savedCells = JSON.parse(localStorage.getItem(LS_KEY))
 
     if (!!savedCells) {
+      if (!isPowerFlexActive) {
+        return savedCells.filter(cell => cell.i !== 'kubernetes-volume-chart')
+      }
       return savedCells
     } else {
       return defaultCells
     }
-  }, [])
+  }, [isPowerFlexActive])
 
   useEffect(() => {
     setPodChartHeight(cells.find(cell => cell.i === 'kubernetes-pod-chart')?.h)
@@ -216,9 +227,20 @@ function KubernetesPodDashboardSection({
 }
 
 const mstp = state => {
+  const {
+    links: {addons},
+    kubernetesDetailsDashboard: {podChartHeight, volumeChartHeight},
+  } = state
+
+  const isPowerFlexActive = !!_.find(
+    addons,
+    addon => addon.name === 'powerflex' && addon.url === 'on'
+  )
+
   return {
-    podChartHeight: state.kubernetesDetailsDashboard.podChartHeight,
-    volumeChartHeight: state.kubernetesDetailsDashboard.volumeChartHeight,
+    podChartHeight,
+    volumeChartHeight,
+    isPowerFlexActive,
   }
 }
 const mdtp = dispatch => ({
