@@ -44,11 +44,18 @@ const getSegmentCountForWidth = (width: number): number => {
     return 35
   }
 
-  return 50
+  if (width < 520) {
+    return 50
+  }
+
+  return 70
 }
 
 function TableGaugeCell({options, value}: Props) {
   const gaugeRef = useRef<HTMLDivElement>(null)
+
+  const [isEmptyValue, setIsEmptyValue] = useState<boolean>(false)
+
   const [segmentCount, setSegmentCount] = useState<number>(50)
 
   useEffect(() => {
@@ -79,9 +86,13 @@ function TableGaugeCell({options, value}: Props) {
     }
   }, [])
 
+  useEffect(() => {
+    setIsEmptyValue(!Number.isFinite(value))
+  }, [value])
+
   const parsedValue =
     typeof value === 'number' ? value : !_.isNaN(value) ? Number(value) : NaN
-  const numericValue = Number.isFinite(parsedValue) ? parsedValue : 0
+  const numericValue = Number.isFinite(parsedValue) ? parsedValue : null
 
   const max = options?.max ?? 100
 
@@ -89,7 +100,8 @@ function TableGaugeCell({options, value}: Props) {
 
   const range = max - min || 1
 
-  const percentage = ((numericValue - min) / range) * 100
+  const percentage =
+    numericValue !== null ? ((numericValue - min) / range) * 100 : 0
 
   const clampedPercentage = Math.max(0, Math.min(100, percentage))
 
@@ -138,7 +150,7 @@ function TableGaugeCell({options, value}: Props) {
 
   const decimalPlaces = Number.isFinite(options?.decimalPlaces)
     ? Math.max(0, options.decimalPlaces)
-    : 1
+    : undefined
 
   const rawValueForDisplay = isPercent ? clampedPercentage : numericValue
 
@@ -156,58 +168,81 @@ function TableGaugeCell({options, value}: Props) {
   return (
     <div
       className={`table-gauge-cell-container ${
-        !options?.isGauge ? 'only-value' : ''
+        !options?.isGauge || isEmptyValue ? 'only-value' : ''
       }`}
     >
-      {options.isGauge && (
-        <div
-          ref={gaugeRef}
-          className={`table-gauge-cell-gauge${
-            chartType === CHART_TYPE_MODES.SEGMENTED
-              ? ' table-gauge-cell-gauge--segmented'
-              : ''
-          }`}
-        >
-          {chartType === CHART_TYPE_MODES.SEGMENTED ? (
-            <div className="table-gauge-cell-segments">
-              {buildSegments(
-                clampedPercentage,
-                segmentCount,
-                backgroundType,
-                isGradientBackground ? gradientColorStops : solidColorStops
+      {isEmptyValue ? (
+        <div className="table-gauge-cell-value empty-value">--</div>
+      ) : (
+        <>
+          {options.isGauge && (
+            <div
+              ref={gaugeRef}
+              className={`table-gauge-cell-gauge${
+                chartType === CHART_TYPE_MODES.SEGMENTED
+                  ? ' table-gauge-cell-gauge--segmented'
+                  : ''
+              }`}
+            >
+              {chartType === CHART_TYPE_MODES.SEGMENTED ? (
+                <div className="table-gauge-cell-segments">
+                  {buildSegments(
+                    clampedPercentage,
+                    segmentCount,
+                    backgroundType,
+                    isGradientBackground ? gradientColorStops : solidColorStops
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="table-gauge-cell-background"
+                    style={{
+                      ...(barGradient && {
+                        backgroundImage: barGradient,
+                        backgroundSize: '100% 100%',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: '0 0',
+                      }),
+                      ...(!barGradient && {
+                        backgroundColor: solidBarColor,
+                      }),
+                      opacity: 0.2,
+                    }}
+                  />
+                  <div
+                    className="table-gauge-cell-bar"
+                    style={{
+                      width: `${clampedPercentage}%`,
+                      ...(barGradient && {
+                        backgroundImage: barGradient,
+                        backgroundSize: backgroundSize,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: '0 0',
+                      }),
+                      ...(!barGradient && {
+                        backgroundColor: solidBarColor,
+                      }),
+                    }}
+                  />
+                </>
               )}
             </div>
-          ) : (
-            <div
-              className="table-gauge-cell-bar"
-              style={{
-                width: `${clampedPercentage}%`,
-                ...(barGradient && {
-                  backgroundImage: barGradient,
-                  backgroundSize: backgroundSize,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: '0 0',
-                }),
-                ...(!barGradient && {
-                  backgroundColor: solidBarColor,
-                }),
-              }}
-            />
           )}
-        </div>
-      )}
-      {options?.isShowValues && (
-        <div
-          title={options?.prefix + formattedValue + options?.suffix}
-          className={`table-gauge-cell-value ${
-            !options?.isGauge ? 'only-value' : ''
-          }`}
-          style={{color: textColor}}
-        >
-          {options?.prefix ?? ''}
-          {formattedValue}
-          {options?.suffix ?? ''}
-        </div>
+          {options?.isShowValues && (
+            <div
+              title={options?.prefix + formattedValue + options?.suffix}
+              className={`table-gauge-cell-value ${
+                !options?.isGauge ? 'only-value' : ''
+              }`}
+              style={{color: textColor}}
+            >
+              {options?.prefix ?? ''}
+              {formattedValue}
+              {options?.suffix ?? ''}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

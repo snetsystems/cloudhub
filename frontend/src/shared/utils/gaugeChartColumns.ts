@@ -1,23 +1,17 @@
-import {AlignType, ColumnInfo} from 'src/types'
-import {TimeSeriesSeries} from 'src/types/series'
-
-import {
-  ColumnSettingInterface,
-  TableGaugeChartOptionsInterface,
-} from 'src/types/statisticalgraph'
+import {ColumnInfo} from 'src/types'
+import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 import {ColorString, ColorNumber} from 'src/types/colors'
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 import {DEFAULT_GAUGE_COLORS} from '../constants/thresholds'
 import {DecimalPlaces, FieldOption} from 'src/types/dashboards'
+import {AlignType} from 'src/types'
 
-interface ConvertOptions {
-  defaultMin?: number
-  defaultMax?: number
+interface DataTableObject {
+  [key: string]: string | number | boolean | null | any
 }
 
 export const convertTimeSeriesDataToColumns = (
-  data: TimeSeriesSeries[],
-  options?: ConvertOptions,
+  data: DataTableObject[],
   tableGaugeChartOptions?: TableGaugeChartOptionsInterface,
   originFiledOptions?: FieldOption[],
   decimalPlaces?: DecimalPlaces
@@ -26,157 +20,104 @@ export const convertTimeSeriesDataToColumns = (
     return []
   }
 
-  const {defaultMin = 0, defaultMax = 100} = options || {}
+  const DEFAULT_MIN = 0
+  const DEFAULT_MAX = 100
+  const allKeys = new Set<string>()
+  data.forEach(row => {
+    Object.keys(row).forEach(key => {
+      if (key !== 'time') allKeys.add(key)
+    })
+  })
 
-  const firstSeries = data[0]
-  const columnNames = (firstSeries?.columns || []).filter(col => col !== 'time')
-  const tagName = firstSeries?.name || ''
+  const columns: ColumnInfo[] = Array.from(allKeys).map(key => {
+    const gaugeSetting = tableGaugeChartOptions?.columnSettings?.find(
+      setting => {
+        return (
+          setting.internalName === key ||
+          setting.internalName.endsWith(`.${key}`)
+        )
+      }
+    )
 
-  const nameColumnArray: ColumnInfo[] = Object.keys(
-    firstSeries?.tags || {}
-  ).map(key => {
+    if (!gaugeSetting) {
+      const fieldOption = originFiledOptions?.find(f => f.internalName === key)
+      const displayName = fieldOption?.displayName || key
+
+      return {
+        key: key,
+        name: displayName,
+        options: {
+          sorting: true,
+          thead: {
+            align: AlignType.LEFT,
+          },
+        },
+      }
+    }
+
+    let min = DEFAULT_MIN
+    let max = DEFAULT_MAX
+
+    const values = data
+      .map(row => row[key])
+      .filter(val => typeof val === 'number') as number[]
+
+    if (values.length > 0) {
+      const dataMin = Math.min(...values)
+      const dataMax = Math.max(...values)
+
+      if (dataMin === dataMax) {
+        min = dataMin > 0 ? 0 : dataMin - 10
+        max = dataMax === 0 ? 100 : dataMax + 10
+      } else {
+        min = dataMin
+        max = dataMax
+      }
+    }
+
+    min =
+      gaugeSetting.min !== undefined && !isNaN(gaugeSetting.min)
+        ? gaugeSetting.min
+        : min
+    max =
+      gaugeSetting.max !== undefined && !isNaN(gaugeSetting.max)
+        ? gaugeSetting.max
+        : max
+
+    const colors: ColorString[] = gaugeSetting.colors ?? DEFAULT_LINE_COLORS
+    const thresholdColors: ColorNumber[] =
+      gaugeSetting.thresholdColors ?? DEFAULT_GAUGE_COLORS
+
+    const gaugeOptions = {
+      min,
+      max,
+      decimalPlaces: decimalPlaces?.isEnforced ? decimalPlaces?.digits : 0,
+      colors,
+      thresholdColors,
+      chartType: gaugeSetting.chartType,
+      isPercent: gaugeSetting.isPercent,
+      backgroundType: gaugeSetting.backgroundType,
+      prefix: gaugeSetting.prefix,
+      suffix: gaugeSetting.suffix,
+      isValuesVisible: tableGaugeChartOptions?.isShowValues,
+      isShowValues: gaugeSetting.isShowValues,
+      valueFormat: gaugeSetting.valueFormat,
+      isGauge: gaugeSetting.isShowChart ?? true,
+    }
+
     return {
       key: key,
-      name:
-        originFiledOptions?.find(field => field.internalName === key)
-          ?.displayName || key,
+      name: gaugeSetting.displayName || key,
       options: {
+        thead: {
+          align: AlignType.RIGHT,
+        },
+        isGauge: true,
         sorting: true,
+        gaugeOptions,
       },
     }
   })
 
-  const gaugeColumns: ColumnInfo[] = (
-    tableGaugeChartOptions?.columnSettings || []
-  )
-    .map(columnSetting => {
-      const matchingColumnName = columnNames.find(col => {
-        const internalName = columnSetting.internalName.replace(
-          `${tagName}.`,
-          ''
-        )
-        return internalName === col
-      })
-
-      if (!matchingColumnName) {
-        return null
-      }
-
-      const columnName = matchingColumnName
-      let min = defaultMin
-      let max = defaultMax
-
-      const columnIndex = data[0].columns.indexOf(columnName)
-      const allValues: number[] = []
-
-      data.forEach(series => {
-        series.values.forEach(valueArray => {
-          const value = valueArray[columnIndex]
-          if (typeof value === 'number' && !isNaN(value)) {
-            allValues.push(value)
-          }
-        })
-      })
-
-      if (allValues.length > 0) {
-        min = Math.min(...allValues)
-        max = Math.max(...allValues)
-
-        if (min === max) {
-          min = min > 0 ? 0 : min - 10
-          max = max === 0 ? 100 : max + 10
-        }
-      }
-
-      min = isNaN(columnSetting?.min) ? min : columnSetting?.min
-      max = isNaN(columnSetting?.max) ? max : columnSetting?.max
-
-      const displayName = columnSetting?.displayName || columnName
-      const isShowChart = columnSetting?.isShowChart ?? true
-
-      const colors: ColorString[] = columnSetting?.colors ?? DEFAULT_LINE_COLORS
-      const thresholdColors: ColorNumber[] =
-        columnSetting?.thresholdColors ?? DEFAULT_GAUGE_COLORS
-
-      const gaugeOptions = {
-        min,
-        max,
-        decimalPlaces: decimalPlaces?.isEnforced ? decimalPlaces?.digits : 0,
-        colors,
-        thresholdColors,
-        chartType: columnSetting?.chartType,
-        isPercent: columnSetting?.isPercent,
-        backgroundType: columnSetting?.backgroundType,
-        prefix: columnSetting?.prefix,
-        suffix: columnSetting?.suffix,
-        isValuesVisible: tableGaugeChartOptions?.isShowValues,
-        isShowValues: columnSetting?.isShowValues,
-        valueFormat: columnSetting?.valueFormat,
-        isGauge: isShowChart,
-      }
-
-      return {
-        key: columnName,
-        name: displayName,
-        options: {
-          thead: {
-            align: AlignType.RIGHT,
-          },
-          isGauge: true,
-          sorting: true,
-          gaugeOptions,
-        },
-      }
-    })
-    .filter(column => column !== null) as ColumnInfo[]
-
-  // Preserve the order from the raw series columns (excluding time) while
-  // merging in tag columns and gauge columns.
-  const gaugeMap = new Map<string, ColumnInfo>()
-  gaugeColumns.forEach(col => gaugeMap.set(col.key, col))
-
-  const nameMap = new Map<string, ColumnInfo>()
-  nameColumnArray.forEach(col => nameMap.set(col.key, col))
-
-  const orderedColumns: ColumnInfo[] = []
-
-  columnNames.forEach(colKey => {
-    if (gaugeMap.has(colKey)) {
-      orderedColumns.push(gaugeMap.get(colKey) as ColumnInfo)
-      gaugeMap.delete(colKey)
-      return
-    }
-    if (nameMap.has(colKey)) {
-      orderedColumns.push(nameMap.get(colKey) as ColumnInfo)
-      nameMap.delete(colKey)
-    }
-  })
-
-  // Append any remaining name or gauge columns that were not part of columnNames.
-  nameMap.forEach(col => orderedColumns.push(col))
-  gaugeMap.forEach(col => orderedColumns.push(col))
-
-  return orderedColumns
-}
-
-export const matchedColumn = (
-  data: TimeSeriesSeries[],
-  columnSettings?: ColumnSettingInterface[]
-) => {
-  if (!columnSettings) {
-    return []
-  }
-
-  const firstSeries = data[0]
-  const columnNames = (firstSeries?.columns || []).filter(col => col !== 'time')
-  const tagName = firstSeries?.name || ''
-
-  return columnSettings.map(columnSetting => {
-    const matchingColumnName = columnNames.find(col => {
-      const internalName = columnSetting.internalName.replace(`${tagName}.`, '')
-      return internalName === col
-    })
-
-    return matchingColumnName
-  })
+  return columns
 }

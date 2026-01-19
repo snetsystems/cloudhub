@@ -139,9 +139,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
   }
 
   public render() {
-    const {loading, data} = this.props
-
-    if (data.length > 1) {
+    const {loading, data, type} = this.props
+    if (data.length > 1 && type !== CellType.StaticTableGaugeChart) {
       return (
         <InvalidQuery
           message={'Only one query maker tab is supported in this graph type.'}
@@ -149,7 +148,6 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       )
     }
     if (
-      data.length > 1 ||
       !data[0]['response']['results'][0]['series'][0].hasOwnProperty(
         'values'
       ) ||

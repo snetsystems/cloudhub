@@ -276,7 +276,7 @@ function TableBase({
                               timeZone
                             )
                           ) : (
-                            <>getValue(item, key)</>
+                            <>{getValue(item, key)}</>
                           )}
                         </td>
                       )

@@ -13,9 +13,11 @@ import {useIsUpdateObj} from 'src/shared/utils/useIsUpdateObj'
 // Types
 import {ColumnInfo, DataTableObject, FluxTable} from 'src/types'
 import {TimeSeriesServerResponse, TimeSeriesSeries} from 'src/types/series'
-import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
+import {
+  ColumnSettingInterface,
+  TableGaugeChartOptionsInterface,
+} from 'src/types/statisticalgraph'
 import {DecimalPlaces, FieldOption} from 'src/types/dashboards'
-import {matchedColumn} from 'src/shared/utils/gaugeChartColumns'
 
 interface Props {
   data: TimeSeriesServerResponse[] | FluxTable[]
@@ -36,54 +38,98 @@ function StaticTableGaugeChart({
 
   const isUpdated = useIsUpdateObj({queryKey, object: tableGaugeChartOptions})
 
-  const [convertData, setConvertData] = useState<TimeSeriesSeries[]>()
+  const [convertData, setConvertData] = useState<TimeSeriesSeries[][]>()
 
   const [tableData, setTableData] = useState<DataTableObject[]>([])
 
   useEffect(() => {
-    setConvertData(data[0]['response']['results'][0]['series'])
+    const convertData = data.map(item =>
+      _.get(item, ['response', 'results', '0', 'series'], [])
+    )
+
+    setConvertData(convertData)
   }, [data])
 
-  useEffect(() => {
-    if (convertData) {
-      setTableData(decimalizeTableData(convertData))
-    }
-  }, [convertData])
+  const mergeDataByTags = (rawData: any[]): DataTableObject[] => {
+    const mergedMap = new Map<string, DataTableObject>()
 
-  const decimalizeTableData = (data: TimeSeriesSeries[]) => {
-    const newData = data.map(item => {
-      const row: DataTableObject = {
-        ...item.tags,
-      }
+    rawData.forEach(rootItem => {
+      const results = rootItem?.response?.results || []
 
-      item.columns.forEach((column, index) => {
-        if (index > 0) {
-          row[column] = item.values[0][index]
-        }
+      results.forEach((result: any) => {
+        const seriesList = result?.series || []
+
+        seriesList.forEach((seriesItem: any) => {
+          const tags = seriesItem.tags || {}
+          const columns = seriesItem.columns || []
+          const values = seriesItem.values || []
+
+          if (values.length === 0) return
+
+          const tagSignature = Object.keys(tags)
+            .sort()
+            .map(key => `${key}:${tags[key]}`)
+            .join('|')
+
+          let targetRow = mergedMap.get(tagSignature)
+
+          if (!targetRow) {
+            targetRow = {...tags}
+            mergedMap.set(tagSignature, targetRow)
+          }
+
+          columns.forEach((colName: string, index: number) => {
+            if (index > 0) {
+              const val = values[0][index]
+
+              if (val !== undefined && val !== null) {
+                targetRow![colName] = val
+              }
+            }
+          })
+        })
       })
-
-      return row
     })
 
-    return newData
+    return Array.from(mergedMap.values())
   }
 
-  const normalizeInternalName = (name?: string, tagName?: string) => {
+  useEffect(() => {
+    if (data && data.length > 0) {
+      const finalResult = mergeDataByTags(data)
+
+      setTableData(finalResult)
+    }
+  }, [data])
+
+  const normalizeInternalName = (name?: string, tagName?: string[]) => {
     if (!name) {
       return ''
     }
-    return tagName ? name.replace(`${tagName}.`, '') : name
+
+    if (!tagName || tagName.length === 0) {
+      return name
+    }
+
+    for (const tag of tagName) {
+      const prefix = `${tag}.`
+      if (name.startsWith(prefix)) {
+        return name.replace(prefix, '')
+      }
+    }
+
+    return name
   }
 
   const buildNormalizedFields = (
     originFiledOptions?: FieldOption[],
-    tagName?: string
+    tagNameList?: string[]
   ) => {
     return (
       originFiledOptions
         ?.filter(field => field.internalName !== 'time')
         .map(field => ({
-          key: normalizeInternalName(field.internalName, tagName),
+          key: normalizeInternalName(field.internalName, tagNameList),
           visible: field.visible !== false,
         })) || []
     )
@@ -161,27 +207,61 @@ function StaticTableGaugeChart({
     })
   }
 
+  const matchedColumn = (
+    data: DataTableObject[],
+    columnSettings?: ColumnSettingInterface[],
+    tagNameList?: string[]
+  ) => {
+    if (!columnSettings || !data || data.length === 0) {
+      return []
+    }
+
+    const columnNamesSet = new Set<string>()
+    data.forEach(row => {
+      Object.keys(row).forEach(key => {
+        if (key !== 'time') {
+          columnNamesSet.add(key)
+        }
+      })
+    })
+    const columnNames = Array.from(columnNamesSet)
+
+    return columnSettings.map(columnSetting => {
+      const normalizedInternalName = normalizeInternalName(
+        columnSetting.internalName,
+        tagNameList
+      )
+
+      const matchingColumnName = columnNames.find(
+        col => col === normalizedInternalName
+      )
+
+      return matchingColumnName
+    })
+  }
+
   const columns = useMemo<ColumnInfo[]>(() => {
-    if (!convertData) return []
+    if (!tableData) return []
 
     const baseColumns = convertTimeSeriesDataToColumns(
-      convertData,
-      {
-        defaultMin: 0,
-        defaultMax: 100,
-      },
+      tableData,
       tableGaugeChartOptions,
       originFiledOptions,
       decimalPlaces
     )
 
-    const tagName = convertData?.[0]?.name
-    const normalizedFields = buildNormalizedFields(originFiledOptions, tagName)
+    const tagNameList: string[] = convertData?.map(item => item[0].name) || []
+
+    const normalizedFields = buildNormalizedFields(
+      originFiledOptions,
+      tagNameList
+    )
 
     // width setting
     const matchedColumns = matchedColumn(
-      convertData,
-      tableGaugeChartOptions?.columnSettings
+      tableData,
+      tableGaugeChartOptions?.columnSettings,
+      tagNameList
     )
 
     const returnColumns = reorderColumns(
@@ -191,7 +271,7 @@ function StaticTableGaugeChart({
     )
     return returnColumns
   }, [
-    convertData,
+    tableData,
     isUpdated,
     tableGaugeChartOptions,
     decimalPlaces,
@@ -199,13 +279,17 @@ function StaticTableGaugeChart({
   ])
 
   const initSort = useMemo(() => {
-    const keyName = convertData?.[0]?.name
-    return tableGaugeChartOptions?.sortBy
-      ? {
-          key: tableGaugeChartOptions?.sortBy.replace(`${keyName}.`, ''),
-          isDesc: tableGaugeChartOptions?.sortByDirection === 'desc',
-        }
-      : null
+    if (!tableGaugeChartOptions?.sortBy) {
+      return null
+    }
+
+    const tagNameList: string[] =
+      convertData?.map(item => item[0]?.name).filter(Boolean) || []
+
+    return {
+      key: normalizeInternalName(tableGaugeChartOptions.sortBy, tagNameList),
+      isDesc: tableGaugeChartOptions.sortByDirection === 'desc',
+    }
   }, [tableGaugeChartOptions, convertData])
 
   return (
@@ -214,10 +298,6 @@ function StaticTableGaugeChart({
         className="dygraph-child-container"
         style={{
           ...staticGraphStyle,
-          borderBottom: `2px solid #383846`,
-          borderBottomWidth: `2px`,
-          borderBottomStyle: `solid`,
-          borderBottomColor: `#383846`,
         }}
       >
         <FancyScrollbar className="display-options" autoHide={true}>

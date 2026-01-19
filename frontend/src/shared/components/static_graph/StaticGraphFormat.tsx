@@ -180,11 +180,18 @@ class StaticGraphFormat extends PureComponent<Props, State> {
     const {tableGaugeChartOptions, dataType, data} = this.props
     const {sortedLabels, queryType} = this.getSortedLabelsAndQueryType()
 
-    const defaultTimeField = _.get(data, '0.response.results.0.series', '')
-    const setName =
-      Array.isArray(defaultTimeField) && defaultTimeField[0]?.tags
-        ? Object.keys(defaultTimeField[0].tags)
-        : []
+    const allTagKeys = new Set<string>()
+    data.forEach(item => {
+      const series = _.get(item, 'response.results.0.series', [])
+      if (Array.isArray(series)) {
+        series.forEach(s => {
+          if (s?.tags) {
+            Object.keys(s.tags).forEach(key => allTagKeys.add(key))
+          }
+        })
+      }
+    })
+    const setName = Array.from(allTagKeys)
 
     let tempOptions: ColumnSettingInterface[] = []
 

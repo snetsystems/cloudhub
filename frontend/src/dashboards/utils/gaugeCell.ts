@@ -224,7 +224,7 @@ const KMG_LABELS = ['KB', 'MB', 'GB', 'TB']
 const formatNumber = (value: number, decimalPlaces: number): string => {
   const absValue = Math.abs(value)
 
-  if (!(decimalPlaces > 0 && decimalPlaces < 100)) {
+  if (!(decimalPlaces >= 0 && decimalPlaces < 100)) {
     return value.toString()
   }
 
@@ -307,10 +307,11 @@ export const formatDisplayValue = (
   decimalPlaces: number,
   valueFormat: FormatOption = FORMAT_OPTIONS.RAW
 ): string => {
+  if (!Number.isFinite(value) || value === null) {
+    return '--'
+  }
+
   if (isPercent) {
-    if (!Number.isFinite(value) || value === null) {
-      return '--'
-    }
     return `${value.toFixed(1)}%`
   }
 
