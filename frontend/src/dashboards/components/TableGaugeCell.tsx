@@ -32,6 +32,7 @@ interface Props {
 }
 
 const getSegmentCountForWidth = (width: number): number => {
+  
   if (!width || width <= 0) {
     return 50
   }
@@ -48,7 +49,15 @@ const getSegmentCountForWidth = (width: number): number => {
     return 50
   }
 
-  return 70
+  if (width < 820) {
+    return 70
+  }
+
+  if (width < 1020) {
+    return 90
+  }
+
+  return 120
 }
 
 function TableGaugeCell({options, value}: Props) {
