@@ -91,7 +91,7 @@ export const convertTimeSeriesDataToColumns = (
     const gaugeOptions = {
       min,
       max,
-      decimalPlaces: decimalPlaces?.isEnforced ? decimalPlaces?.digits : 0,
+      decimalPlaces: decimalPlaces?.isEnforced ? decimalPlaces?.digits : undefined,
       colors,
       thresholdColors,
       chartType: gaugeSetting.chartType,
