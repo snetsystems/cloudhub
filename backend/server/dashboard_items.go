@@ -1,0 +1,273 @@
+package server
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"time"
+
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+)
+
+type dashboardItemLinks struct {
+	Self string `json:"self"` // Self link mapping to this resource
+}
+
+type dashboardItemResponse struct {
+	ID           string                `json:"id"`
+	Name         string                `json:"name"`
+	Description  string                `json:"description,omitempty"`
+	Organization string                `json:"organization"`
+	Type         string                `json:"type"`
+	Content      cloudhub.DashboardCell `json:"content"`
+	Meta         cloudhub.DashboardItemMeta `json:"meta"`
+	Links        dashboardItemLinks    `json:"links"`
+}
+
+type getDashboardItemsResponse struct {
+	DashboardItems []dashboardItemResponse `json:"dashboardItems"`
+}
+
+func newDashboardItemResponse(item cloudhub.DashboardItem) dashboardItemResponse {
+	base := "/cloudhub/v1/dashboard-items"
+	return dashboardItemResponse{
+		ID:           item.ID,
+		Name:         item.Name,
+		Description:  item.Description,
+		Organization: item.Organization,
+		Type:         item.Type,
+		Content:      item.Content,
+		Meta:         item.Meta,
+		Links: dashboardItemLinks{
+			Self: fmt.Sprintf("%s/%s", base, item.ID),
+		},
+	}
+}
+
+// DashboardItems returns all dashboard items within the store
+func (s *Service) DashboardItems(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	items, err := s.Store.DashboardItems(ctx).All(ctx)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, "Error loading dashboard items", s.Logger)
+		return
+	}
+
+	res := getDashboardItemsResponse{
+		DashboardItems: []dashboardItemResponse{},
+	}
+
+	for _, item := range items {
+		res.DashboardItems = append(res.DashboardItems, newDashboardItemResponse(item))
+	}
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// DashboardItemID returns a single specified dashboard item
+func (s *Service) DashboardItemID(w http.ResponseWriter, r *http.Request) {
+	id, err := paramStr("id", r)
+	if err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	item, err := s.Store.DashboardItems(ctx).Get(ctx, id)
+	if err != nil {
+		Error(w, http.StatusNotFound, "Dashboard item not found", s.Logger)
+		return
+	}
+
+	res := newDashboardItemResponse(item)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// NewDashboardItem creates and returns a new dashboard item object
+func (s *Service) NewDashboardItem(w http.ResponseWriter, r *http.Request) {
+	var item cloudhub.DashboardItem
+	if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+
+	// Validate required fields
+	if item.Name == "" {
+		invalidData(w, fmt.Errorf("name is required"), s.Logger)
+		return
+	}
+	if item.Type == "" {
+		invalidData(w, fmt.Errorf("type is required"), s.Logger)
+		return
+	}
+
+	// Set metadata
+	now := time.Now().UTC().Format(time.RFC3339)
+	item.Meta.CreatedAt = now
+	item.Meta.UpdatedAt = now
+
+	// Get user from context for CreatedBy
+	if user, ok := hasUserContext(ctx); ok {
+		item.Meta.CreatedBy = user.Name
+		item.Meta.UpdatedBy = user.Name
+	}
+
+	var err error
+	if item, err = s.Store.DashboardItems(ctx).Add(ctx, item); err != nil {
+		msg := fmt.Errorf("Error storing dashboard item %v: %v", item.Name, err)
+		unknownErrorWithMessage(w, msg, s.Logger)
+		return
+	}
+
+	// log registration
+	msg := fmt.Sprintf("Dashboard item '%s' created", item.Name)
+	s.logRegistration(ctx, "DashboardItems", msg)
+
+	res := newDashboardItemResponse(item)
+	location(w, res.Links.Self)
+	encodeJSON(w, http.StatusCreated, res, s.Logger)
+}
+
+// RemoveDashboardItem deletes a dashboard item
+func (s *Service) RemoveDashboardItem(w http.ResponseWriter, r *http.Request) {
+	id, err := paramStr("id", r)
+	if err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	item, err := s.Store.DashboardItems(ctx).Get(ctx, id)
+	if err != nil {
+		Error(w, http.StatusNotFound, "Dashboard item not found", s.Logger)
+		return
+	}
+
+	if err := s.Store.DashboardItems(ctx).Delete(ctx, item); err != nil {
+		unknownErrorWithMessage(w, err, s.Logger)
+		return
+	}
+
+	// log registration
+	msg := fmt.Sprintf("Dashboard item '%s' deleted", item.Name)
+	s.logRegistration(ctx, "DashboardItems", msg)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// UpdateDashboardItem completely replaces a dashboard item
+func (s *Service) UpdateDashboardItem(w http.ResponseWriter, r *http.Request) {
+	id, err := paramStr("id", r)
+	if err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	existing, err := s.Store.DashboardItems(ctx).Get(ctx, id)
+	if err != nil {
+		Error(w, http.StatusNotFound, "Dashboard item not found", s.Logger)
+		return
+	}
+
+	var item cloudhub.DashboardItem
+	if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	// Preserve ID and organization
+	item.ID = existing.ID
+	item.Organization = existing.Organization
+
+	// Preserve creation metadata, update modification metadata
+	item.Meta.CreatedAt = existing.Meta.CreatedAt
+	item.Meta.CreatedBy = existing.Meta.CreatedBy
+	item.Meta.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	// Get user from context for UpdatedBy
+	if user, ok := hasUserContext(ctx); ok {
+		item.Meta.UpdatedBy = user.Name
+	}
+
+	if err := s.Store.DashboardItems(ctx).Update(ctx, item); err != nil {
+		msg := fmt.Errorf("Error updating dashboard item %s: %v", id, err)
+		unknownErrorWithMessage(w, msg, s.Logger)
+		return
+	}
+
+	// log registration
+	msg := fmt.Sprintf("Dashboard item '%s' updated", item.Name)
+	s.logRegistration(ctx, "DashboardItems", msg)
+
+	res := newDashboardItemResponse(item)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// PatchDashboardItem partially updates a dashboard item
+func (s *Service) PatchDashboardItem(w http.ResponseWriter, r *http.Request) {
+	id, err := paramStr("id", r)
+	if err != nil {
+		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	existing, err := s.Store.DashboardItems(ctx).Get(ctx, id)
+	if err != nil {
+		Error(w, http.StatusNotFound, "Dashboard item not found", s.Logger)
+		return
+	}
+
+	var patch map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	// Apply patch fields
+	if name, ok := patch["name"].(string); ok {
+		existing.Name = name
+	}
+	if description, ok := patch["description"].(string); ok {
+		existing.Description = description
+	}
+	if itemType, ok := patch["type"].(string); ok {
+		existing.Type = itemType
+	}
+	if content, ok := patch["content"]; ok {
+		contentBytes, err := json.Marshal(content)
+		if err != nil {
+			invalidData(w, fmt.Errorf("invalid content format"), s.Logger)
+			return
+		}
+		var cell cloudhub.DashboardCell
+		if err := json.Unmarshal(contentBytes, &cell); err != nil {
+			invalidData(w, fmt.Errorf("invalid content format"), s.Logger)
+			return
+		}
+		existing.Content = cell
+	}
+
+	// Update modification metadata
+	existing.Meta.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	// Get user from context for UpdatedBy
+	if user, ok := hasUserContext(ctx); ok {
+		existing.Meta.UpdatedBy = user.Name
+	}
+
+	if err := s.Store.DashboardItems(ctx).Update(ctx, existing); err != nil {
+		msg := fmt.Errorf("Error updating dashboard item %s: %v", id, err)
+		unknownErrorWithMessage(w, msg, s.Logger)
+		return
+	}
+
+	// log registration
+	msg := fmt.Sprintf("Dashboard item '%s' updated", existing.Name)
+	s.logRegistration(ctx, "DashboardItems", msg)
+
+	res := newDashboardItemResponse(existing)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+}

@@ -477,3 +477,22 @@ message AliasMappingToDevice {
   string orgId    = 1; // Organization ID this device belongs to
   string hostname = 2; // Original DeviceMeta.hostname
 }
+
+// DashboardItemMeta contains metadata for a dashboard item.
+message DashboardItemMeta {
+  string createdAt = 1; // Creation timestamp (RFC3339)
+  string updatedAt = 2; // Last update timestamp (RFC3339)
+  string createdBy = 3; // User ID who created the item
+  string updatedBy = 4; // User ID who last updated the item
+}
+
+// DashboardItem represents a reusable visualization panel stored in the library.
+message DashboardItem {
+  string ID                   = 1; // Unique identifier
+  string Name                 = 2; // User-defined name for the item
+  string Description          = 3; // Optional description
+  string Organization         = 4; // Organization ID that owns this item
+  string Type                 = 5; // Visualization type (e.g., "line", "gauge", "table")
+  DashboardCell Content       = 6; // Full cell definition (queries + visualization)
+  DashboardItemMeta Meta      = 7; // Metadata (created/updated timestamps)
+}

@@ -1676,3 +1676,419 @@ func UnmarshalAliasToDevice(data []byte, atd *cloudhub.AliasToDevice) error {
 	atd.Hostname = pb.Hostname
 	return nil
 }
+
+// marshalDashboardCellToPB converts a cloudhub.DashboardCell to protobuf DashboardCell
+func marshalDashboardCellToPB(c cloudhub.DashboardCell) *DashboardCell {
+	queries := make([]*Query, len(c.Queries))
+	for j, q := range c.Queries {
+		r := new(Range)
+		if q.Range != nil {
+			r.Upper, r.Lower = q.Range.Upper, q.Range.Lower
+		}
+		q.Shifts = q.QueryConfig.Shifts
+		queries[j] = &Query{
+			Command: q.Command,
+			Label:   q.Label,
+			Range:   r,
+			Source:  q.Source,
+			Type:    q.Type,
+		}
+
+		shifts := make([]*TimeShift, len(q.Shifts))
+		for k := range q.Shifts {
+			shift := &TimeShift{
+				Label:    q.Shifts[k].Label,
+				Unit:     q.Shifts[k].Unit,
+				Quantity: q.Shifts[k].Quantity,
+			}
+			shifts[k] = shift
+		}
+		queries[j].Shifts = shifts
+	}
+
+	colors := make([]*Color, len(c.CellColors))
+	for j, color := range c.CellColors {
+		colors[j] = &Color{
+			ID:    color.ID,
+			Type:  color.Type,
+			Hex:   color.Hex,
+			Name:  color.Name,
+			Value: color.Value,
+		}
+	}
+
+	axes := make(map[string]*Axis, len(c.Axes))
+	for a, r := range c.Axes {
+		axes[a] = &Axis{
+			Bounds: r.Bounds,
+			Label:  r.Label,
+			Prefix: r.Prefix,
+			Suffix: r.Suffix,
+			Base:   r.Base,
+			Scale:  r.Scale,
+		}
+	}
+
+	sortBy := &RenamableField{
+		InternalName: c.TableOptions.SortBy.InternalName,
+		DisplayName:  c.TableOptions.SortBy.DisplayName,
+		Visible:      c.TableOptions.SortBy.Visible,
+		Direction:    c.TableOptions.SortBy.Direction,
+		TempVar:      c.TableOptions.SortBy.TempVar,
+	}
+
+	tableOptions := &TableOptions{
+		VerticalTimeAxis: c.TableOptions.VerticalTimeAxis,
+		SortBy:           sortBy,
+		Wrapping:         c.TableOptions.Wrapping,
+		FixFirstColumn:   c.TableOptions.FixFirstColumn,
+	}
+
+	decimalPlaces := &DecimalPlaces{
+		IsEnforced: c.DecimalPlaces.IsEnforced,
+		Digits:     c.DecimalPlaces.Digits,
+	}
+
+	fieldOptions := make([]*RenamableField, len(c.FieldOptions))
+	for i, field := range c.FieldOptions {
+		fieldOptions[i] = &RenamableField{
+			InternalName: field.InternalName,
+			DisplayName:  field.DisplayName,
+			Visible:      field.Visible,
+			Direction:    field.Direction,
+			TempVar:      field.TempVar,
+		}
+	}
+
+	graphOptions := &GraphOptions{
+		FillArea:         c.GraphOptions.FillArea,
+		ShowLine:         c.GraphOptions.ShowLine,
+		ShowPoint:        c.GraphOptions.ShowPoint,
+		ShowTempVarCount: c.GraphOptions.ShowTempVarCount,
+	}
+
+	tableGaugeDecimalPlaces := &DecimalPlaces{
+		IsEnforced: c.TableGaugeChartOptions.DecimalPlaces.IsEnforced,
+		Digits:     c.TableGaugeChartOptions.DecimalPlaces.Digits,
+	}
+
+	columnSettings := make([]*ColumnSetting, len(c.TableGaugeChartOptions.ColumnSettings))
+	for idx, setting := range c.TableGaugeChartOptions.ColumnSettings {
+		settingColors := make([]*Color, len(setting.Colors))
+		for j, color := range setting.Colors {
+			settingColors[j] = &Color{
+				ID:    color.ID,
+				Type:  color.Type,
+				Hex:   color.Hex,
+				Name:  color.Name,
+				Value: color.Value,
+			}
+		}
+		thresholdColors := make([]*Color, len(setting.ThresholdColors))
+		for j, color := range setting.ThresholdColors {
+			thresholdColors[j] = &Color{
+				ID:    color.ID,
+				Type:  color.Type,
+				Hex:   color.Hex,
+				Name:  color.Name,
+				Value: color.Value,
+			}
+		}
+		columnSettings[idx] = &ColumnSetting{
+			InternalName:    setting.InternalName,
+			DisplayName:     setting.DisplayName,
+			Visible:         setting.Visible,
+			Direction:       setting.Direction,
+			Min:             setting.Min,
+			Max:             setting.Max,
+			Colors:          settingColors,
+			ThresholdColors: thresholdColors,
+			Unit:            setting.Unit,
+			Prefix:          setting.Prefix,
+			Suffix:          setting.Suffix,
+			IsShowChart:     setting.IsShowChart,
+			IsPercent:       setting.IsPercent,
+			ChartType:       setting.ChartType,
+			BackgroundType:  setting.BackgroundType,
+			IsShowValues:    setting.IsShowValues,
+		}
+	}
+
+	tableGaugeChartOptions := &TableGaugeChartOptions{
+		ColumnSettings:  columnSettings,
+		DecimalPlaces:   tableGaugeDecimalPlaces,
+		IsShowValues:    c.TableGaugeChartOptions.IsShowValues,
+		SortBy:          c.TableGaugeChartOptions.SortBy,
+		SortByDirection: c.TableGaugeChartOptions.SortByDirection,
+	}
+
+	return &DashboardCell{
+		X:                      c.X,
+		Y:                      c.Y,
+		W:                      c.W,
+		H:                      c.H,
+		MinW:                   c.MinW,
+		MinH:                   c.MinH,
+		Name:                   c.Name,
+		Queries:                queries,
+		Type:                   c.Type,
+		ID:                     c.ID,
+		Axes:                   axes,
+		Colors:                 colors,
+		TableOptions:           tableOptions,
+		FieldOptions:           fieldOptions,
+		TimeFormat:             c.TimeFormat,
+		DecimalPlaces:          decimalPlaces,
+		Note:                   c.Note,
+		NoteVisibility:         c.NoteVisibility,
+		GraphOptions:           graphOptions,
+		TableGaugeChartOptions: tableGaugeChartOptions,
+	}
+}
+
+// unmarshalPBToDashboardCell converts a protobuf DashboardCell to cloudhub.DashboardCell
+func unmarshalPBToDashboardCell(c *DashboardCell) cloudhub.DashboardCell {
+	queries := make([]cloudhub.DashboardQuery, len(c.Queries))
+	for j, q := range c.Queries {
+		queryType := "influxql"
+		if q.Type != "" {
+			queryType = q.Type
+		}
+		queries[j] = cloudhub.DashboardQuery{
+			Command: q.Command,
+			Label:   q.Label,
+			Source:  q.Source,
+			Type:    queryType,
+		}
+
+		if q.Range.Upper != q.Range.Lower {
+			queries[j].Range = &cloudhub.Range{
+				Upper: q.Range.Upper,
+				Lower: q.Range.Lower,
+			}
+		}
+
+		shifts := make([]cloudhub.TimeShift, len(q.Shifts))
+		for k := range q.Shifts {
+			shift := cloudhub.TimeShift{
+				Label:    q.Shifts[k].Label,
+				Unit:     q.Shifts[k].Unit,
+				Quantity: q.Shifts[k].Quantity,
+			}
+			shifts[k] = shift
+		}
+		queries[j].Shifts = shifts
+	}
+
+	colors := make([]cloudhub.CellColor, len(c.Colors))
+	for j, color := range c.Colors {
+		colors[j] = cloudhub.CellColor{
+			ID:    color.ID,
+			Type:  color.Type,
+			Hex:   color.Hex,
+			Name:  color.Name,
+			Value: color.Value,
+		}
+	}
+
+	axes := make(map[string]cloudhub.Axis, len(c.Axes))
+	for a, r := range c.Axes {
+		if r.Base == "" {
+			r.Base = "10"
+		}
+		if r.Scale == "" {
+			r.Scale = "linear"
+		}
+		axis := cloudhub.Axis{
+			Bounds: r.Bounds,
+			Label:  r.Label,
+			Prefix: r.Prefix,
+			Suffix: r.Suffix,
+			Base:   r.Base,
+			Scale:  r.Scale,
+		}
+		axes[a] = axis
+	}
+
+	legend := cloudhub.Legend{}
+	if c.Legend != nil {
+		legend.Type = c.Legend.Type
+		legend.Orientation = c.Legend.Orientation
+	}
+
+	tableOptions := cloudhub.TableOptions{}
+	if c.TableOptions != nil {
+		sortBy := cloudhub.RenamableField{}
+		if c.TableOptions.SortBy != nil {
+			sortBy.InternalName = c.TableOptions.SortBy.InternalName
+			sortBy.DisplayName = c.TableOptions.SortBy.DisplayName
+			sortBy.Visible = c.TableOptions.SortBy.Visible
+			sortBy.Direction = c.TableOptions.SortBy.Direction
+			sortBy.TempVar = c.TableOptions.SortBy.TempVar
+		}
+		tableOptions.SortBy = sortBy
+		tableOptions.VerticalTimeAxis = c.TableOptions.VerticalTimeAxis
+		tableOptions.Wrapping = c.TableOptions.Wrapping
+		tableOptions.FixFirstColumn = c.TableOptions.FixFirstColumn
+	}
+
+	fieldOptions := make([]cloudhub.RenamableField, len(c.FieldOptions))
+	for i, field := range c.FieldOptions {
+		fieldOptions[i] = cloudhub.RenamableField{
+			InternalName: field.InternalName,
+			DisplayName:  field.DisplayName,
+			Visible:      field.Visible,
+			Direction:    field.Direction,
+			TempVar:      field.TempVar,
+		}
+	}
+
+	decimalPlaces := cloudhub.DecimalPlaces{}
+	if c.DecimalPlaces != nil {
+		decimalPlaces.IsEnforced = c.DecimalPlaces.IsEnforced
+		decimalPlaces.Digits = c.DecimalPlaces.Digits
+	} else {
+		decimalPlaces.IsEnforced = true
+		decimalPlaces.Digits = 2
+	}
+
+	graphOptions := cloudhub.GraphOptions{}
+	if c.GraphOptions != nil {
+		graphOptions.FillArea = c.GraphOptions.FillArea
+		graphOptions.ShowLine = c.GraphOptions.ShowLine
+		graphOptions.ShowPoint = c.GraphOptions.ShowPoint
+		graphOptions.ShowTempVarCount = c.GraphOptions.ShowTempVarCount
+	} else {
+		graphOptions.FillArea = true
+		graphOptions.ShowLine = true
+		graphOptions.ShowPoint = false
+		graphOptions.ShowTempVarCount = ""
+	}
+
+	tableGaugeChartOptions := cloudhub.TableGaugeChartOptions{}
+	if c.TableGaugeChartOptions != nil {
+		columnSettings := make([]cloudhub.ColumnSetting, len(c.TableGaugeChartOptions.ColumnSettings))
+		for idx, setting := range c.TableGaugeChartOptions.ColumnSettings {
+			settingColors := make([]cloudhub.CellColor, len(setting.Colors))
+			for j, color := range setting.Colors {
+				settingColors[j] = cloudhub.CellColor{
+					ID:    color.ID,
+					Type:  color.Type,
+					Hex:   color.Hex,
+					Name:  color.Name,
+					Value: color.Value,
+				}
+			}
+			thresholdColors := make([]cloudhub.CellColor, len(setting.ThresholdColors))
+			for j, color := range setting.ThresholdColors {
+				thresholdColors[j] = cloudhub.CellColor{
+					ID:    color.ID,
+					Type:  color.Type,
+					Hex:   color.Hex,
+					Name:  color.Name,
+					Value: color.Value,
+				}
+			}
+			columnSettings[idx] = cloudhub.ColumnSetting{
+				InternalName:    setting.InternalName,
+				DisplayName:     setting.DisplayName,
+				Visible:         setting.Visible,
+				Direction:       setting.Direction,
+				Min:             setting.Min,
+				Max:             setting.Max,
+				Colors:          settingColors,
+				ThresholdColors: thresholdColors,
+				Unit:            setting.Unit,
+				Prefix:          setting.Prefix,
+				Suffix:          setting.Suffix,
+				IsShowChart:     setting.IsShowChart,
+				IsPercent:       setting.IsPercent,
+				ChartType:       setting.ChartType,
+				BackgroundType:  setting.BackgroundType,
+				IsShowValues:    setting.IsShowValues,
+			}
+		}
+		tableGaugeChartOptions.ColumnSettings = columnSettings
+
+		if c.TableGaugeChartOptions.DecimalPlaces != nil {
+			tableGaugeChartOptions.DecimalPlaces = cloudhub.DecimalPlaces{
+				IsEnforced: c.TableGaugeChartOptions.DecimalPlaces.IsEnforced,
+				Digits:     c.TableGaugeChartOptions.DecimalPlaces.Digits,
+			}
+		}
+		tableGaugeChartOptions.IsShowValues = c.TableGaugeChartOptions.IsShowValues
+		tableGaugeChartOptions.SortBy = c.TableGaugeChartOptions.SortBy
+		tableGaugeChartOptions.SortByDirection = c.TableGaugeChartOptions.SortByDirection
+	}
+
+	return cloudhub.DashboardCell{
+		ID:                     c.ID,
+		X:                      c.X,
+		Y:                      c.Y,
+		W:                      c.W,
+		H:                      c.H,
+		MinW:                   c.MinW,
+		MinH:                   c.MinH,
+		Name:                   c.Name,
+		Queries:                queries,
+		Axes:                   axes,
+		Type:                   c.Type,
+		CellColors:             colors,
+		Legend:                 legend,
+		TableOptions:           tableOptions,
+		FieldOptions:           fieldOptions,
+		TimeFormat:             c.TimeFormat,
+		DecimalPlaces:          decimalPlaces,
+		Note:                   c.Note,
+		NoteVisibility:         c.NoteVisibility,
+		GraphOptions:           graphOptions,
+		TableGaugeChartOptions: tableGaugeChartOptions,
+	}
+}
+
+// MarshalDashboardItem encodes a DashboardItem to binary protobuf format.
+func MarshalDashboardItem(item cloudhub.DashboardItem) ([]byte, error) {
+	return proto.Marshal(&DashboardItem{
+		ID:           item.ID,
+		Name:         item.Name,
+		Description:  item.Description,
+		Organization: item.Organization,
+		Type:         item.Type,
+		Content:      marshalDashboardCellToPB(item.Content),
+		Meta: &DashboardItemMeta{
+			CreatedAt: item.Meta.CreatedAt,
+			UpdatedAt: item.Meta.UpdatedAt,
+			CreatedBy: item.Meta.CreatedBy,
+			UpdatedBy: item.Meta.UpdatedBy,
+		},
+	})
+}
+
+// UnmarshalDashboardItem decodes a DashboardItem from binary protobuf data.
+func UnmarshalDashboardItem(data []byte, item *cloudhub.DashboardItem) error {
+	var pb DashboardItem
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	item.ID = pb.ID
+	item.Name = pb.Name
+	item.Description = pb.Description
+	item.Organization = pb.Organization
+	item.Type = pb.Type
+
+	if pb.Content != nil {
+		item.Content = unmarshalPBToDashboardCell(pb.Content)
+	}
+
+	if pb.Meta != nil {
+		item.Meta = cloudhub.DashboardItemMeta{
+			CreatedAt: pb.Meta.CreatedAt,
+			UpdatedAt: pb.Meta.UpdatedAt,
+			CreatedBy: pb.Meta.CreatedBy,
+			UpdatedBy: pb.Meta.UpdatedBy,
+		}
+	}
+
+	return nil
+}

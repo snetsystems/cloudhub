@@ -502,6 +502,15 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Ensure device
 	router.POST("/cloudhub/v1/device-mappings/ensure", EnsureViewer(service.EnsureDevice))
 
+	// DashboardItems (Library Panels)
+	router.GET("/cloudhub/v1/dashboard-items", EnsureViewer(service.DashboardItems))
+	router.POST("/cloudhub/v1/dashboard-items", EnsureEditor(service.NewDashboardItem))
+
+	router.GET("/cloudhub/v1/dashboard-items/:id", EnsureViewer(service.DashboardItemID))
+	router.DELETE("/cloudhub/v1/dashboard-items/:id", EnsureEditor(service.RemoveDashboardItem))
+	router.PUT("/cloudhub/v1/dashboard-items/:id", EnsureEditor(service.UpdateDashboardItem))
+	router.PATCH("/cloudhub/v1/dashboard-items/:id", EnsureEditor(service.PatchDashboardItem))
+
 	// Kubernetes API Proxy
 	kubernetes := http.HandlerFunc(service.KubernetesProxy)
 	registerAllMethods(router, "/cloudhub/v1/kubernetes/proxy/*path", kubernetes)

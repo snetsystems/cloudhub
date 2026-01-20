@@ -6041,6 +6041,212 @@
           }
         }
       }
+    },
+    "/dashboard-items": {
+      "get": {
+        "tags": ["dashboard-items"],
+        "summary": "List all dashboard items",
+        "description": "Returns all dashboard items (library panels) for the current organization",
+        "responses": {
+          "200": {
+            "description": "An array of dashboard items",
+            "schema": {
+              "$ref": "#/definitions/DashboardItems"
+            }
+          },
+          "default": {
+            "description": "Unexpected internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["dashboard-items"],
+        "summary": "Create a new dashboard item",
+        "description": "Create a new reusable dashboard item (library panel)",
+        "parameters": [
+          {
+            "name": "dashboardItem",
+            "in": "body",
+            "description": "Dashboard item to create",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DashboardItemCreate"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Dashboard item created successfully",
+            "schema": {
+              "$ref": "#/definitions/DashboardItem"
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/dashboard-items/{id}": {
+      "get": {
+        "tags": ["dashboard-items"],
+        "summary": "Get a specific dashboard item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the dashboard item",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard item details",
+            "schema": {
+              "$ref": "#/definitions/DashboardItem"
+            }
+          },
+          "404": {
+            "description": "Dashboard item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["dashboard-items"],
+        "summary": "Replace a dashboard item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the dashboard item",
+            "required": true
+          },
+          {
+            "name": "dashboardItem",
+            "in": "body",
+            "description": "Dashboard item to update",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DashboardItemCreate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard item updated successfully",
+            "schema": {
+              "$ref": "#/definitions/DashboardItem"
+            }
+          },
+          "404": {
+            "description": "Dashboard item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["dashboard-items"],
+        "summary": "Partially update a dashboard item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the dashboard item",
+            "required": true
+          },
+          {
+            "name": "dashboardItem",
+            "in": "body",
+            "description": "Fields to update",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DashboardItemPatch"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard item updated successfully",
+            "schema": {
+              "$ref": "#/definitions/DashboardItem"
+            }
+          },
+          "404": {
+            "description": "Dashboard item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["dashboard-items"],
+        "summary": "Delete a dashboard item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the dashboard item",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Dashboard item deleted successfully"
+          },
+          "404": {
+            "description": "Dashboard item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -10863,6 +11069,131 @@
         }
       },
       "required": ["hostname", "esSource"]
+    },
+    "DashboardItem": {
+      "type": "object",
+      "description": "A reusable visualization panel stored in the library",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "description": "User-defined name for the item"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description"
+        },
+        "organization": {
+          "type": "string",
+          "description": "Organization ID that owns this item",
+          "readOnly": true
+        },
+        "type": {
+          "type": "string",
+          "description": "Visualization type (e.g., line, gauge, table)"
+        },
+        "content": {
+          "$ref": "#/definitions/Cell",
+          "description": "Full cell definition (queries + visualization)"
+        },
+        "meta": {
+          "$ref": "#/definitions/DashboardItemMeta"
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "description": "Self link to this resource"
+            }
+          }
+        }
+      }
+    },
+    "DashboardItems": {
+      "type": "object",
+      "description": "A list of dashboard items",
+      "properties": {
+        "dashboardItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardItem"
+          }
+        }
+      }
+    },
+    "DashboardItemCreate": {
+      "type": "object",
+      "description": "Request body for creating a dashboard item",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "User-defined name for the item"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description"
+        },
+        "type": {
+          "type": "string",
+          "description": "Visualization type (e.g., line, gauge, table)"
+        },
+        "content": {
+          "$ref": "#/definitions/Cell",
+          "description": "Full cell definition (queries + visualization)"
+        }
+      }
+    },
+    "DashboardItemPatch": {
+      "type": "object",
+      "description": "Request body for partially updating a dashboard item",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "User-defined name for the item"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description"
+        },
+        "type": {
+          "type": "string",
+          "description": "Visualization type"
+        },
+        "content": {
+          "$ref": "#/definitions/Cell",
+          "description": "Full cell definition"
+        }
+      }
+    },
+    "DashboardItemMeta": {
+      "type": "object",
+      "description": "Metadata for a dashboard item",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp (RFC3339)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp (RFC3339)"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "User who created the item"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "User who last updated the item"
+        }
+      }
     }
   }
 }

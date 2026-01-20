@@ -103,6 +103,7 @@ type DataStore interface {
 	DLNxRstStg(ctx context.Context) cloudhub.DLNxRstStgStore
 	EsSources(ctx context.Context) cloudhub.EsSourcesStore
 	DeviceMappings(ctx context.Context) cloudhub.DeviceMappingsStore
+	DashboardItems(ctx context.Context) cloudhub.DashboardItemsStore
 }
 
 // ensure that Store implements a DataStore
@@ -130,6 +131,7 @@ type Store struct {
 	DLNxRstStgStore         cloudhub.DLNxRstStgStore
 	EsSourcesStore          cloudhub.EsSourcesStore
 	DeviceMappingsStore     cloudhub.DeviceMappingsStore
+	DashboardItemsStore     cloudhub.DashboardItemsStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -362,4 +364,16 @@ func (s *Store) DeviceMappings(ctx context.Context) cloudhub.DeviceMappingsStore
 		return organizations.NewDeviceMappingsStore(s.DeviceMappingsStore, org, isSuperAdmin)
 	}
 	return &noop.DeviceMappingsStore{}
+}
+
+// DashboardItems returns a noop.DashboardItemsStore if the context has no organization specified
+// and an organization.DashboardItemsStore otherwise.
+func (s *Store) DashboardItems(ctx context.Context) cloudhub.DashboardItemsStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.DashboardItemsStore
+	}
+	if org, ok := hasOrganizationContext(ctx); ok {
+		return organizations.NewDashboardItemsStore(s.DashboardItemsStore, org)
+	}
+	return &noop.DashboardItemsStore{}
 }
