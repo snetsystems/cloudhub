@@ -67,6 +67,8 @@ function TableGaugeCell({options, value}: Props) {
 
   const [segmentCount, setSegmentCount] = useState<number>(50)
 
+  const [isZeroRange, setIsZeroRange] = useState<boolean>(false)
+
   useEffect(() => {
     const element = gaugeRef.current
     if (!element) {
@@ -99,18 +101,24 @@ function TableGaugeCell({options, value}: Props) {
     setIsEmptyValue(!Number.isFinite(value))
   }, [value])
 
+  useEffect(() => {
+    setIsZeroRange(Number(options?.min) === 0 && Number(options?.max) === 0)
+    
+  }, [options?.min, options?.max])
+
+
   const parsedValue =
     typeof value === 'number' ? value : !_.isNaN(value) ? Number(value) : NaN
   const numericValue = Number.isFinite(parsedValue) ? parsedValue : null
 
-  const max = options?.max ?? 100
+  const max = options?.max ?? 0
 
   const min = options?.min ?? 0
 
   const range = max - min || 1
 
   const percentage =
-    numericValue !== null ? ((numericValue - min) / range) * 100 : 0
+  isZeroRange ? null :numericValue !== null ? ((numericValue - min) / range) * 100 : 0
 
   const clampedPercentage = Math.max(0, Math.min(100, percentage))
 
@@ -145,8 +153,8 @@ function TableGaugeCell({options, value}: Props) {
   )
 
   const textColor = isGradientBackground
-    ? getGradientColorForPercent(clampedPercentage, gradientColorStops)
-    : getSolidColorForPercent(clampedPercentage, solidColorStops)
+    ? getGradientColorForPercent(clampedPercentage, gradientColorStops, isZeroRange)
+    : getSolidColorForPercent(clampedPercentage, solidColorStops,isZeroRange)
 
   const backgroundSize =
     barGradient && clampedPercentage > 0
@@ -171,7 +179,8 @@ function TableGaugeCell({options, value}: Props) {
     valueToDisplay,
     isPercent,
     decimalPlaces,
-    options?.valueFormat
+    options?.valueFormat,
+    isZeroRange
   )
 
   return (

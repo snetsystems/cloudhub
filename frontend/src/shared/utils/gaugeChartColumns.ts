@@ -20,8 +20,6 @@ export const convertTimeSeriesDataToColumns = (
     return []
   }
 
-  const DEFAULT_MIN = 0
-  const DEFAULT_MAX = 100
   const allKeys = new Set<string>()
   data.forEach(row => {
     Object.keys(row).forEach(key => {
@@ -55,42 +53,13 @@ export const convertTimeSeriesDataToColumns = (
       }
     }
 
-    let min = DEFAULT_MIN
-    let max = DEFAULT_MAX
-
-    const values = data
-      .map(row => row[key])
-      .filter(val => typeof val === 'number') as number[]
-
-    if (values.length > 0) {
-      const dataMin = Math.min(...values)
-      const dataMax = Math.max(...values)
-
-      if (dataMin === dataMax) {
-        min = dataMin > 0 ? 0 : dataMin - 10
-        max = dataMax === 0 ? 100 : dataMax + 10
-      } else {
-        min = dataMin
-        max = dataMax
-      }
-    }
-
-    min =
-      gaugeSetting.min !== undefined && !isNaN(gaugeSetting.min)
-        ? gaugeSetting.min
-        : min
-    max =
-      gaugeSetting.max !== undefined && !isNaN(gaugeSetting.max)
-        ? gaugeSetting.max
-        : max
 
     const colors: ColorString[] = gaugeSetting.colors ?? DEFAULT_LINE_COLORS
     const thresholdColors: ColorNumber[] =
       gaugeSetting.thresholdColors ?? DEFAULT_GAUGE_COLORS
-
     const gaugeOptions = {
-      min,
-      max,
+      min: gaugeSetting.min,
+      max: gaugeSetting.max,
       decimalPlaces: decimalPlaces?.isEnforced ? decimalPlaces?.digits : undefined,
       colors,
       thresholdColors,

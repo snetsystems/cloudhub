@@ -91,13 +91,14 @@ export const buildSolidGradientStops = (colorStops: ColorStop[]): string[] => {
 
 export const getGradientColorForPercent = (
   percent: number,
-  colorStops: ColorStop[]
+  colorStops: ColorStop[],
+  isZeroRange: boolean = false
 ): string => {
   if (colorStops.length === 0) {
     return '#00bfdd'
   }
 
-  if (colorStops.length === 1) {
+  if (colorStops.length === 1 || isZeroRange) {
     return colorStops[0].color.hex
   }
 
@@ -137,7 +138,8 @@ export const getGradientColorForPercent = (
 
 export const getSolidColorForPercent = (
   percent: number,
-  colorStops: ColorStop[]
+  colorStops: ColorStop[],
+  isZeroRange: boolean = false
 ): string => {
   if (colorStops.length === 0) {
     return '#00bfdd'
@@ -145,6 +147,10 @@ export const getSolidColorForPercent = (
 
   const clampedPercent = clampPercent(percent)
   const sortedStops = normalizeStops(colorStops)
+
+  if (isZeroRange) {
+    return sortedStops[0].color.hex
+  }
 
   let currentColor = sortedStops[0].color.hex
 
@@ -218,8 +224,8 @@ export const rgbToHex = (r: number, g: number, b: number): string => {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 
-const KMB_LABELS = ['K', 'M', 'B', 'T']
-const KMG_LABELS = ['KB', 'MB', 'GB', 'TB']
+const KMB_LABELS = ['K', 'M', 'B', 'T', 'P', 'E', 'Z', 'Y']
+const KMG_LABELS = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
 const formatNumber = (value: number, decimalPlaces: number): string => {
   const absValue = Math.abs(value)
@@ -239,7 +245,8 @@ const formatNumber = (value: number, decimalPlaces: number): string => {
 
 const scaleByUnit = (
   value: number,
-  valueFormat: FormatOption
+  valueFormat: FormatOption,
+  isZeroRange: boolean = false
 ): {value: number; unit: string} => {
   if (valueFormat === FORMAT_OPTIONS.RAW) {
     return {value, unit: ''}
@@ -257,7 +264,7 @@ const scaleByUnit = (
   }
 
   const absValue = Math.abs(value)
-  if (!base || absValue < base) {
+  if (!base || absValue < base || isZeroRange) {
     return {value, unit: ''}
   }
 
@@ -281,7 +288,8 @@ const scaleByUnit = (
 export const formatValueWithUnit = (
   value: number | null,
   decimalPlaces: number,
-  valueFormat: FormatOption = FORMAT_OPTIONS.RAW
+  valueFormat: FormatOption = FORMAT_OPTIONS.RAW,
+  isZeroRange: boolean = false
 ): string => {
   if (value === null || value === undefined) {
     return '--'
@@ -297,7 +305,7 @@ export const formatValueWithUnit = (
     return '0'
   }
 
-  const {value: scaledValue, unit} = scaleByUnit(numericValue, valueFormat)
+  const {value: scaledValue, unit} = scaleByUnit(numericValue, valueFormat, isZeroRange)
   return `${formatNumber(scaledValue, decimalPlaces)} ${unit}`
 }
 
@@ -305,7 +313,8 @@ export const formatDisplayValue = (
   value: number | null,
   isPercent: boolean,
   decimalPlaces: number,
-  valueFormat: FormatOption = FORMAT_OPTIONS.RAW
+  valueFormat: FormatOption = FORMAT_OPTIONS.RAW,
+  isZeroRange: boolean = false
 ): string => {
   if (!Number.isFinite(value) || value === null) {
     return '--'
@@ -315,5 +324,5 @@ export const formatDisplayValue = (
     return `${value.toFixed(1)}%`
   }
 
-  return formatValueWithUnit(value, decimalPlaces, valueFormat)
+  return formatValueWithUnit(value, decimalPlaces, valueFormat, isZeroRange)
 }
