@@ -177,7 +177,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                       active: setting.valueFormat === FORMAT_OPTIONS.KMB,
                       onClick: () =>
                         this.handleToggleValueFormat(FORMAT_OPTIONS.KMB, index),
-                      titleText: 'K/M/B',
+                      titleText: 'Thousand / Million / Billion',
                       title: 'K/M/B',
                     },
                     {
@@ -185,7 +185,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                       active: setting.valueFormat === FORMAT_OPTIONS.KMG,
                       onClick: () =>
                         this.handleToggleValueFormat(FORMAT_OPTIONS.KMG, index),
-                      titleText: 'K/M/G',
+                      titleText: 'Kilo / Mega / Giga',
                       title: 'K/M/G',
                     },
                   ]}
@@ -233,8 +233,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                     this.handleToggleBackgroundType(value, index)
                   }
                   labelTextActive="Gradient"
-                  labelTextInactive="Solid"
-                  disabled={!setting.isShowChart}
+                  labelTextInactive="Solid"                  
                 />
                 {/* <div className="form-group col-sm-6">
                   <label htmlFor="min">Min</label>
