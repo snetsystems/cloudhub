@@ -138,6 +138,11 @@ message Template {
 	string type                   = 4; // Type can be fieldKeys, tagKeys, tagValues, CSV, constant, query, measurements, databases
 	string label                  = 5; // Label is a user-facing description of the Template
 	TemplateQuery query           = 6; // Query is used to generate the choices for a template
+	TemplateOptions options       = 7; // Options is the optional configuration for the template (e.g. isAllEnabled)
+}
+
+message TemplateOptions {
+	bool isAllEnabled = 1;
 }
 
 message TemplateValue {
