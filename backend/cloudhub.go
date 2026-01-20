@@ -202,13 +202,19 @@ type TemplateVar struct {
 // TemplateID is the unique ID used to identify a template
 type TemplateID string
 
+// TemplateOptions represents optional configuration for a Template
+type TemplateOptions struct {
+	IsAllEnabled bool `json:"isAllEnabled"` // IsAllEnabled checks if the tag values are all enabled
+}
+
 // Template represents a series of choices to replace TemplateVars within InfluxQL
 type Template struct {
 	TemplateVar
-	ID    TemplateID     `json:"id"`              // ID is the unique ID associated with this template
-	Type  string         `json:"type"`            // Type can be fieldKeys, tagKeys, tagValues, csv, constant, measurements, databases, map, influxql, text
-	Label string         `json:"label"`           // Label is a user-facing description of the Template
-	Query *TemplateQuery `json:"query,omitempty"` // Query is used to generate the choices for a template
+	ID      TemplateID       `json:"id"`                // ID is the unique ID associated with this template
+	Type    string           `json:"type"`              // Type can be fieldKeys, tagKeys, tagValues, csv, constant, measurements, databases, map, influxql, text
+	Label   string           `json:"label"`             // Label is a user-facing description of the Template
+	Query   *TemplateQuery   `json:"query,omitempty"`   // Query is used to generate the choices for a template
+	Options *TemplateOptions `json:"options,omitempty"` // Options is the optional configuration for the template (e.g. isAllEnabled)
 }
 
 // Query retrieves a Response from a TimeSeries.
