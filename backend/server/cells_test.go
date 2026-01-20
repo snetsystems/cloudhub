@@ -1655,7 +1655,7 @@ func Test_newCellResponse_TableGaugeDefaults(t *testing.T) {
 			ID: "cell-custom",
 			TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
 				ColumnSettings: []cloudhub.ColumnSetting{
-					{InternalName: "cpu", DisplayName: "CPU"},
+					{InternalName: "cpu", DisplayName: "CPU", ValueFormat: "KMB"},
 				},
 				DecimalPlaces: cloudhub.DecimalPlaces{
 					IsEnforced: true,
@@ -1672,6 +1672,9 @@ func Test_newCellResponse_TableGaugeDefaults(t *testing.T) {
 		if len(resp.TableGaugeChartOptions.ColumnSettings) != 1 || resp.TableGaugeChartOptions.ColumnSettings[0].InternalName != "cpu" {
 			t.Fatalf("ColumnSettings should be preserved, got %+v", resp.TableGaugeChartOptions.ColumnSettings)
 		}
+		if resp.TableGaugeChartOptions.ColumnSettings[0].ValueFormat != "KMB" {
+			t.Fatalf("ValueFormat should be preserved as KMB, got %q", resp.TableGaugeChartOptions.ColumnSettings[0].ValueFormat)
+		}
 		if resp.TableGaugeChartOptions.DecimalPlaces.IsEnforced != true || resp.TableGaugeChartOptions.DecimalPlaces.Digits != 3 {
 			t.Fatalf("DecimalPlaces should be preserved, got %+v", resp.TableGaugeChartOptions.DecimalPlaces)
 		}
@@ -1680,6 +1683,23 @@ func Test_newCellResponse_TableGaugeDefaults(t *testing.T) {
 		}
 		if resp.TableGaugeChartOptions.SortBy != "cpu" || resp.TableGaugeChartOptions.SortByDirection != "desc" {
 			t.Fatalf("Sort fields should be preserved, got sortBy=%q sortDir=%q", resp.TableGaugeChartOptions.SortBy, resp.TableGaugeChartOptions.SortByDirection)
+		}
+	})
+
+	t.Run("empty ValueFormat remains empty", func(t *testing.T) {
+		cell := cloudhub.DashboardCell{
+			ID: "cell-empty-format",
+			TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+				ColumnSettings: []cloudhub.ColumnSetting{
+					{InternalName: "memory", DisplayName: "Memory"},
+				},
+			},
+		}
+
+		resp := newCellResponse(3, cell)
+
+		if resp.TableGaugeChartOptions.ColumnSettings[0].ValueFormat != "" {
+			t.Fatalf("ValueFormat should remain empty (handled by frontend), got %q", resp.TableGaugeChartOptions.ColumnSettings[0].ValueFormat)
 		}
 	})
 }

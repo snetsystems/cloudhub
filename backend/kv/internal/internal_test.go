@@ -452,6 +452,7 @@ func Test_MarshalDashboard_WithTableGaugeChartOptions(t *testing.T) {
 						ChartType:      "continuous",
 						BackgroundType: "gradient",
 						IsShowValues:   true,
+						ValueFormat:    "KMB",
 					},
 				},
 				DecimalPlaces: cloudhub.DecimalPlaces{

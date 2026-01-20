@@ -866,6 +866,7 @@ type ColumnSetting struct {
 	ChartType       string      `json:"chartType"`
 	BackgroundType  string      `json:"backgroundType"`
 	IsShowValues    bool        `json:"isShowValues"`
+	ValueFormat     string      `json:"valueFormat"`
 }
 
 // RenamableField is a column/row field in a DashboardCell of type Table

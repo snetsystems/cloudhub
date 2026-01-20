@@ -387,3 +387,223 @@ func Test_newDashboardResponse(t *testing.T) {
 		}
 	}
 }
+
+func TestDashboard_TableGaugeChartOptions_ValueFormat(t *testing.T) {
+	tests := []struct {
+		name string
+		d    cloudhub.Dashboard
+		want cloudhub.Dashboard
+	}{
+		{
+			name: "empty ValueFormat remains empty (frontend handles default)",
+			d: cloudhub.Dashboard{
+				Organization: "1337",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+							ColumnSettings: []cloudhub.ColumnSetting{
+								{
+									InternalName: "cpu",
+									DisplayName:  "CPU Usage",
+									Visible:      true,
+									// ValueFormat not provided, should remain empty
+								},
+							},
+						},
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Organization: "1337",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+							ColumnSettings: []cloudhub.ColumnSetting{
+								{
+									InternalName: "cpu",
+									DisplayName:  "CPU Usage",
+									Visible:      true,
+									ValueFormat:  "",
+								},
+							},
+							DecimalPlaces: cloudhub.DecimalPlaces{
+								IsEnforced: false,
+								Digits:     0,
+							},
+							IsShowValues:    true,
+							SortBy:          "name",
+							SortByDirection: "asc",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "preserves provided ValueFormat",
+			d: cloudhub.Dashboard{
+				Organization: "1337",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+							ColumnSettings: []cloudhub.ColumnSetting{
+								{
+									InternalName: "memory",
+									DisplayName:  "Memory Usage",
+									Visible:      true,
+									ValueFormat:  "KMB",
+								},
+								{
+									InternalName: "disk",
+									DisplayName:  "Disk Usage",
+									Visible:      true,
+									ValueFormat:  "KMG",
+								},
+							},
+							IsShowValues:    true,
+							SortBy:          "memory",
+							SortByDirection: "desc",
+						},
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Organization: "1337",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+							ColumnSettings: []cloudhub.ColumnSetting{
+								{
+									InternalName: "memory",
+									DisplayName:  "Memory Usage",
+									Visible:      true,
+									ValueFormat:  "KMB",
+								},
+								{
+									InternalName: "disk",
+									DisplayName:  "Disk Usage",
+									Visible:      true,
+									ValueFormat:  "KMG",
+								},
+							},
+							DecimalPlaces: cloudhub.DecimalPlaces{
+								IsEnforced: false,
+								Digits:     0,
+							},
+							IsShowValues:    true,
+							SortBy:          "memory",
+							SortByDirection: "desc",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := DashboardDefaults(tt.d)
+			want := tt.want
+			for i := range want.Cells {
+				applyTableGaugeDefaults(&want.Cells[i])
+			}
+			if !gocmp.Equal(actual, want) {
+				t.Errorf("DashboardDefaults() = diff:\n%s", gocmp.Diff(actual, want))
+			}
+		})
+	}
+}
+
+func TestValidDashboardRequest_TableGaugeChartOptions_ValueFormat(t *testing.T) {
+	tests := []struct {
+		name    string
+		d       cloudhub.Dashboard
+		want    cloudhub.Dashboard
+		wantErr bool
+	}{
+		{
+			name: "empty ValueFormat remains empty in validation",
+			d: cloudhub.Dashboard{
+				Organization: "1337",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						Queries: []cloudhub.DashboardQuery{
+							{
+								Command: "SELECT * FROM cpu",
+								Type:    "influxql",
+							},
+						},
+						TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+							ColumnSettings: []cloudhub.ColumnSetting{
+								{
+									InternalName: "cpu",
+									DisplayName:  "CPU",
+									Visible:      true,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Organization: "1337",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						Queries: []cloudhub.DashboardQuery{
+							{
+								Command: "SELECT * FROM cpu",
+								Type:    "influxql",
+							},
+						},
+						TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+							ColumnSettings: []cloudhub.ColumnSetting{
+								{
+									InternalName: "cpu",
+									DisplayName:  "CPU",
+									Visible:      true,
+									ValueFormat:  "",
+								},
+							},
+							DecimalPlaces: cloudhub.DecimalPlaces{
+								IsEnforced: false,
+								Digits:     0,
+							},
+							IsShowValues:    true,
+							SortBy:          "name",
+							SortByDirection: "asc",
+						},
+						NoteVisibility: "default",
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidDashboardRequest(&tt.d, "0")
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidDashboardRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			for i := range tt.want.Cells {
+				applyTableGaugeDefaults(&tt.want.Cells[i])
+			}
+			if diff := gocmp.Diff(tt.d, tt.want); diff != "" {
+				t.Errorf("ValidDashboardRequest() diff:\n%s", diff)
+			}
+		})
+	}
+}

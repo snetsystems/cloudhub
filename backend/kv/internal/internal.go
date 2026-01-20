@@ -427,24 +427,25 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				}
 			}
 
-			columnSettings[idx] = &ColumnSetting{
-				InternalName:    setting.InternalName,
-				DisplayName:     setting.DisplayName,
-				Visible:         setting.Visible,
-				Direction:       setting.Direction,
-				Min:             setting.Min,
-				Max:             setting.Max,
-				Colors:          colors,
-				ThresholdColors: thresholdColors,
-				Unit:            setting.Unit,
-				Prefix:          setting.Prefix,
-				Suffix:          setting.Suffix,
-				IsShowChart:     setting.IsShowChart,
-				IsPercent:       setting.IsPercent,
-				ChartType:       setting.ChartType,
-				BackgroundType:  setting.BackgroundType,
-				IsShowValues:    setting.IsShowValues,
-			}
+		columnSettings[idx] = &ColumnSetting{
+			InternalName:    setting.InternalName,
+			DisplayName:     setting.DisplayName,
+			Visible:         setting.Visible,
+			Direction:       setting.Direction,
+			Min:             setting.Min,
+			Max:             setting.Max,
+			Colors:          colors,
+			ThresholdColors: thresholdColors,
+			Unit:            setting.Unit,
+			Prefix:          setting.Prefix,
+			Suffix:          setting.Suffix,
+			IsShowChart:     setting.IsShowChart,
+			IsPercent:       setting.IsPercent,
+			ChartType:       setting.ChartType,
+			BackgroundType:  setting.BackgroundType,
+			IsShowValues:    setting.IsShowValues,
+			ValueFormat:     setting.ValueFormat,
+		}
 		}
 
 		tableGaugeChartOptions := &TableGaugeChartOptions{
@@ -683,25 +684,26 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 					}
 				}
 
-				columnSettings[idx] = cloudhub.ColumnSetting{
-					InternalName:    setting.InternalName,
-					DisplayName:     setting.DisplayName,
-					Visible:         setting.Visible,
-					Direction:       setting.Direction,
-					Min:             setting.Min,
-					Max:             setting.Max,
-					Colors:          colors,
-					ThresholdColors: thresholdColors,
-					Unit:            setting.Unit,
-					Prefix:          setting.Prefix,
-					Suffix:          setting.Suffix,
-					IsShowChart:     setting.IsShowChart,
-					IsPercent:       setting.IsPercent,
-					ChartType:       setting.ChartType,
-					BackgroundType:  setting.BackgroundType,
-					IsShowValues:    setting.IsShowValues,
-				}
-			}
+	columnSettings[idx] = cloudhub.ColumnSetting{
+		InternalName:    setting.InternalName,
+		DisplayName:     setting.DisplayName,
+		Visible:         setting.Visible,
+		Direction:       setting.Direction,
+		Min:             setting.Min,
+		Max:             setting.Max,
+		Colors:          colors,
+		ThresholdColors: thresholdColors,
+		Unit:            setting.Unit,
+		Prefix:          setting.Prefix,
+		Suffix:          setting.Suffix,
+		IsShowChart:     setting.IsShowChart,
+		IsPercent:       setting.IsPercent,
+		ChartType:       setting.ChartType,
+		BackgroundType:  setting.BackgroundType,
+		IsShowValues:    setting.IsShowValues,
+		ValueFormat:     setting.ValueFormat,
+	}
+	}
 
 			decimalPlaces := cloudhub.DecimalPlaces{}
 			if c.TableGaugeChartOptions.DecimalPlaces != nil {

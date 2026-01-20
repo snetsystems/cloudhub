@@ -82,7 +82,8 @@ message ColumnSetting {
 	bool isPercent          = 13; // Whether values are percentage-based
 	string chartType        = 14; // Chart type (e.g., continuous/segmented)
 	string backgroundType   = 15; // Background type (e.g., gradient/solid)
-	bool isShowValues		= 16; // Display value next to chart 
+	bool isShowValues		= 16; // Display value next to chart
+	string valueFormat      = 17; // Value format option (e.g., Raw/KMB/KMG)
 }
 
 message DecimalPlaces {
