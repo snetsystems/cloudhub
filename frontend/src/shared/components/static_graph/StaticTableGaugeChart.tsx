@@ -196,7 +196,7 @@ function StaticTableGaugeChart({
             thead: {
               ...col.options?.thead,
               style: {
-                width: `${80 / visibleColumns.length}%`,
+                width: `${100 / visibleColumns.length}%`,
               },
             },
           },
