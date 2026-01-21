@@ -238,6 +238,30 @@ export type NewDefaultCell = Pick<
   Exclude<keyof Cell, 'i' | 'axes' | 'colors' | 'links' | 'legend'>
 >
 
+export interface DashboardItemMeta {
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  updatedBy: string
+}
+
+export interface DashboardItem {
+  id?: string
+  name: string
+  description?: string
+  organization?: string
+  type: string
+  content: Cell
+  meta?: DashboardItemMeta
+  links?: {
+    self?: string
+  }
+}
+
+export interface DashboardItemsResponse {
+  dashboardItems: DashboardItem[]
+}
+
 export interface ProtoboardMetadata {
   name: string
   icon: string

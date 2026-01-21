@@ -142,6 +142,12 @@ class SideNav extends PureComponent<Props> {
             link={`${sourcePrefix}/infrastructure/topology`}
             title="Infrastructure"
           />
+          <NavListItem link={`${sourcePrefix}/infrastructure/topology`}>
+            Topology
+          </NavListItem>
+          <NavListItem link={`${sourcePrefix}/infrastructure/host`}>
+            Host
+          </NavListItem>
         </NavBlock>
         {isUsingAuth && (isUsingVMware || isUsingK8s || isUsingOsp) && (
           <NavBlock

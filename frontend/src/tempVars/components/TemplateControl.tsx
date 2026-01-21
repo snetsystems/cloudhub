@@ -69,13 +69,15 @@ class TemplateControl extends PureComponent<Props, State> {
 
         <label className="template-control--label">
           {template.tempVar}
-          <Authorized requiredRole={EDITOR_ROLE}>
-            <span
-              className="icon cog-thick"
-              onClick={this.handleShowSettings}
-              data-test="edit"
-            />
-          </Authorized>
+          {template.type !== TemplateType.Constant && (
+            <Authorized requiredRole={EDITOR_ROLE}>
+              <span
+                className="icon cog-thick"
+                onClick={this.handleShowSettings}
+                data-test="edit"
+              />
+            </Authorized>
+          )}
         </label>
 
         <OverlayTechnology visible={isEditing}>

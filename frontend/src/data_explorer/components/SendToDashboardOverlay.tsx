@@ -8,6 +8,7 @@ import {
   getCellTypeColors,
   normalizeTableGaugeChartOptions,
 } from 'src/dashboards/constants/cellEditor'
+import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants'
 import {
   TimeMachineContainer,
   TimeMachineContextConsumer,
@@ -25,6 +26,7 @@ import {
   ComponentColor,
   ComponentStatus,
   Input,
+  Dropdown,
 } from 'src/reusable_ui'
 
 // Constants
@@ -34,9 +36,10 @@ import {
   notifyCellSent,
   notifyCellSendFailed,
 } from 'src/shared/copy/notifications'
+import {defaultSuccessNotification, defaultErrorNotification} from 'src/shared/copy/notifications'
 
 // APIs
-import {createDashboard} from 'src/dashboards/apis'
+import {createDashboard, createDashboardItem} from 'src/dashboards/apis'
 
 // Types
 import {
@@ -87,6 +90,9 @@ interface State {
   name: string
   newDashboardName: string
   sendAllQueries: boolean
+  saveToLibrary: boolean
+  description: string
+  itemType: string
 }
 
 const NEW_DASHBOARD_ID = 'new'
@@ -100,6 +106,9 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       name: '',
       newDashboardName: '',
       sendAllQueries: false,
+      saveToLibrary: false,
+      description: '',
+      itemType: 'line',
     }
   }
   private onSendAllQueriesCheckChange = (
@@ -127,6 +136,23 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
     this.setState({newDashboardName})
   }
 
+  public handleChangeDescription = e => {
+    const description = e.target.value
+    this.setState({description})
+  }
+
+  public handleChangeItemType = (value: string) => {
+    this.setState({itemType: value})
+  }
+
+  public handleToggleSaveToLibrary = (e?: ChangeEvent<HTMLInputElement>) => {
+    if (e) {
+      this.setState({saveToLibrary: e.target.value === 'library'})
+    } else {
+      this.setState({saveToLibrary: !this.state.saveToLibrary})
+    }
+  }
+
   public render() {
     const {onCancel, queryDrafts, queryType} = this.props
     const {name, selectedIDs, newDashboardName, sendAllQueries} = this.state
@@ -142,16 +168,56 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
         <OverlayBody>
           {this.hasQuery() ? (
             <Form>
-              <Form.Element label="Target Dashboard(s)">
-                <MultiSelectDropdown
-                  onChange={this.handleSelect}
-                  selectedIDs={this.state.selectedIDs}
-                  emptyText="Choose at least 1 dashboard"
-                >
-                  {this.dropdownItems}
-                </MultiSelectDropdown>
+              <Form.Element label="Save Location">
+                <div className="form-group col-xs-12">
+                  <div className="form-control-static">
+                    <div className="radio-item">
+                      <input
+                        id="send_to_dashboard_option"
+                        type="radio"
+                        name="saveLocationRadio"
+                        value="dashboard"
+                        checked={!this.state.saveToLibrary}
+                        onChange={() => this.setState({saveToLibrary: false})}
+                      />
+                      <label
+                        htmlFor="send_to_dashboard_option"
+                        title="Send to existing dashboard(s)"
+                      >
+                        Send to Dashboard
+                      </label>
+                    </div>
+                    <div className="radio-item">
+                      <input
+                        id="save_to_library_option"
+                        type="radio"
+                        name="saveLocationRadio"
+                        value="library"
+                        checked={this.state.saveToLibrary}
+                        onChange={() => this.setState({saveToLibrary: true})}
+                      />
+                      <label
+                        htmlFor="save_to_library_option"
+                        title="Save to Library Panel"
+                      >
+                        Save to Library Panel
+                      </label>
+                    </div>
+                  </div>
+                </div>
               </Form.Element>
-              {this.isNewDashboardSelected && (
+              {!this.state.saveToLibrary && (
+                <Form.Element label="Target Dashboard(s)">
+                  <MultiSelectDropdown
+                    onChange={this.handleSelect}
+                    selectedIDs={this.state.selectedIDs}
+                    emptyText="Choose at least 1 dashboard"
+                  >
+                    {this.dropdownItems}
+                  </MultiSelectDropdown>
+                </Form.Element>
+              )}
+              {!this.state.saveToLibrary && this.isNewDashboardSelected && (
                 <Form.Element label="Name new dashboard">
                   <Input
                     value={newDashboardName}
@@ -160,14 +226,68 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
                   />
                 </Form.Element>
               )}
-              <Form.Element label="Cell Name">
-                <Input
-                  value={name}
-                  onChange={this.handleChangeName}
-                  placeholder={'Name this new cell'}
-                />
-              </Form.Element>
-              {multipleQueries && (
+              {!this.state.saveToLibrary && (
+                <Form.Element label="Cell Name">
+                  <Input
+                    value={name}
+                    onChange={this.handleChangeName}
+                    placeholder={'Name this new cell'}
+                  />
+                </Form.Element>
+              )}
+              {this.state.saveToLibrary && (
+                <Form.Element label="Name">
+                  <Input
+                    value={name}
+                    onChange={this.handleChangeName}
+                    placeholder={'Name this dashboard item'}
+                  />
+                </Form.Element>
+              )}
+              {this.state.saveToLibrary && (
+                <Form.Element label="Type">
+                  <Dropdown
+                    selectedID={this.state.itemType}
+                    onChange={this.handleChangeItemType}
+                    buttonColor={ComponentColor.Default}
+                  >
+                    <Dropdown.Item id="line" value="line">
+                      Line
+                    </Dropdown.Item>
+                    <Dropdown.Item id="stacked" value="stacked">
+                      Stacked
+                    </Dropdown.Item>
+                    <Dropdown.Item id="step-plot" value="step-plot">
+                      Step Plot
+                    </Dropdown.Item>
+                    <Dropdown.Item id="bar" value="bar">
+                      Bar
+                    </Dropdown.Item>
+                    <Dropdown.Item id="line-plus-single-stat" value="line-plus-single-stat">
+                      Line + Single Stat
+                    </Dropdown.Item>
+                    <Dropdown.Item id="single-stat" value="single-stat">
+                      Single Stat
+                    </Dropdown.Item>
+                    <Dropdown.Item id="gauge" value="gauge">
+                      Gauge
+                    </Dropdown.Item>
+                    <Dropdown.Item id="table" value="table">
+                      Table
+                    </Dropdown.Item>
+                  </Dropdown>
+                </Form.Element>
+              )}
+              {this.state.saveToLibrary && (
+                <Form.Element label="Description">
+                  <Input
+                    value={this.state.description}
+                    onChange={this.handleChangeDescription}
+                    placeholder={'Description (optional)'}
+                  />
+                </Form.Element>
+              )}
+              {!this.state.saveToLibrary && multipleQueries && (
                 <Form.Element label="Queries">
                   <div className="form-group col-xs-12">
                     <div className="form-control-static">
@@ -208,13 +328,23 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
                 </Form.Element>
               )}
               <Form.Footer>
-                <Button
-                  color={ComponentColor.Success}
-                  text={`Send to ${numberDashboards} Dashboard${pluralizer}`}
-                  titleText="Must choose at least 1 dashboard and set a name"
-                  status={this.submitButtonStatus}
-                  onClick={this.sendToDashboard}
-                />
+                {this.state.saveToLibrary ? (
+                  <Button
+                    color={ComponentColor.Success}
+                    text="Save Item"
+                    titleText="Must set a name"
+                    status={this.saveItemButtonStatus}
+                    onClick={this.saveToLibrary}
+                  />
+                ) : (
+                  <Button
+                    color={ComponentColor.Success}
+                    text={`Send to ${numberDashboards} Dashboard${pluralizer}`}
+                    titleText="Must choose at least 1 dashboard and set a name"
+                    status={this.submitButtonStatus}
+                    onClick={this.sendToDashboard}
+                  />
+                )}
                 <Button text="Cancel" onClick={onCancel} />
               </Form.Footer>
             </Form>
@@ -332,6 +462,16 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
     const {name, selectedIDs} = this.state
 
     if (selectedIDs.length === 0 || name.trim().length === 0) {
+      return ComponentStatus.Disabled
+    }
+
+    return ComponentStatus.Default
+  }
+
+  private get saveItemButtonStatus(): ComponentStatus {
+    const {name} = this.state
+
+    if (name.trim().length === 0) {
       return ComponentStatus.Disabled
     }
 
@@ -476,6 +616,119 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
     )
     this.notifyResolutions(resolved, name)
     onCancel()
+  }
+
+  private saveToLibrary = async () => {
+    const {name, description, itemType} = this.state
+    const {
+      queryType,
+      script,
+      source,
+      onCancel,
+      notify,
+      visualizationOptions,
+      graphOptions,
+      isStaticLegend,
+      staticLegendPosition,
+      queryDrafts,
+      tableGaugeChartOptions,
+    } = this.props
+    const {
+      type,
+      gaugeColors,
+      thresholdsListColors,
+      lineColors,
+      axes,
+      decimalPlaces,
+      timeFormat,
+      note,
+      noteVisibility,
+      fieldOptions,
+      tableOptions,
+    } = visualizationOptions
+    const isFluxQuery = queryType === QueryType.Flux
+
+    let newCellQueries: CellQuery[]
+
+    if (isFluxQuery) {
+      newCellQueries = [
+        {
+          queryConfig: null,
+          query: script,
+          source: source.links.self,
+          type: QueryType.Flux,
+        },
+      ]
+    } else {
+      const createInfluxQLCellQuery = (queryConfig: QueryConfig): CellQuery => {
+        const rawText = this.rawText(queryConfig)
+        return {
+          queryConfig,
+          query: rawText,
+          source: source.links.self,
+          type: QueryType.InfluxQL,
+        }
+      }
+      newCellQueries = [createInfluxQLCellQuery(this.activeQueryConfig)]
+    }
+
+    const colors: ColorString[] = getCellTypeColors({
+      cellType: type,
+      gaugeColors,
+      thresholdsListColors,
+      lineColors,
+    })
+
+    const legend = isStaticLegend
+      ? {...STATIC_LEGEND, orientation: staticLegendPosition}
+      : {orientation: staticLegendPosition}
+
+    // Use NEW_DEFAULT_DASHBOARD_CELL directly since we don't need dashboard context
+    // Generate a unique ID for the cell
+    const cellId = `cell-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const cellContent: Partial<Cell> = {
+      ...NEW_DEFAULT_DASHBOARD_CELL,
+      i: cellId, // Add unique ID for the cell
+      name,
+      queries: newCellQueries,
+      type: itemType as any, // Use selected itemType instead of visualizationOptions.type
+      axes,
+      legend,
+      colors,
+      decimalPlaces,
+      timeFormat,
+      note,
+      noteVisibility,
+      fieldOptions,
+      tableOptions,
+      graphOptions,
+      tableGaugeChartOptions: normalizeTableGaugeChartOptions(
+        tableGaugeChartOptions
+      ),
+    }
+
+    try {
+      const response = await createDashboardItem({
+        name,
+        description: description || undefined,
+        type: itemType,
+        content: cellContent as Cell,
+      })
+      
+      console.log('Dashboard item created:', response)
+      notify({
+        ...defaultSuccessNotification,
+        icon: 'dash-h',
+        message: `Dashboard item "${name}" saved successfully`,
+      } as Notification)
+      onCancel()
+    } catch (error) {
+      notify({
+        ...defaultErrorNotification,
+        icon: 'dash-h',
+        message: `Failed to save dashboard item: ${error.message || 'Unknown error'}`,
+      } as Notification)
+    }
   }
 }
 

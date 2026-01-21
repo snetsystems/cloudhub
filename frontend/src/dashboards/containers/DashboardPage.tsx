@@ -9,6 +9,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import CellEditorOverlay from 'src/dashboards/components/CellEditorOverlay'
 import DashboardHeader from 'src/dashboards/components/DashboardHeader'
 import Dashboard from 'src/dashboards/components/Dashboard'
+import ImportOverlay from 'src/dashboards/components/ImportOverlay'
 import ManualRefresh from 'src/shared/components/ManualRefresh'
 import TemplateControlBar from 'src/tempVars/components/TemplateControlBar'
 import AnnotationControlBar from 'src/shared/components/AnnotationControlBar'
@@ -35,7 +36,7 @@ import {getTimeRange, getRefreshRate} from 'src/dashboards/selectors'
 import {annotationsError} from 'src/shared/copy/notifications'
 
 // APIs
-import {loadDashboardLinks} from 'src/dashboards/apis'
+import {loadDashboardLinks, addDashboardCell as addDashboardCellAPI} from 'src/dashboards/apis'
 
 // Constants
 import {interval, DASHBOARD_LAYOUT_ROW_HEIGHT} from 'src/shared/constants'
@@ -105,6 +106,7 @@ interface Props extends ManualRefreshProps, WithRouterProps {
   putDashboardByID: typeof dashboardActions.putDashboardByID
   getDashboardsAsync: typeof dashboardActions.getDashboardsAsync
   addDashboardCellAsync: typeof dashboardActions.addDashboardCellAsync
+  addDashboardCell: typeof dashboardActions.addDashboardCell
   editCellQueryStatus: typeof dashboardActions.editCellQueryStatus
   updateDashboardCell: typeof dashboardActions.updateDashboardCell
   cloneDashboardCellAsync: typeof dashboardActions.cloneDashboardCellAsync
@@ -124,6 +126,7 @@ interface State {
   dashboardLinks: DashboardsModels.DashboardSwitcherLinks
   showAnnotationControls: boolean
   showCellEditorOverlay: boolean
+  showImportOverlay: boolean
 }
 
 @ErrorHandling
@@ -138,6 +141,7 @@ class DashboardPage extends Component<Props, State> {
       dashboardLinks: EMPTY_LINKS,
       showAnnotationControls: false,
       showCellEditorOverlay: false,
+      showImportOverlay: false,
     }
   }
 
@@ -320,6 +324,7 @@ class DashboardPage extends Component<Props, State> {
           autoRefresh={refreshRate}
           isHidden={inPresentationMode}
           onAddCell={this.handleAddCell}
+          onImportFromLibrary={this.handleShowImportOverlay}
           onManualRefresh={onManualRefresh}
           zoomedTimeRange={zoomedTimeRange}
           onRenameDashboard={this.handleRenameDashboard}
@@ -343,6 +348,11 @@ class DashboardPage extends Component<Props, State> {
             source={source}
           />
         )}
+        <ImportOverlay
+          isVisible={this.state.showImportOverlay}
+          onDismiss={this.handleHideImportOverlay}
+          onImportItems={this.handleImportItems}
+        />
         {!inPresentationMode && showAnnotationControls && (
           <AnnotationControlBar dashboardID={dashboardID} source={source} />
         )}
@@ -452,6 +462,113 @@ class DashboardPage extends Component<Props, State> {
     }, WAIT_FOR_ANIMATION)
   }
 
+  private handleShowImportOverlay = () => {
+    this.setState({showImportOverlay: true})
+  }
+
+  private handleHideImportOverlay = () => {
+    this.setState({showImportOverlay: false})
+  }
+
+  private calculateNextCellPosition = (
+    cells: DashboardsModels.Cell[],
+    newCellWidth: number = 4,
+    newCellHeight: number = 4
+  ): {x: number; y: number} => {
+    const MAX_COLUMNS = 96
+
+    if (cells.length === 0) {
+      return {x: 0, y: 0}
+    }
+
+    // Find the bottommost row
+    const farthestY = Math.max(...cells.map(cell => cell.y || 0))
+
+    // Find cells in the bottommost row
+    const bottomCells = cells.filter(cell => (cell.y || 0) === farthestY)
+
+    // Find the rightmost cell in the bottom row
+    const farthestX = Math.max(...bottomCells.map(cell => (cell.x || 0) + (cell.w || 4)))
+    const lastCell = bottomCells.find(
+      cell => (cell.x || 0) + (cell.w || 4) === farthestX
+    )
+
+    if (!lastCell) {
+      return {x: 0, y: farthestY + (bottomCells[0]?.h || 4)}
+    }
+
+    // Check if there's space to the right
+    const availableSpace = MAX_COLUMNS - farthestX
+    const newCellFits = availableSpace >= newCellWidth
+
+    return newCellFits
+      ? {
+          x: farthestX,
+          y: farthestY,
+        }
+      : {
+          x: 0,
+          y: farthestY + (lastCell.h || 4),
+        }
+  }
+
+  private handleImportItems = async (
+    items: DashboardsModels.DashboardItem[]
+  ): Promise<void> => {
+    const {dashboard, notify} = this.props
+    const {addDashboardCell: addDashboardCellAction} = dashboardActions
+
+    try {
+      // Calculate positions for all cells upfront to avoid overlapping
+      let currentCells = [...dashboard.cells]
+      let currentDashboard = dashboard
+      
+      for (const item of items) {
+        // Convert DashboardItem to Cell
+        const cell: Partial<DashboardsModels.Cell> = {
+          ...item.content,
+          name: item.name,
+          type: item.type as DashboardsModels.CellType,
+        }
+
+        // Calculate position for the new cell based on current cells
+        const position = this.calculateNextCellPosition(
+          currentCells,
+          cell.w || 4,
+          cell.h || 4
+        )
+        cell.x = position.x
+        cell.y = position.y
+
+        // Add cell to dashboard via API and get the created cell back
+        const response = await addDashboardCellAPI(currentDashboard, cell)
+        const createdCell = response.data
+        
+        // Dispatch Redux action to update store with the created cell
+        this.props.addDashboardCell(currentDashboard, createdCell)
+        
+        // Update currentCells and currentDashboard for next iteration
+        currentCells = [...currentCells, createdCell]
+        currentDashboard = {...currentDashboard, cells: currentCells}
+      }
+
+      notify({
+        type: 'success',
+        icon: 'checkmark',
+        message: `Successfully imported ${items.length} panel(s)`,
+        duration: 220
+      })
+    } catch (error) {
+      console.error('Failed to import items:', error)
+      notify({
+        type: 'error',
+        icon: 'alert-triangle',
+        message: 'Failed to import panels',
+        duration: 220
+      })
+    }
+  }
+
   private handleChooseAutoRefresh = (
     autoRefreshOption: AutoRefreshOption
   ): void => {
@@ -528,8 +645,8 @@ class DashboardPage extends Component<Props, State> {
       templateVariableLocalSelected,
       rehydrateTemplatesAsync,
     } = this.props
-    
-    if(template !== undefined) {
+
+    if (template !== undefined) {
       templateVariableLocalSelected(dashboard.id, template.id, value)
       rehydrateTemplatesAsync(dashboard.id, source, sources)
     }
@@ -641,6 +758,7 @@ const mdtp = {
   putDashboardByID: dashboardActions.putDashboardByID,
   getDashboardsAsync: dashboardActions.getDashboardsAsync,
   addDashboardCellAsync: dashboardActions.addDashboardCellAsync,
+  addDashboardCell: dashboardActions.addDashboardCell,
   editCellQueryStatus: dashboardActions.editCellQueryStatus,
   updateDashboardCell: dashboardActions.updateDashboardCell,
   cloneDashboardCellAsync: dashboardActions.cloneDashboardCellAsync,

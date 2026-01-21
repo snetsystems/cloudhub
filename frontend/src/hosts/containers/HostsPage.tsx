@@ -18,13 +18,24 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import {getLocalStorage} from 'src/shared/middleware/localStorage'
 
 // Types
-import {Source, Links, Layout, TimeRange, RemoteDataState} from 'src/types'
+import {
+  Source,
+  Links,
+  Layout,
+  TimeRange,
+  RemoteDataState,
+  Template,
+} from 'src/types'
 import {CloudServiceProvider} from 'src/hosts/types/cloud'
+import {DashboardItem} from 'src/types/dashboards'
 
 interface Props extends ManualRefreshProps {
   source: Source
   links: Links
   timeRange: TimeRange
+  templates?: Template[]
+  onAddCellsFromLibrary?: DashboardItem[]
+  onCellsAdded?: () => void
 }
 
 interface State {
@@ -117,7 +128,13 @@ export class HostsPage extends PureComponent<Props, State> {
     }
     switch (activeCspTab) {
       case 'Host': {
-        return <HostsPageHostTab {...this.props} tableTitle={this.tableTitle} />
+        return (
+          <HostsPageHostTab
+            {...this.props}
+            tableTitle={this.tableTitle}
+            onCellsAdded={this.props.onCellsAdded}
+          />
+        )
       }
       case CloudServiceProvider.AWS: {
         return <HostsPageAwsTab {...this.props} tableTitle={this.tableTitle} />

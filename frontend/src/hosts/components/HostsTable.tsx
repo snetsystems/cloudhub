@@ -196,6 +196,8 @@ class HostsTable extends PureComponent<Props, State> {
       <div className="hosts-table">
         {this.HostsTableHeader}
         <FancyScrollbar
+          autoHide={true}
+          autoHeight={false}
           children={sortedHosts.map(h => (
             <HostRow
               key={h.name}

@@ -7,14 +7,9 @@ import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
 import RenameDashboard from 'src/dashboards/components/rename_dashboard/RenameDashboard'
 import DashboardSwitcher from 'src/dashboards/components/DashboardSwitcher'
+import AddPanelDropdown from 'src/dashboards/components/AddPanelDropdown'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
-import {
-  Button,
-  ComponentColor,
-  ButtonShape,
-  IconFont,
-  Page,
-} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
 
 // Types
 import * as AppActions from 'src/types/actions/app'
@@ -45,6 +40,7 @@ interface Props {
   onManualRefresh: () => void
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   onAddCell: () => void
+  onImportFromLibrary?: () => void
   showTempVarControls?: boolean
   onToggleShowTempVarControls?: () => void
   showAnnotationControls: boolean
@@ -153,20 +149,32 @@ class DashboardHeader extends Component<Props, State> {
   }
 
   private get addCellButton(): JSX.Element {
-    const {dashboard, onAddCell} = this.props
+    const {dashboard, onAddCell, onImportFromLibrary} = this.props
 
-    if (dashboard) {
+    if (dashboard || onAddCell || onImportFromLibrary) {
       return (
         <Authorized requiredRole={EDITOR_ROLE}>
-          <Button
-            shape={ButtonShape.Square}
-            color={ComponentColor.Primary}
-            icon={IconFont.AddCell}
-            onClick={onAddCell}
-            titleText="Add a Cell to Dashboard"
-          />
+          <AddPanelDropdown onSelect={this.handleSelectAddOption} />
         </Authorized>
       )
+    }
+  }
+
+  private handleSelectAddOption = (option: string): void => {
+    const {onAddCell, onImportFromLibrary} = this.props
+
+    switch (option) {
+      case 'visualization':
+        onAddCell()
+        break
+      case 'import':
+        if (onImportFromLibrary) {
+          onImportFromLibrary()
+        }
+        break
+      default:
+        console.log(`Selected option: ${option}`)
+        break
     }
   }
 

@@ -143,3 +143,33 @@ export const editTemplateVariables = async templateVariable => {
     throw error
   }
 }
+
+export const getDashboardItems = async () => {
+  try {
+    return await AJAX({
+      method: 'GET',
+      url: '/cloudhub/v1/dashboard-items',
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const createDashboardItem = async (dashboardItem: {
+  name: string
+  description?: string
+  type: string
+  content: any
+}) => {
+  try {
+    return await AJAX({
+      method: 'POST',
+      url: '/cloudhub/v1/dashboard-items',
+      data: dashboardItem,
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}

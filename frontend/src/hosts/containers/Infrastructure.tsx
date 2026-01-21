@@ -5,16 +5,16 @@ import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 
 // Components
-import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
+import {Page} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
-import GraphTips from 'src/shared/components/GraphTips'
 import HostsPage from 'src/hosts/containers/HostsPage'
 import InventoryTopology from 'src/hosts/containers/InventoryTopology'
+import DashboardHeader from 'src/dashboards/components/DashboardHeader'
+import ImportOverlay from 'src/dashboards/components/ImportOverlay'
+import TemplateControlBar from 'src/tempVars/components/TemplateControlBar'
 
 // Actions
 import {
@@ -31,10 +31,16 @@ import {
   TimeRange,
   RefreshRate,
   NotificationAction,
+  Template,
+  TemplateValue,
+  TimeZones,
+  Me,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as AppActions from 'src/types/actions/app'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
+import {setTimeZone} from 'src/shared/actions/app'
+import {toggleTemplateVariableControlBar} from 'src/shared/actions/app'
 
 import {
   loadCloudServiceProvidersAsync,
@@ -48,6 +54,13 @@ import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/aut
 // Constants
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
+import {generateForHosts} from 'src/utils/tempVars'
+import {createTimeRangeTemplates} from 'src/shared/utils/templates'
+import {interval} from 'src/shared/constants'
+import {
+  getLocalStorage,
+  setLocalStorage,
+} from 'src/shared/middleware/localStorage'
 
 interface RouterProps extends InjectedRouter {
   params: RouterState['params']
@@ -68,19 +81,22 @@ interface Props extends ManualRefreshProps {
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
   router: RouterProps
+  timeZone: TimeZones
+  onSetTimeZone: typeof setTimeZone
+  showTemplateVariableControlBar: boolean
+  toggleTemplateVariableControlBar: typeof toggleTemplateVariableControlBar
+  me: Me
+  isUsingAuth: boolean
 }
 
 interface State {
   timeRange: TimeRange
   activeTab: string
   autoRefreshOptions: AutoRefreshOption[] | null
-  headerRadioButtons: {
-    id: string
-    titleText: string
-    value: string
-    active: string
-    label: string
-  }[]
+  templates: Template[]
+  zoomedTimeRange: TimeRange
+  showImportOverlay: boolean
+  selectedDashboardItems: any[]
 }
 
 @ErrorHandling
@@ -88,13 +104,24 @@ class Infrastructure extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
+    // 로컬 스토리지에서 template variables 복원
+    const savedTemplates = getLocalStorage('infrastructureTemplates')
+    const initialTemplates =
+      savedTemplates?.templates || generateForHosts(props.source)
+
     this.state = {
       timeRange:
         props.cloudTimeRange?.infrastructure ??
         timeRanges.find(tr => tr.lower === 'now() - 1h'),
       autoRefreshOptions: getTimeOptionByGroup('topology'),
       activeTab: 'topology',
-      headerRadioButtons: [],
+      templates: initialTemplates,
+      zoomedTimeRange: {
+        upper: null,
+        lower: null,
+      },
+      showImportOverlay: false,
+      selectedDashboardItems: [],
     }
   }
 
@@ -110,33 +137,46 @@ class Infrastructure extends PureComponent<Props, State> {
       : onChooseAutoRefresh(milliseconds)
   }
 
+  public componentDidMount() {
+    // host 탭일 때 template variable control bar를 기본적으로 표시
+    const {
+      router,
+      showTemplateVariableControlBar,
+      toggleTemplateVariableControlBar,
+    } = this.props
+    const infraTab = _.get(router.params, 'infraTab', 'topology')
+
+    if (infraTab === 'host' && !showTemplateVariableControlBar) {
+      toggleTemplateVariableControlBar()
+    }
+  }
+
   public static getDerivedStateFromProps(nextProps: Props) {
     const {router} = nextProps
 
     const infraTab = _.get(router.params, 'infraTab', 'topology')
-    const defaultHeaderRadioButtons = [
-      {
-        id: 'hostspage-tab-InventoryTopology',
-        titleText: 'InventoryTopology',
-        value: 'topology',
-        active: 'topology',
-        label: 'Topology',
-      },
-      {
-        id: 'hostspage-tab-Host',
-        titleText: 'Host',
-        value: 'host',
-        active: 'host',
-        label: 'Host',
-      },
-    ]
-
-    const headerRadioButtons = [...defaultHeaderRadioButtons]
-
     return {
       autoRefreshOptions: getTimeOptionByGroup(infraTab),
       activeTab: infraTab,
-      headerRadioButtons,
+    }
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    // 탭이 host로 변경될 때 template variable control bar를 표시
+    const {
+      router,
+      showTemplateVariableControlBar,
+      toggleTemplateVariableControlBar,
+    } = this.props
+    const prevInfraTab = _.get(prevProps.router.params, 'infraTab', 'topology')
+    const infraTab = _.get(router.params, 'infraTab', 'topology')
+
+    if (
+      infraTab === 'host' &&
+      prevInfraTab !== 'host' &&
+      !showTemplateVariableControlBar
+    ) {
+      toggleTemplateVariableControlBar()
     }
   }
 
@@ -148,66 +188,83 @@ class Infrastructure extends PureComponent<Props, State> {
       onManualRefresh,
       inPresentationMode,
       source,
+      timeZone,
+      onSetTimeZone,
+      showTemplateVariableControlBar,
+      me,
+      isUsingAuth,
     } = this.props
-    const {
-      activeTab,
+    const {activeTab, timeRange, templates, zoomedTimeRange} = this.state
+
+    const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
       timeRange,
-      headerRadioButtons,
-      autoRefreshOptions,
-    } = this.state
+      zoomedTimeRange
+    )
+
+    const templatesIncludingDashTime = [
+      ...templates,
+      dashboardTime,
+      upperDashboardTime,
+      interval,
+    ]
 
     return (
       <Page className="hosts-list-page">
-        <Page.Header inPresentationMode={inPresentationMode}>
-          <Page.Header.Left>
-            <Page.Title title={'Infrastructure'} />
-          </Page.Header.Left>
-          <Page.Header.Center widthPixels={headerRadioButtons.length * 90}>
-            <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
-              {headerRadioButtons.map(rBtn => {
-                return (
-                  <Radio.Button
-                    key={rBtn.titleText}
-                    id={rBtn.id}
-                    titleText={rBtn.titleText}
-                    value={rBtn.value}
-                    active={activeTab === rBtn.active}
-                    onClick={this.onChooseActiveTab}
-                  >
-                    {rBtn.label}
-                  </Radio.Button>
-                )
-              })}
-            </div>
-          </Page.Header.Center>
-
-          <Page.Header.Right showSourceIndicator={true}>
-            {activeTab !== 'topology' && <GraphTips />}
-            <AutoRefreshDropdown
-              selected={autoRefresh}
-              onChoose={this.handleChooseAutoRefresh}
-              onManualRefresh={onManualRefresh}
-              customAutoRefreshOptions={autoRefreshOptions}
-              customAutoRefreshSelected={cloudAutoRefresh}
-            />
-            <TimeRangeDropdown
-              //@ts-ignore
-              onChooseTimeRange={this.handleChooseTimeRange}
-              selected={timeRange}
-            />
-            <Button
-              icon={IconFont.ExpandA}
-              onClick={this.handleClickPresentationButton}
-              shape={ButtonShape.Square}
-              titleText="Enter Full-Screen Presentation Mode"
-            />
-          </Page.Header.Right>
-        </Page.Header>
+        <DashboardHeader
+          dashboard={null}
+          timeRange={timeRange}
+          timeZone={timeZone}
+          onSetTimeZone={onSetTimeZone}
+          autoRefresh={autoRefresh}
+          isHidden={inPresentationMode}
+          onAddCell={() => {}}
+          onImportFromLibrary={this.handleShowImportOverlay}
+          onManualRefresh={onManualRefresh}
+          zoomedTimeRange={zoomedTimeRange}
+          onRenameDashboard={undefined}
+          dashboardLinks={{links: [], active: undefined}}
+          activeDashboard="Infrastructure"
+          showAnnotationControls={false}
+          showTempVarControls={showTemplateVariableControlBar}
+          handleChooseAutoRefresh={this.handleChooseAutoRefresh}
+          handleChooseTimeRange={this.handleChooseTimeRange}
+          onToggleShowTempVarControls={
+            this.props.toggleTemplateVariableControlBar
+          }
+          onToggleShowAnnotationControls={undefined}
+          handleClickPresentationButton={
+            this.props.handleClickPresentationButton
+          }
+        />
+        {!inPresentationMode && showTemplateVariableControlBar && (
+          <TemplateControlBar
+            templates={templates}
+            me={me}
+            isUsingAuth={isUsingAuth}
+            onSaveTemplates={this.handleSaveTemplates}
+            onPickTemplate={this.handlePickTemplate}
+            source={source}
+          />
+        )}
+        <ImportOverlay
+          isVisible={this.state.showImportOverlay}
+          onDismiss={this.handleHideImportOverlay}
+          onImportItems={this.handleImportDashboardItems}
+        />
         <Page.Contents scrollable={true} fullWidth={activeTab !== 'host'}>
           <>
             {activeTab === 'host' && (
               //@ts-ignore
-              <HostsPage {...this.props} timeRange={timeRange} />
+              <HostsPage
+                {...this.props}
+                timeRange={timeRange}
+                templates={templatesIncludingDashTime}
+                onAddCellsFromLibrary={this.state.selectedDashboardItems}
+                onCellsAdded={() => {
+                  // Cells added, reset state
+                  this.setState({selectedDashboardItems: []})
+                }}
+              />
             )}
             {activeTab === 'topology' && (
               //@ts-ignore
@@ -224,39 +281,81 @@ class Infrastructure extends PureComponent<Props, State> {
     )
   }
 
-  private handleChooseTimeRange = ({lower, upper}) => {
+  private handleChooseTimeRange = (timeRange: TimeRange): void => {
     const {onChooseCloudTimeRange} = this.props
-    if (upper) {
-      this.setState({timeRange: {lower, upper}})
+    if (timeRange.upper) {
+      this.setState({
+        timeRange: {lower: timeRange.lower, upper: timeRange.upper},
+      })
       onChooseCloudTimeRange({
-        infrastructure: {lower, upper},
+        infrastructure: {lower: timeRange.lower, upper: timeRange.upper},
       })
     } else {
-      const timeRange = timeRanges.find(range => range.lower === lower)
-      this.setState({timeRange})
-      onChooseCloudTimeRange({
-        infrastructure: timeRange,
-      })
+      const foundTimeRange = timeRanges.find(
+        range => range.lower === timeRange.lower
+      )
+      if (foundTimeRange) {
+        this.setState({timeRange: foundTimeRange})
+        onChooseCloudTimeRange({
+          infrastructure: foundTimeRange,
+        })
+      }
     }
   }
 
-  private handleClickPresentationButton = (): void => {
-    this.props.handleClickPresentationButton()
+  private handleShowImportOverlay = () => {
+    this.setState({showImportOverlay: true})
   }
 
-  private onChooseActiveTab = (activeTab: string): void => {
-    const {router, source} = this.props
-    router.push(`/sources/${source.id}/infrastructure/${activeTab}`)
+  private handleHideImportOverlay = () => {
+    this.setState({showImportOverlay: false})
+  }
+
+  private handleImportDashboardItems = (items: any[]) => {
+    this.setState({selectedDashboardItems: items})
+  }
+
+  private handleSaveTemplates = (newTemplates: Template[]): void => {
+    this.setState({templates: newTemplates})
+    setLocalStorage('infrastructureTemplates', {templates: newTemplates})
+  }
+
+  private handlePickTemplate = (
+    template: Template,
+    value: TemplateValue
+  ): void => {
+    const {templates} = this.state
+    const updatedTemplates = templates.map(t => {
+      if (t.id === template.id) {
+        return {
+          ...t,
+          values: t.values.map(v => ({
+            ...v,
+            localSelected: v.value === value.value,
+          })),
+        }
+      }
+      return t
+    })
+    this.setState({templates: updatedTemplates})
+    setLocalStorage('infrastructureTemplates', {templates: updatedTemplates})
   }
 }
 
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh, cloudAutoRefresh, cloudTimeRange},
+      persisted: {
+        autoRefresh,
+        cloudAutoRefresh,
+        cloudTimeRange,
+        showTemplateVariableControlBar,
+        timeZone,
+      },
       ephemeral: {inPresentationMode},
     },
     links,
+    auth,
   } = state
   return {
     links,
@@ -264,6 +363,10 @@ const mstp = state => {
     cloudTimeRange,
     cloudAutoRefresh,
     inPresentationMode,
+    showTemplateVariableControlBar,
+    timeZone,
+    me: auth.me,
+    isUsingAuth: !!auth.me,
   }
 }
 
@@ -282,6 +385,11 @@ const mdtp = dispatch => ({
   ),
   handleGetAWSInstancesAsync: bindActionCreators(
     getAWSInstancesAsync,
+    dispatch
+  ),
+  onSetTimeZone: bindActionCreators(setTimeZone, dispatch),
+  toggleTemplateVariableControlBar: bindActionCreators(
+    toggleTemplateVariableControlBar,
     dispatch
   ),
 })
