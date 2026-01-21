@@ -505,6 +505,11 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			Type:    t.Type,
 			Label:   t.Label,
 		}
+		if t.Options != nil {
+			template.Options = &TemplateOptions{
+				IsAllEnabled: t.Options.IsAllEnabled,
+			}
+		}
 		if t.Query != nil {
 			template.Query = &TemplateQuery{
 				Command:     t.Query.Command,
@@ -793,6 +798,12 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			},
 			Type:  t.Type,
 			Label: t.Label,
+		}
+
+		if t.Options != nil {
+			template.Options = &cloudhub.TemplateOptions{
+				IsAllEnabled: t.Options.IsAllEnabled,
+			}
 		}
 
 		if t.Query != nil {
