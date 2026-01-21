@@ -14,7 +14,7 @@ import {
   GetDashboards,
   LoadLinksOptions,
 } from 'src/types/apis/dashboards'
-import {DashboardSwitcherLinks} from 'src/types/dashboards'
+import {DashboardSwitcherLinks, Dashboard} from 'src/types/dashboards'
 import {Source, Protoboard} from 'src/types'
 
 export const getDashboards: GetDashboards = () => {
@@ -22,6 +22,48 @@ export const getDashboards: GetDashboards = () => {
     method: 'GET',
     resource: 'dashboards',
   }) as Promise<AxiosResponse<DashboardsResponse>>
+}
+
+/**
+ * Get builtin dashboard by name from the store.
+ * Returns the dashboard instance stored in the store for the current organization,
+ * not the JSON template. This instance may have been modified by admins.
+ */
+export const getBuiltinDashboardByName = async (
+  name: string
+): Promise<Dashboard | null> => {
+  try {
+    const {
+      data: {dashboards},
+    } = await getDashboards()
+    const builtinDashboard = dashboards.find(
+      d => d.type === 'builtin' && d.name === name
+    )
+    return builtinDashboard || null
+  } catch (error) {
+    console.error('Failed to get builtin dashboard:', error)
+    return null
+  }
+}
+
+/**
+ * Get original builtin dashboard template by name from backend.
+ * Returns the original JSON template (not the modified instance in the store).
+ * @param name Dashboard name (unique identifier, e.g., "Host Page")
+ */
+export const getBuiltinDashboardTemplate = async (
+  name: string
+): Promise<Dashboard | null> => {
+  try {
+    const response = await (AJAX<Dashboard>({
+      method: 'GET',
+      url: `/cloudhub/v1/builtin/dashboards/${encodeURIComponent(name)}/template`,
+    }) as Promise<AxiosResponse<Dashboard>>)
+    return response.data
+  } catch (error) {
+    console.error('Failed to get builtin dashboard template:', error)
+    return null
+  }
 }
 
 export const loadDashboardLinks = async (
@@ -49,9 +91,12 @@ export const getDashboard = async dashboardID => {
 }
 
 export const updateDashboard = dashboard => {
+  // links.self가 있으면 사용하고, 없으면 dashboardID로 URL 구성
+  const url =
+    dashboard.links?.self || `/cloudhub/v1/dashboards/${dashboard.id}`
   return AJAX({
     method: 'PUT',
-    url: dashboard.links.self,
+    url,
     data: dashboard,
   })
 }

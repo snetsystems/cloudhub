@@ -130,6 +130,7 @@ export enum CellType {
   StaticStackedBar = 'staticStackedBar',
   StaticLineChart = 'staticLineChart',
   StaticTableGaugeChart = 'staticTableGaugeChart',
+  HostTable = 'host-table',
 }
 
 interface DashboardLinks {
@@ -144,6 +145,7 @@ export interface Dashboard {
   templates: Template[]
   name: string
   organization: string
+  type?: string // 'normal' (default) or 'builtin'
   links?: DashboardLinks
 }
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/builtin"
 )
 
 // getDashboardType returns "normal" if typeStr is empty, otherwise returns typeStr as-is.
@@ -341,4 +342,35 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 		newDash.Cells[i] = c
 	}
 	return
+}
+
+// BuiltinDashboardTemplate returns the original JSON template for a builtin dashboard by file name
+// GET /cloudhub/v1/builtin/dashboards/:name/template
+// The name parameter should be the dashboard file name without extension (e.g., "hostpage" for "hostpage.json")
+func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Request) {
+	name, err := paramStr("name", r)
+	if err != nil {
+		Error(w, http.StatusBadRequest, "Dashboard name is required", s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	builtinStore := &builtin.BinDashboardsStore{
+		Logger: s.Logger,
+	}
+
+	// Get template by dashboard name (unique identifier, not filename)
+	template, err := builtinStore.Get(ctx, name)
+	if err != nil {
+		if err == cloudhub.ErrDashboardNotFound {
+			notFound(w, name, s.Logger)
+			return
+		}
+		Error(w, http.StatusInternalServerError, "Error loading builtin dashboard template", s.Logger)
+		return
+	}
+
+	// Return the template as-is (without organization or ID set)
+	res := newDashboardResponse(template)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
 }

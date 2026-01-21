@@ -375,6 +375,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/dashboards/:id/templates/:tid", EnsureEditor(service.RemoveTemplate))
 	router.PUT("/cloudhub/v1/dashboards/:id/templates/:tid", EnsureEditor(service.ReplaceTemplate))
 
+	// Builtin Dashboard Templates
+	router.GET("/cloudhub/v1/builtin/dashboards/:name/template", EnsureViewer(service.BuiltinDashboardTemplate))
+
 	// Databases
 	router.GET("/cloudhub/v1/sources/:id/dbs", EnsureViewer(service.GetDatabases))
 	router.POST("/cloudhub/v1/sources/:id/dbs", EnsureEditor(service.NewDatabase))

@@ -6,6 +6,8 @@ import _ from 'lodash'
 import WidgetCell from 'src/shared/components/WidgetCell'
 import LayoutCell from 'src/shared/components/LayoutCell'
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
+import BuiltinCellRenderer from 'src/shared/components/BuiltinCellRenderer'
+import {isBuiltinCell as checkIsBuiltinCell} from 'src/shared/components/BuiltinCellRegistry'
 
 // Utils
 import {buildQueriesForLayouts} from 'src/utils/buildQueriesForLayouts'
@@ -77,6 +79,27 @@ class Layout extends Component<Props, State> {
     } = this.props
     const {cellData, cellFluxData} = this.state
 
+    // Check if this is a builtin cell type that needs special rendering
+    if (this.isBuiltinCell) {
+      return (
+        <LayoutCell
+          cell={cell}
+          cellData={cellData}
+          cellFluxData={cellFluxData}
+          templates={templates}
+          visType={this.visType}
+          isEditable={isEditable}
+          onCloneCell={onCloneCell}
+          onDeleteCell={onDeleteCell}
+          isFluxQuery={this.isFluxQuery}
+          toggleVisType={this.toggleVisType}
+          onSummonOverlayTechnologies={onSummonOverlayTechnologies}
+        >
+          {this.builtinVisualization}
+        </LayoutCell>
+      )
+    }
+
     return (
       <LayoutCell
         cell={cell}
@@ -100,6 +123,19 @@ class Layout extends Component<Props, State> {
     const {cell} = this.props
     const type = getDeep<string>(cell, 'queries.0.type', '')
     return type === 'flux'
+  }
+
+  private get isBuiltinCell(): boolean {
+    const {cell} = this.props
+    return checkIsBuiltinCell(cell)
+  }
+
+  private get builtinVisualization(): JSX.Element {
+    const {cell, source, timeRange} = this.props
+
+    return (
+      <BuiltinCellRenderer cell={cell} source={source} timeRange={timeRange} />
+    )
   }
 
   private get fluxVis(): JSX.Element {

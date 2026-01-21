@@ -5,9 +5,82 @@
   "organization": "",
   "cells": [
     {
-      "i": "hostpage-cell-1",
+      "i": "host-table-cell",
       "x": 0,
       "y": 0,
+      "w": 24,
+      "h": 10,
+      "minW": 12,
+      "minH": 8,
+      "name": "Host List",
+      "queries": [],
+      "type": "host-table",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": [],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": false,
+        "sortBy": {
+          "internalName": "",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": false
+      },
+      "fieldOptions": [],
+      "timeFormat": "",
+      "decimalPlaces": {
+        "isEnforced": false,
+        "digits": 2
+      },
+      "note": "",
+      "noteVisibility": "default",
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      },
+      "tableGaugeChartOptions": {
+        "columnSettings": [],
+        "decimalPlaces": {
+          "isEnforced": false,
+          "digits": 0
+        },
+        "isShowValues": false,
+        "sortBy": "",
+        "sortByDirection": ""
+      },
+      "inView": true,
+      "links": {}
+    },
+    {
+      "i": "hostpage-cell-1",
+      "x": 0,
+      "y": 10,
       "w": 12,
       "h": 8,
       "minW": 4,
@@ -109,7 +182,7 @@
     {
       "i": "hostpage-cell-2",
       "x": 12,
-      "y": 0,
+      "y": 10,
       "w": 12,
       "h": 8,
       "minW": 4,
@@ -211,7 +284,7 @@
     {
       "i": "hostpage-cell-3",
       "x": 0,
-      "y": 8,
+      "y": 18,
       "w": 12,
       "h": 8,
       "minW": 4,
@@ -313,7 +386,7 @@
     {
       "i": "hostpage-cell-4",
       "x": 12,
-      "y": 8,
+      "y": 18,
       "w": 12,
       "h": 8,
       "minW": 4,

@@ -7,10 +7,11 @@ import {getDeep} from 'src/utils/wrappers'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 
 // Components
-import HostTable from 'src/hosts/components/HostsTable'
 import LayoutComponent from 'src/shared/components/Layout'
+import BuiltinCellRenderer from 'src/shared/components/BuiltinCellRenderer'
+import {isBuiltinCell} from 'src/shared/components/BuiltinCellRegistry'
 import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
-import {Page, OverlayTechnology} from 'src/reusable_ui'
+import {Page, OverlayTechnology, Button, IconFont} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import CellEditorOverlay from 'src/dashboards/components/CellEditorOverlay'
 
@@ -25,6 +26,12 @@ import {
   getMeasurementsForHost,
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
+import {
+  getBuiltinDashboardByName,
+  updateDashboard,
+  getBuiltinDashboardTemplate,
+  createDashboard,
+} from 'src/dashboards/apis'
 
 // Actions
 import {
@@ -36,21 +43,16 @@ import {loadCloudServiceProvidersAsync} from 'src/hosts/actions'
 import * as dashboardActions from 'src/dashboards/actions'
 import * as cellEditorOverlayActions from 'src/dashboards/actions/cellEditorOverlay'
 
-//Middleware
-import {
-  setLocalStorage,
-  getLocalStorage,
-} from 'src/shared/middleware/localStorage'
-
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
-import {getCells} from 'src/hosts/utils/getCells'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 // Constants
 import {
   notifyUnableToGetHosts,
   notifyUnableToGetApps,
+  defaultErrorNotification,
+  defaultSuccessNotification,
 } from 'src/shared/copy/notifications'
 import {notIncludeApps} from 'src/hosts/constants/apps'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
@@ -71,16 +73,16 @@ import {
   Me,
   Cell,
   CellType,
-  Axes,
   Template,
 } from 'src/types'
-import {NoteVisibility} from 'src/types/dashboards'
+import {NoteVisibility, Dashboard} from 'src/types/dashboards'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 import {CloudAutoRefresh} from 'src/clouds/types/type'
 import {DashboardItem, NewDefaultCell} from 'src/types/dashboards'
 import {Links as FluxLinks} from 'src/types/flux'
 import * as SourcesModels from 'src/types/sources'
+import {EDITOR_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 
 interface Auth {
   me: Me
@@ -123,6 +125,7 @@ interface State {
   cellsLayout: Cell[] // 셀 레이아웃 저장
   showCellEditorOverlay: boolean
   selectedCell: Cell | NewDefaultCell | null
+  builtinDashboard: Dashboard | null // Store에 저장된 builtin dashboard 인스턴스
 }
 
 @ErrorHandling
@@ -141,16 +144,6 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       PureComponent.prototype.setState.bind(this)(args, callback)
     }
 
-    // 로컬 스토리지에서 셀 레이아웃 복원
-    // 단, host-table-cell의 h 값이 너무 크면(50 이상) 초기화
-    const savedLayout = getLocalStorage('hostsPageCellsLayout')
-    let initialCellsLayout = []
-    if (savedLayout && savedLayout.cellsLayout) {
-      initialCellsLayout = savedLayout.cellsLayout.map(cell => {
-        return cell
-      })
-    }
-
     this.state = {
       hostsObject: {},
       layouts: [],
@@ -158,14 +151,22 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       focusedHost: '',
       activeCspTab: 'Host',
       hostPageStatus: RemoteDataState.NotStarted,
-      cellsLayout: initialCellsLayout,
+      cellsLayout: [],
       showCellEditorOverlay: false,
       selectedCell: null,
+      builtinDashboard: null,
     }
   }
 
   public async componentDidMount() {
     const {notify, cloudAutoRefresh} = this.props
+
+    // Store에 저장된 builtin dashboard 인스턴스 로드
+    const builtinDashboard = await getBuiltinDashboardByName('Host Page')
+    if (builtinDashboard) {
+      this.setState({builtinDashboard})
+    }
+    console.log(builtinDashboard)
 
     const layoutResults = await getLayouts()
 
@@ -185,8 +186,6 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       m => !_.includes(notIncludeApps, m.app)
     )
 
-    const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
-
     const defaultState = {
       focusedHost: '',
       focusedInstance: null,
@@ -194,18 +193,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       selectedNamespace: 'ALL',
       activeCspTab: 'Host',
     }
-    let hostsPage = _.get(
-      getLocalStorageInfrastructure,
-      'hostsPage',
-      defaultState
-    )
-    const isEqualActiveCspTab =
-      !_.isEmpty(hostsPage) &&
-      hostsPage.activeCspTab === this.state.activeCspTab
-
-    if (!isEqualActiveCspTab) {
-      hostsPage = defaultState
-    }
+    const hostsPage = defaultState
 
     if (cloudAutoRefresh.host) {
       clearInterval(this.intervalID)
@@ -295,18 +283,6 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
 
-    const {activeCspTab, focusedHost} = this.state
-    const getHostsPage = {
-      hostsPage: {
-        selectedAgent: 'ALL',
-        selectedNamespace: 'ALL',
-        activeCspTab: activeCspTab,
-        focusedInstance: null,
-        focusedHost: focusedHost,
-      },
-    }
-    setLocalStorage('infrastructure', getHostsPage)
-
     this.isComponentMounted = false
   }
 
@@ -339,98 +315,34 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     // templates prop이 있으면 사용, 없으면 기본값 사용
     const tempVars = templates || generateForHosts(source)
 
-    // 그래프 셀들 생성
-    const graphCells = getCells(filteredLayouts, source)
+    // getAllCells()를 사용하여 builtin dashboard의 cells 포함하여 모든 셀 가져오기
+    const allCells = this.getAllCells()
 
-    // HostTable을 위한 커스텀 셀 생성
-    const hostTableCell: Cell = {
-      ...NEW_DEFAULT_DASHBOARD_CELL,
-      i: 'host-table-cell',
-      x: 0,
-      y: 0,
-      w: 96, // 전체 너비
-      h: 25, // 적절한 높이 (약 265px = 25 * 10.6)
-      minW: 30,
-      minH: 15,
-      name: 'Host List',
-      queries: [],
-      type: CellType.Note,
-      axes: {
-        x: DEFAULT_AXIS,
-        y: DEFAULT_AXIS,
-      } as Axes,
-      colors: DEFAULT_LINE_COLORS,
-      tableOptions: {
-        verticalTimeAxis: false,
-        sortBy: {
-          internalName: '',
-          displayName: '',
-          visible: true,
-          direction: 'asc',
-        },
-        wrapping: '',
-        fixFirstColumn: false,
-      },
-      fieldOptions: [],
-      timeFormat: '',
-      decimalPlaces: {isEnforced: false, digits: 2},
-      legend: {},
-      inView: true,
-      note: '',
-      noteVisibility: NoteVisibility.Default,
-      links: {self: ''},
-    }
-
-    // 그래프 셀들의 y 위치를 hostTableCell 아래로 조정
-    // 한 줄에 4개씩 배치되도록 w를 24로 고정 (24 * 4 = 96)
-    const adjustedGraphCells = graphCells.map((cell, index) => {
-      // 저장된 레이아웃이 있으면 사용, 없으면 기본 위치
-      const savedCell = cellsLayout.find(c => c.i === cell.i)
-      if (savedCell) {
-        return {
-          ...cell,
-          x: savedCell.x,
-          y: savedCell.y,
-          w: savedCell.w || 24, // 저장된 값이 없으면 24 사용
-          h: savedCell.h || 20,
-        }
-      }
-      // 기본 위치: hostTableCell 아래에 배치
-      const colsPerRow = 4
-      const cellWidth = 24 // 한 줄에 4개씩 배치 (24 * 4 = 96)
-      const row = Math.floor(index / colsPerRow)
-      const col = index % colsPerRow
-      return {
-        ...cell,
-        x: col * cellWidth, // 각 셀은 24 너비
-        y: hostTableCell.h + row * 20, // hostTableCell 높이 아래부터 (h: 25)
-        w: cellWidth, // 항상 24로 고정
-        h: cell.h || 20,
-      }
-    })
-
-    // 저장된 hostTableCell 레이아웃이 있으면 사용
-    // 단, h 값이 너무 크면(40 이상) 기본값 사용하여 h 값이 무시되지 않도록 함
-    const savedHostTableCell = cellsLayout.find(c => c.i === 'host-table-cell')
-    const finalHostTableCell =
-      savedHostTableCell && savedHostTableCell.h <= 40
-        ? {...hostTableCell, ...savedHostTableCell}
-        : hostTableCell
-
-    // 모든 셀 합치기
-    // 1. System Graph Cells (adjusted) is already defined above
-
-    // 2. Custom Cells (Imported)
-    // Filter cells from cellsLayout that are NOT in graphCells AND NOT host-table-cell
-    const systemCellIds = new Set(graphCells.map(c => c.i))
-    systemCellIds.add('host-table-cell')
-
-    const customCells = cellsLayout.filter(cell => !systemCellIds.has(cell.i))
-
-    const allCells = [finalHostTableCell, ...adjustedGraphCells, ...customCells]
+    // 권한 체크 (에디터 이상)
+    const isEditorOrAbove =
+      auth.me &&
+      auth.me.roles &&
+      auth.me.roles.some(r => isUserAuthorized(r.name, EDITOR_ROLE))
 
     return (
       <Page.Contents fullWidth={true}>
+        {isEditorOrAbove && (
+          <div
+            style={{
+              padding: '10px',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              borderBottom: '1px solid #e0e0e0',
+            }}
+          >
+            <Button
+              text="Reset to Default"
+              icon={IconFont.Refresh}
+              onClick={this.handleResetToDefault}
+              titleText="Reset dashboard to original JSON template"
+            />
+          </div>
+        )}
         <OverlayTechnology visible={showCellEditorOverlay}>
           {selectedCell && (
             <CellEditorOverlay
@@ -493,7 +405,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     )
   }
 
-  private handleLayoutChange = (layout: any[]) => {
+  private handleLayoutChange = async (layout: any[]) => {
     const newCells = this.getAllCells().map(cell => {
       const l = layout.find(ly => ly.i === cell.i)
       if (!l) return cell
@@ -508,9 +420,31 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     })
 
     this.setState({cellsLayout: newCells})
-    setLocalStorage('hostsPageCellsLayout', {
-      cellsLayout: newCells,
-    })
+
+    // 권한 체크 (에디터 이상)
+    const {auth} = this.props
+    const isEditorOrAbove =
+      auth.me &&
+      auth.me.roles &&
+      auth.me.roles.some(r => isUserAuthorized(r.name, EDITOR_ROLE))
+
+    if (isEditorOrAbove && this.state.builtinDashboard) {
+      // 에디터 이상: Store에 저장된 builtin dashboard 인스턴스 업데이트
+      try {
+        const updatedDashboard = {
+          ...this.state.builtinDashboard,
+          cells: newCells,
+        }
+        await updateDashboard(updatedDashboard)
+        // 업데이트 후 다시 로드하여 최신 상태 유지
+        const reloaded = await getBuiltinDashboardByName('Host Page')
+        if (reloaded) {
+          this.setState({builtinDashboard: reloaded})
+        }
+      } catch (error) {
+        console.error('Failed to update builtin dashboard:', error)
+      }
+    }
   }
 
   private addCellsFromLibrary = (dashboardItems: DashboardItem[]) => {
@@ -622,11 +556,6 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
 
     this.setState({cellsLayout: updatedCellsLayout})
 
-    // 로컬 스토리지에 저장
-    setLocalStorage('hostsPageCellsLayout', {
-      cellsLayout: updatedCellsLayout,
-    })
-
     // Infrastructure에서 상태 초기화를 위해 부모에게 알림
     if (this.props.onCellsAdded) {
       this.props.onCellsAdded()
@@ -634,88 +563,83 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
   }
 
   private getAllCells = (): Cell[] => {
-    const {filteredLayouts, cellsLayout} = this.state
-    const {source} = this.props
+    const {cellsLayout, builtinDashboard} = this.state
 
-    const graphCells = getCells(filteredLayouts, source)
+    // builtin 대시보드 기준 셀 목록 확보
+    const baseBuiltinCells = builtinDashboard?.cells || []
 
-    const hostTableCell: Cell = {
-      ...NEW_DEFAULT_DASHBOARD_CELL,
-      i: 'host-table-cell',
-      x: 0,
-      y: 0,
-      w: 96,
-      h: 25,
-      minW: 30,
-      minH: 15,
-      name: 'Host List',
-      queries: [],
-      type: CellType.Note,
-      axes: {
-        x: DEFAULT_AXIS,
-        y: DEFAULT_AXIS,
-      },
-      colors: DEFAULT_LINE_COLORS,
-      tableOptions: {
-        verticalTimeAxis: false,
-        sortBy: {
-          internalName: '',
-          displayName: '',
-          visible: true,
-          direction: 'asc',
+    // host-table-cell 우선 확보 (builtin에 없으면 기본값 생성)
+    let finalHostTableCell =
+      baseBuiltinCells.find(
+        c => c.i === 'host-table-cell' || c.type === CellType.HostTable
+      ) || null
+
+    if (!finalHostTableCell) {
+      finalHostTableCell = {
+        ...NEW_DEFAULT_DASHBOARD_CELL,
+        i: 'host-table-cell',
+        x: 0,
+        y: 0,
+        w: 96,
+        h: 25,
+        minW: 30,
+        minH: 15,
+        name: 'Host List',
+        queries: [],
+        type: CellType.HostTable,
+        axes: {
+          x: DEFAULT_AXIS,
+          y: DEFAULT_AXIS,
         },
-        wrapping: '',
-        fixFirstColumn: false,
-      },
-      fieldOptions: [],
-      timeFormat: '',
-      decimalPlaces: {isEnforced: false, digits: 2},
-      legend: {},
-      inView: true,
-      note: '',
-      noteVisibility: NoteVisibility.Default,
-      links: {self: ''},
+        colors: DEFAULT_LINE_COLORS,
+        tableOptions: {
+          verticalTimeAxis: false,
+          sortBy: {
+            internalName: '',
+            displayName: '',
+            visible: true,
+            direction: 'asc',
+          },
+          wrapping: '',
+          fixFirstColumn: false,
+        },
+        fieldOptions: [],
+        timeFormat: '',
+        decimalPlaces: {isEnforced: false, digits: 2},
+        legend: {},
+        inView: true,
+        note: '',
+        noteVisibility: NoteVisibility.Default,
+        links: {self: ''},
+      }
     }
 
-    const savedHostTableCell = cellsLayout.find(c => c.i === 'host-table-cell')
-    const finalHostTableCell = savedHostTableCell
-      ? {...hostTableCell, ...savedHostTableCell}
-      : hostTableCell
-
-    // 1. System Graph Cells (Layouts)
-    const cellWidth = 24
-    const colsPerRow = 4
-    const adjustedGraphCells = graphCells.map((cell, index) => {
-      const savedCell = cellsLayout.find(c => c.i === cell.i)
-      if (savedCell) {
-        return {
-          ...cell,
-          x: savedCell.x,
-          y: savedCell.y,
-          w: savedCell.w || cellWidth, // 저장된 값이 없으면 24 사용
-          h: savedCell.h || 20,
-        }
-      }
-      // 저장된 레이아웃이 없으면 기본 위치 계산
-      const row = Math.floor(index / colsPerRow)
-      const col = index % colsPerRow
-      return {
-        ...cell,
-        x: col * cellWidth,
-        y: finalHostTableCell.h + row * 20,
-        w: cellWidth, // 항상 24로 고정
-        h: cell.h || 20,
-      }
+    // builtin 셀에 대해 cellsLayout 오버라이드 적용
+    const builtinCellsWithOverrides = baseBuiltinCells.map(cell => {
+      const override = cellsLayout.find(c => c.i === cell.i)
+      return override ? {...cell, ...override} : cell
     })
 
-    // 2. Custom Cells (Imported from Library)
-    // Filter cells from cellsLayout that are NOT in graphCells AND NOT host-table-cell
-    const systemCellIds = new Set(graphCells.map(c => c.i))
-    systemCellIds.add('host-table-cell')
+    // host-table-cell 제외한 builtin 셀
+    const builtinCells = builtinCellsWithOverrides.filter(
+      c => c.i !== finalHostTableCell.i
+    )
 
-    const customCells = cellsLayout.filter(cell => !systemCellIds.has(cell.i))
+    // 커스텀 셀: builtin에 없는 cellsLayout 항목
+    const builtinIds = new Set([
+      ...builtinCellsWithOverrides.map(c => c.i),
+      finalHostTableCell.i,
+    ])
+    const customCells = cellsLayout.filter(cell => !builtinIds.has(cell.i))
 
-    return [finalHostTableCell, ...adjustedGraphCells, ...customCells]
+    // 병합 및 중복 제거
+    const merged = [finalHostTableCell, ...builtinCells, ...customCells]
+    const seen = new Set<string>()
+    return merged.filter(cell => {
+      if (!cell || !cell.i || seen.has(cell.i)) return false
+      seen.add(cell.i)
+      return true
+    })
   }
 
   private renderCell = (
@@ -730,29 +654,20 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       hostPageStatus: RemoteDataState
     }
   ) => {
-    // HostTable 셀인 경우
-    if (cell.i === 'host-table-cell') {
+    // Builtin cell인 경우 BuiltinCellRenderer 사용
+    // 필요한 props를 직접 전달 (구체적인 의존성 없이)
+    if (isBuiltinCell(cell)) {
       return (
-        <div className="dash-graph" style={{height: '100%'}}>
-          <div
-            className="dash-graph--draggable"
-            style={{cursor: 'move', height: '100%'}}
-          >
-            <div
-              className="dash-graph--container"
-              style={{height: '100%', overflow: 'hidden'}}
-            >
-              <HostTable
-                source={props.source}
-                hosts={_.values(props.hostsObject)}
-                hostPageStatus={props.hostPageStatus}
-                focusedHost={props.focusedHost}
-                onClickTableRow={this.handleClickTableRow}
-                tableTitle={this.props.tableTitle}
-              />
-            </div>
-          </div>
-        </div>
+        <BuiltinCellRenderer
+          cell={cell}
+          source={props.source}
+          timeRange={props.timeRange}
+          hostsObject={props.hostsObject}
+          hostPageStatus={props.hostPageStatus}
+          onClickTableRow={this.handleClickTableRow}
+          tableTitle={this.props.tableTitle}
+          host={props.focusedHost}
+        />
       )
     }
 
@@ -773,19 +688,50 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
         onZoom={undefined}
         onDeleteCell={() => this.handleDeleteCell(cell)}
         onCloneCell={undefined}
-        onSummonOverlayTechnologies={() => this.handleShowCellEditorOverlay(cell)}
+        onSummonOverlayTechnologies={() =>
+          this.handleShowCellEditorOverlay(cell)
+        }
       />
     )
   }
 
-  private handleDeleteCell = (cell: Cell) => {
-    const {cellsLayout} = this.state
-    const newCellsLayout = cellsLayout.filter(c => c.i !== cell.i)
+  private handleDeleteCell = async (cell: Cell) => {
+    const {builtinDashboard} = this.state
+    const {auth} = this.props
 
-    this.setState({cellsLayout: newCellsLayout})
-    setLocalStorage('hostsPageCellsLayout', {
-      cellsLayout: newCellsLayout,
-    })
+    // 현재 화면에 반영된 모든 셀 기준으로 삭제 수행
+    const mergedCells = this.getAllCells().filter(c => c.i !== cell.i)
+
+    // 권한 체크 (에디터 이상)
+    const isEditorOrAbove =
+      auth.me &&
+      auth.me.roles &&
+      auth.me.roles.some(r => isUserAuthorized(r.name, EDITOR_ROLE))
+
+    // 대시보드 인스턴스가 있다면 함께 업데이트
+    if (builtinDashboard) {
+      const updatedDashboard = {
+        ...builtinDashboard,
+        cells: mergedCells,
+      }
+
+      this.setState({
+        cellsLayout: mergedCells,
+        builtinDashboard: updatedDashboard,
+      })
+
+      if (isEditorOrAbove) {
+        try {
+          await updateDashboard(updatedDashboard)
+          return
+        } catch (error) {
+          console.error('Failed to delete cell on builtin dashboard:', error)
+        }
+      }
+    }
+
+    // fallback: 로컬 상태/스토리지만 갱신
+    this.setState({cellsLayout: mergedCells})
   }
 
   private handleShowCellEditorOverlay = (cell: Cell): void => {
@@ -802,29 +748,51 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     }, WAIT_FOR_ANIMATION)
   }
 
-  private handleSaveEditedCell = (newCell: Cell | NewDefaultCell): void => {
-    const {cellsLayout} = this.state
+  private handleSaveEditedCell = async (
+    newCell: Cell | NewDefaultCell
+  ): Promise<void> => {
+    const {builtinDashboard} = this.state
+    const {auth} = this.props
 
-    // 셀 업데이트
+    // 현재 화면 기준의 전체 셀 목록을 기반으로 업데이트
+    const currentCells = this.getAllCells()
     const cellId = (newCell as Cell).i
+
+    let updatedCells: Cell[]
     if (cellId) {
-      const updatedCellsLayout = cellsLayout.map(cell =>
+      updatedCells = currentCells.map(cell =>
         cell.i === cellId ? (newCell as Cell) : cell
       )
-
-      this.setState({cellsLayout: updatedCellsLayout})
-      setLocalStorage('hostsPageCellsLayout', {
-        cellsLayout: updatedCellsLayout,
-      })
     } else {
-      // 새 셀인 경우 (일반적으로는 발생하지 않지만 안전을 위해)
-      const updatedCellsLayout = [...cellsLayout, newCell as Cell]
-      this.setState({cellsLayout: updatedCellsLayout})
-      setLocalStorage('hostsPageCellsLayout', {
-        cellsLayout: updatedCellsLayout,
-      })
+      updatedCells = [...currentCells, newCell as Cell]
     }
 
+    // 권한 체크 (에디터 이상)
+    const isEditorOrAbove =
+      auth.me &&
+      auth.me.roles &&
+      auth.me.roles.some(r => isUserAuthorized(r.name, EDITOR_ROLE))
+
+    if (isEditorOrAbove && builtinDashboard) {
+      try {
+        const updatedDashboard = {
+          ...builtinDashboard,
+          cells: updatedCells,
+        }
+        await updateDashboard(updatedDashboard)
+        this.setState({
+          cellsLayout: updatedCells,
+          builtinDashboard: updatedDashboard,
+        })
+        this.handleHideCellEditorOverlay()
+        return
+      } catch (error) {
+        console.error('Failed to update builtin dashboard:', error)
+      }
+    }
+
+    // fallback: 로컬 상태만 업데이트
+    this.setState({cellsLayout: updatedCells})
     this.handleHideCellEditorOverlay()
   }
 
@@ -951,10 +919,81 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
   }
 
   private handleClickTableRow = (hostName: string) => () => {
-    const hostsTableState = getLocalStorage('hostsTableState')
-    hostsTableState.focusedHost = hostName
-    setLocalStorage('hostsTableState', hostsTableState)
     this.setState({focusedHost: hostName})
+  }
+
+  /**
+   * Reset builtin dashboard to original JSON template
+   */
+  private handleResetToDefault = async () => {
+    const {notify, auth} = this.props
+
+    // 권한 체크 (에디터 이상)
+    const isEditorOrAbove =
+      auth.me &&
+      auth.me.roles &&
+      auth.me.roles.some(r => isUserAuthorized(r.name, EDITOR_ROLE))
+
+    if (!isEditorOrAbove) {
+      notify({
+        ...defaultErrorNotification,
+        message: 'Permission denied. Editor role required.',
+      })
+      return
+    }
+
+    try {
+      // 백엔드에서 원본 템플릿 가져오기 (name 사용: "Host Page")
+      const template = await getBuiltinDashboardTemplate('Host Page')
+      if (!template) {
+        notify({
+          ...defaultErrorNotification,
+          message: 'Failed to load original template',
+        })
+        return
+      }
+
+      // 기존 builtin dashboard 찾기 (없을 수도 있음)
+      const existingDashboard = await getBuiltinDashboardByName('Host Page')
+
+      let resetDashboard: Dashboard
+
+      if (existingDashboard) {
+        // 기존 대시보드가 있으면 업데이트 (id, organization, links 유지)
+        resetDashboard = {
+          ...template,
+          id: existingDashboard.id,
+          organization: existingDashboard.organization,
+          type: 'builtin',
+          links: existingDashboard.links, // links 유지 (updateDashboard에서 필요)
+        }
+        await updateDashboard(resetDashboard)
+      } else {
+        // 기존 대시보드가 없으면 새로 생성
+        resetDashboard = {
+          ...template,
+          type: 'builtin',
+        }
+        const {data} = await createDashboard(resetDashboard)
+        resetDashboard = data
+      }
+
+      // 성공 시 상태 업데이트
+      this.setState({
+        builtinDashboard: resetDashboard,
+        cellsLayout: [],
+      })
+      notify({
+        ...defaultSuccessNotification,
+        message: 'Dashboard reset to default successfully',
+      })
+    } catch (error) {
+      console.error('Failed to reset dashboard:', error)
+      notify({
+        ...defaultErrorNotification,
+        message: 'Failed to reset dashboard',
+      })
+    }
   }
 }
 
