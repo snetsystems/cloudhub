@@ -1,0 +1,424 @@
+{
+  "id": 0,
+  "name": "Host Page",
+  "type": "builtin",
+  "organization": "",
+  "cells": [
+    {
+      "i": "hostpage-cell-1",
+      "x": 0,
+      "y": 0,
+      "w": 12,
+      "h": 8,
+      "minW": 4,
+      "minH": 4,
+      "name": "CPU Usage",
+      "queries": [
+        {
+          "query": "SELECT mean(\"usage_user\") + mean(\"usage_system\") AS \"usage\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = ':host:'",
+          "label": "CPU Usage",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "CPU Usage (%)",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "cpu-color-1",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "timeFormat": "",
+      "decimalPlaces": {
+        "isEnforced": false,
+        "digits": 0
+      },
+      "note": "",
+      "noteVisibility": "default",
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      },
+      "tableGaugeChartOptions": {
+        "columnSettings": [],
+        "decimalPlaces": {
+          "isEnforced": false,
+          "digits": 0
+        },
+        "isShowValues": false,
+        "sortBy": "",
+        "sortByDirection": ""
+      }
+    },
+    {
+      "i": "hostpage-cell-2",
+      "x": 12,
+      "y": 0,
+      "w": 12,
+      "h": 8,
+      "minW": 4,
+      "minH": 4,
+      "name": "Memory Usage",
+      "queries": [
+        {
+          "query": "SELECT mean(\"used_percent\") AS \"usage\" FROM \":db:\".\":rp:\".\"mem\" WHERE \"host\" = ':host:'",
+          "label": "Memory Usage",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Memory Usage (%)",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "mem-color-1",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "timeFormat": "",
+      "decimalPlaces": {
+        "isEnforced": false,
+        "digits": 0
+      },
+      "note": "",
+      "noteVisibility": "default",
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      },
+      "tableGaugeChartOptions": {
+        "columnSettings": [],
+        "decimalPlaces": {
+          "isEnforced": false,
+          "digits": 0
+        },
+        "isShowValues": false,
+        "sortBy": "",
+        "sortByDirection": ""
+      }
+    },
+    {
+      "i": "hostpage-cell-3",
+      "x": 0,
+      "y": 8,
+      "w": 12,
+      "h": 8,
+      "minW": 4,
+      "minH": 4,
+      "name": "Disk Usage",
+      "queries": [
+        {
+          "query": "SELECT mean(\"used_percent\") AS \"usage\" FROM \":db:\".\":rp:\".\"disk\" WHERE \"host\" = ':host:'",
+          "label": "Disk Usage",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Disk Usage (%)",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "disk-color-1",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "timeFormat": "",
+      "decimalPlaces": {
+        "isEnforced": false,
+        "digits": 0
+      },
+      "note": "",
+      "noteVisibility": "default",
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      },
+      "tableGaugeChartOptions": {
+        "columnSettings": [],
+        "decimalPlaces": {
+          "isEnforced": false,
+          "digits": 0
+        },
+        "isShowValues": false,
+        "sortBy": "",
+        "sortByDirection": ""
+      }
+    },
+    {
+      "i": "hostpage-cell-4",
+      "x": 12,
+      "y": 8,
+      "w": 12,
+      "h": 8,
+      "minW": 4,
+      "minH": 4,
+      "name": "Network Traffic",
+      "queries": [
+        {
+          "query": "SELECT mean(\"bytes_recv\") AS \"received\", mean(\"bytes_sent\") AS \"sent\" FROM \":db:\".\":rp:\".\"net\" WHERE \"host\" = ':host:'",
+          "label": "Network Traffic",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Bytes",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+      "colors": [
+        {
+          "id": "net-color-1",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "net-color-2",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
+      "tableOptions": {
+        "verticalTimeAxis": true,
+        "sortBy": {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": true
+      },
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        }
+      ],
+      "timeFormat": "",
+      "decimalPlaces": {
+        "isEnforced": false,
+        "digits": 0
+      },
+      "note": "",
+      "noteVisibility": "default",
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false,
+        "showTempVarCount": ""
+      },
+      "tableGaugeChartOptions": {
+        "columnSettings": [],
+        "decimalPlaces": {
+          "isEnforced": false,
+          "digits": 0
+        },
+        "isShowValues": false,
+        "sortBy": "",
+        "sortByDirection": ""
+      }
+    }
+  ],
+  "templates": []
+}

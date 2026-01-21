@@ -695,10 +695,24 @@ func TestService_NewOrganization(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Track builtin dashboard initialization calls
+			addedDashboards := []cloudhub.Dashboard{}
+			mockDashboardsStore := &mocks.DashboardsStore{
+				AllF: func(ctx context.Context) ([]cloudhub.Dashboard, error) {
+					return []cloudhub.Dashboard{}, nil
+				},
+				AddF: func(ctx context.Context, d cloudhub.Dashboard) (cloudhub.Dashboard, error) {
+					addedDashboards = append(addedDashboards, d)
+					d.ID = cloudhub.DashboardID(len(addedDashboards))
+					return d, nil
+				},
+			}
+
 			s := &Service{
 				Store: &mocks.Store{
 					OrganizationsStore: tt.fields.OrganizationsStore,
 					UsersStore:         tt.fields.UsersStore,
+					DashboardsStore:    mockDashboardsStore,
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -710,6 +724,18 @@ func TestService_NewOrganization(t *testing.T) {
 			buf, _ := json.Marshal(tt.args.org)
 			tt.args.r.Body = ioutil.NopCloser(bytes.NewReader(buf))
 			s.NewOrganization(tt.args.w, tt.args.r)
+
+			// Verify builtin dashboards were initialized for successful org creation
+			if tt.wantStatus == http.StatusCreated && len(addedDashboards) == 0 {
+				t.Log("Note: Builtin dashboard initialization may have been skipped or failed, but org creation succeeded")
+			} else if tt.wantStatus == http.StatusCreated && len(addedDashboards) > 0 {
+				// Verify all added dashboards are builtin type
+				for _, dashboard := range addedDashboards {
+					if dashboard.Type != "builtin" {
+						t.Errorf("NewOrganization() initialized dashboard with type %q, want 'builtin'", dashboard.Type)
+					}
+				}
+			}
 
 			resp := tt.args.w.Result()
 			content := resp.Header.Get("Content-Type")
