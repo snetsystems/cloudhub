@@ -314,7 +314,10 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			if q.Range != nil {
 				r.Upper, r.Lower = q.Range.Upper, q.Range.Lower
 			}
-			q.Shifts = q.QueryConfig.Shifts
+			// QueryConfig가 nil일 수 있으므로 체크
+			if q.QueryConfig.Shifts != nil {
+				q.Shifts = q.QueryConfig.Shifts
+			}
 			queries[j] = &Query{
 				Command: q.Command,
 				Label:   q.Label,
@@ -427,25 +430,25 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				}
 			}
 
-		columnSettings[idx] = &ColumnSetting{
-			InternalName:    setting.InternalName,
-			DisplayName:     setting.DisplayName,
-			Visible:         setting.Visible,
-			Direction:       setting.Direction,
-			Min:             setting.Min,
-			Max:             setting.Max,
-			Colors:          colors,
-			ThresholdColors: thresholdColors,
-			Unit:            setting.Unit,
-			Prefix:          setting.Prefix,
-			Suffix:          setting.Suffix,
-			IsShowChart:     setting.IsShowChart,
-			IsPercent:       setting.IsPercent,
-			ChartType:       setting.ChartType,
-			BackgroundType:  setting.BackgroundType,
-			IsShowValues:    setting.IsShowValues,
-			ValueFormat:     setting.ValueFormat,
-		}
+			columnSettings[idx] = &ColumnSetting{
+				InternalName:    setting.InternalName,
+				DisplayName:     setting.DisplayName,
+				Visible:         setting.Visible,
+				Direction:       setting.Direction,
+				Min:             setting.Min,
+				Max:             setting.Max,
+				Colors:          colors,
+				ThresholdColors: thresholdColors,
+				Unit:            setting.Unit,
+				Prefix:          setting.Prefix,
+				Suffix:          setting.Suffix,
+				IsShowChart:     setting.IsShowChart,
+				IsPercent:       setting.IsPercent,
+				ChartType:       setting.ChartType,
+				BackgroundType:  setting.BackgroundType,
+				IsShowValues:    setting.IsShowValues,
+				ValueFormat:     setting.ValueFormat,
+			}
 		}
 
 		tableGaugeChartOptions := &TableGaugeChartOptions{
@@ -504,6 +507,11 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			Values:  vals,
 			Type:    t.Type,
 			Label:   t.Label,
+		}
+		if t.Options != nil {
+			template.Options = &TemplateOptions{
+				IsAllEnabled: t.Options.IsAllEnabled,
+			}
 		}
 		if t.Query != nil {
 			template.Query = &TemplateQuery{
@@ -684,26 +692,26 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 					}
 				}
 
-	columnSettings[idx] = cloudhub.ColumnSetting{
-		InternalName:    setting.InternalName,
-		DisplayName:     setting.DisplayName,
-		Visible:         setting.Visible,
-		Direction:       setting.Direction,
-		Min:             setting.Min,
-		Max:             setting.Max,
-		Colors:          colors,
-		ThresholdColors: thresholdColors,
-		Unit:            setting.Unit,
-		Prefix:          setting.Prefix,
-		Suffix:          setting.Suffix,
-		IsShowChart:     setting.IsShowChart,
-		IsPercent:       setting.IsPercent,
-		ChartType:       setting.ChartType,
-		BackgroundType:  setting.BackgroundType,
-		IsShowValues:    setting.IsShowValues,
-		ValueFormat:     setting.ValueFormat,
-	}
-	}
+				columnSettings[idx] = cloudhub.ColumnSetting{
+					InternalName:    setting.InternalName,
+					DisplayName:     setting.DisplayName,
+					Visible:         setting.Visible,
+					Direction:       setting.Direction,
+					Min:             setting.Min,
+					Max:             setting.Max,
+					Colors:          colors,
+					ThresholdColors: thresholdColors,
+					Unit:            setting.Unit,
+					Prefix:          setting.Prefix,
+					Suffix:          setting.Suffix,
+					IsShowChart:     setting.IsShowChart,
+					IsPercent:       setting.IsPercent,
+					ChartType:       setting.ChartType,
+					BackgroundType:  setting.BackgroundType,
+					IsShowValues:    setting.IsShowValues,
+					ValueFormat:     setting.ValueFormat,
+				}
+			}
 
 			decimalPlaces := cloudhub.DecimalPlaces{}
 			if c.TableGaugeChartOptions.DecimalPlaces != nil {
@@ -793,6 +801,12 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			},
 			Type:  t.Type,
 			Label: t.Label,
+		}
+
+		if t.Options != nil {
+			template.Options = &cloudhub.TemplateOptions{
+				IsAllEnabled: t.Options.IsAllEnabled,
+			}
 		}
 
 		if t.Query != nil {
@@ -1685,7 +1699,10 @@ func marshalDashboardCellToPB(c cloudhub.DashboardCell) *DashboardCell {
 		if q.Range != nil {
 			r.Upper, r.Lower = q.Range.Upper, q.Range.Lower
 		}
-		q.Shifts = q.QueryConfig.Shifts
+		// QueryConfig가 nil일 수 있으므로 체크
+		if q.QueryConfig.Shifts != nil {
+			q.Shifts = q.QueryConfig.Shifts
+		}
 		queries[j] = &Query{
 			Command: q.Command,
 			Label:   q.Label,

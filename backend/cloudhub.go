@@ -203,13 +203,19 @@ type TemplateVar struct {
 // TemplateID is the unique ID used to identify a template
 type TemplateID string
 
+// TemplateOptions represents optional configuration for a Template
+type TemplateOptions struct {
+	IsAllEnabled bool `json:"isAllEnabled"` // IsAllEnabled checks if the tag values are all enabled
+}
+
 // Template represents a series of choices to replace TemplateVars within InfluxQL
 type Template struct {
 	TemplateVar
-	ID    TemplateID     `json:"id"`              // ID is the unique ID associated with this template
-	Type  string         `json:"type"`            // Type can be fieldKeys, tagKeys, tagValues, csv, constant, measurements, databases, map, influxql, text
-	Label string         `json:"label"`           // Label is a user-facing description of the Template
-	Query *TemplateQuery `json:"query,omitempty"` // Query is used to generate the choices for a template
+	ID      TemplateID       `json:"id"`                // ID is the unique ID associated with this template
+	Type    string           `json:"type"`              // Type can be fieldKeys, tagKeys, tagValues, csv, constant, measurements, databases, map, influxql, text
+	Label   string           `json:"label"`             // Label is a user-facing description of the Template
+	Query   *TemplateQuery   `json:"query,omitempty"`   // Query is used to generate the choices for a template
+	Options *TemplateOptions `json:"options,omitempty"` // Options is the optional configuration for the template (e.g. isAllEnabled)
 }
 
 // Query retrieves a Response from a TimeSeries.
@@ -1748,13 +1754,13 @@ type DashboardItemMeta struct {
 
 // DashboardItem represents a reusable visualization panel stored in the library.
 type DashboardItem struct {
-	ID           string            `json:"id"`                     // Unique identifier
-	Name         string            `json:"name"`                   // User-defined name for the item
-	Description  string            `json:"description,omitempty"`  // Optional description
-	Organization string            `json:"organization"`           // Organization ID that owns this item
-	Type         string            `json:"type"`                   // Visualization type (e.g., "line", "gauge", "table")
-	Content      DashboardCell     `json:"content"`                // Full cell definition (queries + visualization)
-	Meta         DashboardItemMeta `json:"meta"`                   // Metadata (created/updated timestamps)
+	ID           string            `json:"id"`                    // Unique identifier
+	Name         string            `json:"name"`                  // User-defined name for the item
+	Description  string            `json:"description,omitempty"` // Optional description
+	Organization string            `json:"organization"`          // Organization ID that owns this item
+	Type         string            `json:"type"`                  // Visualization type (e.g., "line", "gauge", "table")
+	Content      DashboardCell     `json:"content"`               // Full cell definition (queries + visualization)
+	Meta         DashboardItemMeta `json:"meta"`                  // Metadata (created/updated timestamps)
 }
 
 // DashboardItemsStore is the storage interface for dashboard items (library panels).

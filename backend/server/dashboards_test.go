@@ -130,6 +130,9 @@ func TestDashboardDefaults(t *testing.T) {
 	for _, tt := range tests {
 		actual := DashboardDefaults(tt.d)
 		want := tt.want
+		for i := range actual.Cells {
+			applyTableGaugeDefaults(&actual.Cells[i])
+		}
 		for i := range want.Cells {
 			applyTableGaugeDefaults(&want.Cells[i])
 		}
@@ -199,6 +202,65 @@ func TestValidDashboardRequest(t *testing.T) {
 						NoteVisibility: "default",
 					},
 				},
+			},
+		},
+		{
+			name: "Updates no cell",
+			d: cloudhub.Dashboard{
+				Organization: "0",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+					},
+					{
+						W: 2,
+						H: 2,
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Organization: "0",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W:              4,
+						H:              4,
+						NoteVisibility: "default",
+					},
+					{
+						W:              2,
+						H:              2,
+						NoteVisibility: "default",
+					},
+				},
+			},
+		},
+		{
+			name: "Dashboard with Template Options",
+			d: cloudhub.Dashboard{
+				Organization: "1337",
+				Templates: []cloudhub.Template{
+					{
+						ID:   "t1",
+						Type: "tagValues",
+						Options: &cloudhub.TemplateOptions{
+							IsAllEnabled: true,
+						},
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Organization: "1337",
+				Templates: []cloudhub.Template{
+					{
+						ID:   "t1",
+						Type: "tagValues",
+						Options: &cloudhub.TemplateOptions{
+							IsAllEnabled: true,
+						},
+					},
+				},
+				Cells: []cloudhub.DashboardCell{},
 			},
 		},
 	}
@@ -370,6 +432,203 @@ func Test_newDashboardResponse(t *testing.T) {
 						},
 					},
 				},
+				Links: dashboardLinks{
+					Self:      "/cloudhub/v1/dashboards/0",
+					Cells:     "/cloudhub/v1/dashboards/0/cells",
+					Templates: "/cloudhub/v1/dashboards/0/templates",
+				},
+			},
+		},
+		{
+			name: "sets default width if width is zero",
+			d: cloudhub.Dashboard{
+				Organization: "0",
+				Cells: []cloudhub.DashboardCell{
+					{
+						ID: "a",
+						W:  0,
+						H:  4,
+					},
+				},
+			},
+			want: &dashboardResponse{
+				Organization: "0",
+				Templates:    []templateResponse{},
+				Cells: []dashboardCellResponse{
+					{
+						Links: dashboardCellLinks{
+							Self: "/cloudhub/v1/dashboards/0/cells/a",
+						},
+						DashboardCell: cloudhub.DashboardCell{
+							ID:             "a",
+							W:              4,
+							H:              4,
+							NoteVisibility: "default",
+							Queries:        []cloudhub.DashboardQuery{},
+							CellColors:     []cloudhub.CellColor{},
+							Axes: map[string]cloudhub.Axis{
+								"x":  {Bounds: []string{"", ""}},
+								"y":  {Bounds: []string{"", ""}},
+								"y2": {Bounds: []string{"", ""}},
+							},
+						},
+					},
+				},
+				Links: dashboardLinks{
+					Self:      "/cloudhub/v1/dashboards/0",
+					Cells:     "/cloudhub/v1/dashboards/0/cells",
+					Templates: "/cloudhub/v1/dashboards/0/templates",
+				},
+			},
+		},
+		{
+			name: "sets default height if height is zero",
+			d: cloudhub.Dashboard{
+				Organization: "0",
+				Cells: []cloudhub.DashboardCell{
+					{
+						ID: "a",
+						W:  4,
+						H:  0,
+					},
+				},
+			},
+			want: &dashboardResponse{
+				Organization: "0",
+				Templates:    []templateResponse{},
+				Cells: []dashboardCellResponse{
+					{
+						Links: dashboardCellLinks{
+							Self: "/cloudhub/v1/dashboards/0/cells/a",
+						},
+						DashboardCell: cloudhub.DashboardCell{
+							ID:             "a",
+							W:              4,
+							H:              4,
+							NoteVisibility: "default",
+							Queries:        []cloudhub.DashboardQuery{},
+							CellColors:     []cloudhub.CellColor{},
+							Axes: map[string]cloudhub.Axis{
+								"x":  {Bounds: []string{"", ""}},
+								"y":  {Bounds: []string{"", ""}},
+								"y2": {Bounds: []string{"", ""}},
+							},
+						},
+					},
+				},
+				Links: dashboardLinks{
+					Self:      "/cloudhub/v1/dashboards/0",
+					Cells:     "/cloudhub/v1/dashboards/0/cells",
+					Templates: "/cloudhub/v1/dashboards/0/templates",
+				},
+			},
+		},
+		{
+			name: "sets default height and width if height and width are zero",
+			d: cloudhub.Dashboard{
+				Organization: "0",
+				Cells: []cloudhub.DashboardCell{
+					{
+						ID: "a",
+						W:  0,
+						H:  0,
+					},
+				},
+			},
+			want: &dashboardResponse{
+				Organization: "0",
+				Templates:    []templateResponse{},
+				Cells: []dashboardCellResponse{
+					{
+						Links: dashboardCellLinks{
+							Self: "/cloudhub/v1/dashboards/0/cells/a",
+						},
+						DashboardCell: cloudhub.DashboardCell{
+							ID:             "a",
+							W:              4,
+							H:              4,
+							NoteVisibility: "default",
+							Queries:        []cloudhub.DashboardQuery{},
+							CellColors:     []cloudhub.CellColor{},
+							Axes: map[string]cloudhub.Axis{
+								"x":  {Bounds: []string{"", ""}},
+								"y":  {Bounds: []string{"", ""}},
+								"y2": {Bounds: []string{"", ""}},
+							},
+						},
+					},
+				},
+				Links: dashboardLinks{
+					Self:      "/cloudhub/v1/dashboards/0",
+					Cells:     "/cloudhub/v1/dashboards/0/cells",
+					Templates: "/cloudhub/v1/dashboards/0/templates",
+				},
+			},
+		},
+		{
+			name: "creates a dashboard response with Template Options",
+			d: cloudhub.Dashboard{
+				Organization: "0",
+				Templates: []cloudhub.Template{
+					{
+						ID:   "t1",
+						Type: "tagValues",
+						Options: &cloudhub.TemplateOptions{
+							IsAllEnabled: true,
+						},
+					},
+				},
+			},
+			want: &dashboardResponse{
+				Organization: "0",
+				Templates: []templateResponse{
+					{
+						Template: cloudhub.Template{
+							ID:   "t1",
+							Type: "tagValues",
+							Options: &cloudhub.TemplateOptions{
+								IsAllEnabled: true,
+							},
+						},
+						Links: templateLinks{
+							Self: "/cloudhub/v1/dashboards/0/templates/t1",
+						},
+					},
+				},
+				Cells: []dashboardCellResponse{},
+				Links: dashboardLinks{
+					Self:      "/cloudhub/v1/dashboards/0",
+					Cells:     "/cloudhub/v1/dashboards/0/cells",
+					Templates: "/cloudhub/v1/dashboards/0/templates",
+				},
+			},
+		},
+		{
+			name: "creates a dashboard response without Template Options",
+			d: cloudhub.Dashboard{
+				Organization: "0",
+				Templates: []cloudhub.Template{
+					{
+						ID:   "t2",
+						Type: "tagValues",
+						// Options is nil
+					},
+				},
+			},
+			want: &dashboardResponse{
+				Organization: "0",
+				Templates: []templateResponse{
+					{
+						Template: cloudhub.Template{
+							ID:   "t2",
+							Type: "tagValues",
+						},
+						Links: templateLinks{
+							Self: "/cloudhub/v1/dashboards/0/templates/t2",
+						},
+					},
+				},
+				Cells: []dashboardCellResponse{},
 				Links: dashboardLinks{
 					Self:      "/cloudhub/v1/dashboards/0",
 					Cells:     "/cloudhub/v1/dashboards/0/cells",
@@ -579,7 +838,7 @@ func TestValidDashboardRequest_TableGaugeChartOptions_ValueFormat(t *testing.T) 
 								IsEnforced: false,
 								Digits:     0,
 							},
-							IsShowValues:    true,
+							IsShowValues:    false,
 							SortBy:          "name",
 							SortByDirection: "asc",
 						},
