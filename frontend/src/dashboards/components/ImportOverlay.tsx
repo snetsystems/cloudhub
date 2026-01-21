@@ -247,12 +247,17 @@ class ImportOverlay extends PureComponent<Props, State> {
 
   private get filteredDashboards(): Dashboard[] {
     const {dashboards, searchTerm} = this.state
+    // Filter to only normal dashboards (exclude builtin)
+    const normalDashboards = dashboards.filter(
+      d => !d.type || d.type === 'normal'
+    )
+    
     if (!searchTerm.trim()) {
-      return dashboards
+      return normalDashboards
     }
     const term = searchTerm.toLowerCase()
     // Filter dashboards that match name OR have cells that match name
-    return dashboards.filter(d => {
+    return normalDashboards.filter(d => {
       const dashMatch = d.name.toLowerCase().includes(term)
       const cellMatch = d.cells.some(
         c => c.name && c.name.toLowerCase().includes(term)
