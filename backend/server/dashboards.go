@@ -15,7 +15,7 @@ type dashboardLinks struct {
 }
 
 type dashboardResponse struct {
-	ID           cloudhub.DashboardID  `json:"id,string"`
+	ID           cloudhub.DashboardID    `json:"id,string"`
 	Cells        []dashboardCellResponse `json:"cells"`
 	Templates    []templateResponse      `json:"templates"`
 	Name         string                  `json:"name"`
@@ -48,6 +48,9 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 }
 
 // Dashboards returns all dashboards within the store
+// Query parameters:
+//   - includeCells: if "true", includes cells in response (default: true)
+//   - includeTemplates: if "true", includes templates in response (default: true)
 func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	dashboards, err := s.Store.Dashboards(ctx).All(ctx)
@@ -56,12 +59,30 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Parse query parameters
+	includeCells := r.URL.Query().Get("includeCells")
+	includeTemplates := r.URL.Query().Get("includeTemplates")
+
+	// Default to true if not specified
+	shouldIncludeCells := includeCells != "false"
+	shouldIncludeTemplates := includeTemplates != "false"
+
 	res := getDashboardsResponse{
 		Dashboards: []*dashboardResponse{},
 	}
 
 	for _, dashboard := range dashboards {
-		res.Dashboards = append(res.Dashboards, newDashboardResponse(dashboard))
+		dashboardResp := newDashboardResponse(dashboard)
+
+		// Conditionally exclude cells and templates based on query parameters
+		if !shouldIncludeCells {
+			dashboardResp.Cells = []dashboardCellResponse{}
+		}
+		if !shouldIncludeTemplates {
+			dashboardResp.Templates = []templateResponse{}
+		}
+
+		res.Dashboards = append(res.Dashboards, dashboardResp)
 	}
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
