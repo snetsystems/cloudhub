@@ -8,6 +8,15 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
+// getDashboardType returns "normal" if typeStr is empty, otherwise returns typeStr as-is.
+// This ensures backward compatibility with existing dashboards that don't have a Type field.
+func getDashboardType(typeStr string) string {
+	if typeStr == "" {
+		return "normal"
+	}
+	return typeStr
+}
+
 type dashboardLinks struct {
 	Self      string `json:"self"`      // Self link mapping to this resource
 	Cells     string `json:"cells"`     // Cells link to the cells endpoint
@@ -20,6 +29,7 @@ type dashboardResponse struct {
 	Templates    []templateResponse      `json:"templates"`
 	Name         string                  `json:"name"`
 	Organization string                  `json:"organization"`
+	Type         string                  `json:"type,omitempty"`
 	Links        dashboardLinks          `json:"links"`
 }
 
@@ -39,6 +49,7 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 		Cells:        cells,
 		Templates:    templates,
 		Organization: d.Organization,
+		Type:         getDashboardType(d.Type),
 		Links: dashboardLinks{
 			Self:      fmt.Sprintf("%s/%d", base, dd.ID),
 			Cells:     fmt.Sprintf("%s/%d/cells", base, dd.ID),
@@ -278,6 +289,11 @@ func ValidDashboardRequest(d *cloudhub.Dashboard, defaultOrgID string) error {
 	if d.Organization == "" {
 		d.Organization = defaultOrgID
 	}
+	// Validate Type field: allow "", "normal", or "builtin"
+	// If invalid, default to "normal"
+	if d.Type != "" && d.Type != "normal" && d.Type != "builtin" {
+		d.Type = "normal"
+	}
 	for i, c := range d.Cells {
 		if err := ValidDashboardCellRequest(&c); err != nil {
 			return err
@@ -300,6 +316,7 @@ func DashboardDefaults(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Templates = d.Templates
 	newDash.Name = d.Name
 	newDash.Organization = d.Organization
+	newDash.Type = getDashboardType(d.Type)
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {
@@ -315,6 +332,8 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.ID = d.ID
 	newDash.Templates = d.Templates
 	newDash.Name = d.Name
+	newDash.Organization = d.Organization
+	newDash.Type = d.Type
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {

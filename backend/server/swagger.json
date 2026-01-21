@@ -8522,6 +8522,12 @@
         "name": {
           "description": "the user-facing name of the dashboard",
           "type": "string"
+        },
+        "type": {
+          "description": "Dashboard type: 'normal' (default) for user-created dashboards, 'builtin' for system-builtin page dashboards",
+          "type": "string",
+          "enum": ["normal", "builtin"],
+          "default": "normal"
         }
       },
       "example": {
@@ -8580,6 +8586,11 @@
         "name": {
           "description": "the user-facing name of the dashboard",
           "type": "string"
+        },
+        "type": {
+          "description": "Dashboard type: 'normal' (default) for user-created dashboards, 'builtin' for system-builtin page dashboards",
+          "type": "string",
+          "enum": ["normal", "builtin"]
         },
         "links": {
           "type": "object",

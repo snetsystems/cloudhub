@@ -8,6 +8,45 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
+func Test_getDashboardType(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "empty string returns normal",
+			input: "",
+			want:  "normal",
+		},
+		{
+			name:  "normal returns normal",
+			input: "normal",
+			want:  "normal",
+		},
+		{
+			name:  "builtin returns builtin",
+			input: "builtin",
+			want:  "builtin",
+		},
+		{
+			name:  "invalid value returns as-is",
+			input: "invalid",
+			want:  "invalid",
+		},
+	}
+	for _, tt := range tests {
+		ts := tt
+		t.Run(ts.name, func(t *testing.T) {
+			t.Parallel()
+			if got := getDashboardType(ts.input); got != ts.want {
+				t.Errorf("getDashboardType() = %v, want %v", got, ts.want)
+			}
+		})
+	}
+}
+
 func TestCorrectWidthHeight(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -98,6 +137,7 @@ func TestDashboardDefaults(t *testing.T) {
 						H: 2,
 					},
 				},
+				Type: "normal",
 			},
 		},
 		{
@@ -122,6 +162,49 @@ func TestDashboardDefaults(t *testing.T) {
 					{
 						W: 2,
 						H: 2,
+					},
+				},
+				Type: "normal",
+			},
+		},
+		{
+			name: "Empty Type defaults to normal",
+			d: cloudhub.Dashboard{
+				Type: "",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Type: "normal",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+					},
+				},
+			},
+		},
+		{
+			name: "Builtin Type is preserved",
+			d: cloudhub.Dashboard{
+				Type: "builtin",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Type: "builtin",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
 					},
 				},
 			},
@@ -178,6 +261,7 @@ func TestValidDashboardRequest(t *testing.T) {
 			},
 			want: cloudhub.Dashboard{
 				Organization: "1337",
+				Type:         "normal",
 				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
@@ -221,6 +305,7 @@ func TestValidDashboardRequest(t *testing.T) {
 			},
 			want: cloudhub.Dashboard{
 				Organization: "0",
+				Type:         "normal",
 				Cells: []cloudhub.DashboardCell{
 					{
 						W:              4,
@@ -251,6 +336,7 @@ func TestValidDashboardRequest(t *testing.T) {
 			},
 			want: cloudhub.Dashboard{
 				Organization: "1337",
+				Type:         "normal",
 				Templates: []cloudhub.Template{
 					{
 						ID:   "t1",
@@ -261,6 +347,114 @@ func TestValidDashboardRequest(t *testing.T) {
 					},
 				},
 				Cells: []cloudhub.DashboardCell{},
+			},
+		},
+		{
+			name: "Empty Type defaults to normal",
+			d: cloudhub.Dashboard{
+				Organization: "1337",
+				Type:         "",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						Queries: []cloudhub.DashboardQuery{
+							{
+								Command: "SELECT * FROM cpu",
+								Type:    "influxql",
+							},
+						},
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Organization: "1337",
+				Type:         "normal",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						Queries: []cloudhub.DashboardQuery{
+							{
+								Command: "SELECT * FROM cpu",
+								Type:    "influxql",
+							},
+						},
+						NoteVisibility: "default",
+					},
+				},
+			},
+		},
+		{
+			name: "Builtin Type is preserved",
+			d: cloudhub.Dashboard{
+				Organization: "1337",
+				Type:         "builtin",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						Queries: []cloudhub.DashboardQuery{
+							{
+								Command: "SELECT * FROM cpu",
+								Type:    "influxql",
+							},
+						},
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Organization: "1337",
+				Type:         "builtin",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						Queries: []cloudhub.DashboardQuery{
+							{
+								Command: "SELECT * FROM cpu",
+								Type:    "influxql",
+							},
+						},
+						NoteVisibility: "default",
+					},
+				},
+			},
+		},
+		{
+			name: "Invalid Type defaults to normal",
+			d: cloudhub.Dashboard{
+				Organization: "1337",
+				Type:         "invalid",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						Queries: []cloudhub.DashboardQuery{
+							{
+								Command: "SELECT * FROM cpu",
+								Type:    "influxql",
+							},
+						},
+					},
+				},
+			},
+			want: cloudhub.Dashboard{
+				Organization: "1337",
+				Type:         "normal",
+				Cells: []cloudhub.DashboardCell{
+					{
+						W: 4,
+						H: 4,
+						Queries: []cloudhub.DashboardQuery{
+							{
+								Command: "SELECT * FROM cpu",
+								Type:    "influxql",
+							},
+						},
+						NoteVisibility: "default",
+					},
+				},
 			},
 		},
 	}
@@ -335,6 +529,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
+				Type:         "normal",
 				Templates:    []templateResponse{},
 				Cells: []dashboardCellResponse{
 					{
@@ -453,6 +648,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
+				Type:         "normal",
 				Templates:    []templateResponse{},
 				Cells: []dashboardCellResponse{
 					{
@@ -495,6 +691,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
+				Type:         "normal",
 				Templates:    []templateResponse{},
 				Cells: []dashboardCellResponse{
 					{
@@ -537,6 +734,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
+				Type:         "normal",
 				Templates:    []templateResponse{},
 				Cells: []dashboardCellResponse{
 					{
@@ -629,6 +827,63 @@ func Test_newDashboardResponse(t *testing.T) {
 					},
 				},
 				Cells: []dashboardCellResponse{},
+				Links: dashboardLinks{
+					Self:      "/cloudhub/v1/dashboards/0",
+					Cells:     "/cloudhub/v1/dashboards/0/cells",
+					Templates: "/cloudhub/v1/dashboards/0/templates",
+				},
+			},
+		},
+		{
+			name: "Empty Type defaults to normal in response",
+			d: cloudhub.Dashboard{
+				Organization: "0",
+				Type:         "",
+				Cells:        []cloudhub.DashboardCell{},
+			},
+			want: &dashboardResponse{
+				Organization: "0",
+				Type:         "normal",
+				Templates:    []templateResponse{},
+				Cells:        []dashboardCellResponse{},
+				Links: dashboardLinks{
+					Self:      "/cloudhub/v1/dashboards/0",
+					Cells:     "/cloudhub/v1/dashboards/0/cells",
+					Templates: "/cloudhub/v1/dashboards/0/templates",
+				},
+			},
+		},
+		{
+			name: "Builtin Type is included in response",
+			d: cloudhub.Dashboard{
+				Organization: "0",
+				Type:         "builtin",
+				Cells:        []cloudhub.DashboardCell{},
+			},
+			want: &dashboardResponse{
+				Organization: "0",
+				Type:         "builtin",
+				Templates:    []templateResponse{},
+				Cells:        []dashboardCellResponse{},
+				Links: dashboardLinks{
+					Self:      "/cloudhub/v1/dashboards/0",
+					Cells:     "/cloudhub/v1/dashboards/0/cells",
+					Templates: "/cloudhub/v1/dashboards/0/templates",
+				},
+			},
+		},
+		{
+			name: "Normal Type is included in response",
+			d: cloudhub.Dashboard{
+				Organization: "0",
+				Type:         "normal",
+				Cells:        []cloudhub.DashboardCell{},
+			},
+			want: &dashboardResponse{
+				Organization: "0",
+				Type:         "normal",
+				Templates:    []templateResponse{},
+				Cells:        []dashboardCellResponse{},
 				Links: dashboardLinks{
 					Self:      "/cloudhub/v1/dashboards/0",
 					Cells:     "/cloudhub/v1/dashboards/0/cells",

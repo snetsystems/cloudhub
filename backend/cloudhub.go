@@ -751,6 +751,7 @@ type Dashboard struct {
 	Templates    []Template      `json:"templates"`
 	Name         string          `json:"name"`
 	Organization string          `json:"organization"` // Organization is the organization ID that resource belongs to
+	Type         string          `json:"type,omitempty"` // Type distinguishes dashboard types: "normal" (default) or "builtin"
 }
 
 // UnmarshalJSON unmarshals a string ID into a DashboardID (int).

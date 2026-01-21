@@ -304,6 +304,15 @@ func UnmarshalLayout(data []byte, l *cloudhub.Layout) error {
 	return nil
 }
 
+// getDashboardType returns "normal" if typeStr is empty, otherwise returns typeStr as-is.
+// This ensures backward compatibility with existing dashboards that don't have a Type field.
+func getDashboardType(typeStr string) string {
+	if typeStr == "" {
+		return "normal"
+	}
+	return typeStr
+}
+
 // MarshalDashboard encodes a dashboard to binary protobuf format.
 func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 	cells := make([]*DashboardCell, len(d.Cells))
@@ -314,7 +323,6 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			if q.Range != nil {
 				r.Upper, r.Lower = q.Range.Upper, q.Range.Lower
 			}
-			// QueryConfig가 nil일 수 있으므로 체크
 			if q.QueryConfig.Shifts != nil {
 				q.Shifts = q.QueryConfig.Shifts
 			}
@@ -532,6 +540,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 		Templates:    templates,
 		Name:         d.Name,
 		Organization: d.Organization,
+		Type:         getDashboardType(d.Type),
 	})
 }
 
@@ -828,6 +837,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 	d.Templates = templates
 	d.Name = pb.Name
 	d.Organization = pb.Organization
+	d.Type = getDashboardType(pb.Type)
 	return nil
 }
 
