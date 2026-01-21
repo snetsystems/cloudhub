@@ -11,8 +11,8 @@ import {convertTimeSeriesDataToColumns} from 'src/shared/utils/gaugeChartColumns
 import {useIsUpdateObj} from 'src/shared/utils/useIsUpdateObj'
 
 // Types
-import {ColumnInfo, DataTableObject, FluxTable} from 'src/types'
-import {TimeSeriesServerResponse, TimeSeriesSeries} from 'src/types/series'
+import {ColumnInfo, DataTableObject, FluxTable, Template, TemplateValue} from 'src/types'
+import {TimeSeriesServerResponse, TimeSeriesSeries, TimeSeriesValue} from 'src/types/series'
 import {
   ColumnSettingInterface,
   TableGaugeChartOptionsInterface,
@@ -25,6 +25,8 @@ interface Props {
   tableGaugeChartOptions: TableGaugeChartOptionsInterface
   decimalPlaces: DecimalPlaces
   originFiledOptions: FieldOption[]
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
+  templates?: Template[]
 }
 
 function StaticTableGaugeChart({
@@ -33,6 +35,8 @@ function StaticTableGaugeChart({
   tableGaugeChartOptions,
   decimalPlaces,
   originFiledOptions,
+  onPickTemplate,
+  templates,
 }: Props) {
   const queryKey = _.get(data, ['0', 'response', 'uuid'], [])
 
@@ -240,6 +244,27 @@ function StaticTableGaugeChart({
     })
   }
 
+  const handleClickCell = (
+    tempVar: string,
+    isTempVarData: TimeSeriesValue
+  ) => async (): Promise<void> => {
+    console.log('temp', tempVar, isTempVarData)
+    const temp = templates && templates.find(f => f.tempVar === tempVar)
+    const val = temp && temp.values.find(f => f.value === isTempVarData)
+    if (typeof onPickTemplate === 'function' && temp !== undefined) {
+      onPickTemplate(temp, val)
+    }
+  }
+
+  const temVarCell = (tempVar: string, isTempVarData: TimeSeriesValue) => {
+    return( 
+      <div className="template-variable-cell" onClick={handleClickCell(tempVar, isTempVarData)}>
+        {isTempVarData}
+      </div>
+    )
+  }
+
+
   const columns = useMemo<ColumnInfo[]>(() => {
     if (!tableData) return []
 
@@ -247,7 +272,8 @@ function StaticTableGaugeChart({
       tableData,
       tableGaugeChartOptions,
       originFiledOptions,
-      decimalPlaces
+      decimalPlaces,
+      temVarCell      
     )
 
     const tagNameList: string[] = convertData?.map(item => item[0].name) || []

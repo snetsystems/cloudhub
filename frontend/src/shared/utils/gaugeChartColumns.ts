@@ -1,10 +1,12 @@
+
 import {ColumnInfo} from 'src/types'
 import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 import {ColorString, ColorNumber} from 'src/types/colors'
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 import {DEFAULT_GAUGE_COLORS} from '../constants/thresholds'
-import {DecimalPlaces, FieldOption} from 'src/types/dashboards'
+import {DecimalPlaces, FieldOption, TimeSeriesValue} from 'src/types/dashboards'
 import {AlignType} from 'src/types'
+import { ReactNode } from 'react'
 
 interface DataTableObject {
   [key: string]: string | number | boolean | null | any
@@ -14,7 +16,8 @@ export const convertTimeSeriesDataToColumns = (
   data: DataTableObject[],
   tableGaugeChartOptions?: TableGaugeChartOptionsInterface,
   originFiledOptions?: FieldOption[],
-  decimalPlaces?: DecimalPlaces
+  decimalPlaces?: DecimalPlaces,
+  temVarCell?: (tempVar: string, isTempVarData: TimeSeriesValue) => ReactNode 
 ): ColumnInfo[] => {
   if (!data || data.length === 0) {
     return []
@@ -41,6 +44,23 @@ export const convertTimeSeriesDataToColumns = (
       const fieldOption = originFiledOptions?.find(f => f.internalName === key)
       const displayName = fieldOption?.displayName || key
 
+      const isTempVar = fieldOption?.tempVar !== ''
+      if (isTempVar) {
+        return {
+          key: key,
+          name: displayName,
+          options: {
+            sorting: true,
+            thead: {
+              align: AlignType.LEFT,
+            },
+          },
+          render: (value: string) => {
+            return temVarCell(fieldOption?.tempVar, value)
+          },
+        }
+      }
+
       return {
         key: key,
         name: displayName,
@@ -49,7 +69,7 @@ export const convertTimeSeriesDataToColumns = (
           thead: {
             align: AlignType.LEFT,
           },
-        },
+        },        
       }
     }
 

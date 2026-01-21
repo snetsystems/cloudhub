@@ -112,7 +112,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                 fields={customizeFieldOptions}
                 onFieldUpdate={this.handleFieldUpdate}
                 moveField={this.moveField}
-                isUsingTempVar={false}
+                isUsingTempVar={true}
               />
             </div>
             <div className="graph-options-group"></div>

@@ -181,6 +181,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       decimalPlaces,
       tableGaugeChartOptions,
       originFiledOptions,
+      onPickTemplate
     } = this.props
     const {fillArea, showLine, showPoint} = graphOptions
 
@@ -356,6 +357,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticGraphStyle={this.staticGraphStyle}
             tableGaugeChartOptions={tableGaugeChartOptions}
             originFiledOptions={originFiledOptions}
+            onPickTemplate={onPickTemplate}
+            templates={templates}
           />
         )
       default:

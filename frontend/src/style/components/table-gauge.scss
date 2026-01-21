@@ -200,3 +200,11 @@
 .table-gauge-cell-value.empty-value {
   color: $g12-forge;
 }
+
+.template-variable-cell {
+  color:$s-brown;
+  cursor: pointer;
+  &:hover {
+    color: $s-orange;
+  }
+}
