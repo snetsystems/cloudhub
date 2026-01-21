@@ -31,6 +31,10 @@ export const convertTimeSeriesDataToColumns = (
   })
 
   const columns: ColumnInfo[] = Array.from(allKeys).map(key => {
+    const sampleValue = data.find(row => row[key] !== null && row[key] !== undefined)?.[key]
+    const isNumberType = typeof sampleValue === 'number'
+    const columnAlign = isNumberType ? AlignType.RIGHT : AlignType.LEFT
+
     const gaugeSetting = tableGaugeChartOptions?.columnSettings?.find(
       setting => {
         return (
@@ -99,7 +103,7 @@ export const convertTimeSeriesDataToColumns = (
       name: gaugeSetting.displayName || key,
       options: {
         thead: {
-          align: AlignType.RIGHT,
+          align: columnAlign,
         },
         isGauge: true,
         sorting: true,

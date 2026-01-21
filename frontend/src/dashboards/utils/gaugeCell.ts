@@ -246,7 +246,6 @@ const formatNumber = (value: number, decimalPlaces: number): string => {
 const scaleByUnit = (
   value: number,
   valueFormat: FormatOption,
-  isZeroRange: boolean = false
 ): {value: number; unit: string} => {
   if (valueFormat === FORMAT_OPTIONS.RAW) {
     return {value, unit: ''}
@@ -264,7 +263,7 @@ const scaleByUnit = (
   }
 
   const absValue = Math.abs(value)
-  if (!base || absValue < base || isZeroRange) {
+  if (!base || absValue < base ) {
     return {value, unit: ''}
   }
 
@@ -281,15 +280,13 @@ const scaleByUnit = (
   if (unitIndex === -1) {
     return {value, unit: ''}
   }
-
   return {value: value / divisor, unit: labels[unitIndex]}
 }
 
 export const formatValueWithUnit = (
   value: number | null,
   decimalPlaces: number,
-  valueFormat: FormatOption = FORMAT_OPTIONS.RAW,
-  isZeroRange: boolean = false
+  valueFormat: FormatOption = FORMAT_OPTIONS.RAW,  
 ): string => {
   if (value === null || value === undefined) {
     return '--'
@@ -305,7 +302,7 @@ export const formatValueWithUnit = (
     return '0'
   }
 
-  const {value: scaledValue, unit} = scaleByUnit(numericValue, valueFormat, isZeroRange)
+  const {value: scaledValue, unit} = scaleByUnit(numericValue, valueFormat)
   return `${formatNumber(scaledValue, decimalPlaces)} ${unit}`
 }
 
@@ -314,7 +311,6 @@ export const formatDisplayValue = (
   isPercent: boolean,
   decimalPlaces: number,
   valueFormat: FormatOption = FORMAT_OPTIONS.RAW,
-  isZeroRange: boolean = false
 ): string => {
   if (!Number.isFinite(value) || value === null) {
     return '--'
@@ -324,5 +320,5 @@ export const formatDisplayValue = (
     return `${value.toFixed(1)}%`
   }
 
-  return formatValueWithUnit(value, decimalPlaces, valueFormat, isZeroRange)
+  return formatValueWithUnit(value, decimalPlaces, valueFormat)
 }

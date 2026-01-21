@@ -47,11 +47,11 @@ function StaticTableGaugeChart({
   const [tableData, setTableData] = useState<DataTableObject[]>([])
 
   useEffect(() => {
-    const convertData = data.map(item =>
+    const rowData = data.map(item =>
       _.get(item, ['response', 'results', '0', 'series'], [])
     )
 
-    setConvertData(convertData)
+    setConvertData(rowData)
   }, [data])
 
   const mergeDataByTags = (rawData: any[]): DataTableObject[] => {
@@ -101,7 +101,6 @@ function StaticTableGaugeChart({
   useEffect(() => {
     if (data && data.length > 0) {
       const finalResult = mergeDataByTags(data)
-
       setTableData(finalResult)
     }
   }, [data])

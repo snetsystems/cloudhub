@@ -31,6 +31,8 @@ interface Props {
   value: number
 }
 
+type ValueState = 'valid' | 'null' | 'invalid'
+
 const getSegmentCountForWidth = (width: number): number => {
   
   if (!width || width <= 0) {
@@ -63,7 +65,7 @@ const getSegmentCountForWidth = (width: number): number => {
 function TableGaugeCell({options, value}: Props) {
   const gaugeRef = useRef<HTMLDivElement>(null)
 
-  const [isEmptyValue, setIsEmptyValue] = useState<boolean>(false)
+  const [valueState, setValueState] = useState<ValueState>('valid')
 
   const [segmentCount, setSegmentCount] = useState<number>(50)
 
@@ -98,7 +100,13 @@ function TableGaugeCell({options, value}: Props) {
   }, [])
 
   useEffect(() => {
-    setIsEmptyValue(!Number.isFinite(value))
+    if (value === null) {
+      setValueState('null')
+    } else if (typeof value !== 'number' || !Number.isFinite(value)) {
+      setValueState('invalid')
+    } else {
+      setValueState('valid')
+    }
   }, [value])
 
   useEffect(() => {
@@ -180,17 +188,18 @@ function TableGaugeCell({options, value}: Props) {
     isPercent,
     decimalPlaces,
     options?.valueFormat,
-    isZeroRange
   )
 
   return (
     <div
       className={`table-gauge-cell-container ${
-        !options?.isGauge || isEmptyValue ? 'only-value' : ''
+        !options?.isGauge || valueState !== 'valid' ? 'only-value' : ''
       }`}
     >
-      {isEmptyValue ? (
+      {valueState === 'null' ? (
         <div className="table-gauge-cell-value empty-value">--</div>
+      ) : valueState === 'invalid' ? (
+        <div>{value}</div>
       ) : (
         <>
           {options.isGauge && (
