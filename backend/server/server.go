@@ -696,6 +696,14 @@ func (s *Server) Serve(ctx context.Context) {
 		auth0: s.Auth0SuperAdminOrg,
 	}
 
+	// Initialize builtin dashboards for default organization
+	if err := initializeDefaultOrgBuiltinDashboards(ctx, &service, logger); err != nil {
+		logger.
+			WithField("component", "server").
+			Error("Failed to initialize builtin dashboards for default organization:", err)
+		// Don't exit - continue startup even if builtin dashboard initialization fails
+	}
+
 	service.Env = cloudhub.Environment{
 		TelegrafSystemInterval: s.TelegrafSystemInterval,
 		CustomAutoRefresh:      s.CustomAutoRefresh,
@@ -985,6 +993,7 @@ func openService(
 			DLNxRstStgStore:         svc.DLNxRstStgStore(),
 			EsSourcesStore:          svc.EsSourcesStore(),
 			DeviceMappingsStore:     svc.DeviceMappingsStore(),
+			DashboardItemsStore:     svc.DashboardItemsStore(),
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,

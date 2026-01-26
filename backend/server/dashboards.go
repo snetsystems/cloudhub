@@ -6,7 +6,17 @@ import (
 	"net/http"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/builtin"
 )
+
+// getDashboardType returns "normal" if typeStr is empty, otherwise returns typeStr as-is.
+// This ensures backward compatibility with existing dashboards that don't have a Type field.
+func getDashboardType(typeStr string) string {
+	if typeStr == "" {
+		return "normal"
+	}
+	return typeStr
+}
 
 type dashboardLinks struct {
 	Self      string `json:"self"`      // Self link mapping to this resource
@@ -15,11 +25,12 @@ type dashboardLinks struct {
 }
 
 type dashboardResponse struct {
-	ID           cloudhub.DashboardID  `json:"id,string"`
+	ID           cloudhub.DashboardID    `json:"id,string"`
 	Cells        []dashboardCellResponse `json:"cells"`
 	Templates    []templateResponse      `json:"templates"`
 	Name         string                  `json:"name"`
 	Organization string                  `json:"organization"`
+	Type         string                  `json:"type,omitempty"`
 	Links        dashboardLinks          `json:"links"`
 }
 
@@ -39,6 +50,7 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 		Cells:        cells,
 		Templates:    templates,
 		Organization: d.Organization,
+		Type:         getDashboardType(d.Type),
 		Links: dashboardLinks{
 			Self:      fmt.Sprintf("%s/%d", base, dd.ID),
 			Cells:     fmt.Sprintf("%s/%d/cells", base, dd.ID),
@@ -48,6 +60,9 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 }
 
 // Dashboards returns all dashboards within the store
+// Query parameters:
+//   - includeCells: if "true", includes cells in response (default: true)
+//   - includeTemplates: if "true", includes templates in response (default: true)
 func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	dashboards, err := s.Store.Dashboards(ctx).All(ctx)
@@ -56,12 +71,30 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Parse query parameters
+	includeCells := r.URL.Query().Get("includeCells")
+	includeTemplates := r.URL.Query().Get("includeTemplates")
+
+	// Default to true if not specified
+	shouldIncludeCells := includeCells != "false"
+	shouldIncludeTemplates := includeTemplates != "false"
+
 	res := getDashboardsResponse{
 		Dashboards: []*dashboardResponse{},
 	}
 
 	for _, dashboard := range dashboards {
-		res.Dashboards = append(res.Dashboards, newDashboardResponse(dashboard))
+		dashboardResp := newDashboardResponse(dashboard)
+
+		// Conditionally exclude cells and templates based on query parameters
+		if !shouldIncludeCells {
+			dashboardResp.Cells = []dashboardCellResponse{}
+		}
+		if !shouldIncludeTemplates {
+			dashboardResp.Templates = []templateResponse{}
+		}
+
+		res.Dashboards = append(res.Dashboards, dashboardResp)
 	}
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -257,6 +290,11 @@ func ValidDashboardRequest(d *cloudhub.Dashboard, defaultOrgID string) error {
 	if d.Organization == "" {
 		d.Organization = defaultOrgID
 	}
+	// Validate Type field: allow "", "normal", or "builtin"
+	// If invalid, default to "normal"
+	if d.Type != "" && d.Type != "normal" && d.Type != "builtin" {
+		d.Type = "normal"
+	}
 	for i, c := range d.Cells {
 		if err := ValidDashboardCellRequest(&c); err != nil {
 			return err
@@ -279,6 +317,7 @@ func DashboardDefaults(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Templates = d.Templates
 	newDash.Name = d.Name
 	newDash.Organization = d.Organization
+	newDash.Type = getDashboardType(d.Type)
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {
@@ -294,6 +333,8 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.ID = d.ID
 	newDash.Templates = d.Templates
 	newDash.Name = d.Name
+	newDash.Organization = d.Organization
+	newDash.Type = d.Type
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {
@@ -301,4 +342,35 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 		newDash.Cells[i] = c
 	}
 	return
+}
+
+// BuiltinDashboardTemplate returns the original JSON template for a builtin dashboard by file name
+// GET /cloudhub/v1/builtin/dashboards/:name/template
+// The name parameter should be the dashboard file name without extension (e.g., "hostpage" for "hostpage.json")
+func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Request) {
+	name, err := paramStr("name", r)
+	if err != nil {
+		Error(w, http.StatusBadRequest, "Dashboard name is required", s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+	builtinStore := &builtin.BinDashboardsStore{
+		Logger: s.Logger,
+	}
+
+	// Get template by dashboard name (unique identifier, not filename)
+	template, err := builtinStore.Get(ctx, name)
+	if err != nil {
+		if err == cloudhub.ErrDashboardNotFound {
+			notFound(w, name, s.Logger)
+			return
+		}
+		Error(w, http.StatusInternalServerError, "Error loading builtin dashboard template", s.Logger)
+		return
+	}
+
+	// Return the template as-is (without organization or ID set)
+	res := newDashboardResponse(template)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
