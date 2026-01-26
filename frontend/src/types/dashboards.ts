@@ -130,7 +130,7 @@ export enum CellType {
   StaticStackedBar = 'staticStackedBar',
   StaticLineChart = 'staticLineChart',
   StaticTableGaugeChart = 'staticTableGaugeChart',
-  HostTable = 'host-table',
+  Component = 'component',
 }
 
 interface DashboardLinks {

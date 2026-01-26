@@ -56,7 +56,7 @@ func (s *BinDashboardsStore) All(ctx context.Context) ([]cloudhub.Dashboard, err
 }
 
 // Get retrieves a builtin dashboard by name
-// Name should match the dashboard's Name field (e.g., "Host Page")
+// Name should match the dashboard's Name field (e.g., "host_page")
 func (s *BinDashboardsStore) Get(ctx context.Context, name string) (cloudhub.Dashboard, error) {
 	dashboards, err := s.All(ctx)
 	if err != nil {

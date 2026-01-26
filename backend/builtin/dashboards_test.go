@@ -114,13 +114,13 @@ func TestBinDashboardsStore_GetByFileName(t *testing.T) {
 			name:     "Get hostpage dashboard by file name",
 			fileName: "hostpage",
 			wantErr:  false,
-			wantName: "Host Page",
+			wantName: "host_page",
 		},
 		{
 			name:     "Get hostpage dashboard by file name with extension",
 			fileName: "hostpage.json",
 			wantErr:  false,
-			wantName: "Host Page",
+			wantName: "host_page",
 		},
 		{
 			name:     "Get non-existent dashboard",

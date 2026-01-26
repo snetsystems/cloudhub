@@ -187,3 +187,12 @@ export const DYNAMIC_SOURCE_ITEM: SourceItemValue = {
 export const DEFAULT_CELL_BG_COLOR = '#292933'
 export const DEFAULT_CELL_TEXT_COLOR = '#FFFFFF'
 export const GRAPH_BG_COLOR = '#1f1f27'
+
+// Builtin Dashboard Names
+// Use snake_case for dashboard names (e.g., "host_page")
+export const BUILTIN_DASHBOARD_NAMES = {
+  HOST_PAGE: 'host_page',
+} as const
+
+export type BuiltinDashboardName =
+  typeof BUILTIN_DASHBOARD_NAMES[keyof typeof BUILTIN_DASHBOARD_NAMES]

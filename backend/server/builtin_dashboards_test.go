@@ -33,7 +33,7 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 			orgID:  "test-org-2",
 			existingDashes: []cloudhub.Dashboard{
 				{
-					Name:         "Host Page",
+					Name:         "host_page",
 					Organization:  "test-org-2",
 					Type:         "builtin",
 				},

@@ -9,8 +9,13 @@ import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 // Components
 import LayoutComponent from 'src/shared/components/Layout'
 import BuiltinCellRenderer from 'src/shared/components/BuiltinCellRenderer'
-import {isBuiltinCell} from 'src/shared/components/BuiltinCellRegistry'
+import {
+  isBuiltinCell,
+  getBuiltinCellComponent,
+} from 'src/shared/components/BuiltinCellRegistry'
+import {HostTableCellContainerProps} from 'src/shared/components/builtinCells/HostTableCell'
 import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
+import {initHostTableCell} from 'src/shared/components/builtinCells/HostTableCell'
 import {Page, OverlayTechnology, Button, IconFont} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import CellEditorOverlay from 'src/dashboards/components/CellEditorOverlay'
@@ -27,7 +32,7 @@ import {
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
 import {
-  getBuiltinDashboardByName,
+  getBuiltinDashboard,
   updateDashboard,
   getBuiltinDashboardTemplate,
   createDashboard,
@@ -56,9 +61,6 @@ import {
 } from 'src/shared/copy/notifications'
 import {notIncludeApps} from 'src/hosts/constants/apps'
 import {DASHBOARD_LAYOUT_ROW_HEIGHT, LAYOUT_MARGIN} from 'src/shared/constants'
-import {NEW_DEFAULT_DASHBOARD_CELL} from 'src/dashboards/constants'
-import {DEFAULT_AXIS} from 'src/dashboards/constants/cellEditor'
-import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 
 // Types
 import {
@@ -144,6 +146,9 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       PureComponent.prototype.setState.bind(this)(args, callback)
     }
 
+    // Initialize builtin cell components used in this container
+    initHostTableCell()
+
     this.state = {
       hostsObject: {},
       layouts: [],
@@ -162,7 +167,8 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     const {notify, cloudAutoRefresh} = this.props
 
     // Store에 저장된 builtin dashboard 인스턴스 로드
-    const builtinDashboard = await getBuiltinDashboardByName('Host Page')
+    const builtinDashboard = await getBuiltinDashboard.hostPage()
+
     if (builtinDashboard) {
       this.setState({builtinDashboard})
     }
@@ -298,16 +304,14 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       isUsingAuth,
       notify,
       editCellQueryStatus,
-      handleClearCEO,
+
       cellQueryStatus,
       autoRefresh,
     } = this.props
     const {
-      filteredLayouts,
       focusedHost,
       hostsObject,
       hostPageStatus,
-      cellsLayout,
       showCellEditorOverlay,
       selectedCell,
     } = this.state
@@ -353,7 +357,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
               notify={notify}
               fluxLinks={fluxLinks}
               cell={selectedCell}
-              dashboardID="hosts-page" // hosts 페이지는 고정 ID 사용
+              dashboardID="hosts-page"
               queryStatus={cellQueryStatus}
               onSave={this.handleSaveEditedCell}
               onCancel={this.handleHideCellEditorOverlay}
@@ -437,7 +441,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
         }
         await updateDashboard(updatedDashboard)
         // 업데이트 후 다시 로드하여 최신 상태 유지
-        const reloaded = await getBuiltinDashboardByName('Host Page')
+        const reloaded = await getBuiltinDashboard.hostPage()
         if (reloaded) {
           this.setState({builtinDashboard: reloaded})
         }
@@ -570,49 +574,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
 
     // host-table-cell 우선 확보 (builtin에 없으면 기본값 생성)
     let finalHostTableCell =
-      baseBuiltinCells.find(
-        c => c.i === 'host-table-cell' || c.type === CellType.HostTable
-      ) || null
-
-    if (!finalHostTableCell) {
-      finalHostTableCell = {
-        ...NEW_DEFAULT_DASHBOARD_CELL,
-        i: 'host-table-cell',
-        x: 0,
-        y: 0,
-        w: 96,
-        h: 25,
-        minW: 30,
-        minH: 15,
-        name: 'Host List',
-        queries: [],
-        type: CellType.HostTable,
-        axes: {
-          x: DEFAULT_AXIS,
-          y: DEFAULT_AXIS,
-        },
-        colors: DEFAULT_LINE_COLORS,
-        tableOptions: {
-          verticalTimeAxis: false,
-          sortBy: {
-            internalName: '',
-            displayName: '',
-            visible: true,
-            direction: 'asc',
-          },
-          wrapping: '',
-          fixFirstColumn: false,
-        },
-        fieldOptions: [],
-        timeFormat: '',
-        decimalPlaces: {isEnforced: false, digits: 2},
-        legend: {},
-        inView: true,
-        note: '',
-        noteVisibility: NoteVisibility.Default,
-        links: {self: ''},
-      }
-    }
+      baseBuiltinCells.find(c => c.i === 'host-table-cell') || null
 
     // builtin 셀에 대해 cellsLayout 오버라이드 적용
     const builtinCellsWithOverrides = baseBuiltinCells.map(cell => {
@@ -622,18 +584,22 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
 
     // host-table-cell 제외한 builtin 셀
     const builtinCells = builtinCellsWithOverrides.filter(
-      c => c.i !== finalHostTableCell.i
+      c => !finalHostTableCell || c.i !== finalHostTableCell.i
     )
 
     // 커스텀 셀: builtin에 없는 cellsLayout 항목
     const builtinIds = new Set([
       ...builtinCellsWithOverrides.map(c => c.i),
-      finalHostTableCell.i,
+      ...(finalHostTableCell ? [finalHostTableCell.i] : []),
     ])
     const customCells = cellsLayout.filter(cell => !builtinIds.has(cell.i))
 
     // 병합 및 중복 제거
-    const merged = [finalHostTableCell, ...builtinCells, ...customCells]
+    const merged = [
+      ...(finalHostTableCell ? [finalHostTableCell] : []),
+      ...builtinCells,
+      ...customCells,
+    ]
     const seen = new Set<string>()
     return merged.filter(cell => {
       if (!cell || !cell.i || seen.has(cell.i)) return false
@@ -654,19 +620,30 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       hostPageStatus: RemoteDataState
     }
   ) => {
-    // Builtin cell인 경우 BuiltinCellRenderer 사용
-    // 필요한 props를 직접 전달 (구체적인 의존성 없이)
     if (isBuiltinCell(cell)) {
+      const registryEntry = getBuiltinCellComponent(cell)
+      if (!registryEntry) {
+        return null
+      }
+
+      const containerProps: HostTableCellContainerProps = {
+        hostsObject: props.hostsObject,
+        hostPageStatus: props.hostPageStatus,
+        onClickTableRow: this.handleClickTableRow,
+        tableTitle: this.props.tableTitle,
+        focusedHost: props.focusedHost,
+      }
+
+      const cellSpecificProps = registryEntry.getProps
+        ? registryEntry.getProps(containerProps)
+        : {}
+
       return (
         <BuiltinCellRenderer
           cell={cell}
           source={props.source}
           timeRange={props.timeRange}
-          hostsObject={props.hostsObject}
-          hostPageStatus={props.hostPageStatus}
-          onClickTableRow={this.handleClickTableRow}
-          tableTitle={this.props.tableTitle}
-          host={props.focusedHost}
+          {...cellSpecificProps}
         />
       )
     }
@@ -943,8 +920,8 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     }
 
     try {
-      // 백엔드에서 원본 템플릿 가져오기 (name 사용: "Host Page")
-      const template = await getBuiltinDashboardTemplate('Host Page')
+      // 백엔드에서 원본 템플릿 가져오기
+      const template = await getBuiltinDashboardTemplate.hostPage()
       if (!template) {
         notify({
           ...defaultErrorNotification,
@@ -954,7 +931,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       }
 
       // 기존 builtin dashboard 찾기 (없을 수도 있음)
-      const existingDashboard = await getBuiltinDashboardByName('Host Page')
+      const existingDashboard = await getBuiltinDashboard.hostPage()
 
       let resetDashboard: Dashboard
 

@@ -1,12 +1,9 @@
 // Libraries
 import {ComponentType} from 'react'
 
-// Components
-import HostTableCell from 'src/shared/components/builtinCells/HostTableCell'
-
 // Types
-import {Cell, CellType} from 'src/types/dashboards'
-import {Source, TimeRange, Host, RemoteDataState} from 'src/types'
+import {Cell} from 'src/types/dashboards'
+import {Source, TimeRange} from 'src/types'
 
 /**
  * BuiltinCellComponentProps defines the common props that all builtin cell components receive.
@@ -20,75 +17,88 @@ export interface BuiltinCellComponentProps {
 }
 
 /**
- * HostTableCellProps defines the props required by HostTableCell component.
+ * Props provider function type.
+ * Each builtin cell provides a function that extracts required props from container's available data.
+ * This allows cells to declare what they need, and containers to provide it automatically.
+ * 
+ * @template T - The props type that this cell returns
+ * @template C - The container props type that this cell requires
  */
-export interface HostTableCellProps {
-  hostsObject: {[x: string]: Host}
-  hostPageStatus: RemoteDataState
-  onClickTableRow: (hostName: string) => () => void
-  tableTitle: () => JSX.Element
-  host?: string
-}
-
-/**
- * CellTypeToProps maps cell types to their required props types.
- * This enables TypeScript to enforce required props for each cell type.
- * Note: This is for documentation purposes. Props are passed directly to components.
- */
-export type CellTypeToProps = {
-  [CellType.HostTable]: HostTableCellProps
-  // Add more cell type props here as needed
-  // [CellType.AWSInstances]: AWSInstancesCellProps
-}
+export type BuiltinCellPropsProvider<T = any, C = {[key: string]: any}> = (
+  containerProps: C
+) => T
 
 /**
  * BuiltinCellRegistryEntry defines the structure of a builtin cell component registration.
+ * Each entry includes the component, metadata, and a props provider function.
+ * 
+ * @template T - The props type that this cell requires from the container
  */
-export interface BuiltinCellRegistryEntry {
+export interface BuiltinCellRegistryEntry<T = any> {
   component: ComponentType<BuiltinCellComponentProps>
   description: string
   defaultSize?: {w: number; h: number}
+  requiredProps?: (keyof T)[] // List of required prop names (typed)
+  getProps?: BuiltinCellPropsProvider<T> // Function to extract required props from container
+  propsType?: T // Props type for type checking and documentation
 }
 
 /**
- * BuiltinCellRegistry maps cell types to their corresponding React components.
- * This registry allows for easy extension with new builtin cell types.
+ * Builtin Cell IDs
+ * Each builtin cell must have a unique ID that matches cell.i in backend JSON.
  */
-export const BUILTIN_CELL_REGISTRY: Record<string, BuiltinCellRegistryEntry> = {
-  [CellType.HostTable]: {
-    component: HostTableCell,
-    description: '호스트 목록을 표시하는 테이블 컴포넌트',
-    defaultSize: {w: 12, h: 8},
-  },
-  // Add more builtin cell types here as needed
-  // [CellType.AWSInstances]: {
-  //   component: AWSInstancesTableCell,
-  //   description: 'AWS 인스턴스 목록',
-  //   defaultSize: {w: 12, h: 8},
-  // },
+export const BUILTIN_CELL_IDS = {
+  HOST_TABLE_CELL: 'host-table-cell',
+  // Add more cell IDs here as needed
+} as const
+
+export type BuiltinCellId = typeof BUILTIN_CELL_IDS[keyof typeof BUILTIN_CELL_IDS]
+
+/**
+ * BuiltinCellRegistry maps cell IDs (cell.i) to their corresponding React components.
+ * 
+ * This registry is populated by calling init functions in container components.
+ * Each builtin cell component exports an init function (e.g., `initHostTableCell()`)
+ * that should be called in the container component's constructor (class) or useEffect (functional).
+ * 
+ * Naming Convention: `{component-name}-cell` (e.g., `"host-table-cell"`)
+ * 
+ * Each entry's `requiredProps` field shows what props the container must provide.
+ * Check registryEntry.requiredProps to see what props are needed for each cell.
+ */
+export const BUILTIN_CELL_REGISTRY: Record<
+  string,
+  BuiltinCellRegistryEntry<any>
+> = {}
+
+/**
+ * Register a builtin cell component in the registry.
+ * This is an internal function used by init functions exported from builtin cell components.
+ * 
+ * @param cellId - The cell ID (must match cell.i in backend JSON)
+ * @param entry - The registry entry containing component and metadata
+ */
+export function registerBuiltinCell(
+  cellId: string,
+  entry: BuiltinCellRegistryEntry
+): void {
+  if (BUILTIN_CELL_REGISTRY[cellId]) {
+    console.warn(
+      `Builtin cell with ID "${cellId}" is already registered. Overwriting...`
+    )
+  }
+  BUILTIN_CELL_REGISTRY[cellId] = entry
 }
 
 /**
- * Get builtin cell component by cell type or cell ID.
+ * Get builtin cell component by cell ID (cell.i).
  * Returns null if no matching component is found.
  */
 export function getBuiltinCellComponent(
   cell: Cell
 ): BuiltinCellRegistryEntry | null {
-  // Try by cell type first (more explicit)
-  if (cell.type && BUILTIN_CELL_REGISTRY[cell.type]) {
-    return BUILTIN_CELL_REGISTRY[cell.type]
-  }
-
-  // Fallback: try by cell ID (for backward compatibility)
-  // Map known cell IDs to their types
-  const cellIdToTypeMap: Record<string, string> = {
-    'host-table-cell': CellType.HostTable,
-  }
-
-  const mappedType = cellIdToTypeMap[cell.i]
-  if (mappedType && BUILTIN_CELL_REGISTRY[mappedType]) {
-    return BUILTIN_CELL_REGISTRY[mappedType]
+  if (cell.i && BUILTIN_CELL_REGISTRY[cell.i]) {
+    return BUILTIN_CELL_REGISTRY[cell.i]
   }
 
   return null

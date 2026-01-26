@@ -3,9 +3,6 @@ import React, {FunctionComponent} from 'react'
 import {Link} from 'react-router'
 import classnames from 'classnames'
 
-//components
-import {HostsPageHostTab} from 'src/hosts/containers/HostsPageHostTab'
-
 //types
 import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {Host} from 'src/types'
@@ -17,7 +14,7 @@ interface Props {
   sourceID: string
   host: Host
   focusedHost: string
-  onClickTableRow: HostsPageHostTab['handleClickTableRow']
+  onClickTableRow: (hostName: string) => () => void
 }
 
 const HostRow: FunctionComponent<Props> = ({

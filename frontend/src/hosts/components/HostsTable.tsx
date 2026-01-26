@@ -13,7 +13,6 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, RemoteDataState, Host} from 'src/types'
-import {HostsPageHostTab} from 'src/hosts/containers/HostsPageHostTab'
 
 //middlware
 import {
@@ -32,7 +31,7 @@ export interface Props {
   hostPageStatus: RemoteDataState
   source: Source
   focusedHost: string
-  onClickTableRow: HostsPageHostTab['handleClickTableRow']
+  onClickTableRow: (hostName: string) => () => void
   tableTitle: () => JSX.Element
 }
 
