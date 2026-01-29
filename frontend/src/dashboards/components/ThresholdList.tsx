@@ -21,13 +21,11 @@ interface Props {
   gaugeColors: ColorNumber[]
   onUpdateGaugeColors: (g: ColorNumber[]) => void
   onResetFocus: () => void
-  maximum?: number
-  minimum?: number
 }
 
 export default class ThresholdList extends PureComponent<Props> {
   public render() {
-    const {gaugeColors, maximum, minimum} = this.props
+    const {gaugeColors} = this.props
     const isMax = gaugeColors.length - 1
     return (
       <div className="thresholds-list">
@@ -39,8 +37,6 @@ export default class ThresholdList extends PureComponent<Props> {
           <span className="icon plus" /> Add Threshold
         </button>
         {this.sortedGaugeColors.map((color, index) => {
-          const propMaximum = index === isMax && isMax > 1 ? maximum : null
-          const propMinimum = index === 0 ? minimum : null
           return (
             <Threshold
               isMin={index === 0}
@@ -53,8 +49,6 @@ export default class ThresholdList extends PureComponent<Props> {
               onValidateColorValue={this.handleValidateColorValue}
               onUpdateColorValue={this.handleUpdateColorValue}
               onDeleteThreshold={this.handleDeleteThreshold}
-              maximum={propMaximum}
-              minimum={propMinimum}
             />
           )
         })}
