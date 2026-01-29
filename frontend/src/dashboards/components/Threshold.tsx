@@ -21,8 +21,8 @@ interface Props {
   onDeleteThreshold: (threshold: ColorNumber) => void
   isMin: boolean
   isMax: boolean
-  maximum?: number
-  minimum?: number
+  readOnly?: boolean
+  isInvalid?: boolean
 }
 
 interface State {
@@ -43,14 +43,19 @@ class Threshold extends PureComponent<Props, State> {
     }
   }
 
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps.threshold.value !== this.props.threshold.value) {
+      this.setState({
+        workingValue: this.props.threshold.value,
+        valid: true,
+      })
+    }
+  }
+
   public render() {
-    const {disableMaxColor, isMax, maximum, minimum} = this.props
-    const regex = /^-?\d*\.?\d*$/
-
-    const disabled =
-      regex.test(`${maximum}`) || regex.test(`${minimum}`) ? true : false
-
+    const {disableMaxColor, isMax, readOnly} = this.props
     const {workingValue} = this.state
+
     return (
       <div className="threshold-item">
         <div className={this.labelClass}>{this.label}</div>
@@ -63,21 +68,23 @@ class Threshold extends PureComponent<Props, State> {
           </button>
         ) : null}
         <input
-          value={!disabled ? workingValue : maximum || minimum || workingValue}
+          value={workingValue}
           className={this.inputClass}
           type="number"
           onChange={this.handleChangeWorkingValue}
           onBlur={this.handleBlur}
           onKeyUp={this.handleKeyUp}
           ref={this.handleInputRef}
-          disabled={disabled}
+          disabled={!!readOnly}
         />
-        <ColorDropdown
-          colors={THRESHOLD_COLORS}
-          selected={this.selectedColor}
-          onChoose={this.handleChooseColor}
-          disabled={isMax && disableMaxColor}
-        />
+        {!(isMax && disableMaxColor) && (
+          <ColorDropdown
+            colors={THRESHOLD_COLORS}
+            selected={this.selectedColor}
+            onChoose={this.handleChooseColor}
+            disabled={false}
+          />
+        )}
       </div>
     )
   }
@@ -98,16 +105,20 @@ class Threshold extends PureComponent<Props, State> {
 
   private get inputClass(): string {
     const {valid} = this.state
+    const {isInvalid} = this.props
+    const isFieldInvalid = isInvalid || !valid
 
-    const inputClass = valid
-      ? 'form-control input-sm threshold-item--input'
-      : 'form-control input-sm threshold-item--input form-volcano'
-
-    return inputClass
+    return isFieldInvalid
+      ? 'form-control input-sm threshold-item--input form-volcano'
+      : 'form-control input-sm threshold-item--input'
   }
 
   private get canBeDeleted(): boolean {
-    const {visualizationType, isMax, isMin} = this.props
+    const {visualizationType, isMax, isMin, readOnly} = this.props
+
+    if (readOnly) {
+      return false
+    }
 
     let canBeDeleted = true
 
@@ -119,45 +130,29 @@ class Threshold extends PureComponent<Props, State> {
   }
 
   private get labelClass(): string {
-    const {visualizationType, isMax, isMin} = this.props
+    const {readOnly} = this.props
 
-    let labelClass = 'threshold-item--label__editable'
-
-    if (visualizationType === 'gauge') {
-      labelClass =
-        isMin || isMax
-          ? 'threshold-item--label'
-          : 'threshold-item--label__editable'
-    }
-
-    return labelClass
+    return readOnly
+      ? 'threshold-item--label'
+      : 'threshold-item--label__editable'
   }
 
   private get label(): string {
-    let label = 'Threshold'
-    const {visualizationType, isMax, isMin} = this.props
+    const {isMin, isMax, readOnly} = this.props
 
-    if (isMin && visualizationType === 'gauge') {
-      label = 'Minimum'
+    if (isMin && readOnly) {
+      return 'Minimum'
     }
-    if (isMax && visualizationType === 'gauge') {
-      label = 'Maximum'
+    if (isMax && readOnly) {
+      return 'Maximum'
     }
-
-    return label
+    return 'Threshold'
   }
 
   private handleChangeWorkingValue = (e: ChangeEvent<HTMLInputElement>) => {
-    const {threshold, onValidateColorValue, maximum} = this.props
-
-    if (maximum > 0) {
-      return
-    }
-
+    const {threshold, onValidateColorValue} = this.props
     const targetValue = e.target.value
-
     const valid = onValidateColorValue(threshold, Number(targetValue))
-
     this.setState({valid, workingValue: targetValue})
   }
 

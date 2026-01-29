@@ -9,7 +9,8 @@ import GraphOptionsSortBy from 'src/dashboards/components/GraphOptionsSortBy'
 import GraphOptionsBooleanOption from 'src/dashboards/components/GraphOptionsBooleanOption'
 import LineGraphColorSelector from 'src/shared/components/LineGraphColorSelector'
 import Input from 'src/dashboards/components/DisplayOptionsInput'
-import ThresholdList from 'src/dashboards/components/ThresholdList'
+import ThresholdListForOptions from 'src/dashboards/components/ThresholdListForOptions'
+
 
 // Types
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -33,6 +34,7 @@ import {DEFAULT_INFLUXQL_TIME_FIELD} from 'src/dashboards/constants'
 // Utils
 import {getDeep} from 'src/utils/wrappers'
 import GraphOptionsToggleBtn from './GraphOptionsToggleBtn'
+import { COLOR_TYPE_MAX } from 'src/shared/constants/thresholds'
 
 interface Props {
   groupByTag: string[]
@@ -64,6 +66,28 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
       yPrefix: getDeep<string>(props, 'axes.y.prefix', ''),
       ySuffix: getDeep<string>(props, 'axes.y.suffix', ''),
     }
+  }
+
+  public componentDidMount() {
+    const {tableGaugeChartOptions, onUpdateTableGaugeChartOptions} = this.props
+
+    const tempColumnSettings = [...tableGaugeChartOptions.columnSettings]
+
+    tempColumnSettings.forEach((setting,setIndex) => {
+
+      if(setting.max !== undefined) {
+        setting.thresholdColors.forEach((c,i) =>{
+          if(c.type === COLOR_TYPE_MAX && c.value !== setting.max){
+
+            tempColumnSettings[setIndex].thresholdColors[i].value = setting.max
+          }              
+        })
+      }      
+    })
+    onUpdateTableGaugeChartOptions({
+      ...tableGaugeChartOptions,
+      columnSettings: tempColumnSettings,
+    })
   }
 
   public render() {
@@ -120,8 +144,12 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
 
           <h5 className="display-options--header">Column Gauge Controls</h5>
           <div className="form-group-wrapper column-settings">
-            {tableGaugeChartOptions.columnSettings.map((setting, index) => (
-              <div
+            {tableGaugeChartOptions.columnSettings.map((setting, index) =>{
+              if(fieldOptions.find(f => f.internalName === setting.internalName).visible === false){
+                return null
+              }
+              return (
+                <div
                 className="form-group"
                 key={`${setting.internalName}-${index}`}
               >
@@ -288,7 +316,7 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   />
                 ) : (
                   <div className="form-group col-xs-12">
-                    <ThresholdList
+                    <ThresholdListForOptions
                       gaugeColors={setting.thresholdColors ?? []}
                       onUpdateGaugeColors={(colors: ColorNumber[]) =>
                         this.handleUpdateGaugeColors(colors, index)
@@ -300,7 +328,8 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </FancyScrollbar>
@@ -452,15 +481,19 @@ class TableGaugeChartOptions extends PureComponent<Props, State> {
       `columnSettings[${index}].thresholdColors`,
       []
     )
+
+    if (key === 'max') {
+      return colors
+    }
+
     const newColors = colors.map((color, idx) => {
-      if (idx === (key === 'min' ? 0 : colors.length - 1)) {
+      if (idx === 0) {
         return {
           ...color,
           value: parseFloat(value),
         }
-      } else {
-        return color
       }
+      return color
     })
     return newColors
   }

@@ -34,7 +34,6 @@ interface Props {
 type ValueState = 'valid' | 'null' | 'invalid'
 
 const getSegmentCountForWidth = (width: number): number => {
-  
   if (!width || width <= 0) {
     return 50
   }
@@ -111,9 +110,7 @@ function TableGaugeCell({options, value}: Props) {
 
   useEffect(() => {
     setIsZeroRange(Number(options?.min) === 0 && Number(options?.max) === 0)
-    
   }, [options?.min, options?.max])
-
 
   const parsedValue =
     typeof value === 'number' ? value : !_.isNaN(value) ? Number(value) : NaN
@@ -125,8 +122,11 @@ function TableGaugeCell({options, value}: Props) {
 
   const range = max - min || 1
 
-  const percentage =
-  isZeroRange ? null :numericValue !== null ? ((numericValue - min) / range) * 100 : 0
+  const percentage = isZeroRange
+    ? null
+    : numericValue !== null
+    ? ((numericValue - min) / range) * 100
+    : 0
 
   const clampedPercentage = Math.max(0, Math.min(100, percentage))
 
@@ -134,8 +134,26 @@ function TableGaugeCell({options, value}: Props) {
     ? options.colors
     : DEFAULT_LINE_COLORS
 
-  const solidColors: ColorNumber[] = options?.thresholdColors?.length
-    ? options.thresholdColors
+  const validThresholdColors: ColorNumber[] = options?.thresholdColors?.length
+    ? options.thresholdColors.filter(color => {
+        const value = Number(color.value)
+        const minValue = options?.min != null ? Number(options.min) : null
+        const maxValue = options?.max != null ? Number(options.max) : null
+
+        if (minValue != null && value < minValue) {
+          return false
+        }
+
+        if (maxValue != null && value > maxValue) {
+          return false
+        }
+
+        return true
+      })
+    : []
+
+  const solidColors: ColorNumber[] = validThresholdColors.length
+    ? validThresholdColors
     : DEFAULT_GAUGE_COLORS
 
   const gradientColorStops = buildEvenColorStops(gradientColors)
@@ -161,8 +179,12 @@ function TableGaugeCell({options, value}: Props) {
   )
 
   const textColor = isGradientBackground
-    ? getGradientColorForPercent(clampedPercentage, gradientColorStops, isZeroRange)
-    : getSolidColorForPercent(clampedPercentage, solidColorStops,isZeroRange)
+    ? getGradientColorForPercent(
+        clampedPercentage,
+        gradientColorStops,
+        isZeroRange
+      )
+    : getSolidColorForPercent(clampedPercentage, solidColorStops, isZeroRange)
 
   const backgroundSize =
     barGradient && clampedPercentage > 0
@@ -187,7 +209,7 @@ function TableGaugeCell({options, value}: Props) {
     valueToDisplay,
     isPercent,
     decimalPlaces,
-    options?.valueFormat,
+    options?.valueFormat
   )
 
   return (
