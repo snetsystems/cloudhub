@@ -33,7 +33,7 @@ ${BINARY}: $(SOURCES) .bindata .jsdep .godep
 
 assets: .jssrc .bindata
 
-.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go backend/kv/internal/internal.pb.go backend/templates/bin_gen.go
+.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/builtin/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go backend/kv/internal/internal.pb.go backend/templates/bin_gen.go
 	@touch .bindata
 
 backend/dist/dist_gen.go: $(UISOURCES)
@@ -44,6 +44,9 @@ backend/canned/bin_gen.go: backend/canned/*.json
 
 backend/protoboards/bin_gen.go: backend/protoboards/*.json
 	go generate -x ./backend/protoboards
+
+backend/builtin/bin_gen.go: backend/builtin/dashboards/*.json
+	go generate -x ./backend/builtin
 
 backend/server/swagger_gen.go: backend/server/swagger.json
 	go generate -x ./backend/server
@@ -108,7 +111,7 @@ clean:
 	if [ -f backend/cmd/cloudhubctl/${CTLBINARY} ] ; then rm backend/cmd/cloudhubctl/${CTLBINARY} ; fi
 	cd frontend && yarn run clean
 #	cd frontend && rm -rf node_modules
-	rm -f backend/dist/dist_gen.go backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/server/swagger_gen.go backend/templates/bin_gen.go
+	rm -f backend/dist/dist_gen.go backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/builtin/bin_gen.go backend/server/swagger_gen.go backend/templates/bin_gen.go
 	@rm -f .godep .jsdep .jssrc .bindata
 
 # For Vim-go Env.
