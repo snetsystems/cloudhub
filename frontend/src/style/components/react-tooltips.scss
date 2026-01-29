@@ -107,6 +107,20 @@ $tooltip-code-color: $c-potassium;
       border-left-color: $c-rainforest;
     }
   }
+
+  &.all-option-tooltip {
+    margin-left: 100px;
+    p {
+      margin: 0;
+      width: auto;
+      display: block;
+      padding: 0;
+      white-space: normal;
+    }
+        &.place-bottom::after {
+          display: contents
+        }
+  }
 }
 
 .influx-tooltip__hover {

@@ -45,7 +45,11 @@ const makeSelected = (template: Template, value: string): Template => {
   if (found) {
     valueToChoose = found.value
   } else {
-    valueToChoose = getDeep<string>(template, 'values.0.value', '')
+    const firstNonAllValue = template.values.find(
+      v => v.value !== 'allTagValues'
+    )
+    valueToChoose =
+      firstNonAllValue?.value || getDeep<string>(template, 'values.0.value', '')
   }
 
   const valuesWithSelected = template.values.map(v => {
@@ -77,7 +81,11 @@ export const makeLocalSelected = (
   } else if (selectedValue) {
     valueToChoose = selectedValue.value
   } else {
-    valueToChoose = getDeep<string>(template, 'values.0.value', '')
+    const firstNonAllValue = template.values.find(
+      v => v.value !== 'allTagValues'
+    )
+    valueToChoose =
+      firstNonAllValue?.value || getDeep<string>(template, 'values.0.value', '')
   }
 
   const valuesWithLocalSelected = template.values.map(v => {

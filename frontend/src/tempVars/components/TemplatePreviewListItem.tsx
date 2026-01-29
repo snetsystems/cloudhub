@@ -18,8 +18,6 @@ interface Props {
 
 class TemplatePreviewListItem extends PureComponent<Props> {
   public render() {
-    const {item} = this.props
-
     return (
       <li
         onClick={this.handleClick}
@@ -29,10 +27,15 @@ class TemplatePreviewListItem extends PureComponent<Props> {
         })}
       >
         {this.mapTempVarKey}
-        {item.value}
+        {this.displayValue}
         {this.defaultIndicator()}
       </li>
     )
+  }
+
+  private get displayValue(): string {
+    const {item} = this.props
+    return item.value === 'allTagValues' ? 'All' : item.value
   }
 
   private get isDefault(): boolean {
