@@ -25,6 +25,7 @@ message Dashboard {
 	repeated DashboardCell cells = 3; // a representation of all visual data required for rendering the dashboard
 	repeated Template templates  = 4; // Templates replace template variables within InfluxQL
 	string Organization          = 5; // Organization is the organization ID that resource belongs to
+	string Type                  = 6; // Type distinguishes dashboard types: 'normal' (default) or 'builtin'
 }
 
 message DashboardCell {
@@ -138,6 +139,11 @@ message Template {
 	string type                   = 4; // Type can be fieldKeys, tagKeys, tagValues, CSV, constant, query, measurements, databases
 	string label                  = 5; // Label is a user-facing description of the Template
 	TemplateQuery query           = 6; // Query is used to generate the choices for a template
+	TemplateOptions options       = 7; // Options is the optional configuration for the template (e.g. isAllEnabled)
+}
+
+message TemplateOptions {
+	bool isAllEnabled = 1;
 }
 
 message TemplateValue {
@@ -476,4 +482,23 @@ message DeviceMappingToOrg {
 message AliasMappingToDevice {
   string orgId    = 1; // Organization ID this device belongs to
   string hostname = 2; // Original DeviceMeta.hostname
+}
+
+// DashboardItemMeta contains metadata for a dashboard item.
+message DashboardItemMeta {
+  string createdAt = 1; // Creation timestamp (RFC3339)
+  string updatedAt = 2; // Last update timestamp (RFC3339)
+  string createdBy = 3; // User ID who created the item
+  string updatedBy = 4; // User ID who last updated the item
+}
+
+// DashboardItem represents a reusable visualization panel stored in the library.
+message DashboardItem {
+  string ID                   = 1; // Unique identifier
+  string Name                 = 2; // User-defined name for the item
+  string Description          = 3; // Optional description
+  string Organization         = 4; // Organization ID that owns this item
+  string Type                 = 5; // Visualization type (e.g., "line", "gauge", "table")
+  DashboardCell Content       = 6; // Full cell definition (queries + visualization)
+  DashboardItemMeta Meta      = 7; // Metadata (created/updated timestamps)
 }

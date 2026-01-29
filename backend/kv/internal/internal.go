@@ -304,6 +304,15 @@ func UnmarshalLayout(data []byte, l *cloudhub.Layout) error {
 	return nil
 }
 
+// getDashboardType returns "normal" if typeStr is empty, otherwise returns typeStr as-is.
+// This ensures backward compatibility with existing dashboards that don't have a Type field.
+func getDashboardType(typeStr string) string {
+	if typeStr == "" {
+		return "normal"
+	}
+	return typeStr
+}
+
 // MarshalDashboard encodes a dashboard to binary protobuf format.
 func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 	cells := make([]*DashboardCell, len(d.Cells))
@@ -314,7 +323,9 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			if q.Range != nil {
 				r.Upper, r.Lower = q.Range.Upper, q.Range.Lower
 			}
-			q.Shifts = q.QueryConfig.Shifts
+			if q.QueryConfig.Shifts != nil {
+				q.Shifts = q.QueryConfig.Shifts
+			}
 			queries[j] = &Query{
 				Command: q.Command,
 				Label:   q.Label,
@@ -427,25 +438,25 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				}
 			}
 
-		columnSettings[idx] = &ColumnSetting{
-			InternalName:    setting.InternalName,
-			DisplayName:     setting.DisplayName,
-			Visible:         setting.Visible,
-			Direction:       setting.Direction,
-			Min:             setting.Min,
-			Max:             setting.Max,
-			Colors:          colors,
-			ThresholdColors: thresholdColors,
-			Unit:            setting.Unit,
-			Prefix:          setting.Prefix,
-			Suffix:          setting.Suffix,
-			IsShowChart:     setting.IsShowChart,
-			IsPercent:       setting.IsPercent,
-			ChartType:       setting.ChartType,
-			BackgroundType:  setting.BackgroundType,
-			IsShowValues:    setting.IsShowValues,
-			ValueFormat:     setting.ValueFormat,
-		}
+			columnSettings[idx] = &ColumnSetting{
+				InternalName:    setting.InternalName,
+				DisplayName:     setting.DisplayName,
+				Visible:         setting.Visible,
+				Direction:       setting.Direction,
+				Min:             setting.Min,
+				Max:             setting.Max,
+				Colors:          colors,
+				ThresholdColors: thresholdColors,
+				Unit:            setting.Unit,
+				Prefix:          setting.Prefix,
+				Suffix:          setting.Suffix,
+				IsShowChart:     setting.IsShowChart,
+				IsPercent:       setting.IsPercent,
+				ChartType:       setting.ChartType,
+				BackgroundType:  setting.BackgroundType,
+				IsShowValues:    setting.IsShowValues,
+				ValueFormat:     setting.ValueFormat,
+			}
 		}
 
 		tableGaugeChartOptions := &TableGaugeChartOptions{
@@ -505,6 +516,11 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			Type:    t.Type,
 			Label:   t.Label,
 		}
+		if t.Options != nil {
+			template.Options = &TemplateOptions{
+				IsAllEnabled: t.Options.IsAllEnabled,
+			}
+		}
 		if t.Query != nil {
 			template.Query = &TemplateQuery{
 				Command:     t.Query.Command,
@@ -524,6 +540,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 		Templates:    templates,
 		Name:         d.Name,
 		Organization: d.Organization,
+		Type:         getDashboardType(d.Type),
 	})
 }
 
@@ -684,25 +701,25 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 					}
 				}
 
-	columnSettings[idx] = cloudhub.ColumnSetting{
-		InternalName:    setting.InternalName,
-		DisplayName:     setting.DisplayName,
-		Visible:         setting.Visible,
-		Direction:       setting.Direction,
-		Min:             setting.Min,
-		Max:             setting.Max,
-		Colors:          colors,
-		ThresholdColors: thresholdColors,
-		Unit:            setting.Unit,
-		Prefix:          setting.Prefix,
-		Suffix:          setting.Suffix,
-		IsShowChart:     setting.IsShowChart,
-		IsPercent:       setting.IsPercent,
-		ChartType:       setting.ChartType,
-		BackgroundType:  setting.BackgroundType,
-		IsShowValues:    setting.IsShowValues,
-		ValueFormat:     setting.ValueFormat,
-	}
+				columnSettings[idx] = cloudhub.ColumnSetting{
+					InternalName:    setting.InternalName,
+					DisplayName:     setting.DisplayName,
+					Visible:         setting.Visible,
+					Direction:       setting.Direction,
+					Min:             setting.Min,
+					Max:             setting.Max,
+					Colors:          colors,
+					ThresholdColors: thresholdColors,
+					Unit:            setting.Unit,
+					Prefix:          setting.Prefix,
+					Suffix:          setting.Suffix,
+					IsShowChart:     setting.IsShowChart,
+					IsPercent:       setting.IsPercent,
+					ChartType:       setting.ChartType,
+					BackgroundType:  setting.BackgroundType,
+					IsShowValues:    setting.IsShowValues,
+					ValueFormat:     setting.ValueFormat,
+				}
 	}
 
 			decimalPlaces := cloudhub.DecimalPlaces{}
@@ -795,6 +812,12 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			Label: t.Label,
 		}
 
+		if t.Options != nil {
+			template.Options = &cloudhub.TemplateOptions{
+				IsAllEnabled: t.Options.IsAllEnabled,
+			}
+		}
+
 		if t.Query != nil {
 			template.Query = &cloudhub.TemplateQuery{
 				Command:     t.Query.Command,
@@ -814,6 +837,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 	d.Templates = templates
 	d.Name = pb.Name
 	d.Organization = pb.Organization
+	d.Type = getDashboardType(pb.Type)
 	return nil
 }
 

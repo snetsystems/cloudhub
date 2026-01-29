@@ -8,6 +8,7 @@ import (
 
 	"github.com/bouk/httprouter"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/builtin"
 	"github.com/snetsystems/cloudhub/backend/organizations"
 	"github.com/snetsystems/cloudhub/backend/roles"
 )
@@ -149,6 +150,21 @@ func (s *Service) NewOrganization(w http.ResponseWriter, r *http.Request) {
 		s.Logger.Error("failed to add user to organization", err.Error())
 		Error(w, http.StatusInternalServerError, "failed to add user to organization", s.Logger)
 		return
+	}
+
+	// Initialize builtin dashboards for the new organization
+	builtinStore := &builtin.BinDashboardsStore{
+		Logger: s.Logger,
+	}
+	// Use server context to get direct access to dashboards store
+	serverCtx := serverContext(ctx)
+	dashboardsStore := s.Store.Dashboards(serverCtx)
+	if err := InitializeBuiltinDashboards(orgCtx, res.ID, dashboardsStore, builtinStore, s.Logger); err != nil {
+		// Log error but don't fail organization creation
+		s.Logger.
+			WithField("component", "builtin").
+			WithField("organization", res.ID).
+			Error("Failed to initialize builtin dashboards for new organization:", err)
 	}
 
 	// log registrationte

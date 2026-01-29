@@ -28,6 +28,7 @@ type Store struct {
 	DLNxRstStgStore         cloudhub.DLNxRstStgStore
 	EsSourcesStore          cloudhub.EsSourcesStore
 	DeviceMappingsStore     cloudhub.DeviceMappingsStore
+	DashboardItemsStore     cloudhub.DashboardItemsStore
 }
 
 // Sources ...
@@ -128,4 +129,9 @@ func (s *Store) EsSources(ctx context.Context) cloudhub.EsSourcesStore {
 // DeviceMappings ...
 func (s *Store) DeviceMappings(ctx context.Context) cloudhub.DeviceMappingsStore {
 	return s.DeviceMappingsStore
+}
+
+// DashboardItems ...
+func (s *Store) DashboardItems(ctx context.Context) cloudhub.DashboardItemsStore {
+	return s.DashboardItemsStore
 }

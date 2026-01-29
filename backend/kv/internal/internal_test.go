@@ -235,6 +235,44 @@ func Test_MarshalDashboard(t *testing.T) {
 	}
 }
 
+func Test_MarshalDashboard_WithTemplateOptions(t *testing.T) {
+	dashboard := cloudhub.Dashboard{
+		ID: 1,
+		Templates: []cloudhub.Template{
+			{
+				ID:   "t1",
+				Type: "tagValues",
+				Options: &cloudhub.TemplateOptions{
+					IsAllEnabled: true,
+				},
+				TemplateVar: cloudhub.TemplateVar{
+					Var:    "host",
+					Values: []cloudhub.TemplateValue{},
+				},
+			},
+			{
+				ID:   "t2",
+				Type: "tagValues",
+				// Options is nil
+				TemplateVar: cloudhub.TemplateVar{
+					Var:    "region",
+					Values: []cloudhub.TemplateValue{},
+				},
+			},
+		},
+		Cells: []cloudhub.DashboardCell{},
+	}
+
+	var actual cloudhub.Dashboard
+	if buf, err := internal.MarshalDashboard(dashboard); err != nil {
+		t.Fatal("Error marshaling dashboard: err", err)
+	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
+		t.Fatal("Error unmarshaling dashboard: err:", err)
+	} else if !gocmp.Equal(dashboard, actual) {
+		t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(dashboard, actual))
+	}
+}
+
 func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 	dashboard := cloudhub.Dashboard{
 		ID: 1,

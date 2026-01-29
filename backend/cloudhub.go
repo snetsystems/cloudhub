@@ -65,6 +65,7 @@ const (
 	ErrInvalidShardID                  = Error("invalid shard ID")
 	ErrKafkaPublishFailed              = Error("failed to publish config to kafka")
 	ErrKafkaPartitionCountFetchFailed  = Error("failed to get kafka partition count")
+	ErrDashboardItemNotFound           = Error("dashboard item not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -202,13 +203,19 @@ type TemplateVar struct {
 // TemplateID is the unique ID used to identify a template
 type TemplateID string
 
+// TemplateOptions represents optional configuration for a Template
+type TemplateOptions struct {
+	IsAllEnabled bool `json:"isAllEnabled"` // IsAllEnabled checks if the tag values are all enabled
+}
+
 // Template represents a series of choices to replace TemplateVars within InfluxQL
 type Template struct {
 	TemplateVar
-	ID    TemplateID     `json:"id"`              // ID is the unique ID associated with this template
-	Type  string         `json:"type"`            // Type can be fieldKeys, tagKeys, tagValues, csv, constant, measurements, databases, map, influxql, text
-	Label string         `json:"label"`           // Label is a user-facing description of the Template
-	Query *TemplateQuery `json:"query,omitempty"` // Query is used to generate the choices for a template
+	ID      TemplateID       `json:"id"`                // ID is the unique ID associated with this template
+	Type    string           `json:"type"`              // Type can be fieldKeys, tagKeys, tagValues, csv, constant, measurements, databases, map, influxql, text
+	Label   string           `json:"label"`             // Label is a user-facing description of the Template
+	Query   *TemplateQuery   `json:"query,omitempty"`   // Query is used to generate the choices for a template
+	Options *TemplateOptions `json:"options,omitempty"` // Options is the optional configuration for the template (e.g. isAllEnabled)
 }
 
 // Query retrieves a Response from a TimeSeries.
@@ -744,6 +751,7 @@ type Dashboard struct {
 	Templates    []Template      `json:"templates"`
 	Name         string          `json:"name"`
 	Organization string          `json:"organization"` // Organization is the organization ID that resource belongs to
+	Type         string          `json:"type,omitempty"` // Type distinguishes dashboard types: "normal" (default) or "builtin"
 }
 
 // UnmarshalJSON unmarshals a string ID into a DashboardID (int).
@@ -1735,4 +1743,41 @@ type DeviceMappingsStore interface {
 
 	// BatchAddDevices adds multiple devices in a single transaction.
 	BatchAddDevices(ctx context.Context, metas []*DeviceMeta) error
+}
+
+// DashboardItemMeta represents metadata for a dashboard item.
+type DashboardItemMeta struct {
+	CreatedAt string `json:"createdAt"` // Creation timestamp (RFC3339)
+	UpdatedAt string `json:"updatedAt"` // Last update timestamp (RFC3339)
+	CreatedBy string `json:"createdBy"` // User ID who created the item
+	UpdatedBy string `json:"updatedBy"` // User ID who last updated the item
+}
+
+// DashboardItem represents a reusable visualization panel stored in the library.
+type DashboardItem struct {
+	ID           string            `json:"id"`                    // Unique identifier
+	Name         string            `json:"name"`                  // User-defined name for the item
+	Description  string            `json:"description,omitempty"` // Optional description
+	Organization string            `json:"organization"`          // Organization ID that owns this item
+	Type         string            `json:"type"`                  // Visualization type (e.g., "line", "gauge", "table")
+	Content      DashboardCell     `json:"content"`               // Full cell definition (queries + visualization)
+	Meta         DashboardItemMeta `json:"meta"`                  // Metadata (created/updated timestamps)
+}
+
+// DashboardItemsStore is the storage interface for dashboard items (library panels).
+type DashboardItemsStore interface {
+	// All returns all dashboard items.
+	All(ctx context.Context) ([]DashboardItem, error)
+
+	// Add creates a new dashboard item and returns it with generated ID.
+	Add(ctx context.Context, item DashboardItem) (DashboardItem, error)
+
+	// Get retrieves a dashboard item by ID.
+	Get(ctx context.Context, id string) (DashboardItem, error)
+
+	// Delete removes a dashboard item by ID.
+	Delete(ctx context.Context, item DashboardItem) error
+
+	// Update replaces an existing dashboard item.
+	Update(ctx context.Context, item DashboardItem) error
 }
