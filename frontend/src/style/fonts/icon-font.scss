@@ -431,4 +431,56 @@
   &.document::before {
     content: '\e939';
   }
+
+  &.kubernetes::before {
+    content: '\e93a';
+  }
+
+  &.redhat::before {
+    content: '\e93b';
+  }
+
+  &.vmware::before {
+    content: '\e93d';
+  }
+
+  &.openstack::before {
+    content: '\e93f';
+  }
+
+  &.amazonaws::before {
+    content: '\e941';
+  }
+
+  &.docker::before {
+    content: '\e943';
+  }
+
+  &.googlecloud::before {
+    content: '\e945';
+  }
+
+  &.nutanix::before {
+    content: '\e946';
+  }
+
+  &.sphere::before {
+    content: '\e9c9';
+  }
+
+  &.tree::before {
+    content: '\e9bc';
+  }
+
+  &.line-chart::before {
+    content: '\f201';
+  }
+
+  &.tachometer::before {
+    content: '\f0e4';
+  }
+
+  &.network::before {
+    content: '\e93c';
+  }
 }
