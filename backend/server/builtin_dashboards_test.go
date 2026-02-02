@@ -22,37 +22,37 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 		wantErr        bool
 	}{
 		{
-			name:  "Initialize builtin dashboards for new organization",
-			orgID:  "test-org-1",
+			name:           "Initialize builtin dashboards for new organization",
+			orgID:          "test-org-1",
 			existingDashes: []cloudhub.Dashboard{},
-			wantCount: 1, // hostpage.json
-			wantErr:  false,
+			wantCount:      1, // hostpage.json
+			wantErr:        false,
 		},
 		{
 			name:  "Skip existing builtin dashboards",
-			orgID:  "test-org-2",
+			orgID: "test-org-2",
 			existingDashes: []cloudhub.Dashboard{
 				{
 					Name:         "host_page",
-					Organization:  "test-org-2",
+					Organization: "test-org-2",
 					Type:         "builtin",
 				},
 			},
 			wantCount: 0, // Already exists, should skip
-			wantErr:  false,
+			wantErr:   false,
 		},
 		{
 			name:  "Add builtin dashboard even if normal dashboard exists",
-			orgID:  "test-org-3",
+			orgID: "test-org-3",
 			existingDashes: []cloudhub.Dashboard{
 				{
 					Name:         "Normal Dashboard",
-					Organization:  "test-org-3",
+					Organization: "test-org-3",
 					Type:         "normal",
 				},
 			},
 			wantCount: 1, // Should still add builtin dashboard
-			wantErr:  false,
+			wantErr:   false,
 		},
 	}
 
