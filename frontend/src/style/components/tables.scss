@@ -332,6 +332,8 @@ $wordBreak: break-word;
   & + .list-type {
     width: $listWidth;
     word-break: $wordBreak;
+    white-space: nowrap;
+    flex-flow: wrap;
   }
 }
 
