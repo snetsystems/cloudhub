@@ -776,6 +776,7 @@ func TestMarshalTopology(t *testing.T) {
 			HostStatusVisible: false,
 			IPMIVisible:       true,
 			LinkVisible:       true,
+			AutoSaveOnLeave:   false,
 		},
 	}
 

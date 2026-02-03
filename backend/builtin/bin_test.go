@@ -105,10 +105,10 @@ func TestBinDashboardsStore_GetByFileName(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name      string
-		fileName  string
-		wantErr   bool
-		wantName  string
+		name     string
+		fileName string
+		wantErr  bool
+		wantName string
 	}{
 		{
 			name:     "Get hostpage dashboard by file name",

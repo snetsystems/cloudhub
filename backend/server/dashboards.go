@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,6 +9,23 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/builtin"
 )
+
+// setBuiltinVersionInfo sets LatestVersion and UpdateAvailable on resp when d is a builtin dashboard.
+// getVersion returns the latest builtin version for a dashboard name (e.g. from BinDashboardsStore.GetVersion).
+func setBuiltinVersionInfo(resp *dashboardResponse, d cloudhub.Dashboard, getVersion func(context.Context, string) string, ctx context.Context) {
+	if d.Type != "builtin" {
+		return
+	}
+	latest := getVersion(ctx, d.Name)
+	if latest == "" {
+		return
+	}
+	resp.LatestVersion = latest
+	// Update is available if: no version (legacy) or version differs from latest
+	if d.Version == "" || d.Version != latest {
+		resp.UpdateAvailable = true
+	}
+}
 
 // getDashboardType returns "normal" if typeStr is empty, otherwise returns typeStr as-is.
 // This ensures backward compatibility with existing dashboards that don't have a Type field.
@@ -25,13 +43,16 @@ type dashboardLinks struct {
 }
 
 type dashboardResponse struct {
-	ID           cloudhub.DashboardID    `json:"id,string"`
-	Cells        []dashboardCellResponse `json:"cells"`
-	Templates    []templateResponse      `json:"templates"`
-	Name         string                  `json:"name"`
-	Organization string                  `json:"organization"`
-	Type         string                  `json:"type,omitempty"`
-	Links        dashboardLinks          `json:"links"`
+	ID              cloudhub.DashboardID    `json:"id,string"`
+	Cells           []dashboardCellResponse `json:"cells"`
+	Templates       []templateResponse      `json:"templates"`
+	Name            string                  `json:"name"`
+	Organization    string                  `json:"organization"`
+	Type            string                  `json:"type,omitempty"`
+	Version         string                  `json:"version,omitempty"`         // Current version of the dashboard
+	LatestVersion   string                  `json:"latestVersion,omitempty"`   // Latest version available (for builtin dashboards)
+	UpdateAvailable bool                    `json:"updateAvailable,omitempty"` // True if a newer version is available
+	Links           dashboardLinks          `json:"links"`
 }
 
 type getDashboardsResponse struct {
@@ -51,6 +72,7 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 		Templates:    templates,
 		Organization: d.Organization,
 		Type:         getDashboardType(d.Type),
+		Version:      d.Version,
 		Links: dashboardLinks{
 			Self:      fmt.Sprintf("%s/%d", base, dd.ID),
 			Cells:     fmt.Sprintf("%s/%d/cells", base, dd.ID),
@@ -79,12 +101,20 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 	shouldIncludeCells := includeCells != "false"
 	shouldIncludeTemplates := includeTemplates != "false"
 
+	// Get builtin dashboard versions for comparison
+	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
+	builtinVersions := builtinStore.GetAllVersions(ctx)
+
 	res := getDashboardsResponse{
 		Dashboards: []*dashboardResponse{},
 	}
 
 	for _, dashboard := range dashboards {
 		dashboardResp := newDashboardResponse(dashboard)
+		getVersion := func(ctx context.Context, name string) string {
+			return builtinVersions[name]
+		}
+		setBuiltinVersionInfo(dashboardResp, dashboard, getVersion, ctx)
 
 		// Conditionally exclude cells and templates based on query parameters
 		if !shouldIncludeCells {
@@ -115,6 +145,9 @@ func (s *Service) DashboardID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := newDashboardResponse(e)
+	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
+	setBuiltinVersionInfo(res, e, builtinStore.GetVersion, ctx)
+
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
@@ -145,7 +178,7 @@ func (s *Service) NewDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// log registrationte
+	// log registration
 	msg := fmt.Sprintf(MsgDashboardCreated.String(), dashboard.Name)
 	s.logRegistration(ctx, "Dashboards", msg)
 
@@ -174,7 +207,7 @@ func (s *Service) RemoveDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// log registrationte
+	// log registration
 	msg := fmt.Sprintf(MsgDashboardDeleted.String(), dashboard.Name)
 	s.logRegistration(ctx, "Dashboards", msg)
 
@@ -188,6 +221,7 @@ func (s *Service) ReplaceDashboard(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		msg := fmt.Sprintf("Could not parse dashboard ID: %s", err)
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
+		return
 	}
 	id := cloudhub.DashboardID(idParam)
 
@@ -221,7 +255,7 @@ func (s *Service) ReplaceDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// log registrationte
+	// log registration
 	msg := fmt.Sprintf(MsgDashboardModified.String(), dashboard.Name)
 	s.logRegistration(ctx, "Dashboards", msg)
 
@@ -277,7 +311,7 @@ func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// log registrationte
+	// log registration
 	msg := fmt.Sprintf(MsgDashboardModified.String(), orig.Name)
 	s.logRegistration(ctx, "Dashboards", msg)
 
@@ -318,6 +352,7 @@ func DashboardDefaults(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Name = d.Name
 	newDash.Organization = d.Organization
 	newDash.Type = getDashboardType(d.Type)
+	newDash.Version = d.Version
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {
@@ -327,7 +362,7 @@ func DashboardDefaults(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	return
 }
 
-// AddQueryConfigs updates all the celsl in the dashboard to have query config
+// AddQueryConfigs updates all the cells in the dashboard to have query config
 // objects corresponding to their influxql queries.
 func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.ID = d.ID
@@ -335,6 +370,7 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Name = d.Name
 	newDash.Organization = d.Organization
 	newDash.Type = d.Type
+	newDash.Version = d.Version
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {

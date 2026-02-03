@@ -750,8 +750,9 @@ type Dashboard struct {
 	Cells        []DashboardCell `json:"cells"`
 	Templates    []Template      `json:"templates"`
 	Name         string          `json:"name"`
-	Organization string          `json:"organization"` // Organization is the organization ID that resource belongs to
+	Organization string          `json:"organization"`   // Organization is the organization ID that resource belongs to
 	Type         string          `json:"type,omitempty"` // Type distinguishes dashboard types: "normal" (default) or "builtin"
+	Version      string          `json:"version,omitempty"` // Version is the template version for builtin dashboards (e.g., "1.0.0")
 }
 
 // UnmarshalJSON unmarshals a string ID into a DashboardID (int).
@@ -1266,6 +1267,7 @@ type TopologyOptions struct {
 	HostStatusVisible bool `json:"hostStatusVisible"` // Controls whether the host status is visible
 	IPMIVisible       bool `json:"ipmiVisible"`       // Controls whether the IPMI icon is visible
 	LinkVisible       bool `json:"linkVisible"`       // Controls whether the dashboard link icon is visible
+	AutoSaveOnLeave   bool `json:"autoSaveOnLeave"`   // Controls whether to auto-save when leaving the topology view
 }
 
 // TopologyQuery represents the attributes that a topology may be retrieved by.
