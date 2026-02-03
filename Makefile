@@ -66,7 +66,7 @@ dep: .jsdep .godep
 .godep:
 ifndef GOBINDATA
 	@echo "Installing go-bindata"
-	go install github.com/go-bindata/go-bindata/...@latest
+	go install github.com/go-bindata/go-bindata/v3/go-bindata@v3.1.3
 	export PATH=$PATH:$(go env GOPATH)/bin
 	@echo "Installing go-protoc"
 	go install github.com/gogo/protobuf/protoc-gen-gofast@latest
