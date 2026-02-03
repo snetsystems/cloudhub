@@ -8528,6 +8528,10 @@
           "type": "string",
           "enum": ["normal", "builtin"],
           "default": "normal"
+        },
+        "version": {
+          "description": "Template version for builtin dashboards (e.g., '1.0.0')",
+          "type": "string"
         }
       },
       "example": {
@@ -8591,6 +8595,18 @@
           "description": "Dashboard type: 'normal' (default) for user-created dashboards, 'builtin' for system-builtin page dashboards",
           "type": "string",
           "enum": ["normal", "builtin"]
+        },
+        "version": {
+          "description": "Template version for builtin dashboards (e.g., '1.0.0')",
+          "type": "string"
+        },
+        "latestVersion": {
+          "description": "Latest available version from builtin template (only for builtin dashboards)",
+          "type": "string"
+        },
+        "updateAvailable": {
+          "description": "True if a newer version of the builtin template is available",
+          "type": "boolean"
         },
         "links": {
           "type": "object",

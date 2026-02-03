@@ -112,3 +112,26 @@ func (s *BinDashboardsStore) GetByFileName(ctx context.Context, fileName string)
 
 	return dashboard, nil
 }
+
+// GetVersion returns the version of a builtin dashboard by name
+// Returns empty string if not found
+func (s *BinDashboardsStore) GetVersion(ctx context.Context, name string) string {
+	dashboard, err := s.Get(ctx, name)
+	if err != nil {
+		return ""
+	}
+	return dashboard.Version
+}
+
+// GetAllVersions returns a map of builtin dashboard names to their versions
+func (s *BinDashboardsStore) GetAllVersions(ctx context.Context) map[string]string {
+	versions := make(map[string]string)
+	dashboards, err := s.All(ctx)
+	if err != nil {
+		return versions
+	}
+	for _, d := range dashboards {
+		versions[d.Name] = d.Version
+	}
+	return versions
+}

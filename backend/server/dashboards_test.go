@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -88,6 +89,7 @@ func TestDashboardDefaults(t *testing.T) {
 				},
 			},
 			want: cloudhub.Dashboard{
+				Type: "normal",
 				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
@@ -114,6 +116,7 @@ func TestDashboardDefaults(t *testing.T) {
 				},
 			},
 			want: cloudhub.Dashboard{
+				Type: "normal",
 				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
@@ -178,6 +181,7 @@ func TestValidDashboardRequest(t *testing.T) {
 			},
 			want: cloudhub.Dashboard{
 				Organization: "1337",
+				Type:         "normal",
 				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
@@ -221,6 +225,7 @@ func TestValidDashboardRequest(t *testing.T) {
 			},
 			want: cloudhub.Dashboard{
 				Organization: "0",
+				Type:         "normal",
 				Cells: []cloudhub.DashboardCell{
 					{
 						W:              4,
@@ -251,6 +256,7 @@ func TestValidDashboardRequest(t *testing.T) {
 			},
 			want: cloudhub.Dashboard{
 				Organization: "1337",
+				Type:         "normal",
 				Templates: []cloudhub.Template{
 					{
 						ID:   "t1",
@@ -335,7 +341,8 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
-				Templates:    []templateResponse{},
+				Type:         "normal",
+				Templates:   []templateResponse{},
 				Cells: []dashboardCellResponse{
 					{
 						Links: dashboardCellLinks{
@@ -453,6 +460,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
+				Type:         "normal",
 				Templates:    []templateResponse{},
 				Cells: []dashboardCellResponse{
 					{
@@ -495,6 +503,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
+				Type:         "normal",
 				Templates:    []templateResponse{},
 				Cells: []dashboardCellResponse{
 					{
@@ -537,6 +546,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
+				Type:         "normal",
 				Templates:    []templateResponse{},
 				Cells: []dashboardCellResponse{
 					{
@@ -581,6 +591,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
+				Type:         "normal",
 				Templates: []templateResponse{
 					{
 						Template: cloudhub.Template{
@@ -617,6 +628,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			},
 			want: &dashboardResponse{
 				Organization: "0",
+				Type:         "normal",
 				Templates: []templateResponse{
 					{
 						Template: cloudhub.Template{
@@ -676,6 +688,7 @@ func TestDashboard_TableGaugeChartOptions_ValueFormat(t *testing.T) {
 			},
 			want: cloudhub.Dashboard{
 				Organization: "1337",
+				Type:         "normal",
 				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
@@ -733,6 +746,7 @@ func TestDashboard_TableGaugeChartOptions_ValueFormat(t *testing.T) {
 			},
 			want: cloudhub.Dashboard{
 				Organization: "1337",
+				Type:         "normal",
 				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
@@ -815,6 +829,7 @@ func TestValidDashboardRequest_TableGaugeChartOptions_ValueFormat(t *testing.T) 
 			},
 			want: cloudhub.Dashboard{
 				Organization: "1337",
+				Type:         "normal",
 				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
@@ -864,5 +879,107 @@ func TestValidDashboardRequest_TableGaugeChartOptions_ValueFormat(t *testing.T) 
 				t.Errorf("ValidDashboardRequest() diff:\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestSetBuiltinVersionInfo(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name       string
+		d          cloudhub.Dashboard
+		getVersion func(context.Context, string) string
+		wantLatest string
+		wantUpdate bool
+	}{
+		{
+			name: "non-builtin dashboard leaves response unchanged",
+			d: cloudhub.Dashboard{
+				Type:    "normal",
+				Name:    "my-dash",
+				Version: "1.0.0",
+			},
+			getVersion: func(ctx context.Context, name string) string { return "1.1.0" },
+			wantLatest: "",
+			wantUpdate: false,
+		},
+		{
+			name: "builtin with no latest version in store",
+			d: cloudhub.Dashboard{
+				Type:    "builtin",
+				Name:    "host_page",
+				Version: "1.0.0",
+			},
+			getVersion: func(ctx context.Context, name string) string { return "" },
+			wantLatest: "",
+			wantUpdate: false,
+		},
+		{
+			name: "builtin same version as latest",
+			d: cloudhub.Dashboard{
+				Type:    "builtin",
+				Name:    "host_page",
+				Version: "1.0.0",
+			},
+			getVersion: func(ctx context.Context, name string) string { return "1.0.0" },
+			wantLatest: "1.0.0",
+			wantUpdate: false,
+		},
+		{
+			name: "builtin older version than latest",
+			d: cloudhub.Dashboard{
+				Type:    "builtin",
+				Name:    "host_page",
+				Version: "1.0.0",
+			},
+			getVersion: func(ctx context.Context, name string) string { return "1.1.0" },
+			wantLatest: "1.1.0",
+			wantUpdate: true,
+		},
+		{
+			name: "builtin legacy dashboard with no version",
+			d: cloudhub.Dashboard{
+				Type:    "builtin",
+				Name:    "host_page",
+				Version: "",
+			},
+			getVersion: func(ctx context.Context, name string) string { return "1.0.0" },
+			wantLatest: "1.0.0",
+			wantUpdate: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp := &dashboardResponse{}
+			setBuiltinVersionInfo(resp, tt.d, tt.getVersion, ctx)
+			if resp.LatestVersion != tt.wantLatest {
+				t.Errorf("LatestVersion = %q, want %q", resp.LatestVersion, tt.wantLatest)
+			}
+			if resp.UpdateAvailable != tt.wantUpdate {
+				t.Errorf("UpdateAvailable = %v, want %v", resp.UpdateAvailable, tt.wantUpdate)
+			}
+		})
+	}
+}
+
+func Test_newDashboardResponse_includesVersion(t *testing.T) {
+	d := cloudhub.Dashboard{
+		ID:            cloudhub.DashboardID(1),
+		Name:          "host_page",
+		Organization:  "org1",
+		Type:          "builtin",
+		Version:       "1.0.0",
+		Cells:         []cloudhub.DashboardCell{},
+		Templates:     []cloudhub.Template{},
+	}
+	got := newDashboardResponse(d)
+	if got.Version != "1.0.0" {
+		t.Errorf("Version = %q, want 1.0.0", got.Version)
+	}
+	if got.Type != "builtin" {
+		t.Errorf("Type = %q, want builtin", got.Type)
+	}
+	// LatestVersion and UpdateAvailable are set by setBuiltinVersionInfo in handlers, not newDashboardResponse
+	if got.LatestVersion != "" {
+		t.Errorf("LatestVersion = %q, want empty (set by handler)", got.LatestVersion)
 	}
 }

@@ -750,8 +750,9 @@ type Dashboard struct {
 	Cells        []DashboardCell `json:"cells"`
 	Templates    []Template      `json:"templates"`
 	Name         string          `json:"name"`
-	Organization string          `json:"organization"` // Organization is the organization ID that resource belongs to
+	Organization string          `json:"organization"`   // Organization is the organization ID that resource belongs to
 	Type         string          `json:"type,omitempty"` // Type distinguishes dashboard types: "normal" (default) or "builtin"
+	Version      string          `json:"version,omitempty"` // Version is the template version for builtin dashboards (e.g., "1.0.0")
 }
 
 // UnmarshalJSON unmarshals a string ID into a DashboardID (int).
