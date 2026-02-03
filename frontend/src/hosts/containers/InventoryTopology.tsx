@@ -72,6 +72,14 @@ import {
   temperatureMinValue,
 } from 'src/hosts/constants/topology'
 
+const defaultTopologyOption: TopologyOption = {
+  minimapVisible: true,
+  ipmiVisible: true,
+  linkVisible: true,
+  hostStatusVisible: true,
+  autoSaveOnLeave: true,
+}
+
 // Types
 import {
   Source,
@@ -556,10 +564,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isMouseUp: true,
       isSettingOverlayOpen: false,
       topologyOption: {
-        minimapVisible: true,
-        ipmiVisible: true,
-        linkVisible: true,
-        hostStatusVisible: true,
+        ...defaultTopologyOption,
       },
     }
   }
@@ -794,18 +799,22 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   public componentWillUnmount() {
     const {auth} = this.props
-    const {isTopologyChanged} = this.state
+    const {isTopologyChanged, topologyOption} = this.state
     const view = this.graph.getView()
     const meRole = _.get(auth, 'me.role', '')
+    const shouldAutoSaveOnLeave = !!topologyOption?.autoSaveOnLeave
 
     if (
       (isTopologyChanged || this.compareTopology()) &&
       (meRole === SUPERADMIN_ROLE ||
         meRole === ADMIN_ROLE ||
-        meRole === EDITOR_ROLE) &&
-      window.confirm('Do you want to save changes?')
+        meRole === EDITOR_ROLE)
     ) {
-      this.handleTopologySave()
+      if (shouldAutoSaveOnLeave) {
+        this.handleTopologySave()
+      } else if (window.confirm('Do you want to save changes?')) {
+        this.handleTopologySave()
+      }
     }
 
     if (this.graph !== null) {
@@ -936,6 +945,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
                   this.setState(prevState => ({
                     ...prevState,
                     topologyOption: value,
+                    isTopologyChanged:
+                      prevState.isTopologyChanged ||
+                      prevState.topologyOption.autoSaveOnLeave !==
+                        value.autoSaveOnLeave,
                   }))
                 }
               />
@@ -1491,7 +1504,12 @@ export class InventoryTopology extends PureComponent<Props, State> {
         graph.getModel().endUpdate()
 
         if (_.get(topology, 'topologyOptions')) {
-          this.setState({topologyOption: topology.topologyOptions})
+          this.setState({
+            topologyOption: {
+              ...defaultTopologyOption,
+              ...topology.topologyOptions,
+            },
+          })
         }
       }
     }
@@ -3037,7 +3055,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
         const response = await createInventoryTopology(
           links,
           topology,
-          unsavedPreferenceTemperatureValues
+          unsavedPreferenceTemperatureValues,
+          topologyOption
         )
         const getTopologyId = _.get(response, 'data.id', null)
 
