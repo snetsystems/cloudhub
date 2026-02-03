@@ -1,15 +1,19 @@
 import React, {useState} from 'react'
+import {RouterProps} from 'react-router'
 
-//component
 import {Page} from 'src/reusable_ui'
 import {
+  Me,
+  Organization,
   PredictionManualRefresh,
   RefreshRate,
-  Source,
   TimeZones,
 } from 'src/types'
+import * as SourcesModels from 'src/types/sources'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
-import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
+
+// Container
+import PredictionPage from 'src/device_management/containers/PredictionPage'
 
 //action
 import {setAutoRefresh} from 'src/shared/actions/app'
@@ -17,37 +21,57 @@ import {setCloudAutoRefresh} from 'src/clouds/actions'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import * as appActions from 'src/shared/actions/app'
-import {CloudAutoRefresh} from 'src/clouds/types/type'
+import DeviceManagementModal from 'src/device_management/components/DeviceManagementModal'
+import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
+import {
+  setPredictionManualRefresh,
+  setStateInitAction,
+} from 'src/device_management/actions'
+
+import ManualRefresh, {
+  ManualRefreshProps,
+} from 'src/shared/components/ManualRefresh'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
+import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
+import {setCloudTimeRange} from 'src/clouds/actions/clouds'
 
-//container
-import GPUMonitoringDashBoard from 'src/gpu_monitoring/components/GPUMonitoringDashBoard'
-
-interface Props {
+interface Props extends ManualRefreshProps {
+  me: Me
+  source: SourcesModels.Source
+  links: any
+  isUsingAuth: boolean
+  notify: (n: Notification) => void
+  organizations: Organization[]
   timeZone: TimeZones
-  source: Source
-  autoRefresh: number
   setTimeZone: typeof appActions.setTimeZone
+  params: {tab: string}
+  autoRefresh: number
   cloudAutoRefresh: CloudAutoRefresh
-  onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
+  onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
+  router: RouterProps
+  cloudTimeRange: CloudTimeRange
+  setPredictionManualRefresh: () => void
+  setStateInitAction: () => void
 }
 
-function GPUMonitoringPage({
+function PredictionRouter({
+  me,
   source,
-  timeZone,
   autoRefresh,
   cloudAutoRefresh,
-  onChooseCloudAutoRefresh,
   onChooseAutoRefresh,
+  onChooseCloudAutoRefresh,
+  setPredictionManualRefresh,
   setTimeZone,
+  timeZone,
 }: Props) {
   const [
     manualRefreshState,
     setManualRefreshState,
   ] = useState<PredictionManualRefresh>({
-    key: 'gpu-monitoring',
+    key: 'network-device',
     value: Date.now(),
   })
 
@@ -62,6 +86,9 @@ function GPUMonitoringPage({
   }
 
   const handleManualRefresh = () => {
+    setPredictionManualRefresh()
+    setStateInitAction()
+
     setManualRefreshState({
       ...manualRefreshState,
       value: Date.now(),
@@ -76,7 +103,7 @@ function GPUMonitoringPage({
           onChoose={handleChooseAutoRefresh}
           selected={autoRefresh}
           onManualRefresh={handleManualRefresh}
-          customAutoRefreshOptions={getTimeOptionByGroup('gpuMonitoring')}
+          customAutoRefreshOptions={getTimeOptionByGroup('prediction')}
           customAutoRefreshSelected={cloudAutoRefresh}
         />
 
@@ -89,40 +116,47 @@ function GPUMonitoringPage({
     <Page>
       <Page.Header>
         <Page.Header.Left>
-          <Page.Title title={'GPU Monitoring'} />
+          <Page.Title title={'Device Management'} />
         </Page.Header.Left>
+
         <Page.Header.Right>{renderHeaderRight()}</Page.Header.Right>
       </Page.Header>
       <Page.Contents fullWidth={true}>
-        <GPUMonitoringDashBoard source={source} sources={[source]} />
+        <PredictionPage me={me} source={source} />
       </Page.Contents>
+      <DeviceManagementModal />
     </Page>
   )
 }
 
 const mstp = ({
   app: {
-    persisted: {timeZone, autoRefresh, cloudAutoRefresh},
+    persisted: {timeZone, autoRefresh, cloudAutoRefresh, cloudTimeRange},
   },
+  adminCloudHub: {organizations},
+  auth: {isUsingAuth, me},
 }) => {
   return {
+    organizations,
+    isUsingAuth,
+    me,
     timeZone,
     autoRefresh,
+    cloudTimeRange,
     cloudAutoRefresh,
   }
 }
 
-const mdtp = (dispatch: any) => ({
+const mdtp = dispatch => ({
   setTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
+  onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
+  setPredictionManualRefresh: bindActionCreators(
+    setPredictionManualRefresh,
+    dispatch
+  ),
+  setStateInitAction: bindActionCreators(setStateInitAction, dispatch),
 })
 
-const areEqual = (prevProps, nextProps) => {
-  return prevProps === nextProps
-}
-
-export default React.memo(
-  connect(mstp, mdtp, null)(GPUMonitoringPage),
-  areEqual
-)
+export default connect(mstp, mdtp, null)(ManualRefresh<Props>(PredictionRouter))

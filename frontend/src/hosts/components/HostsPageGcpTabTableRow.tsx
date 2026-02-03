@@ -89,7 +89,7 @@ const HostsPageGcpTabTableRow: FunctionComponent<Props> = ({
         {csp.namespace}
       </div>
       <div className="hosts-table--td" style={{width: CloudNameWidth}}>
-        <Link to={`/sources/${sourceID}/infrastructure/details/${name}`}>
+        <Link to={`/sources/${sourceID}/server-monitoring/server-list/${name}`}>
           {name}
         </Link>
       </div>
@@ -127,7 +127,7 @@ const HostsPageGcpTabTableRow: FunctionComponent<Props> = ({
               <Link
                 style={{marginLeft: '2px'}}
                 to={{
-                  pathname: `/sources/${sourceID}/infrastructure/details/${name}`,
+                  pathname: `/sources/${sourceID}/server-monitoring/server-list/${name}`,
                   query: {app},
                 }}
               >

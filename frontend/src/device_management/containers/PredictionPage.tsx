@@ -7,10 +7,9 @@ import {resetStatusDashboard} from 'src/status/actions'
 import _ from 'lodash'
 
 interface Props {
-  source: Source
-  limit: number
+  source: Source  
   me: Me
-  onResetStatusDashboard: typeof resetStatusDashboard
+  onResetStatusDashboard?: typeof resetStatusDashboard
 }
 function PredictionPage({me, source, onResetStatusDashboard}: Props) {
   useEffect(() => {

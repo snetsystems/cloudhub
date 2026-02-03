@@ -7,6 +7,7 @@ import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import DashboardHeader from 'src/dashboards/components/DashboardHeader'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import ManualRefresh from 'src/shared/components/ManualRefresh'
+import PageSpinner from 'src/shared/components/PageSpinner'
 import {generateForHosts} from 'src/utils/tempVars'
 
 import {timeRanges} from 'src/shared/data/timeRanges'
@@ -58,6 +59,7 @@ interface State {
   hostLinks: DashboardSwitcherLinks
   timeRange: TimeRange
   isAgentHost: boolean
+  isLoading: boolean
 }
 
 class HostPage extends PureComponent<Props, State> {
@@ -69,59 +71,68 @@ class HostPage extends PureComponent<Props, State> {
       hostLinks: EMPTY_LINKS,
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       isAgentHost: false,
+      isLoading: true,
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
   }
 
   public async componentDidMount() {
     const {location, autoRefresh} = this.props
-    const isAgentHost = location?.query?.trigger === 'anomaly_predict'
+    try {
+      const isAgentHost = location?.query?.trigger === 'anomaly_predict'
 
-    this.setState({isAgentHost: isAgentHost})
+      this.setState({isAgentHost: isAgentHost})
 
-    const {
-      data: {layouts},
-    } = await getLayouts()
+      const {
+        data: {layouts},
+      } = await getLayouts()
 
-    const filteredNotIncludeApps = isAgentHost
-      ? notIncludeApps.filter(
-          app => !excludedAppsForHostDetailsPage.includes(app)
-        )
-      : notIncludeApps
+      const filteredNotIncludeApps = isAgentHost
+        ? notIncludeApps.filter(
+            app => !excludedAppsForHostDetailsPage.includes(app)
+          )
+        : notIncludeApps
 
-    const filterLayouts = _.filter(
-      layouts,
-      m => !_.includes(filteredNotIncludeApps, m.app)
-    )
+      const filterLayouts = _.filter(
+        layouts,
+        m => !_.includes(filteredNotIncludeApps, m.app)
+      )
 
-    // fetching layouts and mappings can be done at the same time
-    const {host, measurements} = await this.fetchHostsAndMeasurements(
-      filterLayouts
-    )
+      // fetching layouts and mappings can be done at the same time
+      const {host, measurements} = await this.fetchHostsAndMeasurements(
+        filterLayouts
+      )
 
-    const focusedApp = location.query.app
+      const focusedApp = location.query.app
 
-    const filteredLayouts = filterLayouts
-      .filter(filterLayouts => {
-        return focusedApp
-          ? filterLayouts.app === focusedApp
-          : host.apps &&
-              host.apps.includes(filterLayouts.app) &&
-              measurements.includes(filterLayouts.measurement)
-      })
-      .sort((x, y) => {
-        return x.measurement < y.measurement
-          ? -1
-          : x.measurement > y.measurement
-          ? 1
-          : 0
-      })
+      const filteredLayouts = filterLayouts
+        .filter(filterLayouts => {
+          return focusedApp
+            ? filterLayouts.app === focusedApp
+            : host.apps &&
+                host.apps.includes(filterLayouts.app) &&
+                measurements.includes(filterLayouts.measurement)
+        })
+        .sort((x, y) => {
+          return x.measurement < y.measurement
+            ? -1
+            : x.measurement > y.measurement
+            ? 1
+            : 0
+        })
 
-    const hostLinks = await this.getHostLinks()
+      const hostLinks = await this.getHostLinks()
 
-    this.setState({layouts: filteredLayouts, hostLinks}) // eslint-disable-line react/no-did-mount-set-state
+      this.setState({
+        layouts: filteredLayouts,
+        hostLinks,
+        isLoading: false,
+      }) // eslint-disable-line react/no-did-mount-set-state
 
-    GlobalAutoRefresher.poll(autoRefresh)
+      GlobalAutoRefresher.poll(autoRefresh)
+    } catch {
+      this.setState({isLoading: false})
+    }
   }
 
   public componentDidUpdate(prevProps) {
@@ -154,7 +165,7 @@ class HostPage extends PureComponent<Props, State> {
       timeZone,
       onSetTimeZone,
     } = this.props
-    const {timeRange, hostLinks, layouts} = this.state
+    const {timeRange, hostLinks, layouts, isLoading} = this.state
 
     const layoutCells = getCells(layouts, source)
     const tempVars = generateForHosts(source)
@@ -180,20 +191,24 @@ class HostPage extends PureComponent<Props, State> {
             'presentation-mode': inPresentationMode,
           })}
         >
-          <div className="container-fluid full-width dashboard">
-            <LayoutRenderer
-              source={source}
-              sources={[source]}
-              isStatusPage={false}
-              isStaticPage={true}
-              isEditable={false}
-              cells={layoutCells}
-              templates={tempVars}
-              timeRange={timeRange}
-              manualRefresh={manualRefresh}
-              host={hostID}
-            />
-          </div>
+          {isLoading ? (
+            <PageSpinner customClass="host-page-spinner" />
+          ) : (
+            <div className="container-fluid full-width dashboard">
+              <LayoutRenderer
+                source={source}
+                sources={[source]}
+                isStatusPage={false}
+                isStaticPage={true}
+                isEditable={false}
+                cells={layoutCells}
+                templates={tempVars}
+                timeRange={timeRange}
+                manualRefresh={manualRefresh}
+                host={hostID}
+              />
+            </div>
+          )}
         </FancyScrollbar>
       </div>
     )

@@ -98,7 +98,7 @@ export default class PredictionRule extends Component<Props, State> {
             <Page.Title title="Prediction Alert Rule Builder" />
           </Page.Header.Left>
           <Page.Header.Right showSourceIndicator={true}>
-            {this.saveButton}
+            {this.exitButton}
             <RuleHeaderSave
               onSave={this.handleSave}
               validationError={this.validationError}
@@ -128,9 +128,9 @@ export default class PredictionRule extends Component<Props, State> {
     )
   }
 
-  private get saveButton(): JSX.Element {
+  private get exitButton(): JSX.Element {
     const {source, router} = this.props
-    const pageLink = `/sources/${source.id}/ai/prediction`
+    const pageLink = `/sources/${source.id}/network-monitoring/anomaly-prediction`
 
     return (
       <button
@@ -159,7 +159,7 @@ export default class PredictionRule extends Component<Props, State> {
 
     return (
       <div className="rule-section">
-        <h3 className="rule-section--heading">Organization</h3>
+        <h3 className="rule-section--heading">Source</h3>
         <div className="rule-section--body">
           <div className="rule-section--row rule-section--row-first rule-section--row-last">
             <Dropdown

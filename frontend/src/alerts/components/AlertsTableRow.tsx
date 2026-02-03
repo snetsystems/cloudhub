@@ -116,11 +116,18 @@ class AlertsTableRow extends PureComponent<Props> {
         ) : (
           <Link
             onClick={e => e.stopPropagation()}
-            to={`/sources/${sourceID}/infrastructure/details/${host}${
+            to={`/sources/${sourceID}/server-monitoring/server-list/${host}${
               !!triggerType ? `?trigger=${triggerType}&app=snmp_nx_all` : ''
             }`}
             title={host}
           >
+            {/* <Link
+            onClick={e => e.stopPropagation()}
+            to={`/sources/${sourceID}/infrastructure/details/${host}${
+              !!triggerType ? `?trigger=${triggerType}&app=snmp_nx_all` : ''
+            }`}
+            title={host}
+          > */}
             {host}
           </Link>
           // <span className="alert-history-link">{host}</span>

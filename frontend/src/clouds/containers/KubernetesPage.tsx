@@ -63,7 +63,6 @@ import {
   Source,
   Layout,
   TimeRange,
-  Links,
   RemoteDataState,
   NotificationAction,
 } from 'src/types'
@@ -98,15 +97,14 @@ import {
 } from 'src/shared/copy/notifications'
 import {setSelectedPersistentVolume} from 'src/clouds/actions/kubernetesProxy'
 
-interface Props extends KubernetesProps {
+interface Props {
   source: Source
-  addons: Addon[]
-  notify: NotificationAction
   manualRefresh: number
   timeRange: TimeRange
   autoRefresh: number
-  links: Links
-  meRole: string
+  meRole?: string
+  addons?: Addon[]
+  notify?: NotificationAction
   setSelectedPersistentVolume?: (persistentVolumeName: string[] | null) => void
 }
 

@@ -11,6 +11,7 @@ import HostTable from 'src/hosts/components/HostsTable'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
 import {Page} from 'src/reusable_ui'
+import PageSpinner from 'src/shared/components/PageSpinner'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // APIs
@@ -97,6 +98,7 @@ interface State {
   proportions: number[]
   activeCspTab: string
   hostPageStatus: RemoteDataState
+  isGraphLoading: boolean
 }
 
 @ErrorHandling
@@ -123,6 +125,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       activeCspTab: 'Host',
       hostPageStatus: RemoteDataState.NotStarted,
+      isGraphLoading: false,
     }
   }
 
@@ -187,19 +190,31 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     GlobalAutoRefresher.poll(cloudAutoRefresh.host)
 
     const hostID = hostsPage.focusedHost
-    if (hostID === '') {
-      await this.fetchHostsData(filterLayouts)
-      const {filteredLayouts} = await this.getLayoutsforHost(
-        filterLayouts,
-        this.state.focusedHost
-      )
-      this.setState({filteredLayouts})
-    } else {
-      this.setState({
-        layouts: filterLayouts,
-        proportions: convertProportions,
-        focusedHost: hostID,
-      })
+    try {
+      if (hostID === '') {
+        const newHosts = await this.fetchHostsData(filterLayouts)
+        const firstHost = newHosts ? this.getFirstHost(newHosts) : ''
+        this.setState({isGraphLoading: true})
+        const {filteredLayouts} = await this.getLayoutsforHost(
+          filterLayouts,
+          firstHost
+        )
+        this.setState({filteredLayouts, isGraphLoading: false})
+      } else {
+        this.setState({
+          isGraphLoading: true,
+          layouts: filterLayouts,
+          proportions: convertProportions,
+          focusedHost: hostID,
+        })
+        const {filteredLayouts} = await this.getLayoutsforHost(
+          filterLayouts,
+          hostID
+        )
+        this.setState({filteredLayouts, isGraphLoading: false})
+      }
+    } catch {
+      this.setState({isGraphLoading: false})
     }
   }
 
@@ -209,12 +224,17 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
 
     if (layouts) {
       if (prevState.focusedHost !== focusedHost) {
-        this.fetchHostsData(layouts)
-        const {filteredLayouts} = await this.getLayoutsforHost(
-          layouts,
-          focusedHost
-        )
-        this.setState({filteredLayouts})
+        this.setState({isGraphLoading: true})
+        try {
+          this.fetchHostsData(layouts)
+          const {filteredLayouts} = await this.getLayoutsforHost(
+            layouts,
+            focusedHost
+          )
+          this.setState({filteredLayouts, isGraphLoading: false})
+        } catch {
+          this.setState({isGraphLoading: false})
+        }
       }
 
       if (prevProps.cloudAutoRefresh.host !== cloudAutoRefresh.host) {
@@ -228,12 +248,17 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
 
     if (layouts) {
       if (this.props.manualRefresh !== nextProps.manualRefresh) {
-        await this.fetchHostsData(layouts)
-        const {filteredLayouts} = await this.getLayoutsforHost(
-          layouts,
-          focusedHost
-        )
-        this.setState({filteredLayouts})
+        this.setState({isGraphLoading: true})
+        try {
+          await this.fetchHostsData(layouts)
+          const {filteredLayouts} = await this.getLayoutsforHost(
+            layouts,
+            focusedHost
+          )
+          this.setState({filteredLayouts, isGraphLoading: false})
+        } catch {
+          this.setState({isGraphLoading: false})
+        }
       }
 
       if (
@@ -335,33 +360,36 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
 
   private renderGraph = () => {
     const {source, manualRefresh, timeRange} = this.props
-    const {filteredLayouts, focusedHost} = this.state
-    const layoutCells = getCells(filteredLayouts, source)
-    const tempVars = generateForHosts(source)
+    const {filteredLayouts, focusedHost, isGraphLoading} = this.state
 
-    const cspGraphComponent = (): JSX.Element => {
+    if (isGraphLoading) {
       return (
-        <>
-          <Page.Contents>
-            <LayoutRenderer
-              source={source}
-              sources={[source]}
-              isStatusPage={false}
-              isStaticPage={true}
-              isEditable={false}
-              cells={layoutCells}
-              templates={tempVars}
-              timeRange={timeRange}
-              manualRefresh={manualRefresh}
-              host={focusedHost}
-              instance={null}
-            />
-          </Page.Contents>
-        </>
+        <Page.Contents>
+          <PageSpinner />
+        </Page.Contents>
       )
     }
 
-    return cspGraphComponent()
+    const layoutCells = getCells(filteredLayouts, source)
+    const tempVars = generateForHosts(source)
+
+    return (
+      <Page.Contents>
+        <LayoutRenderer
+          source={source}
+          sources={[source]}
+          isStatusPage={false}
+          isStaticPage={true}
+          isEditable={false}
+          cells={layoutCells}
+          templates={tempVars}
+          timeRange={timeRange}
+          manualRefresh={manualRefresh}
+          host={focusedHost}
+          instance={null}
+        />
+      </Page.Contents>
+    )
   }
   private async getLayoutsforHost(layouts: Layout[], hostID: string) {
     const {host, measurements} = await this.fetchHostsAndMeasurements(

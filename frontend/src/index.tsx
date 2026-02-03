@@ -84,12 +84,24 @@ import {setCustomAutoRefreshOptions} from './shared/components/dropdown_auto_ref
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
 import {reducerVSphere, ResponseVSphere} from './clouds/types'
-
+import PredictionRouter from 'src/device_management/containers/PredictionRouter'
 import AiRoutePage from 'src/device_management/containers/AiRoutePage'
 import PredictionRulePage from 'src/device_management/containers/PredictionRulePage'
 import {getElasticSearchInfoAsync} from 'src/shared/actions/elasticSearch'
-
+import ManagementRouter from 'src/device_management/containers/ManagementRouter'
 import 'src/log_analysis/util/setupOUIIcons'
+import TopologyRouter from 'src/hosts/containers/TopologyRouter'
+import OverviewPage from 'src/overview/containers/OverviewPage'
+import HostPageRouter from 'src/hosts/containers/HostPageRouter'
+import ServerDetailsPage from 'src/server_details/containers/ServerDetailsPage'
+import GPUMonitoringPage from 'src/gpu_monitoring/containers/GPUMonitoringPage'
+import URLMonitoringPage from 'src/url_monitoring/containers/URLMonitoringPage'
+import DBMonitoringPage from 'src/db_monitoring/containers/DBMonitoringPage'
+import AppPerformanceMonitoringPage from 'src/app_monitoring/containers/AppPerformanceMonitoringPage'
+import KubernetesRouter from 'src/clouds/containers/KubernetesRouter'
+import OpenStackRouter from 'src/clouds/containers/OpenStackRouter'
+import VMHostRouter from './clouds/containers/VMHostRouter'
+import NutanixPage from './nutanix/containers/NutanixPage'
 
 const errorsQueue = []
 
@@ -252,7 +264,74 @@ class Root extends PureComponent<Record<string, never>, State> {
               component={UserIsAuthenticated(App)}
             >
               <Route component={CheckSources}>
+                {/* network monitoring */}
                 <Route
+                  path="network-monitoring/anomaly-prediction"
+                  component={PredictionRouter}
+                />
+                <Route
+                  path="network-monitoring/:tab/prediction-rule"
+                  component={PredictionRulePage}
+                />
+                <Route
+                  path="network-monitoring/management"
+                  component={ManagementRouter}
+                />
+                {/* server monitoring */}
+                <Route
+                  path="server-monitoring/topology"
+                  component={props => (
+                    <TopologyRouter
+                      {...props}
+                      handleClearTimeout={this.handleClearTimeout}
+                    />
+                  )}
+                />
+                <Route
+                  path="server-monitoring/overview"
+                  component={OverviewPage}
+                />
+                <Route
+                  path="server-monitoring/server-list"
+                  component={HostPageRouter}
+                />
+                <Route
+                  path="server-monitoring/server-list/:hostID"
+                  component={HostPage}
+                />
+                <Route
+                  path="server-monitoring/server-details"
+                  component={ServerDetailsPage}
+                />
+                <Route
+                  path="server-monitoring/gpu-monitoring"
+                  component={GPUMonitoringPage}
+                />
+                {/* url monitoring */}
+                <Route path="url-monitoring" component={URLMonitoringPage} />
+
+                {/* db monitoring */}
+                <Route path="db-monitoring" component={DBMonitoringPage} />
+
+                {/* app performance monitoring */}
+                <Route
+                  path="app-performance-monitoring"
+                  component={AppPerformanceMonitoringPage}
+                />
+
+                {/* kubernetes */}
+                <Route path="kubernetes" component={KubernetesRouter} />
+
+                {/* openstack */}
+                <Route path="openstack" component={OpenStackRouter} />
+
+                {/* vmware */}
+                <Route path="vmware" component={VMHostRouter} />
+
+                {/* nutanix */}
+                <Route path="nutanix" component={NutanixPage} />
+
+                {/* <Route
                   path="ai/:tab"
                   component={props => (
                     <AiRoutePage
@@ -264,7 +343,8 @@ class Root extends PureComponent<Record<string, never>, State> {
                 <Route
                   path="ai/:tab/prediction-rule"
                   component={PredictionRulePage}
-                />
+                /> */}
+
                 <Route path="status" component={StatusPage} />
                 <Route path="visualize" component={DataExplorerPage} />
                 <Route path="dashboards" component={DashboardsPage} />
@@ -272,7 +352,7 @@ class Root extends PureComponent<Record<string, never>, State> {
                   path="dashboards/:dashboardID"
                   component={DashboardPage}
                 />
-                <Route
+                {/* <Route
                   path="infrastructure/:infraTab"
                   component={props => (
                     <Infrastructure
@@ -280,11 +360,11 @@ class Root extends PureComponent<Record<string, never>, State> {
                       handleClearTimeout={this.handleClearTimeout}
                     />
                   )}
-                />
-                <Route
+                /> */}
+                {/* <Route
                   path="infrastructure/details/:hostID"
                   component={HostPage}
-                />
+                /> */}
                 <Route
                   path="clouds/:cloud"
                   component={props => (

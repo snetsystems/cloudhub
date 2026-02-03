@@ -86,20 +86,20 @@ interface ManualRefresh {
 }
 
 interface Props {
-  auth: Auth
   source: Source
-  sources: Source[]
-  links: Links
-  isUsingAuth: boolean
   me: Me
+  isUsingAuth: boolean
   organizations: Organization[]
-  timeZone: TimeZones
-  notify: (n: Notification) => void
-  openShell: (shell: ShellInfo) => void
-  openModal: (aiModal: AiModal) => void
-  closeModal: () => void
   autoRefresh: number
   manualRefresh: ManualRefresh
+  auth?: Auth
+  sources?: Source[]
+  links?: Links
+  timeZone?: TimeZones
+  notify?: (n: Notification) => void
+  closeModal?: () => void
+  openShell?: (shell: ShellInfo) => void
+  openModal?: (aiModal: AiModal) => void
 }
 
 interface State {

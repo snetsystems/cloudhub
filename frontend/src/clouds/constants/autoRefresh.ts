@@ -143,6 +143,8 @@ export function getTimeOptionByGroup(groupName: string | undefined) {
       prediction: autoRefreshGroupDefaultOption(groupName, 'prediction'),
       gpuMonitoring: autoRefreshGroupDefaultOption(groupName, 'gpuMonitoring'),
       logAnalysis: autoRefreshGroupDefaultOption(groupName, 'logAnalysis'),
+      serverList: autoRefreshGroupDefaultOption(groupName, 'serverList'),
+      management: autoRefreshGroupDefaultOption(groupName, 'management'),
       expandTimePulse: autoRefreshGroupDefaultOption(
         groupName,
         'expandTimePulse'

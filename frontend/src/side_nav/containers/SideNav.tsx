@@ -104,6 +104,292 @@ class SideNav extends PureComponent<Props> {
       }
     })()
 
+    const navItem = () => {
+      return (
+        <>
+          <NavBlock
+            highlightWhen={['visualize']}
+            icon="graphline-2"
+            link={`${sourcePrefix}/visualize`}
+            location={location}
+          >
+            <NavHeader link={`${sourcePrefix}/visualize`} title="Visualize" />
+          </NavBlock>
+          <NavBlock
+            highlightWhen={['dashboards']}
+            icon="dash-j"
+            link={`${sourcePrefix}/dashboards`}
+            location={location}
+          >
+            <NavHeader link={`${sourcePrefix}/dashboards`} title="Dashboards" />
+          </NavBlock>
+          {/* Network Monitoring */}
+          <NavBlock
+            highlightWhen={['network-monitoring']}
+            icon="network"
+            link={`${sourcePrefix}/network-monitoring/anomaly-prediction`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/network-monitoring/anomaly-prediction`}
+              title="Network Monitoring"
+            />
+            <NavListItem link={`${sourcePrefix}/network-monitoring/management`}>
+              Device Management
+            </NavListItem>
+            <NavListItem
+              link={`${sourcePrefix}/network-monitoring/anomaly-prediction`}
+            >
+              Anomaly Prediction
+            </NavListItem>
+          </NavBlock>
+
+          {/* Server Monitoring */}
+          <NavBlock
+            highlightWhen={['server-monitoring']}
+            icon="server2"
+            link={`${sourcePrefix}/server-monitoring/overview`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/server-monitoring/overview`}
+              title="Server Monitoring"
+            />
+            <NavListItem link={`${sourcePrefix}/server-monitoring/topology`}>
+              Topology Builder
+            </NavListItem>
+            <NavListItem link={`${sourcePrefix}/server-monitoring/overview`}>
+              Overview
+            </NavListItem>
+            <NavListItem link={`${sourcePrefix}/server-monitoring/server-list`}>
+              Server List
+            </NavListItem>
+            <NavListItem
+              link={`${sourcePrefix}/server-monitoring/server-details`}
+            >
+              Server Details
+            </NavListItem>
+            <NavListItem
+              link={`${sourcePrefix}/server-monitoring/gpu-monitoring`}
+            >
+              NVIDIA GPU Monitoring
+            </NavListItem>
+          </NavBlock>
+
+          {/* URL Monitoring */}
+          <NavBlock
+            highlightWhen={['url-monitoring']}
+            icon="sphere"
+            link={`${sourcePrefix}/url-monitoring`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/url-monitoring`}
+              title="URL Monitoring"
+            />
+          </NavBlock>
+
+          {/* DB Monitoring */}
+          <NavBlock
+            highlightWhen={['db-monitoring']}
+            icon="disks"
+            link={`${sourcePrefix}/db-monitoring`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/db-monitoring`}
+              title="DB Monitoring"
+            />
+          </NavBlock>
+
+          {/* App Performance Monitoring */}
+          <NavBlock
+            highlightWhen={['app-performance-monitoring']}
+            icon="tachometer"
+            link={`${sourcePrefix}/app-performance-monitoring`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/app-performance-monitoring`}
+              title="App. Performance Monitoring"
+            />
+          </NavBlock>
+
+          {/* Kubernetes  */}
+          <NavBlock
+            highlightWhen={['kubernetes']}
+            icon="kubernetes"
+            link={`${sourcePrefix}/kubernetes`}
+            location={location}
+          >
+            <NavHeader link={`${sourcePrefix}/kubernetes`} title="Kubernetes" />
+          </NavBlock>
+
+          {/* OpenStack  */}
+          {isUsingAuth && isUsingOsp && (
+            <NavBlock
+              highlightWhen={['openstack']}
+              icon="openstack"
+              link={`${sourcePrefix}/openstack`}
+              location={location}
+            >
+              <NavHeader link={`${sourcePrefix}/openstack`} title="OpenStack" />
+            </NavBlock>
+          )}
+
+          {/* VMware */}
+          {isUsingAuth && isUsingVMware && (
+            <NavBlock
+              highlightWhen={['vmware']}
+              icon="vmware"
+              link={`${sourcePrefix}/vmware`}
+              location={location}
+            >
+              <NavHeader link={`${sourcePrefix}/vmware`} title="VMware" />
+            </NavBlock>
+          )}
+
+          <Authorized
+            requiredRole={ADMIN_ROLE}
+            replaceWithIfNotAuthorized={
+              <NavBlock
+                highlightWhen={['logs']}
+                icon="document"
+                link={`${sourcePrefix}/logs`}
+                location={location}
+              >
+                <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+              </NavBlock>
+            }
+            replaceWithIfNotUsingAuth={
+              <NavBlock
+                highlightWhen={['logs']}
+                icon="document"
+                link={`${sourcePrefix}/logs`}
+                location={location}
+              >
+                <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+              </NavBlock>
+            }
+          >
+            <NavBlock
+              highlightWhen={['log-analysis', 'logs', 'activity-logs']}
+              icon="document"
+              link={
+                isUsingLogAnalysis
+                  ? `${sourcePrefix}/log-analysis`
+                  : `${sourcePrefix}/logs`
+              }
+              location={location}
+            >
+              <NavHeader
+                link={
+                  isUsingLogAnalysis
+                    ? `${sourcePrefix}/log-analysis`
+                    : `${sourcePrefix}/logs`
+                }
+                title="Log Viewer"
+              />
+              {isUsingLogAnalysis && (
+                <NavListItem link={`${sourcePrefix}/log-analysis`}>
+                  Log Analysis
+                </NavListItem>
+              )}
+              <NavListItem link={`${sourcePrefix}/logs`}>
+                Log Viewer
+              </NavListItem>
+
+              {_.get(me, 'role', '').includes(SUPERADMIN_ROLE) && (
+                <NavListItem link={`${sourcePrefix}/activity-logs`}>
+                  Activity Logs
+                </NavListItem>
+              )}
+            </NavBlock>
+          </Authorized>
+
+          <NavBlock
+            highlightWhen={['alerts', 'alert-rules', 'tickscript']}
+            icon="bell"
+            link={`${sourcePrefix}/alert-rules`}
+            location={location}
+          >
+            <NavHeader link={`${sourcePrefix}/alert-rules`} title="Alert" />
+            <NavListItem link={`${sourcePrefix}/alert-rules`}>
+              Alert Setting
+            </NavListItem>
+            <NavListItem link={`${sourcePrefix}/alerts`}>
+              Alert History
+            </NavListItem>
+          </NavBlock>
+
+          <Authorized
+            requiredRole={ADMIN_ROLE}
+            replaceWithIfNotUsingAuth={
+              <NavBlock
+                highlightWhen={['admin-influxdb']}
+                icon="crown-outline"
+                link={`${sourcePrefix}/admin-influxdb/databases`}
+                location={location}
+              >
+                <NavHeader
+                  link={`${sourcePrefix}/admin-influxdb/databases`}
+                  title="InfluxDB Admin"
+                />
+              </NavBlock>
+            }
+          >
+            <NavBlock
+              highlightWhen={['admin-cloudhub', 'admin-influxdb']}
+              icon="crown-outline"
+              link={`${sourcePrefix}/admin-cloudhub/current-organization`}
+              location={location}
+            >
+              <NavHeader
+                link={`${sourcePrefix}/admin-cloudhub/current-organization`}
+                title="Admin"
+              />
+              <NavListItem
+                link={`${sourcePrefix}/admin-cloudhub/current-organization`}
+              >
+                CloudHub
+              </NavListItem>
+              <NavListItem link={`${sourcePrefix}/admin-influxdb/databases`}>
+                InfluxDB
+              </NavListItem>
+            </NavBlock>
+          </Authorized>
+          {this.Configuration}
+          {isUsingAuth && (
+            <UserNavBlock
+              logoutLink={logoutLink}
+              links={links}
+              me={me}
+              sourcePrefix={sourcePrefix}
+            />
+          )}
+          {isUsing128T && (
+            <NavBlock
+              highlightWhen={['swan-status', 'swan-setting']}
+              icon="cube"
+              link={`${sourcePrefix}/add-on/swan-status`}
+              location={location}
+            >
+              <NavHeader
+                link={`${sourcePrefix}/add-on/swan-status`}
+                title="SWAN/Oncue"
+              />
+              <NavListItem link={`${sourcePrefix}/add-on/swan-status`}>
+                Status
+              </NavListItem>
+              {/* <NavListItem link={`${sourcePrefix}/add-on/swan-setting`}>
+              Setting
+            </NavListItem> */}
+            </NavBlock>
+          )}
+        </>
+      )
+    }
+
     return isHidden ? null : (
       <nav className="sidebar">
         <div
@@ -116,222 +402,9 @@ class SideNav extends PureComponent<Props> {
             <span className="sidebar--icon icon _cloudsmarthub--logo" />
           </Link>
         </div>
-        <NavBlock
-          highlightWhen={['visualize']}
-          icon="graphline-2"
-          link={`${sourcePrefix}/visualize`}
-          location={location}
-        >
-          <NavHeader link={`${sourcePrefix}/visualize`} title="Visualize" />
-        </NavBlock>
-        <NavBlock
-          highlightWhen={['dashboards']}
-          icon="dash-j"
-          link={`${sourcePrefix}/dashboards`}
-          location={location}
-        >
-          <NavHeader link={`${sourcePrefix}/dashboards`} title="Dashboards" />
-        </NavBlock>
-        <NavBlock
-          highlightWhen={['infrastructure']}
-          icon="server2"
-          link={`${sourcePrefix}/infrastructure/topology`}
-          location={location}
-        >
-          <NavHeader
-            link={`${sourcePrefix}/infrastructure/topology`}
-            title="Infrastructure"
-          />
-        </NavBlock>
-        {isUsingAuth && (isUsingVMware || isUsingK8s || isUsingOsp) && (
-          <NavBlock
-            highlightWhen={['clouds']}
-            icon="cloud"
-            link={`${sourcePrefix}/clouds/${cloudsNavLink}`}
-            location={location}
-          >
-            <NavHeader
-              link={`${sourcePrefix}/clouds/${cloudsNavLink}`}
-              title="Clouds"
-            />
-            {isUsingVMware && (
-              <NavListItem link={`${sourcePrefix}/clouds/vmware`}>
-                VMware
-              </NavListItem>
-            )}
-            {isUsingK8s && (
-              <NavListItem link={`${sourcePrefix}/clouds/kubernetes`}>
-                Kubernetes
-              </NavListItem>
-            )}
-            {isUsingOsp && (
-              <NavListItem link={`${sourcePrefix}/clouds/openstack`}>
-                Openstack
-              </NavListItem>
-            )}
-          </NavBlock>
-        )}
-        {isUsingAuth && isUsingAI && (
-          <NavBlock
-            highlightWhen={['ai']}
-            icon="ai-icon"
-            link={
-              isUsingNvidiaGpu
-                ? `${sourcePrefix}/ai/gpu-monitoring`
-                : `${sourcePrefix}/ai/device-management`
-            }
-            location={location}
-          >
-            <NavHeader
-              link={`${sourcePrefix}/ai/device-management`}
-              title="AI"
-            />
-            {isUsingNvidiaGpu && (
-              <NavListItem link={`${sourcePrefix}/ai/gpu-monitoring`}>
-                NVIDIA GPU
-              </NavListItem>
-            )}
-            <NavListItem link={`${sourcePrefix}/ai/device-management`}>
-              Network Device
-            </NavListItem>
-          </NavBlock>
-        )}
 
-        <NavBlock
-          highlightWhen={['alerts', 'alert-rules', 'tickscript']}
-          icon="bell"
-          link={`${sourcePrefix}/alert-rules`}
-          location={location}
-        >
-          <NavHeader link={`${sourcePrefix}/alert-rules`} title="Alert" />
-          <NavListItem link={`${sourcePrefix}/alert-rules`}>
-            Alert Setting
-          </NavListItem>
-          <NavListItem link={`${sourcePrefix}/alerts`}>
-            Alert History
-          </NavListItem>
-        </NavBlock>
+        {navItem()}
 
-        <Authorized
-          requiredRole={ADMIN_ROLE}
-          replaceWithIfNotAuthorized={
-            <NavBlock
-              highlightWhen={['logs']}
-              icon="document"
-              link={`${sourcePrefix}/logs`}
-              location={location}
-            >
-              <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
-            </NavBlock>
-          }
-          replaceWithIfNotUsingAuth={
-            <NavBlock
-              highlightWhen={['logs']}
-              icon="document"
-              link={`${sourcePrefix}/logs`}
-              location={location}
-            >
-              <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
-            </NavBlock>
-          }
-        >
-          <NavBlock
-            highlightWhen={['log-analysis', 'logs', 'activity-logs']}
-            icon="document"
-            link={
-              isUsingLogAnalysis
-                ? `${sourcePrefix}/log-analysis`
-                : `${sourcePrefix}/logs`
-            }
-            location={location}
-          >
-            <NavHeader
-              link={
-                isUsingLogAnalysis
-                  ? `${sourcePrefix}/log-analysis`
-                  : `${sourcePrefix}/logs`
-              }
-              title="Log Viewer"
-            />
-            {isUsingLogAnalysis && (
-              <NavListItem link={`${sourcePrefix}/log-analysis`}>
-                Log Analysis
-              </NavListItem>
-            )}
-            <NavListItem link={`${sourcePrefix}/logs`}>System Logs</NavListItem>
-
-            {_.get(me, 'role', '').includes(SUPERADMIN_ROLE) && (
-              <NavListItem link={`${sourcePrefix}/activity-logs`}>
-                Activity Logs
-              </NavListItem>
-            )}
-          </NavBlock>
-        </Authorized>
-
-        <Authorized
-          requiredRole={ADMIN_ROLE}
-          replaceWithIfNotUsingAuth={
-            <NavBlock
-              highlightWhen={['admin-influxdb']}
-              icon="crown-outline"
-              link={`${sourcePrefix}/admin-influxdb/databases`}
-              location={location}
-            >
-              <NavHeader
-                link={`${sourcePrefix}/admin-influxdb/databases`}
-                title="InfluxDB Admin"
-              />
-            </NavBlock>
-          }
-        >
-          <NavBlock
-            highlightWhen={['admin-cloudhub', 'admin-influxdb']}
-            icon="crown-outline"
-            link={`${sourcePrefix}/admin-cloudhub/current-organization`}
-            location={location}
-          >
-            <NavHeader
-              link={`${sourcePrefix}/admin-cloudhub/current-organization`}
-              title="Admin"
-            />
-            <NavListItem
-              link={`${sourcePrefix}/admin-cloudhub/current-organization`}
-            >
-              CloudHub
-            </NavListItem>
-            <NavListItem link={`${sourcePrefix}/admin-influxdb/databases`}>
-              InfluxDB
-            </NavListItem>
-          </NavBlock>
-        </Authorized>
-        {this.Configuration}
-        {isUsingAuth && (
-          <UserNavBlock
-            logoutLink={logoutLink}
-            links={links}
-            me={me}
-            sourcePrefix={sourcePrefix}
-          />
-        )}
-        {isUsing128T && (
-          <NavBlock
-            highlightWhen={['swan-status', 'swan-setting']}
-            icon="cube"
-            link={`${sourcePrefix}/add-on/swan-status`}
-            location={location}
-          >
-            <NavHeader
-              link={`${sourcePrefix}/add-on/swan-status`}
-              title="SWAN/Oncue"
-            />
-            <NavListItem link={`${sourcePrefix}/add-on/swan-status`}>
-              Status
-            </NavListItem>
-            {/* <NavListItem link={`${sourcePrefix}/add-on/swan-setting`}>
-              Setting
-            </NavListItem> */}
-          </NavBlock>
-        )}
         <div
           className={`sidebar--item align-bottom ${
             this.props.shell.isVisible ? 'active' : ''

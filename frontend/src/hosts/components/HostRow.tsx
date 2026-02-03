@@ -46,7 +46,7 @@ const HostRow: FunctionComponent<Props> = ({
   return (
     <div className={focusedClasses()} onClick={onClickTableRow(name)}>
       <div className="hosts-table--td" style={{width: NameWidth}}>
-        <Link to={`/sources/${sourceID}/infrastructure/details/${name}`}>
+        <Link to={`/sources/${sourceID}/server-monitoring/server-list/${name}`}>
           {name}
         </Link>
       </div>
@@ -66,7 +66,7 @@ const HostRow: FunctionComponent<Props> = ({
               <Link
                 style={{marginLeft: '2px'}}
                 to={{
-                  pathname: `/sources/${sourceID}/infrastructure/details/${name}`,
+                  pathname: `/sources/${sourceID}/server-monitoring/server-list/${name}`,
                   query: {app},
                 }}
               >

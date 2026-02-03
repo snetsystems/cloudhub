@@ -234,7 +234,7 @@ function PredictionDashBoard({
         <div className="prediction-page--button">
           {isAdminRole && (
             <Link
-              to={`/sources/${source.id}/ai/device-management/prediction-rule`}
+              to={`/sources/${source.id}/network-monitoring/anomaly-prediction/prediction-rule`}
               className="btn btn-sm btn-primary"
               style={{marginRight: '4px'}}
             >
