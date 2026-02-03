@@ -168,6 +168,9 @@ export const DEFAULT_TEMPLATES: DefaultTemplates = {
       query: {
         influxql: TEMPLATE_VARIABLE_QUERIES[TemplateType.TagValues],
       },
+      options: {
+        isAllEnabled: true,
+      },
     }
   },
   [TemplateType.MetaQuery]: () => {

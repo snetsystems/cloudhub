@@ -3,6 +3,7 @@ import _ from 'lodash'
 
 import Dropdown from 'src/shared/components/Dropdown'
 
+// import {Template, TemplateValue, TemplateValueType, Me} from 'src/types'
 import {Template, TemplateValue, TemplateValueType, Me} from 'src/types'
 
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
@@ -15,7 +16,8 @@ interface Props {
 }
 
 const TemplateDropdown: FunctionComponent<Props> = props => {
-  const {template, me, isUsingAuth, onPickValue} = props
+  //const {template, me, isUsingAuth, onPickValue} = props
+  let {template, me, isUsingAuth, onPickValue} = props
 
   let dropdownItems = []
 
@@ -24,7 +26,10 @@ const TemplateDropdown: FunctionComponent<Props> = props => {
       if (value.type === TemplateValueType.Map) {
         return {...value, text: value.key}
       }
-      return {...value, text: value.value}
+      return {
+        ...value,
+        text: value.value === 'allTagValues' ? 'All' : value.value,
+      }
     })
   } else {
     if (template.type === 'databases') {
@@ -38,14 +43,33 @@ const TemplateDropdown: FunctionComponent<Props> = props => {
         if (value.type === TemplateValueType.Map) {
           return {...value, text: value.key}
         }
-        return {...value, text: value.value}
+        return {
+          ...value,
+          text: value.value === 'allTagValues' ? 'All' : value.value,
+        }
       })
     }
   }
 
-  const localSelectedItem = dropdownItems.find(item => item.localSelected) ||
-    dropdownItems[0] || {text: '(No values)'}
+  if (template.options?.isAllEnabled === true) {
+    const hasAll = dropdownItems.some(item => item.value === 'allTagValues')
+    if (!hasAll) {
+      const allValue: TemplateValue = {
+        type: TemplateValueType.TagValue,
+        value: 'allTagValues',
+        selected: false,
+        localSelected: false,
+      }
+      dropdownItems = [{...allValue, text: 'All'}, ...dropdownItems]
+    }
+  }
 
+  const localSelectedItem = dropdownItems.find(
+    item => item.localSelected && item.value !== 'allTagValues'
+  ) ||
+    dropdownItems.find(item => item.localSelected) ||
+    dropdownItems.find(item => item.value !== 'allTagValues') ||
+    dropdownItems[0] || {text: '(No values)'}
   return (
     <Dropdown
       items={dropdownItems}

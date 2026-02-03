@@ -65,15 +65,30 @@ const renderTemplate = (query: string, template: Template): string => {
 
   let q = ''
 
+  // Check if template has "all" option for TagValue
+  const hasAllInTemplate = template.values.some(v => v.value === 'allTagValues')
+  const hasAllOption = hasAllInTemplate || template.options?.isAllEnabled === true
+
   // First replace all template variable types in regular expressions.  Values should appear unquoted.
   switch (type) {
     case TemplateValueType.TagKey:
     case TemplateValueType.FieldKey:
     case TemplateValueType.Measurement:
     case TemplateValueType.Database:
-    case TemplateValueType.TagValue:
     case TemplateValueType.TimeStamp:
       q = replaceAllRegex(query, tempVar, value)
+      break
+    case TemplateValueType.TagValue:
+      // Only use regex replacement if "all" option exists
+      if (hasAllOption) {
+        if (value === 'allTagValues') {
+          q = replaceAllRegex(query, tempVar, '.*')
+        } else {
+          q = replaceAllRegex(query, tempVar, value)
+        }
+      } else {
+        q = query
+      }
       break
     default:
       q = query
@@ -88,6 +103,7 @@ const renderTemplate = (query: string, template: Template): string => {
     case TemplateValueType.Database:
       return replaceAll(q, tempVar, `"${value}"`)
     case TemplateValueType.TagValue:
+      return replaceTagValueWithRegex(q, tempVar, template.values, value, template)
     case TemplateValueType.TimeStamp:
       return replaceAll(q, tempVar, `'${value}'`)
     case TemplateValueType.CSV:
@@ -150,6 +166,63 @@ const findNext = (s: string, t: string, startIndex: number) => {
 
 const replaceAll = (query: string, search: string, replacement: string) => {
   return (query || '').split(search).join(replacement)
+}
+
+const replaceTagValueWithRegex = (
+  query: string,
+  tempVar: string,
+  allValues: TemplateValue[],
+  selectedValue: string,
+  template: Template
+): string => {
+  const selectedValues = allValues
+    .filter(v => v.localSelected || v.selected)
+    .map(v => v.value)
+
+  const hasAllInTemplate = template.values.some(v => v.value === 'allTagValues')
+  const hasAllOption = hasAllInTemplate || template.options?.isAllEnabled === true
+
+  if (!hasAllOption) {
+    return replaceAll(query, tempVar, `'${selectedValue}'`)
+  }
+
+  const isAllSelected = selectedValue === 'allTagValues'
+  if (isAllSelected) {
+    const tagValuePattern = new RegExp(
+      `("\\w+")\\s*=\\s*(${escapeRegex(tempVar)}|'[^']*')`,
+      'g'
+    )
+    const result = query.replace(tagValuePattern, (_match, tagKey) => {
+      return `${tagKey}=~ /^.*$/`
+    })
+    return result
+  }
+
+  if (selectedValues.length === 0) {
+    return query
+  }
+
+  const regexPattern =
+    selectedValues.length === 1
+      ? `^${escapeRegexForPattern(selectedValues[0])}$`
+      : `^${selectedValues.map(escapeRegexForPattern).join('|')}$`
+
+  const tagValuePattern = new RegExp(
+    `("\\w+")\\s*=\\s*(${escapeRegex(tempVar)}|'[^']*')`,
+    'g'
+  )
+
+  return query.replace(tagValuePattern, (_match, tagKey) => {
+    return `${tagKey}=~ /${regexPattern}/`
+  })
+}
+
+const escapeRegex = (str: string): string => {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+const escapeRegexForPattern = (str: string): string => {
+  return str.replace(/[.*+?^${}()[\]\\]/g, '\\$&')
 }
 
 export const templateInternalReplace = (template: Template): string => {

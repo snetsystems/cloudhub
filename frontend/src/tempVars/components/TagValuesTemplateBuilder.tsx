@@ -15,6 +15,7 @@ import DropdownLoadingPlaceholder from 'src/shared/components/DropdownLoadingPla
 import {
   TemplateBuilderProps,
   TemplateValueType,
+  TemplateType,
   RemoteDataState,
 } from 'src/types'
 
@@ -121,6 +122,9 @@ class KeysTemplateBuilder extends PureComponent<TemplateBuilderProps, State> {
           items={template.values}
           loadingStatus={tagValuesStatus}
           onUpdateDefaultTemplateValue={onUpdateDefaultTemplateValue}
+          templateType={TemplateType.TagValues}
+          onUpdateAllOption={this.handleUpdateAllOption}
+          isAllEnabled={template.options?.isAllEnabled}
         />
       </>
     )
@@ -247,13 +251,72 @@ class KeysTemplateBuilder extends PureComponent<TemplateBuilderProps, State> {
         }
       })
 
-      if (nextValues[0]) {
-        nextValues[0].selected = true
+
+      const isAllEnabled =
+        template.options?.isAllEnabled !== undefined
+          ? template.options.isAllEnabled
+          : true
+
+      const allValue = template.values.find(v => v.value === 'allTagValues')
+      const hasAll = allValue && isAllEnabled
+
+      let finalValues
+      let finalOptions
+
+      if (isAllEnabled) {
+
+        if (hasAll) {
+          finalValues = [
+            {
+              ...allValue,
+              selected: false,
+              localSelected: false,
+            },
+            ...nextValues.map((v, index) => ({
+              ...v,
+              selected: index === 0,
+              localSelected: index === 0,
+            })),
+          ]
+        } else {
+          finalValues = [
+            {
+              value: 'allTagValues',
+              type: TemplateValueType.TagValue,
+              selected: false,
+              localSelected: false,
+            },
+            ...nextValues.map((v, index) => ({
+              ...v,
+              selected: index === 0,
+              localSelected: index === 0,
+            })),
+          ]
+        }
+        finalOptions = {
+          ...template.options,
+          isAllEnabled: true,
+        }
+      } else {
+        if (nextValues.length > 0) {
+          finalValues = nextValues.map((v, index) => ({
+            ...v,
+            selected: index === 0,
+            localSelected: index === 0,
+          }))
+        } else {
+          finalValues = nextValues
+        }
+        finalOptions = {
+          ...template.options,
+          isAllEnabled: false,
+        }
       }
 
       onUpdateTemplate({
         ...template,
-        values: nextValues,
+        values: finalValues,
+        options: finalOptions,
         query: {
           ...template.query,
           db: selectedDatabase,
@@ -325,6 +388,77 @@ class KeysTemplateBuilder extends PureComponent<TemplateBuilderProps, State> {
         ...template.query,
         tagKey,
       },
+    })
+  }
+
+  private handleUpdateAllOption = (isAllEnabled: boolean): void => {
+    const {template, onUpdateTemplate} = this.props
+
+    let updatedValues = [...template.values]
+    let updatedOptions = {
+      ...template.options,
+      isAllEnabled: isAllEnabled,
+    }
+
+    if (isAllEnabled) {
+
+      const hasAll = updatedValues.some(v => v.value === 'allTagValues')
+
+      if (!hasAll) {
+        const allValue = {
+          value: 'allTagValues',
+          type: TemplateValueType.TagValue,
+          selected: false,
+          localSelected: false,
+        }
+
+        updatedValues = updatedValues.map((v, index) => ({
+          ...v,
+          selected: index === 0,
+          localSelected: index === 0,
+        }))
+
+        updatedValues = [allValue, ...updatedValues]
+      } else {
+
+        let firstNonAllIndex = -1
+        updatedValues = updatedValues.map((v, index) => {
+          if (v.value === 'allTagValues') {
+            return {
+              ...v,
+              selected: false,
+              localSelected: false,
+            }
+          }
+          if (firstNonAllIndex === -1) {
+            firstNonAllIndex = index
+          }
+          return v
+        })
+
+        if (firstNonAllIndex !== -1) {
+          updatedValues[firstNonAllIndex] = {
+            ...updatedValues[firstNonAllIndex],
+            selected: true,
+            localSelected: true,
+          }
+        }
+      }
+    } else {
+      updatedValues = updatedValues.filter(v => v.value !== 'allTagValues')
+      if (updatedValues.length > 0) {
+        updatedValues = updatedValues.map((v, index) => ({
+          ...v,
+          selected: index === 0,
+          localSelected: index === 0,
+        }))
+      }
+    }
+
+    onUpdateTemplate({
+      ...template,
+      values: updatedValues,
+      options: updatedOptions,
     })
   }
 }

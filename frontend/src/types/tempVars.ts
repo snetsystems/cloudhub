@@ -58,6 +58,9 @@ export interface Template {
   label: string
   query?: TemplateQuery
   sourceID?: string
+  options?: {
+    isAllEnabled?: boolean
+  }
 }
 
 export interface TemplateUpdate {

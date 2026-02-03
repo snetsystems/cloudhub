@@ -93,4 +93,5 @@ export interface TopologyOption {
   ipmiVisible: boolean
   linkVisible: boolean
   minimapVisible: boolean
+  autoSaveOnLeave: boolean
 }

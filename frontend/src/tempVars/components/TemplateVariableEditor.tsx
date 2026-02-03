@@ -42,6 +42,7 @@ import {
   Template,
   TemplateType,
   TemplateValue,
+  TemplateValueType,
   TemplateBuilderProps,
   Source,
   RemoteDataState,
@@ -107,9 +108,58 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
     const {template} = this.props
 
     if (template) {
+
+      let nextTemplate = {...template}
+
+      if (template.type === TemplateType.TagValues) {
+        const isAllEnabled = template.options?.isAllEnabled === true
+        const hasAll = template.values.some(v => v.value === 'allTagValues')
+
+        if (isAllEnabled && !hasAll) {
+          const updatedValues = template.values.map((v, index) => ({
+            ...v,
+            selected: index === 0,
+            localSelected: index === 0,
+          }))
+          nextTemplate = {
+            ...nextTemplate,
+            values: [
+              {
+                value: 'allTagValues',
+                type: TemplateValueType.TagValue,
+                selected: false,
+                localSelected: false,
+              },
+              ...updatedValues,
+            ],
+          }
+        } else if (!isAllEnabled && hasAll) {
+
+          const filteredValues = template.values.filter(
+            v => v.value !== 'allTagValues'
+          )
+          if (filteredValues.length > 0) {
+            const updatedValues = filteredValues.map((v, index) => ({
+              ...v,
+              selected: index === 0,
+              localSelected: index === 0,
+            }))
+            nextTemplate = {
+              ...nextTemplate,
+              values: updatedValues,
+            }
+          } else {
+            nextTemplate = {
+              ...nextTemplate,
+              values: filteredValues,
+            }
+          }
+        }
+      }
+
       this.state = {
         ...defaultState,
-        nextTemplate: {...template},
+        nextTemplate,
         isNew: false,
       }
     } else {
@@ -243,21 +293,47 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
 
     const nextValues = values.map(v => {
       if (v.value === selected.value) {
-        return {...v, selected: true}
+        return {...v, selected: true, localSelected: true}
       }
-      return {...v, selected: false}
+      return {...v, selected: false, localSelected: false}
     })
-
     this.setState({nextTemplate: {...nextTemplate, values: nextValues}})
   }
 
   private handleUpdateTemplate = (nextNextTemplate: Template): void => {
     const {nextTemplate} = this.state
 
+    const isAllEnabledChangedToTrue =
+      nextNextTemplate.options?.isAllEnabled === true &&
+      nextTemplate.options?.isAllEnabled !== true
+    const hasAllSelected = nextNextTemplate.values.some(
+      v => v.value === 'allTagValues' && v.selected === true
+    )
+
+
+    if (isAllEnabledChangedToTrue && hasAllSelected) {
+      const templateWithOptions = {
+        ...nextNextTemplate,
+        options: {
+          ...nextNextTemplate.options,
+          isAllEnabled: true,
+        },
+      }
+      this.setState({nextTemplate: templateWithOptions})
+      return
+    }
+
     const templateWithSelectedAndLocalSelected = reconcileSelectedAndLocalSelectedValues(
       nextTemplate,
       nextNextTemplate
     )
+
+    if (nextNextTemplate.options?.isAllEnabled !== undefined) {
+      templateWithSelectedAndLocalSelected.options = {
+        ...templateWithSelectedAndLocalSelected.options,
+        isAllEnabled: nextNextTemplate.options.isAllEnabled,
+      }
+    }
 
     this.setState({nextTemplate: templateWithSelectedAndLocalSelected})
   }
@@ -309,14 +385,23 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
 
     nextTemplate.tempVar = formatTempVar(nextTemplate.tempVar)
 
+    const templateToSave = {
+      ...nextTemplate,
+      ...(nextTemplate.options?.isAllEnabled !== undefined && {
+        options: {
+          ...nextTemplate.options,
+          isAllEnabled: nextTemplate.options.isAllEnabled,
+        },
+      }),
+    }
     this.setState({savingStatus: RemoteDataState.Loading})
 
     try {
       if (isNew) {
-        const updatedTemplate = pickSelected(nextTemplate)
+        const updatedTemplate = pickSelected(templateToSave)
         await onCreate(updatedTemplate)
       } else {
-        await onUpdate(nextTemplate)
+        await onUpdate(templateToSave)
       }
     } catch (error) {
       notify({

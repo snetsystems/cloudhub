@@ -28,6 +28,7 @@ class TopologySettingOverlay extends PureComponent<Props, State> {
         ipmiVisible: props.topologyOption.ipmiVisible,
         linkVisible: props.topologyOption.linkVisible,
         minimapVisible: props.topologyOption.minimapVisible,
+        autoSaveOnLeave: props.topologyOption.autoSaveOnLeave,
       },
     }
   }
@@ -102,6 +103,17 @@ class TopologySettingOverlay extends PureComponent<Props, State> {
             }
           />
           <label htmlFor="linkVisible">Link Dashboard</label>
+        </div>
+        <div className="form-control-static">
+          <input
+            type="checkbox"
+            id="autoSaveOnLeave"
+            defaultChecked={topologyOption.autoSaveOnLeave}
+            onChange={e =>
+              this.onCheckClick('autoSaveOnLeave', e.currentTarget.checked)
+            }
+          />
+          <label htmlFor="autoSaveOnLeave">Auto-save on leave</label>
         </div>
       </div>
     )

@@ -56,25 +56,43 @@ const newTemplateValueQuery = (
 
   const type = TEMPLATE_VARIABLE_TYPES[template.type]
 
+  const hasAllInTemplate = template.values.some(v => v.value === 'allTagValues')
+
+  const shouldIncludeAll =
+    hasAllInTemplate || template.options?.isAllEnabled === true
+  const valuesToMap = shouldIncludeAll
+    ? ['allTagValues', ...newValues]
+    : newValues
+
   let selectedValue = getSelectedValue(template)
 
-  if (!selectedValue || !newValues.includes(selectedValue)) {
-    // The persisted selected value may no longer exist as a result for the
-    // templates metaquery. In this case we select the first actual result
+  if (!selectedValue || !valuesToMap.includes(selectedValue)) {
+
     selectedValue = newValues[0]
   }
 
-  let localSelectedValue = hopefullySelectedValue
+  let localSelectedValue =
+    hopefullySelectedValue || getLocalSelectedValue(template)
 
   if (!localSelectedValue) {
-    localSelectedValue = getLocalSelectedValue(template)
+    if (selectedValue && valuesToMap.includes(selectedValue)) {
+      localSelectedValue = selectedValue
+    } else if (newValues.length > 0) {
+      localSelectedValue = newValues[0]
+    }
   }
 
-  if (!localSelectedValue || !newValues.includes(localSelectedValue)) {
+  const isAllSelected = localSelectedValue === 'allTagValues'
+
+
+  if (
+    !localSelectedValue ||
+    (!isAllSelected && !valuesToMap.includes(localSelectedValue))
+  ) {
     localSelectedValue = selectedValue
   }
 
-  return newValues.map(value => {
+  return valuesToMap.map(value => {
     return {
       type,
       value,
@@ -147,7 +165,6 @@ const newTemplateValueText = (
 
 export const getSelectedValue = (template: Template): string | null => {
   const selected = template.values.find(v => v.selected)
-
   if (selected) {
     return selected.value
   }
