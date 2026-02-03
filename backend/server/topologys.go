@@ -41,6 +41,7 @@ func newTopologyResponse(t *cloudhub.Topology, resDiagram bool) *topologyRespons
 			HostStatusVisible: t.TopologyOptions.HostStatusVisible,
 			IPMIVisible:       t.TopologyOptions.IPMIVisible,
 			LinkVisible:       t.TopologyOptions.LinkVisible,
+			AutoSaveOnLeave:   t.TopologyOptions.AutoSaveOnLeave,
 		},
 	}
 
@@ -75,6 +76,7 @@ func (s *Service) Topology(w http.ResponseWriter, r *http.Request) {
 				HostStatusVisible: true,
 				IPMIVisible:       true,
 				LinkVisible:       true,
+				AutoSaveOnLeave:   true,
 			},
 		}
 		encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -123,6 +125,7 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 			HostStatusVisible: requestData.TopologyOptions.HostStatusVisible,
 			IPMIVisible:       requestData.TopologyOptions.IPMIVisible,
 			LinkVisible:       requestData.TopologyOptions.LinkVisible,
+			AutoSaveOnLeave:   requestData.TopologyOptions.AutoSaveOnLeave,
 		},
 	}
 
@@ -217,6 +220,7 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 		HostStatusVisible: requestData.TopologyOptions.HostStatusVisible,
 		IPMIVisible:       requestData.TopologyOptions.IPMIVisible,
 		LinkVisible:       requestData.TopologyOptions.LinkVisible,
+		AutoSaveOnLeave:   requestData.TopologyOptions.AutoSaveOnLeave,
 	}
 
 	if err := s.Store.Topologies(ctx).Update(ctx, topology); err != nil {

@@ -26,6 +26,7 @@ message Dashboard {
 	repeated Template templates  = 4; // Templates replace template variables within InfluxQL
 	string Organization          = 5; // Organization is the organization ID that resource belongs to
 	string Type                  = 6; // Type distinguishes dashboard types: 'normal' (default) or 'builtin'
+	string Version               = 7; // Version is the template version for builtin dashboards (e.g., "1.0.0")
 }
 
 message DashboardCell {
@@ -334,6 +335,7 @@ message TopologyOptions {
 	bool hostStatusVisible  = 2; // Whether to show the host status
 	bool ipmiVisible        = 3; // Whether to show the IPMI icon
 	bool linkVisible        = 4; // Whether to show the dashboard link icon
+	bool autoSaveOnLeave   = 5; // Whether to auto-save when leaving the topology view
 }
 
 message CSP {

@@ -30,6 +30,7 @@ func TestTopologiesStore(t *testing.T) {
 				HostStatusVisible: false,
 				IPMIVisible:       true,
 				LinkVisible:       true,
+				AutoSaveOnLeave:   false,
 			},
 		},
 		{
@@ -42,6 +43,7 @@ func TestTopologiesStore(t *testing.T) {
 				HostStatusVisible: true,
 				IPMIVisible:       false,
 				LinkVisible:       true,
+				AutoSaveOnLeave:   false,
 			},
 		},
 	}
@@ -73,6 +75,7 @@ func TestTopologiesStore(t *testing.T) {
 		HostStatusVisible: true,
 		IPMIVisible:       true,
 		LinkVisible:       false,
+		AutoSaveOnLeave:   false,
 	}
 	if err := s.Update(ctx, &tss[1]); err != nil {
 		t.Fatal(err)
