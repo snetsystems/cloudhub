@@ -335,6 +335,7 @@ message TopologyOptions {
 	bool hostStatusVisible  = 2; // Whether to show the host status
 	bool ipmiVisible        = 3; // Whether to show the IPMI icon
 	bool linkVisible        = 4; // Whether to show the dashboard link icon
+	bool autoSaveOnLeave   = 5; // Whether to auto-save when leaving the topology view
 }
 
 message CSP {

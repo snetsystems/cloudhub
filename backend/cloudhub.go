@@ -1267,6 +1267,7 @@ type TopologyOptions struct {
 	HostStatusVisible bool `json:"hostStatusVisible"` // Controls whether the host status is visible
 	IPMIVisible       bool `json:"ipmiVisible"`       // Controls whether the IPMI icon is visible
 	LinkVisible       bool `json:"linkVisible"`       // Controls whether the dashboard link icon is visible
+	AutoSaveOnLeave   bool `json:"autoSaveOnLeave"`   // Controls whether to auto-save when leaving the topology view
 }
 
 // TopologyQuery represents the attributes that a topology may be retrieved by.

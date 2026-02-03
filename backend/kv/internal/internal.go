@@ -1252,6 +1252,7 @@ func MarshalTopology(t *cloudhub.Topology) ([]byte, error) {
 			HostStatusVisible: t.TopologyOptions.HostStatusVisible,
 			IpmiVisible:       t.TopologyOptions.IPMIVisible,
 			LinkVisible:       t.TopologyOptions.LinkVisible,
+			AutoSaveOnLeave:   t.TopologyOptions.AutoSaveOnLeave,
 		},
 	})
 }
@@ -1274,6 +1275,7 @@ func UnmarshalTopology(data []byte, t *cloudhub.Topology) error {
 			HostStatusVisible: pb.TopologyOptions.HostStatusVisible,
 			IPMIVisible:       pb.TopologyOptions.IpmiVisible,
 			LinkVisible:       pb.TopologyOptions.LinkVisible,
+			AutoSaveOnLeave:   pb.TopologyOptions.AutoSaveOnLeave,
 		}
 	} else {
 		t.TopologyOptions = getDefaultTopologyOptions()
@@ -1288,6 +1290,7 @@ func getDefaultTopologyOptions() cloudhub.TopologyOptions {
 		HostStatusVisible: true,
 		IPMIVisible:       true,
 		LinkVisible:       true,
+		AutoSaveOnLeave:   false,
 	}
 }
 

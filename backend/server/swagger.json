@@ -9662,6 +9662,10 @@
         "linkVisible": {
           "type": "boolean",
           "description": "Visibility of the network links"
+        },
+        "autoSaveOnLeave": {
+          "type": "boolean",
+          "description": "Whether to auto-save when leaving the topology view"
         }
       }
     },
@@ -9744,7 +9748,8 @@
           "minimapVisible": true,
           "hostStatusVisible": true,
           "ipmiVisible": true,
-          "linkVisible": true
+          "linkVisible": true,
+          "autoSaveOnLeave": false
         }
       }
     },
