@@ -1114,6 +1114,14 @@ export const notifyAgentConfigTempFileWriteFailed = (
   message: `Failed to Make Temp Config File ${error}`,
 })
 
+export const notifyAgentConfigLoadFailed = (error: unknown): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to load collector config file. ${
+    error instanceof Error ? error.message : String(error)
+  }`,
+})
+
 export const notifyMinionNotSelected = (): Notification => ({
   ...defaultErrorNotification,
   duration: INFINITE,

@@ -96,6 +96,7 @@ const AgentConfigPluginContents = ({
   )
 
   const groupedPlugins = _.groupBy(sortedPlugins, 'category')
+
   return (
     <FancyScrollbar>
       {_.isEmpty(plugins) && (
@@ -104,8 +105,10 @@ const AgentConfigPluginContents = ({
           <p>Please update to the latest version.</p>
         </div>
       )}
+
       {Object.keys(groupedPlugins).map((cat, i) => {
-        const isCollapsed = collapsedCategories?.[cat] || false
+        const isCollapsed = collapsedCategories?.[cat] ?? true
+
         return (
           <div key={i}>
             <div style={{display: 'flex'}}>

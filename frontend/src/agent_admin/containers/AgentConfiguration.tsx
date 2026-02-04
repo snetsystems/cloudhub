@@ -50,6 +50,7 @@ import {
   notifyAgentConfigHostNameChanged,
   notifyAgentConfigTempDirectoryMakeFailed,
   notifyAgentConfigTempFileWriteFailed,
+  notifyAgentConfigLoadFailed,
   notifyTelegrafReloadFailed,
   notifyAgentApplyFailed,
 } from 'src/shared/copy/notifications'
@@ -163,6 +164,7 @@ interface State {
   isConsoleModalVisible: boolean
   isConsoleModalMessage: string
   timeStampTempFile: string
+  errorState: string
 }
 
 @ErrorHandling
@@ -194,6 +196,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isConsoleModalVisible: false,
       isConsoleModalMessage: '',
       timeStampTempFile: '',
+      errorState: '',
     }
   }
 
@@ -338,6 +341,14 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       })
       .catch(error => {
         console.error(error)
+        const message =
+          error instanceof Error ? error.message : 'Failed to load config file.'
+        notify(notifyAgentConfigLoadFailed(error))
+        this.setState({
+          errorState: message,
+          configPageStatus: RemoteDataState.Done,
+          collectorConfigStatus: RemoteDataState.Done,
+        })
       })
   }
 

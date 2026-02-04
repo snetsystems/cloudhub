@@ -72,7 +72,7 @@ const AgentConfigPlugin = ({
   const toggleCategory = (cat: string) => {
     setCollapsedCategories(prevState => ({
       ...prevState,
-      [cat]: !prevState?.[cat],
+      [cat]: !(prevState?.[cat] ?? true),
     }))
   }
 
