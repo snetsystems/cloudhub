@@ -1,0 +1,42 @@
+.modal-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100%;
+  background-color: $g0-obsidian;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
+}
+
+.modal-wrapper--open {
+  opacity: 0.3;
+}
+
+.modal-wrapper--closing {
+  opacity: 0;
+}
+
+.modal-content {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  background-color: $g1-raven;
+  box-shadow: -4px 0 16px $g1-raven;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  transform: translateX(100%);
+  transition: transform 0.25s ease-out;
+}
+
+.modal-content--open {
+  transform: translateX(0);
+}
+
+.modal-content--closing {
+  transform: translateX(100%);
+}
