@@ -226,49 +226,52 @@ class DeviceManagement extends PureComponent<Props, State> {
       applyMonitoringModalVisibility,
       learningModelModalVisibility,
       isDataFetchingCompleted,
+      isLoading,
     } = this.state
-
-    if (!isDataFetchingCompleted) {
-      return this.LoadingState
-    }
 
     return (
       <>
         <div className="device-management--wrapper">
-          <TableComponent
-            timeZone={this.props.timeZone}
-            tableTitle={`${
-              this.state.data.length
-                ? this.state.data.length === 1
-                  ? '1 Device'
-                  : this.state.data.length + ' ' + 'Devices'
-                : '0 Device'
-            } list`}
-            data={data}
-            columns={this.column}
-            checkedArray={this.state.checkedArray}
-            setCheckedArray={(value: string[]) =>
-              this.setState({checkedArray: value})
-            }
-            initSort={{key: 'organization', isDesc: false}}
-            // options={this.options}
-            topLeftRender={
-              <DeviceManagementBtn
-                data={data}
-                importDevice={this.importDevice}
-                connectDevice={this.connectDevice}
-                reLearnSetting={this.reLearnSetting}
-                checkedArray={checkedArray}
-                networkDeviceOrganizationStatus={
-                  networkDeviceOrganizationStatus
-                }
-                me={me}
-                deleteDevicesAJAX={this.deleteDevicesAJAX}
-                onOpenApplyMonitoringModal={this.handleOpenApplyMonitoringModal}
-                onOpenLearningModelModal={this.handleOpenLearningModelModal}
-              />
-            }
-          />
+          {isDataFetchingCompleted ? (
+            <TableComponent
+              timeZone={this.props.timeZone}
+              tableTitle={`${
+                this.state.data.length
+                  ? this.state.data.length === 1
+                    ? '1 Device'
+                    : this.state.data.length + ' ' + 'Devices'
+                  : '0 Device'
+              } list`}
+              data={data}
+              columns={this.column}
+              checkedArray={this.state.checkedArray}
+              setCheckedArray={(value: string[]) =>
+                this.setState({checkedArray: value})
+              }
+              initSort={{key: 'organization', isDesc: false}}
+              // options={this.options}
+              topLeftRender={
+                <DeviceManagementBtn
+                  data={data}
+                  importDevice={this.importDevice}
+                  connectDevice={this.connectDevice}
+                  reLearnSetting={this.reLearnSetting}
+                  checkedArray={checkedArray}
+                  networkDeviceOrganizationStatus={
+                    networkDeviceOrganizationStatus
+                  }
+                  me={me}
+                  deleteDevicesAJAX={this.deleteDevicesAJAX}
+                  onOpenApplyMonitoringModal={
+                    this.handleOpenApplyMonitoringModal
+                  }
+                  onOpenLearningModelModal={this.handleOpenLearningModelModal}
+                />
+              }
+            />
+          ) : (
+            <PageSpinner pageSpinnerHeight={'100%'} />
+          )}
         </div>
         <DeviceConnection
           deviceConnectionStatus={deviceConnectionStatus}
@@ -320,7 +323,7 @@ class DeviceManagement extends PureComponent<Props, State> {
           setDeviceManagementIsLoading={this.setDeviceManagementIsLoading}
           initializeCheckedArray={this.initializeCheckedArray}
         />
-        {this.state.isLoading && this.LoadingState}
+        {isLoading && this.LoadingState}
       </>
     )
   }
