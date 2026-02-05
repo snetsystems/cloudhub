@@ -29,6 +29,7 @@ func initializeDefaultOrgBuiltinDashboards(ctx context.Context, service *Service
 
 	// Get dashboards store with server context (direct access, no org filtering)
 	dashboardsStore := service.Store.Dashboards(serverCtx)
+	mappingStore := service.Store.BuiltinDashboardMappingStore()
 
 	// Initialize builtin dashboards for default organization
 	return InitializeBuiltinDashboards(
@@ -36,6 +37,7 @@ func initializeDefaultOrgBuiltinDashboards(ctx context.Context, service *Service
 		defaultOrg.ID,
 		dashboardsStore,
 		builtinStore,
+		mappingStore,
 		logger,
 	)
 }

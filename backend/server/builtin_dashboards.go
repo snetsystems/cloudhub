@@ -11,12 +11,14 @@ import (
 // InitializeBuiltinDashboards initializes builtin dashboards for an organization.
 // It loads all builtin dashboards from the builtin store, sets the organization ID,
 // ensures the type is "builtin", and adds them to the dashboards store.
+// It also registers (orgID, name) -> dashboard ID in the mapping store for name-based lookup.
 // It skips dashboards that already exist (based on name and organization).
 func InitializeBuiltinDashboards(
 	ctx context.Context,
 	orgID string,
 	dashboardsStore cloudhub.DashboardsStore,
 	builtinStore *builtin.BinDashboardsStore,
+	mappingStore cloudhub.BuiltinDashboardMappingStore,
 	logger cloudhub.Logger,
 ) error {
 	// Get all builtin dashboards from the builtin store
@@ -40,23 +42,30 @@ func InitializeBuiltinDashboards(
 		return err
 	}
 
-	// Create a map of existing builtin dashboards by name for quick lookup
-	existingBuiltinMap := make(map[string]bool)
+	// Map existing builtin dashboard name -> ID (for skip and for mapping backfill)
+	existingBuiltinByName := make(map[string]cloudhub.DashboardID)
 	for _, d := range existingDashboards {
-		if d.Type == "builtin" && d.Organization == orgID {
-			existingBuiltinMap[d.Name] = true
+		if d.Type == "builtin" && d.Organization == orgID && d.Name != "" {
+			existingBuiltinByName[d.Name] = d.ID
 		}
 	}
 
 	// Initialize each builtin dashboard
 	for _, dashboard := range builtinDashboards {
-		// Skip if this builtin dashboard already exists for this organization
-		if existingBuiltinMap[dashboard.Name] {
+		// If already exists: ensure mapping is registered (backfill for orgs created before mapping feature)
+		if existingID, exists := existingBuiltinByName[dashboard.Name]; exists {
+			if err := mappingStore.Register(ctx, orgID, dashboard.Name, existingID); err != nil {
+				logger.
+					WithField("component", "builtin").
+					WithField("organization", orgID).
+					WithField("dashboard", dashboard.Name).
+					Error("Failed to register builtin dashboard mapping (existing):", err)
+			}
 			logger.
 				WithField("component", "builtin").
 				WithField("organization", orgID).
 				WithField("dashboard", dashboard.Name).
-				Debug("Builtin dashboard already exists, skipping")
+				Debug("Builtin dashboard already exists, ensured mapping")
 			continue
 		}
 
@@ -66,7 +75,7 @@ func InitializeBuiltinDashboards(
 		// ID will be set by the store's Add method
 
 		// Add the dashboard to the store
-		_, err := dashboardsStore.Add(orgCtx, dashboard)
+		added, err := dashboardsStore.Add(orgCtx, dashboard)
 		if err != nil {
 			logger.
 				WithField("component", "builtin").
@@ -75,6 +84,14 @@ func InitializeBuiltinDashboards(
 				Error("Failed to add builtin dashboard:", err)
 			// Continue with other dashboards even if one fails
 			continue
+		}
+
+		if err := mappingStore.Register(ctx, orgID, added.Name, added.ID); err != nil {
+			logger.
+				WithField("component", "builtin").
+				WithField("organization", orgID).
+				WithField("dashboard", added.Name).
+				Error("Failed to register builtin dashboard mapping:", err)
 		}
 
 		logger.

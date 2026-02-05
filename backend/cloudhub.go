@@ -750,8 +750,8 @@ type Dashboard struct {
 	Cells        []DashboardCell `json:"cells"`
 	Templates    []Template      `json:"templates"`
 	Name         string          `json:"name"`
-	Organization string          `json:"organization"`   // Organization is the organization ID that resource belongs to
-	Type         string          `json:"type,omitempty"` // Type distinguishes dashboard types: "normal" (default) or "builtin"
+	Organization string          `json:"organization"`      // Organization is the organization ID that resource belongs to
+	Type         string          `json:"type,omitempty"`    // Type distinguishes dashboard types: "normal" (default) or "builtin"
 	Version      string          `json:"version,omitempty"` // Version is the template version for builtin dashboards (e.g., "1.0.0")
 }
 
@@ -921,6 +921,15 @@ type DashboardsStore interface {
 	Get(ctx context.Context, id DashboardID) (Dashboard, error)
 	// Update replaces the dashboard information
 	Update(context.Context, Dashboard) error
+}
+
+// BuiltinDashboardMappingStore stores (orgID, builtin dashboard name) -> dashboard ID
+// so the frontend can request a builtin dashboard by name (e.g. host_page).
+type BuiltinDashboardMappingStore interface {
+	// GetDashboardID returns the dashboard ID for the builtin dashboard named name in the given org.
+	GetDashboardID(ctx context.Context, orgID, name string) (DashboardID, error)
+	// Register records that the builtin dashboard named name in org orgID is stored as dashboardID.
+	Register(ctx context.Context, orgID, name string, dashboardID DashboardID) error
 }
 
 // Cell is a rectangle and multiple time series queries to visualize.
@@ -1351,6 +1360,8 @@ type KVClient interface {
 	ConfigStore() ConfigStore
 	// DashboardsStore returns the kv's DashboardsStore type.
 	DashboardsStore() DashboardsStore
+	// BuiltinDashboardMappingStore returns the kv's BuiltinDashboardMappingStore type.
+	BuiltinDashboardMappingStore() BuiltinDashboardMappingStore
 	// MappingsStore returns the kv's MappingsStore type.
 	MappingsStore() MappingsStore
 	// OrganizationConfigStore returns the kv's OrganizationConfigStore type.

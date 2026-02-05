@@ -151,6 +151,49 @@ func (s *Service) DashboardID(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
+// TemplateDashboardByName returns the builtin dashboard for the current org by name (e.g. host_page).
+// GET /cloudhub/v1/templates/:name
+func (s *Service) TemplateDashboardByName(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	orgID, ok := hasOrganizationContext(ctx)
+	if !ok || orgID == "" {
+		Error(w, http.StatusBadRequest, "organization context required", s.Logger)
+		return
+	}
+	name, err := paramStr("name", r)
+	if err != nil || name == "" {
+		Error(w, http.StatusBadRequest, "template name is required", s.Logger)
+		return
+	}
+
+	dashboardID, err := s.Store.BuiltinDashboardMappingStore().GetDashboardID(ctx, orgID, name)
+	if err != nil {
+		if err == cloudhub.ErrDashboardNotFound {
+			notFound(w, name, s.Logger)
+			return
+		}
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	serverCtx := serverContext(ctx)
+	e, err := s.Store.Dashboards(serverCtx).Get(ctx, dashboardID)
+	if err != nil {
+		notFound(w, name, s.Logger)
+		return
+	}
+	if e.Organization != orgID {
+		notFound(w, name, s.Logger)
+		return
+	}
+
+	res := newDashboardResponse(e)
+	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
+	setBuiltinVersionInfo(res, e, builtinStore.GetVersion, ctx)
+
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
 // NewDashboard creates and returns a new dashboard object
 func (s *Service) NewDashboard(w http.ResponseWriter, r *http.Request) {
 	var dashboard cloudhub.Dashboard

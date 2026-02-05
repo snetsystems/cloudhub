@@ -973,9 +973,10 @@ func openService(
 	return Service{
 		TimeSeriesClient: &InfluxClient{},
 		Store: &Store{
-			LayoutsStore:            layouts,
-			DashboardsStore:         dashboards,
-			SourcesStore:            sources,
+			LayoutsStore:                 layouts,
+			DashboardsStore:              dashboards,
+			BuiltinDashboardMapping:      svc.BuiltinDashboardMappingStore(),
+			SourcesStore:                 sources,
 			ServersStore:            kapacitors,
 			OrganizationsStore:      organizations,
 			ProtoboardsStore:        protoboards,

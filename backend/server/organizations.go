@@ -159,7 +159,8 @@ func (s *Service) NewOrganization(w http.ResponseWriter, r *http.Request) {
 	// Use server context to get direct access to dashboards store
 	serverCtx := serverContext(ctx)
 	dashboardsStore := s.Store.Dashboards(serverCtx)
-	if err := InitializeBuiltinDashboards(orgCtx, res.ID, dashboardsStore, builtinStore, s.Logger); err != nil {
+	mappingStore := s.Store.BuiltinDashboardMappingStore()
+	if err := InitializeBuiltinDashboards(orgCtx, res.ID, dashboardsStore, builtinStore, mappingStore, s.Logger); err != nil {
 		// Log error but don't fail organization creation
 		s.Logger.
 			WithField("component", "builtin").

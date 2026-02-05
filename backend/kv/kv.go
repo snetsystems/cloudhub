@@ -12,26 +12,27 @@ import (
 var _ cloudhub.KVClient = (*Service)(nil)
 
 var (
-	cellBucket               = []byte("cellsv2")
-	configBucket             = []byte("ConfigV1")
-	dashboardsBucket         = []byte("Dashoard") // keep spelling for backwards compat
-	mappingsBucket           = []byte("MappingsV1")
-	organizationConfigBucket = []byte("OrganizationConfigV1")
-	organizationsBucket      = []byte("OrganizationsV1")
-	serversBucket            = []byte("Servers")
-	sourcesBucket            = []byte("Sources")
-	usersBucket              = []byte("UsersV2")
-	vSpheresBucket           = []byte("vSpheres")
-	topologyBucket           = []byte("Topologies")
-	cspBucket                = []byte("CSP")
-	networkDeviceBucket      = []byte("NetworkDevice")
-	networkDeviceOrgBucket   = []byte("NetworkDeviceOrg")
-	mlNxRstBucket            = []byte("MLNxRst")
-	dlNxRstBucket            = []byte("DLNxRst")
-	dLNxRstStgBucket         = []byte("DLNxRstStg")
-	esSourcesBucket          = []byte("EsSources")
-	deviceMappingsBucket     = []byte("DeviceMappings")
-	dashboardItemsBucket     = []byte("DashboardItems")
+	cellBucket                     = []byte("cellsv2")
+	configBucket                   = []byte("ConfigV1")
+	dashboardsBucket               = []byte("Dashoard")                 // keep spelling for backwards compat
+	dashboardsBuiltinMappingBucket = []byte("DashboardsBuiltinMapping") // orgID\x00name -> dashboard ID
+	mappingsBucket                 = []byte("MappingsV1")
+	organizationConfigBucket       = []byte("OrganizationConfigV1")
+	organizationsBucket            = []byte("OrganizationsV1")
+	serversBucket                  = []byte("Servers")
+	sourcesBucket                  = []byte("Sources")
+	usersBucket                    = []byte("UsersV2")
+	vSpheresBucket                 = []byte("vSpheres")
+	topologyBucket                 = []byte("Topologies")
+	cspBucket                      = []byte("CSP")
+	networkDeviceBucket            = []byte("NetworkDevice")
+	networkDeviceOrgBucket         = []byte("NetworkDeviceOrg")
+	mlNxRstBucket                  = []byte("MLNxRst")
+	dlNxRstBucket                  = []byte("DLNxRst")
+	dLNxRstStgBucket               = []byte("DLNxRstStg")
+	esSourcesBucket                = []byte("EsSources")
+	deviceMappingsBucket           = []byte("DeviceMappings")
+	dashboardItemsBucket           = []byte("DashboardItems")
 )
 
 // Store is an interface for a generic key value store. It is modeled after
@@ -125,6 +126,7 @@ func (s *Service) initialize(ctx context.Context, tx Tx) error {
 		cellBucket,
 		configBucket,
 		dashboardsBucket,
+		dashboardsBuiltinMappingBucket,
 		mappingsBucket,
 		organizationConfigBucket,
 		organizationsBucket,
@@ -175,6 +177,11 @@ func (s *Service) ConfigStore() cloudhub.ConfigStore {
 // DashboardsStore returns a cloudhub.DashboardsStore.
 func (s *Service) DashboardsStore() cloudhub.DashboardsStore {
 	return &dashboardsStore{client: s, IDs: &id.UUID{}}
+}
+
+// BuiltinDashboardMappingStore returns a cloudhub.BuiltinDashboardMappingStore.
+func (s *Service) BuiltinDashboardMappingStore() cloudhub.BuiltinDashboardMappingStore {
+	return &builtinDashboardMappingStore{client: s}
 }
 
 // MappingsStore returns a cloudhub.MappingsStore.

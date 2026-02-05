@@ -2953,6 +2953,48 @@
         }
       }
     },
+    "/templates/{name}": {
+      "get": {
+        "tags": ["dashboards", "templates"],
+        "summary": "Get builtin dashboard by name",
+        "description": "Returns the dashboard for the current organization that was created from the builtin template with the given name (e.g. host_page). Resolves the template name to the org's dashboard ID via BuiltinDashboardMappingStore and returns the same dashboard payload as GET /dashboards/{id}.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "type": "string",
+            "description": "Builtin dashboard template name (e.g. host_page)",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the builtin dashboard for the current organization.",
+            "schema": {
+              "$ref": "#/definitions/Dashboard"
+            }
+          },
+          "400": {
+            "description": "Organization context required or template name missing",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No builtin dashboard found for this name in the current organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/organizations": {
       "get": {
         "tags": ["organizations", "users"],
@@ -9137,6 +9179,7 @@
         "me": "/cloudhub/v1/me",
         "environment": "/cloudhub/v1/env",
         "dashboards": "/cloudhub/v1/dashboards",
+        "templates": "/cloudhub/v1/templates",
         "config": {
           "self": "/cloudhub/v1/config",
           "auth": "/cloudhub/v1/config/auth"

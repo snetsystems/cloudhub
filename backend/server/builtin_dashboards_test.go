@@ -79,6 +79,9 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 				Logger: log.New(log.DebugLevel),
 			}
 
+			// Mock mapping store (no-op for tests; optional: verify Register calls)
+			mockMappingStore := &mocks.BuiltinDashboardMappingStore{}
+
 			// Create context with organization
 			ctx := context.WithValue(context.Background(), organizations.ContextKey, tt.orgID)
 
@@ -88,6 +91,7 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 				tt.orgID,
 				mockDashboardsStore,
 				builtinStore,
+				mockMappingStore,
 				log.New(log.DebugLevel),
 			)
 
