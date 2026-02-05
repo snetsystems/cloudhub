@@ -58,7 +58,7 @@ export class HostsPage extends PureComponent<Props, State> {
         ) === 'on'
       )
     })
-    const itemCSPs = ['Host', ...addOnCsp]
+    const itemCSPs = ['Host'] //['Host', ...addOnCsp]
 
     this.state = {
       activeCspTab: '',
@@ -107,7 +107,7 @@ export class HostsPage extends PureComponent<Props, State> {
     return <>{this.activeTabRender}</>
   }
   private get activeTabRender(): JSX.Element {
-    const {activeCspTab, HostsPageStatus} = this.state
+    const {HostsPageStatus} = this.state
 
     if (
       HostsPageStatus === RemoteDataState.Loading ||
@@ -115,20 +115,20 @@ export class HostsPage extends PureComponent<Props, State> {
     ) {
       return this.LoadingState
     }
-    switch (activeCspTab) {
-      case 'Host': {
-        return <HostsPageHostTab {...this.props} tableTitle={this.tableTitle} />
-      }
-      case CloudServiceProvider.AWS: {
-        return <HostsPageAwsTab {...this.props} tableTitle={this.tableTitle} />
-      }
-      case CloudServiceProvider.GCP: {
-        return <HostsPageGcpTab {...this.props} tableTitle={this.tableTitle} />
-      }
-      default: {
-        return <HostsPageHostTab {...this.props} tableTitle={this.tableTitle} />
-      }
-    }
+    return <HostsPageHostTab {...this.props} tableTitle={this.tableTitle} />
+    // switch (activeCspTab) {
+    //   case 'Host': {
+    //   }
+    //   case CloudServiceProvider.AWS: {
+    //     return <HostsPageAwsTab {...this.props} tableTitle={this.tableTitle} />
+    //   }
+    //   case CloudServiceProvider.GCP: {
+    //     return <HostsPageGcpTab {...this.props} tableTitle={this.tableTitle} />
+    //   }
+    //   default: {
+    //     return <HostsPageHostTab {...this.props} tableTitle={this.tableTitle} />
+    //   }
+    // }
   }
   private tableTitle = (): JSX.Element => {
     const {activeCspTab, itemCSPs} = this.state

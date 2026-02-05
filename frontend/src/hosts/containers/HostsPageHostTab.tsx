@@ -179,15 +179,15 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       hostsPage = defaultState
     }
 
-    if (cloudAutoRefresh.host) {
+    if (cloudAutoRefresh.serverList) {
       clearInterval(this.intervalID)
       this.intervalID = window.setInterval(
         () => this.fetchHostsData(filterLayouts),
-        cloudAutoRefresh.host
+        cloudAutoRefresh.serverList
       )
     }
 
-    GlobalAutoRefresher.poll(cloudAutoRefresh.host)
+    GlobalAutoRefresher.poll(cloudAutoRefresh.serverList)
 
     const hostID = hostsPage.focusedHost
     try {
@@ -237,8 +237,10 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
         }
       }
 
-      if (prevProps.cloudAutoRefresh.host !== cloudAutoRefresh.host) {
-        GlobalAutoRefresher.poll(cloudAutoRefresh.host)
+      if (
+        prevProps.cloudAutoRefresh.serverList !== cloudAutoRefresh.serverList
+      ) {
+        GlobalAutoRefresher.poll(cloudAutoRefresh.serverList)
       }
     }
   }
@@ -262,15 +264,16 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       }
 
       if (
-        this.props.cloudAutoRefresh.host !== nextProps.cloudAutoRefresh.host
+        this.props.cloudAutoRefresh.serverList !==
+        nextProps.cloudAutoRefresh.serverList
       ) {
         clearInterval(this.intervalID)
-        GlobalAutoRefresher.poll(nextProps.cloudAutoRefresh.host)
+        GlobalAutoRefresher.poll(nextProps.cloudAutoRefresh.serverList)
 
-        if (nextProps.cloudAutoRefresh.host) {
+        if (nextProps.cloudAutoRefresh.serverList) {
           this.intervalID = window.setInterval(
             () => this.fetchHostsData(layouts),
-            nextProps.cloudAutoRefresh.host
+            nextProps.cloudAutoRefresh.serverList
           )
         }
       }
