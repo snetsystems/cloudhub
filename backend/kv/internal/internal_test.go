@@ -521,6 +521,66 @@ func Test_MarshalDashboard_WithTableGaugeChartOptions(t *testing.T) {
 	}
 }
 
+func Test_MarshalDashboard_WithCellOrigin(t *testing.T) {
+	dashboard := cloudhub.Dashboard{
+		ID: 1,
+		Cells: []cloudhub.DashboardCell{
+			{
+				ID:         "cell-builtin",
+				X:          0,
+				Y:          0,
+				W:          4,
+				H:          4,
+				MinW:       2,
+				MinH:       2,
+				Name:       "Builtin cell",
+				Type:       "line",
+				Queries:    []cloudhub.DashboardQuery{},
+				Axes:       map[string]cloudhub.Axis{},
+				CellOrigin: cloudhub.CellOriginBuiltin,
+			},
+			{
+				ID:         "cell-user",
+				X:          4,
+				Y:          0,
+				W:          4,
+				H:          4,
+				MinW:       2,
+				MinH:       2,
+				Name:       "User cell",
+				Type:       "line",
+				Queries:    []cloudhub.DashboardQuery{},
+				Axes:       map[string]cloudhub.Axis{},
+				CellOrigin: cloudhub.CellOriginUser,
+			},
+		},
+		Templates: []cloudhub.Template{},
+		Name:      "Dashboard with cell origin",
+	}
+
+	var actual cloudhub.Dashboard
+	buf, err := internal.MarshalDashboard(dashboard)
+	if err != nil {
+		t.Fatal("Error marshaling dashboard with cell origin:", err)
+	}
+	if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
+		t.Fatal("Error unmarshaling dashboard with cell origin:", err)
+	}
+
+	if len(actual.Cells) != 2 {
+		t.Fatalf("expected 2 cells, got %d", len(actual.Cells))
+	}
+	if actual.Cells[0].CellOrigin != cloudhub.CellOriginBuiltin {
+		t.Errorf("cell[0].CellOrigin = %q, want %q", actual.Cells[0].CellOrigin, cloudhub.CellOriginBuiltin)
+	}
+	if actual.Cells[1].CellOrigin != cloudhub.CellOriginUser {
+		t.Errorf("cell[1].CellOrigin = %q, want %q", actual.Cells[1].CellOrigin, cloudhub.CellOriginUser)
+	}
+	if actual.Cells[0].ID != "cell-builtin" || actual.Cells[1].ID != "cell-user" {
+		t.Errorf("cell IDs not preserved: got %q, %q", actual.Cells[0].ID, actual.Cells[1].ID)
+	}
+}
+
 func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 	dashboard := cloudhub.Dashboard{
 		ID: 1,

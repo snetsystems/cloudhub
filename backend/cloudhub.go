@@ -744,6 +744,15 @@ type AnnotationStore interface {
 // DashboardID is the dashboard ID
 type DashboardID int
 
+// Dashboard and cell type/origin constants
+const (
+	DashboardTypeNormal  = "normal"
+	DashboardTypeBuiltin = "builtin"
+
+	CellOriginUser   = "user"
+	CellOriginBuiltin = "builtin"
+)
+
 // Dashboard represents all visual and query data for a dashboard
 type Dashboard struct {
 	ID           DashboardID     `json:"id"`
@@ -846,6 +855,7 @@ type DashboardCell struct {
 	NoteVisibility         string                 `json:"noteVisibility"`
 	GraphOptions           GraphOptions           `json:"graphOptions"`
 	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
+	CellOrigin             string                 `json:"cellOrigin,omitempty"` // CellOriginBuiltin | CellOriginUser (empty treated as user)
 }
 
 // TableGaugeChartOptions is the options for the table gauge chart

@@ -44,9 +44,9 @@ func (s *BinDashboardsStore) All(ctx context.Context) ([]cloudhub.Dashboard, err
 			continue // Skip invalid files instead of failing completely
 		}
 
-		// Ensure type is set to "builtin"
+		// Ensure type is set to builtin
 		if dashboard.Type == "" {
-			dashboard.Type = "builtin"
+			dashboard.Type = cloudhub.DashboardTypeBuiltin
 		}
 
 		dashboards = append(dashboards, dashboard)
@@ -105,9 +105,9 @@ func (s *BinDashboardsStore) GetByFileName(ctx context.Context, fileName string)
 		return cloudhub.Dashboard{}, cloudhub.ErrDashboardInvalid
 	}
 
-	// Ensure type is set to "builtin"
+	// Ensure type is set to builtin
 	if dashboard.Type == "" {
-		dashboard.Type = "builtin"
+		dashboard.Type = cloudhub.DashboardTypeBuiltin
 	}
 
 	return dashboard, nil

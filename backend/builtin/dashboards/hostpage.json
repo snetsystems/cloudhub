@@ -2,11 +2,11 @@
   "id": 0,
   "name": "host_page",
   "type": "builtin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "organization": "",
   "cells": [
     {
-      "i": "host-table-cell",
+      "i": "host-table-cell ",
       "x": 0,
       "y": 0,
       "w": 96,
@@ -1417,5 +1417,21 @@
       }
     }
   ],
-  "templates": []
+  "templates": [
+    {
+      "id": "template-host-001",
+      "tempVar": ":host:",
+      "type": "tagValues",
+      "label": "Host",
+      "values": [],
+      "query": {
+        "influxql": "SHOW TAG VALUES ON :database: FROM :measurement: WITH KEY=:tagKey:",
+        "db": "telegraf",
+        "rp": "autogen",
+        "measurement": "cpu",
+        "tagKey": "host",
+        "fieldKey": ""
+      }
+    }
+  ]
 }

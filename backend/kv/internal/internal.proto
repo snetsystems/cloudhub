@@ -51,6 +51,7 @@ message DashboardCell {
 	int32 minH                           = 19; // Min Height of Cell in the Dashboard
 	GraphOptions graphOptions            = 20; // GraphOptions for visualization of cell
 	TableGaugeChartOptions tableGaugeChartOptions = 21; // TableGaugeChartOptions for table gauge visualization
+	string cellOrigin                    = 22; // "builtin" | "user" (empty treated as user)
 }
 
 message GraphOptions {

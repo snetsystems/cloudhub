@@ -35,7 +35,7 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 				{
 					Name:         "host_page",
 					Organization: "test-org-2",
-					Type:         "builtin",
+					Type:         cloudhub.DashboardTypeBuiltin,
 				},
 			},
 			wantCount: 0, // Already exists, should skip
@@ -48,7 +48,7 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 				{
 					Name:         "Normal Dashboard",
 					Organization: "test-org-3",
-					Type:         "normal",
+					Type:         cloudhub.DashboardTypeNormal,
 				},
 			},
 			wantCount: 1, // Should still add builtin dashboard
@@ -110,8 +110,14 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 					if dashboard.Organization != tt.orgID {
 						t.Errorf("InitializeBuiltinDashboards() added dashboard with organization %q, want %q", dashboard.Organization, tt.orgID)
 					}
-					if dashboard.Type != "builtin" {
-						t.Errorf("InitializeBuiltinDashboards() added dashboard with type %q, want 'builtin'", dashboard.Type)
+					if dashboard.Type != cloudhub.DashboardTypeBuiltin {
+						t.Errorf("InitializeBuiltinDashboards() added dashboard with type %q, want %q", dashboard.Type, cloudhub.DashboardTypeBuiltin)
+					}
+					// Every cell in a builtin dashboard must have CellOrigin set to builtin
+					for i, cell := range dashboard.Cells {
+						if cell.CellOrigin != cloudhub.CellOriginBuiltin {
+							t.Errorf("InitializeBuiltinDashboards() added dashboard %q cell[%d] has cellOrigin %q, want %q", dashboard.Name, i, cell.CellOrigin, cloudhub.CellOriginBuiltin)
+						}
 					}
 				}
 			}
