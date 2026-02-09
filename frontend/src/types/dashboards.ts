@@ -107,7 +107,15 @@ export interface Cell {
   noteVisibility: NoteVisibility
   graphOptions?: GraphOptions
   tableGaugeChartOptions?: TableGaugeChartOptionsInterface
+  cellOrigin?: CellOriginValue
 }
+
+/** Cell origin: builtin (system template) or user-created. Empty is treated as user. */
+export const CellOrigin = {
+  Builtin: 'builtin',
+  User: 'user',
+} as const
+export type CellOriginValue = typeof CellOrigin[keyof typeof CellOrigin]
 
 export enum CellType {
   Line = 'line',

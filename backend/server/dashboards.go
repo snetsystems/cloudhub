@@ -13,7 +13,7 @@ import (
 // setBuiltinVersionInfo sets LatestVersion and UpdateAvailable on resp when d is a builtin dashboard.
 // getVersion returns the latest builtin version for a dashboard name (e.g. from BinDashboardsStore.GetVersion).
 func setBuiltinVersionInfo(resp *dashboardResponse, d cloudhub.Dashboard, getVersion func(context.Context, string) string, ctx context.Context) {
-	if d.Type != "builtin" {
+	if d.Type != cloudhub.DashboardTypeBuiltin {
 		return
 	}
 	latest := getVersion(ctx, d.Name)
@@ -27,11 +27,11 @@ func setBuiltinVersionInfo(resp *dashboardResponse, d cloudhub.Dashboard, getVer
 	}
 }
 
-// getDashboardType returns "normal" if typeStr is empty, otherwise returns typeStr as-is.
+// getDashboardType returns DashboardTypeNormal if typeStr is empty, otherwise returns typeStr as-is.
 // This ensures backward compatibility with existing dashboards that don't have a Type field.
 func getDashboardType(typeStr string) string {
 	if typeStr == "" {
-		return "normal"
+		return cloudhub.DashboardTypeNormal
 	}
 	return typeStr
 }
@@ -367,10 +367,10 @@ func ValidDashboardRequest(d *cloudhub.Dashboard, defaultOrgID string) error {
 	if d.Organization == "" {
 		d.Organization = defaultOrgID
 	}
-	// Validate Type field: allow "", "normal", or "builtin"
-	// If invalid, default to "normal"
-	if d.Type != "" && d.Type != "normal" && d.Type != "builtin" {
-		d.Type = "normal"
+	// Validate Type field: allow "", DashboardTypeNormal, or DashboardTypeBuiltin
+	// If invalid, default to normal
+	if d.Type != "" && d.Type != cloudhub.DashboardTypeNormal && d.Type != cloudhub.DashboardTypeBuiltin {
+		d.Type = cloudhub.DashboardTypeNormal
 	}
 	for i, c := range d.Cells {
 		if err := ValidDashboardCellRequest(&c); err != nil {

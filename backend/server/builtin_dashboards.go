@@ -45,7 +45,7 @@ func InitializeBuiltinDashboards(
 	// Map existing builtin dashboard name -> ID (for skip and for mapping backfill)
 	existingBuiltinByName := make(map[string]cloudhub.DashboardID)
 	for _, d := range existingDashboards {
-		if d.Type == "builtin" && d.Organization == orgID && d.Name != "" {
+		if d.Type == cloudhub.DashboardTypeBuiltin && d.Organization == orgID && d.Name != "" {
 			existingBuiltinByName[d.Name] = d.ID
 		}
 	}
@@ -69,9 +69,12 @@ func InitializeBuiltinDashboards(
 			continue
 		}
 
-		// Set organization and ensure type is "builtin"
+		// Set organization and ensure type is builtin
 		dashboard.Organization = orgID
-		dashboard.Type = "builtin"
+		dashboard.Type = cloudhub.DashboardTypeBuiltin
+		for j := range dashboard.Cells {
+			dashboard.Cells[j].CellOrigin = cloudhub.CellOriginBuiltin
+		}
 		// ID will be set by the store's Add method
 
 		// Add the dashboard to the store

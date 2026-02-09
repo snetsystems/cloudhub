@@ -304,11 +304,11 @@ func UnmarshalLayout(data []byte, l *cloudhub.Layout) error {
 	return nil
 }
 
-// getDashboardType returns "normal" if typeStr is empty, otherwise returns typeStr as-is.
+// getDashboardType returns DashboardTypeNormal if typeStr is empty, otherwise returns typeStr as-is.
 // This ensures backward compatibility with existing dashboards that don't have a Type field.
 func getDashboardType(typeStr string) string {
 	if typeStr == "" {
-		return "normal"
+		return cloudhub.DashboardTypeNormal
 	}
 	return typeStr
 }
@@ -495,6 +495,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			NoteVisibility:         noteVisibility,
 			GraphOptions:           graphOptions,
 			TableGaugeChartOptions: tableGaugeChartOptions,
+			CellOrigin:             c.CellOrigin,
 		}
 	}
 	templates := make([]*Template, len(d.Templates))
@@ -788,6 +789,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			NoteVisibility:         noteVisibility,
 			GraphOptions:           graphOptions,
 			TableGaugeChartOptions: tableGaugeChartOptions,
+			CellOrigin:             c.CellOrigin,
 		}
 	}
 
