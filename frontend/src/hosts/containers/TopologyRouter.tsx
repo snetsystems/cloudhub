@@ -1,5 +1,5 @@
 // Libraries
-import React, {useState} from 'react'
+import React, {useEffect} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
@@ -8,10 +8,7 @@ import _ from 'lodash'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh from 'src/shared/components/ManualRefresh'
 import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
-import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
-import GraphTips from 'src/shared/components/GraphTips'
-import HostsPage from 'src/hosts/containers/HostsPage'
 import InventoryTopology from 'src/hosts/containers/InventoryTopology'
 
 // Actions
@@ -23,13 +20,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
 
 // Types
-import {
-  Source,
-  Links,
-  TimeRange,
-  RefreshRate,
-  NotificationAction,
-} from 'src/types'
+import {Source, Links, RefreshRate, NotificationAction} from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as AppActions from 'src/types/actions/app'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
@@ -80,19 +71,20 @@ function TopologyRouter({
   manualRefresh,
   onManualRefresh,
 }: Props) {
-  const [timeRange, setTimeRange] = useState<TimeRange>(
-    cloudTimeRange?.topology ?? timeRanges.find(tr => tr.lower === 'now() - 1h')
-  )
+  useEffect(() => {
+    if (!cloudTimeRange?.topology.lower) {
+      onChooseCloudTimeRange({
+        topology: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+      })
+    }
+  }, [])
 
   const handleChooseTimeRange = ({lower, upper}) => {
     if (upper) {
-      setTimeRange({lower, upper})
       onChooseCloudTimeRange({topology: {lower, upper}})
     } else {
-      setTimeRange(timeRanges.find(tr => tr.lower === lower))
-      onChooseCloudTimeRange({
-        topology: timeRanges.find(tr => tr.lower === lower),
-      })
+      const tr = timeRanges.find(tr => tr.lower === lower)
+      onChooseCloudTimeRange({topology: tr})
     }
   }
 
@@ -124,7 +116,10 @@ function TopologyRouter({
           <TimeRangeDropdown
             //@ts-ignore
             onChooseTimeRange={handleChooseTimeRange}
-            selected={timeRange}
+            selected={
+              cloudTimeRange?.topology ??
+              timeRanges.find(tr => tr.lower === 'now() - 1h')
+            }
           />
           <Button
             icon={IconFont.ExpandA}

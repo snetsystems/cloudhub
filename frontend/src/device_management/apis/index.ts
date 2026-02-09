@@ -366,6 +366,18 @@ export const getPredictionAlert = (
       query,
       db,
     })
+  } else if (timeRange.upper) {
+    const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE triggerType = 'anomaly_predict' AND time >= '${
+      timeRange.lower
+    }' AND time <= '${timeRange.upper}' ORDER BY time desc ${
+      limit ? `LIMIT ${limit}` : ''
+    }`
+
+    return proxy({
+      source,
+      query,
+      db,
+    })
   } else {
     const query = `SELECT host, value, level, alertName, triggerType, agent_host FROM cloudhub_alerts WHERE triggerType = 'anomaly_predict' AND time >= ${
       timeRange.lower

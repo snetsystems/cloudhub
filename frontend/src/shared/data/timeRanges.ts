@@ -12,6 +12,15 @@ export const CLOUD_TIME_RANGE = {
     upper: null,
     menuOption: 'Past 1h',
   },
+  topology: {
+    defaultGroupBy: '1h',
+    seconds: 3600,
+    inputValue: 'Past 1h',
+    lower: 'now() - 1h',
+    lowerFlux: '-1h',
+    upper: null,
+    menuOption: 'Past 1h',
+  },
   prediction: {
     defaultGroupBy: '6h',
     seconds: 2592000,

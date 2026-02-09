@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {RouterProps} from 'react-router'
 
 import {Page} from 'src/reusable_ui'
@@ -32,9 +32,11 @@ import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
+import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
+import {CLOUD_TIME_RANGE, timeRanges} from 'src/shared/data/timeRanges'
 
 interface Props extends ManualRefreshProps {
   me: Me
@@ -52,6 +54,7 @@ interface Props extends ManualRefreshProps {
   onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
   router: RouterProps
   cloudTimeRange: CloudTimeRange
+  onChooseCloudTimeRange: (timeRange: CloudTimeRange) => void
   setPredictionManualRefresh: () => void
   setStateInitAction: () => void
 }
@@ -66,6 +69,8 @@ function PredictionRouter({
   setPredictionManualRefresh,
   setTimeZone,
   timeZone,
+  cloudTimeRange,
+  onChooseCloudTimeRange,
 }: Props) {
   const [
     manualRefreshState,
@@ -95,6 +100,16 @@ function PredictionRouter({
     })
   }
 
+  const handleChooseTimeRange = ({lower, upper}) => {
+    if (upper) {
+      onChooseCloudTimeRange({prediction: {lower, upper}})
+    } else {
+      onChooseCloudTimeRange({
+        prediction: timeRanges.find(tr => tr.lower === lower),
+      })
+    }
+  }
+
   const renderHeaderRight = () => {
     return (
       <>
@@ -105,6 +120,10 @@ function PredictionRouter({
           onManualRefresh={handleManualRefresh}
           customAutoRefreshOptions={getTimeOptionByGroup('prediction')}
           customAutoRefreshSelected={cloudAutoRefresh}
+        />
+        <TimeRangeDropdown
+          onChooseTimeRange={handleChooseTimeRange}
+          selected={cloudTimeRange?.prediction ?? CLOUD_TIME_RANGE.prediction}
         />
 
         <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
