@@ -21,7 +21,7 @@ import {setCloudAutoRefresh} from 'src/clouds/actions'
 
 // Types
 import {Source, Links, RefreshRate, NotificationAction} from 'src/types'
-import {timeRanges} from 'src/shared/data/timeRanges'
+import {CLOUD_TIME_RANGE, timeRanges} from 'src/shared/data/timeRanges'
 import * as AppActions from 'src/types/actions/app'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
@@ -72,9 +72,9 @@ function TopologyRouter({
   onManualRefresh,
 }: Props) {
   useEffect(() => {
-    if (!cloudTimeRange?.topology.lower) {
+    if (!cloudTimeRange?.topology) {
       onChooseCloudTimeRange({
-        topology: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+        topology: CLOUD_TIME_RANGE.topology,
       })
     }
   }, [])
@@ -116,10 +116,7 @@ function TopologyRouter({
           <TimeRangeDropdown
             //@ts-ignore
             onChooseTimeRange={handleChooseTimeRange}
-            selected={
-              cloudTimeRange?.topology ??
-              timeRanges.find(tr => tr.lower === 'now() - 1h')
-            }
+            selected={cloudTimeRange?.topology ?? CLOUD_TIME_RANGE.topology}
           />
           <Button
             icon={IconFont.ExpandA}
