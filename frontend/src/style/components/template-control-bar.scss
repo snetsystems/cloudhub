@@ -56,6 +56,12 @@ button.btn.template-control--manage {
   align-items: stretch;
   margin: $template-control--margin;
 
+  &.has-conflict {
+    border: 2px solid #ff0000;
+    border-radius: 4px;
+    box-shadow: 0 0 4px rgba(255, 0, 0, 0.3);
+  }
+
   > .text-template-selector {
     order: 2;
     outline: none;
@@ -117,5 +123,13 @@ button.btn.template-control--manage {
     padding-bottom: 1px;
     color: $g11-sidewalk;
     cursor: pointer;
+  }
+
+  .template-conflict-tooltip {
+    margin: 0;
+
+    .question-mark-tooltip--icon {
+      margin: 0;
+    }
   }
 }

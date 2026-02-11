@@ -37,6 +37,31 @@ const QuestionMarkTooltip: FunctionComponent<Props> = ({
       class={`influx-tooltip ${customClass || ''}`}
       clickable={clickToClose}
       globalEventOff={clickToClose ? "click" : undefined}
+      overridePosition={({left, top}, currentEvent, currentTarget, node) => {
+        const padding = 10
+        const windowWidth = window.innerWidth
+        const windowHeight = window.innerHeight
+        const tooltipWidth = node.offsetWidth || 300
+        const tooltipHeight = node.offsetHeight || 100
+
+        if (left + tooltipWidth > windowWidth - padding) {
+          left = windowWidth - tooltipWidth - padding
+        }
+
+        if (left < padding) {
+          left = padding
+        }
+
+        if (top + tooltipHeight > windowHeight - padding) {
+          top = windowHeight - tooltipHeight - padding
+        }
+
+        if (top < padding) {
+          top = padding
+        }
+
+        return {left, top}
+      }}
     />
   </div>
 )

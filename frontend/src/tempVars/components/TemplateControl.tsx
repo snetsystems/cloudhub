@@ -6,6 +6,7 @@ import TextTemplateSelector from 'src/tempVars/components/TextTemplateSelector'
 import TemplateVariableEditor from 'src/tempVars/components/TemplateVariableEditor'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {calculateDropdownWidth} from 'src/dashboards/constants/templateControlBar'
+import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
 
 import {Template, TemplateType, Source, TemplateValue, Me} from 'src/types'
 
@@ -50,8 +51,13 @@ class TemplateControl extends PureComponent<Props, State> {
       ? {minWidth: calculateDropdownWidth(template.values)}
       : null
 
+    const hasConflict = (template as any).hasConflict || false
+
     return (
-      <div className="template-control--dropdown" style={dropdownStyle}>
+      <div 
+        className={`template-control--dropdown ${hasConflict ? 'has-conflict' : ''}`} 
+        style={dropdownStyle}
+      >
         {template.type === TemplateType.Text ? (
           <TextTemplateSelector
             template={template}
@@ -68,7 +74,16 @@ class TemplateControl extends PureComponent<Props, State> {
         )}
 
         <label className="template-control--label">
-          {template.tempVar}
+          <span style={{display: 'flex', alignItems: 'center', gap: 0}}>
+            {template.tempVar}
+            {hasConflict && (
+              <QuestionMarkTooltip
+                tipID={`template-conflict-${template.id}`}
+                tipContent="<h1>Template Variable Conflict</h1><p>This template variable has the same name<br/>but a different query from the imported dashboard.</p><p>Please rename it before use.</p>"
+                customClass="template-conflict-tooltip"
+              />
+            )}
+          </span>
           <Authorized requiredRole={EDITOR_ROLE}>
             <span
               className="icon cog-thick"

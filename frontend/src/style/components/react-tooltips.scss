@@ -121,6 +121,20 @@ $tooltip-code-color: $c-potassium;
           display: contents
         }
   }
+
+  &.template-conflict-tooltip {
+    max-width: calc(100vw - 20px);
+    p {
+      margin: 0;
+      width: auto;
+      display: block;
+      padding: 0;
+      white-space: normal;
+    }
+    &.place-bottom::after {
+      display: contents
+    }
+  }
 }
 
 .influx-tooltip__hover {
