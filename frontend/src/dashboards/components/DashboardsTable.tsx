@@ -7,7 +7,7 @@ import ConfirmButton from 'src/shared/components/ConfirmButton'
 
 import {getDeep} from 'src/utils/wrappers'
 
-import {Dashboard, Template, RemoteDataState} from 'src/types'
+import {Dashboard, Template, RemoteDataState, DashboardType} from 'src/types'
 
 interface Props {
   dashboards: Dashboard[]
@@ -57,50 +57,53 @@ class DashboardsTable extends PureComponent<Props> {
           </tr>
         </thead>
         <tbody>
-          {_.sortBy(dashboards, d => d.name.toLowerCase()).map(dashboard => (
-            <tr key={dashboard.id}>
-              <td>
-                <Link to={`${dashboardLink}/dashboards/${dashboard.id}`}>
-                  {dashboard.name}
-                </Link>
-              </td>
-              <td>{this.getDashboardTemplates(dashboard)}</td>
-              <td className="text-right">
-                <Authorized
-                  requiredRole={VIEWER_ROLE}
-                  replaceWithIfNotAuthorized={<div />}
-                >
-                  <button
-                    className="btn btn-xs btn-default table--show-on-row-hover"
-                    onClick={onExportDashboard(dashboard)}
+          {_.sortBy(dashboards, d => d.name.toLowerCase())
+            .filter(dashboard => dashboard.type === DashboardType.Normal)
+            .map(dashboard => (
+              <tr key={dashboard.id}>
+                <td>
+                  <Link to={`${dashboardLink}/dashboards/${dashboard.id}`}>
+                    {dashboard.name}
+                  </Link>
+                </td>
+                <td>{this.getDashboardTemplates(dashboard)}</td>
+                <td className="text-right">
+                  <Authorized
+                    requiredRole={VIEWER_ROLE}
+                    replaceWithIfNotAuthorized={<div />}
                   >
-                    <span className="icon export" />Export
-                  </button>
-                </Authorized>
-                <Authorized
-                  requiredRole={EDITOR_ROLE}
-                  replaceWithIfNotAuthorized={<div />}
-                >
-                  <>
                     <button
                       className="btn btn-xs btn-default table--show-on-row-hover"
-                      onClick={onCloneDashboard(dashboard)}
+                      onClick={onExportDashboard(dashboard)}
                     >
-                      <span className="icon duplicate" />
-                      Clone
+                      <span className="icon export" />
+                      Export
                     </button>
-                    <ConfirmButton
-                      confirmAction={onDeleteDashboard(dashboard)}
-                      size="btn-xs"
-                      type="btn-danger"
-                      text="Delete"
-                      customClass="table--show-on-row-hover"
-                    />
-                  </>
-                </Authorized>
-              </td>
-            </tr>
-          ))}
+                  </Authorized>
+                  <Authorized
+                    requiredRole={EDITOR_ROLE}
+                    replaceWithIfNotAuthorized={<div />}
+                  >
+                    <>
+                      <button
+                        className="btn btn-xs btn-default table--show-on-row-hover"
+                        onClick={onCloneDashboard(dashboard)}
+                      >
+                        <span className="icon duplicate" />
+                        Clone
+                      </button>
+                      <ConfirmButton
+                        confirmAction={onDeleteDashboard(dashboard)}
+                        size="btn-xs"
+                        type="btn-danger"
+                        text="Delete"
+                        customClass="table--show-on-row-hover"
+                      />
+                    </>
+                  </Authorized>
+                </td>
+              </tr>
+            ))}
         </tbody>
       </table>
     )

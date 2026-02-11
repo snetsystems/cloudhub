@@ -153,7 +153,15 @@ export interface Dashboard {
   name: string
   organization: string
   links?: DashboardLinks
+  type?: DashboardTypeValue
 }
+
+export const DashboardType = {
+  Normal: 'normal',
+  Builtin: 'builtin',
+} as const
+
+export type DashboardTypeValue = typeof DashboardType[keyof typeof DashboardType]
 
 export interface DashboardName {
   id: string

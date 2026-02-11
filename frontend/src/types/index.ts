@@ -24,6 +24,7 @@ import {
   QueryType,
   RefreshRate,
   StaticLegendPositionType,
+  DashboardType,
 } from './dashboards'
 import {
   Template,
@@ -268,6 +269,7 @@ export {
   NotificationAction,
   Axes,
   Dashboard,
+  DashboardType,
   Service,
   NewService,
   ServiceLinks,
