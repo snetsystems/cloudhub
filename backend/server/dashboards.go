@@ -306,7 +306,8 @@ func (s *Service) ReplaceDashboard(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-// UpdateDashboard completely updates either the dashboard name or the cells
+// UpdateDashboard completely updates the dashboard name, cells, and/or templates.
+// Request body may include any combination of name, cells, and templates; each present field is applied.
 func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	idParam, err := paramID("id", r)
@@ -330,21 +331,37 @@ func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	req.ID = id
 
+	defaultOrg, err := s.Store.Organizations(ctx).DefaultOrganization(ctx)
+	if err != nil {
+		unknownErrorWithMessage(w, err, s.Logger)
+		return
+	}
+
+	updated := false
 	if req.Name != "" {
 		orig.Name = req.Name
-	} else if len(req.Cells) > 0 {
-		defaultOrg, err := s.Store.Organizations(ctx).DefaultOrganization(ctx)
-		if err != nil {
-			unknownErrorWithMessage(w, err, s.Logger)
-			return
-		}
+		updated = true
+	}
+	if len(req.Cells) > 0 {
 		if err := ValidDashboardRequest(&req, defaultOrg.ID); err != nil {
 			invalidData(w, err, s.Logger)
 			return
 		}
 		orig.Cells = req.Cells
-	} else {
-		invalidData(w, fmt.Errorf("Update must include either name or cells"), s.Logger)
+		updated = true
+	}
+	if req.Templates != nil {
+		for i := range req.Templates {
+			if err := ValidTemplateRequest(&req.Templates[i]); err != nil {
+				invalidData(w, err, s.Logger)
+				return
+			}
+		}
+		orig.Templates = req.Templates
+		updated = true
+	}
+	if !updated {
+		invalidData(w, fmt.Errorf("Update must include at least one of name, cells, or templates"), s.Logger)
 		return
 	}
 

@@ -2912,7 +2912,7 @@
       "patch": {
         "tags": ["layouts"],
         "summary": "Update dashboard information.",
-        "description": "Update either the dashboard name or the dashboard cells",
+        "description": "Update the dashboard name, cells, and/or template variables. Request body may include any combination of name, cells, and templates; each present field is applied. At least one of name, cells, or templates must be provided.",
         "parameters": [
           {
             "name": "id",
@@ -2924,7 +2924,7 @@
           {
             "name": "config",
             "in": "body",
-            "description": "dashboard configuration update parameters. Must be either name or cells",
+            "description": "Dashboard configuration update parameters. Include at least one of: name, cells, or templates. All included fields are applied.",
             "schema": {
               "$ref": "#/definitions/Dashboard"
             },
@@ -8627,6 +8627,13 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/Cell"
+          }
+        },
+        "templates": {
+          "type": "array",
+          "description": "Template variables (e.g. for :host:, :cpu:) applied to the dashboard. When included in PATCH body, replaces all dashboard templates.",
+          "items": {
+            "type": "object"
           }
         },
         "name": {

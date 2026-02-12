@@ -1,12 +1,17 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 
 	gocmp "github.com/google/go-cmp/cmp"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func TestCorrectWidthHeight(t *testing.T) {
@@ -981,5 +986,174 @@ func Test_newDashboardResponse_includesVersion(t *testing.T) {
 	// LatestVersion and UpdateAvailable are set by setBuiltinVersionInfo in handlers, not newDashboardResponse
 	if got.LatestVersion != "" {
 		t.Errorf("LatestVersion = %q, want empty (set by handler)", got.LatestVersion)
+	}
+}
+
+func TestService_UpdateDashboard(t *testing.T) {
+	validTemplate := cloudhub.Template{
+		ID:    "tid-1",
+		Type:  "tagValues",
+		Label: "Host",
+		TemplateVar: cloudhub.TemplateVar{
+			Var: ":host:",
+			Values: []cloudhub.TemplateValue{
+				{Type: "tagValue", Value: "h1"},
+			},
+		},
+	}
+
+	tests := []struct {
+		name            string
+		body            string
+		dashboardsGet   cloudhub.Dashboard
+		dashboardsGetErr error
+		updateErr       error
+		wantStatus      int
+		wantErrMsg      string
+		checkUpdated    func(t *testing.T, updated cloudhub.Dashboard)
+	}{
+		{
+			name: "update name only",
+			body: `{"name": "New Name"}`,
+			dashboardsGet: cloudhub.Dashboard{
+				ID:   1,
+				Name: "Old",
+			},
+			wantStatus: http.StatusOK,
+			checkUpdated: func(t *testing.T, d cloudhub.Dashboard) {
+				if d.Name != "New Name" {
+					t.Errorf("Name = %q, want New Name", d.Name)
+				}
+			},
+		},
+		{
+			name: "update templates only",
+			body: func() string {
+				b, _ := json.Marshal(map[string]interface{}{
+					"templates": []cloudhub.Template{validTemplate},
+				})
+				return string(b)
+			}(),
+			dashboardsGet: cloudhub.Dashboard{
+				ID:         1,
+				Name:       "Dash",
+				Templates: []cloudhub.Template{},
+			},
+			wantStatus: http.StatusOK,
+			checkUpdated: func(t *testing.T, d cloudhub.Dashboard) {
+				if len(d.Templates) != 1 || d.Templates[0].ID != validTemplate.ID {
+					t.Errorf("Templates = %+v, want one template %q", d.Templates, validTemplate.ID)
+				}
+			},
+		},
+		{
+			name: "update name and templates",
+			body: func() string {
+				b, _ := json.Marshal(map[string]interface{}{
+					"name":      "Renamed",
+					"templates": []cloudhub.Template{validTemplate},
+				})
+				return string(b)
+			}(),
+			dashboardsGet: cloudhub.Dashboard{
+				ID:    1,
+				Name:  "Old",
+				Cells: []cloudhub.DashboardCell{},
+			},
+			wantStatus: http.StatusOK,
+			checkUpdated: func(t *testing.T, d cloudhub.Dashboard) {
+				if d.Name != "Renamed" {
+					t.Errorf("Name = %q, want Renamed", d.Name)
+				}
+				if len(d.Templates) != 1 {
+					t.Errorf("len(Templates) = %d, want 1", len(d.Templates))
+				}
+			},
+		},
+		{
+			name:       "no name cells or templates returns 422",
+			body:       `{}`,
+			dashboardsGet: cloudhub.Dashboard{ID: 1, Name: "D"},
+			wantStatus: http.StatusUnprocessableEntity,
+			wantErrMsg: "Update must include at least one of name, cells, or templates",
+		},
+		{
+			name: "invalid template type returns 422",
+			body: func() string {
+				b, _ := json.Marshal(map[string]interface{}{
+					"templates": []cloudhub.Template{{
+						ID: "x", Type: "InvalidType",
+						TemplateVar: cloudhub.TemplateVar{Values: []cloudhub.TemplateValue{{Type: "constant"}}},
+					}},
+				})
+				return string(b)
+			}(),
+			dashboardsGet: cloudhub.Dashboard{ID: 1, Name: "D"},
+			wantStatus:   http.StatusUnprocessableEntity,
+			wantErrMsg:   "Unknown template type",
+		},
+		{
+			name:            "dashboard not found returns 404",
+			body:            `{"name": "X"}`,
+			dashboardsGetErr: http.ErrNoLocation,
+			wantStatus:      http.StatusNotFound,
+		},
+		{
+			name:       "store update error returns 500",
+			body:       `{"name": "X"}`,
+			dashboardsGet: cloudhub.Dashboard{ID: 1, Name: "D"},
+			updateErr:  context.DeadlineExceeded,
+			wantStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var captured cloudhub.Dashboard
+			s := &Service{
+				Store: &mocks.Store{
+					DashboardsStore: &mocks.DashboardsStore{
+						GetF: func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+							if tt.dashboardsGetErr != nil {
+								return cloudhub.Dashboard{}, tt.dashboardsGetErr
+							}
+							return tt.dashboardsGet, nil
+						},
+						UpdateF: func(ctx context.Context, d cloudhub.Dashboard) error {
+							captured = d
+							return tt.updateErr
+						},
+					},
+					OrganizationsStore: &mocks.OrganizationsStore{
+						DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+							return &cloudhub.Organization{ID: "default-org"}, nil
+						},
+					},
+				},
+				Logger: &mocks.TestLogger{},
+			}
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodPatch, "/cloudhub/v1/dashboards/1", bytes.NewReader([]byte(tt.body)))
+			r = WithContext(r.Context(), r, map[string]string{"id": "1"})
+
+			s.UpdateDashboard(w, r)
+
+			if w.Code != tt.wantStatus {
+				t.Errorf("UpdateDashboard() status = %d, want %d\nbody: %s", w.Code, tt.wantStatus, w.Body.String())
+			}
+			if tt.wantErrMsg != "" && w.Body.String() != "" {
+				var errResp struct {
+					Message string `json:"message"`
+				}
+				if err := json.Unmarshal(w.Body.Bytes(), &errResp); err == nil && tt.wantErrMsg != "" {
+					if errResp.Message != "" && !bytes.Contains([]byte(errResp.Message), []byte(tt.wantErrMsg)) {
+						t.Errorf("UpdateDashboard() message = %q, want substring %q", errResp.Message, tt.wantErrMsg)
+					}
+				}
+			}
+			if tt.checkUpdated != nil && tt.updateErr == nil && w.Code == http.StatusOK {
+				tt.checkUpdated(t, captured)
+			}
+		})
 	}
 }
