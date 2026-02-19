@@ -14,7 +14,7 @@ import {
   GetDashboards,
   LoadLinksOptions,
 } from 'src/types/apis/dashboards'
-import {DashboardSwitcherLinks} from 'src/types/dashboards'
+import {Cell, Dashboard, DashboardSwitcherLinks} from 'src/types/dashboards'
 import {Source, Protoboard} from 'src/types'
 
 export const getDashboards: GetDashboards = () => {
@@ -119,6 +119,39 @@ export const addDashboardCell = async (dashboard, cell) => {
   }
 }
 
+export const addDashboardCells = async (dashboard, cells) => {
+  try {
+    return await AJAX({
+      method: 'POST',
+      url: `/cloudhub/v1/dashboards/${dashboard.id}`,
+      data: {
+        cells: cells,
+      },
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const patchDashboardByID = async (
+  dashboardID: string,
+  cells: Cell[]
+) => {
+  try {
+    return await AJAX({
+      method: 'PATCH',
+      url: `/cloudhub/v1/dashboards/${dashboardID}`,
+      data: {
+        cells: cells,
+      },
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export const deleteDashboardCell = async cell => {
   try {
     return await AJAX({
@@ -138,6 +171,20 @@ export const editTemplateVariables = async templateVariable => {
       url: templateVariable.links.self,
       data: templateVariable,
     })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const getHostsListApi = async (id: string) => {
+  try {
+    const {data} = await AJAX<AxiosResponse<Dashboard>>({
+      url: `/cloudhub/v1/templates/${id}`,
+      method: 'GET',
+    })
+    // /cloudhub/v1/builtin/dashboards/host_page/template
+    return data as Dashboard
   } catch (error) {
     console.error(error)
     throw error

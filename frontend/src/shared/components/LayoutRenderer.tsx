@@ -46,9 +46,9 @@ interface Props {
   isStaticPage: boolean
   isEditable: boolean
   onZoom?: () => void
-  onCloneCell?: () => void
-  onDeleteCell?: () => void
-  onSummonOverlayTechnologies?: () => void
+  onCloneCell?: (cell: Cell) => void
+  onDeleteCell?: (cell: Cell) => void
+  onSummonOverlayTechnologies?: (cell: Cell) => void
   onPositionChange?: (cells: Cell[]) => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void

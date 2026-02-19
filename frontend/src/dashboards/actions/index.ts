@@ -12,6 +12,7 @@ import {
   addDashboardCell as addDashboardCellAJAX,
   deleteDashboardCell as deleteDashboardCellAJAX,
   createDashboard as createDashboardAJAX,
+  patchDashboardByID as patchDashboardByIdAJAX,
 } from 'src/dashboards/apis'
 import {getMe} from 'src/shared/apis/auth'
 import {hydrateTemplates} from 'src/tempVars/utils/graph'
@@ -67,6 +68,7 @@ export enum ActionType {
   DeleteDashboard = 'DELETE_DASHBOARD',
   DeleteDashboardFailed = 'DELETE_DASHBOARD_FAILED',
   AddDashboardCell = 'ADD_DASHBOARD_CELL',
+  AddDashboardCells = 'ADD_DASHBOARD_CELLS',
   DeleteDashboardCell = 'DELETE_DASHBOARD_CELL',
   SyncDashboardCell = 'SYNC_DASHBOARD_CELL',
   EditCellQueryStatus = 'EDIT_CELL_QUERY_STATUS',
@@ -78,6 +80,7 @@ export enum ActionType {
   SetDashboardRefresh = 'SET_DASHBOARD_REFRESH',
   RetainRangesDashboardTimeV1 = 'RETAIN_RANGES_DASHBOARD_TIME_V1',
   RetainDashboardRefresh = 'RETAIN_DASHBOARD_REFRESH',
+  PatchDashboardByID = 'PATCH_DASHBOARD_BY_ID',
 }
 
 interface LoadDashboardsAction {
@@ -167,6 +170,22 @@ interface AddDashboardCellAction {
   }
 }
 
+interface AddDashboardCellsAction {
+  type: ActionType.AddDashboardCells
+  payload: {
+    dashboard: Dashboard
+    cells: Cell[]
+  }
+}
+
+interface PatchDashboardByIDAction {
+  type: ActionType.PatchDashboardByID
+  payload: {
+    dashboardID: string
+    dashboard: Dashboard
+  }
+}
+
 interface DeleteDashboardCellAction {
   type: ActionType.DeleteDashboardCell
   payload: {
@@ -229,6 +248,14 @@ interface SetDashRefreshAction {
   }
 }
 
+interface PatchDashboardByIDAction {
+  type: ActionType.PatchDashboardByID
+  payload: {
+    dashboardID: string
+    dashboard: Dashboard
+  }
+}
+
 export type Action =
   | LoadDashboardsAction
   | LoadDashboardAction
@@ -242,6 +269,7 @@ export type Action =
   | DeleteDashboardFailedAction
   | SyncDashboardCellAction
   | AddDashboardCellAction
+  | AddDashboardCellsAction
   | DeleteDashboardCellAction
   | EditCellQueryStatusAction
   | TemplateVariableLocalSelectedAction
@@ -250,6 +278,7 @@ export type Action =
   | SetActiveCellAction
   | SetDashTimeV1Action
   | SetDashRefreshAction
+  | PatchDashboardByIDAction
 
 export const loadDashboards = (
   dashboards: Dashboard[],
@@ -351,6 +380,22 @@ export const addDashboardCell = (
 ): AddDashboardCellAction => ({
   type: ActionType.AddDashboardCell,
   payload: {dashboard, cell},
+})
+
+export const addDashboardCells = (
+  dashboard: Dashboard,
+  cells: Cell[]
+): AddDashboardCellsAction => ({
+  type: ActionType.AddDashboardCells,
+  payload: {dashboard, cells},
+})
+
+export const patchDashboardByID = (
+  dashboardID: string,
+  dashboard: Dashboard
+): PatchDashboardByIDAction => ({
+  type: ActionType.PatchDashboardByID,
+  payload: {dashboardID, dashboard},
 })
 
 export const deleteDashboardCell = (
@@ -802,4 +847,42 @@ export const updateTemplateQueryParams = (dashboardId: string) => (
   }
 
   dispatch(updateQueryParams(updatedQueryParams))
+}
+
+export const setTempVarstoDashboard = (dashboardId: string) => (
+  dispatch: Dispatch<Action>,
+  getState
+): void => {
+  const templates = getDashboard(getState(), dashboardId).templates
+  const updatedQueryParams = {
+    tempVars: templateSelectionsFromTemplates(templates),
+  }
+  dispatch(updateQueryParams(updatedQueryParams))
+}
+
+// export const addDashboardCellsAsync = (
+//   dashboard: Dashboard,
+//   cells: Cell[]
+// ) => async (dispatch: Dispatch<Action>): Promise<void> => {
+//   try {
+//     const {data} = await addDashboardCellsAJAX(dashboard, cells)
+//     dispatch(addDashboardCells(dashboard, data))
+//   } catch (error) {
+//     console.error(error)
+//     dispatch(errorThrown(error))
+//   }
+// }
+
+export const patchDashboardByIDAsync = (
+  dashboardID: string,
+  cells: Cell[]
+) => async (dispatch: Dispatch<Action>): Promise<void> => {
+  try {
+    const {data} = await patchDashboardByIdAJAX(dashboardID, cells)
+
+    dispatch(patchDashboardByID(dashboardID, data))
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
 }

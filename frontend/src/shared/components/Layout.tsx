@@ -43,9 +43,9 @@ interface Props {
   isEditable: boolean
   manualRefresh: number
   onZoom: () => void
-  onDeleteCell: () => void
-  onCloneCell: () => void
-  onSummonOverlayTechnologies: () => void
+  onDeleteCell: (cell: Cell) => void
+  onCloneCell: (cell: Cell) => void
+  onSummonOverlayTechnologies: (cell: Cell) => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   isUsingAnnotationViewer?: boolean
