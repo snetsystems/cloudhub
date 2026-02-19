@@ -24,7 +24,8 @@ type dashboardCellLinks struct {
 
 type dashboardCellResponse struct {
 	cloudhub.DashboardCell
-	Links dashboardCellLinks `json:"links"`
+	Links             dashboardCellLinks `json:"links"`
+	CellVersionStatus string            `json:"cellVersionStatus,omitempty"` // Set by BuiltinDashboardTemplate: "new", "update", "unchanged", "deprecated"
 }
 
 func newCellResponse(dID cloudhub.DashboardID, cell cloudhub.DashboardCell) dashboardCellResponse {

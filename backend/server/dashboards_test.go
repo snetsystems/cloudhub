@@ -11,7 +11,9 @@ import (
 
 	gocmp "github.com/google/go-cmp/cmp"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/builtin"
 	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
 func TestCorrectWidthHeight(t *testing.T) {
@@ -1153,6 +1155,200 @@ func TestService_UpdateDashboard(t *testing.T) {
 			}
 			if tt.checkUpdated != nil && tt.updateErr == nil && w.Code == http.StatusOK {
 				tt.checkUpdated(t, captured)
+			}
+		})
+	}
+}
+
+func TestService_BuiltinDashboardTemplate(t *testing.T) {
+	builtinStore := &builtin.BinDashboardsStore{Logger: &mocks.TestLogger{}}
+	template, err := builtinStore.Get(context.Background(), "host_page")
+	if err != nil || len(template.Cells) < 1 {
+		t.Skip("host_page builtin template not available or has no cells")
+	}
+
+	tests := []struct {
+		name              string
+		paramName         string
+		withOrg           bool
+		orgID             string
+		mappingGetID      cloudhub.DashboardID
+		mappingGetErr     error
+		userDashboard     *cloudhub.Dashboard
+		dashboardsGetErr  error
+		wantStatus        int
+		wantCellStatuses  []string // order of cellVersionStatus in response cells (empty string = omit/any)
+		checkResponse     func(t *testing.T, body []byte)
+	}{
+		{
+			name:       "no org context returns 200 without cellVersionStatus",
+			paramName:  "host_page",
+			withOrg:    false,
+			wantStatus: http.StatusOK,
+			checkResponse: func(t *testing.T, body []byte) {
+				var res struct {
+					Cells []struct {
+						CellVersionStatus string `json:"cellVersionStatus"`
+					} `json:"cells"`
+				}
+				if err := json.Unmarshal(body, &res); err != nil {
+					t.Fatalf("unmarshal: %v", err)
+				}
+				for i, c := range res.Cells {
+					if c.CellVersionStatus != "" {
+						t.Errorf("cell[%d].cellVersionStatus = %q, want empty (no org)", i, c.CellVersionStatus)
+					}
+				}
+			},
+		},
+		{
+			name:          "org context but no mapping returns 200 with all new",
+			paramName:     "host_page",
+			withOrg:       true,
+			orgID:         "org1",
+			mappingGetErr: cloudhub.ErrDashboardNotFound,
+			wantStatus:    http.StatusOK,
+			checkResponse: func(t *testing.T, body []byte) {
+				var res struct {
+					Cells []struct {
+						CellVersionStatus string `json:"cellVersionStatus"`
+					} `json:"cells"`
+				}
+				if err := json.Unmarshal(body, &res); err != nil {
+					t.Fatalf("unmarshal: %v", err)
+				}
+				for i, c := range res.Cells {
+					if c.CellVersionStatus != "new" {
+						t.Errorf("cell[%d].cellVersionStatus = %q, want new", i, c.CellVersionStatus)
+					}
+				}
+			},
+		},
+		{
+			name:             "org context and mapping but dashboard get fails returns 200 with all new",
+			paramName:        "host_page",
+			withOrg:          true,
+			orgID:            "org1",
+			mappingGetID:     1,
+			dashboardsGetErr: context.DeadlineExceeded,
+			wantStatus:       http.StatusOK,
+			checkResponse: func(t *testing.T, body []byte) {
+				var res struct {
+					Cells []struct {
+						CellVersionStatus string `json:"cellVersionStatus"`
+					} `json:"cells"`
+				}
+				if err := json.Unmarshal(body, &res); err != nil {
+					t.Fatalf("unmarshal: %v", err)
+				}
+				for i, c := range res.Cells {
+					if c.CellVersionStatus != "new" {
+						t.Errorf("cell[%d].cellVersionStatus = %q, want new", i, c.CellVersionStatus)
+					}
+				}
+			},
+		},
+		{
+			name:         "org and user dashboard: one unchanged, one deprecated",
+			paramName:    "host_page",
+			withOrg:      true,
+			orgID:        "org1",
+			mappingGetID: 1,
+			userDashboard: func() *cloudhub.Dashboard {
+				// User has first template cell (unchanged) + one extra (deprecated)
+				cell0 := template.Cells[0]
+				deprecated := cloudhub.DashboardCell{
+					ID:   "deprecated-cell-id",
+					Name: "Removed Cell",
+					W:    4,
+					H:    4,
+				}
+				return &cloudhub.Dashboard{
+					ID:           1,
+					Name:         template.Name,
+					Organization: "org1",
+					Cells:        []cloudhub.DashboardCell{cell0, deprecated},
+				}
+			}(),
+			wantStatus: http.StatusOK,
+			checkResponse: func(t *testing.T, body []byte) {
+				var res struct {
+					Cells []struct {
+						ID                string `json:"i"`
+						CellVersionStatus string `json:"cellVersionStatus"`
+					} `json:"cells"`
+				}
+				if err := json.Unmarshal(body, &res); err != nil {
+					t.Fatalf("unmarshal: %v", err)
+				}
+				// First template cell should be unchanged; rest of template cells new; last should be deprecated
+				hasUnchanged := false
+				hasDeprecated := false
+				for _, c := range res.Cells {
+					if c.CellVersionStatus == "unchanged" {
+						hasUnchanged = true
+					}
+					if c.CellVersionStatus == "deprecated" && c.ID == "deprecated-cell-id" {
+						hasDeprecated = true
+					}
+				}
+				if !hasUnchanged {
+					t.Error("expected at least one cell with cellVersionStatus unchanged")
+				}
+				if !hasDeprecated {
+					t.Error("expected deprecated cell (deprecated-cell-id) in response")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mappingGetID := tt.mappingGetID
+			mappingGetErr := tt.mappingGetErr
+			var userDash cloudhub.Dashboard
+			if tt.userDashboard != nil {
+				userDash = *tt.userDashboard
+			}
+			dashboardsGetErr := tt.dashboardsGetErr
+
+			s := &Service{
+				Store: &mocks.Store{
+					BuiltinDashboardMapping: &mocks.BuiltinDashboardMappingStore{
+						GetDashboardIDF: func(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error) {
+							return mappingGetID, mappingGetErr
+						},
+					},
+					DashboardsStore: &mocks.DashboardsStore{
+						GetF: func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+							if dashboardsGetErr != nil {
+								return cloudhub.Dashboard{}, dashboardsGetErr
+							}
+							if tt.userDashboard == nil {
+								return cloudhub.Dashboard{}, nil
+							}
+							return userDash, nil
+						},
+					},
+				},
+				Logger: &mocks.TestLogger{},
+			}
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "/cloudhub/v1/builtin/dashboards/"+tt.paramName+"/template", nil)
+			r = WithContext(r.Context(), r, map[string]string{"name": tt.paramName})
+			if tt.withOrg {
+				ctx := context.WithValue(r.Context(), organizations.ContextKey, tt.orgID)
+				r = r.WithContext(ctx)
+			}
+
+			s.BuiltinDashboardTemplate(w, r)
+
+			if w.Code != tt.wantStatus {
+				t.Errorf("BuiltinDashboardTemplate() status = %d, want %d\nbody: %s", tt.wantStatus, w.Code, w.Body.String())
+			}
+			if tt.checkResponse != nil && w.Code == http.StatusOK {
+				tt.checkResponse(t, w.Body.Bytes())
 			}
 		})
 	}

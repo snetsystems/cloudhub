@@ -856,6 +856,7 @@ type DashboardCell struct {
 	GraphOptions           GraphOptions           `json:"graphOptions"`
 	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
 	CellOrigin             string                 `json:"cellOrigin,omitempty"` // CellOriginBuiltin | CellOriginUser (empty treated as user)
+	Hidden                 bool                   `json:"hidden,omitempty"`     // When true, cell is hidden (user can toggle without deleting)
 }
 
 // TableGaugeChartOptions is the options for the table gauge chart

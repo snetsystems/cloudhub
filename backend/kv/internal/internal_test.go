@@ -9,6 +9,13 @@ import (
 	"github.com/snetsystems/cloudhub/backend/kv/internal"
 )
 
+// dashboardRoundtripNormalizeType fixes actual.Type for roundtrip compare: empty Type is normalized to "normal" by getDashboardType in internal.go.
+func dashboardRoundtripNormalizeType(orig, actual *cloudhub.Dashboard) {
+	if orig.Type == "" && actual.Type == "normal" {
+		actual.Type = ""
+	}
+}
+
 func TestMarshalSource(t *testing.T) {
 	v := cloudhub.Source{
 		ID:       12,
@@ -230,8 +237,72 @@ func Test_MarshalDashboard(t *testing.T) {
 		t.Fatal("Error marshaling dashboard: err", err)
 	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
 		t.Fatal("Error unmarshaling dashboard: err:", err)
-	} else if !gocmp.Equal(dashboard, actual) {
-		t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(dashboard, actual))
+	} else {
+		dashboardRoundtripNormalizeType(&dashboard, &actual)
+		if !gocmp.Equal(dashboard, actual) {
+			t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(dashboard, actual))
+		}
+	}
+}
+
+func Test_MarshalDashboard_CellHidden(t *testing.T) {
+	// Clone Test_MarshalDashboard dashboard and set Hidden on the cell
+	dashboard := cloudhub.Dashboard{
+		ID: 2,
+		Cells: []cloudhub.DashboardCell{
+			{
+				ID:   "9b5367de-c552-4322-a9e8-7f384cbd235c",
+				X:    0,
+				Y:    0,
+				W:    4,
+				H:    4,
+				MinW: 10,
+				MinH: 10,
+				Name: "Super awesome query",
+				Queries: []cloudhub.DashboardQuery{
+					{
+						Command: "select * from cpu",
+						Label:   "CPU Utilization",
+						Range:   &cloudhub.Range{Upper: int64(100)},
+						Source:  "/cloudhub/v1/sources/1",
+						Shifts:  []cloudhub.TimeShift{},
+						Type:    "influxql",
+					},
+				},
+				Axes: map[string]cloudhub.Axis{
+					"y": {Bounds: []string{"0", "3", "1-7", "foo"}, Label: "foo", Prefix: "M", Suffix: "m", Base: "2", Scale: "roflscale"},
+				},
+				Type: "line",
+				CellColors: []cloudhub.CellColor{
+					{ID: "myid", Type: "min", Hex: "#234567", Name: "Laser", Value: "0"},
+					{ID: "id2", Type: "max", Hex: "#876543", Name: "Solitude", Value: "100"},
+				},
+				TableOptions: cloudhub.TableOptions{},
+				FieldOptions: []cloudhub.RenamableField{},
+				TimeFormat:   "",
+				GraphOptions: cloudhub.GraphOptions{FillArea: true, ShowLine: true, ShowPoint: false, ShowTempVarCount: ""},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					DecimalPlaces:  cloudhub.DecimalPlaces{IsEnforced: false, Digits: 0},
+					IsShowValues:   true, SortBy: "name", SortByDirection: "asc",
+				},
+				Hidden: true,
+			},
+		},
+		Templates: []cloudhub.Template{},
+		Name:      "WithHidden",
+	}
+	var actual cloudhub.Dashboard
+	if buf, err := internal.MarshalDashboard(dashboard); err != nil {
+		t.Fatal("MarshalDashboard err:", err)
+	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
+		t.Fatal("UnmarshalDashboard err:", err)
+	}
+	if len(actual.Cells) != 1 {
+		t.Fatalf("len(actual.Cells) = %d, want 1", len(actual.Cells))
+	}
+	if !actual.Cells[0].Hidden {
+		t.Error("Cells[0].Hidden = false, want true after roundtrip")
 	}
 }
 
@@ -268,8 +339,11 @@ func Test_MarshalDashboard_WithTemplateOptions(t *testing.T) {
 		t.Fatal("Error marshaling dashboard: err", err)
 	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
 		t.Fatal("Error unmarshaling dashboard: err:", err)
-	} else if !gocmp.Equal(dashboard, actual) {
-		t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(dashboard, actual))
+	} else {
+		dashboardRoundtripNormalizeType(&dashboard, &actual)
+		if !gocmp.Equal(dashboard, actual) {
+			t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(dashboard, actual))
+		}
 	}
 }
 
@@ -424,8 +498,11 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 		t.Fatal("Error marshaling dashboard: err", err)
 	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
 		t.Fatal("Error unmarshaling dashboard: err:", err)
-	} else if !gocmp.Equal(expected, actual) {
-		t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(expected, actual))
+	} else {
+		dashboardRoundtripNormalizeType(&dashboard, &actual)
+		if !gocmp.Equal(expected, actual) {
+			t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(expected, actual))
+		}
 	}
 }
 
@@ -481,21 +558,21 @@ func Test_MarshalDashboard_WithTableGaugeChartOptions(t *testing.T) {
 							},
 							ThresholdColors: []cloudhub.CellColor{
 								{ID: "gt1", Type: "max", Hex: "#9394FF", Name: "comet", Value: "100"},
+							},
+							Unit:           "%",
+							Prefix:         "",
+							Suffix:         "%",
+							IsShowChart:    true,
+							IsPercent:      true,
+							ChartType:      "continuous",
+							BackgroundType: "gradient",
+							IsShowValues:   true,
+							ValueFormat:    "KMB",
 						},
-						Unit:           "%",
-						Prefix:         "",
-						Suffix:         "%",
-						IsShowChart:    true,
-						IsPercent:      true,
-						ChartType:      "continuous",
-						BackgroundType: "gradient",
-						IsShowValues:   true,
-						ValueFormat:    "KMB",
 					},
-				},
-				DecimalPlaces: cloudhub.DecimalPlaces{
-					IsEnforced: true,
-					Digits:     2,
+					DecimalPlaces: cloudhub.DecimalPlaces{
+						IsEnforced: true,
+						Digits:     2,
 					},
 					IsShowValues:    true,
 					SortBy:          "cpu",
@@ -516,6 +593,7 @@ func Test_MarshalDashboard_WithTableGaugeChartOptions(t *testing.T) {
 		t.Fatal("Error unmarshaling dashboard with table gauge options:", err)
 	}
 
+	dashboardRoundtripNormalizeType(&dashboard, &actual)
 	if !gocmp.Equal(dashboard, actual) {
 		t.Fatalf("Dashboard protobuf copy error with table gauge options: diff follows:\n%s", gocmp.Diff(dashboard, actual))
 	}
@@ -724,8 +802,11 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 		t.Fatal("Error marshaling dashboard: err", err)
 	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
 		t.Fatal("Error unmarshaling dashboard: err:", err)
-	} else if !gocmp.Equal(expected, actual) {
-		t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(expected, actual))
+	} else {
+		dashboardRoundtripNormalizeType(&dashboard, &actual)
+		if !gocmp.Equal(expected, actual) {
+			t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(expected, actual))
+		}
 	}
 }
 
@@ -792,8 +873,11 @@ func Test_MarshalDashboard_WithEmptyCellType(t *testing.T) {
 		t.Fatal("Error marshaling dashboard: err", err)
 	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
 		t.Fatal("Error unmarshaling dashboard: err:", err)
-	} else if !gocmp.Equal(expected, actual) {
-		t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(expected, actual))
+	} else {
+		dashboardRoundtripNormalizeType(&dashboard, &actual)
+		if !gocmp.Equal(expected, actual) {
+			t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(expected, actual))
+		}
 	}
 }
 

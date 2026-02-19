@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/builtin"
@@ -440,9 +441,12 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	return
 }
 
-// BuiltinDashboardTemplate returns the original JSON template for a builtin dashboard by file name
+// BuiltinDashboardTemplate returns the original JSON template for a builtin dashboard by name.
+// When the request has organization context, compares template cells with the current user's
+// dashboard (same org + name) and adds cellVersionStatus to each cell: "new", "update",
+// "unchanged", or "deprecated". Deprecated cells (in user's dashboard but not in template)
+// are appended to the cells array so the client can show them with one loop.
 // GET /cloudhub/v1/builtin/dashboards/:name/template
-// The name parameter should be the dashboard file name without extension (e.g., "hostpage" for "hostpage.json")
 func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Request) {
 	name, err := paramStr("name", r)
 	if err != nil {
@@ -455,7 +459,6 @@ func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Reques
 		Logger: s.Logger,
 	}
 
-	// Get template by dashboard name (unique identifier, not filename)
 	template, err := builtinStore.Get(ctx, name)
 	if err != nil {
 		if err == cloudhub.ErrDashboardNotFound {
@@ -466,7 +469,63 @@ func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Return the template as-is (without organization or ID set)
 	res := newDashboardResponse(template)
+	orgID, ok := hasOrganizationContext(ctx)
+	if !ok || orgID == "" {
+		encodeJSON(w, http.StatusOK, res, s.Logger)
+		return
+	}
+
+	dashboardID, err := s.Store.BuiltinDashboardMappingStore().GetDashboardID(ctx, orgID, name)
+	if err != nil {
+		// No dashboard for this org yet: all template cells are "new"
+		for i := range res.Cells {
+			res.Cells[i].CellVersionStatus = "new"
+		}
+		encodeJSON(w, http.StatusOK, res, s.Logger)
+		return
+	}
+
+	serverCtx := serverContext(ctx)
+	userDash, err := s.Store.Dashboards(serverCtx).Get(ctx, dashboardID)
+	if err != nil || userDash.Organization != orgID {
+		for i := range res.Cells {
+			res.Cells[i].CellVersionStatus = "new"
+		}
+		encodeJSON(w, http.StatusOK, res, s.Logger)
+		return
+	}
+
+	userCellsByID := make(map[string]cloudhub.DashboardCell)
+	for _, c := range userDash.Cells {
+		userCellsByID[c.ID] = c
+	}
+
+	dd := AddQueryConfigs(DashboardDefaults(template))
+	const placeholderID = 0
+	var cellsWithStatus []dashboardCellResponse
+	for _, tc := range dd.Cells {
+		cr := newCellResponse(placeholderID, tc)
+		uc, inUser := userCellsByID[tc.ID]
+		if !inUser {
+			cr.CellVersionStatus = "new"
+		} else {
+			delete(userCellsByID, tc.ID)
+			// Only compare queries to decide update vs unchanged; type, colors, etc. are user-customizable.
+			if reflect.DeepEqual(tc.Queries, uc.Queries) {
+				cr.CellVersionStatus = "unchanged"
+			} else {
+				cr.CellVersionStatus = "update"
+			}
+		}
+		cellsWithStatus = append(cellsWithStatus, cr)
+	}
+	for _, uc := range userCellsByID {
+		cr := newCellResponse(placeholderID, uc)
+		cr.CellVersionStatus = "deprecated"
+		cellsWithStatus = append(cellsWithStatus, cr)
+	}
+
+	res.Cells = cellsWithStatus
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }

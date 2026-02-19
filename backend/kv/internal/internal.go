@@ -496,6 +496,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			GraphOptions:           graphOptions,
 			TableGaugeChartOptions: tableGaugeChartOptions,
 			CellOrigin:             c.CellOrigin,
+			Hidden:                 c.Hidden,
 		}
 	}
 	templates := make([]*Template, len(d.Templates))
@@ -790,6 +791,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			GraphOptions:           graphOptions,
 			TableGaugeChartOptions: tableGaugeChartOptions,
 			CellOrigin:             c.CellOrigin,
+			Hidden:                 c.Hidden,
 		}
 	}
 

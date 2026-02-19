@@ -2953,6 +2953,48 @@
         }
       }
     },
+    "/builtin/dashboards/{name}/template": {
+      "get": {
+        "tags": ["dashboards", "templates", "builtin"],
+        "summary": "Get builtin dashboard template JSON",
+        "description": "Returns the original builtin dashboard template by name (e.g. host_page). When the request has organization context, each cell includes cellVersionStatus comparing template to the current org's dashboard: 'new', 'update', 'unchanged', or 'deprecated'. Deprecated cells (in org dashboard but not in template) are appended to the cells array.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "type": "string",
+            "description": "Builtin template name (e.g. host_page)",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Builtin template; cells include cellVersionStatus when organization context is present.",
+            "schema": {
+              "$ref": "#/definitions/Dashboard"
+            }
+          },
+          "400": {
+            "description": "Dashboard name is required",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Builtin template not found for the given name",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/templates/{name}": {
       "get": {
         "tags": ["dashboards", "templates"],
@@ -8369,6 +8411,15 @@
               "type": "string"
             }
           }
+        },
+        "cellVersionStatus": {
+          "description": "Only present in GET /builtin/dashboards/{name}/template when request has organization context. Indicates how this cell compares to the org's dashboard: 'new' (in template only), 'update' (both but content differs), 'unchanged' (identical), 'deprecated' (in org dashboard only).",
+          "type": "string",
+          "enum": ["new", "update", "unchanged", "deprecated"]
+        },
+        "hidden": {
+          "description": "When true, the cell is hidden (user can toggle without deleting). Omitted when false.",
+          "type": "boolean"
         },
         "links": {
           "type": "object",
