@@ -32,12 +32,18 @@ func initializeDefaultOrgBuiltinDashboards(ctx context.Context, service *Service
 	mappingStore := service.Store.BuiltinDashboardMappingStore()
 
 	// Initialize builtin dashboards for default organization
-	return InitializeBuiltinDashboards(
+	if err := InitializeBuiltinDashboards(
 		serverCtx,
 		defaultOrg.ID,
 		dashboardsStore,
 		builtinStore,
 		mappingStore,
 		logger,
-	)
+	); err != nil {
+		return err
+	}
+
+	// Template sync (SyncBuiltinTemplatesToAllOrgs) is done on first GET /cloudhub/v1/templates/:name
+	// per builtin name to avoid startup load.
+	return nil
 }

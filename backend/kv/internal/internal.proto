@@ -27,6 +27,7 @@ message Dashboard {
 	string Organization          = 5; // Organization is the organization ID that resource belongs to
 	string Type                  = 6; // Type distinguishes dashboard types: 'normal' (default) or 'builtin'
 	string Version               = 7; // Version is the template version for builtin dashboards (e.g., "1.0.0")
+	string UpdatedAt               = 8; // When dashboard was last updated (e.g. builtin template sync); TZ=UTC, Format=RFC3339
 }
 
 message DashboardCell {

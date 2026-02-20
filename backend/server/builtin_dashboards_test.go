@@ -124,3 +124,74 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 		})
 	}
 }
+
+func TestSyncBuiltinTemplatesToAllOrgs(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	realBuiltinStore := &builtin.BinDashboardsStore{Logger: log.New(log.DebugLevel)}
+	template, err := realBuiltinStore.Get(ctx, "host_page")
+	if err != nil {
+		t.Skip("host_page builtin not available:", err)
+	}
+
+	entries := []cloudhub.BuiltinDashboardMappingEntry{
+		{OrgID: "org1", DashboardID: 1},
+		{OrgID: "org2", DashboardID: 2},
+	}
+	org1Dash := cloudhub.Dashboard{
+		ID: 1, Organization: "org1", Name: "host_page",
+		Cells:     []cloudhub.DashboardCell{{ID: "user-cell-1", Name: "User cell 1"}},
+		Templates: []cloudhub.Template{{ID: "old", Label: "Old"}},
+	}
+	org2Dash := cloudhub.Dashboard{
+		ID: 2, Organization: "org2", Name: "host_page",
+		Cells:     []cloudhub.DashboardCell{{ID: "user-cell-2", Name: "User cell 2"}},
+		Templates: []cloudhub.Template{},
+	}
+	var updated []cloudhub.Dashboard
+	mockDashboardsStore := &mocks.DashboardsStore{
+		GetF: func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+			if id == 1 {
+				return org1Dash, nil
+			}
+			if id == 2 {
+				return org2Dash, nil
+			}
+			return cloudhub.Dashboard{}, cloudhub.ErrDashboardNotFound
+		},
+		UpdateF: func(ctx context.Context, d cloudhub.Dashboard) error {
+			updated = append(updated, d)
+			return nil
+		},
+	}
+	mockMappingStore := &mocks.BuiltinDashboardMappingStore{
+		ListByBuiltinNameF: func(ctx context.Context, name string) ([]cloudhub.BuiltinDashboardMappingEntry, error) {
+			if name != "host_page" {
+				return nil, nil
+			}
+			return entries, nil
+		},
+	}
+
+	err = SyncBuiltinTemplatesToAllOrgs(ctx, "host_page", mockDashboardsStore, realBuiltinStore, mockMappingStore, log.New(log.DebugLevel))
+	if err != nil {
+		t.Fatalf("SyncBuiltinTemplatesToAllOrgs() error = %v", err)
+	}
+	if len(updated) != 2 {
+		t.Fatalf("Update called %d times, want 2", len(updated))
+	}
+	for i, u := range updated {
+		if len(u.Templates) != len(template.Templates) {
+			t.Errorf("updated[%d].Templates length = %d, want %d", i, len(u.Templates), len(template.Templates))
+		}
+		var origCells []cloudhub.DashboardCell
+		if u.ID == 1 {
+			origCells = org1Dash.Cells
+		} else {
+			origCells = org2Dash.Cells
+		}
+		if len(u.Cells) != len(origCells) || (len(origCells) > 0 && u.Cells[0].ID != origCells[0].ID) {
+			t.Errorf("updated[%d].Cells must be preserved: got %+v, want %+v", i, u.Cells, origCells)
+		}
+	}
+}

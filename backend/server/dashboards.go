@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"reflect"
+	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/builtin"
 )
 
-// setBuiltinVersionInfo sets LatestVersion and UpdateAvailable on resp when d is a builtin dashboard.
+// BuiltinUpdatedBadgeDays is how many days to show "Updated" badge after a builtin template sync.
+const BuiltinUpdatedBadgeDays = 30
+
+// setBuiltinVersionInfo sets LatestVersion, UpdateAvailable, and RecentlyUpdated on resp when d is a builtin dashboard.
 // getVersion returns the latest builtin version for a dashboard name (e.g. from BinDashboardsStore.GetVersion).
 func setBuiltinVersionInfo(resp *dashboardResponse, d cloudhub.Dashboard, getVersion func(context.Context, string) string, ctx context.Context) {
 	if d.Type != cloudhub.DashboardTypeBuiltin {
@@ -25,6 +28,13 @@ func setBuiltinVersionInfo(resp *dashboardResponse, d cloudhub.Dashboard, getVer
 	// Update is available if: no version (legacy) or version differs from latest
 	if d.Version == "" || d.Version != latest {
 		resp.UpdateAvailable = true
+	}
+	// Show "Updated" badge when dashboard was updated within BuiltinUpdatedBadgeDays (server decides; single source of truth)
+	if d.UpdatedAt != "" {
+		if t, err := time.Parse(time.RFC3339, d.UpdatedAt); err == nil {
+			limit := time.Now().UTC().AddDate(0, 0, -BuiltinUpdatedBadgeDays)
+			resp.RecentlyUpdated = !t.Before(limit)
+		}
 	}
 }
 
@@ -51,9 +61,11 @@ type dashboardResponse struct {
 	Organization    string                  `json:"organization"`
 	Type            string                  `json:"type,omitempty"`
 	Version         string                  `json:"version,omitempty"`         // Current version of the dashboard
-	LatestVersion   string                  `json:"latestVersion,omitempty"`   // Latest version available (for builtin dashboards)
-	UpdateAvailable bool                    `json:"updateAvailable,omitempty"` // True if a newer version is available
-	Links           dashboardLinks          `json:"links"`
+	LatestVersion      string                  `json:"latestVersion,omitempty"`      // Latest version available (for builtin dashboards)
+	UpdateAvailable    bool                    `json:"updateAvailable,omitempty"`     // True if a newer version is available
+	UpdatedAt         string                  `json:"updatedAt,omitempty"`           // RFC3339; when dashboard was last updated
+	RecentlyUpdated   bool                    `json:"recentlyUpdated,omitempty"`     // true if builtin and updated within BuiltinUpdatedBadgeDays (server-computed)
+	Links             dashboardLinks          `json:"links"`
 }
 
 type getDashboardsResponse struct {
@@ -66,7 +78,7 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 	cells := newCellResponses(dd.ID, dd.Cells)
 	templates := newTemplateResponses(dd.ID, dd.Templates)
 
-	return &dashboardResponse{
+	resp := &dashboardResponse{
 		ID:           dd.ID,
 		Name:         dd.Name,
 		Cells:        cells,
@@ -80,6 +92,10 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 			Templates: fmt.Sprintf("%s/%d/templates", base, dd.ID),
 		},
 	}
+	if d.UpdatedAt != "" {
+		resp.UpdatedAt = d.UpdatedAt
+	}
+	return resp
 }
 
 // Dashboards returns all dashboards within the store
@@ -154,6 +170,7 @@ func (s *Service) DashboardID(w http.ResponseWriter, r *http.Request) {
 
 // TemplateDashboardByName returns the builtin dashboard for the current org by name (e.g. host_page).
 // GET /cloudhub/v1/templates/:name
+// If the builtin template version differs from the org dashboard's version, templates are synced to all orgs first.
 func (s *Service) TemplateDashboardByName(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	orgID, ok := hasOrganizationContext(ctx)
@@ -188,8 +205,17 @@ func (s *Service) TemplateDashboardByName(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res := newDashboardResponse(e)
 	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
+	builtinVersion := builtinStore.GetVersion(ctx, name)
+	if builtinVersion != "" && e.Version != builtinVersion {
+		dashboardsStore := s.Store.Dashboards(serverCtx)
+		mappingStore := s.Store.BuiltinDashboardMappingStore()
+		if err := SyncBuiltinTemplatesToAllOrgs(serverCtx, name, dashboardsStore, builtinStore, mappingStore, s.Logger); err == nil {
+			e, _ = s.Store.Dashboards(serverCtx).Get(ctx, dashboardID)
+		}
+	}
+
+	res := newDashboardResponse(e)
 	setBuiltinVersionInfo(res, e, builtinStore.GetVersion, ctx)
 
 	encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -414,6 +440,7 @@ func DashboardDefaults(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Organization = d.Organization
 	newDash.Type = getDashboardType(d.Type)
 	newDash.Version = d.Version
+	newDash.UpdatedAt = d.UpdatedAt
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {
@@ -441,11 +468,32 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	return
 }
 
+// builtinTemplateMeta is the response item for BuiltinDashboardList.
+type builtinTemplateMeta struct {
+	Name    string `json:"name"`
+	Version string `json:"version,omitempty"`
+}
+
+// BuiltinDashboardList returns the list of available builtin template names (and version).
+// GET /cloudhub/v1/builtin/dashboards
+func (s *Service) BuiltinDashboardList(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
+	all, err := builtinStore.All(ctx)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, "Error listing builtin dashboards", s.Logger)
+		return
+	}
+	list := make([]builtinTemplateMeta, 0, len(all))
+	for _, d := range all {
+		list = append(list, builtinTemplateMeta{Name: d.Name, Version: d.Version})
+	}
+	encodeJSON(w, http.StatusOK, struct {
+		Templates []builtinTemplateMeta `json:"templates"`
+	}{Templates: list}, s.Logger)
+}
+
 // BuiltinDashboardTemplate returns the original JSON template for a builtin dashboard by name.
-// When the request has organization context, compares template cells with the current user's
-// dashboard (same org + name) and adds cellVersionStatus to each cell: "new", "update",
-// "unchanged", or "deprecated". Deprecated cells (in user's dashboard but not in template)
-// are appended to the cells array so the client can show them with one loop.
 // GET /cloudhub/v1/builtin/dashboards/:name/template
 func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Request) {
 	name, err := paramStr("name", r)
@@ -470,62 +518,5 @@ func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Reques
 	}
 
 	res := newDashboardResponse(template)
-	orgID, ok := hasOrganizationContext(ctx)
-	if !ok || orgID == "" {
-		encodeJSON(w, http.StatusOK, res, s.Logger)
-		return
-	}
-
-	dashboardID, err := s.Store.BuiltinDashboardMappingStore().GetDashboardID(ctx, orgID, name)
-	if err != nil {
-		// No dashboard for this org yet: all template cells are "new"
-		for i := range res.Cells {
-			res.Cells[i].CellVersionStatus = "new"
-		}
-		encodeJSON(w, http.StatusOK, res, s.Logger)
-		return
-	}
-
-	serverCtx := serverContext(ctx)
-	userDash, err := s.Store.Dashboards(serverCtx).Get(ctx, dashboardID)
-	if err != nil || userDash.Organization != orgID {
-		for i := range res.Cells {
-			res.Cells[i].CellVersionStatus = "new"
-		}
-		encodeJSON(w, http.StatusOK, res, s.Logger)
-		return
-	}
-
-	userCellsByID := make(map[string]cloudhub.DashboardCell)
-	for _, c := range userDash.Cells {
-		userCellsByID[c.ID] = c
-	}
-
-	dd := AddQueryConfigs(DashboardDefaults(template))
-	const placeholderID = 0
-	var cellsWithStatus []dashboardCellResponse
-	for _, tc := range dd.Cells {
-		cr := newCellResponse(placeholderID, tc)
-		uc, inUser := userCellsByID[tc.ID]
-		if !inUser {
-			cr.CellVersionStatus = "new"
-		} else {
-			delete(userCellsByID, tc.ID)
-			// Only compare queries to decide update vs unchanged; type, colors, etc. are user-customizable.
-			if reflect.DeepEqual(tc.Queries, uc.Queries) {
-				cr.CellVersionStatus = "unchanged"
-			} else {
-				cr.CellVersionStatus = "update"
-			}
-		}
-		cellsWithStatus = append(cellsWithStatus, cr)
-	}
-	for _, uc := range userCellsByID {
-		cr := newCellResponse(placeholderID, uc)
-		cr.CellVersionStatus = "deprecated"
-		cellsWithStatus = append(cellsWithStatus, cr)
-	}
-
-	res.Cells = cellsWithStatus
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/builtin"
@@ -104,5 +105,65 @@ func InitializeBuiltinDashboards(
 			Info("Initialized builtin dashboard")
 	}
 
+	return nil
+}
+
+// SyncBuiltinTemplatesToAllOrgs updates only the Templates field of every org's dashboard
+// that was created from the builtin named builtinName. Cells and other fields are left unchanged.
+// dashboardsStore must be the store from server context (not org-scoped) so all dashboards can be read/updated.
+func SyncBuiltinTemplatesToAllOrgs(
+	ctx context.Context,
+	builtinName string,
+	dashboardsStore cloudhub.DashboardsStore,
+	builtinStore *builtin.BinDashboardsStore,
+	mappingStore cloudhub.BuiltinDashboardMappingStore,
+	logger cloudhub.Logger,
+) error {
+	template, err := builtinStore.Get(ctx, builtinName)
+	if err != nil {
+		return err
+	}
+
+	entries, err := mappingStore.ListByBuiltinName(ctx, builtinName)
+	if err != nil {
+		logger.
+			WithField("component", "builtin").
+			WithField("builtinName", builtinName).
+			Error("Failed to list builtin dashboard mappings:", err)
+		return err
+	}
+
+	for _, e := range entries {
+		dash, err := dashboardsStore.Get(ctx, e.DashboardID)
+		if err != nil {
+			logger.
+				WithField("component", "builtin").
+				WithField("builtinName", builtinName).
+				WithField("orgID", e.OrgID).
+				WithField("dashboardID", e.DashboardID).
+				Error("Failed to get dashboard for template sync:", err)
+			continue
+		}
+		if dash.Organization != e.OrgID {
+			continue
+		}
+		dash.Templates = template.Templates
+		dash.Version = template.Version
+		dash.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+		if err := dashboardsStore.Update(ctx, dash); err != nil {
+			logger.
+				WithField("component", "builtin").
+				WithField("builtinName", builtinName).
+				WithField("orgID", e.OrgID).
+				WithField("dashboardID", e.DashboardID).
+				Error("Failed to update dashboard templates:", err)
+			continue
+		}
+		logger.
+			WithField("component", "builtin").
+			WithField("builtinName", builtinName).
+			WithField("orgID", e.OrgID).
+			Debug("Synced builtin templates to org dashboard")
+	}
 	return nil
 }

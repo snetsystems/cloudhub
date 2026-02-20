@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -54,4 +55,35 @@ func (s *builtinDashboardMappingStore) Register(ctx context.Context, orgID, name
 		idStr := strconv.Itoa(int(dashboardID))
 		return tx.Bucket(dashboardsBuiltinMappingBucket).Put(mappingKey(orgID, name), []byte(idStr))
 	})
+}
+
+// ListByBuiltinName returns all (orgID, dashboardID) entries for the given builtin name.
+func (s *builtinDashboardMappingStore) ListByBuiltinName(ctx context.Context, name string) ([]cloudhub.BuiltinDashboardMappingEntry, error) {
+	if name == "" {
+		return nil, nil
+	}
+	suffix := "\x00" + name
+	var out []cloudhub.BuiltinDashboardMappingEntry
+	if err := s.client.kv.View(ctx, func(tx Tx) error {
+		return tx.Bucket(dashboardsBuiltinMappingBucket).ForEach(func(k, v []byte) error {
+			keyStr := string(k)
+			if !strings.HasSuffix(keyStr, suffix) {
+				return nil
+			}
+			orgID := keyStr[:len(keyStr)-len(suffix)]
+			idStr := string(v)
+			id, err := strconv.ParseInt(idStr, 10, 64)
+			if err != nil {
+				return nil
+			}
+			out = append(out, cloudhub.BuiltinDashboardMappingEntry{
+				OrgID:        orgID,
+				DashboardID:  cloudhub.DashboardID(id),
+			})
+			return nil
+		})
+	}); err != nil {
+		return nil, err
+	}
+	return out, nil
 }

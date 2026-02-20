@@ -760,8 +760,9 @@ type Dashboard struct {
 	Templates    []Template      `json:"templates"`
 	Name         string          `json:"name"`
 	Organization string          `json:"organization"`      // Organization is the organization ID that resource belongs to
-	Type         string          `json:"type,omitempty"`    // Type distinguishes dashboard types: "normal" (default) or "builtin"
-	Version      string          `json:"version,omitempty"` // Version is the template version for builtin dashboards (e.g., "1.0.0")
+	Type               string     `json:"type,omitempty"`    // Type distinguishes dashboard types: "normal" (default) or "builtin"
+	Version            string     `json:"version,omitempty"` // Version is the template version for builtin dashboards (e.g., "1.0.0")
+	UpdatedAt string `json:"updatedAt,omitempty"` // When the dashboard was last updated (RFC3339, UTC); e.g. builtin template sync
 }
 
 // UnmarshalJSON unmarshals a string ID into a DashboardID (int).
@@ -934,6 +935,12 @@ type DashboardsStore interface {
 	Update(context.Context, Dashboard) error
 }
 
+// BuiltinDashboardMappingEntry is one (orgID, dashboardID) pair for a builtin dashboard name.
+type BuiltinDashboardMappingEntry struct {
+	OrgID        string      `json:"orgID"`
+	DashboardID DashboardID `json:"dashboardID"`
+}
+
 // BuiltinDashboardMappingStore stores (orgID, builtin dashboard name) -> dashboard ID
 // so the frontend can request a builtin dashboard by name (e.g. host_page).
 type BuiltinDashboardMappingStore interface {
@@ -941,6 +948,8 @@ type BuiltinDashboardMappingStore interface {
 	GetDashboardID(ctx context.Context, orgID, name string) (DashboardID, error)
 	// Register records that the builtin dashboard named name in org orgID is stored as dashboardID.
 	Register(ctx context.Context, orgID, name string, dashboardID DashboardID) error
+	// ListByBuiltinName returns all (orgID, dashboardID) entries for the given builtin name.
+	ListByBuiltinName(ctx context.Context, name string) ([]BuiltinDashboardMappingEntry, error)
 }
 
 // Cell is a rectangle and multiple time series queries to visualize.

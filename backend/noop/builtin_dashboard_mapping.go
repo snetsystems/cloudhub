@@ -21,3 +21,8 @@ func (s *BuiltinDashboardMappingStore) GetDashboardID(ctx context.Context, orgID
 func (s *BuiltinDashboardMappingStore) Register(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error {
 	return nil
 }
+
+// ListByBuiltinName returns nil (no mappings).
+func (s *BuiltinDashboardMappingStore) ListByBuiltinName(ctx context.Context, name string) ([]cloudhub.BuiltinDashboardMappingEntry, error) {
+	return nil, nil
+}

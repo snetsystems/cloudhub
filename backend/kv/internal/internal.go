@@ -536,7 +536,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 		}
 		templates[i] = template
 	}
-	return proto.Marshal(&Dashboard{
+	pb := &Dashboard{
 		ID:           int64(d.ID),
 		Cells:        cells,
 		Templates:    templates,
@@ -544,7 +544,9 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 		Organization: d.Organization,
 		Type:         getDashboardType(d.Type),
 		Version:      d.Version,
-	})
+	}
+	pb.UpdatedAt = d.UpdatedAt
+	return proto.Marshal(pb)
 }
 
 // UnmarshalDashboard decodes a layout from binary protobuf data.
@@ -844,6 +846,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 	d.Organization = pb.Organization
 	d.Type = getDashboardType(pb.Type)
 	d.Version = pb.Version
+	d.UpdatedAt = pb.UpdatedAt
 	return nil
 }
 
