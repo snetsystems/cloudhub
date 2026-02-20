@@ -91,7 +91,7 @@ import ManagementRouter from 'src/device_management/containers/ManagementRouter'
 import 'src/log_analysis/util/setupOUIIcons'
 import TopologyRouter from 'src/hosts/containers/TopologyRouter'
 import OverviewPage from 'src/overview/containers/OverviewPage'
-import HostPageRouter from 'src/hosts/containers/HostPageRouter'
+import NewHostsPage from 'src/hosts/containers/NewHostsPage'
 import ServerDetailsPage from 'src/server_details/containers/ServerDetailsPage'
 import GPUMonitoringPage from 'src/gpu_monitoring/containers/GPUMonitoringPage'
 import URLMonitoringPage from 'src/url_monitoring/containers/URLMonitoringPage'
@@ -292,7 +292,8 @@ class Root extends PureComponent<Record<string, never>, State> {
                 />
                 <Route
                   path="server-monitoring/server-list"
-                  component={HostPageRouter}
+                  // component={HostPageRouter}
+                  component={NewHostsPage}
                 />
                 <Route
                   path="server-monitoring/server-list/:hostID"

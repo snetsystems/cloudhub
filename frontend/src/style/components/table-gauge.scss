@@ -117,7 +117,7 @@
           z-index: 10;
           background-color: $g4-onyx;
           color: $g14-chromium;
-          border: 0; /* 전체 border 제거 */
+          border: 0;
           border-top: $ix-border solid $g5-pepper;
           border-right: $ix-border solid $g5-pepper;
           border-bottom: $ix-border solid $g5-pepper;
@@ -127,7 +127,7 @@
           white-space: pre;
           padding: 4px 12px;
           color: $g12-forge;
-          border: 0; /* 전체 border 제거 */
+          border: 0;
           border-right: $ix-border solid $g5-pepper;
           border-bottom: $ix-border solid $g5-pepper;
         }
@@ -202,7 +202,7 @@
 }
 
 .template-variable-cell {
-  color:$s-brown;
+  color: $s-brown;
   cursor: pointer;
   &:hover {
     color: $s-orange;
@@ -211,4 +211,4 @@
 
 .invalid-value {
   text-align: left;
- }
+}

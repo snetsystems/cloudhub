@@ -8,3 +8,50 @@
   align-items: center;
   justify-content: center;
 }
+
+.host-page-graph-table-container-wrapper {
+  padding: 16px;
+  color: $g14-chromium;
+}
+
+.host-page-graph-table-container {
+  width: 100%;
+  padding: 16px;
+
+  .panel.panel-solid {
+    width: 100%;
+
+    .panel-body {
+      width: 100%;
+      padding: 0;
+
+      table {
+        border-collapse: separate;
+        border-left: $ix-border solid $g5-pepper;
+      }
+
+      tr {
+        th {
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          background-color: $g4-onyx;
+          color: $g14-chromium;
+          border: 0;
+          border-top: $ix-border solid $g5-pepper;
+          border-right: $ix-border solid $g5-pepper;
+          border-bottom: $ix-border solid $g5-pepper;
+        }
+
+        td {
+          white-space: pre;
+          padding: 4px 12px;
+          color: $g12-forge;
+          border: 0;
+          border-right: $ix-border solid $g5-pepper;
+          border-bottom: $ix-border solid $g5-pepper;
+        }
+      }
+    }
+  }
+}
