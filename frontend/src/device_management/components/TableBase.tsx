@@ -3,7 +3,6 @@ import React, {useEffect, useMemo, useState} from 'react'
 
 // Components
 import AccordionTable from 'src/device_management/components/AccordionTable'
-import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
 
 // Types
 import {
@@ -14,7 +13,6 @@ import {
   SortInfo,
   TimeZones,
 } from 'src/types'
-import {formatValueWithUnit} from 'src/dashboards/utils/gaugeCell'
 interface Props {
   columns: ColumnInfo[]
   data: DataTableObject[]
@@ -262,11 +260,6 @@ function TableBase({
                                 htmlFor={`agent-control--${rowIndex}`}
                               />
                             </div>
-                          ) : column?.options?.isGauge ? (
-                            <TableGaugeCell
-                              options={column.options?.gaugeOptions}
-                              value={getValue(item, key) as number}
-                            />
                           ) : column?.render ? (
                             column.render(
                               getValue(item, key),
