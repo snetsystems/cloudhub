@@ -2768,13 +2768,9 @@ class KubernetesPage extends PureComponent<Props, State> {
     const {kubernetesObject} = this.state
     const node = d3.select('svg.kubernetes-svg').selectAll('g')
 
-    if (!node.node() || !(node.data().length > 0)) return
-
-    const esc = (v: any) =>
-      typeof (window as any).CSS !== 'undefined' &&
-      typeof (window as any).CSS.escape === 'function'
-        ? (window as any).CSS.escape(String(v))
-        : String(v).replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+    if (!node.node() || !(node.data().length > 0)) {
+      return
+    }
 
     let d3NodeObject = {}
     _.forEach(node.select(`circle[data-type=${'Node'}]`).data() as any[], s => {
@@ -2798,139 +2794,140 @@ class KubernetesPage extends PureComponent<Props, State> {
       }
     })
 
-    _.forEach(
+    const nodeNamesInK8sObject = _.map(
+      _.filter(kubernetesObject, k8sObj => k8sObj['type'] === 'Node'),
+      m => m['name']
+    )
+    const grayNodeNames = new Set(
       _.filter(
         d3NodeObject,
-        f =>
-          !_.map(
-            _.filter(kubernetesObject, k8sObj => k8sObj['type'] === 'Node'),
-            m => m['name']
-          ).includes(f['name'])
-      ),
-      d3ModNod => {
-        node
-          .select(`circle[data-label=${esc(d3ModNod['name'])}]`)
-          .attr('fill', 'gray')
-      }
+        f => !nodeNamesInK8sObject.includes(f['name'])
+      ).map((n: any) => n['name'])
     )
-
-    _.forEach(
-      _.filter(
-        d3PodObject,
-        f =>
-          !_.map(
-            _.filter(kubernetesObject, k8sObj => k8sObj['type'] === 'Pod'),
-            m => m['name']
-          ).includes(f['name'])
-      ),
-      d3ModPod => {
-        node
-          .select(`path[data-label=${esc(d3ModPod['name'])}]`)
-          .attr('fill', 'gray')
+    const nodeDataMap: Record<
+      string,
+      {cpu: string; memory: string}
+    > = {}
+    _.forEach(kubernetesObject, m => {
+      if (m['type'] === 'Node') {
+        nodeDataMap[m['name']] = {cpu: m['cpu'], memory: m['memory']}
       }
+    })
+    node.selectAll(`circle[data-type=${'Node'}]`).each(function () {
+      const label = d3.select(this).attr('data-label')
+      if (!label) return
+      if (grayNodeNames.has(label)) {
+        d3.select(this).attr('fill', 'gray')
+        return
+      }
+      const data = nodeDataMap[label]
+      if (!data) return
+      const limitCpu = d3.select(this).attr('data-limit-cpu')
+      const limitMemory = d3.select(this).attr('data-limit-memory')
+      if (!limitCpu || !limitMemory) return
+      const cpuUsage =
+        (parseFloat(data.cpu) / parseFloat(limitCpu)) * 100.0
+      const memoryUsage =
+        (parseFloat(data.memory) / parseFloat(limitMemory)) * 100.0
+      const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+      const fillColor = kubernetesStatusColor(pick / 100)
+      d3.select(this)
+        .attr('data-cpu', `${cpuUsage}`)
+        .attr('data-memory', `${memoryUsage}`)
+        .attr('fill', fillColor)
+    })
+
+    const podNamesInK8sObject = _.map(
+      _.filter(kubernetesObject, k8sObj => k8sObj['type'] === 'Pod'),
+      m => m['name']
     )
-    try {
-      _.forEach(kubernetesObject, m => {
-        if (m['type'] === 'Node') {
-          if (
-            _.find(
-              node.select(`circle[data-type=${'Node'}]`).data() as any[],
-              nodeData => nodeData.data.label === m['name']
-            )
-          ) {
-            const limitCpu = node
-              .select(`circle[data-label=${esc(m['name'])}]`)
-              .attr('data-limit-cpu')
-            const limitMemory = node
-              .select(`circle[data-label=${esc(m['name'])}]`)
-              .attr('data-limit-memory')
-            const cpuUsage =
-              (parseFloat(m['cpu']) / parseFloat(limitCpu)) * 100.0
-            const memoryUsage =
-              (parseFloat(m['memory']) / parseFloat(limitMemory)) * 100.0
+    const podsToPaintGray = _.filter(
+      d3PodObject,
+      f => !podNamesInK8sObject.includes(f['name'])
+    )
+    const grayPodNames = new Set(podsToPaintGray.map((p: any) => p['name']))
+    const podDataMap: Record<
+      string,
+      {cpu: string; memory: string}
+    > = {}
+    _.forEach(kubernetesObject, m => {
+      if (m['type'] !== 'Node' && m['type'] !== 'PV') {
+        podDataMap[m['name']] = {cpu: m['cpu'], memory: m['memory']}
+      }
+    })
+    node.selectAll(`path[data-type=${'Pod'}]`).each(function () {
+      const label = d3.select(this).attr('data-label')
+      if (!label) return
+      if (grayPodNames.has(label)) {
+        d3.select(this).attr('fill', 'gray')
+        return
+      }
+      const data = podDataMap[label]
+      if (!data) return
+      const limitCpu = d3.select(this).attr('data-limit-cpu')
+      const limitMemory = d3.select(this).attr('data-limit-memory')
+      if (!limitCpu || !limitMemory) return
+      const cpuUsage =
+        (parseFloat(data.cpu) / parseFloat(limitCpu)) * 100.0
+      const memoryUsage =
+        (parseFloat(data.memory) / parseFloat(limitMemory)) * 100.0
+      const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+      const fillColor = kubernetesStatusColor(pick / 100)
+      d3.select(this)
+        .attr('data-cpu', `${cpuUsage}`)
+        .attr('data-memory', `${memoryUsage}`)
+        .attr('fill', fillColor)
+    })
 
-            node
-              .select(`circle[data-label=${esc(m['name'])}]`)
-              .attr('data-cpu', `${cpuUsage}`)
-            node
-              .select(`circle[data-label=${esc(m['name'])}]`)
-              .attr('data-memory', `${memoryUsage}`)
-            const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
-            const fillColor = kubernetesStatusColor(pick / 100)
-            node
-              .select(`circle[data-label=${esc(m['name'])}]`)
-              .attr('fill', fillColor)
-          }
-        } else if (m['type'] === 'PV') {
-          if (
-            _.find(
-              node.select(`path[data-type=${'PV'}]`).data() as any[],
-              pvData => pvData.data.label === m['name']
-            )
-          ) {
-            const iopsValue = m['iops'] || 0
-            const bandwidthValue = m['bandwidth'] || 0
-            const latencyValue = m['latency'] || 0
-
-            const iopsUsage = (iopsValue / 100000) * 100
-            const bandwidthUsage = (bandwidthValue / 700000) * 100
-
-            const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
-            const fillColor = kubernetesStatusColor(pick / 100)
-
-            node
-              .select(`path[data-label=${esc(m['name'])}]`)
-              .attr('data-iops', `${iopsValue}`)
-              .attr('data-bandwidth', `${bandwidthValue}`)
-              .attr('data-latency', `${latencyValue}`)
-              .attr('fill', fillColor)
-
-            const volumeMapping = this.state.volumeMapping || {}
-            const mappedPVCs = Object.keys(volumeMapping).filter(
-              pvcName => volumeMapping[pvcName] === m['name']
-            )
-            mappedPVCs.forEach(pvcName => {
-              node
-                .select(`path[data-type=${'PVC'}][data-label=${esc(pvcName)}]`)
-                .attr('fill', fillColor)
-            })
-          }
-        } else {
-          if (
-            _.find(
-              node.select(`path[data-type=${'Pod'}]`).data() as any[],
-              podData => podData.data.label === m['name']
-            )
-          ) {
-            const limitCpu = node
-              .select(`path[data-label=${esc(m['name'])}]`)
-              .attr('data-limit-cpu')
-            const limitMemory = node
-              .select(`path[data-label=${esc(m['name'])}]`)
-              .attr('data-limit-memory')
-            const cpuUsage =
-              (parseFloat(m['cpu']) / parseFloat(limitCpu)) * 100.0
-            const memoryUsage =
-              (parseFloat(m['memory']) / parseFloat(limitMemory)) * 100.0
-
-            node
-              .select(`path[data-label=${esc(m['name'])}]`)
-              .attr('data-cpu', `${cpuUsage}`)
-            node
-              .select(`path[data-label=${esc(m['name'])}]`)
-              .attr('data-memory', `${memoryUsage}`)
-
-            const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
-            const fillColor = kubernetesStatusColor(pick / 100)
-            node
-              .select(`path[data-label=${esc(m['name'])}]`)
-              .attr('fill', fillColor)
-          }
+    const pvDataMap: Record<
+      string,
+      {iops: number; bandwidth: number; latency: number}
+    > = {}
+    const pvcFillMap: Record<string, string> = {}
+    const volumeMapping = this.state.volumeMapping || {}
+    _.forEach(kubernetesObject, m => {
+      if (m['type'] === 'PV') {
+        const iopsValue = m['iops'] || 0
+        const bandwidthValue = m['bandwidth'] || 0
+        const latencyValue = m['latency'] || 0
+        const iopsUsage = (iopsValue / 100000) * 100
+        const bandwidthUsage = (bandwidthValue / 700000) * 100
+        const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
+        const fillColor = kubernetesStatusColor(pick / 100)
+        pvDataMap[m['name']] = {
+          iops: iopsValue,
+          bandwidth: bandwidthValue,
+          latency: latencyValue,
         }
-      })
-    } catch (error) {
-      console.error(error)
-    }
+        const mappedPVCs = Object.keys(volumeMapping).filter(
+          pvcName => volumeMapping[pvcName] === m['name']
+        )
+        mappedPVCs.forEach(pvcName => {
+          pvcFillMap[pvcName] = fillColor
+        })
+      }
+    })
+    node.selectAll(`path[data-type=${'PV'}]`).each(function () {
+      const label = d3.select(this).attr('data-label')
+      const data = label ? pvDataMap[label] : null
+      if (!data) return
+      const iopsUsage = (data.iops / 100000) * 100
+      const bandwidthUsage = (data.bandwidth / 700000) * 100
+      const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
+      const fillColor = kubernetesStatusColor(pick / 100)
+      d3.select(this)
+        .attr('data-iops', `${data.iops}`)
+        .attr('data-bandwidth', `${data.bandwidth}`)
+        .attr('data-latency', `${data.latency}`)
+        .attr('fill', fillColor)
+    })
+    node.selectAll(`path[data-type=${'PVC'}]`).each(function () {
+      const label = d3.select(this).attr('data-label')
+      const fillColor = label ? pvcFillMap[label] : null
+      if (fillColor) {
+        d3.select(this).attr('fill', fillColor)
+      }
+    })
   }
 
   public async fetchK8sData() {

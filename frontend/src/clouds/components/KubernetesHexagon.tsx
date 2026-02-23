@@ -514,123 +514,133 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         }
       })
 
-    _.forEach(
+    const nodeNamesInK8sObjectHex = _.map(
+      _.filter(kubernetesObject, k8sObj => k8sObj['type'] === 'Node'),
+      m => m['name']
+    )
+    const grayNodeNamesHex = new Set(
       _.filter(
         d3NodeObject,
-        f =>
-          !_.map(
-            _.filter(kubernetesObject, k8sObj => k8sObj['type'] === 'Node'),
-            m => m['name']
-          ).includes(f['name'])
-      ),
-      d3ModNod => {
-        zoomGroup
-          .select(`circle[data-label=${esc(d3ModNod['name'])}]`)
-          .attr('fill', 'gray')
-      }
+        f => !nodeNamesInK8sObjectHex.includes(f['name'])
+      ).map((n: any) => n['name'])
     )
-
-    _.forEach(
-      _.filter(
-        d3PodObject,
-        f =>
-          !_.map(
-            _.filter(kubernetesObject, k8sObj => k8sObj['type'] === 'Pod'),
-            m => m['name']
-          ).includes(f['name'])
-      ),
-      d3ModPod => {
-        zoomGroup
-          .select(`path[data-label=${esc(d3ModPod['name'])}]`)
-          .attr('fill', 'gray')
-      }
-    )
-
+    const nodeDataMapHex: Record<
+      string,
+      {cpu: string; memory: string}
+    > = {}
     _.forEach(kubernetesObject, m => {
       if (m['type'] === 'Node') {
-        if (
-          _.find(
-            zoomGroup.select(`circle[data-type=${'Node'}]`).data(),
-            (nodeData: any) => nodeData.data.label === m['name']
-          )
-        ) {
-          const limitCpu = zoomGroup
-            .select(`circle[data-label=${esc(m['name'])}]`)
-            .attr('data-limit-cpu')
-          const limitMemory = zoomGroup
-            .select(`circle[data-label=${esc(m['name'])}]`)
-            .attr('data-limit-memory')
-          const cpuUsage = (parseFloat(m['cpu']) / parseFloat(limitCpu)) * 100
-          const memoryUsage =
-            (parseFloat(m['memory']) / parseFloat(limitMemory)) * 100
-          const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
-          const fillColor = kubernetesStatusColor(pick / 100)
-          zoomGroup
-            .select(`circle[data-label=${esc(m['name'])}]`)
-            .attr('data-cpu', `${cpuUsage}`)
-          zoomGroup
-            .select(`circle[data-label=${esc(m['name'])}]`)
-            .attr('data-memory', `${memoryUsage}`)
-            .attr('fill', fillColor)
+        nodeDataMapHex[m['name']] = {cpu: m['cpu'], memory: m['memory']}
+      }
+    })
+    zoomGroup.selectAll(`circle[data-type=${'Node'}]`).each(function () {
+      const label = d3.select(this).attr('data-label')
+      if (!label) return
+      if (grayNodeNamesHex.has(label)) {
+        d3.select(this).attr('fill', 'gray')
+        return
+      }
+      const data = nodeDataMapHex[label]
+      if (!data) return
+      const limitCpu = d3.select(this).attr('data-limit-cpu')
+      const limitMemory = d3.select(this).attr('data-limit-memory')
+      if (!limitCpu || !limitMemory) return
+      const cpuUsage = (parseFloat(data.cpu) / parseFloat(limitCpu)) * 100
+      const memoryUsage =
+        (parseFloat(data.memory) / parseFloat(limitMemory)) * 100
+      const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+      const fillColor = kubernetesStatusColor(pick / 100)
+      d3.select(this)
+        .attr('data-cpu', `${cpuUsage}`)
+        .attr('data-memory', `${memoryUsage}`)
+        .attr('fill', fillColor)
+    })
+
+    const podNamesInK8sObjectHex = _.map(
+      _.filter(kubernetesObject, k8sObj => k8sObj['type'] === 'Pod'),
+      m => m['name']
+    )
+    const podsToPaintGrayHex = _.filter(
+      d3PodObject,
+      f => !podNamesInK8sObjectHex.includes(f['name'])
+    )
+    const grayPodNames = new Set(
+      podsToPaintGrayHex.map((p: any) => p['name'])
+    )
+    const podDataMapHex: Record<
+      string,
+      {cpu: string; memory: string}
+    > = {}
+    _.forEach(kubernetesObject, m => {
+      if (m['type'] !== 'Node' && m['type'] !== 'PV') {
+        podDataMapHex[m['name']] = {cpu: m['cpu'], memory: m['memory']}
+      }
+    })
+    zoomGroup.selectAll(`path[data-type=${'Pod'}]`).each(function () {
+      const label = d3.select(this).attr('data-label')
+      if (!label) return
+      if (grayPodNames.has(label)) {
+        d3.select(this).attr('fill', 'gray')
+        return
+      }
+      const data = podDataMapHex[label]
+      if (!data) return
+      const limitCpu = d3.select(this).attr('data-limit-cpu')
+      const limitMemory = d3.select(this).attr('data-limit-memory')
+      if (!limitCpu || !limitMemory) return
+      const cpuUsage =
+        (parseFloat(data.cpu) / parseFloat(limitCpu)) * 100
+      const memoryUsage =
+        (parseFloat(data.memory) / parseFloat(limitMemory)) * 100
+      const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+      const fillColor = kubernetesStatusColor(pick / 100)
+      d3.select(this)
+        .attr('data-cpu', `${cpuUsage}`)
+        .attr('data-memory', `${memoryUsage}`)
+        .attr('fill', fillColor)
+    })
+
+    const pvDataMapHex: Record<
+      string,
+      {iops: number; bandwidth: number; latency: number}
+    > = {}
+    const pvFillMapHex: Record<string, string> = {}
+    _.forEach(kubernetesObject, m => {
+      if (m['type'] === 'PV') {
+        const iopsValue = m['iops'] || 0
+        const bandwidthValue = m['bandwidth'] || 0
+        const latencyValue = m['latency'] || 0
+        const iopsUsage = (iopsValue / 100000) * 100
+        const bandwidthUsage = (bandwidthValue / 700000) * 100
+        const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
+        const fillColor = kubernetesStatusColor(pick / 100)
+        pvDataMapHex[m['name']] = {
+          iops: iopsValue,
+          bandwidth: bandwidthValue,
+          latency: latencyValue,
         }
-      } else if (m['type'] === 'PV') {
-        if (
-          _.find(
-            zoomGroup.select(`path[data-type=${'PV'}]`).data(),
-            (pvData: any) => pvData.data.label === m['name']
-          )
-        ) {
-          const iopsValue = m['iops'] || 0
-          const bandwidthValue = m['bandwidth'] || 0
-          const latencyValue = m['latency'] || 0
-
-          const iopsUsage = (iopsValue / 100000) * 100
-          const bandwidthUsage = (bandwidthValue / 700000) * 100
-
-          const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
-          const fillColor = kubernetesStatusColor(pick / 100)
-
-          zoomGroup
-            .select(`path[data-label=${esc(m['name'])}]`)
-            .attr('data-iops', `${iopsValue}`)
-            .attr('data-bandwidth', `${bandwidthValue}`)
-            .attr('data-latency', `${latencyValue}`)
-            .attr('fill', fillColor)
-
-          zoomGroup
-            .selectAll(`path[data-type=${'PVC'}]`)
-            .filter(function () {
-              return d3.select(this).attr('data-volume-name') === m['name']
-            })
-            .attr('fill', fillColor)
-        }
-      } else {
-        if (
-          _.find(
-            zoomGroup.select(`path[data-type=${'Pod'}]`).data(),
-            (podData: any) => podData.data.label === m['name']
-          )
-        ) {
-          const limitCpu = zoomGroup
-            .select(`path[data-label=${esc(m['name'])}]`)
-            .attr('data-limit-cpu')
-          const limitMemory = zoomGroup
-            .select(`path[data-label=${esc(m['name'])}]`)
-            .attr('data-limit-memory')
-          const cpuUsage = (parseFloat(m['cpu']) / parseFloat(limitCpu)) * 100
-          const memoryUsage =
-            (parseFloat(m['memory']) / parseFloat(limitMemory)) * 100
-
-          const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
-          const fillColor = kubernetesStatusColor(pick / 100)
-          zoomGroup
-            .select(`path[data-label=${esc(m['name'])}]`)
-            .attr('data-cpu', `${cpuUsage}`)
-          zoomGroup
-            .select(`path[data-label=${esc(m['name'])}]`)
-            .attr('data-memory', `${memoryUsage}`)
-            .attr('fill', fillColor)
-        }
+        pvFillMapHex[m['name']] = fillColor
+      }
+    })
+    zoomGroup.selectAll(`path[data-type=${'PV'}]`).each(function () {
+      const label = d3.select(this).attr('data-label')
+      const data = label ? pvDataMapHex[label] : null
+      if (!data) return
+      const iopsUsage = (data.iops / 100000) * 100
+      const bandwidthUsage = (data.bandwidth / 700000) * 100
+      const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
+      const fillColor = kubernetesStatusColor(pick / 100)
+      d3.select(this)
+        .attr('data-iops', `${data.iops}`)
+        .attr('data-bandwidth', `${data.bandwidth}`)
+        .attr('data-latency', `${data.latency}`)
+        .attr('fill', fillColor)
+    })
+    zoomGroup.selectAll(`path[data-type=${'PVC'}]`).each(function () {
+      const volumeName = d3.select(this).attr('data-volume-name')
+      const fillColor = volumeName ? pvFillMapHex[volumeName] : null
+      if (fillColor) {
+        d3.select(this).attr('fill', fillColor)
       }
     })
 
