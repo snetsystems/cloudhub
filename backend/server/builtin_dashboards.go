@@ -108,62 +108,91 @@ func InitializeBuiltinDashboards(
 	return nil
 }
 
-// SyncBuiltinTemplatesToAllOrgs updates only the Templates field of every org's dashboard
-// that was created from the builtin named builtinName. Cells and other fields are left unchanged.
-// dashboardsStore must be the store from server context (not org-scoped) so all dashboards can be read/updated.
-func SyncBuiltinTemplatesToAllOrgs(
+// ApplyBuiltinDashboardToOrg updates the given org's builtin dashboard from the latest template:
+// - Templates, Version, UpdatedAt: replaced from template.
+// - Cells: only cells with Type "fixed" are updated, and only their Queries field is replaced from the template (matched by cell ID, json "i"). All other cells and all other cell fields are left unchanged.
+func ApplyBuiltinDashboardToOrg(
 	ctx context.Context,
+	orgID string,
 	builtinName string,
 	dashboardsStore cloudhub.DashboardsStore,
 	builtinStore *builtin.BinDashboardsStore,
 	mappingStore cloudhub.BuiltinDashboardMappingStore,
 	logger cloudhub.Logger,
 ) error {
+	dashboardID, err := mappingStore.GetDashboardID(ctx, orgID, builtinName)
+	if err != nil {
+		return err
+	}
+
+	dash, err := dashboardsStore.Get(ctx, dashboardID)
+	if err != nil {
+		logger.
+			WithField("component", "builtin").
+			WithField("builtinName", builtinName).
+			WithField("orgID", orgID).
+			Error("Failed to get dashboard for apply:", err)
+		return err
+	}
+	if dash.Organization != orgID {
+		return cloudhub.ErrDashboardNotFound
+	}
+
 	template, err := builtinStore.Get(ctx, builtinName)
 	if err != nil {
-		return err
-	}
-
-	entries, err := mappingStore.ListByBuiltinName(ctx, builtinName)
-	if err != nil {
 		logger.
 			WithField("component", "builtin").
 			WithField("builtinName", builtinName).
-			Error("Failed to list builtin dashboard mappings:", err)
+			Error("Failed to load builtin template:", err)
 		return err
 	}
 
-	for _, e := range entries {
-		dash, err := dashboardsStore.Get(ctx, e.DashboardID)
-		if err != nil {
-			logger.
-				WithField("component", "builtin").
-				WithField("builtinName", builtinName).
-				WithField("orgID", e.OrgID).
-				WithField("dashboardID", e.DashboardID).
-				Error("Failed to get dashboard for template sync:", err)
+	// Build map: template cell ID (i) -> queries (only for component type)
+	templateQueriesByID := make(map[string][]cloudhub.DashboardQuery)
+	for i := range template.Cells {
+		c := &template.Cells[i]
+		if c.Type == "component" && c.ID != "" {
+			templateQueriesByID[c.ID] = cloneDashboardQueries(c.Queries)
+		}
+	}
+
+	// For org dashboard: only update Queries on cells with type "component", from template by cell ID (i)
+	for i := range dash.Cells {
+		c := &dash.Cells[i]
+		if c.Type != "component" {
 			continue
 		}
-		if dash.Organization != e.OrgID {
-			continue
+		if queries, ok := templateQueriesByID[c.ID]; ok {
+			dash.Cells[i].Queries = queries
 		}
-		dash.Templates = template.Templates
-		dash.Version = template.Version
-		dash.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
-		if err := dashboardsStore.Update(ctx, dash); err != nil {
-			logger.
-				WithField("component", "builtin").
-				WithField("builtinName", builtinName).
-				WithField("orgID", e.OrgID).
-				WithField("dashboardID", e.DashboardID).
-				Error("Failed to update dashboard templates:", err)
-			continue
-		}
+	}
+
+	dash.Templates = template.Templates
+	dash.Version = template.Version
+	dash.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	if err := dashboardsStore.Update(ctx, dash); err != nil {
 		logger.
 			WithField("component", "builtin").
 			WithField("builtinName", builtinName).
-			WithField("orgID", e.OrgID).
-			Debug("Synced builtin templates to org dashboard")
+			WithField("orgID", orgID).
+			Error("Failed to update dashboard on apply:", err)
+		return err
 	}
+
+	logger.
+		WithField("component", "builtin").
+		WithField("builtinName", builtinName).
+		WithField("orgID", orgID).
+		Info("Applied builtin template (component cells: queries only) to org dashboard")
 	return nil
+}
+
+func cloneDashboardQueries(q []cloudhub.DashboardQuery) []cloudhub.DashboardQuery {
+	if q == nil {
+		return nil
+	}
+	out := make([]cloudhub.DashboardQuery, len(q))
+	copy(out, q)
+	return out
 }

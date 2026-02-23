@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react'
 import GraphOptionsToggleBtn from 'src/dashboards/components/GraphOptionsToggleBtn'
 import DashboardList from 'src/server_details/components/DashboardList'
 import CellList from 'src/server_details/components/CellList'
-import List3 from 'src/server_details/components/List3'
+import BuiltinTemplates from 'src/server_details/components/BuiltinTemplates'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
 import {Dashboard, CellType, Template} from 'src/types'
@@ -75,11 +75,11 @@ function FixedModal({isOpen, setIsOpen, children, width, onSelectionChange}: Pro
       titleText: 'Cell List',
     },
     {
-      title: 'List 3',
-      value: 'list-3',
-      active: currentTab === 'list-3',
-      onClick: () => handleTabChange('list-3'),
-      titleText: 'List 3',
+      title: 'Builtin',
+      value: 'builtin',
+      active: currentTab === 'builtin',
+      onClick: () => handleTabChange('builtin'),
+      titleText: 'Builtin',
     },
   ]
 
@@ -143,7 +143,7 @@ function FixedModal({isOpen, setIsOpen, children, width, onSelectionChange}: Pro
                 {currentTab === 'cell-list' && (
                   <CellList onSelectionChange={handleSelectionUpdate} />
                 )}
-                {currentTab === 'list-3' && <List3 />}
+                {currentTab === 'builtin' && <BuiltinTemplates />}
                 {children}
               </div>
             </FancyScrollbar>

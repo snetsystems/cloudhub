@@ -378,6 +378,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Builtin Dashboard Templates
 	router.GET("/cloudhub/v1/builtin/dashboards", EnsureViewer(service.BuiltinDashboardList))
 	router.GET("/cloudhub/v1/builtin/dashboards/:name/template", EnsureViewer(service.BuiltinDashboardTemplate))
+	router.POST("/cloudhub/v1/builtin/dashboards/:name/apply", EnsureEditor(service.ApplyBuiltinDashboard))
 	// Builtin dashboard by name (resolves to org's dashboard ID and returns dashboard)
 	router.GET("/cloudhub/v1/templates/:name", EnsureViewer(service.TemplateDashboardByName))
 

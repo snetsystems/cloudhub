@@ -48,6 +48,52 @@ export const getDashboard = async dashboardID => {
   }
 }
 
+/** Response of GET /cloudhub/v1/builtin/dashboards (list of available builtin template names) */
+export interface BuiltinDashboardListResponse {
+  templates: Array<{name: string; version?: string}>
+}
+
+export const getBuiltinDashboardList = (): Promise<
+  AxiosResponse<BuiltinDashboardListResponse>
+> => {
+  return AJAX<BuiltinDashboardListResponse>({
+    method: 'GET',
+    url: '/cloudhub/v1/builtin/dashboards',
+  }) as Promise<AxiosResponse<BuiltinDashboardListResponse>>
+}
+
+/** Fetches one builtin template by name. GET /cloudhub/v1/builtin/dashboards/:name/template */
+export const getBuiltinDashboardTemplate = async (
+  name: string
+): Promise<AxiosResponse<Dashboard>> => {
+  return AJAX<Dashboard>({
+    method: 'GET',
+    url: `/cloudhub/v1/builtin/dashboards/${encodeURIComponent(name)}/template`,
+  }) as Promise<AxiosResponse<Dashboard>>
+}
+
+/** Fetches current org's builtin dashboard by name (has version, latestVersion, updateAvailable, recentlyUpdated). GET /cloudhub/v1/templates/:name */
+export const getTemplateDashboardByName = async (
+  name: string
+): Promise<AxiosResponse<Dashboard> | null> => {
+  try {
+    return (await AJAX<Dashboard>({
+      method: 'GET',
+      url: `/cloudhub/v1/templates/${encodeURIComponent(name)}`,
+    })) as AxiosResponse<Dashboard>
+  } catch {
+    return null
+  }
+}
+
+/** Applies the latest builtin template to the current org's dashboard (full replace). POST /cloudhub/v1/builtin/dashboards/:name/apply */
+export const applyBuiltinDashboard = async (name: string): Promise<void> => {
+  await AJAX({
+    method: 'POST',
+    url: `/cloudhub/v1/builtin/dashboards/${encodeURIComponent(name)}/apply`,
+  })
+}
+
 export const updateDashboard = dashboard => {
   return AJAX({
     method: 'PUT',

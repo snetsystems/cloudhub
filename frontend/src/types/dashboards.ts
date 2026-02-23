@@ -154,6 +154,13 @@ export interface Dashboard {
   organization: string
   links?: DashboardLinks
   type?: DashboardTypeValue
+  version?: string
+  latestVersion?: string
+  updateAvailable?: boolean
+  /** RFC3339; when dashboard was last updated (e.g. builtin sync) */
+  updatedAt?: string
+  /** Server-computed: true if builtin and updated within last N days (show "Updated" badge) */
+  recentlyUpdated?: boolean
 }
 
 export const DashboardType = {

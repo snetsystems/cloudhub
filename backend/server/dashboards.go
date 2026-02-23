@@ -170,7 +170,7 @@ func (s *Service) DashboardID(w http.ResponseWriter, r *http.Request) {
 
 // TemplateDashboardByName returns the builtin dashboard for the current org by name (e.g. host_page).
 // GET /cloudhub/v1/templates/:name
-// If the builtin template version differs from the org dashboard's version, templates are synced to all orgs first.
+// Returns the org's dashboard as stored. No auto-apply; the user must use the Update button (POST .../apply) to apply the latest template. This keeps Current version reflecting the real org state so the UI can show update availability (Current vs Latest).
 func (s *Service) TemplateDashboardByName(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	orgID, ok := hasOrganizationContext(ctx)
@@ -206,15 +206,6 @@ func (s *Service) TemplateDashboardByName(w http.ResponseWriter, r *http.Request
 	}
 
 	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
-	builtinVersion := builtinStore.GetVersion(ctx, name)
-	if builtinVersion != "" && e.Version != builtinVersion {
-		dashboardsStore := s.Store.Dashboards(serverCtx)
-		mappingStore := s.Store.BuiltinDashboardMappingStore()
-		if err := SyncBuiltinTemplatesToAllOrgs(serverCtx, name, dashboardsStore, builtinStore, mappingStore, s.Logger); err == nil {
-			e, _ = s.Store.Dashboards(serverCtx).Get(ctx, dashboardID)
-		}
-	}
-
 	res := newDashboardResponse(e)
 	setBuiltinVersionInfo(res, e, builtinStore.GetVersion, ctx)
 
@@ -519,4 +510,43 @@ func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Reques
 
 	res := newDashboardResponse(template)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// ApplyBuiltinDashboard fully applies the latest builtin template to the current org's dashboard (cells + templates).
+// POST /cloudhub/v1/builtin/dashboards/:name/apply
+func (s *Service) ApplyBuiltinDashboard(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	orgID, ok := hasOrganizationContext(ctx)
+	if !ok || orgID == "" {
+		Error(w, http.StatusBadRequest, "organization context required", s.Logger)
+		return
+	}
+
+	name, err := paramStr("name", r)
+	if err != nil || name == "" {
+		Error(w, http.StatusBadRequest, "template name is required", s.Logger)
+		return
+	}
+
+	serverCtx := serverContext(ctx)
+	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
+	err = ApplyBuiltinDashboardToOrg(
+		serverCtx,
+		orgID,
+		name,
+		s.Store.Dashboards(serverCtx),
+		builtinStore,
+		s.Store.BuiltinDashboardMappingStore(),
+		s.Logger,
+	)
+	if err != nil {
+		if err == cloudhub.ErrDashboardNotFound {
+			notFound(w, name, s.Logger)
+			return
+		}
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -1,0 +1,207 @@
+/*
+   Builtin Templates (FixedModal Builtin tab) & shared builtin badge
+   -----------------------------------------------------------------------------
+   Uses theme variables from modules (_influx-colors, _variables).
+*/
+
+.builtin-templates {
+  padding: $ix-marg-c;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $ix-marg-c;
+    flex-wrap: wrap;
+    gap: $ix-marg-b;
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &__update-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__version-info {
+    font-size: $ix-text-base;
+    color: rgba($g18-cloud, 0.8);
+  }
+
+  &__btn-update {
+    font-size: $ix-text-base;
+    padding: 6px 14px;
+    border-radius: $ix-radius;
+    border: none;
+    background-color: $c-ruby;
+    color: $g20-white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.25s ease, opacity 0.25s ease;
+
+    &:hover:not(:disabled) {
+      background-color: darken($c-ruby, 6%);
+    }
+
+    &:disabled {
+      cursor: wait;
+      opacity: 0.8;
+    }
+  }
+
+  &__list {
+    background-color: $g2-kevlar;
+    border: 1px solid $g5-pepper;
+    border-radius: $ix-radius;
+    overflow: hidden;
+  }
+
+  &__error {
+    color: $c-ruby;
+  }
+}
+
+// Tree item (shared with dashboard-tree pattern)
+.builtin-templates .dashboard-tree-item {
+  border-bottom: 1px solid $g5-pepper;
+
+  &.expanded .dashboard-tree-header {
+    background-color: $g5-pepper;
+  }
+
+  &.dashboard-tree-item--no-children .dashboard-tree-header {
+    cursor: default;
+  }
+
+  .dashboard-tree-header {
+    padding: 12px $ix-marg-c;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    background-color: $g2-kevlar;
+    transition: background-color 0.25s ease, color 0.25s ease;
+
+    &:hover {
+      background-color: $g4-onyx;
+    }
+  }
+
+  &.expanded .dashboard-tree-header:hover {
+    background-color: $g5-pepper;
+  }
+
+  .fixedmodal-checkbox-wrapper {
+    margin-right: $ix-marg-b;
+  }
+
+  .builtin-templates__caret-wrap {
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: $ix-marg-b;
+  }
+
+  .dashboard-tree-header .icon {
+    font-size: 12px;
+    color: $g11-sidewalk;
+    transition: transform 0.2s, color 0.25s ease;
+  }
+
+  .dashboard-tree-header:hover .icon {
+    color: $g15-platinum;
+  }
+
+  &.expanded .dashboard-tree-header .icon {
+    color: $g18-cloud;
+  }
+
+  .builtin-templates__tree-title {
+    flex: 1;
+    min-width: 0;
+    margin-right: 12px;
+  }
+
+  .builtin-templates__tree-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: $g11-sidewalk;
+    transition: color 0.25s ease;
+  }
+
+  .dashboard-tree-header:hover .builtin-templates__tree-name {
+    color: $g15-platinum;
+  }
+
+  &.expanded .builtin-templates__tree-name {
+    color: $g18-cloud;
+  }
+
+  .builtin-templates__tree-meta {
+    font-size: 11px;
+    color: $g11-sidewalk;
+    margin-top: $ix-marg-a;
+    transition: color 0.25s ease;
+  }
+
+  .dashboard-tree-header:hover .builtin-templates__tree-meta {
+    color: rgba($g15-platinum, 0.7);
+  }
+
+  &.expanded .builtin-templates__tree-meta {
+    color: rgba($g18-cloud, 0.7);
+  }
+
+  .builtin-templates__badges {
+    display: flex;
+    flex-shrink: 0;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .builtin-templates__badge-recently {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: $ix-radius;
+    background-color: $c-sapphire;
+    color: $g20-white;
+  }
+}
+
+.builtin-templates__cell-row {
+  padding: 8px $ix-marg-c 8px 48px;
+  border-bottom: 1px solid $g5-pepper;
+  background-color: $g2-kevlar;
+}
+
+.builtin-templates__cell-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.builtin-templates__cell-name {
+  font-weight: 500;
+  font-size: $ix-text-base;
+  color: $g11-sidewalk;
+}
+
+.builtin-templates__cell-type {
+  margin-left: auto;
+  color: $g11-sidewalk;
+  font-size: 11px;
+  padding: 2px 8px;
+  background-color: $g5-pepper;
+  border-radius: $ix-radius-sm;
+  transition: background-color 0.25s ease, color 0.25s ease;
+
+  &:hover {
+    color: $g15-platinum;
+    background-color: $g4-onyx;
+  }
+}

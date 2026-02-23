@@ -43,7 +43,7 @@ func initializeDefaultOrgBuiltinDashboards(ctx context.Context, service *Service
 		return err
 	}
 
-	// Template sync (SyncBuiltinTemplatesToAllOrgs) is done on first GET /cloudhub/v1/templates/:name
+	// No auto-apply on GET /templates/:name; user applies via Update button (POST /builtin/dashboards/:name/apply)
 	// per builtin name to avoid startup load.
 	return nil
 }
