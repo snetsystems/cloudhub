@@ -2766,9 +2766,9 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public setD3K8sSeries() {
     const {kubernetesObject} = this.state
-    const node = d3.select('svg').selectAll('g')
+    const node = d3.select('svg.kubernetes-svg').selectAll('g')
 
-    if (!(node.data().length > 0)) return
+    if (!node.node() || !(node.data().length > 0)) return
 
     const esc = (v: any) =>
       typeof (window as any).CSS !== 'undefined' &&
@@ -2838,22 +2838,16 @@ class KubernetesPage extends PureComponent<Props, State> {
               nodeData => nodeData.data.label === m['name']
             )
           ) {
+            const limitCpu = node
+              .select(`circle[data-label=${esc(m['name'])}]`)
+              .attr('data-limit-cpu')
+            const limitMemory = node
+              .select(`circle[data-label=${esc(m['name'])}]`)
+              .attr('data-limit-memory')
             const cpuUsage =
-              (parseFloat(m['cpu']) /
-                parseFloat(
-                  node
-                    .select(`circle[data-label=${esc(m['name'])}]`)
-                    .attr('data-limit-cpu')
-                )) *
-              100.0
+              (parseFloat(m['cpu']) / parseFloat(limitCpu)) * 100.0
             const memoryUsage =
-              (parseFloat(m['memory']) /
-                parseFloat(
-                  node
-                    .select(`circle[data-label=${esc(m['name'])}]`)
-                    .attr('data-limit-memory')
-                )) *
-              100.0
+              (parseFloat(m['memory']) / parseFloat(limitMemory)) * 100.0
 
             node
               .select(`circle[data-label=${esc(m['name'])}]`)
@@ -2862,12 +2856,10 @@ class KubernetesPage extends PureComponent<Props, State> {
               .select(`circle[data-label=${esc(m['name'])}]`)
               .attr('data-memory', `${memoryUsage}`)
             const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+            const fillColor = kubernetesStatusColor(pick / 100)
             node
               .select(`circle[data-label=${esc(m['name'])}]`)
-              .attr(
-                'fill',
-                (kubernetesStatusColor(pick / 100) as unknown) as string
-              )
+              .attr('fill', fillColor)
           }
         } else if (m['type'] === 'PV') {
           if (
@@ -2884,9 +2876,7 @@ class KubernetesPage extends PureComponent<Props, State> {
             const bandwidthUsage = (bandwidthValue / 700000) * 100
 
             const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
-            const fillColor = (kubernetesStatusColor(
-              pick / 100
-            ) as unknown) as string
+            const fillColor = kubernetesStatusColor(pick / 100)
 
             node
               .select(`path[data-label=${esc(m['name'])}]`)
@@ -2912,22 +2902,16 @@ class KubernetesPage extends PureComponent<Props, State> {
               podData => podData.data.label === m['name']
             )
           ) {
+            const limitCpu = node
+              .select(`path[data-label=${esc(m['name'])}]`)
+              .attr('data-limit-cpu')
+            const limitMemory = node
+              .select(`path[data-label=${esc(m['name'])}]`)
+              .attr('data-limit-memory')
             const cpuUsage =
-              (parseFloat(m['cpu']) /
-                parseFloat(
-                  node
-                    .select(`path[data-label=${esc(m['name'])}]`)
-                    .attr('data-limit-cpu')
-                )) *
-              100.0
+              (parseFloat(m['cpu']) / parseFloat(limitCpu)) * 100.0
             const memoryUsage =
-              (parseFloat(m['memory']) /
-                parseFloat(
-                  node
-                    .select(`path[data-label=${esc(m['name'])}]`)
-                    .attr('data-limit-memory')
-                )) *
-              100.0
+              (parseFloat(m['memory']) / parseFloat(limitMemory)) * 100.0
 
             node
               .select(`path[data-label=${esc(m['name'])}]`)
@@ -2937,12 +2921,10 @@ class KubernetesPage extends PureComponent<Props, State> {
               .attr('data-memory', `${memoryUsage}`)
 
             const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+            const fillColor = kubernetesStatusColor(pick / 100)
             node
               .select(`path[data-label=${esc(m['name'])}]`)
-              .attr(
-                'fill',
-                (kubernetesStatusColor(pick / 100) as unknown) as string
-              )
+              .attr('fill', fillColor)
           }
         }
       })
@@ -3001,6 +2983,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     const {
       kubernetesObject,
       kubernetesData,
+      kubernetesD3Data,
       focuseNode,
       selectedAutoRefresh,
       selectedNamespaces,
@@ -3030,6 +3013,17 @@ class KubernetesPage extends PureComponent<Props, State> {
       JSON.stringify(kubernetesObject)
     ) {
       this.setD3K8sSeries()
+    }
+
+    // kubernetesD3Data가 바뀌면 Hexagon이 SVG를 지우고 다시 그리므로,
+    // 자식이 DOM을 갱신한 뒤에 색상을 다시 적용해야 함
+    if (
+      JSON.stringify(prevState.kubernetesD3Data) !==
+      JSON.stringify(kubernetesD3Data)
+    ) {
+      requestAnimationFrame(() => {
+        this.setD3K8sSeries()
+      })
     }
 
     if (focuseNode.name && prevState.focuseNode.name !== focuseNode.name) {

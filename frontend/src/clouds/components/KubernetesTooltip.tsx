@@ -13,7 +13,7 @@ interface Props {
   onDismiss?: () => void
   targetPosition: TooltipPosition
   tooltipNode: TooltipNode
-  statusColor: chroma.Scale<chroma.Color>
+  statusColor: (t: number) => string
 }
 
 interface State {

@@ -554,33 +554,24 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (nodeData: any) => nodeData.data.label === m['name']
           )
         ) {
-          const cpuUsage =
-            (parseFloat(m['cpu']) /
-              parseFloat(
-                zoomGroup
-                  .select(`circle[data-label=${esc(m['name'])}]`)
-                  .attr('data-limit-cpu')
-              )) *
-            100
+          const limitCpu = zoomGroup
+            .select(`circle[data-label=${esc(m['name'])}]`)
+            .attr('data-limit-cpu')
+          const limitMemory = zoomGroup
+            .select(`circle[data-label=${esc(m['name'])}]`)
+            .attr('data-limit-memory')
+          const cpuUsage = (parseFloat(m['cpu']) / parseFloat(limitCpu)) * 100
           const memoryUsage =
-            (parseFloat(m['memory']) /
-              parseFloat(
-                zoomGroup
-                  .select(`circle[data-label=${esc(m['name'])}]`)
-                  .attr('data-limit-memory')
-              )) *
-            100
+            (parseFloat(m['memory']) / parseFloat(limitMemory)) * 100
           const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+          const fillColor = kubernetesStatusColor(pick / 100)
           zoomGroup
             .select(`circle[data-label=${esc(m['name'])}]`)
             .attr('data-cpu', `${cpuUsage}`)
           zoomGroup
             .select(`circle[data-label=${esc(m['name'])}]`)
             .attr('data-memory', `${memoryUsage}`)
-            .attr(
-              'fill',
-              (kubernetesStatusColor(pick / 100) as unknown) as string
-            )
+            .attr('fill', fillColor)
         }
       } else if (m['type'] === 'PV') {
         if (
@@ -597,9 +588,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
           const bandwidthUsage = (bandwidthValue / 700000) * 100
 
           const pick = iopsUsage > bandwidthUsage ? iopsUsage : bandwidthUsage
-          const fillColor = (kubernetesStatusColor(
-            pick / 100
-          ) as unknown) as string
+          const fillColor = kubernetesStatusColor(pick / 100)
 
           zoomGroup
             .select(`path[data-label=${esc(m['name'])}]`)
@@ -622,34 +611,25 @@ class KubernetesHexagon extends PureComponent<Props, State> {
             (podData: any) => podData.data.label === m['name']
           )
         ) {
-          const cpuUsage =
-            (parseFloat(m['cpu']) /
-              parseFloat(
-                zoomGroup
-                  .select(`path[data-label=${esc(m['name'])}]`)
-                  .attr('data-limit-cpu')
-              )) *
-            100
+          const limitCpu = zoomGroup
+            .select(`path[data-label=${esc(m['name'])}]`)
+            .attr('data-limit-cpu')
+          const limitMemory = zoomGroup
+            .select(`path[data-label=${esc(m['name'])}]`)
+            .attr('data-limit-memory')
+          const cpuUsage = (parseFloat(m['cpu']) / parseFloat(limitCpu)) * 100
           const memoryUsage =
-            (parseFloat(m['memory']) /
-              parseFloat(
-                zoomGroup
-                  .select(`path[data-label=${esc(m['name'])}]`)
-                  .attr('data-limit-memory')
-              )) *
-            100
+            (parseFloat(m['memory']) / parseFloat(limitMemory)) * 100
 
           const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+          const fillColor = kubernetesStatusColor(pick / 100)
           zoomGroup
             .select(`path[data-label=${esc(m['name'])}]`)
             .attr('data-cpu', `${cpuUsage}`)
           zoomGroup
             .select(`path[data-label=${esc(m['name'])}]`)
             .attr('data-memory', `${memoryUsage}`)
-            .attr(
-              'fill',
-              (kubernetesStatusColor(pick / 100) as unknown) as string
-            )
+            .attr('fill', fillColor)
         }
       }
     })
