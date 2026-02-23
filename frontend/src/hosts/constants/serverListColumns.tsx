@@ -11,6 +11,7 @@ import {
   LINE_COLORS_E,
 } from 'src/shared/constants/graphColorPalettes'
 import {Link} from 'react-router'
+import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
 
 export interface ServerListQuery {
   id: string
@@ -43,9 +44,10 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
       thead: {
         align: AlignType.RIGHT,
       },
-      isGauge: true,
       sorting: true,
-      gaugeOptions: {
+    },
+    render: (value: number) => {
+      const gaugeOptions = {
         min: 0,
         max: 100,
         colors: LINE_COLORS_I,
@@ -55,7 +57,8 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
         isShowValues: true,
         isGauge: true,
         decimalPlaces: 0,
-      },
+      }
+      return <TableGaugeCell options={gaugeOptions} value={value} />
     },
   },
   {
@@ -68,7 +71,9 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
         align: AlignType.RIGHT,
       },
       isGauge: true,
-      gaugeOptions: {
+    },
+    render: (value: number) => {
+      const gaugeOptions = {
         min: 0,
         max: 0,
         colors: LINE_COLORS_E,
@@ -79,7 +84,8 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
         isGauge: false,
         valueFormat: FORMAT_OPTIONS.KMG,
         decimalPlaces: 0,
-      },
+      }
+      return <TableGaugeCell options={gaugeOptions} value={value} />
     },
   },
   {
@@ -92,7 +98,9 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
       },
       isGauge: true,
       sorting: true,
-      gaugeOptions: {
+    },
+    render: (value: number) => {
+      const gaugeOptions = {
         min: 0,
         max: 100,
         colors: LINE_COLORS_I,
@@ -102,7 +110,8 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
         isShowValues: true,
         isGauge: true,
         decimalPlaces: 0,
-      },
+      }
+      return <TableGaugeCell options={gaugeOptions} value={value} />
     },
   },
   {
@@ -115,7 +124,9 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
       },
       isGauge: true,
       sorting: true,
-      gaugeOptions: {
+    },
+    render: (value: number) => {
+      const gaugeOptions = {
         min: 0,
         max: 100,
         colors: LINE_COLORS_I,
@@ -126,7 +137,8 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
         isGauge: false,
         valueFormat: FORMAT_OPTIONS.KMG,
         decimalPlaces: 0,
-      },
+      }
+      return <TableGaugeCell options={gaugeOptions} value={value} />
     },
   },
   {
@@ -139,7 +151,9 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
       },
       isGauge: true,
       sorting: true,
-      gaugeOptions: {
+    },
+    render: (value: number) => {
+      const gaugeOptions = {
         min: 0,
         max: 100,
         colors: LINE_COLORS_I,
@@ -150,7 +164,8 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
         isGauge: false,
         valueFormat: FORMAT_OPTIONS.KMG,
         decimalPlaces: 0,
-      },
+      }
+      return <TableGaugeCell options={gaugeOptions} value={value} />
     },
   },
   {
@@ -163,7 +178,9 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
       },
       isGauge: true,
       sorting: true,
-      gaugeOptions: {
+    },
+    render: (value: number) => {
+      const gaugeOptions = {
         min: 0,
         max: 1000000000,
         colors: LINE_COLORS_I,
@@ -174,7 +191,8 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
         isGauge: true,
         valueFormat: FORMAT_OPTIONS.KMG,
         decimalPlaces: 0,
-      },
+      }
+      return <TableGaugeCell options={gaugeOptions} value={value} />
     },
   },
   {
@@ -192,7 +210,9 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
       },
       isGauge: true,
       sorting: true,
-      gaugeOptions: {
+    },
+    render: (value: number) => {
+      const gaugeOptions = {
         min: 0,
         max: 100,
         colors: LINE_COLORS_I,
@@ -202,7 +222,8 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
         isShowValues: true,
         isGauge: true,
         decimalPlaces: 0,
-      },
+      }
+      return <TableGaugeCell options={gaugeOptions} value={value} />
     },
   },
   {key: 'Path', name: 'Path', align: AlignType.LEFT},
@@ -216,7 +237,9 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
       },
       isGauge: true,
       sorting: true,
-      gaugeOptions: {
+    },
+    render: (value: number) => {
+      const gaugeOptions = {
         min: 0,
         max: 100,
         colors: LINE_COLORS_I,
@@ -226,7 +249,8 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
         isShowValues: true,
         isGauge: true,
         decimalPlaces: 0,
-      },
+      }
+      return <TableGaugeCell options={gaugeOptions} value={value} />
     },
   },
   {key: 'Device', name: 'Device', align: AlignType.LEFT},
