@@ -64,12 +64,10 @@ const renderTemplate = (query: string, template: Template): string => {
   const {tempVar} = template
   const {value, type} = templateValue
 
-  if (type === TemplateValueType.TagValue) {
-    return replaceTagValueWithRegex(query, tempVar, value, template)
-  }
-
   let q = query
   switch (type) {
+    case TemplateValueType.TagValue:
+      return replaceTagValueWithRegex(query, tempVar, value, template)
     case TemplateValueType.TagKey:
     case TemplateValueType.FieldKey:
     case TemplateValueType.Measurement:
@@ -110,14 +108,10 @@ const replaceTagValueWithRegex = (
   }
 
   const isAllSelected = selectedValue === 'allTagValues'
-  
-  const regexPattern = isAllSelected
-    ? '.*'
-    : escapeRegexForPattern(selectedValue)
 
   const regexPatternWithDelimiters = isAllSelected
     ? '/^.*$/'
-    : `/^${regexPattern}$/`
+    : `/^${escapeRegexForPattern(selectedValue)}$/`
 
   return replaceAll(query, tempVar, regexPatternWithDelimiters)
 }
