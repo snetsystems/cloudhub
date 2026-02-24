@@ -92,7 +92,7 @@ import 'src/log_analysis/util/setupOUIIcons'
 import TopologyRouter from 'src/hosts/containers/TopologyRouter'
 import OverviewPage from 'src/overview/containers/OverviewPage'
 import NewHostsPage from 'src/hosts/containers/NewHostsPage'
-import ServerDetailsPage from 'src/server_details/containers/ServerDetailsPage'
+import ServerDetailsWrapper from 'src/server_details/containers/ServerDetailsWrapper'
 import GPUMonitoringPage from 'src/gpu_monitoring/containers/GPUMonitoringPage'
 import URLMonitoringPage from 'src/url_monitoring/containers/URLMonitoringPage'
 import DBMonitoringPage from 'src/db_monitoring/containers/DBMonitoringPage'
@@ -101,6 +101,7 @@ import KubernetesRouter from 'src/clouds/containers/KubernetesRouter'
 import OpenStackRouter from 'src/clouds/containers/OpenStackRouter'
 import VMHostRouter from './clouds/containers/VMHostRouter'
 import NutanixPage from './nutanix/containers/NutanixPage'
+import ServerDetailsPage from './server_details/containers/ServerDetailsPage'
 
 const errorsQueue = []
 
@@ -302,6 +303,10 @@ class Root extends PureComponent<Record<string, never>, State> {
                 <Route
                   path="server-monitoring/server-details"
                   component={ServerDetailsPage}
+                />
+                <Route
+                  path="server-monitoring/server-details-tmp"
+                  component={ServerDetailsWrapper}
                 />
                 <Route
                   path="server-monitoring/gpu-monitoring"

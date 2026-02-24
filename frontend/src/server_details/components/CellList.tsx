@@ -1,12 +1,9 @@
 import React, {useState} from 'react'
-import {CellType, Template} from 'src/types'
+import {CellType} from 'src/types'
+import {ImportSelectionPayload} from 'src/shared/types/importModal'
 
 interface CellListProps {
-  onSelectionChange?: (items: {
-    dashboards: any[]
-    cellTypes: CellType[]
-    templates: Template[]
-  }) => void
+  onSelectionChange?: (items: ImportSelectionPayload) => void
 }
 
 const CELL_TYPE_INFO: Record<CellType, {name: string; description: string}> = {
@@ -112,6 +109,7 @@ function CellList({onSelectionChange}: CellListProps) {
         dashboards: [],
         cellTypes: Array.from(newSelected),
         templates: [],
+        importStrategy: 'append',
       })
     }
   }

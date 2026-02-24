@@ -1,36 +1,69 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useCallback, useRef} from 'react'
 import {
   getBuiltinDashboardList,
   getBuiltinDashboardTemplate,
   getTemplateDashboardByName,
   applyBuiltinDashboard,
 } from 'src/dashboards/apis'
-import {Dashboard, Cell} from 'src/types/dashboards'
+import {Dashboard, Cell, CellType} from 'src/types/dashboards'
+import {Template} from 'src/types/tempVars'
+import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import _ from 'lodash'
 import classnames from 'classnames'
 import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
 
-interface BuiltinTemplatesProps {}
+interface BuiltinTemplatesProps {
+  onSelectionChange?: (items: ImportSelectionPayload) => void
+  /** When set, only the builtin template with this name is shown (e.g. current page's builtin). */
+  builtinName?: string
+}
 
 interface TemplateItemProps {
   template: Dashboard
+  selectedCellIds: Set<string>
+  onTemplateToggle: (templateName: string, checked: boolean) => void
+  onCellToggle: (templateName: string, cellId: string, checked: boolean) => void
 }
 
 interface TemplateCellItemProps {
   cell: Cell
+  isChecked: boolean
+  onToggle: (cellId: string, checked: boolean) => void
 }
 
-const TemplateCellItem: React.FC<TemplateCellItemProps> = ({cell}) => {
+const TemplateCellItem: React.FC<TemplateCellItemProps> = ({
+  cell,
+  isChecked,
+  onToggle,
+}) => {
+  const checkboxId = `builtin-cell-${cell.i}`
+  const handleRowClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('.fixedmodal-checkbox-wrapper')) return
+    onToggle(cell.i, !isChecked)
+  }
   return (
-    <div className="builtin-templates__cell-row">
+    <div
+      className="builtin-templates__cell-row"
+      onClick={handleRowClick}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onToggle(cell.i, !isChecked)
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <div className="builtin-templates__cell-inner">
-        <div className="fixedmodal-checkbox-wrapper">
+        <div className="fixedmodal-checkbox-wrapper" onClick={e => e.stopPropagation()}>
           <input
             type="checkbox"
-            id={`builtin-cell-${cell.i}`}
+            id={checkboxId}
+            checked={isChecked}
+            onChange={e => onToggle(cell.i, (e.target as HTMLInputElement).checked)}
             onClick={e => e.stopPropagation()}
           />
-          <label htmlFor={`builtin-cell-${cell.i}`} />
+          <label htmlFor={checkboxId} onClick={e => e.stopPropagation()} />
         </div>
         <span className="icon circle-thin" />
         <span className="builtin-templates__cell-name">
@@ -42,15 +75,35 @@ const TemplateCellItem: React.FC<TemplateCellItemProps> = ({cell}) => {
   )
 }
 
-const TemplateItem: React.FC<TemplateItemProps> = ({template}) => {
-  const [isExpanded, setIsExpanded] = useState(false)
+const TemplateItem: React.FC<TemplateItemProps> = ({
+  template,
+  selectedCellIds,
+  onTemplateToggle,
+  onCellToggle,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true)
+  const hasCells = template.cells && template.cells.length > 0
+  const templateName = template.name || template.id || ''
+  const allSelected =
+    hasCells && template.cells!.every(c => selectedCellIds.has(c.i))
+  const someSelected =
+    hasCells && template.cells!.some(c => selectedCellIds.has(c.i))
 
   const toggleExpanded = (e: React.MouseEvent) => {
     e.stopPropagation()
     setIsExpanded(!isExpanded)
   }
 
-  const hasCells = template.cells && template.cells.length > 0
+  const handleTemplateCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = (e.target as HTMLInputElement).checked
+    onTemplateToggle(templateName, checked)
+  }
+
+  const templateCheckRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const el = templateCheckRef.current
+    if (el) el.indeterminate = someSelected && !allSelected
+  }, [someSelected, allSelected])
 
   return (
     <div
@@ -65,8 +118,11 @@ const TemplateItem: React.FC<TemplateItemProps> = ({template}) => {
       >
         <div className="fixedmodal-checkbox-wrapper" onClick={e => e.stopPropagation()}>
           <input
+            ref={templateCheckRef}
             type="checkbox"
             id={`builtin-template-${template.name}-${template.id}`}
+            checked={allSelected}
+            onChange={handleTemplateCheck}
             onClick={e => e.stopPropagation()}
           />
           <label
@@ -92,24 +148,16 @@ const TemplateItem: React.FC<TemplateItemProps> = ({template}) => {
             Cells: {template.cells?.length || 0}
           </div>
         </div>
-        <div
-          className="builtin-templates__badges"
-          onClick={e => e.stopPropagation()}
-        >
-          {template.recentlyUpdated && (
-            <span
-              className="builtin-templates__badge-recently"
-              title="Template was applied within the last 30 days."
-            >
-              Recently updated
-            </span>
-          )}
-        </div>
       </div>
       {hasCells && isExpanded && (
         <div className="dashboard-tree-children">
           {template.cells!.map(cell => (
-            <TemplateCellItem key={cell.i} cell={cell} />
+            <TemplateCellItem
+              key={cell.i}
+              cell={cell}
+              isChecked={selectedCellIds.has(cell.i)}
+              onToggle={(cellId, checked) => onCellToggle(templateName, cellId, checked)}
+            />
           ))}
         </div>
       )}
@@ -120,14 +168,86 @@ const TemplateItem: React.FC<TemplateItemProps> = ({template}) => {
 const UPDATE_HELP_TEXT =
   'When you run this update: Only cells of type "fixedCell" are changed. For those cells, only the query definitions (queries) are replaced from the latest template, matched by cell ID. Layout, names, and all other cell types remain unchanged. Template variables and version are updated to the latest.'
 
-function BuiltinTemplates(_props: BuiltinTemplatesProps) {
+function BuiltinTemplates({
+  onSelectionChange,
+  builtinName: builtinNameFilter,
+}: BuiltinTemplatesProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [templates, setTemplates] = useState<Dashboard[]>([])
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [isApplying, setIsApplying] = useState(false)
+  /** template name -> selected cell ids (for Import) */
+  const [selectedCellIdsByTemplate, setSelectedCellIdsByTemplate] = useState<
+    Record<string, string[]>
+  >({})
 
   const refreshList = () => setRefreshTrigger(t => t + 1)
+
+  const selectedSet = useCallback((templateName: string) => {
+    return new Set(selectedCellIdsByTemplate[templateName] ?? [])
+  }, [selectedCellIdsByTemplate])
+
+  const onSelectionChangeRef = useRef(onSelectionChange)
+  onSelectionChangeRef.current = onSelectionChange
+
+  const buildSelectionPayload = useCallback(
+    (selectedByTemplate: Record<string, string[]>) => {
+      const dashboards: Dashboard[] = []
+      const templateVars: Template[] = []
+      templates.forEach(t => {
+        const name = t.name || t.id || ''
+        const ids = new Set(selectedByTemplate[name] ?? [])
+        const selectedCells = (t.cells ?? []).filter(c => ids.has(c.i))
+        if (selectedCells.length === 0) return
+        dashboards.push({...t, cells: selectedCells})
+        ;(t.templates ?? []).forEach(tv => {
+          if (!templateVars.find(v => v.id === tv.id)) templateVars.push(tv)
+        })
+      })
+      return {
+        dashboards,
+        cellTypes: [] as CellType[],
+        templates: templateVars,
+        importStrategy: 'mergeByCellId' as const,
+      }
+    },
+    [templates]
+  )
+
+  useEffect(() => {
+    const notify = onSelectionChangeRef.current
+    if (!notify) return
+    const payload = buildSelectionPayload(selectedCellIdsByTemplate)
+    notify(payload)
+  }, [selectedCellIdsByTemplate, buildSelectionPayload])
+
+  const handleTemplateToggle = useCallback(
+    (templateName: string, checked: boolean) => {
+      const template = templates.find(
+        t => (t.name || t.id || '') === templateName
+      )
+      const cellIds = template?.cells?.map(c => c.i) ?? []
+      setSelectedCellIdsByTemplate(prev => ({
+        ...prev,
+        [templateName]: checked ? cellIds : [],
+      }))
+    },
+    [templates]
+  )
+
+  const handleCellToggle = useCallback(
+    (templateName: string, cellId: string, checked: boolean) => {
+      setSelectedCellIdsByTemplate(prev => {
+        const list = prev[templateName] ?? []
+        const nextList = checked
+          ? [...list, cellId]
+          : list.filter(id => id !== cellId)
+        return {...prev, [templateName]: nextList}
+      })
+    },
+    []
+  )
 
   const templatesWithUpdate = templates.filter(t => t.updateAvailable && t.name)
   const hasUpdateAvailable = templatesWithUpdate.length > 0
@@ -179,10 +299,16 @@ function BuiltinTemplates(_props: BuiltinTemplatesProps) {
             version: org?.version ?? undefined,
             latestVersion: serverVersion,
             updateAvailable: org?.updateAvailable,
-            recentlyUpdated: org?.recentlyUpdated,
           }
         })
-        setTemplates(_.sortBy(merged, d => d.name?.toLowerCase() ?? ''))
+        let filtered = _.sortBy(merged, d => d.name?.toLowerCase() ?? '')
+        if (builtinNameFilter) {
+          const name = builtinNameFilter.trim().toLowerCase()
+          filtered = filtered.filter(
+            d => (d.name ?? d.id ?? '').toString().toLowerCase() === name
+          )
+        }
+        setTemplates(filtered)
       } catch (e: any) {
         if (!cancelled) {
           setError(e?.message || 'Failed to load builtin templates')
@@ -196,7 +322,7 @@ function BuiltinTemplates(_props: BuiltinTemplatesProps) {
     return () => {
       cancelled = true
     }
-  }, [refreshTrigger])
+  }, [refreshTrigger, builtinNameFilter])
 
   if (isLoading) {
     return (
@@ -249,6 +375,9 @@ function BuiltinTemplates(_props: BuiltinTemplatesProps) {
             <TemplateItem
               key={template.name || template.id}
               template={template}
+              selectedCellIds={selectedSet(template.name || template.id || '')}
+              onTemplateToggle={handleTemplateToggle}
+              onCellToggle={handleCellToggle}
             />
           ))}
         </div>

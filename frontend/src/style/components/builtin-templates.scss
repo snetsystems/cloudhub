@@ -155,28 +155,13 @@
   &.expanded .builtin-templates__tree-meta {
     color: rgba($g18-cloud, 0.7);
   }
-
-  .builtin-templates__badges {
-    display: flex;
-    flex-shrink: 0;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .builtin-templates__badge-recently {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: $ix-radius;
-    background-color: $c-sapphire;
-    color: $g20-white;
-  }
 }
 
 .builtin-templates__cell-row {
   padding: 8px $ix-marg-c 8px 48px;
   border-bottom: 1px solid $g5-pepper;
   background-color: $g2-kevlar;
+  cursor: pointer;
 }
 
 .builtin-templates__cell-inner {

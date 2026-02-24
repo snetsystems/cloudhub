@@ -1,7 +1,14 @@
 import React, {useEffect, useState} from 'react'
 import {connect} from 'react-redux'
 import {getDashboardsAsync} from 'src/dashboards/actions'
-import {Dashboard, Cell, Source, TimeRange, CellType, Template} from 'src/types'
+import {
+  Dashboard,
+  Cell,
+  Source,
+  TimeRange,
+  Template,
+} from 'src/types'
+import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import _ from 'lodash'
 import classnames from 'classnames'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
@@ -16,11 +23,7 @@ interface DashboardListProps {
   handleGetDashboards: () => Promise<Dashboard[]>
   source?: Source
   timeRange?: TimeRange
-  onSelectionChange?: (items: {
-    dashboards: Dashboard[]
-    cellTypes: CellType[]
-    templates: Template[]
-  }) => void
+  onSelectionChange?: (items: ImportSelectionPayload) => void
 }
 
 interface DashboardItemProps {
@@ -387,9 +390,8 @@ function DashboardList({
         dashboards: selected,
         cellTypes: [],
         templates: templatesWithConflict,
+        importStrategy: 'append',
       })
-      
-
     }
   }
 
@@ -432,14 +434,13 @@ function DashboardList({
       })
       
       const templatesWithConflict = detectTemplateConflicts(allTemplates)
-      
+
       onSelectionChange({
         dashboards: selected,
         cellTypes: [],
         templates: templatesWithConflict,
+        importStrategy: 'append',
       })
-      
-
     }
   }
 

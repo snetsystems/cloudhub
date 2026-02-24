@@ -72,7 +72,7 @@ export const getBuiltinDashboardTemplate = async (
   }) as Promise<AxiosResponse<Dashboard>>
 }
 
-/** Fetches current org's builtin dashboard by name (has version, latestVersion, updateAvailable, recentlyUpdated). GET /cloudhub/v1/templates/:name */
+/** Fetches current org's builtin dashboard by name (has version, latestVersion, updateAvailable). GET /cloudhub/v1/templates/:name */
 export const getTemplateDashboardByName = async (
   name: string
 ): Promise<AxiosResponse<Dashboard> | null> => {
@@ -198,11 +198,17 @@ export const patchDashboardByID = async (
   }
 }
 
-export const deleteDashboardCell = async cell => {
+export const deleteDashboardCell = async (
+  dashboard: {id: string},
+  cell: {i: string; links?: {self?: string}}
+) => {
+  const url =
+    cell.links?.self ||
+    `/cloudhub/v1/dashboards/${dashboard.id}/cells/${cell.i}`
   try {
     return await AJAX({
       method: 'DELETE',
-      url: cell.links.self,
+      url,
     })
   } catch (error) {
     console.error(error)

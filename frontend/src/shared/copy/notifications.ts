@@ -608,6 +608,36 @@ export const notifyCellDeleted = (name: string): Notification => ({
   message: `Deleted "${name}" from dashboard.`,
 })
 
+export const notifyCellsImportedAdded = (count: number): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'dash-h',
+  duration: 1900,
+  message:
+    count === 1
+      ? 'Added 1 cell to dashboard.'
+      : `Added ${count} cells to dashboard.`,
+})
+
+export const notifyCellsImportedUpdated = (count: number): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'dash-h',
+  duration: 1900,
+  message:
+    count === 1
+      ? 'Updated 1 cell in dashboard.'
+      : `Updated ${count} cells in dashboard.`,
+})
+
+export const notifyCellsImportedMixed = (
+  added: number,
+  updated: number
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'dash-h',
+  duration: 1900,
+  message: `Added ${added} and updated ${updated} cells in dashboard.`,
+})
+
 //  Template Variables & URL Queries
 //  ----------------------------------------------------------------------------
 export const notifyInvalidTempVarValueInMetaQuery = (

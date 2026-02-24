@@ -1,60 +1,71 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import GraphOptionsToggleBtn from 'src/dashboards/components/GraphOptionsToggleBtn'
 import DashboardList from 'src/server_details/components/DashboardList'
 import CellList from 'src/server_details/components/CellList'
 import BuiltinTemplates from 'src/server_details/components/BuiltinTemplates'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
-import {Dashboard, CellType, Template} from 'src/types'
+import {ImportSelectionPayload} from 'src/shared/types/importModal'
 
 interface Props {
   isOpen: boolean
   setIsOpen: (isOpen: boolean) => void
   children?: React.ReactNode
   width?: string
-  onSelectionChange?: (items: {
-    dashboards: Dashboard[]
-    cellTypes: CellType[]
-    templates: Template[]
-  }) => void
+  onSelectionChange?: (items: ImportSelectionPayload) => void
+  /** When set, Builtin tab shows only this builtin template (e.g. current page's builtin). */
+  builtinName?: string
 }
 
-interface SelectionState {
-  dashboards: Dashboard[]
-  cellTypes: CellType[]
-  templates: Template[]
-}
-
-function FixedModal({isOpen, setIsOpen, children, width, onSelectionChange}: Props) {
+function FixedModal({
+  isOpen,
+  setIsOpen,
+  children,
+  width,
+  onSelectionChange,
+  builtinName,
+}: Props) {
   const [isMounted, setIsMounted] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(isOpen)
   const [currentTab, setCurrentTab] = useState<string>('dashboard-list')
-  const [selection, setSelection] = useState<SelectionState>({
+  const [selection, setSelection] = useState<ImportSelectionPayload>({
     dashboards: [],
     cellTypes: [],
     templates: [],
+    importStrategy: 'append',
   })
+
+  const selectionRef = useRef<ImportSelectionPayload>(selection)
+  selectionRef.current = selection
 
   const handleTabChange = (tab: string) => {
     setCurrentTab(tab)
   }
 
-  const handleSelectionUpdate = (items: {
-    dashboards: Dashboard[]
-    cellTypes: CellType[]
-    templates: Template[]
-  }) => {
-    setSelection(prev => ({
-      dashboards: items.dashboards.length > 0 ? items.dashboards : prev.dashboards,
-      cellTypes: items.cellTypes.length > 0 ? items.cellTypes : prev.cellTypes,
-      templates: items.templates.length > 0 ? items.templates : prev.templates,
-    }))
+  const handleSelectionUpdate = (items: ImportSelectionPayload) => {
+    const next: ImportSelectionPayload = {
+      dashboards:
+        items.dashboards.length > 0
+          ? items.dashboards
+          : selectionRef.current.dashboards,
+      cellTypes:
+        items.cellTypes.length > 0
+          ? items.cellTypes
+          : selectionRef.current.cellTypes,
+      templates:
+        items.templates.length > 0
+          ? items.templates
+          : selectionRef.current.templates,
+      importStrategy:
+        items.importStrategy ?? selectionRef.current.importStrategy,
+    }
+    selectionRef.current = next
+    setSelection(next)
   }
 
   const handleImport = () => {
     if (onSelectionChange) {
-      onSelectionChange(selection)
-      console.log('Import clicked - Selected items:', selection)
+      onSelectionChange(selectionRef.current)
     }
     setIsOpen(false)
   }
@@ -86,14 +97,13 @@ function FixedModal({isOpen, setIsOpen, children, width, onSelectionChange}: Pro
   useEffect(() => {
     if (isOpen) {
       setIsMounted(true)
-      // 다음 프레임에 visible을 켜서 슬라이드 인 트랜지션이 보이도록 함
+
       requestAnimationFrame(() => {
         setIsVisible(true)
       })
       return
     }
 
-    // 닫힐 때는 우선 visible을 끄고 슬라이드 아웃 트랜지션 실행
     setIsVisible(false)
 
     const timeoutId = setTimeout(() => {
@@ -143,7 +153,12 @@ function FixedModal({isOpen, setIsOpen, children, width, onSelectionChange}: Pro
                 {currentTab === 'cell-list' && (
                   <CellList onSelectionChange={handleSelectionUpdate} />
                 )}
-                {currentTab === 'builtin' && <BuiltinTemplates />}
+                {currentTab === 'builtin' && (
+                  <BuiltinTemplates
+                    builtinName={builtinName}
+                    onSelectionChange={handleSelectionUpdate}
+                  />
+                )}
                 {children}
               </div>
             </FancyScrollbar>

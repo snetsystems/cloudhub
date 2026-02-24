@@ -666,7 +666,7 @@ export const deleteDashboardCellAsync = (
   cell: Cell
 ) => async (dispatch: Dispatch<Action>): Promise<void> => {
   try {
-    await deleteDashboardCellAJAX(cell)
+    await deleteDashboardCellAJAX(dashboard, cell)
     dispatch(deleteDashboardCell(dashboard, cell))
     dispatch(notify(notifyCellDeleted(cell.name)))
   } catch (error) {
@@ -860,29 +860,18 @@ export const setTempVarstoDashboard = (dashboardId: string) => (
   dispatch(updateQueryParams(updatedQueryParams))
 }
 
-// export const addDashboardCellsAsync = (
-//   dashboard: Dashboard,
-//   cells: Cell[]
-// ) => async (dispatch: Dispatch<Action>): Promise<void> => {
-//   try {
-//     const {data} = await addDashboardCellsAJAX(dashboard, cells)
-//     dispatch(addDashboardCells(dashboard, data))
-//   } catch (error) {
-//     console.error(error)
-//     dispatch(errorThrown(error))
-//   }
-// }
-
 export const patchDashboardByIDAsync = (
   dashboardID: string,
   cells: Cell[]
-) => async (dispatch: Dispatch<Action>): Promise<void> => {
+) => async (dispatch: Dispatch<Action>): Promise<Dashboard | undefined> => {
   try {
     const {data} = await patchDashboardByIdAJAX(dashboardID, cells)
 
     dispatch(patchDashboardByID(dashboardID, data))
+    return data
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))
+    return undefined
   }
 }
