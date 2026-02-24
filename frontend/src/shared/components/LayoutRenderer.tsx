@@ -62,12 +62,22 @@ interface State {
 
 @ErrorHandling
 class LayoutRenderer extends Component<Props, State> {
+  private _isMounted = false
+
   constructor(props) {
     super(props)
 
     this.state = {
       rowHeight: this.calculateRowHeight(),
     }
+  }
+
+  componentDidMount() {
+    this._isMounted = true
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false
   }
 
   public render() {
@@ -179,7 +189,16 @@ class LayoutRenderer extends Component<Props, State> {
     })
 
     if (changed) {
-      this.props.onPositionChange(newCells)
+      // Defer so react-grid-layout/DraggableCore finish their work first.
+      // Prevents "Unable to find node on an unmounted component" when
+      // parent re-render runs during drag end.
+      const callback = this.props.onPositionChange
+      const cellsToApply = newCells
+      setTimeout(() => {
+        if (this._isMounted && callback) {
+          callback(cellsToApply)
+        }
+      }, 0)
     }
   }
 
