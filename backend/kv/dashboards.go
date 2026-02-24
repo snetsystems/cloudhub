@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv/internal"
@@ -56,7 +57,7 @@ func (d *dashboardsStore) Add(ctx context.Context, src cloudhub.Dashboard) (clou
 			if err != nil {
 				return err
 			}
-			cell.ID = cid
+			cell.ID = strings.TrimSpace(strings.ToLower(cid))
 			src.Cells[i] = cell
 		}
 		v, err := internal.MarshalDashboard(src)
@@ -108,13 +109,15 @@ func (d *dashboardsStore) Update(ctx context.Context, dash cloudhub.Dashboard) e
 
 		for i, cell := range dash.Cells {
 			if cell.ID != "" {
+				cell.ID = strings.TrimSpace(strings.ToLower(cell.ID))
+				dash.Cells[i] = cell
 				continue
 			}
 			cid, err := d.IDs.Generate()
 			if err != nil {
 				return err
 			}
-			cell.ID = cid
+			cell.ID = strings.TrimSpace(strings.ToLower(cid))
 			dash.Cells[i] = cell
 		}
 		if v, err := internal.MarshalDashboard(dash); err != nil {

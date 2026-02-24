@@ -955,7 +955,7 @@ func TestSetBuiltinVersionInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resp := &dashboardResponse{}
-			setBuiltinVersionInfo(resp, tt.d, tt.getVersion, ctx)
+			setBuiltinVersionInfo(ctx, resp, tt.d, tt.getVersion)
 			if resp.LatestVersion != tt.wantLatest {
 				t.Errorf("LatestVersion = %q, want %q", resp.LatestVersion, tt.wantLatest)
 			}

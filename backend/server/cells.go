@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/bouk/httprouter"
 	"github.com/microcosm-cc/bluemonday"
@@ -322,7 +323,7 @@ func (s *Service) NewDashboardCell(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
-	cell.ID = cid
+	cell.ID = strings.TrimSpace(strings.ToLower(cid))
 
 	dash.Cells = append(dash.Cells, cell)
 	if err := s.Store.Dashboards(ctx).Update(ctx, dash); err != nil {
@@ -336,9 +337,10 @@ func (s *Service) NewDashboardCell(w http.ResponseWriter, r *http.Request) {
 	s.logRegistration(ctx, "Dashboards Cells", msg)
 
 	boards := newDashboardResponse(dash)
-	for _, cell := range boards.Cells {
-		if cell.ID == cid {
-			encodeJSON(w, http.StatusOK, cell, s.Logger)
+	cidNorm := strings.TrimSpace(strings.ToLower(cid))
+	for _, c := range boards.Cells {
+		if strings.TrimSpace(strings.ToLower(c.ID)) == cidNorm {
+			encodeJSON(w, http.StatusOK, c, s.Logger)
 			return
 		}
 	}
@@ -360,9 +362,9 @@ func (s *Service) DashboardCellID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	boards := newDashboardResponse(dash)
-	cid := httprouter.GetParamFromContext(ctx, "cid")
+	cid := strings.TrimSpace(strings.ToLower(httprouter.GetParamFromContext(ctx, "cid")))
 	for _, cell := range boards.Cells {
-		if cell.ID == cid {
+		if strings.TrimSpace(strings.ToLower(cell.ID)) == cid {
 			encodeJSON(w, http.StatusOK, cell, s.Logger)
 			return
 		}
@@ -385,17 +387,26 @@ func (s *Service) RemoveDashboardCell(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cid := httprouter.GetParamFromContext(ctx, "cid")
+	cid := strings.TrimSpace(strings.ToLower(httprouter.GetParamFromContext(ctx, "cid")))
 	cellid := -1
 	var dashCell cloudhub.DashboardCell
 	for i, cell := range dash.Cells {
-		if cell.ID == cid {
+		if strings.TrimSpace(strings.ToLower(cell.ID)) == cid {
 			cellid = i
 			dashCell = cell
 			break
 		}
 	}
 	if cellid == -1 {
+		cellIDs := make([]string, 0, len(dash.Cells))
+		for _, c := range dash.Cells {
+			cellIDs = append(cellIDs, c.ID)
+		}
+		s.Logger.
+			WithField("cid", cid).
+			WithField("dashboardID", id).
+			WithField("cellIDs", cellIDs).
+			Error("RemoveDashboardCell: cell not found")
 		notFound(w, id, s.Logger)
 		return
 	}
@@ -429,11 +440,11 @@ func (s *Service) ReplaceDashboardCell(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cid := httprouter.GetParamFromContext(ctx, "cid")
+	cid := strings.TrimSpace(strings.ToLower(httprouter.GetParamFromContext(ctx, "cid")))
 	cellid := -1
 	var dashCell cloudhub.DashboardCell
 	for i, cell := range dash.Cells {
-		if cell.ID == cid {
+		if strings.TrimSpace(strings.ToLower(cell.ID)) == cid {
 			cellid = i
 			dashCell = cell
 			break

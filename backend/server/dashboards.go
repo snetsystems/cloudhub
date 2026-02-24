@@ -5,18 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
+	"strings"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/builtin"
 )
 
-// BuiltinUpdatedBadgeDays is how many days to show "Updated" badge after a builtin template sync.
-const BuiltinUpdatedBadgeDays = 30
-
-// setBuiltinVersionInfo sets LatestVersion, UpdateAvailable, and RecentlyUpdated on resp when d is a builtin dashboard.
+// setBuiltinVersionInfo sets LatestVersion and UpdateAvailable on resp when d is a builtin dashboard.
 // getVersion returns the latest builtin version for a dashboard name (e.g. from BinDashboardsStore.GetVersion).
-func setBuiltinVersionInfo(resp *dashboardResponse, d cloudhub.Dashboard, getVersion func(context.Context, string) string, ctx context.Context) {
+func setBuiltinVersionInfo(ctx context.Context, resp *dashboardResponse, d cloudhub.Dashboard, getVersion func(context.Context, string) string) {
 	if d.Type != cloudhub.DashboardTypeBuiltin {
 		return
 	}
@@ -28,13 +25,6 @@ func setBuiltinVersionInfo(resp *dashboardResponse, d cloudhub.Dashboard, getVer
 	// Update is available if: no version (legacy) or version differs from latest
 	if d.Version == "" || d.Version != latest {
 		resp.UpdateAvailable = true
-	}
-	// Show "Updated" badge when dashboard was updated within BuiltinUpdatedBadgeDays (server decides; single source of truth)
-	if d.UpdatedAt != "" {
-		if t, err := time.Parse(time.RFC3339, d.UpdatedAt); err == nil {
-			limit := time.Now().UTC().AddDate(0, 0, -BuiltinUpdatedBadgeDays)
-			resp.RecentlyUpdated = !t.Before(limit)
-		}
 	}
 }
 
@@ -61,11 +51,10 @@ type dashboardResponse struct {
 	Organization    string                  `json:"organization"`
 	Type            string                  `json:"type,omitempty"`
 	Version         string                  `json:"version,omitempty"`         // Current version of the dashboard
-	LatestVersion      string                  `json:"latestVersion,omitempty"`      // Latest version available (for builtin dashboards)
-	UpdateAvailable    bool                    `json:"updateAvailable,omitempty"`     // True if a newer version is available
-	UpdatedAt         string                  `json:"updatedAt,omitempty"`           // RFC3339; when dashboard was last updated
-	RecentlyUpdated   bool                    `json:"recentlyUpdated,omitempty"`     // true if builtin and updated within BuiltinUpdatedBadgeDays (server-computed)
-	Links             dashboardLinks          `json:"links"`
+	LatestVersion   string                  `json:"latestVersion,omitempty"`   // Latest version available (for builtin dashboards)
+	UpdateAvailable bool                    `json:"updateAvailable,omitempty"` // True if a newer version is available
+	UpdatedAt       string                  `json:"updatedAt,omitempty"`       // RFC3339; when dashboard was last updated
+	Links           dashboardLinks          `json:"links"`
 }
 
 type getDashboardsResponse struct {
@@ -131,7 +120,7 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 		getVersion := func(ctx context.Context, name string) string {
 			return builtinVersions[name]
 		}
-		setBuiltinVersionInfo(dashboardResp, dashboard, getVersion, ctx)
+		setBuiltinVersionInfo(ctx, dashboardResp, dashboard, getVersion)
 
 		// Conditionally exclude cells and templates based on query parameters
 		if !shouldIncludeCells {
@@ -163,7 +152,7 @@ func (s *Service) DashboardID(w http.ResponseWriter, r *http.Request) {
 
 	res := newDashboardResponse(e)
 	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
-	setBuiltinVersionInfo(res, e, builtinStore.GetVersion, ctx)
+	setBuiltinVersionInfo(ctx, res, e, builtinStore.GetVersion)
 
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -207,7 +196,7 @@ func (s *Service) TemplateDashboardByName(w http.ResponseWriter, r *http.Request
 
 	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
 	res := newDashboardResponse(e)
-	setBuiltinVersionInfo(res, e, builtinStore.GetVersion, ctx)
+	setBuiltinVersionInfo(ctx, res, e, builtinStore.GetVersion)
 
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -366,6 +355,11 @@ func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		orig.Cells = req.Cells
+		for i := range orig.Cells {
+			if orig.Cells[i].ID != "" {
+				orig.Cells[i].ID = strings.TrimSpace(strings.ToLower(orig.Cells[i].ID))
+			}
+		}
 		updated = true
 	}
 	if req.Templates != nil {
