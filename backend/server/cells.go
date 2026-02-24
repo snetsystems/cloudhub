@@ -88,6 +88,11 @@ func ValidDashboardCellRequest(c *cloudhub.DashboardCell) error {
 		return fmt.Errorf("CloudHub dashboard cell was nil")
 	}
 
+	// Component-type cells are layout placeholders; skip detailed validation.
+	if c.Type == cloudhub.DashboardCellTypeComponent {
+		return nil
+	}
+
 	applyTableGaugeDefaults(c)
 
 	if err := ValidateNote(c); err != nil {

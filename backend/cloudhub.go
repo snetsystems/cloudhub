@@ -749,8 +749,11 @@ const (
 	DashboardTypeNormal  = "normal"
 	DashboardTypeBuiltin = "builtin"
 
-	CellOriginUser   = "user"
+	CellOriginUser    = "user"
 	CellOriginBuiltin = "builtin"
+
+	// Dashboard cell types
+	DashboardCellTypeComponent = "component"
 )
 
 // Dashboard represents all visual and query data for a dashboard

@@ -151,7 +151,7 @@ func ApplyBuiltinDashboardToOrg(
 	templateQueriesByID := make(map[string][]cloudhub.DashboardQuery)
 	for i := range template.Cells {
 		c := &template.Cells[i]
-		if c.Type == "component" && c.ID != "" {
+		if c.Type == cloudhub.DashboardCellTypeComponent && c.ID != "" {
 			templateQueriesByID[c.ID] = cloneDashboardQueries(c.Queries)
 		}
 	}
@@ -159,7 +159,7 @@ func ApplyBuiltinDashboardToOrg(
 	// For org dashboard: only update Queries on cells with type "component", from template by cell ID (i)
 	for i := range dash.Cells {
 		c := &dash.Cells[i]
-		if c.Type != "component" {
+		if c.Type != cloudhub.DashboardCellTypeComponent {
 			continue
 		}
 		if queries, ok := templateQueriesByID[c.ID]; ok {
