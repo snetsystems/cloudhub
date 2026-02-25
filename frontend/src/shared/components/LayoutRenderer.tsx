@@ -34,6 +34,22 @@ import {
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+/** Context passed to renderCell when provided; use for fixed/custom cell rendering. */
+export interface RenderCellContext {
+  source: Source
+  sources: Source[]
+  host: string
+  templates: Template[]
+  timeRange: TimeRange
+  isEditable: boolean
+  manualRefresh: number
+  onDeleteCell?: (cell: Cell) => void
+  onCloneCell?: (cell: Cell) => void
+  onSummonOverlayTechnologies?: (cell: Cell) => void
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
+  instance?: object
+}
+
 interface Props {
   source: Source
   cells: Cell[]
@@ -54,6 +70,8 @@ interface Props {
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   isUsingAnnotationViewer?: boolean
   annotationsViewMode?: AnnotationViewer[]
+  /** When provided, called per cell; return a ReactNode for fixed/custom cells, or null to use default Layout. */
+  renderCell?: (cell: Cell, context: RenderCellContext) => React.ReactNode | null
 }
 
 interface State {
@@ -96,10 +114,26 @@ class LayoutRenderer extends Component<Props, State> {
       onSummonOverlayTechnologies,
       instance,
       onPickTemplate,
+      renderCell,
     } = this.props
 
     const {rowHeight} = this.state
     const isDashboard = !!this.props.onPositionChange
+    const layoutContext: RenderCellContext = {
+      source,
+      sources,
+      host,
+      templates,
+      timeRange,
+      isEditable,
+      manualRefresh,
+      onDeleteCell,
+      onCloneCell,
+      onSummonOverlayTechnologies,
+      onPickTemplate,
+      instance,
+    }
+
     return (
       <Authorized
         requiredRole={EDITOR_ROLE}
@@ -121,36 +155,44 @@ class LayoutRenderer extends Component<Props, State> {
           isDraggable={isDashboard}
           isResizable={isDashboard}
         >
-          {fastMap(cells, cell => (
-            <div key={cell.i}>
-              <Authorized
-                requiredRole={EDITOR_ROLE}
-                propsOverride={{
-                  isEditable: false,
-                }}
-              >
-                <Layout
-                  key={cell.i}
-                  cell={cell}
-                  host={host}
-                  source={source}
-                  onZoom={onZoom}
-                  sources={sources}
-                  templates={templates}
-                  timeRange={timeRange}
-                  isEditable={isEditable}
-                  onDeleteCell={onDeleteCell}
-                  onCloneCell={onCloneCell}
-                  manualRefresh={manualRefresh}
-                  onSummonOverlayTechnologies={onSummonOverlayTechnologies}
-                  instance={instance}
-                  onPickTemplate={onPickTemplate}
-                  isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
-                  annotationsViewMode={this.props.annotationsViewMode}
-                />
-              </Authorized>
-            </div>
-          ))}
+          {fastMap(cells, cell => {
+            const customContent =
+              renderCell != null ? renderCell(cell, layoutContext) : null
+            return (
+              <div key={cell.i}>
+                <Authorized
+                  requiredRole={EDITOR_ROLE}
+                  propsOverride={{
+                    isEditable: false,
+                  }}
+                >
+                  {customContent != null ? (
+                    customContent
+                  ) : (
+                    <Layout
+                      key={cell.i}
+                      cell={cell}
+                      host={host}
+                      source={source}
+                      onZoom={onZoom}
+                      sources={sources}
+                      templates={templates}
+                      timeRange={timeRange}
+                      isEditable={isEditable}
+                      onDeleteCell={onDeleteCell}
+                      onCloneCell={onCloneCell}
+                      manualRefresh={manualRefresh}
+                      onSummonOverlayTechnologies={onSummonOverlayTechnologies}
+                      instance={instance}
+                      onPickTemplate={onPickTemplate}
+                      isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
+                      annotationsViewMode={this.props.annotationsViewMode}
+                    />
+                  )}
+                </Authorized>
+              </div>
+            )
+          })}
         </GridLayout>
       </Authorized>
     )
