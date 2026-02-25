@@ -46,7 +46,19 @@ export function computeNextCells(
   }
 
   importedCells.forEach((cell, i) => {
-    if (!templateMatchedByIndex.has(i)) result.push(cell)
+    if (templateMatchedByIndex.has(i)) return
+    const idK = key(cell.i)
+    const existingResultIndex = result.findIndex(c => key(c.i) === idK)
+    if (existingResultIndex !== -1) {
+      result[existingResultIndex] = {
+        ...result[existingResultIndex],
+        queries: cell.queries,
+        name: cell.name,
+      }
+      templateMatchedByIndex.add(i)
+      return
+    }
+    result.push(cell)
   })
 
   return {

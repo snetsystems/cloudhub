@@ -3,7 +3,7 @@ import {connect} from 'react-redux'
 import {Cell, Source, Me} from 'src/types'
 import {Button, ComponentColor, Page} from 'src/reusable_ui'
 import FixedModal from 'src/reusable_ui/components/FixedModal/FixedModal'
-import {getHostsListApi} from 'src/dashboards/apis'
+import {getDashboardByTemplateName} from 'src/dashboards/apis'
 import {bindActionCreators} from 'redux'
 
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
@@ -24,6 +24,7 @@ import {
 
 import TemplateControlBar from 'src/tempVars/components/TemplateControlBar'
 import {useDashboardPageWithImport} from 'src/server_details/hooks/useDashboardPageWithImport'
+import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 
 interface Props {
   source: Source
@@ -43,16 +44,6 @@ interface Props {
   dashboards?: DashboardsModels.Dashboard[]
   me?: Me
   isUsingAuth?: boolean
-}
-
-const HOST_PAGE_NAME = 'server-details'
-
-const fetchHostPageDashboard = async (name: string) => {
-  try {
-    return await getHostsListApi(name)
-  } catch {
-    return null
-  }
 }
 
 function ServerDetailsWrapper({
@@ -87,8 +78,8 @@ function ServerDetailsWrapper({
     handlePickTemplate,
     handleSaveTemplates,
   } = useDashboardPageWithImport({
-    pageName: HOST_PAGE_NAME,
-    fetchDashboardByName: fetchHostPageDashboard,
+    pageName: SERVER_DETAILS_PAGE_NAME,
+    fetchDashboardByName: getDashboardByTemplateName,
     dashboards,
     getDashboardsAsync,
     updateDashboard,
@@ -162,7 +153,7 @@ function ServerDetailsWrapper({
         isOpen={importModal.isOpen}
         setIsOpen={importModal.setIsOpen}
         onSelectionChange={importModal.onSelectionChange}
-        builtinName={HOST_PAGE_NAME}
+        builtinName={SERVER_DETAILS_PAGE_NAME}
       />
     </Page>
   )
@@ -211,4 +202,3 @@ const mdtp = dispatch => ({
 })
 
 export default connect(mstp, mdtp)(ServerDetailsWrapper)
-

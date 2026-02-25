@@ -18,6 +18,10 @@ import {
 } from 'src/side_nav/components/NavItems'
 
 import {DEFAULT_HOME_PAGE, AddonType} from 'src/shared/constants'
+import {
+  SERVER_DETAILS_PAGE_NAME,
+  SERVER_DETAILS_IMPORT_PATH,
+} from 'src/shared/constants/routes'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Params, Location, Me} from 'src/types/sideNav'
@@ -165,9 +169,14 @@ class SideNav extends PureComponent<Props> {
               Server List
             </NavListItem>
             <NavListItem
-              link={`${sourcePrefix}/server-monitoring/server-details`}
+              link={`${sourcePrefix}/server-monitoring/${SERVER_DETAILS_PAGE_NAME}`}
             >
               Server Details
+            </NavListItem>
+            <NavListItem
+              link={`${sourcePrefix}/server-monitoring/${SERVER_DETAILS_IMPORT_PATH}`}
+            >
+              Server Details (Import)
             </NavListItem>
             <NavListItem
               link={`${sourcePrefix}/server-monitoring/gpu-monitoring`}

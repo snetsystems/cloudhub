@@ -102,6 +102,10 @@ import OpenStackRouter from 'src/clouds/containers/OpenStackRouter'
 import VMHostRouter from './clouds/containers/VMHostRouter'
 import NutanixPage from './nutanix/containers/NutanixPage'
 import ServerDetailsPage from './server_details/containers/ServerDetailsPage'
+import {
+  SERVER_DETAILS_PAGE_NAME,
+  SERVER_DETAILS_IMPORT_PATH,
+} from './shared/constants/routes'
 
 const errorsQueue = []
 
@@ -301,11 +305,11 @@ class Root extends PureComponent<Record<string, never>, State> {
                   component={HostPage}
                 />
                 <Route
-                  path="server-monitoring/server-details"
+                  path={`server-monitoring/${SERVER_DETAILS_PAGE_NAME}`}
                   component={ServerDetailsPage}
                 />
                 <Route
-                  path="server-monitoring/server-details-tmp"
+                  path={`server-monitoring/${SERVER_DETAILS_IMPORT_PATH}`}
                   component={ServerDetailsWrapper}
                 />
                 <Route

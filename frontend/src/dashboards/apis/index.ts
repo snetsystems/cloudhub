@@ -229,16 +229,18 @@ export const editTemplateVariables = async templateVariable => {
   }
 }
 
-export const getHostsListApi = async (id: string) => {
+/** Fetches a dashboard by its template/page name (e.g. server-details, host_page). Returns null when not found or on error. */
+export const getDashboardByTemplateName = async (
+  name: string
+): Promise<Dashboard | null> => {
   try {
     const {data} = await AJAX<AxiosResponse<Dashboard>>({
-      url: `/cloudhub/v1/templates/${id}`,
+      url: `/cloudhub/v1/templates/${name}`,
       method: 'GET',
     })
-    // /cloudhub/v1/builtin/dashboards/host_page/template
     return data as Dashboard
   } catch (error) {
     console.error(error)
-    throw error
+    return null
   }
 }

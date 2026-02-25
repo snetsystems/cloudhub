@@ -12,6 +12,7 @@ import {
 } from 'src/shared/constants/graphColorPalettes'
 import {Link} from 'react-router'
 import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
+import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 
 export interface ServerListQuery {
   id: string
@@ -30,7 +31,7 @@ export const serverListColumns = ({sourceID}: Props): ColumnInfo[] => [
     render: (value: string) => {
       return (
         <Link
-          to={`/sources/${sourceID}/server-monitoring/server-details?host=${value}`}
+          to={`/sources/${sourceID}/server-monitoring/${SERVER_DETAILS_PAGE_NAME}?host=${value}`}
         >
           {value}
         </Link>
