@@ -5,7 +5,6 @@ import {
   CHART_TYPE_MODES,
   FORMAT_OPTIONS,
 } from 'src/types/statisticalgraph'
-import {TimeSeriesValue} from 'src/types/series'
 
 import {
   LINE_COLORS_I,
@@ -15,6 +14,7 @@ import {Link} from 'react-router'
 import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
 import TableLineChartCell from 'src/dashboards/components/TableLineChartCell'
 import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
+import {toLineValues} from 'src/dashboards/utils/tableLineChart'
 
 export interface ServerListQuery {
   id: string
@@ -24,26 +24,6 @@ export interface ServerListQuery {
 interface Props {
   sourceID: string
   chartMode?: 'gauge' | 'line'
-}
-
-const toNumericPoint = (value: TimeSeriesValue | null | undefined) => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : null
-  }
-  return null
-}
-
-const toLineValues = (
-  value: TimeSeriesValue | TimeSeriesValue[] | null | undefined
-): Array<number | null> => {
-  if (Array.isArray(value)) {
-    return value.map(item => toNumericPoint(item))
-  }
-  return value === null || value === undefined ? [] : [toNumericPoint(value)]
 }
 
 export const serverListColumns = ({
