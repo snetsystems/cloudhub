@@ -11,8 +11,18 @@ import {convertTimeSeriesDataToColumns} from 'src/shared/utils/gaugeChartColumns
 import {useIsUpdateObj} from 'src/shared/utils/useIsUpdateObj'
 
 // Types
-import {ColumnInfo, DataTableObject, FluxTable, Template, TemplateValue} from 'src/types'
-import {TimeSeriesServerResponse, TimeSeriesSeries, TimeSeriesValue} from 'src/types/series'
+import {
+  ColumnInfo,
+  DataTableObject,
+  FluxTable,
+  Template,
+  TemplateValue,
+} from 'src/types'
+import {
+  TimeSeriesServerResponse,
+  TimeSeriesSeries,
+  TimeSeriesValue,
+} from 'src/types/series'
 import {
   ColumnSettingInterface,
   TableGaugeChartOptionsInterface,
@@ -256,13 +266,15 @@ function StaticTableGaugeChart({
   }
 
   const temVarCell = (tempVar: string, isTempVarData: TimeSeriesValue) => {
-    return( 
-      <div className="template-variable-cell" onClick={handleClickCell(tempVar, isTempVarData)}>
+    return (
+      <div
+        className="template-variable-cell"
+        onClick={handleClickCell(tempVar, isTempVarData)}
+      >
         {isTempVarData}
       </div>
     )
   }
-
 
   const columns = useMemo<ColumnInfo[]>(() => {
     if (!tableData) return []
@@ -272,7 +284,7 @@ function StaticTableGaugeChart({
       tableGaugeChartOptions,
       originFiledOptions,
       decimalPlaces,
-      temVarCell      
+      temVarCell
     )
 
     const tagNameList: string[] = convertData?.map(item => item[0].name) || []

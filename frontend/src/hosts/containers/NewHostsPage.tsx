@@ -1,6 +1,7 @@
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {Source, Links} from 'src/types'
 import {Page} from 'src/reusable_ui'
+import {ButtonShape, Radio} from 'src/reusable_ui'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
@@ -11,12 +12,14 @@ import TableComponent from 'src/device_management/components/TableComponent'
 import {
   serverListColumns,
   serverListQueries,
+  serverListLineQueries,
 } from 'src/hosts/constants/serverListColumns'
 import {executeQueries} from 'src/shared/apis/query'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {generateForHosts} from 'src/utils/tempVars'
 import {TimeSeriesResponse, TimeSeriesValue} from 'src/types/series'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+type HostCellValue = TimeSeriesValue | TimeSeriesValue[]
+
 interface Props {
   source: Source
   links: Links
@@ -30,15 +33,27 @@ function NewHostsPage({
   cloudTimeRange,
   inPresentationMode: _inPresentationMode,
 }: Props) {
-  const columns = useMemo(() => serverListColumns({sourceID: source.id}), [])
-  const [tableData, setTableData] = useState<Record<string, TimeSeriesValue>[]>(
+  const [displayedChartMode, setDisplayedChartMode] = useState<
+    'gauge' | 'line'
+  >('gauge')
+  const [pendingChartMode, setPendingChartMode] = useState<'gauge' | 'line'>(
+    'gauge'
+  )
+  const [isModeSwitching, setIsModeSwitching] = useState(false)
+  const requestIdRef = useRef(0)
+  const columns = useMemo(
+    () =>
+      serverListColumns({sourceID: source.id, chartMode: displayedChartMode}),
+    [source.id, displayedChartMode]
+  )
+  const [tableData, setTableData] = useState<Record<string, HostCellValue>[]>(
     []
   )
 
   const mergeResultsByHost = (
     results: Array<{value: TimeSeriesResponse | null; error: unknown | null}>
   ) => {
-    const rowMap = new Map<string, Record<string, TimeSeriesValue>>()
+    const rowMap = new Map<string, Record<string, HostCellValue>>()
 
     const isIPv4 = (value: string): boolean =>
       /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/.test(
@@ -46,11 +61,14 @@ function NewHostsPage({
       )
 
     const setRowValue = (
-      row: Record<string, TimeSeriesValue>,
+      row: Record<string, HostCellValue>,
       key: string,
-      value: TimeSeriesValue
+      value: HostCellValue
     ) => {
       if (value === null || value === undefined) {
+        return
+      }
+      if (Array.isArray(value) && value.length === 0) {
         return
       }
 
@@ -86,10 +104,10 @@ function NewHostsPage({
             ({
               host,
               ip: isIPv4(host) ? host : '-',
-            } as Record<string, TimeSeriesValue>)
+            } as Record<string, HostCellValue>)
 
-          const values = series.values?.[0]
-          if (!values?.length) {
+          const rows = series.values ?? []
+          if (!rows.length) {
             rowMap.set(host, row)
             return
           }
@@ -98,7 +116,15 @@ function NewHostsPage({
             if (index === 0) {
               return
             }
-            setRowValue(row, columnName, values[index])
+            const isMultiPoint = rows.length > 1
+            if (isMultiPoint) {
+              const columnValues = rows.map(valueRow => valueRow[index] ?? null)
+              setRowValue(row, columnName, columnValues)
+              return
+            }
+
+            const singleRow = rows[0]
+            setRowValue(row, columnName, singleRow?.[index] ?? null)
           })
 
           rowMap.set(host, row)
@@ -113,6 +139,13 @@ function NewHostsPage({
     let isSubscribed = true
 
     const fetchTableData = async () => {
+      const requestId = requestIdRef.current + 1
+      requestIdRef.current = requestId
+      const shouldSwitchMode = pendingChartMode !== displayedChartMode
+      if (shouldSwitchMode) {
+        setIsModeSwitching(true)
+      }
+
       const selectedTimeRange = cloudTimeRange?.default || {
         lower: 'now() - 1h',
         upper: 'now()',
@@ -127,7 +160,10 @@ function NewHostsPage({
         upperDashboardTime,
       ]
 
-      const querySet = serverListQueries.map(query => ({
+      const selectedQueries =
+        pendingChartMode === 'line' ? serverListLineQueries : serverListQueries
+
+      const querySet = selectedQueries.map(query => ({
         id: query.id,
         text: query.text,
         db: source.telegraf,
@@ -135,16 +171,24 @@ function NewHostsPage({
 
       try {
         const results = await executeQueries(source, querySet, templates)
-        if (!isSubscribed) {
+        if (!isSubscribed || requestId !== requestIdRef.current) {
           return
         }
-        setTableData(mergeResultsByHost(results))
+        const mergedData = mergeResultsByHost(results)
+        setTableData(mergedData)
+        if (shouldSwitchMode) {
+          setDisplayedChartMode(pendingChartMode)
+        }
+        setIsModeSwitching(false)
 
-        console.log('tableData', mergeResultsByHost(results))
+        console.log('tableData', mergedData)
       } catch (error) {
         console.error('Failed to fetch server list data', error)
-        if (isSubscribed) {
-          setTableData([])
+        if (isSubscribed && requestId === requestIdRef.current) {
+          if (!shouldSwitchMode) {
+            setTableData([])
+          }
+          setIsModeSwitching(false)
         }
       }
     }
@@ -154,7 +198,13 @@ function NewHostsPage({
     return () => {
       isSubscribed = false
     }
-  }, [source, cloudTimeRange?.default?.lower, cloudTimeRange?.default?.upper])
+  }, [
+    source,
+    displayedChartMode,
+    pendingChartMode,
+    cloudTimeRange?.default?.lower,
+    cloudTimeRange?.default?.upper,
+  ])
 
   return (
     <Page className="hosts-page">
@@ -175,6 +225,43 @@ function NewHostsPage({
                 isDotKey={true}
               />
             )}
+          </div>
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+            }}
+          >
+            <Radio shape={ButtonShape.Default}>
+              <Radio.Button
+                id="host-chart-mode-gauge"
+                titleText="Gauge"
+                value="gauge"
+                active={displayedChartMode === 'gauge'}
+                onClick={() => {
+                  if (pendingChartMode !== 'gauge' && !isModeSwitching) {
+                    setPendingChartMode('gauge')
+                  }
+                }}
+              >
+                Gauge
+              </Radio.Button>
+              <Radio.Button
+                id="host-chart-mode-line"
+                titleText="Line"
+                value="line"
+                active={displayedChartMode === 'line'}
+                onClick={() => {
+                  if (pendingChartMode !== 'line' && !isModeSwitching) {
+                    setPendingChartMode('line')
+                  }
+                }}
+              >
+                Line
+              </Radio.Button>
+            </Radio>
           </div>
         </div>
       </Page.Contents>
