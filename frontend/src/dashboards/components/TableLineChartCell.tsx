@@ -39,6 +39,10 @@ interface HoverState {
 const DEFAULT_HEIGHT = 30
 const VIEW_BOX_WIDTH = 100
 const VIEW_BOX_HEIGHT = 34
+const CHART_TOP_PADDING_RATIO = 0.2
+const HOVER_POINT_SIZE_RATIO = 0.5
+const TOOLTIP_HORIZONTAL_OFFSET_PERCENT = 6
+const TOOLTIP_FLIP_THRESHOLD_PERCENT = 75
 
 const toFiniteNumber = (value: PointValue): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -75,12 +79,15 @@ function TableLineChartCell({
   const showPoint = options?.showPoint ?? false
   const connectSeparatedPoints = options?.connectSeparatedPoints ?? false
   const areaOpacity = options?.areaOpacity ?? 0.15
-  const pointRadius = options?.pointRadius ?? Math.max(strokeWidth + 0.5, 2)
+  const pointRadius = options?.pointRadius ?? Math.max(strokeWidth + 0.5, 1)
   const valueLabel = options?.valueLabel
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
 
   const validValues = useMemo(
-    () => values.map(toFiniteNumber).filter((value): value is number => value !== null),
+    () =>
+      values
+        .map(toFiniteNumber)
+        .filter((value): value is number => value !== null),
     [values]
   )
 
@@ -89,13 +96,28 @@ function TableLineChartCell({
       return [] as NormalizedPoint[]
     }
 
-    const min = zeroBaseline
+    let min = zeroBaseline
       ? Math.min(0, ...validValues)
       : Math.min(...validValues)
-    const max = zeroBaseline
+    let max = zeroBaseline
       ? Math.max(0, ...validValues)
       : Math.max(...validValues)
+
+    // range가 0이면 스케일이 붕괴되어 baseline 의미가 사라지므로 domain을 확장한다.
+    if (min === max) {
+      const domainSize = Math.max(Math.abs(max), 1)
+      if (zeroBaseline) {
+        min = Math.min(0, min)
+        max = min + domainSize
+      } else {
+        min -= domainSize / 2
+        max += domainSize / 2
+      }
+    }
+
     const range = max - min
+    const chartTopPadding = VIEW_BOX_HEIGHT * CHART_TOP_PADDING_RATIO
+    const drawableHeight = VIEW_BOX_HEIGHT - chartTopPadding
     const xStep =
       values.length > 1 ? VIEW_BOX_WIDTH / (values.length - 1) : VIEW_BOX_WIDTH
 
@@ -106,13 +128,7 @@ function TableLineChartCell({
       }
 
       const x = xStep * index
-      // [ZERO-RANGE HEIGHT BLOCK] data가 모두 같을 때(예: 전부 0) y 높이 처리
-      const y =
-        range === 0
-          ? zeroBaseline
-            ? VIEW_BOX_HEIGHT
-            : VIEW_BOX_HEIGHT / 2
-          : ((max - numericValue) / range) * VIEW_BOX_HEIGHT
+      const y = chartTopPadding + ((max - numericValue) / range) * drawableHeight
 
       acc.push({
         index,
@@ -221,10 +237,20 @@ function TableLineChartCell({
   const isEmpty = segments.length === 0
   const hoverTooltipText = hoverState?.point.value.toLocaleString() ?? null
   const tooltipStyle = hoverState
-    ? {
-        left: `${Math.min(Math.max((hoverState.point.x / VIEW_BOX_WIDTH) * 100, 8), 92)}%`,
-        top: `${Math.min(Math.max((hoverState.point.y / VIEW_BOX_HEIGHT) * 100, 10), 90)}%`,
-      }
+    ? (() => {
+        const cursorXPercent = (hoverState.cursorX / VIEW_BOX_WIDTH) * 100
+        const cursorYPercent = (hoverState.cursorY / VIEW_BOX_HEIGHT) * 100
+        const shouldFlipToLeft = cursorXPercent > TOOLTIP_FLIP_THRESHOLD_PERCENT
+        const rawLeft = shouldFlipToLeft
+          ? cursorXPercent - TOOLTIP_HORIZONTAL_OFFSET_PERCENT
+          : cursorXPercent + TOOLTIP_HORIZONTAL_OFFSET_PERCENT
+
+        return {
+          left: `${Math.min(Math.max(rawLeft, 4), 96)}%`,
+          top: `${Math.min(Math.max(cursorYPercent, 10), 90)}%`,
+          transform: shouldFlipToLeft ? 'translate(-100%, -50%)' : 'translate(0, -50%)',
+        }
+      })()
     : undefined
 
   return (
@@ -311,13 +337,13 @@ function TableLineChartCell({
                     className="table-line-cell-hover-point-outline"
                     cx={hoverState.point.x}
                     cy={hoverState.point.y}
-                    r={Math.max(pointRadius + 1.5, 3)}
+                    r={Math.max((pointRadius + 1.5) * HOVER_POINT_SIZE_RATIO, 1.5)}
                   />
                   <circle
                     className="table-line-cell-hover-point"
                     cx={hoverState.point.x}
                     cy={hoverState.point.y}
-                    r={Math.max(pointRadius, 2.5)}
+                    r={Math.max(pointRadius * HOVER_POINT_SIZE_RATIO, 1.25)}
                   />
                 </>
               )}
