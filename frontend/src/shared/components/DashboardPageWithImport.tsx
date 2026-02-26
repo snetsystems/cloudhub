@@ -31,10 +31,23 @@ import {setAutoRefresh} from 'src/shared/actions/app'
 import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
 import {timeRanges} from 'src/shared/data/timeRanges'
 
-import TemplateControlBar from 'src/tempVars/components/TemplateControlBar'
 import {useDashboardPageWithImport} from 'src/server_details/hooks/useDashboardPageWithImport'
 import {getDashboardByTemplateName} from 'src/dashboards/apis'
 import * as QueriesModels from 'src/types/queries'
+import {mergeBuiltinWithGetTempVars} from 'src/utils/tempVars'
+import {hydrateTemplates} from 'src/tempVars/utils/graph'
+
+/** Optional context for template overrides (e.g. :host: selection). Consumer provides a React Context; common component only reads templateOverrides. */
+export interface TemplateSelectionContextValue {
+  templateOverrides?: Record<string, string>
+}
+
+/** Context passed to renderHeaderLeft when provided; use to render e.g. host list next to the title. */
+export interface HeaderLeftContext {
+  pageTitle: string
+  templates: Template[]
+  source: Source
+}
 
 /** Context passed to renderHeaderRight when provided; use default header data or compose your own. */
 export interface HeaderRightContext {
@@ -63,12 +76,22 @@ export interface DashboardPageWithImportConfig {
     cell: Cell,
     context: RenderCellContext
   ) => React.ReactNode | null
+  /** When provided, renders next to the page title in the left header (e.g. host list). */
+  renderHeaderLeft?: (context: HeaderLeftContext) => React.ReactNode
   /** When provided, replaces the default right header (SourceIndicator, AutoRefresh, TimeRange, TimeZone, Import). */
   renderHeaderRight?: (context: HeaderRightContext) => React.ReactNode
   /** Key in cloudTimeRange for this page (e.g. 'hostDetails', 'prediction'). Default 'hostDetails'. */
   timeRangeKey?: string
   pageClassName?: string
   importButtonText?: string
+  /** When false, do not show "no cells" empty state (DashboardEmpty). Default true. */
+  showEmptyState?: boolean
+  /**
+   * Optional React Context for template overrides. When provided, common component reads
+   * templateOverrides (tempVar -> selected value) and applies to templates passed to cells.
+   * Consumer owns state and provides via Provider; no page-specific state in common component.
+   */
+  templateSelectionContext?: React.Context<TemplateSelectionContextValue | null>
 }
 
 export interface DashboardPageWithImportProps
@@ -103,10 +126,13 @@ function DashboardPageWithImport({
   pageName,
   getTempVars,
   renderCell,
+  renderHeaderLeft,
   renderHeaderRight,
   timeRangeKey = 'hostDetails',
   pageClassName = 'dashboard-page-with-import',
   importButtonText = 'Import Modal',
+  showEmptyState = true,
+  templateSelectionContext,
   source,
   sources,
   inPresentationMode,
@@ -128,12 +154,18 @@ function DashboardPageWithImport({
   patchDashboardByIDAsync,
   dispatch,
   dashboards,
-  me,
-  isUsingAuth,
 }: DashboardPageWithImportProps) {
-  const tempVars = getTempVars(source)
   const [manualRefreshStamp, setManualRefreshStamp] = React.useState(Date.now())
+  const [hydratedTemplates, setHydratedTemplates] = React.useState<
+    Template[] | null
+  >(null)
   const effectiveManualRefresh = manualRefreshStamp || manualRefresh
+
+  const templateSelection =
+    templateSelectionContext != null
+      ? React.useContext(templateSelectionContext)
+      : null
+  const templateOverrides = templateSelection?.templateOverrides
 
   const {
     dashboard,
@@ -143,9 +175,6 @@ function DashboardPageWithImport({
     onDeleteCell,
     onCloneCell,
     importModal,
-    localTemplates,
-    handlePickTemplate,
-    handleSaveTemplates,
   } = useDashboardPageWithImport({
     pageName,
     fetchDashboardByName: getDashboardByTemplateName,
@@ -159,6 +188,44 @@ function DashboardPageWithImport({
     deleteDashboardCellAsync,
     dispatch,
   })
+
+  const mergedTemplates = React.useMemo(
+    () =>
+      mergeBuiltinWithGetTempVars(
+        dashboard?.templates ?? [],
+        getTempVars(source),
+        source
+      ),
+    [dashboard?.templates, source]
+  )
+
+  React.useEffect(() => {
+    let cancelled = false
+    hydrateTemplates(mergedTemplates, sources, {source}).then(result => {
+      if (!cancelled) setHydratedTemplates(result)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [mergedTemplates, sources, source])
+
+  const tempVars = hydratedTemplates ?? mergedTemplates
+
+  const templatesWithSelection = React.useMemo(() => {
+    if (!templateOverrides || Object.keys(templateOverrides).length === 0)
+      return tempVars
+    return tempVars.map(t => {
+      const override = templateOverrides[t.tempVar]
+      if (override === undefined) return t
+      return {
+        ...t,
+        values: (t.values || []).map(v => ({
+          ...v,
+          localSelected: v.value === override,
+        })),
+      }
+    })
+  }, [tempVars, templateOverrides])
 
   const onSummonOverlayTechnologies = (_cell: Cell) => {}
 
@@ -215,7 +282,14 @@ function DashboardPageWithImport({
     <Page className={pageClassName}>
       <Page.Header fullWidth={true}>
         <Page.Header.Left>
-          <Page.Title title={pageTitle} />
+          <>
+            <Page.Title title={pageTitle} />
+            {renderHeaderLeft?.({
+              pageTitle,
+              templates: tempVars,
+              source,
+            })}
+          </>
         </Page.Header.Left>
         <Page.Header.Right showSourceIndicator={true}>
           <>
@@ -225,16 +299,6 @@ function DashboardPageWithImport({
           </>
         </Page.Header.Right>
       </Page.Header>
-      {localTemplates.length > 0 && (
-        <TemplateControlBar
-          templates={localTemplates}
-          me={me}
-          isUsingAuth={isUsingAuth || false}
-          onSaveTemplates={handleSaveTemplates}
-          onPickTemplate={handlePickTemplate}
-          source={source}
-        />
-      )}
       <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
         <div className="dashboard container-fluid full-width">
           {cells.length ? (
@@ -250,13 +314,15 @@ function DashboardPageWithImport({
               onDeleteCell={onDeleteCell}
               onCloneCell={onCloneCell}
               onPositionChange={onPositionChange}
-              templates={tempVars}
+              templates={templatesWithSelection}
               onSummonOverlayTechnologies={onSummonOverlayTechnologies}
               host={source.name}
               renderCell={renderCell}
             />
           ) : dashboard ? (
-            <DashboardEmpty dashboard={dashboard} />
+            showEmptyState ? (
+              <DashboardEmpty dashboard={dashboard} />
+            ) : null
           ) : loadSettled ? (
             <div className="dashboard-empty">
               <p>page not available.</p>
