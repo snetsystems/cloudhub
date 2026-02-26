@@ -1,17 +1,9 @@
 import React, {useEffect, useState, useMemo} from 'react'
 import {connect} from 'react-redux'
-import {
-  Cell,
-  Source,
-  Dashboard,
-  CellType,
-  Template,
-  TemplateValue,
-  Me,
-} from 'src/types'
-import {Button, ComponentColor, Page} from 'src/reusable_ui'
+import {Cell, Source, Dashboard, CellType, Template, Me} from 'src/types'
+import {Button, ComponentColor, Page, OverlayTechnology} from 'src/reusable_ui'
 import FixedModal from 'src/reusable_ui/components/FixedModal/FixedModal'
-import {getHostsListApi} from 'src/dashboards/apis'
+import {getDashboardByTemplateName} from 'src/dashboards/apis'
 import {bindActionCreators} from 'redux'
 
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
@@ -19,7 +11,14 @@ import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import DashboardEmpty from 'src/dashboards/components/DashboardEmpty'
 import * as DashboardsModels from 'src/types/dashboards'
+import * as QueriesModels from 'src/types/queries'
 import {generateForHosts} from 'src/utils/tempVars'
+import {createTimeRangeTemplates} from 'src/shared/utils/templates'
+import CellEditorOverlay from 'src/dashboards/components/CellEditorOverlay'
+import {Links} from 'src/types/flux'
+import {NotificationAction} from 'src/types'
+import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
+import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 import {
   addDashboardCellAsync,
   cloneDashboardCellAsync,
@@ -28,10 +27,9 @@ import {
   putDashboard,
   getDashboardsAsync,
   patchDashboardByIDAsync,
+  editCellQueryStatus,
 } from 'src/dashboards/actions'
-
-import TemplateControlBar from 'src/tempVars/components/TemplateControlBar'
-import {detectTemplateConflicts} from 'src/server_details/utils/templateConflict'
+import * as notifyActions from 'src/shared/actions/notifications'
 
 interface Props {
   source: Source
@@ -50,6 +48,10 @@ interface Props {
   dashboards?: DashboardsModels.Dashboard[]
   me?: Me
   isUsingAuth?: boolean
+  fluxLinks: Links
+  notify: NotificationAction
+  cellQueryStatus: QueriesModels.QueryStatus
+  editCellQueryStatus: typeof editCellQueryStatus
 }
 
 interface SelectedItems {
@@ -62,6 +64,7 @@ function ServerDetailsPage({
   source,
   sources,
   inPresentationMode,
+  cloudAutoRefresh,
   cloudTimeRange,
   manualRefresh,
   updateDashboard,
@@ -74,9 +77,12 @@ function ServerDetailsPage({
   dashboards,
   me,
   isUsingAuth,
+  fluxLinks,
+  notify,
+  cellQueryStatus,
+  editCellQueryStatus,
 }: Props) {
-  // dashboard id
-  const HOST_PAGE_NAME = 'host_page'
+  const templateName = SERVER_DETAILS_PAGE_NAME
 
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -84,7 +90,10 @@ function ServerDetailsPage({
 
   const [currentDashboardId, setCurrentDashboardId] = useState<string>('')
 
-  const [localTemplates, setLocalTemplates] = useState<Template[]>([])
+  const [selectedTemplates, setSelectedTemplates] = useState<Template[]>([])
+
+  const [selectedCell, setSelectedCell] = useState<DashboardsModels.Cell | DashboardsModels.NewDefaultCell | null>(null)
+  const [isCellEditorOpen, setIsCellEditorOpen] = useState(false)
 
   const tempVars = generateForHosts(source)
 
@@ -102,7 +111,10 @@ function ServerDetailsPage({
 
   useEffect(() => {
     const getDashboardById = async () => {
-      const dashboardByName = await getHostsListApi(HOST_PAGE_NAME)
+      console.log('dashboardByName', templateName)
+
+      const dashboardByName = await getDashboardByTemplateName(templateName)
+      console.log('dashboardByName', dashboardByName)
       if (dashboardByName) {
         setCurrentDashboardId(dashboardByName.id)
       }
@@ -112,11 +124,6 @@ function ServerDetailsPage({
     //get all dashboards
     getDashboardsAsync()
   }, [])
-
-  const onAddCell = (cell: Cell) => {
-    if (!dashboard) return
-    addDashboardCellAsync(dashboard, cell)
-  }
 
   const onDeleteCell = (cell: Cell) => {
     if (!dashboard) return
@@ -135,12 +142,42 @@ function ServerDetailsPage({
     putDashboard(newDashboard)
   }
 
-  const onSummonOverlayTechnologies = (_cell: Cell) => {
-    // Cell Editor 띄울 때, 옵션 수정만 가능하게 진행
+  const onSummonOverlayTechnologies = (cell: Cell) => {
+    setSelectedCell(cell)
+    setIsCellEditorOpen(true)
+  }
+
+  const handleSaveEditedCell = async (
+    newCell: DashboardsModels.Cell | DashboardsModels.NewDefaultCell
+  ) => {
+    if (!dashboard) {
+      setIsCellEditorOpen(false)
+      return
+    }
+
+    if ((newCell as DashboardsModels.Cell).i !== undefined) {
+      const updatedCells = dashboard.cells.map(cell =>
+        cell.i === (newCell as DashboardsModels.Cell).i
+          ? {...cell, ...newCell}
+          : cell
+      )
+      const newDashboard = {...dashboard, cells: updatedCells}
+      updateDashboard(newDashboard)
+      await putDashboard(newDashboard)
+      setCells(updatedCells)
+    } else {
+      addDashboardCellAsync(dashboard, newCell as DashboardsModels.NewDefaultCell)
+    }
+
+    setIsCellEditorOpen(false)
+  }
+
+  const handleCloseCellEditor = () => {
+    setIsCellEditorOpen(false)
   }
 
   const handleSelectionChange = (items: SelectedItems) => {
-    setLocalTemplates(items.templates)
+    setSelectedTemplates(items.templates)
 
     const dashboardCells = items.dashboards.flatMap(
       dashboard => dashboard.cells
@@ -148,29 +185,67 @@ function ServerDetailsPage({
     patchDashboardByIDAsync(currentDashboardId, [...cells, ...dashboardCells])
   }
 
-  const handlePickTemplate = (template: Template, value: TemplateValue) => {
-    const updated = localTemplates.map(t => {
-      if (t.id === template.id) {
-        return {
-          ...t,
-          values: t.values.map(v => ({
-            ...v,
-            localSelected: v.value === value.value,
-          })),
-        }
-      }
-      return t
-    })
-    setLocalTemplates(updated)
-  }
+  const hostDetailsTimeRange =
+    cloudTimeRange.hostDetails ?? CLOUD_TIME_RANGE.default
+  const hostDetailsRefresh = cloudAutoRefresh.hostDetails ?? 0
 
-  const handleSaveTemplates = (templates: Template[]) => {
-    const templatesWithConflict = detectTemplateConflicts(templates)
-    setLocalTemplates(templatesWithConflict)
-  }
+  const mergedTemplates = useMemo(() => {
+    const templateMap = new Map<string, Template>()
+
+    tempVars.forEach(template => {
+      const key = template.tempVar || template.id
+      if (key) {
+        templateMap.set(key, template)
+      }
+    })
+
+    selectedTemplates.forEach(template => {
+      const key = template.tempVar || template.id
+      if (key) {
+        templateMap.set(key, template)
+      }
+    })
+
+    const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
+      hostDetailsTimeRange
+    )
+    templateMap.set(dashboardTime.tempVar || dashboardTime.id, dashboardTime)
+    templateMap.set(
+      upperDashboardTime.tempVar || upperDashboardTime.id,
+      upperDashboardTime
+    )
+
+    return Array.from(templateMap.values())
+  }, [tempVars, selectedTemplates, hostDetailsTimeRange])
+
+  const dashboardTemplatesForEditor = useMemo(
+    () => [...mergedTemplates, ...(dashboard?.templates || [])],
+    [mergedTemplates, dashboard?.templates]
+  )
 
   return (
     <Page className="server-details-page">
+      {dashboard && selectedCell && (
+        <OverlayTechnology visible={isCellEditorOpen}>
+          <CellEditorOverlay
+            source={source}
+            sources={sources}
+            me={me}
+            isUsingAuth={!!isUsingAuth}
+            notify={notify}
+            fluxLinks={fluxLinks}
+            cell={selectedCell}
+            dashboardID={currentDashboardId}
+            queryStatus={cellQueryStatus}
+            onSave={handleSaveEditedCell}
+            onCancel={handleCloseCellEditor}
+            dashboardTemplates={dashboardTemplatesForEditor}
+            editQueryStatus={editCellQueryStatus}
+            dashboardTimeRange={hostDetailsTimeRange}
+            dashboardRefresh={hostDetailsRefresh}
+          />
+        </OverlayTechnology>
+      )}
       <Page.Header fullWidth={true}>
         <Page.Header.Left>
           <Page.Title title="Server Details" />
@@ -185,16 +260,6 @@ function ServerDetailsPage({
           />
         </Page.Header.Right>
       </Page.Header>
-      {localTemplates.length > 0 && (
-        <TemplateControlBar
-          templates={localTemplates}
-          me={me}
-          isUsingAuth={isUsingAuth || false}
-          onSaveTemplates={handleSaveTemplates}
-          onPickTemplate={handlePickTemplate}
-          source={source}
-        />
-      )}
       <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
         <div className="dashboard container-fluid full-width">
           {cells.length ? (
@@ -205,12 +270,12 @@ function ServerDetailsPage({
               isEditable={true}
               isStatusPage={false}
               isStaticPage={false}
-              timeRange={cloudTimeRange.hostDetails}
+              timeRange={hostDetailsTimeRange}
               manualRefresh={manualRefresh}
               onDeleteCell={onDeleteCell}
               onCloneCell={onCloneCell}
               onPositionChange={onPositionChange}
-              templates={tempVars}
+              templates={mergedTemplates}
               onSummonOverlayTechnologies={onSummonOverlayTechnologies}
               host={source.name}
             />
@@ -237,7 +302,8 @@ const mstp = state => {
       persisted: {cloudAutoRefresh, cloudTimeRange, manualRefresh},
     },
     auth: {isUsingAuth, me},
-    dashboardUI: {dashboards},
+    dashboardUI: {dashboards, cellQueryStatus},
+    links,
   } = state
 
   return {
@@ -248,6 +314,8 @@ const mstp = state => {
     cloudTimeRange,
     manualRefresh,
     dashboards,
+    fluxLinks: links.flux,
+    cellQueryStatus,
   }
 }
 
@@ -268,6 +336,8 @@ const mdtp = dispatch => ({
     patchDashboardByIDAsync,
     dispatch
   ),
+  editCellQueryStatus: bindActionCreators(editCellQueryStatus, dispatch),
+  notify: bindActionCreators(notifyActions.notify, dispatch),
 })
 
 export default connect(mstp, mdtp)(ServerDetailsPage)

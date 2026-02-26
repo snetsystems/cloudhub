@@ -6,7 +6,7 @@
   "organization": "",
   "cells": [
     {
-      "i": "host-table-cell ",
+      "i": "host-table-cell",
       "x": 0,
       "y": 0,
       "w": 96,
@@ -86,7 +86,7 @@
       "h": 8,
       "minW": 16,
       "minH": 4,
-      "name": "CPU Usage2",
+      "name": "CPU Usage",
       "queries": [
         {
           "query": "SELECT mean(\"usage_system\") AS \"system\", :host: mean(\"usage_user\") as  \"user\", mean(\"usage_idle\") as \"idle\"  FROM \":db:\".\":rp:\".\"cpu\" WHERE host = :host: and time > :dashboardTime: AND \"cpu\"='cpu-total' GROUP BY time(:interval:) FILL(null)",

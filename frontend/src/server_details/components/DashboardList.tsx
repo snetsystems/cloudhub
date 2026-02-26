@@ -7,6 +7,7 @@ import {
   Source,
   TimeRange,
   Template,
+  DashboardType,
 } from 'src/types'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import _ from 'lodash'
@@ -130,14 +131,27 @@ const CellItem: React.FC<CellItemProps> = ({
 
   return (
     <div
+      onClick={() => onToggle(cell.i, !isSelected)}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onToggle(cell.i, !isSelected)
+        }
+      }}
+      role="button"
+      tabIndex={0}
       style={{
         padding: '8px 16px 8px 48px',
         borderBottom: '1px solid #383846',
         backgroundColor: '#202028',
+        cursor: 'pointer',
       }}
     >
       <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-        <div className="fixedmodal-checkbox-wrapper">
+        <div
+          className="fixedmodal-checkbox-wrapper"
+          onClick={e => e.stopPropagation()}
+        >
           <input
             type="checkbox"
             id={`cell-checkbox-${cell.i}`}
@@ -148,7 +162,10 @@ const CellItem: React.FC<CellItemProps> = ({
             }}
             onClick={e => e.stopPropagation()}
           />
-          <label htmlFor={`cell-checkbox-${cell.i}`} />
+          <label
+            htmlFor={`cell-checkbox-${cell.i}`}
+            onClick={e => e.stopPropagation()}
+          />
         </div>
         <span
           className="icon circle-thin"
@@ -479,6 +496,7 @@ function DashboardList({
   }
 
   const sortedDashboards = _.sortBy(dashboards, d => d.name?.toLowerCase() || '')
+    .filter(dashboard => dashboard.type === DashboardType.Normal)
 
   return (
     <div style={{padding: '16px'}}>

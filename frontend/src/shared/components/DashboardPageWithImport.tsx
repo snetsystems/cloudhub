@@ -1,6 +1,6 @@
-import React from 'react'
+import React, {useState, useMemo} from 'react'
 import {Cell, Source, Me, Template, TimeZones} from 'src/types'
-import {Button, ComponentColor, Page} from 'src/reusable_ui'
+import {Button, ComponentColor, Page, OverlayTechnology} from 'src/reusable_ui'
 import FixedModal from 'src/reusable_ui/components/FixedModal/FixedModal'
 import {bindActionCreators} from 'redux'
 
@@ -10,7 +10,8 @@ import LayoutRenderer, {
 } from 'src/shared/components/LayoutRenderer'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import DashboardEmpty from 'src/dashboards/components/DashboardEmpty'
-import SourceIndicator from 'src/shared/components/SourceIndicator'
+import CellEditorOverlay from 'src/dashboards/components/CellEditorOverlay'
+import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
@@ -24,7 +25,9 @@ import {
   putDashboard,
   getDashboardsAsync,
   patchDashboardByIDAsync,
+  editCellQueryStatus,
 } from 'src/dashboards/actions'
+import * as notifyActions from 'src/shared/actions/notifications'
 import {setTimeZone} from 'src/shared/actions/app'
 import {setCloudTimeRange, setCloudAutoRefresh} from 'src/clouds/actions/clouds'
 import {setAutoRefresh} from 'src/shared/actions/app'
@@ -69,6 +72,7 @@ export interface DashboardPageWithImportConfig {
   timeRangeKey?: string
   pageClassName?: string
   importButtonText?: string
+  draggableCancel?: string
 }
 
 export interface DashboardPageWithImportProps
@@ -96,6 +100,10 @@ export interface DashboardPageWithImportProps
   dashboards?: DashboardsModels.Dashboard[]
   me?: Me
   isUsingAuth?: boolean
+  fluxLinks?: {self: string; suggestions: string; ast: string}
+  notify?: (message: {type: string; icon: string; duration: number; message: string}) => void
+  cellQueryStatus?: QueriesModels.QueryStatus
+  editCellQueryStatus?: (queryID: string, status: QueriesModels.Status) => unknown
 }
 
 function DashboardPageWithImport({
@@ -104,6 +112,7 @@ function DashboardPageWithImport({
   getTempVars,
   renderCell,
   renderHeaderRight,
+  draggableCancel,
   timeRangeKey = 'hostDetails',
   pageClassName = 'dashboard-page-with-import',
   importButtonText = 'Import Modal',
@@ -130,10 +139,23 @@ function DashboardPageWithImport({
   dashboards,
   me,
   isUsingAuth,
+  fluxLinks,
+  notify,
+  cellQueryStatus,
+  editCellQueryStatus,
 }: DashboardPageWithImportProps) {
+  const safeFluxLinks = fluxLinks ?? {self: '', suggestions: '', ast: ''}
+  const safeNotify = notify ?? (() => {})
+  const safeCellQueryStatus = cellQueryStatus ?? {queryID: '', status: {}}
+  const safeEditCellQueryStatus =
+    editCellQueryStatus ?? ((_queryID: string, _status: QueriesModels.Status) => undefined)
   const tempVars = getTempVars(source)
   const [manualRefreshStamp, setManualRefreshStamp] = React.useState(Date.now())
   const effectiveManualRefresh = manualRefreshStamp || manualRefresh
+  const [selectedCell, setSelectedCell] = useState<
+    DashboardsModels.Cell | DashboardsModels.NewDefaultCell | null
+  >(null)
+  const [isCellEditorOpen, setIsCellEditorOpen] = useState(false)
 
   const {
     dashboard,
@@ -160,10 +182,68 @@ function DashboardPageWithImport({
     dispatch,
   })
 
-  const onSummonOverlayTechnologies = (_cell: Cell) => {}
-
   const selectedTimeRange: QueriesModels.TimeRange =
     cloudTimeRange?.[timeRangeKey] ?? CLOUD_TIME_RANGE.default ?? timeRanges[0]
+  const dashboardRefresh = cloudAutoRefresh?.[timeRangeKey] ?? 0
+
+  const mergedTemplates = useMemo(() => {
+    const templateMap = new Map<string, Template>()
+    tempVars.forEach(t => {
+      const key = t.tempVar || t.id
+      if (key) templateMap.set(key, t)
+    })
+    ;(dashboard?.templates ?? []).forEach(t => {
+      const key = t.tempVar || t.id
+      if (key) templateMap.set(key, t)
+    })
+    localTemplates.forEach(t => {
+      const key = t.tempVar || t.id
+      if (key) templateMap.set(key, t)
+    })
+    const {dashboardTime, upperDashboardTime} =
+      createTimeRangeTemplates(selectedTimeRange)
+    templateMap.set(dashboardTime.tempVar || dashboardTime.id, dashboardTime)
+    templateMap.set(
+      upperDashboardTime.tempVar || upperDashboardTime.id,
+      upperDashboardTime
+    )
+    return Array.from(templateMap.values())
+  }, [tempVars, dashboard?.templates, localTemplates, selectedTimeRange])
+
+  const dashboardTemplatesForEditor = useMemo(
+    () => [...mergedTemplates, ...(dashboard?.templates || [])],
+    [mergedTemplates, dashboard?.templates]
+  )
+
+  const onSummonOverlayTechnologies = (cell: Cell) => {
+    setSelectedCell(cell)
+    setIsCellEditorOpen(true)
+  }
+
+  const handleSaveEditedCell = async (
+    newCell: DashboardsModels.Cell | DashboardsModels.NewDefaultCell
+  ) => {
+    if (!dashboard) {
+      setIsCellEditorOpen(false)
+      return
+    }
+    if ((newCell as DashboardsModels.Cell).i !== undefined) {
+      const updatedCells = dashboard.cells.map(cell =>
+        cell.i === (newCell as DashboardsModels.Cell).i
+          ? {...cell, ...newCell}
+          : cell
+      )
+      const newDashboard = {...dashboard, cells: updatedCells}
+      updateDashboard(newDashboard)
+      await putDashboard(newDashboard)
+    } else {
+      addDashboardCellAsync(dashboard, newCell as DashboardsModels.NewDefaultCell)
+    }
+    setIsCellEditorOpen(false)
+  }
+
+  const handleCloseCellEditor = () => setIsCellEditorOpen(false)
+
   const handleChooseTimeRange = (tr: QueriesModels.TimeRange) => {
     onChooseCloudTimeRange({...cloudTimeRange, [timeRangeKey]: tr})
   }
@@ -213,6 +293,27 @@ function DashboardPageWithImport({
 
   return (
     <Page className={pageClassName}>
+      {dashboard && selectedCell && (
+        <OverlayTechnology visible={isCellEditorOpen}>
+          <CellEditorOverlay
+            source={source}
+            sources={sources}
+            me={me}
+            isUsingAuth={!!isUsingAuth}
+            notify={safeNotify}
+            fluxLinks={safeFluxLinks}
+            cell={selectedCell}
+            dashboardID={dashboard.id}
+            queryStatus={safeCellQueryStatus}
+            onSave={handleSaveEditedCell}
+            onCancel={handleCloseCellEditor}
+            dashboardTemplates={dashboardTemplatesForEditor}
+            editQueryStatus={safeEditCellQueryStatus}
+            dashboardTimeRange={selectedTimeRange}
+            dashboardRefresh={dashboardRefresh}
+          />
+        </OverlayTechnology>
+      )}
       <Page.Header fullWidth={true}>
         <Page.Header.Left>
           <Page.Title title={pageTitle} />
@@ -250,10 +351,11 @@ function DashboardPageWithImport({
               onDeleteCell={onDeleteCell}
               onCloneCell={onCloneCell}
               onPositionChange={onPositionChange}
-              templates={tempVars}
+              templates={mergedTemplates}
               onSummonOverlayTechnologies={onSummonOverlayTechnologies}
               host={source.name}
               renderCell={renderCell}
+              draggableCancel={draggableCancel}
             />
           ) : dashboard ? (
             <DashboardEmpty dashboard={dashboard} />
@@ -290,7 +392,8 @@ export const dashboardPageWithImportMstp = state => {
       },
     },
     auth: {isUsingAuth, me},
-    dashboardUI: {dashboards},
+    dashboardUI: {dashboards, cellQueryStatus},
+    links,
   } = state
 
   return {
@@ -303,6 +406,8 @@ export const dashboardPageWithImportMstp = state => {
     timeZone,
     autoRefresh,
     dashboards,
+    cellQueryStatus,
+    fluxLinks: links?.flux ?? {self: '', suggestions: '', ast: ''},
   }
 }
 
@@ -325,6 +430,8 @@ export const dashboardPageWithImportMdtp = dispatch => ({
     patchDashboardByIDAsync,
     dispatch
   ),
+  editCellQueryStatus: bindActionCreators(editCellQueryStatus, dispatch),
+  notify: bindActionCreators(notifyActions.notify, dispatch),
   setTimeZone: bindActionCreators(setTimeZone, dispatch),
   setAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),

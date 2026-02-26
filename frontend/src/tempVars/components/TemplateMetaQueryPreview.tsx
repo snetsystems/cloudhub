@@ -38,6 +38,12 @@ class TemplateMetaQueryPreview extends PureComponent<Props, State> {
     }
   }
 
+  public componentDidMount() {
+    if (this.state.isAllEnabled) {
+      this.showTooltipAutomatically()
+    }
+  }
+
   public componentDidUpdate(prevProps: Props, prevState: State) {
     if (prevProps.isAllEnabled !== this.props.isAllEnabled) {
       this.setState({

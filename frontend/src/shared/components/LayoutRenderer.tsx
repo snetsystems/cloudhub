@@ -72,6 +72,7 @@ interface Props {
   annotationsViewMode?: AnnotationViewer[]
   /** When provided, called per cell; return a ReactNode for fixed/custom cells, or null to use default Layout. */
   renderCell?: (cell: Cell, context: RenderCellContext) => React.ReactNode | null
+  draggableCancel?: string
 }
 
 interface State {
@@ -152,6 +153,7 @@ class LayoutRenderer extends Component<Props, State> {
           useCSSTransforms={false}
           onLayoutChange={this.handleLayoutChange}
           draggableHandle={'.dash-graph--draggable'}
+          draggableCancel={this.props.draggableCancel || ''}
           isDraggable={isDashboard}
           isResizable={isDashboard}
         >

@@ -1,0 +1,92 @@
+/* Grid cell wrapper: fill height so flex layout works */
+.server-details-page .react-grid-item > div {
+  height: 100%;
+  min-height: 0;
+}
+
+.server-details-cell-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.server-details-cell-header {
+  flex-shrink: 0;
+  margin: 0;
+  height: 30px;
+  background-color: #292933;
+  z-index: 6;
+  display: flex;
+  align-items: stretch;
+}
+
+/* 헤더 오른쪽 드래그 영역 (헤더 전체가 handle, 탭은 draggableCancel로 제외) */
+.server-details-cell-drag-handle {
+  flex: 1;
+  min-width: 40px;
+  position: relative;
+  cursor: move;
+}
+
+.server-details-cell-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.server-details-cell-header .server-details-cell-tab-buttons {
+  display: flex;
+  gap: 0;
+  flex: 0 0 auto; 
+  align-items: stretch;
+
+  button {
+    padding: 0 14px;
+    border: 2px solid $g5-pepper;
+    border-right-width: 0;
+    background-color: $g4-onyx;
+    color: $g13-mist;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 26px;
+
+    &:first-child {
+      border-radius: 4px 0 0 4px;
+    }
+
+    &:last-child {
+      border-right-width: 2px;
+      border-radius: 0 4px 4px 0;
+    }
+
+    &:hover {
+      background-color: $g5-pepper;
+      color: $g14-chromium;
+    }
+
+    &.active {
+      background-color: $g6-smoke;
+      color: $g18-cloud;
+    }
+  }
+}
+
+.server-details-cell-tab-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.server-details-cell-tab-body {
+  padding: 16px;
+}
+
+.react-grid-item .server-details-cell-header {
+  transition: background-color 0.25s ease;
+}
+
+.react-grid-item:hover .server-details-cell-header {
+  background-color: $g4-onyx;
+}

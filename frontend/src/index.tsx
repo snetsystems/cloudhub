@@ -101,7 +101,6 @@ import KubernetesRouter from 'src/clouds/containers/KubernetesRouter'
 import OpenStackRouter from 'src/clouds/containers/OpenStackRouter'
 import VMHostRouter from './clouds/containers/VMHostRouter'
 import NutanixPage from './nutanix/containers/NutanixPage'
-import ServerDetailsPage from './server_details/containers/ServerDetailsPage'
 import {
   SERVER_DETAILS_PAGE_NAME,
   SERVER_DETAILS_IMPORT_PATH,
@@ -306,7 +305,7 @@ class Root extends PureComponent<Record<string, never>, State> {
                 />
                 <Route
                   path={`server-monitoring/${SERVER_DETAILS_PAGE_NAME}`}
-                  component={ServerDetailsPage}
+                  component={ServerDetailsWrapper}
                 />
                 <Route
                   path={`server-monitoring/${SERVER_DETAILS_IMPORT_PATH}`}
