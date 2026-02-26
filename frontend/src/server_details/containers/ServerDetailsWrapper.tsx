@@ -1,10 +1,11 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect, useContext, useRef} from 'react'
 import {connect} from 'react-redux'
 import {generateForHosts} from 'src/utils/tempVars'
 import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 import DashboardPageWithImport, {
   dashboardPageWithImportMstp,
   dashboardPageWithImportMdtp,
+  type TemplateSelectionContextValue,
 } from 'src/shared/components/DashboardPageWithImport'
 
 function ServerDetailsCellContent() {
@@ -46,24 +47,105 @@ function ServerDetailsCellContent() {
     </div>
   )
 }
+import {Dropdown, DropdownMode} from 'src/reusable_ui'
+import {Template} from 'src/types'
+
+type ServerDetailsPageContextValue = TemplateSelectionContextValue & {
+  selectedHost: string | null
+  onHostSelect: (host: string | null) => void
+}
+
+const ServerDetailsPageContext = React.createContext<ServerDetailsPageContextValue | null>(
+  null
+)
+
+function HostDropdownHeader({templates}: {templates: Template[]}) {
+  const ctx = useContext(ServerDetailsPageContext)
+  const hostTemplate = templates?.find(t => t.tempVar === ':host:')
+  const hostList = hostTemplate?.values?.map(v => v.value) ?? []
+  const initialSetRef = useRef(false)
+
+  useEffect(() => {
+    if (hostList.length > 0 && ctx?.selectedHost === null && !initialSetRef.current) {
+      initialSetRef.current = true
+      ctx.onHostSelect(hostList[0])
+    }
+  }, [hostList, ctx?.selectedHost, ctx?.onHostSelect])
+
+  if (!ctx) return null
+  const current = ctx.selectedHost ?? ''
+  if (hostList.length === 0) {
+    return (
+      <span
+        style={{marginLeft: 12}}
+        className="server-details-page__host-dropdown server-details-page__host-dropdown--placeholder"
+      >
+        Select Host
+      </span>
+    )
+  }
+  return (
+    <span
+      style={{marginLeft: 12, flexShrink: 0, minWidth: 0}}
+      className="server-details-page__host-dropdown-wrap"
+    >
+      <Dropdown
+        mode={DropdownMode.ActionList}
+        titleText="Select Host"
+        selectedID={current}
+        onChange={value => ctx.onHostSelect(value ?? null)}
+        customClass="server-details-page__host-dropdown"
+        widthPixels={150}
+      >
+        {hostList.map(host => (
+          <Dropdown.Item key={host} id={host} value={host}>
+            {host}
+          </Dropdown.Item>
+        ))}
+      </Dropdown>
+    </span>
+  )
+}
 
 function ServerDetailsWrapper(props) {
+  const [selectedHost, setSelectedHost] = useState<string | null>(null)
+  const contextValue: ServerDetailsPageContextValue = {
+    selectedHost,
+    onHostSelect: setSelectedHost,
+    templateOverrides:
+      selectedHost != null ? {':host:': selectedHost} : {},
+  }
+
   return (
-    <DashboardPageWithImport
-      {...props}
-      pageTitle="Server Details"
-      pageName={SERVER_DETAILS_PAGE_NAME}
-      getTempVars={generateForHosts}
-      pageClassName="server-details-page"
-      draggableCancel=".server-details-cell-tab-buttons"
-      renderCell={(cell, _context) => {
-        const cellId = (cell.i || '').trim()
-        if (cellId === 'host-table-cell') {
-          return <ServerDetailsCellContent />
-        }
-        return null
-      }}
-    />
+    <ServerDetailsPageContext.Provider value={contextValue}>
+      <DashboardPageWithImport
+        {...props}
+        pageTitle="Server Details"
+        pageName={SERVER_DETAILS_PAGE_NAME}
+        getTempVars={generateForHosts}
+        pageClassName="server-details-page"
+        showEmptyState={false}
+        templateSelectionContext={ServerDetailsPageContext as React.Context<TemplateSelectionContextValue | null>}
+        renderHeaderLeft={({templates}) => (
+          <HostDropdownHeader templates={templates} />
+        )}
+        renderCell={(cell, context) => {
+          if (cell.i === 'host-table-cell') {
+            const hostTemplate = context.templates.find(
+              t => t.tempVar === ':host:'
+            )
+            const selected = hostTemplate?.values?.find(v => v.localSelected)
+              ?.value
+            return (
+              <div className="server-details-page__selected-host">
+                Server Details selected Host: {selected ?? '—'}
+              </div>
+            )
+          }
+          return null
+        }}
+      />
+    </ServerDetailsPageContext.Provider>
   )
 }
 

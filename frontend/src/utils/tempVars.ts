@@ -1,5 +1,31 @@
 import {Source, Template, TemplateValueType, TemplateType} from 'src/types'
 
+/**
+ * Merges builtin dashboard templates with page getTempVars.
+ * - getTempVars (DB/RP, source-backed) take priority by tempVar.
+ */
+export function mergeBuiltinWithGetTempVars(
+  builtinTemplates: Template[],
+  pageTempVars: Template[],
+  source: Source
+): Template[] {
+  const pageVarKeys = new Set(pageTempVars.map(t => t.tempVar))
+  const fromBuiltin = (builtinTemplates || [])
+    .filter(t => !pageVarKeys.has(t.tempVar))
+    .map(t => {
+      if (!t.query) return t
+      return {
+        ...t,
+        query: {
+          ...t.query,
+          db: source.telegraf ?? t.query.db,
+          rp: source.defaultRP ?? t.query.rp,
+        },
+      }
+    })
+  return [...pageTempVars, ...fromBuiltin]
+}
+
 export const generateForHosts = (source: Source): Template[] => [
   {
     tempVar: ':db:',

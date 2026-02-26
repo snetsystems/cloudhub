@@ -27,6 +27,7 @@ export const resolveValues = (
   switch (template.type) {
     case TemplateType.Text:
       return newTemplateValueText(template, hopefullySelectedValue)
+    case TemplateType.Constant:
     case TemplateType.CSV:
     case TemplateType.Map:
       return newTemplateValueConstant(template, hopefullySelectedValue)

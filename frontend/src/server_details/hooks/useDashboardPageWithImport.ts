@@ -1,5 +1,5 @@
 import {useEffect, useState, useMemo} from 'react'
-import {Cell, Template, TemplateValue} from 'src/types'
+import {Cell} from 'src/types'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import * as DashboardsModels from 'src/types/dashboards'
 import {
@@ -16,7 +16,6 @@ import {
   notifyCellsImportedUpdated,
   notifyCellsImportedMixed,
 } from 'src/shared/copy/notifications'
-import {detectTemplateConflicts} from 'src/server_details/utils/templateConflict'
 import {computeNextCells} from 'src/dashboards/utils/importCells'
 
 export type FetchDashboardByName = (
@@ -50,9 +49,6 @@ export interface UseDashboardPageWithImportResult {
     setIsOpen: (value: boolean | ((prev: boolean) => boolean)) => void
     onSelectionChange: (items: ImportSelectionPayload) => Promise<void>
   }
-  localTemplates: Template[]
-  handlePickTemplate: (template: Template, value: TemplateValue) => void
-  handleSaveTemplates: (templates: Template[]) => void
 }
 
 export function useDashboardPageWithImport(
@@ -75,7 +71,6 @@ export function useDashboardPageWithImport(
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [cells, setCells] = useState<Cell[]>([])
   const [currentDashboardId, setCurrentDashboardId] = useState<string>('')
-  const [localTemplates, setLocalTemplates] = useState<Template[]>([])
   const [loadSettled, setLoadSettled] = useState(false)
 
   const patchDashboardByIDAsyncBound = patchDashboardByIDAsync as unknown as (
@@ -148,8 +143,6 @@ export function useDashboardPageWithImport(
   }
 
   const handleSelectionChange = async (items: ImportSelectionPayload) => {
-    setLocalTemplates(items.templates)
-
     const dashboardCells = items.dashboards.flatMap(d => d.cells)
     if (dashboardCells.length === 0 || !currentDashboardId) return
 
@@ -191,26 +184,6 @@ export function useDashboardPageWithImport(
     }
   }
 
-  const handlePickTemplate = (template: Template, value: TemplateValue) => {
-    const updated = localTemplates.map(t => {
-      if (t.id === template.id) {
-        return {
-          ...t,
-          values: t.values.map(v => ({
-            ...v,
-            localSelected: v.value === value.value,
-          })),
-        }
-      }
-      return t
-    })
-    setLocalTemplates(updated)
-  }
-
-  const handleSaveTemplates = (templates: Template[]) => {
-    setLocalTemplates(detectTemplateConflicts(templates))
-  }
-
   return {
     dashboard,
     cells,
@@ -224,8 +197,5 @@ export function useDashboardPageWithImport(
       setIsOpen: setIsModalOpen,
       onSelectionChange: handleSelectionChange,
     },
-    localTemplates,
-    handlePickTemplate,
-    handleSaveTemplates,
   }
 }
