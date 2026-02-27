@@ -182,6 +182,7 @@ function DashboardPageWithImport({
   const safeNotify = notify ?? (() => {})
   const safeCellQueryStatus = cellQueryStatus ?? {queryID: '', status: {}}
   const safeEditCellQueryStatus =
+    editCellQueryStatus ?? ((_queryID: string, _status: QueriesModels.Status) => undefined)
     editCellQueryStatus ??
     ((_queryID: string, _status: QueriesModels.Status) => undefined)
 
@@ -205,6 +206,7 @@ function DashboardPageWithImport({
     dashboard,
     cells,
     loadSettled,
+    localTemplates,
     onPositionChange,
     onDeleteCell,
     onCloneCell,
@@ -244,6 +246,10 @@ function DashboardPageWithImport({
   }, [mergedTemplates, sources, source])
 
   const tempVars = hydratedTemplates ?? mergedTemplates
+
+  const templateOverrides = templateSelectionContext
+    ? React.useContext(templateSelectionContext)?.templateOverrides
+    : undefined
 
   const templatesWithSelection = React.useMemo(() => {
     if (!templateOverrides || Object.keys(templateOverrides).length === 0)

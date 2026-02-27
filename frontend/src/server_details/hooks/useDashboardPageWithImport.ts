@@ -1,5 +1,5 @@
 import {useEffect, useState, useMemo} from 'react'
-import {Cell} from 'src/types'
+import {Cell, Template} from 'src/types'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import * as DashboardsModels from 'src/types/dashboards'
 import {
@@ -40,6 +40,7 @@ export interface UseDashboardPageWithImportResult {
   dashboard: DashboardsModels.Dashboard | undefined
   cells: Cell[]
   loadSettled: boolean
+  localTemplates: Template[]
   onPositionChange: (newCells: Cell[]) => void
   onAddCell: (cell: Cell) => void
   onDeleteCell: (cell: Cell) => void
@@ -72,6 +73,7 @@ export function useDashboardPageWithImport(
   const [cells, setCells] = useState<Cell[]>([])
   const [currentDashboardId, setCurrentDashboardId] = useState<string>('')
   const [loadSettled, setLoadSettled] = useState(false)
+  const [localTemplates, setLocalTemplates] = useState<Template[]>([])
 
   const patchDashboardByIDAsyncBound = patchDashboardByIDAsync as unknown as (
     dashboardID: string,
@@ -176,6 +178,7 @@ export function useDashboardPageWithImport(
     dashboard,
     cells,
     loadSettled,
+    localTemplates,
     onPositionChange,
     onAddCell,
     onDeleteCell,

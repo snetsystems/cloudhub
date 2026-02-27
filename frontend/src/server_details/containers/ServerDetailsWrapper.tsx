@@ -131,16 +131,8 @@ function ServerDetailsWrapper(props) {
         )}
         renderCell={(cell, context) => {
           if (cell.i === 'host-table-cell') {
-            const hostTemplate = context.templates.find(
-              t => t.tempVar === ':host:'
-            )
-            const selected = hostTemplate?.values?.find(v => v.localSelected)
-              ?.value
-            return (
-              <div className="server-details-page__selected-host">
-                Server Details selected Host: {selected ?? '—'}
-              </div>
-            )
+            console.log('renderCell context', context)
+            return <ServerDetailsCellContent />
           }
           return null
         }}
