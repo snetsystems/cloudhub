@@ -638,6 +638,22 @@ export const notifyCellsImportedMixed = (
   message: `Added ${added} and updated ${updated} cells in dashboard.`,
 })
 
+export const notifyFixedCellsUpdated = (count: number): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'dash-h',
+  message:
+    count === 1
+      ? 'Fixed cell updated successfully.'
+      : `${count} fixed cells updated successfully.`,
+})
+
+export const notifyFixedCellsUpdateFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to update fixed cell: ${errorMessage}`,
+})
+
 //  Template Variables & URL Queries
 //  ----------------------------------------------------------------------------
 export const notifyInvalidTempVarValueInMetaQuery = (
