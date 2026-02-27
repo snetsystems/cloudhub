@@ -91,7 +91,7 @@ type DataStore interface {
 	Organizations(ctx context.Context) cloudhub.OrganizationsStore
 	Mappings(ctx context.Context) cloudhub.MappingsStore
 	Dashboards(ctx context.Context) cloudhub.DashboardsStore
-	BuiltinDashboardMappingStore() cloudhub.BuiltinDashboardMappingStore
+	FixedCellMappingStore() cloudhub.FixedCellMappingStore
 	Config(ctx context.Context) cloudhub.ConfigStore
 	OrganizationConfig(ctx context.Context) cloudhub.OrganizationConfigStore
 	Vspheres(ctx context.Context) cloudhub.VspheresStore
@@ -118,7 +118,7 @@ type Store struct {
 	ProtoboardsStore        cloudhub.ProtoboardsStore
 	UsersStore              cloudhub.UsersStore
 	DashboardsStore              cloudhub.DashboardsStore
-	BuiltinDashboardMapping      cloudhub.BuiltinDashboardMappingStore
+	FixedCellMapping      cloudhub.FixedCellMappingStore
 	MappingsStore                cloudhub.MappingsStore
 	OrganizationsStore      cloudhub.OrganizationsStore
 	ConfigStore             cloudhub.ConfigStore
@@ -202,9 +202,9 @@ func (s *Store) Dashboards(ctx context.Context) cloudhub.DashboardsStore {
 	return &noop.DashboardsStore{}
 }
 
-// BuiltinDashboardMappingStore returns the store for builtin dashboard name -> ID mapping.
-func (s *Store) BuiltinDashboardMappingStore() cloudhub.BuiltinDashboardMappingStore {
-	return s.BuiltinDashboardMapping
+// FixedCellMappingStore returns the store for fixed-cell name -> dashboard ID mapping.
+func (s *Store) FixedCellMappingStore() cloudhub.FixedCellMappingStore {
+	return s.FixedCellMapping
 }
 
 // OrganizationConfig returns a noop.OrganizationConfigStore if the context has no organization specified

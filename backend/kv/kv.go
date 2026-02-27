@@ -179,9 +179,9 @@ func (s *Service) DashboardsStore() cloudhub.DashboardsStore {
 	return &dashboardsStore{client: s, IDs: &id.UUID{}}
 }
 
-// BuiltinDashboardMappingStore returns a cloudhub.BuiltinDashboardMappingStore.
-func (s *Service) BuiltinDashboardMappingStore() cloudhub.BuiltinDashboardMappingStore {
-	return &builtinDashboardMappingStore{client: s}
+// FixedCellMappingStore returns a cloudhub.FixedCellMappingStore.
+func (s *Service) FixedCellMappingStore() cloudhub.FixedCellMappingStore {
+	return &fixedCellMappingStore{client: s}
 }
 
 // MappingsStore returns a cloudhub.MappingsStore.

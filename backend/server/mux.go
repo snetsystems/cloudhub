@@ -375,12 +375,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/dashboards/:id/templates/:tid", EnsureEditor(service.RemoveTemplate))
 	router.PUT("/cloudhub/v1/dashboards/:id/templates/:tid", EnsureEditor(service.ReplaceTemplate))
 
-	// Builtin Dashboard Templates
-	router.GET("/cloudhub/v1/builtin/dashboards", EnsureViewer(service.BuiltinDashboardList))
-	router.GET("/cloudhub/v1/builtin/dashboards/:name/template", EnsureViewer(service.BuiltinDashboardTemplate))
-	router.POST("/cloudhub/v1/builtin/dashboards/:name/apply", EnsureEditor(service.ApplyBuiltinDashboard))
-	// Builtin dashboard by name (resolves to org's dashboard ID and returns dashboard)
-	router.GET("/cloudhub/v1/templates/:name", EnsureViewer(service.TemplateDashboardByName))
+	// Fixed-cell dashboards
+	router.GET("/cloudhub/v1/fixed-cells", EnsureViewer(service.FixedCellList))
+	router.GET("/cloudhub/v1/fixed-cells/:name", EnsureViewer(service.FixedCellDashboardByName))
+	router.GET("/cloudhub/v1/fixed-cells/:name/template", EnsureViewer(service.GetFixedCell))
+	router.POST("/cloudhub/v1/fixed-cells/:name/apply", EnsureEditor(service.ApplyFixedCell))
 
 	// Databases
 	router.GET("/cloudhub/v1/sources/:id/dbs", EnsureViewer(service.GetDatabases))

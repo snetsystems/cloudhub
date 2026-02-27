@@ -11,7 +11,7 @@ import (
 	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
-func TestInitializeBuiltinDashboards(t *testing.T) {
+func TestInitializeFixedCells(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -80,13 +80,13 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 			}
 
 			// Mock mapping store (no-op for tests; optional: verify Register calls)
-			mockMappingStore := &mocks.BuiltinDashboardMappingStore{}
+			mockMappingStore := &mocks.FixedCellMappingStore{}
 
 			// Create context with organization
 			ctx := context.WithValue(context.Background(), organizations.ContextKey, tt.orgID)
 
-			// Initialize builtin dashboards
-			err := InitializeBuiltinDashboards(
+			// Initialize fixed-cell dashboards
+			err := InitializeFixedCells(
 				ctx,
 				tt.orgID,
 				mockDashboardsStore,
@@ -96,27 +96,27 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 			)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("InitializeBuiltinDashboards() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("InitializeFixedCells() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if !tt.wantErr {
 				if len(addedDashboards) != tt.wantCount {
-					t.Errorf("InitializeBuiltinDashboards() added %d dashboards, want %d", len(addedDashboards), tt.wantCount)
+					t.Errorf("InitializeFixedCells() added %d dashboards, want %d", len(addedDashboards), tt.wantCount)
 				}
 
 				// Verify added dashboards have correct properties
 				for _, dashboard := range addedDashboards {
 					if dashboard.Organization != tt.orgID {
-						t.Errorf("InitializeBuiltinDashboards() added dashboard with organization %q, want %q", dashboard.Organization, tt.orgID)
+						t.Errorf("InitializeFixedCells() added dashboard with organization %q, want %q", dashboard.Organization, tt.orgID)
 					}
 					if dashboard.Type != cloudhub.DashboardTypeBuiltin {
-						t.Errorf("InitializeBuiltinDashboards() added dashboard with type %q, want %q", dashboard.Type, cloudhub.DashboardTypeBuiltin)
+						t.Errorf("InitializeFixedCells() added dashboard with type %q, want %q", dashboard.Type, cloudhub.DashboardTypeBuiltin)
 					}
-					// Every cell in a builtin dashboard must have CellOrigin set to builtin
+					// Every cell in a fixed-cell dashboard must have CellOrigin set to builtin
 					for i, cell := range dashboard.Cells {
 						if cell.CellOrigin != cloudhub.CellOriginBuiltin {
-							t.Errorf("InitializeBuiltinDashboards() added dashboard %q cell[%d] has cellOrigin %q, want %q", dashboard.Name, i, cell.CellOrigin, cloudhub.CellOriginBuiltin)
+							t.Errorf("InitializeFixedCells() added dashboard %q cell[%d] has cellOrigin %q, want %q", dashboard.Name, i, cell.CellOrigin, cloudhub.CellOriginBuiltin)
 						}
 					}
 				}
@@ -125,13 +125,13 @@ func TestInitializeBuiltinDashboards(t *testing.T) {
 	}
 }
 
-func TestApplyBuiltinDashboardToOrg(t *testing.T) {
+func TestApplyFixedCellToOrg(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	realBuiltinStore := &builtin.BinDashboardsStore{Logger: log.New(log.DebugLevel)}
 	template, err := realBuiltinStore.Get(ctx, "host_page")
 	if err != nil {
-		t.Skip("host_page builtin not available:", err)
+		t.Skip("host_page fixed-cell not available:", err)
 	}
 
 	// Org dashboard has one component cell (same ID as in template) and one non-component cell
@@ -156,7 +156,7 @@ func TestApplyBuiltinDashboardToOrg(t *testing.T) {
 			return nil
 		},
 	}
-	mockMappingStore := &mocks.BuiltinDashboardMappingStore{
+	mockMappingStore := &mocks.FixedCellMappingStore{
 		GetDashboardIDF: func(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error) {
 			if orgID == "org1" && name == "host_page" {
 				return 1, nil
@@ -165,9 +165,9 @@ func TestApplyBuiltinDashboardToOrg(t *testing.T) {
 		},
 	}
 
-	err = ApplyBuiltinDashboardToOrg(ctx, "org1", "host_page", mockDashboardsStore, realBuiltinStore, mockMappingStore, log.New(log.DebugLevel))
+	err = ApplyFixedCellToOrg(ctx, "org1", "host_page", mockDashboardsStore, realBuiltinStore, mockMappingStore, log.New(log.DebugLevel))
 	if err != nil {
-		t.Fatalf("ApplyBuiltinDashboardToOrg() error = %v", err)
+		t.Fatalf("ApplyFixedCellToOrg() error = %v", err)
 	}
 	if len(updated.Templates) != len(template.Templates) {
 		t.Errorf("Templates length = %d, want %d", len(updated.Templates), len(template.Templates))

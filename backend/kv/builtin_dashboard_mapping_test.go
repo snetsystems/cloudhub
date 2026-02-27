@@ -15,7 +15,7 @@ func TestBuiltinDashboardMappingStore_RegisterAndGet(t *testing.T) {
 	defer client.Close()
 
 	ctx := context.Background()
-	mapping := client.BuiltinDashboardMappingStore()
+	mapping := client.FixedCellMappingStore()
 
 	orgID := "org-1"
 	name := "host_page"
@@ -42,7 +42,7 @@ func TestBuiltinDashboardMappingStore_GetDashboardID_NotFound(t *testing.T) {
 	defer client.Close()
 
 	ctx := context.Background()
-	mapping := client.BuiltinDashboardMappingStore()
+	mapping := client.FixedCellMappingStore()
 
 	_, err = mapping.GetDashboardID(ctx, "org-1", "nonexistent")
 	if err != cloudhub.ErrDashboardNotFound {
@@ -58,7 +58,7 @@ func TestBuiltinDashboardMappingStore_ListByBuiltinName(t *testing.T) {
 	defer client.Close()
 
 	ctx := context.Background()
-	mapping := client.BuiltinDashboardMappingStore()
+	mapping := client.FixedCellMappingStore()
 
 	if err := mapping.Register(ctx, "org-1", "host_page", 10); err != nil {
 		t.Fatalf("Register(org-1) error = %v", err)
@@ -70,34 +70,34 @@ func TestBuiltinDashboardMappingStore_ListByBuiltinName(t *testing.T) {
 		t.Fatalf("Register(org-1, other_page) error = %v", err)
 	}
 
-	entries, err := mapping.ListByBuiltinName(ctx, "host_page")
+	entries, err := mapping.ListByTemplateName(ctx, "host_page")
 	if err != nil {
-		t.Fatalf("ListByBuiltinName() error = %v", err)
+		t.Fatalf("ListByTemplateName() error = %v", err)
 	}
 	if len(entries) != 2 {
-		t.Fatalf("ListByBuiltinName() returned %d entries, want 2", len(entries))
+		t.Fatalf("ListByTemplateName() returned %d entries, want 2", len(entries))
 	}
 	byOrg := make(map[string]cloudhub.DashboardID)
 	for _, e := range entries {
 		byOrg[e.OrgID] = e.DashboardID
 	}
 	if byOrg["org-1"] != 10 || byOrg["org-2"] != 20 {
-		t.Errorf("ListByBuiltinName() entries = %+v", entries)
+		t.Errorf("ListByTemplateName() entries = %+v", entries)
 	}
 
-	other, err := mapping.ListByBuiltinName(ctx, "other_page")
+	other, err := mapping.ListByTemplateName(ctx, "other_page")
 	if err != nil {
-		t.Fatalf("ListByBuiltinName(other_page) error = %v", err)
+		t.Fatalf("ListByTemplateName(other_page) error = %v", err)
 	}
 	if len(other) != 1 || other[0].OrgID != "org-1" || other[0].DashboardID != 30 {
-		t.Errorf("ListByBuiltinName(other_page) = %+v", other)
+		t.Errorf("ListByTemplateName(other_page) = %+v", other)
 	}
 
-	empty, err := mapping.ListByBuiltinName(ctx, "nonexistent")
+	empty, err := mapping.ListByTemplateName(ctx, "nonexistent")
 	if err != nil {
-		t.Fatalf("ListByBuiltinName(nonexistent) error = %v", err)
+		t.Fatalf("ListByTemplateName(nonexistent) error = %v", err)
 	}
 	if len(empty) != 0 {
-		t.Errorf("ListByBuiltinName(nonexistent) = %+v, want empty", empty)
+		t.Errorf("ListByTemplateName(nonexistent) = %+v, want empty", empty)
 	}
 }

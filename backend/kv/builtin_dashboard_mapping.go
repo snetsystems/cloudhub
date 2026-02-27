@@ -8,8 +8,8 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// builtinDashboardMappingStore stores (orgID, name) -> dashboard ID for builtin dashboards.
-type builtinDashboardMappingStore struct {
+// fixedCellMappingStore stores (orgID, name) -> dashboard ID for fixed-cell dashboards.
+type fixedCellMappingStore struct {
 	client *Service
 }
 
@@ -18,11 +18,11 @@ func mappingKey(orgID, name string) []byte {
 	return []byte(orgID + "\x00" + name)
 }
 
-// Ensure builtinDashboardMappingStore implements cloudhub.BuiltinDashboardMappingStore.
-var _ cloudhub.BuiltinDashboardMappingStore = (*builtinDashboardMappingStore)(nil)
+// Ensure fixedCellMappingStore implements cloudhub.FixedCellMappingStore.
+var _ cloudhub.FixedCellMappingStore = (*fixedCellMappingStore)(nil)
 
-// GetDashboardID returns the dashboard ID for the builtin dashboard named name in the given org.
-func (s *builtinDashboardMappingStore) GetDashboardID(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error) {
+// GetDashboardID returns the dashboard ID for the fixed-cell named name in the given org.
+func (s *fixedCellMappingStore) GetDashboardID(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error) {
 	if orgID == "" || name == "" {
 		return 0, cloudhub.ErrDashboardNotFound
 	}
@@ -46,8 +46,8 @@ func (s *builtinDashboardMappingStore) GetDashboardID(ctx context.Context, orgID
 	return cloudhub.DashboardID(id), nil
 }
 
-// Register records that the builtin dashboard named name in org orgID is stored as dashboardID.
-func (s *builtinDashboardMappingStore) Register(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error {
+// Register records that the fixed-cell named name in org orgID is stored as dashboardID.
+func (s *fixedCellMappingStore) Register(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error {
 	if orgID == "" || name == "" {
 		return nil
 	}
@@ -57,13 +57,13 @@ func (s *builtinDashboardMappingStore) Register(ctx context.Context, orgID, name
 	})
 }
 
-// ListByBuiltinName returns all (orgID, dashboardID) entries for the given builtin name.
-func (s *builtinDashboardMappingStore) ListByBuiltinName(ctx context.Context, name string) ([]cloudhub.BuiltinDashboardMappingEntry, error) {
+// ListByTemplateName returns all (orgID, dashboardID) entries for the given template name.
+func (s *fixedCellMappingStore) ListByTemplateName(ctx context.Context, name string) ([]cloudhub.FixedCellMappingEntry, error) {
 	if name == "" {
 		return nil, nil
 	}
 	suffix := "\x00" + name
-	var out []cloudhub.BuiltinDashboardMappingEntry
+	var out []cloudhub.FixedCellMappingEntry
 	if err := s.client.kv.View(ctx, func(tx Tx) error {
 		return tx.Bucket(dashboardsBuiltinMappingBucket).ForEach(func(k, v []byte) error {
 			keyStr := string(k)
@@ -76,7 +76,7 @@ func (s *builtinDashboardMappingStore) ListByBuiltinName(ctx context.Context, na
 			if err != nil {
 				return nil
 			}
-			out = append(out, cloudhub.BuiltinDashboardMappingEntry{
+			out = append(out, cloudhub.FixedCellMappingEntry{
 				OrgID:        orgID,
 				DashboardID:  cloudhub.DashboardID(id),
 			})

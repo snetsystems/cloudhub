@@ -11,9 +11,9 @@ import (
 	"github.com/snetsystems/cloudhub/backend/builtin"
 )
 
-// setBuiltinVersionInfo sets LatestVersion and UpdateAvailable on resp when d is a builtin dashboard.
-// getVersion returns the latest builtin version for a dashboard name (e.g. from BinDashboardsStore.GetVersion).
-func setBuiltinVersionInfo(ctx context.Context, resp *dashboardResponse, d cloudhub.Dashboard, getVersion func(context.Context, string) string) {
+// setFixedCellVersionInfo sets LatestVersion and UpdateAvailable on resp when d is a fixed-cell dashboard.
+// getVersion returns the latest template version for a dashboard name (e.g. from BinDashboardsStore.GetVersion).
+func setFixedCellVersionInfo(ctx context.Context, resp *dashboardResponse, d cloudhub.Dashboard, getVersion func(context.Context, string) string) {
 	if d.Type != cloudhub.DashboardTypeBuiltin {
 		return
 	}
@@ -51,8 +51,8 @@ type dashboardResponse struct {
 	Organization    string                  `json:"organization"`
 	Type            string                  `json:"type,omitempty"`
 	Version         string                  `json:"version,omitempty"`         // Current version of the dashboard
-	LatestVersion   string                  `json:"latestVersion,omitempty"`   // Latest version available (for builtin dashboards)
-	UpdateAvailable bool                    `json:"updateAvailable,omitempty"` // True if a newer version is available
+	LatestVersion   string                  `json:"latestVersion,omitempty"`   // Latest version available (for fixed-cell dashboards)
+	UpdateAvailable bool                    `json:"updateAvailable,omitempty"` // True if a newer template version is available
 	UpdatedAt       string                  `json:"updatedAt,omitempty"`       // RFC3339; when dashboard was last updated
 	Links           dashboardLinks          `json:"links"`
 }
@@ -107,9 +107,9 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 	shouldIncludeCells := includeCells != "false"
 	shouldIncludeTemplates := includeTemplates != "false"
 
-	// Get builtin dashboard versions for comparison
+	// Get fixed-cell template versions for comparison
 	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
-	builtinVersions := builtinStore.GetAllVersions(ctx)
+	templateVersions := builtinStore.GetAllVersions(ctx)
 
 	res := getDashboardsResponse{
 		Dashboards: []*dashboardResponse{},
@@ -118,9 +118,9 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 	for _, dashboard := range dashboards {
 		dashboardResp := newDashboardResponse(dashboard)
 		getVersion := func(ctx context.Context, name string) string {
-			return builtinVersions[name]
+			return templateVersions[name]
 		}
-		setBuiltinVersionInfo(ctx, dashboardResp, dashboard, getVersion)
+		setFixedCellVersionInfo(ctx, dashboardResp, dashboard, getVersion)
 
 		// Conditionally exclude cells and templates based on query parameters
 		if !shouldIncludeCells {
@@ -152,15 +152,15 @@ func (s *Service) DashboardID(w http.ResponseWriter, r *http.Request) {
 
 	res := newDashboardResponse(e)
 	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
-	setBuiltinVersionInfo(ctx, res, e, builtinStore.GetVersion)
+	setFixedCellVersionInfo(ctx, res, e, builtinStore.GetVersion)
 
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-// TemplateDashboardByName returns the builtin dashboard for the current org by name (e.g. host_page).
-// GET /cloudhub/v1/templates/:name
+// FixedCellDashboardByName returns the fixed-cell dashboard for the current org by name (e.g. host_page).
+// GET /cloudhub/v1/fixed-cells/:name
 // Returns the org's dashboard as stored. No auto-apply; the user must use the Update button (POST .../apply) to apply the latest template. This keeps Current version reflecting the real org state so the UI can show update availability (Current vs Latest).
-func (s *Service) TemplateDashboardByName(w http.ResponseWriter, r *http.Request) {
+func (s *Service) FixedCellDashboardByName(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	orgID, ok := hasOrganizationContext(ctx)
 	if !ok || orgID == "" {
@@ -173,7 +173,7 @@ func (s *Service) TemplateDashboardByName(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	dashboardID, err := s.Store.BuiltinDashboardMappingStore().GetDashboardID(ctx, orgID, name)
+	dashboardID, err := s.Store.FixedCellMappingStore().GetDashboardID(ctx, orgID, name)
 	if err != nil {
 		if err == cloudhub.ErrDashboardNotFound {
 			notFound(w, name, s.Logger)
@@ -194,9 +194,9 @@ func (s *Service) TemplateDashboardByName(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
+	templateStore := &builtin.BinDashboardsStore{Logger: s.Logger}
 	res := newDashboardResponse(e)
-	setBuiltinVersionInfo(ctx, res, e, builtinStore.GetVersion)
+	setFixedCellVersionInfo(ctx, res, e, templateStore.GetVersion)
 
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -453,37 +453,37 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	return
 }
 
-// builtinTemplateMeta is the response item for BuiltinDashboardList.
-type builtinTemplateMeta struct {
+// fixedCellMeta is the response item for FixedCellList.
+type fixedCellMeta struct {
 	Name    string `json:"name"`
 	Version string `json:"version,omitempty"`
 }
 
-// BuiltinDashboardList returns the list of available builtin template names (and version).
-// GET /cloudhub/v1/builtin/dashboards
-func (s *Service) BuiltinDashboardList(w http.ResponseWriter, r *http.Request) {
+// FixedCellList returns the list of available fixed-cell names (and version).
+// GET /cloudhub/v1/fixed-cells
+func (s *Service) FixedCellList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
 	all, err := builtinStore.All(ctx)
 	if err != nil {
-		Error(w, http.StatusInternalServerError, "Error listing builtin dashboards", s.Logger)
+		Error(w, http.StatusInternalServerError, "Error listing fixed-cells", s.Logger)
 		return
 	}
-	list := make([]builtinTemplateMeta, 0, len(all))
+	list := make([]fixedCellMeta, 0, len(all))
 	for _, d := range all {
-		list = append(list, builtinTemplateMeta{Name: d.Name, Version: d.Version})
+		list = append(list, fixedCellMeta{Name: d.Name, Version: d.Version})
 	}
 	encodeJSON(w, http.StatusOK, struct {
-		Templates []builtinTemplateMeta `json:"templates"`
+		Templates []fixedCellMeta `json:"templates"`
 	}{Templates: list}, s.Logger)
 }
 
-// BuiltinDashboardTemplate returns the original JSON template for a builtin dashboard by name.
-// GET /cloudhub/v1/builtin/dashboards/:name/template
-func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Request) {
+// GetFixedCell returns the original JSON template for a fixed-cell by name.
+// GET /cloudhub/v1/fixed-cells/:name/template
+func (s *Service) GetFixedCell(w http.ResponseWriter, r *http.Request) {
 	name, err := paramStr("name", r)
 	if err != nil {
-		Error(w, http.StatusBadRequest, "Dashboard name is required", s.Logger)
+		Error(w, http.StatusBadRequest, "Template name is required", s.Logger)
 		return
 	}
 
@@ -498,7 +498,7 @@ func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Reques
 			notFound(w, name, s.Logger)
 			return
 		}
-		Error(w, http.StatusInternalServerError, "Error loading builtin dashboard template", s.Logger)
+		Error(w, http.StatusInternalServerError, "Error loading fixed-cell", s.Logger)
 		return
 	}
 
@@ -506,9 +506,9 @@ func (s *Service) BuiltinDashboardTemplate(w http.ResponseWriter, r *http.Reques
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-// ApplyBuiltinDashboard fully applies the latest builtin template to the current org's dashboard (cells + templates).
-// POST /cloudhub/v1/builtin/dashboards/:name/apply
-func (s *Service) ApplyBuiltinDashboard(w http.ResponseWriter, r *http.Request) {
+// ApplyFixedCell applies the latest fixed-cell to the current org's dashboard (component cells: queries only; templates and version updated).
+// POST /cloudhub/v1/fixed-cells/:name/apply
+func (s *Service) ApplyFixedCell(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	orgID, ok := hasOrganizationContext(ctx)
 	if !ok || orgID == "" {
@@ -524,13 +524,13 @@ func (s *Service) ApplyBuiltinDashboard(w http.ResponseWriter, r *http.Request) 
 
 	serverCtx := serverContext(ctx)
 	builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
-	err = ApplyBuiltinDashboardToOrg(
+	err = ApplyFixedCellToOrg(
 		serverCtx,
 		orgID,
 		name,
 		s.Store.Dashboards(serverCtx),
 		builtinStore,
-		s.Store.BuiltinDashboardMappingStore(),
+		s.Store.FixedCellMappingStore(),
 		s.Logger,
 	)
 	if err != nil {

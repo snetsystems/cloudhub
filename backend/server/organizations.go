@@ -159,13 +159,13 @@ func (s *Service) NewOrganization(w http.ResponseWriter, r *http.Request) {
 	// Use server context to get direct access to dashboards store
 	serverCtx := serverContext(ctx)
 	dashboardsStore := s.Store.Dashboards(serverCtx)
-	mappingStore := s.Store.BuiltinDashboardMappingStore()
-	if err := InitializeBuiltinDashboards(orgCtx, res.ID, dashboardsStore, builtinStore, mappingStore, s.Logger); err != nil {
+	mappingStore := s.Store.FixedCellMappingStore()
+	if err := InitializeFixedCells(orgCtx, res.ID, dashboardsStore, builtinStore, mappingStore, s.Logger); err != nil {
 		// Log error but don't fail organization creation
 		s.Logger.
-			WithField("component", "builtin").
+			WithField("component", "fixed-cell").
 			WithField("organization", res.ID).
-			Error("Failed to initialize builtin dashboards for new organization:", err)
+			Error("Failed to initialize fixed-cells for new organization:", err)
 	}
 
 	// log registrationte

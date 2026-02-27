@@ -15,7 +15,7 @@ type Store struct {
 	ProtoboardsStore        cloudhub.ProtoboardsStore
 	UsersStore              cloudhub.UsersStore
 	DashboardsStore             cloudhub.DashboardsStore
-	BuiltinDashboardMapping     cloudhub.BuiltinDashboardMappingStore
+	FixedCellMapping     cloudhub.FixedCellMappingStore
 	OrganizationsStore         cloudhub.OrganizationsStore
 	ConfigStore             cloudhub.ConfigStore
 	OrganizationConfigStore cloudhub.OrganizationConfigStore
@@ -72,9 +72,9 @@ func (s *Store) Dashboards(ctx context.Context) cloudhub.DashboardsStore {
 	return s.DashboardsStore
 }
 
-// BuiltinDashboardMappingStore ...
-func (s *Store) BuiltinDashboardMappingStore() cloudhub.BuiltinDashboardMappingStore {
-	return s.BuiltinDashboardMapping
+// FixedCellMappingStore ...
+func (s *Store) FixedCellMappingStore() cloudhub.FixedCellMappingStore {
+	return s.FixedCellMapping
 }
 
 // Config ...

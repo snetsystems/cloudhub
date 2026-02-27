@@ -48,49 +48,49 @@ export const getDashboard = async dashboardID => {
   }
 }
 
-/** Response of GET /cloudhub/v1/builtin/dashboards (list of available builtin template names) */
-export interface BuiltinDashboardListResponse {
+/** Response of GET /cloudhub/v1/fixed-cells (list of available fixed-cell names) */
+export interface FixedCellListResponse {
   templates: Array<{name: string; version?: string}>
 }
 
-export const getBuiltinDashboardList = (): Promise<
-  AxiosResponse<BuiltinDashboardListResponse>
+export const getFixedCellList = (): Promise<
+  AxiosResponse<FixedCellListResponse>
 > => {
-  return AJAX<BuiltinDashboardListResponse>({
+  return AJAX<FixedCellListResponse>({
     method: 'GET',
-    url: '/cloudhub/v1/builtin/dashboards',
-  }) as Promise<AxiosResponse<BuiltinDashboardListResponse>>
+    url: '/cloudhub/v1/fixed-cells',
+  }) as Promise<AxiosResponse<FixedCellListResponse>>
 }
 
-/** Fetches one builtin template by name. GET /cloudhub/v1/builtin/dashboards/:name/template */
-export const getBuiltinDashboardTemplate = async (
+/** Fetches one fixed-cell by name. GET /cloudhub/v1/fixed-cells/:name/template */
+export const getFixedCell = async (
   name: string
 ): Promise<AxiosResponse<Dashboard>> => {
   return AJAX<Dashboard>({
     method: 'GET',
-    url: `/cloudhub/v1/builtin/dashboards/${encodeURIComponent(name)}/template`,
+    url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(name)}/template`,
   }) as Promise<AxiosResponse<Dashboard>>
 }
 
-/** Fetches current org's builtin dashboard by name (has version, latestVersion, updateAvailable). GET /cloudhub/v1/templates/:name */
-export const getTemplateDashboardByName = async (
+/** Fetches current org's fixed-cell dashboard by name (has version, latestVersion, updateAvailable). GET /cloudhub/v1/fixed-cells/:name */
+export const getFixedCellDashboardByName = async (
   name: string
 ): Promise<AxiosResponse<Dashboard> | null> => {
   try {
     return (await AJAX<Dashboard>({
       method: 'GET',
-      url: `/cloudhub/v1/templates/${encodeURIComponent(name)}`,
+      url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(name)}`,
     })) as AxiosResponse<Dashboard>
   } catch {
     return null
   }
 }
 
-/** Applies the latest builtin template to the current org's dashboard (full replace). POST /cloudhub/v1/builtin/dashboards/:name/apply */
-export const applyBuiltinDashboard = async (name: string): Promise<void> => {
+/** Applies the latest fixed-cell to the current org's dashboard. POST /cloudhub/v1/fixed-cells/:name/apply */
+export const applyFixedCell = async (name: string): Promise<void> => {
   await AJAX({
     method: 'POST',
-    url: `/cloudhub/v1/builtin/dashboards/${encodeURIComponent(name)}/apply`,
+    url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(name)}/apply`,
   })
 }
 
@@ -229,13 +229,13 @@ export const editTemplateVariables = async templateVariable => {
   }
 }
 
-/** Fetches a dashboard by its template/page name (e.g. server-details, host_page). Returns null when not found or on error. */
+/** Fetches a dashboard by its fixed-cell/page name (e.g. server-details, host_page). Returns null when not found or on error. */
 export const getDashboardByTemplateName = async (
   name: string
 ): Promise<Dashboard | null> => {
   try {
     const {data} = await AJAX<AxiosResponse<Dashboard>>({
-      url: `/cloudhub/v1/templates/${name}`,
+      url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(name)}`,
       method: 'GET',
     })
     return data as Dashboard

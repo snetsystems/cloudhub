@@ -6,23 +6,23 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// Ensure BuiltinDashboardMappingStore implements cloudhub.BuiltinDashboardMappingStore.
-var _ cloudhub.BuiltinDashboardMappingStore = (*BuiltinDashboardMappingStore)(nil)
+// Ensure FixedCellMappingStore implements cloudhub.FixedCellMappingStore.
+var _ cloudhub.FixedCellMappingStore = (*FixedCellMappingStore)(nil)
 
-// BuiltinDashboardMappingStore is a no-op implementation.
-type BuiltinDashboardMappingStore struct{}
+// FixedCellMappingStore is a no-op implementation.
+type FixedCellMappingStore struct{}
 
 // GetDashboardID returns ErrDashboardNotFound.
-func (s *BuiltinDashboardMappingStore) GetDashboardID(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error) {
+func (s *FixedCellMappingStore) GetDashboardID(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error) {
 	return 0, cloudhub.ErrDashboardNotFound
 }
 
 // Register is a no-op.
-func (s *BuiltinDashboardMappingStore) Register(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error {
+func (s *FixedCellMappingStore) Register(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error {
 	return nil
 }
 
-// ListByBuiltinName returns nil (no mappings).
-func (s *BuiltinDashboardMappingStore) ListByBuiltinName(ctx context.Context, name string) ([]cloudhub.BuiltinDashboardMappingEntry, error) {
+// ListByTemplateName returns nil (no mappings).
+func (s *FixedCellMappingStore) ListByTemplateName(ctx context.Context, name string) ([]cloudhub.FixedCellMappingEntry, error) {
 	return nil, nil
 }

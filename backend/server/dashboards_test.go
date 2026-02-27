@@ -887,7 +887,7 @@ func TestValidDashboardRequest_TableGaugeChartOptions_ValueFormat(t *testing.T) 
 	}
 }
 
-func TestSetBuiltinVersionInfo(t *testing.T) {
+func TestSetFixedCellVersionInfo(t *testing.T) {
 	ctx := context.Background()
 	tests := []struct {
 		name       string
@@ -955,7 +955,7 @@ func TestSetBuiltinVersionInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resp := &dashboardResponse{}
-			setBuiltinVersionInfo(ctx, resp, tt.d, tt.getVersion)
+			setFixedCellVersionInfo(ctx, resp, tt.d, tt.getVersion)
 			if resp.LatestVersion != tt.wantLatest {
 				t.Errorf("LatestVersion = %q, want %q", resp.LatestVersion, tt.wantLatest)
 			}
@@ -1158,16 +1158,16 @@ func TestService_UpdateDashboard(t *testing.T) {
 	}
 }
 
-func TestService_BuiltinDashboardTemplate(t *testing.T) {
+func TestService_GetFixedCell(t *testing.T) {
 	s := &Service{Logger: &mocks.TestLogger{}}
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/cloudhub/v1/builtin/dashboards/host_page/template", nil)
+	r := httptest.NewRequest(http.MethodGet, "/cloudhub/v1/fixed-cells/host_page/template", nil)
 	r = WithContext(r.Context(), r, map[string]string{"name": "host_page"})
 
-	s.BuiltinDashboardTemplate(w, r)
+	s.GetFixedCell(w, r)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("BuiltinDashboardTemplate() status = %d, want 200\nbody: %s", w.Code, w.Body.String())
+		t.Errorf("GetFixedCell() status = %d, want 200\nbody: %s", w.Code, w.Body.String())
 		return
 	}
 	var res struct {

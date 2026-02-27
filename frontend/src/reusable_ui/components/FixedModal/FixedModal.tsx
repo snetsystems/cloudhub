@@ -13,8 +13,8 @@ interface Props {
   children?: React.ReactNode
   width?: string
   onSelectionChange?: (items: ImportSelectionPayload) => void
-  /** When set, Builtin tab shows only this builtin template (e.g. current page's builtin). */
-  builtinName?: string
+  /** When set, Fixed cell tab shows only this template (e.g. current page's template). */
+  fixedCellName?: string
 }
 
 function FixedModal({
@@ -23,7 +23,7 @@ function FixedModal({
   children,
   width,
   onSelectionChange,
-  builtinName,
+  fixedCellName,
 }: Props) {
   const [isMounted, setIsMounted] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(isOpen)
@@ -86,11 +86,11 @@ function FixedModal({
       titleText: 'Cell List',
     },
     {
-      title: 'Builtin',
-      value: 'builtin',
-      active: currentTab === 'builtin',
-      onClick: () => handleTabChange('builtin'),
-      titleText: 'Builtin',
+      title: 'Fixed cell',
+      value: 'fixed-cell',
+      active: currentTab === 'fixed-cell',
+      onClick: () => handleTabChange('fixed-cell'),
+      titleText: 'Fixed cell',
     },
   ]
 
@@ -153,9 +153,9 @@ function FixedModal({
                 {currentTab === 'cell-list' && (
                   <CellList onSelectionChange={handleSelectionUpdate} />
                 )}
-                {currentTab === 'builtin' && (
+                {currentTab === 'fixed-cell' && (
                   <BuiltinTemplates
-                    builtinName={builtinName}
+                    fixedCellName={fixedCellName}
                     onSelectionChange={handleSelectionUpdate}
                   />
                 )}

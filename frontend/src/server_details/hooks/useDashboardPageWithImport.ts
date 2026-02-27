@@ -88,18 +88,6 @@ export function useDashboardPageWithImport(
   }, [dashboard])
 
   useEffect(() => {
-    if (!dashboard?.templates?.length) return
-    setLocalTemplates(prev => {
-      const byKey = new Map(prev.map(t => [t.tempVar || t.id, t]))
-      dashboard.templates!.forEach(t => {
-        const k = t.tempVar || t.id
-        if (k && !byKey.has(k)) byKey.set(k, t)
-      })
-      return Array.from(byKey.values())
-    })
-  }, [dashboard?.id, dashboard?.templates?.length])
-
-  useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
@@ -199,3 +187,4 @@ export function useDashboardPageWithImport(
     },
   }
 }
+

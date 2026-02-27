@@ -744,13 +744,13 @@ type AnnotationStore interface {
 // DashboardID is the dashboard ID
 type DashboardID int
 
-// Dashboard and cell type/origin constants
+// Dashboard and cell type/origin constants (fixed-cell template dashboards use type "builtin" in JSON).
 const (
 	DashboardTypeNormal  = "normal"
-	DashboardTypeBuiltin = "builtin"
+	DashboardTypeBuiltin = "builtin" // fixed-cell template dashboard
 
 	CellOriginUser    = "user"
-	CellOriginBuiltin = "builtin"
+	CellOriginBuiltin = "builtin" // cell from fixed-cell template
 
 	// Dashboard cell types
 	DashboardCellTypeComponent = "component"
@@ -763,9 +763,9 @@ type Dashboard struct {
 	Templates    []Template      `json:"templates"`
 	Name         string          `json:"name"`
 	Organization string          `json:"organization"`      // Organization is the organization ID that resource belongs to
-	Type               string     `json:"type,omitempty"`    // Type distinguishes dashboard types: "normal" (default) or "builtin"
-	Version            string     `json:"version,omitempty"` // Version is the template version for builtin dashboards (e.g., "1.0.0")
-	UpdatedAt string `json:"updatedAt,omitempty"` // When the dashboard was last updated (RFC3339, UTC); e.g. builtin template sync
+	Type               string     `json:"type,omitempty"`    // Type: "normal" (default) or "builtin" (fixed-cell template dashboard)
+	Version            string     `json:"version,omitempty"` // Template version for fixed-cell template dashboards (e.g., "1.0.0")
+	UpdatedAt string `json:"updatedAt,omitempty"` // When the dashboard was last updated (RFC3339, UTC); e.g. fixed-cell template sync
 }
 
 // UnmarshalJSON unmarshals a string ID into a DashboardID (int).
@@ -938,21 +938,21 @@ type DashboardsStore interface {
 	Update(context.Context, Dashboard) error
 }
 
-// BuiltinDashboardMappingEntry is one (orgID, dashboardID) pair for a builtin dashboard name.
-type BuiltinDashboardMappingEntry struct {
+// FixedCellMappingEntry is one (orgID, dashboardID) pair for a fixed-cell name.
+type FixedCellMappingEntry struct {
 	OrgID        string      `json:"orgID"`
 	DashboardID DashboardID `json:"dashboardID"`
 }
 
-// BuiltinDashboardMappingStore stores (orgID, builtin dashboard name) -> dashboard ID
-// so the frontend can request a builtin dashboard by name (e.g. host_page).
-type BuiltinDashboardMappingStore interface {
-	// GetDashboardID returns the dashboard ID for the builtin dashboard named name in the given org.
+// FixedCellMappingStore stores (orgID, fixed-cell name) -> dashboard ID
+// so the frontend can request a fixed-cell dashboard by name (e.g. host_page).
+type FixedCellMappingStore interface {
+	// GetDashboardID returns the dashboard ID for the fixed-cell named name in the given org.
 	GetDashboardID(ctx context.Context, orgID, name string) (DashboardID, error)
-	// Register records that the builtin dashboard named name in org orgID is stored as dashboardID.
+	// Register records that the fixed-cell named name in org orgID is stored as dashboardID.
 	Register(ctx context.Context, orgID, name string, dashboardID DashboardID) error
-	// ListByBuiltinName returns all (orgID, dashboardID) entries for the given builtin name.
-	ListByBuiltinName(ctx context.Context, name string) ([]BuiltinDashboardMappingEntry, error)
+	// ListByTemplateName returns all (orgID, dashboardID) entries for the given template name.
+	ListByTemplateName(ctx context.Context, name string) ([]FixedCellMappingEntry, error)
 }
 
 // Cell is a rectangle and multiple time series queries to visualize.
@@ -1383,8 +1383,8 @@ type KVClient interface {
 	ConfigStore() ConfigStore
 	// DashboardsStore returns the kv's DashboardsStore type.
 	DashboardsStore() DashboardsStore
-	// BuiltinDashboardMappingStore returns the kv's BuiltinDashboardMappingStore type.
-	BuiltinDashboardMappingStore() BuiltinDashboardMappingStore
+	// FixedCellMappingStore returns the kv's FixedCellMappingStore type.
+	FixedCellMappingStore() FixedCellMappingStore
 	// MappingsStore returns the kv's MappingsStore type.
 	MappingsStore() MappingsStore
 	// OrganizationConfigStore returns the kv's OrganizationConfigStore type.

@@ -9,26 +9,26 @@ import (
 	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
-// InitializeBuiltinDashboards initializes builtin dashboards for an organization.
-// It loads all builtin dashboards from the builtin store, sets the organization ID,
+// InitializeFixedCells initializes fixed-cell dashboards for an organization.
+// It loads all templates from the builtin store, sets the organization ID,
 // ensures the type is "builtin", and adds them to the dashboards store.
 // It also registers (orgID, name) -> dashboard ID in the mapping store for name-based lookup.
 // It skips dashboards that already exist (based on name and organization).
-func InitializeBuiltinDashboards(
+func InitializeFixedCells(
 	ctx context.Context,
 	orgID string,
 	dashboardsStore cloudhub.DashboardsStore,
 	builtinStore *builtin.BinDashboardsStore,
-	mappingStore cloudhub.BuiltinDashboardMappingStore,
+	mappingStore cloudhub.FixedCellMappingStore,
 	logger cloudhub.Logger,
 ) error {
-	// Get all builtin dashboards from the builtin store
-	builtinDashboards, err := builtinStore.All(ctx)
+	// Get all fixed-cells from the builtin store
+	templates, err := builtinStore.All(ctx)
 	if err != nil {
 		logger.
-			WithField("component", "builtin").
+			WithField("component", "fixed-cell").
 			WithField("organization", orgID).
-			Error("Failed to load builtin dashboards:", err)
+			Error("Failed to load fixed-cell templates:", err)
 		return err
 	}
 
@@ -37,36 +37,36 @@ func InitializeBuiltinDashboards(
 	existingDashboards, err := dashboardsStore.All(orgCtx)
 	if err != nil {
 		logger.
-			WithField("component", "builtin").
+			WithField("component", "fixed-cell").
 			WithField("organization", orgID).
 			Error("Failed to load existing dashboards:", err)
 		return err
 	}
 
-	// Map existing builtin dashboard name -> ID (for skip and for mapping backfill)
-	existingBuiltinByName := make(map[string]cloudhub.DashboardID)
+	// Map existing fixed-cell name -> ID (for skip and for mapping backfill)
+	existingByName := make(map[string]cloudhub.DashboardID)
 	for _, d := range existingDashboards {
 		if d.Type == cloudhub.DashboardTypeBuiltin && d.Organization == orgID && d.Name != "" {
-			existingBuiltinByName[d.Name] = d.ID
+			existingByName[d.Name] = d.ID
 		}
 	}
 
-	// Initialize each builtin dashboard
-	for _, dashboard := range builtinDashboards {
+	// Initialize each fixed-cell dashboard
+	for _, dashboard := range templates {
 		// If already exists: ensure mapping is registered (backfill for orgs created before mapping feature)
-		if existingID, exists := existingBuiltinByName[dashboard.Name]; exists {
+		if existingID, exists := existingByName[dashboard.Name]; exists {
 			if err := mappingStore.Register(ctx, orgID, dashboard.Name, existingID); err != nil {
 				logger.
-					WithField("component", "builtin").
+					WithField("component", "fixed-cell").
 					WithField("organization", orgID).
 					WithField("dashboard", dashboard.Name).
-					Error("Failed to register builtin dashboard mapping (existing):", err)
+					Error("Failed to register fixed-cell mapping (existing):", err)
 			}
 			logger.
-				WithField("component", "builtin").
+				WithField("component", "fixed-cell").
 				WithField("organization", orgID).
 				WithField("dashboard", dashboard.Name).
-				Debug("Builtin dashboard already exists, ensured mapping")
+				Debug("Fixed-cell dashboard already exists, ensured mapping")
 			continue
 		}
 
@@ -82,45 +82,45 @@ func InitializeBuiltinDashboards(
 		added, err := dashboardsStore.Add(orgCtx, dashboard)
 		if err != nil {
 			logger.
-				WithField("component", "builtin").
+				WithField("component", "fixed-cell").
 				WithField("organization", orgID).
 				WithField("dashboard", dashboard.Name).
-				Error("Failed to add builtin dashboard:", err)
+				Error("Failed to add fixed-cell dashboard:", err)
 			// Continue with other dashboards even if one fails
 			continue
 		}
 
 		if err := mappingStore.Register(ctx, orgID, added.Name, added.ID); err != nil {
 			logger.
-				WithField("component", "builtin").
+				WithField("component", "fixed-cell").
 				WithField("organization", orgID).
 				WithField("dashboard", added.Name).
-				Error("Failed to register builtin dashboard mapping:", err)
+				Error("Failed to register fixed-cell mapping:", err)
 		}
 
 		logger.
-			WithField("component", "builtin").
+			WithField("component", "fixed-cell").
 			WithField("organization", orgID).
 			WithField("dashboard", dashboard.Name).
-			Info("Initialized builtin dashboard")
+			Info("Initialized fixed-cell dashboard")
 	}
 
 	return nil
 }
 
-// ApplyBuiltinDashboardToOrg updates the given org's builtin dashboard from the latest template:
+// ApplyFixedCellToOrg updates the given org's fixed-cell dashboard from the latest template:
 // - Templates, Version, UpdatedAt: replaced from template.
-// - Cells: only cells with Type "fixed" are updated, and only their Queries field is replaced from the template (matched by cell ID, json "i"). All other cells and all other cell fields are left unchanged.
-func ApplyBuiltinDashboardToOrg(
+// - Cells: only cells with Type "component" are updated; only their Queries field is replaced from the template (matched by cell ID). All other cells and fields are left unchanged.
+func ApplyFixedCellToOrg(
 	ctx context.Context,
 	orgID string,
-	builtinName string,
+	templateName string,
 	dashboardsStore cloudhub.DashboardsStore,
 	builtinStore *builtin.BinDashboardsStore,
-	mappingStore cloudhub.BuiltinDashboardMappingStore,
+	mappingStore cloudhub.FixedCellMappingStore,
 	logger cloudhub.Logger,
 ) error {
-	dashboardID, err := mappingStore.GetDashboardID(ctx, orgID, builtinName)
+	dashboardID, err := mappingStore.GetDashboardID(ctx, orgID, templateName)
 	if err != nil {
 		return err
 	}
@@ -128,8 +128,8 @@ func ApplyBuiltinDashboardToOrg(
 	dash, err := dashboardsStore.Get(ctx, dashboardID)
 	if err != nil {
 		logger.
-			WithField("component", "builtin").
-			WithField("builtinName", builtinName).
+			WithField("component", "fixed-cell").
+			WithField("templateName", templateName).
 			WithField("orgID", orgID).
 			Error("Failed to get dashboard for apply:", err)
 		return err
@@ -138,12 +138,12 @@ func ApplyBuiltinDashboardToOrg(
 		return cloudhub.ErrDashboardNotFound
 	}
 
-	template, err := builtinStore.Get(ctx, builtinName)
+	template, err := builtinStore.Get(ctx, templateName)
 	if err != nil {
 		logger.
-			WithField("component", "builtin").
-			WithField("builtinName", builtinName).
-			Error("Failed to load builtin template:", err)
+			WithField("component", "fixed-cell").
+			WithField("templateName", templateName).
+			Error("Failed to load fixed-cell:", err)
 		return err
 	}
 
@@ -173,18 +173,18 @@ func ApplyBuiltinDashboardToOrg(
 
 	if err := dashboardsStore.Update(ctx, dash); err != nil {
 		logger.
-			WithField("component", "builtin").
-			WithField("builtinName", builtinName).
+			WithField("component", "fixed-cell").
+			WithField("templateName", templateName).
 			WithField("orgID", orgID).
 			Error("Failed to update dashboard on apply:", err)
 		return err
 	}
 
 	logger.
-		WithField("component", "builtin").
-		WithField("builtinName", builtinName).
+		WithField("component", "fixed-cell").
+		WithField("templateName", templateName).
 		WithField("orgID", orgID).
-		Info("Applied builtin template (component cells: queries only) to org dashboard")
+		Info("Applied fixed-cell (component cells: queries only) to org dashboard")
 	return nil
 }
 

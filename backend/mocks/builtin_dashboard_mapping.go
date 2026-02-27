@@ -6,18 +6,18 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// Ensure BuiltinDashboardMappingStore implements cloudhub.BuiltinDashboardMappingStore.
-var _ cloudhub.BuiltinDashboardMappingStore = (*BuiltinDashboardMappingStore)(nil)
+// Ensure FixedCellMappingStore implements cloudhub.FixedCellMappingStore.
+var _ cloudhub.FixedCellMappingStore = (*FixedCellMappingStore)(nil)
 
-// BuiltinDashboardMappingStore mock.
-type BuiltinDashboardMappingStore struct {
-	GetDashboardIDF    func(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error)
-	RegisterF          func(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error
-	ListByBuiltinNameF func(ctx context.Context, name string) ([]cloudhub.BuiltinDashboardMappingEntry, error)
+// FixedCellMappingStore mock.
+type FixedCellMappingStore struct {
+	GetDashboardIDF   func(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error)
+	RegisterF        func(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error
+	ListByTemplateNameF func(ctx context.Context, name string) ([]cloudhub.FixedCellMappingEntry, error)
 }
 
 // GetDashboardID calls GetDashboardIDF if set.
-func (s *BuiltinDashboardMappingStore) GetDashboardID(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error) {
+func (s *FixedCellMappingStore) GetDashboardID(ctx context.Context, orgID, name string) (cloudhub.DashboardID, error) {
 	if s.GetDashboardIDF != nil {
 		return s.GetDashboardIDF(ctx, orgID, name)
 	}
@@ -25,17 +25,17 @@ func (s *BuiltinDashboardMappingStore) GetDashboardID(ctx context.Context, orgID
 }
 
 // Register calls RegisterF if set.
-func (s *BuiltinDashboardMappingStore) Register(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error {
+func (s *FixedCellMappingStore) Register(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error {
 	if s.RegisterF != nil {
 		return s.RegisterF(ctx, orgID, name, dashboardID)
 	}
 	return nil
 }
 
-// ListByBuiltinName calls ListByBuiltinNameF if set.
-func (s *BuiltinDashboardMappingStore) ListByBuiltinName(ctx context.Context, name string) ([]cloudhub.BuiltinDashboardMappingEntry, error) {
-	if s.ListByBuiltinNameF != nil {
-		return s.ListByBuiltinNameF(ctx, name)
+// ListByTemplateName calls ListByTemplateNameF if set.
+func (s *FixedCellMappingStore) ListByTemplateName(ctx context.Context, name string) ([]cloudhub.FixedCellMappingEntry, error) {
+	if s.ListByTemplateNameF != nil {
+		return s.ListByTemplateNameF(ctx, name)
 	}
 	return nil, nil
 }

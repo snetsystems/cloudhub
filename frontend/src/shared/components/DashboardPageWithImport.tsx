@@ -34,11 +34,11 @@ import {setAutoRefresh} from 'src/shared/actions/app'
 import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
 import {timeRanges} from 'src/shared/data/timeRanges'
 
-import {useDashboardPageWithImport} from 'src/server_details/hooks/useDashboardPageWithImport'
 import {getDashboardByTemplateName} from 'src/dashboards/apis'
 import * as QueriesModels from 'src/types/queries'
 import {mergeBuiltinWithGetTempVars} from 'src/utils/tempVars'
 import {hydrateTemplates} from 'src/tempVars/utils/graph'
+import {useDashboardPageWithImport} from 'src/server_details/hooks/useDashboardPageWithImport'
 
 /** Optional context for template overrides (e.g. :host: selection). Consumer provides a React Context; common component only reads templateOverrides. */
 export interface TemplateSelectionContextValue {
@@ -124,9 +124,17 @@ export interface DashboardPageWithImportProps
   me?: Me
   isUsingAuth?: boolean
   fluxLinks?: {self: string; suggestions: string; ast: string}
-  notify?: (message: {type: string; icon: string; duration: number; message: string}) => void
+  notify?: (message: {
+    type: string
+    icon: string
+    duration: number
+    message: string
+  }) => void
   cellQueryStatus?: QueriesModels.QueryStatus
-  editCellQueryStatus?: (queryID: string, status: QueriesModels.Status) => unknown
+  editCellQueryStatus?: (
+    queryID: string,
+    status: QueriesModels.Status
+  ) => unknown
 }
 
 function DashboardPageWithImport({
@@ -136,11 +144,11 @@ function DashboardPageWithImport({
   renderCell,
   renderHeaderLeft,
   renderHeaderRight,
-  draggableCancel,
   timeRangeKey = 'hostDetails',
   pageClassName = 'dashboard-page-with-import',
   importButtonText = 'Import Modal',
   showEmptyState = true,
+  draggableCancel,
   templateSelectionContext,
   source,
   sources,
@@ -174,8 +182,9 @@ function DashboardPageWithImport({
   const safeNotify = notify ?? (() => {})
   const safeCellQueryStatus = cellQueryStatus ?? {queryID: '', status: {}}
   const safeEditCellQueryStatus =
-    editCellQueryStatus ?? ((_queryID: string, _status: QueriesModels.Status) => undefined)
-  const tempVars = getTempVars(source)
+    editCellQueryStatus ??
+    ((_queryID: string, _status: QueriesModels.Status) => undefined)
+
   const [manualRefreshStamp, setManualRefreshStamp] = React.useState(Date.now())
   const [hydratedTemplates, setHydratedTemplates] = React.useState<
     Template[] | null
@@ -185,6 +194,12 @@ function DashboardPageWithImport({
     DashboardsModels.Cell | DashboardsModels.NewDefaultCell | null
   >(null)
   const [isCellEditorOpen, setIsCellEditorOpen] = useState(false)
+
+  const templateSelection =
+    templateSelectionContext != null
+      ? React.useContext(templateSelectionContext)
+      : null
+  const templateOverrides = templateSelection?.templateOverrides
 
   const {
     dashboard,
@@ -246,13 +261,11 @@ function DashboardPageWithImport({
     })
   }, [tempVars, templateOverrides])
 
-  const onSummonOverlayTechnologies = (_cell: Cell) => {}
-
   const selectedTimeRange: QueriesModels.TimeRange =
     cloudTimeRange?.[timeRangeKey] ?? CLOUD_TIME_RANGE.default ?? timeRanges[0]
   const dashboardRefresh = cloudAutoRefresh?.[timeRangeKey] ?? 0
 
-  const mergedTemplates = useMemo(() => {
+  const dashboardTemplatesForEditor = useMemo(() => {
     const templateMap = new Map<string, Template>()
     tempVars.forEach(t => {
       const key = t.tempVar || t.id
@@ -262,24 +275,16 @@ function DashboardPageWithImport({
       const key = t.tempVar || t.id
       if (key) templateMap.set(key, t)
     })
-    localTemplates.forEach(t => {
-      const key = t.tempVar || t.id
-      if (key) templateMap.set(key, t)
-    })
-    const {dashboardTime, upperDashboardTime} =
-      createTimeRangeTemplates(selectedTimeRange)
+    const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
+      selectedTimeRange
+    )
     templateMap.set(dashboardTime.tempVar || dashboardTime.id, dashboardTime)
     templateMap.set(
       upperDashboardTime.tempVar || upperDashboardTime.id,
       upperDashboardTime
     )
     return Array.from(templateMap.values())
-  }, [tempVars, dashboard?.templates, localTemplates, selectedTimeRange])
-
-  const dashboardTemplatesForEditor = useMemo(
-    () => [...mergedTemplates, ...(dashboard?.templates || [])],
-    [mergedTemplates, dashboard?.templates]
-  )
+  }, [tempVars, dashboard?.templates, selectedTimeRange])
 
   const onSummonOverlayTechnologies = (cell: Cell) => {
     setSelectedCell(cell)
@@ -303,7 +308,10 @@ function DashboardPageWithImport({
       updateDashboard(newDashboard)
       await putDashboard(newDashboard)
     } else {
-      addDashboardCellAsync(dashboard, newCell as DashboardsModels.NewDefaultCell)
+      addDashboardCellAsync(
+        dashboard,
+        newCell as DashboardsModels.NewDefaultCell
+      )
     }
     setIsCellEditorOpen(false)
   }
@@ -437,7 +445,7 @@ function DashboardPageWithImport({
         isOpen={importModal.isOpen}
         setIsOpen={importModal.setIsOpen}
         onSelectionChange={importModal.onSelectionChange}
-        builtinName={pageName}
+        fixedCellName={pageName}
       />
     </Page>
   )

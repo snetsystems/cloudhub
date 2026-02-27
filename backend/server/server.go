@@ -697,7 +697,7 @@ func (s *Server) Serve(ctx context.Context) {
 	}
 
 	// Initialize builtin dashboards for default organization
-	if err := initializeDefaultOrgBuiltinDashboards(ctx, &service, logger); err != nil {
+	if err := initializeDefaultOrgFixedCells(ctx, &service, logger); err != nil {
 		logger.
 			WithField("component", "server").
 			Error("Failed to initialize builtin dashboards for default organization:", err)
@@ -975,7 +975,7 @@ func openService(
 		Store: &Store{
 			LayoutsStore:                 layouts,
 			DashboardsStore:              dashboards,
-			BuiltinDashboardMapping:      svc.BuiltinDashboardMappingStore(),
+			FixedCellMapping:      svc.FixedCellMappingStore(),
 			SourcesStore:                 sources,
 			ServersStore:            kapacitors,
 			OrganizationsStore:      organizations,

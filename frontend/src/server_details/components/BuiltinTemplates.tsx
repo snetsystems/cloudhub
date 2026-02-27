@@ -1,10 +1,16 @@
 import React, {useEffect, useState, useCallback, useRef} from 'react'
+import {useDispatch} from 'react-redux'
 import {
-  getBuiltinDashboardList,
-  getBuiltinDashboardTemplate,
-  getTemplateDashboardByName,
-  applyBuiltinDashboard,
+  getFixedCellList,
+  getFixedCell,
+  getFixedCellDashboardByName,
+  applyFixedCell,
 } from 'src/dashboards/apis'
+import {notify} from 'src/shared/actions/notifications'
+import {
+  notifyFixedCellsUpdated,
+  notifyFixedCellsUpdateFailed,
+} from 'src/shared/copy/notifications'
 import {Dashboard, Cell, CellType} from 'src/types/dashboards'
 import {Template} from 'src/types/tempVars'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
@@ -12,10 +18,10 @@ import _ from 'lodash'
 import classnames from 'classnames'
 import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
 
-interface BuiltinTemplatesProps {
+interface FixedCellsProps {
   onSelectionChange?: (items: ImportSelectionPayload) => void
-  /** When set, only the builtin template with this name is shown (e.g. current page's builtin). */
-  builtinName?: string
+  /** When set, only the fixed-cell with this name is shown (e.g. current page's template). */
+  fixedCellName?: string
 }
 
 interface TemplateItemProps {
@@ -36,14 +42,14 @@ const TemplateCellItem: React.FC<TemplateCellItemProps> = ({
   isChecked,
   onToggle,
 }) => {
-  const checkboxId = `builtin-cell-${cell.i}`
+  const checkboxId = `fixed-cell-cell-${cell.i}`
   const handleRowClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.fixedmodal-checkbox-wrapper')) return
     onToggle(cell.i, !isChecked)
   }
   return (
     <div
-      className="builtin-templates__cell-row"
+      className="fixed-cells__cell-row"
       onClick={handleRowClick}
       onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -54,7 +60,7 @@ const TemplateCellItem: React.FC<TemplateCellItemProps> = ({
       role="button"
       tabIndex={0}
     >
-      <div className="builtin-templates__cell-inner">
+      <div className="fixed-cells__cell-inner">
         <div className="fixedmodal-checkbox-wrapper" onClick={e => e.stopPropagation()}>
           <input
             type="checkbox"
@@ -66,10 +72,10 @@ const TemplateCellItem: React.FC<TemplateCellItemProps> = ({
           <label htmlFor={checkboxId} onClick={e => e.stopPropagation()} />
         </div>
         <span className="icon circle-thin" />
-        <span className="builtin-templates__cell-name">
+        <span className="fixed-cells__cell-name">
           {cell.name || 'Unnamed Cell'}
         </span>
-        <span className="builtin-templates__cell-type">{cell.type || '—'}</span>
+        <span className="fixed-cells__cell-type">{cell.type || '—'}</span>
       </div>
     </div>
   )
@@ -120,17 +126,17 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
           <input
             ref={templateCheckRef}
             type="checkbox"
-            id={`builtin-template-${template.name}-${template.id}`}
+            id={`fixed-cell-${template.name}-${template.id}`}
             checked={allSelected}
             onChange={handleTemplateCheck}
             onClick={e => e.stopPropagation()}
           />
           <label
-            htmlFor={`builtin-template-${template.name}-${template.id}`}
+            htmlFor={`fixed-cell-${template.name}-${template.id}`}
             onClick={e => e.stopPropagation()}
           />
         </div>
-        <div className="builtin-templates__caret-wrap">
+        <div className="fixed-cells__caret-wrap">
           {hasCells && (
             <span
               className={classnames('icon', {
@@ -140,11 +146,11 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
             />
           )}
         </div>
-        <div className="builtin-templates__tree-title">
-          <div className="builtin-templates__tree-name">
+        <div className="fixed-cells__tree-title">
+          <div className="fixed-cells__tree-name">
             {template.name || 'Untitled Template'}
           </div>
-          <div className="builtin-templates__tree-meta">
+          <div className="fixed-cells__tree-meta">
             Cells: {template.cells?.length || 0}
           </div>
         </div>
@@ -166,12 +172,13 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
 }
 
 const UPDATE_HELP_TEXT =
-  'When you run this update: Only cells of type "fixedCell" are changed. For those cells, only the query definitions (queries) are replaced from the latest template, matched by cell ID. Layout, names, and all other cell types remain unchanged. Template variables and version are updated to the latest.'
+  'When you run this update: Only cells of type "component" are changed. For those cells, only the query definitions (queries) are replaced from the latest fixed-cell, matched by cell ID. Layout, names, and all other cell types remain unchanged. Template variables and version are updated to the latest.'
 
-function BuiltinTemplates({
+function FixedCells({
   onSelectionChange,
-  builtinName: builtinNameFilter,
-}: BuiltinTemplatesProps) {
+  fixedCellName: fixedCellNameFilter,
+}: FixedCellsProps) {
+  const dispatch = useDispatch()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [templates, setTemplates] = useState<Dashboard[]>([])
@@ -255,11 +262,16 @@ function BuiltinTemplates({
   const handleUpdateAll = async () => {
     if (!hasUpdateAvailable) return
     setIsApplying(true)
+    const count = templatesWithUpdate.length
     try {
       for (const t of templatesWithUpdate) {
-        await applyBuiltinDashboard(t.name!)
+        await applyFixedCell(t.name!)
       }
       refreshList()
+      dispatch(notify(notifyFixedCellsUpdated(count)))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      dispatch(notify(notifyFixedCellsUpdateFailed(message)))
     } finally {
       setIsApplying(false)
     }
@@ -273,7 +285,7 @@ function BuiltinTemplates({
 
     const load = async () => {
       try {
-        const listRes = await getBuiltinDashboardList()
+        const listRes = await getFixedCellList()
         const list = listRes.data?.templates ?? []
         if (cancelled) return
         if (list.length === 0) {
@@ -283,11 +295,11 @@ function BuiltinTemplates({
         const [templateResults, orgResults] = await Promise.all([
           Promise.all(
             list.map(({name}) =>
-              getBuiltinDashboardTemplate(name).then(r => r.data)
+              getFixedCell(name).then(r => r.data)
             )
           ),
           Promise.all(
-            list.map(({name}) => getTemplateDashboardByName(name))
+            list.map(({name}) => getFixedCellDashboardByName(name))
           ),
         ])
         if (cancelled) return
@@ -302,8 +314,8 @@ function BuiltinTemplates({
           }
         })
         let filtered = _.sortBy(merged, d => d.name?.toLowerCase() ?? '')
-        if (builtinNameFilter) {
-          const name = builtinNameFilter.trim().toLowerCase()
+        if (fixedCellNameFilter) {
+          const name = fixedCellNameFilter.trim().toLowerCase()
           filtered = filtered.filter(
             d => (d.name ?? d.id ?? '').toString().toLowerCase() === name
           )
@@ -311,7 +323,7 @@ function BuiltinTemplates({
         setTemplates(filtered)
       } catch (e: any) {
         if (!cancelled) {
-          setError(e?.message || 'Failed to load builtin templates')
+          setError(e?.message || 'Failed to load fixed-cell templates')
         }
       } finally {
         if (!cancelled) setIsLoading(false)
@@ -322,12 +334,12 @@ function BuiltinTemplates({
     return () => {
       cancelled = true
     }
-  }, [refreshTrigger, builtinNameFilter])
+  }, [refreshTrigger, fixedCellNameFilter])
 
   if (isLoading) {
     return (
-      <div className="builtin-templates">
-        <h2 className="builtin-templates__title">Builtin</h2>
+      <div className="fixed-cells">
+        <h2 className="fixed-cells__title">Fixed cell</h2>
         <p>Loading...</p>
       </div>
     )
@@ -335,42 +347,42 @@ function BuiltinTemplates({
 
   if (error) {
     return (
-      <div className="builtin-templates">
-        <h2 className="builtin-templates__title">Builtin</h2>
-        <p className="builtin-templates__error">{error}</p>
+      <div className="fixed-cells">
+        <h2 className="fixed-cells__title">Fixed cell</h2>
+        <p className="fixed-cells__error">{error}</p>
       </div>
     )
   }
 
   return (
-    <div className="builtin-templates">
-      <div className="builtin-templates__header">
-        <h2 className="builtin-templates__title">Builtin</h2>
+    <div className="fixed-cells">
+      <div className="fixed-cells__header">
+        <h2 className="fixed-cells__title">Fixed cell</h2>
         {hasUpdateAvailable && (
-          <div className="builtin-templates__update-bar">
-            <span className="builtin-templates__version-info">
+          <div className="fixed-cells__update-bar">
+            <span className="fixed-cells__version-info">
               Current: {templatesWithUpdate[0].version ? `v${templatesWithUpdate[0].version}` : '—'} → Latest:{' '}
               {templatesWithUpdate[0].latestVersion ? `v${templatesWithUpdate[0].latestVersion}` : '—'}
             </span>
             <button
               type="button"
-              className="builtin-templates__btn-update"
+              className="fixed-cells__btn-update"
               disabled={isApplying}
               onClick={handleUpdateAll}
             >
               {isApplying ? 'Updating...' : 'Update'}
             </button>
             <QuestionMarkTooltip
-              tipID="builtin-update-help"
+              tipID="fixed-cell-update-help"
               tipContent={UPDATE_HELP_TEXT}
             />
           </div>
         )}
       </div>
       {templates.length === 0 ? (
-        <p>No builtin templates available.</p>
+        <p>No fixed-cells available.</p>
       ) : (
-        <div className="builtin-templates__list">
+        <div className="fixed-cells__list">
           {templates.map(template => (
             <TemplateItem
               key={template.name || template.id}
@@ -386,4 +398,4 @@ function BuiltinTemplates({
   )
 }
 
-export default BuiltinTemplates
+export default FixedCells
