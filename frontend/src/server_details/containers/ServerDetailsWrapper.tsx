@@ -48,7 +48,8 @@ function ServerDetailsCellContent() {
   )
 }
 import {Dropdown, DropdownMode} from 'src/reusable_ui'
-import {Template} from 'src/types'
+import {Template, TemplateValue} from 'src/types'
+import * as DashboardsModels from 'src/types/dashboards'
 
 type ServerDetailsPageContextValue = TemplateSelectionContextValue & {
   selectedHost: string | null
@@ -59,7 +60,19 @@ const ServerDetailsPageContext = React.createContext<ServerDetailsPageContextVal
   null
 )
 
-function HostDropdownHeader({templates}: {templates: Template[]}) {
+function HostDropdownHeader({
+  templates,
+  dashboard,
+  templateVariableLocalSelected,
+}: {
+  templates: Template[]
+  dashboard?: DashboardsModels.Dashboard
+  templateVariableLocalSelected?: (
+    dashboardID: string,
+    templateID: string,
+    value: TemplateValue
+  ) => void
+}) {
   const ctx = useContext(ServerDetailsPageContext)
   const hostTemplate = templates?.find(t => t.tempVar === ':host:')
   const hostList = hostTemplate?.values?.map(v => v.value) ?? []
@@ -71,6 +84,18 @@ function HostDropdownHeader({templates}: {templates: Template[]}) {
       ctx.onHostSelect(hostList[0])
     }
   }, [hostList, ctx?.selectedHost, ctx?.onHostSelect])
+
+  useEffect(() => {
+    if (ctx?.selectedHost && hostTemplate && dashboard && templateVariableLocalSelected) {
+      const selectedValue = hostTemplate.values.find(v => v.value === ctx.selectedHost)
+      if (selectedValue) {
+        templateVariableLocalSelected(dashboard.id, hostTemplate.id, {
+          ...selectedValue,
+          localSelected: true,
+        })
+      }
+    }
+  }, [ctx?.selectedHost, hostTemplate, dashboard, templateVariableLocalSelected])
 
   if (!ctx) return null
   const current = ctx.selectedHost ?? ''
@@ -126,8 +151,12 @@ function ServerDetailsWrapper(props) {
         pageClassName="server-details-page"
         showEmptyState={false}
         templateSelectionContext={ServerDetailsPageContext as React.Context<TemplateSelectionContextValue | null>}
-        renderHeaderLeft={({templates}) => (
-          <HostDropdownHeader templates={templates} />
+        renderHeaderLeft={({templates, dashboard, templateVariableLocalSelected}) => (
+          <HostDropdownHeader 
+            templates={templates} 
+            dashboard={dashboard}
+            templateVariableLocalSelected={templateVariableLocalSelected}
+          />
         )}
         renderCell={(cell, context) => {
           if (cell.i === 'host-table-cell') {

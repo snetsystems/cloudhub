@@ -1,5 +1,5 @@
 import React, {useState, useMemo} from 'react'
-import {Cell, Source, Me, Template, TimeZones} from 'src/types'
+import {Cell, Source, Me, Template, TimeZones, TemplateValue} from 'src/types'
 import {Button, ComponentColor, Page, OverlayTechnology} from 'src/reusable_ui'
 import FixedModal from 'src/reusable_ui/components/FixedModal/FixedModal'
 import {bindActionCreators} from 'redux'
@@ -26,6 +26,7 @@ import {
   getDashboardsAsync,
   patchDashboardByIDAsync,
   editCellQueryStatus,
+  templateVariableLocalSelected,
 } from 'src/dashboards/actions'
 import * as notifyActions from 'src/shared/actions/notifications'
 import {setTimeZone} from 'src/shared/actions/app'
@@ -50,6 +51,12 @@ export interface HeaderLeftContext {
   pageTitle: string
   templates: Template[]
   source: Source
+  dashboard?: DashboardsModels.Dashboard
+  templateVariableLocalSelected?: (
+    dashboardID: string,
+    templateID: string,
+    value: TemplateValue
+  ) => void
 }
 
 /** Context passed to renderHeaderRight when provided; use default header data or compose your own. */
@@ -135,6 +142,11 @@ export interface DashboardPageWithImportProps
     queryID: string,
     status: QueriesModels.Status
   ) => unknown
+  templateVariableLocalSelected?: (
+    dashboardID: string,
+    templateID: string,
+    value: TemplateValue
+  ) => void
 }
 
 function DashboardPageWithImport({
@@ -248,39 +260,87 @@ function DashboardPageWithImport({
   const tempVars = hydratedTemplates ?? mergedTemplates
 
   const templatesWithSelection = React.useMemo(() => {
-    if (!templateOverrides || Object.keys(templateOverrides).length === 0)
-      return tempVars
     return tempVars.map(t => {
-      const override = templateOverrides[t.tempVar]
-      if (override === undefined) return t
+      const override = templateOverrides?.[t.tempVar]
+      if (override !== undefined) {
+        return {
+          ...t,
+          values: (t.values || []).map(v => ({
+            ...v,
+            localSelected: v.value === override,
+          })),
+        }
+      }
+
+      const dashboardTemplate = dashboard?.templates?.find(dt => dt.tempVar === t.tempVar)
+      if (dashboardTemplate) {
+        return {
+          ...t,
+          values: (t.values || []).map(v => {
+            const dashboardValue = dashboardTemplate.values.find(dv => dv.value === v.value)
+            return {
+              ...v,
+              localSelected: dashboardValue?.localSelected ?? v.localSelected ?? (v.selected ?? false),
+            }
+          }),
+        }
+      }
+
       return {
         ...t,
         values: (t.values || []).map(v => ({
           ...v,
-          localSelected: v.value === override,
+          localSelected: v.localSelected !== undefined ? v.localSelected : (v.selected ?? false),
         })),
       }
     })
-  }, [tempVars, templateOverrides])
+  }, [tempVars, templateOverrides, dashboard?.templates])
 
   const selectedTimeRange: QueriesModels.TimeRange =
     cloudTimeRange?.[timeRangeKey] ?? CLOUD_TIME_RANGE.default ?? timeRanges[0]
   const dashboardRefresh = cloudAutoRefresh?.[timeRangeKey] ?? 0
 
-  const mergedTemplatesForLayout = useMemo(() => {
+  const templatesForLayout = useMemo(() => {
+    const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
+      selectedTimeRange
+    )
+
     const templateMap = new Map<string, Template>()
-    tempVars.forEach(t => {
+
+    templatesWithSelection.forEach(t => {
       const key = t.tempVar || t.id
       if (key) templateMap.set(key, t)
     })
+
+    templateMap.set(dashboardTime.tempVar || dashboardTime.id, dashboardTime)
+    templateMap.set(
+      upperDashboardTime.tempVar || upperDashboardTime.id,
+      upperDashboardTime
+    )
+
+    return Array.from(templateMap.values())
+  }, [templatesWithSelection, selectedTimeRange])
+
+  const dashboardTemplatesForEditor = useMemo(() => {
+    const templateMap = new Map<string, Template>()
+
+    templatesWithSelection.forEach(t => {
+      const key = t.tempVar || t.id
+      if (key) templateMap.set(key, t)
+    })
+
     ;(dashboard?.templates ?? []).forEach(t => {
       const key = t.tempVar || t.id
-      if (key) templateMap.set(key, t)
+      if (key && !templateMap.has(key)) {
+        templateMap.set(key, t)
+      }
     })
+
     localTemplates.forEach(t => {
       const key = t.tempVar || t.id
       if (key) templateMap.set(key, t)
     })
+
     const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
       selectedTimeRange
     )
@@ -289,13 +349,9 @@ function DashboardPageWithImport({
       upperDashboardTime.tempVar || upperDashboardTime.id,
       upperDashboardTime
     )
-    return Array.from(templateMap.values())
-  }, [tempVars, dashboard?.templates, localTemplates, selectedTimeRange])
 
-  const dashboardTemplatesForEditor = useMemo(
-    () => [...mergedTemplatesForLayout, ...(dashboard?.templates || [])],
-    [mergedTemplatesForLayout, dashboard?.templates]
-  )
+    return Array.from(templateMap.values())
+  }, [templatesWithSelection, dashboard?.templates, localTemplates, selectedTimeRange])
 
   const onSummonOverlayTechnologies = (cell: Cell) => {
     setSelectedCell(cell)
@@ -407,6 +463,8 @@ function DashboardPageWithImport({
               pageTitle,
               templates: tempVars,
               source,
+              dashboard,
+              templateVariableLocalSelected,
             })}
           </>
         </Page.Header.Left>
@@ -432,8 +490,8 @@ function DashboardPageWithImport({
               manualRefresh={effectiveManualRefresh}
               onDeleteCell={onDeleteCell}
               onCloneCell={onCloneCell}
-              onPositionChange={onPositionChange}
-              templates={templatesWithSelection}
+            onPositionChange={onPositionChange}
+            templates={templatesForLayout}
               onSummonOverlayTechnologies={onSummonOverlayTechnologies}
               host={source.name}
               renderCell={renderCell}
@@ -520,6 +578,10 @@ export const dashboardPageWithImportMdtp = dispatch => ({
   setAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
+  templateVariableLocalSelected: bindActionCreators(
+    templateVariableLocalSelected,
+    dispatch
+  ),
   dispatch,
 })
 
