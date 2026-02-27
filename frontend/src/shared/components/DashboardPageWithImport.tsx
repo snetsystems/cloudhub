@@ -247,10 +247,6 @@ function DashboardPageWithImport({
 
   const tempVars = hydratedTemplates ?? mergedTemplates
 
-  const templateOverrides = templateSelectionContext
-    ? React.useContext(templateSelectionContext)?.templateOverrides
-    : undefined
-
   const templatesWithSelection = React.useMemo(() => {
     if (!templateOverrides || Object.keys(templateOverrides).length === 0)
       return tempVars
@@ -271,13 +267,17 @@ function DashboardPageWithImport({
     cloudTimeRange?.[timeRangeKey] ?? CLOUD_TIME_RANGE.default ?? timeRanges[0]
   const dashboardRefresh = cloudAutoRefresh?.[timeRangeKey] ?? 0
 
-  const dashboardTemplatesForEditor = useMemo(() => {
+  const mergedTemplatesForLayout = useMemo(() => {
     const templateMap = new Map<string, Template>()
     tempVars.forEach(t => {
       const key = t.tempVar || t.id
       if (key) templateMap.set(key, t)
     })
     ;(dashboard?.templates ?? []).forEach(t => {
+      const key = t.tempVar || t.id
+      if (key) templateMap.set(key, t)
+    })
+    localTemplates.forEach(t => {
       const key = t.tempVar || t.id
       if (key) templateMap.set(key, t)
     })
@@ -290,7 +290,12 @@ function DashboardPageWithImport({
       upperDashboardTime
     )
     return Array.from(templateMap.values())
-  }, [tempVars, dashboard?.templates, selectedTimeRange])
+  }, [tempVars, dashboard?.templates, localTemplates, selectedTimeRange])
+
+  const dashboardTemplatesForEditor = useMemo(
+    () => [...mergedTemplatesForLayout, ...(dashboard?.templates || [])],
+    [mergedTemplatesForLayout, dashboard?.templates]
+  )
 
   const onSummonOverlayTechnologies = (cell: Cell) => {
     setSelectedCell(cell)
