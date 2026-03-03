@@ -168,8 +168,9 @@ func ApplyFixedCellToOrg(
 		}
 	}
 
-	// Update Queries for existing component cells that exist in template, and remove builtin cells no longer in template.
-	// Deduplicate by cell ID so we never have two cells with the same id (first occurrence wins).
+	// Keep all existing cells. Cells that are builtin but no longer in the template are reclassified as user cells
+	// so they stay on the dashboard but no longer appear in the Fixed Cell tab and are fully user-managed.
+	// Deduplicate by cell ID. Update Queries only for component cells that exist in template.
 	existingCellIDs := make(map[string]struct{})
 	seenIDs := make(map[string]struct{})
 	var cellsKept []cloudhub.DashboardCell
@@ -182,10 +183,10 @@ func ApplyFixedCellToOrg(
 			}
 			seenIDs[c.ID] = struct{}{}
 		}
-		// Drop builtin-origin cells that are no longer in the template (sync with JSON)
+		// Builtin cell no longer in template → treat as user cell (stays on dashboard, leaves Fixed Cell management)
 		if c.CellOrigin == cloudhub.CellOriginBuiltin {
 			if _, inTemplate := templateCellsByID[c.ID]; !inTemplate {
-				continue
+				c.CellOrigin = cloudhub.CellOriginUser
 			}
 		}
 		// Update Queries only for existing component cells that exist in template

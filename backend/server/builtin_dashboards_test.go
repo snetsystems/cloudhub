@@ -203,7 +203,7 @@ func TestApplyFixedCellToOrg(t *testing.T) {
 	}
 }
 
-func TestApplyFixedCellToOrg_removesBuiltinCellNotInTemplate(t *testing.T) {
+func TestApplyFixedCellToOrg_keepsBuiltinCellNotInTemplate(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	realBuiltinStore := &builtin.BinDashboardsStore{Logger: log.New(log.DebugLevel)}
@@ -215,7 +215,8 @@ func TestApplyFixedCellToOrg_removesBuiltinCellNotInTemplate(t *testing.T) {
 	if len(template.Cells) > 0 {
 		templateID = template.Cells[0].ID
 	}
-	// Org has one cell that exists in template and one builtin cell that is not in template
+	// Org has one cell that exists in template and one builtin cell that is no longer in template.
+	// Cells stay on the user's dashboard until the user explicitly deletes them; Update does not remove them.
 	orgDash := cloudhub.Dashboard{
 		ID: 1, Organization: "org1", Name: "host_page", Version: "1.0.0",
 		Cells: []cloudhub.DashboardCell{
@@ -248,10 +249,21 @@ func TestApplyFixedCellToOrg_removesBuiltinCellNotInTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ApplyFixedCellToOrg() error = %v", err)
 	}
+	// Cell not in template must remain and be reclassified as user cell (no longer in Fixed Cell tab)
+	var found bool
+	var cellOrigin string
 	for _, c := range updated.Cells {
 		if c.ID == "removed-cell" {
-			t.Error("builtin cell not in template should be removed, but removed-cell still present")
+			found = true
+			cellOrigin = c.CellOrigin
+			break
 		}
+	}
+	if !found {
+		t.Error("builtin cell not in template should remain on user dashboard until user deletes it, but removed-cell was dropped")
+	}
+	if found && cellOrigin != cloudhub.CellOriginUser {
+		t.Errorf("builtin cell not in template should have cellOrigin=%q after update, got %q", cloudhub.CellOriginUser, cellOrigin)
 	}
 }
 

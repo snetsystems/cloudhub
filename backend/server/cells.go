@@ -9,6 +9,7 @@ import (
 	"github.com/bouk/httprouter"
 	"github.com/microcosm-cc/bluemonday"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/builtin"
 	idgen "github.com/snetsystems/cloudhub/backend/id"
 )
 
@@ -416,13 +417,30 @@ func (s *Service) RemoveDashboardCell(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For fixed-cell (builtin) dashboards, don't physically delete builtin cells.
-	// Instead, mark them as hidden so they can be restored or used for future template updates.
-	isFixedCell := dash.Type == cloudhub.DashboardTypeBuiltin && dashCell.CellOrigin == cloudhub.CellOriginBuiltin
-	if isFixedCell {
-		dash.Cells[cellid].Hidden = true
-	} else {
+	// Builtin cell: if the cell is no longer in the template (JSON), do a full delete.
+	// Otherwise soft-delete (Hidden=true) so it can be restored.
+	isBuiltinCell := dash.Type == cloudhub.DashboardTypeBuiltin && dashCell.CellOrigin == cloudhub.CellOriginBuiltin
+	doFullDelete := !isBuiltinCell
+	if isBuiltinCell && dash.Name != "" {
+		builtinStore := &builtin.BinDashboardsStore{Logger: s.Logger}
+		template, err := builtinStore.Get(ctx, dash.Name)
+		if err == nil {
+			inTemplate := false
+			for _, c := range template.Cells {
+				if strings.TrimSpace(strings.ToLower(c.ID)) == cid {
+					inTemplate = true
+					break
+				}
+			}
+			if !inTemplate {
+				doFullDelete = true
+			}
+		}
+	}
+	if doFullDelete {
 		dash.Cells = append(dash.Cells[:cellid], dash.Cells[cellid+1:]...)
+	} else {
+		dash.Cells[cellid].Hidden = true
 	}
 	if err := s.Store.Dashboards(ctx).Update(ctx, dash); err != nil {
 		msg := fmt.Sprintf("Error removing cell %s from dashboard %d: %v", cid, id, err)
