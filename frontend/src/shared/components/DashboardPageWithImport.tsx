@@ -98,6 +98,12 @@ export interface DashboardPageWithImportConfig {
   /** When false, do not show "no cells" empty state (DashboardEmpty). Default true. */
   showEmptyState?: boolean
   /**
+   * Optional list of tempVar names (e.g. ':host:') that must have a selected
+   * value before queries are executed. Used to avoid sending incomplete
+   * queries that still contain template tokens.
+   */
+  requiredTemplateVars?: string[]
+  /**
    * Optional React Context for template overrides. When provided, common component reads
    * templateOverrides (tempVar -> selected value) and applies to templates passed to cells.
    * Consumer owns state and provides via Provider; no page-specific state in common component.
@@ -161,6 +167,7 @@ function DashboardPageWithImport({
   importButtonText = 'Import Modal',
   showEmptyState = true,
   draggableCancel,
+  requiredTemplateVars,
   templateSelectionContext,
   source,
   sources,
@@ -194,8 +201,9 @@ function DashboardPageWithImport({
   const safeNotify = notify ?? (() => {})
   const safeCellQueryStatus = cellQueryStatus ?? {queryID: '', status: {}}
   const safeEditCellQueryStatus =
-    editCellQueryStatus ?? ((_queryID: string, _status: QueriesModels.Status) => undefined)
     editCellQueryStatus ??
+    ((_queryID: string, _status: QueriesModels.Status) => undefined)
+  editCellQueryStatus ??
     ((_queryID: string, _status: QueriesModels.Status) => undefined)
 
   const [manualRefreshStamp, setManualRefreshStamp] = React.useState(Date.now())
@@ -237,10 +245,9 @@ function DashboardPageWithImport({
     dispatch,
   })
 
-  const visibleCells = React.useMemo(
-    () => cells.filter(c => !c.hidden),
-    [cells]
-  )
+  const visibleCells = React.useMemo(() => cells.filter(c => !c.hidden), [
+    cells,
+  ])
 
   const mergedTemplates = React.useMemo(
     () =>
@@ -277,15 +284,23 @@ function DashboardPageWithImport({
         }
       }
 
-      const dashboardTemplate = dashboard?.templates?.find(dt => dt.tempVar === t.tempVar)
+      const dashboardTemplate = dashboard?.templates?.find(
+        dt => dt.tempVar === t.tempVar
+      )
       if (dashboardTemplate) {
         return {
           ...t,
           values: (t.values || []).map(v => {
-            const dashboardValue = dashboardTemplate.values.find(dv => dv.value === v.value)
+            const dashboardValue = dashboardTemplate.values.find(
+              dv => dv.value === v.value
+            )
             return {
               ...v,
-              localSelected: dashboardValue?.localSelected ?? v.localSelected ?? (v.selected ?? false),
+              localSelected:
+                dashboardValue?.localSelected ??
+                v.localSelected ??
+                v.selected ??
+                false,
             }
           }),
         }
@@ -295,11 +310,40 @@ function DashboardPageWithImport({
         ...t,
         values: (t.values || []).map(v => ({
           ...v,
-          localSelected: v.localSelected !== undefined ? v.localSelected : (v.selected ?? false),
+          localSelected:
+            v.localSelected !== undefined
+              ? v.localSelected
+              : v.selected ?? false,
         })),
       }
     })
   }, [tempVars, templateOverrides, dashboard?.templates])
+
+  const templatesReady = React.useMemo(() => {
+    if (!mergedTemplates.length) {
+      return true
+    }
+    if (hydratedTemplates === null) {
+      return false
+    }
+
+    if (!requiredTemplateVars || !requiredTemplateVars.length) {
+      return true
+    }
+
+    return requiredTemplateVars.every(tempVar => {
+      const tpl = templatesWithSelection.find(t => t.tempVar === tempVar)
+      if (!tpl || !tpl.values || !tpl.values.length) {
+        return false
+      }
+      return tpl.values.some(v => v.localSelected || v.selected)
+    })
+  }, [
+    mergedTemplates.length,
+    hydratedTemplates,
+    requiredTemplateVars,
+    templatesWithSelection,
+  ])
 
   const selectedTimeRange: QueriesModels.TimeRange =
     cloudTimeRange?.[timeRangeKey] ?? CLOUD_TIME_RANGE.default ?? timeRanges[0]
@@ -333,7 +377,6 @@ function DashboardPageWithImport({
       const key = t.tempVar || t.id
       if (key) templateMap.set(key, t)
     })
-
     ;(dashboard?.templates ?? []).forEach(t => {
       const key = t.tempVar || t.id
       if (key && !templateMap.has(key)) {
@@ -356,7 +399,12 @@ function DashboardPageWithImport({
     )
 
     return Array.from(templateMap.values())
-  }, [templatesWithSelection, dashboard?.templates, localTemplates, selectedTimeRange])
+  }, [
+    templatesWithSelection,
+    dashboard?.templates,
+    localTemplates,
+    selectedTimeRange,
+  ])
 
   const onSummonOverlayTechnologies = (cell: Cell) => {
     setSelectedCell(cell)
@@ -484,24 +532,28 @@ function DashboardPageWithImport({
       <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
         <div className="dashboard container-fluid full-width">
           {visibleCells.length ? (
-            <LayoutRenderer
-              cells={visibleCells}
-              source={source}
-              sources={sources}
-              isEditable={true}
-              isStatusPage={false}
-              isStaticPage={false}
-              timeRange={selectedTimeRange}
-              manualRefresh={effectiveManualRefresh}
-              onDeleteCell={onDeleteCell}
-              onCloneCell={onCloneCell}
-            onPositionChange={onPositionChange}
-            templates={templatesForLayout}
-              onSummonOverlayTechnologies={onSummonOverlayTechnologies}
-              host={source.name}
-              renderCell={renderCell}
-              draggableCancel={draggableCancel}
-            />
+            templatesReady ? (
+              <LayoutRenderer
+                cells={visibleCells}
+                source={source}
+                sources={sources}
+                isEditable={true}
+                isStatusPage={false}
+                isStaticPage={false}
+                timeRange={selectedTimeRange}
+                manualRefresh={effectiveManualRefresh}
+                onDeleteCell={onDeleteCell}
+                onCloneCell={onCloneCell}
+                onPositionChange={onPositionChange}
+                templates={templatesForLayout}
+                onSummonOverlayTechnologies={onSummonOverlayTechnologies}
+                host={source.name}
+                renderCell={renderCell}
+                draggableCancel={draggableCancel}
+              />
+            ) : (
+              <PageSpinner customClass={`${pageClassName}-spinner`} />
+            )
           ) : dashboard ? (
             showEmptyState ? (
               <DashboardEmpty dashboard={dashboard} />

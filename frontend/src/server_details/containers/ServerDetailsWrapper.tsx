@@ -7,7 +7,11 @@ import DashboardPageWithImport, {
   dashboardPageWithImportMdtp,
   type TemplateSelectionContextValue,
 } from 'src/shared/components/DashboardPageWithImport'
+import {Dropdown, DropdownMode} from 'src/reusable_ui'
+import {Template, TemplateValue} from 'src/types'
+import * as DashboardsModels from 'src/types/dashboards'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
+
 
 function ServerDetailsCellContent() {
   const [activeTab, setActiveTab] = useState<'info' | 'files'>('info')
@@ -48,9 +52,7 @@ function ServerDetailsCellContent() {
     </div>
   )
 }
-import {Dropdown, DropdownMode} from 'src/reusable_ui'
-import {Template, TemplateValue} from 'src/types'
-import * as DashboardsModels from 'src/types/dashboards'
+
 
 type ServerDetailsPageContextValue = TemplateSelectionContextValue & {
   selectedHost: string | null
@@ -151,6 +153,7 @@ function ServerDetailsWrapper(props) {
         getTempVars={generateForHosts}
         pageClassName="server-details-page"
         showEmptyState={false}
+        requiredTemplateVars={[':host:']}
         templateSelectionContext={ServerDetailsPageContext as React.Context<TemplateSelectionContextValue | null>}
         renderHeaderLeft={({templates, dashboard, templateVariableLocalSelected}) => (
           <HostDropdownHeader 
@@ -160,14 +163,11 @@ function ServerDetailsWrapper(props) {
           />
         )}
         renderCell={(cell, _context) => {
-          console.log('context', _context)
-          if (cell.i === 'host-table-cell') {
+          if (cell.i === 'sever-details-server-info') {
             return <ServerDetailsCellContent />
           }
-          if (cell.i === 'hostpage-cell-11') {
+          if (cell.i === 'sever-details-process') {
             return <ProcessLineChartTable source={props.source} />
-            // return <ProcessLineChartTable source={context.source} />
-
           }
           return null
         }}
