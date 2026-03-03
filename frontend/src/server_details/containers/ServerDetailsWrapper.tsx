@@ -7,6 +7,7 @@ import DashboardPageWithImport, {
   dashboardPageWithImportMdtp,
   type TemplateSelectionContextValue,
 } from 'src/shared/components/DashboardPageWithImport'
+import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
 
 function ServerDetailsCellContent() {
   const [activeTab, setActiveTab] = useState<'info' | 'files'>('info')
@@ -158,10 +159,15 @@ function ServerDetailsWrapper(props) {
             templateVariableLocalSelected={templateVariableLocalSelected}
           />
         )}
-        renderCell={(cell, context) => {
+        renderCell={(cell, _context) => {
+          console.log('context', _context)
           if (cell.i === 'host-table-cell') {
-            console.log('renderCell context', context)
             return <ServerDetailsCellContent />
+          }
+          if (cell.i === 'hostpage-cell-11') {
+            return <ProcessLineChartTable source={props.source} />
+            // return <ProcessLineChartTable source={context.source} />
+
           }
           return null
         }}

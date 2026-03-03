@@ -75,7 +75,7 @@ export function useDashboardPageWithImport(
   const [loadSettled, setLoadSettled] = useState(false)
   const [localTemplates, setLocalTemplates] = useState<Template[]>([])
 
-  const patchDashboardByIDAsyncBound = patchDashboardByIDAsync as unknown as (
+  const patchDashboardByIDAsyncBound = (patchDashboardByIDAsync as unknown) as (
     dashboardID: string,
     cells: Cell[]
   ) => Promise<DashboardsModels.Dashboard | undefined>
@@ -145,7 +145,10 @@ export function useDashboardPageWithImport(
 
     let updated: DashboardsModels.Dashboard | undefined
     try {
-      updated = await patchDashboardByIDAsyncBound(currentDashboardId, nextCells)
+      updated = await patchDashboardByIDAsyncBound(
+        currentDashboardId,
+        nextCells
+      )
       if (updated?.cells && String(updated.id) === String(currentDashboardId)) {
         const cellsToSet = updated.cells
         setTimeout(() => setCells(cellsToSet), 0)
@@ -190,4 +193,3 @@ export function useDashboardPageWithImport(
     },
   }
 }
-
