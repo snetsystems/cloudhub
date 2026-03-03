@@ -1,8 +1,11 @@
 import {Cell} from 'src/types'
 import {ImportStrategy} from 'src/shared/types/importModal'
+import {CellOrigin} from 'src/types/dashboards'
 
 /**
  * Computes the next cells array after import: either merge by cell id/name or append.
+ * For mergeByCellId (Fixed Cell): builtin cells that already exist on the dashboard
+ * only have visibility (hidden: false) updated; no add/overwrite of content.
  */
 export function computeNextCells(
   currentCells: Cell[],
@@ -15,6 +18,7 @@ export function computeNextCells(
 
   const key = (id: string) => (id || '').trim().toLowerCase()
   const nameKey = (name: string) => (name || '').trim().toLowerCase()
+  const isBuiltin = (c: Cell) => c.cellOrigin === CellOrigin.Builtin
   const templateMatchedByIndex = new Set<number>()
   const result: Cell[] = []
 
@@ -27,7 +31,11 @@ export function computeNextCells(
     if (templateById != null) {
       const idx = importedCells.indexOf(templateById)
       templateMatchedByIndex.add(idx)
-      result.push({...existing, queries: templateById.queries})
+      if (isBuiltin(existing)) {
+        result.push({...existing, hidden: false})
+      } else {
+        result.push({...existing, queries: templateById.queries, hidden: false})
+      }
       continue
     }
     const existingName = nameKey(existing.name)
@@ -39,7 +47,11 @@ export function computeNextCells(
     if (templateByName != null) {
       const idx = importedCells.indexOf(templateByName)
       templateMatchedByIndex.add(idx)
-      result.push({...existing, queries: templateByName.queries})
+      if (isBuiltin(existing)) {
+        result.push({...existing, hidden: false})
+      } else {
+        result.push({...existing, queries: templateByName.queries, hidden: false})
+      }
       continue
     }
     result.push(existing)
@@ -50,15 +62,21 @@ export function computeNextCells(
     const idK = key(cell.i)
     const existingResultIndex = result.findIndex(c => key(c.i) === idK)
     if (existingResultIndex !== -1) {
-      result[existingResultIndex] = {
-        ...result[existingResultIndex],
-        queries: cell.queries,
-        name: cell.name,
+      const existingCell = result[existingResultIndex]
+      if (isBuiltin(existingCell)) {
+        result[existingResultIndex] = {...existingCell, hidden: false}
+      } else {
+        result[existingResultIndex] = {
+          ...existingCell,
+          queries: cell.queries,
+          name: cell.name,
+          hidden: false,
+        }
       }
       templateMatchedByIndex.add(i)
       return
     }
-    result.push(cell)
+    result.push({...cell, hidden: false})
   })
 
   return {

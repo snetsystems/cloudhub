@@ -194,8 +194,30 @@ func (s *Service) FixedCellDashboardByName(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Optional: includeHidden=true shows hidden cells (e.g. Fixed Cell management UI).
+	// By default (includeHidden unset/false), hidden cells are filtered out so that
+	// normal dashboard views don't render them.
+	includeHidden := false
+	if v := r.URL.Query().Get("includeHidden"); v == "true" || v == "1" {
+		includeHidden = true
+	}
+
+	dashForResponse := e
+	if !includeHidden {
+		// Filter out hidden cells for callers that only want visible cells.
+		filtered := e
+		filtered.Cells = make([]cloudhub.DashboardCell, 0, len(e.Cells))
+		for _, c := range e.Cells {
+			if c.Hidden {
+				continue
+			}
+			filtered.Cells = append(filtered.Cells, c)
+		}
+		dashForResponse = filtered
+	}
+
 	templateStore := &builtin.BinDashboardsStore{Logger: s.Logger}
-	res := newDashboardResponse(e)
+	res := newDashboardResponse(dashForResponse)
 	setFixedCellVersionInfo(ctx, res, e, templateStore.GetVersion)
 
 	encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -257,6 +279,17 @@ func (s *Service) RemoveDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If this was a fixed-cell (builtin) dashboard, remove the name→ID mapping so GET /fixed-cells/:name returns 404.
+	if dashboard.Type == cloudhub.DashboardTypeBuiltin && dashboard.Name != "" && dashboard.Organization != "" {
+		if unregErr := s.Store.FixedCellMappingStore().Unregister(ctx, dashboard.Organization, dashboard.Name); unregErr != nil {
+			s.Logger.
+				WithField("component", "fixed-cell").
+				WithField("dashboard", dashboard.Name).
+				WithField("organization", dashboard.Organization).
+				Error("Dashboard deleted but failed to unregister fixed-cell mapping: ", unregErr)
+		}
+	}
+
 	// log registration
 	msg := fmt.Sprintf(MsgDashboardDeleted.String(), dashboard.Name)
 	s.logRegistration(ctx, "Dashboards", msg)
@@ -297,6 +330,26 @@ func (s *Service) ReplaceDashboard(w http.ResponseWriter, r *http.Request) {
 	if err := ValidDashboardRequest(&req, defaultOrg.ID); err != nil {
 		invalidData(w, err, s.Logger)
 		return
+	}
+
+	// Preserve any hidden cells that already exist on the dashboard and are not already in the request
+	// (e.g. client re-added a cell and sent it with hidden=false; do not append the same cell again).
+	if len(dashboard.Cells) > 0 {
+		reqIDs := make(map[string]struct{})
+		for _, c := range req.Cells {
+			if c.ID != "" {
+				reqIDs[strings.TrimSpace(strings.ToLower(c.ID))] = struct{}{}
+			}
+		}
+		for _, c := range dashboard.Cells {
+			if c.Hidden && c.ID != "" {
+				id := strings.TrimSpace(strings.ToLower(c.ID))
+				if _, inReq := reqIDs[id]; !inReq {
+					req.Cells = append(req.Cells, c)
+					reqIDs[id] = struct{}{}
+				}
+			}
+		}
 	}
 
 	if err := s.Store.Dashboards(ctx).Update(ctx, req); err != nil {
@@ -354,6 +407,26 @@ func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 			invalidData(w, err, s.Logger)
 			return
 		}
+
+		// Preserve hidden cells that are not already in the request (client may have re-added a cell with hidden=false).
+		if len(orig.Cells) > 0 {
+			reqIDs := make(map[string]struct{})
+			for _, c := range req.Cells {
+				if c.ID != "" {
+					reqIDs[strings.TrimSpace(strings.ToLower(c.ID))] = struct{}{}
+				}
+			}
+			for _, c := range orig.Cells {
+				if c.Hidden && c.ID != "" {
+					id := strings.TrimSpace(strings.ToLower(c.ID))
+					if _, inReq := reqIDs[id]; !inReq {
+						req.Cells = append(req.Cells, c)
+						reqIDs[id] = struct{}{}
+					}
+				}
+			}
+		}
+
 		orig.Cells = req.Cells
 		for i := range orig.Cells {
 			if orig.Cells[i].ID != "" {

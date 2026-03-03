@@ -416,14 +416,21 @@ func (s *Service) RemoveDashboardCell(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dash.Cells = append(dash.Cells[:cellid], dash.Cells[cellid+1:]...)
+	// For fixed-cell (builtin) dashboards, don't physically delete builtin cells.
+	// Instead, mark them as hidden so they can be restored or used for future template updates.
+	isFixedCell := dash.Type == cloudhub.DashboardTypeBuiltin && dashCell.CellOrigin == cloudhub.CellOriginBuiltin
+	if isFixedCell {
+		dash.Cells[cellid].Hidden = true
+	} else {
+		dash.Cells = append(dash.Cells[:cellid], dash.Cells[cellid+1:]...)
+	}
 	if err := s.Store.Dashboards(ctx).Update(ctx, dash); err != nil {
 		msg := fmt.Sprintf("Error removing cell %s from dashboard %d: %v", cid, id, err)
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
 
-	// log registrationte
+	// log registration
 	msg := fmt.Sprintf(MsgDashboardCellDeleted.String(), dashCell.Name, dash.Name)
 	s.logRegistration(ctx, "Dashboards Cells", msg)
 

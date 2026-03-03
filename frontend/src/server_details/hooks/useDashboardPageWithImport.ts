@@ -136,8 +136,15 @@ export function useDashboardPageWithImport(
     const dashboardCells = items.dashboards.flatMap(d => d.cells)
     if (dashboardCells.length === 0 || !currentDashboardId) return
 
+    // For builtin dashboards, use full cell list (including hidden) so import only toggles visibility and does not run "add" logic
+    const isBuiltin = dashboard?.type === DashboardsModels.DashboardType.Builtin
+    const currentCellsForMerge =
+      isBuiltin && items.importStrategy === 'mergeByCellId'
+        ? (await fetchDashboardByName(pageName))?.cells ?? cells
+        : cells
+
     const {nextCells, mergeMatchedCount} = computeNextCells(
-      cells,
+      currentCellsForMerge,
       dashboardCells,
       items.importStrategy
     )

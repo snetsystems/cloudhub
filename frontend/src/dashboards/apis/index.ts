@@ -79,7 +79,11 @@ export const getFixedCellDashboardByName = async (
   try {
     return (await AJAX<Dashboard>({
       method: 'GET',
-      url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(name)}`,
+      // includeHidden=true so Fixed Cell management UI can see all builtin cells,
+      // regardless of their visible/hidden state on the dashboard.
+      url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(
+        name
+      )}?includeHidden=true`,
     })) as AxiosResponse<Dashboard>
   } catch {
     return null
@@ -229,13 +233,14 @@ export const editTemplateVariables = async templateVariable => {
   }
 }
 
-/** Fetches a dashboard by its fixed-cell/page name (e.g. server-details, host_page). Returns null when not found or on error. */
+/** Fetches a dashboard by its fixed-cell/page name (e.g. server-details, host_page). Returns null when not found or on error.
+ * Uses includeHidden=true so the full cell list (including hidden) is available for import merge; visibility is handled by the UI. */
 export const getDashboardByTemplateName = async (
   name: string
 ): Promise<Dashboard | null> => {
   try {
     const {data} = await AJAX<AxiosResponse<Dashboard>>({
-      url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(name)}`,
+      url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(name)}?includeHidden=true`,
       method: 'GET',
     })
     return data as Dashboard

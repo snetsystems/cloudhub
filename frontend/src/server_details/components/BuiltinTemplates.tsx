@@ -11,7 +11,7 @@ import {
   notifyFixedCellsUpdated,
   notifyFixedCellsUpdateFailed,
 } from 'src/shared/copy/notifications'
-import {Dashboard, Cell, CellType} from 'src/types/dashboards'
+import {Dashboard, Cell, CellType, CellOrigin} from 'src/types/dashboards'
 import {Template} from 'src/types/tempVars'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import _ from 'lodash'
@@ -44,7 +44,8 @@ const TemplateCellItem: React.FC<TemplateCellItemProps> = ({
 }) => {
   const checkboxId = `fixed-cell-cell-${cell.i}`
   const handleRowClick = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('.fixedmodal-checkbox-wrapper')) return
+    if ((e.target as HTMLElement).closest('.fixedmodal-checkbox-wrapper'))
+      return
     onToggle(cell.i, !isChecked)
   }
   return (
@@ -61,12 +62,17 @@ const TemplateCellItem: React.FC<TemplateCellItemProps> = ({
       tabIndex={0}
     >
       <div className="fixed-cells__cell-inner">
-        <div className="fixedmodal-checkbox-wrapper" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixedmodal-checkbox-wrapper"
+          onClick={e => e.stopPropagation()}
+        >
           <input
             type="checkbox"
             id={checkboxId}
             checked={isChecked}
-            onChange={e => onToggle(cell.i, (e.target as HTMLInputElement).checked)}
+            onChange={e =>
+              onToggle(cell.i, (e.target as HTMLInputElement).checked)
+            }
             onClick={e => e.stopPropagation()}
           />
           <label htmlFor={checkboxId} onClick={e => e.stopPropagation()} />
@@ -122,7 +128,10 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
         className="dashboard-tree-header"
         onClick={hasCells ? toggleExpanded : undefined}
       >
-        <div className="fixedmodal-checkbox-wrapper" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixedmodal-checkbox-wrapper"
+          onClick={e => e.stopPropagation()}
+        >
           <input
             ref={templateCheckRef}
             type="checkbox"
@@ -157,12 +166,14 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
       </div>
       {hasCells && isExpanded && (
         <div className="dashboard-tree-children">
-          {template.cells!.map(cell => (
+          {template.cells!.map((cell, index) => (
             <TemplateCellItem
-              key={cell.i}
+              key={cell.i ? `${cell.i}-${index}` : `cell-${index}`}
               cell={cell}
               isChecked={selectedCellIds.has(cell.i)}
-              onToggle={(cellId, checked) => onCellToggle(templateName, cellId, checked)}
+              onToggle={(cellId, checked) =>
+                onCellToggle(templateName, cellId, checked)
+              }
             />
           ))}
         </div>
@@ -191,9 +202,12 @@ function FixedCells({
 
   const refreshList = () => setRefreshTrigger(t => t + 1)
 
-  const selectedSet = useCallback((templateName: string) => {
-    return new Set(selectedCellIdsByTemplate[templateName] ?? [])
-  }, [selectedCellIdsByTemplate])
+  const selectedSet = useCallback(
+    (templateName: string) => {
+      return new Set(selectedCellIdsByTemplate[templateName] ?? [])
+    },
+    [selectedCellIdsByTemplate]
+  )
 
   const onSelectionChangeRef = useRef(onSelectionChange)
   onSelectionChangeRef.current = onSelectionChange
@@ -294,20 +308,26 @@ function FixedCells({
         }
         const [templateResults, orgResults] = await Promise.all([
           Promise.all(
-            list.map(({name}) =>
-              getFixedCell(name).then(r => r.data)
-            )
+            list.map(({name}) => getFixedCell(name).then(r => r.data))
           ),
-          Promise.all(
-            list.map(({name}) => getFixedCellDashboardByName(name))
-          ),
+          Promise.all(list.map(({name}) => getFixedCellDashboardByName(name))),
         ])
         if (cancelled) return
         const merged: Dashboard[] = templateResults.map((t, i) => {
           const org = orgResults[i]?.data
           const serverVersion = org?.latestVersion ?? t.version
+
+          const orgBuiltinCells =
+            org?.cells?.filter(c => c.cellOrigin === CellOrigin.Builtin) ?? []
+
+          const cells =
+            orgBuiltinCells.length > 0 ? orgBuiltinCells : t.cells ?? []
+          const templates = org?.templates ?? t.templates ?? []
+
           return {
-            ...t,
+            ...(org || t),
+            cells,
+            templates,
             version: org?.version ?? undefined,
             latestVersion: serverVersion,
             updateAvailable: org?.updateAvailable,
@@ -361,8 +381,14 @@ function FixedCells({
         {hasUpdateAvailable && (
           <div className="fixed-cells__update-bar">
             <span className="fixed-cells__version-info">
-              Current: {templatesWithUpdate[0].version ? `v${templatesWithUpdate[0].version}` : '—'} → Latest:{' '}
-              {templatesWithUpdate[0].latestVersion ? `v${templatesWithUpdate[0].latestVersion}` : '—'}
+              Current:{' '}
+              {templatesWithUpdate[0].version
+                ? `v${templatesWithUpdate[0].version}`
+                : '—'}{' '}
+              → Latest:{' '}
+              {templatesWithUpdate[0].latestVersion
+                ? `v${templatesWithUpdate[0].latestVersion}`
+                : '—'}
             </span>
             <button
               type="button"

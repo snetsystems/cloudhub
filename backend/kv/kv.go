@@ -15,7 +15,7 @@ var (
 	cellBucket                     = []byte("cellsv2")
 	configBucket                   = []byte("ConfigV1")
 	dashboardsBucket               = []byte("Dashoard")                 // keep spelling for backwards compat
-	dashboardsBuiltinMappingBucket = []byte("DashboardsBuiltinMapping") // orgID\x00name -> dashboard ID
+	dashboardsBuiltinMappingBucket = []byte("DashboardsBuiltinMapping") // orgID/name -> dashboard ID (e.g. default/server-details)
 	mappingsBucket                 = []byte("MappingsV1")
 	organizationConfigBucket       = []byte("OrganizationConfigV1")
 	organizationsBucket            = []byte("OrganizationsV1")

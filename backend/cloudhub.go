@@ -951,6 +951,8 @@ type FixedCellMappingStore interface {
 	GetDashboardID(ctx context.Context, orgID, name string) (DashboardID, error)
 	// Register records that the fixed-cell named name in org orgID is stored as dashboardID.
 	Register(ctx context.Context, orgID, name string, dashboardID DashboardID) error
+	// Unregister removes the fixed-cell mapping for (orgID, name). Use when the org's dashboard is deleted.
+	Unregister(ctx context.Context, orgID, name string) error
 	// ListByTemplateName returns all (orgID, dashboardID) entries for the given template name.
 	ListByTemplateName(ctx context.Context, name string) ([]FixedCellMappingEntry, error)
 }

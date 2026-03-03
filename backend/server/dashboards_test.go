@@ -1105,6 +1105,28 @@ func TestService_UpdateDashboard(t *testing.T) {
 			updateErr:  context.DeadlineExceeded,
 			wantStatus: http.StatusInternalServerError,
 		},
+		{
+			name: "do not duplicate hidden cell when client sends same cell with hidden false (fixed-cell re-add)",
+			body: `{"cells":[{"i":"cell-a","name":"Cell A"},{"i":"cell-b","name":"Cell B"}]}`,
+			dashboardsGet: cloudhub.Dashboard{
+				ID: 1, Name: "D",
+				Cells: []cloudhub.DashboardCell{
+					{ID: "cell-a", Name: "Cell A"},
+					{ID: "cell-b", Name: "Cell B", Hidden: true},
+				},
+			},
+			wantStatus: http.StatusOK,
+			checkUpdated: func(t *testing.T, d cloudhub.Dashboard) {
+				if len(d.Cells) != 2 {
+					t.Errorf("len(Cells) = %d, want 2 (hidden cell must not be appended again)", len(d.Cells))
+				}
+				for _, c := range d.Cells {
+					if c.ID == "cell-b" && c.Hidden {
+						t.Error("cell-b should be visible (Hidden=false) after client re-added it")
+					}
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1155,6 +1177,56 @@ func TestService_UpdateDashboard(t *testing.T) {
 				tt.checkUpdated(t, captured)
 			}
 		})
+	}
+}
+
+func TestService_ReplaceDashboard_doNotDuplicateHiddenCell(t *testing.T) {
+	body := `{"name":"D","cells":[{"i":"cell-a","name":"Cell A"},{"i":"cell-b","name":"Cell B"}]}`
+	orig := cloudhub.Dashboard{
+		ID: 1, Name: "D",
+		Cells: []cloudhub.DashboardCell{
+			{ID: "cell-a", Name: "Cell A"},
+			{ID: "cell-b", Name: "Cell B", Hidden: true},
+		},
+	}
+	var captured cloudhub.Dashboard
+	s := &Service{
+		Store: &mocks.Store{
+			DashboardsStore: &mocks.DashboardsStore{
+				GetF: func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+					if id == 1 {
+						return orig, nil
+					}
+					return cloudhub.Dashboard{}, cloudhub.ErrDashboardNotFound
+				},
+				UpdateF: func(ctx context.Context, d cloudhub.Dashboard) error {
+					captured = d
+					return nil
+				},
+			},
+			OrganizationsStore: &mocks.OrganizationsStore{
+				DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "default-org"}, nil
+				},
+			},
+		},
+		Logger: &mocks.TestLogger{},
+	}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPut, "/cloudhub/v1/dashboards/1", bytes.NewReader([]byte(body)))
+	r = WithContext(r.Context(), r, map[string]string{"id": "1"})
+	s.ReplaceDashboard(w, r)
+	if w.Code != http.StatusOK {
+		t.Errorf("ReplaceDashboard() status = %d, want 200\nbody: %s", w.Code, w.Body.String())
+		return
+	}
+	if len(captured.Cells) != 2 {
+		t.Errorf("len(Cells) = %d, want 2 (hidden cell must not be appended again)", len(captured.Cells))
+	}
+	for _, c := range captured.Cells {
+		if c.ID == "cell-b" && c.Hidden {
+			t.Error("cell-b should be visible (Hidden=false) after client re-added it")
+		}
 	}
 }
 

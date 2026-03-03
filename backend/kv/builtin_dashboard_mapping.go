@@ -13,9 +13,9 @@ type fixedCellMappingStore struct {
 	client *Service
 }
 
-// mappingKey returns the KV key: orgID + "\x00" + name.
+// mappingKey returns the KV key: orgID + "/" + name (hierarchy: e.g. default/server-details).
 func mappingKey(orgID, name string) []byte {
-	return []byte(orgID + "\x00" + name)
+	return []byte(orgID + "/" + name)
 }
 
 // Ensure fixedCellMappingStore implements cloudhub.FixedCellMappingStore.
@@ -46,6 +46,16 @@ func (s *fixedCellMappingStore) GetDashboardID(ctx context.Context, orgID, name 
 	return cloudhub.DashboardID(id), nil
 }
 
+// Unregister removes the fixed-cell mapping for (orgID, name).
+func (s *fixedCellMappingStore) Unregister(ctx context.Context, orgID, name string) error {
+	if orgID == "" || name == "" {
+		return nil
+	}
+	return s.client.kv.Update(ctx, func(tx Tx) error {
+		return tx.Bucket(dashboardsBuiltinMappingBucket).Delete(mappingKey(orgID, name))
+	})
+}
+
 // Register records that the fixed-cell named name in org orgID is stored as dashboardID.
 func (s *fixedCellMappingStore) Register(ctx context.Context, orgID, name string, dashboardID cloudhub.DashboardID) error {
 	if orgID == "" || name == "" {
@@ -62,7 +72,7 @@ func (s *fixedCellMappingStore) ListByTemplateName(ctx context.Context, name str
 	if name == "" {
 		return nil, nil
 	}
-	suffix := "\x00" + name
+	suffix := "/" + name
 	var out []cloudhub.FixedCellMappingEntry
 	if err := s.client.kv.View(ctx, func(tx Tx) error {
 		return tx.Bucket(dashboardsBuiltinMappingBucket).ForEach(func(k, v []byte) error {

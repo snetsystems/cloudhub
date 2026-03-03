@@ -237,6 +237,11 @@ function DashboardPageWithImport({
     dispatch,
   })
 
+  const visibleCells = React.useMemo(
+    () => cells.filter(c => !c.hidden),
+    [cells]
+  )
+
   const mergedTemplates = React.useMemo(
     () =>
       mergeBuiltinWithGetTempVars(
@@ -478,9 +483,9 @@ function DashboardPageWithImport({
       </Page.Header>
       <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
         <div className="dashboard container-fluid full-width">
-          {cells.length ? (
+          {visibleCells.length ? (
             <LayoutRenderer
-              cells={cells}
+              cells={visibleCells}
               source={source}
               sources={sources}
               isEditable={true}

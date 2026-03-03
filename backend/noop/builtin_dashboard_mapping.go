@@ -22,6 +22,11 @@ func (s *FixedCellMappingStore) Register(ctx context.Context, orgID, name string
 	return nil
 }
 
+// Unregister is a no-op.
+func (s *FixedCellMappingStore) Unregister(ctx context.Context, orgID, name string) error {
+	return nil
+}
+
 // ListByTemplateName returns nil (no mappings).
 func (s *FixedCellMappingStore) ListByTemplateName(ctx context.Context, name string) ([]cloudhub.FixedCellMappingEntry, error) {
 	return nil, nil

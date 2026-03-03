@@ -34,6 +34,36 @@ func TestBuiltinDashboardMappingStore_RegisterAndGet(t *testing.T) {
 	}
 }
 
+func TestBuiltinDashboardMappingStore_Unregister(t *testing.T) {
+	client, err := NewTestClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+	mapping := client.FixedCellMappingStore()
+
+	orgID := "org-1"
+	name := "server-details"
+	dashboardID := cloudhub.DashboardID(100)
+
+	if err := mapping.Register(ctx, orgID, name, dashboardID); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	if got, err := mapping.GetDashboardID(ctx, orgID, name); err != nil || got != dashboardID {
+		t.Fatalf("after Register: GetDashboardID() = %v, %v; want %v, nil", got, err, dashboardID)
+	}
+
+	if err := mapping.Unregister(ctx, orgID, name); err != nil {
+		t.Fatalf("Unregister() error = %v", err)
+	}
+	_, err = mapping.GetDashboardID(ctx, orgID, name)
+	if err != cloudhub.ErrDashboardNotFound {
+		t.Errorf("after Unregister: GetDashboardID() error = %v, want ErrDashboardNotFound", err)
+	}
+}
+
 func TestBuiltinDashboardMappingStore_GetDashboardID_NotFound(t *testing.T) {
 	client, err := NewTestClient()
 	if err != nil {
