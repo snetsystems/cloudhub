@@ -1,5 +1,5 @@
 import React from 'react'
-import {AlignType, ColumnInfo} from 'src/types'
+import {AlignType, ColumnInfo, DataTableObject} from 'src/types'
 import {
   BACKGROUND_TYPE_MODES,
   CHART_TYPE_MODES,
@@ -73,12 +73,12 @@ export const serverListColumns = ({
             <TableLineChartCell
               values={toLineValues(value)}
               options={{
-                showLine: true,
-                showPoint: false,
-                fillArea: true,
-                connectSeparatedPoints: true,
+                isShowLine: true,
+                isShowPoint: false,
+                isFillArea: true,
+                isConnectSeparatedPoints: true,
                 valueLabel: 'maximum',
-                zeroBaseline: true,
+                isZeroBaseline: true,
                 areaOpacity: 0.1,
                 pointRadius: 1,
               }}
@@ -144,12 +144,13 @@ export const serverListColumns = ({
             <TableLineChartCell
               values={toLineValues(value)}
               options={{
-                showLine: true,
-                showPoint: false,
-                fillArea: true,
-                connectSeparatedPoints: true,
+                isShowLine: true,
+                isShowPoint: false,
+                isFillArea: true,
+                isConnectSeparatedPoints: true,
                 valueLabel: 'last',
-                zeroBaseline: true,
+                isZeroBaseline: true,
+                valueFormat: FORMAT_OPTIONS.KMG,
               }}
             />
           )
@@ -178,8 +179,8 @@ export const serverListColumns = ({
           isPercent: false,
           isShowValues: true,
           isGauge: false,
-          valueFormat: FORMAT_OPTIONS.KMG,
           decimalPlaces: 0,
+          valueFormat: FORMAT_OPTIONS.KMG,
         }
 
         return <TableGaugeCell options={gaugeOptions} value={value as number} />
@@ -241,12 +242,13 @@ export const serverListColumns = ({
             <TableLineChartCell
               values={toLineValues(value)}
               options={{
-                showLine: true,
-                showPoint: false,
-                fillArea: true,
-                connectSeparatedPoints: true,
+                isShowLine: true,
+                isShowPoint: false,
+                isFillArea: true,
+                isConnectSeparatedPoints: true,
                 valueLabel: 'last',
-                zeroBaseline: true,
+                isZeroBaseline: true,
+                valueFormat: FORMAT_OPTIONS.KMG,
               }}
             />
           )
@@ -259,32 +261,37 @@ export const serverListColumns = ({
       name: 'Network Interface',
       align: AlignType.LEFT,
     } as ColumnInfo,
-    // {
-    //   key: 'Disk Usage',
-    //   name: 'Disk Usage',
-    //   align: AlignType.RIGHT,
-    //   options: {
-    //     thead: {
-    //       align: AlignType.RIGHT,
-    //     },
-    //     isGauge: true,
-    //     sorting: true,
-    //   },
-    //   render: (value: number) => {
-    //     const gaugeOptions = {
-    //       min: 0,
-    //       max: 100,
-    //       colors: LINE_COLORS_I,
-    //       chartType: CHART_TYPE_MODES.SEGMENTED,
-    //       backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
-    //       isPercent: true,
-    //       isShowValues: true,
-    //       isGauge: true,
-    //       decimalPlaces: 0,
-    //     }
-    //     return <TableGaugeCell options={gaugeOptions} value={value} />
-    //   },
-    // },
+    {
+      key: 'Disk Usage',
+      name: 'Disk Usage',
+      align: AlignType.RIGHT,
+      options: {
+        thead: {
+          align: AlignType.RIGHT,
+        },
+        isGauge: true,
+        sorting: true,
+      },
+      render: (value: number, rowData: DataTableObject) => {
+        const gaugeOptions = {
+          min: 0,
+          max: 100,
+          colors: LINE_COLORS_I,
+          chartType: CHART_TYPE_MODES.SEGMENTED,
+          backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
+          isPercent: true,
+          isShowValues: true,
+          isGauge: true,
+          decimalPlaces: 0,
+        }
+        return (
+          <div>
+            <TableGaugeCell options={gaugeOptions} value={value} />
+            <span>{rowData.path}</span>
+          </div>
+        )
+      },
+    },
     // {key: 'Path', name: 'Path', align: AlignType.LEFT},
     // {
     //   key: 'Disk I/O %',
@@ -518,25 +525,25 @@ FILL(null)`,
   {
     id: 'server-list-network-win',
     text: `SELECT "instance" AS "Network Interface", max("traffic") AS "Network Traffic"
-FROM (
-  SELECT max("Bytes_Received_persec") + max("Bytes_Sent_persec") AS "traffic"
-  FROM "Default"."autogen"."win_net"
-  WHERE time > now() - 3m AND "instance" !~ /^_Total/
-  GROUP BY time(:interval:), "host", "instance"
-  LIMIT 1
-)
-GROUP BY "host"`,
+  FROM (
+    SELECT max("Bytes_Received_persec") + max("Bytes_Sent_persec") AS "traffic"
+    FROM "Default"."autogen"."win_net"
+    WHERE time > now() - 3m AND "instance" !~ /^_Total/
+    GROUP BY time(:interval:), "host", "instance"
+    LIMIT 1
+  )
+  GROUP BY "host"`,
   },
   {
     id: 'server-list-network',
     text: `SELECT "interface" AS "Network Interface", max("traffic") AS "Network Traffic"
-FROM (
-  SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
-  FROM "Default"."autogen"."net"
-  WHERE time > now() - 3m
-  GROUP BY time(:interval:), "interface"
-  LIMIT 1
-)
-GROUP BY "host"`,
+  FROM (
+    SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
+    FROM "Default"."autogen"."net"
+    WHERE time > now() - 3m
+    GROUP BY time(:interval:), "interface"
+    LIMIT 1
+  )
+  GROUP BY "host"`,
   },
 ]

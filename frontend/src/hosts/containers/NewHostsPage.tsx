@@ -17,7 +17,7 @@ import {
 import {executeQueries} from 'src/shared/apis/query'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {generateForHosts} from 'src/utils/tempVars'
-import {TimeSeriesResponse, TimeSeriesValue} from 'src/types/series'
+import {TimeSeriesValue} from 'src/types/series'
 import {mergeResultsByHost} from 'src/dashboards/utils/tableLineChart'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
 type HostCellValue = TimeSeriesValue | TimeSeriesValue[]
@@ -140,47 +140,41 @@ function NewHostsPage({
                 columns={columns}
                 isSearchDisplay={true}
                 isDotKey={true}
+                topLeftRender={
+                  <Radio shape={ButtonShape.Default}>
+                    <Radio.Button
+                      id="host-chart-mode-gauge"
+                      titleText="Gauge"
+                      value="gauge"
+                      active={displayedChartMode === 'gauge'}
+                      onClick={() => {
+                        if (pendingChartMode !== 'gauge' && !isModeSwitching) {
+                          setPendingChartMode('gauge')
+                        }
+                      }}
+                    >
+                      Gauge
+                    </Radio.Button>
+                    <Radio.Button
+                      id="host-chart-mode-line"
+                      titleText="Line"
+                      value="line"
+                      active={displayedChartMode === 'line'}
+                      onClick={() => {
+                        if (pendingChartMode !== 'line' && !isModeSwitching) {
+                          setPendingChartMode('line')
+                        }
+                      }}
+                    >
+                      Line
+                    </Radio.Button>
+                  </Radio>
+                }
               />
             )}
           </div>
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-            }}
-          >
-            <Radio shape={ButtonShape.Default}>
-              <Radio.Button
-                id="host-chart-mode-gauge"
-                titleText="Gauge"
-                value="gauge"
-                active={displayedChartMode === 'gauge'}
-                onClick={() => {
-                  if (pendingChartMode !== 'gauge' && !isModeSwitching) {
-                    setPendingChartMode('gauge')
-                  }
-                }}
-              >
-                Gauge
-              </Radio.Button>
-              <Radio.Button
-                id="host-chart-mode-line"
-                titleText="Line"
-                value="line"
-                active={displayedChartMode === 'line'}
-                onClick={() => {
-                  if (pendingChartMode !== 'line' && !isModeSwitching) {
-                    setPendingChartMode('line')
-                  }
-                }}
-              >
-                Line
-              </Radio.Button>
-            </Radio>
-          </div>
-          <ProcessLineChartTable source={source} />
+          <div className="radio-button-container"></div>
+          {/* <ProcessLineChartTable source={source} /> */}
         </div>
       </Page.Contents>
     </Page>

@@ -245,7 +245,7 @@ const formatNumber = (value: number, decimalPlaces: number): string => {
 
 const scaleByUnit = (
   value: number,
-  valueFormat: FormatOption,
+  valueFormat: FormatOption
 ): {value: number; unit: string} => {
   if (valueFormat === FORMAT_OPTIONS.RAW) {
     return {value, unit: ''}
@@ -253,6 +253,7 @@ const scaleByUnit = (
 
   let base = 0
   let labels: string[] = []
+  let defaultUnit = ''
 
   if (valueFormat === FORMAT_OPTIONS.KMB) {
     base = 1000
@@ -260,11 +261,12 @@ const scaleByUnit = (
   } else if (valueFormat === FORMAT_OPTIONS.KMG) {
     base = 1024
     labels = KMG_LABELS
+    defaultUnit = 'B'
   }
 
   const absValue = Math.abs(value)
-  if (!base || absValue < base ) {
-    return {value, unit: ''}
+  if (!base || absValue < base) {
+    return {value, unit: defaultUnit}
   }
 
   let unitIndex = -1
@@ -278,7 +280,7 @@ const scaleByUnit = (
   }
 
   if (unitIndex === -1) {
-    return {value, unit: ''}
+    return {value, unit: defaultUnit}
   }
   return {value: value / divisor, unit: labels[unitIndex]}
 }
@@ -286,7 +288,7 @@ const scaleByUnit = (
 export const formatValueWithUnit = (
   value: number | null,
   decimalPlaces: number,
-  valueFormat: FormatOption = FORMAT_OPTIONS.RAW,  
+  valueFormat: FormatOption = FORMAT_OPTIONS.RAW
 ): string => {
   if (value === null || value === undefined) {
     return '--'
@@ -310,7 +312,7 @@ export const formatDisplayValue = (
   value: number | null,
   isPercent: boolean,
   decimalPlaces: number,
-  valueFormat: FormatOption = FORMAT_OPTIONS.RAW,
+  valueFormat: FormatOption = FORMAT_OPTIONS.RAW
 ): string => {
   if (!Number.isFinite(value) || value === null) {
     return '--'

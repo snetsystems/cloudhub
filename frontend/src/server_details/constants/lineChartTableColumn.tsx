@@ -21,11 +21,10 @@ export const lineChartTableColumn = [
         <TableLineChartCell
           values={toLineValues(value)}
           options={{
-            showLine: true,
-
-            showPoint: false,
-            fillArea: true,
-            connectSeparatedPoints: true,
+            isShowLine: true,
+            isShowPoint: false,
+            isFillArea: true,
+            isConnectSeparatedPoints: true,
           }}
         />
       )
@@ -44,11 +43,10 @@ export const lineChartTableColumn = [
         <TableLineChartCell
           values={toLineValues(value)}
           options={{
-            showLine: true,
-
-            showPoint: false,
-            fillArea: true,
-            connectSeparatedPoints: true,
+            isShowLine: true,
+            isShowPoint: false,
+            isFillArea: true,
+            isConnectSeparatedPoints: true,
           }}
         />
       )
@@ -67,11 +65,10 @@ export const lineChartTableColumn = [
         <TableLineChartCell
           values={toLineValues(value)}
           options={{
-            showLine: true,
-
-            showPoint: false,
-            fillArea: true,
-            connectSeparatedPoints: true,
+            isShowLine: true,
+            isShowPoint: false,
+            isFillArea: true,
+            isConnectSeparatedPoints: true,
           }}
         />
       )
@@ -91,11 +88,10 @@ export const lineChartTableColumn = [
           values={toLineValues(value)}
           strokeWidth={0.5}
           options={{
-            showLine: true,
-
-            showPoint: false,
-            fillArea: true,
-            connectSeparatedPoints: true,
+            isShowLine: true,
+            isShowPoint: false,
+            isFillArea: true,
+            isConnectSeparatedPoints: true,
           }}
         />
       )

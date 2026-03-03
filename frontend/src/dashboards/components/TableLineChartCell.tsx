@@ -1,15 +1,19 @@
 import React, {useMemo, useState} from 'react'
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
+import {formatDisplayValue} from 'src/dashboards/utils/gaugeCell'
+import {FormatOption} from 'src/types/statisticalgraph'
 
 type PointValue = number | string | null | undefined
 
 interface TableLineChartCellOptions {
   valueLabel?: 'minimum' | 'maximum' | 'last'
-  zeroBaseline?: boolean
-  fillArea?: boolean
-  showLine?: boolean
-  showPoint?: boolean
-  connectSeparatedPoints?: boolean
+  valueFormat?: FormatOption
+  decimalPlaces?: number
+  isZeroBaseline?: boolean
+  isFillArea?: boolean
+  isShowLine?: boolean
+  isShowPoint?: boolean
+  isConnectSeparatedPoints?: boolean
   areaOpacity?: number
   pointRadius?: number
 }
@@ -73,14 +77,18 @@ function TableLineChartCell({
   className,
   options,
 }: Props) {
-  const fillArea = options?.fillArea ?? false
-  const zeroBaseline = options?.zeroBaseline ?? false
-  const showLine = options?.showLine ?? true
-  const showPoint = options?.showPoint ?? false
-  const connectSeparatedPoints = options?.connectSeparatedPoints ?? false
+  const fillArea = options?.isFillArea ?? false
+  const zeroBaseline = options?.isZeroBaseline ?? false
+  const showLine = options?.isShowLine ?? true
+  const showPoint = options?.isShowPoint ?? false
+  const connectSeparatedPoints = options?.isConnectSeparatedPoints ?? false
   const areaOpacity = options?.areaOpacity ?? 0.15
   const pointRadius = options?.pointRadius ?? Math.max(strokeWidth + 0.5, 1)
   const valueLabel = options?.valueLabel
+  const valueFormat = options?.valueFormat
+  const decimalPlaces = Number.isFinite(options?.decimalPlaces)
+    ? Math.max(0, options.decimalPlaces)
+    : 1
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
 
   const validValues = useMemo(
@@ -103,7 +111,6 @@ function TableLineChartCell({
       ? Math.max(0, ...validValues)
       : Math.max(...validValues)
 
-    // range가 0이면 스케일이 붕괴되어 baseline 의미가 사라지므로 domain을 확장한다.
     if (min === max) {
       const domainSize = Math.max(Math.abs(max), 1)
       if (zeroBaseline) {
@@ -128,7 +135,8 @@ function TableLineChartCell({
       }
 
       const x = xStep * index
-      const y = chartTopPadding + ((max - numericValue) / range) * drawableHeight
+      const y =
+        chartTopPadding + ((max - numericValue) / range) * drawableHeight
 
       acc.push({
         index,
@@ -215,27 +223,38 @@ function TableLineChartCell({
       return null
     }
 
+    const formatValue = (value: number) =>
+      formatDisplayValue(value, false, decimalPlaces, valueFormat).trim()
+
     if (valueLabel === 'minimum') {
-      return 'Min: ' + Math.min(...validValues).toLocaleString()
+      return 'Min: ' + formatValue(Math.min(...validValues))
     }
 
     if (valueLabel === 'maximum') {
-      return 'Max: ' + Math.max(...validValues).toLocaleString()
+      return 'Max: ' + formatValue(Math.max(...validValues))
     }
 
     for (let index = values.length - 1; index >= 0; index--) {
       const value = values[index]
       const numericValue = toFiniteNumber(value)
       if (numericValue !== null) {
-        return numericValue.toLocaleString()
+        return 'Last: ' + formatValue(numericValue)
       }
     }
 
     return null
-  }, [valueLabel, validValues, values])
+  }, [valueLabel, validValues, values, decimalPlaces, valueFormat])
 
   const isEmpty = segments.length === 0
-  const hoverTooltipText = hoverState?.point.value.toLocaleString() ?? null
+  const hoverTooltipText =
+    hoverState?.point.value !== undefined
+      ? formatDisplayValue(
+          hoverState.point.value,
+          false,
+          decimalPlaces,
+          valueFormat
+        ).trim()
+      : null
   const tooltipStyle = hoverState
     ? (() => {
         const cursorXPercent = (hoverState.cursorX / VIEW_BOX_WIDTH) * 100
@@ -248,7 +267,9 @@ function TableLineChartCell({
         return {
           left: `${Math.min(Math.max(rawLeft, 4), 96)}%`,
           top: `${Math.min(Math.max(cursorYPercent, 10), 90)}%`,
-          transform: shouldFlipToLeft ? 'translate(-100%, -50%)' : 'translate(0, -50%)',
+          transform: shouldFlipToLeft
+            ? 'translate(-100%, -50%)'
+            : 'translate(0, -50%)',
         }
       })()
     : undefined
@@ -337,7 +358,10 @@ function TableLineChartCell({
                     className="table-line-cell-hover-point-outline"
                     cx={hoverState.point.x}
                     cy={hoverState.point.y}
-                    r={Math.max((pointRadius + 1.5) * HOVER_POINT_SIZE_RATIO, 1.5)}
+                    r={Math.max(
+                      (pointRadius + 1.5) * HOVER_POINT_SIZE_RATIO,
+                      1.5
+                    )}
                   />
                   <circle
                     className="table-line-cell-hover-point"
