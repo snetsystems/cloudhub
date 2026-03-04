@@ -359,7 +359,6 @@ function FixedCells({
   if (isLoading) {
     return (
       <div className="fixed-cells">
-        <h2 className="fixed-cells__title">Fixed cell</h2>
         <p>Loading...</p>
       </div>
     )
@@ -368,7 +367,6 @@ function FixedCells({
   if (error) {
     return (
       <div className="fixed-cells">
-        <h2 className="fixed-cells__title">Fixed cell</h2>
         <p className="fixed-cells__error">{error}</p>
       </div>
     )
@@ -377,7 +375,6 @@ function FixedCells({
   return (
     <div className="fixed-cells">
       <div className="fixed-cells__header">
-        <h2 className="fixed-cells__title">Fixed cell</h2>
         {hasUpdateAvailable && (
           <div className="fixed-cells__update-bar">
             <span className="fixed-cells__version-info">

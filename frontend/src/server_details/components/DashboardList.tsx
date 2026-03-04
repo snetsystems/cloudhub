@@ -17,7 +17,10 @@ import OverlayContainer from 'src/reusable_ui/components/overlays/OverlayContain
 import OverlayHeading from 'src/reusable_ui/components/overlays/OverlayHeading'
 import OverlayBody from 'src/reusable_ui/components/overlays/OverlayBody'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-import {detectTemplateConflicts, getTemplateQueryKey} from 'src/server_details/utils/templateConflict'
+import {
+  detectTemplateConflicts,
+  getTemplateQueryKey,
+} from 'src/server_details/utils/templateConflict'
 
 interface DashboardListProps {
   dashboards: Dashboard[]
@@ -84,9 +87,9 @@ const CellPreviewModal: React.FC<CellPreviewModalProps> = ({
   return (
     <OverlayTechnology visible={isOpen}>
       <OverlayContainer maxWidth={1200}>
-        <OverlayHeading 
-          title={cell.name || 'Cell Preview'} 
-          onDismiss={() => setIsOpen(false)} 
+        <OverlayHeading
+          title={cell.name || 'Cell Preview'}
+          onDismiss={() => setIsOpen(false)}
         />
         <OverlayBody>
           <div
@@ -345,15 +348,17 @@ function DashboardList({
   const [previewCell, setPreviewCell] = useState<Cell | null>(null)
   const [previewTemplates, setPreviewTemplates] = useState<Template[]>([])
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-  const [selectedDashboards, setSelectedDashboards] = useState<Set<string>>(new Set())
+  const [selectedDashboards, setSelectedDashboards] = useState<Set<string>>(
+    new Set()
+  )
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set())
 
   const handleDashboardToggle = (dashboardId: string, checked: boolean) => {
     const newSelected = new Set(selectedDashboards)
     const newSelectedCells = new Set(selectedCells)
-    
+
     const dashboard = dashboards.find(d => d.id === dashboardId)
-    
+
     if (checked) {
       newSelected.add(dashboardId)
       if (dashboard?.cells) {
@@ -369,7 +374,7 @@ function DashboardList({
         })
       }
     }
-    
+
     setSelectedDashboards(newSelected)
     setSelectedCells(newSelectedCells)
 
@@ -383,16 +388,16 @@ function DashboardList({
           }
         })
       })
-      
+
       const allTemplates: Template[] = []
       const templateMap = new Map<string, Template>()
-      
+
       selected.forEach(dashboard => {
         if (dashboard.templates && dashboard.templates.length > 0) {
           dashboard.templates.forEach(template => {
             const queryKey = getTemplateQueryKey(template)
             const fullKey = `${template.tempVar}::${queryKey}`
-            
+
             if (!templateMap.has(fullKey)) {
               templateMap.set(fullKey, template)
               allTemplates.push(template)
@@ -400,11 +405,18 @@ function DashboardList({
           })
         }
       })
-      
+
       const templatesWithConflict = detectTemplateConflicts(allTemplates)
-      
+
+      const dashboardsWithSelectedCellsOnly = selected
+        .map(d => ({
+          ...d,
+          cells: (d.cells ?? []).filter(c => newSelectedCells.has(c.i)),
+        }))
+        .filter(d => d.cells.length > 0)
+
       onSelectionChange({
-        dashboards: selected,
+        dashboards: dashboardsWithSelectedCellsOnly,
         cellTypes: [],
         templates: templatesWithConflict,
         importStrategy: 'append',
@@ -422,26 +434,27 @@ function DashboardList({
     setSelectedCells(newSelected)
 
     if (onSelectionChange) {
-      const selectedCellsList: Cell[] = []
-      dashboards.forEach(dashboard => {
-        dashboard.cells?.forEach(cell => {
-          if (newSelected.has(cell.i)) {
-            selectedCellsList.push(cell)
-          }
-        })
-      })
-      
-      const selected = dashboards.filter(d => selectedDashboards.has(d.id))
-      
+      // 현재 선택된 셀을 기준으로, 하나 이상의 셀이 선택된 대시보드를 모두 payload에 포함한다.
+      const selectedDashboardsByCells = dashboards.filter(dashboard =>
+        dashboard.cells?.some(cell => newSelected.has(cell.i))
+      )
+
+      const selectedDashboardIds = new Set<string>([
+        ...Array.from(selectedDashboards),
+        ...selectedDashboardsByCells.map(d => d.id),
+      ])
+
+      const selected = dashboards.filter(d => selectedDashboardIds.has(d.id))
+
       const allTemplates: Template[] = []
-      const templateMap = new Map<string, Template>() 
-      
+      const templateMap = new Map<string, Template>()
+
       selected.forEach(dashboard => {
         if (dashboard.templates && dashboard.templates.length > 0) {
           dashboard.templates.forEach(template => {
             const queryKey = getTemplateQueryKey(template)
             const fullKey = `${template.tempVar}::${queryKey}`
-            
+
             if (!templateMap.has(fullKey)) {
               templateMap.set(fullKey, template)
               allTemplates.push(template)
@@ -449,11 +462,18 @@ function DashboardList({
           })
         }
       })
-      
+
       const templatesWithConflict = detectTemplateConflicts(allTemplates)
 
+      const dashboardsWithSelectedCellsOnly = selected
+        .map(d => ({
+          ...d,
+          cells: (d.cells ?? []).filter(c => newSelected.has(c.i)),
+        }))
+        .filter(d => d.cells.length > 0)
+
       onSelectionChange({
-        dashboards: selected,
+        dashboards: dashboardsWithSelectedCellsOnly,
         cellTypes: [],
         templates: templatesWithConflict,
         importStrategy: 'append',
@@ -477,10 +497,8 @@ function DashboardList({
   }, [handleGetDashboards])
 
   const handlePreviewClick = (cell: Cell) => {
-    const dashboard = dashboards.find(d => 
-      d.cells?.some(c => c.i === cell.i)
-    )
-    
+    const dashboard = dashboards.find(d => d.cells?.some(c => c.i === cell.i))
+
     setPreviewCell(cell)
     setPreviewTemplates(dashboard?.templates || [])
     setIsPreviewOpen(true)
@@ -489,18 +507,18 @@ function DashboardList({
   if (isLoading) {
     return (
       <div style={{padding: '16px'}}>
-        <h2>Dashboard List</h2>
         <p>Loading...</p>
       </div>
     )
   }
 
-  const sortedDashboards = _.sortBy(dashboards, d => d.name?.toLowerCase() || '')
-    .filter(dashboard => dashboard.type === DashboardType.Normal)
+  const sortedDashboards = _.sortBy(
+    dashboards,
+    d => d.name?.toLowerCase() || ''
+  ).filter(dashboard => dashboard.type === DashboardType.Normal)
 
   return (
     <div style={{padding: '16px'}}>
-      <h2 style={{marginBottom: '16px'}}>Dashboard List</h2>
       {sortedDashboards.length === 0 ? (
         <p>No dashboards found.</p>
       ) : (
@@ -539,8 +557,9 @@ function DashboardList({
 
 const mapStateToProps = ({dashboardUI, sources, app}) => {
   const activeSourceID = app?.persisted?.activeSourceID
-  const source = sources?.find((s: Source) => s.id === activeSourceID) || sources?.[0]
-  
+  const source =
+    sources?.find((s: Source) => s.id === activeSourceID) || sources?.[0]
+
   return {
     dashboards: dashboardUI.dashboards || [],
     source,
@@ -553,4 +572,3 @@ const mapDispatchToProps = {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(DashboardList)
-
