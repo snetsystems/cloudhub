@@ -33,10 +33,12 @@ import {NEW_EMPTY_DASHBOARD} from 'src/dashboards/constants'
 import {
   notifyCellSent,
   notifyCellSendFailed,
+  notifyDashboardItemSaved,
+  notifyDashboardItemSaveFailed,
 } from 'src/shared/copy/notifications'
 
 // APIs
-import {createDashboard} from 'src/dashboards/apis'
+import {createDashboard, createDashboardItem} from 'src/dashboards/apis'
 
 // Types
 import {
@@ -209,6 +211,13 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
               )}
               <Form.Footer>
                 <Button
+                  color={ComponentColor.Primary}
+                  text={`Save Cell`}
+                  titleText="Save to ETCD"
+                  status={this.saveButtonStatus}
+                  onClick={this.saveCell}
+                />
+                <Button
                   color={ComponentColor.Success}
                   text={`Send to ${numberDashboards} Dashboard${pluralizer}`}
                   titleText="Must choose at least 1 dashboard and set a name"
@@ -338,6 +347,16 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
     return ComponentStatus.Default
   }
 
+  private get saveButtonStatus(): ComponentStatus {
+    const {name} = this.state
+
+    if (name.trim().length === 0) {
+      return ComponentStatus.Disabled
+    }
+
+    return ComponentStatus.Default
+  }
+
   private handleSelect = async (selectedIDs: string[]) => {
     this.setState({selectedIDs})
   }
@@ -355,6 +374,120 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
     failures.forEach(f => {
       notify(notifyCellSendFailed(cellName, f.dashboard.name))
     })
+  }
+
+  private saveCell = async () => {
+    const {name, sendAllQueries} = this.state
+    const {
+      queryType,
+      script,
+      source,
+      onCancel,
+      notify,
+      visualizationOptions,
+      graphOptions,
+      isStaticLegend,
+      staticLegendPosition,
+      queryDrafts,
+      tableGaugeChartOptions,
+    } = this.props
+
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      return
+    }
+
+    const {
+      type,
+      gaugeColors,
+      thresholdsListColors,
+      lineColors,
+      axes,
+      decimalPlaces,
+      timeFormat,
+      note,
+      noteVisibility,
+      fieldOptions,
+      tableOptions,
+    } = visualizationOptions
+
+    const isFluxQuery = queryType === QueryType.Flux
+
+    let newCellQueries: CellQuery[]
+
+    if (isFluxQuery) {
+      newCellQueries = [
+        {
+          queryConfig: null,
+          query: script,
+          source: source.links.self,
+          type: QueryType.Flux,
+        },
+      ]
+    } else {
+      const createInfluxQLCellQuery = (queryConfig: QueryConfig): CellQuery => {
+        const rawText = this.rawText(queryConfig)
+        return {
+          queryConfig,
+          query: rawText,
+          source: source.links.self,
+          type: QueryType.InfluxQL,
+        }
+      }
+
+      if (sendAllQueries) {
+        newCellQueries = queryDrafts.reduce((acc, val) => {
+          acc.push(createInfluxQLCellQuery(val.queryConfig))
+          return acc
+        }, [])
+      } else {
+        newCellQueries = [createInfluxQLCellQuery(this.activeQueryConfig)]
+      }
+    }
+
+    const colors: ColorString[] = getCellTypeColors({
+      cellType: type,
+      gaugeColors,
+      thresholdsListColors,
+      lineColors,
+    })
+
+    const legend = isStaticLegend
+      ? {...STATIC_LEGEND, orientation: staticLegendPosition}
+      : {orientation: staticLegendPosition}
+
+    const emptyCell = getNewDashboardCell(NEW_EMPTY_DASHBOARD as Dashboard)
+    const newCell = {
+      ...emptyCell,
+      name: trimmedName,
+      queries: newCellQueries,
+      type,
+      axes,
+      legend,
+      colors,
+      decimalPlaces,
+      timeFormat,
+      note,
+      noteVisibility,
+      fieldOptions,
+      tableOptions,
+      graphOptions,
+      tableGaugeChartOptions: normalizeTableGaugeChartOptions(
+        tableGaugeChartOptions
+      ),
+    }
+
+    try {
+      await createDashboardItem({
+        name: trimmedName,
+        type,
+        content: newCell,
+      })
+      notify(notifyDashboardItemSaved(trimmedName))
+      onCancel()
+    } catch (error) {
+      notify(notifyDashboardItemSaveFailed(trimmedName))
+    }
   }
 
   private sendToDashboard = async () => {

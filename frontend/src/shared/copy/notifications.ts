@@ -601,6 +601,18 @@ export const notifyCellSendFailed = (
   }
 }
 
+export const notifyDashboardItemSaved = (cellName: string): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'dash-h',
+  message: `Saved "${cellName}" to dashboard item library.`,
+})
+
+export const notifyDashboardItemSaveFailed = (cellName: string): Notification => ({
+  ...defaultErrorNotification,
+  icon: 'dash-h',
+  message: `Could not save "${cellName}" to dashboard item library.`,
+})
+
 export const notifyCellDeleted = (name: string): Notification => ({
   ...defaultDeletionNotification,
   icon: 'dash-h',

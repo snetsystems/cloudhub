@@ -127,6 +127,19 @@ export const createDashboard = async dashboard => {
   }
 }
 
+export const createDashboardItem = async dashboardItem => {
+  try {
+    return await AJAX({
+      method: 'POST',
+      url: '/cloudhub/v1/dashboard-items',
+      data: dashboardItem,
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export const createDashboardFromProtoboard = async (
   protoboard: Protoboard,
   source: Source
