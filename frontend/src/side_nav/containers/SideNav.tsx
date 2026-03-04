@@ -174,11 +174,6 @@ class SideNav extends PureComponent<Props> {
               Server Details
             </NavListItem>
             <NavListItem
-              link={`${sourcePrefix}/server-monitoring/${SERVER_DETAILS_IMPORT_PATH}`}
-            >
-              Server Details (Import)
-            </NavListItem>
-            <NavListItem
               link={`${sourcePrefix}/server-monitoring/gpu-monitoring`}
             >
               NVIDIA GPU Monitoring
