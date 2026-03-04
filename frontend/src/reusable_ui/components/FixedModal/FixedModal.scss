@@ -33,12 +33,18 @@
   transition: transform 0.25s ease-out;
   overflow: hidden;
 
+  .radio-button {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
   > .fancy-scroll--container {
     flex: 1;
     min-height: 0;
   }
 
-  
   .fixedmodal-checkbox-wrapper {
     input[type='checkbox'] {
       position: relative;
@@ -111,6 +117,240 @@
       margin-top: 14px;
     }
   }
+}
+
+/* Cell List: constrain graph-type-selector graphic to icon box and apply colored fills */
+.cell-list-icon-wrapper {
+  .graph-type-selector--graphic {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    transform: none;
+  }
+  /* Same colors as GraphTypeSelector active state (graphic-fill / graphic-line) */
+  .graph-type-selector--graphic-line.graphic-line-a {
+    stroke: $c-pool;
+  }
+  .graph-type-selector--graphic-line.graphic-line-b {
+    stroke: $c-dreamsicle;
+  }
+  .graph-type-selector--graphic-line.graphic-line-c {
+    stroke: $c-rainforest;
+  }
+  .graph-type-selector--graphic-line.graphic-line-d {
+    stroke: $g17-whisper;
+  }
+  .graph-type-selector--graphic-fill.graphic-fill-a {
+    fill: $c-pool;
+    opacity: 0.22;
+  }
+  .graph-type-selector--graphic-fill.graphic-fill-b {
+    fill: $c-dreamsicle;
+    opacity: 0.22;
+  }
+  .graph-type-selector--graphic-fill.graphic-fill-c {
+    fill: $c-rainforest;
+    opacity: 0.22;
+  }
+  .graph-type-selector--graphic-fill.graphic-fill-d {
+    fill: $g17-whisper;
+    opacity: 1;
+  }
+}
+
+/* Shared list layout: match admin-table (dashboards list) — font 13px, padding 8px */
+.fixedmodal-list {
+  padding: 0 8px 8px 8px;
+  font-size: 13px;
+
+  &__loading {
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  &__message {
+    padding: 8px 0;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__list-box {
+    background-color: $g2-kevlar;
+    border: 1px solid $g5-pepper;
+    border-radius: $ix-radius;
+    overflow: hidden;
+  }
+}
+
+.fixedmodal-list-row {
+  padding: 6px 8px;
+  min-height: 44px;
+  box-sizing: border-box;
+  border-bottom: 1px solid $g5-pepper;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.25s ease;
+  font-size: 13px;
+
+  &--nested {
+    padding-left: 20px;
+    background-color: $g2-kevlar;
+    cursor: pointer;
+  }
+
+  &__inner {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__icon {
+    font-size: 6px;
+    color: $g9-mountain;
+    flex-shrink: 0;
+  }
+
+  &__cell-name {
+    font-weight: 500;
+    font-size: 13px;
+    color: $g13-mist;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__cell-type {
+    margin-left: auto;
+    flex-shrink: 0;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    padding: 2px 8px;
+    background-color: $g5-pepper;
+    border-radius: $ix-radius-sm;
+    cursor: pointer;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    color: $g9-mountain;
+
+    &:hover {
+      color: $g13-mist;
+      background-color: $g4-onyx;
+    }
+  }
+
+  &__caret-wrap {
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+  }
+
+  &__caret-icon {
+    font-size: 12px;
+    transition: transform 0.2s, color 0.25s ease;
+  }
+
+  &__title-block {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-weight: 600;
+    font-size: 13px;
+    transition: color 0.25s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    font-size: 11px;
+    margin-top: 2px;
+    transition: color 0.25s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Dashboard list: tree item & header states */
+.modal-content .dashboard-tree-item {
+  border-bottom: 1px solid $g5-pepper;
+}
+
+.modal-content .dashboard-tree-header {
+  cursor: pointer;
+  transition: color 0.25s ease;
+
+  &.is-expanded {
+    background-color: $g5-pepper;
+
+    .fixedmodal-list-row__name {
+      color: $g17-whisper;
+    }
+    .fixedmodal-list-row__meta {
+      color: rgba($g17-whisper, 0.7);
+    }
+    .fixedmodal-list-row__caret-icon {
+      color: $g17-whisper;
+    }
+  }
+
+  &.is-hovered {
+    background-color: $g4-onyx;
+
+    .fixedmodal-list-row__name {
+      color: $g13-mist;
+    }
+    .fixedmodal-list-row__meta {
+      color: rgba($g13-mist, 0.7);
+    }
+    .fixedmodal-list-row__caret-icon {
+      color: $g13-mist;
+    }
+  }
+
+  &.has-no-children {
+    cursor: default;
+  }
+
+  &:not(.is-expanded):not(.is-hovered) {
+    background-color: $g2-kevlar;
+
+    .fixedmodal-list-row__name {
+      color: $g9-mountain;
+    }
+    .fixedmodal-list-row__meta {
+      color: rgba($g9-mountain, 0.7);
+    }
+    .fixedmodal-list-row__caret-icon {
+      color: $g9-mountain;
+    }
+  }
+
+  .fixedmodal-checkbox-wrapper {
+    margin-right: 8px;
+  }
+}
+
+/* Cell preview modal body */
+.fixedmodal-preview-body {
+  height: 600px;
+  background-color: $g1-raven;
+  padding: 20px;
+  overflow: auto;
 }
 
 .modal-content--open {

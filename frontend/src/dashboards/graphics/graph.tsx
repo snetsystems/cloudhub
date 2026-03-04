@@ -25,7 +25,7 @@ interface GraphSVGs {
   [CellType.StaticBar]: Graphic
   [CellType.StaticTableGaugeChart]: Graphic
 }
-const GRAPH_SVGS: GraphSVGs = {
+export const GRAPH_SVGS: GraphSVGs = {
   staticTableGaugeChart: (
     <div className="graph-type-selector--graphic">
       <svg

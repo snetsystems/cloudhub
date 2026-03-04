@@ -6,7 +6,8 @@
 
 .fixed-cell-templates,
 .fixed-cells {
-  padding: $ix-marg-c;
+  padding: 0 8px 8px 8px;
+  font-size: 13px;
 
   &__header {
     display: flex;
@@ -31,6 +32,9 @@
   &__version-info {
     font-size: $ix-text-base;
     color: rgba($g18-cloud, 0.8);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__btn-update {
@@ -64,6 +68,15 @@
 
   &__error {
     color: $c-ruby;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  > p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -81,7 +94,9 @@
   }
 
   .dashboard-tree-header {
-    padding: 12px $ix-marg-c;
+    padding: 6px 8px;
+    min-height: 44px;
+    box-sizing: border-box;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -134,9 +149,12 @@
   .fixed-cell-templates__tree-name,
   .fixed-cells__tree-name {
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     color: $g11-sidewalk;
     transition: color 0.25s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .dashboard-tree-header:hover .fixed-cell-templates__tree-name,
@@ -152,9 +170,12 @@
   .fixed-cell-templates__tree-meta,
   .fixed-cells__tree-meta {
     font-size: 11px;
-    color: $g11-sidewalk;
-    margin-top: $ix-marg-a;
+    color: $g13-mist;
+    margin-top: 2px;
     transition: color 0.25s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .dashboard-tree-header:hover .fixed-cell-templates__tree-meta,
@@ -170,29 +191,46 @@
 
 .fixed-cell-templates__cell-row,
 .fixed-cells__cell-row {
-  padding: 8px $ix-marg-c 8px 48px;
+  padding: 6px 8px 6px 40px;
+  min-height: 44px;
+  box-sizing: border-box;
   border-bottom: 1px solid $g5-pepper;
   background-color: $g2-kevlar;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
 }
 
 .fixed-cell-templates__cell-inner,
 .fixed-cells__cell-inner {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .fixed-cell-templates__cell-name,
 .fixed-cells__cell-name {
   font-weight: 500;
-  font-size: $ix-text-base;
-  color: $g11-sidewalk;
+  font-size: 13px;
+  color: $g13-mist;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fixed-cell-templates__cell-type,
 .fixed-cells__cell-type {
   margin-left: auto;
+  flex-shrink: 0;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: $g11-sidewalk;
   font-size: 11px;
   padding: 2px 8px;

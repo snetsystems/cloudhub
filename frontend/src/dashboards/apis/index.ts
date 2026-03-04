@@ -14,7 +14,12 @@ import {
   GetDashboards,
   LoadLinksOptions,
 } from 'src/types/apis/dashboards'
-import {Cell, Dashboard, DashboardSwitcherLinks} from 'src/types/dashboards'
+import {
+  Cell,
+  Dashboard,
+  DashboardItem,
+  DashboardSwitcherLinks,
+} from 'src/types/dashboards'
 import {Source, Protoboard} from 'src/types'
 
 export const getDashboards: GetDashboards = () => {
@@ -127,7 +132,22 @@ export const createDashboard = async dashboard => {
   }
 }
 
-export const createDashboardItem = async dashboardItem => {
+export interface GetDashboardItemsResponse {
+  dashboardItems: DashboardItem[]
+}
+
+export const getDashboardItems = (): Promise<
+  AxiosResponse<GetDashboardItemsResponse>
+> => {
+  return AJAX<GetDashboardItemsResponse>({
+    method: 'GET',
+    url: '/cloudhub/v1/dashboard-items',
+  }) as Promise<AxiosResponse<GetDashboardItemsResponse>>
+}
+
+export const createDashboardItem = async (
+  dashboardItem: Partial<DashboardItem>
+) => {
   try {
     return await AJAX({
       method: 'POST',

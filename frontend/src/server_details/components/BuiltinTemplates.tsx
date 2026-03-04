@@ -78,10 +78,12 @@ const TemplateCellItem: React.FC<TemplateCellItemProps> = ({
           <label htmlFor={checkboxId} onClick={e => e.stopPropagation()} />
         </div>
         <span className="icon circle-thin" />
-        <span className="fixed-cells__cell-name">
+        <span className="fixed-cells__cell-name" title={cell.name || 'Unnamed Cell'}>
           {cell.name || 'Unnamed Cell'}
         </span>
-        <span className="fixed-cells__cell-type">{cell.type || '—'}</span>
+        <span className="fixed-cells__cell-type" title={cell.type || '—'}>
+          {cell.type || '—'}
+        </span>
       </div>
     </div>
   )
@@ -156,10 +158,10 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
           )}
         </div>
         <div className="fixed-cells__tree-title">
-          <div className="fixed-cells__tree-name">
+          <div className="fixed-cells__tree-name" title={template.name || 'Untitled Template'}>
             {template.name || 'Untitled Template'}
           </div>
-          <div className="fixed-cells__tree-meta">
+          <div className="fixed-cells__tree-meta" title={`Cells: ${template.cells?.length || 0}`}>
             Cells: {template.cells?.length || 0}
           </div>
         </div>
@@ -229,6 +231,7 @@ function FixedCells({
       return {
         dashboards,
         cellTypes: [] as CellType[],
+        dashboardItems: [],
         templates: templateVars,
         importStrategy: 'mergeByCellId' as const,
       }

@@ -170,6 +170,24 @@ export const DashboardType = {
 
 export type DashboardTypeValue = typeof DashboardType[keyof typeof DashboardType]
 
+export interface DashboardItemMeta {
+  createdAt?: string
+  updatedAt?: string
+  createdBy?: string
+  updatedBy?: string
+}
+
+export interface DashboardItem {
+  id: string
+  name: string
+  description?: string
+  organization?: string
+  type: string
+  content: Cell
+  meta?: DashboardItemMeta
+  links?: {self?: string}
+}
+
 export interface DashboardName {
   id: string
   name: string

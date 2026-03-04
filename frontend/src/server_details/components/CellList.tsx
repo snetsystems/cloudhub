@@ -1,152 +1,138 @@
-import React, {useState} from 'react'
-import {CellType} from 'src/types'
+import React, {useEffect, useState} from 'react'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
+import {DashboardItem} from 'src/types/dashboards'
+import {getDashboardItems} from 'src/dashboards/apis'
+import {CellTypeIcon} from 'src/server_details/components/CellListIcons'
 
 interface CellListProps {
   onSelectionChange?: (items: ImportSelectionPayload) => void
 }
 
-const CELL_TYPE_INFO: Record<CellType, {name: string; description: string}> = {
-  [CellType.Line]: {
-    name: 'Line',
-    description: 'Display time-series data as a line graph',
-  },
-  [CellType.Stacked]: {
-    name: 'Stacked',
-    description: 'Display multiple data series as stacked line graphs',
-  },
-  [CellType.StepPlot]: {
-    name: 'Step Plot',
-    description: 'Display data as a step plot line graph',
-  },
-  [CellType.Bar]: {
-    name: 'Bar',
-    description: 'Display data as a bar chart',
-  },
-  [CellType.LinePlusSingleStat]: {
-    name: 'Line + Single Stat',
-    description: 'Display a line graph with a single statistic',
-  },
-  [CellType.SingleStat]: {
-    name: 'Single Stat',
-    description: 'Display a single statistic value',
-  },
-  [CellType.Gauge]: {
-    name: 'Gauge',
-    description: 'Display data as a gauge chart',
-  },
-  [CellType.Table]: {
-    name: 'Table',
-    description: 'Display data in a table format',
-  },
-  [CellType.Alerts]: {
-    name: 'Alerts',
-    description: 'Display alert information',
-  },
-  [CellType.News]: {
-    name: 'News',
-    description: 'Display news information',
-  },
-  [CellType.Guide]: {
-    name: 'Guide',
-    description: 'Display guide information',
-  },
-  [CellType.Note]: {
-    name: 'Note',
-    description: 'Display note information',
-  },
-  [CellType.StaticBar]: {
-    name: 'Static Bar',
-    description: 'Display a static bar chart',
-  },
-  [CellType.StaticPie]: {
-    name: 'Static Pie',
-    description: 'Display a static pie chart',
-  },
-  [CellType.StaticDoughnut]: {
-    name: 'Static Doughnut',
-    description: 'Display a static doughnut chart',
-  },
-  [CellType.StaticScatter]: {
-    name: 'Static Scatter',
-    description: 'Display a static scatter plot',
-  },
-  [CellType.StaticRadar]: {
-    name: 'Static Radar',
-    description: 'Display a static radar chart',
-  },
-  [CellType.StaticStackedBar]: {
-    name: 'Static Stacked Bar',
-    description: 'Display a static stacked bar chart',
-  },
-  [CellType.StaticLineChart]: {
-    name: 'Static Line Chart',
-    description: 'Display a static line chart',
-  },
-  [CellType.StaticTableGaugeChart]: {
-    name: 'Static Table Gauge',
-    description: 'Display a static table gauge chart',
-  },
-}
-
 function CellList({onSelectionChange}: CellListProps) {
-  const [hoveredType, setHoveredType] = useState<CellType | null>(null)
-  const [selectedCellTypes, setSelectedCellTypes] = useState<Set<CellType>>(new Set())
+  const [items, setItems] = useState<DashboardItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
-  const cellTypes = Object.values(CellType) as CellType[]
-
-  const handleCellTypeToggle = (cellType: CellType, checked: boolean) => {
-    const newSelected = new Set(selectedCellTypes)
-    if (checked) {
-      newSelected.add(cellType)
-    } else {
-      newSelected.delete(cellType)
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    getDashboardItems()
+      .then(res => {
+        if (!cancelled && res?.data?.dashboardItems) {
+          setItems(res.data.dashboardItems)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setItems([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-    setSelectedCellTypes(newSelected)
+  }, [])
+
+  const handleToggle = (item: DashboardItem, checked: boolean) => {
+    const newSelected = new Set(selectedIds)
+    if (checked) {
+      newSelected.add(item.id)
+    } else {
+      newSelected.delete(item.id)
+    }
+    setSelectedIds(newSelected)
 
     if (onSelectionChange) {
+      const selectedItems = items.filter(i => newSelected.has(i.id))
       onSelectionChange({
         dashboards: [],
-        cellTypes: Array.from(newSelected),
+        cellTypes: [],
+        dashboardItems: selectedItems,
         templates: [],
         importStrategy: 'append',
       })
     }
   }
 
+  if (loading) {
+    return (
+      <div className="fixedmodal-list" style={{padding: '8px'}}>
+        <p
+          style={{
+            color: '#8b8f99',
+            fontSize: '13px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Loading...
+        </p>
+      </div>
+    )
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="fixedmodal-list" style={{padding: '8px'}}>
+        <p
+          style={{
+            color: '#8b8f99',
+            fontSize: '13px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          No dashboard items found.
+        </p>
+      </div>
+    )
+  }
+
   return (
-    <div style={{padding: '0 16px 16px 16px'}}>
-      {cellTypes.map((cellType) => {
-        const info = CELL_TYPE_INFO[cellType]
-        const isHovered = hoveredType === cellType
-        const isSelected = selectedCellTypes.has(cellType)
+    <div className="fixedmodal-list">
+      {items.map(item => {
+        const isHovered = hoveredId === item.id
+        const isSelected = selectedIds.has(item.id)
 
         return (
           <div
-            key={cellType}
-            onMouseEnter={() => setHoveredType(cellType)}
-            onMouseLeave={() => setHoveredType(null)}
+            key={item.id}
+            role="button"
+            tabIndex={0}
+            className="fixedmodal-list-row"
+            onMouseEnter={() => setHoveredId(item.id)}
+            onMouseLeave={() => setHoveredId(null)}
+            onClick={() => handleToggle(item, !isSelected)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleToggle(item, !isSelected)
+              }
+            }}
             style={{
-              padding: '12px 16px',
-              borderBottom: '1px solid #383846',
               backgroundColor: isHovered ? '#31313d' : '#202028',
-              transition: 'background-color 0.25s ease',
               cursor: 'pointer',
             }}
           >
-            <div style={{display: 'flex', alignItems: 'flex-start', gap: '10px'}}>
-              <div className="fixedmodal-checkbox-wrapper fixedmodal-checkbox-wrapper--cell-list">
+            <div className="fixedmodal-list-row__inner">
+              <div
+                className="fixedmodal-checkbox-wrapper fixedmodal-checkbox-wrapper--cell-list"
+                onClick={e => e.stopPropagation()}
+              >
                 <input
                   type="checkbox"
-                  id={`cell-type-checkbox-${cellType}`}
+                  id={`cell-item-checkbox-${item.id}`}
                   checked={isSelected}
                   onChange={e => {
                     e.stopPropagation()
-                    handleCellTypeToggle(cellType, e.target.checked)
+                    handleToggle(item, e.target.checked)
                   }}
                   onClick={e => e.stopPropagation()}
                 />
-                <label htmlFor={`cell-type-checkbox-${cellType}`} />
+                <label htmlFor={`cell-item-checkbox-${item.id}`} onClick={e => e.stopPropagation()} />
               </div>
               <div
                 style={{
@@ -158,32 +144,41 @@ function CellList({onSelectionChange}: CellListProps) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
+                  overflow: 'hidden',
                 }}
               >
-                <span style={{color: '#999dab', fontSize: '12px'}}>Icon</span>
+                <CellTypeIcon type={item.type} />
               </div>
 
               <div style={{flex: 1, minWidth: 0}}>
                 <div
                   style={{
                     fontWeight: 500,
-                    fontSize: '14px',
-                    color: isHovered ? '#f6f6f8' : '#d4d7dd',
-                    marginBottom: '4px',
+                    fontSize: '13px',
+                    color: isHovered ? '#eeeff2' : '#bec2cc',
+                    marginBottom: '2px',
                     transition: 'color 0.25s ease',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
+                  title={item.name}
                 >
-                  {info.name}
+                  {item.name}
                 </div>
                 <div
                   style={{
                     fontSize: '12px',
-                    color: isHovered ? '#d4d7dd' : '#999dab',
-                    lineHeight: '1.4',
+                    color: isHovered ? '#bec2cc' : '#8b8f99',
+                    lineHeight: 1.4,
                     transition: 'color 0.25s ease',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
+                  title={item.description || `Display as ${item.type}`}
                 >
-                  {info.description}
+                  {item.description || `Display as ${item.type}`}
                 </div>
               </div>
             </div>

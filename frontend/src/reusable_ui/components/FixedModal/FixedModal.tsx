@@ -31,6 +31,7 @@ function FixedModal({
   const [selection, setSelection] = useState<ImportSelectionPayload>({
     dashboards: [],
     cellTypes: [],
+    dashboardItems: [],
     templates: [],
     importStrategy: 'append',
   })
@@ -52,6 +53,10 @@ function FixedModal({
         items.cellTypes.length > 0
           ? items.cellTypes
           : selectionRef.current.cellTypes,
+      dashboardItems:
+        items.dashboardItems !== undefined
+          ? items.dashboardItems
+          : selectionRef.current.dashboardItems ?? [],
       templates:
         items.templates.length > 0
           ? items.templates
@@ -72,25 +77,25 @@ function FixedModal({
 
   const tabOptions = [
     {
-      title: 'Dashboard List',
+      title: 'Dashboards',
       value: 'dashboard-list',
       active: currentTab === 'dashboard-list',
       onClick: () => handleTabChange('dashboard-list'),
       titleText: 'Dashboard List',
     },
     {
-      title: 'Cell List',
+      title: 'Cells',
       value: 'cell-list',
       active: currentTab === 'cell-list',
       onClick: () => handleTabChange('cell-list'),
       titleText: 'Cell List',
     },
     {
-      title: 'Fixed cell',
+      title: 'Fixed Cells',
       value: 'fixed-cell',
       active: currentTab === 'fixed-cell',
       onClick: () => handleTabChange('fixed-cell'),
-      titleText: 'Fixed cell',
+      titleText: 'Fixed Cells',
     },
   ]
 

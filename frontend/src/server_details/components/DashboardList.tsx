@@ -92,14 +92,7 @@ const CellPreviewModal: React.FC<CellPreviewModalProps> = ({
           onDismiss={() => setIsOpen(false)}
         />
         <OverlayBody>
-          <div
-            style={{
-              height: '600px',
-              backgroundColor: '#1c1c21',
-              padding: '20px',
-              overflow: 'auto',
-            }}
-          >
+          <div className="fixedmodal-preview-body">
             <LayoutRenderer
               cells={[previewCell]}
               source={source}
@@ -125,8 +118,6 @@ const CellItem: React.FC<CellItemProps> = ({
   onToggle,
   isSelected,
 }) => {
-  const [isHovered, setIsHovered] = useState(false)
-
   const handleTypeClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     onPreviewClick(cell)
@@ -134,6 +125,7 @@ const CellItem: React.FC<CellItemProps> = ({
 
   return (
     <div
+      className="fixedmodal-list-row fixedmodal-list-row--nested"
       onClick={() => onToggle(cell.i, !isSelected)}
       onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -143,14 +135,8 @@ const CellItem: React.FC<CellItemProps> = ({
       }}
       role="button"
       tabIndex={0}
-      style={{
-        padding: '8px 16px 8px 48px',
-        borderBottom: '1px solid #383846',
-        backgroundColor: '#202028',
-        cursor: 'pointer',
-      }}
     >
-      <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+      <div className="fixedmodal-list-row__inner">
         <div
           className="fixedmodal-checkbox-wrapper"
           onClick={e => e.stopPropagation()}
@@ -170,27 +156,17 @@ const CellItem: React.FC<CellItemProps> = ({
             onClick={e => e.stopPropagation()}
           />
         </div>
+        <span className="icon circle-thin fixedmodal-list-row__icon" />
         <span
-          className="icon circle-thin"
-          style={{fontSize: '6px', color: '#999dab'}}
-        />
-        <span style={{fontWeight: 500, fontSize: '13px', color: '#999dab'}}>
+          className="fixedmodal-list-row__cell-name"
+          title={cell.name || 'Unnamed Cell'}
+        >
           {cell.name || 'Unnamed Cell'}
         </span>
         <span
+          className="fixedmodal-list-row__cell-type"
           onClick={handleTypeClick}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          style={{
-            marginLeft: 'auto',
-            color: isHovered ? '#d4d7dd' : '#999dab',
-            fontSize: '11px',
-            padding: '2px 8px',
-            backgroundColor: isHovered ? '#31313d' : '#383846',
-            borderRadius: '3px',
-            cursor: 'pointer',
-            transition: 'background-color 0.25s ease, color 0.25s ease',
-          }}
+          title={cell.type}
         >
           {cell.type}
         </span>
@@ -217,46 +193,22 @@ const DashboardItem: React.FC<DashboardItemProps> = ({
 
   const hasCells = dashboard.cells && dashboard.cells.length > 0
 
-  const getBackgroundColor = () => {
-    if (isExpanded) return '#383846' // active
-    if (isHovered) return '#31313d' // hover
-    return '#202028' // default
-  }
-
-  const getTextColor = () => {
-    if (isExpanded) return '#f6f6f8' // active
-    if (isHovered) return '#d4d7dd' // hover
-    return '#999dab' // default
-  }
-
-  const getSecondaryTextColor = () => {
-    if (isExpanded) return 'rgba(246, 246, 248, 0.7)' // active
-    if (isHovered) return 'rgba(212, 215, 221, 0.7)' // hover
-    return 'rgba(153, 157, 171, 0.7)' // default
-  }
-
   return (
     <div
       className={classnames('dashboard-tree-item', {expanded: isExpanded})}
-      style={{borderBottom: '1px solid #383846'}}
     >
       <div
-        className="dashboard-tree-header"
+        className={classnames('dashboard-tree-header fixedmodal-list-row', {
+          'is-expanded': isExpanded,
+          'is-hovered': isHovered,
+          'has-no-children': !hasCells,
+        })}
         onClick={hasCells ? toggleExpanded : undefined}
         onMouseEnter={() => hasCells && setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        style={{
-          padding: '12px 16px',
-          cursor: hasCells ? 'pointer' : 'default',
-          display: 'flex',
-          alignItems: 'center',
-          backgroundColor: getBackgroundColor(),
-          transition: 'background-color 0.25s ease, color 0.25s ease',
-        }}
       >
         <div
           className="fixedmodal-checkbox-wrapper"
-          style={{marginRight: '8px'}}
           onClick={e => e.stopPropagation()}
         >
           <input
@@ -274,47 +226,26 @@ const DashboardItem: React.FC<DashboardItemProps> = ({
             onClick={e => e.stopPropagation()}
           />
         </div>
-        <div
-          style={{
-            width: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: '8px',
-          }}
-        >
+        <div className="fixedmodal-list-row__caret-wrap">
           {hasCells && (
             <span
-              className={classnames('icon', {
+              className={classnames('icon fixedmodal-list-row__caret-icon', {
                 'caret-down': isExpanded,
                 'caret-right': !isExpanded,
               })}
-              style={{
-                fontSize: '12px',
-                color: getTextColor(),
-                transition: 'transform 0.2s, color 0.25s ease',
-              }}
             />
           )}
         </div>
-        <div style={{flex: 1}}>
+        <div className="fixedmodal-list-row__title-block">
           <div
-            style={{
-              fontWeight: 600,
-              fontSize: '14px',
-              color: getTextColor(),
-              transition: 'color 0.25s ease',
-            }}
+            className="fixedmodal-list-row__name"
+            title={dashboard.name || 'Untitled Dashboard'}
           >
             {dashboard.name || 'Untitled Dashboard'}
           </div>
           <div
-            style={{
-              fontSize: '11px',
-              color: getSecondaryTextColor(),
-              marginTop: '2px',
-              transition: 'color 0.25s ease',
-            }}
+            className="fixedmodal-list-row__meta"
+            title={`Cells: ${dashboard.cells?.length || 0}`}
           >
             Cells: {dashboard.cells?.length || 0}
           </div>
@@ -418,6 +349,7 @@ function DashboardList({
       onSelectionChange({
         dashboards: dashboardsWithSelectedCellsOnly,
         cellTypes: [],
+        dashboardItems: [],
         templates: templatesWithConflict,
         importStrategy: 'append',
       })
@@ -475,6 +407,7 @@ function DashboardList({
       onSelectionChange({
         dashboards: dashboardsWithSelectedCellsOnly,
         cellTypes: [],
+        dashboardItems: [],
         templates: templatesWithConflict,
         importStrategy: 'append',
       })
@@ -506,8 +439,8 @@ function DashboardList({
 
   if (isLoading) {
     return (
-      <div style={{padding: '16px'}}>
-        <p>Loading...</p>
+      <div className="fixedmodal-list fixedmodal-list__loading">
+        <p className="fixedmodal-list__message">Loading...</p>
       </div>
     )
   }
@@ -518,18 +451,11 @@ function DashboardList({
   ).filter(dashboard => dashboard.type === DashboardType.Normal)
 
   return (
-    <div style={{padding: '16px'}}>
+    <div className="fixedmodal-list">
       {sortedDashboards.length === 0 ? (
-        <p>No dashboards found.</p>
+        <p className="fixedmodal-list__message">No dashboards found.</p>
       ) : (
-        <div
-          style={{
-            backgroundColor: '#202028',
-            border: '1px solid #383846',
-            borderRadius: '4px',
-            overflow: 'hidden',
-          }}
-        >
+        <div className="fixedmodal-list__list-box">
           {sortedDashboards.map(dashboard => (
             <DashboardItem
               key={dashboard.id}

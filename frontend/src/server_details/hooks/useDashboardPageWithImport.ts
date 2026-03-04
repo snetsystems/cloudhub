@@ -133,7 +133,10 @@ export function useDashboardPageWithImport(
   }
 
   const handleSelectionChange = async (items: ImportSelectionPayload) => {
-    const dashboardCells = items.dashboards.flatMap(d => d.cells)
+    const dashboardCells = [
+      ...items.dashboards.flatMap(d => d.cells),
+      ...(items.dashboardItems ?? []).map(di => di.content),
+    ]
     if (dashboardCells.length === 0 || !currentDashboardId) return
 
     // For builtin dashboards, use full cell list (including hidden) so import only toggles visibility and does not run "add" logic
