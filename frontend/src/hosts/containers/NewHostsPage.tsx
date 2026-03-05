@@ -19,7 +19,8 @@ import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {generateForHosts} from 'src/utils/tempVars'
 import {TimeSeriesValue} from 'src/types/series'
 import {mergeResultsByHost} from 'src/dashboards/utils/tableLineChart'
-import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
+import PageSpinner from 'src/shared/components/PageSpinner'
+
 type HostCellValue = TimeSeriesValue | TimeSeriesValue[]
 
 interface Props {
@@ -51,6 +52,7 @@ function NewHostsPage({
   const [tableData, setTableData] = useState<Record<string, HostCellValue>[]>(
     []
   )
+  const [isTableLoading, setIsTableLoading] = useState(true)
 
   useEffect(() => {
     let isSubscribed = true
@@ -58,6 +60,7 @@ function NewHostsPage({
     const fetchTableData = async () => {
       const requestId = requestIdRef.current + 1
       requestIdRef.current = requestId
+      setIsTableLoading(true)
       const shouldSwitchMode = pendingChartMode !== displayedChartMode
       if (shouldSwitchMode) {
         setIsModeSwitching(true)
@@ -97,6 +100,7 @@ function NewHostsPage({
           setDisplayedChartMode(pendingChartMode)
         }
         setIsModeSwitching(false)
+        setIsTableLoading(false)
 
         console.log('tableData', mergedData)
       } catch (error) {
@@ -106,6 +110,7 @@ function NewHostsPage({
             setTableData([])
           }
           setIsModeSwitching(false)
+          setIsTableLoading(false)
         }
       }
     }
@@ -134,7 +139,11 @@ function NewHostsPage({
       <Page.Contents fullWidth={true}>
         <div className="host-page-graph-table-container-wrapper">
           <div className="host-page-graph-table-container table-gauge-chart">
-            {columns.length > 0 && tableData.length > 0 && (
+            {isTableLoading && tableData.length === 0 ? (
+              <PageSpinner customClass="host-page-spinner" />
+            ) : (
+              columns.length > 0 &&
+              tableData.length > 0 && (
               <TableComponent
                 data={tableData || []}
                 columns={columns}
@@ -171,6 +180,7 @@ function NewHostsPage({
                   </Radio>
                 }
               />
+              )
             )}
           </div>
           <div className="radio-button-container"></div>
