@@ -1,4 +1,5 @@
 import React, {useState, useEffect, useContext, useRef} from 'react'
+import classnames from 'classnames'
 import {connect} from 'react-redux'
 import {generateForHosts} from 'src/utils/tempVars'
 import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
@@ -9,9 +10,13 @@ import DashboardPageWithImport, {
 } from 'src/shared/components/DashboardPageWithImport'
 import {Dropdown, DropdownMode} from 'src/reusable_ui'
 import {Template, TemplateValue} from 'src/types'
+import type {Cell, Source} from 'src/types'
+import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import * as DashboardsModels from 'src/types/dashboards'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
+import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {
   ServerDetailsCellContent,
   ServerDetailsPageContext,
@@ -90,6 +95,67 @@ function HostDropdownHeader({
   )
 }
 
+function ProcessCellContent({
+  cell,
+  context,
+  source,
+}: {
+  cell: Cell
+  context: RenderCellContext
+  source: Source
+}) {
+  const [contextOpen, setContextOpen] = useState(false)
+  return (
+    <div className="server-details-cell-content">
+      <div className="dash-graph--draggable dash-graph--heading dash-graph--heading-draggable server-details-cell-header">
+        <span className="dash-graph--name server-details-cell-header-name">
+          Process
+        </span>
+        <div className="server-details-cell-drag-handle">
+          <div className="dash-graph--heading-bar" />
+          <div className="dash-graph--heading-dragger" />
+        </div>
+      </div>
+      {context?.onDeleteCell && (
+        <div
+          className={classnames('dash-graph-context', {
+            'dash-graph-context__open': contextOpen,
+          })}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <div className="dash-graph-context--buttons">
+            <Authorized requiredRole={EDITOR_ROLE}>
+              <MenuTooltipButton
+                icon="trash"
+                theme="danger"
+                menuItems={[
+                  {
+                    text: 'Confirm',
+                    action: () => context.onDeleteCell(cell),
+                    disabled: false,
+                  },
+                ]}
+                informParent={() => setContextOpen(prev => !prev)}
+              />
+            </Authorized>
+          </div>
+        </div>
+      )}
+      <div className="server-details-cell-tabs">
+        <div className="server-details-cell-tab-panel">
+          <FancyScrollbar
+            className="server-details-cell-tab-panel__scroll"
+            style={{height: '100%'}}
+            autoHide={false}
+          >
+            <ProcessLineChartTable source={source} />
+          </FancyScrollbar>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ServerDetailsWrapper(props) {
   const [selectedHost, setSelectedHost] = useState<string | null>(null)
   const contextValue: ServerDetailsPageContextValue = {
@@ -109,7 +175,7 @@ function ServerDetailsWrapper(props) {
         pageClassName="server-details-page"
         showEmptyState={false}
         requiredTemplateVars={[':host:']}
-        draggableCancel=".server-details-cell-tab-buttons"
+        draggableCancel=".server-details-cell-tab-buttons, .dash-graph-context"
         templateSelectionContext={
           ServerDetailsPageContext as React.Context<TemplateSelectionContextValue | null>
         }
@@ -138,26 +204,11 @@ function ServerDetailsWrapper(props) {
           }
           if (cell.i === 'sever-details-process') {
             return (
-              <div className="server-details-cell-content">
-                <div className="dash-graph--draggable dash-graph--heading dash-graph--heading-draggable server-details-cell-header">
-                  <span className="server-details-cell-header-name">Process</span>
-                  <div className="server-details-cell-drag-handle">
-                    <div className="dash-graph--heading-bar" />
-                    <div className="dash-graph--heading-dragger" />
-                  </div>
-                </div>
-                <div className="server-details-cell-tabs">
-                  <div className="server-details-cell-tab-panel">
-                    <FancyScrollbar
-                      className="server-details-cell-tab-panel__scroll"
-                      style={{height: '100%'}}
-                      autoHide={false}
-                    >
-                      <ProcessLineChartTable source={props.source} />
-                    </FancyScrollbar>
-                  </div>
-                </div>
-              </div>
+              <ProcessCellContent
+                cell={cell}
+                context={context}
+                source={props.source}
+              />
             )
           }
           return null

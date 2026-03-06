@@ -9,6 +9,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  position: relative;
 }
 
 .server-details-cell-header {
@@ -23,7 +24,6 @@
   align-items: stretch;
 }
 
-/* 헤더 왼쪽 셀 이름 (Process 등, 탭 버튼 없을 때) */
 .server-details-cell-header-name {
   flex: 0 0 auto;
   display: flex;
@@ -33,7 +33,6 @@
   color: $g13-mist;
 }
 
-/* 헤더 오른쪽 드래그 영역 (헤더 전체가 handle, 탭은 draggableCancel로 제외) */
 .server-details-cell-drag-handle {
   flex: 1;
   min-width: 40px;
@@ -92,23 +91,18 @@
   display: flex;
   flex-direction: column;
 
-  /* FancyScrollbar가 스크롤 담당, 컨테이너가 영역 전체 채우기 */
   > .fancy-scroll--container {
     flex: 1;
     min-height: 0;
   }
 }
 
-/* File System 탭 내부 Layout(.dash-graph)이 position:absolute로 셀 전체를 덮지 않도록
-   이 래퍼를 containing block으로 만듦 → 탭 바 위를 덮지 않고 클릭 가능 유지 */
 .server-details-cell-files-layout-wrap {
   position: relative;
-  /* .dash-graph가 position:absolute라 높이를 주지 않으면 래퍼가 0으로 줄어듦 → 뷰 높이만큼 확보 */
+
   min-height: 100%;
   height: 100%;
-  /* 스크롤은 상위 FancyScrollbar가 담당 */
 
-  /* File System 탭 테이블 위 "Server Info" 등 셀 이름 헤더 제거 */
   .dash-graph--heading {
     display: none;
   }

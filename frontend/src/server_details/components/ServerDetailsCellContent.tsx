@@ -1,4 +1,5 @@
 import React, {useState, useEffect, useContext} from 'react'
+import classnames from 'classnames'
 import _ from 'lodash'
 import Layout from 'src/shared/components/Layout'
 import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
@@ -11,6 +12,8 @@ import {
   DEFAULT_DECIMAL_PLACES,
 } from 'src/dashboards/constants'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
+import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 
 function renderSimpleData(
   obj: Record<string, unknown>,
@@ -154,6 +157,7 @@ export function ServerDetailsCellContent({
   const ctx = useContext(ServerDetailsPageContext)
   const selectedHost = ctx?.selectedHost ?? null
   const [activeTab, setActiveTab] = useState<'info' | 'files'>('info')
+  const [contextOpen, setContextOpen] = useState(false)
 
   const canUseLayout = cell != null && layoutContext != null
 
@@ -239,6 +243,31 @@ export function ServerDetailsCellContent({
           <div className="dash-graph--heading-dragger" />
         </div>
       </div>
+      {layoutContext?.onDeleteCell && cell && (
+        <div
+          className={classnames('dash-graph-context', {
+            'dash-graph-context__open': contextOpen,
+          })}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <div className="dash-graph-context--buttons">
+            <Authorized requiredRole={EDITOR_ROLE}>
+              <MenuTooltipButton
+                icon="trash"
+                theme="danger"
+                menuItems={[
+                  {
+                    text: 'Confirm',
+                    action: () => layoutContext.onDeleteCell(cell),
+                    disabled: false,
+                  },
+                ]}
+                informParent={() => setContextOpen(prev => !prev)}
+              />
+            </Authorized>
+          </div>
+        </div>
+      )}
       <div className="server-details-cell-tabs">
         <div className="server-details-cell-tab-panel" key={activeTab}>
           <FancyScrollbar
