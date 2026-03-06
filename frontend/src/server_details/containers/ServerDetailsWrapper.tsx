@@ -126,7 +126,6 @@ function ServerDetailsWrapper(props) {
         )}
         renderCell={(cell, context) => {
           if (
-            cell.i === 'host-table-cell' ||
             cell.i === 'sever-details-server-info'
           ) {
             return (

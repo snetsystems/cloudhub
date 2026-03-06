@@ -185,7 +185,7 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
 }
 
 const UPDATE_HELP_TEXT =
-  'When you run this update: Only cells of type "component" are changed. For those cells, only the query definitions (queries) are replaced from the latest fixed-cell, matched by cell ID. Layout, names, and all other cell types remain unchanged. Template variables and version are updated to the latest.'
+  'When you run this update: For each cell that already exists on your dashboard (matched by cell ID), query definitions (queries) are replaced from the latest fixed-cell template—for all cell types (component, line, line-plus-single-stat, etc.). Layout and names stay as-is. New cells from the template are added as hidden. Template variables and version are updated to the latest.'
 
 function FixedCells({
   onSelectionChange,
@@ -316,13 +316,12 @@ function FixedCells({
           Promise.all(list.map(({name}) => getFixedCellDashboardByName(name))),
         ])
         if (cancelled) return
+        // 표시 목록 = 사용자 대시보드(org) 기준. builtin 셀은 hidden 여부와 관계없이 전부 표시 (hidden = 대시보드 레이아웃에서만 숨김, 리스트에서는 항상 표시).
         const merged: Dashboard[] = templateResults.map((t, i) => {
           const org = orgResults[i]?.data
           const serverVersion = org?.latestVersion ?? t.version
-
           const orgBuiltinCells =
             org?.cells?.filter(c => c.cellOrigin === CellOrigin.Builtin) ?? []
-
           const cells =
             orgBuiltinCells.length > 0 ? orgBuiltinCells : t.cells ?? []
           const templates = org?.templates ?? t.templates ?? []
@@ -337,6 +336,20 @@ function FixedCells({
           }
         })
         let filtered = _.sortBy(merged, d => d.name?.toLowerCase() ?? '')
+
+        // 선택 상태: 현재 org에 있는 builtin 셀 id로 초기화 (Update 전 5개 체크, Update 후 6개 체크)
+        const initialSelection: Record<string, string[]> = {}
+        templateResults.forEach((t, i) => {
+          const org = orgResults[i]?.data
+          const name = (t.name || t.id || '').toString()
+          if (!name) return
+          const orgBuiltinIds = (
+            org?.cells?.filter(c => c.cellOrigin === CellOrigin.Builtin) ?? []
+          )
+            .map(c => c.i)
+            .filter(Boolean)
+          initialSelection[name] = orgBuiltinIds
+        })
         if (fixedCellNameFilter) {
           const name = fixedCellNameFilter.trim().toLowerCase()
           filtered = filtered.filter(
@@ -344,6 +357,10 @@ function FixedCells({
           )
         }
         setTemplates(filtered)
+        setSelectedCellIdsByTemplate(prev => ({
+          ...prev,
+          ...initialSelection,
+        }))
       } catch (e: any) {
         if (!cancelled) {
           setError(e?.message || 'Failed to load fixed-cell templates')

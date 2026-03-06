@@ -194,17 +194,17 @@ func (s *Service) FixedCellDashboardByName(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Optional: includeHidden=true shows hidden cells (e.g. Fixed Cell management UI).
-	// By default (includeHidden unset/false), hidden cells are filtered out so that
-	// normal dashboard views don't render them.
-	includeHidden := false
-	if v := r.URL.Query().Get("includeHidden"); v == "true" || v == "1" {
-		includeHidden = true
+	// Fixed Cell management UI must see all builtin cells (including hidden). Hidden means
+	// "not shown on the dashboard layout", not "hide from the Fixed Cell list". So for this
+	// endpoint we always include hidden cells; includeHidden=false is only for other callers
+	// (e.g. normal dashboard view) that request this URL and want visible cells only.
+	includeHidden := true
+	if v := r.URL.Query().Get("includeHidden"); v == "false" || v == "0" {
+		includeHidden = false
 	}
 
 	dashForResponse := e
 	if !includeHidden {
-		// Filter out hidden cells for callers that only want visible cells.
 		filtered := e
 		filtered.Cells = make([]cloudhub.DashboardCell, 0, len(e.Cells))
 		for _, c := range e.Cells {
