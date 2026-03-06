@@ -164,7 +164,7 @@ function DashboardPageWithImport({
   renderHeaderRight,
   timeRangeKey = 'hostDetails',
   pageClassName = 'dashboard-page-with-import',
-  importButtonText = 'Import Modal',
+  importButtonText = 'Import Cell',
   showEmptyState = true,
   draggableCancel,
   requiredTemplateVars,

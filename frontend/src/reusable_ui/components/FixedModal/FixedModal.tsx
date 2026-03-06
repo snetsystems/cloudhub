@@ -84,11 +84,11 @@ function FixedModal({
       titleText: 'Dashboard List',
     },
     {
-      title: 'Cells',
+      title: 'Cell library',
       value: 'cell-list',
       active: currentTab === 'cell-list',
       onClick: () => handleTabChange('cell-list'),
-      titleText: 'Cell List',
+      titleText: 'Cell library',
     },
     {
       title: 'Fixed Cells',
@@ -138,6 +138,16 @@ function FixedModal({
             style={{width: width || '420px'}}
           >
             <div style={{padding: '16px', flexShrink: 0}}>
+              <p
+                style={{
+                  margin: '0 0 12px 0',
+                  fontSize: '20px',
+                  color: '#8b8ba7',
+                  fontWeight: 500,
+                }}
+              >
+                From existing resources
+              </p>
               <GraphOptionsToggleBtn
                 title=""
                 GraphOptionsOptions={tabOptions}
