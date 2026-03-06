@@ -19,7 +19,6 @@ import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {generateForHosts} from 'src/utils/tempVars'
 import {TimeSeriesValue} from 'src/types/series'
 import {mergeResultsByHost} from 'src/dashboards/utils/tableLineChart'
-import PageSpinner from 'src/shared/components/PageSpinner'
 
 type HostCellValue = TimeSeriesValue | TimeSeriesValue[]
 
@@ -139,14 +138,11 @@ function NewHostsPage({
       <Page.Contents fullWidth={true}>
         <div className="host-page-graph-table-container-wrapper">
           <div className="host-page-graph-table-container table-gauge-chart">
-            {isTableLoading && tableData.length === 0 ? (
-              <PageSpinner customClass="host-page-spinner" />
-            ) : (
-              columns.length > 0 &&
-              tableData.length > 0 && (
+            {columns.length > 0 && tableData.length > 0 && (
               <TableComponent
                 data={tableData || []}
                 columns={columns}
+                isLoading={isTableLoading}
                 isSearchDisplay={true}
                 isDotKey={true}
                 topLeftRender={
@@ -155,8 +151,9 @@ function NewHostsPage({
                       id="host-chart-mode-gauge"
                       titleText="Gauge"
                       value="gauge"
-                      active={displayedChartMode === 'gauge'}
+                      active={pendingChartMode === 'gauge'}
                       onClick={() => {
+                        pendingChartMode !== 'gauge' && setIsTableLoading(true)
                         if (pendingChartMode !== 'gauge' && !isModeSwitching) {
                           setPendingChartMode('gauge')
                         }
@@ -168,8 +165,9 @@ function NewHostsPage({
                       id="host-chart-mode-line"
                       titleText="Line"
                       value="line"
-                      active={displayedChartMode === 'line'}
+                      active={pendingChartMode === 'line'}
                       onClick={() => {
+                        pendingChartMode !== 'line' && setIsTableLoading(true)
                         if (pendingChartMode !== 'line' && !isModeSwitching) {
                           setPendingChartMode('line')
                         }
@@ -180,11 +178,8 @@ function NewHostsPage({
                   </Radio>
                 }
               />
-              )
             )}
           </div>
-          <div className="radio-button-container"></div>
-          {/* <ProcessLineChartTable source={source} /> */}
         </div>
       </Page.Contents>
     </Page>
