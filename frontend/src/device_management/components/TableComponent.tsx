@@ -19,6 +19,7 @@ import {
   DataTableOptions,
   TimeZones,
 } from 'src/types'
+import PageSpinner from 'src/shared/components/PageSpinner'
 
 interface Props {
   data: DataTableObject[]
@@ -39,6 +40,7 @@ interface Props {
   timeZone?: TimeZones
   searchPlaceholder?: string
   isDotKey?: boolean
+  isLoading?: boolean
 }
 
 function TableComponent({
@@ -60,6 +62,7 @@ function TableComponent({
   timeZone,
   searchPlaceholder,
   isDotKey = false,
+  isLoading = false,
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
@@ -259,18 +262,22 @@ function TableComponent({
         </div>
       )}
       <div className={`panel-body ${bodyClassName ?? ''}`}>
-        <TableBase
-          columns={columns}
-          data={sortedData}
-          accordionColumns={isAccordion ? accordionColumns : null}
-          isMultiSelect={isMultiSelect}
-          onCheck={setCheckedArray}
-          onSort={onSort}
-          checkedTargets={checkedArray}
-          sortTarget={sortTarget}
-          options={options}
-          timeZone={timeZone}
-        />
+        {isLoading ? (
+          <PageSpinner customClass="table-spinner" />
+        ) : (
+          <TableBase
+            columns={columns}
+            data={sortedData}
+            accordionColumns={isAccordion ? accordionColumns : null}
+            isMultiSelect={isMultiSelect}
+            onCheck={setCheckedArray}
+            onSort={onSort}
+            checkedTargets={checkedArray}
+            sortTarget={sortTarget}
+            options={options}
+            timeZone={timeZone}
+          />
+        )}
       </div>
     </div>
   )

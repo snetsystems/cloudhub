@@ -41,6 +41,10 @@
           border-top: $ix-border solid $g5-pepper;
           border-right: $ix-border solid $g5-pepper;
           border-bottom: $ix-border solid $g5-pepper;
+
+          &.parent-header-th {
+            border-bottom: 0;
+          }
         }
 
         td {
