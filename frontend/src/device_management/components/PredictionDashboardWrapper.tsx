@@ -134,7 +134,7 @@ function PredictionDashboardWrapper({
       {rebuiltCell && (
         <div
           className="dash-graph--container"
-          style={{height: 'calc(100% - 32px)'}}
+          style={{height: 'calc(100% - 50px)'}}
         >
           <ChartJSAlertBarChart
             cell={rebuiltCell}
