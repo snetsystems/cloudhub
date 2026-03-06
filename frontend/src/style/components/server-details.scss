@@ -15,10 +15,22 @@
   flex-shrink: 0;
   margin: 0;
   height: 30px;
+  min-height: 30px;
   background-color: #292933;
-  z-index: 6;
+  z-index: 10;
+  position: relative;
   display: flex;
   align-items: stretch;
+}
+
+/* 헤더 왼쪽 셀 이름 (Process 등, 탭 버튼 없을 때) */
+.server-details-cell-header-name {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 13px;
+  color: $g13-mist;
 }
 
 /* 헤더 오른쪽 드래그 영역 (헤더 전체가 handle, 탭은 draggableCancel로 제외) */
@@ -39,7 +51,8 @@
 .server-details-cell-header .server-details-cell-tab-buttons {
   display: flex;
   gap: 0;
-  flex: 0 0 auto; 
+  flex: 0 0 auto;
+  min-width: 220px;
   align-items: stretch;
 
   button {
@@ -76,11 +89,74 @@
 .server-details-cell-tab-panel {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+
+  /* FancyScrollbar가 스크롤 담당, 컨테이너가 영역 전체 채우기 */
+  > .fancy-scroll--container {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+/* File System 탭 내부 Layout(.dash-graph)이 position:absolute로 셀 전체를 덮지 않도록
+   이 래퍼를 containing block으로 만듦 → 탭 바 위를 덮지 않고 클릭 가능 유지 */
+.server-details-cell-files-layout-wrap {
+  position: relative;
+  /* .dash-graph가 position:absolute라 높이를 주지 않으면 래퍼가 0으로 줄어듦 → 뷰 높이만큼 확보 */
+  min-height: 100%;
+  height: 100%;
+  /* 스크롤은 상위 FancyScrollbar가 담당 */
+
+  /* File System 탭 테이블 위 "Server Info" 등 셀 이름 헤더 제거 */
+  .dash-graph--heading {
+    display: none;
+  }
 }
 
 .server-details-cell-tab-body {
   padding: 16px;
+  font-size: 12px;
+}
+
+/* Server Info / simple data list (renderSimpleData) */
+.server-details-simple-data-list {
+  margin: 0;
+  padding-left: 12px;
+  list-style: none;
+  font-size: 12px;
+
+  &--nested {
+    padding-left: 10px;
+  }
+}
+
+.server-details-simple-data-item {
+  margin-bottom: 2px;
+  display: flex;
+  gap: 6px;
+}
+
+.server-details-simple-data-key {
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.server-details-simple-data-value {
+  word-break: break-word;
+}
+
+/* Server Info section (section title + content) */
+.server-details-server-info-section {
+  margin-bottom: 10px;
+}
+
+.server-details-server-info-section-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 13px;
+  border-bottom: 1px solid $g6-smoke;
+  padding-bottom: 2px;
 }
 
 .react-grid-item .server-details-cell-header {

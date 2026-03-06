@@ -97,8 +97,6 @@ function NewHostsPage({
           setDisplayedChartMode(pendingChartMode)
         }
         setIsModeSwitching(false)
-
-        console.log('tableData', mergedData)
       } catch (error) {
         console.error('Failed to fetch server list data', error)
         if (isSubscribed && requestId === requestIdRef.current) {

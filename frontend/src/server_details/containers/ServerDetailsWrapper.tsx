@@ -11,57 +11,12 @@ import {Dropdown, DropdownMode} from 'src/reusable_ui'
 import {Template, TemplateValue} from 'src/types'
 import * as DashboardsModels from 'src/types/dashboards'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
-
-
-function ServerDetailsCellContent() {
-  const [activeTab, setActiveTab] = useState<'info' | 'files'>('info')
-  return (
-    <div className="server-details-cell-content">
-      <div className="dash-graph--draggable dash-graph--heading dash-graph--heading-draggable server-details-cell-header">
-        <div className="server-details-cell-tab-buttons">
-          <button
-            type="button"
-            className={activeTab === 'info' ? 'active' : ''}
-            onClick={() => setActiveTab('info')}
-          >
-            Server Info
-          </button>
-          <button
-            type="button"
-            className={activeTab === 'files' ? 'active' : ''}
-            onClick={() => setActiveTab('files')}
-          >
-            File System
-          </button>
-        </div>
-        <div className="server-details-cell-drag-handle">
-          <div className="dash-graph--heading-bar" />
-          <div className="dash-graph--heading-dragger" />
-        </div>
-      </div>
-      <div className="server-details-cell-tabs">
-        <div className="server-details-cell-tab-panel">
-          {activeTab === 'info' && (
-            <div className="server-details-cell-tab-body">서버 정보 내용~</div>
-          )}
-          {activeTab === 'files' && (
-            <div className="server-details-cell-tab-body">파일 시스템 내용</div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
-type ServerDetailsPageContextValue = TemplateSelectionContextValue & {
-  selectedHost: string | null
-  onHostSelect: (host: string | null) => void
-}
-
-const ServerDetailsPageContext = React.createContext<ServerDetailsPageContextValue | null>(
-  null
-)
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {
+  ServerDetailsCellContent,
+  ServerDetailsPageContext,
+  type ServerDetailsPageContextValue,
+} from 'src/server_details/components/ServerDetailsCellContent'
 
 function HostDropdownHeader({
   templates,
@@ -154,20 +109,57 @@ function ServerDetailsWrapper(props) {
         pageClassName="server-details-page"
         showEmptyState={false}
         requiredTemplateVars={[':host:']}
-        templateSelectionContext={ServerDetailsPageContext as React.Context<TemplateSelectionContextValue | null>}
-        renderHeaderLeft={({templates, dashboard, templateVariableLocalSelected}) => (
-          <HostDropdownHeader 
-            templates={templates} 
+        draggableCancel=".server-details-cell-tab-buttons"
+        templateSelectionContext={
+          ServerDetailsPageContext as React.Context<TemplateSelectionContextValue | null>
+        }
+        renderHeaderLeft={({
+          templates,
+          dashboard,
+          templateVariableLocalSelected,
+        }) => (
+          <HostDropdownHeader
+            templates={templates}
             dashboard={dashboard}
             templateVariableLocalSelected={templateVariableLocalSelected}
           />
         )}
-        renderCell={(cell, _context) => {
-          if (cell.i === 'sever-details-server-info') {
-            return <ServerDetailsCellContent />
+        renderCell={(cell, context) => {
+          if (
+            cell.i === 'host-table-cell' ||
+            cell.i === 'sever-details-server-info'
+          ) {
+            return (
+              <ServerDetailsCellContent
+                addons={props.addons}
+                cell={cell}
+                layoutContext={context}
+              />
+            )
           }
           if (cell.i === 'sever-details-process') {
-            return <ProcessLineChartTable source={props.source} />
+            return (
+              <div className="server-details-cell-content">
+                <div className="dash-graph--draggable dash-graph--heading dash-graph--heading-draggable server-details-cell-header">
+                  <span className="server-details-cell-header-name">Process</span>
+                  <div className="server-details-cell-drag-handle">
+                    <div className="dash-graph--heading-bar" />
+                    <div className="dash-graph--heading-dragger" />
+                  </div>
+                </div>
+                <div className="server-details-cell-tabs">
+                  <div className="server-details-cell-tab-panel">
+                    <FancyScrollbar
+                      className="server-details-cell-tab-panel__scroll"
+                      style={{height: '100%'}}
+                      autoHide={false}
+                    >
+                      <ProcessLineChartTable source={props.source} />
+                    </FancyScrollbar>
+                  </div>
+                </div>
+              </div>
+            )
           }
           return null
         }}
@@ -176,7 +168,9 @@ function ServerDetailsWrapper(props) {
   )
 }
 
-export default connect(
-  dashboardPageWithImportMstp,
-  dashboardPageWithImportMdtp
-)(ServerDetailsWrapper)
+const mstp = state => ({
+  ...dashboardPageWithImportMstp(state),
+  addons: state.links?.addons ?? [],
+})
+
+export default connect(mstp, dashboardPageWithImportMdtp)(ServerDetailsWrapper)
