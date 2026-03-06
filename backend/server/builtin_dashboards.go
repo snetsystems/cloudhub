@@ -111,11 +111,11 @@ func InitializeFixedCells(
 // ApplyFixedCellToOrg updates the given org's fixed-cell dashboard from the latest template:
 // - Templates, Version, UpdatedAt: replaced from template.
 // - Cells:
-//   - For cells that already exist on the org dashboard (matched by ID): if type is "component",
-//     only the Queries field is replaced from the template; other cells are left unchanged.
-//   - For any new cells in the template that are not yet on the org dashboard (any type:
-//     component, line, etc.), they are appended with CellOriginBuiltin so they appear in
-//     the Fixed Cell tab and on the dashboard after the user clicks Update.
+//   - For cells that already exist on the org dashboard (matched by ID): Queries is replaced
+//     from the template for all cell types (component, line, line-plus-single-stat, etc.).
+//   - For any new cells in the template that are not yet on the org dashboard (any type),
+//     they are appended with CellOriginBuiltin so they appear in the Fixed Cell tab and
+//     on the dashboard after the user clicks Update.
 func ApplyFixedCellToOrg(
 	ctx context.Context,
 	orgID string,
@@ -152,9 +152,8 @@ func ApplyFixedCellToOrg(
 		return err
 	}
 
-	// Map template cell ID -> full cell (for appending new cells) and ID -> queries (for component-only query updates)
+	// Map template cell ID -> full cell (for appending new cells and for query updates)
 	templateCellsByID := make(map[string]cloudhub.DashboardCell)
-	templateComponentQueriesByID := make(map[string][]cloudhub.DashboardQuery)
 	for i := range template.Cells {
 		c := template.Cells[i]
 		if c.ID == "" {
@@ -163,14 +162,10 @@ func ApplyFixedCellToOrg(
 		cloned := c
 		cloned.Queries = cloneDashboardQueries(c.Queries)
 		templateCellsByID[c.ID] = cloned
-		if c.Type == cloudhub.DashboardCellTypeComponent {
-			templateComponentQueriesByID[c.ID] = cloned.Queries
-		}
 	}
 
-	// Keep all existing cells. Cells that are builtin but no longer in the template are reclassified as user cells
-	// so they stay on the dashboard but no longer appear in the Fixed Cell tab and are fully user-managed.
-	// Deduplicate by cell ID. Update Queries only for component cells that exist in template.
+	// Keep all existing cells. Builtin cells no longer in the template: if visible, reclassify as user; if already hidden, remove (real delete) so they don't become orphans.
+	// Deduplicate by cell ID. Update Queries from template for any cell type that exists in template.
 	existingCellIDs := make(map[string]struct{})
 	seenIDs := make(map[string]struct{})
 	var cellsKept []cloudhub.DashboardCell
@@ -183,17 +178,21 @@ func ApplyFixedCellToOrg(
 			}
 			seenIDs[c.ID] = struct{}{}
 		}
-		// Builtin cell no longer in template → treat as user cell (stays on dashboard, leaves Fixed Cell management)
-		if c.CellOrigin == cloudhub.CellOriginBuiltin {
-			if _, inTemplate := templateCellsByID[c.ID]; !inTemplate {
+		// Cell not in template and hidden: remove (real delete) to avoid orphan (builtin or user).
+		// Builtin not in template and visible: reclassify as user so it stays on the dashboard.
+		_, inTemplate := templateCellsByID[c.ID]
+		if !inTemplate {
+			if c.Hidden {
+				continue // drop: not in template and hidden (builtin or user), avoid orphan
+			}
+			if c.CellOrigin == cloudhub.CellOriginBuiltin {
 				c.CellOrigin = cloudhub.CellOriginUser
 			}
 		}
-		// Update Queries only for existing component cells that exist in template
-		if c.Type == cloudhub.DashboardCellTypeComponent {
-			if queries, ok := templateComponentQueriesByID[c.ID]; ok {
-				c.Queries = cloneDashboardQueries(queries)
-			}
+		// Cell exists in template: update Queries and set CellOrigin to builtin so it appears in the Fixed Cell list (even if it was previously user-added)
+		if tmplCell, inTemplate := templateCellsByID[c.ID]; inTemplate {
+			c.CellOrigin = cloudhub.CellOriginBuiltin
+			c.Queries = cloneDashboardQueries(tmplCell.Queries)
 		}
 		cellsKept = append(cellsKept, *c)
 	}
@@ -233,7 +232,7 @@ func ApplyFixedCellToOrg(
 		WithField("component", "fixed-cell").
 		WithField("templateName", templateName).
 		WithField("orgID", orgID).
-		Info("Applied fixed-cell to org dashboard (queries for component cells; new cells of any type appended)")
+		Info("Applied fixed-cell to org dashboard (queries for all cell types; new cells appended)")
 	return nil
 }
 

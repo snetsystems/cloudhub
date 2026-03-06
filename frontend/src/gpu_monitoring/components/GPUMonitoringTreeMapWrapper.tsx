@@ -112,6 +112,8 @@ function GPUMonitoringTreeMapWrapper({
     switch (intervalId) {
       case 'interval-1m':
         return '1m'
+      case 'interval-2m':
+        return '2m'
       case 'interval-3m':
         return '3m'
       case 'interval-5m':
@@ -384,6 +386,9 @@ function GPUMonitoringTreeMapWrapper({
           >
             <Dropdown.Item id="interval-1m" value={{id: 'interval-1m'}}>
               Last 1 minutes
+            </Dropdown.Item>
+            <Dropdown.Item id="interval-2m" value={{id: 'interval-2m'}}>
+              Last 2 minutes
             </Dropdown.Item>
             <Dropdown.Item id="interval-3m" value={{id: 'interval-3m'}}>
               Last 3 minutes
