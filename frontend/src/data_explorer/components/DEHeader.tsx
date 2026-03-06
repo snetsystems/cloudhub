@@ -23,7 +23,7 @@ interface Props {
   activeEditorTab: CEOTabs
   onSetTimeZone: typeof setTimeZone
   onOpenWriteData: () => void
-  toggleSendToDashboard: () => void
+  toggleSendToDashboard: (isSaveCell?: boolean) => void
   onSetActiveEditorTab: (activeEditorTab: CEOTabs) => void
 }
 
@@ -78,7 +78,15 @@ class DEHeader extends Component<Props> {
           </button>
           <Authorized requiredRole={EDITOR_ROLE}>
             <button
-              onClick={toggleSendToDashboard}
+              onClick={() => toggleSendToDashboard(true)}
+              className="button button-sm button-primary"
+            >
+              Save Cell
+            </button>
+          </Authorized>
+          <Authorized requiredRole={EDITOR_ROLE}>
+            <button
+              onClick={() => toggleSendToDashboard(false)}
               className="button button-sm button-success"
             >
               Send to Dashboard

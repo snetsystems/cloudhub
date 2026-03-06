@@ -68,6 +68,7 @@ interface PassedProps {
   handleGetDashboards: () => Dashboard[]
   notify: (message: Notification) => void
   activeQueryIndex: number
+  isSaveCell?: boolean
 }
 
 interface ConnectedProps {
@@ -87,6 +88,7 @@ type Props = PassedProps & ConnectedProps
 interface State {
   selectedIDs: string[]
   name: string
+  description: string
   newDashboardName: string
   sendAllQueries: boolean
 }
@@ -100,6 +102,7 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
     this.state = {
       selectedIDs: [],
       name: '',
+      description: '',
       newDashboardName: '',
       sendAllQueries: false,
     }
@@ -129,9 +132,20 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
     this.setState({newDashboardName})
   }
 
+  public handleChangeDescription = e => {
+    const description = e.target.value
+    this.setState({description})
+  }
+
   public render() {
-    const {onCancel, queryDrafts, queryType} = this.props
-    const {name, selectedIDs, newDashboardName, sendAllQueries} = this.state
+    const {onCancel, queryDrafts, queryType, isSaveCell} = this.props
+    const {
+      name,
+      description,
+      selectedIDs,
+      newDashboardName,
+      sendAllQueries,
+    } = this.state
 
     const numberDashboards = selectedIDs.length > 1 ? selectedIDs.length : ''
     const pluralizer = selectedIDs.length > 1 ? 's' : ''
@@ -144,16 +158,34 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
         <OverlayBody>
           {this.hasQuery() ? (
             <Form>
-              <Form.Element label="Target Dashboard(s)">
-                <MultiSelectDropdown
-                  onChange={this.handleSelect}
-                  selectedIDs={this.state.selectedIDs}
-                  emptyText="Choose at least 1 dashboard"
-                >
-                  {this.dropdownItems}
-                </MultiSelectDropdown>
+              <Form.Element label="Cell Name">
+                <Input
+                  value={name}
+                  onChange={this.handleChangeName}
+                  placeholder={'Name this new cell'}
+                />
               </Form.Element>
-              {this.isNewDashboardSelected && (
+              {isSaveCell && (
+                <Form.Element label="Cell Description">
+                  <Input
+                    value={description}
+                    onChange={this.handleChangeDescription}
+                    placeholder={'Description for this cell'}
+                  />
+                </Form.Element>
+              )}
+              {!isSaveCell && (
+                <Form.Element label="Target Dashboard(s)">
+                  <MultiSelectDropdown
+                    onChange={this.handleSelect}
+                    selectedIDs={this.state.selectedIDs}
+                    emptyText="Choose at least 1 dashboard"
+                  >
+                    {this.dropdownItems}
+                  </MultiSelectDropdown>
+                </Form.Element>
+              )}
+              {!isSaveCell && this.isNewDashboardSelected && (
                 <Form.Element label="Name new dashboard">
                   <Input
                     value={newDashboardName}
@@ -162,14 +194,7 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
                   />
                 </Form.Element>
               )}
-              <Form.Element label="Cell Name">
-                <Input
-                  value={name}
-                  onChange={this.handleChangeName}
-                  placeholder={'Name this new cell'}
-                />
-              </Form.Element>
-              {multipleQueries && (
+              {!isSaveCell && multipleQueries && (
                 <Form.Element label="Queries">
                   <div className="form-group col-xs-12">
                     <div className="form-control-static">
@@ -210,20 +235,23 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
                 </Form.Element>
               )}
               <Form.Footer>
-                <Button
-                  color={ComponentColor.Primary}
-                  text={`Save Cell`}
-                  titleText="Save to ETCD"
-                  status={this.saveButtonStatus}
-                  onClick={this.saveCell}
-                />
-                <Button
-                  color={ComponentColor.Success}
-                  text={`Send to ${numberDashboards} Dashboard${pluralizer}`}
-                  titleText="Must choose at least 1 dashboard and set a name"
-                  status={this.submitButtonStatus}
-                  onClick={this.sendToDashboard}
-                />
+                {isSaveCell ? (
+                  <Button
+                    color={ComponentColor.Primary}
+                    text={`Save Cell`}
+                    titleText="Save to ETCD"
+                    status={this.saveButtonStatus}
+                    onClick={this.saveCell}
+                  />
+                ) : (
+                  <Button
+                    color={ComponentColor.Success}
+                    text={`Send to ${numberDashboards} Dashboard${pluralizer}`}
+                    titleText="Must choose at least 1 dashboard and set a name"
+                    status={this.submitButtonStatus}
+                    onClick={this.sendToDashboard}
+                  />
+                )}
                 <Button text="Cancel" onClick={onCancel} />
               </Form.Footer>
             </Form>
@@ -377,7 +405,7 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
   }
 
   private saveCell = async () => {
-    const {name, sendAllQueries} = this.state
+    const {name, description, sendAllQueries} = this.state
     const {
       queryType,
       script,
@@ -480,6 +508,7 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
     try {
       await createDashboardItem({
         name: trimmedName,
+        description: description.trim(),
         type,
         content: newCell,
       })

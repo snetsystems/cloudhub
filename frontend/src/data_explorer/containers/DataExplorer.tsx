@@ -119,6 +119,7 @@ interface State {
   isSendToDashboardVisible: boolean
   isComponentMounted: boolean
   activeQueryIndex: number
+  isSaveCell: boolean
 }
 
 @ErrorHandling
@@ -131,6 +132,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       isSendToDashboardVisible: false,
       isComponentMounted: false,
       activeQueryIndex: 0,
+      isSaveCell: false,
     }
 
     props.onResetTimeMachine()
@@ -337,7 +339,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       notify,
     } = this.props
 
-    const {isSendToDashboardVisible, activeQueryIndex} = this.state
+    const {isSendToDashboardVisible, activeQueryIndex, isSaveCell} = this.state
     return (
       <Authorized requiredRole={EDITOR_ROLE}>
         <OverlayTechnology visible={isSendToDashboardVisible}>
@@ -349,6 +351,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             activeQueryIndex={activeQueryIndex}
             handleGetDashboards={handleGetDashboards}
             sendDashboardCell={sendDashboardCell}
+            isSaveCell={isSaveCell}
           />
         </OverlayTechnology>
       </Authorized>
@@ -418,9 +421,10 @@ export class DataExplorer extends PureComponent<Props, State> {
     return _.get(this.props.queryConfigs, ['0', 'database'], null)
   }
 
-  private toggleSendToDashboard = () => {
+  private toggleSendToDashboard = (isSaveCell?: boolean) => {
     this.setState({
       isSendToDashboardVisible: !this.state.isSendToDashboardVisible,
+      isSaveCell: isSaveCell,
     })
   }
 
