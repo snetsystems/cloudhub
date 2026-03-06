@@ -42,13 +42,61 @@ function TableBase({
 }: Props) {
   const [openRowAccor, setOpenRowAccor] = useState<number | null>(null)
 
+  const displayColumns = useMemo(
+    () => columns?.filter(column => !column?.options?.isAccordion) ?? [],
+    [columns]
+  )
+
   useEffect(() => {
     setOpenRowAccor(null)
   }, [data])
 
-  const keys = columns
-    ?.filter(column => !column?.options?.isAccordion)
-    ?.map(item => item.key)
+  const keys = displayColumns?.map(item => item.key)
+
+  const hasParentHeader = useMemo(
+    () => displayColumns.some(column => !!column.parentHeader?.trim()),
+    [displayColumns]
+  )
+
+  const parentHeaderGroups = useMemo(() => {
+    if (!hasParentHeader) {
+      return []
+    }
+
+    return displayColumns.reduce<
+      {label: string; colSpan: number; isEmpty: boolean}[]
+    >((acc, column) => {
+      const normalizedLabel = column.parentHeader?.trim() ?? ''
+
+      // parentHeader가 없는 컬럼은 상단 행에 빈 칸(th)으로 표시합니다.
+      if (!normalizedLabel) {
+        acc.push({
+          label: '',
+          colSpan: 1,
+          isEmpty: true,
+        })
+        return acc
+      }
+
+      const lastGroup = acc[acc.length - 1]
+
+      if (
+        lastGroup &&
+        !lastGroup.isEmpty &&
+        lastGroup.label === normalizedLabel
+      ) {
+        lastGroup.colSpan += 1
+        return acc
+      }
+
+      acc.push({
+        label: normalizedLabel,
+        colSpan: 1,
+        isEmpty: false,
+      })
+      return acc
+    }, [])
+  }, [displayColumns, hasParentHeader])
 
   const accordionKey = useMemo(() => {
     return columns?.find(column => !!column?.options?.isAccordion)?.key || ''
@@ -142,71 +190,83 @@ function TableBase({
     }
   }
 
+  const renderHeaderCell = (column: ColumnInfo, index: number) => {
+    return (
+      <th
+        style={column.options?.thead?.style}
+        className={`${getAlignClassName(column?.options?.thead?.align)} ${
+          options?.theadRow?.className ?? ''
+        } ${column.options?.thead?.className ?? ''} ${
+          column.options?.checkbox ? 'checkbox' : ''
+        }`}
+        key={index}
+        onClick={() => onClickTh(column)}
+      >
+        {column.options?.checkbox ? (
+          <>
+            {isMultiSelect ? (
+              <div className="dark-checkbox">
+                <input
+                  type={'checkbox'}
+                  id="agent-control--all-check"
+                  checked={checkedTargets?.length === data?.length}
+                  onClick={event => event.stopPropagation()}
+                  onChange={() => {
+                    onChangeCheckAll(column.key)
+                  }}
+                />
+                <label htmlFor={`agent-control--all-check`} />
+              </div>
+            ) : null}
+          </>
+        ) : column.options?.sorting ? (
+          <div
+            className={`${
+              !!sortTarget && sortTarget.key === column.key ? 'sorted' : ''
+            }`}
+          >
+            <span>{column.name}</span>
+
+            {!!sortTarget &&
+              sortTarget.key === column.key &&
+              (sortTarget?.isDesc ? (
+                <span className="icon caret-down" />
+              ) : (
+                <span className="icon caret-up" />
+              ))}
+          </div>
+        ) : (
+          <>
+            <span>{column.name}</span>
+          </>
+        )}
+      </th>
+    )
+  }
+
   return (
     <div>
       <table className="table v-center margin-bottom-zero table-highlight table-accordion">
         <thead>
+          {hasParentHeader && (
+            <tr className="highlight parent-header-tr">
+              {parentHeaderGroups.map((group, index) => (
+                <th
+                  key={`parent-header-${index}`}
+                  colSpan={group.colSpan}
+                  className={`text-center parent-header-th ${
+                    options?.theadRow?.className ?? ''
+                  } ${group.isEmpty ? 'table-parent-header-empty' : ''}`}
+                >
+                  {group.label}
+                </th>
+              ))}
+            </tr>
+          )}
           <tr className="highlight">
-            {columns
-              ?.filter(column => {
-                // render no accordion
-                return !column.options?.isAccordion
-              })
-              ?.map((column, index) => {
-                return (
-                  <th
-                    style={column.options?.thead?.style}
-                    className={`${getAlignClassName(
-                      column?.options?.thead?.align
-                    )} ${options?.theadRow?.className ?? ''} ${
-                      column.options?.thead?.className ?? ''
-                    } ${column.options?.checkbox ? 'checkbox' : ''}`}
-                    key={index}
-                    onClick={() => onClickTh(column)}
-                  >
-                    {column.options?.checkbox ? (
-                      <>
-                        {isMultiSelect ? (
-                          <div className="dark-checkbox">
-                            <input
-                              type={'checkbox'}
-                              id="agent-control--all-check"
-                              checked={checkedTargets?.length === data?.length}
-                              onClick={event => event.stopPropagation()}
-                              onChange={() => {
-                                onChangeCheckAll(column.key)
-                              }}
-                            />
-                            <label htmlFor={`agent-control--all-check`} />
-                          </div>
-                        ) : null}
-                      </>
-                    ) : column.options?.sorting ? (
-                      <div
-                        className={`${
-                          !!sortTarget && sortTarget.key === column.key
-                            ? 'sorted'
-                            : ''
-                        }`}
-                      >
-                        <span>{column.name}</span>
-
-                        {!!sortTarget &&
-                          sortTarget.key === column.key &&
-                          (sortTarget?.isDesc ? (
-                            <span className="icon caret-down" />
-                          ) : (
-                            <span className="icon caret-up" />
-                          ))}
-                      </div>
-                    ) : (
-                      <>
-                        <span>{column.name}</span>
-                      </>
-                    )}
-                  </th>
-                )
-              })}
+            {displayColumns?.map((column, index) =>
+              renderHeaderCell(column, index)
+            )}
           </tr>
         </thead>
         <tbody>
@@ -231,12 +291,12 @@ function TableBase({
                       isAccordionRow ? 'hover-pointer-cursor' : ''
                     } ${options?.tbodyRow?.className ?? ''}`}
                   >
-                    {keys.map((key, columnIndex) => {
-                      const column = columns[columnIndex]
+                    {displayColumns.map((column, columnIndex) => {
+                      const key = column.key
                       return (
                         <td
                           key={columnIndex}
-                          onClick={() => columns[columnIndex].onClick}
+                          onClick={() => column.onClick}
                           className={`${getAlignClassName(
                             column?.options?.thead?.align
                           )}`}

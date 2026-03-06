@@ -37,6 +37,7 @@ export const serverListColumns = ({
       key: 'host',
       name: '서버 호스트',
       align: AlignType.LEFT,
+      parentHeader: 'Server',
       render: (value: string) => {
         return (
           <Link
@@ -50,6 +51,7 @@ export const serverListColumns = ({
     {
       key: 'CPU Usage',
       name: 'CPU Usage',
+      parentHeader: 'CPU',
       options: {
         thead: {
           align: AlignType.RIGHT,
@@ -91,6 +93,7 @@ export const serverListColumns = ({
     {
       key: 'Mem Total',
       name: 'Mem Total',
+      parentHeader: 'Memory',
       align: AlignType.RIGHT,
       options: {
         sorting: true,
@@ -119,6 +122,7 @@ export const serverListColumns = ({
     {
       key: 'Mem Usage',
       name: 'Mem Usage',
+      parentHeader: 'Memory',
       align: AlignType.RIGHT,
       options: {
         thead: {
@@ -161,6 +165,7 @@ export const serverListColumns = ({
     {
       key: 'Mem Used',
       name: 'Mem Used',
+      parentHeader: 'Memory',
       align: AlignType.RIGHT,
       options: {
         thead: {
@@ -189,6 +194,7 @@ export const serverListColumns = ({
     {
       key: 'Mem Cached',
       name: 'Mem Cached',
+      parentHeader: 'Memory',
       align: AlignType.RIGHT,
       options: {
         thead: {
@@ -216,6 +222,7 @@ export const serverListColumns = ({
     {
       key: 'Network Traffic',
       name: 'Network Traffic (Max)',
+      parentHeader: 'Network',
       align: AlignType.RIGHT,
       options: {
         thead: {
@@ -259,6 +266,7 @@ export const serverListColumns = ({
     {
       key: 'Network Interface',
       name: 'Network Interface',
+      parentHeader: 'Network',
       align: AlignType.LEFT,
     } as ColumnInfo,
     {
