@@ -1,25 +1,27 @@
 import React from 'react'
-import {Source} from 'src/types'
-import {Page} from 'src/reusable_ui'
+import {connect} from 'react-redux'
+import {generateForHosts} from 'src/utils/tempVars'
+import {SERVER_OVERVIEW_PAGE_NAME} from 'src/shared/constants/routes'
+import DashboardPageWithImport, {
+  dashboardPageWithImportMstp,
+  dashboardPageWithImportMdtp,
+  type DashboardPageWithImportProps,
+} from 'src/shared/components/DashboardPageWithImport'
 
-interface Props {
-  source: Source
-}
+type Props = DashboardPageWithImportProps
 
-function OverviewPage({source}: Props) {
+function OverviewPage(props: Props) {
   return (
-    <Page className="overview-page">
-      <Page.Header fullWidth={true}>
-        <Page.Header.Left>
-          <Page.Title title="Overview" />
-        </Page.Header.Left>
-        <Page.Header.Right showSourceIndicator={true} />
-      </Page.Header>
-      <Page.Contents>
-        <div>OverviewPage Page</div>
-      </Page.Contents>
-    </Page>
+    <DashboardPageWithImport
+      {...props}
+      pageTitle="Server Monitoring Overview"
+      pageName={SERVER_OVERVIEW_PAGE_NAME}
+      getTempVars={generateForHosts}
+      pageClassName="server-overview-page"
+      showEmptyState={false}
+    />
   )
 }
 
-export default OverviewPage
+const mstp = state => ({...dashboardPageWithImportMstp(state)})
+export default connect(mstp, dashboardPageWithImportMdtp)(OverviewPage as any)
