@@ -613,6 +613,26 @@ export const notifyDashboardItemSaveFailed = (cellName: string): Notification =>
   message: `Could not save "${cellName}" to dashboard item library.`,
 })
 
+export const notifyDashboardItemUpdated = (cellName: string): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'dash-h',
+  message: `Updated "${cellName}" in dashboard item library.`,
+})
+
+export const notifyDashboardItemDeleted = (cellName: string): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'dash-h',
+  message: `Deleted "${cellName}" from dashboard item library.`,
+})
+
+export const notifyDashboardItemDeleteFailed = (
+  cellName: string
+): Notification => ({
+  ...defaultErrorNotification,
+  icon: 'dash-h',
+  message: `Could not delete "${cellName}" from dashboard item library.`,
+})
+
 export const notifyCellDeleted = (name: string): Notification => ({
   ...defaultDeletionNotification,
   icon: 'dash-h',

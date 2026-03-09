@@ -6,7 +6,13 @@ import SourceSelector from 'src/dashboards/components/SourceSelector'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import CSVExporter from 'src/shared/components/TimeMachine/CSVExporter'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
-import {SlideToggle, ComponentSize} from 'src/reusable_ui'
+import {
+  SlideToggle,
+  ComponentSize,
+  IconFont,
+  Button,
+  ComponentColor,
+} from 'src/reusable_ui'
 
 // Utils
 import buildQueries from 'src/utils/buildQueriesForGraphs'
@@ -39,6 +45,8 @@ interface Props {
   toggleFlux: (queryType: QueryType) => void
   toggleIsViewingRawData: () => void
   onManualRefresh: () => void
+  selectedCellName?: string
+  onClearSelectedCell?: () => void
 }
 
 const TimeMachineControls: FunctionComponent<Props> = ({
@@ -61,6 +69,8 @@ const TimeMachineControls: FunctionComponent<Props> = ({
   toggleIsViewingRawData,
   isDynamicSourceSelected,
   updateEditorTimeRange,
+  selectedCellName,
+  onClearSelectedCell,
 }) => {
   return (
     <div className="deceo--controls">
@@ -75,6 +85,21 @@ const TimeMachineControls: FunctionComponent<Props> = ({
         isDynamicSourceSelected={isDynamicSourceSelected}
         onSelectDynamicSource={onSelectDynamicSource}
       />
+      {selectedCellName && (
+        <div className="selected-cell-name ">
+          <span className="selected-cell-name-text" title={selectedCellName}>
+            Selected Cell: {selectedCellName}
+          </span>
+          <Button
+            icon={IconFont.Remove}
+            color={ComponentColor.Danger}
+            customClass="cell-management-button"
+            titleText="Clear selected cell and reset visualize state"
+            onClick={onClearSelectedCell}
+            size={ComponentSize.ExtraSmall}
+          />
+        </div>
+      )}
       {isFluxSelected && (
         <div className="time-machine-vis--raw-toggle">
           <SlideToggle
@@ -85,6 +110,7 @@ const TimeMachineControls: FunctionComponent<Props> = ({
           View Raw Data
         </div>
       )}
+
       <CSVExporter
         script={script}
         source={source}

@@ -3,12 +3,26 @@ import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import {DashboardItem} from 'src/types/dashboards'
 import {getDashboardItems} from 'src/dashboards/apis'
 import {CellTypeIcon} from 'src/server_details/components/CellListIcons'
+import ConfirmButton from 'src/shared/components/ConfirmButton'
+import {Button, ComponentSize, IconFont} from 'src/reusable_ui'
 
 interface CellListProps {
   onSelectionChange?: (items: ImportSelectionPayload) => void
+  mode?: 'select' | 'manage'
+  selectedItemId?: string
+  onEditItem?: (item: DashboardItem) => void
+  onDeleteItem?: (item: DashboardItem) => Promise<void> | void
+  onItemsLoaded?: (items: DashboardItem[]) => void
 }
 
-function CellList({onSelectionChange}: CellListProps) {
+function CellList({
+  onSelectionChange,
+  mode = 'select',
+  selectedItemId,
+  onEditItem,
+  onDeleteItem,
+  onItemsLoaded,
+}: CellListProps) {
   const [items, setItems] = useState<DashboardItem[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -21,6 +35,9 @@ function CellList({onSelectionChange}: CellListProps) {
       .then(res => {
         if (!cancelled && res?.data?.dashboardItems) {
           setItems(res.data.dashboardItems)
+          if (onItemsLoaded) {
+            onItemsLoaded(res.data.dashboardItems)
+          }
         }
       })
       .catch(() => {
@@ -33,6 +50,16 @@ function CellList({onSelectionChange}: CellListProps) {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (mode !== 'select') {
+      return
+    }
+    if (!selectedItemId) {
+      return
+    }
+    setSelectedIds(new Set([selectedItemId]))
+  }, [mode, selectedItemId])
 
   const handleToggle = (item: DashboardItem, checked: boolean) => {
     const newSelected = new Set(selectedIds)
@@ -95,7 +122,10 @@ function CellList({onSelectionChange}: CellListProps) {
     <div className="fixedmodal-list">
       {items.map(item => {
         const isHovered = hoveredId === item.id
-        const isSelected = selectedIds.has(item.id)
+        const isSelected =
+          mode === 'manage'
+            ? selectedItemId === item.id
+            : selectedIds.has(item.id)
 
         return (
           <div
@@ -105,11 +135,19 @@ function CellList({onSelectionChange}: CellListProps) {
             className="fixedmodal-list-row"
             onMouseEnter={() => setHoveredId(item.id)}
             onMouseLeave={() => setHoveredId(null)}
-            onClick={() => handleToggle(item, !isSelected)}
+            onClick={() => {
+              if (mode === 'select') {
+                handleToggle(item, !isSelected)
+                return
+              }
+            }}
             onKeyDown={e => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                handleToggle(item, !isSelected)
+                if (mode === 'select') {
+                  handleToggle(item, !isSelected)
+                  return
+                }
               }
             }}
             style={{
@@ -118,22 +156,27 @@ function CellList({onSelectionChange}: CellListProps) {
             }}
           >
             <div className="fixedmodal-list-row__inner">
-              <div
-                className="fixedmodal-checkbox-wrapper fixedmodal-checkbox-wrapper--cell-list"
-                onClick={e => e.stopPropagation()}
-              >
-                <input
-                  type="checkbox"
-                  id={`cell-item-checkbox-${item.id}`}
-                  checked={isSelected}
-                  onChange={e => {
-                    e.stopPropagation()
-                    handleToggle(item, e.target.checked)
-                  }}
+              {mode === 'select' && (
+                <div
+                  className="fixedmodal-checkbox-wrapper fixedmodal-checkbox-wrapper--cell-list"
                   onClick={e => e.stopPropagation()}
-                />
-                <label htmlFor={`cell-item-checkbox-${item.id}`} onClick={e => e.stopPropagation()} />
-              </div>
+                >
+                  <input
+                    type="checkbox"
+                    id={`cell-item-checkbox-${item.id}`}
+                    checked={isSelected}
+                    onChange={e => {
+                      e.stopPropagation()
+                      handleToggle(item, e.target.checked)
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  />
+                  <label
+                    htmlFor={`cell-item-checkbox-${item.id}`}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </div>
+              )}
               <div
                 style={{
                   width: '40px',
@@ -181,6 +224,48 @@ function CellList({onSelectionChange}: CellListProps) {
                   {item.description || `Display as ${item.type}`}
                 </div>
               </div>
+              {mode === 'manage' && (
+                <div
+                  className="cell-management-button"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <Button
+                    icon={IconFont.Export}
+                    titleText="Set this cell to Visualize"
+                    size={ComponentSize.Small}
+                    onClick={e => {
+                      e.stopPropagation()
+                      if (onEditItem) {
+                        onEditItem(item)
+                      }
+                    }}
+                  />
+                  <ConfirmButton
+                    icon={IconFont.Remove}
+                    isHideText={true}
+                    size={'btn-sm'}
+                    type="btn-danger"
+                    confirmText="Delete"
+                    text=""
+                    isEventStopPropagation={true}
+                    confirmAction={async () => {
+                      let deleted = true
+                      if (onDeleteItem) {
+                        try {
+                          await onDeleteItem(item)
+                        } catch {
+                          deleted = false
+                        }
+                      }
+                      if (deleted) {
+                        setItems(prev =>
+                          prev.filter(prevItem => prevItem.id !== item.id)
+                        )
+                      }
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )

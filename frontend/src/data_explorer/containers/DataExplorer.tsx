@@ -10,8 +10,8 @@ import _ from 'lodash'
 // Utils
 import {stripPrefix} from 'src/utils/basepath'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {getConfig} from 'src/dashboards/utils/cellGetters'
-import {defaultQueryDraft} from 'src/shared/utils/timeMachine'
+import {getConfig, getNewDashboardCell} from 'src/dashboards/utils/cellGetters'
+import {defaultQueryDraft, initialStateFromCell} from 'src/shared/utils/timeMachine'
 import {
   TimeMachineContainer,
   TimeMachineContextConsumer,
@@ -21,6 +21,8 @@ import {
 import WriteDataForm from 'src/data_explorer/components/WriteDataForm'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
 import SendToDashboardOverlay from 'src/data_explorer/components/SendToDashboardOverlay'
+import SaveCellOverlay from 'src/data_explorer/components/SaveCellOverlay'
+import CellListOverlay from 'src/data_explorer/components/CellListOverlay'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import TimeMachine from 'src/shared/components/TimeMachine/TimeMachine'
 import DEHeader from 'src/data_explorer/components/DEHeader'
@@ -46,6 +48,7 @@ import {
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
 } from 'src/shared/constants'
+import {NEW_EMPTY_DASHBOARD} from 'src/dashboards/constants'
 
 // Types
 import {
@@ -66,6 +69,7 @@ import {
 } from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Links} from 'src/types/flux'
+import {DashboardItem} from 'src/types/dashboards'
 
 interface PassedProps {
   source: Source
@@ -73,14 +77,19 @@ interface PassedProps {
   queryConfigs: QueryConfig[]
   updateSourceLink: typeof updateSourceLinkAction
   autoRefresh: number
-  handleChooseAutoRefresh: () => void
+  handleChooseAutoRefresh: typeof setAutoRefresh
   router?: InjectedRouter
   location?: Location
   manualRefresh: number
   dashboards: Dashboard[]
   onManualRefresh: () => void
   errorThrownAction: () => void
-  writeLineProtocol: () => void
+  writeLineProtocol: (
+    source: Source,
+    database: string,
+    content: string,
+    precision?: string
+  ) => void
   handleGetDashboards: () => Dashboard[]
   sendDashboardCell: (
     dashboard: Dashboard,
@@ -116,10 +125,13 @@ type Props = PassedProps & ConnectedProps & Auth
 
 interface State {
   isWriteFormVisible: boolean
+  isCellListVisible: boolean
+  isSaveCellVisible: boolean
   isSendToDashboardVisible: boolean
   isComponentMounted: boolean
   activeQueryIndex: number
-  isSaveCell: boolean
+  editingDashboardItem?: DashboardItem
+  lastSelectedDashboardItemID?: string
 }
 
 @ErrorHandling
@@ -129,10 +141,13 @@ export class DataExplorer extends PureComponent<Props, State> {
 
     this.state = {
       isWriteFormVisible: false,
+      isCellListVisible: false,
+      isSaveCellVisible: false,
       isSendToDashboardVisible: false,
       isComponentMounted: false,
       activeQueryIndex: 0,
-      isSaveCell: false,
+      editingDashboardItem: null,
+      lastSelectedDashboardItemID: '',
     }
 
     props.onResetTimeMachine()
@@ -193,6 +208,8 @@ export class DataExplorer extends PureComponent<Props, State> {
     return (
       <>
         {this.writeDataForm}
+        {this.cellListOverlay}
+        {this.saveCellOverlay}
         {this.sendToDashboardOverlay}
         <div className="deceo--page">
           <TimeMachine
@@ -211,6 +228,8 @@ export class DataExplorer extends PureComponent<Props, State> {
             isUsingAuth={isUsingAuth}
             refresh={autoRefresh}
             timeZone={timeZone}
+            selectedCellName={this.state.editingDashboardItem?.name}
+            onClearSelectedCell={this.handleClearSelectedCell}
           >
             {(activeEditorTab, onSetActiveEditorTab) => (
               <DEHeader
@@ -220,7 +239,9 @@ export class DataExplorer extends PureComponent<Props, State> {
                 activeEditorTab={activeEditorTab}
                 onOpenWriteData={this.handleOpenWriteData}
                 onSetActiveEditorTab={onSetActiveEditorTab}
-                toggleSendToDashboard={this.toggleSendToDashboard}
+                onOpenCellList={this.handleOpenCellList}
+                onOpenSaveCell={this.handleOpenSaveCell}
+                onOpenSendToDashboard={this.handleOpenSendToDashboard}
               />
             )}
           </TimeMachine>
@@ -339,19 +360,55 @@ export class DataExplorer extends PureComponent<Props, State> {
       notify,
     } = this.props
 
-    const {isSendToDashboardVisible, activeQueryIndex, isSaveCell} = this.state
+    const {isSendToDashboardVisible, activeQueryIndex} = this.state
     return (
       <Authorized requiredRole={EDITOR_ROLE}>
         <OverlayTechnology visible={isSendToDashboardVisible}>
           <SendToDashboardOverlay
             notify={notify}
-            onCancel={this.toggleSendToDashboard}
+            onCancel={this.handleCloseSendToDashboard}
             source={source}
             dashboards={dashboards}
             activeQueryIndex={activeQueryIndex}
             handleGetDashboards={handleGetDashboards}
             sendDashboardCell={sendDashboardCell}
-            isSaveCell={isSaveCell}
+          />
+        </OverlayTechnology>
+      </Authorized>
+    )
+  }
+
+  private get saveCellOverlay(): JSX.Element {
+    const {source, notify} = this.props
+    const {isSaveCellVisible, activeQueryIndex, editingDashboardItem} = this.state
+    return (
+      <Authorized requiredRole={EDITOR_ROLE}>
+        <OverlayTechnology visible={isSaveCellVisible}>
+          <SaveCellOverlay
+            notify={notify}
+            onCancel={this.handleCloseSaveCell}
+            source={source}
+            activeQueryIndex={activeQueryIndex}
+            editingDashboardItem={editingDashboardItem}
+            initialSelectedItemId={this.state.lastSelectedDashboardItemID}
+            onSavedDashboardItem={this.handleSavedDashboardItem}
+          />
+        </OverlayTechnology>
+      </Authorized>
+    )
+  }
+
+  private get cellListOverlay(): JSX.Element {
+    const {notify} = this.props
+    const {isCellListVisible, lastSelectedDashboardItemID} = this.state
+    return (
+      <Authorized requiredRole={EDITOR_ROLE}>
+        <OverlayTechnology visible={isCellListVisible}>
+          <CellListOverlay
+            notify={notify}
+            onCancel={this.handleCloseCellList}
+            onEditItem={this.handleEditDashboardItem}
+            selectedItemId={lastSelectedDashboardItemID}
           />
         </OverlayTechnology>
       </Authorized>
@@ -421,10 +478,55 @@ export class DataExplorer extends PureComponent<Props, State> {
     return _.get(this.props.queryConfigs, ['0', 'database'], null)
   }
 
-  private toggleSendToDashboard = (isSaveCell?: boolean) => {
+  private handleOpenSendToDashboard = () => {
+    this.setState({isSendToDashboardVisible: true})
+  }
+
+  private handleCloseSendToDashboard = () => {
+    this.setState({isSendToDashboardVisible: false})
+  }
+
+  private handleOpenSaveCell = () => {
+    this.setState({isSaveCellVisible: true})
+  }
+
+  private handleCloseSaveCell = () => {
+    this.setState({isSaveCellVisible: false})
+  }
+
+  private handleOpenCellList = () => {
+    this.setState({isCellListVisible: true})
+  }
+
+  private handleCloseCellList = () => {
+    this.setState({isCellListVisible: false})
+  }
+
+  private handleEditDashboardItem = (item: DashboardItem) => {
+    this.props.onResetTimeMachine(initialStateFromCell(item.content))
     this.setState({
-      isSendToDashboardVisible: !this.state.isSendToDashboardVisible,
-      isSaveCell: isSaveCell,
+      editingDashboardItem: item,
+      lastSelectedDashboardItemID: item.id,
+      isCellListVisible: false,
+    })
+  }
+
+  private handleSavedDashboardItem = (item: DashboardItem) => {
+    if (!item) {
+      return
+    }
+    this.setState({
+      editingDashboardItem: item,
+      lastSelectedDashboardItemID: item.id,
+    })
+  }
+
+  private handleClearSelectedCell = () => {
+    const emptyCell = getNewDashboardCell(NEW_EMPTY_DASHBOARD as Dashboard)
+    this.props.onResetTimeMachine(initialStateFromCell(emptyCell))
+    this.setState({
+      editingDashboardItem: null,
+      lastSelectedDashboardItemID: '',
     })
   }
 
@@ -484,7 +586,7 @@ const mstp = state => {
   }
 }
 
-const mdtp = {
+const mdtp: any = {
   handleChooseAutoRefresh: setAutoRefresh,
   errorThrownAction: errorThrown,
   writeLineProtocol: writeLineProtocolAsync,

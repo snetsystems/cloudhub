@@ -23,7 +23,9 @@ interface Props {
   activeEditorTab: CEOTabs
   onSetTimeZone: typeof setTimeZone
   onOpenWriteData: () => void
-  toggleSendToDashboard: (isSaveCell?: boolean) => void
+  onOpenCellList: () => void
+  onOpenSaveCell: () => void
+  onOpenSendToDashboard: () => void
   onSetActiveEditorTab: (activeEditorTab: CEOTabs) => void
 }
 
@@ -36,7 +38,9 @@ class DEHeader extends Component<Props> {
       onOpenWriteData,
       activeEditorTab,
       onSetActiveEditorTab,
-      toggleSendToDashboard,
+      onOpenCellList,
+      onOpenSaveCell,
+      onOpenSendToDashboard,
     } = this.props
 
     return (
@@ -78,7 +82,15 @@ class DEHeader extends Component<Props> {
           </button>
           <Authorized requiredRole={EDITOR_ROLE}>
             <button
-              onClick={() => toggleSendToDashboard(true)}
+              onClick={onOpenCellList}
+              className="button button-sm button-primary"
+            >
+              Cell List
+            </button>
+          </Authorized>
+          <Authorized requiredRole={EDITOR_ROLE}>
+            <button
+              onClick={onOpenSaveCell}
               className="button button-sm button-primary"
             >
               Save Cell
@@ -86,7 +98,7 @@ class DEHeader extends Component<Props> {
           </Authorized>
           <Authorized requiredRole={EDITOR_ROLE}>
             <button
-              onClick={() => toggleSendToDashboard(false)}
+              onClick={onOpenSendToDashboard}
               className="button button-sm button-success"
             >
               Send to Dashboard
