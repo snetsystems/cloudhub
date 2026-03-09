@@ -7,7 +7,9 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 interface DefaultProps {
   autoHide: boolean
   autoHeight: boolean
-  maxHeight: number
+  // Passed through to react-custom-scrollbars autoHeightMax/Min.
+  maxHeight: React.CSSProperties['maxHeight']
+  minHeight: React.CSSProperties['minHeight']
   setScrollTop: (value: React.MouseEvent<HTMLElement>) => void
   style: React.CSSProperties
 }
@@ -24,6 +26,7 @@ class FancyScrollbar extends Component<Props & Partial<DefaultProps>> {
     autoHide: true,
     autoHeight: false,
     maxHeight: null,
+    minHeight: null,
     style: {},
     setScrollTop: () => {},
   }
@@ -72,6 +75,7 @@ class FancyScrollbar extends Component<Props & Partial<DefaultProps>> {
       children,
       className,
       maxHeight,
+      minHeight,
       setScrollTop,
       style,
     } = this.props
@@ -89,6 +93,7 @@ class FancyScrollbar extends Component<Props & Partial<DefaultProps>> {
         autoHideDuration={250}
         autoHeight={autoHeight}
         autoHeightMax={maxHeight}
+        autoHeightMin={minHeight}
         // renderTrackHorizontal={this.handleMakeDiv('track-h')}
         renderTrackVertical={this.handleMakeDiv('track-v')}
         renderThumbHorizontal={this.handleMakeDiv('thumb-h')}
