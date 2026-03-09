@@ -26,7 +26,6 @@ function CellList({
   const [items, setItems] = useState<LibraryCell[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -85,17 +84,7 @@ function CellList({
   if (loading) {
     return (
       <div className="fixedmodal-list" style={{padding: '8px'}}>
-        <p
-          style={{
-            color: '#8b8f99',
-            fontSize: '13px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Loading...
-        </p>
+        <p className="fixed-modal-msg">Loading...</p>
       </div>
     )
   }
@@ -103,17 +92,7 @@ function CellList({
   if (items.length === 0) {
     return (
       <div className="fixedmodal-list" style={{padding: '8px'}}>
-        <p
-          style={{
-            color: '#8b8f99',
-            fontSize: '13px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          No library cells found.
-        </p>
+        <p className="fixed-modal-msg">No library cells found.</p>
       </div>
     )
   }
@@ -121,7 +100,6 @@ function CellList({
   return (
     <div className="fixedmodal-list">
       {items.map(item => {
-        const isHovered = hoveredId === item.id
         const isSelected =
           mode === 'manage'
             ? selectedItemId === item.id
@@ -133,8 +111,6 @@ function CellList({
             role="button"
             tabIndex={0}
             className="fixedmodal-list-row"
-            onMouseEnter={() => setHoveredId(item.id)}
-            onMouseLeave={() => setHoveredId(null)}
             onClick={() => {
               if (mode === 'select') {
                 handleToggle(item, !isSelected)
@@ -149,10 +125,6 @@ function CellList({
                   return
                 }
               }
-            }}
-            style={{
-              backgroundColor: isHovered ? '#31313d' : '#202028',
-              cursor: 'pointer',
             }}
           >
             <div className="fixedmodal-list-row__inner">
@@ -177,48 +149,17 @@ function CellList({
                   />
                 </div>
               )}
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: '#383846',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  overflow: 'hidden',
-                }}
-              >
+              <div className="fixedmodal-list-row__icon-wrapper">
                 <CellTypeIcon type={item.type} />
               </div>
 
-              <div style={{flex: 1, minWidth: 0}}>
-                <div
-                  style={{
-                    fontWeight: 500,
-                    fontSize: '13px',
-                    color: isHovered ? '#eeeff2' : '#bec2cc',
-                    marginBottom: '2px',
-                    transition: 'color 0.25s ease',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                  title={item.name}
-                >
+              <div className="fixedmodal-list-row__name-wrapper">
+                <div className="fixedmodal-list-row__name" title={item.name}>
                   {item.name}
                 </div>
+
                 <div
-                  style={{
-                    fontSize: '12px',
-                    color: isHovered ? '#bec2cc' : '#8b8f99',
-                    lineHeight: 1.4,
-                    transition: 'color 0.25s ease',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
+                  className="fixedmodal-list-row__description"
                   title={item.description || `Display as ${item.type}`}
                 >
                   {item.description || `Display as ${item.type}`}
@@ -258,9 +199,7 @@ function CellList({
                         }
                       }
                       if (deleted) {
-                        setItems(prev =>
-                          prev.filter(prevItem => prevItem.id !== item.id)
-                        )
+                        prev => prev.filter(prevItem => prevItem.id !== item.id)
                       }
                     }}
                   />
