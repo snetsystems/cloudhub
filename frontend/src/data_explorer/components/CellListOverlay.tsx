@@ -36,7 +36,12 @@ class CellListOverlay extends PureComponent<Props> {
           <Form>
             <Form.Element>
               <div className="cell-list-overlay-container">
-                <FancyScrollbar autoHeight={false}>
+                <FancyScrollbar
+                  autoHeight={true}
+                  minHeight={100}
+                  maxHeight="70vh"
+                  className="cell-list-overlay-scrollbar"
+                >
                   <CellList
                     mode="manage"
                     selectedItemId={selectedItemId}
