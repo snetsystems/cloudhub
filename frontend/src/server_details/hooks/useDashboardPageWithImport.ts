@@ -135,7 +135,7 @@ export function useDashboardPageWithImport(
   const handleSelectionChange = async (items: ImportSelectionPayload) => {
     const dashboardCells = [
       ...items.dashboards.flatMap(d => d.cells),
-      ...(items.dashboardItems ?? []).map(di => di.content),
+      ...(items.libraryCells ?? []).map(lc => lc.content),
     ]
     if (dashboardCells.length === 0 || !currentDashboardId) return
 

@@ -266,7 +266,7 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       )
     })
 
-    const newDashboardItem = (
+    const newDashboardOption = (
       <MultiSelectDropdown.Item
         key={NEW_DASHBOARD_ID}
         id={NEW_DASHBOARD_ID}
@@ -283,7 +283,7 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       <MultiSelectDropdown.Divider key={'divider'} id={'divider'} />
     )
 
-    return [newDashboardItem, divider, ...items]
+    return [newDashboardOption, divider, ...items]
   }
 
   private get isNewDashboardSelected(): boolean {

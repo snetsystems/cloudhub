@@ -231,7 +231,7 @@ function FixedCells({
       return {
         dashboards,
         cellTypes: [] as CellType[],
-        dashboardItems: [],
+        libraryCells: [],
         templates: templateVars,
         importStrategy: 'mergeByCellId' as const,
       }

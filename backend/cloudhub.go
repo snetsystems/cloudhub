@@ -65,7 +65,7 @@ const (
 	ErrInvalidShardID                  = Error("invalid shard ID")
 	ErrKafkaPublishFailed              = Error("failed to publish config to kafka")
 	ErrKafkaPartitionCountFetchFailed  = Error("failed to get kafka partition count")
-	ErrDashboardItemNotFound           = Error("dashboard item not found")
+	ErrLibraryCellNotFound = Error("library cell not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -765,7 +765,6 @@ type Dashboard struct {
 	Organization string          `json:"organization"`      // Organization is the organization ID that resource belongs to
 	Type               string     `json:"type,omitempty"`    // Type: "normal" (default) or "builtin" (fixed-cell template dashboard)
 	Version            string     `json:"version,omitempty"` // Template version for fixed-cell template dashboards (e.g., "1.0.0")
-	UpdatedAt string `json:"updatedAt,omitempty"` // When the dashboard was last updated (RFC3339, UTC); e.g. fixed-cell template sync
 }
 
 // UnmarshalJSON unmarshals a string ID into a DashboardID (int).
@@ -1783,39 +1782,36 @@ type DeviceMappingsStore interface {
 	BatchAddDevices(ctx context.Context, metas []*DeviceMeta) error
 }
 
-// DashboardItemMeta represents metadata for a dashboard item.
-type DashboardItemMeta struct {
-	CreatedAt string `json:"createdAt"` // Creation timestamp (RFC3339)
-	UpdatedAt string `json:"updatedAt"` // Last update timestamp (RFC3339)
-	CreatedBy string `json:"createdBy"` // User ID who created the item
-	UpdatedBy string `json:"updatedBy"` // User ID who last updated the item
+// LibraryCellMeta holds metadata for a library cell. UpdatedAt is set on create and update.
+type LibraryCellMeta struct {
+	UpdatedAt string `json:"updatedAt"` // Last update timestamp (RFC3339, UTC)
 }
 
-// DashboardItem represents a reusable visualization panel stored in the library.
-type DashboardItem struct {
-	ID           string            `json:"id"`                    // Unique identifier
-	Name         string            `json:"name"`                  // User-defined name for the item
-	Description  string            `json:"description,omitempty"` // Optional description
-	Organization string            `json:"organization"`          // Organization ID that owns this item
-	Type         string            `json:"type"`                  // Visualization type (e.g., "line", "gauge", "table")
-	Content      DashboardCell     `json:"content"`               // Full cell definition (queries + visualization)
-	Meta         DashboardItemMeta `json:"meta"`                  // Metadata (created/updated timestamps)
+// LibraryCell is a single cell in the cell library (reusable visualization panel).
+type LibraryCell struct {
+	ID           string          `json:"id"`                    // Unique identifier
+	Name         string          `json:"name"`                  // User-defined name for the cell
+	Description  string          `json:"description,omitempty"` // Optional description
+	Organization string          `json:"organization"`          // Organization ID that owns this cell
+	Type         string          `json:"type"`                  // Visualization type (e.g., "line", "gauge", "table")
+	Content      DashboardCell   `json:"content"`               // Full cell definition (queries + visualization)
+	Meta         LibraryCellMeta `json:"meta"`                  // Metadata (UpdatedAt set on create/update)
 }
 
-// DashboardItemsStore is the storage interface for dashboard items (library panels).
-type DashboardItemsStore interface {
-	// All returns all dashboard items.
-	All(ctx context.Context) ([]DashboardItem, error)
+// CellLibraryStore is the storage interface for the cell library (library panels).
+type CellLibraryStore interface {
+	// All returns all library cells.
+	All(ctx context.Context) ([]LibraryCell, error)
 
-	// Add creates a new dashboard item and returns it with generated ID.
-	Add(ctx context.Context, item DashboardItem) (DashboardItem, error)
+	// Add creates a new library cell and returns it with generated ID.
+	Add(ctx context.Context, cell LibraryCell) (LibraryCell, error)
 
-	// Get retrieves a dashboard item by ID.
-	Get(ctx context.Context, id string) (DashboardItem, error)
+	// Get retrieves a library cell by ID.
+	Get(ctx context.Context, id string) (LibraryCell, error)
 
-	// Delete removes a dashboard item by ID.
-	Delete(ctx context.Context, item DashboardItem) error
+	// Delete removes a library cell by ID.
+	Delete(ctx context.Context, cell LibraryCell) error
 
-	// Update replaces an existing dashboard item.
-	Update(ctx context.Context, item DashboardItem) error
+	// Update replaces an existing library cell.
+	Update(ctx context.Context, cell LibraryCell) error
 }

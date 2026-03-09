@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/builtin"
@@ -109,7 +108,7 @@ func InitializeFixedCells(
 }
 
 // ApplyFixedCellToOrg updates the given org's fixed-cell dashboard from the latest template:
-// - Templates, Version, UpdatedAt: replaced from template.
+// - Templates, Version: replaced from template.
 // - Cells:
 //   - For cells that already exist on the org dashboard (matched by ID): Queries is replaced
 //     from the template for all cell types (component, line, line-plus-single-stat, etc.).
@@ -219,7 +218,6 @@ func ApplyFixedCellToOrg(
 
 	dash.Templates = template.Templates
 	dash.Version = template.Version
-	dash.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 
 	if err := dashboardsStore.Update(ctx, dash); err != nil {
 		logger.

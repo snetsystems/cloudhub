@@ -53,7 +53,6 @@ type dashboardResponse struct {
 	Version         string                  `json:"version,omitempty"`         // Current version of the dashboard
 	LatestVersion   string                  `json:"latestVersion,omitempty"`   // Latest version available (for fixed-cell dashboards)
 	UpdateAvailable bool                    `json:"updateAvailable,omitempty"` // True if a newer template version is available
-	UpdatedAt       string                  `json:"updatedAt,omitempty"`       // RFC3339; when dashboard was last updated
 	Links           dashboardLinks          `json:"links"`
 }
 
@@ -80,9 +79,6 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 			Cells:     fmt.Sprintf("%s/%d/cells", base, dd.ID),
 			Templates: fmt.Sprintf("%s/%d/templates", base, dd.ID),
 		},
-	}
-	if d.UpdatedAt != "" {
-		resp.UpdatedAt = d.UpdatedAt
 	}
 	return resp
 }
@@ -498,7 +494,6 @@ func DashboardDefaults(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Organization = d.Organization
 	newDash.Type = getDashboardType(d.Type)
 	newDash.Version = d.Version
-	newDash.UpdatedAt = d.UpdatedAt
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {

@@ -349,7 +349,7 @@ function DashboardList({
       onSelectionChange({
         dashboards: dashboardsWithSelectedCellsOnly,
         cellTypes: [],
-        dashboardItems: [],
+        libraryCells: [],
         templates: templatesWithConflict,
         importStrategy: 'append',
       })
@@ -407,7 +407,7 @@ function DashboardList({
       onSelectionChange({
         dashboards: dashboardsWithSelectedCellsOnly,
         cellTypes: [],
-        dashboardItems: [],
+        libraryCells: [],
         templates: templatesWithConflict,
         importStrategy: 'append',
       })

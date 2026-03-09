@@ -6126,16 +6126,16 @@
         }
       }
     },
-    "/dashboard-items": {
+    "/cell-library": {
       "get": {
-        "tags": ["dashboard-items"],
+        "tags": ["cell-library"],
         "summary": "List all dashboard items",
         "description": "Returns all dashboard items (library panels) for the current organization",
         "responses": {
           "200": {
             "description": "An array of dashboard items",
             "schema": {
-              "$ref": "#/definitions/DashboardItems"
+              "$ref": "#/definitions/LibraryCells"
             }
           },
           "default": {
@@ -6147,17 +6147,17 @@
         }
       },
       "post": {
-        "tags": ["dashboard-items"],
+        "tags": ["cell-library"],
         "summary": "Create a new dashboard item",
         "description": "Create a new reusable dashboard item (library panel)",
         "parameters": [
           {
-            "name": "dashboardItem",
+            "name": "libraryCell",
             "in": "body",
             "description": "Dashboard item to create",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/DashboardItemCreate"
+              "$ref": "#/definitions/LibraryCellCreate"
             }
           }
         ],
@@ -6165,7 +6165,7 @@
           "201": {
             "description": "Dashboard item created successfully",
             "schema": {
-              "$ref": "#/definitions/DashboardItem"
+              "$ref": "#/definitions/LibraryCell"
             }
           },
           "400": {
@@ -6183,9 +6183,9 @@
         }
       }
     },
-    "/dashboard-items/{id}": {
+    "/cell-library/{id}": {
       "get": {
-        "tags": ["dashboard-items"],
+        "tags": ["cell-library"],
         "summary": "Get a specific dashboard item",
         "parameters": [
           {
@@ -6200,7 +6200,7 @@
           "200": {
             "description": "Dashboard item details",
             "schema": {
-              "$ref": "#/definitions/DashboardItem"
+              "$ref": "#/definitions/LibraryCell"
             }
           },
           "404": {
@@ -6218,7 +6218,7 @@
         }
       },
       "put": {
-        "tags": ["dashboard-items"],
+        "tags": ["cell-library"],
         "summary": "Replace a dashboard item",
         "parameters": [
           {
@@ -6229,12 +6229,12 @@
             "required": true
           },
           {
-            "name": "dashboardItem",
+            "name": "libraryCell",
             "in": "body",
             "description": "Dashboard item to update",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/DashboardItemCreate"
+              "$ref": "#/definitions/LibraryCellCreate"
             }
           }
         ],
@@ -6242,7 +6242,7 @@
           "200": {
             "description": "Dashboard item updated successfully",
             "schema": {
-              "$ref": "#/definitions/DashboardItem"
+              "$ref": "#/definitions/LibraryCell"
             }
           },
           "404": {
@@ -6260,7 +6260,7 @@
         }
       },
       "patch": {
-        "tags": ["dashboard-items"],
+        "tags": ["cell-library"],
         "summary": "Partially update a dashboard item",
         "parameters": [
           {
@@ -6271,12 +6271,12 @@
             "required": true
           },
           {
-            "name": "dashboardItem",
+            "name": "libraryCell",
             "in": "body",
             "description": "Fields to update",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/DashboardItemPatch"
+              "$ref": "#/definitions/LibraryCellPatch"
             }
           }
         ],
@@ -6284,7 +6284,7 @@
           "200": {
             "description": "Dashboard item updated successfully",
             "schema": {
-              "$ref": "#/definitions/DashboardItem"
+              "$ref": "#/definitions/LibraryCell"
             }
           },
           "404": {
@@ -6302,7 +6302,7 @@
         }
       },
       "delete": {
-        "tags": ["dashboard-items"],
+        "tags": ["cell-library"],
         "summary": "Delete a dashboard item",
         "parameters": [
           {
@@ -11198,7 +11198,18 @@
       },
       "required": ["hostname", "esSource"]
     },
-    "DashboardItem": {
+    "LibraryCellMeta": {
+      "type": "object",
+      "description": "Metadata for a library cell. UpdatedAt is set on create and update.",
+      "properties": {
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp (RFC3339, UTC)",
+          "readOnly": true
+        }
+      }
+    },
+    "LibraryCell": {
       "type": "object",
       "description": "A reusable visualization panel stored in the library",
       "properties": {
@@ -11229,7 +11240,8 @@
           "description": "Full cell definition (queries + visualization)"
         },
         "meta": {
-          "$ref": "#/definitions/DashboardItemMeta"
+          "$ref": "#/definitions/LibraryCellMeta",
+          "description": "Metadata (UpdatedAt set on create/update)"
         },
         "links": {
           "type": "object",
@@ -11242,19 +11254,19 @@
         }
       }
     },
-    "DashboardItems": {
+    "LibraryCells": {
       "type": "object",
       "description": "A list of dashboard items",
       "properties": {
-        "dashboardItems": {
+        "libraryCells": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DashboardItem"
+            "$ref": "#/definitions/LibraryCell"
           }
         }
       }
     },
-    "DashboardItemCreate": {
+    "LibraryCellCreate": {
       "type": "object",
       "description": "Request body for creating a dashboard item",
       "required": ["name", "type"],
@@ -11277,7 +11289,7 @@
         }
       }
     },
-    "DashboardItemPatch": {
+    "LibraryCellPatch": {
       "type": "object",
       "description": "Request body for partially updating a dashboard item",
       "properties": {
@@ -11296,30 +11308,6 @@
         "content": {
           "$ref": "#/definitions/Cell",
           "description": "Full cell definition"
-        }
-      }
-    },
-    "DashboardItemMeta": {
-      "type": "object",
-      "description": "Metadata for a dashboard item",
-      "properties": {
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Creation timestamp (RFC3339)"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last update timestamp (RFC3339)"
-        },
-        "createdBy": {
-          "type": "string",
-          "description": "User who created the item"
-        },
-        "updatedBy": {
-          "type": "string",
-          "description": "User who last updated the item"
         }
       }
     }

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
-import {DashboardItem} from 'src/types/dashboards'
-import {getDashboardItems} from 'src/dashboards/apis'
+import {LibraryCell} from 'src/types/dashboards'
+import {getLibraryCells} from 'src/dashboards/apis'
 import {CellTypeIcon} from 'src/server_details/components/CellListIcons'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {Button, ComponentSize, IconFont} from 'src/reusable_ui'
@@ -10,9 +10,9 @@ interface CellListProps {
   onSelectionChange?: (items: ImportSelectionPayload) => void
   mode?: 'select' | 'manage'
   selectedItemId?: string
-  onEditItem?: (item: DashboardItem) => void
-  onDeleteItem?: (item: DashboardItem) => Promise<void> | void
-  onItemsLoaded?: (items: DashboardItem[]) => void
+  onEditItem?: (item: LibraryCell) => void
+  onDeleteItem?: (item: LibraryCell) => Promise<void> | void
+  onItemsLoaded?: (items: LibraryCell[]) => void
 }
 
 function CellList({
@@ -23,7 +23,7 @@ function CellList({
   onDeleteItem,
   onItemsLoaded,
 }: CellListProps) {
-  const [items, setItems] = useState<DashboardItem[]>([])
+  const [items, setItems] = useState<LibraryCell[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [hoveredId, setHoveredId] = useState<string | null>(null)
@@ -31,12 +31,12 @@ function CellList({
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    getDashboardItems()
+    getLibraryCells()
       .then(res => {
-        if (!cancelled && res?.data?.dashboardItems) {
-          setItems(res.data.dashboardItems)
+        if (!cancelled && res?.data?.libraryCells) {
+          setItems(res.data.libraryCells)
           if (onItemsLoaded) {
-            onItemsLoaded(res.data.dashboardItems)
+            onItemsLoaded(res.data.libraryCells)
           }
         }
       })
@@ -61,7 +61,7 @@ function CellList({
     setSelectedIds(new Set([selectedItemId]))
   }, [mode, selectedItemId])
 
-  const handleToggle = (item: DashboardItem, checked: boolean) => {
+  const handleToggle = (item: LibraryCell, checked: boolean) => {
     const newSelected = new Set(selectedIds)
     if (checked) {
       newSelected.add(item.id)
@@ -75,7 +75,7 @@ function CellList({
       onSelectionChange({
         dashboards: [],
         cellTypes: [],
-        dashboardItems: selectedItems,
+        libraryCells: selectedItems,
         templates: [],
         importStrategy: 'append',
       })
@@ -112,7 +112,7 @@ function CellList({
             whiteSpace: 'nowrap',
           }}
         >
-          No dashboard items found.
+          No library cells found.
         </p>
       </div>
     )

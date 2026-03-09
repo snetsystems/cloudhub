@@ -32,7 +32,7 @@ var (
 	dLNxRstStgBucket               = []byte("DLNxRstStg")
 	esSourcesBucket                = []byte("EsSources")
 	deviceMappingsBucket           = []byte("DeviceMappings")
-	dashboardItemsBucket           = []byte("DashboardItems")
+	libraryCellsBucket = []byte("LibraryCells")
 )
 
 // Store is an interface for a generic key value store. It is modeled after
@@ -143,7 +143,7 @@ func (s *Service) initialize(ctx context.Context, tx Tx) error {
 		dLNxRstStgBucket,
 		esSourcesBucket,
 		deviceMappingsBucket,
-		dashboardItemsBucket,
+		libraryCellsBucket,
 	}
 
 	for i := range buckets {
@@ -264,7 +264,7 @@ func (s *Service) EsSourcesStore() cloudhub.EsSourcesStore {
 	return &esSourcesStore{client: s}
 }
 
-// DashboardItemsStore returns a cloudhub.DashboardItemsStore.
-func (s *Service) DashboardItemsStore() cloudhub.DashboardItemsStore {
-	return &dashboardItemsStore{client: s, IDs: &id.UUID{}}
+// CellLibraryStore returns a cloudhub.CellLibraryStore.
+func (s *Service) CellLibraryStore() cloudhub.CellLibraryStore {
+	return &cellLibraryStore{client: s, IDs: &id.UUID{}}
 }

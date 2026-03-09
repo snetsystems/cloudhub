@@ -31,7 +31,7 @@ function FixedModal({
   const [selection, setSelection] = useState<ImportSelectionPayload>({
     dashboards: [],
     cellTypes: [],
-    dashboardItems: [],
+    libraryCells: [],
     templates: [],
     importStrategy: 'append',
   })
@@ -53,10 +53,10 @@ function FixedModal({
         items.cellTypes.length > 0
           ? items.cellTypes
           : selectionRef.current.cellTypes,
-      dashboardItems:
-        items.dashboardItems !== undefined
-          ? items.dashboardItems
-          : selectionRef.current.dashboardItems ?? [],
+      libraryCells:
+        items.libraryCells !== undefined
+          ? items.libraryCells
+          : selectionRef.current.libraryCells ?? [],
       templates:
         items.templates.length > 0
           ? items.templates

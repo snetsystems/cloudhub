@@ -159,8 +159,6 @@ export interface Dashboard {
   version?: string
   latestVersion?: string
   updateAvailable?: boolean
-  /** RFC3339; when dashboard was last updated (e.g. builtin sync) */
-  updatedAt?: string
 }
 
 export const DashboardType = {
@@ -170,21 +168,20 @@ export const DashboardType = {
 
 export type DashboardTypeValue = typeof DashboardType[keyof typeof DashboardType]
 
-export interface DashboardItemMeta {
-  createdAt?: string
+/** Metadata for a library cell. UpdatedAt is set on create and update. */
+export interface LibraryCellMeta {
   updatedAt?: string
-  createdBy?: string
-  updatedBy?: string
 }
 
-export interface DashboardItem {
+/** A single cell in the cell library (reusable panel). */
+export interface LibraryCell {
   id: string
   name: string
   description?: string
   organization?: string
   type: string
   content: Cell
-  meta?: DashboardItemMeta
+  meta?: LibraryCellMeta
   links?: {self?: string}
 }
 

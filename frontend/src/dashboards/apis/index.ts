@@ -17,7 +17,7 @@ import {
 import {
   Cell,
   Dashboard,
-  DashboardItem,
+  LibraryCell,
   DashboardSwitcherLinks,
 } from 'src/types/dashboards'
 import {Source, Protoboard} from 'src/types'
@@ -132,27 +132,55 @@ export const createDashboard = async dashboard => {
   }
 }
 
-export interface GetDashboardItemsResponse {
-  dashboardItems: DashboardItem[]
+export interface GetLibraryCellsResponse {
+  libraryCells: LibraryCell[]
 }
 
-export const getDashboardItems = (): Promise<
-  AxiosResponse<GetDashboardItemsResponse>
+export const getLibraryCells = (): Promise<
+  AxiosResponse<GetLibraryCellsResponse>
 > => {
-  return AJAX<GetDashboardItemsResponse>({
+  return AJAX<GetLibraryCellsResponse>({
     method: 'GET',
-    url: '/cloudhub/v1/dashboard-items',
-  }) as Promise<AxiosResponse<GetDashboardItemsResponse>>
+    url: '/cloudhub/v1/cell-library',
+  }) as Promise<AxiosResponse<GetLibraryCellsResponse>>
 }
 
-export const createDashboardItem = async (
-  dashboardItem: Partial<DashboardItem>
+export const createLibraryCell = async (
+  libraryCell: Partial<LibraryCell>
 ) => {
   try {
     return await AJAX({
       method: 'POST',
-      url: '/cloudhub/v1/dashboard-items',
-      data: dashboardItem,
+      url: '/cloudhub/v1/cell-library',
+      data: libraryCell,
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const updateLibraryCell = async (
+  id: string,
+  patch: Partial<Pick<LibraryCell, 'name' | 'description' | 'type' | 'content'>>
+) => {
+  try {
+    return await AJAX({
+      method: 'PATCH',
+      url: `/cloudhub/v1/cell-library/${encodeURIComponent(id)}`,
+      data: patch,
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const deleteLibraryCell = async (id: string) => {
+  try {
+    return await AJAX({
+      method: 'DELETE',
+      url: `/cloudhub/v1/cell-library/${encodeURIComponent(id)}`,
     })
   } catch (error) {
     console.error(error)

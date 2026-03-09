@@ -69,7 +69,7 @@ import {
 } from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Links} from 'src/types/flux'
-import {DashboardItem} from 'src/types/dashboards'
+import {LibraryCell} from 'src/types/dashboards'
 
 interface PassedProps {
   source: Source
@@ -130,8 +130,8 @@ interface State {
   isSendToDashboardVisible: boolean
   isComponentMounted: boolean
   activeQueryIndex: number
-  editingDashboardItem?: DashboardItem
-  lastSelectedDashboardItemID?: string
+  editingLibraryCell?: LibraryCell
+  lastSelectedLibraryCellID?: string
 }
 
 @ErrorHandling
@@ -146,8 +146,8 @@ export class DataExplorer extends PureComponent<Props, State> {
       isSendToDashboardVisible: false,
       isComponentMounted: false,
       activeQueryIndex: 0,
-      editingDashboardItem: null,
-      lastSelectedDashboardItemID: '',
+      editingLibraryCell: null,
+      lastSelectedLibraryCellID: '',
     }
 
     props.onResetTimeMachine()
@@ -228,7 +228,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             isUsingAuth={isUsingAuth}
             refresh={autoRefresh}
             timeZone={timeZone}
-            selectedCellName={this.state.editingDashboardItem?.name}
+            selectedCellName={this.state.editingLibraryCell?.name}
             onClearSelectedCell={this.handleClearSelectedCell}
           >
             {(activeEditorTab, onSetActiveEditorTab) => (
@@ -380,7 +380,7 @@ export class DataExplorer extends PureComponent<Props, State> {
 
   private get saveCellOverlay(): JSX.Element {
     const {source, notify} = this.props
-    const {isSaveCellVisible, activeQueryIndex, editingDashboardItem} = this.state
+    const {isSaveCellVisible, activeQueryIndex, editingLibraryCell} = this.state
     return (
       <Authorized requiredRole={EDITOR_ROLE}>
         <OverlayTechnology visible={isSaveCellVisible}>
@@ -389,9 +389,9 @@ export class DataExplorer extends PureComponent<Props, State> {
             onCancel={this.handleCloseSaveCell}
             source={source}
             activeQueryIndex={activeQueryIndex}
-            editingDashboardItem={editingDashboardItem}
-            initialSelectedItemId={this.state.lastSelectedDashboardItemID}
-            onSavedDashboardItem={this.handleSavedDashboardItem}
+            editingLibraryCell={editingLibraryCell}
+            initialSelectedItemId={this.state.lastSelectedLibraryCellID}
+            onSavedLibraryCell={this.handleSavedLibraryCell}
           />
         </OverlayTechnology>
       </Authorized>
@@ -400,15 +400,15 @@ export class DataExplorer extends PureComponent<Props, State> {
 
   private get cellListOverlay(): JSX.Element {
     const {notify} = this.props
-    const {isCellListVisible, lastSelectedDashboardItemID} = this.state
+    const {isCellListVisible, lastSelectedLibraryCellID} = this.state
     return (
       <Authorized requiredRole={EDITOR_ROLE}>
         <OverlayTechnology visible={isCellListVisible}>
           <CellListOverlay
             notify={notify}
             onCancel={this.handleCloseCellList}
-            onEditItem={this.handleEditDashboardItem}
-            selectedItemId={lastSelectedDashboardItemID}
+            onEditItem={this.handleEditLibraryCell}
+            selectedItemId={lastSelectedLibraryCellID}
           />
         </OverlayTechnology>
       </Authorized>
@@ -502,22 +502,22 @@ export class DataExplorer extends PureComponent<Props, State> {
     this.setState({isCellListVisible: false})
   }
 
-  private handleEditDashboardItem = (item: DashboardItem) => {
+  private handleEditLibraryCell = (item: LibraryCell) => {
     this.props.onResetTimeMachine(initialStateFromCell(item.content))
     this.setState({
-      editingDashboardItem: item,
-      lastSelectedDashboardItemID: item.id,
+      editingLibraryCell: item,
+      lastSelectedLibraryCellID: item.id,
       isCellListVisible: false,
     })
   }
 
-  private handleSavedDashboardItem = (item: DashboardItem) => {
+  private handleSavedLibraryCell = (item: LibraryCell) => {
     if (!item) {
       return
     }
     this.setState({
-      editingDashboardItem: item,
-      lastSelectedDashboardItemID: item.id,
+      editingLibraryCell: item,
+      lastSelectedLibraryCellID: item.id,
     })
   }
 
@@ -525,8 +525,8 @@ export class DataExplorer extends PureComponent<Props, State> {
     const emptyCell = getNewDashboardCell(NEW_EMPTY_DASHBOARD as Dashboard)
     this.props.onResetTimeMachine(initialStateFromCell(emptyCell))
     this.setState({
-      editingDashboardItem: null,
-      lastSelectedDashboardItemID: '',
+      editingLibraryCell: null,
+      lastSelectedLibraryCellID: '',
     })
   }
 

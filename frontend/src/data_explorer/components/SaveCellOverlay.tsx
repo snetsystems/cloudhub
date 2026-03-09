@@ -25,15 +25,15 @@ import {
 import {STATIC_LEGEND} from 'src/dashboards/constants/cellEditor'
 import {NEW_EMPTY_DASHBOARD} from 'src/dashboards/constants'
 import {
-  notifyDashboardItemSaved,
-  notifyDashboardItemSaveFailed,
-  notifyDashboardItemUpdated,
+  notifyLibraryCellSaved,
+  notifyLibraryCellSaveFailed,
+  notifyLibraryCellUpdated,
 } from 'src/shared/copy/notifications'
 
 import {
-  createDashboardItem,
-  getDashboardItems,
-  updateDashboardItem,
+  createLibraryCell,
+  getLibraryCells,
+  updateLibraryCell,
 } from 'src/dashboards/apis'
 
 import {
@@ -47,7 +47,7 @@ import {
 } from 'src/types'
 import {VisualizationOptions} from 'src/types/dataExplorer'
 import {ColorString} from 'src/types/colors'
-import {GraphOptions, Dashboard, DashboardItem} from 'src/types/dashboards'
+import {GraphOptions, Dashboard, LibraryCell} from 'src/types/dashboards'
 import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 
 interface PassedProps {
@@ -55,9 +55,9 @@ interface PassedProps {
   onCancel: () => void
   notify: (message: Notification) => void
   activeQueryIndex: number
-  editingDashboardItem?: DashboardItem
+  editingLibraryCell?: LibraryCell
   initialSelectedItemId?: string
-  onSavedDashboardItem?: (item: DashboardItem) => void
+  onSavedLibraryCell?: (item: LibraryCell) => void
 }
 
 interface ConnectedProps {
@@ -79,7 +79,7 @@ interface State {
   name: string
   description: string
   sendAllQueries: boolean
-  dashboardItems: DashboardItem[]
+  libraryCells: LibraryCell[]
 }
 
 class SaveCellOverlay extends PureComponent<Props, State> {
@@ -88,33 +88,33 @@ class SaveCellOverlay extends PureComponent<Props, State> {
 
     this.state = {
       selectedItemId: '',
-      name: props.editingDashboardItem?.name || '',
-      description: props.editingDashboardItem?.description || '',
+      name: props.editingLibraryCell?.name || '',
+      description: props.editingLibraryCell?.description || '',
       sendAllQueries: false,
-      dashboardItems: [],
+      libraryCells: [],
     }
   }
 
   public async componentDidMount() {
-    const {editingDashboardItem, initialSelectedItemId} = this.props
+    const {editingLibraryCell, initialSelectedItemId} = this.props
 
     try {
-      const result = await getDashboardItems()
-      const dashboardItems = result?.data?.dashboardItems || []
+      const result = await getLibraryCells()
+      const libraryCells = result?.data?.libraryCells || []
       const fallbackSelectedID =
-        editingDashboardItem?.id || initialSelectedItemId
-      const selectedItemID = dashboardItems.find(
+        editingLibraryCell?.id || initialSelectedItemId
+      const selectedItemID = libraryCells.find(
         item => item.id === fallbackSelectedID
       )
         ? fallbackSelectedID
         : ''
 
       this.setState({
-        dashboardItems,
+        libraryCells,
         selectedItemId: selectedItemID || '',
       })
     } catch {
-      this.setState({dashboardItems: []})
+      this.setState({libraryCells: []})
     }
   }
 
@@ -141,7 +141,7 @@ class SaveCellOverlay extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {onCancel, queryDrafts, queryType, editingDashboardItem} = this.props
+    const {onCancel, queryDrafts, queryType, editingLibraryCell} = this.props
     const {name, description, sendAllQueries} = this.state
     const multipleQueries =
       queryType === QueryType.InfluxQL && queryDrafts.length > 1
@@ -152,15 +152,15 @@ class SaveCellOverlay extends PureComponent<Props, State> {
         <OverlayBody>
           {this.hasQuery() ? (
             <Form>
-              {/* {editingDashboardItem && (
+              {/* {editingLibraryCell && (
                 <Form.Element>
                   <div className="form-control-static">
                     <div>
                       Prev Cell Name:{' '}
-                      <strong> {editingDashboardItem.name}</strong>
+                      <strong> {editingLibraryCell.name}</strong>
                       <br />
                       Prev Cell Description:{' '}
-                      <b> {editingDashboardItem.description}</b>
+                      <b> {editingLibraryCell.description}</b>
                     </div>
                   </div>
                 </Form.Element>
@@ -221,7 +221,7 @@ class SaveCellOverlay extends PureComponent<Props, State> {
                 </Form.Element>
               )}
               <Form.Footer>
-                {editingDashboardItem ? (
+                {editingLibraryCell ? (
                   <>
                     <Button
                       color={ComponentColor.Success}
@@ -309,7 +309,7 @@ class SaveCellOverlay extends PureComponent<Props, State> {
 
   private handleSave = async () => {
     const selectedID =
-      this.state.selectedItemId || this.props.editingDashboardItem?.id
+      this.state.selectedItemId || this.props.editingLibraryCell?.id
     if (!selectedID) {
       await this.handleSaveAs()
       return
@@ -422,52 +422,59 @@ class SaveCellOverlay extends PureComponent<Props, State> {
     }
 
     try {
-      let savedDashboardItem: DashboardItem
+      let savedLibraryCell: LibraryCell
       if (mode === 'save' && selectedID) {
-        const result = await updateDashboardItem(selectedID, {
+        const result = await updateLibraryCell(selectedID, {
           name: trimmedName,
           description: description.trim(),
           type,
-          content: newCell as DashboardItem['content'],
+          content: newCell as LibraryCell['content'],
         })
-        savedDashboardItem = result?.data || {
+        savedLibraryCell = result?.data || {
           id: selectedID,
           name: trimmedName,
           description: description.trim(),
           type,
-          content: newCell as DashboardItem['content'],
+          content: newCell as LibraryCell['content'],
         }
-        notify(notifyDashboardItemUpdated(trimmedName))
+        notify(notifyLibraryCellUpdated(trimmedName))
       } else if (mode === 'saveAs' && selectedID) {
-        const result = await createDashboardItem({
+        const result = await createLibraryCell({
           name: trimmedName,
           description: description.trim(),
           type,
-          content: newCell as DashboardItem['content'],
+          content: newCell as LibraryCell['content'],
         })
-        savedDashboardItem = result?.data || {
+        savedLibraryCell = result?.data || {
           id: '',
           name: trimmedName,
           description: description.trim(),
           type,
-          content: newCell as DashboardItem['content'],
+          content: newCell as LibraryCell['content'],
         }
-        notify(notifyDashboardItemSaved(trimmedName))
+        notify(notifyLibraryCellSaved(trimmedName))
       } else {
-        await createDashboardItem({
+        const result = await createLibraryCell({
           name: trimmedName,
           description: description.trim(),
           type,
-          content: newCell as DashboardItem['content'],
+          content: newCell as LibraryCell['content'],
         })
-        notify(notifyDashboardItemSaved(trimmedName))
+        savedLibraryCell = result?.data || {
+          id: '',
+          name: trimmedName,
+          description: description.trim(),
+          type,
+          content: newCell as LibraryCell['content'],
+        }
+        notify(notifyLibraryCellSaved(trimmedName))
       }
-      if (this.props.onSavedDashboardItem) {
-        this.props.onSavedDashboardItem(savedDashboardItem)
+      if (this.props.onSavedLibraryCell) {
+        this.props.onSavedLibraryCell(savedLibraryCell)
       }
       onCancel()
     } catch {
-      notify(notifyDashboardItemSaveFailed(trimmedName))
+      notify(notifyLibraryCellSaveFailed(trimmedName))
     }
   }
 }

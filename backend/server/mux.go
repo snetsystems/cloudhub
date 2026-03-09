@@ -508,14 +508,14 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Ensure device
 	router.POST("/cloudhub/v1/device-mappings/ensure", EnsureViewer(service.EnsureDevice))
 
-	// DashboardItems (Library Panels)
-	router.GET("/cloudhub/v1/dashboard-items", EnsureViewer(service.DashboardItems))
-	router.POST("/cloudhub/v1/dashboard-items", EnsureEditor(service.NewDashboardItem))
+	// Cell Library (reusable library panels)
+	router.GET("/cloudhub/v1/cell-library", EnsureViewer(service.CellLibrary))
+	router.POST("/cloudhub/v1/cell-library", EnsureEditor(service.NewLibraryCell))
 
-	router.GET("/cloudhub/v1/dashboard-items/:id", EnsureViewer(service.DashboardItemID))
-	router.DELETE("/cloudhub/v1/dashboard-items/:id", EnsureEditor(service.RemoveDashboardItem))
-	router.PUT("/cloudhub/v1/dashboard-items/:id", EnsureEditor(service.UpdateDashboardItem))
-	router.PATCH("/cloudhub/v1/dashboard-items/:id", EnsureEditor(service.PatchDashboardItem))
+	router.GET("/cloudhub/v1/cell-library/:id", EnsureViewer(service.LibraryCellID))
+	router.DELETE("/cloudhub/v1/cell-library/:id", EnsureEditor(service.RemoveLibraryCell))
+	router.PUT("/cloudhub/v1/cell-library/:id", EnsureEditor(service.UpdateLibraryCell))
+	router.PATCH("/cloudhub/v1/cell-library/:id", EnsureEditor(service.PatchLibraryCell))
 
 	// Kubernetes API Proxy
 	kubernetes := http.HandlerFunc(service.KubernetesProxy)

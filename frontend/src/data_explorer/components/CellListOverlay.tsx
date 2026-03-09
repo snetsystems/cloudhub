@@ -10,17 +10,17 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 import CellList from 'src/server_details/components/CellList'
-import {deleteDashboardItem} from 'src/dashboards/apis'
+import {deleteLibraryCell} from 'src/dashboards/apis'
 import {
-  notifyDashboardItemDeleted,
-  notifyDashboardItemDeleteFailed,
+  notifyLibraryCellDeleted,
+  notifyLibraryCellDeleteFailed,
 } from 'src/shared/copy/notifications'
-import {DashboardItem} from 'src/types/dashboards'
+import {LibraryCell} from 'src/types/dashboards'
 import {Notification} from 'src/types'
 
 interface Props {
   onCancel: () => void
-  onEditItem: (item: DashboardItem) => void
+  onEditItem: (item: LibraryCell) => void
   notify: (message: Notification) => void
   selectedItemId?: string
 }
@@ -55,14 +55,14 @@ class CellListOverlay extends PureComponent<Props> {
     )
   }
 
-  private handleDeleteItem = async (item: DashboardItem) => {
+  private handleDeleteItem = async (item: LibraryCell) => {
     const {notify} = this.props
     try {
-      await deleteDashboardItem(item.id)
-      notify(notifyDashboardItemDeleted(item.name))
+      await deleteLibraryCell(item.id)
+      notify(notifyLibraryCellDeleted(item.name))
     } catch {
-      notify(notifyDashboardItemDeleteFailed(item.name))
-      throw new Error('delete dashboard item failed')
+      notify(notifyLibraryCellDeleteFailed(item.name))
+      throw new Error('delete library cell failed')
     }
   }
 }

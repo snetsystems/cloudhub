@@ -27,7 +27,6 @@ message Dashboard {
 	string Organization          = 5; // Organization is the organization ID that resource belongs to
 	string Type                  = 6; // Type distinguishes dashboard types: 'normal' (default) or 'builtin'
 	string Version               = 7; // Version is the template version for builtin dashboards (e.g., "1.0.0")
-	string UpdatedAt               = 8; // When dashboard was last updated (e.g. builtin template sync); TZ=UTC, Format=RFC3339
 }
 
 message DashboardCell {
@@ -489,21 +488,18 @@ message AliasMappingToDevice {
   string hostname = 2; // Original DeviceMeta.hostname
 }
 
-// DashboardItemMeta contains metadata for a dashboard item.
-message DashboardItemMeta {
-  string createdAt = 1; // Creation timestamp (RFC3339)
-  string updatedAt = 2; // Last update timestamp (RFC3339)
-  string createdBy = 3; // User ID who created the item
-  string updatedBy = 4; // User ID who last updated the item
+// LibraryCellMeta holds metadata for a library cell. UpdatedAt is set on create and update.
+message LibraryCellMeta {
+  string updatedAt = 1; // Last update timestamp (RFC3339, UTC)
 }
 
-// DashboardItem represents a reusable visualization panel stored in the library.
-message DashboardItem {
+// LibraryCell is a single cell in the cell library (reusable visualization panel).
+message LibraryCell {
   string ID                   = 1; // Unique identifier
-  string Name                 = 2; // User-defined name for the item
+  string Name                 = 2; // User-defined name for the cell
   string Description          = 3; // Optional description
-  string Organization         = 4; // Organization ID that owns this item
+  string Organization         = 4; // Organization ID that owns this cell
   string Type                 = 5; // Visualization type (e.g., "line", "gauge", "table")
   DashboardCell Content       = 6; // Full cell definition (queries + visualization)
-  DashboardItemMeta Meta      = 7; // Metadata (created/updated timestamps)
+  LibraryCellMeta Meta        = 7; // Metadata (UpdatedAt set on create/update)
 }
