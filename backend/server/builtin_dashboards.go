@@ -178,12 +178,14 @@ func ApplyFixedCellToOrg(
 			}
 			seenIDs[c.ID] = struct{}{}
 		}
-		// Cell not in template and hidden: remove (real delete) to avoid orphan (builtin or user).
-		// Builtin not in template and visible: reclassify as user so it stays on the dashboard.
+		// Cell not in template: component type → always remove; non-component → if hidden remove, else reclassify as user.
 		_, inTemplate := templateCellsByID[c.ID]
 		if !inTemplate {
+			if c.Type == cloudhub.DashboardCellTypeComponent {
+				continue // drop: component not in template is always removed (hidden or not)
+			}
 			if c.Hidden {
-				continue // drop: not in template and hidden (builtin or user), avoid orphan
+				continue // drop: not in template and hidden (avoid orphan)
 			}
 			if c.CellOrigin == cloudhub.CellOriginBuiltin {
 				c.CellOrigin = cloudhub.CellOriginUser
