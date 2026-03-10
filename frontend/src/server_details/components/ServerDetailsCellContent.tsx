@@ -19,6 +19,31 @@ import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 const isObject = (val: unknown): val is Record<string, unknown> =>
   typeof val === 'object' && val !== null && !Array.isArray(val)
 
+function renderValue(value: unknown, depth: number): React.ReactNode {
+  if (Array.isArray(value)) {
+    const listClass = classnames('server-details-simple-data-list', {
+      'server-details-simple-data-list--nested': depth > 0,
+    })
+    return (
+      <ul className={listClass}>
+        {value.map((item, index) => (
+          <li key={index} className="server-details-simple-data-item">
+            <span className="server-details-simple-data-value">
+              {isObject(item)
+                ? renderSimpleData(item, depth + 1)
+                : String(item ?? '')}
+            </span>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  if (isObject(value)) {
+    return renderSimpleData(value, depth + 1)
+  }
+  return String(value ?? '')
+}
+
 function renderSimpleData(
   obj: Record<string, unknown> | unknown,
   depth = 0
@@ -37,9 +62,7 @@ function renderSimpleData(
         <li key={key} className="server-details-simple-data-item">
           <span className="server-details-simple-data-key">{key}:</span>
           <span className="server-details-simple-data-value">
-            {isObject(value)
-              ? renderSimpleData(value, depth + 1)
-              : String(value ?? '')}
+            {renderValue(value, depth)}
           </span>
         </li>
       ))}
