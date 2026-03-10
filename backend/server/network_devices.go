@@ -1016,10 +1016,10 @@ func (s *Service) LearningDeviceManagement(w http.ResponseWriter, r *http.Reques
 			continue
 		}
 
-		// Save updated devices (in case ShardID changed) and collect shards for notification
+		// Save updated devices: apply request is_learning and ShardID, then persist
 		for _, device := range devicesData.learningDevicesGroupByOrg[org] {
 			if networkDevice, ok := devicesData.networkDevicesMap[device.ID]; ok {
-				// Save device to persistent store (important if ShardID was updated)
+				networkDevice.IsLearning = device.IsLearning
 				if err := s.Store.NetworkDevice(ctx).Update(ctx, networkDevice); err != nil {
 					addFailedDevice(failedDevices, device.ID, err)
 					continue
