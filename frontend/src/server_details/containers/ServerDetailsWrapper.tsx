@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext, useRef} from 'react'
+import React, {useState, useEffect, useContext, useRef, useMemo} from 'react'
 import classnames from 'classnames'
 import {connect} from 'react-redux'
 import {generateForHosts} from 'src/utils/tempVars'
@@ -13,7 +13,10 @@ import {Template, TemplateValue} from 'src/types'
 import type {Cell, Source} from 'src/types'
 import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import * as DashboardsModels from 'src/types/dashboards'
+import type {DataTableObject} from 'src/types/tableType'
+import type {Addon} from 'src/types/auth'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
+import ProcessDetailModal from 'src/server_details/components/ProcessDetailModal'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
@@ -23,11 +26,7 @@ import {
   type ServerDetailsPageContextValue,
 } from 'src/server_details/components/ServerDetailsCellContent'
 
-function HostDropdownHeader({
-  templates,
-  dashboard,
-  templateVariableLocalSelected,
-}: {
+interface HostDropdownHeaderProps {
   templates: Template[]
   dashboard?: DashboardsModels.Dashboard
   templateVariableLocalSelected?: (
@@ -35,22 +34,39 @@ function HostDropdownHeader({
     templateID: string,
     value: TemplateValue
   ) => void
-}) {
+}
+
+function HostDropdownHeader({
+  templates,
+  dashboard,
+  templateVariableLocalSelected,
+}: HostDropdownHeaderProps) {
   const ctx = useContext(ServerDetailsPageContext)
-  const hostTemplate = templates?.find(t => t.tempVar === ':host:')
-  const hostList = hostTemplate?.values?.map(v => v.value) ?? []
   const initialSetRef = useRef(false)
 
-  useEffect(() => {
-    if (hostList.length > 0 && ctx?.selectedHost === null && !initialSetRef.current) {
-      initialSetRef.current = true
-      ctx.onHostSelect(hostList[0])
-    }
-  }, [hostList, ctx?.selectedHost, ctx?.onHostSelect])
+  const hostTemplate = useMemo(() => 
+    templates?.find(t => t.tempVar === ':host:'), 
+    [templates]
+  )
+  
+  const hostList = useMemo(() => 
+    hostTemplate?.values?.map(v => v.value) ?? [], 
+    [hostTemplate]
+  )
+
+  const {selectedHost, onHostSelect} = ctx || {}
 
   useEffect(() => {
-    if (ctx?.selectedHost && hostTemplate && dashboard && templateVariableLocalSelected) {
-      const selectedValue = hostTemplate.values.find(v => v.value === ctx.selectedHost)
+    if (!ctx || !hostTemplate || !dashboard) return
+
+    if (!initialSetRef.current && hostList.length > 0 && selectedHost === null) {
+      initialSetRef.current = true
+      onHostSelect(hostList[0])
+      return
+    }
+
+    if (selectedHost && templateVariableLocalSelected) {
+      const selectedValue = hostTemplate.values.find(v => v.value === selectedHost)
       if (selectedValue) {
         templateVariableLocalSelected(dashboard.id, hostTemplate.id, {
           ...selectedValue,
@@ -58,30 +74,25 @@ function HostDropdownHeader({
         })
       }
     }
-  }, [ctx?.selectedHost, hostTemplate, dashboard, templateVariableLocalSelected])
+  }, [selectedHost, hostList, hostTemplate, dashboard, onHostSelect, templateVariableLocalSelected])
 
   if (!ctx) return null
-  const current = ctx.selectedHost ?? ''
+
   if (hostList.length === 0) {
     return (
-      <span
-        style={{marginLeft: 12}}
-        className="server-details-page__host-dropdown server-details-page__host-dropdown--placeholder"
-      >
+      <span className="server-details-page__host-dropdown server-details-page__host-dropdown--placeholder">
         Select Host
       </span>
     )
   }
+
   return (
-    <span
-      style={{marginLeft: 12, flexShrink: 0, minWidth: 0}}
-      className="server-details-page__host-dropdown-wrap"
-    >
+    <span className="server-details-page__host-dropdown-wrap">
       <Dropdown
         mode={DropdownMode.ActionList}
         titleText="Select Host"
-        selectedID={current}
-        onChange={value => ctx.onHostSelect(value ?? null)}
+        selectedID={selectedHost ?? ''}
+        onChange={value => onHostSelect(value ?? null)}
         customClass="server-details-page__host-dropdown"
         widthPixels={150}
       >
@@ -99,12 +110,24 @@ function ProcessCellContent({
   cell,
   context,
   source,
+  addons,
 }: {
   cell: Cell
   context: RenderCellContext
   source: Source
+  addons?: Addon[]
 }) {
+  const ctx = useContext(ServerDetailsPageContext)
   const [contextOpen, setContextOpen] = useState(false)
+  const [processDetailModalOpen, setProcessDetailModalOpen] = useState(false)
+  const [selectedProcessRow, setSelectedProcessRow] =
+    useState<DataTableObject | null>(null)
+
+  const openProcessDetail = (row: DataTableObject) => {
+    setSelectedProcessRow(row)
+    setProcessDetailModalOpen(true)
+  }
+
   return (
     <div className="server-details-cell-content">
       <div className="dash-graph--draggable dash-graph--heading dash-graph--heading-draggable server-details-cell-header">
@@ -148,22 +171,39 @@ function ProcessCellContent({
             style={{height: '100%'}}
             autoHide={false}
           >
-            <ProcessLineChartTable source={source} />
+            <ProcessLineChartTable
+              source={source}
+              onProcessNameClick={openProcessDetail}
+            />
           </FancyScrollbar>
         </div>
       </div>
+      <ProcessDetailModal
+        isOpen={processDetailModalOpen}
+        onClose={() => {
+          setProcessDetailModalOpen(false)
+          setSelectedProcessRow(null)
+        }}
+        serverDetail={{
+          selectedHost: ctx?.selectedHost ?? null,
+          source,
+          addons,
+        }}
+        nameInfo={selectedProcessRow}
+      />
     </div>
   )
 }
 
 function ServerDetailsWrapper(props) {
   const [selectedHost, setSelectedHost] = useState<string | null>(null)
-  const contextValue: ServerDetailsPageContextValue = {
+
+
+  const contextValue : ServerDetailsPageContextValue = useMemo(() => ({
     selectedHost,
     onHostSelect: setSelectedHost,
-    templateOverrides:
-      selectedHost != null ? {':host:': selectedHost} : {},
-  }
+    templateOverrides: selectedHost != null ? {':host:': selectedHost} : {},
+  }), [selectedHost])     
 
   return (
     <ServerDetailsPageContext.Provider value={contextValue}>
@@ -208,6 +248,7 @@ function ServerDetailsWrapper(props) {
                 cell={cell}
                 context={context}
                 source={props.source}
+                addons={props.addons}
               />
             )
           }

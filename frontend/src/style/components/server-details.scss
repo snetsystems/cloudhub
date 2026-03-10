@@ -160,3 +160,92 @@
 .react-grid-item:hover .server-details-cell-header {
   background-color: $g4-onyx;
 }
+
+.process-name-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  text-decoration: underline;
+  font: inherit;
+}
+
+/* Process Detail Modal */
+.modal-content.process-detail-modal {
+  width: 70vw;
+}
+
+.process-detail-modal__header {
+  padding: 16px;
+  flex-shrink: 0;
+}
+
+.process-detail-modal__title {
+  margin: 0;
+  font-size: 20px;
+  color: #8b8ba7;
+  font-weight: 500;
+}
+
+.process-detail-modal__scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.process-detail-modal__body {
+  padding: 0 16px 16px 16px;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr 2fr;
+  gap: 16px;
+}
+
+.process-detail-modal__grid {
+  display: grid;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+
+  &--top {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  &--bottom {
+    grid-template-columns: 1fr 1fr 2fr;
+  }
+}
+
+.process-detail-modal__block {
+  border: 1px solid $g5-pepper;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.process-detail-modal__block-title {
+  margin: 0;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: $g13-mist;
+  background-color: #292933;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.process-detail-modal__block-content {
+  padding: 16px;
+  font-size: 12px;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}

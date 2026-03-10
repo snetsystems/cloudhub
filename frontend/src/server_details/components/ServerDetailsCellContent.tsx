@@ -1,6 +1,5 @@
-import React, {useState, useEffect, useContext} from 'react'
+import React, {useState, useEffect, useContext, useMemo} from 'react'
 import classnames from 'classnames'
-import _ from 'lodash'
 import Layout from 'src/shared/components/Layout'
 import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import type {TemplateSelectionContextValue} from 'src/shared/components/DashboardPageWithImport'
@@ -15,32 +14,40 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 
+// --- Utilities ---
+
+const isObject = (val: unknown): val is Record<string, unknown> =>
+  typeof val === 'object' && val !== null && !Array.isArray(val)
+
 function renderSimpleData(
-  obj: Record<string, unknown>,
+  obj: Record<string, unknown> | unknown,
   depth = 0
 ): React.ReactNode {
-  if (obj == null || typeof obj !== 'object') {
-    return <span>{String(obj)}</span>
+  if (!isObject(obj)) {
+    return <span>{String(obj ?? '')}</span>
   }
+
+  const listClass = classnames('server-details-simple-data-list', {
+    'server-details-simple-data-list--nested': depth > 0,
+  })
+
   return (
-    <ul
-      className={`server-details-simple-data-list${depth ? ' server-details-simple-data-list--nested' : ''}`}
-    >
-      {_.toPairs(obj).map(([k, v]) => (
-        <li key={k} className="server-details-simple-data-item">
-          <span className="server-details-simple-data-key">{k}:</span>
+    <ul className={listClass}>
+      {Object.entries(obj).map(([key, value]) => (
+        <li key={key} className="server-details-simple-data-item">
+          <span className="server-details-simple-data-key">{key}:</span>
           <span className="server-details-simple-data-value">
-            {typeof v === 'object' && v !== null && !Array.isArray(v)
-              ? renderSimpleData(v as Record<string, unknown>, depth + 1)
-              : Array.isArray(v)
-              ? String(v)
-              : String(v ?? '')}
+            {isObject(value)
+              ? renderSimpleData(value, depth + 1)
+              : String(value ?? '')}
           </span>
         </li>
       ))}
     </ul>
   )
 }
+
+// --- Components ---
 
 function ServerInfoBody({
   selectedHost,
@@ -58,92 +65,83 @@ function ServerInfoBody({
       setData(null)
       return
     }
+
     const addon = addons.find(a => a.name === 'salt')
     const useProxy = addon?.url?.includes('proxy/salt')
     const hasAuth = addon?.url && (addon?.token || useProxy)
+
     if (!hasAuth) {
       setData(null)
       setError('Salt addon not configured')
       return
     }
 
-    let cancelled = false
+    let isCancelled = false
     setLoading(true)
     setError(null)
-    getAgentDetails(addon.url, addon?.token ?? '', selectedHost)
+
+    getAgentDetails(addon.url!, addon.token ?? '', selectedHost)
       .then(res => {
-        if (!cancelled && res && typeof res === 'object') {
-          setData(res as Record<string, unknown>)
+        if (!isCancelled && isObject(res)) {
+          setData(res)
         }
       })
       .catch(err => {
-        if (!cancelled) {
+        if (!isCancelled) {
           setError(err?.message ?? 'Failed to load server info')
         }
       })
       .finally(() => {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        if (!isCancelled) setLoading(false)
       })
 
     return () => {
-      cancelled = true
+      isCancelled = true
     }
   }, [selectedHost, addons])
 
-  if (loading) {
-    return (
-      <div className="server-details-cell-tab-body">
-        Loading...
-      </div>
-    )
-  }
-  if (error) {
-    return (
-      <div className="server-details-cell-tab-body">
-        Error: {error}
-      </div>
-    )
-  }
-  if (!selectedHost) {
-    return (
-      <div className="server-details-cell-tab-body">
-        Select a host.
-      </div>
-    )
-  }
-  if (!data || _.isEmpty(data)) {
-    return (
-      <div className="server-details-cell-tab-body">
-        No data.
-      </div>
-    )
+  if (loading)
+    return <div className="server-details-cell-tab-body">Loading...</div>
+  if (error)
+    return <div className="server-details-cell-tab-body">Error: {error}</div>
+  if (!selectedHost)
+    return <div className="server-details-cell-tab-body">Select a host.</div>
+
+  if (!data || Object.keys(data).length === 0) {
+    return <div className="server-details-cell-tab-body">No data.</div>
   }
 
   return (
     <div className="server-details-cell-tab-body">
-      {_.toPairs(data).map(([sectionName, section]) => (
-        <div key={sectionName} className="server-details-server-info-section">
-          <div className="server-details-server-info-section-title">
-            {sectionName}
+      {Object.entries(data).map(([sectionName, section]) => {
+        const displayData =
+          isObject(section) && 'data' in section
+            ? (section.data as Record<string, unknown>)
+            : (section as Record<string, unknown>)
+
+        return (
+          <div key={sectionName} className="server-details-server-info-section">
+            <div className="server-details-server-info-section-title">
+              {sectionName}
+            </div>
+            {renderSimpleData(displayData)}
           </div>
-          {section && typeof section === 'object' && 'data' in section
-            ? renderSimpleData((section as {data: Record<string, unknown>}).data)
-            : renderSimpleData(section as Record<string, unknown>)}
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
+
+// --- Context & Main Content ---
 
 export type ServerDetailsPageContextValue = TemplateSelectionContextValue & {
   selectedHost: string | null
   onHostSelect: (host: string | null) => void
 }
 
-export const ServerDetailsPageContext =
-  React.createContext<ServerDetailsPageContextValue | null>(null)
+export const ServerDetailsPageContext = React.createContext<ServerDetailsPageContextValue | null>(
+  null
+)
 
 export function ServerDetailsCellContent({
   addons,
@@ -159,56 +157,62 @@ export function ServerDetailsCellContent({
   const [activeTab, setActiveTab] = useState<'info' | 'files'>('info')
   const [contextOpen, setContextOpen] = useState(false)
 
-  const canUseLayout = cell != null && layoutContext != null
+  const canUseLayout = !!(cell && layoutContext)
 
-  const effectiveCell =
-    canUseLayout && cell
-      ? {
-          ...cell,
-          name: '',
-          type: DashboardsModels.CellType.Table,
-          tableOptions: {
-            ...DEFAULT_TABLE_OPTIONS,
-            ...(cell.tableOptions ?? {}),
-            verticalTimeAxis: true,
-          } as DashboardsModels.TableOptions,
-          decimalPlaces: DEFAULT_DECIMAL_PLACES,
-          fieldOptions: [
-            {internalName: 'time', displayName: 'time', visible: false},
-            {internalName: 'path', displayName: 'Mount Point', visible: true},
+  const effectiveCell = useMemo(() => {
+    if (!canUseLayout || !cell) return null
+
+    return {
+      ...cell,
+      name: '',
+      type: DashboardsModels.CellType.Table,
+      tableOptions: {
+        ...DEFAULT_TABLE_OPTIONS,
+        ...cell.tableOptions,
+        verticalTimeAxis: true,
+      } as DashboardsModels.TableOptions,
+      decimalPlaces: DEFAULT_DECIMAL_PLACES,
+      fieldOptions: [
+        {internalName: 'time', displayName: 'time', visible: false},
+        {internalName: 'path', displayName: 'Mount Point', visible: true},
+        {
+          internalName: 'disk.total_gib',
+          displayName: 'Total (GiB)',
+          visible: true,
+        },
+        {
+          internalName: 'disk.used_gib',
+          displayName: 'Used (GiB)',
+          visible: true,
+        },
+        {
+          internalName: 'disk.used_percent',
+          displayName: 'Used(%)',
+          visible: true,
+        },
+        {
+          internalName: 'disk.inode_used_percent',
+          displayName: 'i-node Used(%)',
+          visible: true,
+        },
+        {
+          internalName: 'disk.free_gib',
+          displayName: 'Free(GiB)',
+          visible: true,
+        },
+      ] as DashboardsModels.FieldOption[],
+      queries: cell.queries?.length
+        ? cell.queries
+        : [
             {
-              internalName: 'disk.total_gib',
-              displayName: 'Total Space (GiB)',
-              visible: true,
-            },
-            {
-              internalName: 'disk.used_gib',
-              displayName: 'Used Space (GiB)',
-              visible: true,
-            },
-            {internalName: 'disk.used_percent', displayName: 'Used(%)', visible: true},
-            {
-              internalName: 'disk.inode_used_percent',
-              displayName: 'i-node Used(%)',
-              visible: true,
-            },
-            {internalName: 'disk.free_gib', displayName: 'Free(GiB)', visible: true},
-          ] as DashboardsModels.FieldOption[],
-          queries:
-            cell.queries && cell.queries.length > 0
-              ? cell.queries
-              : [
-                  {
-                    ...(cell.queries && cell.queries[0]
-                      ? cell.queries[0]
-                      : ({} as DashboardsModels.CellQuery)),
-                    query:
-                      'SELECT last("total")/1073741824 AS "total_gib", last("used")/1073741824 AS "used_gib", last("free")/1073741824 AS "free_gib", last("used_percent") AS "used_percent", last("inodes_used_percent") AS "inode_used_percent" FROM ":db:".":rp:"."disk" WHERE time > :dashboardTime: AND "host"=:host: GROUP BY "path"',
-                  },
-                ],
-          inView: true,
-        }
-      : null
+              ...(cell.queries?.[0] || {}),
+              query:
+                'SELECT last("total")/1073741824 AS "total_gib", last("used")/1073741824 AS "used_gib", last("free")/1073741824 AS "free_gib", last("used_percent") AS "used_percent", last("inodes_used_percent") AS "inode_used_percent" FROM ":db:".":rp:"."disk" WHERE time > :dashboardTime: AND "host"=:host: GROUP BY "path"',
+            } as DashboardsModels.CellQuery,
+          ],
+      inView: true,
+    }
+  }, [cell, canUseLayout])
 
   return (
     <div className="server-details-cell-content">
@@ -219,7 +223,7 @@ export function ServerDetailsCellContent({
         >
           <button
             type="button"
-            className={activeTab === 'info' ? 'active' : ''}
+            className={classnames({active: activeTab === 'info'})}
             onClick={e => {
               e.stopPropagation()
               setActiveTab('info')
@@ -229,7 +233,7 @@ export function ServerDetailsCellContent({
           </button>
           <button
             type="button"
-            className={activeTab === 'files' ? 'active' : ''}
+            className={classnames({active: activeTab === 'files'})}
             onClick={e => {
               e.stopPropagation()
               setActiveTab('files')
@@ -243,6 +247,7 @@ export function ServerDetailsCellContent({
           <div className="dash-graph--heading-dragger" />
         </div>
       </div>
+
       {layoutContext?.onDeleteCell && cell && (
         <div
           className={classnames('dash-graph-context', {
@@ -258,7 +263,7 @@ export function ServerDetailsCellContent({
                 menuItems={[
                   {
                     text: 'Confirm',
-                    action: () => layoutContext.onDeleteCell(cell),
+                    action: () => layoutContext.onDeleteCell!(cell),
                     disabled: false,
                   },
                 ]}
@@ -268,6 +273,7 @@ export function ServerDetailsCellContent({
           </div>
         </div>
       )}
+
       <div className="server-details-cell-tabs">
         <div className="server-details-cell-tab-panel" key={activeTab}>
           <FancyScrollbar
@@ -275,14 +281,12 @@ export function ServerDetailsCellContent({
             style={{height: '100%'}}
             autoHide={false}
           >
-            {activeTab === 'info' && (
+            {activeTab === 'info' ? (
               <ServerInfoBody selectedHost={selectedHost} addons={addons} />
-            )}
-            {activeTab === 'files' && (
-              <>
+            ) : (
+              <div className="server-details-cell-tab-body server-details-cell-files-layout-wrap">
                 {effectiveCell && layoutContext ? (
-                  <div className="server-details-cell-tab-body server-details-cell-files-layout-wrap">
-                    <Layout
+                  <Layout
                     cell={effectiveCell}
                     timeRange={layoutContext.timeRange}
                     templates={layoutContext.templates}
@@ -300,13 +304,10 @@ export function ServerDetailsCellContent({
                     instance={layoutContext.instance}
                     onPickTemplate={layoutContext.onPickTemplate}
                   />
-                </div>
-              ) : (
-                  <div className="server-details-cell-tab-body">
-                    No data.
-                  </div>
+                ) : (
+                  'No data.'
                 )}
-              </>
+              </div>
             )}
           </FancyScrollbar>
         </div>
