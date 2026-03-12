@@ -595,3 +595,62 @@
   font-style: italic;
   padding: 0px 8px 6px;
 }
+
+.server-list-table {
+  .server-host {
+    width: 10%;
+    white-space: nowrap;
+  }
+
+  .network-interface {
+    width: 100px;
+  }
+
+  .disk-usage-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+
+    .table-gauge-cell-container {
+      flex-grow: 1;
+    }
+    .disk-usage-path {
+      width: 50px;
+      min-width: 50px;
+      text-align: left;
+    }
+  }
+
+  .disk-io-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    .table-gauge-cell-container {
+      flex-grow: 1;
+    }
+    .disk-io-device {
+      width: 50px;
+      min-width: 50px;
+      text-align: left;
+    }
+  }
+}
+
+.host-page-graph-table-container-wrapper {
+  .panel.panel-solid {
+    position: relative;
+  }
+}
+
+.hosts-page {
+  .panel-body {
+    .table {
+      tr > td {
+        height: 60px;
+      }
+    }
+  }
+}

@@ -1,6 +1,15 @@
-import {TimeSeriesResponse, TimeSeriesValue} from 'src/types/series'
+import {
+  TableLineChartPoint,
+  TimeSeriesResponse,
+  TimeSeriesValue,
+} from 'src/types/series'
 
-type HostCellValue = TimeSeriesValue | TimeSeriesValue[] | null | undefined
+type HostCellValue =
+  | TimeSeriesValue
+  | TimeSeriesValue[]
+  | TableLineChartPoint[]
+  | null
+  | undefined
 
 export const toNumericPoint = (value: TimeSeriesValue | null | undefined) => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -13,13 +22,37 @@ export const toNumericPoint = (value: TimeSeriesValue | null | undefined) => {
   return null
 }
 
+const isTableLineChartPoint = (
+  value: unknown
+): value is TableLineChartPoint =>
+  !!value &&
+  typeof value === 'object' &&
+  'time' in value &&
+  'value' in value
+
 export const toLineValues = (
-  value: TimeSeriesValue | TimeSeriesValue[] | null | undefined
-): Array<number | null> => {
+  value: HostCellValue
+): TableLineChartPoint[] => {
   if (Array.isArray(value)) {
-    return value.map(item => toNumericPoint(item))
+    const lineValues = value as Array<TimeSeriesValue | TableLineChartPoint>
+    const tablePoints = lineValues.filter(isTableLineChartPoint)
+
+    if (tablePoints.length === lineValues.length) {
+      return tablePoints.map(item => ({
+        time: item.time ?? null,
+        value: toNumericPoint(item.value),
+      }))
+    }
+
+    return lineValues.map((item, index) => ({
+      time: index,
+      value: toNumericPoint(item as TimeSeriesValue),
+    }))
   }
-  return value === null || value === undefined ? [] : [toNumericPoint(value)]
+
+  return value === null || value === undefined
+    ? []
+    : [{time: 0, value: toNumericPoint(value)}]
 }
 
 export const mergeResultsByHost = (
@@ -90,7 +123,10 @@ export const mergeResultsByHost = (
           }
           const isMultiPoint = rows.length > 1
           if (isMultiPoint) {
-            const columnValues = rows.map(valueRow => valueRow[index] ?? null)
+            const columnValues = rows.map(valueRow => ({
+              time: valueRow[0] ?? null,
+              value: valueRow[index] ?? null,
+            }))
             setRowValue(row, columnName, columnValues)
             return
           }

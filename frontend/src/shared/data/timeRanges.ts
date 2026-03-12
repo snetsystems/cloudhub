@@ -61,6 +61,15 @@ export const CLOUD_TIME_RANGE = {
     menuOption: 'Past 30d',
     format: 'relativeTime',
   },
+  serverList: {
+    defaultGroupBy: '1m',
+    seconds: 3600,
+    inputValue: 'Past 1h',
+    lower: 'now() - 1h',
+    lowerFlux: '-1h',
+    upper: null,
+    menuOption: 'Past 1h',
+  },
 }
 
 export const timeRanges: TimeRangeOption[] = [

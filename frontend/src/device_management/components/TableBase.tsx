@@ -3,6 +3,7 @@ import React, {useEffect, useMemo, useState} from 'react'
 
 // Components
 import AccordionTable from 'src/device_management/components/AccordionTable'
+import {TableChartCellProvider} from 'src/device_management/components/TableChartHoverContext'
 
 // Types
 import {
@@ -293,6 +294,7 @@ function TableBase({
                   >
                     {displayColumns.map((column, columnIndex) => {
                       const key = column.key
+                      const cellId = `${rowIndex}:${column.key}:${columnIndex}`
                       return (
                         <td
                           key={columnIndex}
@@ -321,13 +323,15 @@ function TableBase({
                               />
                             </div>
                           ) : column?.render ? (
-                            column.render(
-                              getValue(item, key),
-                              item,
-                              columnIndex,
-                              rowIndex,
-                              timeZone
-                            )
+                            <TableChartCellProvider value={{cellId}}>
+                              {column.render(
+                                getValue(item, key),
+                                item,
+                                columnIndex,
+                                rowIndex,
+                                timeZone
+                              )}
+                            </TableChartCellProvider>
                           ) : (
                             <>{getValue(item, key)}</>
                           )}

@@ -10,6 +10,7 @@ import React, {
 // Components
 import SearchBar from 'src/hosts/components/SearchBar'
 import TableBase from 'src/device_management/components/TableBase'
+import {TableChartHoverProvider} from 'src/device_management/components/TableChartHoverContext'
 
 // Types
 import {
@@ -41,6 +42,7 @@ interface Props {
   searchPlaceholder?: string
   isDotKey?: boolean
   isLoading?: boolean
+  enableSharedChartHover?: boolean
 }
 
 function TableComponent({
@@ -63,6 +65,7 @@ function TableComponent({
   searchPlaceholder,
   isDotKey = false,
   isLoading = false,
+  enableSharedChartHover = false,
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
@@ -265,18 +268,37 @@ function TableComponent({
         {isLoading ? (
           <PageSpinner customClass="table-spinner" />
         ) : (
-          <TableBase
-            columns={columns}
-            data={sortedData}
-            accordionColumns={isAccordion ? accordionColumns : null}
-            isMultiSelect={isMultiSelect}
-            onCheck={setCheckedArray}
-            onSort={onSort}
-            checkedTargets={checkedArray}
-            sortTarget={sortTarget}
-            options={options}
-            timeZone={timeZone}
-          />
+          <>
+            {enableSharedChartHover ? (
+              <TableChartHoverProvider>
+                <TableBase
+                  columns={columns}
+                  data={sortedData}
+                  accordionColumns={isAccordion ? accordionColumns : null}
+                  isMultiSelect={isMultiSelect}
+                  onCheck={setCheckedArray}
+                  onSort={onSort}
+                  checkedTargets={checkedArray}
+                  sortTarget={sortTarget}
+                  options={options}
+                  timeZone={timeZone}
+                />
+              </TableChartHoverProvider>
+            ) : (
+              <TableBase
+                columns={columns}
+                data={sortedData}
+                accordionColumns={isAccordion ? accordionColumns : null}
+                isMultiSelect={isMultiSelect}
+                onCheck={setCheckedArray}
+                onSort={onSort}
+                checkedTargets={checkedArray}
+                sortTarget={sortTarget}
+                options={options}
+                timeZone={timeZone}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

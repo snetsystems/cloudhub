@@ -1,9 +1,17 @@
+import moment from 'moment'
 import React, {useMemo, useState} from 'react'
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 import {formatDisplayValue} from 'src/dashboards/utils/gaugeCell'
+import {
+  normalizeTableHoverTime,
+  useTableChartCell,
+  useTableChartHover,
+} from 'src/device_management/components/TableChartHoverContext'
+import {TableLineChartPoint, TimeSeriesValue} from 'src/types/series'
 import {FormatOption} from 'src/types/statisticalgraph'
 
 type PointValue = number | string | null | undefined
+type LineValue = PointValue | TableLineChartPoint
 
 interface TableLineChartCellOptions {
   valueLabel?: 'minimum' | 'maximum' | 'last'
@@ -19,7 +27,7 @@ interface TableLineChartCellOptions {
 }
 
 interface Props {
-  values: PointValue[]
+  values: LineValue[]
   color?: string
   strokeWidth?: number
   height?: number
@@ -29,9 +37,12 @@ interface Props {
 
 interface NormalizedPoint {
   index: number
-  value: number
+  time: TimeSeriesValue
+  timeKey: string | null
+  value: number | null
+  displayValue: number | null
   x: number
-  y: number
+  y: number | null
 }
 
 interface HoverState {
@@ -47,6 +58,11 @@ const CHART_TOP_PADDING_RATIO = 0.2
 const HOVER_POINT_SIZE_RATIO = 0.5
 const TOOLTIP_HORIZONTAL_OFFSET_PERCENT = 6
 const TOOLTIP_FLIP_THRESHOLD_PERCENT = 75
+
+const isTableLineChartPoint = (
+  value: LineValue
+): value is TableLineChartPoint =>
+  !!value && typeof value === 'object' && 'time' in value && 'value' in value
 
 const toFiniteNumber = (value: PointValue): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -65,9 +81,27 @@ const toPath = (points: NormalizedPoint[]) =>
   points
     .map(
       (point, index) =>
-        `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`
+        `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${(
+          point.y ?? 0
+        ).toFixed(2)}`
     )
     .join(' ')
+
+const formatHoverTime = (time: TimeSeriesValue): string => {
+  if (typeof time === 'number') {
+    const parsed = moment.utc(time)
+    return parsed.isValid()
+      ? parsed.format('YYYY-MM-DD HH:mm:ss')
+      : String(time)
+  }
+
+  if (typeof time === 'string') {
+    const parsed = moment.utc(time)
+    return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm:ss') : time
+  }
+
+  return '--'
+}
 
 function TableLineChartCell({
   values,
@@ -86,83 +120,134 @@ function TableLineChartCell({
   const pointRadius = options?.pointRadius ?? Math.max(strokeWidth + 0.5, 1)
   const valueLabel = options?.valueLabel
   const valueFormat = options?.valueFormat
+  const hoverContext = useTableChartHover()
+  const tableCell = useTableChartCell()
   const decimalPlaces = Number.isFinite(options?.decimalPlaces)
     ? Math.max(0, options.decimalPlaces)
     : 1
   const [hoverState, setHoverState] = useState<HoverState | null>(null)
+  const cellId = tableCell?.cellId ?? null
+  const isSharedHoverEnabled = hoverContext.enabled && !!cellId
 
-  const validValues = useMemo(
+  const linePoints = useMemo(
     () =>
-      values
-        .map(toFiniteNumber)
-        .filter((value): value is number => value !== null),
+      values.map((item, index) => {
+        if (isTableLineChartPoint(item)) {
+          return {
+            index,
+            time: item.time ?? index,
+            value: toFiniteNumber(item.value),
+          }
+        }
+
+        return {
+          index,
+          time: index,
+          value: toFiniteNumber(item),
+        }
+      }),
     [values]
   )
 
+  const hasRawValue = useMemo(
+    () => linePoints.some(point => point.value !== null),
+    [linePoints]
+  )
+
+  const displayValues = useMemo(
+    () =>
+      linePoints.map(point =>
+        point.value !== null ? point.value : hasRawValue ? 0 : null
+      ),
+    [linePoints, hasRawValue]
+  )
+
+  const validValues = useMemo(
+    () => displayValues.filter((value): value is number => value !== null),
+    [displayValues]
+  )
+
   const normalizedPoints = useMemo(() => {
-    if (validValues.length === 0 || values.length === 0) {
+    if (linePoints.length === 0) {
       return [] as NormalizedPoint[]
     }
 
-    let min = zeroBaseline
-      ? Math.min(0, ...validValues)
-      : Math.min(...validValues)
-    let max = zeroBaseline
-      ? Math.max(0, ...validValues)
-      : Math.max(...validValues)
+    let min = 0
+    let max = 1
+    let range = 1
+    const hasDrawableValue = validValues.length > 0
 
-    if (min === max) {
-      const domainSize = Math.max(Math.abs(max), 1)
-      if (zeroBaseline) {
-        min = Math.min(0, min)
-        max = min + domainSize
-      } else {
-        min -= domainSize / 2
-        max += domainSize / 2
+    if (hasDrawableValue) {
+      min = zeroBaseline
+        ? Math.min(0, ...validValues)
+        : Math.min(...validValues)
+      max = zeroBaseline
+        ? Math.max(0, ...validValues)
+        : Math.max(...validValues)
+
+      if (min === max) {
+        const domainSize = Math.max(Math.abs(max), 1)
+        if (zeroBaseline) {
+          min = Math.min(0, min)
+          max = min + domainSize
+        } else {
+          min -= domainSize / 2
+          max += domainSize / 2
+        }
       }
+
+      range = max - min
     }
 
-    const range = max - min
     const chartTopPadding = VIEW_BOX_HEIGHT * CHART_TOP_PADDING_RATIO
     const drawableHeight = VIEW_BOX_HEIGHT - chartTopPadding
     const xStep =
-      values.length > 1 ? VIEW_BOX_WIDTH / (values.length - 1) : VIEW_BOX_WIDTH
+      linePoints.length > 1
+        ? VIEW_BOX_WIDTH / (linePoints.length - 1)
+        : VIEW_BOX_WIDTH / 2
 
-    return values.reduce<NormalizedPoint[]>((acc, value, index) => {
-      const numericValue = toFiniteNumber(value)
-      if (numericValue === null) {
-        return acc
-      }
+    return linePoints.map((point, index) => {
+      const x = linePoints.length > 1 ? xStep * index : VIEW_BOX_WIDTH / 2
+      const displayValue = displayValues[index] ?? null
 
-      const x = xStep * index
-      const y =
-        chartTopPadding + ((max - numericValue) / range) * drawableHeight
-
-      acc.push({
+      return {
         index,
-        value: numericValue,
+        time: point.time,
+        timeKey: normalizeTableHoverTime(point.time),
+        value: point.value,
+        displayValue,
         x,
-        y,
-      })
-      return acc
-    }, [])
-  }, [values, validValues, zeroBaseline])
+        y:
+          displayValue === null || !hasDrawableValue
+            ? null
+            : chartTopPadding + ((max - displayValue) / range) * drawableHeight,
+      }
+    })
+  }, [linePoints, displayValues, validValues, zeroBaseline])
+
+  const drawablePoints = useMemo(
+    () =>
+      normalizedPoints.filter(
+        (point): point is NormalizedPoint & {value: number; y: number} =>
+          point.value !== null && point.y !== null
+      ),
+    [normalizedPoints]
+  )
 
   const segments = useMemo(() => {
-    if (normalizedPoints.length === 0 || values.length === 0) {
+    if (drawablePoints.length === 0 || linePoints.length === 0) {
       return []
     }
 
     if (connectSeparatedPoints) {
-      return [normalizedPoints]
+      return [drawablePoints]
     }
 
     const newSegments: NormalizedPoint[][] = []
     let current: NormalizedPoint[] = []
 
-    values.forEach((_, index) => {
-      const point = normalizedPoints.find(item => item.index === index)
-      if (point) {
+    normalizedPoints.forEach(point => {
+      if (point.y !== null) {
         current.push(point)
       } else if (current.length > 0) {
         newSegments.push(current)
@@ -175,9 +260,8 @@ function TableLineChartCell({
     }
 
     return newSegments
-  }, [values, normalizedPoints, connectSeparatedPoints])
+  }, [linePoints, normalizedPoints, drawablePoints, connectSeparatedPoints])
 
-  // [HOVER INTERACTION BLOCK] 마우스 hover 상태 계산/갱신
   const handleMouseMove = (event: React.MouseEvent<SVGSVGElement>) => {
     if (normalizedPoints.length === 0) {
       return
@@ -206,6 +290,16 @@ function TableLineChartCell({
       }
     }
 
+    if (isSharedHoverEnabled && cellId) {
+      hoverContext.setHover({
+        cellId,
+        time: nearestPoint.time,
+        cursorX: nextCursorX,
+        cursorY: nextCursorY,
+      })
+      return
+    }
+
     setHoverState({
       cursorX: nextCursorX,
       cursorY: nextCursorY,
@@ -213,10 +307,45 @@ function TableLineChartCell({
     })
   }
 
-  // [HOVER INTERACTION BLOCK] 마우스 이탈 시 hover 상태 초기화
   const handleMouseLeave = () => {
+    if (isSharedHoverEnabled && cellId) {
+      hoverContext.clearHover(cellId)
+      return
+    }
+
     setHoverState(null)
   }
+
+  const resolvedHoverState = useMemo(() => {
+    if (isSharedHoverEnabled) {
+      if (!hoverContext.hoveredTimeKey) {
+        return null
+      }
+
+      const point = normalizedPoints.find(
+        item => item.timeKey === hoverContext.hoveredTimeKey
+      )
+      if (!point) {
+        return null
+      }
+
+      return {
+        cursorX: hoverContext.cursorX,
+        cursorY: hoverContext.cursorY,
+        point,
+        isActive: hoverContext.activeCellId === cellId,
+      }
+    }
+
+    if (!hoverState) {
+      return null
+    }
+
+    return {
+      ...hoverState,
+      isActive: true,
+    }
+  }, [isSharedHoverEnabled, hoverContext, normalizedPoints, hoverState, cellId])
 
   const valueLabelText = useMemo(() => {
     if (!valueLabel || validValues.length === 0) {
@@ -235,30 +364,41 @@ function TableLineChartCell({
     }
 
     for (let index = values.length - 1; index >= 0; index--) {
-      const value = values[index]
-      const numericValue = toFiniteNumber(value)
+      const numericValue = linePoints[index]?.value ?? null
       if (numericValue !== null) {
         return 'Last: ' + formatValue(numericValue)
       }
     }
 
     return null
-  }, [valueLabel, validValues, values, decimalPlaces, valueFormat])
+  }, [
+    valueLabel,
+    validValues,
+    linePoints,
+    values.length,
+    decimalPlaces,
+    valueFormat,
+  ])
 
-  const isEmpty = segments.length === 0
+  const isEmpty = !hasRawValue
   const hoverTooltipText =
-    hoverState?.point.value !== undefined
+    resolvedHoverState?.point.value !== undefined
       ? formatDisplayValue(
-          hoverState.point.value,
+          resolvedHoverState.point.value,
           false,
           decimalPlaces,
           valueFormat
         ).trim()
       : null
-  const tooltipStyle = hoverState
+  const hoverTooltipTimeText = resolvedHoverState
+    ? formatHoverTime(resolvedHoverState.point.time)
+    : null
+  const tooltipStyle = resolvedHoverState
     ? (() => {
-        const cursorXPercent = (hoverState.cursorX / VIEW_BOX_WIDTH) * 100
-        const cursorYPercent = (hoverState.cursorY / VIEW_BOX_HEIGHT) * 100
+        const cursorXPercent =
+          (resolvedHoverState.cursorX / VIEW_BOX_WIDTH) * 100
+        const cursorYPercent =
+          (resolvedHoverState.cursorY / VIEW_BOX_HEIGHT) * 100
         const shouldFlipToLeft = cursorXPercent > TOOLTIP_FLIP_THRESHOLD_PERCENT
         const rawLeft = shouldFlipToLeft
           ? cursorXPercent - TOOLTIP_HORIZONTAL_OFFSET_PERCENT
@@ -280,104 +420,121 @@ function TableLineChartCell({
         <div className="table-line-cell-empty">--</div>
       ) : (
         <>
-          <div className="table-line-cell-chart" style={{height}}>
-            <svg
-              className="table-line-cell-svg"
-              viewBox={`0 0 ${VIEW_BOX_WIDTH} ${VIEW_BOX_HEIGHT}`}
-              preserveAspectRatio="none"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-            >
-              {segments.map((segment, index) => (
-                <React.Fragment key={`segment-${index}`}>
-                  {fillArea && segment.length >= 2 && (
-                    <path
-                      d={`${toPath(segment)} L ${segment[
-                        segment.length - 1
-                      ].x.toFixed(2)} ${VIEW_BOX_HEIGHT.toFixed(
-                        2
-                      )} L ${segment[0].x.toFixed(2)} ${VIEW_BOX_HEIGHT.toFixed(
-                        2
-                      )} Z`}
-                      fill={color}
-                      opacity={areaOpacity}
-                    />
-                  )}
+          <div className="table-line-cell-tooltip-layer" style={{height}}>
+            <div className="table-line-cell-chart" style={{height}}>
+              <svg
+                className="table-line-cell-svg"
+                viewBox={`0 0 ${VIEW_BOX_WIDTH} ${VIEW_BOX_HEIGHT}`}
+                preserveAspectRatio="none"
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+              >
+                {segments.map((segment, index) => (
+                  <React.Fragment key={`segment-${index}`}>
+                    {fillArea && segment.length >= 2 && (
+                      <path
+                        d={`${toPath(segment)} L ${segment[
+                          segment.length - 1
+                        ].x.toFixed(2)} ${VIEW_BOX_HEIGHT.toFixed(
+                          2
+                        )} L ${segment[0].x.toFixed(
+                          2
+                        )} ${VIEW_BOX_HEIGHT.toFixed(2)} Z`}
+                        fill={color}
+                        opacity={areaOpacity}
+                      />
+                    )}
 
-                  {showLine && segment.length >= 2 && (
-                    <path
-                      d={toPath(segment)}
-                      fill="none"
-                      stroke={color}
-                      strokeWidth={strokeWidth}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  )}
+                    {showLine && segment.length >= 2 && (
+                      <path
+                        d={toPath(segment)}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth={strokeWidth}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    )}
 
-                  {showPoint &&
-                    segment.map((point, pointIndex) => (
+                    {showPoint &&
+                      segment.map((point, pointIndex) => (
+                        <circle
+                          key={`point-${index}-${pointIndex}`}
+                          cx={point.x}
+                          cy={point.y}
+                          r={pointRadius}
+                          fill={color}
+                        />
+                      ))}
+
+                    {!showPoint && segment.length === 1 && (
                       <circle
-                        key={`point-${index}-${pointIndex}`}
-                        cx={point.x}
-                        cy={point.y}
+                        className="table-line-cell-single-point"
+                        cx={segment[0].x}
+                        cy={segment[0].y}
                         r={pointRadius}
                         fill={color}
                       />
-                    ))}
-
-                  {!showLine && !showPoint && segment.length === 1 && (
-                    <circle
-                      cx={segment[0].x}
-                      cy={segment[0].y}
-                      r={pointRadius}
-                      fill={color}
-                    />
-                  )}
-                </React.Fragment>
-              ))}
-
-              {/* [HOVER RENDER BLOCK] crosshair + hover dot 렌더링 */}
-              {hoverState && (
-                <>
-                  <line
-                    className="table-line-cell-crosshair"
-                    x1={hoverState.cursorX}
-                    y1={0}
-                    x2={hoverState.cursorX}
-                    y2={VIEW_BOX_HEIGHT}
-                  />
-                  <line
-                    className="table-line-cell-crosshair"
-                    x1={0}
-                    y1={hoverState.cursorY}
-                    x2={VIEW_BOX_WIDTH}
-                    y2={hoverState.cursorY}
-                  />
-                  <circle
-                    className="table-line-cell-hover-point-outline"
-                    cx={hoverState.point.x}
-                    cy={hoverState.point.y}
-                    r={Math.max(
-                      (pointRadius + 1.5) * HOVER_POINT_SIZE_RATIO,
-                      1.5
                     )}
-                  />
-                  <circle
-                    className="table-line-cell-hover-point"
-                    cx={hoverState.point.x}
-                    cy={hoverState.point.y}
-                    r={Math.max(pointRadius * HOVER_POINT_SIZE_RATIO, 1.25)}
-                  />
-                </>
+                  </React.Fragment>
+                ))}
+
+                {resolvedHoverState && (
+                  <>
+                    <line
+                      className="table-line-cell-crosshair table-line-cell-crosshair--vertical"
+                      x1={resolvedHoverState.point.x}
+                      y1={0}
+                      x2={resolvedHoverState.point.x}
+                      y2={VIEW_BOX_HEIGHT}
+                    />
+                    {resolvedHoverState.isActive &&
+                      resolvedHoverState.point.value !== null &&
+                      resolvedHoverState.point.y !== null && (
+                        <>
+                          <line
+                            className="table-line-cell-crosshair table-line-cell-crosshair--horizontal"
+                            x1={0}
+                            y1={resolvedHoverState.point.y}
+                            x2={VIEW_BOX_WIDTH}
+                            y2={resolvedHoverState.point.y}
+                          />
+                          <circle
+                            className="table-line-cell-hover-point-outline"
+                            cx={resolvedHoverState.point.x}
+                            cy={resolvedHoverState.point.y}
+                            r={Math.max(
+                              (pointRadius + 1.5) * HOVER_POINT_SIZE_RATIO,
+                              1.5
+                            )}
+                          />
+                          <circle
+                            className="table-line-cell-hover-point"
+                            cx={resolvedHoverState.point.x}
+                            cy={resolvedHoverState.point.y}
+                            r={Math.max(
+                              pointRadius * HOVER_POINT_SIZE_RATIO,
+                              1.25
+                            )}
+                          />
+                        </>
+                      )}
+                  </>
+                )}
+              </svg>
+            </div>
+            {resolvedHoverState?.isActive &&
+              hoverTooltipText !== null &&
+              hoverTooltipTimeText !== null && (
+                <div className="table-line-cell-tooltip" style={tooltipStyle}>
+                  <div className="table-line-cell-tooltip-time">
+                    {hoverTooltipTimeText}
+                  </div>
+                  <div className="table-line-cell-tooltip-value">
+                    {hoverTooltipText}
+                  </div>
+                </div>
               )}
-            </svg>
-            {/* [HOVER RENDER BLOCK] hover tooltip 렌더링 */}
-            {hoverState && hoverTooltipText !== null && (
-              <div className="table-line-cell-tooltip" style={tooltipStyle}>
-                {hoverTooltipText}
-              </div>
-            )}
           </div>
           {valueLabelText !== null && (
             <div className="table-line-cell-value">{valueLabelText}</div>

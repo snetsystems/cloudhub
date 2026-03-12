@@ -206,10 +206,16 @@
   padding: 2px 0;
 }
 
+.table-line-cell-tooltip-layer {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
 .table-line-cell-chart {
   position: relative;
   width: 100%;
-  background-color: $g5-pepper;
+  background-color: $g0-obsidian;
   border-radius: 3px;
   overflow: hidden;
   cursor: crosshair;
@@ -268,6 +274,15 @@
   padding: 4px 6px;
   white-space: nowrap;
   z-index: 2;
+}
+
+.table-line-cell-tooltip-time {
+  color: rgba($g18-cloud, 0.72);
+  margin-bottom: 2px;
+}
+
+.table-line-cell-tooltip-value {
+  color: $g18-cloud;
 }
 
 .template-variable-cell {

@@ -41,6 +41,7 @@ export interface ColumnInfo extends ColumnBaseInfo {
   name: string
   key: string
   parentHeader?: string
+  parentHeaderClassName?: string
   options?: ColumnInfoOptions
   render?: (
     value: any,

@@ -38,13 +38,22 @@ export const serverListColumns = ({
       name: '서버 호스트',
       align: AlignType.LEFT,
       parentHeader: 'Server',
+      parentHeaderClassName: 'parent-header-server',
+      options: {
+        thead: {
+          align: AlignType.LEFT,
+          className: 'server-host',
+        },
+      },
       render: (value: string) => {
         return (
-          <Link
-            to={`/sources/${sourceID}/server-monitoring/${SERVER_DETAILS_PAGE_NAME}?host=${value}`}
-          >
-            {value}
-          </Link>
+          <div className="server-host">
+            <Link
+              to={`/sources/${sourceID}/server-monitoring/${SERVER_DETAILS_PAGE_NAME}?host=${value}`}
+            >
+              {value}
+            </Link>
+          </div>
         )
       },
     },
@@ -52,6 +61,7 @@ export const serverListColumns = ({
       key: 'CPU Usage',
       name: 'CPU Usage',
       parentHeader: 'CPU',
+      parentHeaderClassName: 'parent-header-cpu',
       options: {
         thead: {
           align: AlignType.RIGHT,
@@ -78,7 +88,7 @@ export const serverListColumns = ({
                 isShowLine: true,
                 isShowPoint: false,
                 isFillArea: true,
-                isConnectSeparatedPoints: true,
+                isConnectSeparatedPoints: false,
                 valueLabel: 'maximum',
                 isZeroBaseline: true,
                 areaOpacity: 0.1,
@@ -94,6 +104,7 @@ export const serverListColumns = ({
       key: 'Mem Total',
       name: 'Mem Total',
       parentHeader: 'Memory',
+      parentHeaderClassName: 'parent-header-mem',
       align: AlignType.RIGHT,
       options: {
         sorting: true,
@@ -151,7 +162,7 @@ export const serverListColumns = ({
                 isShowLine: true,
                 isShowPoint: false,
                 isFillArea: true,
-                isConnectSeparatedPoints: true,
+                isConnectSeparatedPoints: false,
                 valueLabel: 'last',
                 isZeroBaseline: true,
                 valueFormat: FORMAT_OPTIONS.KMG,
@@ -166,6 +177,7 @@ export const serverListColumns = ({
       key: 'Mem Used',
       name: 'Mem Used',
       parentHeader: 'Memory',
+      parentHeaderClassName: 'parent-header-mem',
       align: AlignType.RIGHT,
       options: {
         thead: {
@@ -268,10 +280,24 @@ export const serverListColumns = ({
       name: 'Network Interface',
       parentHeader: 'Network',
       align: AlignType.LEFT,
-    } as ColumnInfo,
+      options: {
+        thead: {
+          align: AlignType.LEFT,
+          className: 'network-interface',
+        },
+      },
+      render: (value: string) => {
+        return (
+          <div title={value} className="ellipsis-text network-interface">
+            {value}
+          </div>
+        )
+      },
+    },
     {
       key: 'Disk Usage',
       name: 'Disk Usage',
+      parentHeader: 'Disk',
       align: AlignType.RIGHT,
       options: {
         thead: {
@@ -292,42 +318,83 @@ export const serverListColumns = ({
           isGauge: true,
           decimalPlaces: 0,
         }
+        if (isLineChart) {
+          return (
+            <>
+              <TableLineChartCell
+                values={toLineValues(value)}
+                options={{
+                  isShowLine: true,
+                  isShowPoint: false,
+                  isFillArea: true,
+                  isConnectSeparatedPoints: true,
+                  valueLabel: 'last',
+                  isZeroBaseline: true,
+                  valueFormat: FORMAT_OPTIONS.KMG,
+                }}
+              />
+              <div className="disk-usage-path">{rowData.Path}</div>
+            </>
+          )
+        }
         return (
-          <div>
+          <div className="disk-usage-container">
             <TableGaugeCell options={gaugeOptions} value={value} />
-            <span>{rowData.path}</span>
           </div>
         )
       },
     },
-    // {key: 'Path', name: 'Path', align: AlignType.LEFT},
-    // {
-    //   key: 'Disk I/O %',
-    //   name: 'Disk I/O % (Max)',
-    //   align: AlignType.RIGHT,
-    //   options: {
-    //     thead: {
-    //       align: AlignType.RIGHT,
-    //     },
-    //     isGauge: true,
-    //     sorting: true,
-    //   },
-    //   render: (value: number) => {
-    //     const gaugeOptions = {
-    //       min: 0,
-    //       max: 100,
-    //       colors: LINE_COLORS_I,
-    //       chartType: CHART_TYPE_MODES.SEGMENTED,
-    //       backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
-    //       isPercent: true,
-    //       isShowValues: true,
-    //       isGauge: true,
-    //       decimalPlaces: 0,
-    //     }
-    //     return <TableGaugeCell options={gaugeOptions} value={value} />
-    //   },
-    // },
-    // {key: 'Device', name: 'Device', align: AlignType.LEFT},
+    {
+      key: 'Disk I/O %',
+      name: 'Disk I/O % (Max)',
+      parentHeader: 'Disk',
+      align: AlignType.RIGHT,
+      options: {
+        thead: {
+          align: AlignType.RIGHT,
+        },
+        isGauge: true,
+        sorting: true,
+      },
+      render: (value: number, rowData: DataTableObject) => {
+        const gaugeOptions = {
+          min: 0,
+          max: 100,
+          colors: LINE_COLORS_I,
+          chartType: CHART_TYPE_MODES.SEGMENTED,
+          backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
+          isPercent: true,
+          isShowValues: true,
+          isGauge: true,
+          decimalPlaces: 0,
+        }
+        if (isLineChart) {
+          return (
+            <>
+              <TableLineChartCell
+                values={toLineValues(value)}
+                options={{
+                  isShowLine: true,
+                  isShowPoint: false,
+                  isFillArea: true,
+                  isConnectSeparatedPoints: true,
+                  valueLabel: 'last',
+                  isZeroBaseline: true,
+                  valueFormat: FORMAT_OPTIONS.KMG,
+                }}
+              />
+              <div className="disk-io-device">{rowData.Device}</div>
+            </>
+          )
+        }
+        return (
+          <div className="disk-io-container">
+            <TableGaugeCell options={gaugeOptions} value={value} />
+            <div className="disk-io-device">{rowData.Device}</div>
+          </div>
+        )
+      },
+    },
     // {
     //   key: 'mean_usage_irq',
     //   name: 'mean_usage_irq',
@@ -347,12 +414,12 @@ export const serverListColumns = ({
     //       <TableLineChartCell
     //         values={series}
     //         options={{
-    //           showLine: true,
-    //           showPoint: false,
-    //           fillArea: true,
-    //           connectSeparatedPoints: true,
+    //           isShowLine: true,
+    //           isShowPoint: false,
+    //           isFillArea: true,
+    //           isConnectSeparatedPoints: true,
     //           valueLabel: 'maximum',
-    //           zeroBaseline: true,
+    //           isZeroBaseline: true,
     //         }}
     //       />
     //     )
@@ -505,6 +572,45 @@ GROUP BY "host"
 FILL(null)`,
   },
   {
+    id: 'server-list-line-disk-usage',
+    text: `SELECT max("Disk Usage") AS "Disk Usage"
+FROM (
+  SELECT last("used_percent") AS "Disk Usage"
+  FROM "Default"."autogen"."disk"
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND path !~ /^\\/boot/ AND path !~ /^\\/run/
+  GROUP BY "host", "path", time(:interval:)
+  FILL(null)
+)
+GROUP BY "host", time(:interval:)
+FILL(null)`,
+  },
+  {
+    id: 'server-list-line-disk-io',
+    text: `SELECT max("Disk I/O %") AS "Disk I/O %"
+FROM (
+  SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "Disk I/O %"
+  FROM "Default"."autogen"."diskio"
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime:
+  GROUP BY "host", "name", time(:interval:)
+  FILL(null)
+)
+GROUP BY "host", time(:interval:)
+FILL(null)`,
+  },
+  {
+    id: 'server-list-line-disk-io-win',
+    text: `SELECT max("Disk I/O %") AS "Disk I/O %"
+FROM (
+  SELECT last("Percent_Disk_Time") AS "Disk I/O %"
+  FROM "Default"."autogen"."win_diskio"
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "instance" !~ /^_Total/
+  GROUP BY "host", "instance", time(:interval:)
+  FILL(null)
+)
+GROUP BY "host", time(:interval:)
+FILL(null)`,
+  },
+  {
     id: 'server-list-line-network',
     text: `SELECT max("traffic") AS "Network Traffic"
 FROM (
@@ -532,7 +638,7 @@ FILL(null)`,
   },
   {
     id: 'server-list-network-win',
-    text: `SELECT "instance" AS "Network Interface", max("traffic") AS "Network Traffic"
+    text: `SELECT "instance" AS "Network Interface", max("traffic") AS "__ignore_network_traffic__"
   FROM (
     SELECT max("Bytes_Received_persec") + max("Bytes_Sent_persec") AS "traffic"
     FROM "Default"."autogen"."win_net"
@@ -544,14 +650,49 @@ FILL(null)`,
   },
   {
     id: 'server-list-network',
-    text: `SELECT "interface" AS "Network Interface", max("traffic") AS "Network Traffic"
+    text: `SELECT "interface" AS "Network Interface", max("traffic") AS "__ignore_network_traffic__"
   FROM (
     SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
     FROM "Default"."autogen"."net"
     WHERE time > now() - 3m
-    GROUP BY time(:interval:), "interface"
+    GROUP BY time(:interval:), "host", "interface"
     LIMIT 1
   )
   GROUP BY "host"`,
+  },
+  {
+    id: 'server-list-line-disk-usage-meta',
+    text: `SELECT "path" AS "Path", max("Disk Usage") AS "__ignore_disk_usage__"
+FROM (
+  SELECT last("used_percent") AS "Disk Usage"
+  FROM "Default"."autogen"."disk"
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND path !~ /^\\/boot/ AND path !~ /^\\/run/
+  GROUP BY "host", "path"
+)
+GROUP BY "host"`,
+  },
+  {
+    id: 'server-list-line-disk-io-meta',
+    text: `SELECT "name" AS "Device", max("io_time") AS "__ignore_disk_io__"
+FROM (
+  SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
+  FROM "Default"."autogen"."diskio"
+  WHERE time > now() - 3m
+  GROUP BY time(:interval:), "host", "name"
+  LIMIT 1
+)
+GROUP BY "host"`,
+  },
+  {
+    id: 'server-list-line-disk-io-win-meta',
+    text: `SELECT "instance" AS "Device", max("Disk I/O %") AS "__ignore_disk_io__"
+FROM (
+  SELECT last("Percent_Disk_Time") AS "Disk I/O %"
+  FROM "Default"."autogen"."win_diskio"
+  WHERE time > now() - 3m AND "instance" !~ /^_Total/
+  GROUP BY time(:interval:), "host", "instance"
+  LIMIT 1
+)
+GROUP BY "host"`,
   },
 ]

@@ -1,5 +1,10 @@
 export type TimeSeriesValue = string | number | null
 
+export interface TableLineChartPoint {
+  time: TimeSeriesValue
+  value: TimeSeriesValue
+}
+
 export interface TimeSeriesSeries {
   name?: string
   columns: string[]
