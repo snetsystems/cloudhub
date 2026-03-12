@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 import TableComponent from 'src/device_management/components/TableComponent'
-import {AlignType, DataTableObject} from 'src/types/tableType'
+import {DataTableObject} from 'src/types/tableType'
 import {
   lineChartTableColumn,
   serverListDummyLineQueries,
@@ -12,14 +12,34 @@ import {generateForHosts} from 'src/utils/tempVars'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 
 interface Props {
-  // 상위 컴포넌트에서 데이터를 Props로 넘겨서 사용하는게 좋을 듯함.
-  // data: DataTableObject[]
-  //
   source: Source
+  onProcessNameClick?: (row: DataTableObject) => void
 }
 
-const ProcessLineChartTable: React.FC<Props> = ({source}) => {
+const ProcessLineChartTable: React.FC<Props> = ({
+  source,
+  onProcessNameClick,
+}) => {
   const [dummyData, setDummyData] = useState<DataTableObject[]>([])
+
+  const columns = useMemo(() => {
+    if (!onProcessNameClick) return lineChartTableColumn
+    return lineChartTableColumn.map(col => {
+      if (col.key !== 'host') return col
+      return {
+        ...col,
+        render: (value: unknown, rowData: DataTableObject) => (
+          <button
+            type="button"
+            onClick={() => onProcessNameClick(rowData)}
+            className="process-name-link"
+          >
+            {String(value ?? '')}
+          </button>
+        ),
+      }
+    })
+  }, [onProcessNameClick])
 
   useEffect(() => {
     const querySet = serverListDummyLineQueries.map(query => ({
@@ -43,8 +63,6 @@ const ProcessLineChartTable: React.FC<Props> = ({source}) => {
 
       const mergedData = mergeResultsByHost(results)
       setDummyData(mergedData)
-
-      console.log('tableData', mergedData)
     }
 
     fetchDummyData()
@@ -52,8 +70,7 @@ const ProcessLineChartTable: React.FC<Props> = ({source}) => {
 
   return (
     <div>
-      {/* Data에 맞게 Column Key값 변경해야 함. */}
-      <TableComponent data={dummyData} columns={lineChartTableColumn} />
+      <TableComponent data={dummyData} columns={columns} />
     </div>
   )
 }

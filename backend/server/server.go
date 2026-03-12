@@ -696,11 +696,11 @@ func (s *Server) Serve(ctx context.Context) {
 		auth0: s.Auth0SuperAdminOrg,
 	}
 
-	// Initialize builtin dashboards for default organization
-	if err := initializeDefaultOrgFixedCells(ctx, &service, logger); err != nil {
+	// Initialize builtin dashboards for all organizations (including server_overview for existing orgs)
+	if err := initializeAllOrgsFixedCells(ctx, &service, logger); err != nil {
 		logger.
 			WithField("component", "server").
-			Error("Failed to initialize builtin dashboards for default organization:", err)
+			Error("Failed to initialize builtin dashboards for organizations:", err)
 		// Don't exit - continue startup even if builtin dashboard initialization fails
 	}
 

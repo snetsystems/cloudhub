@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react'
+import React, {useState, useMemo, useEffect} from 'react'
 import {Cell, Source, Me, Template, TimeZones, TemplateValue} from 'src/types'
 import {Button, ComponentColor, Page, OverlayTechnology} from 'src/reusable_ui'
 import FixedModal from 'src/reusable_ui/components/FixedModal/FixedModal'
@@ -40,6 +40,7 @@ import * as QueriesModels from 'src/types/queries'
 import {mergeBuiltinWithGetTempVars} from 'src/utils/tempVars'
 import {hydrateTemplates} from 'src/tempVars/utils/graph'
 import {useDashboardPageWithImport} from 'src/server_details/hooks/useDashboardPageWithImport'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 /** Optional context for template overrides (e.g. :host: selection). Consumer provides a React Context; common component only reads templateOverrides. */
 export interface TemplateSelectionContextValue {
@@ -215,6 +216,13 @@ function DashboardPageWithImport({
     DashboardsModels.Cell | DashboardsModels.NewDefaultCell | null
   >(null)
   const [isCellEditorOpen, setIsCellEditorOpen] = useState(false)
+
+  useEffect(() => {
+    GlobalAutoRefresher.poll(autoRefresh)
+    return () => {
+      GlobalAutoRefresher.stopPolling()
+    }
+  }, [autoRefresh])
 
   const templateSelection =
     templateSelectionContext != null

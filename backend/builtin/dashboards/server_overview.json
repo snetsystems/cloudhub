@@ -1,0 +1,513 @@
+{
+  "id": 0,
+  "name": "server_overview",
+  "type": "builtin",
+  "version": "1.0.2",
+  "organization": "",
+  "cells": [
+    {
+      "i": "server-overview-server-count",
+      "x": 0,
+      "y": 0,
+      "w": 16,
+      "h": 8,
+      "minW": 12,
+      "minH": 4,
+      "name": "Server",
+      "queries": [
+        {
+          "query": "SELECT count(\"CPU Usage\") AS \"server_count\" FROM (SELECT last(\"usage_system\") + last(\"usage_user\") AS \"CPU Usage\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' GROUP BY \"host\")",
+          "label": "Server Count",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "single-stat",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": []
+    },
+    {
+      "i": "server-overview-os-summary",
+      "x": 16,
+      "y": 0,
+      "w": 16,
+      "h": 8,
+      "minW": 12,
+      "minH": 4,
+      "name": "OS",
+      "queries": [
+        {
+          "query": "SELECT 5 AS \"Linux\", 5 AS \"Windows\", 0 AS \"Unix\", 0 AS \"Others\" FROM \":db:\".\":rp:\".\"system\" LIMIT 1",
+          "label": "OS Summary (dummy)",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "table",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "tableOptions": {
+        "verticalTimeAxis": false,
+        "sortBy": {
+          "internalName": "",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": false
+      },
+      "fieldOptions": [],
+      "colors": []
+    },
+    {
+      "i": "server-overview-total-cores",
+      "x": 32,
+      "y": 0,
+      "w": 16,
+      "h": 8,
+      "minW": 12,
+      "minH": 4,
+      "name": "Total Cores",
+      "queries": [
+        {
+          "query": "SELECT 41 AS \"total_cores\" FROM \":db:\".\":rp:\".\"cpu\" LIMIT 1",
+          "label": "Total Cores (dummy)",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "single-stat",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": []
+    },
+    {
+      "i": "server-overview-avg-cpu",
+      "x": 48,
+      "y": 0,
+      "w": 16,
+      "h": 8,
+      "minW": 12,
+      "minH": 4,
+      "name": "Avg CPU",
+      "queries": [
+        {
+          "query": "SELECT 3 AS \"avg_cpu\" FROM \":db:\".\":rp:\".\"cpu\" LIMIT 1",
+          "label": "Avg CPU (dummy)",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "single-stat",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "percentage",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": []
+    },
+    {
+      "i": "server-overview-avg-memory",
+      "x": 64,
+      "y": 0,
+      "w": 16,
+      "h": 8,
+      "minW": 12,
+      "minH": 4,
+      "name": "Avg Memory",
+      "queries": [
+        {
+          "query": "SELECT 63 AS \"avg_mem\" FROM \":db:\".\":rp:\".\"mem\" LIMIT 1",
+          "label": "Avg Memory (dummy)",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "single-stat",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "percentage",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": []
+    },
+    {
+      "i": "server-overview-avg-disk",
+      "x": 80,
+      "y": 0,
+      "w": 16,
+      "h": 8,
+      "minW": 12,
+      "minH": 4,
+      "name": "Avg Disk",
+      "queries": [
+        {
+          "query": "SELECT 39 AS \"avg_disk\" FROM \":db:\".\":rp:\".\"disk\" LIMIT 1",
+          "label": "Avg Disk (dummy)",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "single-stat",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "percentage",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": []
+    },
+    {
+      "i": "server-overview-cpu-map",
+      "x": 0,
+      "y": 8,
+      "w": 72,
+      "h": 16,
+      "minW": 24,
+      "minH": 8,
+      "name": "CPU Resource Map",
+      "queries": [
+        {
+          "query": "SELECT mean(\"usage_system\") + mean(\"usage_user\") AS \"CPU Usage\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"='cpu-total' GROUP BY \"host\", time(:interval:) FILL(null)",
+          "label": "CPU",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "line",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "percentage",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": [
+        {
+          "id": "cpu-map-1",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "i": "server-overview-top5-cpu",
+      "x": 72,
+      "y": 8,
+      "w": 24,
+      "h": 5,
+      "minW": 12,
+      "minH": 4,
+      "name": "CPU TOP5",
+      "queries": [
+        {
+          "query": "SELECT last(\"usage_system\") + last(\"usage_user\") AS \"CPU Usage\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' GROUP BY \"host\" FILL(null)",
+          "label": "CPU TOP5",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "bar",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "percentage",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": []
+    },
+    {
+      "i": "server-overview-top5-mem",
+      "x": 72,
+      "y": 13,
+      "w": 24,
+      "h": 5,
+      "minW": 12,
+      "minH": 4,
+      "name": "메모리 TOP5",
+      "queries": [
+        {
+          "query": "SELECT last(\"used_percent\") AS \"Mem Usage\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: GROUP BY \"host\" FILL(null)",
+          "label": "Memory TOP5",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "bar",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "percentage",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": []
+    },
+    {
+      "i": "server-overview-top5-disk",
+      "x": 72,
+      "y": 18,
+      "w": 24,
+      "h": 6,
+      "minW": 12,
+      "minH": 4,
+      "name": "디스크 I/O TOP5",
+      "queries": [
+        {
+          "query": "SELECT max(\"Disk Usage\") AS \"Disk Usage\" FROM (SELECT last(\"used_percent\") AS \"Disk Usage\" FROM \":db:\".\":rp:\".\"disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND path !~ /^\\/boot/ AND path !~ /^\\/run/ GROUP BY \"host\", \"path\") GROUP BY \"host\"",
+          "label": "Disk I/O TOP5",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "bar",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["0", "100"],
+          "label": "percentage",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": []
+    },
+    {
+      "i": "server-overview-process-cpu-top5",
+      "x": 0,
+      "y": 24,
+      "w": 48,
+      "h": 12,
+      "minW": 24,
+      "minH": 6,
+      "name": "Process CPU TOP 5",
+      "queries": [
+        {
+          "query": "SELECT 'sqlservr.exe' AS \"Name\", 7.94 AS \"Max\", 7.94 AS \"Avg\", 1 AS \"Count\", 'mssql' AS \"Servers\" UNION ALL SELECT 'java.exe', 5.61, 5.61, 3, 'dev' UNION ALL SELECT 'Veeam.Backup.UIServer.exe', 4.99, 4.99, 1, 'veeam'",
+          "label": "Process CPU TOP5 (dummy)",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "table",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "tableOptions": {
+        "verticalTimeAxis": false,
+        "sortBy": {
+          "internalName": "",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": false
+      },
+      "fieldOptions": [],
+      "colors": []
+    },
+    {
+      "i": "server-overview-process-mem-top5",
+      "x": 48,
+      "y": 24,
+      "w": 48,
+      "h": 12,
+      "minW": 24,
+      "minH": 6,
+      "name": "Process 메모리 TOP 5",
+      "queries": [
+        {
+          "query": "SELECT 'sqlservr.exe' AS \"Name\", 92.11 AS \"Max\", 92.11 AS \"Avg\", 1 AS \"Count\", 'scp-db01' AS \"Servers\" UNION ALL SELECT 'java.exe', 90.46, 90.46, 1, 'mssql' UNION ALL SELECT 'Veeam.Backup.UIServer.exe', 48.25, 48.25, 1, 'veeam'",
+          "label": "Process Memory TOP5 (dummy)",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "type": "table",
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "tableOptions": {
+        "verticalTimeAxis": false,
+        "sortBy": {
+          "internalName": "",
+          "displayName": "",
+          "visible": true,
+          "direction": "asc",
+          "tempVar": ""
+        },
+        "wrapping": "truncate",
+        "fixFirstColumn": false
+      },
+      "fieldOptions": [],
+      "colors": []
+    }
+  ],
+  "templates": []
+}

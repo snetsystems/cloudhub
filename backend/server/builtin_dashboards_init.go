@@ -7,43 +7,45 @@ import (
 	"github.com/snetsystems/cloudhub/backend/builtin"
 )
 
-// initializeDefaultOrgFixedCells initializes fixed-cell dashboards for the default organization
-// if it doesn't already have them. This is called during server startup.
-func initializeDefaultOrgFixedCells(ctx context.Context, service *Service, logger cloudhub.Logger) error {
-	// Use server context to access stores directly
+// initializeAllOrgsFixedCells initializes fixed-cell dashboards for all organizations
+// so that every org has every builtin template (e.g. server_overview, host_page).
+// Existing dashboards are skipped by InitializeFixedCells; only missing ones are added.
+// This is called during server startup so that existing orgs get new templates (e.g. server_overview)
+// without requiring manual apply.
+func initializeAllOrgsFixedCells(ctx context.Context, service *Service, logger cloudhub.Logger) error {
 	serverCtx := serverContext(ctx)
 
-	// Get default organization
-	defaultOrg, err := service.Store.Organizations(serverCtx).DefaultOrganization(serverCtx)
+	orgs, err := service.Store.Organizations(serverCtx).All(serverCtx)
 	if err != nil {
 		logger.
 			WithField("component", "fixed-cell").
-			Error("Failed to get default organization:", err)
+			Error("Failed to list organizations:", err)
 		return err
 	}
 
-	// Create fixed-cell template store (builtin package embeds JSON templates)
 	builtinStore := &builtin.BinDashboardsStore{
 		Logger: logger,
 	}
-
-	// Get dashboards store with server context (direct access, no org filtering)
 	dashboardsStore := service.Store.Dashboards(serverCtx)
 	mappingStore := service.Store.FixedCellMappingStore()
 
-	// Initialize fixed-cell dashboards for default organization
-	if err := InitializeFixedCells(
-		serverCtx,
-		defaultOrg.ID,
-		dashboardsStore,
-		builtinStore,
-		mappingStore,
-		logger,
-	); err != nil {
-		return err
+	for _, org := range orgs {
+		if err := InitializeFixedCells(
+			serverCtx,
+			org.ID,
+			dashboardsStore,
+			builtinStore,
+			mappingStore,
+			logger,
+		); err != nil {
+			logger.
+				WithField("component", "fixed-cell").
+				WithField("organization", org.ID).
+				Error("Failed to initialize fixed-cell dashboards for organization:", err)
+			// Continue with other orgs
+			continue
+		}
 	}
 
-	// No auto-apply on GET /fixed-cells/:name; user applies via Update button (POST /fixed-cells/:name/apply)
-	// per template name to avoid startup load.
 	return nil
 }
