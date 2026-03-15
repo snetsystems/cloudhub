@@ -12,9 +12,17 @@ import {FormatOption} from 'src/types/statisticalgraph'
 
 type PointValue = number | string | null | undefined
 type LineValue = PointValue | TableLineChartPoint
+type ValueLabelOption =
+  | 'minimum'
+  | 'maximum'
+  | 'last'
+  | 'average'
+  | 'min'
+  | 'max'
+  | 'avr'
 
 interface TableLineChartCellOptions {
-  valueLabel?: 'minimum' | 'maximum' | 'last'
+  valueLabel?: ValueLabelOption | ValueLabelOption[]
   valueFormat?: FormatOption
   decimalPlaces?: number
   isZeroBaseline?: boolean
@@ -24,6 +32,7 @@ interface TableLineChartCellOptions {
   isConnectSeparatedPoints?: boolean
   areaOpacity?: number
   pointRadius?: number
+  suffix?: string
 }
 
 interface Props {
@@ -120,6 +129,7 @@ function TableLineChartCell({
   const pointRadius = options?.pointRadius ?? Math.max(strokeWidth + 0.5, 1)
   const valueLabel = options?.valueLabel
   const valueFormat = options?.valueFormat
+  const suffix = options?.suffix ?? ''
   const hoverContext = useTableChartHover()
   const tableCell = useTableChartCell()
   const decimalPlaces = Number.isFinite(options?.decimalPlaces)
@@ -352,25 +362,52 @@ function TableLineChartCell({
       return null
     }
 
+    const valueLabels = Array.isArray(valueLabel) ? valueLabel : [valueLabel]
     const formatValue = (value: number) =>
-      formatDisplayValue(value, false, decimalPlaces, valueFormat).trim()
+      `${formatDisplayValue(
+        value,
+        false,
+        decimalPlaces,
+        valueFormat
+      ).trim()}${suffix}`
 
-    if (valueLabel === 'minimum') {
-      return 'Min: ' + formatValue(Math.min(...validValues))
-    }
-
-    if (valueLabel === 'maximum') {
-      return 'Max: ' + formatValue(Math.max(...validValues))
-    }
-
-    for (let index = values.length - 1; index >= 0; index--) {
-      const numericValue = linePoints[index]?.value ?? null
-      if (numericValue !== null) {
-        return 'Last: ' + formatValue(numericValue)
+    const lastValue = (() => {
+      for (let index = values.length - 1; index >= 0; index--) {
+        const numericValue = linePoints[index]?.value ?? null
+        if (numericValue !== null) {
+          return numericValue
+        }
       }
-    }
 
-    return null
+      return null
+    })()
+
+    const labelTexts = valueLabels
+      .map(label => {
+        if (label === 'minimum' || label === 'min') {
+          return ' Min: ' + formatValue(Math.min(...validValues))
+        }
+
+        if (label === 'maximum' || label === 'max') {
+          return ' Max: ' + formatValue(Math.max(...validValues))
+        }
+
+        if (label === 'average' || label === 'avr') {
+          const average =
+            validValues.reduce((sum, current) => sum + current, 0) /
+            validValues.length
+          return ' Avg: ' + formatValue(average)
+        }
+
+        if (label === 'last' && lastValue !== null) {
+          return ' Last: ' + formatValue(lastValue)
+        }
+
+        return null
+      })
+      .filter((text): text is string => text !== null)
+
+    return labelTexts.length > 0 ? labelTexts.join(' ') : null
   }, [
     valueLabel,
     validValues,
@@ -378,17 +415,18 @@ function TableLineChartCell({
     values.length,
     decimalPlaces,
     valueFormat,
+    suffix,
   ])
 
   const isEmpty = !hasRawValue
   const hoverTooltipText =
     resolvedHoverState?.point.value !== undefined
-      ? formatDisplayValue(
+      ? `${formatDisplayValue(
           resolvedHoverState.point.value,
           false,
           decimalPlaces,
           valueFormat
-        ).trim()
+        ).trim()}${suffix}`
       : null
   const hoverTooltipTimeText = resolvedHoverState
     ? formatHoverTime(resolvedHoverState.point.time)

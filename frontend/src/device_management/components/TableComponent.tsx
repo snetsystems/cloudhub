@@ -125,6 +125,84 @@ function TableComponent({
     return 0
   }
 
+  const toNumber = (val: any) => {
+    if (typeof val === 'number' && Number.isFinite(val)) {
+      return val
+    }
+    if (
+      typeof val === 'string' &&
+      val.trim() !== '' &&
+      !Number.isNaN(Number(val))
+    ) {
+      return Number(val)
+    }
+    return null
+  }
+
+  const getArraySortValue = (value: any[], metric: SortInfo['sortArrayBy']) => {
+    const getNumericValue = (item: any) => {
+      if (
+        item !== null &&
+        item !== undefined &&
+        typeof item === 'object' &&
+        'value' in item
+      ) {
+        return toNumber(item.value)
+      }
+
+      return toNumber(item)
+    }
+
+    const numericValues = value
+      .map(item => getNumericValue(item))
+      .filter((item): item is number => item !== null)
+
+    if (numericValues.length === 0) {
+      return ''
+    }
+
+    if (metric === 'max') {
+      return Math.max(...numericValues)
+    }
+
+    if (metric === 'min') {
+      return Math.min(...numericValues)
+    }
+
+    if (metric === 'avr') {
+      return (
+        numericValues.reduce((sum, current) => sum + current, 0) /
+        numericValues.length
+      )
+    }
+
+    for (let index = value.length - 1; index >= 0; index--) {
+      const numericValue = getNumericValue(value[index])
+      if (numericValue !== null) {
+        return numericValue
+      }
+    }
+
+    return ''
+  }
+
+  const getComparableSortValue = (
+    value: any,
+    metric: SortInfo['sortArrayBy'] = 'last'
+  ) => {
+    if (!Array.isArray(value)) {
+      return value
+    }
+
+    return getArraySortValue(value, metric)
+  }
+
+  const compareStringValues = (a: any, b: any) =>
+    String(a ?? '').localeCompare(String(b ?? ''), undefined, {
+      sensitivity: 'base',
+      numeric: true,
+    })
+
   const sortedData = useMemo(() => {
     const newData: DataTableObject[] = JSON.parse(JSON.stringify(filterData))
     if (sortTarget === null) {
@@ -139,8 +217,6 @@ function TableComponent({
         let resultA: any = a
         let resultB: any = b
         keyAry.map(keyItem => {
-          console.log('keyItem', keyItem)
-
           resultA = resultA[keyItem]
           resultB = resultB[keyItem]
           return
@@ -151,20 +227,9 @@ function TableComponent({
         dataA = (a[sortTarget.key] as any) ?? ''
         dataB = (b[sortTarget.key] as any) ?? ''
       }
+      dataA = getComparableSortValue(dataA, sortTarget.sortArrayBy) as any
+      dataB = getComparableSortValue(dataB, sortTarget.sortArrayBy) as any
       const isDesc = sortTarget.isDesc
-      const toNumber = (val: any) => {
-        if (typeof val === 'number' && Number.isFinite(val)) {
-          return val
-        }
-        if (
-          typeof val === 'string' &&
-          val.trim() !== '' &&
-          !Number.isNaN(Number(val))
-        ) {
-          return Number(val)
-        }
-        return null
-      }
       const numA = toNumber(dataA)
       const numB = toNumber(dataB)
       const bothNumeric = numA !== null && numB !== null
@@ -180,10 +245,9 @@ function TableComponent({
             return 1
           }
         }
-        if (dataA > dataB) {
-          return -1
-        } else if (dataA < dataB) {
-          return 1
+        const stringCompare = compareStringValues(dataA, dataB)
+        if (stringCompare !== 0) {
+          return stringCompare * -1
         }
       } else {
         if (sortTarget.isIP) {
@@ -196,10 +260,9 @@ function TableComponent({
             return -1
           }
         }
-        if (dataA > dataB) {
-          return 1
-        } else if (dataA < dataB) {
-          return -1
+        const stringCompare = compareStringValues(dataA, dataB)
+        if (stringCompare !== 0) {
+          return stringCompare
         }
       }
 
@@ -215,13 +278,15 @@ function TableComponent({
         setSortTarget({
           key: column.key,
           isDesc: false,
-          isIP: column.options.isIP,
+          isIP: column.options?.isIP,
+          sortArrayBy: column.options?.sortArrayBy,
         })
         return
       } else if (target.key !== column.key) {
         target.isDesc = false
         target.key = column.key
-        target.isIp = column.options.isIP
+        target.isIP = column.options?.isIP
+        target.sortArrayBy = column.options?.sortArrayBy
       } else {
         if (target.isDesc) {
           setSortTarget(null)

@@ -2,16 +2,22 @@ import React from 'react'
 import {AlignType} from 'src/types'
 import TableLineChartCell from 'src/dashboards/components/TableLineChartCell'
 import {toLineValues} from 'src/dashboards/utils/tableLineChart'
-
-export const lineChartTableColumn = [
+import {FORMAT_OPTIONS} from 'src/types/statisticalgraph'
+import {ColumnInfo} from 'src/types'
+export const lineChartTableColumn: ColumnInfo[] = [
   {
     key: 'host',
     name: '이름',
+    options: {
+      sorting: true,
+    },
   },
   {
     key: 'CPU',
     name: 'CPU',
-    option: {
+    options: {
+      sorting: true,
+      sortArrayBy: 'max',
       thead: {
         align: AlignType.CENTER,
       },
@@ -24,7 +30,12 @@ export const lineChartTableColumn = [
             isShowLine: true,
             isShowPoint: false,
             isFillArea: true,
-            isConnectSeparatedPoints: true,
+            isConnectSeparatedPoints: false,
+            valueLabel: 'maximum',
+            isZeroBaseline: true,
+            areaOpacity: 0.1,
+            pointRadius: 1,
+            suffix: '%',
           }}
         />
       )
@@ -33,7 +44,9 @@ export const lineChartTableColumn = [
   {
     key: 'Memory',
     name: '메모리',
-    option: {
+    options: {
+      sorting: true,
+      sortArrayBy: 'max',
       thead: {
         align: AlignType.CENTER,
       },
@@ -46,7 +59,12 @@ export const lineChartTableColumn = [
             isShowLine: true,
             isShowPoint: false,
             isFillArea: true,
-            isConnectSeparatedPoints: true,
+            isConnectSeparatedPoints: false,
+            valueLabel: 'maximum',
+            isZeroBaseline: true,
+            areaOpacity: 0.1,
+            pointRadius: 1,
+            suffix: '%',
           }}
         />
       )
@@ -55,7 +73,9 @@ export const lineChartTableColumn = [
   {
     key: 'Process I/O',
     name: '프로세스 I/O',
-    option: {
+    options: {
+      sorting: true,
+      sortArrayBy: 'max',
       thead: {
         align: AlignType.CENTER,
       },
@@ -68,7 +88,13 @@ export const lineChartTableColumn = [
             isShowLine: true,
             isShowPoint: false,
             isFillArea: true,
-            isConnectSeparatedPoints: true,
+            isConnectSeparatedPoints: false,
+            valueLabel: 'maximum',
+            isZeroBaseline: true,
+            areaOpacity: 0.1,
+            pointRadius: 1,
+            decimalPlaces: 2,
+            valueFormat: FORMAT_OPTIONS.KMG,
           }}
         />
       )
@@ -77,7 +103,9 @@ export const lineChartTableColumn = [
   {
     key: 'Count',
     name: '개수',
-    option: {
+    options: {
+      sorting: true,
+      sortArrayBy: 'max',
       thead: {
         align: AlignType.CENTER,
       },
@@ -91,7 +119,11 @@ export const lineChartTableColumn = [
             isShowLine: true,
             isShowPoint: false,
             isFillArea: true,
-            isConnectSeparatedPoints: true,
+            isConnectSeparatedPoints: false,
+            valueLabel: 'maximum',
+            isZeroBaseline: true,
+            areaOpacity: 0.1,
+            pointRadius: 1,
           }}
         />
       )

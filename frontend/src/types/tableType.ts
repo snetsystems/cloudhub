@@ -33,6 +33,7 @@ export interface ColumnInfoOptions {
   sorting?: boolean
   checkbox?: boolean
   isIP?: boolean
+  sortArrayBy?: ArraySortMetric
   isGauge?: boolean
   gaugeOptions?: GaugeOptions
 }
@@ -71,7 +72,10 @@ export interface SortInfo {
   key: string
   isDesc: boolean
   isIP?: boolean
+  sortArrayBy?: ArraySortMetric
 }
+
+export type ArraySortMetric = 'last' | 'max' | 'min' | 'avr'
 
 export interface GaugeOptions {
   isPercent?: boolean // percent / raw value

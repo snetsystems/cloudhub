@@ -42,6 +42,10 @@ const ProcessLineChartTable: React.FC<Props> = ({
   }, [onProcessNameClick])
 
   useEffect(() => {
+    console.log('columns', columns)
+  }, [columns])
+
+  useEffect(() => {
     const querySet = serverListDummyLineQueries.map(query => ({
       id: query.id,
       text: query.text,
@@ -50,7 +54,7 @@ const ProcessLineChartTable: React.FC<Props> = ({
 
     const fetchDummyData = async () => {
       const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates({
-        lower: 'now() - 20m',
+        lower: 'now() - 6h',
         upper: 'now()',
       })
       const templates = [
@@ -70,7 +74,14 @@ const ProcessLineChartTable: React.FC<Props> = ({
 
   return (
     <div>
-      <TableComponent data={dummyData} columns={columns} />
+      <TableComponent
+        data={dummyData}
+        columns={columns}
+        isSearchDisplay={false}
+        isDotKey={true}
+        enableSharedChartHover={true}
+        // initSort={{key: 'CPU', isDesc: true}}
+      />
     </div>
   )
 }
