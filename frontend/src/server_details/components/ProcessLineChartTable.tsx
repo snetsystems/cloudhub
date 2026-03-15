@@ -42,10 +42,6 @@ const ProcessLineChartTable: React.FC<Props> = ({
   }, [onProcessNameClick])
 
   useEffect(() => {
-    console.log('columns', columns)
-  }, [columns])
-
-  useEffect(() => {
     const querySet = serverListDummyLineQueries.map(query => ({
       id: query.id,
       text: query.text,
