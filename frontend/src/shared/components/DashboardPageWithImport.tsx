@@ -110,6 +110,10 @@ export interface DashboardPageWithImportConfig {
    * Consumer owns state and provides via Provider; no page-specific state in common component.
    */
   templateSelectionContext?: React.Context<TemplateSelectionContextValue | null>
+  /** Optional: return extra action buttons per cell (frontend-only, no backend). */
+  getExtraActionsForCell?: (cell: Cell) => DashboardsModels.CellExtraAction[]
+  /** Called when user clicks an injected extra action. */
+  onCustomCellAction?: (cell: Cell, actionId: string) => void
 }
 
 export interface DashboardPageWithImportProps
@@ -170,6 +174,8 @@ function DashboardPageWithImport({
   draggableCancel,
   requiredTemplateVars,
   templateSelectionContext,
+  getExtraActionsForCell,
+  onCustomCellAction,
   source,
   sources,
   inPresentationMode,
@@ -552,6 +558,8 @@ function DashboardPageWithImport({
                 manualRefresh={effectiveManualRefresh}
                 onDeleteCell={onDeleteCell}
                 onCloneCell={onCloneCell}
+                getExtraActionsForCell={getExtraActionsForCell}
+                onCustomCellAction={onCustomCellAction}
                 onPositionChange={onPositionChange}
                 templates={templatesForLayout}
                 onSummonOverlayTechnologies={onSummonOverlayTechnologies}

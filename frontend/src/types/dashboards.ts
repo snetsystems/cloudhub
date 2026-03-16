@@ -306,3 +306,9 @@ export interface Protoboard {
 export type RefreshRate = number | null | undefined
 
 export type StaticLegendPositionType = 'top' | 'left' | 'bottom' | 'right'
+
+export interface CellExtraAction {
+  id: string
+  label: string
+}
+

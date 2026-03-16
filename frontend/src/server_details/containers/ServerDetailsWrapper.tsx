@@ -17,6 +17,9 @@ import type {DataTableObject} from 'src/types/tableType'
 import type {Addon} from 'src/types/auth'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
 import ProcessDetailModal from 'src/server_details/components/ProcessDetailModal'
+import UsageDetailModal, {
+  type UsageDetailType,
+} from 'src/server_details/components/UsageDetailModal'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
@@ -198,6 +201,60 @@ function ProcessCellContent({
 function ServerDetailsWrapper(props) {
   const [selectedHost, setSelectedHost] = useState<string | null>(null)
 
+  const USAGE_DETAIL_ACTION_ID = 'open-usage-detail'
+
+  const [usageDetailState, setUsageDetailState] = useState<{
+    isOpen: boolean
+    detailType: UsageDetailType | null
+  }>({
+    isOpen: false,
+    detailType: null,
+  })
+
+  const mapCellIdToUsageDetailType = (cellId?: string | null): UsageDetailType | null => {
+    if (!cellId) return null
+    switch (cellId) {
+      case 'sever-details-cpu-usage':
+        return 'cpu'
+      case 'sever-details-memory-usage':
+        return 'memory'
+      case 'sever-details-network-usage':
+        return 'network'
+      case 'sever-details-disk-io-usage':
+        return 'disk'
+      default:
+        return null
+    }
+  }
+
+  const openUsageDetail = (cell: Cell) => {
+    const detailType = mapCellIdToUsageDetailType(cell?.i)
+    if (!detailType) return
+    setUsageDetailState({isOpen: true, detailType})
+  }
+
+  const handleCloseUsageDetail = () => {
+    setUsageDetailState(prev => ({...prev, isOpen: false}))
+  }
+
+  const getExtraActionsForCell = (cell: Cell) => {
+    const detailType = mapCellIdToUsageDetailType(cell?.i)
+    if (!detailType) return []
+
+    return [
+      {
+        id: USAGE_DETAIL_ACTION_ID,
+        label: '상세 보기',
+      },
+    ]
+  }
+
+  const handleCustomCellAction = (cell: Cell, actionId: string) => {
+    if (actionId === USAGE_DETAIL_ACTION_ID) {
+      openUsageDetail(cell)
+    }
+  }
+
 
   const contextValue : ServerDetailsPageContextValue = useMemo(() => ({
     selectedHost,
@@ -253,6 +310,18 @@ function ServerDetailsWrapper(props) {
             )
           }
           return null
+        }}
+        getExtraActionsForCell={getExtraActionsForCell}
+        onCustomCellAction={handleCustomCellAction}
+      />
+      <UsageDetailModal
+        isOpen={usageDetailState.isOpen}
+        onClose={handleCloseUsageDetail}
+        detailType={usageDetailState.detailType}
+        serverContext={{
+          selectedHost,
+          source: props.source ?? null,
+          addons: props.addons,
         }}
       />
     </ServerDetailsPageContext.Provider>

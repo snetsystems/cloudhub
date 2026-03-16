@@ -22,15 +22,8 @@ import {
 } from 'src/shared/constants'
 
 // Types
-import {
-  TimeRange,
-  Cell,
-  Template,
-  Source,
-  TemplateValue,
-  AnnotationViewer,
-  // AnnotationViewer,
-} from 'src/types'
+import {TimeRange, Cell, Template, Source, TemplateValue, AnnotationViewer} from 'src/types'
+import type {CellExtraAction} from 'src/types/dashboards'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -73,6 +66,10 @@ interface Props {
   /** When provided, called per cell; return a ReactNode for fixed/custom cells, or null to use default Layout. */
   renderCell?: (cell: Cell, context: RenderCellContext) => React.ReactNode | null
   draggableCancel?: string
+  /** Optional: return extra action buttons per cell (frontend-only, no backend). */
+  getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
+  /** Called when user clicks an injected extra action. */
+  onCustomCellAction?: (cell: Cell, actionId: string) => void
 }
 
 interface State {
@@ -116,6 +113,8 @@ class LayoutRenderer extends Component<Props, State> {
       instance,
       onPickTemplate,
       renderCell,
+      getExtraActionsForCell,
+      onCustomCellAction,
     } = this.props
 
     const {rowHeight} = this.state
@@ -183,6 +182,8 @@ class LayoutRenderer extends Component<Props, State> {
                       isEditable={isEditable}
                       onDeleteCell={onDeleteCell}
                       onCloneCell={onCloneCell}
+                      getExtraActionsForCell={getExtraActionsForCell}
+                      onCustomCellAction={onCustomCellAction}
                       manualRefresh={manualRefresh}
                       onSummonOverlayTechnologies={onSummonOverlayTechnologies}
                       instance={instance}

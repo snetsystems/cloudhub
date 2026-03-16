@@ -22,7 +22,7 @@ import templateReplace from 'src/tempVars/utils/replace'
 
 // Types
 import {Cell, CellQuery, Template} from 'src/types/'
-import {NoteVisibility} from 'src/types/dashboards'
+import {NoteVisibility, CellExtraAction} from 'src/types/dashboards'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {CellType} from 'src/types/dashboards'
 import {VisType} from 'src/types/flux'
@@ -40,6 +40,8 @@ interface Props {
   isFluxQuery: boolean
   visType: VisType
   toggleVisType: () => void
+  getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
+  onExtraAction?: (cell: Cell, actionId: string) => void
 }
 
 @ErrorHandling
@@ -76,6 +78,8 @@ export default class LayoutCell extends Component<Props> {
               isFluxQuery={isFluxQuery}
               visType={visType}
               toggleVisType={toggleVisType}
+              getExtraActionsForCell={this.props.getExtraActionsForCell}
+              onExtraAction={this.props.onExtraAction}
             />
           </Authorized>
           <LayoutCellNote
@@ -171,9 +175,7 @@ export default class LayoutCell extends Component<Props> {
 
   private async downloadInfluxQLCSV() {
     const {cellData, cell} = this.props
-    const name = `${_.get(cell, 'name', '')
-      .split(' ')
-      .join('_')}.csv`
+    const name = `${_.get(cell, 'name', '').split(' ').join('_')}.csv`
 
     let csv: string
 
@@ -192,9 +194,7 @@ export default class LayoutCell extends Component<Props> {
 
   private downloadFluxCSV() {
     const {cellFluxData, cell} = this.props
-    const joinedName = _.get(cell, 'name', '')
-      .split(' ')
-      .join('_')
+    const joinedName = _.get(cell, 'name', '').split(' ').join('_')
 
     downloadCSV(cellFluxData, joinedName)
   }

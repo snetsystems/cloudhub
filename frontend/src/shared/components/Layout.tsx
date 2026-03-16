@@ -46,6 +46,10 @@ interface Props {
   onDeleteCell: (cell: Cell) => void
   onCloneCell: (cell: Cell) => void
   onSummonOverlayTechnologies: (cell: Cell) => void
+  getExtraActionsForCell?: (
+    cell: Cell
+  ) => import('src/types/dashboards').CellExtraAction[]
+  onCustomCellAction?: (cell: Cell, actionId: string) => void
   instance?: object
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   isUsingAnnotationViewer?: boolean
@@ -74,6 +78,8 @@ class Layout extends Component<Props, State> {
       onCloneCell,
       onDeleteCell,
       onSummonOverlayTechnologies,
+      getExtraActionsForCell,
+      onCustomCellAction,
     } = this.props
     const {cellData, cellFluxData} = this.state
 
@@ -90,6 +96,8 @@ class Layout extends Component<Props, State> {
         isFluxQuery={this.isFluxQuery}
         toggleVisType={this.toggleVisType}
         onSummonOverlayTechnologies={onSummonOverlayTechnologies}
+        getExtraActionsForCell={getExtraActionsForCell}
+        onExtraAction={onCustomCellAction}
       >
         {this.visualization}
       </LayoutCell>

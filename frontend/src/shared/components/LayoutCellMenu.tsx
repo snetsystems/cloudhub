@@ -7,15 +7,9 @@ import MenuTooltipButton, {
 } from 'src/shared/components/MenuTooltipButton'
 import CustomTimeIndicator from 'src/shared/components/CustomTimeIndicator'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
-import {Cell} from 'src/types/dashboards'
-import {QueryConfig} from 'src/types/queries'
+import {Cell, CellExtraAction, CellQuery} from 'src/types/dashboards'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {VisType} from 'src/types/flux'
-
-interface Query {
-  text?: string
-  queryConfig: QueryConfig
-}
 
 interface Props {
   cell: Cell
@@ -25,10 +19,12 @@ interface Props {
   onClone: (cell: Cell) => void
   onDelete: (cell: Cell) => void
   onCSVDownload: () => void
-  queries: Query[]
+  queries: CellQuery[]
   isFluxQuery: boolean
   visType: VisType
   toggleVisType: () => void
+  getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
+  onExtraAction?: (cell: Cell, actionId: string) => void
 }
 
 interface State {
@@ -67,7 +63,25 @@ class LayoutCellMenu extends Component<Props, State> {
 
     return (
       <div className="dash-graph-context--buttons">
+        {this.extraActions.map(action => (
+          <button
+            key={action.id}
+            type="button"
+            className="dash-graph-context--button"
+            title={action.label}
+            onClick={e => {
+              e.stopPropagation()
+              const {onExtraAction, cell} = this.props
+              if (onExtraAction) {
+                onExtraAction(cell, action.id)
+              }
+            }}
+          >
+            <span className="icon plus" />
+          </button>
+        ))}
         {this.pencilMenu}
+        
         <Authorized requiredRole={EDITOR_ROLE}>
           <MenuTooltipButton
             icon="duplicate"
@@ -162,6 +176,12 @@ class LayoutCellMenu extends Component<Props, State> {
   private get deleteMenuItems(): MenuItem[] {
     return [{text: 'Confirm', action: this.handleDeleteCell, disabled: false}]
   }
+
+  private get extraActions(): CellExtraAction[] {
+    const {getExtraActionsForCell, cell} = this.props
+    return getExtraActionsForCell ? getExtraActionsForCell(cell) : []
+  }
+
 
   private handleEditCell = (): void => {
     const {onEdit} = this.props
