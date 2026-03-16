@@ -11,7 +11,10 @@ import _ from 'lodash'
 import {stripPrefix} from 'src/utils/basepath'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getConfig, getNewDashboardCell} from 'src/dashboards/utils/cellGetters'
-import {defaultQueryDraft, initialStateFromCell} from 'src/shared/utils/timeMachine'
+import {
+  defaultQueryDraft,
+  initialStateFromCell,
+} from 'src/shared/utils/timeMachine'
 import {
   TimeMachineContainer,
   TimeMachineContextConsumer,
@@ -228,8 +231,6 @@ export class DataExplorer extends PureComponent<Props, State> {
             isUsingAuth={isUsingAuth}
             refresh={autoRefresh}
             timeZone={timeZone}
-            selectedCellName={this.state.editingLibraryCell?.name}
-            onClearSelectedCell={this.handleClearSelectedCell}
           >
             {(activeEditorTab, onSetActiveEditorTab) => (
               <DEHeader
@@ -380,7 +381,7 @@ export class DataExplorer extends PureComponent<Props, State> {
 
   private get saveCellOverlay(): JSX.Element {
     const {source, notify} = this.props
-    const {isSaveCellVisible, activeQueryIndex, editingLibraryCell} = this.state
+    const {isSaveCellVisible, activeQueryIndex} = this.state
     return (
       <Authorized requiredRole={EDITOR_ROLE}>
         <OverlayTechnology visible={isSaveCellVisible}>
@@ -389,8 +390,6 @@ export class DataExplorer extends PureComponent<Props, State> {
             onCancel={this.handleCloseSaveCell}
             source={source}
             activeQueryIndex={activeQueryIndex}
-            editingLibraryCell={editingLibraryCell}
-            initialSelectedItemId={this.state.lastSelectedLibraryCellID}
             onSavedLibraryCell={this.handleSavedLibraryCell}
           />
         </OverlayTechnology>

@@ -45,8 +45,6 @@ interface Props {
   toggleFlux: (queryType: QueryType) => void
   toggleIsViewingRawData: () => void
   onManualRefresh: () => void
-  selectedCellName?: string
-  onClearSelectedCell?: () => void
 }
 
 const TimeMachineControls: FunctionComponent<Props> = ({
@@ -69,8 +67,6 @@ const TimeMachineControls: FunctionComponent<Props> = ({
   toggleIsViewingRawData,
   isDynamicSourceSelected,
   updateEditorTimeRange,
-  selectedCellName,
-  onClearSelectedCell,
 }) => {
   return (
     <div className="deceo--controls">
@@ -85,21 +81,7 @@ const TimeMachineControls: FunctionComponent<Props> = ({
         isDynamicSourceSelected={isDynamicSourceSelected}
         onSelectDynamicSource={onSelectDynamicSource}
       />
-      {selectedCellName && (
-        <div className="selected-cell-name ">
-          <span className="selected-cell-name-text" title={selectedCellName}>
-            Selected Cell: {selectedCellName}
-          </span>
-          <Button
-            icon={IconFont.Remove}
-            color={ComponentColor.Danger}
-            customClass="cell-management-button"
-            titleText="Clear selected cell and reset visualize state"
-            onClick={onClearSelectedCell}
-            size={ComponentSize.ExtraSmall}
-          />
-        </div>
-      )}
+
       {isFluxSelected && (
         <div className="time-machine-vis--raw-toggle">
           <SlideToggle

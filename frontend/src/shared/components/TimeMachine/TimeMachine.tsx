@@ -97,8 +97,6 @@ interface PassedProps {
   onActiveQueryIndexChange?: (activeQueryIndex: number) => void
   refresh: RefreshRate
   timeZone?: TimeZones
-  selectedCellName?: string
-  onClearSelectedCell?: () => void
 }
 
 interface State {
@@ -160,8 +158,6 @@ class TimeMachine extends PureComponent<Props, State> {
       onManualRefresh,
       timeMachineProportions,
       onSetTimeMachineProportions,
-      selectedCellName,
-      onClearSelectedCell,
     } = this.props
     const {autoRefreshDuration, isViewingRawData} = this.state
     const [topSize, bottomSize] = timeMachineProportions
@@ -210,8 +206,6 @@ class TimeMachine extends PureComponent<Props, State> {
           updateEditorTimeRange={this.handleUpdateEditorTimeRange}
           toggleIsViewingRawData={this.handleToggleIsViewingRawData}
           onChangeAutoRefreshDuration={this.handleChangeAutoRefreshDuration}
-          selectedCellName={selectedCellName}
-          onClearSelectedCell={onClearSelectedCell}
         />
         <div className="deceo--container">
           <Threesizer

@@ -27,14 +27,9 @@ import {NEW_EMPTY_DASHBOARD} from 'src/dashboards/constants'
 import {
   notifyLibraryCellSaved,
   notifyLibraryCellSaveFailed,
-  notifyLibraryCellUpdated,
 } from 'src/shared/copy/notifications'
 
-import {
-  createLibraryCell,
-  getLibraryCells,
-  updateLibraryCell,
-} from 'src/dashboards/apis'
+import {createLibraryCell, getLibraryCells} from 'src/dashboards/apis'
 
 import {
   QueryConfig,
@@ -55,8 +50,6 @@ interface PassedProps {
   onCancel: () => void
   notify: (message: Notification) => void
   activeQueryIndex: number
-  editingLibraryCell?: LibraryCell
-  initialSelectedItemId?: string
   onSavedLibraryCell?: (item: LibraryCell) => void
 }
 
@@ -75,7 +68,6 @@ interface ConnectedProps {
 type Props = PassedProps & ConnectedProps
 
 interface State {
-  selectedItemId: string
   name: string
   description: string
   sendAllQueries: boolean
@@ -87,47 +79,21 @@ class SaveCellOverlay extends PureComponent<Props, State> {
     super(props)
 
     this.state = {
-      selectedItemId: '',
-      name: props.editingLibraryCell?.name || '',
-      description: props.editingLibraryCell?.description || '',
+      name: '',
+      description: '',
       sendAllQueries: false,
       libraryCells: [],
     }
   }
 
   public async componentDidMount() {
-    const {editingLibraryCell, initialSelectedItemId} = this.props
-
     try {
       const result = await getLibraryCells()
       const libraryCells = result?.data?.libraryCells || []
-      const fallbackSelectedID =
-        editingLibraryCell?.id || initialSelectedItemId
-      const selectedItemID = libraryCells.find(
-        item => item.id === fallbackSelectedID
-      )
-        ? fallbackSelectedID
-        : ''
-
-      this.setState({
-        libraryCells,
-        selectedItemId: selectedItemID || '',
-      })
+      this.setState({libraryCells})
     } catch {
       this.setState({libraryCells: []})
     }
-  }
-
-  private onSendAllQueriesCheckChange = (
-    val: ChangeEvent<HTMLInputElement>
-  ): void => {
-    this.setState({sendAllQueries: val.target.checked})
-  }
-
-  private onSendActiveQueriesCheckChange = (
-    val: ChangeEvent<HTMLInputElement>
-  ): void => {
-    this.setState({sendAllQueries: !val.target.checked})
   }
 
   public handleChangeName = e => {
@@ -141,10 +107,8 @@ class SaveCellOverlay extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {onCancel, queryDrafts, queryType, editingLibraryCell} = this.props
-    const {name, description, sendAllQueries} = this.state
-    const multipleQueries =
-      queryType === QueryType.InfluxQL && queryDrafts.length > 1
+    const {onCancel} = this.props
+    const {name, description} = this.state
 
     return (
       <OverlayContainer>
@@ -180,73 +144,15 @@ class SaveCellOverlay extends PureComponent<Props, State> {
                 />
               </Form.Element>
 
-              {multipleQueries && (
-                <Form.Element label="Queries">
-                  <div className="form-group col-xs-12">
-                    <div className="form-control-static">
-                      <div className="radio-item">
-                        <input
-                          id="active_query_option"
-                          type="radio"
-                          name="queriesRadio"
-                          value="active"
-                          checked={!sendAllQueries}
-                          onChange={this.onSendActiveQueriesCheckChange}
-                        />
-                        <label
-                          htmlFor="active_query_option"
-                          title="Query from the selected tab"
-                        >
-                          Active Query
-                        </label>
-                      </div>
-                      <div className="radio-item">
-                        <input
-                          id="all_queries_option"
-                          type="radio"
-                          name="queriesRadio"
-                          value="all"
-                          checked={sendAllQueries}
-                          onChange={this.onSendAllQueriesCheckChange}
-                        />
-                        <label
-                          htmlFor="all_queries_option"
-                          title="Queries from all tabs"
-                        >
-                          All Queries
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </Form.Element>
-              )}
               <Form.Footer>
-                {editingLibraryCell ? (
-                  <>
-                    <Button
-                      color={ComponentColor.Success}
-                      text="Save As"
-                      titleText="Create a new cell item"
-                      status={this.saveButtonStatus}
-                      onClick={this.handleSaveAs}
-                    />
-                    <Button
-                      color={ComponentColor.Primary}
-                      text="Save"
-                      titleText="Overwrite selected cell item"
-                      status={this.saveButtonStatus}
-                      onClick={this.handleSave}
-                    />
-                  </>
-                ) : (
-                  <Button
-                    color={ComponentColor.Primary}
-                    text="Save Cell"
-                    titleText="Save as a new cell item"
-                    status={this.saveButtonStatus}
-                    onClick={this.handleSaveAs}
-                  />
-                )}
+                <Button
+                  color={ComponentColor.Primary}
+                  text="Save Cell"
+                  titleText="Save as a new cell item"
+                  status={this.saveButtonStatus}
+                  onClick={this.handleSaveAs}
+                />
+
                 <Button text="Cancel" onClick={onCancel} />
               </Form.Footer>
             </Form>
@@ -307,22 +213,12 @@ class SaveCellOverlay extends PureComponent<Props, State> {
     return rawText && !!rawText.trim()
   }
 
-  private handleSave = async () => {
-    const selectedID =
-      this.state.selectedItemId || this.props.editingLibraryCell?.id
-    if (!selectedID) {
-      await this.handleSaveAs()
-      return
-    }
-    await this.saveCell('save', selectedID)
-  }
-
   private handleSaveAs = async () => {
     await this.saveCell('saveAs')
   }
 
   private saveCell = async (mode: 'save' | 'saveAs', selectedID?: string) => {
-    const {name, description, sendAllQueries} = this.state
+    const {name, description} = this.state
     const {
       queryType,
       script,
@@ -379,14 +275,10 @@ class SaveCellOverlay extends PureComponent<Props, State> {
         }
       }
 
-      if (sendAllQueries) {
-        newCellQueries = queryDrafts.reduce((acc, val) => {
-          acc.push(createInfluxQLCellQuery(val.queryConfig))
-          return acc
-        }, [])
-      } else {
-        newCellQueries = [createInfluxQLCellQuery(this.activeQueryConfig)]
-      }
+      newCellQueries = queryDrafts.reduce((acc, val) => {
+        acc.push(createInfluxQLCellQuery(val.queryConfig))
+        return acc
+      }, [])
     }
 
     const colors: ColorString[] = getCellTypeColors({
@@ -423,22 +315,7 @@ class SaveCellOverlay extends PureComponent<Props, State> {
 
     try {
       let savedLibraryCell: LibraryCell
-      if (mode === 'save' && selectedID) {
-        const result = await updateLibraryCell(selectedID, {
-          name: trimmedName,
-          description: description.trim(),
-          type,
-          content: newCell as LibraryCell['content'],
-        })
-        savedLibraryCell = result?.data || {
-          id: selectedID,
-          name: trimmedName,
-          description: description.trim(),
-          type,
-          content: newCell as LibraryCell['content'],
-        }
-        notify(notifyLibraryCellUpdated(trimmedName))
-      } else if (mode === 'saveAs' && selectedID) {
+      if (mode === 'saveAs' && selectedID) {
         const result = await createLibraryCell({
           name: trimmedName,
           description: description.trim(),
