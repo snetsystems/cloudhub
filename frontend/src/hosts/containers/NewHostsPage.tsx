@@ -76,7 +76,10 @@ export function NewHostsPage({
   )
 
   const [isModeSwitching, setIsModeSwitching] = useState(false)
+
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const [isError, setIsError] = useState(false)
 
   const requestIdRef = useRef(0)
 
@@ -236,6 +239,7 @@ export function NewHostsPage({
       setIsRefreshing(false)
     } catch (error) {
       console.error('Failed to fetch server list data', error)
+      setIsError(true)
       if (isSubscribed && requestId === requestIdRef.current) {
         setIsModeSwitching(false)
         setIsTableLoading(false)
@@ -270,7 +274,7 @@ export function NewHostsPage({
       <Page.Contents fullWidth={true}>
         <div className="host-page-graph-table-container-wrapper">
           <div className="host-page-graph-table-container table-gauge-chart">
-            {columns.length > 0 && tableData.length > 0 && (
+            {!isError ? (
               <TableComponent
                 data={tableData || []}
                 bodyClassName="server-list-table"
@@ -317,6 +321,12 @@ export function NewHostsPage({
                   </Radio>
                 }
               />
+            ) : (
+              <div className="empty-table-container">
+                <div className="empty-table-content">
+                  <p>No data available</p>
+                </div>
+              </div>
             )}
           </div>
         </div>

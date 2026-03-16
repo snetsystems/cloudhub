@@ -340,6 +340,7 @@ export const serverListColumns = ({
         return (
           <div className="disk-usage-container">
             <TableGaugeCell options={gaugeOptions} value={value} />
+            <div className="disk-usage-path">{rowData.Path}</div>
           </div>
         )
       },
@@ -383,14 +384,18 @@ export const serverListColumns = ({
                   valueFormat: FORMAT_OPTIONS.KMG,
                 }}
               />
-              <div className="disk-io-device">{rowData.Device}</div>
+              <div className="disk-io-device">
+                {formatDiskDeviceLabel(rowData.Device)}
+              </div>
             </>
           )
         }
         return (
           <div className="disk-io-container">
             <TableGaugeCell options={gaugeOptions} value={value} />
-            <div className="disk-io-device">{rowData.Device}</div>
+            <div className="disk-io-device">
+              {formatDiskDeviceLabel(rowData.Device)}
+            </div>
           </div>
         )
       },
@@ -426,6 +431,20 @@ export const serverListColumns = ({
     //   },
     // },
   ]
+}
+
+const formatDiskDeviceLabel = (device: unknown) => {
+  if (typeof device !== 'string') {
+    return device
+  }
+
+  const trimmed = device.trim()
+
+  if (/^\d+\s+[A-Z]:$/i.test(trimmed)) {
+    return trimmed.split(/\s+/).slice(1).join(' ')
+  }
+
+  return trimmed
 }
 
 export const serverListQueries: ServerListQuery[] = [
