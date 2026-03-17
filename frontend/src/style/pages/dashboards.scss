@@ -145,17 +145,15 @@ $dash-graph-options-arrow: 8px;
 
 .cell-summary-overlay__line1 {
   font-size: 11px;
-  line-height: 1.5;
   color: rgba($g20-white, 0.78);
   margin-bottom: 6px;
 }
 
 .cell-summary-overlay__line2 {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
   font-size: 12px;
-  line-height: 1.5;
 }
 
 .cell-summary-overlay__item-indicator {
