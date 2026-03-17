@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useContext, useRef, useMemo} from 'react'
 import classnames from 'classnames'
 import {connect} from 'react-redux'
+import qs from 'qs'
 import {generateForHosts} from 'src/utils/tempVars'
 import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 import DashboardPageWithImport, {
@@ -199,7 +200,13 @@ function ProcessCellContent({
 }
 
 function ServerDetailsWrapper(props) {
-  const [selectedHost, setSelectedHost] = useState<string | null>(null)
+  const hostFromUrl = useMemo(() => {
+    const params = qs.parse(window.location.search, {ignoreQueryPrefix: true})
+    const h = params.host
+    return typeof h === 'string' && h.trim() ? h : null
+  }, [])
+
+  const [selectedHost, setSelectedHost] = useState<string | null>(hostFromUrl)
 
   const USAGE_DETAIL_ACTION_ID = 'open-usage-detail'
 
