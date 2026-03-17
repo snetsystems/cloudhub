@@ -114,6 +114,7 @@ export interface DashboardPageWithImportConfig {
   getExtraActionsForCell?: (cell: Cell) => DashboardsModels.CellExtraAction[]
   /** Called when user clicks an injected extra action. */
   onCustomCellAction?: (cell: Cell, actionId: string) => void
+  isShowSummaryOverlay?: boolean
 }
 
 export interface DashboardPageWithImportProps
@@ -176,6 +177,7 @@ function DashboardPageWithImport({
   templateSelectionContext,
   getExtraActionsForCell,
   onCustomCellAction,
+  isShowSummaryOverlay,
   source,
   sources,
   inPresentationMode,
@@ -566,6 +568,7 @@ function DashboardPageWithImport({
                 host={source.name}
                 renderCell={renderCell}
                 draggableCancel={draggableCancel}
+                isShowSummaryOverlay={isShowSummaryOverlay}
               />
             ) : (
               <PageSpinner customClass={`${pageClassName}-spinner`} />

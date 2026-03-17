@@ -195,6 +195,7 @@ import {
 } from './elasticSearch'
 
 import {SidePanelState, OpenPanelPayload} from './sidePanel'
+import {CellSummary, CellSummaryContext, CellSummaryItem} from './cellDashboard'
 
 import {
   Ratio,
@@ -419,4 +420,7 @@ export {
   ChartOptions,
   Column,
   GaugeOptions,
+  CellSummary,
+  CellSummaryContext,
+  CellSummaryItem,
 }

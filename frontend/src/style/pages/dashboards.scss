@@ -120,6 +120,67 @@ $dash-graph-options-arrow: 8px;
   }
 }
 
+.cell-summary-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+
+  &__chart {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+}
+
+.cell-summary-overlay {
+  flex-shrink: 0;
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid rgba($g20-white, 0.08);
+  background: rgba($g2-kevlar, 0.6);
+  color: $g20-white;
+  min-width: 0;
+}
+
+.cell-summary-overlay__line1 {
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba($g20-white, 0.78);
+  margin-bottom: 6px;
+}
+
+.cell-summary-overlay__line2 {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.cell-summary-overlay__item-indicator {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.cell-summary-overlay__color-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--fallback {
+    background-color: rgba($g20-white, 0.5);
+  }
+}
+
+.cell-summary-overlay__item-content {
+  flex: 1;
+  min-width: 0;
+}
+
 .dash-graph--note {
   position: absolute;
   top: 2px;

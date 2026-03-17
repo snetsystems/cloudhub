@@ -34,6 +34,8 @@ import {
 // Utils
 import {AutoRefresher, GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
+import {groupByTimeSeriesTransform} from 'src/utils/groupByTimeSeriesTransform'
+import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
 
 // Actions
 import {setHoverTime} from 'src/dashboards/actions'
@@ -47,6 +49,7 @@ import {
   TimeRange,
   Template,
   Query,
+  CellQuery,
   CellType,
   FluxTable,
   RemoteDataState,
@@ -70,6 +73,10 @@ import {TimeSeriesServerResponse} from 'src/types/series'
 import StaticGraph from 'src/shared/components/static_graph/StaticGraph'
 import StaticGraphFormat from 'src/shared/components/static_graph/StaticGraphFormat'
 import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
+import {VisType} from 'src/types/flux'
+import CellSummaryOverlay from 'src/shared/components/CellSummaryOverlay'
+import {buildCellSummary} from 'src/shared/utils/cellSummary'
+import {CellSummary} from 'src/types'
 
 interface TypeAndData {
   dataType: DataType
@@ -79,7 +86,7 @@ interface TypeAndData {
 interface Props {
   axes: Axes
   source: Source
-  queries: Query[]
+  queries: CellQuery[]
   queryType: QueryType
   timeRange: TimeRange
   colors: ColorString[]
@@ -107,6 +114,8 @@ interface Props {
   onNotify: typeof notify
   grabDataForDownload?: GrabDataForDownloadHandler
   grabFluxData?: (data: string) => void
+  rawData?: string
+  visType?: VisType
   cellNote: string
   cellNoteVisibility: NoteVisibility
   editorLocation?: QueryUpdateState
@@ -120,6 +129,7 @@ interface Props {
   onUpdateTableGaugeChartOptions?: (
     tableGaugeChartOptions: TableGaugeChartOptionsInterface
   ) => void
+  isShowSummaryOverlay?: boolean
 }
 class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
@@ -141,6 +151,7 @@ class RefreshingGraph extends Component<Props> {
     const {
       type,
       source,
+      colors,
       inView,
       queries,
       cellNote,
@@ -153,6 +164,7 @@ class RefreshingGraph extends Component<Props> {
       manualRefresh,
       autoRefresher,
       showRawFluxData,
+      isShowSummaryOverlay,
       editQueryStatus,
       cellNoteVisibility,
       grabDataForDownload,
@@ -257,22 +269,68 @@ class RefreshingGraph extends Component<Props> {
                       )
                     }
 
+                    const summary =
+                      isShowSummaryOverlay && queryType === QueryType.InfluxQL
+                        ? buildCellSummary({
+                            queries: this.queries,
+                            responses: timeSeriesInfluxQL,
+                            timeRange,
+                          })
+                        : null
+
+                    let itemColor: string | undefined
+                    if (
+                      summary?.items[0]?.chartLabel &&
+                      timeSeriesInfluxQL?.length &&
+                      colors?.length
+                    ) {
+                      try {
+                        const transformed = groupByTimeSeriesTransform(
+                          timeSeriesInfluxQL,
+                          false
+                        )
+                        if (transformed?.sortedLabels?.length) {
+                          const idx = transformed.sortedLabels.findIndex(
+                            l => l.label === summary.items[0].chartLabel
+                          )
+                          if (idx >= 0) {
+                            const hexes = getLineColorsHexes(
+                              colors,
+                              transformed.sortedLabels.length
+                            )
+                            itemColor = hexes[idx]
+                          }
+                        }
+                      } catch {
+                        // Fallback: no color when transform fails
+                      }
+                    }
+
                     switch (type) {
                       case CellType.SingleStat:
-                        return this.singleStat(
-                          timeSeriesInfluxQL,
-                          timeSeriesFlux
+                        return this.wrapWithSummary(
+                          this.singleStat(timeSeriesInfluxQL, timeSeriesFlux),
+                          summary,
+                          itemColor
                         )
                       case CellType.Table:
-                        return this.table(
-                          timeSeriesInfluxQL,
-                          timeSeriesFlux,
-                          uuid,
-                          width,
-                          height
+                        return this.wrapWithSummary(
+                          this.table(
+                            timeSeriesInfluxQL,
+                            timeSeriesFlux,
+                            uuid,
+                            width,
+                            height
+                          ),
+                          summary,
+                          itemColor
                         )
                       case CellType.Gauge:
-                        return this.gauge(timeSeriesInfluxQL, timeSeriesFlux)
+                        return this.wrapWithSummary(
+                          this.gauge(timeSeriesInfluxQL, timeSeriesFlux),
+                          summary,
+                          itemColor
+                        )
                       case CellType.StaticBar:
                       case CellType.StaticPie:
                       case CellType.StaticDoughnut:
@@ -281,17 +339,21 @@ class RefreshingGraph extends Component<Props> {
                       case CellType.StaticStackedBar:
                       case CellType.StaticLineChart:
                       case CellType.StaticTableGaugeChart:
-                        return this.StaticGraph(
-                          timeSeriesInfluxQL,
-                          timeSeriesFlux,
-                          loading,
-                          uuid
+                        return this.wrapWithSummary(
+                          this.StaticGraph(
+                            timeSeriesInfluxQL,
+                            timeSeriesFlux,
+                            loading,
+                            uuid
+                          ),
+                          summary,
+                          itemColor
                         )
                       default:
-                        return this.lineGraph(
-                          timeSeriesInfluxQL,
-                          timeSeriesFlux,
-                          loading
+                        return this.wrapWithSummary(
+                          this.lineGraph(timeSeriesInfluxQL, timeSeriesFlux, loading),
+                          summary,
+                          itemColor
                         )
                     }
                   }}
@@ -511,7 +573,6 @@ class RefreshingGraph extends Component<Props> {
       colors,
       onZoom,
       cellID,
-      queries,
       timeRange,
       cellHeight,
       decimalPlaces,
@@ -532,7 +593,7 @@ class RefreshingGraph extends Component<Props> {
         cellID={cellID}
         colors={colors}
         onZoom={onZoom}
-        queries={queries}
+        queries={this.queries}
         loading={loading}
         dataType={dataType}
         key={manualRefresh}
@@ -560,7 +621,6 @@ class RefreshingGraph extends Component<Props> {
       type,
       colors,
       cellID,
-      queries,
       decimalPlaces,
       graphOptions,
       staticLegend,
@@ -592,7 +652,7 @@ class RefreshingGraph extends Component<Props> {
             axes={axes}
             cellID={cellID}
             colors={colors}
-            queries={queries}
+            queries={this.queries}
             loading={loading}
             dataType={dataType}
             key={manualRefresh}
@@ -616,15 +676,21 @@ class RefreshingGraph extends Component<Props> {
 
   private get queries(): Query[] {
     const {queries, type} = this.props
+    const normalizedQueries = queries.map(query => ({
+      ...query,
+      id: query.id ?? '',
+      text: query.text ?? query.query ?? '',
+    }))
+
     if (type === CellType.SingleStat) {
-      return [queries[0]]
+      return [normalizedQueries[0]]
     }
 
     if (type === CellType.Gauge) {
-      return [queries[0]]
+      return [normalizedQueries[0]]
     }
 
-    return queries
+    return normalizedQueries
   }
 
   private get prefix(): string {
@@ -636,6 +702,29 @@ class RefreshingGraph extends Component<Props> {
   private get suffix(): string {
     const {axes} = this.props
     return _.get(axes, 'y.suffix', '')
+  }
+
+  private wrapWithSummary = (
+    graph: JSX.Element,
+    summary: CellSummary | null,
+    itemColor?: string
+  ) => {
+    if (!summary || summary.items.length === 0) {
+      return graph
+    }
+
+    return (
+      <div className="cell-summary-wrapper">
+        <CellSummaryOverlay
+          summary={summary}
+          decimalPlaces={this.props.decimalPlaces}
+          prefix={this.prefix}
+          suffix={this.suffix}
+          itemColor={itemColor}
+        />
+        <div className="cell-summary-wrapper__chart">{graph}</div>
+      </div>
+    )
   }
 
   private getTypeAndData(

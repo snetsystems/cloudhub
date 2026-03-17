@@ -54,6 +54,7 @@ interface Props {
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   isUsingAnnotationViewer?: boolean
   annotationsViewMode?: AnnotationViewer[]
+  isShowSummaryOverlay?: boolean
 }
 
 interface State {
@@ -119,6 +120,7 @@ class Layout extends Component<Props, State> {
       templates,
       source,
       onPickTemplate,
+      isShowSummaryOverlay,
     } = this.props
     const {cellFluxData, visType} = this.state
     const showRawFluxData = visType === VisType.Table
@@ -151,6 +153,7 @@ class Layout extends Component<Props, State> {
         visType={this.visType}
         onPickTemplate={onPickTemplate}
         graphOptions={cell.graphOptions}
+        isShowSummaryOverlay={isShowSummaryOverlay}
         // isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
         // annotationsViewMode={this.props.annotationsViewMode}
       />
@@ -169,6 +172,7 @@ class Layout extends Component<Props, State> {
       templates,
       instance,
       onPickTemplate,
+      isShowSummaryOverlay,
     } = this.props
 
     if (cell.isWidget) {
@@ -202,6 +206,7 @@ class Layout extends Component<Props, State> {
         isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
         annotationsViewMode={this.props.annotationsViewMode}
         tableGaugeChartOptions={cell.tableGaugeChartOptions}
+        isShowSummaryOverlay={isShowSummaryOverlay}
       />
     )
   }

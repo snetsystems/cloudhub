@@ -9,6 +9,7 @@ const GridLayout = WidthProvider(ReactGridLayout)
 
 // Utils
 import {fastMap} from 'src/utils/fast'
+import {shouldShowSummaryOverlay} from 'src/shared/utils/summaryOverlay'
 
 // Constants
 import {
@@ -22,7 +23,14 @@ import {
 } from 'src/shared/constants'
 
 // Types
-import {TimeRange, Cell, Template, Source, TemplateValue, AnnotationViewer} from 'src/types'
+import {
+  TimeRange,
+  Cell,
+  Template,
+  Source,
+  TemplateValue,
+  AnnotationViewer,
+} from 'src/types'
 import type {CellExtraAction} from 'src/types/dashboards'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -64,12 +72,16 @@ interface Props {
   isUsingAnnotationViewer?: boolean
   annotationsViewMode?: AnnotationViewer[]
   /** When provided, called per cell; return a ReactNode for fixed/custom cells, or null to use default Layout. */
-  renderCell?: (cell: Cell, context: RenderCellContext) => React.ReactNode | null
+  renderCell?: (
+    cell: Cell,
+    context: RenderCellContext
+  ) => React.ReactNode | null
   draggableCancel?: string
   /** Optional: return extra action buttons per cell (frontend-only, no backend). */
   getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
   /** Called when user clicks an injected extra action. */
   onCustomCellAction?: (cell: Cell, actionId: string) => void
+  isShowSummaryOverlay?: boolean
 }
 
 interface State {
@@ -113,6 +125,7 @@ class LayoutRenderer extends Component<Props, State> {
       instance,
       onPickTemplate,
       renderCell,
+      isShowSummaryOverlay = false,
       getExtraActionsForCell,
       onCustomCellAction,
     } = this.props
@@ -188,8 +201,13 @@ class LayoutRenderer extends Component<Props, State> {
                       onSummonOverlayTechnologies={onSummonOverlayTechnologies}
                       instance={instance}
                       onPickTemplate={onPickTemplate}
-                      isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
+                      isUsingAnnotationViewer={
+                        this.props.isUsingAnnotationViewer
+                      }
                       annotationsViewMode={this.props.annotationsViewMode}
+                      isShowSummaryOverlay={shouldShowSummaryOverlay(
+                        isShowSummaryOverlay
+                      )}
                     />
                   )}
                 </Authorized>
