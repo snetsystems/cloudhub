@@ -190,10 +190,19 @@ class RefreshingGraph extends Component<Props> {
           }
 
           return (
-            <AutoRefresh
-              autoRefresh={autoRefresher}
-              manualRefresh={manualRefresh}
+            <div
+              style={{
+                width: `${width}px`,
+                height: `${height}px`,
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+              }}
             >
+              <AutoRefresh
+                autoRefresh={autoRefresher}
+                manualRefresh={manualRefresh}
+              >
               {refreshingUUID => (
                 <TimeSeries
                   uuid={refreshingUUID}
@@ -360,6 +369,7 @@ class RefreshingGraph extends Component<Props> {
                 </TimeSeries>
               )}
             </AutoRefresh>
+            </div>
           )
         }}
       </AutoSizer>

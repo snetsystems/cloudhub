@@ -94,6 +94,7 @@ $dash-graph-options-arrow: 8px;
   left: 0;
   border-radius: $ix-radius;
   border: $ix-border solid $g3-castle;
+  overflow: hidden;
 }
 
 .dash-graph--container {
