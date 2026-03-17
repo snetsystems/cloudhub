@@ -459,7 +459,7 @@ last("usage_steal") AS "CPU Steal",
 last("usage_softirq") AS "CPU SoftIRQ",
 last("usage_guest_nice") AS "CPU Guest Nice",
 last("usage_iowait") AS "CPU IOWait"
-FROM "Default"."autogen"."cpu"
+FROM ":db:".":rp:"."cpu"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total'
 GROUP BY "host"
 FILL(null)`,
@@ -474,7 +474,7 @@ last("shared") AS "Mem Shared",
 last("buffered") AS "Mem Buffered",
 last("cached") AS "Mem Cached",
 last("available") AS "Mem Available"
-FROM "Default"."autogen"."mem"
+FROM ":db:".":rp:"."mem"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime:
 GROUP BY "host"
 FILL(null)`,
@@ -482,7 +482,7 @@ FILL(null)`,
   {
     id: 'server-list-mem-cached-win',
     text: `SELECT last("Standby_Cache_Core_Bytes") + last("Standby_Cache_Normal_Priority_Bytes") + last("Standby_Cache_Reserve_Bytes") AS "Mem Cached"
-FROM "Default"."autogen"."win_mem"
+FROM ":db:".":rp:"."win_mem"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime:
 GROUP BY "host"
 FILL(null)`,
@@ -492,7 +492,7 @@ FILL(null)`,
     text: `SELECT "interface" AS "Network Interface", max("traffic") AS "Network Traffic"
 FROM (
   SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
-  FROM "Default"."autogen"."net"
+  FROM ":db:".":rp:"."net"
   WHERE time > now() - 3m
   GROUP BY time(:interval:), "interface"
   LIMIT 1
@@ -504,7 +504,7 @@ GROUP BY "host"`,
     text: `SELECT "instance" AS "Network Interface", max("traffic") AS "Network Traffic"
 FROM (
   SELECT max("Bytes_Received_persec") + max("Bytes_Sent_persec") AS "traffic"
-  FROM "Default"."autogen"."win_net"
+  FROM ":db:".":rp:"."win_net"
   WHERE time > now() - 3m AND "instance" !~ /^_Total/
   GROUP BY time(:interval:), "host", "instance"
   LIMIT 1
@@ -516,7 +516,7 @@ GROUP BY "host"`,
     text: `SELECT "instance" AS "Device", max("Disk I/O %") AS "Disk I/O %"
 FROM (
   SELECT last("Percent_Disk_Time") AS "Disk I/O %"
-  FROM "Default"."autogen"."win_diskio"
+  FROM ":db:".":rp:"."win_diskio"
   WHERE time > now() - 3m AND "instance" !~ /^_Total/
   GROUP BY time(:interval:), "host", "instance"
   LIMIT 1
@@ -529,7 +529,7 @@ GROUP BY "host"`,
     text: `SELECT "path" AS "Path", max("Disk Usage") AS "Disk Usage"
 FROM (
   SELECT last("used_percent") AS "Disk Usage"
-  FROM "Default"."autogen"."disk"
+  FROM ":db:".":rp:"."disk"
   WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND path !~ /^\\/boot/ AND path !~ /^\\/run/
   GROUP BY "path"
 )
@@ -541,7 +541,7 @@ GROUP BY "host"`,
     text: `SELECT "name" AS "Device", max("io_time") AS "Disk I/O %"
 FROM (
   SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
-  FROM "Default"."autogen"."diskio"
+  FROM ":db:".":rp:"."diskio"
   WHERE time > now() - 3m
   GROUP BY time(:interval:), "name"
   LIMIT 1
@@ -551,7 +551,7 @@ GROUP BY "host"`,
 
   // {
   //   id: 'server-list-cpu-irq-mean',
-  //   text: `SELECT mean("usage_irq") AS "mean_usage_irq" FROM "Default"."autogen"."cpu" WHERE time > :dashboardTime: AND time < :upperDashboardTime: GROUP BY "host", time(:interval:)`,
+  //   text: `SELECT mean("usage_irq") AS "mean_usage_irq" FROM ":db:".":rp:"."cpu" WHERE time > :dashboardTime: AND time < :upperDashboardTime: GROUP BY "host", time(:interval:)`,
   // },
 ]
 
@@ -559,7 +559,7 @@ export const serverListLineQueries: ServerListQuery[] = [
   {
     id: 'server-list-line-cpu',
     text: `SELECT mean("usage_system") + mean("usage_user") AS "CPU Usage"
-FROM "Default"."autogen"."cpu"
+FROM ":db:".":rp:"."cpu"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total'
 GROUP BY "host", time(:interval:)
 FILL(null)`,
@@ -567,7 +567,7 @@ FILL(null)`,
   {
     id: 'server-list-line-mem',
     text: `SELECT mean("used_percent") AS "Mem Usage"
-FROM "Default"."autogen"."mem"
+FROM ":db:".":rp:"."mem"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime:
 GROUP BY "host", time(:interval:)
 FILL(null)`,
@@ -577,7 +577,7 @@ FILL(null)`,
     text: `SELECT last("total") AS "Mem Total",
 last("used") AS "Mem Used",
 last("cached") AS "Mem Cached"
-FROM "Default"."autogen"."mem"
+FROM ":db:".":rp:"."mem"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime:
 GROUP BY "host"
 FILL(null)`,
@@ -585,7 +585,7 @@ FILL(null)`,
   {
     id: 'server-list-line-mem-cached-win',
     text: `SELECT last("Standby_Cache_Core_Bytes") + last("Standby_Cache_Normal_Priority_Bytes") + last("Standby_Cache_Reserve_Bytes") AS "Mem Cached"
-FROM "Default"."autogen"."win_mem"
+FROM ":db:".":rp:"."win_mem"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime:
 GROUP BY "host"
 FILL(null)`,
@@ -595,7 +595,7 @@ FILL(null)`,
     text: `SELECT max("Disk Usage") AS "Disk Usage"
 FROM (
   SELECT last("used_percent") AS "Disk Usage"
-  FROM "Default"."autogen"."disk"
+  FROM ":db:".":rp:"."disk"
   WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND path !~ /^\\/boot/ AND path !~ /^\\/run/
   GROUP BY "host", "path", time(:interval:)
   FILL(null)
@@ -608,7 +608,7 @@ FILL(null)`,
     text: `SELECT max("Disk I/O %") AS "Disk I/O %"
 FROM (
   SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "Disk I/O %"
-  FROM "Default"."autogen"."diskio"
+  FROM ":db:".":rp:"."diskio"
   WHERE time > :dashboardTime: AND time < :upperDashboardTime:
   GROUP BY "host", "name", time(:interval:)
   FILL(null)
@@ -621,7 +621,7 @@ FILL(null)`,
     text: `SELECT max("Disk I/O %") AS "Disk I/O %"
 FROM (
   SELECT last("Percent_Disk_Time") AS "Disk I/O %"
-  FROM "Default"."autogen"."win_diskio"
+  FROM ":db:".":rp:"."win_diskio"
   WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "instance" !~ /^_Total/
   GROUP BY "host", "instance", time(:interval:)
   FILL(null)
@@ -634,7 +634,7 @@ FILL(null)`,
     text: `SELECT max("traffic") AS "Network Traffic"
 FROM (
   SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
-  FROM "Default"."autogen"."net"
+  FROM ":db:".":rp:"."net"
   WHERE time > :dashboardTime: AND time < :upperDashboardTime:
   GROUP BY "host", "interface", time(:interval:)
   FILL(null)
@@ -647,7 +647,7 @@ FILL(null)`,
     text: `SELECT max("traffic") AS "Network Traffic"
 FROM (
   SELECT max("Bytes_Received_persec") + max("Bytes_Sent_persec") AS "traffic"
-  FROM "Default"."autogen"."win_net"
+  FROM ":db:".":rp:"."win_net"
   WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "instance" !~ /^_Total/
   GROUP BY "host", "instance", time(:interval:)
   FILL(null)
@@ -660,7 +660,7 @@ FILL(null)`,
     text: `SELECT "instance" AS "Network Interface", max("traffic") AS "__ignore_network_traffic__"
   FROM (
     SELECT max("Bytes_Received_persec") + max("Bytes_Sent_persec") AS "traffic"
-    FROM "Default"."autogen"."win_net"
+    FROM ":db:".":rp:"."win_net"
     WHERE time > now() - 3m AND "instance" !~ /^_Total/
     GROUP BY time(:interval:), "host", "instance"
     LIMIT 1
@@ -672,7 +672,7 @@ FILL(null)`,
     text: `SELECT "interface" AS "Network Interface", max("traffic") AS "__ignore_network_traffic__"
   FROM (
     SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
-    FROM "Default"."autogen"."net"
+    FROM ":db:".":rp:"."net"
     WHERE time > now() - 3m
     GROUP BY time(:interval:), "host", "interface"
     LIMIT 1
@@ -684,7 +684,7 @@ FILL(null)`,
     text: `SELECT "path" AS "Path", max("Disk Usage") AS "__ignore_disk_usage__"
 FROM (
   SELECT last("used_percent") AS "Disk Usage"
-  FROM "Default"."autogen"."disk"
+  FROM ":db:".":rp:"."disk"
   WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND path !~ /^\\/boot/ AND path !~ /^\\/run/
   GROUP BY "host", "path"
 )
@@ -695,7 +695,7 @@ GROUP BY "host"`,
     text: `SELECT "name" AS "Device", max("io_time") AS "__ignore_disk_io__"
 FROM (
   SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
-  FROM "Default"."autogen"."diskio"
+  FROM ":db:".":rp:"."diskio"
   WHERE time > now() - 3m
   GROUP BY time(:interval:), "host", "name"
   LIMIT 1
@@ -707,7 +707,7 @@ GROUP BY "host"`,
     text: `SELECT "instance" AS "Device", max("Disk I/O %") AS "__ignore_disk_io__"
 FROM (
   SELECT last("Percent_Disk_Time") AS "Disk I/O %"
-  FROM "Default"."autogen"."win_diskio"
+  FROM ":db:".":rp:"."win_diskio"
   WHERE time > now() - 3m AND "instance" !~ /^_Total/
   GROUP BY time(:interval:), "host", "instance"
   LIMIT 1
