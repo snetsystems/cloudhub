@@ -38,10 +38,11 @@ function CellSummaryOverlay({
   }
 
   const item = summary.items[0]
+  const summaryDigits = Math.max(decimalPlaces?.digits ?? 2, 2)
   const formattedValue = formatDisplayValue(
     item.value,
     false,
-    decimalPlaces?.digits ?? 2
+    summaryDigits
   ).trim()
   const formattedTime = formatSummaryTime(item.time)
   const summaryTypeLabel = summary.context.summaryType || 'Chart Max'
