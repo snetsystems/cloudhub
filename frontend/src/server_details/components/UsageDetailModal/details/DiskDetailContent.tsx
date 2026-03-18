@@ -1,11 +1,14 @@
 import React from 'react'
 import {UsageDetailBlock} from '../UsageDetailBlock'
 import type {UsageDetailServerContext} from '../types'
+import type {Template} from 'src/types'
 
 export function DiskDetailContent({
-  serverContext,
+  serverContext: _serverContext,
+  templates: _templates,
 }: {
   serverContext: UsageDetailServerContext
+  templates: Template[] | null
 }) {
   return (
     <div className="process-detail-modal__body">

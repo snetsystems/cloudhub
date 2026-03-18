@@ -94,6 +94,8 @@ interface Props {
   timeZone: TimeZones
   isUsingAnnotationViewer: boolean
   annotationsViewMode: AnnotationViewer[]
+  axisLabelWidth?: number
+  staticLegendGap?: number
 }
 
 interface State {
@@ -274,12 +276,12 @@ class Dygraph extends Component<Props, State> {
     const {staticLegendHeight} = this.state
 
     if (staticLegend) {
-      const cellVerticalPadding = 16
+      const gap = this.props.staticLegendGap ?? 16
 
       return {
         ...containerStyle,
         zIndex: 2,
-        height: `calc(100% - ${staticLegendHeight + cellVerticalPadding}px)`,
+        height: `calc(100% - ${staticLegendHeight + gap}px)`,
       }
     }
 
@@ -381,11 +383,32 @@ class Dygraph extends Component<Props, State> {
   private formatYVal = (yval: number, __, opts: (name: string) => number) => {
     const {
       axes: {
-        y: {prefix, suffix},
+        y: {prefix, suffix, avoidScientificNotation},
       },
     } = this.props
 
-    return numberValueFormatter(yval, opts, prefix, suffix)
+    return numberValueFormatter(yval, opts, prefix ?? '', suffix ?? '', {
+      avoidScientificNotation: avoidScientificNotation ?? false,
+    })
+  }
+
+  private formatYValForLegend = (
+    v: number,
+    opts: (name: string) => number,
+    _seriesName: string,
+    _dygraph: DygraphClass,
+    _row: number,
+    _col: number
+  ) => {
+    const {
+      axes: {
+        y: {prefix, suffix, avoidScientificNotation},
+      },
+    } = this.props
+
+    return numberValueFormatter(v, opts, prefix ?? '', suffix ?? '', {
+      avoidScientificNotation: avoidScientificNotation ?? false,
+    })
   }
 
   private eventToTimestamp = ({
@@ -449,10 +472,11 @@ class Dygraph extends Component<Props, State> {
       plotter: type === CellType.Bar ? barPlotter : null,
       axes: {
         y: {
-          axisLabelWidth: labelWidth,
+          axisLabelWidth: this.props.axisLabelWidth ?? labelWidth,
           labelsKMB: y.base === BASE_10,
           labelsKMG2: y.base === BASE_2,
           axisLabelFormatter: formatYVal,
+          valueFormatter: this.formatYValForLegend,
           valueRange: this.getYRange(timeSeries),
         },
       },

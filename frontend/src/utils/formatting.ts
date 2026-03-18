@@ -41,12 +41,17 @@ const floatFormat = (x: number, optPrecision: number): string => {
     : x.toPrecision(p)
 }
 
+export interface NumberValueFormatterOptions {
+  avoidScientificNotation?: boolean
+}
+
 // taken from https://github.com/danvk/dygraphs/blob/aaec6de56dba8ed712fd7b9d949de47b46a76ccd/src/dygraph-utils.js#L1103
 export const numberValueFormatter = (
   x: number,
   opts: (name: string) => number,
   prefix: string,
-  suffix: string
+  suffix: string,
+  formatterOptions?: NumberValueFormatterOptions
 ): string => {
   const sigFigs = opts('sigFigs')
 
@@ -55,20 +60,25 @@ export const numberValueFormatter = (
     return floatFormat(x, sigFigs)
   }
 
-  const digits = opts('digitsAfterDecimal')
-  const maxNumberWidth = opts('maxNumberWidth')
+  const digits = opts('digitsAfterDecimal') ?? 2
+  const maxNumberWidth = opts('maxNumberWidth') ?? 6
 
   const kmb = opts('labelsKMB')
   const kmg2 = opts('labelsKMG2')
 
   let label
 
-  // switch to scientific notation if we underflow or overflow fixed display.
-  if (
-    x !== 0.0 &&
-    (Math.abs(x) >= Math.pow(10, maxNumberWidth) ||
-      Math.abs(x) < Math.pow(10, -digits))
-  ) {
+  const absX = Math.abs(x)
+  const wouldUnderflow = x !== 0.0 && absX < Math.pow(10, -digits)
+  const wouldOverflow = x !== 0.0 && absX >= Math.pow(10, maxNumberWidth)
+  const avoidScientific = formatterOptions?.avoidScientificNotation ?? false
+
+  if (wouldOverflow) {
+    label = x.toExponential(digits)
+  } else if (wouldUnderflow && avoidScientific) {
+    const placesNeeded = Math.min(8, Math.max(digits, Math.ceil(-Math.log10(absX || 1e-10))))
+    label = `${roundNum(x, placesNeeded)}`
+  } else if (wouldUnderflow) {
     label = x.toExponential(digits)
   } else {
     label = `${roundNum(x, digits)}`

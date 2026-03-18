@@ -59,6 +59,9 @@ interface Props {
   onUpdateVisType?: (type: CellType) => Promise<void>
   isUsingAnnotationViewer?: boolean
   annotationsViewMode?: AnnotationViewer[]
+  axisLabelWidth?: number
+  staticLegendGap?: number
+  containerStyle?: CSSProperties
 }
 
 type LineGraphProps = Props & RouteComponentProps<any, any>
@@ -206,6 +209,8 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
           handleSetHoverTime={handleSetHoverTime}
           isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
           annotationsViewMode={this.props.annotationsViewMode}
+          axisLabelWidth={this.props.axisLabelWidth}
+          staticLegendGap={this.props.staticLegendGap}
         >
           {type === CellType.LinePlusSingleStat && (
             <SingleStat
@@ -259,13 +264,14 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
   }
 
   private get containerStyle(): CSSProperties {
-    return {
+    const defaultStyle = {
       width: 'calc(100% - 32px)',
       height: 'calc(100% - 16px)',
-      position: 'absolute',
+      position: 'absolute' as const,
       top: '8px',
       left: '16px',
     }
+    return this.props.containerStyle ?? defaultStyle
   }
 
   private async convertToDygraphData(

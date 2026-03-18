@@ -130,6 +130,9 @@ interface Props {
     tableGaugeChartOptions: TableGaugeChartOptionsInterface
   ) => void
   isShowSummaryOverlay?: boolean
+  axisLabelWidth?: number
+  staticLegendGap?: number
+  containerStyle?: React.CSSProperties
 }
 class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
@@ -203,172 +206,182 @@ class RefreshingGraph extends Component<Props> {
                 autoRefresh={autoRefresher}
                 manualRefresh={manualRefresh}
               >
-              {refreshingUUID => (
-                <TimeSeries
-                  uuid={refreshingUUID}
-                  source={source}
-                  inView={inView}
-                  queries={this.queries}
-                  timeRange={timeRange}
-                  xPixels={width}
-                  templates={templates}
-                  fluxASTLink={fluxASTLink}
-                  editQueryStatus={editQueryStatus}
-                  onNotify={onNotify}
-                  grabDataForDownload={grabDataForDownload}
-                  grabFluxData={grabFluxData}
-                >
-                  {({
-                    timeSeriesInfluxQL,
-                    timeSeriesFlux,
-                    rawFluxData,
-                    loading,
-                    isInitialFetch,
-                    uuid,
-                    errorMessage,
-                  }) => {
-                    if (isInitialFetch && loading === RemoteDataState.Loading) {
-                      return (
-                        <div className="graph-empty">
-                          <h3 className="graph-spinner" />
-                        </div>
-                      )
-                    }
-
-                    if (!this.hasValues(timeSeriesFlux, timeSeriesInfluxQL)) {
-                      if (errorMessage && _.get(queries, '0.text', '').trim()) {
-                        return <InvalidData message={errorMessage} />
-                      }
-
+                {refreshingUUID => (
+                  <TimeSeries
+                    uuid={refreshingUUID}
+                    source={source}
+                    inView={inView}
+                    queries={this.queries}
+                    timeRange={timeRange}
+                    xPixels={width}
+                    templates={templates}
+                    fluxASTLink={fluxASTLink}
+                    editQueryStatus={editQueryStatus}
+                    onNotify={onNotify}
+                    grabDataForDownload={grabDataForDownload}
+                    grabFluxData={grabFluxData}
+                  >
+                    {({
+                      timeSeriesInfluxQL,
+                      timeSeriesFlux,
+                      rawFluxData,
+                      loading,
+                      isInitialFetch,
+                      uuid,
+                      errorMessage,
+                    }) => {
                       if (
-                        cellNoteVisibility === NoteVisibility.ShowWhenNoData
-                      ) {
-                        return <MarkdownCell text={cellNote} />
-                      }
-
-                      if (
-                        this.isFluxQuery &&
-                        !getDeep<string>(source, 'links.flux', null)
+                        isInitialFetch &&
+                        loading === RemoteDataState.Loading
                       ) {
                         return (
                           <div className="graph-empty">
-                            <p>The current source does not support Flux</p>
+                            <h3 className="graph-spinner" />
                           </div>
                         )
                       }
 
-                      return (
-                        <div className="graph-empty">
-                          <p>No Results</p>
-                        </div>
-                      )
-                    }
-
-                    if (
-                      showRawFluxData &&
-                      queryType === QueryType.Flux &&
-                      !_.isEmpty(rawFluxData)
-                    ) {
-                      return (
-                        <RawFluxDataTable
-                          csv={rawFluxData}
-                          width={width}
-                          height={height}
-                        />
-                      )
-                    }
-
-                    const summary =
-                      isShowSummaryOverlay && queryType === QueryType.InfluxQL
-                        ? buildCellSummary({
-                            queries: this.queries,
-                            responses: timeSeriesInfluxQL,
-                            timeRange,
-                          })
-                        : null
-
-                    let itemColor: string | undefined
-                    if (
-                      summary?.items[0]?.chartLabel &&
-                      timeSeriesInfluxQL?.length &&
-                      colors?.length
-                    ) {
-                      try {
-                        const transformed = groupByTimeSeriesTransform(
-                          timeSeriesInfluxQL,
-                          false
-                        )
-                        if (transformed?.sortedLabels?.length) {
-                          const idx = transformed.sortedLabels.findIndex(
-                            l => l.label === summary.items[0].chartLabel
-                          )
-                          if (idx >= 0) {
-                            const hexes = getLineColorsHexes(
-                              colors,
-                              transformed.sortedLabels.length
-                            )
-                            itemColor = hexes[idx]
-                          }
+                      if (!this.hasValues(timeSeriesFlux, timeSeriesInfluxQL)) {
+                        if (
+                          errorMessage &&
+                          _.get(queries, '0.text', '').trim()
+                        ) {
+                          return <InvalidData message={errorMessage} />
                         }
-                      } catch {
-                        // Fallback: no color when transform fails
-                      }
-                    }
 
-                    switch (type) {
-                      case CellType.SingleStat:
-                        return this.wrapWithSummary(
-                          this.singleStat(timeSeriesInfluxQL, timeSeriesFlux),
-                          summary,
-                          itemColor
+                        if (
+                          cellNoteVisibility === NoteVisibility.ShowWhenNoData
+                        ) {
+                          return <MarkdownCell text={cellNote} />
+                        }
+
+                        if (
+                          this.isFluxQuery &&
+                          !getDeep<string>(source, 'links.flux', null)
+                        ) {
+                          return (
+                            <div className="graph-empty">
+                              <p>The current source does not support Flux</p>
+                            </div>
+                          )
+                        }
+
+                        return (
+                          <div className="graph-empty">
+                            <p>No Results</p>
+                          </div>
                         )
-                      case CellType.Table:
-                        return this.wrapWithSummary(
-                          this.table(
+                      }
+
+                      if (
+                        showRawFluxData &&
+                        queryType === QueryType.Flux &&
+                        !_.isEmpty(rawFluxData)
+                      ) {
+                        return (
+                          <RawFluxDataTable
+                            csv={rawFluxData}
+                            width={width}
+                            height={height}
+                          />
+                        )
+                      }
+
+                      const summary =
+                        isShowSummaryOverlay && queryType === QueryType.InfluxQL
+                          ? buildCellSummary({
+                              queries: this.queries,
+                              responses: timeSeriesInfluxQL,
+                              timeRange,
+                            })
+                          : null
+
+                      let itemColor: string | undefined
+                      if (
+                        summary?.items[0]?.chartLabel &&
+                        timeSeriesInfluxQL?.length &&
+                        colors?.length
+                      ) {
+                        try {
+                          const transformed = groupByTimeSeriesTransform(
                             timeSeriesInfluxQL,
-                            timeSeriesFlux,
-                            uuid,
-                            width,
-                            height
-                          ),
-                          summary,
-                          itemColor
-                        )
-                      case CellType.Gauge:
-                        return this.wrapWithSummary(
-                          this.gauge(timeSeriesInfluxQL, timeSeriesFlux),
-                          summary,
-                          itemColor
-                        )
-                      case CellType.StaticBar:
-                      case CellType.StaticPie:
-                      case CellType.StaticDoughnut:
-                      case CellType.StaticScatter:
-                      case CellType.StaticRadar:
-                      case CellType.StaticStackedBar:
-                      case CellType.StaticLineChart:
-                      case CellType.StaticTableGaugeChart:
-                        return this.wrapWithSummary(
-                          this.StaticGraph(
-                            timeSeriesInfluxQL,
-                            timeSeriesFlux,
-                            loading,
-                            uuid
-                          ),
-                          summary,
-                          itemColor
-                        )
-                      default:
-                        return this.wrapWithSummary(
-                          this.lineGraph(timeSeriesInfluxQL, timeSeriesFlux, loading),
-                          summary,
-                          itemColor
-                        )
-                    }
-                  }}
-                </TimeSeries>
-              )}
-            </AutoRefresh>
+                            false
+                          )
+                          if (transformed?.sortedLabels?.length) {
+                            const idx = transformed.sortedLabels.findIndex(
+                              l => l.label === summary.items[0].chartLabel
+                            )
+                            if (idx >= 0) {
+                              const hexes = getLineColorsHexes(
+                                colors,
+                                transformed.sortedLabels.length
+                              )
+                              itemColor = hexes[idx]
+                            }
+                          }
+                        } catch {
+                          // Fallback: no color when transform fails
+                        }
+                      }
+
+                      switch (type) {
+                        case CellType.SingleStat:
+                          return this.wrapWithSummary(
+                            this.singleStat(timeSeriesInfluxQL, timeSeriesFlux),
+                            summary,
+                            itemColor
+                          )
+                        case CellType.Table:
+                          return this.wrapWithSummary(
+                            this.table(
+                              timeSeriesInfluxQL,
+                              timeSeriesFlux,
+                              uuid,
+                              width,
+                              height
+                            ),
+                            summary,
+                            itemColor
+                          )
+                        case CellType.Gauge:
+                          return this.wrapWithSummary(
+                            this.gauge(timeSeriesInfluxQL, timeSeriesFlux),
+                            summary,
+                            itemColor
+                          )
+                        case CellType.StaticBar:
+                        case CellType.StaticPie:
+                        case CellType.StaticDoughnut:
+                        case CellType.StaticScatter:
+                        case CellType.StaticRadar:
+                        case CellType.StaticStackedBar:
+                        case CellType.StaticLineChart:
+                        case CellType.StaticTableGaugeChart:
+                          return this.wrapWithSummary(
+                            this.StaticGraph(
+                              timeSeriesInfluxQL,
+                              timeSeriesFlux,
+                              loading,
+                              uuid
+                            ),
+                            summary,
+                            itemColor
+                          )
+                        default:
+                          return this.wrapWithSummary(
+                            this.lineGraph(
+                              timeSeriesInfluxQL,
+                              timeSeriesFlux,
+                              loading
+                            ),
+                            summary,
+                            itemColor
+                          )
+                      }
+                    }}
+                  </TimeSeries>
+                )}
+              </AutoRefresh>
             </div>
           )
         }}
@@ -614,6 +627,9 @@ class RefreshingGraph extends Component<Props> {
         decimalPlaces={decimalPlaces}
         onUpdateVisType={onUpdateVisType}
         handleSetHoverTime={handleSetHoverTime}
+        axisLabelWidth={this.props.axisLabelWidth}
+        staticLegendGap={this.props.staticLegendGap}
+        containerStyle={this.props.containerStyle}
         isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
         annotationsViewMode={this.props.annotationsViewMode}
       />
@@ -763,4 +779,12 @@ const mdtp = {
   onNotify: notify,
 }
 
-export default connect(mapStateToProps, mdtp, null)(RefreshingGraph)
+type StateProps = ReturnType<typeof mapStateToProps>
+type DispatchProps = typeof mdtp
+type OwnProps = Omit<Props, keyof StateProps | keyof DispatchProps>
+
+export default connect<StateProps, DispatchProps, OwnProps, any>(
+  mapStateToProps,
+  mdtp,
+  null
+)(RefreshingGraph)

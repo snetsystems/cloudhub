@@ -10,6 +10,7 @@ export interface Axis {
   base: string
   scale: string
   bounds?: [string, string]
+  avoidScientificNotation?: boolean
 }
 
 export type TimeSeriesValue = string | number | null | undefined

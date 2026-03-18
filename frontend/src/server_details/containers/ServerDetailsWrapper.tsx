@@ -330,6 +330,7 @@ function ServerDetailsWrapper(props) {
           selectedHost,
           source: props.source ?? null,
           addons: props.addons,
+          timeRange: props.cloudTimeRange?.hostDetails ?? props.cloudTimeRange?.default,
         }}
       />
     </ServerDetailsPageContext.Provider>
