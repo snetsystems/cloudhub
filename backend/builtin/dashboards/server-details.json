@@ -2,359 +2,132 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "organization": "",
   "cells": [
     {
-      "i": "sever-details-server-info",
+      "i": "server-details-summary",
       "x": 0,
       "y": 0,
       "w": 96,
-      "h": 20,
+      "h": 4,
       "minW": 48,
-      "minH": 8,
-      "name": "Server Info",
-      "queries": [
-        {
-          "query": "SELECT last(\"total\")/1073741824 AS \"total_gib\", last(\"used\")/1073741824 AS \"used_gib\", last(\"free\")/1073741824 AS \"free_gib\", last(\"used_percent\") AS \"used_percent\", last(\"inodes_used_percent\") AS \"inode_used_percent\" FROM \":db:\".\":rp:\".\"disk\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY \"path\"",
-          "label": "Disk Usage",
-          "groupbys": [],
-          "wheres": []
-        }
-      ],
+      "minH": 2,
+      "name": "Server Summary",
+      "queries": [],
       "type": "component"
     },
     {
-      "i": "sever-details-process",
+      "i": "server-details-cpu-usage",
       "x": 0,
-      "y": 0,
-      "w": 96,
+      "y": 4,
+      "w": 48,
+      "h": 10,
+      "minW": 16,
+      "minH": 4,
+      "name": "CPU Usage",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
+          "label": "CPU Usage"
+        }
+      ]
+    },
+    {
+      "i": "server-details-memory-usage",
+      "x": 0,
+      "y": 14,
+      "w": 48,
+      "h": 10,
+      "minW": 16,
+      "minH": 4,
+      "name": "Memory usage",
+      "type": "line-plus-single-stat",
+      "queries": [
+        {
+          "query": "SELECT mean(\"used_percent\") AS \"last_used_percent\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(previous)",
+          "label": "Memory Usage"
+        }
+      ]
+    },
+    {
+      "i": "server-details-process",
+      "x": 48,
+      "y": 4,
+      "w": 48,
       "h": 20,
-      "minW": 48,
-      "minH": 8,
+      "minW": 24,
+      "minH": 2,
       "name": "Process",
       "queries": [],
       "type": "component"
     },
     {
-      "i": "sever-details-cpu-usage",
-      "x": 0,
-      "y": 18,
+      "i": "server-details-server-info",
+      "x": 48,
+      "y": 24,
       "w": 48,
-      "h": 8,
-      "minW": 16,
-      "minH": 4,
-      "name": "CPU Usage",
+      "h": 20,
+      "minW": 24,
+      "minH": 2,
+      "name": "Server Info",
+      "type": "component",
       "queries": [
         {
-          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_idle\") AS \"idle\", mean(\"usage_nice\") AS \"nice\", mean(\"usage_iowait\") AS \"iowait\", mean(\"usage_steal\") AS \"steal\", mean(\"usage_irq\") AS \"irq\", mean(\"usage_softirq\") AS \"softirq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
-          "label": "CPU Usage",
-          "groupbys": [],
-          "wheres": []
-        }
-      ],
-      "axes": {
-        "x": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y": {
-          "bounds": ["", ""],
-          "label": "percentage",
-          "prefix": "",
-          "suffix": "",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y2": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "10",
-          "scale": "linear"
-        }
-      },
-      "type": "line",
-      "colors": [
-        {
-          "id": "919f0386-9439-4387-9a51-2a4243d4940d",
-          "type": "scale",
-          "hex": "#31C0F6",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        },
-        {
-          "id": "1e7840a4-2fcf-4882-9351-604877a9c432",
-          "type": "scale",
-          "hex": "#A500A5",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        },
-        {
-          "id": "a4944a5f-30f7-41b5-b1a4-d1b2f316c72b",
-          "type": "scale",
-          "hex": "#FF7E27",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
+          "query": "SELECT last(\"total\")/1073741824 AS \"total_gib\", last(\"used\")/1073741824 AS \"used_gib\", last(\"free\")/1073741824 AS \"free_gib\", last(\"used_percent\") AS \"used_percent\", last(\"inodes_used_percent\") AS \"inode_used_percent\" FROM \":db:\".\":rp:\".\"disk\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY \"path\"",
+          "label": "Disk Usage"
         }
       ]
     },
     {
-      "i": "sever-details-memory-usage",
-      "x": 48,
-      "y": 10,
-      "w": 48,
-      "h": 8,
-      "minW": 16,
-      "minH": 4,
-      "name": "Memory usage",
-      "queries": [
-        {
-          "query": "SELECT mean(\"used_percent\") AS \"last_used_percent\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(previous)",
-          "label": "Memory Usage",
-          "groupbys": [],
-          "wheres": []
-        }
-      ],
-      "axes": {
-        "x": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y": {
-          "bounds": ["", ""],
-          "label": "Memory used %",
-          "prefix": "",
-          "suffix": " %",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y2": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "10",
-          "scale": "linear"
-        }
-      },
-      "type": "line-plus-single-stat",
-      "colors": [
-        {
-          "id": "base",
-          "type": "scale",
-          "hex": "#8F8AF4",
-          "name": "Do Androids Dream of Electric Sheep?",
-          "value": "0"
-        },
-        {
-          "id": "8314ff20-1158-4910-85fa-c880ca805611",
-          "type": "scale",
-          "hex": "#A51414",
-          "name": "Do Androids Dream of Electric Sheep?",
-          "value": "0"
-        },
-        {
-          "id": "84b07d37-6abe-461d-9e1e-fefbaa696368",
-          "type": "scale",
-          "hex": "#F4CF31",
-          "name": "Do Androids Dream of Electric Sheep?",
-          "value": "0"
-        }
-      ],
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      },
-      "tableOptions": {
-        "verticalTimeAxis": true,
-        "sortBy": {
-          "internalName": "time",
-          "displayName": "",
-          "visible": true,
-          "direction": "asc",
-          "tempVar": ""
-        },
-        "wrapping": "truncate",
-        "fixFirstColumn": true
-      },
-      "fieldOptions": [
-        {
-          "internalName": "time",
-          "displayName": "",
-          "visible": true,
-          "direction": "asc",
-          "tempVar": ""
-        }
-      ],
-      "timeFormat": "MM/DD/YYYY HH:mm:ss",
-      "decimalPlaces": {
-        "isEnforced": true,
-        "digits": 0
-      },
-      "note": "To enable this graph, you will need to configure the Telegraf `mem` plugin. For more information, please visit the [Telegraf Mem plugin documentation](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/mem).",
-      "noteVisibility": "showWhenNoData",
-      "graphOptions": {
-        "fillArea": false,
-        "showLine": true,
-        "showPoint": false,
-        "showTempVarCount": ""
-      },
-      "tableGaugeChartOptions": {
-        "columnSettings": [],
-        "decimalPlaces": {
-          "isEnforced": false,
-          "digits": 0
-        },
-        "isShowValues": false,
-        "sortBy": "",
-        "sortByDirection": ""
-      }
-    },
-    {
-      "i": "sever-details-network-usage",
+      "i": "server-details-network-usage",
       "x": 0,
-      "y": 18,
+      "y": 24,
       "w": 48,
-      "h": 8,
+      "h": 10,
       "minW": 16,
       "minH": 4,
       "name": "Network",
+      "type": "line",
       "queries": [
         {
           "query": "SELECT non_negative_derivative(max(\"bytes_recv\"), 1s) AS \"received\", non_negative_derivative(max(\"bytes_sent\"), 1s) AS \"sent\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND \"host\" = :host: GROUP BY time(:interval:) FILL(null)",
-          "label": "Network Traffic",
-          "groupbys": [],
-          "wheres": []
-        }
-      ],
-      "axes": {
-        "x": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y": {
-          "bounds": ["", ""],
-          "label": "percentage",
-          "prefix": "",
-          "suffix": "",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y2": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "10",
-          "scale": "linear"
-        }
-      },
-      "type": "line",
-      "colors": [
-        {
-          "id": "919f0386-9439-4387-9a51-2a4243d4940d",
-          "type": "scale",
-          "hex": "#31C0F6",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        },
-        {
-          "id": "1e7840a4-2fcf-4882-9351-604877a9c432",
-          "type": "scale",
-          "hex": "#A500A5",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        },
-        {
-          "id": "a4944a5f-30f7-41b5-b1a4-d1b2f316c72b",
-          "type": "scale",
-          "hex": "#FF7E27",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
+          "label": "Network Traffic"
         }
       ]
     },
     {
-      "i": "sever-details-disk-io-usage",
+      "i": "server-details-disk-io-usage",
       "x": 0,
-      "y": 18,
+      "y": 34,
       "w": 48,
-      "h": 8,
+      "h": 10,
       "minW": 16,
       "minH": 4,
       "name": "Disk io",
+      "type": "line",
       "queries": [
         {
           "query": "SELECT non_negative_derivative(max(\"read_bytes\"),1s) AS \"read bytes\", non_negative_derivative(max(\"write_bytes\"),1s) AS \"write bytes\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND \"host\" = :host: GROUP BY time(:interval:) FILL(null)",
-          "label": "Disk I/O Usage",
-          "groupbys": [],
-          "wheres": []
+          "label": "Disk I/O Usage"
+        }
+      ]
+    },
+    {
+      "i": "server-details-disk-utilization",
+      "x": 0, "y": 44, "w": 48, "h": 10,
+      "name": "Disk I/O Usage (%)",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE \"host\" = :host: AND time > :dashboardTime: GROUP BY \"name\", time(:interval:) FILL(null)",
+          "label": "Disk Utilization"
         }
       ],
       "axes": {
-        "x": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y": {
-          "bounds": ["", ""],
-          "label": "percentage",
-          "prefix": "",
-          "suffix": "",
-          "base": "raw",
-          "scale": "linear"
-        },
-        "y2": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "10",
-          "scale": "linear"
-        }
-      },
-      "type": "line",
-      "colors": [
-        {
-          "id": "919f0386-9439-4387-9a51-2a4243d4940d",
-          "type": "scale",
-          "hex": "#31C0F6",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        },
-        {
-          "id": "1e7840a4-2fcf-4882-9351-604877a9c432",
-          "type": "scale",
-          "hex": "#A500A5",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        },
-        {
-          "id": "a4944a5f-30f7-41b5-b1a4-d1b2f316c72b",
-          "type": "scale",
-          "hex": "#FF7E27",
-          "name": "Nineteen Eighty Four",
-          "value": "0"
-        }
-      ]
+        "y": { "bounds": ["0", "100"], "suffix": "%", "base": "raw", "scale": "linear" }
+      }
     }
   ],
   "templates": [

@@ -5,7 +5,10 @@ import {NetworkDetailContent} from './details/NetworkDetailContent'
 import {DiskDetailContent} from './details/DiskDetailContent'
 import type {UsageDetailType, UsageDetailServerContext} from './types'
 import {buildDetailTemplates, DEFAULT_DETAIL_TIME_RANGE} from './utils'
-import type {Template} from 'src/types'
+import type {Template, TimeRange} from 'src/types'
+import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
+import type {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 export interface UsageDetailModalProps {
   isOpen: boolean
@@ -60,15 +63,36 @@ export const UsageDetailModal: React.FC<UsageDetailModalProps> = ({
 }) => {
   const [isMounted, setIsMounted] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(isOpen)
+  const [localTimeRange, setLocalTimeRange] = useState<TimeRange | null>(null)
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState<number>(0)
+  const [manualRefresh, setManualRefresh] = useState<number>(Date.now())
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timer
+    if (autoRefreshInterval > 0) {
+      intervalId = setInterval(() => setManualRefresh(Date.now()), autoRefreshInterval)
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [autoRefreshInterval])
+
+  useEffect(() => {
+    if (isOpen) {
+      setLocalTimeRange(serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE)
+    }
+  }, [isOpen, serverContext.timeRange])
+
+  const currentTimeRange = localTimeRange ?? serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
 
   const templates = useMemo(() => {
     if (!serverContext.source || !serverContext.selectedHost) return null
     return buildDetailTemplates(
       serverContext.source,
-      serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE,
+      currentTimeRange,
       serverContext.selectedHost
     )
-  }, [serverContext.source, serverContext.timeRange, serverContext.selectedHost])
+  }, [serverContext.source, currentTimeRange, serverContext.selectedHost])
 
   useEffect(() => {
     if (isOpen) {
@@ -103,18 +127,38 @@ export const UsageDetailModal: React.FC<UsageDetailModalProps> = ({
         aria-modal="true"
         aria-labelledby="usage-detail-modal-title"
       >
-        <div className="process-detail-modal__header">
-          <h2
-            id="usage-detail-modal-title"
-            className="process-detail-modal__title"
-          >
-            {title}
-          </h2>
+        <div
+          className="process-detail-modal__header"
+          style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}
+        >
+          <div style={{display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0}}>
+            <h2
+              id="usage-detail-modal-title"
+              className="process-detail-modal__title"
+              style={{flexShrink: 0}}
+            >
+              {title}
+            </h2>
+            <div id="usage-detail-modal-header-portal" style={{flex: 1, display: 'flex', alignItems: 'center', minWidth: 0}} />
+          </div>
+          <div style={{display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0}}>
+            <AutoRefreshDropdown
+              selected={autoRefreshInterval}
+              onChoose={(option: AutoRefreshOption) => setAutoRefreshInterval(option.milliseconds)}
+              onManualRefresh={() => setManualRefresh(Date.now())}
+            />
+            {currentTimeRange && (
+              <TimeRangeDropdown
+                selected={currentTimeRange}
+                onChooseTimeRange={setLocalTimeRange}
+              />
+            )}
+          </div>
         </div>
         <div className="process-detail-modal__scroll">
           <DetailContent
             detailType={detailType}
-            serverContext={serverContext}
+            serverContext={{...serverContext, timeRange: currentTimeRange, manualRefresh}}
             templates={templates}
           />
         </div>

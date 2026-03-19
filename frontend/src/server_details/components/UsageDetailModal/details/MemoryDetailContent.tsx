@@ -158,6 +158,7 @@ function DetailChartBlock({
   timeRange,
   templates,
   colors,
+  manualRefresh,
 }: {
   blockId: string
   source: Source | null
@@ -165,6 +166,7 @@ function DetailChartBlock({
   timeRange: TimeRange
   templates: Template[] | null
   colors: typeof LINE_COLOR_PALETTES_SEQUENCE[number]
+  manualRefresh?: number
 }) {
   const queryText = BLOCK_QUERIES[blockId]
   if (!queryText) return null
@@ -228,6 +230,7 @@ function DetailChartBlock({
         cellNote=""
         cellNoteVisibility={NoteVisibility.Default}
         inView={true}
+        manualRefresh={manualRefresh}
         onZoom={() => {}}
         editQueryStatus={() => {}}
         onSetResolution={() => {}}
@@ -267,6 +270,7 @@ export function MemoryDetailContent({
             timeRange={timeRange}
             templates={templates}
             colors={colors}
+            manualRefresh={serverContext.manualRefresh}
           />
         </UsageDetailBlock>
       )

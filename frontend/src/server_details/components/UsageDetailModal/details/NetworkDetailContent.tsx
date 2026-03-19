@@ -1,4 +1,6 @@
-import React from 'react'
+import React, {useState, useEffect} from 'react'
+import {createPortal} from 'react-dom'
+import Dropdown from 'src/shared/components/Dropdown'
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
 import {CellType, QueryType} from 'src/types'
 import type {Template, TimeRange, CellQuery} from 'src/types'
@@ -118,6 +120,7 @@ function DetailChartBlock({
   timeRange,
   templates,
   colors,
+  manualRefresh,
 }: {
   blockId: string
   source: Source | null
@@ -125,6 +128,7 @@ function DetailChartBlock({
   timeRange: TimeRange
   templates: Template[] | null
   colors: typeof LINE_COLOR_PALETTES_SEQUENCE[number]
+  manualRefresh?: number
 }) {
   const queryText = BLOCK_QUERIES[blockId]
   if (!queryText) return null
@@ -188,6 +192,7 @@ function DetailChartBlock({
         cellNote=""
         cellNoteVisibility={NoteVisibility.Default}
         inView={true}
+        manualRefresh={manualRefresh}
         onZoom={() => {}}
         editQueryStatus={() => {}}
         onSetResolution={() => {}}
@@ -203,12 +208,55 @@ export function NetworkDetailContent({
   serverContext: UsageDetailServerContext
   templates: Template[] | null
 }) {
+  const [selectedInterface, setSelectedInterface] = useState<string>('all')
+  const [headerPortalTarget, setHeaderPortalTarget] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setHeaderPortalTarget(document.getElementById('usage-detail-modal-header-portal'))
+  }, [])
+
+  const MOCK_INTERFACES = [
+    { name: 'eth0', mac: '00:1A:2B:3C:4D:5E', ip: '192.168.1.10', status: 'UP' },
+    { name: 'docker0', mac: '02:42:04:8b:0a:32', ip: '172.17.0.1', status: 'UP' },
+    { name: 'lo', mac: '00:00:00:00:00:00', ip: '127.0.0.1', status: 'UNKNOWN' },
+  ]
+
   const timeRange = serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverContext.source
   const host = serverContext.selectedHost
 
+  const selectedIf = MOCK_INTERFACES.find(i => i.name === selectedInterface) || null
+
+  const networkHeaderContent = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
+      <div style={{ width: 140, flexShrink: 0 }}>
+        <Dropdown
+          items={[{text: '전체'}, ...MOCK_INTERFACES.map(i => ({ text: i.name }))]}
+          onChoose={(item) => setSelectedInterface(item.text === '전체' ? 'all' : item.text)}
+          selected={selectedInterface === 'all' ? '전체' : selectedInterface}
+        />
+      </div>
+      {selectedIf && (
+        <div style={{
+          display: 'flex', 
+          gap: '16px', 
+          fontSize: '12px',
+          color: '#a0aab8',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          <div><span style={{color: '#6b7a90', paddingRight: '4px'}}>MAC:</span><span style={{color: '#e5e8ed'}}>{selectedIf.mac}</span></div>
+          <div><span style={{color: '#6b7a90', paddingRight: '4px'}}>IP:</span><span style={{color: '#e5e8ed'}}>{selectedIf.ip}</span></div>
+          <div><span style={{color: '#6b7a90', paddingRight: '4px'}}>Status:</span><span style={{color: '#e5e8ed'}}>{selectedIf.status}</span></div>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div className="process-detail-modal__body">
+      {headerPortalTarget && createPortal(networkHeaderContent, headerPortalTarget)}
       <div className="process-detail-modal__grid process-detail-modal__grid--2x2">
         {GRID_LAYOUT.map((blockId, i) => {
           const config = BLOCK_CONFIG[blockId]
@@ -226,6 +274,7 @@ export function NetworkDetailContent({
                 timeRange={timeRange}
                 templates={templates}
                 colors={colors}
+                manualRefresh={serverContext.manualRefresh}
               />
             </UsageDetailBlock>
           )

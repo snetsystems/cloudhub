@@ -25,6 +25,9 @@ import {NoteVisibility} from 'src/types/dashboards'
 import type {GraphOptions} from 'src/types/dashboards'
 import type {Template} from 'src/types'
 import type {TimeRange} from 'src/types'
+import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
+import type {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 import {
   buildDetailTemplates,
   DEFAULT_DETAIL_TIME_RANGE,
@@ -129,6 +132,7 @@ function ProcessDetailChartBlock({
   timeRange,
   templates,
   colors,
+  manualRefresh,
 }: {
   blockId: string
   source: Source | null
@@ -137,6 +141,7 @@ function ProcessDetailChartBlock({
   timeRange: TimeRange
   templates: Template[] | null
   colors: typeof LINE_COLOR_PALETTES_SEQUENCE[number]
+  manualRefresh?: number
 }) {
   const queryText = PROCESS_DETAIL_CHART_QUERIES[blockId]
 
@@ -204,6 +209,7 @@ function ProcessDetailChartBlock({
         cellNote=""
         cellNoteVisibility={NoteVisibility.Default}
         inView={true}
+        manualRefresh={manualRefresh}
         onZoom={() => {}}
         editQueryStatus={() => {}}
         onSetResolution={() => {}}
@@ -220,8 +226,27 @@ function ProcessDetailModal({
 }: ProcessDetailModalProps) {
   const [isMounted, setIsMounted] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(isOpen)
+  const [localTimeRange, setLocalTimeRange] = useState<TimeRange | null>(null)
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState<number>(0)
+  const [manualRefresh, setManualRefresh] = useState<number>(Date.now())
 
-  const timeRange = serverDetail.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
+  useEffect(() => {
+    let intervalId: NodeJS.Timer
+    if (autoRefreshInterval > 0) {
+      intervalId = setInterval(() => setManualRefresh(Date.now()), autoRefreshInterval)
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [autoRefreshInterval])
+
+  useEffect(() => {
+    if (isOpen) {
+      setLocalTimeRange(serverDetail.timeRange ?? DEFAULT_DETAIL_TIME_RANGE)
+    }
+  }, [isOpen, serverDetail.timeRange])
+
+  const currentTimeRange = localTimeRange ?? serverDetail.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverDetail.source
   const host = serverDetail.selectedHost
   const processName = (nameInfo?.process_name as string) ?? null
@@ -229,8 +254,8 @@ function ProcessDetailModal({
 
   const templates = useMemo(() => {
     if (!source || !host || !processName) return null
-    return buildDetailTemplates(source, timeRange, host, processName, user)
-  }, [source, timeRange, host, processName, user])
+    return buildDetailTemplates(source, currentTimeRange, host, processName, user)
+  }, [source, currentTimeRange, host, processName, user])
 
   useEffect(() => {
     if (isOpen) {
@@ -265,13 +290,29 @@ function ProcessDetailModal({
         aria-modal="true"
         aria-labelledby="process-detail-modal-title"
       >
-        <div className="process-detail-modal__header">
+        <div
+          className="process-detail-modal__header"
+          style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}
+        >
           <h2
             id="process-detail-modal-title"
             className="process-detail-modal__title"
           >
             프로세스 상세 {processName ? `- ${processName}` : ''}
           </h2>
+          <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+            <AutoRefreshDropdown
+              selected={autoRefreshInterval}
+              onChoose={(option: AutoRefreshOption) => setAutoRefreshInterval(option.milliseconds)}
+              onManualRefresh={() => setManualRefresh(Date.now())}
+            />
+            {currentTimeRange && (
+              <TimeRangeDropdown
+                selected={currentTimeRange}
+                onChooseTimeRange={setLocalTimeRange}
+              />
+            )}
+          </div>
         </div>
         <div className="process-detail-modal__scroll">
           <div className="process-detail-modal__body">
@@ -292,9 +333,10 @@ function ProcessDetailModal({
                       source={source}
                       host={host}
                       processName={processName}
-                      timeRange={timeRange}
+                      timeRange={currentTimeRange}
                       templates={templates}
                       colors={colors}
+                      manualRefresh={manualRefresh}
                     />
                   </ProcessDetailBlock>
                 )

@@ -202,6 +202,70 @@ function ProcessCellContent({
   )
 }
 
+function ServerDetailsSummaryCellContent({
+  cell,
+  context,
+}: {
+  cell: Cell
+  context: RenderCellContext
+}) {
+  const [contextOpen, setContextOpen] = useState(false)
+  const Item = ({ label, value, icon }: { label: string, value: string, icon?: boolean }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+      <span style={{ fontWeight: 'bold' }}>{label}</span>
+      {icon && <span className="icon info-sign" style={{ opacity: 0.6, fontSize: '12px', cursor: 'help' }} />}
+      <span>{value}</span>
+    </div>
+  )
+
+  return (
+    <div className="server-details-cell-content">
+      <div className="dash-graph--draggable dash-graph--heading dash-graph--heading-draggable server-details-cell-header">
+        <span className="dash-graph--name server-details-cell-header-name">
+          {cell.name}
+        </span>
+        <div className="server-details-cell-drag-handle">
+          <div className="dash-graph--heading-bar" />
+          <div className="dash-graph--heading-dragger" />
+        </div>
+      </div>
+      {context?.onDeleteCell && (
+        <div
+          className={classnames('dash-graph-context', {
+            'dash-graph-context__open': contextOpen,
+          })}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <div className="dash-graph-context--buttons">
+            <Authorized requiredRole={EDITOR_ROLE}>
+              <MenuTooltipButton
+                icon="trash"
+                theme="danger"
+                menuItems={[
+                  {
+                    text: 'Confirm',
+                    action: () => context.onDeleteCell(cell),
+                    disabled: false,
+                  },
+                ]}
+                informParent={() => setContextOpen(prev => !prev)}
+              />
+            </Authorized>
+          </div>
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', padding: '0 16px', height: '100%', gap: '24px', flexWrap: 'nowrap', overflowX: 'auto', whiteSpace: 'nowrap' }}>
+        <Item label="IP 주소" value="123.37.31.53..." />
+        <Item label="운영체제" value="linux" />
+        <Item label="CPU 코어" value="2" />
+        <Item label="Memory Total" value="3.9 GB" />
+        <Item label="Disk Total" value="97.94 GiB" icon={true} />
+        <Item label="OS 버전" value="CentOS Linux release 7.8.2003 (Core)" />
+      </div>
+    </div>
+  )
+}
+
 function ServerDetailsWrapper(props) {
   const hostFromUrl = useMemo(() => {
     const params = qs.parse(window.location.search, {ignoreQueryPrefix: true})
@@ -224,13 +288,14 @@ function ServerDetailsWrapper(props) {
   const mapCellIdToUsageDetailType = (cellId?: string | null): UsageDetailType | null => {
     if (!cellId) return null
     switch (cellId) {
-      case 'sever-details-cpu-usage':
+      case 'server-details-cpu-usage':
         return 'cpu'
-      case 'sever-details-memory-usage':
+      case 'server-details-memory-usage':
         return 'memory'
-      case 'sever-details-network-usage':
+      case 'server-details-network-usage':
         return 'network'
-      case 'sever-details-disk-io-usage':
+      case 'server-details-disk-io-usage':
+      case 'server-details-disk-utilization':
         return 'disk'
       default:
         return null
@@ -299,8 +364,11 @@ function ServerDetailsWrapper(props) {
           />
         )}
         renderCell={(cell, context) => {
+          if (cell.i === 'server-details-summary') {
+            return <ServerDetailsSummaryCellContent cell={cell} context={context} />
+          }
           if (
-            cell.i === 'sever-details-server-info'
+            cell.i === 'server-details-server-info'
           ) {
             return (
               <ServerDetailsCellContent
@@ -310,7 +378,7 @@ function ServerDetailsWrapper(props) {
               />
             )
           }
-          if (cell.i === 'sever-details-process') {
+          if (cell.i === 'server-details-process') {
             return (
               <ProcessCellContent
                 cell={cell}

@@ -9,4 +9,5 @@ export interface UsageDetailServerContext {
   source: Source | null
   addons?: Addon[]
   timeRange?: TimeRange
+  manualRefresh?: number
 }
