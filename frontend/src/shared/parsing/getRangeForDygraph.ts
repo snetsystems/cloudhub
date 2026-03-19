@@ -4,6 +4,8 @@ import {RuleValues} from 'src/types'
 const ADD_FACTOR = 1.1
 const SUB_FACTOR = 0.9
 
+const MAX_SCALE_FACTOR = 1.2
+
 const checkNumeric = num => (isFinite(num) ? num : null)
 
 const considerEmpty = (userNumber, num) => {
@@ -74,8 +76,13 @@ const getRange = (
   )
 
   const [calcMin, calcMax] = range
-  const min = considerEmpty(userMin, calcMin)
-  const max = considerEmpty(userMax, calcMax)
+  let min = considerEmpty(userMin, calcMin)
+  let max = considerEmpty(userMax, calcMax)
+
+  if (userMin != null && userMax == null && calcMax != null) {
+    min = +userMin
+    max = calcMax > 0 ? calcMax * MAX_SCALE_FACTOR : 1
+  }
 
   if (min === max) {
     if (min > 0) {

@@ -1,7 +1,7 @@
 import React from 'react'
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
 import {CellType, QueryType} from 'src/types'
-import type {Template, TimeRange, Query} from 'src/types'
+import type {Template, TimeRange, CellQuery} from 'src/types'
 import type {Source} from 'src/types/sources'
 import {
   DEFAULT_AXES,
@@ -48,7 +48,13 @@ const MEMORY_DETAIL_CHART_OPTIONS = {
 }
 
 const BYTES_PER_GIB = 1073741824
-const BYTES_PER_MIB = 1048576
+
+const MEMORY_Y_AXIS = {
+  ...FULL_DEFAULT_AXIS,
+  suffix: '',
+  base: AXES_SCALE_OPTIONS.BASE_RAW,
+  avoidScientificNotation: true,
+}
 
 const BLOCK_QUERIES: Record<string, string> = {
   'memory-usage': `SELECT mean("used_percent") AS "used_percent"
@@ -69,19 +75,19 @@ WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
 GROUP BY time(:interval:)
 FILL(null)`,
 
-  'memory-sreclaimable': `SELECT mean("sreclaimable")/${BYTES_PER_MIB} AS "sreclaimable"
+  'memory-sreclaimable': `SELECT mean("sreclaimable")/${BYTES_PER_GIB} AS "sreclaimable"
 FROM ":db:".":rp:"."mem"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
 GROUP BY time(:interval:)
 FILL(null)`,
 
-  'memory-sunreclaim': `SELECT mean("sunreclaim")/${BYTES_PER_MIB} AS "sunreclaim"
+  'memory-sunreclaim': `SELECT mean("sunreclaim")/${BYTES_PER_GIB} AS "sunreclaim"
 FROM ":db:".":rp:"."mem"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
 GROUP BY time(:interval:)
 FILL(null)`,
 
-  'memory-slab': `SELECT mean("slab")/${BYTES_PER_MIB} AS "slab"
+  'memory-slab': `SELECT mean("slab")/${BYTES_PER_GIB} AS "slab"
 FROM ":db:".":rp:"."mem"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
 GROUP BY time(:interval:)
@@ -106,103 +112,24 @@ GROUP BY time(:interval:)
 FILL(null)`,
 }
 
-const MEMORY_BLOCK_AXES: Record<string, Axes> = {
-  'memory-usage': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'memory-used': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'memory-available': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'memory-sreclaimable': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'memory-sunreclaim': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'memory-slab': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'memory-swap-percent': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'memory-swap-used': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'memory-page-faults': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
+const MEMORY_BASE_AXES: Axes = {
+  x: FULL_DEFAULT_AXIS,
+  y: MEMORY_Y_AXIS,
 }
 
 const BLOCK_CONFIG: Record<
   string,
-  {title: string; blockClassName?: string; autoScale?: boolean; isPercent?: boolean}
+  {title: string; blockClassName?: string; isPercent?: boolean; bounds?: [string, string]; yLabel?: string}
 > = {
-  'memory-usage': {title: 'Memory Usage (%)', autoScale: false, isPercent: true},
-  'memory-used': {title: 'Memory Used (GiB)', autoScale: true},
-  'memory-available': {title: 'Memory Available (GiB)', autoScale: true},
-  'memory-sreclaimable': {title: 'Memory SReclaimable (MiB)', autoScale: true},
-  'memory-sunreclaim': {title: 'Memory SUnreclaim (MiB)', autoScale: true},
-  'memory-slab': {title: 'Memory Slab (MiB)', autoScale: true},
-  'memory-swap-percent': {title: 'Memory Swap Used (%)', autoScale: false, isPercent: true},
-  'memory-swap-used': {title: 'Memory Swap Used (GiB)', autoScale: true},
-  'memory-page-faults': {title: 'Memory Page Faults (/s)', autoScale: true},
+  'memory-usage': {title: 'Memory Usage (%)', isPercent: true, bounds: ['0', '100']},
+  'memory-used': {title: 'Memory Used (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
+  'memory-available': {title: 'Memory Available (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
+  'memory-sreclaimable': {title: 'Memory SReclaimable (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
+  'memory-sunreclaim': {title: 'Memory SUnreclaim (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
+  'memory-slab': {title: 'Memory Slab (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
+  'memory-swap-percent': {title: 'Memory Swap Used (%)', isPercent: true, bounds: ['0', '100']},
+  'memory-swap-used': {title: 'Memory Swap Used (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
+  'memory-page-faults': {title: 'Memory Page Faults (/s)', bounds: ['0', '']},
 }
 
 const GRID_LAYOUT = {
@@ -215,19 +142,13 @@ const GRID_LAYOUT = {
   ] as const,
 }
 
-function resolveAxesForBlock(
-  blockId: string,
-  autoScale: boolean
-): Axes {
-  const baseAxes =
-    MEMORY_BLOCK_AXES[blockId] ?? MEMORY_DETAIL_CHART_OPTIONS.axes
-  if (autoScale) return baseAxes
-  const isPercent = BLOCK_CONFIG[blockId]?.isPercent === true
-  if (!isPercent) return baseAxes
-  return {
-    ...baseAxes,
-    y: {...baseAxes.y, bounds: ['0', '100'] as [string, string]},
-  }
+function resolveAxesForBlock(blockId: string): Axes {
+  const config = BLOCK_CONFIG[blockId]
+  const bounds = config?.bounds
+  if (!bounds) return MEMORY_BASE_AXES
+  const yOverrides: Partial<typeof MEMORY_Y_AXIS> = {bounds}
+  if (config?.yLabel) yOverrides.suffix = ` ${config.yLabel}`
+  return {...MEMORY_BASE_AXES, y: {...MEMORY_BASE_AXES.y, ...yOverrides}}
 }
 
 function DetailChartBlock({
@@ -264,17 +185,18 @@ function DetailChartBlock({
     )
   }
 
-  const queries: Query[] = [
+  const queries: CellQuery[] = [
     {
+      query: queryText,
       text: queryText,
       id: `memory-detail-${blockId}`,
       type: QueryType.InfluxQL,
-      queryConfig: null,
-    } as Query,
+      queryConfig: null as CellQuery['queryConfig'],
+      source: source.id,
+    },
   ]
 
-  const autoScale = BLOCK_CONFIG[blockId]?.autoScale ?? true
-  const axes = resolveAxesForBlock(blockId, autoScale)
+  const axes = resolveAxesForBlock(blockId)
 
   return (
     <div

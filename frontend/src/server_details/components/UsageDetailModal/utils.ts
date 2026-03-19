@@ -11,7 +11,9 @@ export const DEFAULT_DETAIL_TIME_RANGE: TimeRange = {
 export function buildDetailTemplates(
   source: Source,
   timeRange: TimeRange,
-  host: string
+  host: string,
+  processName?: string,
+  user?: string
 ): Template[] {
   const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates({
     lower: timeRange.lower,
@@ -63,5 +65,40 @@ export function buildDetailTemplates(
     ],
   }
 
-  return [dbTemplate, rpTemplate, dashboardTime, upperDashboardTime, hostTemplate]
+  let result = [dbTemplate, rpTemplate, dashboardTime, upperDashboardTime, hostTemplate]
+  if (processName != null) {
+    const processNameTemplate: Template = {
+      tempVar: ':process_name:',
+      id: 'process_name',
+      type: TemplateType.Constant,
+      label: '',
+      values: [
+        {
+          value: processName,
+          type: TemplateValueType.Constant,
+          selected: true,
+          localSelected: true,
+        },
+      ],
+    }
+    result = [...result, processNameTemplate]
+  }
+  if (user != null) {
+    const userTemplate: Template = {
+      tempVar: ':user:',
+      id: 'user',
+      type: TemplateType.Constant,
+      label: '',
+      values: [
+        {
+          value: user,
+          type: TemplateValueType.Constant,
+          selected: true,
+          localSelected: true,
+        },
+      ],
+    }
+    result = [...result, userTemplate]
+  }
+  return result
 }

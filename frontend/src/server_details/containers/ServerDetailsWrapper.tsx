@@ -177,6 +177,8 @@ function ProcessCellContent({
           >
             <ProcessLineChartTable
               source={source}
+              selectedHost={ctx?.selectedHost ?? null}
+              timeRange={context.timeRange}
               onProcessNameClick={openProcessDetail}
             />
           </FancyScrollbar>
@@ -192,6 +194,7 @@ function ProcessCellContent({
           selectedHost: ctx?.selectedHost ?? null,
           source,
           addons,
+          timeRange: context.timeRange,
         }}
         nameInfo={selectedProcessRow}
       />

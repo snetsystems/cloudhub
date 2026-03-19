@@ -230,12 +230,13 @@ export function ServerDetailsCellContent({
             {
               ...(cell.queries?.[0] || {}),
               query:
-                'SELECT last("total")/1073741824 AS "total_gib", last("used")/1073741824 AS "used_gib", last("free")/1073741824 AS "free_gib", last("used_percent") AS "used_percent", last("inodes_used_percent") AS "inode_used_percent" FROM ":db:".":rp:"."disk" WHERE time > :dashboardTime: AND "host"=:host: GROUP BY "path"',
+                'SELECT last("total")/1073741824 AS "total_gib", last("used")/1073741824 AS "used_gib", last("free")/1073741824 AS "free_gib", last("used_percent") AS "used_percent", last("inodes_used_percent") AS "inode_used_percent" FROM ":db:".":rp:"."disk" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=:host: GROUP BY "path"',
             } as DashboardsModels.CellQuery,
           ],
       inView: true,
     }
   }, [cell, canUseLayout])
+
 
   return (
     <div className="server-details-cell-content">

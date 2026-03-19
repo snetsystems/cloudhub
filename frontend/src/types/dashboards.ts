@@ -312,4 +312,3 @@ export interface CellExtraAction {
   id: string
   label: string
 }
-

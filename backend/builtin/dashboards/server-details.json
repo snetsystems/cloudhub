@@ -2,7 +2,7 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.4.8",
+  "version": "1.5.0",
   "organization": "",
   "cells": [
     {
@@ -47,7 +47,7 @@
       "name": "CPU Usage",
       "queries": [
         {
-          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_idle\") AS \"idle\", mean(\"usage_nice\") AS \"nice\", mean(\"usage_iowait\") AS \"iowait\", mean(\"usage_steal\") AS \"steal\", mean(\"usage_irq\") AS \"irq\", mean(\"usage_softirq\") AS \"softirq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = ':host:' AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
+          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_idle\") AS \"idle\", mean(\"usage_nice\") AS \"nice\", mean(\"usage_iowait\") AS \"iowait\", mean(\"usage_steal\") AS \"steal\", mean(\"usage_irq\") AS \"irq\", mean(\"usage_softirq\") AS \"softirq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
           "label": "CPU Usage",
           "groupbys": [],
           "wheres": []

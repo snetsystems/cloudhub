@@ -4,12 +4,24 @@ import TableLineChartCell from 'src/dashboards/components/TableLineChartCell'
 import {toLineValues} from 'src/dashboards/utils/tableLineChart'
 import {FORMAT_OPTIONS} from 'src/types/statisticalgraph'
 import {ColumnInfo} from 'src/types'
+import type {DataTableObject} from 'src/types/tableType'
 export const lineChartTableColumn: ColumnInfo[] = [
   {
-    key: 'host',
+    key: 'process_name',
     name: '이름',
     options: {
       sorting: true,
+    },
+    render: (value: unknown, rowData: DataTableObject) => {
+      const processName = String(value ?? '')
+      const user = (rowData?.user as string) ?? ''
+      if (!user) return processName
+      return (
+        <span className="process-name-with-user">
+          <span className="process-name-with-user__name">{processName}</span>
+          <span className="process-name-with-user__user">{user}</span>
+        </span>
+      )
     },
   },
   {
@@ -30,7 +42,7 @@ export const lineChartTableColumn: ColumnInfo[] = [
             isShowLine: true,
             isShowPoint: false,
             isFillArea: true,
-            isConnectSeparatedPoints: false,
+            isConnectSeparatedPoints: true,
             valueLabel: 'maximum',
             isZeroBaseline: true,
             areaOpacity: 0.1,
@@ -59,7 +71,7 @@ export const lineChartTableColumn: ColumnInfo[] = [
             isShowLine: true,
             isShowPoint: false,
             isFillArea: true,
-            isConnectSeparatedPoints: false,
+            isConnectSeparatedPoints: true,
             valueLabel: 'maximum',
             isZeroBaseline: true,
             areaOpacity: 0.1,
@@ -88,13 +100,14 @@ export const lineChartTableColumn: ColumnInfo[] = [
             isShowLine: true,
             isShowPoint: false,
             isFillArea: true,
-            isConnectSeparatedPoints: false,
+            isConnectSeparatedPoints: true,
             valueLabel: 'maximum',
             isZeroBaseline: true,
             areaOpacity: 0.1,
             pointRadius: 1,
             decimalPlaces: 2,
             valueFormat: FORMAT_OPTIONS.KMG,
+            suffix: 'bps',
           }}
         />
       )
@@ -119,7 +132,7 @@ export const lineChartTableColumn: ColumnInfo[] = [
             isShowLine: true,
             isShowPoint: false,
             isFillArea: true,
-            isConnectSeparatedPoints: false,
+            isConnectSeparatedPoints: true,
             valueLabel: 'maximum',
             isZeroBaseline: true,
             areaOpacity: 0.1,
@@ -130,42 +143,38 @@ export const lineChartTableColumn: ColumnInfo[] = [
     },
   },
 ]
-export const serverListDummyLineQueries = [
+
+export const serverDetailProcessQueries = [
   {
-    id: 'server-list-dummy-line-cpu',
-    text: `SELECT mean("usage_system") + mean("usage_user") AS "CPU"
-  FROM "Default"."autogen"."cpu"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total'
-  GROUP BY "host", time(:interval:)
+    id: 'server-list-line-cpu',
+    text: `SELECT sum("cpu_usage_pct") AS "CPU"
+  FROM ":db:".":rp:"."procstat_top"
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "user"=~/:user:/
+  GROUP BY "process_name", "user", time(:interval:)
   FILL(null)`,
   },
   {
-    id: 'server-list-dummy-line-mem',
-    text: `SELECT mean("used_percent") AS "Memory"
-  FROM "Default"."autogen"."mem"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime:
-  GROUP BY "host", time(:interval:)
+    id: 'server-list-line-mem',
+    text: `SELECT sum("memory_usage_pct") AS "Memory"
+  FROM ":db:".":rp:"."procstat_top"
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "user"=~/:user:/
+  GROUP BY "process_name", "user", time(:interval:)
   FILL(null)`,
   },
   {
-    id: 'server-list-dummy-line-network',
-    text: `SELECT max("traffic") AS "Process I/O"
-  FROM (
-    SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
-    FROM "Default"."autogen"."net"
-    WHERE time > :dashboardTime: AND time < :upperDashboardTime:
-    GROUP BY "host", "interface", time(:interval:)
-    FILL(null)
-  )
-  GROUP BY "host", time(:interval:)
+    id: 'server-list-line-network',
+    text: `SELECT mean("io_read_bps") AS "mean_io_read_bps", mean("io_write_bps") AS "mean_io_write_bps", mean("io_total_bps") AS "Process I/O"
+  FROM ":db:".":rp:"."procstat_top"
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=~/:process:/ AND "user"=~/:user:/
+  GROUP BY "host", "process_name", "user", time(:interval:)
   FILL(null)`,
   },
   {
-    id: 'server-list-dummy-line-count',
-    text: `SELECT count("usage_user") AS "Count"
-  FROM "Default"."autogen"."cpu"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total'
-  GROUP BY "host", time(:interval:)
+    id: 'server-list-line-count',
+    text: `SELECT last("process_count") AS "Count"
+  FROM ":db:".":rp:"."procstat_top"
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "user"=~/:user:/
+  GROUP BY "process_name", "user", time(:interval:)
   FILL(null)`,
   },
 ]

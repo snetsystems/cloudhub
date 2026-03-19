@@ -166,9 +166,33 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  color: inherit;
-  text-decoration: underline;
+  transition: color 0.25s ease;
+  color: $s-brown;
   font: inherit;
+  text-align: left;
+
+  &:hover,
+  &:focus,
+  &:active {
+    color: $s-orange;
+  }
+}
+
+.process-name-with-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+
+  &__name {
+    line-height: 1.2;
+  }
+
+  &__user {
+    font-size: 0.75em;
+    opacity: 0.8;
+    line-height: 1.2;
+  }
 }
 
 .modal-content.process-detail-modal {
@@ -220,6 +244,11 @@
 
   &--top {
     grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  &--stacked {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
   }
 
   &--middle {

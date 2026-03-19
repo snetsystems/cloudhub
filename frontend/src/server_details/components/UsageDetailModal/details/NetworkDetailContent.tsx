@@ -1,7 +1,7 @@
 import React from 'react'
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
 import {CellType, QueryType} from 'src/types'
-import type {Template, TimeRange, Query} from 'src/types'
+import type {Template, TimeRange, CellQuery} from 'src/types'
 import type {Source} from 'src/types/sources'
 import {
   DEFAULT_AXES,
@@ -26,6 +26,13 @@ import type {UsageDetailServerContext} from '../types'
 import {DEFAULT_DETAIL_TIME_RANGE} from '../utils'
 
 const BYTES_PER_MIB = 1048576
+
+const NETWORK_Y_AXIS = {
+  ...FULL_DEFAULT_AXIS,
+  suffix: '',
+  base: AXES_SCALE_OPTIONS.BASE_RAW,
+  avoidScientificNotation: true,
+}
 
 const NETWORK_DETAIL_CHART_OPTIONS = {
   graphOptions: {
@@ -75,53 +82,20 @@ GROUP BY time(:interval:)
 FILL(null)`,
 }
 
-const NETWORK_BLOCK_AXES: Record<string, Axes> = {
-  'traffic-in-out': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'packet-in-out': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'error-in-out': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
-  'dropped-in-out': {
-    x: FULL_DEFAULT_AXIS,
-    y: {
-      ...FULL_DEFAULT_AXIS,
-      suffix: '',
-      base: AXES_SCALE_OPTIONS.BASE_RAW,
-      avoidScientificNotation: true,
-    },
-  },
+const NETWORK_BASE_AXES: Axes = {
+  x: FULL_DEFAULT_AXIS,
+  y: NETWORK_Y_AXIS,
 }
+
 
 const BLOCK_CONFIG: Record<
   string,
-  {title: string; autoScale?: boolean}
+  {title: string; bounds: [string, string]}
 > = {
-  'traffic-in-out': {title: 'Traffic In/Out (MiB/s)', autoScale: true},
-  'packet-in-out': {title: 'Packet In/Out (/s)', autoScale: true},
-  'error-in-out': {title: 'Error In/Out (/s)', autoScale: true},
-  'dropped-in-out': {title: 'Dropped In/Out (/s)', autoScale: true},
+  'traffic-in-out': {title: 'Traffic In/Out (MiB/s)', bounds: ['0', '']},
+  'packet-in-out': {title: 'Packet In/Out (/s)', bounds: ['0', '']},
+  'error-in-out': {title: 'Error In/Out (/s)', bounds: ['0', '']},
+  'dropped-in-out': {title: 'Dropped In/Out (/s)', bounds: ['0', '']},
 }
 
 const GRID_LAYOUT = [
@@ -131,19 +105,10 @@ const GRID_LAYOUT = [
   'dropped-in-out',
 ] as const
 
-function resolveAxesForBlock(
-  blockId: string,
-  autoScale: boolean
-): Axes {
-  const baseAxes =
-    NETWORK_BLOCK_AXES[blockId] ?? NETWORK_DETAIL_CHART_OPTIONS.axes
-  if (autoScale) return baseAxes
-  const isPercent = (baseAxes.y?.suffix ?? '').trim().endsWith('%')
-  if (!isPercent) return baseAxes
-  return {
-    ...baseAxes,
-    y: {...baseAxes.y, bounds: ['0', '100'] as [string, string]},
-  }
+function resolveAxesForBlock(blockId: string): Axes {
+  const bounds = BLOCK_CONFIG[blockId]?.bounds
+  if (!bounds) return NETWORK_BASE_AXES
+  return {...NETWORK_BASE_AXES, y: {...NETWORK_BASE_AXES.y, bounds}}
 }
 
 function DetailChartBlock({
@@ -180,17 +145,18 @@ function DetailChartBlock({
     )
   }
 
-  const queries: Query[] = [
+  const queries: CellQuery[] = [
     {
+      query: queryText,
       text: queryText,
       id: `network-detail-${blockId}`,
       type: QueryType.InfluxQL,
-      queryConfig: null,
-    } as Query,
+      queryConfig: null as CellQuery['queryConfig'],
+      source: source.id,
+    },
   ]
 
-  const autoScale = BLOCK_CONFIG[blockId]?.autoScale ?? true
-  const axes = resolveAxesForBlock(blockId, autoScale)
+  const axes = resolveAxesForBlock(blockId)
 
   return (
     <div

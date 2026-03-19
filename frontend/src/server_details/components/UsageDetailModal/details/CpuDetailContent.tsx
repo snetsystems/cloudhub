@@ -1,7 +1,7 @@
 import React from 'react'
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
 import {CellType, QueryType} from 'src/types'
-import type {Template, TimeRange, Query} from 'src/types'
+import type {Template, TimeRange, CellQuery} from 'src/types'
 import type {Source} from 'src/types/sources'
 import {
   DEFAULT_AXES,
@@ -90,7 +90,7 @@ WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-tota
 GROUP BY time(:interval:)
 FILL(null)`,
 
-  'cpu-load': `SELECT mean("load1") AS "load1", mean("load5") AS "load5", mean("load15") AS "load15"
+  'cpu-load': `SELECT mean("load1") AS "01 min", mean("load5") AS "05 min", mean("load15") AS "15 min"
 FROM ":db:".":rp:"."system"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
 GROUP BY time(:interval:)
@@ -106,35 +106,26 @@ const CPU_USAGE_AXES: Axes = {
     avoidScientificNotation: true,
   },
 }
-const CPU_BLOCK_AXES: Record<string, Axes> = {
-  'cpu-usage': CPU_USAGE_AXES,
-  'cpu-idle': CPU_USAGE_AXES,
-  'cpu-nice': CPU_USAGE_AXES,
-  'cpu-io-wait': CPU_USAGE_AXES,
-  'cpu-steal': CPU_USAGE_AXES,
-  'cpu-irq': CPU_USAGE_AXES,
-  'cpu-soft-irq': CPU_USAGE_AXES,
-}
 
 const BLOCK_CONFIG: Record<
   string,
-  {title: string; blockClassName?: string; autoScale?: boolean; isPercent?: boolean}
+  {title: string; blockClassName?: string; isPercent?: boolean; bounds?: [string, string]}
 > = {
-  'cpu-usage': {title: 'CPU Usage (%)', autoScale: false, isPercent: true},
-  'cpu-idle': {title: 'CPU Idle (%)', autoScale: false, isPercent: true},
-  'cpu-nice': {title: 'CPU Nice (%)', autoScale: false, isPercent: true},
-  'cpu-io-wait': {title: 'CPU I/O Wait (%)', autoScale: false, isPercent: true},
-  'cpu-steal': {title: 'CPU Steal (%)', autoScale: false, isPercent: true},
-  'cpu-irq': {title: 'CPU IRQ (Interrupt Request, %)', autoScale: false, isPercent: true},
+  'cpu-usage': {title: 'CPU Usage (%)', isPercent: true, bounds: ['0', '100']},
+  'cpu-idle': {title: 'CPU Idle (%)', isPercent: true, bounds: ['0', '100']},
+  'cpu-nice': {title: 'CPU Nice (%)', isPercent: true, bounds: ['0', '100']},
+  'cpu-io-wait': {title: 'CPU I/O Wait (%)', isPercent: true, bounds: ['0', '100']},
+  'cpu-steal': {title: 'CPU Steal (%)', isPercent: true, bounds: ['0', '100']},
+  'cpu-irq': {title: 'CPU IRQ (Interrupt Request, %)', isPercent: true, bounds: ['0', '100']},
   'cpu-soft-irq': {
     title: 'CPU Soft IRQ (Software Interrupt Request, %)',
-    autoScale: false,
     isPercent: true,
+    bounds: ['0', '100'],
   },
   'cpu-load': {
     title: 'CPU Load',
     blockClassName: 'process-detail-modal__block--span-2',
-    autoScale: true,
+    bounds: ['0', ''],
   },
 }
 
@@ -144,15 +135,10 @@ const GRID_LAYOUT = {
   bottom: ['cpu-soft-irq', 'cpu-load'] as const,
 }
 
-function resolveAxesForBlock(blockId: string, autoScale: boolean): Axes {
-  const baseAxes = CPU_BLOCK_AXES[blockId] ?? CPU_DETAIL_CHART_OPTIONS.axes
-  if (autoScale) return baseAxes
-  const isPercent = BLOCK_CONFIG[blockId]?.isPercent === true
-  if (!isPercent) return baseAxes
-  return {
-    ...baseAxes,
-    y: {...baseAxes.y, bounds: ['0', '100'] as [string, string]},
-  }
+function resolveAxesForBlock(blockId: string): Axes {
+  const bounds = BLOCK_CONFIG[blockId]?.bounds
+  if (!bounds) return CPU_USAGE_AXES
+  return {...CPU_USAGE_AXES, y: {...CPU_USAGE_AXES.y, bounds}}
 }
 
 function DetailChartBlock({
@@ -189,17 +175,18 @@ function DetailChartBlock({
     )
   }
 
-  const queries: Query[] = [
+  const queries: CellQuery[] = [
     {
+      query: queryText,
       text: queryText,
       id: `cpu-detail-${blockId}`,
       type: QueryType.InfluxQL,
-      queryConfig: null,
-    } as Query,
+      queryConfig: null as CellQuery['queryConfig'],
+      source: source.id,
+    },
   ]
 
-  const autoScale = BLOCK_CONFIG[blockId]?.autoScale ?? true
-  const axes = resolveAxesForBlock(blockId, autoScale)
+  const axes = resolveAxesForBlock(blockId)
 
   return (
     <div
