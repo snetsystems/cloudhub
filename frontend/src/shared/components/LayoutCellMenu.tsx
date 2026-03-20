@@ -25,7 +25,7 @@ interface Props {
   toggleVisType: () => void
   getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
   onExtraAction?: (cell: Cell, actionId: string) => void
-  onShowInformation: (cell: Cell) => void
+  onShowInformation?: (cell: Cell) => void
 }
 
 interface State {
@@ -157,7 +157,7 @@ class LayoutCellMenu extends Component<Props, State> {
         action: this.handleEditCell,
         disabled: false,
       },
-      onShowInformation && {
+      !!onShowInformation && {
         text: 'Show Information',
         action: this.handleShowInformation,
         disabled: false,
@@ -167,7 +167,7 @@ class LayoutCellMenu extends Component<Props, State> {
         action: onCSVDownload,
         disabled: !dataExists,
       },
-    ]
+    ].filter(Boolean) as MenuItem[]
 
     if (isFluxQuery) {
       menuItems.push(visTypeItem)
