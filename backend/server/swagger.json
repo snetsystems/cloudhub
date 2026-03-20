@@ -6331,6 +6331,114 @@
           }
         }
       }
+    },
+    "/hosts": {
+      "get": {
+        "tags": ["hosts"],
+        "summary": "Retrieve all registered hosts",
+        "description": "Returns all hosts registered in the PostgreSQL store",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved all registered hosts",
+            "schema": {
+              "$ref": "#/definitions/Hosts"
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve hosts from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["hosts"],
+        "summary": "Register or update a host",
+        "description": "Creates or upserts a host record. If a host with the same hostname already exists, its information is updated.",
+        "parameters": [
+          {
+            "name": "host",
+            "in": "body",
+            "description": "Host registration payload",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HostReq"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Host successfully registered or updated",
+            "schema": {
+              "$ref": "#/definitions/HostRes"
+            }
+          },
+          "400": {
+            "description": "Invalid request body or missing required fields",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Failed to register host in store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/hosts/{minionId}": {
+      "delete": {
+        "tags": ["hosts"],
+        "summary": "Delete a registered host",
+        "description": "Removes a host from the PostgreSQL store by minion ID",
+        "parameters": [
+          {
+            "name": "minionId",
+            "in": "path",
+            "type": "string",
+            "description": "Minion ID of the host to delete",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Host successfully deleted"
+          },
+          "404": {
+            "description": "Host not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Failed to delete host from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -8414,6 +8522,10 @@
         },
         "hidden": {
           "description": "When true, the cell is hidden (user can toggle without deleting). Omitted when false.",
+          "type": "boolean"
+        },
+        "isShowSummary": {
+          "description": "When true, the cell displays summary information. Omitted when false.",
           "type": "boolean"
         },
         "links": {
@@ -11309,6 +11421,259 @@
           "$ref": "#/definitions/Cell",
           "description": "Full cell definition"
         }
+      }
+    },
+    "IPInterface": {
+      "type": "object",
+      "description": "A network interface with its IP address",
+      "properties": {
+        "interfaceName": {
+          "type": "string",
+          "description": "Network interface name (e.g., eth0, lo)"
+        },
+        "ipAddress": {
+          "type": "string",
+          "description": "IP address assigned to the interface"
+        }
+      }
+    },
+    "Disk": {
+      "type": "object",
+      "description": "A mounted disk device",
+      "properties": {
+        "device": {
+          "type": "string",
+          "description": "Device path (e.g., /dev/sda1)"
+        },
+        "mountPoint": {
+          "type": "string",
+          "description": "Mount point path (e.g., /, /data)"
+        }
+      }
+    },
+    "GPU": {
+      "type": "object",
+      "description": "A GPU device",
+      "properties": {
+        "vendor": {
+          "type": "string",
+          "description": "GPU vendor (e.g., NVIDIA, AMD)"
+        },
+        "model": {
+          "type": "string",
+          "description": "GPU model name"
+        }
+      }
+    },
+    "HostReq": {
+      "type": "object",
+      "description": "Request body for registering or updating a host",
+      "required": ["hostname"],
+      "properties": {
+        "minionId": {
+          "type": "string",
+          "description": "Salt minion ID (optional, only for Salt-managed hosts)"
+        },
+        "hostname": {
+          "type": "string",
+          "description": "Hostname of the target server (required)"
+        },
+        "ipInterfaces": {
+          "type": "array",
+          "description": "List of network interfaces and their IP addresses",
+          "items": {
+            "$ref": "#/definitions/IPInterface"
+          }
+        },
+        "os": {
+          "type": "string",
+          "description": "Operating system name (e.g., Ubuntu, CentOS)"
+        },
+        "osFamily": {
+          "type": "string",
+          "description": "OS family (e.g., Debian, RedHat)"
+        },
+        "osVersion": {
+          "type": "string",
+          "description": "OS version string"
+        },
+        "kernel": {
+          "type": "string",
+          "description": "Kernel version"
+        },
+        "arch": {
+          "type": "string",
+          "description": "CPU architecture (e.g., x86_64)"
+        },
+        "memTotalKb": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Total memory in kilobytes"
+        },
+        "swapTotalKb": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Total swap in kilobytes"
+        },
+        "cpuCores": {
+          "type": "integer",
+          "description": "Number of CPU cores"
+        },
+        "cpuModel": {
+          "type": "string",
+          "description": "CPU model name"
+        },
+        "biosVersion": {
+          "type": "string",
+          "description": "BIOS version string"
+        },
+        "disks": {
+          "type": "array",
+          "description": "List of mounted disk devices",
+          "items": {
+            "$ref": "#/definitions/Disk"
+          }
+        },
+        "gpus": {
+          "type": "array",
+          "description": "List of GPU devices",
+          "items": {
+            "$ref": "#/definitions/GPU"
+          }
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["salt", "snmp", "syslog"],
+          "description": "Collection method used to gather host information"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["accepted", "rejected"],
+          "description": "Host registration status"
+        }
+      }
+    },
+    "HostRes": {
+      "type": "object",
+      "description": "A registered host record",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID of the host record"
+        },
+        "minionId": {
+          "type": "string",
+          "description": "Salt minion ID (empty for non-Salt hosts)"
+        },
+        "hostname": {
+          "type": "string",
+          "description": "Hostname of the server"
+        },
+        "privateIps": {
+          "type": "array",
+          "description": "List of private IP addresses derived from ipInterfaces",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ipInterfaces": {
+          "type": "array",
+          "description": "List of network interfaces and their IP addresses",
+          "items": {
+            "$ref": "#/definitions/IPInterface"
+          }
+        },
+        "os": {
+          "type": "string",
+          "description": "Operating system name"
+        },
+        "osFamily": {
+          "type": "string",
+          "description": "OS family"
+        },
+        "osVersion": {
+          "type": "string",
+          "description": "OS version string"
+        },
+        "kernel": {
+          "type": "string",
+          "description": "Kernel version"
+        },
+        "arch": {
+          "type": "string",
+          "description": "CPU architecture"
+        },
+        "memTotalKb": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Total memory in kilobytes"
+        },
+        "swapTotalKb": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Total swap in kilobytes"
+        },
+        "cpuCores": {
+          "type": "integer",
+          "description": "Number of CPU cores"
+        },
+        "cpuModel": {
+          "type": "string",
+          "description": "CPU model name"
+        },
+        "biosVersion": {
+          "type": "string",
+          "description": "BIOS version string"
+        },
+        "disks": {
+          "type": "array",
+          "description": "List of mounted disk devices",
+          "items": {
+            "$ref": "#/definitions/Disk"
+          }
+        },
+        "gpus": {
+          "type": "array",
+          "description": "List of GPU devices",
+          "items": {
+            "$ref": "#/definitions/GPU"
+          }
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["salt", "snmp", "syslog"],
+          "description": "Collection method used to gather host information"
+        },
+        "orgId": {
+          "type": "string",
+          "description": "Organization ID"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["accepted", "rejected"],
+          "description": "Host registration status"
+        },
+        "acceptedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the host was first registered"
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "description": "URI of this host resource"
+            }
+          }
+        }
+      }
+    },
+    "Hosts": {
+      "type": "array",
+      "description": "List of registered host records",
+      "items": {
+        "$ref": "#/definitions/HostRes"
       }
     }
   }

@@ -65,7 +65,8 @@ const (
 	ErrInvalidShardID                  = Error("invalid shard ID")
 	ErrKafkaPublishFailed              = Error("failed to publish config to kafka")
 	ErrKafkaPartitionCountFetchFailed  = Error("failed to get kafka partition count")
-	ErrLibraryCellNotFound = Error("library cell not found")
+	ErrLibraryCellNotFound             = Error("library cell not found")
+	ErrHostNotFound                    = Error("host not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -860,6 +861,7 @@ type DashboardCell struct {
 	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
 	CellOrigin             string                 `json:"cellOrigin,omitempty"` // CellOriginBuiltin | CellOriginUser (empty treated as user)
 	Hidden                 bool                   `json:"hidden,omitempty"`     // When true, cell is hidden (user can toggle without deleting)
+	IsShowSummary          bool                   `json:"isShowSummary,omitempty"` // When true, cell displays summary information
 }
 
 // TableGaugeChartOptions is the options for the table gauge chart
@@ -1814,4 +1816,61 @@ type CellLibraryStore interface {
 
 	// Update replaces an existing library cell.
 	Update(ctx context.Context, cell LibraryCell) error
+}
+
+// IPInterface represents a single IP address assigned to a network interface.
+type IPInterface struct {
+	InterfaceName string `json:"interfaceName"`
+	IPAddress     string `json:"ipAddress"`
+}
+
+// Disk represents a device-to-mount-point mapping for InfluxDB metric correlation.
+type Disk struct {
+	Device     string `json:"device"`
+	MountPoint string `json:"mountPoint"`
+}
+
+// GPU represents a graphics processing unit.
+type GPU struct {
+	Vendor string `json:"vendor"`
+	Model  string `json:"model"`
+}
+
+// Agent represents a Salt minion registered in the system.
+// Status is either "accepted" or "rejected".
+type Host struct {
+	ID           string        `json:"id"`
+	MinionID     string        `json:"minionId"`
+	Hostname     string        `json:"hostname"`
+	IPInterfaces []IPInterface `json:"ipInterfaces"`
+	OS           string        `json:"os"`
+	OSFamily     string        `json:"osFamily"`
+	OSVersion    string        `json:"osVersion"`
+	Kernel       string        `json:"kernel"`
+	Arch         string        `json:"arch"`
+	MemTotalKB   int64         `json:"memTotalKb"`
+	SwapTotalKB  int64         `json:"swapTotalKb"`
+	CPUCores     int           `json:"cpuCores"`
+	CPUModel     string        `json:"cpuModel"`
+	BIOSVersion  string        `json:"biosVersion"`
+	Disks        []Disk        `json:"disks"`
+	GPUs         []GPU         `json:"gpus"`
+	SourceType   string        `json:"sourceType"`
+	OrgID        string        `json:"orgId"`
+	Status       string        `json:"status"`
+	AcceptedAt   time.Time     `json:"acceptedAt"`
+}
+
+// HostQuery filters for looking up hosts.
+type HostQuery struct {
+	MinionID *string
+	OrgID    *string
+}
+
+// HostStore manages persistence of Hosts.
+type HostStore interface {
+	All(ctx context.Context) ([]Host, error)
+	Add(ctx context.Context, h *Host) (*Host, error)
+	Get(ctx context.Context, q HostQuery) (*Host, error)
+	Delete(ctx context.Context, minionID string) error
 }

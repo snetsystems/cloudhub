@@ -53,6 +53,7 @@ message DashboardCell {
 	TableGaugeChartOptions tableGaugeChartOptions = 21; // TableGaugeChartOptions for table gauge visualization
 	string cellOrigin                    = 22; // "builtin" | "user" (empty treated as user)
 	bool hidden                          = 23; // When true, cell is hidden (user can toggle without deleting)
+	bool isShowSummary                   = 24; // When true, cell displays summary information
 }
 
 message GraphOptions {
