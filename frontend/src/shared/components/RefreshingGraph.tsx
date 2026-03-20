@@ -299,8 +299,7 @@ class RefreshingGraph extends Component<Props> {
                       let itemColor: string | undefined
                       if (
                         summary?.items[0]?.chartLabel &&
-                        timeSeriesInfluxQL?.length &&
-                        colors?.length
+                        timeSeriesInfluxQL?.length
                       ) {
                         try {
                           const transformed = groupByTimeSeriesTransform(
