@@ -8,7 +8,6 @@ import SearchBar from 'src/hosts/components/SearchBar'
 import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import AgentMinionsTableRow from 'src/agent_admin/components/AgentMinionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import PageSpinner from 'src/shared/components/PageSpinner'
 import AgentMinionsToolTip from 'src/agent_admin/components/AgentMinionsToolTip'
 
 // Constants
@@ -28,9 +27,12 @@ export interface Props {
   onClickModal: ({}) => object
   onClickTableRow: AgentMinions['onClickTableRowCall']
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
+  onRefreshMinion: (host: string) => void | Promise<void>
   handleShellModalOpen?: (shell: ShellInfo) => void
   handleShellModalClose: () => void
   renderConsoleTableBodyRow: ({}) => object
+  isSaltLoading?: boolean
+  processingHost?: string
 }
 
 interface State {
@@ -148,21 +150,6 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     return this.AgentTableWithHosts
   }
 
-  private get LoadingState(): JSX.Element {
-    return (
-      <div
-        style={{
-          position: 'absolute',
-          zIndex: 3,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          width: '100%',
-          height: '100%',
-        }}
-      >
-        <PageSpinner />
-      </div>
-    )
-  }
 
   private get ErrorState(): JSX.Element {
     return (
@@ -191,12 +178,8 @@ class AgentMinionsTable extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {minionsPageStatus} = this.props
     return (
       <div className="panel">
-        {minionsPageStatus === RemoteDataState.Loading
-          ? this.LoadingState
-          : null}
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
           <span>
@@ -218,7 +201,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     )
   }
 
-  private get AgentTitle() {
+  private get AgentTitle(): JSX.Element {
     const {minions} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
@@ -229,10 +212,9 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     )
 
     const hostsCount = sortedHosts.length
-    if (hostsCount === 1) {
-      return `1 Minions`
-    }
-    return `${hostsCount} Minions`
+    const label = hostsCount === 1 ? '1 Minions' : `${hostsCount} Minions`
+
+    return <span>{label}</span>
   }
 
   private get AgentTableHeaderEachPage() {
@@ -285,7 +267,10 @@ class AgentMinionsTable extends PureComponent<Props, State> {
             className={this.sortableClasses('status')}
             style={{width: StatusWidth}}
           >
-            Status
+            <span style={{display: 'inline-flex', alignItems: 'center', gap: '6px'}}>
+              Status
+              {this.props.isSaltLoading && <div className="simple-spinner" />}
+            </span>
             <span className="icon caret-up" />
           </div>
           <div
@@ -328,9 +313,9 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 
   private get tooltip() {
     const {isToolipActive, targetPosition, minionIPAdress} = this.state
-    const minionIPAddresses = minionIPAdress.split(',')
+    const minionIPAddresses = (minionIPAdress ?? '').split(',')
     const isMultipleIPAddress =
-      minionIPAdress !== '' && minionIPAddresses.length > 1
+      !!minionIPAdress && minionIPAddresses.length > 1
 
     if (isToolipActive && isMultipleIPAddress) {
       return (
@@ -352,6 +337,8 @@ class AgentMinionsTable extends PureComponent<Props, State> {
       focusedHost,
       handleShellModalOpen,
       handleShellModalClose,
+      onRefreshMinion,
+      processingHost,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -377,12 +364,15 @@ class AgentMinionsTable extends PureComponent<Props, State> {
                   onClickTableRow={onClickTableRow}
                   onClickModal={onClickModal}
                   handleWheelKeyCommand={handleWheelKeyCommand}
+                  onRefreshMinion={onRefreshMinion}
                   focusedHost={focusedHost}
                   handleShellModalOpen={handleShellModalOpen}
                   handleShellModalClose={handleShellModalClose}
                   onMouseLeave={this.onMouseLeave}
                   onMouseOver={this.onMouseOver}
                   renderConsoleTableBodyRow={renderConsoleTableBodyRow}
+                  isProcessing={processingHost === m.host}
+                  isSaltLoading={this.props.isSaltLoading}
                 />
               ))}
               className="hosts-table--tbody"

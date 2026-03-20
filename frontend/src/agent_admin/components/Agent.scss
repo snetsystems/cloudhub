@@ -135,6 +135,10 @@
     &.indicator--fail {
       color: $c-topaz;
     }
+
+    &.indicator--offline {
+      color: $g9-mountain;
+    }
   }
 
   /***** table end   *****/

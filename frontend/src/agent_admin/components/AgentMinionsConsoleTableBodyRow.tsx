@@ -40,8 +40,8 @@ class AgentMinionsConsoleTableBodyRow extends PureComponent<Props, State> {
 
   public handleOpenModal = event => {
     const {ip} = this.props
-    const minionIPAddresses = ip.split(',')
-    const isSingleIPAddress = ip === '' || minionIPAddresses.length < 2
+    const minionIPAddresses = (ip ?? '').split(',')
+    const isSingleIPAddress = !ip || minionIPAddresses.length < 2
 
     event.stopPropagation()
 
@@ -141,7 +141,7 @@ class AgentMinionsConsoleTableBodyRow extends PureComponent<Props, State> {
   private get IPSelectDropdown() {
     const {ip} = this.props
     const {target, showModal} = this.state
-    const minionIPAddresses = ip.split(',')
+    const minionIPAddresses = (ip ?? '').split(',')
 
     return (
       <ReactModal

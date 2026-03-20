@@ -22,11 +22,14 @@ interface Props {
   onClickTableRow: AgentMinions['onClickTableRowCall']
   onClickModal: ({}) => object
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
+  onRefreshMinion: (host: string) => void | Promise<void>
   handleShellModalOpen?: (shell: ShellInfo) => void
   handleShellModalClose?: () => void
   onMouseOver: (event: MouseEvent<HTMLElement>, minionIPAddress: string) => void
   onMouseLeave: () => void
   renderConsoleTableBodyRow: ({}) => object
+  isProcessing?: boolean
+  isSaltLoading?: boolean
 }
 
 @ErrorHandling
@@ -43,9 +46,18 @@ class AgentMinionsTableRow extends PureComponent<Props> {
     return 'agent--row hosts-table--tr'
   }
 
-  public isStatusIndicator = (status: string) => {
+  public isStatusIndicator = (status: string, isInstall?: boolean, isSaltRunning?: boolean) => {
     if (status === MinionState.Accept) {
-      return <div className="agent--indicator indicator--primary">Accepted</div>
+      const online = isSaltRunning !== false
+      return (
+        <div
+          className={`agent--indicator ${
+            online ? 'indicator--primary' : 'indicator--offline'
+          }`}
+        >
+          Accepted
+        </div>
+      )
     } else if (status === MinionState.UnAccept) {
       return <div className="agent--indicator indicator--fail">UnAccept</div>
     } else if (status === MinionState.Reject) {
@@ -71,12 +83,15 @@ class AgentMinionsTableRow extends PureComponent<Props> {
       minions,
       onClickModal,
       handleWheelKeyCommand,
+      onRefreshMinion,
       handleShellModalOpen,
       onMouseLeave,
       onMouseOver,
       renderConsoleTableBodyRow,
+      isProcessing,
+      isSaltLoading,
     } = this.props
-    const {osVersion, os, ip, host, status} = minions
+    const {osVersion, os, ip, host, status, isInstall, isSaltRunning} = minions
     const {
       HostWidth,
       OSWidth,
@@ -85,8 +100,8 @@ class AgentMinionsTableRow extends PureComponent<Props> {
       StatusWidth,
       OperationWidth,
     } = AGENT_MINION_TABLE_SIZING
-    const minionIPAddresses = ip.split(',')
-    const isMultipleIPAddress = ip !== '' && minionIPAddresses.length > 1
+    const minionIPAddresses = (ip ?? '').split(',')
+    const isMultipleIPAddress = !!ip && minionIPAddresses.length > 1
     const minionIPAddress = isMultipleIPAddress
       ? `${minionIPAddresses[0]},...`
       : ip
@@ -111,12 +126,22 @@ class AgentMinionsTableRow extends PureComponent<Props> {
           {ip ? minionIPAddress : '-'}
         </div>
         <TableBodyRowItem
-          title={this.isStatusIndicator(status)}
+          title={
+            <span style={{display: 'inline-flex', alignItems: 'center', gap: '6px'}}>
+              {this.isStatusIndicator(status, isInstall, isSaltRunning)}
+              {(isProcessing || (isSaltLoading && status === MinionState.Accept)) && (
+                <div className="simple-spinner" />
+              )}
+            </span>
+          }
           width={StatusWidth}
         />
         <TableBodyRowItem
           title={
-            <div id={`table-row--select${idx}`}>
+            <div
+              id={`table-row--select${idx}`}
+              style={{display: 'flex', alignItems: 'center', gap: '4px'}}
+            >
               {onClickModal({
                 name: '፧',
                 host,
@@ -125,6 +150,23 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                 handleWheelKeyCommand,
                 idx,
               })}
+              {status === MinionState.Accept && (
+                <button
+                  className="btn btn-sm btn-default agent-row--button-sm"
+                  title="Update agent info"
+                  disabled={isProcessing || isSaltRunning !== true}
+                  onClick={e => {
+                    e.stopPropagation()
+                    onRefreshMinion(host)
+                  }}
+                >
+                  {isProcessing ? (
+                    <div className="simple-spinner" />
+                  ) : (
+                    <span className="icon refresh" />
+                  )}
+                </button>
+              )}
             </div>
           }
           width={OperationWidth}

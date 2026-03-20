@@ -30,6 +30,7 @@ type Store struct {
 	EsSourcesStore          cloudhub.EsSourcesStore
 	DeviceMappingsStore     cloudhub.DeviceMappingsStore
 	CellLibraryStore cloudhub.CellLibraryStore
+	HostStore        cloudhub.HostStore
 }
 
 // Sources ...
@@ -140,4 +141,9 @@ func (s *Store) DeviceMappings(ctx context.Context) cloudhub.DeviceMappingsStore
 // CellLibrary ...
 func (s *Store) CellLibrary(ctx context.Context) cloudhub.CellLibraryStore {
 	return s.CellLibraryStore
+}
+
+// Hosts ...
+func (s *Store) Hosts(ctx context.Context) cloudhub.HostStore {
+	return s.HostStore
 }

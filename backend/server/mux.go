@@ -517,6 +517,13 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.PUT("/cloudhub/v1/cell-library/:id", EnsureEditor(service.UpdateLibraryCell))
 	router.PATCH("/cloudhub/v1/cell-library/:id", EnsureEditor(service.PatchLibraryCell))
 
+	// Host management
+	router.GET("/cloudhub/v1/hosts", EnsureViewer(service.GetHosts))
+	router.POST("/cloudhub/v1/hosts", EnsureAdmin(service.RegisterHost))
+	router.PUT("/cloudhub/v1/hosts/:minionId", EnsureAdmin(service.UpdateHost))
+	router.PATCH("/cloudhub/v1/hosts/:minionId", EnsureAdmin(service.PatchHost))
+	router.DELETE("/cloudhub/v1/hosts/:minionId", EnsureAdmin(service.DeleteHost))
+
 	// Kubernetes API Proxy
 	kubernetes := http.HandlerFunc(service.KubernetesProxy)
 	registerAllMethods(router, "/cloudhub/v1/kubernetes/proxy/*path", kubernetes)
@@ -708,6 +715,16 @@ func invalidXML(w http.ResponseWriter, logger cloudhub.Logger) {
 
 func unknownErrorWithMessage(w http.ResponseWriter, err error, logger cloudhub.Logger) {
 	Error(w, http.StatusInternalServerError, fmt.Sprintf("Unknown error: %v", err), logger)
+}
+
+// internalServerError logs the real cause server-side and returns a generic
+// "internal server error" message to the client, preventing internal details
+// such as DB schema or query errors from leaking to external callers.
+func internalServerError(w http.ResponseWriter, err error, logger cloudhub.Logger) {
+	logger.
+		WithField("component", "server").
+		Error("internal server error: ", err)
+	Error(w, http.StatusInternalServerError, "internal server error", logger)
 }
 
 func notFound(w http.ResponseWriter, id interface{}, logger cloudhub.Logger) {

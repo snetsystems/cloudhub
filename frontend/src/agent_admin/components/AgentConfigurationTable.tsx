@@ -311,9 +311,9 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
 
   private get tooltip() {
     const {isToolipActive, targetPosition, minionIPAdress} = this.state
-    const minionIPAddresses = minionIPAdress.split(',')
+    const minionIPAddresses = (minionIPAdress ?? '').split(',')
     const isMultipleIPAddress =
-      minionIPAdress !== '' && minionIPAddresses.length > 1
+      !!minionIPAdress && minionIPAddresses.length > 1
 
     if (isToolipActive && isMultipleIPAddress) {
       return (

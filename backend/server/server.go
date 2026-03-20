@@ -36,6 +36,8 @@ import (
 	"github.com/snetsystems/cloudhub/backend/oauth2"
 	"github.com/snetsystems/cloudhub/backend/platform/baremetal"
 	"github.com/snetsystems/cloudhub/backend/platform/k8s"
+	"github.com/snetsystems/cloudhub/backend/noop"
+	"github.com/snetsystems/cloudhub/backend/rdb/postgres"
 	"github.com/snetsystems/cloudhub/backend/server/config"
 )
 
@@ -181,6 +183,9 @@ type Server struct {
 	KafkaBrokers       string `long:"kafka-brokers" description:"Comma-separated list of Kafka brokers" env:"KAFKA_BROKERS"`
 	KafkaTopic         string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`
 	MaxShards          int    `long:"max-shards" description:"Max number of shards (virtual partitions) for fallback" env:"MAX_SHARDS" default:"10"`
+
+	PostgresDSN         string `long:"postgres-dsn" description:"PostgreSQL connection string for agent store" env:"CLOUDHUB_POSTGRES_DSN" default:""`
+	PostgresMigrateAuto bool   `long:"postgres-migrate-auto" description:"Run PostgreSQL schema migrations automatically on startup" env:"CLOUDHUB_POSTGRES_MIGRATE_AUTO"`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -691,6 +696,8 @@ func (s *Server) Serve(ctx context.Context) {
 		s.AddonURLs,
 		s.AddonTokens,
 		osp,
+		s.PostgresDSN,
+		s.PostgresMigrateAuto,
 	)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
@@ -914,6 +921,8 @@ func openService(
 	addonURLs map[string]string,
 	addonTokens map[string]string,
 	osp OSP,
+	postgresDSN string,
+	postgresMigrateAuto bool,
 ) Service {
 
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
@@ -970,6 +979,29 @@ func openService(
 		os.Exit(1)
 	}
 
+	// Initialize PostgreSQL HostStore if DSN is provided
+	var hostStore cloudhub.HostStore = &noop.HostStore{}
+	if postgresDSN != "" {
+		pgClient, pgErr := postgres.NewClient(ctx, postgresDSN)
+		if pgErr != nil {
+			logger.Error("Unable to connect to PostgreSQL; host store disabled", pgErr)
+		} else {
+			if postgresMigrateAuto {
+				if migrateErr := pgClient.Migrate(ctx); migrateErr != nil {
+					logger.Error("Unable to migrate PostgreSQL schema; host store disabled", migrateErr)
+					pgClient.Close()
+					goto hostStoreReady
+				}
+				logger.Info("PostgreSQL schema migration completed")
+			} else {
+				logger.Info("PostgreSQL auto-migration is disabled (--postgres-migrate-auto not set)")
+			}
+			hostStore = postgres.NewHostStore(pgClient)
+			logger.Info("PostgreSQL HostStore initialized")
+		}
+	}
+hostStoreReady:
+
 	return Service{
 		TimeSeriesClient: &InfluxClient{},
 		Store: &Store{
@@ -995,6 +1027,7 @@ func openService(
 			EsSourcesStore:          svc.EsSourcesStore(),
 			DeviceMappingsStore:     svc.DeviceMappingsStore(),
 			CellLibraryStore: svc.CellLibraryStore(),
+			HostStore:        hostStore,
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,

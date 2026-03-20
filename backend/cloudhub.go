@@ -1842,6 +1842,7 @@ type Host struct {
 	ID           string        `json:"id"`
 	MinionID     string        `json:"minionId"`
 	Hostname     string        `json:"hostname"`
+	IP           string        `json:"ip"`
 	IPInterfaces []IPInterface `json:"ipInterfaces"`
 	OS           string        `json:"os"`
 	OSFamily     string        `json:"osFamily"`
@@ -1858,7 +1859,9 @@ type Host struct {
 	SourceType   string        `json:"sourceType"`
 	OrgID        string        `json:"orgId"`
 	Status       string        `json:"status"`
-	AcceptedAt   time.Time     `json:"acceptedAt"`
+	CreatedAt    time.Time     `json:"createdAt"`
+	UpdatedAt    time.Time     `json:"updatedAt"`
+	DeleteYN     bool          `json:"deleteYn"`
 }
 
 // HostQuery filters for looking up hosts.
@@ -1867,10 +1870,18 @@ type HostQuery struct {
 	OrgID    *string
 }
 
+// HostPatch contains optional fields for a partial host update.
+type HostPatch struct {
+	Status *string `json:"status,omitempty"`
+	OrgID  *string `json:"orgId,omitempty"`
+}
+
 // HostStore manages persistence of Hosts.
 type HostStore interface {
 	All(ctx context.Context) ([]Host, error)
 	Add(ctx context.Context, h *Host) (*Host, error)
 	Get(ctx context.Context, q HostQuery) (*Host, error)
+	Update(ctx context.Context, h *Host) (*Host, error)
+	Patch(ctx context.Context, minionID string, patch HostPatch) (*Host, error)
 	Delete(ctx context.Context, minionID string) error
 }

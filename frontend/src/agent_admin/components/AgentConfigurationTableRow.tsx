@@ -67,8 +67,8 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
       ActionWidth,
       TelegrafVersionWidth,
     } = AGENT_CONFIGURATION_TABLE_SIZING
-    const minionIPAddresses = ip.split(',')
-    const isMultipleIPAddress = ip !== '' && minionIPAddresses.length > 1
+    const minionIPAddresses = (ip ?? '').split(',')
+    const isMultipleIPAddress = !!ip && minionIPAddresses.length > 1
     const minionIPAddress = isMultipleIPAddress
       ? `${minionIPAddresses[0]},...`
       : ip

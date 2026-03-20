@@ -105,6 +105,7 @@ type DataStore interface {
 	EsSources(ctx context.Context) cloudhub.EsSourcesStore
 	DeviceMappings(ctx context.Context) cloudhub.DeviceMappingsStore
 	CellLibrary(ctx context.Context) cloudhub.CellLibraryStore
+	Hosts(ctx context.Context) cloudhub.HostStore
 }
 
 // ensure that Store implements a DataStore
@@ -134,6 +135,7 @@ type Store struct {
 	EsSourcesStore          cloudhub.EsSourcesStore
 	DeviceMappingsStore     cloudhub.DeviceMappingsStore
 	CellLibraryStore cloudhub.CellLibraryStore
+	HostStore        cloudhub.HostStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -371,6 +373,14 @@ func (s *Store) DeviceMappings(ctx context.Context) cloudhub.DeviceMappingsStore
 		return organizations.NewDeviceMappingsStore(s.DeviceMappingsStore, org, isSuperAdmin)
 	}
 	return &noop.DeviceMappingsStore{}
+}
+
+// Hosts returns the HostStore if server context is present, otherwise noop.
+func (s *Store) Hosts(ctx context.Context) cloudhub.HostStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.HostStore
+	}
+	return &noop.HostStore{}
 }
 
 // CellLibrary returns a noop.CellLibraryStore if the context has no organization specified

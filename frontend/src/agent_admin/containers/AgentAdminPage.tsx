@@ -43,7 +43,14 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {MinionsObject} from 'src/agent_admin/type'
 
 // APIs
-import {getTelegrafState, updateMinionKeyState} from 'src/agent_admin/apis'
+import {
+  getTelegrafState,
+  getTelegrafInstalledList,
+  updateMinionKeyState,
+} from 'src/agent_admin/apis'
+import {extractTelegrafVersion} from 'src/agent_admin/utils'
+import {getHosts, Host as Agent} from 'src/shared/apis/host'
+import {getManageUp} from 'src/shared/apis/saltStack'
 
 interface Props {
   links: Links
@@ -65,6 +72,7 @@ interface Props {
 interface State {
   agentPageStatus: RemoteDataState
   minionsStatus: RemoteDataState
+  isSaltLoading: boolean
   isSelectBoxView: boolean
   minionsObject: MinionsObject
   saltMasterUrl: string
@@ -72,6 +80,7 @@ interface State {
   shellModalVisible: boolean
   shellAddr: string
   nodename: string
+  agents: Agent[]
 }
 
 export interface LoginEvent extends MouseEvent<KeyboardEvent> {
@@ -86,6 +95,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
     this.state = {
       agentPageStatus: RemoteDataState.NotStarted,
       minionsStatus: RemoteDataState.NotStarted,
+      isSaltLoading: false,
       isSelectBoxView: true,
       minionsObject: {},
       saltMasterUrl: '',
@@ -93,6 +103,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
       shellModalVisible: false,
       shellAddr: '',
       nodename: '',
+      agents: [],
     }
   }
 
@@ -130,17 +141,108 @@ class AgentAdminPage extends PureComponent<Props, State> {
 
     this.setState({minionsStatus: RemoteDataState.Loading})
 
-    const minionListObject = await this.props.handleGetMinionKeyListAll(
-      saltMasterUrl,
-      saltMasterToken,
-      this.props.source,
-      this.props.meRole
-    )
+    const [minionListObject, dbHosts] = await Promise.all([
+      this.props.handleGetMinionKeyListAll(
+        saltMasterUrl,
+        saltMasterToken,
+        this.props.source,
+        this.props.meRole
+      ),
+      getHosts().catch(() => [] as Agent[]),
+    ])
 
-    this.setState({
-      minionsObject: minionListObject,
-      minionsStatus: RemoteDataState.Done,
-    })
+    const dbByMinionId = new Map((dbHosts as Agent[]).map(h => [h.minionId, h]))
+    const saltRunningKeys: string[] = []
+
+    for (const key of Object.keys(minionListObject)) {
+      const dbHost = dbByMinionId.get(key)
+      if (dbHost) {
+        minionListObject[key] = {
+          ...minionListObject[key],
+          os: dbHost.os,
+          osVersion: dbHost.osVersion,
+          ip: dbHost.privateIps?.[0] ?? '',
+          isSaltRunning: undefined,
+        }
+        saltRunningKeys.push(key)
+      }
+    }
+
+    const hasDbHosts = (dbHosts as Agent[]).length > 0
+
+    if (hasDbHosts) {
+      this.setState({
+        agents: dbHosts,
+        minionsObject: minionListObject,
+        minionsStatus: RemoteDataState.Done,
+      })
+    }
+
+    if (saltRunningKeys.length === 0) {
+      if (!hasDbHosts) {
+        this.setState({
+          agents: dbHosts,
+          minionsObject: minionListObject,
+          minionsStatus: RemoteDataState.Done,
+        })
+      }
+      return
+    }
+
+    if (hasDbHosts) this.setState({isSaltLoading: true})
+    let onlineSet = new Set<string>()
+    try {
+      const upRes = await getManageUp(saltMasterUrl, saltMasterToken)
+      const upList: string[] = upRes?.data?.return?.[0] ?? []
+      onlineSet = new Set(upList)
+    } catch (_) {}
+    if (hasDbHosts) this.setState({isSaltLoading: false})
+
+    const onlineKeys = saltRunningKeys.filter(k => onlineSet.has(k))
+
+    for (const key of saltRunningKeys) {
+      minionListObject[key] = {
+        ...minionListObject[key],
+        isSaltRunning: onlineSet.has(key),
+      }
+    }
+
+    if (onlineKeys.length > 0) {
+      try {
+        const telegrafInfo = await getTelegrafInstalledList(
+          saltMasterUrl,
+          saltMasterToken,
+          onlineKeys.toString()
+        )
+        const installList = telegrafInfo[0].data.return[0]
+        const statusList = telegrafInfo[1].data.return[0]
+        const versionList = telegrafInfo[2].data.return[0]
+        for (const key of onlineKeys) {
+          const {version} = extractTelegrafVersion(versionList[key])
+          minionListObject[key] = {
+            ...minionListObject[key],
+            isInstall: installList[key] === true,
+            isRunning: statusList[key] === true,
+            telegrafVersion: version,
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (!hasDbHosts) {
+      this.setState({
+        agents: dbHosts,
+        minionsObject: {...minionListObject},
+        minionsStatus: RemoteDataState.Done,
+      })
+    } else {
+      this.setState({minionsObject: {...minionListObject}})
+    }
+  }
+
+  public refreshAgents = async () => {
+    const agents = await getHosts()
+    this.setState({agents})
   }
 
   public updateTelegrafState = async (targetMinion: string) => {
@@ -194,6 +296,8 @@ class AgentAdminPage extends PureComponent<Props, State> {
       saltMasterToken,
       minionsObject,
       minionsStatus,
+      isSaltLoading,
+      agents,
     } = this.state
     const collectorConfigTableTabs = this.getCollectorConfigTableTabs()
 
@@ -210,6 +314,9 @@ class AgentAdminPage extends PureComponent<Props, State> {
             saltMasterToken={saltMasterToken}
             minionsObject={minionsObject}
             minionsStatus={minionsStatus}
+            isSaltLoading={isSaltLoading}
+            agents={agents}
+            onRefreshAgents={this.refreshAgents}
             handleUpdateMinionStatus={this.updateMinionState}
             handleSetMinionStatus={this.setMinionStatus}
             handleShellModalOpen={this.onClickShellModalOpen}

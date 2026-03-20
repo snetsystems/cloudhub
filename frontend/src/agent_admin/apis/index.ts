@@ -117,74 +117,38 @@ export const getMinionKeyListAllAdmin = async (
       }
     }
 
-  const paramKeyList = _.values(minions)
-    .filter(m => m.status === MinionState.Accept)
-    .map(m => m.host)
-
-  const grainItemInfo = await Promise.all([
-    getLocalGrainsItem(pUrl, pToken, paramKeyList.toString()),
-  ])
-
-  const ipv4Regexformat: RegExp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/
-  const exceptLoopbackRegexFormat: RegExp = /^(?!127.0.0.1)/
-  const osList = grainItemInfo[0].data.return[0]
-
-  for (const k of _.values(minions).map(m => m.host)) {
-    const ipInterfaces = osList[k]?.ip_interfaces
-    const ipList: string = _.keys(ipInterfaces)
-      .map(item =>
-        ipInterfaces[item]
-          .filter((ip: string) => ipv4Regexformat.test(ip))
-          .filter((ip: string) => exceptLoopbackRegexFormat.test(ip))
-      )
-      .flat()
-      .join(',')
-
-    if (osList[k]) {
-      minions[k] = {
-        ...minions[k],
-        ip: ipList,
-        os: osList[k].os,
-        osVersion: osList[k].osrelease,
-        isSaltRunning: typeof osList[k] !== 'object' ? false : true,
-      }
-    } else {
-      minions[k] = {
-        ...minions[k],
-        ip: ipList,
-        isSaltRunning: false,
-      }
-    }
-  }
-
+  // OS/IP info comes from the hosts DB (merged in AgentMinions container).
+  // isSaltRunning remains false — telegraf status is fetched per-tab as needed.
   const paramSaltRuningKeyList = _.values(minions)
     .filter(f => f.isSaltRunning !== false)
     .map(m => m.host)
 
-  const telegrafInfo = await getTelegrafInstalledList(
-    pUrl,
-    pToken,
-    paramSaltRuningKeyList.toString()
-  )
+  if (paramSaltRuningKeyList.length > 0) {
+    const telegrafInfo = await getTelegrafInstalledList(
+      pUrl,
+      pToken,
+      paramSaltRuningKeyList.toString()
+    )
 
-  const installList = telegrafInfo[0].data.return[0]
-  const statusList = telegrafInfo[1].data.return[0]
-  const versionList = telegrafInfo[2].data.return[0]
+    const installList = telegrafInfo[0].data.return[0]
+    const statusList = telegrafInfo[1].data.return[0]
+    const versionList = telegrafInfo[2].data.return[0]
 
-  for (const k of _.values(minions).map(m => m.host)) {
-    const {version} = extractTelegrafVersion(versionList[k])
-    minions[k] = {
-      ...minions[k],
-      isInstall: installList[k] !== true ? false : true,
-      isRunning: statusList[k] !== true ? false : true,
-      telegrafVersion: version,
+    for (const k of _.values(minions).map(m => m.host)) {
+      const {version} = extractTelegrafVersion(versionList[k])
+      minions[k] = {
+        ...minions[k],
+        isInstall: installList[k] !== true ? false : true,
+        isRunning: statusList[k] !== true ? false : true,
+        telegrafVersion: version,
+      }
     }
   }
 
   return minions
 }
 
-async function waitForSaltCallCompletion(
+export async function waitForSaltCallCompletion(
   func: (...params: any) => Promise<unknown>,
   check: (data: any) => boolean,
   params: any,

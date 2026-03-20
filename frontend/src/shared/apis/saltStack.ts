@@ -20,6 +20,7 @@ interface Params {
   arg?: string[] | string
   tgt_type?: string
   tgt?: string[] | string
+  timeout?: number
   match?: string
   include_rejected?: string
   include_denied?: string
@@ -57,6 +58,8 @@ interface Params {
     dir_path?: string
     mode?: string
     name_or_id?: string
+    timeout?: number
+    gather_job_timeout?: number
   }
   username?: string
   password?: string
@@ -224,6 +227,8 @@ export async function getLocalGrainsItem(
         'virtual',
         'cpuarch',
         'cpu_model',
+        'num_cpus',
+        'host',
         'localhost',
         'ip_interfaces',
         'ip6_interfaces',
@@ -231,7 +236,6 @@ export async function getLocalGrainsItem(
         'ip6_gw',
         'dns:nameservers',
         'locale_info',
-        'cpu_model',
         'biosversion',
         'mem_total',
         'swap_total',
@@ -239,9 +243,57 @@ export async function getLocalGrainsItem(
         'selinux',
         'path',
       ],
-      tgt_type: 'list',
+      tgt_type: 'glob',
     }
 
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+/**
+ * Get active mount points (device -> path mapping) from minion via Salt mount.active.
+ * Linux: returns { "/": { device, fstype, ... }, "/home": ... }.
+ * Windows: may not be supported; caller should catch and use fallback (e.g. empty).
+ */
+export async function getLocalMountActive(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  try {
+    const params = {
+      client: 'local',
+      tgt: pMinionId,
+      fun: 'mount.active',
+      tgt_type: 'glob',
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+/**
+ * Get disk usage per path/drive from minion via Salt disk.usage.
+ * Linux: returns { "/": { total, used, free }, "/home": ... }.
+ * Windows: returns { "C:\\": { total, used, free }, "D:\\": ... }
+ */
+export async function getLocalDiskUsage(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  try {
+    const params = {
+      client: 'local',
+      tgt: pMinionId,
+      fun: 'disk.usage',
+      tgt_type: 'glob',
+    }
     return await apiRequest(pUrl, pToken, params)
   } catch (error) {
     console.error(error)
@@ -342,6 +394,23 @@ export async function runDeleteKey(
     }
 
     return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getManageUp(pUrl: string, pToken: string) {
+  try {
+    const params = {
+      client: 'runner',
+      fun: 'manage.up',
+      kwarg: {timeout: 3, gather_job_timeout: 2},
+    }
+    const clientTimeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('manage.up client timeout')), 15000)
+    )
+    return await Promise.race([apiRequest(pUrl, pToken, params), clientTimeout])
   } catch (error) {
     console.error(error)
     throw error
@@ -2696,7 +2765,7 @@ export async function getLocalSaltCmdTelegraf(
   pMinionId: string
 ) {
   try {
-    const params = {
+    const params: Params = {
       client: 'local',
       fun: 'cmd.run',
       kwarg: {

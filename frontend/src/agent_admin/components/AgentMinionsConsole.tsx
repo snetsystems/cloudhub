@@ -7,40 +7,15 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import TopologyDetails from 'src/hosts/components/TopologyDetails'
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {Radio} from 'src/reusable_ui'
-import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 
 interface Props {
   res?: string
 }
 
-interface State {
-  activeEditorTab: 'TABLE' | 'DETAILS'
-}
-
 @ErrorHandling
-class AgentMinionsConsole extends PureComponent<Props, State> {
-  state: State = {
-    activeEditorTab: 'TABLE',
-  }
-
-  handleActiveEditorTab = (tab: 'TABLE' | 'DETAILS') => {
-    this.setState({activeEditorTab: tab})
-  }
-
+class AgentMinionsConsole extends PureComponent<Props> {
   render() {
-    const {activeEditorTab} = this.state
     const {res} = this.props
-    const options = {
-      tabIndex: 1,
-      readonly: false,
-      lineNumbers: false,
-      autoRefresh: true,
-      completeSingle: false,
-      lineWrapping: true,
-      mode: 'yaml',
-      theme: 'yaml',
-    }
 
     const getSaltInstanceInfo = (info: any) => {
       try {
@@ -114,75 +89,38 @@ class AgentMinionsConsole extends PureComponent<Props, State> {
       <div className="panel">
         <div className="panel-heading">
           <h2 className="panel-title">Console</h2>
-          <div className="gpu-monitoring-detail-header radio-buttons radio-buttons--default radio-buttons--sm">
-            <Radio.Button
-              id="details-tab-TABLE"
-              titleText="Table"
-              value="TABLE"
-              active={activeEditorTab === 'TABLE'}
-              onClick={() => this.handleActiveEditorTab('TABLE')}
-            >
-              <span className="gpu-monitoring-detail-header-title">Table</span>
-            </Radio.Button>
-
-            <Radio.Button
-              id="details-tab-DETAILS"
-              titleText="Details"
-              value="DETAILS"
-              active={activeEditorTab === 'DETAILS'}
-              onClick={() => this.handleActiveEditorTab('DETAILS')}
-            >
-              <span className="gpu-monitoring-detail-header-title">
-                Details
-              </span>
-            </Radio.Button>
-          </div>
         </div>
 
         <div className="panel-body" style={{position: 'relative'}}>
-          {activeEditorTab === 'TABLE' && (
-            <div className="page-contents">
-              {(() => {
-                const mapped = getSaltInstanceInfo(res)
-                const noData =
-                  !mapped?.System?.data?.os || mapped.System.data.os === '-'
+          <div className="page-contents">
+            {(() => {
+              const mapped = getSaltInstanceInfo(res)
+              const noData =
+                !mapped?.System?.data?.os || mapped.System.data.os === '-'
 
-                return noData ? (
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      height: '100%',
-                      fontSize: '18px',
-                    }}
-                  >
-                    No Data
-                  </div>
-                ) : (
-                  <FancyScrollbar style={{height: '100%'}} autoHide={false}>
-                    <TopologyDetails selectInstanceData={mapped} />
-                  </FancyScrollbar>
-                )
-              })()}
-            </div>
-          )}
-
-          {activeEditorTab === 'DETAILS' && (
-            <ReactCodeMirror
-              value={typeof res === 'string' ? res : yaml.dump(res)}
-              options={options}
-              onBeforeChange={this.beforeChange}
-              onTouchStart={this.onTouchStart}
-            />
-          )}
+              return noData ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                    fontSize: '18px',
+                  }}
+                >
+                  No Data
+                </div>
+              ) : (
+                <FancyScrollbar style={{height: '100%'}} autoHide={false}>
+                  <TopologyDetails selectInstanceData={mapped} />
+                </FancyScrollbar>
+              )
+            })()}
+          </div>
         </div>
       </div>
     )
   }
-
-  private beforeChange = (): void => {}
-  private onTouchStart = (): void => {}
 }
 
 export default AgentMinionsConsole
