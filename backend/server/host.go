@@ -143,9 +143,24 @@ func toHostResponse(h cloudhub.Host) hostResponse {
 	}
 }
 
-// GetHosts returns all registered hosts.
+// GetHosts returns all registered hosts, or a single host if ?hostname= is provided.
 func (s *Service) GetHosts(w http.ResponseWriter, r *http.Request) {
 	ctx := serverContext(r.Context())
+
+	if hostname := r.URL.Query().Get("hostname"); hostname != "" {
+		host, err := s.Store.Hosts(ctx).Get(ctx, cloudhub.HostQuery{Hostname: &hostname})
+		if err != nil {
+			if err == cloudhub.ErrHostNotFound {
+				notFound(w, hostname, s.Logger)
+				return
+			}
+			internalServerError(w, err, s.Logger)
+			return
+		}
+		encodeJSON(w, http.StatusOK, toHostResponse(*host), s.Logger)
+		return
+	}
+
 	all, err := s.Store.Hosts(ctx).All(ctx)
 	if err != nil {
 		internalServerError(w, err, s.Logger)

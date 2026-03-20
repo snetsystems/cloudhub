@@ -80,6 +80,14 @@ export async function getHosts(): Promise<Host[]> {
   return data as Host[]
 }
 
+export async function getHostByHostname(hostname: string): Promise<Host> {
+  const {data} = await AJAX({
+    url: `/cloudhub/v1/hosts?hostname=${encodeURIComponent(hostname)}`,
+    method: 'GET',
+  })
+  return data as Host
+}
+
 export interface HostPatch {
   status?: HostStatus
   orgId?: string

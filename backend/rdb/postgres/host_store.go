@@ -112,19 +112,27 @@ RETURNING id`
 	return h, nil
 }
 
-// Get looks up a single active host by MinionID.
+// Get looks up a single active host by MinionID or Hostname.
 func (s *HostStore) Get(ctx context.Context, q cloudhub.HostQuery) (*cloudhub.Host, error) {
-	if q.MinionID == nil {
-		return nil, fmt.Errorf("HostQuery must specify MinionID")
-	}
-
-	const queryHost = `
+	var row rdb.Row
+	switch {
+	case q.MinionID != nil:
+		const queryHost = `
 SELECT id, minion_id, hostname, ip, source_type, os, os_family, os_version, kernel, arch,
        mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
        org_id, status, created_at, updated_at
 FROM hosts WHERE minion_id = $1 AND delete_yn = false`
-
-	row := s.client.QueryRowContext(ctx, queryHost, *q.MinionID)
+		row = s.client.QueryRowContext(ctx, queryHost, *q.MinionID)
+	case q.Hostname != nil:
+		const queryHost = `
+SELECT id, minion_id, hostname, ip, source_type, os, os_family, os_version, kernel, arch,
+       mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
+       org_id, status, created_at, updated_at
+FROM hosts WHERE hostname = $1 AND delete_yn = false`
+		row = s.client.QueryRowContext(ctx, queryHost, *q.Hostname)
+	default:
+		return nil, fmt.Errorf("HostQuery must specify MinionID or Hostname")
+	}
 	var h cloudhub.Host
 	var minionID *string
 	if err := row.Scan(

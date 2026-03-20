@@ -1867,6 +1867,7 @@ type Host struct {
 // HostQuery filters for looking up hosts.
 type HostQuery struct {
 	MinionID *string
+	Hostname *string
 	OrgID    *string
 }
 
