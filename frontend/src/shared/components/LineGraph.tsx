@@ -62,6 +62,7 @@ interface Props {
   axisLabelWidth?: number
   staticLegendGap?: number
   containerStyle?: CSSProperties
+  hideMaxMarker?: boolean
 }
 
 type LineGraphProps = Props & RouteComponentProps<any, any>
@@ -211,6 +212,10 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
           annotationsViewMode={this.props.annotationsViewMode}
           axisLabelWidth={this.props.axisLabelWidth}
           staticLegendGap={this.props.staticLegendGap}
+          prefix={this.prefix}
+          suffix={this.suffix}
+          decimalPlaces={decimalPlaces}
+          hideMaxMarker={this.props.hideMaxMarker}
         >
           {type === CellType.LinePlusSingleStat && (
             <SingleStat

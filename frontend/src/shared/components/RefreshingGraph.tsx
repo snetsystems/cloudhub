@@ -94,7 +94,7 @@ interface Props {
   showRawFluxData?: boolean
   tableOptions: TableOptions
   fieldOptions: FieldOption[]
-  decimalPlaces: DecimalPlaces
+  decimalPlaces?: DecimalPlaces
   type: CellType
   cellID: string
   inView: boolean
@@ -133,6 +133,7 @@ interface Props {
   axisLabelWidth?: number
   staticLegendGap?: number
   containerStyle?: React.CSSProperties
+  hideMaxMarker?: boolean
 }
 class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
@@ -361,7 +362,8 @@ class RefreshingGraph extends Component<Props> {
                               timeSeriesInfluxQL,
                               timeSeriesFlux,
                               loading,
-                              uuid
+                              uuid,
+                              this.props.hideMaxMarker
                             ),
                             summary,
                             itemColor
@@ -431,6 +433,7 @@ class RefreshingGraph extends Component<Props> {
       'graphOptions',
       'tableGaugeChartOptions',
       'isShowSummaryOverlay',
+      'hideMaxMarker',
     ]
 
     const prevVisValues = _.pick(prevProps, visProps)
@@ -604,6 +607,7 @@ class RefreshingGraph extends Component<Props> {
       manualRefresh,
       onUpdateVisType,
       handleSetHoverTime,
+      hideMaxMarker,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
@@ -632,6 +636,7 @@ class RefreshingGraph extends Component<Props> {
         containerStyle={this.props.containerStyle}
         isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
         annotationsViewMode={this.props.annotationsViewMode}
+        hideMaxMarker={hideMaxMarker}
       />
     )
   }
@@ -640,7 +645,8 @@ class RefreshingGraph extends Component<Props> {
     influxQLData: TimeSeriesServerResponse[],
     fluxData: FluxTable[],
     loading: RemoteDataState,
-    uuid: string
+    uuid: string,
+    hideMaxMarker?: boolean
   ): JSX.Element => {
     const {
       axes,
@@ -694,6 +700,7 @@ class RefreshingGraph extends Component<Props> {
             tableGaugeChartOptions={tableGaugeChartOptions}
             onUpdateTableGaugeChartOptions={onUpdateTableGaugeChartOptions}
             originFiledOptions={fieldOptions}
+            hideMaxMarker={hideMaxMarker}
           />
         )}
       </StaticGraphFormat>

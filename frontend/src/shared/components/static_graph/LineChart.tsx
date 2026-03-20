@@ -37,6 +37,7 @@ import {LEGEND_POSITION} from 'src/shared/constants/staticGraph'
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
+import StaticMaxMarker from 'src/shared/components/static_graph/StaticMaxMarker'
 
 // Utils
 import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
@@ -69,6 +70,7 @@ interface Props {
   showPoint: boolean
   decimalPlaces: DecimalPlaces
   showCount?: number | null
+  hideMaxMarker?: boolean
 }
 
 const LineChart = ({
@@ -87,6 +89,7 @@ const LineChart = ({
   showPoint,
   showCount,
   decimalPlaces,
+  hideMaxMarker,
 }: Props) => {
   const chartRef = useRef<ChartJS<'line', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
@@ -157,7 +160,7 @@ const LineChart = ({
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
-        <div className="static-graph-container" style={{...container}}>
+        <div className="static-graph-container" style={{...container, position: 'relative'}}>
           <ChartContainer>
             <Line
               ref={chartRef}
@@ -165,6 +168,16 @@ const LineChart = ({
               data={chartData}
               onDoubleClick={onResetZoom}
             />
+            {chartInstance && (
+              <StaticMaxMarker
+                chartInstance={chartInstance}
+                prefix={axes.y.prefix}
+                suffix={axes.y.suffix}
+                decimalPlaces={decimalPlaces}
+                yAxis={axes.y}
+                hide={hideMaxMarker}
+              />
+            )}
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend

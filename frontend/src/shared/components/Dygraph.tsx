@@ -13,6 +13,8 @@ import DygraphLegend from 'src/shared/components/DygraphLegend'
 import StaticLegend from 'src/shared/components/StaticLegend'
 import Annotations from 'src/shared/components/Annotations'
 import Crosshair from 'src/shared/components/Crosshair'
+import MaxMarker from 'src/shared/components/MaxMarker'
+import {DecimalPlaces} from 'src/types/dashboards'
 // import AnnotationsViewer from 'src/shared/components/AnnotationsViewer'
 
 // Utils
@@ -96,6 +98,10 @@ interface Props {
   annotationsViewMode: AnnotationViewer[]
   axisLabelWidth?: number
   staticLegendGap?: number
+  prefix?: string
+  suffix?: string
+  decimalPlaces?: DecimalPlaces
+  hideMaxMarker?: boolean
 }
 
 interface State {
@@ -225,6 +231,16 @@ class Dygraph extends Component<Props, State> {
             <Crosshair
               dygraph={this.dygraph}
               staticLegendHeight={staticLegendHeight}
+            />
+            <MaxMarker
+              dygraph={this.dygraph}
+              timeSeries={this.timeSeries}
+              staticLegendHeight={staticLegendHeight}
+              prefix={this.props.prefix}
+              suffix={this.props.suffix}
+              decimalPlaces={this.props.decimalPlaces}
+              yAxis={this.props.axes.y}
+              hide={this.props.hideMaxMarker}
             />
           </div>
         )}

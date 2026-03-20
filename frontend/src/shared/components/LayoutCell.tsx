@@ -101,11 +101,34 @@ export default class LayoutCell extends Component<Props> {
             cellBackgroundColor={this.cellBackgroundColor}
             cellTextColor={this.cellTextColor}
           />
-          <div className="dash-graph--container">{this.renderGraph}</div>
+          <div
+            className={`dash-graph--container ${
+              !cell.isShowSummary
+                ? this.isMaxMarkerChart
+                  ? 'no-summary-with-marker'
+                  : 'no-summary'
+                : ''
+            }`}
+          >
+            {this.renderGraph}
+          </div>
         </div>
         {this.gradientBorder}
       </>
     )
+  }
+
+  private get isMaxMarkerChart(): boolean {
+    const {cell} = this.props
+    const types = [
+      CellType.Line,
+      CellType.Stacked,
+      CellType.StepPlot,
+      CellType.Bar,
+      CellType.LinePlusSingleStat,
+      CellType.StaticLineChart,
+    ]
+    return types.includes(cell.type)
   }
 
   private get makeSpaceForCellNote(): boolean {

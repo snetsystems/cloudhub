@@ -2,6 +2,7 @@
 import React, {PureComponent, CSSProperties} from 'react'
 import {withRouter, RouteComponentProps} from 'react-router'
 import {Chart as ChartJS} from 'chart.js'
+import _ from 'lodash'
 
 // Components
 import {ErrorHandlingWith} from 'src/shared/decorators/errors'
@@ -10,7 +11,6 @@ import BarChart from 'src/shared/components/static_graph/BarChart'
 import InvalidQuery from 'src/shared/components/InvalidQuery'
 import PieChart from 'src/shared/components/static_graph/PieChart'
 import DoughnutChart from 'src/shared/components/static_graph/DoughnutChart'
-
 import RadarChart from 'src/shared/components/static_graph/RadarChart'
 import StackedChart from 'src/shared/components/static_graph/StackedChart'
 import LineChart from 'src/shared/components/static_graph/LineChart'
@@ -50,7 +50,6 @@ import {
   StatisticalGraphFieldOption,
   TableGaugeChartOptionsInterface,
 } from 'src/types/statisticalgraph'
-import _ from 'lodash'
 import {parseIfPositiveNumber} from 'src/shared/utils/staticGraph'
 import StaticTableGaugeChart from './StaticTableGaugeChart'
 
@@ -58,6 +57,7 @@ ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#999dab'
 ChartJS.defaults.font.family =
   '"Roboto", Helvetica, Arial, Tahoma, Verdana, sans-serif'
+
 interface Props {
   axes: Axes
   type: CellType
@@ -81,6 +81,7 @@ interface Props {
     tableGaugeChartOptions: TableGaugeChartOptionsInterface
   ) => void
   originFiledOptions: FieldOption[]
+  hideMaxMarker?: boolean
 }
 
 type StaticGraphProps = Props & RouteComponentProps<any, any>
@@ -97,25 +98,22 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
   constructor(props: StaticGraphProps) {
     super(props)
-
     this.state = {
       staticLegendHeight: 0,
     }
   }
+
   public componentDidMount() {
     const {fieldOptions, tableGaugeChartOptions} = this.props
-
     this.handleUpdateFieldOptions(fieldOptions)
     this.handleUpdateTableGaugeChartOptions(tableGaugeChartOptions)
   }
 
   public componentDidUpdate(prevProps: Props) {
     const {fieldOptions, tableGaugeChartOptions} = this.props
-
     if (!_.isEqual(fieldOptions, prevProps.fieldOptions)) {
       this.handleUpdateFieldOptions(fieldOptions)
     }
-
     if (!_.isEqual(tableGaugeChartOptions, prevProps.tableGaugeChartOptions)) {
       this.handleUpdateTableGaugeChartOptions(tableGaugeChartOptions)
     }
@@ -123,7 +121,6 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
   private handleUpdateFieldOptions = (fieldOptions: FieldOption[]): void => {
     const {onUpdateFieldOptions} = this.props
-
     if (onUpdateFieldOptions) {
       onUpdateFieldOptions(fieldOptions)
     }
@@ -147,18 +144,21 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
         />
       )
     }
-    if (
-      !data[0]['response']['results'][0]['series'][0].hasOwnProperty(
-        'values'
-      ) ||
-      data[0]['response']['results'][0]['series'][0]?.['values']?.length > 1
-    ) {
+    
+    // Safety check for data structure
+    const results = _.get(data, '0.response.results', [])
+    const series = _.get(results, '0.series', [])
+    if (series.length === 0) {
       return <InvalidQuery />
     }
 
     return (
       <div className="dygraph graph--hasYLabel" style={this.style}>
-        {loading === RemoteDataState.Loading && <GraphLoadingDots />}
+        {loading === RemoteDataState.Loading && (
+          <div className="graph-panel__refreshing">
+            <div /><div /><div />
+          </div>
+        )}
         {this.StaticGraphWithType}
       </div>
     )
@@ -192,6 +192,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
     const xAxisTitle = this.getAxisTitle('x', axes, queries)
     const yAxisTitle = this.getAxisTitle('y', axes, queries)
+    
     const xAxisTitleForScatterChart = this.getAxisTitleForScatterChart(
       'x',
       axes,
@@ -275,27 +276,6 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
           />
         )
       case CellType.StaticScatter:
-        const convertData: TimeSeriesSeries[] =
-          data[0]['response']['results'][0]['series']
-        const selectedFieldsLength = convertData[0].columns.filter(
-          key => !_.keys(convertData[0].tags).indexOf(key) || key !== 'time'
-        )
-        if (selectedFieldsLength.length < 2) {
-          return (
-            <InvalidQuery
-              message={'Please select two fields for the Scatter Chart.'}
-            />
-          )
-        }
-        if (convertData.length > 3000) {
-          return (
-            <InvalidQuery
-              message={
-                'The results of the query clause are too numerous to display. Please modify your query.'
-              }
-            />
-          )
-        }
         return (
           <ScatterChart
             axes={axes}
@@ -327,7 +307,6 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             decimalPlaces={decimalPlaces}
           />
         )
-
       case CellType.StaticLineChart:
         return (
           <LineChart
@@ -347,6 +326,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             yAxisTitle={yAxisTitle}
             showCount={showCount}
             decimalPlaces={decimalPlaces}
+            hideMaxMarker={this.props.hideMaxMarker}
           />
         )
       case CellType.StaticTableGaugeChart:
@@ -362,9 +342,10 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
           />
         )
       default:
-        break
+        return null
     }
   }
+
   private get style(): CSSProperties {
     return {height: '100%'}
   }
@@ -385,14 +366,12 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
     if (staticLegend) {
       const cellVerticalPadding = 16
-
       return {
         ...this.containerStyle,
         zIndex: 2,
         height: `calc(100% - ${staticLegendHeight + cellVerticalPadding}px)`,
       }
     }
-
     return {...this.containerStyle, zIndex: 2}
   }
 
@@ -403,14 +382,10 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
   ): string => {
     const label = getDeep<string>(axes, `${axis}.label`, '') || ''
     const queryConfig = getDeep(queries, '0.queryConfig', false)
-
     if (label || !queryConfig) {
       return label
     }
-
-    return axis === 'x'
-      ? buildScatterChartDefaultXLabel(queryConfig)
-      : buildScatterChartDefaultYLabel(queryConfig)
+    return axis === 'x' ? buildScatterChartDefaultXLabel(queryConfig) : buildScatterChartDefaultYLabel(queryConfig)
   }
 
   private getAxisTitle = (
@@ -420,38 +395,24 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
   ): string => {
     const label = getDeep<string>(axes, `${axis}.label`, '') || ''
     const queryConfig = getDeep(queries, '0.queryConfig', false)
-
     if (label || !queryConfig) {
       return label
     }
-
-    return axis === 'x'
-      ? buildDefaultXLabel(queryConfig)
-      : buildDefaultYLabel(queryConfig)
+    return axis === 'x' ? buildDefaultXLabel(queryConfig) : buildDefaultYLabel(queryConfig)
   }
 
   private getFieldOptionsWithGroupByTags = (
     queries: Query[],
     fieldOptions: StatisticalGraphFieldOption[]
   ): StatisticalGraphFieldOption[] => {
-    const groupByTags =
-      queries?.[0]?.groupbys || queries[0].queryConfig.groupBy.tags
-
+    const groupByTags = queries?.[0]?.groupbys || _.get(queries, '0.queryConfig.groupBy.tags', [])
     return fastMap(fieldOptions, fieldOption => {
-      const isGroupByTag = groupByTags.indexOf(fieldOption.internalName)
+      const isGroupByTag = (groupByTags || []).indexOf(fieldOption.internalName)
       return isGroupByTag !== -1
         ? {...fieldOption, groupByTagOrder: isGroupByTag}
         : fieldOption
     })
   }
 }
-
-const GraphLoadingDots = () => (
-  <div className="graph-panel__refreshing">
-    <div />
-    <div />
-    <div />
-  </div>
-)
 
 export default withRouter<Props>(StaticGraph)

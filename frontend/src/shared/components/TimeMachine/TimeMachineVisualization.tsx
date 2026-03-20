@@ -118,6 +118,7 @@ const TimeMachineVisualization: FunctionComponent<Props> = props => {
             cellNoteVisibility={props.noteVisibility}
             onUpdateFieldOptions={props.onUpdateFieldOptions}
             onUpdateVisType={props.onUpdateVisType}
+            hideMaxMarker={true}
           />
         </div>
       </div>
