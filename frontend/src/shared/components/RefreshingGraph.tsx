@@ -431,6 +431,7 @@ class RefreshingGraph extends Component<Props> {
       'staticLegendPosition',
       'graphOptions',
       'tableGaugeChartOptions',
+      'isShowSummaryOverlay',
     ]
 
     const prevVisValues = _.pick(prevProps, visProps)

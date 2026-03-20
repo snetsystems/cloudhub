@@ -111,6 +111,8 @@ export interface Cell {
   cellOrigin?: CellOriginValue
   /** When true, cell is hidden (e.g. fixed-cell "deleted" but kept for restore). */
   hidden?: boolean
+  /** When true, cell is shown as summary. */
+  isShowSummary?: boolean
 }
 
 /** Cell origin: builtin (system template) or user-created. Empty is treated as user. */

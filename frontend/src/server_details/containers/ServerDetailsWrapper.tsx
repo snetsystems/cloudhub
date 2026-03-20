@@ -341,7 +341,6 @@ function ServerDetailsWrapper(props) {
     <ServerDetailsPageContext.Provider value={contextValue}>
       <DashboardPageWithImport
         {...props}
-        isShowSummaryOverlay={true}
         pageTitle="Server Details"
         pageName={SERVER_DETAILS_PAGE_NAME}
         getTempVars={generateForHosts}

@@ -45,6 +45,7 @@ interface Props {
   onZoom: () => void
   onDeleteCell: (cell: Cell) => void
   onCloneCell: (cell: Cell) => void
+  onShowInformation: (cell: Cell) => void
   onSummonOverlayTechnologies: (cell: Cell) => void
   getExtraActionsForCell?: (
     cell: Cell
@@ -54,7 +55,6 @@ interface Props {
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   isUsingAnnotationViewer?: boolean
   annotationsViewMode?: AnnotationViewer[]
-  isShowSummaryOverlay?: boolean
 }
 
 interface State {
@@ -81,6 +81,7 @@ class Layout extends Component<Props, State> {
       onSummonOverlayTechnologies,
       getExtraActionsForCell,
       onCustomCellAction,
+      onShowInformation
     } = this.props
     const {cellData, cellFluxData} = this.state
 
@@ -96,6 +97,7 @@ class Layout extends Component<Props, State> {
         onDeleteCell={onDeleteCell}
         isFluxQuery={this.isFluxQuery}
         toggleVisType={this.toggleVisType}
+        onShowInformation={onShowInformation}
         onSummonOverlayTechnologies={onSummonOverlayTechnologies}
         getExtraActionsForCell={getExtraActionsForCell}
         onExtraAction={onCustomCellAction}
@@ -120,7 +122,6 @@ class Layout extends Component<Props, State> {
       templates,
       source,
       onPickTemplate,
-      isShowSummaryOverlay,
     } = this.props
     const {cellFluxData, visType} = this.state
     const showRawFluxData = visType === VisType.Table
@@ -153,7 +154,6 @@ class Layout extends Component<Props, State> {
         visType={this.visType}
         onPickTemplate={onPickTemplate}
         graphOptions={cell.graphOptions}
-        isShowSummaryOverlay={isShowSummaryOverlay}
         // isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
         // annotationsViewMode={this.props.annotationsViewMode}
       />
@@ -172,13 +172,11 @@ class Layout extends Component<Props, State> {
       templates,
       instance,
       onPickTemplate,
-      isShowSummaryOverlay,
     } = this.props
 
     if (cell.isWidget) {
       return <WidgetCell cell={cell} timeRange={timeRange} source={source} />
     }
-
     return (
       <RefreshingGraph
         onZoom={onZoom}
@@ -206,7 +204,7 @@ class Layout extends Component<Props, State> {
         isUsingAnnotationViewer={this.props.isUsingAnnotationViewer}
         annotationsViewMode={this.props.annotationsViewMode}
         tableGaugeChartOptions={cell.tableGaugeChartOptions}
-        isShowSummaryOverlay={isShowSummaryOverlay}
+        isShowSummaryOverlay={cell.isShowSummary}
       />
     )
   }

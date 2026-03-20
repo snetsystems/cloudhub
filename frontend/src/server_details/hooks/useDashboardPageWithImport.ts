@@ -45,6 +45,7 @@ export interface UseDashboardPageWithImportResult {
   onAddCell: (cell: Cell) => void
   onDeleteCell: (cell: Cell) => void
   onCloneCell: (cell: Cell) => void
+  onShowInformation: (cell: Cell) => void
   importModal: {
     isOpen: boolean
     setIsOpen: (value: boolean | ((prev: boolean) => boolean)) => void
@@ -125,6 +126,19 @@ export function useDashboardPageWithImport(
     cloneDashboardCellAsync(dashboard, cell)
   }
 
+  const onShowInformation = (cell: Cell) => {
+    if (!dashboard) return
+      const nextCells = cells.map(c => {
+      if (c.i === cell.i) {
+        return {
+          ...c,
+          isShowSummary: !c.isShowSummary,       }
+      }
+      return c
+    })
+     onPositionChange(nextCells)
+  }
+
   const onPositionChange = (newCells: Cell[]) => {
     if (!dashboard) return
     const newDashboard = {...dashboard, cells: newCells}
@@ -196,6 +210,7 @@ export function useDashboardPageWithImport(
     onAddCell,
     onDeleteCell,
     onCloneCell,
+    onShowInformation,
     importModal: {
       isOpen: isModalOpen,
       setIsOpen: setIsModalOpen,

@@ -46,6 +46,7 @@ export interface RenderCellContext {
   manualRefresh: number
   onDeleteCell?: (cell: Cell) => void
   onCloneCell?: (cell: Cell) => void
+  onShowInformation?: (cell: Cell) => void
   onSummonOverlayTechnologies?: (cell: Cell) => void
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   instance?: object
@@ -65,6 +66,7 @@ interface Props {
   onZoom?: () => void
   onCloneCell?: (cell: Cell) => void
   onDeleteCell?: (cell: Cell) => void
+  onShowInformation?: (cell: Cell) => void  
   onSummonOverlayTechnologies?: (cell: Cell) => void
   onPositionChange?: (cells: Cell[]) => void
   instance?: object
@@ -81,7 +83,6 @@ interface Props {
   getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
   /** Called when user clicks an injected extra action. */
   onCustomCellAction?: (cell: Cell, actionId: string) => void
-  isShowSummaryOverlay?: boolean
 }
 
 interface State {
@@ -121,11 +122,11 @@ class LayoutRenderer extends Component<Props, State> {
       manualRefresh,
       onDeleteCell,
       onCloneCell,
+      onShowInformation,
       onSummonOverlayTechnologies,
       instance,
       onPickTemplate,
       renderCell,
-      isShowSummaryOverlay = false,
       getExtraActionsForCell,
       onCustomCellAction,
     } = this.props
@@ -142,6 +143,7 @@ class LayoutRenderer extends Component<Props, State> {
       manualRefresh,
       onDeleteCell,
       onCloneCell,
+      onShowInformation,
       onSummonOverlayTechnologies,
       onPickTemplate,
       instance,
@@ -195,6 +197,7 @@ class LayoutRenderer extends Component<Props, State> {
                       isEditable={isEditable}
                       onDeleteCell={onDeleteCell}
                       onCloneCell={onCloneCell}
+                      onShowInformation={onShowInformation}
                       getExtraActionsForCell={getExtraActionsForCell}
                       onCustomCellAction={onCustomCellAction}
                       manualRefresh={manualRefresh}
@@ -205,9 +208,6 @@ class LayoutRenderer extends Component<Props, State> {
                         this.props.isUsingAnnotationViewer
                       }
                       annotationsViewMode={this.props.annotationsViewMode}
-                      isShowSummaryOverlay={shouldShowSummaryOverlay(
-                        isShowSummaryOverlay
-                      )}
                     />
                   )}
                 </Authorized>

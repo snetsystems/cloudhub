@@ -25,6 +25,7 @@ interface Props {
   toggleVisType: () => void
   getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
   onExtraAction?: (cell: Cell, actionId: string) => void
+  onShowInformation: (cell: Cell) => void
 }
 
 interface State {
@@ -137,6 +138,7 @@ class LayoutCellMenu extends Component<Props, State> {
       toggleVisType,
       visType,
       isFluxQuery,
+      onShowInformation
     } = this.props
 
     const visTypeItem = {
@@ -153,6 +155,11 @@ class LayoutCellMenu extends Component<Props, State> {
       {
         text: 'Configure',
         action: this.handleEditCell,
+        disabled: false,
+      },
+      onShowInformation && {
+        text: 'Show Information',
+        action: this.handleShowInformation,
         disabled: false,
       },
       {
@@ -186,6 +193,11 @@ class LayoutCellMenu extends Component<Props, State> {
   private handleEditCell = (): void => {
     const {onEdit} = this.props
     onEdit()
+  }
+
+  private handleShowInformation = (): void => {
+    const {onShowInformation, cell} = this.props
+    onShowInformation(cell)
   }
 
   private handleDeleteCell = (): void => {

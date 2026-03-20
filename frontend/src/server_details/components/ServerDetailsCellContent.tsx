@@ -327,6 +327,7 @@ export function ServerDetailsCellContent({
                     }
                     instance={layoutContext.instance}
                     onPickTemplate={layoutContext.onPickTemplate}
+                    onShowInformation={layoutContext.onShowInformation ?? (() => {})}
                   />
                 ) : (
                   'No data.'

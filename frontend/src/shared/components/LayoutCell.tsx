@@ -42,6 +42,7 @@ interface Props {
   toggleVisType: () => void
   getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
   onExtraAction?: (cell: Cell, actionId: string) => void
+  onShowInformation?: (cell: Cell) => void
 }
 
 @ErrorHandling
@@ -60,6 +61,7 @@ export default class LayoutCell extends Component<Props> {
       visType,
       toggleVisType,
       isFluxQuery,
+      onShowInformation
     } = this.props
 
     return (
@@ -80,6 +82,7 @@ export default class LayoutCell extends Component<Props> {
               toggleVisType={toggleVisType}
               getExtraActionsForCell={this.props.getExtraActionsForCell}
               onExtraAction={this.props.onExtraAction}
+              onShowInformation={onShowInformation}
             />
           </Authorized>
           <LayoutCellNote

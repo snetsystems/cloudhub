@@ -113,8 +113,7 @@ export interface DashboardPageWithImportConfig {
   /** Optional: return extra action buttons per cell (frontend-only, no backend). */
   getExtraActionsForCell?: (cell: Cell) => DashboardsModels.CellExtraAction[]
   /** Called when user clicks an injected extra action. */
-  onCustomCellAction?: (cell: Cell, actionId: string) => void
-  isShowSummaryOverlay?: boolean
+  onCustomCellAction?: (cell: Cell, actionId: string) => void  
 }
 
 export interface DashboardPageWithImportProps
@@ -176,8 +175,7 @@ function DashboardPageWithImport({
   requiredTemplateVars,
   templateSelectionContext,
   getExtraActionsForCell,
-  onCustomCellAction,
-  isShowSummaryOverlay,
+  onCustomCellAction,  
   source,
   sources,
   inPresentationMode,
@@ -246,6 +244,7 @@ function DashboardPageWithImport({
     onPositionChange,
     onDeleteCell,
     onCloneCell,
+    onShowInformation,
     importModal,
   } = useDashboardPageWithImport({
     pageName,
@@ -560,6 +559,7 @@ function DashboardPageWithImport({
                 manualRefresh={effectiveManualRefresh}
                 onDeleteCell={onDeleteCell}
                 onCloneCell={onCloneCell}
+                onShowInformation={onShowInformation}
                 getExtraActionsForCell={getExtraActionsForCell}
                 onCustomCellAction={onCustomCellAction}
                 onPositionChange={onPositionChange}
@@ -568,7 +568,6 @@ function DashboardPageWithImport({
                 host={source.name}
                 renderCell={renderCell}
                 draggableCancel={draggableCancel}
-                isShowSummaryOverlay={isShowSummaryOverlay}
               />
             ) : (
               <PageSpinner customClass={`${pageClassName}-spinner`} />
