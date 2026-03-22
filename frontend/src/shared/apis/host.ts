@@ -63,18 +63,9 @@ export interface Host {
   createdAt: string
 }
 
-export async function registerHost(payload: HostRegistrationPayload): Promise<Host> {
-  const {data} = await AJAX({
-    url: '/cloudhub/v1/hosts',
-    method: 'POST',
-    data: payload,
-  })
-  return data as Host
-}
-
 export async function getHosts(): Promise<Host[]> {
   const {data} = await AJAX({
-    url: '/cloudhub/v1/hosts',
+    url: '/cloudhub/v2/hosts',
     method: 'GET',
   })
   return data as Host[]
@@ -82,8 +73,17 @@ export async function getHosts(): Promise<Host[]> {
 
 export async function getHostByHostname(hostname: string): Promise<Host> {
   const {data} = await AJAX({
-    url: `/cloudhub/v1/hosts?hostname=${encodeURIComponent(hostname)}`,
+    url: `/cloudhub/v2/hosts/${encodeURIComponent(hostname)}`,
     method: 'GET',
+  })
+  return data as Host
+}
+
+export async function registerHost(payload: HostRegistrationPayload): Promise<Host> {
+  const {data} = await AJAX({
+    url: '/cloudhub/v2/hosts',
+    method: 'POST',
+    data: payload,
   })
   return data as Host
 }
@@ -93,9 +93,9 @@ export interface HostPatch {
   orgId?: string
 }
 
-export async function patchHost(minionId: string, patch: HostPatch): Promise<Host> {
+export async function patchHost(hostname: string, patch: HostPatch): Promise<Host> {
   const {data} = await AJAX({
-    url: `/cloudhub/v1/hosts/${encodeURIComponent(minionId)}`,
+    url: `/cloudhub/v2/hosts/${encodeURIComponent(hostname)}`,
     method: 'PATCH',
     data: patch,
   })
@@ -103,20 +103,20 @@ export async function patchHost(minionId: string, patch: HostPatch): Promise<Hos
 }
 
 export async function updateHost(
-  minionId: string,
+  hostname: string,
   payload: Partial<HostRegistrationPayload>
 ): Promise<Host> {
   const {data} = await AJAX({
-    url: `/cloudhub/v1/hosts/${encodeURIComponent(minionId)}`,
+    url: `/cloudhub/v2/hosts/${encodeURIComponent(hostname)}`,
     method: 'PUT',
     data: payload,
   })
   return data as Host
 }
 
-export async function deleteHost(minionId: string): Promise<void> {
+export async function deleteHost(hostname: string): Promise<void> {
   await AJAX({
-    url: `/cloudhub/v1/hosts/${encodeURIComponent(minionId)}`,
+    url: `/cloudhub/v2/hosts/${encodeURIComponent(hostname)}`,
     method: 'DELETE',
   })
 }

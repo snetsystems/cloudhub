@@ -310,7 +310,7 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 	return hosts, nil
 }
 
-// Update modifies mutable fields of an active host identified by MinionID.
+// Update modifies mutable fields of an active host identified by Hostname.
 func (s *HostStore) Update(ctx context.Context, h *cloudhub.Host) (*cloudhub.Host, error) {
 	h.UpdatedAt = time.Now()
 
@@ -328,7 +328,7 @@ func (s *HostStore) Update(ctx context.Context, h *cloudhub.Host) (*cloudhub.Hos
 	err := s.client.WithTx(ctx, func(ctx context.Context, tx rdb.Store) error {
 		const query = `
 UPDATE hosts SET
-    hostname      = $2,
+    minion_id     = $2,
     ip            = $3,
     os            = $4,
     os_family     = $5,
@@ -344,10 +344,10 @@ UPDATE hosts SET
     org_id        = $15,
     status        = $16,
     updated_at    = $17
-WHERE minion_id = $1 AND delete_yn = false`
+WHERE hostname = $1 AND delete_yn = false`
 
 		result, err := tx.ExecContext(ctx, query,
-			nilIfEmpty(h.MinionID), h.Hostname, h.IP,
+			h.Hostname, nilIfEmpty(h.MinionID), h.IP,
 			h.OS, h.OSFamily, h.OSVersion, h.Kernel, h.Arch,
 			h.MemTotalKB, h.SwapTotalKB, h.CPUCores, h.CPUModel, h.BIOSVersion,
 			h.SourceType, h.OrgID, h.Status, h.UpdatedAt,
@@ -360,42 +360,42 @@ WHERE minion_id = $1 AND delete_yn = false`
 		}
 
 		if _, err := tx.ExecContext(ctx,
-			`DELETE FROM host_ip_interfaces WHERE host_id = (SELECT id FROM hosts WHERE minion_id = $1 AND delete_yn = false)`, nilIfEmpty(h.MinionID),
+			`DELETE FROM host_ip_interfaces WHERE host_id = (SELECT id FROM hosts WHERE hostname = $1 AND delete_yn = false)`, h.Hostname,
 		); err != nil {
 			return fmt.Errorf("hosts update delete ip_interfaces: %w", err)
 		}
 		for _, iface := range h.IPInterfaces {
 			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO host_ip_interfaces (host_id, interface_name, ip_address) SELECT id, $2, $3 FROM hosts WHERE minion_id = $1 AND delete_yn = false`,
-				nilIfEmpty(h.MinionID), iface.InterfaceName, iface.IPAddress,
+				`INSERT INTO host_ip_interfaces (host_id, interface_name, ip_address) SELECT id, $2, $3 FROM hosts WHERE hostname = $1 AND delete_yn = false`,
+				h.Hostname, iface.InterfaceName, iface.IPAddress,
 			); err != nil {
 				return fmt.Errorf("hosts update insert ip_interface: %w", err)
 			}
 		}
 
 		if _, err := tx.ExecContext(ctx,
-			`DELETE FROM host_disks WHERE host_id = (SELECT id FROM hosts WHERE minion_id = $1 AND delete_yn = false)`, nilIfEmpty(h.MinionID),
+			`DELETE FROM host_disks WHERE host_id = (SELECT id FROM hosts WHERE hostname = $1 AND delete_yn = false)`, h.Hostname,
 		); err != nil {
 			return fmt.Errorf("hosts update delete disks: %w", err)
 		}
 		for _, disk := range h.Disks {
 			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO host_disks (host_id, device, mount_point) SELECT id, $2, $3 FROM hosts WHERE minion_id = $1 AND delete_yn = false`,
-				nilIfEmpty(h.MinionID), disk.Device, disk.MountPoint,
+				`INSERT INTO host_disks (host_id, device, mount_point) SELECT id, $2, $3 FROM hosts WHERE hostname = $1 AND delete_yn = false`,
+				h.Hostname, disk.Device, disk.MountPoint,
 			); err != nil {
 				return fmt.Errorf("hosts update insert disk: %w", err)
 			}
 		}
 
 		if _, err := tx.ExecContext(ctx,
-			`DELETE FROM host_gpus WHERE host_id = (SELECT id FROM hosts WHERE minion_id = $1 AND delete_yn = false)`, nilIfEmpty(h.MinionID),
+			`DELETE FROM host_gpus WHERE host_id = (SELECT id FROM hosts WHERE hostname = $1 AND delete_yn = false)`, h.Hostname,
 		); err != nil {
 			return fmt.Errorf("hosts update delete gpus: %w", err)
 		}
 		for _, gpu := range h.GPUs {
 			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO host_gpus (host_id, vendor, model) SELECT id, $2, $3 FROM hosts WHERE minion_id = $1 AND delete_yn = false`,
-				nilIfEmpty(h.MinionID), gpu.Vendor, gpu.Model,
+				`INSERT INTO host_gpus (host_id, vendor, model) SELECT id, $2, $3 FROM hosts WHERE hostname = $1 AND delete_yn = false`,
+				h.Hostname, gpu.Vendor, gpu.Model,
 			); err != nil {
 				return fmt.Errorf("hosts update insert gpu: %w", err)
 			}
@@ -409,10 +409,10 @@ WHERE minion_id = $1 AND delete_yn = false`
 	return h, nil
 }
 
-// Patch applies a partial update to an active host identified by minionID.
-func (s *HostStore) Patch(ctx context.Context, minionID string, patch cloudhub.HostPatch) (*cloudhub.Host, error) {
+// Patch applies a partial update to an active host identified by hostname.
+func (s *HostStore) Patch(ctx context.Context, hostname string, patch cloudhub.HostPatch) (*cloudhub.Host, error) {
 	if patch.Status == nil && patch.OrgID == nil {
-		return s.Get(ctx, cloudhub.HostQuery{MinionID: &minionID})
+		return s.Get(ctx, cloudhub.HostQuery{Hostname: &hostname})
 	}
 
 	now := time.Now()
@@ -421,24 +421,24 @@ UPDATE hosts SET
     status     = COALESCE($2, status),
     org_id     = COALESCE($3, org_id),
     updated_at = $4
-WHERE minion_id = $1 AND delete_yn = false`
+WHERE hostname = $1 AND delete_yn = false`
 
-	result, err := s.client.ExecContext(ctx, query, nilIfEmpty(minionID), patch.Status, patch.OrgID, now)
+	result, err := s.client.ExecContext(ctx, query, hostname, patch.Status, patch.OrgID, now)
 	if err != nil {
 		return nil, fmt.Errorf("hosts patch: %w", err)
 	}
 	if result.RowsAffected() == 0 {
 		return nil, cloudhub.ErrHostNotFound
 	}
-	return s.Get(ctx, cloudhub.HostQuery{MinionID: &minionID})
+	return s.Get(ctx, cloudhub.HostQuery{Hostname: &hostname})
 }
 
-// Delete soft-deletes the active host with the given minionID.
-func (s *HostStore) Delete(ctx context.Context, minionID string) error {
+// Delete soft-deletes the active host with the given hostname.
+func (s *HostStore) Delete(ctx context.Context, hostname string) error {
 	const query = `
 UPDATE hosts SET delete_yn = true, updated_at = now()
-WHERE minion_id = $1 AND delete_yn = false`
-	result, err := s.client.ExecContext(ctx, query, minionID)
+WHERE hostname = $1 AND delete_yn = false`
+	result, err := s.client.ExecContext(ctx, query, hostname)
 	if err != nil {
 		return fmt.Errorf("hosts delete: %w", err)
 	}

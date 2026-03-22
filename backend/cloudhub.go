@@ -1883,6 +1883,6 @@ type HostStore interface {
 	Add(ctx context.Context, h *Host) (*Host, error)
 	Get(ctx context.Context, q HostQuery) (*Host, error)
 	Update(ctx context.Context, h *Host) (*Host, error)
-	Patch(ctx context.Context, minionID string, patch HostPatch) (*Host, error)
-	Delete(ctx context.Context, minionID string) error
+	Patch(ctx context.Context, hostname string, patch HostPatch) (*Host, error)
+	Delete(ctx context.Context, hostname string) error
 }

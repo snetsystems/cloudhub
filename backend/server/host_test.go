@@ -96,7 +96,7 @@ func TestToHostResponse_FilterPrivateIPs(t *testing.T) {
 	if resp.ID != "host-1" || resp.MinionID != "minion-001" || resp.Hostname != "server-01" {
 		t.Errorf("unexpected basic fields: %+v", resp)
 	}
-	if resp.Links.Self != "/cloudhub/v1/hosts" {
+	if resp.Links.Self != "/cloudhub/v2/hosts/server-01" {
 		t.Errorf("unexpected links: %+v", resp.Links)
 	}
 }
@@ -108,8 +108,8 @@ type mockHostStore struct {
 	GetFn    func(ctx context.Context, q cloudhub.HostQuery) (*cloudhub.Host, error)
 	AllFn    func(ctx context.Context) ([]cloudhub.Host, error)
 	UpdateFn func(ctx context.Context, h *cloudhub.Host) (*cloudhub.Host, error)
-	PatchFn  func(ctx context.Context, minionID string, patch cloudhub.HostPatch) (*cloudhub.Host, error)
-	DeleteFn func(ctx context.Context, minionID string) error
+	PatchFn  func(ctx context.Context, hostname string, patch cloudhub.HostPatch) (*cloudhub.Host, error)
+	DeleteFn func(ctx context.Context, hostname string) error
 }
 
 func (m *mockHostStore) Add(ctx context.Context, h *cloudhub.Host) (*cloudhub.Host, error) {
@@ -124,11 +124,11 @@ func (m *mockHostStore) All(ctx context.Context) ([]cloudhub.Host, error) {
 func (m *mockHostStore) Update(ctx context.Context, h *cloudhub.Host) (*cloudhub.Host, error) {
 	return m.UpdateFn(ctx, h)
 }
-func (m *mockHostStore) Patch(ctx context.Context, minionID string, patch cloudhub.HostPatch) (*cloudhub.Host, error) {
-	return m.PatchFn(ctx, minionID, patch)
+func (m *mockHostStore) Patch(ctx context.Context, hostname string, patch cloudhub.HostPatch) (*cloudhub.Host, error) {
+	return m.PatchFn(ctx, hostname, patch)
 }
-func (m *mockHostStore) Delete(ctx context.Context, minionID string) error {
-	return m.DeleteFn(ctx, minionID)
+func (m *mockHostStore) Delete(ctx context.Context, hostname string) error {
+	return m.DeleteFn(ctx, hostname)
 }
 
 func newServiceWithHostStore(hs cloudhub.HostStore) *Service {
@@ -149,9 +149,9 @@ func TestPatchHost_Success(t *testing.T) {
 	}
 
 	svc := newServiceWithHostStore(&mockHostStore{
-		PatchFn: func(_ context.Context, minionID string, patch cloudhub.HostPatch) (*cloudhub.Host, error) {
-			if minionID != "minion-001" {
-				t.Errorf("unexpected minionID: %s", minionID)
+		PatchFn: func(_ context.Context, hostname string, patch cloudhub.HostPatch) (*cloudhub.Host, error) {
+			if hostname != "server-01" {
+				t.Errorf("unexpected hostname: %s", hostname)
 			}
 			if patch.Status == nil || *patch.Status != "rejected" {
 				t.Errorf("unexpected patch status: %v", patch.Status)
@@ -161,9 +161,9 @@ func TestPatchHost_Success(t *testing.T) {
 	})
 
 	body, _ := json.Marshal(map[string]string{"status": status})
-	req := httptest.NewRequest(http.MethodPatch, "/cloudhub/v1/hosts/minion-001", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPatch, "/cloudhub/v2/hosts/server-01", bytes.NewReader(body))
 	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
-		{Key: "minionId", Value: "minion-001"},
+		{Key: "hostname", Value: "server-01"},
 	}))
 	rr := httptest.NewRecorder()
 
@@ -190,9 +190,9 @@ func TestPatchHost_NotFound(t *testing.T) {
 	})
 
 	body, _ := json.Marshal(map[string]string{"status": "rejected"})
-	req := httptest.NewRequest(http.MethodPatch, "/cloudhub/v1/hosts/ghost", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPatch, "/cloudhub/v2/hosts/ghost", bytes.NewReader(body))
 	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
-		{Key: "minionId", Value: "ghost"},
+		{Key: "hostname", Value: "ghost"},
 	}))
 	rr := httptest.NewRecorder()
 
@@ -207,9 +207,9 @@ func TestPatchHost_InvalidStatus(t *testing.T) {
 	svc := newServiceWithHostStore(&mockHostStore{})
 
 	body, _ := json.Marshal(map[string]string{"status": "unknown"})
-	req := httptest.NewRequest(http.MethodPatch, "/cloudhub/v1/hosts/minion-001", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPatch, "/cloudhub/v2/hosts/server-01", bytes.NewReader(body))
 	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
-		{Key: "minionId", Value: "minion-001"},
+		{Key: "hostname", Value: "server-01"},
 	}))
 	rr := httptest.NewRecorder()
 
@@ -231,9 +231,9 @@ func TestUpdateHost_NotFound(t *testing.T) {
 		"hostname": "new-host",
 		"status":   "accepted",
 	})
-	req := httptest.NewRequest(http.MethodPut, "/cloudhub/v1/hosts/minion-001", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPut, "/cloudhub/v2/hosts/server-01", bytes.NewReader(body))
 	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
-		{Key: "minionId", Value: "minion-001"},
+		{Key: "hostname", Value: "server-01"},
 	}))
 	rr := httptest.NewRecorder()
 
@@ -248,7 +248,7 @@ func TestRegisterHost_MissingHostname(t *testing.T) {
 	svc := newServiceWithHostStore(&mockHostStore{})
 
 	body, _ := json.Marshal(map[string]string{"minionId": "minion-001"})
-	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v1/hosts", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/hosts", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
 
 	svc.RegisterHost(rr, req)

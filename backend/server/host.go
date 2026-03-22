@@ -139,27 +139,13 @@ func toHostResponse(h cloudhub.Host) hostResponse {
 		Status:       h.Status,
 		CreatedAt:   h.CreatedAt,
 		UpdatedAt:    h.UpdatedAt,
-		Links:        selfLinks{Self: "/cloudhub/v1/hosts"},
+		Links:        selfLinks{Self: fmt.Sprintf("/cloudhub/v2/hosts/%s", h.Hostname)},
 	}
 }
 
-// GetHosts returns all registered hosts, or a single host if ?hostname= is provided.
+// GetHosts returns all registered hosts.
 func (s *Service) GetHosts(w http.ResponseWriter, r *http.Request) {
 	ctx := serverContext(r.Context())
-
-	if hostname := r.URL.Query().Get("hostname"); hostname != "" {
-		host, err := s.Store.Hosts(ctx).Get(ctx, cloudhub.HostQuery{Hostname: &hostname})
-		if err != nil {
-			if err == cloudhub.ErrHostNotFound {
-				notFound(w, hostname, s.Logger)
-				return
-			}
-			internalServerError(w, err, s.Logger)
-			return
-		}
-		encodeJSON(w, http.StatusOK, toHostResponse(*host), s.Logger)
-		return
-	}
 
 	all, err := s.Store.Hosts(ctx).All(ctx)
 	if err != nil {
@@ -172,6 +158,27 @@ func (s *Service) GetHosts(w http.ResponseWriter, r *http.Request) {
 		resp = append(resp, toHostResponse(h))
 	}
 	encodeJSON(w, http.StatusOK, resp, s.Logger)
+}
+
+// GetHost returns a single registered host by hostname.
+func (s *Service) GetHost(w http.ResponseWriter, r *http.Request) {
+	hostname := httprouter.GetParamFromContext(r.Context(), "hostname")
+	ctx := serverContext(r.Context())
+	if hostname == "" {
+		invalidData(w, fmt.Errorf("hostname is required"), s.Logger)
+		return
+	}
+
+	host, err := s.Store.Hosts(ctx).Get(ctx, cloudhub.HostQuery{Hostname: &hostname})
+	if err != nil {
+		if err == cloudhub.ErrHostNotFound {
+			notFound(w, hostname, s.Logger)
+			return
+		}
+		internalServerError(w, err, s.Logger)
+		return
+	}
+	encodeJSON(w, http.StatusOK, toHostResponse(*host), s.Logger)
 }
 
 // RegisterHost creates a new host record from a minion accept event.
@@ -229,12 +236,12 @@ func (s *Service) RegisterHost(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusCreated, toHostResponse(*created), s.Logger)
 }
 
-// UpdateHost updates mutable fields of an existing host by minionId.
+// UpdateHost updates mutable fields of an existing host by hostname.
 func (s *Service) UpdateHost(w http.ResponseWriter, r *http.Request) {
-	minionID := httprouter.GetParamFromContext(r.Context(), "minionId")
+	hostname := httprouter.GetParamFromContext(r.Context(), "hostname")
 	ctx := serverContext(r.Context())
-	if minionID == "" {
-		invalidData(w, fmt.Errorf("minionId is required"), s.Logger)
+	if hostname == "" {
+		invalidData(w, fmt.Errorf("hostname is required"), s.Logger)
 		return
 	}
 
@@ -250,8 +257,8 @@ func (s *Service) UpdateHost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	host := &cloudhub.Host{
-		MinionID:     minionID,
-		Hostname:     req.Hostname,
+		MinionID:     req.MinionID,
+		Hostname:     hostname,
 		IPInterfaces: req.IPInterfaces,
 		OS:           req.OS,
 		OSFamily:     req.OSFamily,
@@ -272,7 +279,7 @@ func (s *Service) UpdateHost(w http.ResponseWriter, r *http.Request) {
 	updated, err := s.Store.Hosts(ctx).Update(ctx, host)
 	if err != nil {
 		if err == cloudhub.ErrHostNotFound {
-			notFound(w, minionID, s.Logger)
+			notFound(w, hostname, s.Logger)
 			return
 		}
 		internalServerError(w, err, s.Logger)
@@ -282,12 +289,12 @@ func (s *Service) UpdateHost(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, toHostResponse(*updated), s.Logger)
 }
 
-// PatchHost applies a partial update to an existing host by minionId.
+// PatchHost applies a partial update to an existing host by hostname.
 func (s *Service) PatchHost(w http.ResponseWriter, r *http.Request) {
-	minionID := httprouter.GetParamFromContext(r.Context(), "minionId")
+	hostname := httprouter.GetParamFromContext(r.Context(), "hostname")
 	ctx := serverContext(r.Context())
-	if minionID == "" {
-		invalidData(w, fmt.Errorf("minionId is required"), s.Logger)
+	if hostname == "" {
+		invalidData(w, fmt.Errorf("hostname is required"), s.Logger)
 		return
 	}
 
@@ -302,10 +309,10 @@ func (s *Service) PatchHost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updated, err := s.Store.Hosts(ctx).Patch(ctx, minionID, patch)
+	updated, err := s.Store.Hosts(ctx).Patch(ctx, hostname, patch)
 	if err != nil {
 		if err == cloudhub.ErrHostNotFound {
-			notFound(w, minionID, s.Logger)
+			notFound(w, hostname, s.Logger)
 			return
 		}
 		internalServerError(w, err, s.Logger)
@@ -315,18 +322,18 @@ func (s *Service) PatchHost(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, toHostResponse(*updated), s.Logger)
 }
 
-// DeleteHost removes a host by minionId.
+// DeleteHost removes a host by hostname.
 func (s *Service) DeleteHost(w http.ResponseWriter, r *http.Request) {
-	minionID := httprouter.GetParamFromContext(r.Context(), "minionId")
+	hostname := httprouter.GetParamFromContext(r.Context(), "hostname")
 	ctx := serverContext(r.Context())
-	if minionID == "" {
-		invalidData(w, fmt.Errorf("minionId is required"), s.Logger)
+	if hostname == "" {
+		invalidData(w, fmt.Errorf("hostname is required"), s.Logger)
 		return
 	}
 
-	if err := s.Store.Hosts(ctx).Delete(ctx, minionID); err != nil {
+	if err := s.Store.Hosts(ctx).Delete(ctx, hostname); err != nil {
 		if err == cloudhub.ErrHostNotFound {
-			notFound(w, minionID, s.Logger)
+			notFound(w, hostname, s.Logger)
 			return
 		}
 		internalServerError(w, err, s.Logger)
