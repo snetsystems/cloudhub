@@ -119,6 +119,14 @@ $dash-graph-options-arrow: 8px;
   .graph-panel__refreshing {
     top: (-$dash-graph-heading + 5px) !important;
   }
+
+  &.no-summary {
+    margin-top: 0;
+  }
+
+  &.no-summary-with-marker {
+    margin-top: 20px;
+  }
 }
 
 .cell-summary-wrapper {
@@ -131,6 +139,7 @@ $dash-graph-options-arrow: 8px;
     flex: 1;
     min-height: 0;
     position: relative;
+    margin-top: 20px;
   }
 }
 
