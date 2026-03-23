@@ -13,7 +13,7 @@ const handleProxyError = err => {
   }
 }
 
-const proxyMiddleware = proxy('/cloudhub/v1', {
+const proxyMiddleware = proxy(['/cloudhub/v1', '/cloudhub/v2'], {
   target: 'http://localhost:8888',
   logLevel: 'silent',
   changeOrigin: true,

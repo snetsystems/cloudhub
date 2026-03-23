@@ -518,12 +518,12 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.PATCH("/cloudhub/v1/cell-library/:id", EnsureEditor(service.PatchLibraryCell))
 
 	// Host management
-	router.GET("/cloudhub/v2/hosts", EnsureViewer(service.GetHosts))
-	router.GET("/cloudhub/v2/hosts/:hostname", EnsureViewer(service.GetHost))
-	router.POST("/cloudhub/v2/hosts", EnsureAdmin(service.RegisterHost))
-	router.PUT("/cloudhub/v2/hosts/:hostname", EnsureAdmin(service.UpdateHost))
-	router.PATCH("/cloudhub/v2/hosts/:hostname", EnsureAdmin(service.PatchHost))
-	router.DELETE("/cloudhub/v2/hosts/:hostname", EnsureAdmin(service.DeleteHost))
+	router.GET("/cloudhub/v1/hosts", EnsureViewer(service.GetHosts))
+	router.GET("/cloudhub/v1/hosts/:hostname", EnsureViewer(service.GetHost))
+	router.POST("/cloudhub/v1/hosts", EnsureAdmin(service.RegisterHost))
+	router.PUT("/cloudhub/v1/hosts/:hostname", EnsureAdmin(service.UpdateHost))
+	router.PATCH("/cloudhub/v1/hosts/:hostname", EnsureAdmin(service.PatchHost))
+	router.DELETE("/cloudhub/v1/hosts/:hostname", EnsureAdmin(service.DeleteHost))
 
 	// Kubernetes API Proxy
 	kubernetes := http.HandlerFunc(service.KubernetesProxy)
