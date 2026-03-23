@@ -20,12 +20,14 @@ import ProcessLineChartTable from 'src/server_details/components/ProcessLineChar
 import ProcessDetailModal from 'src/server_details/components/ProcessDetailModal'
 import UsageDetailModal, {
   type UsageDetailType,
+  type DetailQuery,
 } from 'src/server_details/components/UsageDetailModal'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {
   ServerDetailsCellContent,
+  ServerDetailsSummaryCellContent,
   ServerDetailsPageContext,
   type ServerDetailsPageContextValue,
 } from 'src/server_details/components/ServerDetailsCellContent'
@@ -202,69 +204,6 @@ function ProcessCellContent({
   )
 }
 
-function ServerDetailsSummaryCellContent({
-  cell,
-  context,
-}: {
-  cell: Cell
-  context: RenderCellContext
-}) {
-  const [contextOpen, setContextOpen] = useState(false)
-  const Item = ({ label, value, icon }: { label: string, value: string, icon?: boolean }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-      <span style={{ fontWeight: 'bold' }}>{label}</span>
-      {icon && <span className="icon info-sign" style={{ opacity: 0.6, fontSize: '12px', cursor: 'help' }} />}
-      <span>{value}</span>
-    </div>
-  )
-
-  return (
-    <div className="server-details-cell-content">
-      <div className="dash-graph--draggable dash-graph--heading dash-graph--heading-draggable server-details-cell-header">
-        <span className="dash-graph--name server-details-cell-header-name">
-          {cell.name}
-        </span>
-        <div className="server-details-cell-drag-handle">
-          <div className="dash-graph--heading-bar" />
-          <div className="dash-graph--heading-dragger" />
-        </div>
-      </div>
-      {context?.onDeleteCell && (
-        <div
-          className={classnames('dash-graph-context', {
-            'dash-graph-context__open': contextOpen,
-          })}
-          onMouseDown={e => e.stopPropagation()}
-        >
-          <div className="dash-graph-context--buttons">
-            <Authorized requiredRole={EDITOR_ROLE}>
-              <MenuTooltipButton
-                icon="trash"
-                theme="danger"
-                menuItems={[
-                  {
-                    text: 'Confirm',
-                    action: () => context.onDeleteCell(cell),
-                    disabled: false,
-                  },
-                ]}
-                informParent={() => setContextOpen(prev => !prev)}
-              />
-            </Authorized>
-          </div>
-        </div>
-      )}
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', padding: '0 16px', height: '100%', gap: '24px', flexWrap: 'nowrap', overflowX: 'auto', whiteSpace: 'nowrap' }}>
-        <Item label="IP 주소" value="123.37.31.53..." />
-        <Item label="운영체제" value="linux" />
-        <Item label="CPU 코어" value="2" />
-        <Item label="Memory Total" value="3.9 GB" />
-        <Item label="Disk Total" value="97.94 GiB" icon={true} />
-        <Item label="OS 버전" value="CentOS Linux release 7.8.2003 (Core)" />
-      </div>
-    </div>
-  )
-}
 
 function ServerDetailsWrapper(props) {
   const hostFromUrl = useMemo(() => {
@@ -280,6 +219,7 @@ function ServerDetailsWrapper(props) {
   const [usageDetailState, setUsageDetailState] = useState<{
     isOpen: boolean
     detailType: UsageDetailType | null
+    detailQueries?: DetailQuery[]
   }>({
     isOpen: false,
     detailType: null,
@@ -305,11 +245,12 @@ function ServerDetailsWrapper(props) {
   const openUsageDetail = (cell: Cell) => {
     const detailType = mapCellIdToUsageDetailType(cell?.i)
     if (!detailType) return
-    setUsageDetailState({isOpen: true, detailType})
+    const detailQueries = (cell as any).detailQueries
+    setUsageDetailState({isOpen: true, detailType, detailQueries})
   }
 
   const handleCloseUsageDetail = () => {
-    setUsageDetailState(prev => ({...prev, isOpen: false}))
+    setUsageDetailState(prev => ({...prev, isOpen: false, detailQueries: undefined}))
   }
 
   const getExtraActionsForCell = (cell: Cell) => {
@@ -401,6 +342,7 @@ function ServerDetailsWrapper(props) {
           source: props.source ?? null,
           addons: props.addons,
           timeRange: props.cloudTimeRange?.hostDetails ?? props.cloudTimeRange?.default,
+          detailQueries: usageDetailState.detailQueries,
         }}
       />
     </ServerDetailsPageContext.Provider>

@@ -60,6 +60,7 @@ export enum QueryType {
 // corresponds to DashboardQuery on the backend
 export interface CellQuery {
   query: string
+  label?: string
   queryConfig: QueryConfig
   source: string
   text?: string // doesn't come from server
@@ -114,7 +115,10 @@ export interface Cell {
   /** When true, cell is shown as summary. */
   isShowSummary?: boolean
   /** Detail queries for cell detail view */
-  detailQueries?: CellQuery[]
+  detailQueries?: Array<{
+    query: string
+    label: string
+  }>
 }
 
 /** Cell origin: builtin (system template) or user-created. Empty is treated as user. */

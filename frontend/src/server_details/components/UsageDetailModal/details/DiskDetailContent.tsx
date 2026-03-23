@@ -93,8 +93,7 @@ const DISK_DETAIL_CHART_OPTIONS = {
   },
 }
 
-const BYTES_PER_GIB = 1073741824
-const BYTES_PER_MIB = 1048576
+// Constants removed as they are now handled in the backend queries
 
 const DISK_Y_AXIS = {
   ...FULL_DEFAULT_AXIS,
@@ -103,61 +102,7 @@ const DISK_Y_AXIS = {
   avoidScientificNotation: true,
 }
 
-const BLOCK_QUERIES: Record<string, string> = {
-  'disk-1': `SELECT non_negative_derivative(max("io_time"), 1s)/10 AS "io_percent"
-FROM ":db:".":rp:"."diskio"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY "name", time(:interval:)
-FILL(null)`,
-
-  'disk-2': `SELECT non_negative_derivative(max("reads"), 1s) AS "read_iops", non_negative_derivative(max("writes"), 1s) AS "write_iops"
-FROM ":db:".":rp:"."diskio"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY "name", time(:interval:)
-FILL(null)`,
-
-  'disk-3': `SELECT non_negative_derivative(max("read_bytes"), 1s)/${BYTES_PER_MIB} AS "read_mib_per_s", non_negative_derivative(max("write_bytes"), 1s)/${BYTES_PER_MIB} AS "write_mib_per_s"
-FROM ":db:".":rp:"."diskio"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY "name", time(:interval:)
-FILL(null)`,
-
-  'disk-4': `SELECT max("used_percent") AS "used_percent"
-FROM ":db:".":rp:"."disk"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY "path", time(:interval:)
-FILL(null)`,
-
-  'disk-5': `SELECT max("used")/${BYTES_PER_GIB} AS "used_gib"
-FROM ":db:".":rp:"."disk"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY "path", time(:interval:)
-FILL(null)`,
-
-  'disk-6': `SELECT max("iops_in_progress") AS "queue_length"
-FROM ":db:".":rp:"."diskio"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY "name", time(:interval:)
-FILL(null)`,
-
-  'disk-7': `SELECT max("inodes_used_percent") AS "inode_used_percent"
-FROM ":db:".":rp:"."disk"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY "path", time(:interval:)
-FILL(null)`,
-
-  'disk-8': `SELECT 100 - max("used_percent") AS "free_percent"
-FROM ":db:".":rp:"."disk"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY "path", time(:interval:)
-FILL(null)`,
-
-  'disk-9': `SELECT max("free")/${BYTES_PER_GIB} AS "free_gib"
-FROM ":db:".":rp:"."disk"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY "path", time(:interval:)
-FILL(null)`,
-}
+// Queries are now fetched from the backend (server-details.json)
 
 const DISK_BASE_AXES: Axes = {
   x: FULL_DEFAULT_AXIS,
@@ -168,21 +113,25 @@ const BLOCK_CONFIG: Record<
   string,
   {title: string; blockClassName?: string; isPercent?: boolean; bounds?: [string, string]; yLabel?: string}
 > = {
-  'disk-1': {title: 'Disk I/O(%)', isPercent: true, bounds: ['0', '100']},
-  'disk-2': {title: 'IOPS Read/Write(ops/s)', bounds: ['0', '']},
-  'disk-3': {title: 'Disk Bps Read/Write(MiB/s)', bounds: ['0', '']},
-  'disk-4': {title: 'Used Space(%)', isPercent: true, bounds: ['0', '100']},
-  'disk-5': {title: 'Used Space(GiB)', bounds: ['0', '']},
-  'disk-6': {title: 'Queue Length', bounds: ['0', '']},
-  'disk-7': {title: 'Inode Used (%)', isPercent: true, bounds: ['0', '100']},
-  'disk-8': {title: 'Free Space(%)', isPercent: true, bounds: ['0', '100']},
-  'disk-9': {title: 'Free Space(GiB)', bounds: ['0', '']},
+  'disk-io-percent': {title: 'Disk I/O(%)', isPercent: true, bounds: ['0', '100']},
+  'disk-iops': {title: 'IOPS Read/Write(ops/s)', bounds: ['0', '']},
+  'disk-throughput': {title: 'Disk Bps Read/Write(MiB/s)', bounds: ['0', '']},
+  'disk-used-percent': {title: 'Used Space(%)', isPercent: true, bounds: ['0', '100']},
+  'disk-used-gib': {title: 'Used Space(GiB)', bounds: ['0', '']},
+  'disk-queue-length': {title: 'Queue Length', bounds: ['0', '']},
+  'disk-inode-used-percent': {title: 'Inode Used (%)', isPercent: true, bounds: ['0', '100']},
+  'disk-free-percent': {title: 'Free Space(%)', isPercent: true, bounds: ['0', '100']},
+  'disk-free-gib': {title: 'Free Space(GiB)', bounds: ['0', '']},
 }
 
 const GRID_LAYOUT = {
-  top: ['disk-1', 'disk-2', 'disk-3'] as const,
-  middle: ['disk-4', 'disk-5', 'disk-6'] as const,
-  bottom: ['disk-7', 'disk-8', 'disk-9'] as const,
+  top: ['disk-io-percent', 'disk-iops', 'disk-throughput'] as const,
+  middle: ['disk-used-percent', 'disk-used-gib', 'disk-queue-length'] as const,
+  bottom: [
+    'disk-inode-used-percent',
+    'disk-free-percent',
+    'disk-free-gib',
+  ] as const,
 }
 
 function resolveAxesForBlock(blockId: string): Axes {
@@ -203,6 +152,7 @@ function DetailChartBlock({
   colors,
   manualRefresh,
   selectedDisk,
+  queryText: originalQueryText,
 }: {
   blockId: string
   source: Source | null
@@ -212,9 +162,10 @@ function DetailChartBlock({
   colors: typeof LINE_COLOR_PALETTES_SEQUENCE[number]
   manualRefresh?: number
   selectedDisk?: DiskMetadata | null
+  queryText?: string
 }) {
-  let queryText = BLOCK_QUERIES[blockId]
-  if (!queryText) return null
+  if (!originalQueryText) return null
+  let queryText = originalQueryText
 
   if (selectedDisk) {
     if (queryText.includes('"diskio"')) {
@@ -313,6 +264,8 @@ export function DiskDetailContent({
   const timeRange = serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverContext.source
   const host = serverContext.selectedHost
+  const detailQueries = serverContext.detailQueries ?? []
+
 
   useEffect(() => {
     if (!source || !host) return
@@ -367,6 +320,7 @@ export function DiskDetailContent({
       const paletteIndex =
         (startIndex + i) % LINE_COLOR_PALETTES_SEQUENCE.length
       const colors = LINE_COLOR_PALETTES_SEQUENCE[paletteIndex]
+      const queryText = detailQueries.find(q => q.label === blockId)?.query
       return (
         <UsageDetailBlock
           key={blockId}
@@ -382,6 +336,7 @@ export function DiskDetailContent({
             colors={colors}
             manualRefresh={serverContext.manualRefresh}
             selectedDisk={selectedDisk}
+            queryText={queryText}
           />
         </UsageDetailBlock>
       )

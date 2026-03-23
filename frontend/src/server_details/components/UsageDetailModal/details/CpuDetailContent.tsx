@@ -47,55 +47,7 @@ const CPU_DETAIL_CHART_OPTIONS = {
   },
 }
 
-const BLOCK_QUERIES: Record<string, string> = {
-  'cpu-usage': `SELECT mean("usage_system") AS "system", mean("usage_user") AS "user"
-FROM ":db:".":rp:"."cpu"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total' AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
 
-  'cpu-idle': `SELECT mean("usage_idle") AS "idle"
-FROM ":db:".":rp:"."cpu"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total' AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'cpu-nice': `SELECT mean("usage_nice") AS "nice"
-FROM ":db:".":rp:"."cpu"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total' AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'cpu-io-wait': `SELECT mean("usage_iowait") AS "iowait"
-FROM ":db:".":rp:"."cpu"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total' AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'cpu-steal': `SELECT mean("usage_steal") AS "steal"
-FROM ":db:".":rp:"."cpu"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total' AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'cpu-irq': `SELECT mean("usage_irq") AS "irq"
-FROM ":db:".":rp:"."cpu"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total' AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'cpu-soft-irq': `SELECT mean("usage_softirq") AS "softirq"
-FROM ":db:".":rp:"."cpu"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total' AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'cpu-load': `SELECT mean("load1") AS "01 min", mean("load5") AS "05 min", mean("load15") AS "15 min"
-FROM ":db:".":rp:"."system"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-}
 
 const CPU_USAGE_AXES: Axes = {
   x: FULL_DEFAULT_AXIS,
@@ -149,6 +101,7 @@ function DetailChartBlock({
   templates,
   colors,
   manualRefresh,
+  queryText,
 }: {
   blockId: string
   source: Source | null
@@ -157,8 +110,8 @@ function DetailChartBlock({
   templates: Template[] | null
   colors: typeof LINE_COLOR_PALETTES_SEQUENCE[number]
   manualRefresh?: number
+  queryText?: string
 }) {
-  const queryText = BLOCK_QUERIES[blockId]
   if (!queryText) return null
 
   if (!source) {
@@ -239,6 +192,8 @@ export function CpuDetailContent({
   const timeRange = serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverContext.source
   const host = serverContext.selectedHost
+  const detailQueries = serverContext.detailQueries ?? []
+
 
   const renderGridSection = (blockIds: readonly string[], startIndex: number) =>
     blockIds.map((blockId, i) => {
@@ -247,6 +202,8 @@ export function CpuDetailContent({
       const paletteIndex =
         (startIndex + i) % LINE_COLOR_PALETTES_SEQUENCE.length
       const colors = LINE_COLOR_PALETTES_SEQUENCE[paletteIndex]
+      const queryText = detailQueries.find(q => q.label === blockId)?.query
+
       return (
         <UsageDetailBlock
           key={blockId}
@@ -261,6 +218,7 @@ export function CpuDetailContent({
             templates={templates}
             colors={colors}
             manualRefresh={serverContext.manualRefresh}
+            queryText={queryText}
           />
         </UsageDetailBlock>
       )

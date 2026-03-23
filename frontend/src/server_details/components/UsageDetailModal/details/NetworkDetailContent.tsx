@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import {createPortal} from 'react-dom'
 import Dropdown from 'src/shared/components/Dropdown'
+import {executeQueries} from 'src/shared/apis/query'
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
 import {CellType, QueryType} from 'src/types'
 import type {Template, TimeRange, CellQuery} from 'src/types'
@@ -27,7 +28,43 @@ import {UsageDetailBlock} from '../UsageDetailBlock'
 import type {UsageDetailServerContext} from '../types'
 import {DEFAULT_DETAIL_TIME_RANGE} from '../utils'
 
-const BYTES_PER_MIB = 1048576
+function parseSeriesString(series: string): Record<string, string> {
+  const parts = series.substring(series.indexOf(',') + 1)
+  const tags: Record<string, string> = {}
+  let currentKey = ''
+  let currentValue = ''
+  let inValue = false
+  for (let i = 0; i < parts.length; i++) {
+    const char = parts[i]
+    if (char === '\\' && parts[i + 1] === ',') {
+      currentValue += ','
+      i++
+      continue
+    }
+    if (char === '=' && !inValue) {
+      inValue = true
+      continue
+    }
+    if (char === ',' && inValue) {
+      tags[currentKey] = currentValue
+      currentKey = ''
+      currentValue = ''
+      inValue = false
+      continue
+    }
+    if (inValue) {
+      currentValue += char
+    } else {
+      currentKey += char
+    }
+  }
+  if (currentKey && inValue) {
+    tags[currentKey] = currentValue
+  }
+  return tags
+}
+
+// BYTES_PER_MIB removed as it is now handled in the backend queries
 
 const NETWORK_Y_AXIS = {
   ...FULL_DEFAULT_AXIS,
@@ -58,31 +95,7 @@ const NETWORK_DETAIL_CHART_OPTIONS = {
   },
 }
 
-const BLOCK_QUERIES: Record<string, string> = {
-  'traffic-in-out': `SELECT non_negative_derivative(sum("bytes_recv"), 1s)/${BYTES_PER_MIB} AS "Traffic in", non_negative_derivative(sum("bytes_sent"), 1s)/${BYTES_PER_MIB} AS "Traffic out"
-FROM ":db:".":rp:"."net"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'packet-in-out': `SELECT non_negative_derivative(sum("packets_recv"), 1s) AS "Packet in", non_negative_derivative(sum("packets_sent"), 1s) AS "Packet out"
-FROM ":db:".":rp:"."net"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'error-in-out': `SELECT non_negative_derivative(sum("err_in"), 1s) AS "Error in", non_negative_derivative(sum("err_out"), 1s) AS "Error out"
-FROM ":db:".":rp:"."net"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'dropped-in-out': `SELECT non_negative_derivative(sum("drop_in"), 1s) AS "Dropped in", non_negative_derivative(sum("drop_out"), 1s) AS "Dropped out"
-FROM ":db:".":rp:"."net"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-}
+// Queries are now fetched from the backend (server-details.json)
 
 const NETWORK_BASE_AXES: Axes = {
   x: FULL_DEFAULT_AXIS,
@@ -121,6 +134,8 @@ function DetailChartBlock({
   templates,
   colors,
   manualRefresh,
+  selectedInterface,
+  queryText: originalQueryText,
 }: {
   blockId: string
   source: Source | null
@@ -129,9 +144,15 @@ function DetailChartBlock({
   templates: Template[] | null
   colors: typeof LINE_COLOR_PALETTES_SEQUENCE[number]
   manualRefresh?: number
+  selectedInterface?: string | null
+  queryText?: string
 }) {
-  const queryText = BLOCK_QUERIES[blockId]
-  if (!queryText) return null
+  if (!originalQueryText) return null
+  let queryText = originalQueryText
+
+  if (selectedInterface && selectedInterface !== 'all') {
+    queryText = queryText.replace('AND "host"=\':host:\'', `AND "host"=':host:' AND "interface"='${selectedInterface}'`)
+  }
 
   if (!source) {
     return (
@@ -208,48 +229,65 @@ export function NetworkDetailContent({
   serverContext: UsageDetailServerContext
   templates: Template[] | null
 }) {
-  const [selectedInterface, setSelectedInterface] = useState<string>('all')
+  const [availableInterfaces, setAvailableInterfaces] = useState<string[]>([])
+  const [selectedInterface, setSelectedInterface] = useState<string>('')
   const [headerPortalTarget, setHeaderPortalTarget] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
     setHeaderPortalTarget(document.getElementById('usage-detail-modal-header-portal'))
   }, [])
 
-  const MOCK_INTERFACES = [
-    { name: 'eth0', mac: '00:1A:2B:3C:4D:5E', ip: '192.168.1.10', status: 'UP' },
-    { name: 'docker0', mac: '02:42:04:8b:0a:32', ip: '172.17.0.1', status: 'UP' },
-    { name: 'lo', mac: '00:00:00:00:00:00', ip: '127.0.0.1', status: 'UNKNOWN' },
-  ]
-
   const timeRange = serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverContext.source
   const host = serverContext.selectedHost
+  const detailQueries = serverContext.detailQueries ?? []
 
-  const selectedIf = MOCK_INTERFACES.find(i => i.name === selectedInterface) || null
+
+  useEffect(() => {
+    if (!source || !host) return
+    const fetchInterfaces = async () => {
+      try {
+        const hostName = templates?.find(t => t.tempVar === ':host:')?.values?.find((v: any) => v.selected)?.value || host
+        const q = [{
+          id: 'net-series',
+          text: `SHOW SERIES FROM "net" WHERE "host"='${hostName}'`,
+          db: source.telegraf ?? 'Default',
+        }]
+        const res = await executeQueries(source, q, [])
+        const rawSeries: any[] = (res as any)?.[0]?.value?.results?.[0]?.series?.[0]?.values || []
+        const interfaces = new Set<string>()
+        for (const [seriesStr] of rawSeries) {
+          if (typeof seriesStr !== 'string') continue
+          const tags = parseSeriesString(seriesStr)
+          if (tags.interface && tags.interface !== 'all') {
+            interfaces.add(tags.interface)
+          }
+        }
+        
+        const sortedInterfaces = Array.from(interfaces).sort()
+        setAvailableInterfaces(sortedInterfaces)
+        if (sortedInterfaces.length > 0) {
+          setSelectedInterface('all')
+        }
+      } catch (e) {
+        console.error('Failed to fetch interfaces', e)
+      }
+    }
+    fetchInterfaces()
+  }, [source, host, templates])
 
   const networkHeaderContent = (
     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
-      <div style={{ width: 140, flexShrink: 0 }}>
-        <Dropdown
-          items={[{text: '전체'}, ...MOCK_INTERFACES.map(i => ({ text: i.name }))]}
-          onChoose={(item) => setSelectedInterface(item.text === '전체' ? 'all' : item.text)}
-          selected={selectedInterface === 'all' ? '전체' : selectedInterface}
-        />
-      </div>
-      {selectedIf && (
-        <div style={{
-          display: 'flex', 
-          gap: '16px', 
-          fontSize: '12px',
-          color: '#a0aab8',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}>
-          <div><span style={{color: '#6b7a90', paddingRight: '4px'}}>MAC:</span><span style={{color: '#e5e8ed'}}>{selectedIf.mac}</span></div>
-          <div><span style={{color: '#6b7a90', paddingRight: '4px'}}>IP:</span><span style={{color: '#e5e8ed'}}>{selectedIf.ip}</span></div>
-          <div><span style={{color: '#6b7a90', paddingRight: '4px'}}>Status:</span><span style={{color: '#e5e8ed'}}>{selectedIf.status}</span></div>
+      {availableInterfaces.length > 0 ? (
+        <div style={{ width: 140, flexShrink: 0 }}>
+          <Dropdown
+            items={[{text: '전체'}, ...availableInterfaces.map(i => ({ text: i }))]}
+            onChoose={(item) => setSelectedInterface(item.text === '전체' ? 'all' : item.text)}
+            selected={selectedInterface === 'all' ? '전체' : selectedInterface}
+          />
         </div>
+      ) : (
+         <div style={{ color: '#aaa', fontSize: '13px' }}>Loading interfaces...</div>
       )}
     </div>
   )
@@ -261,10 +299,11 @@ export function NetworkDetailContent({
         {GRID_LAYOUT.map((blockId, i) => {
           const config = BLOCK_CONFIG[blockId]
           if (!config) return null
-          const colors =
+            const colors =
             LINE_COLOR_PALETTES_SEQUENCE[
               i % LINE_COLOR_PALETTES_SEQUENCE.length
             ]
+          const queryText = detailQueries.find(q => q.label === blockId)?.query
           return (
             <UsageDetailBlock key={blockId} title={config.title}>
               <DetailChartBlock
@@ -275,6 +314,8 @@ export function NetworkDetailContent({
                 templates={templates}
                 colors={colors}
                 manualRefresh={serverContext.manualRefresh}
+                selectedInterface={selectedInterface}
+                queryText={queryText}
               />
             </UsageDetailBlock>
           )

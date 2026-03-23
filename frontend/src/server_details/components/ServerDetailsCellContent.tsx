@@ -1,5 +1,6 @@
 import React, {useState, useEffect, useContext, useMemo} from 'react'
 import classnames from 'classnames'
+import {executeQueries} from 'src/shared/apis/query'
 import Layout from 'src/shared/components/Layout'
 import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import type {TemplateSelectionContextValue} from 'src/shared/components/DashboardPageWithImport'
@@ -13,6 +14,7 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
+import {getHostByHostname, type Host} from 'src/shared/apis/host'
 
 // --- Utilities ---
 
@@ -165,6 +167,144 @@ export type ServerDetailsPageContextValue = TemplateSelectionContextValue & {
 export const ServerDetailsPageContext = React.createContext<ServerDetailsPageContextValue | null>(
   null
 )
+
+export function ServerDetailsSummaryCellContent({
+  cell,
+  context,
+}: {
+  cell: DashboardsModels.Cell
+  context: RenderCellContext
+}) {
+  const ctx = useContext(ServerDetailsPageContext)
+  const selectedHost = ctx?.selectedHost ?? null
+
+  const [contextOpen, setContextOpen] = useState(false)
+  const [hostData, setHostData] = useState<Host | null>(null)
+  const [diskTotal, setDiskTotal] = useState<string | undefined>(undefined)
+  const source = context?.source
+  const templates = context?.templates
+
+  useEffect(() => {
+    if (!selectedHost || !source) {
+      setDiskTotal(undefined)
+      return
+    }
+
+    const diskQuery = (cell.queries as any[])?.find(q => q.label === 'disk-total')
+    if (!diskQuery) {
+      setDiskTotal(undefined)
+      return
+    }
+
+    let isCancelled = false
+    const q = [{
+      id: 'disk-total',
+      text: diskQuery.query,
+      db: source.telegraf ?? 'Default',
+    }]
+
+    executeQueries(source, q, templates ?? [])
+      .then(res => {
+        if (isCancelled) return
+        const val = (res as any)?.[0]?.value?.results?.[0]?.series?.[0]?.values?.[0]?.[1]
+        if (val !== undefined && val !== null) {
+          setDiskTotal(Number(val).toFixed(2) + ' GB')
+        } else {
+          setDiskTotal(undefined)
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load disk total', err)
+        if (!isCancelled) setDiskTotal(undefined)
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [selectedHost, source, templates, cell.queries])
+
+  useEffect(() => {
+    if (!selectedHost) {
+      setHostData(null)
+      return
+    }
+
+    let isCancelled = false
+    getHostByHostname(selectedHost)
+      .then(res => {
+        if (!isCancelled) {
+          setHostData(res)
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load host details', err)
+        if (!isCancelled) setHostData(null)
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [selectedHost])
+
+  const Item = ({ label, value, icon }: { label: string, value?: string, icon?: boolean }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', lineHeight: '1' }}>
+      <span style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>{label}</span>
+      {icon && <span className="icon info-sign" style={{ opacity: 0.6, fontSize: '12px', cursor: 'help' }} />}
+      <span style={{ display: 'flex', alignItems: 'center' }}>{value ?? '-'}</span>
+    </div>
+  )
+
+  const memTotalGB = hostData?.memTotalKb
+    ? (hostData.memTotalKb / 1024 / 1024).toFixed(2) + ' GB'
+    : undefined
+
+  return (
+    <div className="server-details-cell-content">
+      <div className="dash-graph--draggable dash-graph--heading dash-graph--heading-draggable server-details-cell-header">
+        <span className="dash-graph--name server-details-cell-header-name">
+          {cell.name}
+        </span>
+        <div className="server-details-cell-drag-handle">
+          <div className="dash-graph--heading-bar" />
+          <div className="dash-graph--heading-dragger" />
+        </div>
+      </div>
+      {context?.onDeleteCell && (
+        <div
+          className={classnames('dash-graph-context', {
+            'dash-graph-context__open': contextOpen,
+          })}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <div className="dash-graph-context--buttons">
+            <Authorized requiredRole={EDITOR_ROLE}>
+              <MenuTooltipButton
+                icon="trash"
+                theme="danger"
+                menuItems={[
+                  {
+                    text: 'Confirm',
+                    action: () => context.onDeleteCell(cell),
+                    disabled: false,
+                  },
+                ]}
+                informParent={() => setContextOpen(prev => !prev)}
+              />
+            </Authorized>
+          </div>
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', padding: '0 16px', height: '100%', gap: '24px', flexWrap: 'nowrap', overflowX: 'auto', whiteSpace: 'nowrap' }}>
+        <Item label="IP 주소" value={hostData?.ip} />
+        <Item label="운영체제" value={hostData?.kernel} />
+        <Item label="CPU 코어" value={hostData?.cpuCores?.toString()} />
+        <Item label="Memory Total" value={memTotalGB} />
+        <Item label="Disk Total" value={diskTotal} icon={true} />
+        <Item label="OS 버전" value={hostData?.osVersion} />
+      </div>
+    </div>
+  )
+}
 
 export function ServerDetailsCellContent({
   addons,

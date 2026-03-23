@@ -47,7 +47,7 @@ const MEMORY_DETAIL_CHART_OPTIONS = {
   },
 }
 
-const BYTES_PER_GIB = 1073741824
+// BYTES_PER_GIB removed as it is now handled in the backend queries
 
 const MEMORY_Y_AXIS = {
   ...FULL_DEFAULT_AXIS,
@@ -56,61 +56,7 @@ const MEMORY_Y_AXIS = {
   avoidScientificNotation: true,
 }
 
-const BLOCK_QUERIES: Record<string, string> = {
-  'memory-usage': `SELECT mean("used_percent") AS "used_percent"
-FROM ":db:".":rp:"."mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'memory-used': `SELECT mean("free")/${BYTES_PER_GIB} AS "free", mean("cached")/${BYTES_PER_GIB} AS "cached", mean("buffered")/${BYTES_PER_GIB} AS "buffers", mean("used")/${BYTES_PER_GIB} AS "used"
-FROM ":db:".":rp:"."mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'memory-available': `SELECT mean("available")/${BYTES_PER_GIB} AS "available"
-FROM ":db:".":rp:"."mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'memory-sreclaimable': `SELECT mean("sreclaimable")/${BYTES_PER_GIB} AS "sreclaimable"
-FROM ":db:".":rp:"."mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'memory-sunreclaim': `SELECT mean("sunreclaim")/${BYTES_PER_GIB} AS "sunreclaim"
-FROM ":db:".":rp:"."mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'memory-slab': `SELECT mean("slab")/${BYTES_PER_GIB} AS "slab"
-FROM ":db:".":rp:"."mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'memory-swap-percent': `SELECT (mean("swap_total") - mean("swap_free")) / mean("swap_total") * 100 AS "swap_used_percent"
-FROM ":db:".":rp:"."mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'memory-swap-used': `SELECT (mean("swap_total") - mean("swap_free"))/${BYTES_PER_GIB} AS "swap_used"
-FROM ":db:".":rp:"."mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-
-  'memory-page-faults': `SELECT non_negative_derivative(mean("pgfault"), 1s) AS "pgfault", non_negative_derivative(mean("pgmajfault"), 1s) AS "pgmajfault"
-FROM ":db:".":rp:"."kernel_vmstat"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
-GROUP BY time(:interval:)
-FILL(null)`,
-}
+// Queries are now fetched from the backend (server-details.json)
 
 const MEMORY_BASE_AXES: Axes = {
   x: FULL_DEFAULT_AXIS,
@@ -159,6 +105,7 @@ function DetailChartBlock({
   templates,
   colors,
   manualRefresh,
+  queryText,
 }: {
   blockId: string
   source: Source | null
@@ -167,8 +114,8 @@ function DetailChartBlock({
   templates: Template[] | null
   colors: typeof LINE_COLOR_PALETTES_SEQUENCE[number]
   manualRefresh?: number
+  queryText?: string
 }) {
-  const queryText = BLOCK_QUERIES[blockId]
   if (!queryText) return null
 
   if (!source) {
@@ -249,6 +196,8 @@ export function MemoryDetailContent({
   const timeRange = serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverContext.source
   const host = serverContext.selectedHost
+  const detailQueries = serverContext.detailQueries ?? []
+
 
   const renderGridSection = (blockIds: readonly string[], startIndex: number) =>
     blockIds.map((blockId, i) => {
@@ -257,6 +206,8 @@ export function MemoryDetailContent({
       const paletteIndex =
         (startIndex + i) % LINE_COLOR_PALETTES_SEQUENCE.length
       const colors = LINE_COLOR_PALETTES_SEQUENCE[paletteIndex]
+      const queryText = detailQueries.find(q => q.label === blockId)?.query
+
       return (
         <UsageDetailBlock
           key={blockId}
@@ -271,6 +222,7 @@ export function MemoryDetailContent({
             templates={templates}
             colors={colors}
             manualRefresh={serverContext.manualRefresh}
+            queryText={queryText}
           />
         </UsageDetailBlock>
       )
