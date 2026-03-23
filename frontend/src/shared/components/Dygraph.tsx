@@ -231,6 +231,7 @@ class Dygraph extends Component<Props, State> {
             <Crosshair
               dygraph={this.dygraph}
               staticLegendHeight={staticLegendHeight}
+              leftOffset={this.leftOffset}
             />
             <MaxMarker
               dygraph={this.dygraph}
@@ -302,6 +303,18 @@ class Dygraph extends Component<Props, State> {
     }
 
     return {...containerStyle, zIndex: 2}
+  }
+
+  private get leftOffset(): number {
+    const {containerStyle} = this.props
+    const left = containerStyle?.left
+    if (typeof left === 'number') {
+      return left
+    }
+    if (typeof left === 'string' && left.endsWith('px')) {
+      return parseInt(left, 10)
+    }
+    return 16
   }
 
   private get labelWidth() {
