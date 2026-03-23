@@ -16,8 +16,8 @@ import (
 	"github.com/snetsystems/cloudhub/backend/mocks"
 	"github.com/snetsystems/cloudhub/backend/server/config"
 	"github.com/snetsystems/cloudhub/backend/snowflake"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/clientv3/concurrency"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
 const (

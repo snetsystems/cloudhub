@@ -13,8 +13,8 @@ import (
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/mocks"
 	"github.com/stretchr/testify/require"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/embed"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/server/v3/embed"
 )
 
 func TestNewClient(t *testing.T) {
@@ -45,8 +45,8 @@ func NewService(t *testing.T) (cloudhub.KVClient, func()) {
 	}
 
 	endpoints := []string{}
-	for i := range cfg.LPUrls {
-		endpoints = append(endpoints, cfg.LPUrls[i].String())
+	for i := range cfg.ListenPeerUrls {
+		endpoints = append(endpoints, cfg.ListenPeerUrls[i].String())
 	}
 
 	c, err := NewClient(context.TODO(), WithEndpoints(endpoints))
