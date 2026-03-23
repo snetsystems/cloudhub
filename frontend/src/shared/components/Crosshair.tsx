@@ -10,6 +10,7 @@ interface Props {
   hoverTime: number
   dygraph: Dygraph
   staticLegendHeight: number
+  leftOffset?: number
 }
 
 @ErrorHandling
@@ -51,7 +52,7 @@ class Crosshair extends PureComponent<Props> {
 
   private get crosshairLeft(): string {
     const {dygraph, hoverTime} = this.props
-    const cursorOffset = 16
+    const cursorOffset = this.props.leftOffset ?? 16
     const translateX = Math.max(
       dygraph.toDomXCoord(hoverTime) + cursorOffset,
       cursorOffset
