@@ -53,6 +53,7 @@ type dashboardResponse struct {
 	Version         string                  `json:"version,omitempty"`         // Current version of the dashboard
 	LatestVersion   string                  `json:"latestVersion,omitempty"`   // Latest version available (for fixed-cell dashboards)
 	UpdateAvailable bool                    `json:"updateAvailable,omitempty"` // True if a newer template version is available
+	IsDefault       bool                    `json:"isDefault,omitempty"`
 	Links           dashboardLinks          `json:"links"`
 }
 
@@ -74,6 +75,7 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 		Organization: d.Organization,
 		Type:         getDashboardType(d.Type),
 		Version:      d.Version,
+		IsDefault:    d.IsDefault,
 		Links: dashboardLinks{
 			Self:      fmt.Sprintf("%s/%d", base, dd.ID),
 			Cells:     fmt.Sprintf("%s/%d/cells", base, dd.ID),
@@ -98,6 +100,7 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 	// Parse query parameters
 	includeCells := r.URL.Query().Get("includeCells")
 	includeTemplates := r.URL.Query().Get("includeTemplates")
+	isDefaultFilter := r.URL.Query().Get("isDefault") == "true"
 
 	// Default to true if not specified
 	shouldIncludeCells := includeCells != "false"
@@ -109,6 +112,20 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 
 	res := getDashboardsResponse{
 		Dashboards: []*dashboardResponse{},
+	}
+
+	if isDefaultFilter {
+		var filtered []cloudhub.Dashboard
+		for _, d := range dashboards {
+			if d.IsDefault {
+				filtered = append(filtered, d)
+			}
+		}
+		if len(filtered) == 0 {
+			Error(w, http.StatusNotFound, "no default dashboard found", s.Logger)
+			return
+		}
+		dashboards = filtered
 	}
 
 	for _, dashboard := range dashboards {
@@ -441,8 +458,27 @@ func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 		orig.Templates = req.Templates
 		updated = true
 	}
+	if req.IsDefault {
+		// Ensure only one default per org: clear isDefault on all other dashboards
+		allDashboards, err := s.Store.Dashboards(ctx).All(ctx)
+		if err != nil {
+			unknownErrorWithMessage(w, err, s.Logger)
+			return
+		}
+		for _, d := range allDashboards {
+			if d.IsDefault && d.ID != id {
+				d.IsDefault = false
+				if err := s.Store.Dashboards(ctx).Update(ctx, d); err != nil {
+					unknownErrorWithMessage(w, err, s.Logger)
+					return
+				}
+			}
+		}
+		orig.IsDefault = true
+		updated = true
+	}
 	if !updated {
-		invalidData(w, fmt.Errorf("Update must include at least one of name, cells, or templates"), s.Logger)
+		invalidData(w, fmt.Errorf("Update must include at least one of name, cells, templates, or isDefault"), s.Logger)
 		return
 	}
 

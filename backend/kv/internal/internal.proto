@@ -27,6 +27,7 @@ message Dashboard {
 	string Organization          = 5; // Organization is the organization ID that resource belongs to
 	string Type                  = 6; // Type distinguishes dashboard types: 'normal' (default) or 'builtin'
 	string Version               = 7; // Version is the template version for builtin dashboards (e.g., "1.0.0")
+	bool isDefault               = 8; // When true, this dashboard is the org's default
 }
 
 message DashboardCell {

@@ -573,6 +573,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 		Organization: d.Organization,
 		Type:         getDashboardType(d.Type),
 		Version:      d.Version,
+		IsDefault:    d.IsDefault,
 	}
 	return proto.Marshal(pb)
 }
@@ -909,6 +910,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 	d.Organization = pb.Organization
 	d.Type = getDashboardType(pb.Type)
 	d.Version = pb.Version
+	d.IsDefault = pb.IsDefault
 	return nil
 }
 

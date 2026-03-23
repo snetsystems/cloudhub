@@ -1277,3 +1277,48 @@ func TestMarshalDashboardWithDetailQueries(t *testing.T) {
 		t.Errorf("DetailQueries roundtrip mismatch (-want +got):\n%s", diff)
 	}
 }
+
+func TestMarshalDashboardIsDefault(t *testing.T) {
+	d := cloudhub.Dashboard{
+		ID:           42,
+		Name:         "my-dashboard",
+		IsDefault:    true,
+		Organization: "org1",
+		Cells:        []cloudhub.DashboardCell{},
+		Templates:    []cloudhub.Template{},
+	}
+
+	buf, err := internal.MarshalDashboard(d)
+	if err != nil {
+		t.Fatalf("MarshalDashboard error: %v", err)
+	}
+
+	var got cloudhub.Dashboard
+	if err := internal.UnmarshalDashboard(buf, &got); err != nil {
+		t.Fatalf("UnmarshalDashboard error: %v", err)
+	}
+
+	if got.IsDefault != true {
+		t.Errorf("expected IsDefault=true, got %v", got.IsDefault)
+	}
+
+	// false も roundtrip 確認
+	d2 := cloudhub.Dashboard{
+		ID:        43,
+		Name:      "other",
+		IsDefault: false,
+		Cells:     []cloudhub.DashboardCell{},
+		Templates: []cloudhub.Template{},
+	}
+	buf2, err := internal.MarshalDashboard(d2)
+	if err != nil {
+		t.Fatalf("MarshalDashboard error: %v", err)
+	}
+	var got2 cloudhub.Dashboard
+	if err := internal.UnmarshalDashboard(buf2, &got2); err != nil {
+		t.Fatalf("UnmarshalDashboard error: %v", err)
+	}
+	if got2.IsDefault != false {
+		t.Errorf("expected IsDefault=false, got %v", got2.IsDefault)
+	}
+}
