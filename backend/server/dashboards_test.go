@@ -394,6 +394,7 @@ func Test_newDashboardResponse(t *testing.T) {
 								},
 							},
 							NoteVisibility: "default",
+							DetailQueries: []cloudhub.DashboardQuery{},
 						},
 					},
 					{
@@ -441,6 +442,7 @@ func Test_newDashboardResponse(t *testing.T) {
 								},
 							},
 							NoteVisibility: "default",
+							DetailQueries: []cloudhub.DashboardQuery{},
 						},
 					},
 				},
@@ -657,6 +659,9 @@ func Test_newDashboardResponse(t *testing.T) {
 	for _, tt := range tests {
 		for i := range tt.want.Cells {
 			applyTableGaugeDefaults(&tt.want.Cells[i].DashboardCell)
+			if tt.want.Cells[i].DashboardCell.DetailQueries == nil {
+				tt.want.Cells[i].DashboardCell.DetailQueries = []cloudhub.DashboardQuery{}
+			}
 		}
 		if got := newDashboardResponse(tt.d); !gocmp.Equal(got, tt.want) {
 			t.Errorf("%q. newDashboardResponse() = diff:\n%s", tt.name, gocmp.Diff(got, tt.want))

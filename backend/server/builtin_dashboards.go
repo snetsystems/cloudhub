@@ -160,6 +160,7 @@ func ApplyFixedCellToOrg(
 		}
 		cloned := c
 		cloned.Queries = cloneDashboardQueries(c.Queries)
+		cloned.DetailQueries = cloneDashboardQueries(c.DetailQueries)
 		templateCellsByID[c.ID] = cloned
 	}
 
@@ -190,10 +191,11 @@ func ApplyFixedCellToOrg(
 				c.CellOrigin = cloudhub.CellOriginUser
 			}
 		}
-		// Cell exists in template: update Queries and set CellOrigin to builtin so it appears in the Fixed Cell list (even if it was previously user-added)
+		// Cell exists in template: update Queries and DetailQueries and set CellOrigin to builtin so it appears in the Fixed Cell list (even if it was previously user-added)
 		if tmplCell, inTemplate := templateCellsByID[c.ID]; inTemplate {
 			c.CellOrigin = cloudhub.CellOriginBuiltin
 			c.Queries = cloneDashboardQueries(tmplCell.Queries)
+			c.DetailQueries = cloneDashboardQueries(tmplCell.DetailQueries)
 		}
 		cellsKept = append(cellsKept, *c)
 	}

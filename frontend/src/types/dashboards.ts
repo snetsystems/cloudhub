@@ -113,6 +113,8 @@ export interface Cell {
   hidden?: boolean
   /** When true, cell is shown as summary. */
   isShowSummary?: boolean
+  /** Detail queries for cell detail view */
+  detailQueries?: CellQuery[]
 }
 
 /** Cell origin: builtin (system template) or user-created. Empty is treated as user. */

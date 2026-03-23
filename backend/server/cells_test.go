@@ -182,15 +182,16 @@ func Test_Service_DashboardCells(t *testing.T) {
 			},
 			expected: []cloudhub.DashboardCell{
 				{
-					ID:         "3899be5a-f6eb-4347-b949-de2f4fbea859",
-					X:          0,
-					Y:          0,
-					W:          4,
-					H:          4,
-					Name:       "CPU",
-					Type:       "bar",
-					Queries:    []cloudhub.DashboardQuery{},
-					CellColors: []cloudhub.CellColor{},
+					ID:            "3899be5a-f6eb-4347-b949-de2f4fbea859",
+					X:             0,
+					Y:             0,
+					W:             4,
+					H:             4,
+					Name:          "CPU",
+					Type:          "bar",
+					Queries:       []cloudhub.DashboardQuery{},
+					CellColors:    []cloudhub.CellColor{},
+					DetailQueries: []cloudhub.DashboardQuery{},
 					Axes: map[string]cloudhub.Axis{
 						"x": {
 							Bounds: []string{"", ""},
@@ -1088,6 +1089,7 @@ func Test_newCellResponses(t *testing.T) {
 							ShowPoint:        true,
 							ShowTempVarCount: ":top_count:",
 						},
+						DetailQueries: []cloudhub.DashboardQuery{},
 					},
 					Links: dashboardCellLinks{
 						Self: "/cloudhub/v1/dashboards/1/cells/445f8dc0-4d73-4168-8477-f628690d18a3"},
@@ -1127,6 +1129,7 @@ func Test_newCellResponses(t *testing.T) {
 							},
 						},
 						CellColors:     []cloudhub.CellColor{},
+						DetailQueries:  []cloudhub.DashboardQuery{},
 						Legend:         cloudhub.Legend{},
 						Note:           "",
 						NoteVisibility: "default",
@@ -1702,4 +1705,44 @@ func Test_newCellResponse_TableGaugeDefaults(t *testing.T) {
 			t.Fatalf("ValueFormat should remain empty (handled by frontend), got %q", resp.TableGaugeChartOptions.ColumnSettings[0].ValueFormat)
 		}
 	})
+}
+
+func TestNewCellResponseDetailQueriesDefault(t *testing.T) {
+	dID := cloudhub.DashboardID(1)
+
+	// nil → 빈 슬라이스
+	cell := cloudhub.DashboardCell{
+		ID:   "abc",
+		Name: "test",
+		Type: "line",
+		Axes: map[string]cloudhub.Axis{},
+	}
+	resp := newCellResponse(dID, cell)
+	if resp.DetailQueries == nil {
+		t.Error("expected DetailQueries to be non-nil empty slice, got nil")
+	}
+	if len(resp.DetailQueries) != 0 {
+		t.Errorf("expected DetailQueries length 0, got %d", len(resp.DetailQueries))
+	}
+
+	// 값이 있으면 유지
+	cell.DetailQueries = []cloudhub.DashboardQuery{
+		{Command: "SELECT mean(\"usage_idle\") FROM cpu", Label: "cpu-idle", Type: "influxql"},
+	}
+	resp = newCellResponse(dID, cell)
+	if len(resp.DetailQueries) != 1 {
+		t.Errorf("expected DetailQueries length 1, got %d", len(resp.DetailQueries))
+	}
+	if resp.DetailQueries[0].Label != "cpu-idle" {
+		t.Errorf("expected label cpu-idle, got %s", resp.DetailQueries[0].Label)
+	}
+
+	// 빈 Type → "influxql"로 정규화
+	cell.DetailQueries = []cloudhub.DashboardQuery{
+		{Command: "SELECT mean(\"usage_idle\") FROM cpu", Label: "cpu-idle", Type: ""},
+	}
+	resp = newCellResponse(dID, cell)
+	if resp.DetailQueries[0].Type != "influxql" {
+		t.Errorf("expected Type influxql after normalization, got %q", resp.DetailQueries[0].Type)
+	}
 }

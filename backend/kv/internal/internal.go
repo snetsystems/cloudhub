@@ -348,6 +348,33 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			queries[j].Shifts = shifts
 		}
 
+		detailQueries := make([]*Query, len(c.DetailQueries))
+		for j, q := range c.DetailQueries {
+			r := new(Range)
+			if q.Range != nil {
+				r.Upper, r.Lower = q.Range.Upper, q.Range.Lower
+			}
+			if q.QueryConfig.Shifts != nil {
+				q.Shifts = q.QueryConfig.Shifts
+			}
+			detailQueries[j] = &Query{
+				Command: q.Command,
+				Label:   q.Label,
+				Range:   r,
+				Source:  q.Source,
+				Type:    q.Type,
+			}
+			shifts := make([]*TimeShift, len(q.Shifts))
+			for k := range q.Shifts {
+				shifts[k] = &TimeShift{
+					Label:    q.Shifts[k].Label,
+					Unit:     q.Shifts[k].Unit,
+					Quantity: q.Shifts[k].Quantity,
+				}
+			}
+			detailQueries[j].Shifts = shifts
+		}
+
 		colors := make([]*Color, len(c.CellColors))
 		for j, color := range c.CellColors {
 			colors[j] = &Color{
@@ -471,15 +498,16 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 		noteVisibility := c.NoteVisibility
 
 		cells[i] = &DashboardCell{
-			ID:      c.ID,
-			X:       c.X,
-			Y:       c.Y,
-			W:       c.W,
-			H:       c.H,
-			MinW:    c.MinW,
-			MinH:    c.MinH,
-			Name:    c.Name,
-			Queries: queries,
+			ID:            c.ID,
+			X:             c.X,
+			Y:             c.Y,
+			W:             c.W,
+			H:             c.H,
+			MinW:          c.MinW,
+			MinH:          c.MinH,
+			Name:          c.Name,
+			Queries:       queries,
+			DetailQueries: detailQueries,
 			Type:    c.Type,
 			Axes:    axes,
 			Colors:  colors,
@@ -590,6 +618,39 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			}
 
 			queries[j].Shifts = shifts
+		}
+
+		var detailQueries []cloudhub.DashboardQuery
+		if len(c.DetailQueries) > 0 {
+			detailQueries = make([]cloudhub.DashboardQuery, len(c.DetailQueries))
+		}
+		for j, q := range c.DetailQueries {
+			queryType := "influxql"
+			if q.Type != "" {
+				queryType = q.Type
+			}
+			detailQueries[j] = cloudhub.DashboardQuery{
+				Command: q.Command,
+				Label:   q.Label,
+				Source:  q.Source,
+				Type:    queryType,
+			}
+			// Defensive nil check — MarshalDashboard always sets Range but guard against external data
+			if q.Range != nil && q.Range.Upper != q.Range.Lower {
+				detailQueries[j].Range = &cloudhub.Range{
+					Upper: q.Range.Upper,
+					Lower: q.Range.Lower,
+				}
+			}
+			shifts := make([]cloudhub.TimeShift, len(q.Shifts))
+			for k := range q.Shifts {
+				shifts[k] = cloudhub.TimeShift{
+					Label:    q.Shifts[k].Label,
+					Unit:     q.Shifts[k].Unit,
+					Quantity: q.Shifts[k].Quantity,
+				}
+			}
+			detailQueries[j].Shifts = shifts
 		}
 
 		colors := make([]cloudhub.CellColor, len(c.Colors))
@@ -780,6 +841,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			MinH:                   c.MinH,
 			Name:                   c.Name,
 			Queries:                queries,
+			DetailQueries:          detailQueries,
 			Type:                   cellType,
 			Axes:                   axes,
 			CellColors:             colors,

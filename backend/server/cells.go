@@ -43,6 +43,14 @@ func newCellResponse(dID cloudhub.DashboardID, cell cloudhub.DashboardCell) dash
 			cell.Queries[i].Type = "influxql"
 		}
 	}
+	if cell.DetailQueries == nil {
+		cell.DetailQueries = []cloudhub.DashboardQuery{}
+	}
+	for i := range cell.DetailQueries {
+		if cell.DetailQueries[i].Type == "" {
+			cell.DetailQueries[i].Type = "influxql"
+		}
+	}
 	// Copy to handle race condition
 	newAxes := make(map[string]cloudhub.Axis, len(cell.Axes))
 	for k, v := range cell.Axes {

@@ -54,6 +54,7 @@ message DashboardCell {
 	string cellOrigin                    = 22; // "builtin" | "user" (empty treated as user)
 	bool hidden                          = 23; // When true, cell is hidden (user can toggle without deleting)
 	bool isShowSummary                   = 24; // When true, cell displays summary information
+	repeated Query detailQueries                  = 25; // Detail queries for cell detail view
 }
 
 message GraphOptions {

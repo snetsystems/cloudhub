@@ -168,75 +168,61 @@ class AgentAdminPage extends PureComponent<Props, State> {
       }
     }
 
-    const hasDbHosts = (dbHosts as Agent[]).length > 0
+    const allAcceptedKeys = Object.keys(minionListObject)
 
-    if (hasDbHosts) {
-      this.setState({
-        agents: dbHosts,
-        minionsObject: minionListObject,
-        minionsStatus: RemoteDataState.Done,
-      })
-    }
+    this.setState({
+      agents: dbHosts,
+      minionsObject: minionListObject,
+      minionsStatus: RemoteDataState.Done,
+    })
 
-    if (saltRunningKeys.length === 0) {
-      if (!hasDbHosts) {
-        this.setState({
-          agents: dbHosts,
-          minionsObject: minionListObject,
-          minionsStatus: RemoteDataState.Done,
-        })
-      }
+    if (allAcceptedKeys.length === 0) {
       return
     }
 
-    if (hasDbHosts) this.setState({isSaltLoading: true})
-    let onlineSet = new Set<string>()
+    this.setState({isSaltLoading: true})
     try {
-      const upRes = await getManageUp(saltMasterUrl, saltMasterToken)
-      const upList: string[] = upRes?.data?.return?.[0] ?? []
-      onlineSet = new Set(upList)
-    } catch (_) {}
-    if (hasDbHosts) this.setState({isSaltLoading: false})
-
-    const onlineKeys = saltRunningKeys.filter(k => onlineSet.has(k))
-
-    for (const key of saltRunningKeys) {
-      minionListObject[key] = {
-        ...minionListObject[key],
-        isSaltRunning: onlineSet.has(key),
-      }
-    }
-
-    if (onlineKeys.length > 0) {
+      let onlineSet = new Set<string>()
       try {
-        const telegrafInfo = await getTelegrafInstalledList(
-          saltMasterUrl,
-          saltMasterToken,
-          onlineKeys.toString()
-        )
-        const installList = telegrafInfo[0].data.return[0]
-        const statusList = telegrafInfo[1].data.return[0]
-        const versionList = telegrafInfo[2].data.return[0]
-        for (const key of onlineKeys) {
-          const {version} = extractTelegrafVersion(versionList[key])
-          minionListObject[key] = {
-            ...minionListObject[key],
-            isInstall: installList[key] === true,
-            isRunning: statusList[key] === true,
-            telegrafVersion: version,
-          }
-        }
+        const upRes = await getManageUp(saltMasterUrl, saltMasterToken)
+        const upList: string[] = upRes?.data?.return?.[0] ?? []
+        onlineSet = new Set(upList)
       } catch (_) {}
-    }
 
-    if (!hasDbHosts) {
-      this.setState({
-        agents: dbHosts,
-        minionsObject: {...minionListObject},
-        minionsStatus: RemoteDataState.Done,
-      })
-    } else {
+      const onlineKeys = allAcceptedKeys.filter(k => onlineSet.has(k))
+
+      for (const key of allAcceptedKeys) {
+        minionListObject[key] = {
+          ...minionListObject[key],
+          isSaltRunning: onlineSet.has(key),
+        }
+      }
+
+      if (onlineKeys.length > 0) {
+        try {
+          const telegrafInfo = await getTelegrafInstalledList(
+            saltMasterUrl,
+            saltMasterToken,
+            onlineKeys.toString()
+          )
+          const installList = telegrafInfo[0].data.return[0]
+          const statusList = telegrafInfo[1].data.return[0]
+          const versionList = telegrafInfo[2].data.return[0]
+          for (const key of onlineKeys) {
+            const {version} = extractTelegrafVersion(versionList[key])
+            minionListObject[key] = {
+              ...minionListObject[key],
+              isInstall: installList[key] === true,
+              isRunning: statusList[key] === true,
+              telegrafVersion: version,
+            }
+          }
+        } catch (_) {}
+      }
+
       this.setState({minionsObject: {...minionListObject}})
+    } finally {
+      this.setState({isSaltLoading: false})
     }
   }
 

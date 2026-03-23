@@ -1229,3 +1229,51 @@ func TestMarshalAliasToDevice(t *testing.T) {
 		t.Fatalf("AliasToDevice protobuf copy error: got %#v, expected %#v", vv, *v)
 	}
 }
+
+func TestMarshalDashboardWithDetailQueries(t *testing.T) {
+	d := cloudhub.Dashboard{
+		ID:   1,
+		Name: "test",
+		Cells: []cloudhub.DashboardCell{
+			{
+				ID:   "cell1",
+				Name: "CPU",
+				Type: "line",
+				Queries: []cloudhub.DashboardQuery{
+					{Command: "SELECT mean(\"usage_user\") FROM cpu", Label: "user", Type: "influxql", Shifts: []cloudhub.TimeShift{}},
+				},
+				DetailQueries: []cloudhub.DashboardQuery{
+					{Command: "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\" FROM cpu", Label: "cpu-usage", Type: "influxql", Shifts: []cloudhub.TimeShift{}},
+					{Command: "SELECT mean(\"usage_idle\") AS \"idle\" FROM cpu", Label: "cpu-idle", Type: "influxql", Shifts: []cloudhub.TimeShift{}},
+				},
+				Axes:         map[string]cloudhub.Axis{},
+				CellColors:   []cloudhub.CellColor{},
+				FieldOptions: []cloudhub.RenamableField{},
+				DecimalPlaces: cloudhub.DecimalPlaces{IsEnforced: true, Digits: 2},
+				GraphOptions:  cloudhub.GraphOptions{FillArea: true, ShowLine: true},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings:  []cloudhub.ColumnSetting{},
+					SortBy:          "name",
+					SortByDirection: "asc",
+				},
+			},
+		},
+	}
+	d.Templates = []cloudhub.Template{}
+
+	buf, err := internal.MarshalDashboard(d)
+	if err != nil {
+		t.Fatalf("MarshalDashboard error: %v", err)
+	}
+
+	var got cloudhub.Dashboard
+	if err := internal.UnmarshalDashboard(buf, &got); err != nil {
+		t.Fatalf("UnmarshalDashboard error: %v", err)
+	}
+
+	dashboardRoundtripNormalizeType(&d, &got)
+
+	if diff := gocmp.Diff(d, got); diff != "" {
+		t.Errorf("DetailQueries roundtrip mismatch (-want +got):\n%s", diff)
+	}
+}

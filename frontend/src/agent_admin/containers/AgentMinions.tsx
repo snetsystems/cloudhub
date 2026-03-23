@@ -283,11 +283,17 @@ export class AgentMinions extends PureComponent<Props, State> {
         }
       } catch (_) {}
 
-      await updateAgent(host, {
+      const payload = {
         minionId: host,
-        sourceType: 'salt',
+        sourceType: 'salt' as const,
         ...this.buildAgentPayload(host, grains, diskData),
-      })
+      }
+      const existsInDb = this.props.agents.some(a => a.minionId === host)
+      if (existsInDb) {
+        await updateAgent(host, payload)
+      } else {
+        await registerAgent(payload)
+      }
 
       await onRefreshAgents()
       notify(notifyAgentStartSucceeded(host))

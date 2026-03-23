@@ -2,7 +2,7 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.5.2",
+  "version": "1.5.4",
   "organization": "",
   "cells": [
     {
@@ -31,6 +31,40 @@
         {
           "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
           "label": "CPU Usage"
+        }
+      ],
+      "detailQueries": [
+        {
+          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-usage"
+        },
+        {
+          "query": "SELECT mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-idle"
+        },
+        {
+          "query": "SELECT mean(\"usage_nice\") AS \"nice\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-nice"
+        },
+        {
+          "query": "SELECT mean(\"usage_iowait\") AS \"iowait\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-io-wait"
+        },
+        {
+          "query": "SELECT mean(\"usage_steal\") AS \"steal\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-steal"
+        },
+        {
+          "query": "SELECT mean(\"usage_irq\") AS \"irq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-irq"
+        },
+        {
+          "query": "SELECT mean(\"usage_softirq\") AS \"softirq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-soft-irq"
+        },
+        {
+          "query": "SELECT mean(\"load1\") AS \"01 min\", mean(\"load5\") AS \"05 min\", mean(\"load15\") AS \"15 min\" FROM \":db:\".\":rp:\".\"system\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-load"
         }
       ]
     },
@@ -116,7 +150,10 @@
     },
     {
       "i": "server-details-disk-utilization",
-      "x": 0, "y": 44, "w": 48, "h": 10,
+      "x": 0,
+      "y": 44,
+      "w": 48,
+      "h": 10,
       "name": "Disk I/O Usage (%)",
       "type": "line",
       "queries": [
@@ -126,7 +163,12 @@
         }
       ],
       "axes": {
-        "y": { "bounds": ["0", "100"], "suffix": "%", "base": "raw", "scale": "linear" }
+        "y": {
+          "bounds": ["0", "100"],
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        }
       }
     }
   ],

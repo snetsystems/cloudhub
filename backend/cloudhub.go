@@ -862,6 +862,7 @@ type DashboardCell struct {
 	CellOrigin             string                 `json:"cellOrigin,omitempty"` // CellOriginBuiltin | CellOriginUser (empty treated as user)
 	Hidden                 bool                   `json:"hidden,omitempty"`     // When true, cell is hidden (user can toggle without deleting)
 	IsShowSummary          bool                   `json:"isShowSummary,omitempty"` // When true, cell displays summary information
+	DetailQueries          []DashboardQuery       `json:"detailQueries"`
 }
 
 // TableGaugeChartOptions is the options for the table gauge chart
