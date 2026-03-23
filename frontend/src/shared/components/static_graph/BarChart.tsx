@@ -136,7 +136,7 @@ const BarChart = ({
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
-        <div className="static-graph-container" style={{...container}}>
+        <div className="static-graph-container" style={{...container, position: 'relative'}}>
           <ChartContainer>
             <Bar
               ref={chartRef}

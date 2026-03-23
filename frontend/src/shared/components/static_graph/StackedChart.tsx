@@ -14,7 +14,6 @@ import {
   LogarithmicScale,
 } from 'chart.js'
 import zoomPlugin from 'chartjs-plugin-zoom'
-import _ from 'lodash'
 
 // Types
 import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
@@ -35,9 +34,9 @@ import {StaticGraphLegend} from 'src/shared/components/static_graph/common/Stati
 import {
   CellType,
   DecimalPlaces,
-  FieldOption,
   TableOptions,
 } from 'src/types/dashboards'
+import {StatisticalGraphFieldOption} from 'src/types/statisticalgraph'
 
 // Utils
 import {useIsUpdated} from 'src/shared/utils/staticGraphHooks'
@@ -64,7 +63,7 @@ interface Props {
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
   tableOptions: TableOptions
-  fieldOptions: FieldOption[]
+  fieldOptions: StatisticalGraphFieldOption[]
   decimalPlaces: DecimalPlaces
   showCount?: number | null
 }
@@ -141,7 +140,7 @@ const StackedChart = ({
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
-        <div className="static-graph-container" style={{...container}}>
+        <div className="static-graph-container" style={{...container, position: 'relative'}}>
           <ChartContainer>
             <Bar
               ref={chartRef}
