@@ -1080,7 +1080,7 @@ func TestService_UpdateDashboard(t *testing.T) {
 			body:       `{}`,
 			dashboardsGet: cloudhub.Dashboard{ID: 1, Name: "D"},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantErrMsg: "Update must include at least one of name, cells, or templates",
+			wantErrMsg: "Update must include at least one of name, cells, templates, or isDefault",
 		},
 		{
 			name: "invalid template type returns 422",
@@ -1261,5 +1261,61 @@ func TestService_GetFixedCell(t *testing.T) {
 	}
 	if len(res.Cells) == 0 {
 		t.Error("response cells empty, want at least one")
+	}
+}
+
+func TestDashboardsIsDefaultFilter(t *testing.T) {
+	defaultDash := cloudhub.Dashboard{
+		ID:        1,
+		Name:      "Default Dashboard",
+		IsDefault: true,
+		Cells:     []cloudhub.DashboardCell{},
+		Templates: []cloudhub.Template{},
+	}
+	otherDash := cloudhub.Dashboard{
+		ID:        2,
+		Name:      "Other Dashboard",
+		IsDefault: false,
+		Cells:     []cloudhub.DashboardCell{},
+		Templates: []cloudhub.Template{},
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := &Service{
+			Store: &mocks.Store{
+				DashboardsStore: &mocks.DashboardsStore{
+					AllF: func(ctx context.Context) ([]cloudhub.Dashboard, error) {
+						return []cloudhub.Dashboard{defaultDash, otherDash}, nil
+					},
+				},
+			},
+			Logger: &mocks.TestLogger{},
+		}
+		s.Dashboards(w, r)
+	}))
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "?isDefault=true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+	var result struct {
+		Dashboards []struct {
+			ID        int  `json:"id,string"`
+			IsDefault bool `json:"isDefault"`
+		} `json:"dashboards"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Dashboards) != 1 {
+		t.Fatalf("expected 1 dashboard, got %d", len(result.Dashboards))
+	}
+	if !result.Dashboards[0].IsDefault {
+		t.Error("expected isDefault=true on returned dashboard")
 	}
 }

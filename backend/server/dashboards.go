@@ -121,9 +121,8 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 				filtered = append(filtered, d)
 			}
 		}
-		if len(filtered) == 0 {
-			Error(w, http.StatusNotFound, "no default dashboard found", s.Logger)
-			return
+		if len(filtered) == 0 && len(dashboards) > 0 {
+			filtered = dashboards[:1]
 		}
 		dashboards = filtered
 	}
