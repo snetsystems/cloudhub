@@ -6,26 +6,9 @@
   "organization": "",
   "cells": [
     {
-      "i": "server-details-summary",
-      "x": 0,
-      "y": 0,
-      "w": 96,
-      "h": 4,
-      "minW": 48,
-      "minH": 2,
-      "name": "Server Summary",
-      "queries": [
-        {
-          "query": "SELECT sum(\"last_total\") / 1073741824 AS \"disk_total_gib\" FROM (SELECT last(\"total\") AS \"last_total\" FROM \":db:\".\":rp:\".\"disk\" WHERE \"host\" = :host: GROUP BY \"path\")",
-          "label": "disk-total"
-        }
-      ],
-      "type": "component"
-    },
-    {
       "i": "server-details-cpu-usage",
       "x": 0,
-      "y": 4,
+      "y": 0,
       "w": 48,
       "h": 10,
       "minW": 16,
@@ -76,12 +59,12 @@
     {
       "i": "server-details-memory-usage",
       "x": 0,
-      "y": 14,
+      "y": 10,
       "w": 48,
       "h": 10,
       "minW": 16,
       "minH": 4,
-      "name": "Memory usage",
+      "name": "Memory Usage",
       "type": "line-plus-single-stat",
       "queries": [
         {
@@ -131,7 +114,7 @@
     {
       "i": "server-details-process",
       "x": 48,
-      "y": 4,
+      "y": 0,
       "w": 48,
       "h": 20,
       "minW": 24,
@@ -143,7 +126,7 @@
     {
       "i": "server-details-server-info",
       "x": 48,
-      "y": 24,
+      "y": 20,
       "w": 48,
       "h": 20,
       "minW": 24,
@@ -160,7 +143,7 @@
     {
       "i": "server-details-network-usage",
       "x": 0,
-      "y": 24,
+      "y": 20,
       "w": 48,
       "h": 10,
       "minW": 16,
@@ -195,12 +178,12 @@
     {
       "i": "server-details-disk-io-usage",
       "x": 0,
-      "y": 34,
+      "y": 30,
       "w": 48,
       "h": 10,
       "minW": 16,
       "minH": 4,
-      "name": "Disk io",
+      "name": "Disk I/O",
       "type": "line",
       "queries": [
         {
@@ -250,7 +233,7 @@
     {
       "i": "server-details-disk-utilization",
       "x": 0,
-      "y": 44,
+      "y": 40,
       "w": 48,
       "h": 10,
       "name": "Disk I/O Usage (%)",

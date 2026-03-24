@@ -6,6 +6,7 @@ import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import type {TemplateSelectionContextValue} from 'src/shared/components/DashboardPageWithImport'
 import * as DashboardsModels from 'src/types/dashboards'
 import {Addon} from 'src/types/auth'
+import {Template, Source} from 'src/types'
 import {getAgentDetails} from 'src/hosts/utils'
 import {
   DEFAULT_TABLE_OPTIONS,
@@ -168,40 +169,36 @@ export const ServerDetailsPageContext = React.createContext<ServerDetailsPageCon
   null
 )
 
-export function ServerDetailsSummaryCellContent({
-  cell,
-  context,
-}: {
-  cell: DashboardsModels.Cell
-  context: RenderCellContext
-}) {
-  const ctx = useContext(ServerDetailsPageContext)
-  const selectedHost = ctx?.selectedHost ?? null
+export interface ServerSummaryInfoProps {
+  selectedHost: string | null
+  source: Source | null
+  templates: Template[]
+  diskTotalQuery?: string
+}
 
-  const [contextOpen, setContextOpen] = useState(false)
+export function ServerSummaryInfo({
+  selectedHost,
+  source,
+  templates,
+  diskTotalQuery,
+}: ServerSummaryInfoProps) {
   const [hostData, setHostData] = useState<Host | null>(null)
   const [diskTotal, setDiskTotal] = useState<string | undefined>(undefined)
-  const source = context?.source
-  const templates = context?.templates
 
   useEffect(() => {
-    if (!selectedHost || !source) {
-      setDiskTotal(undefined)
-      return
-    }
-
-    const diskQuery = (cell.queries as any[])?.find(q => q.label === 'disk-total')
-    if (!diskQuery) {
+    if (!selectedHost || !source || !diskTotalQuery) {
       setDiskTotal(undefined)
       return
     }
 
     let isCancelled = false
-    const q = [{
-      id: 'disk-total',
-      text: diskQuery.query,
-      db: source.telegraf ?? 'Default',
-    }]
+    const q = [
+      {
+        id: 'disk-total',
+        text: diskTotalQuery,
+        db: source.telegraf ?? 'Default',
+      },
+    ]
 
     executeQueries(source, q, templates ?? [])
       .then(res => {
@@ -221,7 +218,7 @@ export function ServerDetailsSummaryCellContent({
     return () => {
       isCancelled = true
     }
-  }, [selectedHost, source, templates, cell.queries])
+  }, [selectedHost, source, templates, diskTotalQuery])
 
   useEffect(() => {
     if (!selectedHost) {
@@ -246,11 +243,32 @@ export function ServerDetailsSummaryCellContent({
     }
   }, [selectedHost])
 
-  const Item = ({ label, value, icon }: { label: string, value?: string, icon?: boolean }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', lineHeight: '1' }}>
-      <span style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>{label}</span>
-      {icon && <span className="icon info-sign" style={{ opacity: 0.6, fontSize: '12px', cursor: 'help' }} />}
-      <span style={{ display: 'flex', alignItems: 'center' }}>{value ?? '-'}</span>
+  const Item = ({
+    label,
+    fullLabel,
+    value,
+    icon,
+    className,
+  }: {
+    label: string
+    fullLabel?: string
+    value?: string
+    icon?: boolean
+    className?: string
+  }) => (
+    <div className={classnames('server-details-header-info__item', className)}>
+      <span className="server-details-header-info__label">
+        <span className="full-title">{fullLabel || label}</span>
+        <span className="short-title">{label}</span>
+        :
+      </span>
+      <span className="server-details-header-info__value">{value ?? '-'}</span>
+      {icon && (
+        <span
+          className="icon info-sign"
+          style={{opacity: 0.6, fontSize: '11px', cursor: 'help', marginLeft: '2px'}}
+        />
+      )}
     </div>
   )
 
@@ -258,53 +276,30 @@ export function ServerDetailsSummaryCellContent({
     ? (hostData.memTotalKb / 1024 / 1024).toFixed(2) + ' GB'
     : undefined
 
+  if (!selectedHost) return null
+
   return (
-    <div className="server-details-cell-content">
-      <div className="dash-graph--draggable dash-graph--heading dash-graph--heading-draggable server-details-cell-header">
-        <span className="dash-graph--name server-details-cell-header-name">
-          {cell.name}
-        </span>
-        <div className="server-details-cell-drag-handle">
-          <div className="dash-graph--heading-bar" />
-          <div className="dash-graph--heading-dragger" />
-        </div>
-      </div>
-      {context?.onDeleteCell && (
-        <div
-          className={classnames('dash-graph-context', {
-            'dash-graph-context__open': contextOpen,
-          })}
-          onMouseDown={e => e.stopPropagation()}
-        >
-          <div className="dash-graph-context--buttons">
-            <Authorized requiredRole={EDITOR_ROLE}>
-              <MenuTooltipButton
-                icon="trash"
-                theme="danger"
-                menuItems={[
-                  {
-                    text: 'Confirm',
-                    action: () => context.onDeleteCell(cell),
-                    disabled: false,
-                  },
-                ]}
-                informParent={() => setContextOpen(prev => !prev)}
-              />
-            </Authorized>
-          </div>
-        </div>
-      )}
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', padding: '0 16px', height: '100%', gap: '24px', flexWrap: 'nowrap', overflowX: 'auto', whiteSpace: 'nowrap' }}>
-        <Item label="IP 주소" value={hostData?.ip} />
-        <Item label="운영체제" value={hostData?.kernel} />
-        <Item label="CPU 코어" value={hostData?.cpuCores?.toString()} />
-        <Item label="Memory Total" value={memTotalGB} />
-        <Item label="Disk Total" value={diskTotal} icon={true} />
-        <Item label="OS 버전" value={hostData?.osVersion} />
-      </div>
+    <div className="server-details-header-info">
+      <Item label="IP" fullLabel="IP Address" value={hostData?.ip} />
+      <Item
+        label="Ker"
+        fullLabel="Kernel"
+        value={hostData?.kernel}
+        className="server-details-header-info__item--hide-sm"
+      />
+      <Item label="CPU" fullLabel="CPU Cores" value={hostData?.cpuCores?.toString()} />
+      <Item label="Mem" fullLabel="Memory Total" value={memTotalGB} />
+      <Item label="Disk" fullLabel="Disk Total" value={diskTotal} icon={true} />
+      <Item
+        label="OS"
+        fullLabel="OS Version"
+        value={hostData?.osVersion}
+        className="server-details-header-info__item--hide-sm"
+      />
     </div>
   )
 }
+
 
 export function ServerDetailsCellContent({
   addons,

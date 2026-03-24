@@ -27,7 +27,7 @@ import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {
   ServerDetailsCellContent,
-  ServerDetailsSummaryCellContent,
+  ServerSummaryInfo,
   ServerDetailsPageContext,
   type ServerDetailsPageContextValue,
 } from 'src/server_details/components/ServerDetailsCellContent'
@@ -35,6 +35,7 @@ import {
 interface HostDropdownHeaderProps {
   templates: Template[]
   dashboard?: DashboardsModels.Dashboard
+  source: Source
   templateVariableLocalSelected?: (
     dashboardID: string,
     templateID: string,
@@ -45,6 +46,7 @@ interface HostDropdownHeaderProps {
 function HostDropdownHeader({
   templates,
   dashboard,
+  source,
   templateVariableLocalSelected,
 }: HostDropdownHeaderProps) {
   const ctx = useContext(ServerDetailsPageContext)
@@ -61,6 +63,17 @@ function HostDropdownHeader({
   )
 
   const {selectedHost, onHostSelect} = ctx || {}
+  
+  const DEFAULT_DISK_TOTAL_QUERY =
+    'SELECT sum("last_total") / 1073741824 AS "disk_total_gib" FROM (SELECT last("total") AS "last_total" FROM ":db:".":rp:"."disk" WHERE "host" = :host: GROUP BY "path")'
+
+  const diskTotalQuery = useMemo(() => {
+    const summaryCell = dashboard?.cells?.find(c => c.i === 'server-details-summary')
+    return (
+      (summaryCell?.queries as any[])?.find(q => q.label === 'disk-total')?.query ||
+      DEFAULT_DISK_TOTAL_QUERY
+    )
+  }, [dashboard])
 
   useEffect(() => {
     if (!ctx || !hostTemplate || !dashboard) return
@@ -93,22 +106,30 @@ function HostDropdownHeader({
   }
 
   return (
-    <span className="server-details-page__host-dropdown-wrap">
-      <Dropdown
-        mode={DropdownMode.ActionList}
-        titleText="Select Host"
-        selectedID={selectedHost ?? ''}
-        onChange={value => onHostSelect(value ?? null)}
-        customClass="server-details-page__host-dropdown"
-        widthPixels={150}
-      >
-        {hostList.map(host => (
-          <Dropdown.Item key={host} id={host} value={host}>
-            {host}
-          </Dropdown.Item>
-        ))}
-      </Dropdown>
-    </span>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <span className="server-details-page__host-dropdown-wrap">
+        <Dropdown
+          mode={DropdownMode.ActionList}
+          titleText="Select Host"
+          selectedID={selectedHost ?? ''}
+          onChange={value => onHostSelect(value ?? null)}
+          customClass="server-details-page__host-dropdown"
+          widthPixels={150}
+        >
+          {hostList.map(host => (
+            <Dropdown.Item key={host} id={host} value={host}>
+              {host}
+            </Dropdown.Item>
+          ))}
+        </Dropdown>
+      </span>
+      <ServerSummaryInfo
+        selectedHost={selectedHost}
+        source={source}
+        templates={templates}
+        diskTotalQuery={diskTotalQuery}
+      />
+    </div>
   )
 }
 
@@ -300,13 +321,11 @@ function ServerDetailsWrapper(props) {
           <HostDropdownHeader
             templates={templates}
             dashboard={dashboard}
+            source={props.source}
             templateVariableLocalSelected={templateVariableLocalSelected}
           />
         )}
         renderCell={(cell, context) => {
-          if (cell.i === 'server-details-summary') {
-            return <ServerDetailsSummaryCellContent cell={cell} context={context} />
-          }
           if (
             cell.i === 'server-details-server-info'
           ) {

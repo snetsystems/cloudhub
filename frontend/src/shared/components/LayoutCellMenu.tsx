@@ -78,7 +78,7 @@ class LayoutCellMenu extends Component<Props, State> {
               }
             }}
           >
-            <span className="icon plus" />
+            <span className="icon search" />
           </button>
         ))}
         {this.pencilMenu}

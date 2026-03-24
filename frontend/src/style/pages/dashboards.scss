@@ -787,3 +787,59 @@ $cell-gradient-border--mid: mix(
     cursor: move;
   }
 }
+
+/*
+  Server Details Header Info
+  ------------------------------------------------------
+*/
+
+.server-details-header-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid #383846;
+  height: 24px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+
+    &--hide-sm {
+      @media (max-width: 1300px) {
+        display: none;
+      }
+    }
+  }
+
+  &__label {
+    font-weight: bold;
+    color: #6b7a90;
+
+    .short-title {
+      display: inline;
+    }
+    .full-title {
+      display: none;
+    }
+
+    @media (min-width: 1600px) {
+      .short-title {
+        display: none;
+      }
+      .full-title {
+        display: inline;
+      }
+    }
+  }
+
+  &__value {
+    color: #e5e8ed;
+  }
+}
