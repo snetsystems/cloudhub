@@ -192,10 +192,12 @@ export function ServerSummaryInfo({
     }
 
     let isCancelled = false
+    const resolvedText = diskTotalQuery.replace(/':host:'|:host:/g, `'${selectedHost}'`)
+    
     const q = [
       {
         id: 'disk-total',
-        text: diskTotalQuery,
+        text: resolvedText,
         db: source.telegraf ?? 'Default',
       },
     ]

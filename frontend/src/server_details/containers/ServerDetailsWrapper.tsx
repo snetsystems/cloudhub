@@ -65,7 +65,7 @@ function HostDropdownHeader({
   const {selectedHost, onHostSelect} = ctx || {}
   
   const DEFAULT_DISK_TOTAL_QUERY =
-    'SELECT sum("last_total") / 1073741824 AS "disk_total_gib" FROM (SELECT last("total") AS "last_total" FROM ":db:".":rp:"."disk" WHERE "host" = :host: GROUP BY "path")'
+    'SELECT sum("last_total") / 1073741824 AS "disk_total_gib" FROM (SELECT last("total") AS "last_total" FROM ":db:".":rp:"."disk" WHERE time > now() - 15m AND "host" = :host: GROUP BY "path")'
 
   const diskTotalQuery = useMemo(() => {
     const summaryCell = dashboard?.cells?.find(c => c.i === 'server-details-summary')
