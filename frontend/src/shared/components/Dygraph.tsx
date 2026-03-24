@@ -108,6 +108,7 @@ interface State {
   staticLegendHeight: number
   xAxisRange: [number, number]
   isMouseInLegend: boolean
+  visibilities: boolean[]
 }
 
 @ErrorHandling
@@ -142,6 +143,7 @@ class Dygraph extends Component<Props, State> {
       staticLegendHeight: 0,
       xAxisRange: [0, 0],
       isMouseInLegend: false,
+      visibilities: [],
     }
 
     this.graphRef = React.createRef<HTMLDivElement>()
@@ -401,11 +403,20 @@ class Dygraph extends Component<Props, State> {
       return
     }
 
-    const {xAxisRange} = this.state
+    const {xAxisRange, visibilities} = this.state
     const newXAxisRange = this.dygraph.xAxisRange()
+    const newVisibilities = this.dygraph.visibility()
 
+    const stateUpdate: Partial<State> = {}
     if (!isEqual(xAxisRange, newXAxisRange)) {
-      this.setState({xAxisRange: newXAxisRange})
+      stateUpdate.xAxisRange = newXAxisRange
+    }
+    if (!isEqual(visibilities, newVisibilities)) {
+      stateUpdate.visibilities = newVisibilities
+    }
+
+    if (Object.keys(stateUpdate).length > 0) {
+      this.setState(stateUpdate as any)
     }
   }
 

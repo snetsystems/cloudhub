@@ -32,12 +32,16 @@ const MaxMarker: FunctionComponent<Props> = ({
   let maxSeriesIdx = -1
 
   // 1. Find the absolute maximum value, its timestamp, and series index
+  const visibilities = dygraph.visibility() || []
   for (const row of timeSeries) {
     if (!row || row.length < 2) {
       continue
     }
     const time = row[0]
     for (let i = 1; i < row.length; i++) {
+      if (visibilities.length > i - 1 && visibilities[i - 1] === false) {
+        continue
+      }
       const val = row[i]
       if (typeof val === 'number' && val > maxVal) {
         maxVal = val
@@ -58,12 +62,32 @@ const MaxMarker: FunctionComponent<Props> = ({
   }
 
   // 3. Convert data coordinates to DOM coordinates
-  const x = dygraph.toDomXCoord(maxTime) + 16
-  const y = dygraph.toDomYCoord(maxVal) + 8
+  let x = dygraph.toDomXCoord(maxTime)
+  let y = dygraph.toDomYCoord(maxVal)
+
+  if (isNaN(x) || isNaN(y)) {
+    return null
+  }
+
+  x += 16
+  y += 8
 
   // 4. Get the color of the specific series from Dygraph
-  const colors = dygraph.getColors() || []
-  const seriesColor = colors[maxSeriesIdx - 1] || '#FDC44F'
+  let seriesColor = '#FDC44F'
+  const labels = dygraph.getLabels()
+  if (labels && maxSeriesIdx > 0 && maxSeriesIdx < labels.length) {
+    const seriesName = labels[maxSeriesIdx]
+    const props = dygraph.getPropertiesForSeries(seriesName)
+    if (props && props.color) {
+      seriesColor = props.color
+    } else {
+      const colors = dygraph.getColors() || []
+      seriesColor = colors[maxSeriesIdx - 1] || '#FDC44F'
+    }
+  } else {
+    const colors = dygraph.getColors() || []
+    seriesColor = colors[maxSeriesIdx - 1] || '#FDC44F'
+  }
 
   // 5. Format the value using the system's standard for charts
   const digits =
