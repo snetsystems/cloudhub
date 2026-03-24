@@ -21,6 +21,7 @@ import {
   handleSelectHostProps,
   vmParam,
   CloudTimeRange,
+  CloudAutoRefresh,
 } from 'src/clouds/types/type'
 
 import {
@@ -80,4 +81,5 @@ export {
   OpenStackGaugeChartCloudResource,
   OpenStackGaugeChartSize,
   CloudTimeRange,
+  CloudAutoRefresh,
 }

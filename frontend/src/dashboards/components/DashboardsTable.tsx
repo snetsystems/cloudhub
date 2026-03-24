@@ -4,10 +4,14 @@ import _ from 'lodash'
 
 import Authorized, {EDITOR_ROLE, VIEWER_ROLE} from 'src/auth/Authorized'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
+import Button from 'src/reusable_ui/components/Button'
+
+import 'src/dashboards/components/DashboardsTable.scss'
 
 import {getDeep} from 'src/utils/wrappers'
 
 import {Dashboard, Template, RemoteDataState, DashboardType} from 'src/types'
+import {ComponentColor, ComponentSize, ButtonShape} from 'src/reusable_ui/types'
 
 interface Props {
   dashboards: Dashboard[]
@@ -18,6 +22,7 @@ interface Props {
     dashboard: Dashboard
   ) => (event: MouseEvent<HTMLButtonElement>) => void
   onExportDashboard: (dashboard: Dashboard) => () => void
+  onSetDefaultDashboard: (dashboard: Dashboard) => void
   dashboardLink: string
 }
 
@@ -30,6 +35,7 @@ class DashboardsTable extends PureComponent<Props> {
       onCloneDashboard,
       onDeleteDashboard,
       onExportDashboard,
+      onSetDefaultDashboard,
     } = this.props
 
     if (
@@ -47,10 +53,13 @@ class DashboardsTable extends PureComponent<Props> {
       return this.renderEmptyState()
     }
 
+    const defaultDashboard = dashboards.find(d => d.isDefault) || dashboards[0]
+
     return (
-      <table className="table v-center admin-table table-highlight">
+      <table className="table v-center admin-table table-highlight dashboards-table">
         <thead>
           <tr>
+            <th style={{width: '100px'}}>Overview</th>
             <th>Name</th>
             <th>Template Variables</th>
             <th />
@@ -59,51 +68,79 @@ class DashboardsTable extends PureComponent<Props> {
         <tbody>
           {_.sortBy(dashboards, d => d.name.toLowerCase())
             .filter(dashboard => dashboard.type === DashboardType.Normal)
-            .map(dashboard => (
-              <tr key={dashboard.id}>
-                <td>
-                  <Link to={`${dashboardLink}/dashboards/${dashboard.id}`}>
-                    {dashboard.name}
-                  </Link>
-                </td>
-                <td>{this.getDashboardTemplates(dashboard)}</td>
-                <td className="text-right">
-                  <Authorized
-                    requiredRole={VIEWER_ROLE}
-                    replaceWithIfNotAuthorized={<div />}
-                  >
-                    <button
-                      className="btn btn-xs btn-default table--show-on-row-hover"
-                      onClick={onExportDashboard(dashboard)}
+            .map(dashboard => {
+              const isSelected =
+                defaultDashboard && dashboard.id === defaultDashboard.id
+              return (
+                <tr key={dashboard.id}>
+                  <td className="dashboards-table--td">
+                    {isSelected ? (
+                      <Button
+                        text={'Selected'}
+                        color={ComponentColor.Success}
+                        size={ComponentSize.ExtraSmall}
+                        shape={ButtonShape.StretchToFit}
+                        onClick={() => {}}
+                      />
+                    ) : (
+                      <Button
+                        text={'Select'}
+                        color={ComponentColor.Default}
+                        size={ComponentSize.ExtraSmall}
+                        shape={ButtonShape.StretchToFit}
+                        onClick={e => {
+                          e.stopPropagation()
+                          onSetDefaultDashboard(dashboard)
+                        }}
+                      />
+                    )}
+                  </td>
+                  <td className="dashboards-table--td dashboards-table--name">
+                    <Link to={`${dashboardLink}/dashboards/${dashboard.id}`}>
+                      {dashboard.name}
+                    </Link>
+                  </td>
+                  <td className="dashboards-table--td">
+                    {this.getDashboardTemplates(dashboard)}
+                  </td>
+                  <td className="text-right dashboards-table--td">
+                    <Authorized
+                      requiredRole={VIEWER_ROLE}
+                      replaceWithIfNotAuthorized={<div />}
                     >
-                      <span className="icon export" />
-                      Export
-                    </button>
-                  </Authorized>
-                  <Authorized
-                    requiredRole={EDITOR_ROLE}
-                    replaceWithIfNotAuthorized={<div />}
-                  >
-                    <>
                       <button
                         className="btn btn-xs btn-default table--show-on-row-hover"
-                        onClick={onCloneDashboard(dashboard)}
+                        onClick={onExportDashboard(dashboard)}
                       >
-                        <span className="icon duplicate" />
-                        Clone
+                        <span className="icon export" />
+                        Export
                       </button>
-                      <ConfirmButton
-                        confirmAction={onDeleteDashboard(dashboard)}
-                        size="btn-xs"
-                        type="btn-danger"
-                        text="Delete"
-                        customClass="table--show-on-row-hover"
-                      />
-                    </>
-                  </Authorized>
-                </td>
-              </tr>
-            ))}
+                    </Authorized>
+                    <Authorized
+                      requiredRole={EDITOR_ROLE}
+                      replaceWithIfNotAuthorized={<div />}
+                    >
+                      <>
+                        <button
+                          className="btn btn-xs btn-default table--show-on-row-hover"
+                          onClick={onCloneDashboard(dashboard)}
+                        >
+                          <span className="icon duplicate" />
+                          Clone
+                        </button>
+                        <ConfirmButton
+                          confirmAction={onDeleteDashboard(dashboard)}
+                          size="btn-xs"
+                          type="btn-danger"
+                          text="Delete"
+                          customClass="table--show-on-row-hover"
+                        />
+                      </>
+                    </Authorized>
+                  </td>
+                </tr>
+              )
+            })}
         </tbody>
       </table>
     )

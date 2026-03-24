@@ -155,6 +155,7 @@ export function getTimeOptionByGroup(groupName: string | undefined) {
         groupName,
         'openstackMonitor'
       ),
+      overview: autoRefreshGroupDefaultOption(groupName, 'overview'),
       openstack: [
         {...autoRefreshHeader, group: groupName},
         {...autoRefreshOptionPaused, group: groupName},

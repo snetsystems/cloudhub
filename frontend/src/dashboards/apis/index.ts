@@ -29,6 +29,15 @@ export const getDashboards: GetDashboards = () => {
   }) as Promise<AxiosResponse<DashboardsResponse>>
 }
 
+export const getDefaultDashboards = (): Promise<
+  AxiosResponse<DashboardsResponse>
+> => {
+  return AJAX<DashboardsResponse>({
+    method: 'GET',
+    url: '/cloudhub/v1/dashboards?isDefault=true',
+  }) as Promise<AxiosResponse<DashboardsResponse>>
+}
+
 export const loadDashboardLinks = async (
   source: Source,
   {activeDashboard, dashboardsAJAX = getDashboards}: LoadLinksOptions
@@ -255,6 +264,24 @@ export const patchDashboardByID = async (
       url: `/cloudhub/v1/dashboards/${dashboardID}`,
       data: {
         cells: cells,
+      },
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const updateDashboardDefault = async (
+  dashboardID: string,
+  isDefault: boolean
+) => {
+  try {
+    return await AJAX({
+      method: 'PATCH',
+      url: `/cloudhub/v1/dashboards/${dashboardID}`,
+      data: {
+        isDefault,
       },
     })
   } catch (error) {

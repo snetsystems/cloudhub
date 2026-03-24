@@ -24,6 +24,7 @@ interface Props {
   ) => (event: MouseEvent<HTMLButtonElement>) => void
   onExportDashboard: (dashboard: Dashboard) => () => void
   onImportDashboard: (dashboard: Dashboard) => void
+  onSetDefaultDashboard: (dashboard: Dashboard) => void
   notify: (message: Notification) => void
   dashboardLink: string
 }
@@ -50,6 +51,7 @@ class DashboardsPageContents extends Component<Props, State> {
       onCreateDashboard,
       onCloneDashboard,
       onExportDashboard,
+      onSetDefaultDashboard,
       dashboardLink,
       dashboardsStatus,
     } = this.props
@@ -65,6 +67,7 @@ class DashboardsPageContents extends Component<Props, State> {
             onCreateDashboard={onCreateDashboard}
             onCloneDashboard={onCloneDashboard}
             onExportDashboard={onExportDashboard}
+            onSetDefaultDashboard={onSetDefaultDashboard}
             dashboardLink={dashboardLink}
           />
         </div>

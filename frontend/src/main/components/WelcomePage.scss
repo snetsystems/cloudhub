@@ -1,0 +1,63 @@
+@import 'src/style/modules/influx-colors';
+
+.panel.welcome-page-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  padding: 40px;
+  color: $g18-cloud;
+
+  .auth-logo {
+    width: 200px;
+    height: 100px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    color: $g20-white;
+  }
+
+  .welcome-page-content {
+    max-width: 600px;
+    text-align: center;
+
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      color: $g14-chromium;
+    }
+
+    .welcome-page-instructions {
+      background-color: $g3-castle;
+      padding: 20px;
+      border-radius: 4px;
+      text-align: left;
+      margin-top: 30px;
+
+      h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: $g20-white;
+      }
+
+      ul {
+        padding-left: 20px;
+        line-height: 1.8;
+        color: $g16-pearl;
+        
+        strong {
+          color: $c-pool;
+        }
+      }
+    }
+  }
+}

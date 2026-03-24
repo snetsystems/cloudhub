@@ -9,7 +9,7 @@ import {Page} from 'src/reusable_ui'
 import {getDeep} from 'src/utils/wrappers'
 
 import {mapDashboardForDownload} from 'src/dashboards/utils/export'
-import {createDashboard} from 'src/dashboards/apis'
+import {createDashboard, updateDashboardDefault} from 'src/dashboards/apis'
 import {
   getDashboardsAsync,
   deleteDashboardAsync,
@@ -17,6 +17,7 @@ import {
   importDashboardAsync,
   retainRangesDashTimeV1 as retainRangesDashTimeV1Action,
   retainDashRefresh as retainDashRefreshAction,
+  putDashboard as putDashboardAction,
 } from 'src/dashboards/actions'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
@@ -47,6 +48,7 @@ export interface Props extends WithRouterProps {
   notify: (message: Notification) => void
   retainRangesDashTimeV1: (dashboardIDs: number[]) => void
   retainDashRefresh: (dashboardIDs: number[]) => void
+  putDashboard: (dashboard: Dashboard) => Promise<void>
   dashboards: Dashboard[]
 }
 
@@ -106,6 +108,7 @@ export class DashboardsPage extends PureComponent<Props, State> {
             onCloneDashboard={this.handleCloneDashboard}
             onExportDashboard={this.handleExportDashboard}
             onImportDashboard={this.handleImportDashboard}
+            onSetDefaultDashboard={this.handleSetDefaultDashboard}
           />
         </Page.Contents>
       </Page>
@@ -182,6 +185,20 @@ export class DashboardsPage extends PureComponent<Props, State> {
       cells: cellsWithDefaultsApplied,
     })
   }
+
+  private handleSetDefaultDashboard = async (
+    dashboard: Dashboard
+  ): Promise<void> => {
+    try {
+      const {handleGetDashboards} = this.props
+
+      await updateDashboardDefault(dashboard.id, true)
+
+      await handleGetDashboards()
+    } catch (err) {
+      console.error(err)
+    }
+  }
 }
 
 const mapStateToProps = ({
@@ -201,6 +218,7 @@ const mapDispatchToProps = {
   notify: notifyAction,
   retainRangesDashTimeV1: retainRangesDashTimeV1Action,
   retainDashRefresh: retainDashRefreshAction,
+  putDashboard: putDashboardAction,
 }
 
 export default connect(

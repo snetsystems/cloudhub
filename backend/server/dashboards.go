@@ -529,6 +529,7 @@ func DashboardDefaults(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Organization = d.Organization
 	newDash.Type = getDashboardType(d.Type)
 	newDash.Version = d.Version
+	newDash.IsDefault = d.IsDefault
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {
@@ -547,6 +548,7 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Organization = d.Organization
 	newDash.Type = d.Type
 	newDash.Version = d.Version
+	newDash.IsDefault = d.IsDefault
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {

@@ -97,3 +97,29 @@ export const duration = async (
 
   return queryDuration
 }
+/**
+ * Checks if Telegraf is actively collecting data in the database.
+ * 
+ * Executes 'SHOW TAG KEYS' to find if any measurement contains the
+ * default 'host' tag, which confirms Telegraf agent connectivity.
+ * 
+ * @param {Source} source - Data source info containing target DB name.
+ * @returns {Promise<boolean>} True if 'host' tag key exists in any series.
+ */
+export const checkTelegrafData = async (source: Source): Promise<boolean> => {
+  try {
+    const res = await proxy({
+      source: source.links.proxy,
+      query: 'SHOW TAG KEYS',
+      db: source.telegraf,
+    })
+    const series = res.data?.results?.[0]?.series
+    if (series) {
+      return series.some(s => s.values && s.values.some(v => v[0] === 'host'))
+    }
+    return false
+  } catch (error) {
+    console.error('Failed to check Telegraf tags', error)
+    return false
+  }
+}

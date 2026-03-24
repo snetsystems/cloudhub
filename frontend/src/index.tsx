@@ -105,6 +105,7 @@ import {
   SERVER_DETAILS_PAGE_NAME,
   SERVER_DETAILS_IMPORT_PATH,
 } from './shared/constants/routes'
+import MainOverviewPage from 'src/main/OverviewPage'
 
 const errorsQueue = []
 
@@ -353,6 +354,7 @@ class Root extends PureComponent<Record<string, never>, State> {
                   component={PredictionRulePage}
                 /> */}
 
+                <Route path="overview" component={MainOverviewPage} />
                 <Route path="status" component={StatusPage} />
                 <Route path="visualize" component={DataExplorerPage} />
                 <Route path="dashboards" component={DashboardsPage} />

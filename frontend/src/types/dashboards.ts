@@ -168,6 +168,7 @@ export interface Dashboard {
   version?: string
   latestVersion?: string
   updateAvailable?: boolean
+  isDefault?: boolean
 }
 
 export const DashboardType = {
