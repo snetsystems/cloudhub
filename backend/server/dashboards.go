@@ -121,8 +121,13 @@ func (s *Service) Dashboards(w http.ResponseWriter, r *http.Request) {
 				filtered = append(filtered, d)
 			}
 		}
-		if len(filtered) == 0 && len(dashboards) > 0 {
-			filtered = dashboards[:1]
+		if len(filtered) == 0 {
+			for _, d := range dashboards {
+				if d.Type == "" || d.Type == cloudhub.DashboardTypeNormal {
+					filtered = append(filtered, d)
+					break
+				}
+			}
 		}
 		dashboards = filtered
 	}
