@@ -24,6 +24,7 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import {Page} from 'src/reusable_ui'
+import OrgDropdown from 'src/shared/components/OrgDropdown'
 
 // Actions & APIs
 import * as appActions from 'src/shared/actions/app'
@@ -197,6 +198,7 @@ const OverviewPage: React.FC<Props> = ({
     return (
       <>
         <SourceIndicator />
+        <OrgDropdown />
         <AutoRefreshDropdown
           onChoose={handleChooseAutoRefresh}
           selected={autoRefresh}
@@ -222,9 +224,8 @@ const OverviewPage: React.FC<Props> = ({
           </Page.Header.Left>
           <Page.Header.Right>{renderHeaderRight()}</Page.Header.Right>
         </Page.Header>
-        <PageSpinner />
         <Page.Contents fullWidth={true} scrollable={true}>
-          <div className="dashboard container-fluid full-width"></div>
+          <PageSpinner />
         </Page.Contents>
       </Page>
     )
