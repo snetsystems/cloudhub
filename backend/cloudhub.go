@@ -1834,6 +1834,7 @@ type Disk struct {
 
 // GPU represents a graphics processing unit.
 type GPU struct {
+	Slot   int    `json:"slot"`
 	Vendor string `json:"vendor"`
 	Model  string `json:"model"`
 }

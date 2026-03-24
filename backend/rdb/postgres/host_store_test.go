@@ -56,11 +56,11 @@ func TestHostStore_AddAndGet_WithInterfaces(t *testing.T) {
 			{Device: "/dev/sdb1", MountPoint: "/data"},
 		},
 		GPUs: []cloudhub.GPU{
-			{Vendor: "NVIDIA", Model: "RTX 4090"},
+			{Slot: 0, Vendor: "NVIDIA", Model: "RTX 4090"},
 		},
 		SourceType: "salt",
 		OrgID:      "",
-		CreatedAt: time.Now().Truncate(time.Millisecond),
+		CreatedAt:  time.Now().Truncate(time.Millisecond),
 	}
 
 	created, err := store.Add(ctx, host)
@@ -441,5 +441,71 @@ func TestHostStore_Patch_NotFound(t *testing.T) {
 	_, err := store.Patch(ctx, "ghost-minion", cloudhub.HostPatch{Status: &rejected})
 	if err != cloudhub.ErrHostNotFound {
 		t.Errorf("expected ErrHostNotFound, got %v", err)
+	}
+}
+
+func TestHostStore_GPU_SlotRoundTrip(t *testing.T) {
+	client, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	store := postgres.NewHostStore(client)
+	ctx := context.Background()
+
+	host := &cloudhub.Host{
+		MinionID: "minion-gpu",
+		Hostname: "gpu-server",
+		IPInterfaces: []cloudhub.IPInterface{
+			{InterfaceName: "eth0", IPAddress: "10.0.0.1"},
+		},
+		GPUs: []cloudhub.GPU{
+			{Slot: 0, Vendor: "NVIDIA", Model: "Tesla T4"},
+			{Slot: 1, Vendor: "NVIDIA", Model: "Tesla T4"},
+			{Slot: 2, Vendor: "NVIDIA", Model: "RTX 4090"},
+		},
+		SourceType: "salt",
+	}
+
+	created, err := store.Add(ctx, host)
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := store.Get(ctx, cloudhub.HostQuery{Hostname: &host.Hostname})
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+
+	if len(got.GPUs) != 3 {
+		t.Fatalf("expected 3 GPUs, got %d", len(got.GPUs))
+	}
+	for i, gpu := range got.GPUs {
+		if gpu.Slot != i {
+			t.Errorf("GPU[%d].Slot = %d, want %d", i, gpu.Slot, i)
+		}
+	}
+	if got.GPUs[0].Model != "Tesla T4" {
+		t.Errorf("GPU[0].Model = %q, want Tesla T4", got.GPUs[0].Model)
+	}
+	if got.GPUs[2].Model != "RTX 4090" {
+		t.Errorf("GPU[2].Model = %q, want RTX 4090", got.GPUs[2].Model)
+	}
+
+	all, err := store.All(ctx)
+	if err != nil {
+		t.Fatalf("All: %v", err)
+	}
+	var found *cloudhub.Host
+	for _, h := range all {
+		if h.ID == created.ID {
+			h := h
+			found = &h
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("host not found in All()")
+	}
+	if len(found.GPUs) != 3 {
+		t.Fatalf("All: expected 3 GPUs, got %d", len(found.GPUs))
 	}
 }

@@ -11,6 +11,7 @@ export interface Disk {
 }
 
 export interface GPU {
+  slot?: number
   vendor: string
   model: string
 }

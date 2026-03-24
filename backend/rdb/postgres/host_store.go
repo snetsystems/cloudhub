@@ -53,7 +53,7 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $
 RETURNING id`
 
 		row := tx.QueryRowContext(ctx, insertHost,
-			nilIfEmpty(h.MinionID), h.Hostname, h.IP, h.SourceType,
+			h.MinionID, h.Hostname, h.IP, h.SourceType,
 			h.OS, h.OSFamily, h.OSVersion, h.Kernel, h.Arch,
 			h.MemTotalKB, h.SwapTotalKB, h.CPUCores, h.CPUModel, h.BIOSVersion,
 			h.OrgID, h.Status, h.CreatedAt, h.UpdatedAt,
@@ -97,8 +97,8 @@ RETURNING id`
 		}
 		for _, gpu := range h.GPUs {
 			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO host_gpus (host_id, vendor, model) VALUES ($1, $2, $3)`,
-				h.ID, gpu.Vendor, gpu.Model,
+				`INSERT INTO host_gpus (host_id, slot, vendor, model) VALUES ($1, $2, $3, $4)`,
+				h.ID, gpu.Slot, gpu.Vendor, gpu.Model,
 			); err != nil {
 				return fmt.Errorf("hosts insert gpu: %w", err)
 			}
@@ -134,9 +134,8 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 		return nil, fmt.Errorf("HostQuery must specify MinionID or Hostname")
 	}
 	var h cloudhub.Host
-	var minionID *string
 	if err := row.Scan(
-		&h.ID, &minionID, &h.Hostname, &h.IP, &h.SourceType,
+		&h.ID, &h.MinionID, &h.Hostname, &h.IP, &h.SourceType,
 		&h.OS, &h.OSFamily, &h.OSVersion, &h.Kernel, &h.Arch,
 		&h.MemTotalKB, &h.SwapTotalKB, &h.CPUCores, &h.CPUModel, &h.BIOSVersion,
 		&h.OrgID, &h.Status, &h.CreatedAt, &h.UpdatedAt,
@@ -145,9 +144,6 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 			return nil, cloudhub.ErrHostNotFound
 		}
 		return nil, fmt.Errorf("hosts get: %w", err)
-	}
-	if minionID != nil {
-		h.MinionID = *minionID
 	}
 
 	h.IPInterfaces = make([]cloudhub.IPInterface, 0)
@@ -184,7 +180,7 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 
 	h.GPUs = make([]cloudhub.GPU, 0)
 	gpuRows, err := s.client.QueryContext(ctx,
-		`SELECT vendor, model FROM host_gpus WHERE host_id = $1`, h.ID,
+		`SELECT slot, vendor, model FROM host_gpus WHERE host_id = $1 ORDER BY slot`, h.ID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("hosts get gpus: %w", err)
@@ -192,7 +188,7 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 	defer gpuRows.Close()
 	for gpuRows.Next() {
 		var gpu cloudhub.GPU
-		if err := gpuRows.Scan(&gpu.Vendor, &gpu.Model); err != nil {
+		if err := gpuRows.Scan(&gpu.Slot, &gpu.Vendor, &gpu.Model); err != nil {
 			return nil, fmt.Errorf("hosts get gpu scan: %w", err)
 		}
 		h.GPUs = append(h.GPUs, gpu)
@@ -220,20 +216,16 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 
 	for rows.Next() {
 		var h cloudhub.Host
-		var minionID *string
 		h.IPInterfaces = make([]cloudhub.IPInterface, 0)
 		h.Disks = make([]cloudhub.Disk, 0)
 		h.GPUs = make([]cloudhub.GPU, 0)
 		if err := rows.Scan(
-			&h.ID, &minionID, &h.Hostname, &h.IP, &h.SourceType,
+			&h.ID, &h.MinionID, &h.Hostname, &h.IP, &h.SourceType,
 			&h.OS, &h.OSFamily, &h.OSVersion, &h.Kernel, &h.Arch,
 			&h.MemTotalKB, &h.SwapTotalKB, &h.CPUCores, &h.CPUModel, &h.BIOSVersion,
 			&h.OrgID, &h.Status, &h.CreatedAt, &h.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("hosts all scan: %w", err)
-		}
-		if minionID != nil {
-			h.MinionID = *minionID
 		}
 		idxByID[h.ID] = len(hosts)
 		ids = append(ids, h.ID)
@@ -289,7 +281,7 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 
 	// Batch fetch gpus
 	gpuRows, err := s.client.QueryContext(ctx,
-		`SELECT host_id, vendor, model FROM host_gpus WHERE host_id = ANY($1)`,
+		`SELECT host_id, slot, vendor, model FROM host_gpus WHERE host_id = ANY($1) ORDER BY host_id, slot`,
 		ids,
 	)
 	if err != nil {
@@ -299,7 +291,7 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 	for gpuRows.Next() {
 		var hostID string
 		var gpu cloudhub.GPU
-		if err := gpuRows.Scan(&hostID, &gpu.Vendor, &gpu.Model); err != nil {
+		if err := gpuRows.Scan(&hostID, &gpu.Slot, &gpu.Vendor, &gpu.Model); err != nil {
 			return nil, fmt.Errorf("hosts all gpu scan: %w", err)
 		}
 		if idx, ok := idxByID[hostID]; ok {
@@ -347,7 +339,7 @@ UPDATE hosts SET
 WHERE hostname = $1 AND delete_yn = false`
 
 		result, err := tx.ExecContext(ctx, query,
-			h.Hostname, nilIfEmpty(h.MinionID), h.IP,
+			h.Hostname, h.MinionID, h.IP,
 			h.OS, h.OSFamily, h.OSVersion, h.Kernel, h.Arch,
 			h.MemTotalKB, h.SwapTotalKB, h.CPUCores, h.CPUModel, h.BIOSVersion,
 			h.SourceType, h.OrgID, h.Status, h.UpdatedAt,
@@ -394,8 +386,8 @@ WHERE hostname = $1 AND delete_yn = false`
 		}
 		for _, gpu := range h.GPUs {
 			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO host_gpus (host_id, vendor, model) SELECT id, $2, $3 FROM hosts WHERE hostname = $1 AND delete_yn = false`,
-				h.Hostname, gpu.Vendor, gpu.Model,
+				`INSERT INTO host_gpus (host_id, slot, vendor, model) SELECT id, $2, $3, $4 FROM hosts WHERE hostname = $1 AND delete_yn = false`,
+				h.Hostname, gpu.Slot, gpu.Vendor, gpu.Model,
 			); err != nil {
 				return fmt.Errorf("hosts update insert gpu: %w", err)
 			}
@@ -450,13 +442,6 @@ WHERE hostname = $1 AND delete_yn = false`
 
 // nilIfEmpty returns nil if s is empty, otherwise a pointer to s.
 // Used for nullable TEXT columns like minion_id.
-func nilIfEmpty(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
-}
-
 var privateRanges = func() []*net.IPNet {
 	cidrs := []string{"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"}
 	nets := make([]*net.IPNet, len(cidrs))

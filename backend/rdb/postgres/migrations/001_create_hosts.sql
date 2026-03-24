@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS hosts (
 
     -- identity
     hostname      TEXT        NOT NULL DEFAULT '',  -- human-readable node name
-    minion_id     TEXT,                             -- Salt minion ID; NULL allowed for non-Salt sources
+    minion_id     TEXT        NOT NULL DEFAULT '',  -- Salt minion ID; '' for non-Salt sources
 
     -- network
     ip            TEXT        NOT NULL DEFAULT '',  -- representative IP (first private IP from ip_interfaces)
@@ -33,9 +33,10 @@ CREATE TABLE IF NOT EXISTS hosts (
     delete_yn     BOOLEAN     NOT NULL DEFAULT false  -- soft-delete flag; true means logically deleted
 );
 
--- unique active minion: only one active (delete_yn=false) row per minion_id
+-- unique active minion: only one active (delete_yn=false) row per non-empty minion_id
+-- empty string ('') is allowed for non-Salt sources (SNMP, Syslog)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_hosts_minion_id_active
-    ON hosts (minion_id) WHERE delete_yn = false;
+    ON hosts (minion_id) WHERE delete_yn = false AND minion_id != '';
 
 CREATE INDEX IF NOT EXISTS idx_hosts_org_id ON hosts (org_id);
 
@@ -61,16 +62,17 @@ CREATE TABLE IF NOT EXISTS host_disks (
 -- host_gpus: GPU devices belonging to a host
 CREATE TABLE IF NOT EXISTS host_gpus (
     host_id UUID NOT NULL REFERENCES hosts(id) ON DELETE CASCADE, -- [PK][FK → hosts.id] parent host; cascades on hard delete
-    vendor  TEXT NOT NULL,                                         -- [PK] GPU vendor (e.g. NVIDIA, AMD)
-    model   TEXT NOT NULL,                                         -- [PK] GPU model name (e.g. RTX 4090, RX 7900)
-    PRIMARY KEY (host_id, vendor, model)
+    slot    INT  NOT NULL,                                         -- [PK] internal ordering index from Salt grains dict key (not a physical slot)
+    vendor  TEXT NOT NULL,                                         -- GPU vendor (e.g. NVIDIA, AMD)
+    model   TEXT NOT NULL,                                         -- GPU model name (e.g. RTX 4090, RX 7900)
+    PRIMARY KEY (host_id, slot)
 );
 
 -- column comments: stored in DB, visible via \d+ or pg_catalog
 COMMENT ON TABLE hosts IS 'registered agent nodes (Salt minions or other sources)';
 COMMENT ON COLUMN hosts.id            IS '[PK] surrogate key, auto-generated UUID';
 COMMENT ON COLUMN hosts.hostname      IS 'human-readable node name';
-COMMENT ON COLUMN hosts.minion_id     IS 'Salt minion ID; NULL allowed for non-Salt sources';
+COMMENT ON COLUMN hosts.minion_id     IS 'Salt minion ID; empty string for non-Salt sources';
 COMMENT ON COLUMN hosts.ip            IS 'representative IP — cached from first private IP in host_ip_interfaces';
 COMMENT ON COLUMN hosts.os            IS 'operating system name (e.g. Ubuntu, Windows)';
 COMMENT ON COLUMN hosts.os_family     IS 'OS family (e.g. Debian, RedHat)';
@@ -101,8 +103,9 @@ COMMENT ON COLUMN host_disks.mount_point IS 'filesystem mount point (e.g. /, /da
 
 COMMENT ON TABLE host_gpus IS 'GPU devices belonging to a host';
 COMMENT ON COLUMN host_gpus.host_id IS '[PK][FK → hosts.id] parent host; cascades on hard delete';
-COMMENT ON COLUMN host_gpus.vendor  IS '[PK] GPU vendor (e.g. NVIDIA, AMD)';
-COMMENT ON COLUMN host_gpus.model   IS '[PK] GPU model name (e.g. RTX 4090, RX 7900)';
+COMMENT ON COLUMN host_gpus.slot    IS '[PK] internal ordering index from Salt grains dict key; not a physical slot number';
+COMMENT ON COLUMN host_gpus.vendor  IS 'GPU vendor (e.g. NVIDIA, AMD)';
+COMMENT ON COLUMN host_gpus.model   IS 'GPU model name (e.g. RTX 4090, RX 7900)';
 
 ---- create above / drop below ----
 
