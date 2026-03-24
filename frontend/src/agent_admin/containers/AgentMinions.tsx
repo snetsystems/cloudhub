@@ -173,6 +173,8 @@ export class AgentMinions extends PureComponent<Props, State> {
       ip_interfaces: ipIfacesMap,
       gpus: agent.gpus ?? [],
       disks: agent.disks ?? [],
+      timezone: agent.timezone ?? '',
+      selinux_state: agent.selinuxState ?? '',
     }
 
     this.setState({minionLog: yaml.dump(agentInfo)})
@@ -216,6 +218,12 @@ export class AgentMinions extends PureComponent<Props, State> {
         }))
       : []
 
+    const selinuxRaw = grains.selinux
+    const selinuxState: string =
+      selinuxRaw && typeof selinuxRaw === 'object'
+        ? String(selinuxRaw.mode ?? selinuxRaw.enforced ?? '')
+        : ''
+
     return {
       hostname: host,
       ipInterfaces,
@@ -229,6 +237,8 @@ export class AgentMinions extends PureComponent<Props, State> {
       cpuCores: parseInt(grains.num_cpus ?? '0', 10),
       cpuModel: String(grains.cpu_model ?? ''),
       biosVersion: String(grains.biosversion ?? ''),
+      timezone: String(grains.locale_info?.timezone ?? ''),
+      selinuxState,
       disks,
       gpus,
       status,

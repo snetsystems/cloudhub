@@ -25,6 +25,8 @@ type hostRequest struct {
 	CPUCores     int                    `json:"cpuCores"`
 	CPUModel     string                 `json:"cpuModel"`
 	BIOSVersion  string                 `json:"biosVersion"`
+	Timezone     string                 `json:"timezone"`
+	SelinuxState string                 `json:"selinuxState"`
 	Disks        []cloudhub.Disk        `json:"disks"`
 	GPUs         []cloudhub.GPU         `json:"gpus"`
 	SourceType   string                 `json:"sourceType"`
@@ -63,6 +65,8 @@ type hostResponse struct {
 	CPUCores     int             `json:"cpuCores"`
 	CPUModel     string          `json:"cpuModel"`
 	BIOSVersion  string          `json:"biosVersion"`
+	Timezone     string          `json:"timezone"`
+	SelinuxState string          `json:"selinuxState"`
 	Disks        []diskResponse  `json:"disks"`
 	GPUs         []gpuResponse   `json:"gpus"`
 	SourceType   string          `json:"sourceType"`
@@ -132,6 +136,8 @@ func toHostResponse(h cloudhub.Host) hostResponse {
 		CPUCores:     h.CPUCores,
 		CPUModel:     h.CPUModel,
 		BIOSVersion:  h.BIOSVersion,
+		Timezone:     h.Timezone,
+		SelinuxState: h.SelinuxState,
 		Disks:        disks,
 		GPUs:         gpus,
 		SourceType:   h.SourceType,
@@ -219,6 +225,8 @@ func (s *Service) RegisterHost(w http.ResponseWriter, r *http.Request) {
 		CPUCores:     req.CPUCores,
 		CPUModel:     req.CPUModel,
 		BIOSVersion:  req.BIOSVersion,
+		Timezone:     req.Timezone,
+		SelinuxState: req.SelinuxState,
 		Disks:        req.Disks,
 		GPUs:         req.GPUs,
 		SourceType:   sourceType,
@@ -270,6 +278,8 @@ func (s *Service) UpdateHost(w http.ResponseWriter, r *http.Request) {
 		CPUCores:     req.CPUCores,
 		CPUModel:     req.CPUModel,
 		BIOSVersion:  req.BIOSVersion,
+		Timezone:     req.Timezone,
+		SelinuxState: req.SelinuxState,
 		Disks:        req.Disks,
 		GPUs:         req.GPUs,
 		SourceType:   req.SourceType,

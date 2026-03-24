@@ -63,17 +63,14 @@ class AgentMinionsConsole extends PureComponent<Props> {
             name: 'host',
             role: 'table',
             data: {
-              defaultlanguage: saltInfo?.locale_info?.defaultlanguage ?? '-',
-              defaultencoding: saltInfo?.locale_info?.defaultencoding ?? '-',
-              detectedencoding: saltInfo?.locale_info?.detectedencoding ?? '-',
-              timezone: saltInfo?.locale_info?.timezone ?? '-',
+              timezone: saltInfo?.timezone ?? '-',
             },
           },
           Security: {
             name: 'host',
             role: 'table',
             data: {
-              selinux: saltInfo?.selinux ?? '-',
+              selinux_state: saltInfo?.selinux_state ?? '-',
             },
           },
         }

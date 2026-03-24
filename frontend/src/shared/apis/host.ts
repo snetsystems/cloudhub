@@ -33,6 +33,8 @@ export interface HostRegistrationPayload {
   cpuCores: number
   cpuModel: string
   biosVersion: string
+  timezone: string
+  selinuxState: string
   disks: Disk[]
   gpus: GPU[]
   sourceType: HostSourceType
@@ -56,6 +58,8 @@ export interface Host {
   cpuCores: number
   cpuModel: string
   biosVersion: string
+  timezone: string
+  selinuxState: string
   disks: Disk[]
   gpus: GPU[]
   sourceType: HostSourceType

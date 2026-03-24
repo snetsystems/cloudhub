@@ -1857,6 +1857,8 @@ type Host struct {
 	CPUCores     int           `json:"cpuCores"`
 	CPUModel     string        `json:"cpuModel"`
 	BIOSVersion  string        `json:"biosVersion"`
+	Timezone     string        `json:"timezone"` // timezone abbreviation, e.g. KST, UTC
+	SelinuxState string        `json:"selinuxState"`
 	Disks        []Disk        `json:"disks"`
 	GPUs         []GPU         `json:"gpus"`
 	SourceType   string        `json:"sourceType"`
