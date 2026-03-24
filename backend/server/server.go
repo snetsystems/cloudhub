@@ -185,7 +185,28 @@ type Server struct {
 	MaxShards          int    `long:"max-shards" description:"Max number of shards (virtual partitions) for fallback" env:"MAX_SHARDS" default:"10"`
 
 	PostgresDSN         string `long:"postgres-dsn" description:"PostgreSQL connection string for agent store" env:"CLOUDHUB_POSTGRES_DSN" default:""`
+	PostgresHost        string `long:"postgres-host" description:"PostgreSQL host" env:"CLOUDHUB_POSTGRES_HOST" default:""`
+	PostgresPort        int    `long:"postgres-port" description:"PostgreSQL port" env:"CLOUDHUB_POSTGRES_PORT" default:"5432"`
+	PostgresUser        string `long:"postgres-user" description:"PostgreSQL user" env:"CLOUDHUB_POSTGRES_USER" default:""`
+	PostgresPassword    string `long:"postgres-password" description:"PostgreSQL password" env:"CLOUDHUB_POSTGRES_PASSWORD" default:""`
+	PostgresDatabase    string `long:"postgres-database" description:"PostgreSQL database name" env:"CLOUDHUB_POSTGRES_DATABASE" default:""`
+	PostgresSSLMode     string `long:"postgres-sslmode" description:"PostgreSQL SSL mode (disable|require|verify-ca|verify-full)" env:"CLOUDHUB_POSTGRES_SSLMODE" default:"disable"`
 	PostgresMigrateAuto bool   `long:"postgres-migrate-auto" description:"Run PostgreSQL schema migrations automatically on startup" env:"CLOUDHUB_POSTGRES_MIGRATE_AUTO"`
+}
+
+// postgresDSN returns the effective PostgreSQL DSN.
+// If --postgres-dsn is set it takes precedence; otherwise the DSN is built
+// from the individual --postgres-host/user/password/database/sslmode flags.
+func (s *Server) postgresDSN() string {
+	if s.PostgresDSN != "" {
+		return s.PostgresDSN
+	}
+	if s.PostgresHost == "" {
+		return ""
+	}
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		s.PostgresHost, s.PostgresPort, s.PostgresUser, s.PostgresPassword, s.PostgresDatabase, s.PostgresSSLMode,
+	)
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -696,7 +717,7 @@ func (s *Server) Serve(ctx context.Context) {
 		s.AddonURLs,
 		s.AddonTokens,
 		osp,
-		s.PostgresDSN,
+		s.postgresDSN(),
 		s.PostgresMigrateAuto,
 	)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
