@@ -39,32 +39,74 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_hosts_minion_id_active
 
 CREATE INDEX IF NOT EXISTS idx_hosts_org_id ON hosts (org_id);
 
+CREATE INDEX IF NOT EXISTS idx_hosts_hostname_active
+    ON hosts (hostname) WHERE delete_yn = false;
+
 -- host_ip_interfaces: network interfaces belonging to a host
 CREATE TABLE IF NOT EXISTS host_ip_interfaces (
-    host_id        UUID NOT NULL REFERENCES hosts(id) ON DELETE CASCADE, -- [FK] hosts.id
-    interface_name TEXT NOT NULL, -- network interface name (e.g. eth0, lo)
-    ip_address     TEXT NOT NULL, -- IP address assigned to the interface
+    host_id        UUID NOT NULL REFERENCES hosts(id) ON DELETE CASCADE, -- [PK][FK → hosts.id] parent host; cascades on hard delete
+    interface_name TEXT NOT NULL,                                         -- [PK] network interface name (e.g. eth0, lo)
+    ip_address     TEXT NOT NULL,                                         -- [PK] IP address assigned to the interface
     PRIMARY KEY (host_id, interface_name, ip_address)
 );
 
 -- host_disks: disk mount points belonging to a host
 CREATE TABLE IF NOT EXISTS host_disks (
-    host_id     UUID NOT NULL REFERENCES hosts(id) ON DELETE CASCADE, -- [FK] hosts.id
-    device      TEXT NOT NULL, -- block device path (e.g. /dev/sda1)
-    mount_point TEXT NOT NULL, -- filesystem mount point (e.g. /, /data)
+    host_id     UUID NOT NULL REFERENCES hosts(id) ON DELETE CASCADE, -- [PK][FK → hosts.id] parent host; cascades on hard delete
+    device      TEXT NOT NULL,                                         -- [PK] block device path (e.g. /dev/sda1)
+    mount_point TEXT NOT NULL,                                         -- filesystem mount point (e.g. /, /data)
     PRIMARY KEY (host_id, device)
 );
 
 -- host_gpus: GPU devices belonging to a host
 CREATE TABLE IF NOT EXISTS host_gpus (
-    host_id UUID NOT NULL REFERENCES hosts(id) ON DELETE CASCADE, -- [FK] hosts.id
-    vendor  TEXT NOT NULL, -- GPU vendor (e.g. NVIDIA, AMD)
-    model   TEXT NOT NULL, -- GPU model name (e.g. RTX 4090, RX 7900)
+    host_id UUID NOT NULL REFERENCES hosts(id) ON DELETE CASCADE, -- [PK][FK → hosts.id] parent host; cascades on hard delete
+    vendor  TEXT NOT NULL,                                         -- [PK] GPU vendor (e.g. NVIDIA, AMD)
+    model   TEXT NOT NULL,                                         -- [PK] GPU model name (e.g. RTX 4090, RX 7900)
     PRIMARY KEY (host_id, vendor, model)
 );
 
+-- column comments: stored in DB, visible via \d+ or pg_catalog
+COMMENT ON TABLE hosts IS 'registered agent nodes (Salt minions or other sources)';
+COMMENT ON COLUMN hosts.id            IS '[PK] surrogate key, auto-generated UUID';
+COMMENT ON COLUMN hosts.hostname      IS 'human-readable node name';
+COMMENT ON COLUMN hosts.minion_id     IS 'Salt minion ID; NULL allowed for non-Salt sources';
+COMMENT ON COLUMN hosts.ip            IS 'representative IP — cached from first private IP in host_ip_interfaces';
+COMMENT ON COLUMN hosts.os            IS 'operating system name (e.g. Ubuntu, Windows)';
+COMMENT ON COLUMN hosts.os_family     IS 'OS family (e.g. Debian, RedHat)';
+COMMENT ON COLUMN hosts.os_version    IS 'OS version string';
+COMMENT ON COLUMN hosts.kernel        IS 'kernel version';
+COMMENT ON COLUMN hosts.arch          IS 'CPU architecture (e.g. x86_64, arm64)';
+COMMENT ON COLUMN hosts.mem_total_kb  IS 'total physical memory in kilobytes';
+COMMENT ON COLUMN hosts.swap_total_kb IS 'total swap space in kilobytes';
+COMMENT ON COLUMN hosts.cpu_cores     IS 'number of logical CPU cores';
+COMMENT ON COLUMN hosts.cpu_model     IS 'CPU model string';
+COMMENT ON COLUMN hosts.bios_version  IS 'BIOS/UEFI version string';
+COMMENT ON COLUMN hosts.source_type   IS 'registration source (salt | snmp | syslog)';
+COMMENT ON COLUMN hosts.org_id        IS 'organization this host belongs to';
+COMMENT ON COLUMN hosts.status        IS 'lifecycle status (accepted | rejected)';
+COMMENT ON COLUMN hosts.created_at    IS 'record creation time';
+COMMENT ON COLUMN hosts.updated_at    IS 'last update time; used as deletion time when delete_yn = true';
+COMMENT ON COLUMN hosts.delete_yn     IS 'soft-delete flag; true means logically deleted';
+
+COMMENT ON TABLE host_ip_interfaces IS 'network interfaces belonging to a host';
+COMMENT ON COLUMN host_ip_interfaces.host_id        IS '[PK][FK → hosts.id] parent host; cascades on hard delete';
+COMMENT ON COLUMN host_ip_interfaces.interface_name IS '[PK] network interface name (e.g. eth0, lo)';
+COMMENT ON COLUMN host_ip_interfaces.ip_address     IS '[PK] IP address assigned to the interface';
+
+COMMENT ON TABLE host_disks IS 'disk mount points belonging to a host';
+COMMENT ON COLUMN host_disks.host_id     IS '[PK][FK → hosts.id] parent host; cascades on hard delete';
+COMMENT ON COLUMN host_disks.device      IS '[PK] block device path (e.g. /dev/sda1)';
+COMMENT ON COLUMN host_disks.mount_point IS 'filesystem mount point (e.g. /, /data); key for InfluxDB disk metric lookup';
+
+COMMENT ON TABLE host_gpus IS 'GPU devices belonging to a host';
+COMMENT ON COLUMN host_gpus.host_id IS '[PK][FK → hosts.id] parent host; cascades on hard delete';
+COMMENT ON COLUMN host_gpus.vendor  IS '[PK] GPU vendor (e.g. NVIDIA, AMD)';
+COMMENT ON COLUMN host_gpus.model   IS '[PK] GPU model name (e.g. RTX 4090, RX 7900)';
+
 ---- create above / drop below ----
 
+DROP INDEX IF EXISTS idx_hosts_hostname_active;
 DROP INDEX IF EXISTS idx_hosts_org_id;
 DROP INDEX IF EXISTS idx_hosts_minion_id_active;
 DROP TABLE IF EXISTS host_gpus;
