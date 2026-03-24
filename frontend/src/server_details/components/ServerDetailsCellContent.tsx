@@ -284,16 +284,16 @@ export function ServerSummaryInfo({
     <div className="server-details-header-info">
       <Item label="IP" fullLabel="IP Address" value={hostData?.ip} />
       <Item
-        label="Ker"
-        fullLabel="Kernel"
-        value={hostData?.kernel}
+        label="OS"
+        fullLabel="OS"
+        value={hostData?.os}
         className="server-details-header-info__item--hide-sm"
       />
       <Item label="CPU" fullLabel="CPU Cores" value={hostData?.cpuCores?.toString()} />
       <Item label="Mem" fullLabel="Memory Total" value={memTotalGB} />
       <Item label="Disk" fullLabel="Disk Total" value={diskTotal} icon={true} />
       <Item
-        label="OS"
+        label="Version"
         fullLabel="OS Version"
         value={hostData?.osVersion}
         className="server-details-header-info__item--hide-sm"
