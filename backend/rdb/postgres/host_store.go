@@ -46,15 +46,15 @@ func (s *HostStore) Add(ctx context.Context, h *cloudhub.Host) (*cloudhub.Host, 
 
 	err := s.client.WithTx(ctx, func(ctx context.Context, tx rdb.Store) error {
 		const insertHost = `
-INSERT INTO hosts (minion_id, hostname, ip, source_type, os, os_family, os_version, kernel, arch,
+INSERT INTO hosts (minion_id, hostname, original_hostname, ip, source_type, os, os_family, os_version, kernel, arch,
                    mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
                    timezone, selinux_state,
                    org_id, status, created_at, updated_at, delete_yn)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, false)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, false)
 RETURNING id`
 
 		row := tx.QueryRowContext(ctx, insertHost,
-			h.MinionID, h.Hostname, h.IP, h.SourceType,
+			h.MinionID, h.Hostname, h.OriginalHostname, h.IP, h.SourceType,
 			h.OS, h.OSFamily, h.OSVersion, h.Kernel, h.Arch,
 			h.MemTotalKB, h.SwapTotalKB, h.CPUCores, h.CPUModel, h.BIOSVersion,
 			h.Timezone, h.SelinuxState,
@@ -120,7 +120,7 @@ func (s *HostStore) Get(ctx context.Context, q cloudhub.HostQuery) (*cloudhub.Ho
 	switch {
 	case q.MinionID != nil:
 		const queryHost = `
-SELECT id, minion_id, hostname, ip, source_type, os, os_family, os_version, kernel, arch,
+SELECT id, minion_id, hostname, original_hostname, ip, source_type, os, os_family, os_version, kernel, arch,
        mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
        timezone, selinux_state,
        org_id, status, created_at, updated_at
@@ -128,7 +128,7 @@ FROM hosts WHERE minion_id = $1 AND delete_yn = false`
 		row = s.client.QueryRowContext(ctx, queryHost, *q.MinionID)
 	case q.Hostname != nil:
 		const queryHost = `
-SELECT id, minion_id, hostname, ip, source_type, os, os_family, os_version, kernel, arch,
+SELECT id, minion_id, hostname, original_hostname, ip, source_type, os, os_family, os_version, kernel, arch,
        mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
        timezone, selinux_state,
        org_id, status, created_at, updated_at
@@ -139,7 +139,7 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 	}
 	var h cloudhub.Host
 	if err := row.Scan(
-		&h.ID, &h.MinionID, &h.Hostname, &h.IP, &h.SourceType,
+		&h.ID, &h.MinionID, &h.Hostname, &h.OriginalHostname, &h.IP, &h.SourceType,
 		&h.OS, &h.OSFamily, &h.OSVersion, &h.Kernel, &h.Arch,
 		&h.MemTotalKB, &h.SwapTotalKB, &h.CPUCores, &h.CPUModel, &h.BIOSVersion,
 		&h.Timezone, &h.SelinuxState,
@@ -204,7 +204,7 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 
 func (s *HostStore) All(ctx context.Context) ([]cloudhub.Host, error) {
 	const queryHosts = `
-SELECT id, minion_id, hostname, ip, source_type, os, os_family, os_version, kernel, arch,
+SELECT id, minion_id, hostname, original_hostname, ip, source_type, os, os_family, os_version, kernel, arch,
        mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
        timezone, selinux_state,
        org_id, status, created_at, updated_at
@@ -226,7 +226,7 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 		h.Disks = make([]cloudhub.Disk, 0)
 		h.GPUs = make([]cloudhub.GPU, 0)
 		if err := rows.Scan(
-			&h.ID, &h.MinionID, &h.Hostname, &h.IP, &h.SourceType,
+			&h.ID, &h.MinionID, &h.Hostname, &h.OriginalHostname, &h.IP, &h.SourceType,
 			&h.OS, &h.OSFamily, &h.OSVersion, &h.Kernel, &h.Arch,
 			&h.MemTotalKB, &h.SwapTotalKB, &h.CPUCores, &h.CPUModel, &h.BIOSVersion,
 			&h.Timezone, &h.SelinuxState,
@@ -327,28 +327,29 @@ func (s *HostStore) Update(ctx context.Context, h *cloudhub.Host) (*cloudhub.Hos
 	err := s.client.WithTx(ctx, func(ctx context.Context, tx rdb.Store) error {
 		const query = `
 UPDATE hosts SET
-    minion_id     = $2,
-    ip            = $3,
-    os            = $4,
-    os_family     = $5,
-    os_version    = $6,
-    kernel        = $7,
-    arch          = $8,
-    mem_total_kb  = $9,
-    swap_total_kb = $10,
-    cpu_cores     = $11,
-    cpu_model     = $12,
-    bios_version  = $13,
-    timezone      = $14,
-    selinux_state = $15,
-    source_type   = $16,
-    org_id        = $17,
-    status        = $18,
-    updated_at    = $19
+    minion_id         = $2,
+    original_hostname = $3,
+    ip                = $4,
+    os                = $5,
+    os_family         = $6,
+    os_version        = $7,
+    kernel            = $8,
+    arch              = $9,
+    mem_total_kb      = $10,
+    swap_total_kb     = $11,
+    cpu_cores         = $12,
+    cpu_model         = $13,
+    bios_version      = $14,
+    timezone          = $15,
+    selinux_state     = $16,
+    source_type       = $17,
+    org_id            = $18,
+    status            = $19,
+    updated_at        = $20
 WHERE hostname = $1 AND delete_yn = false`
 
 		result, err := tx.ExecContext(ctx, query,
-			h.Hostname, h.MinionID, h.IP,
+			h.Hostname, h.MinionID, h.OriginalHostname, h.IP,
 			h.OS, h.OSFamily, h.OSVersion, h.Kernel, h.Arch,
 			h.MemTotalKB, h.SwapTotalKB, h.CPUCores, h.CPUModel, h.BIOSVersion,
 			h.Timezone, h.SelinuxState,

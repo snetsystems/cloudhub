@@ -12,9 +12,10 @@ import (
 )
 
 type hostRequest struct {
-	MinionID     string                 `json:"minionId"`
-	Hostname     string                 `json:"hostname"`
-	IPInterfaces []cloudhub.IPInterface `json:"ipInterfaces"`
+	MinionID         string                 `json:"minionId"`
+	Hostname         string                 `json:"hostname"`
+	OriginalHostname string                 `json:"originalHostname"`
+	IPInterfaces     []cloudhub.IPInterface `json:"ipInterfaces"`
 	OS           string                 `json:"os"`
 	OSFamily     string                 `json:"osFamily"`
 	OSVersion    string                 `json:"osVersion"`
@@ -49,10 +50,11 @@ type ifaceResponse struct {
 }
 
 type hostResponse struct {
-	ID           string          `json:"id"`
-	MinionID     string          `json:"minionId"`
-	Hostname     string          `json:"hostname"`
-	IP           string          `json:"ip"`
+	ID               string          `json:"id"`
+	MinionID         string          `json:"minionId"`
+	Hostname         string          `json:"hostname"`
+	OriginalHostname string          `json:"originalHostname"`
+	IP               string          `json:"ip"`
 	PrivateIPs   []string        `json:"privateIps"`
 	IPInterfaces []ifaceResponse `json:"ipInterfaces"`
 	OS           string          `json:"os"`
@@ -120,10 +122,11 @@ func toHostResponse(h cloudhub.Host) hostResponse {
 	}
 
 	return hostResponse{
-		ID:           h.ID,
-		MinionID:     h.MinionID,
-		Hostname:     h.Hostname,
-		IP:           h.IP,
+		ID:               h.ID,
+		MinionID:         h.MinionID,
+		Hostname:         h.Hostname,
+		OriginalHostname: h.OriginalHostname,
+		IP:               h.IP,
 		PrivateIPs:   privateIPs,
 		IPInterfaces: ifaces,
 		OS:           h.OS,
@@ -212,27 +215,28 @@ func (s *Service) RegisterHost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	host := &cloudhub.Host{
-		MinionID:     req.MinionID,
-		Hostname:     req.Hostname,
-		IPInterfaces: req.IPInterfaces,
-		OS:           req.OS,
-		OSFamily:     req.OSFamily,
-		OSVersion:    req.OSVersion,
-		Kernel:       req.Kernel,
-		Arch:         req.Arch,
-		MemTotalKB:   req.MemTotalKB,
-		SwapTotalKB:  req.SwapTotalKB,
-		CPUCores:     req.CPUCores,
-		CPUModel:     req.CPUModel,
-		BIOSVersion:  req.BIOSVersion,
-		Timezone:     req.Timezone,
-		SelinuxState: req.SelinuxState,
-		Disks:        req.Disks,
-		GPUs:         req.GPUs,
-		SourceType:   sourceType,
-		OrgID:        "",
-		Status:       status,
-		CreatedAt:   time.Now(),
+		MinionID:         req.MinionID,
+		Hostname:         req.Hostname,
+		OriginalHostname: req.OriginalHostname,
+		IPInterfaces:     req.IPInterfaces,
+		OS:               req.OS,
+		OSFamily:         req.OSFamily,
+		OSVersion:        req.OSVersion,
+		Kernel:           req.Kernel,
+		Arch:             req.Arch,
+		MemTotalKB:       req.MemTotalKB,
+		SwapTotalKB:      req.SwapTotalKB,
+		CPUCores:         req.CPUCores,
+		CPUModel:         req.CPUModel,
+		BIOSVersion:      req.BIOSVersion,
+		Timezone:         req.Timezone,
+		SelinuxState:     req.SelinuxState,
+		Disks:            req.Disks,
+		GPUs:             req.GPUs,
+		SourceType:       sourceType,
+		OrgID:            "",
+		Status:           status,
+		CreatedAt:        time.Now(),
 	}
 
 	created, err := s.Store.Hosts(ctx).Add(ctx, host)
@@ -265,25 +269,26 @@ func (s *Service) UpdateHost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	host := &cloudhub.Host{
-		MinionID:     req.MinionID,
-		Hostname:     hostname,
-		IPInterfaces: req.IPInterfaces,
-		OS:           req.OS,
-		OSFamily:     req.OSFamily,
-		OSVersion:    req.OSVersion,
-		Kernel:       req.Kernel,
-		Arch:         req.Arch,
-		MemTotalKB:   req.MemTotalKB,
-		SwapTotalKB:  req.SwapTotalKB,
-		CPUCores:     req.CPUCores,
-		CPUModel:     req.CPUModel,
-		BIOSVersion:  req.BIOSVersion,
-		Timezone:     req.Timezone,
-		SelinuxState: req.SelinuxState,
-		Disks:        req.Disks,
-		GPUs:         req.GPUs,
-		SourceType:   req.SourceType,
-		Status:       status,
+		MinionID:         req.MinionID,
+		Hostname:         hostname,
+		OriginalHostname: req.OriginalHostname,
+		IPInterfaces:     req.IPInterfaces,
+		OS:               req.OS,
+		OSFamily:         req.OSFamily,
+		OSVersion:        req.OSVersion,
+		Kernel:           req.Kernel,
+		Arch:             req.Arch,
+		MemTotalKB:       req.MemTotalKB,
+		SwapTotalKB:      req.SwapTotalKB,
+		CPUCores:         req.CPUCores,
+		CPUModel:         req.CPUModel,
+		BIOSVersion:      req.BIOSVersion,
+		Timezone:         req.Timezone,
+		SelinuxState:     req.SelinuxState,
+		Disks:            req.Disks,
+		GPUs:             req.GPUs,
+		SourceType:       req.SourceType,
+		Status:           status,
 	}
 
 	updated, err := s.Store.Hosts(ctx).Update(ctx, host)

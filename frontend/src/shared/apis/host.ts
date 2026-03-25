@@ -22,6 +22,7 @@ export type HostSourceType = 'salt' | 'snmp' | 'syslog'
 export interface HostRegistrationPayload {
   minionId: string
   hostname: string
+  originalHostname: string
   ipInterfaces: IPInterface[]
   os: string
   osFamily: string
@@ -45,6 +46,7 @@ export interface Host {
   id: string
   minionId: string
   hostname: string
+  originalHostname: string
   ip: string
   privateIps: string[]
   ipInterfaces: IPInterface[]

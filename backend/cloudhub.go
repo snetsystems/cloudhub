@@ -1842,10 +1842,11 @@ type GPU struct {
 // Agent represents a Salt minion registered in the system.
 // Status is either "accepted" or "rejected".
 type Host struct {
-	ID           string        `json:"id"`
-	MinionID     string        `json:"minionId"`
-	Hostname     string        `json:"hostname"`
-	IP           string        `json:"ip"`
+	ID               string        `json:"id"`
+	MinionID         string        `json:"minionId"`
+	Hostname         string        `json:"hostname"`
+	OriginalHostname string        `json:"originalHostname"` // user-defined display name for the server
+	IP               string        `json:"ip"`
 	IPInterfaces []IPInterface `json:"ipInterfaces"`
 	OS           string        `json:"os"`
 	OSFamily     string        `json:"osFamily"`

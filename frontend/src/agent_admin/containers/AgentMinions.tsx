@@ -226,6 +226,7 @@ export class AgentMinions extends PureComponent<Props, State> {
 
     return {
       hostname: host,
+      originalHostname: String(grains.hostname ?? host),
       ipInterfaces,
       os: String(grains.os ?? ''),
       osFamily: String(grains.os_family ?? grains.osfamily ?? ''),
