@@ -106,7 +106,6 @@ class UserNavBlock extends PureComponent<Props> {
           <div className="sidebar-menu--heading sidebar--no-hover">
             {me.name}
           </div>
-          <div className="sidebar-menu--triangle" />
         </div>
       </div>
     )

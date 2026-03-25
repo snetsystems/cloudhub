@@ -240,18 +240,7 @@ $s-sidebar--width: 45px;
 .sidebar-menu--item > strong {
   opacity: 0.6;
 }
-// Invisible triangle for easier mouse movement when navigating to sub items
-.sidebar-menu--triangle {
-  position: absolute;
-  z-index: -1;
-}
-.sidebar-menu .sidebar-menu--triangle {
-  width: 50px;
-  height: 60px;
-  bottom: 12px;
-  left: 6px;
-  transform: translate(-50%, -50%) rotate(30deg);
-}
+
 .sidebar-menu--section {
   white-space: nowrap;
   font-size: 16px;
@@ -362,9 +351,7 @@ span.icon.sidebar--icon.sidebar--icon__superadmin {
   .sidebar-menu--heading {
     order: 8;
   }
-  .sidebar-menu--triangle {
-    order: 9;
-  }
+
 
   .sidebar-menu--section__custom-links:after {
     display: none;
@@ -409,12 +396,6 @@ span.icon.sidebar--icon.sidebar--icon__superadmin {
       display: initial;
       border-top-right-radius: 0;
     }
-    .sidebar-menu--triangle {
-      width: 40px;
-      height: 40px;
-      top: $s-sidebar--width;
-      left: 0;
-      transform: translate(-50%, -50%) rotate(45deg);
-    }
+
   }
 }
