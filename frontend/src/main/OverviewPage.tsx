@@ -13,6 +13,7 @@ import {
 } from 'src/types'
 import {Dashboard} from 'src/types/dashboards'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types'
+import {Addon} from 'src/types/auth'
 
 // Components
 import WelcomePage from 'src/main/components/WelcomePage'
@@ -31,13 +32,14 @@ import {setAutoRefresh} from 'src/shared/actions/app'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
 import {checkTelegrafData} from 'src/shared/apis/query'
-import {getDashboards, getDefaultDashboards} from 'src/dashboards/apis'
+import {getDefaultDashboards} from 'src/dashboards/apis'
+import {getWheelKeyListAll} from 'src/shared/apis/saltStack'
 
 // Utilities & Constants
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {interval} from 'src/shared/constants'
+import {interval, AddonType} from 'src/shared/constants'
 import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
 
 interface OwnProps {
@@ -49,6 +51,7 @@ interface StateProps {
   autoRefresh: number
   cloudTimeRange: CloudTimeRange
   cloudAutoRefresh: CloudAutoRefresh
+  addons: Addon[]
   setTimeZone: typeof appActions.setTimeZone
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
   onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
@@ -78,6 +81,7 @@ const OverviewPage: React.FC<Props> = ({
   autoRefresh,
   cloudTimeRange,
   cloudAutoRefresh,
+  addons,
   setTimeZone,
   onChooseAutoRefresh,
   onChooseCloudAutoRefresh,
@@ -85,6 +89,7 @@ const OverviewPage: React.FC<Props> = ({
 }) => {
   const [isFetching, setIsFetching] = useState<boolean>(true)
   const [hasTelegrafData, setHasTelegrafData] = useState<boolean>(false)
+  const [welcomeReason, setWelcomeReason] = useState<'no-telegraf' | 'no-hosts'>('no-hosts')
   const [dashboard, setDashboard] = useState<Dashboard>()
   const [
     manualRefreshState,
@@ -138,6 +143,29 @@ const OverviewPage: React.FC<Props> = ({
           setHasTelegrafData(hasTelegraf)
           if (activeDashboard) {
             setDashboard(activeDashboard)
+          }
+
+          if (!hasTelegraf) {
+            // Determine if Telegraf is installed by checking for authorized minion keys (keyList.minions) on the Salt Master.
+            // (Since Salt Minion and Telegraf are bundled in the agent installer, the presence of a key guarantees Telegraf is installed)
+            const saltAddon = addons.find(a => a.name === AddonType.salt)
+            if (saltAddon) {
+              try {
+                const info = await getWheelKeyListAll(saltAddon.url, saltAddon.token)
+                const keyList = info?.data?.return?.[0]?.data?.return
+                if (keyList && keyList.minions) {
+                  if (keyList.minions.length === 0) {
+                    setWelcomeReason('no-telegraf')
+                  } else {
+                    setWelcomeReason('no-hosts')
+                  }
+                }
+              } catch (e) {
+                console.error('Failed to get salt minion keys', e)
+              }
+            } else {
+              setWelcomeReason('no-telegraf')
+            }
           }
         }
       } catch (error) {
@@ -218,7 +246,7 @@ const OverviewPage: React.FC<Props> = ({
 
   // 1. Telegraf 데이터가 없는 경우 (host tag check)
   if (!hasTelegrafData) {
-    return <WelcomePage reason="no-hosts" />
+    return <WelcomePage reason={welcomeReason} />
   }
 
   // 2. Telegraf 데이터는 있지만 Dashboard가 0개인 경우
@@ -272,6 +300,7 @@ const mstp = ({
     persisted: {timeZone, autoRefresh, cloudAutoRefresh, cloudTimeRange},
   },
   auth: {isUsingAuth},
+  links: {addons},
 }) => {
   return {
     isUsingAuth,
@@ -279,6 +308,7 @@ const mstp = ({
     autoRefresh,
     cloudTimeRange,
     cloudAutoRefresh,
+    addons,
   }
 }
 
