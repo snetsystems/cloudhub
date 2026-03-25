@@ -283,7 +283,7 @@ function ProcessDetailModal({
         role="presentation"
       />
       <div
-        className={`modal-content process-detail-modal ${
+        className={`modal-content process-detail-modal process-detail-modal--process-only ${
           isVisible ? 'modal-content--open' : 'modal-content--closing'
         }`}
         role="dialog"

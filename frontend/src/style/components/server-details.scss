@@ -197,6 +197,10 @@
 
 .modal-content.process-detail-modal {
   width: 70vw;
+
+  &--process-only {
+    width: 50vw;
+  }
 }
 
 .process-detail-modal__header {
@@ -357,3 +361,5 @@
     white-space: nowrap !important;
   }
 }
+
+

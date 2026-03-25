@@ -12,6 +12,8 @@ interface Props {
   decimalPlaces?: DecimalPlaces
   yAxis?: Axis
   hide?: boolean
+  offsetX?: number
+  offsetY?: number
 }
 
 const MaxMarker: FunctionComponent<Props> = ({
@@ -22,6 +24,8 @@ const MaxMarker: FunctionComponent<Props> = ({
   decimalPlaces,
   yAxis,
   hide,
+  offsetX = 16,
+  offsetY = 8,
 }) => {
   if (hide || !dygraph || !timeSeries || timeSeries.length === 0) {
     return null
@@ -69,8 +73,8 @@ const MaxMarker: FunctionComponent<Props> = ({
     return null
   }
 
-  x += 16
-  y += 8
+  x += offsetX
+  y += offsetY
 
   // 4. Get the color of the specific series from Dygraph
   let seriesColor = '#FDC44F'

@@ -244,6 +244,8 @@ class Dygraph extends Component<Props, State> {
               decimalPlaces={this.props.decimalPlaces}
               yAxis={this.props.axes.y}
               hide={this.props.hideMaxMarker}
+              offsetX={this.leftOffset}
+              offsetY={this.topOffset}
             />
           </div>
         )}
@@ -317,6 +319,18 @@ class Dygraph extends Component<Props, State> {
       return parseInt(left, 10)
     }
     return 16
+  }
+
+  private get topOffset(): number {
+    const {containerStyle} = this.props
+    const top = containerStyle?.top
+    if (typeof top === 'number') {
+      return top
+    }
+    if (typeof top === 'string' && top.endsWith('px')) {
+      return parseInt(top, 10)
+    }
+    return 8
   }
 
   private get labelWidth() {

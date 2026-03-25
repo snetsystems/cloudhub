@@ -438,9 +438,8 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
   z-index: 3;
   position: absolute;
   top: calc(100% + 8px);
-  left: 50%;
+  right: 0;
   background-color: $g6-smoke;
-  transform: translateX(-50%);
   border-radius: 3px;
   display: flex;
   flex-direction: column;
@@ -451,9 +450,9 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
     content: '';
     border: 6px solid transparent;
     border-bottom-color: $g6-smoke;
-    left: 50%;
+    right: 6px;
     top: 0;
-    transform: translate(-50%, -100%);
+    transform: translateY(-100%);
     transition: border-color 0.25s ease;
   }
   .dash-graph-context--menu-item {
