@@ -58,6 +58,127 @@
           color: $c-pool;
         }
       }
+
+      .dashboard-link-container {
+        margin-top: 10px;
+        font-size: 15px;
+
+        a {
+          color: #22adf6;
+          text-decoration: underline;
+
+          &:hover {
+            color: darken(#22adf6, 10%);
+          }
+        }
+      }
+    }
+  }
+
+  .welcome-step-indicator {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #383846;
+    width: 100%;
+
+    h3 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: $g20-white;
+      font-size: 18px;
+    }
+
+    .welcome-step-indicator-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+      width: 85%;
+      margin: 0 auto;
+    }
+
+    .welcome-step-line-bg {
+      position: absolute;
+      top: 20px;
+      left: 60px;
+      right: 60px;
+      height: 3px;
+      background-color: #383846;
+      z-index: 0;
+    }
+
+    .welcome-step-line-active {
+      position: absolute;
+      top: 20px;
+      left: 60px;
+      height: 3px;
+      background-color: #00a3ff;
+      z-index: 1;
+      transition: width 0.5s ease;
+    }
+
+    .welcome-step-line-completed {
+      position: absolute;
+      top: 20px;
+      left: 60px;
+      height: 3px;
+      background-color: #4ed8a0;
+      z-index: 2;
+      transition: width 0.5s ease;
+    }
+
+    .welcome-step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1;
+      width: 120px;
+    }
+
+    .welcome-step-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-color: #292933;
+      border: 3px solid #383846;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #8e91a1;
+      font-size: 18px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+
+      &.completed {
+        background-color: #4ed8a0;
+        color: #ffffff;
+        border-color: #4ed8a0;
+      }
+
+      &.active {
+        background-color: #00a3ff;
+        color: #ffffff;
+        border-color: #00a3ff;
+        box-shadow: 0 0 0 6px rgba(0, 163, 255, 0.2);
+      }
+    }
+
+    .welcome-step-title {
+      margin-top: 15px;
+      font-size: 14px;
+      font-weight: 400;
+      color: #8e91a1;
+      text-align: center;
+
+      &.completed {
+        font-weight: 600;
+        color: #4ed8a0;
+      }
+
+      &.active {
+        font-weight: 600;
+        color: #ffffff;
+      }
     }
   }
 }

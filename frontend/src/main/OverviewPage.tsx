@@ -5,7 +5,6 @@ import {bindActionCreators} from 'redux'
 
 // Types
 import {
-  Me,
   Source,
   TimeRange,
   TimeZones,
@@ -35,7 +34,6 @@ import {checkTelegrafData} from 'src/shared/apis/query'
 import {getDashboards, getDefaultDashboards} from 'src/dashboards/apis'
 
 // Utilities & Constants
-import {isUserAuthorized, EDITOR_ROLE} from 'src/auth/Authorized'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
@@ -47,7 +45,6 @@ interface OwnProps {
 }
 
 interface StateProps {
-  me: Me
   timeZone: TimeZones
   autoRefresh: number
   cloudTimeRange: CloudTimeRange
@@ -62,25 +59,14 @@ type Props = OwnProps & StateProps
 
 const fetchActiveDashboard = async (): Promise<Dashboard | undefined> => {
   try {
-    const res = await getDashboards()
-    const fetchedDashboards = res.data.dashboards || []
+    const defaultRes = await getDefaultDashboards()
+    const defaultDashboards = defaultRes.data.dashboards || []
 
-    try {
-      const defaultRes = await getDefaultDashboards()
-      const defaultDashboards = defaultRes.data.dashboards || []
-
-      if (defaultDashboards.length > 0) {
-        return defaultDashboards[0]
-      }
-    } catch (err) {
-      console.error(err)
+    if (defaultDashboards.length > 0) {
+      return defaultDashboards[0]
     }
-
-    if (fetchedDashboards.length > 0) {
-      return fetchedDashboards[0]
-    }
-  } catch (error) {
-    console.error(error)
+  } catch (err) {
+    console.error(err)
   }
 
   return undefined
@@ -88,7 +74,6 @@ const fetchActiveDashboard = async (): Promise<Dashboard | undefined> => {
 
 const OverviewPage: React.FC<Props> = ({
   source,
-  me,
   timeZone,
   autoRefresh,
   cloudTimeRange,
@@ -238,12 +223,7 @@ const OverviewPage: React.FC<Props> = ({
 
   // 2. Telegraf 데이터는 있지만 Dashboard가 0개인 경우
   if (!dashboard) {
-    const isEditor = isUserAuthorized(me.role, EDITOR_ROLE)
-    if (isEditor) {
-      return <WelcomePage reason="no-dashboards-editor" sourceID={source.id} />
-    } else {
-      return <WelcomePage reason="no-dashboards-viewer" sourceID={source.id} />
-    }
+    return <WelcomePage reason="no-dashboards" sourceID={source.id} />
   }
 
   const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
@@ -291,11 +271,10 @@ const mstp = ({
   app: {
     persisted: {timeZone, autoRefresh, cloudAutoRefresh, cloudTimeRange},
   },
-  auth: {isUsingAuth, me},
+  auth: {isUsingAuth},
 }) => {
   return {
     isUsingAuth,
-    me,
     timeZone,
     autoRefresh,
     cloudTimeRange,
