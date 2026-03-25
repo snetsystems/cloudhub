@@ -11,7 +11,6 @@ export interface Disk {
 }
 
 export interface GPU {
-  slot?: number
   vendor: string
   model: string
 }
@@ -36,6 +35,7 @@ export interface HostRegistrationPayload {
   biosVersion: string
   timezone: string
   selinuxState: string
+  isCollector: boolean
   disks: Disk[]
   gpus: GPU[]
   sourceType: HostSourceType
@@ -62,6 +62,7 @@ export interface Host {
   biosVersion: string
   timezone: string
   selinuxState: string
+  isCollector: boolean
   disks: Disk[]
   gpus: GPU[]
   sourceType: HostSourceType

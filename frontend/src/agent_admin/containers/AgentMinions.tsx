@@ -211,8 +211,7 @@ export class AgentMinions extends PureComponent<Props, State> {
 
     const gpusRaw = grains.gpus
     const gpus: GPU[] = gpusRaw
-      ? Object.entries(gpusRaw as Record<string, any>).map(([key, g]: [string, any], idx) => ({
-          slot: parseInt(key, 10) || idx,
+      ? Object.entries(gpusRaw as Record<string, any>).map(([, g]: [string, any]) => ({
           vendor: String(g.vendor ?? ''),
           model: String(g.model ?? ''),
         }))

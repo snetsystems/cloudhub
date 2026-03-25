@@ -1834,7 +1834,6 @@ type Disk struct {
 
 // GPU represents a graphics processing unit.
 type GPU struct {
-	Slot   int    `json:"slot"`
 	Vendor string `json:"vendor"`
 	Model  string `json:"model"`
 }
@@ -1862,6 +1861,7 @@ type Host struct {
 	SelinuxState string        `json:"selinuxState"`
 	Disks        []Disk        `json:"disks"`
 	GPUs         []GPU         `json:"gpus"`
+	IsCollector  bool          `json:"isCollector"` // true if this host is a collector server
 	SourceType   string        `json:"sourceType"`
 	OrgID        string        `json:"orgId"`
 	Status       string        `json:"status"`

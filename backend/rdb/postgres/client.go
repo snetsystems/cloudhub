@@ -13,7 +13,6 @@ import (
 // Ensure Client and txClient implement rdb interfaces at compile time.
 var _ rdb.Store        = (*Client)(nil)
 var _ rdb.Store        = (*txClient)(nil)
-var _ rdb.Migrator     = (*Client)(nil)
 var _ rdb.BulkInserter = (*Client)(nil)
 
 // pgxResult adapts pgconn.CommandTag to rdb.Result.

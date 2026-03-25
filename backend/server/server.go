@@ -191,7 +191,6 @@ type Server struct {
 	PostgresPassword    string `long:"postgres-password" description:"PostgreSQL password" env:"CLOUDHUB_POSTGRES_PASSWORD" default:""`
 	PostgresDatabase    string `long:"postgres-database" description:"PostgreSQL database name" env:"CLOUDHUB_POSTGRES_DATABASE" default:""`
 	PostgresSSLMode     string `long:"postgres-sslmode" description:"PostgreSQL SSL mode (disable|require|verify-ca|verify-full)" env:"CLOUDHUB_POSTGRES_SSLMODE" default:"disable"`
-	PostgresMigrateAuto bool   `long:"postgres-migrate-auto" description:"Run PostgreSQL schema migrations automatically on startup" env:"CLOUDHUB_POSTGRES_MIGRATE_AUTO"`
 }
 
 // postgresDSN returns the effective PostgreSQL DSN.
@@ -718,7 +717,6 @@ func (s *Server) Serve(ctx context.Context) {
 		s.AddonTokens,
 		osp,
 		s.postgresDSN(),
-		s.PostgresMigrateAuto,
 	)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
@@ -943,7 +941,6 @@ func openService(
 	addonTokens map[string]string,
 	osp OSP,
 	postgresDSN string,
-	postgresMigrateAuto bool,
 ) Service {
 
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
@@ -1007,21 +1004,10 @@ func openService(
 		if pgErr != nil {
 			logger.Error("Unable to connect to PostgreSQL; host store disabled", pgErr)
 		} else {
-			if postgresMigrateAuto {
-				if migrateErr := pgClient.Migrate(ctx); migrateErr != nil {
-					logger.Error("Unable to migrate PostgreSQL schema; host store disabled", migrateErr)
-					pgClient.Close()
-					goto hostStoreReady
-				}
-				logger.Info("PostgreSQL schema migration completed")
-			} else {
-				logger.Info("PostgreSQL auto-migration is disabled (--postgres-migrate-auto not set)")
-			}
 			hostStore = postgres.NewHostStore(pgClient)
 			logger.Info("PostgreSQL HostStore initialized")
 		}
 	}
-hostStoreReady:
 
 	return Service{
 		TimeSeriesClient: &InfluxClient{},

@@ -48,16 +48,16 @@ func (s *HostStore) Add(ctx context.Context, h *cloudhub.Host) (*cloudhub.Host, 
 		const insertHost = `
 INSERT INTO hosts (minion_id, hostname, original_hostname, ip, source_type, os, os_family, os_version, kernel, arch,
                    mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
-                   timezone, selinux_state,
+                   timezone, selinux_state, is_collector,
                    org_id, status, created_at, updated_at, delete_yn)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, false)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, false)
 RETURNING id`
 
 		row := tx.QueryRowContext(ctx, insertHost,
 			h.MinionID, h.Hostname, h.OriginalHostname, h.IP, h.SourceType,
 			h.OS, h.OSFamily, h.OSVersion, h.Kernel, h.Arch,
 			h.MemTotalKB, h.SwapTotalKB, h.CPUCores, h.CPUModel, h.BIOSVersion,
-			h.Timezone, h.SelinuxState,
+			h.Timezone, h.SelinuxState, h.IsCollector,
 			h.OrgID, h.Status, h.CreatedAt, h.UpdatedAt,
 		)
 		if err := row.Scan(&h.ID); err != nil {
@@ -99,8 +99,8 @@ RETURNING id`
 		}
 		for _, gpu := range h.GPUs {
 			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO host_gpus (host_id, slot, vendor, model) VALUES ($1, $2, $3, $4)`,
-				h.ID, gpu.Slot, gpu.Vendor, gpu.Model,
+				`INSERT INTO host_gpus (host_id, vendor, model) VALUES ($1, $2, $3)`,
+				h.ID, gpu.Vendor, gpu.Model,
 			); err != nil {
 				return fmt.Errorf("hosts insert gpu: %w", err)
 			}
@@ -122,7 +122,7 @@ func (s *HostStore) Get(ctx context.Context, q cloudhub.HostQuery) (*cloudhub.Ho
 		const queryHost = `
 SELECT id, minion_id, hostname, original_hostname, ip, source_type, os, os_family, os_version, kernel, arch,
        mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
-       timezone, selinux_state,
+       timezone, selinux_state, is_collector,
        org_id, status, created_at, updated_at
 FROM hosts WHERE minion_id = $1 AND delete_yn = false`
 		row = s.client.QueryRowContext(ctx, queryHost, *q.MinionID)
@@ -130,7 +130,7 @@ FROM hosts WHERE minion_id = $1 AND delete_yn = false`
 		const queryHost = `
 SELECT id, minion_id, hostname, original_hostname, ip, source_type, os, os_family, os_version, kernel, arch,
        mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
-       timezone, selinux_state,
+       timezone, selinux_state, is_collector,
        org_id, status, created_at, updated_at
 FROM hosts WHERE hostname = $1 AND delete_yn = false`
 		row = s.client.QueryRowContext(ctx, queryHost, *q.Hostname)
@@ -142,7 +142,7 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 		&h.ID, &h.MinionID, &h.Hostname, &h.OriginalHostname, &h.IP, &h.SourceType,
 		&h.OS, &h.OSFamily, &h.OSVersion, &h.Kernel, &h.Arch,
 		&h.MemTotalKB, &h.SwapTotalKB, &h.CPUCores, &h.CPUModel, &h.BIOSVersion,
-		&h.Timezone, &h.SelinuxState,
+		&h.Timezone, &h.SelinuxState, &h.IsCollector,
 		&h.OrgID, &h.Status, &h.CreatedAt, &h.UpdatedAt,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -185,7 +185,7 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 
 	h.GPUs = make([]cloudhub.GPU, 0)
 	gpuRows, err := s.client.QueryContext(ctx,
-		`SELECT slot, vendor, model FROM host_gpus WHERE host_id = $1 ORDER BY slot`, h.ID,
+		`SELECT vendor, model FROM host_gpus WHERE host_id = $1`, h.ID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("hosts get gpus: %w", err)
@@ -193,7 +193,7 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 	defer gpuRows.Close()
 	for gpuRows.Next() {
 		var gpu cloudhub.GPU
-		if err := gpuRows.Scan(&gpu.Slot, &gpu.Vendor, &gpu.Model); err != nil {
+		if err := gpuRows.Scan(&gpu.Vendor, &gpu.Model); err != nil {
 			return nil, fmt.Errorf("hosts get gpu scan: %w", err)
 		}
 		h.GPUs = append(h.GPUs, gpu)
@@ -206,7 +206,7 @@ func (s *HostStore) All(ctx context.Context) ([]cloudhub.Host, error) {
 	const queryHosts = `
 SELECT id, minion_id, hostname, original_hostname, ip, source_type, os, os_family, os_version, kernel, arch,
        mem_total_kb, swap_total_kb, cpu_cores, cpu_model, bios_version,
-       timezone, selinux_state,
+       timezone, selinux_state, is_collector,
        org_id, status, created_at, updated_at
 FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 
@@ -229,7 +229,7 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 			&h.ID, &h.MinionID, &h.Hostname, &h.OriginalHostname, &h.IP, &h.SourceType,
 			&h.OS, &h.OSFamily, &h.OSVersion, &h.Kernel, &h.Arch,
 			&h.MemTotalKB, &h.SwapTotalKB, &h.CPUCores, &h.CPUModel, &h.BIOSVersion,
-			&h.Timezone, &h.SelinuxState,
+			&h.Timezone, &h.SelinuxState, &h.IsCollector,
 			&h.OrgID, &h.Status, &h.CreatedAt, &h.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("hosts all scan: %w", err)
@@ -288,7 +288,7 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 
 	// Batch fetch gpus
 	gpuRows, err := s.client.QueryContext(ctx,
-		`SELECT host_id, slot, vendor, model FROM host_gpus WHERE host_id = ANY($1) ORDER BY host_id, slot`,
+		`SELECT host_id, vendor, model FROM host_gpus WHERE host_id = ANY($1)`,
 		ids,
 	)
 	if err != nil {
@@ -298,7 +298,7 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 	for gpuRows.Next() {
 		var hostID string
 		var gpu cloudhub.GPU
-		if err := gpuRows.Scan(&hostID, &gpu.Slot, &gpu.Vendor, &gpu.Model); err != nil {
+		if err := gpuRows.Scan(&hostID, &gpu.Vendor, &gpu.Model); err != nil {
 			return nil, fmt.Errorf("hosts all gpu scan: %w", err)
 		}
 		if idx, ok := idxByID[hostID]; ok {
@@ -342,17 +342,18 @@ UPDATE hosts SET
     bios_version      = $14,
     timezone          = $15,
     selinux_state     = $16,
-    source_type       = $17,
-    org_id            = $18,
-    status            = $19,
-    updated_at        = $20
+    is_collector      = $17,
+    source_type       = $18,
+    org_id            = $19,
+    status            = $20,
+    updated_at        = $21
 WHERE hostname = $1 AND delete_yn = false`
 
 		result, err := tx.ExecContext(ctx, query,
 			h.Hostname, h.MinionID, h.OriginalHostname, h.IP,
 			h.OS, h.OSFamily, h.OSVersion, h.Kernel, h.Arch,
 			h.MemTotalKB, h.SwapTotalKB, h.CPUCores, h.CPUModel, h.BIOSVersion,
-			h.Timezone, h.SelinuxState,
+			h.Timezone, h.SelinuxState, h.IsCollector,
 			h.SourceType, h.OrgID, h.Status, h.UpdatedAt,
 		)
 		if err != nil {
@@ -397,8 +398,8 @@ WHERE hostname = $1 AND delete_yn = false`
 		}
 		for _, gpu := range h.GPUs {
 			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO host_gpus (host_id, slot, vendor, model) SELECT id, $2, $3, $4 FROM hosts WHERE hostname = $1 AND delete_yn = false`,
-				h.Hostname, gpu.Slot, gpu.Vendor, gpu.Model,
+				`INSERT INTO host_gpus (host_id, vendor, model) SELECT id, $2, $3 FROM hosts WHERE hostname = $1 AND delete_yn = false`,
+				h.Hostname, gpu.Vendor, gpu.Model,
 			); err != nil {
 				return fmt.Errorf("hosts update insert gpu: %w", err)
 			}

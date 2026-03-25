@@ -28,6 +28,7 @@ type hostRequest struct {
 	BIOSVersion  string                 `json:"biosVersion"`
 	Timezone     string                 `json:"timezone"`
 	SelinuxState string                 `json:"selinuxState"`
+	IsCollector  bool                   `json:"isCollector"`
 	Disks        []cloudhub.Disk        `json:"disks"`
 	GPUs         []cloudhub.GPU         `json:"gpus"`
 	SourceType   string                 `json:"sourceType"`
@@ -69,6 +70,7 @@ type hostResponse struct {
 	BIOSVersion  string          `json:"biosVersion"`
 	Timezone     string          `json:"timezone"`
 	SelinuxState string          `json:"selinuxState"`
+	IsCollector  bool            `json:"isCollector"`
 	Disks        []diskResponse  `json:"disks"`
 	GPUs         []gpuResponse   `json:"gpus"`
 	SourceType   string          `json:"sourceType"`
@@ -141,6 +143,7 @@ func toHostResponse(h cloudhub.Host) hostResponse {
 		BIOSVersion:  h.BIOSVersion,
 		Timezone:     h.Timezone,
 		SelinuxState: h.SelinuxState,
+		IsCollector:  h.IsCollector,
 		Disks:        disks,
 		GPUs:         gpus,
 		SourceType:   h.SourceType,
@@ -231,6 +234,7 @@ func (s *Service) RegisterHost(w http.ResponseWriter, r *http.Request) {
 		BIOSVersion:      req.BIOSVersion,
 		Timezone:         req.Timezone,
 		SelinuxState:     req.SelinuxState,
+		IsCollector:      req.IsCollector,
 		Disks:            req.Disks,
 		GPUs:             req.GPUs,
 		SourceType:       sourceType,
@@ -285,6 +289,7 @@ func (s *Service) UpdateHost(w http.ResponseWriter, r *http.Request) {
 		BIOSVersion:      req.BIOSVersion,
 		Timezone:         req.Timezone,
 		SelinuxState:     req.SelinuxState,
+		IsCollector:      req.IsCollector,
 		Disks:            req.Disks,
 		GPUs:             req.GPUs,
 		SourceType:       req.SourceType,

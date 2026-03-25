@@ -38,12 +38,6 @@ type Row interface {
 	Scan(dest ...any) error
 }
 
-// Migrator runs schema migrations.
-// Implementations must be safe to call on every startup (idempotent).
-type Migrator interface {
-	Migrate(ctx context.Context) error
-}
-
 // BulkInserter performs high-throughput batch inserts.
 // Use for data migration (KV → PostgreSQL). Not for general CRUD.
 // Access via type assertion: client.(rdb.BulkInserter).CopyFrom(...)
