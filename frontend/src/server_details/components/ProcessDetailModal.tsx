@@ -100,8 +100,8 @@ const BLOCK_CONFIG: Record<
   string,
   {title: string; bounds?: [string, string]; suffix?: string}
 > = {
-  cpu: {title: 'CPU (%)', bounds: ['0', '100'], suffix: '%'},
-  memory: {title: 'Memory (%)', bounds: ['0', '100'], suffix: '%'},
+  cpu: {title: 'CPU (%)', bounds: ['0', ''], suffix: '%'},
+  memory: {title: 'Memory (%)', bounds: ['0', ''], suffix: '%'},
   io: {
     title: 'Process I/O(bps)',
     bounds: ['0', ''],
