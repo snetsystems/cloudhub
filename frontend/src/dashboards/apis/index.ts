@@ -34,7 +34,10 @@ export const getDefaultDashboards = (): Promise<
 > => {
   return AJAX<DashboardsResponse>({
     method: 'GET',
-    url: '/cloudhub/v1/dashboards?isDefault=true',
+    url: '/cloudhub/v1/dashboards',
+    params: {
+      isDefault: true,
+    },
   }) as Promise<AxiosResponse<DashboardsResponse>>
 }
 
@@ -154,9 +157,7 @@ export const getLibraryCells = (): Promise<
   }) as Promise<AxiosResponse<GetLibraryCellsResponse>>
 }
 
-export const createLibraryCell = async (
-  libraryCell: Partial<LibraryCell>
-) => {
+export const createLibraryCell = async (libraryCell: Partial<LibraryCell>) => {
   try {
     return await AJAX({
       method: 'POST',
@@ -328,7 +329,9 @@ export const getDashboardByTemplateName = async (
 ): Promise<Dashboard | null> => {
   try {
     const {data} = await AJAX<AxiosResponse<Dashboard>>({
-      url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(name)}?includeHidden=true`,
+      url: `/cloudhub/v1/fixed-cells/${encodeURIComponent(
+        name
+      )}?includeHidden=true`,
       method: 'GET',
     })
     return data as Dashboard
