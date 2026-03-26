@@ -4,7 +4,7 @@ import {RuleValues} from 'src/types'
 const ADD_FACTOR = 1.1
 const SUB_FACTOR = 0.9
 
-const MAX_SCALE_FACTOR = 1.2
+const MAX_SCALE_FACTOR = 1.35
 
 const checkNumeric = num => (isFinite(num) ? num : null)
 

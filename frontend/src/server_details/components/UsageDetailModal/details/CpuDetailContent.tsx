@@ -63,16 +63,16 @@ const BLOCK_CONFIG: Record<
   string,
   {title: string; blockClassName?: string; isPercent?: boolean; bounds?: [string, string]}
 > = {
-  'cpu-usage': {title: 'CPU Usage (%)', isPercent: true, bounds: ['0', '100']},
-  'cpu-idle': {title: 'CPU Idle (%)', isPercent: true, bounds: ['0', '100']},
-  'cpu-nice': {title: 'CPU Nice (%)', isPercent: true, bounds: ['0', '100']},
-  'cpu-io-wait': {title: 'CPU I/O Wait (%)', isPercent: true, bounds: ['0', '100']},
-  'cpu-steal': {title: 'CPU Steal (%)', isPercent: true, bounds: ['0', '100']},
-  'cpu-irq': {title: 'CPU IRQ (Interrupt Request, %)', isPercent: true, bounds: ['0', '100']},
+  'cpu-usage': {title: 'CPU Usage (%)', isPercent: true, bounds: ['0', '110']},
+  'cpu-idle': {title: 'CPU Idle (%)', isPercent: true, bounds: ['0', '110']},
+  'cpu-nice': {title: 'CPU Nice (%)', isPercent: true, bounds: ['0', '110']},
+  'cpu-io-wait': {title: 'CPU I/O Wait (%)', isPercent: true, bounds: ['0', '110']},
+  'cpu-steal': {title: 'CPU Steal (%)', isPercent: true, bounds: ['0', '110']},
+  'cpu-irq': {title: 'CPU IRQ (Interrupt Request, %)', isPercent: true, bounds: ['0', '110']},
   'cpu-soft-irq': {
     title: 'CPU Soft IRQ (Software Interrupt Request, %)',
     isPercent: true,
-    bounds: ['0', '100'],
+    bounds: ['0', '110'],
   },
   'cpu-load': {
     title: 'CPU Load',

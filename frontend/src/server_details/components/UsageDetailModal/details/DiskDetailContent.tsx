@@ -113,14 +113,14 @@ const BLOCK_CONFIG: Record<
   string,
   {title: string; blockClassName?: string; isPercent?: boolean; bounds?: [string, string]; yLabel?: string}
 > = {
-  'disk-io-percent': {title: 'Disk I/O(%)', isPercent: true, bounds: ['0', '100']},
+  'disk-io-percent': {title: 'Disk I/O(%)', isPercent: true, bounds: ['0', '110']},
   'disk-iops': {title: 'IOPS Read/Write(ops/s)', bounds: ['0', '']},
   'disk-throughput': {title: 'Disk Bps Read/Write(MiB/s)', bounds: ['0', '']},
-  'disk-used-percent': {title: 'Used Space(%)', isPercent: true, bounds: ['0', '100']},
+  'disk-used-percent': {title: 'Used Space(%)', isPercent: true, bounds: ['0', '110']},
   'disk-used-gib': {title: 'Used Space(GiB)', bounds: ['0', '']},
   'disk-queue-length': {title: 'Queue Length', bounds: ['0', '']},
-  'disk-inode-used-percent': {title: 'Inode Used (%)', isPercent: true, bounds: ['0', '100']},
-  'disk-free-percent': {title: 'Free Space(%)', isPercent: true, bounds: ['0', '100']},
+  'disk-inode-used-percent': {title: 'Inode Used (%)', isPercent: true, bounds: ['0', '110']},
+  'disk-free-percent': {title: 'Free Space(%)', isPercent: true, bounds: ['0', '110']},
   'disk-free-gib': {title: 'Free Space(GiB)', bounds: ['0', '']},
 }
 

@@ -67,13 +67,13 @@ const BLOCK_CONFIG: Record<
   string,
   {title: string; blockClassName?: string; isPercent?: boolean; bounds?: [string, string]; yLabel?: string}
 > = {
-  'memory-usage': {title: 'Memory Usage (%)', isPercent: true, bounds: ['0', '100']},
+  'memory-usage': {title: 'Memory Usage (%)', isPercent: true, bounds: ['0', '110']},
   'memory-used': {title: 'Memory Used (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
   'memory-available': {title: 'Memory Available (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
   'memory-sreclaimable': {title: 'Memory SReclaimable (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
   'memory-sunreclaim': {title: 'Memory SUnreclaim (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
   'memory-slab': {title: 'Memory Slab (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
-  'memory-swap-percent': {title: 'Memory Swap Used (%)', isPercent: true, bounds: ['0', '100']},
+  'memory-swap-percent': {title: 'Memory Swap Used (%)', isPercent: true, bounds: ['0', '110']},
   'memory-swap-used': {title: 'Memory Swap Used (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
   'memory-page-faults': {title: 'Memory Page Faults (/s)', bounds: ['0', '']},
 }
