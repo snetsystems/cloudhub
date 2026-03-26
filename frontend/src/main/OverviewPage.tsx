@@ -244,12 +244,12 @@ const OverviewPage: React.FC<Props> = ({
     )
   }
 
-  // 1. Telegraf 데이터가 없는 경우 (host tag check)
+  // 1. When there is no Telegraf data (host tag check)
   if (!hasTelegrafData) {
     return <WelcomePage reason={welcomeReason} />
   }
 
-  // 2. Telegraf 데이터는 있지만 Dashboard가 0개인 경우
+  // 2. When Telegraf data exists but there are no dashboards
   if (!dashboard) {
     return <WelcomePage reason="no-dashboards" sourceID={source.id} />
   }

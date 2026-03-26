@@ -1,0 +1,23 @@
+{
+  "welcome": {
+    "page_title": "Welcome",
+    "title": "Welcome to Cloudhub",
+    "no_telegraf_msg": "Cloudhub requires an agent to collect metrics. Telegraf is currently not installed.",
+    "install_telegraf": "Install Telegraf",
+    "no_hosts_msg": "Telegraf is installed, but no hosts are detected. This usually occurs when the agent fails to connect to the database.",
+    "configure_db": "Configure DB Connection",
+    "no_dashboards_msg": "No dashboards are currently configured to view your metrics.",
+    "create_dashboard": "Create a Dashboard",
+    "instruction_agent_admin": "Navigate to <1>Agent Admin</1> or <3>Manage Sources</3> to install and configure Minions.",
+    "instruction_ensure_telegraf": "Ensure <1>Telegraf</1> is installed on your host machines.",
+    "instruction_telegraf_config": "Check your <1>Telegraf configuration</1> to ensure the output plugin is pointing to the correct database instance.",
+    "instruction_verify_auth": "Verify the authentication credentials in the Telegraf config.",
+    "instruction_once_connected": "Once the database connection is established and metrics are arriving, your hosts will appear.",
+    "instruction_navigate_dashboard": "Navigate to the <1>Dashboards</1> page to create your first dashboard and start visualizing your data.",
+    "getting_started": "Getting Started with Cloudhub",
+    "step_install_cloudhub": "Install Cloudhub",
+    "step_install_telegraf": "Install Telegraf",
+    "step_connect_db": "Connect DB",
+    "step_create_dashboard": "Create Dashboard"
+  }
+}

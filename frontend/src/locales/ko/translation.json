@@ -1,0 +1,23 @@
+{
+  "welcome": {
+    "page_title": "환영합니다",
+    "title": "Cloudhub에 오신 것을 환영합니다",
+    "no_telegraf_msg": "메트릭 수집을 위한 에이전트가 필요합니다. 현재 Telegraf가 설치되어 있지 않습니다.",
+    "install_telegraf": "Telegraf 설치",
+    "no_hosts_msg": "Telegraf는 설치되었지만 호스트가 감지되지 않습니다. 에이전트가 DB 연결에 실패했을 때 주로 발생합니다.",
+    "configure_db": "DB 연결 설정",
+    "no_dashboards_msg": "현재 메트릭을 시각화할 대시보드가 구성되어 있지 않습니다.",
+    "create_dashboard": "대시보드 생성",
+    "instruction_agent_admin": "<1>Agent Admin</1> 또는 <3>Manage Sources</3> 메뉴에서 미니언(에이전트)을 설치하고 구성하세요.",
+    "instruction_ensure_telegraf": "호스트 장비에 <1>Telegraf</1>가 정상적으로 설치되어 있는지 확인하세요.",
+    "instruction_telegraf_config": "<1>Telegraf 설정</1>을 점검하여 출력 플러그인이 올바른 데이터베이스를 가리키는지 확인하세요.",
+    "instruction_verify_auth": "Telegraf 설정의 인증(Authentication) 정보가 올바른지 확인하세요.",
+    "instruction_once_connected": "데이터베이스 연결이 완료되고 메트릭이 수신되면 호스트 목록이 나타납니다.",
+    "instruction_navigate_dashboard": "<1>Dashboards</1> 메뉴로 이동하여 첫 번째 대시보드를 생성하고 데이터를 시각화하세요.",
+    "getting_started": "Cloudhub 시작하기",
+    "step_install_cloudhub": "Cloudhub 설치",
+    "step_install_telegraf": "Telegraf 설치",
+    "step_connect_db": "DB 연결",
+    "step_create_dashboard": "대시보드 생성"
+  }
+}

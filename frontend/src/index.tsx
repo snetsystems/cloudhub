@@ -1,4 +1,5 @@
 import 'babel-polyfill'
+import './i18n' // I18N initialization
 
 import React, {PureComponent} from 'react'
 import {render} from 'react-dom'
