@@ -114,6 +114,7 @@ export interface DashboardPageWithImportConfig {
   getExtraActionsForCell?: (cell: Cell) => DashboardsModels.CellExtraAction[]
   /** Called when user clicks an injected extra action. */
   onCustomCellAction?: (cell: Cell, actionId: string) => void  
+  hideQueriesTab?: boolean
 }
 
 export interface DashboardPageWithImportProps
@@ -203,7 +204,9 @@ function DashboardPageWithImport({
   notify,
   cellQueryStatus,
   editCellQueryStatus,
+  hideQueriesTab,
 }: DashboardPageWithImportProps) {
+
   const safeFluxLinks = fluxLinks ?? {self: '', suggestions: '', ast: ''}
   const safeNotify = notify ?? (() => {})
   const safeCellQueryStatus = cellQueryStatus ?? {queryID: '', status: {}}
@@ -520,6 +523,7 @@ function DashboardPageWithImport({
             editQueryStatus={safeEditCellQueryStatus}
             dashboardTimeRange={selectedTimeRange}
             dashboardRefresh={dashboardRefresh}
+            hideQueriesTab={hideQueriesTab}
           />
         </OverlayTechnology>
       )}

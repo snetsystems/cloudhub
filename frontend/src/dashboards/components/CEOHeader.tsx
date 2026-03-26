@@ -20,10 +20,26 @@ interface Props {
   activeEditorTab: CEOTabs
   onSetActiveEditorTab: (activeEditorTab: CEOTabs) => void
   isSaveable: boolean
+  hideQueriesTab?: boolean
 }
 
 @ErrorHandling
 class CEOHeader extends Component<Props> {
+  public componentDidMount() {
+    this.redirectIfQueriesTabHidden()
+  }
+
+  public componentDidUpdate() {
+    this.redirectIfQueriesTabHidden()
+  }
+
+  private redirectIfQueriesTabHidden() {
+    const {activeEditorTab, onSetActiveEditorTab, hideQueriesTab} = this.props
+    if (hideQueriesTab && activeEditorTab === CEOTabs.Queries) {
+      onSetActiveEditorTab(CEOTabs.Vis)
+    }
+  }
+
   public render() {
     const {
       activeEditorTab,
@@ -33,6 +49,7 @@ class CEOHeader extends Component<Props> {
       onCancel,
       onSave,
       isSaveable,
+      hideQueriesTab,
     } = this.props
 
     return (
@@ -42,26 +59,28 @@ class CEOHeader extends Component<Props> {
             <VisualizationName name={title} handleRenameCell={renameCell} />
           </div>
           <div className="deceo--header-tabs">
-            <Radio shape={ButtonShape.StretchToFit}>
-              <Radio.Button
-                id="deceo-tab-queries"
-                titleText="Queries"
-                value={CEOTabs.Queries}
-                active={activeEditorTab === CEOTabs.Queries}
-                onClick={onSetActiveEditorTab}
-              >
-                Queries
-              </Radio.Button>
-              <Radio.Button
-                id="deceo-tab-vis"
-                titleText="Visualization"
-                value={CEOTabs.Vis}
-                active={activeEditorTab === CEOTabs.Vis}
-                onClick={onSetActiveEditorTab}
-              >
-                Visualization
-              </Radio.Button>
-            </Radio>
+            {!hideQueriesTab && (
+              <Radio shape={ButtonShape.StretchToFit}>
+                <Radio.Button
+                  id="deceo-tab-queries"
+                  titleText="Queries"
+                  value={CEOTabs.Queries}
+                  active={activeEditorTab === CEOTabs.Queries}
+                  onClick={onSetActiveEditorTab}
+                >
+                  Queries
+                </Radio.Button>
+                <Radio.Button
+                  id="deceo-tab-vis"
+                  titleText="Visualization"
+                  value={CEOTabs.Vis}
+                  active={activeEditorTab === CEOTabs.Vis}
+                  onClick={onSetActiveEditorTab}
+                >
+                  Visualization
+                </Radio.Button>
+              </Radio>
+            )}
           </div>
           <div className="page-header--right">
             <ConfirmOrCancel
