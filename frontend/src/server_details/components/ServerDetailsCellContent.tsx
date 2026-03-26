@@ -443,7 +443,7 @@ export function ServerDetailsCellContent({
               setActiveTab('info')
             }}
           >
-            Server Information
+            Server Info
           </button>
           <button
             type="button"

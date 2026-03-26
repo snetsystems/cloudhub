@@ -2,7 +2,7 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "organization": "",
   "cells": [
     {
@@ -54,7 +54,12 @@
           "query": "SELECT mean(\"load1\") AS \"01 min\", mean(\"load5\") AS \"05 min\", mean(\"load15\") AS \"15 min\" FROM \":db:\".\":rp:\".\"system\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
           "label": "cpu-load"
         }
-      ]
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false
+      }
     },
     {
       "i": "server-details-memory-usage",
@@ -109,7 +114,12 @@
           "query": "SELECT non_negative_derivative(mean(\"pgfault\"), 1s) AS \"pgfault\", non_negative_derivative(mean(\"pgmajfault\"), 1s) AS \"pgmajfault\" FROM \":db:\".\":rp:\".\"kernel_vmstat\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
           "label": "memory-page-faults"
         }
-      ]
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false
+      }
     },
     {
       "i": "server-details-process",
@@ -173,7 +183,12 @@
           "query": "SELECT non_negative_derivative(sum(\"drop_in\"), 1s) AS \"Dropped in\", non_negative_derivative(sum(\"drop_out\"), 1s) AS \"Dropped out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
           "label": "dropped-in-out"
         }
-      ]
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false
+      }
     },
     {
       "i": "server-details-disk-io-usage",
@@ -228,7 +243,12 @@
           "query": "SELECT max(\"free\")/1073741824 AS \"free_gib\" FROM \":db:\".\":rp:\".\"disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY \"path\", time(:interval:) FILL(null)",
           "label": "disk-free-gib"
         }
-      ]
+      ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false
+      }
     },
     {
       "i": "server-details-disk-utilization",
@@ -282,6 +302,11 @@
           "label": "disk-free-gib"
         }
       ],
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false
+      },
       "axes": {
         "y": {
           "bounds": ["0", "100"],
