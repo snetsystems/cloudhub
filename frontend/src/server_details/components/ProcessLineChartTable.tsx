@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react'
+import moment from 'moment'
 import TableComponent from 'src/device_management/components/TableComponent'
 import {DataTableObject} from 'src/types/tableType'
 import {
@@ -46,7 +47,9 @@ const ProcessLineChartTable: React.FC<Props> = ({
               className="process-name-link"
             >
               <span className="process-name-with-user">
-                <span className="process-name-with-user__name">{processName}</span>
+                <span className="process-name-with-user__name">
+                  {processName}
+                </span>
                 {user && (
                   <span className="process-name-with-user__user">{user}</span>
                 )}
@@ -76,6 +79,44 @@ const ProcessLineChartTable: React.FC<Props> = ({
         lower: range.lower ?? 'now() - 1h',
         upper: range.upper ?? 'now()',
       })
+
+      let diffSeconds = range.seconds || 0
+
+      if (!diffSeconds) {
+        const relativeMatch = (range.lower || '').match(
+          /now\(\)\s*-\s*(\d+)([smhd])/
+        )
+        if (relativeMatch) {
+          const value = parseInt(relativeMatch[1], 10)
+          const unit = relativeMatch[2]
+          if (unit === 's') diffSeconds = value
+          else if (unit === 'm') diffSeconds = value * 60
+          else if (unit === 'h') diffSeconds = value * 3600
+          else if (unit === 'd') diffSeconds = value * 86400
+        } else {
+          const lowerMs = moment(range.lower).valueOf()
+          const upperMs =
+            range.upper === 'now()' || !range.upper
+              ? Date.now()
+              : moment(range.upper).valueOf()
+
+          if (!isNaN(lowerMs) && !isNaN(upperMs)) {
+            diffSeconds = (upperMs - lowerMs) / 1000
+          }
+        }
+      }
+
+      let intervalValue = '1m'
+      if (diffSeconds > 0) {
+        if (diffSeconds <= 300) intervalValue = '10s' // <= 5m
+        else if (diffSeconds <= 21600) intervalValue = '1m' // <= 6h
+        else if (diffSeconds <= 43200) intervalValue = '5m' // <= 12h
+        else if (diffSeconds <= 86400) intervalValue = '10m' // <= 24h
+        else if (diffSeconds <= 172800) intervalValue = '30m' // <= 2d
+        else if (diffSeconds <= 604800) intervalValue = '1h' // <= 7d
+        else intervalValue = '6h' // > 7d
+      }
+
       const hostTemplate: Template = {
         tempVar: ':host:',
         id: 'host',
@@ -95,21 +136,42 @@ const ProcessLineChartTable: React.FC<Props> = ({
         id: 'process',
         type: TemplateType.Constant,
         label: '',
-        values: [{value: '.*', type: TemplateValueType.Constant, selected: true, localSelected: true}],
+        values: [
+          {
+            value: '.*',
+            type: TemplateValueType.Constant,
+            selected: true,
+            localSelected: true,
+          },
+        ],
       }
       const userTemplate: Template = {
         tempVar: ':user:',
         id: 'user',
         type: TemplateType.Constant,
         label: '',
-        values: [{value: '.*', type: TemplateValueType.Constant, selected: true, localSelected: true}],
+        values: [
+          {
+            value: '.*',
+            type: TemplateValueType.Constant,
+            selected: true,
+            localSelected: true,
+          },
+        ],
       }
       const intervalTemplate: Template = {
         tempVar: TEMP_VAR_INTERVAL,
         id: 'interval',
         type: TemplateType.Constant,
         label: '',
-        values: [{value: '1m', type: TemplateValueType.Constant, selected: true, localSelected: true}],
+        values: [
+          {
+            value: intervalValue,
+            type: TemplateValueType.Constant,
+            selected: true,
+            localSelected: true,
+          },
+        ],
       }
       const templates = [
         ...generateForHosts(source),
