@@ -63,7 +63,7 @@ function renderSimpleData(
     <ul className={listClass}>
       {Object.entries(obj).map(([key, value]) => (
         <li key={key} className="server-details-simple-data-item">
-          <span className="server-details-simple-data-key">{key}:</span>
+          <span className="server-details-simple-data-key">{key}</span>
           <span className="server-details-simple-data-value">
             {renderValue(value, depth)}
           </span>
@@ -74,6 +74,60 @@ function renderSimpleData(
 }
 
 // --- Components ---
+
+function ServerInfoSection({
+  title,
+  displayData,
+}: {
+  title: string
+  displayData: Record<string, unknown>
+}) {
+  const [isActive, setIsActive] = useState(true)
+
+  console.log(`[ServerInfo] Rendering section: ${title}`)
+
+  return (
+    <div
+      className="tab-pannel-contents"
+      style={{
+        marginBottom: '20px',
+      }}
+    >
+      <div
+        className={classnames('expandable-sectional', {
+          'expandable-sectional-expand': isActive,
+        })}
+        style={{
+          padding: '4px 0',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        }}
+        onClick={() => setIsActive(!isActive)}
+      >
+        <span
+          className={classnames('expandable-sectional-button icon', {
+            'caret-down': isActive,
+            'caret-right': !isActive,
+          })}
+          style={{marginRight: '12px', fontSize: '14px'}}
+        />
+        <div
+          className="expandable-sectional-title"
+          style={{fontWeight: 'bold', fontSize: '14px', color: '#fff'}}
+        >
+          {title}
+        </div>
+      </div>
+      {isActive && (
+        <div style={{padding: '8px 0'}}>
+          {renderSimpleData(displayData)}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function ServerInfoBody({
   selectedHost,
@@ -138,7 +192,7 @@ function ServerInfoBody({
   }
 
   return (
-    <div className="server-details-cell-tab-body">
+    <div className="server-details-cell-tab-body tab-pannel">
       {Object.entries(data).map(([sectionName, section]) => {
         const displayData =
           isObject(section) && 'data' in section
@@ -146,12 +200,11 @@ function ServerInfoBody({
             : (section as Record<string, unknown>)
 
         return (
-          <div key={sectionName} className="server-details-server-info-section">
-            <div className="server-details-server-info-section-title">
-              {sectionName}
-            </div>
-            {renderSimpleData(displayData)}
-          </div>
+          <ServerInfoSection
+            key={sectionName}
+            title={sectionName}
+            displayData={displayData}
+          />
         )
       })}
     </div>

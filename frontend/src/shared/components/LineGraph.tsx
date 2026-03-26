@@ -171,8 +171,8 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
 
     const isBarType = type === 'bar'
     const options = {
-      rightGap: 0,
-      yRangePad: 10,
+      rightGap: 20,
+      yRangePad: 20,
       labelsKMB: true,
       axisLabelWidth: 60,
       animatedZooms: true,
