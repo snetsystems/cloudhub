@@ -163,13 +163,9 @@ export default class OptIn extends Component<Props, State> {
   }
 
   private considerResetCustomValue = (): void => {
-    const customValue = this.customValueInput.value.trim()
+const customValue = this.customValueInput.value.trim() || ' '
 
-    this.setState({customValue})
-
-    if (customValue === '') {
-      this.useFixedValue()
-    }
+    this.setState({customValue}, this.setValue)
 
     this.isCustomValueInputFocused = false
   }

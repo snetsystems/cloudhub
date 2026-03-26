@@ -63,19 +63,19 @@ class VisualizationName extends Component<Props, State> {
 
   private handleBlur = (): void => {
     const {handleRenameCell} = this.props
-    const {workingName} = this.state
+    const workingName = this.state.workingName.trim() || ' '
 
-    this.setState({isEditing: false})
+    this.setState({isEditing: false, workingName})
     handleRenameCell(workingName)
   }
 
   private handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     const {handleRenameCell} = this.props
-    const {workingName} = this.state
+    const workingName = this.state.workingName.trim() || ' '
 
     if (e.key === 'Enter' || e.key === 'Escape') {
+      this.setState({isEditing: false, workingName})
       handleRenameCell(workingName)
-      this.setState({isEditing: false})
     }
   }
 
