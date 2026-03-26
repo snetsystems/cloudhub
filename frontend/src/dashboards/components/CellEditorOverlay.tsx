@@ -95,6 +95,7 @@ interface PassedProps {
   cell: Cell | NewDefaultCell
   dashboardTimeRange: TimeRange
   dashboardRefresh: RefreshRate
+  hideQueriesTab?: boolean
 }
 
 interface Auth {
@@ -156,6 +157,8 @@ class CellEditorOverlay extends Component<Props, State> {
       dashboardTemplates,
     } = this.props
 
+
+
     return (
       <div
         className="deceo--overlay"
@@ -188,6 +191,7 @@ class CellEditorOverlay extends Component<Props, State> {
               activeEditorTab={activeEditorTab}
               onSetActiveEditorTab={onSetActiveEditorTab}
               isSaveable={this.isSaveable}
+              hideQueriesTab={this.props.hideQueriesTab}
             />
           )}
         </TimeMachine>

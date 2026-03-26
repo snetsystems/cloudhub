@@ -309,6 +309,7 @@ function ServerDetailsWrapper(props) {
         pageClassName="server-details-page"
         showEmptyState={false}
         requiredTemplateVars={[':host:']}
+        hideQueriesTab={true}
         draggableCancel=".server-details-cell-tab-buttons, .dash-graph-context"
         templateSelectionContext={
           ServerDetailsPageContext as React.Context<TemplateSelectionContextValue | null>
