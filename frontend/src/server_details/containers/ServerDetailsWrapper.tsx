@@ -9,7 +9,7 @@ import DashboardPageWithImport, {
   dashboardPageWithImportMdtp,
   type TemplateSelectionContextValue,
 } from 'src/shared/components/DashboardPageWithImport'
-import {Dropdown, DropdownMode} from 'src/reusable_ui'
+import {Dropdown, DropdownMode, ComponentSize} from 'src/reusable_ui'
 import {Template, TemplateValue} from 'src/types'
 import type {Cell, Source} from 'src/types'
 import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
@@ -133,6 +133,13 @@ function HostDropdownHeader({
   )
 }
 
+const LIMIT_OPTIONS = [
+  {id: 'all', name: 'All', value: 0},
+  {id: '10', name: '10', value: 10},
+  {id: '20', name: '20', value: 20},
+  {id: '50', name: '50', value: 50},
+]
+
 function ProcessCellContent({
   cell,
   context,
@@ -146,6 +153,7 @@ function ProcessCellContent({
 }) {
   const ctx = useContext(ServerDetailsPageContext)
   const [contextOpen, setContextOpen] = useState(false)
+  const [processLimit, setProcessLimit] = useState<number>(10)
   const [processDetailModalOpen, setProcessDetailModalOpen] = useState(false)
   const [selectedProcessRow, setSelectedProcessRow] =
     useState<DataTableObject | null>(null)
@@ -174,6 +182,23 @@ function ProcessCellContent({
           onMouseDown={e => e.stopPropagation()}
         >
           <div className="dash-graph-context--buttons">
+            <div className="server-details-process-limit-dropdown" style={{marginRight: '4px'}}>
+              <Dropdown
+                widthPixels={70}
+                buttonSize={ComponentSize.ExtraSmall}
+                selectedID={LIMIT_OPTIONS.find(opt => opt.value === processLimit)?.id ?? '10'}
+                onChange={id => {
+                  const opt = LIMIT_OPTIONS.find(o => o.id === id)
+                  if (opt) setProcessLimit(opt.value)
+                }}
+              >
+                {LIMIT_OPTIONS.map(opt => (
+                  <Dropdown.Item key={opt.id} id={opt.id} value={opt.id}>
+                    {opt.name}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown>
+            </div>
             <Authorized requiredRole={EDITOR_ROLE}>
               <MenuTooltipButton
                 icon="trash"
@@ -203,6 +228,7 @@ function ProcessCellContent({
               selectedHost={ctx?.selectedHost ?? null}
               timeRange={context.timeRange}
               onProcessNameClick={openProcessDetail}
+              limit={processLimit}
             />
           </FancyScrollbar>
         </div>

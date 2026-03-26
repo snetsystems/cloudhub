@@ -21,6 +21,7 @@ interface Props {
   selectedHost: string | null
   timeRange?: TimeRange | null
   onProcessNameClick?: (row: DataTableObject) => void
+  limit?: number
 }
 
 const ProcessLineChartTable: React.FC<Props> = ({
@@ -28,6 +29,7 @@ const ProcessLineChartTable: React.FC<Props> = ({
   selectedHost,
   timeRange,
   onProcessNameClick,
+  limit,
 }) => {
   const [dummyData, setDummyData] = useState<DataTableObject[]>([])
 
@@ -184,13 +186,30 @@ const ProcessLineChartTable: React.FC<Props> = ({
       ]
 
       const results = await executeQueries(source, querySet, templates)
-
       const mergedData = mergeResultsByProcessName(results)
-      setDummyData(mergedData)
+
+      if (limit && limit > 0) {
+        // Sort by max CPU descending
+        const sortedData = [...mergedData].sort((a, b) => {
+          const getMax = (val: any) => {
+            if (Array.isArray(val)) {
+              const numbers = val
+                .map(p => (typeof p.value === 'number' ? p.value : null))
+                .filter((v): v is number => v !== null)
+              return numbers.length > 0 ? Math.max(...numbers) : 0
+            }
+            return typeof val === 'number' ? val : 0
+          }
+          return getMax(b.CPU) - getMax(a.CPU)
+        })
+        setDummyData(sortedData.slice(0, limit))
+      } else {
+        setDummyData(mergedData)
+      }
     }
 
     fetchDummyData()
-  }, [source, selectedHost, timeRange])
+  }, [source, selectedHost, timeRange, limit])
 
   return (
     <div>
