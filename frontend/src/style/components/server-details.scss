@@ -116,27 +116,46 @@
 /* Server Info / simple data list (renderSimpleData) */
 .server-details-simple-data-list {
   margin: 0;
-  padding-left: 12px;
+  padding: 0;
   list-style: none;
   font-size: 12px;
 
   &--nested {
-    padding-left: 10px;
+    padding-left: 12px;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    margin: 4px 0 4px 4px;
   }
 }
 
 .server-details-simple-data-item {
-  margin-bottom: 2px;
   display: flex;
-  gap: 6px;
+  align-items: flex-start;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
 }
 
 .server-details-simple-data-key {
   font-weight: 500;
+  color: $g11-sidewalk;
+  width: 140px;
   flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .server-details-simple-data-value {
+  color: $g20-white;
+  flex: 1;
   word-break: break-word;
 }
 
