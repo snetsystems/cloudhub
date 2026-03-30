@@ -37,12 +37,15 @@ class WelcomePage extends PureComponent<Props> {
                     <ul>
                       <li>
                         <Trans i18nKey="welcome.instruction_agent_admin">
-                          Navigate to <strong>Agent Admin</strong> or <strong>Manage Sources</strong> to install and configure Minions.
+                          Navigate to <strong>Agent Admin</strong> or{' '}
+                          <strong>Manage Sources</strong> to install and
+                          configure Minions.
                         </Trans>
                       </li>
                       <li>
                         <Trans i18nKey="welcome.instruction_ensure_telegraf">
-                          Ensure <strong>Telegraf</strong> is installed on your host machines.
+                          Ensure <strong>Telegraf</strong> is installed on your
+                          host machines.
                         </Trans>
                       </li>
                     </ul>
@@ -58,7 +61,9 @@ class WelcomePage extends PureComponent<Props> {
                     <ul>
                       <li>
                         <Trans i18nKey="welcome.instruction_telegraf_config">
-                          Check your <strong>Telegraf configuration</strong> to ensure the output plugin is pointing to the correct database instance.
+                          Check your <strong>Telegraf configuration</strong> to
+                          ensure the output plugin is pointing to the correct
+                          database instance.
                         </Trans>
                       </li>
                       <li>{t('welcome.instruction_verify_auth')}</li>
@@ -75,7 +80,12 @@ class WelcomePage extends PureComponent<Props> {
                     <h3>{t('welcome.create_dashboard')}</h3>
                     <p className="dashboard-link-container">
                       <Trans i18nKey="welcome.instruction_navigate_dashboard">
-                        Navigate to the <Link to={`/sources/${sourceID}/dashboards`}>Dashboards</Link> page to create your first dashboard and start visualizing your data.
+                        Navigate to the{' '}
+                        <Link to={`/sources/${sourceID}/dashboards`}>
+                          Dashboards
+                        </Link>{' '}
+                        page to create your first dashboard and start
+                        visualizing your data.
                       </Trans>
                     </p>
                   </div>
