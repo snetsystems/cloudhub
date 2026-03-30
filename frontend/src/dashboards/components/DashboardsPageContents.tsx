@@ -121,13 +121,14 @@ class DashboardsPageContents extends Component<Props, State> {
   private get panelTitle(): string {
     const {dashboards} = this.props
 
-    if (dashboards === null) {
+    const filtered = dashboards.filter(d => d.type === 'normal')
+    if (filtered === null) {
       return 'Loading Dashboards...'
-    } else if (dashboards.length === 1) {
+    } else if (filtered.length === 1) {
       return '1 Dashboard'
     }
 
-    return `${dashboards.length} Dashboards`
+    return `${filtered.length} Dashboards`
   }
 
   private filterDashboards = (searchTerm: string): void => {
