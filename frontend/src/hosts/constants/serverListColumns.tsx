@@ -9,6 +9,7 @@ import {
 import {
   LINE_COLORS_I,
   LINE_COLORS_E,
+  LINE_COLOR_PALETTES_SEQUENCE,
 } from 'src/shared/constants/graphColorPalettes'
 import {Link} from 'react-router'
 import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
@@ -25,6 +26,13 @@ interface Props {
   sourceID: string
   chartMode?: 'gauge' | 'line'
 }
+
+const SERVER_LIST_LINE_HEX_BY_PARENT = {
+  CPU: LINE_COLOR_PALETTES_SEQUENCE[0][0].hex,
+  Memory: LINE_COLOR_PALETTES_SEQUENCE[1][0].hex,
+  Network: LINE_COLOR_PALETTES_SEQUENCE[2][0].hex,
+  Disk: LINE_COLOR_PALETTES_SEQUENCE[3][0].hex,
+} as const
 
 export const serverListColumns = ({
   sourceID,
@@ -83,6 +91,7 @@ export const serverListColumns = ({
         if (isLineChart) {
           return (
             <TableLineChartCell
+              color={SERVER_LIST_LINE_HEX_BY_PARENT.CPU}
               values={toLineValues(value)}
               options={{
                 isShowLine: true,
@@ -157,6 +166,7 @@ export const serverListColumns = ({
         if (isLineChart) {
           return (
             <TableLineChartCell
+              color={SERVER_LIST_LINE_HEX_BY_PARENT.Memory}
               values={toLineValues(value)}
               options={{
                 isShowLine: true,
@@ -259,6 +269,7 @@ export const serverListColumns = ({
         if (isLineChart) {
           return (
             <TableLineChartCell
+              color={SERVER_LIST_LINE_HEX_BY_PARENT.Network}
               values={toLineValues(value)}
               options={{
                 isShowLine: true,
@@ -322,6 +333,7 @@ export const serverListColumns = ({
           return (
             <>
               <TableLineChartCell
+                color={SERVER_LIST_LINE_HEX_BY_PARENT.Disk}
                 values={toLineValues(value)}
                 options={{
                   isShowLine: true,
@@ -373,6 +385,7 @@ export const serverListColumns = ({
           return (
             <>
               <TableLineChartCell
+                color={SERVER_LIST_LINE_HEX_BY_PARENT.Disk}
                 values={toLineValues(value)}
                 options={{
                   isShowLine: true,
