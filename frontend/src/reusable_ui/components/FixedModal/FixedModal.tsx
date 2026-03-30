@@ -2,7 +2,6 @@ import React, {useEffect, useRef, useState} from 'react'
 import GraphOptionsToggleBtn from 'src/dashboards/components/GraphOptionsToggleBtn'
 import DashboardList from 'src/server_details/components/DashboardList'
 import CellList from 'src/server_details/components/CellList'
-import BuiltinTemplates from 'src/server_details/components/BuiltinTemplates'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
@@ -23,7 +22,6 @@ function FixedModal({
   children,
   width,
   onSelectionChange,
-  fixedCellName,
 }: Props) {
   const [isMounted, setIsMounted] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(isOpen)
@@ -90,13 +88,13 @@ function FixedModal({
       onClick: () => handleTabChange('cell-list'),
       titleText: 'Cell library',
     },
-    {
-      title: 'Fixed Cells',
-      value: 'fixed-cell',
-      active: currentTab === 'fixed-cell',
-      onClick: () => handleTabChange('fixed-cell'),
-      titleText: 'Fixed Cells',
-    },
+    // {
+    //   title: 'Fixed Cells',
+    //   value: 'fixed-cell',
+    //   active: currentTab === 'fixed-cell',
+    //   onClick: () => handleTabChange('fixed-cell'),
+    //   titleText: 'Fixed Cells',
+    // },
   ]
 
   useEffect(() => {
@@ -168,12 +166,12 @@ function FixedModal({
                 {currentTab === 'cell-list' && (
                   <CellList onSelectionChange={handleSelectionUpdate} />
                 )}
-                {currentTab === 'fixed-cell' && (
+                {/* {currentTab === 'fixed-cell' && (
                   <BuiltinTemplates
                     fixedCellName={fixedCellName}
                     onSelectionChange={handleSelectionUpdate}
                   />
-                )}
+                )} */}
                 {children}
               </div>
             </FancyScrollbar>

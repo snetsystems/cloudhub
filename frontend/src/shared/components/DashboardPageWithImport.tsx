@@ -1,6 +1,16 @@
-import React, {useState, useMemo, useEffect} from 'react'
+import React, {useState, useMemo, useEffect, useRef} from 'react'
 import {Cell, Source, Me, Template, TimeZones, TemplateValue} from 'src/types'
-import {Button, ComponentColor, Page, OverlayTechnology} from 'src/reusable_ui'
+import {
+  Button,
+  ComponentColor,
+  Page,
+  OverlayTechnology,
+  PopoverModal,
+  IconFont,
+  ButtonShape,
+} from 'src/reusable_ui'
+import {PopoverModalSection} from 'src/reusable_ui/components/PopoverModal/PopoverModal'
+import {CellOrigin} from 'src/types/dashboards'
 import FixedModal from 'src/reusable_ui/components/FixedModal/FixedModal'
 import {bindActionCreators} from 'redux'
 
@@ -113,7 +123,7 @@ export interface DashboardPageWithImportConfig {
   /** Optional: return extra action buttons per cell (frontend-only, no backend). */
   getExtraActionsForCell?: (cell: Cell) => DashboardsModels.CellExtraAction[]
   /** Called when user clicks an injected extra action. */
-  onCustomCellAction?: (cell: Cell, actionId: string) => void  
+  onCustomCellAction?: (cell: Cell, actionId: string) => void
   hideQueriesTab?: boolean
 }
 
@@ -176,7 +186,7 @@ function DashboardPageWithImport({
   requiredTemplateVars,
   templateSelectionContext,
   getExtraActionsForCell,
-  onCustomCellAction,  
+  onCustomCellAction,
   source,
   sources,
   inPresentationMode,
@@ -206,7 +216,6 @@ function DashboardPageWithImport({
   editCellQueryStatus,
   hideQueriesTab,
 }: DashboardPageWithImportProps) {
-
   const safeFluxLinks = fluxLinks ?? {self: '', suggestions: '', ast: ''}
   const safeNotify = notify ?? (() => {})
   const safeCellQueryStatus = cellQueryStatus ?? {queryID: '', status: {}}
@@ -225,6 +234,8 @@ function DashboardPageWithImport({
     DashboardsModels.Cell | DashboardsModels.NewDefaultCell | null
   >(null)
   const [isCellEditorOpen, setIsCellEditorOpen] = useState(false)
+  const [isFixedCellModalOpen, setIsFixedCellModalOpen] = useState(false)
+  const fixedCellBtnRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     GlobalAutoRefresher.poll(autoRefresh)
@@ -246,6 +257,7 @@ function DashboardPageWithImport({
     localTemplates,
     onPositionChange,
     onDeleteCell,
+    onHideCell,
     onCloneCell,
     onShowInformation,
     importModal,
@@ -466,10 +478,94 @@ function DashboardPageWithImport({
 
   const importButton = (
     <Button
-      text={importButtonText}
-      color={ComponentColor.Primary}
+      color={ComponentColor.Default}
+      shape={ButtonShape.Square}
       onClick={() => importModal.setIsOpen(prev => !prev)}
+      icon={IconFont.Import}
     />
+  )
+
+  // ── Fixed Cell modal ────────────────────────────────────────────────
+
+  /**
+   * Build two sections from the full cells list (including hidden):
+   *  - "Fixed Cells"  → cellOrigin === 'builtin'  (no delete)
+   *  - "Flex Cells"   → all others (imported/user) (deletable)
+   * checked = !cell.hidden  →  visible on dashboard
+   */
+  const fixedCellModalSections: PopoverModalSection[] = useMemo(() => {
+    const builtinCells = cells
+      .filter(c => c.cellOrigin === CellOrigin.Builtin)
+      .sort((a, b) => a.name.localeCompare(b.name))
+    const flexCells = cells
+      .filter(c => c.cellOrigin !== CellOrigin.Builtin)
+      .sort((a, b) => a.name.localeCompare(b.name))
+    const sections: PopoverModalSection[] = []
+    if (builtinCells.length > 0) {
+      sections.push({
+        label: 'Template',
+        items: builtinCells.map(c => ({
+          id: c.i,
+          label: c.name,
+          type: 'checkbox' as const,
+          checked: !c.hidden,
+          deletable: false,
+        })),
+      })
+    }
+    if (flexCells.length > 0) {
+      sections.push({
+        label: 'Custom',
+        items: flexCells.map(c => ({
+          id: c.i,
+          label: c.name,
+          type: 'checkbox' as const,
+          checked: !c.hidden,
+          deletable: true,
+        })),
+      })
+    }
+    return sections
+  }, [cells])
+
+  /**
+   * Apply visibility changes from the modal in one batch.
+   * Compares new checked state vs current hidden flag and calls
+   * onHideCell / onShowCell only for changed cells.
+   */
+  const handleFixedCellModalConfirm = (
+    values: Record<string, boolean | string>
+  ) => {
+    const newCells = cells.map(c => {
+      const newChecked = values[c.i]
+      if (newChecked === undefined) return c
+      const nowHidden = !newChecked
+      if (!!c.hidden === nowHidden) return c
+      return {...c, hidden: nowHidden}
+    })
+    // Only save if something actually changed
+    const hasChanges = newCells.some((c, i) => c.hidden !== cells[i].hidden)
+    if (hasChanges) onPositionChange(newCells)
+  }
+
+  /** Delete a Flex Cell (permanently from ETCD). Called by modal delete button. */
+  const handleDeleteCellFromModal = (cellId: string) => {
+    const cell = cells.find(c => c.i === cellId)
+    if (cell) onDeleteCell(cell)
+  }
+
+  const fixedCellModalButton = (
+    <span
+      ref={fixedCellBtnRef as React.RefObject<HTMLSpanElement>}
+      style={{display: 'inline-flex'}}
+    >
+      <Button
+        color={ComponentColor.Default}
+        shape={ButtonShape.Square}
+        onClick={() => setIsFixedCellModalOpen(prev => !prev)}
+        icon={IconFont.CogThick}
+      />
+    </span>
   )
 
   const headerRightContext: HeaderRightContext = {
@@ -500,6 +596,7 @@ function DashboardPageWithImport({
       />
       <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
       {importButton}
+      {fixedCellModalButton}
     </>
   )
 
@@ -561,7 +658,7 @@ function DashboardPageWithImport({
                 isStaticPage={false}
                 timeRange={selectedTimeRange}
                 manualRefresh={effectiveManualRefresh}
-                onDeleteCell={onDeleteCell}
+                onDeleteCell={onHideCell}
                 onCloneCell={onCloneCell}
                 onShowInformation={onShowInformation}
                 getExtraActionsForCell={getExtraActionsForCell}
@@ -594,6 +691,17 @@ function DashboardPageWithImport({
         setIsOpen={importModal.setIsOpen}
         onSelectionChange={importModal.onSelectionChange}
         fixedCellName={pageName}
+      />
+      {/* fixed cell modal */}
+      <PopoverModal
+        anchorRef={fixedCellBtnRef as React.RefObject<HTMLElement>}
+        isOpen={isFixedCellModalOpen}
+        onClose={() => setIsFixedCellModalOpen(false)}
+        title="Cell Manager"
+        sections={fixedCellModalSections}
+        onConfirm={handleFixedCellModalConfirm}
+        onDeleteItem={handleDeleteCellFromModal}
+        width={320}
       />
     </Page>
   )
