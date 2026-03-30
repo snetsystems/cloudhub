@@ -153,9 +153,14 @@ class MultiGrid extends React.PureComponent<PropsMultiGrid, State> {
     }
   }
 
-  public componentDidUpdate() {
+  public componentDidUpdate(prevProps: PropsMultiGrid) {
     if (this.topRightGrid) {
       this.topRightGrid.forceUpdate()
+    }
+
+    if (prevProps.height !== this.props.height) {
+      this.recomputeGridSize()
+      this.forceUpdate()
     }
   }
 
@@ -331,10 +336,7 @@ class MultiGrid extends React.PureComponent<PropsMultiGrid, State> {
                 height={height}
                 ref={this.bottomLeftGridRef}
                 rowCount={calculatedRowCount}
-                rowHeight={this.getCalculatedRowHeight(
-                  height,
-                  calculatedRowCount
-                )}
+                rowHeight={this.props.rowHeight ?? ROW_HEIGHT}
                 columnWidth={columnWidth}
                 style={{
                   overflowY: 'hidden',
@@ -400,7 +402,7 @@ class MultiGrid extends React.PureComponent<PropsMultiGrid, State> {
                 width: this.props.width - leftWidth,
                 height: this.props.height - ROW_HEIGHT,
               }}
-              autoHide={verticalScrollbarWidth === 0} // always show vertical scrollbar when rows overflow
+              autoHide={true} // consistent autohiding behavior so horizontal scrollbar doesnt awkwardly persist
               scrollTop={scrollTop}
               scrollLeft={scrollLeft}
               setScrollTop={this.onScrollbarsScroll}
@@ -416,10 +418,7 @@ class MultiGrid extends React.PureComponent<PropsMultiGrid, State> {
                 ref={this.bottomRightGridRef}
                 onScroll={this.onGridScroll}
                 rowCount={calculatedRowCount}
-                rowHeight={this.getCalculatedRowHeight(
-                  height,
-                  calculatedRowCount
-                )}
+                rowHeight={this.props.rowHeight ?? ROW_HEIGHT}
                 scrollToRow={scrollToRow - fixedRowCount}
                 style={{
                   overflowY: 'hidden',
@@ -435,14 +434,14 @@ class MultiGrid extends React.PureComponent<PropsMultiGrid, State> {
     )
   }
 
-  private getCalculatedRowHeight = (
-    height: number,
-    calculatedRowCount: number
-  ): number => {
-    const calculatedRowHeight =
-      calculatedRowCount !== 0 ? height / calculatedRowCount : 0
-    return Math.max(calculatedRowHeight, ROW_HEIGHT)
-  }
+  // private getCalculatedRowHeight = (
+  //   height: number,
+  //   calculatedRowCount: number
+  // ): number => {
+  //   const calculatedRowHeight =
+  //     calculatedRowCount !== 0 ? height / calculatedRowCount : 0
+  //   return Math.max(calculatedRowHeight, ROW_HEIGHT)
+  // }
 
   private renderTopLeftGrid(props) {
     const {fixedColumnCount, fixedRowCount} = props
