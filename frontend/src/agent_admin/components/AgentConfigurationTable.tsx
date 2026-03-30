@@ -24,6 +24,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 interface Props {
   minions: Minion[]
   configPageStatus: RemoteDataState
+  isSaltLoading: boolean
   onClickTableRow: AgentConfiguration['onClickTableRowCall']
   onClickAction: AgentConfiguration['onClickActionCall']
   focusedHost: string
@@ -113,8 +114,8 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return 'hosts-table--th sortable-header'
   }
 
-  private get AgentTableContents(): JSX.Element {
-    const {minions, configPageStatus, isCollectorInstalled} = this.props
+  private get AgentTableContents(): JSX.Element | null {
+    const {minions, configPageStatus, isSaltLoading, isCollectorInstalled} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
     const sortedHosts: Minion[] = this.getSortedHosts(
@@ -127,14 +128,20 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     if (configPageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
-    if (configPageStatus === RemoteDataState.Done && minions.length === 0) {
+    if (
+      configPageStatus === RemoteDataState.Loading ||
+      configPageStatus === RemoteDataState.NotStarted ||
+      isSaltLoading
+    ) {
+      return this.LoadingState
+    }
+    if (minions.length === 0) {
       return this.NoHostsState
     }
-    if (configPageStatus === RemoteDataState.Done && sortedHosts.length === 0) {
+    if (sortedHosts.length === 0) {
       return this.NoSortedHostsState
     }
-
-    if (configPageStatus === RemoteDataState.Done && !isCollectorInstalled) {
+    if (!isCollectorInstalled) {
       return this.NoInstalledCollector
     }
 
@@ -142,53 +149,36 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   }
 
   private get LoadingState(): JSX.Element {
+    return <PageSpinner />
+  }
+
+  private renderEmptyState(message: string): JSX.Element {
     return (
-      <div className="agent--state agent--loding-state">
-        <PageSpinner />
+      <div className="agent--state generic-empty-state">
+        <h4>{message}</h4>
       </div>
     )
   }
 
   private get ErrorState(): JSX.Element {
-    return (
-      <div className="agent--state generic-empty-state">
-        <h4>There was a problem loading hosts</h4>
-      </div>
-    )
+    return this.renderEmptyState('No Collector found')
   }
 
   private get NoHostsState(): JSX.Element {
-    return (
-      <div className="agent--state generic-empty-state">
-        <h4>No Hosts found</h4>
-      </div>
-    )
+    return this.renderEmptyState('No Collector found')
   }
 
   private get NoSortedHostsState(): JSX.Element {
-    return (
-      <div className="agent--state generic-empty-state">
-        <h4>There are no hosts that match the search criteria</h4>
-      </div>
-    )
+    return this.renderEmptyState('No Collector found')
   }
 
   private get NoInstalledCollector(): JSX.Element {
-    return (
-      <div className="agent--state generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>There is no installed collector.</h4>
-      </div>
-    )
+    return this.renderEmptyState('No Collector found')
   }
 
   public render() {
-    const {configPageStatus} = this.props
-
     return (
       <div className="panel">
-        {configPageStatus === RemoteDataState.Loading
-          ? this.LoadingState
-          : null}
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
           <SearchBar
@@ -326,7 +316,13 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   }
 
   private get AgentTableWithHosts() {
-    const {minions, onClickTableRow, onClickAction, focusedHost} = this.props
+    const {
+      minions,
+      onClickTableRow,
+      onClickAction,
+      focusedHost,
+      isSaltLoading,
+    } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const filteredMinion = minions.filter((m: Minion) => m.isInstall === true)
 
@@ -352,6 +348,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
                     onClickTableRow={onClickTableRow}
                     onClickAction={onClickAction}
                     focusedHost={focusedHost}
+                    isSaltLoading={isSaltLoading}
                     onMouseLeave={this.onMouseLeave}
                     onMouseOver={this.onMouseOver}
                   />

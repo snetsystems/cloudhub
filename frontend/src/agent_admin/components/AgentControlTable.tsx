@@ -146,7 +146,7 @@ class AgentControlTable extends PureComponent<Props, State> {
   private get ErrorState(): JSX.Element {
     return (
       <div className="agent--state generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>There was a problem loading hosts</h4>
+        <h4 style={{margin: '90px 0'}}>No Data</h4>
       </div>
     )
   }
@@ -154,7 +154,7 @@ class AgentControlTable extends PureComponent<Props, State> {
   private get NoHostsState(): JSX.Element {
     return (
       <div className="agent--state generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>No Hosts found</h4>
+        <h4 style={{margin: '90px 0'}}>No Data</h4>
       </div>
     )
   }
@@ -162,9 +162,7 @@ class AgentControlTable extends PureComponent<Props, State> {
   private get NoSortedHostsState(): JSX.Element {
     return (
       <div className="agent--state generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>
-          There are no hosts that match the search criteria
-        </h4>
+        <h4 style={{margin: '90px 0'}}>No Data</h4>
       </div>
     )
   }
@@ -361,8 +359,7 @@ class AgentControlTable extends PureComponent<Props, State> {
   private get tooltip() {
     const {isToolipActive, targetPosition, minionIPAdress} = this.state
     const minionIPAddresses = (minionIPAdress ?? '').split(',')
-    const isMultipleIPAddress =
-      !!minionIPAdress && minionIPAddresses.length > 1
+    const isMultipleIPAddress = !!minionIPAdress && minionIPAddresses.length > 1
 
     if (isToolipActive && isMultipleIPAddress) {
       return (

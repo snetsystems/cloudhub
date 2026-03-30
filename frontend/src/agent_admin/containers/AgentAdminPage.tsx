@@ -141,15 +141,22 @@ class AgentAdminPage extends PureComponent<Props, State> {
 
     this.setState({minionsStatus: RemoteDataState.Loading})
 
-    const [minionListObject, dbHosts] = await Promise.all([
+    const fetchResult = await Promise.all([
       this.props.handleGetMinionKeyListAll(
         saltMasterUrl,
         saltMasterToken,
         this.props.source,
         this.props.meRole
-      ),
+      ).catch(() => undefined as MinionsObject),
       getHosts().catch(() => [] as Agent[]),
     ])
+
+    const [minionListObject, dbHosts] = fetchResult ?? []
+
+    if (!minionListObject) {
+      this.setState({minionsStatus: RemoteDataState.Error})
+      return
+    }
 
     const dbByMinionId = new Map((dbHosts as Agent[]).map(h => [h.minionId, h]))
     const saltRunningKeys: string[] = []
@@ -240,17 +247,20 @@ class AgentAdminPage extends PureComponent<Props, State> {
     const saltMasterToken = addon.token
     this.setState({minionsStatus: RemoteDataState.Loading})
 
-    const minionAfterTelegrafUpdate = await getTelegrafState(
-      saltMasterUrl,
-      saltMasterToken,
-      targetMinion,
-      minionsObject
-    )
+    try {
+      const minionAfterTelegrafUpdate = await getTelegrafState(
+        saltMasterUrl,
+        saltMasterToken,
+        targetMinion,
+        minionsObject
+      )
 
-    this.setState({
-      minionsObject: minionAfterTelegrafUpdate,
-      minionsStatus: RemoteDataState.Done,
-    })
+      this.setState({minionsObject: minionAfterTelegrafUpdate})
+    } catch (error) {
+      console.error('Failed to update telegraf state', error)
+    } finally {
+      this.setState({minionsStatus: RemoteDataState.Done})
+    }
   }
 
   public updateMinionState = async (targetMinion: string) => {
@@ -263,17 +273,20 @@ class AgentAdminPage extends PureComponent<Props, State> {
 
     this.setState({minionsStatus: RemoteDataState.Loading})
 
-    const minionListObject = await updateMinionKeyState(
-      saltMasterUrl,
-      saltMasterToken,
-      targetMinion,
-      minionsObject
-    )
+    try {
+      const minionListObject = await updateMinionKeyState(
+        saltMasterUrl,
+        saltMasterToken,
+        targetMinion,
+        minionsObject
+      )
 
-    this.setState({
-      minionsObject: minionListObject,
-      minionsStatus: RemoteDataState.Done,
-    })
+      this.setState({minionsObject: minionListObject})
+    } catch (error) {
+      console.error('Failed to update minion state', error)
+    } finally {
+      this.setState({minionsStatus: RemoteDataState.Done})
+    }
   }
 
   public sections = (meRole: string) => {
@@ -339,6 +352,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
             saltMasterToken={saltMasterToken}
             minionsObject={minionsObject}
             minionsStatus={minionsStatus}
+            isSaltLoading={isSaltLoading}
             handleTelegrafStatus={this.updateTelegrafState}
             handleGetMinionKeyListAll={this.getMinionKeyListAll}
             handleSetMinionStatus={this.setMinionStatus}
