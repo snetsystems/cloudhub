@@ -16,6 +16,7 @@ import {
 } from 'src/hosts/constants/serverListColumns'
 import * as appActions from 'src/shared/actions/app'
 import {executeQueries} from 'src/shared/apis/query'
+import {getHosts} from 'src/shared/apis/host'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {generateForHosts} from 'src/utils/tempVars'
 import {TableLineChartPoint, TimeSeriesValue} from 'src/types/series'
@@ -66,6 +67,20 @@ export function NewHostsPage({
     []
   )
   const [isTableLoading, setIsTableLoading] = useState(true)
+
+  const apiHostsResultRef = useRef<any>(null)
+
+  useEffect(() => {
+    getHosts()
+      .then(data => {
+        console.log('getHosts API Result:', data)
+        apiHostsResultRef.current = data
+      })
+      .catch(err => {
+        console.error('getHosts error:', err)
+        apiHostsResultRef.current = {error: err.message}
+      })
+  }, [])
 
   const [displayedChartMode, setDisplayedChartMode] = useState<
     'gauge' | 'line'
@@ -229,7 +244,17 @@ export function NewHostsPage({
       if (!isSubscribed || requestId !== requestIdRef.current) {
         return
       }
-      const mergedData = mergeResultsByHost(results)
+      let mergedData = mergeResultsByHost(results)
+
+      if (Array.isArray(apiHostsResultRef.current)) {
+        const allowedHosts = new Set(
+          apiHostsResultRef.current.map((h: any) => h.hostname)
+        )
+        mergedData = mergedData.filter(row =>
+          allowedHosts.has(row.host as string)
+        )
+      }
+
       setTableData(mergedData)
       if (isModeSwitchFetch) {
         setDisplayedChartMode(chartMode)

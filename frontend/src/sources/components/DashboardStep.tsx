@@ -96,9 +96,11 @@ class DashboardStep extends Component<Props, State> {
     const {selected, protoboards} = this.state
     const {dashboardsCreated, notify, source} = this.props
 
-    const selectedProtoboards = protoboards.filter(p => selected[p.id])
+    const safeProtoboards = protoboards || []
 
-    const newSelectedProtoboards = protoboards.filter(
+    const selectedProtoboards = safeProtoboards.filter(p => selected[p.id])
+
+    const newSelectedProtoboards = safeProtoboards.filter(
       p =>
         selected[p.id] &&
         !_.find(dashboardsCreated, d => {
