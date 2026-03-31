@@ -100,9 +100,8 @@ const AgentConfigPluginContents = ({
   return (
     <FancyScrollbar>
       {_.isEmpty(plugins) && (
-        <div>
-          <p>This version of Telegraf is not supported.</p>
-          <p>Please update to the latest version.</p>
+        <div className="agent--state generic-empty-state">
+          <h4 style={{margin: '90px 0'}}>No Data</h4>
         </div>
       )}
 

@@ -1,6 +1,16 @@
-import React, {useState, useMemo, useEffect} from 'react'
+import React, {useState, useMemo, useEffect, useRef} from 'react'
 import {Cell, Source, Me, Template, TimeZones, TemplateValue} from 'src/types'
-import {Button, ComponentColor, Page, OverlayTechnology} from 'src/reusable_ui'
+import {
+  Button,
+  ComponentColor,
+  Page,
+  OverlayTechnology,
+  PopoverModal,
+  IconFont,
+  ButtonShape,
+} from 'src/reusable_ui'
+import {PopoverModalSection} from 'src/reusable_ui/components/PopoverModal/PopoverModal'
+import {CellOrigin} from 'src/types/dashboards'
 import FixedModal from 'src/reusable_ui/components/FixedModal/FixedModal'
 import {bindActionCreators} from 'redux'
 
@@ -9,6 +19,7 @@ import LayoutRenderer, {
   RenderCellContext,
 } from 'src/shared/components/LayoutRenderer'
 import PageSpinner from 'src/shared/components/PageSpinner'
+import ServerDetailTips from 'src/shared/components/ServerDetailTips'
 import DashboardEmpty from 'src/dashboards/components/DashboardEmpty'
 import CellEditorOverlay from 'src/dashboards/components/CellEditorOverlay'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
@@ -35,12 +46,20 @@ import {setAutoRefresh} from 'src/shared/actions/app'
 import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
 import {timeRanges} from 'src/shared/data/timeRanges'
 
-import {getDashboardByTemplateName} from 'src/dashboards/apis'
+import {getDashboardByTemplateName, applyFixedCell} from 'src/dashboards/apis'
+import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
 import * as QueriesModels from 'src/types/queries'
+import {
+  notifyTemplateUpdated,
+  notifyTemplateUpdateFailed,
+} from 'src/shared/copy/notifications'
 import {mergeBuiltinWithGetTempVars} from 'src/utils/tempVars'
 import {hydrateTemplates} from 'src/tempVars/utils/graph'
 import {useDashboardPageWithImport} from 'src/server_details/hooks/useDashboardPageWithImport'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+
+const UPDATE_HELP_TEXT =
+  'When you run this update: For each cell that already exists on your dashboard (matched by cell ID), query definitions (queries) are replaced from the latest fixed-cell template—for all cell types (component, line, line-plus-single-stat, etc.). Layout and names stay as-is. New cells from the template are added as hidden. Template variables and version are updated to the latest.'
 
 /** Optional context for template overrides (e.g. :host: selection). Consumer provides a React Context; common component only reads templateOverrides. */
 export interface TemplateSelectionContextValue {
@@ -113,7 +132,7 @@ export interface DashboardPageWithImportConfig {
   /** Optional: return extra action buttons per cell (frontend-only, no backend). */
   getExtraActionsForCell?: (cell: Cell) => DashboardsModels.CellExtraAction[]
   /** Called when user clicks an injected extra action. */
-  onCustomCellAction?: (cell: Cell, actionId: string) => void  
+  onCustomCellAction?: (cell: Cell, actionId: string) => void
   hideQueriesTab?: boolean
 }
 
@@ -176,7 +195,7 @@ function DashboardPageWithImport({
   requiredTemplateVars,
   templateSelectionContext,
   getExtraActionsForCell,
-  onCustomCellAction,  
+  onCustomCellAction,
   source,
   sources,
   inPresentationMode,
@@ -206,7 +225,6 @@ function DashboardPageWithImport({
   editCellQueryStatus,
   hideQueriesTab,
 }: DashboardPageWithImportProps) {
-
   const safeFluxLinks = fluxLinks ?? {self: '', suggestions: '', ast: ''}
   const safeNotify = notify ?? (() => {})
   const safeCellQueryStatus = cellQueryStatus ?? {queryID: '', status: {}}
@@ -225,6 +243,9 @@ function DashboardPageWithImport({
     DashboardsModels.Cell | DashboardsModels.NewDefaultCell | null
   >(null)
   const [isCellEditorOpen, setIsCellEditorOpen] = useState(false)
+  const [isFixedCellModalOpen, setIsFixedCellModalOpen] = useState(false)
+  const [isApplyingTemplateUpdate, setIsApplyingTemplateUpdate] = useState(false)
+  const fixedCellBtnRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     GlobalAutoRefresher.poll(autoRefresh)
@@ -246,6 +267,7 @@ function DashboardPageWithImport({
     localTemplates,
     onPositionChange,
     onDeleteCell,
+    onHideCell,
     onCloneCell,
     onShowInformation,
     importModal,
@@ -466,10 +488,89 @@ function DashboardPageWithImport({
 
   const importButton = (
     <Button
-      text={importButtonText}
-      color={ComponentColor.Primary}
+      color={ComponentColor.Default}
+      shape={ButtonShape.Square}
       onClick={() => importModal.setIsOpen(prev => !prev)}
+      icon={IconFont.Import}
     />
+  )
+
+  // ── Fixed Cell modal ────────────────────────────────────────────────
+
+  /**
+   * Build two sections from the full cells list (including hidden):
+   *  - "Template Cells" → cellOrigin === 'builtin'  (no delete)
+   *  - "Custom Cells"   → all others (imported/user) (deletable)
+   * checked = !cell.hidden  →  visible on dashboard
+   */
+  const fixedCellModalSections: PopoverModalSection[] = useMemo(() => {
+    const builtinCells = cells
+      .filter(c => c.cellOrigin === CellOrigin.Builtin)
+      .sort((a, b) => a.name.localeCompare(b.name))
+    const flexCells = cells
+      .filter(c => c.cellOrigin !== CellOrigin.Builtin)
+      .sort((a, b) => a.name.localeCompare(b.name))
+    const sections: PopoverModalSection[] = []
+    if (builtinCells.length > 0) {
+      sections.push({
+        label: 'Template',
+        items: builtinCells.map(c => ({
+          id: c.i,
+          label: c.name,
+          type: 'checkbox' as const,
+          checked: !c.hidden,
+          deletable: false,
+        })),
+      })
+    }
+    if (flexCells.length > 0) {
+      sections.push({
+        label: 'Custom',
+        items: flexCells.map(c => ({
+          id: c.i,
+          label: c.name,
+          type: 'checkbox' as const,
+          checked: !c.hidden,
+          deletable: true,
+        })),
+      })
+    }
+    return sections
+  }, [cells])
+
+  const handleFixedCellModalConfirm = (
+    values: Record<string, boolean | string>
+  ) => {
+    const newCells = cells.map(c => {
+      const newChecked = values[c.i]
+      if (newChecked === undefined) return c
+      const nowHidden = !newChecked
+      if (!!c.hidden === nowHidden) return c
+      return {...c, hidden: nowHidden}
+    })
+    // Only save if something actually changed
+    const hasChanges = newCells.some((c, i) => c.hidden !== cells[i].hidden)
+    if (hasChanges) onPositionChange(newCells)
+  }
+
+  /** Delete a Flex Cell (permanently from ETCD). Called by modal delete button. */
+  const handleDeleteCellFromModal = (cellId: string) => {
+    const cell = cells.find(c => c.i === cellId)
+    if (cell) onDeleteCell(cell)
+  }
+
+  const fixedCellModalButton = (
+    <span
+      ref={fixedCellBtnRef as React.RefObject<HTMLSpanElement>}
+      style={{display: 'inline-flex'}}
+    >
+      <Button
+        color={ComponentColor.Default}
+        shape={ButtonShape.Square}
+        onClick={() => setIsFixedCellModalOpen(prev => !prev)}
+        icon={IconFont.CogThick}
+      />
+    </span>
   )
 
   const headerRightContext: HeaderRightContext = {
@@ -487,6 +588,45 @@ function DashboardPageWithImport({
     onManualRefresh: handleManualRefresh,
   }
 
+  const handleUpdateTemplate = async () => {
+    if (!dashboard?.updateAvailable || !pageName) return
+
+    setIsApplyingTemplateUpdate(true)
+    try {
+      await applyFixedCell(pageName)
+      // Refresh list to update versions and updateAvailable flag
+      await getDashboardsAsync()
+      safeNotify(notifyTemplateUpdated())
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      safeNotify(notifyTemplateUpdateFailed(message))
+    } finally {
+      setIsApplyingTemplateUpdate(false)
+    }
+  }
+
+  const fixedCellUpdateBar = dashboard?.updateAvailable && (
+    <div className="fixed-cells__update-bar update-bar--modal">
+      <span className="fixed-cells__version-info">
+        Update:{' '}
+        {dashboard.version ? `v${dashboard.version}` : '—'} →{' '}
+        {dashboard.latestVersion ? `v${dashboard.latestVersion}` : '—'}
+      </span>
+      <button
+        type="button"
+        className="fixed-cells__btn-update"
+        disabled={isApplyingTemplateUpdate}
+        onClick={handleUpdateTemplate}
+      >
+        {isApplyingTemplateUpdate ? 'Updating...' : 'Update'}
+      </button>
+      <QuestionMarkTooltip
+        tipID="template-update-help"
+        tipContent={UPDATE_HELP_TEXT}
+      />
+    </div>
+  )
+
   const defaultHeaderRight = (
     <>
       <AutoRefreshDropdown
@@ -500,6 +640,7 @@ function DashboardPageWithImport({
       />
       <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
       {importButton}
+      {fixedCellModalButton}
     </>
   )
 
@@ -561,7 +702,7 @@ function DashboardPageWithImport({
                 isStaticPage={false}
                 timeRange={selectedTimeRange}
                 manualRefresh={effectiveManualRefresh}
-                onDeleteCell={onDeleteCell}
+                onDeleteCell={onHideCell}
                 onCloneCell={onCloneCell}
                 onShowInformation={onShowInformation}
                 getExtraActionsForCell={getExtraActionsForCell}
@@ -594,6 +735,19 @@ function DashboardPageWithImport({
         setIsOpen={importModal.setIsOpen}
         onSelectionChange={importModal.onSelectionChange}
         fixedCellName={pageName}
+      />
+      {/* fixed cell modal */}
+      <PopoverModal
+        anchorRef={fixedCellBtnRef as React.RefObject<HTMLElement>}
+        isOpen={isFixedCellModalOpen}
+        onClose={() => setIsFixedCellModalOpen(false)}
+        title="Cell Manager"
+        sections={fixedCellModalSections}
+        onConfirm={handleFixedCellModalConfirm}
+        onDeleteItem={handleDeleteCellFromModal}
+        width={320}
+        tip={<ServerDetailTips />}
+        beforeBody={fixedCellUpdateBar}
       />
     </Page>
   )

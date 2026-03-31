@@ -44,6 +44,8 @@ export interface UseDashboardPageWithImportResult {
   onPositionChange: (newCells: Cell[]) => void
   onAddCell: (cell: Cell) => void
   onDeleteCell: (cell: Cell) => void
+  onHideCell: (cell: Cell) => void
+  onShowCell: (cell: Cell) => void
   onCloneCell: (cell: Cell) => void
   onShowInformation: (cell: Cell) => void
   importModal: {
@@ -74,6 +76,7 @@ export function useDashboardPageWithImport(
   const [cells, setCells] = useState<Cell[]>([])
   const [currentDashboardId, setCurrentDashboardId] = useState<string>('')
   const [loadSettled, setLoadSettled] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [localTemplates, setLocalTemplates] = useState<Template[]>([])
 
   const patchDashboardByIDAsyncBound = (patchDashboardByIDAsync as unknown) as (
@@ -146,6 +149,24 @@ export function useDashboardPageWithImport(
     putDashboard(newDashboard)
   }
 
+  /** Hides a cell from the dashboard (sets hidden: true) without deleting from ETCD. */
+  const onHideCell = (cell: Cell) => {
+    if (!dashboard) return
+    const newCells = cells.map(c =>
+      c.i === cell.i ? {...c, hidden: true} : c
+    )
+    onPositionChange(newCells)
+  }
+
+  /** Shows a previously hidden cell (sets hidden: false). */
+  const onShowCell = (cell: Cell) => {
+    if (!dashboard) return
+    const newCells = cells.map(c =>
+      c.i === cell.i ? {...c, hidden: false} : c
+    )
+    onPositionChange(newCells)
+  }
+
   const handleSelectionChange = async (items: ImportSelectionPayload) => {
     const dashboardCells = [
       ...items.dashboards.flatMap(d => d.cells),
@@ -209,6 +230,8 @@ export function useDashboardPageWithImport(
     onPositionChange,
     onAddCell,
     onDeleteCell,
+    onHideCell,
+    onShowCell,
     onCloneCell,
     onShowInformation,
     importModal: {

@@ -27,6 +27,22 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+
+    &.update-bar--modal {
+      padding: 2px 0 12px 0;
+      border-bottom: 1px solid $g5-pepper;
+      margin-bottom: 12px;
+
+      .fixed-cells__version-info {
+        font-size: 12px;
+      }
+
+      .fixed-cells__btn-update {
+        height: 24px;
+        line-height: 24px;
+        font-size: 11px;
+      }
+    }
   }
 
   &__version-info {

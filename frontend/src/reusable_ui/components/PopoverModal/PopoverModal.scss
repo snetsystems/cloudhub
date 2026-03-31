@@ -1,0 +1,214 @@
+// -----------------------------------------------------------------------
+// PopoverModal — anchored dropdown-style modal
+// -----------------------------------------------------------------------
+
+.popover-modal {
+  background-color: $g2-kevlar;
+  border: 1px solid $g5-pepper;
+  border-radius: $ix-radius;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+
+  // Entry animation
+  opacity: 0;
+  transform: translateY(-6px) scale(0.97);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  transform-origin: top right;
+
+  &--open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  &--closing {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+
+  // ── Header ──────────────────────────────────────────────────────────
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid $g4-onyx;
+    flex-shrink: 0;
+    background-color: $g3-castle;
+  }
+
+  &__title-section {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: $g15-platinum;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__header-tip {
+    display: flex;
+    align-items: center;
+    opacity: 0.75;
+    transition: opacity 0.2s ease;
+    margin-top: -1px;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    .question-mark-tooltip--icon {
+      font-size: 15px;
+      font-weight: 700;
+      color: $g10-wolf;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: $g9-mountain;
+    transition: color 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+
+    &:hover {
+      color: $g17-whisper;
+    }
+
+    .icon {
+      font-size: 13px;
+    }
+  }
+
+  // ── Body ────────────────────────────────────────────────────────────
+  &__body {
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__section {
+    &:not(:last-child) {
+      margin-bottom: 4px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid $g4-onyx;
+    }
+  }
+
+  &__section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $g8-storm;
+    margin-bottom: 6px;
+  }
+
+  &__item {
+    padding: 3px 0;
+  }
+
+  // Row wrapper: checkbox-label + optional delete button side by side
+  &__item-row {
+    &.form-control-static {
+      // Suppress default form-control-static borders/bg in the modal list
+      border: none;
+      background: transparent;
+      min-height: 0;
+      padding: 2px 0;
+      width: 100%;
+
+      label {
+        color: $g13-mist;
+        font-size: 13px;
+        font-weight: 400;
+        margin: 0;
+        padding-left: 30px; // Standard checkbox gap from global styles
+        flex: 1;
+        min-width: 0;
+        cursor: pointer;
+        transition: color 0.15s ease;
+
+        &:hover {
+          color: $g18-cloud;
+        }
+
+        &::before {
+          // Standard checkbox box position tweak
+          top: 50%;
+        }
+        &::after {
+          // Standard check dot position tweak
+          top: 50%;
+        }
+      }
+    }
+  }
+
+  &__item-text {
+    font-size: 13px;
+    color: $g13-mist;
+    line-height: normal;
+  }
+
+  // ── Footer ──────────────────────────────────────────────────────────
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid $g4-onyx;
+    flex-shrink: 0;
+    background-color: $g2-kevlar;
+  }
+
+  &__footer-btn {
+    // Override default Button min-width so buttons stay compact
+    min-width: 0 !important;
+  }
+
+  // ── Per-item delete button ───────────────────────────────────────────
+  &__item-delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: $g8-storm;
+    border-radius: 3px;
+    transition: color 0.2s ease, background-color 0.2s ease;
+    padding: 0;
+
+    &:hover {
+      color: $c-dreamsicle;
+      background-color: rgba($c-dreamsicle, 0.12);
+    }
+
+    .icon {
+      font-size: 11px;
+    }
+  }
+}

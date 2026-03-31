@@ -13,6 +13,7 @@ import Panel, {PanelType} from './components/panel/Panel'
 import Radio from './components/radio_buttons/RadioButtons'
 import SlideToggle from './components/slide_toggle/SlideToggle'
 import Spinner from './components/spinners/Spinner'
+import PopoverModal from './components/PopoverModal/PopoverModal'
 
 // Import Types
 import {
@@ -55,4 +56,5 @@ export {
   IconFont,
   Columns,
   Spinner,
+  PopoverModal,
 }

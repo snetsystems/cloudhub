@@ -1,0 +1,73 @@
+@import 'src/style/modules/influx-colors';
+@import 'src/style/theme/snet';
+
+.server-detail-tips-container {
+  display: inline-block;
+  height: 18px;
+  line-height: 18px;
+  padding: 0;
+  cursor: pointer;
+
+  &__icon {
+    width: 15px;
+    height: 15px;
+    font-size: 11px;
+    line-height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: $g7-graphite;
+    color: $g20-white;
+    font-weight: 900;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: $s-orange;
+    }
+  }
+}
+
+.server-detail-tips-tooltip {
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+  color: $g18-cloud !important;
+  min-width: 200px;
+  max-width: 280px;
+  pointer-events: none;
+  padding: 10px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 9999 !important; // above popover modal (9990)
+  background-color: $g3-castle !important;
+  border: 1px solid $g6-smoke !important;
+
+  &__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__title {
+    font-weight: 600;
+    color: $g20-white;
+    border-bottom: 1px solid $g6-smoke;
+    padding-bottom: 3px;
+    margin-bottom: 2px;
+    font-size: 12px;
+  }
+
+  &__description {
+    margin-bottom: 4px;
+    color: $g13-mist;
+  }
+
+  &__item {
+    margin-bottom: 1px;
+
+    strong {
+      color: $c-hydrogen;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+  }
+}

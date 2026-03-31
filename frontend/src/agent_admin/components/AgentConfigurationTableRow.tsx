@@ -5,6 +5,7 @@ import React, {PureComponent, MouseEvent} from 'react'
 import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
 import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
 import {TableBodyRowItem} from 'src/agent_admin/reusable/'
+import LoadingDots from 'src/shared/components/LoadingDots'
 
 // Constants
 import {AGENT_CONFIGURATION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -18,6 +19,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 interface Props {
   minions: Minion
   focusedHost: string
+  isSaltLoading: boolean
   onClickTableRow: AgentConfiguration['onClickTableRowCall']
   onClickAction: AgentConfiguration['onClickActionCall']
   onMouseOver: (event: MouseEvent<HTMLElement>, minionIPAddress: string) => void
@@ -57,7 +59,7 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
     onClickAction(host, isRunning)
   }
   private get TableRowEachPage(): JSX.Element {
-    const {minions, onMouseLeave, onMouseOver} = this.props
+    const {minions, onMouseLeave, onMouseOver, isSaltLoading} = this.props
     const {osVersion, os, ip, host, isRunning, telegrafVersion} = minions
     const {
       HostWidth,
@@ -101,8 +103,13 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
             <button
               className="btn btn-default action-call"
               onClick={this.handleOnClickAction}
+              disabled={isSaltLoading}
             >
-              <>{isRunning === true ? '■' : '▶'}</>
+              {isSaltLoading ? (
+                <LoadingDots />
+              ) : (
+                <>{isRunning === true ? '■' : '▶'}</>
+              )}
             </button>
           }
           width={ActionWidth}

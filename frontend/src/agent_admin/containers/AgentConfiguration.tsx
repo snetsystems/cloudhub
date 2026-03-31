@@ -97,6 +97,7 @@ interface Props {
   saltMasterToken: string
   minionsObject: MinionsObject
   minionsStatus: RemoteDataState
+  isSaltLoading: boolean
   handleGetMinionKeyListAll: () => void
   handleTelegrafStatus: (targetMinion: string) => Promise<void>
   handleSetMinionStatus: ({
@@ -361,15 +362,18 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       handleTelegrafStatus,
     } = this.props
 
-    this.setState({
-      configPageStatus: RemoteDataState.Loading,
-    })
+    this.setState({configPageStatus: RemoteDataState.Loading})
 
-    isRunning
-      ? await runLocalServiceStopTelegraf(saltMasterUrl, saltMasterToken, host)
-      : await runLocalServiceStartTelegraf(saltMasterUrl, saltMasterToken, host)
+    try {
+      isRunning
+        ? await runLocalServiceStopTelegraf(saltMasterUrl, saltMasterToken, host)
+        : await runLocalServiceStartTelegraf(saltMasterUrl, saltMasterToken, host)
 
-    await handleTelegrafStatus(host)
+      await handleTelegrafStatus(host)
+    } catch (error) {
+      console.error('Failed to update telegraf service', error)
+      this.setState({configPageStatus: RemoteDataState.Done})
+    }
   }
 
   public onClickApplyCall = () => {
@@ -958,12 +962,13 @@ export class AgentConfiguration extends PureComponent<Props, State> {
 
   private renderAgentPageTop = () => {
     const {configPageStatus, focusedHost, isCollectorInstalled} = this.state
-    const {minionsObject} = this.props
+    const {minionsObject, isSaltLoading} = this.props
 
     return (
       <AgentConfigurationTable
         minions={_.values(minionsObject)}
         configPageStatus={configPageStatus}
+        isSaltLoading={isSaltLoading}
         onClickTableRow={this.onClickTableRowCall}
         onClickAction={this.onClickActionCall}
         focusedHost={focusedHost}

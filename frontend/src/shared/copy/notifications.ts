@@ -686,6 +686,19 @@ export const notifyFixedCellsUpdateFailed = (
   message: `Failed to update fixed cell: ${errorMessage}`,
 })
 
+export const notifyTemplateUpdated = (): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'dash-h',
+  message: 'Template updated successfully.',
+})
+
+export const notifyTemplateUpdateFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to update template: ${errorMessage}`,
+})
+
 //  Template Variables & URL Queries
 //  ----------------------------------------------------------------------------
 export const notifyInvalidTempVarValueInMetaQuery = (

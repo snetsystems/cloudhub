@@ -31,6 +31,10 @@ import {
 // constants
 import {LegacyTelegrafVersion} from 'src/agent_admin/constants/agentControlTableSupportedOsVersion'
 
+const isSaltException = (value: unknown): boolean =>
+  typeof value === 'string' &&
+  (value.includes('Exception occurred') || value.includes('Traceback'))
+
 interface AgentConfigPluginProps {
   loadingState: JSX.Element
   errorStateComponent: JSX.Element
@@ -116,48 +120,54 @@ const AgentConfigPlugin = ({
   }
 
   const getTelegrafPlugin = async () => {
-    const versionResponse = await getRunnerSaltCmdTelegrafPlugin(
-      saltMasterUrl,
-      saltMasterToken,
-      'telegraf version'
-    )
-    const versionData = _.get(
-      yaml.safeLoad(versionResponse.data),
-      'return'
-    )?.[0]
-
-    const telegrafVersion = extractTelegrafVersion(versionData).version || ''
-
-    setDefaultTelegrafVersion(telegrafVersion)
-
-    if (
-      parseFloat(extractNumericVersion(telegrafVersion)) < LegacyTelegrafVersion
-    ) {
-      const combinedPlugins = await fetchLegacyTelegrafPlugins(
-        saltMasterUrl,
-        saltMasterToken
-      )
-
-      setPluginsObject(prev => ({
-        ...prev,
-        [telegrafVersion]: combinedPlugins,
-      }))
-    } else {
-      const pluginResponse = await getRunnerSaltCmdTelegrafPlugin(
+    try {
+      const versionResponse = await getRunnerSaltCmdTelegrafPlugin(
         saltMasterUrl,
         saltMasterToken,
-        'telegraf plugins'
+        'telegraf version'
       )
-      const pluginStr =
-        _.get(yaml.safeLoad(pluginResponse.data), 'return')?.[0] || ''
-      const telegrafPlugins = parsePluginsV3(pluginStr)
+      const versionData = _.get(
+        yaml.safeLoad(versionResponse.data),
+        'return'
+      )?.[0]
 
-      setPluginsObject(prev => ({
-        ...prev,
-        [telegrafVersion]: telegrafPlugins,
-      }))
+      const telegrafVersion = extractTelegrafVersion(versionData).version || ''
+
+      setDefaultTelegrafVersion(telegrafVersion)
+
+      if (
+        parseFloat(extractNumericVersion(telegrafVersion)) < LegacyTelegrafVersion
+      ) {
+        const combinedPlugins = await fetchLegacyTelegrafPlugins(
+          saltMasterUrl,
+          saltMasterToken
+        )
+
+        setPluginsObject(prev => ({
+          ...prev,
+          [telegrafVersion]: combinedPlugins,
+        }))
+      } else {
+        const pluginResponse = await getRunnerSaltCmdTelegrafPlugin(
+          saltMasterUrl,
+          saltMasterToken,
+          'telegraf plugins'
+        )
+        const rawPluginStr =
+          _.get(yaml.safeLoad(pluginResponse.data), 'return')?.[0] || ''
+        const pluginStr = isSaltException(rawPluginStr) ? '' : rawPluginStr
+        const telegrafPlugins = parsePluginsV3(pluginStr)
+
+        setPluginsObject(prev => ({
+          ...prev,
+          [telegrafVersion]: telegrafPlugins,
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching telegraf plugin', error)
+    } finally {
+      setMeasurementsStatus(RemoteDataState.Done)
     }
-    setMeasurementsStatus(RemoteDataState.Done)
   }
 
   async function fetchLegacyTelegrafPlugins(
@@ -175,7 +185,9 @@ const AgentConfigPlugin = ({
     )
     const plugins = responses.flatMap((response, index) => {
       const category = commands[index].category
-      const pluginStr = _.get(yaml.safeLoad(response.data), 'return')?.[0] || ''
+      const rawPluginStr =
+        _.get(yaml.safeLoad(response.data), 'return')?.[0] || ''
+      const pluginStr = isSaltException(rawPluginStr) ? '' : rawPluginStr
       return parsePluginsV2(pluginStr, category)
     })
 
@@ -185,17 +197,19 @@ const AgentConfigPlugin = ({
   const extractPluginStr = (parsed: string, response: any): string => {
     const fromParsed = _.get(parsed, 'return')?.[0]
     if (typeof fromParsed === 'string') {
-      return fromParsed
+      return isSaltException(fromParsed) ? '' : fromParsed
     }
     const fromResponse = _.get(response.data, 'return')?.[0]
 
     if (fromResponse && typeof fromResponse === 'object') {
       const dynamicValue = Object.values(fromResponse)[0] || ''
-      return typeof dynamicValue === 'string'
+      return typeof dynamicValue === 'string' && !isSaltException(dynamicValue)
         ? dynamicValue.split('\n').slice(1).join('\n')
         : ''
     } else if (typeof fromResponse === 'string') {
-      return fromResponse.split('\n').slice(1).join('\n')
+      return isSaltException(fromResponse)
+        ? ''
+        : fromResponse.split('\n').slice(1).join('\n')
     }
     return ''
   }
