@@ -16,6 +16,7 @@ import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import * as DashboardsModels from 'src/types/dashboards'
 import type {DataTableObject} from 'src/types/tableType'
 import type {Addon} from 'src/types/auth'
+import {getHosts} from 'src/shared/apis/host'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
 import ProcessDetailModal from 'src/server_details/components/ProcessDetailModal'
 import UsageDetailModal, {
@@ -51,16 +52,32 @@ function HostDropdownHeader({
 }: HostDropdownHeaderProps) {
   const ctx = useContext(ServerDetailsPageContext)
   const initialSetRef = useRef(false)
+  const [apiHostsResult, setApiHostsResult] = useState<any>(null)
+
+  useEffect(() => {
+    getHosts()
+      .then(data => {
+        setApiHostsResult(data)
+      })
+      .catch(err => {
+        console.error('getHosts error:', err)
+        setApiHostsResult({error: err.message})
+      })
+  }, [])
 
   const hostTemplate = useMemo(() => 
     templates?.find(t => t.tempVar === ':host:'), 
     [templates]
   )
   
-  const hostList = useMemo(() => 
-    hostTemplate?.values?.map(v => v.value) ?? [], 
-    [hostTemplate]
-  )
+  const hostList = useMemo(() => {
+    const defaultList = hostTemplate?.values?.map(v => v.value) ?? []
+    if (Array.isArray(apiHostsResult)) {
+      const allowedHosts = new Set(apiHostsResult.map((h: any) => h.hostname))
+      return defaultList.filter(host => allowedHosts.has(host as string))
+    }
+    return defaultList
+  }, [hostTemplate, apiHostsResult])
 
   const {selectedHost, onHostSelect} = ctx || {}
   
