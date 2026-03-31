@@ -11,6 +11,7 @@ import React, {
 import SearchBar from 'src/hosts/components/SearchBar'
 import TableBase from 'src/device_management/components/TableBase'
 import {TableChartHoverProvider} from 'src/device_management/components/TableChartHoverContext'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Types
 import {
@@ -43,6 +44,8 @@ interface Props {
   isDotKey?: boolean
   isLoading?: boolean
   enableSharedChartHover?: boolean
+  fancyScroll?: boolean
+  fancyScrollHeight?: string
 }
 
 function TableComponent({
@@ -66,6 +69,8 @@ function TableComponent({
   isDotKey = false,
   isLoading = false,
   enableSharedChartHover = false,
+  fancyScroll = false,
+  fancyScrollHeight = '70vh',
 }: Props) {
   const [keyword, setKeyword] = useState('')
 
@@ -334,7 +339,42 @@ function TableComponent({
           <PageSpinner customClass="table-spinner" />
         ) : (
           <>
-            {enableSharedChartHover ? (
+            {fancyScroll ? (
+              <FancyScrollbar
+                autoHide={false}
+                style={{height: fancyScrollHeight}}
+              >
+                {enableSharedChartHover ? (
+                  <TableChartHoverProvider>
+                    <TableBase
+                      columns={columns}
+                      data={sortedData}
+                      accordionColumns={isAccordion ? accordionColumns : null}
+                      isMultiSelect={isMultiSelect}
+                      onCheck={setCheckedArray}
+                      onSort={onSort}
+                      checkedTargets={checkedArray}
+                      sortTarget={sortTarget}
+                      options={options}
+                      timeZone={timeZone}
+                    />
+                  </TableChartHoverProvider>
+                ) : (
+                  <TableBase
+                    columns={columns}
+                    data={sortedData}
+                    accordionColumns={isAccordion ? accordionColumns : null}
+                    isMultiSelect={isMultiSelect}
+                    onCheck={setCheckedArray}
+                    onSort={onSort}
+                    checkedTargets={checkedArray}
+                    sortTarget={sortTarget}
+                    options={options}
+                    timeZone={timeZone}
+                  />
+                )}
+              </FancyScrollbar>
+            ) : enableSharedChartHover ? (
               <TableChartHoverProvider>
                 <TableBase
                   columns={columns}

@@ -70,6 +70,15 @@ export const CLOUD_TIME_RANGE = {
     upper: null,
     menuOption: 'Past 1h',
   },
+  urlMonitoring: {
+    defaultGroupBy: '1m',
+    seconds: 3600,
+    inputValue: 'Past 1h',
+    lower: 'now() - 1h',
+    lowerFlux: '-1h',
+    upper: null,
+    menuOption: 'Past 1h',
+  },
   overview: {
     defaultGroupBy: '1m',
     seconds: 3600,

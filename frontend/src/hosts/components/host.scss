@@ -596,6 +596,174 @@
   padding: 0px 8px 6px;
 }
 
+.url-monitoring-table {
+  // sticky header for thead
+  table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: $g4-onyx;
+  }
+
+  .url-monitoring-status-th {
+    width: 160px;
+    min-width: 120px;
+    white-space: nowrap;
+  }
+
+  .url-monitoring-url-th {
+    width: 28%;
+    min-width: 220px;
+    white-space: nowrap;
+  }
+
+  .url-monitoring-region-th {
+    width: 90px;
+    min-width: 80px;
+    white-space: nowrap;
+  }
+
+  .url-monitoring-actions-th {
+    width: 80px;
+    min-width: 70px;
+    white-space: nowrap;
+  }
+}
+
+.url-monitoring-summary {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border-radius: 6px;
+  background-color: transparent;
+  flex-wrap: wrap;
+}
+
+.url-monitoring-summary__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.url-monitoring-summary__item-button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 6px;
+  opacity: 0.45;
+  transition: opacity 0.15s ease;
+}
+
+.url-monitoring-summary__item-button.active {
+  opacity: 1;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+.url-monitoring-summary__label {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.url-monitoring-summary__count {
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.url-monitoring-summary__label--total {
+  background-color: #6b7280;
+}
+
+.url-monitoring-summary__label--success {
+  background-color: #4ed8a0;
+}
+
+.url-monitoring-summary__label--redirect {
+  background-color: #63b3ff;
+}
+
+.url-monitoring-summary__label--failure {
+  background-color: #ff4d4f;
+}
+
+// URL 모니터링 패널 상단: 검색창 우측 액션 버튼
+.url-monitoring-page {
+  .url-monitoring-panel-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .url-monitoring-panel-toolbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .url-monitoring-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      opacity 0.15s ease;
+
+    .icon {
+      flex-shrink: 0;
+    }
+  }
+
+  .url-monitoring-toolbar-btn--outline {
+    border: 1px solid rgba(164, 168, 182, 0.45);
+    background-color: rgba(0, 0, 0, 0.15);
+    color: $g12-forge;
+
+    &:hover {
+      border-color: rgba(164, 168, 182, 0.65);
+      background-color: rgba(255, 255, 255, 0.06);
+      color: #e2e4ea;
+    }
+  }
+
+  .url-monitoring-toolbar-btn--primary {
+    border: 1px solid transparent;
+    background-color: $s-orange;
+    color: #ffffff;
+
+    &:hover {
+      background-color: lighten($s-orange, 6%);
+    }
+
+    &:active {
+      background-color: darken($s-orange, 4%);
+    }
+  }
+}
+
 .server-list-table {
   .server-host {
     width: 10%;
