@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  ReactNode,
-} from 'react'
+import React, {useEffect, useRef, useState, useCallback, ReactNode} from 'react'
 import {createPortal} from 'react-dom'
 import {Button, ComponentColor} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -50,6 +44,10 @@ export interface PopoverModalProps {
   hideFooter?: boolean
   /** Called when a deletable item's delete button is clicked. Receives item id. */
   onDeleteItem?: (id: string) => void
+  /** Optional tip or help icon to show in header */
+  tip?: ReactNode
+  /** Optional content to render at the top of the body, before sections */
+  beforeBody?: ReactNode
 }
 
 interface Position {
@@ -92,6 +90,8 @@ function PopoverModal({
   confirmText = 'OK',
   hideFooter = false,
   onDeleteItem,
+  tip,
+  beforeBody,
 }: PopoverModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const [isMounted, setIsMounted] = useState(isOpen)
@@ -99,9 +99,9 @@ function PopoverModal({
   const [position, setPosition] = useState<Position>({top: 0, left: 0})
 
   // Track local checkbox/radio state derived from sections
-  const [localValues, setLocalValues] = useState<Record<string, boolean | string>>(() =>
-    initValues(sections)
-  )
+  const [localValues, setLocalValues] = useState<
+    Record<string, boolean | string>
+  >(() => initValues(sections))
 
   // Re-sync when sections prop changes (e.g., parent updates prop values)
   useEffect(() => {
@@ -200,19 +200,28 @@ function PopoverModal({
   const panel = (
     <div
       ref={panelRef}
-      className={`popover-modal ${isVisible ? 'popover-modal--open' : 'popover-modal--closing'}`}
+      className={`popover-modal ${
+        isVisible ? 'popover-modal--open' : 'popover-modal--closing'
+      }`}
       style={{
         position: 'fixed',
         top: position.top,
         left: position.left,
         width,
-        zIndex: 9999,
+        zIndex: 9990,
       }}
     >
       {/* Header */}
       <div className="popover-modal__header">
-        <span className="popover-modal__title">{title}</span>
-        <button className="popover-modal__close-btn" onClick={onClose} aria-label="Close">
+        <div className="popover-modal__title-section">
+          <span className="popover-modal__title">{title}</span>
+          {tip && <div className="popover-modal__header-tip">{tip}</div>}
+        </div>
+        <button
+          className="popover-modal__close-btn"
+          onClick={onClose}
+          aria-label="Close"
+        >
           <span className="icon remove" />
         </button>
       </div>
@@ -220,28 +229,30 @@ function PopoverModal({
       {/* Body */}
       <FancyScrollbar autoHeight maxHeight="min(500px, 50vh)">
         <div className="popover-modal__body">
+          {beforeBody}
           {children
             ? children
             : sections.map((section, si) => (
                 <div key={si} className="popover-modal__section">
                   {section.label && (
-                    <div className="popover-modal__section-label">{section.label}</div>
+                    <div className="popover-modal__section-label">
+                      {section.label}
+                    </div>
                   )}
                   {section.items.map(item => (
-                     <div key={item.id} className="popover-modal__item">
+                    <div key={item.id} className="popover-modal__item">
                       {item.type === 'checkbox' && (
-                        <div className="popover-modal__item-row">
-                          <label className="popover-modal__checkbox-label" htmlFor={`pm-${item.id}`}>
-                            <input
-                              id={`pm-${item.id}`}
-                              type="checkbox"
-                              className="popover-modal__checkbox"
-                              checked={!!(localValues[item.id] ?? item.checked)}
-                              onChange={e => handleItemChange(item.id, e.currentTarget.checked)}
-                            />
-                            <span className="popover-modal__checkbox-box" />
-                            <span className="popover-modal__item-text">{item.label}</span>
-                          </label>
+                        <div className="popover-modal__item-row form-control-static">
+                          <input
+                            id={`pm-${item.id}`}
+                            type="checkbox"
+                            checked={!!(localValues[item.id] ?? item.checked)}
+                            onChange={e =>
+                              handleItemChange(item.id, e.currentTarget.checked)
+                            }
+                          />
+                          <label htmlFor={`pm-${item.id}`}>{item.label}</label>
+
                           {item.deletable && onDeleteItem && (
                             <button
                               className="popover-modal__item-delete-btn"
@@ -255,22 +266,20 @@ function PopoverModal({
                         </div>
                       )}
                       {item.type === 'radio' && (
-                        <label
-                          className="popover-modal__checkbox-label"
-                          htmlFor={`pm-${item.id}`}
-                        >
+                        <div className="popover-modal__item-row form-control-static">
                           <input
                             id={`pm-${item.id}`}
                             type="radio"
-                            className="popover-modal__radio"
                             checked={!!(localValues[item.id] ?? item.checked)}
                             onChange={() => handleItemChange(item.id, true)}
                           />
-                          <span className="popover-modal__item-text">{item.label}</span>
-                        </label>
+                          <label htmlFor={`pm-${item.id}`}>{item.label}</label>
+                        </div>
                       )}
                       {item.type === 'text' && (
-                        <span className="popover-modal__item-text">{item.label}</span>
+                        <span className="popover-modal__item-text">
+                          {item.label}
+                        </span>
                       )}
                     </div>
                   ))}
@@ -302,7 +311,9 @@ function PopoverModal({
   return createPortal(panel, document.body)
 }
 
-function initValues(sections: PopoverModalSection[]): Record<string, boolean | string> {
+function initValues(
+  sections: PopoverModalSection[]
+): Record<string, boolean | string> {
   const result: Record<string, boolean | string> = {}
   sections.forEach(sec => {
     sec.items.forEach(item => {

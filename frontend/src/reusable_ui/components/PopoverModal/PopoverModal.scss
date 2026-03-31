@@ -9,7 +9,6 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 
   // Entry animation
   opacity: 0;
@@ -38,6 +37,14 @@
     background-color: $g3-castle;
   }
 
+  &__title-section {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+  }
+
   &__title {
     font-size: 13px;
     font-weight: 600;
@@ -46,6 +53,26 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  &__header-tip {
+    display: flex;
+    align-items: center;
+    opacity: 0.75;
+    transition: opacity 0.2s ease;
+    margin-top: -1px;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    .question-mark-tooltip--icon {
+      font-size: 15px;
+      font-weight: 700;
+      color: $g10-wolf;
+      width: 18px;
+      height: 18px;
+    }
   }
 
   &__close-btn {
@@ -102,91 +129,45 @@
 
   // Row wrapper: checkbox-label + optional delete button side by side
   &__item-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    &.form-control-static {
+      // Suppress default form-control-static borders/bg in the modal list
+      border: none;
+      background: transparent;
+      min-height: 0;
+      padding: 2px 0;
+      width: 100%;
 
-    .popover-modal__checkbox-label {
-      flex: 1;
-      min-width: 0;
+      label {
+        color: $g13-mist;
+        font-size: 13px;
+        font-weight: 400;
+        margin: 0;
+        padding-left: 30px; // Standard checkbox gap from global styles
+        flex: 1;
+        min-width: 0;
+        cursor: pointer;
+        transition: color 0.15s ease;
+
+        &:hover {
+          color: $g18-cloud;
+        }
+
+        &::before {
+          // Standard checkbox box position tweak
+          top: 50%;
+        }
+        &::after {
+          // Standard check dot position tweak
+          top: 50%;
+        }
+      }
     }
   }
 
   &__item-text {
     font-size: 13px;
     color: $g13-mist;
-    transition: color 0.2s ease;
-  }
-
-  // ── Checkbox ────────────────────────────────────────────────────────
-  &__checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    padding: 4px 0;
-
-    &:hover .popover-modal__item-text {
-      color: $g18-cloud;
-    }
-
-    &:hover .popover-modal__checkbox-box {
-      border-color: $g8-storm;
-    }
-  }
-
-  &__checkbox {
-    // visually hidden — custom box rendered via sibling
-    position: absolute;
-    left: -9999px;
-    width: 0;
-    height: 0;
-    opacity: 0;
-
-    &:checked + .popover-modal__checkbox-box {
-      border-color: $c-pool;
-      background-color: $c-pool;
-
-      &::after {
-        opacity: 1;
-        transform: translate(-50%, -60%) rotate(45deg) scale(1);
-      }
-    }
-  }
-
-  &__checkbox-box {
-    position: relative;
-    display: inline-flex;
-    width: 16px;
-    height: 16px;
-    border-radius: 3px;
-    border: 2px solid $g6-smoke;
-    background-color: $g2-kevlar;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-    flex-shrink: 0;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 4px;
-      height: 7px;
-      border: 2px solid $g0-obsidian;
-      border-top: none;
-      border-left: none;
-      opacity: 0;
-      transform: translate(-50%, -60%) rotate(45deg) scale(0.5);
-      transition: opacity 0.15s ease, transform 0.15s ease;
-    }
-  }
-
-  &__radio {
-    accent-color: $c-pool;
-    width: 15px;
-    height: 15px;
-    flex-shrink: 0;
-    cursor: pointer;
+    line-height: normal;
   }
 
   // ── Footer ──────────────────────────────────────────────────────────

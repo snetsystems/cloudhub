@@ -19,6 +19,7 @@ import LayoutRenderer, {
   RenderCellContext,
 } from 'src/shared/components/LayoutRenderer'
 import PageSpinner from 'src/shared/components/PageSpinner'
+import ServerDetailTips from 'src/shared/components/ServerDetailTips'
 import DashboardEmpty from 'src/dashboards/components/DashboardEmpty'
 import CellEditorOverlay from 'src/dashboards/components/CellEditorOverlay'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
@@ -45,12 +46,20 @@ import {setAutoRefresh} from 'src/shared/actions/app'
 import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
 import {timeRanges} from 'src/shared/data/timeRanges'
 
-import {getDashboardByTemplateName} from 'src/dashboards/apis'
+import {getDashboardByTemplateName, applyFixedCell} from 'src/dashboards/apis'
+import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
 import * as QueriesModels from 'src/types/queries'
+import {
+  notifyTemplateUpdated,
+  notifyTemplateUpdateFailed,
+} from 'src/shared/copy/notifications'
 import {mergeBuiltinWithGetTempVars} from 'src/utils/tempVars'
 import {hydrateTemplates} from 'src/tempVars/utils/graph'
 import {useDashboardPageWithImport} from 'src/server_details/hooks/useDashboardPageWithImport'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+
+const UPDATE_HELP_TEXT =
+  'When you run this update: For each cell that already exists on your dashboard (matched by cell ID), query definitions (queries) are replaced from the latest fixed-cell template—for all cell types (component, line, line-plus-single-stat, etc.). Layout and names stay as-is. New cells from the template are added as hidden. Template variables and version are updated to the latest.'
 
 /** Optional context for template overrides (e.g. :host: selection). Consumer provides a React Context; common component only reads templateOverrides. */
 export interface TemplateSelectionContextValue {
@@ -235,6 +244,7 @@ function DashboardPageWithImport({
   >(null)
   const [isCellEditorOpen, setIsCellEditorOpen] = useState(false)
   const [isFixedCellModalOpen, setIsFixedCellModalOpen] = useState(false)
+  const [isApplyingTemplateUpdate, setIsApplyingTemplateUpdate] = useState(false)
   const fixedCellBtnRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -489,8 +499,8 @@ function DashboardPageWithImport({
 
   /**
    * Build two sections from the full cells list (including hidden):
-   *  - "Fixed Cells"  → cellOrigin === 'builtin'  (no delete)
-   *  - "Flex Cells"   → all others (imported/user) (deletable)
+   *  - "Template Cells" → cellOrigin === 'builtin'  (no delete)
+   *  - "Custom Cells"   → all others (imported/user) (deletable)
    * checked = !cell.hidden  →  visible on dashboard
    */
   const fixedCellModalSections: PopoverModalSection[] = useMemo(() => {
@@ -528,11 +538,6 @@ function DashboardPageWithImport({
     return sections
   }, [cells])
 
-  /**
-   * Apply visibility changes from the modal in one batch.
-   * Compares new checked state vs current hidden flag and calls
-   * onHideCell / onShowCell only for changed cells.
-   */
   const handleFixedCellModalConfirm = (
     values: Record<string, boolean | string>
   ) => {
@@ -582,6 +587,45 @@ function DashboardPageWithImport({
     onChooseCloudAutoRefresh: onChooseCloudAutoRefresh,
     onManualRefresh: handleManualRefresh,
   }
+
+  const handleUpdateTemplate = async () => {
+    if (!dashboard?.updateAvailable || !pageName) return
+
+    setIsApplyingTemplateUpdate(true)
+    try {
+      await applyFixedCell(pageName)
+      // Refresh list to update versions and updateAvailable flag
+      await getDashboardsAsync()
+      safeNotify(notifyTemplateUpdated())
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      safeNotify(notifyTemplateUpdateFailed(message))
+    } finally {
+      setIsApplyingTemplateUpdate(false)
+    }
+  }
+
+  const fixedCellUpdateBar = dashboard?.updateAvailable && (
+    <div className="fixed-cells__update-bar update-bar--modal">
+      <span className="fixed-cells__version-info">
+        Update:{' '}
+        {dashboard.version ? `v${dashboard.version}` : '—'} →{' '}
+        {dashboard.latestVersion ? `v${dashboard.latestVersion}` : '—'}
+      </span>
+      <button
+        type="button"
+        className="fixed-cells__btn-update"
+        disabled={isApplyingTemplateUpdate}
+        onClick={handleUpdateTemplate}
+      >
+        {isApplyingTemplateUpdate ? 'Updating...' : 'Update'}
+      </button>
+      <QuestionMarkTooltip
+        tipID="template-update-help"
+        tipContent={UPDATE_HELP_TEXT}
+      />
+    </div>
+  )
 
   const defaultHeaderRight = (
     <>
@@ -702,6 +746,8 @@ function DashboardPageWithImport({
         onConfirm={handleFixedCellModalConfirm}
         onDeleteItem={handleDeleteCellFromModal}
         width={320}
+        tip={<ServerDetailTips />}
+        beforeBody={fixedCellUpdateBar}
       />
     </Page>
   )
