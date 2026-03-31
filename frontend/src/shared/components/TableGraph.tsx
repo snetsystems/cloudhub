@@ -533,7 +533,7 @@ class TableGraph extends PureComponent<Props, State> {
 
     const {fieldOptions = [this.defaultTimeField], colors} = this.props
     const foundVisible = fieldOptions.filter(m => m.visible === true)
-    const tempVar = foundVisible[columnIndex].tempVar
+    const tempVar = foundVisible[columnIndex]?.tempVar || ''
     const cellData = transformedData[rowIndex][columnIndex]
     const tempVarData = rowIndex > 0 && tempVar !== '' ? cellData : ''
     const isTempVar = tempVarData !== ''
