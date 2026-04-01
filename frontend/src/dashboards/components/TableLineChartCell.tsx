@@ -22,16 +22,27 @@ type ValueLabelOption =
   | 'avr'
 
 interface TableLineChartCellOptions {
+  /** 텍스트 라벨로 표시할 값의 종류 (예: 최소, 최대, 평균, 마지막 값 등) */
   valueLabel?: ValueLabelOption | ValueLabelOption[]
+  /** 값을 포맷팅할 형식 지정 (예: 단위 표시 등) */
   valueFormat?: FormatOption
+  /** 숫자 표시 시 소수점 이하 자릿수 */
   decimalPlaces?: number
+  /** true이면 차트의 Y축 최소값을 항상 0으로 고정 */
   isZeroBaseline?: boolean
+  /** true이면 라인 차트 아래 면적(Area)에 색상을 채움 */
   isFillArea?: boolean
+  /** true이면 데이터 포인트를 잇는 선(Line)을 표시 */
   isShowLine?: boolean
+  /** true이면 각 데이터 포인트마다 마커(점)를 표시 */
   isShowPoint?: boolean
+  /** true이면 중간에 값이 비어있는(null) 구간을 무시하고 선을 연결 */
   isConnectSeparatedPoints?: boolean
+  /** 면적(Area) 채우기 시 적용할 투명도 (0.0 ~ 1.0) */
   areaOpacity?: number
+  /** 데이터 포인트 마커(점)의 반지름 크기 */
   pointRadius?: number
+  /** 렌더링된 값 뒤에 붙일 텍스트 단위 (예: '%', 'MB' 등) */
   suffix?: string
 }
 
@@ -517,49 +528,59 @@ function TableLineChartCell({
                   </React.Fragment>
                 ))}
 
-                {resolvedHoverState && (
-                  <>
-                    <line
-                      className="table-line-cell-crosshair table-line-cell-crosshair--vertical"
-                      x1={resolvedHoverState.point.x}
-                      y1={0}
-                      x2={resolvedHoverState.point.x}
-                      y2={VIEW_BOX_HEIGHT}
-                    />
-                    {resolvedHoverState.isActive &&
-                      resolvedHoverState.point.value !== null &&
-                      resolvedHoverState.point.y !== null && (
-                        <>
-                          <line
-                            className="table-line-cell-crosshair table-line-cell-crosshair--horizontal"
-                            x1={0}
-                            y1={resolvedHoverState.point.y}
-                            x2={VIEW_BOX_WIDTH}
-                            y2={resolvedHoverState.point.y}
-                          />
-                          <circle
-                            className="table-line-cell-hover-point-outline"
-                            cx={resolvedHoverState.point.x}
-                            cy={resolvedHoverState.point.y}
-                            r={Math.max(
-                              (pointRadius + 1.5) * HOVER_POINT_SIZE_RATIO,
-                              1.5
-                            )}
-                          />
-                          <circle
-                            className="table-line-cell-hover-point"
-                            cx={resolvedHoverState.point.x}
-                            cy={resolvedHoverState.point.y}
-                            r={Math.max(
-                              pointRadius * HOVER_POINT_SIZE_RATIO,
-                              1.25
-                            )}
-                          />
-                        </>
-                      )}
-                  </>
-                )}
               </svg>
+              {resolvedHoverState && (
+                <svg
+                  className="table-line-cell-svg-hover-overlay"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <line
+                    className="table-line-cell-crosshair table-line-cell-crosshair--vertical"
+                    x1={`${(resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100}%`}
+                    y1="0"
+                    x2={`${(resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100}%`}
+                    y2="100%"
+                  />
+                  {resolvedHoverState.isActive &&
+                    resolvedHoverState.point.value !== null &&
+                    resolvedHoverState.point.y !== null && (
+                      <>
+                        <line
+                          className="table-line-cell-crosshair table-line-cell-crosshair--horizontal"
+                          x1="0"
+                          y1={`${(resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100}%`}
+                          x2="100%"
+                          y2={`${(resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100}%`}
+                        />
+                        <circle
+                          className="table-line-cell-hover-point-outline"
+                          cx={`${(resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100}%`}
+                          cy={`${(resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100}%`}
+                          r={Math.max(
+                            (pointRadius + 1.5) * HOVER_POINT_SIZE_RATIO,
+                            1.5
+                          )}
+                        />
+                        <circle
+                          className="table-line-cell-hover-point"
+                          cx={`${(resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100}%`}
+                          cy={`${(resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100}%`}
+                          r={Math.max(
+                            pointRadius * HOVER_POINT_SIZE_RATIO,
+                            1.25
+                          )}
+                        />
+                      </>
+                    )}
+                </svg>
+              )}
             </div>
             {resolvedHoverState?.isActive &&
               hoverTooltipText !== null &&
