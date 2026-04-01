@@ -4,14 +4,12 @@ import _ from 'lodash'
 
 import Authorized, {EDITOR_ROLE, VIEWER_ROLE} from 'src/auth/Authorized'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import Button from 'src/reusable_ui/components/Button'
 
 import 'src/dashboards/components/DashboardsTable.scss'
 
 import {getDeep} from 'src/utils/wrappers'
 
 import {Dashboard, Template, RemoteDataState, DashboardType} from 'src/types'
-import {ComponentColor, ComponentSize, ButtonShape} from 'src/reusable_ui/types'
 
 interface Props {
   dashboards: Dashboard[]
@@ -25,8 +23,18 @@ interface Props {
   onSetDefaultDashboard: (dashboard: Dashboard) => void
   dashboardLink: string
 }
+interface State {
+  optimisticDefaultId: number | string | null
+}
 
-class DashboardsTable extends PureComponent<Props> {
+class DashboardsTable extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props)
+    this.state = {
+      optimisticDefaultId: null,
+    }
+  }
+
   public render() {
     const {
       dashboards,
@@ -53,13 +61,19 @@ class DashboardsTable extends PureComponent<Props> {
       return this.renderEmptyState()
     }
 
-    const defaultDashboard = dashboards.find(d => d.isDefault) || dashboards[0]
+    const {optimisticDefaultId} = this.state
+    const defaultDashboard =
+      dashboards.find(d =>
+        optimisticDefaultId ? d.id === optimisticDefaultId : d.isDefault
+      ) || dashboards[0]
 
     return (
       <table className="table v-center admin-table table-highlight dashboards-table">
         <thead>
           <tr>
-            <th style={{width: '100px'}}>Overview</th>
+            <th className="text-center" style={{width: '70px'}}>
+              Overview
+            </th>
             <th>Name</th>
             <th>Template Variables</th>
             <th />
@@ -73,27 +87,42 @@ class DashboardsTable extends PureComponent<Props> {
                 defaultDashboard && dashboard.id === defaultDashboard.id
               return (
                 <tr key={dashboard.id}>
-                  <td className="dashboards-table--td">
-                    {isSelected ? (
-                      <Button
-                        text={'Selected'}
-                        color={ComponentColor.Success}
-                        size={ComponentSize.ExtraSmall}
-                        shape={ButtonShape.StretchToFit}
-                        onClick={() => {}}
-                      />
-                    ) : (
-                      <Button
-                        text={'Select'}
-                        color={ComponentColor.Default}
-                        size={ComponentSize.ExtraSmall}
-                        shape={ButtonShape.StretchToFit}
-                        onClick={e => {
-                          e.stopPropagation()
-                          onSetDefaultDashboard(dashboard)
-                        }}
-                      />
-                    )}
+                  <td className="dashboards-table--td text-center">
+                    <div
+                      className="form-control-static"
+                      style={{
+                        border: 'none',
+                        padding: 0,
+                        minHeight: 0,
+                        display: 'flex',
+                        justifyContent: 'center',
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <div
+                        className="radio-item"
+                        style={{margin: 0, width: 'max-content'}}
+                      >
+                        <input
+                          id={`dashboard_select_${dashboard.id}`}
+                          type="radio"
+                          name="defaultDashboard"
+                          value={dashboard.id}
+                          checked={isSelected}
+                          onChange={() => {
+                            if (!isSelected) {
+                              this.setState({optimisticDefaultId: dashboard.id})
+                              onSetDefaultDashboard(dashboard)
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`dashboard_select_${dashboard.id}`}
+                          title={isSelected ? 'Selected' : 'Select'}
+                          style={{marginBottom: 0, paddingLeft: '20px'}}
+                        />
+                      </div>
+                    </div>
                   </td>
                   <td className="dashboards-table--td dashboards-table--name">
                     <Link to={`${dashboardLink}/dashboards/${dashboard.id}`}>

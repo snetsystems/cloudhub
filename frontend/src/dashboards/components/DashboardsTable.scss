@@ -8,4 +8,8 @@
     font-weight: bold;
     font-size: 14px;
   }
+
+  .form-control-static input[type='radio'] + label::after {
+    background-color: #f58220;
+  }
 }
