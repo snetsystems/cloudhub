@@ -896,13 +896,18 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       <div
         style={{
           position: 'absolute',
-          zIndex: 7,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          width: '100%',
-          height: '100%',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 200,
+          backgroundColor: 'rgba(0, 0, 0, 0.45)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <PageSpinner />
+        <PageSpinner pageSpinnerHeight="auto" />
       </div>
     )
   }
@@ -1026,7 +1031,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     }
 
     return (
-      <div className="panel">
+      <div className="panel" style={{position: 'relative'}}>
         {collectorConfigStatus === RemoteDataState.Loading
           ? this.LoadingState
           : null}

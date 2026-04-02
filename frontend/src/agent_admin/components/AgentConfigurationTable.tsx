@@ -114,6 +114,44 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return 'hosts-table--th sortable-header'
   }
 
+  private get canShowHostTable(): boolean {
+    const {minions, isCollectorInstalled} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
+    if (!isCollectorInstalled || minions.length === 0) {
+      return false
+    }
+    const filteredMinion = minions.filter((m: Minion) => m.isInstall === true)
+    const sortedHosts = this.getSortedHosts(
+      filteredMinion,
+      searchTerm,
+      sortKey,
+      sortDirection
+    )
+    return sortedHosts.length > 0
+  }
+
+  /** Covers thead + tbody; inline styles so stacking works above FancyScrollbar. */
+  private renderLoadingShade(): JSX.Element {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 200,
+          backgroundColor: 'rgba(0, 0, 0, 0.45)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <PageSpinner pageSpinnerHeight="auto" />
+      </div>
+    )
+  }
+
   private get AgentTableContents(): JSX.Element | null {
     const {minions, configPageStatus, isSaltLoading, isCollectorInstalled} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
@@ -125,15 +163,23 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
       sortDirection
     )
 
-    if (configPageStatus === RemoteDataState.Error) {
-      return this.ErrorState
-    }
-    if (
+    const showLoading =
       configPageStatus === RemoteDataState.Loading ||
       configPageStatus === RemoteDataState.NotStarted ||
       isSaltLoading
-    ) {
-      return this.LoadingState
+
+    if (configPageStatus === RemoteDataState.Error) {
+      return this.ErrorState
+    }
+    if (showLoading && this.canShowHostTable) {
+      return this.renderAgentTableWithHosts(true)
+    }
+    if (showLoading) {
+      return (
+        <div style={{position: 'relative', minHeight: 200}}>
+          {this.renderLoadingShade()}
+        </div>
+      )
     }
     if (minions.length === 0) {
       return this.NoHostsState
@@ -145,11 +191,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
       return this.NoInstalledCollector
     }
 
-    return this.AgentTableWithHosts
-  }
-
-  private get LoadingState(): JSX.Element {
-    return <PageSpinner />
+    return this.renderAgentTableWithHosts(false)
   }
 
   private renderEmptyState(message: string): JSX.Element {
@@ -315,7 +357,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     }
   }
 
-  private get AgentTableWithHosts() {
+  private renderAgentTableWithHosts(loadingOverlay: boolean): JSX.Element {
     const {
       minions,
       onClickTableRow,
@@ -326,7 +368,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     const {sortKey, sortDirection, searchTerm} = this.state
     const filteredMinion = minions.filter((m: Minion) => m.isInstall === true)
 
-    const sortedHosts: [] = this.getSortedHosts(
+    const sortedHosts: Minion[] = this.getSortedHosts(
       filteredMinion,
       searchTerm,
       sortKey,
@@ -334,7 +376,10 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     )
 
     return (
-      <div className="hosts-table">
+      <div
+        className="hosts-table"
+        style={loadingOverlay ? {position: 'relative'} : undefined}
+      >
         {this.AgentTableHeader}
         {this.tooltip}
         {sortedHosts.length > 0 ? (
@@ -357,6 +402,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
             className="hosts-table--tbody"
           />
         ) : null}
+        {loadingOverlay ? this.renderLoadingShade() : null}
       </div>
     )
   }
