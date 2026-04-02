@@ -240,6 +240,11 @@
   text-align: right;
 }
 
+.table-line-cell-value-extra {
+  color: $g14-chromium;
+  font-size: 10px;
+}
+
 .table-line-cell-crosshair {
   stroke: rgba($g18-cloud, 0.28);
   stroke-width: 0.8;

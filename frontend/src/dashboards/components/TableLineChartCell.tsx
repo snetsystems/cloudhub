@@ -44,6 +44,8 @@ interface TableLineChartCellOptions {
   pointRadius?: number
   /** 렌더링된 값 뒤에 붙일 텍스트 단위 (예: '%', 'MB' 등) */
   suffix?: string
+  /** valueLabel 옆에 추가로 표시할 외부 포맷 텍스트 (예: 실 사용량) */
+  extraLabel?: string
 }
 
 interface Props {
@@ -141,6 +143,7 @@ function TableLineChartCell({
   const valueLabel = options?.valueLabel
   const valueFormat = options?.valueFormat
   const suffix = options?.suffix ?? ''
+  const extraLabel = options?.extraLabel ?? null
   const hoverContext = useTableChartHover()
   const tableCell = useTableChartCell()
   const decimalPlaces = Number.isFinite(options?.decimalPlaces)
@@ -595,8 +598,15 @@ function TableLineChartCell({
                 </div>
               )}
           </div>
-          {valueLabelText !== null && (
-            <div className="table-line-cell-value">{valueLabelText}</div>
+          {(valueLabelText !== null || extraLabel !== null) && (
+            <div className="table-line-cell-value">
+              {valueLabelText}
+              {extraLabel !== null && (
+                <span className="table-line-cell-value-extra">
+                  {valueLabelText ? ' (' : ''}{extraLabel}{valueLabelText ? ')' : ''}
+                </span>
+              )}
+            </div>
           )}
         </>
       )}

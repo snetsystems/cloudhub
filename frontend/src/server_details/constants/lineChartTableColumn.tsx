@@ -5,6 +5,23 @@ import {toLineValues} from 'src/dashboards/utils/tableLineChart'
 import {FORMAT_OPTIONS} from 'src/types/statisticalgraph'
 import {ColumnInfo} from 'src/types'
 import type {DataTableObject} from 'src/types/tableType'
+import {TableLineChartPoint} from 'src/types/series'
+
+const IEC_LABELS = ['KiB', 'MiB', 'GiB', 'TiB', 'PiB']
+
+const formatBytesIEC = (bytes: number, decimalPlaces = 1): string => {
+  if (!Number.isFinite(bytes) || bytes === 0) return '0 B'
+  const absBytes = Math.abs(bytes)
+  let divisor = 1
+  let unitIndex = -1
+  for (let i = 0; i < IEC_LABELS.length; i++) {
+    if (absBytes < divisor * 1024) break
+    divisor *= 1024
+    unitIndex = i
+  }
+  if (unitIndex === -1) return `${bytes.toFixed(decimalPlaces)} B`
+  return `${(bytes / divisor).toFixed(decimalPlaces)} ${IEC_LABELS[unitIndex]}`
+}
 export const lineChartTableColumn: ColumnInfo[] = [
   {
     key: 'process_name',
@@ -63,7 +80,21 @@ export const lineChartTableColumn: ColumnInfo[] = [
         align: AlignType.CENTER,
       },
     },
-    render: value => {
+    render: (value, rowData) => {
+      const rssRaw = rowData?.RSS
+      let maxRss: number | null = null
+      if (Array.isArray(rssRaw)) {
+        const points = rssRaw as TableLineChartPoint[]
+        for (const p of points) {
+          const v = typeof p?.value === 'number' ? p.value : typeof p === 'number' ? (p as unknown as number) : null
+          if (v !== null && Number.isFinite(v) && (maxRss === null || v > maxRss)) {
+            maxRss = v
+          }
+        }
+      } else if (typeof rssRaw === 'number' && Number.isFinite(rssRaw)) {
+        maxRss = rssRaw
+      }
+      const extraLabel = maxRss !== null ? formatBytesIEC(maxRss) : null
       return (
         <TableLineChartCell
           values={toLineValues(value)}
@@ -77,6 +108,7 @@ export const lineChartTableColumn: ColumnInfo[] = [
             areaOpacity: 0.1,
             pointRadius: 1,
             suffix: '%',
+            extraLabel: extraLabel ?? undefined,
           }}
         />
       )
@@ -155,7 +187,7 @@ export const serverDetailProcessQueries = [
   },
   {
     id: 'server-list-line-mem',
-    text: `SELECT sum("memory_usage_pct") AS "Memory"
+    text: `SELECT sum("memory_usage_pct") AS "Memory", sum("memory_rss_bytes") AS "RSS"
   FROM ":db:".":rp:"."procstat_top"
   WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "user"=~/:user:/
   GROUP BY "process_name", "user", time(:interval:)
