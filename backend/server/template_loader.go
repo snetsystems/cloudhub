@@ -18,6 +18,8 @@ const (
 	PredictionTaskField cloudhub.TemplateFieldType = "predict-task"
 	// LogstashTemplateField represents the logstash_gen template field
 	LogstashTemplateField cloudhub.TemplateFieldType = "logstash-snmp_nx"
+	// URLMonitoringTelegrafTemplateField renders telegraf url-monitoring config.
+	URLMonitoringTelegrafTemplateField cloudhub.TemplateFieldType = "telegraf-url-monitoring"
 )
 
 // LoadTemplate loads and parses the template from the given file path and field type

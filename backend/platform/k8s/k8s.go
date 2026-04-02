@@ -9,6 +9,7 @@ import (
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kubernetes"
+	"github.com/snetsystems/cloudhub/backend/platform/baremetal"
 )
 
 // Manager for handling Logstash configuration in a Kubernetes environment
@@ -18,6 +19,9 @@ type Manager struct {
 	KafkaProducer   cloudhub.KafkaProducer
 	ConfigGenerator cloudhub.ConfigGenerator
 	Logger          cloudhub.Logger
+	// telegrafSalt + telegrafPath deploy URL-monitoring Telegraf drop-ins on nodes via Salt (optional in tests).
+	telegrafSalt baremetal.Client
+	telegrafPath string
 }
 
 // NewManager creates a new Manager for handling Logstash configuration in a Kubernetes environment
@@ -27,6 +31,14 @@ func NewManager(client *kubernetes.Client, maxShards int, logger cloudhub.Logger
 		MaxShards: maxShards,
 		Logger:    logger,
 	}
+}
+
+// SetTelegrafSaltDeployment wires Salt for URL monitoring on K8s: same as baremetal, a minion-local path
+// (usually the hostDir/hostPath or other shared volume directory the Telegraf DaemonSet reads).
+// Logstash collectors on K8s do not use this; they follow the Kafka / sidecar pull path instead.
+func (p *Manager) SetTelegrafSaltDeployment(client baremetal.Client, telegrafPath string) {
+	p.telegrafSalt = client
+	p.telegrafPath = telegrafPath
 }
 
 // PushConfigUpdates triggers the configuration push for Kubernetes collectors for the specified shards.
@@ -121,6 +133,41 @@ func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string
 	// but for now, the backend logic constructs shard list based on total devices.
 	// Returning empty here as the backend will self-calculate "shard-0", "shard-1" etc.
 	return []string{}, map[string]bool{}, nil
+}
+
+// CheckFileExists for K8s is not supported via Salt; always returns false.
+func (p *Manager) CheckFileExists(ctx context.Context, collectorName string, filePath string) (bool, error) {
+	return false, nil
+}
+
+// DeployTelegrafConfig writes a Telegraf drop-in under telegraf-path on the chosen Salt minion,
+// using the same Salt "local" execution model as baremetal (file.write, mkdir, etc.).
+// That path is expected to be the node directory the Telegraf DaemonSet mounts (e.g. hostPath / shared volume),
+// not the Logstash pipeline path: Logstash on K8s is pushed via Kafka / sidecar pull and DeployLogstashConfig stays a no-op.
+func (p *Manager) DeployTelegrafConfig(ctx context.Context, collectorName string, configName string, content string) error {
+	if p.telegrafSalt == nil {
+		return fmt.Errorf("kubernetes: Telegraf Salt client not configured (missing SetTelegrafSaltDeployment)")
+	}
+	if p.telegrafPath == "" {
+		return fmt.Errorf("kubernetes: telegraf path is empty")
+	}
+	return baremetal.DeployTelegrafConfigWithClient(p.telegrafSalt, p.telegrafPath, collectorName, configName, content)
+}
+
+// RemoveTelegrafConfig removes the drop-in on the minion via Salt (same volume layout as DeployTelegrafConfig).
+func (p *Manager) RemoveTelegrafConfig(ctx context.Context, collectorName string, configName string) error {
+	if p.telegrafSalt == nil || p.telegrafPath == "" {
+		return nil
+	}
+	return baremetal.RemoveTelegrafConfigWithClient(p.telegrafSalt, p.telegrafPath, collectorName, configName)
+}
+
+// RestartTelegraf runs systemctl reload telegraf on the minion via Salt (local cmd.run), when wired.
+func (p *Manager) RestartTelegraf(ctx context.Context, collectorName string) error {
+	if p.telegrafSalt == nil {
+		return nil
+	}
+	return baremetal.RestartTelegrafWithClient(p.telegrafSalt, collectorName)
 }
 
 // GenerateShardConfig generates the Logstash configuration for a specific shard in a Kubernetes environment.

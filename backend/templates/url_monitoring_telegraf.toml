@@ -1,0 +1,33 @@
+app = "telegraf"
+id = "telegraf-url-monitoring"
+template = """
+{{ define "main" }}
+{{- range .Inputs }}
+[[inputs.http_response]]
+  interval             = "{{ .Interval }}"
+  urls                 = [{{ range $i, $u := .URLs }}{{ if $i }}, {{ end }}"{{ $u }}"{{ end }}]
+  response_timeout     = "{{ .ResponseTimeout }}"
+  method               = "{{ .Method }}"
+  insecure_skip_verify = {{ $.InsecureSkipVerify }}
+{{- if $.TLSCA }}
+  tls_ca               = "{{ $.TLSCA }}"
+{{- end }}
+{{- if $.TLSCert }}
+  tls_cert             = "{{ $.TLSCert }}"
+{{- end }}
+{{- if $.TLSKey }}
+  tls_key              = "{{ $.TLSKey }}"
+{{- end }}
+
+  [inputs.http_response.tags]
+    tenant = "{{ $.OrgName }}"
+
+{{- end }}
+[[outputs.influxdb]]
+  urls     = ["{{ .InfluxURL }}"]
+  database = "{{ .OrgName }}"
+
+  [outputs.influxdb.tagpass]
+    tenant = ["{{ .OrgName }}"]
+{{ end }}
+"""

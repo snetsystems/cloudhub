@@ -106,6 +106,7 @@ type DataStore interface {
 	DeviceMappings(ctx context.Context) cloudhub.DeviceMappingsStore
 	CellLibrary(ctx context.Context) cloudhub.CellLibraryStore
 	Hosts(ctx context.Context) cloudhub.HostStore
+	URLMonitoring(ctx context.Context) cloudhub.URLMonitoringStore
 }
 
 // ensure that Store implements a DataStore
@@ -135,7 +136,8 @@ type Store struct {
 	EsSourcesStore          cloudhub.EsSourcesStore
 	DeviceMappingsStore     cloudhub.DeviceMappingsStore
 	CellLibraryStore cloudhub.CellLibraryStore
-	HostStore        cloudhub.HostStore
+	HostStore             cloudhub.HostStore
+	URLMonitoringStore    cloudhub.URLMonitoringStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -381,6 +383,14 @@ func (s *Store) Hosts(ctx context.Context) cloudhub.HostStore {
 		return s.HostStore
 	}
 	return &noop.HostStore{}
+}
+
+// URLMonitoring returns the URLMonitoringStore if server context is present, otherwise noop.
+func (s *Store) URLMonitoring(ctx context.Context) cloudhub.URLMonitoringStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.URLMonitoringStore
+	}
+	return &noop.URLMonitoringStore{}
 }
 
 // CellLibrary returns a noop.CellLibraryStore if the context has no organization specified

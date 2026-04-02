@@ -17,24 +17,100 @@ type Client interface {
 	RemoveFileWithLocalClient(path string, targetMinion string) (int, []byte, error)
 	MkdirWithLocalClient(path string, targetMinion string) (int, []byte, error)
 	DirectoryExistsWithLocalClient(path string, targetMinion string) (int, []byte, error)
+	FileExistsWithLocalClient(path string, targetMinion string) (int, []byte, error)
 	DockerRestart(path string, targetMinion string, dockerCommand string) (int, []byte, error)
+	ServiceReloadWithLocalClient(serviceName string, targetMinion string) (int, []byte, error)
 	GetWheelKeyAcceptedListAll() (int, []byte, error)
 	IsActiveMinionPingTest(targetMinion string) (int, []byte, error)
+}
+
+// DeployTelegrafConfigWithClient writes a Telegraf drop-in under telegrafPath on collectorName using Salt.
+// Shared by baremetal and Kubernetes (where Logstash uses pull/Kafka but URL monitoring still uses Salt → node).
+func DeployTelegrafConfigWithClient(client Client, telegrafPath, collectorName, configName, content string) error {
+	if client == nil {
+		return fmt.Errorf("telegraf deploy: nil Salt client")
+	}
+	filePath := path.Join(telegrafPath, configName)
+	subDir := path.Dir(filePath)
+	if err := ensureTelegrafDir(client, collectorName, subDir); err != nil {
+		return err
+	}
+	statusCode, _, err := client.CreateFileWithLocalClient(filePath, []string{content}, collectorName)
+	if err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("failed to create telegraf config: status=%d err=%v", statusCode, err)
+	}
+	return nil
+}
+
+// RemoveTelegrafConfigWithClient removes a Telegraf drop-in file via Salt.
+func RemoveTelegrafConfigWithClient(client Client, telegrafPath, collectorName, configName string) error {
+	if client == nil {
+		return fmt.Errorf("telegraf remove: nil Salt client")
+	}
+	filePath := path.Join(telegrafPath, configName)
+	statusCode, _, err := client.RemoveFileWithLocalClient(filePath, collectorName)
+	if err != nil {
+		return err
+	}
+	if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("failed to remove telegraf config: status=%d", statusCode)
+	}
+	return nil
+}
+
+// RestartTelegrafWithClient runs systemctl reload telegraf on the minion via Salt.
+func RestartTelegrafWithClient(client Client, collectorName string) error {
+	if client == nil {
+		return fmt.Errorf("telegraf restart: nil Salt client")
+	}
+	statusCode, _, err := client.ServiceReloadWithLocalClient("telegraf", collectorName)
+	if err != nil {
+		return err
+	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("failed to reload telegraf service: status=%d", statusCode)
+	}
+	return nil
+}
+
+func ensureTelegrafDir(client Client, collectorName, dirPath string) error {
+	statusCode, resp, err := client.DirectoryExistsWithLocalClient(dirPath, collectorName)
+	if err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("failed to check directory %q: status=%d err=%v", dirPath, statusCode, err)
+	}
+	if resp == nil {
+		return fmt.Errorf("empty response checking directory %q", dirPath)
+	}
+
+	r := &struct {
+		Return []map[string]bool `json:"return"`
+	}{}
+	if err := json.Unmarshal(resp, r); err != nil {
+		return fmt.Errorf("failed to unmarshal salt response: %v", err)
+	}
+	if len(r.Return) > 0 && !r.Return[0][collectorName] {
+		statusCode, _, err := client.MkdirWithLocalClient(dirPath, collectorName)
+		if err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			return fmt.Errorf("failed to create directory %q: status=%d err=%v", dirPath, statusCode, err)
+		}
+	}
+	return nil
 }
 
 // Manager implements the Platform interface for baremetal environments using Salt stack.
 type Manager struct {
 	client       Client
 	logstashPath string
+	telegrafPath string
 	dockerPath   string
 	dockerCmd    string
 }
 
 // NewManager creates a new Manager instance.
-func NewManager(client Client, logstashPath string, dockerPath string, dockerCmd string) *Manager {
+func NewManager(client Client, logstashPath string, telegrafPath string, dockerPath string, dockerCmd string) *Manager {
 	return &Manager{
 		client:       client,
 		logstashPath: logstashPath,
+		telegrafPath: telegrafPath,
 		dockerPath:   dockerPath,
 		dockerCmd:    dockerCmd,
 	}
@@ -206,6 +282,42 @@ func (p *Manager) VerifyCollectorReady(ctx context.Context, collectorName string
 		return fmt.Errorf("collector-server is not active")
 	}
 	return nil
+}
+
+// CheckFileExists checks if a file exists at the given path on the specified collector minion.
+func (p *Manager) CheckFileExists(ctx context.Context, collectorName string, filePath string) (bool, error) {
+	statusCode, resp, err := p.client.FileExistsWithLocalClient(filePath, collectorName)
+	if err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return false, fmt.Errorf("failed to check file existence: status=%d err=%v", statusCode, err)
+	}
+
+	r := &struct {
+		Return []map[string]bool `json:"return"`
+	}{}
+	if err := json.Unmarshal(resp, r); err != nil {
+		return false, fmt.Errorf("failed to unmarshal salt response: %v", err)
+	}
+	if len(r.Return) > 0 {
+		return r.Return[0][collectorName], nil
+	}
+	return false, nil
+}
+
+// DeployTelegrafConfig deploys a Telegraf configuration file to the specified collector minion via Salt.
+// The file is placed at {telegrafPath}/{configName} on the target minion.
+// It ensures every directory component of configName (e.g. "url-monitoring/") exists before writing.
+func (p *Manager) DeployTelegrafConfig(ctx context.Context, collectorName string, configName string, content string) error {
+	return DeployTelegrafConfigWithClient(p.client, p.telegrafPath, collectorName, configName, content)
+}
+
+// RemoveTelegrafConfig removes a Telegraf configuration file from the specified collector minion via Salt.
+func (p *Manager) RemoveTelegrafConfig(ctx context.Context, collectorName string, configName string) error {
+	return RemoveTelegrafConfigWithClient(p.client, p.telegrafPath, collectorName, configName)
+}
+
+// RestartTelegraf reloads Telegraf on the specified collector via systemctl.
+func (p *Manager) RestartTelegraf(ctx context.Context, collectorName string) error {
+	return RestartTelegrafWithClient(p.client, collectorName)
 }
 
 // GenerateShardConfig for baremetal is not supported as it doesn't use sharding.

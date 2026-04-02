@@ -1,4 +1,4 @@
-package postgres
+package pgsql
 
 import (
 	"context"
@@ -32,7 +32,7 @@ type Client struct {
 func NewClient(ctx context.Context, dsn string) (*Client, error) {
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
-		return nil, fmt.Errorf("postgres: connect: %w", err)
+		return nil, fmt.Errorf("pgsql:connect: %w", err)
 	}
 	return &Client{pool: pool}, nil
 }
@@ -51,20 +51,20 @@ func (c *Client) Close() {
 func (c *Client) WithTx(ctx context.Context, fn func(ctx context.Context, s rdb.Store) error) error {
 	tx, err := c.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return fmt.Errorf("postgres: begin tx: %w", err)
+		return fmt.Errorf("pgsql:begin tx: %w", err)
 	}
 
 	txClient := &txClient{tx: tx}
 
 	if err := fn(ctx, txClient); err != nil {
 		if rbErr := tx.Rollback(ctx); rbErr != nil {
-			return fmt.Errorf("postgres: tx rollback after error %v: %w", err, rbErr)
+			return fmt.Errorf("pgsql:tx rollback after error %v: %w", err, rbErr)
 		}
 		return err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("postgres: commit tx: %w", err)
+		return fmt.Errorf("pgsql:commit tx: %w", err)
 	}
 	return nil
 }
@@ -80,7 +80,7 @@ func (c *Client) ExecContext(ctx context.Context, sql string, args ...any) (rdb.
 func (c *Client) CopyFrom(ctx context.Context, table string, columns []string, rows [][]any) (int64, error) {
 	n, err := c.pool.CopyFrom(ctx, pgx.Identifier{table}, columns, pgx.CopyFromRows(rows))
 	if err != nil {
-		return 0, fmt.Errorf("postgres: copy from: %w", err)
+		return 0, fmt.Errorf("pgsql:copy from: %w", err)
 	}
 	return n, nil
 }
@@ -123,7 +123,7 @@ type txClient struct {
 func (c *txClient) Ping(ctx context.Context) error {
 	// Within a transaction, use a simple query to verify liveness.
 	if _, err := c.tx.Exec(ctx, "SELECT 1"); err != nil {
-		return fmt.Errorf("postgres: tx ping: %w", err)
+		return fmt.Errorf("pgsql:tx ping: %w", err)
 	}
 	return nil
 }
@@ -135,7 +135,7 @@ func (c *txClient) Close() {
 func (c *txClient) WithTx(ctx context.Context, fn func(ctx context.Context, s rdb.Store) error) error {
 	// Nested transactions are not supported at this abstraction level.
 	// If needed in the future, this can be extended with savepoints.
-	return fmt.Errorf("postgres: nested transactions not supported")
+	return fmt.Errorf("pgsql:nested transactions not supported")
 }
 
 func (c *txClient) ExecContext(ctx context.Context, sql string, args ...any) (rdb.Result, error) {

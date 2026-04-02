@@ -1,4 +1,4 @@
-package postgres_test
+package pgsql_test
 
 import (
 	"context"
@@ -8,25 +8,24 @@ import (
 	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/rdb/postgres"
+	"github.com/snetsystems/cloudhub/backend/rdb/pgsql"
 )
 
-func setupTestDB(t *testing.T) (*postgres.Client, func()) {
+func setupTestDB(t *testing.T) (*pgsql.Client, func()) {
 	t.Helper()
-	dsn := os.Getenv("TEST_POSTGRES_DSN")
+	dsn := os.Getenv("TEST_PGSQL_DSN")
 	if dsn == "" {
-		t.Skip("TEST_POSTGRES_DSN not set")
+		t.Skip("TEST_PGSQL_DSN not set")
 	}
 	ctx := context.Background()
-	client, err := postgres.NewClient(ctx, dsn)
+	client, err := pgsql.NewClient(ctx, dsn)
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
-	if err := client.Migrate(ctx); err != nil {
-		t.Fatalf("Migrate: %v", err)
-	}
 	cleanup := func() {
 		_, _ = client.ExecContext(ctx, "TRUNCATE TABLE hosts RESTART IDENTITY CASCADE")
+		_, _ = client.ExecContext(ctx, "TRUNCATE TABLE url_monitoring_targets RESTART IDENTITY CASCADE")
+		_, _ = client.ExecContext(ctx, "TRUNCATE TABLE url_monitoring RESTART IDENTITY CASCADE")
 		client.Close()
 	}
 	return client, cleanup
@@ -36,7 +35,7 @@ func TestHostStore_AddAndGet_WithInterfaces(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	host := &cloudhub.Host{
@@ -56,7 +55,7 @@ func TestHostStore_AddAndGet_WithInterfaces(t *testing.T) {
 			{Device: "/dev/sdb1", MountPoint: "/data"},
 		},
 		GPUs: []cloudhub.GPU{
-			{Slot: 0, Vendor: "NVIDIA", Model: "RTX 4090"},
+			{Vendor: "NVIDIA", Model: "RTX 4090"},
 		},
 		SourceType: "salt",
 		OrgID:      "",
@@ -107,7 +106,7 @@ func TestHostStore_Add_NewRowOnReregister(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	minionID := "rereg-minion"
@@ -188,7 +187,7 @@ func TestHostStore_Delete_SoftDelete(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	host := &cloudhub.Host{
@@ -231,7 +230,7 @@ func TestHostStore_All(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	for i, id := range []string{"minion-a", "minion-b", "minion-c"} {
@@ -268,7 +267,7 @@ func TestHostStoreDeleteNotFound(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	err := store.Delete(ctx, "non-existent-minion")
@@ -283,7 +282,7 @@ func TestHostStore_Add_DuplicateConflict(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	host := &cloudhub.Host{
@@ -312,7 +311,7 @@ func TestHostStore_Update_ChangesAllFields(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	orig := &cloudhub.Host{
@@ -378,7 +377,7 @@ func TestHostStore_Update_NotFound(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	_, err := store.Update(ctx, &cloudhub.Host{
@@ -396,7 +395,7 @@ func TestHostStore_Patch_StatusOnly(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	minionID := "patch-minion"
@@ -434,7 +433,7 @@ func TestHostStore_Patch_NotFound(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	rejected := "rejected"
@@ -448,7 +447,7 @@ func TestHostStore_GPU_SlotRoundTrip(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	store := postgres.NewHostStore(client)
+	store := pgsql.NewHostStore(client)
 	ctx := context.Background()
 
 	host := &cloudhub.Host{
@@ -458,9 +457,9 @@ func TestHostStore_GPU_SlotRoundTrip(t *testing.T) {
 			{InterfaceName: "eth0", IPAddress: "10.0.0.1"},
 		},
 		GPUs: []cloudhub.GPU{
-			{Slot: 0, Vendor: "NVIDIA", Model: "Tesla T4"},
-			{Slot: 1, Vendor: "NVIDIA", Model: "Tesla T4"},
-			{Slot: 2, Vendor: "NVIDIA", Model: "RTX 4090"},
+			{Vendor: "NVIDIA", Model: "Tesla T4"},
+			{Vendor: "NVIDIA", Model: "Tesla T4"},
+			{Vendor: "AMD", Model: "RTX 4090"},
 		},
 		SourceType: "salt",
 	}
@@ -478,15 +477,11 @@ func TestHostStore_GPU_SlotRoundTrip(t *testing.T) {
 	if len(got.GPUs) != 3 {
 		t.Fatalf("expected 3 GPUs, got %d", len(got.GPUs))
 	}
-	for i, gpu := range got.GPUs {
-		if gpu.Slot != i {
-			t.Errorf("GPU[%d].Slot = %d, want %d", i, gpu.Slot, i)
-		}
-	}
 	if got.GPUs[0].Model != "Tesla T4" {
 		t.Errorf("GPU[0].Model = %q, want Tesla T4", got.GPUs[0].Model)
 	}
 	if got.GPUs[2].Model != "RTX 4090" {
+
 		t.Errorf("GPU[2].Model = %q, want RTX 4090", got.GPUs[2].Model)
 	}
 

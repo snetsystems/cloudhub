@@ -343,6 +343,30 @@ func (s *Service) DirectoryExistsWithLocalClient(path string, targetMinion strin
 	return s.SaltHTTPPost(payload)
 }
 
+// FileExistsWithLocalClient checks if a file exists at the specified path on the target minion.
+func (s *Service) FileExistsWithLocalClient(path string, targetMinion string) (int, []byte, error) {
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Target string `json:"tgt"`
+		Arg    string `json:"arg"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "local",
+		Fun:    "file.file_exists",
+		Target: targetMinion,
+		Arg:    path,
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
+
 // Mkdir make the path to ensure that a directory is available
 func (s *Service) Mkdir(path string) (int, []byte, error) {
 	type kwarg struct {
@@ -494,6 +518,35 @@ func (s *Service) GetWheelKeyAcceptedListAll() (int, []byte, error) {
 }
 
 // DockerRestart is tests to see if path is a valid directory
+// ServiceReloadWithLocalClient sends a `systemctl reload {serviceName}` command to the target minion via Salt cmd.run.
+func (s *Service) ServiceReloadWithLocalClient(serviceName string, targetMinion string) (int, []byte, error) {
+	type kwarg struct {
+		Cmd string `json:"cmd"`
+	}
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Target string `json:"tgt"`
+		Kwarg  kwarg  `json:"kwarg"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "local",
+		Target: targetMinion,
+		Fun:    "cmd.run",
+		Kwarg: kwarg{
+			Cmd: fmt.Sprintf("systemctl reload %s", serviceName),
+		},
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
+
 func (s *Service) DockerRestart(path string, targetMinion string, dockerCommand string) (int, []byte, error) {
 	type kwarg struct {
 		Cmd string `json:"cmd"`

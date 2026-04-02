@@ -8,13 +8,15 @@ import (
 )
 
 type MockClient struct {
-	CreateFileFunc                 func(path string, contents []string, targetMinion string) (int, []byte, error)
-	RemoveFileFunc                 func(path string, targetMinion string) (int, []byte, error)
-	MkdirWithLocalClientFunc       func(path string, targetMinion string) (int, []byte, error)
-	DirectoryExistsFunc            func(path string, targetMinion string) (int, []byte, error)
-	DockerRestartFunc              func(path string, targetMinion string, dockerCommand string) (int, []byte, error)
-	GetWheelKeyAcceptedListAllFunc func() (int, []byte, error)
-	IsActiveMinionPingTestFunc     func(targetMinion string) (int, []byte, error)
+	CreateFileFunc                    func(path string, contents []string, targetMinion string) (int, []byte, error)
+	RemoveFileFunc                    func(path string, targetMinion string) (int, []byte, error)
+	MkdirWithLocalClientFunc          func(path string, targetMinion string) (int, []byte, error)
+	DirectoryExistsFunc               func(path string, targetMinion string) (int, []byte, error)
+	FileExistsFunc                    func(path string, targetMinion string) (int, []byte, error)
+	DockerRestartFunc                 func(path string, targetMinion string, dockerCommand string) (int, []byte, error)
+	ServiceReloadWithLocalClientFunc  func(serviceName string, targetMinion string) (int, []byte, error)
+	GetWheelKeyAcceptedListAllFunc    func() (int, []byte, error)
+	IsActiveMinionPingTestFunc        func(targetMinion string) (int, []byte, error)
 }
 
 func (m *MockClient) CreateFileWithLocalClient(path string, contents []string, targetMinion string) (int, []byte, error) {
@@ -54,9 +56,31 @@ func (m *MockClient) DirectoryExistsWithLocalClient(path string, targetMinion st
 	return http.StatusOK, b, nil
 }
 
+func (m *MockClient) FileExistsWithLocalClient(path string, targetMinion string) (int, []byte, error) {
+	if m.FileExistsFunc != nil {
+		return m.FileExistsFunc(path, targetMinion)
+	}
+	resp := struct {
+		Return []map[string]bool `json:"return"`
+	}{
+		Return: []map[string]bool{
+			{targetMinion: false},
+		},
+	}
+	b, _ := json.Marshal(resp)
+	return http.StatusOK, b, nil
+}
+
 func (m *MockClient) DockerRestart(path string, targetMinion string, dockerCommand string) (int, []byte, error) {
 	if m.DockerRestartFunc != nil {
 		return m.DockerRestartFunc(path, targetMinion, dockerCommand)
+	}
+	return http.StatusOK, nil, nil
+}
+
+func (m *MockClient) ServiceReloadWithLocalClient(serviceName string, targetMinion string) (int, []byte, error) {
+	if m.ServiceReloadWithLocalClientFunc != nil {
+		return m.ServiceReloadWithLocalClientFunc(serviceName, targetMinion)
 	}
 	return http.StatusOK, nil, nil
 }
@@ -119,7 +143,7 @@ func (m *MockClient) IsActiveMinionPingTest(targetMinion string) (int, []byte, e
 func TestDeployLogstashConfig_Success(t *testing.T) {
 	mockClient := &MockClient{}
 	// Test creating a new BaremetalPlatform
-	platform := NewManager(mockClient, "/etc/logstash/conf.d", "/usr/bin/docker", "restart logstash")
+	platform := NewManager(mockClient, "/etc/logstash/conf.d", "/etc/telegraf/telegraf.d", "/usr/bin/docker", "restart logstash")
 
 	// Verify the platform fields
 	if platform.logstashPath != "/etc/logstash/conf.d" {
@@ -129,7 +153,7 @@ func TestDeployLogstashConfig_Success(t *testing.T) {
 
 func TestDeployLogstashConfig(t *testing.T) {
 	mockClient := new(MockClient)
-	platform := NewManager(mockClient, "/tmp", "/usr/bin/docker", "restart logstash")
+	platform := NewManager(mockClient, "/tmp", "/etc/telegraf/telegraf.d", "/usr/bin/docker", "restart logstash")
 	ctx := context.TODO()
 
 	// Test case 1: Successful deployment (directory exists)
@@ -167,7 +191,7 @@ func TestDeployLogstashConfig(t *testing.T) {
 
 func TestRemoveLogstashConfig_Success(t *testing.T) {
 	mockClient := &MockClient{}
-	p := NewManager(mockClient, "/tmp/logstash", "", "")
+	p := NewManager(mockClient, "/tmp/logstash", "", "", "")
 
 	err := p.RemoveLogstashConfig(context.Background(), "minion1", "config.rb")
 	if err != nil {

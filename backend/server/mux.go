@@ -525,6 +525,18 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.PATCH("/cloudhub/v1/hosts/:hostname", EnsureAdmin(service.PatchHost))
 	router.DELETE("/cloudhub/v1/hosts/:hostname", EnsureAdmin(service.DeleteHost))
 
+	// URL Monitoring
+	router.GET("/cloudhub/v1/url-monitoring", EnsureViewer(service.GetURLMonitoring))
+	router.DELETE("/cloudhub/v1/url-monitoring/:id", EnsureEditor(service.DeleteURLMonitoring))
+	// Keep targets on a separate route root to avoid httprouter wildcard conflicts
+	// with "/cloudhub/v1/url-monitoring/:id".
+	router.POST("/cloudhub/v1/url-monitoring-targets", EnsureEditor(service.AddURLMonitoringTarget))
+	router.PATCH("/cloudhub/v1/url-monitoring-targets/:targetId", EnsureEditor(service.PatchURLMonitoringTarget))
+	router.DELETE("/cloudhub/v1/url-monitoring-targets/:targetId", EnsureEditor(service.DeleteURLMonitoringTarget))
+	router.POST("/cloudhub/v1/url-monitoring/:id/apply", EnsureEditor(service.ApplyURLMonitoring))
+	router.GET("/cloudhub/v1/url-monitoring/:id/status", EnsureViewer(service.GetURLMonitoringStatus))
+	router.GET("/cloudhub/v1/url-monitoring/:id/config", EnsureViewer(service.GetURLMonitoringConfig))
+
 	// Kubernetes API Proxy
 	kubernetes := http.HandlerFunc(service.KubernetesProxy)
 	registerAllMethods(router, "/cloudhub/v1/kubernetes/proxy/*path", kubernetes)

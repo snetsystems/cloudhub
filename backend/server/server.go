@@ -37,7 +37,7 @@ import (
 	"github.com/snetsystems/cloudhub/backend/platform/baremetal"
 	"github.com/snetsystems/cloudhub/backend/platform/k8s"
 	"github.com/snetsystems/cloudhub/backend/noop"
-	"github.com/snetsystems/cloudhub/backend/rdb/postgres"
+	"github.com/snetsystems/cloudhub/backend/rdb/pgsql"
 	"github.com/snetsystems/cloudhub/backend/server/config"
 )
 
@@ -166,6 +166,8 @@ type Server struct {
 
 	AI map[string]string `long:"ai" description:"The Information to access to cloudhub AI. '--ai=docker-path:{specifies the path to the Docker Compose file used for restarting the Logstash container} --ai=docker-cmd:{docker restart command} --ai=logstash-path:{The logstash-path variable is used to specify the directory where your Logstash pipeline configuration} --ai=prediction-regex:{parsing tickScript}'. E.g. via environment variable" env:"AI" env-delim:","`
 
+	URLMonitoring map[string]string `long:"url-monitoring" description:"URL monitoring configuration. '--url-monitoring=telegraf-path:{path to telegraf.d directory on collector, e.g. /etc/telegraf/telegraf.d},insecure-skip-verify:{true|false},tls-ca:{path to CA cert},tls-cert:{path to client cert},tls-key:{path to client key}'. E.g. via environment variable" env:"URL_MONITORING" env-delim:","`
+
 	TemplatesPath string `long:"template-path" description:"Path to directory of config template (/usr/share/cloudhub/cloudhub-templates)" env:"TEMPLATES_PATH" default:"templates"`
 
 	EsURLs               []string `long:"es-urls"           description:"Comma-separated list of Elasticsearch endpoints"   env:"ES_URLS"           default:"http://localhost:9200"`
@@ -177,34 +179,28 @@ type Server struct {
 	EsInsecureSkipVerify bool     `long:"es-insecure-skip-verify" description:"Skip TLS cert verification for Elasticsearch" env:"ES_INSECURE_SKIP_VERIFY"`
 
 	Kubernetes     map[string]string `long:"kubernetes" description:"The Information to access to Kubernetes API. '--kubernetes=url:{server URL} --kubernetes=token:{service account token} --kubernetes=insecure-skip-verify:{true/false}'. E.g. via environment variable" env:"KUBERNETES" env-delim:","`
-	DeployPlatform string            `long:"deploy-platform" description:"The deployment platform (k8s or baremetal)" env:"DEPLOY_PLATFORM"`
+	DeployPlatform string            `long:"deploy-platform" description:"Deployment topology: k8s (in-cluster) or host — Linux/VM/docker/systemd direct install, not orchestrated by Kubernetes." env:"DEPLOY_PLATFORM"`
 
 	CollectorAuthToken string `long:"collector-auth-token" description:"Shared secret token for Collector Sidecar authentication" env:"COLLECTOR_AUTH_TOKEN"`
 	KafkaBrokers       string `long:"kafka-brokers" description:"Comma-separated list of Kafka brokers" env:"KAFKA_BROKERS"`
 	KafkaTopic         string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`
 	MaxShards          int    `long:"max-shards" description:"Max number of shards (virtual partitions) for fallback" env:"MAX_SHARDS" default:"10"`
 
-	PostgresDSN         string `long:"postgres-dsn" description:"PostgreSQL connection string for agent store" env:"CLOUDHUB_POSTGRES_DSN" default:""`
-	PostgresHost        string `long:"postgres-host" description:"PostgreSQL host" env:"CLOUDHUB_POSTGRES_HOST" default:""`
-	PostgresPort        int    `long:"postgres-port" description:"PostgreSQL port" env:"CLOUDHUB_POSTGRES_PORT" default:"5432"`
-	PostgresUser        string `long:"postgres-user" description:"PostgreSQL user" env:"CLOUDHUB_POSTGRES_USER" default:""`
-	PostgresPassword    string `long:"postgres-password" description:"PostgreSQL password" env:"CLOUDHUB_POSTGRES_PASSWORD" default:""`
-	PostgresDatabase    string `long:"postgres-database" description:"PostgreSQL database name" env:"CLOUDHUB_POSTGRES_DATABASE" default:""`
-	PostgresSSLMode     string `long:"postgres-sslmode" description:"PostgreSQL SSL mode (disable|require|verify-ca|verify-full)" env:"CLOUDHUB_POSTGRES_SSLMODE" default:"disable"`
+	PgsqlHost        string `long:"pgsql-host" description:"PostgreSQL host" env:"CLOUDHUB_PGSQL_HOST" default:""`
+	PgsqlPort        int    `long:"pgsql-port" description:"PostgreSQL port" env:"CLOUDHUB_PGSQL_PORT" default:"5432"`
+	PgsqlUser        string `long:"pgsql-user" description:"PostgreSQL user" env:"CLOUDHUB_PGSQL_USER" default:""`
+	PgsqlPassword    string `long:"pgsql-password" description:"PostgreSQL password" env:"CLOUDHUB_PGSQL_PASSWORD" default:""`
+	PgsqlDatabase    string `long:"pgsql-database" description:"PostgreSQL database name" env:"CLOUDHUB_PGSQL_DATABASE" default:""`
+	PgsqlSSLMode     string `long:"pgsql-sslmode" description:"PostgreSQL SSL mode (disable|require|verify-ca|verify-full)" env:"CLOUDHUB_PGSQL_SSLMODE" default:"disable"`
 }
 
-// postgresDSN returns the effective PostgreSQL DSN.
-// If --postgres-dsn is set it takes precedence; otherwise the DSN is built
-// from the individual --postgres-host/user/password/database/sslmode flags.
-func (s *Server) postgresDSN() string {
-	if s.PostgresDSN != "" {
-		return s.PostgresDSN
-	}
-	if s.PostgresHost == "" {
+// pgsqlDSN builds a PostgreSQL DSN from the individual pgsql-host/port/user/password/database/sslmode flags.
+func (s *Server) pgsqlDSN() string {
+	if s.PgsqlHost == "" {
 		return ""
 	}
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		s.PostgresHost, s.PostgresPort, s.PostgresUser, s.PostgresPassword, s.PostgresDatabase, s.PostgresSSLMode,
+		s.PgsqlHost, s.PgsqlPort, s.PgsqlUser, s.PgsqlPassword, s.PgsqlDatabase, s.PgsqlSSLMode,
 	)
 }
 
@@ -642,6 +638,7 @@ func (s *Server) Serve(ctx context.Context) {
 
 	osp := NewOSP(s.OSP)
 	aiConfig := NewAIConfig(s.AI)
+	urlMonitoringConfig := NewURLMonitoringConfig(s.URLMonitoring)
 	kubernetesConfig := NewKubernetesConfig(s.Kubernetes)
 	kubernetesConfig.CollectorAuthToken = s.CollectorAuthToken
 
@@ -716,7 +713,7 @@ func (s *Server) Serve(ctx context.Context) {
 		s.AddonURLs,
 		s.AddonTokens,
 		osp,
-		s.postgresDSN(),
+		s.pgsqlDSN(),
 	)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
@@ -735,11 +732,12 @@ func (s *Server) Serve(ctx context.Context) {
 		CustomAutoRefresh:      s.CustomAutoRefresh,
 	}
 	service.InternalENV = cloudhub.InternalEnvironment{
-		EtcdEndpoints:    s.EtcdEndpoints,
-		TemplatesPath:    s.TemplatesPath,
-		TemplatesManager: templatesManager,
-		AIConfig:         aiConfig,
-		KubernetesConfig: kubernetesConfig,
+		EtcdEndpoints:       s.EtcdEndpoints,
+		TemplatesPath:       s.TemplatesPath,
+		TemplatesManager:    templatesManager,
+		AIConfig:            aiConfig,
+		URLMonitoringConfig: urlMonitoringConfig,
+		KubernetesConfig:    kubernetesConfig,
 	}
 	if !validBasepath(s.Basepath) {
 		err := fmt.Errorf("invalid basepath, must follow format \"/mybasepath\"")
@@ -764,18 +762,30 @@ func (s *Server) Serve(ctx context.Context) {
 		logger.Error("Failed to connect to Kubernetes API during startup: ", err)
 	}
 
+	deployKind, err := cloudhub.NormalizeDeployPlatform(s.DeployPlatform)
+	if err != nil {
+		logger.
+			WithField("component", "server").
+			WithField("deploy-platform", s.DeployPlatform).
+			Error(err)
+		return
+	}
 	var p cloudhub.Platform
-	if s.DeployPlatform == "k8s" {
+	if deployKind == cloudhub.DeployPlatformK8s {
 		p = k8s.NewManager(service.KubernetesClient, s.MaxShards, logger)
 	} else {
 		p = baremetal.NewManager(
 			&service,
 			aiConfig.LogstashPath,
+			urlMonitoringConfig.TelegrafPath,
 			aiConfig.DockerPath,
 			aiConfig.DockerCmd,
 		)
 	}
 	service.InternalENV.Platform = p
+	if k8sMgr, ok := p.(*k8s.Manager); ok {
+		k8sMgr.SetTelegrafSaltDeployment(&service, urlMonitoringConfig.TelegrafPath)
+	}
 
 	if s.KafkaBrokers != "" {
 		brokers := strings.Split(s.KafkaBrokers, ",")
@@ -940,7 +950,7 @@ func openService(
 	addonURLs map[string]string,
 	addonTokens map[string]string,
 	osp OSP,
-	postgresDSN string,
+	pgsqlDSN string,
 ) Service {
 
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
@@ -997,16 +1007,24 @@ func openService(
 		os.Exit(1)
 	}
 
-	// Initialize PostgreSQL HostStore if DSN is provided
-	var hostStore cloudhub.HostStore = &noop.HostStore{}
-	if postgresDSN != "" {
-		pgClient, pgErr := postgres.NewClient(ctx, postgresDSN)
-		if pgErr != nil {
-			logger.Error("Unable to connect to PostgreSQL; host store disabled", pgErr)
-		} else {
-			hostStore = postgres.NewHostStore(pgClient)
-			logger.Info("PostgreSQL HostStore initialized")
+	// Initialize PostgreSQL client if DSN is provided
+	var pgsqlClient *pgsql.Client
+	if pgsqlDSN != "" {
+		var pgsqlErr error
+		pgsqlClient, pgsqlErr = pgsql.NewClient(ctx, pgsqlDSN)
+		if pgsqlErr != nil {
+			logger.Error("Unable to connect to PostgreSQL", pgsqlErr)
 		}
+	}
+	var hostStore cloudhub.HostStore = &noop.HostStore{}
+	if pgsqlClient != nil {
+		hostStore = pgsql.NewHostStore(pgsqlClient)
+		logger.Info("PostgreSQL HostStore initialized")
+	}
+	var urlMonitoringStore cloudhub.URLMonitoringStore = &noop.URLMonitoringStore{}
+	if pgsqlClient != nil {
+		urlMonitoringStore = pgsql.NewURLMonitoringStore(pgsqlClient)
+		logger.Info("PostgreSQL URLMonitoringStore initialized")
 	}
 
 	return Service{
@@ -1033,8 +1051,9 @@ func openService(
 			DLNxRstStgStore:         svc.DLNxRstStgStore(),
 			EsSourcesStore:          svc.EsSourcesStore(),
 			DeviceMappingsStore:     svc.DeviceMappingsStore(),
-			CellLibraryStore: svc.CellLibraryStore(),
-			HostStore:        hostStore,
+			CellLibraryStore:    svc.CellLibraryStore(),
+			HostStore:           hostStore,
+			URLMonitoringStore:  urlMonitoringStore,
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,

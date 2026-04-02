@@ -113,6 +113,29 @@ func NewAIConfig(aiConfig map[string]string) cloudhub.AIConfig {
 	return newAiConfig
 }
 
+// NewURLMonitoringConfig converts map to URLMonitoringConfig Struct
+func NewURLMonitoringConfig(cfg map[string]string) cloudhub.URLMonitoringConfig {
+	c := cloudhub.URLMonitoringConfig{
+		TelegrafPath: "/etc/telegraf/telegraf.d",
+	}
+	if p := cfg["telegraf-path"]; p != "" {
+		c.TelegrafPath = p
+	}
+	if v := cfg["insecure-skip-verify"]; v == "true" {
+		c.InsecureSkipVerify = true
+	}
+	if v := cfg["tls-ca"]; v != "" {
+		c.TLSCA = v
+	}
+	if v := cfg["tls-cert"]; v != "" {
+		c.TLSCert = v
+	}
+	if v := cfg["tls-key"]; v != "" {
+		c.TLSKey = v
+	}
+	return c
+}
+
 // NewKubernetesConfig converts map to Kubernetes Struct
 func NewKubernetesConfig(kubernetesConfig map[string]string) cloudhub.KubernetesConfig {
 	var newKubernetesConfig cloudhub.KubernetesConfig

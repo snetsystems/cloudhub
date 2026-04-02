@@ -1,21 +1,21 @@
-package postgres_test
+package pgsql_test
 
 import (
 	"context"
 	"os"
 	"testing"
 
-	"github.com/snetsystems/cloudhub/backend/rdb/postgres"
+	"github.com/snetsystems/cloudhub/backend/rdb/pgsql"
 )
 
 func TestClientPing(t *testing.T) {
-	dsn := os.Getenv("TEST_POSTGRES_DSN")
+	dsn := os.Getenv("TEST_PGSQL_DSN")
 	if dsn == "" {
-		t.Skip("TEST_POSTGRES_DSN not set")
+		t.Skip("TEST_PGSQL_DSN not set")
 	}
 
 	ctx := context.Background()
-	client, err := postgres.NewClient(ctx, dsn)
+	client, err := pgsql.NewClient(ctx, dsn)
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
@@ -27,20 +27,16 @@ func TestClientPing(t *testing.T) {
 }
 
 func TestClientCopyFrom(t *testing.T) {
-	dsn := os.Getenv("TEST_POSTGRES_DSN")
+	dsn := os.Getenv("TEST_PGSQL_DSN")
 	if dsn == "" {
-		t.Skip("TEST_POSTGRES_DSN not set")
+		t.Skip("TEST_PGSQL_DSN not set")
 	}
 	ctx := context.Background()
-	client, err := postgres.NewClient(ctx, dsn)
+	client, err := pgsql.NewClient(ctx, dsn)
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
 	defer client.Close()
-	if err := client.Migrate(ctx); err != nil {
-		t.Fatalf("Migrate: %v", err)
-	}
-
 	rows := [][]any{
 		{"minion-bulk-1", "host1", "linux", "20.04", "amd64", int64(1024), 2, "default"},
 		{"minion-bulk-2", "host2", "linux", "20.04", "amd64", int64(2048), 4, "default"},

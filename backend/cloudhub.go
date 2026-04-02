@@ -67,6 +67,8 @@ const (
 	ErrKafkaPartitionCountFetchFailed  = Error("failed to get kafka partition count")
 	ErrLibraryCellNotFound             = Error("library cell not found")
 	ErrHostNotFound                    = Error("host not found")
+	ErrURLMonitoringNotFound           = Error("url monitoring not found")
+	ErrURLMonitoringExists             = Error("url monitoring already exists for this org")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -1280,12 +1282,13 @@ type Environment struct {
 
 // The InternalEnvironment variable is an internally shared environment variable within the server.
 type InternalEnvironment struct {
-	EtcdEndpoints    []string
-	TemplatesPath    string
-	TemplatesManager TemplatesManager
-	AIConfig         AIConfig
-	KubernetesConfig KubernetesConfig
-	Platform         Platform
+	EtcdEndpoints       []string
+	TemplatesPath       string
+	TemplatesManager    TemplatesManager
+	AIConfig            AIConfig
+	URLMonitoringConfig URLMonitoringConfig
+	KubernetesConfig    KubernetesConfig
+	Platform            Platform
 }
 
 // Topology is represents represents an topology
@@ -1559,6 +1562,14 @@ type Platform interface {
 	PushConfigUpdates(ctx context.Context, shardIDs []int)
 	VerifyCollectorReady(ctx context.Context, collectorName string) error
 	GenerateShardConfig(ctx context.Context, shardID int) (string, error)
+	CheckFileExists(ctx context.Context, collectorName string, filePath string) (bool, error)
+
+	// DeployTelegrafConfig deploys a Telegraf configuration file to the specified collector.
+	DeployTelegrafConfig(ctx context.Context, collectorName string, configName string, content string) error
+	// RemoveTelegrafConfig removes a Telegraf configuration file from the specified collector.
+	RemoveTelegrafConfig(ctx context.Context, collectorName string, configName string) error
+	// RestartTelegraf reloads Telegraf on the specified collector after a config change.
+	RestartTelegraf(ctx context.Context, collectorName string) error
 }
 
 // NetworkDeviceStore is the Storage and retrieval of information
@@ -1606,6 +1617,15 @@ type AIConfig struct {
 	DockerCmd       string `json:"docker-cmd"`
 	LogstashPath    string `json:"logstash-path"`
 	PredictionRegex string `json:"prediction-regex"`
+}
+
+// URLMonitoringConfig holds configuration specific to URL monitoring via Telegraf.
+type URLMonitoringConfig struct {
+	TelegrafPath       string `json:"telegraf-path"`
+	InsecureSkipVerify bool   `json:"insecure-skip-verify"`
+	TLSCA              string `json:"tls-ca"`
+	TLSCert            string `json:"tls-cert"`
+	TLSKey             string `json:"tls-key"`
 }
 
 // KubernetesConfig is the configuration for Kubernetes API access
@@ -1891,4 +1911,40 @@ type HostStore interface {
 	Update(ctx context.Context, h *Host) (*Host, error)
 	Patch(ctx context.Context, hostname string, patch HostPatch) (*Host, error)
 	Delete(ctx context.Context, hostname string) error
+}
+
+// URLMonitoringTarget represents a single URL to monitor.
+type URLMonitoringTarget struct {
+	ID              string `json:"id"`
+	URLMonitoringID string `json:"urlMonitoringId"`
+	Name            string `json:"name"`
+	URL             string `json:"url"`
+	Interval        string `json:"interval"`
+	ResponseTimeout string `json:"responseTimeout"`
+	Method          string `json:"method"`
+	AlertRuleID     string `json:"alertRuleId,omitempty"`
+}
+
+// URLMonitoring represents per-org URL monitoring configuration.
+type URLMonitoring struct {
+	ID              string                `json:"id"`
+	OrgID           string                `json:"orgId"`
+	CollectorServer string                `json:"collectorServer"`
+	Targets         []URLMonitoringTarget `json:"targets"`
+}
+
+// URLMonitoringStore manages persistence of URLMonitoring configurations.
+type URLMonitoringStore interface {
+	// All returns all active url_monitoring records (used for collector assignment).
+	All(ctx context.Context) ([]URLMonitoring, error)
+	// Add creates a new URLMonitoring with its targets in a single transaction.
+	Add(ctx context.Context, m *URLMonitoring) (*URLMonitoring, error)
+	// Get retrieves the URLMonitoring for a given org ID.
+	Get(ctx context.Context, orgID string) (*URLMonitoring, error)
+	// GetByID retrieves the URLMonitoring by its UUID.
+	GetByID(ctx context.Context, id string) (*URLMonitoring, error)
+	// Update replaces the URLMonitoring settings and targets.
+	Update(ctx context.Context, m *URLMonitoring) (*URLMonitoring, error)
+	// Delete soft-deletes the URLMonitoring by its UUID.
+	Delete(ctx context.Context, id string) error
 }

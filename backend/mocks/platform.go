@@ -19,6 +19,10 @@ type MockPlatform struct {
 	PushConfigUpdatesFunc        func(ctx context.Context, shardIDs []int)
 	VerifyCollectorReadyFunc     func(ctx context.Context, collectorName string) error
 	GenerateShardConfigFunc      func(ctx context.Context, shardID int) (string, error)
+	CheckFileExistsFunc         func(ctx context.Context, collectorName string, filePath string) (bool, error)
+	DeployTelegrafConfigFunc    func(ctx context.Context, collectorName string, configName string, content string) error
+	RemoveTelegrafConfigFunc    func(ctx context.Context, collectorName string, configName string) error
+	RestartTelegrafFunc         func(ctx context.Context, collectorName string) error
 }
 
 func (m *MockPlatform) GetAllNetworkDeviceOrgs(ctx context.Context) ([]cloudhub.NetworkDeviceOrg, error) {
@@ -100,4 +104,32 @@ func (m *MockPlatform) GenerateShardConfig(ctx context.Context, shardID int) (st
 		return m.GenerateShardConfigFunc(ctx, shardID)
 	}
 	return "", nil
+}
+
+func (m *MockPlatform) CheckFileExists(ctx context.Context, collectorName string, filePath string) (bool, error) {
+	if m.CheckFileExistsFunc != nil {
+		return m.CheckFileExistsFunc(ctx, collectorName, filePath)
+	}
+	return false, nil
+}
+
+func (m *MockPlatform) DeployTelegrafConfig(ctx context.Context, collectorName string, configName string, content string) error {
+	if m.DeployTelegrafConfigFunc != nil {
+		return m.DeployTelegrafConfigFunc(ctx, collectorName, configName, content)
+	}
+	return nil
+}
+
+func (m *MockPlatform) RemoveTelegrafConfig(ctx context.Context, collectorName string, configName string) error {
+	if m.RemoveTelegrafConfigFunc != nil {
+		return m.RemoveTelegrafConfigFunc(ctx, collectorName, configName)
+	}
+	return nil
+}
+
+func (m *MockPlatform) RestartTelegraf(ctx context.Context, collectorName string) error {
+	if m.RestartTelegrafFunc != nil {
+		return m.RestartTelegrafFunc(ctx, collectorName)
+	}
+	return nil
 }
