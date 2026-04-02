@@ -1,7 +1,7 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
-import {Dropdown, DropdownMode, Page} from 'src/reusable_ui'
+import {Page} from 'src/reusable_ui'
 import {Source, Links, RefreshRate, TimeZones} from 'src/types'
 import {DataTableObject} from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
@@ -19,7 +19,6 @@ import SourceIndicator from 'src/shared/components/SourceIndicator'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import LoadingDots from 'src/shared/components/LoadingDots'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import PageSpinner from 'src/shared/components/PageSpinner'
 import {executeQueries} from 'src/shared/apis/query'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {generateForHosts} from 'src/utils/tempVars'
@@ -29,6 +28,10 @@ import {
   applyMockUrlMonitoringMeta,
   createMockUrlMonitoringRows,
 } from 'src/url_monitoring/utils/mockUrlMonitoringMeta'
+import {
+  UrlMonitoringFormSheet,
+  UrlMonitoringSheetMode,
+} from 'src/url_monitoring/components/UrlMonitoringFormSheet'
 
 const TimeRangeDropdownComponent = TimeRangeDropdown as any
 
@@ -61,7 +64,6 @@ export function URLMonitoringPage({
     key: 'url-monitoring',
     value: Date.now(),
   })
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list')
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'success' | 'redirect' | 'failure'
   >('all')
@@ -72,7 +74,35 @@ export function URLMonitoringPage({
   const requestIdRef = useRef(0)
   const pollIntervalRef = useRef<number | null>(null)
 
-  const columns = useMemo(() => urlMonitoringColumns(), [])
+  const [urlSheet, setUrlSheet] = useState<{
+    open: boolean
+    mode: UrlMonitoringSheetMode
+    row: DataTableObject | null
+  }>({open: false, mode: 'add', row: null})
+
+  const openUrlSheet = useCallback(
+    (mode: UrlMonitoringSheetMode, row?: DataTableObject | null) => {
+      setUrlSheet({
+        open: true,
+        mode,
+        row: row ?? null,
+      })
+    },
+    []
+  )
+
+  const closeUrlSheet = useCallback(() => {
+    setUrlSheet(s => ({...s, open: false}))
+  }, [])
+
+  const columns = useMemo(
+    () =>
+      urlMonitoringColumns({
+        onEditRow: row => openUrlSheet('edit', row),
+        onCopyRow: row => openUrlSheet('copy', row),
+      }),
+    [openUrlSheet]
+  )
 
   const getCodeNumber = (code: any): number | null => {
     if (typeof code === 'number') {
@@ -239,23 +269,6 @@ export function URLMonitoringPage({
         <Page.Header.Left>
           <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
             <Page.Title title="URL Monitoring" />
-            <Dropdown
-              mode={DropdownMode.ActionList}
-              titleText="View"
-              selectedID={viewMode}
-              onChange={value => {
-                if (value === 'card') setViewMode('card')
-                else setViewMode('list')
-              }}
-              widthPixels={120}
-            >
-              <Dropdown.Item id="list" value="list">
-                리스트뷰
-              </Dropdown.Item>
-              <Dropdown.Item id="card" value="card">
-                카드뷰
-              </Dropdown.Item>
-            </Dropdown>
           </div>
         </Page.Header.Left>
         <Page.Header.Right>
@@ -278,209 +291,147 @@ export function URLMonitoringPage({
       </Page.Header>
       <Page.Contents fullWidth={true}>
         <div className="host-page-graph-table-container-wrapper">
-          {viewMode === 'list' ? (
-            <div className="host-page-graph-table-container table-gauge-chart">
-              {!isError ? (
-                <>
-                  <TableComponent
-                    data={displayTableData}
-                    bodyClassName="url-monitoring-table"
-                    columns={columns}
-                    isLoading={isTableLoading}
-                    isSearchDisplay={true}
-                    searchPlaceholder="URL로 필터링..."
-                    isDotKey={false}
-                    enableSharedChartHover={true}
-                    fancyScroll={true}
-                    fancyScrollHeight="70vh"
-                    topLeftRender={
-                      <div className="url-monitoring-summary">
-                        <button
-                          type="button"
-                          className={`url-monitoring-summary__item-button ${
-                            statusFilter === 'all' ? 'active' : ''
-                          }`}
-                          // eslint-disable-next-line react/no-unused-class
-                          // active 스타일을 상태별로 더 자연스럽게 보이게 하기 위함
-                          data-status="all"
-                          onClick={() => setStatusFilter('all')}
-                        >
-                          <span className="url-monitoring-summary__label url-monitoring-summary__label--total">
-                            전체
-                          </span>
-                          <span className="url-monitoring-summary__count">
-                            {statusCounts.total}
-                          </span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={`url-monitoring-summary__item-button ${
-                            statusFilter === 'success' ? 'active' : ''
-                          }`}
-                          data-status="success"
-                          onClick={() => setStatusFilter('success')}
-                        >
-                          <span className="url-monitoring-summary__label url-monitoring-summary__label--success">
-                            성공
-                          </span>
-                          <span className="url-monitoring-summary__count">
-                            {statusCounts.success}
-                          </span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={`url-monitoring-summary__item-button ${
-                            statusFilter === 'redirect' ? 'active' : ''
-                          }`}
-                          data-status="redirect"
-                          onClick={() => setStatusFilter('redirect')}
-                        >
-                          <span className="url-monitoring-summary__label url-monitoring-summary__label--redirect">
-                            리다이렉트
-                          </span>
-                          <span className="url-monitoring-summary__count">
-                            {statusCounts.redirect}
-                          </span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={`url-monitoring-summary__item-button ${
-                            statusFilter === 'failure' ? 'active' : ''
-                          }`}
-                          data-status="failure"
-                          onClick={() => setStatusFilter('failure')}
-                        >
-                          <span className="url-monitoring-summary__label url-monitoring-summary__label--failure">
-                            실패
-                          </span>
-                          <span className="url-monitoring-summary__count">
-                            {statusCounts.failure}
-                          </span>
-                        </button>
-                      </div>
-                    }
-                    toprightRender={
-                      <div className="url-monitoring-panel-toolbar">
-                        <div className="url-monitoring-panel-toolbar__actions">
-                          <button
-                            type="button"
-                            className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
-                            title="가져오기"
-                            onClick={() => {
-                              /* TODO: import */
-                            }}
-                          >
-                            <span className="icon import" />
-                            가져오기
-                          </button>
-                          <button
-                            type="button"
-                            className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
-                            title="내보내기"
-                            onClick={() => {
-                              /* TODO: export */
-                            }}
-                          >
-                            <span className="icon export" />
-                            내보내기
-                          </button>
-                          <button
-                            type="button"
-                            className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--primary"
-                            title="URL 추가하기"
-                            onClick={() => {
-                              /* TODO: add URL */
-                            }}
-                          >
-                            <span className="icon plus" />
-                            URL 추가하기
-                          </button>
-                        </div>
-                        {isRefreshing ? (
-                          <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
-                        ) : null}
-                      </div>
-                    }
-                  />
-                </>
-              ) : (
-                <div className="empty-table-container">
-                  <div className="empty-table-content">
-                    <p>No data available</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div
-              className="url-monitoring-card-view"
-              style={{display: 'flex', flexWrap: 'wrap', gap: 12}}
-            >
-              {!isError ? (
-                isTableLoading ? (
-                  <PageSpinner customClass="table-spinner" pageSpinnerHeight="240px" />
-                ) : tableData.length > 0 ? (
-                  tableData.map((row, rowIndex) => {
-                    const url = String(row.url ?? '')
-                    const latency = row.response_time_ms ?? row.last_response_time
-                    const latencyCol = columns.find(
-                      c => c.key === 'response_time_ms' || c.key === 'last_response_time'
-                    )
-                    return (
-                      <div
-                        key={`${url}-${rowIndex}`}
-                        style={{
-                          flex: '0 0 360px',
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          borderRadius: 8,
-                          padding: 12,
-                        }}
+          <div className="host-page-graph-table-container table-gauge-chart">
+            {!isError ? (
+              <>
+                <TableComponent
+                  data={displayTableData}
+                  bodyClassName="url-monitoring-table"
+                  columns={columns}
+                  isLoading={isTableLoading}
+                  isSearchDisplay={true}
+                  searchPlaceholder="URL로 필터링..."
+                  isDotKey={false}
+                  enableSharedChartHover={true}
+                  fancyScroll={true}
+                  fancyScrollHeight="70vh"
+                  topLeftRender={
+                    <div className="url-monitoring-summary">
+                      <button
+                        type="button"
+                        className={`url-monitoring-summary__item-button ${
+                          statusFilter === 'all' ? 'active' : ''
+                        }`}
+                        // eslint-disable-next-line react/no-unused-class
+                        // active 스타일을 상태별로 더 자연스럽게 보이게 하기 위함
+                        data-status="all"
+                        onClick={() => setStatusFilter('all')}
                       >
-                        <div
-                          style={{
-                            fontWeight: 600,
-                            marginBottom: 10,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                          title={url}
-                        >
-                          {url || '--'}
-                        </div>
-                        <div style={{height: 38}}>
-                          {latencyCol?.render?.(
-                            latency,
-                            row,
-                            1,
-                            rowIndex,
-                            timeZone
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })
-                ) : (
-                  <div className="empty-table-container">
-                    <div className="empty-table-content">
-                      <p>No data available</p>
+                        <span className="url-monitoring-summary__label url-monitoring-summary__label--total">
+                          전체
+                        </span>
+                        <span className="url-monitoring-summary__count">
+                          {statusCounts.total}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`url-monitoring-summary__item-button ${
+                          statusFilter === 'success' ? 'active' : ''
+                        }`}
+                        data-status="success"
+                        onClick={() => setStatusFilter('success')}
+                      >
+                        <span className="url-monitoring-summary__label url-monitoring-summary__label--success">
+                          성공
+                        </span>
+                        <span className="url-monitoring-summary__count">
+                          {statusCounts.success}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`url-monitoring-summary__item-button ${
+                          statusFilter === 'redirect' ? 'active' : ''
+                        }`}
+                        data-status="redirect"
+                        onClick={() => setStatusFilter('redirect')}
+                      >
+                        <span className="url-monitoring-summary__label url-monitoring-summary__label--redirect">
+                          리다이렉트
+                        </span>
+                        <span className="url-monitoring-summary__count">
+                          {statusCounts.redirect}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`url-monitoring-summary__item-button ${
+                          statusFilter === 'failure' ? 'active' : ''
+                        }`}
+                        data-status="failure"
+                        onClick={() => setStatusFilter('failure')}
+                      >
+                        <span className="url-monitoring-summary__label url-monitoring-summary__label--failure">
+                          실패
+                        </span>
+                        <span className="url-monitoring-summary__count">
+                          {statusCounts.failure}
+                        </span>
+                      </button>
                     </div>
-                  </div>
-                )
-              ) : (
-                <div className="empty-table-container">
-                  <div className="empty-table-content">
-                    <p>No data available</p>
-                  </div>
+                  }
+                  toprightRender={
+                    <div className="url-monitoring-panel-toolbar">
+                      <div className="url-monitoring-panel-toolbar__actions">
+                        <button
+                          type="button"
+                          className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
+                          title="가져오기"
+                          onClick={() => {
+                            /* TODO: import */
+                          }}
+                        >
+                          <span className="icon import" />
+                          가져오기
+                        </button>
+                        <button
+                          type="button"
+                          className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
+                          title="내보내기"
+                          onClick={() => {
+                            /* TODO: export */
+                          }}
+                        >
+                          <span className="icon export" />
+                          내보내기
+                        </button>
+                        <button
+                          type="button"
+                          className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--primary"
+                          title="URL 추가하기"
+                          onClick={() => openUrlSheet('add')}
+                        >
+                          <span className="icon plus" />
+                          URL 추가하기
+                        </button>
+                      </div>
+                      {isRefreshing ? (
+                        <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
+                      ) : null}
+                    </div>
+                  }
+                />
+              </>
+            ) : (
+              <div className="empty-table-container">
+                <div className="empty-table-content">
+                  <p>No data available</p>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </Page.Contents>
+      <UrlMonitoringFormSheet
+        isOpen={urlSheet.open}
+        onClose={closeUrlSheet}
+        mode={urlSheet.mode}
+        initialRow={urlSheet.row}
+      />
     </Page>
   )
 }

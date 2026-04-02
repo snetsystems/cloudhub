@@ -1,7 +1,9 @@
 import {ServerListQuery} from 'src/hosts/constants/serverListColumns'
 
 /**
- * URL Monitoring (리스트뷰용) InfluxQL 쿼리
+ * URL Monitoring (리스트뷰용) InfluxQL — 메인 테이블 데이터는 여기서 정의합니다.
+ * 행별 RefreshingGraph용은 `utils/urlMonitoringLineQuery.ts` 의 `buildUrlMonitoringLatencyQuery` 입니다.
+ *
  * - response_time: 밀리초(ms)
  * - http_response_code: 상태 코드
  *

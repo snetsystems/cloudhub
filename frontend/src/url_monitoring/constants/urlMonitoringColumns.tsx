@@ -1,9 +1,7 @@
 import React from 'react'
-import {AlignType, ColumnInfo} from 'src/types'
+import {AlignType, ColumnInfo, DataTableObject} from 'src/types'
 import {TableLineChartPoint, TimeSeriesValue} from 'src/types/series'
-import TableLineChartCell from 'src/dashboards/components/TableLineChartCell'
-import {toLineValues} from 'src/dashboards/utils/tableLineChart'
-import {LINE_COLOR_PALETTES_SEQUENCE} from 'src/shared/constants/graphColorPalettes'
+import {UrlMonitoringLatencyCell} from 'src/url_monitoring/components/UrlMonitoringLatencyCell'
 
 type LatencyCell =
   | TimeSeriesValue
@@ -18,8 +16,6 @@ type StatusCodeCell =
   | TableLineChartPoint[]
   | null
   | undefined
-
-const LATENCY_LINE_COLOR = LINE_COLOR_PALETTES_SEQUENCE[0][0].hex
 
 const getStatusColor = (statusCode: number | null) => {
   if (statusCode === null) return '#6b7280'
@@ -39,13 +35,20 @@ const toNumber = (value: StatusCodeCell): number | null => {
   return null
 }
 
-export const urlMonitoringColumns = (): ColumnInfo[] => [
+export interface UrlMonitoringColumnHandlers {
+  onEditRow?: (row: DataTableObject) => void
+  onCopyRow?: (row: DataTableObject) => void
+}
+
+export const urlMonitoringColumns = (
+  handlers?: UrlMonitoringColumnHandlers
+): ColumnInfo[] => [
   {
     key: 'last_http_response_code',
     name: '현재 Status Code',
-    align: AlignType.LEFT,
+    align: AlignType.CENTER,
     options: {
-      thead: {align: AlignType.LEFT, className: 'url-monitoring-status-th'},
+      thead: {align: AlignType.CENTER, className: 'url-monitoring-status-th'},
     },
     render: (value: StatusCodeCell) => {
       const code = toNumber(value)
@@ -57,13 +60,14 @@ export const urlMonitoringColumns = (): ColumnInfo[] => [
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minWidth: 44,
-            padding: '4px 8px',
-            borderRadius: 4,
+            minWidth: 72,
+            height: 30,
+            padding: '0 12px',
+            borderRadius: 6,
             backgroundColor: color,
             color: '#ffffff',
-            fontWeight: 700,
-            fontSize: 12,
+            fontWeight: 800,
+            fontSize: 14,
           }}
           title={code === null ? 'N/A' : String(code)}
         >
@@ -114,20 +118,12 @@ export const urlMonitoringColumns = (): ColumnInfo[] => [
       thead: {align: AlignType.RIGHT},
       sorting: true,
     },
-    render: (value: LatencyCell) => (
-      <TableLineChartCell
-        color={LATENCY_LINE_COLOR}
-        values={toLineValues(value)}
-        options={{
-          isShowLine: true,
-          isShowPoint: false,
-          isFillArea: true,
-          isConnectSeparatedPoints: false,
-          valueLabel: 'last',
-          isZeroBaseline: true,
-          areaOpacity: 0.1,
-          pointRadius: 1,
-        }}
+    render: (value: LatencyCell, rowData, _colIdx, rowIndex, tz) => (
+      <UrlMonitoringLatencyCell
+        value={value}
+        rowData={rowData as DataTableObject}
+        rowIndex={rowIndex}
+        timeZone={tz}
       />
     ),
   },
@@ -141,43 +137,40 @@ export const urlMonitoringColumns = (): ColumnInfo[] => [
     render: (_value: unknown, rowData: any) => (
       <div
         className="url-monitoring-row-actions"
-        style={{display: 'flex', justifyContent: 'center', gap: 10}}
         onClick={e => e.stopPropagation()}
       >
         <button
           type="button"
-          className="btn btn-xs btn-default"
-          title="Edit"
+          className="btn btn-xs btn-default url-monitoring-row-actions__btn"
+          title="수정"
+          onClick={e => {
+            e.stopPropagation()
+            handlers?.onEditRow?.(rowData as DataTableObject)
+          }}
+        >
+          <span className="icon pencil" aria-hidden />
+        </button>
+        <button
+          type="button"
+          className="btn btn-xs btn-default url-monitoring-row-actions__btn"
+          title="복사"
+          onClick={e => {
+            e.stopPropagation()
+            handlers?.onCopyRow?.(rowData as DataTableObject)
+          }}
+        >
+          <span className="icon duplicate" aria-hidden />
+        </button>
+        <button
+          type="button"
+          className="btn btn-xs btn-default url-monitoring-row-actions__btn"
+          title="삭제"
           onClick={e => {
             e.stopPropagation()
             void rowData
           }}
         >
-          <span className="icon pencil" />
-        </button>
-
-        <button
-          type="button"
-          className="btn btn-xs btn-default"
-          title="Copy"
-          onClick={e => {
-            e.stopPropagation()
-            // TODO: 백엔드 연결 후 copy 로직 연결
-          }}
-        >
-          <span className="icon duplicate" />
-        </button>
-
-        <button
-          type="button"
-          className="btn btn-xs btn-default"
-          title="Delete"
-          onClick={e => {
-            e.stopPropagation()
-            void rowData
-          }}
-        >
-          <span className="icon trash" />
+          <span className="icon trash" aria-hidden />
         </button>
       </div>
     ),

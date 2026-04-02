@@ -1,0 +1,582 @@
+// URL Monitoring 전용 — host.scss(공용 호스트 UI)와 분리
+
+.url-monitoring-page .url-monitoring-table {
+  // sticky header for thead
+  table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: $g4-onyx;
+  }
+
+  .url-monitoring-status-th {
+    width: 112px;
+    min-width: 108px;
+    white-space: nowrap;
+  }
+
+  .url-monitoring-url-th {
+    width: 28%;
+    min-width: 220px;
+    white-space: nowrap;
+  }
+
+  .url-monitoring-region-th {
+    width: 90px;
+    min-width: 80px;
+    white-space: nowrap;
+  }
+
+  .url-monitoring-actions-th {
+    width: 124px;
+    min-width: 124px;
+    white-space: nowrap;
+  }
+
+  tbody tr td.text-center.justify-center:last-child {
+    vertical-align: middle;
+  }
+
+  .url-monitoring-row-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 2px 0;
+  }
+
+  .url-monitoring-row-actions__btn {
+    box-sizing: border-box;
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    .icon {
+      margin: 0;
+      line-height: 1;
+      font-size: 14px;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  // .hosts-page .panel-body .table tr > td { height: 60px } 보다 우선 (specificity + 로드 순서)
+  table.table tbody tr > td {
+    height: auto;
+    min-height: 52px;
+  }
+
+  table.table tbody tr > td.text-right.justify-end {
+    min-height: 188px;
+    vertical-align: top;
+    padding-top: 10px;
+    padding-bottom: 6px;
+  }
+}
+
+.url-monitoring-summary {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border-radius: 6px;
+  background-color: transparent;
+  flex-wrap: wrap;
+}
+
+.url-monitoring-summary__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.url-monitoring-summary__item-button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 6px;
+  opacity: 0.45;
+  transition: opacity 0.15s ease;
+  font-size: 14px;
+}
+
+.url-monitoring-summary__item-button.active {
+  opacity: 1;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+.url-monitoring-summary__label {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.url-monitoring-summary__count {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.url-monitoring-summary__label--total {
+  background-color: #6b7280;
+}
+
+.url-monitoring-summary__label--success {
+  background-color: #4ed8a0;
+}
+
+.url-monitoring-summary__label--redirect {
+  background-color: #63b3ff;
+}
+
+.url-monitoring-summary__label--failure {
+  background-color: #ff4d4f;
+}
+
+.url-monitoring-page {
+  .url-monitoring-panel-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .url-monitoring-panel-toolbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .url-monitoring-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease,
+      opacity 0.15s ease;
+
+    .icon {
+      flex-shrink: 0;
+    }
+  }
+
+  .url-monitoring-toolbar-btn--outline {
+    border: 1px solid rgba(164, 168, 182, 0.45);
+    background-color: rgba(0, 0, 0, 0.15);
+    color: $g12-forge;
+
+    &:hover {
+      border-color: rgba(164, 168, 182, 0.65);
+      background-color: rgba(255, 255, 255, 0.06);
+      color: #e2e4ea;
+    }
+  }
+
+  .url-monitoring-toolbar-btn--primary {
+    border: 1px solid transparent;
+    background-color: $s-orange;
+    color: #ffffff;
+
+    &:hover {
+      background-color: lighten($s-orange, 6%);
+    }
+
+    &:active {
+      background-color: darken($s-orange, 4%);
+    }
+  }
+}
+
+.url-monitoring-form-sheet {
+  &.modal-content {
+    max-height: 100vh;
+  }
+
+  .url-monitoring-form-sheet__scroll.fancy-scroll--container {
+    min-height: 0;
+  }
+
+  .url-monitoring-form-sheet__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    flex-shrink: 0;
+    border-bottom: 1px solid $g4-onyx;
+    background-color: $g2-kevlar;
+  }
+
+  .url-monitoring-form-sheet__header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .url-monitoring-form-sheet__close {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 4px;
+    margin: 0;
+    cursor: pointer;
+    color: #ffffff;
+    line-height: 0;
+    opacity: 0.85;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    .icon {
+      font-size: 18px;
+    }
+  }
+
+  .url-monitoring-form-sheet__title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .url-monitoring-form-sheet__guide {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: #e8e8ee;
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:hover {
+      color: #ffffff;
+    }
+  }
+
+  .url-monitoring-form-sheet__body {
+    padding: 18px;
+    padding-bottom: 24px;
+  }
+
+  .url-monitoring-form-sheet__field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .url-monitoring-form-sheet__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: $g15-platinum;
+  }
+
+  .url-monitoring-form-sheet__req {
+    color: #ff6b6b;
+    font-weight: 700;
+  }
+
+  .url-monitoring-form-sheet__input,
+  .url-monitoring-form-sheet__textarea,
+  .url-monitoring-form-sheet__select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid $g5-pepper;
+    border-radius: 4px;
+    background-color: $g2-kevlar;
+    color: $g17-whisper;
+    font-size: 13px;
+    padding: 8px 10px;
+
+    &:focus {
+      outline: none;
+      border-color: rgba($s-orange, 0.65);
+      box-shadow: 0 0 0 1px rgba($s-orange, 0.25);
+    }
+  }
+
+  .url-monitoring-form-sheet__textarea {
+    resize: vertical;
+    min-height: 88px;
+    line-height: 1.45;
+  }
+
+  .url-monitoring-form-sheet__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .url-monitoring-form-sheet__chip {
+    appearance: none;
+    cursor: pointer;
+    border: 1px solid rgba(164, 168, 182, 0.5);
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: $g12-forge;
+    background-color: rgba(255, 255, 255, 0.06);
+    transition: border-color 0.15s ease, color 0.15s ease,
+      background-color 0.15s ease;
+
+    &:hover {
+      border-color: rgba($s-orange, 0.45);
+      color: #e2e4ea;
+    }
+  }
+
+  .url-monitoring-form-sheet__chip--active {
+    border-color: $s-orange;
+    color: $s-orange;
+    background-color: rgba($s-orange, 0.12);
+  }
+
+  .url-monitoring-form-sheet__collapse-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: $g15-platinum;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 0;
+
+    .icon {
+      font-size: 10px;
+      opacity: 0.85;
+    }
+
+    &:hover {
+      color: #ffffff;
+    }
+  }
+
+  .url-monitoring-form-sheet__collapse-panel {
+    margin: 0 0 16px 16px;
+    padding: 10px 12px;
+    border-left: 2px solid $g5-pepper;
+    background-color: rgba(0, 0, 0, 0.12);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .url-monitoring-form-sheet__hint {
+    margin: 0;
+    font-size: 12px;
+    color: $g11-sidewalk;
+    line-height: 1.4;
+  }
+
+  .url-monitoring-form-sheet__event-block {
+    border: 1px solid $g5-pepper;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .url-monitoring-form-sheet__event-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    margin: 0;
+    padding: 10px 12px;
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #f0f2f6;
+    background: rgba($s-orange, 0.14);
+    border-bottom: 1px solid rgba($s-orange, 0.22);
+
+    .icon {
+      font-size: 10px;
+      opacity: 0.9;
+    }
+
+    &:hover {
+      background: rgba($s-orange, 0.2);
+    }
+  }
+
+  .url-monitoring-form-sheet__event-body {
+    padding: 14px 14px 16px;
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .url-monitoring-form-sheet__event-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .url-monitoring-form-sheet__event-row--spaced {
+    margin-top: 16px;
+  }
+
+  .url-monitoring-form-sheet__subheading {
+    font-size: 13px;
+    font-weight: 600;
+    color: $g15-platinum;
+    min-width: 72px;
+  }
+
+  .url-monitoring-form-sheet__checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 18px;
+    margin-bottom: 12px;
+  }
+
+  .url-monitoring-form-sheet__checkboxes .fixedmodal-checkbox-wrapper {
+    margin-right: 0;
+  }
+
+  .url-monitoring-form-sheet__check-label {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .url-monitoring-form-sheet__check-label--request {
+    color: #e8a04a;
+  }
+
+  .url-monitoring-form-sheet__check-label--server {
+    color: #ff7a7a;
+  }
+
+  .url-monitoring-form-sheet__check-label--unknown {
+    color: #dd9ec9;
+  }
+
+  .url-monitoring-form-sheet__stepper-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .url-monitoring-form-sheet__stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid $g5-pepper;
+    background-color: $g2-kevlar;
+  }
+
+  .url-monitoring-form-sheet__stepper-value {
+    min-width: 28px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  .url-monitoring-form-sheet__accent-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: $s-orange;
+  }
+
+  .url-monitoring-form-sheet__help-accent {
+    margin: 0 0 12px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: $s-orange;
+    opacity: 0.92;
+  }
+
+  .url-monitoring-form-sheet__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: 14px 18px;
+    border-top: 1px solid $g4-onyx;
+    background-color: $g3-castle;
+  }
+
+  .url-monitoring-form-sheet__footer-note {
+    margin: 0;
+    flex: 1 1 200px;
+    min-width: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(99, 179, 255, 0.95);
+    text-align: left;
+  }
+
+  .url-monitoring-form-sheet__save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    align-self: flex-end;
+    appearance: none;
+    border: 1px solid mix($s-orange, #000, 85%);
+    border-radius: 4px;
+    padding: 9px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: $s-orange;
+    color: #ffffff;
+
+    .icon {
+      font-size: 14px;
+    }
+
+    &:hover {
+      background-color: lighten($s-orange, 6%);
+      border-color: lighten($s-orange, 6%);
+    }
+
+    &:active {
+      background-color: darken($s-orange, 5%);
+      border-color: darken($s-orange, 5%);
+    }
+  }
+}
