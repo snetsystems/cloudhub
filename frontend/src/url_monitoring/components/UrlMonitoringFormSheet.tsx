@@ -311,7 +311,7 @@ export function UrlMonitoringFormSheet({
                     <SlideToggle
                       active={statusEventOn}
                       onChange={() => setStatusEventOn(v => !v)}
-                      size={ComponentSize.Small}
+                      size={ComponentSize.ExtraSmall}
                       color={ComponentColor.Primary}
                     />
                   </div>
@@ -375,8 +375,8 @@ export function UrlMonitoringFormSheet({
                     <SlideToggle
                       active={elapsedEventOn}
                       onChange={() => setElapsedEventOn(v => !v)}
-                      size={ComponentSize.Small}
-                      color={ComponentColor.Default}
+                      size={ComponentSize.ExtraSmall}
+                      color={ComponentColor.Primary}
                     />
                   </div>
                   <div className="url-monitoring-form-sheet__stepper-row">
