@@ -1,5 +1,6 @@
 import moment from 'moment'
 import React, {useMemo, useState} from 'react'
+import {useSelector} from 'react-redux'
 import {DEFAULT_LINE_COLORS} from 'src/shared/constants/graphColorPalettes'
 import {formatDisplayValue} from 'src/dashboards/utils/gaugeCell'
 import {
@@ -8,6 +9,7 @@ import {
   useTableChartHover,
 } from 'src/device_management/components/TableChartHoverContext'
 import {TableLineChartPoint, TimeSeriesValue} from 'src/types/series'
+import {TimeZones} from 'src/types'
 import {FormatOption} from 'src/types/statisticalgraph'
 
 type PointValue = number | string | null | undefined
@@ -109,16 +111,25 @@ const toPath = (points: NormalizedPoint[]) =>
     )
     .join(' ')
 
-const formatHoverTime = (time: TimeSeriesValue): string => {
+const formatHoverTime = (
+  time: TimeSeriesValue,
+  timeZone: TimeZones
+): string => {
+  if (time === null || time === undefined) {
+    return '--'
+  }
+
   if (typeof time === 'number') {
-    const parsed = moment.utc(time)
+    const parsed =
+      timeZone === TimeZones.UTC ? moment.utc(time) : moment(time)
     return parsed.isValid()
       ? parsed.format('YYYY-MM-DD HH:mm:ss')
       : String(time)
   }
 
   if (typeof time === 'string') {
-    const parsed = moment.utc(time)
+    const parsed =
+      timeZone === TimeZones.UTC ? moment.utc(time) : moment(time)
     return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm:ss') : time
   }
 
@@ -133,6 +144,11 @@ function TableLineChartCell({
   className,
   options,
 }: Props) {
+  const timeZone = useSelector(
+    (state: {app?: {persisted?: {timeZone?: TimeZones}}}) =>
+      state.app?.persisted?.timeZone ?? TimeZones.Local
+  )
+
   const fillArea = options?.isFillArea ?? false
   const zeroBaseline = options?.isZeroBaseline ?? false
   const showLine = options?.isShowLine ?? true
@@ -443,7 +459,7 @@ function TableLineChartCell({
         ).trim()}${suffix}`
       : null
   const hoverTooltipTimeText = resolvedHoverState
-    ? formatHoverTime(resolvedHoverState.point.time)
+    ? formatHoverTime(resolvedHoverState.point.time, timeZone)
     : null
   const tooltipStyle = resolvedHoverState
     ? (() => {

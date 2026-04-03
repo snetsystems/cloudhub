@@ -15,6 +15,9 @@ export interface UsageDetailModalProps {
   onClose: () => void
   detailType: UsageDetailType | null
   serverContext: UsageDetailServerContext
+  autoRefresh: number
+  onAutoRefreshChange: (milliseconds: number) => void
+  onCloudTimeRangeChange?: (timeRange: TimeRange) => void
 }
 
 function getTitle(detailType: UsageDetailType | null): string {
@@ -43,13 +46,30 @@ function DetailContent({
 }) {
   switch (detailType) {
     case 'cpu':
-      return <CpuDetailContent serverContext={serverContext} templates={templates} />
+      return (
+        <CpuDetailContent serverContext={serverContext} templates={templates} />
+      )
     case 'memory':
-      return <MemoryDetailContent serverContext={serverContext} templates={templates} />
+      return (
+        <MemoryDetailContent
+          serverContext={serverContext}
+          templates={templates}
+        />
+      )
     case 'network':
-      return <NetworkDetailContent serverContext={serverContext} templates={templates} />
+      return (
+        <NetworkDetailContent
+          serverContext={serverContext}
+          templates={templates}
+        />
+      )
     case 'disk':
-      return <DiskDetailContent serverContext={serverContext} templates={templates} />
+      return (
+        <DiskDetailContent
+          serverContext={serverContext}
+          templates={templates}
+        />
+      )
     default:
       return null
   }
@@ -60,22 +80,14 @@ export const UsageDetailModal: React.FC<UsageDetailModalProps> = ({
   onClose,
   detailType,
   serverContext,
+  autoRefresh,
+  onAutoRefreshChange,
+  onCloudTimeRangeChange,
 }) => {
   const [isMounted, setIsMounted] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(isOpen)
   const [localTimeRange, setLocalTimeRange] = useState<TimeRange | null>(null)
-  const [autoRefreshInterval, setAutoRefreshInterval] = useState<number>(0)
   const [manualRefresh, setManualRefresh] = useState<number>(Date.now())
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timer
-    if (autoRefreshInterval > 0) {
-      intervalId = setInterval(() => setManualRefresh(Date.now()), autoRefreshInterval)
-    }
-    return () => {
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [autoRefreshInterval])
 
   useEffect(() => {
     if (isOpen) {
@@ -83,7 +95,8 @@ export const UsageDetailModal: React.FC<UsageDetailModalProps> = ({
     }
   }, [isOpen, serverContext.timeRange])
 
-  const currentTimeRange = localTimeRange ?? serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
+  const currentTimeRange =
+    localTimeRange ?? serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
 
   const templates = useMemo(() => {
     if (!serverContext.source || !serverContext.selectedHost) return null
@@ -129,9 +142,21 @@ export const UsageDetailModal: React.FC<UsageDetailModalProps> = ({
       >
         <div
           className="process-detail-modal__header"
-          style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
         >
-          <div style={{display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0}}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
             <h2
               id="usage-detail-modal-title"
               className="process-detail-modal__title"
@@ -139,18 +164,38 @@ export const UsageDetailModal: React.FC<UsageDetailModalProps> = ({
             >
               {title}
             </h2>
-            <div id="usage-detail-modal-header-portal" style={{flex: 1, display: 'flex', alignItems: 'center', minWidth: 0}} />
+            <div
+              id="usage-detail-modal-header-portal"
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                minWidth: 0,
+              }}
+            />
           </div>
-          <div style={{display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0}}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              flexShrink: 0,
+            }}
+          >
             <AutoRefreshDropdown
-              selected={autoRefreshInterval}
-              onChoose={(option: AutoRefreshOption) => setAutoRefreshInterval(option.milliseconds)}
+              selected={autoRefresh}
+              onChoose={(option: AutoRefreshOption) =>
+                onAutoRefreshChange(option.milliseconds)
+              }
               onManualRefresh={() => setManualRefresh(Date.now())}
             />
             {currentTimeRange && (
               <TimeRangeDropdown
                 selected={currentTimeRange}
-                onChooseTimeRange={setLocalTimeRange}
+                onChooseTimeRange={tr => {
+                  setLocalTimeRange(tr)
+                  onCloudTimeRangeChange?.(tr)
+                }}
               />
             )}
           </div>
@@ -158,7 +203,11 @@ export const UsageDetailModal: React.FC<UsageDetailModalProps> = ({
         <div className="process-detail-modal__scroll">
           <DetailContent
             detailType={detailType}
-            serverContext={{...serverContext, timeRange: currentTimeRange, manualRefresh}}
+            serverContext={{
+              ...serverContext,
+              timeRange: currentTimeRange,
+              manualRefresh,
+            }}
             templates={templates}
           />
         </div>

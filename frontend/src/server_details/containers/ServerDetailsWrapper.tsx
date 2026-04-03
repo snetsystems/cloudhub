@@ -16,6 +16,7 @@ import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import * as DashboardsModels from 'src/types/dashboards'
 import type {DataTableObject} from 'src/types/tableType'
 import type {Addon} from 'src/types/auth'
+import type {CloudTimeRange} from 'src/clouds/types/type'
 import {getHosts} from 'src/shared/apis/host'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
 import ProcessDetailModal from 'src/server_details/components/ProcessDetailModal'
@@ -162,11 +163,19 @@ function ProcessCellContent({
   context,
   source,
   addons,
+  autoRefresh,
+  onAutoRefreshChange,
+  cloudTimeRange,
+  onChooseCloudTimeRange,
 }: {
   cell: Cell
   context: RenderCellContext
   source: Source
   addons?: Addon[]
+  autoRefresh: number
+  onAutoRefreshChange: (milliseconds: number) => void
+  cloudTimeRange: CloudTimeRange
+  onChooseCloudTimeRange: (next: CloudTimeRange) => void
 }) {
   const ctx = useContext(ServerDetailsPageContext)
   const [contextOpen, setContextOpen] = useState(false)
@@ -244,6 +253,7 @@ function ProcessCellContent({
               source={source}
               selectedHost={ctx?.selectedHost ?? null}
               timeRange={context.timeRange}
+              manualRefresh={context.manualRefresh}
               onProcessNameClick={openProcessDetail}
               limit={processLimit}
             />
@@ -261,8 +271,14 @@ function ProcessCellContent({
           source,
           addons,
           timeRange: context.timeRange,
+          manualRefresh: context.manualRefresh,
         }}
         nameInfo={selectedProcessRow}
+        autoRefresh={autoRefresh}
+        onAutoRefreshChange={onAutoRefreshChange}
+        onCloudTimeRangeChange={tr =>
+          onChooseCloudTimeRange({...cloudTimeRange, hostDetails: tr})
+        }
       />
     </div>
   )
@@ -388,6 +404,10 @@ function ServerDetailsWrapper(props) {
                 context={context}
                 source={props.source}
                 addons={props.addons}
+                autoRefresh={props.autoRefresh}
+                onAutoRefreshChange={props.setAutoRefresh}
+                cloudTimeRange={props.cloudTimeRange}
+                onChooseCloudTimeRange={props.onChooseCloudTimeRange}
               />
             )
           }
@@ -407,6 +427,14 @@ function ServerDetailsWrapper(props) {
           timeRange: props.cloudTimeRange?.hostDetails ?? props.cloudTimeRange?.default,
           detailQueries: usageDetailState.detailQueries,
         }}
+        autoRefresh={props.autoRefresh}
+        onAutoRefreshChange={props.setAutoRefresh}
+        onCloudTimeRangeChange={tr =>
+          props.onChooseCloudTimeRange({
+            ...props.cloudTimeRange,
+            hostDetails: tr,
+          })
+        }
       />
     </ServerDetailsPageContext.Provider>
   )

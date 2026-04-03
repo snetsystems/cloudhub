@@ -1,9 +1,10 @@
 import React, {useEffect, useMemo, useState} from 'react'
+import moment from 'moment'
 import type {Source} from 'src/types/sources'
 import type {Addon} from 'src/types/auth'
 import type {DataTableObject} from 'src/types/tableType'
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
-import {CellType, QueryType} from 'src/types'
+import {CellType, QueryType, TemplateType, TemplateValueType} from 'src/types'
 import type {CellQuery} from 'src/types'
 import {
   DEFAULT_AXES,
@@ -19,6 +20,7 @@ import {
 import {
   DEFAULT_TABLE_GAUGE_CHART_OPTIONS,
   DEFAULT_GRAPH_OPTIONS,
+  TEMP_VAR_INTERVAL,
 } from 'src/shared/constants'
 import {LINE_COLOR_PALETTES_SEQUENCE} from 'src/shared/constants/graphColorPalettes'
 import {NoteVisibility} from 'src/types/dashboards'
@@ -56,6 +58,7 @@ export interface ProcessDetailServerDetail {
   source: Source | null
   addons?: Addon[]
   timeRange?: TimeRange
+  manualRefresh?: number
 }
 
 interface ProcessDetailModalProps {
@@ -63,6 +66,9 @@ interface ProcessDetailModalProps {
   onClose: () => void
   serverDetail: ProcessDetailServerDetail
   nameInfo: DataTableObject | null
+  autoRefresh: number
+  onAutoRefreshChange: (milliseconds: number) => void
+  onCloudTimeRangeChange?: (timeRange: TimeRange) => void
 }
 
 const PROCESS_DETAIL_CHART_OPTIONS = {
@@ -223,22 +229,16 @@ function ProcessDetailModal({
   onClose,
   serverDetail,
   nameInfo,
+  autoRefresh,
+  onAutoRefreshChange,
+  onCloudTimeRangeChange,
 }: ProcessDetailModalProps) {
   const [isMounted, setIsMounted] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(isOpen)
   const [localTimeRange, setLocalTimeRange] = useState<TimeRange | null>(null)
-  const [autoRefreshInterval, setAutoRefreshInterval] = useState<number>(0)
-  const [manualRefresh, setManualRefresh] = useState<number>(Date.now())
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timer
-    if (autoRefreshInterval > 0) {
-      intervalId = setInterval(() => setManualRefresh(Date.now()), autoRefreshInterval)
-    }
-    return () => {
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [autoRefreshInterval])
+  const [manualRefresh, setManualRefresh] = useState<number>(
+    () => serverDetail.manualRefresh ?? Date.now()
+  )
 
   useEffect(() => {
     if (isOpen) {
@@ -246,16 +246,87 @@ function ProcessDetailModal({
     }
   }, [isOpen, serverDetail.timeRange])
 
+  useEffect(() => {
+    if (!isOpen) return
+    if (serverDetail.manualRefresh == null) return
+    setManualRefresh(serverDetail.manualRefresh)
+  }, [isOpen, serverDetail.manualRefresh])
+
   const currentTimeRange = localTimeRange ?? serverDetail.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverDetail.source
   const host = serverDetail.selectedHost
   const processName = (nameInfo?.process_name as string) ?? null
   const user = (nameInfo?.user as string) ?? ''
 
+  const intervalValue = useMemo(() => {
+    const range = currentTimeRange
+    let diffSeconds = range.seconds || 0
+
+    if (!diffSeconds) {
+      const lowerStr = range.lower ?? ''
+      const relativeMatch = lowerStr.match(/now\(\)\s*-\s*(\d+)([smhd])/)
+      if (relativeMatch) {
+        const value = parseInt(relativeMatch[1], 10)
+        const unit = relativeMatch[2]
+        if (unit === 's') diffSeconds = value
+        else if (unit === 'm') diffSeconds = value * 60
+        else if (unit === 'h') diffSeconds = value * 3600
+        else if (unit === 'd') diffSeconds = value * 86400
+      } else {
+        const lowerMs = lowerStr ? moment(lowerStr).valueOf() : NaN
+        const upperStr = range.upper ?? 'now()'
+        const upperMs =
+          upperStr === 'now()' || !upperStr ? Date.now() : moment(upperStr).valueOf()
+
+        if (!isNaN(lowerMs) && !isNaN(upperMs)) {
+          diffSeconds = (upperMs - lowerMs) / 1000
+        }
+      }
+    }
+
+    let resolvedInterval = '1m'
+    if (diffSeconds > 0) {
+      if (diffSeconds <= 300) resolvedInterval = '10s'
+      else if (diffSeconds <= 21600) resolvedInterval = '1m'
+      else if (diffSeconds <= 43200) resolvedInterval = '5m'
+      else if (diffSeconds <= 86400) resolvedInterval = '10m'
+      else if (diffSeconds <= 172800) resolvedInterval = '30m'
+      else if (diffSeconds <= 604800) resolvedInterval = '1h'
+      else resolvedInterval = '6h'
+    }
+
+    return resolvedInterval
+  }, [currentTimeRange])
+
+  const intervalTemplate: Template = useMemo(
+    () => ({
+      tempVar: TEMP_VAR_INTERVAL,
+      id: 'interval',
+      type: TemplateType.Constant,
+      label: '',
+      values: [
+        {
+          value: intervalValue,
+          type: TemplateValueType.Constant,
+          selected: true,
+          localSelected: true,
+        },
+      ],
+    }),
+    [intervalValue]
+  )
+
   const templates = useMemo(() => {
     if (!source || !host || !processName) return null
-    return buildDetailTemplates(source, currentTimeRange, host, processName, user)
-  }, [source, currentTimeRange, host, processName, user])
+    const baseTemplates = buildDetailTemplates(
+      source,
+      currentTimeRange,
+      host,
+      processName,
+      user
+    )
+    return [...baseTemplates, intervalTemplate]
+  }, [source, currentTimeRange, host, processName, user, intervalTemplate])
 
   useEffect(() => {
     if (isOpen) {
@@ -302,14 +373,19 @@ function ProcessDetailModal({
           </h2>
           <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
             <AutoRefreshDropdown
-              selected={autoRefreshInterval}
-              onChoose={(option: AutoRefreshOption) => setAutoRefreshInterval(option.milliseconds)}
+              selected={autoRefresh}
+              onChoose={(option: AutoRefreshOption) =>
+                onAutoRefreshChange(option.milliseconds)
+              }
               onManualRefresh={() => setManualRefresh(Date.now())}
             />
             {currentTimeRange && (
               <TimeRangeDropdown
                 selected={currentTimeRange}
-                onChooseTimeRange={setLocalTimeRange}
+                onChooseTimeRange={tr => {
+                  setLocalTimeRange(tr)
+                  onCloudTimeRangeChange?.(tr)
+                }}
               />
             )}
           </div>

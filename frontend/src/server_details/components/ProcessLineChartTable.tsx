@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import moment from 'moment'
 import TableComponent from 'src/device_management/components/TableComponent'
 import {DataTableObject} from 'src/types/tableType'
@@ -15,11 +15,14 @@ import {Template, TemplateType, TemplateValueType} from 'src/types'
 import type {TimeRange} from 'src/types'
 import {TEMP_VAR_INTERVAL} from 'src/shared/constants'
 import {DEFAULT_DETAIL_TIME_RANGE} from 'src/server_details/components/UsageDetailModal/utils'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import LoadingDots from 'src/shared/components/LoadingDots'
 
 interface Props {
   source: Source
   selectedHost: string | null
   timeRange?: TimeRange | null
+  manualRefresh?: number
   onProcessNameClick?: (row: DataTableObject) => void
   limit?: number
 }
@@ -28,10 +31,23 @@ const ProcessLineChartTable: React.FC<Props> = ({
   source,
   selectedHost,
   timeRange,
+  manualRefresh,
   onProcessNameClick,
   limit,
 }) => {
   const [dummyData, setDummyData] = useState<DataTableObject[]>([])
+  const [autoRefreshTick, setAutoRefreshTick] = useState(0)
+  /** Fetch in flight: show dots on overlay without unmounting the table (no flicker). */
+  const [isFetching, setIsFetching] = useState(false)
+
+  const handleAutoRefresh = useCallback(() => {
+    setAutoRefreshTick(t => t + 1)
+  }, [])
+
+  useEffect(() => {
+    GlobalAutoRefresher.subscribe(handleAutoRefresh)
+    return () => GlobalAutoRefresher.unsubscribe(handleAutoRefresh)
+  }, [handleAutoRefresh])
 
   const columns = useMemo(() => {
     if (!onProcessNameClick) return lineChartTableColumn
@@ -66,6 +82,7 @@ const ProcessLineChartTable: React.FC<Props> = ({
   useEffect(() => {
     if (!selectedHost) {
       setDummyData([])
+      setIsFetching(false)
       return
     }
 
@@ -76,6 +93,7 @@ const ProcessLineChartTable: React.FC<Props> = ({
     }))
 
     const fetchDummyData = async () => {
+      setIsFetching(true)
       const range = timeRange ?? DEFAULT_DETAIL_TIME_RANGE
       const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates({
         lower: range.lower ?? 'now() - 1h',
@@ -110,12 +128,18 @@ const ProcessLineChartTable: React.FC<Props> = ({
 
       let intervalValue = '1m'
       if (diffSeconds > 0) {
-        if (diffSeconds <= 300) intervalValue = '10s' // <= 5m
-        else if (diffSeconds <= 21600) intervalValue = '1m' // <= 6h
-        else if (diffSeconds <= 43200) intervalValue = '5m' // <= 12h
-        else if (diffSeconds <= 86400) intervalValue = '10m' // <= 24h
-        else if (diffSeconds <= 172800) intervalValue = '30m' // <= 2d
-        else if (diffSeconds <= 604800) intervalValue = '1h' // <= 7d
+        if (diffSeconds <= 300) intervalValue = '10s'
+        // <= 5m
+        else if (diffSeconds <= 21600) intervalValue = '1m'
+        // <= 6h
+        else if (diffSeconds <= 43200) intervalValue = '5m'
+        // <= 12h
+        else if (diffSeconds <= 86400) intervalValue = '10m'
+        // <= 24h
+        else if (diffSeconds <= 172800) intervalValue = '30m'
+        // <= 2d
+        else if (diffSeconds <= 604800) intervalValue = '1h'
+        // <= 7d
         else intervalValue = '6h' // > 7d
       }
 
@@ -185,42 +209,73 @@ const ProcessLineChartTable: React.FC<Props> = ({
         userTemplate,
       ]
 
-      const results = await executeQueries(source, querySet, templates)
-      const mergedData = mergeResultsByProcessName(results)
+      try {
+        const results = await executeQueries(source, querySet, templates)
+        const mergedData = mergeResultsByProcessName(results)
 
-      if (limit && limit > 0) {
-        // Sort by max CPU descending
-        const sortedData = [...mergedData].sort((a, b) => {
-          const getMax = (val: any) => {
-            if (Array.isArray(val)) {
-              const numbers = val
-                .map(p => (typeof p.value === 'number' ? p.value : null))
-                .filter((v): v is number => v !== null)
-              return numbers.length > 0 ? Math.max(...numbers) : 0
+        if (limit && limit > 0) {
+          const sortedData = [...mergedData].sort((a, b) => {
+            const getMax = (val: any) => {
+              if (Array.isArray(val)) {
+                const numbers = val
+                  .map(p => (typeof p.value === 'number' ? p.value : null))
+                  .filter((v): v is number => v !== null)
+                return numbers.length > 0 ? Math.max(...numbers) : 0
+              }
+              return typeof val === 'number' ? val : 0
             }
-            return typeof val === 'number' ? val : 0
-          }
-          return getMax(b.CPU) - getMax(a.CPU)
-        })
-        setDummyData(sortedData.slice(0, limit))
-      } else {
-        setDummyData(mergedData)
+            return getMax(b.CPU) - getMax(a.CPU)
+          })
+          setDummyData(sortedData.slice(0, limit))
+        } else {
+          setDummyData(mergedData)
+        }
+      } catch (e) {
+        console.error('Failed to fetch process detail table data', e)
+      } finally {
+        setIsFetching(false)
       }
     }
 
     fetchDummyData()
-  }, [source, selectedHost, timeRange, limit])
+  }, [source, selectedHost, timeRange, limit, manualRefresh, autoRefreshTick])
+
+  if (!selectedHost) {
+    return <div style={{height: '100%'}} />
+  }
 
   return (
-    <div>
+    <div
+      style={{
+        position: 'relative',
+        height: '100%',
+        minHeight: 120,
+      }}
+    >
       <TableComponent
         data={dummyData}
         columns={columns}
         isSearchDisplay={false}
         isDotKey={true}
         enableSharedChartHover={true}
-        // initSort={{key: 'CPU', isDesc: true}}
       />
+      {isFetching ? (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            pointerEvents: 'none',
+            zIndex: 2,
+          }}
+          aria-hidden
+        >
+          <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
+        </div>
+      ) : null}
     </div>
   )
 }
