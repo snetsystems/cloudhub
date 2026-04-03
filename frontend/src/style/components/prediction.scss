@@ -248,7 +248,12 @@
 }
 
 .alert-history-link {
-  color: #ce9178;
+  color: $s-brown;
+}
+
+.prediction-wrapper {
+  height: 100%;
+  background-color: $g3-castle;
 }
 
 .hexbin-header--right {

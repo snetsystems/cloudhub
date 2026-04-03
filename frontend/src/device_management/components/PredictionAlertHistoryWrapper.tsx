@@ -239,7 +239,7 @@ function PredictionAlertHistoryWrapper({
 
   return (
     <>
-      <div style={{height: '100%', backgroundColor: '#292933'}}>
+      <div className="prediction-wrapper">
         <PredictionDashboardHeader
           cellName={
             <p>
