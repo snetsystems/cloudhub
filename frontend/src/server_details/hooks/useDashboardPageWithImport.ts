@@ -1,4 +1,4 @@
-import {useEffect, useState, useMemo} from 'react'
+import {useEffect, useState, useMemo, useRef} from 'react'
 import {Cell, Template} from 'src/types'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import * as DashboardsModels from 'src/types/dashboards'
@@ -89,7 +89,15 @@ export function useDashboardPageWithImport(
     return dashboards.find(d => String(d.id) === String(currentDashboardId))
   }, [dashboards, currentDashboardId])
 
+  const cellsRef = useRef<Cell[]>([])
+  const dashboardRef = useRef<DashboardsModels.Dashboard | undefined>(undefined)
+
   useEffect(() => {
+    cellsRef.current = cells
+  }, [cells])
+
+  useEffect(() => {
+    dashboardRef.current = dashboard
     if (dashboard?.cells) setCells(dashboard.cells)
   }, [dashboard])
 
@@ -131,20 +139,38 @@ export function useDashboardPageWithImport(
 
   const onShowInformation = (cell: Cell) => {
     if (!dashboard) return
-      const nextCells = cells.map(c => {
+    const nextCells = cells.map(c => {
       if (c.i === cell.i) {
         return {
           ...c,
-          isShowSummary: !c.isShowSummary,       }
+          isShowSummary: !c.isShowSummary,
+        }
       }
       return c
     })
-     onPositionChange(nextCells)
+    onPositionChange(nextCells)
   }
 
   const onPositionChange = (newCells: Cell[]) => {
-    if (!dashboard) return
-    const newDashboard = {...dashboard, cells: newCells}
+    const currentDashboard = dashboardRef.current
+    const currentCells = cellsRef.current
+
+    if (!currentDashboard) return
+
+    // LayoutRenderer may pass only visible cells. We must not silently drop hidden cells.
+    // We merge the newCells (which may have updated x, y, h, w) with the existing cells.
+    const mergedCells = currentCells.map(c => {
+      const updated = newCells.find(nc => String(nc.i) === String(c.i))
+      return updated ? updated : c
+    })
+
+    // Plus any brand new cells that weren't in the original array
+    const existingIds = new Set(currentCells.map(c => String(c.i)))
+    const addedCells = newCells.filter(nc => !existingIds.has(String(nc.i)))
+
+    const finalCells = [...mergedCells, ...addedCells]
+
+    const newDashboard = {...currentDashboard, cells: finalCells}
     updateDashboard(newDashboard)
     putDashboard(newDashboard)
   }
@@ -152,9 +178,7 @@ export function useDashboardPageWithImport(
   /** Hides a cell from the dashboard (sets hidden: true) without deleting from ETCD. */
   const onHideCell = (cell: Cell) => {
     if (!dashboard) return
-    const newCells = cells.map(c =>
-      c.i === cell.i ? {...c, hidden: true} : c
-    )
+    const newCells = cells.map(c => (c.i === cell.i ? {...c, hidden: true} : c))
     onPositionChange(newCells)
   }
 

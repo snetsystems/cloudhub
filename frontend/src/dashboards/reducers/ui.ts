@@ -90,8 +90,10 @@ export default (
       const {cell, dashboard} = action.payload
       const {dashboards} = state
 
-      const newCells = [cell, ...dashboard.cells]
-      const newDashboard = {...dashboard, cells: newCells}
+      const currentDashboard =
+        dashboards.find(d => d.id === dashboard.id) || dashboard
+      const newCells = [cell, ...currentDashboard.cells]
+      const newDashboard = {...currentDashboard, cells: newCells}
       const newDashboards = dashboards.map(d =>
         d.id === dashboard.id ? newDashboard : d
       )
@@ -104,8 +106,10 @@ export default (
       const {cells, dashboard} = action.payload
       const {dashboards} = state
 
-      const newCells = [...dashboard.cells, ...cells]
-      const newDashboard = {...dashboard, cells: newCells}
+      const currentDashboard =
+        dashboards.find(d => d.id === dashboard.id) || dashboard
+      const newCells = [...currentDashboard.cells, ...cells]
+      const newDashboard = {...currentDashboard, cells: newCells}
       const newDashboards = dashboards.map(d =>
         d.id === dashboard.id ? newDashboard : d
       )
@@ -125,11 +129,11 @@ export default (
     case ActionType.DeleteDashboardCell: {
       const {dashboard, cell} = action.payload
 
-      const newCells = dashboard.cells.filter(
-        c => !(c.x === cell.x && c.y === cell.y)
-      )
+      const currentDashboard =
+        state.dashboards.find(d => d.id === dashboard.id) || dashboard
+      const newCells = currentDashboard.cells.filter(c => c.i !== cell.i)
       const newDashboard = {
-        ...dashboard,
+        ...currentDashboard,
         cells: newCells,
       }
       const newState = {
@@ -144,11 +148,11 @@ export default (
     case ActionType.SyncDashboardCell: {
       const {cell, dashboard} = action.payload
 
+      const currentDashboard =
+        state.dashboards.find(d => d.id === dashboard.id) || dashboard
       const newDashboard = {
-        ...dashboard,
-        cells: dashboard.cells.map(c =>
-          c.x === cell.x && c.y === cell.y ? cell : c
-        ),
+        ...currentDashboard,
+        cells: currentDashboard.cells.map(c => (c.i === cell.i ? cell : c)),
       }
 
       const newState = {
