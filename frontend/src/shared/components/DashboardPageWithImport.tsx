@@ -117,6 +117,9 @@ export interface DashboardPageWithImportConfig {
   draggableCancel?: string
   /** When false, do not show "no cells" empty state (DashboardEmpty). Default true. */
   showEmptyState?: boolean
+  noDataMessage?: string
+
+  templateAvailabilityGate?: {resolved: boolean; blocked: boolean}
   /**
    * Optional list of tempVar names (e.g. ':host:') that must have a selected
    * value before queries are executed. Used to avoid sending incomplete
@@ -191,6 +194,8 @@ function DashboardPageWithImport({
   pageClassName = 'dashboard-page-with-import',
   importButtonText = 'Import Cell',
   showEmptyState = true,
+  noDataMessage,
+  templateAvailabilityGate,
   draggableCancel,
   requiredTemplateVars,
   templateSelectionContext,
@@ -231,8 +236,6 @@ function DashboardPageWithImport({
   const safeEditCellQueryStatus =
     editCellQueryStatus ??
     ((_queryID: string, _status: QueriesModels.Status) => undefined)
-  editCellQueryStatus ??
-    ((_queryID: string, _status: QueriesModels.Status) => undefined)
 
   const [manualRefreshStamp, setManualRefreshStamp] = React.useState(Date.now())
   const [hydratedTemplates, setHydratedTemplates] = React.useState<
@@ -244,7 +247,9 @@ function DashboardPageWithImport({
   >(null)
   const [isCellEditorOpen, setIsCellEditorOpen] = useState(false)
   const [isFixedCellModalOpen, setIsFixedCellModalOpen] = useState(false)
-  const [isApplyingTemplateUpdate, setIsApplyingTemplateUpdate] = useState(false)
+  const [isApplyingTemplateUpdate, setIsApplyingTemplateUpdate] = useState(
+    false
+  )
   const fixedCellBtnRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -384,6 +389,31 @@ function DashboardPageWithImport({
     requiredTemplateVars,
     templatesWithSelection,
   ])
+
+  const requiredTemplateVarsHaveNoValues = React.useMemo(() => {
+    if (!requiredTemplateVars?.length || hydratedTemplates === null) {
+      return false
+    }
+    return requiredTemplateVars.some(tempVar => {
+      const tpl = templatesWithSelection.find(t => t.tempVar === tempVar)
+      return !tpl?.values?.length
+    })
+  }, [requiredTemplateVars, hydratedTemplates, templatesWithSelection])
+
+  const showNoDataForBlockedTemplates =
+    Boolean(noDataMessage) &&
+    hydratedTemplates !== null &&
+    !templatesReady &&
+    (requiredTemplateVarsHaveNoValues ||
+      (templateAvailabilityGate?.resolved === true &&
+        templateAvailabilityGate.blocked === true))
+
+  const noDataFallback =
+    noDataMessage != null && noDataMessage !== '' ? (
+      <div className="dashboard-empty">
+        <p>{noDataMessage}</p>
+      </div>
+    ) : null
 
   const selectedTimeRange: QueriesModels.TimeRange =
     cloudTimeRange?.[timeRangeKey] ?? CLOUD_TIME_RANGE.default ?? timeRanges[0]
@@ -553,7 +583,6 @@ function DashboardPageWithImport({
     if (hasChanges) onPositionChange(newCells)
   }
 
-  /** Delete a Flex Cell (permanently from ETCD). Called by modal delete button. */
   const handleDeleteCellFromModal = (cellId: string) => {
     const cell = cells.find(c => c.i === cellId)
     if (cell) onDeleteCell(cell)
@@ -594,7 +623,6 @@ function DashboardPageWithImport({
     setIsApplyingTemplateUpdate(true)
     try {
       await applyFixedCell(pageName)
-      // Refresh list to update versions and updateAvailable flag
       await getDashboardsAsync()
       safeNotify(notifyTemplateUpdated())
     } catch (err) {
@@ -608,8 +636,7 @@ function DashboardPageWithImport({
   const fixedCellUpdateBar = dashboard?.updateAvailable && (
     <div className="fixed-cells__update-bar update-bar--modal">
       <span className="fixed-cells__version-info">
-        Update:{' '}
-        {dashboard.version ? `v${dashboard.version}` : '—'} →{' '}
+        Update: {dashboard.version ? `v${dashboard.version}` : '—'} →{' '}
         {dashboard.latestVersion ? `v${dashboard.latestVersion}` : '—'}
       </span>
       <button
@@ -714,13 +741,17 @@ function DashboardPageWithImport({
                 renderCell={renderCell}
                 draggableCancel={draggableCancel}
               />
+            ) : showNoDataForBlockedTemplates ? (
+              noDataFallback
             ) : (
               <PageSpinner customClass={`${pageClassName}-spinner`} />
             )
           ) : dashboard ? (
             showEmptyState ? (
               <DashboardEmpty dashboard={dashboard} />
-            ) : null
+            ) : (
+              noDataFallback
+            )
           ) : loadSettled ? (
             <div className="dashboard-empty">
               <p>page not available.</p>

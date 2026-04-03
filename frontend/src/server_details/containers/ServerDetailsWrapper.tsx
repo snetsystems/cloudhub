@@ -1,4 +1,11 @@
-import React, {useState, useEffect, useContext, useRef, useMemo} from 'react'
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useMemo,
+  useCallback,
+} from 'react'
 import classnames from 'classnames'
 import {connect} from 'react-redux'
 import qs from 'qs'
@@ -43,6 +50,10 @@ interface HostDropdownHeaderProps {
     templateID: string,
     value: TemplateValue
   ) => void
+  onTemplateAvailabilityChange?: (gate: {
+    resolved: boolean
+    blocked: boolean
+  }) => void
 }
 
 function HostDropdownHeader({
@@ -50,6 +61,7 @@ function HostDropdownHeader({
   dashboard,
   source,
   templateVariableLocalSelected,
+  onTemplateAvailabilityChange,
 }: HostDropdownHeaderProps) {
   const ctx = useContext(ServerDetailsPageContext)
   const initialSetRef = useRef(false)
@@ -79,6 +91,19 @@ function HostDropdownHeader({
     }
     return defaultList
   }, [hostTemplate, apiHostsResult])
+
+  useEffect(() => {
+    if (!onTemplateAvailabilityChange) {
+      return
+    }
+    if (apiHostsResult === null) {
+      return
+    }
+    onTemplateAvailabilityChange({
+      resolved: true,
+      blocked: hostList.length === 0,
+    })
+  }, [apiHostsResult, hostList, onTemplateAvailabilityChange])
 
   const {selectedHost, onHostSelect} = ctx || {}
   
@@ -293,6 +318,21 @@ function ServerDetailsWrapper(props) {
   }, [])
 
   const [selectedHost, setSelectedHost] = useState<string | null>(hostFromUrl)
+  const [templateAvailabilityGate, setTemplateAvailabilityGate] = useState<{
+    resolved: boolean
+    blocked: boolean
+  }>({resolved: false, blocked: false})
+
+  const handleTemplateAvailabilityChange = useCallback(
+    (gate: {resolved: boolean; blocked: boolean}) => {
+      setTemplateAvailabilityGate(gate)
+    },
+    []
+  )
+
+  useEffect(() => {
+    setTemplateAvailabilityGate({resolved: false, blocked: false})
+  }, [props.source?.id])
 
   const USAGE_DETAIL_ACTION_ID = 'open-usage-detail'
 
@@ -367,6 +407,8 @@ function ServerDetailsWrapper(props) {
         getTempVars={generateForHosts}
         pageClassName="server-details-page"
         showEmptyState={false}
+        noDataMessage="No data"
+        templateAvailabilityGate={templateAvailabilityGate}
         requiredTemplateVars={[':host:']}
         hideQueriesTab={true}
         draggableCancel=".server-details-cell-tab-buttons, .dash-graph-context"
@@ -383,6 +425,7 @@ function ServerDetailsWrapper(props) {
             dashboard={dashboard}
             source={props.source}
             templateVariableLocalSelected={templateVariableLocalSelected}
+            onTemplateAvailabilityChange={handleTemplateAvailabilityChange}
           />
         )}
         renderCell={(cell, context) => {
