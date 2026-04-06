@@ -1171,9 +1171,15 @@ func findLeastLoadedCollectorServer(
 		}
 	}
 
+	// Stick to the current server only if it is still in the active collector list.
 	currentServer, exists := orgToCollector[org]
-	if exists && selectedServer != currentServer {
-		selectedServer = currentServer
+	if exists {
+		for _, k := range collectorServerKeys {
+			if k == currentServer {
+				selectedServer = currentServer
+				break
+			}
+		}
 	}
 
 	if selectedServer == "" {

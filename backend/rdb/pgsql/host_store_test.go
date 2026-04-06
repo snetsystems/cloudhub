@@ -24,8 +24,8 @@ func setupTestDB(t *testing.T) (*pgsql.Client, func()) {
 	}
 	cleanup := func() {
 		_, _ = client.ExecContext(ctx, "TRUNCATE TABLE hosts RESTART IDENTITY CASCADE")
-		_, _ = client.ExecContext(ctx, "TRUNCATE TABLE url_monitoring_targets RESTART IDENTITY CASCADE")
-		_, _ = client.ExecContext(ctx, "TRUNCATE TABLE url_monitoring RESTART IDENTITY CASCADE")
+		_, _ = client.ExecContext(ctx, "TRUNCATE TABLE url_check_targets RESTART IDENTITY CASCADE")
+		_, _ = client.ExecContext(ctx, "TRUNCATE TABLE url_check RESTART IDENTITY CASCADE")
 		client.Close()
 	}
 	return client, cleanup

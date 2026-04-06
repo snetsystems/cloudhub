@@ -75,7 +75,7 @@ func TestURLMonitoringStore_AddGetDelete(t *testing.T) {
 
 	var activeTargets int
 	row := client.QueryRowContext(ctx,
-		`SELECT count(*)::int FROM url_monitoring_targets WHERE url_monitoring_id = $1 AND delete_yn = false`,
+		`SELECT count(*)::int FROM url_check_targets WHERE url_check_id = $1 AND delete_yn = false`,
 		created.ID,
 	)
 	if err := row.Scan(&activeTargets); err != nil {

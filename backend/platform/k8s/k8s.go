@@ -126,18 +126,39 @@ func (p *Manager) RestartCollector(ctx context.Context, target string) error {
 	return nil
 }
 
-// GetActiveCollectors returns the active Logstash collectors in a Kubernetes environment
+// GetActiveCollectors returns ch-collector-* minions via Salt when a Salt client is wired
+// (SetTelegrafSaltDeployment was called). Returns empty without error when no Salt client
+// is configured — Salt is optional in K8s deployments; callers must not treat an empty
+// result as a failure.
 func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error) {
-	// For K8s, active collectors are managed by scaling.
-	// This method might need to query the actual Pods if we want strict verification,
-	// but for now, the backend logic constructs shard list based on total devices.
-	// Returning empty here as the backend will self-calculate "shard-0", "shard-1" etc.
-	return []string{}, map[string]bool{}, nil
+	if p.telegrafSalt == nil {
+		p.Logger.Debug("k8s.GetActiveCollectors: telegrafSalt not configured, returning empty")
+		return []string{}, map[string]bool{}, nil
+	}
+	keys, active, err := baremetal.GetActiveCollectorsFromClient(p.telegrafSalt)
+	p.Logger.
+		WithField("collectors", keys).
+		WithField("active", active).
+		WithField("error", err).
+		Info("k8s.GetActiveCollectors: salt result")
+	return keys, active, err
 }
 
-// CheckFileExists for K8s is not supported via Salt; always returns false.
+// CheckFileExists checks if filePath exists on collectorName via Salt when a Salt client is wired.
+// Returns false, nil when no Salt client is configured — Salt is optional in K8s deployments.
 func (p *Manager) CheckFileExists(ctx context.Context, collectorName string, filePath string) (bool, error) {
-	return false, nil
+	if p.telegrafSalt == nil {
+		p.Logger.Debug("k8s.CheckFileExists: telegrafSalt not configured, returning false")
+		return false, nil
+	}
+	exists, err := baremetal.CheckFileExistsWithClient(p.telegrafSalt, collectorName, filePath)
+	p.Logger.
+		WithField("collector", collectorName).
+		WithField("file", filePath).
+		WithField("exists", exists).
+		WithField("error", err).
+		Debug("k8s.CheckFileExists: result")
+	return exists, err
 }
 
 // DeployTelegrafConfig writes a Telegraf drop-in under telegraf-path on the chosen Salt minion,
@@ -151,7 +172,25 @@ func (p *Manager) DeployTelegrafConfig(ctx context.Context, collectorName string
 	if p.telegrafPath == "" {
 		return fmt.Errorf("kubernetes: telegraf path is empty")
 	}
-	return baremetal.DeployTelegrafConfigWithClient(p.telegrafSalt, p.telegrafPath, collectorName, configName, content)
+	p.Logger.
+		WithField("collector", collectorName).
+		WithField("config", configName).
+		WithField("telegrafPath", p.telegrafPath).
+		Info("k8s.DeployTelegrafConfig: writing file via Salt")
+	err := baremetal.DeployTelegrafConfigWithClient(p.telegrafSalt, p.telegrafPath, collectorName, configName, content)
+	if err != nil {
+		p.Logger.
+			WithField("collector", collectorName).
+			WithField("config", configName).
+			WithField("error", err).
+			Error("k8s.DeployTelegrafConfig: failed")
+	} else {
+		p.Logger.
+			WithField("collector", collectorName).
+			WithField("config", configName).
+			Info("k8s.DeployTelegrafConfig: success")
+	}
+	return err
 }
 
 // RemoveTelegrafConfig removes the drop-in on the minion via Salt (same volume layout as DeployTelegrafConfig).
@@ -248,3 +287,6 @@ func (p *Manager) GenerateShardConfig(ctx context.Context, shardID int) (string,
 func (p *Manager) VerifyCollectorReady(ctx context.Context, collectorName string) error {
 	return nil
 }
+
+// Compile-time check: Manager implements cloudhub.Platform
+var _ cloudhub.Platform = (*Manager)(nil)

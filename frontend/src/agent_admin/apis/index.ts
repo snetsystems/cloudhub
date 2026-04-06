@@ -225,6 +225,10 @@ export const getTelegrafState = async (
   const statusList = telegrafInfo[1].data.return[0]
   const versionList = telegrafInfo[2].data.return[0]
   for (const k of installKeysList) {
+    // Only update minions already in key.list_all; Salt batch returns can include other IDs.
+    if (!Object.prototype.hasOwnProperty.call(minions, k)) {
+      continue
+    }
     const {version} = extractTelegrafVersion(versionList[k])
     minions[k] = {
       ...minions[k],
