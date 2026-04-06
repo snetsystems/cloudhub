@@ -80,6 +80,8 @@ export const ChartJSAlertBarChart = ({
   timeZone = 'UTC',
 }: ChartJSAlertBarChartProps) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
+  const hadChartDataRef = useRef(false)
+  const staleChartIdentityRef = useRef('')
   const [data, setData] = useState<
     {time: string; CRITICAL: number; WARNING: number; OK: number}[]
   >([])
@@ -182,11 +184,25 @@ export const ChartJSAlertBarChart = ({
   }
 
   useEffect(() => {
+    const chartIdentity = [
+      source?.id ?? '',
+      cell?.queries?.[0]?.query ?? '',
+      queryTimeKey,
+    ].join('\0')
+
+    if (staleChartIdentityRef.current !== chartIdentity) {
+      staleChartIdentityRef.current = chartIdentity
+      hadChartDataRef.current = false
+    }
+
     const fetchData = async () => {
       if (!cell?.queries?.[0] || !source?.id) return
+      const showBlockingLoad = !hadChartDataRef.current
       try {
-        setLoading(true)
-        onLoadingChange?.(true)
+        if (showBlockingLoad) {
+          setLoading(true)
+          onLoadingChange?.(true)
+        }
         setError(null)
 
         const tz =
@@ -215,6 +231,7 @@ export const ChartJSAlertBarChart = ({
 
         if (!series.length) {
           setData([])
+          hadChartDataRef.current = false
           return
         }
 
@@ -253,12 +270,15 @@ export const ChartJSAlertBarChart = ({
             OK: number
           }[]
         )
+        hadChartDataRef.current = grouped.length > 0
       } catch (e) {
         console.error('Query failed:', e)
         setError('Query failed.')
       } finally {
-        setLoading(false)
-        onLoadingChange?.(false)
+        if (showBlockingLoad) {
+          setLoading(false)
+          onLoadingChange?.(false)
+        }
       }
     }
 
