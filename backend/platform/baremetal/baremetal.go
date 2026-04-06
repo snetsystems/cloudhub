@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // Client defines the methods required from the Service to interact with Salt/Local filesystem.
@@ -196,13 +198,17 @@ func (p *Manager) RestartCollector(ctx context.Context, target string) error {
 	return nil
 }
 
-// GetActiveCollectors returns a list of active collectors and their status.
-func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error) {
-	status, responseBody, err := p.client.GetWheelKeyAcceptedListAll()
+// GetActiveCollectorsFromClient returns ch-collector-* minions and their ping status
+// using the provided Salt client. Shared by baremetal.Manager and k8s.Manager.
+func GetActiveCollectorsFromClient(client Client) ([]string, map[string]bool, error) {
+	if client == nil {
+		return nil, nil, fmt.Errorf("GetActiveCollectors: nil Salt client")
+	}
+	status, responseBody, err := client.GetWheelKeyAcceptedListAll()
 	if err != nil {
 		return nil, nil, err
 	}
-	if status != 200 {
+	if status < http.StatusOK || status >= http.StatusMultipleChoices {
 		return nil, nil, fmt.Errorf("failed to retrieve keys, status code: %d", status)
 	}
 
@@ -237,7 +243,7 @@ func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string
 			go func(minion string) {
 				defer wg.Done()
 				isActive := false
-				if statusCode, resp, err := p.client.IsActiveMinionPingTest(minion); err == nil && statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices && resp != nil {
+				if statusCode, resp, err := client.IsActiveMinionPingTest(minion); err == nil && statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices && resp != nil {
 					r := &struct {
 						Return []map[string]bool `json:"return"`
 					}{}
@@ -254,6 +260,11 @@ func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string
 
 	wg.Wait()
 	return collectorKeys, activeCollectorKeys, nil
+}
+
+// GetActiveCollectors returns a list of active collectors and their status.
+func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error) {
+	return GetActiveCollectorsFromClient(p.client)
 }
 
 // PushConfigUpdates for baremetal is a no-op as it uses direct file deployment.
@@ -284,9 +295,13 @@ func (p *Manager) VerifyCollectorReady(ctx context.Context, collectorName string
 	return nil
 }
 
-// CheckFileExists checks if a file exists at the given path on the specified collector minion.
-func (p *Manager) CheckFileExists(ctx context.Context, collectorName string, filePath string) (bool, error) {
-	statusCode, resp, err := p.client.FileExistsWithLocalClient(filePath, collectorName)
+// CheckFileExistsWithClient checks if filePath exists on collectorName via Salt.
+// Shared by baremetal.Manager and k8s.Manager.
+func CheckFileExistsWithClient(client Client, collectorName, filePath string) (bool, error) {
+	if client == nil {
+		return false, fmt.Errorf("CheckFileExists: nil Salt client")
+	}
+	statusCode, resp, err := client.FileExistsWithLocalClient(filePath, collectorName)
 	if err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 		return false, fmt.Errorf("failed to check file existence: status=%d err=%v", statusCode, err)
 	}
@@ -301,6 +316,11 @@ func (p *Manager) CheckFileExists(ctx context.Context, collectorName string, fil
 		return r.Return[0][collectorName], nil
 	}
 	return false, nil
+}
+
+// CheckFileExists checks if a file exists at the given path on the specified collector minion.
+func (p *Manager) CheckFileExists(ctx context.Context, collectorName string, filePath string) (bool, error) {
+	return CheckFileExistsWithClient(p.client, collectorName, filePath)
 }
 
 // DeployTelegrafConfig deploys a Telegraf configuration file to the specified collector minion via Salt.
@@ -324,3 +344,6 @@ func (p *Manager) RestartTelegraf(ctx context.Context, collectorName string) err
 func (p *Manager) GenerateShardConfig(ctx context.Context, shardID int) (string, error) {
 	return "", fmt.Errorf("sharding is not supported in baremetal environment")
 }
+
+// Compile-time check: Manager implements cloudhub.Platform
+var _ cloudhub.Platform = (*Manager)(nil)

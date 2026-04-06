@@ -2,10 +2,11 @@ import {TimeSeriesResponse, TimeSeriesValue} from 'src/types/series'
 
 type HostCellValue = TimeSeriesValue | TimeSeriesValue[] | null | undefined
 
-/**
- * URL Monitoring 쿼리 결과는 series.tags의 (host, method, server) 조합으로 분리됩니다.
- * 화면의 1 row는 해당 조합 1개를 기준으로 하며, series.columns(측정 필드/alias)을 컬럼 키에 매핑합니다.
- */
+function canonicalUrlMonitoringColumnKey(columnName: string): string {
+  if (columnName === 'last_response_time') return 'response_time_ms'
+  return columnName
+}
+
 export const mergeResultsByUrlMonitoring = (
   results: Array<{value: TimeSeriesResponse | null; error: unknown | null}>
 ) => {
@@ -64,18 +65,19 @@ export const mergeResultsByUrlMonitoring = (
           // series.values 각 row의 0번째는 time
           if (index === 0) return
 
+          const key = canonicalUrlMonitoringColumnKey(columnName)
           const isMultiPoint = rows.length > 1
           if (isMultiPoint) {
             const columnValues = rows.map(valueRow => ({
               time: valueRow[0] ?? null,
               value: valueRow[index] ?? null,
             }))
-            setRowValue(row, columnName, columnValues as any)
+            setRowValue(row, key, columnValues as any)
             return
           }
 
           const singleRow = rows[0]
-          setRowValue(row, columnName, singleRow?.[index] ?? null)
+          setRowValue(row, key, singleRow?.[index] ?? null)
         })
 
         rowMap.set(rowKey, row)
@@ -85,4 +87,3 @@ export const mergeResultsByUrlMonitoring = (
 
   return Array.from(rowMap.values())
 }
-

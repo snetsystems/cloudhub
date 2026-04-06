@@ -518,7 +518,9 @@ func (s *Service) GetWheelKeyAcceptedListAll() (int, []byte, error) {
 }
 
 // DockerRestart is tests to see if path is a valid directory
-// ServiceReloadWithLocalClient sends a `systemctl reload {serviceName}` command to the target minion via Salt cmd.run.
+// ServiceReloadWithLocalClient sends a `service {serviceName} reload` command to the target minion via Salt cmd.run.
+// Using `service` instead of `systemctl` for compatibility with both systemd hosts and containerized environments
+// where systemd is absent but the entrypoint script handles `service <name> reload` via SIGHUP.
 func (s *Service) ServiceReloadWithLocalClient(serviceName string, targetMinion string) (int, []byte, error) {
 	type kwarg struct {
 		Cmd string `json:"cmd"`
@@ -539,7 +541,7 @@ func (s *Service) ServiceReloadWithLocalClient(serviceName string, targetMinion 
 		Target: targetMinion,
 		Fun:    "cmd.run",
 		Kwarg: kwarg{
-			Cmd: fmt.Sprintf("systemctl reload %s", serviceName),
+			Cmd: fmt.Sprintf("service %s reload", serviceName),
 		},
 	}
 

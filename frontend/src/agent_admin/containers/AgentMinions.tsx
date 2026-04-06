@@ -569,6 +569,8 @@ export class AgentMinions extends PureComponent<Props, State> {
     const minionsFromSalt = _.values(minionsObject)
     const agentByMinionId = new Map(agents.map((a: Agent) => [a.minionId, a]))
 
+    // Rows are only Salt key.list_all keys; DB agents enrich matching minion_id (left join).
+    // Do not append DB-only hosts — they belong to a different Salt master or stale inventory.
     const composedMinions = minionsFromSalt.map(m => {
       const agent = agentByMinionId.get(m.host)
       if (!agent) {
@@ -580,20 +582,6 @@ export class AgentMinions extends PureComponent<Props, State> {
         osVersion: agent.osVersion,
         ip: agent.privateIps?.[0] ?? '',
       }
-    })
-
-    const saltHosts = new Set(minionsFromSalt.map(m => m.host))
-    agents.forEach((agent: Agent) => {
-      if (saltHosts.has(agent.minionId)) {
-        return
-      }
-      composedMinions.push({
-        host: agent.minionId,
-        os: agent.os,
-        osVersion: agent.osVersion,
-        ip: agent.privateIps?.[0] ?? '',
-        status: MinionState.Accept,
-      } as any)
     })
 
     const tableStatus = minionsPageStatus

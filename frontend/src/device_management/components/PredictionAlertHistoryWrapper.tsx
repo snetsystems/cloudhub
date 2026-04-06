@@ -30,7 +30,7 @@ import {
 import {getPredictionAlert} from 'src/device_management/apis'
 
 // Redux
-import {setAlertHostList} from 'src/device_management/actions'
+import {setAlertHostList, setHistogramDate} from 'src/device_management/actions'
 import {bindActionCreators} from 'redux'
 import {connect} from 'react-redux'
 
@@ -51,6 +51,7 @@ interface Props {
   predictionManualRefresh?: number
   cloudAutoRefresh?: CloudAutoRefresh
   setAlertHostList?: (value: AlertHostList) => void
+  setHistogramDate?: (value: TimeRange | null) => void
   onChooseCloudTimeRange?: (value: CloudTimeRange) => void
 }
 
@@ -65,6 +66,7 @@ function PredictionAlertHistoryWrapper({
   predictionManualRefresh,
   alertHostList,
   setAlertHostList,
+  setHistogramDate,
   limit = RECENT_ALERTS_LIMIT,
 }: Props) {
   const [isAlertsMaxedOut, setIsAlertsMaxedOut] = useState(false)
@@ -225,6 +227,7 @@ function PredictionAlertHistoryWrapper({
   }
 
   const onClickReset = () => {
+    setHistogramDate?.(null)
     onChooseCloudTimeRange({
       prediction: {
         lower: 'now() - 30d',
@@ -317,6 +320,7 @@ const mstp = state => {
 const mdtp = (dispatch: any) => ({
   onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
+  setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
 })
 
 const areEqual = (prev, next) => {

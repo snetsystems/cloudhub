@@ -101,6 +101,13 @@ func (s *Service) DeleteURLMonitoring(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Remove conf first; only delete from DB if removal succeeds.
+	if err := s.removeURLMonitoringFromCollector(ctx, m); err != nil {
+		Error(w, http.StatusInternalServerError,
+			fmt.Sprintf("failed to remove url monitoring from collector: %v", err), s.Logger)
+		return
+	}
+
 	if err := s.Store.URLMonitoring(ctx).Delete(ctx, id); err != nil {
 		if err == cloudhub.ErrURLMonitoringNotFound {
 			notFound(w, id, s.Logger)
@@ -109,12 +116,8 @@ func (s *Service) DeleteURLMonitoring(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-
-	if err := s.removeURLMonitoringFromCollector(ctx, m); err != nil {
-		Error(w, http.StatusInternalServerError,
-			fmt.Sprintf("failed to remove url monitoring from collector: %v", err), s.Logger)
-		return
-	}
+	msg := fmt.Sprintf(MsgURLMonitoringDeleted.String(), id)
+	s.logRegistration(ctx, "URLMonitoring", msg)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -185,18 +188,16 @@ func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request)
 		req.Method = "GET"
 	}
 
-	// Get existing or auto-create parent.
+	// Get existing parent, or prepare an in-memory one (not saved yet).
 	m, err := s.Store.URLMonitoring(ctx).Get(ctx, orgID)
+	parentExists := true
 	if err == cloudhub.ErrURLMonitoringNotFound {
+		parentExists = false
 		collectorServer, _ := s.assignURLMonitoringCollector(ctx, orgID)
-		m, err = s.Store.URLMonitoring(ctx).Add(ctx, &cloudhub.URLMonitoring{
+		m = &cloudhub.URLMonitoring{
 			OrgID:           orgID,
 			CollectorServer: collectorServer,
 			Targets:         []cloudhub.URLMonitoringTarget{},
-		})
-		if err != nil {
-			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-			return
 		}
 	} else if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
@@ -235,17 +236,31 @@ func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request)
 		})
 	}
 
-	updated, err := s.Store.URLMonitoring(ctx).Update(ctx, m)
-	if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-		return
-	}
-	if err := s.applyURLMonitoringToCollector(ctx, updated); err != nil {
+	// Deploy conf first; only persist to DB if deployment succeeds.
+	if err := s.applyURLMonitoringToCollector(ctx, m); err != nil {
 		Error(w, http.StatusInternalServerError,
 			fmt.Sprintf("failed to apply url monitoring to collector: %v", err), s.Logger)
 		return
 	}
-	encodeJSON(w, http.StatusOK, toURLMonitoringResponse(updated), s.Logger)
+
+	var result *cloudhub.URLMonitoring
+	if !parentExists {
+		result, err = s.Store.URLMonitoring(ctx).Add(ctx, m)
+	} else {
+		result, err = s.Store.URLMonitoring(ctx).Update(ctx, m)
+	}
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	var msg string
+	if foundIdx >= 0 {
+		msg = fmt.Sprintf(MsgURLMonitoringTargetModified.String(), req.Name)
+	} else {
+		msg = fmt.Sprintf(MsgURLMonitoringTargetCreated.String(), req.Name)
+	}
+	s.logRegistration(ctx, "URLMonitoringTarget", msg)
+	encodeJSON(w, http.StatusOK, toURLMonitoringResponse(result), s.Logger)
 }
 
 // PatchURLMonitoringTarget updates a single target by target id using org context.
@@ -319,16 +334,19 @@ func (s *Service) PatchURLMonitoringTarget(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Deploy conf first; only persist to DB if deployment succeeds.
+	if err := s.applyURLMonitoringToCollector(ctx, m); err != nil {
+		Error(w, http.StatusInternalServerError,
+			fmt.Sprintf("failed to apply url monitoring to collector: %v", err), s.Logger)
+		return
+	}
 	updated, err := s.Store.URLMonitoring(ctx).Update(ctx, m)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	if err := s.applyURLMonitoringToCollector(ctx, updated); err != nil {
-		Error(w, http.StatusInternalServerError,
-			fmt.Sprintf("failed to apply url monitoring to collector: %v", err), s.Logger)
-		return
-	}
+	msg := fmt.Sprintf(MsgURLMonitoringTargetModified.String(), req.Name)
+	s.logRegistration(ctx, "URLMonitoringTarget", msg)
 	encodeJSON(w, http.StatusOK, toURLMonitoringResponse(updated), s.Logger)
 }
 
@@ -361,11 +379,13 @@ func (s *Service) DeleteURLMonitoringTarget(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	var deletedName string
 	found := false
 	next := make([]cloudhub.URLMonitoringTarget, 0, len(m.Targets))
 	for _, t := range m.Targets {
 		if t.ID == targetID {
 			found = true
+			deletedName = t.Name
 			continue
 		}
 		next = append(next, t)
@@ -376,16 +396,23 @@ func (s *Service) DeleteURLMonitoringTarget(w http.ResponseWriter, r *http.Reque
 	}
 
 	m.Targets = next
+	// Deploy conf first; only persist to DB if deployment succeeds.
+	if err := s.applyURLMonitoringToCollector(ctx, m); err != nil {
+		Error(w, http.StatusInternalServerError,
+			fmt.Sprintf("failed to apply url monitoring to collector: %v", err), s.Logger)
+		return
+	}
 	updated, err := s.Store.URLMonitoring(ctx).Update(ctx, m)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	if err := s.applyURLMonitoringToCollector(ctx, updated); err != nil {
-		Error(w, http.StatusInternalServerError,
-			fmt.Sprintf("failed to apply url monitoring to collector: %v", err), s.Logger)
-		return
+	logName := deletedName
+	if strings.TrimSpace(logName) == "" {
+		logName = targetID
 	}
+	msg := fmt.Sprintf(MsgURLMonitoringTargetDeleted.String(), logName)
+	s.logRegistration(ctx, "URLMonitoringTarget", msg)
 	encodeJSON(w, http.StatusOK, toURLMonitoringResponse(updated), s.Logger)
 }
 
@@ -398,6 +425,35 @@ func (s *Service) applyURLMonitoringToCollector(ctx context.Context, m *cloudhub
 		return nil
 	}
 
+	// Re-assign if stored collector is no longer in the active list.
+	if activeKeys, _, err := s.InternalENV.Platform.GetActiveCollectors(ctx); err == nil && len(activeKeys) > 0 {
+		isActive := false
+		for _, k := range activeKeys {
+			if k == m.CollectorServer {
+				isActive = true
+				break
+			}
+		}
+		if !isActive {
+			s.Logger.
+				WithField("org", m.OrgID).
+				WithField("stale_collector", m.CollectorServer).
+				WithField("active_collectors", activeKeys).
+				Info("URLMonitoring: stored collector not active, reassigning")
+			if newCollector, err := s.assignURLMonitoringCollector(ctx, m.OrgID); err == nil && newCollector != "" {
+				m.CollectorServer = newCollector
+				if updated, err := s.Store.URLMonitoring(ctx).Get(ctx, m.OrgID); err == nil {
+					updated.CollectorServer = newCollector
+					_, _ = s.Store.URLMonitoring(ctx).Update(ctx, updated)
+				}
+			}
+		}
+	}
+
+	s.Logger.
+		WithField("collector", m.CollectorServer).
+		WithField("org", m.OrgID).
+		Info("URLMonitoring: verifying collector ready")
 	// Verify collector is ready.
 	if err := s.InternalENV.Platform.VerifyCollectorReady(ctx, m.CollectorServer); err != nil {
 		return fmt.Errorf("collector %q not ready: %w", m.CollectorServer, err)
@@ -406,6 +462,10 @@ func (s *Service) applyURLMonitoringToCollector(ctx context.Context, m *cloudhub
 	fileName := fmt.Sprintf("url-monitoring/%s.conf", m.OrgID)
 	// If there are no URL targets, remove the existing conf file instead of writing an empty one.
 	if len(m.Targets) == 0 {
+		s.Logger.
+			WithField("collector", m.CollectorServer).
+			WithField("file", fileName).
+			Info("URLMonitoring: removing telegraf config (no targets)")
 		if err := s.InternalENV.Platform.RemoveTelegrafConfig(ctx, m.CollectorServer, fileName); err != nil {
 			return fmt.Errorf("failed to remove telegraf config: %w", err)
 		}
@@ -429,10 +489,19 @@ func (s *Service) applyURLMonitoringToCollector(ctx context.Context, m *cloudhub
 		return fmt.Errorf("failed to render telegraf config: %w", err)
 	}
 
+	s.Logger.
+		WithField("collector", m.CollectorServer).
+		WithField("file", fileName).
+		WithField("targets", len(m.Targets)).
+		Info("URLMonitoring: deploying telegraf config")
 	// Deploy Telegraf config via Salt.
 	if err := s.InternalENV.Platform.DeployTelegrafConfig(ctx, m.CollectorServer, fileName, conf); err != nil {
 		return fmt.Errorf("failed to deploy telegraf config: %w", err)
 	}
+	s.Logger.
+		WithField("collector", m.CollectorServer).
+		WithField("file", fileName).
+		Info("URLMonitoring: telegraf config deployed successfully")
 
 	// Reload Telegraf.
 	if err := s.InternalENV.Platform.RestartTelegraf(ctx, m.CollectorServer); err != nil {
@@ -577,6 +646,11 @@ func (s *Service) GetURLMonitoringConfig(w http.ResponseWriter, r *http.Request)
 // assignURLMonitoringCollector picks the least-loaded collector server.
 func (s *Service) assignURLMonitoringCollector(ctx context.Context, orgID string) (string, error) {
 	collectorKeys, _, err := s.InternalENV.Platform.GetActiveCollectors(ctx)
+	s.Logger.
+		WithField("org", orgID).
+		WithField("collectors", collectorKeys).
+		WithField("error", err).
+		Info("URLMonitoring: GetActiveCollectors result")
 	if err != nil || len(collectorKeys) == 0 {
 		return "", fmt.Errorf("no active collectors: %w", err)
 	}
@@ -593,7 +667,12 @@ func (s *Service) assignURLMonitoringCollector(ctx context.Context, orgID string
 		orgToCollector[m.OrgID] = m.CollectorServer
 	}
 
-	return findLeastLoadedCollectorServer(orgID, collectorKeys, serverCount, orgToCollector), nil
+	selected := findLeastLoadedCollectorServer(orgID, collectorKeys, serverCount, orgToCollector)
+	s.Logger.
+		WithField("org", orgID).
+		WithField("selected", selected).
+		Info("URLMonitoring: collector selected")
+	return selected, nil
 }
 
 // GetURLMonitoringStatus checks whether the Telegraf config file exists on the collector.

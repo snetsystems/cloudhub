@@ -7,6 +7,7 @@ import {
   Organization,
   PredictionManualRefresh,
   RefreshRate,
+  TimeRange,
   TimeZones,
 } from 'src/types'
 import * as SourcesModels from 'src/types/sources'
@@ -24,6 +25,7 @@ import * as appActions from 'src/shared/actions/app'
 import DeviceManagementModal from 'src/device_management/components/DeviceManagementModal'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {
+  setHistogramDate,
   setPredictionManualRefresh,
   setStateInitAction,
 } from 'src/device_management/actions'
@@ -57,6 +59,7 @@ interface Props extends ManualRefreshProps {
   onChooseCloudTimeRange: (timeRange: CloudTimeRange) => void
   setPredictionManualRefresh: () => void
   setStateInitAction: () => void
+  setHistogramDate: (value: TimeRange | null) => void
 }
 
 function PredictionRouter({
@@ -71,6 +74,7 @@ function PredictionRouter({
   timeZone,
   cloudTimeRange,
   onChooseCloudTimeRange,
+  setHistogramDate,
 }: Props) {
   const [
     manualRefreshState,
@@ -101,6 +105,7 @@ function PredictionRouter({
   }
 
   const handleChooseTimeRange = ({lower, upper}) => {
+    setHistogramDate(null)
     if (upper) {
       onChooseCloudTimeRange({prediction: {lower, upper}})
     } else {
@@ -176,6 +181,7 @@ const mdtp = dispatch => ({
     dispatch
   ),
   setStateInitAction: bindActionCreators(setStateInitAction, dispatch),
+  setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(ManualRefresh<Props>(PredictionRouter))

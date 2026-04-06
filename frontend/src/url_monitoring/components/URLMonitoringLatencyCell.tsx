@@ -19,14 +19,10 @@ interface Props {
   rowData: DataTableObject
   rowIndex: number
   timeZone: TimeZones
-  /** 리스트/카드 공통 그래프 높이 */
   chartHeight?: number
 }
 
-/**
- * URL 모니터링 응답시간: 항상 서버리스트의 프리패치 시계열(TableLineChartCell) 사용.
- */
-export function UrlMonitoringLatencyCell({
+export function URLMonitoringLatencyCell({
   value,
   rowData: _rowData,
   rowIndex: _rowIndex,

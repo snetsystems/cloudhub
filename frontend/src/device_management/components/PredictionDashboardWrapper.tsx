@@ -12,16 +12,7 @@ import {
 } from 'src/dashboards/constants'
 
 // Types
-import {
-  AlertHostList,
-  AnomalyFactor,
-  Cell,
-  Source,
-  Template,
-  TemplateValue,
-  TimeRange,
-  TimeZones,
-} from 'src/types'
+import {Cell, Source, Template, TemplateValue, TimeRange, TimeZones} from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 
 // Utils
@@ -30,14 +21,9 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 // Redux
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
-import {
-  setAlertHostList,
-  setHistogramDate,
-  setSelectedAnomaly,
-} from 'src/device_management/actions'
+import {setHistogramDate} from 'src/device_management/actions'
 
-// Reducers
-import {initialState} from 'src/device_management/reducers/predictionDashboard'
+import {CLOUD_TIME_RANGE} from 'src/shared/data/timeRanges'
 
 interface Props {
   cell: Cell
@@ -51,12 +37,11 @@ interface Props {
   source: Source
   sources: Source[]
   cloudAutoRefresh?: CloudAutoRefresh
-  setHistogramDate?: (value: TimeRange) => void
-  setSelectedAnomaly?: (anomalyFactor: AnomalyFactor) => void
+  setHistogramDate?: (value: TimeRange | null) => void
   timeZone?: TimeZones
-  setAlertHostList?: (value: AlertHostList) => void
   predictionManualRefresh?: number
   cloudTimeRange?: CloudTimeRange
+  histogramDate?: TimeRange | null
 }
 
 function PredictionDashboardWrapper({
@@ -65,34 +50,24 @@ function PredictionDashboardWrapper({
   cloudAutoRefresh,
   timeZone,
   setHistogramDate,
-  setSelectedAnomaly,
-  setAlertHostList,
+  cloudTimeRange,
+  histogramDate,
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
-  const {selectedAnomaly, alertHostList, histogramDate} = initialState
   const handleDateClick = (timeRange: TimeRange) => {
-    if (!setSelectedAnomaly || !setAlertHostList || !setHistogramDate) return
-
-    setSelectedAnomaly(selectedAnomaly)
-    setAlertHostList(alertHostList)
-    setHistogramDate(timeRange)
+    setHistogramDate?.(timeRange)
   }
 
   const handleDateRangeSelect = (timeRange: TimeRange) => {
-    if (!setSelectedAnomaly || !setAlertHostList || !setHistogramDate) return
-
-    setSelectedAnomaly(selectedAnomaly)
-    setAlertHostList(alertHostList)
-    setHistogramDate(timeRange)
+    setHistogramDate?.(timeRange)
   }
 
   const handleDateClear = () => {
-    if (!setSelectedAnomaly || !setAlertHostList || !setHistogramDate) return
-
-    setSelectedAnomaly(selectedAnomaly)
-    setAlertHostList(alertHostList)
-    setHistogramDate(histogramDate)
+    setHistogramDate?.(null)
   }
+
+  const predictionQueryTimeRange =
+    cloudTimeRange?.prediction ?? CLOUD_TIME_RANGE.prediction
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh?.prediction)
@@ -140,6 +115,8 @@ function PredictionDashboardWrapper({
             cell={rebuiltCell}
             source={source}
             timeZone={timeZone}
+            queryTimeRange={predictionQueryTimeRange}
+            histogramDate={histogramDate}
             onDateClick={handleDateClick}
             onDateRangeSelect={handleDateRangeSelect}
             onDateClear={handleDateClear}
@@ -156,19 +133,19 @@ const mstp = (state: any) => {
     app: {
       persisted: {cloudAutoRefresh, timeZone, cloudTimeRange},
     },
+    predictionDashboard: {histogramDate},
   } = state
 
   return {
     timeZone,
     cloudAutoRefresh,
     cloudTimeRange,
+    histogramDate,
   }
 }
 
 const mdtp = (dispatch: any) => ({
   setHistogramDate: bindActionCreators(setHistogramDate, dispatch),
-  setSelectedAnomaly: bindActionCreators(setSelectedAnomaly, dispatch),
-  setAlertHostList: bindActionCreators(setAlertHostList, dispatch),
 })
 
 const areEqual = (prevProps, nextProps) => {
@@ -187,6 +164,15 @@ const areEqual = (prevProps, nextProps) => {
     prevTime?.lower !== nextTime?.lower ||
     prevTime?.upper !== nextTime?.upper
   ) {
+    return false
+  }
+
+  const prevH = prevProps.histogramDate
+  const nextH = nextProps.histogramDate
+  if (prevH?.lower !== nextH?.lower || prevH?.upper !== nextH?.upper) {
+    return false
+  }
+  if ((prevH == null) !== (nextH == null)) {
     return false
   }
 
