@@ -1,3 +1,4 @@
+import uuid from 'uuid'
 import {getDeep} from 'src/utils/wrappers'
 import {analyzeQueries} from 'src/shared/apis'
 import {TEMP_VAR_INTERVAL, DEFAULT_DURATION_MS} from 'src/shared/constants'
@@ -25,7 +26,7 @@ export function executeQueries(
   source: Source,
   queries: Query[],
   templates: Template[],
-  uuid?: string
+  clientUuid?: string
 ): Promise<QueryResult[]> {
   return new Promise(resolve => {
     const results = []
@@ -33,7 +34,7 @@ export function executeQueries(
     let counter = queries.length
 
     for (let i = 0; i < queries.length; i++) {
-      executeQuery(source, queries[i], templates, uuid)
+      executeQuery(source, queries[i], templates, clientUuid)
         .then(result => (results[i] = {value: result, error: null}))
         .catch(result => (results[i] = {value: null, error: result}))
         // eslint-disable-next-line no-loop-func
@@ -52,16 +53,31 @@ export const executeQuery = async (
   source: Source,
   query: Query,
   templates: Template[],
-  uuid?: string
+  clientUuid?: string
 ): Promise<TimeSeriesResponse> => {
   const text = await replace(query.text, source, templates)
+
+  const proxyUuid =
+    clientUuid ??
+    (query.id?.startsWith('url-monitoring-') ? uuid.v4() : undefined)
+
+  if (query.id?.startsWith('url-monitoring-')) {
+    const db = query.db || query.database
+    // 브라우저 개발자도구 콘솔에서 프록시로 전송되는 최종 InfluxQL 확인용
+    console.log('[URL Monitoring → Influx]', {
+      id: query.id,
+      db,
+      query: text,
+      uuid: proxyUuid,
+    })
+  }
 
   const {data} = await proxy({
     source: source.links.proxy,
     rp: query.rp,
     query: text,
     db: query.db || query.database,
-    uuid,
+    uuid: proxyUuid,
   })
 
   return data
