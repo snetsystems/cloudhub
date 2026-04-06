@@ -19,6 +19,25 @@ import {proxy} from 'src/utils/queryUrlGenerator'
 //Types
 import {INPUT_TIME_TYPE} from 'src/types'
 import {TimeRange} from 'src/types/queries'
+
+export function buildAlertHistogramTimeWhere(
+  timeRange?: TimeRange | null
+): string {
+  if (!timeRange?.lower) {
+    return 'time > now() - 30d'
+  }
+  if (timeRange.format === INPUT_TIME_TYPE.TIMESTAMP) {
+    const upperClause =
+      timeRange.upper && timeRange.upper !== 'now()'
+        ? ` AND time <= '${timeRange.upper}'`
+        : ' AND time <= now()'
+    return `time >= '${timeRange.lower}'${upperClause}`
+  }
+  if (timeRange.upper) {
+    return `time >= '${timeRange.lower}' AND time <= '${timeRange.upper}'`
+  }
+  return `time >= ${timeRange.lower} AND time <= ${timeRange.upper ?? 'now()'}`
+}
 import {Cell} from 'src/types/dashboards'
 import {Source} from 'src/types/sources'
 
@@ -41,6 +60,8 @@ export interface ChartJSAlertBarChartProps {
   cell: Cell
   source: Source
   timeZone?: string
+  queryTimeRange?: TimeRange | null
+  histogramDate?: TimeRange | null
   onDateClick?: (timeRange: TimeRange) => void
   onDateRangeSelect?: (timeRange: TimeRange) => void
   onDateClear?: () => void
@@ -50,6 +71,8 @@ export interface ChartJSAlertBarChartProps {
 export const ChartJSAlertBarChart = ({
   cell,
   source,
+  queryTimeRange,
+  histogramDate,
   onDateClick,
   onDateRangeSelect,
   onDateClear,
@@ -64,6 +87,22 @@ export const ChartJSAlertBarChart = ({
   const [error, setError] = useState<string | null>(null)
   const [active, setActive] = useState<number[]>([])
   const [dragEndTime, setDragEndTime] = useState(0)
+
+  const queryTimeKey = [
+    queryTimeRange?.lower,
+    queryTimeRange?.upper ?? '',
+    queryTimeRange?.format ?? '',
+  ].join('|')
+
+  useEffect(() => {
+    setActive([])
+  }, [queryTimeKey])
+
+  useEffect(() => {
+    if (histogramDate === null) {
+      setActive([])
+    }
+  }, [histogramDate])
 
   const handleClickDate = (time: number) => {
     if (!onDateClick) return
@@ -156,10 +195,12 @@ export const ChartJSAlertBarChart = ({
             ? 'UTC'
             : Intl.DateTimeFormat().resolvedOptions().timeZone)
 
+        const timeWhere = buildAlertHistogramTimeWhere(queryTimeRange)
+
         const fullQuery = `
           SELECT count("value") AS "count_value"
           FROM "Default"."autogen"."cloudhub_alerts"
-          WHERE time > now() - 30d
+          WHERE ${timeWhere}
           GROUP BY time(1d), "level"
           tz('${tz}')
         `.trim()
@@ -222,7 +263,13 @@ export const ChartJSAlertBarChart = ({
     }
 
     fetchData()
-  }, [cell?.queries?.[0]?.query, cell?.queries?.[0]?.tz, source?.id, timeZone])
+  }, [
+    cell?.queries?.[0]?.query,
+    cell?.queries?.[0]?.tz,
+    source?.id,
+    timeZone,
+    queryTimeKey,
+  ])
 
   const chartData = useMemo(() => {
     if (!data.length) return {labels: [], datasets: []}
