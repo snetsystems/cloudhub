@@ -1,7 +1,7 @@
 import React from 'react'
 import {AlignType, ColumnInfo, DataTableObject} from 'src/types'
 import {TableLineChartPoint, TimeSeriesValue} from 'src/types/series'
-import {UrlMonitoringLatencyCell} from 'src/url_monitoring/components/UrlMonitoringLatencyCell'
+import {URLMonitoringLatencyCell} from 'src/url_monitoring/components/URLMonitoringLatencyCell'
 
 type LatencyCell =
   | TimeSeriesValue
@@ -38,6 +38,7 @@ const toNumber = (value: StatusCodeCell): number | null => {
 export interface UrlMonitoringColumnHandlers {
   onEditRow?: (row: DataTableObject) => void
   onCopyRow?: (row: DataTableObject) => void
+  onDeleteRow?: (row: DataTableObject) => void
 }
 
 export const urlMonitoringColumns = (
@@ -83,32 +84,27 @@ export const urlMonitoringColumns = (
     options: {
       thead: {align: AlignType.LEFT, className: 'url-monitoring-url-th'},
     },
-    render: (value: unknown) => {
-      const text = String(value ?? '')
+    render: (value: unknown, rowData: any) => {
+      const url = String(value ?? '')
+      const name = String(rowData?.name ?? '')
       return (
-        <div
-          style={{
-            maxWidth: 280,
-            whiteSpace: 'pre-line',
-            wordBreak: 'break-all',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-          title={text}
-        >
-          {text || '--'}
+        <div style={{maxWidth: 300}}>
+          {name && (
+            <div style={{fontWeight: 600, marginBottom: 2}}>{name}</div>
+          )}
+          <div
+            style={{
+              wordBreak: 'break-all',
+              color: name ? '#aab0bb' : undefined,
+              fontSize: name ? 12 : undefined,
+            }}
+            title={url}
+          >
+            {url || '--'}
+          </div>
         </div>
       )
     },
-  },
-  {
-    key: 'region',
-    name: '지원',
-    align: AlignType.LEFT,
-    options: {
-      thead: {align: AlignType.LEFT, className: 'url-monitoring-region-th'},
-    },
-    render: (value: unknown) => <>{value ?? '--'}</>,
   },
   {
     key: 'response_time_ms',
@@ -119,7 +115,7 @@ export const urlMonitoringColumns = (
       sorting: true,
     },
     render: (value: LatencyCell, rowData, _colIdx, rowIndex, tz) => (
-      <UrlMonitoringLatencyCell
+      <URLMonitoringLatencyCell
         value={value}
         rowData={rowData as DataTableObject}
         rowIndex={rowIndex}
@@ -167,7 +163,7 @@ export const urlMonitoringColumns = (
           title="삭제"
           onClick={e => {
             e.stopPropagation()
-            void rowData
+            handlers?.onDeleteRow?.(rowData as DataTableObject)
           }}
         >
           <span className="icon trash" aria-hidden />

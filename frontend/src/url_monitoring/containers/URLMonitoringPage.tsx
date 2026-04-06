@@ -2,8 +2,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {Page} from 'src/reusable_ui'
-import {Source, Links, RefreshRate, TimeZones} from 'src/types'
-import {DataTableObject} from 'src/types'
+import {Source, Links, RefreshRate, TimeZones, DataTableObject, Notification} from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
@@ -25,13 +24,14 @@ import {generateForHosts} from 'src/utils/tempVars'
 import {urlMonitoringQueries} from 'src/url_monitoring/constants/urlMonitoringQueries'
 import {mergeResultsByUrlMonitoring} from 'src/url_monitoring/utils/mergeResultsByUrlMonitoring'
 import {
-  applyMockUrlMonitoringMeta,
-  createMockUrlMonitoringRows,
-} from 'src/url_monitoring/utils/mockUrlMonitoringMeta'
+  URLMonitoringFormSheet,
+  URLMonitoringSheetMode,
+} from 'src/url_monitoring/components/URLMonitoringFormSheet'
+import {URLMonitoring, URLMonitoringTarget} from 'src/url_monitoring/types'
 import {
-  UrlMonitoringFormSheet,
-  UrlMonitoringSheetMode,
-} from 'src/url_monitoring/components/UrlMonitoringFormSheet'
+  getURLMonitoring,
+  deleteURLMonitoringTarget,
+} from 'src/url_monitoring/apis'
 
 const TimeRangeDropdownComponent = TimeRangeDropdown as any
 
@@ -49,6 +49,7 @@ interface Props {
   onChooseCloudAutoRefresh: (autoRefresh: CloudAutoRefresh) => void
   onChooseCloudTimeRange: (timeRange: CloudTimeRange) => void
   setTimeZone: typeof appActions.setTimeZone
+  notify: (n: Notification) => void
 }
 
 export function URLMonitoringPage({
@@ -59,6 +60,7 @@ export function URLMonitoringPage({
   onChooseCloudAutoRefresh,
   onChooseCloudTimeRange,
   setTimeZone,
+  notify,
 }: Props) {
   const [manualRefreshState, setManualRefreshState] = useState<ManualRefresh>({
     key: 'url-monitoring',
@@ -74,34 +76,100 @@ export function URLMonitoringPage({
   const requestIdRef = useRef(0)
   const pollIntervalRef = useRef<number | null>(null)
 
+  const [urlMonitoringConfig, setUrlMonitoringConfig] =
+    useState<URLMonitoring | null>(null)
+
+  const fetchConfig = useCallback(async () => {
+    try {
+      const config = await getURLMonitoring()
+      setUrlMonitoringConfig(config)
+    } catch (e) {
+      notify({
+        type: 'error',
+        icon: 'alert-triangle',
+        duration: 10000,
+        isHasHTML: false,
+        message: `Failed to fetch URL monitoring config: ${e?.message ?? e}`,
+      })
+    }
+  }, [notify])
+
   const [urlSheet, setUrlSheet] = useState<{
     open: boolean
-    mode: UrlMonitoringSheetMode
-    row: DataTableObject | null
-  }>({open: false, mode: 'add', row: null})
+    mode: URLMonitoringSheetMode
+    target: URLMonitoringTarget | null
+  }>({open: false, mode: 'add', target: null})
 
   const openUrlSheet = useCallback(
-    (mode: UrlMonitoringSheetMode, row?: DataTableObject | null) => {
-      setUrlSheet({
-        open: true,
-        mode,
-        row: row ?? null,
-      })
+    (mode: URLMonitoringSheetMode, row?: DataTableObject | null) => {
+      const target =
+        row && urlMonitoringConfig
+          ? urlMonitoringConfig.targets.find(
+              t => t.url === String(row.url ?? '')
+            ) ?? null
+          : null
+      setUrlSheet({open: true, mode, target})
     },
-    []
+    [urlMonitoringConfig]
   )
 
   const closeUrlSheet = useCallback(() => {
     setUrlSheet(s => ({...s, open: false}))
   }, [])
 
+  const handleDeleteRow = useCallback(
+    async (row: DataTableObject) => {
+      const target = urlMonitoringConfig?.targets.find(
+        t => t.url === String(row.url ?? '')
+      )
+      if (!target?.id) return
+      try {
+        await deleteURLMonitoringTarget(target.id)
+        await fetchConfig()
+      } catch (e) {
+        notify({
+          type: 'error',
+          icon: 'alert-triangle',
+          duration: 10000,
+          isHasHTML: false,
+          message: `Failed to delete URL monitoring target: ${e?.message ?? e}`,
+        })
+      }
+    },
+    [urlMonitoringConfig, fetchConfig, notify]
+  )
+
+  const influxMetricsByUrl = useMemo(() => {
+    const map = new Map<string, DataTableObject>()
+    for (const row of tableData) {
+      const key = String(row.server ?? '')
+      if (key) map.set(key, row)
+    }
+    return map
+  }, [tableData])
+
+  const targetRows = useMemo<DataTableObject[]>(() => {
+    if (!urlMonitoringConfig?.targets?.length) return []
+    return urlMonitoringConfig.targets.map(target => {
+      const influxRow = influxMetricsByUrl.get(target.url) ?? {}
+      return {
+        ...influxRow,
+        id: target.id,
+        name: target.name,
+        url: target.url,
+        interval: target.interval,
+      } as DataTableObject
+    })
+  }, [urlMonitoringConfig, influxMetricsByUrl])
+
   const columns = useMemo(
     () =>
       urlMonitoringColumns({
         onEditRow: row => openUrlSheet('edit', row),
         onCopyRow: row => openUrlSheet('copy', row),
+        onDeleteRow: handleDeleteRow,
       }),
-    [openUrlSheet]
+    [openUrlSheet, handleDeleteRow]
   )
 
   const getCodeNumber = (code: any): number | null => {
@@ -116,37 +184,37 @@ export function URLMonitoringPage({
   }
 
   const statusCounts = useMemo(() => {
-    const total = tableData.length
+    const total = targetRows.length
 
-    const success = tableData.filter(row => {
+    const success = targetRows.filter(row => {
       const n = getCodeNumber(row.last_http_response_code)
       return n !== null && n >= 200 && n < 300
     }).length
 
-    const redirect = tableData.filter(row => {
+    const redirect = targetRows.filter(row => {
       const n = getCodeNumber(row.last_http_response_code)
       return n !== null && n >= 300 && n < 400
     }).length
 
-    const failure = tableData.filter(row => {
+    const failure = targetRows.filter(row => {
       const n = getCodeNumber(row.last_http_response_code)
       return n !== null && n >= 400
     }).length
 
     return {total, success, redirect, failure}
-  }, [tableData])
+  }, [targetRows])
 
   const displayTableData = useMemo(() => {
-    if (statusFilter === 'all') return tableData
+    if (statusFilter === 'all') return targetRows
 
-    return tableData.filter(row => {
+    return targetRows.filter(row => {
       const n = getCodeNumber(row.last_http_response_code)
       if (n === null) return false
       if (statusFilter === 'success') return n >= 200 && n < 300
       if (statusFilter === 'redirect') return n >= 300 && n < 400
       return n >= 400
     })
-  }, [tableData, statusFilter])
+  }, [targetRows, statusFilter])
 
   const fetchTableData = async (isSubscribed: boolean) => {
     const requestId = requestIdRef.current + 1
@@ -179,16 +247,7 @@ export function URLMonitoringPage({
       if (!isSubscribed || requestId !== requestIdRef.current) return
 
       const mergedData = mergeResultsByUrlMonitoring(results)
-
-      // Influx 결과가 없으면(테스트 환경/백엔드 미연결 등) merge된 row도 0개가 되어
-      // 화면이 비게 됩니다. 그 경우엔 목시드 rows를 넣습니다.
-      const baseRows =
-        mergedData.length > 0 ? mergedData : createMockUrlMonitoringRows()
-
-      // 백엔드에서 method/server/url/region/status까지 함께 내려주기 전,
-      // 화면에 필요한 컬럼들은 목데이터로 채웁니다.
-      const withMockMeta = applyMockUrlMonitoringMeta(baseRows)
-      setTableData(withMockMeta)
+      setTableData(mergedData)
       setIsError(false)
     } catch (e) {
       console.error('Failed to fetch URL monitoring data', e)
@@ -263,6 +322,10 @@ export function URLMonitoringPage({
     }
   }, [cloudAutoRefresh.urlMonitoring])
 
+  useEffect(() => {
+    fetchConfig()
+  }, [fetchConfig])
+
   return (
     <Page className="hosts-page url-monitoring-page">
       <Page.Header fullWidth={true}>
@@ -313,7 +376,6 @@ export function URLMonitoringPage({
                           statusFilter === 'all' ? 'active' : ''
                         }`}
                         // eslint-disable-next-line react/no-unused-class
-                        // active 스타일을 상태별로 더 자연스럽게 보이게 하기 위함
                         data-status="all"
                         onClick={() => setStatusFilter('all')}
                       >
@@ -426,11 +488,13 @@ export function URLMonitoringPage({
           </div>
         </div>
       </Page.Contents>
-      <UrlMonitoringFormSheet
+      <URLMonitoringFormSheet
         isOpen={urlSheet.open}
         onClose={closeUrlSheet}
         mode={urlSheet.mode}
-        initialRow={urlSheet.row}
+        initialTarget={urlSheet.target}
+        onSaved={fetchConfig}
+        notify={notify}
       />
     </Page>
   )
