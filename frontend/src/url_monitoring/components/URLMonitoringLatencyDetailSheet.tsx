@@ -58,7 +58,7 @@ const URL_LATENCY_DETAIL_CHART_OPTIONS = {
   /** Must match `.dygraph-child-container` top in `urlMonitoring.scss` so MaxMarker/Crosshair offsets stay aligned. */
   containerStyle: {
     left: 2,
-    top: 40,
+    top: 24,
     width: 'calc(100% - 4px)',
     height: 'calc(100% - 4px)',
     position: 'absolute' as const,

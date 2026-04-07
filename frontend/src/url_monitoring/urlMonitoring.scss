@@ -737,14 +737,14 @@
     padding: 2px 4px !important;
   }
 
-  /* Reserve empty space above the plot — keep `top` in sync with URL_LATENCY_DETAIL_CHART_OPTIONS.containerStyle.top */
+  /* Match containerStyle top/sides. Shorter top inset lifts the plot; taller bottom margin (vs top+height)
+     leaves room for the static legend under the x-axis without nudging labels. */
   .url-monitoring-latency-detail-sheet__refreshing-graph
     .dygraph-child-container {
-    top: 40px !important;
+    top: 24px !important;
     left: 2px !important;
     width: calc(100% - 4px) !important;
-    /* top + height + ~4px bottom gap = 100% (same rule as previous 18 / 22) */
-    height: calc(100% - 44px) !important;
+    height: calc(100% - 38px) !important;
   }
 
   /* Same as ProcessDetailModal: hide rotated Y-axis title */
