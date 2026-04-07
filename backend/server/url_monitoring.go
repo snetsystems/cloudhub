@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -414,6 +415,166 @@ func (s *Service) DeleteURLMonitoringTarget(w http.ResponseWriter, r *http.Reque
 	msg := fmt.Sprintf(MsgURLMonitoringTargetDeleted.String(), logName)
 	s.logRegistration(ctx, "URLMonitoringTarget", msg)
 	encodeJSON(w, http.StatusOK, toURLMonitoringResponse(updated), s.Logger)
+}
+
+type urlMonitoringBulkAddRequest struct {
+	Targets []urlMonitoringTargetUpsertRequest `json:"targets"`
+}
+
+type urlMonitoringBulkFailedItem struct {
+	Name  string `json:"name"`
+	Error string `json:"error"`
+}
+
+type urlMonitoringBulkAddResponse struct {
+	Succeeded []string                      `json:"succeeded"`
+	Failed    []urlMonitoringBulkFailedItem `json:"failed"`
+}
+
+// BulkAddURLMonitoringTargets upserts multiple targets in a single request.
+// Validate-all-first: invalid rows are collected into Failed without blocking valid rows.
+// conf is deployed once after all valid rows are applied.
+// Returns 200 (all success), 207 (partial), or 400 (all invalid / empty).
+func (s *Service) BulkAddURLMonitoringTargets(w http.ResponseWriter, r *http.Request) {
+	ctx := serverContext(r.Context())
+	orgID, ok := hasOrganizationContext(ctx)
+	if !ok || strings.TrimSpace(orgID) == "" {
+		Error(w, http.StatusUnauthorized, "organization context required", s.Logger)
+		return
+	}
+
+	var req urlMonitoringBulkAddRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	if len(req.Targets) == 0 {
+		Error(w, http.StatusBadRequest, "targets is required", s.Logger)
+		return
+	}
+
+	// Step 1: validate all rows, collect valid/failed.
+	var validTargets []urlMonitoringTargetUpsertRequest
+	var failed []urlMonitoringBulkFailedItem
+
+	for _, t := range req.Targets {
+		t.Name = strings.TrimSpace(t.Name)
+		if t.Name == "" {
+			failed = append(failed, urlMonitoringBulkFailedItem{Name: t.Name, Error: "name is required"})
+			continue
+		}
+		if strings.TrimSpace(t.URL) == "" {
+			failed = append(failed, urlMonitoringBulkFailedItem{Name: t.Name, Error: "url is required"})
+			continue
+		}
+		if strings.TrimSpace(t.Interval) == "" {
+			t.Interval = "1m"
+		}
+		if strings.TrimSpace(t.ResponseTimeout) == "" {
+			t.ResponseTimeout = "5s"
+		}
+		if strings.TrimSpace(t.Method) == "" {
+			t.Method = "GET"
+		}
+		validTargets = append(validTargets, t)
+	}
+
+	if len(validTargets) == 0 {
+		encodeJSON(w, http.StatusBadRequest, urlMonitoringBulkAddResponse{
+			Succeeded: []string{},
+			Failed:    failed,
+		}, s.Logger)
+		return
+	}
+
+	// Step 2: load or create parent in-memory.
+	m, err := s.Store.URLMonitoring(ctx).Get(ctx, orgID)
+	parentExists := true
+	if err == cloudhub.ErrURLMonitoringNotFound {
+		parentExists = false
+		collectorServer, _ := s.assignURLMonitoringCollector(ctx, orgID)
+		m = &cloudhub.URLMonitoring{
+			OrgID:           orgID,
+			CollectorServer: collectorServer,
+			Targets:         []cloudhub.URLMonitoringTarget{},
+		}
+	} else if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	if m.Targets == nil {
+		m.Targets = []cloudhub.URLMonitoringTarget{}
+	}
+
+	// Step 3: upsert valid targets by case-insensitive name.
+	var succeeded []string
+	for _, t := range validTargets {
+		foundIdx := -1
+		for i := range m.Targets {
+			if strings.EqualFold(m.Targets[i].Name, t.Name) {
+				foundIdx = i
+				break
+			}
+		}
+		if foundIdx >= 0 {
+			existing := &m.Targets[foundIdx]
+			existing.Name = t.Name
+			existing.URL = t.URL
+			existing.Interval = t.Interval
+			existing.ResponseTimeout = t.ResponseTimeout
+			existing.Method = t.Method
+			existing.AlertRuleID = t.AlertRuleID
+		} else {
+			m.Targets = append(m.Targets, cloudhub.URLMonitoringTarget{
+				Name:            t.Name,
+				URL:             t.URL,
+				Interval:        t.Interval,
+				ResponseTimeout: t.ResponseTimeout,
+				Method:          t.Method,
+				AlertRuleID:     t.AlertRuleID,
+			})
+		}
+		succeeded = append(succeeded, t.Name)
+	}
+
+	// Step 4: deploy conf once.
+	// If deployment fails, all in-memory upserts are discarded (DB not updated).
+	// The caller must retry the full batch.
+	if err := s.applyURLMonitoringToCollector(ctx, m); err != nil {
+		Error(w, http.StatusInternalServerError,
+			fmt.Sprintf("failed to apply url monitoring to collector: %v", err), s.Logger)
+		return
+	}
+
+	// Step 5: persist to DB.
+	if !parentExists {
+		_, err = s.Store.URLMonitoring(ctx).Add(ctx, m)
+	} else {
+		_, err = s.Store.URLMonitoring(ctx).Update(ctx, m)
+	}
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	// Step 6: audit log.
+	msg := fmt.Sprintf(MsgURLMonitoringTargetBulkCreated.String(), strconv.Itoa(len(succeeded)))
+	s.logRegistration(ctx, "URLMonitoringTarget", msg)
+
+	resp := urlMonitoringBulkAddResponse{
+		Succeeded: succeeded,
+		Failed:    failed,
+	}
+	if resp.Failed == nil {
+		resp.Failed = []urlMonitoringBulkFailedItem{}
+	}
+
+	status := http.StatusOK
+	if len(failed) > 0 {
+		status = http.StatusMultiStatus
+	}
+	encodeJSON(w, status, resp, s.Logger)
 }
 
 func (s *Service) applyURLMonitoringToCollector(ctx context.Context, m *cloudhub.URLMonitoring) error {

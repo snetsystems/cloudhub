@@ -531,6 +531,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Keep targets on a separate route root to avoid httprouter wildcard conflicts
 	// with "/cloudhub/v1/url-monitoring/:id".
 	router.POST("/cloudhub/v1/url-monitoring-targets", EnsureEditor(service.AddURLMonitoringTarget))
+	router.POST("/cloudhub/v1/url-monitoring-targets/bulk", EnsureEditor(service.BulkAddURLMonitoringTargets))
 	router.PATCH("/cloudhub/v1/url-monitoring-targets/:targetId", EnsureEditor(service.PatchURLMonitoringTarget))
 	router.DELETE("/cloudhub/v1/url-monitoring-targets/:targetId", EnsureEditor(service.DeleteURLMonitoringTarget))
 	router.POST("/cloudhub/v1/url-monitoring/:id/apply", EnsureEditor(service.ApplyURLMonitoring))
