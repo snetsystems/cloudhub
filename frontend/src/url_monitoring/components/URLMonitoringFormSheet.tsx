@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import classnames from 'classnames'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {Notification} from 'src/types'
 import {URLMonitoringTarget} from 'src/url_monitoring/types'
 import {
@@ -20,10 +21,10 @@ export interface URLMonitoringFormSheetProps {
 }
 
 const COLLECTION_OPTIONS = [
-  {value: '1m', label: '1분'},
-  {value: '2m', label: '2분'},
-  {value: '5m', label: '5분'},
-  {value: '10m', label: '10분'},
+  {value: '1m', label: '1 min'},
+  {value: '2m', label: '2 min'},
+  {value: '5m', label: '5 min'},
+  {value: '10m', label: '10 min'},
 ]
 
 export function URLMonitoringFormSheet({
@@ -78,9 +79,9 @@ export function URLMonitoringFormSheet({
   }, [isOpen, onClose])
 
   const title = useMemo(() => {
-    if (mode === 'edit') return 'URL 수정'
-    if (mode === 'copy') return 'URL 복사'
-    return 'URL 추가하기'
+    if (mode === 'edit') return 'Edit URL'
+    if (mode === 'copy') return 'Copy URL'
+    return 'Add URL'
   }, [mode])
 
   const handleSave = useCallback(async () => {
@@ -149,7 +150,7 @@ export function URLMonitoringFormSheet({
             <button
               type="button"
               className="url-monitoring-form-sheet__close"
-              title="닫기"
+              title="Close"
               onClick={onClose}
             >
               <span className="icon remove" />
@@ -171,13 +172,14 @@ export function URLMonitoringFormSheet({
           <div className="url-monitoring-form-sheet__body">
             <label className="url-monitoring-form-sheet__field">
               <span className="url-monitoring-form-sheet__label">
-                이름 <span className="url-monitoring-form-sheet__req">*</span>
+                Name <span className="url-monitoring-form-sheet__req">*</span>
               </span>
               <input
                 type="text"
                 className="url-monitoring-form-sheet__input"
                 value={name}
                 onChange={e => setName(e.target.value)}
+                placeholder="e.g. Production API"
               />
             </label>
 
@@ -190,12 +192,13 @@ export function URLMonitoringFormSheet({
                 rows={4}
                 value={url}
                 onChange={e => setUrl(e.target.value)}
+                placeholder="https://example.com/api/health"
               />
             </label>
 
             <label className="url-monitoring-form-sheet__field">
               <span className="url-monitoring-form-sheet__label">
-                수집 주기{' '}
+                Collection interval{' '}
                 <span className="url-monitoring-form-sheet__req">*</span>
               </span>
               <select
@@ -214,15 +217,17 @@ export function URLMonitoringFormSheet({
         </FancyScrollbar>
 
         <div className="url-monitoring-form-sheet__footer">
-          <button
-            type="button"
-            className="url-monitoring-form-sheet__save"
-            onClick={handleSave}
+          <ConfirmButton
+            icon="checkmark"
+            text={isLoading ? 'Saving...' : 'Save'}
+            confirmText="Confirm"
+            confirmAction={() => void handleSave()}
+            type="btn-default"
+            size="btn-sm"
+            position="top"
             disabled={isLoading || !name.trim() || !url.trim()}
-          >
-            <span className="icon checkmark" />
-            {isLoading ? '저장 중...' : '저장'}
-          </button>
+            customClass="url-monitoring-form-sheet__save"
+          />
         </div>
       </div>
     </>

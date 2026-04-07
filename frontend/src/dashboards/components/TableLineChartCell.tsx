@@ -1,3 +1,4 @@
+import classnames from 'classnames'
 import moment from 'moment'
 import React, {useMemo, useState} from 'react'
 import {useSelector} from 'react-redux'
@@ -57,6 +58,8 @@ interface Props {
   height?: number
   className?: string
   options?: TableLineChartCellOptions
+  /** Opens detail views etc.; chart area is keyboard-focusable when set */
+  onChartClick?: () => void
 }
 
 interface NormalizedPoint {
@@ -143,6 +146,7 @@ function TableLineChartCell({
   height = DEFAULT_HEIGHT,
   className,
   options,
+  onChartClick,
 }: Props) {
   const timeZone = useSelector(
     (state: {app?: {persisted?: {timeZone?: TimeZones}}}) =>
@@ -448,6 +452,20 @@ function TableLineChartCell({
     suffix,
   ])
 
+  const handleChartActivate = (
+    e:
+      | React.MouseEvent<HTMLDivElement>
+      | React.KeyboardEvent<HTMLDivElement>
+  ) => {
+    if (!onChartClick) return
+    e.stopPropagation()
+    if ('key' in e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return
+      e.preventDefault()
+    }
+    onChartClick()
+  }
+
   const isEmpty = !hasRawValue
   const hoverTooltipText =
     resolvedHoverState?.point.value !== undefined
@@ -489,7 +507,16 @@ function TableLineChartCell({
       ) : (
         <>
           <div className="table-line-cell-tooltip-layer" style={{height}}>
-            <div className="table-line-cell-chart" style={{height}}>
+            <div
+              className={classnames('table-line-cell-chart', {
+                'table-line-cell-chart--clickable': !!onChartClick,
+              })}
+              style={{height}}
+              onClick={onChartClick ? handleChartActivate : undefined}
+              onKeyDown={onChartClick ? handleChartActivate : undefined}
+              role={onChartClick ? 'button' : undefined}
+              tabIndex={onChartClick ? 0 : undefined}
+            >
               <svg
                 className="table-line-cell-svg"
                 viewBox={`0 0 ${VIEW_BOX_WIDTH} ${VIEW_BOX_HEIGHT}`}

@@ -49,9 +49,9 @@ export const mergeResultsByUrlMonitoring = (
             host,
             method,
             server,
-            // 사진 기준 "요청/URL"처럼 method + server를 함께 보여줌
+            // Request/URL column: show method + server together
             url: `${method} ${server}`,
-            // 사진의 "지원"을 host로 표기
+            // "Support" column maps to host
             region: host,
           } as Record<string, HostCellValue>)
 
@@ -62,7 +62,7 @@ export const mergeResultsByUrlMonitoring = (
         }
 
         series.columns.forEach((columnName, index) => {
-          // series.values 각 row의 0번째는 time
+          // First column in each series.values row is time
           if (index === 0) return
 
           const key = canonicalUrlMonitoringColumnKey(columnName)

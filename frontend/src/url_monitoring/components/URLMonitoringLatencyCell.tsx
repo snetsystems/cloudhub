@@ -20,6 +20,7 @@ interface Props {
   rowIndex: number
   timeZone: TimeZones
   chartHeight?: number
+  onChartClick?: () => void
 }
 
 export function URLMonitoringLatencyCell({
@@ -28,12 +29,14 @@ export function URLMonitoringLatencyCell({
   rowIndex: _rowIndex,
   timeZone: _timeZone,
   chartHeight: _chartHeight,
+  onChartClick,
 }: Props) {
   return (
     <TableLineChartCell
       color={LATENCY_LINE_COLOR}
       values={toLineValues(value)}
       height={34}
+      onChartClick={onChartClick}
       options={{
         isShowLine: true,
         isShowPoint: false,

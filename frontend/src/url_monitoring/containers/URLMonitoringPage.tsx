@@ -27,6 +27,7 @@ import {
   URLMonitoringFormSheet,
   URLMonitoringSheetMode,
 } from 'src/url_monitoring/components/URLMonitoringFormSheet'
+import {URLMonitoringLatencyDetailSheet} from 'src/url_monitoring/components/URLMonitoringLatencyDetailSheet'
 import {URLMonitoring, URLMonitoringTarget} from 'src/url_monitoring/types'
 import {
   getURLMonitoring,
@@ -104,6 +105,9 @@ export function URLMonitoringPage({
     target: URLMonitoringTarget | null
   }>({open: false, mode: 'add', target: null})
 
+  const [latencyDetailRow, setLatencyDetailRow] =
+    useState<DataTableObject | null>(null)
+
   const openUrlSheet = useCallback(
     (mode: URLMonitoringSheetMode, row?: DataTableObject | null) => {
       const target =
@@ -119,6 +123,14 @@ export function URLMonitoringPage({
 
   const closeUrlSheet = useCallback(() => {
     setUrlSheet(s => ({...s, open: false}))
+  }, [])
+
+  const openLatencyDetail = useCallback((row: DataTableObject) => {
+    setLatencyDetailRow(row)
+  }, [])
+
+  const closeLatencyDetail = useCallback(() => {
+    setLatencyDetailRow(null)
   }, [])
 
   const handleDeleteRow = useCallback(
@@ -173,8 +185,9 @@ export function URLMonitoringPage({
         onEditRow: row => openUrlSheet('edit', row),
         onCopyRow: row => openUrlSheet('copy', row),
         onDeleteRow: handleDeleteRow,
+        onLatencyChartClick: openLatencyDetail,
       }),
-    [openUrlSheet, handleDeleteRow]
+    [openUrlSheet, handleDeleteRow, openLatencyDetail]
   )
 
   const getCodeNumber = (code: any): number | null => {
@@ -406,7 +419,7 @@ export function URLMonitoringPage({
                   columns={columns}
                   isLoading={isTableLoading}
                   isSearchDisplay={true}
-                  searchPlaceholder="URL로 필터링..."
+                  searchPlaceholder="Filter by URL..."
                   isDotKey={false}
                   enableSharedChartHover={true}
                   fancyScroll={true}
@@ -423,7 +436,7 @@ export function URLMonitoringPage({
                         onClick={() => setStatusFilter('all')}
                       >
                         <span className="url-monitoring-summary__label url-monitoring-summary__label--total">
-                          전체
+                          All
                         </span>
                         <span className="url-monitoring-summary__count">
                           {statusCounts.total}
@@ -439,7 +452,7 @@ export function URLMonitoringPage({
                         onClick={() => setStatusFilter('success')}
                       >
                         <span className="url-monitoring-summary__label url-monitoring-summary__label--success">
-                          성공
+                          Success
                         </span>
                         <span className="url-monitoring-summary__count">
                           {statusCounts.success}
@@ -455,7 +468,7 @@ export function URLMonitoringPage({
                         onClick={() => setStatusFilter('redirect')}
                       >
                         <span className="url-monitoring-summary__label url-monitoring-summary__label--redirect">
-                          리다이렉트
+                          Redirect
                         </span>
                         <span className="url-monitoring-summary__count">
                           {statusCounts.redirect}
@@ -471,7 +484,7 @@ export function URLMonitoringPage({
                         onClick={() => setStatusFilter('failure')}
                       >
                         <span className="url-monitoring-summary__label url-monitoring-summary__label--failure">
-                          실패
+                          Failed
                         </span>
                         <span className="url-monitoring-summary__count">
                           {statusCounts.failure}
@@ -485,33 +498,33 @@ export function URLMonitoringPage({
                         <button
                           type="button"
                           className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
-                          title="가져오기"
+                          title="Import"
                           onClick={() => {
                             /* TODO: import */
                           }}
                         >
                           <span className="icon import" />
-                          가져오기
+                          Import
                         </button>
                         <button
                           type="button"
                           className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
-                          title="내보내기"
+                          title="Export"
                           onClick={() => {
                             /* TODO: export */
                           }}
                         >
                           <span className="icon export" />
-                          내보내기
+                          Export
                         </button>
                         <button
                           type="button"
                           className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--primary"
-                          title="URL 추가하기"
+                          title="Add URL"
                           onClick={() => openUrlSheet('add')}
                         >
                           <span className="icon plus" />
-                          URL 추가하기
+                          Add URL
                         </button>
                       </div>
                       {isRefreshing ? (
@@ -538,6 +551,16 @@ export function URLMonitoringPage({
         initialTarget={urlSheet.target}
         onSaved={fetchConfig}
         notify={notify}
+      />
+      <URLMonitoringLatencyDetailSheet
+        isOpen={!!latencyDetailRow}
+        onClose={closeLatencyDetail}
+        row={latencyDetailRow}
+        source={source}
+        urlMonitoringTimeRange={cloudTimeRange?.urlMonitoring}
+        timeZone={timeZone}
+        notify={notify}
+        chartManualRefresh={manualRefreshState.value}
       />
     </Page>
   )
