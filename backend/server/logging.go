@@ -145,10 +145,11 @@ const (
 	MsgDeviceMappingAutoRegistered = logMessage("Device mapping %s has been auto-registered.")
 
 	// URL Monitoring
-	MsgURLMonitoringDeleted       = logMessage("URLMonitoring %s has been deleted.")
-	MsgURLMonitoringTargetCreated = logMessage("URLMonitoringTarget %s has been created.")
+	MsgURLMonitoringDeleted        = logMessage("URLMonitoring %s has been deleted.")
+	MsgURLMonitoringTargetCreated  = logMessage("URLMonitoringTarget %s has been created.")
 	MsgURLMonitoringTargetModified = logMessage("URLMonitoringTarget %s has been modified.")
 	MsgURLMonitoringTargetDeleted  = logMessage("URLMonitoringTarget %s has been deleted.")
+	MsgURLMonitoringTargetBulkCreated = logMessage("URLMonitoringTarget bulk %s targets have been created or updated.")
 )
 
 type proxyLogRequest struct {

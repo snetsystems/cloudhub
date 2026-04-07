@@ -1,4 +1,4 @@
-// URL Monitoring 전용 — host.scss(공용 호스트 UI)와 분리
+// URL Monitoring only — separate from host.scss (shared host UI)
 
 .url-monitoring-page .url-monitoring-table {
   // sticky header for thead
@@ -46,10 +46,11 @@
   }
 
   .url-monitoring-row-actions__btn {
+    position: relative;
     box-sizing: border-box;
-    width: 28px;
-    min-width: 28px;
-    height: 28px;
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
     padding: 0;
     line-height: 1;
     display: inline-flex;
@@ -65,9 +66,18 @@
     &:focus {
       outline: none;
     }
+
+    &.confirm-button .confirm-button--confirmation {
+      min-height: 34px;
+      padding: 8px 14px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 
-  // .hosts-page .panel-body .table tr > td { height: 60px } 보다 우선 (specificity + 로드 순서)
+  // Overrides .hosts-page .panel-body .table tr > td { height: 60px } (specificity + load order)
   table.table tbody tr > td {
     height: auto;
     min-height: 52px;
@@ -318,6 +328,33 @@
     font-size: 13px;
     padding: 8px 10px;
 
+    &::placeholder {
+      color: $g11-sidewalk;
+      opacity: 1;
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    &::-webkit-input-placeholder {
+      color: $g11-sidewalk;
+      opacity: 1;
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    &::-moz-placeholder {
+      color: $g11-sidewalk;
+      opacity: 1;
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    &:-ms-input-placeholder {
+      color: $g11-sidewalk;
+      font-style: italic;
+      font-weight: 500;
+    }
+
     &:focus {
       outline: none;
       border-color: rgba($s-orange, 0.65);
@@ -549,6 +586,7 @@
   }
 
   .url-monitoring-form-sheet__save {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -578,5 +616,241 @@
       background-color: darken($s-orange, 5%);
       border-color: darken($s-orange, 5%);
     }
+  }
+}
+
+.url-monitoring-latency-detail-sheet {
+  &.modal-content {
+    max-height: 100vh;
+    width: 720px;
+    max-width: 96vw;
+    min-width: 380px;
+  }
+
+  .url-monitoring-latency-detail-sheet__scroll.fancy-scroll--container {
+    min-height: 0;
+  }
+
+  .url-monitoring-latency-detail-sheet__header {
+    display: flex;
+    align-items: flex-start;
+    padding: 14px 16px;
+    flex-shrink: 0;
+    border-bottom: 1px solid $g4-onyx;
+    background-color: $g2-kevlar;
+  }
+
+  .url-monitoring-latency-detail-sheet__header-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .url-monitoring-latency-detail-sheet__close {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 4px;
+    margin: 0;
+    cursor: pointer;
+    color: #ffffff;
+    line-height: 0;
+    opacity: 0.85;
+    flex-shrink: 0;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    .icon {
+      font-size: 18px;
+    }
+  }
+
+  .url-monitoring-latency-detail-sheet__titles {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .url-monitoring-latency-detail-sheet__title {
+    margin: 0 0 4px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .url-monitoring-latency-detail-sheet__subtitle {
+    font-size: 12px;
+    line-height: 1.4;
+    color: $g12-forge;
+    word-break: break-all;
+    max-height: 3.9em;
+    overflow: hidden;
+  }
+
+  .url-monitoring-latency-detail-sheet__body {
+    padding: 16px 18px 28px;
+  }
+
+  .url-monitoring-latency-detail-sheet__section-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: $g15-platinum;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    &--table {
+      margin-top: 22px;
+    }
+  }
+
+  .url-monitoring-latency-detail-sheet__chart {
+    margin-bottom: 4px;
+  }
+
+  .url-monitoring-latency-detail-sheet__refreshing-graph {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 288px;
+    min-height: 288px;
+    background-color: $g3-castle;
+    border-radius: 4px;
+    overflow: visible;
+
+    /* Let AutoSizer (RefreshingGraph) root receive vertical space */
+    > div {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100% !important;
+    }
+  }
+
+  .url-monitoring-latency-detail-sheet__refreshing-graph .dygraph .dygraph-child {
+    padding: 2px 4px !important;
+  }
+
+  /* Reserve empty space above the plot — keep `top` in sync with URL_LATENCY_DETAIL_CHART_OPTIONS.containerStyle.top */
+  .url-monitoring-latency-detail-sheet__refreshing-graph
+    .dygraph-child-container {
+    top: 40px !important;
+    left: 2px !important;
+    width: calc(100% - 4px) !important;
+    /* top + height + ~4px bottom gap = 100% (same rule as previous 18 / 22) */
+    height: calc(100% - 44px) !important;
+  }
+
+  /* Same as ProcessDetailModal: hide rotated Y-axis title */
+  .url-monitoring-latency-detail-sheet__refreshing-graph .dygraph-ylabel,
+  .url-monitoring-latency-detail-sheet__refreshing-graph .dygraph-y2label {
+    display: none !important;
+  }
+
+  .url-monitoring-latency-detail-sheet__refreshing-graph
+    .dygraph-axis-label-y,
+  .url-monitoring-latency-detail-sheet__refreshing-graph
+    .dygraph-axis-label-y2 {
+    white-space: nowrap !important;
+  }
+
+  .url-monitoring-latency-detail-sheet__refreshing-graph .static-legend {
+    bottom: 0;
+    left: 2px;
+    padding-top: 2px;
+    width: calc(100% - 4px);
+    max-height: 24px;
+  }
+
+  .url-monitoring-latency-detail-sheet__refreshing-graph
+    .static-graph-static-legend {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 2px 6px;
+    padding-top: 0;
+    padding-bottom: 0;
+    max-height: 24px;
+    grid-template-columns: unset !important;
+    width: max-content !important;
+    max-width: 100%;
+  }
+
+  .url-monitoring-latency-detail-sheet__refreshing-graph .static-legend--item,
+  .url-monitoring-latency-detail-sheet__refreshing-graph .static-legend--single,
+  .url-monitoring-latency-detail-sheet__refreshing-graph
+    .static-graph-static-legend--item,
+  .url-monitoring-latency-detail-sheet__refreshing-graph
+    .static-graph-static-legend--single {
+    height: 16px;
+    line-height: 16px;
+    font-size: 10px;
+    padding: 0 4px;
+    margin: 1px;
+  }
+
+  .url-monitoring-latency-detail-sheet__chart-empty {
+    margin: 0;
+    padding: 20px 12px;
+    font-size: 13px;
+    color: $g12-forge;
+    line-height: 1.45;
+  }
+
+  .url-monitoring-latency-detail-sheet__loading {
+    display: flex;
+    justify-content: center;
+    padding: 28px 12px;
+  }
+
+  .url-monitoring-latency-detail-sheet__empty {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: $g12-forge;
+    line-height: 1.45;
+  }
+
+  .url-monitoring-latency-detail-sheet__table-scroll {
+    margin-top: 4px;
+    border: 1px solid $g4-onyx;
+    border-radius: 4px;
+    background-color: $g2-kevlar;
+  }
+
+  .url-monitoring-latency-detail-sheet__table {
+    margin: 0;
+    font-size: 12px;
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background-color: $g3-castle;
+      color: $g15-platinum;
+      border-bottom: 1px solid $g4-onyx;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      vertical-align: middle;
+      color: $g17-whisper;
+    }
+  }
+
+  .url-monitoring-latency-detail-sheet__code {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 12px;
   }
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 import {AlignType, ColumnInfo, DataTableObject} from 'src/types'
 import {TableLineChartPoint, TimeSeriesValue} from 'src/types/series'
+import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {URLMonitoringLatencyCell} from 'src/url_monitoring/components/URLMonitoringLatencyCell'
 
 type LatencyCell =
@@ -17,11 +18,16 @@ type StatusCodeCell =
   | null
   | undefined
 
+/** Shown when last_http_response_code is missing (e.g. not returned from Influx) */
+const MISSING_HTTP_STATUS_LABEL = 'No code'
+const MISSING_HTTP_STATUS_TITLE =
+  'No HTTP status code in recent data. Check your query and collection settings.'
+
 const getStatusColor = (statusCode: number | null) => {
   if (statusCode === null) return '#6b7280'
   if (statusCode >= 200 && statusCode < 300) return '#4ed8a0'
   if (statusCode >= 300 && statusCode < 400) return '#63b3ff'
-  // 빨간 계열(4xx/5xx) 동일 컬러
+  // Same red tone for 4xx / 5xx
   if (statusCode >= 400) return '#ff4d4f'
   return '#6b7280'
 }
@@ -39,6 +45,7 @@ export interface UrlMonitoringColumnHandlers {
   onEditRow?: (row: DataTableObject) => void
   onCopyRow?: (row: DataTableObject) => void
   onDeleteRow?: (row: DataTableObject) => void
+  onLatencyChartClick?: (row: DataTableObject) => void
 }
 
 export const urlMonitoringColumns = (
@@ -46,7 +53,7 @@ export const urlMonitoringColumns = (
 ): ColumnInfo[] => [
   {
     key: 'last_http_response_code',
-    name: '현재 Status Code',
+    name: 'Status code',
     align: AlignType.CENTER,
     options: {
       thead: {align: AlignType.CENTER, className: 'url-monitoring-status-th'},
@@ -70,16 +77,16 @@ export const urlMonitoringColumns = (
             fontWeight: 800,
             fontSize: 14,
           }}
-          title={code === null ? 'N/A' : String(code)}
+          title={code === null ? MISSING_HTTP_STATUS_TITLE : String(code)}
         >
-          {code ?? '--'}
+          {code ?? MISSING_HTTP_STATUS_LABEL}
         </div>
       )
     },
   },
   {
     key: 'url',
-    name: '요청/URL',
+    name: 'Request / URL',
     align: AlignType.LEFT,
     options: {
       thead: {align: AlignType.LEFT, className: 'url-monitoring-url-th'},
@@ -108,7 +115,7 @@ export const urlMonitoringColumns = (
   },
   {
     key: 'response_time_ms',
-    name: '평균 응답시간',
+    name: 'Avg. response time',
     align: AlignType.RIGHT,
     options: {
       thead: {align: AlignType.RIGHT},
@@ -120,6 +127,12 @@ export const urlMonitoringColumns = (
         rowData={rowData as DataTableObject}
         rowIndex={rowIndex}
         timeZone={tz}
+        onChartClick={
+          handlers?.onLatencyChartClick
+            ? () =>
+                handlers.onLatencyChartClick?.(rowData as DataTableObject)
+            : undefined
+        }
       />
     ),
   },
@@ -138,7 +151,7 @@ export const urlMonitoringColumns = (
         <button
           type="button"
           className="btn btn-xs btn-default url-monitoring-row-actions__btn"
-          title="수정"
+          title="Edit"
           onClick={e => {
             e.stopPropagation()
             handlers?.onEditRow?.(rowData as DataTableObject)
@@ -149,7 +162,7 @@ export const urlMonitoringColumns = (
         <button
           type="button"
           className="btn btn-xs btn-default url-monitoring-row-actions__btn"
-          title="복사"
+          title="Copy"
           onClick={e => {
             e.stopPropagation()
             handlers?.onCopyRow?.(rowData as DataTableObject)
@@ -157,17 +170,18 @@ export const urlMonitoringColumns = (
         >
           <span className="icon duplicate" aria-hidden />
         </button>
-        <button
-          type="button"
-          className="btn btn-xs btn-default url-monitoring-row-actions__btn"
-          title="삭제"
-          onClick={e => {
-            e.stopPropagation()
+        <ConfirmButton
+          type="btn-default"
+          size="btn-xs"
+          square={true}
+          icon="trash"
+          isEventStopPropagation={true}
+          confirmText="Confirm"
+          confirmAction={() =>
             handlers?.onDeleteRow?.(rowData as DataTableObject)
-          }}
-        >
-          <span className="icon trash" aria-hidden />
-        </button>
+          }
+          customClass="url-monitoring-row-actions__btn"
+        />
       </div>
     ),
   },

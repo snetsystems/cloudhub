@@ -19,9 +19,7 @@ const mockStatusCodeFor = (host: unknown, method: unknown, server: unknown) => {
   const h = hashString(`${host}|||${method}|||${server}`)
   const r = h % 100
 
-  // 테스트용 분포:
-  // - 200번대는 줄이고
-  // - 400/500번대를 늘려서 빨간 배지(에러) 비중이 더 크게 보이도록 함
+  // Test distribution: fewer 2xx, more 4xx/5xx so error badges are more visible
   if (r < 50) return 200 // 50%
   if (r < 60) return 302 // 10%
   if (r < 85) return 404 // 25%
@@ -36,8 +34,8 @@ const mockUrlFor = (method: unknown, server: unknown) => {
 }
 
 /**
- * 백엔드 API 연결 전, 리스트뷰에 필요한 필드(status code, URL, 지원)를 임시로 채웁니다.
- * - URL Monitoring 쿼리 결과의 latency(response_time_ms)는 그대로 사용합니다.
+ * Before backend API wiring: fill list-view fields (status code, URL, support) with mock data.
+ * Keeps latency (response_time_ms) from URL Monitoring query results as-is.
  */
 export const applyMockUrlMonitoringMeta = (
   rows: DataTableObject[]
@@ -57,8 +55,8 @@ export const applyMockUrlMonitoringMeta = (
 }
 
 const makeResponseTimeSeries = (seed: number): TableLineChartPoint[] => {
-  // sparkline을 "평평하게" 보이지 않게, time bucket별로 약간의 변동을 준다.
-  // TableLineChartCell -> toLineValues()에서 time/value 필드를 그대로 사용함.
+  // Small per-bucket variation so sparklines are not perfectly flat.
+  // TableLineChartCell -> toLineValues() uses time/value as-is.
   return Array.from({length: 14}).map((_, i) => {
     const t = i
     const base = 220 + (seed % 7) * 18
@@ -70,9 +68,9 @@ const makeResponseTimeSeries = (seed: number): TableLineChartPoint[] => {
 }
 
 /**
- * Influx 결과가 0일 때 화면이 비지 않도록 최소 테스트 rows를 생성합니다.
- * - columns에서 요구하는 key: host/method/server, response_time_ms
- * - applyMockUrlMonitoringMeta()가 url/region/last_http_response_code를 보강합니다.
+ * When Influx returns no rows, create minimal test rows so the UI is not empty.
+ * Required keys for columns: host/method/server, response_time_ms
+ * applyMockUrlMonitoringMeta() fills url/region/last_http_response_code.
  */
 export const createMockUrlMonitoringRows = (): DataTableObject[] => {
   const hosts = ['10.0.0.11', '10.0.0.12', '10.0.1.21', '10.0.2.7']
@@ -91,7 +89,7 @@ export const createMockUrlMonitoringRows = (): DataTableObject[] => {
           response_time_ms: makeResponseTimeSeries(idx + host.length),
         })
         idx += 1
-        // 스크롤이 생기도록 충분히 많이 생성합니다.
+        // Enough rows to exercise scrolling.
         if (rows.length >= 36) return rows
       }
     }

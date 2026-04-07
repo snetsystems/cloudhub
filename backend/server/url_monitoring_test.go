@@ -741,3 +741,204 @@ func TestPatchURLMonitoringTarget_UpdatesByID(t *testing.T) {
 		t.Fatalf("expected responseTimeout=10s method=POST, got timeout=%q method=%q", got.ResponseTimeout, got.Method)
 	}
 }
+
+// ─── BulkAddURLMonitoringTargets tests ────────────────────────────────────
+
+// newBulkService returns a Service wired with the given stub and a real-enough
+// platform for BulkAddURLMonitoringTargets tests.
+func newBulkService(t *testing.T, stub *urlMonitoringStoreStub, hasParent bool) *Service {
+	t.Helper()
+	store := &mocks.Store{
+		OrganizationsStore: &mocks.OrganizationsStore{
+			GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+				id := "org-1"
+				if q.ID != nil {
+					id = *q.ID
+				}
+				return &cloudhub.Organization{ID: id, Name: "myorg"}, nil
+			},
+		},
+		SourcesStore: &mocks.SourcesStore{
+			AllF: func(ctx context.Context) ([]cloudhub.Source, error) {
+				return []cloudhub.Source{{ID: 1, URL: "http://influx:8086"}}, nil
+			},
+		},
+		URLMonitoringStore: stub,
+	}
+	platform := &mocks.MockPlatform{
+		GetActiveCollectorsFunc: func(ctx context.Context) ([]string, map[string]bool, error) {
+			return []string{"collector-1"}, nil, nil
+		},
+		VerifyCollectorReadyFunc: func(ctx context.Context, collectorName string) error { return nil },
+		DeployTelegrafConfigFunc: func(ctx context.Context, collectorName, configName, content string) error {
+			return nil
+		},
+		RestartTelegrafFunc: func(ctx context.Context, collectorName string) error { return nil },
+	}
+	templatesManager := &LocalMockTemplatesManager{
+		GetF: func(ctx context.Context, id string) (cloudhub.ConfigTemplate, error) {
+			return cloudhub.ConfigTemplate{Template: testURLMonitoringTemplate}, nil
+		},
+	}
+	return &Service{
+		Store: store,
+		InternalENV: cloudhub.InternalEnvironment{
+			Platform:            platform,
+			TemplatesManager:    templatesManager,
+			URLMonitoringConfig: cloudhub.URLMonitoringConfig{TelegrafPath: "/etc/telegraf"},
+		},
+		Logger: mocks.NewLogger(),
+	}
+}
+
+func doBulkRequest(t *testing.T, svc *Service, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	ctx := context.WithValue(context.Background(), organizations.ContextKey, "org-1")
+	router := httprouter.New()
+	router.POST("/cloudhub/v1/url-monitoring-targets/bulk", svc.BulkAddURLMonitoringTargets)
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v1/url-monitoring-targets/bulk", bytes.NewBufferString(body))
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	return rr
+}
+
+func TestBulkAddURLMonitoringTargets_AllSuccess(t *testing.T) {
+	stub := &urlMonitoringStoreStub{monitoring: &cloudhub.URLMonitoring{
+		ID: "um-1", OrgID: "org-1", CollectorServer: "collector-1",
+		Targets: []cloudhub.URLMonitoringTarget{},
+	}}
+	svc := newBulkService(t, stub, true)
+
+	body := `{"targets":[
+		{"name":"A","url":"https://a.com","interval":"1m"},
+		{"name":"B","url":"https://b.com","interval":"5m"}
+	]}`
+	rr := doBulkRequest(t, svc, body)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rr.Code, rr.Body.String())
+	}
+	var resp struct {
+		Succeeded []string `json:"succeeded"`
+		Failed    []struct {
+			Name  string `json:"name"`
+			Error string `json:"error"`
+		} `json:"failed"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(resp.Succeeded) != 2 {
+		t.Fatalf("expected 2 succeeded, got %d", len(resp.Succeeded))
+	}
+	if len(resp.Failed) != 0 {
+		t.Fatalf("expected 0 failed, got %d", len(resp.Failed))
+	}
+	if len(stub.monitoring.Targets) != 2 {
+		t.Fatalf("expected 2 targets in store, got %d", len(stub.monitoring.Targets))
+	}
+}
+
+func TestBulkAddURLMonitoringTargets_PartialFailure(t *testing.T) {
+	stub := &urlMonitoringStoreStub{monitoring: &cloudhub.URLMonitoring{
+		ID: "um-1", OrgID: "org-1", CollectorServer: "collector-1",
+		Targets: []cloudhub.URLMonitoringTarget{},
+	}}
+	svc := newBulkService(t, stub, true)
+
+	// 유효 2개 + url 누락 1개
+	body := `{"targets":[
+		{"name":"A","url":"https://a.com","interval":"1m"},
+		{"name":"B","url":"https://b.com","interval":"5m"},
+		{"name":"C","url":""}
+	]}`
+	rr := doBulkRequest(t, svc, body)
+
+	if rr.Code != http.StatusMultiStatus {
+		t.Fatalf("expected 207, got %d body=%s", rr.Code, rr.Body.String())
+	}
+	var resp struct {
+		Succeeded []string `json:"succeeded"`
+		Failed    []struct {
+			Name  string `json:"name"`
+			Error string `json:"error"`
+		} `json:"failed"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(resp.Succeeded) != 2 {
+		t.Fatalf("expected 2 succeeded, got %d: %v", len(resp.Succeeded), resp.Succeeded)
+	}
+	if len(resp.Failed) != 1 {
+		t.Fatalf("expected 1 failed, got %d", len(resp.Failed))
+	}
+	if resp.Failed[0].Name != "C" {
+		t.Fatalf("expected failed name=C, got %q", resp.Failed[0].Name)
+	}
+	if len(stub.monitoring.Targets) != 2 {
+		t.Fatalf("expected 2 targets saved, got %d", len(stub.monitoring.Targets))
+	}
+}
+
+func TestBulkAddURLMonitoringTargets_AllFail_Returns400(t *testing.T) {
+	stub := &urlMonitoringStoreStub{monitoring: &cloudhub.URLMonitoring{
+		ID: "um-1", OrgID: "org-1", CollectorServer: "collector-1",
+		Targets: []cloudhub.URLMonitoringTarget{},
+	}}
+	svc := newBulkService(t, stub, true)
+
+	body := `{"targets":[
+		{"name":"","url":""},
+		{"name":"B","url":""}
+	]}`
+	rr := doBulkRequest(t, svc, body)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestBulkAddURLMonitoringTargets_EmptyTargets_Returns400(t *testing.T) {
+	stub := &urlMonitoringStoreStub{monitoring: &cloudhub.URLMonitoring{
+		ID: "um-1", OrgID: "org-1", CollectorServer: "collector-1",
+		Targets: []cloudhub.URLMonitoringTarget{},
+	}}
+	svc := newBulkService(t, stub, true)
+
+	rr := doBulkRequest(t, svc, `{"targets":[]}`)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestBulkAddURLMonitoringTargets_UpsertByName(t *testing.T) {
+	// 기존 target "Foo" 가 있고, bulk에 "foo"(소문자) 로 업데이트 시도
+	stub := &urlMonitoringStoreStub{monitoring: &cloudhub.URLMonitoring{
+		ID: "um-1", OrgID: "org-1", CollectorServer: "collector-1",
+		Targets: []cloudhub.URLMonitoringTarget{
+			{ID: "t1", Name: "Foo", URL: "https://old.com", Interval: "1m", ResponseTimeout: "5s", Method: "GET"},
+		},
+	}}
+	svc := newBulkService(t, stub, true)
+
+	body := `{"targets":[{"name":"foo","url":"https://new.com","interval":"2m"}]}`
+	rr := doBulkRequest(t, svc, body)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rr.Code, rr.Body.String())
+	}
+	// target 수는 그대로 1개 (upsert, not insert)
+	if len(stub.monitoring.Targets) != 1 {
+		t.Fatalf("expected 1 target (upserted), got %d", len(stub.monitoring.Targets))
+	}
+	if stub.monitoring.Targets[0].URL != "https://new.com" {
+		t.Fatalf("expected url updated, got %q", stub.monitoring.Targets[0].URL)
+	}
+	if stub.monitoring.Targets[0].ID != "t1" {
+		t.Fatalf("expected original ID preserved, got %q", stub.monitoring.Targets[0].ID)
+	}
+}

@@ -1,3 +1,4 @@
+import type {AxiosResponse} from 'axios'
 import AJAX from 'src/utils/ajax'
 import {URLMonitoring} from '../types'
 
@@ -65,6 +66,48 @@ export const deleteURLMonitoringTarget = async (
     method: 'DELETE',
   })
   return data as URLMonitoring
+}
+
+export interface URLMonitoringBulkAddResponse {
+  succeeded: string[]
+  failed: Array<{name: string; error: string}>
+}
+
+/** CloudHub JSON error shape from server.Error(). */
+interface CloudhubJSONErrorBody {
+  code?: number
+  message?: string
+}
+
+export const bulkAddURLMonitoringTargets = async (
+  targets: URLMonitoringTargetUpsertRequest[]
+): Promise<URLMonitoringBulkAddResponse> => {
+  // Backend returns 207 (partial), 200 (all ok), or 400 when every row is invalid
+  // (body still has succeeded/failed). Axios would otherwise reject 400 and hide the body.
+  const res = (await AJAX({
+    url: `${TARGETS_BASE}/bulk`,
+    method: 'POST',
+    data: {targets},
+    validateStatus: status =>
+      status === 200 || status === 207 || status === 400,
+  })) as AxiosResponse<URLMonitoringBulkAddResponse | CloudhubJSONErrorBody>
+
+  const {status, data} = res
+
+  if (status === 400 && data && typeof data === 'object') {
+    const bulk = data as URLMonitoringBulkAddResponse
+    if (Array.isArray(bulk.succeeded) && Array.isArray(bulk.failed)) {
+      return bulk
+    }
+    const errBody = data as CloudhubJSONErrorBody
+    throw new Error(errBody.message ?? 'Bad request')
+  }
+
+  if (status !== 200 && status !== 207) {
+    throw new Error('Unexpected bulk import response')
+  }
+
+  return data as URLMonitoringBulkAddResponse
 }
 
 export const applyURLMonitoring = async (id: string): Promise<void> => {
