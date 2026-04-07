@@ -114,17 +114,38 @@ export function URLMonitoringPage({
   const [latencyDetailRow, setLatencyDetailRow] =
     useState<DataTableObject | null>(null)
 
-  const openUrlSheet = useCallback(
-    (mode: URLMonitoringSheetMode, row?: DataTableObject | null) => {
-      const target =
-        row && urlMonitoringConfig
-          ? urlMonitoringConfig.targets.find(
-              t => t.url === String(row.url ?? '')
-            ) ?? null
-          : null
-      setUrlSheet({open: true, mode, target})
+  const findTargetFromRow = useCallback(
+    (row?: DataTableObject | null): URLMonitoringTarget | null => {
+      if (!row || !urlMonitoringConfig?.targets?.length) return null
+
+      const rowId = String(row.id ?? '').trim()
+      if (rowId) {
+        const byId = urlMonitoringConfig.targets.find(
+          t => String(t.id ?? '') === rowId
+        )
+        if (byId) return byId
+      }
+
+      const rowUrl = String(row.url ?? '').trim()
+      const rowName = String(row.name ?? '').trim()
+      return (
+        urlMonitoringConfig.targets.find(
+          t =>
+            String(t.url ?? '').trim() === rowUrl &&
+            String(t.name ?? '').trim() === rowName
+        ) ??
+        null
+      )
     },
     [urlMonitoringConfig]
+  )
+
+  const openUrlSheet = useCallback(
+    (mode: URLMonitoringSheetMode, row?: DataTableObject | null) => {
+      const target = findTargetFromRow(row)
+      setUrlSheet({open: true, mode, target})
+    },
+    [findTargetFromRow]
   )
 
   const closeUrlSheet = useCallback(() => {
@@ -217,9 +238,7 @@ export function URLMonitoringPage({
 
   const handleDeleteRow = useCallback(
     async (row: DataTableObject) => {
-      const target = urlMonitoringConfig?.targets.find(
-        t => t.url === String(row.url ?? '')
-      )
+      const target = findTargetFromRow(row)
       if (!target?.id) return
       try {
         await deleteURLMonitoringTarget(target.id)
@@ -234,7 +253,7 @@ export function URLMonitoringPage({
         })
       }
     },
-    [urlMonitoringConfig, fetchConfig, notify]
+    [findTargetFromRow, fetchConfig, notify]
   )
 
   const influxMetricsByUrl = useMemo(() => {
