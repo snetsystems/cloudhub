@@ -30,9 +30,14 @@ import {
 import {URLMonitoringLatencyDetailSheet} from 'src/url_monitoring/components/URLMonitoringLatencyDetailSheet'
 import {URLMonitoring, URLMonitoringTarget} from 'src/url_monitoring/types'
 import {
+  bulkAddURLMonitoringTargets,
   getURLMonitoring,
   deleteURLMonitoringTarget,
 } from 'src/url_monitoring/apis'
+import {
+  downloadUrlMonitoringTargetsExcel,
+  parseUrlMonitoringExcelBuffer,
+} from 'src/url_monitoring/utils/urlMonitoringExcel'
 
 const TimeRangeDropdownComponent = TimeRangeDropdown as any
 
@@ -76,6 +81,7 @@ export function URLMonitoringPage({
   const [isError, setIsError] = useState(false)
   const requestIdRef = useRef(0)
   const pollIntervalRef = useRef<number | null>(null)
+  const importFileInputRef = useRef<HTMLInputElement>(null)
 
   const [urlMonitoringConfig, setUrlMonitoringConfig] =
     useState<URLMonitoring | null>(null)
@@ -132,6 +138,82 @@ export function URLMonitoringPage({
   const closeLatencyDetail = useCallback(() => {
     setLatencyDetailRow(null)
   }, [])
+
+  const handleExportTargets = useCallback(() => {
+    downloadUrlMonitoringTargetsExcel(urlMonitoringConfig?.targets ?? [])
+  }, [urlMonitoringConfig?.targets])
+
+  const handleImportPickFile = useCallback(() => {
+    importFileInputRef.current?.click()
+  }, [])
+
+  const handleImportFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const input = e.target
+      const file = input.files?.[0]
+      input.value = ''
+      if (!file) return
+
+      try {
+        const buffer = await file.arrayBuffer()
+        const {targets, skippedEmptyRows} = parseUrlMonitoringExcelBuffer(buffer)
+        if (targets.length === 0) {
+          notify({
+            type: 'error',
+            icon: 'alert-triangle',
+            duration: 10000,
+            isHasHTML: false,
+            message:
+              'No targets to import. Check the file: first row must be headers (name, url, interval, …) and data rows must include at least name or URL.',
+          })
+          return
+        }
+
+        const {succeeded, failed} = await bulkAddURLMonitoringTargets(targets)
+        await fetchConfig()
+
+        const parts = [
+          `Imported ${succeeded.length} target(s).`,
+          failed.length
+            ? `Failed: ${failed.map(f => `${f.name}: ${f.error}`).join('; ')}`
+            : null,
+          skippedEmptyRows > 0
+            ? `Skipped ${skippedEmptyRows} empty row(s).`
+            : null,
+        ].filter(Boolean)
+
+        notify({
+          type: failed.length ? 'error' : 'success',
+          icon: failed.length ? 'alert-triangle' : 'checkmark',
+          duration: failed.length ? 15000 : 8000,
+          isHasHTML: false,
+          message: parts.join(' '),
+        })
+      } catch (err) {
+        const fromServer =
+          err &&
+          typeof err === 'object' &&
+          'data' in err &&
+          err.data &&
+          typeof err.data === 'object' &&
+          typeof (err.data as {message?: unknown}).message === 'string'
+            ? (err.data as {message: string}).message
+            : undefined
+        const detail =
+          fromServer ??
+          (err instanceof Error ? err.message : null) ??
+          String(err)
+        notify({
+          type: 'error',
+          icon: 'alert-triangle',
+          duration: 10000,
+          isHasHTML: false,
+          message: `Import failed: ${detail}`,
+        })
+      }
+    },
+    [fetchConfig, notify]
+  )
 
   const handleDeleteRow = useCallback(
     async (row: DataTableObject) => {
@@ -494,14 +576,19 @@ export function URLMonitoringPage({
                   }
                   toprightRender={
                     <div className="url-monitoring-panel-toolbar">
+                      <input
+                        ref={importFileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                        style={{display: 'none'}}
+                        onChange={handleImportFile}
+                      />
                       <div className="url-monitoring-panel-toolbar__actions">
                         <button
                           type="button"
                           className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
                           title="Import"
-                          onClick={() => {
-                            /* TODO: import */
-                          }}
+                          onClick={handleImportPickFile}
                         >
                           <span className="icon import" />
                           Import
@@ -510,9 +597,7 @@ export function URLMonitoringPage({
                           type="button"
                           className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
                           title="Export"
-                          onClick={() => {
-                            /* TODO: export */
-                          }}
+                          onClick={handleExportTargets}
                         >
                           <span className="icon export" />
                           Export
