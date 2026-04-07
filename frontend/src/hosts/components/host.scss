@@ -619,6 +619,8 @@
       width: 50px;
       min-width: 50px;
       text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
@@ -646,6 +648,14 @@
 }
 
 .hosts-page {
+  .host-page-graph-table-container-wrapper.host-page-graph-table-container {
+    margin: 16px;
+    padding: 16px;
+    box-sizing: border-box;
+    width: max-content;
+    min-width: calc(100% - 32px);
+  }
+
   .panel-body {
     .table {
       tr > td {

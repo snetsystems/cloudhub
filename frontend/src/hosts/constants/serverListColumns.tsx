@@ -16,6 +16,8 @@ import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
 import TableLineChartCell from 'src/dashboards/components/TableLineChartCell'
 import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 import {toLineValues} from 'src/dashboards/utils/tableLineChart'
+import AlertStatusIcon from 'src/hosts/components/AlertStatusIcon'
+import {AlertStatusMap} from 'src/hosts/types/alertStatus'
 
 export interface ServerListQuery {
   id: string
@@ -25,6 +27,8 @@ export interface ServerListQuery {
 interface Props {
   sourceID: string
   chartMode?: 'gauge' | 'line'
+  alertStatusMap?: AlertStatusMap
+  onStatusIconClick?: (host: string) => void
 }
 
 const SERVER_LIST_LINE_HEX_BY_PARENT = {
@@ -37,10 +41,35 @@ const SERVER_LIST_LINE_HEX_BY_PARENT = {
 export const serverListColumns = ({
   sourceID,
   chartMode = 'gauge',
+  alertStatusMap = {},
+  onStatusIconClick,
 }: Props): ColumnInfo[] => {
   const isLineChart = chartMode === 'line'
 
   return [
+    {
+      key: 'host',
+      name: 'Status',
+      align: AlignType.CENTER,
+      parentHeader: 'Server',
+      parentHeaderClassName: 'parent-header-server',
+      options: {
+        thead: {
+          align: AlignType.CENTER,
+          className: 'server-status',
+        },
+      },
+      render: (value: string) => {
+        const hostStatus = alertStatusMap[value]
+        const level = hostStatus?.currentLevel ?? 'unknown'
+        return (
+          <AlertStatusIcon
+            status={level}
+            onStatusClick={() => onStatusIconClick && onStatusIconClick(value)}
+          />
+        )
+      },
+    },
     {
       key: 'host',
       name: '서버 호스트',
@@ -98,7 +127,7 @@ export const serverListColumns = ({
                 isShowPoint: false,
                 isFillArea: true,
                 isConnectSeparatedPoints: false,
-                valueLabel: 'maximum',
+                valueLabel: ['maximum', 'average', 'last'],
                 isZeroBaseline: true,
                 areaOpacity: 0.1,
                 pointRadius: 1,
@@ -173,7 +202,7 @@ export const serverListColumns = ({
                 isShowPoint: false,
                 isFillArea: true,
                 isConnectSeparatedPoints: false,
-                valueLabel: 'last',
+                valueLabel: ['maximum', 'average', 'last'],
                 isZeroBaseline: true,
                 valueFormat: FORMAT_OPTIONS.KMG,
               }}
@@ -276,7 +305,7 @@ export const serverListColumns = ({
                 isShowPoint: false,
                 isFillArea: true,
                 isConnectSeparatedPoints: false,
-                valueLabel: 'last',
+                valueLabel: ['maximum', 'average', 'last'],
                 isZeroBaseline: true,
                 valueFormat: FORMAT_OPTIONS.KMG,
               }}
@@ -340,19 +369,26 @@ export const serverListColumns = ({
                   isShowPoint: false,
                   isFillArea: true,
                   isConnectSeparatedPoints: false,
-                  valueLabel: 'last',
+                  valueLabel: ['maximum', 'average', 'last'],
                   isZeroBaseline: true,
                   valueFormat: FORMAT_OPTIONS.KMG,
                 }}
               />
-              <div className="disk-usage-path">{rowData.Path}</div>
+              <div
+                className="ellipsis-text disk-usage-path"
+                title={rowData.Path}
+              >
+                {rowData.Path}
+              </div>
             </>
           )
         }
         return (
           <div className="disk-usage-container">
             <TableGaugeCell options={gaugeOptions} value={value} />
-            <div className="disk-usage-path">{rowData.Path}</div>
+            <div className="ellipsis-text disk-usage-path" title={rowData.Path}>
+              {rowData.Path}
+            </div>
           </div>
         )
       },
@@ -392,12 +428,15 @@ export const serverListColumns = ({
                   isShowPoint: false,
                   isFillArea: true,
                   isConnectSeparatedPoints: false,
-                  valueLabel: 'last',
+                  valueLabel: ['maximum', 'average', 'last'],
                   isZeroBaseline: true,
                   valueFormat: FORMAT_OPTIONS.KMG,
                 }}
               />
-              <div className="disk-io-device">
+              <div
+                className="ellipsis-text disk-io-device"
+                title={formatDiskDeviceLabel(rowData.Device) as string}
+              >
                 {formatDiskDeviceLabel(rowData.Device)}
               </div>
             </>
@@ -406,7 +445,10 @@ export const serverListColumns = ({
         return (
           <div className="disk-io-container">
             <TableGaugeCell options={gaugeOptions} value={value} />
-            <div className="disk-io-device">
+            <div
+              className="ellipsis-text disk-io-device"
+              title={formatDiskDeviceLabel(rowData.Device) as string}
+            >
               {formatDiskDeviceLabel(rowData.Device)}
             </div>
           </div>

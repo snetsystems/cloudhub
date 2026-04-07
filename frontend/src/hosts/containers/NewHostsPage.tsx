@@ -1,7 +1,13 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {Source, Links, RefreshRate, TimeZones} from 'src/types'
 import {Page} from 'src/reusable_ui'
-import {ButtonShape, Radio} from 'src/reusable_ui'
+import {
+  ButtonShape,
+  Radio,
+  Button,
+  ComponentColor,
+  IconFont,
+} from 'src/reusable_ui'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
@@ -29,10 +35,51 @@ import SourceIndicator from 'src/shared/components/SourceIndicator'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import LoadingDots from 'src/shared/components/LoadingDots'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import AlertStatusSummary from 'src/hosts/components/AlertStatusSummary'
+import AlertStatusModal from 'src/hosts/components/AlertStatusModal'
+import {AlertLevel, AlertStatusMap} from 'src/hosts/types/alertStatus'
 
 type HostCellValue = TimeSeriesValue | TimeSeriesValue[] | TableLineChartPoint[]
 type FetchIntent = 'mode-switch' | 'refresh'
 const TimeRangeDropdownComponent = TimeRangeDropdown as any
+
+// ─── Alert query ───────────────────────────────────────
+const ALERT_DB = 'Default'
+
+// 모니터링할 alertName 목록 (TICKscript의 .tag('alertName', ...) 와 일치해야 함)
+const ALERT_NAMES = [
+  'server-cpu-usage',
+  'server-mem-usage',
+  'server-network-traffic',
+  'server-disk-usage',
+  'server-disk-io',
+]
+
+// GROUP BY time() 없이 각 (host, level, alertName)의 가장 최신 이벤트만 가져옴
+// FILL(none): 값 없는 버킷 생략 → OK 회복 이벤트가 null로 사라지지 않음
+const ALERT_QUERY_TEXT = `SELECT last("value") AS "last_value"
+FROM "${ALERT_DB}"."autogen"."cloudhub_alerts"
+WHERE time > :dashboardTime: AND time < :upperDashboardTime:
+  AND (${ALERT_NAMES.map(n => `"alertName"='${n}'`).join(' OR ')})
+GROUP BY "host", "level", "alertName"
+FILL(none)`
+
+// level 우선순위 (높을수록 심각)
+const LEVEL_PRIORITY: Record<AlertLevel, number> = {
+  danger: 3,
+  warn: 2,
+  normal: 1,
+  unknown: 0,
+}
+
+// InfluxDB level 태그 → AlertLevel 매핑
+const mapInfluxLevel = (influxLevel: string): AlertLevel => {
+  const upper = (influxLevel ?? '').toUpperCase()
+  if (upper === 'CRITICAL') return 'danger'
+  if (upper === 'WARNING') return 'warn'
+  if (upper === 'OK') return 'normal'
+  return 'unknown'
+}
 
 export interface ManualRefresh {
   key: string
@@ -68,12 +115,18 @@ export function NewHostsPage({
   )
   const [isTableLoading, setIsTableLoading] = useState(true)
 
+  // Alert 상태 관련 state
+  const [alertStatusMap, setAlertStatusMap] = useState<AlertStatusMap>({})
+  const [selectedAlertHost, setSelectedAlertHost] = useState<string | null>(
+    null
+  )
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false)
+
   const apiHostsResultRef = useRef<any>(null)
 
   useEffect(() => {
     getHosts()
       .then(data => {
-        console.log('getHosts API Result:', data)
         apiHostsResultRef.current = data
       })
       .catch(err => {
@@ -127,8 +180,16 @@ export function NewHostsPage({
 
   const columns = useMemo(
     () =>
-      serverListColumns({sourceID: source.id, chartMode: displayedChartMode}),
-    [source.id, displayedChartMode]
+      serverListColumns({
+        sourceID: source.id,
+        chartMode: displayedChartMode,
+        alertStatusMap,
+        onStatusIconClick: (host: string) => {
+          setSelectedAlertHost(host)
+          setIsAlertModalOpen(true)
+        },
+      }),
+    [source.id, displayedChartMode, alertStatusMap]
   )
 
   useEffect(() => {
@@ -139,6 +200,7 @@ export function NewHostsPage({
       fetchIntent: 'refresh',
       chartMode: displayedChartMode,
     })
+    fetchAlertData()
 
     return () => {
       isSubscribed = false
@@ -182,6 +244,7 @@ export function NewHostsPage({
           fetchIntent: 'refresh',
           chartMode: displayedChartMode,
         })
+        fetchAlertData()
       }, cloudAutoRefresh.serverList)
     }
 
@@ -209,38 +272,51 @@ export function NewHostsPage({
 
     const isModeSwitchFetch = fetchIntent === 'mode-switch'
 
+    setIsError(false)
+
     if (isModeSwitchFetch) {
       setIsModeSwitching(true)
       setIsTableLoading(true)
     } else {
       setIsRefreshing(true)
+      if (isError) {
+        setIsTableLoading(true)
+      }
     }
-
-    const selectedTimeRange = cloudTimeRange?.serverList || {
-      lower: 'now() - 1h',
-      upper: 'now()',
-    }
-
-    const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
-      selectedTimeRange
-    )
-    const templates = [
-      ...generateForHosts(source),
-      dashboardTime,
-      upperDashboardTime,
-    ]
-
-    const selectedQueries =
-      chartMode === 'line' ? serverListLineQueries : serverListQueries
-
-    const querySet = selectedQueries.map(query => ({
-      id: query.id,
-      text: query.text,
-      db: source.telegraf,
-    }))
 
     try {
-      const results = await executeQueries(source, querySet, templates)
+      const selectedTimeRange = cloudTimeRange?.serverList || {
+        lower: 'now() - 1h',
+        upper: 'now()',
+      }
+
+      const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
+        selectedTimeRange
+      )
+      const templates = [
+        ...generateForHosts(source),
+        dashboardTime,
+        upperDashboardTime,
+      ]
+
+      const selectedQueries =
+        chartMode === 'line' ? serverListLineQueries : serverListQueries
+
+      const querySet = selectedQueries.map(query => ({
+        id: query.id,
+        text: query.text,
+        db: source.telegraf,
+      }))
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 15000)
+      )
+
+      const results = (await Promise.race([
+        executeQueries(source, querySet, templates),
+        // new Promise(resolve => setTimeout(resolve, 16000)), // 테스트를 위해 고의로 16초 무한 대기
+        timeoutPromise,
+      ])) as any
       if (!isSubscribed || requestId !== requestIdRef.current) {
         return
       }
@@ -273,6 +349,91 @@ export function NewHostsPage({
     }
   }
 
+  const fetchAlertData = async () => {
+    try {
+      const selectedTimeRange = cloudTimeRange?.serverList || {
+        lower: 'now() - 1h',
+        upper: 'now()',
+      }
+      const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
+        selectedTimeRange
+      )
+      const templates = [
+        ...generateForHosts(source),
+        dashboardTime,
+        upperDashboardTime,
+      ]
+
+      const querySet = [
+        {
+          id: 'server-list-alert-status',
+          text: ALERT_QUERY_TEXT,
+          db: ALERT_DB,
+        },
+      ]
+
+      const results = (await executeQueries(source, querySet, templates)) as any
+
+      const result = results?.[0]?.value
+      if (!result) return
+
+      const series: any[] = result?.results?.[0]?.series ?? []
+
+      // Step 1: (host, alertName)별 가장 최신 이벤트 추출
+      const perAlertLatest: Record<
+        string,
+        Record<string, {time: string; level: AlertLevel}>
+      > = {}
+
+      series.forEach(s => {
+        const host: string = s?.tags?.host
+        const levelTag: string = s?.tags?.level ?? ''
+        const alertName: string = s?.tags?.alertName ?? ''
+        if (!host || !alertName) return
+
+        const level: AlertLevel = mapInfluxLevel(levelTag)
+        const timeIndex = (s.columns ?? []).indexOf('time')
+
+        // last() 쿼리는 series당 row가 1개
+        const row = s?.values?.[0]
+        if (!row) return
+        const eventTime: string | null = timeIndex >= 0 ? row[timeIndex] : null
+        if (!eventTime) return
+
+        if (!perAlertLatest[host]) perAlertLatest[host] = {}
+
+        const existing = perAlertLatest[host][alertName]
+        if (!existing || eventTime > existing.time) {
+          perAlertLatest[host][alertName] = {time: eventTime, level}
+        }
+      })
+
+      // Step 2: host별 alertName 현재 level 중 가장 심각한 것을 currentLevel로
+      const nextMap: AlertStatusMap = {}
+      Object.entries(perAlertLatest).forEach(([host, alertMap]) => {
+        const history = Object.entries(alertMap).map(
+          ([alertName, {time, level}]) => ({
+            time,
+            level,
+            alertName,
+          })
+        )
+
+        const currentLevel = history.reduce<AlertLevel>(
+          (worst, {level}) =>
+            LEVEL_PRIORITY[level] > LEVEL_PRIORITY[worst] ? level : worst,
+          'unknown'
+        )
+
+        nextMap[host] = {currentLevel, history}
+      })
+
+      setAlertStatusMap(nextMap)
+    } catch (err) {
+      console.error('Failed to fetch alert status data', err)
+    }
+  }
+
   return (
     <Page className="hosts-page">
       <Page.Header fullWidth={true}>
@@ -297,25 +458,25 @@ export function NewHostsPage({
         </Page.Header.Right>
       </Page.Header>
       <Page.Contents fullWidth={true}>
-        <div className="host-page-graph-table-container-wrapper">
-          <div className="host-page-graph-table-container table-gauge-chart">
-            {!isError ? (
-              <TableComponent
-                data={tableData || []}
-                bodyClassName="server-list-table"
-                columns={columns}
-                isLoading={isTableLoading}
-                isSearchDisplay={true}
-                isDotKey={true}
-                enableSharedChartHover={displayedChartMode === 'line'}
-                toprightRender={
-                  <div className="topright-render-container">
-                    {isRefreshing ? (
-                      <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
-                    ) : null}
-                  </div>
-                }
-                topLeftRender={
+        <div className="host-page-graph-table-container-wrapper host-page-graph-table-container">
+          {!isError ? (
+            <TableComponent
+              data={tableData || []}
+              bodyClassName="server-list-table"
+              columns={columns}
+              isLoading={isTableLoading}
+              isSearchDisplay={true}
+              isDotKey={true}
+              enableSharedChartHover={displayedChartMode === 'line'}
+              toprightRender={
+                <div className="topright-render-container">
+                  {isRefreshing ? (
+                    <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
+                  ) : null}
+                </div>
+              }
+              topLeftRender={
+                <div className="server-list-topleft">
                   <Radio shape={ButtonShape.Default}>
                     <Radio.Button
                       id="host-chart-mode-gauge"
@@ -344,18 +505,33 @@ export function NewHostsPage({
                       Line
                     </Radio.Button>
                   </Radio>
-                }
-              />
-            ) : (
-              <div className="empty-table-container">
-                <div className="empty-table-content">
-                  <p>No data available</p>
+                  <AlertStatusSummary alertStatusMap={alertStatusMap} />
                 </div>
+              }
+            />
+          ) : (
+            <div className="empty-table-container">
+              <div className="empty-table-content empty-table-retry">
+                <p>Failed to load data or responding too slowly.</p>
+                <Button
+                  text="Retry"
+                  icon={IconFont.Refresh}
+                  onClick={handleManualRefresh}
+                  color={ComponentColor.Primary}
+                />
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </Page.Contents>
+      <AlertStatusModal
+        isVisible={isAlertModalOpen}
+        host={selectedAlertHost ?? ''}
+        alertStatus={
+          selectedAlertHost ? alertStatusMap[selectedAlertHost] ?? null : null
+        }
+        onClose={() => setIsAlertModalOpen(false)}
+      />
     </Page>
   )
 }
