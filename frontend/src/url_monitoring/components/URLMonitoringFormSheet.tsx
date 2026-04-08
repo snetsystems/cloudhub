@@ -1,8 +1,8 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import classnames from 'classnames'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import ConfirmButton from 'src/shared/components/ConfirmButton'
-import {Notification} from 'src/types'
+import Dropdown from 'src/shared/components/Dropdown'
+import {DropdownItem, Notification} from 'src/types'
 import {URLMonitoringTarget} from 'src/url_monitoring/types'
 import {
   addURLMonitoringTarget,
@@ -20,12 +20,30 @@ export interface URLMonitoringFormSheetProps {
   notify: (n: Notification) => void
 }
 
-const COLLECTION_OPTIONS = [
-  {value: '1m', label: '1 min'},
-  {value: '2m', label: '2 min'},
-  {value: '5m', label: '5 min'},
-  {value: '10m', label: '10 min'},
+const COLLECTION_INTERVAL_ITEMS: DropdownItem[] = [
+  {text: '1 min'},
+  {text: '2 min'},
+  {text: '5 min'},
+  {text: '10 min'},
 ]
+
+const INTERVAL_VALUE_BY_LABEL: Record<string, string> = {
+  '1 min': '1m',
+  '2 min': '2m',
+  '5 min': '5m',
+  '10 min': '10m',
+}
+
+const INTERVAL_LABEL_BY_VALUE: Record<string, string> = {
+  '1m': '1 min',
+  '2m': '2 min',
+  '5m': '5 min',
+  '10m': '10 min',
+}
+
+function intervalLabelForValue(value: string): string {
+  return INTERVAL_LABEL_BY_VALUE[value] ?? value
+}
 
 export function URLMonitoringFormSheet({
   isOpen,
@@ -147,14 +165,6 @@ export function URLMonitoringFormSheet({
       >
         <div className="url-monitoring-form-sheet__header">
           <div className="url-monitoring-form-sheet__header-left">
-            <button
-              type="button"
-              className="url-monitoring-form-sheet__close"
-              title="Close"
-              onClick={onClose}
-            >
-              <span className="icon remove" />
-            </button>
             <h2
               id="url-monitoring-sheet-title"
               className="url-monitoring-form-sheet__title"
@@ -196,38 +206,38 @@ export function URLMonitoringFormSheet({
               />
             </label>
 
-            <label className="url-monitoring-form-sheet__field">
+            <div className="url-monitoring-form-sheet__field">
               <span className="url-monitoring-form-sheet__label">
                 Collection interval{' '}
                 <span className="url-monitoring-form-sheet__req">*</span>
               </span>
-              <select
-                className="url-monitoring-form-sheet__select"
-                value={collectionInterval}
-                onChange={e => setCollectionInterval(e.target.value)}
-              >
-                {COLLECTION_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <Dropdown
+                className="dropdown-stretch"
+                items={COLLECTION_INTERVAL_ITEMS}
+                selected={intervalLabelForValue(collectionInterval)}
+                onChoose={item =>
+                  setCollectionInterval(
+                    INTERVAL_VALUE_BY_LABEL[item.text] ?? collectionInterval
+                  )
+                }
+                disabled={isLoading}
+                buttonSize="btn-sm"
+                buttonColor="btn-default"
+              />
+            </div>
           </div>
         </FancyScrollbar>
 
         <div className="url-monitoring-form-sheet__footer">
-          <ConfirmButton
-            icon="checkmark"
-            text={isLoading ? 'Saving...' : 'Save'}
-            confirmText="Confirm"
-            confirmAction={() => void handleSave()}
-            type="btn-default"
-            size="btn-sm"
-            position="top"
+          <button
+            type="button"
+            className="url-monitoring-form-sheet__save"
             disabled={isLoading || !name.trim() || !url.trim()}
-            customClass="url-monitoring-form-sheet__save"
-          />
+            onClick={() => void handleSave()}
+          >
+            <span className="icon checkmark" aria-hidden />
+            {isLoading ? 'Saving...' : 'Save'}
+          </button>
         </div>
       </div>
     </>

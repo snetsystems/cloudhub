@@ -250,26 +250,6 @@
     min-width: 0;
   }
 
-  .url-monitoring-form-sheet__close {
-    appearance: none;
-    border: none;
-    background: transparent;
-    padding: 4px;
-    margin: 0;
-    cursor: pointer;
-    color: #ffffff;
-    line-height: 0;
-    opacity: 0.85;
-
-    &:hover {
-      opacity: 1;
-    }
-
-    .icon {
-      font-size: 18px;
-    }
-  }
-
   .url-monitoring-form-sheet__title {
     margin: 0;
     font-size: 17px;
@@ -317,8 +297,7 @@
   }
 
   .url-monitoring-form-sheet__input,
-  .url-monitoring-form-sheet__textarea,
-  .url-monitoring-form-sheet__select {
+  .url-monitoring-form-sheet__textarea {
     width: 100%;
     box-sizing: border-box;
     border: 1px solid $g5-pepper;
@@ -616,6 +595,12 @@
       background-color: darken($s-orange, 5%);
       border-color: darken($s-orange, 5%);
     }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      pointer-events: none;
+    }
   }
 }
 
@@ -646,27 +631,6 @@
     gap: 10px;
     min-width: 0;
     flex: 1;
-  }
-
-  .url-monitoring-latency-detail-sheet__close {
-    appearance: none;
-    border: none;
-    background: transparent;
-    padding: 4px;
-    margin: 0;
-    cursor: pointer;
-    color: #ffffff;
-    line-height: 0;
-    opacity: 0.85;
-    flex-shrink: 0;
-
-    &:hover {
-      opacity: 1;
-    }
-
-    .icon {
-      font-size: 18px;
-    }
   }
 
   .url-monitoring-latency-detail-sheet__titles {
@@ -733,18 +697,18 @@
     }
   }
 
-  .url-monitoring-latency-detail-sheet__refreshing-graph .dygraph .dygraph-child {
+  .url-monitoring-latency-detail-sheet__refreshing-graph
+    .dygraph
+    .dygraph-child {
     padding: 2px 4px !important;
   }
 
-  /* Match containerStyle top/sides. Shorter top inset lifts the plot; taller bottom margin (vs top+height)
-     leaves room for the static legend under the x-axis without nudging labels. */
   .url-monitoring-latency-detail-sheet__refreshing-graph
     .dygraph-child-container {
     top: 24px !important;
     left: 2px !important;
     width: calc(100% - 4px) !important;
-    height: calc(100% - 38px) !important;
+    height: calc(100% - 28px) !important;
   }
 
   /* Same as ProcessDetailModal: hide rotated Y-axis title */
@@ -753,45 +717,10 @@
     display: none !important;
   }
 
-  .url-monitoring-latency-detail-sheet__refreshing-graph
-    .dygraph-axis-label-y,
+  .url-monitoring-latency-detail-sheet__refreshing-graph .dygraph-axis-label-y,
   .url-monitoring-latency-detail-sheet__refreshing-graph
     .dygraph-axis-label-y2 {
     white-space: nowrap !important;
-  }
-
-  .url-monitoring-latency-detail-sheet__refreshing-graph .static-legend {
-    bottom: 0;
-    left: 2px;
-    padding-top: 2px;
-    width: calc(100% - 4px);
-    max-height: 24px;
-  }
-
-  .url-monitoring-latency-detail-sheet__refreshing-graph
-    .static-graph-static-legend {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 2px 6px;
-    padding-top: 0;
-    padding-bottom: 0;
-    max-height: 24px;
-    grid-template-columns: unset !important;
-    width: max-content !important;
-    max-width: 100%;
-  }
-
-  .url-monitoring-latency-detail-sheet__refreshing-graph .static-legend--item,
-  .url-monitoring-latency-detail-sheet__refreshing-graph .static-legend--single,
-  .url-monitoring-latency-detail-sheet__refreshing-graph
-    .static-graph-static-legend--item,
-  .url-monitoring-latency-detail-sheet__refreshing-graph
-    .static-graph-static-legend--single {
-    height: 16px;
-    line-height: 16px;
-    font-size: 10px;
-    padding: 0 4px;
-    margin: 1px;
   }
 
   .url-monitoring-latency-detail-sheet__chart-empty {

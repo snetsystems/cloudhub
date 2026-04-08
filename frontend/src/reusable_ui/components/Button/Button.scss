@@ -161,6 +161,14 @@
     $g20-white
   );
 }
+
+.button.button-primary.button--disabled,
+.button.button-primary.button--disabled:hover {
+  color: rgba($g20-white, 0.82);
+  font-style: normal;
+  background-color: mix($s-orange, $g4-onyx, 40%);
+  border-color: mix($s-orange, $g5-pepper, 34%);
+}
 .button-secondary {
   @include buttonColorModifier(
     $c-star,

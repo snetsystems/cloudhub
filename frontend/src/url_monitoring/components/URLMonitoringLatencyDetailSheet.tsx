@@ -51,9 +51,7 @@ const URL_LATENCY_DETAIL_CHART_OPTIONS = {
     showPoint: false,
   } as GraphOptions,
   decimalPlaces: {...DEFAULT_DECIMAL_PLACES, digits: 2, isEnforced: true},
-  staticLegend: true,
-  staticLegendPosition: 'bottom' as const,
-  staticLegendGap: 0,
+  staticLegend: false,
   axisLabelWidth: 56,
   /** Must match `.dygraph-child-container` top in `urlMonitoring.scss` so MaxMarker/Crosshair offsets stay aligned. */
   containerStyle: {
@@ -291,14 +289,6 @@ export function URLMonitoringLatencyDetailSheet({
       >
         <div className="url-monitoring-latency-detail-sheet__header">
           <div className="url-monitoring-latency-detail-sheet__header-left">
-            <button
-              type="button"
-              className="url-monitoring-latency-detail-sheet__close"
-              title="Close"
-              onClick={onClose}
-            >
-              <span className="icon remove" />
-            </button>
             <div className="url-monitoring-latency-detail-sheet__titles">
               <h2
                 id="url-monitoring-latency-detail-title"
@@ -322,9 +312,6 @@ export function URLMonitoringLatencyDetailSheet({
           className="url-monitoring-latency-detail-sheet__scroll"
         >
           <div className="url-monitoring-latency-detail-sheet__body">
-            <div className="url-monitoring-latency-detail-sheet__section-label">
-              Elapsed time
-            </div>
             <div className="url-monitoring-latency-detail-sheet__chart">
               {latencyChartQueries.length > 0 ? (
                 <div className="url-monitoring-latency-detail-sheet__refreshing-graph">
@@ -338,12 +325,6 @@ export function URLMonitoringLatencyDetailSheet({
                     axes={URL_LATENCY_DETAIL_AXES}
                     graphOptions={URL_LATENCY_DETAIL_CHART_OPTIONS.graphOptions}
                     staticLegend={URL_LATENCY_DETAIL_CHART_OPTIONS.staticLegend}
-                    staticLegendPosition={
-                      URL_LATENCY_DETAIL_CHART_OPTIONS.staticLegendPosition
-                    }
-                    staticLegendGap={
-                      URL_LATENCY_DETAIL_CHART_OPTIONS.staticLegendGap
-                    }
                     axisLabelWidth={
                       URL_LATENCY_DETAIL_CHART_OPTIONS.axisLabelWidth
                     }
