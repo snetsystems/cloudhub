@@ -123,16 +123,14 @@ const formatHoverTime = (
   }
 
   if (typeof time === 'number') {
-    const parsed =
-      timeZone === TimeZones.UTC ? moment.utc(time) : moment(time)
+    const parsed = timeZone === TimeZones.UTC ? moment.utc(time) : moment(time)
     return parsed.isValid()
       ? parsed.format('YYYY-MM-DD HH:mm:ss')
       : String(time)
   }
 
   if (typeof time === 'string') {
-    const parsed =
-      timeZone === TimeZones.UTC ? moment.utc(time) : moment(time)
+    const parsed = timeZone === TimeZones.UTC ? moment.utc(time) : moment(time)
     return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm:ss') : time
   }
 
@@ -416,32 +414,57 @@ function TableLineChartCell({
       return null
     })()
 
-    const labelTexts = valueLabels
-      .map(label => {
+    const labelNodes = valueLabels
+      .map((label, index) => {
         if (label === 'minimum' || label === 'min') {
-          return ' Min: ' + formatValue(Math.min(...validValues))
+          return (
+            <React.Fragment key={index}>
+              <strong>Min:</strong> {formatValue(Math.min(...validValues))}
+            </React.Fragment>
+          )
         }
 
         if (label === 'maximum' || label === 'max') {
-          return ' Max: ' + formatValue(Math.max(...validValues))
+          return (
+            <React.Fragment key={index}>
+              <strong>Max:</strong> {formatValue(Math.max(...validValues))}
+            </React.Fragment>
+          )
         }
 
         if (label === 'average' || label === 'avr') {
           const average =
             validValues.reduce((sum, current) => sum + current, 0) /
             validValues.length
-          return ' Avg: ' + formatValue(average)
+          return (
+            <React.Fragment key={index}>
+              <strong>Avg:</strong> {formatValue(average)}
+            </React.Fragment>
+          )
         }
 
         if (label === 'last' && lastValue !== null) {
-          return ' Last: ' + formatValue(lastValue)
+          return (
+            <React.Fragment key={index}>
+              <strong>Last:</strong> {formatValue(lastValue)}
+            </React.Fragment>
+          )
         }
 
         return null
       })
-      .filter((text): text is string => text !== null)
+      .filter(node => node !== null)
 
-    return labelTexts.length > 0 ? labelTexts.join(' ') : null
+    if (labelNodes.length === 0) {
+      return null
+    }
+
+    return labelNodes.map((node, index) => (
+      <React.Fragment key={`val-${index}`}>
+        {index > 0 && <span style={{margin: '0 4px'}}>|</span>}
+        {node}
+      </React.Fragment>
+    ))
   }, [
     valueLabel,
     validValues,
@@ -453,9 +476,7 @@ function TableLineChartCell({
   ])
 
   const handleChartActivate = (
-    e:
-      | React.MouseEvent<HTMLDivElement>
-      | React.KeyboardEvent<HTMLDivElement>
+    e: React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>
   ) => {
     if (!onChartClick) return
     e.stopPropagation()
@@ -573,7 +594,6 @@ function TableLineChartCell({
                     )}
                   </React.Fragment>
                 ))}
-
               </svg>
               {resolvedHoverState && (
                 <svg
@@ -589,9 +609,13 @@ function TableLineChartCell({
                 >
                   <line
                     className="table-line-cell-crosshair table-line-cell-crosshair--vertical"
-                    x1={`${(resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100}%`}
+                    x1={`${
+                      (resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100
+                    }%`}
                     y1="0"
-                    x2={`${(resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100}%`}
+                    x2={`${
+                      (resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100
+                    }%`}
                     y2="100%"
                   />
                   {resolvedHoverState.isActive &&
@@ -601,14 +625,22 @@ function TableLineChartCell({
                         <line
                           className="table-line-cell-crosshair table-line-cell-crosshair--horizontal"
                           x1="0"
-                          y1={`${(resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100}%`}
+                          y1={`${
+                            (resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100
+                          }%`}
                           x2="100%"
-                          y2={`${(resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100}%`}
+                          y2={`${
+                            (resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100
+                          }%`}
                         />
                         <circle
                           className="table-line-cell-hover-point-outline"
-                          cx={`${(resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100}%`}
-                          cy={`${(resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100}%`}
+                          cx={`${
+                            (resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100
+                          }%`}
+                          cy={`${
+                            (resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100
+                          }%`}
                           r={Math.max(
                             (pointRadius + 1.5) * HOVER_POINT_SIZE_RATIO,
                             1.5
@@ -616,8 +648,12 @@ function TableLineChartCell({
                         />
                         <circle
                           className="table-line-cell-hover-point"
-                          cx={`${(resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100}%`}
-                          cy={`${(resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100}%`}
+                          cx={`${
+                            (resolvedHoverState.point.x / VIEW_BOX_WIDTH) * 100
+                          }%`}
+                          cy={`${
+                            (resolvedHoverState.point.y / VIEW_BOX_HEIGHT) * 100
+                          }%`}
                           r={Math.max(
                             pointRadius * HOVER_POINT_SIZE_RATIO,
                             1.25
@@ -646,7 +682,9 @@ function TableLineChartCell({
               {valueLabelText}
               {extraLabel !== null && (
                 <span className="table-line-cell-value-extra">
-                  {valueLabelText ? ' (' : ''}{extraLabel}{valueLabelText ? ')' : ''}
+                  {valueLabelText ? ' (' : ''}
+                  {extraLabel}
+                  {valueLabelText ? ')' : ''}
                 </span>
               )}
             </div>

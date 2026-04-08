@@ -72,7 +72,9 @@ func (s *Service) GetURLMonitoring(w http.ResponseWriter, r *http.Request) {
 
 	m, err := s.Store.URLMonitoring(ctx).Get(ctx, orgID)
 	if err == cloudhub.ErrURLMonitoringNotFound {
-		encodeJSON(w, http.StatusOK, nil, s.Logger)
+		encodeJSON(w, http.StatusOK, urlMonitoringResponse{
+			Targets: []urlMonitoringTargetResponse{},
+		}, s.Logger)
 		return
 	}
 	if err != nil {

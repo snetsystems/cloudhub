@@ -246,6 +246,10 @@
   line-height: 1;
   color: $g12-forge;
   text-align: right;
+
+  strong {
+    font-weight: 700;
+  }
 }
 
 .table-line-cell-value-extra {

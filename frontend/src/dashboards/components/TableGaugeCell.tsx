@@ -280,7 +280,11 @@ function TableGaugeCell({options, value}: Props) {
           )}
           {options?.isShowValues && (
             <div
-              title={options?.prefix + formattedValue + options?.suffix}
+              title={
+                (options?.prefix ?? '') +
+                formattedValue +
+                (options?.suffix ?? '')
+              }
               className={`table-gauge-cell-value ${
                 !options?.isGauge ? 'only-value' : ''
               }`}

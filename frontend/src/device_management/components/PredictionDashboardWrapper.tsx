@@ -95,7 +95,7 @@ function PredictionDashboardWrapper({
   }, [cell, reBuildQuery])
 
   return (
-    <div style={{height: '100%', backgroundColor: '#292933'}}>
+    <div className="prediction-wrapper">
       <PredictionDashboardHeader
         cellName="Anomaly Prediction Counts Histogram"
         cellBackgroundColor={DEFAULT_CELL_BG_COLOR}

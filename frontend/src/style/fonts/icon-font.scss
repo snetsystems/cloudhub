@@ -483,4 +483,24 @@
   &.network::before {
     content: '\e93c';
   }
+
+  &.warning::before {
+    content: '\e94d';
+  }
+
+  &.notice::before {
+    content: '\e955';
+  }
+
+  &.checkmark1::before {
+    content: '\e95a';
+  }
+
+  &.cancel::before {
+    content: '\e95b';
+  }
+
+  &.plus2::before {
+    content: '\e95c';
+  }
 }
