@@ -156,8 +156,9 @@ func (s *Service) ApplyURLMonitoring(w http.ResponseWriter, r *http.Request) {
 	}, s.Logger)
 }
 
-// AddURLMonitoringTarget adds a target (upsert by case-insensitive name), auto-creating
-// the parent URLMonitoring record for the org if it does not yet exist.
+// AddURLMonitoringTarget adds a new target.
+// Duplicate name (case-insensitive) is rejected with 409 Conflict.
+// Parent URLMonitoring is auto-created for the org if it does not yet exist.
 func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request) {
 	ctx := serverContext(r.Context())
 	orgID, ok := hasOrganizationContext(ctx)
@@ -211,33 +212,22 @@ func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request)
 		m.Targets = []cloudhub.URLMonitoringTarget{}
 	}
 
-	// Upsert by case-insensitive name.
-	foundIdx := -1
+	// POST is create-only: reject duplicate name (case-insensitive).
 	for i := range m.Targets {
 		if strings.EqualFold(m.Targets[i].Name, req.Name) {
-			foundIdx = i
-			break
+			Error(w, http.StatusConflict, fmt.Sprintf("url monitoring target %q already exists", req.Name), s.Logger)
+			return
 		}
 	}
 
-	if foundIdx >= 0 {
-		t := &m.Targets[foundIdx]
-		t.Name = req.Name
-		t.URL = req.URL
-		t.Interval = req.Interval
-		t.ResponseTimeout = req.ResponseTimeout
-		t.Method = req.Method
-		t.AlertRuleID = req.AlertRuleID
-	} else {
-		m.Targets = append(m.Targets, cloudhub.URLMonitoringTarget{
-			Name:            req.Name,
-			URL:             req.URL,
-			Interval:        req.Interval,
-			ResponseTimeout: req.ResponseTimeout,
-			Method:          req.Method,
-			AlertRuleID:     req.AlertRuleID,
-		})
-	}
+	m.Targets = append(m.Targets, cloudhub.URLMonitoringTarget{
+		Name:            req.Name,
+		URL:             req.URL,
+		Interval:        req.Interval,
+		ResponseTimeout: req.ResponseTimeout,
+		Method:          req.Method,
+		AlertRuleID:     req.AlertRuleID,
+	})
 
 	// Deploy conf first; only persist to DB if deployment succeeds.
 	if err := s.applyURLMonitoringToCollector(ctx, m); err != nil {
@@ -256,12 +246,7 @@ func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request)
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	var msg string
-	if foundIdx >= 0 {
-		msg = fmt.Sprintf(MsgURLMonitoringTargetModified.String(), req.Name)
-	} else {
-		msg = fmt.Sprintf(MsgURLMonitoringTargetCreated.String(), req.Name)
-	}
+	msg := fmt.Sprintf(MsgURLMonitoringTargetCreated.String(), req.Name)
 	s.logRegistration(ctx, "URLMonitoringTarget", msg)
 	encodeJSON(w, http.StatusOK, toURLMonitoringResponse(result), s.Logger)
 }
@@ -316,6 +301,17 @@ func (s *Service) PatchURLMonitoringTarget(w http.ResponseWriter, r *http.Reques
 	if len(m.Targets) == 0 {
 		Error(w, http.StatusNotFound, "url monitoring target not found", s.Logger)
 		return
+	}
+
+	// Check duplicate name against other targets first.
+	for i := range m.Targets {
+		if m.Targets[i].ID == targetID {
+			continue
+		}
+		if strings.EqualFold(m.Targets[i].Name, req.Name) {
+			Error(w, http.StatusConflict, fmt.Sprintf("url monitoring target %q already exists", req.Name), s.Logger)
+			return
+		}
 	}
 
 	found := false

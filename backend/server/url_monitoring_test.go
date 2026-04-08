@@ -336,11 +336,10 @@ func TestRemoveURLMonitoringFromCollector_RemovesConfAndRestarts(t *testing.T) {
 	}
 }
 
-func TestAddURLMonitoringTarget_UpsertsByName_CaseInsensitive(t *testing.T) {
+func TestAddURLMonitoringTarget_DuplicateName_ReturnsConflict(t *testing.T) {
 	ctx := context.WithValue(context.Background(), organizations.ContextKey, "org-1")
 
 	var deployCalled bool
-	var deployContent string
 
 	initial := &cloudhub.URLMonitoring{
 		ID:              "um-1",
@@ -374,7 +373,6 @@ func TestAddURLMonitoringTarget_UpsertsByName_CaseInsensitive(t *testing.T) {
 		VerifyCollectorReadyFunc: func(ctx context.Context, collectorName string) error { return nil },
 		DeployTelegrafConfigFunc: func(ctx context.Context, collectorName string, configName string, content string) error {
 			deployCalled = true
-			deployContent = content
 			return nil
 		},
 		RestartTelegrafFunc: func(ctx context.Context, collectorName string) error { return nil },
@@ -406,20 +404,14 @@ func TestAddURLMonitoringTarget_UpsertsByName_CaseInsensitive(t *testing.T) {
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d body=%s", rr.Code, rr.Body.String())
+	if rr.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d body=%s", rr.Code, rr.Body.String())
 	}
-	if !deployCalled {
-		t.Fatal("DeployTelegrafConfig should be called")
+	if deployCalled {
+		t.Fatal("DeployTelegrafConfig should not be called on duplicate name")
 	}
-	if !strings.Contains(deployContent, `https://new.com`) {
-		t.Fatalf("deployContent should contain new url, got:\n%s", deployContent)
-	}
-	if stub.monitoring.Targets[0].ID != "t1" {
-		t.Fatalf("expected target id to remain t1, got %q", stub.monitoring.Targets[0].ID)
-	}
-	if stub.monitoring.Targets[0].URL != "https://new.com" || stub.monitoring.Targets[0].Interval != "2m" {
-		t.Fatalf("expected url/interval updated, got %+v", stub.monitoring.Targets[0])
+	if stub.monitoring.Targets[0].URL != "https://old.com" {
+		t.Fatalf("expected existing target to remain unchanged, got %+v", stub.monitoring.Targets[0])
 	}
 }
 
@@ -739,6 +731,85 @@ func TestPatchURLMonitoringTarget_UpdatesByID(t *testing.T) {
 	}
 	if got.ResponseTimeout != "10s" || got.Method != "POST" {
 		t.Fatalf("expected responseTimeout=10s method=POST, got timeout=%q method=%q", got.ResponseTimeout, got.Method)
+	}
+}
+
+func TestPatchURLMonitoringTarget_DuplicateNameOnOtherTarget_ReturnsConflict(t *testing.T) {
+	ctx := context.WithValue(context.Background(), organizations.ContextKey, "org-1")
+
+	initial := &cloudhub.URLMonitoring{
+		ID:              "um-1",
+		OrgID:           "org-1",
+		CollectorServer: "collector-1",
+		Targets: []cloudhub.URLMonitoringTarget{
+			{ID: "t1", Name: "Alpha", URL: "https://alpha.com", Interval: "1m", ResponseTimeout: "5s", Method: "GET"},
+			{ID: "t2", Name: "Beta", URL: "https://beta.com", Interval: "1m", ResponseTimeout: "5s", Method: "GET"},
+		},
+	}
+	stub := &urlMonitoringStoreStub{monitoring: initial}
+
+	store := &mocks.Store{
+		URLMonitoringStore: stub,
+		OrganizationsStore: &mocks.OrganizationsStore{
+			GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+				id := "org-1"
+				if q.ID != nil {
+					id = *q.ID
+				}
+				return &cloudhub.Organization{ID: id, Name: "myorg"}, nil
+			},
+		},
+		SourcesStore: &mocks.SourcesStore{
+			AllF: func(ctx context.Context) ([]cloudhub.Source, error) {
+				return []cloudhub.Source{{ID: 1, URL: "http://influx:8086"}}, nil
+			},
+		},
+	}
+
+	var deployCalled bool
+	platform := &mocks.MockPlatform{
+		VerifyCollectorReadyFunc: func(ctx context.Context, collectorName string) error { return nil },
+		DeployTelegrafConfigFunc: func(ctx context.Context, collectorName string, configName string, content string) error {
+			deployCalled = true
+			return nil
+		},
+		RestartTelegrafFunc: func(ctx context.Context, collectorName string) error { return nil },
+	}
+	templatesManager := &LocalMockTemplatesManager{
+		GetF: func(ctx context.Context, id string) (cloudhub.ConfigTemplate, error) {
+			return cloudhub.ConfigTemplate{Template: testURLMonitoringTemplate}, nil
+		},
+	}
+
+	s := &Service{
+		Store: store,
+		InternalENV: cloudhub.InternalEnvironment{
+			Platform:            platform,
+			TemplatesManager:    templatesManager,
+			URLMonitoringConfig: cloudhub.URLMonitoringConfig{TelegrafPath: "/etc/telegraf"},
+		},
+		Logger: mocks.NewLogger(),
+	}
+
+	router := httprouter.New()
+	router.PATCH("/cloudhub/v1/url-monitoring-targets/:targetId", s.PatchURLMonitoringTarget)
+
+	// t1 이름을 다른 target(t2)의 이름 "Beta"로 변경 시도 -> conflict
+	body := `{"name":"beta","url":"https://alpha-new.com","interval":"2m","responseTimeout":"10s","method":"POST"}`
+	req := httptest.NewRequest(http.MethodPatch, "/cloudhub/v1/url-monitoring-targets/t1", bytes.NewBufferString(body))
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d body=%s", rr.Code, rr.Body.String())
+	}
+	if deployCalled {
+		t.Fatal("DeployTelegrafConfig should not be called on duplicate name conflict")
+	}
+	if stub.monitoring.Targets[0].Name != "Alpha" {
+		t.Fatalf("expected target to remain unchanged, got %+v", stub.monitoring.Targets[0])
 	}
 }
 
