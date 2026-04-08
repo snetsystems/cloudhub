@@ -84,10 +84,8 @@
   }
 
   table.table tbody tr > td.text-right.justify-end {
-    min-height: 188px;
-    vertical-align: top;
-    padding-top: 10px;
-    padding-bottom: 6px;
+    min-height: 52px;
+    vertical-align: middle;
   }
 }
 
@@ -345,6 +343,18 @@
     resize: vertical;
     min-height: 88px;
     line-height: 1.45;
+  }
+
+  .url-monitoring-form-sheet__input--error {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.22);
+  }
+
+  .url-monitoring-form-sheet__error-text {
+    margin-top: -2px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #ff8d8d;
   }
 
   .url-monitoring-form-sheet__chips {

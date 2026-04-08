@@ -35,14 +35,14 @@ export function URLMonitoringLatencyCell({
     <TableLineChartCell
       color={LATENCY_LINE_COLOR}
       values={toLineValues(value)}
-      height={34}
+      strokeWidth={0.5}
       onChartClick={onChartClick}
       options={{
         isShowLine: true,
         isShowPoint: false,
         isFillArea: true,
         isConnectSeparatedPoints: false,
-        valueLabel: 'last',
+        valueLabel: ['last', 'maximum', 'average'],
         isZeroBaseline: true,
         areaOpacity: 0.1,
         pointRadius: 1,

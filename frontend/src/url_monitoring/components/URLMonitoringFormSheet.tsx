@@ -56,6 +56,7 @@ export function URLMonitoringFormSheet({
   const [isMounted, setIsMounted] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(isOpen)
   const [isLoading, setIsLoading] = useState(false)
+  const [nameError, setNameError] = useState<string | null>(null)
 
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
@@ -78,12 +79,14 @@ export function URLMonitoringFormSheet({
       setName('')
       setUrl('')
       setCollectionInterval('1m')
+      setNameError(null)
       return
     }
     if (initialTarget) {
       setName(initialTarget.name)
       setUrl(initialTarget.url)
       setCollectionInterval(initialTarget.interval ?? '1m')
+      setNameError(null)
     }
   }, [isOpen, mode, initialTarget])
 
@@ -105,6 +108,7 @@ export function URLMonitoringFormSheet({
   const handleSave = useCallback(async () => {
     if (!name.trim()) return
     if (!url.trim()) return
+    setNameError(null)
     setIsLoading(true)
     try {
       if (mode === 'edit' && initialTarget?.id) {
@@ -119,6 +123,10 @@ export function URLMonitoringFormSheet({
       onSaved()
       onClose()
     } catch (e) {
+      if (e?.status === 409) {
+        setNameError('name is already in use.')
+        return
+      }
       notify({
         type: 'error',
         icon: 'alert-triangle',
@@ -186,11 +194,21 @@ export function URLMonitoringFormSheet({
               </span>
               <input
                 type="text"
-                className="url-monitoring-form-sheet__input"
+                className={classnames('url-monitoring-form-sheet__input', {
+                  'url-monitoring-form-sheet__input--error': !!nameError,
+                })}
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={e => {
+                  setName(e.target.value)
+                  if (nameError) setNameError(null)
+                }}
                 placeholder="e.g. Production API"
               />
+              {nameError && (
+                <span className="url-monitoring-form-sheet__error-text">
+                  {nameError}
+                </span>
+              )}
             </label>
 
             <label className="url-monitoring-form-sheet__field">

@@ -2,7 +2,14 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {Page} from 'src/reusable_ui'
-import {Source, Links, RefreshRate, TimeZones, DataTableObject, Notification} from 'src/types'
+import {
+  Source,
+  Links,
+  RefreshRate,
+  TimeZones,
+  DataTableObject,
+  Notification,
+} from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
@@ -83,10 +90,13 @@ export function URLMonitoringPage({
   const pollIntervalRef = useRef<number | null>(null)
   const importFileInputRef = useRef<HTMLInputElement>(null)
 
-  const [urlMonitoringConfig, setUrlMonitoringConfig] =
-    useState<URLMonitoring | null>(null)
-  const [urlMonitoringConfigReady, setUrlMonitoringConfigReady] =
-    useState(false)
+  const [
+    urlMonitoringConfig,
+    setUrlMonitoringConfig,
+  ] = useState<URLMonitoring | null>(null)
+  const [urlMonitoringConfigReady, setUrlMonitoringConfigReady] = useState(
+    false
+  )
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -111,8 +121,10 @@ export function URLMonitoringPage({
     target: URLMonitoringTarget | null
   }>({open: false, mode: 'add', target: null})
 
-  const [latencyDetailRow, setLatencyDetailRow] =
-    useState<DataTableObject | null>(null)
+  const [
+    latencyDetailRow,
+    setLatencyDetailRow,
+  ] = useState<DataTableObject | null>(null)
 
   const findTargetFromRow = useCallback(
     (row?: DataTableObject | null): URLMonitoringTarget | null => {
@@ -133,8 +145,7 @@ export function URLMonitoringPage({
           t =>
             String(t.url ?? '').trim() === rowUrl &&
             String(t.name ?? '').trim() === rowName
-        ) ??
-        null
+        ) ?? null
       )
     },
     [urlMonitoringConfig]
@@ -177,7 +188,9 @@ export function URLMonitoringPage({
 
       try {
         const buffer = await file.arrayBuffer()
-        const {targets, skippedEmptyRows} = parseUrlMonitoringExcelBuffer(buffer)
+        const {targets, skippedEmptyRows} = parseUrlMonitoringExcelBuffer(
+          buffer
+        )
         if (targets.length === 0) {
           notify({
             type: 'error',
@@ -398,11 +411,7 @@ export function URLMonitoringPage({
           setIsError(true)
         }
       } finally {
-        if (
-          isSubscribed &&
-          requestId === requestIdRef.current &&
-          !silent
-        ) {
+        if (isSubscribed && requestId === requestIdRef.current && !silent) {
           setIsTableLoading(false)
           setIsRefreshing(false)
         }
@@ -453,7 +462,6 @@ export function URLMonitoringPage({
     cloudTimeRange?.urlMonitoring?.lower,
     cloudTimeRange?.urlMonitoring?.upper,
     manualRefreshState.value,
-    timeZone,
     urlMonitoringConfig,
     urlMonitoringConfigReady,
   ])
