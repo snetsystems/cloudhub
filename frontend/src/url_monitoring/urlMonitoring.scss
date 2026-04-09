@@ -80,11 +80,12 @@
   // Overrides .hosts-page .panel-body .table tr > td { height: 60px } (specificity + load order)
   table.table tbody tr > td {
     height: auto;
-    min-height: 52px;
+    min-height: 72px;
+    vertical-align: middle;
   }
 
   table.table tbody tr > td.text-right.justify-end {
-    min-height: 52px;
+    min-height: 72px;
     vertical-align: middle;
   }
 }

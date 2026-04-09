@@ -13,6 +13,7 @@ type LatencyCell =
   | undefined
 
 const LATENCY_LINE_COLOR = LINE_COLOR_PALETTES_SEQUENCE[0][0].hex
+const DEFAULT_LATENCY_CHART_HEIGHT = 38
 
 interface Props {
   value: LatencyCell
@@ -28,20 +29,21 @@ export function URLMonitoringLatencyCell({
   rowData: _rowData,
   rowIndex: _rowIndex,
   timeZone: _timeZone,
-  chartHeight: _chartHeight,
+  chartHeight,
   onChartClick,
 }: Props) {
   return (
     <TableLineChartCell
       color={LATENCY_LINE_COLOR}
       values={toLineValues(value)}
-      strokeWidth={0.5}
+      height={chartHeight ?? DEFAULT_LATENCY_CHART_HEIGHT}
+      strokeWidth={0.2}
       onChartClick={onChartClick}
       options={{
         isShowLine: true,
         isShowPoint: false,
         isFillArea: true,
-        isConnectSeparatedPoints: false,
+        isConnectSeparatedPoints: true,
         valueLabel: ['last', 'maximum', 'average'],
         isZeroBaseline: true,
         areaOpacity: 0.1,

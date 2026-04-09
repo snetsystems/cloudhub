@@ -162,6 +162,10 @@ function TableLineChartCell({
   const valueFormat = options?.valueFormat
   const suffix = options?.suffix ?? ''
   const extraLabel = options?.extraLabel ?? null
+  const reserveEmptyValueRowSpace =
+    (!!valueLabel &&
+      (Array.isArray(valueLabel) ? valueLabel.length > 0 : true)) ||
+    extraLabel !== null
   const hoverContext = useTableChartHover()
   const tableCell = useTableChartCell()
   const decimalPlaces = Number.isFinite(options?.decimalPlaces)
@@ -524,7 +528,24 @@ function TableLineChartCell({
   return (
     <div className={`table-line-cell-container ${className ?? ''}`.trim()}>
       {isEmpty ? (
-        <div className="table-line-cell-empty">--</div>
+        <>
+          <div className="table-line-cell-tooltip-layer" style={{height}}>
+            <div
+              className="table-line-cell-chart table-line-cell-chart--empty"
+              style={{height}}
+            >
+              <span className="table-line-cell-empty table-line-cell-empty--in-chart">
+                --
+              </span>
+            </div>
+          </div>
+          {reserveEmptyValueRowSpace && (
+            <div
+              className="table-line-cell-value table-line-cell-value--empty-placeholder"
+              aria-hidden
+            />
+          )}
+        </>
       ) : (
         <>
           <div className="table-line-cell-tooltip-layer" style={{height}}>
