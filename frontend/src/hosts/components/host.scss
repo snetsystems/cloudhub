@@ -617,7 +617,7 @@
     }
     .disk-usage-path {
       width: 50px;
-      min-width: 50px;
+      min-width: 35px;
       text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -635,8 +635,10 @@
     }
     .disk-io-device {
       width: 50px;
-      min-width: 50px;
+      min-width: 35px;
       text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }
@@ -644,13 +646,13 @@
 .host-page-graph-table-container-wrapper {
   .panel.panel-solid {
     position: relative;
+    padding: 16px;
   }
 }
 
 .hosts-page {
   .host-page-graph-table-container-wrapper.host-page-graph-table-container {
     margin: 16px;
-    padding: 16px;
     box-sizing: border-box;
     width: max-content;
     min-width: calc(100% - 32px);
@@ -663,4 +665,16 @@
       }
     }
   }
+}
+
+.alert-status-summary-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert-summary-badge--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(100%);
 }

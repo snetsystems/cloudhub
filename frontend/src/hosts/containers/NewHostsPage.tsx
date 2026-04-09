@@ -23,6 +23,7 @@ import {
 import * as appActions from 'src/shared/actions/app'
 import {executeQueries} from 'src/shared/apis/query'
 import {getHosts} from 'src/shared/apis/host'
+import {getActiveKapacitor, kapacitorProxy} from 'src/shared/apis'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {generateForHosts} from 'src/utils/tempVars'
 import {TableLineChartPoint, TimeSeriesValue} from 'src/types/series'
@@ -37,6 +38,7 @@ import LoadingDots from 'src/shared/components/LoadingDots'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import AlertStatusSummary from 'src/hosts/components/AlertStatusSummary'
 import AlertStatusModal from 'src/hosts/components/AlertStatusModal'
+import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
 import {AlertLevel, AlertStatusMap} from 'src/hosts/types/alertStatus'
 
 type HostCellValue = TimeSeriesValue | TimeSeriesValue[] | TableLineChartPoint[]
@@ -50,14 +52,15 @@ const ALERT_DB = 'Default'
 const ALERT_NAMES = [
   'server-cpu-usage',
   'server-mem-usage',
-  'server-network-traffic',
   'server-disk-usage',
   'server-disk-io',
+  'server-network-traffic',
+  'server-deadman',
 ]
 
 // GROUP BY time() 없이 각 (host, level, alertName)의 가장 최신 이벤트만 가져옴
 // FILL(none): 값 없는 버킷 생략 → OK 회복 이벤트가 null로 사라지지 않음
-const ALERT_QUERY_TEXT = `SELECT last("value") AS "last_value"
+const ALERT_QUERY_TEXT = `SELECT last("message") AS "message"
 FROM "${ALERT_DB}"."autogen"."cloudhub_alerts"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime:
   AND (${ALERT_NAMES.map(n => `"alertName"='${n}'`).join(' OR ')})
@@ -115,12 +118,15 @@ export function NewHostsPage({
   )
   const [isTableLoading, setIsTableLoading] = useState(true)
 
-  // Alert 상태 관련 state
   const [alertStatusMap, setAlertStatusMap] = useState<AlertStatusMap>({})
+
   const [selectedAlertHost, setSelectedAlertHost] = useState<string | null>(
     null
   )
+
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false)
+
+  const [isAlertsEnabled, setIsAlertsEnabled] = useState(true)
 
   const apiHostsResultRef = useRef<any>(null)
 
@@ -134,6 +140,33 @@ export function NewHostsPage({
         apiHostsResultRef.current = {error: err.message}
       })
   }, [])
+
+  useEffect(() => {
+    const checkKapacitorScripts = async () => {
+      try {
+        const activeKap = await getActiveKapacitor(source)
+        if (!activeKap) {
+          setIsAlertsEnabled(false)
+          return
+        }
+        const resp = await kapacitorProxy(
+          activeKap,
+          'GET',
+          '/kapacitor/v1/tasks'
+        )
+        const tasks = resp.data?.tasks || []
+
+        const hasScripts = tasks.some(
+          t => ALERT_NAMES.includes(t.id) && t.status === 'enabled'
+        )
+        setIsAlertsEnabled(hasScripts)
+      } catch (e) {
+        console.warn('Failed to check kapacitor tasks', e)
+        setIsAlertsEnabled(false)
+      }
+    }
+    checkKapacitorScripts()
+  }, [source])
 
   const [displayedChartMode, setDisplayedChartMode] = useState<
     'gauge' | 'line'
@@ -184,12 +217,13 @@ export function NewHostsPage({
         sourceID: source.id,
         chartMode: displayedChartMode,
         alertStatusMap,
+        isAlertsEnabled,
         onStatusIconClick: (host: string) => {
           setSelectedAlertHost(host)
           setIsAlertModalOpen(true)
         },
       }),
-    [source.id, displayedChartMode, alertStatusMap]
+    [source.id, displayedChartMode, alertStatusMap, isAlertsEnabled]
   )
 
   useEffect(() => {
@@ -314,7 +348,6 @@ export function NewHostsPage({
 
       const results = (await Promise.race([
         executeQueries(source, querySet, templates),
-        // new Promise(resolve => setTimeout(resolve, 16000)), // 테스트를 위해 고의로 16초 무한 대기
         timeoutPromise,
       ])) as any
       if (!isSubscribed || requestId !== requestIdRef.current) {
@@ -379,11 +412,12 @@ export function NewHostsPage({
 
       const series: any[] = result?.results?.[0]?.series ?? []
 
-      // Step 1: (host, alertName)별 가장 최신 이벤트 추출
       const perAlertLatest: Record<
         string,
-        Record<string, {time: string; level: AlertLevel}>
+        Record<string, {time: string; level: AlertLevel; message: string}>
       > = {}
+
+      console.log('series', series)
 
       series.forEach(s => {
         const host: string = s?.tags?.host
@@ -393,37 +427,49 @@ export function NewHostsPage({
 
         const level: AlertLevel = mapInfluxLevel(levelTag)
         const timeIndex = (s.columns ?? []).indexOf('time')
+        const messageIndex = (s.columns ?? []).indexOf('message')
 
-        // last() 쿼리는 series당 row가 1개
         const row = s?.values?.[0]
         if (!row) return
         const eventTime: string | null = timeIndex >= 0 ? row[timeIndex] : null
+        const messageStr: string = messageIndex >= 0 ? row[messageIndex] : ''
         if (!eventTime) return
 
         if (!perAlertLatest[host]) perAlertLatest[host] = {}
 
         const existing = perAlertLatest[host][alertName]
         if (!existing || eventTime > existing.time) {
-          perAlertLatest[host][alertName] = {time: eventTime, level}
+          perAlertLatest[host][alertName] = {
+            time: eventTime,
+            level,
+            message: messageStr,
+          }
         }
       })
 
-      // Step 2: host별 alertName 현재 level 중 가장 심각한 것을 currentLevel로
       const nextMap: AlertStatusMap = {}
       Object.entries(perAlertLatest).forEach(([host, alertMap]) => {
         const history = Object.entries(alertMap).map(
-          ([alertName, {time, level}]) => ({
+          ([alertName, {time, level, message}]) => ({
             time,
             level,
             alertName,
+            message,
           })
         )
 
-        const currentLevel = history.reduce<AlertLevel>(
+        let currentLevel = history.reduce<AlertLevel>(
           (worst, {level}) =>
             LEVEL_PRIORITY[level] > LEVEL_PRIORITY[worst] ? level : worst,
-          'unknown'
+          'normal'
         )
+
+        const hasDeadman = history.some(
+          h => h.alertName === 'server-deadman' && h.level === 'danger'
+        )
+        if (hasDeadman) {
+          currentLevel = 'unknown'
+        }
 
         nextMap[host] = {currentLevel, history}
       })
@@ -505,7 +551,19 @@ export function NewHostsPage({
                       Line
                     </Radio.Button>
                   </Radio>
-                  <AlertStatusSummary alertStatusMap={alertStatusMap} />
+                  <div className="alert-status-summary-container">
+                    <AlertStatusSummary
+                      alertStatusMap={alertStatusMap}
+                      tableData={tableData}
+                      isAlertsEnabled={isAlertsEnabled}
+                    />
+                    {!isAlertsEnabled && (
+                      <QuestionMarkTooltip
+                        tipID="alert-status-disabled"
+                        tipContent="Kapacitor alarm settings are required to show the server status."
+                      />
+                    )}
+                  </div>
                 </div>
               }
             />

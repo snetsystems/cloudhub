@@ -29,6 +29,7 @@ interface Props {
   chartMode?: 'gauge' | 'line'
   alertStatusMap?: AlertStatusMap
   onStatusIconClick?: (host: string) => void
+  isAlertsEnabled?: boolean
 }
 
 const SERVER_LIST_LINE_HEX_BY_PARENT = {
@@ -43,6 +44,7 @@ export const serverListColumns = ({
   chartMode = 'gauge',
   alertStatusMap = {},
   onStatusIconClick,
+  isAlertsEnabled = true,
 }: Props): ColumnInfo[] => {
   const isLineChart = chartMode === 'line'
 
@@ -60,8 +62,11 @@ export const serverListColumns = ({
         },
       },
       render: (value: string) => {
+        if (!isAlertsEnabled) {
+          return <span>-</span>
+        }
         const hostStatus = alertStatusMap[value]
-        const level = hostStatus?.currentLevel ?? 'unknown'
+        const level = hostStatus?.currentLevel ?? 'normal'
         return (
           <AlertStatusIcon
             status={level}
@@ -102,6 +107,9 @@ export const serverListColumns = ({
       options: {
         thead: {
           align: AlignType.RIGHT,
+          style: {
+            width: '12%',
+          },
         },
         sorting: true,
       },
@@ -127,7 +135,7 @@ export const serverListColumns = ({
                 isShowPoint: false,
                 isFillArea: true,
                 isConnectSeparatedPoints: false,
-                valueLabel: ['maximum', 'average', 'last'],
+                valueLabel: ['maximum', 'last'],
                 isZeroBaseline: true,
                 areaOpacity: 0.1,
                 pointRadius: 1,
@@ -176,6 +184,9 @@ export const serverListColumns = ({
       options: {
         thead: {
           align: AlignType.RIGHT,
+          style: {
+            width: '12%',
+          },
         },
         isGauge: true,
         sorting: true,
@@ -202,7 +213,7 @@ export const serverListColumns = ({
                 isShowPoint: false,
                 isFillArea: true,
                 isConnectSeparatedPoints: false,
-                valueLabel: ['maximum', 'average', 'last'],
+                valueLabel: ['maximum', 'last'],
                 isZeroBaseline: true,
                 valueFormat: FORMAT_OPTIONS.KMG,
               }}
@@ -278,6 +289,9 @@ export const serverListColumns = ({
       options: {
         thead: {
           align: AlignType.RIGHT,
+          style: {
+            width: '12%',
+          },
         },
         isGauge: true,
         sorting: true,
@@ -305,7 +319,7 @@ export const serverListColumns = ({
                 isShowPoint: false,
                 isFillArea: true,
                 isConnectSeparatedPoints: false,
-                valueLabel: ['maximum', 'average', 'last'],
+                valueLabel: ['maximum', 'last'],
                 isZeroBaseline: true,
                 valueFormat: FORMAT_OPTIONS.KMG,
               }}
@@ -342,6 +356,9 @@ export const serverListColumns = ({
       options: {
         thead: {
           align: AlignType.RIGHT,
+          style: {
+            width: '12%',
+          },
         },
         isGauge: true,
         sorting: true,
@@ -369,7 +386,7 @@ export const serverListColumns = ({
                   isShowPoint: false,
                   isFillArea: true,
                   isConnectSeparatedPoints: false,
-                  valueLabel: ['maximum', 'average', 'last'],
+                  valueLabel: ['maximum', 'last'],
                   isZeroBaseline: true,
                   valueFormat: FORMAT_OPTIONS.KMG,
                 }}
@@ -401,6 +418,9 @@ export const serverListColumns = ({
       options: {
         thead: {
           align: AlignType.RIGHT,
+          style: {
+            width: '12%',
+          },
         },
         isGauge: true,
         sorting: true,
@@ -428,7 +448,7 @@ export const serverListColumns = ({
                   isShowPoint: false,
                   isFillArea: true,
                   isConnectSeparatedPoints: false,
-                  valueLabel: ['maximum', 'average', 'last'],
+                  valueLabel: ['maximum', 'last'],
                   isZeroBaseline: true,
                   valueFormat: FORMAT_OPTIONS.KMG,
                 }}

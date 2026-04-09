@@ -3,6 +3,8 @@ import {AlertLevel, AlertStatusMap} from 'src/hosts/types/alertStatus'
 
 interface Props {
   alertStatusMap: AlertStatusMap
+  tableData?: any[]
+  isAlertsEnabled?: boolean
 }
 
 const LEVEL_ORDER: AlertLevel[] = ['normal', 'warn', 'danger', 'unknown']
@@ -33,7 +35,11 @@ const SUMMARY_CONFIG: Record<
   },
 }
 
-const AlertStatusSummary = ({alertStatusMap}: Props): JSX.Element => {
+const AlertStatusSummary = ({
+  alertStatusMap,
+  tableData = [],
+  isAlertsEnabled = true,
+}: Props): JSX.Element => {
   const counts: Record<AlertLevel, number> = {
     normal: 0,
     warn: 0,
@@ -41,23 +47,27 @@ const AlertStatusSummary = ({alertStatusMap}: Props): JSX.Element => {
     unknown: 0,
   }
 
-  Object.values(alertStatusMap).forEach(({currentLevel}) => {
-    counts[currentLevel] = (counts[currentLevel] ?? 0) + 1
+  tableData.forEach(row => {
+    const host = row.host as string
+    if (!host) return
+    const level = alertStatusMap[host]?.currentLevel ?? 'normal'
+    counts[level] = (counts[level] ?? 0) + 1
   })
 
   return (
-    <div className="alert-status-summary">
+    <div className={`alert-status-summary ${!isAlertsEnabled ? 'disabled' : ''}`} title={!isAlertsEnabled ? "Alarms not configured. Please add Kapacitor scripts." : ""}>
       {LEVEL_ORDER.map(level => {
         const config = SUMMARY_CONFIG[level]
+        const finalClassName = isAlertsEnabled ? config.className : 'alert-summary-badge--disabled'
         return (
           <span
             key={level}
-            className={`alert-summary-badge ${config.className}`}
-            title={config.title}
+            className={`alert-summary-badge ${finalClassName}`}
+            title={isAlertsEnabled ? config.title : "Unmonitored"}
           >
             <span className={`icon ${config.iconClass} alert-summary-icon`} />
             <span className="alert-summary-title">{config.title}</span>
-            <span className="alert-summary-count">{counts[level]}</span>
+            <span className="alert-summary-count">{isAlertsEnabled ? counts[level] : '-'}</span>
           </span>
         )
       })}

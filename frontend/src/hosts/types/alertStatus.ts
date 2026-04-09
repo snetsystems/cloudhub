@@ -4,6 +4,7 @@ export interface AlertTimePoint {
   time: string // ISO timestamp
   level: AlertLevel
   alertName: string
+  message?: string
 }
 
 export interface HostAlertStatus {
