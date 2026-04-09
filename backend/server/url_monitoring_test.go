@@ -496,6 +496,154 @@ func TestAddURLMonitoringTarget_UpsertsByName_InsertIfMissing(t *testing.T) {
 	}
 }
 
+func TestAddURLMonitoringTarget_TrimsURLBeforePersist(t *testing.T) {
+	ctx := context.WithValue(context.Background(), organizations.ContextKey, "org-1")
+
+	initial := &cloudhub.URLMonitoring{
+		ID:              "um-1",
+		OrgID:           "org-1",
+		CollectorServer: "collector-1",
+		Targets: []cloudhub.URLMonitoringTarget{
+			{ID: "t1", Name: "Foo", URL: "https://old.com", Interval: "1m", ResponseTimeout: "5s", Method: "GET"},
+		},
+	}
+
+	stub := &urlMonitoringStoreStub{monitoring: initial}
+	store := &mocks.Store{
+		OrganizationsStore: &mocks.OrganizationsStore{
+			GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+				id := "org-1"
+				if q.ID != nil {
+					id = *q.ID
+				}
+				return &cloudhub.Organization{ID: id, Name: "myorg"}, nil
+			},
+		},
+		SourcesStore: &mocks.SourcesStore{
+			AllF: func(ctx context.Context) ([]cloudhub.Source, error) {
+				return []cloudhub.Source{{ID: 1, URL: "http://influx:8086"}}, nil
+			},
+		},
+		URLMonitoringStore: stub,
+	}
+
+	platform := &mocks.MockPlatform{
+		VerifyCollectorReadyFunc: func(ctx context.Context, collectorName string) error { return nil },
+		DeployTelegrafConfigFunc: func(ctx context.Context, collectorName string, configName string, content string) error {
+			return nil
+		},
+		RestartTelegrafFunc: func(ctx context.Context, collectorName string) error { return nil },
+	}
+
+	templatesManager := &LocalMockTemplatesManager{
+		GetF: func(ctx context.Context, id string) (cloudhub.ConfigTemplate, error) {
+			return cloudhub.ConfigTemplate{Template: testURLMonitoringTemplate}, nil
+		},
+	}
+
+	s := &Service{
+		Store: store,
+		InternalENV: cloudhub.InternalEnvironment{
+			Platform:            platform,
+			TemplatesManager:    templatesManager,
+			URLMonitoringConfig: cloudhub.URLMonitoringConfig{TelegrafPath: "/etc/telegraf"},
+		},
+		Logger: mocks.NewLogger(),
+	}
+
+	router := httprouter.New()
+	router.POST("/cloudhub/v1/url-monitoring-targets", s.AddURLMonitoringTarget)
+
+	body := `{"name":"Bar","url":"   https://new.com/health   ","interval":"1m"}`
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v1/url-monitoring-targets", bytes.NewBufferString(body))
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rr.Code, rr.Body.String())
+	}
+	if got := stub.monitoring.Targets[1].URL; got != "https://new.com/health" {
+		t.Fatalf("expected trimmed url, got %q", got)
+	}
+}
+
+func TestAddURLMonitoringTarget_URLWithNewline_ReturnsBadRequest(t *testing.T) {
+	ctx := context.WithValue(context.Background(), organizations.ContextKey, "org-1")
+
+	initial := &cloudhub.URLMonitoring{
+		ID:              "um-1",
+		OrgID:           "org-1",
+		CollectorServer: "collector-1",
+		Targets: []cloudhub.URLMonitoringTarget{
+			{ID: "t1", Name: "Foo", URL: "https://old.com", Interval: "1m", ResponseTimeout: "5s", Method: "GET"},
+		},
+	}
+
+	var deployCalled bool
+	stub := &urlMonitoringStoreStub{monitoring: initial}
+	store := &mocks.Store{
+		OrganizationsStore: &mocks.OrganizationsStore{
+			GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+				id := "org-1"
+				if q.ID != nil {
+					id = *q.ID
+				}
+				return &cloudhub.Organization{ID: id, Name: "myorg"}, nil
+			},
+		},
+		SourcesStore: &mocks.SourcesStore{
+			AllF: func(ctx context.Context) ([]cloudhub.Source, error) {
+				return []cloudhub.Source{{ID: 1, URL: "http://influx:8086"}}, nil
+			},
+		},
+		URLMonitoringStore: stub,
+	}
+
+	platform := &mocks.MockPlatform{
+		VerifyCollectorReadyFunc: func(ctx context.Context, collectorName string) error { return nil },
+		DeployTelegrafConfigFunc: func(ctx context.Context, collectorName string, configName string, content string) error {
+			deployCalled = true
+			return nil
+		},
+		RestartTelegrafFunc: func(ctx context.Context, collectorName string) error { return nil },
+	}
+
+	templatesManager := &LocalMockTemplatesManager{
+		GetF: func(ctx context.Context, id string) (cloudhub.ConfigTemplate, error) {
+			return cloudhub.ConfigTemplate{Template: testURLMonitoringTemplate}, nil
+		},
+	}
+
+	s := &Service{
+		Store: store,
+		InternalENV: cloudhub.InternalEnvironment{
+			Platform:            platform,
+			TemplatesManager:    templatesManager,
+			URLMonitoringConfig: cloudhub.URLMonitoringConfig{TelegrafPath: "/etc/telegraf"},
+		},
+		Logger: mocks.NewLogger(),
+	}
+
+	router := httprouter.New()
+	router.POST("/cloudhub/v1/url-monitoring-targets", s.AddURLMonitoringTarget)
+
+	body := "{\"name\":\"Bar\",\"url\":\"https://new.com\\nBAD\",\"interval\":\"1m\"}"
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v1/url-monitoring-targets", bytes.NewBufferString(body))
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d body=%s", rr.Code, rr.Body.String())
+	}
+	if deployCalled {
+		t.Fatal("DeployTelegrafConfig should not be called when url is invalid")
+	}
+}
+
 func TestAddURLMonitoringTarget_AutoCreatesParent(t *testing.T) {
 	ctx := context.WithValue(context.Background(), organizations.ContextKey, "org-new")
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -38,6 +39,30 @@ type urlMonitoringTargetUpsertRequest struct {
 	ResponseTimeout string `json:"responseTimeout"`
 	Method          string `json:"method"`
 	AlertRuleID     string `json:"alertRuleId,omitempty"`
+}
+
+func normalizeAndValidateURLMonitoringURL(rawURL string) (string, error) {
+	normalized := strings.TrimSpace(rawURL)
+	if normalized == "" {
+		return "", fmt.Errorf("url is required")
+	}
+	// Telegraf TOML string literal breakage and config injection 방지.
+	if strings.ContainsAny(normalized, "\r\n\"") {
+		return "", fmt.Errorf("url contains invalid characters")
+	}
+
+	parsed, err := url.ParseRequestURI(normalized)
+	if err != nil {
+		return "", fmt.Errorf("url is invalid")
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return "", fmt.Errorf("url must start with http:// or https://")
+	}
+	if parsed.Host == "" {
+		return "", fmt.Errorf("url is invalid")
+	}
+
+	return normalized, nil
 }
 
 func toURLMonitoringResponse(m *cloudhub.URLMonitoring) urlMonitoringResponse {
@@ -178,10 +203,12 @@ func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request)
 		invalidData(w, fmt.Errorf("name is required"), s.Logger)
 		return
 	}
-	if strings.TrimSpace(req.URL) == "" {
-		invalidData(w, fmt.Errorf("url is required"), s.Logger)
+	normalizedURL, err := normalizeAndValidateURLMonitoringURL(req.URL)
+	if err != nil {
+		invalidData(w, err, s.Logger)
 		return
 	}
+	req.URL = normalizedURL
 	if strings.TrimSpace(req.Interval) == "" {
 		req.Interval = "1m"
 	}
@@ -275,10 +302,12 @@ func (s *Service) PatchURLMonitoringTarget(w http.ResponseWriter, r *http.Reques
 		invalidData(w, fmt.Errorf("name is required"), s.Logger)
 		return
 	}
-	if strings.TrimSpace(req.URL) == "" {
-		invalidData(w, fmt.Errorf("url is required"), s.Logger)
+	normalizedURL, err := normalizeAndValidateURLMonitoringURL(req.URL)
+	if err != nil {
+		invalidData(w, err, s.Logger)
 		return
 	}
+	req.URL = normalizedURL
 	if strings.TrimSpace(req.Interval) == "" {
 		req.Interval = "1m"
 	}
@@ -462,10 +491,12 @@ func (s *Service) BulkAddURLMonitoringTargets(w http.ResponseWriter, r *http.Req
 			failed = append(failed, urlMonitoringBulkFailedItem{Name: t.Name, Error: "name is required"})
 			continue
 		}
-		if strings.TrimSpace(t.URL) == "" {
-			failed = append(failed, urlMonitoringBulkFailedItem{Name: t.Name, Error: "url is required"})
+		normalizedURL, err := normalizeAndValidateURLMonitoringURL(t.URL)
+		if err != nil {
+			failed = append(failed, urlMonitoringBulkFailedItem{Name: t.Name, Error: err.Error()})
 			continue
 		}
+		t.URL = normalizedURL
 		if strings.TrimSpace(t.Interval) == "" {
 			t.Interval = "1m"
 		}
