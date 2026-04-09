@@ -20,22 +20,13 @@ import {
 } from 'src/agent_admin/actions'
 
 import {
-  registerHost as registerAgent,
-  updateHost as updateAgent,
   patchHost,
   deleteHost as deleteAgent,
-  IPInterface,
-  Disk,
-  GPU,
   Host as Agent,
-  HostStatus as AgentStatus,
 } from 'src/shared/apis/host'
-import {
-  getLocalGrainsItem,
-  getLocalMountActive,
-  getLocalDiskUsage,
-} from 'src/shared/apis/saltStack'
+import {getLocalGrainsItem} from 'src/shared/apis/saltStack'
 import {waitForSaltCallCompletion} from 'src/agent_admin/apis'
+import {syncMinionFromSaltToDb} from 'src/agent_admin/utils/syncMinionFromSaltToDb'
 import {UserRole, ForceSessionAbortInputRole} from 'src/shared/actions/session'
 
 // Notification
@@ -180,71 +171,6 @@ export class AgentMinions extends PureComponent<Props, State> {
     this.setState({minionLog: yaml.dump(agentInfo)})
   }
 
-  private buildAgentPayload = (
-    host: string,
-    grains: Record<string, any>,
-    mountActive: Record<string, any>,
-    status: AgentStatus = 'accepted'
-  ) => {
-    const ipIfaceRaw: Record<string, string[]> = grains.ip_interfaces ?? {}
-    const ipInterfaces: IPInterface[] = Object.entries(
-      ipIfaceRaw
-    ).flatMap(([interfaceName, addresses]) =>
-      (addresses as string[]).map(ipAddress => ({interfaceName, ipAddress}))
-    )
-
-    const isWindows = String(grains.kernel ?? '').toLowerCase() === 'windows'
-
-    const disks: Disk[] = isWindows
-      ? Object.keys(mountActive).map(drive => ({
-          device: drive,
-          mountPoint: drive,
-        }))
-      : Object.entries(mountActive)
-          .filter(([_, info]) =>
-            String((info as any)?.device ?? '').startsWith('/dev/')
-          )
-          .map(([mountPoint, info]: [string, any]) => ({
-            device: String((info as any)?.device ?? ''),
-            mountPoint,
-          }))
-
-    const gpusRaw = grains.gpus
-    const gpus: GPU[] = gpusRaw
-      ? Object.entries(gpusRaw as Record<string, any>).map(([, g]: [string, any]) => ({
-          vendor: String(g.vendor ?? ''),
-          model: String(g.model ?? ''),
-        }))
-      : []
-
-    const selinuxRaw = grains.selinux
-    const selinuxState: string =
-      selinuxRaw && typeof selinuxRaw === 'object'
-        ? String(selinuxRaw.mode ?? selinuxRaw.enforced ?? '')
-        : ''
-
-    return {
-      hostname: host,
-      originalHostname: String(grains.hostname ?? host),
-      ipInterfaces,
-      os: String(grains.os ?? ''),
-      osFamily: String(grains.os_family ?? grains.osfamily ?? ''),
-      osVersion: String(grains.osrelease ?? ''),
-      kernel: String(grains.kernel ?? ''),
-      arch: String(grains.cpuarch ?? ''),
-      memTotalKb: parseInt(grains.mem_total ?? '0', 10) * 1024,
-      swapTotalKb: parseInt(grains.swap_total ?? '0', 10) * 1024,
-      cpuCores: parseInt(grains.num_cpus ?? '0', 10),
-      cpuModel: String(grains.cpu_model ?? ''),
-      biosVersion: String(grains.biosversion ?? ''),
-      timezone: String(grains.locale_info?.timezone ?? ''),
-      selinuxState,
-      disks,
-      gpus,
-      status,
-    }
-  }
-
   private handleRefreshMinion = async (host: string) => {
     const {
       notify,
@@ -265,46 +191,13 @@ export class AgentMinions extends PureComponent<Props, State> {
     this.setState({focusedHost: host, processingHost: host})
 
     try {
-      const grainsResp = await getLocalGrainsItem(
+      await syncMinionFromSaltToDb(
         saltMasterUrl,
         saltMasterToken,
-        host
+        host,
+        this.props.agents,
+        'accepted'
       )
-      const grains = grainsResp?.data?.return?.[0]?.[host] ?? {}
-      const isWindows = String(grains.kernel ?? '').toLowerCase() === 'windows'
-
-      let diskData: Record<string, any> = {}
-      try {
-        if (isWindows) {
-          const diskResp = await getLocalDiskUsage(
-            saltMasterUrl,
-            saltMasterToken,
-            host
-          )
-          const data = diskResp?.data?.return?.[0]?.[host]
-          if (data != null && typeof data === 'object') diskData = data
-        } else {
-          const mountResp = await getLocalMountActive(
-            saltMasterUrl,
-            saltMasterToken,
-            host
-          )
-          const data = mountResp?.data?.return?.[0]?.[host]
-          if (data != null && typeof data === 'object') diskData = data
-        }
-      } catch (_) {}
-
-      const payload = {
-        minionId: host,
-        sourceType: 'salt' as const,
-        ...this.buildAgentPayload(host, grains, diskData),
-      }
-      const existsInDb = this.props.agents.some(a => a.minionId === host)
-      if (existsInDb) {
-        await updateAgent(host, payload)
-      } else {
-        await registerAgent(payload)
-      }
 
       await onRefreshAgents()
       notify(notifyAgentStartSucceeded(host))
@@ -358,49 +251,20 @@ export class AgentMinions extends PureComponent<Props, State> {
           // Wait for minion to connect by retrying grains.item until valid data arrives
           // (UI status only updates after DB save below)
           try {
-            const grainsResp = await waitForSaltCallCompletion(
+            await waitForSaltCallCompletion(
               getLocalGrainsItem,
               res =>
                 res.data?.return[0][host] !== false &&
                 res.data?.return[0][host] != null,
               [saltMasterUrl, saltMasterToken, host]
             )
-            const grains = grainsResp?.data?.return?.[0]?.[host] ?? {}
-            const isWindows =
-              String(grains.kernel ?? '').toLowerCase() === 'windows'
-
-            let diskData: Record<string, any> = {}
-            try {
-              if (isWindows) {
-                const diskResp = await getLocalDiskUsage(
-                  saltMasterUrl,
-                  saltMasterToken,
-                  host
-                )
-                const data = diskResp?.data?.return?.[0]?.[host]
-                if (data != null && typeof data === 'object') diskData = data
-              } else {
-                const mountResp = await getLocalMountActive(
-                  saltMasterUrl,
-                  saltMasterToken,
-                  host
-                )
-                const data = mountResp?.data?.return?.[0]?.[host]
-                if (data != null && typeof data === 'object') diskData = data
-              }
-            } catch (_) {}
-
-            const payload = {
-              minionId: host,
-              sourceType: 'salt' as const,
-              ...this.buildAgentPayload(host, grains, diskData, 'accepted'),
-            }
-            const existsInDb = this.props.agents.some(a => a.minionId === host)
-            if (existsInDb) {
-              await updateAgent(host, payload)
-            } else {
-              await registerAgent(payload)
-            }
+            await syncMinionFromSaltToDb(
+              saltMasterUrl,
+              saltMasterToken,
+              host,
+              this.props.agents,
+              'accepted'
+            )
 
             await handleUpdateMinionStatus(host)
 

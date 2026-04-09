@@ -17,6 +17,10 @@ import {getMinionKeyListAllAdminAsync} from 'src/agent_admin/actions'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {
+  defaultSuccessNotification,
+  notifyAgentLoadFailed,
+} from 'src/shared/copy/notifications'
 
 // Constants
 import {
@@ -41,6 +45,8 @@ import {AddonType} from 'src/shared/constants'
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {MinionsObject} from 'src/agent_admin/type'
+import {MinionState} from 'src/agent_admin/type/minion'
+import {collectMinionHostPayloadsFromSaltBatch} from 'src/agent_admin/utils/syncMinionFromSaltToDb'
 
 // APIs
 import {
@@ -49,7 +55,7 @@ import {
   updateMinionKeyState,
 } from 'src/agent_admin/apis'
 import {extractTelegrafVersion} from 'src/agent_admin/utils'
-import {getHosts, Host as Agent} from 'src/shared/apis/host'
+import {bulkUpsertHosts, getHosts, Host as Agent} from 'src/shared/apis/host'
 import {getManageUp} from 'src/shared/apis/saltStack'
 
 interface Props {
@@ -131,7 +137,9 @@ class AgentAdminPage extends PureComponent<Props, State> {
     this.setState({minionsStatus})
   }
 
-  public getMinionKeyListAll = async () => {
+  public getMinionKeyListAll = async (): Promise<
+    {minionsObject: MinionsObject; agents: Agent[]} | undefined
+  > => {
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
     })
@@ -155,7 +163,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
 
     if (!minionListObject) {
       this.setState({minionsStatus: RemoteDataState.Error})
-      return
+      return undefined
     }
 
     const dbByMinionId = new Map((dbHosts as Agent[]).map(h => [h.minionId, h]))
@@ -184,7 +192,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
     })
 
     if (allAcceptedKeys.length === 0) {
-      return
+      return {
+        minionsObject: minionListObject,
+        agents: dbHosts as Agent[],
+      }
     }
 
     this.setState({isSaltLoading: true})
@@ -230,6 +241,11 @@ class AgentAdminPage extends PureComponent<Props, State> {
       this.setState({minionsObject: {...minionListObject}})
     } finally {
       this.setState({isSaltLoading: false})
+    }
+
+    return {
+      minionsObject: minionListObject,
+      agents: dbHosts as Agent[],
     }
   }
 
@@ -390,8 +406,102 @@ class AgentAdminPage extends PureComponent<Props, State> {
     ).map(cloudname => cloudsName[cloudname.name])
   }
 
-  public onRefresh = () => {
-    this.getMinionKeyListAll()
+  public onRefresh = async () => {
+    const snapshot = await this.getMinionKeyListAll()
+    if (!snapshot) {
+      return
+    }
+
+    const addon = this.props.addons.find(a => a.name === AddonType.salt)
+    const saltMasterUrl = addon?.url ?? ''
+    const saltMasterToken = addon?.token ?? ''
+    if (!saltMasterUrl) {
+      return
+    }
+
+    const {minionsObject} = snapshot
+    const targets = Object.keys(minionsObject).filter(
+      h =>
+        minionsObject[h].status === MinionState.Accept &&
+        minionsObject[h].isSaltRunning === true
+    )
+
+    if (targets.length === 0) {
+      return
+    }
+
+    const {
+      payloads,
+      errors: saltFailDetails,
+    } = await collectMinionHostPayloadsFromSaltBatch(
+      saltMasterUrl,
+      saltMasterToken,
+      targets,
+      'accepted'
+    )
+    const saltFail = saltFailDetails.length
+    if (saltFailDetails.length > 0) {
+      console.warn(
+        'AgentAdminPage.onRefresh: Salt payload collection issues:',
+        saltFailDetails
+      )
+    }
+
+    let ok = 0
+    let apiFail = 0
+    let apiFailDetails: Array<{host: string; reason: string}> = []
+    if (payloads.length > 0) {
+      try {
+        const resp = await bulkUpsertHosts(payloads)
+        ok = resp.created.length + resp.updated.length
+        apiFail = resp.failed.length
+        apiFailDetails = resp.failed.map(f => ({host: f.hostname, reason: f.error}))
+        if (resp.failed.length > 0) {
+          console.warn(
+            'AgentAdminPage.onRefresh: bulkUpsertHosts failures:',
+            resp.failed
+          )
+        }
+      } catch (e) {
+        console.warn('AgentAdminPage.onRefresh: bulkUpsertHosts request failed:', e)
+        apiFail = payloads.length
+        const reason = e instanceof Error ? e.message : String(e)
+        apiFailDetails = payloads.map(p => ({host: p.hostname, reason}))
+      }
+    }
+
+    const fail = saltFail + apiFail
+    const allFailDetails = [...saltFailDetails, ...apiFailDetails]
+    if (allFailDetails.length > 0) {
+      console.warn('AgentAdminPage.onRefresh: fail details', allFailDetails)
+    }
+
+    await this.refreshAgents()
+
+    if (fail === 0) {
+      this.props.notify({
+        ...defaultSuccessNotification,
+        icon: 'server2',
+        message: `Collector info updated for ${ok} minion(s).`,
+      })
+    } else if (ok === 0) {
+      const firstReason = allFailDetails[0]?.reason
+      this.props.notify(
+        notifyAgentLoadFailed(
+          new Error(
+            firstReason
+              ? `Failed to refresh all ${fail} minion(s). First error: ${firstReason}`
+              : `Failed to refresh all ${fail} minion(s).`
+          )
+        )
+      )
+    } else {
+      this.props.notify({
+        ...defaultSuccessNotification,
+        icon: 'server2',
+        message: `Collector info updated for ${ok} minion(s); ${fail} failed.`,
+      })
+    }
   }
 
   render() {

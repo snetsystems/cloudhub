@@ -193,31 +193,16 @@ func (s *Service) GetHost(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, toHostResponse(*host), s.Logger)
 }
 
-// RegisterHost creates a new host record from a minion accept event.
-func (s *Service) RegisterHost(w http.ResponseWriter, r *http.Request) {
-	ctx := serverContext(r.Context())
-
-	var req hostRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		invalidData(w, err, s.Logger)
-		return
-	}
-	if req.Hostname == "" {
-		invalidData(w, fmt.Errorf("hostname is required"), s.Logger)
-		return
-	}
-
+func normalizedHostFromRequest(req hostRequest, forCreate bool, existing *cloudhub.Host) *cloudhub.Host {
 	sourceType := req.SourceType
 	if sourceType == "" {
 		sourceType = "salt"
 	}
-
 	status := req.Status
 	if status != "accepted" && status != "rejected" {
 		status = "accepted"
 	}
-
-	host := &cloudhub.Host{
+	h := &cloudhub.Host{
 		MinionID:         req.MinionID,
 		Hostname:         req.Hostname,
 		OriginalHostname: req.OriginalHostname,
@@ -234,14 +219,37 @@ func (s *Service) RegisterHost(w http.ResponseWriter, r *http.Request) {
 		BIOSVersion:      req.BIOSVersion,
 		Timezone:         req.Timezone,
 		SelinuxState:     req.SelinuxState,
-		IsCollector:      req.IsCollector,
 		Disks:            req.Disks,
 		GPUs:             req.GPUs,
 		SourceType:       sourceType,
-		OrgID:            "",
 		Status:           status,
-		CreatedAt:        time.Now(),
 	}
+	if forCreate {
+		h.IsCollector = req.IsCollector
+		h.OrgID = ""
+		h.CreatedAt = time.Now()
+	} else {
+		h.IsCollector = existing.IsCollector
+		h.OrgID = existing.OrgID
+	}
+	return h
+}
+
+// RegisterHost creates a new host record from a minion accept event.
+func (s *Service) RegisterHost(w http.ResponseWriter, r *http.Request) {
+	ctx := serverContext(r.Context())
+
+	var req hostRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+	if req.Hostname == "" {
+		invalidData(w, fmt.Errorf("hostname is required"), s.Logger)
+		return
+	}
+
+	host := normalizedHostFromRequest(req, true, nil)
 
 	created, err := s.Store.Hosts(ctx).Add(ctx, host)
 	if err != nil {
@@ -267,34 +275,18 @@ func (s *Service) UpdateHost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status := req.Status
-	if status != "accepted" && status != "rejected" {
-		status = "accepted"
+	existing, gerr := s.Store.Hosts(ctx).Get(ctx, cloudhub.HostQuery{Hostname: &hostname})
+	if gerr != nil {
+		if gerr == cloudhub.ErrHostNotFound {
+			notFound(w, hostname, s.Logger)
+			return
+		}
+		internalServerError(w, gerr, s.Logger)
+		return
 	}
 
-	host := &cloudhub.Host{
-		MinionID:         req.MinionID,
-		Hostname:         hostname,
-		OriginalHostname: req.OriginalHostname,
-		IPInterfaces:     req.IPInterfaces,
-		OS:               req.OS,
-		OSFamily:         req.OSFamily,
-		OSVersion:        req.OSVersion,
-		Kernel:           req.Kernel,
-		Arch:             req.Arch,
-		MemTotalKB:       req.MemTotalKB,
-		SwapTotalKB:      req.SwapTotalKB,
-		CPUCores:         req.CPUCores,
-		CPUModel:         req.CPUModel,
-		BIOSVersion:      req.BIOSVersion,
-		Timezone:         req.Timezone,
-		SelinuxState:     req.SelinuxState,
-		IsCollector:      req.IsCollector,
-		Disks:            req.Disks,
-		GPUs:             req.GPUs,
-		SourceType:       req.SourceType,
-		Status:           status,
-	}
+	host := normalizedHostFromRequest(req, false, existing)
+	host.Hostname = hostname
 
 	updated, err := s.Store.Hosts(ctx).Update(ctx, host)
 	if err != nil {
@@ -361,4 +353,95 @@ func (s *Service) DeleteHost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+type bulkUpsertHostsRequest struct {
+	Hosts []hostRequest `json:"hosts"`
+}
+
+type bulkUpsertHostsFailedItem struct {
+	Hostname string `json:"hostname"`
+	Error    string `json:"error"`
+}
+
+type bulkUpsertHostsResponse struct {
+	Created []string                  `json:"created"`
+	Updated []string                  `json:"updated"`
+	Failed  []bulkUpsertHostsFailedItem `json:"failed"`
+}
+
+// BulkUpsertHosts creates or updates multiple hosts in one request (e.g. Salt-driven inventory refresh).
+// On update, IsCollector and OrgID are taken from the existing row so clients can omit them.
+func (s *Service) BulkUpsertHosts(w http.ResponseWriter, r *http.Request) {
+	ctx := serverContext(r.Context())
+
+	var body bulkUpsertHostsRequest
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+	if len(body.Hosts) == 0 {
+		Error(w, http.StatusBadRequest, "hosts is required", s.Logger)
+		return
+	}
+
+	var created, updated []string
+	var failed []bulkUpsertHostsFailedItem
+
+	for _, req := range body.Hosts {
+		if req.Hostname == "" {
+			failed = append(failed, bulkUpsertHostsFailedItem{Hostname: "", Error: "hostname is required"})
+			continue
+		}
+		hn := req.Hostname
+		existing, gerr := s.Store.Hosts(ctx).Get(ctx, cloudhub.HostQuery{Hostname: &hn})
+		if gerr == cloudhub.ErrHostNotFound {
+			host := normalizedHostFromRequest(req, true, nil)
+			_, aerr := s.Store.Hosts(ctx).Add(ctx, host)
+			if aerr != nil {
+				failed = append(failed, bulkUpsertHostsFailedItem{Hostname: hn, Error: aerr.Error()})
+				continue
+			}
+			created = append(created, hn)
+			continue
+		}
+		if gerr != nil {
+			failed = append(failed, bulkUpsertHostsFailedItem{Hostname: hn, Error: gerr.Error()})
+			continue
+		}
+		host := normalizedHostFromRequest(req, false, existing)
+		host.Hostname = hn
+		_, uerr := s.Store.Hosts(ctx).Update(ctx, host)
+		if uerr != nil {
+			failed = append(failed, bulkUpsertHostsFailedItem{Hostname: hn, Error: uerr.Error()})
+			continue
+		}
+		updated = append(updated, hn)
+	}
+
+	resp := bulkUpsertHostsResponse{
+		Created: created,
+		Updated: updated,
+		Failed:  failed,
+	}
+	if resp.Created == nil {
+		resp.Created = []string{}
+	}
+	if resp.Updated == nil {
+		resp.Updated = []string{}
+	}
+	if resp.Failed == nil {
+		resp.Failed = []bulkUpsertHostsFailedItem{}
+	}
+
+	status := http.StatusOK
+	if len(failed) > 0 {
+		if len(created)+len(updated) == 0 {
+			status = http.StatusBadRequest
+		} else {
+			status = http.StatusMultiStatus
+		}
+	}
+
+	encodeJSON(w, status, resp, s.Logger)
 }

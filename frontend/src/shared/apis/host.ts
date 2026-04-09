@@ -127,6 +127,46 @@ export async function updateHost(
   return data as Host
 }
 
+export interface HostBulkUpsertFailedItem {
+  hostname: string
+  error: string
+}
+
+export interface HostBulkUpsertResponse {
+  created: string[]
+  updated: string[]
+  failed: HostBulkUpsertFailedItem[]
+}
+
+export async function bulkUpsertHosts(
+  hosts: HostRegistrationPayload[]
+): Promise<HostBulkUpsertResponse> {
+  const normalize = (raw: any): HostBulkUpsertResponse => ({
+    created: Array.isArray(raw?.created) ? raw.created : [],
+    updated: Array.isArray(raw?.updated) ? raw.updated : [],
+    failed: Array.isArray(raw?.failed) ? raw.failed : [],
+  })
+
+  try {
+    const res = await AJAX({
+      url: '/cloudhub/v1/hosts/bulk-upsert',
+      method: 'POST',
+      data: {hosts},
+    })
+    return normalize((res as {data: HostBulkUpsertResponse}).data)
+  } catch (err: any) {
+    // AJAX throws the axios response on error; 400 bulk-upsert still returns a JSON body.
+    if (err?.status === 400 && err?.data) {
+      return normalize(err.data)
+    }
+    console.warn('bulkUpsertHosts request failed', {
+      status: err?.status,
+      data: err?.data,
+    })
+    throw err
+  }
+}
+
 export async function deleteHost(hostname: string): Promise<void> {
   await AJAX({
     url: `/cloudhub/v1/hosts/${encodeURIComponent(hostname)}`,

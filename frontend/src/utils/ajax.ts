@@ -97,6 +97,7 @@ async function AJAX<T = any>(
     params = {},
     headers = {},
     cancelToken = null,
+    validateStatus,
   }: RequestParams,
   excludeBasepath = false
 ): Promise<(T | (T & {links: object})) | AxiosResponse<T>> {
@@ -116,6 +117,7 @@ async function AJAX<T = any>(
       params,
       headers,
       cancelToken,
+      ...(validateStatus != null ? {validateStatus} : {}),
     })
 
     // TODO: Just return the unadulterated response without grafting auth, me,

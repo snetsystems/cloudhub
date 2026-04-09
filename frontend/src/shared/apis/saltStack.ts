@@ -205,6 +205,36 @@ const apiRequestMulti = async (
   }
 }
 
+/** Salt `grains.item` field list — keep in sync for single-minion and batch calls. */
+const GRAINS_ITEM_FIELDS = [
+  'saltversion',
+  'master',
+  'os_family',
+  'os',
+  'osrelease',
+  'kernel',
+  'kernelrelease',
+  'kernelversion',
+  'virtual',
+  'cpuarch',
+  'cpu_model',
+  'num_cpus',
+  'host',
+  'localhost',
+  'ip_interfaces',
+  'ip6_interfaces',
+  'ip4_gw',
+  'ip6_gw',
+  'dns:nameservers',
+  'locale_info',
+  'biosversion',
+  'mem_total',
+  'swap_total',
+  'gpus',
+  'selinux',
+  'path',
+] as const
+
 export async function getLocalGrainsItem(
   pUrl: string,
   pToken: string,
@@ -215,37 +245,40 @@ export async function getLocalGrainsItem(
       client: 'local',
       tgt: pMinionId,
       fun: 'grains.item',
-      arg: [
-        'saltversion',
-        'master',
-        'os_family',
-        'os',
-        'osrelease',
-        'kernel',
-        'kernelrelease',
-        'kernelversion',
-        'virtual',
-        'cpuarch',
-        'cpu_model',
-        'num_cpus',
-        'host',
-        'localhost',
-        'ip_interfaces',
-        'ip6_interfaces',
-        'ip4_gw',
-        'ip6_gw',
-        'dns:nameservers',
-        'locale_info',
-        'biosversion',
-        'mem_total',
-        'swap_total',
-        'gpus',
-        'selinux',
-        'path',
-      ],
+      arg: [...GRAINS_ITEM_FIELDS],
       tgt_type: 'glob',
     }
 
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+/**
+ * Same as getLocalGrainsItem but one Salt run for multiple minions (tgt_type=list).
+ * `tgt` is comma-separated minion ids per Salt netapi.
+ */
+export async function getLocalGrainsItemBatch(
+  pUrl: string,
+  pToken: string,
+  minionIds: string[]
+) {
+  if (minionIds.length === 0) {
+    return {data: {return: [{}]}}
+  }
+  if (minionIds.length === 1) {
+    return getLocalGrainsItem(pUrl, pToken, minionIds[0])
+  }
+  try {
+    const params = {
+      client: 'local',
+      tgt: minionIds.join(','),
+      fun: 'grains.item',
+      arg: [...GRAINS_ITEM_FIELDS],
+      tgt_type: 'list',
+    }
     return await apiRequest(pUrl, pToken, params)
   } catch (error) {
     console.error(error)
@@ -277,6 +310,32 @@ export async function getLocalMountActive(
   }
 }
 
+/** batch mount.active for Linux minions (tgt_type=list). */
+export async function getLocalMountActiveBatch(
+  pUrl: string,
+  pToken: string,
+  minionIds: string[]
+) {
+  if (minionIds.length === 0) {
+    return {data: {return: [{}]}}
+  }
+  if (minionIds.length === 1) {
+    return getLocalMountActive(pUrl, pToken, minionIds[0])
+  }
+  try {
+    const params = {
+      client: 'local',
+      tgt: minionIds.join(','),
+      fun: 'mount.active',
+      tgt_type: 'list',
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 /**
  * Get disk usage per path/drive from minion via Salt disk.usage.
  * Linux: returns { "/": { total, used, free }, "/home": ... }.
@@ -293,6 +352,32 @@ export async function getLocalDiskUsage(
       tgt: pMinionId,
       fun: 'disk.usage',
       tgt_type: 'glob',
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+/** batch disk.usage (Windows paths); tgt_type=list */
+export async function getLocalDiskUsageBatch(
+  pUrl: string,
+  pToken: string,
+  minionIds: string[]
+) {
+  if (minionIds.length === 0) {
+    return {data: {return: [{}]}}
+  }
+  if (minionIds.length === 1) {
+    return getLocalDiskUsage(pUrl, pToken, minionIds[0])
+  }
+  try {
+    const params = {
+      client: 'local',
+      tgt: minionIds.join(','),
+      fun: 'disk.usage',
+      tgt_type: 'list',
     }
     return await apiRequest(pUrl, pToken, params)
   } catch (error) {

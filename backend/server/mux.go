@@ -521,6 +521,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v1/hosts", EnsureViewer(service.GetHosts))
 	router.GET("/cloudhub/v1/hosts/:hostname", EnsureViewer(service.GetHost))
 	router.POST("/cloudhub/v1/hosts", EnsureAdmin(service.RegisterHost))
+	router.POST("/cloudhub/v1/hosts/bulk-upsert", EnsureAdmin(service.BulkUpsertHosts))
 	router.PUT("/cloudhub/v1/hosts/:hostname", EnsureAdmin(service.UpdateHost))
 	router.PATCH("/cloudhub/v1/hosts/:hostname", EnsureAdmin(service.PatchHost))
 	router.DELETE("/cloudhub/v1/hosts/:hostname", EnsureAdmin(service.DeleteHost))

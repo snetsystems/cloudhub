@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -222,6 +223,9 @@ func TestPatchHost_InvalidStatus(t *testing.T) {
 
 func TestUpdateHost_NotFound(t *testing.T) {
 	svc := newServiceWithHostStore(&mockHostStore{
+		GetFn: func(_ context.Context, _ cloudhub.HostQuery) (*cloudhub.Host, error) {
+			return nil, cloudhub.ErrHostNotFound
+		},
 		UpdateFn: func(_ context.Context, _ *cloudhub.Host) (*cloudhub.Host, error) {
 			return nil, cloudhub.ErrHostNotFound
 		},
@@ -255,5 +259,106 @@ func TestRegisterHost_MissingHostname(t *testing.T) {
 
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("expected 422, got %d", rr.Code)
+	}
+}
+
+func TestBulkUpsertHosts_AllCreate(t *testing.T) {
+	seen := make(map[string]*cloudhub.Host)
+	svc := newServiceWithHostStore(&mockHostStore{
+		GetFn: func(_ context.Context, q cloudhub.HostQuery) (*cloudhub.Host, error) {
+			if q.Hostname == nil {
+				return nil, fmt.Errorf("hostname required")
+			}
+			if h, ok := seen[*q.Hostname]; ok {
+				return h, nil
+			}
+			return nil, cloudhub.ErrHostNotFound
+		},
+		AddFn: func(_ context.Context, h *cloudhub.Host) (*cloudhub.Host, error) {
+			cp := *h
+			cp.ID = h.Hostname + "-id"
+			seen[h.Hostname] = &cp
+			return &cp, nil
+		},
+		UpdateFn: func(_ context.Context, h *cloudhub.Host) (*cloudhub.Host, error) {
+			cp := *h
+			seen[h.Hostname] = &cp
+			return &cp, nil
+		},
+	})
+
+	body, _ := json.Marshal(bulkUpsertHostsRequest{Hosts: []hostRequest{
+		{Hostname: "host-a", MinionID: "host-a", Status: "accepted"},
+		{Hostname: "host-b", MinionID: "host-b", Status: "accepted"},
+	}})
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v1/hosts/bulk-upsert", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	svc.BulkUpsertHosts(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rr.Code, rr.Body.String())
+	}
+	var resp bulkUpsertHostsResponse
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(resp.Created) != 2 || len(resp.Updated) != 0 || len(resp.Failed) != 0 {
+		t.Fatalf("unexpected response: %+v", resp)
+	}
+}
+
+func TestBulkUpsertHosts_UpdatePreservesIsCollector(t *testing.T) {
+	seen := map[string]*cloudhub.Host{
+		"host-a": {
+			ID:          "id-a",
+			Hostname:    "host-a",
+			MinionID:    "host-a",
+			IsCollector: true,
+			OrgID:       "org-1",
+			Status:      "accepted",
+		},
+	}
+	var updated *cloudhub.Host
+	svc := newServiceWithHostStore(&mockHostStore{
+		GetFn: func(_ context.Context, q cloudhub.HostQuery) (*cloudhub.Host, error) {
+			return seen[*q.Hostname], nil
+		},
+		AddFn: func(_ context.Context, h *cloudhub.Host) (*cloudhub.Host, error) {
+			t.Fatal("Add should not be called")
+			return nil, nil
+		},
+		UpdateFn: func(_ context.Context, h *cloudhub.Host) (*cloudhub.Host, error) {
+			updated = h
+			cp := *h
+			return &cp, nil
+		},
+	})
+
+	body, _ := json.Marshal(bulkUpsertHostsRequest{Hosts: []hostRequest{
+		{Hostname: "host-a", MinionID: "host-a", OS: "Linux", Status: "accepted", IsCollector: false},
+	}})
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v1/hosts/bulk-upsert", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	svc.BulkUpsertHosts(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rr.Code, rr.Body.String())
+	}
+	if updated == nil || !updated.IsCollector {
+		t.Fatalf("IsCollector should be preserved from existing row, got %+v", updated)
+	}
+	if updated.OrgID != "org-1" {
+		t.Fatalf("OrgID should be preserved, got %q", updated.OrgID)
+	}
+}
+
+func TestBulkUpsertHosts_EmptyHosts_Returns400(t *testing.T) {
+	svc := newServiceWithHostStore(&mockHostStore{})
+	body, _ := json.Marshal(bulkUpsertHostsRequest{Hosts: []hostRequest{}})
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v1/hosts/bulk-upsert", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	svc.BulkUpsertHosts(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rr.Code)
 	}
 }
