@@ -37,7 +37,7 @@ export function URLMonitoringLatencyCell({
       color={LATENCY_LINE_COLOR}
       values={toLineValues(value)}
       height={chartHeight ?? DEFAULT_LATENCY_CHART_HEIGHT}
-      strokeWidth={0.2}
+      strokeWidth={1}
       onChartClick={onChartClick}
       options={{
         isShowLine: true,

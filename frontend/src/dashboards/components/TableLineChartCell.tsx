@@ -324,11 +324,15 @@ function TableLineChartCell({
     const nextCursorY =
       ((event.clientY - rect.top) / rect.height) * VIEW_BOX_HEIGHT
 
-    let nearestPoint = normalizedPoints[0]
+    const validPoints = normalizedPoints.filter(p => p.value !== null)
+    const searchTargetPoints =
+      validPoints.length > 0 ? validPoints : normalizedPoints
+
+    let nearestPoint = searchTargetPoints[0]
     let nearestDistance = Math.abs(nearestPoint.x - nextCursorX)
 
-    for (let index = 1; index < normalizedPoints.length; index++) {
-      const point = normalizedPoints[index]
+    for (let index = 1; index < searchTargetPoints.length; index++) {
+      const point = searchTargetPoints[index]
       const distance = Math.abs(point.x - nextCursorX)
       if (distance < nearestDistance) {
         nearestPoint = point
@@ -590,6 +594,7 @@ function TableLineChartCell({
                         strokeWidth={strokeWidth}
                         strokeLinecap="round"
                         strokeLinejoin="round"
+                        vectorEffect="non-scaling-stroke"
                       />
                     )}
 
