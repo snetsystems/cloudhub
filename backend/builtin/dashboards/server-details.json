@@ -2,75 +2,31 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.5.7",
+  "version": "1.0.0",
   "organization": "",
   "cells": [
     {
-      "i": "server-details-cpu-usage",
-      "x": 0,
+      "i": "server-details-process",
+      "x": 48,
       "y": 0,
       "w": 48,
-      "h": 10,
-      "minW": 16,
-      "minH": 4,
-      "name": "CPU Usage",
-      "type": "line",
-      "queries": [
-        {
-          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
-          "label": "CPU Usage"
-        }
-      ],
-      "detailQueries": [
-        {
-          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-usage"
-        },
-        {
-          "query": "SELECT mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-idle"
-        },
-        {
-          "query": "SELECT mean(\"usage_nice\") AS \"nice\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-nice"
-        },
-        {
-          "query": "SELECT mean(\"usage_iowait\") AS \"iowait\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-io-wait"
-        },
-        {
-          "query": "SELECT mean(\"usage_steal\") AS \"steal\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-steal"
-        },
-        {
-          "query": "SELECT mean(\"usage_irq\") AS \"irq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-irq"
-        },
-        {
-          "query": "SELECT mean(\"usage_softirq\") AS \"softirq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-soft-irq"
-        },
-        {
-          "query": "SELECT mean(\"load1\") AS \"01 min\", mean(\"load5\") AS \"05 min\", mean(\"load15\") AS \"15 min\" FROM \":db:\".\":rp:\".\"system\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-load"
-        }
-      ],
-      "graphOptions": {
-        "fillArea": false,
-        "showLine": true,
-        "showPoint": false
-      }
+      "h": 35,
+      "minW": 24,
+      "minH": 2,
+      "name": "Process",
+      "queries": [],
+      "type": "component"
     },
     {
       "i": "server-details-memory-usage",
       "x": 0,
-      "y": 10,
+      "y": 0,
       "w": 48,
-      "h": 10,
+      "h": 17,
       "minW": 16,
       "minH": 4,
       "name": "Memory Usage",
-      "type": "line-plus-single-stat",
+      "type": "line-stacked",
       "queries": [
         {
           "query": "SELECT mean(\"used_percent\") AS \"last_used_percent\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(previous)",
@@ -115,87 +71,55 @@
           "label": "memory-page-faults"
         }
       ],
+      "axes": {
+        "y": {
+          "bounds": ["0", "100"],
+          "label": " ",
+          "prefix": "",
+          "suffix": "%",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "colors": [
+        {
+          "id": "726e1a7d-9580-452e-9c70-9f87cfa05adc",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0e4f5f83-f00d-4151-a238-d6dafbef5317",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "b54f595c-00bc-4cff-ab39-1dd683c8a7be",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
         "showPoint": false
-      }
-    },
-    {
-      "i": "server-details-process",
-      "x": 48,
-      "y": 0,
-      "w": 48,
-      "h": 20,
-      "minW": 24,
-      "minH": 2,
-      "name": "Process",
-      "queries": [],
-      "type": "component"
-    },
-    {
-      "i": "server-details-server-info",
-      "x": 48,
-      "y": 20,
-      "w": 48,
-      "h": 20,
-      "minW": 24,
-      "minH": 2,
-      "name": "Server Info",
-      "type": "component",
-      "queries": [
-        {
-          "query": "SELECT last(\"total\")/1073741824 AS \"total_gib\", last(\"used\")/1073741824 AS \"used_gib\", last(\"free\")/1073741824 AS \"free_gib\", last(\"used_percent\") AS \"used_percent\", last(\"inodes_used_percent\") AS \"inode_used_percent\" FROM \":db:\".\":rp:\".\"disk\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY \"path\"",
-          "label": "Disk Usage"
-        }
-      ]
-    },
-    {
-      "i": "server-details-network-usage",
-      "x": 0,
-      "y": 20,
-      "w": 48,
-      "h": 10,
-      "minW": 16,
-      "minH": 4,
-      "name": "Network",
-      "type": "line",
-      "queries": [
-        {
-          "query": "SELECT non_negative_derivative(max(\"bytes_recv\"), 1s) AS \"received\", non_negative_derivative(max(\"bytes_sent\"), 1s) AS \"sent\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND \"host\" = :host: GROUP BY time(:interval:) FILL(null)",
-          "label": "Network Traffic"
-        }
-      ],
-      "detailQueries": [
-        {
-          "query": "SELECT non_negative_derivative(sum(\"bytes_recv\"), 1s)/1048576 AS \"Traffic in\", non_negative_derivative(sum(\"bytes_sent\"), 1s)/1048576 AS \"Traffic out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "traffic-in-out"
-        },
-        {
-          "query": "SELECT non_negative_derivative(sum(\"packets_recv\"), 1s) AS \"Packet in\", non_negative_derivative(sum(\"packets_sent\"), 1s) AS \"Packet out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "packet-in-out"
-        },
-        {
-          "query": "SELECT non_negative_derivative(sum(\"err_in\"), 1s) AS \"Error in\", non_negative_derivative(sum(\"err_out\"), 1s) AS \"Error out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "error-in-out"
-        },
-        {
-          "query": "SELECT non_negative_derivative(sum(\"drop_in\"), 1s) AS \"Dropped in\", non_negative_derivative(sum(\"drop_out\"), 1s) AS \"Dropped out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "dropped-in-out"
-        }
-      ],
-      "graphOptions": {
-        "fillArea": false,
-        "showLine": true,
-        "showPoint": false
-      }
+      },
+      "isShowSummary": true
     },
     {
       "i": "server-details-disk-io-usage",
       "x": 0,
-      "y": 30,
+      "y": 17,
       "w": 48,
-      "h": 10,
+      "h": 18,
       "minW": 16,
       "minH": 4,
       "name": "Disk I/O",
@@ -244,18 +168,231 @@
           "label": "disk-free-gib"
         }
       ],
+      "axes": {
+        "y": {
+          "label": " ",
+          "suffix": " "
+        }
+      },
+      "colors": [
+        {
+          "id": "726e1a7d-9580-452e-9c70-9f87cfa05adc",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0e4f5f83-f00d-4151-a238-d6dafbef5317",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "b54f595c-00bc-4cff-ab39-1dd683c8a7be",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
         "showPoint": false
-      }
+      },
+      "isShowSummary": true
+    },
+    {
+      "i": "server-details-cpu-usage",
+      "x": 0,
+      "y": 35,
+      "w": 48,
+      "h": 17,
+      "minW": 16,
+      "minH": 4,
+      "name": "CPU Usage",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
+          "label": "CPU Usage"
+        }
+      ],
+      "detailQueries": [
+        {
+          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-usage"
+        },
+        {
+          "query": "SELECT mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-idle"
+        },
+        {
+          "query": "SELECT mean(\"usage_nice\") AS \"nice\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-nice"
+        },
+        {
+          "query": "SELECT mean(\"usage_iowait\") AS \"iowait\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-io-wait"
+        },
+        {
+          "query": "SELECT mean(\"usage_steal\") AS \"steal\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-steal"
+        },
+        {
+          "query": "SELECT mean(\"usage_irq\") AS \"irq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-irq"
+        },
+        {
+          "query": "SELECT mean(\"usage_softirq\") AS \"softirq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-soft-irq"
+        },
+        {
+          "query": "SELECT mean(\"load1\") AS \"01 min\", mean(\"load5\") AS \"05 min\", mean(\"load15\") AS \"15 min\" FROM \":db:\".\":rp:\".\"system\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-load"
+        }
+      ],
+      "axes": {
+        "y": {
+          "label": " ",
+          "suffix": " "
+        }
+      },
+      "colors": [
+        {
+          "id": "726e1a7d-9580-452e-9c70-9f87cfa05adc",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0e4f5f83-f00d-4151-a238-d6dafbef5317",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "b54f595c-00bc-4cff-ab39-1dd683c8a7be",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false
+      },
+      "isShowSummary": true
+    },
+    {
+      "i": "server-details-server-info",
+      "x": 48,
+      "y": 35,
+      "w": 48,
+      "h": 42,
+      "minW": 24,
+      "minH": 2,
+      "name": "Server Info",
+      "type": "component",
+      "queries": [
+        {
+          "query": "SELECT last(\"total\")/1073741824 AS \"total_gib\", last(\"used\")/1073741824 AS \"used_gib\", last(\"free\")/1073741824 AS \"free_gib\", last(\"used_percent\") AS \"used_percent\", last(\"inodes_used_percent\") AS \"inode_used_percent\" FROM \":db:\".\":rp:\".\"disk\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY \"path\"",
+          "label": "Disk Usage"
+        }
+      ]
+    },
+    {
+      "i": "server-details-network-usage",
+      "x": 0,
+      "y": 52,
+      "w": 48,
+      "h": 14,
+      "minW": 16,
+      "minH": 4,
+      "name": "Network",
+      "type": "line",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(max(\"bytes_recv\"), 1s) AS \"received\", non_negative_derivative(max(\"bytes_sent\"), 1s) AS \"sent\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND \"host\" = :host: GROUP BY time(:interval:) FILL(null)",
+          "label": "Network Traffic"
+        }
+      ],
+      "detailQueries": [
+        {
+          "query": "SELECT non_negative_derivative(sum(\"bytes_recv\"), 1s)/1048576 AS \"Traffic in\", non_negative_derivative(sum(\"bytes_sent\"), 1s)/1048576 AS \"Traffic out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "traffic-in-out"
+        },
+        {
+          "query": "SELECT non_negative_derivative(sum(\"packets_recv\"), 1s) AS \"Packet in\", non_negative_derivative(sum(\"packets_sent\"), 1s) AS \"Packet out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "packet-in-out"
+        },
+        {
+          "query": "SELECT non_negative_derivative(sum(\"err_in\"), 1s) AS \"Error in\", non_negative_derivative(sum(\"err_out\"), 1s) AS \"Error out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "error-in-out"
+        },
+        {
+          "query": "SELECT non_negative_derivative(sum(\"drop_in\"), 1s) AS \"Dropped in\", non_negative_derivative(sum(\"drop_out\"), 1s) AS \"Dropped out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "dropped-in-out"
+        }
+      ],
+      "axes": {
+        "y": {
+          "label": " ",
+          "suffix": " "
+        }
+      },
+      "colors": [
+        {
+          "id": "726e1a7d-9580-452e-9c70-9f87cfa05adc",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0e4f5f83-f00d-4151-a238-d6dafbef5317",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "b54f595c-00bc-4cff-ab39-1dd683c8a7be",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "orientation": "bottom"
+      },
+      "graphOptions": {
+        "fillArea": false,
+        "showLine": true,
+        "showPoint": false
+      },
+      "isShowSummary": true
     },
     {
       "i": "server-details-disk-utilization",
       "x": 0,
-      "y": 40,
+      "y": 66,
       "w": 48,
-      "h": 10,
+      "h": 17,
       "name": "Disk I/O Usage (%)",
       "type": "line",
       "queries": [
@@ -302,19 +439,48 @@
           "label": "disk-free-gib"
         }
       ],
+      "axes": {
+        "y": {
+          "bounds": ["0", "100"],
+          "label": " ",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        }
+      },
+      "colors": [
+        {
+          "id": "726e1a7d-9580-452e-9c70-9f87cfa05adc",
+          "type": "scale",
+          "hex": "#31C0F6",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "0e4f5f83-f00d-4151-a238-d6dafbef5317",
+          "type": "scale",
+          "hex": "#A500A5",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        },
+        {
+          "id": "b54f595c-00bc-4cff-ab39-1dd683c8a7be",
+          "type": "scale",
+          "hex": "#FF7E27",
+          "name": "Nineteen Eighty Four",
+          "value": "0"
+        }
+      ],
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      },
       "graphOptions": {
         "fillArea": false,
         "showLine": true,
         "showPoint": false
       },
-      "axes": {
-        "y": {
-          "bounds": ["0", "100"],
-          "suffix": "%",
-          "base": "raw",
-          "scale": "linear"
-        }
-      }
+      "isShowSummary": true
     }
   ],
   "templates": [

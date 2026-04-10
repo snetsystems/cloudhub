@@ -112,6 +112,71 @@ func TestDashboardsStore_Add(t *testing.T) {
 	}
 }
 
+// TestDashboardsStore_Add_CellIDPreservation verifies that Add preserves
+// pre-assigned cell IDs (e.g. builtin dashboard cells) and generates new UUIDs
+// only for cells that have no ID set.
+func TestDashboardsStore_Add_CellIDPreservation(t *testing.T) {
+	client, err := NewTestClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	s := client.DashboardsStore()
+	ctx := context.Background()
+
+	dashboard := cloudhub.Dashboard{
+		Name: "test-builtin",
+		Cells: []cloudhub.DashboardCell{
+			{
+				ID:   "server-details-server-info",
+				Name: "Server Info",
+				Type: "component",
+			},
+			{
+				ID:   "server-details-process",
+				Name: "Process",
+				Type: "component",
+			},
+			{
+				// no ID — should get a new UUID
+				Name: "CPU Usage",
+				Type: "line",
+			},
+		},
+	}
+
+	got, err := s.Add(ctx, dashboard)
+	if err != nil {
+		t.Fatalf("Add() error = %v", err)
+	}
+
+	got, err = s.Get(ctx, got.ID)
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+
+	if len(got.Cells) != 3 {
+		t.Fatalf("expected 3 cells, got %d", len(got.Cells))
+	}
+
+	// cells with preset IDs must be preserved
+	if got.Cells[0].ID != "server-details-server-info" {
+		t.Errorf("cell[0].ID = %q, want %q", got.Cells[0].ID, "server-details-server-info")
+	}
+	if got.Cells[1].ID != "server-details-process" {
+		t.Errorf("cell[1].ID = %q, want %q", got.Cells[1].ID, "server-details-process")
+	}
+
+	// cell without a preset ID must receive a generated UUID (non-empty)
+	if got.Cells[2].ID == "" {
+		t.Errorf("cell[2].ID is empty, expected a generated UUID")
+	}
+	if got.Cells[2].ID == "server-details-server-info" || got.Cells[2].ID == "server-details-process" {
+		t.Errorf("cell[2].ID = %q, looks like a preset ID was reused", got.Cells[2].ID)
+	}
+}
+
 func TestDashboardStore_All(t *testing.T) {
 	type fields struct {
 		dashboard cloudhub.Dashboard
