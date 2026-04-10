@@ -257,7 +257,6 @@ function StaticTableGaugeChart({
     tempVar: string,
     isTempVarData: TimeSeriesValue
   ) => async (): Promise<void> => {
-    console.log('temp', tempVar, isTempVarData)
     const temp = templates && templates.find(f => f.tempVar === tempVar)
     const val = temp && temp.values.find(f => f.value === isTempVarData)
     if (typeof onPickTemplate === 'function' && temp !== undefined) {

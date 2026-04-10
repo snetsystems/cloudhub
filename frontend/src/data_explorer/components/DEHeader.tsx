@@ -2,7 +2,15 @@
 import React, {Component} from 'react'
 
 // Components
-import {Page, Radio, ButtonShape} from 'src/reusable_ui'
+import {
+  Page,
+  Radio,
+  ButtonShape,
+  Button,
+  ComponentColor,
+  ComponentSize,
+  IconFont,
+} from 'src/reusable_ui'
 import GraphTips from 'src/shared/components/GraphTips'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
@@ -81,20 +89,23 @@ class DEHeader extends Component<Props> {
             Write Data
           </button>
           <Authorized requiredRole={EDITOR_ROLE}>
-            <button
+            <Button
+              shape={ButtonShape.Square}
+              size={ComponentSize.Medium}
+              icon={IconFont.DashH}
+              titleText="Cell List"
+              color={ComponentColor.Primary}
               onClick={onOpenCellList}
-              className="button button-sm button-primary"
-            >
-              Cell List
-            </button>
+            />
           </Authorized>
           <Authorized requiredRole={EDITOR_ROLE}>
-            <button
+            <Button
+              shape={ButtonShape.Square}
+              icon={IconFont.FloppyDisk}
+              titleText="Save Cell"
+              color={ComponentColor.Primary}
               onClick={onOpenSaveCell}
-              className="button button-sm button-primary"
-            >
-              Save Cell
-            </button>
+            />
           </Authorized>
           <Authorized requiredRole={EDITOR_ROLE}>
             <button

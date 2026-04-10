@@ -417,8 +417,6 @@ export function NewHostsPage({
         Record<string, {time: string; level: AlertLevel; message: string}>
       > = {}
 
-      console.log('series', series)
-
       series.forEach(s => {
         const host: string = s?.tags?.host
         const levelTag: string = s?.tags?.level ?? ''

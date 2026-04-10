@@ -84,7 +84,6 @@ function ServerInfoSection({
 }) {
   const [isActive, setIsActive] = useState(true)
 
-  console.log(`[ServerInfo] Rendering section: ${title}`)
 
   return (
     <div

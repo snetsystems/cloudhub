@@ -61,17 +61,6 @@ export const executeQuery = async (
     clientUuid ??
     (query.id?.startsWith('url-monitoring-') ? uuid.v4() : undefined)
 
-  if (query.id?.startsWith('url-monitoring-')) {
-    const db = query.db || query.database
-    // 브라우저 개발자도구 콘솔에서 프록시로 전송되는 최종 InfluxQL 확인용
-    console.log('[URL Monitoring → Influx]', {
-      id: query.id,
-      db,
-      query: text,
-      uuid: proxyUuid,
-    })
-  }
-
   const {data} = await proxy({
     source: source.links.proxy,
     rp: query.rp,
