@@ -68,7 +68,7 @@ const URL_LATENCY_DETAIL_AXES: Axes = {
   ...DEFAULT_AXES,
   y: {
     ...DEFAULT_AXES.y,
-    suffix: '',
+    suffix: 'ms',
     base: AXES_SCALE_OPTIONS.BASE_RAW,
     bounds: ['0', ''],
   },

@@ -53,6 +53,11 @@ func (d *dashboardsStore) Add(ctx context.Context, src cloudhub.Dashboard) (clou
 		// TODO: use FormatInt
 		strID := strconv.FormatUint(id, 10)
 		for i, cell := range src.Cells {
+			if cell.ID != "" {
+				cell.ID = strings.TrimSpace(strings.ToLower(cell.ID))
+				src.Cells[i] = cell
+				continue
+			}
 			cid, err := d.IDs.Generate()
 			if err != nil {
 				return err
