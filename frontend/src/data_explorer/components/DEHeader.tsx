@@ -8,7 +8,6 @@ import {
   ButtonShape,
   Button,
   ComponentColor,
-  ComponentSize,
   IconFont,
 } from 'src/reusable_ui'
 import GraphTips from 'src/shared/components/GraphTips'
@@ -91,10 +90,10 @@ class DEHeader extends Component<Props> {
           <Authorized requiredRole={EDITOR_ROLE}>
             <Button
               shape={ButtonShape.Square}
-              size={ComponentSize.Medium}
               icon={IconFont.DashH}
               titleText="Cell List"
               color={ComponentColor.Primary}
+              iconStyle={{fontSize: 20}}
               onClick={onOpenCellList}
             />
           </Authorized>

@@ -1,5 +1,5 @@
 // Libraries
-import React, {Component, MouseEvent} from 'react'
+import React, {Component, CSSProperties, MouseEvent} from 'react'
 import classnames from 'classnames'
 
 // Types
@@ -25,6 +25,7 @@ interface Props {
   active?: boolean
   tabIndex?: number
   customClass?: string
+  iconStyle?: CSSProperties
 }
 
 @ErrorHandling
@@ -56,10 +57,10 @@ class Button extends Component<Props> {
   }
 
   private get icon(): JSX.Element {
-    const {icon} = this.props
+    const {icon, iconStyle} = this.props
 
     if (icon) {
-      return <span className={`button-icon icon ${icon}`} />
+      return <span className={`button-icon icon ${icon}`} style={iconStyle} />
     }
 
     return null
