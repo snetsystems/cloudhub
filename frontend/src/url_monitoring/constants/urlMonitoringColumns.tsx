@@ -115,7 +115,7 @@ export const urlMonitoringColumns = (
   },
   {
     key: 'response_time_ms',
-    name: 'Avg. response time',
+    name: 'Avg. response time (ms)',
     align: AlignType.RIGHT,
     options: {
       thead: {align: AlignType.RIGHT},

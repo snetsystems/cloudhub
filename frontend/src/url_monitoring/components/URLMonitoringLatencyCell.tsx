@@ -48,6 +48,7 @@ export function URLMonitoringLatencyCell({
         isZeroBaseline: true,
         areaOpacity: 0.1,
         pointRadius: 1,
+        suffix: 'ms',
       }}
     />
   )
