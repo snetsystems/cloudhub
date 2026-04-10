@@ -46,8 +46,8 @@ export interface Host {
   id: string
   minionId: string
   hostname: string
-  originalHostname: string
-  ip: string
+  originalHostname?: string
+  ip?: string
   privateIps: string[]
   ipInterfaces: IPInterface[]
   os: string
@@ -60,15 +60,20 @@ export interface Host {
   cpuCores: number
   cpuModel: string
   biosVersion: string
-  timezone: string
-  selinuxState: string
-  isCollector: boolean
+  timezone?: string
+  selinuxState?: string
+  isCollector?: boolean
   disks: Disk[]
   gpus: GPU[]
   sourceType: HostSourceType
   orgId: string
   status: HostStatus
-  createdAt: string
+  createdAt?: string
+  acceptedAt?: string
+  updatedAt?: string
+  links?: {
+    self: string
+  }
 }
 
 export async function getHosts(): Promise<Host[]> {

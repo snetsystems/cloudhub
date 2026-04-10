@@ -22,7 +22,7 @@ import {
 } from 'src/hosts/constants/serverListColumns'
 import * as appActions from 'src/shared/actions/app'
 import {executeQueries} from 'src/shared/apis/query'
-import {getHosts} from 'src/shared/apis/host'
+import {getHosts, Host} from 'src/shared/apis/host'
 import {getActiveKapacitor, kapacitorProxy} from 'src/shared/apis'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {generateForHosts} from 'src/utils/tempVars'
@@ -128,7 +128,7 @@ export function NewHostsPage({
 
   const [isAlertsEnabled, setIsAlertsEnabled] = useState(true)
 
-  const apiHostsResultRef = useRef<any>(null)
+  const apiHostsResultRef = useRef<Host[] | {error: string} | null>(null)
 
   useEffect(() => {
     getHosts()
@@ -356,12 +356,26 @@ export function NewHostsPage({
       let mergedData = mergeResultsByHost(results)
 
       if (Array.isArray(apiHostsResultRef.current)) {
-        const allowedHosts = new Set(
-          apiHostsResultRef.current.map((h: any) => h.hostname)
-        )
-        mergedData = mergedData.filter(row =>
-          allowedHosts.has(row.host as string)
-        )
+        const hosts = apiHostsResultRef.current as Host[]
+        const allowedHosts = new Set(hosts.map(h => h.hostname))
+        const hostMap = new Map<string, Host>(hosts.map(h => [h.hostname, h]))
+
+        mergedData = mergedData
+          .filter(row => allowedHosts.has(row.host as string))
+          .map(row => {
+            const hostInfo = hostMap.get(row.host as string)
+            if (hostInfo && Array.isArray(hostInfo.disks) && typeof row.Device === 'string') {
+              const matchedDisk = hostInfo.disks.find(d => {
+                if (!d.device) return false
+                const paths = d.device.split('/')
+                return paths[paths.length - 1] === row.Device
+              })
+              if (matchedDisk && matchedDisk.mountPoint) {
+                row.Device = matchedDisk.mountPoint
+              }
+            }
+            return row
+          })
       }
 
       setTableData(mergedData)
