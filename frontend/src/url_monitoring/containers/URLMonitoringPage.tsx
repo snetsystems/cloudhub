@@ -45,6 +45,7 @@ import {
   downloadUrlMonitoringTargetsExcel,
   parseUrlMonitoringExcelBuffer,
 } from 'src/url_monitoring/utils/urlMonitoringExcel'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 const TimeRangeDropdownComponent = TimeRangeDropdown as any
 
@@ -517,143 +518,145 @@ export function URLMonitoringPage({
           <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
         </Page.Header.Right>
       </Page.Header>
-      <Page.Contents fullWidth={true}>
+      <Page.Contents scrollable={false} fullWidth={true}>
         <div className="host-page-graph-table-container-wrapper">
-          <div className="host-page-graph-table-container table-gauge-chart">
-            {!isError ? (
-              <>
-                <TableComponent
-                  data={displayTableData}
-                  bodyClassName="url-monitoring-table"
-                  columns={columns}
-                  isLoading={isTableLoading}
-                  isSearchDisplay={true}
-                  searchPlaceholder="Filter by URL..."
-                  isDotKey={false}
-                  enableSharedChartHover={true}
-                  fancyScroll={true}
-                  fancyScrollHeight="70vh"
-                  topLeftRender={
-                    <div className="url-monitoring-summary">
-                      <button
-                        type="button"
-                        className={`url-monitoring-summary__item-button ${
-                          statusFilter === 'all' ? 'active' : ''
-                        }`}
-                        // eslint-disable-next-line react/no-unused-class
-                        data-status="all"
-                        onClick={() => setStatusFilter('all')}
-                      >
-                        <span className="url-monitoring-summary__label url-monitoring-summary__label--total">
-                          All
-                        </span>
-                        <span className="url-monitoring-summary__count">
-                          {statusCounts.total}
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className={`url-monitoring-summary__item-button ${
-                          statusFilter === 'success' ? 'active' : ''
-                        }`}
-                        data-status="success"
-                        onClick={() => setStatusFilter('success')}
-                      >
-                        <span className="url-monitoring-summary__label url-monitoring-summary__label--success">
-                          Success
-                        </span>
-                        <span className="url-monitoring-summary__count">
-                          {statusCounts.success}
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className={`url-monitoring-summary__item-button ${
-                          statusFilter === 'redirect' ? 'active' : ''
-                        }`}
-                        data-status="redirect"
-                        onClick={() => setStatusFilter('redirect')}
-                      >
-                        <span className="url-monitoring-summary__label url-monitoring-summary__label--redirect">
-                          Redirect
-                        </span>
-                        <span className="url-monitoring-summary__count">
-                          {statusCounts.redirect}
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className={`url-monitoring-summary__item-button ${
-                          statusFilter === 'failure' ? 'active' : ''
-                        }`}
-                        data-status="failure"
-                        onClick={() => setStatusFilter('failure')}
-                      >
-                        <span className="url-monitoring-summary__label url-monitoring-summary__label--failure">
-                          Failed
-                        </span>
-                        <span className="url-monitoring-summary__count">
-                          {statusCounts.failure}
-                        </span>
-                      </button>
-                    </div>
-                  }
-                  toprightRender={
-                    <div className="url-monitoring-panel-toolbar">
-                      <input
-                        ref={importFileInputRef}
-                        type="file"
-                        accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                        style={{display: 'none'}}
-                        onChange={handleImportFile}
-                      />
-                      <div className="url-monitoring-panel-toolbar__actions">
+          {!isError ? (
+            <>
+              <FancyScrollbar className="display-options" autoHide={true}>
+                <div className="static-graph-container table-gauge-chart ">
+                  <TableComponent
+                    data={displayTableData}
+                    bodyClassName="url-monitoring-table"
+                    columns={columns}
+                    isLoading={isTableLoading}
+                    isSearchDisplay={true}
+                    searchPlaceholder="Filter by URL..."
+                    isDotKey={false}
+                    enableSharedChartHover={true}
+                    fancyScroll={true}
+                    fancyScrollHeight="70vh"
+                    topLeftRender={
+                      <div className="url-monitoring-summary">
                         <button
                           type="button"
-                          className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
-                          title="Import"
-                          onClick={handleImportPickFile}
+                          className={`url-monitoring-summary__item-button ${
+                            statusFilter === 'all' ? 'active' : ''
+                          }`}
+                          // eslint-disable-next-line react/no-unused-class
+                          data-status="all"
+                          onClick={() => setStatusFilter('all')}
                         >
-                          <span className="icon import" />
-                          Import
+                          <span className="url-monitoring-summary__label url-monitoring-summary__label--total">
+                            All
+                          </span>
+                          <span className="url-monitoring-summary__count">
+                            {statusCounts.total}
+                          </span>
                         </button>
+
                         <button
                           type="button"
-                          className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
-                          title="Export"
-                          onClick={handleExportTargets}
+                          className={`url-monitoring-summary__item-button ${
+                            statusFilter === 'success' ? 'active' : ''
+                          }`}
+                          data-status="success"
+                          onClick={() => setStatusFilter('success')}
                         >
-                          <span className="icon export" />
-                          Export
+                          <span className="url-monitoring-summary__label url-monitoring-summary__label--success">
+                            Success
+                          </span>
+                          <span className="url-monitoring-summary__count">
+                            {statusCounts.success}
+                          </span>
                         </button>
+
                         <button
                           type="button"
-                          className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--primary"
-                          title="Add URL"
-                          onClick={() => openUrlSheet('add')}
+                          className={`url-monitoring-summary__item-button ${
+                            statusFilter === 'redirect' ? 'active' : ''
+                          }`}
+                          data-status="redirect"
+                          onClick={() => setStatusFilter('redirect')}
                         >
-                          <span className="icon plus" />
-                          Add URL
+                          <span className="url-monitoring-summary__label url-monitoring-summary__label--redirect">
+                            Redirect
+                          </span>
+                          <span className="url-monitoring-summary__count">
+                            {statusCounts.redirect}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`url-monitoring-summary__item-button ${
+                            statusFilter === 'failure' ? 'active' : ''
+                          }`}
+                          data-status="failure"
+                          onClick={() => setStatusFilter('failure')}
+                        >
+                          <span className="url-monitoring-summary__label url-monitoring-summary__label--failure">
+                            Failed
+                          </span>
+                          <span className="url-monitoring-summary__count">
+                            {statusCounts.failure}
+                          </span>
                         </button>
                       </div>
-                      {isRefreshing ? (
-                        <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
-                      ) : null}
-                    </div>
-                  }
-                />
-              </>
-            ) : (
-              <div className="empty-table-container">
-                <div className="empty-table-content">
-                  <p>No data available</p>
+                    }
+                    toprightRender={
+                      <div className="url-monitoring-panel-toolbar">
+                        <input
+                          ref={importFileInputRef}
+                          type="file"
+                          accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                          style={{display: 'none'}}
+                          onChange={handleImportFile}
+                        />
+                        <div className="url-monitoring-panel-toolbar__actions">
+                          <button
+                            type="button"
+                            className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
+                            title="Import"
+                            onClick={handleImportPickFile}
+                          >
+                            <span className="icon import" />
+                            Import
+                          </button>
+                          <button
+                            type="button"
+                            className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
+                            title="Export"
+                            onClick={handleExportTargets}
+                          >
+                            <span className="icon export" />
+                            Export
+                          </button>
+                          <button
+                            type="button"
+                            className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--primary"
+                            title="Add URL"
+                            onClick={() => openUrlSheet('add')}
+                          >
+                            <span className="icon plus" />
+                            Add URL
+                          </button>
+                        </div>
+                        {isRefreshing ? (
+                          <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
+                        ) : null}
+                      </div>
+                    }
+                  />
                 </div>
+              </FancyScrollbar>
+            </>
+          ) : (
+            <div className="empty-table-container">
+              <div className="empty-table-content">
+                <p>No data available</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </Page.Contents>
       <URLMonitoringFormSheet
