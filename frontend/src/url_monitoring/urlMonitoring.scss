@@ -161,6 +161,28 @@
 }
 
 .url-monitoring-page {
+  .panel-heading {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .panel-heading .table-top.left {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .panel-heading .table-top.right {
+    min-width: 0;
+    flex: 1 1 520px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 8px;
+  }
+
+  .panel-heading .table-top.right > * {
+    min-width: 0;
+  }
+
   .url-monitoring-panel-toolbar {
     display: flex;
     align-items: center;
@@ -218,6 +240,16 @@
 
     &:active {
       background-color: darken($s-orange, 4%);
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .panel-heading .table-top.right {
+      justify-content: flex-start;
+    }
+
+    .url-monitoring-panel-toolbar {
+      margin-left: 0;
     }
   }
 }
