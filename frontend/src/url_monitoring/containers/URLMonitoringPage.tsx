@@ -522,8 +522,13 @@ export function URLMonitoringPage({
         <div className="url-page-graph-table-container-wrapper">
           {!isError ? (
             <>
-              <FancyScrollbar className="display-options" autoHide={true}>
-                <div className="static-graph-container table-gauge-chart ">
+              <FancyScrollbar
+                className="display-options"
+                autoHeight={true}
+                autoHide={true}
+                maxHeight="calc(100vh - 80px)"
+              >
+                <div className="static-graph-container table-gauge-chart">
                   <TableComponent
                     data={displayTableData}
                     bodyClassName="url-monitoring-table"
@@ -533,8 +538,7 @@ export function URLMonitoringPage({
                     searchPlaceholder="Filter by URL..."
                     isDotKey={false}
                     enableSharedChartHover={true}
-                    fancyScroll={true}
-                    fancyScrollHeight="70vh"
+                    fancyScroll={false}
                     topLeftRender={
                       <div className="url-monitoring-summary">
                         <button
