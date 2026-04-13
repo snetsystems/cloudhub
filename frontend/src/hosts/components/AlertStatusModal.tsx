@@ -1,4 +1,6 @@
 import React from 'react'
+import {useSelector} from 'react-redux'
+import {useTranslation} from 'react-i18next'
 import {
   OverlayContainer,
   OverlayHeading,
@@ -8,6 +10,7 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
 import {HostAlertStatus} from 'src/hosts/types/alertStatus'
+import {TimeZones} from 'src/types'
 
 interface Props {
   isVisible: boolean
@@ -22,6 +25,12 @@ const AlertStatusModal = ({
   alertStatus,
   onClose,
 }: Props): JSX.Element => {
+  const timeZone = useSelector(
+    (state: {app?: {persisted?: {timeZone?: TimeZones}}}) =>
+      state.app?.persisted?.timeZone ?? TimeZones.Local
+  )
+  const {i18n} = useTranslation()
+
   const currentLevel = alertStatus?.currentLevel ?? 'unknown'
   const history = alertStatus?.history ?? []
 
@@ -59,7 +68,15 @@ const AlertStatusModal = ({
                               [{hist.level.toUpperCase()}] {hist.alertName}
                             </span>
                             <span className="alert-status-modal--event-time">
-                              {new Date(hist.time).toLocaleString()}
+                              {new Date(hist.time).toLocaleString(
+                                i18n.language === 'ko' ? 'ko-KR' : 'en-US',
+                                {
+                                  timeZone:
+                                    timeZone === TimeZones.UTC
+                                      ? 'UTC'
+                                      : undefined,
+                                }
+                              )}
                             </span>
                           </div>
                           {hist.message && (
