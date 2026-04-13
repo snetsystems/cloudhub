@@ -74,12 +74,12 @@ const URL_LATENCY_DETAIL_AXES: Axes = {
   },
 }
 
-function statusBadgeColor(code: number | null): string {
-  if (code === null) return '#6b7280'
-  if (code >= 200 && code < 300) return '#4ed8a0'
-  if (code >= 300 && code < 400) return '#63b3ff'
-  if (code >= 400) return '#ff4d4f'
-  return '#6b7280'
+function statusBadgeTone(code: number | null): string {
+  if (code === null) return 'unknown'
+  if (code >= 200 && code < 300) return 'success'
+  if (code >= 300 && code < 400) return 'redirect'
+  if (code >= 400) return 'failure'
+  return 'unknown'
 }
 
 function formatSampleTime(
@@ -400,10 +400,9 @@ export function URLMonitoringLatencyDetailSheet({
                         </td>
                         <td className="text-center">
                           <span
-                            className="url-monitoring-latency-detail-sheet__code"
-                            style={{
-                              backgroundColor: statusBadgeColor(r.statusCode),
-                            }}
+                            className={`url-monitoring-latency-detail-sheet__code url-monitoring-latency-detail-sheet__code--${statusBadgeTone(
+                              r.statusCode
+                            )}`}
                           >
                             {r.statusCode ?? '--'}
                           </span>

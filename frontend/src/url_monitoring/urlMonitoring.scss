@@ -1,5 +1,19 @@
 // URL Monitoring only — separate from host.scss (shared host UI)
 
+$um-white: $g20-white;
+$um-status-unknown: $g8-storm;
+$um-status-success: $c-rainforest;
+$um-status-redirect: $c-pool;
+$um-status-failure: $c-fire;
+$um-subtle-text: $g12-forge;
+$um-hover-text: $g16-pearl;
+$um-error: $c-curacao;
+$um-error-soft: $c-dreamsicle;
+$um-info: $c-hydrogen;
+$um-request: $c-pineapple;
+$um-server: $c-curacao;
+$um-unknown: $c-comet;
+
 .url-monitoring-page .url-monitoring-table {
   // sticky header for thead
   table thead th {
@@ -31,6 +45,53 @@
     width: 124px;
     min-width: 124px;
     white-space: nowrap;
+  }
+
+  .url-monitoring-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 6px;
+    color: $um-white;
+    font-weight: 800;
+    font-size: 14px;
+  }
+
+  .url-monitoring-status-badge--unknown {
+    background-color: $um-status-unknown;
+  }
+
+  .url-monitoring-status-badge--success {
+    background-color: $um-status-success;
+  }
+
+  .url-monitoring-status-badge--redirect {
+    background-color: $um-status-redirect;
+  }
+
+  .url-monitoring-status-badge--failure {
+    background-color: $um-status-failure;
+  }
+
+  .url-monitoring-url-cell {
+    max-width: 300px;
+  }
+
+  .url-monitoring-url-cell__name {
+    margin-bottom: 2px;
+    font-weight: 600;
+  }
+
+  .url-monitoring-url-cell__url {
+    word-break: break-all;
+  }
+
+  .url-monitoring-url-cell__url--secondary {
+    color: $um-subtle-text;
+    font-size: 12px;
   }
 
   tbody tr td.text-center.justify-center:last-child {
@@ -90,6 +151,53 @@
   }
 }
 
+.url-monitoring-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: $um-white;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.url-monitoring-status-badge--unknown {
+  background-color: $um-status-unknown;
+}
+
+.url-monitoring-status-badge--success {
+  background-color: $um-status-success;
+}
+
+.url-monitoring-status-badge--redirect {
+  background-color: $um-status-redirect;
+}
+
+.url-monitoring-status-badge--failure {
+  background-color: $um-status-failure;
+}
+
+.url-monitoring-url-cell {
+  max-width: 300px;
+}
+
+.url-monitoring-url-cell__name {
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.url-monitoring-url-cell__url {
+  word-break: break-all;
+}
+
+.url-monitoring-url-cell__url--secondary {
+  color: $um-subtle-text;
+  font-size: 12px;
+}
+
 .url-monitoring-summary {
   display: flex;
   gap: 22px;
@@ -132,35 +240,41 @@
   padding: 4px 12px;
   border-radius: 4px;
   font-weight: 700;
-  color: #ffffff;
+  color: $um-white;
   font-size: 14px;
   line-height: 1;
 }
 
 .url-monitoring-summary__count {
   font-weight: 700;
-  color: #ffffff;
+  color: $um-white;
   font-size: 14px;
   line-height: 1;
 }
 
 .url-monitoring-summary__label--total {
-  background-color: #6b7280;
+  background-color: $um-status-unknown;
 }
 
 .url-monitoring-summary__label--success {
-  background-color: #4ed8a0;
+  background-color: $um-status-success;
 }
 
 .url-monitoring-summary__label--redirect {
-  background-color: #63b3ff;
+  background-color: $um-status-redirect;
 }
 
 .url-monitoring-summary__label--failure {
-  background-color: #ff4d4f;
+  background-color: $um-status-failure;
 }
 
 .url-monitoring-page {
+  .url-monitoring-page__title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
   .panel-heading {
     row-gap: 8px;
   }
@@ -184,6 +298,10 @@
     gap: 8px;
   }
 
+  .url-monitoring-panel-toolbar__file-input {
+    display: none;
+  }
+
   .url-monitoring-toolbar-btn {
     display: inline-flex;
     align-items: center;
@@ -205,21 +323,21 @@
   }
 
   .url-monitoring-toolbar-btn--outline {
-    border: 1px solid rgba(164, 168, 182, 0.45);
-    background-color: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba($g12-forge, 0.45);
+    background-color: rgba($g0-obsidian, 0.15);
     color: $g12-forge;
 
     &:hover {
-      border-color: rgba(164, 168, 182, 0.65);
-      background-color: rgba(255, 255, 255, 0.06);
-      color: #e2e4ea;
+      border-color: rgba($g12-forge, 0.65);
+      background-color: rgba($g20-white, 0.06);
+      color: $um-hover-text;
     }
   }
 
   .url-monitoring-toolbar-btn--primary {
     border: 1px solid transparent;
     background-color: $s-orange;
-    color: #ffffff;
+    color: $um-white;
 
     &:hover {
       background-color: lighten($s-orange, 6%);
@@ -244,9 +362,13 @@
 .url-monitoring-form-sheet {
   &.modal-content {
     max-height: 100vh;
+    width: 40vw;
+    min-width: 360px;
+    max-width: 720px;
   }
 
   .url-monitoring-form-sheet__scroll.fancy-scroll--container {
+    flex: 1;
     min-height: 0;
   }
 
@@ -272,7 +394,7 @@
     margin: 0;
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: $um-white;
     letter-spacing: 0.02em;
     white-space: nowrap;
     overflow: hidden;
@@ -282,12 +404,12 @@
   .url-monitoring-form-sheet__guide {
     flex-shrink: 0;
     font-size: 13px;
-    color: #e8e8ee;
+    color: $g16-pearl;
     text-decoration: underline;
     cursor: pointer;
 
     &:hover {
-      color: #ffffff;
+      color: $um-white;
     }
   }
 
@@ -310,7 +432,7 @@
   }
 
   .url-monitoring-form-sheet__req {
-    color: #ff6b6b;
+    color: $um-error;
     font-weight: 700;
   }
 
@@ -366,15 +488,15 @@
   }
 
   .url-monitoring-form-sheet__input--error {
-    border-color: #ff6b6b;
-    box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.22);
+    border-color: $um-error;
+    box-shadow: 0 0 0 1px rgba($um-error, 0.22);
   }
 
   .url-monitoring-form-sheet__error-text {
     margin-top: -2px;
     font-size: 12px;
     line-height: 1.35;
-    color: #ff8d8d;
+    color: $um-error-soft;
   }
 
   .url-monitoring-form-sheet__chips {
@@ -386,19 +508,19 @@
   .url-monitoring-form-sheet__chip {
     appearance: none;
     cursor: pointer;
-    border: 1px solid rgba(164, 168, 182, 0.5);
+    border: 1px solid rgba($g12-forge, 0.5);
     border-radius: 4px;
     padding: 6px 12px;
     font-size: 12px;
     font-weight: 500;
     color: $g12-forge;
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba($g20-white, 0.06);
     transition: border-color 0.15s ease, color 0.15s ease,
       background-color 0.15s ease;
 
     &:hover {
       border-color: rgba($s-orange, 0.45);
-      color: #e2e4ea;
+      color: $um-hover-text;
     }
   }
 
@@ -427,7 +549,7 @@
     }
 
     &:hover {
-      color: #ffffff;
+      color: $um-white;
     }
   }
 
@@ -435,7 +557,7 @@
     margin: 0 0 16px 16px;
     padding: 10px 12px;
     border-left: 2px solid $g5-pepper;
-    background-color: rgba(0, 0, 0, 0.12);
+    background-color: rgba($g0-obsidian, 0.12);
     border-radius: 0 4px 4px 0;
   }
 
@@ -466,7 +588,7 @@
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
-    color: #f0f2f6;
+    color: $g17-whisper;
     background: rgba($s-orange, 0.14);
     border-bottom: 1px solid rgba($s-orange, 0.22);
 
@@ -482,7 +604,7 @@
 
   .url-monitoring-form-sheet__event-body {
     padding: 14px 14px 16px;
-    background-color: rgba(0, 0, 0, 0.08);
+    background-color: rgba($g0-obsidian, 0.08);
   }
 
   .url-monitoring-form-sheet__event-row {
@@ -520,15 +642,15 @@
   }
 
   .url-monitoring-form-sheet__check-label--request {
-    color: #e8a04a;
+    color: $um-request;
   }
 
   .url-monitoring-form-sheet__check-label--server {
-    color: #ff7a7a;
+    color: $um-server;
   }
 
   .url-monitoring-form-sheet__check-label--unknown {
-    color: #dd9ec9;
+    color: $um-unknown;
   }
 
   .url-monitoring-form-sheet__stepper-row {
@@ -554,7 +676,7 @@
     text-align: center;
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
+    color: $um-white;
   }
 
   .url-monitoring-form-sheet__accent-text {
@@ -590,7 +712,7 @@
     min-width: 0;
     font-size: 12px;
     line-height: 1.45;
-    color: rgba(99, 179, 255, 0.95);
+    color: rgba($um-info, 0.95);
     text-align: left;
   }
 
@@ -603,14 +725,14 @@
     flex: 0 0 auto;
     align-self: flex-end;
     appearance: none;
-    border: 1px solid mix($s-orange, #000, 85%);
+    border: 1px solid mix($s-orange, $g0-obsidian, 85%);
     border-radius: 4px;
     padding: 9px 22px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     background-color: $s-orange;
-    color: #ffffff;
+    color: $um-white;
 
     .icon {
       font-size: 14px;
@@ -643,6 +765,7 @@
   }
 
   .url-monitoring-latency-detail-sheet__scroll.fancy-scroll--container {
+    flex: 1;
     min-height: 0;
   }
 
@@ -672,7 +795,7 @@
     margin: 0 0 4px;
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: $um-white;
     letter-spacing: 0.02em;
     line-height: 1.25;
     word-break: break-word;
@@ -776,6 +899,8 @@
 
   .url-monitoring-latency-detail-sheet__table-scroll {
     margin-top: 4px;
+    width: 100%;
+    height: 52vh;
     border: 1px solid $g4-onyx;
     border-radius: 4px;
     background-color: $g2-kevlar;
@@ -808,9 +933,25 @@
     min-width: 44px;
     padding: 3px 10px;
     border-radius: 4px;
-    color: #ffffff;
+    color: $um-white;
     font-weight: 700;
     font-size: 12px;
+  }
+
+  .url-monitoring-latency-detail-sheet__code--unknown {
+    background-color: $um-status-unknown;
+  }
+
+  .url-monitoring-latency-detail-sheet__code--success {
+    background-color: $um-status-success;
+  }
+
+  .url-monitoring-latency-detail-sheet__code--redirect {
+    background-color: $um-status-redirect;
+  }
+
+  .url-monitoring-latency-detail-sheet__code--failure {
+    background-color: $um-status-failure;
   }
 }
 

@@ -496,7 +496,7 @@ export function URLMonitoringPage({
     <Page className="hosts-page url-monitoring-page">
       <Page.Header fullWidth={true}>
         <Page.Header.Left>
-          <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
+          <div className="url-monitoring-page__title-wrap">
             <Page.Title title="URL Monitoring" />
           </div>
         </Page.Header.Left>
@@ -613,7 +613,7 @@ export function URLMonitoringPage({
                           ref={importFileInputRef}
                           type="file"
                           accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                          style={{display: 'none'}}
+                          className="url-monitoring-panel-toolbar__file-input"
                           onChange={handleImportFile}
                         />
                         <div className="url-monitoring-panel-toolbar__actions">

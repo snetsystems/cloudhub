@@ -165,7 +165,6 @@ export function URLMonitoringFormSheet({
           'modal-content url-monitoring-form-sheet',
           isVisible ? 'modal-content--open' : 'modal-content--closing'
         )}
-        style={{width: '40vw', minWidth: 360, maxWidth: 720}}
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -184,7 +183,6 @@ export function URLMonitoringFormSheet({
 
         <FancyScrollbar
           autoHide={false}
-          style={{flex: 1, minHeight: 0}}
           className="url-monitoring-form-sheet__scroll"
         >
           <div className="url-monitoring-form-sheet__body">

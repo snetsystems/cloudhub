@@ -1,3 +1,4 @@
+import classnames from 'classnames'
 import React from 'react'
 import {AlignType, ColumnInfo, DataTableObject} from 'src/types'
 import {TableLineChartPoint, TimeSeriesValue} from 'src/types/series'
@@ -23,13 +24,13 @@ const MISSING_HTTP_STATUS_LABEL = 'No code'
 const MISSING_HTTP_STATUS_TITLE =
   'No HTTP status code in recent data. Check your query and collection settings.'
 
-const getStatusColor = (statusCode: number | null) => {
-  if (statusCode === null) return '#6b7280'
-  if (statusCode >= 200 && statusCode < 300) return '#4ed8a0'
-  if (statusCode >= 300 && statusCode < 400) return '#63b3ff'
+const getStatusTone = (statusCode: number | null) => {
+  if (statusCode === null) return 'unknown'
+  if (statusCode >= 200 && statusCode < 300) return 'success'
+  if (statusCode >= 300 && statusCode < 400) return 'redirect'
   // Same red tone for 4xx / 5xx
-  if (statusCode >= 400) return '#ff4d4f'
-  return '#6b7280'
+  if (statusCode >= 400) return 'failure'
+  return 'unknown'
 }
 
 const toNumber = (value: StatusCodeCell): number | null => {
@@ -60,23 +61,12 @@ export const urlMonitoringColumns = (
     },
     render: (value: StatusCodeCell) => {
       const code = toNumber(value)
-      const color = getStatusColor(code)
       return (
         <div
-          className="url-monitoring-status-badge"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 72,
-            height: 30,
-            padding: '0 12px',
-            borderRadius: 6,
-            backgroundColor: color,
-            color: '#ffffff',
-            fontWeight: 800,
-            fontSize: 14,
-          }}
+          className={classnames(
+            'url-monitoring-status-badge',
+            `url-monitoring-status-badge--${getStatusTone(code)}`
+          )}
           title={code === null ? MISSING_HTTP_STATUS_TITLE : String(code)}
         >
           {code ?? MISSING_HTTP_STATUS_LABEL}
@@ -95,16 +85,14 @@ export const urlMonitoringColumns = (
       const url = String(value ?? '')
       const name = String(rowData?.name ?? '')
       return (
-        <div style={{maxWidth: 300}}>
+        <div className="url-monitoring-url-cell">
           {name && (
-            <div style={{fontWeight: 600, marginBottom: 2}}>{name}</div>
+            <div className="url-monitoring-url-cell__name">{name}</div>
           )}
           <div
-            style={{
-              wordBreak: 'break-all',
-              color: name ? '#aab0bb' : undefined,
-              fontSize: name ? 12 : undefined,
-            }}
+            className={classnames('url-monitoring-url-cell__url', {
+              'url-monitoring-url-cell__url--secondary': !!name,
+            })}
             title={url}
           >
             {url || '--'}
