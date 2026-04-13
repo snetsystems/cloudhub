@@ -960,7 +960,8 @@ $um-unknown: $c-comet;
   .static-graph-container.table-gauge-chart {
     width: 100%;
     height: 100%;
-    padding: 16px;
+    padding: 0 16px;
+    padding-bottom: 16px;
 
     .panel.panel-solid {
       width: 100%;
