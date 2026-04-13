@@ -519,7 +519,7 @@ export function URLMonitoringPage({
         </Page.Header.Right>
       </Page.Header>
       <Page.Contents scrollable={false} fullWidth={true}>
-        <div className="host-page-graph-table-container-wrapper">
+        <div className="url-page-graph-table-container-wrapper">
           {!isError ? (
             <>
               <FancyScrollbar className="display-options" autoHide={true}>
