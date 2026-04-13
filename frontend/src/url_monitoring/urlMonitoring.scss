@@ -162,25 +162,12 @@
 
 .url-monitoring-page {
   .panel-heading {
-    flex-wrap: wrap;
     row-gap: 8px;
-  }
-
-  .panel-heading .table-top.left {
-    min-width: 0;
-    flex: 1 1 auto;
   }
 
   .panel-heading .table-top.right {
-    min-width: 0;
-    flex: 1 1 520px;
-    flex-wrap: wrap;
     justify-content: flex-end;
     row-gap: 8px;
-  }
-
-  .panel-heading .table-top.right > * {
-    min-width: 0;
   }
 
   .url-monitoring-panel-toolbar {
@@ -824,5 +811,28 @@
     color: #ffffff;
     font-weight: 700;
     font-size: 12px;
+  }
+}
+
+.host-page-graph-table-container-wrapper {
+  height: 100%;
+  .static-graph-container.table-gauge-chart {
+    width: 100%;
+    height: 100%;
+    .panel.panel-solid {
+      width: 100%;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+
+      .panel-body {
+        tr {
+          th {
+            z-index: 10;
+            top: 0;
+          }
+        }
+      }
+    }
   }
 }
