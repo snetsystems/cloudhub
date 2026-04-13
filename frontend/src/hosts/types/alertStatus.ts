@@ -5,6 +5,7 @@ export interface AlertTimePoint {
   level: AlertLevel
   alertName: string
   message?: string
+  value?: number
 }
 
 export interface HostAlertStatus {

@@ -3,7 +3,7 @@ import {AlertLevel} from 'src/hosts/types/alertStatus'
 
 interface Props {
   status: AlertLevel
-  onStatusClick: () => void
+  onStatusClick?: () => void
 }
 
 const STATUS_CONFIG: Record<
@@ -34,13 +34,15 @@ const STATUS_CONFIG: Record<
 
 const AlertStatusIcon = ({status, onStatusClick}: Props): JSX.Element => {
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.unknown
+  const isClickable = status !== 'normal' && !!onStatusClick
 
   return (
     <div
-      className={`alert-status-icon ${config.className}`}
-      onClick={onStatusClick}
+      className={`alert-status-icon ${config.className} ${isClickable ? 'clickable' : ''}`}
+      onClick={isClickable ? onStatusClick : undefined}
       title={config.title}
-      role="button"
+      role={isClickable ? 'button' : undefined}
+      style={{cursor: isClickable ? 'pointer' : 'default'}}
     >
       <span className={`icon ${config.iconClass}`} />
     </div>

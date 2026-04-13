@@ -60,7 +60,7 @@ const ALERT_NAMES = [
 
 // GROUP BY time() 없이 각 (host, level, alertName)의 가장 최신 이벤트만 가져옴
 // FILL(none): 값 없는 버킷 생략 → OK 회복 이벤트가 null로 사라지지 않음
-const ALERT_QUERY_TEXT = `SELECT last("message") AS "message"
+const ALERT_QUERY_TEXT = `SELECT last("message") AS "message", last("value") AS "value"
 FROM "${ALERT_DB}"."autogen"."cloudhub_alerts"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime:
   AND (${ALERT_NAMES.map(n => `"alertName"='${n}'`).join(' OR ')})
@@ -428,7 +428,7 @@ export function NewHostsPage({
 
       const perAlertLatest: Record<
         string,
-        Record<string, {time: string; level: AlertLevel; message: string}>
+        Record<string, {time: string; level: AlertLevel; message: string; value?: number}>
       > = {}
 
       series.forEach(s => {
@@ -440,11 +440,13 @@ export function NewHostsPage({
         const level: AlertLevel = mapInfluxLevel(levelTag)
         const timeIndex = (s.columns ?? []).indexOf('time')
         const messageIndex = (s.columns ?? []).indexOf('message')
+        const valueIndex = (s.columns ?? []).indexOf('value')
 
         const row = s?.values?.[0]
         if (!row) return
         const eventTime: string | null = timeIndex >= 0 ? row[timeIndex] : null
         const messageStr: string = messageIndex >= 0 ? row[messageIndex] : ''
+        const valueNum: number | undefined = valueIndex >= 0 ? row[valueIndex] : undefined
         if (!eventTime) return
 
         if (!perAlertLatest[host]) perAlertLatest[host] = {}
@@ -455,6 +457,7 @@ export function NewHostsPage({
             time: eventTime,
             level,
             message: messageStr,
+            value: valueNum,
           }
         }
       })
@@ -462,11 +465,12 @@ export function NewHostsPage({
       const nextMap: AlertStatusMap = {}
       Object.entries(perAlertLatest).forEach(([host, alertMap]) => {
         const history = Object.entries(alertMap).map(
-          ([alertName, {time, level, message}]) => ({
+          ([alertName, {time, level, message, value}]) => ({
             time,
             level,
             alertName,
             message,
+            value,
           })
         )
 
