@@ -52,28 +52,58 @@ $um-unknown: $c-comet;
     align-items: center;
     justify-content: center;
     min-width: 72px;
-    height: 30px;
-    padding: 0 12px;
-    border-radius: 6px;
-    color: $um-white;
-    font-weight: 800;
-    font-size: 14px;
-  }
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    color: $g17-whisper;
+    background: rgba(255, 255, 255, 0.03);
 
-  .url-monitoring-status-badge--unknown {
-    background-color: $um-status-unknown;
-  }
+    &--success {
+      color: $c-rainforest;
+      border-color: rgba($c-rainforest, 0.45);
+      background: rgba($c-rainforest, 0.12);
+    }
 
-  .url-monitoring-status-badge--success {
-    background-color: $um-status-success;
-  }
+    &--info {
+      color: $c-pool;
+      border-color: rgba($c-pool, 0.45);
+      background: rgba($c-pool, 0.12);
+    }
 
-  .url-monitoring-status-badge--redirect {
-    background-color: $um-status-redirect;
-  }
+    &--redirect {
+      color: $c-ocean;
+      border-color: rgba($c-ocean, 0.45);
+      background: rgba($c-ocean, 0.12);
+    }
 
-  .url-monitoring-status-badge--failure {
-    background-color: $um-status-failure;
+    &--failure {
+      color: $c-fire;
+      border-color: rgba($c-fire, 0.45);
+      background: rgba($c-fire, 0.12);
+    }
+
+    &--warning {
+      color: $c-tiger;
+      border-color: rgba($c-tiger, 0.45);
+      background: rgba($c-tiger, 0.12);
+    }
+
+    &--custom {
+      color: $c-comet;
+      border-color: rgba($c-comet, 0.45);
+      background: rgba($c-comet, 0.12);
+    }
+
+    &--unknown {
+      color: $g10-wolf;
+      border-color: rgba($g10-wolf, 0.4);
+      background: rgba($g10-wolf, 0.12);
+    }
   }
 
   .url-monitoring-url-cell {
@@ -156,28 +186,58 @@ $um-unknown: $c-comet;
   align-items: center;
   justify-content: center;
   min-width: 72px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 6px;
-  color: $um-white;
-  font-weight: 800;
-  font-size: 14px;
-}
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: $g17-whisper;
+  background: rgba(255, 255, 255, 0.03);
 
-.url-monitoring-status-badge--unknown {
-  background-color: $um-status-unknown;
-}
+  &--success {
+    color: $c-rainforest;
+    border-color: rgba($c-rainforest, 0.45);
+    background: rgba($c-rainforest, 0.12);
+  }
 
-.url-monitoring-status-badge--success {
-  background-color: $um-status-success;
-}
+  &--info {
+    color: $c-pool;
+    border-color: rgba($c-pool, 0.45);
+    background: rgba($c-pool, 0.12);
+  }
 
-.url-monitoring-status-badge--redirect {
-  background-color: $um-status-redirect;
-}
+  &--redirect {
+    color: $c-ocean;
+    border-color: rgba($c-ocean, 0.45);
+    background: rgba($c-ocean, 0.12);
+  }
 
-.url-monitoring-status-badge--failure {
-  background-color: $um-status-failure;
+  &--failure {
+    color: $c-fire;
+    border-color: rgba($c-fire, 0.45);
+    background: rgba($c-fire, 0.12);
+  }
+
+  &--warning {
+    color: $c-tiger;
+    border-color: rgba($c-tiger, 0.45);
+    background: rgba($c-tiger, 0.12);
+  }
+
+  &--custom {
+    color: $c-comet;
+    border-color: rgba($c-comet, 0.45);
+    background: rgba($c-comet, 0.12);
+  }
+
+  &--unknown {
+    color: $g10-wolf;
+    border-color: rgba($g10-wolf, 0.4);
+    background: rgba($g10-wolf, 0.12);
+  }
 }
 
 .url-monitoring-url-cell {
@@ -237,35 +297,44 @@ $um-unknown: $c-comet;
 }
 
 .url-monitoring-summary__label {
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 4px;
-  font-weight: 700;
-  color: $um-white;
-  font-size: 14px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 12px;
   line-height: 1;
+  letter-spacing: 0.01em;
 }
 
 .url-monitoring-summary__count {
   font-weight: 700;
-  color: $um-white;
+  color: $g17-whisper;
   font-size: 14px;
   line-height: 1;
 }
 
 .url-monitoring-summary__label--total {
-  background-color: $um-status-unknown;
+  color: $g10-wolf;
+  border-color: rgba($g10-wolf, 0.4);
+  background: rgba($g10-wolf, 0.12);
 }
 
 .url-monitoring-summary__label--success {
-  background-color: $um-status-success;
+  color: $c-rainforest;
+  border-color: rgba($c-rainforest, 0.45);
+  background: rgba($c-rainforest, 0.12);
 }
 
 .url-monitoring-summary__label--redirect {
-  background-color: $um-status-redirect;
+  color: $c-ocean;
+  border-color: rgba($c-ocean, 0.45);
+  background: rgba($c-ocean, 0.12);
 }
 
 .url-monitoring-summary__label--failure {
-  background-color: $um-status-failure;
+  color: $c-fire;
+  border-color: rgba($c-fire, 0.45);
+  background: rgba($c-fire, 0.12);
 }
 
 .url-monitoring-page {
