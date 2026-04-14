@@ -86,8 +86,17 @@ export const lineChartTableColumn: ColumnInfo[] = [
       if (Array.isArray(rssRaw)) {
         const points = rssRaw as TableLineChartPoint[]
         for (const p of points) {
-          const v = typeof p?.value === 'number' ? p.value : typeof p === 'number' ? (p as unknown as number) : null
-          if (v !== null && Number.isFinite(v) && (maxRss === null || v > maxRss)) {
+          const v =
+            typeof p?.value === 'number'
+              ? p.value
+              : typeof p === 'number'
+              ? ((p as unknown) as number)
+              : null
+          if (
+            v !== null &&
+            Number.isFinite(v) &&
+            (maxRss === null || v > maxRss)
+          ) {
             maxRss = v
           }
         }
@@ -179,17 +188,17 @@ export const lineChartTableColumn: ColumnInfo[] = [
 export const serverDetailProcessQueries = [
   {
     id: 'server-list-line-cpu',
-    text: `SELECT sum("cpu_usage_pct") AS "CPU"
+    text: `SELECT mean("cpu_usage_pct") AS "CPU"
   FROM ":db:".":rp:"."procstat_top"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "user"=~/:user:/
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
   GROUP BY "process_name", "user", time(:interval:)
   FILL(null)`,
   },
   {
     id: 'server-list-line-mem',
-    text: `SELECT sum("memory_usage_pct") AS "Memory", sum("memory_rss_bytes") AS "RSS"
+    text: `SELECT mean("memory_usage_pct") AS "Memory", mean("memory_rss_bytes") AS "RSS"
   FROM ":db:".":rp:"."procstat_top"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "user"=~/:user:/
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
   GROUP BY "process_name", "user", time(:interval:)
   FILL(null)`,
   },
@@ -197,7 +206,7 @@ export const serverDetailProcessQueries = [
     id: 'server-list-line-network',
     text: `SELECT mean("io_read_bps") AS "mean_io_read_bps", mean("io_write_bps") AS "mean_io_write_bps", mean("io_total_bps") AS "Process I/O"
   FROM ":db:".":rp:"."procstat_top"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=~/:process:/ AND "user"=~/:user:/
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=~/:process:/
   GROUP BY "host", "process_name", "user", time(:interval:)
   FILL(null)`,
   },
@@ -205,7 +214,7 @@ export const serverDetailProcessQueries = [
     id: 'server-list-line-count',
     text: `SELECT last("process_count") AS "Count"
   FROM ":db:".":rp:"."procstat_top"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "user"=~/:user:/
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:'
   GROUP BY "process_name", "user", time(:interval:)
   FILL(null)`,
   },

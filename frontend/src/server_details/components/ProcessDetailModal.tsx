@@ -36,14 +36,14 @@ import {
 } from 'src/server_details/components/UsageDetailModal/utils'
 
 const PROCESS_DETAIL_CHART_QUERIES: Record<string, string> = {
-  cpu: `SELECT sum("cpu_usage_pct") AS "CPU"
+  cpu: `SELECT mean("cpu_usage_pct") AS "CPU"
 FROM ":db:".":rp:"."procstat_top"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=':process_name:'
+WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=':process_name:' AND "user"=':user:'
 GROUP BY time(:interval:)
 FILL(null)`,
-  memory: `SELECT sum("memory_usage_pct") AS "Memory"
+  memory: `SELECT mean("memory_usage_pct") AS "Memory"
 FROM ":db:".":rp:"."procstat_top"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=':process_name:'
+WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=':process_name:' AND "user"=':user:'
 GROUP BY time(:interval:)
 FILL(null)`,
   io: `SELECT mean("io_read_bps") AS "mean_io_read_bps", mean("io_write_bps") AS "mean_io_write_bps", mean("io_total_bps") AS "Process I/O"
@@ -106,8 +106,8 @@ const BLOCK_CONFIG: Record<
   string,
   {title: string; bounds?: [string, string]; suffix?: string}
 > = {
-  cpu: {title: 'CPU (%)', bounds: ['0', ''], suffix: '%'},
-  memory: {title: 'Memory (%)', bounds: ['0', ''], suffix: '%'},
+  cpu: {title: 'CPU (%)', bounds: ['0', '100'], suffix: '%'},
+  memory: {title: 'Memory (%)', bounds: ['0', '100'], suffix: '%'},
   io: {
     title: 'Process I/O(bps)',
     bounds: ['0', ''],
@@ -252,7 +252,8 @@ function ProcessDetailModal({
     setManualRefresh(serverDetail.manualRefresh)
   }, [isOpen, serverDetail.manualRefresh])
 
-  const currentTimeRange = localTimeRange ?? serverDetail.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
+  const currentTimeRange =
+    localTimeRange ?? serverDetail.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverDetail.source
   const host = serverDetail.selectedHost
   const processName = (nameInfo?.process_name as string) ?? null
@@ -276,7 +277,9 @@ function ProcessDetailModal({
         const lowerMs = lowerStr ? moment(lowerStr).valueOf() : NaN
         const upperStr = range.upper ?? 'now()'
         const upperMs =
-          upperStr === 'now()' || !upperStr ? Date.now() : moment(upperStr).valueOf()
+          upperStr === 'now()' || !upperStr
+            ? Date.now()
+            : moment(upperStr).valueOf()
 
         if (!isNaN(lowerMs) && !isNaN(upperMs)) {
           diffSeconds = (upperMs - lowerMs) / 1000
@@ -363,7 +366,11 @@ function ProcessDetailModal({
       >
         <div
           className="process-detail-modal__header"
-          style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
         >
           <h2
             id="process-detail-modal-title"
