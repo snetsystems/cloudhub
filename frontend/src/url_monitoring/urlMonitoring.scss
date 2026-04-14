@@ -1002,25 +1002,37 @@ $um-unknown: $c-comet;
     min-width: 44px;
     padding: 3px 10px;
     border-radius: 4px;
-    color: $um-white;
-    font-weight: 700;
+    border: 1px solid transparent;
+    font-weight: 600;
     font-size: 12px;
-  }
+    line-height: 1;
+    letter-spacing: 0.01em;
+    background: rgba(255, 255, 255, 0.03);
+    color: $g17-whisper;
 
-  .url-monitoring-latency-detail-sheet__code--unknown {
-    background-color: $um-status-unknown;
-  }
+    &--success {
+      color: $c-rainforest;
+      border-color: rgba($c-rainforest, 0.45);
+      background: rgba($c-rainforest, 0.12);
+    }
 
-  .url-monitoring-latency-detail-sheet__code--success {
-    background-color: $um-status-success;
-  }
+    &--redirect {
+      color: $c-ocean;
+      border-color: rgba($c-ocean, 0.45);
+      background: rgba($c-ocean, 0.12);
+    }
 
-  .url-monitoring-latency-detail-sheet__code--redirect {
-    background-color: $um-status-redirect;
-  }
+    &--failure {
+      color: $c-fire;
+      border-color: rgba($c-fire, 0.45);
+      background: rgba($c-fire, 0.12);
+    }
 
-  .url-monitoring-latency-detail-sheet__code--failure {
-    background-color: $um-status-failure;
+    &--unknown {
+      color: $g10-wolf;
+      border-color: rgba($g10-wolf, 0.4);
+      background: rgba($g10-wolf, 0.12);
+    }
   }
 }
 
