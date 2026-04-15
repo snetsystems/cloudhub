@@ -364,7 +364,11 @@ export function NewHostsPage({
           .filter(row => allowedHosts.has(row.host as string))
           .map(row => {
             const hostInfo = hostMap.get(row.host as string)
-            if (hostInfo && Array.isArray(hostInfo.disks) && typeof row.Device === 'string') {
+            if (
+              hostInfo &&
+              Array.isArray(hostInfo.disks) &&
+              typeof row.Device === 'string'
+            ) {
               const matchedDisk = hostInfo.disks.find(d => {
                 if (!d.device) return false
                 const paths = d.device.split('/')
@@ -428,7 +432,10 @@ export function NewHostsPage({
 
       const perAlertLatest: Record<
         string,
-        Record<string, {time: string; level: AlertLevel; message: string; value?: number}>
+        Record<
+          string,
+          {time: string; level: AlertLevel; message: string; value?: number}
+        >
       > = {}
 
       series.forEach(s => {
@@ -446,7 +453,8 @@ export function NewHostsPage({
         if (!row) return
         const eventTime: string | null = timeIndex >= 0 ? row[timeIndex] : null
         const messageStr: string = messageIndex >= 0 ? row[messageIndex] : ''
-        const valueNum: number | undefined = valueIndex >= 0 ? row[valueIndex] : undefined
+        const valueNum: number | undefined =
+          valueIndex >= 0 ? row[valueIndex] : undefined
         if (!eventTime) return
 
         if (!perAlertLatest[host]) perAlertLatest[host] = {}
@@ -479,13 +487,6 @@ export function NewHostsPage({
             LEVEL_PRIORITY[level] > LEVEL_PRIORITY[worst] ? level : worst,
           'normal'
         )
-
-        const hasDeadman = history.some(
-          h => h.alertName === 'server-deadman' && h.level === 'danger'
-        )
-        if (hasDeadman) {
-          currentLevel = 'unknown'
-        }
 
         nextMap[host] = {currentLevel, history}
       })
@@ -555,7 +556,7 @@ export function NewHostsPage({
                     </Radio.Button>
                     <Radio.Button
                       id="host-chart-mode-line"
-                      titleText="Line"
+                      titleText="Trend"
                       value="line"
                       active={pendingChartMode === 'line'}
                       onClick={() => {
@@ -564,7 +565,7 @@ export function NewHostsPage({
                         }
                       }}
                     >
-                      Line
+                      Trend
                     </Radio.Button>
                   </Radio>
                   <div className="alert-status-summary-container">

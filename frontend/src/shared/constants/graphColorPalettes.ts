@@ -221,6 +221,30 @@ export const LINE_COLORS_I = [
   },
 ]
 
+export const LINE_COLORS_J = [
+  {
+    type: COLOR_TYPE_SCALE,
+    hex: '#A4A8B6',
+    id: uuid.v4(),
+    name: 'Text',
+    value: '100',
+  },
+  {
+    type: COLOR_TYPE_SCALE,
+    hex: '#A4A8B6',
+    id: uuid.v4(),
+    name: 'Text',
+    value: '50',
+  },
+  {
+    type: COLOR_TYPE_SCALE,
+    hex: '#A4A8B6',
+    id: uuid.v4(),
+    name: 'Text',
+    value: '0',
+  },
+]
+
 export const LINE_COLORS_RULE_GRAPH = [
   {
     type: COLOR_TYPE_SCALE,
@@ -250,6 +274,7 @@ export const LINE_COLOR_PALETTES_SEQUENCE = [
   LINE_COLORS_G,
   LINE_COLORS_H,
   LINE_COLORS_I,
+  LINE_COLORS_J,
 ]
 
 export const LINE_COLOR_SCALES = [
@@ -262,6 +287,7 @@ export const LINE_COLOR_SCALES = [
   LINE_COLORS_G,
   LINE_COLORS_H,
   LINE_COLORS_I,
+  LINE_COLORS_J,
 ].map(colorScale => {
   const name = colorScale[0].name
   const colors = colorScale

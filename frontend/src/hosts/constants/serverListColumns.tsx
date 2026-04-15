@@ -8,7 +8,7 @@ import {
 
 import {
   LINE_COLORS_I,
-  LINE_COLORS_E,
+  LINE_COLORS_J,
   LINE_COLOR_PALETTES_SEQUENCE,
 } from 'src/shared/constants/graphColorPalettes'
 import {Link} from 'react-router'
@@ -163,7 +163,7 @@ export const serverListColumns = ({
         const gaugeOptions = {
           min: 0,
           max: 0,
-          colors: LINE_COLORS_E,
+          colors: LINE_COLORS_J,
           chartType: CHART_TYPE_MODES.SEGMENTED,
           backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
           isPercent: false,
@@ -240,7 +240,7 @@ export const serverListColumns = ({
         const gaugeOptions = {
           min: 0,
           max: 100,
-          colors: LINE_COLORS_I,
+          colors: LINE_COLORS_J,
           chartType: CHART_TYPE_MODES.SEGMENTED,
           backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
           isPercent: false,
@@ -268,7 +268,7 @@ export const serverListColumns = ({
         const gaugeOptions = {
           min: 0,
           max: 100,
-          colors: LINE_COLORS_I,
+          colors: LINE_COLORS_J,
           chartType: CHART_TYPE_MODES.SEGMENTED,
           backgroundType: BACKGROUND_TYPE_MODES.GRADIENT,
           isPercent: false,
