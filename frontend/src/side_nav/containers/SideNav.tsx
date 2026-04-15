@@ -152,19 +152,19 @@ class SideNav extends PureComponent<Props> {
           <NavBlock
             highlightWhen={['server-monitoring']}
             icon="server2"
-            link={`${sourcePrefix}/server-monitoring/overview`}
+            link={`${sourcePrefix}/server-monitoring/server-list`}
             location={location}
           >
             <NavHeader
-              link={`${sourcePrefix}/server-monitoring/overview`}
+              link={`${sourcePrefix}/server-monitoring/server-list`}
               title="Server Monitoring"
             />
             <NavListItem link={`${sourcePrefix}/server-monitoring/topology`}>
               Topology Builder
             </NavListItem>
-            <NavListItem link={`${sourcePrefix}/server-monitoring/overview`}>
+            {/* <NavListItem link={`${sourcePrefix}/server-monitoring/overview`}>
               Overview
-            </NavListItem>
+            </NavListItem> */}
             <NavListItem link={`${sourcePrefix}/server-monitoring/server-list`}>
               Server List
             </NavListItem>
