@@ -109,6 +109,8 @@ interface State {
   xAxisRange: [number, number]
   isMouseInLegend: boolean
   visibilities: boolean[]
+  /** When w/h change, Dygraph re-renders so MaxMarker/Crosshair re-read toDom* coords. */
+  plotAreaSize: {w: number; h: number} | null
 }
 
 @ErrorHandling
@@ -144,6 +146,7 @@ class Dygraph extends Component<Props, State> {
       xAxisRange: [0, 0],
       isMouseInLegend: false,
       visibilities: [],
+      plotAreaSize: null,
     }
 
     this.graphRef = React.createRef<HTMLDivElement>()
@@ -163,7 +166,11 @@ class Dygraph extends Component<Props, State> {
     )
 
     this.dygraphOptions = options
-    this.setState({xAxisRange: this.dygraph.xAxisRange()})
+    const area = this.dygraph.getArea()
+    this.setState({
+      xAxisRange: this.dygraph.xAxisRange(),
+      plotAreaSize: {w: area.w, h: area.h},
+    })
   }
 
   public componentWillUnmount() {
@@ -196,7 +203,7 @@ class Dygraph extends Component<Props, State> {
   }
 
   public render() {
-    const {staticLegendHeight, xAxisRange} = this.state
+    const {staticLegendHeight, xAxisRange, plotAreaSize} = this.state
     const {staticLegend, cellID} = this.props
 
     return (
@@ -206,7 +213,11 @@ class Dygraph extends Component<Props, State> {
         onMouseLeave={this.handleHideLegend}
       >
         {this.dygraph && (
-          <div className="dygraph-addons">
+          <div
+            className="dygraph-addons"
+            data-plot-area-w={plotAreaSize?.w ?? ''}
+            data-plot-area-h={plotAreaSize?.h ?? ''}
+          >
             {this.props.isUsingAnnotationViewer && (
               <AnnotationsViewer
                 dygraph={this.dygraph}
@@ -417,9 +428,10 @@ class Dygraph extends Component<Props, State> {
       return
     }
 
-    const {xAxisRange, visibilities} = this.state
+    const {xAxisRange, visibilities, plotAreaSize} = this.state
     const newXAxisRange = this.dygraph.xAxisRange()
     const newVisibilities = this.dygraph.visibility()
+    const {w: areaW, h: areaH} = this.dygraph.getArea()
 
     const stateUpdate: Partial<State> = {}
     if (!isEqual(xAxisRange, newXAxisRange)) {
@@ -427,6 +439,13 @@ class Dygraph extends Component<Props, State> {
     }
     if (!isEqual(visibilities, newVisibilities)) {
       stateUpdate.visibilities = newVisibilities
+    }
+    if (
+      !plotAreaSize ||
+      plotAreaSize.w !== areaW ||
+      plotAreaSize.h !== areaH
+    ) {
+      stateUpdate.plotAreaSize = {w: areaW, h: areaH}
     }
 
     if (Object.keys(stateUpdate).length > 0) {
@@ -577,6 +596,22 @@ class Dygraph extends Component<Props, State> {
       this.dygraph.predraw_()
       this.dygraph.resize()
     }
+    // drawCallback may not run in the same frame; sync overlay coords after layout.
+    requestAnimationFrame(() => this.syncPlotAreaSizeFromDygraph())
+  }
+
+  private syncPlotAreaSizeFromDygraph = () => {
+    if (!this.dygraph) {
+      return
+    }
+    const {w, h} = this.dygraph.getArea()
+    this.setState(prev => {
+      const p = prev.plotAreaSize
+      if (p && p.w === w && p.h === h) {
+        return null
+      }
+      return {plotAreaSize: {w, h}}
+    })
   }
 
   private formatTimeRange = (date: number): string => {
