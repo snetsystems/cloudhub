@@ -598,8 +598,19 @@
 
 .server-list-table {
   .server-host {
-    width: 10%;
+    width: 96px;
+    max-width: 96px;
+    min-width: 0;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    a {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   .network-interface {
@@ -654,7 +665,7 @@
   .host-page-graph-table-container-wrapper.host-page-graph-table-container {
     margin: 16px;
     box-sizing: border-box;
-    width: max-content;
+    // width: max-content;
     min-width: calc(100% - 32px);
   }
 
