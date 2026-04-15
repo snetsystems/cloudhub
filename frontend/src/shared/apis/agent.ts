@@ -5,11 +5,6 @@ export interface IPInterface {
   ipAddress: string
 }
 
-export interface Disk {
-  device: string
-  mountPoint: string
-}
-
 export interface GPU {
   slot?: number
   vendor: string
@@ -32,7 +27,6 @@ export interface AgentRegistrationPayload {
   cpuCores: number
   cpuModel: string
   biosVersion: string
-  disks: Disk[]
   gpus: GPU[]
   status: AgentStatus
 }
@@ -53,7 +47,6 @@ export interface Agent {
   cpuCores: number
   cpuModel: string
   biosVersion: string
-  disks: Disk[]
   gpus: GPU[]
   orgId: string
   status: AgentStatus

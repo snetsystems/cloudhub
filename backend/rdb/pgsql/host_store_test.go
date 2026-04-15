@@ -50,10 +50,6 @@ func TestHostStore_AddAndGet_WithInterfaces(t *testing.T) {
 		Arch:       "x86_64",
 		MemTotalKB: 8192000,
 		CPUCores:   4,
-		Disks: []cloudhub.Disk{
-			{Device: "/dev/sda1", MountPoint: "/"},
-			{Device: "/dev/sdb1", MountPoint: "/data"},
-		},
 		GPUs: []cloudhub.GPU{
 			{Vendor: "NVIDIA", Model: "RTX 4090"},
 		},
@@ -91,9 +87,6 @@ func TestHostStore_AddAndGet_WithInterfaces(t *testing.T) {
 	}
 	if len(got.IPInterfaces) != len(host.IPInterfaces) {
 		t.Errorf("ipInterfaces count: got %d, want %d", len(got.IPInterfaces), len(host.IPInterfaces))
-	}
-	if len(got.Disks) != len(host.Disks) {
-		t.Errorf("disks count: got %d, want %d", len(got.Disks), len(host.Disks))
 	}
 	if len(got.GPUs) != 1 || got.GPUs[0].Vendor != "NVIDIA" || got.GPUs[0].Model != "RTX 4090" {
 		t.Errorf("gpus: got %+v", got.GPUs)
@@ -195,9 +188,6 @@ func TestHostStore_Delete_SoftDelete(t *testing.T) {
 		Hostname: "to-delete",
 		IPInterfaces: []cloudhub.IPInterface{
 			{InterfaceName: "eth0", IPAddress: "192.168.1.1"},
-		},
-		Disks: []cloudhub.Disk{
-			{Device: "/dev/sda1", MountPoint: "/"},
 		},
 		SourceType: "salt",
 	}
@@ -306,7 +296,7 @@ func TestHostStore_Add_DuplicateConflict(t *testing.T) {
 }
 
 // TestHostStore_Update_ChangesAllFields verifies that Update replaces hardware
-// info and related tables (ip_interfaces, disks, gpus).
+// info and related tables (ip_interfaces, gpus).
 func TestHostStore_Update_ChangesAllFields(t *testing.T) {
 	client, cleanup := setupTestDB(t)
 	defer cleanup()
@@ -320,7 +310,6 @@ func TestHostStore_Update_ChangesAllFields(t *testing.T) {
 		IPInterfaces: []cloudhub.IPInterface{
 			{InterfaceName: "eth0", IPAddress: "192.168.1.1"},
 		},
-		Disks:      []cloudhub.Disk{{Device: "/dev/sda1", MountPoint: "/"}},
 		GPUs:       []cloudhub.GPU{{Vendor: "NVIDIA", Model: "GTX 1080"}},
 		SourceType: "salt",
 		Status:     "accepted",
@@ -336,7 +325,6 @@ func TestHostStore_Update_ChangesAllFields(t *testing.T) {
 			{InterfaceName: "eth0", IPAddress: "10.0.0.99"},
 			{InterfaceName: "eth1", IPAddress: "10.0.0.100"},
 		},
-		Disks:      []cloudhub.Disk{{Device: "/dev/nvme0n1", MountPoint: "/data"}},
 		GPUs:       []cloudhub.GPU{{Vendor: "AMD", Model: "RX 7900"}},
 		CPUCores:   16,
 		MemTotalKB: 32768000,
@@ -359,9 +347,6 @@ func TestHostStore_Update_ChangesAllFields(t *testing.T) {
 	}
 	if len(got.IPInterfaces) != 2 {
 		t.Errorf("ipInterfaces: got %d, want 2", len(got.IPInterfaces))
-	}
-	if len(got.Disks) != 1 || got.Disks[0].Device != "/dev/nvme0n1" {
-		t.Errorf("disks: got %+v", got.Disks)
 	}
 	if len(got.GPUs) != 1 || got.GPUs[0].Vendor != "AMD" {
 		t.Errorf("gpus: got %+v", got.GPUs)

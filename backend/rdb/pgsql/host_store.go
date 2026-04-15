@@ -79,20 +79,6 @@ RETURNING id`
 		}
 
 		if _, err := tx.ExecContext(ctx,
-			`DELETE FROM host_disks WHERE host_id = $1`, h.ID,
-		); err != nil {
-			return fmt.Errorf("hosts delete disks: %w", err)
-		}
-		for _, disk := range h.Disks {
-			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO host_disks (host_id, device, mount_point) VALUES ($1, $2, $3)`,
-				h.ID, disk.Device, disk.MountPoint,
-			); err != nil {
-				return fmt.Errorf("hosts insert disk: %w", err)
-			}
-		}
-
-		if _, err := tx.ExecContext(ctx,
 			`DELETE FROM host_gpus WHERE host_id = $1`, h.ID,
 		); err != nil {
 			return fmt.Errorf("hosts delete gpus: %w", err)
@@ -167,22 +153,6 @@ FROM hosts WHERE hostname = $1 AND delete_yn = false`
 		h.IPInterfaces = append(h.IPInterfaces, iface)
 	}
 
-	h.Disks = make([]cloudhub.Disk, 0)
-	diskRows, err := s.client.QueryContext(ctx,
-		`SELECT device, mount_point FROM host_disks WHERE host_id = $1`, h.ID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("hosts get disks: %w", err)
-	}
-	defer diskRows.Close()
-	for diskRows.Next() {
-		var disk cloudhub.Disk
-		if err := diskRows.Scan(&disk.Device, &disk.MountPoint); err != nil {
-			return nil, fmt.Errorf("hosts get disk scan: %w", err)
-		}
-		h.Disks = append(h.Disks, disk)
-	}
-
 	h.GPUs = make([]cloudhub.GPU, 0)
 	gpuRows, err := s.client.QueryContext(ctx,
 		`SELECT vendor, model FROM host_gpus WHERE host_id = $1`, h.ID,
@@ -223,7 +193,6 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 	for rows.Next() {
 		var h cloudhub.Host
 		h.IPInterfaces = make([]cloudhub.IPInterface, 0)
-		h.Disks = make([]cloudhub.Disk, 0)
 		h.GPUs = make([]cloudhub.GPU, 0)
 		if err := rows.Scan(
 			&h.ID, &h.MinionID, &h.Hostname, &h.OriginalHostname, &h.IP, &h.SourceType,
@@ -263,26 +232,6 @@ FROM hosts WHERE delete_yn = false ORDER BY created_at DESC`
 		}
 		if idx, ok := idxByID[hostID]; ok {
 			hosts[idx].IPInterfaces = append(hosts[idx].IPInterfaces, iface)
-		}
-	}
-
-	// Batch fetch disks
-	diskRows, err := s.client.QueryContext(ctx,
-		`SELECT host_id, device, mount_point FROM host_disks WHERE host_id = ANY($1)`,
-		ids,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("hosts all disks: %w", err)
-	}
-	defer diskRows.Close()
-	for diskRows.Next() {
-		var hostID string
-		var disk cloudhub.Disk
-		if err := diskRows.Scan(&hostID, &disk.Device, &disk.MountPoint); err != nil {
-			return nil, fmt.Errorf("hosts all disk scan: %w", err)
-		}
-		if idx, ok := idxByID[hostID]; ok {
-			hosts[idx].Disks = append(hosts[idx].Disks, disk)
 		}
 	}
 
@@ -374,20 +323,6 @@ WHERE hostname = $1 AND delete_yn = false`
 				h.Hostname, iface.InterfaceName, iface.IPAddress,
 			); err != nil {
 				return fmt.Errorf("hosts update insert ip_interface: %w", err)
-			}
-		}
-
-		if _, err := tx.ExecContext(ctx,
-			`DELETE FROM host_disks WHERE host_id = (SELECT id FROM hosts WHERE hostname = $1 AND delete_yn = false)`, h.Hostname,
-		); err != nil {
-			return fmt.Errorf("hosts update delete disks: %w", err)
-		}
-		for _, disk := range h.Disks {
-			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO host_disks (host_id, device, mount_point) SELECT id, $2, $3 FROM hosts WHERE hostname = $1 AND delete_yn = false`,
-				h.Hostname, disk.Device, disk.MountPoint,
-			); err != nil {
-				return fmt.Errorf("hosts update insert disk: %w", err)
 			}
 		}
 

@@ -358,28 +358,9 @@ export function NewHostsPage({
       if (Array.isArray(apiHostsResultRef.current)) {
         const hosts = apiHostsResultRef.current as Host[]
         const allowedHosts = new Set(hosts.map(h => h.hostname))
-        const hostMap = new Map<string, Host>(hosts.map(h => [h.hostname, h]))
-
-        mergedData = mergedData
-          .filter(row => allowedHosts.has(row.host as string))
-          .map(row => {
-            const hostInfo = hostMap.get(row.host as string)
-            if (
-              hostInfo &&
-              Array.isArray(hostInfo.disks) &&
-              typeof row.Device === 'string'
-            ) {
-              const matchedDisk = hostInfo.disks.find(d => {
-                if (!d.device) return false
-                const paths = d.device.split('/')
-                return paths[paths.length - 1] === row.Device
-              })
-              if (matchedDisk && matchedDisk.mountPoint) {
-                row.Device = matchedDisk.mountPoint
-              }
-            }
-            return row
-          })
+        mergedData = mergedData.filter(row =>
+          allowedHosts.has(row.host as string)
+        )
       }
 
       setTableData(mergedData)

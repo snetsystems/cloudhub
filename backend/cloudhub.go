@@ -1846,12 +1846,6 @@ type IPInterface struct {
 	IPAddress     string `json:"ipAddress"`
 }
 
-// Disk represents a device-to-mount-point mapping for InfluxDB metric correlation.
-type Disk struct {
-	Device     string `json:"device"`
-	MountPoint string `json:"mountPoint"`
-}
-
 // GPU represents a graphics processing unit.
 type GPU struct {
 	Vendor string `json:"vendor"`
@@ -1879,7 +1873,6 @@ type Host struct {
 	BIOSVersion  string        `json:"biosVersion"`
 	Timezone     string        `json:"timezone"` // timezone abbreviation, e.g. KST, UTC
 	SelinuxState string        `json:"selinuxState"`
-	Disks        []Disk        `json:"disks"`
 	GPUs         []GPU         `json:"gpus"`
 	IsCollector  bool          `json:"isCollector"` // true if this host is a collector server
 	SourceType   string        `json:"sourceType"`

@@ -5,11 +5,6 @@ export interface IPInterface {
   ipAddress: string
 }
 
-export interface Disk {
-  device: string
-  mountPoint: string
-}
-
 export interface GPU {
   vendor: string
   model: string
@@ -36,7 +31,6 @@ export interface HostRegistrationPayload {
   timezone: string
   selinuxState: string
   isCollector: boolean
-  disks: Disk[]
   gpus: GPU[]
   sourceType: HostSourceType
   status: HostStatus
@@ -63,7 +57,6 @@ export interface Host {
   timezone?: string
   selinuxState?: string
   isCollector?: boolean
-  disks: Disk[]
   gpus: GPU[]
   sourceType: HostSourceType
   orgId: string

@@ -163,7 +163,6 @@ export class AgentMinions extends PureComponent<Props, State> {
       num_cpus: agent.cpuCores,
       ip_interfaces: ipIfacesMap,
       gpus: agent.gpus ?? [],
-      disks: agent.disks ?? [],
       timezone: agent.timezone ?? '',
       selinux_state: agent.selinuxState ?? '',
     }

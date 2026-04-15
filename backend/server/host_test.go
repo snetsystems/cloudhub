@@ -53,10 +53,6 @@ func TestToHostResponse_FilterPrivateIPs(t *testing.T) {
 			{InterfaceName: "eth1", IPAddress: "8.8.8.8"},
 			{InterfaceName: "eth2", IPAddress: "10.0.0.5"},
 		},
-		Disks: []cloudhub.Disk{
-			{Device: "sda1", MountPoint: "/"},
-			{Device: "sdb1", MountPoint: "/data"},
-		},
 		OS:         "linux",
 		OSVersion:  "20.04",
 		Arch:       "amd64",
@@ -83,14 +79,6 @@ func TestToHostResponse_FilterPrivateIPs(t *testing.T) {
 	}
 	if !privateSet["10.0.0.5"] {
 		t.Error("expected 10.0.0.5 in privateIps")
-	}
-
-	// Disks converted to diskResponse
-	if len(resp.Disks) != 2 {
-		t.Fatalf("expected 2 disks, got %d", len(resp.Disks))
-	}
-	if resp.Disks[0].Device != "sda1" || resp.Disks[0].MountPoint != "/" {
-		t.Errorf("unexpected disk[0]: %+v", resp.Disks[0])
 	}
 
 	// Other fields pass through

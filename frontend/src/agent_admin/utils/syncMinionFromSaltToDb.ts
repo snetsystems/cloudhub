@@ -2,25 +2,16 @@ import {
   registerHost as registerAgent,
   updateHost as updateAgent,
   IPInterface,
-  Disk,
   GPU,
   Host as Agent,
   HostRegistrationPayload,
   HostStatus,
 } from 'src/shared/apis/host'
-import {
-  getLocalGrainsItem,
-  getLocalGrainsItemBatch,
-  getLocalMountActive,
-  getLocalMountActiveBatch,
-  getLocalDiskUsage,
-  getLocalDiskUsageBatch,
-} from 'src/shared/apis/saltStack'
+import {getLocalGrainsItem, getLocalGrainsItemBatch} from 'src/shared/apis/saltStack'
 
 export function buildAgentPayloadFromGrains(
   host: string,
   grains: Record<string, any>,
-  mountActive: Record<string, any>,
   status: HostStatus = 'accepted'
 ) {
   const ipIfaceRaw: Record<string, string[]> = grains.ip_interfaces ?? {}
@@ -28,22 +19,6 @@ export function buildAgentPayloadFromGrains(
     ([interfaceName, addresses]) =>
       (addresses as string[]).map(ipAddress => ({interfaceName, ipAddress}))
   )
-
-  const isWindows = String(grains.kernel ?? '').toLowerCase() === 'windows'
-
-  const disks: Disk[] = isWindows
-    ? Object.keys(mountActive).map(drive => ({
-        device: drive,
-        mountPoint: drive,
-      }))
-    : Object.entries(mountActive)
-        .filter(([_, info]) =>
-          String((info as any)?.device ?? '').startsWith('/dev/')
-        )
-        .map(([mountPoint, info]: [string, any]) => ({
-          device: String((info as any)?.device ?? ''),
-          mountPoint,
-        }))
 
   const gpusRaw = grains.gpus
   const gpus: GPU[] = gpusRaw
@@ -75,13 +50,12 @@ export function buildAgentPayloadFromGrains(
     biosVersion: String(grains.biosversion ?? ''),
     timezone: String(grains.locale_info?.timezone ?? ''),
     selinuxState,
-    disks,
     gpus,
     status,
   }
 }
 
-/** Grains + disk/mount from Salt as a host registration payload (for single PUT/POST or bulk-upsert). */
+/** Grains from Salt as a host registration payload (for single PUT/POST or bulk-upsert). */
 export async function collectMinionHostPayloadFromSalt(
   saltMasterUrl: string,
   saltMasterToken: string,
@@ -94,34 +68,12 @@ export async function collectMinionHostPayloadFromSalt(
     host
   )
   const grains = grainsResp?.data?.return?.[0]?.[host] ?? {}
-  const isWindows = String(grains.kernel ?? '').toLowerCase() === 'windows'
-
-  let diskData: Record<string, any> = {}
-  try {
-    if (isWindows) {
-      const diskResp = await getLocalDiskUsage(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
-      const data = diskResp?.data?.return?.[0]?.[host]
-      if (data != null && typeof data === 'object') diskData = data
-    } else {
-      const mountResp = await getLocalMountActive(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
-      const data = mountResp?.data?.return?.[0]?.[host]
-      if (data != null && typeof data === 'object') diskData = data
-    }
-  } catch (_) {}
 
   return {
     minionId: host,
     sourceType: 'salt',
     isCollector: false,
-    ...buildAgentPayloadFromGrains(host, grains, diskData, status),
+    ...buildAgentPayloadFromGrains(host, grains, status),
   }
 }
 
@@ -131,7 +83,7 @@ export interface MinionSaltCollectError {
 }
 
 /**
- * Fetches grains + mount/disk for many minions using Salt tgt_type=list (fewer HTTP calls than per-host).
+ * Fetches grains for many minions using Salt tgt_type=list (fewer HTTP calls than per-host).
  */
 export async function collectMinionHostPayloadsFromSaltBatch(
   saltMasterUrl: string,
@@ -193,76 +145,15 @@ export async function collectMinionHostPayloadsFromSaltBatch(
     grainsByHost.set(host, g as Record<string, any>)
   }
 
-  const linuxHosts: string[] = []
-  const windowsHosts: string[] = []
-  for (const host of hosts) {
-    const g = grainsByHost.get(host)
-    if (!g) continue
-    if (String(g.kernel ?? '').toLowerCase() === 'windows') {
-      windowsHosts.push(host)
-    } else {
-      linuxHosts.push(host)
-    }
-  }
-
-  const diskDataByHost = new Map<string, Record<string, any>>()
-
-  if (linuxHosts.length > 0) {
-    try {
-      const mountResp = await getLocalMountActiveBatch(
-        saltMasterUrl,
-        saltMasterToken,
-        linuxHosts
-      )
-      const mountReturn = mountResp?.data?.return?.[0] ?? {}
-      for (const host of linuxHosts) {
-        const data = mountReturn[host]
-        if (data != null && typeof data === 'object' && !Array.isArray(data)) {
-          diskDataByHost.set(host, data as Record<string, any>)
-        } else {
-          diskDataByHost.set(host, {})
-        }
-      }
-    } catch (_) {
-      for (const host of linuxHosts) {
-        diskDataByHost.set(host, {})
-      }
-    }
-  }
-
-  if (windowsHosts.length > 0) {
-    try {
-      const diskResp = await getLocalDiskUsageBatch(
-        saltMasterUrl,
-        saltMasterToken,
-        windowsHosts
-      )
-      const diskReturn = diskResp?.data?.return?.[0] ?? {}
-      for (const host of windowsHosts) {
-        const data = diskReturn[host]
-        if (data != null && typeof data === 'object' && !Array.isArray(data)) {
-          diskDataByHost.set(host, data as Record<string, any>)
-        } else {
-          diskDataByHost.set(host, {})
-        }
-      }
-    } catch (_) {
-      for (const host of windowsHosts) {
-        diskDataByHost.set(host, {})
-      }
-    }
-  }
-
   const payloads: HostRegistrationPayload[] = []
   for (const host of hosts) {
     const grains = grainsByHost.get(host)
     if (!grains) continue
-    const disk = diskDataByHost.get(host) ?? {}
     payloads.push({
       minionId: host,
       sourceType: 'salt',
       isCollector: false,
-      ...buildAgentPayloadFromGrains(host, grains, disk, status),
+      ...buildAgentPayloadFromGrains(host, grains, status),
     })
   }
 
@@ -270,7 +161,7 @@ export async function collectMinionHostPayloadsFromSaltBatch(
 }
 
 /**
- * Fetches grains + disk/mount from Salt and upserts the host row (same as per-row refresh).
+ * Fetches grains from Salt and upserts the host row (same as per-row refresh).
  */
 export async function syncMinionFromSaltToDb(
   saltMasterUrl: string,

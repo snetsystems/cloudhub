@@ -42,14 +42,6 @@ CREATE TABLE IF NOT EXISTS host_ip_interfaces (
     ip_address     TEXT NOT NULL
 );
 
--- host_disks: disk mount points belonging to a host
-CREATE TABLE IF NOT EXISTS host_disks (
-    id          UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    host_id     UUID NOT NULL REFERENCES hosts(id) ON DELETE CASCADE,
-    device      TEXT NOT NULL,
-    mount_point TEXT NOT NULL
-);
-
 -- host_gpus: GPU devices belonging to a host
 CREATE TABLE IF NOT EXISTS host_gpus (
     id      UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -98,12 +90,6 @@ COMMENT ON COLUMN host_ip_interfaces.host_id        IS '[FK -> hosts.id] parent 
 COMMENT ON COLUMN host_ip_interfaces.interface_name IS 'network interface name (e.g. eth0, lo)';
 COMMENT ON COLUMN host_ip_interfaces.ip_address     IS 'IP address assigned to the interface';
 
-COMMENT ON TABLE  host_disks             IS 'disk mount points belonging to a host';
-COMMENT ON COLUMN host_disks.id          IS '[PK] surrogate UUID';
-COMMENT ON COLUMN host_disks.host_id     IS '[FK -> hosts.id] parent host; cascades on hard delete';
-COMMENT ON COLUMN host_disks.device      IS 'block device path (e.g. /dev/sda1)';
-COMMENT ON COLUMN host_disks.mount_point IS 'filesystem mount point (e.g. /, /data); key for InfluxDB disk metric lookup';
-
 COMMENT ON TABLE  host_gpus         IS 'GPU devices belonging to a host';
 COMMENT ON COLUMN host_gpus.id      IS '[PK] surrogate UUID';
 COMMENT ON COLUMN host_gpus.host_id IS '[FK -> hosts.id] parent host; cascades on hard delete';
@@ -116,7 +102,6 @@ DROP INDEX IF EXISTS idx_hosts_hostname_active;
 DROP INDEX IF EXISTS idx_hosts_org_id;
 DROP INDEX IF EXISTS idx_hosts_minion_id_active;
 DROP TABLE IF EXISTS host_gpus;
-DROP TABLE IF EXISTS host_disks;
 DROP TABLE IF EXISTS host_ip_interfaces;
 DROP TABLE IF EXISTS hosts;
 DROP TABLE IF EXISTS schema_version;

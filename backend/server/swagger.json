@@ -11437,20 +11437,6 @@
         }
       }
     },
-    "Disk": {
-      "type": "object",
-      "description": "A mounted disk device",
-      "properties": {
-        "device": {
-          "type": "string",
-          "description": "Device path (e.g., /dev/sda1)"
-        },
-        "mountPoint": {
-          "type": "string",
-          "description": "Mount point path (e.g., /, /data)"
-        }
-      }
-    },
     "GPU": {
       "type": "object",
       "description": "A GPU device",
@@ -11526,13 +11512,6 @@
         "biosVersion": {
           "type": "string",
           "description": "BIOS version string"
-        },
-        "disks": {
-          "type": "array",
-          "description": "List of mounted disk devices",
-          "items": {
-            "$ref": "#/definitions/Disk"
-          }
         },
         "gpus": {
           "type": "array",
@@ -11624,13 +11603,6 @@
         "biosVersion": {
           "type": "string",
           "description": "BIOS version string"
-        },
-        "disks": {
-          "type": "array",
-          "description": "List of mounted disk devices",
-          "items": {
-            "$ref": "#/definitions/Disk"
-          }
         },
         "gpus": {
           "type": "array",

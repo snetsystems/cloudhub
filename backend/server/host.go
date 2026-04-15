@@ -29,15 +29,9 @@ type hostRequest struct {
 	Timezone     string                 `json:"timezone"`
 	SelinuxState string                 `json:"selinuxState"`
 	IsCollector  bool                   `json:"isCollector"`
-	Disks        []cloudhub.Disk        `json:"disks"`
 	GPUs         []cloudhub.GPU         `json:"gpus"`
 	SourceType   string                 `json:"sourceType"`
 	Status       string                 `json:"status"`
-}
-
-type diskResponse struct {
-	Device     string `json:"device"`
-	MountPoint string `json:"mountPoint"`
 }
 
 type gpuResponse struct {
@@ -71,7 +65,6 @@ type hostResponse struct {
 	Timezone     string          `json:"timezone"`
 	SelinuxState string          `json:"selinuxState"`
 	IsCollector  bool            `json:"isCollector"`
-	Disks        []diskResponse  `json:"disks"`
 	GPUs         []gpuResponse   `json:"gpus"`
 	SourceType   string          `json:"sourceType"`
 	OrgID        string          `json:"orgId"`
@@ -113,11 +106,6 @@ func toHostResponse(h cloudhub.Host) hostResponse {
 		}
 	}
 
-	disks := make([]diskResponse, 0, len(h.Disks))
-	for _, d := range h.Disks {
-		disks = append(disks, diskResponse{Device: d.Device, MountPoint: d.MountPoint})
-	}
-
 	gpus := make([]gpuResponse, 0, len(h.GPUs))
 	for _, g := range h.GPUs {
 		gpus = append(gpus, gpuResponse{Vendor: g.Vendor, Model: g.Model})
@@ -144,7 +132,6 @@ func toHostResponse(h cloudhub.Host) hostResponse {
 		Timezone:     h.Timezone,
 		SelinuxState: h.SelinuxState,
 		IsCollector:  h.IsCollector,
-		Disks:        disks,
 		GPUs:         gpus,
 		SourceType:   h.SourceType,
 		OrgID:        h.OrgID,
@@ -219,7 +206,6 @@ func normalizedHostFromRequest(req hostRequest, forCreate bool, existing *cloudh
 		BIOSVersion:      req.BIOSVersion,
 		Timezone:         req.Timezone,
 		SelinuxState:     req.SelinuxState,
-		Disks:            req.Disks,
 		GPUs:             req.GPUs,
 		SourceType:       sourceType,
 		Status:           status,
