@@ -114,39 +114,10 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return 'hosts-table--th sortable-header'
   }
 
-  private get canShowHostTable(): boolean {
-    const {minions, isCollectorInstalled} = this.props
-    const {sortKey, sortDirection, searchTerm} = this.state
-    if (!isCollectorInstalled || minions.length === 0) {
-      return false
-    }
-    const filteredMinion = minions.filter((m: Minion) => m.isInstall === true)
-    const sortedHosts = this.getSortedHosts(
-      filteredMinion,
-      searchTerm,
-      sortKey,
-      sortDirection
-    )
-    return sortedHosts.length > 0
-  }
-
   /** Covers thead + tbody; inline styles so stacking works above FancyScrollbar. */
   private renderLoadingShade(): JSX.Element {
     return (
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 200,
-          backgroundColor: 'rgba(0, 0, 0, 0.45)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="hosts-table--loading-shade">
         <PageSpinner pageSpinnerHeight="auto" />
       </div>
     )
@@ -171,15 +142,8 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     if (configPageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
-    if (showLoading && this.canShowHostTable) {
-      return this.renderAgentTableWithHosts(true)
-    }
     if (showLoading) {
-      return (
-        <div style={{position: 'relative', minHeight: 200}}>
-          {this.renderLoadingShade()}
-        </div>
-      )
+      return this.renderAgentTableWithHosts(true)
     }
     if (minions.length === 0) {
       return this.NoHostsState
@@ -376,33 +340,36 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     )
 
     return (
-      <div
-        className="hosts-table"
-        style={loadingOverlay ? {position: 'relative'} : undefined}
-      >
+      <div className="hosts-table">
         {this.AgentTableHeader}
         {this.tooltip}
-        {sortedHosts.length > 0 ? (
-          <FancyScrollbar
-            children={sortedHosts.map(
-              (m: Minion, i: number): JSX.Element =>
-                m.os ? (
-                  <AgentConfigurationTableRow
-                    key={i}
-                    minions={m}
-                    onClickTableRow={onClickTableRow}
-                    onClickAction={onClickAction}
-                    focusedHost={focusedHost}
-                    isSaltLoading={isSaltLoading}
-                    onMouseLeave={this.onMouseLeave}
-                    onMouseOver={this.onMouseOver}
-                  />
-                ) : null
-            )}
-            className="hosts-table--tbody"
-          />
-        ) : null}
-        {loadingOverlay ? this.renderLoadingShade() : null}
+        <div className="hosts-table--rows">
+          {sortedHosts.length > 0 ? (
+            <FancyScrollbar
+              children={sortedHosts.map(
+                (m: Minion, i: number): JSX.Element =>
+                  m.os ? (
+                    <AgentConfigurationTableRow
+                      key={i}
+                      minions={m}
+                      onClickTableRow={onClickTableRow}
+                      onClickAction={onClickAction}
+                      focusedHost={focusedHost}
+                      isSaltLoading={isSaltLoading}
+                      onMouseLeave={this.onMouseLeave}
+                      onMouseOver={this.onMouseOver}
+                    />
+                  ) : null
+              )}
+              className="hosts-table--tbody hosts-table--tbody-fill"
+            />
+          ) : null}
+          {loadingOverlay ? (
+            <div className="hosts-table--rows-overlay">
+              {this.renderLoadingShade()}
+            </div>
+          ) : null}
+        </div>
       </div>
     )
   }

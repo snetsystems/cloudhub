@@ -316,6 +316,33 @@ $wordBreak: break-word;
   flex: 1 0 0;
   width: 100%;
 }
+.hosts-table--tbody-fill {
+  height: 100%;
+}
+.hosts-table--rows {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+}
+.hosts-table--rows-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 200;
+}
+.hosts-table--loading-shade {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .hosts-table--tr {
   display: flex;
   width: 100%;

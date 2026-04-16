@@ -127,21 +127,20 @@ class AgentMinionsTableRow extends PureComponent<Props> {
         </div>
         <TableBodyRowItem
           title={
-            <span style={{display: 'inline-flex', alignItems: 'center', gap: '6px'}}>
+            <span className="agent-minions-status-content">
               {this.isStatusIndicator(status, isInstall, isSaltRunning)}
-              {(isProcessing || (isSaltLoading && status === MinionState.Accept)) && (
-                <div className="simple-spinner" />
-              )}
+              <span className="agent-minions-spinner-slot">
+                {isProcessing || (isSaltLoading && status === MinionState.Accept) ? (
+                  <div className="simple-spinner" />
+                ) : null}
+              </span>
             </span>
           }
           width={StatusWidth}
         />
         <TableBodyRowItem
           title={
-            <div
-              id={`table-row--select${idx}`}
-              style={{display: 'flex', alignItems: 'center', gap: '4px'}}
-            >
+            <div id={`table-row--select${idx}`} className="agent-minions-operation-actions">
               {onClickModal({
                 name: '፧',
                 host,
@@ -152,7 +151,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
               })}
               {status === MinionState.Accept && (
                 <button
-                  className="btn btn-sm btn-default agent-row--button-sm"
+                  className="btn btn-sm btn-default agent-row--button-sm agent-row--refresh-button"
                   title="Update agent info"
                   disabled={isProcessing || isSaltRunning !== true}
                   onClick={e => {

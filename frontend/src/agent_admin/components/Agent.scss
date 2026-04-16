@@ -141,6 +141,36 @@
     }
   }
 
+  .agent-minions-status-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .agent-minions-spinner-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
+  }
+
+  .agent-minions-operation-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .agent-row--refresh-button {
+    width: 30px;
+    min-width: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   /***** table end   *****/
 
   /***** console start *****/

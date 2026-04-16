@@ -267,9 +267,11 @@ class AgentMinionsTable extends PureComponent<Props, State> {
             className={this.sortableClasses('status')}
             style={{width: StatusWidth}}
           >
-            <span style={{display: 'inline-flex', alignItems: 'center', gap: '6px'}}>
-              Status
-              {this.props.isSaltLoading && <div className="simple-spinner" />}
+          <span className="agent-minions-status-content">
+            <span>Status</span>
+            <span className="agent-minions-spinner-slot">
+              {this.props.isSaltLoading ? <div className="simple-spinner" /> : null}
+            </span>
             </span>
             <span className="icon caret-up" />
           </div>
