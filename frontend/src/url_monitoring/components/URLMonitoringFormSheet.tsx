@@ -6,6 +6,7 @@ import {DropdownItem, Notification} from 'src/types'
 import {URLMonitoringTarget} from 'src/url_monitoring/types'
 import {
   addURLMonitoringTarget,
+  getCloudhubAjaxErrorMessage,
   patchURLMonitoringTarget,
 } from 'src/url_monitoring/apis'
 
@@ -120,6 +121,16 @@ export function URLMonitoringFormSheet({
       } else {
         await addURLMonitoringTarget({name, url, interval: collectionInterval})
       }
+      notify({
+        type: 'success',
+        icon: 'checkmark',
+        duration: 8000,
+        isHasHTML: false,
+        message:
+          mode === 'edit'
+            ? 'URL updated successfully.'
+            : 'URL added successfully.',
+      })
       onSaved()
       onClose()
     } catch (e) {
@@ -132,7 +143,7 @@ export function URLMonitoringFormSheet({
         icon: 'alert-triangle',
         duration: 10000,
         isHasHTML: false,
-        message: `Failed to save URL monitoring target: ${e?.message ?? e}`,
+        message: getCloudhubAjaxErrorMessage(e),
       })
     } finally {
       setIsLoading(false)

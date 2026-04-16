@@ -79,6 +79,34 @@ interface CloudhubJSONErrorBody {
   message?: string
 }
 
+export function getCloudhubAjaxErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'data' in err) {
+    const data = (err as {data?: unknown}).data
+    if (data && typeof data === 'object') {
+      const msg = (data as CloudhubJSONErrorBody).message
+      if (typeof msg === 'string' && msg.trim() !== '') {
+        return msg
+      }
+    }
+  }
+  if (err instanceof Error && err.message) {
+    return err.message
+  }
+  if (err && typeof err === 'object' && 'message' in err) {
+    const msg = (err as {message?: unknown}).message
+    if (typeof msg === 'string' && msg.trim() !== '') {
+      return msg
+    }
+  }
+  if (err && typeof err === 'object' && 'statusText' in err) {
+    const st = (err as {statusText?: unknown}).statusText
+    if (typeof st === 'string' && st.trim() !== '') {
+      return st
+    }
+  }
+  return 'Request failed'
+}
+
 export const bulkAddURLMonitoringTargets = async (
   targets: URLMonitoringTargetUpsertRequest[]
 ): Promise<URLMonitoringBulkAddResponse> => {
