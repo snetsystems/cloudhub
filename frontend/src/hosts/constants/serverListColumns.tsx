@@ -139,6 +139,8 @@ export const serverListColumns = ({
                 isZeroBaseline: true,
                 areaOpacity: 0.1,
                 pointRadius: 1,
+                valueFormat: FORMAT_OPTIONS.RAW,
+                suffix: '%',
               }}
             />
           )
@@ -215,7 +217,8 @@ export const serverListColumns = ({
                 isConnectSeparatedPoints: false,
                 valueLabel: ['maximum', 'last'],
                 isZeroBaseline: true,
-                valueFormat: FORMAT_OPTIONS.KMG,
+                valueFormat: FORMAT_OPTIONS.RAW,
+                suffix: '%',
               }}
             />
           )
@@ -388,7 +391,8 @@ export const serverListColumns = ({
                   isConnectSeparatedPoints: false,
                   valueLabel: ['maximum', 'last'],
                   isZeroBaseline: true,
-                  valueFormat: FORMAT_OPTIONS.KMG,
+                  valueFormat: FORMAT_OPTIONS.RAW,
+                  suffix: '%',
                 }}
               />
               <div
@@ -450,7 +454,8 @@ export const serverListColumns = ({
                   isConnectSeparatedPoints: false,
                   valueLabel: ['maximum', 'last'],
                   isZeroBaseline: true,
-                  valueFormat: FORMAT_OPTIONS.KMG,
+                  valueFormat: FORMAT_OPTIONS.RAW,
+                  suffix: '%',
                 }}
               />
               <div
