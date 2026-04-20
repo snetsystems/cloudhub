@@ -40,11 +40,35 @@ import {
   ServerDetailsPageContext,
   type ServerDetailsPageContextValue,
 } from 'src/server_details/components/ServerDetailsCellContent'
+import {getHostByHostname, type Host} from 'src/shared/apis/host'
+
+type QueryTargetOS = 'window' | 'linux'
+
+function normalizeHostOSToTargetOS(os?: string | null): QueryTargetOS {
+  return os === 'Windows' ? 'window' : 'linux'
+}
+
+function normalizeQueryTargetOS(target?: string): QueryTargetOS {
+  const v = (target ?? '').toLowerCase()
+  if (v === 'window' || v === 'windows') return 'window'
+  return 'linux'
+}
+
+function filterQueriesByTargetOS<T>(
+  queries: T[] | undefined,
+  targetOS: QueryTargetOS
+): T[] | undefined {
+  if (!queries?.length) return queries
+  return queries.filter(
+    q => normalizeQueryTargetOS((q as any).queryTargetOS) === targetOS
+  )
+}
 
 interface HostDropdownHeaderProps {
   templates: Template[]
   dashboard?: DashboardsModels.Dashboard
   source: Source
+  hostData?: Host | null
   templateVariableLocalSelected?: (
     dashboardID: string,
     templateID: string,
@@ -60,6 +84,7 @@ function HostDropdownHeader({
   templates,
   dashboard,
   source,
+  hostData,
   templateVariableLocalSelected,
   onTemplateAvailabilityChange,
 }: HostDropdownHeaderProps) {
@@ -171,6 +196,7 @@ function HostDropdownHeader({
         source={source}
         templates={templates}
         diskTotalQuery={diskTotalQuery}
+        hostData={hostData}
       />
     </div>
   )
@@ -318,6 +344,8 @@ function ServerDetailsWrapper(props) {
   }, [])
 
   const [selectedHost, setSelectedHost] = useState<string | null>(hostFromUrl)
+  const [hostData, setHostData] = useState<Host | null>(null)
+  const [targetOS, setTargetOS] = useState<QueryTargetOS>('linux')
   const [templateAvailabilityGate, setTemplateAvailabilityGate] = useState<{
     resolved: boolean
     blocked: boolean
@@ -365,9 +393,58 @@ function ServerDetailsWrapper(props) {
   const openUsageDetail = (cell: Cell) => {
     const detailType = mapCellIdToUsageDetailType(cell?.i)
     if (!detailType) return
-    const detailQueries = (cell as any).detailQueries
+    const detailQueries = filterQueriesByTargetOS<DetailQuery>(
+      (cell as any).detailQueries,
+      targetOS
+    )
     setUsageDetailState({isOpen: true, detailType, detailQueries})
   }
+  useEffect(() => {
+    if (!selectedHost) {
+      setHostData(null)
+      setTargetOS('linux')
+      return
+    }
+
+    let cancelled = false
+    getHostByHostname(selectedHost)
+      .then(host => {
+        if (!cancelled) {
+          setHostData(host)
+          setTargetOS(normalizeHostOSToTargetOS(host?.os))
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHostData(null)
+          setTargetOS('linux')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedHost])
+
+  const transformCellByOS = useCallback(
+    (cell: Cell): Cell => {
+      const queries = filterQueriesByTargetOS<DashboardsModels.CellQuery>(
+        (cell as any).queries,
+        targetOS
+      )
+      const detailQueries = filterQueriesByTargetOS<DetailQuery>(
+        (cell as any).detailQueries,
+        targetOS
+      )
+      return {
+        ...cell,
+        ...(queries !== undefined ? {queries} : {}),
+        ...(detailQueries !== undefined ? {detailQueries} : {}),
+      }
+    },
+    [targetOS]
+  )
+
 
   const handleCloseUsageDetail = () => {
     setUsageDetailState(prev => ({...prev, isOpen: false, detailQueries: undefined}))
@@ -424,6 +501,7 @@ function ServerDetailsWrapper(props) {
             templates={templates}
             dashboard={dashboard}
             source={props.source}
+            hostData={hostData}
             templateVariableLocalSelected={templateVariableLocalSelected}
             onTemplateAvailabilityChange={handleTemplateAvailabilityChange}
           />
@@ -456,6 +534,7 @@ function ServerDetailsWrapper(props) {
           }
           return null
         }}
+        transformCell={transformCellByOS}
         getExtraActionsForCell={getExtraActionsForCell}
         onCustomCellAction={handleCustomCellAction}
       />

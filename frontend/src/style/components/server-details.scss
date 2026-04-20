@@ -302,6 +302,10 @@
   grid-column: 2 / 4;
 }
 
+.process-detail-modal__grid--bottom .process-detail-modal__block--span-3 {
+  grid-column: 1 / 4;
+}
+
 .process-detail-modal__block-title {
   margin: 0;
   height: 30px;
