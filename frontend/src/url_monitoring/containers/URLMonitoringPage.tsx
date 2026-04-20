@@ -46,6 +46,7 @@ import {
   parseUrlMonitoringExcelBuffer,
 } from 'src/url_monitoring/utils/urlMonitoringExcel'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {notifyUrlMonitoringDeleted} from 'src/shared/copy/notifications'
 
 const TimeRangeDropdownComponent = TimeRangeDropdown as any
 
@@ -90,6 +91,8 @@ export function URLMonitoringPage({
   const requestIdRef = useRef(0)
   const pollIntervalRef = useRef<number | null>(null)
   const importFileInputRef = useRef<HTMLInputElement>(null)
+  const urlMonitoringConfigRef = useRef<URLMonitoring | null>(null)
+  const hasSeenReadyUrlMonitoringConfigRef = useRef(false)
 
   const [
     urlMonitoringConfig,
@@ -98,6 +101,7 @@ export function URLMonitoringPage({
   const [urlMonitoringConfigReady, setUrlMonitoringConfigReady] = useState(
     false
   )
+  urlMonitoringConfigRef.current = urlMonitoringConfig
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -252,11 +256,14 @@ export function URLMonitoringPage({
 
   const handleDeleteRow = useCallback(
     async (row: DataTableObject) => {
-      const target = findTargetFromRow(row)
-      if (!target?.id) return
+      const targetId = String(row.id ?? '').trim()
+      if (!targetId) return
+
       try {
-        await deleteURLMonitoringTarget(target.id)
+        await deleteURLMonitoringTarget(targetId)
         await fetchConfig()
+
+        notify(notifyUrlMonitoringDeleted())
       } catch (e) {
         notify({
           type: 'error',
@@ -267,7 +274,7 @@ export function URLMonitoringPage({
         })
       }
     },
-    [findTargetFromRow, fetchConfig, notify]
+    [fetchConfig, notify]
   )
 
   const influxMetricsByUrl = useMemo(() => {
@@ -368,15 +375,13 @@ export function URLMonitoringPage({
         return
       }
 
-      const targets = urlMonitoringConfig?.targets ?? []
+      const targets = urlMonitoringConfigRef.current?.targets ?? []
       if (targets.length === 0) {
         if (isSubscribed && requestId === requestIdRef.current) {
           setTableData([])
           setIsError(false)
-          if (!silent) {
-            setIsTableLoading(false)
-            setIsRefreshing(false)
-          }
+          setIsTableLoading(false)
+          setIsRefreshing(false)
         }
         return
       }
@@ -418,12 +423,7 @@ export function URLMonitoringPage({
         }
       }
     },
-    [
-      source,
-      cloudTimeRange?.urlMonitoring,
-      urlMonitoringConfig,
-      urlMonitoringConfigReady,
-    ]
+    [source, cloudTimeRange?.urlMonitoring, urlMonitoringConfigReady]
   )
 
   const handleManualRefresh = () => {
@@ -463,9 +463,22 @@ export function URLMonitoringPage({
     cloudTimeRange?.urlMonitoring?.lower,
     cloudTimeRange?.urlMonitoring?.upper,
     manualRefreshState.value,
-    urlMonitoringConfig,
-    urlMonitoringConfigReady,
   ])
+
+  useEffect(() => {
+    if (!urlMonitoringConfigReady) {
+      return
+    }
+    let isSubscribed = true
+    if (hasSeenReadyUrlMonitoringConfigRef.current) {
+      void fetchTableData(isSubscribed, true)
+    } else {
+      hasSeenReadyUrlMonitoringConfigRef.current = true
+    }
+    return () => {
+      isSubscribed = false
+    }
+  }, [urlMonitoringConfig, urlMonitoringConfigReady])
 
   useEffect(() => {
     GlobalAutoRefresher.poll(cloudAutoRefresh.urlMonitoring)
