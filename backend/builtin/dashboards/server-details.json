@@ -30,45 +30,97 @@
       "queries": [
         {
           "query": "SELECT mean(\"used_percent\") AS \"last_used_percent\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(previous)",
-          "label": "Memory Usage"
+          "label": "Memory Usage",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT mean(\"used_percent\") AS \"last_used_percent\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(previous)",
+          "label": "Memory Usage",
+          "queryTargetOS": "windows"
         }
       ],
       "detailQueries": [
         {
           "query": "SELECT mean(\"used_percent\") AS \"used_percent\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "memory-usage"
+          "label": "memory-usage",
+          "queryTargetOS": "linux"
         },
         {
+          "query": "SELECT mean(\"used_percent\") AS \"used_percent\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "memory-usage",
+          "queryTargetOS": "windows"
+        },
+
+        {
           "query": "SELECT mean(\"free\")/1073741824 AS \"free\", mean(\"cached\")/1073741824 AS \"cached\", mean(\"buffered\")/1073741824 AS \"buffers\", mean(\"used\")/1073741824 AS \"used\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "memory-used"
+          "label": "memory-used",
+          "queryTargetOS": "linux"
+        },
+
+        {
+          "query": "SELECT mean(\"available\")/1073741824 AS \"available\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "memory-available",
+          "queryTargetOS": "linux"
         },
         {
           "query": "SELECT mean(\"available\")/1073741824 AS \"available\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "memory-available"
+          "label": "memory-available",
+          "queryTargetOS": "windows"
         },
+
         {
           "query": "SELECT mean(\"sreclaimable\")/1073741824 AS \"sreclaimable\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "memory-sreclaimable"
+          "label": "memory-sreclaimable",
+          "queryTargetOS": "linux"
         },
+
         {
           "query": "SELECT mean(\"sunreclaim\")/1073741824 AS \"sunreclaim\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "memory-sunreclaim"
+          "label": "memory-sunreclaim",
+          "queryTargetOS": "linux"
         },
         {
           "query": "SELECT mean(\"slab\")/1073741824 AS \"slab\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "memory-slab"
+          "label": "memory-slab",
+          "queryTargetOS": "linux"
+        },
+
+        {
+          "query": "SELECT mean(\"Pool_Paged_Bytes\")/1073741824 AS \"Pool_Paged_Bytes\" FROM \":db:\".\":rp:\".\"win_mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "memory-paged-pool",
+          "queryTargetOS": "windows"
+        },
+        {
+          "query": "SELECT mean(\"Pool_NonPaged_Bytes\")/1073741824 AS \"Pool_NonPaged_Bytes\" FROM \":db:\".\":rp:\".\"win_mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "memory-nonpaged-pool",
+          "queryTargetOS": "windows"
         },
         {
           "query": "SELECT (mean(\"swap_total\") - mean(\"swap_free\")) / mean(\"swap_total\") * 100 AS \"swap_used_percent\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "memory-swap-percent"
+          "label": "memory-swap-percent",
+          "queryTargetOS": "linux"
         },
+        {
+          "query": "SELECT mean(\"Percent_Usage\") AS \"swap_used_percent\" FROM \":db:\".\":rp:\".\"win_swap\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "memory-swap-percent",
+          "queryTargetOS": "windows"
+        },
+
         {
           "query": "SELECT (mean(\"swap_total\") - mean(\"swap_free\"))/1073741824 AS \"swap_used\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "memory-swap-used"
+          "label": "memory-swap-used",
+          "queryTargetOS": "linux"
         },
+
         {
           "query": "SELECT non_negative_derivative(mean(\"pgfault\"), 1s) AS \"pgfault\", non_negative_derivative(mean(\"pgmajfault\"), 1s) AS \"pgmajfault\" FROM \":db:\".\":rp:\".\"kernel_vmstat\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "memory-page-faults"
+          "label": "memory-page-faults",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT mean(\"Page_Faults_persec\") AS \"pgfault\", mean(\"Pages_persec\") AS \"pgmajfault\" FROM \":db:\".\":rp:\".\"win_mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "memory-page-faults",
+          "queryTargetOS": "windows"
         }
       ],
       "axes": {
@@ -115,19 +167,25 @@
       "isShowSummary": true
     },
     {
-      "i": "server-details-disk-io-usage",
+      "i": "server-details-disk-used-spaces",
       "x": 0,
       "y": 17,
       "w": 48,
       "h": 18,
       "minW": 16,
       "minH": 4,
-      "name": "Disk I/O",
+      "name": "Disk Used Spaces(%)",
       "type": "line",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"read_bytes\"),1s) AS \"read bytes\", non_negative_derivative(max(\"write_bytes\"),1s) AS \"write bytes\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND \"host\" = :host: GROUP BY time(:interval:) FILL(null)",
-          "label": "Disk I/O Usage"
+          "query": "SELECT max(\"used_percent\") AS \"max_used_percent\" FROM \":db:\".\":rp:\".\"disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "Disk Used Spaces(%)",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT max(\"used_percent\") AS \"max_used_percent\" FROM \":db:\".\":rp:\".\"disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "Disk Used Spaces(%)",
+          "queryTargetOS": "windows"
         }
       ],
       "detailQueries": [
@@ -326,26 +384,56 @@
       "type": "line",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"bytes_recv\"), 1s) AS \"received\", non_negative_derivative(max(\"bytes_sent\"), 1s) AS \"sent\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND \"host\" = :host: GROUP BY time(:interval:) FILL(null)",
-          "label": "Network Traffic"
+          "query": "SELECT non_negative_derivative(max(\"bytes_recv\"), 1s) + non_negative_derivative(max(\"bytes_sent\"), 1s) AS \"total_network_traffic\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND \"host\" = :host: GROUP BY time(:interval:), \"interface\" FILL(null)",
+          "label": "Network Traffic",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT (mean(\"Bytes_Received_persec\") + mean(\"Bytes_Sent_persec\")) AS \"total_network_traffic\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND \"host\" = :host: GROUP BY time(:interval:), \"instance\" FILL(null)",
+          "label": "Network Traffic",
+          "queryTargetOS": "window"
         }
       ],
       "detailQueries": [
         {
           "query": "SELECT non_negative_derivative(sum(\"bytes_recv\"), 1s)/1048576 AS \"Traffic in\", non_negative_derivative(sum(\"bytes_sent\"), 1s)/1048576 AS \"Traffic out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "traffic-in-out"
+          "label": "traffic-in-out",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT non_negative_derivative(sum(\"Bytes_Received_persec\"), 1s)/1048576 AS \"Traffic in\", non_negative_derivative(sum(\"Bytes_Sent_persec\"), 1s)/1048576 AS \"Traffic out\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "traffic-in-out",
+          "queryTargetOS": "window"
         },
         {
           "query": "SELECT non_negative_derivative(sum(\"packets_recv\"), 1s) AS \"Packet in\", non_negative_derivative(sum(\"packets_sent\"), 1s) AS \"Packet out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "packet-in-out"
+          "label": "packet-in-out",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT non_negative_derivative(sum(\"Packets_Received_persec\"), 1s) AS \"Packet in\", non_negative_derivative(sum(\"Packets_Sent_persec\"), 1s) AS \"Packet out\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "packet-in-out",
+          "queryTargetOS": "window"
         },
         {
           "query": "SELECT non_negative_derivative(sum(\"err_in\"), 1s) AS \"Error in\", non_negative_derivative(sum(\"err_out\"), 1s) AS \"Error out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "error-in-out"
+          "label": "error-in-out",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT non_negative_derivative(sum(\"Packets_Received_Errors\"), 1s) AS \"Error in\", non_negative_derivative(sum(\"Packets_Outbound_Errors\"), 1s) AS \"Error out\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "error-in-out",
+          "queryTargetOS": "window"
         },
         {
           "query": "SELECT non_negative_derivative(sum(\"drop_in\"), 1s) AS \"Dropped in\", non_negative_derivative(sum(\"drop_out\"), 1s) AS \"Dropped out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
-          "label": "dropped-in-out"
+          "label": "dropped-in-out",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT non_negative_derivative(sum(\"Packets_Received_Discarded\"), 1s) AS \"Dropped in\", non_negative_derivative(sum(\"Packets_Outbound_Discarded\"), 1s) AS \"Dropped out\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
+          "label": "dropped-in-out",
+          "queryTargetOS": "window"
         }
       ],
       "axes": {
