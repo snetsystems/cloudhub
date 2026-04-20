@@ -219,6 +219,7 @@ message Query {
 	string Source             = 8;  // Source is the optional URI to the data source
 	repeated TimeShift Shifts = 9;  // TimeShift represents a shift to apply to an influxql query's time range
 	string Type               = 10; // Type is the language used by the query (influxql or flux)
+	string QueryTargetOS      = 11; // QueryTargetOS distinguishes target OS for this query (windows or linux)
 }
 
 message TimeShift {

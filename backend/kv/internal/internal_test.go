@@ -175,9 +175,10 @@ func Test_MarshalDashboard(t *testing.T) {
 						Range: &cloudhub.Range{
 							Upper: int64(100),
 						},
-						Source: "/cloudhub/v1/sources/1",
-						Shifts: []cloudhub.TimeShift{},
-						Type:   "influxql",
+						Source:        "/cloudhub/v1/sources/1",
+						Shifts:        []cloudhub.TimeShift{},
+						Type:          "influxql",
+						QueryTargetOS: "linux",
 					},
 				},
 				Axes: map[string]cloudhub.Axis{
@@ -1240,11 +1241,11 @@ func TestMarshalDashboardWithDetailQueries(t *testing.T) {
 				Name: "CPU",
 				Type: "line",
 				Queries: []cloudhub.DashboardQuery{
-					{Command: "SELECT mean(\"usage_user\") FROM cpu", Label: "user", Type: "influxql", Shifts: []cloudhub.TimeShift{}},
+					{Command: "SELECT mean(\"usage_user\") FROM cpu", Label: "user", Type: "influxql", Shifts: []cloudhub.TimeShift{}, QueryTargetOS: "linux"},
 				},
 				DetailQueries: []cloudhub.DashboardQuery{
-					{Command: "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\" FROM cpu", Label: "cpu-usage", Type: "influxql", Shifts: []cloudhub.TimeShift{}},
-					{Command: "SELECT mean(\"usage_idle\") AS \"idle\" FROM cpu", Label: "cpu-idle", Type: "influxql", Shifts: []cloudhub.TimeShift{}},
+					{Command: "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\" FROM cpu", Label: "cpu-usage", Type: "influxql", Shifts: []cloudhub.TimeShift{}, QueryTargetOS: "windows"},
+					{Command: "SELECT mean(\"usage_idle\") AS \"idle\" FROM cpu", Label: "cpu-idle", Type: "influxql", Shifts: []cloudhub.TimeShift{}, QueryTargetOS: "linux"},
 				},
 				Axes:         map[string]cloudhub.Axis{},
 				CellColors:   []cloudhub.CellColor{},
@@ -1275,6 +1276,75 @@ func TestMarshalDashboardWithDetailQueries(t *testing.T) {
 
 	if diff := gocmp.Diff(d, got); diff != "" {
 		t.Errorf("DetailQueries roundtrip mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestMarshalDashboard_PreservesQueryTargetOS(t *testing.T) {
+	d := cloudhub.Dashboard{
+		ID:   99,
+		Name: "query-target-os",
+		Cells: []cloudhub.DashboardCell{
+			{
+				ID:   "cell-os",
+				Name: "OS Query",
+				Type: "line",
+				Queries: []cloudhub.DashboardQuery{
+					{
+						Command:       "SELECT mean(\"usage_user\") FROM cpu",
+						Label:         "user",
+						Type:          "influxql",
+						QueryTargetOS: "linux",
+						Shifts:        []cloudhub.TimeShift{},
+					},
+				},
+				DetailQueries: []cloudhub.DashboardQuery{
+					{
+						Command:       "SELECT mean(\"usage_system\") FROM cpu",
+						Label:         "system",
+						Type:          "influxql",
+						QueryTargetOS: "windows",
+						Shifts:        []cloudhub.TimeShift{},
+					},
+				},
+				Axes:                  map[string]cloudhub.Axis{},
+				CellColors:            []cloudhub.CellColor{},
+				FieldOptions:          []cloudhub.RenamableField{},
+				DecimalPlaces:         cloudhub.DecimalPlaces{IsEnforced: true, Digits: 2},
+				GraphOptions:          cloudhub.GraphOptions{FillArea: true, ShowLine: true},
+				TableGaugeChartOptions: cloudhub.TableGaugeChartOptions{
+					ColumnSettings: []cloudhub.ColumnSetting{},
+					SortBy:         "name",
+					SortByDirection: "asc",
+				},
+			},
+		},
+		Templates: []cloudhub.Template{},
+	}
+
+	buf, err := internal.MarshalDashboard(d)
+	if err != nil {
+		t.Fatalf("MarshalDashboard error: %v", err)
+	}
+
+	var got cloudhub.Dashboard
+	if err := internal.UnmarshalDashboard(buf, &got); err != nil {
+		t.Fatalf("UnmarshalDashboard error: %v", err)
+	}
+
+	if len(got.Cells) != 1 {
+		t.Fatalf("expected 1 cell, got %d", len(got.Cells))
+	}
+	if len(got.Cells[0].Queries) != 1 {
+		t.Fatalf("expected 1 query, got %d", len(got.Cells[0].Queries))
+	}
+	if got.Cells[0].Queries[0].QueryTargetOS != "linux" {
+		t.Fatalf("expected Queries[0].QueryTargetOS=linux, got %q", got.Cells[0].Queries[0].QueryTargetOS)
+	}
+	if len(got.Cells[0].DetailQueries) != 1 {
+		t.Fatalf("expected 1 detail query, got %d", len(got.Cells[0].DetailQueries))
+	}
+	if got.Cells[0].DetailQueries[0].QueryTargetOS != "windows" {
+		t.Fatalf("expected DetailQueries[0].QueryTargetOS=windows, got %q", got.Cells[0].DetailQueries[0].QueryTargetOS)
 	}
 }
 

@@ -332,6 +332,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				Range:   r,
 				Source:  q.Source,
 				Type:    q.Type,
+				QueryTargetOS: q.QueryTargetOS,
 			}
 
 			shifts := make([]*TimeShift, len(q.Shifts))
@@ -363,6 +364,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				Range:   r,
 				Source:  q.Source,
 				Type:    q.Type,
+				QueryTargetOS: q.QueryTargetOS,
 			}
 			shifts := make([]*TimeShift, len(q.Shifts))
 			for k := range q.Shifts {
@@ -598,6 +600,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 				Label:   q.Label,
 				Source:  q.Source,
 				Type:    queryType,
+				QueryTargetOS: q.QueryTargetOS,
 			}
 
 			if q.Range.Upper != q.Range.Lower {
@@ -635,6 +638,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 				Label:   q.Label,
 				Source:  q.Source,
 				Type:    queryType,
+				QueryTargetOS: q.QueryTargetOS,
 			}
 			// Defensive nil check — MarshalDashboard always sets Range but guard against external data
 			if q.Range != nil && q.Range.Upper != q.Range.Lower {
