@@ -92,7 +92,6 @@ const WINDOWS_BLOCK_CONFIG: Record<string, MemoryBlockConfig> = {
   'memory-paged-pool': {title: 'Paged Pool(Byte)', bounds: ['0', '']},
   'memory-nonpaged-pool': {title: 'Nonpaged Pool(Byte)', bounds: ['0', '']},
   'memory-swap-percent': {title: 'Memory Swap Used(%)', isPercent: true, bounds: ['0', '110']},
-  'memory-swap-used': {title: 'Memory Swap Used(Byte)', bounds: ['0', '']},
   'memory-page-faults': {title: 'Memory Page Faults', bounds: ['0', '']},
 }
 
@@ -108,8 +107,8 @@ const GRID_LAYOUT = {
 
 const WINDOWS_GRID_LAYOUT = {
   top: ['memory-usage', 'memory-available', 'memory-paged-pool'] as const,
-  middle: ['memory-nonpaged-pool', 'memory-swap-percent', 'memory-swap-used'] as const,
-  bottom: ['memory-page-faults'] as const,
+  middle: ['memory-nonpaged-pool', 'memory-swap-percent', 'memory-page-faults'] as const,
+  bottom: [] as const,
 }
 
 const WINDOWS_BLOCK_TO_QUERY_LABEL: Record<string, string> = {
@@ -246,7 +245,7 @@ export function MemoryDetailContent({
       const colors = LINE_COLOR_PALETTES_SEQUENCE[paletteIndex]
       const queryText = detailQueries.find(q => q.label === queryLabel)?.query
       const blockClassName =
-        isWindowsLayout && blockId === 'memory-page-faults'
+        !isWindowsLayout && blockId === 'memory-page-faults'
           ? 'process-detail-modal__block--span-3'
           : config.blockClassName
 
@@ -278,12 +277,14 @@ export function MemoryDetailContent({
       <div className="process-detail-modal__grid process-detail-modal__grid--middle">
         {renderGridSection(gridLayout.middle, gridLayout.top.length)}
       </div>
-      <div className="process-detail-modal__grid process-detail-modal__grid--bottom">
-        {renderGridSection(
-          gridLayout.bottom,
-          gridLayout.top.length + gridLayout.middle.length
-        )}
-      </div>
+      {gridLayout.bottom.length > 0 && (
+        <div className="process-detail-modal__grid process-detail-modal__grid--bottom">
+          {renderGridSection(
+            gridLayout.bottom,
+            gridLayout.top.length + gridLayout.middle.length
+          )}
+        </div>
+      )}
     </div>
   )
 }
