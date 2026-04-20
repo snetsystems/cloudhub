@@ -244,10 +244,7 @@ export function MemoryDetailContent({
         (startIndex + i) % LINE_COLOR_PALETTES_SEQUENCE.length
       const colors = LINE_COLOR_PALETTES_SEQUENCE[paletteIndex]
       const queryText = detailQueries.find(q => q.label === queryLabel)?.query
-      const blockClassName =
-        !isWindowsLayout && blockId === 'memory-page-faults'
-          ? 'process-detail-modal__block--span-3'
-          : config.blockClassName
+      const blockClassName = config.blockClassName
 
       return (
         <UsageDetailBlock
