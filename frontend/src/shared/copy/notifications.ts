@@ -148,6 +148,14 @@ export const notifyUnableToGetApps = (): Notification => ({
   message: 'Unable to get Apps for Hosts.',
 })
 
+//  URL Monitoring Notifications
+//  ----------------------------------------------------------------------------
+export const notifyUrlMonitoringDeleted = (): Notification => ({
+  ...defaultSuccessNotification,
+  duration: 8000,
+  message: 'URL deleted successfully.',
+})
+
 //  InfluxDB Sources Notifications
 //  ----------------------------------------------------------------------------
 export const notifySourceConnectionSucceeded = (
