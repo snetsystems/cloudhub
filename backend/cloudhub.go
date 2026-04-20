@@ -244,6 +244,7 @@ type DashboardQuery struct {
 	Source      string      `json:"source"`                // Source is the optional URI to the data source for this queryConfig
 	Shifts      []TimeShift `json:"-"`                     // Shifts represents shifts to apply to an influxql query's time range.  Clients expect the shift to be in the generated QueryConfig
 	Type        string      `json:"type"`                  // Type represents the language the query is in (flux or influxql)
+	QueryTargetOS string    `json:"queryTargetOS,omitempty"` // QueryTargetOS distinguishes target OS for this query (windows or linux)
 }
 
 // TemplateQuery is used to retrieve choices for template replacement
