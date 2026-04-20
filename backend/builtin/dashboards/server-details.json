@@ -2,7 +2,7 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "organization": "",
   "cells": [
     {
@@ -279,7 +279,8 @@
       "queries": [
         {
           "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
-          "label": "CPU Usage"
+          "label": "CPU Usage",
+          "queryTargetOS": "linux"
         }
       ],
       "detailQueries": [
@@ -391,7 +392,7 @@
         {
           "query": "SELECT (mean(\"Bytes_Received_persec\") + mean(\"Bytes_Sent_persec\")) AS \"total_network_traffic\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND \"host\" = :host: GROUP BY time(:interval:), \"instance\" FILL(null)",
           "label": "Network Traffic",
-          "queryTargetOS": "window"
+          "queryTargetOS": "windows"
         }
       ],
       "detailQueries": [
@@ -403,7 +404,7 @@
         {
           "query": "SELECT non_negative_derivative(sum(\"Bytes_Received_persec\"), 1s)/1048576 AS \"Traffic in\", non_negative_derivative(sum(\"Bytes_Sent_persec\"), 1s)/1048576 AS \"Traffic out\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
           "label": "traffic-in-out",
-          "queryTargetOS": "window"
+          "queryTargetOS": "windows"
         },
         {
           "query": "SELECT non_negative_derivative(sum(\"packets_recv\"), 1s) AS \"Packet in\", non_negative_derivative(sum(\"packets_sent\"), 1s) AS \"Packet out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
@@ -413,7 +414,7 @@
         {
           "query": "SELECT non_negative_derivative(sum(\"Packets_Received_persec\"), 1s) AS \"Packet in\", non_negative_derivative(sum(\"Packets_Sent_persec\"), 1s) AS \"Packet out\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
           "label": "packet-in-out",
-          "queryTargetOS": "window"
+          "queryTargetOS": "windows"
         },
         {
           "query": "SELECT non_negative_derivative(sum(\"err_in\"), 1s) AS \"Error in\", non_negative_derivative(sum(\"err_out\"), 1s) AS \"Error out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
@@ -423,7 +424,7 @@
         {
           "query": "SELECT non_negative_derivative(sum(\"Packets_Received_Errors\"), 1s) AS \"Error in\", non_negative_derivative(sum(\"Packets_Outbound_Errors\"), 1s) AS \"Error out\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
           "label": "error-in-out",
-          "queryTargetOS": "window"
+          "queryTargetOS": "windows"
         },
         {
           "query": "SELECT non_negative_derivative(sum(\"drop_in\"), 1s) AS \"Dropped in\", non_negative_derivative(sum(\"drop_out\"), 1s) AS \"Dropped out\" FROM \":db:\".\":rp:\".\"net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
@@ -433,7 +434,7 @@
         {
           "query": "SELECT non_negative_derivative(sum(\"Packets_Received_Discarded\"), 1s) AS \"Dropped in\", non_negative_derivative(sum(\"Packets_Outbound_Discarded\"), 1s) AS \"Dropped out\" FROM \":db:\".\":rp:\".\"win_net\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=':host:' GROUP BY time(:interval:) FILL(null)",
           "label": "dropped-in-out",
-          "queryTargetOS": "window"
+          "queryTargetOS": "windows"
         }
       ],
       "axes": {
