@@ -193,6 +193,10 @@ export function CpuDetailContent({
   const source = serverContext.source
   const host = serverContext.selectedHost
   const detailQueries = serverContext.detailQueries ?? []
+  const hasCpuLoadQuery = detailQueries.some(q => q.label === 'cpu-load')
+  const bottomBlockIds = hasCpuLoadQuery
+    ? GRID_LAYOUT.bottom
+    : (['cpu-soft-irq'] as const)
 
 
   const renderGridSection = (blockIds: readonly string[], startIndex: number) =>
@@ -203,12 +207,16 @@ export function CpuDetailContent({
         (startIndex + i) % LINE_COLOR_PALETTES_SEQUENCE.length
       const colors = LINE_COLOR_PALETTES_SEQUENCE[paletteIndex]
       const queryText = detailQueries.find(q => q.label === blockId)?.query
+      const blockClassName =
+        !hasCpuLoadQuery && blockId === 'cpu-soft-irq'
+          ? 'process-detail-modal__block--span-3'
+          : config.blockClassName
 
       return (
         <UsageDetailBlock
           key={blockId}
           title={config.title}
-          blockClassName={config.blockClassName}
+          blockClassName={blockClassName}
         >
           <DetailChartBlock
             blockId={blockId}
@@ -234,7 +242,7 @@ export function CpuDetailContent({
       </div>
       <div className="process-detail-modal__grid process-detail-modal__grid--bottom">
         {renderGridSection(
-          GRID_LAYOUT.bottom,
+          bottomBlockIds,
           GRID_LAYOUT.top.length + GRID_LAYOUT.middle.length
         )}
       </div>

@@ -106,6 +106,8 @@ export interface DashboardPageWithImportConfig {
     cell: Cell,
     context: RenderCellContext
   ) => React.ReactNode | null
+  /** Optional per-cell transformer before rendering/layout. */
+  transformCell?: (cell: Cell) => Cell
   /** When provided, renders next to the page title in the left header (e.g. host list). */
   renderHeaderLeft?: (context: HeaderLeftContext) => React.ReactNode
   /** When provided, replaces the default right header (SourceIndicator, AutoRefresh, TimeRange, TimeZone, Import). */
@@ -188,6 +190,7 @@ function DashboardPageWithImport({
   pageName,
   getTempVars,
   renderCell,
+  transformCell,
   renderHeaderLeft,
   renderHeaderRight,
   timeRangeKey = 'hostDetails',
@@ -293,6 +296,13 @@ function DashboardPageWithImport({
   const visibleCells = React.useMemo(() => cells.filter(c => !c.hidden), [
     cells,
   ])
+  const effectiveVisibleCells = React.useMemo(
+    () =>
+      transformCell
+        ? visibleCells.map(cell => transformCell(cell))
+        : visibleCells,
+    [visibleCells, transformCell]
+  )
 
   const mergedTemplates = React.useMemo(
     () =>
@@ -718,10 +728,10 @@ function DashboardPageWithImport({
       </Page.Header>
       <Page.Contents fullWidth={true} inPresentationMode={inPresentationMode}>
         <div className="dashboard container-fluid full-width">
-          {visibleCells.length ? (
+          {effectiveVisibleCells.length ? (
             templatesReady ? (
               <LayoutRenderer
-                cells={visibleCells}
+                cells={effectiveVisibleCells}
                 source={source}
                 sources={sources}
                 isEditable={true}

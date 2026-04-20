@@ -63,9 +63,17 @@ const MEMORY_BASE_AXES: Axes = {
   y: MEMORY_Y_AXIS,
 }
 
-const BLOCK_CONFIG: Record<
+type MemoryBlockConfig = {
+  title: string
+  blockClassName?: string
+  isPercent?: boolean
+  bounds?: [string, string]
+  yLabel?: string
+}
+
+const LINUX_BLOCK_CONFIG: Record<
   string,
-  {title: string; blockClassName?: string; isPercent?: boolean; bounds?: [string, string]; yLabel?: string}
+  MemoryBlockConfig
 > = {
   'memory-usage': {title: 'Memory Usage (%)', isPercent: true, bounds: ['0', '110']},
   'memory-used': {title: 'Memory Used (GiB)', bounds: ['0', ''], yLabel: 'GiB'},
@@ -78,6 +86,16 @@ const BLOCK_CONFIG: Record<
   'memory-page-faults': {title: 'Memory Page Faults (/s)', bounds: ['0', '']},
 }
 
+const WINDOWS_BLOCK_CONFIG: Record<string, MemoryBlockConfig> = {
+  'memory-usage': {title: 'Memory Usage(%)', isPercent: true, bounds: ['0', '110']},
+  'memory-available': {title: 'Memory Available', bounds: ['0', ''], yLabel: 'GiB'},
+  'memory-paged-pool': {title: 'Paged Pool(Byte)', bounds: ['0', '']},
+  'memory-nonpaged-pool': {title: 'Nonpaged Pool(Byte)', bounds: ['0', '']},
+  'memory-swap-percent': {title: 'Memory Swap Used(%)', isPercent: true, bounds: ['0', '110']},
+  'memory-swap-used': {title: 'Memory Swap Used(Byte)', bounds: ['0', '']},
+  'memory-page-faults': {title: 'Memory Page Faults', bounds: ['0', '']},
+}
+
 const GRID_LAYOUT = {
   top: ['memory-usage', 'memory-used', 'memory-available'] as const,
   middle: ['memory-sreclaimable', 'memory-sunreclaim', 'memory-slab'] as const,
@@ -88,8 +106,19 @@ const GRID_LAYOUT = {
   ] as const,
 }
 
+const WINDOWS_GRID_LAYOUT = {
+  top: ['memory-usage', 'memory-available', 'memory-paged-pool'] as const,
+  middle: ['memory-nonpaged-pool', 'memory-swap-percent', 'memory-swap-used'] as const,
+  bottom: ['memory-page-faults'] as const,
+}
+
+const WINDOWS_BLOCK_TO_QUERY_LABEL: Record<string, string> = {
+  'memory-paged-pool': 'memory-sreclaimable',
+  'memory-nonpaged-pool': 'memory-sunreclaim',
+}
+
 function resolveAxesForBlock(blockId: string): Axes {
-  const config = BLOCK_CONFIG[blockId]
+  const config = LINUX_BLOCK_CONFIG[blockId] ?? WINDOWS_BLOCK_CONFIG[blockId]
   const bounds = config?.bounds
   if (!bounds) return MEMORY_BASE_AXES
   const yOverrides: Partial<typeof MEMORY_Y_AXIS> = {bounds}
@@ -197,22 +226,35 @@ export function MemoryDetailContent({
   const source = serverContext.source
   const host = serverContext.selectedHost
   const detailQueries = serverContext.detailQueries ?? []
+  const detailQueryLabels = new Set(detailQueries.map(q => q.label))
+  const isWindowsLayout =
+    !detailQueryLabels.has('memory-used') &&
+    !detailQueryLabels.has('memory-slab') &&
+    detailQueryLabels.has('memory-page-faults')
+  const gridLayout = isWindowsLayout ? WINDOWS_GRID_LAYOUT : GRID_LAYOUT
+  const blockConfig = isWindowsLayout ? WINDOWS_BLOCK_CONFIG : LINUX_BLOCK_CONFIG
 
 
   const renderGridSection = (blockIds: readonly string[], startIndex: number) =>
     blockIds.map((blockId, i) => {
-      const config = BLOCK_CONFIG[blockId]
+      const config = blockConfig[blockId]
       if (!config) return null
+      const queryLabel = WINDOWS_BLOCK_TO_QUERY_LABEL[blockId] ?? blockId
+      if (!detailQueryLabels.has(queryLabel)) return null
       const paletteIndex =
         (startIndex + i) % LINE_COLOR_PALETTES_SEQUENCE.length
       const colors = LINE_COLOR_PALETTES_SEQUENCE[paletteIndex]
-      const queryText = detailQueries.find(q => q.label === blockId)?.query
+      const queryText = detailQueries.find(q => q.label === queryLabel)?.query
+      const blockClassName =
+        isWindowsLayout && blockId === 'memory-page-faults'
+          ? 'process-detail-modal__block--span-3'
+          : config.blockClassName
 
       return (
         <UsageDetailBlock
           key={blockId}
           title={config.title}
-          blockClassName={config.blockClassName}
+          blockClassName={blockClassName}
         >
           <DetailChartBlock
             blockId={blockId}
@@ -231,15 +273,15 @@ export function MemoryDetailContent({
   return (
     <div className="process-detail-modal__body">
       <div className="process-detail-modal__grid process-detail-modal__grid--top">
-        {renderGridSection(GRID_LAYOUT.top, 0)}
+        {renderGridSection(gridLayout.top, 0)}
       </div>
       <div className="process-detail-modal__grid process-detail-modal__grid--middle">
-        {renderGridSection(GRID_LAYOUT.middle, GRID_LAYOUT.top.length)}
+        {renderGridSection(gridLayout.middle, gridLayout.top.length)}
       </div>
       <div className="process-detail-modal__grid process-detail-modal__grid--bottom">
         {renderGridSection(
-          GRID_LAYOUT.bottom,
-          GRID_LAYOUT.top.length + GRID_LAYOUT.middle.length
+          gridLayout.bottom,
+          gridLayout.top.length + gridLayout.middle.length
         )}
       </div>
     </div>

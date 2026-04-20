@@ -15,7 +15,7 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
-import {getHostByHostname, type Host} from 'src/shared/apis/host'
+import type {Host} from 'src/shared/apis/host'
 
 // --- Utilities ---
 
@@ -226,6 +226,7 @@ export interface ServerSummaryInfoProps {
   source: Source | null
   templates: Template[]
   diskTotalQuery?: string
+  hostData?: Host | null
 }
 
 export function ServerSummaryInfo({
@@ -233,8 +234,8 @@ export function ServerSummaryInfo({
   source,
   templates,
   diskTotalQuery,
+  hostData,
 }: ServerSummaryInfoProps) {
-  const [hostData, setHostData] = useState<Host | null>(null)
   const [diskTotal, setDiskTotal] = useState<string | undefined>(undefined)
 
   useEffect(() => {
@@ -273,29 +274,6 @@ export function ServerSummaryInfo({
       isCancelled = true
     }
   }, [selectedHost, source, templates, diskTotalQuery])
-
-  useEffect(() => {
-    if (!selectedHost) {
-      setHostData(null)
-      return
-    }
-
-    let isCancelled = false
-    getHostByHostname(selectedHost)
-      .then(res => {
-        if (!isCancelled) {
-          setHostData(res)
-        }
-      })
-      .catch(err => {
-        console.error('Failed to load host details', err)
-        if (!isCancelled) setHostData(null)
-      })
-
-    return () => {
-      isCancelled = true
-    }
-  }, [selectedHost])
 
   const Item = ({
     label,
