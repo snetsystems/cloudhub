@@ -611,17 +611,30 @@ FROM (
 GROUP BY "host"`,
   },
 
+  // {
+  //   id: 'server-list-disk-io',
+  //   text: `SELECT "name" AS "Device", max("io_time") AS "Disk I/O %"
+  // FROM (
+  //   SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
+  //   FROM ":db:".":rp:"."diskio"
+  //   WHERE time > now() - 3m
+  //   GROUP BY time(:interval:), "name"
+  //   LIMIT 1
+  // )
+  // GROUP BY "host"`,
+  // },
+  // TODO: 데이터 수집 처리 후 아래 diskio_ext 쿼리로 교체 (mount_path 활용)
   {
     id: 'server-list-disk-io',
-    text: `SELECT "name" AS "Device", max("io_time") AS "Disk I/O %"
-FROM (
-  SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
-  FROM ":db:".":rp:"."diskio"
-  WHERE time > now() - 3m
-  GROUP BY time(:interval:), "name"
-  LIMIT 1
-)
-GROUP BY "host"`,
+    text: `SELECT "mount_path" AS "Device", max("io_time") AS "Disk I/O %"
+  FROM (
+    SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
+    FROM ":db:".":rp:"."diskio_ext"
+    WHERE time > now() - 3m AND "mount_path" != ''
+    GROUP BY time(:interval:), "host", "mount_path"
+    LIMIT 1
+  )
+  GROUP BY "host"`,
   },
 
   // {
@@ -678,18 +691,32 @@ FROM (
 GROUP BY "host", time(:interval:)
 FILL(null)`,
   },
+  //   {
+  //     id: 'server-list-line-disk-io',
+  //     text: `SELECT max("Disk I/O %") AS "Disk I/O %"
+  // FROM (
+  //   SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "Disk I/O %"
+  //   FROM ":db:".":rp:"."diskio"
+  //   WHERE time > :dashboardTime: AND time < :upperDashboardTime:
+  //   GROUP BY "host", "name", time(:interval:)
+  //   FILL(null)
+  // )
+  // GROUP BY "host", time(:interval:)
+  // FILL(null)`,
+  //   },
+  // TODO: 데이터 수집 처리 후 아래 diskio_ext 쿼리로 교체 (mount_path 활용)
   {
     id: 'server-list-line-disk-io',
     text: `SELECT max("Disk I/O %") AS "Disk I/O %"
-FROM (
-  SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "Disk I/O %"
-  FROM ":db:".":rp:"."diskio"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime:
-  GROUP BY "host", "name", time(:interval:)
-  FILL(null)
-)
-GROUP BY "host", time(:interval:)
-FILL(null)`,
+  FROM (
+    SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "Disk I/O %"
+    FROM ":db:".":rp:"."diskio_ext"
+    WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "mount_path" != ''
+    GROUP BY "host", "mount_path", time(:interval:)
+    FILL(null)
+  )
+  GROUP BY "host", time(:interval:)
+  FILL(null)`,
   },
   {
     id: 'server-list-line-disk-io-win',
@@ -765,17 +792,30 @@ FROM (
 )
 GROUP BY "host"`,
   },
+  // {
+  //   id: 'server-list-line-disk-io-meta',
+  //   text: `SELECT "name" AS "Device", max("io_time") AS "__ignore_disk_io__"
+  // FROM (
+  //   SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
+  //   FROM ":db:".":rp:"."diskio"
+  //   WHERE time > now() - 3m
+  //   GROUP BY time(:interval:), "host", "name"
+  //   LIMIT 1
+  // )
+  // GROUP BY "host"`,
+  // },
+  // TODO: 데이터 수집 처리 후 아래 diskio_ext 쿼리로 교체 (mount_path 활용)
   {
     id: 'server-list-line-disk-io-meta',
-    text: `SELECT "name" AS "Device", max("io_time") AS "__ignore_disk_io__"
-FROM (
-  SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
-  FROM ":db:".":rp:"."diskio"
-  WHERE time > now() - 3m
-  GROUP BY time(:interval:), "host", "name"
-  LIMIT 1
-)
-GROUP BY "host"`,
+    text: `SELECT "mount_path" AS "Device", max("io_time") AS "__ignore_disk_io__"
+  FROM (
+    SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
+    FROM ":db:".":rp:"."diskio_ext"
+    WHERE time > now() - 3m AND "mount_path" != ''
+    GROUP BY time(:interval:), "host", "mount_path"
+    LIMIT 1
+  )
+  GROUP BY "host"`,
   },
   {
     id: 'server-list-line-disk-io-win-meta',

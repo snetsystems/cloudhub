@@ -128,6 +128,22 @@ export function NewHostsPage({
 
   const [isAlertsEnabled, setIsAlertsEnabled] = useState(true)
 
+  const [displayedChartMode, setDisplayedChartMode] = useState<
+    'gauge' | 'line'
+  >('gauge')
+
+  const [pendingChartMode, setPendingChartMode] = useState<'gauge' | 'line'>(
+    'gauge'
+  )
+
+  const [isModeSwitching, setIsModeSwitching] = useState(false)
+
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const [isError, setIsError] = useState(false)
+
+  const requestIdRef = useRef(0)
+
   const apiHostsResultRef = useRef<Host[] | {error: string} | null>(null)
 
   useEffect(() => {
@@ -167,22 +183,6 @@ export function NewHostsPage({
     }
     checkKapacitorScripts()
   }, [source])
-
-  const [displayedChartMode, setDisplayedChartMode] = useState<
-    'gauge' | 'line'
-  >('gauge')
-
-  const [pendingChartMode, setPendingChartMode] = useState<'gauge' | 'line'>(
-    'gauge'
-  )
-
-  const [isModeSwitching, setIsModeSwitching] = useState(false)
-
-  const [isRefreshing, setIsRefreshing] = useState(false)
-
-  const [isError, setIsError] = useState(false)
-
-  const requestIdRef = useRef(0)
 
   let intervalID
 
