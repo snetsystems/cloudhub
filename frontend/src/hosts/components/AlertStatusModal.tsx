@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState, useEffect} from 'react'
 import {useSelector} from 'react-redux'
 import {useTranslation} from 'react-i18next'
 import {
@@ -25,6 +25,21 @@ const AlertStatusModal = ({
   alertStatus,
   onClose,
 }: Props): JSX.Element => {
+  const [expandedIndices, setExpandedIndices] = useState<Record<number, boolean>>({})
+
+  useEffect(() => {
+    if (!isVisible) {
+      setExpandedIndices({})
+    }
+  }, [isVisible])
+
+  const toggleExpand = (index: number) => {
+    setExpandedIndices(prev => ({
+      ...prev,
+      [index]: !prev[index],
+    }))
+  }
+
   const timeZone = useSelector(
     (state: {app?: {persisted?: {timeZone?: TimeZones}}}) =>
       state.app?.persisted?.timeZone ?? TimeZones.Local
@@ -52,45 +67,73 @@ const AlertStatusModal = ({
                   <FancyScrollbar autoHeight={true} maxHeight={400}>
                     <div className="alert-status-modal--events-container">
                       <strong>Active Events ({history.length}):</strong>
-                      {history.map((hist, i) => (
-                        <div key={i} className="alert-status-modal--event-item">
-                          <div className="alert-status-modal--event-title-row">
-                            <span className="alert-status-modal--event-title">
-                              <span
-                                className={`icon ${
-                                  hist.level === 'warn'
-                                    ? 'warning'
-                                    : hist.level === 'danger'
-                                    ? 'cancel'
-                                    : 'circle-thick'
-                                }`}
-                              />
-                              [{hist.level.toUpperCase()}] {hist.alertName}
-                            </span>
-                            <span className="alert-status-modal--event-time">
-                              {new Date(hist.time).toLocaleString(
-                                i18n.language === 'ko' ? 'ko-KR' : 'en-US',
-                                {
-                                  timeZone:
-                                    timeZone === TimeZones.UTC
-                                      ? 'UTC'
-                                      : undefined,
-                                }
-                              )}
-                            </span>
+                      {history.map((hist, i) => {
+                        const isExpanded = !!expandedIndices[i]
+                        return (
+                          <div key={i} className="alert-status-modal--event-item">
+                            <div 
+                              className="alert-status-modal--event-title-row"
+                              onClick={() => toggleExpand(i)}
+                              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                            >
+                              <span className="alert-status-modal--event-title">
+                                <span
+                                  className={`icon ${
+                                    hist.level === 'warn'
+                                      ? 'warning'
+                                      : hist.level === 'danger'
+                                      ? 'cancel'
+                                      : 'circle-thick'
+                                  }`}
+                                />
+                                [{hist.level.toUpperCase()}] {hist.alertName}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="alert-status-modal--event-time">
+                                  {new Date(hist.time).toLocaleString(
+                                    i18n.language === 'ko' ? 'ko-KR' : 'en-US',
+                                    {
+                                      timeZone:
+                                        timeZone === TimeZones.UTC
+                                          ? 'UTC'
+                                          : undefined,
+                                    }
+                                  )}
+                                </span>
+                                <span className={`icon caret-${isExpanded ? 'up' : 'down'}`} />
+                              </div>
+                            </div>
+                            {hist.message && (
+                              <div className="alert-status-modal--event-message">
+                                <strong>Message: </strong> {hist.message}
+                              </div>
+                            )}
+                            {typeof hist.value !== 'undefined' && (
+                              <div className="alert-status-modal--event-value">
+                                <strong>Value: </strong> {hist.value}
+                              </div>
+                            )}
+
+                            {isExpanded && (
+                              <div 
+                                className="alert-status-modal--event-chart-container"
+                                style={{
+                                  marginTop: '12px',
+                                  height: '220px',
+                                  backgroundColor: 'var(--gray-2)',
+                                  border: '1px dashed var(--gray-4)',
+                                  borderRadius: '4px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                              >
+                                <p style={{ color: 'var(--gray-5)', margin: 0 }}>차트가 렌더링 될 영역입니다.</p>
+                              </div>
+                            )}
                           </div>
-                          {hist.message && (
-                            <div className="alert-status-modal--event-message">
-                              <strong>Message: </strong> {hist.message}
-                            </div>
-                          )}
-                          {typeof hist.value !== 'undefined' && (
-                            <div className="alert-status-modal--event-value">
-                              <strong>Value: </strong> {hist.value}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </FancyScrollbar>
                 ) : (
