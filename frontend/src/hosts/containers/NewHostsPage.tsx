@@ -581,6 +581,7 @@ export function NewHostsPage({
         </div>
       </Page.Contents>
       <AlertStatusModal
+        source={source}
         isVisible={isAlertModalOpen}
         host={selectedAlertHost ?? ''}
         alertStatus={

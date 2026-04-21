@@ -10,10 +10,12 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
 import {HostAlertStatus} from 'src/hosts/types/alertStatus'
-import {TimeZones} from 'src/types'
+import {Source, TimeZones} from 'src/types'
+import AlertStatusTable from 'src/hosts/components/AlertStatusTable'
 
 interface Props {
   isVisible: boolean
+  source: Source
   host: string
   alertStatus: HostAlertStatus | null
   onClose: () => void
@@ -21,11 +23,14 @@ interface Props {
 
 const AlertStatusModal = ({
   isVisible,
+  source,
   host,
   alertStatus,
   onClose,
 }: Props): JSX.Element => {
-  const [expandedIndices, setExpandedIndices] = useState<Record<number, boolean>>({})
+  const [expandedIndices, setExpandedIndices] = useState<
+    Record<number, boolean>
+  >({})
 
   useEffect(() => {
     if (!isVisible) {
@@ -51,7 +56,7 @@ const AlertStatusModal = ({
 
   return (
     <OverlayTechnology visible={isVisible}>
-      <OverlayContainer maxWidth={800}>
+      <OverlayContainer maxWidth={1200}>
         <OverlayHeading title={`Alert Details: ${host}`} onDismiss={onClose} />
         <OverlayBody>
           <div className="alert-status-modal">
@@ -70,11 +75,13 @@ const AlertStatusModal = ({
                       {history.map((hist, i) => {
                         const isExpanded = !!expandedIndices[i]
                         return (
-                          <div key={i} className="alert-status-modal--event-item">
-                            <div 
+                          <div
+                            key={i}
+                            className="alert-status-modal--event-item"
+                          >
+                            <div
                               className="alert-status-modal--event-title-row"
                               onClick={() => toggleExpand(i)}
-                              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                             >
                               <span className="alert-status-modal--event-title">
                                 <span
@@ -88,7 +95,7 @@ const AlertStatusModal = ({
                                 />
                                 [{hist.level.toUpperCase()}] {hist.alertName}
                               </span>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div className="alert-status-modal--event-meta">
                                 <span className="alert-status-modal--event-time">
                                   {new Date(hist.time).toLocaleString(
                                     i18n.language === 'ko' ? 'ko-KR' : 'en-US',
@@ -100,7 +107,11 @@ const AlertStatusModal = ({
                                     }
                                   )}
                                 </span>
-                                <span className={`icon caret-${isExpanded ? 'up' : 'down'}`} />
+                                <span
+                                  className={`icon caret-${
+                                    isExpanded ? 'up' : 'down'
+                                  }`}
+                                />
                               </div>
                             </div>
                             {hist.message && (
@@ -115,21 +126,11 @@ const AlertStatusModal = ({
                             )}
 
                             {isExpanded && (
-                              <div 
-                                className="alert-status-modal--event-chart-container"
-                                style={{
-                                  marginTop: '12px',
-                                  height: '220px',
-                                  backgroundColor: 'var(--gray-2)',
-                                  border: '1px dashed var(--gray-4)',
-                                  borderRadius: '4px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}
-                              >
-                                <p style={{ color: 'var(--gray-5)', margin: 0 }}>차트가 렌더링 될 영역입니다.</p>
-                              </div>
+                              <AlertStatusTable
+                                source={source}
+                                host={host}
+                                time={hist.time}
+                              />
                             )}
                           </div>
                         )
