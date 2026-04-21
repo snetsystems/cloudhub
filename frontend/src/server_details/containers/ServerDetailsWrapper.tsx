@@ -42,16 +42,10 @@ import {
 } from 'src/server_details/components/ServerDetailsCellContent'
 import {getHostByHostname, type Host} from 'src/shared/apis/host'
 
-type QueryTargetOS = 'window' | 'linux'
+type QueryTargetOS = 'windows' | 'linux'
 
 function normalizeHostOSToTargetOS(os?: string | null): QueryTargetOS {
-  return os === 'Windows' ? 'window' : 'linux'
-}
-
-function normalizeQueryTargetOS(target?: string): QueryTargetOS {
-  const v = (target ?? '').toLowerCase()
-  if (v === 'window' || v === 'windows') return 'window'
-  return 'linux'
+  return os === 'Windows' ? 'windows' : 'linux'
 }
 
 function filterQueriesByTargetOS<T>(
@@ -59,9 +53,12 @@ function filterQueriesByTargetOS<T>(
   targetOS: QueryTargetOS
 ): T[] | undefined {
   if (!queries?.length) return queries
-  return queries.filter(
-    q => normalizeQueryTargetOS((q as any).queryTargetOS) === targetOS
-  )
+  return queries.filter(q => {
+    const qOS = (q as any).queryTargetOS
+    // queryTargetOS가 명시되지 않은 경우, Linux/Windows 공용 쿼리라고 판단합니다.
+    if (!qOS) return true
+    return qOS.toLowerCase() === targetOS
+  })
 }
 
 interface HostDropdownHeaderProps {
@@ -383,7 +380,7 @@ function ServerDetailsWrapper(props) {
       case 'server-details-network-usage':
         return 'network'
       case 'server-details-disk-io-usage':
-      case 'server-details-disk-utilization':
+      case 'server-details-disk-used-spaces':
         return 'disk'
       default:
         return null

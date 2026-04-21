@@ -53,29 +53,35 @@ export function buildDetailTemplates(
   const hostTemplate: Template = {
     tempVar: ':host:',
     id: 'host',
-    type: TemplateType.Constant,
+    type: TemplateType.TagValues,
     label: '',
     values: [
       {
         value: host,
-        type: TemplateValueType.Constant,
+        type: TemplateValueType.TagValue,
         selected: true,
         localSelected: true,
       },
     ],
   }
 
-  let result = [dbTemplate, rpTemplate, dashboardTime, upperDashboardTime, hostTemplate]
+  let result = [
+    dbTemplate,
+    rpTemplate,
+    dashboardTime,
+    upperDashboardTime,
+    hostTemplate,
+  ]
   if (processName != null) {
     const processNameTemplate: Template = {
       tempVar: ':process_name:',
       id: 'process_name',
-      type: TemplateType.Constant,
+      type: TemplateType.TagValues,
       label: '',
       values: [
         {
           value: processName,
-          type: TemplateValueType.Constant,
+          type: TemplateValueType.TagValue,
           selected: true,
           localSelected: true,
         },
@@ -87,12 +93,12 @@ export function buildDetailTemplates(
     const userTemplate: Template = {
       tempVar: ':user:',
       id: 'user',
-      type: TemplateType.Constant,
+      type: TemplateType.TagValues,
       label: '',
       values: [
         {
           value: user,
-          type: TemplateValueType.Constant,
+          type: TemplateValueType.TagValue,
           selected: true,
           localSelected: true,
         },

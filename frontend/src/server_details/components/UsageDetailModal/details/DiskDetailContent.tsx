@@ -111,16 +111,38 @@ const DISK_BASE_AXES: Axes = {
 
 const BLOCK_CONFIG: Record<
   string,
-  {title: string; blockClassName?: string; isPercent?: boolean; bounds?: [string, string]; yLabel?: string}
+  {
+    title: string
+    blockClassName?: string
+    isPercent?: boolean
+    bounds?: [string, string]
+    yLabel?: string
+  }
 > = {
-  'disk-io-percent': {title: 'Disk I/O(%)', isPercent: true, bounds: ['0', '110']},
+  'disk-io-percent': {
+    title: 'Disk I/O(%)',
+    isPercent: true,
+    bounds: ['0', '110'],
+  },
   'disk-iops': {title: 'IOPS Read/Write(ops/s)', bounds: ['0', '']},
   'disk-throughput': {title: 'Disk Bps Read/Write(MiB/s)', bounds: ['0', '']},
-  'disk-used-percent': {title: 'Used Space(%)', isPercent: true, bounds: ['0', '110']},
+  'disk-used-percent': {
+    title: 'Used Space(%)',
+    isPercent: true,
+    bounds: ['0', '110'],
+  },
   'disk-used-gib': {title: 'Used Space(GiB)', bounds: ['0', '']},
   'disk-queue-length': {title: 'Queue Length', bounds: ['0', '']},
-  'disk-inode-used-percent': {title: 'Inode Used (%)', isPercent: true, bounds: ['0', '110']},
-  'disk-free-percent': {title: 'Free Space(%)', isPercent: true, bounds: ['0', '110']},
+  'disk-inode-used-percent': {
+    title: 'Inode Used (%)',
+    isPercent: true,
+    bounds: ['0', '110'],
+  },
+  'disk-free-percent': {
+    title: 'Free Space(%)',
+    isPercent: true,
+    bounds: ['0', '110'],
+  },
   'disk-free-gib': {title: 'Free Space(GiB)', bounds: ['0', '']},
 }
 
@@ -136,11 +158,23 @@ const GRID_LAYOUT = {
 
 function resolveAxesForBlock(blockId: string): Axes {
   const config = BLOCK_CONFIG[blockId]
-  const bounds = config?.bounds
-  if (!bounds) return DISK_BASE_AXES
-  const yOverrides: Partial<typeof DISK_Y_AXIS> = {bounds}
-  if (config?.yLabel) yOverrides.suffix = ` ${config.yLabel}`
-  return {...DISK_BASE_AXES, y: {...DISK_BASE_AXES.y, ...yOverrides}}
+
+  if (!config || !config.bounds) {
+    return DISK_BASE_AXES
+  }
+
+  const yAxisOverrides: Partial<typeof DISK_Y_AXIS> = {
+    bounds: config.bounds,
+    ...(config.yLabel && { suffix: ` ${config.yLabel}` }),
+  }
+
+  return {
+    ...DISK_BASE_AXES,
+    y: {
+      ...DISK_BASE_AXES.y,
+      ...yAxisOverrides,
+    },
+  }
 }
 
 function DetailChartBlock({
@@ -168,13 +202,41 @@ function DetailChartBlock({
   let queryText = originalQueryText
 
   if (selectedDisk) {
-    if (queryText.includes('"diskio"')) {
+    if (queryText.includes('"win_diskio"')) {
+      const instanceName = selectedDisk.path.replace(/\\/g, '')
+      const escapedInstance = instanceName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+      
+      queryText = queryText.replace(
+        /(AND "host"='?:host:'?)/,
+        `$1 AND "instance" =~ /.*${escapedInstance}$/`
+      )
+      
+      queryText = queryText.replace(
+        /GROUP BY "instance",\s*/,
+        'GROUP BY '
+      )
+    } else if (queryText.includes('"diskio"')) {
+      // 리눅스 전용
       const deviceName = selectedDisk.device.split('/').pop() || ''
-      queryText = queryText.replace('AND "host"=\':host:\'', `AND "host"=':host:' AND "name"='${deviceName}'`)
-      queryText = queryText.replace('GROUP BY "name", time(:interval:)', 'GROUP BY time(:interval:)')
+      queryText = queryText.replace(
+        /(AND "host"='?:host:'?)/,
+        `$1 AND "name"='${deviceName}'`
+      )
+      queryText = queryText.replace(
+        /GROUP BY "name",\s*/,
+        'GROUP BY '
+      )
     } else if (queryText.includes('"disk"')) {
-      queryText = queryText.replace('AND "host"=\':host:\'', `AND "host"=':host:' AND "path"='${selectedDisk.path}'`)
-      queryText = queryText.replace('GROUP BY "path", time(:interval:)', 'GROUP BY time(:interval:)')
+      // 윈도우의 경우 'C:\' 처럼 역슬래시가 포함되는데, InfluxQL에서는 '\\'로 이스케이프해야 합니다.
+      const escapedPath = selectedDisk.path.replace(/\\/g, '\\\\')
+      queryText = queryText.replace(
+        /(AND "host"='?:host:'?)/,
+        `$1 AND "path"='${escapedPath}'`
+      )
+      queryText = queryText.replace(
+        /GROUP BY "path",\s*/,
+        'GROUP BY '
+      )
     }
   }
 
@@ -255,10 +317,15 @@ export function DiskDetailContent({
 }) {
   const [availableDisks, setAvailableDisks] = useState<DiskMetadata[]>([])
   const [selectedDiskPath, setSelectedDiskPath] = useState<string>('')
-  const [headerPortalTarget, setHeaderPortalTarget] = useState<HTMLElement | null>(null)
+  const [
+    headerPortalTarget,
+    setHeaderPortalTarget,
+  ] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
-    setHeaderPortalTarget(document.getElementById('usage-detail-modal-header-portal'))
+    setHeaderPortalTarget(
+      document.getElementById('usage-detail-modal-header-portal')
+    )
   }, [])
 
   const timeRange = serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
@@ -266,19 +333,24 @@ export function DiskDetailContent({
   const host = serverContext.selectedHost
   const detailQueries = serverContext.detailQueries ?? []
 
-
   useEffect(() => {
     if (!source || !host) return
     const fetchDisks = async () => {
       try {
-        const hostName = templates?.find(t => t.tempVar === ':host:')?.values?.find((v: any) => v.selected)?.value || host
-        const q = [{
-          id: 'disk-series',
-          text: `SHOW SERIES FROM "disk" WHERE "host"='${hostName}'`,
-          db: source.telegraf ?? 'Default',
-        }]
+        const hostName =
+          templates
+            ?.find(t => t.tempVar === ':host:')
+            ?.values?.find((v: any) => v.selected)?.value || host
+        const q = [
+          {
+            id: 'disk-series',
+            text: `SHOW SERIES FROM "disk" WHERE "host"='${hostName}'`,
+            db: source.telegraf ?? 'Default',
+          },
+        ]
         const res = await executeQueries(source, q, [])
-        const rawSeries: any[] = (res as any)?.[0]?.value?.results?.[0]?.series?.[0]?.values || []
+        const rawSeries: any[] =
+          (res as any)?.[0]?.value?.results?.[0]?.series?.[0]?.values || []
         const disks: DiskMetadata[] = []
         for (const [seriesStr] of rawSeries) {
           if (typeof seriesStr !== 'string') continue
@@ -288,12 +360,14 @@ export function DiskDetailContent({
               path: tags.path,
               device: tags.device || '',
               fstype: tags.fstype || '',
-              mode: tags.mode || ''
+              mode: tags.mode || '',
             })
           }
         }
-        
-        const uniqueDisks = Array.from(new Map(disks.map(d => [d.path, d])).values())
+
+        const uniqueDisks = Array.from(
+          new Map(disks.map(d => [d.path, d])).values()
+        )
         uniqueDisks.sort((a, b) => {
           if (a.path === '/') return -1
           if (b.path === '/') return 1
@@ -311,7 +385,8 @@ export function DiskDetailContent({
     fetchDisks()
   }, [source, host, templates])
 
-  const selectedDisk = availableDisks.find(d => d.path === selectedDiskPath) || null
+  const selectedDisk =
+    availableDisks.find(d => d.path === selectedDiskPath) || null
 
   const renderGridSection = (blockIds: readonly string[], startIndex: number) =>
     blockIds.map((blockId, i) => {
@@ -343,32 +418,63 @@ export function DiskDetailContent({
     })
 
   const diskHeaderContent = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        width: '100%',
+      }}
+    >
       {availableDisks.length > 0 ? (
-        <div style={{ width: 140, flexShrink: 0 }}>
+        <div style={{width: 140, flexShrink: 0}}>
           <Dropdown
-            items={[{text: '전체'}, ...availableDisks.map(d => ({ text: d.path }))]}
-            onChoose={(item) => setSelectedDiskPath(item.text === '전체' ? 'all' : item.text)}
+            items={[
+              {text: '전체'},
+              ...availableDisks.map(d => ({text: d.path})),
+            ]}
+            onChoose={item =>
+              setSelectedDiskPath(item.text === '전체' ? 'all' : item.text)
+            }
             selected={selectedDiskPath === 'all' ? '전체' : selectedDiskPath}
           />
         </div>
       ) : (
-         <div style={{ color: '#aaa', fontSize: '13px' }}>Loading disks...</div>
+        <div style={{color: '#aaa', fontSize: '13px'}}>Loading disks...</div>
       )}
       {selectedDisk && (
-        <div style={{
-          display: 'flex', 
-          gap: '16px', 
-          fontSize: '12px',
-          color: '#a0aab8',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}>
-          <div><span style={{color: '#6b7a90', paddingRight: '4px'}}>ID:</span><span style={{color: '#e5e8ed'}}>{selectedDisk.device.split('/').pop() || selectedDisk.device}</span></div>
-          <div><span style={{color: '#6b7a90', paddingRight: '4px'}}>FS:</span><span style={{color: '#e5e8ed'}}>{selectedDisk.fstype}</span></div>
-          <div><span style={{color: '#6b7a90', paddingRight: '4px'}}>Mount:</span><span style={{color: '#e5e8ed'}}>{selectedDisk.path}</span></div>
-          <div style={{overflow: 'hidden', textOverflow: 'ellipsis'}} title={selectedDisk.mode}><span style={{color: '#6b7a90', paddingRight: '4px'}}>Opt:</span><span style={{color: '#e5e8ed'}}>{selectedDisk.mode}</span></div>
+        <div
+          style={{
+            display: 'flex',
+            gap: '16px',
+            fontSize: '12px',
+            color: '#a0aab8',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          <div>
+            <span style={{color: '#6b7a90', paddingRight: '4px'}}>ID:</span>
+            <span style={{color: '#e5e8ed'}}>
+              {selectedDisk.device.split('/').pop() || selectedDisk.device}
+            </span>
+          </div>
+          <div>
+            <span style={{color: '#6b7a90', paddingRight: '4px'}}>FS:</span>
+            <span style={{color: '#e5e8ed'}}>{selectedDisk.fstype}</span>
+          </div>
+          <div>
+            <span style={{color: '#6b7a90', paddingRight: '4px'}}>Mount:</span>
+            <span style={{color: '#e5e8ed'}}>{selectedDisk.path}</span>
+          </div>
+          <div
+            style={{overflow: 'hidden', textOverflow: 'ellipsis'}}
+            title={selectedDisk.mode}
+          >
+            <span style={{color: '#6b7a90', paddingRight: '4px'}}>Opt:</span>
+            <span style={{color: '#e5e8ed'}}>{selectedDisk.mode}</span>
+          </div>
         </div>
       )}
     </div>
@@ -376,8 +482,8 @@ export function DiskDetailContent({
 
   return (
     <div className="process-detail-modal__body">
-      {headerPortalTarget && createPortal(diskHeaderContent, headerPortalTarget)}
-
+      {headerPortalTarget &&
+        createPortal(diskHeaderContent, headerPortalTarget)}
 
       <div className="process-detail-modal__grid process-detail-modal__grid--top">
         {renderGridSection(GRID_LAYOUT.top, 0)}
