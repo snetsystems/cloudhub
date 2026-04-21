@@ -29,7 +29,6 @@ import ProcessLineChartTable from 'src/server_details/components/ProcessLineChar
 import ProcessDetailModal from 'src/server_details/components/ProcessDetailModal'
 import UsageDetailModal, {
   type UsageDetailType,
-  type DetailQuery,
 } from 'src/server_details/components/UsageDetailModal'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
@@ -41,6 +40,7 @@ import {
   type ServerDetailsPageContextValue,
 } from 'src/server_details/components/ServerDetailsCellContent'
 import {getHostByHostname, type Host} from 'src/shared/apis/host'
+import type {CellQuery} from 'src/types/dashboards'
 
 type QueryTargetOS = 'windows' | 'linux'
 
@@ -48,16 +48,16 @@ function normalizeHostOSToTargetOS(os?: string | null): QueryTargetOS {
   return os === 'Windows' ? 'windows' : 'linux'
 }
 
-function filterQueriesByTargetOS<T>(
+function applySkipByTargetOS<T>(
   queries: T[] | undefined,
   targetOS: QueryTargetOS
 ): T[] | undefined {
   if (!queries?.length) return queries
-  return queries.filter(q => {
+  return queries.map(q => {
     const qOS = (q as any).queryTargetOS
-    // queryTargetOS가 명시되지 않은 경우, Linux/Windows 공용 쿼리라고 판단합니다.
-    if (!qOS) return true
-    return qOS.toLowerCase() === targetOS
+    if (!qOS) return q
+    const isSkip = qOS.toLowerCase() !== targetOS
+    return {...q, isSkip}
   })
 }
 
@@ -151,7 +151,9 @@ function HostDropdownHeader({
 
     if (selectedHost && templateVariableLocalSelected) {
       const selectedValue = hostTemplate.values.find(v => v.value === selectedHost)
-      if (selectedValue) {
+      const currentSelected = hostTemplate.values.find(v => v.selected || v.localSelected)
+      
+      if (selectedValue && currentSelected?.value !== selectedHost) {
         templateVariableLocalSelected(dashboard.id, hostTemplate.id, {
           ...selectedValue,
           localSelected: true,
@@ -364,7 +366,7 @@ function ServerDetailsWrapper(props) {
   const [usageDetailState, setUsageDetailState] = useState<{
     isOpen: boolean
     detailType: UsageDetailType | null
-    detailQueries?: DetailQuery[]
+    detailQueries?: CellQuery[]
   }>({
     isOpen: false,
     detailType: null,
@@ -390,7 +392,7 @@ function ServerDetailsWrapper(props) {
   const openUsageDetail = (cell: Cell) => {
     const detailType = mapCellIdToUsageDetailType(cell?.i)
     if (!detailType) return
-    const detailQueries = filterQueriesByTargetOS<DetailQuery>(
+    const detailQueries = applySkipByTargetOS<CellQuery>(
       (cell as any).detailQueries,
       targetOS
     )
@@ -425,11 +427,11 @@ function ServerDetailsWrapper(props) {
 
   const transformCellByOS = useCallback(
     (cell: Cell): Cell => {
-      const queries = filterQueriesByTargetOS<DashboardsModels.CellQuery>(
+      const queries = applySkipByTargetOS<DashboardsModels.CellQuery>(
         (cell as any).queries,
         targetOS
       )
-      const detailQueries = filterQueriesByTargetOS<DetailQuery>(
+      const detailQueries = applySkipByTargetOS<CellQuery>(
         (cell as any).detailQueries,
         targetOS
       )
@@ -534,6 +536,7 @@ function ServerDetailsWrapper(props) {
         transformCell={transformCellByOS}
         getExtraActionsForCell={getExtraActionsForCell}
         onCustomCellAction={handleCustomCellAction}
+
       />
       <UsageDetailModal
         isOpen={usageDetailState.isOpen}

@@ -67,6 +67,8 @@ export interface CellQuery {
   id?: string
   type: string // flux or influxql
   tz?: string // timezone for query (added at runtime by components)
+  queryTargetOS?: string
+  isSkip?: boolean
 }
 
 export interface Legend {
@@ -115,10 +117,7 @@ export interface Cell {
   /** When true, cell is shown as summary. */
   isShowSummary?: boolean
   /** Detail queries for cell detail view */
-  detailQueries?: Array<{
-    query: string
-    label: string
-  }>
+  detailQueries?: CellQuery[]
 }
 
 /** Cell origin: builtin (system template) or user-created. Empty is treated as user. */

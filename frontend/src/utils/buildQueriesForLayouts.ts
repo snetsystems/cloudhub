@@ -146,42 +146,44 @@ export const buildQueriesForLayouts = (
   host: string,
   instance?: object
 ): CellQuery[] => {
-  return cell.queries.map(query => {
-    let queryText: string
-    // Canned dashboards use an different a schema different from queryConfig.
-    if (query.queryConfig) {
-      const {
-        queryConfig: {database, measurement, fields, shifts, rawText, range},
-      } = query
-      const tR: TimeRange = range || {
-        upper: TEMP_VAR_UPPER_DASHBOARD_TIME,
-        lower: TEMP_VAR_DASHBOARD_TIME,
+  return cell.queries
+    .filter(q => !q.isSkip)
+    .map(query => {
+      let queryText: string
+      // Canned dashboards use an different a schema different from queryConfig.
+      if (query.queryConfig) {
+        const {
+          queryConfig: {database, measurement, fields, shifts, rawText, range},
+        } = query
+        const tR: TimeRange = range || {
+          upper: TEMP_VAR_UPPER_DASHBOARD_TIME,
+          lower: TEMP_VAR_DASHBOARD_TIME,
+        }
+
+        queryText =
+          addTimeBoundsToRawText(rawText) ||
+          buildQuery(TYPE_QUERY_CONFIG, tR, query.queryConfig)
+        const isParsable: boolean =
+          !_.isEmpty(database) && !_.isEmpty(measurement) && fields.length > 0
+
+        if (shifts && shifts.length && isParsable) {
+          const shiftedQueries: string[] = shifts
+            .filter(s => s.unit)
+            .map(s => buildQuery(TYPE_SHIFTED, timeRange, query.queryConfig, s))
+
+          queryText = `${queryText};${shiftedQueries.join(';')}`
+        }
+      } else {
+        queryText = buildCannedDashboardQuery(
+          query,
+          timeRange,
+          host,
+          instance,
+          _.get(cell, 'measurement'),
+          isStaticGraphType(cell?.type)
+        )
       }
 
-      queryText =
-        addTimeBoundsToRawText(rawText) ||
-        buildQuery(TYPE_QUERY_CONFIG, tR, query.queryConfig)
-      const isParsable: boolean =
-        !_.isEmpty(database) && !_.isEmpty(measurement) && fields.length > 0
-
-      if (shifts && shifts.length && isParsable) {
-        const shiftedQueries: string[] = shifts
-          .filter(s => s.unit)
-          .map(s => buildQuery(TYPE_SHIFTED, timeRange, query.queryConfig, s))
-
-        queryText = `${queryText};${shiftedQueries.join(';')}`
-      }
-    } else {
-      queryText = buildCannedDashboardQuery(
-        query,
-        timeRange,
-        host,
-        instance,
-        _.get(cell, 'measurement'),
-        isStaticGraphType(cell?.type)
-      )
-    }
-
-    return {...query, text: queryText}
-  })
+      return {...query, text: queryText}
+    })
 }

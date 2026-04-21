@@ -47,8 +47,6 @@ const CPU_DETAIL_CHART_OPTIONS = {
   },
 }
 
-
-
 const CPU_USAGE_AXES: Axes = {
   x: FULL_DEFAULT_AXIS,
   y: {
@@ -61,14 +59,27 @@ const CPU_USAGE_AXES: Axes = {
 
 const BLOCK_CONFIG: Record<
   string,
-  {title: string; blockClassName?: string; isPercent?: boolean; bounds?: [string, string]}
+  {
+    title: string
+    blockClassName?: string
+    isPercent?: boolean
+    bounds?: [string, string]
+  }
 > = {
   'cpu-usage': {title: 'CPU Usage (%)', isPercent: true, bounds: ['0', '110']},
   'cpu-idle': {title: 'CPU Idle (%)', isPercent: true, bounds: ['0', '110']},
   'cpu-nice': {title: 'CPU Nice (%)', isPercent: true, bounds: ['0', '110']},
-  'cpu-io-wait': {title: 'CPU I/O Wait (%)', isPercent: true, bounds: ['0', '110']},
+  'cpu-io-wait': {
+    title: 'CPU I/O Wait (%)',
+    isPercent: true,
+    bounds: ['0', '110'],
+  },
   'cpu-steal': {title: 'CPU Steal (%)', isPercent: true, bounds: ['0', '110']},
-  'cpu-irq': {title: 'CPU IRQ (Interrupt Request, %)', isPercent: true, bounds: ['0', '110']},
+  'cpu-irq': {
+    title: 'CPU IRQ (Interrupt Request, %)',
+    isPercent: true,
+    bounds: ['0', '110'],
+  },
   'cpu-soft-irq': {
     title: 'CPU Soft IRQ (Software Interrupt Request, %)',
     isPercent: true,
@@ -88,8 +99,8 @@ const LINUX_GRID_LAYOUT = {
 }
 
 const WINDOWS_GRID_LAYOUT = {
-  top: ['cpu-usage'] as const,
-  middle: ['cpu-idle'] as const,
+  top: ['cpu-usage', 'cpu-idle'] as const,
+  middle: [] as const,
   bottom: [] as const,
 }
 
@@ -198,7 +209,9 @@ export function CpuDetailContent({
   const timeRange = serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverContext.source
   const host = serverContext.selectedHost
-  const detailQueries = serverContext.detailQueries ?? []
+  const detailQueries = (serverContext.detailQueries ?? []).filter(
+    q => !q.isSkip
+  )
   const detailQueryLabels = new Set(detailQueries.map(q => q.label))
   const isWindowsLayout = !detailQueryLabels.has('cpu-nice')
 
@@ -210,7 +223,6 @@ export function CpuDetailContent({
     : isWindowsLayout
     ? []
     : (['cpu-soft-irq'] as const)
-
 
   const renderGridSection = (blockIds: readonly string[], startIndex: number) =>
     blockIds.map((blockId, i) => {
@@ -250,7 +262,11 @@ export function CpuDetailContent({
   return (
     <div className="process-detail-modal__body">
       {gridLayout.top.length > 0 && (
-        <div className="process-detail-modal__grid process-detail-modal__grid--top">
+        <div
+          className={`process-detail-modal__grid process-detail-modal__grid--top${
+            isWindowsLayout ? ' process-detail-modal__grid--stacked-2' : ''
+          }`}
+        >
           {renderGridSection(gridLayout.top, 0)}
         </div>
       )}

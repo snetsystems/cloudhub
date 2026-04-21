@@ -81,7 +81,7 @@ class Layout extends Component<Props, State> {
       onSummonOverlayTechnologies,
       getExtraActionsForCell,
       onCustomCellAction,
-      onShowInformation
+      onShowInformation,
     } = this.props
     const {cellData, cellFluxData} = this.state
 
@@ -145,7 +145,7 @@ class Layout extends Component<Props, State> {
         staticLegendPosition={GET_STATIC_LEGEND_POSITION(cell.legend)}
         grabDataForDownload={this.grabDataForDownload}
         grabFluxData={this.grabFluxData}
-        queries={cell.queries}
+        queries={cell.queries.filter(q => !q.isSkip)}
         source={source}
         cellNote={cell.note}
         cellNoteVisibility={cell.noteVisibility}

@@ -323,7 +323,9 @@ export function DiskDetailContent({
   const timeRange = serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverContext.source
   const host = serverContext.selectedHost
-  const detailQueries = serverContext.detailQueries ?? []
+  const detailQueries = (serverContext.detailQueries ?? []).filter(
+    q => !q.isSkip
+  )
 
   useEffect(() => {
     if (!source || !host) return

@@ -106,15 +106,18 @@ const GRID_LAYOUT = {
 }
 
 const WINDOWS_GRID_LAYOUT = {
-  top: ['memory-usage', 'memory-available', 'memory-paged-pool'] as const,
-  middle: ['memory-nonpaged-pool', 'memory-swap-percent', 'memory-page-faults'] as const,
+  top: [
+    'memory-usage',
+    'memory-available',
+    'memory-paged-pool',
+    'memory-nonpaged-pool',
+    'memory-swap-percent',
+    'memory-page-faults',
+  ] as const,
+  middle: [] as const,
   bottom: [] as const,
 }
 
-const WINDOWS_BLOCK_TO_QUERY_LABEL: Record<string, string> = {
-  'memory-paged-pool': 'memory-sreclaimable',
-  'memory-nonpaged-pool': 'memory-sunreclaim',
-}
 
 function resolveAxesForBlock(blockId: string): Axes {
   const config = LINUX_BLOCK_CONFIG[blockId] ?? WINDOWS_BLOCK_CONFIG[blockId]
@@ -224,7 +227,9 @@ export function MemoryDetailContent({
   const timeRange = serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
   const source = serverContext.source
   const host = serverContext.selectedHost
-  const detailQueries = serverContext.detailQueries ?? []
+  const detailQueries = (serverContext.detailQueries ?? []).filter(
+    q => !q.isSkip
+  )
   const detailQueryLabels = new Set(detailQueries.map(q => q.label))
   const isWindowsLayout =
     !detailQueryLabels.has('memory-used') &&
@@ -238,7 +243,7 @@ export function MemoryDetailContent({
     blockIds.map((blockId, i) => {
       const config = blockConfig[blockId]
       if (!config) return null
-      const queryLabel = WINDOWS_BLOCK_TO_QUERY_LABEL[blockId] ?? blockId
+      const queryLabel = blockId
       if (!detailQueryLabels.has(queryLabel)) return null
       const paletteIndex =
         (startIndex + i) % LINE_COLOR_PALETTES_SEQUENCE.length
@@ -268,19 +273,29 @@ export function MemoryDetailContent({
 
   return (
     <div className="process-detail-modal__body">
-      <div className="process-detail-modal__grid process-detail-modal__grid--top">
+      <div
+        className={`process-detail-modal__grid process-detail-modal__grid--top${
+          isWindowsLayout ? ' process-detail-modal__grid--2-col' : ''
+        }`}
+      >
         {renderGridSection(gridLayout.top, 0)}
+        {isWindowsLayout &&
+          renderGridSection(gridLayout.middle, gridLayout.top.length)}
       </div>
-      <div className="process-detail-modal__grid process-detail-modal__grid--middle">
-        {renderGridSection(gridLayout.middle, gridLayout.top.length)}
-      </div>
-      {gridLayout.bottom.length > 0 && (
-        <div className="process-detail-modal__grid process-detail-modal__grid--bottom">
-          {renderGridSection(
-            gridLayout.bottom,
-            gridLayout.top.length + gridLayout.middle.length
+      {!isWindowsLayout && (
+        <>
+          <div className="process-detail-modal__grid process-detail-modal__grid--middle">
+            {renderGridSection(gridLayout.middle, gridLayout.top.length)}
+          </div>
+          {gridLayout.bottom.length > 0 && (
+            <div className="process-detail-modal__grid process-detail-modal__grid--bottom">
+              {renderGridSection(
+                gridLayout.bottom,
+                gridLayout.top.length + gridLayout.middle.length
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
     </div>
   )
