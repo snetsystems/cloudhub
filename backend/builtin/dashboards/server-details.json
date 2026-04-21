@@ -50,13 +50,11 @@
           "label": "memory-usage",
           "queryTargetOS": "windows"
         },
-
         {
           "query": "SELECT mean(\"free\")/1073741824 AS \"free\", mean(\"cached\")/1073741824 AS \"cached\", mean(\"buffered\")/1073741824 AS \"buffers\", mean(\"used\")/1073741824 AS \"used\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
           "label": "memory-used",
           "queryTargetOS": "linux"
         },
-
         {
           "query": "SELECT mean(\"available\")/1073741824 AS \"available\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
           "label": "memory-available",
@@ -67,13 +65,11 @@
           "label": "memory-available",
           "queryTargetOS": "windows"
         },
-
         {
           "query": "SELECT mean(\"sreclaimable\")/1073741824 AS \"sreclaimable\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
           "label": "memory-sreclaimable",
           "queryTargetOS": "linux"
         },
-
         {
           "query": "SELECT mean(\"sunreclaim\")/1073741824 AS \"sunreclaim\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
           "label": "memory-sunreclaim",
@@ -84,7 +80,6 @@
           "label": "memory-slab",
           "queryTargetOS": "linux"
         },
-
         {
           "query": "SELECT mean(\"Pool_Paged_Bytes\")/1073741824 AS \"Pool_Paged_Bytes\" FROM \":db:\".\":rp:\".\"win_mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
           "label": "memory-paged-pool",
@@ -105,13 +100,11 @@
           "label": "memory-swap-percent",
           "queryTargetOS": "windows"
         },
-
         {
           "query": "SELECT (mean(\"swap_total\") - mean(\"swap_free\"))/1073741824 AS \"swap_used\" FROM \":db:\".\":rp:\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
           "label": "memory-swap-used",
           "queryTargetOS": "linux"
         },
-
         {
           "query": "SELECT non_negative_derivative(mean(\"pgfault\"), 1s) AS \"pgfault\", non_negative_derivative(mean(\"pgmajfault\"), 1s) AS \"pgmajfault\" FROM \":db:\".\":rp:\".\"kernel_vmstat\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
           "label": "memory-page-faults",
@@ -125,7 +118,10 @@
       ],
       "axes": {
         "y": {
-          "bounds": ["0", "100"],
+          "bounds": [
+            "0",
+            "100"
+          ],
           "label": " ",
           "prefix": "",
           "suffix": "%",
@@ -335,40 +331,63 @@
           "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
           "label": "CPU Usage",
           "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT mean(\"Percent_Privileged_Time\") AS \"system\", mean(\"Percent_User_Time\") AS \"user\", mean(\"Percent_Idle_Time\") AS \"idle\" FROM \":db:\".\":rp:\".\"win_cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: GROUP BY time(:interval:) FILL(null)",
+          "label": "CPU Usage",
+          "queryTargetOS": "windows"
         }
       ],
       "detailQueries": [
         {
           "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-usage"
+          "label": "cpu-usage",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT mean(\"Percent_Privileged_Time\") AS \"system\", mean(\"Percent_User_Time\") AS \"user\" FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"instance\"='_Total' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-usage",
+          "queryTargetOS": "windows"
         },
         {
           "query": "SELECT mean(\"usage_idle\") AS \"idle\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-idle"
+          "label": "cpu-idle",
+          "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT mean(\"Percent_Idle_Time\") AS \"idle\" FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"instance\"='_Total' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-idle",
+          "queryTargetOS": "windows"
         },
         {
           "query": "SELECT mean(\"usage_nice\") AS \"nice\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-nice"
+          "label": "cpu-nice",
+          "queryTargetOS": "linux"
         },
         {
           "query": "SELECT mean(\"usage_iowait\") AS \"iowait\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-io-wait"
+          "label": "cpu-io-wait",
+          "queryTargetOS": "linux"
         },
         {
           "query": "SELECT mean(\"usage_steal\") AS \"steal\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-steal"
+          "label": "cpu-steal",
+          "queryTargetOS": "linux"
         },
         {
           "query": "SELECT mean(\"usage_irq\") AS \"irq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-irq"
+          "label": "cpu-irq",
+          "queryTargetOS": "linux"
         },
         {
           "query": "SELECT mean(\"usage_softirq\") AS \"softirq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-soft-irq"
+          "label": "cpu-soft-irq",
+          "queryTargetOS": "linux"
         },
         {
           "query": "SELECT mean(\"load1\") AS \"01 min\", mean(\"load5\") AS \"05 min\", mean(\"load15\") AS \"15 min\" FROM \":db:\".\":rp:\".\"system\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
-          "label": "cpu-load"
+          "label": "cpu-load",
+          "queryTargetOS": "linux"
         }
       ],
       "axes": {
@@ -543,6 +562,11 @@
           "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE \"host\" = :host: AND time > :dashboardTime: GROUP BY \"name\", time(:interval:) FILL(null)",
           "label": "Disk Utilization",
           "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT max(\"Percent_Disk_Time\") AS \"io_percent\" FROM \":db:\".\":rp:\".\"win_diskio\" WHERE \"host\" = :host: AND time > :dashboardTime: GROUP BY \"instance\", time(:interval:) FILL(null)",
+          "label": "Disk Utilization",
+          "queryTargetOS": "windows"
         }
       ],
       "detailQueries": [
@@ -585,7 +609,10 @@
       ],
       "axes": {
         "y": {
-          "bounds": ["0", "100"],
+          "bounds": [
+            "0",
+            "100"
+          ],
           "label": " ",
           "suffix": "%",
           "base": "raw",

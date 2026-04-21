@@ -81,10 +81,16 @@ const BLOCK_CONFIG: Record<
   },
 }
 
-const GRID_LAYOUT = {
+const LINUX_GRID_LAYOUT = {
   top: ['cpu-usage', 'cpu-idle', 'cpu-nice'] as const,
   middle: ['cpu-io-wait', 'cpu-steal', 'cpu-irq'] as const,
   bottom: ['cpu-soft-irq', 'cpu-load'] as const,
+}
+
+const WINDOWS_GRID_LAYOUT = {
+  top: ['cpu-usage'] as const,
+  middle: ['cpu-idle'] as const,
+  bottom: [] as const,
 }
 
 function resolveAxesForBlock(blockId: string): Axes {
@@ -193,9 +199,16 @@ export function CpuDetailContent({
   const source = serverContext.source
   const host = serverContext.selectedHost
   const detailQueries = serverContext.detailQueries ?? []
-  const hasCpuLoadQuery = detailQueries.some(q => q.label === 'cpu-load')
+  const detailQueryLabels = new Set(detailQueries.map(q => q.label))
+  const isWindowsLayout = !detailQueryLabels.has('cpu-nice')
+
+  const gridLayout = isWindowsLayout ? WINDOWS_GRID_LAYOUT : LINUX_GRID_LAYOUT
+
+  const hasCpuLoadQuery = detailQueryLabels.has('cpu-load')
   const bottomBlockIds = hasCpuLoadQuery
-    ? GRID_LAYOUT.bottom
+    ? gridLayout.bottom
+    : isWindowsLayout
+    ? []
     : (['cpu-soft-irq'] as const)
 
 
@@ -207,10 +220,12 @@ export function CpuDetailContent({
         (startIndex + i) % LINE_COLOR_PALETTES_SEQUENCE.length
       const colors = LINE_COLOR_PALETTES_SEQUENCE[paletteIndex]
       const queryText = detailQueries.find(q => q.label === blockId)?.query
-      const blockClassName =
-        !hasCpuLoadQuery && blockId === 'cpu-soft-irq'
-          ? 'process-detail-modal__block--span-3'
-          : config.blockClassName
+      let blockClassName = config.blockClassName
+      if (isWindowsLayout) {
+        blockClassName = 'process-detail-modal__block--span-3'
+      } else if (!hasCpuLoadQuery && blockId === 'cpu-soft-irq') {
+        blockClassName = 'process-detail-modal__block--span-3'
+      }
 
       return (
         <UsageDetailBlock
@@ -234,18 +249,24 @@ export function CpuDetailContent({
 
   return (
     <div className="process-detail-modal__body">
-      <div className="process-detail-modal__grid process-detail-modal__grid--top">
-        {renderGridSection(GRID_LAYOUT.top, 0)}
-      </div>
-      <div className="process-detail-modal__grid process-detail-modal__grid--middle">
-        {renderGridSection(GRID_LAYOUT.middle, GRID_LAYOUT.top.length)}
-      </div>
-      <div className="process-detail-modal__grid process-detail-modal__grid--bottom">
-        {renderGridSection(
-          bottomBlockIds,
-          GRID_LAYOUT.top.length + GRID_LAYOUT.middle.length
-        )}
-      </div>
+      {gridLayout.top.length > 0 && (
+        <div className="process-detail-modal__grid process-detail-modal__grid--top">
+          {renderGridSection(gridLayout.top, 0)}
+        </div>
+      )}
+      {gridLayout.middle.length > 0 && (
+        <div className="process-detail-modal__grid process-detail-modal__grid--middle">
+          {renderGridSection(gridLayout.middle, gridLayout.top.length)}
+        </div>
+      )}
+      {bottomBlockIds.length > 0 && (
+        <div className="process-detail-modal__grid process-detail-modal__grid--bottom">
+          {renderGridSection(
+            bottomBlockIds,
+            gridLayout.top.length + gridLayout.middle.length
+          )}
+        </div>
+      )}
     </div>
   )
 }

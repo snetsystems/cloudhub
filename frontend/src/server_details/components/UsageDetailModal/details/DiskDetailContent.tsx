@@ -165,7 +165,7 @@ function resolveAxesForBlock(blockId: string): Axes {
 
   const yAxisOverrides: Partial<typeof DISK_Y_AXIS> = {
     bounds: config.bounds,
-    ...(config.yLabel && { suffix: ` ${config.yLabel}` }),
+    ...(config.yLabel && {suffix: ` ${config.yLabel}`}),
   }
 
   return {
@@ -204,39 +204,31 @@ function DetailChartBlock({
   if (selectedDisk) {
     if (queryText.includes('"win_diskio"')) {
       const instanceName = selectedDisk.path.replace(/\\/g, '')
-      const escapedInstance = instanceName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
-      
+      const escapedInstance = instanceName.replace(
+        /[-\/\\^$*+?.()|[\]{}]/g,
+        '\\$&'
+      )
+
       queryText = queryText.replace(
         /(AND "host"='?:host:'?)/,
         `$1 AND "instance" =~ /.*${escapedInstance}$/`
       )
-      
-      queryText = queryText.replace(
-        /GROUP BY "instance",\s*/,
-        'GROUP BY '
-      )
+
+      queryText = queryText.replace(/GROUP BY "instance",\s*/, 'GROUP BY ')
     } else if (queryText.includes('"diskio"')) {
-      // 리눅스 전용
       const deviceName = selectedDisk.device.split('/').pop() || ''
       queryText = queryText.replace(
         /(AND "host"='?:host:'?)/,
         `$1 AND "name"='${deviceName}'`
       )
-      queryText = queryText.replace(
-        /GROUP BY "name",\s*/,
-        'GROUP BY '
-      )
+      queryText = queryText.replace(/GROUP BY "name",\s*/, 'GROUP BY ')
     } else if (queryText.includes('"disk"')) {
-      // 윈도우의 경우 'C:\' 처럼 역슬래시가 포함되는데, InfluxQL에서는 '\\'로 이스케이프해야 합니다.
       const escapedPath = selectedDisk.path.replace(/\\/g, '\\\\')
       queryText = queryText.replace(
         /(AND "host"='?:host:'?)/,
         `$1 AND "path"='${escapedPath}'`
       )
-      queryText = queryText.replace(
-        /GROUP BY "path",\s*/,
-        'GROUP BY '
-      )
+      queryText = queryText.replace(/GROUP BY "path",\s*/, 'GROUP BY ')
     }
   }
 
