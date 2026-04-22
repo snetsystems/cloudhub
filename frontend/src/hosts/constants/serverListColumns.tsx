@@ -634,7 +634,7 @@ GROUP BY "host"`,
     text: `SELECT "mount_path" AS "Device", max("io_time") AS "Disk I/O %"
   FROM (
     SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
-    FROM ":db:".":rp:"."diskio_ext"
+    FROM ":db:".":rp:"."diskio"
     WHERE time > now() - 3m AND "mount_path" != ''
     GROUP BY time(:interval:), "host", "mount_path"
     LIMIT 1
@@ -715,7 +715,7 @@ FILL(null)`,
     text: `SELECT max("Disk I/O %") AS "Disk I/O %"
   FROM (
     SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "Disk I/O %"
-    FROM ":db:".":rp:"."diskio_ext"
+    FROM ":db:".":rp:"."diskio"
     WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "mount_path" != ''
     GROUP BY "host", "mount_path", time(:interval:)
     FILL(null)
@@ -815,7 +815,7 @@ GROUP BY "host"`,
     text: `SELECT "mount_path" AS "Device", max("io_time") AS "__ignore_disk_io__"
   FROM (
     SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
-    FROM ":db:".":rp:"."diskio_ext"
+    FROM ":db:".":rp:"."diskio"
     WHERE time > now() - 3m AND "mount_path" != ''
     GROUP BY time(:interval:), "host", "mount_path"
     LIMIT 1
