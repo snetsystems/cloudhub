@@ -4,7 +4,11 @@ import {MemoryDetailContent} from './details/MemoryDetailContent'
 import {NetworkDetailContent} from './details/NetworkDetailContent'
 import {DiskDetailContent} from './details/DiskDetailContent'
 import type {UsageDetailType, UsageDetailServerContext} from './types'
-import {buildDetailTemplates, DEFAULT_DETAIL_TIME_RANGE} from './utils'
+import {
+  buildFixedCellUsageDetailQueryTemplates,
+  DEFAULT_DETAIL_TIME_RANGE,
+  mergeFixedCellTimeRangeIntoLayoutTemplates,
+} from './utils'
 import type {Template, TimeRange} from 'src/types'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
@@ -15,6 +19,12 @@ export interface UsageDetailModalProps {
   onClose: () => void
   detailType: UsageDetailType | null
   serverContext: UsageDetailServerContext
+  /**
+   * Same `Template[]` as `LayoutRenderer`'s `templatesForLayout` for this fixed cell (e.g. host
+   * and DB/RP from `DashboardPageWithImport` hydration). When absent, the modal falls back to
+   * `buildFixedCellUsageDetailQueryTemplates` (constants + time range; see UsageDetailModal/utils).
+   */
+  layoutTemplates?: Template[] | null
   autoRefresh: number
   onAutoRefreshChange: (milliseconds: number) => void
   onCloudTimeRangeChange?: (timeRange: TimeRange) => void
@@ -80,6 +90,7 @@ export const UsageDetailModal: React.FC<UsageDetailModalProps> = ({
   onClose,
   detailType,
   serverContext,
+  layoutTemplates,
   autoRefresh,
   onAutoRefreshChange,
   onCloudTimeRangeChange,
@@ -99,13 +110,24 @@ export const UsageDetailModal: React.FC<UsageDetailModalProps> = ({
     localTimeRange ?? serverContext.timeRange ?? DEFAULT_DETAIL_TIME_RANGE
 
   const templates = useMemo(() => {
-    if (!serverContext.source || !serverContext.selectedHost) return null
-    return buildDetailTemplates(
+    if (!serverContext.source) return null
+    if (layoutTemplates?.length) {
+      return mergeFixedCellTimeRangeIntoLayoutTemplates(
+        layoutTemplates,
+        currentTimeRange
+      )
+    }
+    return buildFixedCellUsageDetailQueryTemplates(
       serverContext.source,
       currentTimeRange,
-      serverContext.selectedHost
+      serverContext.selectedHost ?? null
     )
-  }, [serverContext.source, currentTimeRange, serverContext.selectedHost])
+  }, [
+    serverContext.source,
+    currentTimeRange,
+    serverContext.selectedHost,
+    layoutTemplates,
+  ])
 
   useEffect(() => {
     if (isOpen) {

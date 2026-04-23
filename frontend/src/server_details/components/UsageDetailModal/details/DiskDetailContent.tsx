@@ -210,7 +210,7 @@ function DetailChartBlock({
       )
 
       queryText = queryText.replace(
-        /(AND "host"='?:host:'?)/,
+        /(AND "host"=(?:':host:'|:host:))/,
         `$1 AND "instance" =~ /.*${escapedInstance}$/`
       )
 
@@ -218,14 +218,14 @@ function DetailChartBlock({
     } else if (queryText.includes('"diskio"')) {
       const deviceName = selectedDisk.device.split('/').pop() || ''
       queryText = queryText.replace(
-        /(AND "host"='?:host:'?)/,
+        /(AND "host"=(?:':host:'|:host:))/,
         `$1 AND "name"='${deviceName}'`
       )
       queryText = queryText.replace(/GROUP BY "name",\s*/, 'GROUP BY ')
     } else if (queryText.includes('"disk"')) {
       const escapedPath = selectedDisk.path.replace(/\\/g, '\\\\')
       queryText = queryText.replace(
-        /(AND "host"='?:host:'?)/,
+        /(AND "host"=(?:':host:'|:host:))/,
         `$1 AND "path"='${escapedPath}'`
       )
       queryText = queryText.replace(/GROUP BY "path",\s*/, 'GROUP BY ')
@@ -331,14 +331,11 @@ export function DiskDetailContent({
     if (!source || !host) return
     const fetchDisks = async () => {
       try {
-        const hostName =
-          templates
-            ?.find(t => t.tempVar === ':host:')
-            ?.values?.find((v: any) => v.selected)?.value || host
+        const escapedHost = host.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
         const q = [
           {
             id: 'disk-series',
-            text: `SHOW SERIES FROM "disk" WHERE "host"='${hostName}'`,
+            text: `SHOW SERIES FROM "disk" WHERE "host"='${escapedHost}'`,
             db: source.telegraf ?? 'Default',
           },
         ]
@@ -377,7 +374,7 @@ export function DiskDetailContent({
       }
     }
     fetchDisks()
-  }, [source, host, templates])
+  }, [source, host])
 
   const selectedDisk =
     availableDisks.find(d => d.path === selectedDiskPath) || null

@@ -151,7 +151,10 @@ function DetailChartBlock({
   let queryText = originalQueryText
 
   if (selectedInterface && selectedInterface !== 'all') {
-    queryText = queryText.replace('AND "host"=\':host:\'', `AND "host"=':host:' AND "interface"='${selectedInterface}'`)
+    queryText = queryText.replace(
+      /AND "host"\s*=\s*(?:':host:'|:host:)/,
+      `AND "host"=:host: AND "interface"='${selectedInterface}'`
+    )
   }
 
   if (!source) {
@@ -249,10 +252,10 @@ export function NetworkDetailContent({
     if (!source || !host) return
     const fetchInterfaces = async () => {
       try {
-        const hostName = templates?.find(t => t.tempVar === ':host:')?.values?.find((v: any) => v.selected)?.value || host
+        const escapedHost = host.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
         const q = [{
           id: 'net-series',
-          text: `SHOW SERIES FROM "net" WHERE "host"='${hostName}'`,
+          text: `SHOW SERIES FROM "net" WHERE "host"='${escapedHost}'`,
           db: source.telegraf ?? 'Default',
         }]
         const res = await executeQueries(source, q, [])
@@ -276,7 +279,7 @@ export function NetworkDetailContent({
       }
     }
     fetchInterfaces()
-  }, [source, host, templates])
+  }, [source, host])
 
   const networkHeaderContent = (
     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>

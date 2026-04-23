@@ -31,24 +31,25 @@ import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import type {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 import {
-  buildDetailTemplates,
+  buildFixedCellTagValueTemplate,
+  buildFixedCellUsageDetailQueryTemplates,
   DEFAULT_DETAIL_TIME_RANGE,
 } from 'src/server_details/components/UsageDetailModal/utils'
 
 const PROCESS_DETAIL_CHART_QUERIES: Record<string, string> = {
   cpu: `SELECT mean("cpu_usage_pct") AS "CPU"
 FROM ":db:".":rp:"."procstat_top"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=':process_name:' AND "user"=':user:'
+WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=:host: AND "process_name"=:process_name: AND "user"=:user:
 GROUP BY time(:interval:)
 FILL(null)`,
   memory: `SELECT mean("memory_usage_pct") AS "Memory"
 FROM ":db:".":rp:"."procstat_top"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=':process_name:' AND "user"=':user:'
+WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=:host: AND "process_name"=:process_name: AND "user"=:user:
 GROUP BY time(:interval:)
 FILL(null)`,
   io: `SELECT mean("io_read_bps") AS "mean_io_read_bps", mean("io_write_bps") AS "mean_io_write_bps", mean("io_total_bps") AS "Process I/O"
 FROM ":db:".":rp:"."procstat_top"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=':host:' AND "process_name"=':process_name:' AND "user"=':user:'
+WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host"=:host: AND "process_name"=:process_name: AND "user"=:user:
 GROUP BY "host", "process_name", "user", time(:interval:)
 FILL(null)`,
 }
@@ -321,14 +322,16 @@ function ProcessDetailModal({
 
   const templates = useMemo(() => {
     if (!source || !host || !processName) return null
-    const baseTemplates = buildDetailTemplates(
-      source,
-      currentTimeRange,
-      host,
-      processName,
-      user
-    )
-    return [...baseTemplates, intervalTemplate]
+    return [
+      ...buildFixedCellUsageDetailQueryTemplates(source, currentTimeRange, host),
+      buildFixedCellTagValueTemplate(
+        'process-detail-process_name',
+        ':process_name:',
+        processName
+      ),
+      buildFixedCellTagValueTemplate('process-detail-user', ':user:', user),
+      intervalTemplate,
+    ]
   }, [source, currentTimeRange, host, processName, user, intervalTemplate])
 
   useEffect(() => {

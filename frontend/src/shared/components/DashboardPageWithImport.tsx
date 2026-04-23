@@ -139,6 +139,11 @@ export interface DashboardPageWithImportConfig {
   /** Called when user clicks an injected extra action. */
   onCustomCellAction?: (cell: Cell, actionId: string) => void
   hideQueriesTab?: boolean
+  /**
+   * LayoutRenderer에 넘기는 `templatesForLayout`과 동일한 배열 (host hydrate + dashboardTime 등).
+   * e.g. UsageDetailModal이 그리드와 같은 템플릿을 쓰게 할 때.
+   */
+  onLayoutTemplatesChange?: (templates: Template[]) => void
 }
 
 export interface DashboardPageWithImportProps
@@ -204,6 +209,7 @@ function DashboardPageWithImport({
   templateSelectionContext,
   getExtraActionsForCell,
   onCustomCellAction,
+  onLayoutTemplatesChange,
   source,
   sources,
   inPresentationMode,
@@ -449,6 +455,10 @@ function DashboardPageWithImport({
 
     return Array.from(templateMap.values())
   }, [templatesWithSelection, selectedTimeRange])
+
+  React.useEffect(() => {
+    onLayoutTemplatesChange?.(templatesForLayout)
+  }, [templatesForLayout, onLayoutTemplatesChange])
 
   const dashboardTemplatesForEditor = useMemo(() => {
     const templateMap = new Map<string, Template>()
