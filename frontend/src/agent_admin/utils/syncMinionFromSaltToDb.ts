@@ -7,17 +7,164 @@ import {
   HostRegistrationPayload,
   HostStatus,
 } from 'src/shared/apis/host'
-import {getLocalGrainsItem, getLocalGrainsItemBatch} from 'src/shared/apis/saltStack'
+import {
+  getLocalGrainsItem,
+  getLocalGrainsItemBatch,
+  getLocalNetworkDefaultRoute,
+  getLocalNetworkDefaultRouteBatch,
+} from 'src/shared/apis/saltStack'
+
+interface DefaultRouteEntry {
+  destination?: string
+  interface?: string
+  metric?: number | string
+}
+
+function isLikelyContainerOrVirtualIface(interfaceName: string): boolean {
+  return /^(lo|docker\d*|veth.*|br-.*|cni.*|flannel.*|virbr\d*|zt.*)$/i.test(
+    interfaceName
+  )
+}
+
+function isIPv4Address(ip: string): boolean {
+  const parts = ip.split('.')
+  if (parts.length !== 4) return false
+  return parts.every(part => {
+    if (!/^\d+$/.test(part)) return false
+    const n = Number(part)
+    return n >= 0 && n <= 255
+  })
+}
+
+function isLoopbackIPv4(ip: string): boolean {
+  return ip.startsWith('127.')
+}
+
+function isLinkLocalIPv4(ip: string): boolean {
+  return ip.startsWith('169.254.')
+}
+
+function isPrivateIPv4(ip: string): boolean {
+  if (ip.startsWith('10.')) return true
+  if (ip.startsWith('192.168.')) return true
+  if (ip.startsWith('172.')) {
+    const second = Number(ip.split('.')[1])
+    return second >= 16 && second <= 31
+  }
+  return false
+}
+
+function scoreIPAddress(ip: string): number {
+  if (!isIPv4Address(ip)) return 100
+  if (isLoopbackIPv4(ip) || isLinkLocalIPv4(ip)) return 90
+  if (isPrivateIPv4(ip)) return 0
+  return 10
+}
+
+function sortPreferredIPv4(ipInterfaces: IPInterface[]): IPInterface[] {
+  return [...ipInterfaces]
+    .filter(iface => scoreIPAddress(String(iface.ipAddress ?? '')) < 100)
+    .sort(
+      (a, b) =>
+        scoreIPAddress(String(a.ipAddress ?? '')) -
+        scoreIPAddress(String(b.ipAddress ?? ''))
+    )
+}
+
+function parseMetric(metric: unknown): number {
+  if (typeof metric === 'number' && Number.isFinite(metric)) return metric
+  if (typeof metric === 'string' && metric.trim() !== '') {
+    const parsed = Number(metric)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return Number.MAX_SAFE_INTEGER
+}
+
+function isDefaultRouteDestination(destination?: string): boolean {
+  return destination === '0.0.0.0' || destination === 'default'
+}
+
+function normalizeDefaultRouteEntries(routeValue: any): DefaultRouteEntry[] {
+  if (!routeValue) return []
+  if (Array.isArray(routeValue)) return routeValue as DefaultRouteEntry[]
+  if (typeof routeValue === 'object') {
+    const inet = (routeValue as Record<string, any>).inet
+    if (Array.isArray(inet)) return inet as DefaultRouteEntry[]
+  }
+  return []
+}
+
+function flattenIPInterfacesFromGrains(grains: Record<string, any>): IPInterface[] {
+  const ipIfaceRaw: Record<string, string[]> = grains.ip_interfaces ?? {}
+  return Object.entries(ipIfaceRaw).flatMap(([interfaceName, addresses]) =>
+    (addresses as string[]).map(ipAddress => ({interfaceName, ipAddress}))
+  )
+}
+
+function extractStrictDefaultInterfaceName(routeValue: any): string | undefined {
+  const entries = normalizeDefaultRouteEntries(routeValue)
+    .filter(
+      entry =>
+        entry &&
+        typeof entry.interface === 'string' &&
+        entry.interface.trim() !== '' &&
+        isDefaultRouteDestination(entry.destination)
+    )
+    .filter(entry => !isLikelyContainerOrVirtualIface(String(entry.interface)))
+    .sort((a, b) => parseMetric(a.metric) - parseMetric(b.metric))
+
+  if (entries.length === 0) return undefined
+  return String(entries[0].interface)
+}
+
+function selectDefaultInterfaceName(
+  grains: Record<string, any>,
+  routeValue: any
+): string | undefined {
+  const interfaceName = extractStrictDefaultInterfaceName(routeValue)
+  if (!interfaceName) return undefined
+
+  const hasUsableIPv4 = flattenIPInterfacesFromGrains(grains)
+    .filter(iface => iface.interfaceName === interfaceName)
+    .some(iface => scoreIPAddress(String(iface.ipAddress ?? '')) < 90)
+
+  return hasUsableIPv4 ? interfaceName : undefined
+}
+
+function prioritizeIPInterfacesByDefaultRoute(
+  ipInterfaces: IPInterface[],
+  defaultInterfaceName?: string
+): IPInterface[] {
+  if (!defaultInterfaceName) return ipInterfaces
+
+  const prioritizedRaw = ipInterfaces.filter(
+    iface => iface.interfaceName === defaultInterfaceName
+  )
+  if (prioritizedRaw.length === 0) return ipInterfaces
+
+  const prioritized = sortPreferredIPv4(prioritizedRaw)
+  if (prioritized.length === 0) return ipInterfaces
+
+  const others = ipInterfaces.filter(
+    iface => iface.interfaceName !== defaultInterfaceName
+  )
+  return [...prioritized, ...others]
+}
 
 export function buildAgentPayloadFromGrains(
   host: string,
   grains: Record<string, any>,
-  status: HostStatus = 'accepted'
+  status: HostStatus = 'accepted',
+  defaultInterfaceName?: string
 ) {
   const ipIfaceRaw: Record<string, string[]> = grains.ip_interfaces ?? {}
-  const ipInterfaces: IPInterface[] = Object.entries(ipIfaceRaw).flatMap(
+  const flattenedIPInterfaces: IPInterface[] = Object.entries(ipIfaceRaw).flatMap(
     ([interfaceName, addresses]) =>
       (addresses as string[]).map(ipAddress => ({interfaceName, ipAddress}))
+  )
+  const ipInterfaces = prioritizeIPInterfacesByDefaultRoute(
+    flattenedIPInterfaces,
+    defaultInterfaceName
   )
 
   const gpusRaw = grains.gpus
@@ -62,18 +209,23 @@ export async function collectMinionHostPayloadFromSalt(
   host: string,
   status: HostStatus = 'accepted'
 ): Promise<HostRegistrationPayload> {
-  const grainsResp = await getLocalGrainsItem(
-    saltMasterUrl,
-    saltMasterToken,
-    host
-  )
+  const [grainsResp, defaultRouteResp] = await Promise.all([
+    getLocalGrainsItem(saltMasterUrl, saltMasterToken, host),
+    getLocalNetworkDefaultRoute(saltMasterUrl, saltMasterToken, host).catch(
+      () => undefined
+    ),
+  ])
   const grains = grainsResp?.data?.return?.[0]?.[host] ?? {}
+  const defaultInterfaceName = selectDefaultInterfaceName(
+    grains,
+    defaultRouteResp?.data?.return?.[0]?.[host]
+  )
 
   return {
     minionId: host,
     sourceType: 'salt',
     isCollector: false,
-    ...buildAgentPayloadFromGrains(host, grains, status),
+    ...buildAgentPayloadFromGrains(host, grains, status, defaultInterfaceName),
   }
 }
 
@@ -115,13 +267,22 @@ export async function collectMinionHostPayloadsFromSaltBatch(
   }
 
   let grainsReturn: Record<string, any>
+  let defaultRouteReturn: Record<string, any> = {}
   try {
-    const grainsResp = await getLocalGrainsItemBatch(
-      saltMasterUrl,
-      saltMasterToken,
-      hosts
-    )
+    const [grainsResp, defaultRouteResp] = await Promise.all([
+      getLocalGrainsItemBatch(
+        saltMasterUrl,
+        saltMasterToken,
+        hosts
+      ),
+      getLocalNetworkDefaultRouteBatch(
+        saltMasterUrl,
+        saltMasterToken,
+        hosts
+      ).catch(() => ({data: {return: [{}]}})),
+    ])
     grainsReturn = grainsResp?.data?.return?.[0] ?? {}
+    defaultRouteReturn = defaultRouteResp?.data?.return?.[0] ?? {}
   } catch (e) {
     const reason = e instanceof Error ? e.message : String(e)
     return {
@@ -149,11 +310,20 @@ export async function collectMinionHostPayloadsFromSaltBatch(
   for (const host of hosts) {
     const grains = grainsByHost.get(host)
     if (!grains) continue
+    const defaultInterfaceName = selectDefaultInterfaceName(
+      grains,
+      defaultRouteReturn[host]
+    )
     payloads.push({
       minionId: host,
       sourceType: 'salt',
       isCollector: false,
-      ...buildAgentPayloadFromGrains(host, grains, status),
+      ...buildAgentPayloadFromGrains(
+        host,
+        grains,
+        status,
+        defaultInterfaceName
+      ),
     })
   }
 
