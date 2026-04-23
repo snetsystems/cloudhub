@@ -2,7 +2,7 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.0.15",
+  "version": "1.0.20",
   "organization": "",
   "cells": [
     {
@@ -183,7 +183,7 @@
       ],
       "detailQueries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY \"name\", time(:interval:), \"path\" FILL(null)",
+          "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:), \"path\" FILL(null)",
           "label": "disk-io-percent",
           "queryTargetOS": "linux"
         },
@@ -193,7 +193,7 @@
           "queryTargetOS": "windows"
         },
         {
-          "query": "SELECT non_negative_derivative(max(\"reads\"), 1s) AS \"read_iops\", non_negative_derivative(max(\"writes\"), 1s) AS \"write_iops\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY \"name\", time(:interval:), \"path\" FILL(null)",
+          "query": "SELECT non_negative_derivative(max(\"reads\"), 1s) AS \"read_iops\", non_negative_derivative(max(\"writes\"), 1s) AS \"write_iops\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:), \"path\" FILL(null)",
           "label": "disk-iops",
           "queryTargetOS": "linux"
         },
@@ -203,7 +203,7 @@
           "queryTargetOS": "windows"
         },
         {
-          "query": "SELECT non_negative_derivative(max(\"read_bytes\"), 1s)/1048576 AS \"read_mib_per_s\", non_negative_derivative(max(\"write_bytes\"), 1s)/1048576 AS \"write_mib_per_s\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY \"name\", time(:interval:), \"path\" FILL(null)",
+          "query": "SELECT non_negative_derivative(max(\"read_bytes\"), 1s)/1048576 AS \"read_mib_per_s\", non_negative_derivative(max(\"write_bytes\"), 1s)/1048576 AS \"write_mib_per_s\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:), \"path\" FILL(null)",
           "label": "disk-throughput",
           "queryTargetOS": "linux"
         },
@@ -233,7 +233,7 @@
           "queryTargetOS": "windows"
         },
         {
-          "query": "SELECT mean(\"iops_in_progress\") AS \"queue_length\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY \"name\", time(:interval:), \"path\" FILL(null)",
+          "query": "SELECT mean(\"iops_in_progress\") AS \"queue_length\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:), \"path\" FILL(null)",
           "label": "disk-queue-length",
           "queryTargetOS": "linux"
         },
@@ -556,7 +556,7 @@
       "type": "line",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE \"host\" = :host: AND time > :dashboardTime: GROUP BY \"name\", time(:interval:) FILL(null)",
+          "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:) FILL(null)",
           "label": "Disk Utilization",
           "queryTargetOS": "linux"
         },
@@ -568,7 +568,7 @@
       ],
       "detailQueries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY \"name\", time(:interval:) FILL(null)",
+          "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:) FILL(null)",
           "label": "disk-io-percent",
           "queryTargetOS": "linux"
         },
@@ -578,7 +578,7 @@
           "queryTargetOS": "windows"
         },
         {
-          "query": "SELECT non_negative_derivative(max(\"reads\"), 1s) AS \"read_iops\", non_negative_derivative(max(\"writes\"), 1s) AS \"write_iops\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY \"name\", time(:interval:) FILL(null)",
+          "query": "SELECT non_negative_derivative(max(\"reads\"), 1s) AS \"read_iops\", non_negative_derivative(max(\"writes\"), 1s) AS \"write_iops\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:) FILL(null)",
           "label": "disk-iops",
           "queryTargetOS": "linux"
         },
@@ -588,7 +588,7 @@
           "queryTargetOS": "windows"
         },
         {
-          "query": "SELECT non_negative_derivative(max(\"read_bytes\"), 1s)/1048576 AS \"read_mib_per_s\", non_negative_derivative(max(\"write_bytes\"), 1s)/1048576 AS \"write_mib_per_s\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY \"name\", time(:interval:) FILL(null)",
+          "query": "SELECT non_negative_derivative(max(\"read_bytes\"), 1s)/1048576 AS \"read_mib_per_s\", non_negative_derivative(max(\"write_bytes\"), 1s)/1048576 AS \"write_mib_per_s\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:) FILL(null)",
           "label": "disk-throughput",
           "queryTargetOS": "linux"
         },
@@ -618,7 +618,7 @@
           "queryTargetOS": "windows"
         },
         {
-          "query": "SELECT mean(\"iops_in_progress\") AS \"queue_length\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY \"name\", time(:interval:) FILL(null)",
+          "query": "SELECT mean(\"iops_in_progress\") AS \"queue_length\" FROM \":db:\".\":rp:\".\"diskio\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:) FILL(null)",
           "label": "disk-queue-length",
           "queryTargetOS": "linux"
         },

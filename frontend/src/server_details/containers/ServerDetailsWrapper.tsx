@@ -363,6 +363,10 @@ function ServerDetailsWrapper(props) {
 
   const USAGE_DETAIL_ACTION_ID = 'open-usage-detail'
 
+  const [layoutTemplates, setLayoutTemplates] = useState<Template[] | null>(
+    null
+  )
+
   const [usageDetailState, setUsageDetailState] = useState<{
     isOpen: boolean
     detailType: UsageDetailType | null
@@ -536,12 +540,13 @@ function ServerDetailsWrapper(props) {
         transformCell={transformCellByOS}
         getExtraActionsForCell={getExtraActionsForCell}
         onCustomCellAction={handleCustomCellAction}
-
+        onLayoutTemplatesChange={setLayoutTemplates}
       />
       <UsageDetailModal
         isOpen={usageDetailState.isOpen}
         onClose={handleCloseUsageDetail}
         detailType={usageDetailState.detailType}
+        layoutTemplates={layoutTemplates}
         serverContext={{
           selectedHost,
           source: props.source ?? null,
