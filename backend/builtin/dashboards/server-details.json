@@ -12,7 +12,7 @@
       "w": 48,
       "h": 35,
       "minW": 24,
-      "minH": 2,
+      "minH": 30,
       "name": "Process",
       "queries": [],
       "type": "component"
@@ -24,7 +24,7 @@
       "w": 48,
       "h": 17,
       "minW": 16,
-      "minH": 4,
+      "minH": 17,
       "name": "Memory Usage",
       "type": "line-stacked",
       "queries": [
@@ -166,7 +166,7 @@
       "w": 48,
       "h": 18,
       "minW": 16,
-      "minH": 4,
+      "minH": 17,
       "name": "Disk Used Spaces(%)",
       "type": "line",
       "queries": [
@@ -320,7 +320,7 @@
       "w": 48,
       "h": 17,
       "minW": 16,
-      "minH": 4,
+      "minH": 17,
       "name": "CPU Usage",
       "type": "line",
       "queries": [
@@ -433,7 +433,7 @@
       "w": 48,
       "h": 42,
       "minW": 24,
-      "minH": 2,
+      "minH": 17,
       "name": "Server Info",
       "type": "component",
       "queries": [
@@ -450,7 +450,7 @@
       "w": 48,
       "h": 14,
       "minW": 16,
-      "minH": 4,
+      "minH": 17,
       "name": "Network",
       "type": "line",
       "queries": [
@@ -552,6 +552,8 @@
       "y": 66,
       "w": 48,
       "h": 17,
+      "minW": 16,
+      "minH": 17,
       "name": "Disk I/O Usage (%)",
       "type": "line",
       "queries": [
