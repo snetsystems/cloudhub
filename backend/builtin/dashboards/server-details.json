@@ -2,7 +2,7 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "organization": "",
   "cells": [
     {
@@ -558,7 +558,7 @@
       "type": "line",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"mount_path\" != '' GROUP BY \"name\", time(:interval:) FILL(null)",
+          "query": "SELECT non_negative_derivative(max(\"io_time\"), 1s)/10 AS \"io_percent\" FROM \":db:\".\":rp:\".\"diskio\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"mount_path\" != '' GROUP BY \"mount_path\", time(:interval:) FILL(null)",
           "label": "Disk Utilization",
           "queryTargetOS": "linux"
         },
