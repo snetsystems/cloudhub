@@ -573,9 +573,8 @@ FILL(null)`,
 FROM (
   SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
   FROM ":db:".":rp:"."net"
-  WHERE time > now() - 3m
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime:
   GROUP BY time(:interval:), "interface"
-  LIMIT 1
 )
 GROUP BY "host"`,
   },
@@ -585,9 +584,8 @@ GROUP BY "host"`,
 FROM (
   SELECT max("Bytes_Received_persec") + max("Bytes_Sent_persec") AS "traffic"
   FROM ":db:".":rp:"."win_net"
-  WHERE time > now() - 3m AND "instance" !~ /^_Total/
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "instance" !~ /^_Total/
   GROUP BY time(:interval:), "host", "instance"
-  LIMIT 1
 )
 GROUP BY "host"`,
   },
@@ -597,9 +595,8 @@ GROUP BY "host"`,
 FROM (
   SELECT last("Percent_Disk_Time") AS "Disk I/O %"
   FROM ":db:".":rp:"."win_diskio"
-  WHERE time > now() - 3m AND "instance" !~ /^_Total/
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "instance" !~ /^_Total/
   GROUP BY time(:interval:), "host", "instance"
-  LIMIT 1
 )
 GROUP BY "host"`,
   },
@@ -635,9 +632,8 @@ GROUP BY "host"`,
   FROM (
     SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
     FROM ":db:".":rp:"."diskio"
-    WHERE time > now() - 3m AND "mount_path" != ''
+    WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "mount_path" != ''
     GROUP BY time(:interval:), "host", "mount_path"
-    LIMIT 1
   )
   GROUP BY "host"`,
   },
@@ -768,9 +764,8 @@ FILL(null)`,
   FROM (
     SELECT max("Bytes_Received_persec") + max("Bytes_Sent_persec") AS "traffic"
     FROM ":db:".":rp:"."win_net"
-    WHERE time > now() - 3m AND "instance" !~ /^_Total/
+    WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "instance" !~ /^_Total/
     GROUP BY time(:interval:), "host", "instance"
-    LIMIT 1
   )
   GROUP BY "host"`,
   },
@@ -780,9 +775,8 @@ FILL(null)`,
   FROM (
     SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
     FROM ":db:".":rp:"."net"
-    WHERE time > now() - 3m
+    WHERE time > :dashboardTime: AND time < :upperDashboardTime:
     GROUP BY time(:interval:), "host", "interface"
-    LIMIT 1
   )
   GROUP BY "host"`,
   },
@@ -816,9 +810,8 @@ GROUP BY "host"`,
   FROM (
     SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
     FROM ":db:".":rp:"."diskio"
-    WHERE time > now() - 3m AND "mount_path" != ''
+    WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "mount_path" != ''
     GROUP BY time(:interval:), "host", "mount_path"
-    LIMIT 1
   )
   GROUP BY "host"`,
   },
@@ -828,9 +821,8 @@ GROUP BY "host"`,
 FROM (
   SELECT last("Percent_Disk_Time") AS "Disk I/O %"
   FROM ":db:".":rp:"."win_diskio"
-  WHERE time > now() - 3m AND "instance" !~ /^_Total/
+  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "instance" !~ /^_Total/
   GROUP BY time(:interval:), "host", "instance"
-  LIMIT 1
 )
 GROUP BY "host"`,
   },

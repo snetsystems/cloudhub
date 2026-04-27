@@ -58,14 +58,14 @@ const ALERT_NAMES = [
   'server-deadman',
 ]
 
-// GROUP BY time() 없이 각 (host, level, alertName)의 가장 최신 이벤트만 가져옴
-// FILL(none): 값 없는 버킷 생략 → OK 회복 이벤트가 null로 사라지지 않음
-const ALERT_QUERY_TEXT = `SELECT last("message") AS "message", last("value") AS "value"
+// 각 host별로 모든 알람 발생 이력을 가져옴 (최신순 300개 제한)
+const ALERT_QUERY_TEXT = `SELECT "message", "value", "level", "alertName"
 FROM "${ALERT_DB}"."autogen"."cloudhub_alerts"
 WHERE time > :dashboardTime: AND time < :upperDashboardTime:
   AND (${ALERT_NAMES.map(n => `"alertName"='${n}'`).join(' OR ')})
-GROUP BY "host", "level", "alertName"
-FILL(none)`
+GROUP BY "host"
+ORDER BY time DESC
+LIMIT 300`
 
 // level 우선순위 (높을수록 심각)
 const LEVEL_PRIORITY: Record<AlertLevel, number> = {
@@ -211,6 +211,8 @@ export function NewHostsPage({
     }
   }
 
+  const [frozenAlertStatus, setFrozenAlertStatus] = useState<any>(null)
+
   const columns = useMemo(
     () =>
       serverListColumns({
@@ -220,6 +222,7 @@ export function NewHostsPage({
         isAlertsEnabled,
         onStatusIconClick: (host: string) => {
           setSelectedAlertHost(host)
+          setFrozenAlertStatus(alertStatusMap[host] ?? null)
           setIsAlertModalOpen(true)
         },
       }),
@@ -244,7 +247,6 @@ export function NewHostsPage({
     cloudTimeRange?.serverList?.lower,
     cloudTimeRange?.serverList?.upper,
     manualRefreshState.value,
-    timeZone,
     cloudAutoRefresh.serverList,
   ])
 
@@ -411,60 +413,52 @@ export function NewHostsPage({
 
       const series: any[] = result?.results?.[0]?.series ?? []
 
-      const perAlertLatest: Record<
-        string,
-        Record<
-          string,
-          {time: string; level: AlertLevel; message: string; value?: number}
-        >
-      > = {}
+      const nextMap: AlertStatusMap = {}
 
       series.forEach(s => {
         const host: string = s?.tags?.host
-        const levelTag: string = s?.tags?.level ?? ''
-        const alertName: string = s?.tags?.alertName ?? ''
-        if (!host || !alertName) return
+        if (!host) return
 
-        const level: AlertLevel = mapInfluxLevel(levelTag)
         const timeIndex = (s.columns ?? []).indexOf('time')
         const messageIndex = (s.columns ?? []).indexOf('message')
         const valueIndex = (s.columns ?? []).indexOf('value')
+        const levelIndex = (s.columns ?? []).indexOf('level')
+        const alertNameIndex = (s.columns ?? []).indexOf('alertName')
 
-        const row = s?.values?.[0]
-        if (!row) return
-        const eventTime: string | null = timeIndex >= 0 ? row[timeIndex] : null
-        const messageStr: string = messageIndex >= 0 ? row[messageIndex] : ''
-        const valueNum: number | undefined =
-          valueIndex >= 0 ? row[valueIndex] : undefined
-        if (!eventTime) return
+        const history: any[] = []
+        const latestPerAlert: Record<string, AlertLevel> = {}
 
-        if (!perAlertLatest[host]) perAlertLatest[host] = {}
+        ;(s.values ?? []).forEach((row: any[]) => {
+          const eventTime: string | null =
+            timeIndex >= 0 ? row[timeIndex] : null
+          const messageStr: string = messageIndex >= 0 ? row[messageIndex] : ''
+          const valueNum: number | undefined =
+            valueIndex >= 0 ? row[valueIndex] : undefined
+          const levelTag: string = levelIndex >= 0 ? row[levelIndex] : ''
+          const alertNameStr: string =
+            alertNameIndex >= 0 ? row[alertNameIndex] : ''
 
-        const existing = perAlertLatest[host][alertName]
-        if (!existing || eventTime > existing.time) {
-          perAlertLatest[host][alertName] = {
+          if (!eventTime || !alertNameStr) return
+
+          const level = mapInfluxLevel(levelTag)
+
+          history.push({
             time: eventTime,
             level,
+            alertName: alertNameStr,
             message: messageStr,
             value: valueNum,
-          }
-        }
-      })
-
-      const nextMap: AlertStatusMap = {}
-      Object.entries(perAlertLatest).forEach(([host, alertMap]) => {
-        const history = Object.entries(alertMap).map(
-          ([alertName, {time, level, message, value}]) => ({
-            time,
-            level,
-            alertName,
-            message,
-            value,
           })
-        )
 
-        let currentLevel = history.reduce<AlertLevel>(
-          (worst, {level}) =>
+          // ORDER BY time DESC로 가져왔으므로, 처음 등장하는 alertName이 가장 최신 상태
+          if (!latestPerAlert[alertNameStr]) {
+            latestPerAlert[alertNameStr] = level
+          }
+        })
+
+        // Table의 현재 아이콘 색상을 결정하기 위해, 각 알람의 '최신 상태' 중 가장 심각한 것을 고름
+        let currentLevel = Object.values(latestPerAlert).reduce<AlertLevel>(
+          (worst, level) =>
             LEVEL_PRIORITY[level] > LEVEL_PRIORITY[worst] ? level : worst,
           'normal'
         )
@@ -584,10 +578,11 @@ export function NewHostsPage({
         source={source}
         isVisible={isAlertModalOpen}
         host={selectedAlertHost ?? ''}
-        alertStatus={
-          selectedAlertHost ? alertStatusMap[selectedAlertHost] ?? null : null
-        }
-        onClose={() => setIsAlertModalOpen(false)}
+        alertStatus={frozenAlertStatus}
+        onClose={() => {
+          setIsAlertModalOpen(false)
+          setFrozenAlertStatus(null)
+        }}
       />
     </Page>
   )

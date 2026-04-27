@@ -34,7 +34,7 @@ const STATUS_CONFIG: Record<
 
 const AlertStatusIcon = ({status, onStatusClick}: Props): JSX.Element => {
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.unknown
-  const isClickable = status !== 'normal' && !!onStatusClick
+  const isClickable = !!onStatusClick
 
   return (
     <div
