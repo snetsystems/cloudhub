@@ -20,6 +20,7 @@ interface Props {
   dygraphSeries: DygraphSeries
   height: number
   onUpdateHeight: (height: number) => void
+  onVisibilityChange?: (visibilities: boolean[]) => void
 }
 
 interface State {
@@ -127,6 +128,7 @@ class StaticLegend extends Component<Props, State> {
       this.props.dygraph.setVisibility(visibilities)
 
       this.setState({visibilities})
+      this.props.onVisibilityChange?.(visibilities)
       return
     }
 
@@ -144,6 +146,7 @@ class StaticLegend extends Component<Props, State> {
       visibilities: newVisibilities,
       clickStatus: !prevClickStatus,
     })
+    this.props.onVisibilityChange?.(newVisibilities)
   }
 }
 

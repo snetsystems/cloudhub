@@ -266,6 +266,7 @@ class Dygraph extends Component<Props, State> {
             dygraph={this.dygraph}
             height={staticLegendHeight}
             onUpdateHeight={this.handleUpdateStaticLegendHeight}
+            onVisibilityChange={this.handleStaticLegendVisibilityChange}
           />
         )}
         {this.nestedGraph &&
@@ -630,6 +631,12 @@ class Dygraph extends Component<Props, State> {
 
   private handleMouseEnterLegend = () => {
     this.setState({isMouseInLegend: true})
+  }
+
+  private handleStaticLegendVisibilityChange = (visibilities: boolean[]) => {
+    // Force immediate React re-render for overlays (MaxMarker/Crosshair)
+    // right after legend toggle, without waiting for mouse hover/draw timing.
+    this.setState({visibilities})
   }
 }
 

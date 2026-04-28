@@ -2,7 +2,7 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.0.22",
+  "version": "1.0.21",
   "organization": "",
   "cells": [
     {
@@ -325,12 +325,12 @@
       "type": "line",
       "queries": [
         {
-          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_nice\") AS \"nice\", mean(\"usage_steal\") AS \"steal\", mean(\"usage_iowait\") AS \"iowait\", mean(\"usage_irq\") AS \"irq\", mean(\"usage_softirq\") AS \"softirq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
+          "query": "SELECT mean(\"usage_system\") AS \"system\", mean(\"usage_user\") AS \"user\", mean(\"usage_nice\") AS \"nice\", mean(\"usage_steal\") AS \"steal\", mean(\"usage_iowait\") AS \"iowait\", mean(\"usage_irq\") AS \"irq\", mean(\"usage_softirq\") AS \"soft irq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: AND \"cpu\" = 'cpu-total' GROUP BY time(:interval:) FILL(null)",
           "label": "CPU Usage",
           "queryTargetOS": "linux"
         },
         {
-          "query": "SELECT mean(\"Percent_Privileged_Time\") AS \"system\", mean(\"Percent_User_Time\") AS \"user\", mean(\"Percent_Interrupt_Time\") AS \"IRQ\", mean(\"Percent_DPC_Time\") AS \"Soft IRQ\" FROM \":db:\".\":rp:\".\"win_cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: GROUP BY time(:interval:) FILL(null)",
+          "query": "SELECT mean(\"Percent_Privileged_Time\") AS \"system\", mean(\"Percent_User_Time\") AS \"user\", mean(\"Percent_Interrupt_Time\") AS \"irq\", mean(\"Percent_DPC_Time\") AS \"soft irq\" FROM \":db:\".\":rp:\".\"win_cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: GROUP BY time(:interval:) FILL(null)",
           "label": "CPU Usage",
           "queryTargetOS": "windows"
         }

@@ -35,13 +35,17 @@ const MaxMarker: FunctionComponent<Props> = ({
   let maxTime = 0
   let maxSeriesIdx = -1
 
-  // 1. Find the absolute maximum value, its timestamp, and series index
+  // 1. Find maximum within current visible x-range and visible series only.
+  const [minX, maxX] = dygraph.xAxisRange()
   const visibilities = dygraph.visibility() || []
   for (const row of timeSeries) {
     if (!row || row.length < 2) {
       continue
     }
-    const time = row[0]
+    const time = Number(row[0])
+    if (!Number.isFinite(time) || time < minX || time > maxX) {
+      continue
+    }
     for (let i = 1; i < row.length; i++) {
       if (visibilities.length > i - 1 && visibilities[i - 1] === false) {
         continue
@@ -59,13 +63,7 @@ const MaxMarker: FunctionComponent<Props> = ({
     return null
   }
 
-  // 2. Filter by current visible range
-  const [minX, maxX] = dygraph.xAxisRange()
-  if (maxTime < minX || maxTime > maxX) {
-    return null
-  }
-
-  // 3. Convert data coordinates to DOM coordinates
+  // 2. Convert data coordinates to DOM coordinates
   let x = dygraph.toDomXCoord(maxTime)
   let y = dygraph.toDomYCoord(maxVal)
 
@@ -76,7 +74,7 @@ const MaxMarker: FunctionComponent<Props> = ({
   x += offsetX
   y += offsetY
 
-  // 4. Get the color of the specific series from Dygraph
+  // 3. Get the color of the specific series from Dygraph
   let seriesColor = '#FDC44F'
   const labels = dygraph.getLabels()
   if (labels && maxSeriesIdx > 0 && maxSeriesIdx < labels.length) {
@@ -93,7 +91,7 @@ const MaxMarker: FunctionComponent<Props> = ({
     seriesColor = colors[maxSeriesIdx - 1] || '#FDC44F'
   }
 
-  // 5. Format the value using the system's standard for charts
+  // 4. Format the value using the system's standard for charts
   const digits =
     decimalPlaces && decimalPlaces.isEnforced ? decimalPlaces.digits : null
 
