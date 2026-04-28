@@ -38,7 +38,6 @@ import LoadingDots from 'src/shared/components/LoadingDots'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import AlertStatusSummary from 'src/hosts/components/AlertStatusSummary'
 import AlertStatusModal from 'src/hosts/components/AlertStatusModal'
-import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
 import {AlertLevel, AlertStatusMap} from 'src/hosts/types/alertStatus'
 
 type HostCellValue = TimeSeriesValue | TimeSeriesValue[] | TableLineChartPoint[]
@@ -556,12 +555,6 @@ export function NewHostsPage({
                       tableData={tableData}
                       isAlertsEnabled={isAlertsEnabled}
                     />
-                    {!isAlertsEnabled && (
-                      <QuestionMarkTooltip
-                        tipID="alert-status-disabled"
-                        tipContent="Kapacitor alarm settings are required to show the server status."
-                      />
-                    )}
                   </div>
                 </div>
               }

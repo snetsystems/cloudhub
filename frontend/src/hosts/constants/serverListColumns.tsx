@@ -18,6 +18,7 @@ import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 import {toLineValues} from 'src/dashboards/utils/tableLineChart'
 import AlertStatusIcon from 'src/hosts/components/AlertStatusIcon'
 import {AlertStatusMap} from 'src/hosts/types/alertStatus'
+import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
 
 export interface ServerListQuery {
   id: string
@@ -51,7 +52,18 @@ export const serverListColumns = ({
   return [
     {
       key: 'host',
-      name: 'Status',
+      name: !isAlertsEnabled ? (
+        <div style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}>
+          Status
+          <QuestionMarkTooltip
+            tipID="alert-status-disabled"
+            tipContent="Kapacitor alarm settings are required to show the server status."
+            tooltipPlace="right"
+          />
+        </div>
+      ) : (
+        'Status'
+      ),
       align: AlignType.CENTER,
       parentHeader: 'Server',
       parentHeaderClassName: 'parent-header-server',
@@ -59,6 +71,7 @@ export const serverListColumns = ({
         thead: {
           align: AlignType.CENTER,
           className: 'server-status',
+          style: {zIndex: 11},
         },
       },
       render: (value: string) => {
