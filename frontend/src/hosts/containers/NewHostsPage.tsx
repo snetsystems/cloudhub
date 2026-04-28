@@ -99,6 +99,7 @@ interface Props {
   onChooseCloudTimeRange: (timeRange: CloudTimeRange) => void
   setTimeZone: typeof appActions.setTimeZone
 }
+
 export function NewHostsPage({
   source,
   cloudAutoRefresh,
@@ -247,7 +248,6 @@ export function NewHostsPage({
     cloudTimeRange?.serverList?.lower,
     cloudTimeRange?.serverList?.upper,
     manualRefreshState.value,
-    cloudAutoRefresh.serverList,
   ])
 
   useEffect(() => {
@@ -292,7 +292,17 @@ export function NewHostsPage({
       intervalID = null
       GlobalAutoRefresher.stopPolling()
     }
-  }, [cloudAutoRefresh, displayedChartMode])
+  }, [
+    cloudAutoRefresh,
+    displayedChartMode,
+    cloudTimeRange?.serverList?.lower,
+    cloudTimeRange?.serverList?.upper,
+    source,
+  ])
+
+  useEffect(() => {
+    console.log('timeRange: ', cloudTimeRange?.serverList)
+  }, [cloudTimeRange])
 
   const fetchTableData = async ({
     isSubscribed,
@@ -308,16 +318,12 @@ export function NewHostsPage({
 
     const isModeSwitchFetch = fetchIntent === 'mode-switch'
 
-    setIsError(false)
-
     if (isModeSwitchFetch) {
       setIsModeSwitching(true)
       setIsTableLoading(true)
+      setIsError(false)
     } else {
       setIsRefreshing(true)
-      if (isError) {
-        setIsTableLoading(true)
-      }
     }
 
     try {
@@ -369,6 +375,7 @@ export function NewHostsPage({
       if (isModeSwitchFetch) {
         setDisplayedChartMode(chartMode)
       }
+      setIsError(false)
       setIsModeSwitching(false)
       setIsTableLoading(false)
       setIsRefreshing(false)
