@@ -39,7 +39,7 @@ export interface ColumnInfoOptions {
 }
 
 export interface ColumnInfo extends ColumnBaseInfo {
-  name: string
+  name: string | ReactNode
   key: string
   parentHeader?: string
   parentHeaderClassName?: string

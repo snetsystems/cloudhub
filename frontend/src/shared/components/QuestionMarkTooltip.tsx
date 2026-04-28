@@ -6,6 +6,7 @@ interface Props {
   tipContent: string
   customClass?: string
   clickToClose?: boolean
+  tooltipPlace?: 'top' | 'right' | 'bottom' | 'left'
 }
 
 const QuestionMarkTooltip: FunctionComponent<Props> = ({
@@ -13,6 +14,7 @@ const QuestionMarkTooltip: FunctionComponent<Props> = ({
   tipContent,
   customClass,
   clickToClose = false,
+  tooltipPlace = 'bottom',
 }) => (
   <div className="question-mark-tooltip">
     <div
@@ -33,7 +35,7 @@ const QuestionMarkTooltip: FunctionComponent<Props> = ({
       id={`${tipID}-tooltip`}
       effect="solid"
       html={true}
-      place="bottom"
+      place={tooltipPlace}
       class={`influx-tooltip ${customClass || ''}`}
       clickable={clickToClose}
       globalEventOff={clickToClose ? "click" : undefined}

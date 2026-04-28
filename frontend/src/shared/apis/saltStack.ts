@@ -287,6 +287,60 @@ export async function getLocalGrainsItemBatch(
 }
 
 /**
+ * Get default network route information from minion via Salt network.default_route.
+ * Usually returns route entries including interface and gateway.
+ */
+export async function getLocalNetworkDefaultRoute(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  try {
+    const params = {
+      client: 'local',
+      tgt: pMinionId,
+      fun: 'network.default_route',
+      arg: ['inet'],
+      tgt_type: 'glob',
+    }
+
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+/**
+ * Same as getLocalNetworkDefaultRoute but one Salt run for multiple minions (tgt_type=list).
+ */
+export async function getLocalNetworkDefaultRouteBatch(
+  pUrl: string,
+  pToken: string,
+  minionIds: string[]
+) {
+  if (minionIds.length === 0) {
+    return {data: {return: [{}]}}
+  }
+  if (minionIds.length === 1) {
+    return getLocalNetworkDefaultRoute(pUrl, pToken, minionIds[0])
+  }
+  try {
+    const params = {
+      client: 'local',
+      tgt: minionIds.join(','),
+      fun: 'network.default_route',
+      arg: ['inet'],
+      tgt_type: 'list',
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+/**
  * Get active mount points (device -> path mapping) from minion via Salt mount.active.
  * Linux: returns { "/": { device, fstype, ... }, "/home": ... }.
  * Windows: may not be supported; caller should catch and use fallback (e.g. empty).

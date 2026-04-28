@@ -144,26 +144,6 @@ const AlertStatusModal = ({
                 )}
               </Panel.Body>
             </Panel>
-
-            {/* 2. Chart Placeholder */}
-            {/* <Panel>
-              <Panel.Header title="Alert Chart" />
-              <Panel.Body>
-                <div className="alert-status-modal--placeholder alert-status-modal--placeholder-chart">
-                  <p>추후 Chart가 구현될 영역입니다.</p>
-                </div>
-              </Panel.Body>
-            </Panel> */}
-
-            {/* 3. Metadata Placeholder  */}
-            {/* <Panel>
-              <Panel.Header title="Meta Data" />
-              <Panel.Body>
-                <div className="alert-status-modal--placeholder alert-status-modal--placeholder-meta">
-                  <p>추후 메타 데이터가 구현될 영역입니다.</p>
-                </div>
-              </Panel.Body>
-            </Panel> */}
           </div>
         </OverlayBody>
       </OverlayContainer>
