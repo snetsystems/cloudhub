@@ -490,7 +490,6 @@ function ServerDetailsWrapper(props) {
         noDataMessage="No data"
         templateAvailabilityGate={templateAvailabilityGate}
         requiredTemplateVars={[':host:']}
-        hideQueriesTab={true}
         draggableCancel=".server-details-cell-tab-buttons, .dash-graph-context"
         templateSelectionContext={
           ServerDetailsPageContext as React.Context<TemplateSelectionContextValue | null>

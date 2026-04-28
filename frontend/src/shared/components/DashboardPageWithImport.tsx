@@ -138,7 +138,6 @@ export interface DashboardPageWithImportConfig {
   getExtraActionsForCell?: (cell: Cell) => DashboardsModels.CellExtraAction[]
   /** Called when user clicks an injected extra action. */
   onCustomCellAction?: (cell: Cell, actionId: string) => void
-  hideQueriesTab?: boolean
   /**
    * LayoutRenderer에 넘기는 `templatesForLayout`과 동일한 배열 (host hydrate + dashboardTime 등).
    * e.g. UsageDetailModal이 그리드와 같은 템플릿을 쓰게 할 때.
@@ -237,7 +236,6 @@ function DashboardPageWithImport({
   notify,
   cellQueryStatus,
   editCellQueryStatus,
-  hideQueriesTab,
 }: DashboardPageWithImportProps) {
   const safeFluxLinks = fluxLinks ?? {self: '', suggestions: '', ast: ''}
   const safeNotify = notify ?? (() => {})
@@ -528,6 +526,15 @@ function DashboardPageWithImport({
 
   const handleCloseCellEditor = () => setIsCellEditorOpen(false)
 
+  const hideBuiltinQueriesTab = React.useMemo(() => {
+    if (!selectedCell || !('cellOrigin' in selectedCell)) return false
+    const o = (selectedCell as Cell).cellOrigin
+    return (
+      o === CellOrigin.Builtin ||
+      String(o ?? '').toLowerCase() === 'builtin'
+    )
+  }, [selectedCell])
+
   const handleChooseTimeRange = (tr: QueriesModels.TimeRange) => {
     onChooseCloudTimeRange({...cloudTimeRange, [timeRangeKey]: tr})
   }
@@ -711,7 +718,7 @@ function DashboardPageWithImport({
             editQueryStatus={safeEditCellQueryStatus}
             dashboardTimeRange={selectedTimeRange}
             dashboardRefresh={dashboardRefresh}
-            hideQueriesTab={hideQueriesTab}
+            hideQueriesTab={hideBuiltinQueriesTab}
           />
         </OverlayTechnology>
       )}
