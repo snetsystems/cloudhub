@@ -49,12 +49,19 @@ const ALERT_DB = 'Default'
 
 // 모니터링할 alertName 목록 (TICKscript의 .tag('alertName', ...) 와 일치해야 함)
 const ALERT_NAMES = [
-  'server-cpu-usage',
-  'server-mem-usage',
-  'server-disk-usage',
-  'server-disk-io',
-  'server-network-traffic',
-  'server-deadman',
+  // 'server-cpu-usage',
+  // 'server-mem-usage',
+  // 'server-disk-usage',
+  // 'server-disk-io',
+  // 'server-network-traffic',
+  // 'server-deadman',
+  'CPU_Usage',
+  'Memory_Usage',
+  'Disk_Usage',
+  'Disk_IO',
+  'Network_BPS',
+  'Deadman',
+  'Restart',
 ]
 
 // 각 host별로 모든 알람 발생 이력을 가져옴 (최신순 300개 제한)
@@ -172,9 +179,7 @@ export function NewHostsPage({
         )
         const tasks = resp.data?.tasks || []
 
-        const hasScripts = tasks.some(
-          t => ALERT_NAMES.includes(t.id) && t.status === 'enabled'
-        )
+        const hasScripts = tasks.some(t => t.status === 'enabled')
         setIsAlertsEnabled(hasScripts)
       } catch (e) {
         console.warn('Failed to check kapacitor tasks', e)

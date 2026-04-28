@@ -217,7 +217,9 @@ const AlertStatusTable = ({source, host, time}: Props) => {
             const path = s.tags?.path || s.tags?.instance || 'Unknown'
             const usage = getVal(closestRow, 'Disk Usage')
             if (usage !== null) {
-              disksArray.push({path, usage})
+              if (!disksArray.some(d => d.path === path)) {
+                disksArray.push({path, usage})
+              }
             }
             validDiskQuery = qOriginal.text
           }
@@ -226,7 +228,9 @@ const AlertStatusTable = ({source, host, time}: Props) => {
             const iface = s.tags?.interface || s.tags?.instance || 'Unknown'
             const traff = getVal(closestRow, 'traffic')
             if (traff !== null) {
-              netsArray.push({interface: iface, traffic: traff})
+              if (!netsArray.some(n => n.interface === iface)) {
+                netsArray.push({interface: iface, traffic: traff})
+              }
             }
             validNetQuery = qOriginal.text
           }
