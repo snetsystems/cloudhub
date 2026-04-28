@@ -2,7 +2,7 @@
   "id": 0,
   "name": "server-details",
   "type": "builtin",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "organization": "",
   "cells": [
     {
@@ -330,7 +330,7 @@
           "queryTargetOS": "linux"
         },
         {
-          "query": "SELECT mean(\"Percent_Privileged_Time\") AS \"system\", mean(\"Percent_User_Time\") AS \"user\", mean(\"Percent_Idle_Time\") AS \"idle\" FROM \":db:\".\":rp:\".\"win_cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: GROUP BY time(:interval:) FILL(null)",
+          "query": "SELECT mean(\"Percent_Privileged_Time\") AS \"system\", mean(\"Percent_User_Time\") AS \"user\", mean(\"Percent_Interrupt_Time\") AS \"IRQ\", mean(\"Percent_DPC_Time\") AS \"Soft IRQ\" FROM \":db:\".\":rp:\".\"win_cpu\" WHERE \"host\" = :host: AND time > :dashboardTime: GROUP BY time(:interval:) FILL(null)",
           "label": "CPU Usage",
           "queryTargetOS": "windows"
         }
@@ -377,9 +377,19 @@
           "queryTargetOS": "linux"
         },
         {
+          "query": "SELECT mean(\"Percent_Interrupt_Time\") AS \"IRQ\" FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"instance\"='_Total' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-irq",
+          "queryTargetOS": "windows"
+        },
+        {
           "query": "SELECT mean(\"usage_softirq\") AS \"softirq\" FROM \":db:\".\":rp:\".\"cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"cpu\"='cpu-total' AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
           "label": "cpu-soft-irq",
           "queryTargetOS": "linux"
+        },
+        {
+          "query": "SELECT mean(\"Percent_DPC_Time\") AS \"SoftIRQ\" FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: AND \"instance\"='_Total' GROUP BY time(:interval:) FILL(null)",
+          "label": "cpu-soft-irq",
+          "queryTargetOS": "windows"
         },
         {
           "query": "SELECT mean(\"load1\") AS \"01 min\", mean(\"load5\") AS \"05 min\", mean(\"load15\") AS \"15 min\" FROM \":db:\".\":rp:\".\"system\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",

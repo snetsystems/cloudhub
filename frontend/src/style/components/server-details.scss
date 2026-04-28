@@ -294,6 +294,10 @@
   &--2x2 {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
+
+    .process-detail-modal__block--span-cols-2 {
+      grid-column: 1 / -1;
+    }
   }
 }
 

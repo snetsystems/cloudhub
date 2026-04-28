@@ -61,48 +61,59 @@ const BLOCK_CONFIG: Record<
   string,
   {
     title: string
-    blockClassName?: string
-    isPercent?: boolean
     bounds?: [string, string]
   }
 > = {
-  'cpu-usage': {title: 'CPU Usage (%)', isPercent: true, bounds: ['0', '110']},
-  'cpu-idle': {title: 'CPU Idle (%)', isPercent: true, bounds: ['0', '110']},
-  'cpu-nice': {title: 'CPU Nice (%)', isPercent: true, bounds: ['0', '110']},
+  'cpu-usage': {title: 'CPU Usage (%)', bounds: ['0', '110']},
+  'cpu-idle': {title: 'CPU Idle (%)', bounds: ['0', '110']},
+  'cpu-nice': {title: 'CPU Nice (%)', bounds: ['0', '110']},
   'cpu-io-wait': {
     title: 'CPU I/O Wait (%)',
-    isPercent: true,
     bounds: ['0', '110'],
   },
-  'cpu-steal': {title: 'CPU Steal (%)', isPercent: true, bounds: ['0', '110']},
+  'cpu-steal': {title: 'CPU Steal (%)', bounds: ['0', '110']},
   'cpu-irq': {
     title: 'CPU IRQ (Interrupt Request, %)',
-    isPercent: true,
     bounds: ['0', '110'],
   },
   'cpu-soft-irq': {
     title: 'CPU Soft IRQ (Software Interrupt Request, %)',
-    isPercent: true,
     bounds: ['0', '110'],
   },
   'cpu-load': {
     title: 'CPU Load',
-    blockClassName: 'process-detail-modal__block--span-2',
     bounds: ['0', ''],
   },
 }
 
-const LINUX_GRID_LAYOUT = {
-  top: ['cpu-usage', 'cpu-idle', 'cpu-nice'] as const,
-  middle: ['cpu-io-wait', 'cpu-steal', 'cpu-irq'] as const,
-  bottom: ['cpu-soft-irq', 'cpu-load'] as const,
-}
+/** Windows: same flat order as NetworkDetailContent GRID_LAYOUT → 2×2 placement */
+const WINDOWS_CPU_GRID = [
+  'cpu-usage',
+  'cpu-idle',
+  'cpu-irq',
+  'cpu-soft-irq',
+] as const
 
-const WINDOWS_GRID_LAYOUT = {
-  top: ['cpu-usage', 'cpu-idle'] as const,
-  middle: [] as const,
-  bottom: [] as const,
-}
+/** Linux: two stacked 2×2 panels (Network-style matrix per panel) */
+const LINUX_CPU_GRID_FIRST = [
+  'cpu-usage',
+  'cpu-idle',
+  'cpu-nice',
+  'cpu-io-wait',
+] as const
+
+const LINUX_CPU_GRID_SECOND_WITH_LOAD = [
+  'cpu-steal',
+  'cpu-irq',
+  'cpu-soft-irq',
+  'cpu-load',
+] as const
+
+const LINUX_CPU_GRID_SECOND_NO_LOAD = [
+  'cpu-steal',
+  'cpu-irq',
+  'cpu-soft-irq',
+] as const
 
 function resolveAxesForBlock(blockId: string): Axes {
   const bounds = BLOCK_CONFIG[blockId]?.bounds
@@ -215,28 +226,27 @@ export function CpuDetailContent({
   const detailQueryLabels = new Set(detailQueries.map(q => q.label))
   const isWindowsLayout = !detailQueryLabels.has('cpu-nice')
 
-  const gridLayout = isWindowsLayout ? WINDOWS_GRID_LAYOUT : LINUX_GRID_LAYOUT
-
   const hasCpuLoadQuery = detailQueryLabels.has('cpu-load')
-  const bottomBlockIds = hasCpuLoadQuery
-    ? gridLayout.bottom
-    : isWindowsLayout
-    ? []
-    : (['cpu-soft-irq'] as const)
 
-  const renderGridSection = (blockIds: readonly string[], startIndex: number) =>
+  const renderChartBlocks = (
+    blockIds: readonly string[],
+    paletteOffset: number,
+    options?: {linuxSecondGridNoLoad?: boolean}
+  ) =>
     blockIds.map((blockId, i) => {
       const config = BLOCK_CONFIG[blockId]
       if (!config) return null
       const paletteIndex =
-        (startIndex + i) % LINE_COLOR_PALETTES_SEQUENCE.length
+        (paletteOffset + i) % LINE_COLOR_PALETTES_SEQUENCE.length
       const colors = LINE_COLOR_PALETTES_SEQUENCE[paletteIndex]
       const queryText = detailQueries.find(q => q.label === blockId)?.query
-      let blockClassName = config.blockClassName
-      if (isWindowsLayout) {
-        blockClassName = 'process-detail-modal__block--span-3'
-      } else if (!hasCpuLoadQuery && blockId === 'cpu-soft-irq') {
-        blockClassName = 'process-detail-modal__block--span-3'
+
+      let blockClassName: string | undefined
+      if (
+        options?.linuxSecondGridNoLoad &&
+        blockId === 'cpu-soft-irq'
+      ) {
+        blockClassName = 'process-detail-modal__block--span-cols-2'
       }
 
       return (
@@ -259,30 +269,30 @@ export function CpuDetailContent({
       )
     })
 
+  if (isWindowsLayout) {
+    return (
+      <div className="process-detail-modal__body">
+        <div className="process-detail-modal__grid process-detail-modal__grid--2x2">
+          {renderChartBlocks(WINDOWS_CPU_GRID, 0)}
+        </div>
+      </div>
+    )
+  }
+
+  const linuxSecondIds = hasCpuLoadQuery
+    ? LINUX_CPU_GRID_SECOND_WITH_LOAD
+    : LINUX_CPU_GRID_SECOND_NO_LOAD
+
   return (
     <div className="process-detail-modal__body">
-      {gridLayout.top.length > 0 && (
-        <div
-          className={`process-detail-modal__grid process-detail-modal__grid--top${
-            isWindowsLayout ? ' process-detail-modal__grid--stacked-2' : ''
-          }`}
-        >
-          {renderGridSection(gridLayout.top, 0)}
-        </div>
-      )}
-      {gridLayout.middle.length > 0 && (
-        <div className="process-detail-modal__grid process-detail-modal__grid--middle">
-          {renderGridSection(gridLayout.middle, gridLayout.top.length)}
-        </div>
-      )}
-      {bottomBlockIds.length > 0 && (
-        <div className="process-detail-modal__grid process-detail-modal__grid--bottom">
-          {renderGridSection(
-            bottomBlockIds,
-            gridLayout.top.length + gridLayout.middle.length
-          )}
-        </div>
-      )}
+      <div className="process-detail-modal__grid process-detail-modal__grid--2x2">
+        {renderChartBlocks(LINUX_CPU_GRID_FIRST, 0)}
+      </div>
+      <div className="process-detail-modal__grid process-detail-modal__grid--2x2">
+        {renderChartBlocks(linuxSecondIds, LINUX_CPU_GRID_FIRST.length, {
+          linuxSecondGridNoLoad: !hasCpuLoadQuery,
+        })}
+      </div>
     </div>
   )
 }
