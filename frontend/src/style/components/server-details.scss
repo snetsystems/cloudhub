@@ -95,6 +95,15 @@
     flex: 1;
     min-height: 0;
   }
+
+  /*
+   * Library default is overflow: scroll on the view, which keeps a scrollbar gutter even
+   * when content fits; use auto so “No Results” and short bodies do not show a bar.
+   */
+  .server-details-cell-tab-panel__scroll.fancy-scroll--container .fancy-scroll--view {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
 }
 
 .server-details-cell-files-layout-wrap {
@@ -113,12 +122,12 @@
   font-size: 12px;
 }
 
-/* Fills tab scroll area so .graph-empty (absolute) centers like other dashboard cells */
-.server-details-cell-tab-body--empty {
+/* Relative box for `.graph-empty` (absolute); matches graph cells without forcing overflow */
+.server-details-cell-graph-empty-host {
   position: relative;
-  min-height: 200px;
-  flex: 1;
+  box-sizing: border-box;
   height: 100%;
+  min-height: 0;
 }
 
 /* Server Info / simple data list (renderSimpleData) */

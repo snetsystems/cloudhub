@@ -75,15 +75,10 @@ function renderSimpleData(
 
 // --- Components ---
 
-/** Matches other dashboard cells: `RefreshingGraph` / `NoResults` (graph-empty + “No Results”). */
+/** Same markup as `RefreshingGraph` / `src/flux/components/NoResults.tsx` (`graph-empty`). */
 function ServerDetailsCellNoResults() {
   return (
-    <div
-      className={classnames(
-        'server-details-cell-tab-body',
-        'server-details-cell-tab-body--empty'
-      )}
-    >
+    <div className="server-details-cell-graph-empty-host">
       <div className="graph-empty">
         <p>No Results</p>
       </div>
@@ -490,42 +485,31 @@ export function ServerDetailsCellContent({
           >
             {activeTab === 'info' ? (
               <ServerInfoBody selectedHost={selectedHost} addons={addons} />
-            ) : (
-              <div
-                className={classnames(
-                  'server-details-cell-tab-body',
-                  'server-details-cell-files-layout-wrap',
-                  {
-                    'server-details-cell-tab-body--empty':
-                      !effectiveCell || !layoutContext,
+            ) : effectiveCell && layoutContext ? (
+              <div className="server-details-cell-tab-body server-details-cell-files-layout-wrap">
+                <Layout
+                  cell={effectiveCell}
+                  timeRange={layoutContext.timeRange}
+                  templates={layoutContext.templates}
+                  source={layoutContext.source}
+                  sources={layoutContext.sources}
+                  host={layoutContext.host}
+                  isEditable={false}
+                  manualRefresh={layoutContext.manualRefresh}
+                  onZoom={() => {}}
+                  onDeleteCell={layoutContext.onDeleteCell ?? (() => {})}
+                  onCloneCell={layoutContext.onCloneCell ?? (() => {})}
+                  onSummonOverlayTechnologies={
+                    layoutContext.onSummonOverlayTechnologies ?? (() => {})
                   }
-                )}
-              >
-                {effectiveCell && layoutContext ? (
-                  <Layout
-                    cell={effectiveCell}
-                    timeRange={layoutContext.timeRange}
-                    templates={layoutContext.templates}
-                    source={layoutContext.source}
-                    sources={layoutContext.sources}
-                    host={layoutContext.host}
-                    isEditable={false}
-                    manualRefresh={layoutContext.manualRefresh}
-                    onZoom={() => {}}
-                    onDeleteCell={layoutContext.onDeleteCell ?? (() => {})}
-                    onCloneCell={layoutContext.onCloneCell ?? (() => {})}
-                    onSummonOverlayTechnologies={
-                      layoutContext.onSummonOverlayTechnologies ?? (() => {})
-                    }
-                    instance={layoutContext.instance}
-                    onPickTemplate={layoutContext.onPickTemplate}
-                    onShowInformation={layoutContext.onShowInformation ?? (() => {})}
-                  />
-                ) : (
-                  <div className="graph-empty">
-                    <p>No Results</p>
-                  </div>
-                )}
+                  instance={layoutContext.instance}
+                  onPickTemplate={layoutContext.onPickTemplate}
+                  onShowInformation={layoutContext.onShowInformation ?? (() => {})}
+                />
+              </div>
+            ) : (
+              <div className="server-details-cell-files-layout-wrap">
+                <ServerDetailsCellNoResults />
               </div>
             )}
           </FancyScrollbar>
