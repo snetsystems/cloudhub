@@ -113,6 +113,14 @@
   font-size: 12px;
 }
 
+/* Fills tab scroll area so .graph-empty (absolute) centers like other dashboard cells */
+.server-details-cell-tab-body--empty {
+  position: relative;
+  min-height: 200px;
+  flex: 1;
+  height: 100%;
+}
+
 /* Server Info / simple data list (renderSimpleData) */
 .server-details-simple-data-list {
   margin: 0;

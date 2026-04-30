@@ -258,6 +258,7 @@ const ProcessLineChartTable: React.FC<Props> = ({
         isSearchDisplay={false}
         isDotKey={true}
         enableSharedChartHover={true}
+        options={{noDataMessage: 'No Results'}}
       />
       {isFetching ? (
         <div

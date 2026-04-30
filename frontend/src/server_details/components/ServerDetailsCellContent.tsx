@@ -75,6 +75,22 @@ function renderSimpleData(
 
 // --- Components ---
 
+/** Matches other dashboard cells: `RefreshingGraph` / `NoResults` (graph-empty + “No Results”). */
+function ServerDetailsCellNoResults() {
+  return (
+    <div
+      className={classnames(
+        'server-details-cell-tab-body',
+        'server-details-cell-tab-body--empty'
+      )}
+    >
+      <div className="graph-empty">
+        <p>No Results</p>
+      </div>
+    </div>
+  )
+}
+
 function ServerInfoSection({
   title,
   displayData,
@@ -187,7 +203,7 @@ function ServerInfoBody({
     return <div className="server-details-cell-tab-body">Select a host.</div>
 
   if (!data || Object.keys(data).length === 0) {
-    return <div className="server-details-cell-tab-body">No data.</div>
+    return <ServerDetailsCellNoResults />
   }
 
   return (
@@ -475,7 +491,16 @@ export function ServerDetailsCellContent({
             {activeTab === 'info' ? (
               <ServerInfoBody selectedHost={selectedHost} addons={addons} />
             ) : (
-              <div className="server-details-cell-tab-body server-details-cell-files-layout-wrap">
+              <div
+                className={classnames(
+                  'server-details-cell-tab-body',
+                  'server-details-cell-files-layout-wrap',
+                  {
+                    'server-details-cell-tab-body--empty':
+                      !effectiveCell || !layoutContext,
+                  }
+                )}
+              >
                 {effectiveCell && layoutContext ? (
                   <Layout
                     cell={effectiveCell}
@@ -497,7 +522,9 @@ export function ServerDetailsCellContent({
                     onShowInformation={layoutContext.onShowInformation ?? (() => {})}
                   />
                 ) : (
-                  'No data.'
+                  <div className="graph-empty">
+                    <p>No Results</p>
+                  </div>
                 )}
               </div>
             )}
