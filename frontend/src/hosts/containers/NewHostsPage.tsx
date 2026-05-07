@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react'
+import {useTranslation} from 'react-i18next'
 import {Source, Links, RefreshRate, TimeZones} from 'src/types'
 import {Page} from 'src/reusable_ui'
 import {
@@ -7,6 +8,8 @@ import {
   Button,
   ComponentColor,
   IconFont,
+  ComponentStatus,
+  ComponentSize,
 } from 'src/reusable_ui'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
@@ -28,6 +31,7 @@ import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {generateForHosts} from 'src/utils/tempVars'
 import {TableLineChartPoint, TimeSeriesValue} from 'src/types/series'
 import {mergeResultsByHost} from 'src/dashboards/utils/tableLineChart'
+import {batchSyncAcceptedMinionsToDb} from 'src/agent_admin/utils/syncMinionFromSaltToDb'
 import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
@@ -108,6 +112,7 @@ interface Props {
 
 export function NewHostsPage({
   source,
+  links,
   cloudAutoRefresh,
   cloudTimeRange,
   timeZone,
@@ -115,6 +120,8 @@ export function NewHostsPage({
   onChooseCloudTimeRange,
   setTimeZone,
 }: Props) {
+  const {t} = useTranslation()
+
   const [manualRefreshState, setManualRefreshState] = useState<ManualRefresh>({
     key: 'server-list',
     value: Date.now(),
@@ -149,6 +156,10 @@ export function NewHostsPage({
 
   const [isError, setIsError] = useState(false)
 
+  const [dbHosts, setDbHosts] = useState<Host[]>([])
+  const [isFetching, setIsFetching] = useState(false)
+  const [hasFetched, setHasFetched] = useState(false)
+
   const requestIdRef = useRef(0)
 
   const apiHostsResultRef = useRef<Host[] | {error: string} | null>(null)
@@ -157,6 +168,7 @@ export function NewHostsPage({
     getHosts()
       .then(data => {
         apiHostsResultRef.current = data
+        setDbHosts(data)
       })
       .catch(err => {
         console.error('getHosts error:', err)
@@ -198,6 +210,43 @@ export function NewHostsPage({
     })
   }
 
+  const handleFetch = async () => {
+    if (isFetching) return
+
+    const addon = links.addons?.find((a: any) => a.name === 'salt')
+    const saltMasterUrl = addon?.url ?? ''
+    const saltMasterToken = addon?.token ?? ''
+
+    setIsFetching(true)
+
+    try {
+      // 버튼이 눌렸다는 시각적 피드백(로딩 스피너)을 위해 최소 500ms 대기
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      const influxHosts = tableData.map(r => r.host as string)
+      const targetHosts = influxHosts.filter(
+        h => !dbHosts.some(dbH => dbH.minionId === h)
+      )
+
+      if (targetHosts.length > 0) {
+        await batchSyncAcceptedMinionsToDb(
+          saltMasterUrl,
+          saltMasterToken,
+          targetHosts
+        )
+
+        const newHosts = await getHosts()
+        apiHostsResultRef.current = newHosts
+        setDbHosts(newHosts)
+      }
+    } catch (error) {
+      console.error('Failed to sync salt minions', error)
+    } finally {
+      setIsFetching(false)
+      setHasFetched(true)
+    }
+  }
+
   const handleChooseAutoRefresh = (option: {
     milliseconds: RefreshRate
     group?: string
@@ -225,14 +274,29 @@ export function NewHostsPage({
         chartMode: displayedChartMode,
         alertStatusMap,
         isAlertsEnabled,
+        hosts: dbHosts,
+        hasFetched,
         onStatusIconClick: (host: string) => {
           setSelectedAlertHost(host)
           setFrozenAlertStatus(alertStatusMap[host] ?? null)
           setIsAlertModalOpen(true)
         },
+        t,
       }),
-    [source.id, displayedChartMode, alertStatusMap, isAlertsEnabled]
+    [
+      source.id,
+      displayedChartMode,
+      alertStatusMap,
+      isAlertsEnabled,
+      dbHosts,
+      hasFetched,
+      t,
+    ]
   )
+
+  useEffect(() => {
+    console.log('hasFetched:', hasFetched)
+  }, [hasFetched])
 
   useEffect(() => {
     let isSubscribed = true
@@ -304,10 +368,6 @@ export function NewHostsPage({
     source,
   ])
 
-  useEffect(() => {
-    console.log('timeRange: ', cloudTimeRange?.serverList)
-  }, [cloudTimeRange])
-
   const fetchTableData = async ({
     isSubscribed,
     fetchIntent,
@@ -367,13 +427,13 @@ export function NewHostsPage({
       }
       let mergedData = mergeResultsByHost(results)
 
-      if (Array.isArray(apiHostsResultRef.current)) {
-        const hosts = apiHostsResultRef.current as Host[]
-        const allowedHosts = new Set(hosts.map(h => h.hostname))
-        mergedData = mergedData.filter(row =>
-          allowedHosts.has(row.host as string)
-        )
-      }
+      // if (Array.isArray(apiHostsResultRef.current)) {
+      //   const hosts = apiHostsResultRef.current as Host[]
+      //   const allowedHosts = new Set(hosts.map(h => h.hostname))
+      //   mergedData = mergedData.filter(row =>
+      //     allowedHosts.has(row.host as string)
+      //   )
+      // }
 
       setTableData(mergedData)
       if (isModeSwitchFetch) {
@@ -525,49 +585,75 @@ export function NewHostsPage({
                 </div>
               }
               topLeftRender={
-                <div className="server-list-topleft">
-                  <Radio shape={ButtonShape.Default}>
-                    <Radio.Button
-                      id="host-chart-mode-gauge"
-                      titleText="Gauge"
-                      value="gauge"
-                      active={pendingChartMode === 'gauge'}
-                      onClick={() => {
-                        if (pendingChartMode !== 'gauge' && !isModeSwitching) {
-                          setPendingChartMode('gauge')
-                        }
-                      }}
-                    >
-                      Gauge
-                    </Radio.Button>
-                    <Radio.Button
-                      id="host-chart-mode-line"
-                      titleText="Trend"
-                      value="line"
-                      active={pendingChartMode === 'line'}
-                      onClick={() => {
-                        if (pendingChartMode !== 'line' && !isModeSwitching) {
-                          setPendingChartMode('line')
-                        }
-                      }}
-                    >
-                      Trend
-                    </Radio.Button>
-                  </Radio>
-                  <div className="alert-status-summary-container">
-                    <AlertStatusSummary
-                      alertStatusMap={alertStatusMap}
-                      tableData={tableData}
-                      isAlertsEnabled={isAlertsEnabled}
+                <>
+                  <div className="server-list-topleft">
+                    <Radio shape={ButtonShape.Default}>
+                      <Radio.Button
+                        id="host-chart-mode-gauge"
+                        titleText="Gauge"
+                        value="gauge"
+                        active={pendingChartMode === 'gauge'}
+                        onClick={() => {
+                          if (
+                            pendingChartMode !== 'gauge' &&
+                            !isModeSwitching
+                          ) {
+                            setPendingChartMode('gauge')
+                          }
+                        }}
+                      >
+                        Gauge
+                      </Radio.Button>
+                      <Radio.Button
+                        id="host-chart-mode-line"
+                        titleText="Trend"
+                        value="line"
+                        active={pendingChartMode === 'line'}
+                        onClick={() => {
+                          if (pendingChartMode !== 'line' && !isModeSwitching) {
+                            setPendingChartMode('line')
+                          }
+                        }}
+                      >
+                        Trend
+                      </Radio.Button>
+                    </Radio>
+                    <div className="alert-status-summary-container">
+                      <AlertStatusSummary
+                        alertStatusMap={alertStatusMap}
+                        tableData={tableData}
+                        isAlertsEnabled={isAlertsEnabled}
+                      />
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      width: '100%',
+                    }}
+                  >
+                    <Button
+                      titleText={isFetching ? 'Fetching...' : 'Fetch'}
+                      onClick={handleFetch}
+                      icon={IconFont.SyncAlt}
+                      shape={ButtonShape.Square}
+                      color={ComponentColor.Default}
+                      size={ComponentSize.Small}
+                      status={
+                        isFetching
+                          ? ComponentStatus.Loading
+                          : ComponentStatus.Default
+                      }
                     />
                   </div>
-                </div>
+                </>
               }
             />
           ) : (
             <div className="empty-table-container">
               <div className="empty-table-content empty-table-retry">
-                <p>Failed to load data or responding too slowly.</p>
+                <p>{t('hosts.failed_to_load')}</p>
                 <Button
                   text="Retry"
                   icon={IconFont.Refresh}

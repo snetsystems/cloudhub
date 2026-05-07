@@ -19,5 +19,10 @@
     "step_install_telegraf": "Install Telegraf",
     "step_connect_db": "Connect DB",
     "step_create_dashboard": "Create Dashboard"
+  },
+  "hosts": {
+    "alert_status_disabled": "Kapacitor alarm settings are required to show the server status.",
+    "no_ip_msg": "Not displayed because connect-agent is not installed.",
+    "failed_to_load": "Failed to load data or responding too slowly."
   }
 }

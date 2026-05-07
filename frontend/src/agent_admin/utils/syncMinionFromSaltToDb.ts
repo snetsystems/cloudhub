@@ -6,6 +6,7 @@ import {
   Host as Agent,
   HostRegistrationPayload,
   HostStatus,
+  bulkUpsertHosts,
 } from 'src/shared/apis/host'
 import {
   getLocalGrainsItem,
@@ -351,5 +352,43 @@ export async function syncMinionFromSaltToDb(
     await updateAgent(host, payload)
   } else {
     await registerAgent(payload)
+  }
+}
+
+export async function batchSyncAcceptedMinionsToDb(
+  saltMasterUrl: string,
+  saltMasterToken: string,
+  targets: string[]
+) {
+  if (targets.length === 0) return {ok: 0, fail: 0, allFailDetails: []}
+
+  const {
+    payloads,
+    errors: saltFailDetails,
+  } = await collectMinionHostPayloadsFromSaltBatch(
+    saltMasterUrl,
+    saltMasterToken,
+    targets,
+    'accepted'
+  )
+
+  let ok = 0
+  let apiFailDetails: Array<{host: string; reason: string}> = []
+
+  if (payloads.length > 0) {
+    try {
+      const resp = await bulkUpsertHosts(payloads)
+      ok = resp.created.length + resp.updated.length
+      apiFailDetails = resp.failed.map(f => ({host: f.hostname, reason: f.error}))
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e)
+      apiFailDetails = payloads.map(p => ({host: p.hostname, reason}))
+    }
+  }
+
+  return {
+    ok,
+    fail: saltFailDetails.length + apiFailDetails.length,
+    allFailDetails: [...saltFailDetails, ...apiFailDetails],
   }
 }

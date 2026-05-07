@@ -1,5 +1,6 @@
 import React from 'react'
 import {AlignType, ColumnInfo, DataTableObject} from 'src/types'
+import {Host} from 'src/shared/apis/host'
 import {
   BACKGROUND_TYPE_MODES,
   CHART_TYPE_MODES,
@@ -31,6 +32,9 @@ interface Props {
   alertStatusMap?: AlertStatusMap
   onStatusIconClick?: (host: string) => void
   isAlertsEnabled?: boolean
+  hosts?: Host[]
+  hasFetched?: boolean
+  t?: (key: string) => string
 }
 
 const SERVER_LIST_LINE_HEX_BY_PARENT = {
@@ -46,6 +50,9 @@ export const serverListColumns = ({
   alertStatusMap = {},
   onStatusIconClick,
   isAlertsEnabled = true,
+  hosts = [],
+  hasFetched = false,
+  t = (k: string) => k,
 }: Props): ColumnInfo[] => {
   const isLineChart = chartMode === 'line'
 
@@ -57,7 +64,7 @@ export const serverListColumns = ({
           Status
           <QuestionMarkTooltip
             tipID="alert-status-disabled"
-            tipContent="Kapacitor alarm settings are required to show the server status."
+            tipContent={t('hosts.alert_status_disabled')}
             tooltipPlace="right"
           />
         </div>
@@ -101,13 +108,38 @@ export const serverListColumns = ({
         },
       },
       render: (value: string) => {
+        const hostInfo = hosts?.find(h => h.minionId === value)
+        const ip = hostInfo?.privateIps?.[0] || '-'
         return (
-          <div className="server-host">
+          <div
+            className="server-host"
+            style={{display: 'flex', flexDirection: 'column'}}
+          >
             <Link
               to={`/sources/${sourceID}/server-monitoring/${SERVER_DETAILS_PAGE_NAME}?host=${value}`}
             >
               {value}
             </Link>
+            <div
+              className="server-ip"
+              style={{
+                fontSize: '11px',
+                color: 'var(--gray-chalice)',
+                marginTop: '2px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              {ip}
+              {ip === '-' && hasFetched && (
+                <QuestionMarkTooltip
+                  tipID={`no-ip-${value}`}
+                  tipContent={t('hosts.no_ip_msg')}
+                  tooltipPlace="right"
+                />
+              )}
+            </div>
           </div>
         )
       },
