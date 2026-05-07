@@ -503,4 +503,36 @@
   &.plus2::before {
     content: '\e95c';
   }
+
+  &.bell-off::before {
+    content: '\e96d';
+  }
+
+  &.sync-alt::before {
+    content: '\e96e';
+  }
+
+  &.menu-book::before {
+    content: '\e96f';
+  }
+
+  &.edit::before {
+    content: '\e970';
+  }
+
+  &.git-merge::before {
+    content: '\e971';
+  }
+
+  &.git-branch::before {
+    content: '\e972';
+  }
+
+  &.git-commit::before {
+    content: '\e973';
+  }
+
+  &.git-pull-request::before {
+    content: '\e974';
+  }
 }
