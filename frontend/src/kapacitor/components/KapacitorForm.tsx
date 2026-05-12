@@ -85,7 +85,7 @@ class KapacitorForm extends PureComponent<Props> {
                           name="username"
                           label="Username"
                           value={username || ''}
-                          placeholder={username}
+                          placeholder={username || 'username'}
                           onChange={onInputChange}
                         />
                         <Input
