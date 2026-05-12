@@ -141,6 +141,14 @@ export enum IconFont {
   Filter = 'filter',
   Pin = 'pin',
   FloppyDisk = 'floppy-disk',
+  BellOff = 'bell-off',
+  SyncAlt = 'sync-alt',
+  MenuBook = 'menu-book',
+  Edit = 'edit',
+  GitMerge = 'git-merge',
+  GitBranch = 'git-branch',
+  GitCommit = 'git-commit',
+  GitPullRequest = 'git-pull-request',
 }
 
 export enum Columns {
