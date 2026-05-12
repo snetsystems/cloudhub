@@ -596,12 +596,27 @@
   padding: 0px 8px 6px;
 }
 
+.server-status-header-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .server-list-table {
   .server-host {
     max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .server-ip {
+    font-size: 11px;
+    color: var(--gray-chalice);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .network-interface {

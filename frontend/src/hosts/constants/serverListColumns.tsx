@@ -60,7 +60,7 @@ export const serverListColumns = ({
     {
       key: 'host',
       name: !isAlertsEnabled ? (
-        <div style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}>
+        <div className="server-status-header-content">
           Status
           <QuestionMarkTooltip
             tipID="alert-status-disabled"
@@ -120,17 +120,7 @@ export const serverListColumns = ({
             >
               {value}
             </Link>
-            <div
-              className="server-ip"
-              style={{
-                fontSize: '11px',
-                color: 'var(--gray-chalice)',
-                marginTop: '2px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
+            <div className="server-ip">
               {ip}
               {ip === '-' && hasFetched && (
                 <QuestionMarkTooltip
