@@ -122,6 +122,11 @@ func (s *Service) NewKapacitor(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if err := s.syncAlertKapacitorFromLegacy(ctx, srv); err != nil {
+		internalServerError(w, err, s.Logger)
+		return
+	}
+
 	// log registrationte
 	msg := fmt.Sprintf(MsgKapacitorCreated.String(), srv.Name)
 	s.logRegistration(ctx, "Kapacitors", msg)
@@ -129,6 +134,75 @@ func (s *Service) NewKapacitor(w http.ResponseWriter, r *http.Request) {
 	res := newKapacitor(srv)
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
+}
+
+func (s *Service) syncAlertKapacitorFromLegacy(ctx context.Context, srv cloudhub.Server) error {
+	if s.AlertKapacitors == nil {
+		return nil
+	}
+
+	alertKapa, err := s.AlertKapacitors.Add(ctx, cloudhub.AlertKapacitor{
+		OrgID:              srv.Organization,
+		Name:               srv.Name,
+		URL:                srv.URL,
+		Username:           srv.Username,
+		Password:           srv.Password,
+		InsecureSkipVerify: srv.InsecureSkipVerify,
+	})
+	if err != nil {
+		return fmt.Errorf("sync alert kapacitor from legacy: %w", err)
+	}
+	if s.AlertKapacitorMappings != nil {
+		if err := s.AlertKapacitorMappings.Put(ctx, srv.SrcID, srv.ID, alertKapa.ID); err != nil {
+			return fmt.Errorf("sync alert kapacitor mapping from legacy: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) syncUpdatedAlertKapacitorFromLegacy(ctx context.Context, srv cloudhub.Server) error {
+	if s.AlertKapacitors == nil || s.AlertKapacitorMappings == nil {
+		return nil
+	}
+
+	alertKapacitorID, err := s.AlertKapacitorMappings.GetAlertKapacitorID(ctx, srv.SrcID, srv.ID)
+	if err != nil {
+		return nil
+	}
+
+	if err := s.AlertKapacitors.Update(ctx, cloudhub.AlertKapacitor{
+		ID:                 alertKapacitorID,
+		OrgID:              srv.Organization,
+		Name:               srv.Name,
+		URL:                srv.URL,
+		Username:           srv.Username,
+		Password:           srv.Password,
+		InsecureSkipVerify: srv.InsecureSkipVerify,
+	}); err != nil {
+		return fmt.Errorf("sync updated alert kapacitor from legacy: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) syncDeletedAlertKapacitorFromLegacy(ctx context.Context, srv cloudhub.Server) error {
+	if s.AlertKapacitors == nil || s.AlertKapacitorMappings == nil {
+		return nil
+	}
+
+	alertKapacitorID, err := s.AlertKapacitorMappings.GetAlertKapacitorID(ctx, srv.SrcID, srv.ID)
+	if err != nil {
+		return nil
+	}
+	if err := s.AlertKapacitors.Delete(ctx, alertKapacitorID); err != nil {
+		return fmt.Errorf("sync deleted alert kapacitor from legacy: %w", err)
+	}
+	if err := s.AlertKapacitorMappings.Delete(ctx, srv.SrcID, srv.ID); err != nil {
+		return fmt.Errorf("delete alert kapacitor mapping from legacy: %w", err)
+	}
+
+	return nil
 }
 
 func newKapacitor(srv cloudhub.Server) kapacitor {
@@ -233,6 +307,10 @@ func (s *Service) RemoveKapacitor(w http.ResponseWriter, r *http.Request) {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
+	if err := s.syncDeletedAlertKapacitorFromLegacy(ctx, srv); err != nil {
+		internalServerError(w, err, s.Logger)
+		return
+	}
 
 	// log registrationte
 	msg := fmt.Sprintf(MsgKapacitorDeleted.String(), srv.Name)
@@ -329,6 +407,10 @@ func (s *Service) UpdateKapacitor(w http.ResponseWriter, r *http.Request) {
 			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 			return
 		}
+	}
+	if err := s.syncUpdatedAlertKapacitorFromLegacy(ctx, srv); err != nil {
+		internalServerError(w, err, s.Logger)
+		return
 	}
 
 	// log registrationte

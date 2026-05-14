@@ -33,10 +33,10 @@ import (
 	"github.com/snetsystems/cloudhub/backend/kv/bolt"
 	"github.com/snetsystems/cloudhub/backend/kv/etcd"
 	clog "github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/noop"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
 	"github.com/snetsystems/cloudhub/backend/platform/baremetal"
 	"github.com/snetsystems/cloudhub/backend/platform/k8s"
-	"github.com/snetsystems/cloudhub/backend/noop"
 	"github.com/snetsystems/cloudhub/backend/rdb/pgsql"
 	"github.com/snetsystems/cloudhub/backend/server/config"
 )
@@ -186,12 +186,12 @@ type Server struct {
 	KafkaTopic         string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`
 	MaxShards          int    `long:"max-shards" description:"Max number of shards (virtual partitions) for fallback" env:"MAX_SHARDS" default:"10"`
 
-	PgsqlHost        string `long:"pgsql-host" description:"PostgreSQL host" env:"CLOUDHUB_PGSQL_HOST" default:""`
-	PgsqlPort        int    `long:"pgsql-port" description:"PostgreSQL port" env:"CLOUDHUB_PGSQL_PORT" default:"5432"`
-	PgsqlUser        string `long:"pgsql-user" description:"PostgreSQL user" env:"CLOUDHUB_PGSQL_USER" default:""`
-	PgsqlPassword    string `long:"pgsql-password" description:"PostgreSQL password" env:"CLOUDHUB_PGSQL_PASSWORD" default:""`
-	PgsqlDatabase    string `long:"pgsql-database" description:"PostgreSQL database name" env:"CLOUDHUB_PGSQL_DATABASE" default:""`
-	PgsqlSSLMode     string `long:"pgsql-sslmode" description:"PostgreSQL SSL mode (disable|require|verify-ca|verify-full)" env:"CLOUDHUB_PGSQL_SSLMODE" default:"disable"`
+	PgsqlHost     string `long:"pgsql-host" description:"PostgreSQL host" env:"CLOUDHUB_PGSQL_HOST" default:""`
+	PgsqlPort     int    `long:"pgsql-port" description:"PostgreSQL port" env:"CLOUDHUB_PGSQL_PORT" default:"5432"`
+	PgsqlUser     string `long:"pgsql-user" description:"PostgreSQL user" env:"CLOUDHUB_PGSQL_USER" default:""`
+	PgsqlPassword string `long:"pgsql-password" description:"PostgreSQL password" env:"CLOUDHUB_PGSQL_PASSWORD" default:""`
+	PgsqlDatabase string `long:"pgsql-database" description:"PostgreSQL database name" env:"CLOUDHUB_PGSQL_DATABASE" default:""`
+	PgsqlSSLMode  string `long:"pgsql-sslmode" description:"PostgreSQL SSL mode (disable|require|verify-ca|verify-full)" env:"CLOUDHUB_PGSQL_SSLMODE" default:"disable"`
 }
 
 // pgsqlDSN builds a PostgreSQL DSN from the individual pgsql-host/port/user/password/database/sslmode flags.
@@ -1027,13 +1027,25 @@ func openService(
 		logger.Info("PostgreSQL URLMonitoringStore initialized")
 	}
 
+	var userGroupStore cloudhub.UserGroupStore
+	var alertKapacitorStore cloudhub.AlertKapacitorStore
+	var alertKapacitorMappingStore cloudhub.AlertKapacitorMappingStore
+	var alertGroupRuleStore cloudhub.AlertGroupRuleStore
+	if pgsqlClient != nil {
+		userGroupStore = pgsql.NewUserGroupStore(pgsqlClient)
+		alertKapacitorStore = pgsql.NewAlertKapacitorStore(pgsqlClient)
+		alertKapacitorMappingStore = pgsql.NewAlertKapacitorMappingStore(pgsqlClient)
+		alertGroupRuleStore = pgsql.NewAlertRuleStore(pgsqlClient)
+		logger.Info("PostgreSQL AlertGrouping stores initialized")
+	}
+
 	return Service{
 		TimeSeriesClient: &InfluxClient{},
 		Store: &Store{
-			LayoutsStore:                 layouts,
-			DashboardsStore:              dashboards,
-			FixedCellMapping:      svc.FixedCellMappingStore(),
-			SourcesStore:                 sources,
+			LayoutsStore:            layouts,
+			DashboardsStore:         dashboards,
+			FixedCellMapping:        svc.FixedCellMappingStore(),
+			SourcesStore:            sources,
 			ServersStore:            kapacitors,
 			OrganizationsStore:      organizations,
 			ProtoboardsStore:        protoboards,
@@ -1051,9 +1063,9 @@ func openService(
 			DLNxRstStgStore:         svc.DLNxRstStgStore(),
 			EsSourcesStore:          svc.EsSourcesStore(),
 			DeviceMappingsStore:     svc.DeviceMappingsStore(),
-			CellLibraryStore:    svc.CellLibraryStore(),
-			HostStore:           hostStore,
-			URLMonitoringStore:  urlMonitoringStore,
+			CellLibraryStore:        svc.CellLibraryStore(),
+			HostStore:               hostStore,
+			URLMonitoringStore:      urlMonitoringStore,
 		},
 		Logger:                 logger,
 		UseAuth:                useAuth,
@@ -1068,6 +1080,10 @@ func openService(
 		AddonURLs:              addonURLs,
 		AddonTokens:            addonTokens,
 		OSP:                    osp,
+		UserGroups:             userGroupStore,
+		AlertKapacitors:        alertKapacitorStore,
+		AlertKapacitorMappings: alertKapacitorMappingStore,
+		AlertGroupRules:        alertGroupRuleStore,
 	}
 }
 

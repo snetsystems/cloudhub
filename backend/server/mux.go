@@ -321,6 +321,31 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.PATCH("/cloudhub/v1/sources/:id/kapacitors/:kid/proxy", EnsureEditor(service.ProxyPatch))
 	router.DELETE("/cloudhub/v1/sources/:id/kapacitors/:kid/proxy", EnsureEditor(service.ProxyDelete))
 
+	// Alert Kapacitors (org-scoped v2 registry)
+	router.GET("/cloudhub/v2/alert-kapacitors", EnsureViewer(service.AlertKapacitorsGet))
+	router.POST("/cloudhub/v2/alert-kapacitors", EnsureEditor(service.AlertKapacitorCreate))
+	router.GET("/cloudhub/v2/alert-kapacitors/:id", EnsureViewer(service.AlertKapacitorIDGet))
+	router.PATCH("/cloudhub/v2/alert-kapacitors/:id", EnsureEditor(service.AlertKapacitorUpdate))
+	router.DELETE("/cloudhub/v2/alert-kapacitors/:id", EnsureEditor(service.AlertKapacitorDelete))
+
+	// Alert group rules (static paths before /:id)
+	router.GET("/cloudhub/v2/alert-group-rules", EnsureViewer(service.AlertGroupRulesGet))
+	router.POST("/cloudhub/v2/alert-group-rules", EnsureEditor(service.AlertGroupRuleCreate))
+	router.POST("/cloudhub/v2/alert-group-rules/test-notification", EnsureEditor(service.AlertGroupRuleTestNotification))
+	router.POST("/cloudhub/v2/alert-group-rules-test-notification/:id", EnsureEditor(service.AlertGroupRuleTestNotificationByID))
+	router.PUT("/cloudhub/v2/alert-group-rules/:id/hosts", EnsureEditor(service.AlertGroupRuleSetHosts))
+	router.PUT("/cloudhub/v2/alert-group-rules/:id/user-groups", EnsureEditor(service.AlertGroupRuleSetUserGroups))
+	router.GET("/cloudhub/v2/alert-group-rules/:id", EnsureViewer(service.AlertGroupRuleIDGet))
+	router.PATCH("/cloudhub/v2/alert-group-rules/:id", EnsureEditor(service.AlertGroupRuleUpdate))
+	router.DELETE("/cloudhub/v2/alert-group-rules/:id", EnsureEditor(service.AlertGroupRuleDelete))
+
+	// User groups
+	router.GET("/cloudhub/v2/user-groups", EnsureViewer(service.UserGroupsGet))
+	router.POST("/cloudhub/v2/user-groups", EnsureEditor(service.UserGroupCreate))
+	router.GET("/cloudhub/v2/user-groups/:id", EnsureViewer(service.UserGroupIDGet))
+	router.PATCH("/cloudhub/v2/user-groups/:id", EnsureEditor(service.UserGroupUpdate))
+	router.DELETE("/cloudhub/v2/user-groups/:id", EnsureEditor(service.UserGroupDelete))
+
 	// Layouts
 	router.GET("/cloudhub/v1/layouts", EnsureViewer(service.Layouts))
 	router.GET("/cloudhub/v1/layouts/:id", EnsureViewer(service.LayoutsID))
@@ -620,14 +645,17 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 		})
 	}
 
-	rootPath := path.Join(opts.Basepath, "/cloudhub/v1")
+	rootPathV1 := path.Join(opts.Basepath, "/cloudhub/v1")
+	rootPathV2 := path.Join(opts.Basepath, "/cloudhub/v2")
 	logoutPath := path.Join(opts.Basepath, "/oauth/logout")
 
 	tokenMiddleware := AuthorizedToken(opts.Auth, opts.Logger, router)
 	// Wrap the API with token validation middleware.
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cleanPath := path.Clean(r.URL.Path) // compare ignoring path garbage, trailing slashes, etc.
-		if (strings.HasPrefix(cleanPath, rootPath) && len(cleanPath) > len(rootPath)) || cleanPath == logoutPath {
+		if (strings.HasPrefix(cleanPath, rootPathV1) && len(cleanPath) > len(rootPathV1)) ||
+			(strings.HasPrefix(cleanPath, rootPathV2) && len(cleanPath) > len(rootPathV2)) ||
+			cleanPath == logoutPath {
 			tokenMiddleware.ServeHTTP(w, r)
 			return
 		}

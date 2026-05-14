@@ -30,6 +30,10 @@ type Service struct {
 	InternalENV              cloudhub.InternalEnvironment
 	KubernetesClient         *kubernetes.Client
 	KafkaProducer            KafkaProducer
+	UserGroups               cloudhub.UserGroupStore
+	AlertKapacitors          cloudhub.AlertKapacitorStore
+	AlertKapacitorMappings   cloudhub.AlertKapacitorMappingStore
+	AlertGroupRules          cloudhub.AlertGroupRuleStore
 }
 
 // KafkaProducer defines the interface for publishing configuration updates

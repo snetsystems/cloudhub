@@ -237,14 +237,14 @@ type Query struct {
 // DashboardQuery includes state for the query builder.  This is a transition
 // struct while we move to the full InfluxQL AST
 type DashboardQuery struct {
-	Command     string      `json:"query"`                 // Command is the query itself
-	Label       string      `json:"label,omitempty"`       // Label is the Y-Axis label for the data
-	Range       *Range      `json:"range,omitempty"`       // Range is the default Y-Axis range for the data
-	QueryConfig QueryConfig `json:"queryConfig,omitempty"` // QueryConfig represents the query state that is understood by the data explorer
-	Source      string      `json:"source"`                // Source is the optional URI to the data source for this queryConfig
-	Shifts      []TimeShift `json:"-"`                     // Shifts represents shifts to apply to an influxql query's time range.  Clients expect the shift to be in the generated QueryConfig
-	Type        string      `json:"type"`                  // Type represents the language the query is in (flux or influxql)
-	QueryTargetOS string    `json:"queryTargetOS,omitempty"` // QueryTargetOS distinguishes target OS for this query (windows or linux)
+	Command       string      `json:"query"`                   // Command is the query itself
+	Label         string      `json:"label,omitempty"`         // Label is the Y-Axis label for the data
+	Range         *Range      `json:"range,omitempty"`         // Range is the default Y-Axis range for the data
+	QueryConfig   QueryConfig `json:"queryConfig,omitempty"`   // QueryConfig represents the query state that is understood by the data explorer
+	Source        string      `json:"source"`                  // Source is the optional URI to the data source for this queryConfig
+	Shifts        []TimeShift `json:"-"`                       // Shifts represents shifts to apply to an influxql query's time range.  Clients expect the shift to be in the generated QueryConfig
+	Type          string      `json:"type"`                    // Type represents the language the query is in (flux or influxql)
+	QueryTargetOS string      `json:"queryTargetOS,omitempty"` // QueryTargetOS distinguishes target OS for this query (windows or linux)
 }
 
 // TemplateQuery is used to retrieve choices for template replacement
@@ -766,10 +766,10 @@ type Dashboard struct {
 	Cells        []DashboardCell `json:"cells"`
 	Templates    []Template      `json:"templates"`
 	Name         string          `json:"name"`
-	Organization string          `json:"organization"`      // Organization is the organization ID that resource belongs to
-	Type               string     `json:"type,omitempty"`    // Type: "normal" (default) or "builtin" (fixed-cell template dashboard)
-	Version            string     `json:"version,omitempty"`   // Template version for fixed-cell template dashboards (e.g., "1.0.0")
-	IsDefault          bool       `json:"isDefault,omitempty"` // IsDefault marks this dashboard as the default dashboard for the organization
+	Organization string          `json:"organization"`        // Organization is the organization ID that resource belongs to
+	Type         string          `json:"type,omitempty"`      // Type: "normal" (default) or "builtin" (fixed-cell template dashboard)
+	Version      string          `json:"version,omitempty"`   // Template version for fixed-cell template dashboards (e.g., "1.0.0")
+	IsDefault    bool            `json:"isDefault,omitempty"` // IsDefault marks this dashboard as the default dashboard for the organization
 }
 
 // UnmarshalJSON unmarshals a string ID into a DashboardID (int).
@@ -863,8 +863,8 @@ type DashboardCell struct {
 	NoteVisibility         string                 `json:"noteVisibility"`
 	GraphOptions           GraphOptions           `json:"graphOptions"`
 	TableGaugeChartOptions TableGaugeChartOptions `json:"tableGaugeChartOptions"`
-	CellOrigin             string                 `json:"cellOrigin,omitempty"` // CellOriginBuiltin | CellOriginUser (empty treated as user)
-	Hidden                 bool                   `json:"hidden,omitempty"`     // When true, cell is hidden (user can toggle without deleting)
+	CellOrigin             string                 `json:"cellOrigin,omitempty"`    // CellOriginBuiltin | CellOriginUser (empty treated as user)
+	Hidden                 bool                   `json:"hidden,omitempty"`        // When true, cell is hidden (user can toggle without deleting)
 	IsShowSummary          bool                   `json:"isShowSummary,omitempty"` // When true, cell displays summary information
 	DetailQueries          []DashboardQuery       `json:"detailQueries"`
 }
@@ -946,7 +946,7 @@ type DashboardsStore interface {
 
 // FixedCellMappingEntry is one (orgID, dashboardID) pair for a fixed-cell name.
 type FixedCellMappingEntry struct {
-	OrgID        string      `json:"orgID"`
+	OrgID       string      `json:"orgID"`
 	DashboardID DashboardID `json:"dashboardID"`
 }
 
@@ -1853,35 +1853,35 @@ type GPU struct {
 	Model  string `json:"model"`
 }
 
-// Agent represents a Salt minion registered in the system.
-// Status is either "accepted" or "rejected".
+// Host represents a Salt minion registered in the system.
+// Status is either "accepted" or "rejected". (accepted: registered, rejected: not registered)
 type Host struct {
 	ID               string        `json:"id"`
 	MinionID         string        `json:"minionId"`
 	Hostname         string        `json:"hostname"`
 	OriginalHostname string        `json:"originalHostname"` // user-defined display name for the server
 	IP               string        `json:"ip"`
-	IPInterfaces []IPInterface `json:"ipInterfaces"`
-	OS           string        `json:"os"`
-	OSFamily     string        `json:"osFamily"`
-	OSVersion    string        `json:"osVersion"`
-	Kernel       string        `json:"kernel"`
-	Arch         string        `json:"arch"`
-	MemTotalKB   int64         `json:"memTotalKb"`
-	SwapTotalKB  int64         `json:"swapTotalKb"`
-	CPUCores     int           `json:"cpuCores"`
-	CPUModel     string        `json:"cpuModel"`
-	BIOSVersion  string        `json:"biosVersion"`
-	Timezone     string        `json:"timezone"` // timezone abbreviation, e.g. KST, UTC
-	SelinuxState string        `json:"selinuxState"`
-	GPUs         []GPU         `json:"gpus"`
-	IsCollector  bool          `json:"isCollector"` // true if this host is a collector server
-	SourceType   string        `json:"sourceType"`
-	OrgID        string        `json:"orgId"`
-	Status       string        `json:"status"`
-	CreatedAt    time.Time     `json:"createdAt"`
-	UpdatedAt    time.Time     `json:"updatedAt"`
-	DeleteYN     bool          `json:"deleteYn"`
+	IPInterfaces     []IPInterface `json:"ipInterfaces"`
+	OS               string        `json:"os"`
+	OSFamily         string        `json:"osFamily"`
+	OSVersion        string        `json:"osVersion"`
+	Kernel           string        `json:"kernel"`
+	Arch             string        `json:"arch"`
+	MemTotalKB       int64         `json:"memTotalKb"`
+	SwapTotalKB      int64         `json:"swapTotalKb"`
+	CPUCores         int           `json:"cpuCores"`
+	CPUModel         string        `json:"cpuModel"`
+	BIOSVersion      string        `json:"biosVersion"`
+	Timezone         string        `json:"timezone"` // timezone abbreviation, e.g. KST, UTC
+	SelinuxState     string        `json:"selinuxState"`
+	GPUs             []GPU         `json:"gpus"`
+	IsCollector      bool          `json:"isCollector"` // true if this host is a collector server
+	SourceType       string        `json:"sourceType"`
+	OrgID            string        `json:"orgId"`
+	Status           string        `json:"status"`
+	CreatedAt        time.Time     `json:"createdAt"`
+	UpdatedAt        time.Time     `json:"updatedAt"`
+	DeleteYN         bool          `json:"deleteYn"`
 }
 
 // HostQuery filters for looking up hosts.
@@ -1940,5 +1940,174 @@ type URLMonitoringStore interface {
 	// Update replaces the URLMonitoring settings and targets.
 	Update(ctx context.Context, m *URLMonitoring) (*URLMonitoring, error)
 	// Delete soft-deletes the URLMonitoring by its UUID.
+	Delete(ctx context.Context, id string) error
+}
+
+// AlertCondition is one level threshold within an AlertGroupRule.
+type AlertCondition struct {
+	Level   string `json:"level"` // critical | warning | info
+	Value   string `json:"value"` // numeric threshold, e.g. "90.5"
+	Enabled bool   `json:"enabled"`
+}
+
+// UserGroupMember defines a specific user's notification preferences within a UserGroup.
+type UserGroupMember struct {
+	UserID       string `json:"userId"`
+	UserName     string `json:"userName"`
+	Email        string `json:"email,omitempty"`
+	EmailEnabled bool   `json:"emailEnabled"`
+	EmailLevel   string `json:"emailLevel"` // all | warning | critical
+	SMS          string `json:"sms,omitempty"`
+	SMSEnabled   bool   `json:"smsEnabled"`
+	SMSLevel     string `json:"smsLevel"`
+}
+
+// UserGroup is a named set of notification recipients and their channel settings.
+type UserGroup struct {
+	ID                 string            `json:"id"`
+	OrgID              string            `json:"orgId"`
+	Name               string            `json:"name"`
+	AlertNodes         AlertNodes        `json:"alertNodes,omitempty"`
+	Members            []UserGroupMember `json:"members"`
+	EscalationSchedule string            `json:"escalationSchedule,omitempty"`
+	NotifyDays         string            `json:"notifyDays"`
+	NotifyStartHM      string            `json:"notifyStartHm"`
+	NotifyEndHM        string            `json:"notifyEndHm"`
+	ReceiveLevel       string            `json:"receiveLevel"` // global legacy
+	CreatedAt          time.Time         `json:"createdAt"`
+	UpdatedAt          time.Time         `json:"updatedAt"`
+}
+
+// AlertTimeTag is a named schedule used to restrict alert firing time.
+type AlertTimeTag struct {
+	ID       string `json:"id"`
+	OrgID    string `json:"orgId"`
+	Name     string `json:"name"`
+	Weekdays string `json:"weekdays"` // "1,2,3,4,5"
+	StartHM  string `json:"startHm"`  // "09:00"
+	EndHM    string `json:"endHm"`    // "18:00"
+	Color    string `json:"color"`
+}
+
+// AlertSuppressionSettings controls bulk-alert suppression at org level.
+type AlertSuppressionSettings struct {
+	OrgID                  string `json:"orgId"`
+	Enabled                bool   `json:"enabled"`
+	DetectionWindowSeconds int    `json:"detectionWindowSeconds"`
+	DetectionCount         int    `json:"detectionCount"`
+	PauseSeconds           int    `json:"pauseSeconds"`
+}
+
+// AlertKapacitor represents a Kapacitor instance registered for the alert system.
+// Stored in PostgreSQL separately from KV servers to maintain FK integrity.
+type AlertKapacitor struct {
+	ID                 string    `json:"id"`
+	OrgID              string    `json:"orgId"`
+	Name               string    `json:"name"`
+	URL                string    `json:"url"`
+	Username           string    `json:"username,omitempty"`
+	Password           string    `json:"password,omitempty"`
+	InsecureSkipVerify bool      `json:"insecureSkipVerify"`
+	CreatedAt          time.Time `json:"createdAt"`
+	UpdatedAt          time.Time `json:"updatedAt"`
+}
+
+// AlertKapacitorStore manages AlertKapacitor persistence.
+type AlertKapacitorStore interface {
+	All(ctx context.Context, orgID string) ([]AlertKapacitor, error)
+	Get(ctx context.Context, id string) (AlertKapacitor, error)
+	Add(ctx context.Context, k AlertKapacitor) (AlertKapacitor, error)
+	Update(ctx context.Context, k AlertKapacitor) error
+	Delete(ctx context.Context, id string) error
+}
+
+// AlertKapacitorMappingStore maps legacy v1 Kapacitor IDs to v2 alert_kapacitors UUIDs.
+type AlertKapacitorMappingStore interface {
+	Put(ctx context.Context, sourceID, legacyKapacitorID int, alertKapacitorID string) error
+	GetAlertKapacitorID(ctx context.Context, sourceID, legacyKapacitorID int) (string, error)
+	Delete(ctx context.Context, sourceID, legacyKapacitorID int) error
+}
+
+// Alert Group rule trigger kinds (JSON field "trigger").
+const (
+	AlertGroupRuleTriggerThreshold = "threshold"
+	AlertGroupRuleTriggerRelative  = "relative"
+	AlertGroupRuleTriggerDeadman   = "deadman"
+)
+
+// Alert Group rule task types (JSON field "taskType").
+const (
+	AlertGroupRuleTaskTypeStream = "stream"
+	AlertGroupRuleTaskTypeBatch  = "batch"
+)
+
+// AlertGroupRule represents a rule for alerting.
+// It is used to define a rule for alerting.
+type AlertGroupRule struct {
+	ID              string           `json:"id"`
+	OrgID           string           `json:"orgId"`
+	KapacitorID     string           `json:"kapacitorId,omitempty"` // alert_kapacitors.id
+	Name            string           `json:"name"`
+	Database        string           `json:"database"`
+	RetentionPolicy string           `json:"retentionPolicy"`
+	Measurement     string           `json:"measurement"`
+	Field           string           `json:"field"`
+	Conditions      []AlertCondition `json:"conditions"`
+	TriggerOperator string           `json:"triggerOperator"` // greater | less | equal | not_equal | greater_equal | less_equal
+	// Trigger is threshold | relative | deadman (empty => threshold). Deadman is supported for stream tasks only.
+	Trigger          string    `json:"trigger,omitempty"`
+	TaskType         string    `json:"taskType"` // stream | batch
+	Every            string    `json:"every"`
+	OccurrenceType   string    `json:"occurrenceType"` // consecutive | recent
+	OccurrenceCount  int       `json:"occurrenceCount"`
+	OccurrenceWindow string    `json:"occurrenceWindow"`
+	PauseSeconds     int       `json:"pauseSeconds"`
+	NotifyRecovery   bool      `json:"notifyRecovery"`
+	Message          string    `json:"message"`
+	Active           bool      `json:"active"`
+	Hostnames        []string  `json:"hostnames,omitempty"`
+	UserGroupIDs     []string  `json:"userGroupIds,omitempty"`
+	Recipients       []string  `json:"recipients,omitempty"` // direct-input email recipients
+	TimeTagIDs       []string  `json:"timeTagIds,omitempty"`
+	Tickscript       string    `json:"tickscript,omitempty"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
+}
+
+// UserGroupStore manages UserGroup persistence.
+type UserGroupStore interface {
+	All(ctx context.Context, orgID string) ([]UserGroup, error)
+	Get(ctx context.Context, id string) (UserGroup, error)
+	Add(ctx context.Context, g UserGroup) (UserGroup, error)
+	Update(ctx context.Context, g UserGroup) error
+	Delete(ctx context.Context, id string) error
+}
+
+// AlertGroupRuleStore manages AlertGroupRule persistence.
+type AlertGroupRuleStore interface {
+	All(ctx context.Context, orgID string) ([]AlertGroupRule, error)
+	Get(ctx context.Context, id string) (AlertGroupRule, error)
+	Add(ctx context.Context, r AlertGroupRule) (AlertGroupRule, error)
+	Update(ctx context.Context, r AlertGroupRule) error
+	Delete(ctx context.Context, id string) error
+	SetHosts(ctx context.Context, ruleID string, hostnames []string) error
+	SetUserGroups(ctx context.Context, ruleID string, userGroupIDs []string) error
+	Hostnames(ctx context.Context, ruleID string) ([]string, error)
+	UserGroupsByRule(ctx context.Context, ruleID string) ([]UserGroup, error)
+	RulesByUserGroup(ctx context.Context, userGroupID string) ([]AlertGroupRule, error)
+}
+
+// AlertSuppressionStore manages AlertSuppressionSettings persistence.
+type AlertSuppressionStore interface {
+	Get(ctx context.Context, orgID string) (AlertSuppressionSettings, error)
+	Upsert(ctx context.Context, s AlertSuppressionSettings) error
+}
+
+// AlertTimeTagStore manages AlertTimeTag persistence.
+type AlertTimeTagStore interface {
+	All(ctx context.Context, orgID string) ([]AlertTimeTag, error)
+	Get(ctx context.Context, id string) (AlertTimeTag, error)
+	Add(ctx context.Context, t AlertTimeTag) (AlertTimeTag, error)
+	Update(ctx context.Context, t AlertTimeTag) error
 	Delete(ctx context.Context, id string) error
 }
