@@ -1517,6 +1517,12 @@ export const notifyError = (errorMessage: string): Notification => ({
   ...defaultErrorNotification,
   message: errorMessage,
 })
+
+export const notifySuccess = (message: string): Notification => ({
+  ...defaultSuccessNotification,
+  message,
+})
+
 export const notifyExceptionRunner = (): Notification => ({
   ...defaultErrorNotification,
   message: notifyGenericFail(),

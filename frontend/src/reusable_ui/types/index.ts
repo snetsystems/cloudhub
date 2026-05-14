@@ -70,6 +70,7 @@ export enum IconFont {
   AddCell = 'add-cell',
   AlertTriangle = 'alert-triangle',
   Alerts = 'alerts',
+  Bell = 'bell',
   Annotate = 'annotate',
   AnnotatePlus = 'annotate-plus',
   AuthZero = 'authzero',

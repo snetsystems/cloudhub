@@ -97,6 +97,8 @@ import ServerDetailsWrapper from 'src/server_details/containers/ServerDetailsWra
 import GPUMonitoringPage from 'src/gpu_monitoring/containers/GPUMonitoringPage'
 import URLMonitoringPage from 'src/url_monitoring/containers/URLMonitoringPage'
 import DBMonitoringPage from 'src/db_monitoring/containers/DBMonitoringPage'
+import AlertGroupListPage from 'src/alert_group/containers/AlertGroupListPage'
+import AlertGroupRulePage from 'src/alert_group/containers/AlertGroupRulePage'
 import AppPerformanceMonitoringPage from 'src/app_monitoring/containers/AppPerformanceMonitoringPage'
 import KubernetesRouter from 'src/clouds/containers/KubernetesRouter'
 import OpenStackRouter from 'src/clouds/containers/OpenStackRouter'
@@ -395,6 +397,18 @@ class Root extends PureComponent<Record<string, never>, State> {
                 <Route
                   path="alert-rules/:ruleID"
                   component={KapacitorRulePage}
+                />
+                <Route
+                  path="alert-group-rules"
+                  component={AlertGroupListPage}
+                />
+                <Route
+                  path="alert-group-rules/new"
+                  component={AlertGroupRulePage}
+                />
+                <Route
+                  path="alert-group-rules/:id/edit"
+                  component={AlertGroupRulePage}
                 />
                 <Route path="log-analysis" component={LogAnalysisDashboard} />
                 <Route path="activity-logs" component={ActivityLogsPage} />

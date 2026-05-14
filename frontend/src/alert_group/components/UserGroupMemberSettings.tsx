@@ -1,0 +1,204 @@
+import React, {PureComponent} from 'react'
+import {
+  ButtonShape,
+  ComponentColor,
+  ComponentSize,
+  SlideToggle,
+  Dropdown,
+  DropdownMode,
+  DropdownMenuColors,
+  Radio,
+} from 'src/reusable_ui'
+import {UserGroupMember} from 'src/alert_group/types'
+
+interface Props {
+  members: UserGroupMember[]
+  systemUsers: any[]
+  onUpdateMember: (userId: string, userName: string, patch: any) => void
+}
+
+interface State {
+  viewMode: 'grid' | 'list'
+}
+
+const RECEIVE_LEVELS = [
+  {text: '전체 (Info, Warning, Critical)', value: 'all'},
+  {text: 'Warning 이상', value: 'warning'},
+  {text: 'Critical 환경만', value: 'critical'},
+]
+
+class UserGroupMemberSettings extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props)
+    this.state = {viewMode: 'grid'}
+  }
+
+  private handleToggleEmail = (u: any, member: any) => {
+    const enabled = member ? !member.emailEnabled : true
+    this.props.onUpdateMember(u.id, u.name, {emailEnabled: enabled, email: u.email})
+  }
+
+  private handleEmailLevel = (u: any, level: string) => {
+    this.props.onUpdateMember(u.id, u.name, {emailLevel: level, email: u.email})
+  }
+
+  private renderGrid = () => {
+    const {systemUsers, members} = this.props
+    return (
+      <div className="user-group-member-grid">
+        {systemUsers.map(u => {
+          const member = members.find(m => m.userId === u.id) || {
+            emailEnabled: false,
+            emailLevel: 'all',
+          }
+          const initials = u.name.substring(0, 2).toUpperCase()
+          
+          return (
+            <div key={u.id} className="member-grid-card">
+              <div className="member-card-header">
+                <div className="member-avatar">{initials}</div>
+                <div className="member-name-wrap">
+                  <h4>{u.name}</h4>
+                  <div style={{fontSize: '12px', color: '#8e91a1'}}>{u.email || 'No Email'}</div>
+                </div>
+              </div>
+              
+              <div className="member-channel-row">
+                <span className="channel-label">Email Notifications</span>
+                <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                   <SlideToggle
+                    active={member.emailEnabled}
+                    onChange={() => this.handleToggleEmail(u, member)}
+                    size={ComponentSize.ExtraSmall}
+                    color={ComponentColor.Primary}
+                  />
+                  <Dropdown
+                    selectedID={member.emailLevel}
+                    onChange={(item) => this.handleEmailLevel(u, item.value)}
+                    buttonColor={ComponentColor.Default}
+                    buttonSize={ComponentSize.ExtraSmall}
+                    menuColor={DropdownMenuColors.Onyx}
+                    mode={DropdownMode.ActionList}
+                    titleText="Level"
+                  >
+                    {RECEIVE_LEVELS.map(l => (
+                      <Dropdown.Item key={l.value} id={l.value} value={l}>
+                        {l.text}
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown>
+                </div>
+              </div>
+              
+              <div className="member-channel-row" style={{opacity: 0.5}}>
+                <span className="channel-label">SMS (Mockup)</span>
+                <SlideToggle
+                  active={false}
+                  onChange={() => {}}
+                  size={ComponentSize.ExtraSmall}
+                  color={ComponentColor.Secondary}
+                  disabled={true}
+                />
+              </div>
+
+              <div style={{marginTop: '16px', display: 'flex', gap: '8px'}}>
+                 <span className="label label--default" style={{fontSize: '10px'}}>#TeamA</span>
+                 <span className="label label--default" style={{fontSize: '10px'}}>#VIP</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  private renderList = () => {
+    const {systemUsers, members} = this.props
+    return (
+      <div className="user-group-member-list">
+        {systemUsers.map(u => {
+          const member = members.find(m => m.userId === u.id) || {
+            emailEnabled: false,
+            emailLevel: 'all',
+          }
+          const initials = u.name.substring(0, 2).toUpperCase()
+          
+          return (
+            <div key={u.id} className="member-list-card">
+              <div className="member-avatar">{initials}</div>
+              <div className="member-list-info">
+                <div style={{fontWeight: 700, color: '#fff'}}>{u.name}</div>
+                <div style={{fontSize: '12px', color: '#8e91a1'}}>{u.email || 'No Email'}</div>
+              </div>
+              <div className="member-list-channels">
+                <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                  <span style={{fontSize: '12px', color: '#8e91a1', width: '40px'}}>Email</span>
+                  <SlideToggle
+                    active={member.emailEnabled}
+                    onChange={() => this.handleToggleEmail(u, member)}
+                    size={ComponentSize.ExtraSmall}
+                    color={ComponentColor.Primary}
+                  />
+                  <Dropdown
+                    selectedID={member.emailLevel}
+                    onChange={(item) => this.handleEmailLevel(u, item.value)}
+                    buttonColor={ComponentColor.Default}
+                    buttonSize={ComponentSize.ExtraSmall}
+                    menuColor={DropdownMenuColors.Onyx}
+                    mode={DropdownMode.ActionList}
+                  >
+                    {RECEIVE_LEVELS.map(l => (
+                      <Dropdown.Item key={l.value} id={l.value} value={l}>
+                        {l.text}
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '12px', opacity: 0.5}}>
+                   <span style={{fontSize: '12px', color: '#8e91a1'}}>SMS</span>
+                   <SlideToggle active={false} onChange={()=>{}} size={ComponentSize.ExtraSmall} disabled={true} />
+                </div>
+              </div>
+              <div style={{marginLeft: 'auto'}}>
+                 <span className="label label--default">#TeamA</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  public render() {
+    const {viewMode} = this.state
+    
+    return (
+      <div className="user-group-member-settings-container">
+        <div className="user-group-view-toggle">
+          <Radio shape={ButtonShape.Default}>
+            <Radio.Button
+              id="view-mode-grid"
+              value="grid"
+              active={viewMode === 'grid'}
+              onClick={(v) => this.setState({viewMode: v as any})}
+            >
+              Grid View
+            </Radio.Button>
+            <Radio.Button
+              id="view-mode-list"
+              value="list"
+              active={viewMode === 'list'}
+              onClick={(v) => this.setState({viewMode: v as any})}
+            >
+              List View
+            </Radio.Button>
+          </Radio>
+        </div>
+        
+        {viewMode === 'grid' ? this.renderGrid() : this.renderList()}
+      </div>
+    )
+  }
+}
+
+export default UserGroupMemberSettings

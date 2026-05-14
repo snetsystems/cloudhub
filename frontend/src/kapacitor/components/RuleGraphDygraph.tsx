@@ -21,8 +21,16 @@ import {
   Query,
   TimeRange,
   RemoteDataState,
+  DygraphClass,
 } from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
+
+interface DygraphUnderlayArea {
+  x: number
+  y: number
+  w: number
+  h: number
+}
 
 interface Props {
   query: QueryConfig
@@ -31,6 +39,14 @@ interface Props {
   setHoverTime: typeof setHoverTimeAction
   loading: RemoteDataState
   timeSeries: TimeSeriesServerResponse[]
+  /** Default is 10. Used when MaxMarker is at the top, like in the Alert Group Preview. */
+  yRangePad?: number
+  /** Used instead of Kapacitor `underlayCallback(rule)` (e.g. Alert Group Preview) */
+  customUnderlay?: (
+    canvas: CanvasRenderingContext2D,
+    area: DygraphUnderlayArea,
+    dygraph: DygraphClass
+  ) => void
 }
 
 interface State {
@@ -58,7 +74,7 @@ class RuleGraphDygraph extends Component<Props, State> {
   }
 
   public render() {
-    const {timeRange, rule} = this.props
+    const {timeRange, rule, customUnderlay} = this.props
     const {timeSeriesToDygraphResult} = this.state
 
     if (!timeSeriesToDygraphResult) {
@@ -76,6 +92,9 @@ class RuleGraphDygraph extends Component<Props, State> {
       )
     }
 
+    const underlay =
+      customUnderlay != null ? customUnderlay : underlayCallback(rule)
+
     return (
       <Dygraph
         labels={timeSeriesToDygraphResult.labels}
@@ -89,7 +108,7 @@ class RuleGraphDygraph extends Component<Props, State> {
         dygraphSeries={timeSeriesToDygraphResult.dygraphSeries}
         colors={LINE_COLORS_RULE_GRAPH}
         containerStyle={this.containerStyle}
-        underlayCallback={underlayCallback(rule)}
+        underlayCallback={underlay}
         handleSetHoverTime={this.props.setHoverTime}
       />
     )
@@ -112,9 +131,10 @@ class RuleGraphDygraph extends Component<Props, State> {
   }
 
   private get options() {
+    const yRangePad = this.props.yRangePad ?? 10
     return {
       rightGap: 0,
-      yRangePad: 10,
+      yRangePad,
       labelsKMB: true,
       fillGraph: true,
       axisLabelWidth: 60,
