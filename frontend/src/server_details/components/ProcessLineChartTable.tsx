@@ -17,6 +17,8 @@ import {TEMP_VAR_INTERVAL} from 'src/shared/constants'
 import {DEFAULT_DETAIL_TIME_RANGE} from 'src/server_details/components/UsageDetailModal/utils'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import LoadingDots from 'src/shared/components/LoadingDots'
+import ProcessNameTooltip from 'src/server_details/components/ProcessNameTooltip'
+import {TooltipData} from 'src/server_details/types/ProcessLineChartTable-tooltip'
 
 interface Props {
   source: Source
@@ -49,6 +51,8 @@ const ProcessLineChartTable: React.FC<Props> = ({
     return () => GlobalAutoRefresher.unsubscribe(handleAutoRefresh)
   }, [handleAutoRefresh])
 
+  const [tooltipState, setTooltipState] = useState<TooltipData | null>(null)
+
   const columns = useMemo(() => {
     if (!onProcessNameClick) return lineChartTableColumn
     return lineChartTableColumn.map(col => {
@@ -62,6 +66,17 @@ const ProcessLineChartTable: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => onProcessNameClick(rowData)}
+              onMouseEnter={e => {
+                setTooltipState({row: rowData, x: e.clientX, y: e.clientY})
+              }}
+              onMouseMove={e => {
+                const x = e.clientX
+                const y = e.clientY
+                setTooltipState(prev => (prev ? {...prev, x, y} : null))
+              }}
+              onMouseLeave={() => {
+                setTooltipState(null)
+              }}
               className="process-name-link"
             >
               <span className="process-name-with-user">
@@ -277,6 +292,7 @@ const ProcessLineChartTable: React.FC<Props> = ({
           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
         </div>
       ) : null}
+      {tooltipState ? <ProcessNameTooltip tooltipData={tooltipState} /> : null}
     </div>
   )
 }
