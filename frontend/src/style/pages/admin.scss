@@ -166,6 +166,22 @@ pre.admin-table--query {
     CloudHub Admin
     ----------------------------------------------------------------------------
 */
+
+.group-action-btn-container {
+  display: flex;
+  gap: 8px;
+  .confirm-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.group-action-btn.btn {
+  .icon {
+    font-size: 13px;
+  }
+}
 .all-users-admin-toggle {
   display: flex;
   align-items: center;

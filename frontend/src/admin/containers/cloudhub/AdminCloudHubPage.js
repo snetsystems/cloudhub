@@ -14,6 +14,7 @@ import ProvidersPage from 'src/admin/containers/ProvidersPage'
 import ProviderConfPage from 'src/admin/containers/cloudhub/ProviderConfPage'
 import DevicesMappingPage from 'src/admin/components/DevicesMappingPage'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
+import GroupManagementPage from 'src/admin/containers/cloudhub/GroupManagementPage'
 
 // actions
 import {
@@ -55,6 +56,14 @@ const sections = (me, providers, cspProviders = [], source, router) => {
       enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
       component: (
         <OrganizationsPage meCurrentOrganization={me.currentOrganization} />
+      ),
+    },
+    {
+      url: 'recipient-groups',
+      name: 'Recipient Groups',
+      enabled: isUserAuthorized(me.role, ADMIN_ROLE),
+      component: (
+        <GroupManagementPage meCurrentOrganization={me.currentOrganization} />
       ),
     },
     {

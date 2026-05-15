@@ -1,0 +1,163 @@
+.group-detail-page {
+  .panel.panel-solid {
+    margin: 20px;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    label {
+      margin: 0;
+      white-space: nowrap;
+
+      .required-asterisk {
+        color: $c-fire;
+        margin-left: 2px;
+      }
+    }
+
+    .input-wrapper {
+      width: 200px;
+      display: flex;
+      flex-direction: column;
+
+      .input-error-msg {
+        color: $c-fire;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+    }
+  }
+
+  .card-view-wrapper {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .group-card {
+    background-color: $g3-castle;
+    border: 1px solid $g1-raven;
+    padding: 24px;
+    border-radius: 4px;
+    min-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease-in-out;
+    cursor: default;
+
+    &:hover {
+      background-color: $g4-onyx;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
+      transform: translateY(-4px);
+    }
+
+    .group-card-header {
+      display: flex;
+      align-items: center;
+
+      .group-card-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: $c-star;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: $g20-white;
+        font-weight: bold;
+        font-size: 18px;
+      }
+
+      .group-card-info {
+        margin-left: 16px;
+
+        .group-card-name {
+          font-weight: bold;
+          font-size: 18px;
+          color: $g20-white;
+          margin-bottom: 4px;
+        }
+
+        .group-card-email {
+          font-size: 13px;
+          color: $g11-sidewalk;
+        }
+      }
+
+      .group-card-remove-action {
+        margin-left: auto;
+
+        .confirm-button.btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+    }
+
+    .group-card-settings {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .group-card-setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: $g2-kevlar;
+        padding: 12px 16px;
+        border-radius: 4px;
+
+        .group-card-setting-label {
+          font-size: 13px;
+          color: $g13-mist;
+        }
+        > * {
+          flex: 1;
+        }
+      }
+    }
+  }
+
+  .empty-card-view {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 0;
+    color: $g11-sidewalk;
+    font-size: 14px;
+    background-color: $g3-castle;
+    border: 1px dashed $g1-raven;
+    border-radius: 4px;
+    margin: 16px 20px;
+  }
+
+  .list-view-remove-action {
+    display: flex;
+    align-items: center;
+    .confirm-button.btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .group-detail-table-row {
+    td {
+      padding: 8px;
+    }
+  }
+}
+
+.user-selection-overlay-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  gap: 8px;
+}
