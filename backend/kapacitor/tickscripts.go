@@ -70,8 +70,11 @@ type alertGroupTickParams struct {
 	PauseDuration     string // "" = no reminder; otherwise like "10s" — argument to stateChangesOnly()
 	NotifyRecovery    bool   // true => emit a recovery email when level returns to OK
 	OccurrenceEnabled bool   // true when OccurrenceCount > 1 (apply stateCount wrap)
+	RecentEnabled     bool   // true when OccurrenceType asks for windowed recent counts
 	OccurrenceCount   int    // N consecutive points required to trigger
+	OccurrenceWindow  string // window duration for recent occurrence mode
 	OccurrenceLambda  string // stateCount lambda — typically the most permissive enabled threshold
+	RecentBlock       string
 	Message           string
 	TaskID            string
 	OutputDB          string
@@ -117,12 +120,19 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	hostLambda, hostSQL := buildHostFilters(hostnames)
 	occLambda := buildOccurrenceLambda(rule)
 	occEnabled := rule.OccurrenceCount > 1 && occLambda != ""
+	recentEnabled := occEnabled && isRecentOccurrence(rule.OccurrenceType)
+	consecutiveEnabled := occEnabled && !recentEnabled
 
 	// Email branches must use level-exclusive lambdas so a CRIT-matching value
 	// does not also dispatch the WARN email (and similarly for INFO).
 	emailInfo, emailWarn, emailCrit := buildExclusiveLambdas(rule)
 
-	if occEnabled {
+	recent := recentOccurrenceParams{}
+	if recentEnabled {
+		recent = buildRecentOccurrenceParams(rule, info, warn, crit, emailInfo, emailWarn, emailCrit)
+		info, warn, crit = recent.infoCountLambda, recent.warnCountLambda, recent.critCountLambda
+		emailInfo, emailWarn, emailCrit = recent.emailInfoCountLambda, recent.emailWarnCountLambda, recent.emailCritCountLambda
+	} else if consecutiveEnabled {
 		wrap := func(s string) string {
 			if s == "" {
 				return ""
@@ -145,9 +155,12 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		EmailCrit:         emailCrit,
 		PauseDuration:     formatPauseDuration(rule.PauseSeconds),
 		NotifyRecovery:    rule.NotifyRecovery,
-		OccurrenceEnabled: occEnabled,
+		OccurrenceEnabled: consecutiveEnabled,
+		RecentEnabled:     recentEnabled,
 		OccurrenceCount:   rule.OccurrenceCount,
+		OccurrenceWindow:  occurrenceWindow(rule.OccurrenceWindow),
 		OccurrenceLambda:  occLambda,
+		RecentBlock:       recent.block,
 		Message:           rule.Message,
 		TaskID:            "alert-group-" + rule.ID,
 		OutputDB:          rule.Database,
@@ -188,6 +201,122 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		return "", fmt.Errorf("AlertGroupRuleTICKScript: execute template %q: %w", taskType, err)
 	}
 	return buf.String(), nil
+}
+
+type recentOccurrenceParams struct {
+	block                string
+	infoCountLambda      string
+	warnCountLambda      string
+	critCountLambda      string
+	emailInfoCountLambda string
+	emailWarnCountLambda string
+	emailCritCountLambda string
+}
+
+type recentCountSpec struct {
+	name       string
+	expr       string
+	countField string
+}
+
+func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, info, warn, crit, emailInfo, emailWarn, emailCrit string) recentOccurrenceParams {
+	var specs []recentCountSpec
+	add := func(expr, name, countField string) string {
+		if expr == "" {
+			return ""
+		}
+		specs = append(specs, recentCountSpec{name: name, expr: expr, countField: countField})
+		return fmt.Sprintf(`"%s" >= %d`, countField, rule.OccurrenceCount)
+	}
+
+	p := recentOccurrenceParams{}
+	p.infoCountLambda = add(info, "info", "info_count")
+	p.warnCountLambda = add(warn, "warn", "warn_count")
+	p.critCountLambda = add(crit, "crit", "crit_count")
+	p.emailInfoCountLambda = add(emailInfo, "email_info", "email_info_count")
+	p.emailWarnCountLambda = add(emailWarn, "email_warn", "email_warn_count")
+	p.emailCritCountLambda = add(emailCrit, "email_crit", "email_crit_count")
+	p.block = buildRecentOccurrenceBlock(rule, specs)
+	return p
+}
+
+func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, specs []recentCountSpec) string {
+	if len(specs) == 0 {
+		return "var processed = src"
+	}
+	window := occurrenceWindow(rule.OccurrenceWindow)
+	every := strings.TrimSpace(rule.Every)
+	if every == "" {
+		every = "30s"
+	}
+
+	var b strings.Builder
+	for _, s := range specs {
+		fmt.Fprintf(&b, `var recent_%s = src
+    |eval(lambda: if(%s, 1, 0))
+        .as('%s_hit')
+    |window()
+        .period(%s)
+        .every(%s)
+        .align()
+    |sum('%s_hit')
+        .as('%s')
+
+`, s.name, s.expr, s.name, window, every, s.name, s.countField)
+	}
+	if len(specs) == 1 {
+		fmt.Fprintf(&b, "var processed = recent_%s", specs[0].name)
+		return b.String()
+	}
+
+	fmt.Fprintf(&b, "var processed = recent_%s\n", specs[0].name)
+	fmt.Fprint(&b, "    |join(")
+	for i, s := range specs[1:] {
+		if i > 0 {
+			fmt.Fprint(&b, ", ")
+		}
+		fmt.Fprintf(&b, "recent_%s", s.name)
+	}
+	fmt.Fprint(&b, ")\n        .as(")
+	for i, s := range specs {
+		if i > 0 {
+			fmt.Fprint(&b, ", ")
+		}
+		fmt.Fprintf(&b, "'%s'", s.name)
+	}
+	fmt.Fprint(&b, ")\n        .tolerance(1s)\n    |eval(")
+	for i, s := range specs {
+		if i > 0 {
+			fmt.Fprint(&b, ", ")
+		}
+		fmt.Fprintf(&b, `lambda: "%s.%s"`, s.name, s.countField)
+	}
+	fmt.Fprint(&b, ")\n        .as(")
+	for i, s := range specs {
+		if i > 0 {
+			fmt.Fprint(&b, ", ")
+		}
+		fmt.Fprintf(&b, "'%s'", s.countField)
+	}
+	fmt.Fprint(&b, ")")
+	return b.String()
+}
+
+func isRecentOccurrence(t string) bool {
+	switch strings.ToLower(strings.TrimSpace(t)) {
+	case "recent", "total":
+		return true
+	default:
+		return false
+	}
+}
+
+func occurrenceWindow(w string) string {
+	w = strings.TrimSpace(w)
+	if w == "" {
+		return "5m"
+	}
+	return w
 }
 
 // buildHostFilters returns the host filter expressions for stream (TICKscript

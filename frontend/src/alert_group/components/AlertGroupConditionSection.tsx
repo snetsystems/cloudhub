@@ -1091,10 +1091,13 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                   </Radio.Button>
                   <Radio.Button
                     id="occ-total"
-                    value="total"
-                    active={rule.occurrenceType === 'total'}
+                    value="recent"
+                    active={
+                      rule.occurrenceType === 'recent' ||
+                      rule.occurrenceType === 'total'
+                    }
                     onClick={(_v: string) =>
-                      onUpdateRule({occurrenceType: 'total'})
+                      onUpdateRule({occurrenceType: 'recent'})
                     }
                     titleText="최근"
                   >

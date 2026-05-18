@@ -23,7 +23,7 @@ export interface AlertGroupRule {
     | 'not_equal'
   taskType: string
   every: string
-  occurrenceType: 'consecutive' | 'total'
+  occurrenceType: 'consecutive' | 'recent' | 'total'
   occurrenceCount: number
   occurrenceWindow: string
   pauseSeconds: number

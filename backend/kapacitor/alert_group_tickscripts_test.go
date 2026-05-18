@@ -323,6 +323,56 @@ func TestAlertGroupRuleTICKScriptMultiLevelWithOccurrenceCount(t *testing.T) {
 	}
 }
 
+func TestAlertGroupRuleTICKScriptRecentOccurrenceUsesWindowedCounts(t *testing.T) {
+	r := sampleRule()
+	r.Every = "30s"
+	r.OccurrenceCount = 3
+	r.OccurrenceType = "recent"
+	r.OccurrenceWindow = "5m"
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "warning", Value: 60, Enabled: true},
+		{Level: "critical", Value: 90, Enabled: true},
+	}
+	rec := AlertRecipients{
+		Crit: []string{"a@x.com"},
+		Warn: []string{"a@x.com"},
+	}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`var recent_warn = src`,
+		`|eval(lambda: if("usage_idle" > 60, 1, 0))`,
+		`.as('warn_hit')`,
+		`|window()`,
+		`.period(5m)`,
+		`.every(30s)`,
+		`|sum('warn_hit')`,
+		`.as('warn_count')`,
+		`var recent_email_warn = src`,
+		`|eval(lambda: if("usage_idle" > 60 AND "usage_idle" <= 90, 1, 0))`,
+		`|join(recent_crit, recent_email_warn, recent_email_crit)`,
+		`.as('warn', 'crit', 'email_warn', 'email_crit')`,
+		`|eval(lambda: "warn.warn_count", lambda: "crit.crit_count", lambda: "email_warn.email_warn_count", lambda: "email_crit.email_crit_count")`,
+		`.as('warn_count', 'crit_count', 'email_warn_count', 'email_crit_count')`,
+		`.crit(lambda: "crit_count" >= 3)`,
+		`.warn(lambda: "warn_count" >= 3)`,
+		`.crit(lambda: "email_crit_count" >= 3)`,
+		`.warn(lambda: "email_warn_count" >= 3)`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("expected recent occurrence fragment %q in:\n%s", want, tick)
+		}
+	}
+	if strings.Contains(tick, `|stateCount(`) {
+		t.Fatalf("recent occurrence should not use consecutive stateCount:\n%s", tick)
+	}
+	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
+		t.Fatalf("recent occurrence tickscript should validate: %v\n%s", err, tick)
+	}
+}
+
 func TestAlertGroupRuleTICKScriptExclusiveLambdasForLessOperator(t *testing.T) {
 	r := sampleRule()
 	r.TriggerOperator = "less"

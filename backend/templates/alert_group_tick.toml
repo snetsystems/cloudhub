@@ -19,7 +19,9 @@ var src = stream
         .where(lambda: {{.HostFilterLambda}}){{end}}
         .groupBy('host')
 
-{{if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive matching points
+{{if .RecentEnabled}}// occurrence_count={{.OccurrenceCount}} (recent): require N matching points inside occurrence_window={{.OccurrenceWindow}}
+{{.RecentBlock}}
+{{else if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive matching points
 var processed = src
     |stateCount(lambda: {{.OccurrenceLambda}})
 {{else}}var processed = src
