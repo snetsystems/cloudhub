@@ -2,7 +2,6 @@ package pgsql
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -32,33 +31,26 @@ func normalizeAlertRuleTrigger(t string) string {
 	return t
 }
 
-const alertRuleCols = `id, org_id, kapacitor_id, name, database, retention_policy, measurement, field, conditions, trigger_operator, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, recipients, created_at, updated_at`
+const alertRuleCols = `id, org_id, kapacitor_id, name, database, retention_policy, measurement, field, trigger_operator, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, delete_yn, created_at, updated_at`
 
 func (s *AlertRuleStore) scan(row interface{ Scan(...any) error }) (cloudhub.AlertGroupRule, error) {
 	var r cloudhub.AlertGroupRule
-	var condJSON, recipientsJSON []byte
 	var ca, ua time.Time
-	if err := row.Scan(&r.ID, &r.OrgID, &r.KapacitorID, &r.Name, &r.Database, &r.RetentionPolicy,
-		&r.Measurement, &r.Field, &condJSON,
+	if err := row.Scan(
+		&r.ID, &r.OrgID, &r.KapacitorID, &r.Name, &r.Database, &r.RetentionPolicy,
+		&r.Measurement, &r.Field,
 		&r.TriggerOperator, &r.Trigger, &r.TaskType, &r.Every, &r.OccurrenceType, &r.OccurrenceCount,
 		&r.OccurrenceWindow, &r.PauseSeconds, &r.NotifyRecovery, &r.Message, &r.Active,
-		&recipientsJSON, &ca, &ua); err != nil {
+		&r.DeleteYN, &ca, &ua,
+	); err != nil {
 		return r, fmt.Errorf("alert_rule scan: %w", err)
 	}
 	r.CreatedAt, r.UpdatedAt = ca, ua
-	if err := json.Unmarshal(condJSON, &r.Conditions); err != nil {
-		return r, fmt.Errorf("alert_rule conditions unmarshal: %w", err)
-	}
-	if len(recipientsJSON) > 0 {
-		if err := json.Unmarshal(recipientsJSON, &r.Recipients); err != nil {
-			return r, fmt.Errorf("alert_rule recipients unmarshal: %w", err)
-		}
-	}
 	return r, nil
 }
 
 func (s *AlertRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.AlertGroupRule, error) {
-	q := `SELECT ` + alertRuleCols + ` FROM alert_rules WHERE org_id = $1 ORDER BY created_at`
+	q := `SELECT ` + alertRuleCols + ` FROM alert_rules WHERE org_id = $1 AND delete_yn = false ORDER BY created_at`
 	rows, err := s.client.QueryContext(ctx, q, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("alert_rule.All: %w", err)
@@ -70,30 +62,34 @@ func (s *AlertRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.Aler
 		if err != nil {
 			return nil, err
 		}
+		if r.Conditions, err = s.ConditionsByRule(ctx, r.ID); err != nil {
+			return nil, err
+		}
+		if r.Hostnames, err = s.hostnamesOf(ctx, r.ID); err != nil {
+			return nil, err
+		}
+		if r.RecipientGroupIDs, err = s.recipientGroupIDs(ctx, r.ID); err != nil {
+			return nil, err
+		}
 		out = append(out, r)
 	}
 	return out, rows.Err()
 }
 
 func (s *AlertRuleStore) Get(ctx context.Context, id string) (cloudhub.AlertGroupRule, error) {
-	q := `SELECT ` + alertRuleCols + ` FROM alert_rules WHERE id = $1`
-	rows, err := s.client.QueryContext(ctx, q, id)
+	q := `SELECT ` + alertRuleCols + ` FROM alert_rules WHERE id = $1 AND delete_yn = false`
+	row := s.client.QueryRowContext(ctx, q, id)
+	r, err := s.scan(row)
 	if err != nil {
 		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Get: %w", err)
 	}
-	defer rows.Close()
-	if !rows.Next() {
-		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Get: not found")
-	}
-	r, err := s.scan(rows)
-	if err != nil {
-		return cloudhub.AlertGroupRule{}, err
-	}
-	r.Hostnames, err = s.hostnamesOf(ctx, id)
-	if err != nil {
+	if r.Conditions, err = s.ConditionsByRule(ctx, id); err != nil {
 		return r, err
 	}
-	r.UserGroupIDs, err = s.userGroupIDs(ctx, id)
+	if r.Hostnames, err = s.hostnamesOf(ctx, id); err != nil {
+		return r, err
+	}
+	r.RecipientGroupIDs, err = s.recipientGroupIDs(ctx, id)
 	return r, err
 }
 
@@ -114,70 +110,46 @@ func (s *AlertRuleStore) hostnamesOf(ctx context.Context, ruleID string) ([]stri
 	return names, rows.Err()
 }
 
-func (s *AlertRuleStore) userGroupIDs(ctx context.Context, ruleID string) ([]string, error) {
-	rows, err := s.client.QueryContext(ctx, `SELECT user_group_id FROM alert_rule_user_groups WHERE alert_rule_id = $1`, ruleID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var ids []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	return ids, rows.Err()
-}
-
 func (s *AlertRuleStore) Add(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
-	condJSON, err := json.Marshal(r.Conditions)
-	if err != nil {
-		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Add marshal: %w", err)
-	}
-	if r.Conditions == nil {
-		condJSON = []byte("[]")
-	}
-	recipientsJSON, err := json.Marshal(r.Recipients)
-	if err != nil {
-		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Add recipients marshal: %w", err)
-	}
-	if r.Recipients == nil {
-		recipientsJSON = []byte("[]")
-	}
-	const q = `INSERT INTO alert_rules (org_id, kapacitor_id, name, database, retention_policy, measurement, field, conditions, trigger_operator, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, recipients, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,NOW(),NOW()) RETURNING id, created_at, updated_at`
+	const q = `INSERT INTO alert_rules (
+		org_id, kapacitor_id, name, database, retention_policy, measurement, field,
+		trigger_operator, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window,
+		pause_seconds, notify_recovery, message, active
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+	RETURNING id, created_at, updated_at`
 	var ca, ua time.Time
 	if err := s.client.QueryRowContext(ctx, q,
-		r.OrgID, r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field, condJSON,
+		r.OrgID, r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field,
 		r.TriggerOperator, normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
 		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
-		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active, recipientsJSON,
+		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
 	).Scan(&r.ID, &ca, &ua); err != nil {
 		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Add: %w", err)
 	}
 	r.CreatedAt, r.UpdatedAt = ca, ua
+
+	if len(r.Conditions) > 0 {
+		if err := s.SetConditions(ctx, r.ID, r.Conditions); err != nil {
+			return r, err
+		}
+	}
 	return r, nil
 }
 
 func (s *AlertRuleStore) Update(ctx context.Context, r cloudhub.AlertGroupRule) error {
-	condJSON, err := json.Marshal(r.Conditions)
-	if err != nil {
-		return fmt.Errorf("alert_rule.Update marshal: %w", err)
-	}
-	recipientsJSON, err := json.Marshal(r.Recipients)
-	if err != nil {
-		return fmt.Errorf("alert_rule.Update recipients marshal: %w", err)
-	}
-	if r.Recipients == nil {
-		recipientsJSON = []byte("[]")
-	}
-	const q = `UPDATE alert_rules SET kapacitor_id=$1, name=$2, database=$3, retention_policy=$4, measurement=$5, field=$6, conditions=$7, trigger_operator=$8, rule_trigger=$9, task_type=$10, every=$11, occurrence_type=$12, occurrence_count=$13, occurrence_window=$14, pause_seconds=$15, notify_recovery=$16, message=$17, active=$18, recipients=$19, updated_at=NOW() WHERE id=$20`
+	const q = `UPDATE alert_rules SET
+		kapacitor_id=$1, name=$2, database=$3, retention_policy=$4, measurement=$5, field=$6,
+		trigger_operator=$7, rule_trigger=$8, task_type=$9, every=$10,
+		occurrence_type=$11, occurrence_count=$12, occurrence_window=$13,
+		pause_seconds=$14, notify_recovery=$15, message=$16, active=$17,
+		updated_at=NOW()
+	WHERE id=$18 AND delete_yn = false`
 	if _, err := s.client.ExecContext(ctx, q,
-		r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field, condJSON,
+		r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field,
 		r.TriggerOperator, normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
 		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
-		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active, recipientsJSON, r.ID,
+		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
+		r.ID,
 	); err != nil {
 		return fmt.Errorf("alert_rule.Update: %w", err)
 	}
@@ -185,7 +157,7 @@ func (s *AlertRuleStore) Update(ctx context.Context, r cloudhub.AlertGroupRule) 
 }
 
 func (s *AlertRuleStore) Delete(ctx context.Context, id string) error {
-	if _, err := s.client.ExecContext(ctx, `DELETE FROM alert_rules WHERE id = $1`, id); err != nil {
+	if _, err := s.client.ExecContext(ctx, `UPDATE alert_rules SET delete_yn = true, updated_at = NOW() WHERE id = $1`, id); err != nil {
 		return fmt.Errorf("alert_rule.Delete: %w", err)
 	}
 	return nil
@@ -210,14 +182,37 @@ func (s *AlertRuleStore) SetHosts(ctx context.Context, ruleID string, hostnames 
 	})
 }
 
-func (s *AlertRuleStore) SetUserGroups(ctx context.Context, ruleID string, userGroupIDs []string) error {
+// Hostnames returns all hostnames directly assigned to a rule.
+// Returns empty slice when no hosts assigned (= all-hosts mode).
+func (s *AlertRuleStore) Hostnames(ctx context.Context, ruleID string) ([]string, error) {
+	return s.hostnamesOf(ctx, ruleID)
+}
+
+func (s *AlertRuleStore) recipientGroupIDs(ctx context.Context, ruleID string) ([]string, error) {
+	rows, err := s.client.QueryContext(ctx, `SELECT recipient_group_id FROM alert_rule_recipient_groups WHERE alert_rule_id = $1`, ruleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+func (s *AlertRuleStore) SetRecipientGroups(ctx context.Context, ruleID string, groupIDs []string) error {
 	return s.client.WithTx(ctx, func(ctx context.Context, tx rdb.Store) error {
-		if _, err := tx.ExecContext(ctx, `DELETE FROM alert_rule_user_groups WHERE alert_rule_id = $1`, ruleID); err != nil {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM alert_rule_recipient_groups WHERE alert_rule_id = $1`, ruleID); err != nil {
 			return err
 		}
-		for _, gid := range userGroupIDs {
+		for _, gid := range groupIDs {
 			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO alert_rule_user_groups (alert_rule_id, user_group_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+				`INSERT INTO alert_rule_recipient_groups (alert_rule_id, recipient_group_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
 				ruleID, gid); err != nil {
 				return err
 			}
@@ -226,26 +221,18 @@ func (s *AlertRuleStore) SetUserGroups(ctx context.Context, ruleID string, userG
 	})
 }
 
-// Hostnames returns all hostnames directly assigned to a rule.
-// Returns empty slice when no hosts assigned (= all-hosts mode).
-func (s *AlertRuleStore) Hostnames(ctx context.Context, ruleID string) ([]string, error) {
-	return s.hostnamesOf(ctx, ruleID)
-}
-
-// UserGroupsByRule returns all user_groups directly linked to a rule via alert_rule_user_groups.
-// Empty list means no recipient groups assigned (직접 수신자만 사용 — 빈 대상으로 발송 안 함).
-func (s *AlertRuleStore) UserGroupsByRule(ctx context.Context, ruleID string) ([]cloudhub.UserGroup, error) {
-	ids, err := s.userGroupIDs(ctx, ruleID)
+func (s *AlertRuleStore) RecipientGroupsByRule(ctx context.Context, ruleID string) ([]cloudhub.RecipientGroup, error) {
+	ids, err := s.recipientGroupIDs(ctx, ruleID)
 	if err != nil {
 		return nil, err
 	}
 	if len(ids) == 0 {
 		return nil, nil
 	}
-	ugStore := NewUserGroupStore(s.client)
-	var out []cloudhub.UserGroup
+	rgStore := NewRecipientGroupStore(s.client)
+	var out []cloudhub.RecipientGroup
 	for _, gid := range ids {
-		g, err := ugStore.Get(ctx, gid)
+		g, err := rgStore.Get(ctx, gid)
 		if err != nil {
 			return nil, err
 		}
@@ -254,12 +241,11 @@ func (s *AlertRuleStore) UserGroupsByRule(ctx context.Context, ruleID string) ([
 	return out, nil
 }
 
-// RulesByUserGroup returns all alert rules linked to a user_group via alert_rule_user_groups.
-func (s *AlertRuleStore) RulesByUserGroup(ctx context.Context, userGroupID string) ([]cloudhub.AlertGroupRule, error) {
-	const q = `SELECT alert_rule_id FROM alert_rule_user_groups WHERE user_group_id = $1`
-	rows, err := s.client.QueryContext(ctx, q, userGroupID)
+func (s *AlertRuleStore) RulesByRecipientGroup(ctx context.Context, recipientGroupID string) ([]cloudhub.AlertGroupRule, error) {
+	const q = `SELECT alert_rule_id FROM alert_rule_recipient_groups WHERE recipient_group_id = $1`
+	rows, err := s.client.QueryContext(ctx, q, recipientGroupID)
 	if err != nil {
-		return nil, fmt.Errorf("alert_rule.RulesByUserGroup: %w", err)
+		return nil, fmt.Errorf("alert_rule.RulesByRecipientGroup: %w", err)
 	}
 	defer rows.Close()
 	var ids []string
@@ -282,4 +268,14 @@ func (s *AlertRuleStore) RulesByUserGroup(ctx context.Context, userGroupID strin
 		out = append(out, r)
 	}
 	return out, nil
+}
+
+// ConditionsByRule delegates to AlertRuleConditionStore so AlertGroupRuleStore
+// can be satisfied without a second store handle in callers.
+func (s *AlertRuleStore) ConditionsByRule(ctx context.Context, ruleID string) ([]cloudhub.AlertRuleCondition, error) {
+	return NewAlertRuleConditionStore(s.client).ByRule(ctx, ruleID)
+}
+
+func (s *AlertRuleStore) SetConditions(ctx context.Context, ruleID string, conditions []cloudhub.AlertRuleCondition) error {
+	return NewAlertRuleConditionStore(s.client).SetForRule(ctx, ruleID, conditions)
 }

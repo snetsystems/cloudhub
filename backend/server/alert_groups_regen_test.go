@@ -11,9 +11,9 @@ import (
 
 type fakeAlertRuleStore struct {
 	cloudhub.AlertGroupRuleStore
-	rules            []cloudhub.AlertGroupRule
-	userGroups       map[string][]cloudhub.UserGroup
-	rulesByUserGroup map[string][]cloudhub.AlertGroupRule
+	rules                 []cloudhub.AlertGroupRule
+	recipientGroups       map[string][]cloudhub.RecipientGroup
+	rulesByRecipientGroup map[string][]cloudhub.AlertGroupRule
 }
 
 func (f *fakeAlertRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.AlertGroupRule, error) {
@@ -35,22 +35,22 @@ func (f *fakeAlertRuleStore) Get(ctx context.Context, id string) (cloudhub.Alert
 	return cloudhub.AlertGroupRule{}, fmt.Errorf("alert rule %q not found", id)
 }
 
-func (f *fakeAlertRuleStore) UserGroupsByRule(ctx context.Context, ruleID string) ([]cloudhub.UserGroup, error) {
-	return f.userGroups[ruleID], nil
+func (f *fakeAlertRuleStore) RecipientGroupsByRule(ctx context.Context, ruleID string) ([]cloudhub.RecipientGroup, error) {
+	return f.recipientGroups[ruleID], nil
 }
 
-func (f *fakeAlertRuleStore) RulesByUserGroup(ctx context.Context, userGroupID string) ([]cloudhub.AlertGroupRule, error) {
-	return f.rulesByUserGroup[userGroupID], nil
+func (f *fakeAlertRuleStore) RulesByRecipientGroup(ctx context.Context, recipientGroupID string) ([]cloudhub.AlertGroupRule, error) {
+	return f.rulesByRecipientGroup[recipientGroupID], nil
 }
 
-func TestRegenerateRulesByUserGroup_SyncsLinkedRules(t *testing.T) {
+func TestRegenerateRulesByRecipientGroup_SyncsLinkedRules(t *testing.T) {
 	rules := []cloudhub.AlertGroupRule{
-		{ID: "r1", OrgID: "o1", UserGroupIDs: []string{"g1"}, Active: true},
-		{ID: "r3", OrgID: "o1", UserGroupIDs: []string{"g1"}, Active: true},
+		{ID: "r1", OrgID: "o1", RecipientGroupIDs: []string{"g1"}, Active: true},
+		{ID: "r3", OrgID: "o1", RecipientGroupIDs: []string{"g1"}, Active: true},
 	}
 	store := &fakeAlertRuleStore{
 		rules: rules,
-		rulesByUserGroup: map[string][]cloudhub.AlertGroupRule{
+		rulesByRecipientGroup: map[string][]cloudhub.AlertGroupRule{
 			"g1": {rules[0], rules[1]},
 		},
 	}
@@ -65,9 +65,9 @@ func TestRegenerateRulesByUserGroup_SyncsLinkedRules(t *testing.T) {
 	}
 	t.Cleanup(func() { regenRuleSyncHook = nil })
 
-	group := cloudhub.UserGroup{ID: "g1"}
-	if err := s.RegenerateRulesByUserGroup(context.Background(), "o1", group); err != nil {
-		t.Fatalf("RegenerateRulesByUserGroup: %v", err)
+	group := cloudhub.RecipientGroup{ID: "g1"}
+	if err := s.RegenerateRulesByRecipientGroup(context.Background(), "o1", group); err != nil {
+		t.Fatalf("RegenerateRulesByRecipientGroup: %v", err)
 	}
 	if len(synced) != 2 {
 		t.Fatalf("expected 2 rules synced, got %v", synced)
@@ -81,9 +81,9 @@ func TestRegenerateRulesByUserGroup_SyncsLinkedRules(t *testing.T) {
 	}
 }
 
-func TestRegenerateRulesByUserGroup_FiltersByOrg(t *testing.T) {
+func TestRegenerateRulesByRecipientGroup_FiltersByOrg(t *testing.T) {
 	store := &fakeAlertRuleStore{
-		rulesByUserGroup: map[string][]cloudhub.AlertGroupRule{
+		rulesByRecipientGroup: map[string][]cloudhub.AlertGroupRule{
 			"g1": {
 				{ID: "r1", OrgID: "o1", Active: true},
 				{ID: "r2", OrgID: "other", Active: true},
@@ -101,9 +101,9 @@ func TestRegenerateRulesByUserGroup_FiltersByOrg(t *testing.T) {
 	}
 	t.Cleanup(func() { regenRuleSyncHook = nil })
 
-	group := cloudhub.UserGroup{ID: "g1"}
-	if err := s.RegenerateRulesByUserGroup(context.Background(), "o1", group); err != nil {
-		t.Fatalf("RegenerateRulesByUserGroup: %v", err)
+	group := cloudhub.RecipientGroup{ID: "g1"}
+	if err := s.RegenerateRulesByRecipientGroup(context.Background(), "o1", group); err != nil {
+		t.Fatalf("RegenerateRulesByRecipientGroup: %v", err)
 	}
 	if len(synced) != 1 || synced[0] != "r1" {
 		t.Fatalf("expected only r1 synced, got %v", synced)

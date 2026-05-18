@@ -11,23 +11,23 @@ import (
 // It is always nil in production binaries.
 var regenRuleSyncHook func(ctx context.Context, rule cloudhub.AlertGroupRule) error
 
-// RegenerateRulesByUserGroup regenerates tickscripts of all alert rules directly
-// linked to the given user_group via alert_rule_user_groups. Per-rule failures
-// are logged and skipped — one bad rule does not block the others.
-func (s *Service) RegenerateRulesByUserGroup(ctx context.Context, orgID string, group cloudhub.UserGroup) error {
+// RegenerateRulesByRecipientGroup regenerates tickscripts of all alert rules
+// directly linked to the given recipient_group via alert_rule_recipient_groups.
+// Per-rule failures are logged and skipped — one bad rule does not block the others.
+func (s *Service) RegenerateRulesByRecipientGroup(ctx context.Context, orgID string, group cloudhub.RecipientGroup) error {
 	if s.AlertGroupRules == nil {
 		return nil
 	}
-	rules, err := s.AlertGroupRules.RulesByUserGroup(ctx, group.ID)
+	rules, err := s.AlertGroupRules.RulesByRecipientGroup(ctx, group.ID)
 	if err != nil {
-		return fmt.Errorf("RegenerateRulesByUserGroup: list rules: %w", err)
+		return fmt.Errorf("RegenerateRulesByRecipientGroup: list rules: %w", err)
 	}
 	for _, rule := range rules {
 		if orgID != "" && rule.OrgID != "" && rule.OrgID != orgID {
 			continue
 		}
 		if err := s.regenRule(ctx, rule); err != nil {
-			s.Logger.Error(fmt.Sprintf("RegenerateRulesByUserGroup: rule=%s err=%v", rule.ID, err))
+			s.Logger.Error(fmt.Sprintf("RegenerateRulesByRecipientGroup: rule=%s err=%v", rule.ID, err))
 		}
 	}
 	return nil

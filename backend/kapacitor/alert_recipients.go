@@ -14,8 +14,9 @@ type AlertRecipients struct {
 	Crit []string
 }
 
-// ResolveAlertRecipients merges direct-input recipients (always all-levels) with
-// user_group members (bucketed by EmailLevel) into level-specific lists.
+// ResolveAlertRecipients walks the recipient groups, looks up each member's
+// alert preferences in prefs (keyed by RecipientGroupMember.ID), and buckets
+// emails by EmailLevel into the AlertRecipients lists.
 //
 // EmailLevel mapping:
 //
@@ -24,32 +25,23 @@ type AlertRecipients struct {
 //	"critical"     -> crit
 //	anything else  -> ignored
 //
-// Members with EmailEnabled=false or empty Email are skipped.
-// Direct-input recipients (rule.Recipients) are treated as "all".
+// Members without a prefs entry or with EmailEnabled=false are skipped.
 // Final lists are dedup'd case-insensitively and trimmed.
-func ResolveAlertRecipients(rule cloudhub.AlertGroupRule, groups []cloudhub.UserGroup) AlertRecipients {
+func ResolveAlertRecipients(rule cloudhub.AlertGroupRule, groups []cloudhub.RecipientGroup, prefs map[string]cloudhub.AlertRecipientMemberPrefs) AlertRecipients {
+	_ = rule // rule is reserved for future filtering (e.g., by KapacitorID) — current logic depends only on groups+prefs.
+
 	var info, warn, crit recipientBucket
-
-	for _, raw := range rule.Recipients {
-		addr := strings.TrimSpace(raw)
-		if addr == "" {
-			continue
-		}
-		info.add(addr)
-		warn.add(addr)
-		crit.add(addr)
-	}
-
 	for _, g := range groups {
 		for _, m := range g.Members {
-			if !m.EmailEnabled {
-				continue
-			}
 			addr := strings.TrimSpace(m.Email)
 			if addr == "" {
 				continue
 			}
-			switch strings.ToLower(strings.TrimSpace(m.EmailLevel)) {
+			p, ok := prefs[m.ID]
+			if !ok || !p.EmailEnabled {
+				continue
+			}
+			switch strings.ToLower(strings.TrimSpace(p.EmailLevel)) {
 			case "all", "":
 				info.add(addr)
 				warn.add(addr)

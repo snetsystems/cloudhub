@@ -69,6 +69,8 @@ const (
 	ErrHostNotFound                    = Error("host not found")
 	ErrURLMonitoringNotFound           = Error("url monitoring not found")
 	ErrURLMonitoringExists             = Error("url monitoring already exists for this org")
+	ErrRecipientGroupNotFound          = Error("recipient group not found")
+	ErrRecipientGroupMemberNotFound    = Error("recipient group member not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -1943,59 +1945,70 @@ type URLMonitoringStore interface {
 	Delete(ctx context.Context, id string) error
 }
 
-// AlertCondition is one level threshold within an AlertGroupRule.
-type AlertCondition struct {
-	Level   string `json:"level"` // critical | warning | info
-	Value   string `json:"value"` // numeric threshold, e.g. "90.5"
-	Enabled bool   `json:"enabled"`
+// RecipientGroup is a Layer 1 (domain-neutral) recipient grouping.
+// Shared by alert and future report-style domains. Per-domain config
+// lives on a Layer 2 extension keyed by RecipientGroup.ID.
+type RecipientGroup struct {
+	ID        string                 `json:"id"`
+	OrgID     string                 `json:"orgId"`
+	Name      string                 `json:"name"`
+	DeleteYN  bool                   `json:"deleteYn,omitempty"`
+	CreatedAt time.Time              `json:"createdAt"`
+	UpdatedAt time.Time              `json:"updatedAt"`
+	Members   []RecipientGroupMember `json:"members,omitempty"`
 }
 
-// UserGroupMember defines a specific user's notification preferences within a UserGroup.
-type UserGroupMember struct {
-	UserID       string `json:"userId"`
-	UserName     string `json:"userName"`
-	Email        string `json:"email,omitempty"`
-	EmailEnabled bool   `json:"emailEnabled"`
-	EmailLevel   string `json:"emailLevel"` // all | warning | critical
-	SMS          string `json:"sms,omitempty"`
-	SMSEnabled   bool   `json:"smsEnabled"`
-	SMSLevel     string `json:"smsLevel"`
+// RecipientGroupMember is the domain-neutral identity + contact info of
+// a group member. Per-channel preferences live in AlertRecipientMemberPrefs
+// (or analogous Layer 2 extensions for future domains).
+type RecipientGroupMember struct {
+	ID               string    `json:"id"`
+	RecipientGroupID string    `json:"recipientGroupId"`
+	UserID           string    `json:"userId"`
+	UserName         string    `json:"userName"`
+	Email            string    `json:"email"`
+	PhoneNumber      string    `json:"phoneNumber"`
+	DeleteYN         bool      `json:"deleteYn,omitempty"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
 }
 
-// UserGroup is a named set of notification recipients and their channel settings.
-type UserGroup struct {
-	ID                 string            `json:"id"`
-	OrgID              string            `json:"orgId"`
-	Name               string            `json:"name"`
-	AlertNodes         AlertNodes        `json:"alertNodes,omitempty"`
-	Members            []UserGroupMember `json:"members"`
-	EscalationSchedule string            `json:"escalationSchedule,omitempty"`
-	NotifyDays         string            `json:"notifyDays"`
-	NotifyStartHM      string            `json:"notifyStartHm"`
-	NotifyEndHM        string            `json:"notifyEndHm"`
-	ReceiveLevel       string            `json:"receiveLevel"` // global legacy
-	CreatedAt          time.Time         `json:"createdAt"`
-	UpdatedAt          time.Time         `json:"updatedAt"`
+// AlertRecipientGroup is the Layer 2 alert-domain extension of RecipientGroup.
+// Row existence marks the group as alert-active; columns hold group-level
+// burst suppression policy.
+type AlertRecipientGroup struct {
+	RecipientGroupID         string    `json:"recipientGroupId"`
+	SuppressionEnabled       bool      `json:"suppressionEnabled"`
+	SuppressionWindowSeconds int       `json:"suppressionWindowSeconds"`
+	SuppressionCount         int       `json:"suppressionCount"`
+	SuppressionPauseSeconds  int       `json:"suppressionPauseSeconds"`
+	CreatedAt                time.Time `json:"createdAt"`
+	UpdatedAt                time.Time `json:"updatedAt"`
 }
 
-// AlertTimeTag is a named schedule used to restrict alert firing time.
-type AlertTimeTag struct {
-	ID       string `json:"id"`
-	OrgID    string `json:"orgId"`
-	Name     string `json:"name"`
-	Weekdays string `json:"weekdays"` // "1,2,3,4,5"
-	StartHM  string `json:"startHm"`  // "09:00"
-	EndHM    string `json:"endHm"`    // "18:00"
-	Color    string `json:"color"`
+// AlertRecipientMemberPrefs is the Layer 2 alert-domain extension of
+// RecipientGroupMember. Per-channel toggles + per-channel severity + receive
+// time window + per-member escalation cadence.
+type AlertRecipientMemberPrefs struct {
+	RecipientGroupMemberID string `json:"recipientGroupMemberId"`
+	EmailEnabled           bool   `json:"emailEnabled"`
+	EmailLevel             string `json:"emailLevel"` // all | warning | critical
+	SMSEnabled             bool   `json:"smsEnabled"`
+	SMSLevel               string `json:"smsLevel"` // all | warning | critical
+	NotifyWeekdays         string `json:"notifyWeekdays"`
+	NotifyStartHM          string `json:"notifyStartHm"`
+	NotifyEndHM            string `json:"notifyEndHm"`
+	EscalationSeconds      int    `json:"escalationSeconds"`
 }
 
-// AlertSuppressionSettings controls bulk-alert suppression at org level.
-type AlertSuppressionSettings struct {
-	OrgID                  string `json:"orgId"`
-	Enabled                bool   `json:"enabled"`
-	DetectionWindowSeconds int    `json:"detectionWindowSeconds"`
-	DetectionCount         int    `json:"detectionCount"`
-	PauseSeconds           int    `json:"pauseSeconds"`
+// AlertRuleCondition is a Layer 3 child row of alert_rules: one severity
+// level per row (critical | warning | info). Replaces the legacy
+// AlertRule.Conditions JSON array.
+type AlertRuleCondition struct {
+	AlertRuleID string  `json:"alertRuleId"`
+	Level       string  `json:"level"` // critical | warning | info
+	Value       float64 `json:"value"`
+	Enabled     bool    `json:"enabled"`
 }
 
 // AlertKapacitor represents a Kapacitor instance registered for the alert system.
@@ -2044,43 +2057,74 @@ const (
 // AlertGroupRule represents a rule for alerting.
 // It is used to define a rule for alerting.
 type AlertGroupRule struct {
-	ID              string           `json:"id"`
-	OrgID           string           `json:"orgId"`
-	KapacitorID     string           `json:"kapacitorId,omitempty"` // alert_kapacitors.id
-	Name            string           `json:"name"`
-	Database        string           `json:"database"`
-	RetentionPolicy string           `json:"retentionPolicy"`
-	Measurement     string           `json:"measurement"`
-	Field           string           `json:"field"`
-	Conditions      []AlertCondition `json:"conditions"`
-	TriggerOperator string           `json:"triggerOperator"` // greater | less | equal | not_equal | greater_equal | less_equal
+	ID              string               `json:"id"`
+	OrgID           string               `json:"orgId"`
+	KapacitorID     string               `json:"kapacitorId,omitempty"` // alert_kapacitors.id
+	Name            string               `json:"name"`
+	Database        string               `json:"database"`
+	RetentionPolicy string               `json:"retentionPolicy"`
+	Measurement     string               `json:"measurement"`
+	Field           string               `json:"field"`
+	Conditions      []AlertRuleCondition `json:"conditions,omitempty"`
+	TriggerOperator string               `json:"triggerOperator"` // greater | less | equal | not_equal | greater_equal | less_equal
 	// Trigger is threshold | relative | deadman (empty => threshold). Deadman is supported for stream tasks only.
-	Trigger          string    `json:"trigger,omitempty"`
-	TaskType         string    `json:"taskType"` // stream | batch
-	Every            string    `json:"every"`
-	OccurrenceType   string    `json:"occurrenceType"` // consecutive | recent
-	OccurrenceCount  int       `json:"occurrenceCount"`
-	OccurrenceWindow string    `json:"occurrenceWindow"`
-	PauseSeconds     int       `json:"pauseSeconds"`
-	NotifyRecovery   bool      `json:"notifyRecovery"`
-	Message          string    `json:"message"`
-	Active           bool      `json:"active"`
-	Hostnames        []string  `json:"hostnames,omitempty"`
-	UserGroupIDs     []string  `json:"userGroupIds,omitempty"`
-	Recipients       []string  `json:"recipients,omitempty"` // direct-input email recipients
-	TimeTagIDs       []string  `json:"timeTagIds,omitempty"`
-	Tickscript       string    `json:"tickscript,omitempty"`
-	CreatedAt        time.Time `json:"createdAt"`
-	UpdatedAt        time.Time `json:"updatedAt"`
+	Trigger           string    `json:"trigger,omitempty"`
+	TaskType          string    `json:"taskType"` // stream | batch
+	Every             string    `json:"every"`
+	OccurrenceType    string    `json:"occurrenceType"` // consecutive | recent
+	OccurrenceCount   int       `json:"occurrenceCount"`
+	OccurrenceWindow  string    `json:"occurrenceWindow"`
+	PauseSeconds      int       `json:"pauseSeconds"`
+	NotifyRecovery    bool      `json:"notifyRecovery"`
+	Message           string    `json:"message"`
+	Active            bool      `json:"active"`
+	Hostnames         []string  `json:"hostnames,omitempty"`
+	RecipientGroupIDs []string  `json:"recipientGroupIds,omitempty"`
+	DeleteYN          bool      `json:"deleteYn,omitempty"`
+	Tickscript        string    `json:"tickscript,omitempty"`
+	CreatedAt         time.Time `json:"createdAt"`
+	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
-// UserGroupStore manages UserGroup persistence.
-type UserGroupStore interface {
-	All(ctx context.Context, orgID string) ([]UserGroup, error)
-	Get(ctx context.Context, id string) (UserGroup, error)
-	Add(ctx context.Context, g UserGroup) (UserGroup, error)
-	Update(ctx context.Context, g UserGroup) error
+// RecipientGroupStore manages domain-neutral recipient groups and their members.
+// Implements soft-delete via delete_yn — All/Get return only delete_yn=false rows.
+type RecipientGroupStore interface {
+	All(ctx context.Context, orgID string) ([]RecipientGroup, error)
+	Get(ctx context.Context, id string) (RecipientGroup, error)
+	Add(ctx context.Context, g RecipientGroup) (RecipientGroup, error)
+	Update(ctx context.Context, g RecipientGroup) error
 	Delete(ctx context.Context, id string) error
+
+	// Member-level operations
+	AddMember(ctx context.Context, m RecipientGroupMember) (RecipientGroupMember, error)
+	UpdateMember(ctx context.Context, m RecipientGroupMember) error
+	DeleteMember(ctx context.Context, memberID string) error
+	Members(ctx context.Context, groupID string) ([]RecipientGroupMember, error)
+}
+
+// AlertRecipientGroupStore manages the alert-domain extension of RecipientGroup.
+// Existence of an extension row indicates the group participates in the alert
+// domain. Hard delete — no delete_yn (lifecycle follows parent + activation toggle).
+type AlertRecipientGroupStore interface {
+	Get(ctx context.Context, recipientGroupID string) (AlertRecipientGroup, error)
+	Upsert(ctx context.Context, ext AlertRecipientGroup) error
+	Delete(ctx context.Context, recipientGroupID string) error
+}
+
+// AlertRecipientMemberPrefsStore manages the alert-domain extension of
+// RecipientGroupMember (per-member channel / level / time / escalation).
+type AlertRecipientMemberPrefsStore interface {
+	Get(ctx context.Context, recipientGroupMemberID string) (AlertRecipientMemberPrefs, error)
+	Upsert(ctx context.Context, p AlertRecipientMemberPrefs) error
+	Delete(ctx context.Context, recipientGroupMemberID string) error
+	ByGroup(ctx context.Context, recipientGroupID string) ([]AlertRecipientMemberPrefs, error)
+}
+
+// AlertRuleConditionStore manages level-threshold rows tied to an AlertGroupRule.
+// SetForRule is a transactional replace-all helper used by handler PUT operations.
+type AlertRuleConditionStore interface {
+	ByRule(ctx context.Context, alertRuleID string) ([]AlertRuleCondition, error)
+	SetForRule(ctx context.Context, alertRuleID string, conditions []AlertRuleCondition) error
 }
 
 // AlertGroupRuleStore manages AlertGroupRule persistence.
@@ -2090,24 +2134,17 @@ type AlertGroupRuleStore interface {
 	Add(ctx context.Context, r AlertGroupRule) (AlertGroupRule, error)
 	Update(ctx context.Context, r AlertGroupRule) error
 	Delete(ctx context.Context, id string) error
+
+	// N:M associations
 	SetHosts(ctx context.Context, ruleID string, hostnames []string) error
-	SetUserGroups(ctx context.Context, ruleID string, userGroupIDs []string) error
 	Hostnames(ctx context.Context, ruleID string) ([]string, error)
-	UserGroupsByRule(ctx context.Context, ruleID string) ([]UserGroup, error)
-	RulesByUserGroup(ctx context.Context, userGroupID string) ([]AlertGroupRule, error)
+
+	SetRecipientGroups(ctx context.Context, ruleID string, recipientGroupIDs []string) error
+	RecipientGroupsByRule(ctx context.Context, ruleID string) ([]RecipientGroup, error)
+	RulesByRecipientGroup(ctx context.Context, recipientGroupID string) ([]AlertGroupRule, error)
+
+	// Conditions accessor (implementations may delegate to AlertRuleConditionStore)
+	ConditionsByRule(ctx context.Context, ruleID string) ([]AlertRuleCondition, error)
+	SetConditions(ctx context.Context, ruleID string, conditions []AlertRuleCondition) error
 }
 
-// AlertSuppressionStore manages AlertSuppressionSettings persistence.
-type AlertSuppressionStore interface {
-	Get(ctx context.Context, orgID string) (AlertSuppressionSettings, error)
-	Upsert(ctx context.Context, s AlertSuppressionSettings) error
-}
-
-// AlertTimeTagStore manages AlertTimeTag persistence.
-type AlertTimeTagStore interface {
-	All(ctx context.Context, orgID string) ([]AlertTimeTag, error)
-	Get(ctx context.Context, id string) (AlertTimeTag, error)
-	Add(ctx context.Context, t AlertTimeTag) (AlertTimeTag, error)
-	Update(ctx context.Context, t AlertTimeTag) error
-	Delete(ctx context.Context, id string) error
-}

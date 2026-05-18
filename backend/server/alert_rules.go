@@ -18,17 +18,16 @@ import (
 )
 
 type alertGroupTestNotificationRequest struct {
-	KapacitorID  string   `json:"kapacitorId,omitempty"`
-	UserGroupIDs []string `json:"userGroupIds,omitempty"`
-	Title        string   `json:"title"`
-	Message      string   `json:"message"`
-	Recipients   []string `json:"recipients,omitempty"`
+	KapacitorID       string   `json:"kapacitorId,omitempty"`
+	RecipientGroupIDs []string `json:"recipientGroupIds,omitempty"`
+	Title             string   `json:"title"`
+	Message           string   `json:"message"`
 }
 
 type alertGroupTestNotificationResponse struct {
-	ResolvedUserGroups int      `json:"resolvedUserGroups"`
-	ResolvedRecipients []string `json:"resolvedRecipients"`
-	SentCount          int      `json:"sentCount"`
+	ResolvedRecipientGroups int      `json:"resolvedRecipientGroups"`
+	ResolvedRecipients      []string `json:"resolvedRecipients"`
+	SentCount               int      `json:"sentCount"`
 }
 
 // kapacitorSMTPSender is overridable in tests to bypass real HTTP calls.
@@ -81,18 +80,24 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	// Persist host/user_group associations alongside the rule itself.
+	// Persist host/recipient_group/condition associations alongside the rule itself.
 	if err := s.AlertGroupRules.SetHosts(ctx, rule.ID, req.Hostnames); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	if err := s.AlertGroupRules.SetUserGroups(ctx, rule.ID, req.UserGroupIDs); err != nil {
+	if err := s.AlertGroupRules.SetRecipientGroups(ctx, rule.ID, req.RecipientGroupIDs); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	if len(req.Conditions) > 0 {
+		if err := s.AlertGroupRules.SetConditions(ctx, rule.ID, req.Conditions); err != nil {
+			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+			return
+		}
+	}
 	rule.Hostnames = req.Hostnames
-	rule.UserGroupIDs = req.UserGroupIDs
-	rule.Recipients = req.Recipients
+	rule.RecipientGroupIDs = req.RecipientGroupIDs
+	rule.Conditions = req.Conditions
 	recipients, err := s.resolveRuleRecipients(ctx, rule)
 	if err != nil {
 		s.Logger.Error("AlertGroupRuleCreate: resolve recipients:", err)
@@ -163,9 +168,15 @@ func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	if err := s.AlertGroupRules.SetUserGroups(ctx, id, req.UserGroupIDs); err != nil {
+	if err := s.AlertGroupRules.SetRecipientGroups(ctx, id, req.RecipientGroupIDs); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
+	}
+	if len(req.Conditions) > 0 {
+		if err := s.AlertGroupRules.SetConditions(ctx, id, req.Conditions); err != nil {
+			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+			return
+		}
 	}
 	recipients, err := s.resolveRuleRecipients(ctx, req)
 	if err != nil {
@@ -205,12 +216,12 @@ func (s *Service) AlertGroupRuleTestNotification(w http.ResponseWriter, r *http.
 		invalidData(w, fmt.Errorf("kapacitorId is required"), s.Logger)
 		return
 	}
-	userGroups, err := s.resolveDraftAlertGroupUserGroups(ctx, orgID, req.UserGroupIDs)
+	recipientGroups, err := s.resolveDraftAlertGroupRecipientGroups(ctx, orgID, req.RecipientGroupIDs)
 	if err != nil {
 		internalServerError(w, err, s.Logger)
 		return
 	}
-	resp, err := s.sendAlertGroupTestNotification(ctx, orgID, req.KapacitorID, userGroups, req.Title, req.Message, req.Recipients)
+	resp, err := s.sendAlertGroupTestNotification(ctx, orgID, req.KapacitorID, recipientGroups, req.Title, req.Message)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -242,7 +253,7 @@ func (s *Service) AlertGroupRuleTestNotificationByID(w http.ResponseWriter, r *h
 		notFound(w, id, s.Logger)
 		return
 	}
-	userGroups, err := s.AlertGroupRules.UserGroupsByRule(ctx, id)
+	recipientGroups, err := s.AlertGroupRules.RecipientGroupsByRule(ctx, id)
 	if err != nil {
 		internalServerError(w, err, s.Logger)
 		return
@@ -255,7 +266,7 @@ func (s *Service) AlertGroupRuleTestNotificationByID(w http.ResponseWriter, r *h
 		invalidData(w, fmt.Errorf("rule has no kapacitor configured"), s.Logger)
 		return
 	}
-	resp, err := s.sendAlertGroupTestNotification(ctx, rule.OrgID, kapacitorID, userGroups, req.Title, req.Message, req.Recipients)
+	resp, err := s.sendAlertGroupTestNotification(ctx, rule.OrgID, kapacitorID, recipientGroups, req.Title, req.Message)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -304,18 +315,18 @@ func (s *Service) AlertGroupRuleSetHosts(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// AlertGroupRuleSetUserGroups sets the user groups for an alert group rule.
-func (s *Service) AlertGroupRuleSetUserGroups(w http.ResponseWriter, r *http.Request) {
+// AlertGroupRuleSetRecipientGroups sets the recipient groups for an alert group rule.
+func (s *Service) AlertGroupRuleSetRecipientGroups(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := httprouter.GetParam(r, "id")
 	var req struct {
-		UserGroupIDs []string `json:"userGroupIds"`
+		RecipientGroupIDs []string `json:"recipientGroupIds"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
 	}
-	if err := s.AlertGroupRules.SetUserGroups(ctx, id, req.UserGroupIDs); err != nil {
+	if err := s.AlertGroupRules.SetRecipientGroups(ctx, id, req.RecipientGroupIDs); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
@@ -419,45 +430,89 @@ func validateAlertGroupRuleInput(rule cloudhub.AlertGroupRule) error {
 		}
 	}
 
-	for _, condition := range rule.Conditions {
-		if !condition.Enabled {
-			continue
-		}
-		if strings.TrimSpace(condition.Value) == "" {
-			return fmt.Errorf("%s condition value is required when enabled", condition.Level)
-		}
-	}
 	return nil
 }
 
-// resolveRuleRecipients merges direct-input + user_group recipients into
-// level buckets for tickscript embedding.
+// resolveRuleRecipients walks the rule's bound recipient groups, looks up each
+// member's alert preferences, and buckets emails by alert level (info/warn/crit).
+// Members without prefs or with EmailEnabled=false are skipped.
 func (s *Service) resolveRuleRecipients(ctx context.Context, rule cloudhub.AlertGroupRule) (kapackage.AlertRecipients, error) {
-	var groups []cloudhub.UserGroup
-	if len(rule.UserGroupIDs) > 0 && s.AlertGroupRules != nil && rule.ID != "" {
-		ug, err := s.AlertGroupRules.UserGroupsByRule(ctx, rule.ID)
-		if err != nil {
-			return kapackage.AlertRecipients{}, err
-		}
-		groups = ug
+	if rule.ID == "" || s.AlertGroupRules == nil {
+		return kapackage.AlertRecipients{}, nil
 	}
-	return kapackage.ResolveAlertRecipients(rule, groups), nil
+	groups, err := s.AlertGroupRules.RecipientGroupsByRule(ctx, rule.ID)
+	if err != nil {
+		return kapackage.AlertRecipients{}, err
+	}
+	return s.buildAlertRecipientsFromGroups(ctx, groups), nil
 }
 
-func (s *Service) resolveDraftAlertGroupUserGroups(ctx context.Context, orgID string, userGroupIDs []string) ([]cloudhub.UserGroup, error) {
-	if s.UserGroups == nil {
-		return nil, fmt.Errorf("user group store unavailable")
+// buildAlertRecipientsFromGroups builds level-bucketed lists from already-resolved
+// recipient groups, fetching per-member alert prefs to filter by EmailEnabled/EmailLevel.
+func (s *Service) buildAlertRecipientsFromGroups(ctx context.Context, groups []cloudhub.RecipientGroup) kapackage.AlertRecipients {
+	var info, warn, crit recipientBucket
+	for _, g := range groups {
+		for _, m := range g.Members {
+			addr := strings.TrimSpace(m.Email)
+			if addr == "" {
+				continue
+			}
+			if s.AlertRecipientMemberPrefs == nil {
+				continue
+			}
+			prefs, err := s.AlertRecipientMemberPrefs.Get(ctx, m.ID)
+			if err != nil || !prefs.EmailEnabled {
+				continue
+			}
+			switch strings.ToLower(strings.TrimSpace(prefs.EmailLevel)) {
+			case "all", "":
+				info.add(addr)
+				warn.add(addr)
+				crit.add(addr)
+			case "warning":
+				warn.add(addr)
+				crit.add(addr)
+			case "critical":
+				crit.add(addr)
+			}
+		}
 	}
-	if len(userGroupIDs) == 0 {
-		// Empty selection means "no group recipients"; merging with manual
-		// recipients or the logged-in-user fallback happens upstream.
+	return kapackage.AlertRecipients{Info: info.list, Warn: warn.list, Crit: crit.list}
+}
+
+// recipientBucket is a small case-insensitive dedup'd list builder local to
+// alert_rules.go (was previously a helper inside kapacitor.ResolveAlertRecipients).
+type recipientBucket struct {
+	seen map[string]bool
+	list []string
+}
+
+func (b *recipientBucket) add(addr string) {
+	if b.seen == nil {
+		b.seen = map[string]bool{}
+	}
+	key := strings.ToLower(addr)
+	if b.seen[key] {
+		return
+	}
+	b.seen[key] = true
+	b.list = append(b.list, addr)
+}
+
+func (s *Service) resolveDraftAlertGroupRecipientGroups(ctx context.Context, orgID string, recipientGroupIDs []string) ([]cloudhub.RecipientGroup, error) {
+	if s.RecipientGroups == nil {
+		return nil, fmt.Errorf("recipient group store unavailable")
+	}
+	if len(recipientGroupIDs) == 0 {
+		// Empty selection means "no group recipients"; the logged-in-user fallback
+		// happens upstream.
 		return nil, nil
 	}
 
 	seen := map[string]bool{}
-	var out []cloudhub.UserGroup
-	for _, gid := range userGroupIDs {
-		group, err := s.UserGroups.Get(ctx, gid)
+	var out []cloudhub.RecipientGroup
+	for _, gid := range recipientGroupIDs {
+		group, err := s.RecipientGroups.Get(ctx, gid)
 		if err != nil {
 			return nil, err
 		}
@@ -472,13 +527,11 @@ func (s *Service) resolveDraftAlertGroupUserGroups(ctx context.Context, orgID st
 	return out, nil
 }
 
-func (s *Service) sendAlertGroupTestNotification(ctx context.Context, orgID, kapacitorID string, userGroups []cloudhub.UserGroup, title, message string, manualRecipients []string) (alertGroupTestNotificationResponse, error) {
-	// recipients = manualRecipients ∪ userGroup members ∪ {logged-in user as fallback}
-	combined := append([]string{}, manualRecipients...)
-	if len(userGroups) > 0 {
-		combined = append(combined, collectAlertGroupTestRecipientsRaw(userGroups)...)
-	}
-	recipients := normalizeAlertGroupTestRecipients(combined)
+func (s *Service) sendAlertGroupTestNotification(ctx context.Context, orgID, kapacitorID string, recipientGroups []cloudhub.RecipientGroup, title, message string) (alertGroupTestNotificationResponse, error) {
+	// recipients = recipient_group members with EmailEnabled prefs ∪ {logged-in user as fallback}.
+	// .Info is the superset of warning/critical because "all"/"" levels populate all three buckets.
+	resolved := s.buildAlertRecipientsFromGroups(ctx, recipientGroups)
+	recipients := normalizeAlertGroupTestRecipients(resolved.Info)
 	if len(recipients) == 0 {
 		if user, ok := hasUserContext(ctx); ok && user.Email != "" {
 			recipients = []string{user.Email}
@@ -513,34 +566,10 @@ func (s *Service) sendAlertGroupTestNotification(ctx context.Context, orgID, kap
 	))
 
 	return alertGroupTestNotificationResponse{
-		ResolvedUserGroups: len(userGroups),
-		ResolvedRecipients: recipients,
-		SentCount:          len(recipients),
+		ResolvedRecipientGroups: len(recipientGroups),
+		ResolvedRecipients:      recipients,
+		SentCount:               len(recipients),
 	}, nil
-}
-
-func collectAlertGroupTestRecipientsRaw(userGroups []cloudhub.UserGroup) []string {
-	seen := map[string]bool{}
-	var recipients []string
-	for _, group := range userGroups {
-		for _, member := range group.Members {
-			if !member.EmailEnabled || member.Email == "" || seen[member.Email] {
-				continue
-			}
-			seen[member.Email] = true
-			recipients = append(recipients, member.Email)
-		}
-		for _, node := range group.AlertNodes.Email {
-			for _, to := range node.To {
-				if to == "" || seen[to] {
-					continue
-				}
-				seen[to] = true
-				recipients = append(recipients, to)
-			}
-		}
-	}
-	return recipients
 }
 
 func normalizeAlertGroupTestRecipients(recipients []string) []string {

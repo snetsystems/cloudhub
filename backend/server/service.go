@@ -10,30 +10,33 @@ import (
 
 // Service handles REST calls to the persistence
 type Service struct {
-	Store                    DataStore
-	TimeSeriesClient         TimeSeriesClient
-	Logger                   cloudhub.Logger
-	UseAuth                  bool
-	SuperAdminProviderGroups superAdminProviderGroups
-	Env                      cloudhub.Environment
-	Databases                cloudhub.Databases
-	MailSubject              string
-	MailBody                 string
-	ExternalExec             string
-	ExternalExecArgs         string
-	LoginAuthType            string
-	BasicPasswordResetType   string
-	RetryPolicy              map[string]string
-	AddonURLs                map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
-	AddonTokens              map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
-	OSP                      OSP
-	InternalENV              cloudhub.InternalEnvironment
-	KubernetesClient         *kubernetes.Client
-	KafkaProducer            KafkaProducer
-	UserGroups               cloudhub.UserGroupStore
-	AlertKapacitors          cloudhub.AlertKapacitorStore
-	AlertKapacitorMappings   cloudhub.AlertKapacitorMappingStore
-	AlertGroupRules          cloudhub.AlertGroupRuleStore
+	Store                     DataStore
+	TimeSeriesClient          TimeSeriesClient
+	Logger                    cloudhub.Logger
+	UseAuth                   bool
+	SuperAdminProviderGroups  superAdminProviderGroups
+	Env                       cloudhub.Environment
+	Databases                 cloudhub.Databases
+	MailSubject               string
+	MailBody                  string
+	ExternalExec              string
+	ExternalExecArgs          string
+	LoginAuthType             string
+	BasicPasswordResetType    string
+	RetryPolicy               map[string]string
+	AddonURLs                 map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
+	AddonTokens               map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
+	OSP                       OSP
+	InternalENV               cloudhub.InternalEnvironment
+	KubernetesClient          *kubernetes.Client
+	KafkaProducer             KafkaProducer
+	RecipientGroups           cloudhub.RecipientGroupStore
+	AlertRecipientGroups      cloudhub.AlertRecipientGroupStore
+	AlertRecipientMemberPrefs cloudhub.AlertRecipientMemberPrefsStore
+	AlertRuleConditions       cloudhub.AlertRuleConditionStore
+	AlertKapacitors           cloudhub.AlertKapacitorStore
+	AlertKapacitorMappings    cloudhub.AlertKapacitorMappingStore
+	AlertGroupRules           cloudhub.AlertGroupRuleStore
 }
 
 // KafkaProducer defines the interface for publishing configuration updates

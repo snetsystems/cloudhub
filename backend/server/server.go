@@ -1027,12 +1027,18 @@ func openService(
 		logger.Info("PostgreSQL URLMonitoringStore initialized")
 	}
 
-	var userGroupStore cloudhub.UserGroupStore
+	var recipientGroupStore cloudhub.RecipientGroupStore
+	var alertRecipientGroupStore cloudhub.AlertRecipientGroupStore
+	var alertRecipientMemberPrefsStore cloudhub.AlertRecipientMemberPrefsStore
+	var alertRuleConditionStore cloudhub.AlertRuleConditionStore
 	var alertKapacitorStore cloudhub.AlertKapacitorStore
 	var alertKapacitorMappingStore cloudhub.AlertKapacitorMappingStore
 	var alertGroupRuleStore cloudhub.AlertGroupRuleStore
 	if pgsqlClient != nil {
-		userGroupStore = pgsql.NewUserGroupStore(pgsqlClient)
+		recipientGroupStore = pgsql.NewRecipientGroupStore(pgsqlClient)
+		alertRecipientGroupStore = pgsql.NewAlertRecipientGroupStore(pgsqlClient)
+		alertRecipientMemberPrefsStore = pgsql.NewAlertRecipientMemberPrefsStore(pgsqlClient)
+		alertRuleConditionStore = pgsql.NewAlertRuleConditionStore(pgsqlClient)
 		alertKapacitorStore = pgsql.NewAlertKapacitorStore(pgsqlClient)
 		alertKapacitorMappingStore = pgsql.NewAlertKapacitorMappingStore(pgsqlClient)
 		alertGroupRuleStore = pgsql.NewAlertRuleStore(pgsqlClient)
@@ -1067,23 +1073,26 @@ func openService(
 			HostStore:               hostStore,
 			URLMonitoringStore:      urlMonitoringStore,
 		},
-		Logger:                 logger,
-		UseAuth:                useAuth,
-		Databases:              &influx.Client{Logger: logger},
-		MailSubject:            mailSubject,
-		MailBody:               mailBody,
-		ExternalExec:           externalExec,
-		ExternalExecArgs:       externalExecArgs,
-		LoginAuthType:          loginAuthType,
-		BasicPasswordResetType: basicPasswordResetType,
-		RetryPolicy:            retryPolicy,
-		AddonURLs:              addonURLs,
-		AddonTokens:            addonTokens,
-		OSP:                    osp,
-		UserGroups:             userGroupStore,
-		AlertKapacitors:        alertKapacitorStore,
-		AlertKapacitorMappings: alertKapacitorMappingStore,
-		AlertGroupRules:        alertGroupRuleStore,
+		Logger:                    logger,
+		UseAuth:                   useAuth,
+		Databases:                 &influx.Client{Logger: logger},
+		MailSubject:               mailSubject,
+		MailBody:                  mailBody,
+		ExternalExec:              externalExec,
+		ExternalExecArgs:          externalExecArgs,
+		LoginAuthType:             loginAuthType,
+		BasicPasswordResetType:    basicPasswordResetType,
+		RetryPolicy:               retryPolicy,
+		AddonURLs:                 addonURLs,
+		AddonTokens:               addonTokens,
+		OSP:                       osp,
+		RecipientGroups:           recipientGroupStore,
+		AlertRecipientGroups:      alertRecipientGroupStore,
+		AlertRecipientMemberPrefs: alertRecipientMemberPrefsStore,
+		AlertRuleConditions:       alertRuleConditionStore,
+		AlertKapacitors:           alertKapacitorStore,
+		AlertKapacitorMappings:    alertKapacitorMappingStore,
+		AlertGroupRules:           alertGroupRuleStore,
 	}
 }
 

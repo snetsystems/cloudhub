@@ -7184,12 +7184,12 @@
         ]
       }
     },
-    "../v2/user-groups": {
+    "../v2/recipient-groups": {
       "get": {
         "tags": [
-          "user-groups"
+          "recipient-groups"
         ],
-        "summary": "Get all user groups",
+        "summary": "Get all recipient groups",
         "responses": {
           "200": {
             "description": "OK"
@@ -7198,9 +7198,9 @@
       },
       "post": {
         "tags": [
-          "user-groups"
+          "recipient-groups"
         ],
-        "summary": "Create user group",
+        "summary": "Create recipient group",
         "responses": {
           "201": {
             "description": "Created"
@@ -7208,12 +7208,12 @@
         }
       }
     },
-    "../v2/user-groups/{id}": {
+    "../v2/recipient-groups/{id}": {
       "get": {
         "tags": [
-          "user-groups"
+          "recipient-groups"
         ],
-        "summary": "Get specific user group",
+        "summary": "Get specific recipient group with members",
         "responses": {
           "200": {
             "description": "OK"
@@ -7230,9 +7230,9 @@
       },
       "patch": {
         "tags": [
-          "user-groups"
+          "recipient-groups"
         ],
-        "summary": "Update specific user group",
+        "summary": "Rename recipient group",
         "responses": {
           "200": {
             "description": "OK"
@@ -7249,9 +7249,103 @@
       },
       "delete": {
         "tags": [
-          "user-groups"
+          "recipient-groups"
         ],
-        "summary": "Delete specific user group",
+        "summary": "Soft-delete recipient group",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "../v2/recipient-groups/{id}/members": {
+      "post": {
+        "tags": [
+          "recipient-groups"
+        ],
+        "summary": "Add a member to a recipient group",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "../v2/recipient-groups/{id}/members/{memberId}": {
+      "patch": {
+        "tags": [
+          "recipient-groups"
+        ],
+        "summary": "Update a recipient group member",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "recipient-groups"
+        ],
+        "summary": "Soft-delete a recipient group member",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "../v2/recipient-groups/{id}/alert-policy": {
+      "get": {
+        "tags": [
+          "alert-recipient-groups"
+        ],
+        "summary": "Get alert-domain policy for a recipient group (group-level suppression)",
         "responses": {
           "200": {
             "description": "OK"
@@ -7265,14 +7359,12 @@
             "type": "string"
           }
         ]
-      }
-    },
-    "../v2/user-groups/{id}/tags": {
+      },
       "put": {
         "tags": [
-          "user-groups"
+          "alert-recipient-groups"
         ],
-        "summary": "Set user group tags",
+        "summary": "Upsert alert-domain policy for a recipient group",
         "responses": {
           "200": {
             "description": "OK"
@@ -7281,6 +7373,65 @@
         "parameters": [
           {
             "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "alert-recipient-groups"
+        ],
+        "summary": "Remove the alert-domain extension (deactivates the group for alerts)",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "../v2/recipient-group-members/{memberId}/alert-prefs": {
+      "get": {
+        "tags": [
+          "alert-recipient-member-prefs"
+        ],
+        "summary": "Get per-member alert preferences (channel/level/time/escalation)",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "alert-recipient-member-prefs"
+        ],
+        "summary": "Upsert per-member alert preferences",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "parameters": [
+          {
+            "name": "memberId",
             "in": "path",
             "required": true,
             "type": "string"
@@ -7371,33 +7522,12 @@
         ]
       }
     },
-    "../v2/alert-group-rules/{id}/device-groups": {
+    "../v2/alert-group-rules/{id}/recipient-groups": {
       "put": {
         "tags": [
           "alert-group-rules"
         ],
-        "summary": "Set alert group rule device groups",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ]
-      }
-    },
-    "../v2/alert-group-rules/{id}/tags": {
-      "put": {
-        "tags": [
-          "alert-group-rules"
-        ],
-        "summary": "Set alert group rule tags",
+        "summary": "Set the recipient groups bound to an alert group rule",
         "responses": {
           "200": {
             "description": "OK"

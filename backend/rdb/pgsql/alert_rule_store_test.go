@@ -12,19 +12,29 @@ func TestAlertRuleStore_AddAndGet(t *testing.T) {
 	client, cleanup := setupAlertGroupTestDB(t)
 	defer cleanup()
 
-	store := pgsql.NewAlertRuleStore(client)
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	rgStore := pgsql.NewRecipientGroupStore(client)
 	ctx := context.Background()
 
-	r, err := store.Add(ctx, cloudhub.AlertGroupRule{
+	// Seed two recipient groups to associate with the rule.
+	g1, err := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org1", Name: "DevOps"})
+	if err != nil {
+		t.Fatalf("seed g1: %v", err)
+	}
+	g2, err := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org1", Name: "OnCall"})
+	if err != nil {
+		t.Fatalf("seed g2: %v", err)
+	}
+
+	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
 		OrgID:       "org1",
 		Name:        "CPU",
 		Measurement: "cpu",
 		Field:       "usage_user",
-		Conditions: []cloudhub.AlertCondition{
-			{Level: "warning", Value: "70", Enabled: true},
-			{Level: "critical", Value: "90", Enabled: true},
+		Conditions: []cloudhub.AlertRuleCondition{
+			{Level: "warning", Value: 70, Enabled: true},
+			{Level: "critical", Value: 90, Enabled: true},
 		},
-		Recipients:      []string{"ops@example.com", "oncall@example.com"},
 		TriggerOperator: "greater",
 		TaskType:        "stream",
 		OccurrenceCount: 1,
@@ -37,7 +47,15 @@ func TestAlertRuleStore_AddAndGet(t *testing.T) {
 		t.Fatal("expected non-empty ID")
 	}
 
-	got, err := store.Get(ctx, r.ID)
+	// Attach hosts and recipient groups.
+	if err := ruleStore.SetHosts(ctx, r.ID, []string{"web-1", "web-2"}); err != nil {
+		t.Fatalf("SetHosts: %v", err)
+	}
+	if err := ruleStore.SetRecipientGroups(ctx, r.ID, []string{g1.ID, g2.ID}); err != nil {
+		t.Fatalf("SetRecipientGroups: %v", err)
+	}
+
+	got, err := ruleStore.Get(ctx, r.ID)
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
@@ -47,8 +65,65 @@ func TestAlertRuleStore_AddAndGet(t *testing.T) {
 	if len(got.Conditions) != 2 {
 		t.Errorf("Conditions len = %d, want 2", len(got.Conditions))
 	}
-	if len(got.Recipients) != 2 || got.Recipients[0] != "ops@example.com" || got.Recipients[1] != "oncall@example.com" {
-		t.Errorf("Recipients round-trip failed: got %v, want [ops@example.com oncall@example.com]", got.Recipients)
+	if len(got.Hostnames) != 2 {
+		t.Errorf("Hostnames len = %d, want 2", len(got.Hostnames))
+	}
+	if len(got.RecipientGroupIDs) != 2 {
+		t.Errorf("RecipientGroupIDs len = %d, want 2", len(got.RecipientGroupIDs))
+	}
+}
+
+func TestAlertRuleStore_Update(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	ctx := context.Background()
+
+	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
+		OrgID: "org1", Name: "mem", Active: true,
+	})
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	r.Name = "memory-usage"
+	if err := ruleStore.Update(ctx, r); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	got, err := ruleStore.Get(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Name != "memory-usage" {
+		t.Errorf("Name after Update = %q, want %q", got.Name, "memory-usage")
+	}
+}
+
+func TestAlertRuleStore_SoftDelete(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	ctx := context.Background()
+
+	r, _ := ruleStore.Add(ctx, cloudhub.AlertGroupRule{OrgID: "org1", Name: "disk", Active: true})
+
+	if err := ruleStore.Delete(ctx, r.ID); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if _, err := ruleStore.Get(ctx, r.ID); err == nil {
+		t.Fatalf("expected Get to fail for soft-deleted row")
+	}
+	list, err := ruleStore.All(ctx, "org1")
+	if err != nil {
+		t.Fatalf("All: %v", err)
+	}
+	for _, x := range list {
+		if x.ID == r.ID {
+			t.Fatalf("soft-deleted rule still listed in All: %s", x.ID)
+		}
 	}
 }
 
@@ -65,20 +140,6 @@ func TestAlertRuleStore_SetHosts(t *testing.T) {
 		t.Fatalf("SetHosts: %v", err)
 	}
 
-	got, err := ruleStore.Get(ctx, rule.ID)
-	if err != nil {
-		t.Fatalf("Get: %v", err)
-	}
-	if len(got.Hostnames) != 2 {
-		t.Fatalf("Hostnames len = %d, want 2", len(got.Hostnames))
-	}
-	want := map[string]bool{"web-1": true, "web-2": true}
-	for _, n := range got.Hostnames {
-		if !want[n] {
-			t.Errorf("unexpected hostname %q", n)
-		}
-	}
-
 	names, err := ruleStore.Hostnames(ctx, rule.ID)
 	if err != nil {
 		t.Fatalf("Hostnames: %v", err)
@@ -86,26 +147,128 @@ func TestAlertRuleStore_SetHosts(t *testing.T) {
 	if len(names) != 2 {
 		t.Errorf("Hostnames = %v, want 2 entries", names)
 	}
+
+	// Replace-all semantics: a fresh set wipes the previous entries.
+	if err := ruleStore.SetHosts(ctx, rule.ID, []string{"web-3"}); err != nil {
+		t.Fatalf("SetHosts replace: %v", err)
+	}
+	names, _ = ruleStore.Hostnames(ctx, rule.ID)
+	if len(names) != 1 || names[0] != "web-3" {
+		t.Errorf("after replace, hostnames = %v, want [web-3]", names)
+	}
 }
 
-func TestAlertRuleStore_UserGroupsByRule_NoTags(t *testing.T) {
+func TestAlertRuleStore_SetRecipientGroups_ReplaceAll(t *testing.T) {
 	client, cleanup := setupAlertGroupTestDB(t)
 	defer cleanup()
 
 	ruleStore := pgsql.NewAlertRuleStore(client)
-	ugStore := pgsql.NewUserGroupStore(client)
+	rgStore := pgsql.NewRecipientGroupStore(client)
 	ctx := context.Background()
 
 	rule, _ := ruleStore.Add(ctx, cloudhub.AlertGroupRule{OrgID: "org2", Name: "disk", Active: true})
-	_, _ = ugStore.Add(ctx, cloudhub.UserGroup{OrgID: "org2", Name: "team-a", ReceiveLevel: "all"})
-	_, _ = ugStore.Add(ctx, cloudhub.UserGroup{OrgID: "org2", Name: "team-b", ReceiveLevel: "all"})
+	g1, _ := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org2", Name: "team-a"})
+	g2, _ := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org2", Name: "team-b"})
+	g3, _ := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org2", Name: "team-c"})
 
-	// No tags set => all user_groups in org
-	groups, err := ruleStore.UserGroupsByRule(ctx, rule.ID)
-	if err != nil {
-		t.Fatalf("UserGroupsByRule: %v", err)
+	if err := ruleStore.SetRecipientGroups(ctx, rule.ID, []string{g1.ID, g2.ID}); err != nil {
+		t.Fatalf("SetRecipientGroups: %v", err)
 	}
-	if len(groups) < 2 {
-		t.Errorf("got %d groups, want >= 2", len(groups))
+	got, err := ruleStore.RecipientGroupsByRule(ctx, rule.ID)
+	if err != nil {
+		t.Fatalf("RecipientGroupsByRule: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("want 2 recipient groups, got %d", len(got))
+	}
+
+	// Replace-all: drop g2, add g3.
+	if err := ruleStore.SetRecipientGroups(ctx, rule.ID, []string{g1.ID, g3.ID}); err != nil {
+		t.Fatalf("SetRecipientGroups replace: %v", err)
+	}
+	got, _ = ruleStore.RecipientGroupsByRule(ctx, rule.ID)
+	if len(got) != 2 {
+		t.Fatalf("after replace want 2, got %d", len(got))
+	}
+	gotIDs := map[string]bool{got[0].ID: true, got[1].ID: true}
+	if !gotIDs[g1.ID] || !gotIDs[g3.ID] || gotIDs[g2.ID] {
+		t.Fatalf("after replace want {g1, g3}, got %+v", gotIDs)
+	}
+}
+
+func TestAlertRuleStore_RulesByRecipientGroup(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	rgStore := pgsql.NewRecipientGroupStore(client)
+	ctx := context.Background()
+
+	g, _ := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org3", Name: "ops"})
+	r1, _ := ruleStore.Add(ctx, cloudhub.AlertGroupRule{OrgID: "org3", Name: "r1", Active: true})
+	r2, _ := ruleStore.Add(ctx, cloudhub.AlertGroupRule{OrgID: "org3", Name: "r2", Active: true})
+	other, _ := ruleStore.Add(ctx, cloudhub.AlertGroupRule{OrgID: "org3", Name: "other", Active: true})
+
+	if err := ruleStore.SetRecipientGroups(ctx, r1.ID, []string{g.ID}); err != nil {
+		t.Fatalf("SetRecipientGroups r1: %v", err)
+	}
+	if err := ruleStore.SetRecipientGroups(ctx, r2.ID, []string{g.ID}); err != nil {
+		t.Fatalf("SetRecipientGroups r2: %v", err)
+	}
+
+	rules, err := ruleStore.RulesByRecipientGroup(ctx, g.ID)
+	if err != nil {
+		t.Fatalf("RulesByRecipientGroup: %v", err)
+	}
+	if len(rules) != 2 {
+		t.Fatalf("want 2 rules linked to group, got %d", len(rules))
+	}
+	for _, r := range rules {
+		if r.ID == other.ID {
+			t.Fatalf("unlinked rule %q should not appear", other.ID)
+		}
+	}
+}
+
+func TestAlertRuleStore_ConditionsRoundTrip(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	ctx := context.Background()
+
+	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
+		OrgID:       "org4",
+		Name:        "thresh",
+		Measurement: "cpu",
+		Field:       "usage_user",
+		Conditions: []cloudhub.AlertRuleCondition{
+			{Level: "info", Value: 50, Enabled: true},
+			{Level: "warning", Value: 70, Enabled: true},
+			{Level: "critical", Value: 90, Enabled: false},
+		},
+		Active: true,
+	})
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := ruleStore.ConditionsByRule(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("ConditionsByRule: %v", err)
+	}
+	if len(got) != 3 {
+		t.Fatalf("want 3 conditions, got %d", len(got))
+	}
+
+	// SetConditions replaces previous rows.
+	if err := ruleStore.SetConditions(ctx, r.ID, []cloudhub.AlertRuleCondition{
+		{Level: "critical", Value: 95, Enabled: true},
+	}); err != nil {
+		t.Fatalf("SetConditions: %v", err)
+	}
+	got, _ = ruleStore.ConditionsByRule(ctx, r.ID)
+	if len(got) != 1 || got[0].Level != "critical" || got[0].Value != 95 {
+		t.Fatalf("after SetConditions want [critical=95], got %+v", got)
 	}
 }
