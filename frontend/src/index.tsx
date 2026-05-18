@@ -108,6 +108,8 @@ import {
   SERVER_DETAILS_IMPORT_PATH,
 } from './shared/constants/routes'
 import MainOverviewPage from 'src/main/OverviewPage'
+import GroupDetailPage from 'src/admin/containers/cloudhub/GroupDetailPage'
+import ServerAlertManagementPage from 'src/server_alert/containers/ServerAlertManagementPage'
 
 const errorsQueue = []
 
@@ -318,6 +320,14 @@ class Root extends PureComponent<Record<string, never>, State> {
                   path="server-monitoring/gpu-monitoring"
                   component={GPUMonitoringPage}
                 />
+                <Route
+                  path="server-monitoring/server-alert"
+                  component={ServerAlertManagementPage}
+                />
+                <Route
+                  path="server-monitoring/alert-setup"
+                  component={AlertGroupRulePage}
+                />
                 {/* url monitoring */}
                 <Route path="url-monitoring" component={URLMonitoringPage} />
 
@@ -417,6 +427,10 @@ class Root extends PureComponent<Record<string, never>, State> {
                 <Route
                   path="kapacitors/:id/edit:hash"
                   component={KapacitorPage}
+                />
+                <Route
+                  path="group-management/detail(/:groupId)"
+                  component={GroupDetailPage}
                 />
                 <Route
                   path="admin-cloudhub/:tab"

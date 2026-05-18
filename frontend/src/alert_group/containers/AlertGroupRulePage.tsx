@@ -314,7 +314,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       } else {
         await updateAlertGroupRule(params.id, rule)
       }
-      router.push(`/sources/${source.id}/alert-group-rules`)
+      router.push(`/sources/${source.id}/server-monitoring/server-alert`)
     } catch (e) {
       notify(
         notifyError(this.getRequestErrorMessage(e, '저장에 실패했습니다.'))
@@ -325,7 +325,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
 
   private handleCancel = (): void => {
     const {source, router} = this.props
-    router.push(`/sources/${source.id}/alert-group-rules`)
+    router.push(`/sources/${source.id}/server-monitoring/server-alert`)
   }
 
   private getRequestErrorMessage = (error: any, fallback: string): string => {

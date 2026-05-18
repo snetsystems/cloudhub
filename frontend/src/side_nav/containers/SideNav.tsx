@@ -178,6 +178,11 @@ class SideNav extends PureComponent<Props> {
             >
               NVIDIA GPU Monitoring
             </NavListItem>
+            <NavListItem
+              link={`${sourcePrefix}/server-monitoring/server-alert`}
+            >
+              Server Alert
+            </NavListItem>
           </NavBlock>
 
           {/* URL Monitoring */}

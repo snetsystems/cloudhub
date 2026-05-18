@@ -57,6 +57,22 @@
     "no_user_to_add": "No users to add.",
     "group_name_required": "Must be entered."
   },
+  "server_alert": {
+    "title": "Server Alert Management",
+    "table_title": "Server Alerts",
+    "all": "All",
+    "warning": "Warning",
+    "critical": "Critical",
+    "add_event": "Add Event",
+    "active": "Active",
+    "event_name": "Event Name",
+    "rule": "Rule",
+    "alarm_count": "Alarm Count",
+    "pause": "Pause",
+    "in_use": "In Use",
+    "not_in_use": "Not in Use",
+    "delete": "Delete"
+  },
   "button": {
     "edit": "Edit",
     "delete": "Delete",

@@ -57,6 +57,22 @@
     "no_user_to_add": "추가할 사용자가 없습니다.",
     "group_name_required": "반드시 입력해야 합니다."
   },
+  "server_alert": {
+    "title": "서버 알람 관리",
+    "table_title": "개의 알람 규칙",
+    "all": "전체",
+    "warning": "경고",
+    "critical": "위험",
+    "add_event": "이벤트 추가",
+    "active": "활성",
+    "event_name": "이벤트 이름",
+    "rule": "규칙",
+    "alarm_count": "알람 횟수",
+    "pause": "일시중지",
+    "in_use": "사용중",
+    "not_in_use": "사용 안함",
+    "delete": "삭제"
+  },
   "button": {
     "edit": "수정",
     "delete": "삭제",
