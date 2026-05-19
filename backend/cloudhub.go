@@ -1952,6 +1952,7 @@ type RecipientGroup struct {
 	ID        string                 `json:"id"`
 	OrgID     string                 `json:"orgId"`
 	Name      string                 `json:"name"`
+	IsDefault bool                   `json:"isDefault,omitempty"`
 	DeleteYN  bool                   `json:"deleteYn,omitempty"`
 	CreatedAt time.Time              `json:"createdAt"`
 	UpdatedAt time.Time              `json:"updatedAt"`
@@ -2094,6 +2095,7 @@ type RecipientGroupStore interface {
 	Get(ctx context.Context, id string) (RecipientGroup, error)
 	Add(ctx context.Context, g RecipientGroup) (RecipientGroup, error)
 	Update(ctx context.Context, g RecipientGroup) error
+	MarkAsDefault(ctx context.Context, orgID, groupID string) error
 	Delete(ctx context.Context, id string) error
 
 	// Member-level operations

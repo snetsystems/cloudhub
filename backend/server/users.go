@@ -282,6 +282,10 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+	if err := s.syncDefaultRecipientGroupsForUser(ctx, res); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 
 	// log registrationte
 	msg := fmt.Sprintf(MsgUserCreated.String(), user.Name)
@@ -352,6 +356,10 @@ func (s *Service) OrganizationNewUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
+	if err := s.syncDefaultRecipientGroupsForOrgIDs(ctx, []string{orgID}); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 
 	// log registrationte
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
@@ -440,6 +448,10 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+	if err := s.syncDefaultRecipientGroupsForUser(serverCtx, res); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
 	cu := newUserResponse(res, orgID, "")
@@ -513,8 +525,13 @@ func (s *Service) RemoveUser(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return
 	}
+	orgIDs := orgIDsFromRoles(u.Roles)
 	if err := s.Store.Users(ctx).Delete(ctx, u); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+	if err := s.syncDefaultRecipientGroupsForOrgIDs(ctx, orgIDs); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
@@ -546,6 +563,10 @@ func (s *Service) OrganizationRemoveUser(w http.ResponseWriter, r *http.Request)
 	}
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
+	if err := s.syncDefaultRecipientGroupsForOrgIDs(ctx, []string{orgID}); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 
 	// log registrationte
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
@@ -581,6 +602,8 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return
 	}
+
+	rolesBefore := append([]cloudhub.Role(nil), u.Roles...)
 
 	roles, err := s.validRoles(ctx, req.Roles, u.Roles)
 	if err != nil {
@@ -648,6 +671,11 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.syncAlertRecipientMembersForUserEmailChange(ctx, "", u, oldEmail); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	syncOrgIDs := append(orgIDsFromRoles(rolesBefore), orgIDsFromRoles(u.Roles)...)
+	if err := s.syncDefaultRecipientGroupsForOrgIDs(ctx, syncOrgIDs); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
@@ -758,6 +786,10 @@ func (s *Service) OrganizationUpdateUser(w http.ResponseWriter, r *http.Request)
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
 	if err := s.syncAlertRecipientMembersForUserEmailChange(ctx, orgID, u, oldEmail); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	if err := s.syncDefaultRecipientGroupsForOrgIDs(ctx, []string{orgID}); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}

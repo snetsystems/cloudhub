@@ -727,6 +727,12 @@ func (s *Server) Serve(ctx context.Context) {
 		// Don't exit - continue startup even if builtin dashboard initialization fails
 	}
 
+	if err := initializeAllOrgsDefaultRecipientGroups(ctx, &service, logger); err != nil {
+		logger.
+			WithField("component", "server").
+			Error("Failed to bootstrap default recipient groups:", err)
+	}
+
 	service.Env = cloudhub.Environment{
 		TelegrafSystemInterval: s.TelegrafSystemInterval,
 		CustomAutoRefresh:      s.CustomAutoRefresh,

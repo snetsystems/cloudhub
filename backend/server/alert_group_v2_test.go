@@ -217,6 +217,10 @@ func (f *fakeRecipientGroupStore) Update(ctx context.Context, g cloudhub.Recipie
 	return nil
 }
 
+func (f *fakeRecipientGroupStore) MarkAsDefault(ctx context.Context, orgID, groupID string) error {
+	return nil
+}
+
 func (f *fakeRecipientGroupStore) Delete(ctx context.Context, id string) error {
 	if f.deleteFunc != nil {
 		return f.deleteFunc(ctx, id)

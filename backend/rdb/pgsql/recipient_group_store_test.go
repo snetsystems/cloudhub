@@ -137,3 +137,28 @@ func TestRecipientGroupStore_MembersByUserID(t *testing.T) {
 		t.Fatalf("expected 2 members across orgs, got %+v", allMembers)
 	}
 }
+
+func TestRecipientGroupStore_IsDefault(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+
+	store := pgsql.NewRecipientGroupStore(client)
+	ctx := context.Background()
+
+	def, err := store.Add(ctx, cloudhub.RecipientGroup{OrgID: "org1", Name: "기본 수신자", IsDefault: true})
+	if err != nil || !def.IsDefault {
+		t.Fatalf("Add default: %+v err=%v", def, err)
+	}
+	other, err := store.Add(ctx, cloudhub.RecipientGroup{OrgID: "org1", Name: "Ops"})
+	if err != nil {
+		t.Fatalf("Add other: %v", err)
+	}
+	if err := store.MarkAsDefault(ctx, "org1", other.ID); err != nil {
+		t.Fatalf("MarkAsDefault: %v", err)
+	}
+	gotDef, _ := store.Get(ctx, def.ID)
+	gotOther, _ := store.Get(ctx, other.ID)
+	if gotDef.IsDefault || !gotOther.IsDefault {
+		t.Fatalf("expected single default: def=%+v other=%+v", gotDef, gotOther)
+	}
+}

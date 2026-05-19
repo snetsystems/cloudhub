@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/rdb"
 )
 
 var _ cloudhub.RecipientGroupStore = (*RecipientGroupStore)(nil)
@@ -18,12 +19,12 @@ func NewRecipientGroupStore(client *Client) *RecipientGroupStore {
 	return &RecipientGroupStore{client: client}
 }
 
-const recipientGroupCols = `id, org_id, name, delete_yn, created_at, updated_at`
+const recipientGroupCols = `id, org_id, name, is_default, delete_yn, created_at, updated_at`
 
 func scanRecipientGroup(row interface{ Scan(...any) error }) (cloudhub.RecipientGroup, error) {
 	var g cloudhub.RecipientGroup
 	var ca, ua time.Time
-	if err := row.Scan(&g.ID, &g.OrgID, &g.Name, &g.DeleteYN, &ca, &ua); err != nil {
+	if err := row.Scan(&g.ID, &g.OrgID, &g.Name, &g.IsDefault, &g.DeleteYN, &ca, &ua); err != nil {
 		return g, fmt.Errorf("recipient_group scan: %w", err)
 	}
 	g.CreatedAt, g.UpdatedAt = ca, ua
@@ -66,8 +67,40 @@ func (s *RecipientGroupStore) Get(ctx context.Context, id string) (cloudhub.Reci
 	return g, err
 }
 
+func clearOrgDefaultRecipientGroups(ctx context.Context, st rdb.Store, orgID string) error {
+	_, err := st.ExecContext(ctx,
+		`UPDATE recipient_groups SET is_default = false, updated_at = NOW() WHERE org_id = $1 AND is_default = true AND delete_yn = false`,
+		orgID,
+	)
+	return err
+}
+
 func (s *RecipientGroupStore) Add(ctx context.Context, g cloudhub.RecipientGroup) (cloudhub.RecipientGroup, error) {
-	const q = `INSERT INTO recipient_groups (org_id, name) VALUES ($1,$2) RETURNING id, created_at, updated_at`
+	if g.IsDefault {
+		var out cloudhub.RecipientGroup
+		err := s.client.WithTx(ctx, func(ctx context.Context, st rdb.Store) error {
+			if err := clearOrgDefaultRecipientGroups(ctx, st, g.OrgID); err != nil {
+				return err
+			}
+			row := st.QueryRowContext(ctx,
+				`INSERT INTO recipient_groups (org_id, name, is_default) VALUES ($1,$2,true) RETURNING id, created_at, updated_at`,
+				g.OrgID, g.Name,
+			)
+			var ca, ua time.Time
+			if err := row.Scan(&out.ID, &ca, &ua); err != nil {
+				return err
+			}
+			out.OrgID, out.Name, out.IsDefault = g.OrgID, g.Name, true
+			out.CreatedAt, out.UpdatedAt = ca, ua
+			return nil
+		})
+		if err != nil {
+			return cloudhub.RecipientGroup{}, fmt.Errorf("recipient_group.Add: %w", err)
+		}
+		return out, nil
+	}
+
+	const q = `INSERT INTO recipient_groups (org_id, name, is_default) VALUES ($1,$2,false) RETURNING id, created_at, updated_at`
 	var ca, ua time.Time
 	if err := s.client.QueryRowContext(ctx, q, g.OrgID, g.Name).Scan(&g.ID, &ca, &ua); err != nil {
 		return cloudhub.RecipientGroup{}, fmt.Errorf("recipient_group.Add: %w", err)
@@ -80,6 +113,29 @@ func (s *RecipientGroupStore) Update(ctx context.Context, g cloudhub.RecipientGr
 	const q = `UPDATE recipient_groups SET name=$1, updated_at=NOW() WHERE id=$2 AND delete_yn = false`
 	if _, err := s.client.ExecContext(ctx, q, g.Name, g.ID); err != nil {
 		return fmt.Errorf("recipient_group.Update: %w", err)
+	}
+	return nil
+}
+
+func (s *RecipientGroupStore) MarkAsDefault(ctx context.Context, orgID, groupID string) error {
+	err := s.client.WithTx(ctx, func(ctx context.Context, st rdb.Store) error {
+		if err := clearOrgDefaultRecipientGroups(ctx, st, orgID); err != nil {
+			return err
+		}
+		res, err := st.ExecContext(ctx,
+			`UPDATE recipient_groups SET is_default = true, updated_at = NOW() WHERE id = $1 AND org_id = $2 AND delete_yn = false`,
+			groupID, orgID,
+		)
+		if err != nil {
+			return err
+		}
+		if res.RowsAffected() == 0 {
+			return cloudhub.ErrRecipientGroupNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("recipient_group.MarkAsDefault: %w", err)
 	}
 	return nil
 }

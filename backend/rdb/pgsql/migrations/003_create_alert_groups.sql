@@ -31,6 +31,9 @@
 --
 -- Future domains (report, etc.) extend Layer 1 via their own *_recipient_groups /
 -- *_recipient_member_prefs tables.
+--
+-- recipient_groups.is_default: at most one per org (partial unique index).
+-- System bootstrap marks the org default group; name is display-only (e.g. "기본 수신자").
 
 -- =====================================================================
 -- Layer 1: 도메인 중립 (recipient identity)
@@ -38,15 +41,18 @@
 
 -- recipient_groups: alert/report 등 모든 수신 도메인이 공유하는 그룹
 CREATE TABLE IF NOT EXISTS recipient_groups (
-    id         UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    org_id     TEXT        NOT NULL DEFAULT '',
-    name       TEXT        NOT NULL,
-    delete_yn  BOOLEAN     NOT NULL DEFAULT false,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id          UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    org_id      TEXT        NOT NULL DEFAULT '',
+    name        TEXT        NOT NULL,
+    is_default  BOOLEAN     NOT NULL DEFAULT false,
+    delete_yn   BOOLEAN     NOT NULL DEFAULT false,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_recipient_groups_org_id_active
     ON recipient_groups (org_id) WHERE delete_yn = false;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_recipient_groups_org_default_active
+    ON recipient_groups (org_id) WHERE is_default = true AND delete_yn = false;
 
 -- recipient_group_members: 그룹 멤버 정체성 + 연락처 (도메인 중립)
 --   email / phone_number: 연락처 데이터. SMS 채널이 phone_number를 사용.
@@ -351,6 +357,7 @@ COMMENT ON COLUMN alert_rule_hosts.hostname IS
   'Hostname as reported to InfluxDB. Stored directly as text — NOT a FK to the hosts table.';
 
 -- Soft-delete flags
+COMMENT ON COLUMN recipient_groups.is_default         IS 'true = org-wide default recipient group (system-managed membership sync); at most one per org';
 COMMENT ON COLUMN recipient_groups.delete_yn          IS 'soft-delete flag; true means logically deleted';
 COMMENT ON COLUMN recipient_group_members.delete_yn   IS 'soft-delete flag; true means logically deleted';
 COMMENT ON COLUMN alert_kapacitors.delete_yn          IS 'soft-delete flag; true means logically deleted';
