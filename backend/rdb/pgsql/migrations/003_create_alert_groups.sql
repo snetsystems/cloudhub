@@ -124,9 +124,10 @@ CREATE INDEX IF NOT EXISTS idx_alert_kapacitors_org_id_active
 -- alert_kapacitor_mappings: legacy KV Server(Kapacitor) <-> v2 alert_kapacitors 영구 동기화 다리
 --   legacy KV 측 (source_id, kapacitor_id) 식별자와 v2 PG 측 UUID를 잇는 cross-reference.
 --   KV Server 생성/수정/삭제 시 v2 alert_kapacitors 동기 반영을 위해 지속적으로 사용됨.
+--   source_id / legacy_kapacitor_id 는 Go int(KV int64)와 맞추기 위해 BIGINT 사용.
 CREATE TABLE IF NOT EXISTS alert_kapacitor_mappings (
-    source_id           INT         NOT NULL,
-    legacy_kapacitor_id INT         NOT NULL,
+    source_id           BIGINT      NOT NULL,
+    legacy_kapacitor_id BIGINT      NOT NULL,
     alert_kapacitor_id  UUID        NOT NULL REFERENCES alert_kapacitors(id) ON DELETE CASCADE,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -339,9 +340,9 @@ COMMENT ON COLUMN alert_kapacitors.insecure_skip_verify IS
 
 -- alert_kapacitor_mappings columns
 COMMENT ON COLUMN alert_kapacitor_mappings.source_id IS
-  'Legacy KV Source ID component of the cross-reference key.';
+  'Legacy KV Source ID component of the cross-reference key (BIGINT, matches Go int).';
 COMMENT ON COLUMN alert_kapacitor_mappings.legacy_kapacitor_id IS
-  'Legacy KV Kapacitor (Server) ID component of the cross-reference key.';
+  'Legacy KV Kapacitor (Server) ID component of the cross-reference key (BIGINT, matches Go int).';
 COMMENT ON COLUMN alert_kapacitor_mappings.alert_kapacitor_id IS
   'Resolved v2 alert_kapacitors.id for the legacy identifier pair.';
 
