@@ -36,67 +36,10 @@ function ServerAlertManagementPage({router, location}: any) {
       const rules = await getAlertGroupRules()
       if (rules.length > 0) {
         setData(rules)
-      } else {
-        // API 결과가 없을 경우 더미 데이터 표시
       }
     } catch (error) {
       console.error('Failed to fetch alert group rules', error)
     }
-    setData([
-      {
-        ...DEFAULT_RULE,
-        id: '1',
-        active: true,
-        name: 'CPU Usage Alert',
-        measurement: 'cpu',
-        field: 'usage_idle',
-        conditions: [
-          {level: 'critical', value: '84', enabled: true},
-          {level: 'warning', value: '44', enabled: true},
-        ],
-        occurrenceCount: 10,
-        pauseSeconds: 0,
-      },
-      {
-        ...DEFAULT_RULE,
-        id: '2',
-        active: true,
-        name: 'CPU Usage Alert',
-        measurement: 'cpu',
-        field: 'usage_idle',
-        conditions: [],
-        occurrenceCount: 10,
-        pauseSeconds: 0,
-      },
-      {
-        ...DEFAULT_RULE,
-        id: '3',
-        active: true,
-        name: 'Memory Usage Alert',
-        measurement: 'mem',
-        field: 'used_percent',
-        conditions: [
-          {level: 'critical', value: '84', enabled: true},
-          {level: 'warning', value: '44', enabled: true},
-        ],
-        occurrenceCount: 10,
-        pauseSeconds: 0,
-      },
-      {
-        ...DEFAULT_RULE,
-        id: '4',
-        active: true,
-        name: 'Disk Usage Alert',
-        measurement: 'disk',
-        field: 'used_percent',
-        conditions: [
-          {level: 'critical', value: '84', enabled: true},
-          {level: 'warning', value: '44', enabled: true},
-        ],
-        occurrenceCount: 10,
-        pauseSeconds: 0,
-      },
-    ])
   }
 
   useEffect(() => {
@@ -193,10 +136,6 @@ function ServerAlertManagementPage({router, location}: any) {
 
   const columns: ColumnInfo[] = useMemo(
     () => [
-      {
-        key: 'id',
-        name: 'No',
-      },
       {
         key: 'active',
         name: t('server_alert.active', '활성'),

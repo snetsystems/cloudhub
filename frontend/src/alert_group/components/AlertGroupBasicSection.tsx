@@ -2,6 +2,7 @@
 import React, {ChangeEvent, PureComponent} from 'react'
 import _ from 'lodash'
 import ReactTooltip from 'react-tooltip'
+import {withTranslation, WithTranslation} from 'react-i18next'
 import {
   Radio,
   Button,
@@ -27,7 +28,7 @@ import {
 } from 'src/alert_group/types'
 import {getUserGroups} from 'src/alert_group/apis'
 
-interface AlertGroupBasicSectionProps {
+interface AlertGroupBasicSectionProps extends WithTranslation {
   rule: AlertGroupRule
   kapacitors: AlertKapacitor[]
   organizationId: string
@@ -130,11 +131,12 @@ class AlertGroupBasicSectionView extends PureComponent<
 
   private renderMatchedUserPanel(): JSX.Element {
     const {userGroupsLoad, receiveMode} = this.state
+    const {t} = this.props
 
     if (userGroupsLoad === RemoteDataState.Loading) {
       return (
         <span className="alert-group-empty-text">
-          수신자 목록을 계산하는 중…
+          {t('alert_group_basic.calculating_recipients')}
         </span>
       )
     }
@@ -142,7 +144,7 @@ class AlertGroupBasicSectionView extends PureComponent<
     if (userGroupsLoad === RemoteDataState.Error) {
       return (
         <span className="alert-group-empty-text">
-          대상 그룹 정보를 불러오지 못했습니다.
+          {t('alert_group_basic.failed_to_load_groups')}
         </span>
       )
     }
@@ -153,8 +155,8 @@ class AlertGroupBasicSectionView extends PureComponent<
       return (
         <span className="alert-group-empty-text">
           {receiveMode === 'all'
-            ? '수신 가능한 대상 그룹이 없습니다.'
-            : '선택한 수신 그룹이 없거나 멤버가 없습니다.'}
+            ? t('alert_group_basic.no_receivable_groups')
+            : t('alert_group_basic.no_selected_groups_or_members')}
         </span>
       )
     }
@@ -167,7 +169,7 @@ class AlertGroupBasicSectionView extends PureComponent<
               {m.userName}
             </span>
             <span className="alert-group-receive-user-list--email">
-              {m.email || '—'} (이메일: {m.emailLevel})
+              {m.email || '—'} ({t('group_management.email')}: {m.emailLevel})
             </span>
           </div>
         ))}
@@ -176,15 +178,17 @@ class AlertGroupBasicSectionView extends PureComponent<
   }
 
   public render() {
-    const {rule, kapacitors, onOpenTestModal, isTestingSend} = this.props
+    const {rule, kapacitors, onOpenTestModal, isTestingSend, t} = this.props
     const {receiveMode, userGroups} = this.state
 
     return (
       <div className="rule-section">
-        <h3 className="rule-section--heading">③ 기본 정보 및 수신 설정</h3>
+        <h3 className="rule-section--heading">
+          {t('alert_group_basic.basic_info_receipt_settings')}
+        </h3>
         <div className="rule-section--body">
           <div className="rule-section--row rule-section--row-first">
-            <p>이벤트 활성화</p>
+            <p>{t('alert_group_basic.enable_event')}</p>
             <SlideToggle
               active={rule.active}
               onChange={this.handleToggleActive}
@@ -202,7 +206,7 @@ class AlertGroupBasicSectionView extends PureComponent<
                 buttonColor={ComponentColor.Default}
                 buttonSize={ComponentSize.Small}
                 menuColor={DropdownMenuColors.Onyx}
-                titleText="Kapacitor 선택"
+                titleText={t('alert_group_basic.select_kapacitor')}
                 mode={DropdownMode.ActionList}
               >
                 {kapacitors.map(k => (
@@ -213,21 +217,25 @@ class AlertGroupBasicSectionView extends PureComponent<
               </Dropdown>
             ) : (
               <span className="alert-group-empty-text">
-                등록된 Alert Kapacitor가 없습니다.
+                {t('alert_group_basic.no_registered_kapacitor')}
               </span>
             )}
           </div>
-
           <div className="rule-section--row rule-section--row-receive-block rule-section--border-top">
-            <div className="rule-section--row-handler-label" title="수신 대상">
+            <div
+              className="rule-section--row-handler-label"
+              title={t('alert_group_basic.receipt_target')}
+            >
               <span className={`icon ${IconFont.Group}`} aria-hidden />
-              <p className="rule-section--row-handler-title">이 규칙의 수신</p>
+              <p className="rule-section--row-handler-title">
+                {t('alert_group_basic.receipt_of_this_rule')}
+              </p>
             </div>
             <div className="alert-group-receive-panel-card">
               <div className="alert-group-receive-panel-card__fields">
                 <div className="alert-group-receive-panel-card__field">
                   <span className="alert-group-receive-panel-card__label">
-                    수신 방식
+                    {t('alert_group_basic.receipt_mode')}
                   </span>
                   <div className="alert-group-receive-panel-card__control">
                     <Radio shape={ButtonShape.Default}>
@@ -237,7 +245,7 @@ class AlertGroupBasicSectionView extends PureComponent<
                         active={receiveMode === 'all'}
                         onClick={this.handleReceiveModeChange}
                       >
-                        전체 수신
+                        {t('alert_group_basic.receive_all')}
                       </Radio.Button>
                       <Radio.Button
                         id="receive-mode-groups"
@@ -245,7 +253,7 @@ class AlertGroupBasicSectionView extends PureComponent<
                         active={receiveMode === 'specific'}
                         onClick={this.handleReceiveModeChange}
                       >
-                        그룹 선택 수신
+                        {t('alert_group_basic.receive_specific_groups')}
                       </Radio.Button>
                     </Radio>
                   </div>
@@ -253,7 +261,7 @@ class AlertGroupBasicSectionView extends PureComponent<
                 {receiveMode === 'specific' && (
                   <div className="alert-group-receive-panel-card__field">
                     <span className="alert-group-receive-panel-card__label">
-                      수신 그룹
+                      {t('alert_group_basic.receipt_groups')}
                     </span>
                     <div className="alert-group-receive-panel-card__control">
                       {userGroups.length > 0 ? (
@@ -263,7 +271,7 @@ class AlertGroupBasicSectionView extends PureComponent<
                           buttonColor={ComponentColor.Default}
                           buttonSize={ComponentSize.Small}
                           menuColor={DropdownMenuColors.Onyx}
-                          emptyText="그룹 선택"
+                          emptyText={t('alert_group_basic.select_group')}
                         >
                           {userGroups.map(ug => (
                             <MultiSelectDropdown.Item
@@ -277,8 +285,7 @@ class AlertGroupBasicSectionView extends PureComponent<
                         </MultiSelectDropdown>
                       ) : (
                         <div className="alert-group-tags-empty-hint">
-                          등록된 수신 그룹이 없습니다. 먼저 수신 그룹을
-                          생성해주세요.
+                          {t('alert_group_basic.no_registered_receipt_groups')}
                         </div>
                       )}
                     </div>
@@ -288,15 +295,15 @@ class AlertGroupBasicSectionView extends PureComponent<
               <div className="alert-group-receive-panel-card__preview">
                 <div className="alert-group-receive-user-header">
                   <p className="alert-group-receive-user-title">
-                    수신 사용자 미리보기
+                    {t('alert_group_basic.receipt_users_preview')}
                     <span className="alert-group-receive-user-count">
                       ({this.getMatchedMembers().length})
                     </span>
                   </p>
                   <p className="alert-group-receive-user-hint">
                     {receiveMode === 'all'
-                      ? '모든 대상 그룹이 알림을 받게 됩니다.'
-                      : '선택한 수신 그룹의 멤버에게 알림이 전달됩니다.'}
+                      ? t('alert_group_basic.all_groups_will_receive')
+                      : t('alert_group_basic.selected_groups_will_receive')}
                   </p>
                 </div>
                 {this.renderMatchedUserPanel()}
@@ -306,13 +313,15 @@ class AlertGroupBasicSectionView extends PureComponent<
 
           <div className="rule-section--row rule-section--border-top">
             <div className="rule-section--row-label-wrap">
-              <p className="rule-section--row-label">알림 메시지</p>
+              <p className="rule-section--row-label">
+                {t('alert_group_basic.alert_message')}
+              </p>
             </div>
           </div>
 
           <div className="rule-section--row">
-            <p>메시지 본문</p>
-            <div className="rule-builder--message" style={{width: '100%'}}>
+            <p>{t('alert_group_basic.message_body')}</p>
+            <div className="rule-builder--message rule-builder--message-full">
               <textarea
                 value={rule.message || ''}
                 onChange={this.handleMessageChange}
@@ -343,10 +352,14 @@ class AlertGroupBasicSectionView extends PureComponent<
           </div>
 
           <div className="rule-section--row rule-section--row-test-send">
-            <p>수신 테스트</p>
+            <p>{t('alert_group_basic.test_receipt')}</p>
             <div className="alert-group-test-send-block">
               <Button
-                text={isTestingSend ? '발송 중...' : '수신 테스트'}
+                text={
+                  isTestingSend
+                    ? t('alert_group_basic.sending')
+                    : t('alert_group_basic.test_receipt')
+                }
                 icon={IconFont.Bell}
                 onClick={onOpenTestModal}
                 color={ComponentColor.Success}
@@ -358,8 +371,7 @@ class AlertGroupBasicSectionView extends PureComponent<
                 }
               />
               <span className="alert-group-test-send-block__hint">
-                수신 테스트를 누르면 팝업에서 테스트 제목/메시지와 수신 대상을
-                입력해 발송 여부를 확인할 수 있습니다.
+                {t('alert_group_basic.test_receipt_hint')}
               </span>
             </div>
           </div>
@@ -369,4 +381,4 @@ class AlertGroupBasicSectionView extends PureComponent<
   }
 }
 
-export default AlertGroupBasicSectionView
+export default withTranslation()(AlertGroupBasicSectionView)

@@ -81,9 +81,7 @@ class HostSelector extends PureComponent<Props, State> {
         <div className="device-group-host-selector--list">
           {filtered.length === 0 ? (
             <div className="device-group-host-selector--empty">
-              {search
-                ? '검색 결과가 없습니다.'
-                : '대상 호스트가 없습니다.'}
+              {search ? '검색 결과가 없습니다.' : '대상 호스트가 없습니다.'}
             </div>
           ) : (
             <>
@@ -93,7 +91,11 @@ class HostSelector extends PureComponent<Props, State> {
               >
                 <span
                   className={`device-group-host-selector--checkbox${
-                    allSelected ? ' checked' : someSelected ? ' indeterminate' : ''
+                    allSelected
+                      ? ' checked'
+                      : someSelected
+                      ? ' indeterminate'
+                      : ''
                   }`}
                 />
                 <span className="device-group-host-selector--hostname">
@@ -107,13 +109,19 @@ class HostSelector extends PureComponent<Props, State> {
                 return (
                   <div
                     key={host.hostname}
-                    className={`device-group-host-selector--item${isSelected ? ' selected' : ''}`}
+                    className={`device-group-host-selector--item${
+                      isSelected ? ' selected' : ''
+                    }`}
                     onClick={() => this.handleToggle(host.hostname)}
                   >
                     <span
-                      className={`device-group-host-selector--checkbox${isSelected ? ' checked' : ''}`}
+                      className={`device-group-host-selector--checkbox${
+                        isSelected ? ' checked' : ''
+                      }`}
                     />
-                    <span className="device-group-host-selector--hostname">{host.hostname}</span>
+                    <span className="device-group-host-selector--hostname">
+                      {host.hostname}
+                    </span>
                   </div>
                 )
               })}

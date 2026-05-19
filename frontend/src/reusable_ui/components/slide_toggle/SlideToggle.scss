@@ -108,10 +108,19 @@
   }
 
   &.slide-toggle-warning.active .slide-toggle--knob {
-    background-color: $c-star;
+    background-color: $c-pineapple;
   }
   &.slide-toggle-warning.active:hover .slide-toggle--knob {
-    background-color: $c-comet;
+    background-color: $c-thunder;
+  }
+
+  &.slide-toggle-info.active .slide-toggle--knob,
+  &.slide-toggle-secondary.active .slide-toggle--knob {
+    background-color: $c-pool;
+  }
+  &.slide-toggle-info.active:hover .slide-toggle--knob,
+  &.slide-toggle-secondary.active:hover .slide-toggle--knob {
+    background-color: $c-laser;
   }
 
   &.slide-toggle-danger.active .slide-toggle--knob {

@@ -1,20 +1,20 @@
 // frontend/src/alert_group/components/AlertGroupConditionSection.tsx
 import React, {PureComponent} from 'react'
 import uuid from 'uuid'
+import {withTranslation, WithTranslation} from 'react-i18next'
 import {
   Button,
   IconFont,
   ComponentColor,
   ComponentSize,
-  Dropdown,
-  DropdownMode,
-  DropdownMenuColors,
   Input,
   InputType,
   Radio,
   ButtonShape,
   SlideToggle,
 } from 'src/reusable_ui'
+
+import Dropdown from 'src/shared/components/Dropdown'
 
 import {SHIFTS, PERIODS} from 'src/kapacitor/constants'
 
@@ -39,21 +39,7 @@ import {
   ALERT_TEMPLATES,
 } from 'src/alert_group/types'
 
-const RELATIVE_OPERATOR_OPTIONS = [
-  {label: '초과 (>)', value: 'greater than'},
-  {label: '이상 (>=)', value: 'equal to or greater'},
-  {label: '미만 (<)', value: 'less than'},
-  {label: '이하 (<=)', value: 'equal to or less than'},
-  {label: '같음 (=)', value: 'equal to'},
-  {label: '다름 (!=)', value: 'not equal to'},
-]
-
-const CHANGES_OPTIONS = [
-  {label: '변화량', value: 'change'},
-  {label: '변화율(%)', value: '% change'},
-]
-
-interface Props {
+interface Props extends WithTranslation {
   source: Source
   me: Me
   isUsingAuth: boolean
@@ -86,7 +72,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       case 'warning':
         return ComponentColor.Warning
       case 'info':
-        return ComponentColor.Alert
+        return ComponentColor.Info
       default:
         return ComponentColor.Default
     }
@@ -106,6 +92,51 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   }
 
   private readonly instanceId = uuid.v4()
+
+  private getRelativeOperatorOptions = (t: any) => [
+    {label: t('alert_group_rule.op_gt'), value: 'greater than'},
+    {label: t('alert_group_rule.op_gte'), value: 'equal to or greater'},
+    {label: t('alert_group_rule.op_lt'), value: 'less than'},
+    {label: t('alert_group_rule.op_lte'), value: 'equal to or less than'},
+    {label: t('alert_group_rule.op_eq'), value: 'equal to'},
+    {label: t('alert_group_rule.op_neq'), value: 'not equal to'},
+  ]
+
+  private getChangesOptions = (t: any) => [
+    {label: t('alert_group_rule.opt_change'), value: 'change'},
+    {label: t('alert_group_rule.opt_pct_change'), value: '% change'},
+  ]
+
+  private getTranslatedTriggerOperators = (t: any) =>
+    TRIGGER_OPERATORS.map(o => {
+      const tKeyMap: Record<string, string> = {
+        greater: 'op_gt',
+        greater_equal: 'op_gte',
+        less: 'op_lt',
+        less_equal: 'op_lte',
+        equal: 'op_eq',
+        not_equal: 'op_neq',
+      }
+      return {
+        label: t(`alert_group_rule.${tKeyMap[o.value] || o.value}`),
+        value: o.value,
+      }
+    })
+
+  private getTranslatedPauseOptions = (t: any) =>
+    PAUSE_SECONDS_OPTIONS.map(o => {
+      const tKeyMap: Record<number, string> = {
+        0: 'do_not_use',
+        300: 'pause_300',
+        600: 'pause_600',
+        1800: 'pause_1800',
+        3600: 'pause_3600',
+      }
+      return {
+        label: t(`alert_group_rule.${tKeyMap[o.value] || o.value}`),
+        value: o.value,
+      }
+    })
 
   constructor(props: Props) {
     super(props)
@@ -284,9 +315,10 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   // ── Render Template UI ─────────────────────────────────────────────────────
 
   private renderTemplateUI(): JSX.Element {
-    const {rule, onUpdateRule} = this.props
+    const {rule, onUpdateRule, t} = this.props
     const selectedTemplate = ALERT_TEMPLATES.find(
-      t => t.measurement === rule.measurement && t.field === rule.field
+      t_item =>
+        t_item.measurement === rule.measurement && t_item.field === rule.field
     )
 
     return (
@@ -294,24 +326,24 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
         {this.props.children}
         <div className="alert-group-setting-row alert-group-setting-row--template-summary">
           <div className="alert-group-setting-label alert-group-setting-label--aligned">
-            지표 설정
+            {t('alert_group_rule.metric_setting')}
           </div>
           <div className="alert-group-setting-control">
             <div className="alert-group-selected-template-name">
-              {selectedTemplate ? selectedTemplate.name : '템플릿을 선택하세요'}
+              {selectedTemplate
+                ? selectedTemplate.name
+                : t('alert_group_rule.select_template')}
             </div>
 
             {/* Alert Type Selector */}
-            <div className="alert-group-setting-row">
+            <div className="alert-group-setting-row child-component">
               <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                Alert Type
+                {t('alert_group_rule.alert_type')}
               </div>
               <div className="alert-group-setting-control">
-                <div
-                  style={{display: 'flex', alignItems: 'center', gap: '12px'}}
-                >
-                  <span style={{color: '#999', fontSize: '13px'}}>
-                    Choose One:
+                <div className="alert-group-condition-flex-row-12">
+                  <span className="alert-group-condition-text-light-sm">
+                    {t('alert_group_rule.choose_one')}
                   </span>
                   <Radio color={ComponentColor.Success}>
                     <Radio.Button
@@ -320,7 +352,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       active={!rule.trigger || rule.trigger === 'threshold'}
                       onClick={() => this.handleTriggerTypeChange('threshold')}
                     >
-                      Threshold
+                      {t('alert_group_rule.threshold')}
                     </Radio.Button>
                     <Radio.Button
                       id="trigger-relative"
@@ -328,7 +360,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       active={rule.trigger === 'relative'}
                       onClick={() => this.handleTriggerTypeChange('relative')}
                     >
-                      Relative
+                      {t('alert_group_rule.relative')}
                     </Radio.Button>
                     <Radio.Button
                       id="trigger-deadman"
@@ -336,7 +368,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       active={rule.trigger === 'deadman'}
                       onClick={() => this.handleTriggerTypeChange('deadman')}
                     >
-                      Deadman
+                      {t('alert_group_rule.deadman')}
                     </Radio.Button>
                   </Radio>
                 </div>
@@ -345,27 +377,18 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
             {/* Threshold Rows */}
             {(!rule.trigger || rule.trigger === 'threshold') && (
-              <div
-                className="alert-group-template-thresholds"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                  marginTop: '8px',
-                }}
-              >
+              <div className="alert-group-template-thresholds">
                 {rule.conditions.map((cond, idx) => {
-                  const selectedOperator = TRIGGER_OPERATORS.find(
+                  const translatedTriggerOperators = this.getTranslatedTriggerOperators(
+                    t
+                  )
+                  const selectedOperator = translatedTriggerOperators.find(
                     o => o.value === rule.triggerOperator
                   )
                   return (
                     <div
                       key={idx}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                      }}
+                      className="alert-group-condition-flex-row-12"
                     >
                       <SlideToggle
                         active={cond.enabled}
@@ -376,10 +399,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         color={this.conditionToggleColor(cond.level)}
                       />
                       <span
-                        className={`alert-group-threshold--badge ${cond.level}${
-                          !cond.enabled ? ' disabled' : ''
-                        }`}
-                        style={{width: '80px', textAlign: 'center'}}
+                        className={`alert-group-threshold--badge alert-group-condition-w80 ${
+                          cond.level
+                        }${!cond.enabled ? ' disabled' : ''}`}
                       >
                         {this.conditionLabel(cond.level)}
                       </span>
@@ -387,32 +409,23 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       {cond.enabled && (
                         <>
                           <Dropdown
-                            widthPixels={100}
-                            selectedID={
+                            menuWidth="100px"
+                            selected={
                               selectedOperator
-                                ? selectedOperator.value
-                                : TRIGGER_OPERATORS[0].value
+                                ? selectedOperator.label
+                                : translatedTriggerOperators[0].label
                             }
-                            onChange={(value: string) =>
-                              onUpdateRule({triggerOperator: value as any})
+                            onChoose={(item: any) =>
+                              onUpdateRule({triggerOperator: item.value as any})
                             }
-                            buttonColor={ComponentColor.Default}
-                            buttonSize={ComponentSize.Small}
-                            menuColor={DropdownMenuColors.Onyx}
-                            titleText="선택"
-                            mode={DropdownMode.ActionList}
-                          >
-                            {TRIGGER_OPERATORS.map(o => (
-                              <Dropdown.Item
-                                key={o.value}
-                                id={o.value}
-                                value={o.value}
-                              >
-                                {o.label}
-                              </Dropdown.Item>
-                            ))}
-                          </Dropdown>
-                          <div style={{width: '100px'}}>
+                            buttonColor="btn-default"
+                            buttonSize="btn-sm"
+                            items={translatedTriggerOperators.map(o => ({
+                              text: o.label,
+                              value: o.value,
+                            }))}
+                          />
+                          <div className="alert-group-condition-w100">
                             <Input
                               value={cond.value}
                               onChange={e =>
@@ -420,7 +433,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                               }
                               type={InputType.Number}
                               size={ComponentSize.Small}
-                              placeholder="임계값"
+                              placeholder={t(
+                                'alert_group_rule.threshold_placeholder'
+                              )}
                             />
                           </div>
                         </>
@@ -433,92 +448,63 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
             {rule.trigger === 'relative' && (
               <div className="alert-group-setting-row">
                 <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                  지표 설정
+                  {t('alert_group_rule.metric_setting')}
                 </div>
-                <div
-                  className="alert-group-setting-control"
-                  style={{flexDirection: 'column', gap: '16px'}}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <span style={{color: '#999'}}>이전</span>
+                <div className="alert-group-setting-control alert-group-condition-flex-col-16">
+                  <div className="alert-group-condition-flex-wrap">
+                    <span className="alert-group-condition-text-light">
+                      {t('alert_group_rule.cond_prev')}
+                    </span>
                     <Dropdown
-                      selectedID={rule.triggerValues?.shift || '1m'}
-                      onChange={(v: string) =>
-                        this.handleTriggerValueChange('shift', v)
+                      menuWidth="80px"
+                      selected={rule.triggerValues?.shift || '1m'}
+                      onChoose={(item: any) =>
+                        this.handleTriggerValueChange('shift', item.value)
                       }
-                      buttonSize={ComponentSize.Small}
-                      buttonColor={ComponentColor.Default}
-                      widthPixels={80}
-                      mode={DropdownMode.ActionList}
-                      menuColor={DropdownMenuColors.Amethyst}
-                      titleText={rule.triggerValues?.shift || '1m'}
-                    >
-                      {SHIFTS.map(t => (
-                        <Dropdown.Item key={t} id={t} value={t}>
-                          {t}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown>
-                    <span style={{color: '#999'}}>대비</span>
+                      buttonColor="btn-default"
+                      buttonSize="btn-sm"
+                      items={SHIFTS.map(t => ({text: t, value: t}))}
+                    />
+                    <span className="alert-group-condition-text-light">
+                      {t('alert_group_rule.cond_vs')}
+                    </span>
                     <Dropdown
-                      selectedID={rule.triggerValues?.change || 'change'}
-                      onChange={(v: string) =>
-                        this.handleTriggerValueChange('change', v)
-                      }
-                      buttonSize={ComponentSize.Small}
-                      buttonColor={ComponentColor.Default}
-                      widthPixels={120}
-                      mode={DropdownMode.ActionList}
-                      menuColor={DropdownMenuColors.Amethyst}
-                      titleText={
-                        CHANGES_OPTIONS.find(
+                      menuWidth="120px"
+                      selected={
+                        this.getChangesOptions(t).find(
                           o =>
                             o.value === (rule.triggerValues?.change || 'change')
                         )?.label || 'change'
                       }
-                    >
-                      {CHANGES_OPTIONS.map(o => (
-                        <Dropdown.Item
-                          key={o.value}
-                          id={o.value}
-                          value={o.value}
-                        >
-                          {o.label}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown>
-                    <span style={{color: '#999'}}>이(가)</span>
+                      onChoose={(item: any) =>
+                        this.handleTriggerValueChange('change', item.value)
+                      }
+                      buttonColor="btn-default"
+                      buttonSize="btn-sm"
+                      items={this.getChangesOptions(t).map(o => ({
+                        text: o.label,
+                        value: o.value,
+                      }))}
+                    />
+                    <span className="alert-group-condition-text-light">
+                      {t('alert_group_rule.cond_is')}
+                    </span>
                   </div>
 
-                  <div
-                    className="alert-group-template-thresholds"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                    }}
-                  >
+                  <div className="alert-group-template-thresholds">
                     {rule.conditions.map((cond, idx) => {
+                      const relativeOpOptions = this.getRelativeOperatorOptions(
+                        t
+                      )
                       const selectedOperator =
                         rule.triggerValues?.operator || 'greater than'
-                      const selectedOpObj = RELATIVE_OPERATOR_OPTIONS.find(
+                      const selectedOpObj = relativeOpOptions.find(
                         o => o.value === selectedOperator
                       )
                       return (
                         <div
                           key={idx}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                          }}
+                          className="alert-group-condition-flex-row-12"
                         >
                           <SlideToggle
                             active={cond.enabled}
@@ -529,10 +515,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                             color={this.conditionToggleColor(cond.level)}
                           />
                           <span
-                            className={`alert-group-threshold--badge ${
+                            className={`alert-group-threshold--badge alert-group-condition-w80 ${
                               cond.level
                             }${!cond.enabled ? ' disabled' : ''}`}
-                            style={{width: '80px', textAlign: 'center'}}
                           >
                             {this.conditionLabel(cond.level)}
                           </span>
@@ -540,35 +525,26 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                           {cond.enabled && (
                             <>
                               <Dropdown
-                                widthPixels={160}
-                                selectedID={selectedOperator}
-                                onChange={(value: string) =>
-                                  this.handleTriggerValueChange(
-                                    'operator',
-                                    value
-                                  )
-                                }
-                                buttonColor={ComponentColor.Default}
-                                buttonSize={ComponentSize.Small}
-                                menuColor={DropdownMenuColors.Onyx}
-                                titleText={
+                                menuWidth="160px"
+                                selected={
                                   selectedOpObj
                                     ? selectedOpObj.label
                                     : selectedOperator
                                 }
-                                mode={DropdownMode.ActionList}
-                              >
-                                {RELATIVE_OPERATOR_OPTIONS.map(o => (
-                                  <Dropdown.Item
-                                    key={o.value}
-                                    id={o.value}
-                                    value={o.value}
-                                  >
-                                    {o.label}
-                                  </Dropdown.Item>
-                                ))}
-                              </Dropdown>
-                              <div style={{width: '100px'}}>
+                                onChoose={(item: any) =>
+                                  this.handleTriggerValueChange(
+                                    'operator',
+                                    item.value
+                                  )
+                                }
+                                buttonColor="btn-default"
+                                buttonSize="btn-sm"
+                                items={relativeOpOptions.map(o => ({
+                                  text: o.label,
+                                  value: o.value,
+                                }))}
+                              />
+                              <div className="alert-group-condition-w100">
                                 <Input
                                   value={cond.value}
                                   onChange={e =>
@@ -579,11 +555,15 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                   }
                                   type={InputType.Number}
                                   size={ComponentSize.Small}
-                                  placeholder="값 입력"
+                                  placeholder={t(
+                                    'alert_group_rule.value_input'
+                                  )}
                                 />
                               </div>
                               {rule.triggerValues?.change === '% change' && (
-                                <span style={{color: '#999'}}>%</span>
+                                <span className="alert-group-condition-text-light">
+                                  %
+                                </span>
                               )}
                             </>
                           )}
@@ -597,36 +577,25 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
             {rule.trigger === 'deadman' && (
               <div className="alert-group-setting-row">
                 <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                  지표 설정
+                  {t('alert_group_rule.metric_setting')}
                 </div>
-                <div
-                  className="alert-group-setting-control"
-                  style={{flexDirection: 'column', gap: '16px'}}
-                >
-                  <div
-                    style={{display: 'flex', alignItems: 'center', gap: '8px'}}
-                  >
-                    <span style={{color: '#999'}}>데이터 수신이</span>
+                <div className="alert-group-setting-control alert-group-condition-flex-col-16">
+                  <div className="alert-group-condition-flex-row-8">
+                    <span className="alert-group-condition-text-light">
+                      {t('alert_group_rule.deadman_data_receipt')}
+                    </span>
                     <Dropdown
-                      selectedID={rule.triggerValues?.period || '10m'}
-                      onChange={(v: string) =>
-                        this.handleTriggerValueChange('period', v)
+                      menuWidth="60px"
+                      selected={rule.triggerValues?.period || '1m'}
+                      onChoose={(item: any) =>
+                        this.handleTriggerValueChange('period', item.value)
                       }
-                      buttonSize={ComponentSize.Small}
-                      buttonColor={ComponentColor.Default}
-                      widthPixels={80}
-                      mode={DropdownMode.ActionList}
-                      menuColor={DropdownMenuColors.Amethyst}
-                      titleText={rule.triggerValues?.period || '10m'}
-                    >
-                      {PERIODS.map(t => (
-                        <Dropdown.Item key={t} id={t} value={t}>
-                          {t}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown>
-                    <span style={{color: '#999'}}>
-                      동안 없을 경우 알림 발생
+                      buttonColor="btn-default"
+                      buttonSize="btn-sm"
+                      items={PERIODS.map(val => ({text: val, value: val}))}
+                    />
+                    <span className="alert-group-condition-text-light">
+                      {t('alert_group_rule.deadman_no_data_for')}
                     </span>
                   </div>
                 </div>
@@ -649,27 +618,25 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       isUsingAuth,
       builderMode,
       onSwitchToRawMode,
+      t,
     } = this.props
     const {queryConfig} = this.state
 
-    const selectedPause = PAUSE_SECONDS_OPTIONS.find(
+    const translatedPauseOptions = this.getTranslatedPauseOptions(t)
+    const selectedPause = translatedPauseOptions.find(
       o => o.value === rule.pauseSeconds
     )
     const isTemplateMode = builderMode !== 'raw'
 
     return (
       <div className="rule-section">
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <h3 className="rule-section--heading">① 이벤트 조건 정의</h3>
+        <div className="alert-group-section-header">
+          <h3 className="rule-section--heading">
+            {t('alert_group_rule.cond_def_title')}
+          </h3>
           {isTemplateMode && onSwitchToRawMode && (
             <Button
-              text="직접 입력"
+              text={t('alert_group_rule.direct_input')}
               icon={IconFont.Pencil}
               size={ComponentSize.ExtraSmall}
               color={ComponentColor.Default}
@@ -714,17 +681,12 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
               {/* Alert Type Selector */}
               <div className="alert-group-setting-row">
                 <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                  Alert Type
+                  {t('alert_group_rule.alert_type')}
                 </div>
-                <div
-                  className="alert-group-setting-control"
-                  style={{flexDirection: 'column', gap: '16px'}}
-                >
-                  <div
-                    style={{display: 'flex', alignItems: 'center', gap: '12px'}}
-                  >
-                    <span style={{color: '#999', fontSize: '13px'}}>
-                      Choose One:
+                <div className="alert-group-setting-control alert-group-condition-flex-col-16">
+                  <div className="alert-group-condition-flex-row-12">
+                    <span className="alert-group-condition-text-light-sm">
+                      {t('alert_group_rule.choose_one')}
                     </span>
                     <Radio color={ComponentColor.Success}>
                       <Radio.Button
@@ -735,7 +697,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                           this.handleTriggerTypeChange('threshold')
                         }
                       >
-                        Threshold
+                        {t('alert_group_rule.threshold')}
                       </Radio.Button>
                       <Radio.Button
                         id="trigger-relative"
@@ -743,7 +705,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         active={rule.trigger === 'relative'}
                         onClick={() => this.handleTriggerTypeChange('relative')}
                       >
-                        Relative
+                        {t('alert_group_rule.relative')}
                       </Radio.Button>
                       <Radio.Button
                         id="trigger-deadman"
@@ -751,7 +713,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         active={rule.trigger === 'deadman'}
                         onClick={() => this.handleTriggerTypeChange('deadman')}
                       >
-                        Deadman
+                        {t('alert_group_rule.deadman')}
                       </Radio.Button>
                     </Radio>
                   </div>
@@ -761,32 +723,21 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
               {(!rule.trigger || rule.trigger === 'threshold') && (
                 <div className="alert-group-setting-row">
                   <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                    지표 설정
+                    {t('alert_group_rule.metric_setting')}
                   </div>
-                  <div
-                    className="alert-group-setting-control"
-                    style={{flexDirection: 'column', gap: '16px'}}
-                  >
-                    <div
-                      className="alert-group-template-thresholds"
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px',
-                      }}
-                    >
+                  <div className="alert-group-setting-control alert-group-condition-flex-col-16">
+                    <div className="alert-group-template-thresholds">
                       {rule.conditions.map((cond, idx) => {
-                        const selectedOperator = TRIGGER_OPERATORS.find(
+                        const translatedTriggerOperators = this.getTranslatedTriggerOperators(
+                          t
+                        )
+                        const selectedOperator = translatedTriggerOperators.find(
                           o => o.value === rule.triggerOperator
                         )
                         return (
                           <div
                             key={idx}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                            }}
+                            className="alert-group-condition-flex-row-12"
                           >
                             <SlideToggle
                               active={cond.enabled}
@@ -797,10 +748,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                               color={this.conditionToggleColor(cond.level)}
                             />
                             <span
-                              className={`alert-group-threshold--badge ${
+                              className={`alert-group-threshold--badge alert-group-condition-w80 ${
                                 cond.level
                               }${!cond.enabled ? ' disabled' : ''}`}
-                              style={{width: '80px', textAlign: 'center'}}
                             >
                               {this.conditionLabel(cond.level)}
                             </span>
@@ -808,34 +758,25 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                             {cond.enabled && (
                               <>
                                 <Dropdown
-                                  widthPixels={100}
-                                  selectedID={
+                                  menuWidth="100px"
+                                  selected={
                                     selectedOperator
-                                      ? selectedOperator.value
-                                      : TRIGGER_OPERATORS[0].value
+                                      ? selectedOperator.label
+                                      : translatedTriggerOperators[0].label
                                   }
-                                  onChange={(value: string) =>
+                                  onChoose={(item: any) =>
                                     onUpdateRule({
-                                      triggerOperator: value as any,
+                                      triggerOperator: item.value,
                                     })
                                   }
-                                  buttonColor={ComponentColor.Default}
-                                  buttonSize={ComponentSize.Small}
-                                  menuColor={DropdownMenuColors.Onyx}
-                                  titleText="선택"
-                                  mode={DropdownMode.ActionList}
-                                >
-                                  {TRIGGER_OPERATORS.map(o => (
-                                    <Dropdown.Item
-                                      key={o.value}
-                                      id={o.value}
-                                      value={o.value}
-                                    >
-                                      {o.label}
-                                    </Dropdown.Item>
-                                  ))}
-                                </Dropdown>
-                                <div style={{width: '100px'}}>
+                                  buttonColor="btn-default"
+                                  buttonSize="btn-sm"
+                                  items={translatedTriggerOperators.map(o => ({
+                                    text: o.label,
+                                    value: o.value,
+                                  }))}
+                                />
+                                <div className="alert-group-condition-w100">
                                   <Input
                                     value={cond.value}
                                     onChange={e =>
@@ -846,7 +787,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                     }
                                     type={InputType.Number}
                                     size={ComponentSize.Small}
-                                    placeholder="임계값"
+                                    placeholder={t(
+                                      'alert_group_rule.threshold_placeholder'
+                                    )}
                                   />
                                 </div>
                               </>
@@ -861,94 +804,64 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
               {rule.trigger === 'relative' && (
                 <div className="alert-group-setting-row">
                   <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                    지표 설정
+                    {t('alert_group_rule.metric_setting')}
                   </div>
-                  <div
-                    className="alert-group-setting-control"
-                    style={{flexDirection: 'column', gap: '16px'}}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <span style={{color: '#999'}}>이전</span>
+                  <div className="alert-group-setting-control alert-group-condition-flex-col-16">
+                    <div className="alert-group-condition-flex-wrap">
+                      <span className="alert-group-condition-text-light">
+                        {t('alert_group_rule.cond_prev')}
+                      </span>
                       <Dropdown
-                        selectedID={rule.triggerValues?.shift || '1m'}
-                        onChange={(v: string) =>
-                          this.handleTriggerValueChange('shift', v)
+                        menuWidth="60px"
+                        selected={rule.triggerValues?.shift || '1m'}
+                        onChoose={(item: any) =>
+                          this.handleTriggerValueChange('shift', item.value)
                         }
-                        buttonSize={ComponentSize.Small}
-                        buttonColor={ComponentColor.Default}
-                        widthPixels={80}
-                        mode={DropdownMode.ActionList}
-                        menuColor={DropdownMenuColors.Amethyst}
-                        titleText={rule.triggerValues?.shift || '1m'}
-                      >
-                        {SHIFTS.map(t => (
-                          <Dropdown.Item key={t} id={t} value={t}>
-                            {t}
-                          </Dropdown.Item>
-                        ))}
-                      </Dropdown>
-                      <span style={{color: '#999'}}>대비</span>
+                        buttonColor="btn-default"
+                        buttonSize="btn-sm"
+                        items={SHIFTS.map(val => ({text: val, value: val}))}
+                      />
+                      <span className="alert-group-condition-text-light">
+                        {t('alert_group_rule.cond_vs')}
+                      </span>
                       <Dropdown
-                        selectedID={rule.triggerValues?.change || 'change'}
-                        onChange={(v: string) =>
-                          this.handleTriggerValueChange('change', v)
-                        }
-                        buttonSize={ComponentSize.Small}
-                        buttonColor={ComponentColor.Default}
-                        widthPixels={120}
-                        mode={DropdownMode.ActionList}
-                        menuColor={DropdownMenuColors.Amethyst}
-                        titleText={
-                          CHANGES_OPTIONS.find(
+                        menuWidth="120px"
+                        selected={
+                          this.getChangesOptions(t).find(
                             o =>
                               o.value ===
                               (rule.triggerValues?.change || 'change')
                           )?.label || 'change'
                         }
-                      >
-                        {CHANGES_OPTIONS.map(o => (
-                          <Dropdown.Item
-                            key={o.value}
-                            id={o.value}
-                            value={o.value}
-                          >
-                            {o.label}
-                          </Dropdown.Item>
-                        ))}
-                      </Dropdown>
-                      <span style={{color: '#999'}}>이(가)</span>
+                        onChoose={(item: any) =>
+                          this.handleTriggerValueChange('change', item.value)
+                        }
+                        buttonColor="btn-default"
+                        buttonSize="btn-sm"
+                        items={this.getChangesOptions(t).map(o => ({
+                          text: o.label,
+                          value: o.value,
+                        }))}
+                      />
+                      <span className="alert-group-condition-text-light">
+                        {t('alert_group_rule.cond_is')}
+                      </span>
                     </div>
 
-                    <div
-                      className="alert-group-template-thresholds"
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px',
-                        marginTop: '8px',
-                      }}
-                    >
+                    <div className="alert-group-template-thresholds">
                       {rule.conditions.map((cond, idx) => {
+                        const relativeOpOptions = this.getRelativeOperatorOptions(
+                          t
+                        )
                         const selectedOperator =
                           rule.triggerValues?.operator || 'greater than'
-                        const selectedOpObj = RELATIVE_OPERATOR_OPTIONS.find(
+                        const selectedOpObj = relativeOpOptions.find(
                           o => o.value === selectedOperator
                         )
                         return (
                           <div
                             key={idx}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                            }}
+                            className="alert-group-condition-flex-row-12"
                           >
                             <SlideToggle
                               active={cond.enabled}
@@ -959,10 +872,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                               color={this.conditionToggleColor(cond.level)}
                             />
                             <span
-                              className={`alert-group-threshold--badge ${
+                              className={`alert-group-threshold--badge alert-group-condition-w80 ${
                                 cond.level
                               }${!cond.enabled ? ' disabled' : ''}`}
-                              style={{width: '80px', textAlign: 'center'}}
                             >
                               {this.conditionLabel(cond.level)}
                             </span>
@@ -970,35 +882,26 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                             {cond.enabled && (
                               <>
                                 <Dropdown
-                                  widthPixels={160}
-                                  selectedID={selectedOperator}
-                                  onChange={(value: string) =>
-                                    this.handleTriggerValueChange(
-                                      'operator',
-                                      value
-                                    )
-                                  }
-                                  buttonColor={ComponentColor.Default}
-                                  buttonSize={ComponentSize.Small}
-                                  menuColor={DropdownMenuColors.Onyx}
-                                  titleText={
+                                  menuWidth="160px"
+                                  selected={
                                     selectedOpObj
                                       ? selectedOpObj.label
                                       : selectedOperator
                                   }
-                                  mode={DropdownMode.ActionList}
-                                >
-                                  {RELATIVE_OPERATOR_OPTIONS.map(o => (
-                                    <Dropdown.Item
-                                      key={o.value}
-                                      id={o.value}
-                                      value={o.value}
-                                    >
-                                      {o.label}
-                                    </Dropdown.Item>
-                                  ))}
-                                </Dropdown>
-                                <div style={{width: '100px'}}>
+                                  onChoose={(item: any) =>
+                                    this.handleTriggerValueChange(
+                                      'operator',
+                                      item.value
+                                    )
+                                  }
+                                  buttonColor="btn-default"
+                                  buttonSize="btn-sm"
+                                  items={relativeOpOptions.map(o => ({
+                                    text: o.label,
+                                    value: o.value,
+                                  }))}
+                                />
+                                <div className="alert-group-condition-w100">
                                   <Input
                                     value={cond.value}
                                     onChange={e =>
@@ -1009,11 +912,15 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                     }
                                     type={InputType.Number}
                                     size={ComponentSize.Small}
-                                    placeholder="값 입력"
+                                    placeholder={t(
+                                      'alert_group_rule.value_input'
+                                    )}
                                   />
                                 </div>
                                 {rule.triggerValues?.change === '% change' && (
-                                  <span style={{color: '#999'}}>%</span>
+                                  <span className="alert-group-condition-text-light">
+                                    %
+                                  </span>
                                 )}
                               </>
                             )}
@@ -1027,40 +934,25 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
               {rule.trigger === 'deadman' && (
                 <div className="alert-group-setting-row">
                   <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                    지표 설정
+                    {t('alert_group_rule.metric_setting')}
                   </div>
-                  <div
-                    className="alert-group-setting-control"
-                    style={{flexDirection: 'column', gap: '16px'}}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                      }}
-                    >
-                      <span style={{color: '#999'}}>데이터 수신이</span>
+                  <div className="alert-group-setting-control alert-group-condition-flex-col-16">
+                    <div className="alert-group-condition-flex-row-8">
+                      <span className="alert-group-condition-text-light">
+                        {t('alert_group_rule.deadman_data_receipt')}
+                      </span>
                       <Dropdown
-                        selectedID={rule.triggerValues?.period || '10m'}
-                        onChange={(v: string) =>
-                          this.handleTriggerValueChange('period', v)
+                        menuWidth="80px"
+                        selected={rule.triggerValues?.period || '10m'}
+                        onChoose={(item: any) =>
+                          this.handleTriggerValueChange('period', item.value)
                         }
-                        buttonSize={ComponentSize.Small}
-                        buttonColor={ComponentColor.Default}
-                        widthPixels={80}
-                        mode={DropdownMode.ActionList}
-                        menuColor={DropdownMenuColors.Amethyst}
-                        titleText={rule.triggerValues?.period || '10m'}
-                      >
-                        {PERIODS.map(t => (
-                          <Dropdown.Item key={t} id={t} value={t}>
-                            {t}
-                          </Dropdown.Item>
-                        ))}
-                      </Dropdown>
-                      <span style={{color: '#999'}}>
-                        동안 없을 경우 알림 발생
+                        buttonColor="btn-default"
+                        buttonSize="btn-sm"
+                        items={PERIODS.map(val => ({text: val, value: val}))}
+                      />
+                      <span className="alert-group-condition-text-light">
+                        {t('alert_group_rule.deadman_no_data_for')}
                       </span>
                     </div>
                   </div>
@@ -1071,7 +963,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
           {/* Occurrence Group */}
           <div className="alert-group-setting-row">
-            <div className="alert-group-setting-label">발생 횟수</div>
+            <div className="alert-group-setting-label">
+              {t('alert_group_rule.occurrence_count')}
+            </div>
             <div className="alert-group-setting-control">
               <div className="alert-group-setting-inputs">
                 <Radio
@@ -1085,55 +979,43 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     onClick={(_v: string) =>
                       onUpdateRule({occurrenceType: 'consecutive'})
                     }
-                    titleText="연속"
+                    titleText={t('alert_group_rule.occ_consecutive')}
                   >
-                    연속
+                    {t('alert_group_rule.occ_consecutive')}
                   </Radio.Button>
                   <Radio.Button
                     id="occ-total"
-                    value="recent"
-                    active={
-                      rule.occurrenceType === 'recent' ||
-                      rule.occurrenceType === 'total'
-                    }
+                    value="total"
+                    active={rule.occurrenceType === 'total'}
                     onClick={(_v: string) =>
-                      onUpdateRule({occurrenceType: 'recent'})
+                      onUpdateRule({occurrenceType: 'total'})
                     }
-                    titleText="최근"
+                    titleText={t('alert_group_rule.occ_recent')}
                   >
-                    최근
+                    {t('alert_group_rule.occ_recent')}
                   </Radio.Button>
                 </Radio>
                 <Dropdown
-                  selectedID={rule.occurrenceWindow || '5m'}
-                  onChange={(w: string) => onUpdateRule({occurrenceWindow: w})}
-                  widthPixels={100}
-                  buttonColor={ComponentColor.Default}
-                  buttonSize={ComponentSize.Small}
-                  menuColor={DropdownMenuColors.Onyx}
-                  titleText={rule.occurrenceWindow || '5m'}
-                >
-                  <Dropdown.Item id="1m" value="1m">
-                    1m
-                  </Dropdown.Item>
-                  <Dropdown.Item id="5m" value="5m">
-                    5m
-                  </Dropdown.Item>
-                  <Dropdown.Item id="10m" value="10m">
-                    10m
-                  </Dropdown.Item>
-                  <Dropdown.Item id="15m" value="15m">
-                    15m
-                  </Dropdown.Item>
-                  <Dropdown.Item id="30m" value="30m">
-                    30m
-                  </Dropdown.Item>
-                  <Dropdown.Item id="1h" value="1h">
-                    1h
-                  </Dropdown.Item>
-                </Dropdown>
-                <span className="alert-group-occurrence--sep">동안</span>
-                <div style={{width: '80px'}}>
+                  menuWidth="80px"
+                  selected={rule.occurrenceWindow || '1m'}
+                  onChoose={(item: any) =>
+                    onUpdateRule({occurrenceWindow: item.value})
+                  }
+                  buttonColor="btn-default"
+                  buttonSize="btn-sm"
+                  items={[
+                    {text: '1m', value: '1m'},
+                    {text: '5m', value: '5m'},
+                    {text: '10m', value: '10m'},
+                    {text: '15m', value: '15m'},
+                    {text: '30m', value: '30m'},
+                    {text: '1h', value: '1h'},
+                  ]}
+                />
+                <span className="alert-group-occurrence--sep">
+                  {t('alert_group_rule.duration_for')}
+                </span>
+                <div className="alert-group-condition-w80">
                   <Input
                     value={String(rule.occurrenceCount)}
                     onChange={e =>
@@ -1147,51 +1029,51 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     customClass="alert-group-occurrence--count"
                   />
                 </div>
-                <span className="alert-group-occurrence--sep">회 발생</span>
+                <span className="alert-group-occurrence--sep">
+                  {t('alert_group_rule.occ_occurrences')}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Pause Group */}
           <div className="alert-group-setting-row">
-            <div className="alert-group-setting-label">일시 중지</div>
+            <div className="alert-group-setting-label">
+              {t('alert_group_rule.pause')}
+            </div>
             <div className="alert-group-setting-control">
               <div className="alert-group-setting-inputs">
                 <Dropdown
-                  widthPixels={240}
-                  selectedID={selectedPause ? String(selectedPause.value) : '0'}
-                  onChange={(value: string) =>
-                    onUpdateRule({pauseSeconds: parseInt(value, 10)})
+                  menuWidth="240px"
+                  selected={
+                    selectedPause
+                      ? selectedPause.label
+                      : t('alert_group_rule.do_not_use')
                   }
-                  buttonColor={ComponentColor.Default}
-                  buttonSize={ComponentSize.Small}
-                  menuColor={DropdownMenuColors.Onyx}
-                  titleText="사용 안 함"
-                  mode={DropdownMode.ActionList}
-                >
-                  {PAUSE_SECONDS_OPTIONS.map(o => (
-                    <Dropdown.Item
-                      key={String(o.value)}
-                      id={String(o.value)}
-                      value={String(o.value)}
-                    >
-                      {o.label}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown>
+                  onChoose={(item: any) =>
+                    onUpdateRule({pauseSeconds: parseInt(item.value, 10)})
+                  }
+                  buttonColor="btn-default"
+                  buttonSize="btn-sm"
+                  items={translatedPauseOptions.map(o => ({
+                    text: o.label,
+                    value: o.value,
+                  }))}
+                />
               </div>
               <p className="alert-group-setting-helper">
-                알림 수신 후 선택한 시간 동안 이벤트가 발생하지 않습니다.
+                {t('alert_group_rule.pause_desc1')}
                 <br />
-                단, "해소된 알림" 기능을 활성화한 경우에는 RECOVERED 알림 수신
-                후 선택한 시간 동안 이벤트가 발생하지 않습니다.
+                {t('alert_group_rule.pause_desc2')}
               </p>
             </div>
           </div>
 
           {/* Resolved Alert Group */}
           <div className="alert-group-setting-row">
-            <div className="alert-group-setting-label">해소된 알림</div>
+            <div className="alert-group-setting-label">
+              {t('alert_group_rule.notify_recovery')}
+            </div>
             <div className="alert-group-setting-control">
               <div className="alert-group-setting-inputs">
                 <SlideToggle
@@ -1204,11 +1086,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 />
               </div>
               <p className="alert-group-setting-helper">
-                해소된 알림 옵션을 활성화하면 이벤트 기록 메뉴에서 진행 중인
-                이벤트로 표시됩니다.
+                {t('alert_group_rule.recovery_desc1')}
                 <br />
-                Critical과 Warning 레벨의 이벤트가 해소되면 RECOVERED 상태의
-                알림을 수신합니다.
+                {t('alert_group_rule.recovery_desc2')}
               </p>
             </div>
           </div>
@@ -1218,4 +1098,4 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   }
 }
 
-export default AlertGroupConditionSection
+export default withTranslation()(AlertGroupConditionSection)

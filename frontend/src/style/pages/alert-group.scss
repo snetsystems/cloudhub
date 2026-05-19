@@ -418,7 +418,7 @@ $alert-group--preview-graph-shell-height: 360px;
   .alert-group-preview-graph--chart {
     position: relative;
     box-sizing: border-box;
-    padding-top: ($ix-marg-d + $ix-marg-b);
+    padding-top: ($ix-marg-c);
     overflow: visible;
   }
 
@@ -517,15 +517,15 @@ $alert-group--preview-graph-shell-height: 360px;
   }
 
   &.warning {
-    background-color: rgba($c-star, 0.15);
-    color: $c-star;
-    border: $ix-border solid rgba($c-star, 0.35);
-  }
-
-  &.info {
     background-color: rgba($c-pineapple, 0.15);
     color: $c-pineapple;
     border: $ix-border solid rgba($c-pineapple, 0.35);
+  }
+
+  &.info {
+    background-color: rgba($c-pool, 0.15);
+    color: $c-pool;
+    border: $ix-border solid rgba($c-pool, 0.35);
   }
 
   // Muted when the condition is disabled
@@ -1319,11 +1319,15 @@ $alert-group--preview-graph-shell-height: 360px;
 .alert-group-setting-row {
   display: flex;
   align-items: flex-start;
-  padding: $rule-builder--padding-lg 0;
+  padding: $rule-builder--padding-md 0;
   border-bottom: 1px solid $rule-builder--section-border;
 
   &:last-child {
     border-bottom: none;
+  }
+
+  &.child-component {
+    padding: $rule-builder--padding-sm 0;
   }
 }
 
@@ -1375,4 +1379,63 @@ $alert-group--preview-graph-shell-height: 360px;
   font-size: $ix-text-tiny;
   color: $g10-wolf;
   line-height: 1.45;
+}
+
+/* Alert Group Condition Inline Styles Refactoring */
+.alert-group-condition-flex-row-12 {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-c;
+  min-height: 30px;
+}
+
+.alert-group-condition-flex-row-8 {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-b;
+}
+
+.alert-group-condition-flex-col-16 {
+  display: flex;
+  flex-direction: column;
+  gap: $ix-marg-d;
+}
+
+.alert-group-condition-w100 {
+  width: 100px;
+}
+
+.alert-group-condition-text-light {
+  color: $ix-text-light;
+}
+
+.alert-group-condition-text-light-sm {
+  color: $ix-text-light;
+  font-size: $ix-text-tiny;
+}
+
+.alert-group-template-thresholds {
+  display: flex;
+  flex-direction: column;
+  gap: $ix-marg-b;
+  margin-top: $ix-marg-b;
+}
+
+.alert-group-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.alert-group-condition-flex-wrap {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-b;
+  flex-wrap: wrap;
+}
+
+.alert-group-condition-content {
+  padding: 0 $ix-marg-f $ix-marg-f;
+  flex: 1;
+  overflow-y: auto;
 }
