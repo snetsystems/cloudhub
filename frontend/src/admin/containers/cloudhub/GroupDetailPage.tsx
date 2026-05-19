@@ -1,6 +1,7 @@
 import React, {useState, useMemo, useEffect} from 'react'
 import {useTranslation} from 'react-i18next'
 import {browserHistory} from 'react-router'
+import {connect} from 'react-redux'
 import {
   Page,
   Input,
@@ -19,6 +20,18 @@ import UserSelectionOverlay from 'src/admin/components/cloudhub/UserSelectionOve
 import TableComponent from 'src/device_management/components/TableComponent'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {ColumnInfo, User} from 'src/types'
+import {
+  getRecipientGroup,
+  createRecipientGroup,
+  updateRecipientGroup,
+  addRecipientGroupMember,
+  deleteRecipientGroupMember,
+  getAlertRecipientMemberPrefsByGroup,
+  upsertAlertRecipientMemberPrefsByGroup,
+} from 'src/alert_group/apis'
+import {AlertRecipientMemberPrefs} from 'src/alert_group/types'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 
 export interface DummyUser {
   id: string
@@ -26,6 +39,9 @@ export interface DummyUser {
   email: string
   alertOn: boolean
   level: string
+  isNew?: boolean
+  userId?: string
+  originalPrefs?: AlertRecipientMemberPrefs
 }
 
 export interface GroupInfo {
@@ -40,6 +56,7 @@ interface Props {
   params: {
     groupId?: string
   }
+  notify: any
 }
 
 const DropdownItem = Dropdown.Item
@@ -54,141 +71,55 @@ export const LEVEL_OPTIONS = [
   },
 ]
 
-const DUMMY_USERS = [
-  {
-    id: '1',
-    userName: 'Alice',
-    email: 'alice@example.com',
-    alertOn: true,
-    level: 'all',
-  },
-  {
-    id: '2',
-    userName: 'Bob',
-    email: 'bob@example.com',
-    alertOn: false,
-    level: 'warning',
-  },
-  {
-    id: '3',
-    userName: 'Charlie',
-    email: 'charlie@example.com',
-    alertOn: true,
-    level: 'critical',
-  },
-  {
-    id: '1',
-    userName: 'Alice',
-    email: 'alice@example.com',
-    alertOn: true,
-    level: 'all',
-  },
-  {
-    id: '2',
-    userName: 'Bob',
-    email: 'bob@example.com',
-    alertOn: false,
-    level: 'warning',
-  },
-  {
-    id: '3',
-    userName: 'Charlie',
-    email: 'charlie@example.com',
-    alertOn: true,
-    level: 'critical',
-  },
-  {
-    id: '1',
-    userName: 'Alice',
-    email: 'alice@example.com',
-    alertOn: true,
-    level: 'all',
-  },
-  {
-    id: '2',
-    userName: 'Bob',
-    email: 'bob@example.com',
-    alertOn: false,
-    level: 'warning',
-  },
-  {
-    id: '3',
-    userName: 'Charlie',
-    email: 'charlie@example.com',
-    alertOn: true,
-    level: 'critical',
-  },
-  {
-    id: '1',
-    userName: 'Alice',
-    email: 'alice@example.com',
-    alertOn: true,
-    level: 'all',
-  },
-  {
-    id: '2',
-    userName: 'Bob',
-    email: 'bob@example.com',
-    alertOn: false,
-    level: 'warning',
-  },
-  {
-    id: '3',
-    userName: 'Charlie',
-    email: 'charlie@example.com',
-    alertOn: true,
-    level: 'critical',
-  },
-  {
-    id: '1',
-    userName: 'Alice',
-    email: 'alice@example.com',
-    alertOn: true,
-    level: 'all',
-  },
-  {
-    id: '2',
-    userName: 'Bob',
-    email: 'bob@example.com',
-    alertOn: false,
-    level: 'warning',
-  },
-  {
-    id: '3',
-    userName: 'Charlie',
-    email: 'charlie@example.com',
-    alertOn: true,
-    level: 'critical',
-  },
-]
-
-export default function GroupDetailPage({params}: Props) {
+function GroupDetailPage({params, notify}: Props) {
   const {t} = useTranslation()
   const groupId = params.groupId
 
   const [groupName, setGroupName] = useState('')
   const [viewMode, setViewMode] = useState<'card' | 'list'>('list')
   const [users, setUsers] = useState<DummyUser[]>([])
+  const [originalMembers, setOriginalMembers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUserOverlayVisible, setIsUserOverlayVisible] = useState(false)
   const [groupNameError, setGroupNameError] = useState(false)
 
   useEffect(() => {
-    // API 호출 시뮬레이션
     const fetchGroupData = async () => {
       setIsLoading(true)
       try {
         if (groupId && groupId !== 'new') {
-          // 여기서 실제 API 호출 (예: const response = await api.getGroupDetail(groupId))
-          // 현재는 setTimeout으로 가짜 API 지연 시뮬레이션
-          await new Promise(resolve => setTimeout(resolve, 500))
-          setGroupName('Admin Group') // 임시 하드코딩
-          setUsers(DUMMY_USERS)
+          const group = await getRecipientGroup(groupId)
+          setGroupName(group.name || '')
+          const members = group.members || []
+          setOriginalMembers(members)
+
+          const prefs = await getAlertRecipientMemberPrefsByGroup(groupId)
+          const prefsMap = new Map(
+            prefs.map(p => [p.recipientGroupMemberId, p])
+          )
+
+          const mappedUsers = members.map(m => {
+            const p = prefsMap.get(m.id)
+            return {
+              id: m.id,
+              userName: m.userName,
+              email: m.email || '',
+              alertOn: p ? p.emailEnabled : false,
+              level: p ? p.emailLevel : 'all',
+              originalPrefs: p,
+            }
+          })
+          setUsers(mappedUsers)
         } else {
           setUsers([])
         }
       } catch (error) {
         console.error('Failed to fetch group details', error)
+        notify(
+          notifyError(
+            t('group_management.fetch_failed', '그룹 상세 정보를 불러오는데 실패했습니다.')
+          )
+        )
       } finally {
         setIsLoading(false)
       }
@@ -333,10 +264,12 @@ export default function GroupDetailPage({params}: Props) {
   const handleConfirmUserSelection = (selectedUsers: User[]) => {
     const newDummyUsers = selectedUsers.map(u => ({
       id: u.id,
+      userId: u.id,
       userName: u.name,
       email: (u as any).email || '',
       alertOn: true,
       level: 'all',
+      isNew: true,
     }))
     setUsers(prev => [...prev, ...newDummyUsers])
     setIsUserOverlayVisible(false)
@@ -365,14 +298,87 @@ export default function GroupDetailPage({params}: Props) {
             text={t('button.save', '저장')}
             color={ComponentColor.Primary}
             size={ComponentSize.Small}
-            onClick={() => {
+            onClick={async () => {
               if (!groupName.trim()) {
                 setGroupNameError(true)
                 return
               }
-              // TODO: 실제 저장 로직 구현
-              console.log('Saved:', {groupName, users})
-              browserHistory.goBack()
+              setIsLoading(true)
+              try {
+                let currentGroupId = groupId
+                if (!currentGroupId || currentGroupId === 'new') {
+                  const newGroup = await createRecipientGroup(groupName)
+                  currentGroupId = newGroup.id
+                } else {
+                  await updateRecipientGroup(currentGroupId, groupName)
+                }
+
+                if (groupId && groupId !== 'new') {
+                  const currentUserIds = new Set(users.filter(u => !u.isNew).map(u => u.id))
+                  const removedMembers = originalMembers.filter(
+                    m => !currentUserIds.has(m.id)
+                  )
+                  await Promise.all(
+                    removedMembers.map(m =>
+                      deleteRecipientGroupMember(currentGroupId, m.id)
+                    )
+                  )
+                }
+
+                const finalPrefs: AlertRecipientMemberPrefs[] = []
+
+                for (const u of users) {
+                  let memberId = u.id
+                  if (u.isNew) {
+                    const newMember = await addRecipientGroupMember(
+                      currentGroupId,
+                      {
+                        userId: u.userId || u.id,
+                        userName: u.userName,
+                        email: u.email,
+                        phoneNumber: '',
+                      }
+                    )
+                    memberId = newMember.id
+                  }
+
+                  finalPrefs.push({
+                    ...(u.originalPrefs || {
+                      smsEnabled: false,
+                      smsLevel: 'all',
+                      notifyWeekdays: '1,2,3,4,5,6,7',
+                      notifyStartHm: '00:00',
+                      notifyEndHm: '23:59',
+                      escalationSeconds: 0,
+                      recipientGroupMemberId: '',
+                    }),
+                    recipientGroupMemberId: memberId,
+                    emailEnabled: u.alertOn,
+                    emailLevel: u.level,
+                  })
+                }
+
+                await upsertAlertRecipientMemberPrefsByGroup(
+                  currentGroupId,
+                  finalPrefs
+                )
+
+                notify(
+                  notifySuccess(
+                    t('group_management.save_success', '그룹 설정을 저장했습니다.')
+                  )
+                )
+                browserHistory.goBack()
+              } catch (error) {
+                console.error('Failed to save group details', error)
+                notify(
+                  notifyError(
+                    t('group_management.save_failed', '그룹 설정 저장에 실패했습니다.')
+                  )
+                )
+              } finally {
+                setIsLoading(false)
+              }
             }}
           />
         </Page.Header.Right>
@@ -482,3 +488,9 @@ export default function GroupDetailPage({params}: Props) {
     </Page>
   )
 }
+
+const mapDispatchToProps = {
+  notify: notifyAction,
+}
+
+export default connect(null, mapDispatchToProps)(GroupDetailPage)

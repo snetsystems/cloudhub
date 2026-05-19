@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react'
+import React, {useMemo, useState, useEffect} from 'react'
 import {withRouter} from 'react-router'
 import {useTranslation} from 'react-i18next'
 import {
@@ -13,6 +13,9 @@ import ConfirmButton from 'src/shared/components/ConfirmButton'
 import TableComponent from 'src/device_management/components/TableComponent'
 import {ColumnInfo, Organization} from 'src/types'
 import {connect} from 'react-redux'
+import {getRecipientGroups, deleteRecipientGroup} from 'src/alert_group/apis'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 
 interface Props {
   meCurrentOrganization: Organization
@@ -20,10 +23,55 @@ interface Props {
   params: {
     sourceID: string
   }
+  notify: any
 }
 
-function GroupsPage({router, params}: Props) {
+function GroupsPage({router, params, notify}: Props) {
   const {t} = useTranslation()
+  const [data, setData] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+
+  const fetchData = async () => {
+    setIsLoading(true)
+    try {
+      const groups = await getRecipientGroups()
+      const formattedData = groups.map(group => ({
+        groupId: group.id,
+        groupName: group.name,
+        memberCount: group.members?.length || 0,
+        emailTargets: 0,
+      }))
+      setData(formattedData)
+    } catch (error) {
+      console.error('Failed to fetch recipient groups', error)
+      notify(
+        notifyError(
+          t('group_management.fetch_failed', '그룹 목록을 불러오는데 실패했습니다.')
+        )
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const handleDeleteGroup = async (groupId: string) => {
+    try {
+      await deleteRecipientGroup(groupId)
+      notify(
+        notifySuccess(t('group_management.delete_success', '그룹을 삭제했습니다.'))
+      )
+      fetchData()
+    } catch (error) {
+      console.error('Failed to delete recipient group', error)
+      notify(
+        notifyError(t('group_management.delete_failed', '그룹 삭제에 실패했습니다.'))
+      )
+    }
+  }
 
   const navigateToDetail = (group: any) => {
     const pathId = group?.isNew ? 'new' : group?.groupId
@@ -85,7 +133,7 @@ function GroupsPage({router, params}: Props) {
               confirmText={t('group_management.delete_confirm', '삭제하기')}
               type="btn-danger"
               size="btn-xs"
-              confirmAction={() => {}}
+              confirmAction={() => handleDeleteGroup(_rowData.groupId)}
               customClass="group-action-btn"
             />
           </div>
@@ -95,29 +143,11 @@ function GroupsPage({router, params}: Props) {
     [t]
   )
 
-  const data = useMemo(
-    () => [
-      // 예시 데이터 (Dummy data for testing layout)
-      {
-        groupId: '1',
-        groupName: 'Admin Group',
-        memberCount: 5,
-        emailTargets: 4,
-      },
-      {
-        groupId: '2',
-        groupName: 'User Group',
-        memberCount: 120,
-        emailTargets: 110,
-      },
-    ],
-    []
-  )
-
   return (
     <TableComponent
       columns={columns}
       data={data}
+      isLoading={isLoading}
       isSearchDisplay={true}
       searchPlaceholder={t('group_management.search_placeholder', '검색...')}
       isMultiSelect={false}
@@ -149,4 +179,8 @@ const mstp = state => {
   return {me}
 }
 
-export default connect(mstp, null)(withRouter(GroupsPage))
+const mapDispatchToProps = {
+  notify: notifyAction,
+}
+
+export default connect(mstp, mapDispatchToProps)(withRouter(GroupsPage))
