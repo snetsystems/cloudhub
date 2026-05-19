@@ -1,0 +1,26 @@
+{
+  "id": "cpu_usage",
+  "name": "CPU 사용률 알림",
+  "description": "호스트 CPU 사용률이 임계치를 초과하면 알림",
+  "category": "server-monitoring",
+  "tags": ["cpu", "performance"],
+  "database": "",
+  "retentionPolicy": "",
+  "measurement": "cpu",
+  "field": "usage_percent",
+  "trigger": "threshold",
+  "triggerOperator": "greater",
+  "taskType": "stream",
+  "every": "30s",
+  "occurrenceType": "consecutive",
+  "occurrenceCount": 2,
+  "occurrenceWindow": "5m",
+  "pauseSeconds": 0,
+  "notifyRecovery": true,
+  "message": "{{ index .Tags \"host\" }} CPU 사용률 {{ .Level }} ({{ index .Fields \"usage_percent\" }}%)",
+  "conditions": [
+    { "level": "critical", "value": 90, "enabled": true },
+    { "level": "warning",  "value": 70, "enabled": true },
+    { "level": "info",     "value": 0,  "enabled": false }
+  ]
+}

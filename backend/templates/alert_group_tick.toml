@@ -17,7 +17,13 @@ var src = stream
     |from()
         .measurement('{{.Measurement}}'){{if .HostFilterLambda}}
         .where(lambda: {{.HostFilterLambda}}){{end}}
-        .groupBy('host')
+        .groupBy('host'){{if .EvalEnabled}}
+    |eval(lambda: {{.EvalExpression}})
+        .as('{{.EvalAs}}')
+        .keep(){{end}}{{if .DerivativeEnabled}}
+    |derivative('{{.DerivativeField}}'){{if .DerivativeNonNegative}}
+        .nonNegative(){{end}}
+        .unit({{.DerivativeUnit}}){{end}}
 
 {{if .DeadmanEnabled}}// deadman: alert when no points arrive for the configured period.
 var trigger = src

@@ -34,16 +34,18 @@ import {
 
 import {
   AlertGroupRule,
+  AlertTemplate,
   TRIGGER_OPERATORS,
   PAUSE_SECONDS_OPTIONS,
-  ALERT_TEMPLATES,
 } from 'src/alert_group/types'
+import {findSelectedAlertTemplate} from 'src/alert_group/utils/alertTemplates'
 
 interface Props extends WithTranslation {
   source: Source
   me: Me
   isUsingAuth: boolean
   rule: AlertGroupRule
+  templates?: AlertTemplate[]
   onUpdateRule: (patch: Partial<AlertGroupRule>) => void
   builderMode?: 'template' | 'raw'
   onSwitchToRawMode?: () => void
@@ -315,11 +317,8 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   // ── Render Template UI ─────────────────────────────────────────────────────
 
   private renderTemplateUI(): JSX.Element {
-    const {rule, onUpdateRule, t} = this.props
-    const selectedTemplate = ALERT_TEMPLATES.find(
-      t_item =>
-        t_item.measurement === rule.measurement && t_item.field === rule.field
-    )
+    const {rule, templates, onUpdateRule, t} = this.props
+    const selectedTemplate = findSelectedAlertTemplate(templates, rule)
 
     return (
       <div className="alert-group-template-container">

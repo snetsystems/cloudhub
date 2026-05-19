@@ -71,6 +71,7 @@ const (
 	ErrURLMonitoringExists             = Error("url monitoring already exists for this org")
 	ErrRecipientGroupNotFound          = Error("recipient group not found")
 	ErrRecipientGroupMemberNotFound    = Error("recipient group member not found")
+	ErrAlertTemplateNotFound           = Error("alert template not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -2012,6 +2013,70 @@ type AlertRuleCondition struct {
 	Enabled     bool    `json:"enabled"`
 }
 
+// DerivativeConfig adds a `|derivative()` TICK node between `|from()` and the
+// alert pipeline. Used for counter metrics (`bytes_recv`, `packets_recv`,
+// `io_time`) so that the threshold lambda compares against rate-per-unit
+// rather than the raw cumulative counter. Stream-only.
+//
+// The result field name equals the input field (TICK derivative default),
+// so threshold lambdas continue to reference rule.Field unchanged.
+type DerivativeConfig struct {
+	Enabled     bool   `json:"enabled"`
+	NonNegative bool   `json:"nonNegative"`
+	Unit        string `json:"unit"` // duration literal like "1s"
+}
+
+// EvalConfig adds a `|eval(lambda: <expression>).as('<as>').keep()` TICK node
+// between `|from()` and the alert pipeline. Used for derived fields like
+// "inode used %" computed from `inodes_used / inodes_total * 100`. Stream-only.
+//
+// When Eval is active (non-nil + non-empty Expression + non-empty As),
+// threshold lambdas reference As instead of rule.Field. `.keep()` preserves
+// all original fields so a subsequent Derivative can still reference them.
+type EvalConfig struct {
+	Expression string `json:"expression"`
+	As         string `json:"as"`
+}
+
+// AlertTemplate is a builtin blueprint for creating an AlertGroupRule.
+// Selecting a template in the UI pre-fills nearly every input field with
+// sensible defaults (thresholds, message, occurrence, recovery, transforms)
+// so that only host/recipient selection is left to the user.
+//
+// Templates are stored as JSON files under backend/builtin/alerts/ and
+// embedded into the binary via go-bindata. They are read-only at runtime.
+type AlertTemplate struct {
+	ID              string               `json:"id"`
+	Name            string               `json:"name"`
+	Description     string               `json:"description,omitempty"`
+	Category        string               `json:"category,omitempty"` // monitoring domain: server-monitoring | url-monitoring | ...
+	Tags            []string             `json:"tags,omitempty"`     // metric domain + free-form keywords
+	Database        string               `json:"database"`
+	RetentionPolicy string               `json:"retentionPolicy"`
+	Measurement     string               `json:"measurement"`
+	Field           string               `json:"field"`
+	Derivative      *DerivativeConfig    `json:"derivative,omitempty"`
+	Eval            *EvalConfig          `json:"eval,omitempty"`
+	Trigger         string               `json:"trigger,omitempty"` // threshold | relative | deadman
+	TriggerOperator string               `json:"triggerOperator"`
+	TriggerValues   TriggerValues        `json:"values,omitempty"`
+	TaskType        string               `json:"taskType"` // stream | batch
+	Every           string               `json:"every"`
+	OccurrenceType  string               `json:"occurrenceType"` // consecutive | recent
+	OccurrenceCount int                  `json:"occurrenceCount"`
+	OccurrenceWindow string              `json:"occurrenceWindow"`
+	PauseSeconds    int                  `json:"pauseSeconds"`
+	NotifyRecovery  bool                 `json:"notifyRecovery"`
+	Message         string               `json:"message"`
+	Conditions      []AlertRuleCondition `json:"conditions,omitempty"`
+}
+
+// AlertTemplatesStore exposes read-only access to builtin alert templates.
+type AlertTemplatesStore interface {
+	All(ctx context.Context) ([]AlertTemplate, error)
+	Get(ctx context.Context, id string) (AlertTemplate, error)
+}
+
 // AlertKapacitor represents a Kapacitor instance registered for the alert system.
 // Stored in PostgreSQL separately from KV servers to maintain FK integrity.
 type AlertKapacitor struct {
@@ -2082,10 +2147,15 @@ type AlertGroupRule struct {
 	Active            bool          `json:"active"`
 	Hostnames         []string      `json:"hostnames,omitempty"`
 	RecipientGroupIDs []string      `json:"recipientGroupIds,omitempty"`
-	DeleteYN          bool          `json:"deleteYn,omitempty"`
-	Tickscript        string        `json:"tickscript,omitempty"`
-	CreatedAt         time.Time     `json:"createdAt"`
-	UpdatedAt         time.Time     `json:"updatedAt"`
+	// Derivative / Eval add TICK nodes between |from() and the alert pipeline
+	// for counter and derived-field metrics. Stream-only. See DerivativeConfig /
+	// EvalConfig for semantics.
+	Derivative *DerivativeConfig `json:"derivative,omitempty"`
+	Eval       *EvalConfig       `json:"eval,omitempty"`
+	DeleteYN   bool              `json:"deleteYn,omitempty"`
+	Tickscript string            `json:"tickscript,omitempty"`
+	CreatedAt  time.Time         `json:"createdAt"`
+	UpdatedAt  time.Time         `json:"updatedAt"`
 }
 
 // RecipientGroupStore manages domain-neutral recipient groups and their members.

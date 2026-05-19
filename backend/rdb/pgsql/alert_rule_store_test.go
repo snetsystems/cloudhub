@@ -316,3 +316,115 @@ func TestAlertRuleStore_ConditionsRoundTrip(t *testing.T) {
 		t.Fatalf("after SetConditions want [critical=95], got %+v", got)
 	}
 }
+
+func TestAlertRuleStore_DerivativeRoundTrip(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	ctx := context.Background()
+
+	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
+		OrgID:       "org5",
+		Name:        "net bps",
+		Measurement: "net",
+		Field:       "bytes_recv",
+		Derivative: &cloudhub.DerivativeConfig{
+			Enabled:     true,
+			NonNegative: true,
+			Unit:        "1s",
+		},
+		Active: true,
+	})
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	got, err := ruleStore.Get(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Derivative == nil || !got.Derivative.Enabled || !got.Derivative.NonNegative || got.Derivative.Unit != "1s" {
+		t.Fatalf("Derivative not hydrated: %+v", got.Derivative)
+	}
+
+	// Disable via Update — Derivative=nil should clear the persisted flag.
+	got.Derivative = nil
+	if err := ruleStore.Update(ctx, got); err != nil {
+		t.Fatalf("Update (disable): %v", err)
+	}
+	got, _ = ruleStore.Get(ctx, r.ID)
+	if got.Derivative != nil {
+		t.Fatalf("expected Derivative=nil after disable, got %+v", got.Derivative)
+	}
+}
+
+func TestAlertRuleStore_EvalRoundTrip(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	ctx := context.Background()
+
+	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
+		OrgID:       "org6",
+		Name:        "disk inode",
+		Measurement: "disk",
+		Field:       "inodes_used",
+		Eval: &cloudhub.EvalConfig{
+			Expression: `float("inodes_used") / float("inodes_total") * 100.0`,
+			As:         "inodes_used_percent",
+		},
+		Active: true,
+	})
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	got, err := ruleStore.Get(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Eval == nil || got.Eval.Expression == "" || got.Eval.As != "inodes_used_percent" {
+		t.Fatalf("Eval not hydrated: %+v", got.Eval)
+	}
+
+	// Empty pair (expression or as) means inactive — Update must clear.
+	got.Eval = &cloudhub.EvalConfig{Expression: "", As: "foo"}
+	if err := ruleStore.Update(ctx, got); err != nil {
+		t.Fatalf("Update (clear via empty expression): %v", err)
+	}
+	got, _ = ruleStore.Get(ctx, r.ID)
+	if got.Eval != nil {
+		t.Fatalf("expected Eval=nil after clearing, got %+v", got.Eval)
+	}
+}
+
+func TestAlertRuleStore_DerivativeAndEvalCoexist(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	ctx := context.Background()
+
+	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
+		OrgID:       "org7",
+		Name:        "mixed",
+		Measurement: "disk",
+		Field:       "inodes_used",
+		Eval: &cloudhub.EvalConfig{
+			Expression: `float("inodes_used") / float("inodes_total") * 100.0`,
+			As:         "inodes_used_percent",
+		},
+		Derivative: &cloudhub.DerivativeConfig{Enabled: true, NonNegative: true, Unit: "10s"},
+		Active:     true,
+	})
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	got, err := ruleStore.Get(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Derivative == nil || got.Derivative.Unit != "10s" {
+		t.Fatalf("Derivative not hydrated alongside Eval: %+v", got.Derivative)
+	}
+	if got.Eval == nil || got.Eval.As != "inodes_used_percent" {
+		t.Fatalf("Eval not hydrated alongside Derivative: %+v", got.Eval)
+	}
+}

@@ -16,9 +16,9 @@ import {TimeRange} from 'src/types'
 import {
   AlertGroupRule,
   AlertKapacitor,
+  AlertTemplate,
   UserGroup,
   DEFAULT_RULE,
-  ALERT_TEMPLATES,
 } from 'src/alert_group/types'
 
 // Components
@@ -56,6 +56,8 @@ import {
   testDraftAlertGroupNotification,
   getAlertKapacitors,
   getUserGroups,
+  getAlertTemplates,
+  fetchAvailableMeasurements,
 } from 'src/alert_group/apis'
 import {getActiveKapacitor} from 'src/shared/apis'
 
@@ -89,6 +91,8 @@ interface State {
   savedRule: AlertGroupRule | null
   kapacitors: AlertKapacitor[]
   userGroups: UserGroup[]
+  templates: AlertTemplate[]
+  availableMeasurements: Set<string>
   loading: RemoteDataState
   isSaving: boolean
   isTestModalOpen: boolean
@@ -112,6 +116,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       savedRule: null,
       kapacitors: [],
       userGroups: [],
+      templates: [],
+      availableMeasurements: new Set<string>(),
       loading: RemoteDataState.NotStarted,
       isSaving: false,
       isTestModalOpen: false,
@@ -133,10 +139,20 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     try {
       const isEdit = params.id && params.id !== 'new'
 
-      const [kapacitors, userGroups, activeKapacitor] = await Promise.all([
+      const [
+        kapacitors,
+        userGroups,
+        activeKapacitor,
+        templates,
+        availableMeasurements,
+      ] = await Promise.all([
         getAlertKapacitors(),
         getUserGroups(),
         getActiveKapacitor(this.props.source).catch(() => null),
+        getAlertTemplates().catch(() => [] as AlertTemplate[]),
+        fetchAvailableMeasurements(this.props.source).catch(
+          () => new Set<string>()
+        ),
       ])
 
       if (isEdit) {
@@ -145,7 +161,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         let builderMode: 'template' | 'raw' = 'raw'
         let selectedTemplateId = 'custom'
 
-        const matchedTemplate = ALERT_TEMPLATES.find(
+        const matchedTemplate = templates.find(
           t => t.measurement === rule.measurement && t.field === rule.field
         )
         if (matchedTemplate) {
@@ -158,6 +174,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           savedRule: rule,
           kapacitors,
           userGroups,
+          templates,
+          availableMeasurements,
           loading: RemoteDataState.Done,
           builderMode,
           selectedTemplateId,
@@ -174,6 +192,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
               : this.state.rule,
           kapacitors,
           userGroups,
+          templates,
+          availableMeasurements,
           loading: RemoteDataState.Done,
         })
       }
@@ -280,22 +300,57 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       return
     }
 
-    const template = ALERT_TEMPLATES.find(t => t.id === templateId)
-    if (template) {
-      this.setState(prev => ({
-        selectedTemplateId: template.id,
-        builderMode: 'template',
-        rule: {
-          ...prev.rule,
-          name: prev.rule.name || template.name,
-          database: prev.rule.database || 'DB', // Default placeholder
-          retentionPolicy: prev.rule.retentionPolicy || 'autogen',
-          measurement: template.measurement,
-          field: template.field,
-          triggerOperator: template.defaultOperator || 'greater',
-        },
-      }))
+    const template = this.state.templates.find(t => t.id === templateId)
+    if (!template) {
+      return
     }
+
+    // Disabled templates (measurement not in source) should not apply.
+    const {availableMeasurements} = this.state
+    if (
+      availableMeasurements.size > 0 &&
+      !availableMeasurements.has(template.measurement)
+    ) {
+      this.props.notify(
+        notifyError(
+          `이 알람을 사용하려면 '${template.measurement}' 데이터 수집이 필요합니다.`
+        )
+      )
+      return
+    }
+
+    // Apply the template as a complete blueprint — every persisted rule field
+    // is overwritten so the user only has to set hostnames + recipient groups.
+    // Name carries over from prior state only when the user has typed one.
+    this.setState(prev => ({
+      selectedTemplateId: template.id,
+      builderMode: 'template',
+      rule: {
+        ...prev.rule,
+        name: prev.rule.name || template.name,
+        database: template.database || prev.rule.database,
+        retentionPolicy: template.retentionPolicy || prev.rule.retentionPolicy,
+        measurement: template.measurement,
+        field: template.field,
+        derivative: template.derivative,
+        eval: template.eval,
+        trigger: template.trigger || 'threshold',
+        triggerOperator: template.triggerOperator,
+        triggerValues: template.values || prev.rule.triggerValues,
+        taskType: template.taskType,
+        every: template.every,
+        occurrenceType: template.occurrenceType,
+        occurrenceCount: template.occurrenceCount,
+        occurrenceWindow: template.occurrenceWindow,
+        pauseSeconds: template.pauseSeconds,
+        notifyRecovery: template.notifyRecovery,
+        message: template.message,
+        conditions:
+          template.conditions && template.conditions.length > 0
+            ? template.conditions
+            : prev.rule.conditions,
+      },
+    }))
   }
 
   private handleSwitchToRawMode = (): void => {
@@ -511,6 +566,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           <Spinner loading={loading}>
             <div className="alert-group-page-wrapper">
               <AlertGroupTemplateSidebar
+                templates={this.state.templates}
+                availableMeasurements={this.state.availableMeasurements}
                 selectedTemplateId={selectedTemplateId}
                 onSelectTemplate={this.handleSelectTemplate}
               />
@@ -524,6 +581,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                   me={auth ? auth.me : null}
                   isUsingAuth={auth ? auth.isUsingAuth : false}
                   rule={rule}
+                  templates={this.state.templates}
                   onUpdateRule={this.handleUpdateRule}
                   builderMode={builderMode}
                   onSwitchToRawMode={this.handleSwitchToRawMode}

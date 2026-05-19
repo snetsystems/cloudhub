@@ -37,6 +37,7 @@ type Service struct {
 	AlertKapacitors           cloudhub.AlertKapacitorStore
 	AlertKapacitorMappings    cloudhub.AlertKapacitorMappingStore
 	AlertGroupRules           cloudhub.AlertGroupRuleStore
+	AlertTemplates            cloudhub.AlertTemplatesStore
 }
 
 // KafkaProducer defines the interface for publishing configuration updates

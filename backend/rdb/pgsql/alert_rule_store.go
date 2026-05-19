@@ -33,21 +33,37 @@ func normalizeAlertRuleTrigger(t string) string {
 	return t
 }
 
-const alertRuleCols = `id, org_id, kapacitor_id, name, database, retention_policy, measurement, field, trigger_operator, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, delete_yn, created_at, updated_at`
+const alertRuleCols = `id, org_id, kapacitor_id, name, database, retention_policy, measurement, field, trigger_operator, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as, delete_yn, created_at, updated_at`
 
 func (s *AlertRuleStore) scan(row interface{ Scan(...any) error }) (cloudhub.AlertGroupRule, error) {
 	var r cloudhub.AlertGroupRule
 	var ca, ua time.Time
+	var derivativeEnabled, derivativeNonNegative bool
+	var derivativeUnit, evalExpression, evalAs string
 	if err := row.Scan(
 		&r.ID, &r.OrgID, &r.KapacitorID, &r.Name, &r.Database, &r.RetentionPolicy,
 		&r.Measurement, &r.Field,
 		&r.TriggerOperator, &r.Trigger, &r.TaskType, &r.Every, &r.OccurrenceType, &r.OccurrenceCount,
 		&r.OccurrenceWindow, &r.PauseSeconds, &r.NotifyRecovery, &r.Message, &r.Active,
+		&derivativeEnabled, &derivativeNonNegative, &derivativeUnit, &evalExpression, &evalAs,
 		&r.DeleteYN, &ca, &ua,
 	); err != nil {
 		return r, fmt.Errorf("alert_rule scan: %w", err)
 	}
 	r.CreatedAt, r.UpdatedAt = ca, ua
+	// Derivative is nil unless the row marked it enabled.
+	if derivativeEnabled {
+		r.Derivative = &cloudhub.DerivativeConfig{
+			Enabled:     true,
+			NonNegative: derivativeNonNegative,
+			Unit:        derivativeUnit,
+		}
+	}
+	// Eval is nil unless both expression and alias are present — empty defaults
+	// from the migration mean "inactive".
+	if evalExpression != "" && evalAs != "" {
+		r.Eval = &cloudhub.EvalConfig{Expression: evalExpression, As: evalAs}
+	}
 	return r, nil
 }
 
@@ -122,15 +138,19 @@ func (s *AlertRuleStore) Add(ctx context.Context, r cloudhub.AlertGroupRule) (cl
 	const q = `INSERT INTO alert_rules (
 		org_id, kapacitor_id, name, database, retention_policy, measurement, field,
 		trigger_operator, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window,
-		pause_seconds, notify_recovery, message, active
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+		pause_seconds, notify_recovery, message, active,
+		derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
 	RETURNING id, created_at, updated_at`
 	var ca, ua time.Time
+	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
+	evalExpression, evalAs := splitEval(r.Eval)
 	if err := s.client.QueryRowContext(ctx, q,
 		r.OrgID, r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field,
 		r.TriggerOperator, normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
 		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
 		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
+		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,
 	).Scan(&r.ID, &ca, &ua); err != nil {
 		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Add: %w", err)
 	}
@@ -155,13 +175,18 @@ func (s *AlertRuleStore) Update(ctx context.Context, r cloudhub.AlertGroupRule) 
 		trigger_operator=$7, rule_trigger=$8, task_type=$9, every=$10,
 		occurrence_type=$11, occurrence_count=$12, occurrence_window=$13,
 		pause_seconds=$14, notify_recovery=$15, message=$16, active=$17,
+		derivative_enabled=$18, derivative_non_negative=$19, derivative_unit=$20,
+		eval_expression=$21, eval_as=$22,
 		updated_at=NOW()
-	WHERE id=$18 AND delete_yn = false`
+	WHERE id=$23 AND delete_yn = false`
+	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
+	evalExpression, evalAs := splitEval(r.Eval)
 	if _, err := s.client.ExecContext(ctx, q,
 		r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field,
 		r.TriggerOperator, normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
 		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
 		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
+		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,
 		r.ID,
 	); err != nil {
 		return fmt.Errorf("alert_rule.Update: %w", err)
@@ -257,6 +282,31 @@ func (s *AlertRuleStore) DeleteTriggerValues(ctx context.Context, ruleID string)
 	}
 	return nil
 }
+
+// splitDerivative flattens a *DerivativeConfig into the three persisted column
+// values, normalizing the inactive case to (false, true, ""). Defaults match
+// the migration's column defaults.
+func splitDerivative(d *cloudhub.DerivativeConfig) (enabled, nonNegative bool, unit string) {
+	if d == nil || !d.Enabled {
+		return false, true, ""
+	}
+	return true, d.NonNegative, strings.TrimSpace(d.Unit)
+}
+
+// splitEval flattens a *EvalConfig into the two persisted column values.
+// Empty pair = inactive (matches migration defaults).
+func splitEval(e *cloudhub.EvalConfig) (expression, as string) {
+	if e == nil {
+		return "", ""
+	}
+	exp := strings.TrimSpace(e.Expression)
+	alias := strings.TrimSpace(e.As)
+	if exp == "" || alias == "" {
+		return "", ""
+	}
+	return exp, alias
+}
+
 
 func (s *AlertRuleStore) recipientGroupIDs(ctx context.Context, ruleID string) ([]string, error) {
 	rows, err := s.client.QueryContext(ctx, `SELECT recipient_group_id FROM alert_rule_recipient_groups WHERE alert_rule_id = $1`, ruleID)

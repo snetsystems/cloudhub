@@ -358,6 +358,10 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v2/recipient-group-members/:memberId/alert-prefs", EnsureViewer(service.AlertRecipientMemberPrefsGet))
 	router.PUT("/cloudhub/v2/recipient-group-members/:memberId/alert-prefs", EnsureEditor(service.AlertRecipientMemberPrefsUpsert))
 
+	// Builtin alert templates (read-only)
+	router.GET("/cloudhub/v2/alert-templates", EnsureViewer(service.AlertTemplatesGet))
+	router.GET("/cloudhub/v2/alert-templates/:id", EnsureViewer(service.AlertTemplateID))
+
 	// Layouts
 	router.GET("/cloudhub/v1/layouts", EnsureViewer(service.Layouts))
 	router.GET("/cloudhub/v1/layouts/:id", EnsureViewer(service.LayoutsID))

@@ -135,7 +135,34 @@ $alert-group--preview-graph-shell-height: 360px;
       border-left: 3px solid $c-pool;
       padding-left: calc(#{$ix-marg-c} - 3px);
     }
+
+    &.disabled {
+      color: $g8-storm;
+      cursor: not-allowed;
+      opacity: 0.5;
+
+      &:hover {
+        background-color: transparent;
+        color: $g8-storm;
+      }
+    }
   }
+}
+
+.alert-group-template-tooltip {
+  position: fixed;
+  z-index: 9999;
+  max-width: 260px;
+  padding: 6px 8px;
+  pointer-events: none;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  border-radius: 3px;
+  background-color: $g2-kevlar;
+  color: $g13-mist;
+  border: 1px solid $g6-smoke;
+  box-shadow: 0 2px 8px rgba($g0-obsidian, 0.35);
 }
 
 .alert-group-rule-builder {

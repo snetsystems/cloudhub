@@ -77,13 +77,13 @@
             }
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
           },
           "422": {
-            "description": "Unprocessable Entity \u2013 indicates that the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.",
+            "description": "Unprocessable Entity – indicates that the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -263,7 +263,7 @@
             "description": "Password change successfully"
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -3323,7 +3323,7 @@
             }
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -3433,7 +3433,7 @@
             }
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -3572,7 +3572,7 @@
             }
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -3637,7 +3637,7 @@
             }
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -3753,7 +3753,7 @@
             }
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; failed to parse user id as valid; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; failed to parse user id as valid; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -4432,7 +4432,7 @@
             }
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -4596,7 +4596,7 @@
             }
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -4736,7 +4736,7 @@
             }
           },
           "400": {
-            "description": "Invalid Body \u2013 failed to perform operation in data store",
+            "description": "Invalid Body – failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -4909,7 +4909,7 @@
             "description": "Locked user successfully"
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -4952,7 +4952,7 @@
             "description": "logging successfully"
           },
           "400": {
-            "description": "Invalid JSON \u2013 unable to encode or decode; or failed to perform operation in data store",
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -5064,7 +5064,7 @@
             }
           },
           "400": {
-            "description": "Invalid Body \u2013 failed to perform operation in data store",
+            "description": "Invalid Body – failed to perform operation in data store",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -7190,9 +7190,51 @@
           "recipient-groups"
         ],
         "summary": "Get all recipient groups",
+        "description": "Lists all non-deleted recipient groups for the organization in the request context, each including its members.",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Recipient groups",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroupsList"
+            },
+            "examples": {
+              "application/json": {
+                "recipientGroups": [
+                  {
+                    "id": "a1111111-1111-1111-1111-111111111111",
+                    "orgId": "default",
+                    "name": "DevOps",
+                    "isDefault": false,
+                    "createdAt": "2026-05-19T09:00:00Z",
+                    "updatedAt": "2026-05-19T09:00:00Z",
+                    "members": [
+                      {
+                        "id": "b2222222-2222-2222-2222-222222222222",
+                        "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+                        "userId": "42",
+                        "userName": "Alice",
+                        "email": "alice@example.com",
+                        "phoneNumber": "+821012345678",
+                        "createdAt": "2026-05-19T09:00:00Z",
+                        "updatedAt": "2026-05-19T09:00:00Z"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           }
         }
       },
@@ -7201,9 +7243,52 @@
           "recipient-groups"
         ],
         "summary": "Create recipient group",
+        "description": "Creates a new Layer 1 recipient group. orgId is taken from the organization context, not the request body.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "Recipient group name",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroupCreateRequest"
+            }
+          }
+        ],
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created recipient group",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroup"
+            },
+            "examples": {
+              "application/json": {
+                "id": "a1111111-1111-1111-1111-111111111111",
+                "orgId": "default",
+                "name": "DevOps",
+                "isDefault": false,
+                "createdAt": "2026-05-19T09:00:00Z",
+                "updatedAt": "2026-05-19T09:00:00Z"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           }
         }
       }
@@ -7214,57 +7299,161 @@
           "recipient-groups"
         ],
         "summary": "Get specific recipient group with members",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group UUID"
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "Recipient group",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroup"
+            },
+            "examples": {
+              "application/json": {
+                "id": "a1111111-1111-1111-1111-111111111111",
+                "orgId": "default",
+                "name": "DevOps",
+                "isDefault": false,
+                "createdAt": "2026-05-19T09:00:00Z",
+                "updatedAt": "2026-05-19T09:00:00Z",
+                "members": [
+                  {
+                    "id": "b2222222-2222-2222-2222-222222222222",
+                    "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+                    "userId": "42",
+                    "userName": "Alice",
+                    "email": "alice@example.com",
+                    "phoneNumber": "+821012345678",
+                    "createdAt": "2026-05-19T09:00:00Z",
+                    "updatedAt": "2026-05-19T09:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       },
       "patch": {
         "tags": [
           "recipient-groups"
         ],
         "summary": "Rename recipient group",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "New name",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroupUpdateRequest"
+            }
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated recipient group",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroup"
+            },
+            "examples": {
+              "application/json": {
+                "id": "a1111111-1111-1111-1111-111111111111",
+                "orgId": "default",
+                "name": "Platform Ops",
+                "isDefault": false,
+                "createdAt": "2026-05-19T09:00:00Z",
+                "updatedAt": "2026-05-19T09:00:00Z",
+                "members": [
+                  {
+                    "id": "b2222222-2222-2222-2222-222222222222",
+                    "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+                    "userId": "42",
+                    "userName": "Alice",
+                    "email": "alice@example.com",
+                    "phoneNumber": "+821012345678",
+                    "createdAt": "2026-05-19T09:00:00Z",
+                    "updatedAt": "2026-05-19T09:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       },
       "delete": {
         "tags": [
           "recipient-groups"
         ],
         "summary": "Soft-delete recipient group",
-        "responses": {
-          "204": {
-            "description": "No Content"
-          }
-        },
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group UUID"
           }
-        ]
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       }
     },
     "../v2/recipient-groups/{id}/members": {
@@ -7273,19 +7462,62 @@
           "recipient-groups"
         ],
         "summary": "Add a member to a recipient group",
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        },
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "Member contact info",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroupMemberRequest"
+            }
           }
-        ]
+        ],
+        "responses": {
+          "201": {
+            "description": "Created member",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroupMember"
+            },
+            "examples": {
+              "application/json": {
+                "id": "b2222222-2222-2222-2222-222222222222",
+                "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+                "userId": "42",
+                "userName": "Alice",
+                "email": "alice@example.com",
+                "phoneNumber": "+821012345678",
+                "createdAt": "2026-05-19T09:00:00Z",
+                "updatedAt": "2026-05-19T09:00:00Z"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       }
     },
     "../v2/recipient-groups/{id}/members/{memberId}": {
@@ -7294,50 +7526,109 @@
           "recipient-groups"
         ],
         "summary": "Update a recipient group member",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
+        "description": "Updates userName, email, and/or phoneNumber. Omitted or empty fields are left unchanged.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group UUID"
           },
           {
             "name": "memberId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group member UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "Fields to update",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroupMemberRequest"
+            }
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated member",
+            "schema": {
+              "$ref": "#/definitions/RecipientGroupMember"
+            },
+            "examples": {
+              "application/json": {
+                "id": "b2222222-2222-2222-2222-222222222222",
+                "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+                "userId": "42",
+                "userName": "Alice",
+                "email": "alice@example.com",
+                "phoneNumber": "+821012345678",
+                "createdAt": "2026-05-19T09:00:00Z",
+                "updatedAt": "2026-05-19T09:00:00Z"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       },
       "delete": {
         "tags": [
           "recipient-groups"
         ],
         "summary": "Soft-delete a recipient group member",
-        "responses": {
-          "204": {
-            "description": "No Content"
-          }
-        },
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group UUID"
           },
           {
             "name": "memberId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group member UUID"
           }
-        ]
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       }
     },
     "../v2/recipient-groups/{id}/alert-policy": {
@@ -7346,57 +7637,140 @@
           "alert-recipient-groups"
         ],
         "summary": "Get alert-domain policy for a recipient group (group-level suppression)",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group UUID"
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "Alert policy extension",
+            "schema": {
+              "$ref": "#/definitions/AlertRecipientGroup"
+            },
+            "examples": {
+              "application/json": {
+                "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+                "suppressionEnabled": true,
+                "suppressionWindowSeconds": 300,
+                "suppressionCount": 5,
+                "suppressionPauseSeconds": 600,
+                "createdAt": "2026-05-19T09:00:00Z",
+                "updatedAt": "2026-05-19T09:00:00Z"
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       },
       "put": {
         "tags": [
           "alert-recipient-groups"
         ],
         "summary": "Upsert alert-domain policy for a recipient group",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
+        "description": "Creates or updates the Layer 2 extension. Presence of a row marks the group as participating in the alert domain.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "Suppression policy",
+            "schema": {
+              "$ref": "#/definitions/AlertRecipientGroupRequest"
+            }
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved alert policy",
+            "schema": {
+              "$ref": "#/definitions/AlertRecipientGroup"
+            },
+            "examples": {
+              "application/json": {
+                "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+                "suppressionEnabled": true,
+                "suppressionWindowSeconds": 300,
+                "suppressionCount": 5,
+                "suppressionPauseSeconds": 600,
+                "createdAt": "2026-05-19T09:00:00Z",
+                "updatedAt": "2026-05-19T09:00:00Z"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       },
       "delete": {
         "tags": [
           "alert-recipient-groups"
         ],
         "summary": "Remove the alert-domain extension (deactivates the group for alerts)",
-        "responses": {
-          "204": {
-            "description": "No Content"
-          }
-        },
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group UUID"
           }
-        ]
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       }
     },
     "../v2/recipient-group-members/{memberId}/alert-prefs": {
@@ -7405,38 +7779,111 @@
           "alert-recipient-member-prefs"
         ],
         "summary": "Get per-member alert preferences (channel/level/time/escalation)",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
         "parameters": [
           {
             "name": "memberId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group member UUID"
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "Member alert preferences",
+            "schema": {
+              "$ref": "#/definitions/AlertRecipientMemberPrefs"
+            },
+            "examples": {
+              "application/json": {
+                "recipientGroupMemberId": "b2222222-2222-2222-2222-222222222222",
+                "emailEnabled": true,
+                "emailLevel": "critical",
+                "smsEnabled": false,
+                "smsLevel": "all",
+                "notifyWeekdays": "1,2,3,4,5",
+                "notifyStartHm": "09:00",
+                "notifyEndHm": "18:00",
+                "escalationSeconds": 300
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       },
       "put": {
         "tags": [
           "alert-recipient-member-prefs"
         ],
         "summary": "Upsert per-member alert preferences",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
         "parameters": [
           {
             "name": "memberId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Recipient group member UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "Member alert preferences",
+            "schema": {
+              "$ref": "#/definitions/AlertRecipientMemberPrefsRequest"
+            }
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved member alert preferences",
+            "schema": {
+              "$ref": "#/definitions/AlertRecipientMemberPrefs"
+            },
+            "examples": {
+              "application/json": {
+                "recipientGroupMemberId": "b2222222-2222-2222-2222-222222222222",
+                "emailEnabled": true,
+                "emailLevel": "critical",
+                "smsEnabled": false,
+                "smsLevel": "all",
+                "notifyWeekdays": "1,2,3,4,5",
+                "notifyStartHm": "09:00",
+                "notifyEndHm": "18:00",
+                "escalationSeconds": 300
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       }
     },
     "../v2/alert-group-rules": {
@@ -7525,22 +7972,175 @@
     "../v2/alert-group-rules/{id}/recipient-groups": {
       "put": {
         "tags": [
-          "alert-group-rules"
+          "alert-group-rules",
+          "recipient-groups"
         ],
         "summary": "Set the recipient groups bound to an alert group rule",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
+        "description": "Replaces the N:M binding between an alert rule and recipient groups.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "description": "Alert group rule UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "Recipient group IDs",
+            "schema": {
+              "$ref": "#/definitions/AlertGroupRuleRecipientGroupsRequest"
+            }
           }
-        ]
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/recipient-groups/{id}/alert-prefs": {
+      "get": {
+        "tags": [
+          "alert-recipient-member-prefs"
+        ],
+        "summary": "Get alert preferences for all members of a recipient group",
+        "description": "Returns prefs for every member in one request (avoids N+1 calls from the alert UI).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Recipient group UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member alert preferences",
+            "schema": {
+              "$ref": "#/definitions/AlertRecipientMemberPrefsList"
+            },
+            "examples": {
+              "application/json": {
+                "alertRecipientMemberPrefs": [
+                  {
+                    "recipientGroupMemberId": "b2222222-2222-2222-2222-222222222222",
+                    "emailEnabled": true,
+                    "emailLevel": "critical",
+                    "smsEnabled": false,
+                    "smsLevel": "all",
+                    "notifyWeekdays": "1,2,3,4,5",
+                    "notifyStartHm": "09:00",
+                    "notifyEndHm": "18:00",
+                    "escalationSeconds": 300
+                  }
+                ]
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "alert-recipient-member-prefs"
+        ],
+        "summary": "Bulk upsert alert preferences for group members",
+        "description": "Each recipientGroupMemberId must belong to the URL group. Members omitted from the body keep their existing prefs.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Recipient group UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "Member prefs to upsert",
+            "schema": {
+              "$ref": "#/definitions/AlertRecipientMemberPrefsBulkRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved member prefs for the group",
+            "schema": {
+              "$ref": "#/definitions/AlertRecipientMemberPrefsList"
+            },
+            "examples": {
+              "application/json": {
+                "alertRecipientMemberPrefs": [
+                  {
+                    "recipientGroupMemberId": "b2222222-2222-2222-2222-222222222222",
+                    "emailEnabled": true,
+                    "emailLevel": "critical",
+                    "smsEnabled": false,
+                    "smsLevel": "all",
+                    "notifyWeekdays": "1,2,3,4,5",
+                    "notifyStartHm": "09:00",
+                    "notifyEndHm": "18:00",
+                    "escalationSeconds": 300
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
       }
     }
   },
@@ -13100,6 +13700,512 @@
       "description": "List of registered host records",
       "items": {
         "$ref": "#/definitions/HostRes"
+      }
+    },
+    "RecipientGroup": {
+      "type": "object",
+      "description": "Layer 1 domain-neutral recipient group (shared across alert and future domains).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "orgId": {
+          "type": "string",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "deleteYn": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RecipientGroupMember"
+          }
+        }
+      },
+      "example": {
+        "id": "a1111111-1111-1111-1111-111111111111",
+        "orgId": "default",
+        "name": "DevOps",
+        "isDefault": false,
+        "createdAt": "2026-05-19T09:00:00Z",
+        "updatedAt": "2026-05-19T09:00:00Z",
+        "members": [
+          {
+            "id": "b2222222-2222-2222-2222-222222222222",
+            "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+            "userId": "42",
+            "userName": "Alice",
+            "email": "alice@example.com",
+            "phoneNumber": "+821012345678",
+            "createdAt": "2026-05-19T09:00:00Z",
+            "updatedAt": "2026-05-19T09:00:00Z"
+          }
+        ]
+      }
+    },
+    "RecipientGroupMember": {
+      "type": "object",
+      "description": "Layer 1 group member identity and contact info.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "recipientGroupId": {
+          "type": "string",
+          "readOnly": true
+        },
+        "userId": {
+          "type": "string"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "deleteYn": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      },
+      "required": [
+        "email"
+      ],
+      "example": {
+        "id": "b2222222-2222-2222-2222-222222222222",
+        "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+        "userId": "42",
+        "userName": "Alice",
+        "email": "alice@example.com",
+        "phoneNumber": "+821012345678",
+        "createdAt": "2026-05-19T09:00:00Z",
+        "updatedAt": "2026-05-19T09:00:00Z"
+      }
+    },
+    "RecipientGroupsList": {
+      "type": "object",
+      "properties": {
+        "recipientGroups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RecipientGroup"
+          }
+        }
+      },
+      "example": {
+        "recipientGroups": [
+          {
+            "id": "a1111111-1111-1111-1111-111111111111",
+            "orgId": "default",
+            "name": "DevOps",
+            "isDefault": false,
+            "createdAt": "2026-05-19T09:00:00Z",
+            "updatedAt": "2026-05-19T09:00:00Z",
+            "members": [
+              {
+                "id": "b2222222-2222-2222-2222-222222222222",
+                "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+                "userId": "42",
+                "userName": "Alice",
+                "email": "alice@example.com",
+                "phoneNumber": "+821012345678",
+                "createdAt": "2026-05-19T09:00:00Z",
+                "updatedAt": "2026-05-19T09:00:00Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "RecipientGroupCreateRequest": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name of the recipient group"
+        }
+      },
+      "example": {
+        "name": "DevOps"
+      }
+    },
+    "RecipientGroupUpdateRequest": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "New display name"
+        }
+      },
+      "example": {
+        "name": "Platform Ops"
+      }
+    },
+    "RecipientGroupMemberRequest": {
+      "type": "object",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "CloudHub user ID (optional for external recipients)"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string"
+        }
+      },
+      "example": {
+        "userId": "42",
+        "userName": "Alice",
+        "email": "alice@example.com",
+        "phoneNumber": "+821012345678"
+      }
+    },
+    "AlertRecipientGroup": {
+      "type": "object",
+      "description": "Layer 2 alert-domain extension (group-level burst suppression). Row existence marks the group as alert-active.",
+      "properties": {
+        "recipientGroupId": {
+          "type": "string",
+          "readOnly": true
+        },
+        "suppressionEnabled": {
+          "type": "boolean"
+        },
+        "suppressionWindowSeconds": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "suppressionCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "suppressionPauseSeconds": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      },
+      "example": {
+        "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+        "suppressionEnabled": true,
+        "suppressionWindowSeconds": 300,
+        "suppressionCount": 5,
+        "suppressionPauseSeconds": 600,
+        "createdAt": "2026-05-19T09:00:00Z",
+        "updatedAt": "2026-05-19T09:00:00Z"
+      }
+    },
+    "AlertRecipientGroupRequest": {
+      "type": "object",
+      "properties": {
+        "suppressionEnabled": {
+          "type": "boolean"
+        },
+        "suppressionWindowSeconds": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Required > 0 when suppressionEnabled is true"
+        },
+        "suppressionCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "suppressionPauseSeconds": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "example": {
+        "suppressionEnabled": true,
+        "suppressionWindowSeconds": 300,
+        "suppressionCount": 5,
+        "suppressionPauseSeconds": 600
+      }
+    },
+    "AlertRecipientMemberPrefs": {
+      "type": "object",
+      "description": "Layer 2 per-member alert channel preferences.",
+      "properties": {
+        "recipientGroupMemberId": {
+          "type": "string",
+          "readOnly": true
+        },
+        "emailEnabled": {
+          "type": "boolean"
+        },
+        "emailLevel": {
+          "type": "string",
+          "enum": [
+            "",
+            "all",
+            "warning",
+            "critical"
+          ]
+        },
+        "smsEnabled": {
+          "type": "boolean"
+        },
+        "smsLevel": {
+          "type": "string",
+          "enum": [
+            "",
+            "all",
+            "warning",
+            "critical"
+          ]
+        },
+        "notifyWeekdays": {
+          "type": "string",
+          "description": "Comma-separated weekday numbers (0=Sun .. 6=Sat), e.g. 1,2,3,4,5"
+        },
+        "notifyStartHm": {
+          "type": "string",
+          "description": "Receive window start (HH:MM)"
+        },
+        "notifyEndHm": {
+          "type": "string",
+          "description": "Receive window end (HH:MM)"
+        },
+        "escalationSeconds": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "example": {
+        "recipientGroupMemberId": "b2222222-2222-2222-2222-222222222222",
+        "emailEnabled": true,
+        "emailLevel": "critical",
+        "smsEnabled": false,
+        "smsLevel": "all",
+        "notifyWeekdays": "1,2,3,4,5",
+        "notifyStartHm": "09:00",
+        "notifyEndHm": "18:00",
+        "escalationSeconds": 300
+      }
+    },
+    "AlertRecipientMemberPrefsRequest": {
+      "type": "object",
+      "properties": {
+        "emailEnabled": {
+          "type": "boolean"
+        },
+        "emailLevel": {
+          "type": "string",
+          "enum": [
+            "",
+            "all",
+            "warning",
+            "critical"
+          ]
+        },
+        "smsEnabled": {
+          "type": "boolean"
+        },
+        "smsLevel": {
+          "type": "string",
+          "enum": [
+            "",
+            "all",
+            "warning",
+            "critical"
+          ]
+        },
+        "notifyWeekdays": {
+          "type": "string"
+        },
+        "notifyStartHm": {
+          "type": "string"
+        },
+        "notifyEndHm": {
+          "type": "string"
+        },
+        "escalationSeconds": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "example": {
+        "emailEnabled": true,
+        "emailLevel": "critical",
+        "smsEnabled": false,
+        "smsLevel": "all",
+        "notifyWeekdays": "1,2,3,4,5",
+        "notifyStartHm": "09:00",
+        "notifyEndHm": "18:00",
+        "escalationSeconds": 300
+      }
+    },
+    "AlertRecipientMemberPrefsList": {
+      "type": "object",
+      "properties": {
+        "alertRecipientMemberPrefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertRecipientMemberPrefs"
+          }
+        }
+      },
+      "example": {
+        "alertRecipientMemberPrefs": [
+          {
+            "recipientGroupMemberId": "b2222222-2222-2222-2222-222222222222",
+            "emailEnabled": true,
+            "emailLevel": "critical",
+            "smsEnabled": false,
+            "smsLevel": "all",
+            "notifyWeekdays": "1,2,3,4,5",
+            "notifyStartHm": "09:00",
+            "notifyEndHm": "18:00",
+            "escalationSeconds": 300
+          }
+        ]
+      }
+    },
+    "AlertRecipientMemberPrefsBulkRequest": {
+      "type": "object",
+      "required": [
+        "alertRecipientMemberPrefs"
+      ],
+      "properties": {
+        "alertRecipientMemberPrefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "recipientGroupMemberId"
+            ],
+            "properties": {
+              "recipientGroupMemberId": {
+                "type": "string"
+              },
+              "emailEnabled": {
+                "type": "boolean"
+              },
+              "emailLevel": {
+                "type": "string",
+                "enum": [
+                  "",
+                  "all",
+                  "warning",
+                  "critical"
+                ]
+              },
+              "smsEnabled": {
+                "type": "boolean"
+              },
+              "smsLevel": {
+                "type": "string",
+                "enum": [
+                  "",
+                  "all",
+                  "warning",
+                  "critical"
+                ]
+              },
+              "notifyWeekdays": {
+                "type": "string"
+              },
+              "notifyStartHm": {
+                "type": "string"
+              },
+              "notifyEndHm": {
+                "type": "string"
+              },
+              "escalationSeconds": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        }
+      },
+      "example": {
+        "alertRecipientMemberPrefs": [
+          {
+            "recipientGroupMemberId": "b2222222-2222-2222-2222-222222222222",
+            "emailEnabled": true,
+            "emailLevel": "critical",
+            "smsEnabled": false,
+            "smsLevel": "all",
+            "notifyWeekdays": "1,2,3,4,5",
+            "notifyStartHm": "09:00",
+            "notifyEndHm": "18:00",
+            "escalationSeconds": 300
+          }
+        ]
+      }
+    },
+    "AlertGroupRuleRecipientGroupsRequest": {
+      "type": "object",
+      "properties": {
+        "recipientGroupIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Recipient group UUIDs bound to the alert rule"
+        }
+      },
+      "example": {
+        "recipientGroupIds": [
+          "a1111111-1111-1111-1111-111111111111"
+        ]
       }
     }
   }

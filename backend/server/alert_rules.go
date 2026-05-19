@@ -1,4 +1,4 @@
-// backend/server/alert_rules.go
+// Package server provides the HTTP server for the CloudHub API.
 package server
 
 import (
@@ -33,6 +33,7 @@ type alertGroupTestNotificationResponse struct {
 // kapacitorSMTPSender is overridable in tests to bypass real HTTP calls.
 var kapacitorSMTPSender = sendViaKapacitorSMTPServiceTest
 
+// AlertGroupRulesGet gets all alert group rules.
 func (s *Service) AlertGroupRulesGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	orgID, _ := hasOrganizationContext(ctx)
@@ -53,6 +54,7 @@ func (s *Service) AlertGroupRulesGet(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, map[string]interface{}{"alertGroupRules": rules}, s.Logger)
 }
 
+// AlertGroupRuleCreate creates a new alert group rule.
 func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var req cloudhub.AlertGroupRule
@@ -114,6 +116,7 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusCreated, rule, s.Logger)
 }
 
+// AlertGroupRuleIDGet gets an alert group rule by ID.
 func (s *Service) AlertGroupRuleIDGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := httprouter.GetParam(r, "id")
@@ -131,6 +134,7 @@ func (s *Service) AlertGroupRuleIDGet(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, rule, s.Logger)
 }
 
+// AlertGroupRuleUpdate updates an alert group rule.
 func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := httprouter.GetParam(r, "id")

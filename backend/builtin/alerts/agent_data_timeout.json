@@ -1,0 +1,25 @@
+{
+  "id": "agent_data_timeout",
+  "name": "Agent 데이터 수신 중단 알림",
+  "description": "지정 기간 동안 호스트에서 데이터가 들어오지 않으면 알림 (Kapacitor deadman)",
+  "category": "server-monitoring",
+  "tags": ["agent", "availability"],
+  "database": "",
+  "retentionPolicy": "",
+  "measurement": "system",
+  "field": "uptime",
+  "trigger": "deadman",
+  "triggerOperator": "greater",
+  "values": {
+    "period": "5m"
+  },
+  "taskType": "stream",
+  "every": "30s",
+  "occurrenceType": "consecutive",
+  "occurrenceCount": 1,
+  "occurrenceWindow": "5m",
+  "pauseSeconds": 0,
+  "notifyRecovery": true,
+  "message": "{{ index .Tags \"host\" }} Agent 데이터 수신 중단됨 ({{ .Time }})",
+  "conditions": []
+}

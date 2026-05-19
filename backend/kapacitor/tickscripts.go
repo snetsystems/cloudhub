@@ -92,6 +92,19 @@ type alertGroupTickParams struct {
 	RecipientsAll     []string // union (dedup'd, case-insensitive) of all level recipient lists — used for recovery email
 	HostFilterLambda  string   // stream: `"host" == 'a' OR "host" == 'b'`; empty = all hosts
 	HostFilterSQL     string   // batch:  ` AND ("host" = 'a' OR "host" = 'b')`; empty = all hosts
+	// EvalEnabled inserts `|eval(lambda: <EvalExpression>).as('<EvalAs>').keep()`
+	// after |from(). Stream-only. When active, threshold lambdas reference EvalAs
+	// instead of the raw Field — see resolveLambdaField.
+	EvalEnabled    bool
+	EvalExpression string
+	EvalAs         string
+	// DerivativeEnabled inserts `|derivative('<DerivativeField>').[nonNegative()].unit(<DerivativeUnit>)`
+	// after |eval() (or directly after |from() when Eval is inactive). Stream-only.
+	// Result field name equals the input field — threshold lambdas unchanged.
+	DerivativeEnabled     bool
+	DerivativeField       string
+	DerivativeNonNegative bool
+	DerivativeUnit        string
 }
 
 // AlertGroupRuleTICKScript generates a TICKscript for an AlertGroupRule.
@@ -107,15 +120,16 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		triggerType = cloudhub.AlertGroupRuleTriggerThreshold
 	}
 	sourceVar := "src"
+	evalActive := rule.Eval != nil && strings.TrimSpace(rule.Eval.Expression) != "" && strings.TrimSpace(rule.Eval.As) != ""
+	derivativeActive := rule.Derivative != nil && rule.Derivative.Enabled
 	var info, warn, crit string
 	for _, c := range rule.Conditions {
 		if !c.Enabled {
 			continue
 		}
-		field := rule.Field
+		field := resolveLambdaField(rule, triggerType, evalActive)
 		operator := rule.TriggerOperator
 		if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
-			field = "relative_value"
 			operator = relativeTriggerOperator(rule.TriggerValues.Operator)
 		}
 		expr := buildThresholdExpr(field, operator, c.Value)
@@ -141,27 +155,23 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	}
 
 	hostLambda, hostSQL := buildHostFilters(hostnames)
-	occLambda := buildOccurrenceLambda(rule)
+	// Lambda helpers consume rule.Field directly. For relative trigger the
+	// field is `relative_value`; for eval it's the alias. Build a "lambda
+	// view" of the rule once and reuse for occurrence / exclusive builders.
+	lambdaRule := rule
+	lambdaRule.Field = resolveLambdaField(rule, triggerType, evalActive)
 	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
-		occRule := rule
-		occRule.Field = "relative_value"
-		occRule.TriggerOperator = relativeTriggerOperator(rule.TriggerValues.Operator)
-		occLambda = buildOccurrenceLambda(occRule)
+		lambdaRule.TriggerOperator = relativeTriggerOperator(rule.TriggerValues.Operator)
 		sourceVar = "relative_src"
 	}
+	occLambda := buildOccurrenceLambda(lambdaRule)
 	occEnabled := rule.OccurrenceCount > 1 && occLambda != ""
 	recentEnabled := occEnabled && isRecentOccurrence(rule.OccurrenceType)
 	consecutiveEnabled := occEnabled && !recentEnabled
 
 	// Email branches must use level-exclusive lambdas so a CRIT-matching value
 	// does not also dispatch the WARN email (and similarly for INFO).
-	emailInfo, emailWarn, emailCrit := buildExclusiveLambdas(rule)
-	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
-		emailRule := rule
-		emailRule.Field = "relative_value"
-		emailRule.TriggerOperator = relativeTriggerOperator(rule.TriggerValues.Operator)
-		emailInfo, emailWarn, emailCrit = buildExclusiveLambdas(emailRule)
-	}
+	emailInfo, emailWarn, emailCrit := buildExclusiveLambdas(lambdaRule)
 
 	recent := recentOccurrenceParams{}
 	if recentEnabled {
@@ -214,6 +224,25 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		RecipientsAll:     unionRecipients(recipients),
 		HostFilterLambda:  hostLambda,
 		HostFilterSQL:     hostSQL,
+	}
+	if evalActive {
+		params.EvalEnabled = true
+		params.EvalExpression = rule.Eval.Expression
+		params.EvalAs = rule.Eval.As
+	}
+	if derivativeActive {
+		params.DerivativeEnabled = true
+		// Derivative reads from the eval alias if eval ran first, else the raw field.
+		if evalActive {
+			params.DerivativeField = rule.Eval.As
+		} else {
+			params.DerivativeField = rule.Field
+		}
+		params.DerivativeNonNegative = rule.Derivative.NonNegative
+		params.DerivativeUnit = strings.TrimSpace(rule.Derivative.Unit)
+		if params.DerivativeUnit == "" {
+			params.DerivativeUnit = "1s"
+		}
 	}
 
 	rawToml, err := tmplstore.Asset("alert_group_tick.toml")
@@ -434,6 +463,24 @@ func buildHostFilters(hostnames []string) (lambda, sqlAnd string) {
 	}
 	return strings.Join(lambdaParts, " OR "),
 		" AND (" + strings.Join(sqlParts, " OR ") + ")"
+}
+
+// resolveLambdaField returns the field name that threshold lambdas should
+// reference. Order of precedence:
+//  1. relative trigger → `relative_value` (eval/derivative are ignored — relative
+//     handles its own derived value via shift+join+eval into `relative_value`).
+//  2. eval active → the eval alias (`EvalConfig.As`). `.keep()` preserves the
+//     raw field but the alert pipeline targets the derived value.
+//  3. otherwise → `rule.Field` (raw or post-derivative; derivative keeps the
+//     same field name by default).
+func resolveLambdaField(rule cloudhub.AlertGroupRule, triggerType string, evalActive bool) string {
+	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
+		return "relative_value"
+	}
+	if evalActive {
+		return rule.Eval.As
+	}
+	return rule.Field
 }
 
 // formatPauseDuration maps pause_seconds → argument string for stateChangesOnly().

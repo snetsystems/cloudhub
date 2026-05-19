@@ -1,8 +1,11 @@
 // frontend/src/alert_group/apis/index.ts
 import AJAX from 'src/utils/ajax'
+import {proxy} from 'src/utils/queryUrlGenerator'
+import {Source} from 'src/types'
 import {
   AlertGroupRule,
   AlertKapacitor,
+  AlertTemplate,
   DEFAULT_RULE,
   AlertGroupTestNotificationRequest,
   AlertGroupTestNotificationResponse,
@@ -418,4 +421,45 @@ export const getOrganizationUsers = async (
     name: String(u.name ?? ''),
     email: u.email != null ? String(u.email) : undefined,
   }))
+}
+
+// Builtin alert templates (Layer 0 — read-only blueprints).
+interface AlertTemplatesResponse {
+  alertTemplates: AlertTemplate[]
+}
+
+export const getAlertTemplates = async (): Promise<AlertTemplate[]> => {
+  const {data} = await AJAX({
+    method: 'GET',
+    url: '/cloudhub/v2/alert-templates',
+  })
+  return (data as AlertTemplatesResponse | undefined)?.alertTemplates || []
+}
+
+// fetchAvailableMeasurements runs `SHOW MEASUREMENTS` against the source's
+// default telegraf DB and returns the set of measurement names. Used by the
+// template sidebar to disable templates whose measurement is not collected
+// in the current environment (e.g. `procstat` not installed → process_*
+// templates render as disabled with a tooltip).
+//
+// Returns an empty set on error so the UI degrades gracefully — templates
+// remain disabled but visible.
+export const fetchAvailableMeasurements = async (
+  source: Source,
+  db?: string
+): Promise<Set<string>> => {
+  const database = db || source.telegraf || 'telegraf'
+  try {
+    const {data} = await proxy({
+      source: source.links.proxy,
+      query: 'SHOW MEASUREMENTS',
+      db: database,
+    })
+    const results = (data as {results?: any[]})?.results
+    const rows: any[][] =
+      results?.[0]?.series?.[0]?.values || []
+    return new Set(rows.map(r => String(r[0])))
+  } catch {
+    return new Set()
+  }
 }

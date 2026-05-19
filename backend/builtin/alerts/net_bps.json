@@ -1,0 +1,31 @@
+{
+  "id": "net_bps",
+  "name": "Network BPS 알림",
+  "description": "네트워크 수신 대역폭이 임계치를 초과하면 알림. 1Gbps NIC 기준 100Mbps(warning) / 125Mbps(critical)",
+  "category": "server-monitoring",
+  "tags": ["network", "throughput"],
+  "database": "",
+  "retentionPolicy": "",
+  "measurement": "net",
+  "field": "bytes_recv",
+  "derivative": {
+    "enabled": true,
+    "nonNegative": true,
+    "unit": "1s"
+  },
+  "trigger": "threshold",
+  "triggerOperator": "greater",
+  "taskType": "stream",
+  "every": "30s",
+  "occurrenceType": "consecutive",
+  "occurrenceCount": 2,
+  "occurrenceWindow": "5m",
+  "pauseSeconds": 0,
+  "notifyRecovery": true,
+  "message": "{{ index .Tags \"host\" }} Network BPS {{ .Level }} ({{ index .Fields \"bytes_recv\" }} bytes/s)",
+  "conditions": [
+    { "level": "critical", "value": 125000000, "enabled": true },
+    { "level": "warning",  "value": 100000000, "enabled": true },
+    { "level": "info",     "value": 0,         "enabled": false }
+  ]
+}

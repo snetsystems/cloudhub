@@ -6,6 +6,24 @@ export interface AlertCondition {
   enabled: boolean
 }
 
+// DerivativeConfig — when enabled, the backend tickscript inserts
+// |derivative('<field>').[nonNegative()].unit(<unit>) between |from() and the
+// alert pipeline. Result field name equals the input field, so threshold
+// lambdas continue to reference rule.field unchanged.
+export interface DerivativeConfig {
+  enabled: boolean
+  nonNegative: boolean
+  unit: string // duration literal like "1s"
+}
+
+// EvalConfig — when both expression and `as` are non-empty, the backend
+// tickscript inserts |eval(lambda: <expression>).as('<as>').keep(). Threshold
+// lambdas reference `as` instead of rule.field.
+export interface EvalConfig {
+  expression: string
+  as: string
+}
+
 export interface AlertGroupRule {
   id?: string
   name: string
@@ -48,6 +66,10 @@ export interface AlertGroupRule {
   kapacitorId: string
   hostnames: string[]
   recipientGroupIds: string[]
+  // Optional TICK transformations between |from() and the alert pipeline.
+  // Templates set these; users can override via raw mode (future UI).
+  derivative?: DerivativeConfig
+  eval?: EvalConfig
   tickscript?: string
   orgId?: string
   createdAt?: string
@@ -213,119 +235,33 @@ export const DEFAULT_RULE: AlertGroupRule = {
   recipientGroupIds: [],
 }
 
+// AlertTemplate matches backend cloudhub.AlertTemplate — a complete blueprint
+// for creating an AlertGroupRule. Loaded from /cloudhub/v2/alert-templates.
 export interface AlertTemplate {
   id: string
   name: string
-  category: string
+  description?: string
+  category?: string // monitoring domain: server-monitoring | url-monitoring | ...
+  tags?: string[]
+  database: string
+  retentionPolicy: string
   measurement: string
   field: string
-  defaultOperator?:
-    | 'greater'
-    | 'greater_equal'
-    | 'less'
-    | 'less_equal'
-    | 'equal'
-    | 'not_equal'
+  derivative?: DerivativeConfig
+  eval?: EvalConfig
+  trigger?: 'threshold' | 'relative' | 'deadman'
+  triggerOperator: AlertGroupRule['triggerOperator']
+  values?: AlertGroupRule['triggerValues']
+  taskType: string
+  every: string
+  occurrenceType: AlertGroupRule['occurrenceType']
+  occurrenceCount: number
+  occurrenceWindow: string
+  pauseSeconds: number
+  notifyRecovery: boolean
+  message: string
+  conditions?: AlertCondition[]
 }
-
-export const ALERT_TEMPLATES: AlertTemplate[] = [
-  {
-    id: 'agent_data_timeout',
-    name: 'Agent Data Timeout',
-    category: 'System',
-    measurement: 'system',
-    field: 'uptime',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'cpu_usage',
-    name: 'CPU 사용률',
-    category: 'CPU',
-    measurement: 'cpu',
-    field: 'usage_percent',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'cpu_steal',
-    name: 'CPU Steal',
-    category: 'CPU',
-    measurement: 'cpu',
-    field: 'usage_steal',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'disk_usage',
-    name: 'Disk 사용률',
-    category: 'Disk',
-    measurement: 'disk',
-    field: 'used_percent',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'disk_io',
-    name: 'Disk I/O',
-    category: 'Disk',
-    measurement: 'diskio',
-    field: 'io_time',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'disk_inode',
-    name: 'Disk Inode',
-    category: 'Disk',
-    measurement: 'disk',
-    field: 'inodes_used',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'mem_usage',
-    name: 'Memory 사용률',
-    category: 'Memory',
-    measurement: 'mem',
-    field: 'used_percent',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'net_bps',
-    name: 'Network BPS',
-    category: 'Network',
-    measurement: 'net',
-    field: 'bytes_recv',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'net_iops',
-    name: 'Network IOPS',
-    category: 'Network',
-    measurement: 'net',
-    field: 'packets_recv',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'process_cpu',
-    name: 'Process CPU',
-    category: 'Process',
-    measurement: 'processes',
-    field: 'running',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'process_mem',
-    name: 'Process Memory',
-    category: 'Process',
-    measurement: 'processes',
-    field: 'blocked',
-    defaultOperator: 'greater',
-  },
-  {
-    id: 'swap_mem',
-    name: 'Swap Memory',
-    category: 'Memory',
-    measurement: 'swap',
-    field: 'used_percent',
-    defaultOperator: 'greater',
-  },
-]
 
 export const TRIGGER_OPERATORS = [
   {label: '초과 (>)', value: 'greater'},

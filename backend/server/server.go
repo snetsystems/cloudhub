@@ -25,6 +25,7 @@ import (
 	client "github.com/influxdata/usage-client/v1"
 	flags "github.com/jessevdk/go-flags"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/builtin"
 	idgen "github.com/snetsystems/cloudhub/backend/id"
 	"github.com/snetsystems/cloudhub/backend/influx"
 	"github.com/snetsystems/cloudhub/backend/kafka"
@@ -1051,6 +1052,10 @@ func openService(
 		logger.Info("PostgreSQL AlertGrouping stores initialized")
 	}
 
+	// Builtin alert templates are file-embedded (go-bindata) and have no
+	// runtime dependency on PG or any external service.
+	var alertTemplatesStore cloudhub.AlertTemplatesStore = &builtin.BinAlertTemplatesStore{Logger: logger}
+
 	return Service{
 		TimeSeriesClient: &InfluxClient{},
 		Store: &Store{
@@ -1099,6 +1104,7 @@ func openService(
 		AlertKapacitors:           alertKapacitorStore,
 		AlertKapacitorMappings:    alertKapacitorMappingStore,
 		AlertGroupRules:           alertGroupRuleStore,
+		AlertTemplates:            alertTemplatesStore,
 	}
 }
 

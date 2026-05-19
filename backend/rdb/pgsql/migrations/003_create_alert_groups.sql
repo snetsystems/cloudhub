@@ -10,6 +10,11 @@
 --                        alert_rule_hosts, alert_rule_recipient_groups,
 --                        alert_kapacitors, alert_kapacitor_mappings
 --
+--   alert_rules transform columns (stream-only TICK nodes, 1:0..1 inline):
+--     derivative_* — |derivative() between |from() and the alert pipeline.
+--     eval_*       — |eval(lambda).as(alias).keep(); thresholds use eval_as.
+--     Order in tickscript: |from() → |eval() → |derivative() → alert pipeline.
+--
 -- All alert recipients flow through recipient_groups -> recipient_group_members.
 -- There is no rule-level direct-email escape hatch — ad-hoc external recipients
 -- should be modeled as a group member with user_id = email (or similar convention).
@@ -161,9 +166,14 @@ CREATE TABLE IF NOT EXISTS alert_rules (
     occurrence_window TEXT        NOT NULL DEFAULT '5m',
     pause_seconds     INT         NOT NULL DEFAULT 0,
     notify_recovery   BOOLEAN     NOT NULL DEFAULT false,
-    message           TEXT        NOT NULL DEFAULT '',
-    active            BOOLEAN     NOT NULL DEFAULT true,
-    delete_yn         BOOLEAN     NOT NULL DEFAULT false,
+    message                 TEXT    NOT NULL DEFAULT '',
+    active                  BOOLEAN NOT NULL DEFAULT true,
+    derivative_enabled      BOOLEAN NOT NULL DEFAULT FALSE,
+    derivative_non_negative BOOLEAN NOT NULL DEFAULT TRUE,
+    derivative_unit         TEXT    NOT NULL DEFAULT '',
+    eval_expression         TEXT    NOT NULL DEFAULT '',
+    eval_as                 TEXT    NOT NULL DEFAULT '',
+    delete_yn               BOOLEAN NOT NULL DEFAULT false,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -276,6 +286,16 @@ COMMENT ON COLUMN alert_rules.message IS
   'Alert message template, including TICKscript placeholders (e.g. {{ .Level }} {{ index .Tags "host" }}).';
 COMMENT ON COLUMN alert_rules.active IS
   'When false, this rule is not deployed to Kapacitor / not evaluated.';
+COMMENT ON COLUMN alert_rules.derivative_enabled IS
+  'When true, tickscript inserts |derivative() before the alert pipeline.';
+COMMENT ON COLUMN alert_rules.derivative_non_negative IS
+  'TICK |derivative().nonNegative() — drop negative diffs (counter resets).';
+COMMENT ON COLUMN alert_rules.derivative_unit IS
+  'TICK |derivative().unit(<duration>) — duration literal like "1s". Empty falls back to "1s" at generation time.';
+COMMENT ON COLUMN alert_rules.eval_expression IS
+  'TICK |eval(lambda: <expression>). Active when both eval_expression and eval_as are non-empty.';
+COMMENT ON COLUMN alert_rules.eval_as IS
+  'TICK |eval(...).as(<alias>) — result field name. Threshold lambdas reference this instead of rule.field.';
 COMMENT ON TABLE alert_rule_trigger_values IS
   'Layer 3: optional 1:1 trigger-specific settings for alert_rules. Relative uses change/shift/operator; deadman uses period.';
 COMMENT ON COLUMN alert_rule_trigger_values.change IS
