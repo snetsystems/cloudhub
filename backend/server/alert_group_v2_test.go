@@ -709,6 +709,9 @@ func TestAlertGroupRuleCreateAcceptsUIRelativePayload(t *testing.T) {
 				return nil
 			},
 		},
+		// resolveRuleRecipients falls back to all-org groups when no bound
+		// groups exist; the fake returns nil so we don't try to send anywhere.
+		RecipientGroups: &fakeRecipientGroupStore{},
 	}
 
 	payload := bytes.NewBufferString(`{"name":"relative cpu","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":15,"enabled":true}],"trigger":"relative","values":{"change":"change","shift":"1m","operator":"greater than"},"triggerOperator":"greater","taskType":"stream","every":"30s","occurrenceType":"recent","occurrenceCount":2,"occurrenceWindow":"5m","pauseSeconds":60,"notifyRecovery":true,"active":true,"hostnames":["web-1"],"recipientGroupIds":["rg-1"]}`)
@@ -1151,6 +1154,9 @@ func TestAlertGroupRuleUpdateAppliesPartialPatchOnExisting(t *testing.T) {
 				}, nil
 			},
 		},
+		// resolveRuleRecipients falls back to all-org groups when no bound
+		// groups exist; the fake returns nil so we don't try to send anywhere.
+		RecipientGroups: &fakeRecipientGroupStore{},
 	}
 
 	// Partial patch: send only `active=false`; expect every other field to be preserved
