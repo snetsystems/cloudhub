@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useMemo} from 'react'
 import {useTranslation} from 'react-i18next'
 import {withRouter} from 'react-router'
+import {connect} from 'react-redux'
 
 import TableComponent from 'src/device_management/components/TableComponent'
 import {
@@ -14,16 +15,14 @@ import {
 } from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {ColumnInfo} from 'src/types'
-import {
-  AlertGroupRule,
-  DEFAULT_RULE,
-  AlertCondition,
-} from 'src/alert_group/types'
+import {AlertGroupRule, AlertCondition} from 'src/alert_group/types'
 import {getAlertGroupRules, deleteAlertGroupRule} from 'src/alert_group/apis'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 
 import './ServerAlertManagementPage.scss'
 
-function ServerAlertManagementPage({router, location}: any) {
+function ServerAlertManagementPage({router, location, notify}: any) {
   const {t} = useTranslation()
   const [data, setData] = useState<AlertGroupRule[]>([])
   const [activeFilter, setActiveFilter] = useState<
@@ -57,9 +56,22 @@ function ServerAlertManagementPage({router, location}: any) {
   const handleDelete = async (id: string) => {
     try {
       await deleteAlertGroupRule(id)
+      notify(
+        notifySuccess(
+          t('server_alert.delete_success', '이벤트 그룹 규칙을 삭제했습니다.')
+        )
+      )
       fetchData()
     } catch (error) {
       console.error('Failed to delete alert group rule', error)
+      notify(
+        notifyError(
+          t(
+            'server_alert.delete_failed',
+            '이벤트 그룹 규칙 삭제에 실패했습니다.'
+          )
+        )
+      )
     }
   }
 
@@ -264,4 +276,11 @@ function ServerAlertManagementPage({router, location}: any) {
   )
 }
 
-export default withRouter(ServerAlertManagementPage)
+const mapDispatchToProps = {
+  notify: notifyAction,
+}
+
+export default connect(
+  null,
+  mapDispatchToProps
+)(withRouter(ServerAlertManagementPage))
