@@ -2068,22 +2068,23 @@ type AlertGroupRule struct {
 	Conditions      []AlertRuleCondition `json:"conditions,omitempty"`
 	TriggerOperator string               `json:"triggerOperator"` // greater | less | equal | not_equal | greater_equal | less_equal
 	// Trigger is threshold | relative | deadman (empty => threshold). Deadman is supported for stream tasks only.
-	Trigger           string    `json:"trigger,omitempty"`
-	TaskType          string    `json:"taskType"` // stream | batch
-	Every             string    `json:"every"`
-	OccurrenceType    string    `json:"occurrenceType"` // consecutive | recent
-	OccurrenceCount   int       `json:"occurrenceCount"`
-	OccurrenceWindow  string    `json:"occurrenceWindow"`
-	PauseSeconds      int       `json:"pauseSeconds"`
-	NotifyRecovery    bool      `json:"notifyRecovery"`
-	Message           string    `json:"message"`
-	Active            bool      `json:"active"`
-	Hostnames         []string  `json:"hostnames,omitempty"`
-	RecipientGroupIDs []string  `json:"recipientGroupIds,omitempty"`
-	DeleteYN          bool      `json:"deleteYn,omitempty"`
-	Tickscript        string    `json:"tickscript,omitempty"`
-	CreatedAt         time.Time `json:"createdAt"`
-	UpdatedAt         time.Time `json:"updatedAt"`
+	Trigger           string        `json:"trigger,omitempty"`
+	TriggerValues     TriggerValues `json:"values,omitempty"`
+	TaskType          string        `json:"taskType"` // stream | batch
+	Every             string        `json:"every"`
+	OccurrenceType    string        `json:"occurrenceType"` // consecutive | recent
+	OccurrenceCount   int           `json:"occurrenceCount"`
+	OccurrenceWindow  string        `json:"occurrenceWindow"`
+	PauseSeconds      int           `json:"pauseSeconds"`
+	NotifyRecovery    bool          `json:"notifyRecovery"`
+	Message           string        `json:"message"`
+	Active            bool          `json:"active"`
+	Hostnames         []string      `json:"hostnames,omitempty"`
+	RecipientGroupIDs []string      `json:"recipientGroupIds,omitempty"`
+	DeleteYN          bool          `json:"deleteYn,omitempty"`
+	Tickscript        string        `json:"tickscript,omitempty"`
+	CreatedAt         time.Time     `json:"createdAt"`
+	UpdatedAt         time.Time     `json:"updatedAt"`
 }
 
 // RecipientGroupStore manages domain-neutral recipient groups and their members.
@@ -2100,6 +2101,7 @@ type RecipientGroupStore interface {
 	UpdateMember(ctx context.Context, m RecipientGroupMember) error
 	DeleteMember(ctx context.Context, memberID string) error
 	Members(ctx context.Context, groupID string) ([]RecipientGroupMember, error)
+	MembersByUserID(ctx context.Context, orgID, userID string) ([]RecipientGroupMember, error)
 }
 
 // AlertRecipientGroupStore manages the alert-domain extension of RecipientGroup.
@@ -2116,6 +2118,7 @@ type AlertRecipientGroupStore interface {
 type AlertRecipientMemberPrefsStore interface {
 	Get(ctx context.Context, recipientGroupMemberID string) (AlertRecipientMemberPrefs, error)
 	Upsert(ctx context.Context, p AlertRecipientMemberPrefs) error
+	UpsertBulk(ctx context.Context, prefs []AlertRecipientMemberPrefs) error
 	Delete(ctx context.Context, recipientGroupMemberID string) error
 	ByGroup(ctx context.Context, recipientGroupID string) ([]AlertRecipientMemberPrefs, error)
 }
@@ -2147,4 +2150,3 @@ type AlertGroupRuleStore interface {
 	ConditionsByRule(ctx context.Context, ruleID string) ([]AlertRuleCondition, error)
 	SetConditions(ctx context.Context, ruleID string, conditions []AlertRuleCondition) error
 }
-

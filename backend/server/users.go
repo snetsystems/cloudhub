@@ -24,24 +24,24 @@ var (
 )
 
 type userRequest struct {
-	ID                    uint64          `json:"id,string"`
-	Name                  string          `json:"name"`
-	Provider              string          `json:"provider"`
-	Scheme                string          `json:"scheme"`
-	SuperAdmin            bool            `json:"superAdmin"`
-	Roles                 []cloudhub.Role `json:"roles"`
-	Password              string          `json:"password,omitempty"`
-	Email                 string          `json:"email,omitempty"`
+	ID         uint64          `json:"id,string"`
+	Name       string          `json:"name"`
+	Provider   string          `json:"provider"`
+	Scheme     string          `json:"scheme"`
+	SuperAdmin bool            `json:"superAdmin"`
+	Roles      []cloudhub.Role `json:"roles"`
+	Password   string          `json:"password,omitempty"`
+	Email      string          `json:"email,omitempty"`
 }
 
 type userPwdResetRequest struct {
-	Name                  string          `json:"name"`
-	Password              string          `json:"password"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 type userLockedRequest struct {
-	Name                  string          `json:"name"`
-	Locked                bool            `json:"locked"`
+	Name   string `json:"name"`
+	Locked bool   `json:"locked"`
 }
 
 func (r *userRequest) ValidCreate() error {
@@ -93,7 +93,7 @@ func (r *userRequest) ValidUpdate() error {
 		return r.ValidRoles()
 	}
 	return nil
-	
+
 }
 
 func (r *userRequest) ValidRoles() error {
@@ -119,20 +119,20 @@ func (r *userRequest) ValidRoles() error {
 }
 
 type userResponse struct {
-	Links      selfLinks       `json:"links"`
-	ID         uint64          `json:"id,string"`
-	Name       string          `json:"name"`
-	Provider   string          `json:"provider"`
-	Scheme     string          `json:"scheme"`
-	SuperAdmin bool            `json:"superAdmin"`
-	Roles      []cloudhub.Role `json:"roles"`
-	PasswordUpdateDate string  `json:"passwordUpdateDate,omitempty"`
-	PasswordResetFlag  string  `json:"passwordResetFlag,omitempty"`
-	Email              string  `json:"email,omitempty"`
-	Password           string  `json:"password,omitempty"`
-	RetryCount         int32   `json:"retryCount"`
-	LockedTime         string  `json:"lockedTime"`
-	Locked             bool    `json:"locked"`
+	Links              selfLinks       `json:"links"`
+	ID                 uint64          `json:"id,string"`
+	Name               string          `json:"name"`
+	Provider           string          `json:"provider"`
+	Scheme             string          `json:"scheme"`
+	SuperAdmin         bool            `json:"superAdmin"`
+	Roles              []cloudhub.Role `json:"roles"`
+	PasswordUpdateDate string          `json:"passwordUpdateDate,omitempty"`
+	PasswordResetFlag  string          `json:"passwordResetFlag,omitempty"`
+	Email              string          `json:"email,omitempty"`
+	Password           string          `json:"password,omitempty"`
+	RetryCount         int32           `json:"retryCount"`
+	LockedTime         string          `json:"lockedTime"`
+	Locked             bool            `json:"locked"`
 }
 
 func newUserResponse(u *cloudhub.User, org string, password string) *userResponse {
@@ -148,7 +148,7 @@ func newUserResponse(u *cloudhub.User, org string, password string) *userRespons
 	} else {
 		selfLink = fmt.Sprintf("/cloudhub/v1/users/%d", u.ID)
 	}
-	
+
 	resData := &userResponse{
 		Links:              selfLinks{Self: selfLink},
 		ID:                 u.ID,
@@ -261,7 +261,7 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 	if cfg.Auth.SuperAdminNewUsers {
 		req.SuperAdmin = true
 	}
-	
+
 	var resetPassword string
 	if req.Provider == "cloudhub" && (hasAuthorizedRole(user, roles.AdminRoleName) || hasSuperAdminContext(ctx)) {
 		resetPassword = randResetPassword()
@@ -329,7 +329,7 @@ func (s *Service) OrganizationNewUser(w http.ResponseWriter, r *http.Request) {
 	if cfg.Auth.SuperAdminNewUsers {
 		req.SuperAdmin = true
 	}
-	
+
 	var resetPassword string
 	if req.Provider == "cloudhub" && (hasAuthorizedRole(user, roles.AdminRoleName) || hasSuperAdminContext(ctx)) {
 		resetPassword = randResetPassword()
@@ -351,13 +351,13 @@ func (s *Service) OrganizationNewUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID := httprouter.GetParamFromContext(ctx, "oid")	
+	orgID := httprouter.GetParamFromContext(ctx, "oid")
 
 	// log registrationte
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
 	msg := fmt.Sprintf(MsgOrganizationUserCreated.String(), user.Name, org.Name)
 	s.logRegistration(ctx, "Organizations Users", msg)
-	
+
 	cu := newUserResponse(res, orgID, resetPassword)
 	location(w, cu.Links.Self)
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
@@ -418,21 +418,21 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := &cloudhub.User{
-		Name:     req.Name,
-		Provider: req.Provider,
-		Scheme:   req.Scheme,
-		Roles:    roles,
-		Passwd:   hashPassword,
-		PasswordResetFlag: pwdResetFlag,
+		Name:               req.Name,
+		Provider:           req.Provider,
+		Scheme:             req.Scheme,
+		Roles:              roles,
+		Passwd:             hashPassword,
+		PasswordResetFlag:  pwdResetFlag,
 		PasswordUpdateDate: pwdUpdateDate,
-		Email:    req.Email,
-		SuperAdmin: s.newUsersAreSuperAdmin(),
+		Email:              req.Email,
+		SuperAdmin:         s.newUsersAreSuperAdmin(),
 	}
 
 	if !user.SuperAdmin {
 		user.SuperAdmin = req.SuperAdmin
 	}
-	
+
 	ctx = context.WithValue(ctx, organizations.ContextKey, req.Roles[0].Organization)
 
 	res, err := s.Store.Users(serverCtx).Add(serverCtx, user)
@@ -485,8 +485,8 @@ func (s *Service) UserPassword(w http.ResponseWriter, r *http.Request) {
 	user.PasswordResetFlag = "N"
 	user.RetryCount = 0
 	user.Locked = false
-	user.LockedTime = ""	
-	
+	user.LockedTime = ""
+
 	if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
@@ -545,12 +545,12 @@ func (s *Service) OrganizationRemoveUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	orgID := httprouter.GetParamFromContext(ctx, "oid")	
+	orgID := httprouter.GetParamFromContext(ctx, "oid")
 
-	// log registrationte	
+	// log registrationte
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
 	msg := fmt.Sprintf(MsgOrganizationUserDeleted.String(), user.Name, org.Name)
-	s.logRegistration(ctx, "Organizations Users", msg)	
+	s.logRegistration(ctx, "Organizations Users", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -612,6 +612,8 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	oldEmail := u.Email
+
 	// provider = cloudhub
 	u.Email = req.Email
 	if req.Password != "" {
@@ -643,6 +645,10 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	err = s.Store.Users(ctx).Update(ctx, u)
 	if err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+	if err := s.syncAlertRecipientMembersForUserEmailChange(ctx, "", u, oldEmail); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
@@ -714,6 +720,8 @@ func (s *Service) OrganizationUpdateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	oldEmail := u.Email
+
 	// provider = cloudhub
 	u.Email = req.Email
 	if req.Password != "" {
@@ -749,8 +757,12 @@ func (s *Service) OrganizationUpdateUser(w http.ResponseWriter, r *http.Request)
 	}
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
+	if err := s.syncAlertRecipientMembersForUserEmailChange(ctx, orgID, u, oldEmail); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 
-	// log registrationte	
+	// log registrationte
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
 	msg := fmt.Sprintf(MsgOrganizationUserModified.String(), u.Name, org.Name)
 	s.logRegistration(ctx, "Organizations Users", msg)
@@ -811,7 +823,7 @@ func (s *Service) LockedUser(w http.ResponseWriter, r *http.Request) {
 		user.LockedTime = ""
 		msg = fmt.Sprintf(MsgUnlocked.String(), user.Name)
 	}
-	
+
 	if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return

@@ -19,12 +19,45 @@ var src = stream
         .where(lambda: {{.HostFilterLambda}}){{end}}
         .groupBy('host')
 
-{{if .RecentEnabled}}// occurrence_count={{.OccurrenceCount}} (recent): require N matching points inside occurrence_window={{.OccurrenceWindow}}
+{{if .DeadmanEnabled}}// deadman: alert when no points arrive for the configured period.
+var trigger = src
+    |deadman(0.0, {{.DeadmanPeriod}})
+        .stateChangesOnly(){{if .Message}}
+        .message('{{.Message}}'){{end}}
+        .id('{{.TaskID}}')
+        .idTag('alertID')
+        .levelTag('level')
+        .messageField('message')
+
+{{if .RecipientsCrit}}
+src
+    |deadman(0.0, {{.DeadmanPeriod}})
+        .stateChangesOnly({{.PauseDuration}})
+        .noRecoveries()
+        .id('{{.TaskID}}-email-crit'){{if .Message}}
+        .message('{{.Message}}'){{end}}
+        .email(){{range .RecipientsCrit}}
+            .to('{{.}}'){{end}}
+{{end}}
+{{if and .NotifyRecovery .RecipientsAll}}
+trigger
+    |where(lambda: "level" == 'OK')
+    |alert()
+        .info(lambda: TRUE)
+        .id('{{.TaskID}}-email-recovery'){{if .Message}}
+        .message('Recovery: {{.Message}}'){{end}}
+        .email(){{range .RecipientsAll}}
+            .to('{{.}}'){{end}}
+{{end}}
+
+{{else}}{{if .RelativeEnabled}}{{.RelativeBlock}}
+
+{{end}}{{if .RecentEnabled}}// occurrence_count={{.OccurrenceCount}} (recent): require N matching points inside occurrence_window={{.OccurrenceWindow}}
 {{.RecentBlock}}
 {{else if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive matching points
-var processed = src
+var processed = {{.SourceVar}}
     |stateCount(lambda: {{.OccurrenceLambda}})
-{{else}}var processed = src
+{{else}}var processed = {{.SourceVar}}
 {{end}}
 // Main trigger — drives the alert-history log via influxDBOut.
 // Uses stateChangesOnly() so we don't flood the log with every input.
@@ -88,6 +121,7 @@ trigger
         .email(){{range .RecipientsAll}}
             .to('{{.}}'){{end}}
 {{end}}
+{{end}}
 
 trigger
     |influxDBOut()
@@ -96,7 +130,7 @@ trigger
         .retentionPolicy(outputRP)
         .measurement(outputMeasurement)
         .tag('alertName', name)
-        .tag('triggerType', 'threshold')
+        .tag('triggerType', '{{.TriggerType}}')
 {{ end }}
 
 {{ define "batch" }}

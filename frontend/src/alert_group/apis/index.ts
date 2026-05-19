@@ -4,17 +4,22 @@ import {
   AlertGroupRule,
   AlertKapacitor,
   DEFAULT_RULE,
-  UserGroup,
-  OrganizationUserListItem,
   AlertGroupTestNotificationRequest,
   AlertGroupTestNotificationResponse,
+  RecipientGroup,
+  RecipientGroupMember,
+  AlertRecipientGroup,
+  AlertRecipientMemberPrefs,
+  UserGroup,
+  UserGroupMember,
+  OrganizationUserListItem,
 } from 'src/alert_group/types'
 
 interface AlertGroupRulesResponse {
   alertGroupRules: AlertGroupRule[]
 }
-interface UserGroupsResponse {
-  userGroups: UserGroup[]
+interface RecipientGroupsResponse {
+  recipientGroups: RecipientGroup[]
 }
 
 const normalizeAlertGroupRule = (
@@ -22,11 +27,27 @@ const normalizeAlertGroupRule = (
 ): AlertGroupRule => ({
   ...DEFAULT_RULE,
   ...(rule || {}),
+  triggerValues:
+    rule?.triggerValues || rule?.values || DEFAULT_RULE.triggerValues,
   conditions: Array.isArray(rule?.conditions)
-    ? rule.conditions
+    ? rule.conditions.map(condition => ({
+        ...condition,
+        value: String(condition.value),
+      }))
     : DEFAULT_RULE.conditions,
   hostnames: Array.isArray(rule?.hostnames) ? rule.hostnames : [],
-  userGroupIds: Array.isArray(rule?.userGroupIds) ? rule.userGroupIds : [],
+  recipientGroupIds: Array.isArray(rule?.recipientGroupIds)
+    ? rule.recipientGroupIds
+    : [],
+})
+
+const toAlertGroupRuleRequest = (rule: AlertGroupRule) => ({
+  ...rule,
+  values: rule.triggerValues,
+  conditions: (rule.conditions || []).map(condition => ({
+    ...condition,
+    value: Number(condition.value),
+  })),
 })
 
 // Alert Group Rules
@@ -55,7 +76,7 @@ export const createAlertGroupRule = async (
   const {data} = await AJAX({
     method: 'POST',
     url: '/cloudhub/v2/alert-group-rules',
-    data: rule,
+    data: toAlertGroupRuleRequest(rule),
   })
   return normalizeAlertGroupRule(data as Partial<AlertGroupRule>)
 }
@@ -67,7 +88,7 @@ export const updateAlertGroupRule = async (
   const {data} = await AJAX({
     method: 'PATCH',
     url: `/cloudhub/v2/alert-group-rules/${id}`,
-    data: rule,
+    data: toAlertGroupRuleRequest(rule),
   })
   return normalizeAlertGroupRule(data as Partial<AlertGroupRule>)
 }
@@ -87,7 +108,7 @@ export const testSavedAlertGroupNotification = async (
   id: string,
   payload: Pick<
     AlertGroupTestNotificationRequest,
-    'title' | 'message' | 'recipients' | 'userGroupIds'
+    'title' | 'message' | 'recipientGroupIds'
   >
 ): Promise<AlertGroupTestNotificationResponse> => {
   const {data} = await AJAX({
@@ -102,6 +123,18 @@ export const deleteAlertGroupRule = async (id: string): Promise<void> => {
   await AJAX({
     method: 'DELETE',
     url: `/cloudhub/v2/alert-group-rules/${id}`,
+  })
+}
+
+// Alert Rule ↔ recipient groups
+export const setAlertRuleRecipientGroups = async (
+  ruleId: string,
+  recipientGroupIds: string[]
+): Promise<void> => {
+  await AJAX({
+    method: 'PUT',
+    url: `/cloudhub/v2/alert-group-rules/${ruleId}/recipient-groups`,
+    data: {recipientGroupIds},
   })
 }
 
@@ -124,48 +157,227 @@ export const getAlertKapacitors = async (): Promise<AlertKapacitor[]> => {
   }))
 }
 
-// User Group CRUD
-export const getUserGroups = async (): Promise<UserGroup[]> => {
+// Recipient Group CRUD (Layer 1 — domain-neutral)
+export const getRecipientGroups = async (): Promise<RecipientGroup[]> => {
   const {data} = await AJAX({
     method: 'GET',
-    url: '/cloudhub/v2/user-groups',
+    url: '/cloudhub/v2/recipient-groups',
   })
-  return (data as UserGroupsResponse).userGroups || []
+  return (data as RecipientGroupsResponse).recipientGroups || []
 }
 
-export const getUserGroup = async (id: string): Promise<UserGroup> => {
+export const getRecipientGroup = async (
+  id: string
+): Promise<RecipientGroup> => {
   const {data} = await AJAX({
     method: 'GET',
-    url: `/cloudhub/v2/user-groups/${id}`,
+    url: `/cloudhub/v2/recipient-groups/${id}`,
   })
-  return data as UserGroup
+  return data as RecipientGroup
 }
 
-export const createUserGroup = async (group: UserGroup): Promise<UserGroup> => {
+export const createRecipientGroup = async (
+  name: string
+): Promise<RecipientGroup> => {
   const {data} = await AJAX({
     method: 'POST',
-    url: '/cloudhub/v2/user-groups',
-    data: group,
+    url: '/cloudhub/v2/recipient-groups',
+    data: {name},
   })
-  return data as UserGroup
+  return data as RecipientGroup
 }
 
-export const updateUserGroup = async (
+export const updateRecipientGroup = async (
   id: string,
-  group: UserGroup
-): Promise<void> => {
-  await AJAX({
+  name: string
+): Promise<RecipientGroup> => {
+  const {data} = await AJAX({
     method: 'PATCH',
-    url: `/cloudhub/v2/user-groups/${id}`,
-    data: group,
+    url: `/cloudhub/v2/recipient-groups/${id}`,
+    data: {name},
   })
+  return data as RecipientGroup
 }
 
-export const deleteUserGroup = async (id: string): Promise<void> => {
+export const deleteRecipientGroup = async (id: string): Promise<void> => {
   await AJAX({
     method: 'DELETE',
-    url: `/cloudhub/v2/user-groups/${id}`,
+    url: `/cloudhub/v2/recipient-groups/${id}`,
   })
+}
+
+// Recipient Group Members
+export const addRecipientGroupMember = async (
+  groupId: string,
+  member: Pick<
+    RecipientGroupMember,
+    'userId' | 'userName' | 'email' | 'phoneNumber'
+  >
+): Promise<RecipientGroupMember> => {
+  const {data} = await AJAX({
+    method: 'POST',
+    url: `/cloudhub/v2/recipient-groups/${groupId}/members`,
+    data: member,
+  })
+  return data as RecipientGroupMember
+}
+
+export const updateRecipientGroupMember = async (
+  groupId: string,
+  memberId: string,
+  patch: Partial<
+    Pick<RecipientGroupMember, 'userName' | 'email' | 'phoneNumber'>
+  >
+): Promise<RecipientGroupMember> => {
+  const {data} = await AJAX({
+    method: 'PATCH',
+    url: `/cloudhub/v2/recipient-groups/${groupId}/members/${memberId}`,
+    data: patch,
+  })
+  return data as RecipientGroupMember
+}
+
+export const deleteRecipientGroupMember = async (
+  groupId: string,
+  memberId: string
+): Promise<void> => {
+  await AJAX({
+    method: 'DELETE',
+    url: `/cloudhub/v2/recipient-groups/${groupId}/members/${memberId}`,
+  })
+}
+
+// Alert Recipient Group policy (Layer 2 — alert-domain suppression)
+export const getAlertRecipientGroupPolicy = async (
+  groupId: string
+): Promise<AlertRecipientGroup> => {
+  const {data} = await AJAX({
+    method: 'GET',
+    url: `/cloudhub/v2/recipient-groups/${groupId}/alert-policy`,
+  })
+  return data as AlertRecipientGroup
+}
+
+export const upsertAlertRecipientGroupPolicy = async (
+  groupId: string,
+  policy: Omit<
+    AlertRecipientGroup,
+    'recipientGroupId' | 'createdAt' | 'updatedAt'
+  >
+): Promise<AlertRecipientGroup> => {
+  const {data} = await AJAX({
+    method: 'PUT',
+    url: `/cloudhub/v2/recipient-groups/${groupId}/alert-policy`,
+    data: policy,
+  })
+  return data as AlertRecipientGroup
+}
+
+export const deleteAlertRecipientGroupPolicy = async (
+  groupId: string
+): Promise<void> => {
+  await AJAX({
+    method: 'DELETE',
+    url: `/cloudhub/v2/recipient-groups/${groupId}/alert-policy`,
+  })
+}
+
+// Member alert prefs (channel / level / window)
+interface AlertRecipientMemberPrefsListResponse {
+  alertRecipientMemberPrefs: AlertRecipientMemberPrefs[]
+}
+
+// Bulk fetch — returns prefs for every member of the group in one round-trip,
+// avoiding N+1 calls when rendering per-member channel toggles.
+export const getAlertRecipientMemberPrefsByGroup = async (
+  groupId: string
+): Promise<AlertRecipientMemberPrefs[]> => {
+  const {data} = await AJAX({
+    method: 'GET',
+    url: `/cloudhub/v2/recipient-groups/${groupId}/alert-prefs`,
+  })
+  return (
+    (data as AlertRecipientMemberPrefsListResponse).alertRecipientMemberPrefs ||
+    []
+  )
+}
+
+// Bulk upsert — applies a batch of member prefs in one transaction.
+// Members not present in `prefs` keep their existing prefs (partial save UX).
+// Each entry's recipientGroupMemberId must belong to `groupId` — the server
+// rejects cross-group ids with 400.
+export const upsertAlertRecipientMemberPrefsByGroup = async (
+  groupId: string,
+  prefs: AlertRecipientMemberPrefs[]
+): Promise<AlertRecipientMemberPrefs[]> => {
+  const {data} = await AJAX({
+    method: 'PUT',
+    url: `/cloudhub/v2/recipient-groups/${groupId}/alert-prefs`,
+    data: {alertRecipientMemberPrefs: prefs},
+  })
+  return (
+    (data as AlertRecipientMemberPrefsListResponse).alertRecipientMemberPrefs ||
+    []
+  )
+}
+
+export const getAlertRecipientMemberPrefs = async (
+  memberId: string
+): Promise<AlertRecipientMemberPrefs> => {
+  const {data} = await AJAX({
+    method: 'GET',
+    url: `/cloudhub/v2/recipient-group-members/${memberId}/alert-prefs`,
+  })
+  return data as AlertRecipientMemberPrefs
+}
+
+export const upsertAlertRecipientMemberPrefs = async (
+  memberId: string,
+  prefs: Omit<AlertRecipientMemberPrefs, 'recipientGroupMemberId'>
+): Promise<AlertRecipientMemberPrefs> => {
+  const {data} = await AJAX({
+    method: 'PUT',
+    url: `/cloudhub/v2/recipient-group-members/${memberId}/alert-prefs`,
+    data: prefs,
+  })
+  return data as AlertRecipientMemberPrefs
+}
+
+// Legacy UserGroup-shaped adapter — bridges Recipient Group API to
+// existing UI (BasicSection / UserGroupMemberSettings) until those
+// components are rewritten against the new contracts.
+// Per-member email/sms prefs default to {emailEnabled:false, emailLevel:'all'};
+// real prefs live in AlertRecipientMemberPrefs (load per memberId on demand).
+const adaptRecipientMemberToUserGroupMember = (
+  m: RecipientGroupMember
+): UserGroupMember => ({
+  userId: m.userId,
+  userName: m.userName,
+  email: m.email,
+  emailEnabled: false,
+  emailLevel: 'all',
+  sms: m.phoneNumber || undefined,
+  smsEnabled: false,
+  smsLevel: 'all',
+})
+
+const adaptRecipientGroupToUserGroup = (g: RecipientGroup): UserGroup => ({
+  id: g.id,
+  orgId: g.orgId,
+  name: g.name,
+  alertNodes: {},
+  members: (g.members || []).map(adaptRecipientMemberToUserGroupMember),
+  notifyDays: '',
+  notifyStartHm: '',
+  notifyEndHm: '',
+  receiveLevel: 'all',
+  createdAt: g.createdAt,
+  updatedAt: g.updatedAt,
+})
+
+export const getUserGroups = async (): Promise<UserGroup[]> => {
+  const groups = await getRecipientGroups()
+  return groups.map(adaptRecipientGroupToUserGroup)
 }
 
 // Alert Rule ↔ hosts

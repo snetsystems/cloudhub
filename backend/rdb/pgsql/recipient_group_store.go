@@ -124,6 +124,36 @@ func (s *RecipientGroupStore) Members(ctx context.Context, groupID string) ([]cl
 	return out, rows.Err()
 }
 
+func (s *RecipientGroupStore) MembersByUserID(ctx context.Context, orgID, userID string) ([]cloudhub.RecipientGroupMember, error) {
+	const cols = `m.id, m.recipient_group_id, m.user_id, m.user_name, m.email, m.phone_number, m.delete_yn, m.created_at, m.updated_at`
+	q := `SELECT ` + cols + `
+		FROM recipient_group_members m
+		JOIN recipient_groups g ON g.id = m.recipient_group_id
+		WHERE m.user_id = $1 AND m.delete_yn = false AND g.delete_yn = false`
+	args := []any{userID}
+	if orgID != "" {
+		q += ` AND g.org_id = $2`
+		args = append(args, orgID)
+	}
+	q += ` ORDER BY m.created_at`
+
+	rows, err := s.client.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("recipient_group.MembersByUserID: %w", err)
+	}
+	defer rows.Close()
+
+	var out []cloudhub.RecipientGroupMember
+	for rows.Next() {
+		m, err := scanMember(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
 func (s *RecipientGroupStore) AddMember(ctx context.Context, m cloudhub.RecipientGroupMember) (cloudhub.RecipientGroupMember, error) {
 	const q = `INSERT INTO recipient_group_members (recipient_group_id, user_id, user_name, email, phone_number) VALUES ($1,$2,$3,$4,$5) RETURNING id, created_at, updated_at`
 	var ca, ua time.Time

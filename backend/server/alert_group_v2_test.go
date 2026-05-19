@@ -177,15 +177,16 @@ func (f *fakeAlertKapacitorMappingStore) Delete(ctx context.Context, sourceID, l
 }
 
 type fakeRecipientGroupStore struct {
-	allFunc          func(context.Context, string) ([]cloudhub.RecipientGroup, error)
-	getFunc          func(context.Context, string) (cloudhub.RecipientGroup, error)
-	addFunc          func(context.Context, cloudhub.RecipientGroup) (cloudhub.RecipientGroup, error)
-	updateFunc       func(context.Context, cloudhub.RecipientGroup) error
-	deleteFunc       func(context.Context, string) error
-	addMemberFunc    func(context.Context, cloudhub.RecipientGroupMember) (cloudhub.RecipientGroupMember, error)
-	updateMemberFunc func(context.Context, cloudhub.RecipientGroupMember) error
-	deleteMemberFunc func(context.Context, string) error
-	membersFunc      func(context.Context, string) ([]cloudhub.RecipientGroupMember, error)
+	allFunc             func(context.Context, string) ([]cloudhub.RecipientGroup, error)
+	getFunc             func(context.Context, string) (cloudhub.RecipientGroup, error)
+	addFunc             func(context.Context, cloudhub.RecipientGroup) (cloudhub.RecipientGroup, error)
+	updateFunc          func(context.Context, cloudhub.RecipientGroup) error
+	deleteFunc          func(context.Context, string) error
+	addMemberFunc       func(context.Context, cloudhub.RecipientGroupMember) (cloudhub.RecipientGroupMember, error)
+	updateMemberFunc    func(context.Context, cloudhub.RecipientGroupMember) error
+	deleteMemberFunc    func(context.Context, string) error
+	membersFunc         func(context.Context, string) ([]cloudhub.RecipientGroupMember, error)
+	membersByUserIDFunc func(context.Context, string, string) ([]cloudhub.RecipientGroupMember, error)
 }
 
 func (f *fakeRecipientGroupStore) All(ctx context.Context, orgID string) ([]cloudhub.RecipientGroup, error) {
@@ -251,13 +252,21 @@ func (f *fakeRecipientGroupStore) Members(ctx context.Context, groupID string) (
 	return nil, nil
 }
 
+func (f *fakeRecipientGroupStore) MembersByUserID(ctx context.Context, orgID, userID string) ([]cloudhub.RecipientGroupMember, error) {
+	if f.membersByUserIDFunc != nil {
+		return f.membersByUserIDFunc(ctx, orgID, userID)
+	}
+	return nil, nil
+}
+
 // fakeAlertRecipientMemberPrefsStore returns EmailEnabled+EmailLevel=all by default
 // for any member, simulating the new prefs-based recipient resolution.
 type fakeAlertRecipientMemberPrefsStore struct {
-	getFunc     func(context.Context, string) (cloudhub.AlertRecipientMemberPrefs, error)
-	upsertFunc  func(context.Context, cloudhub.AlertRecipientMemberPrefs) error
-	deleteFunc  func(context.Context, string) error
-	byGroupFunc func(context.Context, string) ([]cloudhub.AlertRecipientMemberPrefs, error)
+	getFunc        func(context.Context, string) (cloudhub.AlertRecipientMemberPrefs, error)
+	upsertFunc     func(context.Context, cloudhub.AlertRecipientMemberPrefs) error
+	upsertBulkFunc func(context.Context, []cloudhub.AlertRecipientMemberPrefs) error
+	deleteFunc     func(context.Context, string) error
+	byGroupFunc    func(context.Context, string) ([]cloudhub.AlertRecipientMemberPrefs, error)
 }
 
 func (f *fakeAlertRecipientMemberPrefsStore) Get(ctx context.Context, memberID string) (cloudhub.AlertRecipientMemberPrefs, error) {
@@ -274,6 +283,13 @@ func (f *fakeAlertRecipientMemberPrefsStore) Get(ctx context.Context, memberID s
 func (f *fakeAlertRecipientMemberPrefsStore) Upsert(ctx context.Context, p cloudhub.AlertRecipientMemberPrefs) error {
 	if f.upsertFunc != nil {
 		return f.upsertFunc(ctx, p)
+	}
+	return nil
+}
+
+func (f *fakeAlertRecipientMemberPrefsStore) UpsertBulk(ctx context.Context, prefs []cloudhub.AlertRecipientMemberPrefs) error {
+	if f.upsertBulkFunc != nil {
+		return f.upsertBulkFunc(ctx, prefs)
 	}
 	return nil
 }
@@ -549,6 +565,64 @@ func TestAlertGroupRuleCreateRejectsDeadmanWithBatchTaskType(t *testing.T) {
 	}
 	if addCalled {
 		t.Fatal("expected alert group rule store Add not to be called for deadman with batch task type")
+	}
+}
+
+func TestAlertGroupRuleCreateAcceptsUIRelativePayload(t *testing.T) {
+	logger := &mocks.TestLogger{}
+
+	var added cloudhub.AlertGroupRule
+	var setHosts []string
+	var setRecipientGroups []string
+	var setConditions []cloudhub.AlertRuleCondition
+
+	svc := &Service{
+		Logger: logger,
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			addFunc: func(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
+				added = r
+				r.ID = "rule-1"
+				return r, nil
+			},
+			setHostsFunc: func(ctx context.Context, ruleID string, hostnames []string) error {
+				setHosts = append([]string(nil), hostnames...)
+				return nil
+			},
+			setRecipientGroupsFunc: func(ctx context.Context, ruleID string, recipientGroupIDs []string) error {
+				setRecipientGroups = append([]string(nil), recipientGroupIDs...)
+				return nil
+			},
+			setConditionsFunc: func(ctx context.Context, ruleID string, conditions []cloudhub.AlertRuleCondition) error {
+				setConditions = append([]cloudhub.AlertRuleCondition(nil), conditions...)
+				return nil
+			},
+		},
+	}
+
+	payload := bytes.NewBufferString(`{"name":"relative cpu","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":15,"enabled":true}],"trigger":"relative","values":{"change":"change","shift":"1m","operator":"greater than"},"triggerOperator":"greater","taskType":"stream","every":"30s","occurrenceType":"recent","occurrenceCount":2,"occurrenceWindow":"5m","pauseSeconds":60,"notifyRecovery":true,"active":true,"hostnames":["web-1"],"recipientGroupIds":["rg-1"]}`)
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
+	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
+	rr := httptest.NewRecorder()
+
+	svc.AlertGroupRuleCreate(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	if added.Trigger != cloudhub.AlertGroupRuleTriggerRelative {
+		t.Fatalf("trigger = %q, want %q", added.Trigger, cloudhub.AlertGroupRuleTriggerRelative)
+	}
+	if added.TriggerValues.Shift != "1m" || added.TriggerValues.Operator != "greater than" {
+		t.Fatalf("unexpected trigger values: %+v", added.TriggerValues)
+	}
+	if len(setConditions) != 1 || setConditions[0].Value != 15 {
+		t.Fatalf("unexpected conditions: %+v", setConditions)
+	}
+	if len(setHosts) != 1 || setHosts[0] != "web-1" {
+		t.Fatalf("unexpected hosts: %+v", setHosts)
+	}
+	if len(setRecipientGroups) != 1 || setRecipientGroups[0] != "rg-1" {
+		t.Fatalf("unexpected recipient groups: %+v", setRecipientGroups)
 	}
 }
 

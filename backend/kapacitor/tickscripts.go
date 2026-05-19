@@ -69,6 +69,12 @@ type alertGroupTickParams struct {
 	EmailCrit         string
 	PauseDuration     string // "" = no reminder; otherwise like "10s" — argument to stateChangesOnly()
 	NotifyRecovery    bool   // true => emit a recovery email when level returns to OK
+	TriggerType       string
+	SourceVar         string
+	RelativeEnabled   bool
+	RelativeBlock     string
+	DeadmanEnabled    bool
+	DeadmanPeriod     string
 	OccurrenceEnabled bool   // true when OccurrenceCount > 1 (apply stateCount wrap)
 	RecentEnabled     bool   // true when OccurrenceType asks for windowed recent counts
 	OccurrenceCount   int    // N consecutive points required to trigger
@@ -96,12 +102,23 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		return "", fmt.Errorf("AlertGroupRuleTICKScript: rule ID required")
 	}
 
+	triggerType := strings.TrimSpace(strings.ToLower(rule.Trigger))
+	if triggerType == "" {
+		triggerType = cloudhub.AlertGroupRuleTriggerThreshold
+	}
+	sourceVar := "src"
 	var info, warn, crit string
 	for _, c := range rule.Conditions {
 		if !c.Enabled {
 			continue
 		}
-		expr := buildThresholdExpr(rule.Field, rule.TriggerOperator, c.Value)
+		field := rule.Field
+		operator := rule.TriggerOperator
+		if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
+			field = "relative_value"
+			operator = relativeTriggerOperator(rule.TriggerValues.Operator)
+		}
+		expr := buildThresholdExpr(field, operator, c.Value)
 		switch c.Level {
 		case "info":
 			info = expr
@@ -116,9 +133,22 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	if taskType == "" {
 		taskType = "stream"
 	}
+	if triggerType == cloudhub.AlertGroupRuleTriggerDeadman && taskType != "stream" {
+		return "", fmt.Errorf("AlertGroupRuleTICKScript: deadman trigger requires stream task")
+	}
+	if triggerType == cloudhub.AlertGroupRuleTriggerRelative && taskType != "stream" {
+		return "", fmt.Errorf("AlertGroupRuleTICKScript: relative trigger currently requires stream task")
+	}
 
 	hostLambda, hostSQL := buildHostFilters(hostnames)
 	occLambda := buildOccurrenceLambda(rule)
+	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
+		occRule := rule
+		occRule.Field = "relative_value"
+		occRule.TriggerOperator = relativeTriggerOperator(rule.TriggerValues.Operator)
+		occLambda = buildOccurrenceLambda(occRule)
+		sourceVar = "relative_src"
+	}
 	occEnabled := rule.OccurrenceCount > 1 && occLambda != ""
 	recentEnabled := occEnabled && isRecentOccurrence(rule.OccurrenceType)
 	consecutiveEnabled := occEnabled && !recentEnabled
@@ -126,10 +156,16 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	// Email branches must use level-exclusive lambdas so a CRIT-matching value
 	// does not also dispatch the WARN email (and similarly for INFO).
 	emailInfo, emailWarn, emailCrit := buildExclusiveLambdas(rule)
+	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
+		emailRule := rule
+		emailRule.Field = "relative_value"
+		emailRule.TriggerOperator = relativeTriggerOperator(rule.TriggerValues.Operator)
+		emailInfo, emailWarn, emailCrit = buildExclusiveLambdas(emailRule)
+	}
 
 	recent := recentOccurrenceParams{}
 	if recentEnabled {
-		recent = buildRecentOccurrenceParams(rule, info, warn, crit, emailInfo, emailWarn, emailCrit)
+		recent = buildRecentOccurrenceParams(rule, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit)
 		info, warn, crit = recent.infoCountLambda, recent.warnCountLambda, recent.critCountLambda
 		emailInfo, emailWarn, emailCrit = recent.emailInfoCountLambda, recent.emailWarnCountLambda, recent.emailCritCountLambda
 	} else if consecutiveEnabled {
@@ -155,6 +191,12 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		EmailCrit:         emailCrit,
 		PauseDuration:     formatPauseDuration(rule.PauseSeconds),
 		NotifyRecovery:    rule.NotifyRecovery,
+		TriggerType:       triggerType,
+		SourceVar:         sourceVar,
+		RelativeEnabled:   triggerType == cloudhub.AlertGroupRuleTriggerRelative,
+		RelativeBlock:     buildRelativeBlock(rule),
+		DeadmanEnabled:    triggerType == cloudhub.AlertGroupRuleTriggerDeadman,
+		DeadmanPeriod:     deadmanPeriod(rule.TriggerValues.Period),
 		OccurrenceEnabled: consecutiveEnabled,
 		RecentEnabled:     recentEnabled,
 		OccurrenceCount:   rule.OccurrenceCount,
@@ -219,7 +261,7 @@ type recentCountSpec struct {
 	countField string
 }
 
-func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, info, warn, crit, emailInfo, emailWarn, emailCrit string) recentOccurrenceParams {
+func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit string) recentOccurrenceParams {
 	var specs []recentCountSpec
 	add := func(expr, name, countField string) string {
 		if expr == "" {
@@ -236,13 +278,13 @@ func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, info, warn, crit,
 	p.emailInfoCountLambda = add(emailInfo, "email_info", "email_info_count")
 	p.emailWarnCountLambda = add(emailWarn, "email_warn", "email_warn_count")
 	p.emailCritCountLambda = add(emailCrit, "email_crit", "email_crit_count")
-	p.block = buildRecentOccurrenceBlock(rule, specs)
+	p.block = buildRecentOccurrenceBlock(rule, sourceVar, specs)
 	return p
 }
 
-func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, specs []recentCountSpec) string {
+func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, sourceVar string, specs []recentCountSpec) string {
 	if len(specs) == 0 {
-		return "var processed = src"
+		return "var processed = " + sourceVar
 	}
 	window := occurrenceWindow(rule.OccurrenceWindow)
 	every := strings.TrimSpace(rule.Every)
@@ -252,7 +294,7 @@ func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, specs []recentCoun
 
 	var b strings.Builder
 	for _, s := range specs {
-		fmt.Fprintf(&b, `var recent_%s = src
+		fmt.Fprintf(&b, `var recent_%s = %s
     |eval(lambda: if(%s, 1, 0))
         .as('%s_hit')
     |window()
@@ -262,7 +304,7 @@ func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, specs []recentCoun
     |sum('%s_hit')
         .as('%s')
 
-`, s.name, s.expr, s.name, window, every, s.name, s.countField)
+`, s.name, sourceVar, s.expr, s.name, window, every, s.name, s.countField)
 	}
 	if len(specs) == 1 {
 		fmt.Fprintf(&b, "var processed = recent_%s", specs[0].name)
@@ -317,6 +359,57 @@ func occurrenceWindow(w string) string {
 		return "5m"
 	}
 	return w
+}
+
+func deadmanPeriod(p string) string {
+	p = strings.TrimSpace(p)
+	if p == "" {
+		return "10m"
+	}
+	return p
+}
+
+func relativeTriggerOperator(operator string) string {
+	switch strings.TrimSpace(operator) {
+	case lessThan:
+		return "less"
+	case lessThanEqual:
+		return "less_equal"
+	case greaterThanEqual:
+		return "greater_equal"
+	case equal:
+		return "equal"
+	case notEqual:
+		return "not_equal"
+	default:
+		return "greater"
+	}
+}
+
+func buildRelativeBlock(rule cloudhub.AlertGroupRule) string {
+	shift := strings.TrimSpace(rule.TriggerValues.Shift)
+	if shift == "" {
+		shift = "1m"
+	}
+	var expr string
+	switch strings.TrimSpace(rule.TriggerValues.Change) {
+	case ChangePercent:
+		expr = fmt.Sprintf(`abs(float("current.%s" - "past.%s"))/float("past.%s") * 100.0`, rule.Field, rule.Field, rule.Field)
+	default:
+		expr = fmt.Sprintf(`float("current.%s" - "past.%s")`, rule.Field, rule.Field)
+	}
+	return fmt.Sprintf(`var past = src
+    |shift(%s)
+
+var current = src
+
+var relative_src = past
+    |join(current)
+        .as('past', 'current')
+        .tolerance(2s)
+    |eval(lambda: %s)
+        .keep()
+        .as('relative_value')`, shift, expr)
 }
 
 // buildHostFilters returns the host filter expressions for stream (TICKscript

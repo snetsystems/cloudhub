@@ -340,7 +340,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       testMessage: rule.message || '',
       testRecipients: '',
       testIncludeSelf: true,
-      testUserGroupIds: [...(rule.userGroupIds || [])],
+      testUserGroupIds: [...(rule.recipientGroupIds || [])],
     })
   }
 
@@ -422,14 +422,17 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     this.setState({isTestingSend: true})
 
     try {
-      // Modal lets the user pick user_groups + recipients explicitly, so the draft
+      // Modal lets the user pick recipient_groups + recipients explicitly, so the draft
       // endpoint covers both new and saved rules — no need for the by-id path.
+      // NOTE: backend test-notification no longer accepts free-form `recipients[]`;
+      // manual entries from `testRecipients` are only used FE-side for the empty-check
+      // (kept here so the UX warning still triggers) and ignored at the request boundary.
+      void recipients
       const result = await testDraftAlertGroupNotification({
         kapacitorId: rule.kapacitorId,
-        userGroupIds: testUserGroupIds,
+        recipientGroupIds: testUserGroupIds,
         title: testTitle,
         message: testMessage,
-        recipients,
       })
 
       notify(

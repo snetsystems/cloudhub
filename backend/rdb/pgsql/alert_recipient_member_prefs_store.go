@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/rdb"
 )
 
 var _ cloudhub.AlertRecipientMemberPrefsStore = (*AlertRecipientMemberPrefsStore)(nil)
@@ -60,6 +61,42 @@ func (s *AlertRecipientMemberPrefsStore) Upsert(ctx context.Context, p cloudhub.
 		return fmt.Errorf("alert_recipient_member_prefs.Upsert: %w", err)
 	}
 	return nil
+}
+
+// UpsertBulk applies each prefs row inside a single transaction.
+// Members not present in the input list keep their existing prefs — this is
+// intentional for the "save only what was toggled" UX. Per-row failures roll
+// back the whole batch.
+func (s *AlertRecipientMemberPrefsStore) UpsertBulk(ctx context.Context, prefs []cloudhub.AlertRecipientMemberPrefs) error {
+	if len(prefs) == 0 {
+		return nil
+	}
+	const q = `INSERT INTO alert_recipient_member_prefs
+		(recipient_group_member_id, email_enabled, email_level, sms_enabled, sms_level, notify_weekdays, notify_start_hm, notify_end_hm, escalation_seconds)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+		ON CONFLICT (recipient_group_member_id) DO UPDATE SET
+			email_enabled = EXCLUDED.email_enabled,
+			email_level = EXCLUDED.email_level,
+			sms_enabled = EXCLUDED.sms_enabled,
+			sms_level = EXCLUDED.sms_level,
+			notify_weekdays = EXCLUDED.notify_weekdays,
+			notify_start_hm = EXCLUDED.notify_start_hm,
+			notify_end_hm = EXCLUDED.notify_end_hm,
+			escalation_seconds = EXCLUDED.escalation_seconds`
+	return s.client.WithTx(ctx, func(ctx context.Context, tx rdb.Store) error {
+		for _, p := range prefs {
+			if _, err := tx.ExecContext(ctx, q,
+				p.RecipientGroupMemberID,
+				p.EmailEnabled, p.EmailLevel,
+				p.SMSEnabled, p.SMSLevel,
+				p.NotifyWeekdays, p.NotifyStartHM, p.NotifyEndHM,
+				p.EscalationSeconds,
+			); err != nil {
+				return fmt.Errorf("alert_recipient_member_prefs.UpsertBulk: %w", err)
+			}
+		}
+		return nil
+	})
 }
 
 func (s *AlertRecipientMemberPrefsStore) Delete(ctx context.Context, memberID string) error {

@@ -100,3 +100,40 @@ func TestRecipientGroupStore_Members(t *testing.T) {
 		t.Fatalf("expected only the re-added member active, got %+v", active)
 	}
 }
+
+func TestRecipientGroupStore_MembersByUserID(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+
+	store := pgsql.NewRecipientGroupStore(client)
+	ctx := context.Background()
+	g1, _ := store.Add(ctx, cloudhub.RecipientGroup{OrgID: "org1", Name: "DevOps"})
+	g2, _ := store.Add(ctx, cloudhub.RecipientGroup{OrgID: "org2", Name: "Ops"})
+
+	if _, err := store.AddMember(ctx, cloudhub.RecipientGroupMember{
+		RecipientGroupID: g1.ID, UserID: "42", UserName: "Alice", Email: "alice-old@example.com",
+	}); err != nil {
+		t.Fatalf("AddMember org1: %v", err)
+	}
+	if _, err := store.AddMember(ctx, cloudhub.RecipientGroupMember{
+		RecipientGroupID: g2.ID, UserID: "42", UserName: "Alice", Email: "alice-other@example.com",
+	}); err != nil {
+		t.Fatalf("AddMember org2: %v", err)
+	}
+
+	org1Members, err := store.MembersByUserID(ctx, "org1", "42")
+	if err != nil {
+		t.Fatalf("MembersByUserID org1: %v", err)
+	}
+	if len(org1Members) != 1 || org1Members[0].RecipientGroupID != g1.ID {
+		t.Fatalf("unexpected org1 members: %+v", org1Members)
+	}
+
+	allMembers, err := store.MembersByUserID(ctx, "", "42")
+	if err != nil {
+		t.Fatalf("MembersByUserID all orgs: %v", err)
+	}
+	if len(allMembers) != 2 {
+		t.Fatalf("expected 2 members across orgs, got %+v", allMembers)
+	}
+}

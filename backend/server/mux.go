@@ -353,6 +353,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v2/recipient-groups/:id/alert-policy", EnsureViewer(service.AlertRecipientGroupGet))
 	router.PUT("/cloudhub/v2/recipient-groups/:id/alert-policy", EnsureEditor(service.AlertRecipientGroupUpsert))
 	router.DELETE("/cloudhub/v2/recipient-groups/:id/alert-policy", EnsureEditor(service.AlertRecipientGroupDelete))
+	router.GET("/cloudhub/v2/recipient-groups/:id/alert-prefs", EnsureViewer(service.AlertRecipientMemberPrefsByGroup))
+	router.PUT("/cloudhub/v2/recipient-groups/:id/alert-prefs", EnsureEditor(service.AlertRecipientMemberPrefsBulkUpsert))
 	router.GET("/cloudhub/v2/recipient-group-members/:memberId/alert-prefs", EnsureViewer(service.AlertRecipientMemberPrefsGet))
 	router.PUT("/cloudhub/v2/recipient-group-members/:memberId/alert-prefs", EnsureEditor(service.AlertRecipientMemberPrefsUpsert))
 

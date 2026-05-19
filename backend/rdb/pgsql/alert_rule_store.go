@@ -2,10 +2,12 @@ package pgsql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/rdb"
 )
@@ -65,6 +67,9 @@ func (s *AlertRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.Aler
 		if r.Conditions, err = s.ConditionsByRule(ctx, r.ID); err != nil {
 			return nil, err
 		}
+		if r.TriggerValues, err = s.TriggerValuesByRule(ctx, r.ID); err != nil {
+			return nil, err
+		}
 		if r.Hostnames, err = s.hostnamesOf(ctx, r.ID); err != nil {
 			return nil, err
 		}
@@ -84,6 +89,9 @@ func (s *AlertRuleStore) Get(ctx context.Context, id string) (cloudhub.AlertGrou
 		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Get: %w", err)
 	}
 	if r.Conditions, err = s.ConditionsByRule(ctx, id); err != nil {
+		return r, err
+	}
+	if r.TriggerValues, err = s.TriggerValuesByRule(ctx, id); err != nil {
 		return r, err
 	}
 	if r.Hostnames, err = s.hostnamesOf(ctx, id); err != nil {
@@ -133,6 +141,11 @@ func (s *AlertRuleStore) Add(ctx context.Context, r cloudhub.AlertGroupRule) (cl
 			return r, err
 		}
 	}
+	if shouldStoreTriggerValues(r) {
+		if err := s.SetTriggerValues(ctx, r.ID, r.TriggerValues); err != nil {
+			return r, err
+		}
+	}
 	return r, nil
 }
 
@@ -152,6 +165,13 @@ func (s *AlertRuleStore) Update(ctx context.Context, r cloudhub.AlertGroupRule) 
 		r.ID,
 	); err != nil {
 		return fmt.Errorf("alert_rule.Update: %w", err)
+	}
+	if shouldStoreTriggerValues(r) {
+		if err := s.SetTriggerValues(ctx, r.ID, r.TriggerValues); err != nil {
+			return err
+		}
+	} else if err := s.DeleteTriggerValues(ctx, r.ID); err != nil {
+		return err
 	}
 	return nil
 }
@@ -186,6 +206,56 @@ func (s *AlertRuleStore) SetHosts(ctx context.Context, ruleID string, hostnames 
 // Returns empty slice when no hosts assigned (= all-hosts mode).
 func (s *AlertRuleStore) Hostnames(ctx context.Context, ruleID string) ([]string, error) {
 	return s.hostnamesOf(ctx, ruleID)
+}
+
+func shouldStoreTriggerValues(r cloudhub.AlertGroupRule) bool {
+	trigger := normalizeAlertRuleTrigger(r.Trigger)
+	v := r.TriggerValues
+	return trigger == cloudhub.AlertGroupRuleTriggerRelative ||
+		trigger == cloudhub.AlertGroupRuleTriggerDeadman ||
+		v.Change != "" || v.Period != "" || v.Shift != "" || v.Operator != "" ||
+		v.Value != "" || v.RangeValue != ""
+}
+
+func (s *AlertRuleStore) TriggerValuesByRule(ctx context.Context, ruleID string) (cloudhub.TriggerValues, error) {
+	row := s.client.QueryRowContext(ctx, `
+		SELECT change, period, shift, operator, value, range_value
+	FROM alert_rule_trigger_values
+	WHERE alert_rule_id = $1`, ruleID)
+	var v cloudhub.TriggerValues
+	if err := row.Scan(&v.Change, &v.Period, &v.Shift, &v.Operator, &v.Value, &v.RangeValue); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return cloudhub.TriggerValues{}, nil
+		}
+		return v, fmt.Errorf("alert_rule.TriggerValuesByRule: %w", err)
+	}
+	return v, nil
+}
+
+func (s *AlertRuleStore) SetTriggerValues(ctx context.Context, ruleID string, v cloudhub.TriggerValues) error {
+	_, err := s.client.ExecContext(ctx, `
+		INSERT INTO alert_rule_trigger_values
+			(alert_rule_id, change, period, shift, operator, value, range_value)
+		VALUES ($1,$2,$3,$4,$5,$6,$7)
+		ON CONFLICT (alert_rule_id) DO UPDATE SET
+			change = EXCLUDED.change,
+			period = EXCLUDED.period,
+			shift = EXCLUDED.shift,
+			operator = EXCLUDED.operator,
+			value = EXCLUDED.value,
+			range_value = EXCLUDED.range_value`,
+		ruleID, v.Change, v.Period, v.Shift, v.Operator, v.Value, v.RangeValue)
+	if err != nil {
+		return fmt.Errorf("alert_rule.SetTriggerValues: %w", err)
+	}
+	return nil
+}
+
+func (s *AlertRuleStore) DeleteTriggerValues(ctx context.Context, ruleID string) error {
+	if _, err := s.client.ExecContext(ctx, `DELETE FROM alert_rule_trigger_values WHERE alert_rule_id = $1`, ruleID); err != nil {
+		return fmt.Errorf("alert_rule.DeleteTriggerValues: %w", err)
+	}
+	return nil
 }
 
 func (s *AlertRuleStore) recipientGroupIDs(ctx context.Context, ruleID string) ([]string, error) {

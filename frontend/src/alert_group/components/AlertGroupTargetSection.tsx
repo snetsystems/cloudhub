@@ -2,17 +2,12 @@
 import React, {PureComponent} from 'react'
 import classnames from 'classnames'
 import {getDeep} from 'src/utils/wrappers'
-import {
-  ComponentColor,
-  ComponentSize,
-  ComponentStatus,
-} from 'src/reusable_ui'
+import {ComponentColor, ComponentSize, ComponentStatus} from 'src/reusable_ui'
 import DropdownButton from 'src/reusable_ui/components/dropdowns/DropdownButton'
 import {ClickOutside} from 'src/shared/components/ClickOutside'
 import {AlertGroupRule, HostCandidate} from 'src/alert_group/types'
 import {proxy} from 'src/utils/queryUrlGenerator'
 import HostSelector from 'src/alert_group/components/HostSelector'
-import AlertGroupRecipientsInput from 'src/alert_group/components/AlertGroupRecipientsInput'
 import {RemoteDataState, Source} from 'src/types'
 
 interface HostTagSeries {
@@ -65,7 +60,11 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
         query: 'show tag values with key = "host"',
         db: source.telegraf,
       })
-      const seriesList = getDeep<HostTagSeries[]>(data, 'results.[0].series', [])
+      const seriesList = getDeep<HostTagSeries[]>(
+        data,
+        'results.[0].series',
+        []
+      )
       const names = new Set<string>()
       seriesList.forEach(s => {
         const valueIdx = s.columns.findIndex(c => c === 'value')
@@ -115,8 +114,8 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
       hostsLoad === RemoteDataState.Loading
         ? ComponentStatus.Loading
         : hostsLoad === RemoteDataState.Error
-          ? ComponentStatus.Error
-          : ComponentStatus.Default
+        ? ComponentStatus.Error
+        : ComponentStatus.Default
 
     return (
       <div className="rule-section">
@@ -137,7 +136,7 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
                         'dropdown dropdown-small dropdown-default',
                         'alert-group-target--dropdown-root'
                       )}
-                      style={{ width: '240px' }}
+                      style={{width: '240px'}}
                     >
                       <DropdownButton
                         active={targetPickerOpen}
@@ -147,12 +146,12 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
                         onClick={this.toggleTargetPicker}
                         title="서버 선택"
                       >
-                        {this.renderTargetTriggerLabel(selectedHostnames.length)}
+                        {this.renderTargetTriggerLabel(
+                          selectedHostnames.length
+                        )}
                       </DropdownButton>
                       {targetPickerOpen && hostsLoad === RemoteDataState.Done && (
-                        <div
-                          className="dropdown--menu-container dropdown--onyx alert-group-target--host-dropdown-menu"
-                        >
+                        <div className="dropdown--menu-container dropdown--onyx alert-group-target--host-dropdown-menu">
                           <div className="alert-group-target--host-dropdown-menu-inner">
                             <HostSelector
                               hosts={hosts}
@@ -167,17 +166,9 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
                 )}
               </div>
               <p className="alert-group-setting-helper">
-                현재 소스로부터 보고 중인 호스트 중 선택한 서버에만 알림이 발생합니다.
+                현재 소스로부터 보고 중인 호스트 중 선택한 서버에만 알림이
+                발생합니다.
               </p>
-            </div>
-          </div>
-
-          <div className="alert-group-setting-row rule-section--border-top">
-            <div className="alert-group-setting-control">
-              <AlertGroupRecipientsInput
-                recipients={rule.recipients || []}
-                onChange={recipients => this.props.onUpdateRule({recipients})}
-              />
             </div>
           </div>
         </div>

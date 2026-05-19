@@ -373,6 +373,62 @@ func TestAlertGroupRuleTICKScriptRecentOccurrenceUsesWindowedCounts(t *testing.T
 	}
 }
 
+func TestAlertGroupRuleTICKScriptRelativeChange(t *testing.T) {
+	r := sampleRule()
+	r.Trigger = "relative"
+	r.TriggerValues = cloudhub.TriggerValues{
+		Shift:    "2m",
+		Change:   "change",
+		Operator: "greater than",
+	}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`var past = src`,
+		`|shift(2m)`,
+		`|join(current)`,
+		`.as('past', 'current')`,
+		`|eval(lambda: float("current.usage_idle" - "past.usage_idle"))`,
+		`.as('relative_value')`,
+		`.crit(lambda: "relative_value" > 70)`,
+		`.tag('triggerType', 'relative')`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("expected relative fragment %q in:\n%s", want, tick)
+		}
+	}
+	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
+		t.Fatalf("relative tickscript should validate: %v\n%s", err, tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptDeadman(t *testing.T) {
+	r := sampleRule()
+	r.Trigger = "deadman"
+	r.TriggerValues = cloudhub.TriggerValues{Period: "3m"}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`|deadman(0.0, 3m)`,
+		`.id('alert-group-rule-1')`,
+		`.id('alert-group-rule-1-email-crit')`,
+		`.tag('triggerType', 'deadman')`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("expected deadman fragment %q in:\n%s", want, tick)
+		}
+	}
+	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
+		t.Fatalf("deadman tickscript should validate: %v\n%s", err, tick)
+	}
+}
+
 func TestAlertGroupRuleTICKScriptExclusiveLambdasForLessOperator(t *testing.T) {
 	r := sampleRule()
 	r.TriggerOperator = "less"

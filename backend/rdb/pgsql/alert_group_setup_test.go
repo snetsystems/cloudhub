@@ -17,6 +17,7 @@ func setupAlertGroupTestDB(t *testing.T) (*pgsql.Client, func()) {
 		_, _ = client.ExecContext(ctx, `TRUNCATE TABLE
 			alert_rule_recipient_groups,
 			alert_rule_hosts,
+			alert_rule_trigger_values,
 			alert_rule_conditions,
 			alert_rules,
 			alert_kapacitor_mappings,

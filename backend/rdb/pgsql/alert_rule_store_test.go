@@ -101,6 +101,50 @@ func TestAlertRuleStore_Update(t *testing.T) {
 	}
 }
 
+func TestAlertRuleStore_TriggerValues(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	ctx := context.Background()
+
+	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
+		OrgID:   "org1",
+		Name:    "relative cpu",
+		Trigger: cloudhub.AlertGroupRuleTriggerRelative,
+		TriggerValues: cloudhub.TriggerValues{
+			Change:   "change",
+			Shift:    "2m",
+			Operator: "greater than",
+		},
+		Active: true,
+	})
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := ruleStore.Get(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.TriggerValues.Change != "change" || got.TriggerValues.Shift != "2m" || got.TriggerValues.Operator != "greater than" {
+		t.Fatalf("TriggerValues not hydrated: %+v", got.TriggerValues)
+	}
+
+	got.Trigger = cloudhub.AlertGroupRuleTriggerDeadman
+	got.TriggerValues = cloudhub.TriggerValues{Period: "3m"}
+	if err := ruleStore.Update(ctx, got); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	got, err = ruleStore.Get(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("Get after update: %v", err)
+	}
+	if got.TriggerValues.Period != "3m" || got.TriggerValues.Shift != "" {
+		t.Fatalf("TriggerValues not replaced on update: %+v", got.TriggerValues)
+	}
+}
+
 func TestAlertRuleStore_SoftDelete(t *testing.T) {
 	client, cleanup := setupAlertGroupTestDB(t)
 	defer cleanup()

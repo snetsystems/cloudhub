@@ -49,10 +49,10 @@ class AlertGroupBasicSectionView extends PureComponent<
 > {
   constructor(props: AlertGroupBasicSectionProps) {
     super(props)
-    const userGroupIds = props.rule.userGroupIds || []
+    const recipientGroupIds = props.rule.recipientGroupIds || []
 
     this.state = {
-      receiveMode: userGroupIds.length > 0 ? 'specific' : 'all',
+      receiveMode: recipientGroupIds.length > 0 ? 'specific' : 'all',
       userGroups: [],
       userGroupsLoad: RemoteDataState.NotStarted,
     }
@@ -95,25 +95,25 @@ class AlertGroupBasicSectionView extends PureComponent<
   private handleReceiveModeChange = (mode: 'all' | 'specific'): void => {
     this.setState({receiveMode: mode})
     if (mode === 'all') {
-      this.props.onUpdateRule({userGroupIds: []})
+      this.props.onUpdateRule({recipientGroupIds: []})
     }
   }
 
   private handleUserGroupDropdownChange = (selectedIDs: string[]): void => {
-    this.props.onUpdateRule({userGroupIds: selectedIDs})
+    this.props.onUpdateRule({recipientGroupIds: selectedIDs})
   }
 
   private getMatchedMembers(): UserGroupMember[] {
     const {rule} = this.props
     const {userGroups, receiveMode} = this.state
-    const userGroupIds = rule.userGroupIds || []
+    const recipientGroupIds = rule.recipientGroupIds || []
 
     let matchedGroups: UserGroup[] = []
 
     if (receiveMode === 'all') {
       matchedGroups = userGroups
     } else {
-      const selected = new Set(userGroupIds)
+      const selected = new Set(recipientGroupIds)
       matchedGroups = userGroups.filter(ug => ug.id && selected.has(ug.id))
     }
 
@@ -258,7 +258,7 @@ class AlertGroupBasicSectionView extends PureComponent<
                     <div className="alert-group-receive-panel-card__control">
                       {userGroups.length > 0 ? (
                         <MultiSelectDropdown
-                          selectedIDs={rule.userGroupIds || []}
+                          selectedIDs={rule.recipientGroupIds || []}
                           onChange={this.handleUserGroupDropdownChange}
                           buttonColor={ComponentColor.Default}
                           buttonSize={ComponentSize.Small}

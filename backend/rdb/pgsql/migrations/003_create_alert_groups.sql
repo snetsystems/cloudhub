@@ -175,6 +175,20 @@ CREATE TABLE IF NOT EXISTS alert_rule_conditions (
 CREATE INDEX IF NOT EXISTS idx_alert_rule_conditions_alert_rule_id
     ON alert_rule_conditions (alert_rule_id);
 
+-- alert_rule_trigger_values: trigger-specific settings for relative/deadman rules
+--   1 rule : 0..1 trigger values row. Threshold rules usually do not need one.
+CREATE TABLE IF NOT EXISTS alert_rule_trigger_values (
+    alert_rule_id UUID NOT NULL REFERENCES alert_rules(id) ON DELETE CASCADE PRIMARY KEY,
+    change        TEXT NOT NULL DEFAULT '',
+    period        TEXT NOT NULL DEFAULT '',
+    shift         TEXT NOT NULL DEFAULT '',
+    operator      TEXT NOT NULL DEFAULT '',
+    value         TEXT NOT NULL DEFAULT '',
+    range_value   TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_alert_rule_trigger_values_alert_rule_id
+    ON alert_rule_trigger_values (alert_rule_id);
+
 -- alert_rule_hosts: 규칙 대상 호스트명 (Influx 보고되는 hostname; hosts FK 없음)
 CREATE TABLE IF NOT EXISTS alert_rule_hosts (
     alert_rule_id UUID NOT NULL REFERENCES alert_rules(id) ON DELETE CASCADE,
@@ -255,6 +269,20 @@ COMMENT ON COLUMN alert_rules.message IS
   'Alert message template, including TICKscript placeholders (e.g. {{ .Level }} {{ index .Tags "host" }}).';
 COMMENT ON COLUMN alert_rules.active IS
   'When false, this rule is not deployed to Kapacitor / not evaluated.';
+COMMENT ON TABLE alert_rule_trigger_values IS
+  'Layer 3: optional 1:1 trigger-specific settings for alert_rules. Relative uses change/shift/operator; deadman uses period.';
+COMMENT ON COLUMN alert_rule_trigger_values.change IS
+  'Relative trigger change type: change | % change.';
+COMMENT ON COLUMN alert_rule_trigger_values.period IS
+  'Deadman period duration before data absence triggers an alert.';
+COMMENT ON COLUMN alert_rule_trigger_values.shift IS
+  'Relative trigger shift duration used to compare current value to past value.';
+COMMENT ON COLUMN alert_rule_trigger_values.operator IS
+  'Relative trigger comparison operator in UI form, e.g. greater than.';
+COMMENT ON COLUMN alert_rule_trigger_values.value IS
+  'Optional trigger-level value retained for compatibility; alert_group level thresholds live in alert_rule_conditions.';
+COMMENT ON COLUMN alert_rule_trigger_values.range_value IS
+  'Optional trigger-level range upper value retained for compatibility.';
 
 -- alert_recipient_member_prefs columns
 COMMENT ON COLUMN alert_recipient_member_prefs.email_enabled IS
@@ -331,6 +359,7 @@ COMMENT ON COLUMN alert_rules.delete_yn               IS 'soft-delete flag; true
 
 DROP TABLE IF EXISTS alert_rule_recipient_groups;
 DROP TABLE IF EXISTS alert_rule_hosts;
+DROP TABLE IF EXISTS alert_rule_trigger_values;
 DROP TABLE IF EXISTS alert_rule_conditions;
 DROP TABLE IF EXISTS alert_rules;
 DROP TABLE IF EXISTS alert_kapacitor_mappings;

@@ -37,11 +37,17 @@ export interface AlertGroupRule {
     value?: string
     period?: string
   }
+  values?: {
+    change?: string
+    shift?: string
+    operator?: string
+    value?: string
+    period?: string
+  }
   active: boolean
   kapacitorId: string
   hostnames: string[]
-  userGroupIds: string[]
-  recipients: string[]
+  recipientGroupIds: string[]
   tickscript?: string
   orgId?: string
   createdAt?: string
@@ -57,16 +63,62 @@ export interface AlertKapacitor {
 
 export interface AlertGroupTestNotificationRequest {
   kapacitorId?: string
-  userGroupIds?: string[]
+  recipientGroupIds?: string[]
   title: string
   message: string
-  recipients?: string[]
 }
 
 export interface AlertGroupTestNotificationResponse {
-  resolvedUserGroups: number
+  resolvedRecipientGroups: number
   resolvedRecipients: string[]
   sentCount: number
+}
+
+// Layer 1 (domain-neutral) recipient grouping. Mirrors backend cloudhub.RecipientGroup.
+export interface RecipientGroup {
+  id: string
+  orgId: string
+  name: string
+  deleteYn?: boolean
+  createdAt?: string
+  updatedAt?: string
+  members?: RecipientGroupMember[]
+}
+
+export interface RecipientGroupMember {
+  id: string
+  recipientGroupId: string
+  userId: string
+  userName: string
+  email: string
+  phoneNumber: string
+  deleteYn?: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+// Layer 2 alert-domain extension keyed by RecipientGroup.id.
+export interface AlertRecipientGroup {
+  recipientGroupId: string
+  suppressionEnabled: boolean
+  suppressionWindowSeconds: number
+  suppressionCount: number
+  suppressionPauseSeconds: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+// Layer 2 alert-domain extension keyed by RecipientGroupMember.id.
+export interface AlertRecipientMemberPrefs {
+  recipientGroupMemberId: string
+  emailEnabled: boolean
+  emailLevel: string
+  smsEnabled: boolean
+  smsLevel: string
+  notifyWeekdays: string
+  notifyStartHm: string
+  notifyEndHm: string
+  escalationSeconds: number
 }
 
 export interface HostCandidate {
@@ -158,8 +210,7 @@ export const DEFAULT_RULE: AlertGroupRule = {
   active: true,
   kapacitorId: '',
   hostnames: [],
-  userGroupIds: [],
-  recipients: [],
+  recipientGroupIds: [],
 }
 
 export interface AlertTemplate {
