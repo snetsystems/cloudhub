@@ -456,3 +456,149 @@ func TestAlertGroupRuleTICKScriptExclusiveLambdasForLessOperator(t *testing.T) {
 		}
 	}
 }
+
+func TestAlertGroupRuleTICKScriptEmitsDerivativeNode(t *testing.T) {
+	r := sampleRule()
+	r.Measurement = "net"
+	r.Field = "bytes_recv"
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "critical", Value: 125000000, Enabled: true},
+	}
+	r.Derivative = &cloudhub.DerivativeConfig{Enabled: true, NonNegative: true, Unit: "1s"}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`|derivative('bytes_recv')`,
+		`.nonNegative()`,
+		`.unit(1s)`,
+		// Threshold lambda still references the field name (derivative keeps the name).
+		`.crit(lambda: "bytes_recv" > 125000000)`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("expected derivative fragment %q in:\n%s", want, tick)
+		}
+	}
+	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
+		t.Fatalf("derivative tickscript should validate: %v\n%s", err, tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptDerivativeOmitsNonNegativeWhenFalse(t *testing.T) {
+	r := sampleRule()
+	r.Derivative = &cloudhub.DerivativeConfig{Enabled: true, NonNegative: false, Unit: "10s"}
+	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{Crit: []string{"a@x.com"}}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if !strings.Contains(tick, `.unit(10s)`) {
+		t.Fatalf("expected .unit(10s) in:\n%s", tick)
+	}
+	if strings.Contains(tick, `.nonNegative()`) {
+		t.Fatalf("did not expect .nonNegative() when NonNegative=false:\n%s", tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptDerivativeIgnoredWhenDisabled(t *testing.T) {
+	r := sampleRule()
+	r.Derivative = &cloudhub.DerivativeConfig{Enabled: false, NonNegative: true, Unit: "1s"}
+	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{Crit: []string{"a@x.com"}}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if strings.Contains(tick, `|derivative(`) {
+		t.Fatalf("did not expect derivative node when disabled:\n%s", tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptEmitsEvalNode(t *testing.T) {
+	r := sampleRule()
+	r.Measurement = "disk"
+	r.Field = "inodes_used"
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "critical", Value: 95, Enabled: true},
+		{Level: "warning", Value: 80, Enabled: true},
+	}
+	r.Eval = &cloudhub.EvalConfig{
+		Expression: `float("inodes_used") / float("inodes_total") * 100.0`,
+		As:         "inodes_used_percent",
+	}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}, Warn: []string{"a@x.com"}}
+
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`|eval(lambda: float("inodes_used") / float("inodes_total") * 100.0)`,
+		`.as('inodes_used_percent')`,
+		`.keep()`,
+		// Threshold lambdas reference the eval alias, not the raw field.
+		`.crit(lambda: "inodes_used_percent" > 95)`,
+		`.warn(lambda: "inodes_used_percent" > 80 AND "inodes_used_percent" <= 95)`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("expected eval fragment %q in:\n%s", want, tick)
+		}
+	}
+	if strings.Contains(tick, `"inodes_used" >`) {
+		t.Fatalf("threshold lambdas should not reference raw inodes_used after eval:\n%s", tick)
+	}
+	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
+		t.Fatalf("eval tickscript should validate: %v\n%s", err, tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptEvalIgnoredWhenIncomplete(t *testing.T) {
+	r := sampleRule()
+	r.Eval = &cloudhub.EvalConfig{Expression: "", As: "foo"} // missing expression
+	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{Crit: []string{"a@x.com"}}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if strings.Contains(tick, `|eval(`) {
+		t.Fatalf("did not expect eval node when expression empty:\n%s", tick)
+	}
+	if !strings.Contains(tick, `"usage_idle" > 70`) {
+		t.Fatalf("expected raw-field threshold when eval inactive:\n%s", tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptEvalBeforeDerivative(t *testing.T) {
+	// When both are active, eval renames the field, derivative reads from the
+	// alias (not the raw field). Threshold lambda continues to reference the
+	// eval alias (derivative keeps the name by default).
+	r := sampleRule()
+	r.Measurement = "disk"
+	r.Field = "inodes_used"
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "critical", Value: 10, Enabled: true},
+	}
+	r.Eval = &cloudhub.EvalConfig{
+		Expression: `float("inodes_used") / float("inodes_total") * 100.0`,
+		As:         "inodes_used_percent",
+	}
+	r.Derivative = &cloudhub.DerivativeConfig{Enabled: true, NonNegative: true, Unit: "1s"}
+
+	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{Crit: []string{"a@x.com"}}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	evalIdx := strings.Index(tick, `|eval(`)
+	derivIdx := strings.Index(tick, `|derivative(`)
+	if evalIdx < 0 || derivIdx < 0 {
+		t.Fatalf("expected both eval and derivative in:\n%s", tick)
+	}
+	if evalIdx > derivIdx {
+		t.Fatalf("eval node should precede derivative node:\nevalIdx=%d derivIdx=%d\n%s", evalIdx, derivIdx, tick)
+	}
+	if !strings.Contains(tick, `|derivative('inodes_used_percent')`) {
+		t.Fatalf("derivative should consume the eval alias:\n%s", tick)
+	}
+	if !strings.Contains(tick, `.crit(lambda: "inodes_used_percent" > 10)`) {
+		t.Fatalf("threshold lambda should reference eval alias:\n%s", tick)
+	}
+}

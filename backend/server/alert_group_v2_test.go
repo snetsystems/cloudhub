@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bouk/httprouter"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	kapackage "github.com/snetsystems/cloudhub/backend/kapacitor"
 	"github.com/snetsystems/cloudhub/backend/mocks"
@@ -69,6 +70,7 @@ type fakeAlertGroupRuleStore struct {
 	rulesByRecipientGroupFunc func(context.Context, string) ([]cloudhub.AlertGroupRule, error)
 	conditionsByRuleFunc      func(context.Context, string) ([]cloudhub.AlertRuleCondition, error)
 	setConditionsFunc         func(context.Context, string, []cloudhub.AlertRuleCondition) error
+	deleteFunc                func(context.Context, string) error
 }
 
 func (f *fakeAlertGroupRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.AlertGroupRule, error) {
@@ -97,6 +99,9 @@ func (f *fakeAlertGroupRuleStore) Update(ctx context.Context, r cloudhub.AlertGr
 }
 
 func (f *fakeAlertGroupRuleStore) Delete(ctx context.Context, id string) error {
+	if f.deleteFunc != nil {
+		return f.deleteFunc(ctx, id)
+	}
 	return nil
 }
 
@@ -868,6 +873,81 @@ func TestRemoveKapacitorAlsoDeletesAlertKapacitorAndMapping(t *testing.T) {
 	}
 	if !mappingDeleted {
 		t.Fatal("expected alert kapacitor mapping to be deleted")
+	}
+}
+
+func TestKapacitorRulesDeleteAlsoSoftDeletesV2AlertGroupRule(t *testing.T) {
+	const taskID = "alert-group-rule-1"
+
+	deletedTask := false
+	kapaSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/kapacitor/v1/tasks/"+taskID {
+			t.Fatalf("unexpected kapacitor path: %s", r.URL.Path)
+		}
+
+		switch r.Method {
+		case http.MethodGet:
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"id":     taskID,
+				"script": "stream\n    |from()\n    |alert()",
+				"status": "enabled",
+				"type":   "stream",
+				"dbrps":  []cloudhub.DBRP{{DB: "telegraf", RP: "autogen"}},
+				"link": map[string]interface{}{
+					"rel":  "self",
+					"href": "/kapacitor/v1/tasks/" + taskID,
+				},
+			})
+		case http.MethodDelete:
+			deletedTask = true
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected kapacitor method: %s", r.Method)
+		}
+	}))
+	defer kapaSrv.Close()
+
+	deletedRuleID := ""
+	svc := &Service{
+		Store: &mocks.Store{
+			ServersStore: &mocks.ServersStore{
+				GetF: func(context.Context, int) (cloudhub.Server, error) {
+					return cloudhub.Server{
+						ID:    42,
+						SrcID: 1,
+						Name:  "kapacitor",
+						URL:   kapaSrv.URL,
+					}, nil
+				},
+			},
+		},
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			deleteFunc: func(ctx context.Context, id string) error {
+				deletedRuleID = id
+				return nil
+			},
+		},
+		Logger: &mocks.TestLogger{},
+	}
+
+	req := httptest.NewRequest(http.MethodDelete, "/cloudhub/v1/sources/1/kapacitors/42/rules/"+taskID, nil)
+	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
+		{Key: "id", Value: "1"},
+		{Key: "kid", Value: "42"},
+		{Key: "tid", Value: taskID},
+	}))
+	rr := httptest.NewRecorder()
+
+	svc.KapacitorRulesDelete(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusNoContent, rr.Body.String())
+	}
+	if !deletedTask {
+		t.Fatal("expected kapacitor task to be deleted")
+	}
+	if deletedRuleID != "rule-1" {
+		t.Fatalf("deleted alert rule id = %q, want %q", deletedRuleID, "rule-1")
 	}
 }
 

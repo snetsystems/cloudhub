@@ -1109,6 +1109,15 @@ func (s *Service) KapacitorRulesDelete(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	if s.AlertGroupRules != nil && strings.HasPrefix(tid, "alert-group-") {
+		ruleID := strings.TrimPrefix(tid, "alert-group-")
+		if ruleID != "" {
+			if err := s.AlertGroupRules.Delete(ctx, ruleID); err != nil {
+				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+				return
+			}
+		}
+	}
 
 	// log registrationte
 	msg := fmt.Sprintf(MsgKapacitorRuleDeleted.String(), task.Rule.Name, srv.Name)
