@@ -436,6 +436,8 @@ func validateAlertGroupRuleInput(rule cloudhub.AlertGroupRule) error {
 // resolveRuleRecipients walks the rule's bound recipient groups, looks up each
 // member's alert preferences, and buckets emails by alert level (info/warn/crit).
 // Members without prefs or with EmailEnabled=false are skipped.
+// An empty rule binding (no alert_rule_recipient_groups rows) means all recipient
+// groups in the rule's org, matching empty hostnames (= all hosts).
 func (s *Service) resolveRuleRecipients(ctx context.Context, rule cloudhub.AlertGroupRule) (kapackage.AlertRecipients, error) {
 	if rule.ID == "" || s.AlertGroupRules == nil {
 		return kapackage.AlertRecipients{}, nil
@@ -444,7 +446,30 @@ func (s *Service) resolveRuleRecipients(ctx context.Context, rule cloudhub.Alert
 	if err != nil {
 		return kapackage.AlertRecipients{}, err
 	}
+	groups, err = s.recipientGroupsForOrg(ctx, rule.OrgID, groups)
+	if err != nil {
+		return kapackage.AlertRecipients{}, err
+	}
 	return s.buildAlertRecipientsFromGroups(ctx, groups), nil
+}
+
+// recipientGroupsForOrg returns bound groups when present, otherwise all org groups.
+func (s *Service) recipientGroupsForOrg(ctx context.Context, orgID string, bound []cloudhub.RecipientGroup) ([]cloudhub.RecipientGroup, error) {
+	if len(bound) > 0 {
+		return bound, nil
+	}
+	return s.allOrgRecipientGroups(ctx, orgID)
+}
+
+func (s *Service) allOrgRecipientGroups(ctx context.Context, orgID string) ([]cloudhub.RecipientGroup, error) {
+	if s.RecipientGroups == nil {
+		return nil, fmt.Errorf("recipient group store unavailable")
+	}
+	orgID = strings.TrimSpace(orgID)
+	if orgID == "" {
+		return nil, nil
+	}
+	return s.RecipientGroups.All(ctx, orgID)
 }
 
 // buildAlertRecipientsFromGroups builds level-bucketed lists from already-resolved
@@ -504,9 +529,7 @@ func (s *Service) resolveDraftAlertGroupRecipientGroups(ctx context.Context, org
 		return nil, fmt.Errorf("recipient group store unavailable")
 	}
 	if len(recipientGroupIDs) == 0 {
-		// Empty selection means "no group recipients"; the logged-in-user fallback
-		// happens upstream.
-		return nil, nil
+		return s.allOrgRecipientGroups(ctx, orgID)
 	}
 
 	seen := map[string]bool{}

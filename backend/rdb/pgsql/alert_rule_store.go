@@ -291,6 +291,8 @@ func (s *AlertRuleStore) SetRecipientGroups(ctx context.Context, ruleID string, 
 	})
 }
 
+// RecipientGroupsByRule returns groups explicitly bound to the rule.
+// An empty result is valid: handlers treat it as "all org recipient groups" at resolve time.
 func (s *AlertRuleStore) RecipientGroupsByRule(ctx context.Context, ruleID string) ([]cloudhub.RecipientGroup, error) {
 	ids, err := s.recipientGroupIDs(ctx, ruleID)
 	if err != nil {

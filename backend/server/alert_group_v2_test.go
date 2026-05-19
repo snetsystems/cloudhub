@@ -308,6 +308,114 @@ func (f *fakeAlertRecipientMemberPrefsStore) ByGroup(ctx context.Context, groupI
 	return nil, nil
 }
 
+func TestResolveRuleRecipientsUsesAllOrgGroupsWhenUnbound(t *testing.T) {
+	allCalled := false
+	svc := &Service{
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			recipientGroupsByRuleFunc: func(context.Context, string) ([]cloudhub.RecipientGroup, error) {
+				return nil, nil
+			},
+		},
+		RecipientGroups: &fakeRecipientGroupStore{
+			allFunc: func(_ context.Context, orgID string) ([]cloudhub.RecipientGroup, error) {
+				allCalled = true
+				if orgID != "org-1" {
+					t.Fatalf("orgID = %q, want org-1", orgID)
+				}
+				return []cloudhub.RecipientGroup{{
+					ID: "group-all",
+					Members: []cloudhub.RecipientGroupMember{{
+						ID:    "member-1",
+						Email: "all@example.com",
+					}},
+				}}, nil
+			},
+		},
+		AlertRecipientMemberPrefs: &fakeAlertRecipientMemberPrefsStore{},
+	}
+
+	recipients, err := svc.resolveRuleRecipients(context.Background(), cloudhub.AlertGroupRule{
+		ID:    "rule-1",
+		OrgID: "org-1",
+	})
+	if err != nil {
+		t.Fatalf("resolveRuleRecipients: %v", err)
+	}
+	if !allCalled {
+		t.Fatal("expected RecipientGroups.All when rule has no bound groups")
+	}
+	if len(recipients.Crit) != 1 || recipients.Crit[0] != "all@example.com" {
+		t.Fatalf("unexpected recipients: %+v", recipients)
+	}
+}
+
+func TestResolveDraftAlertGroupRecipientGroupsEmptyMeansAllOrg(t *testing.T) {
+	svc := &Service{
+		RecipientGroups: &fakeRecipientGroupStore{
+			allFunc: func(_ context.Context, orgID string) ([]cloudhub.RecipientGroup, error) {
+				return []cloudhub.RecipientGroup{
+					{ID: "group-1", OrgID: orgID},
+					{ID: "group-2", OrgID: orgID},
+				}, nil
+			},
+		},
+	}
+
+	groups, err := svc.resolveDraftAlertGroupRecipientGroups(context.Background(), "org-1", nil)
+	if err != nil {
+		t.Fatalf("resolveDraftAlertGroupRecipientGroups: %v", err)
+	}
+	if len(groups) != 2 {
+		t.Fatalf("groups len = %d, want 2", len(groups))
+	}
+}
+
+func TestAlertGroupRuleTestNotificationEmptyRecipientGroupIDsUsesAllOrg(t *testing.T) {
+	logger := &mocks.TestLogger{}
+	var sentRecipients []string
+	prev := kapacitorSMTPSender
+	kapacitorSMTPSender = func(_ context.Context, _ string, to []string, _, _ string) error {
+		sentRecipients = append([]string(nil), to...)
+		return nil
+	}
+	defer func() { kapacitorSMTPSender = prev }()
+
+	svc := &Service{
+		Logger: logger,
+		RecipientGroups: &fakeRecipientGroupStore{
+			allFunc: func(context.Context, string) ([]cloudhub.RecipientGroup, error) {
+				return []cloudhub.RecipientGroup{{
+					ID:    "group-1",
+					OrgID: "org-1",
+					Members: []cloudhub.RecipientGroupMember{{
+						ID:    "m-1",
+						Email: "org-wide@example.com",
+					}},
+				}}, nil
+			},
+		},
+		AlertRecipientMemberPrefs: &fakeAlertRecipientMemberPrefsStore{},
+		AlertKapacitors: &fakeAlertKapacitorStore{
+			getFunc: func(context.Context, string) (cloudhub.AlertKapacitor, error) {
+				return cloudhub.AlertKapacitor{ID: "kapa-1", OrgID: "org-1", URL: "http://kapacitor.example.com:9094"}, nil
+			},
+		},
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules/test-notification", bytes.NewBufferString(`{"kapacitorId":"kapa-1","recipientGroupIds":[],"title":"t","message":"m"}`))
+	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
+	rr := httptest.NewRecorder()
+
+	svc.AlertGroupRuleTestNotification(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusOK, rr.Body.String())
+	}
+	if len(sentRecipients) != 1 || sentRecipients[0] != "org-wide@example.com" {
+		t.Fatalf("unexpected recipients: %#v", sentRecipients)
+	}
+}
+
 func TestNewKapacitorAlsoCreatesAlertKapacitor(t *testing.T) {
 	logger := &mocks.TestLogger{}
 	var synced []cloudhub.AlertKapacitor
