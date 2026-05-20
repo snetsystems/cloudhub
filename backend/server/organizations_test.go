@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/bouk/httprouter"
@@ -482,6 +484,16 @@ func TestService_RemoveOrganization(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
 					OrganizationsStore: tt.fields.OrganizationsStore,
+					NetworkDeviceStore: &mocks.NetworkDeviceStore{
+						AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+							return nil, nil
+						},
+					},
+					DeviceMappingsStore: &mocks.DeviceMappingsStore{
+						AllDevicesFunc: func(ctx context.Context, access cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error) {
+							return nil, nil
+						},
+					},
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -501,6 +513,155 @@ func TestService_RemoveOrganization(t *testing.T) {
 				t.Errorf("%q. NewOrganization() = %v, want %v", tt.name, resp.StatusCode, tt.wantStatus)
 			}
 		})
+	}
+}
+
+func TestRemoveOrganizationCleansAlertResourcesBeforeDeletingOrg(t *testing.T) {
+	var taskDeletes []string
+	taskServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Fatalf("method = %s, want DELETE", r.Method)
+		}
+		taskDeletes = append(taskDeletes, r.URL.Path)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer taskServer.Close()
+
+	var sequence []string
+	svc := &Service{
+		Store: &mocks.Store{
+			OrganizationsStore: &mocks.OrganizationsStore{
+				GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "org-1", Name: "Acme"}, nil
+				},
+				DeleteF: func(ctx context.Context, o *cloudhub.Organization) error {
+					sequence = append(sequence, "org:"+o.ID)
+					return nil
+				},
+			},
+			NetworkDeviceStore: &mocks.NetworkDeviceStore{
+				AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+					return nil, nil
+				},
+			},
+			DeviceMappingsStore: &mocks.DeviceMappingsStore{
+				AllDevicesFunc: func(ctx context.Context, access cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error) {
+					return nil, nil
+				},
+			},
+		},
+		AlertKapacitors: &fakeAlertKapacitorStore{
+			getFunc: func(ctx context.Context, id string) (cloudhub.AlertKapacitor, error) {
+				return cloudhub.AlertKapacitor{ID: id, OrgID: "org-1", URL: taskServer.URL}, nil
+			},
+			allFunc: func(ctx context.Context, orgID string) ([]cloudhub.AlertKapacitor, error) {
+				return []cloudhub.AlertKapacitor{{ID: "kap-1", OrgID: orgID}}, nil
+			},
+			deleteFunc: func(ctx context.Context, id string) error {
+				sequence = append(sequence, "kapacitor:"+id)
+				return nil
+			},
+		},
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			allFunc: func(ctx context.Context, orgID string) ([]cloudhub.AlertGroupRule, error) {
+				return []cloudhub.AlertGroupRule{{ID: "rule-1", OrgID: orgID, KapacitorID: "kap-1"}}, nil
+			},
+			deleteFunc: func(ctx context.Context, id string) error {
+				sequence = append(sequence, "rule:"+id)
+				return nil
+			},
+		},
+		RecipientGroups: &fakeRecipientGroupStore{
+			allFunc: func(ctx context.Context, orgID string) ([]cloudhub.RecipientGroup, error) {
+				return []cloudhub.RecipientGroup{{ID: "group-1", OrgID: orgID}}, nil
+			},
+			deleteFunc: func(ctx context.Context, id string) error {
+				sequence = append(sequence, "group:"+id)
+				return nil
+			},
+		},
+		Logger: log.New(log.DebugLevel),
+	}
+
+	req := httptest.NewRequest(http.MethodDelete, "/cloudhub/v1/organizations/org-1", nil)
+	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{{Key: "oid", Value: "org-1"}}))
+	rr := httptest.NewRecorder()
+
+	svc.RemoveOrganization(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusNoContent, rr.Body.String())
+	}
+	if len(taskDeletes) != 1 || taskDeletes[0] != "/kapacitor/v1/tasks/alert-group-rule-1" {
+		t.Fatalf("taskDeletes = %v, want alert-group-rule-1 delete", taskDeletes)
+	}
+	wantSequence := []string{"rule:rule-1", "kapacitor:kap-1", "group:group-1", "org:org-1"}
+	if !reflect.DeepEqual(sequence, wantSequence) {
+		t.Fatalf("sequence = %v, want %v", sequence, wantSequence)
+	}
+}
+
+func TestRemoveOrganizationStopsWhenAlertTaskDeleteFails(t *testing.T) {
+	taskServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "kapacitor unavailable", http.StatusInternalServerError)
+	}))
+	defer taskServer.Close()
+
+	orgDeleted := false
+	ruleDeleted := false
+	svc := &Service{
+		Store: &mocks.Store{
+			OrganizationsStore: &mocks.OrganizationsStore{
+				GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "org-1", Name: "Acme"}, nil
+				},
+				DeleteF: func(ctx context.Context, o *cloudhub.Organization) error {
+					orgDeleted = true
+					return nil
+				},
+			},
+			NetworkDeviceStore: &mocks.NetworkDeviceStore{
+				AllF: func(ctx context.Context) ([]cloudhub.NetworkDevice, error) {
+					return nil, nil
+				},
+			},
+			DeviceMappingsStore: &mocks.DeviceMappingsStore{
+				AllDevicesFunc: func(ctx context.Context, access cloudhub.AccessContext) ([]*cloudhub.DeviceMeta, error) {
+					return nil, nil
+				},
+			},
+		},
+		AlertKapacitors: &fakeAlertKapacitorStore{
+			getFunc: func(ctx context.Context, id string) (cloudhub.AlertKapacitor, error) {
+				return cloudhub.AlertKapacitor{ID: id, OrgID: "org-1", URL: taskServer.URL}, nil
+			},
+		},
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			allFunc: func(ctx context.Context, orgID string) ([]cloudhub.AlertGroupRule, error) {
+				return []cloudhub.AlertGroupRule{{ID: "rule-1", OrgID: orgID, KapacitorID: "kap-1"}}, nil
+			},
+			deleteFunc: func(ctx context.Context, id string) error {
+				ruleDeleted = true
+				return nil
+			},
+		},
+		Logger: log.New(log.DebugLevel),
+	}
+
+	req := httptest.NewRequest(http.MethodDelete, "/cloudhub/v1/organizations/org-1", nil)
+	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{{Key: "oid", Value: "org-1"}}))
+	rr := httptest.NewRecorder()
+
+	svc.RemoveOrganization(rr, req)
+
+	if rr.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusInternalServerError, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), "failed to delete alert task before deleting organization") {
+		t.Fatalf("body = %s, want alert task cleanup message", rr.Body.String())
+	}
+	if orgDeleted || ruleDeleted {
+		t.Fatalf("orgDeleted=%v ruleDeleted=%v, want both false", orgDeleted, ruleDeleted)
 	}
 }
 

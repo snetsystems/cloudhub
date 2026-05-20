@@ -334,6 +334,15 @@ func (s *Service) AlertGroupRuleSetRecipientGroups(w http.ResponseWriter, r *htt
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	rule, err := s.AlertGroupRules.Get(ctx, id)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	if err := s.regenRule(ctx, rule); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -675,6 +684,13 @@ func deleteKapacitorTask(kapaURL, taskID string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("delete kapacitor task returned status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
 	return nil
 }
 

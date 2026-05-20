@@ -269,6 +269,12 @@ func (s *Service) RemoveOrganization(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if err := s.cleanupOrganizationAlertResources(ctx, org.ID); err != nil {
+		s.Logger.Error("failed to clean up organization alert resources", err.Error())
+		Error(w, http.StatusInternalServerError, organizationAlertCleanupMessage(err), s.Logger)
+		return
+	}
+
 	// Move device mappings from the organization being deleted to default organization
 	deviceMappings, err := s.Store.DeviceMappings(ctx).AllDevices(ctx, cloudhub.AccessContext{
 		IsSuperAdmin: hasSuperAdminContext(ctx),
@@ -325,4 +331,108 @@ func (s *Service) OrganizationNameByID(ctx context.Context, orgID string) (strin
 		return "", fmt.Errorf("organization does not exist")
 	}
 	return org.Name, nil
+}
+
+type organizationAlertCleanupError struct {
+	message string
+	err     error
+}
+
+func (e organizationAlertCleanupError) Error() string {
+	return e.err.Error()
+}
+
+func (e organizationAlertCleanupError) Unwrap() error {
+	return e.err
+}
+
+func newOrganizationAlertCleanupError(message string, err error) error {
+	return organizationAlertCleanupError{message: message, err: err}
+}
+
+func organizationAlertCleanupMessage(err error) string {
+	if e, ok := err.(organizationAlertCleanupError); ok {
+		return e.message
+	}
+	return "failed to clean up alert resources before deleting organization"
+}
+
+func (s *Service) cleanupOrganizationAlertResources(ctx context.Context, orgID string) error {
+	if s.AlertGroupRules != nil {
+		rules, err := s.AlertGroupRules.All(ctx, orgID)
+		if err != nil {
+			return newOrganizationAlertCleanupError(
+				"failed to clean up alert resources before deleting organization",
+				fmt.Errorf("list alert rules for org %s: %w", orgID, err),
+			)
+		}
+		for _, rule := range rules {
+			if rule.KapacitorID != "" {
+				if s.AlertKapacitors == nil {
+					return newOrganizationAlertCleanupError(
+						"failed to delete alert task before deleting organization",
+						fmt.Errorf("alert kapacitor store unavailable for rule %s", rule.ID),
+					)
+				}
+				kapa, err := s.AlertKapacitors.Get(ctx, rule.KapacitorID)
+				if err != nil {
+					return newOrganizationAlertCleanupError(
+						"failed to delete alert task before deleting organization",
+						fmt.Errorf("get alert kapacitor %s for rule %s: %w", rule.KapacitorID, rule.ID, err),
+					)
+				}
+				taskID := "alert-group-" + rule.ID
+				if err := deleteKapacitorTask(kapa.URL, taskID); err != nil {
+					return newOrganizationAlertCleanupError(
+						"failed to delete alert task before deleting organization",
+						fmt.Errorf("delete kapacitor task %s for rule %s: %w", taskID, rule.ID, err),
+					)
+				}
+			}
+			if err := s.AlertGroupRules.Delete(ctx, rule.ID); err != nil {
+				return newOrganizationAlertCleanupError(
+					"failed to clean up alert resources before deleting organization",
+					fmt.Errorf("delete alert rule %s: %w", rule.ID, err),
+				)
+			}
+		}
+	}
+
+	if s.AlertKapacitors != nil {
+		kapacitors, err := s.AlertKapacitors.All(ctx, orgID)
+		if err != nil {
+			return newOrganizationAlertCleanupError(
+				"failed to clean up alert resources before deleting organization",
+				fmt.Errorf("list alert kapacitors for org %s: %w", orgID, err),
+			)
+		}
+		for _, kapa := range kapacitors {
+			if err := s.AlertKapacitors.Delete(ctx, kapa.ID); err != nil {
+				return newOrganizationAlertCleanupError(
+					"failed to clean up alert resources before deleting organization",
+					fmt.Errorf("delete alert kapacitor %s: %w", kapa.ID, err),
+				)
+			}
+		}
+	}
+
+	if s.RecipientGroups != nil {
+		groups, err := s.RecipientGroups.All(ctx, orgID)
+		if err != nil {
+			return newOrganizationAlertCleanupError(
+				"failed to clean up alert resources before deleting organization",
+				fmt.Errorf("list recipient groups for org %s: %w", orgID, err),
+			)
+		}
+		for _, group := range groups {
+			if err := s.RecipientGroups.Delete(ctx, group.ID); err != nil {
+				return newOrganizationAlertCleanupError(
+					"failed to clean up alert resources before deleting organization",
+					fmt.Errorf("delete recipient group %s: %w", group.ID, err),
+				)
+			}
+		}
+	}
+
+	return nil
 }

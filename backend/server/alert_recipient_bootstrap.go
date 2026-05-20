@@ -153,6 +153,11 @@ func ensureDefaultRecipientGroupForOrg(ctx context.Context, service *Service, or
 		return err
 	}
 	if syncResult.Added > 0 || syncResult.Updated > 0 || syncResult.Removed > 0 {
+		if err := service.RegenerateRulesByRecipientGroup(ctx, orgID, *defaultGroup); err != nil {
+			return err
+		}
+	}
+	if syncResult.Added > 0 || syncResult.Updated > 0 || syncResult.Removed > 0 {
 		logger.
 			WithField("component", "alert-recipient-bootstrap").
 			WithField("organization", orgID).

@@ -60,6 +60,7 @@ func (f *fakeAlertKapacitorStore) Delete(ctx context.Context, id string) error {
 }
 
 type fakeAlertGroupRuleStore struct {
+	allFunc                   func(context.Context, string) ([]cloudhub.AlertGroupRule, error)
 	addFunc                   func(context.Context, cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error)
 	updateFunc                func(context.Context, cloudhub.AlertGroupRule) error
 	getFunc                   func(context.Context, string) (cloudhub.AlertGroupRule, error)
@@ -74,6 +75,9 @@ type fakeAlertGroupRuleStore struct {
 }
 
 func (f *fakeAlertGroupRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.AlertGroupRule, error) {
+	if f.allFunc != nil {
+		return f.allFunc(ctx, orgID)
+	}
 	return nil, nil
 }
 

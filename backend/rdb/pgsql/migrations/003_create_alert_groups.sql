@@ -38,7 +38,7 @@
 -- *_recipient_member_prefs tables.
 --
 -- recipient_groups.is_default: at most one per org (partial unique index).
--- System bootstrap marks the org default group; name is display-only (e.g. "기본 수신자").
+-- System bootstrap marks the org default group; name is display-only (e.g. "<Org Name> Default Recipients").
 
 -- =====================================================================
 -- Layer 1: 도메인 중립 (recipient identity)

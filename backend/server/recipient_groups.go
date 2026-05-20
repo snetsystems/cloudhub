@@ -185,7 +185,8 @@ func (s *Service) NewRecipientGroupMember(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if _, err := s.RecipientGroups.Get(ctx, groupID); err != nil {
+	group, err := s.RecipientGroups.Get(ctx, groupID)
+	if err != nil {
 		if isRecipientGroupNotFound(err) {
 			notFound(w, groupID, s.Logger)
 			return
@@ -213,6 +214,10 @@ func (s *Service) NewRecipientGroupMember(w http.ResponseWriter, r *http.Request
 		PhoneNumber:      strings.TrimSpace(req.PhoneNumber),
 	})
 	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	if err := s.RegenerateRulesByRecipientGroup(ctx, group.OrgID, group); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
@@ -277,6 +282,10 @@ func (s *Service) UpdateRecipientGroupMember(w http.ResponseWriter, r *http.Requ
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	if err := s.RegenerateRulesByRecipientGroup(ctx, g.OrgID, g); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 	encodeJSON(w, http.StatusOK, updated, s.Logger)
 }
 
@@ -321,6 +330,10 @@ func (s *Service) RemoveRecipientGroupMember(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := s.RecipientGroups.DeleteMember(ctx, memberID); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	if err := s.RegenerateRulesByRecipientGroup(ctx, g.OrgID, g); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}

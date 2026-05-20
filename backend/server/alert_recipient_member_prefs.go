@@ -111,6 +111,10 @@ func (s *Service) AlertRecipientMemberPrefsBulkUpsert(w http.ResponseWriter, r *
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	if err := s.RegenerateRulesByRecipientGroup(ctx, g.OrgID, g); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 
 	saved, err := s.AlertRecipientMemberPrefs.ByGroup(ctx, groupID)
 	if err != nil {

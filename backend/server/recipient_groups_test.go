@@ -156,3 +156,94 @@ func TestUpdateRecipientGroupMemberAllowsDefaultGroupMember(t *testing.T) {
 		t.Fatalf("updated member = %#v, want edited member", updated)
 	}
 }
+
+func TestRecipientGroupMemberChangesRegenerateLinkedRules(t *testing.T) {
+	tests := []struct {
+		name       string
+		method     string
+		target     string
+		body       string
+		handler    func(*Service, http.ResponseWriter, *http.Request)
+		wantStatus int
+	}{
+		{
+			name:       "add member",
+			method:     http.MethodPost,
+			target:     "/cloudhub/v2/recipient-groups/group-1/members",
+			body:       `{"userName":"New","email":"new@example.com"}`,
+			handler:    (*Service).NewRecipientGroupMember,
+			wantStatus: http.StatusCreated,
+		},
+		{
+			name:       "update member",
+			method:     http.MethodPatch,
+			target:     "/cloudhub/v2/recipient-groups/group-1/members/member-1",
+			body:       `{"email":"after@example.com"}`,
+			handler:    (*Service).UpdateRecipientGroupMember,
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "delete member",
+			method:     http.MethodDelete,
+			target:     "/cloudhub/v2/recipient-groups/group-1/members/member-1",
+			handler:    (*Service).RemoveRecipientGroupMember,
+			wantStatus: http.StatusNoContent,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var regenerated []string
+			oldHook := regenRuleSyncHook
+			regenRuleSyncHook = func(ctx context.Context, rule cloudhub.AlertGroupRule) error {
+				regenerated = append(regenerated, rule.ID)
+				return nil
+			}
+			defer func() { regenRuleSyncHook = oldHook }()
+
+			group := cloudhub.RecipientGroup{
+				ID:    "group-1",
+				OrgID: "org-1",
+				Members: []cloudhub.RecipientGroupMember{
+					{ID: "member-1", RecipientGroupID: "group-1", Email: "before@example.com"},
+				},
+			}
+			svc := &Service{
+				RecipientGroups: &fakeRecipientGroupStore{
+					getFunc: func(ctx context.Context, id string) (cloudhub.RecipientGroup, error) {
+						return group, nil
+					},
+					addMemberFunc: func(ctx context.Context, m cloudhub.RecipientGroupMember) (cloudhub.RecipientGroupMember, error) {
+						m.ID = "member-2"
+						return m, nil
+					},
+				},
+				AlertGroupRules: &fakeAlertGroupRuleStore{
+					rulesByRecipientGroupFunc: func(ctx context.Context, recipientGroupID string) ([]cloudhub.AlertGroupRule, error) {
+						if recipientGroupID != "group-1" {
+							t.Fatalf("recipientGroupID = %q, want group-1", recipientGroupID)
+						}
+						return []cloudhub.AlertGroupRule{{ID: "rule-1", OrgID: "org-1"}}, nil
+					},
+				},
+				Logger: &mocks.TestLogger{},
+			}
+
+			req := httptest.NewRequest(tt.method, tt.target, bytes.NewBufferString(tt.body))
+			req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
+				{Key: "id", Value: "group-1"},
+				{Key: "memberId", Value: "member-1"},
+			}))
+			rr := httptest.NewRecorder()
+
+			tt.handler(svc, rr, req)
+
+			if rr.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d; body=%s", rr.Code, tt.wantStatus, rr.Body.String())
+			}
+			if len(regenerated) != 1 || regenerated[0] != "rule-1" {
+				t.Fatalf("regenerated = %v, want [rule-1]", regenerated)
+			}
+		})
+	}
+}
