@@ -9,7 +9,7 @@ import (
 	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
-const defaultRecipientGroupName = "기본 수신자"
+const defaultRecipientGroupNameSuffix = "Default Recipients"
 
 func orgIDsFromRoles(roles []cloudhub.Role) []string {
 	seen := make(map[string]struct{}, len(roles))
@@ -65,6 +65,21 @@ func defaultAlertRecipientMemberPrefs(memberID string, hasEmail bool) cloudhub.A
 	}
 }
 
+func defaultRecipientGroupName(ctx context.Context, service *Service, orgID string) string {
+	name := strings.TrimSpace(orgID)
+	if service != nil && service.Store != nil {
+		if org, err := service.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID}); err == nil && org != nil {
+			if orgName := strings.TrimSpace(org.Name); orgName != "" {
+				name = orgName
+			}
+		}
+	}
+	if name == "" {
+		return defaultRecipientGroupNameSuffix
+	}
+	return name + " " + defaultRecipientGroupNameSuffix
+}
+
 type defaultGroupMemberSyncResult struct {
 	Added, Updated, Removed int
 }
@@ -112,26 +127,9 @@ func ensureDefaultRecipientGroupForOrg(ctx context.Context, service *Service, or
 	}
 
 	if defaultGroup == nil {
-		for i := range groups {
-			if groups[i].Name == defaultRecipientGroupName {
-				if err := service.RecipientGroups.MarkAsDefault(ctx, orgID, groups[i].ID); err != nil {
-					return err
-				}
-				g := groups[i]
-				g.IsDefault = true
-				defaultGroup = &g
-				break
-			}
-		}
-	}
-
-	if defaultGroup == nil {
-		if len(groups) > 0 {
-			return nil
-		}
 		g, err := service.RecipientGroups.Add(ctx, cloudhub.RecipientGroup{
 			OrgID:     orgID,
-			Name:      defaultRecipientGroupName,
+			Name:      defaultRecipientGroupName(ctx, service, orgID),
 			IsDefault: true,
 		})
 		if err != nil {

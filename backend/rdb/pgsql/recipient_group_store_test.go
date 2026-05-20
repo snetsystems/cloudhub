@@ -145,7 +145,7 @@ func TestRecipientGroupStore_IsDefault(t *testing.T) {
 	store := pgsql.NewRecipientGroupStore(client)
 	ctx := context.Background()
 
-	def, err := store.Add(ctx, cloudhub.RecipientGroup{OrgID: "org1", Name: "기본 수신자", IsDefault: true})
+	def, err := store.Add(ctx, cloudhub.RecipientGroup{OrgID: "org1", Name: "Org One Default Recipients", IsDefault: true})
 	if err != nil || !def.IsDefault {
 		t.Fatalf("Add default: %+v err=%v", def, err)
 	}

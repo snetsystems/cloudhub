@@ -155,12 +155,17 @@ func (s *Service) RemoveRecipientGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := s.RecipientGroups.Get(ctx, id); err != nil {
+	g, err := s.RecipientGroups.Get(ctx, id)
+	if err != nil {
 		if isRecipientGroupNotFound(err) {
 			notFound(w, id, s.Logger)
 			return
 		}
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	if g.IsDefault {
+		Error(w, http.StatusConflict, "default recipient group cannot be deleted", s.Logger)
 		return
 	}
 
@@ -308,6 +313,10 @@ func (s *Service) RemoveRecipientGroupMember(w http.ResponseWriter, r *http.Requ
 	}
 	if !found {
 		notFound(w, memberID, s.Logger)
+		return
+	}
+	if g.IsDefault {
+		Error(w, http.StatusConflict, "default recipient group members cannot be deleted", s.Logger)
 		return
 	}
 

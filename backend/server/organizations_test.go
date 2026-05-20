@@ -728,6 +728,94 @@ func TestService_NewOrganization(t *testing.T) {
 	}
 }
 
+func TestNewOrganizationCreatesDefaultRecipientGroup(t *testing.T) {
+	ctxUser := &cloudhub.User{
+		ID:       1,
+		Name:     "bobetta",
+		Provider: "github",
+		Scheme:   "oauth2",
+		Email:    "bobetta@example.com",
+	}
+	rgStore := &memRecipientGroupStore{members: map[string][]cloudhub.RecipientGroupMember{}}
+	prefsStore := &memAlertRecipientMemberPrefsStore{prefs: map[string]cloudhub.AlertRecipientMemberPrefs{}}
+	svc := &Service{
+		Store: &mocks.Store{
+			SourcesStore: &mocks.SourcesStore{
+				GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+					return cloudhub.Source{}, fmt.Errorf("not configured")
+				},
+			},
+			OrganizationsStore: &mocks.OrganizationsStore{
+				AddF: func(ctx context.Context, o *cloudhub.Organization) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{
+						ID:          "org-1",
+						Name:        o.Name,
+						DefaultRole: o.DefaultRole,
+					}, nil
+				},
+				GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "org-1", Name: "The Good Place"}, nil
+				},
+				DeleteF: func(ctx context.Context, o *cloudhub.Organization) error {
+					return nil
+				},
+			},
+			UsersStore: &mocks.UsersStore{
+				AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
+					return u, nil
+				},
+				AllF: func(ctx context.Context) ([]cloudhub.User, error) {
+					return []cloudhub.User{
+						{
+							ID:    ctxUser.ID,
+							Name:  ctxUser.Name,
+							Email: ctxUser.Email,
+							Roles: []cloudhub.Role{{Organization: "org-1", Name: roles.AdminRoleName}},
+						},
+					}, nil
+				},
+			},
+			DashboardsStore: &mocks.DashboardsStore{
+				AllF: func(ctx context.Context) ([]cloudhub.Dashboard, error) {
+					return nil, nil
+				},
+				AddF: func(ctx context.Context, d cloudhub.Dashboard) (cloudhub.Dashboard, error) {
+					d.ID = 1
+					return d, nil
+				},
+			},
+			FixedCellMapping: &mocks.FixedCellMappingStore{},
+		},
+		RecipientGroups:           rgStore,
+		AlertRecipientGroups:      &memAlertRecipientGroupStore{ext: map[string]cloudhub.AlertRecipientGroup{}},
+		AlertRecipientMemberPrefs: prefsStore,
+		Logger:                    log.New(log.DebugLevel),
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v1/organizations", bytes.NewBufferString(`{"name":"The Good Place"}`))
+	req = req.WithContext(context.WithValue(req.Context(), UserContextKey, ctxUser))
+	rr := httptest.NewRecorder()
+
+	svc.NewOrganization(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("NewOrganization status = %d body=%s", rr.Code, rr.Body.String())
+	}
+	groups, err := rgStore.All(serverContext(context.Background()), "org-1")
+	if err != nil {
+		t.Fatalf("recipient groups: %v", err)
+	}
+	if len(groups) != 1 || !groups[0].IsDefault || groups[0].Name != "The Good Place Default Recipients" {
+		t.Fatalf("expected one default recipient group, got %+v", groups)
+	}
+	if len(groups[0].Members) != 1 || groups[0].Members[0].UserID != "1" {
+		t.Fatalf("expected creator in default group, got %+v", groups[0].Members)
+	}
+	if len(prefsStore.prefs) != 1 {
+		t.Fatalf("expected default member prefs, got %+v", prefsStore.prefs)
+	}
+}
+
 func TestService_OrganizationExists(t *testing.T) {
 	type fields struct {
 		OrganizationsStore cloudhub.OrganizationsStore

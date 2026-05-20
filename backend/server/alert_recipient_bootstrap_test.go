@@ -222,20 +222,20 @@ func TestEnsureDefaultRecipientGroupForOrg(t *testing.T) {
 			wantPrefs:      3,
 		},
 		{
-			name: "skips when org already has other groups",
+			name: "creates default group even when org already has other groups",
 			initialGroups: []cloudhub.RecipientGroup{
 				{ID: "existing", OrgID: "org-1", Name: "Ops"},
 			},
-			wantGroupCount: 1,
-			wantMembers:    0,
-			wantExt:        false,
-			wantPrefs:      0,
+			wantGroupCount: 2,
+			wantMembers:    3,
+			wantExt:        true,
+			wantPrefs:      3,
 		},
 		{
 			name: "syncs new users into existing default group",
 			initialGroups: []cloudhub.RecipientGroup{
 				{
-					ID: "default", OrgID: "org-1", Name: defaultRecipientGroupName, IsDefault: true,
+					ID: "default", OrgID: "org-1", Name: "Acme Ops Default Recipients", IsDefault: true,
 				},
 			},
 			wantGroupCount: 1,
@@ -264,6 +264,11 @@ func TestEnsureDefaultRecipientGroupForOrg(t *testing.T) {
 
 			svc := &Service{
 				Store: &Store{
+					OrganizationsStore: &mocks.OrganizationsStore{
+						GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+							return &cloudhub.Organization{ID: "org-1", Name: "Acme Ops"}, nil
+						},
+					},
 					UsersStore: &mocks.UsersStore{
 						AllF: func(ctx context.Context) ([]cloudhub.User, error) {
 							return allUsers, nil
@@ -301,6 +306,9 @@ func TestEnsureDefaultRecipientGroupForOrg(t *testing.T) {
 			if defaultGroup.ID == "" {
 				t.Fatal("default group not found")
 			}
+			if tt.wantGroupCount > len(tt.initialGroups) && defaultGroup.Name != "Acme Ops Default Recipients" {
+				t.Fatalf("default group name = %q, want %q", defaultGroup.Name, "Acme Ops Default Recipients")
+			}
 			if len(defaultGroup.Members) != tt.wantMembers {
 				t.Fatalf("member count = %d, want %d", len(defaultGroup.Members), tt.wantMembers)
 			}
@@ -331,7 +339,7 @@ func TestSyncDefaultRecipientGroupMembers_RemovesDepartedUsers(t *testing.T) {
 	ctx := serverContext(context.Background())
 	rgStore := &memRecipientGroupStore{
 		groups: []cloudhub.RecipientGroup{
-			{ID: "default", OrgID: "org-1", Name: defaultRecipientGroupName, IsDefault: true},
+			{ID: "default", OrgID: "org-1", Name: "Acme Ops Default Recipients", IsDefault: true},
 		},
 		members: map[string][]cloudhub.RecipientGroupMember{
 			"default": {
@@ -341,6 +349,11 @@ func TestSyncDefaultRecipientGroupMembers_RemovesDepartedUsers(t *testing.T) {
 	}
 	svc := &Service{
 		Store: &Store{
+			OrganizationsStore: &mocks.OrganizationsStore{
+				GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "default", Name: "Default Org"}, nil
+				},
+			},
 			UsersStore: &mocks.UsersStore{
 				AllF: func(ctx context.Context) ([]cloudhub.User, error) {
 					return []cloudhub.User{
@@ -378,7 +391,7 @@ func TestSyncDefaultRecipientGroupMembers_UpdatesContactInfo(t *testing.T) {
 	ctx := serverContext(context.Background())
 	rgStore := &memRecipientGroupStore{
 		groups: []cloudhub.RecipientGroup{
-			{ID: "default", OrgID: "org-1", Name: defaultRecipientGroupName, IsDefault: true},
+			{ID: "default", OrgID: "org-1", Name: "Acme Ops Default Recipients", IsDefault: true},
 		},
 		members: map[string][]cloudhub.RecipientGroupMember{
 			"default": {
@@ -467,6 +480,11 @@ func TestEnsureDefaultRecipientGroupForOrg_UsesOrgScopedUsers(t *testing.T) {
 
 	svc := &Service{
 		Store: &Store{
+			OrganizationsStore: &mocks.OrganizationsStore{
+				GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "org-1", Name: "Acme Ops"}, nil
+				},
+			},
 			UsersStore: organizations.NewUsersStore(&mocks.UsersStore{
 				AllF: func(ctx context.Context) ([]cloudhub.User, error) {
 					return []cloudhub.User{

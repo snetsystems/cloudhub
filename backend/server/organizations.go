@@ -152,6 +152,13 @@ func (s *Service) NewOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := s.syncDefaultRecipientGroupsForOrgIDs(ctx, []string{res.ID}); err != nil {
+		_ = s.Store.Organizations(ctx).Delete(ctx, res)
+		s.Logger.Error("failed to initialize default recipient group", err.Error())
+		Error(w, http.StatusInternalServerError, "failed to initialize default recipient group", s.Logger)
+		return
+	}
+
 	// Initialize builtin dashboards for the new organization
 	builtinStore := &builtin.BinDashboardsStore{
 		Logger: s.Logger,
