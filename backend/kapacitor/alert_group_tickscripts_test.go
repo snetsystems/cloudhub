@@ -405,6 +405,34 @@ func TestAlertGroupRuleTICKScriptRelativeChange(t *testing.T) {
 	}
 }
 
+func TestAlertGroupRuleTICKScriptRelativePercentChangeSkipsZeroPastValue(t *testing.T) {
+	r := sampleRule()
+	r.Trigger = "relative"
+	r.TriggerValues = cloudhub.TriggerValues{
+		Shift:    "2m",
+		Change:   "% change",
+		Operator: "greater than",
+	}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`|where(lambda: "past.usage_idle" != 0.0)`,
+		`|eval(lambda: abs(float("current.usage_idle" - "past.usage_idle"))/float("past.usage_idle") * 100.0)`,
+		`.as('relative_value')`,
+		`.crit(lambda: "relative_value" > 70)`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("expected relative percent fragment %q in:\n%s", want, tick)
+		}
+	}
+	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
+		t.Fatalf("relative percent tickscript should validate: %v\n%s", err, tick)
+	}
+}
+
 func TestAlertGroupRuleTICKScriptDeadman(t *testing.T) {
 	r := sampleRule()
 	r.Trigger = "deadman"

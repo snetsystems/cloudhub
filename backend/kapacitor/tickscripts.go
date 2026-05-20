@@ -421,9 +421,12 @@ func buildRelativeBlock(rule cloudhub.AlertGroupRule) string {
 		shift = "1m"
 	}
 	var expr string
+	var zeroGuard string
 	switch strings.TrimSpace(rule.TriggerValues.Change) {
 	case ChangePercent:
 		expr = fmt.Sprintf(`abs(float("current.%s" - "past.%s"))/float("past.%s") * 100.0`, rule.Field, rule.Field, rule.Field)
+		zeroGuard = fmt.Sprintf(`
+    |where(lambda: "past.%s" != 0.0)`, rule.Field)
 	default:
 		expr = fmt.Sprintf(`float("current.%s" - "past.%s")`, rule.Field, rule.Field)
 	}
@@ -436,9 +439,10 @@ var relative_src = past
     |join(current)
         .as('past', 'current')
         .tolerance(2s)
+%s
     |eval(lambda: %s)
         .keep()
-        .as('relative_value')`, shift, expr)
+        .as('relative_value')`, shift, zeroGuard, expr)
 }
 
 // buildHostFilters returns the host filter expressions for stream (TICKscript
