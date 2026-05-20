@@ -46,7 +46,10 @@ function GroupsPage({router, params, notify}: Props) {
       console.error('Failed to fetch recipient groups', error)
       notify(
         notifyError(
-          t('group_management.fetch_failed', '그룹 목록을 불러오는데 실패했습니다.')
+          t(
+            'group_management.fetch_failed',
+            '그룹 목록을 불러오는데 실패했습니다.'
+          )
         )
       )
     } finally {
@@ -62,13 +65,17 @@ function GroupsPage({router, params, notify}: Props) {
     try {
       await deleteRecipientGroup(groupId)
       notify(
-        notifySuccess(t('group_management.delete_success', '그룹을 삭제했습니다.'))
+        notifySuccess(
+          t('group_management.delete_success', '그룹을 삭제했습니다.')
+        )
       )
       fetchData()
     } catch (error) {
       console.error('Failed to delete recipient group', error)
       notify(
-        notifyError(t('group_management.delete_failed', '그룹 삭제에 실패했습니다.'))
+        notifyError(
+          t('group_management.delete_failed', '그룹 삭제에 실패했습니다.')
+        )
       )
     }
   }
@@ -85,7 +92,7 @@ function GroupsPage({router, params, notify}: Props) {
       {
         name: t('group_management.group_name', '그룹명'),
         key: 'groupName',
-        option: {
+        options: {
           thead: {
             style: {width: '25%'},
           },
@@ -94,7 +101,7 @@ function GroupsPage({router, params, notify}: Props) {
       {
         name: t('group_management.member_count', '인원'),
         key: 'memberCount',
-        option: {
+        options: {
           thead: {
             style: {width: '25%'},
           },
@@ -103,7 +110,7 @@ function GroupsPage({router, params, notify}: Props) {
       {
         name: t('group_management.email_targets', '설정된 이메일 대상'),
         key: 'emailTargets',
-        option: {
+        options: {
           thead: {
             style: {width: '35%'},
           },
@@ -112,7 +119,7 @@ function GroupsPage({router, params, notify}: Props) {
       {
         name: t('group_management.actions', '설정'),
         key: 'actions',
-        option: {
+        options: {
           thead: {
             style: {width: '15%'},
           },
@@ -145,12 +152,18 @@ function GroupsPage({router, params, notify}: Props) {
 
   return (
     <TableComponent
+      bodyClassName="group-management"
       columns={columns}
       data={data}
       isLoading={isLoading}
       isSearchDisplay={true}
       searchPlaceholder={t('group_management.search_placeholder', '검색...')}
       isMultiSelect={false}
+      options={{
+        tbodyRow: {
+          className: 'group-management-table-row',
+        },
+      }}
       topLeftRender={
         <div className="panel-title">
           {`${t('group_management.group_list', '그룹 목록')} : ${data.length}`}

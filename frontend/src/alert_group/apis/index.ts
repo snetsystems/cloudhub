@@ -129,6 +129,13 @@ export const deleteAlertGroupRule = async (id: string): Promise<void> => {
   })
 }
 
+export const deleteAlertGroupRuleAndFetch = async (
+  id: string
+): Promise<AlertGroupRule[]> => {
+  await deleteAlertGroupRule(id)
+  return await getAlertGroupRules()
+}
+
 // Alert Rule ↔ recipient groups
 export const setAlertRuleRecipientGroups = async (
   ruleId: string,

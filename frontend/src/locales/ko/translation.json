@@ -71,7 +71,9 @@
     "pause": "일시중지",
     "in_use": "사용중",
     "not_in_use": "사용 안함",
-    "delete": "삭제"
+    "delete": "삭제",
+    "delete_success": "이벤트 그룹 규칙을 삭제했습니다.",
+    "delete_failed": "이벤트 그룹 규칙 삭제에 실패했습니다."
   },
   "button": {
     "edit": "수정",

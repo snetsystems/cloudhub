@@ -1,7 +1,8 @@
-import React, {useState, useEffect, useMemo} from 'react'
+import React, {useState, useEffect, useMemo, useCallback} from 'react'
 import {useTranslation} from 'react-i18next'
 import {withRouter} from 'react-router'
 import {connect} from 'react-redux'
+import ReactJson from 'react-json-view'
 
 import TableComponent from 'src/device_management/components/TableComponent'
 import {
@@ -12,15 +13,23 @@ import {
   SlideToggle,
   ButtonShape,
   Page,
+  OverlayTechnology,
+  OverlayContainer,
+  OverlayHeading,
+  OverlayBody,
 } from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {ColumnInfo} from 'src/types'
 import {AlertGroupRule, AlertCondition} from 'src/alert_group/types'
-import {getAlertGroupRules, deleteAlertGroupRule} from 'src/alert_group/apis'
+import {
+  getAlertGroupRules,
+  deleteAlertGroupRuleAndFetch,
+  updateAlertGroupRule,
+} from 'src/alert_group/apis'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 
-import './ServerAlertManagementPage.scss'
+
 
 function ServerAlertManagementPage({router, location, notify}: any) {
   const {t} = useTranslation()
@@ -28,6 +37,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
   const [activeFilter, setActiveFilter] = useState<
     'all' | 'warning' | 'critical'
   >('all')
+  const [viewingRule, setViewingRule] = useState<AlertGroupRule | null>(null)
 
   // 데이터 가져오기
   const fetchData = async () => {
@@ -45,35 +55,54 @@ function ServerAlertManagementPage({router, location, notify}: any) {
     fetchData()
   }, [])
 
-  const handleToggleActive = (id: string) => {
-    setData(prevData =>
-      prevData.map(item =>
-        item.id === id ? {...item, active: !item.active} : item
-      )
-    )
-  }
+  const handleToggleActive = useCallback(
+    async (rule: AlertGroupRule) => {
+      if (!rule || !rule.id) return
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteAlertGroupRule(id)
-      notify(
-        notifySuccess(
-          t('server_alert.delete_success', '이벤트 그룹 규칙을 삭제했습니다.')
+      try {
+        const updatedRule = await updateAlertGroupRule(rule.id, {
+          ...rule,
+          active: !rule.active,
+        })
+        setData(prevData =>
+          prevData.map(item => (item.id === rule.id ? updatedRule : item))
         )
-      )
-      fetchData()
-    } catch (error) {
-      console.error('Failed to delete alert group rule', error)
-      notify(
-        notifyError(
-          t(
-            'server_alert.delete_failed',
-            '이벤트 그룹 규칙 삭제에 실패했습니다.'
+      } catch (error) {
+        console.error('Failed to update alert group rule', error)
+        notify(
+          notifyError(
+            t('server_alert.update_failed', '상태 변경에 실패했습니다.')
           )
         )
-      )
-    }
-  }
+      }
+    },
+    [notify, t]
+  )
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        const updatedRules = await deleteAlertGroupRuleAndFetch(id)
+        setData(updatedRules)
+        notify(
+          notifySuccess(
+            t('server_alert.delete_success', '이벤트 그룹 규칙을 삭제했습니다.')
+          )
+        )
+      } catch (error) {
+        console.error('Failed to delete alert group rule', error)
+        notify(
+          notifyError(
+            t(
+              'server_alert.delete_failed',
+              '이벤트 그룹 규칙 삭제에 실패했습니다.'
+            )
+          )
+        )
+      }
+    },
+    [notify, t]
+  )
 
   // 카운트 계산 (데이터 기반)
   const totalCount = data.length
@@ -138,9 +167,13 @@ function ServerAlertManagementPage({router, location, notify}: any) {
       color={ComponentColor.Primary}
       onClick={() => {
         if (location && location.pathname) {
-          router.push(
-            location.pathname.replace('/server-alert', '/alert-setup')
-          )
+          router.push({
+            pathname: location.pathname.replace(
+              '/server-alert',
+              '/alert-setup'
+            ),
+            state: {returnTo: location.pathname},
+          })
         }
       }}
     />
@@ -155,7 +188,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
           <SlideToggle
             active={value}
             size={ComponentSize.ExtraSmall}
-            onChange={() => handleToggleActive(row.id!)}
+            onChange={() => handleToggleActive(row)}
           />
         ),
       },
@@ -222,14 +255,25 @@ function ServerAlertManagementPage({router, location, notify}: any) {
               size={ComponentSize.ExtraSmall}
               shape={ButtonShape.Square}
               color={ComponentColor.Default}
-              onClick={() => {}}
+              onClick={() => setViewingRule(row)}
             />
             <Button
               icon={IconFont.Pencil}
               size={ComponentSize.ExtraSmall}
               shape={ButtonShape.Square}
               color={ComponentColor.Default}
-              onClick={() => {}}
+              onClick={() => {
+                if (location && location.pathname) {
+                  router.push({
+                    pathname: location.pathname.replace(
+                      '/server-alert',
+                      '/alert-setup'
+                    ),
+                    query: {id: row.id},
+                    state: {returnTo: location.pathname},
+                  })
+                }
+              }}
             />
             <ConfirmButton
               icon={IconFont.Trash}
@@ -243,7 +287,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
         ),
       },
     ],
-    [t]
+    [t, handleToggleActive, handleDelete]
   )
 
   return (
@@ -271,6 +315,30 @@ function ServerAlertManagementPage({router, location, notify}: any) {
             options={{tbodyRow: {className: 'server-alert-table-row'}}}
           />
         </div>
+
+        <OverlayTechnology visible={!!viewingRule}>
+          <OverlayContainer maxWidth={800}>
+            <OverlayHeading
+              title={t('server_alert.rule_json', '규칙 JSON 보기')}
+              onDismiss={() => setViewingRule(null)}
+            />
+            <OverlayBody>
+              <div className="server-alert-json-view-container">
+                {viewingRule && (
+                  <ReactJson
+                    src={viewingRule}
+                    theme="ocean"
+                    collapsed={2}
+                    displayDataTypes={false}
+                    displayObjectSize={false}
+                    enableClipboard={true}
+                    style={{backgroundColor: 'transparent'}}
+                  />
+                )}
+              </div>
+            </OverlayBody>
+          </OverlayContainer>
+        </OverlayTechnology>
       </Page.Contents>
     </Page>
   )

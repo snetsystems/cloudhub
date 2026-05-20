@@ -71,7 +71,9 @@
     "pause": "Pause",
     "in_use": "In Use",
     "not_in_use": "Not in Use",
-    "delete": "Delete"
+    "delete": "Delete",
+    "delete_success": "Alert group rule deleted successfully.",
+    "delete_failed": "Failed to delete alert group rule."
   },
   "button": {
     "edit": "Edit",

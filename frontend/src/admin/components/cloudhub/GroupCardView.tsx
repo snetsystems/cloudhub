@@ -6,9 +6,11 @@ import {
   ComponentColor,
   ComponentSize,
   IconFont,
+  ComponentStatus,
 } from 'src/reusable_ui'
 import {DummyUser} from 'src/admin/containers/cloudhub/GroupDetailPage'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
+import {Input, Button, ButtonShape} from 'src/reusable_ui'
 
 const DropdownItem = Dropdown.Item
 
@@ -24,6 +26,8 @@ interface Props {
   onToggleAlert: (id: string) => void
   onLevelChange: (id: string, level: string) => void
   onRemoveUser: (id: string) => void
+  onUserFieldChange?: (id: string, field: string, value: string) => void
+  onSaveUser?: (id: string) => void
 }
 
 export default function GroupCardView({
@@ -32,6 +36,8 @@ export default function GroupCardView({
   onToggleAlert,
   onLevelChange,
   onRemoveUser,
+  onUserFieldChange,
+  onSaveUser,
 }: Props) {
   const {t} = useTranslation()
 
@@ -50,21 +56,62 @@ export default function GroupCardView({
           {/* Avatar and Info Header */}
           <div className="group-card-header">
             <div className="group-card-avatar">
-              {u.userName.substring(0, 2).toUpperCase()}
+              {u.userName ? u.userName.substring(0, 2).toUpperCase() : '?'}
             </div>
-            <div className="group-card-info">
-              <div className="group-card-name">{u.userName}</div>
-              <div className="group-card-email">{u.email}</div>
+            <div className="group-card-info" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {u.isEditing ? (
+                <>
+                  <Input
+                    value={u.userName}
+                    onChange={e => onUserFieldChange && onUserFieldChange(u.id, 'userName', e.target.value)}
+                    placeholder={t('group_management.enter_user_name', '사용자명 입력')}
+                  />
+                  <Input
+                    value={u.email}
+                    onChange={e => onUserFieldChange && onUserFieldChange(u.id, 'email', e.target.value)}
+                    placeholder={t('group_management.enter_email', '이메일 입력')}
+                    status={
+                      u.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u.email.trim())
+                        ? ComponentStatus.Error
+                        : ComponentStatus.Default
+                    }
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="group-card-name">{u.userName}</div>
+                  <div className="group-card-email">{u.email}</div>
+                </>
+              )}
             </div>
-            <div className="group-card-remove-action">
-              <ConfirmButton
-                icon={IconFont.UserRemove}
-                square={true}
-                confirmText={t('group_management.remove_confirm', '제외하기')}
-                type="btn-danger"
-                size="btn-xs"
-                confirmAction={() => onRemoveUser(u.id)}
-              />
+            <div className="group-card-remove-action" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {u.isEditing ? (
+                <>
+                  <Button
+                    icon={IconFont.Checkmark}
+                    color={ComponentColor.Primary}
+                    size={ComponentSize.ExtraSmall}
+                    shape={ButtonShape.Square}
+                    onClick={() => onSaveUser && onSaveUser(u.id)}
+                  />
+                  <Button
+                    icon={IconFont.Remove}
+                    color={ComponentColor.Default}
+                    size={ComponentSize.ExtraSmall}
+                    shape={ButtonShape.Square}
+                    onClick={() => onRemoveUser(u.id)}
+                  />
+                </>
+              ) : (
+                <ConfirmButton
+                  icon={IconFont.UserRemove}
+                  square={true}
+                  confirmText={t('group_management.remove_confirm', '제외하기')}
+                  type="btn-danger"
+                  size="btn-xs"
+                  confirmAction={() => onRemoveUser(u.id)}
+                />
+              )}
             </div>
           </div>
 

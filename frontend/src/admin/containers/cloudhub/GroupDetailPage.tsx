@@ -42,6 +42,8 @@ export interface DummyUser {
   isNew?: boolean
   userId?: string
   originalPrefs?: AlertRecipientMemberPrefs
+  isEditing?: boolean
+  isExternal?: boolean
 }
 
 export interface GroupInfo {
@@ -117,7 +119,10 @@ function GroupDetailPage({params, notify}: Props) {
         console.error('Failed to fetch group details', error)
         notify(
           notifyError(
-            t('group_management.fetch_failed', '그룹 상세 정보를 불러오는데 실패했습니다.')
+            t(
+              'group_management.fetch_failed',
+              '그룹 상세 정보를 불러오는데 실패했습니다.'
+            )
           )
         )
       } finally {
@@ -142,6 +147,44 @@ function GroupDetailPage({params, notify}: Props) {
     setUsers(users.filter(u => u.id !== userId))
   }
 
+  const handleUserFieldChange = (
+    userId: string,
+    field: string,
+    value: string
+  ) => {
+    setUsers(users.map(u => (u.id === userId ? {...u, [field]: value} : u)))
+  }
+
+  const handleSaveExternalUser = (userId: string) => {
+    const user = users.find(u => u.id === userId)
+    if (!user?.userName.trim() || !user?.email.trim()) {
+      notify(
+        notifyError(
+          t(
+            'group_management.enter_all_fields',
+            '사용자명과 이메일을 모두 입력해주세요.'
+          )
+        )
+      )
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(user.email.trim())) {
+      notify(
+        notifyError(
+          t(
+            'group_management.invalid_email_format',
+            '올바른 이메일 형식이 아닙니다.'
+          )
+        )
+      )
+      return
+    }
+
+    setUsers(users.map(u => (u.id === userId ? {...u, isEditing: false} : u)))
+  }
+
   const columns: ColumnInfo[] = useMemo(
     () => [
       {
@@ -160,8 +203,52 @@ function GroupDetailPage({params, notify}: Props) {
           />
         ),
       },
-      {name: t('group_management.user_name', '사용자명'), key: 'userName'},
-      {name: t('group_management.email_option', '이메일'), key: 'email'},
+      {
+        name: t('group_management.user_name', '사용자명'),
+        key: 'userName',
+        render: (_val, row) =>
+          row.isEditing ? (
+            <div style={{maxWidth: '200px'}}>
+              <Input
+                value={row.userName}
+                onChange={e =>
+                  handleUserFieldChange(row.id, 'userName', e.target.value)
+                }
+                placeholder={t(
+                  'group_management.enter_user_name',
+                  '사용자명 입력'
+                )}
+                size={ComponentSize.Small}
+              />
+            </div>
+          ) : (
+            row.userName
+          ),
+      },
+      {
+        name: t('group_management.email_option', '이메일'),
+        key: 'email',
+        render: (_val, row) =>
+          row.isEditing ? (
+            <div style={{maxWidth: '200px'}}>
+              <Input
+                value={row.email}
+                onChange={e =>
+                  handleUserFieldChange(row.id, 'email', e.target.value)
+                }
+                placeholder={t('group_management.enter_email', '이메일 입력')}
+                size={ComponentSize.Small}
+                status={
+                  row.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email.trim())
+                    ? ComponentStatus.Error
+                    : ComponentStatus.Default
+                }
+              />
+            </div>
+          ) : (
+            row.email
+          ),
+      },
       {
         name: t('group_management.alert_level', '알림 레벨'),
         key: 'level',
@@ -193,18 +280,42 @@ function GroupDetailPage({params, notify}: Props) {
             style: {width: '10%'},
           },
         },
-        render: (_val, row) => (
-          <div className="list-view-remove-action">
-            <ConfirmButton
-              icon={IconFont.UserRemove}
-              square={true}
-              confirmText={t('group_management.remove_confirm', '제외하기')}
-              type="btn-danger"
-              size="btn-xs"
-              confirmAction={() => handleRemoveUser(row.id)}
-            />
-          </div>
-        ),
+        render: (_val, row) =>
+          row.isEditing ? (
+            <div
+              className="list-view-edit-action"
+              style={{display: 'flex', gap: '4px', justifyContent: 'center'}}
+            >
+              <Button
+                icon={IconFont.Remove}
+                color={ComponentColor.Default}
+                size={ComponentSize.ExtraSmall}
+                shape={ButtonShape.Square}
+                onClick={() => handleRemoveUser(row.id)}
+              />
+              <Button
+                icon={IconFont.Checkmark}
+                color={ComponentColor.Success}
+                size={ComponentSize.ExtraSmall}
+                shape={ButtonShape.Square}
+                onClick={() => handleSaveExternalUser(row.id)}
+              />
+            </div>
+          ) : (
+            <div
+              className="list-view-remove-action"
+              style={{justifyContent: 'center'}}
+            >
+              <ConfirmButton
+                icon={IconFont.UserRemove}
+                square={true}
+                confirmText={t('group_management.remove_confirm', '제외하기')}
+                type="btn-danger"
+                size="btn-xs"
+                confirmAction={() => handleRemoveUser(row.id)}
+              />
+            </div>
+          ),
       },
     ],
     [users, t]
@@ -251,14 +362,37 @@ function GroupDetailPage({params, notify}: Props) {
     )
   }
 
-  const addUserButton = (
-    <Button
-      text={t('group_management.add_user', '사용자 추가')}
-      icon={IconFont.Plus}
-      color={ComponentColor.Primary}
-      size={ComponentSize.Small}
-      onClick={() => setIsUserOverlayVisible(true)}
-    />
+  const handleAddExternalUser = () => {
+    const newExternalUser: DummyUser = {
+      id: `ext_${Date.now()}`,
+      userName: '',
+      email: '',
+      alertOn: true,
+      level: 'all',
+      isNew: true,
+      isExternal: true,
+      isEditing: true,
+    }
+    setUsers([newExternalUser, ...users])
+  }
+
+  const actionButtons = (
+    <>
+      <Button
+        text={t('group_management.add_external_user', '외부 사용자 추가')}
+        icon={IconFont.Plus}
+        color={ComponentColor.Default}
+        size={ComponentSize.Small}
+        onClick={handleAddExternalUser}
+      />
+      <Button
+        text={t('group_management.add_user', '사용자 추가')}
+        icon={IconFont.Plus}
+        color={ComponentColor.Primary}
+        size={ComponentSize.Small}
+        onClick={() => setIsUserOverlayVisible(true)}
+      />
+    </>
   )
 
   const handleConfirmUserSelection = (selectedUsers: User[]) => {
@@ -314,7 +448,9 @@ function GroupDetailPage({params, notify}: Props) {
                 }
 
                 if (groupId && groupId !== 'new') {
-                  const currentUserIds = new Set(users.filter(u => !u.isNew).map(u => u.id))
+                  const currentUserIds = new Set(
+                    users.filter(u => !u.isNew).map(u => u.id)
+                  )
                   const removedMembers = originalMembers.filter(
                     m => !currentUserIds.has(m.id)
                   )
@@ -365,7 +501,10 @@ function GroupDetailPage({params, notify}: Props) {
 
                 notify(
                   notifySuccess(
-                    t('group_management.save_success', '그룹 설정을 저장했습니다.')
+                    t(
+                      'group_management.save_success',
+                      '그룹 설정을 저장했습니다.'
+                    )
                   )
                 )
                 browserHistory.goBack()
@@ -373,7 +512,10 @@ function GroupDetailPage({params, notify}: Props) {
                 console.error('Failed to save group details', error)
                 notify(
                   notifyError(
-                    t('group_management.save_failed', '그룹 설정 저장에 실패했습니다.')
+                    t(
+                      'group_management.save_failed',
+                      '그룹 설정 저장에 실패했습니다.'
+                    )
                   )
                 )
               } finally {
@@ -421,7 +563,10 @@ function GroupDetailPage({params, notify}: Props) {
                   />
                   {groupNameError && (
                     <span className="input-error-msg">
-                      {t('group_management.group_name_required', '반드시 입력해야 합니다.')}
+                      {t(
+                        'group_management.group_name_required',
+                        '반드시 입력해야 합니다.'
+                      )}
                     </span>
                   )}
                 </div>
@@ -436,7 +581,9 @@ function GroupDetailPage({params, notify}: Props) {
                 '사용자별 수신 상세설정'
               )}
               topLeftRender={viewModeRadio}
-              toprightRender={addUserButton}
+              toprightRender={
+                <div style={{display: 'flex', gap: '8px'}}>{actionButtons}</div>
+              }
               columns={columns}
               data={users}
               isSearchDisplay={false}
@@ -463,7 +610,7 @@ function GroupDetailPage({params, notify}: Props) {
                   className="table-top right"
                   style={{display: 'flex', gap: '8px', alignItems: 'center'}}
                 >
-                  {addUserButton}
+                  {actionButtons}
                 </div>
               </div>
               <div className="panel-body card-view-body">
@@ -473,6 +620,8 @@ function GroupDetailPage({params, notify}: Props) {
                   onToggleAlert={handleToggleAlert}
                   onLevelChange={handleLevelChange}
                   onRemoveUser={handleRemoveUser}
+                  onUserFieldChange={handleUserFieldChange}
+                  onSaveUser={handleSaveExternalUser}
                 />
               </div>
             </div>
