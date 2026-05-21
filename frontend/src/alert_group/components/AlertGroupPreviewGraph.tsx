@@ -2,6 +2,7 @@
 import React, {PureComponent, CSSProperties} from 'react'
 import {connect} from 'react-redux'
 import uuid from 'uuid'
+import {withTranslation, WithTranslation} from 'react-i18next'
 
 import TimeSeries from 'src/shared/components/time_series/TimeSeries'
 import RuleGraphDygraph from 'src/kapacitor/components/RuleGraphDygraph'
@@ -16,7 +17,7 @@ import {Source, TimeRange, RemoteDataState, AlertRule} from 'src/types'
 import {QueryConfig} from 'src/types/queries'
 import {AlertCondition, AlertGroupRule} from 'src/alert_group/types'
 
-interface Props {
+interface Props extends WithTranslation {
   source: Source
   database?: string
   retentionPolicy?: string
@@ -77,6 +78,7 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
       timeRange,
       source,
       triggerOperator,
+      t,
     } = this.props
     const ready = !!(measurement && field)
     const queries = ready ? buildQueries([this.queryConfig], timeRange) : []
@@ -106,7 +108,7 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
                 key={i}
                 className={`alert-group-preview-graph--threshold alert-group-preview-graph--threshold__${condition.level}`}
               >
-                {LEVEL_LABELS[condition.level] || condition.level}: {condition.value}
+                {t(`server_alert.${condition.level}`, LEVEL_LABELS[condition.level])}: {condition.value}
               </span>
             ))}
           </div>
@@ -115,23 +117,26 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
           <div className="alert-group-preview-graph--graph-shell">
             {!ready ? (
               <div className="alert-group-preview-graph--graph-placeholder">
-                <p>
-                  <strong>시계열</strong>을 선택하면 그래프가 이 영역에 표시됩니다.
-                </p>
+                <p dangerouslySetInnerHTML={{
+                  __html: t(
+                    'alert_group_basic.graph_placeholder',
+                    '<strong>시계열</strong>을 선택하면 그래프가 이 영역에 표시됩니다.'
+                  )
+                }} />
               </div>
             ) : (
               <div className="dygraph graph--hasYLabel" style={this.dygraphShellStyle}>
                 <TimeSeries
-                  source={source}
-                  uuid={this.instanceUuid}
-                  queries={queries}
-                  timeRange={timeRange}
+                   source={source}
+                   uuid={this.instanceUuid}
+                   queries={queries}
+                   timeRange={timeRange}
                 >
                   {({timeSeriesInfluxQL, loading}) => {
                     if (loading === RemoteDataState.Loading) {
                       return (
                         <div className="alert-group-preview-graph--loading">
-                          데이터를 불러오는 중...
+                          {t('alert_group_basic.loading_data', '데이터를 불러오는 중...')}
                         </div>
                       )
                     }
@@ -154,7 +159,7 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
                     if (!hasData) {
                       return (
                         <div className="alert-group-preview-graph--no-data">
-                          <p>선택한 시간 범위에 데이터가 없습니다.</p>
+                          <p>{t('alert_group_basic.no_data_in_range', '선택한 시간 범위에 데이터가 없습니다.')}</p>
                         </div>
                       )
                     }
@@ -186,4 +191,5 @@ const mdtp = {
   setHoverTime: setHoverTimeAction,
 }
 
-export default connect(null, mdtp)(AlertGroupPreviewGraph)
+export default connect(null, mdtp)(withTranslation()(AlertGroupPreviewGraph))
+
