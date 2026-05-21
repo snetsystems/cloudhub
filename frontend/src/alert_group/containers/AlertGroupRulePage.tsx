@@ -15,7 +15,6 @@ import {
 import {TimeRange} from 'src/types'
 import {
   AlertGroupRule,
-  AlertKapacitor,
   AlertTemplate,
   UserGroup,
   DEFAULT_RULE,
@@ -54,12 +53,10 @@ import {
   createAlertGroupRule,
   updateAlertGroupRule,
   testDraftAlertGroupNotification,
-  getAlertKapacitors,
   getUserGroups,
   getAlertTemplates,
   fetchAvailableMeasurements,
 } from 'src/alert_group/apis'
-import {getActiveKapacitor} from 'src/shared/apis'
 
 // Actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -89,7 +86,6 @@ interface Props {
 interface State {
   rule: AlertGroupRule
   savedRule: AlertGroupRule | null
-  kapacitors: AlertKapacitor[]
   userGroups: UserGroup[]
   templates: AlertTemplate[]
   availableMeasurements: Set<string>
@@ -114,7 +110,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     this.state = {
       rule: DEFAULT_RULE,
       savedRule: null,
-      kapacitors: [],
       userGroups: [],
       templates: [],
       availableMeasurements: new Set<string>(),
@@ -133,22 +128,18 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {params} = this.props
     this.setState({loading: RemoteDataState.Loading})
 
     try {
-      const isEdit = params.id && params.id !== 'new'
+      const ruleId = this.ruleId
+      const isEdit = ruleId && ruleId !== 'new'
 
       const [
-        kapacitors,
         userGroups,
-        activeKapacitor,
         templates,
         availableMeasurements,
       ] = await Promise.all([
-        getAlertKapacitors(),
         getUserGroups(),
-        getActiveKapacitor(this.props.source).catch(() => null),
         getAlertTemplates().catch(() => [] as AlertTemplate[]),
         fetchAvailableMeasurements(this.props.source).catch(
           () => new Set<string>()
@@ -156,7 +147,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       ])
 
       if (isEdit) {
-        const rule = await getAlertGroupRule(params.id)
+        const rule = await getAlertGroupRule(ruleId!)
 
         let builderMode: 'template' | 'raw' = 'raw'
         let selectedTemplateId = 'custom'
@@ -172,7 +163,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         this.setState({
           rule,
           savedRule: rule,
-          kapacitors,
           userGroups,
           templates,
           availableMeasurements,
@@ -181,16 +171,9 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           selectedTemplateId,
         })
       } else {
-        const preferredKapacitorID = this.findPreferredKapacitorID(
-          kapacitors,
-          activeKapacitor
-        )
         this.setState({
-          rule:
-            preferredKapacitorID !== ''
-              ? {...this.state.rule, kapacitorId: preferredKapacitorID}
-              : this.state.rule,
-          kapacitors,
+          rule: this.state.rule,
+          savedRule: null,
           userGroups,
           templates,
           availableMeasurements,
@@ -200,6 +183,10 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     } catch (e) {
       this.setState({loading: RemoteDataState.Error})
       this.props.notify(notifyError('데이터를 불러오는 데 실패했습니다.'))
+      const {source, router} = this.props
+      if (source && source.id) {
+        router.push(`/sources/${source.id}/server-monitoring/server-alert`)
+      }
     }
 
     document.addEventListener('visibilitychange', this.handleVisibilityRefetch)
@@ -212,79 +199,28 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     )
   }
 
-  private handleVisibilityRefetch = (): void => {
-    if (document.visibilityState !== 'visible') {
-      return
-    }
-    this.refreshKapacitors()
-  }
+  private handleVisibilityRefetch = async (): Promise<void> => {
+    if (document.visibilityState === 'visible') {
+      try {
+        const userGroups = await getUserGroups()
 
-  private refreshKapacitors = async (): Promise<void> => {
-    try {
-      const kapacitors = await getAlertKapacitors()
-      const activeKapacitor = await getActiveKapacitor(this.props.source).catch(
-        () => null
-      )
-      const preferredKapacitorID = this.findPreferredKapacitorID(
-        kapacitors,
-        activeKapacitor
-      )
-      this.setState(prev => ({
-        kapacitors,
-        rule:
-          prev.rule.kapacitorId || preferredKapacitorID === ''
-            ? prev.rule
-            : {...prev.rule, kapacitorId: preferredKapacitorID},
-      }))
-    } catch {
-      // Ignore - separate from initial load failure
-    }
-  }
-
-  private normalizeKapacitorURL(url: string = ''): string {
-    return url.trim().replace(/\/+$/, '').toLowerCase()
-  }
-
-  private findPreferredKapacitorID(
-    kapacitors: AlertKapacitor[],
-    activeKapacitorFromAPI?: {url?: string; name?: string} | null
-  ): string {
-    const sourceKapacitors = this.props.source?.kapacitors || []
-    const activeKapacitor =
-      activeKapacitorFromAPI || sourceKapacitors.find(k => k.active)
-    if (activeKapacitor) {
-      const activeURL = this.normalizeKapacitorURL(activeKapacitor.url)
-      if (activeURL) {
-        const byURL = kapacitors.find(
-          k => this.normalizeKapacitorURL(k.url) === activeURL
-        )
-        if (byURL?.id) {
-          return byURL.id
-        }
-      }
-
-      const activeName = (activeKapacitor.name || '').trim().toLowerCase()
-      if (activeName) {
-        const byName = kapacitors.find(
-          k => (k.name || '').trim().toLowerCase() === activeName
-        )
-        if (byName?.id) {
-          return byName.id
-        }
+        this.setState({
+          userGroups,
+        })
+      } catch (e) {
+        console.error('Failed to refetch reference data', e)
       }
     }
+  }
 
-    // If there is only one Kapacitor in the organization, select it automatically.
-    if (kapacitors.length === 1 && kapacitors[0].id) {
-      return kapacitors[0].id
-    }
-
-    return ''
+  private get ruleId(): string | undefined {
+    const {params, location} = this.props
+    return params.id || (location as any).query?.id
   }
 
   private get isNew(): boolean {
-    const {params} = this.props
-    return !params.id || params.id === 'new'
+    const ruleId = this.ruleId
+    return !ruleId || ruleId === 'new'
   }
 
   private handleUpdateRule = (patch: Partial<AlertGroupRule>): void => {
@@ -358,7 +294,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
   }
 
   private handleSave = async (): Promise<void> => {
-    const {source, params, router, notify} = this.props
+    const {source, router, notify} = this.props
     const {rule} = this.state
 
     this.setState({isSaving: true})
@@ -367,9 +303,15 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       if (this.isNew) {
         await createAlertGroupRule(rule)
       } else {
-        await updateAlertGroupRule(params.id, rule)
+        await updateAlertGroupRule(this.ruleId!, rule)
       }
-      router.push(`/sources/${source.id}/server-monitoring/server-alert`)
+      
+      const returnTo = (this.props.location.state as any)?.returnTo
+      if (returnTo) {
+        router.push(returnTo)
+      } else {
+        router.push(`/sources/${source.id}/server-monitoring/server-alert`)
+      }
     } catch (e) {
       notify(
         notifyError(this.getRequestErrorMessage(e, '저장에 실패했습니다.'))
@@ -379,8 +321,13 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
   }
 
   private handleCancel = (): void => {
-    const {source, router} = this.props
-    router.push(`/sources/${source.id}/server-monitoring/server-alert`)
+    const {source, router, location} = this.props
+    const returnTo = (location.state as any)?.returnTo
+    if (returnTo) {
+      router.push(returnTo)
+    } else {
+      router.push(`/sources/${source.id}/server-monitoring/server-alert`)
+    }
   }
 
   private getRequestErrorMessage = (error: any, fallback: string): string => {
@@ -432,35 +379,14 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     this.setState({testUserGroupIds: selectedIDs})
   }
 
-  private parseTestRecipients = (value: string): string[] => {
-    return value
-      .split(/[\n,]/)
-      .map(recipient => recipient.trim())
-      .filter(Boolean)
-  }
-
   private handleTestSend = async (): Promise<void> => {
-    const {auth, notify} = this.props
+    const {notify} = this.props
     const {
-      rule,
       testTitle,
       testMessage,
-      testRecipients,
-      testIncludeSelf,
       testUserGroupIds,
     } = this.state
-    const manualRecipients = this.parseTestRecipients(testRecipients)
-    const selfEmail = auth?.me?.email
-    const recipients = [
-      ...(testIncludeSelf && selfEmail ? [selfEmail] : []),
-      ...manualRecipients,
-    ]
-
-    if (!rule.kapacitorId) {
-      notify(notifyError('테스트 발송 전에 Kapacitor를 먼저 선택해주세요.'))
-      return
-    }
-
+    
     if (!testTitle) {
       notify(notifyError('테스트 제목을 입력해주세요.'))
       return
@@ -469,22 +395,11 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       notify(notifyError('테스트 메시지를 입력해주세요.'))
       return
     }
-    if (recipients.length === 0 && testUserGroupIds.length === 0) {
-      notify(notifyError('수신 대상을 선택하거나 직접 입력해주세요.'))
-      return
-    }
 
     this.setState({isTestingSend: true})
 
     try {
-      // Modal lets the user pick recipient_groups + recipients explicitly, so the draft
-      // endpoint covers both new and saved rules — no need for the by-id path.
-      // NOTE: backend test-notification no longer accepts free-form `recipients[]`;
-      // manual entries from `testRecipients` are only used FE-side for the empty-check
-      // (kept here so the UX warning still triggers) and ignored at the request boundary.
-      void recipients
       const result = await testDraftAlertGroupNotification({
-        kapacitorId: rule.kapacitorId,
         recipientGroupIds: testUserGroupIds,
         title: testTitle,
         message: testMessage,
@@ -508,7 +423,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     const {source, auth} = this.props
     const {
       rule,
-      kapacitors,
       userGroups,
       loading,
       isSaving,
@@ -529,7 +443,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     const hasPreview = !!(rule.measurement && rule.field)
     const basicSectionProps = {
       rule,
-      kapacitors,
       organizationId: auth?.me?.currentOrganization?.id || '',
       me: auth ? auth.me : null,
       onUpdateRule: this.handleUpdateRule,

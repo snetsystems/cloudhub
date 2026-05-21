@@ -11,26 +11,18 @@ import {
   ComponentSize,
   ComponentStatus,
   MultiSelectDropdown,
-  DropdownMode,
   DropdownMenuColors,
   SlideToggle,
-  Dropdown,
   IconFont,
 } from 'src/reusable_ui'
 import CodeData from 'src/kapacitor/components/CodeData'
 import {RULE_MESSAGE_TEMPLATES} from 'src/kapacitor/constants'
 import {RemoteDataState} from 'src/types'
-import {
-  AlertGroupRule,
-  AlertKapacitor,
-  UserGroup,
-  UserGroupMember,
-} from 'src/alert_group/types'
+import {AlertGroupRule, UserGroup, UserGroupMember} from 'src/alert_group/types'
 import {getUserGroups} from 'src/alert_group/apis'
 
 interface AlertGroupBasicSectionProps extends WithTranslation {
   rule: AlertGroupRule
-  kapacitors: AlertKapacitor[]
   organizationId: string
   me: any
   onUpdateRule: (patch: Partial<AlertGroupRule>) => void
@@ -75,10 +67,6 @@ class AlertGroupBasicSectionView extends PureComponent<
 
   private handleToggleActive = (): void => {
     this.props.onUpdateRule({active: !this.props.rule.active})
-  }
-
-  private handleKapacitorChange = (item: AlertKapacitor): void => {
-    this.props.onUpdateRule({kapacitorId: item.id})
   }
 
   private handleMessageChange = (e: ChangeEvent<HTMLTextAreaElement>): void => {
@@ -178,7 +166,7 @@ class AlertGroupBasicSectionView extends PureComponent<
   }
 
   public render() {
-    const {rule, kapacitors, onOpenTestModal, isTestingSend, t} = this.props
+    const {rule, isTestingSend, onOpenTestModal, t} = this.props
     const {receiveMode, userGroups} = this.state
 
     return (
@@ -197,7 +185,7 @@ class AlertGroupBasicSectionView extends PureComponent<
             />
           </div>
 
-          <div className="rule-section--row">
+          {/* <div className="rule-section--row">
             <p>Kapacitor</p>
             {kapacitors.length > 0 ? (
               <Dropdown
@@ -220,7 +208,7 @@ class AlertGroupBasicSectionView extends PureComponent<
                 {t('alert_group_basic.no_registered_kapacitor')}
               </span>
             )}
-          </div>
+          </div> */}
           <div className="rule-section--row rule-section--row-receive-block rule-section--border-top">
             <div
               className="rule-section--row-handler-label"

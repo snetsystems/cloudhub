@@ -3,8 +3,6 @@ import React, {PureComponent} from 'react'
 import uuid from 'uuid'
 import {withTranslation, WithTranslation} from 'react-i18next'
 import {
-  Button,
-  IconFont,
   ComponentColor,
   ComponentSize,
   Input,
@@ -15,6 +13,7 @@ import {
 } from 'src/reusable_ui'
 
 import Dropdown from 'src/shared/components/Dropdown'
+import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
 
 import {SHIFTS, PERIODS} from 'src/kapacitor/constants'
 
@@ -616,7 +615,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       me,
       isUsingAuth,
       builderMode,
-      onSwitchToRawMode,
+      templates,
       t,
     } = this.props
     const {queryConfig} = this.state
@@ -626,6 +625,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       o => o.value === rule.pauseSeconds
     )
     const isTemplateMode = builderMode !== 'raw'
+    const selectedTemplate = templates ? findSelectedAlertTemplate(templates, rule) : undefined
 
     return (
       <div className="rule-section">
@@ -633,15 +633,6 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
           <h3 className="rule-section--heading">
             {t('alert_group_rule.cond_def_title')}
           </h3>
-          {isTemplateMode && onSwitchToRawMode && (
-            <Button
-              text={t('alert_group_rule.direct_input')}
-              icon={IconFont.Pencil}
-              size={ComponentSize.ExtraSmall}
-              color={ComponentColor.Default}
-              onClick={onSwitchToRawMode}
-            />
-          )}
         </div>
         <div className="rule-section--body">
           {isTemplateMode ? (
@@ -649,7 +640,14 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
           ) : (
             <>
               {/* ── 3-패널 Time Series 브라우저 ── */}
-              <div className="query-builder">
+              <div
+                className="query-builder"
+                style={
+                  selectedTemplate
+                    ? {pointerEvents: 'none', opacity: 0.55}
+                    : undefined
+                }
+              >
                 <DatabaseList
                   query={queryConfig}
                   onChooseNamespace={this.handleChooseNamespace}
@@ -1037,8 +1035,15 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
           {/* Pause Group */}
           <div className="alert-group-setting-row">
-            <div className="alert-group-setting-label">
+            <div
+              className="alert-group-setting-label"
+              style={{display: 'flex', alignItems: 'center', gap: '6px'}}
+            >
               {t('alert_group_rule.pause')}
+              <QuestionMarkTooltip
+                tipID="pause-tooltip"
+                tipContent={t('alert_group_rule.pause_tooltip')}
+              />
             </div>
             <div className="alert-group-setting-control">
               <div className="alert-group-setting-inputs">
@@ -1062,16 +1067,21 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
               </div>
               <p className="alert-group-setting-helper">
                 {t('alert_group_rule.pause_desc1')}
-                <br />
-                {t('alert_group_rule.pause_desc2')}
               </p>
             </div>
           </div>
 
           {/* Resolved Alert Group */}
           <div className="alert-group-setting-row">
-            <div className="alert-group-setting-label">
+            <div
+              className="alert-group-setting-label"
+              style={{display: 'flex', alignItems: 'center', gap: '6px'}}
+            >
               {t('alert_group_rule.notify_recovery')}
+              <QuestionMarkTooltip
+                tipID="recovery-tooltip"
+                tipContent={t('alert_group_rule.recovery_tooltip')}
+              />
             </div>
             <div className="alert-group-setting-control">
               <div className="alert-group-setting-inputs">
@@ -1086,8 +1096,6 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
               </div>
               <p className="alert-group-setting-helper">
                 {t('alert_group_rule.recovery_desc1')}
-                <br />
-                {t('alert_group_rule.recovery_desc2')}
               </p>
             </div>
           </div>

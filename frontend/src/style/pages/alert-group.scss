@@ -112,8 +112,9 @@ $alert-group--preview-graph-shell-height: 360px;
     font-size: 11px;
     font-weight: 700;
     color: $g8-storm;
-    padding: $ix-marg-c $ix-marg-c $ix-marg-a;
+    padding: $ix-marg-b $ix-marg-a;
     text-transform: uppercase;
+    margin: $ix-marg-c 0 $ix-marg-a;
   }
 
   &--item {
@@ -454,6 +455,7 @@ $alert-group--preview-graph-shell-height: 360px;
   .query-builder {
     height: $alert-group--query-builder-height;
     overflow: visible;
+    margin-bottom: $ix-marg-c;
   }
 
   .query-builder--column {
@@ -1149,8 +1151,7 @@ $alert-group--preview-graph-shell-height: 360px;
 
 .alert-group-target--dropdown-root {
   position: relative;
-  width: 100%;
-  max-width: 520px;
+  width: 240px;
 }
 
 .alert-group-target--host-dropdown-menu {
@@ -1347,7 +1348,7 @@ $alert-group--preview-graph-shell-height: 360px;
 .alert-group-setting-row {
   display: flex;
   align-items: flex-start;
-  padding: $rule-builder--padding-md 0;
+  padding: 16px 0;
   border-bottom: 1px solid $rule-builder--section-border;
 
   &:last-child {

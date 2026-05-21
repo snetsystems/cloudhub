@@ -112,7 +112,6 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
     return (
       <div className="alert-group-sidebar">
         <div className="alert-group-sidebar--header">
-          <div className="alert-group-sidebar--title">이벤트 설정</div>
           <div className="alert-group-sidebar--search">
             <Input
               type={InputType.Text}

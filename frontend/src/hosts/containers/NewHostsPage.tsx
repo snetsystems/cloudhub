@@ -108,6 +108,8 @@ interface Props {
   onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
   onChooseCloudTimeRange: (timeRange: CloudTimeRange) => void
   setTimeZone: typeof appActions.setTimeZone
+  router?: any
+  location?: any
 }
 
 export function NewHostsPage({
@@ -119,6 +121,8 @@ export function NewHostsPage({
   onChooseCloudAutoRefresh,
   onChooseCloudTimeRange,
   setTimeZone,
+  router,
+  location,
 }: Props) {
   const {t} = useTranslation()
 
@@ -579,9 +583,23 @@ export function NewHostsPage({
               enableSharedChartHover={displayedChartMode === 'line'}
               toprightRender={
                 <div className="topright-render-container">
-                  {isRefreshing ? (
-                    <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
-                  ) : null}
+                  <Button
+                    text={t('server_alert.add_event', '이벤트 추가')}
+                    icon={IconFont.Plus}
+                    size={ComponentSize.Small}
+                    color={ComponentColor.Primary}
+                    onClick={() => {
+                      if (location && location.pathname && router) {
+                        router.push({
+                          pathname: location.pathname.replace(
+                            '/server-list',
+                            '/alert-setup'
+                          ),
+                          state: {returnTo: location.pathname},
+                        })
+                      }
+                    }}
+                  />
                 </div>
               }
               topLeftRender={

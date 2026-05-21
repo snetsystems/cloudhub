@@ -1,5 +1,6 @@
 // frontend/src/alert_group/components/AlertGroupTargetSection.tsx
 import React, {PureComponent} from 'react'
+import {withTranslation, WithTranslation} from 'react-i18next'
 import classnames from 'classnames'
 import {getDeep} from 'src/utils/wrappers'
 import {ComponentColor, ComponentSize, ComponentStatus} from 'src/reusable_ui'
@@ -15,7 +16,7 @@ interface HostTagSeries {
   values: string[][]
 }
 
-interface Props {
+interface Props extends WithTranslation {
   source: Source
   rule: AlertGroupRule
   onUpdateRule: (patch: Partial<AlertGroupRule>) => void
@@ -98,14 +99,15 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
   }
 
   private renderTargetTriggerLabel(selectedCount: number): string {
+    const {t} = this.props
     if (selectedCount === 0) {
-      return '서버를 선택해 주세요.'
+      return t('alert_group_rule.select_server')
     }
-    return `${selectedCount}개 선택`
+    return t('alert_group_rule.n_selected', {count: selectedCount})
   }
 
   public render(): JSX.Element {
-    const {rule} = this.props
+    const {rule, t} = this.props
     const {hosts, hostsLoad, targetPickerOpen} = this.state
 
     const selectedHostnames = rule.hostnames || []
@@ -119,15 +121,19 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
 
     return (
       <div className="rule-section">
-        <h3 className="rule-section--heading">② 이벤트 대상 선택</h3>
+        <h3 className="rule-section--heading">
+          {t('alert_group_rule.target_def_title')}
+        </h3>
         <div className="rule-section--body">
           <div className="alert-group-setting-row rule-section--row-first">
-            <div className="alert-group-setting-label">대상 서버</div>
+            <div className="alert-group-setting-label">
+              {t('alert_group_rule.target_server')}
+            </div>
             <div className="alert-group-setting-control">
               <div className="alert-group-setting-inputs">
                 {hostsLoad === RemoteDataState.Error ? (
                   <span className="alert-group-empty-text">
-                    호스트 목록을 불러오지 못했습니다.
+                    {t('alert_group_rule.failed_to_load_hosts')}
                   </span>
                 ) : (
                   <ClickOutside onClickOutside={this.closeTargetPicker}>
@@ -136,7 +142,6 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
                         'dropdown dropdown-small dropdown-default',
                         'alert-group-target--dropdown-root'
                       )}
-                      style={{width: '240px'}}
                     >
                       <DropdownButton
                         active={targetPickerOpen}
@@ -144,7 +149,7 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
                         size={ComponentSize.Small}
                         status={dropdownStatus}
                         onClick={this.toggleTargetPicker}
-                        title="서버 선택"
+                        title={t('alert_group_rule.select_server_title')}
                       >
                         {this.renderTargetTriggerLabel(
                           selectedHostnames.length
@@ -166,8 +171,7 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
                 )}
               </div>
               <p className="alert-group-setting-helper">
-                현재 소스로부터 보고 중인 호스트 중 선택한 서버에만 알림이
-                발생합니다.
+                {t('alert_group_rule.target_server_helper')}
               </p>
             </div>
           </div>
@@ -177,4 +181,4 @@ class AlertGroupTargetSection extends PureComponent<Props, State> {
   }
 }
 
-export default AlertGroupTargetSection
+export default withTranslation()(AlertGroupTargetSection)

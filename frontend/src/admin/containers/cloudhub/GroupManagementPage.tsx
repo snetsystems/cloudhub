@@ -2,7 +2,6 @@ import React, {useMemo, useState, useEffect} from 'react'
 import {withRouter} from 'react-router'
 import {useTranslation} from 'react-i18next'
 import {
-  Page,
   Button,
   ComponentColor,
   ComponentSize,
