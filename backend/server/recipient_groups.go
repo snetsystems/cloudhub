@@ -210,6 +210,7 @@ func (s *Service) NewRecipientGroupMember(w http.ResponseWriter, r *http.Request
 	}
 	req.UserID = strings.TrimSpace(req.UserID)
 	req.Email = strings.TrimSpace(req.Email)
+	req.PhoneNumber = strings.TrimSpace(req.PhoneNumber)
 	if req.IsExternal {
 		if req.Email == "" {
 			invalidData(w, errors.New("email is required for external recipients"), s.Logger)
@@ -221,8 +222,8 @@ func (s *Service) NewRecipientGroupMember(w http.ResponseWriter, r *http.Request
 			invalidData(w, errors.New("userId is required for internal members"), s.Logger)
 			return
 		}
-		if req.Email == "" {
-			invalidData(w, errors.New("email is required"), s.Logger)
+		if req.Email == "" && req.PhoneNumber == "" {
+			invalidData(w, errors.New("at least one of email or phoneNumber is required"), s.Logger)
 			return
 		}
 	}

@@ -14384,10 +14384,7 @@
     },
     "RecipientGroupMemberRequest": {
       "type": "object",
-      "description": "Two valid shapes — internal: {userId, userName, email}. External: {isExternal:true, userName, email}. For PATCH only userName / email / phoneNumber are persisted.",
-      "required": [
-        "email"
-      ],
+      "description": "Two valid shapes — internal: {userId, userName, email?, phoneNumber?} (at least one of email or phoneNumber). External: {isExternal:true, userName, email}. For PATCH only userName / email / phoneNumber are persisted.",
       "properties": {
         "userId": {
           "type": "string",
@@ -14399,10 +14396,11 @@
         "email": {
           "type": "string",
           "format": "email",
-          "description": "Required for both internal and external members. External members are uniquely identified by (recipientGroupId, email)."
+          "description": "Required for external members. For internal members it is optional, but at least one of email or phoneNumber must be provided. External members are uniquely identified by (recipientGroupId, email)."
         },
         "phoneNumber": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional SMS contact. For internal members, may be supplied instead of email (at least one contact channel is required)."
         },
         "isExternal": {
           "type": "boolean",
@@ -14424,6 +14422,15 @@
             "userName": "Alice",
             "email": "alice@example.com",
             "phoneNumber": "+821012345678",
+            "isExternal": false
+          }
+        },
+        "internalPhoneOnly": {
+          "summary": "Add internal user with phone number only (SMS-only)",
+          "value": {
+            "userId": "43",
+            "userName": "Bob",
+            "phoneNumber": "+821087654321",
             "isExternal": false
           }
         },

@@ -38,6 +38,36 @@ func TestAlertGroupRuleTICKScriptDropsAlertUdf(t *testing.T) {
 	}
 }
 
+// TestAlertGroupRuleTICKScriptPreservesAlertHistoryWhenNoRecipients verifies
+// that a rule with no enabled handlers (zero recipients) still emits the main
+// alert + influxDBOut('cloudhub_alerts') pipeline. This is the "log only" path:
+// alert occurrences are persisted to the output measurement even when no
+// external notification channel is configured.
+func TestAlertGroupRuleTICKScriptPreservesAlertHistoryWhenNoRecipients(t *testing.T) {
+	tick, err := AlertGroupRuleTICKScript(sampleRule(), AlertRecipients{}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if !strings.Contains(tick, "var outputMeasurement = 'cloudhub_alerts'") {
+		t.Fatalf("tickscript must declare cloudhub_alerts output measurement:\n%s", tick)
+	}
+	if !strings.Contains(tick, "|influxDBOut()") {
+		t.Fatalf("tickscript must persist alerts via influxDBOut() when no handler is configured:\n%s", tick)
+	}
+	if !strings.Contains(tick, ".measurement(outputMeasurement)") {
+		t.Fatalf("tickscript must write to the outputMeasurement (cloudhub_alerts):\n%s", tick)
+	}
+	if !strings.Contains(tick, "|alert()") {
+		t.Fatalf("tickscript must contain a main alert() node even without handlers:\n%s", tick)
+	}
+	if strings.Contains(tick, ".email()") {
+		t.Fatalf("tickscript must not emit email() handler when recipients are empty:\n%s", tick)
+	}
+	if strings.Contains(tick, ".to(") {
+		t.Fatalf("tickscript must not emit any .to(...) recipient when no handler is configured:\n%s", tick)
+	}
+}
+
 func TestAlertGroupRuleTICKScriptOmitsHostFilterWhenNoHosts(t *testing.T) {
 	tick, err := AlertGroupRuleTICKScript(sampleRule(), AlertRecipients{}, nil)
 	if err != nil {
@@ -320,6 +350,85 @@ func TestAlertGroupRuleTICKScriptMultiLevelWithOccurrenceCount(t *testing.T) {
 	wantWarn := `.warn(lambda: "state_count" >= 3 AND ("usage_idle" > 60 AND "usage_idle" <= 90))`
 	if !strings.Contains(tick, wantWarn) {
 		t.Fatalf("expected WARN email lambda %q in:\n%s", wantWarn, tick)
+	}
+}
+
+// TestAlertGroupRuleTICKScriptConsecutiveWithWindowBoundsStreakDuration verifies
+// that the consecutive mode, when an occurrenceWindow is set, bounds the streak
+// by wall-clock duration via stateCount + stateDuration. The streak must be N
+// consecutive points AND must have started within the configured window.
+func TestAlertGroupRuleTICKScriptConsecutiveWithWindowBoundsStreakDuration(t *testing.T) {
+	r := sampleRule()
+	r.OccurrenceCount = 5
+	r.OccurrenceType = "consecutive"
+	r.OccurrenceWindow = "10m"
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "warning", Value: 60, Enabled: true},
+		{Level: "critical", Value: 90, Enabled: true},
+	}
+	rec := AlertRecipients{
+		Crit: []string{"a@x.com"},
+		Warn: []string{"a@x.com"},
+	}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	// stateCount + stateDuration both chained from the source.
+	for _, want := range []string{
+		`|stateCount(lambda: "usage_idle" > 60)`,
+		`|stateDuration(lambda: "usage_idle" > 60)`,
+		`.unit(1s)`,
+		`.as('state_duration')`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("expected fragment %q in:\n%s", want, tick)
+		}
+	}
+	// 10m = 600s — every lambda must include the duration bound AND the threshold.
+	wantCrit := `.crit(lambda: "state_count" >= 5 AND "state_duration" <= 600 AND ("usage_idle" > 90))`
+	if !strings.Contains(tick, wantCrit) {
+		t.Fatalf("expected CRIT email lambda %q in:\n%s", wantCrit, tick)
+	}
+	wantWarn := `.warn(lambda: "state_count" >= 5 AND "state_duration" <= 600 AND ("usage_idle" > 60 AND "usage_idle" <= 90))`
+	if !strings.Contains(tick, wantWarn) {
+		t.Fatalf("expected WARN email lambda %q in:\n%s", wantWarn, tick)
+	}
+	// Recent-mode windowed sum nodes must not appear.
+	if strings.Contains(tick, "|window()") {
+		t.Fatalf("consecutive must not emit window() block:\n%s", tick)
+	}
+	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
+		t.Fatalf("consecutive-with-window tickscript should validate: %v\n%s", err, tick)
+	}
+}
+
+// TestAlertGroupRuleTICKScriptConsecutiveWithoutWindowOmitsStateDuration verifies
+// the fallback: when consecutive has no occurrenceWindow (or invalid), the
+// stateDuration node and duration AND-clause are omitted — preserving the
+// classic plain-consecutive tickscript shape.
+func TestAlertGroupRuleTICKScriptConsecutiveWithoutWindowOmitsStateDuration(t *testing.T) {
+	r := sampleRule()
+	r.OccurrenceCount = 3
+	r.OccurrenceType = "consecutive"
+	r.OccurrenceWindow = "" // no window → fallback to plain stateCount-only
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "critical", Value: 90, Enabled: true},
+	}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if strings.Contains(tick, "stateDuration") {
+		t.Fatalf("consecutive without window must not emit stateDuration:\n%s", tick)
+	}
+	if strings.Contains(tick, `"state_duration"`) {
+		t.Fatalf("consecutive without window must not reference state_duration in lambdas:\n%s", tick)
+	}
+	wantCrit := `.crit(lambda: "state_count" >= 3 AND ("usage_idle" > 90))`
+	if !strings.Contains(tick, wantCrit) {
+		t.Fatalf("expected plain consecutive CRIT lambda %q in:\n%s", wantCrit, tick)
 	}
 }
 

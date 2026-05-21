@@ -60,9 +60,12 @@ trigger
 
 {{end}}{{if .RecentEnabled}}// occurrence_count={{.OccurrenceCount}} (recent): require N matching points inside occurrence_window={{.OccurrenceWindow}}
 {{.RecentBlock}}
-{{else if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive matching points
+{{else if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive matching points{{if .OccurrenceWindowSeconds}}, streak must complete within {{.OccurrenceWindowSeconds}}s{{end}}
 var processed = {{.SourceVar}}
-    |stateCount(lambda: {{.OccurrenceLambda}})
+    |stateCount(lambda: {{.OccurrenceLambda}}){{if .OccurrenceWindowSeconds}}
+    |stateDuration(lambda: {{.OccurrenceLambda}})
+        .unit(1s)
+        .as('state_duration'){{end}}
 {{else}}var processed = {{.SourceVar}}
 {{end}}
 // Main trigger — drives the alert-history log via influxDBOut.
