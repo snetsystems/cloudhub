@@ -7462,6 +7462,7 @@
           "recipient-groups"
         ],
         "summary": "Add a member to a recipient group",
+        "description": "Add either an internal CloudHub user (default) or an external recipient (set isExternal=true). Internal members require userId; external members require email only and have userId stored as NULL.",
         "parameters": [
           {
             "name": "id",
@@ -7474,7 +7475,7 @@
             "name": "body",
             "in": "body",
             "required": true,
-            "description": "Member contact info",
+            "description": "Member contact info. Internal: {userId, userName, email}. External: {isExternal:true, userName, email}.",
             "schema": {
               "$ref": "#/definitions/RecipientGroupMemberRequest"
             }
@@ -7494,6 +7495,7 @@
                 "userName": "Alice",
                 "email": "alice@example.com",
                 "phoneNumber": "+821012345678",
+                "isExternal": false,
                 "createdAt": "2026-05-19T09:00:00Z",
                 "updatedAt": "2026-05-19T09:00:00Z"
               }
@@ -14228,7 +14230,7 @@
     },
     "RecipientGroupMember": {
       "type": "object",
-      "description": "Layer 1 group member identity and contact info.",
+      "description": "Layer 1 group member identity and contact info. Two kinds discriminated by isExternal: internal members (CloudHub user, identified by userId) and external recipients (not a CloudHub user, identified by email; userId is empty).",
       "properties": {
         "id": {
           "type": "string",
@@ -14239,7 +14241,8 @@
           "readOnly": true
         },
         "userId": {
-          "type": "string"
+          "type": "string",
+          "description": "CloudHub user ID. Empty (and NULL in DB) when isExternal=true."
         },
         "userName": {
           "type": "string"
@@ -14250,6 +14253,10 @@
         },
         "phoneNumber": {
           "type": "string"
+        },
+        "isExternal": {
+          "type": "boolean",
+          "description": "True when this member is an external recipient (not a CloudHub user). The in-group identifier is email; userId is empty."
         },
         "deleteYn": {
           "type": "boolean"
@@ -14275,8 +14282,39 @@
         "userName": "Alice",
         "email": "alice@example.com",
         "phoneNumber": "+821012345678",
+        "isExternal": false,
         "createdAt": "2026-05-19T09:00:00Z",
         "updatedAt": "2026-05-19T09:00:00Z"
+      },
+      "x-examples": {
+        "internal": {
+          "summary": "Internal CloudHub user",
+          "value": {
+            "id": "b2222222-2222-2222-2222-222222222222",
+            "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+            "userId": "42",
+            "userName": "Alice",
+            "email": "alice@example.com",
+            "phoneNumber": "+821012345678",
+            "isExternal": false,
+            "createdAt": "2026-05-19T09:00:00Z",
+            "updatedAt": "2026-05-19T09:00:00Z"
+          }
+        },
+        "external": {
+          "summary": "External recipient (no CloudHub account)",
+          "value": {
+            "id": "c3333333-3333-3333-3333-333333333333",
+            "recipientGroupId": "a1111111-1111-1111-1111-111111111111",
+            "userId": "",
+            "userName": "Vendor SRE",
+            "email": "sre@vendor.example.com",
+            "phoneNumber": "",
+            "isExternal": true,
+            "createdAt": "2026-05-21T01:00:00Z",
+            "updatedAt": "2026-05-21T01:00:00Z"
+          }
+        }
       }
     },
     "RecipientGroupsList": {
@@ -14346,30 +14384,58 @@
     },
     "RecipientGroupMemberRequest": {
       "type": "object",
+      "description": "Two valid shapes — internal: {userId, userName, email}. External: {isExternal:true, userName, email}. For PATCH only userName / email / phoneNumber are persisted.",
       "required": [
         "email"
       ],
       "properties": {
         "userId": {
           "type": "string",
-          "description": "CloudHub user ID (optional for external recipients)"
+          "description": "CloudHub user ID. Required when isExternal=false. Ignored when isExternal=true (server stores NULL)."
         },
         "userName": {
           "type": "string"
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Required for both internal and external members. External members are uniquely identified by (recipientGroupId, email)."
         },
         "phoneNumber": {
           "type": "string"
+        },
+        "isExternal": {
+          "type": "boolean",
+          "description": "Set to true to register an external recipient (not a CloudHub user). Defaults to false. POST only — PATCH ignores this field."
         }
       },
       "example": {
         "userId": "42",
         "userName": "Alice",
         "email": "alice@example.com",
-        "phoneNumber": "+821012345678"
+        "phoneNumber": "+821012345678",
+        "isExternal": false
+      },
+      "x-examples": {
+        "internal": {
+          "summary": "Add internal CloudHub user",
+          "value": {
+            "userId": "42",
+            "userName": "Alice",
+            "email": "alice@example.com",
+            "phoneNumber": "+821012345678",
+            "isExternal": false
+          }
+        },
+        "external": {
+          "summary": "Add external recipient (e.g. vendor)",
+          "value": {
+            "isExternal": true,
+            "userName": "Vendor SRE",
+            "email": "sre@vendor.example.com",
+            "phoneNumber": ""
+          }
+        }
       }
     },
     "AlertRecipientGroup": {

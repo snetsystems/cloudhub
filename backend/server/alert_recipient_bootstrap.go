@@ -198,6 +198,9 @@ func syncDefaultRecipientGroupMembers(ctx context.Context, service *Service, org
 
 	existingByUserID := make(map[string]cloudhub.RecipientGroupMember, len(group.Members))
 	for _, m := range group.Members {
+		if m.IsExternal {
+			continue
+		}
 		if m.UserID != "" {
 			existingByUserID[m.UserID] = m
 		}

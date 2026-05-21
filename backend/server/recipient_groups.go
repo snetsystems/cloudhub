@@ -23,11 +23,19 @@ type recipientGroupUpdateRequest struct {
 
 // recipientGroupMemberRequest is the body for POST/PATCH
 // /recipient-groups/:id/members[/...]. recipientGroupId comes from the URL.
+//
+// Two valid shapes:
+//   - Internal user:  {"userId": "<cloudhub-user-id>", "userName": "...", ...}
+//   - External user:  {"isExternal": true, "email": "...", "userName": "...", ...}
+//
+// For external members userId is ignored (NULL is stored). For internal members
+// email is recommended but not strictly required; uniqueness is enforced on userId.
 type recipientGroupMemberRequest struct {
 	UserID      string `json:"userId"`
 	UserName    string `json:"userName"`
 	Email       string `json:"email"`
 	PhoneNumber string `json:"phoneNumber"`
+	IsExternal  bool   `json:"isExternal"`
 }
 
 func isRecipientGroupNotFound(err error) bool {
@@ -200,18 +208,32 @@ func (s *Service) NewRecipientGroupMember(w http.ResponseWriter, r *http.Request
 		invalidJSON(w, s.Logger)
 		return
 	}
+	req.UserID = strings.TrimSpace(req.UserID)
 	req.Email = strings.TrimSpace(req.Email)
-	if req.Email == "" {
-		invalidData(w, errors.New("email is required"), s.Logger)
-		return
+	if req.IsExternal {
+		if req.Email == "" {
+			invalidData(w, errors.New("email is required for external recipients"), s.Logger)
+			return
+		}
+		req.UserID = ""
+	} else {
+		if req.UserID == "" {
+			invalidData(w, errors.New("userId is required for internal members"), s.Logger)
+			return
+		}
+		if req.Email == "" {
+			invalidData(w, errors.New("email is required"), s.Logger)
+			return
+		}
 	}
 
 	m, err := s.RecipientGroups.AddMember(ctx, cloudhub.RecipientGroupMember{
 		RecipientGroupID: groupID,
-		UserID:           strings.TrimSpace(req.UserID),
+		UserID:           req.UserID,
 		UserName:         strings.TrimSpace(req.UserName),
 		Email:            req.Email,
 		PhoneNumber:      strings.TrimSpace(req.PhoneNumber),
+		IsExternal:       req.IsExternal,
 	})
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
