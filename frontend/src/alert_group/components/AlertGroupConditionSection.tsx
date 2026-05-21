@@ -168,6 +168,29 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     }
   }
 
+  public componentDidUpdate(prevProps: Props) {
+    const {rule, source} = this.props
+    if (
+      prevProps.rule.database !== rule.database ||
+      prevProps.rule.retentionPolicy !== rule.retentionPolicy ||
+      prevProps.rule.measurement !== rule.measurement ||
+      prevProps.rule.field !== rule.field
+    ) {
+      this.setState({
+        queryConfig: {
+          ...EMPTY_QUERY_CONFIG,
+          id: this.instanceId,
+          database: rule.database || source.telegraf || 'telegraf',
+          retentionPolicy: rule.retentionPolicy || 'autogen',
+          measurement: rule.measurement || '',
+          fields: rule.field
+            ? [{value: rule.field, type: 'field', alias: '', args: []}]
+            : [],
+        } as QueryConfig,
+      })
+    }
+  }
+
   // ── QueryConfig handlers ───────────────────────────────────────────────────
 
   private handleChooseNamespace = (namespace: Namespace): void => {

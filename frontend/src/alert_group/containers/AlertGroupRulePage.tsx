@@ -45,7 +45,8 @@ import AlertGroupNameSection from 'src/alert_group/components/AlertGroupNameSect
 import AlertGroupConditionSection from 'src/alert_group/components/AlertGroupConditionSection'
 import AlertGroupPreviewGraph from 'src/alert_group/components/AlertGroupPreviewGraph'
 import AlertGroupTargetSection from 'src/alert_group/components/AlertGroupTargetSection'
-import AlertGroupBasicSection from 'src/alert_group/components/AlertGroupBasicSection'
+import AlertGroupHandlersSection from 'src/alert_group/components/AlertGroupHandlersSection'
+
 
 // APIs
 import {
@@ -231,7 +232,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     if (templateId === 'custom') {
       this.setState({
         selectedTemplateId: 'custom',
-        builderMode: 'template', // 'New' default is empty category in template UI
+        builderMode: 'raw', // 'New' default shows Query Builder (3-panel UI)
+        rule: JSON.parse(JSON.stringify(DEFAULT_RULE)),
       })
       return
     }
@@ -263,7 +265,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       builderMode: 'template',
       rule: {
         ...prev.rule,
-        name: prev.rule.name || template.name,
+        name: template.name,
         database: template.database || prev.rule.database,
         retentionPolicy: template.retentionPolicy || prev.rule.retentionPolicy,
         measurement: template.measurement,
@@ -299,12 +301,31 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
 
     this.setState({isSaving: true})
 
+    // 이메일 수신자 주소 목록 중 띄어쓰기로 인해 생성된 빈 문자열 항목을 제거하여 저장합니다.
+    const cleanedHandlers = (rule.eventHandlers || []).map(h => {
+      if (h.type === 'email' && h.configJson?.to) {
+        return {
+          ...h,
+          configJson: {
+            ...h.configJson,
+            to: (h.configJson.to as string[]).filter(Boolean),
+          },
+        }
+      }
+      return h
+    })
+    const cleanedRule = {
+      ...rule,
+      eventHandlers: cleanedHandlers,
+    }
+
     try {
       if (this.isNew) {
-        await createAlertGroupRule(rule)
+        await createAlertGroupRule(cleanedRule)
       } else {
-        await updateAlertGroupRule(this.ruleId!, rule)
+        await updateAlertGroupRule(this.ruleId!, cleanedRule)
       }
+
       
       const returnTo = (this.props.location.state as any)?.returnTo
       if (returnTo) {
@@ -441,14 +462,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       ? '이벤트 그룹 규칙 생성'
       : '이벤트 그룹 규칙 수정'
     const hasPreview = !!(rule.measurement && rule.field)
-    const basicSectionProps = {
-      rule,
-      organizationId: auth?.me?.currentOrganization?.id || '',
-      me: auth ? auth.me : null,
-      onUpdateRule: this.handleUpdateRule,
-      onOpenTestModal: this.handleOpenTestModal,
-      isTestingSend,
-    }
+
 
     return (
       <Page className="alert-group-rule-page">
@@ -462,6 +476,16 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
               onClick={this.handleCancel}
               color={ComponentColor.Default}
               size={ComponentSize.Small}
+            />
+            <Button
+              text={isTestingSend ? '테스트 중...' : '수신 테스트'}
+              onClick={this.handleOpenTestModal}
+              color={ComponentColor.Success}
+              size={ComponentSize.Small}
+              icon={IconFont.Bell}
+              status={
+                isTestingSend ? ComponentStatus.Disabled : ComponentStatus.Default
+              }
             />
             <Button
               text={isSaving ? '저장 중...' : '저장'}
@@ -520,7 +544,14 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                   rule={rule}
                   onUpdateRule={this.handleUpdateRule}
                 />
-                <AlertGroupBasicSection {...basicSectionProps} />
+                <AlertGroupHandlersSection
+                  rule={rule}
+                  userGroups={userGroups}
+                  source={source}
+                  router={this.props.router}
+                  onUpdateRule={this.handleUpdateRule}
+                />
+
               </div>
             </div>
           </Spinner>

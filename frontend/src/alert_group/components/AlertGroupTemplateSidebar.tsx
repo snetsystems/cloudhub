@@ -1,10 +1,20 @@
 import React, {PureComponent} from 'react'
 import classnames from 'classnames'
-import {Input, InputType} from 'src/reusable_ui'
+import {withTranslation, WithTranslation} from 'react-i18next'
+import {
+  Input,
+  InputType,
+  Button,
+  ComponentSize,
+  ComponentColor,
+  ComponentStatus,
+  IconFont,
+} from 'src/reusable_ui'
 import {AlertTemplate} from 'src/alert_group/types'
 import AlertGroupTemplateTooltip from 'src/alert_group/components/AlertGroupTemplateTooltip'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
-interface Props {
+interface Props extends WithTranslation {
   templates: AlertTemplate[]
   availableMeasurements: Set<string>
   selectedTemplateId: string
@@ -42,7 +52,9 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
   }
 
   private getDisabledReason = (template: AlertTemplate): string =>
-    `이 알람을 사용하려면 telegraf '${template.measurement}' 데이터 수집이 필요합니다.`
+    this.props.t('alert_group_rule.disabled_reason_telegraf', {
+      measurement: template.measurement,
+    })
 
   private getTooltipMessage = (template: AlertTemplate): string => {
     if (!this.isAvailable(template)) {
@@ -89,7 +101,7 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {templates, selectedTemplateId, onSelectTemplate} = this.props
+    const {templates, selectedTemplateId, onSelectTemplate, t} = this.props
     const {searchTerm, tooltip} = this.state
 
     const needle = searchTerm.toLowerCase()
@@ -110,62 +122,98 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
     })
 
     return (
-      <div className="alert-group-sidebar">
-        <div className="alert-group-sidebar--header">
-          <div className="alert-group-sidebar--search">
-            <Input
-              type={InputType.Text}
-              placeholder="검색"
-              value={searchTerm}
-              onChange={this.handleSearchChange}
-              spellCheck={false}
-            />
-          </div>
-        </div>
-
-        <div className="alert-group-sidebar--menu">
-          <div
-            className={classnames('alert-group-sidebar--item', {
-              active: selectedTemplateId === 'custom',
-            })}
-            onClick={() => onSelectTemplate('custom')}
-          >
-            새로 만들기
-          </div>
-
-          <div className="alert-group-sidebar--section-title">빠른 설정</div>
-
-          {filteredTemplates.map(template => {
-            const available = this.isAvailable(template)
-            return (
-              <div
-                key={template.id}
-                className={classnames('alert-group-sidebar--item', {
-                  active: selectedTemplateId === template.id,
-                  disabled: !available,
-                })}
-                onClick={
-                  available ? () => onSelectTemplate(template.id) : undefined
-                }
-                onMouseEnter={e => this.handleTemplateMouseEnter(template, e)}
-                onMouseMove={this.handleTemplateMouseMove}
-                onMouseLeave={this.handleTemplateMouseLeave}
-              >
-                {template.name}
-              </div>
-            )
-          })}
-        </div>
-        {tooltip ? (
-          <AlertGroupTemplateTooltip
-            x={tooltip.x}
-            y={tooltip.y}
-            message={tooltip.message}
+      <div className="alert-group-sidebar-wrapper card">
+        <div className="alert-group-sidebar--search">
+          <Input
+            type={InputType.Text}
+            placeholder={t('alert_group_rule.search')}
+            value={searchTerm}
+            onChange={this.handleSearchChange}
+            spellCheck={false}
           />
-        ) : null}
+        </div>
+        <Button
+          text={t('alert_group_rule.create_new')}
+          onClick={() => onSelectTemplate('custom')}
+          icon={IconFont.Plus}
+          color={ComponentColor.Success}
+          size={ComponentSize.Small}
+          status={ComponentStatus.Default}
+        />
+        <div className="alert-group-sidebar">
+          <FancyScrollbar className="alert-group-sidebar--menu">
+            <div className="alert-group-sidebar--section-title">
+              <div className="alert-group-sidebar--section-title-title">
+                <span className={`icon ${IconFont.Cubouniform}`} aria-hidden />
+                {t('alert_group_rule.quick_setting_template')}
+              </div>
+              <div className="alert-group-sidebar--section-title-sub">
+                {t('alert_group_rule.quick_template_desc')}
+              </div>
+            </div>
+
+            {(() => {
+              const items = filteredTemplates.map((template, index) => {
+                const isItalic = index % 2 === 0
+                const available = this.isAvailable(template) && isItalic
+                return {template, available}
+              })
+
+              const availableItems = items.filter(item => item.available)
+              const disabledItems = items.filter(item => !item.available)
+
+              const renderItem = ({
+                template,
+                available,
+              }: {
+                template: AlertTemplate
+                available: boolean
+              }) => (
+                <div
+                  key={template.id}
+                  className={classnames('alert-group-sidebar--item', {
+                    active: selectedTemplateId === template.id,
+                    disabled: !available,
+                  })}
+                  onClick={
+                    available ? () => onSelectTemplate(template.id) : undefined
+                  }
+                  onMouseEnter={e => this.handleTemplateMouseEnter(template, e)}
+                  onMouseMove={this.handleTemplateMouseMove}
+                  onMouseLeave={this.handleTemplateMouseLeave}
+                >
+                  {template.name}
+                </div>
+              )
+
+              return (
+                <>
+                  {availableItems.map(renderItem)}
+                  {disabledItems.length > 0 && (
+                    <div className="alert-group-sidebar--divider">
+                      <div className="alert-group-sidebar--divider-line" />
+                      <span className="alert-group-sidebar--divider-text">
+                        {t('alert_group_rule.unavailable')}
+                      </span>
+                      <div className="alert-group-sidebar--divider-line" />
+                    </div>
+                  )}
+                  {disabledItems.map(renderItem)}
+                </>
+              )
+            })()}
+          </FancyScrollbar>
+          {tooltip ? (
+            <AlertGroupTemplateTooltip
+              x={tooltip.x}
+              y={tooltip.y}
+              message={tooltip.message}
+            />
+          ) : null}
+        </div>
       </div>
     )
   }
 }
 
-export default AlertGroupTemplateSidebar
+export default withTranslation()(AlertGroupTemplateSidebar)
