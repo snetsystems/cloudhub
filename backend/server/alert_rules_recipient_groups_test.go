@@ -12,8 +12,9 @@ import (
 	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
-func TestAlertGroupRuleSetRecipientGroupsRegeneratesRule(t *testing.T) {
+func TestAlertGroupRuleSetEventHandlersRegeneratesRule(t *testing.T) {
 	var setRuleID string
+	var setHandlers []cloudhub.AlertRuleEventHandler
 	var regenerated []string
 	oldHook := regenRuleSyncHook
 	regenRuleSyncHook = func(ctx context.Context, rule cloudhub.AlertGroupRule) error {
@@ -24,8 +25,9 @@ func TestAlertGroupRuleSetRecipientGroupsRegeneratesRule(t *testing.T) {
 
 	svc := &Service{
 		AlertGroupRules: &fakeAlertGroupRuleStore{
-			setRecipientGroupsFunc: func(ctx context.Context, ruleID string, recipientGroupIDs []string) error {
+			setEventHandlersFunc: func(ctx context.Context, ruleID string, handlers []cloudhub.AlertRuleEventHandler) error {
 				setRuleID = ruleID
+				setHandlers = handlers
 				return nil
 			},
 			getFunc: func(ctx context.Context, id string) (cloudhub.AlertGroupRule, error) {
@@ -35,17 +37,20 @@ func TestAlertGroupRuleSetRecipientGroupsRegeneratesRule(t *testing.T) {
 		Logger: &mocks.TestLogger{},
 	}
 
-	req := httptest.NewRequest(http.MethodPut, "/cloudhub/v2/alert-group-rules/rule-1/recipient-groups", bytes.NewBufferString(`{"recipientGroupIds":["group-1"]}`))
+	req := httptest.NewRequest(http.MethodPut, "/cloudhub/v2/alert-group-rules/rule-1/event-handlers", bytes.NewBufferString(`{"eventHandlers":[{"type":"email","enabled":true,"recipientGroupIds":["group-1"]}]}`))
 	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{{Key: "id", Value: "rule-1"}}))
 	rr := httptest.NewRecorder()
 
-	svc.AlertGroupRuleSetRecipientGroups(rr, req)
+	svc.AlertGroupRuleSetEventHandlers(rr, req)
 
 	if rr.Code != http.StatusNoContent {
 		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusNoContent, rr.Body.String())
 	}
 	if setRuleID != "rule-1" {
 		t.Fatalf("setRuleID = %q, want rule-1", setRuleID)
+	}
+	if len(setHandlers) != 1 || setHandlers[0].Type != "email" || len(setHandlers[0].RecipientGroupIDs) != 1 {
+		t.Fatalf("setHandlers = %+v, want email handler with group-1", setHandlers)
 	}
 	if len(regenerated) != 1 || regenerated[0] != "rule-1" {
 		t.Fatalf("regenerated = %v, want [rule-1]", regenerated)

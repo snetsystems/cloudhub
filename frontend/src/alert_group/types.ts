@@ -66,12 +66,24 @@ export interface AlertGroupRule {
   kapacitorId: string
   hostnames: string[]
   recipientGroupIds: string[]
+  eventHandlers?: AlertRuleEventHandler[]
   // Optional TICK transformations between |from() and the alert pipeline.
   // Templates set these; users can override via raw mode (future UI).
   derivative?: DerivativeConfig
   eval?: EvalConfig
   tickscript?: string
   orgId?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface AlertRuleEventHandler {
+  id?: string
+  alertRuleId?: string
+  type: 'email' | 'sms' | 'webhook'
+  enabled: boolean
+  configJson?: Record<string, unknown>
+  recipientGroupIds: string[]
   createdAt?: string
   updatedAt?: string
 }

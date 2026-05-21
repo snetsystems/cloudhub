@@ -7,7 +7,8 @@
 --   Layer 2 (alert ext): alert_recipient_groups (1:1), alert_recipient_member_prefs (1:1)
 --                        — member receive-time window is inlined in member_prefs
 --   Layer 3 (engine)   : alert_rules, alert_rule_conditions,
---                        alert_rule_hosts, alert_rule_recipient_groups,
+--                        alert_rule_hosts, alert_rule_event_handlers,
+--                        alert_rule_event_handler_recipient_groups,
 --                        alert_kapacitors, alert_kapacitor_mappings
 --
 --   alert_rules transform columns (stream-only TICK nodes, 1:0..1 inline):
@@ -215,16 +216,32 @@ CREATE TABLE IF NOT EXISTS alert_rule_hosts (
 CREATE INDEX IF NOT EXISTS idx_alert_rule_hosts_alert_rule_id ON alert_rule_hosts (alert_rule_id);
 CREATE INDEX IF NOT EXISTS idx_alert_rule_hosts_hostname      ON alert_rule_hosts (hostname);
 
--- alert_rule_recipient_groups: 규칙 ↔ 수신자 그룹 N:M (Layer 1 그룹을 직접 참조)
-CREATE TABLE IF NOT EXISTS alert_rule_recipient_groups (
-    alert_rule_id      UUID NOT NULL REFERENCES alert_rules(id) ON DELETE CASCADE,
-    recipient_group_id UUID NOT NULL REFERENCES recipient_groups(id) ON DELETE CASCADE,
-    PRIMARY KEY (alert_rule_id, recipient_group_id)
+-- alert_rule_event_handlers: rule별 notification event handler(channel)
+CREATE TABLE IF NOT EXISTS alert_rule_event_handlers (
+    id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    alert_rule_id UUID        NOT NULL REFERENCES alert_rules(id) ON DELETE CASCADE,
+    handler_type  TEXT        NOT NULL,
+    enabled       BOOLEAN     NOT NULL DEFAULT true,
+    config_json   JSONB       NOT NULL DEFAULT '{}'::jsonb,
+    delete_yn     BOOLEAN     NOT NULL DEFAULT false,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_alert_rule_recipient_groups_alert_rule_id
-    ON alert_rule_recipient_groups (alert_rule_id);
-CREATE INDEX IF NOT EXISTS idx_alert_rule_recipient_groups_recipient_group_id
-    ON alert_rule_recipient_groups (recipient_group_id);
+CREATE INDEX IF NOT EXISTS idx_alert_rule_event_handlers_alert_rule_id_active
+    ON alert_rule_event_handlers (alert_rule_id) WHERE delete_yn = false;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_rule_event_handlers_type_active
+    ON alert_rule_event_handlers (alert_rule_id, handler_type) WHERE delete_yn = false;
+
+-- alert_rule_event_handler_recipient_groups: handler ↔ 수신자 그룹 N:M
+CREATE TABLE IF NOT EXISTS alert_rule_event_handler_recipient_groups (
+    alert_rule_event_handler_id UUID NOT NULL REFERENCES alert_rule_event_handlers(id) ON DELETE CASCADE,
+    recipient_group_id          UUID NOT NULL REFERENCES recipient_groups(id) ON DELETE CASCADE,
+    PRIMARY KEY (alert_rule_event_handler_id, recipient_group_id)
+);
+CREATE INDEX IF NOT EXISTS idx_alert_rule_event_handler_recipient_groups_handler_id
+    ON alert_rule_event_handler_recipient_groups (alert_rule_event_handler_id);
+CREATE INDEX IF NOT EXISTS idx_alert_rule_event_handler_recipient_groups_recipient_group_id
+    ON alert_rule_event_handler_recipient_groups (recipient_group_id);
 
 -- =====================================================================
 -- Comments
@@ -250,8 +267,10 @@ COMMENT ON TABLE alert_rule_conditions IS
   'Layer 3: alert_rule -> conditions 1:N. Per-level threshold (warning/critical/info). Rendered as chained stateCount nodes in TICKscript.';
 COMMENT ON TABLE alert_rule_hosts IS
   'Layer 3: alert_rule -> hostname N:M (hostname stored directly, no FK to hosts table).';
-COMMENT ON TABLE alert_rule_recipient_groups IS
-  'Layer 3: alert_rule -> recipient_groups N:M.';
+COMMENT ON TABLE alert_rule_event_handlers IS
+  'Layer 3: alert_rule -> event handlers 1:N. Handler type controls notification channel such as email, sms, webhook.';
+COMMENT ON TABLE alert_rule_event_handler_recipient_groups IS
+  'Layer 3: alert_rule_event_handler -> recipient_groups N:M. Empty binding means all org recipient groups for that handler.';
 
 -- alert_rules columns
 COMMENT ON COLUMN alert_rules.kapacitor_id IS
@@ -385,7 +404,8 @@ COMMENT ON COLUMN alert_rules.delete_yn               IS 'soft-delete flag; true
 
 ---- create above / drop below ----
 
-DROP TABLE IF EXISTS alert_rule_recipient_groups;
+DROP TABLE IF EXISTS alert_rule_event_handler_recipient_groups;
+DROP TABLE IF EXISTS alert_rule_event_handlers;
 DROP TABLE IF EXISTS alert_rule_hosts;
 DROP TABLE IF EXISTS alert_rule_trigger_values;
 DROP TABLE IF EXISTS alert_rule_conditions;

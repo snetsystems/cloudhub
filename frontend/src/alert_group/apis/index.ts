@@ -4,6 +4,7 @@ import {proxy} from 'src/utils/queryUrlGenerator'
 import {Source} from 'src/types'
 import {
   AlertGroupRule,
+  AlertRuleEventHandler,
   AlertKapacitor,
   AlertTemplate,
   DEFAULT_RULE,
@@ -27,31 +28,64 @@ interface RecipientGroupsResponse {
 
 const normalizeAlertGroupRule = (
   rule: Partial<AlertGroupRule> | null | undefined
-): AlertGroupRule => ({
-  ...DEFAULT_RULE,
-  ...(rule || {}),
-  triggerValues:
-    rule?.triggerValues || rule?.values || DEFAULT_RULE.triggerValues,
-  conditions: Array.isArray(rule?.conditions)
-    ? rule.conditions.map(condition => ({
-        ...condition,
-        value: String(condition.value),
-      }))
-    : DEFAULT_RULE.conditions,
-  hostnames: Array.isArray(rule?.hostnames) ? rule.hostnames : [],
-  recipientGroupIds: Array.isArray(rule?.recipientGroupIds)
+): AlertGroupRule => {
+  const emailHandler = Array.isArray(rule?.eventHandlers)
+    ? rule?.eventHandlers.find(handler => handler.type === 'email')
+    : undefined
+  const recipientGroupIds = Array.isArray(emailHandler?.recipientGroupIds)
+    ? emailHandler?.recipientGroupIds || []
+    : Array.isArray(rule?.recipientGroupIds)
     ? rule.recipientGroupIds
-    : [],
-})
+    : []
 
-const toAlertGroupRuleRequest = (rule: AlertGroupRule) => ({
-  ...rule,
-  values: rule.triggerValues,
-  conditions: (rule.conditions || []).map(condition => ({
-    ...condition,
-    value: Number(condition.value),
-  })),
-})
+  return {
+    ...DEFAULT_RULE,
+    ...(rule || {}),
+    triggerValues:
+      rule?.triggerValues || rule?.values || DEFAULT_RULE.triggerValues,
+    conditions: Array.isArray(rule?.conditions)
+      ? rule.conditions.map(condition => ({
+          ...condition,
+          value: String(condition.value),
+        }))
+      : DEFAULT_RULE.conditions,
+    hostnames: Array.isArray(rule?.hostnames) ? rule.hostnames : [],
+    recipientGroupIds,
+    eventHandlers: Array.isArray(rule?.eventHandlers) ? rule.eventHandlers : [],
+  }
+}
+
+const toEmailEventHandlers = (
+  recipientGroupIds: string[]
+): AlertRuleEventHandler[] => [
+  {
+    type: 'email',
+    enabled: true,
+    recipientGroupIds: recipientGroupIds || [],
+  },
+]
+
+const toAlertRuleEventHandlers = (rule: AlertGroupRule) => {
+  const nonEmailHandlers = Array.isArray(rule.eventHandlers)
+    ? rule.eventHandlers.filter(handler => handler.type !== 'email')
+    : []
+
+  return [...nonEmailHandlers, ...toEmailEventHandlers(rule.recipientGroupIds)]
+}
+
+const toAlertGroupRuleRequest = (rule: AlertGroupRule) => {
+  const {recipientGroupIds, eventHandlers, ...rest} = rule
+
+  return {
+    ...rest,
+    eventHandlers: toAlertRuleEventHandlers(rule),
+    values: rule.triggerValues,
+    conditions: (rule.conditions || []).map(condition => ({
+      ...condition,
+      value: Number(condition.value),
+    })),
+  }
+}
 
 // Alert Group Rules
 export const getAlertGroupRules = async (): Promise<AlertGroupRule[]> => {
@@ -136,15 +170,15 @@ export const deleteAlertGroupRuleAndFetch = async (
   return await getAlertGroupRules()
 }
 
-// Alert Rule ↔ recipient groups
+// Alert Rule event handlers
 export const setAlertRuleRecipientGroups = async (
   ruleId: string,
   recipientGroupIds: string[]
 ): Promise<void> => {
   await AJAX({
     method: 'PUT',
-    url: `/cloudhub/v2/alert-group-rules/${ruleId}/recipient-groups`,
-    data: {recipientGroupIds},
+    url: `/cloudhub/v2/alert-group-rules/${ruleId}/event-handlers`,
+    data: {eventHandlers: toEmailEventHandlers(recipientGroupIds)},
   })
 }
 

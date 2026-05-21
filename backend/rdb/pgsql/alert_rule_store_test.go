@@ -13,18 +13,7 @@ func TestAlertRuleStore_AddAndGet(t *testing.T) {
 	defer cleanup()
 
 	ruleStore := pgsql.NewAlertRuleStore(client)
-	rgStore := pgsql.NewRecipientGroupStore(client)
 	ctx := context.Background()
-
-	// Seed two recipient groups to associate with the rule.
-	g1, err := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org1", Name: "DevOps"})
-	if err != nil {
-		t.Fatalf("seed g1: %v", err)
-	}
-	g2, err := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org1", Name: "OnCall"})
-	if err != nil {
-		t.Fatalf("seed g2: %v", err)
-	}
 
 	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
 		OrgID:       "org1",
@@ -51,9 +40,6 @@ func TestAlertRuleStore_AddAndGet(t *testing.T) {
 	if err := ruleStore.SetHosts(ctx, r.ID, []string{"web-1", "web-2"}); err != nil {
 		t.Fatalf("SetHosts: %v", err)
 	}
-	if err := ruleStore.SetRecipientGroups(ctx, r.ID, []string{g1.ID, g2.ID}); err != nil {
-		t.Fatalf("SetRecipientGroups: %v", err)
-	}
 
 	got, err := ruleStore.Get(ctx, r.ID)
 	if err != nil {
@@ -67,9 +53,6 @@ func TestAlertRuleStore_AddAndGet(t *testing.T) {
 	}
 	if len(got.Hostnames) != 2 {
 		t.Errorf("Hostnames len = %d, want 2", len(got.Hostnames))
-	}
-	if len(got.RecipientGroupIDs) != 2 {
-		t.Errorf("RecipientGroupIDs len = %d, want 2", len(got.RecipientGroupIDs))
 	}
 }
 
@@ -202,7 +185,7 @@ func TestAlertRuleStore_SetHosts(t *testing.T) {
 	}
 }
 
-func TestAlertRuleStore_SetRecipientGroups_ReplaceAll(t *testing.T) {
+func TestAlertRuleStore_SetEventHandlers_ReplaceAll(t *testing.T) {
 	client, cleanup := setupAlertGroupTestDB(t)
 	defer cleanup()
 
@@ -215,32 +198,43 @@ func TestAlertRuleStore_SetRecipientGroups_ReplaceAll(t *testing.T) {
 	g2, _ := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org2", Name: "team-b"})
 	g3, _ := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org2", Name: "team-c"})
 
-	if err := ruleStore.SetRecipientGroups(ctx, rule.ID, []string{g1.ID, g2.ID}); err != nil {
-		t.Fatalf("SetRecipientGroups: %v", err)
+	if err := ruleStore.SetEventHandlers(ctx, rule.ID, []cloudhub.AlertRuleEventHandler{
+		{Type: "email", Enabled: true, RecipientGroupIDs: []string{g1.ID, g2.ID}},
+		{Type: "sms", Enabled: true, RecipientGroupIDs: []string{g3.ID}},
+	}); err != nil {
+		t.Fatalf("SetEventHandlers: %v", err)
 	}
-	got, err := ruleStore.RecipientGroupsByRule(ctx, rule.ID)
+	got, err := ruleStore.EventHandlersByRule(ctx, rule.ID)
 	if err != nil {
-		t.Fatalf("RecipientGroupsByRule: %v", err)
+		t.Fatalf("EventHandlersByRule: %v", err)
 	}
 	if len(got) != 2 {
-		t.Fatalf("want 2 recipient groups, got %d", len(got))
+		t.Fatalf("want 2 event handlers, got %d", len(got))
+	}
+	if got[0].Type != "email" || len(got[0].RecipientGroupIDs) != 2 {
+		t.Fatalf("email handler not hydrated: %+v", got)
+	}
+	if got[1].Type != "sms" || len(got[1].RecipientGroupIDs) != 1 {
+		t.Fatalf("sms handler not hydrated: %+v", got)
 	}
 
-	// Replace-all: drop g2, add g3.
-	if err := ruleStore.SetRecipientGroups(ctx, rule.ID, []string{g1.ID, g3.ID}); err != nil {
-		t.Fatalf("SetRecipientGroups replace: %v", err)
+	// Replace-all: drop sms handler and replace email groups.
+	if err := ruleStore.SetEventHandlers(ctx, rule.ID, []cloudhub.AlertRuleEventHandler{
+		{Type: "email", Enabled: true, RecipientGroupIDs: []string{g1.ID, g3.ID}},
+	}); err != nil {
+		t.Fatalf("SetEventHandlers replace: %v", err)
 	}
-	got, _ = ruleStore.RecipientGroupsByRule(ctx, rule.ID)
-	if len(got) != 2 {
-		t.Fatalf("after replace want 2, got %d", len(got))
+	got, _ = ruleStore.EventHandlersByRule(ctx, rule.ID)
+	if len(got) != 1 {
+		t.Fatalf("after replace want 1 handler, got %d", len(got))
 	}
-	gotIDs := map[string]bool{got[0].ID: true, got[1].ID: true}
+	gotIDs := map[string]bool{got[0].RecipientGroupIDs[0]: true, got[0].RecipientGroupIDs[1]: true}
 	if !gotIDs[g1.ID] || !gotIDs[g3.ID] || gotIDs[g2.ID] {
 		t.Fatalf("after replace want {g1, g3}, got %+v", gotIDs)
 	}
 }
 
-func TestAlertRuleStore_RulesByRecipientGroup(t *testing.T) {
+func TestAlertRuleStore_RulesByRecipientGroupUsesEventHandlerBindings(t *testing.T) {
 	client, cleanup := setupAlertGroupTestDB(t)
 	defer cleanup()
 
@@ -253,11 +247,15 @@ func TestAlertRuleStore_RulesByRecipientGroup(t *testing.T) {
 	r2, _ := ruleStore.Add(ctx, cloudhub.AlertGroupRule{OrgID: "org3", Name: "r2", Active: true})
 	other, _ := ruleStore.Add(ctx, cloudhub.AlertGroupRule{OrgID: "org3", Name: "other", Active: true})
 
-	if err := ruleStore.SetRecipientGroups(ctx, r1.ID, []string{g.ID}); err != nil {
-		t.Fatalf("SetRecipientGroups r1: %v", err)
+	if err := ruleStore.SetEventHandlers(ctx, r1.ID, []cloudhub.AlertRuleEventHandler{
+		{Type: "email", Enabled: true, RecipientGroupIDs: []string{g.ID}},
+	}); err != nil {
+		t.Fatalf("SetEventHandlers r1: %v", err)
 	}
-	if err := ruleStore.SetRecipientGroups(ctx, r2.ID, []string{g.ID}); err != nil {
-		t.Fatalf("SetRecipientGroups r2: %v", err)
+	if err := ruleStore.SetEventHandlers(ctx, r2.ID, []cloudhub.AlertRuleEventHandler{
+		{Type: "sms", Enabled: true, RecipientGroupIDs: []string{g.ID}},
+	}); err != nil {
+		t.Fatalf("SetEventHandlers r2: %v", err)
 	}
 
 	rules, err := ruleStore.RulesByRecipientGroup(ctx, g.ID)
@@ -271,6 +269,38 @@ func TestAlertRuleStore_RulesByRecipientGroup(t *testing.T) {
 		if r.ID == other.ID {
 			t.Fatalf("unlinked rule %q should not appear", other.ID)
 		}
+	}
+}
+
+func TestAlertRuleStore_RulesByRecipientGroupIncludesAllGroupHandlersInSameOrg(t *testing.T) {
+	client, cleanup := setupAlertGroupTestDB(t)
+	defer cleanup()
+
+	ruleStore := pgsql.NewAlertRuleStore(client)
+	rgStore := pgsql.NewRecipientGroupStore(client)
+	ctx := context.Background()
+
+	g, _ := rgStore.Add(ctx, cloudhub.RecipientGroup{OrgID: "org4", Name: "ops"})
+	r1, _ := ruleStore.Add(ctx, cloudhub.AlertGroupRule{OrgID: "org4", Name: "all email", Active: true})
+	otherOrgRule, _ := ruleStore.Add(ctx, cloudhub.AlertGroupRule{OrgID: "other-org", Name: "other", Active: true})
+
+	if err := ruleStore.SetEventHandlers(ctx, r1.ID, []cloudhub.AlertRuleEventHandler{
+		{Type: "email", Enabled: true},
+	}); err != nil {
+		t.Fatalf("SetEventHandlers r1: %v", err)
+	}
+	if err := ruleStore.SetEventHandlers(ctx, otherOrgRule.ID, []cloudhub.AlertRuleEventHandler{
+		{Type: "email", Enabled: true},
+	}); err != nil {
+		t.Fatalf("SetEventHandlers other: %v", err)
+	}
+
+	rules, err := ruleStore.RulesByRecipientGroup(ctx, g.ID)
+	if err != nil {
+		t.Fatalf("RulesByRecipientGroup: %v", err)
+	}
+	if len(rules) != 1 || rules[0].ID != r1.ID {
+		t.Fatalf("want only same-org all-group rule %s, got %+v", r1.ID, rules)
 	}
 }
 

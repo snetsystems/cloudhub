@@ -2,6 +2,7 @@ package pgsql
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -89,9 +90,10 @@ func (s *AlertRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.Aler
 		if r.Hostnames, err = s.hostnamesOf(ctx, r.ID); err != nil {
 			return nil, err
 		}
-		if r.RecipientGroupIDs, err = s.recipientGroupIDs(ctx, r.ID); err != nil {
+		if r.EventHandlers, err = s.EventHandlersByRule(ctx, r.ID); err != nil {
 			return nil, err
 		}
+		r.RecipientGroupIDs = emailRecipientGroupIDs(r.EventHandlers)
 		out = append(out, r)
 	}
 	return out, rows.Err()
@@ -113,7 +115,8 @@ func (s *AlertRuleStore) Get(ctx context.Context, id string) (cloudhub.AlertGrou
 	if r.Hostnames, err = s.hostnamesOf(ctx, id); err != nil {
 		return r, err
 	}
-	r.RecipientGroupIDs, err = s.recipientGroupIDs(ctx, id)
+	r.EventHandlers, err = s.EventHandlersByRule(ctx, id)
+	r.RecipientGroupIDs = emailRecipientGroupIDs(r.EventHandlers)
 	return r, err
 }
 
@@ -307,9 +310,8 @@ func splitEval(e *cloudhub.EvalConfig) (expression, as string) {
 	return exp, alias
 }
 
-
-func (s *AlertRuleStore) recipientGroupIDs(ctx context.Context, ruleID string) ([]string, error) {
-	rows, err := s.client.QueryContext(ctx, `SELECT recipient_group_id FROM alert_rule_recipient_groups WHERE alert_rule_id = $1`, ruleID)
+func (s *AlertRuleStore) eventHandlerRecipientGroupIDs(ctx context.Context, handlerID string) ([]string, error) {
+	rows, err := s.client.QueryContext(ctx, `SELECT recipient_group_id FROM alert_rule_event_handler_recipient_groups WHERE alert_rule_event_handler_id = $1 ORDER BY recipient_group_id`, handlerID)
 	if err != nil {
 		return nil, err
 	}
@@ -325,26 +327,93 @@ func (s *AlertRuleStore) recipientGroupIDs(ctx context.Context, ruleID string) (
 	return ids, rows.Err()
 }
 
-func (s *AlertRuleStore) SetRecipientGroups(ctx context.Context, ruleID string, groupIDs []string) error {
+func (s *AlertRuleStore) SetEventHandlers(ctx context.Context, ruleID string, handlers []cloudhub.AlertRuleEventHandler) error {
 	return s.client.WithTx(ctx, func(ctx context.Context, tx rdb.Store) error {
-		if _, err := tx.ExecContext(ctx, `DELETE FROM alert_rule_recipient_groups WHERE alert_rule_id = $1`, ruleID); err != nil {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM alert_rule_event_handlers WHERE alert_rule_id = $1`, ruleID); err != nil {
 			return err
 		}
-		for _, gid := range groupIDs {
+		for _, h := range handlers {
+			handlerType := strings.TrimSpace(strings.ToLower(h.Type))
+			if handlerType == "" {
+				continue
+			}
+			cfg := h.ConfigJSON
+			if len(cfg) == 0 {
+				cfg = json.RawMessage(`{}`)
+			}
+			var handlerID string
 			if _, err := tx.ExecContext(ctx,
-				`INSERT INTO alert_rule_recipient_groups (alert_rule_id, recipient_group_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
-				ruleID, gid); err != nil {
+				`INSERT INTO alert_rule_event_handlers (alert_rule_id, handler_type, enabled, config_json)
+				 VALUES ($1,$2,$3,$4)`,
+				ruleID, handlerType, h.Enabled, string(cfg)); err != nil {
 				return err
+			}
+			if err := tx.QueryRowContext(ctx,
+				`SELECT id FROM alert_rule_event_handlers WHERE alert_rule_id = $1 AND handler_type = $2 AND delete_yn = false`,
+				ruleID, handlerType).Scan(&handlerID); err != nil {
+				return err
+			}
+			for _, gid := range h.RecipientGroupIDs {
+				if strings.TrimSpace(gid) == "" {
+					continue
+				}
+				if _, err := tx.ExecContext(ctx,
+					`INSERT INTO alert_rule_event_handler_recipient_groups (alert_rule_event_handler_id, recipient_group_id)
+					 VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+					handlerID, gid); err != nil {
+					return err
+				}
 			}
 		}
 		return nil
 	})
 }
 
-// RecipientGroupsByRule returns groups explicitly bound to the rule.
-// An empty result is valid: handlers treat it as "all org recipient groups" at resolve time.
-func (s *AlertRuleStore) RecipientGroupsByRule(ctx context.Context, ruleID string) ([]cloudhub.RecipientGroup, error) {
-	ids, err := s.recipientGroupIDs(ctx, ruleID)
+// SetRecipientGroups maps older email-only callers onto the event-handler model.
+// The persisted schema remains handler-based; no alert_rule_recipient_groups table is used.
+func (s *AlertRuleStore) SetRecipientGroups(ctx context.Context, ruleID string, groupIDs []string) error {
+	return s.SetEventHandlers(ctx, ruleID, []cloudhub.AlertRuleEventHandler{
+		{Type: cloudhub.AlertRuleEventHandlerEmail, Enabled: true, RecipientGroupIDs: groupIDs},
+	})
+}
+
+func (s *AlertRuleStore) EventHandlersByRule(ctx context.Context, ruleID string) ([]cloudhub.AlertRuleEventHandler, error) {
+	rows, err := s.client.QueryContext(ctx, `
+		SELECT id, alert_rule_id, handler_type, enabled, config_json, created_at, updated_at
+		FROM alert_rule_event_handlers
+		WHERE alert_rule_id = $1 AND delete_yn = false
+		ORDER BY created_at`, ruleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []cloudhub.AlertRuleEventHandler
+	for rows.Next() {
+		var h cloudhub.AlertRuleEventHandler
+		var cfg string
+		if err := rows.Scan(&h.ID, &h.AlertRuleID, &h.Type, &h.Enabled, &cfg, &h.CreatedAt, &h.UpdatedAt); err != nil {
+			return nil, err
+		}
+		h.ConfigJSON = json.RawMessage(cfg)
+		if h.RecipientGroupIDs, err = s.eventHandlerRecipientGroupIDs(ctx, h.ID); err != nil {
+			return nil, err
+		}
+		out = append(out, h)
+	}
+	return out, rows.Err()
+}
+
+func emailRecipientGroupIDs(handlers []cloudhub.AlertRuleEventHandler) []string {
+	for _, h := range handlers {
+		if h.Type == cloudhub.AlertRuleEventHandlerEmail && h.Enabled {
+			return append([]string(nil), h.RecipientGroupIDs...)
+		}
+	}
+	return nil
+}
+
+func (s *AlertRuleStore) RecipientGroupsByEventHandler(ctx context.Context, handlerID string) ([]cloudhub.RecipientGroup, error) {
+	ids, err := s.eventHandlerRecipientGroupIDs(ctx, handlerID)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +421,7 @@ func (s *AlertRuleStore) RecipientGroupsByRule(ctx context.Context, ruleID strin
 		return nil, nil
 	}
 	rgStore := NewRecipientGroupStore(s.client)
-	var out []cloudhub.RecipientGroup
+	out := make([]cloudhub.RecipientGroup, 0, len(ids))
 	for _, gid := range ids {
 		g, err := rgStore.Get(ctx, gid)
 		if err != nil {
@@ -363,8 +432,45 @@ func (s *AlertRuleStore) RecipientGroupsByRule(ctx context.Context, ruleID strin
 	return out, nil
 }
 
+// RecipientGroupsByRule returns email-handler groups for older email-only tests
+// and scripts. Empty result keeps the "all org recipient groups" meaning.
+func (s *AlertRuleStore) RecipientGroupsByRule(ctx context.Context, ruleID string) ([]cloudhub.RecipientGroup, error) {
+	handlers, err := s.EventHandlersByRule(ctx, ruleID)
+	if err != nil {
+		return nil, err
+	}
+	for _, h := range handlers {
+		if h.Type == cloudhub.AlertRuleEventHandlerEmail && h.Enabled {
+			return s.RecipientGroupsByEventHandler(ctx, h.ID)
+		}
+	}
+	return nil, nil
+}
+
 func (s *AlertRuleStore) RulesByRecipientGroup(ctx context.Context, recipientGroupID string) ([]cloudhub.AlertGroupRule, error) {
-	const q = `SELECT alert_rule_id FROM alert_rule_recipient_groups WHERE recipient_group_id = $1`
+	const q = `
+		WITH target_group AS (
+			SELECT org_id FROM recipient_groups WHERE id = $1 AND delete_yn = false
+		)
+		SELECT DISTINCT h.alert_rule_id
+		FROM alert_rule_event_handlers h
+		JOIN alert_rules r ON r.id = h.alert_rule_id AND r.delete_yn = false
+		JOIN target_group tg ON tg.org_id = r.org_id
+		WHERE h.delete_yn = false
+		  AND h.enabled = true
+		  AND (
+			EXISTS (
+				SELECT 1
+				FROM alert_rule_event_handler_recipient_groups g
+				WHERE g.alert_rule_event_handler_id = h.id
+				  AND g.recipient_group_id = $1
+			)
+			OR NOT EXISTS (
+				SELECT 1
+				FROM alert_rule_event_handler_recipient_groups g
+				WHERE g.alert_rule_event_handler_id = h.id
+			)
+		  )`
 	rows, err := s.client.QueryContext(ctx, q, recipientGroupID)
 	if err != nil {
 		return nil, fmt.Errorf("alert_rule.RulesByRecipientGroup: %w", err)

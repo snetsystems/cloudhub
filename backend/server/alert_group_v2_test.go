@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/bouk/httprouter"
@@ -60,18 +61,21 @@ func (f *fakeAlertKapacitorStore) Delete(ctx context.Context, id string) error {
 }
 
 type fakeAlertGroupRuleStore struct {
-	allFunc                   func(context.Context, string) ([]cloudhub.AlertGroupRule, error)
-	addFunc                   func(context.Context, cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error)
-	updateFunc                func(context.Context, cloudhub.AlertGroupRule) error
-	getFunc                   func(context.Context, string) (cloudhub.AlertGroupRule, error)
-	setHostsFunc              func(context.Context, string, []string) error
-	hostnamesFunc             func(context.Context, string) ([]string, error)
-	setRecipientGroupsFunc    func(context.Context, string, []string) error
-	recipientGroupsByRuleFunc func(context.Context, string) ([]cloudhub.RecipientGroup, error)
-	rulesByRecipientGroupFunc func(context.Context, string) ([]cloudhub.AlertGroupRule, error)
-	conditionsByRuleFunc      func(context.Context, string) ([]cloudhub.AlertRuleCondition, error)
-	setConditionsFunc         func(context.Context, string, []cloudhub.AlertRuleCondition) error
-	deleteFunc                func(context.Context, string) error
+	allFunc                      func(context.Context, string) ([]cloudhub.AlertGroupRule, error)
+	addFunc                      func(context.Context, cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error)
+	updateFunc                   func(context.Context, cloudhub.AlertGroupRule) error
+	getFunc                      func(context.Context, string) (cloudhub.AlertGroupRule, error)
+	setHostsFunc                 func(context.Context, string, []string) error
+	hostnamesFunc                func(context.Context, string) ([]string, error)
+	setEventHandlersFunc         func(context.Context, string, []cloudhub.AlertRuleEventHandler) error
+	eventHandlersByRuleFunc      func(context.Context, string) ([]cloudhub.AlertRuleEventHandler, error)
+	recipientGroupsByHandlerFunc func(context.Context, string) ([]cloudhub.RecipientGroup, error)
+	setRecipientGroupsFunc       func(context.Context, string, []string) error
+	recipientGroupsByRuleFunc    func(context.Context, string) ([]cloudhub.RecipientGroup, error)
+	rulesByRecipientGroupFunc    func(context.Context, string) ([]cloudhub.AlertGroupRule, error)
+	conditionsByRuleFunc         func(context.Context, string) ([]cloudhub.AlertRuleCondition, error)
+	setConditionsFunc            func(context.Context, string, []cloudhub.AlertRuleCondition) error
+	deleteFunc                   func(context.Context, string) error
 }
 
 func (f *fakeAlertGroupRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.AlertGroupRule, error) {
@@ -119,6 +123,27 @@ func (f *fakeAlertGroupRuleStore) SetHosts(ctx context.Context, ruleID string, h
 func (f *fakeAlertGroupRuleStore) Hostnames(ctx context.Context, ruleID string) ([]string, error) {
 	if f.hostnamesFunc != nil {
 		return f.hostnamesFunc(ctx, ruleID)
+	}
+	return nil, nil
+}
+
+func (f *fakeAlertGroupRuleStore) SetEventHandlers(ctx context.Context, ruleID string, handlers []cloudhub.AlertRuleEventHandler) error {
+	if f.setEventHandlersFunc != nil {
+		return f.setEventHandlersFunc(ctx, ruleID, handlers)
+	}
+	return nil
+}
+
+func (f *fakeAlertGroupRuleStore) EventHandlersByRule(ctx context.Context, ruleID string) ([]cloudhub.AlertRuleEventHandler, error) {
+	if f.eventHandlersByRuleFunc != nil {
+		return f.eventHandlersByRuleFunc(ctx, ruleID)
+	}
+	return nil, nil
+}
+
+func (f *fakeAlertGroupRuleStore) RecipientGroupsByEventHandler(ctx context.Context, handlerID string) ([]cloudhub.RecipientGroup, error) {
+	if f.recipientGroupsByHandlerFunc != nil {
+		return f.recipientGroupsByHandlerFunc(ctx, handlerID)
 	}
 	return nil, nil
 }
@@ -321,11 +346,11 @@ func (f *fakeAlertRecipientMemberPrefsStore) ByGroup(ctx context.Context, groupI
 	return nil, nil
 }
 
-func TestResolveRuleRecipientsUsesAllOrgGroupsWhenUnbound(t *testing.T) {
+func TestResolveRuleRecipientsNoHandlerReturnsNoRecipients(t *testing.T) {
 	allCalled := false
 	svc := &Service{
 		AlertGroupRules: &fakeAlertGroupRuleStore{
-			recipientGroupsByRuleFunc: func(context.Context, string) ([]cloudhub.RecipientGroup, error) {
+			eventHandlersByRuleFunc: func(context.Context, string) ([]cloudhub.AlertRuleEventHandler, error) {
 				return nil, nil
 			},
 		},
@@ -354,8 +379,53 @@ func TestResolveRuleRecipientsUsesAllOrgGroupsWhenUnbound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveRuleRecipients: %v", err)
 	}
+	if allCalled {
+		t.Fatal("did not expect RecipientGroups.All when rule has no email handler")
+	}
+	if len(recipients.Crit) != 0 || len(recipients.Warn) != 0 || len(recipients.Info) != 0 {
+		t.Fatalf("unexpected recipients: %+v", recipients)
+	}
+}
+
+func TestResolveRuleRecipientsEmailHandlerWithoutGroupsUsesAllOrgGroups(t *testing.T) {
+	allCalled := false
+	svc := &Service{
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			eventHandlersByRuleFunc: func(context.Context, string) ([]cloudhub.AlertRuleEventHandler, error) {
+				return []cloudhub.AlertRuleEventHandler{{
+					ID:      "handler-1",
+					Type:    cloudhub.AlertRuleEventHandlerEmail,
+					Enabled: true,
+				}}, nil
+			},
+		},
+		RecipientGroups: &fakeRecipientGroupStore{
+			allFunc: func(_ context.Context, orgID string) ([]cloudhub.RecipientGroup, error) {
+				allCalled = true
+				if orgID != "org-1" {
+					t.Fatalf("orgID = %q, want org-1", orgID)
+				}
+				return []cloudhub.RecipientGroup{{
+					ID: "group-all",
+					Members: []cloudhub.RecipientGroupMember{{
+						ID:    "member-1",
+						Email: "all@example.com",
+					}},
+				}}, nil
+			},
+		},
+		AlertRecipientMemberPrefs: &fakeAlertRecipientMemberPrefsStore{},
+	}
+
+	recipients, err := svc.resolveRuleRecipients(context.Background(), cloudhub.AlertGroupRule{
+		ID:    "rule-1",
+		OrgID: "org-1",
+	})
+	if err != nil {
+		t.Fatalf("resolveRuleRecipients: %v", err)
+	}
 	if !allCalled {
-		t.Fatal("expected RecipientGroups.All when rule has no bound groups")
+		t.Fatal("expected RecipientGroups.All for enabled email handler with no groups")
 	}
 	if len(recipients.Crit) != 1 || recipients.Crit[0] != "all@example.com" {
 		t.Fatalf("unexpected recipients: %+v", recipients)
@@ -694,7 +764,7 @@ func TestAlertGroupRuleCreateAcceptsUIRelativePayload(t *testing.T) {
 
 	var added cloudhub.AlertGroupRule
 	var setHosts []string
-	var setRecipientGroups []string
+	var setEventHandlers []cloudhub.AlertRuleEventHandler
 	var setConditions []cloudhub.AlertRuleCondition
 
 	svc := &Service{
@@ -709,8 +779,8 @@ func TestAlertGroupRuleCreateAcceptsUIRelativePayload(t *testing.T) {
 				setHosts = append([]string(nil), hostnames...)
 				return nil
 			},
-			setRecipientGroupsFunc: func(ctx context.Context, ruleID string, recipientGroupIDs []string) error {
-				setRecipientGroups = append([]string(nil), recipientGroupIDs...)
+			setEventHandlersFunc: func(ctx context.Context, ruleID string, handlers []cloudhub.AlertRuleEventHandler) error {
+				setEventHandlers = append([]cloudhub.AlertRuleEventHandler(nil), handlers...)
 				return nil
 			},
 			setConditionsFunc: func(ctx context.Context, ruleID string, conditions []cloudhub.AlertRuleCondition) error {
@@ -718,12 +788,11 @@ func TestAlertGroupRuleCreateAcceptsUIRelativePayload(t *testing.T) {
 				return nil
 			},
 		},
-		// resolveRuleRecipients falls back to all-org groups when no bound
-		// groups exist; the fake returns nil so we don't try to send anywhere.
+		// No event handler means no external notification recipients.
 		RecipientGroups: &fakeRecipientGroupStore{},
 	}
 
-	payload := bytes.NewBufferString(`{"name":"relative cpu","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":15,"enabled":true}],"trigger":"relative","values":{"change":"change","shift":"1m","operator":"greater than"},"triggerOperator":"greater","taskType":"stream","every":"30s","occurrenceType":"recent","occurrenceCount":2,"occurrenceWindow":"5m","pauseSeconds":60,"notifyRecovery":true,"active":true,"hostnames":["web-1"],"recipientGroupIds":["rg-1"]}`)
+	payload := bytes.NewBufferString(`{"name":"relative cpu","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":15,"enabled":true}],"trigger":"relative","values":{"change":"change","shift":"1m","operator":"greater than"},"triggerOperator":"greater","taskType":"stream","every":"30s","occurrenceType":"recent","occurrenceCount":2,"occurrenceWindow":"5m","pauseSeconds":60,"notifyRecovery":true,"active":true,"hostnames":["web-1"],"eventHandlers":[{"type":"email","enabled":true,"recipientGroupIds":["rg-1"]}]}`)
 	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
 	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
 	rr := httptest.NewRecorder()
@@ -745,8 +814,68 @@ func TestAlertGroupRuleCreateAcceptsUIRelativePayload(t *testing.T) {
 	if len(setHosts) != 1 || setHosts[0] != "web-1" {
 		t.Fatalf("unexpected hosts: %+v", setHosts)
 	}
-	if len(setRecipientGroups) != 1 || setRecipientGroups[0] != "rg-1" {
-		t.Fatalf("unexpected recipient groups: %+v", setRecipientGroups)
+	if len(setEventHandlers) != 1 || setEventHandlers[0].Type != "email" || len(setEventHandlers[0].RecipientGroupIDs) != 1 || setEventHandlers[0].RecipientGroupIDs[0] != "rg-1" {
+		t.Fatalf("unexpected event handlers: %+v", setEventHandlers)
+	}
+}
+
+func TestAlertGroupRuleCreateBuildsEmailTickscriptFromEventHandler(t *testing.T) {
+	logger := &mocks.TestLogger{}
+
+	svc := &Service{
+		Logger: logger,
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			addFunc: func(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
+				r.ID = "rule-email-1"
+				return r, nil
+			},
+			setEventHandlersFunc: func(ctx context.Context, ruleID string, handlers []cloudhub.AlertRuleEventHandler) error {
+				return nil
+			},
+			eventHandlersByRuleFunc: func(context.Context, string) ([]cloudhub.AlertRuleEventHandler, error) {
+				return []cloudhub.AlertRuleEventHandler{{
+					ID:                "handler-email-1",
+					Type:              cloudhub.AlertRuleEventHandlerEmail,
+					Enabled:           true,
+					RecipientGroupIDs: []string{"group-1"},
+				}}, nil
+			},
+			recipientGroupsByHandlerFunc: func(context.Context, string) ([]cloudhub.RecipientGroup, error) {
+				return []cloudhub.RecipientGroup{{
+					ID:    "group-1",
+					OrgID: "org-1",
+					Members: []cloudhub.RecipientGroupMember{{
+						ID:    "member-1",
+						Email: "ops@example.com",
+					}},
+				}}, nil
+			},
+		},
+		AlertRecipientMemberPrefs: &fakeAlertRecipientMemberPrefsStore{},
+	}
+
+	payload := bytes.NewBufferString(`{"name":"cpu email","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"email","enabled":true,"recipientGroupIds":["group-1"]}]}`)
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
+	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
+	rr := httptest.NewRecorder()
+
+	svc.AlertGroupRuleCreate(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	var got cloudhub.AlertGroupRule
+	if err := json.NewDecoder(rr.Body).Decode(&got); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if !strings.Contains(got.Tickscript, ".email()") {
+		t.Fatalf("tickscript does not include email handler:\n%s", got.Tickscript)
+	}
+	if !strings.Contains(got.Tickscript, ".to('ops@example.com')") {
+		t.Fatalf("tickscript does not include event-handler recipient:\n%s", got.Tickscript)
+	}
+	if !strings.Contains(got.Tickscript, "|influxDBOut()") {
+		t.Fatalf("tickscript should still include alert output:\n%s", got.Tickscript)
 	}
 }
 
@@ -1180,29 +1309,33 @@ func TestAlertGroupRuleUpdateAppliesPartialPatchOnExisting(t *testing.T) {
 	defer kapacitorAPI.Close()
 
 	existing := cloudhub.AlertGroupRule{
-		ID:                "rule-1",
-		OrgID:             "org-1",
-		KapacitorID:       "11111111-1111-1111-1111-111111111111",
-		Name:              "cpu high",
-		Database:          "telegraf",
-		RetentionPolicy:   "autogen",
-		Measurement:       "cpu",
-		Field:             "usage_idle",
-		Conditions:        []cloudhub.AlertRuleCondition{{Level: "critical", Value: 90, Enabled: true}},
-		TriggerOperator:   "greater",
-		Trigger:           "threshold",
-		TaskType:          "stream",
-		Every:             "30s",
-		OccurrenceType:    "consecutive",
-		OccurrenceCount:   1,
-		OccurrenceWindow:  "5m",
-		Active:            true,
-		Hostnames:         []string{"web-1"},
-		RecipientGroupIDs: []string{"rg-1"},
+		ID:               "rule-1",
+		OrgID:            "org-1",
+		KapacitorID:      "11111111-1111-1111-1111-111111111111",
+		Name:             "cpu high",
+		Database:         "telegraf",
+		RetentionPolicy:  "autogen",
+		Measurement:      "cpu",
+		Field:            "usage_idle",
+		Conditions:       []cloudhub.AlertRuleCondition{{Level: "critical", Value: 90, Enabled: true}},
+		TriggerOperator:  "greater",
+		Trigger:          "threshold",
+		TaskType:         "stream",
+		Every:            "30s",
+		OccurrenceType:   "consecutive",
+		OccurrenceCount:  1,
+		OccurrenceWindow: "5m",
+		Active:           true,
+		Hostnames:        []string{"web-1"},
+		EventHandlers: []cloudhub.AlertRuleEventHandler{{
+			Type:              cloudhub.AlertRuleEventHandlerEmail,
+			Enabled:           true,
+			RecipientGroupIDs: []string{"rg-1"},
+		}},
 	}
 
 	var captured cloudhub.AlertGroupRule
-	var setHostsCalled, setRecipientGroupsCalled bool
+	var setHostsCalled, setEventHandlersCalled bool
 
 	svc := &Service{
 		Logger: logger,
@@ -1221,10 +1354,10 @@ func TestAlertGroupRuleUpdateAppliesPartialPatchOnExisting(t *testing.T) {
 				}
 				return nil
 			},
-			setRecipientGroupsFunc: func(ctx context.Context, ruleID string, recipientGroupIDs []string) error {
-				setRecipientGroupsCalled = true
-				if len(recipientGroupIDs) != 1 || recipientGroupIDs[0] != "rg-1" {
-					t.Errorf("SetRecipientGroups: want [rg-1], got %v", recipientGroupIDs)
+			setEventHandlersFunc: func(ctx context.Context, ruleID string, handlers []cloudhub.AlertRuleEventHandler) error {
+				setEventHandlersCalled = true
+				if len(handlers) != 1 || handlers[0].Type != cloudhub.AlertRuleEventHandlerEmail || len(handlers[0].RecipientGroupIDs) != 1 || handlers[0].RecipientGroupIDs[0] != "rg-1" {
+					t.Errorf("SetEventHandlers: want email [rg-1], got %+v", handlers)
 				}
 				return nil
 			},
@@ -1238,8 +1371,7 @@ func TestAlertGroupRuleUpdateAppliesPartialPatchOnExisting(t *testing.T) {
 				}, nil
 			},
 		},
-		// resolveRuleRecipients falls back to all-org groups when no bound
-		// groups exist; the fake returns nil so we don't try to send anywhere.
+		// Existing email handler preserves notification routing.
 		RecipientGroups: &fakeRecipientGroupStore{},
 	}
 
@@ -1277,11 +1409,11 @@ func TestAlertGroupRuleUpdateAppliesPartialPatchOnExisting(t *testing.T) {
 	if captured.Active {
 		t.Errorf("Active not patched to false: got true")
 	}
-	if len(captured.RecipientGroupIDs) != 1 || captured.RecipientGroupIDs[0] != "rg-1" {
-		t.Errorf("RecipientGroupIDs not preserved: %v", captured.RecipientGroupIDs)
+	if len(captured.EventHandlers) != 1 || len(captured.EventHandlers[0].RecipientGroupIDs) != 1 || captured.EventHandlers[0].RecipientGroupIDs[0] != "rg-1" {
+		t.Errorf("EventHandlers not preserved: %+v", captured.EventHandlers)
 	}
-	if !setHostsCalled || !setRecipientGroupsCalled {
-		t.Errorf("SetHosts/SetRecipientGroups not called: hosts=%v recipientGroups=%v", setHostsCalled, setRecipientGroupsCalled)
+	if !setHostsCalled || !setEventHandlersCalled {
+		t.Errorf("SetHosts/SetEventHandlers not called: hosts=%v eventHandlers=%v", setHostsCalled, setEventHandlersCalled)
 	}
 }
 
@@ -1308,9 +1440,15 @@ func TestAlertGroupRuleTestNotificationUsesSavedRuleRecipients(t *testing.T) {
 					ID:          "rule-1",
 					OrgID:       "org-1",
 					KapacitorID: "kapa-1",
+					EventHandlers: []cloudhub.AlertRuleEventHandler{{
+						ID:                "handler-1",
+						Type:              cloudhub.AlertRuleEventHandlerEmail,
+						Enabled:           true,
+						RecipientGroupIDs: []string{"group-1"},
+					}},
 				}, nil
 			},
-			recipientGroupsByRuleFunc: func(context.Context, string) ([]cloudhub.RecipientGroup, error) {
+			recipientGroupsByHandlerFunc: func(context.Context, string) ([]cloudhub.RecipientGroup, error) {
 				return []cloudhub.RecipientGroup{
 					{
 						ID:    "group-1",

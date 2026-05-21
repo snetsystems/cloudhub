@@ -12,7 +12,7 @@ import (
 var regenRuleSyncHook func(ctx context.Context, rule cloudhub.AlertGroupRule) error
 
 // RegenerateRulesByRecipientGroup regenerates tickscripts of all alert rules
-// directly linked to the given recipient_group via alert_rule_recipient_groups.
+// affected by the given recipient_group through event-handler routing.
 // Per-rule failures are logged and skipped — one bad rule does not block the others.
 func (s *Service) RegenerateRulesByRecipientGroup(ctx context.Context, orgID string, group cloudhub.RecipientGroup) error {
 	if s.AlertGroupRules == nil {

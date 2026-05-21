@@ -82,12 +82,12 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	// Persist host/recipient_group/condition associations alongside the rule itself.
+	// Persist host/event-handler/condition associations alongside the rule itself.
 	if err := s.AlertGroupRules.SetHosts(ctx, rule.ID, req.Hostnames); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	if err := s.AlertGroupRules.SetRecipientGroups(ctx, rule.ID, req.RecipientGroupIDs); err != nil {
+	if err := s.AlertGroupRules.SetEventHandlers(ctx, rule.ID, req.EventHandlers); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
@@ -98,7 +98,11 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	rule.Hostnames = req.Hostnames
-	rule.RecipientGroupIDs = req.RecipientGroupIDs
+	if handlers, err := s.AlertGroupRules.EventHandlersByRule(ctx, rule.ID); err == nil {
+		rule.EventHandlers = handlers
+	} else {
+		rule.EventHandlers = req.EventHandlers
+	}
 	rule.Conditions = req.Conditions
 	recipients, err := s.resolveRuleRecipients(ctx, rule)
 	if err != nil {
@@ -172,7 +176,7 @@ func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	if err := s.AlertGroupRules.SetRecipientGroups(ctx, id, req.RecipientGroupIDs); err != nil {
+	if err := s.AlertGroupRules.SetEventHandlers(ctx, id, req.EventHandlers); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
@@ -181,6 +185,9 @@ func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 			return
 		}
+	}
+	if handlers, err := s.AlertGroupRules.EventHandlersByRule(ctx, id); err == nil {
+		req.EventHandlers = handlers
 	}
 	recipients, err := s.resolveRuleRecipients(ctx, req)
 	if err != nil {
@@ -257,7 +264,7 @@ func (s *Service) AlertGroupRuleTestNotificationByID(w http.ResponseWriter, r *h
 		notFound(w, id, s.Logger)
 		return
 	}
-	recipientGroups, err := s.AlertGroupRules.RecipientGroupsByRule(ctx, id)
+	recipientGroups, err := s.resolveRuleEmailRecipientGroups(ctx, rule)
 	if err != nil {
 		internalServerError(w, err, s.Logger)
 		return
@@ -319,18 +326,18 @@ func (s *Service) AlertGroupRuleSetHosts(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// AlertGroupRuleSetRecipientGroups sets the recipient groups for an alert group rule.
-func (s *Service) AlertGroupRuleSetRecipientGroups(w http.ResponseWriter, r *http.Request) {
+// AlertGroupRuleSetEventHandlers sets event handlers for an alert group rule.
+func (s *Service) AlertGroupRuleSetEventHandlers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := httprouter.GetParam(r, "id")
 	var req struct {
-		RecipientGroupIDs []string `json:"recipientGroupIds"`
+		EventHandlers []cloudhub.AlertRuleEventHandler `json:"eventHandlers"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
 	}
-	if err := s.AlertGroupRules.SetRecipientGroups(ctx, id, req.RecipientGroupIDs); err != nil {
+	if err := s.AlertGroupRules.SetEventHandlers(ctx, id, req.EventHandlers); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
@@ -446,32 +453,64 @@ func validateAlertGroupRuleInput(rule cloudhub.AlertGroupRule) error {
 	return nil
 }
 
-// resolveRuleRecipients walks the rule's bound recipient groups, looks up each
-// member's alert preferences, and buckets emails by alert level (info/warn/crit).
-// Members without prefs or with EmailEnabled=false are skipped.
-// An empty rule binding (no alert_rule_recipient_groups rows) means all recipient
-// groups in the rule's org, matching empty hostnames (= all hosts).
+// resolveRuleRecipients resolves the enabled email handler's recipient groups,
+// then buckets emails by alert level (info/warn/crit). Missing/disabled email
+// handler means no external email notification; the rule can still emit alert
+// events to the output measurement.
 func (s *Service) resolveRuleRecipients(ctx context.Context, rule cloudhub.AlertGroupRule) (kapackage.AlertRecipients, error) {
 	if rule.ID == "" || s.AlertGroupRules == nil {
 		return kapackage.AlertRecipients{}, nil
 	}
-	groups, err := s.AlertGroupRules.RecipientGroupsByRule(ctx, rule.ID)
-	if err != nil {
-		return kapackage.AlertRecipients{}, err
-	}
-	groups, err = s.recipientGroupsForOrg(ctx, rule.OrgID, groups)
+	groups, err := s.resolveRuleEmailRecipientGroups(ctx, rule)
 	if err != nil {
 		return kapackage.AlertRecipients{}, err
 	}
 	return s.buildAlertRecipientsFromGroups(ctx, groups), nil
 }
 
-// recipientGroupsForOrg returns bound groups when present, otherwise all org groups.
-func (s *Service) recipientGroupsForOrg(ctx context.Context, orgID string, bound []cloudhub.RecipientGroup) ([]cloudhub.RecipientGroup, error) {
-	if len(bound) > 0 {
-		return bound, nil
+func (s *Service) resolveRuleEmailRecipientGroups(ctx context.Context, rule cloudhub.AlertGroupRule) ([]cloudhub.RecipientGroup, error) {
+	handlers := rule.EventHandlers
+	if len(handlers) == 0 && rule.ID != "" && s.AlertGroupRules != nil {
+		var err error
+		handlers, err = s.AlertGroupRules.EventHandlersByRule(ctx, rule.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return s.allOrgRecipientGroups(ctx, orgID)
+	for _, h := range handlers {
+		if strings.EqualFold(strings.TrimSpace(h.Type), cloudhub.AlertRuleEventHandlerEmail) && h.Enabled {
+			if len(h.RecipientGroupIDs) == 0 {
+				return s.allOrgRecipientGroups(ctx, rule.OrgID)
+			}
+			if h.ID != "" && s.AlertGroupRules != nil {
+				return s.AlertGroupRules.RecipientGroupsByEventHandler(ctx, h.ID)
+			}
+			return s.recipientGroupsByIDs(ctx, rule.OrgID, h.RecipientGroupIDs)
+		}
+	}
+	return nil, nil
+}
+
+func (s *Service) recipientGroupsByIDs(ctx context.Context, orgID string, recipientGroupIDs []string) ([]cloudhub.RecipientGroup, error) {
+	if s.RecipientGroups == nil {
+		return nil, fmt.Errorf("recipient group store unavailable")
+	}
+	seen := map[string]bool{}
+	var out []cloudhub.RecipientGroup
+	for _, gid := range recipientGroupIDs {
+		group, err := s.RecipientGroups.Get(ctx, gid)
+		if err != nil {
+			return nil, err
+		}
+		if group.OrgID != "" && orgID != "" && group.OrgID != orgID {
+			continue
+		}
+		if !seen[group.ID] {
+			seen[group.ID] = true
+			out = append(out, group)
+		}
+	}
+	return out, nil
 }
 
 func (s *Service) allOrgRecipientGroups(ctx context.Context, orgID string) ([]cloudhub.RecipientGroup, error) {
@@ -545,22 +584,7 @@ func (s *Service) resolveDraftAlertGroupRecipientGroups(ctx context.Context, org
 		return s.allOrgRecipientGroups(ctx, orgID)
 	}
 
-	seen := map[string]bool{}
-	var out []cloudhub.RecipientGroup
-	for _, gid := range recipientGroupIDs {
-		group, err := s.RecipientGroups.Get(ctx, gid)
-		if err != nil {
-			return nil, err
-		}
-		if group.OrgID != "" && orgID != "" && group.OrgID != orgID {
-			continue
-		}
-		if !seen[group.ID] {
-			seen[group.ID] = true
-			out = append(out, group)
-		}
-	}
-	return out, nil
+	return s.recipientGroupsByIDs(ctx, orgID, recipientGroupIDs)
 }
 
 func (s *Service) sendAlertGroupTestNotification(ctx context.Context, orgID, kapacitorID string, recipientGroups []cloudhub.RecipientGroup, title, message string) (alertGroupTestNotificationResponse, error) {

@@ -2046,29 +2046,29 @@ type EvalConfig struct {
 // Templates are stored as JSON files under backend/builtin/alerts/ and
 // embedded into the binary via go-bindata. They are read-only at runtime.
 type AlertTemplate struct {
-	ID              string               `json:"id"`
-	Name            string               `json:"name"`
-	Description     string               `json:"description,omitempty"`
-	Category        string               `json:"category,omitempty"` // monitoring domain: server-monitoring | url-monitoring | ...
-	Tags            []string             `json:"tags,omitempty"`     // metric domain + free-form keywords
-	Database        string               `json:"database"`
-	RetentionPolicy string               `json:"retentionPolicy"`
-	Measurement     string               `json:"measurement"`
-	Field           string               `json:"field"`
-	Derivative      *DerivativeConfig    `json:"derivative,omitempty"`
-	Eval            *EvalConfig          `json:"eval,omitempty"`
-	Trigger         string               `json:"trigger,omitempty"` // threshold | relative | deadman
-	TriggerOperator string               `json:"triggerOperator"`
-	TriggerValues   TriggerValues        `json:"values,omitempty"`
-	TaskType        string               `json:"taskType"` // stream | batch
-	Every           string               `json:"every"`
-	OccurrenceType  string               `json:"occurrenceType"` // consecutive | recent
-	OccurrenceCount int                  `json:"occurrenceCount"`
-	OccurrenceWindow string              `json:"occurrenceWindow"`
-	PauseSeconds    int                  `json:"pauseSeconds"`
-	NotifyRecovery  bool                 `json:"notifyRecovery"`
-	Message         string               `json:"message"`
-	Conditions      []AlertRuleCondition `json:"conditions,omitempty"`
+	ID               string               `json:"id"`
+	Name             string               `json:"name"`
+	Description      string               `json:"description,omitempty"`
+	Category         string               `json:"category,omitempty"` // monitoring domain: server-monitoring | url-monitoring | ...
+	Tags             []string             `json:"tags,omitempty"`     // metric domain + free-form keywords
+	Database         string               `json:"database"`
+	RetentionPolicy  string               `json:"retentionPolicy"`
+	Measurement      string               `json:"measurement"`
+	Field            string               `json:"field"`
+	Derivative       *DerivativeConfig    `json:"derivative,omitempty"`
+	Eval             *EvalConfig          `json:"eval,omitempty"`
+	Trigger          string               `json:"trigger,omitempty"` // threshold | relative | deadman
+	TriggerOperator  string               `json:"triggerOperator"`
+	TriggerValues    TriggerValues        `json:"values,omitempty"`
+	TaskType         string               `json:"taskType"` // stream | batch
+	Every            string               `json:"every"`
+	OccurrenceType   string               `json:"occurrenceType"` // consecutive | recent
+	OccurrenceCount  int                  `json:"occurrenceCount"`
+	OccurrenceWindow string               `json:"occurrenceWindow"`
+	PauseSeconds     int                  `json:"pauseSeconds"`
+	NotifyRecovery   bool                 `json:"notifyRecovery"`
+	Message          string               `json:"message"`
+	Conditions       []AlertRuleCondition `json:"conditions,omitempty"`
 }
 
 // AlertTemplatesStore exposes read-only access to builtin alert templates.
@@ -2134,19 +2134,22 @@ type AlertGroupRule struct {
 	Conditions      []AlertRuleCondition `json:"conditions,omitempty"`
 	TriggerOperator string               `json:"triggerOperator"` // greater | less | equal | not_equal | greater_equal | less_equal
 	// Trigger is threshold | relative | deadman (empty => threshold). Deadman is supported for stream tasks only.
-	Trigger           string        `json:"trigger,omitempty"`
-	TriggerValues     TriggerValues `json:"values,omitempty"`
-	TaskType          string        `json:"taskType"` // stream | batch
-	Every             string        `json:"every"`
-	OccurrenceType    string        `json:"occurrenceType"` // consecutive | recent
-	OccurrenceCount   int           `json:"occurrenceCount"`
-	OccurrenceWindow  string        `json:"occurrenceWindow"`
-	PauseSeconds      int           `json:"pauseSeconds"`
-	NotifyRecovery    bool          `json:"notifyRecovery"`
-	Message           string        `json:"message"`
-	Active            bool          `json:"active"`
-	Hostnames         []string      `json:"hostnames,omitempty"`
-	RecipientGroupIDs []string      `json:"recipientGroupIds,omitempty"`
+	Trigger          string                  `json:"trigger,omitempty"`
+	TriggerValues    TriggerValues           `json:"values,omitempty"`
+	TaskType         string                  `json:"taskType"` // stream | batch
+	Every            string                  `json:"every"`
+	OccurrenceType   string                  `json:"occurrenceType"` // consecutive | recent
+	OccurrenceCount  int                     `json:"occurrenceCount"`
+	OccurrenceWindow string                  `json:"occurrenceWindow"`
+	PauseSeconds     int                     `json:"pauseSeconds"`
+	NotifyRecovery   bool                    `json:"notifyRecovery"`
+	Message          string                  `json:"message"`
+	Active           bool                    `json:"active"`
+	Hostnames        []string                `json:"hostnames,omitempty"`
+	EventHandlers    []AlertRuleEventHandler `json:"eventHandlers,omitempty"`
+	// RecipientGroupIDs is kept for internal email-only compatibility paths.
+	// API payloads should use EventHandlers[].RecipientGroupIDs.
+	RecipientGroupIDs []string `json:"-"`
 	// Derivative / Eval add TICK nodes between |from() and the alert pipeline
 	// for counter and derived-field metrics. Stream-only. See DerivativeConfig /
 	// EvalConfig for semantics.
@@ -2156,6 +2159,26 @@ type AlertGroupRule struct {
 	Tickscript string            `json:"tickscript,omitempty"`
 	CreatedAt  time.Time         `json:"createdAt"`
 	UpdatedAt  time.Time         `json:"updatedAt"`
+}
+
+const (
+	AlertRuleEventHandlerEmail   = "email"
+	AlertRuleEventHandlerSMS     = "sms"
+	AlertRuleEventHandlerWebhook = "webhook"
+)
+
+// AlertRuleEventHandler configures one notification channel for an alert rule.
+// An enabled handler with no RecipientGroupIDs means "all recipient groups in
+// the rule's org" for that channel.
+type AlertRuleEventHandler struct {
+	ID                string          `json:"id,omitempty"`
+	AlertRuleID       string          `json:"alertRuleId,omitempty"`
+	Type              string          `json:"type"`
+	Enabled           bool            `json:"enabled"`
+	ConfigJSON        json.RawMessage `json:"configJson,omitempty"`
+	RecipientGroupIDs []string        `json:"recipientGroupIds,omitempty"`
+	CreatedAt         time.Time       `json:"createdAt,omitempty"`
+	UpdatedAt         time.Time       `json:"updatedAt,omitempty"`
 }
 
 // RecipientGroupStore manages domain-neutral recipient groups and their members.
@@ -2214,8 +2237,9 @@ type AlertGroupRuleStore interface {
 	SetHosts(ctx context.Context, ruleID string, hostnames []string) error
 	Hostnames(ctx context.Context, ruleID string) ([]string, error)
 
-	SetRecipientGroups(ctx context.Context, ruleID string, recipientGroupIDs []string) error
-	RecipientGroupsByRule(ctx context.Context, ruleID string) ([]RecipientGroup, error)
+	SetEventHandlers(ctx context.Context, ruleID string, handlers []AlertRuleEventHandler) error
+	EventHandlersByRule(ctx context.Context, ruleID string) ([]AlertRuleEventHandler, error)
+	RecipientGroupsByEventHandler(ctx context.Context, handlerID string) ([]RecipientGroup, error)
 	RulesByRecipientGroup(ctx context.Context, recipientGroupID string) ([]AlertGroupRule, error)
 
 	// Conditions accessor (implementations may delegate to AlertRuleConditionStore)
