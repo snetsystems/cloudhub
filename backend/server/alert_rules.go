@@ -340,6 +340,10 @@ func (s *Service) AlertGroupRuleSetEventHandlers(w http.ResponseWriter, r *http.
 		invalidJSON(w, s.Logger)
 		return
 	}
+	if err := validateAlertRuleEventHandlers(req.EventHandlers); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
 	if err := s.AlertGroupRules.SetEventHandlers(ctx, id, req.EventHandlers); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
@@ -493,7 +497,83 @@ func validateAlertGroupRuleInput(rule cloudhub.AlertGroupRule) error {
 			return fmt.Errorf("deadman alert rules require task type stream")
 		}
 	}
+	if err := validateAlertRuleEventHandlers(rule.EventHandlers); err != nil {
+		return err
+	}
 
+	return nil
+}
+
+func validateAlertRuleEventHandlers(handlers []cloudhub.AlertRuleEventHandler) error {
+	for _, h := range handlers {
+		if !h.Enabled {
+			continue
+		}
+		cfg := h.ConfigJSON
+		if len(cfg) == 0 {
+			cfg = []byte(`{}`)
+		}
+		switch strings.ToLower(strings.TrimSpace(h.Type)) {
+		case "", cloudhub.AlertRuleEventHandlerEmail, cloudhub.AlertRuleEventHandlerSMS, cloudhub.AlertRuleEventHandlerWebhook:
+			continue
+		case cloudhub.AlertRuleEventHandlerTCP:
+			var v cloudhub.TCP
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return fmt.Errorf("tcp configJson is invalid")
+			}
+			if strings.TrimSpace(v.Address) == "" {
+				return fmt.Errorf("tcp address is required")
+			}
+		case cloudhub.AlertRuleEventHandlerExec:
+			var v cloudhub.Exec
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return fmt.Errorf("exec configJson is invalid")
+			}
+			if len(v.Command) == 0 {
+				return fmt.Errorf("exec command is required")
+			}
+		case cloudhub.AlertRuleEventHandlerLog:
+			var v cloudhub.Log
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return fmt.Errorf("log configJson is invalid")
+			}
+			if strings.TrimSpace(v.FilePath) == "" {
+				return fmt.Errorf("log filePath is required")
+			}
+		case cloudhub.AlertRuleEventHandlerKafka:
+			var v cloudhub.Kafka
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return fmt.Errorf("kafka configJson is invalid")
+			}
+			if strings.TrimSpace(v.Cluster) == "" {
+				return fmt.Errorf("kafka cluster is required")
+			}
+			if strings.TrimSpace(v.Topic) == "" {
+				return fmt.Errorf("kafka kafka-topic is required")
+			}
+		case cloudhub.AlertRuleEventHandlerSlack:
+			var v cloudhub.Slack
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return fmt.Errorf("slack configJson is invalid")
+			}
+			if strings.TrimSpace(v.Workspace) == "" {
+				return fmt.Errorf("slack workspace is required")
+			}
+			if strings.TrimSpace(v.Channel) == "" {
+				return fmt.Errorf("slack channel is required")
+			}
+		case cloudhub.AlertRuleEventHandlerTelegram:
+			var v cloudhub.Telegram
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return fmt.Errorf("telegram configJson is invalid")
+			}
+			if strings.TrimSpace(v.ChatID) == "" {
+				return fmt.Errorf("telegram chatId is required")
+			}
+		default:
+			return fmt.Errorf("unsupported event handler type %q", h.Type)
+		}
+	}
 	return nil
 }
 

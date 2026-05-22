@@ -56,12 +56,15 @@ const normalizeAlertGroupRule = (
 }
 
 const toEmailEventHandlers = (
-  recipientGroupIds: string[]
+  recipientGroupIds: string[],
+  existingEmailHandler?: AlertRuleEventHandler
 ): AlertRuleEventHandler[] => [
   {
+    ...(existingEmailHandler || {}),
     type: 'email',
-    enabled: true,
+    enabled: existingEmailHandler?.enabled ?? true,
     recipientGroupIds: recipientGroupIds || [],
+    configJson: existingEmailHandler?.configJson || {to: [], body: ''},
   },
 ]
 
@@ -69,8 +72,14 @@ const toAlertRuleEventHandlers = (rule: AlertGroupRule) => {
   const nonEmailHandlers = Array.isArray(rule.eventHandlers)
     ? rule.eventHandlers.filter(handler => handler.type !== 'email')
     : []
+  const emailHandler = Array.isArray(rule.eventHandlers)
+    ? rule.eventHandlers.find(handler => handler.type === 'email')
+    : undefined
 
-  return [...nonEmailHandlers, ...toEmailEventHandlers(rule.recipientGroupIds)]
+  return [
+    ...nonEmailHandlers,
+    ...toEmailEventHandlers(rule.recipientGroupIds, emailHandler),
+  ]
 }
 
 const toAlertGroupRuleRequest = (rule: AlertGroupRule) => {

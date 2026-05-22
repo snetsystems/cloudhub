@@ -124,6 +124,113 @@ func TestAlertGroupRuleTICKScriptEmbedsCriticalRecipients(t *testing.T) {
 	}
 }
 
+func TestAlertGroupRuleTICKScriptUsesEmailHandlerBodyAsDetails(t *testing.T) {
+	r := sampleRule()
+	r.EventHandlers = []cloudhub.AlertRuleEventHandler{{
+		Type:              cloudhub.AlertRuleEventHandlerEmail,
+		Enabled:           true,
+		ConfigJSON:        []byte(`{"body":"CPU alert body {{ .Level }}"}`),
+		RecipientGroupIDs: []string{"group-1"},
+	}}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if !strings.Contains(tick, `.message('cpu high')`) {
+		t.Fatalf("tickscript should keep rule.message as email title:\n%s", tick)
+	}
+	if !strings.Contains(tick, `.details('CPU alert body {{ .Level }}')`) {
+		t.Fatalf("tickscript should render email handler body as details:\n%s", tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptEmbedsNonEmailHandlersWithPausePolicy(t *testing.T) {
+	r := sampleRule()
+	r.PauseSeconds = 60
+	r.EventHandlers = []cloudhub.AlertRuleEventHandler{
+		{
+			Type:       cloudhub.AlertRuleEventHandlerSlack,
+			Enabled:    true,
+			ConfigJSON: []byte(`{"workspace":"default","channel":"#alerts","username":"cloudhub","iconEmoji":":warning:"}`),
+		},
+		{
+			Type:       cloudhub.AlertRuleEventHandlerKafka,
+			Enabled:    true,
+			ConfigJSON: []byte(`{"cluster":"default","kafka-topic":"alerts","template":"{{ json . }}"}`),
+		},
+		{
+			Type:       cloudhub.AlertRuleEventHandlerTCP,
+			Enabled:    true,
+			ConfigJSON: []byte(`{"address":"127.0.0.1:9999"}`),
+		},
+		{
+			Type:       cloudhub.AlertRuleEventHandlerExec,
+			Enabled:    true,
+			ConfigJSON: []byte(`{"command":["/bin/echo","alert"]}`),
+		},
+		{
+			Type:       cloudhub.AlertRuleEventHandlerLog,
+			Enabled:    true,
+			ConfigJSON: []byte(`{"filePath":"/tmp/cloudhub-alerts.log"}`),
+		},
+		{
+			Type:       cloudhub.AlertRuleEventHandlerTelegram,
+			Enabled:    true,
+			ConfigJSON: []byte(`{"chatId":"12345","parseMode":"HTML","disableWebPagePreview":true,"disableNotification":true}`),
+		},
+	}
+
+	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`.id('alert-group-rule-1-email-crit')`,
+		`.stateChangesOnly(60s)`,
+		`.slack()`,
+		`.workspace('default')`,
+		`.channel('#alerts')`,
+		`.kafka()`,
+		`.cluster('default')`,
+		`.kafkaTopic('alerts')`,
+		`.tcp('127.0.0.1:9999')`,
+		`.exec('/bin/echo', 'alert')`,
+		`.log('/tmp/cloudhub-alerts.log')`,
+		`.telegram()`,
+		`.chatId('12345')`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("tickscript missing %q\n%s", want, tick)
+		}
+	}
+}
+
+func TestAlertGroupRuleTICKScriptEmbedsNonEmailHandlersInRecoveryBranch(t *testing.T) {
+	r := sampleRule()
+	r.NotifyRecovery = true
+	r.EventHandlers = []cloudhub.AlertRuleEventHandler{{
+		Type:       cloudhub.AlertRuleEventHandlerSlack,
+		Enabled:    true,
+		ConfigJSON: []byte(`{"workspace":"default","channel":"#alerts"}`),
+	}}
+
+	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if !strings.Contains(tick, `.id('alert-group-rule-1-email-recovery')`) {
+		t.Fatalf("tickscript should render recovery notification branch:\n%s", tick)
+	}
+	if !strings.Contains(tick, `.message('Recovery: cpu high')`) {
+		t.Fatalf("tickscript should render recovery message:\n%s", tick)
+	}
+	if !strings.Contains(tick, `.slack()`) || !strings.Contains(tick, `.channel('#alerts')`) {
+		t.Fatalf("tickscript should attach non-email handler to recovery branch:\n%s", tick)
+	}
+}
+
 func TestAlertGroupRuleTICKScriptOmitsLevelBranchWhenEmpty(t *testing.T) {
 	rec := AlertRecipients{Crit: []string{"a@x.com"}}
 	tick, err := AlertGroupRuleTICKScript(sampleRule(), rec, nil)
@@ -480,6 +587,146 @@ func TestAlertGroupRuleTICKScriptRecentOccurrenceUsesWindowedCounts(t *testing.T
 	}
 	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
 		t.Fatalf("recent occurrence tickscript should validate: %v\n%s", err, tick)
+	}
+}
+
+// TestAlertGroupRuleTICKScriptRecentNeverEmitsStateNodes is a regression guard:
+// recent mode must not borrow consecutive's stateCount/stateDuration plumbing.
+// Sustained-alert auto-recovery (the bug that motivated removing the window from
+// consecutive — see backend/docs/alert_group_consecutive_window.md) hinges on
+// state_duration being chained into the alert lambda. Recent mode relies on
+// window().sum() instead, and lambdas must depend exclusively on the *_count
+// fields.
+func TestAlertGroupRuleTICKScriptRecentNeverEmitsStateNodes(t *testing.T) {
+	r := sampleRule()
+	r.OccurrenceCount = 3
+	r.OccurrenceType = "recent"
+	r.OccurrenceWindow = "5m"
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "warning", Value: 60, Enabled: true},
+		{Level: "critical", Value: 90, Enabled: true},
+	}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}, Warn: []string{"a@x.com"}}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, forbidden := range []string{
+		"stateCount",
+		"stateDuration",
+		`"state_count"`,
+		`"state_duration"`,
+	} {
+		if strings.Contains(tick, forbidden) {
+			t.Fatalf("recent mode must not reference %q in:\n%s", forbidden, tick)
+		}
+	}
+}
+
+// TestAlertGroupRuleTICKScriptRecentSingleLevelOmitsOtherCounts verifies that
+// a crit-only rule produces no warn_count / info_count references anywhere in
+// the tickscript. The builder still emits a main + email pair per enabled
+// level (so join() is present), but unrelated levels must not leak in.
+func TestAlertGroupRuleTICKScriptRecentSingleLevelOmitsOtherCounts(t *testing.T) {
+	r := sampleRule()
+	r.OccurrenceCount = 3
+	r.OccurrenceType = "recent"
+	r.OccurrenceWindow = "5m"
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "critical", Value: 90, Enabled: true},
+	}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, forbidden := range []string{
+		"warn_count", "warn_hit", "recent_warn",
+		"info_count", "info_hit", "recent_info",
+	} {
+		if strings.Contains(tick, forbidden) {
+			t.Fatalf("crit-only rule must not reference %q in:\n%s", forbidden, tick)
+		}
+	}
+	for _, want := range []string{
+		`var recent_crit = src`,
+		`var recent_email_crit = src`,
+		`|sum('crit_hit')`,
+		`.as('crit_count')`,
+		`.crit(lambda: "crit_count" >= 3)`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("expected fragment %q in:\n%s", want, tick)
+		}
+	}
+}
+
+// TestAlertGroupRuleTICKScriptRecentEmailLambdasExcludeHigherLevels verifies
+// that the email WARN branch counts only points strictly inside (60, 90] —
+// a 95% point must NOT contribute to email_warn_count. This is the level-
+// exclusivity guarantee carried over from buildExclusiveLambdas into the
+// hit-evaluation expression that drives recent-mode counters.
+func TestAlertGroupRuleTICKScriptRecentEmailLambdasExcludeHigherLevels(t *testing.T) {
+	r := sampleRule()
+	r.OccurrenceCount = 3
+	r.OccurrenceType = "recent"
+	r.OccurrenceWindow = "5m"
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "warning", Value: 60, Enabled: true},
+		{Level: "critical", Value: 90, Enabled: true},
+	}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}, Warn: []string{"a@x.com"}}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	// Email WARN must exclude CRIT range; email CRIT is just > 90.
+	wantEmailWarnHit := `|eval(lambda: if("usage_idle" > 60 AND "usage_idle" <= 90, 1, 0))`
+	wantEmailCritHit := `|eval(lambda: if("usage_idle" > 90, 1, 0))`
+	if !strings.Contains(tick, wantEmailWarnHit) {
+		t.Fatalf("expected email warn hit lambda %q in:\n%s", wantEmailWarnHit, tick)
+	}
+	if !strings.Contains(tick, wantEmailCritHit) {
+		t.Fatalf("expected email crit hit lambda %q in:\n%s", wantEmailCritHit, tick)
+	}
+	// Email WARN lambda must NOT trigger on the bare > 60 form (which would
+	// also fire when value > 90 — double-notification bug).
+	bareWarn := `.as('email_warn_hit')`
+	if !strings.Contains(tick, bareWarn) {
+		t.Fatalf("expected email_warn_hit assignment in:\n%s", tick)
+	}
+	// Main trigger WARN lambda may keep the bare > 60 form because Kapacitor
+	// resolves CRIT > WARN by precedence — only email branches need exclusion.
+	wantMainWarn := `.warn(lambda: "warn_count" >= 3)`
+	if !strings.Contains(tick, wantMainWarn) {
+		t.Fatalf("expected main WARN lambda %q in:\n%s", wantMainWarn, tick)
+	}
+}
+
+// TestAlertGroupRuleTICKScriptRecentDefaultsEveryWhenMissing verifies the
+// builder's `every` fallback: an empty rule.Every must not produce
+// `.every()` (which would be invalid TICK) — it falls back to 30s.
+func TestAlertGroupRuleTICKScriptRecentDefaultsEveryWhenMissing(t *testing.T) {
+	r := sampleRule()
+	r.Every = "" // builder must apply a sane default.
+	r.OccurrenceCount = 3
+	r.OccurrenceType = "recent"
+	r.OccurrenceWindow = "5m"
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "critical", Value: 90, Enabled: true},
+	}
+	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if strings.Contains(tick, ".every()") {
+		t.Fatalf("recent mode must not emit empty .every() when rule.Every is unset:\n%s", tick)
+	}
+	if !strings.Contains(tick, ".every(30s)") {
+		t.Fatalf("recent mode must fall back to .every(30s) when rule.Every is unset:\n%s", tick)
+	}
+	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
+		t.Fatalf("recent tickscript should validate with default every: %v\n%s", err, tick)
 	}
 }
 

@@ -201,6 +201,7 @@ func TestAlertRuleStore_SetEventHandlers_ReplaceAll(t *testing.T) {
 	if err := ruleStore.SetEventHandlers(ctx, rule.ID, []cloudhub.AlertRuleEventHandler{
 		{Type: "email", Enabled: true, RecipientGroupIDs: []string{g1.ID, g2.ID}},
 		{Type: "sms", Enabled: true, RecipientGroupIDs: []string{g3.ID}},
+		{Type: "slack", Enabled: true, ConfigJSON: []byte(`{"workspace":"default","channel":"#alerts"}`), RecipientGroupIDs: []string{g1.ID}},
 	}); err != nil {
 		t.Fatalf("SetEventHandlers: %v", err)
 	}
@@ -208,14 +209,21 @@ func TestAlertRuleStore_SetEventHandlers_ReplaceAll(t *testing.T) {
 	if err != nil {
 		t.Fatalf("EventHandlersByRule: %v", err)
 	}
-	if len(got) != 2 {
-		t.Fatalf("want 2 event handlers, got %d", len(got))
+	if len(got) != 3 {
+		t.Fatalf("want 3 event handlers, got %d", len(got))
 	}
-	if got[0].Type != "email" || len(got[0].RecipientGroupIDs) != 2 {
+	byType := map[string]cloudhub.AlertRuleEventHandler{}
+	for _, h := range got {
+		byType[h.Type] = h
+	}
+	if len(byType["email"].RecipientGroupIDs) != 2 {
 		t.Fatalf("email handler not hydrated: %+v", got)
 	}
-	if got[1].Type != "sms" || len(got[1].RecipientGroupIDs) != 1 {
+	if len(byType["sms"].RecipientGroupIDs) != 1 {
 		t.Fatalf("sms handler not hydrated: %+v", got)
+	}
+	if len(byType["slack"].RecipientGroupIDs) != 0 {
+		t.Fatalf("slack handler should not hydrate recipient groups: %+v", got)
 	}
 
 	// Replace-all: drop sms handler and replace email groups.

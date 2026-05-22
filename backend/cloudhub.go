@@ -2169,9 +2169,15 @@ type AlertGroupRule struct {
 }
 
 const (
-	AlertRuleEventHandlerEmail   = "email"
-	AlertRuleEventHandlerSMS     = "sms"
-	AlertRuleEventHandlerWebhook = "webhook"
+	AlertRuleEventHandlerEmail    = "email"
+	AlertRuleEventHandlerSMS      = "sms"
+	AlertRuleEventHandlerWebhook  = "webhook"
+	AlertRuleEventHandlerTCP      = "tcp"
+	AlertRuleEventHandlerExec     = "exec"
+	AlertRuleEventHandlerLog      = "log"
+	AlertRuleEventHandlerKafka    = "kafka"
+	AlertRuleEventHandlerSlack    = "slack"
+	AlertRuleEventHandlerTelegram = "telegram"
 )
 
 // AlertRuleEventHandler configures one notification channel for an alert rule.

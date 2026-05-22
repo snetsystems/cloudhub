@@ -918,6 +918,7 @@ func TestAlertGroupRuleCreateBuildsEmailTickscriptFromEventHandler(t *testing.T)
 					ID:                "handler-email-1",
 					Type:              cloudhub.AlertRuleEventHandlerEmail,
 					Enabled:           true,
+					ConfigJSON:        []byte(`{"body":"email body {{ .Level }}"}`),
 					RecipientGroupIDs: []string{"group-1"},
 				}}, nil
 			},
@@ -935,7 +936,7 @@ func TestAlertGroupRuleCreateBuildsEmailTickscriptFromEventHandler(t *testing.T)
 		AlertRecipientMemberPrefs: &fakeAlertRecipientMemberPrefsStore{},
 	}
 
-	payload := bytes.NewBufferString(`{"name":"cpu email","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"email","enabled":true,"recipientGroupIds":["group-1"]}]}`)
+	payload := bytes.NewBufferString(`{"name":"cpu email","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"email","enabled":true,"configJson":{"body":"email body {{ .Level }}"},"recipientGroupIds":["group-1"]}]}`)
 	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
 	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
 	rr := httptest.NewRecorder()
@@ -955,8 +956,33 @@ func TestAlertGroupRuleCreateBuildsEmailTickscriptFromEventHandler(t *testing.T)
 	if !strings.Contains(got.Tickscript, ".to('ops@example.com')") {
 		t.Fatalf("tickscript does not include event-handler recipient:\n%s", got.Tickscript)
 	}
+	if !strings.Contains(got.Tickscript, `.details('email body {{ .Level }}')`) {
+		t.Fatalf("tickscript does not include event-handler body:\n%s", got.Tickscript)
+	}
 	if !strings.Contains(got.Tickscript, "|influxDBOut()") {
 		t.Fatalf("tickscript should still include alert output:\n%s", got.Tickscript)
+	}
+}
+
+func TestAlertGroupRuleCreateRejectsInvalidNonEmailEventHandler(t *testing.T) {
+	logger := &mocks.TestLogger{}
+	svc := &Service{
+		Logger:          logger,
+		AlertGroupRules: &fakeAlertGroupRuleStore{},
+	}
+
+	payload := bytes.NewBufferString(`{"name":"slack invalid","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"slack","enabled":true,"configJson":{"workspace":"default"}}]}`)
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
+	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
+	rr := httptest.NewRecorder()
+
+	svc.AlertGroupRuleCreate(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusUnprocessableEntity, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), "slack channel is required") {
+		t.Fatalf("body should mention missing slack channel: %s", rr.Body.String())
 	}
 }
 

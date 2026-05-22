@@ -353,20 +353,31 @@ func (s *AlertRuleStore) SetEventHandlers(ctx context.Context, ruleID string, ha
 				ruleID, handlerType).Scan(&handlerID); err != nil {
 				return err
 			}
-			for _, gid := range h.RecipientGroupIDs {
-				if strings.TrimSpace(gid) == "" {
-					continue
-				}
-				if _, err := tx.ExecContext(ctx,
-					`INSERT INTO alert_rule_event_handler_recipient_groups (alert_rule_event_handler_id, recipient_group_id)
-					 VALUES ($1,$2) ON CONFLICT DO NOTHING`,
-					handlerID, gid); err != nil {
-					return err
+			if eventHandlerUsesRecipientGroups(handlerType) {
+				for _, gid := range h.RecipientGroupIDs {
+					if strings.TrimSpace(gid) == "" {
+						continue
+					}
+					if _, err := tx.ExecContext(ctx,
+						`INSERT INTO alert_rule_event_handler_recipient_groups (alert_rule_event_handler_id, recipient_group_id)
+						 VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+						handlerID, gid); err != nil {
+						return err
+					}
 				}
 			}
 		}
 		return nil
 	})
+}
+
+func eventHandlerUsesRecipientGroups(handlerType string) bool {
+	switch handlerType {
+	case cloudhub.AlertRuleEventHandlerEmail, cloudhub.AlertRuleEventHandlerSMS:
+		return true
+	default:
+		return false
+	}
 }
 
 // SetRecipientGroups maps older email-only callers onto the event-handler model.

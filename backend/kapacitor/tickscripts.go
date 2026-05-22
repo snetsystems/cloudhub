@@ -2,6 +2,7 @@ package kapacitor
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -57,41 +58,43 @@ func (a *Alert) Generate(rule cloudhub.AlertRule) (cloudhub.TICKScript, error) {
 
 // alertGroupTickParams holds the values injected into the alert_group_tick.toml template.
 type alertGroupTickParams struct {
-	Name              string
-	Measurement       string
-	Field             string
-	Every             string
-	Info              string // main-trigger lambda (Kapacitor picks highest matching level)
-	Warn              string
-	Crit              string
-	EmailInfo         string // email-branch lambda, exclusive of higher levels
-	EmailWarn         string
-	EmailCrit         string
-	PauseDuration     string // "" = no reminder; otherwise like "10s" — argument to stateChangesOnly()
-	NotifyRecovery    bool   // true => emit a recovery email when level returns to OK
-	TriggerType       string
-	SourceVar         string
-	RelativeEnabled   bool
-	RelativeBlock     string
-	DeadmanEnabled    bool
-	DeadmanPeriod     string
-	OccurrenceEnabled bool   // true when OccurrenceCount > 1 (apply stateCount wrap)
-	RecentEnabled     bool   // true when OccurrenceType asks for windowed recent counts
-	OccurrenceCount   int    // N consecutive points required to trigger
-	OccurrenceWindow  string // window duration for recent mode only
-	OccurrenceLambda  string // stateCount lambda — typically the most permissive enabled threshold
-	RecentBlock       string
-	Message           string
-	TaskID            string
-	OutputDB          string
-	OutputRP          string
-	OutputMeasurement string
-	RecipientsInfo    []string
-	RecipientsWarn    []string
-	RecipientsCrit    []string
-	RecipientsAll     []string // union (dedup'd, case-insensitive) of all level recipient lists — used for recovery email
-	HostFilterLambda  string   // stream: `"host" == 'a' OR "host" == 'b'`; empty = all hosts
-	HostFilterSQL     string   // batch:  ` AND ("host" = 'a' OR "host" = 'b')`; empty = all hosts
+	Name                 string
+	Measurement          string
+	Field                string
+	Every                string
+	Info                 string // main-trigger lambda (Kapacitor picks highest matching level)
+	Warn                 string
+	Crit                 string
+	EmailInfo            string // email-branch lambda, exclusive of higher levels
+	EmailWarn            string
+	EmailCrit            string
+	PauseDuration        string // "" = no reminder; otherwise like "10s" — argument to stateChangesOnly()
+	NotifyRecovery       bool   // true => emit a recovery email when level returns to OK
+	TriggerType          string
+	SourceVar            string
+	RelativeEnabled      bool
+	RelativeBlock        string
+	DeadmanEnabled       bool
+	DeadmanPeriod        string
+	OccurrenceEnabled    bool   // true when OccurrenceCount > 1 (apply stateCount wrap)
+	RecentEnabled        bool   // true when OccurrenceType asks for windowed recent counts
+	OccurrenceCount      int    // N consecutive points required to trigger
+	OccurrenceWindow     string // window duration for recent mode only
+	OccurrenceLambda     string // stateCount lambda — typically the most permissive enabled threshold
+	RecentBlock          string
+	Message              string
+	EmailBody            string
+	NotificationHandlers string
+	TaskID               string
+	OutputDB             string
+	OutputRP             string
+	OutputMeasurement    string
+	RecipientsInfo       []string
+	RecipientsWarn       []string
+	RecipientsCrit       []string
+	RecipientsAll        []string // union (dedup'd, case-insensitive) of all level recipient lists — used for recovery email
+	HostFilterLambda     string   // stream: `"host" == 'a' OR "host" == 'b'`; empty = all hosts
+	HostFilterSQL        string   // batch:  ` AND ("host" = 'a' OR "host" = 'b')`; empty = all hosts
 	// EvalEnabled inserts `|eval(lambda: <EvalExpression>).as('<EvalAs>').keep()`
 	// after |from(). Stream-only. When active, threshold lambdas reference EvalAs
 	// instead of the raw Field — see resolveLambdaField.
@@ -191,42 +194,48 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		info, warn, crit = wrap(info), wrap(warn), wrap(crit)
 		emailInfo, emailWarn, emailCrit = wrap(emailInfo), wrap(emailWarn), wrap(emailCrit)
 	}
+	notificationHandlers, err := nonEmailEventHandlerServices(rule.EventHandlers)
+	if err != nil {
+		return "", err
+	}
 	params := alertGroupTickParams{
-		Name:              rule.Name,
-		Measurement:       rule.Measurement,
-		Field:             rule.Field,
-		Every:             rule.Every,
-		Info:              info,
-		Warn:              warn,
-		Crit:              crit,
-		EmailInfo:         emailInfo,
-		EmailWarn:         emailWarn,
-		EmailCrit:         emailCrit,
-		PauseDuration:     formatPauseDuration(rule.PauseSeconds),
-		NotifyRecovery:    rule.NotifyRecovery,
-		TriggerType:       triggerType,
-		SourceVar:         sourceVar,
-		RelativeEnabled:   triggerType == cloudhub.AlertGroupRuleTriggerRelative,
-		RelativeBlock:     buildRelativeBlock(rule),
-		DeadmanEnabled:    triggerType == cloudhub.AlertGroupRuleTriggerDeadman,
-		DeadmanPeriod:     deadmanPeriod(rule.TriggerValues.Period),
-		OccurrenceEnabled: consecutiveEnabled,
-		RecentEnabled:     recentEnabled,
-		OccurrenceCount:   rule.OccurrenceCount,
-		OccurrenceWindow:  occurrenceWindow(rule.OccurrenceWindow),
-		OccurrenceLambda:  occLambda,
-		RecentBlock:       recent.block,
-		Message:           rule.Message,
-		TaskID:            "alert-group-" + rule.ID,
-		OutputDB:          rule.Database,
-		OutputRP:          rule.RetentionPolicy,
-		OutputMeasurement: "cloudhub_alerts",
-		RecipientsInfo:    recipients.Info,
-		RecipientsWarn:    recipients.Warn,
-		RecipientsCrit:    recipients.Crit,
-		RecipientsAll:     unionRecipients(recipients),
-		HostFilterLambda:  hostLambda,
-		HostFilterSQL:     hostSQL,
+		Name:                 rule.Name,
+		Measurement:          rule.Measurement,
+		Field:                rule.Field,
+		Every:                rule.Every,
+		Info:                 info,
+		Warn:                 warn,
+		Crit:                 crit,
+		EmailInfo:            emailInfo,
+		EmailWarn:            emailWarn,
+		EmailCrit:            emailCrit,
+		PauseDuration:        formatPauseDuration(rule.PauseSeconds),
+		NotifyRecovery:       rule.NotifyRecovery,
+		TriggerType:          triggerType,
+		SourceVar:            sourceVar,
+		RelativeEnabled:      triggerType == cloudhub.AlertGroupRuleTriggerRelative,
+		RelativeBlock:        buildRelativeBlock(rule),
+		DeadmanEnabled:       triggerType == cloudhub.AlertGroupRuleTriggerDeadman,
+		DeadmanPeriod:        deadmanPeriod(rule.TriggerValues.Period),
+		OccurrenceEnabled:    consecutiveEnabled,
+		RecentEnabled:        recentEnabled,
+		OccurrenceCount:      rule.OccurrenceCount,
+		OccurrenceWindow:     occurrenceWindow(rule.OccurrenceWindow),
+		OccurrenceLambda:     occLambda,
+		RecentBlock:          recent.block,
+		Message:              tickString(rule.Message),
+		EmailBody:            tickString(emailBodyFromHandlers(rule.EventHandlers)),
+		NotificationHandlers: notificationHandlers,
+		TaskID:               "alert-group-" + rule.ID,
+		OutputDB:             rule.Database,
+		OutputRP:             rule.RetentionPolicy,
+		OutputMeasurement:    "cloudhub_alerts",
+		RecipientsInfo:       recipients.Info,
+		RecipientsWarn:       recipients.Warn,
+		RecipientsCrit:       recipients.Crit,
+		RecipientsAll:        unionRecipients(recipients),
+		HostFilterLambda:     hostLambda,
+		HostFilterSQL:        hostSQL,
 	}
 	if evalActive {
 		params.EvalEnabled = true
@@ -275,6 +284,92 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		return "", fmt.Errorf("AlertGroupRuleTICKScript: execute template %q: %w", taskType, err)
 	}
 	return buf.String(), nil
+}
+
+func nonEmailEventHandlerServices(handlers []cloudhub.AlertRuleEventHandler) (string, error) {
+	var nodes cloudhub.AlertNodes
+	has := false
+	for _, h := range handlers {
+		if !h.Enabled {
+			continue
+		}
+		cfg := h.ConfigJSON
+		if len(cfg) == 0 {
+			cfg = []byte(`{}`)
+		}
+		switch strings.ToLower(strings.TrimSpace(h.Type)) {
+		case cloudhub.AlertRuleEventHandlerTCP:
+			var v cloudhub.TCP
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return "", err
+			}
+			nodes.TCPs = append(nodes.TCPs, &v)
+			has = true
+		case cloudhub.AlertRuleEventHandlerExec:
+			var v cloudhub.Exec
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return "", err
+			}
+			nodes.Exec = append(nodes.Exec, &v)
+			has = true
+		case cloudhub.AlertRuleEventHandlerLog:
+			var v cloudhub.Log
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return "", err
+			}
+			nodes.Log = append(nodes.Log, &v)
+			has = true
+		case cloudhub.AlertRuleEventHandlerKafka:
+			var v cloudhub.Kafka
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return "", err
+			}
+			nodes.Kafka = append(nodes.Kafka, &v)
+			has = true
+		case cloudhub.AlertRuleEventHandlerSlack:
+			var v cloudhub.Slack
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return "", err
+			}
+			nodes.Slack = append(nodes.Slack, &v)
+			has = true
+		case cloudhub.AlertRuleEventHandlerTelegram:
+			var v cloudhub.Telegram
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return "", err
+			}
+			nodes.Telegram = append(nodes.Telegram, &v)
+			has = true
+		}
+	}
+	if !has {
+		return "", nil
+	}
+	return AlertServices(cloudhub.AlertRule{AlertNodes: nodes})
+}
+
+func emailBodyFromHandlers(handlers []cloudhub.AlertRuleEventHandler) string {
+	for _, h := range handlers {
+		if h.Type != cloudhub.AlertRuleEventHandlerEmail || !h.Enabled || len(h.ConfigJSON) == 0 {
+			continue
+		}
+		var cfg struct {
+			Body string `json:"body"`
+		}
+		if err := json.Unmarshal(h.ConfigJSON, &cfg); err != nil {
+			continue
+		}
+		return strings.TrimSpace(cfg.Body)
+	}
+	return ""
+}
+
+func tickString(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `'`, `\'`)
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\n", `\n`)
+	return s
 }
 
 type recentOccurrenceParams struct {

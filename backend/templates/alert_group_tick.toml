@@ -35,25 +35,29 @@ var trigger = src
         .levelTag('level')
         .messageField('message')
 
-{{if .RecipientsCrit}}
+{{if or .RecipientsCrit .NotificationHandlers}}
 src
     |deadman(0.0, {{.DeadmanPeriod}})
         .stateChangesOnly({{.PauseDuration}})
         .noRecoveries()
         .id('{{.TaskID}}-email-crit'){{if .Message}}
-        .message('{{.Message}}'){{end}}
+        .message('{{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsCrit}}
         .email(){{range .RecipientsCrit}}
-            .to('{{.}}'){{end}}
+            .to('{{.}}'){{end}}{{end}}
 {{end}}
-{{if and .NotifyRecovery .RecipientsAll}}
+{{if and .NotifyRecovery (or .RecipientsAll .NotificationHandlers)}}
 trigger
     |where(lambda: "level" == 'OK')
     |alert()
         .info(lambda: TRUE)
         .id('{{.TaskID}}-email-recovery'){{if .Message}}
-        .message('Recovery: {{.Message}}'){{end}}
+        .message('Recovery: {{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsAll}}
         .email(){{range .RecipientsAll}}
-            .to('{{.}}'){{end}}
+            .to('{{.}}'){{end}}{{end}}
 {{end}}
 
 {{else}}{{if .RelativeEnabled}}{{.RelativeBlock}}
@@ -79,7 +83,7 @@ var trigger = processed
         .levelTag('level')
         .messageField('message')
 
-{{if .RecipientsCrit}}{{if .EmailCrit}}
+{{if and .EmailCrit (or .RecipientsCrit .NotificationHandlers)}}
 // CRIT email branch — consumes processed directly so stateChangesOnly({{.PauseDuration}})
 // reminders can tick on every incoming point (input flow drives the timer).
 processed
@@ -88,11 +92,13 @@ processed
         .stateChangesOnly({{.PauseDuration}})
         .noRecoveries()
         .id('{{.TaskID}}-email-crit'){{if .Message}}
-        .message('{{.Message}}'){{end}}
+        .message('{{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsCrit}}
         .email(){{range .RecipientsCrit}}
-            .to('{{.}}'){{end}}
-{{end}}{{end}}
-{{if .RecipientsWarn}}{{if .EmailWarn}}
+            .to('{{.}}'){{end}}{{end}}
+{{end}}
+{{if and .EmailWarn (or .RecipientsWarn .NotificationHandlers)}}
 // WARN email branch — lambda excludes CRIT so a CRIT-matching value does not also fire WARN.
 processed
     |alert()
@@ -100,11 +106,13 @@ processed
         .stateChangesOnly({{.PauseDuration}})
         .noRecoveries()
         .id('{{.TaskID}}-email-warn'){{if .Message}}
-        .message('{{.Message}}'){{end}}
+        .message('{{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsWarn}}
         .email(){{range .RecipientsWarn}}
-            .to('{{.}}'){{end}}
-{{end}}{{end}}
-{{if .RecipientsInfo}}{{if .EmailInfo}}
+            .to('{{.}}'){{end}}{{end}}
+{{end}}
+{{if and .EmailInfo (or .RecipientsInfo .NotificationHandlers)}}
 // INFO email branch — lambda excludes WARN and CRIT.
 processed
     |alert()
@@ -112,20 +120,24 @@ processed
         .stateChangesOnly({{.PauseDuration}})
         .noRecoveries()
         .id('{{.TaskID}}-email-info'){{if .Message}}
-        .message('{{.Message}}'){{end}}
+        .message('{{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsInfo}}
         .email(){{range .RecipientsInfo}}
-            .to('{{.}}'){{end}}
-{{end}}{{end}}
-{{if and .NotifyRecovery .RecipientsAll}}
+            .to('{{.}}'){{end}}{{end}}
+{{end}}
+{{if and .NotifyRecovery (or .RecipientsAll .NotificationHandlers)}}
 // Recovery branch — chained off main trigger so we only emit on state-change to OK.
 trigger
     |where(lambda: "level" == 'OK')
     |alert()
         .info(lambda: TRUE)
         .id('{{.TaskID}}-email-recovery'){{if .Message}}
-        .message('Recovery: {{.Message}}'){{end}}
+        .message('Recovery: {{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsAll}}
         .email(){{range .RecipientsAll}}
-            .to('{{.}}'){{end}}
+            .to('{{.}}'){{end}}{{end}}
 {{end}}
 {{end}}
 
@@ -173,48 +185,56 @@ var trigger = processed
         .levelTag('level')
         .messageField('message')
 
-{{if .RecipientsCrit}}{{if .Crit}}
+{{if and .Crit (or .RecipientsCrit .NotificationHandlers)}}
 processed
     |alert()
         .crit(lambda: {{.Crit}})
         .stateChangesOnly({{.PauseDuration}})
         .noRecoveries()
         .id('{{.TaskID}}-email-crit'){{if .Message}}
-        .message('{{.Message}}'){{end}}
+        .message('{{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsCrit}}
         .email(){{range .RecipientsCrit}}
-            .to('{{.}}'){{end}}
-{{end}}{{end}}
-{{if .RecipientsWarn}}{{if .Warn}}
+            .to('{{.}}'){{end}}{{end}}
+{{end}}
+{{if and .Warn (or .RecipientsWarn .NotificationHandlers)}}
 processed
     |alert()
         .warn(lambda: {{.Warn}})
         .stateChangesOnly({{.PauseDuration}})
         .noRecoveries()
         .id('{{.TaskID}}-email-warn'){{if .Message}}
-        .message('{{.Message}}'){{end}}
+        .message('{{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsWarn}}
         .email(){{range .RecipientsWarn}}
-            .to('{{.}}'){{end}}
-{{end}}{{end}}
-{{if .RecipientsInfo}}{{if .Info}}
+            .to('{{.}}'){{end}}{{end}}
+{{end}}
+{{if and .Info (or .RecipientsInfo .NotificationHandlers)}}
 processed
     |alert()
         .info(lambda: {{.Info}})
         .stateChangesOnly({{.PauseDuration}})
         .noRecoveries()
         .id('{{.TaskID}}-email-info'){{if .Message}}
-        .message('{{.Message}}'){{end}}
+        .message('{{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsInfo}}
         .email(){{range .RecipientsInfo}}
-            .to('{{.}}'){{end}}
-{{end}}{{end}}
-{{if and .NotifyRecovery .RecipientsAll}}
+            .to('{{.}}'){{end}}{{end}}
+{{end}}
+{{if and .NotifyRecovery (or .RecipientsAll .NotificationHandlers)}}
 trigger
     |where(lambda: "level" == 'OK')
     |alert()
         .info(lambda: TRUE)
         .id('{{.TaskID}}-email-recovery'){{if .Message}}
-        .message('Recovery: {{.Message}}'){{end}}
+        .message('Recovery: {{.Message}}'){{end}}{{if .EmailBody}}
+        .details('{{.EmailBody}}'){{end}}
+        {{.NotificationHandlers}}{{if .RecipientsAll}}
         .email(){{range .RecipientsAll}}
-            .to('{{.}}'){{end}}
+            .to('{{.}}'){{end}}{{end}}
 {{end}}
 
 trigger
