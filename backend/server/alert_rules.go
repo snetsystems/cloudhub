@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/bouk/httprouter"
@@ -65,6 +66,7 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 	if orgID, ok := hasOrganizationContext(ctx); ok {
 		req.OrgID = orgID
 	}
+	req.KapacitorID = s.normalizeAlertGroupKapacitorID(ctx, req.KapacitorID)
 	if err := s.validateAlertGroupKapacitor(ctx, req.OrgID, req.KapacitorID); err != nil {
 		if errors.Is(err, errAlertKapacitorStoreUnavailable) {
 			internalServerError(w, err, s.Logger)
@@ -156,6 +158,7 @@ func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	req.ID = id
 	req.OrgID = existing.OrgID
+	req.KapacitorID = s.normalizeAlertGroupKapacitorID(ctx, req.KapacitorID)
 	if err := s.validateAlertGroupKapacitor(ctx, existing.OrgID, req.KapacitorID); err != nil {
 		if errors.Is(err, errAlertKapacitorStoreUnavailable) {
 			internalServerError(w, err, s.Logger)
@@ -414,6 +417,47 @@ func (s *Service) syncKapacitorTask(ctx context.Context, rule cloudhub.AlertGrou
 }
 
 var errAlertKapacitorStoreUnavailable = errors.New("alert kapacitor store unavailable")
+
+// normalizeAlertGroupKapacitorID converts a legacy numeric kapacitor ID
+// (sources sub-resource) into the matching alert_kapacitors UUID. Returns the
+// input untouched when empty, already a UUID, or when no mapping is found —
+// downstream validation will then surface the error.
+// If the legacy kapacitor exists but no mapping has been backfilled yet
+// (the user never visited GET /v2/alert-kapacitors), this triggers an
+// idempotent sync so the rule create flow doesn't fail with 422.
+func (s *Service) normalizeAlertGroupKapacitorID(ctx context.Context, kapacitorID string) string {
+	if kapacitorID == "" {
+		return kapacitorID
+	}
+	if _, err := uuid.Parse(kapacitorID); err == nil {
+		return kapacitorID
+	}
+	legacyID, err := strconv.Atoi(kapacitorID)
+	if err != nil {
+		return kapacitorID
+	}
+	if s.Store == nil || s.AlertKapacitorMappings == nil {
+		return kapacitorID
+	}
+	srv, err := s.Store.Servers(ctx).Get(ctx, legacyID)
+	if err != nil {
+		return kapacitorID
+	}
+	uuidID, err := s.AlertKapacitorMappings.GetAlertKapacitorID(ctx, srv.SrcID, srv.ID)
+	if err == nil {
+		return uuidID
+	}
+	// Mapping missing — backfill from the legacy kapacitor and retry once.
+	if syncErr := s.syncAlertKapacitorFromLegacy(ctx, srv); syncErr != nil {
+		s.Logger.Error(fmt.Sprintf("normalizeAlertGroupKapacitorID: sync legacy kapacitor %d failed: %v", legacyID, syncErr))
+		return kapacitorID
+	}
+	uuidID, err = s.AlertKapacitorMappings.GetAlertKapacitorID(ctx, srv.SrcID, srv.ID)
+	if err != nil {
+		return kapacitorID
+	}
+	return uuidID
+}
 
 func (s *Service) validateAlertGroupKapacitor(ctx context.Context, orgID, kapacitorID string) error {
 	if kapacitorID == "" {

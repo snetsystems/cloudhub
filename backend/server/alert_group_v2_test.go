@@ -627,6 +627,87 @@ func TestAlertGroupRuleCreateRejectsLegacyNumericKapacitorID(t *testing.T) {
 	}
 }
 
+func TestAlertGroupRuleCreateNormalizesLegacyKapacitorID(t *testing.T) {
+	logger := &mocks.TestLogger{}
+	const targetUUID = "11111111-1111-1111-1111-111111111111"
+	var storedRule cloudhub.AlertGroupRule
+
+	kapacitorAPI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer kapacitorAPI.Close()
+
+	svc := &Service{
+		Logger: logger,
+		Store: &mocks.Store{
+			ServersStore: &mocks.ServersStore{
+				GetF: func(ctx context.Context, id int) (cloudhub.Server, error) {
+					if id != 42 {
+						return cloudhub.Server{}, errors.New("not found")
+					}
+					return cloudhub.Server{ID: 42, SrcID: 1}, nil
+				},
+			},
+		},
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			addFunc: func(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
+				storedRule = r
+				r.ID = "rule-1"
+				return r, nil
+			},
+		},
+		AlertKapacitors: &fakeAlertKapacitorStore{
+			getFunc: func(ctx context.Context, id string) (cloudhub.AlertKapacitor, error) {
+				if id != targetUUID {
+					return cloudhub.AlertKapacitor{}, errors.New("not found")
+				}
+				return cloudhub.AlertKapacitor{ID: id, OrgID: "org-1", URL: kapacitorAPI.URL}, nil
+			},
+		},
+		AlertKapacitorMappings: &fakeAlertKapacitorMappingStore{
+			getFunc: func(ctx context.Context, sourceID, legacyKapacitorID int) (string, error) {
+				if sourceID != 1 || legacyKapacitorID != 42 {
+					return "", errors.New("not found")
+				}
+				return targetUUID, nil
+			},
+		},
+	}
+
+	reqRule := cloudhub.AlertGroupRule{
+		Name:            "cpu high",
+		KapacitorID:     "42",
+		Database:        "telegraf",
+		RetentionPolicy: "autogen",
+		Measurement:     "cpu",
+		Field:           "usage_idle",
+		Conditions: []cloudhub.AlertRuleCondition{
+			{Level: "critical", Value: 90, Enabled: true},
+		},
+		TriggerOperator:  "greater",
+		TaskType:         "stream",
+		Every:            "30s",
+		OccurrenceType:   "consecutive",
+		OccurrenceCount:  1,
+		OccurrenceWindow: "5m",
+		Active:           true,
+	}
+	payload, _ := json.Marshal(reqRule)
+
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", bytes.NewReader(payload))
+	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
+	rr := httptest.NewRecorder()
+
+	svc.AlertGroupRuleCreate(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	if storedRule.KapacitorID != targetUUID {
+		t.Fatalf("stored KapacitorID = %q, want %q", storedRule.KapacitorID, targetUUID)
+	}
+}
+
 func TestAlertGroupRuleUpdateRejectsLegacyNumericKapacitorID(t *testing.T) {
 	logger := &mocks.TestLogger{}
 	updateCalled := false

@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	tmplstore "github.com/snetsystems/cloudhub/backend/templates"
@@ -76,12 +75,11 @@ type alertGroupTickParams struct {
 	RelativeBlock     string
 	DeadmanEnabled    bool
 	DeadmanPeriod     string
-	OccurrenceEnabled       bool   // true when OccurrenceCount > 1 (apply stateCount wrap)
-	RecentEnabled           bool   // true when OccurrenceType asks for windowed recent counts
-	OccurrenceCount         int    // N consecutive points required to trigger
-	OccurrenceWindow        string // window duration for recent mode (template var only)
-	OccurrenceWindowSeconds int    // OccurrenceWindow in seconds; > 0 enables stateDuration bound on consecutive
-	OccurrenceLambda        string // stateCount lambda — typically the most permissive enabled threshold
+	OccurrenceEnabled bool   // true when OccurrenceCount > 1 (apply stateCount wrap)
+	RecentEnabled     bool   // true when OccurrenceType asks for windowed recent counts
+	OccurrenceCount   int    // N consecutive points required to trigger
+	OccurrenceWindow  string // window duration for recent mode only
+	OccurrenceLambda  string // stateCount lambda — typically the most permissive enabled threshold
 	RecentBlock       string
 	Message           string
 	TaskID            string
@@ -169,11 +167,7 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	occLambda := buildOccurrenceLambda(lambdaRule)
 	occEnabled := rule.OccurrenceCount > 1 && occLambda != ""
 	recentEnabled := occEnabled && isRecentOccurrence(rule.OccurrenceType)
-	occWindowSeconds := parseOccurrenceWindowSeconds(rule.OccurrenceWindow)
 	consecutiveEnabled := occEnabled && !recentEnabled
-	// consecutive + window > 0 ⇒ bound streak by wall-clock duration via stateDuration.
-	// consecutive + no window  ⇒ classic stateCount-only behavior.
-	consecutiveWithDuration := consecutiveEnabled && occWindowSeconds > 0
 
 	// Email branches must use level-exclusive lambdas so a CRIT-matching value
 	// does not also dispatch the WARN email (and similarly for INFO).
@@ -186,15 +180,11 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		info, warn, crit = recent.infoCountLambda, recent.warnCountLambda, recent.critCountLambda
 		emailInfo, emailWarn, emailCrit = recent.emailInfoCountLambda, recent.emailWarnCountLambda, recent.emailCritCountLambda
 	case consecutiveEnabled:
-		// state_count >= N implies state hasn't broken, so no state_duration < 0
-		// guard needed in the duration-bounded form.
+		// Pure stateCount guard. occurrenceWindow is intentionally ignored here —
+		// see docs/alert_group_consecutive_window.md for the rationale.
 		wrap := func(s string) string {
 			if s == "" {
 				return ""
-			}
-			if consecutiveWithDuration {
-				return fmt.Sprintf(`"state_count" >= %d AND "state_duration" <= %d AND (%s)`,
-					rule.OccurrenceCount, occWindowSeconds, s)
 			}
 			return fmt.Sprintf(`"state_count" >= %d AND (%s)`, rule.OccurrenceCount, s)
 		}
@@ -220,12 +210,11 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		RelativeBlock:     buildRelativeBlock(rule),
 		DeadmanEnabled:    triggerType == cloudhub.AlertGroupRuleTriggerDeadman,
 		DeadmanPeriod:     deadmanPeriod(rule.TriggerValues.Period),
-		OccurrenceEnabled:       consecutiveEnabled,
-		RecentEnabled:           recentEnabled,
-		OccurrenceCount:         rule.OccurrenceCount,
-		OccurrenceWindow:        occurrenceWindow(rule.OccurrenceWindow),
-		OccurrenceWindowSeconds: occWindowSeconds,
-		OccurrenceLambda:        occLambda,
+		OccurrenceEnabled: consecutiveEnabled,
+		RecentEnabled:     recentEnabled,
+		OccurrenceCount:   rule.OccurrenceCount,
+		OccurrenceWindow:  occurrenceWindow(rule.OccurrenceWindow),
+		OccurrenceLambda:  occLambda,
 		RecentBlock:       recent.block,
 		Message:           rule.Message,
 		TaskID:            "alert-group-" + rule.ID,
@@ -394,22 +383,6 @@ func isRecentOccurrence(t string) bool {
 	default:
 		return false
 	}
-}
-
-// parseOccurrenceWindowSeconds converts an OccurrenceWindow duration string
-// (e.g. "10m", "1h", "30s") into a whole-second count for embedding into TICK
-// lambdas. Falls back to 0 on parse error — callers should treat 0 as
-// "window unset / invalid" and skip the duration AND-clause.
-func parseOccurrenceWindowSeconds(s string) int {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return 0
-	}
-	d, err := time.ParseDuration(s)
-	if err != nil || d <= 0 {
-		return 0
-	}
-	return int(d / time.Second)
 }
 
 func occurrenceWindow(w string) string {

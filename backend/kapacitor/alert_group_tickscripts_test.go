@@ -353,15 +353,17 @@ func TestAlertGroupRuleTICKScriptMultiLevelWithOccurrenceCount(t *testing.T) {
 	}
 }
 
-// TestAlertGroupRuleTICKScriptConsecutiveWithWindowBoundsStreakDuration verifies
-// that the consecutive mode, when an occurrenceWindow is set, bounds the streak
-// by wall-clock duration via stateCount + stateDuration. The streak must be N
-// consecutive points AND must have started within the configured window.
-func TestAlertGroupRuleTICKScriptConsecutiveWithWindowBoundsStreakDuration(t *testing.T) {
+// TestAlertGroupRuleTICKScriptConsecutiveIgnoresOccurrenceWindow verifies that
+// consecutive mode does NOT apply the occurrenceWindow as a streak-duration
+// bound, even when the window is explicitly set. The previous implementation
+// emitted a stateDuration node and an extra `state_duration <= W` clause,
+// which caused sustained alerts to auto-recover after the window elapsed
+// (see docs/alert_group_consecutive_window.md).
+func TestAlertGroupRuleTICKScriptConsecutiveIgnoresOccurrenceWindow(t *testing.T) {
 	r := sampleRule()
 	r.OccurrenceCount = 5
 	r.OccurrenceType = "consecutive"
-	r.OccurrenceWindow = "10m"
+	r.OccurrenceWindow = "10m" // window must be ignored for consecutive mode.
 	r.Conditions = []cloudhub.AlertRuleCondition{
 		{Level: "warning", Value: 60, Enabled: true},
 		{Level: "critical", Value: 90, Enabled: true},
@@ -374,32 +376,31 @@ func TestAlertGroupRuleTICKScriptConsecutiveWithWindowBoundsStreakDuration(t *te
 	if err != nil {
 		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
 	}
-	// stateCount + stateDuration both chained from the source.
-	for _, want := range []string{
-		`|stateCount(lambda: "usage_idle" > 60)`,
-		`|stateDuration(lambda: "usage_idle" > 60)`,
-		`.unit(1s)`,
-		`.as('state_duration')`,
-	} {
-		if !strings.Contains(tick, want) {
-			t.Fatalf("expected fragment %q in:\n%s", want, tick)
-		}
+	// stateCount must be present; stateDuration must NOT be emitted.
+	if !strings.Contains(tick, `|stateCount(lambda: "usage_idle" > 60)`) {
+		t.Fatalf("expected stateCount node in:\n%s", tick)
 	}
-	// 10m = 600s — every lambda must include the duration bound AND the threshold.
-	wantCrit := `.crit(lambda: "state_count" >= 5 AND "state_duration" <= 600 AND ("usage_idle" > 90))`
+	if strings.Contains(tick, "stateDuration") {
+		t.Fatalf("consecutive must not emit stateDuration even when window is set:\n%s", tick)
+	}
+	if strings.Contains(tick, `"state_duration"`) {
+		t.Fatalf("consecutive lambdas must not reference state_duration:\n%s", tick)
+	}
+	// Lambdas must only gate on state_count and the per-level threshold.
+	wantCrit := `.crit(lambda: "state_count" >= 5 AND ("usage_idle" > 90))`
 	if !strings.Contains(tick, wantCrit) {
-		t.Fatalf("expected CRIT email lambda %q in:\n%s", wantCrit, tick)
+		t.Fatalf("expected CRIT lambda %q in:\n%s", wantCrit, tick)
 	}
-	wantWarn := `.warn(lambda: "state_count" >= 5 AND "state_duration" <= 600 AND ("usage_idle" > 60 AND "usage_idle" <= 90))`
+	wantWarn := `.warn(lambda: "state_count" >= 5 AND ("usage_idle" > 60 AND "usage_idle" <= 90))`
 	if !strings.Contains(tick, wantWarn) {
 		t.Fatalf("expected WARN email lambda %q in:\n%s", wantWarn, tick)
 	}
-	// Recent-mode windowed sum nodes must not appear.
+	// Recent-mode windowed sum nodes must not appear either.
 	if strings.Contains(tick, "|window()") {
 		t.Fatalf("consecutive must not emit window() block:\n%s", tick)
 	}
 	if err := validateTick(cloudhub.TICKScript(tick)); err != nil {
-		t.Fatalf("consecutive-with-window tickscript should validate: %v\n%s", err, tick)
+		t.Fatalf("consecutive tickscript should validate: %v\n%s", err, tick)
 	}
 }
 
