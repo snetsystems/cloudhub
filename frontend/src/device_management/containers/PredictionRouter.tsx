@@ -140,7 +140,7 @@ function PredictionRouter({
     <Page>
       <Page.Header>
         <Page.Header.Left>
-          <Page.Title title={'Device Management'} />
+          <Page.Title title={'Network Anomaly Monitoring'} />
         </Page.Header.Left>
 
         <Page.Header.Right>{renderHeaderRight()}</Page.Header.Right>
