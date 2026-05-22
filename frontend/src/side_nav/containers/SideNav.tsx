@@ -144,7 +144,7 @@ class SideNav extends PureComponent<Props> {
             <NavListItem
               link={`${sourcePrefix}/network-monitoring/anomaly-prediction`}
             >
-              Anomaly Prediction
+              Anomaly Monitoring
             </NavListItem>
           </NavBlock>
 

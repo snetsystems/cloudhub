@@ -118,7 +118,7 @@ function ManagementRouter({
     <Page>
       <Page.Header>
         <Page.Header.Left>
-          <Page.Title title={'Network Device'} />
+          <Page.Title title={'Network Device Management'} />
         </Page.Header.Left>
 
         <Page.Header.Right>{renderHeaderRight()}</Page.Header.Right>
