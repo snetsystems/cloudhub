@@ -2,7 +2,6 @@ import React, {useState, useEffect, useMemo, useCallback} from 'react'
 import {useTranslation} from 'react-i18next'
 import {withRouter} from 'react-router'
 import {connect} from 'react-redux'
-import ReactJson from 'react-json-view'
 
 import TableComponent from 'src/device_management/components/TableComponent'
 import {
@@ -13,10 +12,6 @@ import {
   SlideToggle,
   ButtonShape,
   Page,
-  OverlayTechnology,
-  OverlayContainer,
-  OverlayHeading,
-  OverlayBody,
 } from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {ColumnInfo} from 'src/types'
@@ -29,15 +24,12 @@ import {
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 
-
-
 function ServerAlertManagementPage({router, location, notify}: any) {
   const {t} = useTranslation()
   const [data, setData] = useState<AlertGroupRule[]>([])
   const [activeFilter, setActiveFilter] = useState<
     'all' | 'warning' | 'critical'
   >('all')
-  const [viewingRule, setViewingRule] = useState<AlertGroupRule | null>(null)
 
   // 데이터 가져오기
   const fetchData = async () => {
@@ -251,13 +243,6 @@ function ServerAlertManagementPage({router, location, notify}: any) {
         render: (_value: any, row: AlertGroupRule) => (
           <div className="server-alert-settings-container">
             <Button
-              icon={IconFont.Eye}
-              size={ComponentSize.ExtraSmall}
-              shape={ButtonShape.Square}
-              color={ComponentColor.Default}
-              onClick={() => setViewingRule(row)}
-            />
-            <Button
               icon={IconFont.Pencil}
               size={ComponentSize.ExtraSmall}
               shape={ButtonShape.Square}
@@ -315,30 +300,6 @@ function ServerAlertManagementPage({router, location, notify}: any) {
             options={{tbodyRow: {className: 'server-alert-table-row'}}}
           />
         </div>
-
-        <OverlayTechnology visible={!!viewingRule}>
-          <OverlayContainer maxWidth={800}>
-            <OverlayHeading
-              title={t('server_alert.rule_json', '규칙 JSON 보기')}
-              onDismiss={() => setViewingRule(null)}
-            />
-            <OverlayBody>
-              <div className="server-alert-json-view-container">
-                {viewingRule && (
-                  <ReactJson
-                    src={viewingRule}
-                    theme="ocean"
-                    collapsed={2}
-                    displayDataTypes={false}
-                    displayObjectSize={false}
-                    enableClipboard={true}
-                    style={{backgroundColor: 'transparent'}}
-                  />
-                )}
-              </div>
-            </OverlayBody>
-          </OverlayContainer>
-        </OverlayTechnology>
       </Page.Contents>
     </Page>
   )

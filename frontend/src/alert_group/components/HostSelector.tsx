@@ -1,9 +1,10 @@
 // frontend/src/alert_group/components/HostSelector.tsx
 import React, {PureComponent, ChangeEvent} from 'react'
+import {withTranslation, WithTranslation} from 'react-i18next'
 import {Input, InputType, ComponentSize} from 'src/reusable_ui'
 import {HostCandidate} from 'src/alert_group/types'
 
-interface Props {
+interface Props extends WithTranslation {
   hosts: HostCandidate[]
   selectedHostnames: string[]
   onChange: (selectedHostnames: string[]) => void
@@ -54,7 +55,7 @@ class HostSelector extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {selectedHostnames} = this.props
+    const {selectedHostnames, t} = this.props
     const {search} = this.state
     const filtered = this.filteredHosts
     const filteredNames = filtered.map(h => h.hostname)
@@ -72,16 +73,21 @@ class HostSelector extends PureComponent<Props, State> {
             onChange={this.handleSearchChange}
             type={InputType.Text}
             size={ComponentSize.Small}
-            placeholder="호스트 검색..."
+            placeholder={t('alert_group_rule.search_hosts', '호스트 검색...')}
           />
           <span className="device-group-host-selector--count">
-            {selectedHostnames.length}개 선택됨
+            {t('alert_group_rule.n_hosts_selected', {
+              count: selectedHostnames.length,
+              defaultValue: '{{count}}개 선택됨',
+            })}
           </span>
         </div>
         <div className="device-group-host-selector--list">
           {filtered.length === 0 ? (
             <div className="device-group-host-selector--empty">
-              {search ? '검색 결과가 없습니다.' : '대상 호스트가 없습니다.'}
+              {search
+                ? t('alert_group_rule.no_hosts_search_results', '검색 결과가 없습니다.')
+                : t('alert_group_rule.no_target_hosts', '대상 호스트가 없습니다.')}
             </div>
           ) : (
             <>
@@ -100,8 +106,14 @@ class HostSelector extends PureComponent<Props, State> {
                 />
                 <span className="device-group-host-selector--hostname">
                   {search
-                    ? `검색 결과 전체 선택 (${filtered.length}개)`
-                    : `전체 선택 (${filtered.length}개)`}
+                    ? t('alert_group_rule.select_all_search_results', {
+                        count: filtered.length,
+                        defaultValue: '검색 결과 전체 선택 ({{count}}개)',
+                      })
+                    : t('alert_group_rule.select_all_with_count', {
+                        count: filtered.length,
+                        defaultValue: '전체 선택 ({{count}}개)',
+                      })}
                 </span>
               </div>
               {filtered.map(host => {
@@ -133,4 +145,5 @@ class HostSelector extends PureComponent<Props, State> {
   }
 }
 
-export default HostSelector
+export default withTranslation()(HostSelector)
+
