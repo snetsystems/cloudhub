@@ -58,6 +58,7 @@ import {
   getAlertTemplates,
   fetchAvailableMeasurements,
 } from 'src/alert_group/apis'
+import {getActiveKapacitor} from 'src/shared/apis'
 
 // Actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -139,13 +140,17 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         userGroups,
         templates,
         availableMeasurements,
+        activeKapacitor,
       ] = await Promise.all([
         getUserGroups(),
         getAlertTemplates().catch(() => [] as AlertTemplate[]),
         fetchAvailableMeasurements(this.props.source).catch(
           () => new Set<string>()
         ),
+        getActiveKapacitor(this.props.source).catch(() => null),
       ])
+
+      const activeKapacitorId = activeKapacitor?.id || ''
 
       if (isEdit) {
         const rule = await getAlertGroupRule(ruleId!)
@@ -161,9 +166,14 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           selectedTemplateId = matchedTemplate.id
         }
 
+        const ruleWithKapacitor = {
+          ...rule,
+          kapacitorId: rule.kapacitorId || activeKapacitorId,
+        }
+
         this.setState({
-          rule,
-          savedRule: rule,
+          rule: ruleWithKapacitor,
+          savedRule: ruleWithKapacitor,
           userGroups,
           templates,
           availableMeasurements,
@@ -173,7 +183,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         })
       } else {
         this.setState({
-          rule: this.state.rule,
+          rule: {...this.state.rule, kapacitorId: activeKapacitorId},
           savedRule: null,
           userGroups,
           templates,

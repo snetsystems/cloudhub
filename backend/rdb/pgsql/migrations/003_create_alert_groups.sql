@@ -18,7 +18,7 @@
 --
 -- All alert recipients flow through recipient_groups -> recipient_group_members.
 -- There is no rule-level direct-email escape hatch — ad-hoc external recipients
--- should be modeled as a group member with user_id = email (or similar convention).
+-- are modeled as members with is_external = true (user_id NULL, email-keyed).
 --
 -- Reminder / repetition policy is per-rule via alert_rules columns
 -- (pause_seconds, occurrence_*, conditions) rendered into TICKscript
@@ -65,18 +65,27 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_recipient_groups_org_default_active
 CREATE TABLE IF NOT EXISTS recipient_group_members (
     id                 UUID    NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     recipient_group_id UUID    NOT NULL REFERENCES recipient_groups(id) ON DELETE CASCADE,
-    user_id            TEXT    NOT NULL,
+    user_id            TEXT,
     user_name          TEXT    NOT NULL,
     email              TEXT    NOT NULL DEFAULT '',
     phone_number       TEXT    NOT NULL DEFAULT '',
+    is_external        BOOLEAN NOT NULL DEFAULT false,
     delete_yn          BOOLEAN NOT NULL DEFAULT false,
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_external_has_no_user_id
+        CHECK ((is_external = TRUE) = (user_id IS NULL)),
+    CONSTRAINT chk_external_requires_email
+        CHECK (is_external = FALSE OR email <> '')
 );
 CREATE INDEX IF NOT EXISTS idx_recipient_group_members_group_id_active
     ON recipient_group_members (recipient_group_id) WHERE delete_yn = false;
-CREATE UNIQUE INDEX IF NOT EXISTS idx_recipient_group_members_user_active
-    ON recipient_group_members (recipient_group_id, user_id) WHERE delete_yn = false;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_recipient_group_members_internal_user_active
+    ON recipient_group_members (recipient_group_id, user_id)
+    WHERE delete_yn = false AND is_external = false;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_recipient_group_members_external_email_active
+    ON recipient_group_members (recipient_group_id, email)
+    WHERE delete_yn = false AND is_external = true;
 
 -- =====================================================================
 -- Layer 2: Alert 도메인 확장 (Layer 1 위에 alert 전용 설정 캡슐화)
@@ -365,13 +374,15 @@ COMMENT ON COLUMN alert_recipient_groups.suppression_pause_seconds IS
 
 -- recipient_group_members columns
 COMMENT ON COLUMN recipient_group_members.user_id IS
-  'CloudHub user identifier. For ad-hoc external recipients (not a CloudHub user), use the email or a prefixed convention (e.g. external:vendor@x.com).';
+  'CloudHub user identifier. NULL when is_external = true (external recipient, not a CloudHub user). CHECK constraint enforces (is_external <=> user_id IS NULL).';
 COMMENT ON COLUMN recipient_group_members.user_name IS
   'Display name for this member.';
 COMMENT ON COLUMN recipient_group_members.email IS
-  'Email address (channel-neutral data). Used by email channel when alert_recipient_member_prefs.email_enabled.';
+  'Email address (channel-neutral data). Used by email channel when alert_recipient_member_prefs.email_enabled. Required (non-empty) for external recipients — they are uniquely identified by email within a group.';
 COMMENT ON COLUMN recipient_group_members.phone_number IS
   'Phone number. Consumed by the SMS channel (see alert_recipient_member_prefs.sms_*).';
+COMMENT ON COLUMN recipient_group_members.is_external IS
+  'When true, this member is an external recipient (not a CloudHub user); user_id is NULL and email serves as the in-group identifier. When false, user_id holds the CloudHub user id.';
 
 -- alert_kapacitors columns
 COMMENT ON COLUMN alert_kapacitors.url IS

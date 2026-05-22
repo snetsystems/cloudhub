@@ -1963,6 +1963,12 @@ type RecipientGroup struct {
 // RecipientGroupMember is the domain-neutral identity + contact info of
 // a group member. Per-channel preferences live in AlertRecipientMemberPrefs
 // (or analogous Layer 2 extensions for future domains).
+//
+// Two member kinds, discriminated by IsExternal:
+//   - Internal (IsExternal=false): UserID is a CloudHub user id. Uniqueness
+//     within a group is enforced on (group_id, user_id).
+//   - External (IsExternal=true):  UserID is empty (NULL in DB). Email is the
+//     in-group identifier; uniqueness is enforced on (group_id, email).
 type RecipientGroupMember struct {
 	ID               string    `json:"id"`
 	RecipientGroupID string    `json:"recipientGroupId"`
@@ -1970,6 +1976,7 @@ type RecipientGroupMember struct {
 	UserName         string    `json:"userName"`
 	Email            string    `json:"email"`
 	PhoneNumber      string    `json:"phoneNumber"`
+	IsExternal       bool      `json:"isExternal"`
 	DeleteYN         bool      `json:"deleteYn,omitempty"`
 	CreatedAt        time.Time `json:"createdAt"`
 	UpdatedAt        time.Time `json:"updatedAt"`

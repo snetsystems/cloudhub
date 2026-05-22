@@ -627,6 +627,87 @@ func TestAlertGroupRuleCreateRejectsLegacyNumericKapacitorID(t *testing.T) {
 	}
 }
 
+func TestAlertGroupRuleCreateNormalizesLegacyKapacitorID(t *testing.T) {
+	logger := &mocks.TestLogger{}
+	const targetUUID = "11111111-1111-1111-1111-111111111111"
+	var storedRule cloudhub.AlertGroupRule
+
+	kapacitorAPI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer kapacitorAPI.Close()
+
+	svc := &Service{
+		Logger: logger,
+		Store: &mocks.Store{
+			ServersStore: &mocks.ServersStore{
+				GetF: func(ctx context.Context, id int) (cloudhub.Server, error) {
+					if id != 42 {
+						return cloudhub.Server{}, errors.New("not found")
+					}
+					return cloudhub.Server{ID: 42, SrcID: 1}, nil
+				},
+			},
+		},
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			addFunc: func(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
+				storedRule = r
+				r.ID = "rule-1"
+				return r, nil
+			},
+		},
+		AlertKapacitors: &fakeAlertKapacitorStore{
+			getFunc: func(ctx context.Context, id string) (cloudhub.AlertKapacitor, error) {
+				if id != targetUUID {
+					return cloudhub.AlertKapacitor{}, errors.New("not found")
+				}
+				return cloudhub.AlertKapacitor{ID: id, OrgID: "org-1", URL: kapacitorAPI.URL}, nil
+			},
+		},
+		AlertKapacitorMappings: &fakeAlertKapacitorMappingStore{
+			getFunc: func(ctx context.Context, sourceID, legacyKapacitorID int) (string, error) {
+				if sourceID != 1 || legacyKapacitorID != 42 {
+					return "", errors.New("not found")
+				}
+				return targetUUID, nil
+			},
+		},
+	}
+
+	reqRule := cloudhub.AlertGroupRule{
+		Name:            "cpu high",
+		KapacitorID:     "42",
+		Database:        "telegraf",
+		RetentionPolicy: "autogen",
+		Measurement:     "cpu",
+		Field:           "usage_idle",
+		Conditions: []cloudhub.AlertRuleCondition{
+			{Level: "critical", Value: 90, Enabled: true},
+		},
+		TriggerOperator:  "greater",
+		TaskType:         "stream",
+		Every:            "30s",
+		OccurrenceType:   "consecutive",
+		OccurrenceCount:  1,
+		OccurrenceWindow: "5m",
+		Active:           true,
+	}
+	payload, _ := json.Marshal(reqRule)
+
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", bytes.NewReader(payload))
+	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
+	rr := httptest.NewRecorder()
+
+	svc.AlertGroupRuleCreate(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	if storedRule.KapacitorID != targetUUID {
+		t.Fatalf("stored KapacitorID = %q, want %q", storedRule.KapacitorID, targetUUID)
+	}
+}
+
 func TestAlertGroupRuleUpdateRejectsLegacyNumericKapacitorID(t *testing.T) {
 	logger := &mocks.TestLogger{}
 	updateCalled := false
@@ -876,6 +957,66 @@ func TestAlertGroupRuleCreateBuildsEmailTickscriptFromEventHandler(t *testing.T)
 	}
 	if !strings.Contains(got.Tickscript, "|influxDBOut()") {
 		t.Fatalf("tickscript should still include alert output:\n%s", got.Tickscript)
+	}
+}
+
+// TestAlertGroupRuleCreateAllowsNoEventHandlers verifies the "log only" path:
+// a rule POST with an empty eventHandlers list is accepted (201) and the
+// generated tickscript still routes alerts to InfluxDB (cloudhub_alerts
+// measurement) so the alert history is persisted even though no external
+// notification channel is configured.
+func TestAlertGroupRuleCreateAllowsNoEventHandlers(t *testing.T) {
+	logger := &mocks.TestLogger{}
+
+	var capturedHandlers []cloudhub.AlertRuleEventHandler
+	svc := &Service{
+		Logger: logger,
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			addFunc: func(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
+				r.ID = "rule-no-handler"
+				return r, nil
+			},
+			setEventHandlersFunc: func(ctx context.Context, ruleID string, handlers []cloudhub.AlertRuleEventHandler) error {
+				capturedHandlers = append([]cloudhub.AlertRuleEventHandler(nil), handlers...)
+				return nil
+			},
+			eventHandlersByRuleFunc: func(context.Context, string) ([]cloudhub.AlertRuleEventHandler, error) {
+				return nil, nil
+			},
+		},
+		RecipientGroups:           &fakeRecipientGroupStore{},
+		AlertRecipientMemberPrefs: &fakeAlertRecipientMemberPrefsStore{},
+	}
+
+	payload := bytes.NewBufferString(`{"name":"cpu no-handler","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true}`)
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
+	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
+	rr := httptest.NewRecorder()
+
+	svc.AlertGroupRuleCreate(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	if len(capturedHandlers) != 0 {
+		t.Fatalf("SetEventHandlers called with non-empty handlers: %+v", capturedHandlers)
+	}
+
+	var got cloudhub.AlertGroupRule
+	if err := json.NewDecoder(rr.Body).Decode(&got); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if !strings.Contains(got.Tickscript, "var outputMeasurement = 'cloudhub_alerts'") {
+		t.Fatalf("tickscript must declare cloudhub_alerts output measurement:\n%s", got.Tickscript)
+	}
+	if !strings.Contains(got.Tickscript, "|influxDBOut()") {
+		t.Fatalf("tickscript must persist alerts via influxDBOut() even without handlers:\n%s", got.Tickscript)
+	}
+	if !strings.Contains(got.Tickscript, "|alert()") {
+		t.Fatalf("tickscript must contain main alert() node:\n%s", got.Tickscript)
+	}
+	if strings.Contains(got.Tickscript, ".email()") {
+		t.Fatalf("tickscript must not emit email() handler when no event handler is registered:\n%s", got.Tickscript)
 	}
 }
 

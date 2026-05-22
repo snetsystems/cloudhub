@@ -78,7 +78,7 @@ type alertGroupTickParams struct {
 	OccurrenceEnabled bool   // true when OccurrenceCount > 1 (apply stateCount wrap)
 	RecentEnabled     bool   // true when OccurrenceType asks for windowed recent counts
 	OccurrenceCount   int    // N consecutive points required to trigger
-	OccurrenceWindow  string // window duration for recent occurrence mode
+	OccurrenceWindow  string // window duration for recent mode only
 	OccurrenceLambda  string // stateCount lambda — typically the most permissive enabled threshold
 	RecentBlock       string
 	Message           string
@@ -174,11 +174,14 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	emailInfo, emailWarn, emailCrit := buildExclusiveLambdas(lambdaRule)
 
 	recent := recentOccurrenceParams{}
-	if recentEnabled {
+	switch {
+	case recentEnabled:
 		recent = buildRecentOccurrenceParams(rule, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit)
 		info, warn, crit = recent.infoCountLambda, recent.warnCountLambda, recent.critCountLambda
 		emailInfo, emailWarn, emailCrit = recent.emailInfoCountLambda, recent.emailWarnCountLambda, recent.emailCritCountLambda
-	} else if consecutiveEnabled {
+	case consecutiveEnabled:
+		// Pure stateCount guard. occurrenceWindow is intentionally ignored here —
+		// see docs/alert_group_consecutive_window.md for the rationale.
 		wrap := func(s string) string {
 			if s == "" {
 				return ""

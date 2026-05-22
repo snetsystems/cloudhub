@@ -150,13 +150,17 @@ func (s *RecipientGroupStore) Delete(ctx context.Context, id string) error {
 
 // Member operations
 
-const memberCols = `id, recipient_group_id, user_id, user_name, email, phone_number, delete_yn, created_at, updated_at`
+const memberCols = `id, recipient_group_id, user_id, user_name, email, phone_number, is_external, delete_yn, created_at, updated_at`
 
 func scanMember(row interface{ Scan(...any) error }) (cloudhub.RecipientGroupMember, error) {
 	var m cloudhub.RecipientGroupMember
 	var ca, ua time.Time
-	if err := row.Scan(&m.ID, &m.RecipientGroupID, &m.UserID, &m.UserName, &m.Email, &m.PhoneNumber, &m.DeleteYN, &ca, &ua); err != nil {
+	var userID *string
+	if err := row.Scan(&m.ID, &m.RecipientGroupID, &userID, &m.UserName, &m.Email, &m.PhoneNumber, &m.IsExternal, &m.DeleteYN, &ca, &ua); err != nil {
 		return m, fmt.Errorf("recipient_group_member scan: %w", err)
+	}
+	if userID != nil {
+		m.UserID = *userID
 	}
 	m.CreatedAt, m.UpdatedAt = ca, ua
 	return m, nil
@@ -181,7 +185,7 @@ func (s *RecipientGroupStore) Members(ctx context.Context, groupID string) ([]cl
 }
 
 func (s *RecipientGroupStore) MembersByUserID(ctx context.Context, orgID, userID string) ([]cloudhub.RecipientGroupMember, error) {
-	const cols = `m.id, m.recipient_group_id, m.user_id, m.user_name, m.email, m.phone_number, m.delete_yn, m.created_at, m.updated_at`
+	const cols = `m.id, m.recipient_group_id, m.user_id, m.user_name, m.email, m.phone_number, m.is_external, m.delete_yn, m.created_at, m.updated_at`
 	q := `SELECT ` + cols + `
 		FROM recipient_group_members m
 		JOIN recipient_groups g ON g.id = m.recipient_group_id
@@ -211,9 +215,16 @@ func (s *RecipientGroupStore) MembersByUserID(ctx context.Context, orgID, userID
 }
 
 func (s *RecipientGroupStore) AddMember(ctx context.Context, m cloudhub.RecipientGroupMember) (cloudhub.RecipientGroupMember, error) {
-	const q = `INSERT INTO recipient_group_members (recipient_group_id, user_id, user_name, email, phone_number) VALUES ($1,$2,$3,$4,$5) RETURNING id, created_at, updated_at`
+	const q = `INSERT INTO recipient_group_members (recipient_group_id, user_id, user_name, email, phone_number, is_external) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at, updated_at`
+	var userIDArg any
+	if m.IsExternal {
+		userIDArg = nil
+		m.UserID = ""
+	} else {
+		userIDArg = m.UserID
+	}
 	var ca, ua time.Time
-	if err := s.client.QueryRowContext(ctx, q, m.RecipientGroupID, m.UserID, m.UserName, m.Email, m.PhoneNumber).Scan(&m.ID, &ca, &ua); err != nil {
+	if err := s.client.QueryRowContext(ctx, q, m.RecipientGroupID, userIDArg, m.UserName, m.Email, m.PhoneNumber, m.IsExternal).Scan(&m.ID, &ca, &ua); err != nil {
 		return cloudhub.RecipientGroupMember{}, fmt.Errorf("recipient_group_member.Add: %w", err)
 	}
 	m.CreatedAt, m.UpdatedAt = ca, ua

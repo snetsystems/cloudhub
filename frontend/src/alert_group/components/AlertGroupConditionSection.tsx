@@ -1023,6 +1023,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                   }
                   buttonColor="btn-default"
                   buttonSize="btn-sm"
+                  disabled={rule.occurrenceType === 'consecutive'}
                   items={[
                     {text: '1m', value: '1m'},
                     {text: '5m', value: '5m'},

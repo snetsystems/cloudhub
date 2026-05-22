@@ -74,12 +74,12 @@ const toAlertRuleEventHandlers = (rule: AlertGroupRule) => {
 }
 
 const toAlertGroupRuleRequest = (rule: AlertGroupRule) => {
-  const {recipientGroupIds, eventHandlers, ...rest} = rule
+  const {recipientGroupIds, eventHandlers, triggerValues, ...rest} = rule
 
   return {
     ...rest,
     eventHandlers: toAlertRuleEventHandlers(rule),
-    values: rule.triggerValues,
+    values: triggerValues,
     conditions: (rule.conditions || []).map(condition => ({
       ...condition,
       value: Number(condition.value),
