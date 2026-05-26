@@ -190,6 +190,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           templates,
           availableMeasurements,
           loading: RemoteDataState.Done,
+          builderMode: 'raw',
+          selectedTemplateId: 'custom',
         })
       }
     } catch (e) {
@@ -396,9 +398,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     }
 
     this.setState({isSaving: true})
-
-    console.log('Saving AlertGroupRule payload JSON:', rule)
-    console.log('JSON Stringified payload:', JSON.stringify(rule, null, 2))
 
     try {
       if (this.isNew) {

@@ -13,10 +13,9 @@ import {
 type DygraphArea = {x: number; y: number; w: number; h: number}
 
 const CRITICAL_FILL = 'rgba(241, 85, 99, 0.32)'
-const WARNING_FILL = 'rgba(162, 84, 244, 0.28)'
-const INFO_FILL = 'rgba(255, 209, 102, 0.26)'
+const WARNING_FILL = 'rgba(255, 185, 74, 0.28)'
+const INFO_FILL = 'rgba(34, 173, 246, 0.26)'
 const DEFAULT_FILL = 'rgba(78, 216, 160, 0.28)'
-const NOT_EQUAL_OVERLAY = 'rgba(78, 216, 160, 0.22)'
 
 function levelFill(level: string): string {
   if (level === 'critical') {
@@ -56,16 +55,17 @@ export function buildAlertGroupPreviewRuleValues(
   conditions: AlertCondition[],
   triggerOperator: AlertGroupRule['triggerOperator']
 ): RuleValues | null {
-  const nums = conditions
-    .filter(c => c.enabled && c.value !== '' && isFinite(Number(c.value)))
-    .map(c => Number(c.value))
-  if (nums.length === 0) {
+  const enabled = conditions.filter(c => c.enabled && c.value !== '' && isFinite(Number(c.value)))
+  if (enabled.length === 0) {
     return null
   }
+  const maxCond = enabled[0]
+  const op = maxCond.operator || triggerOperator
+  const nums = enabled.map(c => Number(c.value))
   const min = Math.min(...nums)
   const max = Math.max(...nums)
   return {
-    operator: triggerOperatorToRuleValuesOperator(triggerOperator),
+    operator: triggerOperatorToRuleValuesOperator(op as any),
     value: String(max),
     rangeValue: nums.length > 1 ? String(min) : '',
   }
@@ -141,31 +141,23 @@ export function buildAlertGroupPreviewUnderlay({
     const span = Math.max(yMax - yMin, 1e-9)
     const band = span * 0.01
 
-    switch (triggerOperator) {
-      case 'greater':
-      case 'greater_equal': {
-        const sorted = [...items].sort((a, b) => a.value - b.value)
-        for (const it of sorted) {
+    // We process each condition's threshold item and draw its corresponding background fill
+    for (const it of items) {
+      const cond = conditions.find(c => c.level === it.level)
+      const op = cond?.operator || triggerOperator
+
+      switch (op) {
+        case 'greater':
+        case 'greater_equal': {
           fillYRange(canvas, dygraph, area, it.value, yMax, levelFill(it.level))
+          break
         }
-        for (const it of sorted) {
-          strokeThresholdLine(canvas, dygraph, area, it.value)
-        }
-        break
-      }
-      case 'less':
-      case 'less_equal': {
-        const sorted = [...items].sort((a, b) => b.value - a.value)
-        for (const it of sorted) {
+        case 'less':
+        case 'less_equal': {
           fillYRange(canvas, dygraph, area, yMin, it.value, levelFill(it.level))
+          break
         }
-        for (const it of sorted) {
-          strokeThresholdLine(canvas, dygraph, area, it.value)
-        }
-        break
-      }
-      case 'equal': {
-        for (const it of items) {
+        case 'equal': {
           fillYRange(
             canvas,
             dygraph,
@@ -174,35 +166,28 @@ export function buildAlertGroupPreviewUnderlay({
             it.value + band / 2,
             levelFill(it.level)
           )
-          strokeThresholdLine(canvas, dygraph, area, it.value)
+          break
         }
-        break
-      }
-      case 'not_equal': {
-        canvas.fillStyle = NOT_EQUAL_OVERLAY
-        canvas.fillRect(area.x, area.y, area.w, area.h)
-        for (const it of items) {
+        case 'not_equal': {
           fillYRange(
             canvas,
             dygraph,
             area,
             it.value - band / 2,
             it.value + band / 2,
-            'rgba(41, 41, 51, 0.94)'
+            levelFill(it.level)
           )
-          strokeThresholdLine(canvas, dygraph, area, it.value)
+          break
         }
-        break
-      }
-      default: {
-        const sorted = [...items].sort((a, b) => a.value - b.value)
-        for (const it of sorted) {
+        default: {
           fillYRange(canvas, dygraph, area, it.value, yMax, levelFill(it.level))
         }
-        for (const it of sorted) {
-          strokeThresholdLine(canvas, dygraph, area, it.value)
-        }
       }
+    }
+
+    // Draw the white threshold lines on top of the fills
+    for (const it of items) {
+      strokeThresholdLine(canvas, dygraph, area, it.value)
     }
   }
 }

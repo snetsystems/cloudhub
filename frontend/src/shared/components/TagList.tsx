@@ -134,7 +134,7 @@ class TagList extends PureComponent<Props, State> {
             onChooseTag={onChooseTag}
             onGroupByTag={onGroupByTag}
             selectedTagValues={query.tags[tagKey] || []}
-            isUsingGroupBy={query.groupBy.tags.indexOf(tagKey) > -1}
+            isUsingGroupBy={_.get(query, 'groupBy.tags', []).indexOf(tagKey) > -1}
             isQuerySupportedByExplorer={isQuerySupportedByExplorer}
           />
         ))}

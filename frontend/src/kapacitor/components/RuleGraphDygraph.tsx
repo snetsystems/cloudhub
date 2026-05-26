@@ -47,6 +47,7 @@ interface Props {
     area: DygraphUnderlayArea,
     dygraph: DygraphClass
   ) => void
+  interactive?: boolean
 }
 
 interface State {
@@ -132,6 +133,7 @@ class RuleGraphDygraph extends Component<Props, State> {
 
   private get options() {
     const yRangePad = this.props.yRangePad ?? 10
+    const {interactive = true} = this.props
     return {
       rightGap: 0,
       yRangePad,
@@ -143,6 +145,7 @@ class RuleGraphDygraph extends Component<Props, State> {
       axisLineColor: '#383846',
       gridLineColor: '#383846',
       connectSeparatedPoints: true,
+      interactionModel: interactive ? undefined : {},
     }
   }
 

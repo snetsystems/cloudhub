@@ -1,6 +1,7 @@
 // frontend/src/alert_group/components/AlertGroupConditionSection.tsx
 import React, {PureComponent} from 'react'
 import uuid from 'uuid'
+import _ from 'lodash'
 import {withTranslation, WithTranslation} from 'react-i18next'
 import {
   ComponentColor,
@@ -171,6 +172,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
         fields: rule.field
           ? [{value: rule.field, type: 'field', alias: '', args: []}]
           : [],
+        tags: {},
+        groupBy: {time: '', tags: []},
+        areTagsAccepted: false,
       } as QueryConfig,
     }
   }
@@ -214,6 +218,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
           fields: rule.field
             ? [{value: rule.field, type: 'field', alias: '', args: []}]
             : [],
+          tags: {},
+          groupBy: {time: '', tags: []},
+          areTagsAccepted: false,
         } as QueryConfig,
       })
       console.log({
@@ -280,10 +287,11 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     const nextValues = hasValue
       ? existingValues.filter(v => v !== tag.value)
       : [...existingValues, tag.value]
+    const nextTags = {...(queryConfig.tags || {}), [tag.key]: nextValues}
     this.setState(prev => ({
       queryConfig: {
         ...prev.queryConfig,
-        tags: {...(prev.queryConfig.tags || {}), [tag.key]: nextValues},
+        tags: nextTags,
       },
     }))
   }
@@ -295,22 +303,24 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     const nextTags = hasTag
       ? currentTags.filter(t => t !== tagKey)
       : [...currentTags, tagKey]
+    const nextGroupBy = {
+      ...(queryConfig.groupBy || {time: 'auto', tags: []}),
+      tags: nextTags,
+    }
     this.setState(prev => ({
       queryConfig: {
         ...prev.queryConfig,
-        groupBy: {
-          ...(prev.queryConfig.groupBy || {time: 'auto', tags: []}),
-          tags: nextTags,
-        },
+        groupBy: nextGroupBy,
       },
     }))
   }
 
   private handleToggleTagAcceptance = (): void => {
+    const nextValue = !this.state.queryConfig.areTagsAccepted
     this.setState(prev => ({
       queryConfig: {
         ...prev.queryConfig,
-        areTagsAccepted: !prev.queryConfig.areTagsAccepted,
+        areTagsAccepted: nextValue,
       },
     }))
   }
@@ -370,10 +380,18 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     this.props.onUpdateRule({conditions: next})
   }
 
+  private handleConditionOperator = (idx: number, operator: string): void => {
+    const sorted = sortConditions(this.props.rule.conditions)
+    const next = sorted.map((c, i) =>
+      i === idx ? {...c, operator} : c
+    )
+    this.props.onUpdateRule({conditions: next})
+  }
+
   // ── Render Template UI ─────────────────────────────────────────────────────
 
   private renderTemplateUI(): JSX.Element {
-    const {rule, templates, onUpdateRule, t} = this.props
+    const {rule, templates, t} = this.props
     const selectedTemplate = findSelectedAlertTemplate(templates, rule)
 
     return (
@@ -438,7 +456,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     t
                   )
                   const selectedOperator = translatedTriggerOperators.find(
-                    o => o.value === rule.triggerOperator
+                    o => o.value === (cond.operator || rule.triggerOperator || 'greater')
                   )
                   return (
                     <div
@@ -471,7 +489,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                 : translatedTriggerOperators[0].label
                             }
                             onChoose={(item: any) =>
-                              onUpdateRule({triggerOperator: item.value as any})
+                              this.handleConditionOperator(idx, item.value)
                             }
                             buttonColor="btn-default"
                             buttonSize="btn-sm"
@@ -552,7 +570,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         t
                       )
                       const selectedOperator =
-                        rule.triggerValues?.operator || 'greater than'
+                        cond.operator || rule.triggerValues?.operator || 'greater than'
                       const selectedOpObj = relativeOpOptions.find(
                         o => o.value === selectedOperator
                       )
@@ -587,10 +605,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                     : selectedOperator
                                 }
                                 onChoose={(item: any) =>
-                                  this.handleTriggerValueChange(
-                                    'operator',
-                                    item.value
-                                  )
+                                  this.handleConditionOperator(idx, item.value)
                                 }
                                 buttonColor="btn-default"
                                 buttonSize="btn-sm"
@@ -721,7 +736,16 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 />
               </div>
 
-              {this.props.children}
+              {React.Children.map(this.props.children, child => {
+                if (React.isValidElement(child)) {
+                  return React.cloneElement(child as React.ReactElement<any>, {
+                    tags: queryConfig.tags,
+                    groupBy: queryConfig.groupBy,
+                    areTagsAccepted: queryConfig.areTagsAccepted,
+                  })
+                }
+                return child
+              })}
 
               {/* Alert Type Selector */}
               <div className="alert-group-setting-row">
@@ -777,7 +801,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                           t
                         )
                         const selectedOperator = translatedTriggerOperators.find(
-                          o => o.value === rule.triggerOperator
+                          o => o.value === (cond.operator || rule.triggerOperator || 'greater')
                         )
                         return (
                           <div
@@ -810,9 +834,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                       : translatedTriggerOperators[0].label
                                   }
                                   onChoose={(item: any) =>
-                                    onUpdateRule({
-                                      triggerOperator: item.value,
-                                    })
+                                    this.handleConditionOperator(idx, item.value)
                                   }
                                   buttonColor="btn-default"
                                   buttonSize="btn-sm"
@@ -899,7 +921,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                           t
                         )
                         const selectedOperator =
-                          rule.triggerValues?.operator || 'greater than'
+                          cond.operator || rule.triggerValues?.operator || 'greater than'
                         const selectedOpObj = relativeOpOptions.find(
                           o => o.value === selectedOperator
                         )
@@ -934,10 +956,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                       : selectedOperator
                                   }
                                   onChoose={(item: any) =>
-                                    this.handleTriggerValueChange(
-                                      'operator',
-                                      item.value
-                                    )
+                                    this.handleConditionOperator(idx, item.value)
                                   }
                                   buttonColor="btn-default"
                                   buttonSize="btn-sm"

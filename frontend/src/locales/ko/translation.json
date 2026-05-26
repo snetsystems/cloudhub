@@ -145,7 +145,7 @@
     "select_server_title": "서버 선택",
     "target_server_helper": "현재 소스로부터 보고 중인 호스트 중 선택한 서버에만 알림이 발생합니다.",
     "search": "검색",
-    "create_new": "새로 만들기",
+    "create_new": "규칙 새로 만들기",
     "quick_setting_template": "빠른 설정 템플릿",
     "quick_template_desc": "자주 사용하는 알림 템플릿",
     "unavailable": "사용불가",

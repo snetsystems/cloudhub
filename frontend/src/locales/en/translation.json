@@ -145,7 +145,7 @@
     "select_server_title": "Select Server",
     "target_server_helper": "Alerts will only occur on the selected servers among hosts reporting from the current source.",
     "search": "Search",
-    "create_new": "Create New",
+    "create_new": "Create New Rule",
     "quick_setting_template": "Quick Template",
     "quick_template_desc": "Frequently used alert templates",
     "unavailable": "Unavailable",

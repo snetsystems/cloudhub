@@ -160,7 +160,7 @@ class MeasurementList extends PureComponent<Props, State> {
                   isQuerySupportedByExplorer={
                     isKapacitorRule || isQuerySupportedByExplorer
                   }
-                  numTagsActive={Object.keys(query.tags).length}
+                  numTagsActive={query.tags ? Object.keys(query.tags).length : 0}
                   onChooseMeasurement={this.handleChoosemeasurement}
                 />
               ))}
