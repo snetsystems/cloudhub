@@ -2050,3 +2050,23 @@ $alert-group--preview-graph-shell-height: 360px;
 .member-list-actions {
   margin-left: auto;
 }
+
+/* Test send modal custom classes */
+.alert-group-test-modal-email-row {
+  display: flex;
+  align-items: center;
+  margin: 0 10px;
+}
+
+.alert-group-test-modal-email-text {
+  margin-left: 12px;
+  font-size: 13px;
+  color: $g18-cloud;
+}
+
+.alert-group-test-modal-hint {
+  margin: 0 10px;
+  font-size: 13px;
+  color: $g18-cloud;
+}
+

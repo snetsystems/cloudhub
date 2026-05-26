@@ -125,7 +125,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       testRecipients: '',
       testIncludeSelf: true,
       testUserGroupIds: [],
-      builderMode: 'template',
+      builderMode: 'raw',
       selectedTemplateId: 'custom',
     }
   }
@@ -652,13 +652,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                     />
                   </Form.Element>
                   <Form.Element label="내 이메일에 발송">
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        margin: '0 10px',
-                      }}
-                    >
+                    <div className="alert-group-test-modal-email-row">
                       <SlideToggle
                         active={testIncludeSelf}
                         onChange={this.handleTestIncludeSelfChange}
@@ -666,13 +660,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                         color={ComponentColor.Primary}
                         disabled={!auth?.me?.email}
                       />
-                      <span
-                        style={{
-                          marginLeft: '12px',
-                          fontSize: '13px',
-                          color: '#f6f6f8',
-                        }}
-                      >
+                      <span className="alert-group-test-modal-email-text">
                         {auth?.me?.email
                           ? auth.me.email
                           : '로그인 사용자의 이메일이 없어 사용할 수 없습니다.'}
@@ -700,14 +688,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                         ))}
                       </MultiSelectDropdown>
                     ) : (
-                      <p
-                        className="alert-group-test-modal-hint"
-                        style={{
-                          margin: '0 10px',
-                          fontSize: '13px',
-                          color: '#f6f6f8',
-                        }}
-                      >
+                      <p className="alert-group-test-modal-hint">
                         등록된 수신 그룹이 없습니다.
                       </p>
                     )}

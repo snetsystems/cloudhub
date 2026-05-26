@@ -223,10 +223,6 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
           areTagsAccepted: false,
         } as QueryConfig,
       })
-      console.log({
-        database: rule.database || '',
-        retentionPolicy: rule.retentionPolicy || '',
-      })
     }
   }
 
@@ -345,9 +341,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
   private handleToggleCondition = (idx: number, enabled: boolean): void => {
     const sorted = sortConditions(this.props.rule.conditions)
-    const next = sorted.map((c, i) =>
-      i === idx ? {...c, enabled} : c
-    )
+    const next = sorted.map((c, i) => (i === idx ? {...c, enabled} : c))
     this.props.onUpdateRule({conditions: next})
   }
 
@@ -374,17 +368,13 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
   private handleConditionValue = (idx: number, value: string): void => {
     const sorted = sortConditions(this.props.rule.conditions)
-    const next = sorted.map((c, i) =>
-      i === idx ? {...c, value} : c
-    )
+    const next = sorted.map((c, i) => (i === idx ? {...c, value} : c))
     this.props.onUpdateRule({conditions: next})
   }
 
   private handleConditionOperator = (idx: number, operator: string): void => {
     const sorted = sortConditions(this.props.rule.conditions)
-    const next = sorted.map((c, i) =>
-      i === idx ? {...c, operator} : c
-    )
+    const next = sorted.map((c, i) => (i === idx ? {...c, operator} : c))
     this.props.onUpdateRule({conditions: next})
   }
 
@@ -570,7 +560,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         t
                       )
                       const selectedOperator =
-                        cond.operator || rule.triggerValues?.operator || 'greater than'
+                        cond.operator ||
+                        rule.triggerValues?.operator ||
+                        'greater than'
                       const selectedOpObj = relativeOpOptions.find(
                         o => o.value === selectedOperator
                       )
@@ -696,7 +688,6 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       o => o.value === rule.pauseSeconds
     )
     const isTemplateMode = builderMode !== 'raw'
-
     return (
       <div className="rule-section">
         <div className="alert-group-section-header">
@@ -834,14 +825,19 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                       : translatedConditionOperators[0].label
                                   }
                                   onChoose={(item: any) =>
-                                    this.handleConditionOperator(idx, item.value)
+                                    this.handleConditionOperator(
+                                      idx,
+                                      item.value
+                                    )
                                   }
                                   buttonColor="btn-default"
                                   buttonSize="btn-sm"
-                                  items={translatedConditionOperators.map(o => ({
-                                    text: o.label,
-                                    value: o.value,
-                                  }))}
+                                  items={translatedConditionOperators.map(
+                                    o => ({
+                                      text: o.label,
+                                      value: o.value,
+                                    })
+                                  )}
                                 />
                                 <div className="alert-group-condition-w100">
                                   <Input
@@ -921,7 +917,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                           t
                         )
                         const selectedOperator =
-                          cond.operator || rule.triggerValues?.operator || 'greater than'
+                          cond.operator ||
+                          rule.triggerValues?.operator ||
+                          'greater than'
                         const selectedOpObj = relativeOpOptions.find(
                           o => o.value === selectedOperator
                         )
@@ -956,7 +954,10 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                       : selectedOperator
                                   }
                                   onChoose={(item: any) =>
-                                    this.handleConditionOperator(idx, item.value)
+                                    this.handleConditionOperator(
+                                      idx,
+                                      item.value
+                                    )
                                   }
                                   buttonColor="btn-default"
                                   buttonSize="btn-sm"
