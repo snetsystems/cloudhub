@@ -82,9 +82,12 @@
     "new_group": "새 그룹",
     "cancel": "취소",
     "save": "저장",
+    "saving": "저장 중...",
     "add": "추가"
   },
   "alert_group_rule": {
+    "create_title": "이벤트 그룹 규칙 생성",
+    "edit_title": "이벤트 그룹 규칙 수정",
     "op_gt": "초과 (>)",
     "op_gte": "이상 (>=)",
     "op_lt": "미만 (<)",
@@ -100,7 +103,7 @@
     "cond_is": "이(가)",
     "deadman_data_receipt": "데이터 수신이",
     "deadman_no_data_for": "동안 없을 경우 알림 발생",
-    "cond_def_title": "① 이벤트 조건 정의",
+    "cond_def_title": "이벤트 조건 정의",
     "direct_input": "직접 입력",
     "threshold_placeholder": "임계값",
     "input_value": "값 입력",
@@ -135,7 +138,7 @@
     "deadman": "Deadman",
     "select_server": "서버를 선택해 주세요.",
     "n_selected": "{{count}}개 선택",
-    "target_def_title": "② 이벤트 대상 선택",
+    "target_def_title": "이벤트 대상 선택",
     "target_server": "대상 서버",
     "failed_to_load_hosts": "호스트 목록을 불러오지 못했습니다.",
     "select_server_title": "서버 선택",
@@ -168,7 +171,7 @@
     "selected_groups_will_receive": "선택된 그룹이 수신합니다.",
     "alert_message": "알림 메시지",
     "message_body": "메시지 본문",
-    "test_receipt": "테스트 수신",
+    "test_receipt": "수신 테스트",
     "sending": "전송 중...",
     "test_receipt_hint": "현재 설정된 수신 대상자에게 테스트 알림을 발송합니다.",
     "calculating_recipients": "수신자를 계산 중입니다...",
@@ -190,7 +193,7 @@
     "recipient_user_groups": "경보 수신 그룹",
     "select_recipient_groups": "수신 그룹 선택",
     "parameters_for_this_handler": "이 핸들러 상세 설정",
-    "recipient_emails": "수신자 이메일 주소: (공백으로 구분) (선택)",
+    "recipient_emails": "추가 수신자 이메일 주소: (공백으로 구분) (선택)",
     "mail_title": "메일 타이틀",
     "mail_title_placeholder": "메일 타이틀을 입력하세요",
     "templates_label": "템플릿:",
@@ -201,6 +204,10 @@
     "email_body_placeholder": "이메일 본문을 입력하세요. HTML 태그를 사용할 수 있습니다.",
     "graph_placeholder": "<strong>시계열</strong>을 선택하면 그래프가 이 영역에 표시됩니다.",
     "loading_data": "데이터를 불러오는 중...",
-    "no_data_in_range": "선택한 시간 범위에 데이터가 없습니다."
+    "no_data_in_range": "선택한 시간 범위에 데이터가 없습니다.",
+    "direct_recipients_title": "직접 입력 수신자",
+    "direct_recipients_placeholder": "admin@example.com\noncall@example.com",
+    "direct_recipients_helper": "한 줄에 하나 또는 콤마로 구분. 직접 입력한 수신자는 모든 레벨(Info/Warning/Critical) 알림을 받습니다.",
+    "invalid_email_format_error": "잘못된 이메일 형식: {{invalidList}}"
   }
 }

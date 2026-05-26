@@ -1757,3 +1757,216 @@ $alert-group--preview-graph-shell-height: 360px;
   flex-wrap: wrap;
   gap: 4px;
 }
+
+/*
+  Alert Group Rule Name Section styles
+*/
+.alert-group-rule-name-section {
+  .rule-section--heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .rule-section--toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rule-section--toggle-label {
+    font-size: 13px;
+    color: $g20-white;
+    font-weight: normal;
+  }
+
+  .rule-section--body {
+    padding: 2.5px 0 13px 46px;
+  }
+}
+
+.rule-section--required-star {
+  color: $c-fire;
+  margin-left: 4px;
+}
+
+/*
+  Alert Group Handlers Section styles
+*/
+.endpoint-tab-contents--alert-group {
+  min-height: unset !important;
+}
+
+.alert-group-handler-callout {
+  margin-bottom: 20px !important;
+
+  .alert-group-handler-callout-title {
+    color: $c-pineapple !important;
+  }
+
+  .alert-group-handler-callout-btn {
+    margin-top: 4px;
+  }
+
+  .alert-group-handler-callout-icon {
+    margin-right: 6px;
+  }
+}
+
+.alert-group-mail-title-textarea {
+  width: 100%;
+  height: 60px;
+  min-height: 60px;
+  resize: vertical;
+}
+
+.alert-group-email-body-textarea {
+  width: 100%;
+  height: 120px;
+}
+
+.alert-group-test-send-group {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid $g5-pepper;
+}
+
+.alert-group-test-send-block {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.alert-group-test-send-block__hint {
+  margin: 0;
+  padding-left: 8px;
+}
+
+.alert-group-handler-form-group-mt10 {
+  margin-top: 10px;
+}
+
+.form-group > label.alert-group-handler-header-label {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+}
+
+.alert-group-handler-add-btn {
+  border-color: $g4-onyx;
+
+  .icon-spacing-right4 {
+    margin-right: 4px;
+  }
+}
+
+.alert-group-webhook-headers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.alert-group-webhook-header-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.alert-group-webhook-header-input {
+  flex: 1;
+}
+
+.alert-group-webhook-delete-btn {
+  padding: 6px 8px;
+  border-radius: 4px;
+  background-color: $c-fire;
+  border-color: $c-fire;
+
+  &:hover {
+    background-color: darken($c-fire, 10%);
+    border-color: darken($c-fire, 10%);
+  }
+}
+
+.alert-group-webhook-no-headers {
+  color: $g10-wolf;
+  font-size: 11px;
+  font-style: italic;
+  margin-left: 12px;
+}
+
+.alert-group-handler-helper-text {
+  margin-top: 4px;
+  display: block;
+  color: $g10-wolf;
+  font-size: 11px;
+}
+
+.alert-group-setting-label--flex {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.query-builder--disabled {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+/*
+  User Group Member Settings styles
+*/
+.member-card-email {
+  font-size: 12px;
+  color: $g10-wolf;
+}
+
+.member-channel-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-channel-controls--disabled {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0.5;
+}
+
+.member-channel-row--disabled {
+  opacity: 0.5;
+}
+
+.member-card-tags {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.member-card-tag--small {
+  font-size: 10px;
+}
+
+.member-list-name {
+  font-weight: 700;
+  color: $g20-white;
+}
+
+.member-list-channel-label {
+  font-size: 12px;
+  color: $g10-wolf;
+  width: 40px;
+}
+
+.member-list-channel-label-sms {
+  font-size: 12px;
+  color: $g10-wolf;
+}
+
+.member-list-actions {
+  margin-left: auto;
+}

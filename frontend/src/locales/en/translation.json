@@ -82,9 +82,12 @@
     "new_group": "New Group",
     "cancel": "Cancel",
     "save": "Save",
+    "saving": "Saving...",
     "add": "Add"
   },
   "alert_group_rule": {
+    "create_title": "Create Event Group Rule",
+    "edit_title": "Edit Event Group Rule",
     "op_gt": ">",
     "op_gte": ">=",
     "op_lt": "<",
@@ -100,7 +103,7 @@
     "cond_is": "is",
     "deadman_data_receipt": "Data receipt",
     "deadman_no_data_for": "missing for, alert occurs",
-    "cond_def_title": "① Event Condition Definition",
+    "cond_def_title": "Event Condition Definition",
     "direct_input": "Direct Input",
     "threshold_placeholder": "Threshold",
     "input_value": "Enter value",
@@ -135,7 +138,7 @@
     "deadman": "Deadman",
     "select_server": "Please select a server.",
     "n_selected": "{{count}} selected",
-    "target_def_title": "② Event Target Selection",
+    "target_def_title": "Event Target Selection",
     "target_server": "Target Server",
     "failed_to_load_hosts": "Failed to load host list.",
     "select_server_title": "Select Server",
@@ -201,6 +204,10 @@
     "email_body_placeholder": "Enter the body for your email here. Can contain HTML",
     "graph_placeholder": "Select a <strong>time series</strong> to display the graph in this area.",
     "loading_data": "Loading data...",
-    "no_data_in_range": "No data in the selected time range."
+    "no_data_in_range": "No data in the selected time range.",
+    "direct_recipients_title": "Direct Input Recipients",
+    "direct_recipients_placeholder": "admin@example.com\noncall@example.com",
+    "direct_recipients_helper": "One per line or separated by commas. Direct input recipients will receive all levels (Info/Warning/Critical) of notifications.",
+    "invalid_email_format_error": "Invalid email format: {{invalidList}}"
   }
 }

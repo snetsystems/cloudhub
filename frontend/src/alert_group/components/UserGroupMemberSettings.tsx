@@ -59,13 +59,13 @@ class UserGroupMemberSettings extends PureComponent<Props, State> {
                 <div className="member-avatar">{initials}</div>
                 <div className="member-name-wrap">
                   <h4>{u.name}</h4>
-                  <div style={{fontSize: '12px', color: '#8e91a1'}}>{u.email || 'No Email'}</div>
+                  <div className="member-card-email">{u.email || 'No Email'}</div>
                 </div>
               </div>
               
               <div className="member-channel-row">
                 <span className="channel-label">Email Notifications</span>
-                <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                <div className="member-channel-controls">
                    <SlideToggle
                     active={member.emailEnabled}
                     onChange={() => this.handleToggleEmail(u, member)}
@@ -90,7 +90,7 @@ class UserGroupMemberSettings extends PureComponent<Props, State> {
                 </div>
               </div>
               
-              <div className="member-channel-row" style={{opacity: 0.5}}>
+              <div className="member-channel-row member-channel-row--disabled">
                 <span className="channel-label">SMS (Mockup)</span>
                 <SlideToggle
                   active={false}
@@ -101,9 +101,9 @@ class UserGroupMemberSettings extends PureComponent<Props, State> {
                 />
               </div>
 
-              <div style={{marginTop: '16px', display: 'flex', gap: '8px'}}>
-                 <span className="label label--default" style={{fontSize: '10px'}}>#TeamA</span>
-                 <span className="label label--default" style={{fontSize: '10px'}}>#VIP</span>
+              <div className="member-card-tags">
+                 <span className="label label--default member-card-tag--small">#TeamA</span>
+                 <span className="label label--default member-card-tag--small">#VIP</span>
               </div>
             </div>
           )
@@ -127,12 +127,12 @@ class UserGroupMemberSettings extends PureComponent<Props, State> {
             <div key={u.id} className="member-list-card">
               <div className="member-avatar">{initials}</div>
               <div className="member-list-info">
-                <div style={{fontWeight: 700, color: '#fff'}}>{u.name}</div>
-                <div style={{fontSize: '12px', color: '#8e91a1'}}>{u.email || 'No Email'}</div>
+                <div className="member-list-name">{u.name}</div>
+                <div className="member-card-email">{u.email || 'No Email'}</div>
               </div>
               <div className="member-list-channels">
-                <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                  <span style={{fontSize: '12px', color: '#8e91a1', width: '40px'}}>Email</span>
+                <div className="member-channel-controls">
+                  <span className="member-list-channel-label">Email</span>
                   <SlideToggle
                     active={member.emailEnabled}
                     onChange={() => this.handleToggleEmail(u, member)}
@@ -154,12 +154,12 @@ class UserGroupMemberSettings extends PureComponent<Props, State> {
                     ))}
                   </Dropdown>
                 </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: '12px', opacity: 0.5}}>
-                   <span style={{fontSize: '12px', color: '#8e91a1'}}>SMS</span>
+                <div className="member-channel-controls--disabled">
+                   <span className="member-list-channel-label-sms">SMS</span>
                    <SlideToggle active={false} onChange={()=>{}} size={ComponentSize.ExtraSmall} disabled={true} />
                 </div>
               </div>
-              <div style={{marginLeft: 'auto'}}>
+              <div className="member-list-actions">
                  <span className="label label--default">#TeamA</span>
               </div>
             </div>

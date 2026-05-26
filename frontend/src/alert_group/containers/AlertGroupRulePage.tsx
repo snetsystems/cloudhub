@@ -1,5 +1,6 @@
 // frontend/src/alert_group/containers/AlertGroupRulePage.tsx
 import React, {PureComponent} from 'react'
+import {withTranslation, WithTranslation} from 'react-i18next'
 import {connect} from 'react-redux'
 import {InjectedRouter} from 'react-router'
 import {Location} from 'history'
@@ -76,7 +77,7 @@ interface Auth {
   isUsingAuth: boolean
 }
 
-interface Props {
+interface Props extends WithTranslation {
   source: Source
   auth: Auth
   params: {id?: string}
@@ -240,10 +241,15 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
 
   private handleSelectTemplate = (templateId: string): void => {
     if (templateId === 'custom') {
+      const prevName = this.state.rule.name
       this.setState({
         selectedTemplateId: 'custom',
         builderMode: 'raw', // 'New' default shows Query Builder (3-panel UI)
-        rule: JSON.parse(JSON.stringify(DEFAULT_RULE)),
+        rule: {
+          ...JSON.parse(JSON.stringify(DEFAULT_RULE)),
+          name: prevName,
+          hostnames: [], // 누를때 마다 selected server 목록 초기화
+        },
       })
       return
     }
@@ -285,31 +291,98 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     const {source, router, notify} = this.props
     const {rule} = this.state
 
-    this.setState({isSaving: true})
+    // 필수 입력 및 정합성 검사
+    if (!rule.name || !rule.name.trim()) {
+      notify(notifyError('이벤트 그룹 규칙 이름을 입력해주세요.'))
+      return
+    }
+    if (!rule.database) {
+      notify(notifyError('데이터베이스를 선택해주세요.'))
+      return
+    }
+    if (!rule.measurement) {
+      notify(notifyError('측정 대상(Measurement)을 선택해주세요.'))
+      return
+    }
+    if (!rule.field) {
+      notify(notifyError('필드(Field)를 선택해주세요.'))
+      return
+    }
+    if (!rule.kapacitorId) {
+      notify(notifyError('Kapacitor를 지정해주세요.'))
+      return
+    }
 
-    // 이메일 수신자 주소 목록 중 띄어쓰기로 인해 생성된 빈 문자열 항목을 제거하여 저장합니다.
-    const cleanedHandlers = (rule.eventHandlers || []).map(h => {
-      if (h.type === 'email' && h.configJson?.to) {
-        return {
-          ...h,
-          configJson: {
-            ...h.configJson,
-            to: (h.configJson.to as string[]).filter(Boolean),
-          },
+    if (Array.isArray(rule.eventHandlers)) {
+      for (const h of rule.eventHandlers) {
+        if (!h.enabled) {
+          continue
+        }
+        const cfg = h.configJson || {}
+        if (h.type === 'tcp') {
+          const address = (cfg.address as string) || ''
+          if (!address.trim()) {
+            notify(notifyError('TCP 주소를 입력해주세요.'))
+            return
+          }
+        } else if (h.type === 'webhook') {
+          const url = (cfg.url as string) || ''
+          if (!url.trim()) {
+            notify(notifyError('Webhook URL을 입력해주세요.'))
+            return
+          }
+        } else if (h.type === 'exec') {
+          const command = (cfg.command as string[]) || []
+          if (
+            !command ||
+            command.length === 0 ||
+            command.every(c => !c.trim())
+          ) {
+            notify(notifyError('실행 명령어를 입력해주세요.'))
+            return
+          }
+        } else if (h.type === 'log') {
+          const filePath = (cfg.filePath as string) || ''
+          if (!filePath.trim()) {
+            notify(notifyError('로그 파일 경로를 입력해주세요.'))
+            return
+          }
+        } else if (h.type === 'slack') {
+          const workspace = (cfg.workspace as string) || ''
+          const channel = (cfg.channel as string) || ''
+          if (!workspace.trim() || !channel.trim()) {
+            notify(
+              notifyError('Slack 워크스페이스와 채널을 모두 입력해주세요.')
+            )
+            return
+          }
+        } else if (h.type === 'kafka') {
+          const cluster = (cfg.cluster as string) || ''
+          const topic = (cfg['kafka-topic'] as string) || ''
+          if (!cluster.trim() || !topic.trim()) {
+            notify(notifyError('Kafka 클러스터와 토픽을 모두 입력해주세요.'))
+            return
+          }
+        } else if (h.type === 'telegram') {
+          const chatId = (cfg.chatId as string) || ''
+          if (!chatId.trim()) {
+            notify(notifyError('Telegram Chat ID를 입력해주세요.'))
+            return
+          }
         }
       }
-      return h
-    })
-    const cleanedRule = {
-      ...rule,
-      eventHandlers: cleanedHandlers,
     }
+
+    this.setState({isSaving: true})
+
+    console.log('Saving AlertGroupRule payload JSON:', rule)
+    console.log('JSON Stringified payload:', JSON.stringify(rule, null, 2))
 
     try {
       if (this.isNew) {
-        await createAlertGroupRule(cleanedRule)
+        await createAlertGroupRule(rule)
       } else {
-        await updateAlertGroupRule(this.ruleId!, cleanedRule)
+        await updateAlertGroupRule(this.ruleId!, rule)
       }
 
       const returnTo = (this.props.location.state as any)?.returnTo
@@ -387,11 +460,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
 
   private handleTestSend = async (): Promise<void> => {
     const {notify} = this.props
-    const {
-      testTitle,
-      testMessage,
-      testUserGroupIds,
-    } = this.state
+    const {testTitle, testMessage, testUserGroupIds} = this.state
 
     if (!testTitle) {
       notify(notifyError('테스트 제목을 입력해주세요.'))
@@ -443,11 +512,11 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       selectedTemplateId,
     } = this.state
 
+    const {t} = this.props
     const pageTitle = this.isNew
-      ? '이벤트 그룹 규칙 생성'
-      : '이벤트 그룹 규칙 수정'
+      ? t('alert_group_rule.create_title', '이벤트 그룹 규칙 생성')
+      : t('alert_group_rule.edit_title', '이벤트 그룹 규칙 수정')
     const hasPreview = !!(rule.measurement && rule.field)
-
 
     return (
       <Page className="alert-group-rule-page">
@@ -457,23 +526,13 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           </Page.Header.Left>
           <Page.Header.Right>
             <Button
-              text="취소"
+              text={t('button.cancel', '취소')}
               onClick={this.handleCancel}
               color={ComponentColor.Default}
               size={ComponentSize.Small}
             />
             <Button
-              text={isTestingSend ? '테스트 중...' : '수신 테스트'}
-              onClick={this.handleOpenTestModal}
-              color={ComponentColor.Success}
-              size={ComponentSize.Small}
-              icon={IconFont.Bell}
-              status={
-                isTestingSend ? ComponentStatus.Disabled : ComponentStatus.Default
-              }
-            />
-            <Button
-              text={isSaving ? '저장 중...' : '저장'}
+              text={isSaving ? t('button.saving', '저장 중...') : t('button.save', '저장')}
               onClick={this.handleSave}
               color={ComponentColor.Primary}
               size={ComponentSize.Small}
@@ -524,19 +583,22 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                     timeRange={DEFAULT_TIME_RANGE}
                   />
                 </AlertGroupConditionSection>
-                <AlertGroupTargetSection
-                  source={source}
-                  rule={rule}
-                  onUpdateRule={this.handleUpdateRule}
-                />
+                {selectedTemplateId !== 'custom' && (
+                  <AlertGroupTargetSection
+                    source={source}
+                    rule={rule}
+                    onUpdateRule={this.handleUpdateRule}
+                  />
+                )}
                 <AlertGroupHandlersSection
                   rule={rule}
                   userGroups={userGroups}
                   source={source}
                   router={this.props.router}
                   onUpdateRule={this.handleUpdateRule}
+                  onOpenTestModal={this.handleOpenTestModal}
+                  isTestingSend={isTestingSend}
                 />
-
               </div>
             </div>
           </Spinner>
@@ -647,7 +709,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                       }
                     />
                     <Button
-                      text="취소"
+                      text={t('button.cancel', '취소')}
                       onClick={this.handleCloseTestModal}
                       color={ComponentColor.Default}
                     />
@@ -666,4 +728,4 @@ const mapDispatchToProps = {
   notify: notifyAction,
 }
 
-export default connect(null, mapDispatchToProps)(AlertGroupRulePage)
+export default connect(null, mapDispatchToProps)(withTranslation()(AlertGroupRulePage))

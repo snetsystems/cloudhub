@@ -664,12 +664,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
             <>
               {/* ── 3-패널 Time Series 브라우저 ── */}
               <div
-                className="query-builder"
-                style={
-                  selectedTemplate
-                    ? {pointerEvents: 'none', opacity: 0.55}
-                    : undefined
-                }
+                className={`query-builder${selectedTemplate ? ' query-builder--disabled' : ''}`}
               >
                 <DatabaseList
                   query={queryConfig}
@@ -1057,49 +1052,10 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
             </div>
           </div>
 
-          {/* Pause Group */}
+          {/* Resolved Alert Group (단발성 알림) */}
           <div className="alert-group-setting-row">
             <div
-              className="alert-group-setting-label"
-              style={{display: 'flex', alignItems: 'center', gap: '6px'}}
-            >
-              {t('alert_group_rule.pause')}
-              <QuestionMarkTooltip
-                tipID="pause-tooltip"
-                tipContent={t('alert_group_rule.pause_tooltip')}
-              />
-            </div>
-            <div className="alert-group-setting-control">
-              <div className="alert-group-setting-inputs">
-                <Dropdown
-                  menuWidth="240px"
-                  selected={
-                    selectedPause
-                      ? selectedPause.label
-                      : t('alert_group_rule.do_not_use')
-                  }
-                  onChoose={(item: any) =>
-                    onUpdateRule({pauseSeconds: parseInt(item.value, 10)})
-                  }
-                  buttonColor="btn-default"
-                  buttonSize="btn-sm"
-                  items={translatedPauseOptions.map(o => ({
-                    text: o.label,
-                    value: o.value,
-                  }))}
-                />
-              </div>
-              <p className="alert-group-setting-helper">
-                {t('alert_group_rule.pause_desc1')}
-              </p>
-            </div>
-          </div>
-
-          {/* Resolved Alert Group */}
-          <div className="alert-group-setting-row">
-            <div
-              className="alert-group-setting-label"
-              style={{display: 'flex', alignItems: 'center', gap: '6px'}}
+              className="alert-group-setting-label alert-group-setting-label--flex"
             >
               {t('alert_group_rule.notify_recovery')}
               <QuestionMarkTooltip
@@ -1111,9 +1067,13 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
               <div className="alert-group-setting-inputs">
                 <SlideToggle
                   active={rule.notifyRecovery}
-                  onChange={() =>
-                    onUpdateRule({notifyRecovery: !rule.notifyRecovery})
-                  }
+                  onChange={() => {
+                    const nextVal = !rule.notifyRecovery
+                    onUpdateRule({
+                      notifyRecovery: nextVal,
+                      pauseSeconds: nextVal ? rule.pauseSeconds : 0, // 단발성 알림이 꺼질 때 리마인드 주기를 사용 안 함으로 초기화
+                    })
+                  }}
                   size={ComponentSize.ExtraSmall}
                   color={ComponentColor.Primary}
                 />
@@ -1123,6 +1083,45 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
               </p>
             </div>
           </div>
+
+          {/* Pause Group (리마인드 주기) - 단발성 알림이 on 되었을 때만 표시 */}
+          {rule.notifyRecovery && (
+            <div className="alert-group-setting-row">
+              <div
+                className="alert-group-setting-label alert-group-setting-label--flex"
+              >
+                {t('alert_group_rule.pause')}
+                <QuestionMarkTooltip
+                  tipID="pause-tooltip"
+                  tipContent={t('alert_group_rule.pause_tooltip')}
+                />
+              </div>
+              <div className="alert-group-setting-control">
+                <div className="alert-group-setting-inputs">
+                  <Dropdown
+                    menuWidth="240px"
+                    selected={
+                      selectedPause
+                        ? selectedPause.label
+                        : t('alert_group_rule.do_not_use')
+                    }
+                    onChoose={(item: any) =>
+                      onUpdateRule({pauseSeconds: parseInt(item.value, 10)})
+                    }
+                    buttonColor="btn-default"
+                    buttonSize="btn-sm"
+                    items={translatedPauseOptions.map(o => ({
+                      text: o.label,
+                      value: o.value,
+                    }))}
+                  />
+                </div>
+                <p className="alert-group-setting-helper">
+                  {t('alert_group_rule.pause_desc1')}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )

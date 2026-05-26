@@ -21,11 +21,13 @@ class AlertGroupNameSection extends PureComponent<Props> {
     const {rule, t} = this.props
 
     return (
-      <div className="rule-section">
-        <h3 className="rule-section--heading" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-          {t('alert_group_rule.event_rule_name')}
-          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-            <span style={{fontSize: '13px', color: '#f6f6f8', fontWeight: 'normal'}}>
+      <div className="rule-section alert-group-rule-name-section">
+        <h3 className="rule-section--heading">
+          <span>
+            {t('alert_group_rule.event_rule_name')} <span className="rule-section--required-star">*</span>
+          </span>
+          <div className="rule-section--toggle-container">
+            <span className="rule-section--toggle-label">
               {t('alert_group_basic.enable_event', '이벤트 규칙 활성화')}
             </span>
             <SlideToggle
@@ -36,7 +38,7 @@ class AlertGroupNameSection extends PureComponent<Props> {
             />
           </div>
         </h3>
-        <div className="rule-section--body" style={{padding: '20px 24px'}}>
+        <div className="rule-section--body">
           <Input
             value={rule.name || ''}
             onChange={this.handleNameChange}

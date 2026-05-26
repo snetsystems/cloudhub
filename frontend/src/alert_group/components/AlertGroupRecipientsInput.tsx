@@ -1,4 +1,5 @@
 import React, {ChangeEvent, PureComponent} from 'react'
+import {withTranslation, WithTranslation} from 'react-i18next'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -18,7 +19,7 @@ export const parseRecipientsText = (text: string): string[] => {
   return out
 }
 
-interface Props {
+interface Props extends WithTranslation {
   recipients: string[]
   onChange: (next: string[]) => void
 }
@@ -28,7 +29,7 @@ interface State {
   invalidEntries: string[]
 }
 
-export default class AlertGroupRecipientsInput extends PureComponent<Props, State> {
+class AlertGroupRecipientsInput extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
@@ -48,23 +49,32 @@ export default class AlertGroupRecipientsInput extends PureComponent<Props, Stat
 
   public render(): JSX.Element {
     const {draft, invalidEntries} = this.state
+    const {t} = this.props
     return (
       <div className="alert-group-recipients-input">
-        <label className="form-label">직접 입력 수신자</label>
+        <label className="form-label">
+          {t('alert_group_basic.direct_recipients_title', '직접 입력 수신자')}
+        </label>
         <textarea
           className="form-control"
           value={draft}
           rows={4}
-          placeholder="admin@example.com&#10;oncall@example.com"
+          placeholder={t('alert_group_basic.direct_recipients_placeholder', 'admin@example.com\noncall@example.com')}
           onChange={this.handleChange}
           onBlur={this.handleBlur}
         />
         <p className="form-help">
-          한 줄에 하나 또는 콤마로 구분. 직접 입력한 수신자는 모든 레벨(Info/Warning/Critical) 알림을 받습니다.
+          {t(
+            'alert_group_basic.direct_recipients_helper',
+            '한 줄에 하나 또는 콤마로 구분. 직접 입력한 수신자는 모든 레벨(Info/Warning/Critical) 알림을 받습니다.'
+          )}
         </p>
         {invalidEntries.length > 0 && (
           <p className="form-error">
-            잘못된 이메일 형식: {invalidEntries.join(', ')}
+            {t('alert_group_basic.invalid_email_format_error', {
+              invalidList: invalidEntries.join(', '),
+              defaultValue: `잘못된 이메일 형식: ${invalidEntries.join(', ')}`,
+            })}
           </p>
         )}
       </div>
@@ -83,3 +93,6 @@ export default class AlertGroupRecipientsInput extends PureComponent<Props, Stat
     this.props.onChange(valid)
   }
 }
+
+export default withTranslation()(AlertGroupRecipientsInput)
+

@@ -41,7 +41,6 @@ export const applyAlertTemplateToRule = (
 
   return {
     ...rule,
-    name: template.name,
     database: template.database || rule.database,
     retentionPolicy: template.retentionPolicy || rule.retentionPolicy,
     measurement: template.measurement,

@@ -1,5 +1,3 @@
-// frontend/src/alert_group/types.ts
-
 export interface AlertCondition {
   level: 'critical' | 'warning' | 'info'
   value: string
@@ -80,7 +78,16 @@ export interface AlertGroupRule {
 export interface AlertRuleEventHandler {
   id?: string
   alertRuleId?: string
-  type: 'email' | 'sms' | 'webhook'
+  type:
+    | 'email'
+    | 'sms'
+    | 'webhook'
+    | 'tcp'
+    | 'exec'
+    | 'log'
+    | 'slack'
+    | 'kafka'
+    | 'telegram'
   enabled: boolean
   configJson?: Record<string, unknown>
   recipientGroupIds: string[]

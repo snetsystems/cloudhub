@@ -153,9 +153,8 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
             </div>
 
             {(() => {
-              const items = filteredTemplates.map((template, index) => {
-                const isItalic = index % 2 === 0
-                const available = this.isAvailable(template) && isItalic
+              const items = filteredTemplates.map(template => {
+                const available = this.isAvailable(template)
                 return {template, available}
               })
 
