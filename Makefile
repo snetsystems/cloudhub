@@ -45,7 +45,7 @@ backend/canned/bin_gen.go: backend/canned/*.json
 backend/protoboards/bin_gen.go: backend/protoboards/*.json
 	go generate -x ./backend/protoboards
 
-backend/builtin/bin_gen.go: backend/builtin/dashboards/*.json
+backend/builtin/bin_gen.go: backend/builtin/dashboards/*.json backend/builtin/alerts/*.json
 	go generate -x ./backend/builtin
 
 backend/server/swagger_gen.go: backend/server/swagger.json

@@ -964,25 +964,74 @@ func TestAlertGroupRuleCreateBuildsEmailTickscriptFromEventHandler(t *testing.T)
 	}
 }
 
-func TestAlertGroupRuleCreateRejectsInvalidNonEmailEventHandler(t *testing.T) {
-	logger := &mocks.TestLogger{}
-	svc := &Service{
-		Logger:          logger,
-		AlertGroupRules: &fakeAlertGroupRuleStore{},
+func TestAlertGroupRuleCreateRejectsInvalidNonEmailEventHandlers(t *testing.T) {
+	tests := []struct {
+		name       string
+		handler    string
+		configJSON string
+		wantError  string
+	}{
+		{
+			name:       "tcp missing address",
+			handler:    "tcp",
+			configJSON: `{}`,
+			wantError:  "tcp address is required",
+		},
+		{
+			name:       "exec missing command",
+			handler:    "exec",
+			configJSON: `{}`,
+			wantError:  "exec command is required",
+		},
+		{
+			name:       "log missing file path",
+			handler:    "log",
+			configJSON: `{}`,
+			wantError:  "log filePath is required",
+		},
+		{
+			name:       "kafka missing topic",
+			handler:    "kafka",
+			configJSON: `{"cluster":"default"}`,
+			wantError:  "kafka kafka-topic is required",
+		},
+		{
+			name:       "slack missing channel",
+			handler:    "slack",
+			configJSON: `{"workspace":"default"}`,
+			wantError:  "slack channel is required",
+		},
+		{
+			name:       "telegram missing chat id",
+			handler:    "telegram",
+			configJSON: `{}`,
+			wantError:  "telegram chatId is required",
+		},
 	}
 
-	payload := bytes.NewBufferString(`{"name":"slack invalid","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"slack","enabled":true,"configJson":{"workspace":"default"}}]}`)
-	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
-	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
-	rr := httptest.NewRecorder()
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			logger := &mocks.TestLogger{}
+			svc := &Service{
+				Logger:          logger,
+				AlertGroupRules: &fakeAlertGroupRuleStore{},
+			}
 
-	svc.AlertGroupRuleCreate(rr, req)
+			payload := bytes.NewBufferString(`{"name":"invalid handler","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"` + tt.handler + `","enabled":true,"configJson":` + tt.configJSON + `}]}`)
+			req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
+			req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
+			rr := httptest.NewRecorder()
 
-	if rr.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusUnprocessableEntity, rr.Body.String())
-	}
-	if !strings.Contains(rr.Body.String(), "slack channel is required") {
-		t.Fatalf("body should mention missing slack channel: %s", rr.Body.String())
+			svc.AlertGroupRuleCreate(rr, req)
+
+			if rr.Code != http.StatusUnprocessableEntity {
+				t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusUnprocessableEntity, rr.Body.String())
+			}
+			if !strings.Contains(rr.Body.String(), tt.wantError) {
+				t.Fatalf("body should mention %q: %s", tt.wantError, rr.Body.String())
+			}
+		})
 	}
 }
 
