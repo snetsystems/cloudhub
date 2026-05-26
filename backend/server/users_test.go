@@ -168,7 +168,7 @@ func TestService_NewUser(t *testing.T) {
 					Provider: "github",
 					Scheme:   "oauth2",
 					Password: "epocokc%%^(",
-					Email: "zooiue@xowu.com",
+					Email:    "zooiue@xowu.com",
 				},
 			},
 			fields: fields{
@@ -182,6 +182,9 @@ func TestService_NewUser(t *testing.T) {
 				},
 				UsersStore: &mocks.UsersStore{
 					AddF: func(ctx context.Context, user *cloudhub.User) (*cloudhub.User, error) {
+						if user.Email != "zooiue@xowu.com" {
+							t.Errorf("user.Email = %q, want zooiue@xowu.com", user.Email)
+						}
 						return &cloudhub.User{
 							ID:       1338,
 							Name:     "bob",
@@ -195,7 +198,7 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"},"email":"zooiue@xowu.com"}`,
+			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"},"email":"zooiue@xowu.com","retryCount":0,"lockedTime":"","locked":false}`,
 		},
 		{
 			name: "Create a new CloudHub User with multiple roles",
@@ -1792,6 +1795,20 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 			wantErr: true,
 			err:     fmt.Errorf("no organization was provided"),
 		},
+		{
+			name: "Invalid email format",
+			args: args{
+				u: &userRequest{
+					ID:       1337,
+					Name:     "billietta",
+					Provider: "auth0",
+					Scheme:   "oauth2",
+					Email:    "not-an-email",
+				},
+			},
+			wantErr: true,
+			err:     fmt.Errorf("invalid email format"),
+		},
 	}
 
 	for _, tt := range tests {
@@ -1921,6 +1938,17 @@ func TestUserRequest_ValidUpdate(t *testing.T) {
 			},
 			wantErr: true,
 			err:     fmt.Errorf("duplicate organization \"0\" in roles"),
+		},
+		{
+			name: "Invalid email format",
+			args: args{
+				u: &userRequest{
+					ID:    1337,
+					Email: "not-an-email",
+				},
+			},
+			wantErr: true,
+			err:     fmt.Errorf("invalid email format"),
 		},
 	}
 

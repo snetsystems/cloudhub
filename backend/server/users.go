@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/mail"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bouk/httprouter"
@@ -61,6 +63,9 @@ func (r *userRequest) ValidCreate() error {
 	if r.Scheme == "basic" && r.Provider != "cloudhub" {
 		return fmt.Errorf("When scheme is basic, provider should be cloudhub")
 	}
+	if err := r.ValidEmail(); err != nil {
+		return err
+	}
 	return r.ValidRoles()
 }
 
@@ -84,6 +89,10 @@ func (r *userLockedRequest) ValidCreate() error {
 }
 
 func (r *userRequest) ValidUpdate() error {
+	if err := r.ValidEmail(); err != nil {
+		return err
+	}
+
 	// if r.Roles == nil {
 	// 	return fmt.Errorf("No Roles to update")
 	// }
@@ -94,6 +103,18 @@ func (r *userRequest) ValidUpdate() error {
 	}
 	return nil
 
+}
+
+func (r *userRequest) ValidEmail() error {
+	r.Email = strings.TrimSpace(r.Email)
+	if r.Email == "" {
+		return nil
+	}
+	addr, err := mail.ParseAddress(r.Email)
+	if err != nil || addr.Address != r.Email {
+		return fmt.Errorf("invalid email format")
+	}
+	return nil
 }
 
 func (r *userRequest) ValidRoles() error {
@@ -257,6 +278,7 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 		Provider: req.Provider,
 		Scheme:   req.Scheme,
 		Roles:    vRoles,
+		Email:    req.Email,
 	}
 	if cfg.Auth.SuperAdminNewUsers {
 		req.SuperAdmin = true
