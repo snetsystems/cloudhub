@@ -11,6 +11,7 @@ import {ComponentColor, ComponentSize} from 'src/reusable_ui/types'
 import {User, BasicUser} from 'src/types'
 
 const {
+  colEmail,
   colOrganizations,
   colProvider,
   colScheme,
@@ -61,6 +62,7 @@ export default class AllUsersTableRow extends Component<Props> {
     return (
       <tr className={'cloudhub-admin-table--user'}>
         {this.userNameTableCell}
+        <td style={{width: colEmail}}>{user.email || '-'}</td>
         <td style={{width: colOrganizations}}>
           <Tags
             tags={this.userOrganizationTags}

@@ -8,6 +8,7 @@ export const USERS_TABLE = {
 }
 
 export const ALL_USERS_TABLE = {
+  colEmail: 250,
   colOrganizations: 320,
   colSuperAdmin: 90,
   colProvider: 150,

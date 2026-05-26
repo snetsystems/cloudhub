@@ -24,12 +24,24 @@ export const getOrganizations = async url => {
   }
 }
 
+export const buildUserPayload = user => {
+  const payload = {
+    name: user.name,
+    provider: user.provider,
+    scheme: user.scheme,
+    roles: user.roles || [],
+    email: user.email || '',
+    superAdmin: user.superAdmin || false,
+  }
+  return payload
+}
+
 export const createUser = async (url, user) => {
   try {
     return await AJAX({
       method: 'POST',
       url,
-      data: user,
+      data: buildUserPayload(user),
     })
   } catch (error) {
     console.error(error)

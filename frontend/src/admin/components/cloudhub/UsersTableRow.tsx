@@ -27,7 +27,7 @@ interface Props {
 class UsersTableRow extends PureComponent<Props> {
   public render() {
     const {user, onChangeUserRole} = this.props
-    const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
+    const {colEmail, colRole, colProvider, colScheme, colActions} = USERS_TABLE
     const isUserLock = user?.['locked']
 
     return (
@@ -44,6 +44,9 @@ class UsersTableRow extends PureComponent<Props> {
               {user.name}
             </strong>
           )}
+        </td>
+        <td style={{width: colEmail}} className="cloudhub-user--email">
+          {user.email || '-'}
         </td>
         <td style={{width: colRole}}>
           <span className="cloudhub-user--role">

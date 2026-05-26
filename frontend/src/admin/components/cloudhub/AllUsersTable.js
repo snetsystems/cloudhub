@@ -12,6 +12,7 @@ import {ALL_USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 const {
+  colEmail,
   colOrganizations,
   colProvider,
   colScheme,
@@ -114,6 +115,7 @@ class AllUsersTable extends Component {
       <div className="panel panel-solid">
         <AllUsersTableHeader
           numUsers={users.length}
+          numEmails={users.filter(user => user.email).length}
           numOrganizations={organizations.length}
           onClickCreateUser={this.handleClickCreateUser}
           isCreatingUser={isCreatingUser}
@@ -125,6 +127,7 @@ class AllUsersTable extends Component {
             <thead>
               <tr>
                 <th>Username</th>
+                <th style={{width: colEmail}}>Email</th>
                 <th
                   style={{width: colOrganizations}}
                   className="align-with-col-text"
@@ -140,6 +143,14 @@ class AllUsersTable extends Component {
               </tr>
             </thead>
             <tbody>
+              {isCreatingUser ? (
+                <AllUsersTableRowNew
+                  providers={providers}
+                  organizations={organizations}
+                  onBlur={this.handleBlurCreateUserRow}
+                  onCreateUser={onCreateUser}
+                />
+              ) : null}
               {users.length ? (
                 users.map(user => (
                   <AllUsersTableRow
@@ -157,19 +168,11 @@ class AllUsersTable extends Component {
                 ))
               ) : (
                 <tr className="table-empty-state">
-                  <th colSpan="6">
+                  <th colSpan="7">
                     <p>No Users to display</p>
                   </th>
                 </tr>
               )}
-              {isCreatingUser ? (
-                <AllUsersTableRowNew
-                  providers={providers}
-                  organizations={organizations}
-                  onBlur={this.handleBlurCreateUserRow}
-                  onCreateUser={onCreateUser}
-                />
-              ) : null}
             </tbody>
           </table>
         </div>
@@ -193,6 +196,7 @@ AllUsersTable.propTypes = {
         self: string.isRequired,
       }),
       name: string.isRequired,
+      email: string,
       provider: string.isRequired,
       roles: arrayOf(
         shape({

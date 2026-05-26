@@ -66,6 +66,7 @@ export interface User {
   id: string
   links: {self: string}
   name: string
+  email?: string
   provider: string
   roles: Role[]
   scheme: string

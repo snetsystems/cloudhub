@@ -8,9 +8,13 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import Dropdown from 'src/shared/components/Dropdown'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {notifyCloudHubUserMissingNameAndProvider} from 'src/shared/copy/notifications'
+import {
+  notifyCloudHubUserMissingNameAndProvider,
+  notifyError,
+} from 'src/shared/copy/notifications'
 import {USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
+import {validateRecipient} from 'src/alert_group/components/AlertGroupRecipientsInput'
 
 class UsersTableRowNew extends PureComponent {
   constructor(props) {
@@ -18,6 +22,7 @@ class UsersTableRowNew extends PureComponent {
 
     this.state = {
       name: '',
+      email: '',
       provider: '',
       scheme: 'oauth2',
       role: this.props.organization.defaultRole,
@@ -37,11 +42,16 @@ class UsersTableRowNew extends PureComponent {
   }
 
   handleConfirmCreateUser = () => {
-    const {onBlur, onCreateUser, organization} = this.props
-    const {name, provider, scheme, role} = this.state
+    const {onBlur, onCreateUser, organization, notify} = this.props
+    const {name, email, provider, scheme, role} = this.state
 
+    if (email && !validateRecipient(email)) {
+      notify(notifyError('Invalid email format.'))
+      return
+    }
     const newUser = {
       name,
+      email,
       provider,
       scheme,
       roles: [
@@ -106,9 +116,9 @@ class UsersTableRowNew extends PureComponent {
   }
 
   render() {
-    const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
+    const {colEmail, colRole, colProvider, colScheme, colActions} = USERS_TABLE
     const {onBlur, providers} = this.props
-    const {name, provider, scheme, role} = this.state
+    const {name, email, provider, scheme, role} = this.state
 
     const dropdownRolesItems = USER_ROLES.map(r => ({...r, text: r.name}))
     const preventCreate = !name || !provider
@@ -123,6 +133,16 @@ class UsersTableRowNew extends PureComponent {
             autoFocus={true}
             value={name}
             onChange={this.handleInputChange('name')}
+            onKeyDown={this.handleKeyDown}
+          />
+        </td>
+        <td style={{width: colEmail}}>
+          <input
+            className="form-control input-xs"
+            type="email"
+            placeholder="email@example.com"
+            value={email}
+            onChange={this.handleInputChange('email')}
             onKeyDown={this.handleKeyDown}
           />
         </td>

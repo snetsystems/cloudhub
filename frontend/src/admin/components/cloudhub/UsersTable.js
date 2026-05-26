@@ -56,7 +56,7 @@ class UsersTable extends Component {
     } = this.props
 
     const {isCreatingUser} = this.state
-    const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
+    const {colEmail, colRole, colProvider, colScheme, colActions} = USERS_TABLE
 
     if (isLoading) {
       return (
@@ -80,6 +80,7 @@ class UsersTable extends Component {
             <thead>
               <tr>
                 <th>Username</th>
+                <th style={{width: colEmail}}>Email</th>
                 <th style={{width: colRole}} className="align-with-col-text">
                   Role
                 </th>
@@ -112,7 +113,7 @@ class UsersTable extends Component {
                 ))
               ) : (
                 <tr className="table-empty-state">
-                  <th colSpan="5">
+                  <th colSpan="6">
                     <p>No Users to display</p>
                   </th>
                 </tr>
@@ -135,6 +136,7 @@ UsersTable.propTypes = {
         self: string.isRequired,
       }),
       name: string.isRequired,
+      email: string,
       provider: string.isRequired,
       roles: arrayOf(
         shape({

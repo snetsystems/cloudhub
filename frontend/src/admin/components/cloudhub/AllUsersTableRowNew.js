@@ -7,9 +7,14 @@ import {notify as notifyAction} from 'shared/actions/notifications'
 import Dropdown from 'shared/components/Dropdown'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {notifyCloudHubUserMissingNameAndProvider} from 'src/shared/copy/notifications'
+import {
+  notifyCloudHubUserMissingNameAndProvider,
+  notifyError,
+} from 'src/shared/copy/notifications'
 import {ALL_USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
+import {validateRecipient} from 'src/alert_group/components/AlertGroupRecipientsInput'
 const {
+  colEmail,
   colOrganizations,
   colProvider,
   colScheme,
@@ -26,6 +31,7 @@ class AllUsersTableRowNew extends Component {
 
     this.state = {
       name: '',
+      email: '',
       provider: '',
       scheme: 'oauth2',
       role: {
@@ -39,10 +45,17 @@ class AllUsersTableRowNew extends Component {
   }
 
   handleConfirmCreateUser = () => {
-    const {onBlur, onCreateUser} = this.props
-    const {name, provider, scheme, role, superAdmin} = this.state
+    const {onBlur, onCreateUser, notify} = this.props
+    const {name, email, provider, scheme, role, superAdmin} = this.state
+
+    if (email && !validateRecipient(email)) {
+      notify(notifyError('Invalid email format.'))
+      return
+    }
+
     const newUser = {
       name,
+      email,
       provider,
       scheme,
       superAdmin,
@@ -115,7 +128,7 @@ class AllUsersTableRowNew extends Component {
 
   render() {
     const {organizations, onBlur, providers} = this.props
-    const {name, provider, scheme, role} = this.state
+    const {name, email, provider, scheme, role} = this.state
 
     const dropdownOrganizationsItems = [
       {...nullOrganization},
@@ -140,6 +153,16 @@ class AllUsersTableRowNew extends Component {
             autoFocus={true}
             value={name}
             onChange={this.handleInputChange('name')}
+            onKeyDown={this.handleKeyDown}
+          />
+        </td>
+        <td style={{width: colEmail}}>
+          <input
+            className="form-control input-xs"
+            type="email"
+            placeholder="email@example.com"
+            value={email}
+            onChange={this.handleInputChange('email')}
             onKeyDown={this.handleKeyDown}
           />
         </td>
