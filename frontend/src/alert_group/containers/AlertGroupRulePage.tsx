@@ -46,7 +46,7 @@ import AlertGroupConditionSection from 'src/alert_group/components/AlertGroupCon
 import AlertGroupPreviewGraph from 'src/alert_group/components/AlertGroupPreviewGraph'
 import AlertGroupTargetSection from 'src/alert_group/components/AlertGroupTargetSection'
 import AlertGroupHandlersSection from 'src/alert_group/components/AlertGroupHandlersSection'
-
+import {applyAlertTemplateToRule} from 'src/alert_group/utils/alertTemplates'
 
 // APIs
 import {
@@ -273,31 +273,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     this.setState(prev => ({
       selectedTemplateId: template.id,
       builderMode: 'template',
-      rule: {
-        ...prev.rule,
-        name: template.name,
-        database: template.database || prev.rule.database,
-        retentionPolicy: template.retentionPolicy || prev.rule.retentionPolicy,
-        measurement: template.measurement,
-        field: template.field,
-        derivative: template.derivative,
-        eval: template.eval,
-        trigger: template.trigger || 'threshold',
-        triggerOperator: template.triggerOperator,
-        triggerValues: template.values || prev.rule.triggerValues,
-        taskType: template.taskType,
-        every: template.every,
-        occurrenceType: template.occurrenceType,
-        occurrenceCount: template.occurrenceCount,
-        occurrenceWindow: template.occurrenceWindow,
-        pauseSeconds: template.pauseSeconds,
-        notifyRecovery: template.notifyRecovery,
-        message: template.message,
-        conditions:
-          template.conditions && template.conditions.length > 0
-            ? template.conditions
-            : prev.rule.conditions,
-      },
+      rule: applyAlertTemplateToRule(prev.rule, template),
     }))
   }
 
@@ -336,7 +312,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         await updateAlertGroupRule(this.ruleId!, cleanedRule)
       }
 
-      
       const returnTo = (this.props.location.state as any)?.returnTo
       if (returnTo) {
         router.push(returnTo)
@@ -417,7 +392,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       testMessage,
       testUserGroupIds,
     } = this.state
-    
+
     if (!testTitle) {
       notify(notifyError('테스트 제목을 입력해주세요.'))
       return

@@ -272,6 +272,7 @@ export interface AlertTemplate {
   pauseSeconds: number
   notifyRecovery: boolean
   message: string
+  emailBody?: string
   conditions?: AlertCondition[]
 }
 

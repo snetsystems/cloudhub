@@ -44,6 +44,9 @@ func TestBinAlertTemplatesStore_AllReturnsBuiltins(t *testing.T) {
 		if tmpl.Category != "server-monitoring" {
 			t.Errorf("template %s: expected category server-monitoring, got %q", tmpl.ID, tmpl.Category)
 		}
+		if tmpl.EmailBody == "" {
+			t.Errorf("template %s: expected default emailBody", tmpl.ID)
+		}
 		got[tmpl.ID] = true
 	}
 	for _, id := range expectedBuiltinTemplateIDs {

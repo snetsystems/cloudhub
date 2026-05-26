@@ -840,6 +840,106 @@ func TestAlertGroupRuleCreateRejectsDeadmanWithBatchTaskType(t *testing.T) {
 	}
 }
 
+func TestAlertGroupRuleCreateRejectsMissingSourceFields(t *testing.T) {
+	tests := []struct {
+		name      string
+		request   cloudhub.AlertGroupRule
+		wantError string
+	}{
+		{
+			name: "database missing",
+			request: cloudhub.AlertGroupRule{
+				Name:            "cpu high",
+				RetentionPolicy: "autogen",
+				Measurement:     "cpu",
+				Field:           "usage_idle",
+			},
+			wantError: "database is required",
+		},
+		{
+			name: "retention policy missing",
+			request: cloudhub.AlertGroupRule{
+				Name:        "cpu high",
+				Database:    "telegraf",
+				Measurement: "cpu",
+				Field:       "usage_idle",
+			},
+			wantError: "retentionPolicy is required",
+		},
+		{
+			name: "measurement missing",
+			request: cloudhub.AlertGroupRule{
+				Name:            "cpu high",
+				Database:        "telegraf",
+				RetentionPolicy: "autogen",
+				Field:           "usage_idle",
+			},
+			wantError: "measurement is required",
+		},
+		{
+			name: "field missing",
+			request: cloudhub.AlertGroupRule{
+				Name:            "cpu high",
+				Database:        "telegraf",
+				RetentionPolicy: "autogen",
+				Measurement:     "cpu",
+			},
+			wantError: "field is required",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			logger := &mocks.TestLogger{}
+			addCalled := false
+			svc := &Service{
+				Logger: logger,
+				AlertGroupRules: &fakeAlertGroupRuleStore{
+					addFunc: func(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
+						addCalled = true
+						r.ID = "rule-1"
+						return r, nil
+					},
+				},
+			}
+
+			reqRule := tt.request
+			reqRule.Conditions = []cloudhub.AlertRuleCondition{
+				{Level: "critical", Value: 90, Enabled: true},
+			}
+			reqRule.Trigger = cloudhub.AlertGroupRuleTriggerThreshold
+			reqRule.TriggerOperator = "greater"
+			reqRule.TaskType = cloudhub.AlertGroupRuleTaskTypeStream
+			reqRule.Every = "30s"
+			reqRule.OccurrenceType = "consecutive"
+			reqRule.OccurrenceCount = 1
+			reqRule.OccurrenceWindow = "5m"
+			reqRule.Active = true
+			payload, err := json.Marshal(reqRule)
+			if err != nil {
+				t.Fatalf("marshal request: %v", err)
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", bytes.NewReader(payload))
+			req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
+			rr := httptest.NewRecorder()
+
+			svc.AlertGroupRuleCreate(rr, req)
+
+			if rr.Code != http.StatusUnprocessableEntity {
+				t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusUnprocessableEntity, rr.Body.String())
+			}
+			if !strings.Contains(rr.Body.String(), tt.wantError) {
+				t.Fatalf("body should mention %q: %s", tt.wantError, rr.Body.String())
+			}
+			if addCalled {
+				t.Fatal("expected alert group rule store Add not to be called")
+			}
+		})
+	}
+}
+
 func TestAlertGroupRuleCreateAcceptsUIRelativePayload(t *testing.T) {
 	logger := &mocks.TestLogger{}
 

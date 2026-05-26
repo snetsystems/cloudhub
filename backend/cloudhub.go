@@ -2075,6 +2075,7 @@ type AlertTemplate struct {
 	PauseSeconds     int                  `json:"pauseSeconds"`
 	NotifyRecovery   bool                 `json:"notifyRecovery"`
 	Message          string               `json:"message"`
+	EmailBody        string               `json:"emailBody,omitempty"`
 	Conditions       []AlertRuleCondition `json:"conditions,omitempty"`
 }
 

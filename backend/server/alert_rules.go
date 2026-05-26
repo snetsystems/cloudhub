@@ -484,6 +484,19 @@ func (s *Service) validateAlertGroupKapacitor(ctx context.Context, orgID, kapaci
 }
 
 func validateAlertGroupRuleInput(rule cloudhub.AlertGroupRule) error {
+	if strings.TrimSpace(rule.Database) == "" {
+		return fmt.Errorf("database is required")
+	}
+	if strings.TrimSpace(rule.RetentionPolicy) == "" {
+		return fmt.Errorf("retentionPolicy is required")
+	}
+	if strings.TrimSpace(rule.Measurement) == "" {
+		return fmt.Errorf("measurement is required")
+	}
+	if strings.TrimSpace(rule.Field) == "" {
+		return fmt.Errorf("field is required")
+	}
+
 	trigger := strings.TrimSpace(strings.ToLower(rule.Trigger))
 	if trigger == "" {
 		trigger = cloudhub.AlertGroupRuleTriggerThreshold
