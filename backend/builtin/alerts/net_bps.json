@@ -14,7 +14,6 @@
     "unit": "1s"
   },
   "trigger": "threshold",
-  "triggerOperator": "greater",
   "taskType": "stream",
   "every": "30s",
   "occurrenceType": "consecutive",
@@ -24,8 +23,8 @@
   "notifyRecovery": true,
   "message": "{{ index .Tags \"host\" }} Network BPS {{ .Level }} ({{ index .Fields \"bytes_recv\" }} bytes/s)",
   "conditions": [
-    { "level": "critical", "value": 125000000, "enabled": true },
-    { "level": "warning",  "value": 100000000, "enabled": true },
-    { "level": "info",     "value": 0,         "enabled": false }
+    { "level": "critical", "value": 125000000, "operator": "greater", "enabled": true },
+    { "level": "warning",  "value": 100000000, "operator": "greater", "enabled": true },
+    { "level": "info",     "value": 0, "operator": "greater", "enabled": false }
   ]
 }

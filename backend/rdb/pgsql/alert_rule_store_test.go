@@ -24,7 +24,6 @@ func TestAlertRuleStore_AddAndGet(t *testing.T) {
 			{Level: "warning", Value: 70, Enabled: true},
 			{Level: "critical", Value: 90, Enabled: true},
 		},
-		TriggerOperator: "greater",
 		TaskType:        "stream",
 		OccurrenceCount: 1,
 		Active:          true,

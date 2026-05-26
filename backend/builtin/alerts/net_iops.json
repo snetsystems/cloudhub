@@ -14,7 +14,6 @@
     "unit": "1s"
   },
   "trigger": "threshold",
-  "triggerOperator": "greater",
   "taskType": "stream",
   "every": "30s",
   "occurrenceType": "consecutive",
@@ -24,8 +23,8 @@
   "notifyRecovery": true,
   "message": "{{ index .Tags \"host\" }} Network IOPS {{ .Level }} ({{ index .Fields \"packets_recv\" }} pps)",
   "conditions": [
-    { "level": "critical", "value": 100000, "enabled": true },
-    { "level": "warning",  "value": 50000,  "enabled": true },
-    { "level": "info",     "value": 0,      "enabled": false }
+    { "level": "critical", "value": 100000, "operator": "greater", "enabled": true },
+    { "level": "warning",  "value": 50000, "operator": "greater", "enabled": true },
+    { "level": "info",     "value": 0, "operator": "greater", "enabled": false }
   ]
 }

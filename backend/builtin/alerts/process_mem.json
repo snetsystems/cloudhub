@@ -9,7 +9,6 @@
   "measurement": "procstat",
   "field": "memory_usage",
   "trigger": "threshold",
-  "triggerOperator": "greater",
   "taskType": "stream",
   "every": "30s",
   "occurrenceType": "consecutive",
@@ -19,8 +18,8 @@
   "notifyRecovery": true,
   "message": "{{ index .Tags \"host\" }} Process Memory {{ .Level }} ({{ index .Fields \"memory_usage\" }}%)",
   "conditions": [
-    { "level": "critical", "value": 95, "enabled": true },
-    { "level": "warning",  "value": 80, "enabled": true },
-    { "level": "info",     "value": 0,  "enabled": false }
+    { "level": "critical", "value": 95, "operator": "greater", "enabled": true },
+    { "level": "warning",  "value": 80, "operator": "greater", "enabled": true },
+    { "level": "info",     "value": 0, "operator": "greater", "enabled": false }
   ]
 }

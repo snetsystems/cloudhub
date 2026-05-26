@@ -34,7 +34,7 @@ func normalizeAlertRuleTrigger(t string) string {
 	return t
 }
 
-const alertRuleCols = `id, org_id, kapacitor_id, name, database, retention_policy, measurement, field, trigger_operator, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as, delete_yn, created_at, updated_at`
+const alertRuleCols = `id, org_id, kapacitor_id, name, database, retention_policy, measurement, field, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as, delete_yn, created_at, updated_at`
 
 func (s *AlertRuleStore) scan(row interface{ Scan(...any) error }) (cloudhub.AlertGroupRule, error) {
 	var r cloudhub.AlertGroupRule
@@ -44,7 +44,7 @@ func (s *AlertRuleStore) scan(row interface{ Scan(...any) error }) (cloudhub.Ale
 	if err := row.Scan(
 		&r.ID, &r.OrgID, &r.KapacitorID, &r.Name, &r.Database, &r.RetentionPolicy,
 		&r.Measurement, &r.Field,
-		&r.TriggerOperator, &r.Trigger, &r.TaskType, &r.Every, &r.OccurrenceType, &r.OccurrenceCount,
+		&r.Trigger, &r.TaskType, &r.Every, &r.OccurrenceType, &r.OccurrenceCount,
 		&r.OccurrenceWindow, &r.PauseSeconds, &r.NotifyRecovery, &r.Message, &r.Active,
 		&derivativeEnabled, &derivativeNonNegative, &derivativeUnit, &evalExpression, &evalAs,
 		&r.DeleteYN, &ca, &ua,
@@ -140,17 +140,17 @@ func (s *AlertRuleStore) hostnamesOf(ctx context.Context, ruleID string) ([]stri
 func (s *AlertRuleStore) Add(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
 	const q = `INSERT INTO alert_rules (
 		org_id, kapacitor_id, name, database, retention_policy, measurement, field,
-		trigger_operator, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window,
+		rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window,
 		pause_seconds, notify_recovery, message, active,
 		derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
 	RETURNING id, created_at, updated_at`
 	var ca, ua time.Time
 	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
 	evalExpression, evalAs := splitEval(r.Eval)
 	if err := s.client.QueryRowContext(ctx, q,
 		r.OrgID, r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field,
-		r.TriggerOperator, normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
+		normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
 		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
 		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
 		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,
@@ -175,18 +175,18 @@ func (s *AlertRuleStore) Add(ctx context.Context, r cloudhub.AlertGroupRule) (cl
 func (s *AlertRuleStore) Update(ctx context.Context, r cloudhub.AlertGroupRule) error {
 	const q = `UPDATE alert_rules SET
 		kapacitor_id=$1, name=$2, database=$3, retention_policy=$4, measurement=$5, field=$6,
-		trigger_operator=$7, rule_trigger=$8, task_type=$9, every=$10,
-		occurrence_type=$11, occurrence_count=$12, occurrence_window=$13,
-		pause_seconds=$14, notify_recovery=$15, message=$16, active=$17,
-		derivative_enabled=$18, derivative_non_negative=$19, derivative_unit=$20,
-		eval_expression=$21, eval_as=$22,
+		rule_trigger=$7, task_type=$8, every=$9,
+		occurrence_type=$10, occurrence_count=$11, occurrence_window=$12,
+		pause_seconds=$13, notify_recovery=$14, message=$15, active=$16,
+		derivative_enabled=$17, derivative_non_negative=$18, derivative_unit=$19,
+		eval_expression=$20, eval_as=$21,
 		updated_at=NOW()
-	WHERE id=$23 AND delete_yn = false`
+	WHERE id=$22 AND delete_yn = false`
 	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
 	evalExpression, evalAs := splitEval(r.Eval)
 	if _, err := s.client.ExecContext(ctx, q,
 		r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field,
-		r.TriggerOperator, normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
+		normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
 		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
 		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
 		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,

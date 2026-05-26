@@ -604,7 +604,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                     measurement={rule.measurement}
                     field={rule.field}
                     conditions={rule.conditions}
-                    triggerOperator={rule.triggerOperator}
                     timeRange={DEFAULT_TIME_RANGE}
                   />
                 </AlertGroupConditionSection>

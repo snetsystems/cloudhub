@@ -9,7 +9,6 @@
   "measurement": "system",
   "field": "uptime",
   "trigger": "deadman",
-  "triggerOperator": "greater",
   "values": {
     "period": "5m"
   },

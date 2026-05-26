@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -2017,7 +2018,34 @@ type AlertRuleCondition struct {
 	AlertRuleID string  `json:"alertRuleId"`
 	Level       string  `json:"level"` // critical | warning | info
 	Value       float64 `json:"value"`
+	Operator    string  `json:"operator"` // greater | less | equal | not_equal | greater_equal | less_equal
 	Enabled     bool    `json:"enabled"`
+}
+
+const (
+	AlertConditionOperatorGreater      = "greater"
+	AlertConditionOperatorLess         = "less"
+	AlertConditionOperatorEqual        = "equal"
+	AlertConditionOperatorNotEqual     = "not_equal"
+	AlertConditionOperatorGreaterEqual = "greater_equal"
+	AlertConditionOperatorLessEqual    = "less_equal"
+)
+
+func NormalizeAlertConditionOperator(operator string) string {
+	switch strings.TrimSpace(strings.ToLower(operator)) {
+	case AlertConditionOperatorLess:
+		return AlertConditionOperatorLess
+	case AlertConditionOperatorEqual:
+		return AlertConditionOperatorEqual
+	case AlertConditionOperatorNotEqual:
+		return AlertConditionOperatorNotEqual
+	case AlertConditionOperatorGreaterEqual:
+		return AlertConditionOperatorGreaterEqual
+	case AlertConditionOperatorLessEqual:
+		return AlertConditionOperatorLessEqual
+	default:
+		return AlertConditionOperatorGreater
+	}
 }
 
 // DerivativeConfig adds a `|derivative()` TICK node between `|from()` and the
@@ -2065,7 +2093,6 @@ type AlertTemplate struct {
 	Derivative       *DerivativeConfig    `json:"derivative,omitempty"`
 	Eval             *EvalConfig          `json:"eval,omitempty"`
 	Trigger          string               `json:"trigger,omitempty"` // threshold | relative | deadman
-	TriggerOperator  string               `json:"triggerOperator"`
 	TriggerValues    TriggerValues        `json:"values,omitempty"`
 	TaskType         string               `json:"taskType"` // stream | batch
 	Every            string               `json:"every"`
@@ -2140,7 +2167,6 @@ type AlertGroupRule struct {
 	Measurement     string               `json:"measurement"`
 	Field           string               `json:"field"`
 	Conditions      []AlertRuleCondition `json:"conditions,omitempty"`
-	TriggerOperator string               `json:"triggerOperator"` // greater | less | equal | not_equal | greater_equal | less_equal
 	// Trigger is threshold | relative | deadman (empty => threshold). Deadman is supported for stream tasks only.
 	Trigger          string                  `json:"trigger,omitempty"`
 	TriggerValues    TriggerValues           `json:"values,omitempty"`

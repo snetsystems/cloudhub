@@ -167,7 +167,6 @@ CREATE TABLE IF NOT EXISTS alert_rules (
     retention_policy  TEXT        NOT NULL DEFAULT 'autogen',
     measurement       TEXT        NOT NULL DEFAULT '',
     field             TEXT        NOT NULL DEFAULT '',
-    trigger_operator  TEXT        NOT NULL DEFAULT 'greater',
     rule_trigger      TEXT        NOT NULL DEFAULT 'threshold',
     task_type         TEXT        NOT NULL DEFAULT 'stream',
     every             TEXT        NOT NULL DEFAULT '30s',
@@ -196,6 +195,7 @@ CREATE TABLE IF NOT EXISTS alert_rule_conditions (
     alert_rule_id UUID             NOT NULL REFERENCES alert_rules(id) ON DELETE CASCADE,
     level         TEXT             NOT NULL,           -- 'critical' | 'warning' | 'info'
     value         DOUBLE PRECISION NOT NULL,
+    operator      TEXT             NOT NULL DEFAULT 'greater',
     enabled       BOOLEAN          NOT NULL DEFAULT true,
     PRIMARY KEY (alert_rule_id, level)
 );
@@ -292,8 +292,6 @@ COMMENT ON COLUMN alert_rules.measurement IS
   'InfluxDB measurement to query (e.g. cpu, mem, disk).';
 COMMENT ON COLUMN alert_rules.field IS
   'Measurement field that conditions evaluate against (e.g. usage_idle).';
-COMMENT ON COLUMN alert_rules.trigger_operator IS
-  'Comparison applied between field value and condition value. greater | less | equal | not_equal | greater_equal | less_equal. Applies to all conditions of this rule.';
 COMMENT ON COLUMN alert_rules.rule_trigger IS
   'threshold (compare to fixed value) | relative (compare to past) | deadman (data absent). deadman requires task_type=stream.';
 COMMENT ON COLUMN alert_rules.task_type IS
@@ -360,7 +358,9 @@ COMMENT ON COLUMN alert_recipient_member_prefs.escalation_seconds IS
 COMMENT ON COLUMN alert_rule_conditions.level IS
   'Severity level (e.g. critical | warning | info). PK with alert_rule_id ensures one row per level per rule.';
 COMMENT ON COLUMN alert_rule_conditions.value IS
-  'Threshold value compared against alert_rules.field using alert_rules.trigger_operator.';
+  'Threshold value compared against alert_rules.field using alert_rule_conditions.operator.';
+COMMENT ON COLUMN alert_rule_conditions.operator IS
+  'Comparison applied between field value and condition value. greater | less | equal | not_equal | greater_equal | less_equal.';
 COMMENT ON COLUMN alert_rule_conditions.enabled IS
   'When false, this level is skipped during TICKscript generation.';
 COMMENT ON COLUMN alert_recipient_groups.suppression_enabled IS

@@ -14,7 +14,6 @@
     "unit": "1s"
   },
   "trigger": "threshold",
-  "triggerOperator": "greater",
   "taskType": "stream",
   "every": "30s",
   "occurrenceType": "consecutive",
@@ -24,8 +23,8 @@
   "notifyRecovery": true,
   "message": "{{ index .Tags \"host\" }} Disk I/O 부하 {{ .Level }} ({{ index .Fields \"io_time\" }} ms/s)",
   "conditions": [
-    { "level": "critical", "value": 800, "enabled": true },
-    { "level": "warning",  "value": 500, "enabled": true },
-    { "level": "info",     "value": 0,   "enabled": false }
+    { "level": "critical", "value": 800, "operator": "greater", "enabled": true },
+    { "level": "warning",  "value": 500, "operator": "greater", "enabled": true },
+    { "level": "info",     "value": 0, "operator": "greater", "enabled": false }
   ]
 }

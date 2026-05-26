@@ -55,7 +55,8 @@
     "email": "이메일",
     "search_user": "사용자 검색...",
     "no_user_to_add": "추가할 사용자가 없습니다.",
-    "group_name_required": "반드시 입력해야 합니다."
+    "group_name_required": "반드시 입력해야 합니다.",
+    "delete_default_error": "기본 그룹은 지울 수 없습니다"
   },
   "server_alert": {
     "title": "서버 알람 관리",

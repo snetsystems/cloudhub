@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import {AlertCondition, AlertGroupRule} from 'src/alert_group/types'
+import {AlertCondition, AlertConditionOperator} from 'src/alert_group/types'
 import {RuleValues, DygraphClass} from 'src/types'
 import {
   EQUAL_TO,
@@ -30,8 +30,8 @@ function levelFill(level: string): string {
   return DEFAULT_FILL
 }
 
-export function triggerOperatorToRuleValuesOperator(
-  t: AlertGroupRule['triggerOperator']
+export function conditionOperatorToRuleValuesOperator(
+  t: AlertConditionOperator | undefined
 ): string {
   switch (t) {
     case 'greater':
@@ -52,20 +52,21 @@ export function triggerOperatorToRuleValuesOperator(
 }
 
 export function buildAlertGroupPreviewRuleValues(
-  conditions: AlertCondition[],
-  triggerOperator: AlertGroupRule['triggerOperator']
+  conditions: AlertCondition[]
 ): RuleValues | null {
-  const enabled = conditions.filter(c => c.enabled && c.value !== '' && isFinite(Number(c.value)))
+  const enabled = conditions.filter(
+    c => c.enabled && c.value !== '' && isFinite(Number(c.value))
+  )
   if (enabled.length === 0) {
     return null
   }
   const maxCond = enabled[0]
-  const op = maxCond.operator || triggerOperator
+  const op = maxCond.operator || 'greater'
   const nums = enabled.map(c => Number(c.value))
   const min = Math.min(...nums)
   const max = Math.max(...nums)
   return {
-    operator: triggerOperatorToRuleValuesOperator(op as any),
+    operator: conditionOperatorToRuleValuesOperator(op as any),
     value: String(max),
     rangeValue: nums.length > 1 ? String(min) : '',
   }
@@ -117,10 +118,8 @@ function strokeThresholdLine(
 }
 
 export function buildAlertGroupPreviewUnderlay({
-  triggerOperator,
   conditions,
 }: {
-  triggerOperator: AlertGroupRule['triggerOperator']
   conditions: AlertCondition[]
 }): (
   canvas: CanvasRenderingContext2D,
@@ -144,7 +143,7 @@ export function buildAlertGroupPreviewUnderlay({
     // We process each condition's threshold item and draw its corresponding background fill
     for (const it of items) {
       const cond = conditions.find(c => c.level === it.level)
-      const op = cond?.operator || triggerOperator
+      const op = cond?.operator || 'greater'
 
       switch (op) {
         case 'greater':

@@ -600,7 +600,6 @@ func TestAlertGroupRuleCreateRejectsLegacyNumericKapacitorID(t *testing.T) {
 		Conditions: []cloudhub.AlertRuleCondition{
 			{Level: "critical", Value: 10, Enabled: true},
 		},
-		TriggerOperator:  "less",
 		TaskType:         "stream",
 		Every:            "30s",
 		OccurrenceType:   "consecutive",
@@ -684,7 +683,6 @@ func TestAlertGroupRuleCreateNormalizesLegacyKapacitorID(t *testing.T) {
 		Conditions: []cloudhub.AlertRuleCondition{
 			{Level: "critical", Value: 90, Enabled: true},
 		},
-		TriggerOperator:  "greater",
 		TaskType:         "stream",
 		Every:            "30s",
 		OccurrenceType:   "consecutive",
@@ -717,15 +715,14 @@ func TestAlertGroupRuleUpdateRejectsLegacyNumericKapacitorID(t *testing.T) {
 		AlertGroupRules: &fakeAlertGroupRuleStore{
 			getFunc: func(ctx context.Context, id string) (cloudhub.AlertGroupRule, error) {
 				return cloudhub.AlertGroupRule{
-					ID:              id,
-					OrgID:           "org-1",
-					KapacitorID:     "existing-uuid",
-					Name:            "existing",
-					Conditions:      []cloudhub.AlertRuleCondition{{Level: "critical", Value: 90, Enabled: true}},
-					Measurement:     "cpu",
-					Field:           "usage_idle",
-					TaskType:        "stream",
-					TriggerOperator: "greater",
+					ID:          id,
+					OrgID:       "org-1",
+					KapacitorID: "existing-uuid",
+					Name:        "existing",
+					Conditions:  []cloudhub.AlertRuleCondition{{Level: "critical", Value: 90, Enabled: true}},
+					Measurement: "cpu",
+					Field:       "usage_idle",
+					TaskType:    "stream",
 				}, nil
 			},
 			updateFunc: func(context.Context, cloudhub.AlertGroupRule) error {
@@ -746,7 +743,6 @@ func TestAlertGroupRuleUpdateRejectsLegacyNumericKapacitorID(t *testing.T) {
 		Conditions: []cloudhub.AlertRuleCondition{
 			{Level: "critical", Value: 10, Enabled: true},
 		},
-		TriggerOperator:  "less",
 		TaskType:         "stream",
 		Every:            "30s",
 		OccurrenceType:   "consecutive",
@@ -813,7 +809,6 @@ func TestAlertGroupRuleCreateRejectsDeadmanWithBatchTaskType(t *testing.T) {
 			{Level: "critical", Value: 90, Enabled: true},
 		},
 		Trigger:          cloudhub.AlertGroupRuleTriggerDeadman,
-		TriggerOperator:  "greater",
 		TaskType:         cloudhub.AlertGroupRuleTaskTypeBatch,
 		Every:            "30s",
 		OccurrenceType:   "consecutive",
@@ -906,10 +901,9 @@ func TestAlertGroupRuleCreateRejectsMissingSourceFields(t *testing.T) {
 
 			reqRule := tt.request
 			reqRule.Conditions = []cloudhub.AlertRuleCondition{
-				{Level: "critical", Value: 90, Enabled: true},
+				{Level: "critical", Value: 90, Operator: "greater", Enabled: true},
 			}
 			reqRule.Trigger = cloudhub.AlertGroupRuleTriggerThreshold
-			reqRule.TriggerOperator = "greater"
 			reqRule.TaskType = cloudhub.AlertGroupRuleTaskTypeStream
 			reqRule.Every = "30s"
 			reqRule.OccurrenceType = "consecutive"
@@ -973,7 +967,7 @@ func TestAlertGroupRuleCreateAcceptsUIRelativePayload(t *testing.T) {
 		RecipientGroups: &fakeRecipientGroupStore{},
 	}
 
-	payload := bytes.NewBufferString(`{"name":"relative cpu","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":15,"enabled":true}],"trigger":"relative","values":{"change":"change","shift":"1m","operator":"greater than"},"triggerOperator":"greater","taskType":"stream","every":"30s","occurrenceType":"recent","occurrenceCount":2,"occurrenceWindow":"5m","pauseSeconds":60,"notifyRecovery":true,"active":true,"hostnames":["web-1"],"eventHandlers":[{"type":"email","enabled":true,"recipientGroupIds":["rg-1"]}]}`)
+	payload := bytes.NewBufferString(`{"name":"relative cpu","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":15,"operator":"greater","enabled":true}],"trigger":"relative","values":{"change":"change","shift":"1m","operator":"greater than"},"taskType":"stream","every":"30s","occurrenceType":"recent","occurrenceCount":2,"occurrenceWindow":"5m","pauseSeconds":60,"notifyRecovery":true,"active":true,"hostnames":["web-1"],"eventHandlers":[{"type":"email","enabled":true,"recipientGroupIds":["rg-1"]}]}`)
 	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
 	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
 	rr := httptest.NewRecorder()
@@ -1036,7 +1030,7 @@ func TestAlertGroupRuleCreateBuildsEmailTickscriptFromEventHandler(t *testing.T)
 		AlertRecipientMemberPrefs: &fakeAlertRecipientMemberPrefsStore{},
 	}
 
-	payload := bytes.NewBufferString(`{"name":"cpu email","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"email","enabled":true,"configJson":{"body":"email body {{ .Level }}"},"recipientGroupIds":["group-1"]}]}`)
+	payload := bytes.NewBufferString(`{"name":"cpu email","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"operator":"greater","enabled":true}],"taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"email","enabled":true,"configJson":{"body":"email body {{ .Level }}"},"recipientGroupIds":["group-1"]}]}`)
 	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
 	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
 	rr := httptest.NewRecorder()
@@ -1118,7 +1112,7 @@ func TestAlertGroupRuleCreateRejectsInvalidNonEmailEventHandlers(t *testing.T) {
 				AlertGroupRules: &fakeAlertGroupRuleStore{},
 			}
 
-			payload := bytes.NewBufferString(`{"name":"invalid handler","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"` + tt.handler + `","enabled":true,"configJson":` + tt.configJSON + `}]}`)
+			payload := bytes.NewBufferString(`{"name":"invalid handler","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"operator":"greater","enabled":true}],"taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true,"eventHandlers":[{"type":"` + tt.handler + `","enabled":true,"configJson":` + tt.configJSON + `}]}`)
 			req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
 			req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
 			rr := httptest.NewRecorder()
@@ -1163,7 +1157,7 @@ func TestAlertGroupRuleCreateAllowsNoEventHandlers(t *testing.T) {
 		AlertRecipientMemberPrefs: &fakeAlertRecipientMemberPrefsStore{},
 	}
 
-	payload := bytes.NewBufferString(`{"name":"cpu no-handler","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true}`)
+	payload := bytes.NewBufferString(`{"name":"cpu no-handler","database":"telegraf","retentionPolicy":"autogen","measurement":"cpu","field":"usage_user","conditions":[{"level":"critical","value":90,"operator":"greater","enabled":true}],"taskType":"stream","occurrenceType":"consecutive","occurrenceCount":1,"active":true}`)
 	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
 	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
 	rr := httptest.NewRecorder()
@@ -1506,7 +1500,6 @@ func TestSyncKapacitorTaskLogsCreateFailureContext(t *testing.T) {
 		RetentionPolicy:  "autogen",
 		Measurement:      "cpu",
 		Field:            "usage_idle",
-		TriggerOperator:  "greater",
 		TaskType:         "stream",
 		OccurrenceType:   "consecutive",
 		OccurrenceCount:  1,
@@ -1557,7 +1550,7 @@ func TestAlertGroupRuleCreateReturnsInternalServerErrorWhenTaskSyncFails(t *test
 		},
 	}
 
-	payload := bytes.NewBufferString(`{"name":"cpu high","kapacitorId":"11111111-1111-1111-1111-111111111111","database":"Default","retentionPolicy":"autogen","measurement":"cpu","field":"usage_idle","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","every":"30s","occurrenceType":"consecutive","occurrenceCount":1,"occurrenceWindow":"5m","active":true}`)
+	payload := bytes.NewBufferString(`{"name":"cpu high","kapacitorId":"11111111-1111-1111-1111-111111111111","database":"Default","retentionPolicy":"autogen","measurement":"cpu","field":"usage_idle","conditions":[{"level":"critical","value":90,"operator":"greater","enabled":true}],"taskType":"stream","every":"30s","occurrenceType":"consecutive","occurrenceCount":1,"occurrenceWindow":"5m","active":true}`)
 	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules", payload)
 	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
 	rr := httptest.NewRecorder()
@@ -1603,7 +1596,7 @@ func TestAlertGroupRuleUpdateReturnsInternalServerErrorWhenTaskSyncFails(t *test
 		},
 	}
 
-	payload := bytes.NewBufferString(`{"name":"cpu high","kapacitorId":"11111111-1111-1111-1111-111111111111","database":"Default","retentionPolicy":"autogen","measurement":"cpu","field":"usage_idle","conditions":[{"level":"critical","value":90,"enabled":true}],"triggerOperator":"greater","taskType":"stream","every":"30s","occurrenceType":"consecutive","occurrenceCount":1,"occurrenceWindow":"5m","active":true}`)
+	payload := bytes.NewBufferString(`{"name":"cpu high","kapacitorId":"11111111-1111-1111-1111-111111111111","database":"Default","retentionPolicy":"autogen","measurement":"cpu","field":"usage_idle","conditions":[{"level":"critical","value":90,"operator":"greater","enabled":true}],"taskType":"stream","every":"30s","occurrenceType":"consecutive","occurrenceCount":1,"occurrenceWindow":"5m","active":true}`)
 	req := httptest.NewRequest(http.MethodPatch, "/cloudhub/v2/alert-group-rules/rule-1", payload)
 	req = req.WithContext(context.WithValue(req.Context(), organizations.ContextKey, "org-1"))
 	req = WithContext(req.Context(), req, map[string]string{"id": "rule-1"})
@@ -1633,8 +1626,7 @@ func TestAlertGroupRuleUpdateAppliesPartialPatchOnExisting(t *testing.T) {
 		RetentionPolicy:  "autogen",
 		Measurement:      "cpu",
 		Field:            "usage_idle",
-		Conditions:       []cloudhub.AlertRuleCondition{{Level: "critical", Value: 90, Enabled: true}},
-		TriggerOperator:  "greater",
+		Conditions:       []cloudhub.AlertRuleCondition{{Level: "critical", Value: 90, Operator: "greater", Enabled: true}},
 		Trigger:          "threshold",
 		TaskType:         "stream",
 		Every:            "30s",
@@ -1716,11 +1708,8 @@ func TestAlertGroupRuleUpdateAppliesPartialPatchOnExisting(t *testing.T) {
 	if captured.Field != "usage_idle" {
 		t.Errorf("Field overwritten: %q", captured.Field)
 	}
-	if len(captured.Conditions) != 1 || captured.Conditions[0].Value != 90 {
+	if len(captured.Conditions) != 1 || captured.Conditions[0].Value != 90 || captured.Conditions[0].Operator != "greater" {
 		t.Errorf("Conditions overwritten: %+v", captured.Conditions)
-	}
-	if captured.TriggerOperator != "greater" {
-		t.Errorf("TriggerOperator overwritten: %q", captured.TriggerOperator)
 	}
 	if captured.Active {
 		t.Errorf("Active not patched to false: got true")

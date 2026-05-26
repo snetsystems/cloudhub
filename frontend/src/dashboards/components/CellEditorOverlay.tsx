@@ -157,8 +157,6 @@ class CellEditorOverlay extends Component<Props, State> {
       dashboardTemplates,
     } = this.props
 
-
-
     return (
       <div
         className="deceo--overlay"

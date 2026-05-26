@@ -1,6 +1,15 @@
+export type AlertConditionOperator =
+  | 'greater'
+  | 'greater_equal'
+  | 'less'
+  | 'less_equal'
+  | 'equal'
+  | 'not_equal'
+
 export interface AlertCondition {
   level: 'critical' | 'warning' | 'info'
   value: string
+  operator?: AlertConditionOperator
   enabled: boolean
   operator?:
     | 'greater'
@@ -241,7 +250,6 @@ export const DEFAULT_RULE: AlertGroupRule = {
     value: '',
     period: '10m',
   },
-  triggerOperator: 'greater',
   taskType: 'stream',
   every: '30s',
   occurrenceType: 'consecutive',
@@ -271,7 +279,6 @@ export interface AlertTemplate {
   derivative?: DerivativeConfig
   eval?: EvalConfig
   trigger?: 'threshold' | 'relative' | 'deadman'
-  triggerOperator: AlertGroupRule['triggerOperator']
   values?: AlertGroupRule['triggerValues']
   taskType: string
   every: string

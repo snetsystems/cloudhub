@@ -126,7 +126,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     {label: t('alert_group_rule.opt_pct_change'), value: '% change'},
   ]
 
-  private getTranslatedTriggerOperators = (t: any) =>
+  private getTranslatedConditionOperators = (t: any) =>
     TRIGGER_OPERATORS.map(o => {
       const tKeyMap: Record<string, string> = {
         greater: 'op_gt',
@@ -452,11 +452,11 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
             {(!rule.trigger || rule.trigger === 'threshold') && (
               <div className="alert-group-template-thresholds">
                 {sortConditions(rule.conditions).map((cond, idx) => {
-                  const translatedTriggerOperators = this.getTranslatedTriggerOperators(
+                  const translatedConditionOperators = this.getTranslatedConditionOperators(
                     t
                   )
-                  const selectedOperator = translatedTriggerOperators.find(
-                    o => o.value === (cond.operator || rule.triggerOperator || 'greater')
+                  const selectedOperator = translatedConditionOperators.find(
+                    o => o.value === (cond.operator || 'greater')
                   )
                   return (
                     <div
@@ -486,14 +486,14 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                             selected={
                               selectedOperator
                                 ? selectedOperator.label
-                                : translatedTriggerOperators[0].label
+                                : translatedConditionOperators[0].label
                             }
                             onChoose={(item: any) =>
                               this.handleConditionOperator(idx, item.value)
                             }
                             buttonColor="btn-default"
                             buttonSize="btn-sm"
-                            items={translatedTriggerOperators.map(o => ({
+                            items={translatedConditionOperators.map(o => ({
                               text: o.label,
                               value: o.value,
                             }))}
@@ -797,11 +797,11 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                   <div className="alert-group-setting-control alert-group-condition-flex-col-16">
                     <div className="alert-group-template-thresholds">
                       {sortConditions(rule.conditions).map((cond, idx) => {
-                        const translatedTriggerOperators = this.getTranslatedTriggerOperators(
+                        const translatedConditionOperators = this.getTranslatedConditionOperators(
                           t
                         )
-                        const selectedOperator = translatedTriggerOperators.find(
-                          o => o.value === (cond.operator || rule.triggerOperator || 'greater')
+                        const selectedOperator = translatedConditionOperators.find(
+                          o => o.value === (cond.operator || 'greater')
                         )
                         return (
                           <div
@@ -831,14 +831,14 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                   selected={
                                     selectedOperator
                                       ? selectedOperator.label
-                                      : translatedTriggerOperators[0].label
+                                      : translatedConditionOperators[0].label
                                   }
                                   onChoose={(item: any) =>
                                     this.handleConditionOperator(idx, item.value)
                                   }
                                   buttonColor="btn-default"
                                   buttonSize="btn-sm"
-                                  items={translatedTriggerOperators.map(o => ({
+                                  items={translatedConditionOperators.map(o => ({
                                     text: o.label,
                                     value: o.value,
                                   }))}

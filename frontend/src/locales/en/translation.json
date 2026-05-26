@@ -55,7 +55,8 @@
     "email": "Email",
     "search_user": "Search users...",
     "no_user_to_add": "No users to add.",
-    "group_name_required": "Must be entered."
+    "group_name_required": "Must be entered.",
+    "delete_default_error": "Default group cannot be deleted"
   },
   "server_alert": {
     "title": "Server Alert Management",
