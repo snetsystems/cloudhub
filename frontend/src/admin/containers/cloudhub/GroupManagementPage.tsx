@@ -144,15 +144,36 @@ function GroupsPage({router, params, notify}: Props) {
               onClick={() => navigateToDetail(rowData)}
               customClass="group-action-btn"
             />
-            <ConfirmButton
-              icon={IconFont.Trash}
-              square={true}
-              confirmText={t('group_management.delete_confirm', '삭제하기')}
-              type="btn-danger"
-              size="btn-xs"
-              confirmAction={() => handleDeleteGroup(rowData.groupId)}
-              customClass="group-action-btn"
-            />
+            {rowData.isDefault ? (
+              <ConfirmButton
+                icon={IconFont.Trash}
+                square={true}
+                confirmText={t('group_management.delete_confirm', '삭제하기')}
+                type="btn-danger"
+                size="btn-xs"
+                confirmAction={() =>
+                  notify(
+                    notifyError(
+                      t(
+                        'group_management.delete_default_error',
+                        '기본 그룹은 지울 수 없습니다'
+                      )
+                    )
+                  )
+                }
+                customClass="group-action-btn"
+              />
+            ) : (
+              <ConfirmButton
+                icon={IconFont.Trash}
+                square={true}
+                confirmText={t('group_management.delete_confirm', '삭제하기')}
+                type="btn-danger"
+                size="btn-xs"
+                confirmAction={() => handleDeleteGroup(rowData.groupId)}
+                customClass="group-action-btn"
+              />
+            )}
           </div>
         ),
       },
