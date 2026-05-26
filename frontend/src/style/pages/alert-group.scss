@@ -1769,6 +1769,24 @@ $alert-group--preview-graph-shell-height: 360px;
   }
 }
 
+.alert-group-email-body-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.alert-group-email-body-preview {
+  min-height: 360px;
+  max-height: 600px;
+  overflow-y: auto;
+  background-color: $g0-obsidian;
+  border: 1px solid $g6-smoke;
+  border-radius: 3px;
+  padding: 8px;
+}
+
 .alert-group-template-chips {
   display: flex;
   flex-wrap: wrap;

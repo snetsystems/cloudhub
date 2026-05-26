@@ -3,6 +3,7 @@ package builtin
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -52,6 +53,33 @@ func TestBinAlertTemplatesStore_AllReturnsBuiltins(t *testing.T) {
 	for _, id := range expectedBuiltinTemplateIDs {
 		if !got[id] {
 			t.Errorf("missing builtin template: %s", id)
+		}
+	}
+}
+
+// TestBinAlertTemplatesStore_DefaultEmailBodyLoadedFromAsset verifies that
+// the default email body comes from the embedded HTML asset
+// (alerts/_default_email_body.html) — not from a hardcoded Go string.
+// Catches regressions if someone reintroduces inline HTML in bin.go.
+func TestBinAlertTemplatesStore_DefaultEmailBodyLoadedFromAsset(t *testing.T) {
+	t.Parallel()
+	store := &BinAlertTemplatesStore{Logger: log.New(log.DebugLevel)}
+	out, err := store.All(context.Background())
+	if err != nil {
+		t.Fatalf("All: %v", err)
+	}
+	if len(out) == 0 {
+		t.Fatal("no templates loaded")
+	}
+	body := out[0].EmailBody
+	for _, marker := range []string{
+		"<!doctype html>",
+		"CloudHub Alert",
+		"{{ .Level }}",
+		`{{ index .Tags "host" }}`,
+	} {
+		if !strings.Contains(body, marker) {
+			t.Errorf("default email body missing expected marker %q. Got:\n%s", marker, body)
 		}
 	}
 }

@@ -152,7 +152,10 @@ type BinAlertTemplatesStore struct {
 	cached []cloudhub.AlertTemplate
 }
 
-const alertAssetPrefix = "alerts/"
+const (
+	alertAssetPrefix         = "alerts/"
+	alertDefaultEmailBodyAsset = "alerts/_default_email_body.html"
+)
 
 // load parses every embedded alert template exactly once and stores the result.
 // Invalid files are logged and skipped so a single bad asset does not break the
@@ -161,7 +164,11 @@ func (s *BinAlertTemplatesStore) load() []cloudhub.AlertTemplate {
 	s.once.Do(func() {
 		names := AssetNames()
 		out := make([]cloudhub.AlertTemplate, 0, len(names))
+		defaultBody := s.loadDefaultEmailBody()
 		for _, name := range names {
+			if name == alertDefaultEmailBodyAsset {
+				continue
+			}
 			if !strings.HasPrefix(name, alertAssetPrefix) || !strings.HasSuffix(name, ".json") {
 				continue
 			}
@@ -182,7 +189,7 @@ func (s *BinAlertTemplatesStore) load() []cloudhub.AlertTemplate {
 				continue
 			}
 			if strings.TrimSpace(tmpl.EmailBody) == "" {
-				tmpl.EmailBody = defaultAlertTemplateEmailBody()
+				tmpl.EmailBody = defaultBody
 			}
 			out = append(out, tmpl)
 		}
@@ -191,36 +198,21 @@ func (s *BinAlertTemplatesStore) load() []cloudhub.AlertTemplate {
 	return s.cached
 }
 
-func defaultAlertTemplateEmailBody() string {
-	return `<!doctype html>
-<html>
-  <body style='margin:0;background:#f5f7fb;font-family:Arial,sans-serif;color:#1f2937;'>
-    <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f5f7fb;padding:24px;'>
-      <tr>
-        <td align='center'>
-          <table role='presentation' width='640' cellpadding='0' cellspacing='0' style='width:640px;max-width:100%;background:#ffffff;border:1px solid #d9dee8;border-radius:8px;overflow:hidden;'>
-            <tr>
-              <td style='background:#111827;color:#ffffff;padding:18px 24px;font-size:18px;font-weight:700;'>CloudHub Alert</td>
-            </tr>
-            <tr>
-              <td style='padding:24px;'>
-                <div style='display:inline-block;padding:6px 10px;border-radius:4px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;letter-spacing:0;text-transform:uppercase;'>{{ .Level }}</div>
-                <h1 style='margin:16px 0 8px;font-size:20px;line-height:1.35;color:#111827;'>{{ .Message }}</h1>
-                <p style='margin:0 0 20px;font-size:13px;line-height:1.5;color:#6b7280;'>CloudHub generated this notification from an alert rule.</p>
-                <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:14px;'>
-                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;width:140px;'>Host</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;font-weight:600;'>{{ index .Tags "host" }}</td></tr>
-                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Level</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;font-weight:600;'>{{ .Level }}</td></tr>
-                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Time</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ .Time }}</td></tr>
-                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Alert ID</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ .ID }}</td></tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`
+// loadDefaultEmailBody reads the shared default email HTML body embedded at
+// alerts/_default_email_body.html. Returns empty string on error so callers
+// can detect and log appropriately; missing default just means templates
+// without an inline emailBody will have no body — the bug surfaces visibly
+// in the rendered email rather than panicking at startup.
+func (s *BinAlertTemplatesStore) loadDefaultEmailBody() string {
+	octets, err := Asset(alertDefaultEmailBodyAsset)
+	if err != nil {
+		s.Logger.
+			WithField("component", "builtin").
+			WithField("name", alertDefaultEmailBodyAsset).
+			Error("default alert email body asset read failed: ", err)
+		return ""
+	}
+	return string(octets)
 }
 
 // All returns every embedded alert template. The result is served from the

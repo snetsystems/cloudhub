@@ -224,7 +224,7 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		OccurrenceLambda:     occLambda,
 		RecentBlock:          recent.block,
 		Message:              tickString(rule.Message),
-		EmailBody:            tickString(emailBodyFromHandlers(rule.EventHandlers)),
+		EmailBody:            tickEmailBody(emailBodyFromHandlers(rule.EventHandlers)),
 		NotificationHandlers: notificationHandlers,
 		TaskID:               "alert-group-" + rule.ID,
 		OutputDB:             rule.Database,
@@ -369,6 +369,21 @@ func tickString(s string) string {
 	s = strings.ReplaceAll(s, `'`, `\'`)
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	s = strings.ReplaceAll(s, "\n", `\n`)
+	return s
+}
+
+// tickEmailBody escapes an HTML email body for embedding in a TICKscript
+// single-quoted string. Unlike tickString it collapses real newlines into a
+// single space rather than the literal `\n` sequence — TICK single-quoted
+// strings do not interpret escape sequences, so a literal `\n` would survive
+// untouched into the rendered email body. HTML treats consecutive whitespace
+// as one space, so collapsing produces identical visual output without the
+// visible "\n" artifacts.
+func tickEmailBody(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `'`, `\'`)
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\n", " ")
 	return s
 }
 

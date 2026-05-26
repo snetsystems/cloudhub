@@ -18,6 +18,7 @@ import {
 } from 'src/reusable_ui'
 import Dropdown from 'src/shared/components/Dropdown'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
+import EmailBodyPreview from 'src/alert_group/components/EmailBodyPreview'
 import {
   AlertGroupRule,
   AlertRuleEventHandler,
@@ -64,6 +65,7 @@ interface State {
 
   kapacitorId: string | null
   receiveMode: 'all' | 'specific'
+  emailBodyView: 'edit' | 'preview'
 }
 
 class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
@@ -92,6 +94,7 @@ class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
 
       kapacitorId: null,
       receiveMode: recipientGroupIds.length > 0 ? 'specific' : 'all',
+      emailBodyView: 'edit',
     }
   }
 
@@ -374,6 +377,36 @@ class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
       ? `${currentMessage} ${template}`
       : template
     this.props.onUpdateRule({message: nextMessage})
+  }
+
+  private handleEmailBodyViewChange = (mode: 'edit' | 'preview'): void => {
+    this.setState({emailBodyView: mode})
+  }
+  private get emailBodyPreviewMock(): {
+    level: string
+    message: string
+    host: string
+    time: string
+    id: string
+  } {
+    const {t, rule} = this.props
+    const level = t('alert_group_basic.preview_level', 'CRITICAL')
+    const host = t('alert_group_basic.preview_host', 'example-host-01')
+    const message =
+      rule?.message ||
+      t(
+        'alert_group_basic.preview_message',
+        '{{host}} {{level}} 예시 알림 메시지'
+      )
+        .replace('{{host}}', host)
+        .replace('{{level}}', level)
+    return {
+      level,
+      message,
+      host,
+      time: new Date().toISOString(),
+      id: 'alert-group-preview-example',
+    }
   }
 
   private handleEmailBodyChange = (
@@ -994,14 +1027,44 @@ class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
                                 </div>
                               </div>
 
-                              {/* Email Message Body text area (bound to configJson.body) */}
                               <div className="form-group col-md-12">
-                                <label htmlFor="email-body">
-                                  {t(
-                                    'alert_group_basic.email_body',
-                                    'Email Message Body'
-                                  )}
-                                </label>
+                                <div className="alert-group-email-body-header">
+                                  <label htmlFor="email-body">
+                                    {t(
+                                      'alert_group_basic.email_body',
+                                      'Email Message Body'
+                                    )}
+                                  </label>
+                                  <Radio shape={ButtonShape.Default}>
+                                    <Radio.Button
+                                      id="email-body-view-edit"
+                                      value="edit"
+                                      active={
+                                        this.state.emailBodyView === 'edit'
+                                      }
+                                      onClick={this.handleEmailBodyViewChange}
+                                    >
+                                      {t(
+                                        'alert_group_basic.email_body_edit',
+                                        '편집'
+                                      )}
+                                    </Radio.Button>
+                                    <Radio.Button
+                                      id="email-body-view-preview"
+                                      value="preview"
+                                      active={
+                                        this.state.emailBodyView === 'preview'
+                                      }
+                                      onClick={this.handleEmailBodyViewChange}
+                                    >
+                                      {t(
+                                        'alert_group_basic.email_body_preview',
+                                        '미리보기'
+                                      )}
+                                    </Radio.Button>
+                                  </Radio>
+                                </div>
+
                                 <textarea
                                   id="email-body"
                                   className="form-control form-malachite alert-group-email-body-textarea"
@@ -1015,7 +1078,23 @@ class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
                                   }
                                   onChange={this.handleEmailBodyChange}
                                   spellCheck={false}
+                                  style={{
+                                    display:
+                                      this.state.emailBodyView === 'edit'
+                                        ? undefined
+                                        : 'none',
+                                  }}
                                 />
+                                {this.state.emailBodyView === 'preview' && (
+                                  <EmailBodyPreview
+                                    className="alert-group-email-body-preview"
+                                    html={
+                                      (selectedHandler.configJson
+                                        ?.body as string) || ''
+                                    }
+                                    mock={this.emailBodyPreviewMock}
+                                  />
+                                )}
                               </div>
 
                               {/* 수신 테스트 (이메일 섹션 가장 하단에 배치) */}
