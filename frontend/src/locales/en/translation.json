@@ -106,6 +106,7 @@
     "cond_def_title": "Event Condition Definition",
     "direct_input": "Direct Input",
     "threshold_placeholder": "Threshold",
+    "threshold_required": "Please enter the {{level}} threshold.",
     "input_value": "Enter value",
     "occurrence_count": "Occurrence Count",
     "consecutive": "Consecutive",

@@ -288,7 +288,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
   }
 
   private handleSave = async (): Promise<void> => {
-    const {source, router, notify} = this.props
+    const {source, router, notify, t} = this.props
     const {rule} = this.state
 
     // 필수 입력 및 정합성 검사
@@ -308,9 +308,31 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       notify(notifyError('필드(Field)를 선택해주세요.'))
       return
     }
-    if (!rule.kapacitorId) {
-      notify(notifyError('Kapacitor를 지정해주세요.'))
-      return
+
+    // 임계값 필수값 정합성 검사 (활성화된 조건의 임계값 입력 여부 검사)
+    if (Array.isArray(rule.conditions) && rule.trigger !== 'deadman') {
+      for (const cond of rule.conditions) {
+        if (cond.enabled) {
+          const valStr =
+            cond.value !== undefined && cond.value !== null
+              ? String(cond.value).trim()
+              : ''
+          if (valStr === '') {
+            const levelLabel =
+              cond.level === 'critical'
+                ? 'Critical'
+                : cond.level === 'warning'
+                ? 'Warning'
+                : 'Info'
+            notify(
+              notifyError(
+                t('alert_group_rule.threshold_required', {level: levelLabel})
+              )
+            )
+            return
+          }
+        }
+      }
     }
 
     if (Array.isArray(rule.eventHandlers)) {
@@ -532,7 +554,11 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
               size={ComponentSize.Small}
             />
             <Button
-              text={isSaving ? t('button.saving', '저장 중...') : t('button.save', '저장')}
+              text={
+                isSaving
+                  ? t('button.saving', '저장 중...')
+                  : t('button.save', '저장')
+              }
               onClick={this.handleSave}
               color={ComponentColor.Primary}
               size={ComponentSize.Small}
@@ -728,4 +754,7 @@ const mapDispatchToProps = {
   notify: notifyAction,
 }
 
-export default connect(null, mapDispatchToProps)(withTranslation()(AlertGroupRulePage))
+export default connect(
+  null,
+  mapDispatchToProps
+)(withTranslation()(AlertGroupRulePage))

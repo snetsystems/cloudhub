@@ -106,6 +106,7 @@
     "cond_def_title": "이벤트 조건 정의",
     "direct_input": "직접 입력",
     "threshold_placeholder": "임계값",
+    "threshold_required": "{{level}} 임계값을 입력해 주세요.",
     "input_value": "값 입력",
     "occurrence_count": "발생 횟수",
     "consecutive": "연속",

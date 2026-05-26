@@ -10,9 +10,10 @@ import {
 } from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import TableComponent from 'src/device_management/components/TableComponent'
-import {ColumnInfo, Organization} from 'src/types'
+import {ColumnInfo, Organization, NotificationAction} from 'src/types'
 import {connect} from 'react-redux'
 import {getRecipientGroups, deleteRecipientGroup} from 'src/alert_group/apis'
+import {RecipientGroup} from 'src/alert_group/types'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 
@@ -22,23 +23,33 @@ interface Props {
   params: {
     sourceID: string
   }
-  notify: any
+  notify?: NotificationAction
+}
+
+interface GroupRowData {
+  groupId?: string
+  groupName: string
+  memberCount?: number
+  emailTargets?: number
+  isDefault?: boolean
+  isNew?: boolean
 }
 
 function GroupsPage({router, params, notify}: Props) {
   const {t} = useTranslation()
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<GroupRowData[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const fetchData = async () => {
     setIsLoading(true)
     try {
       const groups = await getRecipientGroups()
-      const formattedData = groups.map(group => ({
+      const formattedData = groups.map((group: RecipientGroup) => ({
         groupId: group.id,
         groupName: group.name,
         memberCount: group.members?.length || 0,
         emailTargets: 0,
+        isDefault: group.isDefault,
       }))
       setData(formattedData)
     } catch (error) {
@@ -79,7 +90,7 @@ function GroupsPage({router, params, notify}: Props) {
     }
   }
 
-  const navigateToDetail = (group: any) => {
+  const navigateToDetail = (group: GroupRowData) => {
     const pathId = group?.isNew ? 'new' : group?.groupId
     router.push({
       pathname: `/sources/${params.sourceID}/group-management/detail/${pathId}`,
@@ -123,14 +134,14 @@ function GroupsPage({router, params, notify}: Props) {
             style: {width: '15%'},
           },
         },
-        render: (_value, _rowData) => (
+        render: (_value, rowData) => (
           <div className="group-action-btn-container">
             <Button
               icon={IconFont.Pencil}
               shape={ButtonShape.Square}
               color={ComponentColor.Primary}
               size={ComponentSize.ExtraSmall}
-              onClick={() => navigateToDetail(_rowData)}
+              onClick={() => navigateToDetail(rowData)}
               customClass="group-action-btn"
             />
             <ConfirmButton
@@ -139,7 +150,7 @@ function GroupsPage({router, params, notify}: Props) {
               confirmText={t('group_management.delete_confirm', '삭제하기')}
               type="btn-danger"
               size="btn-xs"
-              confirmAction={() => handleDeleteGroup(_rowData.groupId)}
+              confirmAction={() => handleDeleteGroup(rowData.groupId)}
               customClass="group-action-btn"
             />
           </div>

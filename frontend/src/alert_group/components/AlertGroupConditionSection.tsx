@@ -55,6 +55,23 @@ interface State {
   queryConfig: QueryConfig
 }
 
+const LEVEL_ORDER: {[key: string]: number} = {
+  critical: 1,
+  warning: 2,
+  info: 3,
+}
+
+export const sortConditions = (conditions: any[]) => {
+  if (!conditions) {
+    return []
+  }
+  return [...conditions].sort((a, b) => {
+    const orderA = LEVEL_ORDER[a.level] || 99
+    const orderB = LEVEL_ORDER[b.level] || 99
+    return orderA - orderB
+  })
+}
+
 const EMPTY_QUERY_CONFIG: Partial<QueryConfig> = {
   tags: {},
   areTagsAccepted: false,
@@ -164,12 +181,23 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       onUpdateRule({
         database: source.telegraf || 'telegraf',
         retentionPolicy: 'autogen',
+        conditions: sortConditions(rule.conditions),
       })
     }
   }
 
   public componentDidUpdate(prevProps: Props) {
-    const {rule, source} = this.props
+    const {rule, source, onUpdateRule} = this.props
+
+    // 부모의 rule.database가 비어있다면, 자식의 기본 폴백값으로 부모 rule 객체 싱크를 맞춤
+    if (!rule.database) {
+      onUpdateRule({
+        database: source.telegraf || 'telegraf',
+        retentionPolicy: 'autogen',
+      })
+      return
+    }
+
     if (
       prevProps.rule.database !== rule.database ||
       prevProps.rule.retentionPolicy !== rule.retentionPolicy ||
@@ -187,6 +215,10 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
             ? [{value: rule.field, type: 'field', alias: '', args: []}]
             : [],
         } as QueryConfig,
+      })
+      console.log({
+        database: rule.database || '',
+        retentionPolicy: rule.retentionPolicy || '',
       })
     }
   }
@@ -302,7 +334,8 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   // ── Condition handlers ─────────────────────────────────────────────────────
 
   private handleToggleCondition = (idx: number, enabled: boolean): void => {
-    const next = this.props.rule.conditions.map((c, i) =>
+    const sorted = sortConditions(this.props.rule.conditions)
+    const next = sorted.map((c, i) =>
       i === idx ? {...c, enabled} : c
     )
     this.props.onUpdateRule({conditions: next})
@@ -330,7 +363,8 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   }
 
   private handleConditionValue = (idx: number, value: string): void => {
-    const next = this.props.rule.conditions.map((c, i) =>
+    const sorted = sortConditions(this.props.rule.conditions)
+    const next = sorted.map((c, i) =>
       i === idx ? {...c, value} : c
     )
     this.props.onUpdateRule({conditions: next})
@@ -399,7 +433,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
             {/* Threshold Rows */}
             {(!rule.trigger || rule.trigger === 'threshold') && (
               <div className="alert-group-template-thresholds">
-                {rule.conditions.map((cond, idx) => {
+                {sortConditions(rule.conditions).map((cond, idx) => {
                   const translatedTriggerOperators = this.getTranslatedTriggerOperators(
                     t
                   )
@@ -513,7 +547,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                   </div>
 
                   <div className="alert-group-template-thresholds">
-                    {rule.conditions.map((cond, idx) => {
+                    {sortConditions(rule.conditions).map((cond, idx) => {
                       const relativeOpOptions = this.getRelativeOperatorOptions(
                         t
                       )
@@ -638,7 +672,6 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       me,
       isUsingAuth,
       builderMode,
-      templates,
       t,
     } = this.props
     const {queryConfig} = this.state
@@ -648,7 +681,6 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       o => o.value === rule.pauseSeconds
     )
     const isTemplateMode = builderMode !== 'raw'
-    const selectedTemplate = templates ? findSelectedAlertTemplate(templates, rule) : undefined
 
     return (
       <div className="rule-section">
@@ -663,9 +695,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
           ) : (
             <>
               {/* ── 3-패널 Time Series 브라우저 ── */}
-              <div
-                className={`query-builder${selectedTemplate ? ' query-builder--disabled' : ''}`}
-              >
+              <div className="query-builder">
                 <DatabaseList
                   query={queryConfig}
                   onChooseNamespace={this.handleChooseNamespace}
@@ -742,7 +772,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                   </div>
                   <div className="alert-group-setting-control alert-group-condition-flex-col-16">
                     <div className="alert-group-template-thresholds">
-                      {rule.conditions.map((cond, idx) => {
+                      {sortConditions(rule.conditions).map((cond, idx) => {
                         const translatedTriggerOperators = this.getTranslatedTriggerOperators(
                           t
                         )
@@ -864,7 +894,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     </div>
 
                     <div className="alert-group-template-thresholds">
-                      {rule.conditions.map((cond, idx) => {
+                      {sortConditions(rule.conditions).map((cond, idx) => {
                         const relativeOpOptions = this.getRelativeOperatorOptions(
                           t
                         )
@@ -1054,9 +1084,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
           {/* Resolved Alert Group (단발성 알림) */}
           <div className="alert-group-setting-row">
-            <div
-              className="alert-group-setting-label alert-group-setting-label--flex"
-            >
+            <div className="alert-group-setting-label alert-group-setting-label--flex">
               {t('alert_group_rule.notify_recovery')}
               <QuestionMarkTooltip
                 tipID="recovery-tooltip"
@@ -1087,9 +1115,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
           {/* Pause Group (리마인드 주기) - 단발성 알림이 on 되었을 때만 표시 */}
           {rule.notifyRecovery && (
             <div className="alert-group-setting-row">
-              <div
-                className="alert-group-setting-label alert-group-setting-label--flex"
-              >
+              <div className="alert-group-setting-label alert-group-setting-label--flex">
                 {t('alert_group_rule.pause')}
                 <QuestionMarkTooltip
                   tipID="pause-tooltip"
