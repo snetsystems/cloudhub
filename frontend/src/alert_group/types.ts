@@ -2,6 +2,13 @@ export interface AlertCondition {
   level: 'critical' | 'warning' | 'info'
   value: string
   enabled: boolean
+  operator?:
+    | 'greater'
+    | 'greater_equal'
+    | 'less'
+    | 'less_equal'
+    | 'equal'
+    | 'not_equal'
 }
 
 // DerivativeConfig — when enabled, the backend tickscript inserts
@@ -30,13 +37,6 @@ export interface AlertGroupRule {
   measurement: string
   field: string
   conditions: AlertCondition[]
-  triggerOperator:
-    | 'greater'
-    | 'greater_equal'
-    | 'less'
-    | 'less_equal'
-    | 'equal'
-    | 'not_equal'
   taskType: string
   every: string
   occurrenceType: 'consecutive' | 'recent' | 'total'
@@ -120,6 +120,7 @@ export interface RecipientGroup {
   id: string
   orgId: string
   name: string
+  isDefault?: boolean
   deleteYn?: boolean
   createdAt?: string
   updatedAt?: string
@@ -133,6 +134,7 @@ export interface RecipientGroupMember {
   userName: string
   email: string
   phoneNumber: string
+  isExternal?: boolean
   deleteYn?: boolean
   createdAt?: string
   updatedAt?: string
@@ -227,9 +229,9 @@ export const DEFAULT_RULE: AlertGroupRule = {
   measurement: '',
   field: '',
   conditions: [
-    {level: 'critical', value: '', enabled: true},
-    {level: 'warning', value: '', enabled: true},
-    {level: 'info', value: '', enabled: false},
+    {level: 'critical', value: '', enabled: true, operator: 'greater'},
+    {level: 'warning', value: '', enabled: true, operator: 'greater'},
+    {level: 'info', value: '', enabled: false, operator: 'greater'},
   ],
   trigger: 'threshold',
   triggerValues: {
