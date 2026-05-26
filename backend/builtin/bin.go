@@ -153,7 +153,7 @@ type BinAlertTemplatesStore struct {
 }
 
 const (
-	alertAssetPrefix         = "alerts/"
+	alertAssetPrefix           = "alerts/"
 	alertDefaultEmailBodyAsset = "alerts/_default_email_body.html"
 )
 
@@ -190,6 +190,9 @@ func (s *BinAlertTemplatesStore) load() []cloudhub.AlertTemplate {
 			}
 			if strings.TrimSpace(tmpl.EmailBody) == "" {
 				tmpl.EmailBody = defaultBody
+			}
+			for i := range tmpl.Conditions {
+				tmpl.Conditions[i].Operator = cloudhub.NormalizeAlertConditionOperator(tmpl.Conditions[i].Operator)
 			}
 			out = append(out, tmpl)
 		}

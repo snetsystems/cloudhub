@@ -1,6 +1,7 @@
 package kapacitor
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -18,10 +19,9 @@ func sampleRule() cloudhub.AlertGroupRule {
 		Conditions: []cloudhub.AlertRuleCondition{
 			{Level: "critical", Value: 70, Enabled: true},
 		},
-		TriggerOperator: "greater",
-		TaskType:        "stream",
-		Every:           "30s",
-		Message:         "cpu high",
+		TaskType: "stream",
+		Every:    "30s",
+		Message:  "cpu high",
 	}
 }
 
@@ -143,6 +143,96 @@ func TestAlertGroupRuleTICKScriptUsesEmailHandlerBodyAsDetails(t *testing.T) {
 	}
 	if !strings.Contains(tick, `.details('CPU alert body {{ .Level }}')`) {
 		t.Fatalf("tickscript should render email handler body as details:\n%s", tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptUsesPerConditionOperators(t *testing.T) {
+	r := sampleRule()
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "critical", Value: 90, Operator: "greater_equal", Enabled: true},
+		{Level: "warning", Value: 20, Operator: "less", Enabled: true},
+		{Level: "info", Value: 0, Operator: "equal", Enabled: true},
+	}
+
+	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`.crit(lambda: "usage_idle" >= 90)`,
+		`.warn(lambda: "usage_idle" < 20)`,
+		`.info(lambda: "usage_idle" == 0)`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("tickscript missing %q:\n%s", want, tick)
+		}
+	}
+}
+
+func TestAlertGroupRuleTICKScriptRelativeUsesPerConditionOperators(t *testing.T) {
+	r := sampleRule()
+	r.Trigger = cloudhub.AlertGroupRuleTriggerRelative
+	r.TriggerValues = cloudhub.TriggerValues{Change: "change", Shift: "1m", Operator: "greater than"}
+	r.Conditions = []cloudhub.AlertRuleCondition{
+		{Level: "critical", Value: 40, Operator: "less_equal", Enabled: true},
+		{Level: "warning", Value: 10, Operator: "greater", Enabled: true},
+	}
+
+	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{}, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`.crit(lambda: "relative_value" <= 40)`,
+		`.warn(lambda: "relative_value" > 10)`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("relative tickscript missing %q:\n%s", want, tick)
+		}
+	}
+	if strings.Contains(tick, `.crit(lambda: "relative_value" > 40)`) {
+		t.Fatalf("relative trigger must not use triggerValues.operator as condition operator:\n%s", tick)
+	}
+}
+
+// TestAlertGroupRuleTICKScriptCollapsesEmailBodyNewlines verifies that an
+// HTML email body containing real newlines gets collapsed to spaces rather
+// than being escaped as literal "\n". TICKscript single-quoted strings do
+// not interpret escape sequences, so a literal "\n" would survive untouched
+// and end up visible in the rendered email body.
+func TestAlertGroupRuleTICKScriptCollapsesEmailBodyNewlines(t *testing.T) {
+	r := sampleRule()
+	body := "<html>\n  <body>hi</body>\n</html>"
+	bodyJSON, err := json.Marshal(map[string]string{"body": body})
+	if err != nil {
+		t.Fatalf("marshal body: %v", err)
+	}
+	r.EventHandlers = []cloudhub.AlertRuleEventHandler{{
+		Type:              cloudhub.AlertRuleEventHandlerEmail,
+		Enabled:           true,
+		ConfigJSON:        bodyJSON,
+		RecipientGroupIDs: []string{"group-1"},
+	}}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if !strings.Contains(tick, `.details('<html>   <body>hi</body> </html>')`) {
+		t.Fatalf("tickscript should collapse newlines in email body to spaces:\n%s", tick)
+	}
+	idx := strings.Index(tick, `.details('`)
+	if idx < 0 {
+		t.Fatalf("tickscript missing .details(...): %s", tick)
+	}
+	end := strings.Index(tick[idx:], `')`)
+	if end < 0 {
+		t.Fatalf("tickscript .details(...) not closed: %s", tick)
+	}
+	detailsSegment := tick[idx : idx+end]
+	if strings.Contains(detailsSegment, `\n`) {
+		t.Fatalf("tickscript .details(...) must not contain literal \\n (would render as visible text):\n%s", detailsSegment)
 	}
 }
 
@@ -311,11 +401,10 @@ func TestAlertGroupRuleTICKScriptOccurrenceLambdaPicksLowestForGreater(t *testin
 func TestAlertGroupRuleTICKScriptOccurrenceLambdaPicksHighestForLess(t *testing.T) {
 	r := sampleRule()
 	r.OccurrenceCount = 2
-	r.TriggerOperator = "less"
 	r.Conditions = []cloudhub.AlertRuleCondition{
-		{Level: "info", Value: 90, Enabled: true},
-		{Level: "warning", Value: 60, Enabled: true},
-		{Level: "critical", Value: 30, Enabled: true},
+		{Level: "info", Value: 90, Operator: "less", Enabled: true},
+		{Level: "warning", Value: 60, Operator: "less", Enabled: true},
+		{Level: "critical", Value: 30, Operator: "less", Enabled: true},
 	}
 	rec := AlertRecipients{Crit: []string{"a@x.com"}}
 	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
@@ -816,11 +905,10 @@ func TestAlertGroupRuleTICKScriptDeadman(t *testing.T) {
 
 func TestAlertGroupRuleTICKScriptExclusiveLambdasForLessOperator(t *testing.T) {
 	r := sampleRule()
-	r.TriggerOperator = "less"
 	r.Conditions = []cloudhub.AlertRuleCondition{
-		{Level: "info", Value: 90, Enabled: true},
-		{Level: "warning", Value: 60, Enabled: true},
-		{Level: "critical", Value: 30, Enabled: true},
+		{Level: "info", Value: 90, Operator: "less", Enabled: true},
+		{Level: "warning", Value: 60, Operator: "less", Enabled: true},
+		{Level: "critical", Value: 30, Operator: "less", Enabled: true},
 	}
 	rec := AlertRecipients{
 		Crit: []string{"a@x.com"},

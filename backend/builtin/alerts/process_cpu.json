@@ -9,7 +9,6 @@
   "measurement": "procstat",
   "field": "cpu_usage",
   "trigger": "threshold",
-  "triggerOperator": "greater",
   "taskType": "stream",
   "every": "30s",
   "occurrenceType": "consecutive",
@@ -19,8 +18,8 @@
   "notifyRecovery": true,
   "message": "{{ index .Tags \"host\" }} Process CPU {{ .Level }} ({{ index .Fields \"cpu_usage\" }}%)",
   "conditions": [
-    { "level": "critical", "value": 90, "enabled": true },
-    { "level": "warning",  "value": 70, "enabled": true },
-    { "level": "info",     "value": 0,  "enabled": false }
+    { "level": "critical", "value": 90, "operator": "greater", "enabled": true },
+    { "level": "warning",  "value": 70, "operator": "greater", "enabled": true },
+    { "level": "info",     "value": 0, "operator": "greater", "enabled": false }
   ]
 }

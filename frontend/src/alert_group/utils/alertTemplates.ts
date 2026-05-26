@@ -48,7 +48,6 @@ export const applyAlertTemplateToRule = (
     derivative: template.derivative,
     eval: template.eval,
     trigger: template.trigger || 'threshold',
-    triggerOperator: template.triggerOperator,
     triggerValues: template.values || rule.triggerValues,
     taskType: template.taskType,
     every: template.every,
@@ -60,7 +59,10 @@ export const applyAlertTemplateToRule = (
     message: template.message,
     conditions:
       template.conditions && template.conditions.length > 0
-        ? template.conditions
+        ? template.conditions.map(condition => ({
+            ...condition,
+            operator: condition.operator || 'greater',
+          }))
         : rule.conditions,
     eventHandlers: [...nonEmailHandlers, nextEmailHandler],
   }

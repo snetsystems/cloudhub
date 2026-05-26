@@ -47,6 +47,7 @@ const normalizeAlertGroupRule = (
       ? rule.conditions.map(condition => ({
           ...condition,
           value: String(condition.value),
+          operator: condition.operator || 'greater',
         }))
       : DEFAULT_RULE.conditions,
     hostnames: Array.isArray(rule?.hostnames) ? rule.hostnames : [],

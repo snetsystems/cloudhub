@@ -13,6 +13,7 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/log"
 	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 type fakeUserSyncRecipientGroupStore struct {
@@ -219,5 +220,78 @@ func TestUpdateUserSyncsAlertRecipientsOnEmailChange(t *testing.T) {
 	}
 	if len(synced) != 1 || synced[0] != "r1" {
 		t.Fatalf("synced rules = %v, want [r1]", synced)
+	}
+}
+
+func TestOrganizationNewUserSyncsEmailToDefaultRecipientGroup(t *testing.T) {
+	var savedUser *cloudhub.User
+	rgStore := &memRecipientGroupStore{members: map[string][]cloudhub.RecipientGroupMember{}}
+	svc := &Service{
+		Store: &mocks.Store{
+			ConfigStore: &mocks.ConfigStore{
+				Config: &cloudhub.Config{
+					Auth: cloudhub.AuthConfig{SuperAdminNewUsers: false},
+				},
+			},
+			OrganizationsStore: &mocks.OrganizationsStore{
+				GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "org-1", Name: "Acme Ops", DefaultRole: roles.ViewerRoleName}, nil
+				},
+			},
+			UsersStore: &mocks.UsersStore{
+				AddF: func(ctx context.Context, user *cloudhub.User) (*cloudhub.User, error) {
+					u := *user
+					u.ID = 42
+					savedUser = &u
+					return savedUser, nil
+				},
+				AllF: func(ctx context.Context) ([]cloudhub.User, error) {
+					if savedUser == nil {
+						return nil, nil
+					}
+					return []cloudhub.User{*savedUser}, nil
+				},
+			},
+			SourcesStore: &mocks.SourcesStore{
+				GetF: func(ctx context.Context, id int) (cloudhub.Source, error) {
+					return cloudhub.Source{}, fmt.Errorf("source not configured")
+				},
+			},
+		},
+		Logger:                    log.New(log.DebugLevel),
+		RecipientGroups:           rgStore,
+		AlertRecipientGroups:      &memAlertRecipientGroupStore{ext: map[string]cloudhub.AlertRecipientGroup{}},
+		AlertRecipientMemberPrefs: &memAlertRecipientMemberPrefsStore{prefs: map[string]cloudhub.AlertRecipientMemberPrefs{}},
+	}
+
+	body, _ := json.Marshal(userRequest{
+		Name:     "alice",
+		Provider: "cloudhub",
+		Scheme:   "basic",
+		Email:    "alice@example.com",
+		Roles: []cloudhub.Role{{
+			Organization: "org-1",
+			Name:         roles.AdminRoleName,
+		}},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v1/organizations/org-1/users", bytes.NewReader(body))
+	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{{Key: "oid", Value: "org-1"}}))
+	req = req.WithContext(context.WithValue(req.Context(), UserContextKey, &cloudhub.User{ID: 7, Name: "admin", SuperAdmin: true}))
+	rr := httptest.NewRecorder()
+
+	svc.OrganizationNewUser(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201; body=%s", rr.Code, rr.Body.String())
+	}
+	groups, err := rgStore.All(context.Background(), "org-1")
+	if err != nil {
+		t.Fatalf("recipient groups: %v", err)
+	}
+	if len(groups) != 1 || len(groups[0].Members) != 1 {
+		t.Fatalf("expected default group with one member, got %+v", groups)
+	}
+	if groups[0].Members[0].Email != "alice@example.com" {
+		t.Fatalf("recipient member email = %q, want alice@example.com", groups[0].Members[0].Email)
 	}
 }

@@ -13,7 +13,6 @@
     "as": "inodes_used_percent"
   },
   "trigger": "threshold",
-  "triggerOperator": "greater",
   "taskType": "stream",
   "every": "30s",
   "occurrenceType": "consecutive",
@@ -23,8 +22,8 @@
   "notifyRecovery": true,
   "message": "{{ index .Tags \"host\" }} Inode 사용률 {{ .Level }} ({{ index .Fields \"inodes_used_percent\" }}%)",
   "conditions": [
-    { "level": "critical", "value": 95, "enabled": true },
-    { "level": "warning",  "value": 80, "enabled": true },
-    { "level": "info",     "value": 0,  "enabled": false }
+    { "level": "critical", "value": 95, "operator": "greater", "enabled": true },
+    { "level": "warning",  "value": 80, "operator": "greater", "enabled": true },
+    { "level": "info",     "value": 0, "operator": "greater", "enabled": false }
   ]
 }

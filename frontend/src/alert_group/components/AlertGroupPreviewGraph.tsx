@@ -16,7 +16,7 @@ import {groupByTimeSeriesTransform} from 'src/utils/groupByTimeSeriesTransform'
 
 import {Source, TimeRange, RemoteDataState, AlertRule} from 'src/types'
 import {QueryConfig} from 'src/types/queries'
-import {AlertCondition, AlertGroupRule} from 'src/alert_group/types'
+import {AlertCondition, AlertConditionOperator} from 'src/alert_group/types'
 
 interface Props extends WithTranslation {
   source: Source
@@ -31,7 +31,6 @@ interface Props extends WithTranslation {
   }
   areTagsAccepted?: boolean
   conditions: AlertCondition[]
-  triggerOperator: AlertGroupRule['triggerOperator']
   timeRange: TimeRange
   setHoverTime: typeof setHoverTimeAction
 }
@@ -69,6 +68,9 @@ const checkViolation = (val: number, limit: number, op: string): boolean => {
       return val > limit
   }
 }
+
+const conditionOperator = (condition: AlertCondition): AlertConditionOperator =>
+  condition.operator || 'greater'
 
 const countViolations = (
   sortedTimeSeries: any[],
@@ -142,15 +144,7 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
   }
 
   public render() {
-    const {
-      measurement,
-      field,
-      conditions,
-      timeRange,
-      source,
-      triggerOperator,
-      t,
-    } = this.props
+    const {measurement, field, conditions, timeRange, source, t} = this.props
     const ready = !!(measurement && field)
     const queries = ready ? buildQueries([this.queryConfig], timeRange) : []
     const enabledConditions = ready
@@ -158,11 +152,11 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
       : []
 
     const previewRuleValues = ready
-      ? buildAlertGroupPreviewRuleValues(conditions, triggerOperator)
+      ? buildAlertGroupPreviewRuleValues(conditions)
       : null
     const customUnderlay =
       previewRuleValues !== null
-        ? buildAlertGroupPreviewUnderlay({triggerOperator, conditions})
+        ? buildAlertGroupPreviewUnderlay({conditions})
         : undefined
     const dygraphRule = {
       trigger: 'threshold',
@@ -208,20 +202,17 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
                     )
                   })
               )
-
-              // 차트 렌더링에 사용되는 것과 동일하게 정렬/중복제거된 시계열 데이터 획득
               const transformed = hasData
                 ? groupByTimeSeriesTransform(timeSeriesInfluxQL, false)
                 : null
               const sortedTimeSeries = transformed?.sortedTimeSeries || []
 
-              // 임계치 초과 횟수 계산
               const violationCounts = enabledConditions.reduce((acc, cond) => {
                 const count = hasData
                   ? countViolations(
                       sortedTimeSeries,
                       Number(cond.value),
-                      cond.operator || triggerOperator
+                      conditionOperator(cond)
                     )
                   : 0
                 acc[cond.level] = count
@@ -242,7 +233,9 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
                               `server_alert.${condition.level}`,
                               LEVEL_LABELS[condition.level]
                             )}{' '}
-                            {OPERATOR_SYMBOLS[condition.operator || triggerOperator] || '>'}{condition.value}
+                            {OPERATOR_SYMBOLS[conditionOperator(condition)] ||
+                              '>'}
+                            {condition.value}
                           </span>
                         ))}
                       </div>

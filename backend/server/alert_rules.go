@@ -79,6 +79,7 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
+	normalizeAlertGroupRuleConditionOperators(&req)
 	rule, err := s.AlertGroupRules.Add(ctx, req)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
@@ -171,6 +172,7 @@ func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
+	normalizeAlertGroupRuleConditionOperators(&req)
 	if err := s.AlertGroupRules.Update(ctx, req); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
@@ -515,6 +517,12 @@ func validateAlertGroupRuleInput(rule cloudhub.AlertGroupRule) error {
 	}
 
 	return nil
+}
+
+func normalizeAlertGroupRuleConditionOperators(rule *cloudhub.AlertGroupRule) {
+	for i := range rule.Conditions {
+		rule.Conditions[i].Operator = cloudhub.NormalizeAlertConditionOperator(rule.Conditions[i].Operator)
+	}
 }
 
 func validateAlertRuleEventHandlers(handlers []cloudhub.AlertRuleEventHandler) error {

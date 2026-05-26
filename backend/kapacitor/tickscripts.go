@@ -131,11 +131,7 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 			continue
 		}
 		field := resolveLambdaField(rule, triggerType, evalActive)
-		operator := rule.TriggerOperator
-		if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
-			operator = relativeTriggerOperator(rule.TriggerValues.Operator)
-		}
-		expr := buildThresholdExpr(field, operator, c.Value)
+		expr := buildThresholdExpr(field, conditionOperator(c), c.Value)
 		switch c.Level {
 		case "info":
 			info = expr
@@ -164,7 +160,6 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	lambdaRule := rule
 	lambdaRule.Field = resolveLambdaField(rule, triggerType, evalActive)
 	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
-		lambdaRule.TriggerOperator = relativeTriggerOperator(rule.TriggerValues.Operator)
 		sourceVar = "relative_src"
 	}
 	occLambda := buildOccurrenceLambda(lambdaRule)
@@ -511,23 +506,6 @@ func deadmanPeriod(p string) string {
 	return p
 }
 
-func relativeTriggerOperator(operator string) string {
-	switch strings.TrimSpace(operator) {
-	case lessThan:
-		return "less"
-	case lessThanEqual:
-		return "less_equal"
-	case greaterThanEqual:
-		return "greater_equal"
-	case equal:
-		return "equal"
-	case notEqual:
-		return "not_equal"
-	default:
-		return "greater"
-	}
-}
-
 func buildRelativeBlock(rule cloudhub.AlertGroupRule) string {
 	shift := strings.TrimSpace(rule.TriggerValues.Shift)
 	if shift == "" {
@@ -609,91 +587,103 @@ func formatPauseDuration(secs int) string {
 	return fmt.Sprintf("%ds", secs)
 }
 
-// buildOccurrenceLambda picks the most permissive enabled condition's threshold
-// expression to use as the stateCount lambda. For `greater`/`greater_equal` ops
-// the lowest value is most permissive; for `less`/`less_equal` the highest.
-// Returns empty when no enabled condition exists.
+// buildOccurrenceLambda returns the stateCount guard. When every enabled
+// condition uses the same range direction, it keeps the compact historic
+// "most permissive threshold" form; mixed operators are represented as ORs.
 func buildOccurrenceLambda(rule cloudhub.AlertGroupRule) string {
-	var best float64
-	has := false
+	var enabled []cloudhub.AlertRuleCondition
 	for _, c := range rule.Conditions {
 		if !c.Enabled {
 			continue
 		}
-		if !has {
-			best = c.Value
-			has = true
-			continue
-		}
-		switch rule.TriggerOperator {
-		case "less", "less_equal":
-			if c.Value > best {
-				best = c.Value
-			}
-		default: // greater, greater_equal, equal, not_equal
-			if c.Value < best {
-				best = c.Value
-			}
-		}
+		c.Operator = conditionOperator(c)
+		enabled = append(enabled, c)
 	}
-	if !has {
+	if len(enabled) == 0 {
 		return ""
 	}
-	return buildThresholdExpr(rule.Field, rule.TriggerOperator, best)
+
+	firstOp := enabled[0].Operator
+	allSame := true
+	for _, c := range enabled[1:] {
+		if c.Operator != firstOp {
+			allSame = false
+			break
+		}
+	}
+	if allSame {
+		best := enabled[0].Value
+		for _, c := range enabled[1:] {
+			switch firstOp {
+			case cloudhub.AlertConditionOperatorLess, cloudhub.AlertConditionOperatorLessEqual:
+				if c.Value > best {
+					best = c.Value
+				}
+			default:
+				if c.Value < best {
+					best = c.Value
+				}
+			}
+		}
+		return buildThresholdExpr(rule.Field, firstOp, best)
+	}
+
+	parts := make([]string, 0, len(enabled))
+	for _, c := range enabled {
+		parts = append(parts, buildThresholdExpr(rule.Field, c.Operator, c.Value))
+	}
+	return strings.Join(parts, " OR ")
+}
+
+func conditionOperator(c cloudhub.AlertRuleCondition) string {
+	return cloudhub.NormalizeAlertConditionOperator(c.Operator)
+}
+
+func conditionByLevel(conditions []cloudhub.AlertRuleCondition, level string) (cloudhub.AlertRuleCondition, bool) {
+	for _, c := range conditions {
+		if c.Enabled && c.Level == level {
+			c.Operator = conditionOperator(c)
+			return c, true
+		}
+	}
+	return cloudhub.AlertRuleCondition{}, false
+}
+
+func appendHigherSeverityGuards(expr, field string, conditions ...cloudhub.AlertRuleCondition) string {
+	for _, c := range conditions {
+		expr += " AND " + buildThresholdExpr(field, inverseOperator(c.Operator), c.Value)
+	}
+	return expr
 }
 
 // buildExclusiveLambdas returns level-exclusive lambdas for the email branches
 // so a value matching multiple thresholds only fires the highest-severity email
 // branch. Uses range comparisons (inverse-operator on higher-severity thresholds)
 // rather than NOT (...) since Kapacitor's lambda parser rejects the latter.
-//
-// Examples (greater operator, info=30 warn=60 crit=90):
-//
-//	CRIT: "v" > 90
-//	WARN: "v" > 60 AND "v" <= 90
-//	INFO: "v" > 30 AND "v" <= 60 AND "v" <= 90
-//
-// CRIT lambda is unchanged (top severity). WARN/INFO are anchored by `<=` to the
-// higher thresholds (or `>=` when the rule operator is `less` / `less_equal`).
 func buildExclusiveLambdas(rule cloudhub.AlertGroupRule) (eInfo, eWarn, eCrit string) {
-	var infoVal, warnVal, critVal float64
-	var hasInfo, hasWarn, hasCrit bool
-	for _, c := range rule.Conditions {
-		if !c.Enabled {
-			continue
-		}
-		switch c.Level {
-		case "info":
-			infoVal, hasInfo = c.Value, true
-		case "warning":
-			warnVal, hasWarn = c.Value, true
-		case "critical":
-			critVal, hasCrit = c.Value, true
-		}
-	}
-
-	op := rule.TriggerOperator
-	inv := inverseOperator(op)
+	info, hasInfo := conditionByLevel(rule.Conditions, "info")
+	warn, hasWarn := conditionByLevel(rule.Conditions, "warning")
+	crit, hasCrit := conditionByLevel(rule.Conditions, "critical")
 
 	if hasCrit {
-		eCrit = buildThresholdExpr(rule.Field, op, critVal)
+		eCrit = buildThresholdExpr(rule.Field, crit.Operator, crit.Value)
 	}
 	if hasWarn {
-		expr := buildThresholdExpr(rule.Field, op, warnVal)
+		eWarn = buildThresholdExpr(rule.Field, warn.Operator, warn.Value)
 		if hasCrit {
-			expr += " AND " + buildThresholdExpr(rule.Field, inv, critVal)
+			eWarn = appendHigherSeverityGuards(eWarn, rule.Field, crit)
 		}
-		eWarn = expr
 	}
 	if hasInfo {
-		expr := buildThresholdExpr(rule.Field, op, infoVal)
+		eInfo = buildThresholdExpr(rule.Field, info.Operator, info.Value)
+		var higher []cloudhub.AlertRuleCondition
 		if hasWarn {
-			expr += " AND " + buildThresholdExpr(rule.Field, inv, warnVal)
+			higher = append(higher, warn)
 		}
 		if hasCrit {
-			expr += " AND " + buildThresholdExpr(rule.Field, inv, critVal)
+			higher = append(higher, crit)
 		}
-		eInfo = expr
+		eInfo = appendHigherSeverityGuards(eInfo, rule.Field, higher...)
 	}
 	return
 }
@@ -703,20 +693,20 @@ func buildExclusiveLambdas(rule cloudhub.AlertGroupRule) (eInfo, eWarn, eCrit st
 // Examples: greater ↔ less_equal; less_equal ↔ greater.
 func inverseOperator(op string) string {
 	switch op {
-	case "greater":
-		return "less_equal"
-	case "greater_equal":
-		return "less"
-	case "less":
-		return "greater_equal"
-	case "less_equal":
-		return "greater"
-	case "equal":
-		return "not_equal"
-	case "not_equal":
-		return "equal"
+	case cloudhub.AlertConditionOperatorGreater:
+		return cloudhub.AlertConditionOperatorLessEqual
+	case cloudhub.AlertConditionOperatorGreaterEqual:
+		return cloudhub.AlertConditionOperatorLess
+	case cloudhub.AlertConditionOperatorLess:
+		return cloudhub.AlertConditionOperatorGreaterEqual
+	case cloudhub.AlertConditionOperatorLessEqual:
+		return cloudhub.AlertConditionOperatorGreater
+	case cloudhub.AlertConditionOperatorEqual:
+		return cloudhub.AlertConditionOperatorNotEqual
+	case cloudhub.AlertConditionOperatorNotEqual:
+		return cloudhub.AlertConditionOperatorEqual
 	}
-	return op
+	return cloudhub.AlertConditionOperatorGreater
 }
 
 // unionRecipients merges info/warn/crit lists into a single dedup'd list,
@@ -743,12 +733,12 @@ func unionRecipients(r AlertRecipients) []string {
 // buildThresholdExpr returns a TICKscript lambda expression string.
 func buildThresholdExpr(field, operator string, value float64) string {
 	op := map[string]string{
-		"greater":       ">",
-		"less":          "<",
-		"equal":         "==",
-		"not_equal":     "!=",
-		"greater_equal": ">=",
-		"less_equal":    "<=",
+		cloudhub.AlertConditionOperatorGreater:      ">",
+		cloudhub.AlertConditionOperatorLess:         "<",
+		cloudhub.AlertConditionOperatorEqual:        "==",
+		cloudhub.AlertConditionOperatorNotEqual:     "!=",
+		cloudhub.AlertConditionOperatorGreaterEqual: ">=",
+		cloudhub.AlertConditionOperatorLessEqual:    "<=",
 	}[operator]
 	if op == "" {
 		op = ">"

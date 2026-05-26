@@ -351,6 +351,7 @@ func (s *Service) OrganizationNewUser(w http.ResponseWriter, r *http.Request) {
 		Provider: req.Provider,
 		Scheme:   req.Scheme,
 		Roles:    vRoles,
+		Email:    req.Email,
 	}
 	if cfg.Auth.SuperAdminNewUsers {
 		req.SuperAdmin = true
