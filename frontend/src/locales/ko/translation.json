@@ -75,7 +75,11 @@
     "not_in_use": "사용 안함",
     "delete": "삭제",
     "delete_success": "이벤트 그룹 규칙을 삭제했습니다.",
-    "delete_failed": "이벤트 그룹 규칙 삭제에 실패했습니다."
+    "delete_failed": "이벤트 그룹 규칙 삭제에 실패했습니다.",
+    "trigger": "조건 방식",
+    "pct_change": "변화율",
+    "amt_change": "변화량",
+    "update_failed": "상태 변경에 실패했습니다."
   },
   "button": {
     "edit": "수정",
@@ -133,8 +137,8 @@
     "occ_recent": "최근",
     "occ_occurrences": "회 발생",
     "value_input": "값 입력",
-    "alert_type": "Alert Type",
-    "choose_one": "Choose One:",
+    "alert_type": "조건 방식",
+    "choose_one": "선택:",
     "threshold": "Threshold",
     "relative": "Relative",
     "deadman": "Deadman",

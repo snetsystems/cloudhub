@@ -75,7 +75,11 @@
     "not_in_use": "Not in Use",
     "delete": "Delete",
     "delete_success": "Alert group rule deleted successfully.",
-    "delete_failed": "Failed to delete alert group rule."
+    "delete_failed": "Failed to delete alert group rule.",
+    "trigger": "Trigger Type",
+    "pct_change": "% change",
+    "amt_change": "change",
+    "update_failed": "Failed to update state."
   },
   "button": {
     "edit": "Edit",

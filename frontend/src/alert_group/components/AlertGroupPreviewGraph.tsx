@@ -6,6 +6,8 @@ import {withTranslation, WithTranslation} from 'react-i18next'
 
 import TimeSeries from 'src/shared/components/time_series/TimeSeries'
 import RuleGraphDygraph from 'src/kapacitor/components/RuleGraphDygraph'
+import Dropdown from 'src/shared/components/Dropdown'
+import {timeRanges} from 'src/shared/data/timeRanges'
 import buildQueries from 'src/utils/buildQueriesForGraphs'
 import {setHoverTime as setHoverTimeAction} from 'src/dashboards/actions'
 import {
@@ -99,8 +101,39 @@ const countViolations = (
   return count
 }
 
-class AlertGroupPreviewGraph extends PureComponent<Props> {
+const previewTimeRanges = [
+  ...timeRanges.filter(range => range.seconds <= 10800),
+  {
+    defaultGroupBy: '1m',
+    seconds: 10800,
+    inputValue: 'Past 3h',
+    lower: 'now() - 3h',
+    lowerFlux: '-3h',
+    upper: null,
+    menuOption: 'Past 3h',
+  },
+]
+
+interface State {
+  timeRange: TimeRange
+}
+
+class AlertGroupPreviewGraph extends PureComponent<Props, State> {
   private readonly instanceUuid = uuid.v4()
+
+  public state: State = {
+    timeRange: this.props.timeRange,
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps.timeRange !== this.props.timeRange) {
+      this.setState({timeRange: this.props.timeRange})
+    }
+  }
+
+  private handleChooseTimeRange = (item: any): void => {
+    this.setState({timeRange: item.value})
+  }
 
   private get dygraphShellStyle(): CSSProperties {
     return {height: '100%'}
@@ -144,12 +177,22 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
   }
 
   public render() {
-    const {measurement, field, conditions, timeRange, source, t} = this.props
+    const {measurement, field, conditions, source, t} = this.props
+    const {timeRange} = this.state
     const ready = !!(measurement && field)
     const queries = ready ? buildQueries([this.queryConfig], timeRange) : []
     const enabledConditions = ready
       ? conditions.filter(c => c.enabled && c.value !== '')
       : []
+
+    const dropdownItems = previewTimeRanges.map(range => ({
+      text: range.menuOption,
+      value: range,
+    }))
+    const selectedRange = previewTimeRanges.find(
+      r => r.lower === timeRange.lower
+    )
+    const selectedLabel = selectedRange ? selectedRange.menuOption : 'Custom'
 
     const previewRuleValues = ready
       ? buildAlertGroupPreviewRuleValues(conditions)
@@ -246,11 +289,14 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
                           {enabledConditions.map((condition, i) => {
                             const count = violationCounts[condition.level] || 0
                             const isLast = i === enabledConditions.length - 1
-                            const levelLabel = LEVEL_LABELS[condition.level]
+                            const levelLabel = t(
+                              `server_alert.${condition.level}`,
+                              LEVEL_LABELS[condition.level]
+                            )
                             return (
                               <React.Fragment key={condition.level}>
                                 <span className="alert-group-preview-graph--violation-item">
-                                  {levelLabel}{' '}
+                                  {levelLabel}
                                   <span
                                     className={`alert-group-preview-graph--violation-count alert-group-preview-graph--violation-count__${condition.level}`}
                                   >
@@ -271,6 +317,17 @@ class AlertGroupPreviewGraph extends PureComponent<Props> {
                   )}
 
                   <div className="alert-group-preview-graph--chart">
+                    <div className="rule-builder--graph-options">
+                      <p>Preview Data from</p>
+                      <Dropdown
+                        items={dropdownItems}
+                        onChoose={this.handleChooseTimeRange}
+                        selected={selectedLabel}
+                        buttonColor="btn-default"
+                        buttonSize="btn-sm"
+                        menuWidth="120px"
+                      />
+                    </div>
                     <div className="alert-group-preview-graph--graph-shell">
                       {loading === RemoteDataState.Loading ? (
                         <div className="alert-group-preview-graph--loading">

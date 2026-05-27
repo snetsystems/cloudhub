@@ -86,3 +86,14 @@
   overflow: auto;
   max-height: 600px;
 }
+
+.server-alert-trigger-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.server-alert-trigger-sub {
+  font-size: 11px;
+  color: $g10-wolf;
+  margin-top: 2px;
+}

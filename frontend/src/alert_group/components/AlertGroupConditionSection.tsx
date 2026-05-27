@@ -2,7 +2,7 @@
 import React, {PureComponent} from 'react'
 import uuid from 'uuid'
 import _ from 'lodash'
-import {withTranslation, WithTranslation} from 'react-i18next'
+import {withTranslation, WithTranslation, TFunction} from 'react-i18next'
 import {
   ComponentColor,
   ComponentSize,
@@ -35,8 +35,8 @@ import {
 import {
   AlertGroupRule,
   AlertTemplate,
-  TRIGGER_OPERATORS,
-  PAUSE_SECONDS_OPTIONS,
+  getTriggerOperators,
+  getPauseSecondsOptions,
 } from 'src/alert_group/types'
 import {findSelectedAlertTemplate} from 'src/alert_group/utils/alertTemplates'
 
@@ -112,7 +112,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
   private readonly instanceId = uuid.v4()
 
-  private getRelativeOperatorOptions = (t: any) => [
+  private getRelativeOperatorOptions = (t: TFunction) => [
     {label: t('alert_group_rule.op_gt'), value: 'greater than'},
     {label: t('alert_group_rule.op_gte'), value: 'equal to or greater'},
     {label: t('alert_group_rule.op_lt'), value: 'less than'},
@@ -121,41 +121,14 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     {label: t('alert_group_rule.op_neq'), value: 'not equal to'},
   ]
 
-  private getChangesOptions = (t: any) => [
+  private getChangesOptions = (t: TFunction) => [
     {label: t('alert_group_rule.opt_change'), value: 'change'},
     {label: t('alert_group_rule.opt_pct_change'), value: '% change'},
   ]
 
-  private getTranslatedConditionOperators = (t: any) =>
-    TRIGGER_OPERATORS.map(o => {
-      const tKeyMap: Record<string, string> = {
-        greater: 'op_gt',
-        greater_equal: 'op_gte',
-        less: 'op_lt',
-        less_equal: 'op_lte',
-        equal: 'op_eq',
-        not_equal: 'op_neq',
-      }
-      return {
-        label: t(`alert_group_rule.${tKeyMap[o.value] || o.value}`),
-        value: o.value,
-      }
-    })
+  private getTranslatedConditionOperators = (t: TFunction) => getTriggerOperators(t)
 
-  private getTranslatedPauseOptions = (t: any) =>
-    PAUSE_SECONDS_OPTIONS.map(o => {
-      const tKeyMap: Record<number, string> = {
-        0: 'do_not_use',
-        300: 'pause_300',
-        600: 'pause_600',
-        1800: 'pause_1800',
-        3600: 'pause_3600',
-      }
-      return {
-        label: t(`alert_group_rule.${tKeyMap[o.value] || o.value}`),
-        value: o.value,
-      }
-    })
+  private getTranslatedPauseOptions = (t: TFunction) => getPauseSecondsOptions(t)
 
   constructor(props: Props) {
     super(props)
@@ -348,19 +321,34 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   private handleTriggerTypeChange = (
     trigger: 'threshold' | 'relative' | 'deadman'
   ) => {
+    const {rule, onUpdateRule} = this.props
+    const defaultValues = {
+      change: 'change',
+      shift: '1m',
+      period: '10m',
+      ...(rule.values || {}),
+    }
+
     // Deadman is meaningful only on Kapacitor stream tasks (matches legacy TICK generation).
     if (trigger === 'deadman') {
-      this.props.onUpdateRule({trigger, taskType: 'stream'})
+      onUpdateRule({
+        trigger,
+        taskType: 'stream',
+        values: defaultValues,
+      })
       return
     }
-    this.props.onUpdateRule({trigger})
+    onUpdateRule({
+      trigger,
+      values: defaultValues,
+    })
   }
 
   private handleTriggerValueChange = (key: string, value: string) => {
     const {rule, onUpdateRule} = this.props
     onUpdateRule({
-      triggerValues: {
-        ...(rule.triggerValues || {}),
+      values: {
+        ...(rule.values || {}),
         [key]: value,
       },
     })
@@ -520,7 +508,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     </span>
                     <Dropdown
                       menuWidth="80px"
-                      selected={rule.triggerValues?.shift || '1m'}
+                      selected={rule.values?.shift || '1m'}
                       onChoose={(item: any) =>
                         this.handleTriggerValueChange('shift', item.value)
                       }
@@ -536,7 +524,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       selected={
                         this.getChangesOptions(t).find(
                           o =>
-                            o.value === (rule.triggerValues?.change || 'change')
+                            o.value === (rule.values?.change || 'change')
                         )?.label || 'change'
                       }
                       onChoose={(item: any) =>
@@ -561,8 +549,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       )
                       const selectedOperator =
                         cond.operator ||
-                        rule.triggerValues?.operator ||
-                        'greater than'
+                        'greater'
                       const selectedOpObj = relativeOpOptions.find(
                         o => o.value === selectedOperator
                       )
@@ -594,7 +581,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                 selected={
                                   selectedOpObj
                                     ? selectedOpObj.label
-                                    : selectedOperator
+                                    : relativeOpOptions[0].label
                                 }
                                 onChoose={(item: any) =>
                                   this.handleConditionOperator(idx, item.value)
@@ -622,7 +609,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                   )}
                                 />
                               </div>
-                              {rule.triggerValues?.change === '% change' && (
+                              {rule.values?.change === '% change' && (
                                 <span className="alert-group-condition-text-light">
                                   %
                                 </span>
@@ -648,7 +635,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     </span>
                     <Dropdown
                       menuWidth="60px"
-                      selected={rule.triggerValues?.period || '1m'}
+                      selected={rule.values?.period || '1m'}
                       onChoose={(item: any) =>
                         this.handleTriggerValueChange('period', item.value)
                       }
@@ -876,7 +863,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       </span>
                       <Dropdown
                         menuWidth="60px"
-                        selected={rule.triggerValues?.shift || '1m'}
+                        selected={rule.values?.shift || '1m'}
                         onChoose={(item: any) =>
                           this.handleTriggerValueChange('shift', item.value)
                         }
@@ -893,7 +880,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                           this.getChangesOptions(t).find(
                             o =>
                               o.value ===
-                              (rule.triggerValues?.change || 'change')
+                              (rule.values?.change || 'change')
                           )?.label || 'change'
                         }
                         onChoose={(item: any) =>
@@ -918,8 +905,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         )
                         const selectedOperator =
                           cond.operator ||
-                          rule.triggerValues?.operator ||
-                          'greater than'
+                          'greater'
                         const selectedOpObj = relativeOpOptions.find(
                           o => o.value === selectedOperator
                         )
@@ -951,7 +937,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                   selected={
                                     selectedOpObj
                                       ? selectedOpObj.label
-                                      : selectedOperator
+                                      : relativeOpOptions[0].label
                                   }
                                   onChoose={(item: any) =>
                                     this.handleConditionOperator(
@@ -982,7 +968,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                     )}
                                   />
                                 </div>
-                                {rule.triggerValues?.change === '% change' && (
+                                {rule.values?.change === '% change' && (
                                   <span className="alert-group-condition-text-light">
                                     %
                                   </span>
@@ -1008,7 +994,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       </span>
                       <Dropdown
                         menuWidth="80px"
-                        selected={rule.triggerValues?.period || '10m'}
+                        selected={rule.values?.period || '10m'}
                         onChoose={(item: any) =>
                           this.handleTriggerValueChange('period', item.value)
                         }

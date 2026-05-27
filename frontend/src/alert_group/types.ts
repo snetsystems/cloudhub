@@ -1,3 +1,5 @@
+import {TFunction} from 'react-i18next'
+
 export type AlertConditionOperator =
   | 'greater'
   | 'greater_equal'
@@ -11,13 +13,6 @@ export interface AlertCondition {
   value: string
   operator?: AlertConditionOperator
   enabled: boolean
-  operator?:
-    | 'greater'
-    | 'greater_equal'
-    | 'less'
-    | 'less_equal'
-    | 'equal'
-    | 'not_equal'
 }
 
 // DerivativeConfig — when enabled, the backend tickscript inserts
@@ -55,18 +50,9 @@ export interface AlertGroupRule {
   notifyRecovery: boolean
   message: string
   trigger: 'threshold' | 'relative' | 'deadman'
-  triggerValues?: {
-    change?: string
-    shift?: string
-    operator?: string
-    value?: string
-    period?: string
-  }
   values?: {
     change?: string
     shift?: string
-    operator?: string
-    value?: string
     period?: string
   }
   active: boolean
@@ -243,11 +229,9 @@ export const DEFAULT_RULE: AlertGroupRule = {
     {level: 'info', value: '', enabled: false, operator: 'greater'},
   ],
   trigger: 'threshold',
-  triggerValues: {
+  values: {
     change: 'change',
     shift: '1m',
-    operator: 'greater than',
-    value: '',
     period: '10m',
   },
   taskType: 'stream',
@@ -279,7 +263,7 @@ export interface AlertTemplate {
   derivative?: DerivativeConfig
   eval?: EvalConfig
   trigger?: 'threshold' | 'relative' | 'deadman'
-  values?: AlertGroupRule['triggerValues']
+  values?: AlertGroupRule['values']
   taskType: string
   every: string
   occurrenceType: AlertGroupRule['occurrenceType']
@@ -292,19 +276,19 @@ export interface AlertTemplate {
   conditions?: AlertCondition[]
 }
 
-export const TRIGGER_OPERATORS = [
-  {label: '초과 (>)', value: 'greater'},
-  {label: '이상 (>=)', value: 'greater_equal'},
-  {label: '미만 (<)', value: 'less'},
-  {label: '이하 (<=)', value: 'less_equal'},
-  {label: '같음 (=)', value: 'equal'},
-  {label: '다름 (!=)', value: 'not_equal'},
+export const getTriggerOperators = (t: TFunction) => [
+  {label: t('alert_group_rule.op_gt', '초과 (>)'), value: 'greater'},
+  {label: t('alert_group_rule.op_gte', '이상 (>=)'), value: 'greater_equal'},
+  {label: t('alert_group_rule.op_lt', '미만 (<)'), value: 'less'},
+  {label: t('alert_group_rule.op_lte', '이하 (<=)'), value: 'less_equal'},
+  {label: t('alert_group_rule.op_eq', '같음 (=)'), value: 'equal'},
+  {label: t('alert_group_rule.op_neq', '다름 (!=)'), value: 'not_equal'},
 ]
 
-export const PAUSE_SECONDS_OPTIONS = [
-  {label: '사용 안 함', value: 0},
-  {label: '5분', value: 300},
-  {label: '10분', value: 600},
-  {label: '30분', value: 1800},
-  {label: '1시간', value: 3600},
+export const getPauseSecondsOptions = (t: TFunction) => [
+  {label: t('alert_group_rule.do_not_use', '사용 안 함'), value: 0},
+  {label: t('alert_group_rule.pause_300', '5분'), value: 300},
+  {label: t('alert_group_rule.pause_600', '10분'), value: 600},
+  {label: t('alert_group_rule.pause_1800', '30분'), value: 1800},
+  {label: t('alert_group_rule.pause_3600', '1시간'), value: 3600},
 ]

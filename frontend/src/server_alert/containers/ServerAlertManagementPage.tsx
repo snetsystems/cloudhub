@@ -24,6 +24,28 @@ import {
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 
+const OPERATOR_SYMBOLS: Record<string, string> = {
+  greater: '>',
+  greater_equal: '>=',
+  less: '<',
+  less_equal: '<=',
+  equal: '=',
+  not_equal: '!=',
+  'greater than': '>',
+  'equal to or greater': '>=',
+  'less than': '<',
+  'equal to or less than': '<=',
+  'equal to': '=',
+  'not equal to': '!=',
+}
+
+const getOperatorSymbol = (op: string): string => {
+  if (!op) {
+    return ''
+  }
+  return OPERATOR_SYMBOLS[op] || op
+}
+
 function ServerAlertManagementPage({router, location, notify}: any) {
   const {t} = useTranslation()
   const [data, setData] = useState<AlertGroupRule[]>([])
@@ -189,6 +211,63 @@ function ServerAlertManagementPage({router, location, notify}: any) {
         name: t('server_alert.event_name', '이벤트 이름'),
       },
       {
+        key: 'trigger',
+        name: t('server_alert.trigger', '조건 방식'),
+        render: (_value: any, row: AlertGroupRule) => {
+          const trigger = row.trigger || 'threshold'
+          const values = row.values
+
+          if (trigger === 'threshold') {
+            return (
+              <div className="server-alert-trigger-cell">
+                <span className="server-alert-trigger-main">
+                  {t('alert_group_rule.threshold', 'Threshold')}
+                </span>
+              </div>
+            )
+          }
+
+          if (trigger === 'relative') {
+            const shift = values?.shift || ''
+            const changeVal = values?.change || 'change'
+            const changeText =
+              changeVal === '% change'
+                ? t('server_alert.pct_change', '변화율')
+                : t('server_alert.amt_change', '변화량')
+            const optionText = shift ? `${shift} ${changeText}` : `${changeText}`
+
+            return (
+              <div className="server-alert-trigger-cell">
+                <span className="server-alert-trigger-main">
+                  {t('alert_group_rule.relative', 'Relative')}
+                </span>
+                <span className="server-alert-trigger-sub">
+                  {optionText}
+                </span>
+              </div>
+            )
+          }
+
+          if (trigger === 'deadman') {
+            const period = values?.period || ''
+            return (
+              <div className="server-alert-trigger-cell">
+                <span className="server-alert-trigger-main">
+                  {t('alert_group_rule.deadman', 'Deadman')}
+                </span>
+                {period && (
+                  <span className="server-alert-trigger-sub">
+                    {period}
+                  </span>
+                )}
+              </div>
+            )
+          }
+
+          return <span>-</span>
+        },
+      },
+      {
         key: 'conditions',
         name: t('server_alert.rule', '규칙'),
         render: (value: AlertCondition[], row: AlertGroupRule) => {
@@ -210,12 +289,12 @@ function ServerAlertManagementPage({router, location, notify}: any) {
               </span>
               {critical && (
                 <span className="server-alert-rule-critical">
-                  ● Critical {row.triggerOperator} {critical.value}
+                  ● Critical {getOperatorSymbol(critical.operator)} {critical.value}
                 </span>
               )}
               {warning && (
                 <span className="server-alert-rule-warning">
-                  ● Warning {row.triggerOperator} {warning.value}
+                  ● Warning {getOperatorSymbol(warning.operator)} {warning.value}
                 </span>
               )}
             </div>

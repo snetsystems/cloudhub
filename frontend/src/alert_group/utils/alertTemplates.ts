@@ -39,6 +39,22 @@ export const applyAlertTemplateToRule = (
     },
   }
 
+  const nextTrigger = template.trigger || 'threshold'
+  let nextConditions =
+    template.conditions && template.conditions.length > 0
+      ? template.conditions.map(condition => ({
+          ...condition,
+          operator: condition.operator || 'greater',
+        }))
+      : rule.conditions
+
+  if (nextTrigger === 'deadman') {
+    nextConditions = nextConditions.map(condition => ({
+      ...condition,
+      enabled: false,
+    }))
+  }
+
   return {
     ...rule,
     database: template.database || rule.database,
@@ -47,8 +63,14 @@ export const applyAlertTemplateToRule = (
     field: template.field,
     derivative: template.derivative,
     eval: template.eval,
-    trigger: template.trigger || 'threshold',
-    triggerValues: template.values || rule.triggerValues,
+    trigger: nextTrigger,
+    values: {
+      change: 'change',
+      shift: '1m',
+      period: '10m',
+      ...rule.values,
+      ...(template.values || {}),
+    },
     taskType: template.taskType,
     every: template.every,
     occurrenceType: template.occurrenceType,
@@ -57,13 +79,7 @@ export const applyAlertTemplateToRule = (
     pauseSeconds: template.pauseSeconds,
     notifyRecovery: template.notifyRecovery,
     message: template.message,
-    conditions:
-      template.conditions && template.conditions.length > 0
-        ? template.conditions.map(condition => ({
-            ...condition,
-            operator: condition.operator || 'greater',
-          }))
-        : rule.conditions,
+    conditions: nextConditions,
     eventHandlers: [...nonEmailHandlers, nextEmailHandler],
   }
 }

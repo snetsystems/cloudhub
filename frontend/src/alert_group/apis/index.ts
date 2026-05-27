@@ -41,8 +41,10 @@ const normalizeAlertGroupRule = (
   return {
     ...DEFAULT_RULE,
     ...(rule || {}),
-    triggerValues:
-      rule?.triggerValues || rule?.values || DEFAULT_RULE.triggerValues,
+    values: {
+      ...DEFAULT_RULE.values,
+      ...(rule?.values || {}),
+    },
     conditions: Array.isArray(rule?.conditions)
       ? rule.conditions.map(condition => ({
           ...condition,
@@ -84,12 +86,26 @@ const toAlertRuleEventHandlers = (rule: AlertGroupRule) => {
 }
 
 const toAlertGroupRuleRequest = (rule: AlertGroupRule) => {
-  const {recipientGroupIds, eventHandlers, triggerValues, ...rest} = rule
+  const {recipientGroupIds, eventHandlers, ...rest} = rule
+
+  let cleanedValues: AlertGroupRule['values'] = {}
+  if (rule.trigger === 'relative') {
+    cleanedValues = {
+      change: rule.values?.change || 'change',
+      shift: rule.values?.shift || '1m',
+    }
+  } else if (rule.trigger === 'deadman') {
+    cleanedValues = {
+      period: rule.values?.period || '10m',
+    }
+  } else {
+    cleanedValues = {}
+  }
 
   return {
     ...rest,
+    values: cleanedValues,
     eventHandlers: toAlertRuleEventHandlers(rule),
-    values: triggerValues,
     conditions: (rule.conditions || []).map(condition => ({
       ...condition,
       value: Number(condition.value),

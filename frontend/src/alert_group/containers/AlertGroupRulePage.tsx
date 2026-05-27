@@ -195,8 +195,9 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         })
       }
     } catch (e) {
+      const {t} = this.props
       this.setState({loading: RemoteDataState.Error})
-      this.props.notify(notifyError('데이터를 불러오는 데 실패했습니다.'))
+      this.props.notify(notifyError(t('alert_group_rule.noti_load_fail', '데이터를 불러오는 데 실패했습니다.')))
       const {source, router} = this.props
       if (source && source.id) {
         router.push(`/sources/${source.id}/server-monitoring/server-alert`)
@@ -263,13 +264,14 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
 
     // Disabled templates (measurement not in source) should not apply.
     const {availableMeasurements} = this.state
+    const {t} = this.props
     if (
       availableMeasurements.size > 0 &&
       !availableMeasurements.has(template.measurement)
     ) {
       this.props.notify(
         notifyError(
-          `이 알람을 사용하려면 '${template.measurement}' 데이터 수집이 필요합니다.`
+          t('alert_group_rule.noti_measurement_required', '이 알람을 사용하려면 \'{{measurement}}\' 데이터 수집이 필요합니다.', {measurement: template.measurement})
         )
       )
       return
@@ -295,19 +297,19 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
 
     // 필수 입력 및 정합성 검사
     if (!rule.name || !rule.name.trim()) {
-      notify(notifyError('이벤트 그룹 규칙 이름을 입력해주세요.'))
+      notify(notifyError(t('alert_group_rule.noti_enter_name', '이벤트 그룹 규칙 이름을 입력해주세요.')))
       return
     }
     if (!rule.database) {
-      notify(notifyError('데이터베이스를 선택해주세요.'))
+      notify(notifyError(t('alert_group_rule.noti_select_db', '데이터베이스를 선택해주세요.')))
       return
     }
     if (!rule.measurement) {
-      notify(notifyError('측정 대상(Measurement)을 선택해주세요.'))
+      notify(notifyError(t('alert_group_rule.noti_select_measurement', '측정 대상(Measurement)을 선택해주세요.')))
       return
     }
     if (!rule.field) {
-      notify(notifyError('필드(Field)를 선택해주세요.'))
+      notify(notifyError(t('alert_group_rule.noti_select_field', '필드(Field)를 선택해주세요.')))
       return
     }
 
@@ -346,13 +348,13 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         if (h.type === 'tcp') {
           const address = (cfg.address as string) || ''
           if (!address.trim()) {
-            notify(notifyError('TCP 주소를 입력해주세요.'))
+            notify(notifyError(t('alert_group_rule.noti_enter_tcp_address', 'TCP 주소를 입력해주세요.')))
             return
           }
         } else if (h.type === 'webhook') {
           const url = (cfg.url as string) || ''
           if (!url.trim()) {
-            notify(notifyError('Webhook URL을 입력해주세요.'))
+            notify(notifyError(t('alert_group_rule.noti_enter_webhook_url', 'Webhook URL을 입력해주세요.')))
             return
           }
         } else if (h.type === 'exec') {
@@ -362,13 +364,13 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
             command.length === 0 ||
             command.every(c => !c.trim())
           ) {
-            notify(notifyError('실행 명령어를 입력해주세요.'))
+            notify(notifyError(t('alert_group_rule.noti_enter_command', '실행 명령어를 입력해주세요.')))
             return
           }
         } else if (h.type === 'log') {
           const filePath = (cfg.filePath as string) || ''
           if (!filePath.trim()) {
-            notify(notifyError('로그 파일 경로를 입력해주세요.'))
+            notify(notifyError(t('alert_group_rule.noti_enter_log_path', '로그 파일 경로를 입력해주세요.')))
             return
           }
         } else if (h.type === 'slack') {
@@ -376,7 +378,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           const channel = (cfg.channel as string) || ''
           if (!workspace.trim() || !channel.trim()) {
             notify(
-              notifyError('Slack 워크스페이스와 채널을 모두 입력해주세요.')
+              notifyError(t('alert_group_rule.noti_enter_slack_info', 'Slack 워크스페이스와 채널을 모두 입력해주세요.'))
             )
             return
           }
@@ -384,26 +386,37 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           const cluster = (cfg.cluster as string) || ''
           const topic = (cfg['kafka-topic'] as string) || ''
           if (!cluster.trim() || !topic.trim()) {
-            notify(notifyError('Kafka 클러스터와 토픽을 모두 입력해주세요.'))
+            notify(notifyError(t('alert_group_rule.noti_enter_kafka_info', 'Kafka 클러스터와 토픽을 모두 입력해주세요.')))
             return
           }
         } else if (h.type === 'telegram') {
           const chatId = (cfg.chatId as string) || ''
           if (!chatId.trim()) {
-            notify(notifyError('Telegram Chat ID를 입력해주세요.'))
+            notify(notifyError(t('alert_group_rule.noti_enter_telegram_chat_id', 'Telegram Chat ID를 입력해주세요.')))
             return
           }
         }
       }
     }
 
+    const ruleToSave =
+      rule.trigger === 'deadman'
+        ? {
+            ...rule,
+            conditions: (rule.conditions || []).map(c => ({
+              ...c,
+              enabled: false,
+            })),
+          }
+        : rule
+
     this.setState({isSaving: true})
 
     try {
       if (this.isNew) {
-        await createAlertGroupRule(rule)
+        await createAlertGroupRule(ruleToSave)
       } else {
-        await updateAlertGroupRule(this.ruleId!, rule)
+        await updateAlertGroupRule(this.ruleId!, ruleToSave)
       }
 
       const returnTo = (this.props.location.state as any)?.returnTo
@@ -414,7 +427,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       }
     } catch (e) {
       notify(
-        notifyError(this.getRequestErrorMessage(e, '저장에 실패했습니다.'))
+        notifyError(this.getRequestErrorMessage(e, t('alert_group_rule.noti_save_fail', '저장에 실패했습니다.')))
       )
       this.setState({isSaving: false})
     }
@@ -483,12 +496,14 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     const {notify} = this.props
     const {testTitle, testMessage, testUserGroupIds} = this.state
 
+    const {t} = this.props
+
     if (!testTitle) {
-      notify(notifyError('테스트 제목을 입력해주세요.'))
+      notify(notifyError(t('alert_group_rule.noti_enter_test_title', '테스트 제목을 입력해주세요.')))
       return
     }
     if (!testMessage) {
-      notify(notifyError('테스트 메시지를 입력해주세요.'))
+      notify(notifyError(t('alert_group_rule.noti_enter_test_message', '테스트 메시지를 입력해주세요.')))
       return
     }
 
@@ -502,13 +517,13 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       })
 
       notify(
-        notifySuccess(`${result.sentCount}건의 테스트 알림을 전송했습니다.`)
+        notifySuccess(t('alert_group_rule.noti_test_sent_count', '{{count}}건의 테스트 알림을 전송했습니다.', {count: result.sentCount}))
       )
       this.setState({isTestModalOpen: false, isTestingSend: false})
     } catch (e) {
       notify(
         notifyError(
-          this.getRequestErrorMessage(e, '테스트 발송에 실패했습니다.')
+          this.getRequestErrorMessage(e, t('alert_group_rule.noti_test_send_fail', '테스트 발송에 실패했습니다.'))
         )
       )
       this.setState({isTestingSend: false})
@@ -603,7 +618,9 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                     retentionPolicy={rule.retentionPolicy}
                     measurement={rule.measurement}
                     field={rule.field}
-                    conditions={rule.conditions}
+                    conditions={
+                      rule.trigger === 'deadman' ? [] : rule.conditions
+                    }
                     timeRange={DEFAULT_TIME_RANGE}
                   />
                 </AlertGroupConditionSection>
