@@ -2,6 +2,7 @@ package kapacitor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -147,6 +148,7 @@ var idVar = name + '-{{.Group}}'`,
 						Type:   "invalid",
 						Status: "enabled",
 						DBRPs:  []cloudhub.DBRP{},
+						Source: "user",
 					},
 				},
 			},
@@ -177,6 +179,7 @@ var idVar = name + '-{{.Group}}'`,
 						Type:       "invalid",
 						Status:     "enabled",
 						DBRPs:      []cloudhub.DBRP{},
+						Source:     "user",
 					},
 					TICKScript: "",
 				},
@@ -383,6 +386,7 @@ trigger
 							},
 							AreTagsAccepted: false,
 						},
+						Source: "user",
 					},
 				},
 			},
@@ -508,6 +512,7 @@ func TestClient_Get(t *testing.T) {
 							RP: "autogen",
 						},
 					},
+					Source: "user",
 				},
 			},
 			link: client.Link{
@@ -714,6 +719,7 @@ trigger
 						},
 						AreTagsAccepted: false,
 					},
+					Source: "user",
 				},
 			},
 			link: client.Link{
@@ -831,6 +837,7 @@ func TestClient_updateStatus(t *testing.T) {
 						},
 					},
 					Status: "disabled",
+					Source: "user",
 				},
 			},
 		},
@@ -901,6 +908,7 @@ func TestClient_updateStatus(t *testing.T) {
 						},
 					},
 					Status: "enabled",
+					Source: "user",
 				},
 			},
 		},
@@ -1065,6 +1073,7 @@ func TestClient_Update(t *testing.T) {
 					Type:   "stream",
 					ID:     "howdy",
 					Name:   "howdy",
+					Source: "user",
 				},
 			},
 			wantStatus: client.Enabled,
@@ -1141,6 +1150,7 @@ func TestClient_Update(t *testing.T) {
 					},
 					Status: "disabled",
 					Type:   "stream",
+					Source: "user",
 				},
 			},
 			wantStatus: client.Disabled,
@@ -1480,6 +1490,7 @@ trigger
 					Status: "enabled",
 					ID:     "cloudhub-v1-howdy",
 					Name:   "cloudhub-v1-howdy",
+					Source: "user",
 				},
 			},
 		},
@@ -1622,6 +1633,7 @@ trigger
 					Status: "enabled",
 					ID:     "cloudhub-v1-howdy",
 					Name:   "cloudhub-v1-howdy",
+					Source: "user",
 				},
 			},
 		},
@@ -1930,3 +1942,127 @@ func removeWhitespace(s string) string {
 // 		})
 // 	}
 // }
+
+func TestSourceForTaskID(t *testing.T) {
+	tests := []struct {
+		name   string
+		taskID string
+		want   string
+	}{
+		{
+			name:   "alert-group prefix returns alert-group",
+			taskID: "alert-group-269ed024-5d3f-4dd7-a9ab-b86a0cf26fa4",
+			want:   "alert-group",
+		},
+		{
+			name:   "learn prefix returns ai-learn",
+			taskID: "learn-default",
+			want:   "ai-learn",
+		},
+		{
+			name:   "predict prefix returns ai-predict",
+			taskID: "predict-default",
+			want:   "ai-predict",
+		},
+		{
+			name:   "no known prefix returns user",
+			taskID: "my_custom_rule",
+			want:   "user",
+		},
+		{
+			name:   "empty id returns user",
+			taskID: "",
+			want:   "user",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := sourceForTaskID(tt.taskID); got != tt.want {
+				t.Errorf("sourceForTaskID(%q) = %q, want %q", tt.taskID, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewTask_SetsSource(t *testing.T) {
+	tests := []struct {
+		name   string
+		taskID string
+		want   string
+	}{
+		{name: "alert-group task", taskID: "alert-group-abc", want: "alert-group"},
+		{name: "learn task", taskID: "learn-org1", want: "ai-learn"},
+		{name: "predict task", taskID: "predict-org1", want: "ai-predict"},
+		{name: "user task", taskID: "some-user-rule", want: "user"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kt := &client.Task{
+				ID:         tt.taskID,
+				TICKscript: "// not a parseable builder rule",
+				Type:       client.StreamTask,
+				Status:     client.Enabled,
+			}
+			got := NewTask(kt)
+			if got.Rule.Source != tt.want {
+				t.Errorf("NewTask(%q).Rule.Source = %q, want %q", tt.taskID, got.Rule.Source, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewAITask_SetsSource(t *testing.T) {
+	tests := []struct {
+		name   string
+		taskID string
+		want   string
+	}{
+		{name: "predict task", taskID: "predict-org1", want: "ai-predict"},
+		{name: "learn task", taskID: "learn-org1", want: "ai-learn"},
+		{name: "non-system AI task id falls back to user", taskID: "x", want: "user"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kt := &client.Task{
+				ID:         tt.taskID,
+				TICKscript: "// not parseable",
+				Type:       client.StreamTask,
+				Status:     client.Enabled,
+			}
+			got := NewAITask(kt, "")
+			if got.Rule.Source != tt.want {
+				t.Errorf("NewAITask(%q).Rule.Source = %q, want %q", tt.taskID, got.Rule.Source, tt.want)
+			}
+		})
+	}
+}
+
+func TestAlertRule_SourceJSONMarshal(t *testing.T) {
+	tests := []struct {
+		name         string
+		source       string
+		expectInJSON bool
+		expectValue  string
+	}{
+		{name: "empty source is omitted", source: "", expectInJSON: false},
+		{name: "alert-group source appears", source: "alert-group", expectInJSON: true, expectValue: `"source":"alert-group"`},
+		{name: "user source appears", source: "user", expectInJSON: true, expectValue: `"source":"user"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := cloudhub.AlertRule{ID: "x", Source: tt.source}
+			b, err := json.Marshal(r)
+			if err != nil {
+				t.Fatalf("json.Marshal: %v", err)
+			}
+			s := string(b)
+			has := strings.Contains(s, `"source"`)
+			if has != tt.expectInJSON {
+				t.Fatalf("source presence = %v, want %v; payload=%s", has, tt.expectInJSON, s)
+			}
+			if tt.expectInJSON && !strings.Contains(s, tt.expectValue) {
+				t.Errorf("payload missing %q; payload=%s", tt.expectValue, s)
+			}
+		})
+	}
+}

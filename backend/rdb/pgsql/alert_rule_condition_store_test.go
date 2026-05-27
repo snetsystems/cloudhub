@@ -25,8 +25,8 @@ func TestAlertRuleConditionStore_SetForRule(t *testing.T) {
 	}
 
 	if err := condStore.SetForRule(ctx, r.ID, []cloudhub.AlertRuleCondition{
-		{Level: "warning", Value: 80, Enabled: true},
-		{Level: "critical", Value: 95, Enabled: true},
+		{Level: "warning", Value: 80, Operator: "greater", Enabled: true},
+		{Level: "critical", Value: 95, Operator: "greater_equal", Enabled: true},
 	}); err != nil {
 		t.Fatalf("SetForRule: %v", err)
 	}
@@ -36,18 +36,20 @@ func TestAlertRuleConditionStore_SetForRule(t *testing.T) {
 		t.Fatalf("ByRule: %v", err)
 	}
 	sort.Slice(got, func(i, j int) bool { return got[i].Level < got[j].Level })
-	if len(got) != 2 || got[0].Level != "critical" || got[0].Value != 95 || got[1].Level != "warning" {
+	if len(got) != 2 ||
+		got[0].Level != "critical" || got[0].Value != 95 || got[0].Operator != "greater_equal" ||
+		got[1].Level != "warning" || got[1].Operator != "greater" {
 		t.Fatalf("unexpected conditions: %+v", got)
 	}
 
 	// Replace-all: send only critical.
 	if err := condStore.SetForRule(ctx, r.ID, []cloudhub.AlertRuleCondition{
-		{Level: "critical", Value: 99, Enabled: false},
+		{Level: "critical", Value: 99, Operator: "less", Enabled: false},
 	}); err != nil {
 		t.Fatalf("SetForRule replace: %v", err)
 	}
 	got, _ = condStore.ByRule(ctx, r.ID)
-	if len(got) != 1 || got[0].Level != "critical" || got[0].Value != 99 || got[0].Enabled {
+	if len(got) != 1 || got[0].Level != "critical" || got[0].Value != 99 || got[0].Operator != "less" || got[0].Enabled {
 		t.Fatalf("replace-all failed: %+v", got)
 	}
 }
