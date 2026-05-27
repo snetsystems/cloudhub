@@ -281,7 +281,7 @@ export const addRecipientGroupMember = async (
   groupId: string,
   member: Pick<
     RecipientGroupMember,
-    'userId' | 'userName' | 'email' | 'phoneNumber'
+    'userId' | 'userName' | 'email' | 'phoneNumber' | 'isExternal'
   >
 ): Promise<RecipientGroupMember> => {
   const {data} = await AJAX({
@@ -523,8 +523,7 @@ export const fetchAvailableMeasurements = async (
       db: database,
     })
     const results = (data as {results?: any[]})?.results
-    const rows: any[][] =
-      results?.[0]?.series?.[0]?.values || []
+    const rows: any[][] = results?.[0]?.series?.[0]?.values || []
     return new Set(rows.map(r => String(r[0])))
   } catch {
     return new Set()

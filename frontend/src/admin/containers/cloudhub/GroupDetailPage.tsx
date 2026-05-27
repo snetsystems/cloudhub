@@ -25,6 +25,7 @@ import {
   createRecipientGroup,
   updateRecipientGroup,
   addRecipientGroupMember,
+  updateRecipientGroupMember,
   deleteRecipientGroupMember,
   getAlertRecipientMemberPrefsByGroup,
   upsertAlertRecipientMemberPrefsByGroup,
@@ -108,6 +109,7 @@ function GroupDetailPage({params, notify}: Props) {
               email: m.email || '',
               alertOn: p ? p.emailEnabled : false,
               level: p ? p.emailLevel : 'all',
+              isExternal: m.isExternal,
               originalPrefs: p,
             }
           })
@@ -155,6 +157,36 @@ function GroupDetailPage({params, notify}: Props) {
     setUsers(users.map(u => (u.id === userId ? {...u, [field]: value} : u)))
   }
 
+  const handleStartEditUser = (userId: string) => {
+    setUsers(
+      users.map(u =>
+        u.id === userId
+          ? {
+              ...u,
+              isEditing: true,
+            }
+          : u
+      )
+    )
+  }
+
+  const handleCancelEditUser = (userId: string) => {
+    const orig = originalMembers.find(m => m.id === userId)
+    setUsers(
+      users.map(u => {
+        if (u.id === userId) {
+          return {
+            ...u,
+            userName: orig ? orig.userName : u.userName,
+            email: orig ? orig.email : u.email,
+            isEditing: false,
+          }
+        }
+        return u
+      })
+    )
+  }
+
   const handleSaveExternalUser = (userId: string) => {
     const user = users.find(u => u.id === userId)
     if (!user?.userName.trim() || !user?.email.trim()) {
@@ -182,7 +214,17 @@ function GroupDetailPage({params, notify}: Props) {
       return
     }
 
-    setUsers(users.map(u => (u.id === userId ? {...u, isEditing: false} : u)))
+    setUsers(
+      users.map(u =>
+        u.id === userId
+          ? {
+              ...u,
+              isEditing: false,
+              isNew: true,
+            }
+          : u
+      )
+    )
   }
 
   const columns: ColumnInfo[] = useMemo(
@@ -206,6 +248,11 @@ function GroupDetailPage({params, notify}: Props) {
       {
         name: t('group_management.user_name', '사용자명'),
         key: 'userName',
+        options: {
+          thead: {
+            style: {width: '35%'},
+          },
+        },
         render: (_val, row) =>
           row.isEditing ? (
             <div style={{maxWidth: '200px'}}>
@@ -228,6 +275,11 @@ function GroupDetailPage({params, notify}: Props) {
       {
         name: t('group_management.email_option', '이메일'),
         key: 'email',
+        options: {
+          thead: {
+            style: {width: '40%'},
+          },
+        },
         render: (_val, row) =>
           row.isEditing ? (
             <div style={{maxWidth: '200px'}}>
@@ -239,7 +291,8 @@ function GroupDetailPage({params, notify}: Props) {
                 placeholder={t('group_management.enter_email', '이메일 입력')}
                 size={ComponentSize.Small}
                 status={
-                  row.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email.trim())
+                  row.email.trim() &&
+                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email.trim())
                     ? ComponentStatus.Error
                     : ComponentStatus.Default
                 }
@@ -291,7 +344,11 @@ function GroupDetailPage({params, notify}: Props) {
                 color={ComponentColor.Default}
                 size={ComponentSize.ExtraSmall}
                 shape={ButtonShape.Square}
-                onClick={() => handleRemoveUser(row.id)}
+                onClick={() =>
+                  row.isNew
+                    ? handleRemoveUser(row.id)
+                    : handleCancelEditUser(row.id)
+                }
               />
               <Button
                 icon={IconFont.Checkmark}
@@ -304,8 +361,17 @@ function GroupDetailPage({params, notify}: Props) {
           ) : (
             <div
               className="list-view-remove-action"
-              style={{justifyContent: 'center'}}
+              style={{display: 'flex', gap: '4px', justifyContent: 'center'}}
             >
+              {row.isExternal && (
+                <Button
+                  icon={IconFont.Pencil}
+                  color={ComponentColor.Default}
+                  size={ComponentSize.ExtraSmall}
+                  shape={ButtonShape.Square}
+                  onClick={() => handleStartEditUser(row.id)}
+                />
+              )}
               <ConfirmButton
                 icon={IconFont.UserRemove}
                 square={true}
@@ -396,7 +462,26 @@ function GroupDetailPage({params, notify}: Props) {
   )
 
   const handleConfirmUserSelection = (selectedUsers: User[]) => {
-    const newDummyUsers = selectedUsers.map(u => ({
+    const usersWithEmail = selectedUsers.filter(u => (u as any).email)
+    const usersWithoutEmail = selectedUsers.filter(u => !(u as any).email)
+
+    if (usersWithoutEmail.length > 0) {
+      notify(
+        notifyError(
+          t(
+            'group_management.user_email_missing',
+            '이메일은 필수 값입니다. 사용자 관리 화면에서 이메일을 입력해 주세요.'
+          )
+        )
+      )
+    }
+
+    if (usersWithEmail.length === 0) {
+      setIsUserOverlayVisible(false)
+      return
+    }
+
+    const newDummyUsers = usersWithEmail.map(u => ({
       id: u.id,
       userId: u.id,
       userName: u.name,
@@ -464,6 +549,9 @@ function GroupDetailPage({params, notify}: Props) {
                 const finalPrefs: AlertRecipientMemberPrefs[] = []
 
                 for (const u of users) {
+                  if (u.isEditing) {
+                    continue
+                  }
                   let memberId = u.id
                   if (u.isNew) {
                     const newMember = await addRecipientGroupMember(
@@ -473,9 +561,20 @@ function GroupDetailPage({params, notify}: Props) {
                         userName: u.userName,
                         email: u.email,
                         phoneNumber: '',
+                        isExternal: !!u.isExternal,
                       }
                     )
                     memberId = newMember.id
+                  } else {
+                    const orig = originalMembers.find(m => m.id === u.id)
+                    const nameChanged = orig && orig.userName !== u.userName
+                    const emailChanged = orig && orig.email !== u.email
+                    if (nameChanged || emailChanged) {
+                      await updateRecipientGroupMember(currentGroupId, u.id, {
+                        userName: u.userName,
+                        email: u.email,
+                      })
+                    }
                   }
 
                   finalPrefs.push({
@@ -622,6 +721,8 @@ function GroupDetailPage({params, notify}: Props) {
                   onRemoveUser={handleRemoveUser}
                   onUserFieldChange={handleUserFieldChange}
                   onSaveUser={handleSaveExternalUser}
+                  onStartEdit={handleStartEditUser}
+                  onCancelEdit={handleCancelEditUser}
                 />
               </div>
             </div>

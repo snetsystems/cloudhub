@@ -28,6 +28,8 @@ interface Props {
   onRemoveUser: (id: string) => void
   onUserFieldChange?: (id: string, field: string, value: string) => void
   onSaveUser?: (id: string) => void
+  onStartEdit?: (id: string) => void
+  onCancelEdit?: (id: string) => void
 }
 
 export default function GroupCardView({
@@ -38,6 +40,8 @@ export default function GroupCardView({
   onRemoveUser,
   onUserFieldChange,
   onSaveUser,
+  onStartEdit,
+  onCancelEdit,
 }: Props) {
   const {t} = useTranslation()
 
@@ -84,33 +88,50 @@ export default function GroupCardView({
                 </>
               )}
             </div>
-            <div className="group-card-remove-action" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="group-card-remove-action" style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
               {u.isEditing ? (
                 <>
-                  <Button
-                    icon={IconFont.Checkmark}
-                    color={ComponentColor.Primary}
-                    size={ComponentSize.ExtraSmall}
-                    shape={ButtonShape.Square}
-                    onClick={() => onSaveUser && onSaveUser(u.id)}
-                  />
                   <Button
                     icon={IconFont.Remove}
                     color={ComponentColor.Default}
                     size={ComponentSize.ExtraSmall}
                     shape={ButtonShape.Square}
-                    onClick={() => onRemoveUser(u.id)}
+                    onClick={() => {
+                      if (u.isNew) {
+                        onRemoveUser(u.id)
+                      } else {
+                        onCancelEdit && onCancelEdit(u.id)
+                      }
+                    }}
+                  />
+                  <Button
+                    icon={IconFont.Checkmark}
+                    color={ComponentColor.Success}
+                    size={ComponentSize.ExtraSmall}
+                    shape={ButtonShape.Square}
+                    onClick={() => onSaveUser && onSaveUser(u.id)}
                   />
                 </>
               ) : (
-                <ConfirmButton
-                  icon={IconFont.UserRemove}
-                  square={true}
-                  confirmText={t('group_management.remove_confirm', '제외하기')}
-                  type="btn-danger"
-                  size="btn-xs"
-                  confirmAction={() => onRemoveUser(u.id)}
-                />
+                <>
+                  {u.isExternal && (
+                    <Button
+                      icon={IconFont.Pencil}
+                      color={ComponentColor.Default}
+                      size={ComponentSize.ExtraSmall}
+                      shape={ButtonShape.Square}
+                      onClick={() => onStartEdit && onStartEdit(u.id)}
+                    />
+                  )}
+                  <ConfirmButton
+                    icon={IconFont.UserRemove}
+                    square={true}
+                    confirmText={t('group_management.remove_confirm', '제외하기')}
+                    type="btn-danger"
+                    size="btn-xs"
+                    confirmAction={() => onRemoveUser(u.id)}
+                  />
+                </>
               )}
             </div>
           </div>
