@@ -113,16 +113,7 @@ function GroupsPage({router, params, notify}: Props) {
         key: 'memberCount',
         options: {
           thead: {
-            style: {width: '25%'},
-          },
-        },
-      },
-      {
-        name: t('group_management.email_targets', '설정된 이메일 대상'),
-        key: 'emailTargets',
-        options: {
-          thead: {
-            style: {width: '35%'},
+            style: {width: '50%'},
           },
         },
       },
