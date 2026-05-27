@@ -134,7 +134,7 @@ class RuleGraphDygraph extends Component<Props, State> {
   private get options() {
     const yRangePad = this.props.yRangePad ?? 10
     const {interactive = true} = this.props
-    return {
+    const options: any = {
       rightGap: 0,
       yRangePad,
       labelsKMB: true,
@@ -145,8 +145,13 @@ class RuleGraphDygraph extends Component<Props, State> {
       axisLineColor: '#383846',
       gridLineColor: '#383846',
       connectSeparatedPoints: true,
-      interactionModel: interactive ? undefined : {},
     }
+
+    if (!interactive) {
+      options.interactionModel = {}
+    }
+
+    return options
   }
 
   private get queries(): Query[] {
