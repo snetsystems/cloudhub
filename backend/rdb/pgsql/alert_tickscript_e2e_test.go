@@ -92,7 +92,6 @@ func TestAlertGroupRule_TickscriptE2E(t *testing.T) {
 		RetentionPolicy: "autogen",
 		Measurement:     "cpu",
 		Field:           "usage_user",
-		TriggerOperator: "greater",
 		TaskType:        "stream",
 		Every:           "10s",
 		OccurrenceType:  "consecutive",
