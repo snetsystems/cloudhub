@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 
 	client "github.com/influxdata/kapacitor/client/v1"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -71,6 +72,22 @@ type Task struct {
 
 var reTaskName = regexp.MustCompile(`[\r\n]*var[ \t]+name[ \t]+=[ \t]+'([^']+)'`)
 
+// sourceForTaskID returns the origin marker for a Kapacitor task based on its
+// ID prefix. Server-generated tasks use fixed prefixes defined in cloudhub.go;
+// all other IDs fall back to "user".
+func sourceForTaskID(taskID string) string {
+	switch {
+	case strings.HasPrefix(taskID, cloudhub.AlertGroupScriptPrefix):
+		return "alert-group"
+	case strings.HasPrefix(taskID, cloudhub.LearnScriptPrefix):
+		return "ai-learn"
+	case strings.HasPrefix(taskID, cloudhub.PredictScriptPrefix):
+		return "ai-predict"
+	default:
+		return "user"
+	}
+}
+
 // TaskPreprocessor is an interface for processing tasks after they are updated.
 // Implementations of this interface can define custom logic for handling
 // the task based on specific requirements.
@@ -129,6 +146,7 @@ func NewTask(task *client.Task) *Task {
 	rule.Created = task.Created
 	rule.Modified = task.Modified
 	rule.LastEnabled = task.LastEnabled
+	rule.Source = sourceForTaskID(task.ID)
 	return &Task{
 		ID:         task.ID,
 		Href:       task.Link.Href,
@@ -168,6 +186,7 @@ func NewAITask(task *client.Task, regex string) *Task {
 	rule.Created = task.Created
 	rule.Modified = task.Modified
 	rule.LastEnabled = task.LastEnabled
+	rule.Source = sourceForTaskID(task.ID)
 	return &Task{
 		ID:         task.ID,
 		Href:       task.Link.Href,

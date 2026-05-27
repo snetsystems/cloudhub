@@ -395,6 +395,7 @@ type AlertRule struct {
 	Created       time.Time     `json:"created"`                // Date the task was first created
 	Modified      time.Time     `json:"modified"`               // Date the task was last modified
 	LastEnabled   time.Time     `json:"last-enabled,omitempty"` // Date the task was last set to status enabled
+	Source        string        `json:"source,omitempty"`       // Source indicates where the alert rule was created ("alert-group" | "ai-learn" | "ai-predict" | "user")
 }
 
 // TemplateFieldType represents the type of template field
@@ -405,6 +406,8 @@ const (
 	LearnScriptPrefix = "learn-"
 	// PredictScriptPrefix TickScript ID Prefix
 	PredictScriptPrefix = "predict-"
+	// AlertGroupScriptPrefix TickScript ID Prefix for v2 Alert Group rules
+	AlertGroupScriptPrefix = "alert-group-"
 )
 
 // AutoGeneratePredictionRule extends Prediction AlertRule with an additional TaskTemplate field for automatic rule registration.
