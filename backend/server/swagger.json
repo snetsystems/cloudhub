@@ -9632,6 +9632,7 @@
         "created": "2017-05-05T16:16:03.471138388-05:00",
         "modified": "2017-05-23T15:57:42.625909746-05:00",
         "last-enabled": "2017-05-05T16:16:25.890210217-05:00",
+        "source": "user",
         "links": {
           "self": "/cloudhub/v1/sources/5/kapacitors/5/rules/cloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
           "kapacitor": "/cloudhub/v1/sources/5/kapacitors/5/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
@@ -9725,6 +9726,7 @@
         "created": "2017-05-05T16:16:03.471138388-05:00",
         "modified": "2017-05-23T15:57:42.625909746-05:00",
         "last-enabled": "2017-05-05T16:16:25.890210217-05:00",
+        "source": "user",
         "links": {
           "self": "/cloudhub/v1/sources/5/kapacitors/5/rules/cloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
           "kapacitor": "/cloudhub/v1/sources/5/kapacitors/5/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
@@ -9898,6 +9900,17 @@
         "last-enabled": {
           "type": "string",
           "description": "Date the task was last set to status enabled",
+          "readOnly": true
+        },
+        "source": {
+          "type": "string",
+          "description": "Origin of the alert rule. Server-generated tasks are tagged by Kapacitor task ID prefix; everything else is reported as \"user\". Omitted on responses where the underlying value is empty.",
+          "enum": [
+            "alert-group",
+            "ai-learn",
+            "ai-predict",
+            "user"
+          ],
           "readOnly": true
         },
         "links": {

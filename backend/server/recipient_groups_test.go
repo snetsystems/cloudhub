@@ -81,7 +81,7 @@ func TestUpdateRecipientGroupAllowsDefaultGroupName(t *testing.T) {
 	}
 }
 
-func TestRemoveRecipientGroupMemberRejectsDefaultGroup(t *testing.T) {
+func TestRemoveRecipientGroupMemberRejectsDefaultGroupInternalMember(t *testing.T) {
 	deleteMemberCalled := false
 	svc := &Service{
 		RecipientGroups: &fakeRecipientGroupStore{
@@ -90,7 +90,7 @@ func TestRemoveRecipientGroupMemberRejectsDefaultGroup(t *testing.T) {
 					ID:        id,
 					IsDefault: true,
 					Members: []cloudhub.RecipientGroupMember{
-						{ID: "member-1", RecipientGroupID: id, Email: "user@example.com"},
+						{ID: "member-1", RecipientGroupID: id, UserID: "1", Email: "user@example.com"},
 					},
 				}, nil
 			},
@@ -116,6 +116,50 @@ func TestRemoveRecipientGroupMemberRejectsDefaultGroup(t *testing.T) {
 	}
 	if deleteMemberCalled {
 		t.Fatal("default recipient group member should not be deleted")
+	}
+}
+
+func TestRemoveRecipientGroupMemberAllowsDefaultGroupExternalMember(t *testing.T) {
+	var deletedMemberID string
+	svc := &Service{
+		RecipientGroups: &fakeRecipientGroupStore{
+			getFunc: func(ctx context.Context, id string) (cloudhub.RecipientGroup, error) {
+				return cloudhub.RecipientGroup{
+					ID:        id,
+					OrgID:     "org-1",
+					IsDefault: true,
+					Members: []cloudhub.RecipientGroupMember{
+						{
+							ID:               "member-ext",
+							RecipientGroupID: id,
+							IsExternal:       true,
+							Email:            "vendor@example.com",
+						},
+					},
+				}, nil
+			},
+			deleteMemberFunc: func(ctx context.Context, memberID string) error {
+				deletedMemberID = memberID
+				return nil
+			},
+		},
+		Logger: &mocks.TestLogger{},
+	}
+
+	req := httptest.NewRequest(http.MethodDelete, "/cloudhub/v1/recipient-groups/group-1/members/member-ext", nil)
+	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
+		{Key: "id", Value: "group-1"},
+		{Key: "memberId", Value: "member-ext"},
+	}))
+	rr := httptest.NewRecorder()
+
+	svc.RemoveRecipientGroupMember(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusNoContent, rr.Body.String())
+	}
+	if deletedMemberID != "member-ext" {
+		t.Fatalf("deleted member = %q, want member-ext", deletedMemberID)
 	}
 }
 

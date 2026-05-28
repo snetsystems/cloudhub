@@ -336,18 +336,18 @@ func (s *Service) RemoveRecipientGroupMember(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	found := false
+	var current *cloudhub.RecipientGroupMember
 	for i := range g.Members {
 		if g.Members[i].ID == memberID {
-			found = true
+			current = &g.Members[i]
 			break
 		}
 	}
-	if !found {
+	if current == nil {
 		notFound(w, memberID, s.Logger)
 		return
 	}
-	if g.IsDefault {
+	if g.IsDefault && !current.IsExternal {
 		Error(w, http.StatusConflict, "default recipient group members cannot be deleted", s.Logger)
 		return
 	}
