@@ -39,6 +39,7 @@ import {
   getPauseSecondsOptions,
 } from 'src/alert_group/types'
 import {findSelectedAlertTemplate} from 'src/alert_group/utils/alertTemplates'
+import {getOccurrenceTooltip} from 'src/alert_group/utils/occurrenceTooltip'
 
 interface Props extends WithTranslation {
   source: Source
@@ -126,9 +127,11 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     {label: t('alert_group_rule.opt_pct_change'), value: '% change'},
   ]
 
-  private getTranslatedConditionOperators = (t: TFunction) => getTriggerOperators(t)
+  private getTranslatedConditionOperators = (t: TFunction) =>
+    getTriggerOperators(t)
 
-  private getTranslatedPauseOptions = (t: TFunction) => getPauseSecondsOptions(t)
+  private getTranslatedPauseOptions = (t: TFunction) =>
+    getPauseSecondsOptions(t)
 
   constructor(props: Props) {
     super(props)
@@ -175,12 +178,12 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       return
     }
 
-    if (
-      prevProps.rule.database !== rule.database ||
-      prevProps.rule.retentionPolicy !== rule.retentionPolicy ||
-      prevProps.rule.measurement !== rule.measurement ||
-      prevProps.rule.field !== rule.field
-    ) {
+    const isDbChanged = prevProps.rule.database !== rule.database
+    const isRpChanged = prevProps.rule.retentionPolicy !== rule.retentionPolicy
+    const isMeasurementChanged = prevProps.rule.measurement !== rule.measurement
+    const isFieldChanged = prevProps.rule.field !== rule.field
+
+    if (isDbChanged || isRpChanged || isMeasurementChanged) {
       this.setState({
         queryConfig: {
           ...EMPTY_QUERY_CONFIG,
@@ -196,6 +199,15 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
           areTagsAccepted: false,
         } as QueryConfig,
       })
+    } else if (isFieldChanged) {
+      this.setState(prev => ({
+        queryConfig: {
+          ...prev.queryConfig,
+          fields: rule.field
+            ? [{value: rule.field, type: 'field', alias: '', args: []}]
+            : [],
+        } as QueryConfig,
+      }))
     }
   }
 
@@ -523,8 +535,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       menuWidth="120px"
                       selected={
                         this.getChangesOptions(t).find(
-                          o =>
-                            o.value === (rule.values?.change || 'change')
+                          o => o.value === (rule.values?.change || 'change')
                         )?.label || 'change'
                       }
                       onChoose={(item: any) =>
@@ -547,9 +558,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       const relativeOpOptions = this.getRelativeOperatorOptions(
                         t
                       )
-                      const selectedOperator =
-                        cond.operator ||
-                        'greater'
+                      const selectedOperator = cond.operator || 'greater'
                       const selectedOpObj = relativeOpOptions.find(
                         o => o.value === selectedOperator
                       )
@@ -577,7 +586,8 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                           {cond.enabled && (
                             <>
                               <Dropdown
-                                menuWidth="160px"
+                                menuWidth="200px"
+                                className={'threshold'}
                                 selected={
                                   selectedOpObj
                                     ? selectedOpObj.label
@@ -878,9 +888,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         menuWidth="120px"
                         selected={
                           this.getChangesOptions(t).find(
-                            o =>
-                              o.value ===
-                              (rule.values?.change || 'change')
+                            o => o.value === (rule.values?.change || 'change')
                           )?.label || 'change'
                         }
                         onChoose={(item: any) =>
@@ -903,9 +911,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         const relativeOpOptions = this.getRelativeOperatorOptions(
                           t
                         )
-                        const selectedOperator =
-                          cond.operator ||
-                          'greater'
+                        const selectedOperator = cond.operator || 'greater'
                         const selectedOpObj = relativeOpOptions.find(
                           o => o.value === selectedOperator
                         )
@@ -933,7 +939,8 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                             {cond.enabled && (
                               <>
                                 <Dropdown
-                                  menuWidth="160px"
+                                  menuWidth="200px"
+                                  className={'threshold'}
                                   selected={
                                     selectedOpObj
                                       ? selectedOpObj.label
@@ -1084,6 +1091,10 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 <span className="alert-group-occurrence--sep">
                   {t('alert_group_rule.occ_occurrences')}
                 </span>
+                <QuestionMarkTooltip
+                  tipID="occurrence-tooltip"
+                  tipContent={getOccurrenceTooltip(t)}
+                />
               </div>
             </div>
           </div>

@@ -197,7 +197,14 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     } catch (e) {
       const {t} = this.props
       this.setState({loading: RemoteDataState.Error})
-      this.props.notify(notifyError(t('alert_group_rule.noti_load_fail', '데이터를 불러오는 데 실패했습니다.')))
+      this.props.notify(
+        notifyError(
+          t(
+            'alert_group_rule.noti_load_fail',
+            '데이터를 불러오는 데 실패했습니다.'
+          )
+        )
+      )
       const {source, router} = this.props
       if (source && source.id) {
         router.push(`/sources/${source.id}/server-monitoring/server-alert`)
@@ -271,7 +278,11 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     ) {
       this.props.notify(
         notifyError(
-          t('alert_group_rule.noti_measurement_required', '이 알람을 사용하려면 \'{{measurement}}\' 데이터 수집이 필요합니다.', {measurement: template.measurement})
+          t(
+            'alert_group_rule.noti_measurement_required',
+            "이 알람을 사용하려면 '{{measurement}}' 데이터 수집이 필요합니다.",
+            {measurement: template.measurement}
+          )
         )
       )
       return
@@ -297,19 +308,41 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
 
     // 필수 입력 및 정합성 검사
     if (!rule.name || !rule.name.trim()) {
-      notify(notifyError(t('alert_group_rule.noti_enter_name', '이벤트 그룹 규칙 이름을 입력해주세요.')))
+      notify(
+        notifyError(
+          t(
+            'alert_group_rule.noti_enter_name',
+            '이벤트 그룹 규칙 이름을 입력해주세요.'
+          )
+        )
+      )
       return
     }
     if (!rule.database) {
-      notify(notifyError(t('alert_group_rule.noti_select_db', '데이터베이스를 선택해주세요.')))
+      notify(
+        notifyError(
+          t('alert_group_rule.noti_select_db', '데이터베이스를 선택해주세요.')
+        )
+      )
       return
     }
     if (!rule.measurement) {
-      notify(notifyError(t('alert_group_rule.noti_select_measurement', '측정 대상(Measurement)을 선택해주세요.')))
+      notify(
+        notifyError(
+          t(
+            'alert_group_rule.noti_select_measurement',
+            '측정 대상(Measurement)을 선택해주세요.'
+          )
+        )
+      )
       return
     }
     if (!rule.field) {
-      notify(notifyError(t('alert_group_rule.noti_select_field', '필드(Field)를 선택해주세요.')))
+      notify(
+        notifyError(
+          t('alert_group_rule.noti_select_field', '필드(Field)를 선택해주세요.')
+        )
+      )
       return
     }
 
@@ -348,13 +381,27 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         if (h.type === 'tcp') {
           const address = (cfg.address as string) || ''
           if (!address.trim()) {
-            notify(notifyError(t('alert_group_rule.noti_enter_tcp_address', 'TCP 주소를 입력해주세요.')))
+            notify(
+              notifyError(
+                t(
+                  'alert_group_rule.noti_enter_tcp_address',
+                  'TCP 주소를 입력해주세요.'
+                )
+              )
+            )
             return
           }
         } else if (h.type === 'webhook') {
           const url = (cfg.url as string) || ''
           if (!url.trim()) {
-            notify(notifyError(t('alert_group_rule.noti_enter_webhook_url', 'Webhook URL을 입력해주세요.')))
+            notify(
+              notifyError(
+                t(
+                  'alert_group_rule.noti_enter_webhook_url',
+                  'Webhook URL을 입력해주세요.'
+                )
+              )
+            )
             return
           }
         } else if (h.type === 'exec') {
@@ -364,13 +411,27 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
             command.length === 0 ||
             command.every(c => !c.trim())
           ) {
-            notify(notifyError(t('alert_group_rule.noti_enter_command', '실행 명령어를 입력해주세요.')))
+            notify(
+              notifyError(
+                t(
+                  'alert_group_rule.noti_enter_command',
+                  '실행 명령어를 입력해주세요.'
+                )
+              )
+            )
             return
           }
         } else if (h.type === 'log') {
           const filePath = (cfg.filePath as string) || ''
           if (!filePath.trim()) {
-            notify(notifyError(t('alert_group_rule.noti_enter_log_path', '로그 파일 경로를 입력해주세요.')))
+            notify(
+              notifyError(
+                t(
+                  'alert_group_rule.noti_enter_log_path',
+                  '로그 파일 경로를 입력해주세요.'
+                )
+              )
+            )
             return
           }
         } else if (h.type === 'slack') {
@@ -378,7 +439,12 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           const channel = (cfg.channel as string) || ''
           if (!workspace.trim() || !channel.trim()) {
             notify(
-              notifyError(t('alert_group_rule.noti_enter_slack_info', 'Slack 워크스페이스와 채널을 모두 입력해주세요.'))
+              notifyError(
+                t(
+                  'alert_group_rule.noti_enter_slack_info',
+                  'Slack 워크스페이스와 채널을 모두 입력해주세요.'
+                )
+              )
             )
             return
           }
@@ -386,13 +452,27 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           const cluster = (cfg.cluster as string) || ''
           const topic = (cfg['kafka-topic'] as string) || ''
           if (!cluster.trim() || !topic.trim()) {
-            notify(notifyError(t('alert_group_rule.noti_enter_kafka_info', 'Kafka 클러스터와 토픽을 모두 입력해주세요.')))
+            notify(
+              notifyError(
+                t(
+                  'alert_group_rule.noti_enter_kafka_info',
+                  'Kafka 클러스터와 토픽을 모두 입력해주세요.'
+                )
+              )
+            )
             return
           }
         } else if (h.type === 'telegram') {
           const chatId = (cfg.chatId as string) || ''
           if (!chatId.trim()) {
-            notify(notifyError(t('alert_group_rule.noti_enter_telegram_chat_id', 'Telegram Chat ID를 입력해주세요.')))
+            notify(
+              notifyError(
+                t(
+                  'alert_group_rule.noti_enter_telegram_chat_id',
+                  'Telegram Chat ID를 입력해주세요.'
+                )
+              )
+            )
             return
           }
         }
@@ -427,7 +507,12 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       }
     } catch (e) {
       notify(
-        notifyError(this.getRequestErrorMessage(e, t('alert_group_rule.noti_save_fail', '저장에 실패했습니다.')))
+        notifyError(
+          this.getRequestErrorMessage(
+            e,
+            t('alert_group_rule.noti_save_fail', '저장에 실패했습니다.')
+          )
+        )
       )
       this.setState({isSaving: false})
     }
@@ -494,16 +579,30 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
 
   private handleTestSend = async (): Promise<void> => {
     const {notify} = this.props
-    const {testTitle, testMessage, testUserGroupIds} = this.state
+    const {testTitle, testMessage, testUserGroupIds, rule} = this.state
 
     const {t} = this.props
 
     if (!testTitle) {
-      notify(notifyError(t('alert_group_rule.noti_enter_test_title', '테스트 제목을 입력해주세요.')))
+      notify(
+        notifyError(
+          t(
+            'alert_group_rule.noti_enter_test_title',
+            '테스트 제목을 입력해주세요.'
+          )
+        )
+      )
       return
     }
     if (!testMessage) {
-      notify(notifyError(t('alert_group_rule.noti_enter_test_message', '테스트 메시지를 입력해주세요.')))
+      notify(
+        notifyError(
+          t(
+            'alert_group_rule.noti_enter_test_message',
+            '테스트 메시지를 입력해주세요.'
+          )
+        )
+      )
       return
     }
 
@@ -511,19 +610,32 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
 
     try {
       const result = await testDraftAlertGroupNotification({
+        kapacitorId: rule.kapacitorId,
         recipientGroupIds: testUserGroupIds,
         title: testTitle,
         message: testMessage,
       })
 
       notify(
-        notifySuccess(t('alert_group_rule.noti_test_sent_count', '{{count}}건의 테스트 알림을 전송했습니다.', {count: result.sentCount}))
+        notifySuccess(
+          t(
+            'alert_group_rule.noti_test_sent_count',
+            '{{count}}건의 테스트 알림을 전송했습니다.',
+            {count: result.sentCount}
+          )
+        )
       )
       this.setState({isTestModalOpen: false, isTestingSend: false})
     } catch (e) {
       notify(
         notifyError(
-          this.getRequestErrorMessage(e, t('alert_group_rule.noti_test_send_fail', '테스트 발송에 실패했습니다.'))
+          this.getRequestErrorMessage(
+            e,
+            t(
+              'alert_group_rule.noti_test_send_fail',
+              '테스트 발송에 실패했습니다.'
+            )
+          )
         )
       )
       this.setState({isTestingSend: false})
@@ -647,28 +759,28 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           <OverlayTechnology visible={isTestModalOpen}>
             <OverlayContainer maxWidth={480}>
               <OverlayHeading
-                title="수신 테스트"
+                title={t('alert_group_rule.test_modal.title', '수신 테스트')}
                 onDismiss={this.handleCloseTestModal}
               />
               <OverlayBody>
                 <Form>
-                  <Form.Element label="테스트 제목">
+                  <Form.Element label={t('alert_group_rule.test_modal.test_title_label', '테스트 제목')}>
                     <Input
                       value={testTitle}
                       onChange={this.handleTestTitleChange}
                       type={InputType.Text}
-                      placeholder="테스트 메일 제목을 입력하세요"
+                      placeholder={t('alert_group_rule.test_modal.test_title_placeholder', '테스트 메일 제목을 입력하세요')}
                     />
                   </Form.Element>
-                  <Form.Element label="테스트 메시지">
+                  <Form.Element label={t('alert_group_rule.test_modal.test_message_label', '테스트 메시지')}>
                     <Input
                       value={testMessage}
                       onChange={this.handleTestMessageChange}
                       type={InputType.Text}
-                      placeholder="테스트 메일 메시지를 입력하세요"
+                      placeholder={t('alert_group_rule.test_modal.test_message_placeholder', '테스트 메일 메시지를 입력하세요')}
                     />
                   </Form.Element>
-                  <Form.Element label="내 이메일에 발송">
+                  <Form.Element label={t('alert_group_rule.test_modal.send_to_me', '내 이메일에 발송')}>
                     <div className="alert-group-test-modal-email-row">
                       <SlideToggle
                         active={testIncludeSelf}
@@ -680,11 +792,11 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                       <span className="alert-group-test-modal-email-text">
                         {auth?.me?.email
                           ? auth.me.email
-                          : '로그인 사용자의 이메일이 없어 사용할 수 없습니다.'}
+                          : t('alert_group_rule.test_modal.no_email_warning', '로그인 사용자의 이메일이 없어 사용할 수 없습니다.')}
                       </span>
                     </div>
                   </Form.Element>
-                  <Form.Element label="수신 그룹 선택 (선택)">
+                  <Form.Element label={t('alert_group_rule.test_modal.select_groups', '수신 그룹 선택 (선택)')}>
                     {userGroups.length > 0 ? (
                       <MultiSelectDropdown
                         selectedIDs={testUserGroupIds}
@@ -692,7 +804,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                         buttonColor={ComponentColor.Default}
                         buttonSize={ComponentSize.Small}
                         menuColor={DropdownMenuColors.Onyx}
-                        emptyText="그룹 선택 안 함"
+                        emptyText={t('alert_group_rule.test_modal.no_group_selected', '그룹 선택 안 함')}
                       >
                         {userGroups.map(ug => (
                           <MultiSelectDropdown.Item
@@ -706,21 +818,21 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                       </MultiSelectDropdown>
                     ) : (
                       <p className="alert-group-test-modal-hint">
-                        등록된 수신 그룹이 없습니다.
+                        {t('alert_group_rule.test_modal.no_groups_registered', '등록된 수신 그룹이 없습니다.')}
                       </p>
                     )}
                   </Form.Element>
-                  <Form.Element label="수신자 직접 입력 (선택)">
+                  <Form.Element label={t('alert_group_rule.test_modal.direct_recipients', '수신자 직접 입력 (선택)')}>
                     <Input
                       value={testRecipients}
                       onChange={this.handleTestRecipientsChange}
                       type={InputType.Text}
-                      placeholder="여러 명은 쉼표로 구분"
+                      placeholder={t('alert_group_rule.test_modal.recipients_placeholder', '여러 명은 쉼표로 구분')}
                     />
                   </Form.Element>
                   <Form.Footer>
                     <Button
-                      text={isTestingSend ? '발송 중...' : '수신 테스트'}
+                      text={isTestingSend ? t('alert_group_rule.test_modal.sending', '발송 중...') : t('alert_group_rule.test_modal.send_test_btn', '수신 테스트')}
                       icon={IconFont.Bell}
                       onClick={this.handleTestSend}
                       color={ComponentColor.Success}

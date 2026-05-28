@@ -135,9 +135,9 @@ class AlertGroupPreviewGraph extends PureComponent<Props, State> {
     this.setState({timeRange: item.value})
   }
 
-  private get dygraphShellStyle(): CSSProperties {
-    return {height: '100%'}
-  }
+  // private get dygraphShellStyle(): CSSProperties {
+  //   return {height: 'calc(100% - 50px)', marginTop: '50px'}
+  // }
 
   private get queryConfig(): QueryConfig {
     const {
@@ -317,18 +317,18 @@ class AlertGroupPreviewGraph extends PureComponent<Props, State> {
                   )}
 
                   <div className="alert-group-preview-graph--chart">
-                    <div className="rule-builder--graph-options">
-                      <p>Preview Data from</p>
-                      <Dropdown
-                        items={dropdownItems}
-                        onChoose={this.handleChooseTimeRange}
-                        selected={selectedLabel}
-                        buttonColor="btn-default"
-                        buttonSize="btn-sm"
-                        menuWidth="120px"
-                      />
-                    </div>
                     <div className="alert-group-preview-graph--graph-shell">
+                      <div className="rule-builder--graph-options">
+                        <p>Preview Data from</p>
+                        <Dropdown
+                          items={dropdownItems}
+                          onChoose={this.handleChooseTimeRange}
+                          selected={selectedLabel}
+                          buttonColor="btn-default"
+                          buttonSize="btn-sm"
+                          menuWidth="120px"
+                        />
+                      </div>
                       {loading === RemoteDataState.Loading ? (
                         <div className="alert-group-preview-graph--loading">
                           {t(
@@ -346,10 +346,7 @@ class AlertGroupPreviewGraph extends PureComponent<Props, State> {
                           </p>
                         </div>
                       ) : (
-                        <div
-                          className="dygraph graph--hasYLabel"
-                          style={this.dygraphShellStyle}
-                        >
+                        <div className="dygraph graph--hasYLabel">
                           <RuleGraphDygraph
                             query={this.queryConfig}
                             rule={dygraphRule}

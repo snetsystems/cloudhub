@@ -806,7 +806,8 @@ $alert-group--preview-graph-shell-height: 360px;
     top: 0;
     left: 8px;
     width: calc(100% - 16px);
-    height: 100% !important;
+    height: calc(100% - 50px);
+    margin-top: 50px;
   }
 
   > .dygraph > .dygraph-child {
@@ -1068,6 +1069,7 @@ $alert-group--preview-graph-shell-height: 360px;
 */
 .device-group-host-selector {
   width: 100%;
+  height: 250px;
 
   &--search {
     display: flex;
@@ -1265,12 +1267,6 @@ $alert-group--preview-graph-shell-height: 360px;
 .alert-group-target--host-dropdown-menu-inner {
   width: 100%;
   min-width: 0;
-
-  .device-group-host-selector--list {
-    max-height: 280px;
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
 }
 
 .alert-group-preview-graph--graph-placeholder {
@@ -1560,6 +1556,10 @@ $alert-group--preview-graph-shell-height: 360px;
   flex-direction: column;
   gap: $ix-marg-b;
   margin-top: $ix-marg-b;
+
+  .dropdown .dropdown-toggle {
+    width: 200px;
+  }
 }
 
 .alert-group-section-header {
@@ -2069,4 +2069,3 @@ $alert-group--preview-graph-shell-height: 360px;
   font-size: 13px;
   color: $g18-cloud;
 }
-

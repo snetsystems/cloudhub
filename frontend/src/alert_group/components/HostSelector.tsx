@@ -3,6 +3,7 @@ import React, {PureComponent, ChangeEvent} from 'react'
 import {withTranslation, WithTranslation} from 'react-i18next'
 import {Input, InputType, ComponentSize} from 'src/reusable_ui'
 import {HostCandidate} from 'src/alert_group/types'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 interface Props extends WithTranslation {
   hosts: HostCandidate[]
@@ -82,12 +83,21 @@ class HostSelector extends PureComponent<Props, State> {
             })}
           </span>
         </div>
-        <div className="device-group-host-selector--list">
+        <FancyScrollbar
+          className="device-group-host-selector--list"
+          style={{height: 'calc(100% - 30px)'}}
+        >
           {filtered.length === 0 ? (
             <div className="device-group-host-selector--empty">
               {search
-                ? t('alert_group_rule.no_hosts_search_results', '검색 결과가 없습니다.')
-                : t('alert_group_rule.no_target_hosts', '대상 호스트가 없습니다.')}
+                ? t(
+                    'alert_group_rule.no_hosts_search_results',
+                    '검색 결과가 없습니다.'
+                  )
+                : t(
+                    'alert_group_rule.no_target_hosts',
+                    '대상 호스트가 없습니다.'
+                  )}
             </div>
           ) : (
             <>
@@ -139,11 +149,10 @@ class HostSelector extends PureComponent<Props, State> {
               })}
             </>
           )}
-        </div>
+        </FancyScrollbar>
       </div>
     )
   }
 }
 
 export default withTranslation()(HostSelector)
-
