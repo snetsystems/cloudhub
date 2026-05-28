@@ -232,6 +232,7 @@ func (s *Service) AlertGroupRuleTestNotification(w http.ResponseWriter, r *http.
 		invalidData(w, fmt.Errorf("kapacitorId is required"), s.Logger)
 		return
 	}
+	req.KapacitorID = s.normalizeAlertGroupKapacitorID(ctx, req.KapacitorID)
 	recipientGroups, err := s.resolveDraftAlertGroupRecipientGroups(ctx, orgID, req.RecipientGroupIDs)
 	if err != nil {
 		internalServerError(w, err, s.Logger)
@@ -282,6 +283,7 @@ func (s *Service) AlertGroupRuleTestNotificationByID(w http.ResponseWriter, r *h
 		invalidData(w, fmt.Errorf("rule has no kapacitor configured"), s.Logger)
 		return
 	}
+	kapacitorID = s.normalizeAlertGroupKapacitorID(ctx, kapacitorID)
 	resp, err := s.sendAlertGroupTestNotification(ctx, rule.OrgID, kapacitorID, recipientGroups, req.Title, req.Message)
 	if err != nil {
 		invalidData(w, err, s.Logger)
