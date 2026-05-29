@@ -1,7 +1,7 @@
 import React, {ChangeEvent, PureComponent} from 'react'
 import {withTranslation, WithTranslation} from 'react-i18next'
 import {Input, InputType, SlideToggle, ComponentSize, ComponentColor} from 'src/reusable_ui'
-import {AlertGroupRule} from 'src/alert_group/types'
+import {AlertGroupRule} from 'src/types'
 
 interface Props extends WithTranslation {
   rule: AlertGroupRule

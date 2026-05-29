@@ -17,7 +17,7 @@ import {
   UserGroup,
   UserGroupMember,
   OrganizationUserListItem,
-} from 'src/alert_group/types'
+} from 'src/types'
 
 interface AlertGroupRulesResponse {
   alertGroupRules: AlertGroupRule[]

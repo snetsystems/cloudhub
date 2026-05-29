@@ -9,7 +9,7 @@ import {
   DropdownMenuColors,
   Radio,
 } from 'src/reusable_ui'
-import {UserGroupMember} from 'src/alert_group/types'
+import {UserGroupMember} from 'src/types'
 
 interface Props {
   members: UserGroupMember[]

@@ -21,7 +21,7 @@ import {
   AlertRuleEventHandler,
   UserGroup,
   UserGroupMember,
-} from 'src/alert_group/types'
+} from 'src/types'
 
 export interface EmailHandlerProps {
   rule: AlertGroupRule

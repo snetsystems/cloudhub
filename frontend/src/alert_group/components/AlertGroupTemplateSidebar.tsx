@@ -10,7 +10,7 @@ import {
   ComponentStatus,
   IconFont,
 } from 'src/reusable_ui'
-import {AlertTemplate} from 'src/alert_group/types'
+import {AlertTemplate} from 'src/types'
 import AlertGroupTemplateTooltip from 'src/alert_group/components/AlertGroupTemplateTooltip'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 

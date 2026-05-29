@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import {AlertCondition, AlertConditionOperator} from 'src/alert_group/types'
+import {AlertCondition, AlertConditionOperator} from 'src/types'
 import {RuleValues, DygraphClass} from 'src/types'
 import {
   EQUAL_TO,

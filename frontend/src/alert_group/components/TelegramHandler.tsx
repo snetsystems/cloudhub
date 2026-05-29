@@ -1,6 +1,6 @@
 import React, {PureComponent, ChangeEvent} from 'react'
 import {TFunction} from 'react-i18next'
-import {AlertGroupRule, AlertRuleEventHandler} from 'src/alert_group/types'
+import {AlertGroupRule, AlertRuleEventHandler} from 'src/types'
 
 export interface TelegramHandlerProps {
   rule: AlertGroupRule

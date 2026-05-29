@@ -13,7 +13,7 @@ import TableComponent from 'src/device_management/components/TableComponent'
 import {ColumnInfo, Organization, NotificationAction} from 'src/types'
 import {connect} from 'react-redux'
 import {getRecipientGroups, deleteRecipientGroup} from 'src/alert_group/apis'
-import {RecipientGroup} from 'src/alert_group/types'
+import {RecipientGroup} from 'src/types'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 

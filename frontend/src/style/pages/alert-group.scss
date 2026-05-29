@@ -2069,3 +2069,32 @@ $alert-group--preview-graph-shell-height: 360px;
   font-size: 13px;
   color: $g18-cloud;
 }
+
+/*
+  Group Detail Page
+  ---------------------------------------------------------------------------
+*/
+
+.group-detail-page {
+  .table-input-wrapper {
+    max-width: 200px;
+  }
+
+  .list-view-edit-action,
+  .list-view-remove-action {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .action-buttons-wrapper {
+    display: flex;
+    gap: 8px;
+  }
+
+  .table-top-right-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+}

@@ -10,7 +10,7 @@ import {
   InputType,
 } from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import {AlertGroupRule, AlertRuleEventHandler} from 'src/alert_group/types'
+import {AlertGroupRule, AlertRuleEventHandler} from 'src/types'
 
 export interface WebhookHandlerProps {
   rule: AlertGroupRule

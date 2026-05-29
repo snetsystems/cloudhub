@@ -14,7 +14,7 @@ import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 import DashboardPageWithImport, {
   dashboardPageWithImportMstp,
   dashboardPageWithImportMdtp,
-  type TemplateSelectionContextValue,
+  TemplateSelectionContextValue,
 } from 'src/shared/components/DashboardPageWithImport'
 import {Dropdown, DropdownMode, ComponentSize} from 'src/reusable_ui'
 import {Template, TemplateValue} from 'src/types'
@@ -28,7 +28,7 @@ import {getHosts} from 'src/shared/apis/host'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
 import ProcessDetailModal from 'src/server_details/components/ProcessDetailModal'
 import UsageDetailModal, {
-  type UsageDetailType,
+  UsageDetailType,
 } from 'src/server_details/components/UsageDetailModal'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import MenuTooltipButton from 'src/shared/components/MenuTooltipButton'
@@ -37,9 +37,9 @@ import {
   ServerDetailsCellContent,
   ServerSummaryInfo,
   ServerDetailsPageContext,
-  type ServerDetailsPageContextValue,
+  ServerDetailsPageContextValue,
 } from 'src/server_details/components/ServerDetailsCellContent'
-import {getHostByHostname, type Host} from 'src/shared/apis/host'
+import {getHostByHostname, Host} from 'src/shared/apis/host'
 import type {CellQuery} from 'src/types/dashboards'
 
 type QueryTargetOS = 'windows' | 'linux'

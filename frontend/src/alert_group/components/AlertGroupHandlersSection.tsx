@@ -8,7 +8,7 @@ import {
   AlertGroupRule,
   AlertRuleEventHandler,
   UserGroup,
-} from 'src/alert_group/types'
+} from 'src/types'
 import {getActiveKapacitor, getKapacitorConfig} from 'src/shared/apis/index'
 import {Source, DropdownItem} from 'src/types'
 import {InjectedRouter} from 'react-router'

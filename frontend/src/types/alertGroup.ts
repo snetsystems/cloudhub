@@ -8,8 +8,31 @@ export type AlertConditionOperator =
   | 'equal'
   | 'not_equal'
 
+export type AlertConditionLevel = 'critical' | 'warning' | 'info'
+
+export const LEVEL_LABELS: Record<AlertConditionLevel, string> = {
+  critical: '위험',
+  warning: '경고',
+  info: '정보',
+}
+
+export const OPERATOR_SYMBOLS: Record<string, string> = {
+  greater: '>',
+  greater_equal: '>=',
+  less: '<',
+  less_equal: '<=',
+  equal: '=',
+  not_equal: '!=',
+  'greater than': '>',
+  'equal to or greater': '>=',
+  'less than': '<',
+  'equal to or less than': '<=',
+  'equal to': '=',
+  'not equal to': '!=',
+}
+
 export interface AlertCondition {
-  level: 'critical' | 'warning' | 'info'
+  level: AlertConditionLevel
   value: string
   operator?: AlertConditionOperator
   enabled: boolean

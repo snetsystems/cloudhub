@@ -37,7 +37,7 @@ import {
   AlertTemplate,
   getTriggerOperators,
   getPauseSecondsOptions,
-} from 'src/alert_group/types'
+} from 'src/types'
 import {findSelectedAlertTemplate} from 'src/alert_group/utils/alertTemplates'
 import {getOccurrenceTooltip} from 'src/alert_group/utils/occurrenceTooltip'
 
@@ -99,13 +99,14 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   }
 
   private conditionLabel = (level: string): string => {
+    const {t} = this.props
     switch (level) {
       case 'critical':
-        return 'Critical'
+        return t('server_alert.critical', 'Critical')
       case 'warning':
-        return 'Warning'
+        return t('server_alert.warning', 'Warning')
       case 'info':
-        return 'Info'
+        return t('server_alert.info', 'Info')
       default:
         return level
     }

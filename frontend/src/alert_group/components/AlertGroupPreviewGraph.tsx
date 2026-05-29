@@ -18,7 +18,7 @@ import {groupByTimeSeriesTransform} from 'src/utils/groupByTimeSeriesTransform'
 
 import {Source, TimeRange, RemoteDataState, AlertRule} from 'src/types'
 import {QueryConfig} from 'src/types/queries'
-import {AlertCondition, AlertConditionOperator} from 'src/alert_group/types'
+import {AlertCondition, AlertConditionOperator, LEVEL_LABELS, OPERATOR_SYMBOLS} from 'src/types'
 
 interface Props extends WithTranslation {
   source: Source
@@ -35,21 +35,6 @@ interface Props extends WithTranslation {
   conditions: AlertCondition[]
   timeRange: TimeRange
   setHoverTime: typeof setHoverTimeAction
-}
-
-const LEVEL_LABELS: Record<string, string> = {
-  critical: '위험',
-  warning: '경고',
-  info: '정보',
-}
-
-const OPERATOR_SYMBOLS: Record<string, string> = {
-  greater: '>',
-  greater_equal: '>=',
-  less: '<',
-  less_equal: '<=',
-  equal: '==',
-  not_equal: '!=',
 }
 
 const checkViolation = (val: number, limit: number, op: string): boolean => {

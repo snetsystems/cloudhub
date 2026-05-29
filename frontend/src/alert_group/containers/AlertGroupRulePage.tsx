@@ -20,7 +20,7 @@ import {
   AlertTemplate,
   UserGroup,
   DEFAULT_RULE,
-} from 'src/alert_group/types'
+} from 'src/types'
 
 // Components
 import {

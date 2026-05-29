@@ -2,7 +2,7 @@ import {
   AlertGroupRule,
   AlertRuleEventHandler,
   AlertTemplate,
-} from 'src/alert_group/types'
+} from 'src/types'
 
 export const findSelectedAlertTemplate = (
   templates: AlertTemplate[] = [],

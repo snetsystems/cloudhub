@@ -8,7 +8,7 @@ import {
   IconFont,
   ComponentStatus,
 } from 'src/reusable_ui'
-import {DummyUser} from 'src/admin/containers/cloudhub/GroupDetailPage'
+import {RecipientMember} from 'src/types'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {Input, Button, ButtonShape} from 'src/reusable_ui'
 
@@ -21,7 +21,8 @@ export interface LevelOption {
 }
 
 interface Props {
-  users: DummyUser[]
+  isDefault?: boolean
+  users: RecipientMember[]
   levelOptions: LevelOption[]
   onToggleAlert: (id: string) => void
   onLevelChange: (id: string, level: string) => void
@@ -33,6 +34,7 @@ interface Props {
 }
 
 export default function GroupCardView({
+  isDefault = false,
   users,
   levelOptions,
   onToggleAlert,
@@ -123,14 +125,16 @@ export default function GroupCardView({
                       onClick={() => onStartEdit && onStartEdit(u.id)}
                     />
                   )}
-                  <ConfirmButton
-                    icon={IconFont.UserRemove}
-                    square={true}
-                    confirmText={t('group_management.remove_confirm', '제외하기')}
-                    type="btn-danger"
-                    size="btn-xs"
-                    confirmAction={() => onRemoveUser(u.id)}
-                  />
+                  {(!isDefault || u.isExternal) && (
+                    <ConfirmButton
+                      icon={IconFont.UserRemove}
+                      square={true}
+                      confirmText={t('group_management.remove_confirm', '제외하기')}
+                      type="btn-danger"
+                      size="btn-xs"
+                      confirmAction={() => onRemoveUser(u.id)}
+                    />
+                  )}
                 </>
               )}
             </div>

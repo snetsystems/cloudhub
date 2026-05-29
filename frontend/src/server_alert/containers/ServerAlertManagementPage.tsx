@@ -14,8 +14,7 @@ import {
   Page,
 } from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import {ColumnInfo} from 'src/types'
-import {AlertGroupRule, AlertCondition} from 'src/alert_group/types'
+import {ColumnInfo, AlertGroupRule, AlertCondition, OPERATOR_SYMBOLS} from 'src/types'
 import {
   getAlertGroupRules,
   deleteAlertGroupRuleAndFetch,
@@ -23,21 +22,6 @@ import {
 } from 'src/alert_group/apis'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
-
-const OPERATOR_SYMBOLS: Record<string, string> = {
-  greater: '>',
-  greater_equal: '>=',
-  less: '<',
-  less_equal: '<=',
-  equal: '=',
-  not_equal: '!=',
-  'greater than': '>',
-  'equal to or greater': '>=',
-  'less than': '<',
-  'equal to or less than': '<=',
-  'equal to': '=',
-  'not equal to': '!=',
-}
 
 const getOperatorSymbol = (op: string): string => {
   if (!op) {

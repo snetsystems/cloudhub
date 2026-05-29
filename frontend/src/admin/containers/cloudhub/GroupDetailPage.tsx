@@ -19,7 +19,8 @@ import GroupCardView from 'src/admin/components/cloudhub/GroupCardView'
 import UserSelectionOverlay from 'src/admin/components/cloudhub/UserSelectionOverlay'
 import TableComponent from 'src/device_management/components/TableComponent'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import {ColumnInfo, User} from 'src/types'
+import PageSpinner from 'src/shared/components/PageSpinner'
+import {ColumnInfo, User, RecipientMember} from 'src/types'
 import {
   getRecipientGroup,
   createRecipientGroup,
@@ -30,30 +31,9 @@ import {
   getAlertRecipientMemberPrefsByGroup,
   upsertAlertRecipientMemberPrefsByGroup,
 } from 'src/alert_group/apis'
-import {AlertRecipientMemberPrefs} from 'src/alert_group/types'
+import {AlertRecipientMemberPrefs} from 'src/types'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
-
-export interface DummyUser {
-  id: string
-  userName: string
-  email: string
-  alertOn: boolean
-  level: string
-  isNew?: boolean
-  userId?: string
-  originalPrefs?: AlertRecipientMemberPrefs
-  isEditing?: boolean
-  isExternal?: boolean
-}
-
-export interface GroupInfo {
-  isNew?: boolean
-  groupId?: string
-  groupName?: string
-  memberCount?: number
-  emailTargets?: number
-}
 
 interface Props {
   params: {
@@ -79,11 +59,19 @@ function GroupDetailPage({params, notify}: Props) {
   const groupId = params.groupId
 
   const [groupName, setGroupName] = useState('')
+
+  const [isDefault, setIsDefault] = useState(false)
+
   const [viewMode, setViewMode] = useState<'card' | 'list'>('list')
-  const [users, setUsers] = useState<DummyUser[]>([])
+
+  const [users, setUsers] = useState<RecipientMember[]>([])
+
   const [originalMembers, setOriginalMembers] = useState<any[]>([])
+
   const [isLoading, setIsLoading] = useState(true)
+
   const [isUserOverlayVisible, setIsUserOverlayVisible] = useState(false)
+
   const [groupNameError, setGroupNameError] = useState(false)
 
   useEffect(() => {
@@ -93,6 +81,7 @@ function GroupDetailPage({params, notify}: Props) {
         if (groupId && groupId !== 'new') {
           const group = await getRecipientGroup(groupId)
           setGroupName(group.name || '')
+          setIsDefault(group.isDefault || false)
           const members = group.members || []
           setOriginalMembers(members)
 
@@ -214,6 +203,22 @@ function GroupDetailPage({params, notify}: Props) {
       return
     }
 
+    const enteredEmail = user.email.trim().toLowerCase()
+    const isEmailDuplicate = users.some(
+      u => u.id !== userId && u.email.trim().toLowerCase() === enteredEmail
+    )
+    if (isEmailDuplicate) {
+      notify(
+        notifyError(
+          t(
+            'group_management.duplicate_email',
+            '이미 등록된 이메일 주소입니다.'
+          )
+        )
+      )
+      return
+    }
+
     setUsers(
       users.map(u =>
         u.id === userId
@@ -255,7 +260,7 @@ function GroupDetailPage({params, notify}: Props) {
         },
         render: (_val, row) =>
           row.isEditing ? (
-            <div style={{maxWidth: '200px'}}>
+            <div className="table-input-wrapper">
               <Input
                 value={row.userName}
                 onChange={e =>
@@ -282,7 +287,7 @@ function GroupDetailPage({params, notify}: Props) {
         },
         render: (_val, row) =>
           row.isEditing ? (
-            <div style={{maxWidth: '200px'}}>
+            <div className="table-input-wrapper">
               <Input
                 value={row.email}
                 onChange={e =>
@@ -335,10 +340,7 @@ function GroupDetailPage({params, notify}: Props) {
         },
         render: (_val, row) =>
           row.isEditing ? (
-            <div
-              className="list-view-edit-action"
-              style={{display: 'flex', gap: '4px', justifyContent: 'center'}}
-            >
+            <div className="list-view-edit-action">
               <Button
                 icon={IconFont.Remove}
                 color={ComponentColor.Default}
@@ -359,10 +361,7 @@ function GroupDetailPage({params, notify}: Props) {
               />
             </div>
           ) : (
-            <div
-              className="list-view-remove-action"
-              style={{display: 'flex', gap: '4px', justifyContent: 'center'}}
-            >
+            <div className="list-view-remove-action">
               {row.isExternal && (
                 <Button
                   icon={IconFont.Pencil}
@@ -372,14 +371,16 @@ function GroupDetailPage({params, notify}: Props) {
                   onClick={() => handleStartEditUser(row.id)}
                 />
               )}
-              <ConfirmButton
-                icon={IconFont.UserRemove}
-                square={true}
-                confirmText={t('group_management.remove_confirm', '제외하기')}
-                type="btn-danger"
-                size="btn-xs"
-                confirmAction={() => handleRemoveUser(row.id)}
-              />
+              {(!isDefault || row.isExternal) && (
+                <ConfirmButton
+                  icon={IconFont.UserRemove}
+                  square={true}
+                  confirmText={t('group_management.remove_confirm', '제외하기')}
+                  type="btn-danger"
+                  size="btn-xs"
+                  confirmAction={() => handleRemoveUser(row.id)}
+                />
+              )}
             </div>
           ),
       },
@@ -411,25 +412,26 @@ function GroupDetailPage({params, notify}: Props) {
   )
 
   if (isLoading) {
-    return (
-      <Page>
-        <Page.Contents fullWidth={true}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '100px',
-            }}
-          >
-            <div className="page-spinner"></div>
-          </div>
-        </Page.Contents>
-      </Page>
-    )
+    return <PageSpinner />
   }
 
   const handleAddExternalUser = () => {
-    const newExternalUser: DummyUser = {
+    const hasEmptyExternalUser = users.some(
+      u => u.isExternal && u.isEditing && !u.userName.trim() && !u.email.trim()
+    )
+    if (hasEmptyExternalUser) {
+      notify(
+        notifyError(
+          t(
+            'group_management.fill_existing_external_user',
+            '이미 추가 중인 외부 사용자가 있습니다. 먼저 정보를 입력해주세요.'
+          )
+        )
+      )
+      return
+    }
+
+    const newExternalUser: RecipientMember = {
       id: `ext_${Date.now()}`,
       userName: '',
       email: '',
@@ -494,6 +496,111 @@ function GroupDetailPage({params, notify}: Props) {
     setIsUserOverlayVisible(false)
   }
 
+  const handleSave = async () => {
+    if (!groupName.trim()) {
+      setGroupNameError(true)
+      return
+    }
+    setIsLoading(true)
+    try {
+      let currentGroupId = groupId
+      if (!currentGroupId || currentGroupId === 'new') {
+        const newGroup = await createRecipientGroup(groupName)
+        currentGroupId = newGroup.id
+      } else {
+        await updateRecipientGroup(currentGroupId, groupName)
+      }
+
+      if (groupId && groupId !== 'new') {
+        const currentUserIds = new Set(
+          users.filter(u => !u.isNew).map(u => u.id)
+        )
+        const removedMembers = originalMembers.filter(
+          m => !currentUserIds.has(m.id)
+        )
+        await Promise.all(
+          removedMembers.map(m =>
+            deleteRecipientGroupMember(currentGroupId, m.id)
+          )
+        )
+      }
+
+      const finalPrefs: AlertRecipientMemberPrefs[] = []
+
+      for (const u of users) {
+        if (u.isEditing) {
+          continue
+        }
+        let memberId = u.id
+        if (u.isNew) {
+          const newMember = await addRecipientGroupMember(
+            currentGroupId,
+            {
+              userId: u.userId || u.id,
+              userName: u.userName,
+              email: u.email,
+              phoneNumber: '',
+              isExternal: !!u.isExternal,
+            }
+          )
+          memberId = newMember.id
+        } else {
+          const orig = originalMembers.find(m => m.id === u.id)
+          const nameChanged = orig && orig.userName !== u.userName
+          const emailChanged = orig && orig.email !== u.email
+          if (nameChanged || emailChanged) {
+            await updateRecipientGroupMember(currentGroupId, u.id, {
+              userName: u.userName,
+              email: u.email,
+            })
+          }
+        }
+
+        finalPrefs.push({
+          ...(u.originalPrefs || {
+            smsEnabled: false,
+            smsLevel: 'all',
+            notifyWeekdays: '1,2,3,4,5,6,7',
+            notifyStartHm: '00:00',
+            notifyEndHm: '23:59',
+            escalationSeconds: 0,
+            recipientGroupMemberId: '',
+          }),
+          recipientGroupMemberId: memberId,
+          emailEnabled: u.alertOn,
+          emailLevel: u.level,
+        })
+      }
+
+      await upsertAlertRecipientMemberPrefsByGroup(
+        currentGroupId,
+        finalPrefs
+      )
+
+      notify(
+        notifySuccess(
+          t(
+            'group_management.save_success',
+            '그룹 설정을 저장했습니다.'
+          )
+        )
+      )
+      browserHistory.goBack()
+    } catch (error) {
+      console.error('Failed to save group details', error)
+      notify(
+        notifyError(
+          t(
+            'group_management.save_failed',
+            '그룹 설정 저장에 실패했습니다.'
+          )
+        )
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <Page>
       <Page.Header>
@@ -517,110 +624,7 @@ function GroupDetailPage({params, notify}: Props) {
             text={t('button.save', '저장')}
             color={ComponentColor.Primary}
             size={ComponentSize.Small}
-            onClick={async () => {
-              if (!groupName.trim()) {
-                setGroupNameError(true)
-                return
-              }
-              setIsLoading(true)
-              try {
-                let currentGroupId = groupId
-                if (!currentGroupId || currentGroupId === 'new') {
-                  const newGroup = await createRecipientGroup(groupName)
-                  currentGroupId = newGroup.id
-                } else {
-                  await updateRecipientGroup(currentGroupId, groupName)
-                }
-
-                if (groupId && groupId !== 'new') {
-                  const currentUserIds = new Set(
-                    users.filter(u => !u.isNew).map(u => u.id)
-                  )
-                  const removedMembers = originalMembers.filter(
-                    m => !currentUserIds.has(m.id)
-                  )
-                  await Promise.all(
-                    removedMembers.map(m =>
-                      deleteRecipientGroupMember(currentGroupId, m.id)
-                    )
-                  )
-                }
-
-                const finalPrefs: AlertRecipientMemberPrefs[] = []
-
-                for (const u of users) {
-                  if (u.isEditing) {
-                    continue
-                  }
-                  let memberId = u.id
-                  if (u.isNew) {
-                    const newMember = await addRecipientGroupMember(
-                      currentGroupId,
-                      {
-                        userId: u.userId || u.id,
-                        userName: u.userName,
-                        email: u.email,
-                        phoneNumber: '',
-                        isExternal: !!u.isExternal,
-                      }
-                    )
-                    memberId = newMember.id
-                  } else {
-                    const orig = originalMembers.find(m => m.id === u.id)
-                    const nameChanged = orig && orig.userName !== u.userName
-                    const emailChanged = orig && orig.email !== u.email
-                    if (nameChanged || emailChanged) {
-                      await updateRecipientGroupMember(currentGroupId, u.id, {
-                        userName: u.userName,
-                        email: u.email,
-                      })
-                    }
-                  }
-
-                  finalPrefs.push({
-                    ...(u.originalPrefs || {
-                      smsEnabled: false,
-                      smsLevel: 'all',
-                      notifyWeekdays: '1,2,3,4,5,6,7',
-                      notifyStartHm: '00:00',
-                      notifyEndHm: '23:59',
-                      escalationSeconds: 0,
-                      recipientGroupMemberId: '',
-                    }),
-                    recipientGroupMemberId: memberId,
-                    emailEnabled: u.alertOn,
-                    emailLevel: u.level,
-                  })
-                }
-
-                await upsertAlertRecipientMemberPrefsByGroup(
-                  currentGroupId,
-                  finalPrefs
-                )
-
-                notify(
-                  notifySuccess(
-                    t(
-                      'group_management.save_success',
-                      '그룹 설정을 저장했습니다.'
-                    )
-                  )
-                )
-                browserHistory.goBack()
-              } catch (error) {
-                console.error('Failed to save group details', error)
-                notify(
-                  notifyError(
-                    t(
-                      'group_management.save_failed',
-                      '그룹 설정 저장에 실패했습니다.'
-                    )
-                  )
-                )
-              } finally {
-                setIsLoading(false)
-              }
-            }}
+            onClick={handleSave}
           />
         </Page.Header.Right>
       </Page.Header>
@@ -681,7 +685,7 @@ function GroupDetailPage({params, notify}: Props) {
               )}
               topLeftRender={viewModeRadio}
               toprightRender={
-                <div style={{display: 'flex', gap: '8px'}}>{actionButtons}</div>
+                <div className="action-buttons-wrapper">{actionButtons}</div>
               }
               columns={columns}
               data={users}
@@ -705,15 +709,13 @@ function GroupDetailPage({params, notify}: Props) {
                   </h2>
                   {viewModeRadio}
                 </div>
-                <div
-                  className="table-top right"
-                  style={{display: 'flex', gap: '8px', alignItems: 'center'}}
-                >
+                <div className="table-top right table-top-right-wrapper">
                   {actionButtons}
                 </div>
               </div>
               <div className="panel-body card-view-body">
                 <GroupCardView
+                  isDefault={isDefault}
                   users={users}
                   levelOptions={LEVEL_OPTIONS}
                   onToggleAlert={handleToggleAlert}

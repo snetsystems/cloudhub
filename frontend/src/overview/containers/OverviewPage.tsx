@@ -5,7 +5,7 @@ import {SERVER_OVERVIEW_PAGE_NAME} from 'src/shared/constants/routes'
 import DashboardPageWithImport, {
   dashboardPageWithImportMstp,
   dashboardPageWithImportMdtp,
-  type DashboardPageWithImportProps,
+  DashboardPageWithImportProps,
 } from 'src/shared/components/DashboardPageWithImport'
 
 type Props = DashboardPageWithImportProps

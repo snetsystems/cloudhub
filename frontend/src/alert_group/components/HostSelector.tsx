@@ -2,7 +2,7 @@
 import React, {PureComponent, ChangeEvent} from 'react'
 import {withTranslation, WithTranslation} from 'react-i18next'
 import {Input, InputType, ComponentSize} from 'src/reusable_ui'
-import {HostCandidate} from 'src/alert_group/types'
+import {HostCandidate} from 'src/types'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 interface Props extends WithTranslation {
