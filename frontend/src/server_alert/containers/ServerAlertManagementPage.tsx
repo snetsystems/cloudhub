@@ -14,7 +14,12 @@ import {
   Page,
 } from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import {ColumnInfo, AlertGroupRule, AlertCondition, OPERATOR_SYMBOLS} from 'src/types'
+import {
+  ColumnInfo,
+  AlertGroupRule,
+  AlertCondition,
+  OPERATOR_SYMBOLS,
+} from 'src/types'
 import {
   getAlertGroupRules,
   deleteAlertGroupRuleAndFetch,
@@ -218,16 +223,16 @@ function ServerAlertManagementPage({router, location, notify}: any) {
               changeVal === '% change'
                 ? t('server_alert.pct_change', '변화율')
                 : t('server_alert.amt_change', '변화량')
-            const optionText = shift ? `${shift} ${changeText}` : `${changeText}`
+            const optionText = shift
+              ? `${shift} ${changeText}`
+              : `${changeText}`
 
             return (
               <div className="server-alert-trigger-cell">
                 <span className="server-alert-trigger-main">
                   {t('alert_group_rule.relative', 'Relative')}
                 </span>
-                <span className="server-alert-trigger-sub">
-                  {optionText}
-                </span>
+                <span className="server-alert-trigger-sub">{optionText}</span>
               </div>
             )
           }
@@ -240,9 +245,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
                   {t('alert_group_rule.deadman', 'Deadman')}
                 </span>
                 {period && (
-                  <span className="server-alert-trigger-sub">
-                    {period}
-                  </span>
+                  <span className="server-alert-trigger-sub">{period}</span>
                 )}
               </div>
             )
@@ -273,12 +276,14 @@ function ServerAlertManagementPage({router, location, notify}: any) {
               </span>
               {critical && (
                 <span className="server-alert-rule-critical">
-                  ● Critical {getOperatorSymbol(critical.operator)} {critical.value}
+                  ● Critical {getOperatorSymbol(critical.operator)}{' '}
+                  {critical.value}
                 </span>
               )}
               {warning && (
                 <span className="server-alert-rule-warning">
-                  ● Warning {getOperatorSymbol(warning.operator)} {warning.value}
+                  ● Warning {getOperatorSymbol(warning.operator)}{' '}
+                  {warning.value}
                 </span>
               )}
             </div>
@@ -346,7 +351,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
             title={t('server_alert.title', 'Server Alert Management')}
           />
         </Page.Header.Left>
-        <Page.Header.Right />
+        <Page.Header.Right showSourceIndicator={true} />
       </Page.Header>
       <Page.Contents>
         <div className="server-alert-page-content">

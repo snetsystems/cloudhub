@@ -700,7 +700,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           <Page.Header.Left>
             <Page.Title title={pageTitle} />
           </Page.Header.Left>
-          <Page.Header.Right>
+          <Page.Header.Right showSourceIndicator={true}>
             <Button
               text={t('button.cancel', '취소')}
               onClick={this.handleCancel}
