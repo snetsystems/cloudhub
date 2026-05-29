@@ -55,6 +55,7 @@ export interface AlertRule {
   modified?: string
   queryID?: string
   'last-enabled'?: string
+  source: string
 }
 
 export interface AlertRuleForDeviceManagement {

@@ -1,8 +1,9 @@
-import React, {FunctionComponent} from 'react'
+import React, {FunctionComponent, useState} from 'react'
 import {Link} from 'react-router'
 
 import KapacitorRulesTable from 'src/kapacitor/components/KapacitorRulesTable'
 import TasksTable from 'src/kapacitor/components/TasksTable'
+import {ComponentSize, SlideToggle, Dropdown} from 'src/reusable_ui'
 
 import {Source, AlertRule, Kapacitor} from 'src/types'
 
@@ -21,24 +22,53 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
   onDelete,
   onChangeRuleStatus,
 }) => {
+  const DEFAULT_SELECTED_VALUE: string = 'All'
+
+  const [showDefault, setShowDefault] = useState(false)
+  const [selectedDefault, setSelectedDefault] = useState(DEFAULT_SELECTED_VALUE)
+  const handleDefaultDropdownChange = (value: {id: string}) => {
+    setSelectedDefault(value.id)
+  }
+
+  const handleOnChangeShowDefault = () => {
+    setShowDefault(!showDefault)
+  }
+
   const builderRules = rules.filter((r: AlertRule) => r.query)
   const builderHeader = `${builderRules.length} Alert Rule${
     builderRules.length === 1 ? '' : 's'
   }`
-  const scriptsHeader = `${rules.length} TICKscript${
-    rules.length === 1 ? '' : 's'
+  const getFilteredscripts = () => {
+    if (!showDefault) {
+      return rules.filter((r: AlertRule) => r.source === 'user')
+    }
+    switch (selectedDefault) {
+      case DEFAULT_SELECTED_VALUE:
+        return rules
+      case 'AI':
+        return rules.filter((r: AlertRule) => r.source.includes('ai'))
+      case 'Server':
+        return rules.filter((r: AlertRule) => r.source.includes('alert-group'))
+      case 'User':
+        return rules.filter((r: AlertRule) => r.source === 'user')
+    }
+  }
+
+  const tickScripts = getFilteredscripts()
+
+  const scriptsHeader = `${tickScripts.length} TICKscript${
+    tickScripts.length === 1 ? '' : 's'
   }`
   const kapacitorLink = `/sources/${source.id}/kapacitors/${kapacitor.id}`
 
   return (
-    <div>
+    <div className="kapacitor-rules">
       <div className="panel">
         <div className="panel-heading">
           <h2 className="panel-title">{builderHeader}</h2>
           <Link
             to={`${kapacitorLink}/alert-rules/new`}
-            className="btn btn-sm btn-primary"
-            style={{marginRight: '4px'}}
+            className="btn btn-sm btn-primary kapacitor-rules__action"
           >
             <span className="icon plus" /> Build Alert Rule
           </Link>
@@ -54,19 +84,56 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
       </div>
       <div className="panel">
         <div className="panel-heading">
-          <h2 className="panel-title">{scriptsHeader}</h2>
-          <Link
-            to={`${kapacitorLink}/tickscripts/new`}
-            className="btn btn-sm btn-success"
-            style={{marginRight: '4px'}}
-          >
-            <span className="icon plus" /> Write TICKscript
-          </Link>
+          <div>
+            <h2 className="panel-title">{scriptsHeader}</h2>
+            <div className="kapacitor-rules__toggle">
+              <SlideToggle
+                active={showDefault}
+                size={ComponentSize.ExtraSmall}
+                onChange={handleOnChangeShowDefault}
+              />
+            </div>
+          </div>
+          <div>
+            {showDefault && (
+              <div className="kapacitor-rules__filter">
+                <Dropdown
+                  onChange={handleDefaultDropdownChange}
+                  selectedID={selectedDefault}
+                  buttonSize={ComponentSize.Small}
+                  widthPixels={90}
+                  customClass="dropdown dropdown-sm dropdown-default"
+                >
+                  <Dropdown.Item
+                    id={`${DEFAULT_SELECTED_VALUE}`}
+                    value={{id: `${DEFAULT_SELECTED_VALUE}`}}
+                  >
+                    All
+                  </Dropdown.Item>
+                  <Dropdown.Item id="AI" value={{id: 'AI'}}>
+                    AI
+                  </Dropdown.Item>
+                  <Dropdown.Item id="Server" value={{id: 'Server'}}>
+                    Server
+                  </Dropdown.Item>
+                  <Dropdown.Item id="User" value={{id: 'User'}}>
+                    User
+                  </Dropdown.Item>
+                </Dropdown>
+              </div>
+            )}
+            <Link
+              to={`${kapacitorLink}/tickscripts/new`}
+              className="btn btn-sm btn-success kapacitor-rules__action"
+            >
+              <span className="icon plus" /> Write TICKscript
+            </Link>
+          </div>
         </div>
         <div className="panel-body">
           <TasksTable
             kapacitorLink={kapacitorLink}
-            tasks={rules}
+            tasks={tickScripts}
             onDelete={onDelete}
             onChangeRuleStatus={onChangeRuleStatus}
           />
