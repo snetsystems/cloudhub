@@ -333,6 +333,11 @@ func TestAlertGroupRuleTICKScriptEmbedsNonEmailHandlersWithPausePolicy(t *testin
 			Enabled:    true,
 			ConfigJSON: []byte(`{"chatId":"12345","parseMode":"HTML","disableWebPagePreview":true,"disableNotification":true}`),
 		},
+		{
+			Type:       cloudhub.AlertRuleEventHandlerWebhook,
+			Enabled:    true,
+			ConfigJSON: []byte(`{"url":"https://example.com/endpoint","headers":{"Authorization":"Bearer token"}}`),
+		},
 	}
 
 	tick, err := AlertGroupRuleTICKScript(r, AlertRecipients{}, nil)
@@ -353,6 +358,8 @@ func TestAlertGroupRuleTICKScriptEmbedsNonEmailHandlersWithPausePolicy(t *testin
 		`.log('/tmp/cloudhub-alerts.log')`,
 		`.telegram()`,
 		`.chatId('12345')`,
+		`.post('https://example.com/endpoint')`,
+		`.header('Authorization', 'Bearer token')`,
 	} {
 		if !strings.Contains(tick, want) {
 			t.Fatalf("tickscript missing %q\n%s", want, tick)

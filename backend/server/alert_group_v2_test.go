@@ -1099,6 +1099,12 @@ func TestAlertGroupRuleCreateRejectsInvalidNonEmailEventHandlers(t *testing.T) {
 			configJSON: `{}`,
 			wantError:  "telegram chatId is required",
 		},
+		{
+			name:       "webhook missing url",
+			handler:    "webhook",
+			configJSON: `{}`,
+			wantError:  "webhook url is required",
+		},
 	}
 
 	for _, tt := range tests {

@@ -545,8 +545,16 @@ func validateAlertRuleEventHandlers(handlers []cloudhub.AlertRuleEventHandler) e
 			cfg = []byte(`{}`)
 		}
 		switch strings.ToLower(strings.TrimSpace(h.Type)) {
-		case "", cloudhub.AlertRuleEventHandlerEmail, cloudhub.AlertRuleEventHandlerSMS, cloudhub.AlertRuleEventHandlerWebhook:
+		case "", cloudhub.AlertRuleEventHandlerEmail, cloudhub.AlertRuleEventHandlerSMS:
 			continue
+		case cloudhub.AlertRuleEventHandlerWebhook:
+			var v cloudhub.Post
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return fmt.Errorf("webhook configJson is invalid")
+			}
+			if strings.TrimSpace(v.URL) == "" {
+				return fmt.Errorf("webhook url is required")
+			}
 		case cloudhub.AlertRuleEventHandlerTCP:
 			var v cloudhub.TCP
 			if err := json.Unmarshal(cfg, &v); err != nil {

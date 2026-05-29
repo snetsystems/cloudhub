@@ -293,6 +293,13 @@ func nonEmailEventHandlerServices(handlers []cloudhub.AlertRuleEventHandler) (st
 			cfg = []byte(`{}`)
 		}
 		switch strings.ToLower(strings.TrimSpace(h.Type)) {
+		case cloudhub.AlertRuleEventHandlerWebhook:
+			var v cloudhub.Post
+			if err := json.Unmarshal(cfg, &v); err != nil {
+				return "", err
+			}
+			nodes.Posts = append(nodes.Posts, &v)
+			has = true
 		case cloudhub.AlertRuleEventHandlerTCP:
 			var v cloudhub.TCP
 			if err := json.Unmarshal(cfg, &v); err != nil {
