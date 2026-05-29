@@ -80,7 +80,7 @@ type alertGroupTickParams struct {
 	RecentEnabled        bool   // true when OccurrenceType asks for windowed recent counts
 	OccurrenceCount      int    // N consecutive points required to trigger
 	OccurrenceWindow     string // window duration for recent mode only
-	ConsecutiveBlock     string
+	OccurrenceLambda     string // stateCount lambda — typically the most permissive enabled threshold
 	RecentBlock          string
 	Message              string
 	EmailBody            string
@@ -162,7 +162,8 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
 		sourceVar = "relative_src"
 	}
-	occEnabled := rule.OccurrenceCount > 1 && (info != "" || warn != "" || crit != "")
+	occLambda := buildOccurrenceLambda(lambdaRule)
+	occEnabled := rule.OccurrenceCount > 1 && occLambda != ""
 	recentEnabled := occEnabled && isRecentOccurrence(rule.OccurrenceType)
 	consecutiveEnabled := occEnabled && !recentEnabled
 
@@ -171,7 +172,6 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	emailInfo, emailWarn, emailCrit := buildExclusiveLambdas(lambdaRule)
 
 	recent := recentOccurrenceParams{}
-	consecutive := consecutiveOccurrenceParams{}
 	switch {
 	case recentEnabled:
 		recent = buildRecentOccurrenceParams(rule, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit)
@@ -180,9 +180,14 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 	case consecutiveEnabled:
 		// Pure stateCount guard. occurrenceWindow is intentionally ignored here —
 		// see docs/alert_group_consecutive_window.md for the rationale.
-		consecutive = buildConsecutiveOccurrenceParams(rule, sourceVar, emailInfo, emailWarn, emailCrit)
-		info, warn, crit = consecutive.infoCountLambda, consecutive.warnCountLambda, consecutive.critCountLambda
-		emailInfo, emailWarn, emailCrit = consecutive.infoCountLambda, consecutive.warnCountLambda, consecutive.critCountLambda
+		wrap := func(s string) string {
+			if s == "" {
+				return ""
+			}
+			return fmt.Sprintf(`"state_count" >= %d AND (%s)`, rule.OccurrenceCount, s)
+		}
+		info, warn, crit = wrap(info), wrap(warn), wrap(crit)
+		emailInfo, emailWarn, emailCrit = wrap(emailInfo), wrap(emailWarn), wrap(emailCrit)
 	}
 	notificationHandlers, err := nonEmailEventHandlerServices(rule.EventHandlers)
 	if err != nil {
@@ -211,7 +216,7 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		RecentEnabled:        recentEnabled,
 		OccurrenceCount:      rule.OccurrenceCount,
 		OccurrenceWindow:     occurrenceWindow(rule.OccurrenceWindow),
-		ConsecutiveBlock:     consecutive.block,
+		OccurrenceLambda:     occLambda,
 		RecentBlock:          recent.block,
 		Message:              tickString(rule.Message),
 		EmailBody:            tickEmailBody(emailBodyFromHandlers(rule.EventHandlers)),
@@ -408,53 +413,6 @@ type recentCountSpec struct {
 	countField string
 }
 
-type consecutiveOccurrenceParams struct {
-	block           string
-	infoCountLambda string
-	warnCountLambda string
-	critCountLambda string
-}
-
-type consecutiveCountSpec struct {
-	expr       string
-	countField string
-}
-
-func buildConsecutiveOccurrenceParams(rule cloudhub.AlertGroupRule, sourceVar, info, warn, crit string) consecutiveOccurrenceParams {
-	var specs []consecutiveCountSpec
-	add := func(expr, countField string) string {
-		if expr == "" {
-			return ""
-		}
-		specs = append(specs, consecutiveCountSpec{expr: expr, countField: countField})
-		return fmt.Sprintf(`"%s" >= %d`, countField, rule.OccurrenceCount)
-	}
-
-	p := consecutiveOccurrenceParams{}
-	p.infoCountLambda = add(info, "info_count")
-	p.warnCountLambda = add(warn, "warn_count")
-	p.critCountLambda = add(crit, "crit_count")
-	p.block = buildConsecutiveOccurrenceBlock(sourceVar, specs)
-	return p
-}
-
-func buildConsecutiveOccurrenceBlock(sourceVar string, specs []consecutiveCountSpec) string {
-	if len(specs) == 0 {
-		return "var processed = " + sourceVar
-	}
-
-	var b strings.Builder
-	fmt.Fprintf(&b, "var processed = %s", sourceVar)
-	for _, s := range specs {
-		fmt.Fprintf(&b, `
-    |stateCount(lambda: %s)
-    |eval(lambda: "state_count")
-        .as('%s')
-        .keep()`, s.expr, s.countField)
-	}
-	return b.String()
-}
-
 func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit string) recentOccurrenceParams {
 	var specs []recentCountSpec
 	add := func(expr, name, countField string) string {
@@ -642,6 +600,54 @@ func formatPauseDuration(secs int) string {
 		return ""
 	}
 	return fmt.Sprintf("%ds", secs)
+}
+
+// buildOccurrenceLambda returns the stateCount guard. When every enabled
+// condition uses the same range direction, it keeps the compact historic
+// "most permissive threshold" form; mixed operators are represented as ORs.
+func buildOccurrenceLambda(rule cloudhub.AlertGroupRule) string {
+	var enabled []cloudhub.AlertRuleCondition
+	for _, c := range rule.Conditions {
+		if !c.Enabled {
+			continue
+		}
+		c.Operator = conditionOperator(c)
+		enabled = append(enabled, c)
+	}
+	if len(enabled) == 0 {
+		return ""
+	}
+
+	firstOp := enabled[0].Operator
+	allSame := true
+	for _, c := range enabled[1:] {
+		if c.Operator != firstOp {
+			allSame = false
+			break
+		}
+	}
+	if allSame {
+		best := enabled[0].Value
+		for _, c := range enabled[1:] {
+			switch firstOp {
+			case cloudhub.AlertConditionOperatorLess, cloudhub.AlertConditionOperatorLessEqual:
+				if c.Value > best {
+					best = c.Value
+				}
+			default:
+				if c.Value < best {
+					best = c.Value
+				}
+			}
+		}
+		return buildThresholdExpr(rule.Field, firstOp, best)
+	}
+
+	parts := make([]string, 0, len(enabled))
+	for _, c := range enabled {
+		parts = append(parts, buildThresholdExpr(rule.Field, c.Operator, c.Value))
+	}
+	return strings.Join(parts, " OR ")
 }
 
 func conditionOperator(c cloudhub.AlertRuleCondition) string {

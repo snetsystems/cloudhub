@@ -64,8 +64,9 @@ trigger
 
 {{end}}{{if .RecentEnabled}}// occurrence_count={{.OccurrenceCount}} (recent): require N matching points inside occurrence_window={{.OccurrenceWindow}}
 {{.RecentBlock}}
-{{else if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive points matching the current level
-{{.ConsecutiveBlock}}
+{{else if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive matching points
+var processed = {{.SourceVar}}
+    |stateCount(lambda: {{.OccurrenceLambda}})
 {{else}}var processed = {{.SourceVar}}
 {{end}}
 // Main trigger — drives the alert-history log via influxDBOut.
@@ -167,8 +168,9 @@ var src = batch
         .every({{.Every}})
         .groupBy('host')
 
-{{if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive batches matching the current level
-{{.ConsecutiveBlock}}
+{{if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive matching batches
+var processed = src
+    |stateCount(lambda: {{.OccurrenceLambda}})
 {{else}}var processed = src
 {{end}}
 var trigger = processed
