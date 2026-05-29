@@ -24,7 +24,28 @@ interface Props {
 //   {{ .ID }}                       → mock.id
 //   {{ index .Tags "host" }}        → mock.host
 // Whitespace inside the braces is tolerated.
-function substitute(html: string, mock: MockData): string {
+function renderLevelConditionals(html: string, level: string): string {
+  const conditional = /\{\{\s*if\s+eq\s+\.Level\s+"([^"]+)"\s*\}\}([\s\S]*?)(?:\{\{\s*else\s+if\s+eq\s+\.Level\s+"([^"]+)"\s*\}\}([\s\S]*?))?(?:\{\{\s*else\s*\}\}([\s\S]*?))?\{\{\s*end\s*\}\}/g
+
+  return html.replace(
+    conditional,
+    (_match, firstLevel, firstValue, secondLevel, secondValue, fallback) => {
+      if (level === firstLevel) {
+        return firstValue
+      }
+      if (secondLevel && level === secondLevel) {
+        return secondValue
+      }
+      return fallback || ''
+    }
+  )
+}
+
+export function substituteEmailBodyTemplate(
+  html: string,
+  mock: MockData
+): string {
+  html = renderLevelConditionals(html, mock.level)
   const rules: Array<[RegExp, string]> = [
     [/\{\{\s*\.Level\s*\}\}/g, mock.level],
     [/\{\{\s*\.Message\s*\}\}/g, mock.message],
@@ -47,14 +68,13 @@ const EmailBodyPreview: React.FC<Props> = ({html, mock, className, style}) => {
   useEffect(() => {
     const host = hostRef.current
     if (!host) return
-    const rendered = substitute(html, mock)
+    const rendered = substituteEmailBodyTemplate(html, mock)
     const doc = new DOMParser().parseFromString(rendered, 'text/html')
     const body = doc.body
     const bodyStyle = body?.getAttribute('style') ?? ''
     const bodyInner = body?.innerHTML ?? ''
 
-    const shadow =
-      host.shadowRoot ?? host.attachShadow({mode: 'open'})
+    const shadow = host.shadowRoot ?? host.attachShadow({mode: 'open'})
     shadow.innerHTML = `<div style="${bodyStyle}">${bodyInner}</div>`
   }, [html, mock])
 

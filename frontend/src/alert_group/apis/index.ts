@@ -171,7 +171,7 @@ export const testSavedAlertGroupNotification = async (
   id: string,
   payload: Pick<
     AlertGroupTestNotificationRequest,
-    'title' | 'message' | 'recipientGroupIds'
+    'title' | 'message' | 'recipientGroupIds' | 'recipients' | 'includeSelf'
   >
 ): Promise<AlertGroupTestNotificationResponse> => {
   const {data} = await AJAX({

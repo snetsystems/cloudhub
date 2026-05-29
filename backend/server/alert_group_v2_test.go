@@ -432,14 +432,12 @@ func TestResolveRuleRecipientsEmailHandlerWithoutGroupsUsesAllOrgGroups(t *testi
 	}
 }
 
-func TestResolveDraftAlertGroupRecipientGroupsEmptyMeansAllOrg(t *testing.T) {
+func TestResolveDraftAlertGroupRecipientGroupsEmptyMeansNoGroups(t *testing.T) {
 	svc := &Service{
 		RecipientGroups: &fakeRecipientGroupStore{
 			allFunc: func(_ context.Context, orgID string) ([]cloudhub.RecipientGroup, error) {
-				return []cloudhub.RecipientGroup{
-					{ID: "group-1", OrgID: orgID},
-					{ID: "group-2", OrgID: orgID},
-				}, nil
+				t.Fatalf("All should not be called for empty test recipient group selection; orgID=%s", orgID)
+				return nil, nil
 			},
 		},
 	}
@@ -448,17 +446,17 @@ func TestResolveDraftAlertGroupRecipientGroupsEmptyMeansAllOrg(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveDraftAlertGroupRecipientGroups: %v", err)
 	}
-	if len(groups) != 2 {
-		t.Fatalf("groups len = %d, want 2", len(groups))
+	if len(groups) != 0 {
+		t.Fatalf("groups len = %d, want 0", len(groups))
 	}
 }
 
-func TestAlertGroupRuleTestNotificationEmptyRecipientGroupIDsUsesAllOrg(t *testing.T) {
+func TestAlertGroupRuleTestNotificationEmptyRecipientGroupIDsDoesNotUseAllOrg(t *testing.T) {
 	logger := &mocks.TestLogger{}
-	var sentRecipients []string
+	called := false
 	prev := kapacitorSMTPSender
 	kapacitorSMTPSender = func(_ context.Context, _ string, to []string, _, _ string) error {
-		sentRecipients = append([]string(nil), to...)
+		called = true
 		return nil
 	}
 	defer func() { kapacitorSMTPSender = prev }()
@@ -491,11 +489,11 @@ func TestAlertGroupRuleTestNotificationEmptyRecipientGroupIDsUsesAllOrg(t *testi
 
 	svc.AlertGroupRuleTestNotification(rr, req)
 
-	if rr.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusOK, rr.Body.String())
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusUnprocessableEntity, rr.Body.String())
 	}
-	if len(sentRecipients) != 1 || sentRecipients[0] != "org-wide@example.com" {
-		t.Fatalf("unexpected recipients: %#v", sentRecipients)
+	if called {
+		t.Fatal("smtp sender should not be called without an explicit recipient target")
 	}
 }
 
@@ -1877,14 +1875,7 @@ func TestAlertGroupRuleTestNotificationUsesDraftRecipients(t *testing.T) {
 	}
 }
 
-// Dropped TestAlertGroupRuleTestNotificationUsesManualRecipientsOverride: the request-body
-// `recipients` array (direct manual override) was removed from the API; the only inputs are
-// `recipientGroupIds` and the saved rule's groups.
-
-// Dropped TestAlertGroupRuleTestNotificationMergesManualAndUserGroupRecipients: same reason
-// as above — manual recipient input is no longer supported.
-
-func TestAlertGroupRuleTestNotificationFallsBackToLoggedInUser(t *testing.T) {
+func TestAlertGroupRuleTestNotificationMergesDirectRecipientsAndSelf(t *testing.T) {
 	logger := &mocks.TestLogger{}
 	var sentRecipients []string
 	prev := kapacitorSMTPSender
@@ -1905,7 +1896,46 @@ func TestAlertGroupRuleTestNotificationFallsBackToLoggedInUser(t *testing.T) {
 		},
 	}
 
-	body := `{"kapacitorId":"kapa-1","title":"t","message":"m"}`
+	body := `{"kapacitorId":"kapa-1","title":"t","message":"m","includeSelf":true,"recipients":["direct@example.com"," Direct@example.com "]}`
+	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules/test-notification", bytes.NewBufferString(body))
+	ctx := context.WithValue(req.Context(), organizations.ContextKey, "org-1")
+	ctx = context.WithValue(ctx, UserContextKey, &cloudhub.User{Name: "jin", Email: "session@example.com"})
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	svc.AlertGroupRuleTestNotification(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusOK, rr.Body.String())
+	}
+	want := []string{"direct@example.com", "session@example.com"}
+	if strings.Join(sentRecipients, ",") != strings.Join(want, ",") {
+		t.Fatalf("recipients = %#v, want %#v", sentRecipients, want)
+	}
+}
+
+func TestAlertGroupRuleTestNotificationIncludeSelfSendsToLoggedInUser(t *testing.T) {
+	logger := &mocks.TestLogger{}
+	var sentRecipients []string
+	prev := kapacitorSMTPSender
+	kapacitorSMTPSender = func(_ context.Context, _ string, to []string, _, _ string) error {
+		sentRecipients = append([]string(nil), to...)
+		return nil
+	}
+	defer func() { kapacitorSMTPSender = prev }()
+
+	svc := &Service{
+		Logger:                    logger,
+		RecipientGroups:           &fakeRecipientGroupStore{},
+		AlertRecipientMemberPrefs: &fakeAlertRecipientMemberPrefsStore{},
+		AlertKapacitors: &fakeAlertKapacitorStore{
+			getFunc: func(context.Context, string) (cloudhub.AlertKapacitor, error) {
+				return cloudhub.AlertKapacitor{ID: "kapa-1", OrgID: "org-1", URL: "http://kapa"}, nil
+			},
+		},
+	}
+
+	body := `{"kapacitorId":"kapa-1","title":"t","message":"m","includeSelf":true}`
 	req := httptest.NewRequest(http.MethodPost, "/cloudhub/v2/alert-group-rules/test-notification", bytes.NewBufferString(body))
 	ctx := context.WithValue(req.Context(), organizations.ContextKey, "org-1")
 	ctx = context.WithValue(ctx, UserContextKey, &cloudhub.User{Name: "jin", Email: "session@example.com"})
@@ -1982,5 +2012,73 @@ func TestCreateKapacitorTaskTrimsTrailingSlash(t *testing.T) {
 	}
 	if requestedPath != "/kapacitor/v1/tasks" {
 		t.Fatalf("path = %q, want %q", requestedPath, "/kapacitor/v1/tasks")
+	}
+}
+
+// Toggling an alert-group task's status from the TICKscripts page (KapacitorRulesStatus)
+// must also flip AlertGroupRule.Active in PG, otherwise the Server Alert page — which
+// reads Active from PG — keeps showing the stale value.
+func TestKapacitorRulesStatusSyncsAlertGroupActive(t *testing.T) {
+	logger := &mocks.TestLogger{}
+	var updated cloudhub.AlertGroupRule
+	updateCalled := false
+
+	taskJSON := `{"link":{"rel":"self","href":"/kapacitor/v1/tasks/alert-group-rule-1"},"id":"alert-group-rule-1","type":"stream","status":"enabled","script":""}`
+	kapacitorAPI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(taskJSON))
+	}))
+	defer kapacitorAPI.Close()
+
+	svc := &Service{
+		Logger: logger,
+		Store: &mocks.Store{
+			ServersStore: &mocks.ServersStore{
+				GetF: func(_ context.Context, id int) (cloudhub.Server, error) {
+					if id != 42 {
+						return cloudhub.Server{}, errors.New("not found")
+					}
+					return cloudhub.Server{ID: 42, SrcID: 1, URL: kapacitorAPI.URL}, nil
+				},
+			},
+		},
+		AlertGroupRules: &fakeAlertGroupRuleStore{
+			getFunc: func(_ context.Context, id string) (cloudhub.AlertGroupRule, error) {
+				if id != "rule-1" {
+					return cloudhub.AlertGroupRule{}, errors.New("not found")
+				}
+				return cloudhub.AlertGroupRule{ID: "rule-1", OrgID: "org-1", Active: true}, nil
+			},
+			updateFunc: func(_ context.Context, r cloudhub.AlertGroupRule) error {
+				updateCalled = true
+				updated = r
+				return nil
+			},
+		},
+	}
+
+	req := httptest.NewRequest(
+		http.MethodPatch,
+		"/cloudhub/v1/sources/1/kapacitors/42/rules/alert-group-rule-1",
+		bytes.NewBufferString(`{"status":"disabled"}`),
+	)
+	req = req.WithContext(httprouter.WithParams(req.Context(), httprouter.Params{
+		{Key: "id", Value: "1"},
+		{Key: "kid", Value: "42"},
+		{Key: "tid", Value: "alert-group-rule-1"},
+	}))
+	rr := httptest.NewRecorder()
+
+	svc.KapacitorRulesStatus(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusOK, rr.Body.String())
+	}
+	if !updateCalled {
+		t.Fatalf("AlertGroupRules.Update was not called; PG Active not synced")
+	}
+	if updated.Active {
+		t.Fatalf("synced Active = true, want false (status disabled)")
 	}
 }

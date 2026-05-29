@@ -146,6 +146,69 @@ func TestAlertGroupRuleTICKScriptUsesEmailHandlerBodyAsDetails(t *testing.T) {
 	}
 }
 
+func TestAlertGroupRuleTICKScriptPreservesEmailBodyLevelConditionals(t *testing.T) {
+	r := sampleRule()
+	body := `background:{{ if eq .Level "WARNING" }}#fef3c7{{ else if eq .Level "CRITICAL" }}#fee2e2{{ else }}#dbeafe{{ end }}`
+	bodyJSON, err := json.Marshal(map[string]string{"body": body})
+	if err != nil {
+		t.Fatalf("marshal body: %v", err)
+	}
+	r.EventHandlers = []cloudhub.AlertRuleEventHandler{{
+		Type:              cloudhub.AlertRuleEventHandlerEmail,
+		Enabled:           true,
+		ConfigJSON:        bodyJSON,
+		RecipientGroupIDs: []string{"group-1"},
+	}}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`{{ if eq .Level "WARNING" }}`,
+		`#fef3c7`,
+		`{{ else if eq .Level "CRITICAL" }}`,
+		`#fee2e2`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("tickscript should preserve email body conditional %q:\n%s", want, tick)
+		}
+	}
+}
+
+func TestAlertGroupRuleTICKScriptUpgradesLegacyDefaultEmailBodyColors(t *testing.T) {
+	r := sampleRule()
+	body := `<html><body><table><tr><td style='background:#111827;color:#ffffff;padding:18px 24px;font-size:18px;font-weight:700;'>CloudHub Alert</td></tr><tr><td><div style='display:inline-block;padding:6px 10px;border-radius:4px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;letter-spacing:0;text-transform:uppercase;'>{{ .Level }}</div><p>CloudHub generated this notification from an alert rule.</p></td></tr></table></body></html>`
+	bodyJSON, err := json.Marshal(map[string]string{"body": body})
+	if err != nil {
+		t.Fatalf("marshal body: %v", err)
+	}
+	r.EventHandlers = []cloudhub.AlertRuleEventHandler{{
+		Type:              cloudhub.AlertRuleEventHandlerEmail,
+		Enabled:           true,
+		ConfigJSON:        bodyJSON,
+		RecipientGroupIDs: []string{"group-1"},
+	}}
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	for _, want := range []string{
+		`background:{{ if eq .Level "WARNING" }}#fef3c7`,
+		`color:{{ if eq .Level "WARNING" }}#92400e`,
+	} {
+		if !strings.Contains(tick, want) {
+			t.Fatalf("legacy default email body should be upgraded with marker %q:\n%s", want, tick)
+		}
+	}
+	if strings.Contains(tick, "background:#fee2e2;color:#991b1b") {
+		t.Fatalf("legacy default email body should not keep fixed red warning badge:\n%s", tick)
+	}
+}
+
 func TestAlertGroupRuleTICKScriptUsesPerConditionOperators(t *testing.T) {
 	r := sampleRule()
 	r.Conditions = []cloudhub.AlertRuleCondition{

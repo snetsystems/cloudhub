@@ -354,9 +354,24 @@ func emailBodyFromHandlers(handlers []cloudhub.AlertRuleEventHandler) string {
 		if err := json.Unmarshal(h.ConfigJSON, &cfg); err != nil {
 			continue
 		}
-		return strings.TrimSpace(cfg.Body)
+		return normalizeEmailBody(strings.TrimSpace(cfg.Body))
 	}
 	return ""
+}
+
+func normalizeEmailBody(body string) string {
+	const legacyDefaultBadgeStyle = "background:#fee2e2;color:#991b1b;"
+	if !isLegacyDefaultEmailBody(body, legacyDefaultBadgeStyle) {
+		return body
+	}
+	return strings.Replace(body, legacyDefaultBadgeStyle, `background:{{ if eq .Level "WARNING" }}#fef3c7{{ else if eq .Level "CRITICAL" }}#fee2e2{{ else }}#dbeafe{{ end }};color:{{ if eq .Level "WARNING" }}#92400e{{ else if eq .Level "CRITICAL" }}#991b1b{{ else }}#1e40af{{ end }};`, 1)
+}
+
+func isLegacyDefaultEmailBody(body, legacyDefaultBadgeStyle string) bool {
+	return strings.Contains(body, "CloudHub Alert") &&
+		strings.Contains(body, "CloudHub generated this notification from an alert rule.") &&
+		strings.Contains(body, "{{ .Level }}") &&
+		strings.Contains(body, legacyDefaultBadgeStyle)
 }
 
 func tickString(s string) string {

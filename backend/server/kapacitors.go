@@ -982,6 +982,21 @@ func (s *Service) KapacitorRulesStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Alert-group tasks mirror their enabled/disabled state in PG (AlertGroupRule.Active),
+	// which the Server Alert page reads. Keep PG in sync so toggling here is reflected there.
+	if s.AlertGroupRules != nil && strings.HasPrefix(tid, cloudhub.AlertGroupScriptPrefix) {
+		ruleID := strings.TrimPrefix(tid, cloudhub.AlertGroupScriptPrefix)
+		if ruleID != "" {
+			if rule, gErr := s.AlertGroupRules.Get(ctx, ruleID); gErr == nil {
+				rule.Active = req.Status == "enabled"
+				if uErr := s.AlertGroupRules.Update(ctx, rule); uErr != nil {
+					Error(w, http.StatusInternalServerError, uErr.Error(), s.Logger)
+					return
+				}
+			}
+		}
+	}
+
 	// log registrationte
 	msg := fmt.Sprintf(MsgKapacitorRuleStatus.String(), task.Rule.Name, ruleStatus, srv.Name)
 	s.logRegistration(ctx, "Kapacitors Rules", msg)

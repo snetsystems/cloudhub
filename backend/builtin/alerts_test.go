@@ -1,10 +1,12 @@
 package builtin
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"strings"
 	"testing"
+	"text/template"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/log"
@@ -82,6 +84,88 @@ func TestBinAlertTemplatesStore_DefaultEmailBodyLoadedFromAsset(t *testing.T) {
 			t.Errorf("default email body missing expected marker %q. Got:\n%s", marker, body)
 		}
 	}
+}
+
+func TestBinAlertTemplatesStore_DefaultEmailBodyColorsWarningAndCriticalDifferently(t *testing.T) {
+	t.Parallel()
+	store := &BinAlertTemplatesStore{Logger: log.New(log.DebugLevel)}
+	out, err := store.All(context.Background())
+	if err != nil {
+		t.Fatalf("All: %v", err)
+	}
+	if len(out) == 0 {
+		t.Fatal("no templates loaded")
+	}
+	body := out[0].EmailBody
+	for _, marker := range []string{
+		`{{ if eq .Level "WARNING" }}`,
+		"#fef3c7",
+		"#92400e",
+		`{{ else if eq .Level "CRITICAL" }}`,
+		"#fee2e2",
+		"#991b1b",
+	} {
+		if !strings.Contains(body, marker) {
+			t.Errorf("default email body missing level color marker %q. Got:\n%s", marker, body)
+		}
+	}
+}
+
+func TestBinAlertTemplatesStore_DefaultEmailBodyRendersDistinctWarningAndCriticalColors(t *testing.T) {
+	t.Parallel()
+	store := &BinAlertTemplatesStore{Logger: log.New(log.DebugLevel)}
+	out, err := store.All(context.Background())
+	if err != nil {
+		t.Fatalf("All: %v", err)
+	}
+	if len(out) == 0 {
+		t.Fatal("no templates loaded")
+	}
+
+	warning := renderDefaultEmailBody(t, out[0].EmailBody, "WARNING")
+	if !strings.Contains(warning, "background:#fef3c7;color:#92400e") {
+		t.Fatalf("warning email body should use amber badge colors:\n%s", warning)
+	}
+	if strings.Contains(warning, "background:#fee2e2;color:#991b1b") {
+		t.Fatalf("warning email body must not use critical red badge colors:\n%s", warning)
+	}
+	if strings.Contains(warning, "{{") {
+		t.Fatalf("warning email body still contains unrendered template syntax:\n%s", warning)
+	}
+
+	critical := renderDefaultEmailBody(t, out[0].EmailBody, "CRITICAL")
+	if !strings.Contains(critical, "background:#fee2e2;color:#991b1b") {
+		t.Fatalf("critical email body should use red badge colors:\n%s", critical)
+	}
+	if strings.Contains(critical, "background:#fef3c7;color:#92400e") {
+		t.Fatalf("critical email body must not use warning amber badge colors:\n%s", critical)
+	}
+	if strings.Contains(critical, "{{") {
+		t.Fatalf("critical email body still contains unrendered template syntax:\n%s", critical)
+	}
+}
+
+func renderDefaultEmailBody(t *testing.T, body, level string) string {
+	t.Helper()
+
+	tmpl, err := template.New("default-email-body").Parse(body)
+	if err != nil {
+		t.Fatalf("parse default email body: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, map[string]interface{}{
+		"Level":   level,
+		"Message": "example alert",
+		"Time":    "2026-05-28T00:00:00Z",
+		"ID":      "alert-group-example",
+		"Tags": map[string]string{
+			"host": "example-host-01",
+		},
+	}); err != nil {
+		t.Fatalf("render default email body: %v", err)
+	}
+	return buf.String()
 }
 
 func TestBinAlertTemplatesStore_GetReturnsTemplate(t *testing.T) {

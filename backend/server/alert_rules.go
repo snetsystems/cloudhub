@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"strings"
 
@@ -21,6 +22,8 @@ import (
 type alertGroupTestNotificationRequest struct {
 	KapacitorID       string   `json:"kapacitorId,omitempty"`
 	RecipientGroupIDs []string `json:"recipientGroupIds,omitempty"`
+	Recipients        []string `json:"recipients,omitempty"`
+	IncludeSelf       bool     `json:"includeSelf,omitempty"`
 	Title             string   `json:"title"`
 	Message           string   `json:"message"`
 }
@@ -238,7 +241,7 @@ func (s *Service) AlertGroupRuleTestNotification(w http.ResponseWriter, r *http.
 		internalServerError(w, err, s.Logger)
 		return
 	}
-	resp, err := s.sendAlertGroupTestNotification(ctx, orgID, req.KapacitorID, recipientGroups, req.Title, req.Message)
+	resp, err := s.sendAlertGroupTestNotification(ctx, orgID, req.KapacitorID, recipientGroups, req.Recipients, req.IncludeSelf, req.Title, req.Message)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -270,7 +273,12 @@ func (s *Service) AlertGroupRuleTestNotificationByID(w http.ResponseWriter, r *h
 		notFound(w, id, s.Logger)
 		return
 	}
-	recipientGroups, err := s.resolveRuleEmailRecipientGroups(ctx, rule)
+	var recipientGroups []cloudhub.RecipientGroup
+	if req.RecipientGroupIDs != nil {
+		recipientGroups, err = s.resolveDraftAlertGroupRecipientGroups(ctx, rule.OrgID, req.RecipientGroupIDs)
+	} else {
+		recipientGroups, err = s.resolveRuleEmailRecipientGroups(ctx, rule)
+	}
 	if err != nil {
 		internalServerError(w, err, s.Logger)
 		return
@@ -284,7 +292,7 @@ func (s *Service) AlertGroupRuleTestNotificationByID(w http.ResponseWriter, r *h
 		return
 	}
 	kapacitorID = s.normalizeAlertGroupKapacitorID(ctx, kapacitorID)
-	resp, err := s.sendAlertGroupTestNotification(ctx, rule.OrgID, kapacitorID, recipientGroups, req.Title, req.Message)
+	resp, err := s.sendAlertGroupTestNotification(ctx, rule.OrgID, kapacitorID, recipientGroups, req.Recipients, req.IncludeSelf, req.Title, req.Message)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -728,23 +736,31 @@ func (s *Service) resolveDraftAlertGroupRecipientGroups(ctx context.Context, org
 		return nil, fmt.Errorf("recipient group store unavailable")
 	}
 	if len(recipientGroupIDs) == 0 {
-		return s.allOrgRecipientGroups(ctx, orgID)
+		return nil, nil
 	}
 
 	return s.recipientGroupsByIDs(ctx, orgID, recipientGroupIDs)
 }
 
-func (s *Service) sendAlertGroupTestNotification(ctx context.Context, orgID, kapacitorID string, recipientGroups []cloudhub.RecipientGroup, title, message string) (alertGroupTestNotificationResponse, error) {
-	// recipients = recipient_group members with EmailEnabled prefs ∪ {logged-in user as fallback}.
+func (s *Service) sendAlertGroupTestNotification(ctx context.Context, orgID, kapacitorID string, recipientGroups []cloudhub.RecipientGroup, directRecipients []string, includeSelf bool, title, message string) (alertGroupTestNotificationResponse, error) {
+	// recipients = explicitly selected recipient-group members ∪ direct recipients ∪ optional logged-in user.
 	// .Info is the superset of warning/critical because "all"/"" levels populate all three buckets.
 	resolved := s.buildAlertRecipientsFromGroups(ctx, recipientGroups)
-	recipients := normalizeAlertGroupTestRecipients(resolved.Info)
-	if len(recipients) == 0 {
+	var recipients recipientBucket
+	for _, addr := range resolved.Info {
+		recipients.add(addr)
+	}
+	if err := addDirectAlertGroupTestRecipients(&recipients, directRecipients); err != nil {
+		return alertGroupTestNotificationResponse{}, err
+	}
+	if includeSelf {
 		if user, ok := hasUserContext(ctx); ok && user.Email != "" {
-			recipients = []string{user.Email}
+			if err := addDirectAlertGroupTestRecipients(&recipients, []string{user.Email}); err != nil {
+				return alertGroupTestNotificationResponse{}, err
+			}
 		}
 	}
-	if len(recipients) == 0 {
+	if len(recipients.list) == 0 {
 		return alertGroupTestNotificationResponse{}, fmt.Errorf("recipient not found")
 	}
 
@@ -755,12 +771,12 @@ func (s *Service) sendAlertGroupTestNotification(ctx context.Context, orgID, kap
 	if err != nil {
 		return alertGroupTestNotificationResponse{}, fmt.Errorf("kapacitor not found: %s", kapacitorID)
 	}
-	recipientsLog := strings.Join(recipients, ",")
+	recipientsLog := strings.Join(recipients.list, ",")
 	s.Logger.Info(fmt.Sprintf(
 		"alert-group test send start org_id=%s kapacitor_url=%s recipients=%s title=%s",
 		orgID, kapa.URL, recipientsLog, title,
 	))
-	if err := kapacitorSMTPSender(ctx, kapa.URL, recipients, title, message); err != nil {
+	if err := kapacitorSMTPSender(ctx, kapa.URL, recipients.list, title, message); err != nil {
 		s.Logger.Error(fmt.Sprintf(
 			"alert-group test send failed org_id=%s kapacitor_url=%s recipients=%s error=%v",
 			orgID, kapa.URL, recipientsLog, err,
@@ -769,27 +785,29 @@ func (s *Service) sendAlertGroupTestNotification(ctx context.Context, orgID, kap
 	}
 	s.Logger.Info(fmt.Sprintf(
 		"alert-group test send succeeded org_id=%s kapacitor_url=%s recipients=%s sent_count=%d",
-		orgID, kapa.URL, recipientsLog, len(recipients),
+		orgID, kapa.URL, recipientsLog, len(recipients.list),
 	))
 
 	return alertGroupTestNotificationResponse{
 		ResolvedRecipientGroups: len(recipientGroups),
-		ResolvedRecipients:      recipients,
-		SentCount:               len(recipients),
+		ResolvedRecipients:      recipients.list,
+		SentCount:               len(recipients.list),
 	}, nil
 }
 
-func normalizeAlertGroupTestRecipients(recipients []string) []string {
-	seen := map[string]bool{}
-	out := make([]string, 0, len(recipients))
+func addDirectAlertGroupTestRecipients(out *recipientBucket, recipients []string) error {
 	for _, recipient := range recipients {
-		if recipient == "" || seen[recipient] {
+		addr := strings.TrimSpace(recipient)
+		if addr == "" {
 			continue
 		}
-		seen[recipient] = true
-		out = append(out, recipient)
+		parsed, err := mail.ParseAddress(addr)
+		if err != nil || parsed.Address != addr {
+			return fmt.Errorf("invalid recipient email: %s", addr)
+		}
+		out.add(addr)
 	}
-	return out
+	return nil
 }
 
 func kapacitorEndpointURL(kapaURL, endpoint string) string {

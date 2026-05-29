@@ -100,6 +100,8 @@ export interface AlertKapacitor {
 export interface AlertGroupTestNotificationRequest {
   kapacitorId?: string
   recipientGroupIds?: string[]
+  recipients?: string[]
+  includeSelf?: boolean
   title: string
   message: string
 }
