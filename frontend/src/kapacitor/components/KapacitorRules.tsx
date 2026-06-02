@@ -1,16 +1,23 @@
-import React, {FunctionComponent, useState} from 'react'
+import React, {FunctionComponent, useState, useEffect} from 'react'
 import {Link} from 'react-router'
 
 import KapacitorRulesTable from 'src/kapacitor/components/KapacitorRulesTable'
 import TasksTable from 'src/kapacitor/components/TasksTable'
-import {ComponentSize, SlideToggle, Dropdown} from 'src/reusable_ui'
+import {
+  ComponentSize,
+  ComponentStatus,
+  SlideToggle,
+  Dropdown,
+} from 'src/reusable_ui'
 
-import {Source, AlertRule, Kapacitor} from 'src/types'
+import {Source, AlertRule, Kapacitor, Me} from 'src/types'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 interface KapacitorRulesProps {
   source: Source
   kapacitor: Kapacitor
   rules: AlertRule[]
+  me: Me
   onDelete: (rule: AlertRule) => void
   onChangeRuleStatus: (rule: AlertRule) => void
 }
@@ -19,13 +26,29 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
   source,
   kapacitor,
   rules,
+  me,
   onDelete,
   onChangeRuleStatus,
 }) => {
+  const isSuperAdmin = isUserAuthorized(me?.role, SUPERADMIN_ROLE)
   const DEFAULT_SELECTED_VALUE: string = 'All'
+  const [showDefault, setShowDefault] = useState<boolean>(() => {
+    return sessionStorage.getItem('kapacitor_showDefault') === 'true'
+  })
 
-  const [showDefault, setShowDefault] = useState(false)
-  const [selectedDefault, setSelectedDefault] = useState(DEFAULT_SELECTED_VALUE)
+  const [selectedDefault, setSelectedDefault] = useState<string>(() => {
+    const saved = sessionStorage.getItem('kapacitor_selectedDefault')
+    return saved && saved !== 'undefined' ? saved : DEFAULT_SELECTED_VALUE
+  })
+
+  useEffect(() => {
+    sessionStorage.setItem('kapacitor_showDefault', String(showDefault))
+  }, [showDefault])
+
+  useEffect(() => {
+    sessionStorage.setItem('kapacitor_selectedDefault', selectedDefault)
+  }, [selectedDefault])
+
   const handleDefaultDropdownChange = (value: {id: string}) => {
     setSelectedDefault(value.id)
   }
@@ -38,8 +61,9 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
   const builderHeader = `${builderRules.length} Alert Rule${
     builderRules.length === 1 ? '' : 's'
   }`
+
   const getFilteredscripts = () => {
-    if (!showDefault) {
+    if (!isSuperAdmin || !showDefault) {
       return rules.filter((r: AlertRule) => r.source === 'user')
     }
     switch (selectedDefault) {
@@ -51,6 +75,8 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
         return rules.filter((r: AlertRule) => r.source.includes('alert-group'))
       case 'User':
         return rules.filter((r: AlertRule) => r.source === 'user')
+      default:
+        return rules
     }
   }
 
@@ -86,16 +112,18 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
         <div className="panel-heading">
           <div>
             <h2 className="panel-title">{scriptsHeader}</h2>
-            <div className="kapacitor-rules__toggle">
-              <SlideToggle
-                active={showDefault}
-                size={ComponentSize.ExtraSmall}
-                onChange={handleOnChangeShowDefault}
-              />
-            </div>
+            {isSuperAdmin && (
+              <div className="kapacitor-rules__toggle">
+                <SlideToggle
+                  active={showDefault}
+                  size={ComponentSize.ExtraSmall}
+                  onChange={handleOnChangeShowDefault}
+                />
+              </div>
+            )}
           </div>
           <div>
-            {showDefault && (
+            {isSuperAdmin && (
               <div className="kapacitor-rules__filter">
                 <Dropdown
                   onChange={handleDefaultDropdownChange}
@@ -103,6 +131,11 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
                   buttonSize={ComponentSize.Small}
                   widthPixels={90}
                   customClass="dropdown dropdown-sm dropdown-default"
+                  status={
+                    showDefault
+                      ? ComponentStatus.Default
+                      : ComponentStatus.Disabled
+                  }
                 >
                   <Dropdown.Item
                     id={`${DEFAULT_SELECTED_VALUE}`}
@@ -122,6 +155,7 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
                 </Dropdown>
               </div>
             )}
+
             <Link
               to={`${kapacitorLink}/tickscripts/new`}
               className="btn btn-sm btn-success kapacitor-rules__action"

@@ -46,8 +46,8 @@ interface Props {
   notify: (message: Notification | NotificationFunc) => void
   updateRuleStatus: (rule: AlertRule, status: string) => void
   updateRuleStatusSuccess: (id: string, status: string) => void
-  fetchKapacitors: sourcesActions.FetchKapacitorsAsync
-  setActiveKapacitor: sourcesActions.SetActiveKapacitorAsync
+  fetchKapacitors: (source: Source) => Promise<void>
+  setActiveKapacitor: (kapacitor: Kapacitor) => Promise<void>
   rules: AlertRule[]
   auth: Auth
 }
@@ -120,20 +120,22 @@ export class KapacitorRulesPage extends PureComponent<Props, State> {
     if (isUserAuthorized(auth.me.role, SUPERADMIN_ROLE) || !auth.isUsingAuth) {
       meRules = _.cloneDeep(rules)
     } else {
-      meRules = _.isArray(rules) ? rules.filter(rule => {
-        if (_.isObject(rule) && rule.query) {
-          return _.get(rule, 'query.database') === currentOrganization;
-        } else if (_.isString(rule.tickscript)) {
-          const tickscriptDatabaseMatch = rule.tickscript.match(
-            /var\s+db\s*=\s*'(\w+)'/
-          );
-          const tickscriptDatabase = tickscriptDatabaseMatch
-            ? tickscriptDatabaseMatch[1]
-            : null;
-          return tickscriptDatabase === currentOrganization;
-        }
-        return false;
-      }) : [];
+      meRules = _.isArray(rules)
+        ? rules.filter(rule => {
+            if (_.isObject(rule) && rule.query) {
+              return _.get(rule, 'query.database') === currentOrganization
+            } else if (_.isString(rule.tickscript)) {
+              const tickscriptDatabaseMatch = rule.tickscript.match(
+                /var\s+db\s*=\s*'(\w+)'/
+              )
+              const tickscriptDatabase = tickscriptDatabaseMatch
+                ? tickscriptDatabaseMatch[1]
+                : null
+              return tickscriptDatabase === currentOrganization
+            }
+            return false
+          })
+        : []
     }
 
     return (
@@ -141,6 +143,7 @@ export class KapacitorRulesPage extends PureComponent<Props, State> {
         rules={meRules}
         source={source}
         kapacitor={kapacitor}
+        me={auth.me}
         onDelete={this.handleDeleteRule}
         onChangeRuleStatus={this.handleRuleStatus}
       />
@@ -150,8 +153,12 @@ export class KapacitorRulesPage extends PureComponent<Props, State> {
   private get kapacitorsDropdown(): JSX.Element {
     const kapacitor = this.kapacitor
     const kapacitors = this.kapacitors
+    const {auth} = this.props
 
-    if (!kapacitor) {
+    if (
+      !kapacitor ||
+      (auth.isUsingAuth && !isUserAuthorized(auth.me.role, SUPERADMIN_ROLE))
+    ) {
       return null
     }
 
@@ -238,9 +245,10 @@ export class KapacitorRulesPage extends PureComponent<Props, State> {
   }
 }
 
-const mstp = ({rules, sources}) => ({
+const mstp = ({rules, sources, auth}) => ({
   rules: Object.values(rules),
   sources,
+  auth,
 })
 
 const mdtp = {
