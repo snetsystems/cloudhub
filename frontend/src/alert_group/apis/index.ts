@@ -79,6 +79,10 @@ const toAlertRuleEventHandlers = (rule: AlertGroupRule) => {
     ? rule.eventHandlers.find(handler => handler.type === 'email')
     : undefined
 
+  if (!emailHandler) {
+    return nonEmailHandlers
+  }
+
   return [
     ...nonEmailHandlers,
     ...toEmailEventHandlers(rule.recipientGroupIds, emailHandler),
