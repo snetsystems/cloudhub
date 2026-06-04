@@ -333,7 +333,9 @@ function TableBase({
                               )}
                             </TableChartCellProvider>
                           ) : (
-                            <>{getValue(item, key)}</>
+                            <span title={String(getValue(item, key) ?? '')}>
+                              {getValue(item, key)}
+                            </span>
                           )}
                         </td>
                       )

@@ -19,6 +19,7 @@ import {
 } from 'src/dashboards/utils/tableGraph'
 
 // Constants
+import {DEFAULT_TIME_FORMAT} from 'src/dashboards/constants'
 import {
   ASCENDING,
   NULL_HOVER_TIME,
@@ -463,11 +464,12 @@ class TableGraph extends PureComponent<Props, State> {
     const {timeFormat, timeZone, decimalPlaces} = this.props
 
     if (isTimeData) {
+      const format = timeFormat || DEFAULT_TIME_FORMAT
       if (timeZone === TimeZones.UTC) {
-        return moment(cellData).utc().format(timeFormat)
+        return moment(cellData).utc().format(format)
       }
 
-      return moment(cellData).format(timeFormat)
+      return moment(cellData).format(format)
     }
 
     if (_.isString(cellData) && isFieldName) {

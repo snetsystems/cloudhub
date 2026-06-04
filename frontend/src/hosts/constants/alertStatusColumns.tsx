@@ -17,7 +17,7 @@ export const alertStatusColumns = (): ColumnInfo[] => {
       options: {
         thead: {align: AlignType.LEFT, style: {width: '27%'}},
       },
-      render: (value: any, rowData: DataTableObject) => {
+      render: (_value: any, rowData: DataTableObject) => {
         if (!rowData) return null
 
         const cpuUsage = rowData.cpu_usage_total ?? null
@@ -76,7 +76,7 @@ export const alertStatusColumns = (): ColumnInfo[] => {
       options: {
         thead: {align: AlignType.LEFT, style: {width: '27%'}},
       },
-      render: (value: any, rowData: DataTableObject) => {
+      render: (_value: any, rowData: DataTableObject) => {
         if (!rowData) return null
 
         const memUsedPercent = rowData.mem_used_percent ?? null
@@ -171,7 +171,7 @@ export const alertStatusColumns = (): ColumnInfo[] => {
       options: {
         thead: {align: AlignType.LEFT, style: {width: '27%'}},
       },
-      render: (value: any, rowData: DataTableObject) => {
+      render: (_value: any, rowData: DataTableObject) => {
         if (!rowData) return null
 
         const disks =
@@ -213,7 +213,7 @@ export const alertStatusColumns = (): ColumnInfo[] => {
       options: {
         thead: {align: AlignType.LEFT, style: {width: '19%'}},
       },
-      render: (value: any, rowData: DataTableObject) => {
+      render: (_value: any, rowData: DataTableObject) => {
         if (!rowData) return null
 
         const networks =

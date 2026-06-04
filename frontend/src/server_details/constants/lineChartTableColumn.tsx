@@ -6,6 +6,14 @@ import {FORMAT_OPTIONS} from 'src/types/statisticalgraph'
 import {ColumnInfo} from 'src/types'
 import type {DataTableObject} from 'src/types/tableType'
 import {TableLineChartPoint} from 'src/types/series'
+import {LINE_COLOR_PALETTES_SEQUENCE} from 'src/shared/constants/graphColorPalettes'
+
+const PROCESS_LIST_LINE_HEX_BY_KEY = {
+  CPU: LINE_COLOR_PALETTES_SEQUENCE[0][0].hex,
+  Memory: LINE_COLOR_PALETTES_SEQUENCE[1][0].hex,
+  'Process I/O': LINE_COLOR_PALETTES_SEQUENCE[2][0].hex,
+  Count: LINE_COLOR_PALETTES_SEQUENCE[3][0].hex,
+} as const
 
 const IEC_LABELS = ['KiB', 'MiB', 'GiB', 'TiB', 'PiB']
 
@@ -54,6 +62,7 @@ export const lineChartTableColumn: ColumnInfo[] = [
     render: value => {
       return (
         <TableLineChartCell
+          color={PROCESS_LIST_LINE_HEX_BY_KEY.CPU}
           values={toLineValues(value)}
           options={{
             isShowLine: true,
@@ -106,6 +115,7 @@ export const lineChartTableColumn: ColumnInfo[] = [
       const extraLabel = maxRss !== null ? formatBytesIEC(maxRss) : null
       return (
         <TableLineChartCell
+          color={PROCESS_LIST_LINE_HEX_BY_KEY.Memory}
           values={toLineValues(value)}
           options={{
             isShowLine: true,
@@ -136,6 +146,7 @@ export const lineChartTableColumn: ColumnInfo[] = [
     render: value => {
       return (
         <TableLineChartCell
+          color={PROCESS_LIST_LINE_HEX_BY_KEY['Process I/O']}
           values={toLineValues(value)}
           options={{
             isShowLine: true,
@@ -167,6 +178,7 @@ export const lineChartTableColumn: ColumnInfo[] = [
     render: value => {
       return (
         <TableLineChartCell
+          color={PROCESS_LIST_LINE_HEX_BY_KEY.Count}
           values={toLineValues(value)}
           strokeWidth={0.5}
           options={{
@@ -178,6 +190,8 @@ export const lineChartTableColumn: ColumnInfo[] = [
             isZeroBaseline: true,
             areaOpacity: 0.1,
             pointRadius: 1,
+            decimalPlaces: 0,
+            suffix: 'ea',
           }}
         />
       )

@@ -221,7 +221,7 @@ function TableGaugeCell({options, value}: Props) {
       {valueState === 'null' ? (
         <div className="table-gauge-cell-value empty-value">--</div>
       ) : valueState === 'invalid' ? (
-        <div>{value}</div>
+        <span title={String(value ?? '')}>{value}</span>
       ) : (
         <>
           {options.isGauge && (

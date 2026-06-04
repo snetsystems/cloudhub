@@ -188,7 +188,7 @@ export const calculateColumnWidths = (
   decimalPlaces: DecimalPlaces
 ): ColumnWidths => {
   const timeFormatWidth = calculateTimeColumnWidth(
-    timeFormat === '' ? DEFAULT_TIME_FORMAT : timeFormat
+    timeFormat ? timeFormat : DEFAULT_TIME_FORMAT
   )
 
   return fastReduce<TimeSeriesValue[], ColumnWidths>(

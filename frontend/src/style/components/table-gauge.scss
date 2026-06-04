@@ -8,6 +8,10 @@
 
 .table-gauge-cell-container.only-value {
   display: block;
+
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .table-gauge-cell-gauge {
@@ -130,6 +134,9 @@
           border: 0;
           border-right: $ix-border solid $g5-pepper;
           border-bottom: $ix-border solid $g5-pepper;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          max-width: 200px;
         }
       }
     }

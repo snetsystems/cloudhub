@@ -200,6 +200,10 @@ function StaticTableGaugeChart({
   ) => {
     const visibleColumns = matchedColumns.filter(col => !hiddenKeys.has(col))
 
+    if (visibleColumns.length > 6) {
+      return columns
+    }
+
     return columns.map(col => {
       if (visibleColumns.includes(col.key)) {
         return {
@@ -209,7 +213,8 @@ function StaticTableGaugeChart({
             thead: {
               ...col.options?.thead,
               style: {
-                width: `${100 / visibleColumns.length}%`,
+                ...col.options?.thead?.style,
+                width: `${80 / visibleColumns.length}%`,
               },
             },
           },

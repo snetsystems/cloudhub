@@ -24,7 +24,7 @@ import * as DashboardsModels from 'src/types/dashboards'
 import type {DataTableObject} from 'src/types/tableType'
 import type {Addon} from 'src/types/auth'
 import type {CloudTimeRange} from 'src/clouds/types/type'
-import {getHosts} from 'src/shared/apis/host'
+import {fetchHostsBySource} from 'src/server_details/utils/host'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
 import ProcessDetailModal from 'src/server_details/components/ProcessDetailModal'
 import UsageDetailModal, {
@@ -90,21 +90,32 @@ function HostDropdownHeader({
   const [apiHostsResult, setApiHostsResult] = useState<any>(null)
 
   useEffect(() => {
-    getHosts()
-      .then(data => {
-        setApiHostsResult(data)
+    let isMounted = true
+
+    fetchHostsBySource(source)
+      .then(hosts => {
+        if (isMounted) {
+          setApiHostsResult(hosts)
+        }
       })
       .catch(err => {
-        console.error('getHosts error:', err)
-        setApiHostsResult({error: err.message})
+        if (isMounted) {
+          const errMsg = err?.message || 'Failed to load hosts via proxy'
+          console.error('getHosts proxy error:', errMsg)
+          setApiHostsResult({error: errMsg})
+        }
       })
-  }, [])
 
-  const hostTemplate = useMemo(() => 
-    templates?.find(t => t.tempVar === ':host:'), 
+    return () => {
+      isMounted = false
+    }
+  }, [source])
+
+  const hostTemplate = useMemo(
+    () => templates?.find(t => t.tempVar === ':host:'),
     [templates]
   )
-  
+
   const hostList = useMemo(() => {
     const defaultList = hostTemplate?.values?.map(v => v.value) ?? []
     if (Array.isArray(apiHostsResult)) {
@@ -128,31 +139,41 @@ function HostDropdownHeader({
   }, [apiHostsResult, hostList, onTemplateAvailabilityChange])
 
   const {selectedHost, onHostSelect} = ctx || {}
-  
+
   const DEFAULT_DISK_TOTAL_QUERY =
     'SELECT sum("last_total") / 1073741824 AS "disk_total_gib" FROM (SELECT last("total") AS "last_total" FROM ":db:".":rp:"."disk" WHERE time > now() - 15m AND "host" = :host: GROUP BY "path")'
 
   const diskTotalQuery = useMemo(() => {
-    const summaryCell = dashboard?.cells?.find(c => c.i === 'server-details-summary')
+    const summaryCell = dashboard?.cells?.find(
+      c => c.i === 'server-details-summary'
+    )
     return (
-      (summaryCell?.queries as any[])?.find(q => q.label === 'disk-total')?.query ||
-      DEFAULT_DISK_TOTAL_QUERY
+      (summaryCell?.queries as any[])?.find(q => q.label === 'disk-total')
+        ?.query || DEFAULT_DISK_TOTAL_QUERY
     )
   }, [dashboard])
 
   useEffect(() => {
     if (!ctx || !hostTemplate || !dashboard) return
 
-    if (!initialSetRef.current && hostList.length > 0 && selectedHost === null) {
+    if (
+      !initialSetRef.current &&
+      hostList.length > 0 &&
+      selectedHost === null
+    ) {
       initialSetRef.current = true
       onHostSelect(hostList[0])
       return
     }
 
     if (selectedHost && templateVariableLocalSelected) {
-      const selectedValue = hostTemplate.values.find(v => v.value === selectedHost)
-      const currentSelected = hostTemplate.values.find(v => v.selected || v.localSelected)
-      
+      const selectedValue = hostTemplate.values.find(
+        v => v.value === selectedHost
+      )
+      const currentSelected = hostTemplate.values.find(
+        v => v.selected || v.localSelected
+      )
+
       if (selectedValue && currentSelected?.value !== selectedHost) {
         templateVariableLocalSelected(dashboard.id, hostTemplate.id, {
           ...selectedValue,
@@ -160,7 +181,14 @@ function HostDropdownHeader({
         })
       }
     }
-  }, [selectedHost, hostList, hostTemplate, dashboard, onHostSelect, templateVariableLocalSelected])
+  }, [
+    selectedHost,
+    hostList,
+    hostTemplate,
+    dashboard,
+    onHostSelect,
+    templateVariableLocalSelected,
+  ])
 
   if (!ctx) return null
 
@@ -173,7 +201,7 @@ function HostDropdownHeader({
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div style={{display: 'flex', alignItems: 'center'}}>
       <span className="server-details-page__host-dropdown-wrap">
         <Dropdown
           mode={DropdownMode.ActionList}
@@ -231,8 +259,10 @@ function ProcessCellContent({
   const [contextOpen, setContextOpen] = useState(false)
   const [processLimit, setProcessLimit] = useState<number>(10)
   const [processDetailModalOpen, setProcessDetailModalOpen] = useState(false)
-  const [selectedProcessRow, setSelectedProcessRow] =
-    useState<DataTableObject | null>(null)
+  const [
+    selectedProcessRow,
+    setSelectedProcessRow,
+  ] = useState<DataTableObject | null>(null)
 
   const openProcessDetail = (row: DataTableObject) => {
     setSelectedProcessRow(row)
@@ -258,11 +288,17 @@ function ProcessCellContent({
           onMouseDown={e => e.stopPropagation()}
         >
           <div className="dash-graph-context--buttons">
-            <div className="server-details-process-limit-dropdown" style={{marginRight: '4px'}}>
+            <div
+              className="server-details-process-limit-dropdown"
+              style={{marginRight: '4px'}}
+            >
               <Dropdown
                 widthPixels={70}
                 buttonSize={ComponentSize.ExtraSmall}
-                selectedID={LIMIT_OPTIONS.find(opt => opt.value === processLimit)?.id ?? '10'}
+                selectedID={
+                  LIMIT_OPTIONS.find(opt => opt.value === processLimit)?.id ??
+                  '10'
+                }
                 onChange={id => {
                   const opt = LIMIT_OPTIONS.find(o => o.id === id)
                   if (opt) setProcessLimit(opt.value)
@@ -334,7 +370,6 @@ function ProcessCellContent({
   )
 }
 
-
 function ServerDetailsWrapper(props) {
   const hostFromUrl = useMemo(() => {
     const params = qs.parse(window.location.search, {ignoreQueryPrefix: true})
@@ -376,7 +411,9 @@ function ServerDetailsWrapper(props) {
     detailType: null,
   })
 
-  const mapCellIdToUsageDetailType = (cellId?: string | null): UsageDetailType | null => {
+  const mapCellIdToUsageDetailType = (
+    cellId?: string | null
+  ): UsageDetailType | null => {
     if (!cellId) return null
     switch (cellId) {
       case 'server-details-cpu-usage':
@@ -448,9 +485,12 @@ function ServerDetailsWrapper(props) {
     [targetOS]
   )
 
-
   const handleCloseUsageDetail = () => {
-    setUsageDetailState(prev => ({...prev, isOpen: false, detailQueries: undefined}))
+    setUsageDetailState(prev => ({
+      ...prev,
+      isOpen: false,
+      detailQueries: undefined,
+    }))
   }
 
   const getExtraActionsForCell = (cell: Cell) => {
@@ -471,12 +511,14 @@ function ServerDetailsWrapper(props) {
     }
   }
 
-
-  const contextValue : ServerDetailsPageContextValue = useMemo(() => ({
-    selectedHost,
-    onHostSelect: setSelectedHost,
-    templateOverrides: selectedHost != null ? {':host:': selectedHost} : {},
-  }), [selectedHost])     
+  const contextValue: ServerDetailsPageContextValue = useMemo(
+    () => ({
+      selectedHost,
+      onHostSelect: setSelectedHost,
+      templateOverrides: selectedHost != null ? {':host:': selectedHost} : {},
+    }),
+    [selectedHost]
+  )
 
   return (
     <ServerDetailsPageContext.Provider value={contextValue}>
@@ -509,9 +551,7 @@ function ServerDetailsWrapper(props) {
           />
         )}
         renderCell={(cell, context) => {
-          if (
-            cell.i === 'server-details-server-info'
-          ) {
+          if (cell.i === 'server-details-server-info') {
             return (
               <ServerDetailsCellContent
                 addons={props.addons}
@@ -550,7 +590,8 @@ function ServerDetailsWrapper(props) {
           selectedHost,
           source: props.source ?? null,
           addons: props.addons,
-          timeRange: props.cloudTimeRange?.hostDetails ?? props.cloudTimeRange?.default,
+          timeRange:
+            props.cloudTimeRange?.hostDetails ?? props.cloudTimeRange?.default,
           detailQueries: usageDetailState.detailQueries,
         }}
         autoRefresh={props.autoRefresh}

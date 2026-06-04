@@ -111,7 +111,10 @@ export const convertTimeSeriesDataToColumns = (
         sorting: true,
       },
       render: value => {
-        return React.createElement(TableGaugeCell, {options: gaugeOptions, value})
+        return React.createElement(TableGaugeCell, {
+          options: gaugeOptions,
+          value,
+        })
       },
     }
   })
