@@ -51,31 +51,13 @@ const TimeRangeDropdownComponent = TimeRangeDropdown as any
 // ─── Alert query ───────────────────────────────────────
 const ALERT_DB = 'Default'
 
-// 모니터링할 alertName 목록 (TICKscript의 .tag('alertName', ...) 와 일치해야 함)
-const ALERT_NAMES = [
-  // 'server-cpu-usage',
-  // 'server-mem-usage',
-  // 'server-disk-usage',
-  // 'server-disk-io',
-  // 'server-network-traffic',
-  // 'server-deadman',
-  'CPU_Usage',
-  'Memory_Usage',
-  'Disk_Usage',
-  'Disk_IO',
-  'Network_BPS',
-  'Deadman',
-  'Restart',
-]
-
-// 각 host별로 모든 알람 발생 이력을 가져옴 (최신순 300개 제한)
+// 각 host별로 모든 알람 발생 이력을 가져옴
 const ALERT_QUERY_TEXT = `SELECT "message", "value", "level", "alertName"
 FROM "${ALERT_DB}"."autogen"."cloudhub_alerts"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime:
-  AND (${ALERT_NAMES.map(n => `"alertName"='${n}'`).join(' OR ')})
+WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host" != ""
 GROUP BY "host"
-ORDER BY time DESC
-LIMIT 300`
+ORDER BY time DESC 
+LIMIT 1000`
 
 // level 우선순위 (높을수록 심각)
 const LEVEL_PRIORITY: Record<AlertLevel, number> = {
@@ -299,10 +281,6 @@ export function NewHostsPage({
   )
 
   useEffect(() => {
-    console.log('hasFetched:', hasFetched)
-  }, [hasFetched])
-
-  useEffect(() => {
     let isSubscribed = true
 
     fetchTableData({
@@ -482,7 +460,6 @@ export function NewHostsPage({
       ]
 
       const results = (await executeQueries(source, querySet, templates)) as any
-
       const result = results?.[0]?.value
       if (!result) return
 
@@ -582,25 +559,29 @@ export function NewHostsPage({
               isDotKey={true}
               enableSharedChartHover={displayedChartMode === 'line'}
               toprightRender={
-                <div className="topright-render-container">
-                  <Button
-                    text={t('server_alert.add_event', '이벤트 추가')}
-                    icon={IconFont.Plus}
-                    size={ComponentSize.Small}
-                    color={ComponentColor.Primary}
-                    onClick={() => {
-                      if (location && location.pathname && router) {
-                        router.push({
-                          pathname: location.pathname.replace(
-                            '/server-list',
-                            '/alert-setup'
-                          ),
-                          state: {returnTo: location.pathname},
-                        })
-                      }
-                    }}
-                  />
-                </div>
+                isRefreshing ? (
+                  <LoadingDots />
+                ) : (
+                  <div className="topright-render-container">
+                    <Button
+                      text={t('server_alert.add_event', '이벤트 추가')}
+                      icon={IconFont.Plus}
+                      size={ComponentSize.Small}
+                      color={ComponentColor.Primary}
+                      onClick={() => {
+                        if (location && location.pathname && router) {
+                          router.push({
+                            pathname: location.pathname.replace(
+                              '/server-list',
+                              '/alert-setup'
+                            ),
+                            state: {returnTo: location.pathname},
+                          })
+                        }
+                      }}
+                    />
+                  </div>
+                )
               }
               topLeftRender={
                 <>
