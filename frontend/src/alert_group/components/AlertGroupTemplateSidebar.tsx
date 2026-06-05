@@ -105,21 +105,31 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
     const {searchTerm, tooltip} = this.state
 
     const needle = searchTerm.toLowerCase()
-    const filteredTemplates = templates.filter(t => {
-      if (!needle) {
-        return true
-      }
-      if (t.name.toLowerCase().includes(needle)) {
-        return true
-      }
-      if (t.description && t.description.toLowerCase().includes(needle)) {
-        return true
-      }
-      if (t.tags && t.tags.some(tag => tag.toLowerCase().includes(needle))) {
-        return true
-      }
-      return false
-    })
+    const filteredTemplates = templates
+      .filter(t => {
+        if (!needle) {
+          return true
+        }
+        if (t.name.toLowerCase().includes(needle)) {
+          return true
+        }
+        if (t.description && t.description.toLowerCase().includes(needle)) {
+          return true
+        }
+        if (t.tags && t.tags.some(tag => tag.toLowerCase().includes(needle))) {
+          return true
+        }
+        return false
+      })
+      .sort((a, b) => {
+        const byName = a.name.localeCompare(b.name, undefined, {
+          sensitivity: 'base',
+        })
+        if (byName !== 0) {
+          return byName
+        }
+        return a.id.localeCompare(b.id)
+      })
 
     return (
       <div className="alert-group-sidebar-wrapper card">
