@@ -66,6 +66,7 @@ interface Item {
 
 interface TypeItem extends Item {
   type: string
+  value?: string
 }
 
 interface State {
@@ -259,11 +260,11 @@ class KapacitorRule extends Component<Props, State> {
     return ''
   }
 
-  private handleRuleTypeDropdownChange = ({type, text}: TypeItem) => {
+  private handleRuleTypeDropdownChange = ({type, text, value}: TypeItem) => {
     const {ruleActions, rule} = this.props
     ruleActions.updateRuleValues(rule.id, rule.trigger, {
       ...this.props.rule.values,
-      [type]: text,
+      [type]: value ?? text,
     })
   }
 

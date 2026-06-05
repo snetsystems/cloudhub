@@ -106,25 +106,35 @@ export enum ThresholdOperators {
   EqualToOrLessThan = 'equal to or less than',
 }
 
-export const THRESHOLD_OPERATORS: string[] = [
-  GREATER_THAN,
-  EQUAL_TO_OR_GREATER_THAN,
-  EQUAL_TO_OR_LESS_THAN,
-  LESS_THAN,
-  EQUAL_TO,
-  NOT_EQUAL_TO,
-  INSIDE_RANGE,
-  OUTSIDE_RANGE,
+export const THRESHOLD_OPERATOR_OPTIONS: Array<{
+  value: string
+  label: string
+}> = [
+  {value: GREATER_THAN, label: `${GREATER_THAN} (>)`},
+  {value: EQUAL_TO_OR_GREATER_THAN, label: `${EQUAL_TO_OR_GREATER_THAN} (>=)`},
+  {value: EQUAL_TO_OR_LESS_THAN, label: `${EQUAL_TO_OR_LESS_THAN} (<=)`},
+  {value: LESS_THAN, label: `${LESS_THAN} (<)`},
+  {value: EQUAL_TO, label: `${EQUAL_TO} (=)`},
+  {value: NOT_EQUAL_TO, label: `${NOT_EQUAL_TO} (!=)`},
+  {value: INSIDE_RANGE, label: `${INSIDE_RANGE} (>= and <=)`},
+  {value: OUTSIDE_RANGE, label: `${OUTSIDE_RANGE} (< or >)`},
 ]
 
-export const RELATIVE_OPERATORS: string[] = [
-  GREATER_THAN,
-  EQUAL_TO_OR_GREATER_THAN,
-  EQUAL_TO_OR_LESS_THAN,
-  LESS_THAN,
-  EQUAL_TO,
-  NOT_EQUAL_TO,
-]
+export const THRESHOLD_OPERATORS: string[] = THRESHOLD_OPERATOR_OPTIONS.map(
+  ({value}) => value
+)
+
+export const RELATIVE_OPERATOR_OPTIONS = THRESHOLD_OPERATOR_OPTIONS.filter(
+  ({value}) => value !== INSIDE_RANGE && value !== OUTSIDE_RANGE
+)
+
+export const getThresholdOperatorLabel = (operator: string): string =>
+  THRESHOLD_OPERATOR_OPTIONS.find(({value}) => value === operator)?.label ??
+  operator
+
+export const RELATIVE_OPERATORS: string[] = RELATIVE_OPERATOR_OPTIONS.map(
+  ({value}) => value
+)
 
 // export const RELATIONS = ['once', 'more than ', 'less than'];
 export const PERIODS: string[] = ['1m', '5m', '10m', '30m', '1h', '2h', '24h']

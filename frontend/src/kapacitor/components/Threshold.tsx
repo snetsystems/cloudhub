@@ -1,6 +1,9 @@
 import React, {Component, FormEvent, ChangeEvent} from 'react'
 
-import {THRESHOLD_OPERATORS} from 'src/kapacitor/constants'
+import {
+  getThresholdOperatorLabel,
+  THRESHOLD_OPERATOR_OPTIONS,
+} from 'src/kapacitor/constants'
 import Dropdown from 'src/shared/components/Dropdown'
 import {getDeep} from 'src/utils/wrappers'
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -10,6 +13,7 @@ import {AlertRule, QueryConfig} from 'src/types'
 interface TypeItem {
   type: string
   text: string
+  value?: string
 }
 
 interface Props {
@@ -40,7 +44,7 @@ class Threshold extends Component<Props> {
           className="dropdown-180"
           menuClass="dropdown-malachite"
           items={this.operators}
-          selected={operator}
+          selected={getThresholdOperatorLabel(operator)}
           onChoose={onDropdownChange}
         />
         <form style={{display: 'flex'}} onSubmit={this.noopSubmit}>
@@ -62,9 +66,11 @@ class Threshold extends Component<Props> {
 
   private get operators() {
     const type = 'operator'
-    return THRESHOLD_OPERATORS.map(text => {
-      return {text, type}
-    })
+    return THRESHOLD_OPERATOR_OPTIONS.map(({value, label}) => ({
+      text: label,
+      value,
+      type,
+    }))
   }
 
   private get isSecondInputRequired() {

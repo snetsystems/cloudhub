@@ -1,6 +1,11 @@
 import React, {FunctionComponent, ChangeEvent} from 'react'
 
-import {CHANGES, RELATIVE_OPERATORS, SHIFTS} from 'src/kapacitor/constants'
+import {
+  CHANGES,
+  getThresholdOperatorLabel,
+  RELATIVE_OPERATOR_OPTIONS,
+  SHIFTS,
+} from 'src/kapacitor/constants'
 import Dropdown from 'src/shared/components/Dropdown'
 
 import {AlertRule} from 'src/types'
@@ -9,11 +14,16 @@ const mapToItems = (arr: string[], type: string) =>
   arr.map(text => ({text, type}))
 const changes = mapToItems(CHANGES, 'change')
 const shifts = mapToItems(SHIFTS, 'shift')
-const operators = mapToItems(RELATIVE_OPERATORS, 'operator')
+const operators = RELATIVE_OPERATOR_OPTIONS.map(({value, label}) => ({
+  text: label,
+  value,
+  type: 'operator',
+}))
 
 interface TypeItem {
   type: string
   text: string
+  value?: string
 }
 interface Props {
   onRuleTypeInputChange: (e: ChangeEvent<HTMLInputElement>) => void
@@ -50,7 +60,7 @@ const Relative: FunctionComponent<Props> = ({
       className="dropdown-160"
       menuClass="dropdown-malachite"
       items={operators}
-      selected={operator}
+      selected={getThresholdOperatorLabel(operator)}
       onChoose={onDropdownChange}
     />
     <form style={{display: 'flex'}}>
