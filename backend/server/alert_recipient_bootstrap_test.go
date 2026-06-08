@@ -235,7 +235,7 @@ func TestEnsureDefaultRecipientGroupForOrg(t *testing.T) {
 			name: "syncs new users into existing default group",
 			initialGroups: []cloudhub.RecipientGroup{
 				{
-					ID: "default", OrgID: "org-1", Name: "Acme Ops Default Recipients", IsDefault: true,
+					ID: "default", OrgID: "org-1", Name: "Acme Ops", IsDefault: true,
 				},
 			},
 			wantGroupCount: 1,
@@ -306,8 +306,8 @@ func TestEnsureDefaultRecipientGroupForOrg(t *testing.T) {
 			if defaultGroup.ID == "" {
 				t.Fatal("default group not found")
 			}
-			if tt.wantGroupCount > len(tt.initialGroups) && defaultGroup.Name != "Acme Ops Default Recipients" {
-				t.Fatalf("default group name = %q, want %q", defaultGroup.Name, "Acme Ops Default Recipients")
+			if tt.wantGroupCount > len(tt.initialGroups) && defaultGroup.Name != "Acme Ops" {
+				t.Fatalf("default group name = %q, want %q", defaultGroup.Name, "Acme Ops")
 			}
 			if len(defaultGroup.Members) != tt.wantMembers {
 				t.Fatalf("member count = %d, want %d", len(defaultGroup.Members), tt.wantMembers)
@@ -339,7 +339,7 @@ func TestSyncDefaultRecipientGroupMembers_RemovesDepartedUsers(t *testing.T) {
 	ctx := serverContext(context.Background())
 	rgStore := &memRecipientGroupStore{
 		groups: []cloudhub.RecipientGroup{
-			{ID: "default", OrgID: "org-1", Name: "Acme Ops Default Recipients", IsDefault: true},
+			{ID: "default", OrgID: "org-1", Name: "Acme Ops", IsDefault: true},
 		},
 		members: map[string][]cloudhub.RecipientGroupMember{
 			"default": {
@@ -391,7 +391,7 @@ func TestSyncDefaultRecipientGroupMembers_UpdatesContactInfo(t *testing.T) {
 	ctx := serverContext(context.Background())
 	rgStore := &memRecipientGroupStore{
 		groups: []cloudhub.RecipientGroup{
-			{ID: "default", OrgID: "org-1", Name: "Acme Ops Default Recipients", IsDefault: true},
+			{ID: "default", OrgID: "org-1", Name: "Acme Ops", IsDefault: true},
 		},
 		members: map[string][]cloudhub.RecipientGroupMember{
 			"default": {

@@ -9,8 +9,6 @@ import (
 	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
-const defaultRecipientGroupNameSuffix = "Default Recipients"
-
 func orgIDsFromRoles(roles []cloudhub.Role) []string {
 	seen := make(map[string]struct{}, len(roles))
 	out := make([]string, 0, len(roles))
@@ -66,18 +64,17 @@ func defaultAlertRecipientMemberPrefs(memberID string, hasEmail bool) cloudhub.A
 }
 
 func defaultRecipientGroupName(ctx context.Context, service *Service, orgID string) string {
-	name := strings.TrimSpace(orgID)
 	if service != nil && service.Store != nil {
 		if org, err := service.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID}); err == nil && org != nil {
 			if orgName := strings.TrimSpace(org.Name); orgName != "" {
-				name = orgName
+				return orgName
 			}
 		}
 	}
-	if name == "" {
-		return defaultRecipientGroupNameSuffix
+	if id := strings.TrimSpace(orgID); id != "" {
+		return id
 	}
-	return name + " " + defaultRecipientGroupNameSuffix
+	return "default"
 }
 
 type defaultGroupMemberSyncResult struct {

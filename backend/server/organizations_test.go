@@ -966,7 +966,7 @@ func TestNewOrganizationCreatesDefaultRecipientGroup(t *testing.T) {
 	if err != nil {
 		t.Fatalf("recipient groups: %v", err)
 	}
-	if len(groups) != 1 || !groups[0].IsDefault || groups[0].Name != "The Good Place Default Recipients" {
+	if len(groups) != 1 || !groups[0].IsDefault || groups[0].Name != "The Good Place" {
 		t.Fatalf("expected one default recipient group, got %+v", groups)
 	}
 	if len(groups[0].Members) != 1 || groups[0].Members[0].UserID != "1" {
