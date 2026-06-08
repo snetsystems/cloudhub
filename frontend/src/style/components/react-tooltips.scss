@@ -51,6 +51,7 @@ $tooltip-code-color: $c-potassium;
   }
   &.type-dark.place-left:after {
     border-left-color: $tooltip-accent;
+    top: 20% !important;
   }
 
   h1 {
@@ -117,9 +118,9 @@ $tooltip-code-color: $c-potassium;
       padding: 0;
       white-space: normal;
     }
-        &.place-bottom::after {
-          display: contents
-        }
+    &.place-bottom::after {
+      display: contents;
+    }
   }
 
   &.template-conflict-tooltip {
@@ -132,7 +133,7 @@ $tooltip-code-color: $c-potassium;
       white-space: normal;
     }
     &.place-bottom::after {
-      display: contents
+      display: contents;
     }
   }
 }

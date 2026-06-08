@@ -58,7 +58,8 @@ const SourceIndicator: FunctionComponent<Props> = ({
             place="left"
             class="influx-tooltip"
             offset={{
-              top: !!esSource ? -36 : 0,
+              top: !!esSource ? -36 : -20,
+              left: -8,
             }}
           />
         </div>
