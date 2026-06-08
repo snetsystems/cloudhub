@@ -241,7 +241,7 @@ export const getOccurrenceTooltip = (t: TFunction): string => {
         'alert_group_rule.tooltip.muted_alerted_state'
       )}</td>
     </tr>
-    <tr>
+    <tr style="border-bottom: 1px solid #333;">
       <td style="padding: 8px 16px; border-right: 1px solid #333; white-space: nowrap;">${trend(
         15,
         86,
@@ -249,6 +249,20 @@ export const getOccurrenceTooltip = (t: TFunction): string => {
       )}</td>
       <td style="padding: 8px 16px; border-right: 1px solid #333; white-space: nowrap; color: #888;">🔇 ${t(
         'alert_group_rule.tooltip.muted_alerted_state'
+      )}</td>
+      <td style="padding: 8px 16px; border-right: 1px solid #333; white-space: nowrap; color: #888;">🔇 ${t(
+        'alert_group_rule.tooltip.muted_alerted_state'
+      )}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 16px; border-right: 1px solid #333; white-space: nowrap;">${trend(
+        16,
+        86,
+        'exceeding'
+      )}</td>
+      <td style="padding: 8px 16px; white-space: nowrap; font-weight: bold; color: #f5a623;">🔔 ${t(
+        'alert_group_rule.tooltip.remind_after_alert',
+        {minute: 5}
       )}</td>
       <td style="padding: 8px 16px; white-space: nowrap; font-weight: bold; color: #f5a623;">🔔 ${t(
         'alert_group_rule.tooltip.remind_after_alert',
