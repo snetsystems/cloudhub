@@ -62,7 +62,7 @@ function GroupDetailPage({params, notify}: Props) {
 
   const [isDefault, setIsDefault] = useState(false)
 
-  const [viewMode, setViewMode] = useState<'card' | 'list'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('card')
 
   const [users, setUsers] = useState<RecipientMember[]>([])
 
@@ -391,15 +391,6 @@ function GroupDetailPage({params, notify}: Props) {
   const viewModeRadio = (
     <Radio shape={ButtonShape.Default}>
       <Radio.Button
-        id="group-view-mode-list"
-        titleText={t('group_management.list_view', 'List View')}
-        value="list"
-        active={viewMode === 'list'}
-        onClick={() => setViewMode('list')}
-      >
-        {t('group_management.list_view', 'List View')}
-      </Radio.Button>
-      <Radio.Button
         id="group-view-mode-card"
         titleText={t('group_management.card_view', 'Card View')}
         value="card"
@@ -407,6 +398,15 @@ function GroupDetailPage({params, notify}: Props) {
         onClick={() => setViewMode('card')}
       >
         {t('group_management.card_view', 'Card View')}
+      </Radio.Button>
+      <Radio.Button
+        id="group-view-mode-list"
+        titleText={t('group_management.list_view', 'List View')}
+        value="list"
+        active={viewMode === 'list'}
+        onClick={() => setViewMode('list')}
+      >
+        {t('group_management.list_view', 'List View')}
       </Radio.Button>
     </Radio>
   )
@@ -533,16 +533,13 @@ function GroupDetailPage({params, notify}: Props) {
         }
         let memberId = u.id
         if (u.isNew) {
-          const newMember = await addRecipientGroupMember(
-            currentGroupId,
-            {
-              userId: u.userId || u.id,
-              userName: u.userName,
-              email: u.email,
-              phoneNumber: '',
-              isExternal: !!u.isExternal,
-            }
-          )
+          const newMember = await addRecipientGroupMember(currentGroupId, {
+            userId: u.userId || u.id,
+            userName: u.userName,
+            email: u.email,
+            phoneNumber: '',
+            isExternal: !!u.isExternal,
+          })
           memberId = newMember.id
         } else {
           const orig = originalMembers.find(m => m.id === u.id)
@@ -572,17 +569,11 @@ function GroupDetailPage({params, notify}: Props) {
         })
       }
 
-      await upsertAlertRecipientMemberPrefsByGroup(
-        currentGroupId,
-        finalPrefs
-      )
+      await upsertAlertRecipientMemberPrefsByGroup(currentGroupId, finalPrefs)
 
       notify(
         notifySuccess(
-          t(
-            'group_management.save_success',
-            '그룹 설정을 저장했습니다.'
-          )
+          t('group_management.save_success', '그룹 설정을 저장했습니다.')
         )
       )
       browserHistory.goBack()
@@ -590,10 +581,7 @@ function GroupDetailPage({params, notify}: Props) {
       console.error('Failed to save group details', error)
       notify(
         notifyError(
-          t(
-            'group_management.save_failed',
-            '그룹 설정 저장에 실패했습니다.'
-          )
+          t('group_management.save_failed', '그룹 설정 저장에 실패했습니다.')
         )
       )
     } finally {

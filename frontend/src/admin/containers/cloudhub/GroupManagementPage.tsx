@@ -100,6 +100,17 @@ function GroupsPage({router, params, notify}: Props) {
   const columns: ColumnInfo[] = useMemo(
     () => [
       {
+        name: t('group_management.default_label', 'Default'),
+        key: 'isDefault',
+        options: {
+          thead: {
+            style: {width: '10%'},
+          },
+        },
+        render: (_value, rowData) =>
+          rowData.isDefault ? <span className="icon checkmark" /> : null,
+      },
+      {
         name: t('group_management.group_name', '그룹명'),
         key: 'groupName',
         options: {
@@ -113,7 +124,7 @@ function GroupsPage({router, params, notify}: Props) {
         key: 'memberCount',
         options: {
           thead: {
-            style: {width: '50%'},
+            style: {width: '40%'},
           },
         },
       },
