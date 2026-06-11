@@ -3,7 +3,6 @@ import React, {PureComponent, ReactChildren} from 'react'
 interface Props {
   children?: ReactChildren | JSX.Element | JSX.Element[]
   title: string
-  onDismiss?: () => void
 }
 
 class OverlayHeading extends PureComponent<Props> {
@@ -12,14 +11,11 @@ class OverlayHeading extends PureComponent<Props> {
   }
 
   public render() {
-    const {title, onDismiss, children} = this.props
+    const {title, children} = this.props
 
     return (
       <div className="overlay--heading">
         <div className="overlay--title">{title}</div>
-        {onDismiss && (
-          <button className="overlay--dismiss" onClick={onDismiss} />
-        )}
         {children && children}
       </div>
     )

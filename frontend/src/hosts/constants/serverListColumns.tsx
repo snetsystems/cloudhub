@@ -141,7 +141,7 @@ export const serverListColumns = ({
       parentHeaderClassName: 'parent-header-cpu',
       options: {
         thead: {
-          align: AlignType.RIGHT,
+          align: AlignType.CENTER,
           style: {
             width: '12%',
           },
@@ -217,10 +217,10 @@ export const serverListColumns = ({
       key: 'Mem Usage',
       name: 'Mem Usage',
       parentHeader: 'Memory',
-      align: AlignType.RIGHT,
+      align: AlignType.CENTER,
       options: {
         thead: {
-          align: AlignType.RIGHT,
+          align: AlignType.CENTER,
           style: {
             width: '12%',
           },
@@ -323,10 +323,10 @@ export const serverListColumns = ({
       key: 'Network Traffic',
       name: 'Network Traffic (Max)',
       parentHeader: 'Network',
-      align: AlignType.RIGHT,
+      align: AlignType.CENTER,
       options: {
         thead: {
-          align: AlignType.RIGHT,
+          align: AlignType.CENTER,
           style: {
             width: '12%',
           },
@@ -390,10 +390,10 @@ export const serverListColumns = ({
       key: 'Disk Usage',
       name: 'Disk Usage',
       parentHeader: 'Disk',
-      align: AlignType.RIGHT,
+      align: AlignType.CENTER,
       options: {
         thead: {
-          align: AlignType.RIGHT,
+          align: AlignType.CENTER,
           style: {
             width: '12%',
           },
@@ -453,10 +453,10 @@ export const serverListColumns = ({
       key: 'Disk I/O %',
       name: 'Disk I/O % (Max)',
       parentHeader: 'Disk',
-      align: AlignType.RIGHT,
+      align: AlignType.CENTER,
       options: {
         thead: {
-          align: AlignType.RIGHT,
+          align: AlignType.CENTER,
           style: {
             width: '12%',
           },

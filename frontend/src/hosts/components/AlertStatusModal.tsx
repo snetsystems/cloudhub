@@ -1,14 +1,9 @@
 import React, {useState, useEffect} from 'react'
 import {useSelector} from 'react-redux'
 import {useTranslation} from 'react-i18next'
-import {
-  OverlayContainer,
-  OverlayHeading,
-  OverlayBody,
-  Panel,
-} from 'src/reusable_ui'
+import {OverlayHeading, Panel} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
+import RightDrawerTechnology from 'src/reusable_ui/components/overlays/RightDrawerTechnology'
 import {HostAlertStatus} from 'src/hosts/types/alertStatus'
 import {Source, TimeZones} from 'src/types'
 import AlertStatusTable from 'src/hosts/components/AlertStatusTable'
@@ -55,10 +50,14 @@ const AlertStatusModal = ({
   const history = alertStatus?.history ?? []
 
   return (
-    <OverlayTechnology visible={isVisible}>
-      <OverlayContainer maxWidth={1200}>
-        <OverlayHeading title={`Alert Details: ${host}`} onDismiss={onClose} />
-        <OverlayBody>
+    <RightDrawerTechnology
+      isOpen={isVisible}
+      onClose={onClose}
+      className="alert-status-drawer"
+    >
+      <OverlayHeading title={`Alert Details: ${host}`} />
+      <FancyScrollbar autoHide={false} className="alert-status-drawer__scroll">
+        <div className="alert-status-drawer__body">
           <div className="alert-status-modal">
             <Panel>
               <Panel.Header title="Alert Information" />
@@ -69,74 +68,69 @@ const AlertStatusModal = ({
                 </div>
 
                 {history.length > 0 ? (
-                  <FancyScrollbar autoHeight={true} maxHeight={400}>
-                    <div className="alert-status-modal--events-container">
-                      <strong>Active Events ({history.length}):</strong>
-                      {history.map((hist, i) => {
-                        const isExpanded = !!expandedIndices[i]
-                        return (
+                  <div className="alert-status-modal--events-container">
+                    <strong>Active Events ({history.length}):</strong>
+                    {history.map((hist, i) => {
+                      const isExpanded = !!expandedIndices[i]
+                      return (
+                        <div key={i} className="alert-status-modal--event-item">
                           <div
-                            key={i}
-                            className="alert-status-modal--event-item"
+                            className="alert-status-modal--event-title-row"
+                            onClick={() => toggleExpand(i)}
                           >
-                            <div
-                              className="alert-status-modal--event-title-row"
-                              onClick={() => toggleExpand(i)}
-                            >
-                              <span className="alert-status-modal--event-title">
-                                <span
-                                  className={`icon ${
-                                    hist.level === 'warn'
-                                      ? 'warning'
-                                      : hist.level === 'danger'
-                                      ? 'cancel'
-                                      : 'circle-thick'
-                                  }`}
-                                />
-                                [{hist.level.toUpperCase()}] {hist.alertName}
-                              </span>
-                              <div className="alert-status-modal--event-meta">
-                                <span className="alert-status-modal--event-time">
-                                  {new Date(hist.time).toLocaleString(
-                                    i18n.language === 'ko' ? 'ko-KR' : 'en-US',
-                                    {
-                                      timeZone:
-                                        timeZone === TimeZones.UTC
-                                          ? 'UTC'
-                                          : undefined,
-                                    }
-                                  )}
-                                </span>
-                                <span
-                                  className={`icon caret-${
-                                    isExpanded ? 'up' : 'down'
-                                  }`}
-                                />
-                              </div>
-                            </div>
-                            {hist.message && (
-                              <div className="alert-status-modal--event-message">
-                                <strong>Message: </strong> {hist.message}
-                              </div>
-                            )}
-                            {typeof hist.value !== 'undefined' && (
-                              <div className="alert-status-modal--event-value">
-                                <strong>Value: </strong> {hist.value}
-                              </div>
-                            )}
-
-                            {isExpanded && (
-                              <AlertStatusTable
-                                source={source}
-                                host={host}
-                                time={hist.time}
+                            <span className="alert-status-modal--event-title">
+                              <span
+                                className={`icon caret-${
+                                  isExpanded ? 'up' : 'down'
+                                }`}
                               />
-                            )}
+                              <span
+                                className={`icon ${
+                                  hist.level === 'warn'
+                                    ? 'warning'
+                                    : hist.level === 'danger'
+                                    ? 'cancel'
+                                    : 'circle-thick'
+                                }`}
+                              />
+                              [{hist.level.toUpperCase()}] {hist.alertName}
+                            </span>
+                            <div className="alert-status-modal--event-meta">
+                              <span className="alert-status-modal--event-time">
+                                {new Date(hist.time).toLocaleString(
+                                  i18n.language === 'ko' ? 'ko-KR' : 'en-US',
+                                  {
+                                    timeZone:
+                                      timeZone === TimeZones.UTC
+                                        ? 'UTC'
+                                        : undefined,
+                                  }
+                                )}
+                              </span>
+                            </div>
                           </div>
-                        )
-                      })}
-                    </div>
-                  </FancyScrollbar>
+                          {hist.message && (
+                            <div className="alert-status-modal--event-message">
+                              <strong>Message: </strong> {hist.message}
+                            </div>
+                          )}
+                          {typeof hist.value !== 'undefined' && (
+                            <div className="alert-status-modal--event-value">
+                              <strong>Value: </strong> {hist.value}
+                            </div>
+                          )}
+
+                          {isExpanded && (
+                            <AlertStatusTable
+                              source={source}
+                              host={host}
+                              time={hist.time}
+                            />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 ) : (
                   <div className="alert-status-modal--empty-state">
                     No recent alert history.
@@ -145,9 +139,9 @@ const AlertStatusModal = ({
               </Panel.Body>
             </Panel>
           </div>
-        </OverlayBody>
-      </OverlayContainer>
-    </OverlayTechnology>
+        </div>
+      </FancyScrollbar>
+    </RightDrawerTechnology>
   )
 }
 
