@@ -358,6 +358,42 @@ span.icon.sidebar--icon.sidebar--icon__superadmin {
     border-top-right-radius: $radius;
   }
 }
+
+.sidebar-menu--section__language {
+  margin-top: 10px;
+}
+
+.sidebar-menu--language-toggle-wrapper {
+  padding: 10px $sidebar-menu--gutter;
+}
+
+.sidebar-menu--language-toggle {
+  display: flex;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: $radius;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  color: $g20-white;
+  cursor: pointer;
+
+  .language-toggle--item {
+    flex: 1;
+    text-align: center;
+    padding: 6px 0;
+    background-color: transparent;
+    transition: background-color 0.2s;
+
+    &.active {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &:last-child {
+      border-left: 1px solid rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
 @media only screen and (min-height: 1150px) {
   .sidebar-menu--user-nav {
     top: 0;

@@ -104,26 +104,24 @@ class UserNavBlock extends PureComponent<Props> {
           >
             Log out
           </a>
-          <div className="sidebar-menu--section sidebar-menu--section__language" style={{marginTop: '10px'}}>
+          <div className="sidebar-menu--section sidebar-menu--section__language">
             Language
           </div>
-          <div style={{display: 'flex', padding: '10px 20px', gap: '10px'}}>
-            <button
-              className={`btn btn-xs ${
-                i18n.language.startsWith('ko') ? 'btn-default' : 'btn-primary'
-              }`}
-              onClick={() => i18n.changeLanguage('en')}
-            >
-              EN
-            </button>
-            <button
-              className={`btn btn-xs ${
-                i18n.language.startsWith('ko') ? 'btn-primary' : 'btn-default'
-              }`}
-              onClick={() => i18n.changeLanguage('ko')}
-            >
-              KO
-            </button>
+          <div className="sidebar-menu--language-toggle-wrapper">
+            <div className="sidebar-menu--language-toggle">
+              <div
+                className={`language-toggle--item ${!i18n.language.startsWith('ko') ? 'active' : ''}`}
+                onClick={() => i18n.changeLanguage('en')}
+              >
+                EN
+              </div>
+              <div
+                className={`language-toggle--item ${i18n.language.startsWith('ko') ? 'active' : ''}`}
+                onClick={() => i18n.changeLanguage('ko')}
+              >
+                KO
+              </div>
+            </div>
           </div>
           <div className="sidebar-menu--heading sidebar--no-hover">
             {me.name}
