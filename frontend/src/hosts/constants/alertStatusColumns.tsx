@@ -3,6 +3,7 @@ import {AlignType, ColumnInfo, DataTableObject} from 'src/types'
 import {
   BACKGROUND_TYPE_MODES,
   CHART_TYPE_MODES,
+  FORMAT_OPTIONS,
 } from 'src/types/statisticalgraph'
 import {LINE_COLORS_I} from 'src/shared/constants/graphColorPalettes'
 import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
@@ -220,12 +221,16 @@ export const alertStatusColumns = (): ColumnInfo[] => {
           (rowData.networks as Array<{interface: string; traffic: number}>) ||
           []
 
-        const formatTraffic = (bps: number) => {
-          if (bps === 0) return '0 B'
-          const k = 1000
-          const sizes = ['B', 'K', 'M', 'G', 'T']
-          const i = Math.floor(Math.log(bps) / Math.log(k))
-          return parseFloat((bps / Math.pow(k, i)).toFixed(1)) + sizes[i]
+        const gaugeOptsNetwork = {
+          min: 0,
+          max: 1000000000,
+          colors: LINE_COLORS_I,
+          chartType: CHART_TYPE_MODES.CONTINUOUS,
+          isPercent: false,
+          isShowValues: true,
+          isGauge: true,
+          valueFormat: FORMAT_OPTIONS.KMB,
+          decimalPlaces: 1,
         }
 
         return (
@@ -235,10 +240,8 @@ export const alertStatusColumns = (): ColumnInfo[] => {
             )}
             {networks.map((n, i) => (
               <div key={i} className="alert-column--net-item">
-                <span className="alert-column--net-iface">{n.interface}</span>
-                <span className="alert-column--net-traffic">
-                  {formatTraffic(n.traffic)}
-                </span>
+                <div className="alert-column--header">{n.interface}</div>
+                <TableGaugeCell options={gaugeOptsNetwork} value={n.traffic} />
               </div>
             ))}
           </div>

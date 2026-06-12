@@ -191,7 +191,6 @@
   &--stat-group {
     display: flex;
     flex-direction: column;
-    padding-left: $ix-marg-b;
   }
 
   &--stat-row {
@@ -218,23 +217,6 @@
   }
 
   &--disk-path {
-    font-size: $ix-text-tiny;
-    color: $g20-white;
-    word-break: break-all;
-  }
-
-  &--net-item {
-    display: flex;
-    align-items: center;
-    gap: $ix-marg-b;
-    margin-bottom: $ix-marg-a;
-
-    .gauge-wrapper {
-      width: 60%;
-    }
-  }
-
-  &--net-iface {
     font-size: $ix-text-tiny;
     color: $g20-white;
     word-break: break-all;

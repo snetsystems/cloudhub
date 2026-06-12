@@ -22,7 +22,7 @@
   },
   "hosts": {
     "alert_status_disabled": "서버 상태를 표시하려면 Kapacitor 알람 설정이 필요합니다.",
-    "no_ip_msg": "connect-agent가 설치되지 않아서 표시되지 않습니다.",
+    "no_ip_msg": "Control-Agent가 설치되지 않아서 표시되지 않습니다.",
     "failed_to_load": "데이터를 불러오는데 실패했거나 응답이 너무 지연되고 있습니다."
   },
   "group_management": {
