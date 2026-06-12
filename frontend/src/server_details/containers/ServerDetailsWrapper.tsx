@@ -17,14 +17,17 @@ import DashboardPageWithImport, {
   TemplateSelectionContextValue,
 } from 'src/shared/components/DashboardPageWithImport'
 import {Dropdown, DropdownMode, ComponentSize} from 'src/reusable_ui'
-import {Template, TemplateValue} from 'src/types'
+import {Template, TemplateValue, TemplateValueType} from 'src/types'
 import type {Cell, Source} from 'src/types'
 import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import * as DashboardsModels from 'src/types/dashboards'
 import type {DataTableObject} from 'src/types/tableType'
 import type {Addon} from 'src/types/auth'
 import type {CloudTimeRange} from 'src/clouds/types/type'
-import {fetchHostsBySource} from 'src/server_details/utils/host'
+import {serverListQueries} from 'src/hosts/constants/serverListColumns'
+import {executeQueries} from 'src/shared/apis/query'
+import {mergeResultsByHost} from 'src/dashboards/utils/tableLineChart'
+import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import ProcessLineChartTable from 'src/server_details/components/ProcessLineChartTable'
 import ProcessDetailModal from 'src/server_details/components/ProcessDetailModal'
 import UsageDetailModal, {
@@ -66,6 +69,7 @@ interface HostDropdownHeaderProps {
   dashboard?: DashboardsModels.Dashboard
   source: Source
   hostData?: Host | null
+  cloudTimeRange?: CloudTimeRange
   templateVariableLocalSelected?: (
     dashboardID: string,
     templateID: string,
@@ -82,61 +86,91 @@ function HostDropdownHeader({
   dashboard,
   source,
   hostData,
+  cloudTimeRange,
   templateVariableLocalSelected,
   onTemplateAvailabilityChange,
 }: HostDropdownHeaderProps) {
   const ctx = useContext(ServerDetailsPageContext)
   const initialSetRef = useRef(false)
-  const [apiHostsResult, setApiHostsResult] = useState<any>(null)
-
-  useEffect(() => {
-    let isMounted = true
-
-    fetchHostsBySource(source)
-      .then(hosts => {
-        if (isMounted) {
-          setApiHostsResult(hosts)
-        }
-      })
-      .catch(err => {
-        if (isMounted) {
-          const errMsg = err?.message || 'Failed to load hosts via proxy'
-          console.error('getHosts proxy error:', errMsg)
-          setApiHostsResult({error: errMsg})
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [source])
+  const [hostList, setHostList] = useState<string[]>([])
+  const [hostsResolved, setHostsResolved] = useState(false)
 
   const hostTemplate = useMemo(
     () => templates?.find(t => t.tempVar === ':host:'),
     [templates]
   )
 
-  const hostList = useMemo(() => {
-    const defaultList = hostTemplate?.values?.map(v => v.value) ?? []
-    if (Array.isArray(apiHostsResult)) {
-      const allowedHosts = new Set(apiHostsResult.map((h: any) => h.hostname))
-      return defaultList.filter(host => allowedHosts.has(host as string))
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchHosts = async () => {
+      setHostsResolved(false)
+
+      try {
+        const selectedTimeRange = cloudTimeRange?.serverList ?? {
+          lower: 'now() - 1h',
+          upper: 'now()',
+        }
+
+        const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
+          selectedTimeRange
+        )
+        const queryTemplates = [
+          ...generateForHosts(source),
+          dashboardTime,
+          upperDashboardTime,
+        ]
+
+        const querySet = serverListQueries.map(query => ({
+          id: query.id,
+          text: query.text,
+          db: source.telegraf,
+        }))
+
+        const results = await executeQueries(source, querySet, queryTemplates)
+        if (!isMounted) {
+          return
+        }
+
+        const mergedData = mergeResultsByHost(results)
+        const hosts = mergedData
+          .map(row => row.host as string)
+          .filter(Boolean)
+          .sort()
+
+        setHostList(hosts)
+      } catch (err) {
+        console.error('Failed to fetch server list hosts for dropdown', err)
+        if (isMounted) {
+          setHostList([])
+        }
+      } finally {
+        if (isMounted) {
+          setHostsResolved(true)
+        }
+      }
     }
-    return defaultList
-  }, [hostTemplate, apiHostsResult])
+
+    fetchHosts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [
+    source,
+    cloudTimeRange?.serverList?.lower,
+    cloudTimeRange?.serverList?.upper,
+  ])
 
   useEffect(() => {
-    if (!onTemplateAvailabilityChange) {
-      return
-    }
-    if (apiHostsResult === null) {
+    if (!onTemplateAvailabilityChange || !hostsResolved) {
       return
     }
     onTemplateAvailabilityChange({
       resolved: true,
       blocked: hostList.length === 0,
     })
-  }, [apiHostsResult, hostList, onTemplateAvailabilityChange])
+  }, [hostsResolved, hostList, onTemplateAvailabilityChange])
 
   const {selectedHost, onHostSelect} = ctx || {}
 
@@ -174,11 +208,19 @@ function HostDropdownHeader({
         v => v.selected || v.localSelected
       )
 
-      if (selectedValue && currentSelected?.value !== selectedHost) {
-        templateVariableLocalSelected(dashboard.id, hostTemplate.id, {
-          ...selectedValue,
-          localSelected: true,
-        })
+      if (currentSelected?.value !== selectedHost) {
+        templateVariableLocalSelected(
+          dashboard.id,
+          hostTemplate.id,
+          selectedValue
+            ? {...selectedValue, localSelected: true}
+            : {
+                type: TemplateValueType.TagValue,
+                value: selectedHost,
+                selected: true,
+                localSelected: true,
+              }
+        )
       }
     }
   }, [
@@ -546,6 +588,7 @@ function ServerDetailsWrapper(props) {
             dashboard={dashboard}
             source={props.source}
             hostData={hostData}
+            cloudTimeRange={props.cloudTimeRange}
             templateVariableLocalSelected={templateVariableLocalSelected}
             onTemplateAvailabilityChange={handleTemplateAvailabilityChange}
           />
