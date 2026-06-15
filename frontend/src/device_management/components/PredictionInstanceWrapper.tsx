@@ -205,7 +205,7 @@ const PredictionInstanceWrapper = ({
 
   const debouncedFit = _.debounce(() => {
     WindowResizeEventTrigger()
-  }, 150)
+  }, 300)
 
   const handleOnResize = (): void => {
     debouncedFit()
