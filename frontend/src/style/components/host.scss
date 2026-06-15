@@ -21,6 +21,17 @@
   .panel.panel-solid {
     width: 100%;
 
+    .panel-heading {
+      position: relative;
+    }
+
+    .server-list-loading-dots.loading-dots {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
     .panel-body {
       width: 100%;
       padding: 0;

@@ -559,9 +559,10 @@ export function NewHostsPage({
               isDotKey={true}
               enableSharedChartHover={displayedChartMode === 'line'}
               toprightRender={
-                isRefreshing ? (
-                  <LoadingDots />
-                ) : (
+                <>
+                  {isRefreshing && (
+                    <LoadingDots className="server-list-loading-dots" />
+                  )}
                   <div className="topright-render-container">
                     <Button
                       text={t('server_alert.add_event', '이벤트 추가')}
@@ -581,7 +582,7 @@ export function NewHostsPage({
                       }}
                     />
                   </div>
-                )
+                </>
               }
               topLeftRender={
                 <>
