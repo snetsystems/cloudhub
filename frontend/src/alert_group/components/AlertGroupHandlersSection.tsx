@@ -22,6 +22,9 @@ import LogHandler from 'src/alert_group/components/LogHandler'
 import SlackHandler from 'src/alert_group/components/SlackHandler'
 import KafkaHandler from 'src/alert_group/components/KafkaHandler'
 import TelegramHandler from 'src/alert_group/components/TelegramHandler'
+import CodeData from 'src/kapacitor/components/CodeData'
+import {RULE_MESSAGE_TEMPLATES} from 'src/kapacitor/constants'
+import ReactTooltip from 'react-tooltip'
 
 interface Props extends WithTranslation {
   rule: AlertGroupRule
@@ -254,6 +257,20 @@ class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
     this.setState({selectedType: type})
   }
 
+  private handleMessageChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ): void => {
+    this.props.onUpdateRule({message: e.target.value})
+  }
+
+  private handleClickMessageTemplate = (template: string) => (): void => {
+    const currentMessage = this.props.rule.message || ''
+    const nextMessage = currentMessage
+      ? `${currentMessage} ${template}`
+      : template
+    this.props.onUpdateRule({message: nextMessage})
+  }
+
   private handleGoToConfig = (hash: unknown): void => {
     const {source, router} = this.props
     const {kapacitorId} = this.state
@@ -352,7 +369,8 @@ class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
       : 'rule-section--row rule-section--row-first rule-section--row-last'
 
     return (
-      <div className="rule-section">
+      <>
+        <div className="rule-section">
         <h3 className="rule-section--heading">
           {t('alert_group_basic.alert_handlers', 'Alert Handlers')}
         </h3>
@@ -490,6 +508,56 @@ class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
           )}
         </div>
       </div>
+
+      <div className="rule-section">
+        <h3 className="rule-section--heading">
+          {t('alert_group_basic.alert_message', 'Alert Message')}
+        </h3>
+        <div className="rule-section--body">
+          <div className="rule-section--row rule-section--row-first rule-section--row-last">
+            <div className="faux-form">
+              <div className="form-group col-md-12">
+                <label htmlFor="global-message">
+                  {t('alert_group_basic.message_label', 'Message')}
+                </label>
+                <textarea
+                  id="global-message"
+                  className="form-control form-malachite alert-group-mail-title-textarea"
+                  placeholder={t(
+                    'alert_group_basic.message_placeholder',
+                    '알람 메시지를 입력하세요 (예: {{ .Level }}: 알람 발생)'
+                  )}
+                  value={rule.message || ''}
+                  onChange={this.handleMessageChange}
+                  spellCheck={false}
+                />
+              </div>
+              <div className="form-group col-md-12">
+                <label>
+                  {t('alert_group_basic.templates_label', 'Templates:')}
+                </label>
+                <div className="alert-group-template-chips">
+                  {_.map(RULE_MESSAGE_TEMPLATES, (template, key) => (
+                    <CodeData
+                      key={key}
+                      template={template}
+                      onClickTemplate={this.handleClickMessageTemplate(
+                        template.label
+                      )}
+                    />
+                  ))}
+                  <ReactTooltip
+                    effect="solid"
+                    html={true}
+                    class="influx-tooltip kapacitor-tooltip"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </>
     )
   }
 }

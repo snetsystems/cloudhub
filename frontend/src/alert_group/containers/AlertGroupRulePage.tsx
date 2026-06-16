@@ -788,7 +788,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
             <OverlayContainer maxWidth={480}>
               <OverlayHeading
                 title={t('alert_group_rule.test_modal.title', '수신 테스트')}
-                onDismiss={this.handleCloseTestModal}
               />
               <OverlayBody>
                 <Form>

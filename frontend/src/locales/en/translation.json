@@ -283,6 +283,7 @@
     "webhook_url": "Webhook URL",
     "recipient_emails_placeholder": "ex: bob@domain.com susan@domain.com",
     "email_body_placeholder": "Enter the body for your email here. Can contain HTML",
+    "email_title_hint": "The email title is generated from the [Alert Message] set below.",
     "email_body_edit": "Edit",
     "email_body_preview": "Preview",
     "preview_level": "CRITICAL",

@@ -13,9 +13,6 @@ import {
   DropdownMenuColors,
 } from 'src/reusable_ui'
 import EmailBodyPreview from 'src/alert_group/components/EmailBodyPreview'
-import CodeData from 'src/kapacitor/components/CodeData'
-import {RULE_MESSAGE_TEMPLATES} from 'src/kapacitor/constants'
-import ReactTooltip from 'react-tooltip'
 import {
   AlertGroupRule,
   AlertRuleEventHandler,
@@ -149,20 +146,6 @@ export default class EmailHandler extends PureComponent<EmailHandlerProps, State
         ))}
       </div>
     )
-  }
-
-  private handleMailTitleChange = (
-    e: ChangeEvent<HTMLTextAreaElement>
-  ): void => {
-    this.props.onUpdateRule({message: e.target.value})
-  }
-
-  private handleClickMailTitleTemplate = (template: string) => (): void => {
-    const currentMessage = this.props.rule.message || ''
-    const nextMessage = currentMessage
-      ? `${currentMessage} ${template}`
-      : template
-    this.props.onUpdateRule({message: nextMessage})
   }
 
   private handleEmailBodyViewChange = (mode: 'edit' | 'preview'): void => {
@@ -476,58 +459,15 @@ export default class EmailHandler extends PureComponent<EmailHandlerProps, State
                 )}
               </h4>
               <div className="faux-form">
-                {/* Mail Title textarea field */}
                 <div className="form-group col-md-12">
-                  <label htmlFor="mail-title">
+                  <p className="alert-group-receive-user-hint alert-group-email-title-hint">
+                    <span className="icon info-sign" />
                     {t(
-                      'alert_group_basic.mail_title',
-                      'Mail Title'
+                      'alert_group_basic.email_title_hint',
+                      '메일의 제목은 하단의 [Alert Message]에서 설정한 알림 메시지로 생성됩니다.'
                     )}
-                  </label>
-                  <textarea
-                    id="mail-title"
-                    className="form-control form-malachite alert-group-mail-title-textarea"
-                    placeholder={t(
-                      'alert_group_basic.mail_title_placeholder',
-                      '메일 타이틀을 입력하세요'
-                    )}
-                    value={rule.message || ''}
-                    onChange={this.handleMailTitleChange}
-                    spellCheck={false}
-                  />
+                  </p>
                 </div>
-
-                {/* Templates chips area */}
-                <div className="form-group col-md-12">
-                  <label>
-                    {t(
-                      'alert_group_basic.templates_label',
-                      'Templates:'
-                    )}
-                  </label>
-                  <div className="alert-group-template-chips">
-                    {_.map(
-                      RULE_MESSAGE_TEMPLATES,
-                      (template, key) => {
-                        return (
-                          <CodeData
-                            key={key}
-                            template={template}
-                            onClickTemplate={this.handleClickMailTitleTemplate(
-                              template.label
-                            )}
-                          />
-                        )
-                      }
-                    )}
-                    <ReactTooltip
-                      effect="solid"
-                      html={true}
-                      class="influx-tooltip kapacitor-tooltip"
-                    />
-                  </div>
-                </div>
-
                 <div className="form-group col-md-12">
                   <div className="alert-group-email-body-header">
                     <label htmlFor="email-body">
