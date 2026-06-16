@@ -301,6 +301,7 @@ func TestAlertGroupRuleTICKScriptCollapsesEmailBodyNewlines(t *testing.T) {
 
 func TestAlertGroupRuleTICKScriptEmbedsNonEmailHandlersWithPausePolicy(t *testing.T) {
 	r := sampleRule()
+	r.NotifyRecovery = true
 	r.PauseSeconds = 60
 	r.EventHandlers = []cloudhub.AlertRuleEventHandler{
 		{
@@ -407,6 +408,7 @@ func TestAlertGroupRuleTICKScriptOmitsLevelBranchWhenEmpty(t *testing.T) {
 
 func TestAlertGroupRuleTICKScriptEmbedsPauseReminder(t *testing.T) {
 	r := sampleRule()
+	r.NotifyRecovery = true
 	r.PauseSeconds = 30
 	rec := AlertRecipients{Crit: []string{"a@x.com"}}
 	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
@@ -419,8 +421,10 @@ func TestAlertGroupRuleTICKScriptEmbedsPauseReminder(t *testing.T) {
 }
 
 func TestAlertGroupRuleTICKScriptOmitsPauseArgWhenZero(t *testing.T) {
+	r := sampleRule()
+	r.NotifyRecovery = true
 	rec := AlertRecipients{Crit: []string{"a@x.com"}}
-	tick, err := AlertGroupRuleTICKScript(sampleRule(), rec, nil)
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
 	if err != nil {
 		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
 	}
@@ -543,6 +547,30 @@ func TestAlertGroupRuleTICKScriptOmitsRecoveryBranchByDefault(t *testing.T) {
 	}
 	if strings.Contains(tick, "email-recovery") {
 		t.Fatalf("tickscript should omit recovery branch when NotifyRecovery=false:\n%s", tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptOmitsStateChangesOnlyWhenNotifyRecoveryFalse(t *testing.T) {
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+	tick, err := AlertGroupRuleTICKScript(sampleRule(), rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if strings.Contains(tick, ".stateChangesOnly(") {
+		t.Fatalf("tickscript should omit stateChangesOnly() when NotifyRecovery=false:\n%s", tick)
+	}
+}
+
+func TestAlertGroupRuleTICKScriptEmbedsStateChangesOnlyWhenNotifyRecoveryTrue(t *testing.T) {
+	r := sampleRule()
+	r.NotifyRecovery = true
+	rec := AlertRecipients{Crit: []string{"a@x.com"}}
+	tick, err := AlertGroupRuleTICKScript(r, rec, nil)
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
+	}
+	if !strings.Contains(tick, ".stateChangesOnly()") {
+		t.Fatalf("tickscript should render stateChangesOnly() on main trigger when NotifyRecovery=true:\n%s", tick)
 	}
 }
 
