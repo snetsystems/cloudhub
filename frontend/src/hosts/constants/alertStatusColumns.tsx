@@ -9,6 +9,8 @@ import {LINE_COLORS_I} from 'src/shared/constants/graphColorPalettes'
 import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
 import _ from 'lodash'
 
+import {renderStat} from 'src/hosts/utils/alertStatusUtils'
+
 export const alertStatusColumns = (): ColumnInfo[] => {
   return [
     {
@@ -58,14 +60,8 @@ export const alertStatusColumns = (): ColumnInfo[] => {
                 <TableGaugeCell options={gaugeOptsPercent} value={cpuSys} />
               </div>
             )}
-            {queueLength !== null && (
-              <div className="alert-column--stat-row">
-                <span>queue_length</span>
-                <span className="alert-column--stat-value">
-                  {Number(queueLength).toFixed(0)}
-                </span>
-              </div>
-            )}
+            {queueLength !== null &&
+              renderStat('queue_length', Number(queueLength).toFixed(0), false)}
           </div>
         )
       },
@@ -102,32 +98,6 @@ export const alertStatusColumns = (): ColumnInfo[] => {
           isShowValues: true,
           isGauge: true,
           decimalPlaces: 1,
-        }
-
-        const formatBytes = (bytes: number) => {
-          if (bytes === 0) return '0 B'
-          const k = 1024
-          const sizes = ['B', 'K', 'M', 'G', 'T', 'P']
-          const i = Math.floor(Math.log(bytes) / Math.log(k))
-          return (
-            parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
-          )
-        }
-
-        const renderStat = (
-          label: string,
-          val: number | null,
-          isBytes = true
-        ) => {
-          if (val === null) return null
-          return (
-            <div className="alert-column--stat-row">
-              <span>{label}</span>
-              <span className="alert-column--stat-value">
-                {isBytes ? formatBytes(val) : val}
-              </span>
-            </div>
-          )
         }
 
         return (
@@ -195,14 +165,17 @@ export const alertStatusColumns = (): ColumnInfo[] => {
             {disks.length === 0 && (
               <span className="alert-status-modal--empty-state">N/A</span>
             )}
-            {disks.map((d, i) => (
-              <div key={i} className="alert-column--disk-item">
+            {disks.length > 0 && (
+              <div className="alert-column--disk-item">
                 <div className="gauge-wrapper">
-                  <TableGaugeCell options={gaugeOptsPercent} value={d.usage} />
+                  <TableGaugeCell
+                    options={gaugeOptsPercent}
+                    value={disks[0].usage}
+                  />
                 </div>
-                <span className="alert-column--disk-path">{d.path}</span>
+                <span className="alert-column--disk-path">{disks[0].path}</span>
               </div>
-            ))}
+            )}
           </div>
         )
       },

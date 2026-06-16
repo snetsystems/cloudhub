@@ -2098,3 +2098,12 @@ $alert-group--preview-graph-shell-height: 360px;
     align-items: center;
   }
 }
+
+.alert-group-email-title-hint {
+  margin-top: 0;
+  margin-bottom: 15px;
+  
+  .icon.info-sign {
+    margin-right: 6px;
+  }
+}

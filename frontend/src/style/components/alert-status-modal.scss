@@ -3,7 +3,6 @@
     max-height: 100vh;
     width: 70vw;
   }
-
   .overlay--heading {
     flex-shrink: 0;
     padding: 24px 18px;
@@ -195,7 +194,7 @@
 
   &--stat-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     font-size: $ix-text-base;
     margin: 2px 0;
     color: $g11-sidewalk;
@@ -203,6 +202,11 @@
 
   &--stat-value {
     color: $g20-white;
+  }
+
+  &--stat-value-container {
+    min-width: 60px;
+    text-align: right;
   }
 
   &--disk-item {
