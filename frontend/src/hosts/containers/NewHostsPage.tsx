@@ -143,7 +143,9 @@ export function NewHostsPage({
   const [isError, setIsError] = useState(false)
 
   const [dbHosts, setDbHosts] = useState<Host[]>([])
+
   const [isFetching, setIsFetching] = useState(false)
+
   const [hasFetched, setHasFetched] = useState(false)
 
   const requestIdRef = useRef(0)
@@ -524,6 +526,19 @@ export function NewHostsPage({
     }
   }
 
+  const finalTableData = useMemo(() => {
+    const combined = [...(tableData || [])]
+    const existingHosts = new Set(combined.map(row => row.host))
+
+    Object.keys(alertStatusMap).forEach(host => {
+      if (!existingHosts.has(host)) {
+        combined.push({host})
+      }
+    })
+
+    return combined
+  }, [tableData, alertStatusMap])
+
   return (
     <Page className="hosts-page">
       <Page.Header fullWidth={true}>
@@ -551,7 +566,7 @@ export function NewHostsPage({
         <div className="host-page-graph-table-container-wrapper host-page-graph-table-container">
           {!isError ? (
             <TableComponent
-              data={tableData || []}
+              data={finalTableData}
               bodyClassName="server-list-table"
               columns={columns}
               isLoading={isTableLoading}

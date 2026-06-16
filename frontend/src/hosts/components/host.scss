@@ -619,8 +619,32 @@
     gap: 4px;
   }
 
+  td {
+    max-width: 0;
+  }
+
   .network-interface {
-    max-width: 100px;
+    width: 100%;
+    text-align: end;
+  }
+
+  .network-traffic-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    .table-gauge-cell-container {
+      flex-grow: 1;
+    }
+    .network-interface {
+      width: 50px;
+      min-width: 35px;
+      max-width: none;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 
   .disk-usage-container {
@@ -641,6 +665,11 @@
     }
   }
 
+  .disk-usage-path {
+    width: 100%;
+    text-align: end;
+  }
+
   .disk-io-container {
     display: flex;
     align-items: center;
@@ -658,6 +687,11 @@
       text-overflow: ellipsis;
     }
   }
+
+  .disk-io-device {
+    width: 100%;
+    text-align: end;
+  }
 }
 
 .host-page-graph-table-container-wrapper {
@@ -669,7 +703,7 @@
 
 .hosts-page {
   .host-page-graph-table-container-wrapper.host-page-graph-table-container {
-    margin: 16px;
+    margin: 12px;
     box-sizing: border-box;
     width: fit-content;
     min-width: calc(100% - 32px);

@@ -105,6 +105,7 @@ export const serverListColumns = ({
         thead: {
           align: AlignType.LEFT,
           className: 'server-host',
+          style: {width: '8%'},
         },
       },
       render: (value: string) => {
@@ -116,6 +117,8 @@ export const serverListColumns = ({
             style={{display: 'flex', flexDirection: 'column'}}
           >
             <Link
+              className={'ellipsis-text'}
+              title={value}
               to={`/sources/${sourceID}/server-monitoring/${SERVER_DETAILS_PAGE_NAME}?host=${value}`}
             >
               {value}
@@ -143,7 +146,7 @@ export const serverListColumns = ({
         thead: {
           align: AlignType.CENTER,
           style: {
-            width: '12%',
+            width: '14%',
           },
         },
         sorting: true,
@@ -222,7 +225,7 @@ export const serverListColumns = ({
         thead: {
           align: AlignType.CENTER,
           style: {
-            width: '12%',
+            width: '14%',
           },
         },
         isGauge: true,
@@ -328,13 +331,13 @@ export const serverListColumns = ({
         thead: {
           align: AlignType.CENTER,
           style: {
-            width: '12%',
+            width: '14%',
           },
         },
         isGauge: true,
         sorting: true,
       },
-      render: (value: number) => {
+      render: (value: number, rowData: DataTableObject) => {
         const gaugeOptions = {
           min: 0,
           max: 1000000000,
@@ -349,39 +352,38 @@ export const serverListColumns = ({
         }
         if (isLineChart) {
           return (
-            <TableLineChartCell
-              color={SERVER_LIST_LINE_HEX_BY_PARENT.Network}
-              values={toLineValues(value)}
-              options={{
-                isShowLine: true,
-                isShowPoint: false,
-                isFillArea: true,
-                isConnectSeparatedPoints: false,
-                valueLabel: ['maximum', 'last'],
-                isZeroBaseline: true,
-                valueFormat: FORMAT_OPTIONS.KMG,
-              }}
-            />
+            <>
+              <TableLineChartCell
+                color={SERVER_LIST_LINE_HEX_BY_PARENT.Network}
+                values={toLineValues(value)}
+                options={{
+                  isShowLine: true,
+                  isShowPoint: false,
+                  isFillArea: true,
+                  isConnectSeparatedPoints: false,
+                  valueLabel: ['maximum', 'last'],
+                  isZeroBaseline: true,
+                  valueFormat: FORMAT_OPTIONS.KMG,
+                }}
+              />
+              <div
+                className="ellipsis-text network-interface"
+                title={rowData['Network Interface']}
+              >
+                {rowData['Network Interface']}
+              </div>
+            </>
           )
         }
-        return <TableGaugeCell options={gaugeOptions} value={value as number} />
-      },
-    },
-    {
-      key: 'Network Interface',
-      name: 'Network Interface',
-      parentHeader: 'Network',
-      align: AlignType.LEFT,
-      options: {
-        thead: {
-          align: AlignType.LEFT,
-          className: 'network-interface',
-        },
-      },
-      render: (value: string) => {
         return (
-          <div title={value} className="ellipsis-text network-interface">
-            {value}
+          <div className="network-traffic-container">
+            <TableGaugeCell options={gaugeOptions} value={value as number} />
+            <div
+              className="ellipsis-text network-interface"
+              title={rowData['Network Interface']}
+            >
+              {rowData['Network Interface']}
+            </div>
           </div>
         )
       },
@@ -395,7 +397,7 @@ export const serverListColumns = ({
         thead: {
           align: AlignType.CENTER,
           style: {
-            width: '12%',
+            width: '14%',
           },
         },
         isGauge: true,
@@ -458,7 +460,7 @@ export const serverListColumns = ({
         thead: {
           align: AlignType.CENTER,
           style: {
-            width: '12%',
+            width: '14%',
           },
         },
         isGauge: true,
