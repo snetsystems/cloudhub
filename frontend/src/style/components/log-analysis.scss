@@ -316,6 +316,31 @@ button[data-test-subj='pagination-button-next'][disabled] {
   font-size: 13px;
 }
 
+.syslog-cell-popover {
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+
+  &__copy {
+    align-self: flex-end;
+    padding-bottom: 6px;
+    cursor: pointer;
+
+    .ouiButtonIcon {
+      height: 16px;
+      width: 16px;
+      border-radius: 2px;
+      border: none;
+      overflow: hidden;
+    }
+  }
+
+  &__content {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
 .livestatus-wrapper {
   z-index: 3;
   padding-left: 8px;
