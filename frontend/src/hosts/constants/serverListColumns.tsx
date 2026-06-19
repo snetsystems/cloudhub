@@ -577,7 +577,7 @@ last("usage_softirq") AS "CPU SoftIRQ",
 last("usage_guest_nice") AS "CPU Guest Nice",
 last("usage_iowait") AS "CPU IOWait"
 FROM ":db:".":rp:"."cpu"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "cpu"='cpu-total'
+WHERE time > now() - 3m AND "cpu"='cpu-total'
 GROUP BY "host"
 FILL(null)`,
   },
@@ -592,7 +592,7 @@ last("buffered") AS "Mem Buffered",
 last("cached") AS "Mem Cached",
 last("available") AS "Mem Available"
 FROM ":db:".":rp:"."mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime:
+WHERE time > now() - 3m
 GROUP BY "host"
 FILL(null)`,
   },
@@ -600,7 +600,7 @@ FILL(null)`,
     id: 'server-list-mem-cached-win',
     text: `SELECT last("Standby_Cache_Core_Bytes") + last("Standby_Cache_Normal_Priority_Bytes") + last("Standby_Cache_Reserve_Bytes") AS "Mem Cached"
 FROM ":db:".":rp:"."win_mem"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime:
+WHERE time > now() - 3m
 GROUP BY "host"
 FILL(null)`,
   },
@@ -610,8 +610,8 @@ FILL(null)`,
 FROM (
   SELECT non_negative_derivative(max("bytes_recv"),1s) + non_negative_derivative(max("bytes_sent"),1s) AS "traffic"
   FROM ":db:".":rp:"."net"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime:
-  GROUP BY time(:interval:), "interface"
+  WHERE time > now() - 3m
+  GROUP BY time(30s), "interface"
 )
 GROUP BY "host"`,
   },
@@ -621,8 +621,8 @@ GROUP BY "host"`,
 FROM (
   SELECT max("Bytes_Received_persec") + max("Bytes_Sent_persec") AS "traffic"
   FROM ":db:".":rp:"."win_net"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "instance" !~ /^_Total/
-  GROUP BY time(:interval:), "host", "instance"
+  WHERE time > now() - 3m AND "instance" !~ /^_Total/
+  GROUP BY time(30s), "host", "instance"
 )
 GROUP BY "host"`,
   },
@@ -632,8 +632,8 @@ GROUP BY "host"`,
 FROM (
   SELECT last("Percent_Disk_Time") AS "Disk I/O %"
   FROM ":db:".":rp:"."win_diskio"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "instance" !~ /^_Total/
-  GROUP BY time(:interval:), "host", "instance"
+  WHERE time > now() - 3m AND "instance" !~ /^_Total/
+  GROUP BY time(30s), "host", "instance"
 )
 GROUP BY "host"`,
   },
@@ -644,7 +644,7 @@ GROUP BY "host"`,
 FROM (
   SELECT last("used_percent") AS "Disk Usage"
   FROM ":db:".":rp:"."disk"
-  WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND path !~ /^\\/boot/ AND path !~ /^\\/run/
+  WHERE time > now() - 3m AND path !~ /^\\/boot/ AND path !~ /^\\/run/
   GROUP BY "path"
 )
 GROUP BY "host"`,
@@ -669,8 +669,8 @@ GROUP BY "host"`,
   FROM (
     SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "io_time"
     FROM ":db:".":rp:"."diskio"
-    WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "mount_path" != ''
-    GROUP BY time(:interval:), "host", "mount_path"
+    WHERE time > now() - 3m AND "mount_path" != ''
+    GROUP BY time(30s), "host", "mount_path"
   )
   GROUP BY "host"`,
   },
