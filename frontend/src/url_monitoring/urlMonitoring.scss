@@ -125,6 +125,8 @@ $um-unknown: $c-comet;
   }
 
   tbody tr td.text-center.justify-center:last-child {
+    overflow: visible;
+    max-width: none;
     vertical-align: middle;
   }
 
@@ -132,21 +134,15 @@ $um-unknown: $c-comet;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
     padding: 2px 0;
+    overflow: visible;
   }
 
   .url-monitoring-row-actions__btn {
-    position: relative;
-    box-sizing: border-box;
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    padding: 0;
-    line-height: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    margin: 0 4px;
 
     .icon {
       margin: 0;
@@ -158,13 +154,16 @@ $um-unknown: $c-comet;
       outline: none;
     }
 
-    &.confirm-button .confirm-button--confirmation {
-      min-height: 34px;
-      padding: 8px 14px;
-      box-sizing: border-box;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    &.confirm-button {
+      position: relative;
+    }
+
+    &.confirm-button.active {
+      z-index: 20;
+    }
+
+    &.confirm-button .confirm-button--tooltip {
+      margin-top: 4px;
     }
   }
 
@@ -260,7 +259,7 @@ $um-unknown: $c-comet;
 
 .url-monitoring-summary {
   display: flex;
-  gap: 22px;
+  gap: 16px;
   align-items: center;
   margin: 0;
   padding: 0;
@@ -281,7 +280,7 @@ $um-unknown: $c-comet;
   background: transparent;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 0;
   cursor: pointer;
   border-radius: 6px;
@@ -301,15 +300,15 @@ $um-unknown: $c-comet;
   border-radius: 4px;
   border: 1px solid transparent;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1;
   letter-spacing: 0.01em;
 }
 
 .url-monitoring-summary__count {
-  font-weight: 700;
+  font-weight: 600;
   color: $g17-whisper;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
 }
 
@@ -1055,6 +1054,15 @@ $um-unknown: $c-comet;
         height: 60px;
         position: sticky;
         background-color: inherit;
+      }
+
+      .panel-body.url-monitoring-table {
+        overflow: visible;
+
+        table tbody tr > td:last-child {
+          overflow: visible;
+          max-width: none;
+        }
       }
 
       .panel-body {
