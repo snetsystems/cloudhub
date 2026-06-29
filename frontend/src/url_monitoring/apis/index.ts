@@ -1,6 +1,7 @@
 import type {AxiosResponse} from 'axios'
 import AJAX from 'src/utils/ajax'
-import {URLMonitoring} from '../types'
+import urlAlertListDummyData from '../constants/urlAlertListDummyData.json'
+import {URLAlertListItem, URLAlertStatusBadge, URLMonitoring} from '../types'
 
 const BASE = '/cloudhub/v1/url-monitoring'
 const TARGETS_BASE = '/cloudhub/v1/url-monitoring-targets'
@@ -33,6 +34,9 @@ export interface URLMonitoringTargetUpsertRequest {
   responseTimeout?: string
   method?: string
   alertRuleId?: string
+  elapsedTimeEnabled?: boolean
+  elapsedTimeMs?: number | null
+  elapsedTimeAlertMessage?: string
 }
 
 export const addURLMonitoringTarget = async (
@@ -170,4 +174,18 @@ export const getURLMonitoringConfigContent = async (
     method: 'GET',
   })
   return (data as {config: string}).config
+}
+
+export interface URLAlertListResponse {
+  defaultAlertStatuses: URLAlertStatusBadge[]
+  items: URLAlertListItem[]
+}
+
+export const getURLAlertList = async (): Promise<URLAlertListResponse> => {
+  // const {data} = await AJAX({
+  //   url: `${BASE}/alerts`,
+  //   method: 'GET',
+  // })
+  // return data as URLAlertListResponse
+  return urlAlertListDummyData as URLAlertListResponse
 }

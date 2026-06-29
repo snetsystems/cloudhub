@@ -336,8 +336,97 @@ $um-unknown: $c-comet;
   background: rgba($c-fire, 0.12);
 }
 
-.url-monitoring-page {
-  .url-monitoring-page__title-wrap {
+.url-alert-page .url-alert-table {
+  table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: $g4-onyx;
+  }
+
+  .url-alert-url-th {
+    width: 30%;
+    min-width: 240px;
+    white-space: nowrap;
+  }
+
+  .url-alert-url-td {
+    cursor: pointer;
+  }
+
+  .url-alert-status-th {
+    width: 20%;
+    white-space: nowrap;
+  }
+
+  .url-alert-actions-th {
+    width: 124px;
+    min-width: 124px;
+    white-space: nowrap;
+  }
+
+  .url-alert-status-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .url-alert-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.01em;
+
+    &--4xx,
+    &--5xx,
+    &--unknown {
+      color: $c-fire;
+      border: 1px solid rgba($c-fire, 0.45);
+      background: rgba($c-fire, 0.12);
+    }
+  }
+
+  .url-alert-url-cell {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: baseline;
+    gap: 4px;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    color: $ix-link-default;
+
+    &:hover {
+      color: $ix-link-default-hover;
+    }
+  }
+}
+
+tbody tr td.text-center.justify-center:last-child {
+  overflow: visible;
+  max-width: none;
+  vertical-align: middle;
+}
+
+.url-alert-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0;
+  overflow: visible;
+}
+
+.url-monitoring-page,
+.url-alert-page {
+  .url-monitoring-page__title-wrap,
+  .url-alert-page__title-wrap {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -824,6 +913,107 @@ $um-unknown: $c-comet;
   }
 }
 
+.url-alert-form-sheet {
+  .url-alert-form-sheet__targets {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .url-alert-form-sheet__target-set {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid $g4-onyx;
+    border-radius: 4px;
+    background-color: rgba($g3-castle, 0.55);
+  }
+
+  .url-alert-form-sheet__target-index {
+    flex: 0 0 auto;
+    min-width: 36px;
+    font-size: 12px;
+    font-weight: 700;
+    color: $g15-platinum;
+    line-height: 1.4;
+    padding-top: 2px;
+  }
+
+  .url-alert-form-sheet__target-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .url-alert-form-sheet__target-field {
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .url-alert-form-sheet__target-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: $g12-forge;
+    letter-spacing: 0.02em;
+    width: 40px;
+  }
+
+  .url-alert-form-sheet__target-value {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: $g17-whisper;
+    word-break: break-all;
+    flex: 1;
+    min-width: 0;
+
+    &--url {
+      color: $g16-pearl;
+    }
+  }
+
+  .url-alert-form-sheet__target-url-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .url-alert-form-sheet__copy-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-top: -2px;
+    padding: 0;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: $g12-forge;
+    cursor: pointer;
+
+    .icon {
+      font-size: 14px;
+    }
+
+    &:hover:not(:disabled) {
+      color: $g16-pearl;
+      background-color: rgba($g4-onyx, 0.65);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.35;
+    }
+  }
+}
+
 .url-monitoring-latency-detail-sheet {
   &.modal-content {
     max-height: 100vh;
@@ -1056,7 +1246,8 @@ $um-unknown: $c-comet;
         background-color: inherit;
       }
 
-      .panel-body.url-monitoring-table {
+      .panel-body.url-monitoring-table,
+      .panel-body.url-alert-table {
         overflow: visible;
 
         table tbody tr > td:last-child {
