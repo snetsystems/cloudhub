@@ -26,6 +26,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/builtin"
+	"github.com/snetsystems/cloudhub/backend/hubble"
 	idgen "github.com/snetsystems/cloudhub/backend/id"
 	"github.com/snetsystems/cloudhub/backend/influx"
 	"github.com/snetsystems/cloudhub/backend/kafka"
@@ -193,6 +194,13 @@ type Server struct {
 	PgsqlPassword string `long:"pgsql-password" description:"PostgreSQL password" env:"CLOUDHUB_PGSQL_PASSWORD" default:""`
 	PgsqlDatabase string `long:"pgsql-database" description:"PostgreSQL database name" env:"CLOUDHUB_PGSQL_DATABASE" default:""`
 	PgsqlSSLMode  string `long:"pgsql-sslmode" description:"PostgreSQL SSL mode (disable|require|verify-ca|verify-full)" env:"CLOUDHUB_PGSQL_SSLMODE" default:"disable"`
+
+	HubbleWindow           time.Duration `long:"hubble-window" description:"Hubble aggregation window (sliding) per cluster" env:"CLOUDHUB_HUBBLE_WINDOW_DURATION" default:"5m"`
+	HubbleBucket           time.Duration `long:"hubble-bucket" description:"Hubble bucket size within the aggregation window" env:"CLOUDHUB_HUBBLE_BUCKET_DURATION" default:"10s"`
+	HubbleSnapshotInterval time.Duration `long:"hubble-snapshot-interval" description:"Hubble snapshot publish interval (push to WS)" env:"CLOUDHUB_HUBBLE_SNAPSHOT_INTERVAL" default:"2s"`
+	HubbleMaxEdges         int           `long:"hubble-max-edges" description:"Max edges per cluster (LRU eviction beyond cap)" env:"CLOUDHUB_HUBBLE_MAX_EDGES_PER_CLUSTER" default:"10000"`
+	HubbleExcludedNS       []string      `long:"hubble-excluded-ns" description:"Glob patterns of system namespaces to mark/exclude (comma-separated)" env:"CLOUDHUB_HUBBLE_EXCLUDED_NS_PATTERNS" env-delim:","`
+	HubbleClustersFile     string        `long:"hubble-clusters-file" description:"Path to JSON file with Hubble cluster definitions (relayURL + mTLS paths)" env:"CLOUDHUB_HUBBLE_CLUSTERS_FILE"`
 }
 
 // pgsqlDSN builds a PostgreSQL DSN from the individual pgsql-host/port/user/password/database/sslmode flags.
@@ -641,6 +649,16 @@ func (s *Server) Serve(ctx context.Context) {
 	aiConfig := NewAIConfig(s.AI)
 	urlMonitoringConfig := NewURLMonitoringConfig(s.URLMonitoring)
 	kubernetesConfig := NewKubernetesConfig(s.Kubernetes)
+	hubbleConfig, err := NewHubbleConfig(
+		s.HubbleWindow, s.HubbleBucket, s.HubbleSnapshotInterval,
+		s.HubbleMaxEdges, s.HubbleExcludedNS, s.HubbleClustersFile,
+	)
+	if err != nil {
+		logger.
+			WithField("component", "server").
+			WithField("hubble-clusters-file", s.HubbleClustersFile).
+			Error("failed to load hubble clusters file: ", err)
+	}
 	kubernetesConfig.CollectorAuthToken = s.CollectorAuthToken
 
 	var db kv.Store
@@ -719,6 +737,7 @@ func (s *Server) Serve(ctx context.Context) {
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
+	service.HubbleSnapshotInterval = hubbleConfig.SnapshotInterval
 
 	// Initialize builtin dashboards for all organizations (including server_overview for existing orgs)
 	if err := initializeAllOrgsFixedCells(ctx, &service, logger); err != nil {
@@ -745,6 +764,7 @@ func (s *Server) Serve(ctx context.Context) {
 		AIConfig:            aiConfig,
 		URLMonitoringConfig: urlMonitoringConfig,
 		KubernetesConfig:    kubernetesConfig,
+		HubbleConfig:        hubbleConfig,
 	}
 	if !validBasepath(s.Basepath) {
 		err := fmt.Errorf("invalid basepath, must follow format \"/mybasepath\"")
@@ -808,6 +828,36 @@ func (s *Server) Serve(ctx context.Context) {
 				k8sManager.ConfigGenerator = &service
 			}
 		}
+	}
+
+	if len(hubbleConfig.Clusters) > 0 {
+		mgrCfg := hubble.ManagerConfig{
+			Window:           hubbleConfig.Window,
+			Bucket:           hubbleConfig.Bucket,
+			SnapshotInterval: hubbleConfig.SnapshotInterval,
+			MaxEdges:         hubbleConfig.MaxEdgesPerCluster,
+			ExcludedPatterns: hubble.NewExcludedNamespacePatterns(hubbleConfig.ExcludedNamespaceGlobs),
+		}
+		for _, c := range hubbleConfig.Clusters {
+			mgrCfg.Clusters = append(mgrCfg.Clusters, hubble.ClusterConfig{
+				Name: c.Name,
+				Client: hubble.ClientConfig{
+					RelayURL:           c.RelayURL,
+					TLSCA:              c.TLSCA,
+					TLSCert:            c.TLSCert,
+					TLSKey:             c.TLSKey,
+					TLSServerName:      c.TLSServerName,
+					InsecureSkipVerify: c.InsecureSkipVerify,
+					Plaintext:          c.Plaintext,
+				},
+			})
+		}
+		mgr := hubble.NewManager(mgrCfg, logger)
+		if err := mgr.Start(ctx); err != nil {
+			logger.Error("failed to start Hubble manager: ", err)
+		}
+		service.HubbleManager = mgr
+		logger.Info(fmt.Sprintf("Hubble manager initialized with %d cluster(s)", len(mgrCfg.Clusters)))
 	}
 
 	if err = s.validateAuth(); err != nil {

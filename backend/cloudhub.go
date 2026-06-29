@@ -1296,6 +1296,7 @@ type InternalEnvironment struct {
 	AIConfig            AIConfig
 	URLMonitoringConfig URLMonitoringConfig
 	KubernetesConfig    KubernetesConfig
+	HubbleConfig        HubbleConfig
 	Platform            Platform
 }
 
@@ -2288,4 +2289,32 @@ type AlertGroupRuleStore interface {
 	// Conditions accessor (implementations may delegate to AlertRuleConditionStore)
 	ConditionsByRule(ctx context.Context, ruleID string) ([]AlertRuleCondition, error)
 	SetConditions(ctx context.Context, ruleID string, conditions []AlertRuleCondition) error
+}
+
+// HubbleClusterConfig holds connection parameters for one Cilium Hubble Relay.
+// Policy lookup (deep link from a flow to the CiliumNetworkPolicy spec)
+// reuses CloudHub's global Kubernetes client configured via --kubernetes=…
+// flags, so no K8s endpoint is required here.
+type HubbleClusterConfig struct {
+	Name               string `json:"name"`
+	RelayURL           string `json:"relayURL"`
+	TLSCA              string `json:"tlsCA,omitempty"`
+	TLSCert            string `json:"tlsCert,omitempty"`
+	TLSKey             string `json:"tlsKey,omitempty"`
+	TLSServerName      string `json:"tlsServerName,omitempty"`
+	InsecureSkipVerify bool   `json:"insecureSkipVerify,omitempty"`
+	Plaintext          bool   `json:"plaintext,omitempty"`
+}
+
+// HubbleConfig is the top-level CloudHub-side configuration for the Hubble
+// network observability subsystem. Window/Bucket/SnapshotInterval apply
+// uniformly across clusters; ExcludedNamespaceGlobs filters system traffic
+// (e.g. "kube-system", "cilium-*"). Empty Clusters disables the feature.
+type HubbleConfig struct {
+	Window                 time.Duration         `json:"window"`
+	Bucket                 time.Duration         `json:"bucket"`
+	SnapshotInterval       time.Duration         `json:"snapshotInterval"`
+	MaxEdgesPerCluster     int                   `json:"maxEdgesPerCluster"`
+	ExcludedNamespaceGlobs []string              `json:"excludedNamespaceGlobs,omitempty"`
+	Clusters               []HubbleClusterConfig `json:"clusters,omitempty"`
 }

@@ -1,8 +1,12 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
+	"os"
+	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -148,4 +152,40 @@ func NewKubernetesConfig(kubernetesConfig map[string]string) cloudhub.Kubernetes
 	}
 
 	return newKubernetesConfig
+}
+
+// hubbleClustersFile is the JSON shape for CLOUDHUB_HUBBLE_CLUSTERS_FILE.
+type hubbleClustersFile struct {
+	Clusters []cloudhub.HubbleClusterConfig `json:"clusters"`
+}
+
+// NewHubbleConfig builds a HubbleConfig from the parsed flags. If clustersFile
+// is non-empty it is read and its "clusters" array is loaded. Errors reading
+// the file are returned so the caller can decide whether to fail or warn.
+func NewHubbleConfig(
+	window, bucket, snapshotInterval time.Duration,
+	maxEdges int,
+	excludedGlobs []string,
+	clustersFile string,
+) (cloudhub.HubbleConfig, error) {
+	cfg := cloudhub.HubbleConfig{
+		Window:                 window,
+		Bucket:                 bucket,
+		SnapshotInterval:       snapshotInterval,
+		MaxEdgesPerCluster:     maxEdges,
+		ExcludedNamespaceGlobs: excludedGlobs,
+	}
+	if clustersFile == "" {
+		return cfg, nil
+	}
+	raw, err := os.ReadFile(clustersFile)
+	if err != nil {
+		return cfg, fmt.Errorf("hubble clusters file: %w", err)
+	}
+	var parsed hubbleClustersFile
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		return cfg, fmt.Errorf("hubble clusters file: %w", err)
+	}
+	cfg.Clusters = parsed.Clusters
+	return cfg, nil
 }

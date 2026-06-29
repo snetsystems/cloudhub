@@ -1,0 +1,2244 @@
+.hubble-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+
+  > .page-contents {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+.hubble-page-content {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+// Threesizer host — fills the remaining content height. The Threesizer
+// component itself wraps each division with a "threesizer--division" div;
+// we just need to give it 100% width/height.
+.hubble-threesizer-host,
+.hubble-inner-threesizer-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  position: relative;
+  width: 100%;
+}
+
+.hubble-threesizer-host > .threesizer,
+.hubble-inner-threesizer-host > .threesizer {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+}
+
+// Make Threesizer division bodies fill their assigned size. Scope this through
+// direct-child chains so the outer vertical split and nested horizontal split
+// do not accidentally override each other's flex direction.
+.hubble-threesizer-host
+  > .threesizer
+  > .threesizer--division
+  > .threesizer--contents
+  > .threesizer--body,
+.hubble-inner-threesizer-host
+  > .threesizer
+  > .threesizer--division
+  > .threesizer--contents
+  > .threesizer--body {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+}
+
+.hubble-threesizer-host
+  > .threesizer
+  > .threesizer--division
+  > .threesizer--contents
+  > .threesizer--body {
+  flex-direction: column;
+}
+
+.hubble-inner-threesizer-host
+  > .threesizer
+  > .threesizer--division
+  > .threesizer--contents
+  > .threesizer--body {
+  flex-direction: row;
+}
+
+// FancyScrollbar wraps content; we give it flex: 1 1 auto so it eats the
+// panel's remaining vertical space (after the fixed-height title/header).
+// FancyScrollbar internally uses position: relative with absolute-positioned
+// children, so its own size comes from this wrapper.
+.hubble-detail-scroll,
+.hubble-top-talkers-scroll,
+.hubble-flow-table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.hubble-graph-area {
+  flex: 1 1 auto;
+  display: flex;
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+}
+
+.hubble-loading {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1;
+  padding: 6px 12px;
+  background: rgba(34, 37, 47, 0.85);
+  color: #bec2cc;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.hubble-side-panels {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 220px;
+  min-height: 0;
+  width: 100%;
+}
+
+.hubble-side-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid #2c3038;
+  margin-bottom: 8px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.hubble-side-tab {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #8e91a1;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 9px 7px;
+}
+
+.hubble-side-tab:hover,
+.hubble-side-tab.is-active {
+  color: #f0f1f4;
+}
+
+.hubble-side-tab.is-active {
+  border-bottom-color: #65b7ff;
+}
+
+.hubble-side-panel-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.hubble-side-panel-content > .hubble-panel {
+  flex: 1 1 auto;
+  width: 100%;
+  max-height: none;
+}
+
+.hubble-side-panel-content > .hubble-pod-connections-panel {
+  overflow: auto;
+}
+
+.hubble-service-map {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #1c1c21;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.hubble-map-selection-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  background: #22252f;
+  border-bottom: 1px solid #2c3038;
+  font-size: 12px;
+  color: #bec2cc;
+}
+
+.hubble-map-selection-label strong {
+  color: #f0f1f4;
+}
+
+.hubble-map-selection-hint {
+  color: #8e91a1;
+  font-size: 11px;
+}
+
+.hubble-map-selection-traffic {
+  font-size: 12px;
+  color: #bec2cc;
+}
+
+.hubble-map-selection-traffic strong {
+  color: #22adf6;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+}
+
+.hubble-map-selection-action {
+  background: #22adf6;
+  border: 0;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.hubble-map-selection-action:hover {
+  background: #4591ed;
+}
+
+.hubble-map-selection-clear {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #434453;
+  border-radius: 4px;
+  color: #8e91a1;
+  font-size: 11px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.hubble-map-selection-clear:hover {
+  color: #f0f1f4;
+  border-color: #545667;
+}
+
+.hubble-map-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: #22252f;
+  border-bottom: 1px solid #2c3038;
+}
+
+.hubble-map-hint {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #8e91a1;
+}
+
+.hubble-map-hint-line--legend {
+  color: #727688;
+  font-size: 10px;
+}
+
+.hubble-map-reset-layout {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid #434453;
+  border-radius: 4px;
+  color: #bec2cc;
+  font-size: 11px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.hubble-map-reset-layout:hover {
+  border-color: #545667;
+  color: #f0f1f4;
+}
+
+.hubble-map-hint--subtle {
+  background: transparent;
+  border-bottom: 0;
+  padding-top: 0;
+}
+
+.hubble-map-toolbar-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hubble-map-viewport {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.hubble-map-viewport.is-panning {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.hubble-map-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.hubble-map-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.hubble-map-pan-surface {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  background: transparent;
+  cursor: grab;
+}
+
+.hubble-map-viewport.is-panning .hubble-map-pan-surface {
+  cursor: grabbing;
+}
+
+.hubble-map-columns {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hubble-map-column-label {
+  position: absolute;
+  top: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #545667;
+}
+
+// Focus column label: shown above the drilldown ns workloads. Brighter and
+// less-uppercased so the actual namespace name reads clearly (e.g. "📦 elk").
+.hubble-map-column-label--focus {
+  color: #65b7ff;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.hubble-edge-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  // The SVG container itself doesn't receive events — that way background
+  // clicks (deselect) still reach the pan surface beneath. Individual edge
+  // paths re-enable pointer events below.
+  pointer-events: none;
+}
+
+.hubble-edge-group {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+// Wide invisible hit target — only the stroke area receives events, but with
+// stroke-width 14 the target is comfortable to click without changing visuals.
+.hubble-edge-hit {
+  pointer-events: stroke;
+}
+
+.hubble-edge-path {
+  pointer-events: stroke;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+.hubble-edge-path.is-selected {
+  opacity: 1;
+  stroke-width: 6 !important;
+}
+
+.hubble-edge-path.is-dimmed {
+  opacity: 0.12;
+}
+
+// On hover, brighten the line to give visual feedback that it's clickable.
+.hubble-edge-group:hover .hubble-edge-path {
+  opacity: 1;
+}
+
+.hubble-node-card {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  box-sizing: border-box;
+  padding: 0;
+  background: #383846;
+  border: 1px solid #434453;
+  border-radius: 6px;
+  color: #bec2cc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  z-index: 3;
+  overflow: hidden;
+  user-select: none;
+}
+
+.hubble-node-card-grip {
+  flex: 0 0 14px;
+  width: 14px;
+  background: #2c3038;
+  border-right: 1px solid #434453;
+  border-radius: 6px 0 0 6px;
+  cursor: grab;
+  background-image: radial-gradient(#545667 1px, transparent 1px);
+  background-size: 4px 4px;
+  background-position: center;
+}
+
+.hubble-node-card-grip:hover {
+  background-color: #434453;
+}
+
+.hubble-node-card-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hubble-node-card-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px 10px 8px;
+  cursor: pointer;
+}
+
+.hubble-node-card.is-dragging .hubble-node-card-grip {
+  cursor: grabbing;
+  background-color: #434453;
+}
+
+.hubble-node-card.is-selected,
+.hubble-node-card.is-neighbor {
+  border-color: #22adf6;
+  box-shadow: 0 0 0 1px rgba(34, 173, 246, 0.35), 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.hubble-node-card.is-dimmed {
+  opacity: 0.35;
+}
+
+// Drilldown focus accent: cards inside the active namespace get a soft
+// background tint + left ribbon so the operator's scope reads at a glance
+// without competing with selection/neighbor highlights.
+.hubble-node-card.is-focus-ns {
+  background: linear-gradient(180deg, rgba(34, 173, 246, 0.07), transparent 80%);
+  border-left: 3px solid rgba(34, 173, 246, 0.55);
+}
+
+// Cross-NS dim mode: cards from outside the focus namespace render at
+// reduced opacity (Hubble UI's approach). Stacks with hover/selection so the
+// operator can still inspect them.
+.hubble-node-card.is-cross-ns {
+  opacity: 0.45;
+}
+
+.hubble-node-card.is-cross-ns:hover,
+.hubble-node-card.is-cross-ns.is-selected,
+.hubble-node-card.is-cross-ns.is-neighbor {
+  opacity: 1;
+}
+
+.hubble-node-card--namespace {
+  border-left: 3px solid #22adf6;
+}
+
+.hubble-node-card--workload {
+  border-left: 3px solid #7a65f2;
+}
+
+.hubble-node-card--external {
+  border-left: 3px solid #8e91a1;
+}
+
+.hubble-node-card--system {
+  opacity: 0.7;
+}
+
+.hubble-node-card.is-dragging {
+  z-index: 10;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.hubble-node-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.hubble-node-card-kind {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8e91a1;
+  cursor: help;
+}
+
+.hubble-node-card-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.hubble-node-card-badge--denied {
+  background: rgba(255, 111, 111, 0.15);
+  color: #ff6f6f;
+  cursor: help;
+}
+
+// "recovered" — drop happened recently in the window but current traffic is
+// healthy. Amber so it reads as advisory, not error.
+.hubble-node-card-badge--recovered {
+  background: rgba(255, 185, 74, 0.15);
+  color: #ffb94a;
+  cursor: help;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+// Edge ⚠ glyph drawn at the midpoint of a 'recovered' edge.
+.hubble-edge-recovered-badge {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.hubble-edge-recovered-badge.is-dimmed {
+  opacity: 0.2;
+}
+
+.hubble-edge-recovered-badge-bg {
+  fill: #1c1c21;
+  stroke: #ffb94a;
+  stroke-width: 1.5;
+}
+
+.hubble-edge-recovered-badge-text {
+  fill: #ffb94a;
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hubble-node-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0f1f4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.hubble-node-card-subtitle {
+  font-size: 10px;
+  color: #8e91a1;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hubble-node-card-directions {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 9px;
+  color: #bec2cc;
+  margin-bottom: 6px;
+}
+
+.hubble-node-card-direction {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: help;
+}
+
+.hubble-node-card-direction.is-denied {
+  color: #ff6f6f;
+}
+
+.hubble-node-card-lock {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.hubble-node-card-port {
+  font-size: 11px;
+  font-weight: 600;
+  color: #22adf6;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+}
+
+.hubble-node-card-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 6px;
+}
+
+.hubble-node-card-label {
+  font-size: 9px;
+  color: #8e91a1;
+  background: #2c3038;
+  border-radius: 3px;
+  padding: 1px 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hubble-node-card-metrics {
+  display: flex;
+  gap: 12px;
+}
+
+.hubble-node-card-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  cursor: help;
+}
+
+.hubble-node-card-metric-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: #8e91a1;
+}
+
+.hubble-node-card-metric-value {
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+  color: #f0f1f4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hubble-node-card-metric-share {
+  display: block;
+  font-size: 9px;
+  font-weight: 500;
+  color: #727688;
+  line-height: 1.1;
+}
+
+.hubble-node-card-metric-share--reference {
+  color: #22adf6;
+}
+
+.hubble-node-card-internal {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #8e91a1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hubble-node-card-action {
+  flex: 0 0 auto;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #434453;
+  background: #2c3038;
+  color: #22adf6;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.hubble-node-card-action:hover {
+  background: #31313d;
+  color: #4591ed;
+}
+
+.hubble-map-options {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: 8px;
+}
+
+.hubble-map-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #8e91a1;
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+}
+
+.hubble-map-option input {
+  margin: 0;
+  cursor: pointer;
+}
+
+// Cross-NS presentation selector — same visual language as the verdict
+// filter so the toolbar reads as a coherent set of small segmented controls.
+.hubble-cross-ns-mode {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #2c3038;
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.hubble-cross-ns-mode-label {
+  background: #22252f;
+  color: #8e91a1;
+  padding: 4px 8px;
+  border-right: 1px solid #2c3038;
+  user-select: none;
+}
+
+.hubble-cross-ns-mode-btn {
+  background: transparent;
+  color: #8e91a1;
+  border: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-right: 1px solid #2c3038;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.hubble-cross-ns-mode-btn:last-child {
+  border-right: 0;
+}
+
+.hubble-cross-ns-mode-btn:hover {
+  color: #f0f1f4;
+}
+
+.hubble-cross-ns-mode-btn.is-active {
+  background: rgba(34, 173, 246, 0.18);
+  color: #65b7ff;
+}
+
+.hubble-verdict-filter {
+  display: inline-flex;
+  border: 1px solid #2c3038;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.hubble-verdict-filter-btn {
+  background: transparent;
+  color: #8e91a1;
+  border: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-right: 1px solid #2c3038;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.hubble-verdict-filter-btn:last-child {
+  border-right: 0;
+}
+
+.hubble-verdict-filter-btn:hover {
+  color: #f0f1f4;
+}
+
+.hubble-verdict-filter-btn.is-active {
+  background: #22adf6;
+  color: #ffffff;
+}
+
+// When "Denied" is the active filter, use the deny color so the filter chip
+// itself signals "you are looking at blocked traffic only".
+.hubble-verdict-filter-btn--denied {
+  background: #ff6f6f;
+}
+
+.hubble-empty,
+.hubble-error {
+  padding: 24px;
+  text-align: center;
+  color: #8e91a1;
+}
+
+.hubble-empty--with-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.hubble-empty-hint {
+  color: #727688;
+  font-size: 11px;
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+.hubble-error {
+  color: #ff6f6f;
+}
+
+.hubble-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  flex: 0 0 auto;
+  background: #22252f;
+  border-radius: 4px;
+  color: #bec2cc;
+  font-size: 12px;
+}
+
+.hubble-status-item strong {
+  color: #f0f1f4;
+  font-weight: 600;
+}
+
+.hubble-status-window-label {
+  color: #8e91a1;
+  font-weight: normal;
+}
+
+.hubble-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #2c3038;
+  font-weight: 500;
+}
+
+.hubble-status-pill.is-ok {
+  color: #4ed8a0;
+}
+
+.hubble-status-pill.is-bad {
+  color: #ff6f6f;
+}
+
+.hubble-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.hubble-status-warning {
+  color: #ffb94a;
+}
+
+.hubble-status-error {
+  color: #ff6f6f;
+  margin-left: auto;
+  font-style: italic;
+}
+
+.hubble-panel {
+  background: #22252f;
+  border-radius: 4px;
+  padding: 12px;
+  color: #bec2cc;
+  font-size: 12px;
+  // Flex column so the panel splits into (fixed-height title/header) +
+  // (scrollable body wrapped in FancyScrollbar). Native overflow stays
+  // hidden so the CloudHub scrollbar is the only one visible.
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hubble-panel.is-empty {
+  flex: 0 0 auto;
+}
+
+.hubble-top-talkers {
+  flex: 1 1 28%;
+  min-height: 0;
+}
+
+.hubble-policy-impact-panel {
+  flex: 0 1 34%;
+  min-height: 170px;
+}
+
+.hubble-detail-panel {
+  flex: 1 1 38%;
+  min-height: 0;
+}
+
+.hubble-panel-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0f1f4;
+  flex: 0 0 auto;
+}
+
+.hubble-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+}
+
+.hubble-panel-close {
+  background: transparent;
+  border: 0;
+  color: #8e91a1;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.hubble-panel-close:hover {
+  color: #f0f1f4;
+}
+
+.hubble-panel-empty {
+  color: #545667;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.hubble-policy-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.hubble-policy-capture {
+  background: #22adf6;
+  border: 0;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.hubble-policy-capture:hover:not(:disabled) {
+  background: #4591ed;
+}
+
+.hubble-policy-capture:disabled {
+  background: #383b46;
+  color: #727688;
+  cursor: default;
+}
+
+.hubble-policy-flow-count,
+.hubble-policy-meta {
+  color: #8e91a1;
+  font-size: 11px;
+}
+
+.hubble-policy-warning {
+  margin: 6px 0;
+  color: #ffb94a;
+  font-size: 11px;
+}
+
+.hubble-policy-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.hubble-policy-stat {
+  background: #1c1f28;
+  border: 1px solid #2c3038;
+  border-radius: 4px;
+  padding: 5px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 10px;
+  color: #8e91a1;
+}
+
+.hubble-policy-stat strong {
+  color: #bec2cc;
+  font-size: 13px;
+}
+
+.hubble-policy-stat.is-bad strong {
+  color: #ff6f6f;
+}
+
+.hubble-policy-stat.is-good strong {
+  color: #4ed8a0;
+}
+
+.hubble-policy-sections {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.hubble-policy-section {
+  margin-top: 8px;
+}
+
+.hubble-policy-entry {
+  padding: 6px 0;
+  border-top: 1px solid #2c3038;
+}
+
+.hubble-policy-entry-main {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: #bec2cc;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+
+.hubble-policy-entry-main span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hubble-policy-arrow {
+  flex: 0 0 auto;
+  color: #727688;
+}
+
+.hubble-policy-entry-meta,
+.hubble-policy-entry-verdicts,
+.hubble-policy-more {
+  margin-top: 3px;
+  color: #8e91a1;
+  font-size: 10px;
+}
+
+.hubble-pod-connections-panel {
+  flex: 0 1 28%;
+  max-height: 260px;
+  min-height: 150px;
+}
+
+.hubble-pod-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.hubble-pod-chip {
+  min-width: 0;
+  max-width: 100%;
+  background: #1c1f28;
+  border: 1px solid #2c3038;
+  border-radius: 4px;
+  color: #bec2cc;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 7px;
+  text-align: left;
+}
+
+.hubble-pod-chip:hover,
+.hubble-pod-chip.is-selected {
+  border-color: #65b7ff;
+  color: #f0f1f4;
+}
+
+.hubble-pod-chip-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+
+.hubble-pod-chip-meta,
+.hubble-pod-more {
+  color: #8e91a1;
+  font-size: 10px;
+}
+
+.hubble-pod-direction {
+  border-radius: 3px;
+  color: #fff;
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 4px;
+}
+
+.hubble-pod-direction.is-outbound {
+  background: #4591ed;
+}
+
+.hubble-pod-direction.is-inbound {
+  background: #4b7f63;
+}
+
+.hubble-top-talkers-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hubble-top-talkers-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid #2c3038;
+}
+
+.hubble-top-talkers-row:last-child {
+  border-bottom: 0;
+}
+
+.hubble-edge-label {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hubble-edge-src,
+.hubble-edge-dst {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hubble-edge-arrow {
+  color: #545667;
+  flex: 0 0 auto;
+}
+
+.hubble-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.hubble-detail-key {
+  color: #8e91a1;
+}
+
+.hubble-detail-value {
+  color: #f0f1f4;
+}
+
+.hubble-detail-section {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #2c3038;
+}
+
+// "Denied L7" — visually elevated so operators looking at the panel for the
+// first time know this is the actionable info ("what was actually blocked").
+.hubble-detail-section--denied {
+  background: rgba(255, 111, 111, 0.06);
+  border-top: 1px solid rgba(255, 111, 111, 0.35);
+  margin-left: -12px;
+  margin-right: -12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-bottom: 6px;
+}
+
+.hubble-detail-subtitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #f0f1f4;
+}
+
+.hubble-detail-subtitle--denied {
+  color: #ff6f6f;
+}
+
+.hubble-detail-denied-summary .hubble-detail-key {
+  color: #ff6f6f;
+  font-weight: 600;
+}
+
+.hubble-detail-l7-row {
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.hubble-detail-l7-name {
+  flex: 1 1 auto;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #bec2cc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Recent flows table — one entry per raw flow event. Compact, monospace for
+// the technical fields, color-coded by verdict.
+.hubble-flow-row {
+  padding: 6px 0;
+  border-bottom: 1px solid #2c3038;
+  font-size: 11px;
+}
+
+.hubble-flow-row:last-child {
+  border-bottom: 0;
+}
+
+.hubble-flow-row-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hubble-flow-time {
+  color: #8e91a1;
+  flex: 0 0 auto;
+  min-width: 60px;
+}
+
+.hubble-flow-verdict {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hubble-flow-proto {
+  color: #545667;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+
+.hubble-flow-endpoints {
+  font-family: ui-monospace, monospace;
+  color: #bec2cc;
+  padding-top: 2px;
+  word-break: break-all;
+}
+
+.hubble-flow-arrow {
+  color: #545667;
+}
+
+.hubble-flow-meta {
+  padding-top: 2px;
+  color: #8e91a1;
+}
+
+.hubble-flow-l7 {
+  font-family: ui-monospace, monospace;
+  color: #bec2cc;
+}
+
+.hubble-flow-reason {
+  font-family: ui-monospace, monospace;
+}
+
+.hubble-detail-flows-error {
+  color: #ff6f6f;
+  font-size: 11px;
+  padding: 4px 0;
+}
+
+.hubble-flow-row--clickable {
+  cursor: pointer;
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 3px;
+}
+
+.hubble-flow-row--clickable:hover {
+  background: rgba(34, 173, 246, 0.08);
+}
+
+// Flow Details modal — Hubble UI-equivalent per-flow inspector. Centered
+// dialog with backdrop dim; closes on backdrop click or × button.
+.hubble-flow-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.hubble-flow-modal {
+  background: #22252f;
+  border: 1px solid #2c3038;
+  border-radius: 6px;
+  width: 540px;
+  max-width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  color: #bec2cc;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.hubble-flow-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2c3038;
+  flex: 0 0 auto;
+}
+
+.hubble-flow-modal-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f0f1f4;
+}
+
+.hubble-flow-modal-close {
+  background: transparent;
+  border: 0;
+  color: #8e91a1;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.hubble-flow-modal-close:hover {
+  color: #f0f1f4;
+}
+
+.hubble-flow-modal-body {
+  padding: 12px 16px;
+  overflow-y: auto;
+  font-size: 12px;
+}
+
+.hubble-flow-modal-field {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.hubble-flow-modal-field-label {
+  color: #8e91a1;
+}
+
+.hubble-flow-modal-field-value {
+  color: #f0f1f4;
+  word-break: break-all;
+}
+
+.hubble-flow-modal-field-value.is-mono {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.hubble-flow-modal-field-value .is-mono {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.hubble-overlay-close {
+  background: transparent;
+  border: 0;
+  color: #8e91a1;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.hubble-overlay-close:hover {
+  color: #f0f1f4;
+}
+
+.hubble-pod-modal-subtitle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+  color: #8e91a1;
+  font-size: 11px;
+}
+
+.hubble-pod-modal-subtitle span {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hubble-pod-modal-subtitle span:first-child {
+  color: #bec2cc;
+  font-family: ui-monospace, monospace;
+}
+
+.hubble-pod-modal-body {
+  max-height: 560px;
+  overflow: auto;
+}
+
+@media (max-height: 780px) {
+  .hubble-pod-modal-body {
+    max-height: calc(100vh - 220px);
+  }
+}
+
+.hubble-pod-modal-table {
+  width: 100%;
+  min-width: 980px;
+}
+
+.hubble-pod-modal-mono {
+  font-family: ui-monospace, monospace;
+}
+
+.hubble-pod-graph {
+  background: #1c1f28;
+  border: 1px solid #2c3038;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.hubble-pod-graph svg {
+  display: block;
+  width: 100%;
+  height: 280px;
+}
+
+.hubble-pod-graph-node {
+  fill: #2b2f3a;
+  stroke: #3c4250;
+  stroke-width: 1;
+}
+
+.hubble-pod-graph-node.is-selected {
+  fill: #31394a;
+  stroke: #65b7ff;
+  stroke-width: 2;
+}
+
+.hubble-pod-graph-node.is-grouped {
+  fill: #252934;
+  stroke-dasharray: 4 3;
+}
+
+.hubble-pod-graph-node-label {
+  fill: #f0f1f4;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hubble-pod-graph-node-meta {
+  fill: #8e91a1;
+  font-size: 10px;
+}
+
+.hubble-pod-graph-edge-label {
+  fill: #bec2cc;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  paint-order: stroke;
+  stroke: #1c1f28;
+  stroke-width: 4px;
+}
+
+.hubble-pod-graph-note {
+  border-top: 1px solid #2c3038;
+  color: #8e91a1;
+  font-size: 10px;
+  padding: 6px 8px;
+}
+
+.hubble-flow-modal-field-note {
+  color: #8e91a1;
+  font-size: 11px;
+}
+
+.hubble-flow-modal-section-header {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #2c3038;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #8e91a1;
+  letter-spacing: 0.5px;
+}
+
+.hubble-flow-modal-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.hubble-flow-modal-label-chip {
+  background: #2c3038;
+  color: #bec2cc;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  word-break: break-all;
+}
+
+// Policy ref UI — used both in DetailPanel (row form) and FlowDetailsModal
+// (chip form). Denied variant gets the same red signal language as DROPPED
+// verdict rows so the cause-of-block is visually grouped with the effect.
+.hubble-policy-row {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 4px 6px;
+
+  &:hover {
+    background: rgba(86, 99, 122, 0.18);
+  }
+}
+
+.hubble-policy-row-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hubble-policy-kind-chip {
+  display: inline-block;
+  background: #383d47;
+  color: #d3d6db;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 0.4px;
+}
+
+.hubble-flow-modal-policy-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hubble-policy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #2c3038;
+  color: #d3d6db;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: none;
+  word-break: break-all;
+}
+
+.hubble-policy-chip--clickable {
+  cursor: pointer;
+
+  &:hover {
+    background: #383d47;
+  }
+}
+
+.hubble-policy-chip--denied {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.12);
+
+  .hubble-policy-kind-chip {
+    background: rgba(255, 107, 107, 0.22);
+    color: #ff8b8b;
+  }
+}
+
+.hubble-policy-modal-status {
+  padding: 10px 0;
+  font-size: 12px;
+  color: #9ca0aa;
+
+  &.is-error {
+    color: #ff6b6b;
+  }
+}
+
+.hubble-policy-modal-snippet {
+  background: #1c1f26;
+  color: #d3d6db;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
+
+.hubble-policy-modal-spec {
+  margin-top: 12px;
+}
+
+// Human-readable summary block shown above the raw JSON. Operator reads:
+//   - one-line description
+//   - "Applies to" pod selector
+//   - per-rule action/direction badges + peer/port/L7 chips
+// Color coding mirrors verdict styling: Deny rules use the same dropped-red.
+.hubble-policy-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hubble-policy-summary-desc {
+  background: rgba(86, 99, 122, 0.18);
+  color: #d3d6db;
+  padding: 8px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.hubble-policy-summary-applies,
+.hubble-policy-summary-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.hubble-policy-summary-key {
+  flex: 0 0 70px;
+  color: #9ca0aa;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding-top: 3px;
+}
+
+.hubble-policy-summary-value {
+  color: #d3d6db;
+  font-family: ui-monospace, monospace;
+  word-break: break-all;
+}
+
+.hubble-policy-summary-empty {
+  color: #9ca0aa;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.hubble-policy-summary-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hubble-policy-summary-rule {
+  background: #1f2228;
+  border-left: 3px solid #4b525e;
+  border-radius: 3px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hubble-policy-summary-rule.action--deny {
+  border-left-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.08);
+}
+
+.hubble-policy-summary-rule.action--allow {
+  border-left-color: #4ecdc4;
+}
+
+.hubble-policy-summary-rule-header {
+  display: flex;
+  gap: 6px;
+}
+
+.hubble-policy-summary-badge {
+  display: inline-block;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  text-transform: uppercase;
+
+  &.action-allow {
+    background: rgba(78, 205, 196, 0.18);
+    color: #4ecdc4;
+  }
+
+  &.action-deny {
+    background: rgba(255, 107, 107, 0.18);
+    color: #ff6b6b;
+  }
+
+  &.direction {
+    background: #2c3038;
+    color: #bec2cc;
+  }
+}
+
+.hubble-policy-summary-rule-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hubble-policy-summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1 1 auto;
+}
+
+.hubble-policy-summary-chip {
+  background: #2c3038;
+  color: #d3d6db;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 2px;
+
+  &.is-port {
+    background: rgba(78, 205, 196, 0.14);
+    color: #4ecdc4;
+  }
+
+  &.is-l7 {
+    background: rgba(255, 195, 86, 0.14);
+    color: #ffc356;
+  }
+}
+
+.hubble-policy-modal-raw-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  border-top: 1px solid #2c3038;
+  padding-top: 10px;
+}
+
+.hubble-policy-modal-raw-toggle {
+  background: transparent;
+  color: #9ca0aa;
+  border: 1px solid #383d47;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+
+  &:hover {
+    color: #d3d6db;
+    border-color: #4b525e;
+  }
+}
+
+.hubble-policy-modal-api-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #6b707a;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hubble-policy-modal-json {
+  display: block;
+  background: #1c1f26;
+  color: #d3d6db;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  padding: 10px 12px;
+  border-radius: 3px;
+  margin: 4px 0 0;
+  white-space: pre;
+  overflow: auto;
+  min-height: 80px;
+  max-height: 480px;
+  word-break: normal;
+}
+
+.hubble-policy-modal {
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+
+  .hubble-flow-modal-body {
+    overflow-y: auto;
+  }
+}
+
+// Cluster-wide flow table panel at the bottom of the Hubble page. Splits the
+// vertical layout: top half is service map + side panels, bottom half is the
+// flow table. Collapsible so operators not interested in raw flows can keep
+// their attention on the topology.
+.hubble-flow-table-toggle-row {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 0;
+}
+
+.hubble-flow-table-toggle {
+  background: transparent;
+  border: 1px solid #2c3038;
+  color: #bec2cc;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.hubble-flow-table-toggle:hover {
+  color: #f0f1f4;
+  border-color: #545667;
+}
+
+.hubble-flow-table-panel {
+  flex: 0 0 35%;
+  min-height: 200px;
+  background: #22252f;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.hubble-layout.has-flow-table {
+  flex: 0 0 auto;
+}
+
+.hubble-flow-table {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.hubble-flow-table-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #2c3038;
+}
+
+.hubble-flow-table-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0f1f4;
+}
+
+.hubble-flow-table-count {
+  font-weight: 400;
+  font-size: 11px;
+  color: #8e91a1;
+}
+
+.hubble-flow-table-status {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.hubble-flow-table-status.is-ok {
+  background: rgba(78, 216, 160, 0.15);
+  color: #4ed8a0;
+}
+
+.hubble-flow-table-status.is-bad {
+  background: rgba(255, 111, 111, 0.15);
+  color: #ff6f6f;
+}
+
+.hubble-flow-table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hubble-flow-filter-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid #2c3038;
+  background: #1f222b;
+}
+
+.hubble-flow-filter-input,
+.hubble-flow-filter-select {
+  height: 24px;
+  min-width: 112px;
+  max-width: 160px;
+  background: #16181f;
+  border: 1px solid #383b46;
+  border-radius: 4px;
+  color: #bec2cc;
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.hubble-flow-filter-input::placeholder {
+  color: #727688;
+}
+
+.hubble-flow-filter-input:focus,
+.hubble-flow-filter-select:focus {
+  border-color: #4591ed;
+  outline: none;
+}
+
+.hubble-flow-filter-input--wide {
+  min-width: 180px;
+  max-width: 240px;
+}
+
+.hubble-flow-filter-input--port {
+  min-width: 64px;
+  max-width: 80px;
+}
+
+.hubble-flow-filter-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  color: #bec2cc;
+  font-size: 11px;
+  user-select: none;
+}
+
+.hubble-flow-filter-checkbox input {
+  margin: 0;
+}
+
+.hubble-flow-filter-clear {
+  height: 24px;
+  background: transparent;
+  border: 1px solid #383b46;
+  border-radius: 4px;
+  color: #bec2cc;
+  font-size: 11px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.hubble-flow-filter-clear:hover:not(:disabled) {
+  border-color: #545667;
+  color: #f0f1f4;
+}
+
+.hubble-flow-filter-clear:disabled {
+  color: #5f6373;
+  cursor: default;
+}
+
+.hubble-column-picker {
+  position: relative;
+}
+
+.hubble-column-picker-trigger {
+  background: transparent;
+  border: 1px solid #2c3038;
+  color: #bec2cc;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.hubble-column-picker-trigger:hover {
+  color: #f0f1f4;
+  border-color: #545667;
+}
+
+.hubble-column-picker-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #2c3038;
+  border: 1px solid #383b46;
+  border-radius: 4px;
+  padding: 6px 0;
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.hubble-column-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #bec2cc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hubble-column-picker-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.hubble-column-picker-item input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.hubble-flow-table-body {
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.hubble-flow-table-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.hubble-flow-table-body thead {
+  position: sticky;
+  top: 0;
+  background: #22252f;
+  z-index: 1;
+}
+
+.hubble-flow-table-body th {
+  text-align: left;
+  padding: 6px 10px;
+  color: #8e91a1;
+  font-weight: 600;
+  border-bottom: 1px solid #2c3038;
+  white-space: nowrap;
+}
+
+.hubble-flow-table-body td {
+  padding: 4px 10px;
+  border-bottom: 1px solid #2c3038;
+  color: #bec2cc;
+  white-space: nowrap;
+}
+
+.hubble-flow-table-body td.is-mono {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.hubble-flow-table-row {
+  cursor: pointer;
+}
+
+.hubble-flow-table-row:hover {
+  background: rgba(34, 173, 246, 0.06);
+}
+
+.hubble-flow-table-empty,
+.hubble-flow-table-error {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #8e91a1;
+}
+
+.hubble-flow-table-error {
+  color: #ff6f6f;
+}
+
+.hubble-verdict-forwarded {
+  color: #4ed8a0;
+  font-weight: 600;
+}
+
+.hubble-verdict-dropped {
+  color: #ff6f6f;
+  font-weight: 600;
+}
+
+.hubble-verdict-error {
+  color: #ffb94a;
+  font-weight: 600;
+}
+
+.hubble-verdict-audit {
+  color: #ffb94a;
+  font-weight: 600;
+}
+
+// Secondary verdicts (TRACED / TRANSLATED / REDIRECTED / UNKNOWN_VERDICT) —
+// kernel datapath observations, not policy decisions. Muted so operators can
+// scan the primary verdicts first.
+.hubble-verdict-row {
+  align-items: baseline;
+}
+
+.hubble-verdict-row--secondary {
+  font-size: 11px;
+  opacity: 0.55;
+  padding: 2px 0;
+}
+
+.hubble-verdict-row--secondary .hubble-detail-value {
+  color: #8e91a1;
+}
+
+.hubble-verdict-row--secondary [class^='hubble-verdict-'] {
+  color: #8e91a1;
+  font-weight: 400;
+}
+
+.hubble-back-button {
+  background: transparent;
+  border: 1px solid #2c3038;
+  color: #bec2cc;
+  border-radius: 4px;
+  padding: 2px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 12px;
+}
+
+.hubble-back-button:hover {
+  color: #f0f1f4;
+  border-color: #545667;
+}
+
+.hubble-drill-label {
+  margin-left: 12px;
+  color: #bec2cc;
+  font-size: 13px;
+}
+
+.hubble-drill-label strong {
+  color: #f0f1f4;
+}
+
+body.hubble-is-dragging,
+body.hubble-is-panning {
+  user-select: none !important;
+  cursor: grabbing !important;
+}

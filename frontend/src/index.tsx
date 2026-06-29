@@ -100,6 +100,7 @@ import DBMonitoringPage from 'src/db_monitoring/containers/DBMonitoringPage'
 import AlertGroupRulePage from 'src/alert_group/containers/AlertGroupRulePage'
 import AppPerformanceMonitoringPage from 'src/app_monitoring/containers/AppPerformanceMonitoringPage'
 import KubernetesRouter from 'src/clouds/containers/KubernetesRouter'
+import HubblePage from 'src/hubble/containers/HubblePage'
 import OpenStackRouter from 'src/clouds/containers/OpenStackRouter'
 import VMHostRouter from './clouds/containers/VMHostRouter'
 import NutanixPage from './nutanix/containers/NutanixPage'
@@ -342,6 +343,9 @@ class Root extends PureComponent<Record<string, never>, State> {
 
                 {/* kubernetes */}
                 <Route path="kubernetes" component={KubernetesRouter} />
+
+                {/* hubble (Cilium network observability) */}
+                <Route path="hubble" component={HubblePage} />
 
                 {/* openstack */}
                 <Route path="openstack" component={OpenStackRouter} />

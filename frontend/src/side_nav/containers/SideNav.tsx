@@ -234,6 +234,16 @@ class SideNav extends PureComponent<Props> {
             <NavHeader link={`${sourcePrefix}/kubernetes`} title="Kubernetes" />
           </NavBlock>
 
+          {/* Hubble (Cilium network observability) */}
+          <NavBlock
+            highlightWhen={['hubble']}
+            icon="git-merge"
+            link={`${sourcePrefix}/hubble`}
+            location={location}
+          >
+            <NavHeader link={`${sourcePrefix}/hubble`} title="Network (Hubble)" />
+          </NavBlock>
+
           {/* OpenStack  */}
           {isUsingAuth && isUsingOsp && (
             <NavBlock

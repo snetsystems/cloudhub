@@ -584,6 +584,19 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	kubernetes := http.HandlerFunc(service.KubernetesProxy)
 	registerAllMethods(router, "/cloudhub/v1/kubernetes/proxy/*path", kubernetes)
 
+	// Hubble (Cilium network observability)
+	router.GET("/cloudhub/v1/hubble/clusters", EnsureViewer(service.HubbleClustersHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/status", EnsureViewer(service.HubbleClusterStatusHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/snapshot", EnsureViewer(service.HubbleOverviewSnapshotHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/snapshot/ws", EnsureViewer(service.HubbleOverviewWSHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/drilldown/:namespace", EnsureViewer(service.HubbleDrilldownSnapshotHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/drilldown/:namespace/ws", EnsureViewer(service.HubbleDrilldownWSHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/flows", EnsureViewer(service.HubbleEdgeFlowsHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/flows/ws", EnsureViewer(service.HubbleEdgeFlowsWSHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/flows/all", EnsureViewer(service.HubbleAllFlowsHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/flows/all/ws", EnsureViewer(service.HubbleAllFlowsWSHandler))
+	router.GET("/cloudhub/v1/hubble/clusters/:name/policy", EnsureViewer(service.HubblePolicyHandler))
+
 	allRoutes := &AllRoutes{
 		Logger:                opts.Logger,
 		StatusFeed:            opts.StatusFeedURL,

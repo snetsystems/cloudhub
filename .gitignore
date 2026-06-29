@@ -3,6 +3,7 @@ backup
 build
 cloudhub-canned
 cloudhub-protoboards
+docs
 frontend/reports
 frontend/build
 frontend/dist
@@ -17,6 +18,7 @@ backend/cmd/cloudhub/*debug*
 
 # Auto gen files
 backend/cmd/cloudhub/cloudhub*.db*
+backend/cmd/cloudhub/.e2e-*.db
 backend/kv/internal/internal.pb.go
 *_gen.go
 go.sum
@@ -38,4 +40,11 @@ debug.log
 .dev-jssrc
 .bindata
 .eslintcache
-nil
+.agent/
+.cursor/
+nil.worktrees/
+scripts/
+
+# Hubble dev config (cluster endpoints / TLS paths)
+hubble-clusters.json
+hubble-clusters.*.json

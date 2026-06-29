@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
+	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/hubble"
 	"github.com/snetsystems/cloudhub/backend/influx"
 	"github.com/snetsystems/cloudhub/backend/kubernetes"
 )
@@ -30,6 +32,8 @@ type Service struct {
 	InternalENV               cloudhub.InternalEnvironment
 	KubernetesClient          *kubernetes.Client
 	KafkaProducer             KafkaProducer
+	HubbleManager             *hubble.Manager
+	HubbleSnapshotInterval    time.Duration
 	RecipientGroups           cloudhub.RecipientGroupStore
 	AlertRecipientGroups      cloudhub.AlertRecipientGroupStore
 	AlertRecipientMemberPrefs cloudhub.AlertRecipientMemberPrefsStore
