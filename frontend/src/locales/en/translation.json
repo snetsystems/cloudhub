@@ -342,5 +342,31 @@
     "header_value": "Value",
     "delete_confirm": "Delete",
     "no_headers": "No HTTP headers registered."
+  },
+  "url_alert": {
+    "add_event": "Add Event"
+  },
+  "url_alert_setting": {
+    "title": "URL Alert Rule Settings",
+    "reset": "Reset",
+    "cond_title": "Alert Conditions",
+    "metric_label": "Monitoring Item",
+    "select_template": "Select template",
+    "latency_label": "Latency",
+    "condition_method": "Condition Type",
+    "deadman_disabled": "Not available for URL alerts.",
+    "status_label": "Status",
+    "status_client4xx": "4xx Client Error",
+    "status_server5xx": "5xx Server Error",
+    "status_unknown": "Unknown",
+    "target_title": "Event Target",
+    "target_url": "Target URL",
+    "select_url": "Please select a URL.",
+    "select_url_title": "Select URL",
+    "search_urls": "Search URLs...",
+    "n_urls_selected": "{{count}} selected",
+    "no_urls_search_results": "No search results.",
+    "no_target_urls": "No target URLs available.",
+    "failed_to_load_targets": "Failed to load URL targets."
   }
 }

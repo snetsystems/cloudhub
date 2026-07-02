@@ -1267,3 +1267,16 @@ tbody tr td.text-center.justify-center:last-child {
     }
   }
 }
+
+.url-alert-target-section {
+  .alert-group-setting-control {
+    max-width: none;
+  }
+}
+
+.url-alert-condition-status-badge {
+  min-width: 120px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}

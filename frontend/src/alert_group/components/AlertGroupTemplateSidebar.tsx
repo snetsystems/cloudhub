@@ -19,6 +19,7 @@ interface Props extends WithTranslation {
   availableMeasurements: Set<string>
   selectedTemplateId: string
   onSelectTemplate: (templateId: string) => void
+  createNewText?: string
 }
 
 interface State {
@@ -43,6 +44,7 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
   // A template is "available" when its measurement is actually being collected
   // in the current source. Templates without a known availability set (e.g.
   // SHOW MEASUREMENTS failed) are always enabled so the UI degrades gracefully.
+
   private isAvailable = (template: AlertTemplate): boolean => {
     const {availableMeasurements} = this.props
     if (!availableMeasurements || availableMeasurements.size === 0) {
@@ -101,22 +103,36 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {templates, selectedTemplateId, onSelectTemplate, t} = this.props
+    const {
+      templates,
+      selectedTemplateId,
+      onSelectTemplate,
+      createNewText,
+      t,
+    } = this.props
     const {searchTerm, tooltip} = this.state
+
+    const buttonText = createNewText ?? t('alert_group_rule.create_new')
 
     const needle = searchTerm.toLowerCase()
     const filteredTemplates = templates
-      .filter(t => {
+      .filter(template => {
         if (!needle) {
           return true
         }
-        if (t.name.toLowerCase().includes(needle)) {
+        if (template.name.toLowerCase().includes(needle)) {
           return true
         }
-        if (t.description && t.description.toLowerCase().includes(needle)) {
+        if (
+          template.description &&
+          template.description.toLowerCase().includes(needle)
+        ) {
           return true
         }
-        if (t.tags && t.tags.some(tag => tag.toLowerCase().includes(needle))) {
+        if (
+          template.tags &&
+          template.tags.some(tag => tag.toLowerCase().includes(needle))
+        ) {
           return true
         }
         return false
@@ -143,7 +159,7 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
           />
         </div>
         <Button
-          text={t('alert_group_rule.create_new')}
+          text={buttonText}
           onClick={() => onSelectTemplate('custom')}
           icon={IconFont.Plus}
           color={ComponentColor.Success}

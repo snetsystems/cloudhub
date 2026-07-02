@@ -38,6 +38,93 @@ export interface AlertCondition {
   enabled: boolean
 }
 
+/** API wire format — value may be numeric; operator may use camelCase. */
+export type AlertConditionOperatorApi =
+  | AlertConditionOperator
+  | 'greaterEqual'
+  | 'lessEqual'
+  | 'notEqual'
+
+export interface AlertConditionApi {
+  level: AlertConditionLevel
+  value: number | string
+  operator?: AlertConditionOperatorApi
+  enabled: boolean
+}
+
+export const normalizeAlertConditionOperator = (
+  operator?: AlertConditionOperatorApi
+): AlertConditionOperator => {
+  switch (operator) {
+    case 'greaterEqual':
+      return 'greater_equal'
+    case 'lessEqual':
+      return 'less_equal'
+    case 'notEqual':
+      return 'not_equal'
+    default:
+      return (operator as AlertConditionOperator) || 'greater'
+  }
+}
+
+export const normalizeAlertConditions = (
+  conditions?: AlertConditionApi[]
+): AlertCondition[] =>
+  (conditions ?? []).map(condition => ({
+    level: condition.level,
+    value: String(condition.value),
+    operator: normalizeAlertConditionOperator(condition.operator),
+    enabled: condition.enabled,
+  }))
+
+export interface UrlErrorConfig {
+  check4xx: boolean
+  check5xx: boolean
+  checkUnknown: boolean
+}
+
+export interface UrlAlertStatusFilters {
+  client4xx: boolean
+  server5xx: boolean
+  unknown: boolean
+}
+
+export const urlErrorConfigToStatusFilters = (
+  config: UrlErrorConfig
+): UrlAlertStatusFilters => ({
+  client4xx: config.check4xx,
+  server5xx: config.check5xx,
+  unknown: config.checkUnknown,
+})
+
+export const statusFiltersToUrlErrorConfig = (
+  filters: UrlAlertStatusFilters
+): UrlErrorConfig => ({
+  check4xx: filters.client4xx,
+  check5xx: filters.server5xx,
+  checkUnknown: filters.unknown,
+})
+
+export const DEFAULT_URL_STATUS_FILTERS: UrlAlertStatusFilters = {
+  client4xx: true,
+  server5xx: true,
+  unknown: false,
+}
+
+/** Per-metric target inside a URL monitoring alert template (API `targets[]`). */
+export interface AlertTemplateTarget {
+  database: string
+  retentionPolicy: string
+  measurement: string
+  field: string
+  trigger?: 'threshold' | 'relative' | 'deadman'
+  urlErrorConfig?: UrlErrorConfig
+  conditions?: AlertConditionApi[]
+  derivative?: DerivativeConfig
+  eval?: EvalConfig
+  values?: AlertGroupRule['values']
+}
+
 // DerivativeConfig — when enabled, the backend tickscript inserts
 // |derivative('<field>').[nonNegative()].unit(<unit>) between |from() and the
 // alert pipeline. Result field name equals the input field, so threshold
@@ -91,6 +178,14 @@ export interface AlertGroupRule {
   orgId?: string
   createdAt?: string
   updatedAt?: string
+  /** Selected builtin/custom template id when the rule was created from a template. */
+  templateId?: string
+  /** API wire format for URL status checks; UI uses urlStatusFilters. */
+  urlErrorConfig?: UrlErrorConfig
+  urlStatusFilters?: UrlAlertStatusFilters
+  urlTargetIds?: string[]
+  /** Composite URL templates: status + latency targets from the blueprint. */
+  targets?: AlertTemplateTarget[]
 }
 
 export interface AlertRuleEventHandler {
@@ -273,18 +368,18 @@ export const DEFAULT_RULE: AlertGroupRule = {
   recipientGroupIds: [],
 }
 
-// AlertTemplate matches backend cloudhub.AlertTemplate — a complete blueprint
-// for creating an AlertGroupRule. Loaded from /cloudhub/v2/alert-templates.
+// AlertTemplate matches backend/cloud API blueprint for creating an AlertGroupRule.
+// Server templates use flat measurement/field; URL templates may use `targets[]`.
 export interface AlertTemplate {
   id: string
   name: string
   description?: string
   category?: string // monitoring domain: server-monitoring | url-monitoring | ...
   tags?: string[]
-  database: string
-  retentionPolicy: string
-  measurement: string
-  field: string
+  database?: string
+  retentionPolicy?: string
+  measurement?: string
+  field?: string
   derivative?: DerivativeConfig
   eval?: EvalConfig
   trigger?: 'threshold' | 'relative' | 'deadman'
@@ -298,7 +393,11 @@ export interface AlertTemplate {
   notifyRecovery: boolean
   message: string
   emailBody?: string
-  conditions?: AlertCondition[]
+  conditions?: AlertConditionApi[]
+  /** URL monitoring: one or more metric targets (status code, latency, …). */
+  targets?: AlertTemplateTarget[]
+  /** @deprecated Prefer targets[].urlErrorConfig — kept for flat templates. */
+  urlStatusFilters?: UrlAlertStatusFilters
 }
 
 export const getTriggerOperators = (t: TFunction) => [

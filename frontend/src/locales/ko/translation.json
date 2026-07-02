@@ -339,5 +339,31 @@
     "header_value": "설정값 (Value)",
     "delete_confirm": "삭제",
     "no_headers": "등록된 HTTP 헤더가 없습니다."
+  },
+  "url_alert": {
+    "add_event": "이벤트 추가"
+  },
+  "url_alert_setting": {
+    "title": "URL 알림 규칙 설정",
+    "reset": "초기화",
+    "cond_title": "알림 조건",
+    "metric_label": "모니터링 항목",
+    "select_template": "템플릿 선택",
+    "latency_label": "지연 시간",
+    "condition_method": "조건 방식",
+    "deadman_disabled": "URL 알림에서는 사용할 수 없습니다.",
+    "status_label": "상태",
+    "status_client4xx": "4xx 요청 오류",
+    "status_server5xx": "5xx 서버 오류",
+    "status_unknown": "Unknown 알수없음",
+    "target_title": "이벤트 대상 선택",
+    "target_url": "대상 URL",
+    "select_url": "URL 선택해주세요.",
+    "select_url_title": "URL 선택",
+    "search_urls": "URL 검색...",
+    "n_urls_selected": "{{count}}개 선택됨",
+    "no_urls_search_results": "검색 결과가 없습니다.",
+    "no_target_urls": "대상 URL이 없습니다.",
+    "failed_to_load_targets": "URL 목록을 불러오는 데 실패했습니다."
   }
 }

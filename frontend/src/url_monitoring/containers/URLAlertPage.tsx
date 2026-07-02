@@ -20,6 +20,7 @@ import {
   Notification,
   ColumnInfo,
   AlignType,
+  AlertGroupRule,
 } from 'src/types'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
@@ -48,7 +49,7 @@ import {
   URLAlertStatusBadge,
   URLMonitoring,
 } from 'src/url_monitoring/types'
-import {getURLAlertList, getURLMonitoring} from 'src/url_monitoring/apis'
+import {getURLAlertList, getURLMonitoring, getUrlAlertRules} from 'src/url_monitoring/apis'
 
 const toNumber = (value: unknown): number | null => {
   if (typeof value === 'number') return Number.isFinite(value) ? value : null
@@ -164,6 +165,7 @@ export function URLAlertPage({
     false
   )
   const [data, setData] = useState<URLAlertListItem[]>([])
+  const [alertRules, setAlertRules] = useState<AlertGroupRule[]>([])
   const [defaultAlertStatuses, setDefaultAlertStatuses] = useState<
     URLAlertStatusBadge[]
   >([])
@@ -210,23 +212,26 @@ export function URLAlertPage({
     })
   }, [])
 
+  const navigateToAlertSetting = useCallback(
+    (ruleId?: string) => {
+      if (!source?.id) return
+
+      router.push({
+        pathname: `/sources/${source.id}/url-monitoring/url-alert-setting`,
+        ...(ruleId ? {query: {id: ruleId}} : {}),
+        state: {returnTo: `/sources/${source.id}/url-monitoring/url-alert`},
+      })
+    },
+    [router, source?.id]
+  )
+
   const renderTopRight = () => (
     <Button
-      text={t('url_alert.add_event', '이벤트 추가')}
+      text={t('url_alert.add_event')}
       icon={IconFont.Plus}
       size={ComponentSize.Small}
       color={ComponentColor.Primary}
-      onClick={() => {
-        if (location?.pathname) {
-          router.push({
-            pathname: location.pathname.replace(
-              '/url-alert',
-              '/url-alert-setup'
-            ),
-            state: {returnTo: location.pathname},
-          })
-        }
-      }}
+      onClick={() => navigateToAlertSetting()}
     />
   )
 
@@ -267,6 +272,17 @@ export function URLAlertPage({
   }, [urlMonitoringConfig, influxMetricsByUrl, elapsedSettingsByTargetId])
 
   const filteredData = useMemo<DataTableObject[]>(() => {
+    if (alertRules.length > 0) {
+      return alertRules.map(rule => ({
+        id: rule.id,
+        name: rule.name,
+        urls: [],
+        alertStatuses: defaultAlertStatuses,
+        elapsedTimeEnabled: false,
+        elapsedTimeMs: null,
+      }))
+    }
+
     const dataById = new Map(data.map(item => [item.id, item]))
     const dataByUrl = new Map<string, URLAlertListItem>()
     for (const item of data) {
@@ -298,13 +314,15 @@ export function URLAlertPage({
       elapsedTimeEnabled: item.elapsedTimeEnabled,
       elapsedTimeMs: item.elapsedTimeMs,
     }))
-  }, [targetRows, data, defaultAlertStatuses])
+  }, [alertRules, targetRows, data, defaultAlertStatuses])
 
   const columns: ColumnInfo[] = useMemo(
     () => [
       {
         key: 'id',
         name: 'Alert Name',
+        render: (_value: unknown, row: DataTableObject) =>
+          String(row.name ?? row.id ?? ''),
       },
       {
         key: 'name',
@@ -353,20 +371,26 @@ export function URLAlertPage({
             className: 'url-alert-actions-th',
           },
         },
-        render: (_value: unknown, _row: DataTableObject) => (
+        render: (_value: unknown, row: DataTableObject) => (
           <div className="url-alert-row-actions">
             <Button
               icon={IconFont.Pencil}
               size={ComponentSize.ExtraSmall}
               shape={ButtonShape.Square}
               color={ComponentColor.Default}
-              onClick={e => e.stopPropagation()}
+              onClick={e => {
+                e.stopPropagation()
+                const ruleId = String(row.id ?? '').trim()
+                if (ruleId) {
+                  navigateToAlertSetting(ruleId)
+                }
+              }}
             />
           </div>
         ),
       },
     ],
-    [openUrlSheet, defaultAlertStatuses]
+    [openUrlSheet, defaultAlertStatuses, navigateToAlertSetting]
   )
 
   const fetchTableData = useCallback(
@@ -516,12 +540,17 @@ export function URLAlertPage({
 
   const fetchData = useCallback(async () => {
     try {
-      const alertList = await getURLAlertList()
+      const [alertList, rules] = await Promise.all([
+        getURLAlertList(),
+        getUrlAlertRules(),
+      ])
       setDefaultAlertStatuses(alertList.defaultAlertStatuses)
       setData(alertList.items)
+      setAlertRules(rules)
     } catch {
       setDefaultAlertStatuses([])
       setData([])
+      setAlertRules([])
     }
   }, [])
 

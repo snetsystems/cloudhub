@@ -96,6 +96,7 @@ import NewHostsPage from 'src/hosts/containers/NewHostsPage'
 import ServerDetailsWrapper from 'src/server_details/containers/ServerDetailsWrapper'
 import GPUMonitoringPage from 'src/gpu_monitoring/containers/GPUMonitoringPage'
 import URLMonitoringPage from 'src/url_monitoring/containers/URLMonitoringPage'
+import URLAlertSettingPage from 'src/url_monitoring/containers/URLAlertSettingPage'
 import URLAlertPage from 'src/url_monitoring/containers/URLAlertPage'
 import DBMonitoringPage from 'src/db_monitoring/containers/DBMonitoringPage'
 import AlertGroupRulePage from 'src/alert_group/containers/AlertGroupRulePage'
@@ -330,6 +331,10 @@ class Root extends PureComponent<Record<string, never>, State> {
                   component={AlertGroupRulePage}
                 />
                 {/* url monitoring */}
+                <Route
+                  path="url-monitoring/url-alert-setting"
+                  component={URLAlertSettingPage}
+                />
                 <Route path="url-monitoring" component={URLMonitoringPage} />
                 <Route
                   path="url-monitoring/url-list"
