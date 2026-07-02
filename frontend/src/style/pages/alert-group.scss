@@ -1542,6 +1542,11 @@ $alert-group--preview-graph-shell-height: 360px;
   width: 100px;
 }
 
+.alert-group-condition-w80 {
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
 .alert-group-condition-text-light {
   color: $ix-text-light;
 }

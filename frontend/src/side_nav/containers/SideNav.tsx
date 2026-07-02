@@ -189,13 +189,19 @@ class SideNav extends PureComponent<Props> {
           <NavBlock
             highlightWhen={['url-monitoring']}
             icon="sphere"
-            link={`${sourcePrefix}/url-monitoring`}
+            link={`${sourcePrefix}/url-monitoring/url-list`}
             location={location}
           >
             <NavHeader
-              link={`${sourcePrefix}/url-monitoring`}
+              link={`${sourcePrefix}/url-monitoring/url-list`}
               title="URL Monitoring"
             />
+            <NavListItem link={`${sourcePrefix}/url-monitoring/url-list`}>
+              URL List
+            </NavListItem>
+            <NavListItem link={`${sourcePrefix}/url-monitoring/url-alert`}>
+              URL Alert
+            </NavListItem>
           </NavBlock>
 
           {/* DB Monitoring */}

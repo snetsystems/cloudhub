@@ -298,10 +298,10 @@ function TableBase({
                       return (
                         <td
                           key={columnIndex}
-                          onClick={() => column.onClick}
+                          onClick={() => column.onClick?.(item)}
                           className={`${getAlignClassName(
                             column?.options?.thead?.align
-                          )}`}
+                          )} ${column.className ?? ''}`}
                         >
                           {column?.options?.checkbox ? (
                             <div className="dark-checkbox">

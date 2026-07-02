@@ -6,6 +6,9 @@ export interface URLMonitoringTarget {
   responseTimeout?: string
   method?: string
   alertRuleId?: string
+  elapsedTimeEnabled?: boolean
+  elapsedTimeMs?: number | null
+  elapsedTimeAlertMessage?: string
 }
 
 export interface URLMonitoring {
@@ -26,3 +29,19 @@ export const INTERVAL_OPTIONS = ['1m', '2m', '5m', '10m']
 export const METHOD_OPTIONS = ['GET', 'POST', 'HEAD']
 export const DEFAULT_RESPONSE_TIMEOUT = '5s'
 export const DEFAULT_METHOD = 'GET'
+
+export type URLAlertStatusKind = '4xx' | '5xx' | 'unknown'
+
+export interface URLAlertStatusBadge {
+  kind: URLAlertStatusKind
+  label: string
+}
+
+export interface URLAlertListItem {
+  id: string
+  name: string | string[]
+  urls: string[]
+  alertStatuses: URLAlertStatusBadge[]
+  elapsedTimeEnabled: boolean
+  elapsedTimeMs?: number | null
+}

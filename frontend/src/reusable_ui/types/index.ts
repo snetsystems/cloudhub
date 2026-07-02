@@ -92,6 +92,7 @@ export enum IconFont {
   CrownOutline = 'crown-outline',
   CrownSolid = 'crown2',
   Cube = 'cube',
+  Copy = 'copy',
   Cubouniform = 'cubo-uniform',
   DashF = 'dash-f',
   DashH = 'dash-h',

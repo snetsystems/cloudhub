@@ -17,6 +17,7 @@ import LoadingDots from 'src/shared/components/LoadingDots'
 import LogAnalysisDashboardHeader from 'src/log_analysis/components/LogAnalysisDashboardHeader'
 import RefreshSpinner from 'src/reusable_ui/components/spinners/RefreshSpinner'
 import MessageTokensModal from 'src/log_analysis/components/MessageTokensModal'
+import SyslogCellPopoverContent from 'src/log_analysis/components/SyslogCellPopoverContent'
 
 // Actions
 import {
@@ -747,6 +748,14 @@ function LogAnalysisSyslogTable<_>({
     debouncedFit()
   }
 
+  const popoverContents = useMemo(
+    () => ({
+      string: SyslogCellPopoverContent,
+      datetime: SyslogCellPopoverContent,
+    }),
+    []
+  )
+
   const rowHeightsOptions = useMemo(() => {
     if (isTruncated) {
       return {
@@ -883,6 +892,7 @@ function LogAnalysisSyslogTable<_>({
               header: 'underline',
             }}
             rowHeightsOptions={rowHeightsOptions}
+            popoverContents={popoverContents}
           />
         </div>
         {isLastPage && hasMore && (
