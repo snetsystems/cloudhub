@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import classnames from 'classnames'
 import {useTranslation} from 'react-i18next'
 import {withRouter, InjectedRouter} from 'react-router'
@@ -11,8 +11,13 @@ import {
   IconFont,
   ButtonShape,
   Page,
+  SlideToggle,
 } from 'src/reusable_ui'
+import {DataTableObject, Notification, ColumnInfo, AlignType} from 'src/types'
 import {
+  notifyUrlMonitoringDeleted,
+  notifyError,
+} from 'src/shared/copy/notifications'
   Source,
   RefreshRate,
   TimeZones,
@@ -26,29 +31,108 @@ import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import * as appActions from 'src/shared/actions/app'
+import ConfirmButton from 'src/shared/components/ConfirmButton'
 import TableComponent from 'src/device_management/components/TableComponent'
-import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
-import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
-import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
-import {CLOUD_TIME_RANGE, timeRanges} from 'src/shared/data/timeRanges'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
-import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
-import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {executeQueries} from 'src/shared/apis/query'
-import {createTimeRangeTemplates} from 'src/shared/utils/templates'
-import {generateForHosts} from 'src/utils/tempVars'
-import {buildUrlMonitoringQueries} from 'src/url_monitoring/constants/urlMonitoringQueries'
-import {mergeResultsByUrlMonitoring} from 'src/url_monitoring/utils/mergeResultsByUrlMonitoring'
-import {
-  URLAlertFormSheet,
-  URLAlertFormSheetItem,
-} from 'src/url_monitoring/components/URLAlertFormSheet'
 import {
   URLAlertListItem,
   URLAlertStatusBadge,
   URLMonitoring,
 } from 'src/url_monitoring/types'
+import {
+  getURLAlertList,
+  getURLMonitoring,
+  deleteURLMonitoringTarget,
+} from 'src/url_monitoring/apis'
+import {getAlertGroupRules, updateAlertGroupRule} from 'src/alert_group/apis'
+import {AlertGroupRule, OPERATOR_SYMBOLS} from 'src/types'
+import {URLAlertUrlCell} from 'src/url_monitoring/components/URLAlertUrlCell'
+import AlertSeverityFilter, {
+  AlertSeverityFilterValue,
+} from 'src/shared/components/AlertSeverityFilter'
+
+interface Props {
+  router: InjectedRouter
+  notify: (n: Notification) => void
+}
+
+interface URLAlertPageData {
+  config: URLMonitoring | null
+  items: URLAlertListItem[]
+  defaultAlertStatuses: URLAlertStatusBadge[]
+  alertRulesById: Record<string, AlertGroupRule>
+  stubAlertRulesById: Record<string, AlertGroupRule>
+}
+
+const getOperatorSymbol = (op: string): string => {
+  if (!op) {
+    return ''
+  }
+  return OPERATOR_SYMBOLS[op] || op
+}
+
+const getRowAlertRule = (
+  row: DataTableObject,
+  alertRulesById: Record<string, AlertGroupRule>,
+  stubAlertRulesById: Record<string, AlertGroupRule>
+): AlertGroupRule | undefined => {
+  const alertRuleId = String(row.alertRuleId ?? '').trim()
+  if (!alertRuleId) return undefined
+  return alertRulesById[alertRuleId] ?? stubAlertRulesById[alertRuleId]
+}
+
+const urlHostname = (url: string): string => {
+  const trimmed = String(url ?? '').trim()
+  if (!trimmed) return ''
+  try {
+    return new URL(trimmed).hostname.toLowerCase()
+  } catch {
+    return trimmed.toLowerCase()
+  }
+}
+
+const findMatchedAlertListItem = (
+  rowId: string,
+  rowUrls: string[],
+  data: URLAlertListItem[],
+  dataById: Map<string, URLAlertListItem>,
+  dataByUrl: Map<string, URLAlertListItem>
+): URLAlertListItem | undefined => {
+  const byId = dataById.get(rowId)
+  if (byId) return byId
+
+  for (const url of rowUrls) {
+    const exact = dataByUrl.get(url)
+    if (exact) return exact
+  }
+
+  const rowHosts = new Set(rowUrls.map(urlHostname).filter(Boolean))
+  if (!rowHosts.size) return undefined
+
+  return data.find(item =>
+    item.urls.some(itemUrl => rowHosts.has(urlHostname(itemUrl)))
+  )
+}
+
+const enrichRowWithAlertRule = (
+  row: DataTableObject,
+  matchedItem: URLAlertListItem | undefined,
+  alertRulesById: Record<string, AlertGroupRule>,
+  stubAlertRulesById: Record<string, AlertGroupRule>
+): DataTableObject => {
+  const alertRuleId = String(
+    row.alertRuleId ?? matchedItem?.alertRuleId ?? ''
+  ).trim()
+  const rule = alertRuleId
+    ? alertRulesById[alertRuleId] ?? stubAlertRulesById[alertRuleId]
+    : undefined
+
+  return {
+    ...row,
+    alertRuleId: alertRuleId || row.alertRuleId,
+    trigger: rule?.trigger ?? row.trigger,
+    triggerValues: rule?.values ?? row.triggerValues,
+  }
 import {getURLAlertList, getURLMonitoring, getUrlAlertRules} from 'src/url_monitoring/apis'
 
 const toNumber = (value: unknown): number | null => {
@@ -75,25 +159,6 @@ const normalizeUrls = (value: unknown): string[] => {
   return []
 }
 
-const renderUrlAlertUrls = (urls: string[]) => {
-  if (!urls.length) {
-    return <span>--</span>
-  }
-
-  const [firstUrl, ...restUrls] = urls
-
-  return (
-    <div className="url-alert-url-cell" title={urls.join('\n')}>
-      <span className="url-alert-url-cell__item">{firstUrl}</span>
-      {restUrls.length > 0 && (
-        <span className="url-alert-url-cell__more">
-          {`외 ${restUrls.length}`}
-        </span>
-      )}
-    </div>
-  )
-}
-
 const renderAlertStatusBadges = (
   statuses: URLAlertStatusBadge[] | undefined,
   defaultStatuses: URLAlertStatusBadge[] = []
@@ -116,41 +181,60 @@ const renderAlertStatusBadges = (
   )
 }
 
-export interface ManualRefresh {
-  key: string
-  value: number
+const renderAlertTriggerCell = (
+  trigger: string | undefined,
+  values: AlertGroupRule['values'] | undefined,
+  t: (key: string, fallback?: string) => string
+) => {
+  const normalizedTrigger = trigger || 'threshold'
+
+  if (normalizedTrigger === 'threshold') {
+    return (
+      <div className="server-alert-trigger-cell">
+        <span className="server-alert-trigger-main">
+          {t('alert_group_rule.threshold', 'Threshold')}
+        </span>
+      </div>
+    )
+  }
+
+  if (normalizedTrigger === 'relative') {
+    const shift = values?.shift || ''
+    const changeVal = values?.change || 'change'
+    const changeText =
+      changeVal === '% change'
+        ? t('server_alert.pct_change', '변화율')
+        : t('server_alert.amt_change', '변화량')
+    const optionText = shift ? `${shift} ${changeText}` : changeText
+
+    return (
+      <div className="server-alert-trigger-cell">
+        <span className="server-alert-trigger-main">
+          {t('alert_group_rule.relative', 'Relative')}
+        </span>
+        <span className="server-alert-trigger-sub">{optionText}</span>
+      </div>
+    )
+  }
+
+  return <span>-</span>
 }
 
-interface Props {
-  source: Source
-  cloudAutoRefresh: CloudAutoRefresh
-  cloudTimeRange: CloudTimeRange
-  timeZone: TimeZones
-  router: InjectedRouter
-  onChooseCloudAutoRefresh: (autoRefresh: CloudAutoRefresh) => void
-  onChooseCloudTimeRange: (timeRange: CloudTimeRange) => void
-  setTimeZone: typeof appActions.setTimeZone
-  notify: (n: Notification) => void
+const INITIAL_PAGE_DATA: URLAlertPageData = {
+  config: null,
+  items: [],
+  defaultAlertStatuses: [],
+  alertRulesById: {},
+  stubAlertRulesById: {},
 }
 
-export function URLAlertPage({
-  source,
-  cloudAutoRefresh,
-  cloudTimeRange,
-  timeZone,
-  router,
-  onChooseCloudAutoRefresh,
-  onChooseCloudTimeRange,
-  setTimeZone,
-  notify,
-}: Props) {
+export function URLAlertPage({router, notify}: Props) {
   const {t} = useTranslation()
-  const [manualRefreshState, setManualRefreshState] = useState<ManualRefresh>({
-    key: 'url-alert',
-    value: Date.now(),
-  })
-  const [tableData, setTableData] = useState<DataTableObject[]>([])
   const [isTableLoading, setIsTableLoading] = useState(true)
+
+  const [pageData, setPageData] = useState<URLAlertPageData>(INITIAL_PAGE_DATA)
+  const [activeOverridesById, setActiveOverridesById] = useState<
+    Record<string, boolean>
   const [isError, setIsError] = useState(false)
   const requestIdRef = useRef(0)
   const pollIntervalRef = useRef<number | null>(null)
@@ -178,11 +262,22 @@ export function URLAlertPage({
   const [elapsedSettingsByTargetId] = useState<
     Record<string, {enabled: boolean; ms: number | null; alertMessage?: string}>
   >({})
+  const [activeFilter, setActiveFilter] = useState<AlertSeverityFilterValue>(
+    'all'
+  )
+
+  const {
+    config: urlMonitoringConfig,
+    items: data,
+    defaultAlertStatuses,
+    alertRulesById,
+    stubAlertRulesById,
+  } = pageData
 
   const fetchConfig = useCallback(async () => {
     try {
       const config = await getURLMonitoring()
-      setUrlMonitoringConfig(config)
+      setPageData(prev => ({...prev, config}))
     } catch (e) {
       notify({
         type: 'error',
@@ -191,11 +286,18 @@ export function URLAlertPage({
         isHasHTML: false,
         message: `Failed to fetch URL monitoring config: ${e?.message ?? e}`,
       })
-    } finally {
-      setUrlMonitoringConfigReady(true)
     }
   }, [notify])
 
+  const renderTopLeft = () => (
+    <AlertSeverityFilter
+      activeFilter={activeFilter}
+      onChange={setActiveFilter}
+      totalCount={totalCount}
+      warningCount={warningCount}
+      criticalCount={criticalCount}
+    />
+  )
   const openUrlSheet = useCallback((row?: DataTableObject | null) => {
     if (!row) return
 
@@ -235,42 +337,156 @@ export function URLAlertPage({
     />
   )
 
-  const closeUrlSheet = useCallback(() => {
-    setUrlSheet(s => ({...s, open: false}))
-  }, [])
+  const resolveRowActive = useCallback(
+    (
+      rowId: string,
+      alertRuleId?: string,
+      matchedItem?: URLAlertListItem
+    ): boolean => {
+      const ruleId = String(alertRuleId ?? '').trim()
+      if (ruleId && alertRulesById[ruleId]) {
+        return alertRulesById[ruleId].active
+      }
+      if (ruleId && stubAlertRulesById[ruleId]) {
+        return stubAlertRulesById[ruleId].active
+      }
+      if (rowId && rowId in activeOverridesById) {
+        return activeOverridesById[rowId]
+      }
+      return matchedItem?.active ?? true
+    },
+    [alertRulesById, stubAlertRulesById, activeOverridesById]
+  )
 
-  const influxMetricsByUrl = useMemo(() => {
-    const map = new Map<string, DataTableObject>()
-    for (const row of tableData) {
-      const key = String(row.server ?? '')
-      if (!key) continue
-      map.set(key, row)
-    }
-    return map
-  }, [tableData])
+  const handleToggleActive = useCallback(
+    async (row: DataTableObject) => {
+      const targetId = String(row.id ?? '').trim()
+      if (!targetId) return
+
+      const alertRuleId = String(row.alertRuleId ?? '').trim()
+      const serverRule = alertRuleId ? alertRulesById[alertRuleId] : undefined
+      const stubRule = alertRuleId ? stubAlertRulesById[alertRuleId] : undefined
+      const nextActive = !Boolean(row.active)
+
+      if (serverRule?.id) {
+        setPageData(prev => ({
+          ...prev,
+          alertRulesById: {
+            ...prev.alertRulesById,
+            [serverRule.id!]: {...serverRule, active: nextActive},
+          },
+        }))
+        try {
+          const updatedRule = await updateAlertGroupRule(serverRule.id, {
+            ...serverRule,
+            active: nextActive,
+          })
+          setPageData(prev => ({
+            ...prev,
+            alertRulesById: {
+              ...prev.alertRulesById,
+              [serverRule.id!]: updatedRule,
+            },
+          }))
+        } catch (error) {
+          console.error('Failed to update URL alert active state', error)
+          setPageData(prev => ({
+            ...prev,
+            alertRulesById: {
+              ...prev.alertRulesById,
+              [serverRule.id!]: serverRule,
+            },
+          }))
+          notify(
+            notifyError(
+              t('server_alert.update_failed', '상태 변경에 실패했습니다.')
+            )
+          )
+        }
+        return
+      }
+
+      if (stubRule?.id) {
+        setPageData(prev => ({
+          ...prev,
+          stubAlertRulesById: {
+            ...prev.stubAlertRulesById,
+            [stubRule.id!]: {...stubRule, active: nextActive},
+          },
+        }))
+        return
+      }
+
+      setPageData(prev => ({
+        ...prev,
+        items: prev.items.map(item => {
+          if (item.id === targetId) {
+            return {...item, active: nextActive}
+          }
+          const rowUrls = normalizeUrls(row.urls ?? row.url)
+          if (
+            rowUrls.length > 0 &&
+            item.urls.some(url => rowUrls.includes(url))
+          ) {
+            return {...item, active: nextActive}
+          }
+          return item
+        }),
+      }))
+      setActiveOverridesById(prev => ({...prev, [targetId]: nextActive}))
+    },
+    [alertRulesById, stubAlertRulesById, notify, t]
+  )
+
+  const handleDelete = useCallback(
+    async (row: DataTableObject) => {
+      const targetId = String(row.id ?? '').trim()
+      if (!targetId) return
+
+      const hasTarget = urlMonitoringConfig?.targets?.some(
+        target => String(target.id ?? '') === targetId
+      )
+
+      try {
+        if (hasTarget) {
+          await deleteURLMonitoringTarget(targetId)
+          await fetchConfig()
+        }
+        setPageData(prev => ({
+          ...prev,
+          items: prev.items.filter(item => item.id !== targetId),
+        }))
+        notify(notifyUrlMonitoringDeleted())
+      } catch (e) {
+        notify({
+          type: 'error',
+          icon: 'alert-triangle',
+          duration: 10000,
+          isHasHTML: false,
+          message: `Failed to delete URL alert: ${e?.message ?? e}`,
+        })
+      }
+    },
+    [urlMonitoringConfig, fetchConfig, notify]
+  )
 
   const targetRows = useMemo<DataTableObject[]>(() => {
     if (!urlMonitoringConfig?.targets?.length) return []
     return urlMonitoringConfig.targets.map(target => {
-      const influxRow = influxMetricsByUrl.get(String(target.url ?? '')) ?? {}
-      const elapsedOverride = target.id
-        ? elapsedSettingsByTargetId[target.id]
-        : undefined
       return {
-        ...influxRow,
         id: target.id,
         name: target.name,
         urls: normalizeUrls(target.url),
         interval: target.interval,
-        elapsedTimeEnabled:
-          elapsedOverride?.enabled ?? target.elapsedTimeEnabled ?? false,
-        elapsedTimeMs: elapsedOverride?.ms ?? target.elapsedTimeMs ?? null,
-        elapsedTimeAlertMessage:
-          elapsedOverride?.alertMessage ?? target.elapsedTimeAlertMessage ?? '',
+        alertRuleId: target.alertRuleId,
+        elapsedTimeEnabled: target.elapsedTimeEnabled ?? false,
+        elapsedTimeMs: target.elapsedTimeMs ?? null,
+        elapsedTimeAlertMessage: target.elapsedTimeAlertMessage ?? '',
       } as DataTableObject
     })
-  }, [urlMonitoringConfig, influxMetricsByUrl, elapsedSettingsByTargetId])
+  }, [urlMonitoringConfig])
 
+  const tableRows = useMemo<DataTableObject[]>(() => {
   const filteredData = useMemo<DataTableObject[]>(() => {
     if (alertRules.length > 0) {
       return alertRules.map(rule => ({
@@ -294,18 +510,102 @@ export function URLAlertPage({
     if (targetRows.length > 0) {
       return targetRows.map(row => {
         const rowUrls = normalizeUrls(row.urls ?? row.url)
-        const matchedItem =
-          dataById.get(String(row.id ?? '')) ??
-          rowUrls.map(url => dataByUrl.get(url)).find(Boolean)
+        const rowId = String(row.id ?? '')
+        const matchedItem = findMatchedAlertListItem(
+          rowId,
+          rowUrls,
+          data,
+          dataById,
+          dataByUrl
+        )
+        const resolvedAlertRuleId = String(
+          row.alertRuleId ?? matchedItem?.alertRuleId ?? ''
+        )
+        const baseRow = enrichRowWithAlertRule(
+          {
+            ...row,
+            name: matchedItem?.name ?? row.name,
+            urls: rowUrls,
+            alertRuleId: resolvedAlertRuleId || row.alertRuleId,
+            alertStatuses: matchedItem?.alertStatuses ?? defaultAlertStatuses,
+            occurrenceCount: matchedItem?.occurrenceCount ?? 1,
+            pauseSeconds: matchedItem?.pauseSeconds ?? 0,
+          },
+          matchedItem,
+          alertRulesById,
+          stubAlertRulesById
+        )
         return {
-          ...row,
-          name: matchedItem?.name ?? row.name,
-          urls: rowUrls,
-          alertStatuses: matchedItem?.alertStatuses ?? defaultAlertStatuses,
+          ...baseRow,
+          active: resolveRowActive(rowId, resolvedAlertRuleId, matchedItem),
         }
       })
     }
 
+    return data.map(item => {
+      const baseRow = enrichRowWithAlertRule(
+        {
+          id: item.id,
+          name: item.name,
+          urls: item.urls,
+          alertStatuses: item.alertStatuses,
+          alertRuleId: item.alertRuleId,
+          elapsedTimeEnabled: item.elapsedTimeEnabled,
+          elapsedTimeMs: item.elapsedTimeMs,
+          occurrenceCount: item.occurrenceCount ?? 1,
+          pauseSeconds: item.pauseSeconds ?? 0,
+        },
+        item,
+        alertRulesById,
+        stubAlertRulesById
+      )
+      return {
+        ...baseRow,
+        active: resolveRowActive(item.id, item.alertRuleId, item),
+      }
+    })
+  }, [
+    targetRows,
+    data,
+    defaultAlertStatuses,
+    resolveRowActive,
+    alertRulesById,
+    stubAlertRulesById,
+  ])
+
+  const totalCount = tableRows.length
+  const warningCount = tableRows.filter(row =>
+    getRowAlertRule(row, alertRulesById, stubAlertRulesById)?.conditions?.some(
+      c => c.level === 'warning' && c.enabled
+    )
+  ).length
+  const criticalCount = tableRows.filter(row =>
+    getRowAlertRule(row, alertRulesById, stubAlertRulesById)?.conditions?.some(
+      c => c.level === 'critical' && c.enabled
+    )
+  ).length
+
+  const filteredTableRows = useMemo(() => {
+    if (activeFilter === 'warning') {
+      return tableRows.filter(row =>
+        getRowAlertRule(
+          row,
+          alertRulesById,
+          stubAlertRulesById
+        )?.conditions?.some(c => c.level === 'warning' && c.enabled)
+      )
+    }
+    if (activeFilter === 'critical') {
+      return tableRows.filter(row =>
+        getRowAlertRule(
+          row,
+          alertRulesById,
+          stubAlertRulesById
+        )?.conditions?.some(c => c.level === 'critical' && c.enabled)
+      )
+    }
+    return tableRows
+  }, [tableRows, activeFilter, alertRulesById, stubAlertRulesById])
     return data.map(item => ({
       id: item.id,
       name: item.name,
@@ -319,7 +619,21 @@ export function URLAlertPage({
   const columns: ColumnInfo[] = useMemo(
     () => [
       {
+        key: 'active',
+        name: t('server_alert.active', '활성'),
+        render: (value: boolean, row: DataTableObject) => (
+          <div onClick={e => e.stopPropagation()}>
+            <SlideToggle
+              active={value}
+              size={ComponentSize.ExtraSmall}
+              onChange={() => handleToggleActive(row)}
+            />
+          </div>
+        ),
+      },
+      {
         key: 'id',
+        name: t('url_alert.event_name', '이벤트 이름'),
         name: 'Alert Name',
         render: (_value: unknown, row: DataTableObject) =>
           String(row.name ?? row.id ?? ''),
@@ -328,20 +642,21 @@ export function URLAlertPage({
         key: 'name',
         name: 'Request / URL',
         className: 'url-alert-url-td',
-        onClick: (row: DataTableObject) => openUrlSheet(row),
         options: {
           thead: {className: 'url-alert-url-th'},
         },
-        render: (value: unknown, row: DataTableObject) =>
-          renderUrlAlertUrls(normalizeUrls(value ?? row.urls ?? row.url)),
+        render: (value: unknown, row: DataTableObject) => (
+          <URLAlertUrlCell
+            name={value ?? row.name}
+            urls={normalizeUrls(row.urls ?? row.url)}
+          />
+        ),
       },
       {
         key: 'alertStatuses',
-        name: 'Status',
-        align: AlignType.CENTER,
+        name: t('url_alert.status', '상태'),
         options: {
           thead: {
-            align: AlignType.CENTER,
             className: 'url-alert-status-th',
           },
         },
@@ -352,14 +667,79 @@ export function URLAlertPage({
           ),
       },
       {
-        key: 'elapsedTimeMs',
-        name: 'Avg. response time (ms)',
-        render: (_value: unknown, row: DataTableObject) => {
-          if (!row.elapsedTimeEnabled) {
-            return <span>비활성</span>
-          }
-          return <span>{formatElapsedTime(row.elapsedTimeMs)}</span>
+        key: 'trigger',
+        name: t('server_alert.trigger', '조건 방식'),
+        options: {
+          thead: {className: 'url-alert-trigger-th'},
         },
+        render: (_value: unknown, row: DataTableObject) => {
+          const rule = getRowAlertRule(row, alertRulesById, stubAlertRulesById)
+          const trigger = rule?.trigger ?? String(row.trigger ?? '')
+          if (!trigger) {
+            return <span>-</span>
+          }
+          return renderAlertTriggerCell(
+            trigger,
+            rule?.values ?? (row.triggerValues as AlertGroupRule['values']),
+            t
+          )
+        },
+      },
+      {
+        key: 'conditions',
+        name: t('server_alert.rule', '규칙'),
+        render: (_value: unknown, row: DataTableObject) => {
+          const rule = getRowAlertRule(row, alertRulesById, stubAlertRulesById)
+          const value = rule?.conditions
+
+          if (!value || value.length === 0) {
+            return (
+              <div className="url-alert-rule-container">
+                <span>-</span>
+              </div>
+            )
+          }
+
+          const critical = value.find(c => c.level === 'critical' && c.enabled)
+          const warning = value.find(c => c.level === 'warning' && c.enabled)
+
+          return (
+            <div className="url-alert-rule-container">
+              <span>
+                {rule?.measurement
+                  ? `${rule.measurement} - ${rule.field}`
+                  : '-'}
+              </span>
+              {critical && (
+                <span className="url-alert-rule-critical">
+                  ● Critical {getOperatorSymbol(critical.operator)}{' '}
+                  {critical.value}
+                </span>
+              )}
+              {warning && (
+                <span className="url-alert-rule-warning">
+                  ● Warning {getOperatorSymbol(warning.operator)}{' '}
+                  {warning.value}
+                </span>
+              )}
+            </div>
+          )
+        },
+      },
+      {
+        key: 'occurrenceCount',
+        name: t('server_alert.alarm_count', '알람 횟수'),
+      },
+      {
+        key: 'pauseSeconds',
+        name: t('server_alert.pause', '일시중지'),
+        render: (value: number) => (
+          <span>
+            {value > 0
+              ? t('server_alert.in_use', '사용중')
+              : t('server_alert.not_in_use', '사용 안함')}
+          </span>
+        ),
       },
       {
         key: 'settings',
@@ -372,12 +752,15 @@ export function URLAlertPage({
           },
         },
         render: (_value: unknown, row: DataTableObject) => (
+        render: (_value: unknown, row: DataTableObject) => (
           <div className="url-alert-row-actions">
             <Button
               icon={IconFont.Pencil}
               size={ComponentSize.ExtraSmall}
               shape={ButtonShape.Square}
               color={ComponentColor.Default}
+              titleText={t('url_alert.edit', 'Edit')}
+              onClick={e => e.stopPropagation()}
               onClick={e => {
                 e.stopPropagation()
                 const ruleId = String(row.id ?? '').trim()
@@ -386,10 +769,28 @@ export function URLAlertPage({
                 }
               }}
             />
+            <ConfirmButton
+              icon={IconFont.Trash}
+              size="btn-xs"
+              square={true}
+              type="btn-danger"
+              isEventStopPropagation={true}
+              confirmText={t('server_alert.delete', '삭제')}
+              confirmAction={() => handleDelete(row)}
+            />
           </div>
         ),
       },
     ],
+    [
+      defaultAlertStatuses,
+      alertRulesById,
+      stubAlertRulesById,
+      t,
+      handleDelete,
+      handleToggleActive,
+    ]
+  )
     [openUrlSheet, defaultAlertStatuses, navigateToAlertSetting]
   )
 
@@ -540,6 +941,20 @@ export function URLAlertPage({
 
   const fetchData = useCallback(async () => {
     try {
+      const alertList = await getURLAlertList()
+      const nextStubRules = alertList.alertRules?.length
+        ? Object.fromEntries(
+            alertList.alertRules
+              .filter(rule => rule.id)
+              .map(rule => [rule.id!, rule])
+          )
+        : {}
+      setPageData(prev => ({
+        ...prev,
+        defaultAlertStatuses: alertList.defaultAlertStatuses,
+        items: alertList.items,
+        stubAlertRulesById: nextStubRules,
+      }))
       const [alertList, rules] = await Promise.all([
         getURLAlertList(),
         getUrlAlertRules(),
@@ -548,6 +963,14 @@ export function URLAlertPage({
       setData(alertList.items)
       setAlertRules(rules)
     } catch {
+      setPageData(prev => ({
+        ...prev,
+        defaultAlertStatuses: [],
+        items: [],
+        stubAlertRulesById: {},
+      }))
+    } finally {
+      setIsTableLoading(false)
       setDefaultAlertStatuses([])
       setData([])
       setAlertRules([])
@@ -557,6 +980,26 @@ export function URLAlertPage({
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useEffect(() => {
+    let isSubscribed = true
+    getAlertGroupRules()
+      .then(rules => {
+        if (!isSubscribed) return
+        setPageData(prev => ({
+          ...prev,
+          alertRulesById: Object.fromEntries(
+            rules.filter(rule => rule.id).map(rule => [rule.id!, rule])
+          ),
+        }))
+      })
+      .catch(error => {
+        console.error('Failed to fetch alert group rules for URL alert', error)
+      })
+    return () => {
+      isSubscribed = false
+    }
+  }, [])
 
   return (
     <Page className="hosts-page url-alert-page">
@@ -568,72 +1011,34 @@ export function URLAlertPage({
         </Page.Header.Left>
         <Page.Header.Right>
           <SourceIndicator />
-          <AutoRefreshDropdown
-            onChoose={handleChooseAutoRefresh}
-            selected={cloudAutoRefresh.urlMonitoring ?? 0}
-            onManualRefresh={handleManualRefresh}
-            customAutoRefreshOptions={getTimeOptionByGroup('urlMonitoring')}
-            customAutoRefreshSelected={cloudAutoRefresh}
-          />
-          <TimeRangeDropdown
-            onChooseTimeRange={handleChooseTimeRange}
-            selected={
-              cloudTimeRange?.urlMonitoring ?? CLOUD_TIME_RANGE.urlMonitoring
-            }
-          />
-          <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
         </Page.Header.Right>
       </Page.Header>
       <Page.Contents scrollable={false} fullWidth={true}>
         <div className="url-page-graph-table-container-wrapper">
-          {!isError ? (
-            <TableComponent
-              columns={columns}
-              data={filteredData}
-              bodyClassName="url-alert-table"
-              isLoading={isTableLoading}
-              isSearchDisplay={true}
-              searchPlaceholder="Filter by URL..."
-              isDotKey={false}
-              isMultiSelect={false}
-              toprightRender={renderTopRight()}
-            />
-          ) : (
-            <div className="empty-table-container">
-              <div className="empty-table-content">
-                <p>No data available</p>
-              </div>
-            </div>
-          )}
+          <TableComponent
+            tableTitle={`${filteredTableRows.length} ${t(
+              'url_alert.table_title',
+              'URL Alerts'
+            )}`}
+            columns={columns}
+            data={filteredTableRows}
+            bodyClassName="url-alert-table"
+            isLoading={isTableLoading}
+            isSearchDisplay={true}
+            searchPlaceholder="Filter by URL..."
+            isDotKey={false}
+            isMultiSelect={false}
+            topLeftRender={renderTopLeft()}
+            toprightRender={renderTopRight()}
+          />
         </div>
       </Page.Contents>
-      <URLAlertFormSheet
-        isOpen={urlSheet.open}
-        onClose={closeUrlSheet}
-        item={urlSheet.item}
-      />
     </Page>
   )
 }
 
-const mstp = state => {
-  const {
-    app: {
-      persisted: {cloudAutoRefresh, cloudTimeRange, timeZone},
-    },
-  } = state
-  return {
-    timeZone,
-    cloudTimeRange,
-    cloudAutoRefresh,
-  }
-}
-
 const mdtp = dispatch => ({
-  setTimeZone: bindActionCreators(appActions.setTimeZone, dispatch),
-  onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
-  onChooseCloudTimeRange: bindActionCreators(setCloudTimeRange, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
 })
 
-export default connect(mstp, mdtp, null)(withRouter(URLAlertPage))
+export default connect(null, mdtp, null)(withRouter(URLAlertPage))

@@ -1,0 +1,39 @@
+.alert-severity-filter {
+  display: flex;
+  gap: 4px;
+  margin-left: 16px;
+}
+
+.alert-severity-filter-item {
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: all 0.2s;
+  border: 1px solid $g10-wolf;
+  background-color: transparent;
+  color: $g10-wolf;
+
+  &.active {
+    &.alert-severity-filter-item--ocean {
+      border-color: $c-ocean;
+      background-color: rgba($c-ocean, 0.15);
+      color: $c-ocean;
+    }
+    &.alert-severity-filter-item--warning {
+      border-color: $c-tiger;
+      background-color: rgba($c-tiger, 0.15);
+      color: $c-tiger;
+    }
+    &.alert-severity-filter-item--critical {
+      border-color: $c-curacao;
+      background-color: rgba($c-curacao, 0.15);
+      color: $c-curacao;
+    }
+  }
+}

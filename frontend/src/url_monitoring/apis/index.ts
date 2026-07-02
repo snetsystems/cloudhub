@@ -12,6 +12,7 @@ import {
   getAlertTemplates,
 } from 'src/alert_group/apis'
 import urlAlertListDummyData from '../constants/urlAlertListDummyData.json'
+import {AlertGroupRule} from 'src/types'
 import {URLAlertListItem, URLAlertStatusBadge, URLMonitoring} from '../types'
 
 const BASE = '/cloudhub/v1/url-monitoring'
@@ -190,6 +191,7 @@ export const getURLMonitoringConfigContent = async (
 export interface URLAlertListResponse {
   defaultAlertStatuses: URLAlertStatusBadge[]
   items: URLAlertListItem[]
+  alertRules?: AlertGroupRule[]
 }
 
 export const getURLAlertList = async (): Promise<URLAlertListResponse> => {

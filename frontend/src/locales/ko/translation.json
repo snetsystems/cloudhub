@@ -96,6 +96,15 @@
     "amt_change": "변화량",
     "update_failed": "상태 변경에 실패했습니다."
   },
+  "url_alert": {
+    "add_event": "이벤트 추가",
+    "event_name": "이벤트 이름",
+    "status": "상태",
+    "table_title": "URL Alerts",
+    "edit": "편집",
+    "click_to_view_urls": "클릭하여 URL 보기",
+    "and_n_more": "외 {{num}}개"
+  },
   "button": {
     "edit": "수정",
     "delete": "삭제",

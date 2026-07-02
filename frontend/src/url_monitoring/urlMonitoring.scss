@@ -345,17 +345,83 @@ $um-unknown: $c-comet;
   }
 
   .url-alert-url-th {
-    width: 30%;
-    min-width: 240px;
+    width: 15%;
     white-space: nowrap;
   }
 
   .url-alert-url-td {
-    cursor: pointer;
+    position: relative;
+    overflow: visible;
+
+    .url-alert-url-cell__action {
+      visibility: hidden;
+    }
+
+    &:hover .url-alert-url-cell__action,
+    .url-alert-url-cell__action--open {
+      visibility: visible;
+    }
+  }
+
+  .url-alert-url-cell {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .url-alert-url-cell__content {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .url-alert-url-cell__item {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .url-alert-url-cell__more {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .url-alert-url-cell__action {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+
+    .url-alert-url-cell__expand-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
+      min-width: 12px;
+      padding: 0;
+      line-height: 1;
+      border-radius: 2px;
+
+      .ouiIcon {
+        width: 12px;
+        height: 12px;
+      }
+    }
   }
 
   .url-alert-status-th {
-    width: 20%;
+    white-space: nowrap;
+  }
+
+  .url-alert-trigger-th {
+    width: 120px;
+    min-width: 108px;
     white-space: nowrap;
   }
 
@@ -368,7 +434,7 @@ $um-unknown: $c-comet;
   .url-alert-status-badges {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: left;
     gap: 6px;
   }
 
@@ -392,21 +458,73 @@ $um-unknown: $c-comet;
       background: rgba($c-fire, 0.12);
     }
   }
+}
 
-  .url-alert-url-cell {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: baseline;
-    gap: 4px;
-    max-width: 100%;
-    min-width: 0;
-    overflow: hidden;
-    color: $ix-link-default;
+.url-alert-url-popover-panel {
+  max-width: 500px;
+  max-height: 500px;
+  overflow-y: auto;
+}
 
-    &:hover {
-      color: $ix-link-default-hover;
-    }
+.url-alert-url-popover-table {
+  width: 100%;
+  margin-bottom: 0;
+  table-layout: fixed;
+
+  thead th {
+    position: static;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    background-color: $g4-onyx;
+    border-bottom: 1px solid $g6-smoke;
   }
+
+  tbody td {
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    vertical-align: top;
+    border-bottom: 1px solid rgba($g6-smoke, 0.65);
+    word-break: break-all;
+  }
+
+  tbody tr:nth-child(even) td {
+    background-color: rgba($g6-smoke, 0.15);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  &__name {
+    width: 28%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__url {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.url-alert-rule-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.url-alert-rule-critical {
+  color: $c-curacao;
+  font-size: 12px;
+}
+
+.url-alert-rule-warning {
+  color: $c-tiger;
+  font-size: 12px;
 }
 
 tbody tr td.text-center.justify-center:last-child {
@@ -421,6 +539,12 @@ tbody tr td.text-center.justify-center:last-child {
   justify-content: center;
   padding: 2px 0;
   overflow: visible;
+
+  .confirm-button.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .url-monitoring-page,
@@ -571,7 +695,7 @@ tbody tr td.text-center.justify-center:last-child {
   }
 
   .url-monitoring-form-sheet__body {
-    padding: 18px;
+    padding: 16px;
     padding-bottom: 24px;
   }
 
@@ -913,107 +1037,6 @@ tbody tr td.text-center.justify-center:last-child {
   }
 }
 
-.url-alert-form-sheet {
-  .url-alert-form-sheet__targets {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .url-alert-form-sheet__target-set {
-    display: flex;
-    gap: 12px;
-    padding: 14px 16px;
-    border: 1px solid $g4-onyx;
-    border-radius: 4px;
-    background-color: rgba($g3-castle, 0.55);
-  }
-
-  .url-alert-form-sheet__target-index {
-    flex: 0 0 auto;
-    min-width: 36px;
-    font-size: 12px;
-    font-weight: 700;
-    color: $g15-platinum;
-    line-height: 1.4;
-    padding-top: 2px;
-  }
-
-  .url-alert-form-sheet__target-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-width: 0;
-    flex: 1;
-  }
-
-  .url-alert-form-sheet__target-field {
-    display: flex;
-    gap: 6px;
-    min-width: 0;
-  }
-
-  .url-alert-form-sheet__target-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: $g12-forge;
-    letter-spacing: 0.02em;
-    width: 40px;
-  }
-
-  .url-alert-form-sheet__target-value {
-    margin: 0;
-    font-size: 12px;
-    line-height: 1.45;
-    color: $g17-whisper;
-    word-break: break-all;
-    flex: 1;
-    min-width: 0;
-
-    &--url {
-      color: $g16-pearl;
-    }
-  }
-
-  .url-alert-form-sheet__target-url-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    min-width: 0;
-    flex: 1;
-  }
-
-  .url-alert-form-sheet__copy-btn {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    margin-top: -2px;
-    padding: 0;
-    border: none;
-    border-radius: 3px;
-    background: transparent;
-    color: $g12-forge;
-    cursor: pointer;
-
-    .icon {
-      font-size: 14px;
-    }
-
-    &:hover:not(:disabled) {
-      color: $g16-pearl;
-      background-color: rgba($g4-onyx, 0.65);
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.35;
-    }
-  }
-}
-
 .url-monitoring-latency-detail-sheet {
   &.modal-content {
     max-height: 100vh;
@@ -1250,6 +1273,7 @@ tbody tr td.text-center.justify-center:last-child {
       .panel-body.url-alert-table {
         overflow: visible;
 
+        table tbody tr > td.url-alert-url-td,
         table tbody tr > td:last-child {
           overflow: visible;
           max-width: none;

@@ -42,6 +42,10 @@ export interface URLAlertListItem {
   name: string | string[]
   urls: string[]
   alertStatuses: URLAlertStatusBadge[]
+  alertRuleId?: string
+  active?: boolean
   elapsedTimeEnabled: boolean
   elapsedTimeMs?: number | null
+  occurrenceCount?: number
+  pauseSeconds?: number
 }
