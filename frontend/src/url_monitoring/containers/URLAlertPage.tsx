@@ -13,39 +13,29 @@ import {
   Page,
   SlideToggle,
 } from 'src/reusable_ui'
-import {DataTableObject, Notification, ColumnInfo, AlignType} from 'src/types'
 import {
-  notifyUrlMonitoringDeleted,
-  notifyError,
-} from 'src/shared/copy/notifications'
   Source,
-  RefreshRate,
-  TimeZones,
-  DataTableObject,
-  Notification,
   ColumnInfo,
   AlignType,
   AlertGroupRule,
+  AlertCondition,
+  OPERATOR_SYMBOLS,
+  urlErrorConfigToStatusFilters,
 } from 'src/types'
-import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
-import {setCloudAutoRefresh} from 'src/clouds/actions'
-import {setCloudTimeRange} from 'src/clouds/actions/clouds'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import TableComponent from 'src/device_management/components/TableComponent'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {
-  URLAlertListItem,
   URLAlertStatusBadge,
-  URLMonitoring,
+  URLMonitoringTarget,
 } from 'src/url_monitoring/types'
 import {
-  getURLAlertList,
-  getURLMonitoring,
-  deleteURLMonitoringTarget,
+  getUrlAlertListData,
+  isMockUrlAlertRuleId,
 } from 'src/url_monitoring/apis'
-import {getAlertGroupRules, updateAlertGroupRule} from 'src/alert_group/apis'
-import {AlertGroupRule, OPERATOR_SYMBOLS} from 'src/types'
+import {updateAlertGroupRule, deleteAlertGroupRule} from 'src/alert_group/apis'
 import {URLAlertUrlCell} from 'src/url_monitoring/components/URLAlertUrlCell'
 import AlertSeverityFilter, {
   AlertSeverityFilterValue,
@@ -53,15 +43,8 @@ import AlertSeverityFilter, {
 
 interface Props {
   router: InjectedRouter
-  notify: (n: Notification) => void
-}
-
-interface URLAlertPageData {
-  config: URLMonitoring | null
-  items: URLAlertListItem[]
-  defaultAlertStatuses: URLAlertStatusBadge[]
-  alertRulesById: Record<string, AlertGroupRule>
-  stubAlertRulesById: Record<string, AlertGroupRule>
+  source: Source
+  notify: (n: any) => void
 }
 
 const getOperatorSymbol = (op: string): string => {
@@ -71,102 +54,39 @@ const getOperatorSymbol = (op: string): string => {
   return OPERATOR_SYMBOLS[op] || op
 }
 
-const getRowAlertRule = (
-  row: DataTableObject,
-  alertRulesById: Record<string, AlertGroupRule>,
-  stubAlertRulesById: Record<string, AlertGroupRule>
-): AlertGroupRule | undefined => {
-  const alertRuleId = String(row.alertRuleId ?? '').trim()
-  if (!alertRuleId) return undefined
-  return alertRulesById[alertRuleId] ?? stubAlertRulesById[alertRuleId]
-}
-
-const urlHostname = (url: string): string => {
-  const trimmed = String(url ?? '').trim()
-  if (!trimmed) return ''
-  try {
-    return new URL(trimmed).hostname.toLowerCase()
-  } catch {
-    return trimmed.toLowerCase()
-  }
-}
-
-const findMatchedAlertListItem = (
-  rowId: string,
-  rowUrls: string[],
-  data: URLAlertListItem[],
-  dataById: Map<string, URLAlertListItem>,
-  dataByUrl: Map<string, URLAlertListItem>
-): URLAlertListItem | undefined => {
-  const byId = dataById.get(rowId)
-  if (byId) return byId
-
-  for (const url of rowUrls) {
-    const exact = dataByUrl.get(url)
-    if (exact) return exact
-  }
-
-  const rowHosts = new Set(rowUrls.map(urlHostname).filter(Boolean))
-  if (!rowHosts.size) return undefined
-
-  return data.find(item =>
-    item.urls.some(itemUrl => rowHosts.has(urlHostname(itemUrl)))
+const getRuleStatusBadges = (
+  rule: AlertGroupRule,
+  unknownLabel: string
+): URLAlertStatusBadge[] => {
+  const statusTarget = rule.targets?.find(
+    target => target.field === 'result_code'
   )
+  const filters =
+    rule.urlStatusFilters ??
+    (rule.urlErrorConfig
+      ? urlErrorConfigToStatusFilters(rule.urlErrorConfig)
+      : statusTarget?.urlErrorConfig
+      ? urlErrorConfigToStatusFilters(statusTarget.urlErrorConfig)
+      : undefined)
+
+  if (!filters) {
+    return []
+  }
+
+  const badges: URLAlertStatusBadge[] = []
+  if (filters.client4xx) badges.push({kind: '4xx', label: '4XX'})
+  if (filters.server5xx) badges.push({kind: '5xx', label: '5XX'})
+  if (filters.unknown) badges.push({kind: 'unknown', label: unknownLabel})
+  return badges
 }
 
-const enrichRowWithAlertRule = (
-  row: DataTableObject,
-  matchedItem: URLAlertListItem | undefined,
-  alertRulesById: Record<string, AlertGroupRule>,
-  stubAlertRulesById: Record<string, AlertGroupRule>
-): DataTableObject => {
-  const alertRuleId = String(
-    row.alertRuleId ?? matchedItem?.alertRuleId ?? ''
-  ).trim()
-  const rule = alertRuleId
-    ? alertRulesById[alertRuleId] ?? stubAlertRulesById[alertRuleId]
-    : undefined
-
-  return {
-    ...row,
-    alertRuleId: alertRuleId || row.alertRuleId,
-    trigger: rule?.trigger ?? row.trigger,
-    triggerValues: rule?.values ?? row.triggerValues,
+const renderAlertStatusBadges = (statuses: URLAlertStatusBadge[]) => {
+  if (!statuses.length) {
+    return <span>-</span>
   }
-import {getURLAlertList, getURLMonitoring, getUrlAlertRules} from 'src/url_monitoring/apis'
-
-const toNumber = (value: unknown): number | null => {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null
-  if (typeof value === 'string') {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : null
-  }
-  return null
-}
-
-const formatElapsedTime = (value: unknown): string => {
-  const ms = toNumber(value)
-  return ms === null ? '-' : `${Math.round(ms)}ms`
-}
-
-const normalizeUrls = (value: unknown): string[] => {
-  if (Array.isArray(value)) {
-    return value.map(url => String(url).trim()).filter(Boolean)
-  }
-  if (typeof value === 'string' && value.trim()) {
-    return [value.trim()]
-  }
-  return []
-}
-
-const renderAlertStatusBadges = (
-  statuses: URLAlertStatusBadge[] | undefined,
-  defaultStatuses: URLAlertStatusBadge[] = []
-) => {
-  const badges = statuses?.length ? statuses : defaultStatuses
   return (
     <div className="url-alert-status-badges">
-      {badges.map(status => (
+      {statuses.map(status => (
         <span
           key={status.kind}
           className={classnames(
@@ -220,99 +140,43 @@ const renderAlertTriggerCell = (
   return <span>-</span>
 }
 
-const INITIAL_PAGE_DATA: URLAlertPageData = {
-  config: null,
-  items: [],
-  defaultAlertStatuses: [],
-  alertRulesById: {},
-  stubAlertRulesById: {},
-}
-
-export function URLAlertPage({router, notify}: Props) {
+export function URLAlertPage({router, source, notify}: Props) {
   const {t} = useTranslation()
   const [isTableLoading, setIsTableLoading] = useState(true)
-
-  const [pageData, setPageData] = useState<URLAlertPageData>(INITIAL_PAGE_DATA)
-  const [activeOverridesById, setActiveOverridesById] = useState<
-    Record<string, boolean>
-  const [isError, setIsError] = useState(false)
-  const requestIdRef = useRef(0)
-  const pollIntervalRef = useRef<number | null>(null)
-  const urlMonitoringConfigRef = useRef<URLMonitoring | null>(null)
-  const hasSeenReadyUrlMonitoringConfigRef = useRef(false)
-
-  const [
-    urlMonitoringConfig,
-    setUrlMonitoringConfig,
-  ] = useState<URLMonitoring | null>(null)
-  const [urlMonitoringConfigReady, setUrlMonitoringConfigReady] = useState(
-    false
-  )
-  const [data, setData] = useState<URLAlertListItem[]>([])
-  const [alertRules, setAlertRules] = useState<AlertGroupRule[]>([])
-  const [defaultAlertStatuses, setDefaultAlertStatuses] = useState<
-    URLAlertStatusBadge[]
-  >([])
-  urlMonitoringConfigRef.current = urlMonitoringConfig
-
-  const [urlSheet, setUrlSheet] = useState<{
-    open: boolean
-    item: URLAlertFormSheetItem | null
-  }>({open: false, item: null})
-  const [elapsedSettingsByTargetId] = useState<
-    Record<string, {enabled: boolean; ms: number | null; alertMessage?: string}>
+  const [rules, setRules] = useState<AlertGroupRule[]>([])
+  const [targetsById, setTargetsById] = useState<
+    Record<string, URLMonitoringTarget>
   >({})
   const [activeFilter, setActiveFilter] = useState<AlertSeverityFilterValue>(
     'all'
   )
 
-  const {
-    config: urlMonitoringConfig,
-    items: data,
-    defaultAlertStatuses,
-    alertRulesById,
-    stubAlertRulesById,
-  } = pageData
+  const unknownLabel = t('url_alert.status_unknown', '알수없음')
 
-  const fetchConfig = useCallback(async () => {
+  const fetchRules = useCallback(async () => {
+    setIsTableLoading(true)
     try {
-      const config = await getURLMonitoring()
-      setPageData(prev => ({...prev, config}))
-    } catch (e) {
-      notify({
-        type: 'error',
-        icon: 'alert-triangle',
-        duration: 10000,
-        isHasHTML: false,
-        message: `Failed to fetch URL monitoring config: ${e?.message ?? e}`,
-      })
+      const {rules: nextRules, targets} = await getUrlAlertListData()
+      const map: Record<string, URLMonitoringTarget> = {}
+      for (const target of targets) {
+        if (target.id) {
+          map[target.id] = target
+        }
+      }
+      setRules(nextRules)
+      setTargetsById(map)
+    } catch (error) {
+      console.error('Failed to fetch URL alert list', error)
+      setRules([])
+      setTargetsById({})
+    } finally {
+      setIsTableLoading(false)
     }
-  }, [notify])
-
-  const renderTopLeft = () => (
-    <AlertSeverityFilter
-      activeFilter={activeFilter}
-      onChange={setActiveFilter}
-      totalCount={totalCount}
-      warningCount={warningCount}
-      criticalCount={criticalCount}
-    />
-  )
-  const openUrlSheet = useCallback((row?: DataTableObject | null) => {
-    if (!row) return
-
-    const id = String(row.id ?? '').trim()
-    if (!id) return
-
-    setUrlSheet({
-      open: true,
-      item: {
-        id,
-        name: row.name as string | string[],
-        urls: normalizeUrls(row.urls ?? row.url),
-      },
-    })
   }, [])
+
+  useEffect(() => {
+    fetchRules()
+  }, [fetchRules])
 
   const navigateToAlertSetting = useCallback(
     (ruleId?: string) => {
@@ -327,6 +191,108 @@ export function URLAlertPage({router, notify}: Props) {
     [router, source?.id]
   )
 
+  const handleToggleActive = useCallback(
+    async (rule: AlertGroupRule) => {
+      if (!rule || !rule.id) return
+
+      if (isMockUrlAlertRuleId(rule.id)) {
+        setRules(prev =>
+          prev.map(item =>
+            item.id === rule.id ? {...item, active: !item.active} : item
+          )
+        )
+        return
+      }
+
+      try {
+        const updatedRule = await updateAlertGroupRule(rule.id, {
+          ...rule,
+          active: !rule.active,
+        })
+        setRules(prev =>
+          prev.map(item => (item.id === rule.id ? updatedRule : item))
+        )
+      } catch (error) {
+        console.error('Failed to update URL alert active state', error)
+        notify(
+          notifyError(
+            t('server_alert.update_failed', '상태 변경에 실패했습니다.')
+          )
+        )
+      }
+    },
+    [notify, t]
+  )
+
+  const handleDelete = useCallback(
+    async (rule: AlertGroupRule) => {
+      if (!rule || !rule.id) return
+
+      if (isMockUrlAlertRuleId(rule.id)) {
+        setRules(prev => prev.filter(item => item.id !== rule.id))
+        notify(
+          notifySuccess(
+            t('server_alert.delete_success', '이벤트 그룹 규칙을 삭제했습니다.')
+          )
+        )
+        return
+      }
+
+      try {
+        await deleteAlertGroupRule(rule.id)
+        await fetchRules()
+        notify(
+          notifySuccess(
+            t('server_alert.delete_success', '이벤트 그룹 규칙을 삭제했습니다.')
+          )
+        )
+      } catch (error) {
+        console.error('Failed to delete URL alert rule', error)
+        notify(
+          notifyError(
+            t(
+              'server_alert.delete_failed',
+              '이벤트 그룹 규칙 삭제에 실패했습니다.'
+            )
+          )
+        )
+      }
+    },
+    [fetchRules, notify, t]
+  )
+
+  const totalCount = rules.length
+  const warningCount = rules.filter(rule =>
+    rule.conditions?.some(c => c.level === 'warning' && c.enabled)
+  ).length
+  const criticalCount = rules.filter(rule =>
+    rule.conditions?.some(c => c.level === 'critical' && c.enabled)
+  ).length
+
+  const filteredRules = useMemo(() => {
+    if (activeFilter === 'warning') {
+      return rules.filter(rule =>
+        rule.conditions?.some(c => c.level === 'warning' && c.enabled)
+      )
+    }
+    if (activeFilter === 'critical') {
+      return rules.filter(rule =>
+        rule.conditions?.some(c => c.level === 'critical' && c.enabled)
+      )
+    }
+    return rules
+  }, [rules, activeFilter])
+
+  const renderTopLeft = () => (
+    <AlertSeverityFilter
+      activeFilter={activeFilter}
+      onChange={setActiveFilter}
+      totalCount={totalCount}
+      warningCount={warningCount}
+      criticalCount={criticalCount}
+    />
+  )
+
   const renderTopRight = () => (
     <Button
       text={t('url_alert.add_event')}
@@ -337,291 +303,12 @@ export function URLAlertPage({router, notify}: Props) {
     />
   )
 
-  const resolveRowActive = useCallback(
-    (
-      rowId: string,
-      alertRuleId?: string,
-      matchedItem?: URLAlertListItem
-    ): boolean => {
-      const ruleId = String(alertRuleId ?? '').trim()
-      if (ruleId && alertRulesById[ruleId]) {
-        return alertRulesById[ruleId].active
-      }
-      if (ruleId && stubAlertRulesById[ruleId]) {
-        return stubAlertRulesById[ruleId].active
-      }
-      if (rowId && rowId in activeOverridesById) {
-        return activeOverridesById[rowId]
-      }
-      return matchedItem?.active ?? true
-    },
-    [alertRulesById, stubAlertRulesById, activeOverridesById]
-  )
-
-  const handleToggleActive = useCallback(
-    async (row: DataTableObject) => {
-      const targetId = String(row.id ?? '').trim()
-      if (!targetId) return
-
-      const alertRuleId = String(row.alertRuleId ?? '').trim()
-      const serverRule = alertRuleId ? alertRulesById[alertRuleId] : undefined
-      const stubRule = alertRuleId ? stubAlertRulesById[alertRuleId] : undefined
-      const nextActive = !Boolean(row.active)
-
-      if (serverRule?.id) {
-        setPageData(prev => ({
-          ...prev,
-          alertRulesById: {
-            ...prev.alertRulesById,
-            [serverRule.id!]: {...serverRule, active: nextActive},
-          },
-        }))
-        try {
-          const updatedRule = await updateAlertGroupRule(serverRule.id, {
-            ...serverRule,
-            active: nextActive,
-          })
-          setPageData(prev => ({
-            ...prev,
-            alertRulesById: {
-              ...prev.alertRulesById,
-              [serverRule.id!]: updatedRule,
-            },
-          }))
-        } catch (error) {
-          console.error('Failed to update URL alert active state', error)
-          setPageData(prev => ({
-            ...prev,
-            alertRulesById: {
-              ...prev.alertRulesById,
-              [serverRule.id!]: serverRule,
-            },
-          }))
-          notify(
-            notifyError(
-              t('server_alert.update_failed', '상태 변경에 실패했습니다.')
-            )
-          )
-        }
-        return
-      }
-
-      if (stubRule?.id) {
-        setPageData(prev => ({
-          ...prev,
-          stubAlertRulesById: {
-            ...prev.stubAlertRulesById,
-            [stubRule.id!]: {...stubRule, active: nextActive},
-          },
-        }))
-        return
-      }
-
-      setPageData(prev => ({
-        ...prev,
-        items: prev.items.map(item => {
-          if (item.id === targetId) {
-            return {...item, active: nextActive}
-          }
-          const rowUrls = normalizeUrls(row.urls ?? row.url)
-          if (
-            rowUrls.length > 0 &&
-            item.urls.some(url => rowUrls.includes(url))
-          ) {
-            return {...item, active: nextActive}
-          }
-          return item
-        }),
-      }))
-      setActiveOverridesById(prev => ({...prev, [targetId]: nextActive}))
-    },
-    [alertRulesById, stubAlertRulesById, notify, t]
-  )
-
-  const handleDelete = useCallback(
-    async (row: DataTableObject) => {
-      const targetId = String(row.id ?? '').trim()
-      if (!targetId) return
-
-      const hasTarget = urlMonitoringConfig?.targets?.some(
-        target => String(target.id ?? '') === targetId
-      )
-
-      try {
-        if (hasTarget) {
-          await deleteURLMonitoringTarget(targetId)
-          await fetchConfig()
-        }
-        setPageData(prev => ({
-          ...prev,
-          items: prev.items.filter(item => item.id !== targetId),
-        }))
-        notify(notifyUrlMonitoringDeleted())
-      } catch (e) {
-        notify({
-          type: 'error',
-          icon: 'alert-triangle',
-          duration: 10000,
-          isHasHTML: false,
-          message: `Failed to delete URL alert: ${e?.message ?? e}`,
-        })
-      }
-    },
-    [urlMonitoringConfig, fetchConfig, notify]
-  )
-
-  const targetRows = useMemo<DataTableObject[]>(() => {
-    if (!urlMonitoringConfig?.targets?.length) return []
-    return urlMonitoringConfig.targets.map(target => {
-      return {
-        id: target.id,
-        name: target.name,
-        urls: normalizeUrls(target.url),
-        interval: target.interval,
-        alertRuleId: target.alertRuleId,
-        elapsedTimeEnabled: target.elapsedTimeEnabled ?? false,
-        elapsedTimeMs: target.elapsedTimeMs ?? null,
-        elapsedTimeAlertMessage: target.elapsedTimeAlertMessage ?? '',
-      } as DataTableObject
-    })
-  }, [urlMonitoringConfig])
-
-  const tableRows = useMemo<DataTableObject[]>(() => {
-  const filteredData = useMemo<DataTableObject[]>(() => {
-    if (alertRules.length > 0) {
-      return alertRules.map(rule => ({
-        id: rule.id,
-        name: rule.name,
-        urls: [],
-        alertStatuses: defaultAlertStatuses,
-        elapsedTimeEnabled: false,
-        elapsedTimeMs: null,
-      }))
-    }
-
-    const dataById = new Map(data.map(item => [item.id, item]))
-    const dataByUrl = new Map<string, URLAlertListItem>()
-    for (const item of data) {
-      for (const url of item.urls) {
-        dataByUrl.set(url, item)
-      }
-    }
-
-    if (targetRows.length > 0) {
-      return targetRows.map(row => {
-        const rowUrls = normalizeUrls(row.urls ?? row.url)
-        const rowId = String(row.id ?? '')
-        const matchedItem = findMatchedAlertListItem(
-          rowId,
-          rowUrls,
-          data,
-          dataById,
-          dataByUrl
-        )
-        const resolvedAlertRuleId = String(
-          row.alertRuleId ?? matchedItem?.alertRuleId ?? ''
-        )
-        const baseRow = enrichRowWithAlertRule(
-          {
-            ...row,
-            name: matchedItem?.name ?? row.name,
-            urls: rowUrls,
-            alertRuleId: resolvedAlertRuleId || row.alertRuleId,
-            alertStatuses: matchedItem?.alertStatuses ?? defaultAlertStatuses,
-            occurrenceCount: matchedItem?.occurrenceCount ?? 1,
-            pauseSeconds: matchedItem?.pauseSeconds ?? 0,
-          },
-          matchedItem,
-          alertRulesById,
-          stubAlertRulesById
-        )
-        return {
-          ...baseRow,
-          active: resolveRowActive(rowId, resolvedAlertRuleId, matchedItem),
-        }
-      })
-    }
-
-    return data.map(item => {
-      const baseRow = enrichRowWithAlertRule(
-        {
-          id: item.id,
-          name: item.name,
-          urls: item.urls,
-          alertStatuses: item.alertStatuses,
-          alertRuleId: item.alertRuleId,
-          elapsedTimeEnabled: item.elapsedTimeEnabled,
-          elapsedTimeMs: item.elapsedTimeMs,
-          occurrenceCount: item.occurrenceCount ?? 1,
-          pauseSeconds: item.pauseSeconds ?? 0,
-        },
-        item,
-        alertRulesById,
-        stubAlertRulesById
-      )
-      return {
-        ...baseRow,
-        active: resolveRowActive(item.id, item.alertRuleId, item),
-      }
-    })
-  }, [
-    targetRows,
-    data,
-    defaultAlertStatuses,
-    resolveRowActive,
-    alertRulesById,
-    stubAlertRulesById,
-  ])
-
-  const totalCount = tableRows.length
-  const warningCount = tableRows.filter(row =>
-    getRowAlertRule(row, alertRulesById, stubAlertRulesById)?.conditions?.some(
-      c => c.level === 'warning' && c.enabled
-    )
-  ).length
-  const criticalCount = tableRows.filter(row =>
-    getRowAlertRule(row, alertRulesById, stubAlertRulesById)?.conditions?.some(
-      c => c.level === 'critical' && c.enabled
-    )
-  ).length
-
-  const filteredTableRows = useMemo(() => {
-    if (activeFilter === 'warning') {
-      return tableRows.filter(row =>
-        getRowAlertRule(
-          row,
-          alertRulesById,
-          stubAlertRulesById
-        )?.conditions?.some(c => c.level === 'warning' && c.enabled)
-      )
-    }
-    if (activeFilter === 'critical') {
-      return tableRows.filter(row =>
-        getRowAlertRule(
-          row,
-          alertRulesById,
-          stubAlertRulesById
-        )?.conditions?.some(c => c.level === 'critical' && c.enabled)
-      )
-    }
-    return tableRows
-  }, [tableRows, activeFilter, alertRulesById, stubAlertRulesById])
-    return data.map(item => ({
-      id: item.id,
-      name: item.name,
-      urls: item.urls,
-      alertStatuses: item.alertStatuses,
-      elapsedTimeEnabled: item.elapsedTimeEnabled,
-      elapsedTimeMs: item.elapsedTimeMs,
-    }))
-  }, [alertRules, targetRows, data, defaultAlertStatuses])
-
   const columns: ColumnInfo[] = useMemo(
     () => [
       {
         key: 'active',
         name: t('server_alert.active', '활성'),
-        render: (value: boolean, row: DataTableObject) => (
+        render: (value: boolean, row: AlertGroupRule) => (
           <div onClick={e => e.stopPropagation()}>
             <SlideToggle
               active={value}
@@ -632,25 +319,27 @@ export function URLAlertPage({router, notify}: Props) {
         ),
       },
       {
-        key: 'id',
+        key: 'name',
         name: t('url_alert.event_name', '이벤트 이름'),
-        name: 'Alert Name',
-        render: (_value: unknown, row: DataTableObject) =>
-          String(row.name ?? row.id ?? ''),
       },
       {
-        key: 'name',
+        key: 'urlTargetIds',
         name: 'Request / URL',
         className: 'url-alert-url-td',
         options: {
           thead: {className: 'url-alert-url-th'},
         },
-        render: (value: unknown, row: DataTableObject) => (
-          <URLAlertUrlCell
-            name={value ?? row.name}
-            urls={normalizeUrls(row.urls ?? row.url)}
-          />
-        ),
+        render: (_value: unknown, row: AlertGroupRule) => {
+          const targets = (row.urlTargetIds ?? [])
+            .map(id => targetsById[id])
+            .filter(Boolean)
+          return (
+            <URLAlertUrlCell
+              name={targets.map(target => target.name)}
+              urls={targets.map(target => target.url)}
+            />
+          )
+        },
       },
       {
         key: 'alertStatuses',
@@ -660,11 +349,8 @@ export function URLAlertPage({router, notify}: Props) {
             className: 'url-alert-status-th',
           },
         },
-        render: (value: unknown) =>
-          renderAlertStatusBadges(
-            value as URLAlertStatusBadge[] | undefined,
-            defaultAlertStatuses
-          ),
+        render: (_value: unknown, row: AlertGroupRule) =>
+          renderAlertStatusBadges(getRuleStatusBadges(row, unknownLabel)),
       },
       {
         key: 'trigger',
@@ -672,26 +358,17 @@ export function URLAlertPage({router, notify}: Props) {
         options: {
           thead: {className: 'url-alert-trigger-th'},
         },
-        render: (_value: unknown, row: DataTableObject) => {
-          const rule = getRowAlertRule(row, alertRulesById, stubAlertRulesById)
-          const trigger = rule?.trigger ?? String(row.trigger ?? '')
-          if (!trigger) {
+        render: (_value: unknown, row: AlertGroupRule) => {
+          if (!row.trigger) {
             return <span>-</span>
           }
-          return renderAlertTriggerCell(
-            trigger,
-            rule?.values ?? (row.triggerValues as AlertGroupRule['values']),
-            t
-          )
+          return renderAlertTriggerCell(row.trigger, row.values, t)
         },
       },
       {
         key: 'conditions',
         name: t('server_alert.rule', '규칙'),
-        render: (_value: unknown, row: DataTableObject) => {
-          const rule = getRowAlertRule(row, alertRulesById, stubAlertRulesById)
-          const value = rule?.conditions
-
+        render: (value: AlertCondition[], row: AlertGroupRule) => {
           if (!value || value.length === 0) {
             return (
               <div className="url-alert-rule-container">
@@ -706,9 +383,7 @@ export function URLAlertPage({router, notify}: Props) {
           return (
             <div className="url-alert-rule-container">
               <span>
-                {rule?.measurement
-                  ? `${rule.measurement} - ${rule.field}`
-                  : '-'}
+                {row.measurement ? `${row.measurement} - ${row.field}` : '-'}
               </span>
               {critical && (
                 <span className="url-alert-rule-critical">
@@ -751,8 +426,7 @@ export function URLAlertPage({router, notify}: Props) {
             className: 'url-alert-actions-th',
           },
         },
-        render: (_value: unknown, row: DataTableObject) => (
-        render: (_value: unknown, row: DataTableObject) => (
+        render: (_value: unknown, row: AlertGroupRule) => (
           <div className="url-alert-row-actions">
             <Button
               icon={IconFont.Pencil}
@@ -760,12 +434,10 @@ export function URLAlertPage({router, notify}: Props) {
               shape={ButtonShape.Square}
               color={ComponentColor.Default}
               titleText={t('url_alert.edit', 'Edit')}
-              onClick={e => e.stopPropagation()}
               onClick={e => {
                 e.stopPropagation()
-                const ruleId = String(row.id ?? '').trim()
-                if (ruleId) {
-                  navigateToAlertSetting(ruleId)
+                if (row.id) {
+                  navigateToAlertSetting(row.id)
                 }
               }}
             />
@@ -783,223 +455,14 @@ export function URLAlertPage({router, notify}: Props) {
       },
     ],
     [
-      defaultAlertStatuses,
-      alertRulesById,
-      stubAlertRulesById,
+      targetsById,
+      unknownLabel,
       t,
       handleDelete,
       handleToggleActive,
+      navigateToAlertSetting,
     ]
   )
-    [openUrlSheet, defaultAlertStatuses, navigateToAlertSetting]
-  )
-
-  const fetchTableData = useCallback(
-    async (isSubscribed: boolean, silent = false) => {
-      const requestId = requestIdRef.current + 1
-      requestIdRef.current = requestId
-
-      setIsError(false)
-      if (!silent) {
-        setIsTableLoading(true)
-      }
-
-      if (!urlMonitoringConfigReady) {
-        if (isSubscribed && requestId === requestIdRef.current && !silent) {
-          setIsTableLoading(false)
-        }
-        return
-      }
-
-      const targets = urlMonitoringConfigRef.current?.targets ?? []
-      if (targets.length === 0) {
-        if (isSubscribed && requestId === requestIdRef.current) {
-          setTableData([])
-          setIsError(false)
-          setIsTableLoading(false)
-        }
-        return
-      }
-
-      const selectedTimeRange =
-        cloudTimeRange?.urlMonitoring ?? CLOUD_TIME_RANGE.urlMonitoring
-
-      const {dashboardTime, upperDashboardTime} = createTimeRangeTemplates(
-        selectedTimeRange
-      )
-      const templates = [
-        ...generateForHosts(source),
-        dashboardTime,
-        upperDashboardTime,
-      ]
-
-      const querySet = buildUrlMonitoringQueries().map(query => ({
-        id: query.id,
-        text: query.text,
-        db: source.telegraf,
-      }))
-
-      try {
-        const results = await executeQueries(source, querySet, templates)
-        if (!isSubscribed || requestId !== requestIdRef.current) return
-
-        const mergedData = mergeResultsByUrlMonitoring(results)
-        setTableData(mergedData)
-        setIsError(false)
-      } catch (e) {
-        console.error('Failed to fetch URL monitoring data', e)
-        if (isSubscribed && requestId === requestIdRef.current) {
-          setIsError(true)
-        }
-      } finally {
-        if (isSubscribed && requestId === requestIdRef.current && !silent) {
-          setIsTableLoading(false)
-        }
-      }
-    },
-    [source, cloudTimeRange?.urlMonitoring, urlMonitoringConfigReady]
-  )
-
-  const handleManualRefresh = () => {
-    setManualRefreshState({
-      ...manualRefreshState,
-      value: Date.now(),
-    })
-  }
-
-  const handleChooseAutoRefresh = (option: {
-    milliseconds: RefreshRate
-    group?: string
-  }) => {
-    const {milliseconds, group} = option
-    onChooseCloudAutoRefresh({[group]: milliseconds})
-  }
-
-  const handleChooseTimeRange = ({lower, upper}) => {
-    if (upper) {
-      onChooseCloudTimeRange({urlMonitoring: {lower, upper}})
-    } else {
-      onChooseCloudTimeRange({
-        urlMonitoring: timeRanges.find(tr => tr.lower === lower),
-      })
-    }
-  }
-
-  useEffect(() => {
-    let isSubscribed = true
-    fetchTableData(isSubscribed)
-    return () => {
-      isSubscribed = false
-    }
-  }, [
-    fetchTableData,
-    source.id,
-    cloudTimeRange?.urlMonitoring?.lower,
-    cloudTimeRange?.urlMonitoring?.upper,
-    manualRefreshState.value,
-  ])
-
-  useEffect(() => {
-    if (!urlMonitoringConfigReady) {
-      return
-    }
-    let isSubscribed = true
-    if (hasSeenReadyUrlMonitoringConfigRef.current) {
-      void fetchTableData(isSubscribed, true)
-    } else {
-      hasSeenReadyUrlMonitoringConfigRef.current = true
-    }
-    return () => {
-      isSubscribed = false
-    }
-  }, [urlMonitoringConfig, urlMonitoringConfigReady, fetchTableData])
-
-  useEffect(() => {
-    GlobalAutoRefresher.poll(cloudAutoRefresh.urlMonitoring)
-    if (pollIntervalRef.current !== null) {
-      clearInterval(pollIntervalRef.current)
-      pollIntervalRef.current = null
-    }
-    if (!!cloudAutoRefresh.urlMonitoring) {
-      pollIntervalRef.current = window.setInterval(() => {
-        fetchTableData(true, true)
-      }, cloudAutoRefresh.urlMonitoring)
-    }
-
-    return () => {
-      if (pollIntervalRef.current !== null) {
-        clearInterval(pollIntervalRef.current)
-        pollIntervalRef.current = null
-      }
-      GlobalAutoRefresher.stopPolling()
-    }
-  }, [cloudAutoRefresh.urlMonitoring, fetchTableData])
-
-  useEffect(() => {
-    fetchConfig()
-  }, [fetchConfig])
-
-  const fetchData = useCallback(async () => {
-    try {
-      const alertList = await getURLAlertList()
-      const nextStubRules = alertList.alertRules?.length
-        ? Object.fromEntries(
-            alertList.alertRules
-              .filter(rule => rule.id)
-              .map(rule => [rule.id!, rule])
-          )
-        : {}
-      setPageData(prev => ({
-        ...prev,
-        defaultAlertStatuses: alertList.defaultAlertStatuses,
-        items: alertList.items,
-        stubAlertRulesById: nextStubRules,
-      }))
-      const [alertList, rules] = await Promise.all([
-        getURLAlertList(),
-        getUrlAlertRules(),
-      ])
-      setDefaultAlertStatuses(alertList.defaultAlertStatuses)
-      setData(alertList.items)
-      setAlertRules(rules)
-    } catch {
-      setPageData(prev => ({
-        ...prev,
-        defaultAlertStatuses: [],
-        items: [],
-        stubAlertRulesById: {},
-      }))
-    } finally {
-      setIsTableLoading(false)
-      setDefaultAlertStatuses([])
-      setData([])
-      setAlertRules([])
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
-
-  useEffect(() => {
-    let isSubscribed = true
-    getAlertGroupRules()
-      .then(rules => {
-        if (!isSubscribed) return
-        setPageData(prev => ({
-          ...prev,
-          alertRulesById: Object.fromEntries(
-            rules.filter(rule => rule.id).map(rule => [rule.id!, rule])
-          ),
-        }))
-      })
-      .catch(error => {
-        console.error('Failed to fetch alert group rules for URL alert', error)
-      })
-    return () => {
-      isSubscribed = false
-    }
-  }, [])
 
   return (
     <Page className="hosts-page url-alert-page">
@@ -1016,12 +479,12 @@ export function URLAlertPage({router, notify}: Props) {
       <Page.Contents scrollable={false} fullWidth={true}>
         <div className="url-page-graph-table-container-wrapper">
           <TableComponent
-            tableTitle={`${filteredTableRows.length} ${t(
+            tableTitle={`${filteredRules.length} ${t(
               'url_alert.table_title',
               'URL Alerts'
             )}`}
             columns={columns}
-            data={filteredTableRows}
+            data={filteredRules}
             bodyClassName="url-alert-table"
             isLoading={isTableLoading}
             isSearchDisplay={true}
