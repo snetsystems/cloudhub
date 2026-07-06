@@ -34,23 +34,14 @@ import {
   ComponentSize,
   ComponentStatus,
   IconFont,
-  OverlayTechnology,
-  OverlayContainer,
-  OverlayHeading,
-  OverlayBody,
-  Form,
-  Input,
-  InputType,
-  MultiSelectDropdown,
-  DropdownMenuColors,
-  SlideToggle,
 } from 'src/reusable_ui'
 import AlertGroupNameSection from 'src/alert_group/components/AlertGroupNameSection'
 import URLAlertConditionSection from 'src/url_monitoring/components/URLAlertConditionSection'
-import URLAlertTargetSection from 'src/url_monitoring/components/URLAlertTargetSection'
+import AlertGroupTargetSection from 'src/alert_group/components/AlertGroupTargetSection'
 import AlertGroupTemplateSidebar from 'src/alert_group/components/AlertGroupTemplateSidebar'
 import AlertGroupPreviewGraph from 'src/alert_group/components/AlertGroupPreviewGraph'
 import AlertGroupHandlersSection from 'src/alert_group/components/AlertGroupHandlersSection'
+import AlertGroupTestModal from 'src/alert_group/components/AlertGroupTestModal'
 import {
   getUrlAlertTemplates,
   getUrlAlertRule,
@@ -62,7 +53,6 @@ import {URLMonitoringTarget} from 'src/url_monitoring/types'
 import {
   createAlertGroupRule,
   updateAlertGroupRule,
-  testDraftAlertGroupNotification,
   getUserGroups,
   fetchAvailableMeasurements,
 } from 'src/alert_group/apis'
@@ -77,12 +67,6 @@ import {notifyError, notifySuccess} from 'src/shared/copy/notifications'
 const URL_ALERT_PATH = 'url-monitoring/url-alert'
 
 const DEFAULT_TIME_RANGE: TimeRange = {lower: 'now() - 1h', upper: null}
-
-const parseTestRecipients = (value: string): string[] =>
-  value
-    .split(/[\s,]+/)
-    .map(recipient => recipient.trim())
-    .filter(Boolean)
 
 const buildUrlPreviewGraphProps = (
   rule: AlertGroupRule,
@@ -230,9 +214,6 @@ const URLAlertSettingPage: React.FC<Props> = ({
   const [isSaving, setIsSaving] = useState(false)
   const [isTestModalOpen, setIsTestModalOpen] = useState(false)
   const [isTestingSend, setIsTestingSend] = useState(false)
-  const [testRecipients, setTestRecipients] = useState('')
-  const [testIncludeSelf, setTestIncludeSelf] = useState(false)
-  const [testUserGroupIds, setTestUserGroupIds] = useState<string[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState('custom')
 
   const ruleId = params.id || (location as any).query?.id
@@ -535,112 +516,18 @@ const URLAlertSettingPage: React.FC<Props> = ({
     }
   }, [location, router, source.id])
 
-  const getEmailHandler = useCallback((): AlertRuleEventHandler | undefined => {
-    return (rule.eventHandlers || []).find(handler => handler.type === 'email')
-  }, [rule.eventHandlers])
-
-  const getTestRecipientGroupIds = useCallback((): string[] => {
-    const emailHandler = getEmailHandler()
-    if (emailHandler) {
-      return [...(emailHandler.recipientGroupIds || [])]
-    }
-    return [...(rule.recipientGroupIds || [])]
-  }, [getEmailHandler, rule.recipientGroupIds])
-
-  const getTestEmailBody = useCallback((): string => {
-    const body = getEmailHandler()?.configJson?.body
-    return typeof body === 'string' ? body.trim() : ''
-  }, [getEmailHandler])
-
   const handleOpenTestModal = useCallback((): void => {
     setIsTestModalOpen(true)
-    setTestRecipients('')
-    setTestIncludeSelf(false)
-    setTestUserGroupIds(getTestRecipientGroupIds())
-  }, [getTestRecipientGroupIds])
+  }, [])
 
   const handleCloseTestModal = useCallback((): void => {
     setIsTestModalOpen(false)
     setIsTestingSend(false)
   }, [])
 
-  const handleTestRecipientsChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>): void => {
-      setTestRecipients(e.target.value)
-    },
-    []
-  )
-
-  const handleTestIncludeSelfChange = useCallback((): void => {
-    setTestIncludeSelf(prev => !prev)
+  const handleTestingSendChange = useCallback((isSending: boolean): void => {
+    setIsTestingSend(isSending)
   }, [])
-
-  const handleTestUserGroupIdsChange = useCallback(
-    (selectedIDs: string[]): void => {
-      setTestUserGroupIds(selectedIDs)
-    },
-    []
-  )
-
-  const handleTestSend = useCallback(async (): Promise<void> => {
-    const recipients = parseTestRecipients(testRecipients)
-    const title = (rule.message || '').trim()
-    const message = getTestEmailBody()
-
-    if (!title) {
-      notify(notifyError(t('alert_group_rule.noti_enter_mail_title')))
-      return
-    }
-    if (!message) {
-      notify(notifyError(t('alert_group_rule.noti_enter_email_body')))
-      return
-    }
-    if (
-      testUserGroupIds.length === 0 &&
-      recipients.length === 0 &&
-      !testIncludeSelf
-    ) {
-      notify(notifyError(t('alert_group_rule.noti_select_test_recipient')))
-      return
-    }
-
-    setIsTestingSend(true)
-
-    try {
-      const result = await testDraftAlertGroupNotification({
-        kapacitorId: rule.kapacitorId,
-        recipientGroupIds: testUserGroupIds,
-        recipients,
-        includeSelf: testIncludeSelf,
-        title,
-        message,
-      })
-
-      notify(
-        notifySuccess(
-          t('alert_group_rule.noti_test_sent_count', {count: result.sentCount})
-        )
-      )
-      setIsTestModalOpen(false)
-      setIsTestingSend(false)
-    } catch (e) {
-      notify(
-        notifyError(
-          getRequestErrorMessage(e, t('alert_group_rule.noti_test_send_fail'))
-        )
-      )
-      setIsTestingSend(false)
-    }
-  }, [
-    testRecipients,
-    rule.message,
-    rule.kapacitorId,
-    getTestEmailBody,
-    testUserGroupIds,
-    testIncludeSelf,
-    notify,
-    t,
-  ])
 
   const previewGraphProps = useMemo(
     () => buildUrlPreviewGraphProps(rule, urlTargets),
@@ -687,6 +574,7 @@ const URLAlertSettingPage: React.FC<Props> = ({
               selectedTemplateId={selectedTemplateId}
               onSelectTemplate={handleSelectTemplate}
               createNewText={t('url_alert_setting.reset', '초기화')}
+              showCreateIcon={false}
             />
             <div className="alert-group-rule-builder">
               <AlertGroupNameSection
@@ -717,13 +605,17 @@ const URLAlertSettingPage: React.FC<Props> = ({
                   timeRange={DEFAULT_TIME_RANGE}
                 />
               </URLAlertConditionSection>
-              <URLAlertTargetSection
+              <AlertGroupTargetSection
+                type="url"
+                source={source}
                 rule={rule}
                 onUpdateRule={handleUpdateRule}
               />
               <AlertGroupHandlersSection
                 rule={rule}
                 userGroups={userGroups}
+                templates={templates}
+                selectedTemplateId={selectedTemplateId}
                 source={source}
                 router={router}
                 onUpdateRule={handleUpdateRule}
@@ -734,97 +626,15 @@ const URLAlertSettingPage: React.FC<Props> = ({
           </div>
         </Spinner>
 
-        <OverlayTechnology visible={isTestModalOpen}>
-          <OverlayContainer maxWidth={480}>
-            <OverlayHeading title={t('alert_group_rule.test_modal.title')} />
-            <OverlayBody>
-              <Form>
-                <Form.Element
-                  label={t('alert_group_rule.test_modal.send_to_me')}
-                >
-                  <div className="alert-group-test-modal-email-row">
-                    <SlideToggle
-                      active={testIncludeSelf}
-                      onChange={handleTestIncludeSelfChange}
-                      size={ComponentSize.ExtraSmall}
-                      color={ComponentColor.Primary}
-                      disabled={!auth?.me?.email}
-                    />
-                    <span className="alert-group-test-modal-email-text">
-                      {auth?.me?.email
-                        ? auth.me.email
-                        : t('alert_group_rule.test_modal.no_email_warning')}
-                    </span>
-                  </div>
-                </Form.Element>
-                <Form.Element
-                  label={t('alert_group_rule.test_modal.select_groups')}
-                >
-                  {userGroups.length > 0 ? (
-                    <MultiSelectDropdown
-                      selectedIDs={testUserGroupIds}
-                      onChange={handleTestUserGroupIdsChange}
-                      buttonColor={ComponentColor.Default}
-                      buttonSize={ComponentSize.Small}
-                      menuColor={DropdownMenuColors.Onyx}
-                      emptyText={t(
-                        'alert_group_rule.test_modal.no_group_selected'
-                      )}
-                    >
-                      {userGroups.map(ug => (
-                        <MultiSelectDropdown.Item
-                          key={ug.id!}
-                          id={ug.id!}
-                          value={ug}
-                        >
-                          {ug.name}
-                        </MultiSelectDropdown.Item>
-                      ))}
-                    </MultiSelectDropdown>
-                  ) : (
-                    <p className="alert-group-test-modal-hint">
-                      {t('alert_group_rule.test_modal.no_groups_registered')}
-                    </p>
-                  )}
-                </Form.Element>
-                <Form.Element
-                  label={t('alert_group_rule.test_modal.direct_recipients')}
-                >
-                  <Input
-                    value={testRecipients}
-                    onChange={handleTestRecipientsChange}
-                    type={InputType.Text}
-                    placeholder={t(
-                      'alert_group_rule.test_modal.recipients_placeholder'
-                    )}
-                  />
-                </Form.Element>
-                <Form.Footer>
-                  <Button
-                    text={
-                      isTestingSend
-                        ? t('alert_group_rule.test_modal.sending')
-                        : t('alert_group_rule.test_modal.send_test_btn')
-                    }
-                    icon={IconFont.Bell}
-                    onClick={handleTestSend}
-                    color={ComponentColor.Success}
-                    status={
-                      isTestingSend
-                        ? ComponentStatus.Disabled
-                        : ComponentStatus.Default
-                    }
-                  />
-                  <Button
-                    text={t('button.cancel')}
-                    onClick={handleCloseTestModal}
-                    color={ComponentColor.Default}
-                  />
-                </Form.Footer>
-              </Form>
-            </OverlayBody>
-          </OverlayContainer>
-        </OverlayTechnology>
+        <AlertGroupTestModal
+          visible={isTestModalOpen}
+          rule={rule}
+          userGroups={userGroups}
+          userEmail={auth?.me?.email}
+          notify={notify}
+          onClose={handleCloseTestModal}
+          onTestingSendChange={handleTestingSendChange}
+        />
       </Page.Contents>
     </Page>
   )
