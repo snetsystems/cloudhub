@@ -6,150 +6,143 @@ template = """
 // If you edit this script for test, it will be overwritten in the next generation.
 
 var name = '{{.Name}}'
-
 var outputDB = '{{.OutputDB}}'
-
 var outputRP = '{{.OutputRP}}'
-
 var outputMeasurement = '{{.OutputMeasurement}}'
 
-var src = stream
+{{range $spec := .Specs}}
+var src_{{$spec.Index}} = stream
     |from()
-        .measurement('{{.Measurement}}'){{if .HostFilterLambda}}
-        .where(lambda: {{.HostFilterLambda}}){{end}}
-        .groupBy('host'){{if .EvalEnabled}}
-    |eval(lambda: {{.EvalExpression}})
-        .as('{{.EvalAs}}')
-        .keep(){{end}}{{if .DerivativeEnabled}}
-    |derivative('{{.DerivativeField}}'){{if .DerivativeNonNegative}}
+        .measurement('{{$spec.Measurement}}'){{if $.HostFilterLambda}}
+        .where(lambda: {{$.HostFilterLambda}}){{end}}
+        .groupBy('{{$spec.GroupByTag}}'){{if $spec.EvalEnabled}}
+    |eval(lambda: {{$spec.EvalExpression}})
+        .as('{{$spec.EvalAs}}')
+        .keep(){{end}}{{if $spec.DerivativeEnabled}}
+    |derivative('{{$spec.DerivativeField}}'){{if $spec.DerivativeNonNegative}}
         .nonNegative(){{end}}
-        .unit({{.DerivativeUnit}}){{end}}
+        .unit({{$spec.DerivativeUnit}}){{end}}
 
-{{if .DeadmanEnabled}}// deadman: alert when no points arrive for the configured period.
-var trigger = src
-    |deadman(0.0, {{.DeadmanPeriod}}){{if .NotifyRecovery}}
-        .stateChangesOnly(){{end}}{{if .Message}}
-        .message('{{.Message}}'){{end}}
-        .id('{{.TaskID}}')
+{{if $spec.DeadmanEnabled}}// deadman: alert when no points arrive for the configured period.
+var trigger_{{$spec.Index}} = src_{{$spec.Index}}
+    |deadman(0.0, {{$spec.DeadmanPeriod}}){{if $.NotifyRecovery}}
+        .stateChangesOnly(){{end}}{{if $.Message}}
+        .message('{{$.Message}}'){{end}}
+        .id('{{$.TaskID}}_{{$spec.Index}}')
         .idTag('alertID')
         .levelTag('level')
         .messageField('message')
 
-{{if or .RecipientsCrit .NotificationHandlers}}
-src
-    |deadman(0.0, {{.DeadmanPeriod}}){{if .NotifyRecovery}}
-        .stateChangesOnly({{.PauseDuration}}){{end}}
+{{if or $.RecipientsCrit $.NotificationHandlers}}
+src_{{$spec.Index}}
+    |deadman(0.0, {{$spec.DeadmanPeriod}}){{if $.NotifyRecovery}}
+        .stateChangesOnly({{$.PauseDuration}}){{end}}
         .noRecoveries()
-        .id('{{.TaskID}}-email-crit'){{if .Message}}
-        .message('{{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsCrit}}
-        .email(){{range .RecipientsCrit}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-crit'){{if $.Message}}
+        .message('{{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsCrit}}
+        .email(){{range $.RecipientsCrit}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
-{{if and .NotifyRecovery (or .RecipientsAll .NotificationHandlers)}}
-trigger
+{{if and $.NotifyRecovery (or $.RecipientsAll $.NotificationHandlers)}}
+trigger_{{$spec.Index}}
     |where(lambda: "level" == 'OK')
     |alert()
         .info(lambda: TRUE)
-        .id('{{.TaskID}}-email-recovery'){{if .Message}}
-        .message('Recovery: {{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsAll}}
-        .email(){{range .RecipientsAll}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-recovery'){{if $.Message}}
+        .message('Recovery: {{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsAll}}
+        .email(){{range $.RecipientsAll}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
 
-{{else}}{{if .RelativeEnabled}}{{.RelativeBlock}}
+{{else}}{{if $spec.RelativeEnabled}}{{$spec.RelativeBlock}}
 
-{{end}}{{if .RecentEnabled}}// occurrence_count={{.OccurrenceCount}} (recent): require N matching points inside occurrence_window={{.OccurrenceWindow}}
-{{.RecentBlock}}
-{{else if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive matching points
-var processed = {{.SourceVar}}
-    |stateCount(lambda: {{.OccurrenceLambda}})
-{{else}}var processed = {{.SourceVar}}
+{{end}}{{if $spec.RecentEnabled}}// occurrence_count={{$spec.OccurrenceCount}} (recent): require N matching points inside occurrence_window={{$spec.OccurrenceWindow}}
+{{$spec.RecentBlock}}
+{{else if $spec.OccurrenceEnabled}}// occurrence_count={{$spec.OccurrenceCount}} (consecutive): require N consecutive matching points
+var processed_{{$spec.Index}} = {{$spec.SourceVar}}_{{$spec.Index}}
+    |stateCount(lambda: {{$spec.OccurrenceLambda}})
+{{else}}var processed_{{$spec.Index}} = {{$spec.SourceVar}}_{{$spec.Index}}
 {{end}}
 // Main trigger — drives the alert-history log via influxDBOut.
-// stateChangesOnly() is gated by NotifyRecovery so the toggle controls
-// whether each input point fires (false) or only state transitions (true).
-var trigger = processed
-    |alert(){{if .Info}}
-        .info(lambda: {{.Info}}){{end}}{{if .Warn}}
-        .warn(lambda: {{.Warn}}){{end}}{{if .Crit}}
-        .crit(lambda: {{.Crit}}){{end}}{{if .NotifyRecovery}}
-        .stateChangesOnly(){{end}}{{if .Message}}
-        .message('{{.Message}}'){{end}}
-        .id('{{.TaskID}}')
+var trigger_{{$spec.Index}} = processed_{{$spec.Index}}
+    |alert(){{if $spec.Info}}
+        .info(lambda: {{$spec.Info}}){{end}}{{if $spec.Warn}}
+        .warn(lambda: {{$spec.Warn}}){{end}}{{if $spec.Crit}}
+        .crit(lambda: {{$spec.Crit}}){{end}}{{if $.NotifyRecovery}}
+        .stateChangesOnly(){{end}}{{if $.Message}}
+        .message('{{$.Message}}'){{end}}
+        .id('{{$.TaskID}}_{{$spec.Index}}')
         .idTag('alertID')
         .levelTag('level')
         .messageField('message')
 
-{{if and .EmailCrit (or .RecipientsCrit .NotificationHandlers)}}
-// CRIT email branch — consumes processed directly so stateChangesOnly({{.PauseDuration}})
-// reminders can tick on every incoming point (input flow drives the timer).
-processed
+{{if and $spec.EmailCrit (or $.RecipientsCrit $.NotificationHandlers)}}
+processed_{{$spec.Index}}
     |alert()
-        .crit(lambda: {{.EmailCrit}}){{if .NotifyRecovery}}
-        .stateChangesOnly({{.PauseDuration}}){{end}}
+        .crit(lambda: {{$spec.EmailCrit}}){{if $.NotifyRecovery}}
+        .stateChangesOnly({{$.PauseDuration}}){{end}}
         .noRecoveries()
-        .id('{{.TaskID}}-email-crit'){{if .Message}}
-        .message('{{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsCrit}}
-        .email(){{range .RecipientsCrit}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-crit'){{if $.Message}}
+        .message('{{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsCrit}}
+        .email(){{range $.RecipientsCrit}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
-{{if and .EmailWarn (or .RecipientsWarn .NotificationHandlers)}}
-// WARN email branch — lambda excludes CRIT so a CRIT-matching value does not also fire WARN.
-processed
+{{if and $spec.EmailWarn (or $.RecipientsWarn $.NotificationHandlers)}}
+processed_{{$spec.Index}}
     |alert()
-        .warn(lambda: {{.EmailWarn}}){{if .NotifyRecovery}}
-        .stateChangesOnly({{.PauseDuration}}){{end}}
+        .warn(lambda: {{$spec.EmailWarn}}){{if $.NotifyRecovery}}
+        .stateChangesOnly({{$.PauseDuration}}){{end}}
         .noRecoveries()
-        .id('{{.TaskID}}-email-warn'){{if .Message}}
-        .message('{{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsWarn}}
-        .email(){{range .RecipientsWarn}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-warn'){{if $.Message}}
+        .message('{{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsWarn}}
+        .email(){{range $.RecipientsWarn}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
-{{if and .EmailInfo (or .RecipientsInfo .NotificationHandlers)}}
-// INFO email branch — lambda excludes WARN and CRIT.
-processed
+{{if and $spec.EmailInfo (or $.RecipientsInfo $.NotificationHandlers)}}
+processed_{{$spec.Index}}
     |alert()
-        .info(lambda: {{.EmailInfo}}){{if .NotifyRecovery}}
-        .stateChangesOnly({{.PauseDuration}}){{end}}
+        .info(lambda: {{$spec.EmailInfo}}){{if $.NotifyRecovery}}
+        .stateChangesOnly({{$.PauseDuration}}){{end}}
         .noRecoveries()
-        .id('{{.TaskID}}-email-info'){{if .Message}}
-        .message('{{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsInfo}}
-        .email(){{range .RecipientsInfo}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-info'){{if $.Message}}
+        .message('{{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsInfo}}
+        .email(){{range $.RecipientsInfo}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
-{{if and .NotifyRecovery (or .RecipientsAll .NotificationHandlers)}}
+{{if and $.NotifyRecovery (or $.RecipientsAll $.NotificationHandlers)}}
 // Recovery branch — chained off main trigger so we only emit on state-change to OK.
-trigger
+trigger_{{$spec.Index}}
     |where(lambda: "level" == 'OK')
     |alert()
         .info(lambda: TRUE)
-        .id('{{.TaskID}}-email-recovery'){{if .Message}}
-        .message('Recovery: {{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsAll}}
-        .email(){{range .RecipientsAll}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-recovery'){{if $.Message}}
+        .message('Recovery: {{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsAll}}
+        .email(){{range $.RecipientsAll}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
 {{end}}
 
-trigger
+trigger_{{$spec.Index}}
     |influxDBOut()
         .create()
         .database(outputDB)
         .retentionPolicy(outputRP)
         .measurement(outputMeasurement)
         .tag('alertName', name)
-        .tag('triggerType', '{{.TriggerType}}')
+        .tag('triggerType', '{{$spec.TriggerType}}')
+{{end}}
 {{ end }}
 
 {{ define "batch" }}
@@ -157,88 +150,86 @@ trigger
 // If you edit this script for test, it will be overwritten in the next generation.
 
 var name = '{{.Name}}'
-
 var outputDB = '{{.OutputDB}}'
-
 var outputRP = '{{.OutputRP}}'
-
 var outputMeasurement = '{{.OutputMeasurement}}'
 
-var src = batch
-    |query('SELECT {{.Field}} FROM "{{.Measurement}}" WHERE time > -{{.Every}}{{.HostFilterSQL}}')
-        .every({{.Every}})
-        .groupBy('host')
+{{range $spec := .Specs}}
+var src_{{$spec.Index}} = batch
+    |query('SELECT {{$spec.Field}} FROM "{{$spec.Measurement}}" WHERE time > -{{$spec.Every}}{{$.HostFilterSQL}}')
+        .every({{$spec.Every}})
+        .groupBy('{{$spec.GroupByTag}}')
 
-{{if .OccurrenceEnabled}}// occurrence_count={{.OccurrenceCount}} (consecutive): require N consecutive matching batches
-var processed = src
-    |stateCount(lambda: {{.OccurrenceLambda}})
-{{else}}var processed = src
+{{if $spec.OccurrenceEnabled}}// occurrence_count={{$spec.OccurrenceCount}} (consecutive): require N consecutive matching batches
+var processed_{{$spec.Index}} = src_{{$spec.Index}}
+    |stateCount(lambda: {{$spec.OccurrenceLambda}})
+{{else}}var processed_{{$spec.Index}} = src_{{$spec.Index}}
 {{end}}
-var trigger = processed
-    |alert(){{if .Info}}
-        .info(lambda: {{.Info}}){{end}}{{if .Warn}}
-        .warn(lambda: {{.Warn}}){{end}}{{if .Crit}}
-        .crit(lambda: {{.Crit}}){{end}}{{if .NotifyRecovery}}
-        .stateChangesOnly(){{end}}{{if .Message}}
-        .message('{{.Message}}'){{end}}
-        .id('{{.TaskID}}')
+var trigger_{{$spec.Index}} = processed_{{$spec.Index}}
+    |alert(){{if $spec.Info}}
+        .info(lambda: {{$spec.Info}}){{end}}{{if $spec.Warn}}
+        .warn(lambda: {{$spec.Warn}}){{end}}{{if $spec.Crit}}
+        .crit(lambda: {{$spec.Crit}}){{end}}{{if $.NotifyRecovery}}
+        .stateChangesOnly(){{end}}{{if $.Message}}
+        .message('{{$.Message}}'){{end}}
+        .id('{{$.TaskID}}_{{$spec.Index}}')
         .idTag('alertID')
         .levelTag('level')
         .messageField('message')
 
-{{if and .Crit (or .RecipientsCrit .NotificationHandlers)}}
-processed
+{{if and $spec.Crit (or $.RecipientsCrit $.NotificationHandlers)}}
+processed_{{$spec.Index}}
     |alert()
-        .crit(lambda: {{.Crit}}){{if .NotifyRecovery}}
-        .stateChangesOnly({{.PauseDuration}}){{end}}
+        .crit(lambda: {{$spec.Crit}}){{if $.NotifyRecovery}}
+        .stateChangesOnly({{$.PauseDuration}}){{end}}
         .noRecoveries()
-        .id('{{.TaskID}}-email-crit'){{if .Message}}
-        .message('{{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsCrit}}
-        .email(){{range .RecipientsCrit}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-crit'){{if $.Message}}
+        .message('{{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsCrit}}
+        .email(){{range $.RecipientsCrit}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
-{{if and .Warn (or .RecipientsWarn .NotificationHandlers)}}
-processed
+{{if and $spec.Warn (or $.RecipientsWarn $.NotificationHandlers)}}
+processed_{{$spec.Index}}
     |alert()
-        .warn(lambda: {{.Warn}}){{if .NotifyRecovery}}
-        .stateChangesOnly({{.PauseDuration}}){{end}}
+        .warn(lambda: {{$spec.Warn}}){{if $.NotifyRecovery}}
+        .stateChangesOnly({{$.PauseDuration}}){{end}}
         .noRecoveries()
-        .id('{{.TaskID}}-email-warn'){{if .Message}}
-        .message('{{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsWarn}}
-        .email(){{range .RecipientsWarn}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-warn'){{if $.Message}}
+        .message('{{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsWarn}}
+        .email(){{range $.RecipientsWarn}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
-{{if and .Info (or .RecipientsInfo .NotificationHandlers)}}
-processed
+{{if and $spec.Info (or $.RecipientsInfo $.NotificationHandlers)}}
+processed_{{$spec.Index}}
     |alert()
-        .info(lambda: {{.Info}}){{if .NotifyRecovery}}
-        .stateChangesOnly({{.PauseDuration}}){{end}}
+        .info(lambda: {{$spec.Info}}){{if $.NotifyRecovery}}
+        .stateChangesOnly({{$.PauseDuration}}){{end}}
         .noRecoveries()
-        .id('{{.TaskID}}-email-info'){{if .Message}}
-        .message('{{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsInfo}}
-        .email(){{range .RecipientsInfo}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-info'){{if $.Message}}
+        .message('{{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsInfo}}
+        .email(){{range $.RecipientsInfo}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
-{{if and .NotifyRecovery (or .RecipientsAll .NotificationHandlers)}}
-trigger
+{{if and $.NotifyRecovery (or $.RecipientsAll $.NotificationHandlers)}}
+trigger_{{$spec.Index}}
     |where(lambda: "level" == 'OK')
     |alert()
         .info(lambda: TRUE)
-        .id('{{.TaskID}}-email-recovery'){{if .Message}}
-        .message('Recovery: {{.Message}}'){{end}}{{if .EmailBody}}
-        .details('{{.EmailBody}}'){{end}}
-        {{.NotificationHandlers}}{{if .RecipientsAll}}
-        .email(){{range .RecipientsAll}}
+        .id('{{$.TaskID}}_{{$spec.Index}}-email-recovery'){{if $.Message}}
+        .message('Recovery: {{$.Message}}'){{end}}{{if $.EmailBody}}
+        .details('{{$.EmailBody}}'){{end}}
+        {{$.NotificationHandlers}}{{if $.RecipientsAll}}
+        .email(){{range $.RecipientsAll}}
             .to('{{.}}'){{end}}{{end}}
 {{end}}
 
-trigger
+trigger_{{$spec.Index}}
     |influxDBOut()
         .create()
         .database(outputDB)
@@ -246,5 +237,6 @@ trigger
         .measurement(outputMeasurement)
         .tag('alertName', name)
         .tag('triggerType', 'threshold')
+{{end}}
 {{ end }}
 """

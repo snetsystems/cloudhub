@@ -47,13 +47,21 @@ func (s *Service) AlertGroupRulesGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for i := range rules {
+		denormalizeAlertGroupRuleConditionOperators(&rules[i])
 		recipients, err := s.resolveRuleRecipients(ctx, rules[i])
 		if err != nil {
 			s.Logger.Error("AlertGroupRulesGet: resolve recipients:", err)
 			continue
 		}
-		hostnames, _ := s.AlertGroupRules.Hostnames(ctx, rules[i].ID)
-		rules[i].Tickscript, _ = kapackage.AlertGroupRuleTICKScript(rules[i], recipients, hostnames)
+		processor := getTargetProcessor(rules[i], s.AlertGroupRules)
+		var targets []string
+		if processor.Type() == "url" {
+			targets = rules[i].URLTargetIDs
+		} else {
+			targets, _ = s.AlertGroupRules.Hostnames(ctx, rules[i].ID)
+		}
+		filter := processor.BuildTickscriptFilter(targets)
+		rules[i].Tickscript, _ = kapackage.AlertGroupRuleTICKScript(rules[i], recipients, filter)
 	}
 	encodeJSON(w, http.StatusOK, map[string]interface{}{"alertGroupRules": rules}, s.Logger)
 }
@@ -78,7 +86,7 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
-	if err := validateAlertGroupRuleInput(req); err != nil {
+	if err := validateAlertGroupRuleInput(&req); err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
@@ -93,24 +101,22 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	if err := s.AlertGroupRules.SetURLTargets(ctx, rule.ID, req.URLTargetIDs); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 	if err := s.AlertGroupRules.SetEventHandlers(ctx, rule.ID, req.EventHandlers); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	if len(req.Conditions) > 0 {
-		if err := s.AlertGroupRules.SetConditions(ctx, rule.ID, req.Conditions); err != nil {
-			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-			return
-		}
-	}
+	
 	rule.Hostnames = req.Hostnames
 	if handlers, err := s.AlertGroupRules.EventHandlersByRule(ctx, rule.ID); err == nil {
 		rule.EventHandlers = handlers
 	} else {
 		rule.EventHandlers = req.EventHandlers
 	}
-	rule.Conditions = req.Conditions
-	recipients, err := s.resolveRuleRecipients(ctx, rule)
+		recipients, err := s.resolveRuleRecipients(ctx, rule)
 	if err != nil {
 		s.Logger.Error("AlertGroupRuleCreate: resolve recipients:", err)
 		internalServerError(w, err, s.Logger)
@@ -121,8 +127,15 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 		internalServerError(w, err, s.Logger)
 		return
 	}
-	hostnames, _ := s.AlertGroupRules.Hostnames(ctx, rule.ID)
-	rule.Tickscript, _ = kapackage.AlertGroupRuleTICKScript(rule, recipients, hostnames)
+	processor := getTargetProcessor(rule, s.AlertGroupRules)
+	var targets []string
+	if processor.Type() == "url" {
+		targets = rule.URLTargetIDs
+	} else {
+		targets = rule.Hostnames
+	}
+	filter := processor.BuildTickscriptFilter(targets)
+	rule.Tickscript, _ = kapackage.AlertGroupRuleTICKScript(rule, recipients, filter)
 	encodeJSON(w, http.StatusCreated, rule, s.Logger)
 }
 
@@ -135,12 +148,20 @@ func (s *Service) AlertGroupRuleIDGet(w http.ResponseWriter, r *http.Request) {
 		notFound(w, id, s.Logger)
 		return
 	}
+	denormalizeAlertGroupRuleConditionOperators(&rule)
 	recipients, err := s.resolveRuleRecipients(ctx, rule)
 	if err != nil {
 		s.Logger.Error("AlertGroupRuleIDGet: resolve recipients:", err)
 	}
-	hostnames, _ := s.AlertGroupRules.Hostnames(ctx, rule.ID)
-	rule.Tickscript, _ = kapackage.AlertGroupRuleTICKScript(rule, recipients, hostnames)
+	processor := getTargetProcessor(rule, s.AlertGroupRules)
+	var targets []string
+	if processor.Type() == "url" {
+		targets = rule.URLTargetIDs
+	} else {
+		targets = rule.Hostnames
+	}
+	filter := processor.BuildTickscriptFilter(targets)
+	rule.Tickscript, _ = kapackage.AlertGroupRuleTICKScript(rule, recipients, filter)
 	encodeJSON(w, http.StatusOK, rule, s.Logger)
 }
 
@@ -171,7 +192,7 @@ func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
-	if err := validateAlertGroupRuleInput(req); err != nil {
+	if err := validateAlertGroupRuleInput(&req); err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
@@ -184,16 +205,15 @@ func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	if err := s.AlertGroupRules.SetURLTargets(ctx, id, req.URLTargetIDs); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
 	if err := s.AlertGroupRules.SetEventHandlers(ctx, id, req.EventHandlers); err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
-	if len(req.Conditions) > 0 {
-		if err := s.AlertGroupRules.SetConditions(ctx, id, req.Conditions); err != nil {
-			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-			return
-		}
-	}
+	
 	if handlers, err := s.AlertGroupRules.EventHandlersByRule(ctx, id); err == nil {
 		req.EventHandlers = handlers
 	}
@@ -208,8 +228,15 @@ func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 		internalServerError(w, err, s.Logger)
 		return
 	}
-	hostnames, _ := s.AlertGroupRules.Hostnames(ctx, id)
-	req.Tickscript, _ = kapackage.AlertGroupRuleTICKScript(req, recipients, hostnames)
+	processor := getTargetProcessor(req, s.AlertGroupRules)
+	var targets []string
+	if processor.Type() == "url" {
+		targets = req.URLTargetIDs
+	} else {
+		targets, _ = s.AlertGroupRules.Hostnames(ctx, req.ID)
+	}
+	filter := processor.BuildTickscriptFilter(targets)
+	req.Tickscript, _ = kapackage.AlertGroupRuleTICKScript(req, recipients, filter)
 	encodeJSON(w, http.StatusOK, req, s.Logger)
 }
 
@@ -375,6 +402,13 @@ func (s *Service) AlertGroupRuleSetEventHandlers(w http.ResponseWriter, r *http.
 // SyncKapacitorTask aligns Kapacitor with the rule. Recipients are passed pre-resolved
 // so the tickscript embeds the current static email list.
 func (s *Service) syncKapacitorTask(ctx context.Context, rule cloudhub.AlertGroupRule, recipients kapackage.AlertRecipients) error {
+	db := "cloudhub"
+	rp := "autogen"
+	if len(rule.Specs) > 0 && rule.Specs[0].Database != "" {
+		db = rule.Specs[0].Database
+		rp = rule.Specs[0].RetentionPolicy
+	}
+
 	if rule.KapacitorID == "" {
 		return nil
 	}
@@ -383,26 +417,31 @@ func (s *Service) syncKapacitorTask(ctx context.Context, rule cloudhub.AlertGrou
 		return fmt.Errorf("syncKapacitorTask: get kapacitor: %w", err)
 	}
 	taskID := "alert-group-" + rule.ID
-	var hostnames []string
-	if s.AlertGroupRules != nil {
-		hostnames, err = s.AlertGroupRules.Hostnames(ctx, rule.ID)
-		if err != nil {
-			return fmt.Errorf("syncKapacitorTask: resolve hostnames: %w", err)
-		}
+	processor := getTargetProcessor(rule, s.AlertGroupRules)
+	var targets []string
+	if processor.Type() == "url" {
+		targets, err = s.AlertGroupRules.URLTargetIDs(ctx, rule.ID)
+	} else {
+		targets, err = s.AlertGroupRules.Hostnames(ctx, rule.ID)
 	}
+	if err != nil {
+		return fmt.Errorf("syncKapacitorTask: resolve targets: %w", err)
+	}
+	
 	s.Logger.Info(fmt.Sprintf(
-		"alert-group sync start task=%s rule=%s kapacitor=%s active=%t db=%s rp=%s recipients=%d/%d/%d hosts=%d",
-		taskID, rule.ID, rule.KapacitorID, rule.Active, rule.Database, rule.RetentionPolicy,
-		len(recipients.Info), len(recipients.Warn), len(recipients.Crit), len(hostnames),
+		"alert-group sync start task=%s rule=%s kapacitor=%s active=%t db=%s rp=%s recipients=%d/%d/%d targets=%d",
+		taskID, rule.ID, rule.KapacitorID, rule.Active, db, rp,
+		len(recipients.Info), len(recipients.Warn), len(recipients.Crit), len(targets),
 	))
 
-	tick, err := kapackage.AlertGroupRuleTICKScript(rule, recipients, hostnames)
+	filter := processor.BuildTickscriptFilter(targets)
+	tick, err := kapackage.AlertGroupRuleTICKScript(rule, recipients, filter)
 	if err != nil {
 		return fmt.Errorf("syncKapacitorTask: generate tickscript: %w", err)
 	}
 
 	if !rule.Active {
-		missing, err := patchKapacitorTask(kapa.URL, taskID, tick, rule.Database, rule.RetentionPolicy, "disabled")
+		missing, err := patchKapacitorTask(kapa.URL, taskID, tick, db, rp, "disabled")
 		if err != nil {
 			s.Logger.Error(fmt.Sprintf("alert-group sync disable failed task=%s error=%v", taskID, err))
 			return err
@@ -415,13 +454,13 @@ func (s *Service) syncKapacitorTask(ctx context.Context, rule cloudhub.AlertGrou
 		return nil
 	}
 
-	missing, err := patchKapacitorTask(kapa.URL, taskID, tick, rule.Database, rule.RetentionPolicy, "enabled")
+	missing, err := patchKapacitorTask(kapa.URL, taskID, tick, db, rp, "enabled")
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("alert-group sync patch failed task=%s error=%v", taskID, err))
 		return err
 	}
 	if missing {
-		if err := createKapacitorTask(kapa.URL, taskID, tick, rule.Database, rule.RetentionPolicy); err != nil {
+		if err := createKapacitorTask(kapa.URL, taskID, tick, db, rp); err != nil {
 			s.Logger.Error(fmt.Sprintf("alert-group sync create failed task=%s error=%v", taskID, err))
 			return err
 		}
@@ -495,43 +534,115 @@ func (s *Service) validateAlertGroupKapacitor(ctx context.Context, orgID, kapaci
 	return nil
 }
 
-func validateAlertGroupRuleInput(rule cloudhub.AlertGroupRule) error {
-	if strings.TrimSpace(rule.Database) == "" {
-		return fmt.Errorf("database is required")
-	}
-	if strings.TrimSpace(rule.RetentionPolicy) == "" {
-		return fmt.Errorf("retentionPolicy is required")
-	}
-	if strings.TrimSpace(rule.Measurement) == "" {
-		return fmt.Errorf("measurement is required")
-	}
-	if strings.TrimSpace(rule.Field) == "" {
-		return fmt.Errorf("field is required")
-	}
-
-	trigger := strings.TrimSpace(strings.ToLower(rule.Trigger))
-	if trigger == "" {
-		trigger = cloudhub.AlertGroupRuleTriggerThreshold
-	}
-	if trigger == cloudhub.AlertGroupRuleTriggerDeadman {
-		tt := strings.TrimSpace(strings.ToLower(rule.TaskType))
-		if tt == "" {
-			tt = cloudhub.AlertGroupRuleTaskTypeStream
+func validateAlertGroupRuleInput(rule *cloudhub.AlertGroupRule) error {
+	for _, spec := range rule.Specs {
+		if strings.TrimSpace(spec.Database) == "" {
+			return fmt.Errorf("database is required in spec")
 		}
-		if tt != cloudhub.AlertGroupRuleTaskTypeStream {
-			return fmt.Errorf("deadman alert rules require task type stream")
+		if strings.TrimSpace(spec.RetentionPolicy) == "" {
+			return fmt.Errorf("retentionPolicy is required in spec")
+		}
+		if strings.TrimSpace(spec.Measurement) == "" {
+			return fmt.Errorf("measurement is required in spec")
+		}
+		if strings.TrimSpace(spec.Field) == "" {
+			return fmt.Errorf("field is required in spec")
+		}
+
+		trigger := strings.TrimSpace(strings.ToLower(spec.Trigger))
+		if trigger == "" {
+			trigger = cloudhub.AlertGroupRuleTriggerThreshold
+		}
+		if trigger == cloudhub.AlertGroupRuleTriggerDeadman {
+			tt := strings.TrimSpace(strings.ToLower(rule.TaskType))
+			if tt == "" {
+				tt = cloudhub.AlertGroupRuleTaskTypeStream
+			}
+			if tt != cloudhub.AlertGroupRuleTaskTypeStream {
+				return fmt.Errorf("deadman alert rules require task type stream")
+			}
+			if spec.TriggerValues == nil || strings.TrimSpace(spec.TriggerValues.Period) == "" {
+				return fmt.Errorf("deadman alert rules require a period in values")
+			}
+		}
+		if trigger == cloudhub.AlertGroupRuleTriggerRelative {
+			if spec.TriggerValues == nil || strings.TrimSpace(spec.TriggerValues.Shift) == "" {
+				return fmt.Errorf("relative alert rules require a shift in values")
+			}
+			if strings.TrimSpace(spec.TriggerValues.Change) == "" {
+				return fmt.Errorf("relative alert rules require a change type in values")
+			}
 		}
 	}
 	if err := validateAlertRuleEventHandlers(rule.EventHandlers); err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func normalizeAlertGroupRuleConditionOperators(rule *cloudhub.AlertGroupRule) {
-	for i := range rule.Conditions {
-		rule.Conditions[i].Operator = cloudhub.NormalizeAlertConditionOperator(rule.Conditions[i].Operator)
+	for i := range rule.Specs {
+		var expanded []cloudhub.AlertRuleCondition
+		for _, c := range rule.Specs[i].Conditions {
+			c.Operator = cloudhub.NormalizeAlertConditionOperator(c.Operator)
+			expanded = append(expanded, c)
+		}
+		if rule.Specs[i].UrlErrorConfig != nil {
+			if rule.Specs[i].UrlErrorConfig.Check4xx {
+				expanded = append(expanded, cloudhub.AlertRuleCondition{
+					Level:    "url_4xx",
+					Operator: "greater_equal",
+					Value:    400,
+					Enabled:  true,
+				})
+			}
+			if rule.Specs[i].UrlErrorConfig.Check5xx {
+				expanded = append(expanded, cloudhub.AlertRuleCondition{
+					Level:    "url_5xx",
+					Operator: "greater_equal",
+					Value:    500,
+					Enabled:  true,
+				})
+			}
+			if rule.Specs[i].UrlErrorConfig.Unknown {
+				expanded = append(expanded, cloudhub.AlertRuleCondition{
+					Level:    "url_unknown",
+					Operator: "equal",
+					Value:    0,
+					Enabled:  true,
+				})
+			}
+			rule.Specs[i].UrlErrorConfig = nil
+		}
+		rule.Specs[i].Conditions = expanded
+	}
+}
+
+func denormalizeAlertGroupRuleConditionOperators(rule *cloudhub.AlertGroupRule) {
+	for i := range rule.Specs {
+		var filtered []cloudhub.AlertRuleCondition
+		var urlConfig cloudhub.UrlErrorConfig
+		hasUrlConfig := false
+
+		for _, c := range rule.Specs[i].Conditions {
+			switch c.Level {
+			case "url_4xx":
+				urlConfig.Check4xx = true
+				hasUrlConfig = true
+			case "url_5xx":
+				urlConfig.Check5xx = true
+				hasUrlConfig = true
+			case "url_unknown":
+				urlConfig.Unknown = true
+				hasUrlConfig = true
+			default:
+				filtered = append(filtered, c)
+			}
+		}
+		if hasUrlConfig {
+			rule.Specs[i].UrlErrorConfig = &urlConfig
+		}
+		rule.Specs[i].Conditions = filtered
 	}
 }
 
@@ -948,4 +1059,11 @@ func createKapacitorTask(kapaURL, taskID, tick, database, retentionPolicy string
 		return fmt.Errorf("kapacitor create task %d: %s", resp.StatusCode, b)
 	}
 	return nil
+}
+
+func getTargetProcessor(rule cloudhub.AlertGroupRule, store cloudhub.AlertGroupRuleStore) TargetProcessor {
+	if len(rule.URLTargetIDs) > 0 {
+		return &URLTargetProcessor{Store: store}
+	}
+	return &HostTargetProcessor{Store: store}
 }

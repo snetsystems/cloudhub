@@ -88,27 +88,28 @@ func TestAlertGroupRule_TickscriptE2E(t *testing.T) {
 		OrgID:           orgID,
 		KapacitorID:     kapa.ID,
 		Name:            "cpu-e2e",
-		Database:        "telegraf",
-		RetentionPolicy: "autogen",
-		Measurement:     "cpu",
-		Field:           "usage_user",
-		TaskType:        "stream",
-		Every:           "10s",
-		OccurrenceType:  "consecutive",
-		OccurrenceCount: 1,
-		Message:         "CPU high on {{ index .Tags \"host\" }}",
-		Active:          true,
-		Conditions: []cloudhub.AlertRuleCondition{
-			{Level: "warning", Value: 70, Enabled: true},
-			{Level: "critical", Value: 90, Enabled: true},
+		Specs: []cloudhub.AlertRuleSpec{
+			{
+				Database:        "telegraf",
+				RetentionPolicy: "autogen",
+				Measurement:     "cpu",
+				Field:           "usage_user",
+				Every:           "10s",
+				Conditions: []cloudhub.AlertRuleCondition{
+					{Level: "warning", Value: 70, Enabled: true},
+					{Level: "critical", Value: 90, Enabled: true},
+				},
+			},
 		},
 	})
 	if err != nil {
 		t.Fatalf("AlertRule.Add: %v", err)
 	}
 
-	if err := ruleStore.SetRecipientGroups(ctx, rule.ID, []string{g.ID}); err != nil {
-		t.Fatalf("SetRecipientGroups: %v", err)
+	if err := ruleStore.SetEventHandlers(ctx, rule.ID, []cloudhub.AlertRuleEventHandler{
+		{Type: "email", RecipientGroupIDs: []string{g.ID}, Enabled: true},
+	}); err != nil {
+		t.Fatalf("SetEventHandlers: %v", err)
 	}
 	if err := ruleStore.SetHosts(ctx, rule.ID, []string{"e2e-host-01"}); err != nil {
 		t.Fatalf("SetHosts: %v", err)
@@ -119,20 +120,28 @@ func TestAlertGroupRule_TickscriptE2E(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AlertRule.Get: %v", err)
 	}
-	if len(full.Conditions) != 2 {
-		t.Fatalf("expected 2 conditions hydrated, got %d", len(full.Conditions))
+	if len(full.Specs[0].Conditions) != 2 {
+		t.Fatalf("expected 2 conditions hydrated, got %d", len(full.Specs[0].Conditions))
 	}
-	if len(full.RecipientGroupIDs) != 1 || full.RecipientGroupIDs[0] != g.ID {
-		t.Fatalf("expected RecipientGroupIDs=[%s], got %+v", g.ID, full.RecipientGroupIDs)
+	if len(full.EventHandlers) != 1 || full.EventHandlers[0].RecipientGroupIDs[0] != g.ID {
+		t.Fatalf("expected EventHandlers to have group %s", g.ID)
 	}
 	if len(full.Hostnames) != 1 || full.Hostnames[0] != "e2e-host-01" {
 		t.Fatalf("expected Hostnames=[e2e-host-01], got %+v", full.Hostnames)
 	}
 
 	// 6. Build the prefs map.
-	groups, err := ruleStore.RecipientGroupsByRule(ctx, full.ID)
+	handlers, err := ruleStore.EventHandlersByRule(ctx, full.ID)
 	if err != nil {
-		t.Fatalf("RecipientGroupsByRule: %v", err)
+		t.Fatalf("EventHandlersByRule: %v", err)
+	}
+	
+	groups := []cloudhub.RecipientGroup{}
+	for _, h := range handlers {
+		for _, groupID := range h.RecipientGroupIDs {
+			group, _ := rgStore.Get(ctx, groupID)
+			groups = append(groups, group)
+		}
 	}
 	prefs := map[string]cloudhub.AlertRecipientMemberPrefs{}
 	for _, gg := range groups {
@@ -146,7 +155,8 @@ func TestAlertGroupRule_TickscriptE2E(t *testing.T) {
 
 	// 7. Resolve recipients + generate tickscript.
 	recipients := kapackage.ResolveAlertRecipients(full, groups, prefs)
-	tick, err := kapackage.AlertGroupRuleTICKScript(full, recipients, full.Hostnames)
+	targetFilter := `"host" == 'e2e-host-01'`
+	tick, err := kapackage.AlertGroupRuleTICKScript(full, recipients, targetFilter)
 	if err != nil {
 		t.Fatalf("AlertGroupRuleTICKScript: %v", err)
 	}
@@ -179,7 +189,7 @@ func TestAlertGroupRule_TickscriptE2E(t *testing.T) {
 	body := map[string]interface{}{
 		"id":     taskID,
 		"type":   "stream",
-		"dbrps":  []map[string]string{{"db": full.Database, "rp": full.RetentionPolicy}},
+		"dbrps":  []map[string]string{{"db": full.Specs[0].Database, "rp": full.Specs[0].RetentionPolicy}},
 		"script": tick,
 		"status": "enabled",
 	}

@@ -26,15 +26,7 @@ func NewAlertRuleStore(client *Client) *AlertRuleStore {
 // RawClient exposes the underlying client for one-off admin scripts.
 func (s *AlertRuleStore) RawClient() *Client { return s.client }
 
-func normalizeAlertRuleTrigger(t string) string {
-	t = strings.TrimSpace(strings.ToLower(t))
-	if t == "" {
-		return cloudhub.AlertGroupRuleTriggerThreshold
-	}
-	return t
-}
-
-const alertRuleCols = `id, org_id, kapacitor_id, name, database, retention_policy, measurement, field, rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as, delete_yn, created_at, updated_at`
+const alertRuleCols = `id, org_id, kapacitor_id, name, task_type, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as, delete_yn, created_at, updated_at`
 
 func (s *AlertRuleStore) scan(row interface{ Scan(...any) error }) (cloudhub.AlertGroupRule, error) {
 	var r cloudhub.AlertGroupRule
@@ -42,9 +34,8 @@ func (s *AlertRuleStore) scan(row interface{ Scan(...any) error }) (cloudhub.Ale
 	var derivativeEnabled, derivativeNonNegative bool
 	var derivativeUnit, evalExpression, evalAs string
 	if err := row.Scan(
-		&r.ID, &r.OrgID, &r.KapacitorID, &r.Name, &r.Database, &r.RetentionPolicy,
-		&r.Measurement, &r.Field,
-		&r.Trigger, &r.TaskType, &r.Every, &r.OccurrenceType, &r.OccurrenceCount,
+		&r.ID, &r.OrgID, &r.KapacitorID, &r.Name,
+		&r.TaskType, &r.OccurrenceType, &r.OccurrenceCount,
 		&r.OccurrenceWindow, &r.PauseSeconds, &r.NotifyRecovery, &r.Message, &r.Active,
 		&derivativeEnabled, &derivativeNonNegative, &derivativeUnit, &evalExpression, &evalAs,
 		&r.DeleteYN, &ca, &ua,
@@ -60,8 +51,7 @@ func (s *AlertRuleStore) scan(row interface{ Scan(...any) error }) (cloudhub.Ale
 			Unit:        derivativeUnit,
 		}
 	}
-	// Eval is nil unless both expression and alias are present — empty defaults
-	// from the migration mean "inactive".
+	// Eval is nil unless both expression and alias are present
 	if evalExpression != "" && evalAs != "" {
 		r.Eval = &cloudhub.EvalConfig{Expression: evalExpression, As: evalAs}
 	}
@@ -81,13 +71,13 @@ func (s *AlertRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.Aler
 		if err != nil {
 			return nil, err
 		}
-		if r.Conditions, err = s.ConditionsByRule(ctx, r.ID); err != nil {
+		if r.Specs, err = s.SpecsByRule(ctx, r.ID); err != nil {
 			return nil, err
 		}
-		if r.TriggerValues, err = s.TriggerValuesByRule(ctx, r.ID); err != nil {
+		if r.Hostnames, err = s.Hostnames(ctx, r.ID); err != nil {
 			return nil, err
 		}
-		if r.Hostnames, err = s.hostnamesOf(ctx, r.ID); err != nil {
+		if r.URLTargetIDs, err = s.URLTargetIDs(ctx, r.ID); err != nil {
 			return nil, err
 		}
 		if r.EventHandlers, err = s.EventHandlersByRule(ctx, r.ID); err != nil {
@@ -106,13 +96,13 @@ func (s *AlertRuleStore) Get(ctx context.Context, id string) (cloudhub.AlertGrou
 	if err != nil {
 		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Get: %w", err)
 	}
-	if r.Conditions, err = s.ConditionsByRule(ctx, id); err != nil {
+	if r.Specs, err = s.SpecsByRule(ctx, id); err != nil {
 		return r, err
 	}
-	if r.TriggerValues, err = s.TriggerValuesByRule(ctx, id); err != nil {
+	if r.Hostnames, err = s.Hostnames(ctx, id); err != nil {
 		return r, err
 	}
-	if r.Hostnames, err = s.hostnamesOf(ctx, id); err != nil {
+	if r.URLTargetIDs, err = s.URLTargetIDs(ctx, id); err != nil {
 		return r, err
 	}
 	r.EventHandlers, err = s.EventHandlersByRule(ctx, id)
@@ -120,7 +110,67 @@ func (s *AlertRuleStore) Get(ctx context.Context, id string) (cloudhub.AlertGrou
 	return r, err
 }
 
-func (s *AlertRuleStore) hostnamesOf(ctx context.Context, ruleID string) ([]string, error) {
+func (s *AlertRuleStore) Add(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
+	const q = `INSERT INTO alert_rules (
+		org_id, kapacitor_id, name, task_type, occurrence_type, occurrence_count, occurrence_window,
+		pause_seconds, notify_recovery, message, active,
+		derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+	RETURNING id, created_at, updated_at`
+	var ca, ua time.Time
+	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
+	evalExpression, evalAs := splitEval(r.Eval)
+	if err := s.client.QueryRowContext(ctx, q,
+		r.OrgID, r.KapacitorID, r.Name, r.TaskType,
+		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
+		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
+		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,
+	).Scan(&r.ID, &ca, &ua); err != nil {
+		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Add: %w", err)
+	}
+	r.CreatedAt, r.UpdatedAt = ca, ua
+
+	if err := s.SetSpecs(ctx, r.ID, r.Specs); err != nil {
+		return r, err
+	}
+	return r, nil
+}
+
+func (s *AlertRuleStore) Update(ctx context.Context, r cloudhub.AlertGroupRule) error {
+	const q = `UPDATE alert_rules SET
+		kapacitor_id=$1, name=$2, task_type=$3,
+		occurrence_type=$4, occurrence_count=$5, occurrence_window=$6,
+		pause_seconds=$7, notify_recovery=$8, message=$9, active=$10,
+		derivative_enabled=$11, derivative_non_negative=$12, derivative_unit=$13,
+		eval_expression=$14, eval_as=$15,
+		updated_at=NOW()
+	WHERE id=$16 AND delete_yn = false`
+	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
+	evalExpression, evalAs := splitEval(r.Eval)
+	if _, err := s.client.ExecContext(ctx, q,
+		r.KapacitorID, r.Name, r.TaskType,
+		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
+		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
+		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,
+		r.ID,
+	); err != nil {
+		return fmt.Errorf("alert_rule.Update: %w", err)
+	}
+	if err := s.SetSpecs(ctx, r.ID, r.Specs); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AlertRuleStore) Delete(ctx context.Context, id string) error {
+	if _, err := s.client.ExecContext(ctx, `UPDATE alert_rules SET delete_yn = true, updated_at = NOW() WHERE id = $1`, id); err != nil {
+		return fmt.Errorf("alert_rule.Delete: %w", err)
+	}
+	return nil
+}
+
+// target methods
+func (s *AlertRuleStore) Hostnames(ctx context.Context, ruleID string) ([]string, error) {
 	rows, err := s.client.QueryContext(ctx, `SELECT hostname FROM alert_rule_hosts WHERE alert_rule_id = $1`, ruleID)
 	if err != nil {
 		return nil, err
@@ -135,80 +185,6 @@ func (s *AlertRuleStore) hostnamesOf(ctx context.Context, ruleID string) ([]stri
 		names = append(names, name)
 	}
 	return names, rows.Err()
-}
-
-func (s *AlertRuleStore) Add(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
-	const q = `INSERT INTO alert_rules (
-		org_id, kapacitor_id, name, database, retention_policy, measurement, field,
-		rule_trigger, task_type, every, occurrence_type, occurrence_count, occurrence_window,
-		pause_seconds, notify_recovery, message, active,
-		derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
-	RETURNING id, created_at, updated_at`
-	var ca, ua time.Time
-	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
-	evalExpression, evalAs := splitEval(r.Eval)
-	if err := s.client.QueryRowContext(ctx, q,
-		r.OrgID, r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field,
-		normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
-		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
-		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
-		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,
-	).Scan(&r.ID, &ca, &ua); err != nil {
-		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Add: %w", err)
-	}
-	r.CreatedAt, r.UpdatedAt = ca, ua
-
-	if len(r.Conditions) > 0 {
-		if err := s.SetConditions(ctx, r.ID, r.Conditions); err != nil {
-			return r, err
-		}
-	}
-	if shouldStoreTriggerValues(r) {
-		if err := s.SetTriggerValues(ctx, r.ID, r.TriggerValues); err != nil {
-			return r, err
-		}
-	}
-	return r, nil
-}
-
-func (s *AlertRuleStore) Update(ctx context.Context, r cloudhub.AlertGroupRule) error {
-	const q = `UPDATE alert_rules SET
-		kapacitor_id=$1, name=$2, database=$3, retention_policy=$4, measurement=$5, field=$6,
-		rule_trigger=$7, task_type=$8, every=$9,
-		occurrence_type=$10, occurrence_count=$11, occurrence_window=$12,
-		pause_seconds=$13, notify_recovery=$14, message=$15, active=$16,
-		derivative_enabled=$17, derivative_non_negative=$18, derivative_unit=$19,
-		eval_expression=$20, eval_as=$21,
-		updated_at=NOW()
-	WHERE id=$22 AND delete_yn = false`
-	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
-	evalExpression, evalAs := splitEval(r.Eval)
-	if _, err := s.client.ExecContext(ctx, q,
-		r.KapacitorID, r.Name, r.Database, r.RetentionPolicy, r.Measurement, r.Field,
-		normalizeAlertRuleTrigger(r.Trigger), r.TaskType, r.Every,
-		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
-		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
-		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,
-		r.ID,
-	); err != nil {
-		return fmt.Errorf("alert_rule.Update: %w", err)
-	}
-	if shouldStoreTriggerValues(r) {
-		if err := s.SetTriggerValues(ctx, r.ID, r.TriggerValues); err != nil {
-			return err
-		}
-	} else if err := s.DeleteTriggerValues(ctx, r.ID); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *AlertRuleStore) Delete(ctx context.Context, id string) error {
-	if _, err := s.client.ExecContext(ctx, `UPDATE alert_rules SET delete_yn = true, updated_at = NOW() WHERE id = $1`, id); err != nil {
-		return fmt.Errorf("alert_rule.Delete: %w", err)
-	}
-	return nil
 }
 
 func (s *AlertRuleStore) SetHosts(ctx context.Context, ruleID string, hostnames []string) error {
@@ -230,60 +206,41 @@ func (s *AlertRuleStore) SetHosts(ctx context.Context, ruleID string, hostnames 
 	})
 }
 
-// Hostnames returns all hostnames directly assigned to a rule.
-// Returns empty slice when no hosts assigned (= all-hosts mode).
-func (s *AlertRuleStore) Hostnames(ctx context.Context, ruleID string) ([]string, error) {
-	return s.hostnamesOf(ctx, ruleID)
-}
-
-func shouldStoreTriggerValues(r cloudhub.AlertGroupRule) bool {
-	trigger := normalizeAlertRuleTrigger(r.Trigger)
-	v := r.TriggerValues
-	return trigger == cloudhub.AlertGroupRuleTriggerRelative ||
-		trigger == cloudhub.AlertGroupRuleTriggerDeadman ||
-		v.Change != "" || v.Period != "" || v.Shift != "" || v.Operator != "" ||
-		v.Value != "" || v.RangeValue != ""
-}
-
-func (s *AlertRuleStore) TriggerValuesByRule(ctx context.Context, ruleID string) (cloudhub.TriggerValues, error) {
-	row := s.client.QueryRowContext(ctx, `
-		SELECT change, period, shift, operator, value, range_value
-	FROM alert_rule_trigger_values
-	WHERE alert_rule_id = $1`, ruleID)
-	var v cloudhub.TriggerValues
-	if err := row.Scan(&v.Change, &v.Period, &v.Shift, &v.Operator, &v.Value, &v.RangeValue); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return cloudhub.TriggerValues{}, nil
-		}
-		return v, fmt.Errorf("alert_rule.TriggerValuesByRule: %w", err)
-	}
-	return v, nil
-}
-
-func (s *AlertRuleStore) SetTriggerValues(ctx context.Context, ruleID string, v cloudhub.TriggerValues) error {
-	_, err := s.client.ExecContext(ctx, `
-		INSERT INTO alert_rule_trigger_values
-			(alert_rule_id, change, period, shift, operator, value, range_value)
-		VALUES ($1,$2,$3,$4,$5,$6,$7)
-		ON CONFLICT (alert_rule_id) DO UPDATE SET
-			change = EXCLUDED.change,
-			period = EXCLUDED.period,
-			shift = EXCLUDED.shift,
-			operator = EXCLUDED.operator,
-			value = EXCLUDED.value,
-			range_value = EXCLUDED.range_value`,
-		ruleID, v.Change, v.Period, v.Shift, v.Operator, v.Value, v.RangeValue)
+func (s *AlertRuleStore) URLTargetIDs(ctx context.Context, ruleID string) ([]string, error) {
+	rows, err := s.client.QueryContext(ctx, `SELECT url_target_id FROM alert_rule_urls WHERE alert_rule_id = $1`, ruleID)
 	if err != nil {
-		return fmt.Errorf("alert_rule.SetTriggerValues: %w", err)
+		// table might not exist yet if migrations failed, but assuming it exists
+		return nil, err
 	}
-	return nil
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }
 
-func (s *AlertRuleStore) DeleteTriggerValues(ctx context.Context, ruleID string) error {
-	if _, err := s.client.ExecContext(ctx, `DELETE FROM alert_rule_trigger_values WHERE alert_rule_id = $1`, ruleID); err != nil {
-		return fmt.Errorf("alert_rule.DeleteTriggerValues: %w", err)
-	}
-	return nil
+func (s *AlertRuleStore) SetURLTargets(ctx context.Context, ruleID string, urlTargetIDs []string) error {
+	return s.client.WithTx(ctx, func(ctx context.Context, tx rdb.Store) error {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM alert_rule_urls WHERE alert_rule_id = $1`, ruleID); err != nil {
+			return err
+		}
+		for _, id := range urlTargetIDs {
+			if id == "" {
+				continue
+			}
+			if _, err := tx.ExecContext(ctx,
+				`INSERT INTO alert_rule_urls (alert_rule_id, url_target_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+				ruleID, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // splitDerivative flattens a *DerivativeConfig into the three persisted column
@@ -310,6 +267,136 @@ func splitEval(e *cloudhub.EvalConfig) (expression, as string) {
 	return exp, alias
 }
 
+func normalizeAlertRuleTrigger(t string) string {
+	t = strings.TrimSpace(strings.ToLower(t))
+	if t == "" {
+		return cloudhub.AlertGroupRuleTriggerThreshold
+	}
+	return t
+}
+
+func (s *AlertRuleStore) SpecsByRule(ctx context.Context, ruleID string) ([]cloudhub.AlertRuleSpec, error) {
+	q := `SELECT id, database, retention_policy, measurement, field, rule_trigger, every, delete_yn, created_at, updated_at
+		  FROM alert_rule_specs WHERE alert_rule_id = $1 AND delete_yn = false ORDER BY created_at`
+	rows, err := s.client.QueryContext(ctx, q, ruleID)
+	if err != nil {
+		return nil, fmt.Errorf("alert_rule.SpecsByRule: %w", err)
+	}
+	defer rows.Close()
+	var out []cloudhub.AlertRuleSpec
+	for rows.Next() {
+		var sp cloudhub.AlertRuleSpec
+		sp.AlertRuleID = ruleID
+		if err := rows.Scan(
+			&sp.ID, &sp.Database, &sp.RetentionPolicy, &sp.Measurement, &sp.Field,
+			&sp.Trigger, &sp.Every, &sp.DeleteYN, &sp.CreatedAt, &sp.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		out = append(out, sp)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i, sp := range out {
+		if out[i].Conditions, err = s.conditionsBySpec(ctx, sp.ID); err != nil {
+			return nil, err
+		}
+		if out[i].TriggerValues, err = s.triggerValuesBySpec(ctx, sp.ID); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+func (s *AlertRuleStore) conditionsBySpec(ctx context.Context, specID string) ([]cloudhub.AlertRuleCondition, error) {
+	q := `SELECT level, value, operator, enabled FROM alert_rule_conditions WHERE alert_rule_spec_id = $1 ORDER BY level`
+	rows, err := s.client.QueryContext(ctx, q, specID)
+	if err != nil {
+		return nil, fmt.Errorf("alert_rule.conditionsBySpec: %w", err)
+	}
+	defer rows.Close()
+	var out []cloudhub.AlertRuleCondition
+	for rows.Next() {
+		var c cloudhub.AlertRuleCondition
+		if err := rows.Scan(&c.Level, &c.Value, &c.Operator, &c.Enabled); err != nil {
+			return nil, err
+		}
+		c.Operator = cloudhub.NormalizeAlertConditionOperator(c.Operator)
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func (s *AlertRuleStore) triggerValuesBySpec(ctx context.Context, specID string) (*cloudhub.TriggerValues, error) {
+	row := s.client.QueryRowContext(ctx, `
+		SELECT change, period, shift, operator, value, range_value
+	FROM alert_rule_trigger_values
+	WHERE alert_rule_spec_id = $1`, specID)
+	var v cloudhub.TriggerValues
+	if err := row.Scan(&v.Change, &v.Period, &v.Shift, &v.Operator, &v.Value, &v.RangeValue); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("alert_rule.triggerValuesBySpec: %w", err)
+	}
+	return &v, nil
+}
+
+func (s *AlertRuleStore) SetSpecs(ctx context.Context, ruleID string, specs []cloudhub.AlertRuleSpec) error {
+	return s.client.WithTx(ctx, func(ctx context.Context, tx rdb.Store) error {
+		if _, err := tx.ExecContext(ctx, `UPDATE alert_rule_specs SET delete_yn = true, updated_at = NOW() WHERE alert_rule_id = $1`, ruleID); err != nil {
+			return err
+		}
+		for _, sp := range specs {
+			var specID string
+			if sp.ID == "" {
+				q := `INSERT INTO alert_rule_specs (alert_rule_id, database, retention_policy, measurement, field, rule_trigger, every)
+					  VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`
+				if err := tx.QueryRowContext(ctx, q, ruleID, sp.Database, sp.RetentionPolicy, sp.Measurement, sp.Field, normalizeAlertRuleTrigger(sp.Trigger), sp.Every).Scan(&specID); err != nil {
+					return err
+				}
+			} else {
+				q := `UPDATE alert_rule_specs SET database=$1, retention_policy=$2, measurement=$3, field=$4, rule_trigger=$5, every=$6, delete_yn=false, updated_at=NOW() WHERE id=$7 RETURNING id`
+				if err := tx.QueryRowContext(ctx, q, sp.Database, sp.RetentionPolicy, sp.Measurement, sp.Field, normalizeAlertRuleTrigger(sp.Trigger), sp.Every, sp.ID).Scan(&specID); err != nil {
+					return err
+				}
+			}
+			
+			if _, err := tx.ExecContext(ctx, `DELETE FROM alert_rule_conditions WHERE alert_rule_spec_id = $1`, specID); err != nil {
+				return err
+			}
+			for _, c := range sp.Conditions {
+				operator := cloudhub.NormalizeAlertConditionOperator(c.Operator)
+				if _, err := tx.ExecContext(ctx,
+					`INSERT INTO alert_rule_conditions (alert_rule_spec_id, level, value, operator, enabled) VALUES ($1,$2,$3,$4,$5)`,
+					specID, c.Level, c.Value, operator, c.Enabled,
+				); err != nil {
+					return err
+				}
+			}
+			
+			if _, err := tx.ExecContext(ctx, `DELETE FROM alert_rule_trigger_values WHERE alert_rule_spec_id = $1`, specID); err != nil {
+				return err
+			}
+			if sp.TriggerValues != nil {
+				v := sp.TriggerValues
+				_, err := tx.ExecContext(ctx, `
+					INSERT INTO alert_rule_trigger_values
+						(alert_rule_spec_id, change, period, shift, operator, value, range_value)
+					VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+					specID, v.Change, v.Period, v.Shift, v.Operator, v.Value, v.RangeValue)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}
+
+// EventHandlers
 func (s *AlertRuleStore) eventHandlerRecipientGroupIDs(ctx context.Context, handlerID string) ([]string, error) {
 	rows, err := s.client.QueryContext(ctx, `SELECT recipient_group_id FROM alert_rule_event_handler_recipient_groups WHERE alert_rule_event_handler_id = $1 ORDER BY recipient_group_id`, handlerID)
 	if err != nil {
@@ -380,14 +467,6 @@ func eventHandlerUsesRecipientGroups(handlerType string) bool {
 	}
 }
 
-// SetRecipientGroups maps older email-only callers onto the event-handler model.
-// The persisted schema remains handler-based; no alert_rule_recipient_groups table is used.
-func (s *AlertRuleStore) SetRecipientGroups(ctx context.Context, ruleID string, groupIDs []string) error {
-	return s.SetEventHandlers(ctx, ruleID, []cloudhub.AlertRuleEventHandler{
-		{Type: cloudhub.AlertRuleEventHandlerEmail, Enabled: true, RecipientGroupIDs: groupIDs},
-	})
-}
-
 func (s *AlertRuleStore) EventHandlersByRule(ctx context.Context, ruleID string) ([]cloudhub.AlertRuleEventHandler, error) {
 	rows, err := s.client.QueryContext(ctx, `
 		SELECT id, alert_rule_id, handler_type, enabled, config_json, created_at, updated_at
@@ -443,21 +522,6 @@ func (s *AlertRuleStore) RecipientGroupsByEventHandler(ctx context.Context, hand
 	return out, nil
 }
 
-// RecipientGroupsByRule returns email-handler groups for older email-only tests
-// and scripts. Empty result keeps the "all org recipient groups" meaning.
-func (s *AlertRuleStore) RecipientGroupsByRule(ctx context.Context, ruleID string) ([]cloudhub.RecipientGroup, error) {
-	handlers, err := s.EventHandlersByRule(ctx, ruleID)
-	if err != nil {
-		return nil, err
-	}
-	for _, h := range handlers {
-		if h.Type == cloudhub.AlertRuleEventHandlerEmail && h.Enabled {
-			return s.RecipientGroupsByEventHandler(ctx, h.ID)
-		}
-	}
-	return nil, nil
-}
-
 func (s *AlertRuleStore) RulesByRecipientGroup(ctx context.Context, recipientGroupID string) ([]cloudhub.AlertGroupRule, error) {
 	const q = `
 		WITH target_group AS (
@@ -507,14 +571,4 @@ func (s *AlertRuleStore) RulesByRecipientGroup(ctx context.Context, recipientGro
 		out = append(out, r)
 	}
 	return out, nil
-}
-
-// ConditionsByRule delegates to AlertRuleConditionStore so AlertGroupRuleStore
-// can be satisfied without a second store handle in callers.
-func (s *AlertRuleStore) ConditionsByRule(ctx context.Context, ruleID string) ([]cloudhub.AlertRuleCondition, error) {
-	return NewAlertRuleConditionStore(s.client).ByRule(ctx, ruleID)
-}
-
-func (s *AlertRuleStore) SetConditions(ctx context.Context, ruleID string, conditions []cloudhub.AlertRuleCondition) error {
-	return NewAlertRuleConditionStore(s.client).SetForRule(ctx, ruleID, conditions)
 }

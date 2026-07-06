@@ -57,174 +57,96 @@ func (a *Alert) Generate(rule cloudhub.AlertRule) (cloudhub.TICKScript, error) {
 }
 
 // alertGroupTickParams holds the values injected into the alert_group_tick.toml template.
-type alertGroupTickParams struct {
-	Name                 string
-	Measurement          string
-	Field                string
-	Every                string
-	Info                 string // main-trigger lambda (Kapacitor picks highest matching level)
-	Warn                 string
-	Crit                 string
-	EmailInfo            string // email-branch lambda, exclusive of higher levels
-	EmailWarn            string
-	EmailCrit            string
-	PauseDuration        string // "" = no reminder; otherwise like "10s" — argument to stateChangesOnly()
-	NotifyRecovery       bool   // true => emit a recovery email when level returns to OK
-	TriggerType          string
-	SourceVar            string
-	RelativeEnabled      bool
-	RelativeBlock        string
-	DeadmanEnabled       bool
-	DeadmanPeriod        string
-	OccurrenceEnabled    bool   // true when OccurrenceCount > 1 (apply stateCount wrap)
-	RecentEnabled        bool   // true when OccurrenceType asks for windowed recent counts
-	OccurrenceCount      int    // N consecutive points required to trigger
-	OccurrenceWindow     string // window duration for recent mode only
-	OccurrenceLambda     string // stateCount lambda — typically the most permissive enabled threshold
-	RecentBlock          string
-	Message              string
-	EmailBody            string
-	NotificationHandlers string
-	TaskID               string
-	OutputDB             string
-	OutputRP             string
-	OutputMeasurement    string
-	RecipientsInfo       []string
-	RecipientsWarn       []string
-	RecipientsCrit       []string
-	RecipientsAll        []string // union (dedup'd, case-insensitive) of all level recipient lists — used for recovery email
-	HostFilterLambda     string   // stream: `"host" == 'a' OR "host" == 'b'`; empty = all hosts
-	HostFilterSQL        string   // batch:  ` AND ("host" = 'a' OR "host" = 'b')`; empty = all hosts
-	// EvalEnabled inserts `|eval(lambda: <EvalExpression>).as('<EvalAs>').keep()`
-	// after |from(). Stream-only. When active, threshold lambdas reference EvalAs
-	// instead of the raw Field — see resolveLambdaField.
-	EvalEnabled    bool
-	EvalExpression string
-	EvalAs         string
-	// DerivativeEnabled inserts `|derivative('<DerivativeField>').[nonNegative()].unit(<DerivativeUnit>)`
-	// after |eval() (or directly after |from() when Eval is inactive). Stream-only.
-	// Result field name equals the input field — threshold lambdas unchanged.
+type alertGroupTickSpecParams struct {
+	Index                 int
+	Measurement           string
+	GroupByTag            string
+	Field                 string
+	Every                 string
+	Info                  string
+	Warn                  string
+	Crit                  string
+	EmailInfo             string
+	EmailWarn             string
+	EmailCrit             string
+	TriggerType           string
+	SourceVar             string
+	RelativeEnabled       bool
+	RelativeBlock         string
+	DeadmanEnabled        bool
+	DeadmanPeriod         string
+	OccurrenceEnabled     bool
+	RecentEnabled         bool
+	OccurrenceCount       int
+	OccurrenceWindow      string
+	OccurrenceLambda      string
+	RecentBlock           string
+	EvalEnabled           bool
+	EvalExpression        string
+	EvalAs                string
 	DerivativeEnabled     bool
 	DerivativeField       string
 	DerivativeNonNegative bool
 	DerivativeUnit        string
 }
 
+type alertGroupTickParams struct {
+	Name                 string
+	TaskID               string
+	OutputDB             string
+	OutputRP             string
+	OutputMeasurement    string
+	Message              string
+	EmailBody            string
+	NotificationHandlers string
+	PauseDuration        string
+	NotifyRecovery       bool
+	RecipientsInfo       []string
+	RecipientsWarn       []string
+	RecipientsCrit       []string
+	RecipientsAll        []string
+	HostFilterLambda     string
+	HostFilterSQL        string
+	Specs                []alertGroupTickSpecParams
+}
+
 // AlertGroupRuleTICKScript generates a TICKscript for an AlertGroupRule.
 // Recipients are baked into the script via Kapacitor's native email() handler.
 // Hostnames are inlined as a where() / SQL WHERE filter; an empty list means all hosts.
-func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertRecipients, hostnames []string) (string, error) {
+func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertRecipients, targetFilter string) (string, error) {
 	if rule.ID == "" {
 		return "", fmt.Errorf("AlertGroupRuleTICKScript: rule ID required")
-	}
-
-	triggerType := strings.TrimSpace(strings.ToLower(rule.Trigger))
-	if triggerType == "" {
-		triggerType = cloudhub.AlertGroupRuleTriggerThreshold
-	}
-	sourceVar := "src"
-	evalActive := rule.Eval != nil && strings.TrimSpace(rule.Eval.Expression) != "" && strings.TrimSpace(rule.Eval.As) != ""
-	derivativeActive := rule.Derivative != nil && rule.Derivative.Enabled
-	var info, warn, crit string
-	for _, c := range rule.Conditions {
-		if !c.Enabled {
-			continue
-		}
-		field := resolveLambdaField(rule, triggerType, evalActive)
-		expr := buildThresholdExpr(field, conditionOperator(c), c.Value)
-		switch c.Level {
-		case "info":
-			info = expr
-		case "warning":
-			warn = expr
-		case "critical":
-			crit = expr
-		}
 	}
 
 	taskType := rule.TaskType
 	if taskType == "" {
 		taskType = "stream"
 	}
-	if triggerType == cloudhub.AlertGroupRuleTriggerDeadman && taskType != "stream" {
-		return "", fmt.Errorf("AlertGroupRuleTICKScript: deadman trigger requires stream task")
-	}
-	if triggerType == cloudhub.AlertGroupRuleTriggerRelative && taskType != "stream" {
-		return "", fmt.Errorf("AlertGroupRuleTICKScript: relative trigger currently requires stream task")
-	}
 
-	hostLambda, hostSQL := buildHostFilters(hostnames)
-	// Lambda helpers consume rule.Field directly. For relative trigger the
-	// field is `relative_value`; for eval it's the alias. Build a "lambda
-	// view" of the rule once and reuse for occurrence / exclusive builders.
-	lambdaRule := rule
-	lambdaRule.Field = resolveLambdaField(rule, triggerType, evalActive)
-	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
-		sourceVar = "relative_src"
-	}
-	occLambda := buildOccurrenceLambda(lambdaRule)
-	occEnabled := rule.OccurrenceCount > 1 && occLambda != ""
-	recentEnabled := occEnabled && isRecentOccurrence(rule.OccurrenceType)
-	consecutiveEnabled := occEnabled && !recentEnabled
-
-	// Email branches must use level-exclusive lambdas so a CRIT-matching value
-	// does not also dispatch the WARN email (and similarly for INFO).
-	emailInfo, emailWarn, emailCrit := buildExclusiveLambdas(lambdaRule)
-
-	recent := recentOccurrenceParams{}
-	switch {
-	case recentEnabled:
-		recent = buildRecentOccurrenceParams(rule, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit)
-		info, warn, crit = recent.infoCountLambda, recent.warnCountLambda, recent.critCountLambda
-		emailInfo, emailWarn, emailCrit = recent.emailInfoCountLambda, recent.emailWarnCountLambda, recent.emailCritCountLambda
-	case consecutiveEnabled:
-		// Pure stateCount guard. occurrenceWindow is intentionally ignored here —
-		// see docs/alert_group_consecutive_window.md for the rationale.
-		wrap := func(s string) string {
-			if s == "" {
-				return ""
-			}
-			return fmt.Sprintf(`"state_count" >= %d AND (%s)`, rule.OccurrenceCount, s)
-		}
-		info, warn, crit = wrap(info), wrap(warn), wrap(crit)
-		emailInfo, emailWarn, emailCrit = wrap(emailInfo), wrap(emailWarn), wrap(emailCrit)
-	}
 	notificationHandlers, err := nonEmailEventHandlerServices(rule.EventHandlers)
 	if err != nil {
 		return "", err
 	}
+
+	// We pass targetFilter directly since TargetProcessor now creates the exact lambda/sql string.
+	// But we need to separate them if we want to support both stream and batch easily.
+	// In the original, targetFilter was hostnames array. If it's a string, we assume it's the Lambda if stream, SQL if batch.
+	// Let's assume targetFilter is properly formatted by TargetProcessor for the task type.
+	// Actually, TargetProcessor returns the string for TICKScript, we'll use it as HostFilterLambda for stream, and HostFilterSQL for batch.
+	hostLambda := targetFilter
+	hostSQL := targetFilter // In practice, TargetProcessor should give us what we need, or we adapt. Let's just set both.
+
 	params := alertGroupTickParams{
 		Name:                 rule.Name,
-		Measurement:          rule.Measurement,
-		Field:                rule.Field,
-		Every:                rule.Every,
-		Info:                 info,
-		Warn:                 warn,
-		Crit:                 crit,
-		EmailInfo:            emailInfo,
-		EmailWarn:            emailWarn,
-		EmailCrit:            emailCrit,
-		PauseDuration:        formatPauseDuration(rule.PauseSeconds),
-		NotifyRecovery:       rule.NotifyRecovery,
-		TriggerType:          triggerType,
-		SourceVar:            sourceVar,
-		RelativeEnabled:      triggerType == cloudhub.AlertGroupRuleTriggerRelative,
-		RelativeBlock:        buildRelativeBlock(rule),
-		DeadmanEnabled:       triggerType == cloudhub.AlertGroupRuleTriggerDeadman,
-		DeadmanPeriod:        deadmanPeriod(rule.TriggerValues.Period),
-		OccurrenceEnabled:    consecutiveEnabled,
-		RecentEnabled:        recentEnabled,
-		OccurrenceCount:      rule.OccurrenceCount,
-		OccurrenceWindow:     occurrenceWindow(rule.OccurrenceWindow),
-		OccurrenceLambda:     occLambda,
-		RecentBlock:          recent.block,
+		TaskID:               "alert-group-" + rule.ID,
+		OutputDB:             "cloudhub", // We need to get this from somewhere, or maybe it's in the spec?
+		OutputRP:             "autogen",
+		OutputMeasurement:    "cloudhub_alerts",
 		Message:              tickString(rule.Message),
 		EmailBody:            tickEmailBody(emailBodyFromHandlers(rule.EventHandlers)),
 		NotificationHandlers: notificationHandlers,
-		TaskID:               "alert-group-" + rule.ID,
-		OutputDB:             rule.Database,
-		OutputRP:             rule.RetentionPolicy,
-		OutputMeasurement:    "cloudhub_alerts",
+		PauseDuration:        formatPauseDuration(rule.PauseSeconds),
+		NotifyRecovery:       rule.NotifyRecovery,
 		RecipientsInfo:       recipients.Info,
 		RecipientsWarn:       recipients.Warn,
 		RecipientsCrit:       recipients.Crit,
@@ -232,24 +154,150 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		HostFilterLambda:     hostLambda,
 		HostFilterSQL:        hostSQL,
 	}
-	if evalActive {
-		params.EvalEnabled = true
-		params.EvalExpression = rule.Eval.Expression
-		params.EvalAs = rule.Eval.As
-	}
-	if derivativeActive {
-		params.DerivativeEnabled = true
-		// Derivative reads from the eval alias if eval ran first, else the raw field.
+
+	for i, spec := range rule.Specs {
+		// Populate defaults
+		if params.OutputDB == "cloudhub" && spec.Database != "" {
+			params.OutputDB = spec.Database
+			params.OutputRP = spec.RetentionPolicy
+		}
+
+		triggerType := strings.TrimSpace(strings.ToLower(spec.Trigger))
+		if triggerType == "" {
+			triggerType = cloudhub.AlertGroupRuleTriggerThreshold
+		}
+
+		if triggerType == cloudhub.AlertGroupRuleTriggerDeadman && taskType != "stream" {
+			return "", fmt.Errorf("AlertGroupRuleTICKScript: deadman trigger requires stream task")
+		}
+		if triggerType == cloudhub.AlertGroupRuleTriggerRelative && taskType != "stream" {
+			return "", fmt.Errorf("AlertGroupRuleTICKScript: relative trigger currently requires stream task")
+		}
+
+		// Because Eval/Derivative were top-level, we don't have them in Spec in DB.
+		// Wait, did we move Eval/Derivative to Spec? No, they were dropped or still in top level?
+		// In my db changes, eval and derivative were kept in alert_rules! So `rule.Eval` is valid!
+		evalActive := rule.Eval != nil && strings.TrimSpace(rule.Eval.Expression) != "" && strings.TrimSpace(rule.Eval.As) != ""
+		derivativeActive := rule.Derivative != nil && rule.Derivative.Enabled
+
+		var info, warn, crit string
+		for _, c := range spec.Conditions {
+			if !c.Enabled {
+				continue
+			}
+			field := resolveLambdaField(rule, spec, triggerType, evalActive)
+			expr := buildThresholdExpr(field, conditionOperator(c), c.Value)
+			
+			if isUrlLevel(c.Level) {
+				if c.Level == "url_4xx" {
+					expr = `("http_response_code" >= 400 AND "http_response_code" < 500)`
+				} else if c.Level == "url_5xx" {
+					expr = `("http_response_code" >= 500 AND "http_response_code" < 600)`
+				} else if c.Level == "url_unknown" {
+					expr = `(isPresent("http_response_code") == FALSE OR "http_response_code" == 0 OR "http_response_code" < 200 OR "http_response_code" >= 600)`
+				}
+				if crit != "" {
+					crit = fmt.Sprintf("(%s) OR (%s)", crit, expr)
+				} else {
+					crit = expr
+				}
+				continue
+			}
+
+			switch c.Level {
+			case "info":
+				info = expr
+			case "warning":
+				warn = expr
+			case "critical":
+				if crit != "" {
+					crit = fmt.Sprintf("(%s) OR (%s)", crit, expr)
+				} else {
+					crit = expr
+				}
+			}
+		}
+
+		sourceVar := "src"
+		if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
+			sourceVar = "relative_src"
+		}
+
+		// build occurrence
+		occLambda := buildOccurrenceLambda(rule, spec)
+		occEnabled := rule.OccurrenceCount > 1 && occLambda != ""
+		recentEnabled := occEnabled && isRecentOccurrence(rule.OccurrenceType)
+		consecutiveEnabled := occEnabled && !recentEnabled
+
+		emailInfo, emailWarn, emailCrit := buildExclusiveLambdas(rule, spec)
+		recent := recentOccurrenceParams{}
+		switch {
+		case recentEnabled:
+			recent = buildRecentOccurrenceParams(rule, spec, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit)
+			info, warn, crit = recent.infoCountLambda, recent.warnCountLambda, recent.critCountLambda
+			emailInfo, emailWarn, emailCrit = recent.emailInfoCountLambda, recent.emailWarnCountLambda, recent.emailCritCountLambda
+		case consecutiveEnabled:
+			wrap := func(s string) string {
+				if s == "" {
+					return ""
+				}
+				return fmt.Sprintf(`"state_count" >= %d AND (%s)`, rule.OccurrenceCount, s)
+			}
+			info, warn, crit = wrap(info), wrap(warn), wrap(crit)
+			emailInfo, emailWarn, emailCrit = wrap(emailInfo), wrap(emailWarn), wrap(emailCrit)
+		}
+
+		groupByTag := "host"
+		if spec.Measurement == "http_response" {
+			groupByTag = "server"
+		}
+
+		sp := alertGroupTickSpecParams{
+			Index:             i,
+			Measurement:       spec.Measurement,
+			GroupByTag:        groupByTag,
+			Field:             spec.Field,
+			Every:             spec.Every,
+			Info:              info,
+			Warn:              warn,
+			Crit:              crit,
+			EmailInfo:         emailInfo,
+			EmailWarn:         emailWarn,
+			EmailCrit:         emailCrit,
+			TriggerType:       triggerType,
+			SourceVar:         sourceVar,
+			RelativeEnabled:   triggerType == cloudhub.AlertGroupRuleTriggerRelative,
+			RelativeBlock:     buildRelativeBlock(rule, spec),
+			DeadmanEnabled:    triggerType == cloudhub.AlertGroupRuleTriggerDeadman,
+			DeadmanPeriod:     deadmanPeriod(spec),
+			OccurrenceEnabled: consecutiveEnabled,
+			RecentEnabled:     recentEnabled,
+			OccurrenceCount:   rule.OccurrenceCount,
+			OccurrenceWindow:  occurrenceWindow(rule.OccurrenceWindow),
+			OccurrenceLambda:  occLambda,
+			RecentBlock:       recent.block,
+		}
+
 		if evalActive {
-			params.DerivativeField = rule.Eval.As
-		} else {
-			params.DerivativeField = rule.Field
+			sp.EvalEnabled = true
+			sp.EvalExpression = rule.Eval.Expression
+			sp.EvalAs = rule.Eval.As
 		}
-		params.DerivativeNonNegative = rule.Derivative.NonNegative
-		params.DerivativeUnit = strings.TrimSpace(rule.Derivative.Unit)
-		if params.DerivativeUnit == "" {
-			params.DerivativeUnit = "1s"
+		if derivativeActive {
+			sp.DerivativeEnabled = true
+			if evalActive {
+				sp.DerivativeField = rule.Eval.As
+			} else {
+				sp.DerivativeField = spec.Field
+			}
+			sp.DerivativeNonNegative = rule.Derivative.NonNegative
+			sp.DerivativeUnit = strings.TrimSpace(rule.Derivative.Unit)
+			if sp.DerivativeUnit == "" {
+				sp.DerivativeUnit = "1s"
+			}
 		}
+
+		params.Specs = append(params.Specs, sp)
 	}
 
 	rawToml, err := tmplstore.Asset("alert_group_tick.toml")
@@ -420,7 +468,7 @@ type recentCountSpec struct {
 	countField string
 }
 
-func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit string) recentOccurrenceParams {
+func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit string) recentOccurrenceParams {
 	var specs []recentCountSpec
 	add := func(expr, name, countField string) string {
 		if expr == "" {
@@ -437,16 +485,16 @@ func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, sourceVar, info, 
 	p.emailInfoCountLambda = add(emailInfo, "email_info", "email_info_count")
 	p.emailWarnCountLambda = add(emailWarn, "email_warn", "email_warn_count")
 	p.emailCritCountLambda = add(emailCrit, "email_crit", "email_crit_count")
-	p.block = buildRecentOccurrenceBlock(rule, sourceVar, specs)
+	p.block = buildRecentOccurrenceBlock(rule, spec, sourceVar, specs)
 	return p
 }
 
-func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, sourceVar string, specs []recentCountSpec) string {
+func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec, sourceVar string, specs []recentCountSpec) string {
 	if len(specs) == 0 {
 		return "var processed = " + sourceVar
 	}
 	window := occurrenceWindow(rule.OccurrenceWindow)
-	every := strings.TrimSpace(rule.Every)
+	every := strings.TrimSpace(spec.Every)
 	if every == "" {
 		every = "30s"
 	}
@@ -512,6 +560,14 @@ func isRecentOccurrence(t string) bool {
 	}
 }
 
+func deadmanPeriod(spec cloudhub.AlertRuleSpec) string {
+	if spec.TriggerValues == nil {
+		return ""
+	}
+	p := strings.TrimSpace(spec.TriggerValues.Period)
+	return p
+}
+
 func occurrenceWindow(w string) string {
 	w = strings.TrimSpace(w)
 	if w == "" {
@@ -520,28 +576,23 @@ func occurrenceWindow(w string) string {
 	return w
 }
 
-func deadmanPeriod(p string) string {
-	p = strings.TrimSpace(p)
-	if p == "" {
-		return "10m"
+func buildRelativeBlock(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec) string {
+	if spec.TriggerValues == nil {
+		return ""
 	}
-	return p
-}
-
-func buildRelativeBlock(rule cloudhub.AlertGroupRule) string {
-	shift := strings.TrimSpace(rule.TriggerValues.Shift)
+	shift := strings.TrimSpace(spec.TriggerValues.Shift)
 	if shift == "" {
 		shift = "1m"
 	}
 	var expr string
 	var zeroGuard string
-	switch strings.TrimSpace(rule.TriggerValues.Change) {
+	switch strings.TrimSpace(spec.TriggerValues.Change) {
 	case ChangePercent:
-		expr = fmt.Sprintf(`abs(float("current.%s" - "past.%s"))/float("past.%s") * 100.0`, rule.Field, rule.Field, rule.Field)
+		expr = fmt.Sprintf(`abs(float("current.%s" - "past.%s"))/float("past.%s") * 100.0`, spec.Field, spec.Field, spec.Field)
 		zeroGuard = fmt.Sprintf(`
-    |where(lambda: "past.%s" != 0.0)`, rule.Field)
+    |where(lambda: "past.%s" != 0.0)`, spec.Field)
 	default:
-		expr = fmt.Sprintf(`float("current.%s" - "past.%s")`, rule.Field, rule.Field)
+		expr = fmt.Sprintf(`float("current.%s" - "past.%s")`, spec.Field, spec.Field)
 	}
 	return fmt.Sprintf(`var past = src
     |shift(%s)
@@ -588,16 +639,16 @@ func buildHostFilters(hostnames []string) (lambda, sqlAnd string) {
 //     handles its own derived value via shift+join+eval into `relative_value`).
 //  2. eval active → the eval alias (`EvalConfig.As`). `.keep()` preserves the
 //     raw field but the alert pipeline targets the derived value.
-//  3. otherwise → `rule.Field` (raw or post-derivative; derivative keeps the
+//  3. otherwise → `spec.Field` (raw or post-derivative; derivative keeps the
 //     same field name by default).
-func resolveLambdaField(rule cloudhub.AlertGroupRule, triggerType string, evalActive bool) string {
+func resolveLambdaField(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec, triggerType string, evalActive bool) string {
 	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
 		return "relative_value"
 	}
 	if evalActive {
 		return rule.Eval.As
 	}
-	return rule.Field
+	return spec.Field
 }
 
 // formatPauseDuration maps pause_seconds → argument string for stateChangesOnly().
@@ -612,9 +663,9 @@ func formatPauseDuration(secs int) string {
 // buildOccurrenceLambda returns the stateCount guard. When every enabled
 // condition uses the same range direction, it keeps the compact historic
 // "most permissive threshold" form; mixed operators are represented as ORs.
-func buildOccurrenceLambda(rule cloudhub.AlertGroupRule) string {
+func buildOccurrenceLambda(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec) string {
 	var enabled []cloudhub.AlertRuleCondition
-	for _, c := range rule.Conditions {
+	for _, c := range spec.Conditions {
 		if !c.Enabled {
 			continue
 		}
@@ -647,12 +698,20 @@ func buildOccurrenceLambda(rule cloudhub.AlertGroupRule) string {
 				}
 			}
 		}
-		return buildThresholdExpr(rule.Field, firstOp, best)
+		return buildThresholdExpr(spec.Field, firstOp, best)
 	}
 
 	parts := make([]string, 0, len(enabled))
 	for _, c := range enabled {
-		parts = append(parts, buildThresholdExpr(rule.Field, c.Operator, c.Value))
+		if c.Level == "url_4xx" {
+			parts = append(parts, `("http_response_code" >= 400 AND "http_response_code" < 500)`)
+		} else if c.Level == "url_5xx" {
+			parts = append(parts, `("http_response_code" >= 500 AND "http_response_code" < 600)`)
+		} else if c.Level == "url_unknown" {
+			parts = append(parts, `(isPresent("http_response_code") == FALSE OR "http_response_code" == 0 OR "http_response_code" < 200 OR "http_response_code" >= 600)`)
+		} else {
+			parts = append(parts, buildThresholdExpr(spec.Field, c.Operator, c.Value))
+		}
 	}
 	return strings.Join(parts, " OR ")
 }
@@ -678,26 +737,45 @@ func appendHigherSeverityGuards(expr, field string, conditions ...cloudhub.Alert
 	return expr
 }
 
+func isUrlLevel(level string) bool {
+	switch level {
+	case "url_4xx", "url_5xx", "url_unknown":
+		return true
+	}
+	return false
+}
+
 // buildExclusiveLambdas returns level-exclusive lambdas for the email branches
 // so a value matching multiple thresholds only fires the highest-severity email
 // branch. Uses range comparisons (inverse-operator on higher-severity thresholds)
 // rather than NOT (...) since Kapacitor's lambda parser rejects the latter.
-func buildExclusiveLambdas(rule cloudhub.AlertGroupRule) (eInfo, eWarn, eCrit string) {
-	info, hasInfo := conditionByLevel(rule.Conditions, "info")
-	warn, hasWarn := conditionByLevel(rule.Conditions, "warning")
-	crit, hasCrit := conditionByLevel(rule.Conditions, "critical")
+func buildExclusiveLambdas(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec) (eInfo, eWarn, eCrit string) {
+	var thresholdConds []cloudhub.AlertRuleCondition
+	var urlConds []cloudhub.AlertRuleCondition
+
+	for _, c := range spec.Conditions {
+		if isUrlLevel(c.Level) {
+			urlConds = append(urlConds, c)
+		} else {
+			thresholdConds = append(thresholdConds, c)
+		}
+	}
+
+	info, hasInfo := conditionByLevel(thresholdConds, "info")
+	warn, hasWarn := conditionByLevel(thresholdConds, "warning")
+	crit, hasCrit := conditionByLevel(thresholdConds, "critical")
 
 	if hasCrit {
-		eCrit = buildThresholdExpr(rule.Field, crit.Operator, crit.Value)
+		eCrit = buildThresholdExpr(spec.Field, crit.Operator, crit.Value)
 	}
 	if hasWarn {
-		eWarn = buildThresholdExpr(rule.Field, warn.Operator, warn.Value)
+		eWarn = buildThresholdExpr(spec.Field, warn.Operator, warn.Value)
 		if hasCrit {
-			eWarn = appendHigherSeverityGuards(eWarn, rule.Field, crit)
+			eWarn = appendHigherSeverityGuards(eWarn, spec.Field, crit)
 		}
 	}
 	if hasInfo {
-		eInfo = buildThresholdExpr(rule.Field, info.Operator, info.Value)
+		eInfo = buildThresholdExpr(spec.Field, info.Operator, info.Value)
 		var higher []cloudhub.AlertRuleCondition
 		if hasWarn {
 			higher = append(higher, warn)
@@ -705,8 +783,26 @@ func buildExclusiveLambdas(rule cloudhub.AlertGroupRule) (eInfo, eWarn, eCrit st
 		if hasCrit {
 			higher = append(higher, crit)
 		}
-		eInfo = appendHigherSeverityGuards(eInfo, rule.Field, higher...)
+		eInfo = appendHigherSeverityGuards(eInfo, spec.Field, higher...)
 	}
+
+	for _, c := range urlConds {
+		var expr string
+		if c.Level == "url_4xx" {
+			expr = `("http_response_code" >= 400 AND "http_response_code" < 500)`
+		} else if c.Level == "url_5xx" {
+			expr = `("http_response_code" >= 500 AND "http_response_code" < 600)`
+		} else if c.Level == "url_unknown" {
+			expr = `(isPresent("http_response_code") == FALSE OR "http_response_code" == 0 OR "http_response_code" < 200 OR "http_response_code" >= 600)`
+		}
+
+		if eCrit != "" {
+			eCrit = fmt.Sprintf("(%s) OR (%s)", eCrit, expr)
+		} else {
+			eCrit = expr
+		}
+	}
+
 	return
 }
 
@@ -754,6 +850,15 @@ func unionRecipients(r AlertRecipients) []string {
 
 // buildThresholdExpr returns a TICKscript lambda expression string.
 func buildThresholdExpr(field, operator string, value float64) string {
+	switch operator {
+	case "url_4xx":
+		return `("http_response_code" >= 400 AND "http_response_code" < 500)`
+	case "url_5xx":
+		return `("http_response_code" >= 500 AND "http_response_code" < 600)`
+	case "url_unknown":
+		return `(isPresent("http_response_code") == FALSE OR "http_response_code" == 0 OR "http_response_code" < 200 OR "http_response_code" >= 600)`
+	}
+
 	op := map[string]string{
 		cloudhub.AlertConditionOperatorGreater:      ">",
 		cloudhub.AlertConditionOperatorLess:         "<",

@@ -2015,15 +2015,21 @@ type AlertRecipientMemberPrefs struct {
 	EscalationSeconds      int    `json:"escalationSeconds"`
 }
 
+type UrlErrorConfig struct {
+	Check4xx bool `json:"check4xx"`
+	Check5xx bool `json:"check5xx"`
+	Unknown  bool `json:"unknown"`
+}
+
 // AlertRuleCondition is a Layer 3 child row of alert_rules: one severity
 // level per row (critical | warning | info). Replaces the legacy
 // AlertRule.Conditions JSON array.
 type AlertRuleCondition struct {
-	AlertRuleID string  `json:"alertRuleId"`
-	Level       string  `json:"level"` // critical | warning | info
-	Value       float64 `json:"value"`
-	Operator    string  `json:"operator"` // greater | less | equal | not_equal | greater_equal | less_equal
-	Enabled     bool    `json:"enabled"`
+	AlertRuleID    string          `json:"alertRuleId"`
+	Level          string          `json:"level"` // critical | warning | info
+	Value          float64         `json:"value"`
+	Operator       string          `json:"operator"` // greater | less | equal | not_equal | greater_equal | less_equal | status_4xx | status_5xx | status_unknown
+	Enabled        bool            `json:"enabled"`
 }
 
 const (
@@ -2033,6 +2039,8 @@ const (
 	AlertConditionOperatorNotEqual     = "not_equal"
 	AlertConditionOperatorGreaterEqual = "greater_equal"
 	AlertConditionOperatorLessEqual    = "less_equal"
+
+
 )
 
 func NormalizeAlertConditionOperator(operator string) string {
@@ -2108,6 +2116,8 @@ type AlertTemplate struct {
 	Message          string               `json:"message"`
 	EmailBody        string               `json:"emailBody,omitempty"`
 	Conditions       []AlertRuleCondition `json:"conditions,omitempty"`
+	Specs            []AlertRuleSpec      `json:"specs,omitempty"`
+	URLTargetIDs     []string             `json:"urlTargetIds,omitempty"`
 }
 
 // AlertTemplatesStore exposes read-only access to builtin alert templates.
@@ -2161,21 +2171,30 @@ const (
 
 // AlertGroupRule represents a rule for alerting.
 // It is used to define a rule for alerting.
-type AlertGroupRule struct {
-	ID              string               `json:"id"`
-	OrgID           string               `json:"orgId"`
-	KapacitorID     string               `json:"kapacitorId,omitempty"` // alert_kapacitors.id
-	Name            string               `json:"name"`
+type AlertRuleSpec struct {
+	ID              string               `json:"id,omitempty"`
+	AlertRuleID     string               `json:"alertRuleId,omitempty"`
 	Database        string               `json:"database"`
 	RetentionPolicy string               `json:"retentionPolicy"`
 	Measurement     string               `json:"measurement"`
 	Field           string               `json:"field"`
+	Trigger         string               `json:"trigger,omitempty"`
+	Every           string               `json:"every,omitempty"`
+	TriggerValues   *TriggerValues       `json:"values,omitempty"`
+	UrlErrorConfig  *UrlErrorConfig       `json:"urlErrorConfig,omitempty"`
 	Conditions      []AlertRuleCondition `json:"conditions,omitempty"`
-	// Trigger is threshold | relative | deadman (empty => threshold). Deadman is supported for stream tasks only.
-	Trigger          string                  `json:"trigger,omitempty"`
-	TriggerValues    TriggerValues           `json:"values,omitempty"`
-	TaskType         string                  `json:"taskType"` // stream | batch
-	Every            string                  `json:"every"`
+	DeleteYN        bool                 `json:"deleteYn,omitempty"`
+	CreatedAt       time.Time            `json:"createdAt,omitempty"`
+	UpdatedAt       time.Time            `json:"updatedAt,omitempty"`
+}
+
+type AlertGroupRule struct {
+	ID              string          `json:"id"`
+	OrgID           string          `json:"orgId"`
+	KapacitorID     string          `json:"kapacitorId,omitempty"` // alert_kapacitors.id
+	Name            string          `json:"name"`
+	Specs           []AlertRuleSpec `json:"specs"`
+	TaskType        string          `json:"taskType"` // stream | batch
 	OccurrenceType   string                  `json:"occurrenceType"` // consecutive | recent
 	OccurrenceCount  int                     `json:"occurrenceCount"`
 	OccurrenceWindow string                  `json:"occurrenceWindow"`
@@ -2184,6 +2203,7 @@ type AlertGroupRule struct {
 	Message          string                  `json:"message"`
 	Active           bool                    `json:"active"`
 	Hostnames        []string                `json:"hostnames,omitempty"`
+	URLTargetIDs     []string                `json:"urlTargetIds,omitempty"`
 	EventHandlers    []AlertRuleEventHandler `json:"eventHandlers,omitempty"`
 	// RecipientGroupIDs is kept for internal email-only compatibility paths.
 	// API payloads should use EventHandlers[].RecipientGroupIDs.
@@ -2262,13 +2282,6 @@ type AlertRecipientMemberPrefsStore interface {
 	ByGroup(ctx context.Context, recipientGroupID string) ([]AlertRecipientMemberPrefs, error)
 }
 
-// AlertRuleConditionStore manages level-threshold rows tied to an AlertGroupRule.
-// SetForRule is a transactional replace-all helper used by handler PUT operations.
-type AlertRuleConditionStore interface {
-	ByRule(ctx context.Context, alertRuleID string) ([]AlertRuleCondition, error)
-	SetForRule(ctx context.Context, alertRuleID string, conditions []AlertRuleCondition) error
-}
-
 // AlertGroupRuleStore manages AlertGroupRule persistence.
 type AlertGroupRuleStore interface {
 	All(ctx context.Context, orgID string) ([]AlertGroupRule, error)
@@ -2277,18 +2290,21 @@ type AlertGroupRuleStore interface {
 	Update(ctx context.Context, r AlertGroupRule) error
 	Delete(ctx context.Context, id string) error
 
-	// N:M associations
+	// N:M associations (Targets)
 	SetHosts(ctx context.Context, ruleID string, hostnames []string) error
 	Hostnames(ctx context.Context, ruleID string) ([]string, error)
+
+	SetURLTargets(ctx context.Context, ruleID string, urlTargetIDs []string) error
+	URLTargetIDs(ctx context.Context, ruleID string) ([]string, error)
 
 	SetEventHandlers(ctx context.Context, ruleID string, handlers []AlertRuleEventHandler) error
 	EventHandlersByRule(ctx context.Context, ruleID string) ([]AlertRuleEventHandler, error)
 	RecipientGroupsByEventHandler(ctx context.Context, handlerID string) ([]RecipientGroup, error)
 	RulesByRecipientGroup(ctx context.Context, recipientGroupID string) ([]AlertGroupRule, error)
 
-	// Conditions accessor (implementations may delegate to AlertRuleConditionStore)
-	ConditionsByRule(ctx context.Context, ruleID string) ([]AlertRuleCondition, error)
-	SetConditions(ctx context.Context, ruleID string, conditions []AlertRuleCondition) error
+	// Specs (including nested Conditions and TriggerValues) accessor
+	SpecsByRule(ctx context.Context, ruleID string) ([]AlertRuleSpec, error)
+	SetSpecs(ctx context.Context, ruleID string, specs []AlertRuleSpec) error
 }
 
 // HubbleClusterConfig holds connection parameters for one Cilium Hubble Relay.

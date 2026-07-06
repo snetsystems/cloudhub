@@ -1087,15 +1087,14 @@ func openService(
 	var recipientGroupStore cloudhub.RecipientGroupStore
 	var alertRecipientGroupStore cloudhub.AlertRecipientGroupStore
 	var alertRecipientMemberPrefsStore cloudhub.AlertRecipientMemberPrefsStore
-	var alertRuleConditionStore cloudhub.AlertRuleConditionStore
-	var alertKapacitorStore cloudhub.AlertKapacitorStore
+		var alertKapacitorStore cloudhub.AlertKapacitorStore
 	var alertKapacitorMappingStore cloudhub.AlertKapacitorMappingStore
 	var alertGroupRuleStore cloudhub.AlertGroupRuleStore
 	if pgsqlClient != nil {
 		recipientGroupStore = pgsql.NewRecipientGroupStore(pgsqlClient)
 		alertRecipientGroupStore = pgsql.NewAlertRecipientGroupStore(pgsqlClient)
 		alertRecipientMemberPrefsStore = pgsql.NewAlertRecipientMemberPrefsStore(pgsqlClient)
-		alertRuleConditionStore = pgsql.NewAlertRuleConditionStore(pgsqlClient)
+
 		alertKapacitorStore = pgsql.NewAlertKapacitorStore(pgsqlClient)
 		alertKapacitorMappingStore = pgsql.NewAlertKapacitorMappingStore(pgsqlClient)
 		alertGroupRuleStore = pgsql.NewAlertRuleStore(pgsqlClient)
@@ -1150,7 +1149,6 @@ func openService(
 		RecipientGroups:           recipientGroupStore,
 		AlertRecipientGroups:      alertRecipientGroupStore,
 		AlertRecipientMemberPrefs: alertRecipientMemberPrefsStore,
-		AlertRuleConditions:       alertRuleConditionStore,
 		AlertKapacitors:           alertKapacitorStore,
 		AlertKapacitorMappings:    alertKapacitorMappingStore,
 		AlertGroupRules:           alertGroupRuleStore,

@@ -37,7 +37,6 @@ type Service struct {
 	RecipientGroups           cloudhub.RecipientGroupStore
 	AlertRecipientGroups      cloudhub.AlertRecipientGroupStore
 	AlertRecipientMemberPrefs cloudhub.AlertRecipientMemberPrefsStore
-	AlertRuleConditions       cloudhub.AlertRuleConditionStore
 	AlertKapacitors           cloudhub.AlertKapacitorStore
 	AlertKapacitorMappings    cloudhub.AlertKapacitorMappingStore
 	AlertGroupRules           cloudhub.AlertGroupRuleStore

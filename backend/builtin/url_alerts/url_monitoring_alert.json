@@ -1,0 +1,56 @@
+{
+  "id": "url_monitoring_alert",
+  "name": "URL 종합 모니터링 알림",
+  "description": "URL 응답 코드 오류(4xx/5xx)가 발생하거나 응답 시간(지연)이 임계치를 초과할 경우 알림",
+  "category": "url-monitoring",
+  "tags": ["url", "http", "status-code", "availability"],
+  "taskType": "stream",
+  "every": "30s",
+  "occurrenceType": "consecutive",
+  "occurrenceCount": 2,
+  "occurrenceWindow": "5m",
+  "pauseSeconds": 0,
+  "notifyRecovery": true,
+  "message": "{{ index .Tags \"server\" }} URL 모니터링 알람 {{ .Level }} (상태 코드 또는 응답시간 지연)",
+  "specs": [
+    {
+      "database": "",
+      "retentionPolicy": "",
+      "measurement": "http_response",
+      "field": "http_response_code",
+      "trigger": "threshold",
+      "urlErrorConfig": {
+        "check4xx": true,
+        "check5xx": true,
+        "unknown": true
+      },
+      "conditions": [
+        {
+          "level": "critical",
+          "value": 0,
+          "operator": "greaterEqual",
+          "enabled": false
+        },
+        {
+          "level": "warning",
+          "value": 0,
+          "operator": "greater",
+          "enabled": false
+        },
+        {"level": "info", "value": 0, "operator": "greater", "enabled": false}
+      ]
+    },
+    {
+      "database": "",
+      "retentionPolicy": "",
+      "measurement": "http_response",
+      "field": "response_time",
+      "trigger": "threshold",
+      "conditions": [
+        { "level": "critical", "value": 5.0, "operator": "greater", "enabled": true },
+        { "level": "warning",  "value": 2.0, "operator": "greater", "enabled": true },
+        { "level": "info",     "value": 0,   "operator": "greater", "enabled": false }
+      ]
+    }
+  ]
+}

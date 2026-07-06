@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <body style='margin:0;background:#f5f7fb;font-family:Arial,sans-serif;color:#1f2937;'>
+    <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f5f7fb;padding:24px;'>
+      <tr>
+        <td align='center'>
+          <table role='presentation' width='640' cellpadding='0' cellspacing='0' style='width:640px;max-width:100%;background:#ffffff;border:1px solid #d9dee8;border-radius:8px;overflow:hidden;'>
+            <tr>
+              <td style='background:#111827;color:#ffffff;padding:18px 24px;font-size:18px;font-weight:700;'>CloudHub Alert &mdash; URL Monitoring</td>
+            </tr>
+            <tr>
+              <td style='padding:24px;'>
+                <div style='display:inline-block;padding:6px 10px;border-radius:4px;background:{{ if eq .Level "WARNING" }}#fef3c7{{ else if eq .Level "CRITICAL" }}#fee2e2{{ else }}#dbeafe{{ end }};color:{{ if eq .Level "WARNING" }}#92400e{{ else if eq .Level "CRITICAL" }}#991b1b{{ else }}#1e40af{{ end }};font-size:12px;font-weight:700;letter-spacing:0;text-transform:uppercase;'>{{ .Level }}</div>
+                <h1 style='margin:16px 0 8px;font-size:20px;line-height:1.35;color:#111827;'>{{ .Message }}</h1>
+                <p style='margin:0 0 20px;font-size:13px;line-height:1.5;color:#6b7280;'>CloudHub detected an issue with the monitored URL.</p>
+                <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:14px;'>
+                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;width:160px;'>URL</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;font-weight:600;word-break:break-all;'>{{ index .Tags "server" }}</td></tr>
+                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Level</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;font-weight:600;'>{{ .Level }}</td></tr>
+                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Response Time</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ index .Fields "response_time" }}s</td></tr>
+                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Result Code</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ index .Fields "http_response_code" }}</td></tr>
+                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Time</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ .Time }}</td></tr>
+                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Alert ID</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ .ID }}</td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
