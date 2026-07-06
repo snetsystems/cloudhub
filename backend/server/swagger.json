@@ -14878,6 +14878,20 @@
         },
         "enabled": {
           "type": "boolean"
+        },
+        "operator": {
+          "type": "string",
+          "enum": [
+            "greater",
+            "less",
+            "equal",
+            "not_equal",
+            "greater_equal",
+            "less_equal",
+            "status_4xx",
+            "status_5xx",
+            "status_unknown"
+          ]
         }
       },
       "required": [
@@ -14888,6 +14902,7 @@
       "example": {
         "level": "critical",
         "value": 90,
+        "operator": "greater",
         "enabled": true
       }
     },
@@ -15075,6 +15090,7 @@
         "kapacitorId": "k1111111-1111-1111-1111-111111111111",
         "name": "CPU High",
         "taskType": "stream",
+        "targetType": "host",
         "occurrenceType": "consecutive",
         "occurrenceCount": 1,
         "occurrenceWindow": "5m",
@@ -15093,12 +15109,12 @@
             "measurement": "cpu",
             "field": "usage_user",
             "trigger": "threshold",
-            "triggerOperator": "greater",
             "every": "30s",
             "conditions": [
               {
                 "level": "critical",
                 "value": 90,
+                "operator": "greater",
                 "enabled": true
               }
             ]
@@ -15122,6 +15138,7 @@
         "kapacitorId": "k1111111-1111-1111-1111-111111111111",
         "name": "Relative CPU spike",
         "taskType": "stream",
+        "targetType": "host",
         "occurrenceType": "recent",
         "occurrenceCount": 2,
         "occurrenceWindow": "5m",
@@ -15145,7 +15162,6 @@
             "measurement": "cpu",
             "field": "usage_user",
             "trigger": "relative",
-            "triggerOperator": "greater",
             "every": "30s",
             "values": {
               "change": "change",
@@ -15156,6 +15172,7 @@
               {
                 "level": "critical",
                 "value": 15,
+                "operator": "greater",
                 "enabled": true
               }
             ]
@@ -15360,18 +15377,6 @@
             "deadman"
           ],
           "description": "Empty means threshold"
-        },
-        "triggerOperator": {
-          "type": "string",
-          "enum": [
-            "greater",
-            "less",
-            "equal",
-            "not_equal",
-            "greater_equal",
-            "less_equal"
-          ]
-        },
         "every": {
           "type": "string"
         },
@@ -15390,8 +15395,7 @@
       },
       "required": [
         "measurement",
-        "field",
-        "triggerOperator"
+        "field"
       ]
     }
   }

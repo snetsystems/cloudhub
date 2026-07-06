@@ -11,6 +11,8 @@ import (
 // are embedded JSON assets, not user-managed rows.
 func (s *Service) AlertTemplatesGet(w http.ResponseWriter, r *http.Request) {
 	ctx := serverContext(r.Context())
+	targetType := r.URL.Query().Get("targetType")
+
 	templates, err := s.AlertTemplates.All(ctx)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
@@ -19,6 +21,21 @@ func (s *Service) AlertTemplatesGet(w http.ResponseWriter, r *http.Request) {
 	if templates == nil {
 		templates = []cloudhub.AlertTemplate{}
 	}
+
+	if targetType != "" {
+		filtered := []cloudhub.AlertTemplate{}
+		categoryMatch := "server-monitoring" // host by default
+		if targetType == "url" {
+			categoryMatch = "url-monitoring"
+		}
+		for _, t := range templates {
+			if t.Category == categoryMatch {
+				filtered = append(filtered, t)
+			}
+		}
+		templates = filtered
+	}
+
 	encodeJSON(w, http.StatusOK, map[string]interface{}{"alertTemplates": templates}, s.Logger)
 }
 
