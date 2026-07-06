@@ -1,31 +1,33 @@
+// frontend/src/shared/components/TargetSelector.tsx
 import React, {ChangeEvent, useMemo, useState} from 'react'
 import {useTranslation} from 'react-i18next'
 import {Input, InputType, ComponentSize} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {URLMonitoringTarget} from '../types'
+
+export interface TargetSelectorItem {
+  id: string
+  label: string
+}
+
+export interface TargetSelectorText {
+  searchPlaceholder?: string
+  selectedCountText?: string
+  emptyText?: string
+  emptySearchText?: string
+}
 
 interface Props {
-  targets: URLMonitoringTarget[]
-  selectedTargetIds: string[]
-  onChange: (selectedTargetIds: string[]) => void
+  items: TargetSelectorItem[]
+  selectedIds: string[]
+  onChange: (selectedIds: string[]) => void
+  text?: TargetSelectorText
 }
 
-const getTargetId = (target: URLMonitoringTarget): string =>
-  String(target.id ?? target.url)
-
-const getTargetLabel = (target: URLMonitoringTarget): string => {
-  const url = target.url?.trim() || ''
-  const name = target.name?.trim() || ''
-  if (name && url) {
-    return `${name} (${url})`
-  }
-  return name || url
-}
-
-const URLTargetSelector: React.FC<Props> = ({
-  targets,
-  selectedTargetIds,
+const TargetSelector: React.FC<Props> = ({
+  items,
+  selectedIds,
   onChange,
+  text,
 }) => {
   const {t} = useTranslation()
   const [search, setSearch] = useState('')
@@ -33,39 +35,35 @@ const URLTargetSelector: React.FC<Props> = ({
   const filtered = useMemo(() => {
     const needle = search.toLowerCase().trim()
     if (!needle) {
-      return targets
+      return items
     }
-    return targets.filter(target => {
-      const label = getTargetLabel(target).toLowerCase()
-      return label.includes(needle)
-    })
-  }, [targets, search])
+    return items.filter(item => item.label.toLowerCase().includes(needle))
+  }, [items, search])
 
-  const filteredIds = useMemo(() => filtered.map(getTargetId), [filtered])
+  const filteredIds = useMemo(() => filtered.map(item => item.id), [filtered])
 
   const allSelected =
-    filtered.length > 0 &&
-    filteredIds.every(id => selectedTargetIds.includes(id))
+    filtered.length > 0 && filteredIds.every(id => selectedIds.includes(id))
   const someSelected =
-    filteredIds.some(id => selectedTargetIds.includes(id)) && !allSelected
+    filteredIds.some(id => selectedIds.includes(id)) && !allSelected
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setSearch(e.target.value)
   }
 
-  const handleToggle = (targetId: string): void => {
-    if (selectedTargetIds.includes(targetId)) {
-      onChange(selectedTargetIds.filter(id => id !== targetId))
+  const handleToggle = (id: string): void => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter(selected => selected !== id))
     } else {
-      onChange([...selectedTargetIds, targetId])
+      onChange([...selectedIds, id])
     }
   }
 
   const handleToggleAll = (): void => {
     if (allSelected) {
-      onChange(selectedTargetIds.filter(id => !filteredIds.includes(id)))
+      onChange(selectedIds.filter(id => !filteredIds.includes(id)))
     } else {
-      onChange(Array.from(new Set([...selectedTargetIds, ...filteredIds])))
+      onChange(Array.from(new Set([...selectedIds, ...filteredIds])))
     }
   }
 
@@ -77,13 +75,17 @@ const URLTargetSelector: React.FC<Props> = ({
           onChange={handleSearchChange}
           type={InputType.Text}
           size={ComponentSize.Small}
-          placeholder={t('url_alert_setting.search_urls')}
+          placeholder={
+            text?.searchPlaceholder ??
+            t('alert_group_rule.search_hosts', '호스트 검색...')
+          }
         />
         <span className="device-group-host-selector--count">
-          {t('url_alert_setting.n_urls_selected', {
-            count: selectedTargetIds.length,
-            defaultValue: '{{count}}개 선택됨',
-          })}
+          {text?.selectedCountText ??
+            t('alert_group_rule.n_hosts_selected', {
+              count: selectedIds.length,
+              defaultValue: '{{count}}개 선택됨',
+            })}
         </span>
       </div>
       <FancyScrollbar
@@ -93,8 +95,13 @@ const URLTargetSelector: React.FC<Props> = ({
         {filtered.length === 0 ? (
           <div className="device-group-host-selector--empty">
             {search
-              ? t('url_alert_setting.no_urls_search_results')
-              : t('url_alert_setting.no_target_urls')}
+              ? text?.emptySearchText ??
+                t(
+                  'alert_group_rule.no_hosts_search_results',
+                  '검색 결과가 없습니다.'
+                )
+              : text?.emptyText ??
+                t('alert_group_rule.no_target_hosts', '대상 호스트가 없습니다.')}
           </div>
         ) : (
           <>
@@ -123,16 +130,15 @@ const URLTargetSelector: React.FC<Props> = ({
                     })}
               </span>
             </div>
-            {filtered.map(target => {
-              const targetId = getTargetId(target)
-              const isSelected = selectedTargetIds.includes(targetId)
+            {filtered.map(item => {
+              const isSelected = selectedIds.includes(item.id)
               return (
                 <div
-                  key={targetId}
+                  key={item.id}
                   className={`device-group-host-selector--item${
                     isSelected ? ' selected' : ''
                   }`}
-                  onClick={() => handleToggle(targetId)}
+                  onClick={() => handleToggle(item.id)}
                 >
                   <span
                     className={`device-group-host-selector--checkbox${
@@ -140,7 +146,7 @@ const URLTargetSelector: React.FC<Props> = ({
                     }`}
                   />
                   <span className="device-group-host-selector--hostname">
-                    {getTargetLabel(target)}
+                    {item.label}
                   </span>
                 </div>
               )
@@ -152,4 +158,4 @@ const URLTargetSelector: React.FC<Props> = ({
   )
 }
 
-export default URLTargetSelector
+export default TargetSelector

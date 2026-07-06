@@ -2,13 +2,21 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import classnames from 'classnames'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Dropdown from 'src/shared/components/Dropdown'
-import {DropdownItem, Notification} from 'src/types'
+import {AlertGroupRule, DropdownItem, Notification} from 'src/types'
 import {URLMonitoringTarget} from 'src/url_monitoring/types'
 import {
   addURLMonitoringTarget,
   getCloudhubAjaxErrorMessage,
+  getUrlAlertRules,
   patchURLMonitoringTarget,
 } from 'src/url_monitoring/apis'
+
+// Sentinel value for the "not mapped" option in the alert group dropdown.
+const NO_ALERT_RULE = ''
+
+interface AlertRuleDropdownItem extends DropdownItem {
+  id: string
+}
 
 export type URLMonitoringSheetMode = 'add' | 'edit' | 'copy'
 
@@ -62,6 +70,8 @@ export function URLMonitoringFormSheet({
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [collectionInterval, setCollectionInterval] = useState('1m')
+  const [alertRuleId, setAlertRuleId] = useState<string>(NO_ALERT_RULE)
+  const [alertRules, setAlertRules] = useState<AlertGroupRule[]>([])
 
   useEffect(() => {
     if (isOpen) {
@@ -80,6 +90,7 @@ export function URLMonitoringFormSheet({
       setName('')
       setUrl('')
       setCollectionInterval('1m')
+      setAlertRuleId(NO_ALERT_RULE)
       setNameError(null)
       return
     }
@@ -87,9 +98,29 @@ export function URLMonitoringFormSheet({
       setName(initialTarget.name)
       setUrl(initialTarget.url)
       setCollectionInterval(initialTarget.interval ?? '1m')
+      setAlertRuleId(initialTarget.alertRuleId ?? NO_ALERT_RULE)
       setNameError(null)
     }
   }, [isOpen, mode, initialTarget])
+
+  useEffect(() => {
+    if (!isOpen) return
+    let cancelled = false
+    getUrlAlertRules()
+      .then(rules => {
+        if (!cancelled) {
+          setAlertRules(rules)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAlertRules([])
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
@@ -106,20 +137,44 @@ export function URLMonitoringFormSheet({
     return 'Add URL'
   }, [mode])
 
+  const alertRuleItems = useMemo<AlertRuleDropdownItem[]>(() => {
+    const items: AlertRuleDropdownItem[] = [
+      {id: NO_ALERT_RULE, text: 'Not mapped'},
+    ]
+    alertRules.forEach(rule => {
+      if (rule.id) {
+        items.push({id: rule.id, text: rule.name || rule.id})
+      }
+    })
+    return items
+  }, [alertRules])
+
+  const selectedAlertRuleLabel = useMemo(() => {
+    const matched = alertRuleItems.find(item => item.id === alertRuleId)
+    return matched ? matched.text : 'Not mapped'
+  }, [alertRuleItems, alertRuleId])
+
   const handleSave = useCallback(async () => {
     if (!name.trim()) return
     if (!url.trim()) return
     setNameError(null)
     setIsLoading(true)
     try {
+      const alertRuleIdValue = alertRuleId || undefined
       if (mode === 'edit' && initialTarget?.id) {
         await patchURLMonitoringTarget(initialTarget.id, {
           name,
           url,
           interval: collectionInterval,
+          alertRuleId: alertRuleIdValue,
         })
       } else {
-        await addURLMonitoringTarget({name, url, interval: collectionInterval})
+        await addURLMonitoringTarget({
+          name,
+          url,
+          interval: collectionInterval,
+          alertRuleId: alertRuleIdValue,
+        })
       }
       notify({
         type: 'success',
@@ -154,6 +209,7 @@ export function URLMonitoringFormSheet({
     name,
     url,
     collectionInterval,
+    alertRuleId,
     onSaved,
     onClose,
     notify,
@@ -250,6 +306,24 @@ export function URLMonitoringFormSheet({
                 disabled={isLoading}
                 buttonSize="btn-sm"
                 buttonColor="btn-default"
+              />
+            </div>
+
+            <div className="url-monitoring-form-sheet__field">
+              <span className="url-monitoring-form-sheet__label">
+                Alert group <span>(optional)</span>
+              </span>
+              <Dropdown
+                className="dropdown-stretch"
+                items={alertRuleItems}
+                selected={selectedAlertRuleLabel}
+                onChoose={(item: DropdownItem) =>
+                  setAlertRuleId((item as AlertRuleDropdownItem).id)
+                }
+                disabled={isLoading}
+                buttonSize="btn-sm"
+                buttonColor="btn-default"
+                useAutoComplete={alertRuleItems.length > 6}
               />
             </div>
           </div>

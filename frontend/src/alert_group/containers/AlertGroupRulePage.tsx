@@ -16,7 +16,6 @@ import {
 import {TimeRange} from 'src/types'
 import {
   AlertGroupRule,
-  AlertRuleEventHandler,
   AlertTemplate,
   UserGroup,
   DEFAULT_RULE,
@@ -31,16 +30,6 @@ import {
   ComponentSize,
   ComponentStatus,
   IconFont,
-  OverlayTechnology,
-  OverlayContainer,
-  OverlayHeading,
-  OverlayBody,
-  Form,
-  Input,
-  InputType,
-  MultiSelectDropdown,
-  DropdownMenuColors,
-  SlideToggle,
 } from 'src/reusable_ui'
 import AlertGroupTemplateSidebar from 'src/alert_group/components/AlertGroupTemplateSidebar'
 import AlertGroupNameSection from 'src/alert_group/components/AlertGroupNameSection'
@@ -48,6 +37,7 @@ import AlertGroupConditionSection from 'src/alert_group/components/AlertGroupCon
 import AlertGroupPreviewGraph from 'src/alert_group/components/AlertGroupPreviewGraph'
 import AlertGroupTargetSection from 'src/alert_group/components/AlertGroupTargetSection'
 import AlertGroupHandlersSection from 'src/alert_group/components/AlertGroupHandlersSection'
+import AlertGroupTestModal from 'src/alert_group/components/AlertGroupTestModal'
 import {applyAlertTemplateToRule} from 'src/alert_group/utils/alertTemplates'
 
 // APIs
@@ -55,7 +45,6 @@ import {
   getAlertGroupRule,
   createAlertGroupRule,
   updateAlertGroupRule,
-  testDraftAlertGroupNotification,
   getUserGroups,
   getAlertTemplates,
   fetchAvailableMeasurements,
@@ -66,18 +55,12 @@ import {getActiveKapacitor} from 'src/shared/apis'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Notifications
-import {notifyError, notifySuccess} from 'src/shared/copy/notifications'
+import {notifyError} from 'src/shared/copy/notifications'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 const DEFAULT_TIME_RANGE: TimeRange = {lower: 'now() - 1h', upper: null}
-
-const parseTestRecipients = (value: string): string[] =>
-  value
-    .split(/[\s,]+/)
-    .map(recipient => recipient.trim())
-    .filter(Boolean)
 
 interface Auth {
   me: Me
@@ -103,9 +86,6 @@ interface State {
   isSaving: boolean
   isTestModalOpen: boolean
   isTestingSend: boolean
-  testRecipients: string
-  testIncludeSelf: boolean
-  testUserGroupIds: string[]
   builderMode: 'template' | 'raw'
   selectedTemplateId: string
 }
@@ -125,9 +105,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       isSaving: false,
       isTestModalOpen: false,
       isTestingSend: false,
-      testRecipients: '',
-      testIncludeSelf: false,
-      testUserGroupIds: [],
       builderMode: 'raw',
       selectedTemplateId: 'custom',
     }
@@ -535,141 +512,16 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     return error?.data?.message || error?.message || fallback
   }
 
-  private getEmailHandler = (): AlertRuleEventHandler | undefined => {
-    const {rule} = this.state
-    return (rule.eventHandlers || []).find(handler => handler.type === 'email')
-  }
-
-  private getTestRecipientGroupIds = (): string[] => {
-    const {rule} = this.state
-    const emailHandler = this.getEmailHandler()
-
-    if (emailHandler) {
-      return [...(emailHandler.recipientGroupIds || [])]
-    }
-
-    return [...(rule.recipientGroupIds || [])]
-  }
-
-  private getTestEmailBody = (): string => {
-    const body = this.getEmailHandler()?.configJson?.body
-    return typeof body === 'string' ? body.trim() : ''
-  }
-
   private handleOpenTestModal = (): void => {
-    const {rule} = this.state
-    this.setState({
-      isTestModalOpen: true,
-      testRecipients: '',
-      testIncludeSelf: false,
-      testUserGroupIds: this.getTestRecipientGroupIds(),
-    })
+    this.setState({isTestModalOpen: true})
   }
 
   private handleCloseTestModal = (): void => {
-    this.setState({
-      isTestModalOpen: false,
-      isTestingSend: false,
-    })
+    this.setState({isTestModalOpen: false, isTestingSend: false})
   }
 
-  private handleTestRecipientsChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    this.setState({testRecipients: e.target.value})
-  }
-
-  private handleTestIncludeSelfChange = (): void => {
-    this.setState(prev => ({testIncludeSelf: !prev.testIncludeSelf}))
-  }
-
-  private handleTestUserGroupIdsChange = (selectedIDs: string[]): void => {
-    this.setState({testUserGroupIds: selectedIDs})
-  }
-
-  private handleTestSend = async (): Promise<void> => {
-    const {notify} = this.props
-    const {testUserGroupIds, testRecipients, testIncludeSelf, rule} = this.state
-
-    const {t} = this.props
-    const recipients = parseTestRecipients(testRecipients)
-    const title = (rule.message || '').trim()
-    const message = this.getTestEmailBody()
-
-    if (!title) {
-      notify(
-        notifyError(
-          t(
-            'alert_group_rule.noti_enter_mail_title',
-            '메일 타이틀을 입력해주세요.'
-          )
-        )
-      )
-      return
-    }
-    if (!message) {
-      notify(
-        notifyError(
-          t(
-            'alert_group_rule.noti_enter_email_body',
-            '이메일 메시지 본문을 입력해주세요.'
-          )
-        )
-      )
-      return
-    }
-    if (
-      testUserGroupIds.length === 0 &&
-      recipients.length === 0 &&
-      !testIncludeSelf
-    ) {
-      notify(
-        notifyError(
-          t(
-            'alert_group_rule.noti_select_test_recipient',
-            '테스트 수신 대상을 선택해주세요.'
-          )
-        )
-      )
-      return
-    }
-
-    this.setState({isTestingSend: true})
-
-    try {
-      const result = await testDraftAlertGroupNotification({
-        kapacitorId: rule.kapacitorId,
-        recipientGroupIds: testUserGroupIds,
-        recipients,
-        includeSelf: testIncludeSelf,
-        title,
-        message,
-      })
-
-      notify(
-        notifySuccess(
-          t(
-            'alert_group_rule.noti_test_sent_count',
-            '{{count}}건의 테스트 알림을 전송했습니다.',
-            {count: result.sentCount}
-          )
-        )
-      )
-      this.setState({isTestModalOpen: false, isTestingSend: false})
-    } catch (e) {
-      notify(
-        notifyError(
-          this.getRequestErrorMessage(
-            e,
-            t(
-              'alert_group_rule.noti_test_send_fail',
-              '테스트 발송에 실패했습니다.'
-            )
-          )
-        )
-      )
-      this.setState({isTestingSend: false})
-    }
+  private handleTestingSendChange = (isSending: boolean): void => {
+    this.setState({isTestingSend: isSending})
   }
 
   public render() {
@@ -681,9 +533,6 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       isSaving,
       isTestModalOpen,
       isTestingSend,
-      testRecipients,
-      testIncludeSelf,
-      testUserGroupIds,
       builderMode,
       selectedTemplateId,
     } = this.state
@@ -774,6 +623,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                 <AlertGroupHandlersSection
                   rule={rule}
                   userGroups={userGroups}
+                  templates={this.state.templates}
+                  selectedTemplateId={selectedTemplateId}
                   source={source}
                   router={this.props.router}
                   onUpdateRule={this.handleUpdateRule}
@@ -784,122 +635,15 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
             </div>
           </Spinner>
 
-          <OverlayTechnology visible={isTestModalOpen}>
-            <OverlayContainer maxWidth={480}>
-              <OverlayHeading
-                title={t('alert_group_rule.test_modal.title', '수신 테스트')}
-              />
-              <OverlayBody>
-                <Form>
-                  <Form.Element
-                    label={t(
-                      'alert_group_rule.test_modal.send_to_me',
-                      '내 이메일에 발송'
-                    )}
-                  >
-                    <div className="alert-group-test-modal-email-row">
-                      <SlideToggle
-                        active={testIncludeSelf}
-                        onChange={this.handleTestIncludeSelfChange}
-                        size={ComponentSize.ExtraSmall}
-                        color={ComponentColor.Primary}
-                        disabled={!auth?.me?.email}
-                      />
-                      <span className="alert-group-test-modal-email-text">
-                        {auth?.me?.email
-                          ? auth.me.email
-                          : t(
-                              'alert_group_rule.test_modal.no_email_warning',
-                              '로그인 사용자의 이메일이 없어 사용할 수 없습니다.'
-                            )}
-                      </span>
-                    </div>
-                  </Form.Element>
-                  <Form.Element
-                    label={t(
-                      'alert_group_rule.test_modal.select_groups',
-                      '수신 그룹 선택 (선택)'
-                    )}
-                  >
-                    {userGroups.length > 0 ? (
-                      <MultiSelectDropdown
-                        selectedIDs={testUserGroupIds}
-                        onChange={this.handleTestUserGroupIdsChange}
-                        buttonColor={ComponentColor.Default}
-                        buttonSize={ComponentSize.Small}
-                        menuColor={DropdownMenuColors.Onyx}
-                        emptyText={t(
-                          'alert_group_rule.test_modal.no_group_selected',
-                          '그룹 선택 안 함'
-                        )}
-                      >
-                        {userGroups.map(ug => (
-                          <MultiSelectDropdown.Item
-                            key={ug.id!}
-                            id={ug.id!}
-                            value={ug}
-                          >
-                            {ug.name}
-                          </MultiSelectDropdown.Item>
-                        ))}
-                      </MultiSelectDropdown>
-                    ) : (
-                      <p className="alert-group-test-modal-hint">
-                        {t(
-                          'alert_group_rule.test_modal.no_groups_registered',
-                          '등록된 수신 그룹이 없습니다.'
-                        )}
-                      </p>
-                    )}
-                  </Form.Element>
-                  <Form.Element
-                    label={t(
-                      'alert_group_rule.test_modal.direct_recipients',
-                      '수신자 직접 입력 (선택)'
-                    )}
-                  >
-                    <Input
-                      value={testRecipients}
-                      onChange={this.handleTestRecipientsChange}
-                      type={InputType.Text}
-                      placeholder={t(
-                        'alert_group_rule.test_modal.recipients_placeholder',
-                        '여러 명은 쉼표로 구분'
-                      )}
-                    />
-                  </Form.Element>
-                  <Form.Footer>
-                    <Button
-                      text={
-                        isTestingSend
-                          ? t(
-                              'alert_group_rule.test_modal.sending',
-                              '발송 중...'
-                            )
-                          : t(
-                              'alert_group_rule.test_modal.send_test_btn',
-                              '수신 테스트'
-                            )
-                      }
-                      icon={IconFont.Bell}
-                      onClick={this.handleTestSend}
-                      color={ComponentColor.Success}
-                      status={
-                        isTestingSend
-                          ? ComponentStatus.Disabled
-                          : ComponentStatus.Default
-                      }
-                    />
-                    <Button
-                      text={t('button.cancel', '취소')}
-                      onClick={this.handleCloseTestModal}
-                      color={ComponentColor.Default}
-                    />
-                  </Form.Footer>
-                </Form>
-              </OverlayBody>
-            </OverlayContainer>
-          </OverlayTechnology>
+          <AlertGroupTestModal
+            visible={isTestModalOpen}
+            rule={rule}
+            userGroups={userGroups}
+            userEmail={auth?.me?.email}
+            notify={this.props.notify}
+            onClose={this.handleCloseTestModal}
+            onTestingSendChange={this.handleTestingSendChange}
+          />
         </Page.Contents>
       </Page>
     )
