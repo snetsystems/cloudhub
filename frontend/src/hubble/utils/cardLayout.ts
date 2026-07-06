@@ -288,13 +288,11 @@ export const layoutCards = (
   // Ties resolve to the wider grid (closer to one row).
   let best: CardPosition[] = []
   let bestScore = -Infinity
-  for (let cols = 1; cols <= appCount; cols++) {
+  const maxGridCols = Math.min(appCount, MAX_GRID_COLS)
+  for (let cols = 1; cols <= maxGridCols; cols++) {
     const candidate = assembleColumns(byColumn, cardHeights, focusNodeIds, cols)
     const bounds = computeContentBounds(candidate)
-    const score = Math.min(
-      viewportAspect / bounds.width,
-      1 / bounds.height
-    )
+    const score = Math.min(viewportAspect / bounds.width, 1 / bounds.height)
     if (score >= bestScore) {
       bestScore = score
       best = candidate
@@ -388,7 +386,8 @@ export const computeContentBounds = (
   positions: CardPosition[]
 ): ContentBounds => {
   const emptyWidth = CANVAS_PADDING * 2 + CARD_WIDTH
-  const emptyHeight = CANVAS_PADDING * 2 + CARD_BASE_HEIGHT + CANVAS_EXTRA_BOTTOM
+  const emptyHeight =
+    CANVAS_PADDING * 2 + CARD_BASE_HEIGHT + CANVAS_EXTRA_BOTTOM
 
   if (positions.length === 0) {
     return {

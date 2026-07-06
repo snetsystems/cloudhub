@@ -74,6 +74,9 @@ func (r *EndpointResolver) ResolveEndpoint(ep *flow.Endpoint, dnsNames []string)
 	case reservedIdentityHost:
 		return resolvedEndpoint{externalID: "ext:reserved:host"}
 	case reservedIdentityWorld:
+		if service, ok := kubernetesServiceEndpoint(dnsNames); ok {
+			return service
+		}
 		if name := firstNonEmpty(dnsNames); name != "" {
 			return resolvedEndpoint{externalID: "ext:fqdn:" + name}
 		}
@@ -114,6 +117,9 @@ func (r *EndpointResolver) ResolveEndpoint(ep *flow.Endpoint, dnsNames []string)
 	}
 
 	if namespace == "" {
+		if service, ok := kubernetesServiceEndpoint(dnsNames); ok {
+			return service
+		}
 		if name := firstNonEmpty(dnsNames); name != "" {
 			return resolvedEndpoint{externalID: "ext:fqdn:" + name}
 		}
@@ -127,6 +133,21 @@ func (r *EndpointResolver) ResolveEndpoint(ep *flow.Endpoint, dnsNames []string)
 		}
 	}
 	return resolvedEndpoint{namespace: namespace, workload: workload}
+}
+
+// kubernetesServiceEndpoint recognizes the canonical Kubernetes service DNS
+// shape: <service>.<namespace>.svc.<cluster-domain>. The cluster domain is not
+// assumed to be cluster.local because Kubernetes allows it to be customized.
+func kubernetesServiceEndpoint(values []string) (resolvedEndpoint, bool) {
+	for _, value := range values {
+		name := strings.TrimSuffix(strings.ToLower(strings.TrimSpace(value)), ".")
+		labels := strings.Split(name, ".")
+		if len(labels) < 3 || labels[0] == "" || labels[1] == "" || labels[2] != "svc" {
+			continue
+		}
+		return resolvedEndpoint{namespace: labels[1], workload: labels[0]}, true
+	}
+	return resolvedEndpoint{}, false
 }
 
 func workloadCandidate(ep *flow.Endpoint) (string, int) {

@@ -104,13 +104,18 @@ const DetailPanel: React.FC<Props> = ({
         </button>
       </div>
       <FancyScrollbar autoHide={true} className="hubble-detail-scroll">
+      <div className="hubble-detail-scroll-content">
       <div className="hubble-detail-row">
         <span className="hubble-detail-key">From</span>
-        <span className="hubble-detail-value">{edge.src}</span>
+        <span className="hubble-detail-value" title={edge.src}>
+          {edge.src}
+        </span>
       </div>
       <div className="hubble-detail-row">
         <span className="hubble-detail-key">To</span>
-        <span className="hubble-detail-value">{edge.dst}</span>
+        <span className="hubble-detail-value" title={edge.dst}>
+          {edge.dst}
+        </span>
       </div>
       <div
         className="hubble-detail-row"
@@ -219,6 +224,19 @@ const DetailPanel: React.FC<Props> = ({
               </span>
             </div>
           ))}
+          {(edge.topL7Policies?.length ?? 0) > 0 && (
+            <>
+              <div
+                className="hubble-detail-l7-policy-hint"
+                title="L7 차단은 deny 규칙 매칭이 아니라 '허용 목록에 없는 호출'이라서 Cilium이 차단 정책을 지목하지 않습니다. 아래는 이 연결의 L7 트래픽을 통제한 허용 목록 정책 — 위 호출들을 거부한 주체입니다. 클릭하면 허용 목록(spec)을 확인할 수 있습니다. (숫자는 이 정책이 L7 트래픽을 통제한 횟수)"
+              >
+                Blocked by allowlist policy
+              </div>
+              {edge.topL7Policies!.map((p, i) => (
+                <PolicyRow key={i} policy={p} onClick={setSelectedPolicy} denied />
+              ))}
+            </>
+          )}
         </div>
       )}
       {(edge.topDenyReasons?.length ?? 0) > 0 && (
@@ -287,6 +305,7 @@ const DetailPanel: React.FC<Props> = ({
         error={flowsError}
         onSelect={setDetailFlow}
       />
+      </div>
       </FancyScrollbar>
       <FlowDetailsModal
         flow={detailFlow}

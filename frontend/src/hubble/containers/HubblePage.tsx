@@ -343,7 +343,7 @@ const HubblePage: React.FC = () => {
     <Page className="hubble-page">
       <Page.Header>
         <Page.Header.Left>
-          <Page.Title title="Network Observability" />
+          <Page.Title title="Cilium(beta)" />
           {drilldown && (
             <button className="hubble-back-button" onClick={exitDrilldown}>
               ← Overview

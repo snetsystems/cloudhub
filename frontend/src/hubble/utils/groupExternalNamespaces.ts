@@ -148,6 +148,9 @@ const cloneEdgeWithEndpoints = (
   topDeniedPolicies: edge.topDeniedPolicies
     ? edge.topDeniedPolicies.map(x => ({...x}))
     : undefined,
+  topL7Policies: edge.topL7Policies
+    ? edge.topL7Policies.map(x => ({...x}))
+    : undefined,
   topL7: edge.topL7 ? edge.topL7.map(x => ({...x})) : undefined,
   topL7Denied: edge.topL7Denied ? edge.topL7Denied.map(x => ({...x})) : undefined,
 })
@@ -169,6 +172,10 @@ const mergeEdge = (target: HubbleEdge, source: HubbleEdge) => {
   target.topDeniedPolicies = mergeTopPolicies(
     target.topDeniedPolicies,
     source.topDeniedPolicies
+  )
+  target.topL7Policies = mergeTopPolicies(
+    target.topL7Policies,
+    source.topL7Policies
   )
   // lastVerdict: keep whichever target already has. Without per-flow
   // timestamps we cannot meaningfully arbitrate between two merged edges.

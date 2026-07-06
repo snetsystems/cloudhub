@@ -84,8 +84,50 @@
 .hubble-flow-table-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  height: 100%;
   width: 100%;
+  min-width: 0;
+}
+
+// Matches $scrollbar-track-size in fancy-scrollbars.scss — inset content so it
+// does not sit under the custom track; native scrollbar hidden separately.
+$hubble-fancy-scroll-gutter: 20px;
+
+@mixin hubble-fancy-scroll-view {
+  overflow-x: hidden !important;
+  overflow-y: scroll !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+}
+
+.hubble-detail-scroll-content,
+.hubble-top-talkers-scroll-content {
+  box-sizing: border-box;
+  min-width: 0;
+  padding-right: $hubble-fancy-scroll-gutter;
+}
+
+// react-custom-scrollbars defaults to overflow: scroll on the view, so minor
+// width overflow (e.g. negative margins on flow rows) still shows a horizontal bar.
+.hubble-detail-scroll.fancy-scroll--container,
+.hubble-top-talkers-scroll.fancy-scroll--container {
+  overflow: hidden;
+}
+
+.hubble-detail-scroll.fancy-scroll--container .fancy-scroll--view,
+.hubble-top-talkers-scroll.fancy-scroll--container .fancy-scroll--view,
+.hubble-flow-modal-scroll.fancy-scroll--container .fancy-scroll--view {
+  @include hubble-fancy-scroll-view;
+}
+
+.hubble-detail-scroll.fancy-scroll--container .fancy-scroll--track-h,
+.hubble-top-talkers-scroll.fancy-scroll--container .fancy-scroll--track-h {
+  display: none !important;
 }
 
 .hubble-graph-area {
@@ -1109,6 +1151,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -1127,7 +1170,7 @@
 }
 
 .hubble-detail-panel {
-  flex: 1 1 38%;
+  flex: 1 1 auto;
   min-height: 0;
 }
 
@@ -1395,15 +1438,26 @@
 .hubble-detail-row {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
   padding: 3px 0;
+  min-width: 0;
 }
 
 .hubble-detail-key {
   color: #8e91a1;
+  flex: 0 0 auto;
 }
 
 .hubble-detail-value {
   color: #f0f1f4;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 1px;
 }
 
 .hubble-detail-section {
@@ -1415,13 +1469,26 @@
 // "Denied L7" — visually elevated so operators looking at the panel for the
 // first time know this is the actionable info ("what was actually blocked").
 .hubble-detail-section--denied {
-  background: rgba(255, 111, 111, 0.06);
+  position: relative;
   border-top: 1px solid rgba(255, 111, 111, 0.35);
-  margin-left: -12px;
-  margin-right: -12px;
-  padding-left: 12px;
-  padding-right: 12px;
   padding-bottom: 6px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 111, 111, 0.06);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .hubble-detail-subtitle {
@@ -1434,6 +1501,17 @@
   color: #ff6f6f;
 }
 
+// Sub-label inside the Denied L7 section linking the denied calls to the
+// L7 allowlist policy that rejected them (Cilium sets no DeniedBy at L7).
+.hubble-detail-l7-policy-hint {
+  margin: 6px 0 2px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #ff9d9d;
+  cursor: help;
+}
+
 .hubble-detail-denied-summary .hubble-detail-key {
   color: #ff6f6f;
   font-weight: 600;
@@ -1442,6 +1520,10 @@
 .hubble-detail-l7-row {
   align-items: flex-start;
   gap: 6px;
+
+  .hubble-detail-value {
+    flex: 0 0 auto;
+  }
 }
 
 .hubble-detail-l7-name {
@@ -1460,6 +1542,7 @@
   padding: 6px 0;
   border-bottom: 1px solid #2c3038;
   font-size: 11px;
+  min-width: 0;
 }
 
 .hubble-flow-row:last-child {
@@ -1497,7 +1580,9 @@
   font-family: ui-monospace, monospace;
   color: #bec2cc;
   padding-top: 2px;
-  word-break: break-all;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .hubble-flow-arrow {
@@ -1526,10 +1611,9 @@
 
 .hubble-flow-row--clickable {
   cursor: pointer;
-  margin: 0 -8px;
-  padding-left: 8px;
-  padding-right: 8px;
   border-radius: 3px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .hubble-flow-row--clickable:hover {
@@ -1558,6 +1642,7 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   color: #bec2cc;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
 }
@@ -1566,6 +1651,20 @@
   width: 720px;
   max-width: 92vw;
   max-height: 88vh;
+
+  .hubble-flow-modal-scroll {
+    width: 100%;
+    min-height: 0;
+    flex: 0 1 auto;
+  }
+
+  .hubble-flow-modal-scroll.fancy-scroll--container .fancy-scroll--track-h {
+    display: none !important;
+  }
+
+  .hubble-flow-modal-body {
+    overflow: visible;
+  }
 }
 
 .hubble-flow-modal-header {
@@ -1778,7 +1877,7 @@
 
 .hubble-flow-details-modal {
   .hubble-flow-modal-body {
-    padding: 16px 20px;
+    padding: 16px calc(20px + #{$hubble-fancy-scroll-gutter}) 16px 20px;
     font-size: 13px;
   }
 
@@ -1813,7 +1912,7 @@
     width: 92vw;
 
     .hubble-flow-modal-body {
-      padding: 12px 14px;
+      padding: 12px calc(14px + #{$hubble-fancy-scroll-gutter}) 12px 14px;
     }
 
     .hubble-flow-modal-field {
@@ -1831,6 +1930,10 @@
   cursor: pointer;
   border-radius: 3px;
   padding: 4px 6px;
+
+  .hubble-detail-value {
+    flex: 0 0 auto;
+  }
 
   &:hover {
     background: rgba(86, 99, 122, 0.18);
@@ -2435,6 +2538,10 @@
 // scan the primary verdicts first.
 .hubble-verdict-row {
   align-items: baseline;
+
+  [class^='hubble-verdict-'] {
+    flex: 0 0 auto;
+  }
 }
 
 .hubble-verdict-row--secondary {
