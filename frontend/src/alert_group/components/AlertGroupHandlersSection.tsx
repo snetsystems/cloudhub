@@ -7,6 +7,7 @@ import Dropdown from 'src/shared/components/Dropdown'
 import {
   AlertGroupRule,
   AlertRuleEventHandler,
+  AlertTemplate,
   UserGroup,
 } from 'src/types'
 import {getActiveKapacitor, getKapacitorConfig} from 'src/shared/apis/index'
@@ -25,10 +26,13 @@ import TelegramHandler from 'src/alert_group/components/TelegramHandler'
 import CodeData from 'src/kapacitor/components/CodeData'
 import {RULE_MESSAGE_TEMPLATES} from 'src/kapacitor/constants'
 import ReactTooltip from 'react-tooltip'
+import {findSelectedAlertTemplate} from 'src/alert_group/utils/alertTemplates'
 
 interface Props extends WithTranslation {
   rule: AlertGroupRule
   userGroups: UserGroup[]
+  templates?: AlertTemplate[]
+  selectedTemplateId?: string
   source: Source
   router: InjectedRouter
   onUpdateRule: (patch: Partial<AlertGroupRule>) => void
@@ -59,6 +63,34 @@ interface State {
 
   kapacitorId: string | null
 }
+
+const resolveActiveAlertTemplate = (
+  templates: AlertTemplate[] = [],
+  rule: Pick<AlertGroupRule, 'measurement' | 'field' | 'templateId'>,
+  selectedTemplateId?: string
+): AlertTemplate | undefined => {
+  if (selectedTemplateId && selectedTemplateId !== 'custom') {
+    const bySidebar = templates.find(template => template.id === selectedTemplateId)
+    if (bySidebar) {
+      return bySidebar
+    }
+  }
+  if (rule.templateId) {
+    const byRule = templates.find(template => template.id === rule.templateId)
+    if (byRule) {
+      return byRule
+    }
+  }
+  return findSelectedAlertTemplate(templates, rule)
+}
+
+const getTemplateEmailBody = (
+  templates: AlertTemplate[] = [],
+  rule: Pick<AlertGroupRule, 'measurement' | 'field' | 'templateId'>,
+  selectedTemplateId?: string
+): string =>
+  resolveActiveAlertTemplate(templates, rule, selectedTemplateId)?.emailBody?.trim() ||
+  ''
 
 class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -194,7 +226,13 @@ class AlertGroupHandlersSectionView extends PureComponent<Props, State> {
 
     let initialConfig: Record<string, unknown> = {}
     if (item.type === 'email') {
-      initialConfig = {body: ''}
+      const {templates = [], selectedTemplateId, rule} = this.props
+      const templateEmailBody = getTemplateEmailBody(
+        templates,
+        rule,
+        selectedTemplateId
+      )
+      initialConfig = {body: templateEmailBody}
     } else if (item.type === 'webhook') {
       initialConfig = {url: '', headers: {}}
     } else if (item.type === 'tcp') {
