@@ -20,6 +20,7 @@ interface Props extends WithTranslation {
   selectedTemplateId: string
   onSelectTemplate: (templateId: string) => void
   createNewText?: string
+  showCreateIcon?: boolean
 }
 
 interface State {
@@ -108,6 +109,7 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
       selectedTemplateId,
       onSelectTemplate,
       createNewText,
+      showCreateIcon = true,
       t,
     } = this.props
     const {searchTerm, tooltip} = this.state
@@ -161,7 +163,7 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
         <Button
           text={buttonText}
           onClick={() => onSelectTemplate('custom')}
-          icon={IconFont.Plus}
+          icon={showCreateIcon ? IconFont.Plus : undefined}
           color={ComponentColor.Success}
           size={ComponentSize.Small}
           status={ComponentStatus.Default}
