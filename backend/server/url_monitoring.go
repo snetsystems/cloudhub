@@ -273,6 +273,16 @@ func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request)
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+
+	if req.AlertRuleID != "" {
+		for _, t := range result.Targets {
+			if strings.EqualFold(t.Name, req.Name) {
+				_ = s.autoLinkURLToAlertRule(ctx, t.ID, req.AlertRuleID)
+				break
+			}
+		}
+	}
+
 	msg := fmt.Sprintf(MsgURLMonitoringTargetCreated.String(), req.Name)
 	s.logRegistration(ctx, "URLMonitoringTarget", msg)
 	encodeJSON(w, http.StatusOK, toURLMonitoringResponse(result), s.Logger)
@@ -344,10 +354,12 @@ func (s *Service) PatchURLMonitoringTarget(w http.ResponseWriter, r *http.Reques
 	}
 
 	found := false
+	oldAlertRuleID := ""
 	for i := range m.Targets {
 		if m.Targets[i].ID != targetID {
 			continue
 		}
+		oldAlertRuleID = m.Targets[i].AlertRuleID
 		m.Targets[i].Name = req.Name
 		m.Targets[i].URL = req.URL
 		m.Targets[i].Interval = req.Interval
@@ -373,6 +385,16 @@ func (s *Service) PatchURLMonitoringTarget(w http.ResponseWriter, r *http.Reques
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+
+	if oldAlertRuleID != req.AlertRuleID {
+		if oldAlertRuleID != "" {
+			_ = s.removeURLFromAlertRule(ctx, targetID, oldAlertRuleID)
+		}
+		if req.AlertRuleID != "" {
+			_ = s.autoLinkURLToAlertRule(ctx, targetID, req.AlertRuleID)
+		}
+	}
+
 	msg := fmt.Sprintf(MsgURLMonitoringTargetModified.String(), req.Name)
 	s.logRegistration(ctx, "URLMonitoringTarget", msg)
 	encodeJSON(w, http.StatusOK, toURLMonitoringResponse(updated), s.Logger)
@@ -408,12 +430,14 @@ func (s *Service) DeleteURLMonitoringTarget(w http.ResponseWriter, r *http.Reque
 	}
 
 	var deletedName string
+	var deletedAlertRuleID string
 	found := false
 	next := make([]cloudhub.URLMonitoringTarget, 0, len(m.Targets))
 	for _, t := range m.Targets {
 		if t.ID == targetID {
 			found = true
 			deletedName = t.Name
+			deletedAlertRuleID = t.AlertRuleID
 			continue
 		}
 		next = append(next, t)
@@ -435,6 +459,11 @@ func (s *Service) DeleteURLMonitoringTarget(w http.ResponseWriter, r *http.Reque
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+
+	if deletedAlertRuleID != "" {
+		_ = s.removeURLFromAlertRule(ctx, targetID, deletedAlertRuleID)
+	}
+
 	logName := deletedName
 	if strings.TrimSpace(logName) == "" {
 		logName = targetID
@@ -590,6 +619,22 @@ func (s *Service) BulkAddURLMonitoringTargets(w http.ResponseWriter, r *http.Req
 	// Step 6: audit log.
 	msg := fmt.Sprintf(MsgURLMonitoringTargetBulkCreated.String(), strconv.Itoa(len(succeeded)))
 	s.logRegistration(ctx, "URLMonitoringTarget", msg)
+
+	if len(succeeded) > 0 {
+		latestM, _ := s.Store.URLMonitoring(ctx).Get(ctx, orgID)
+		if latestM != nil {
+			for _, reqTarget := range validTargets {
+				if reqTarget.AlertRuleID != "" {
+					for _, t := range latestM.Targets {
+						if strings.EqualFold(t.Name, reqTarget.Name) {
+							_ = s.autoLinkURLToAlertRule(ctx, t.ID, reqTarget.AlertRuleID)
+							break
+						}
+					}
+				}
+			}
+		}
+	}
 
 	resp := urlMonitoringBulkAddResponse{
 		Succeeded: succeeded,
@@ -912,4 +957,73 @@ func (s *Service) GetURLMonitoringStatus(w http.ResponseWriter, r *http.Request)
 		"collectorServer": m.CollectorServer,
 		"filePath":        filePath,
 	}, s.Logger)
+}
+
+// autoLinkURLToAlertRule adds a targetID to an AlertGroupRule's URL targets and redeploys it.
+func (s *Service) autoLinkURLToAlertRule(ctx context.Context, targetID string, ruleID string) error {
+	if strings.TrimSpace(ruleID) == "" {
+		return nil
+	}
+	rule, err := s.AlertGroupRules.Get(ctx, ruleID)
+	if err != nil {
+		s.Logger.WithField("rule", ruleID).WithField("error", err).Error("autoLinkURLToAlertRule: failed to get rule")
+		return err
+	}
+	existingTargets, err := s.AlertGroupRules.URLTargetIDs(ctx, ruleID)
+	if err != nil {
+		s.Logger.WithField("rule", ruleID).WithField("error", err).Error("autoLinkURLToAlertRule: failed to get targets")
+		return err
+	}
+	for _, t := range existingTargets {
+		if t == targetID {
+			return nil
+		}
+	}
+	existingTargets = append(existingTargets, targetID)
+	err = s.AlertGroupRules.SetURLTargets(ctx, ruleID, existingTargets)
+	if err != nil {
+		s.Logger.WithField("rule", ruleID).WithField("error", err).Error("autoLinkURLToAlertRule: failed to set targets")
+		return err
+	}
+	
+	return s.regenRule(ctx, rule)
+}
+
+// removeURLFromAlertRule removes a targetID from an AlertGroupRule's URL targets and redeploys it.
+func (s *Service) removeURLFromAlertRule(ctx context.Context, targetID string, ruleID string) error {
+	if strings.TrimSpace(ruleID) == "" {
+		return nil
+	}
+	rule, err := s.AlertGroupRules.Get(ctx, ruleID)
+	if err != nil {
+		s.Logger.WithField("rule", ruleID).WithField("error", err).Error("removeURLFromAlertRule: failed to get rule")
+		return err // Rule might be deleted already
+	}
+	existingTargets, err := s.AlertGroupRules.URLTargetIDs(ctx, ruleID)
+	if err != nil {
+		s.Logger.WithField("rule", ruleID).WithField("error", err).Error("removeURLFromAlertRule: failed to get targets")
+		return err
+	}
+	
+	var newTargets []string
+	found := false
+	for _, t := range existingTargets {
+		if t == targetID {
+			found = true
+		} else {
+			newTargets = append(newTargets, t)
+		}
+	}
+	
+	if !found {
+		return nil
+	}
+	
+	err = s.AlertGroupRules.SetURLTargets(ctx, ruleID, newTargets)
+	if err != nil {
+		s.Logger.WithField("rule", ruleID).WithField("error", err).Error("removeURLFromAlertRule: failed to set targets")
+		return err
+	}
+	
+	return s.regenRule(ctx, rule)
 }
