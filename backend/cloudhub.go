@@ -2195,6 +2195,7 @@ type AlertGroupRule struct {
 	Name            string          `json:"name"`
 	Specs           []AlertRuleSpec `json:"specs"`
 	TaskType        string          `json:"taskType"` // stream | batch
+	TargetType      string          `json:"targetType"` // host | url
 	OccurrenceType   string                  `json:"occurrenceType"` // consecutive | recent
 	OccurrenceCount  int                     `json:"occurrenceCount"`
 	OccurrenceWindow string                  `json:"occurrenceWindow"`

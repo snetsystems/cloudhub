@@ -21,14 +21,15 @@ CREATE INDEX IF NOT EXISTS idx_alert_rule_specs_alert_rule_id_active
 COMMENT ON TABLE alert_rule_specs IS
   'Layer 3: alert_rule -> specs 1:N. Data collection fields and triggers.';
 
--- 2. 기존 테이블에서 옛날 구조의 단일 지표 컬럼들 삭제
+-- 2. 기존 테이블에서 옛날 구조의 단일 지표 컬럼들 삭제 및 target_type 추가
 ALTER TABLE alert_rules 
     DROP COLUMN IF EXISTS database,
     DROP COLUMN IF EXISTS retention_policy,
     DROP COLUMN IF EXISTS measurement,
     DROP COLUMN IF EXISTS field,
     DROP COLUMN IF EXISTS rule_trigger,
-    DROP COLUMN IF EXISTS every;
+    DROP COLUMN IF EXISTS every,
+    ADD COLUMN IF NOT EXISTS target_type TEXT NOT NULL DEFAULT 'host';
 
 -- 3. alert_rule_urls 테이블 생성 (1 rule : N urls)
 CREATE TABLE IF NOT EXISTS alert_rule_urls (
@@ -109,4 +110,5 @@ ALTER TABLE alert_rules
     ADD COLUMN measurement TEXT NOT NULL DEFAULT '',
     ADD COLUMN field TEXT NOT NULL DEFAULT '',
     ADD COLUMN rule_trigger TEXT NOT NULL DEFAULT 'threshold',
-    ADD COLUMN every TEXT NOT NULL DEFAULT '30s';
+    ADD COLUMN every TEXT NOT NULL DEFAULT '30s',
+    DROP COLUMN IF EXISTS target_type;

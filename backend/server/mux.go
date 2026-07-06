@@ -334,6 +334,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v2/alert-group-rules/test-notification", EnsureEditor(service.AlertGroupRuleTestNotification))
 	router.POST("/cloudhub/v2/alert-group-rules-test-notification/:id", EnsureEditor(service.AlertGroupRuleTestNotificationByID))
 	router.PUT("/cloudhub/v2/alert-group-rules/:id/hosts", EnsureEditor(service.AlertGroupRuleSetHosts))
+	router.PUT("/cloudhub/v2/alert-group-rules/:id/urls", EnsureEditor(service.AlertGroupRuleSetURLTargets))
 	router.PUT("/cloudhub/v2/alert-group-rules/:id/event-handlers", EnsureEditor(service.AlertGroupRuleSetEventHandlers))
 	router.GET("/cloudhub/v2/alert-group-rules/:id", EnsureViewer(service.AlertGroupRuleIDGet))
 	router.PATCH("/cloudhub/v2/alert-group-rules/:id", EnsureEditor(service.AlertGroupRuleUpdate))

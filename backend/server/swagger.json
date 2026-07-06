@@ -7895,6 +7895,15 @@
         ],
         "summary": "Get all alert group rules",
         "description": "Lists alert rules for the organization in the request context. Each rule includes resolved eventHandlers and a generated tickscript preview.",
+        "parameters": [
+          {
+            "name": "targetType",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Filter by target type (e.g. 'url' or 'host')"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Alert group rules",
@@ -8409,6 +8418,55 @@
             "description": "Hostnames to scope the rule (see AlertGroupRuleHostsRequest example)",
             "schema": {
               "$ref": "#/definitions/AlertGroupRuleHostsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/alert-group-rules/{id}/urls": {
+      "put": {
+        "tags": [
+          "alert-group-rules"
+        ],
+        "summary": "Set URL targets for an alert group rule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Alert group rule UUID"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "URL targets to scope the rule (see AlertGroupRuleURLsRequest example)",
+            "schema": {
+              "$ref": "#/definitions/AlertGroupRuleURLsRequest"
             }
           }
         ],
@@ -14925,6 +14983,13 @@
             "batch"
           ]
         },
+        "targetType": {
+          "type": "string",
+          "enum": [
+            "host",
+            "url"
+          ]
+        },
         "occurrenceType": {
           "type": "string",
           "enum": [
@@ -15178,6 +15243,23 @@
         "hostnames": [
           "web-1",
           "web-2"
+        ]
+      }
+    },
+    "AlertGroupRuleURLsRequest": {
+      "type": "object",
+      "properties": {
+        "urlTargetIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "example": {
+        "urlTargetIds": [
+          "url-1",
+          "url-2"
         ]
       }
     },

@@ -57,6 +57,7 @@ type fakeAlertGroupRuleStore struct {
 	updateFunc                   func(context.Context, cloudhub.AlertGroupRule) error
 	getFunc                      func(context.Context, string) (cloudhub.AlertGroupRule, error)
 	setHostsFunc                 func(context.Context, string, []string) error
+	setURLTargetsFunc            func(context.Context, string, []string) error
 	hostnamesFunc                func(context.Context, string) ([]string, error)
 	setEventHandlersFunc         func(context.Context, string, []cloudhub.AlertRuleEventHandler) error
 	eventHandlersByRuleFunc      func(context.Context, string) ([]cloudhub.AlertRuleEventHandler, error)
@@ -176,6 +177,9 @@ func (f *fakeAlertGroupRuleStore) SetSpecs(ctx context.Context, ruleID string, s
 }
 
 func (f *fakeAlertGroupRuleStore) SetURLTargets(ctx context.Context, ruleID string, targets []string) error {
+	if f.setURLTargetsFunc != nil {
+		return f.setURLTargetsFunc(ctx, ruleID, targets)
+	}
 	return nil
 }
 
@@ -481,3 +485,5 @@ func TestCreateKapacitorTaskTrimsTrailingSlash(t *testing.T) {
 func TestKapacitorRulesStatusSyncsAlertGroupActive(t *testing.T) {
 	t.Skip("Skipping refactored tests")
 }
+
+

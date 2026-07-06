@@ -46,7 +46,13 @@ func (s *Service) AlertGroupRulesGet(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+	targetTypeFilter := r.URL.Query().Get("targetType")
+	var filteredRules []cloudhub.AlertGroupRule
+
 	for i := range rules {
+		if targetTypeFilter != "" && rules[i].TargetType != targetTypeFilter {
+			continue
+		}
 		denormalizeAlertGroupRuleConditionOperators(&rules[i])
 		recipients, err := s.resolveRuleRecipients(ctx, rules[i])
 		if err != nil {
@@ -62,8 +68,12 @@ func (s *Service) AlertGroupRulesGet(w http.ResponseWriter, r *http.Request) {
 		}
 		filter := processor.BuildTickscriptFilter(targets)
 		rules[i].Tickscript, _ = kapackage.AlertGroupRuleTICKScript(rules[i], recipients, filter)
+		filteredRules = append(filteredRules, rules[i])
 	}
-	encodeJSON(w, http.StatusOK, map[string]interface{}{"alertGroupRules": rules}, s.Logger)
+	if filteredRules == nil {
+		filteredRules = []cloudhub.AlertGroupRule{}
+	}
+	encodeJSON(w, http.StatusOK, map[string]interface{}{"alertGroupRules": filteredRules}, s.Logger)
 }
 
 // AlertGroupRuleCreate creates a new alert group rule.
@@ -368,6 +378,24 @@ func (s *Service) AlertGroupRuleSetHosts(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// AlertGroupRuleSetURLTargets sets the URL targets for an alert group rule.
+func (s *Service) AlertGroupRuleSetURLTargets(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := httprouter.GetParam(r, "id")
+	var req struct {
+		URLTargetIDs []string `json:"urlTargetIds"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+	if err := s.AlertGroupRules.SetURLTargets(ctx, id, req.URLTargetIDs); err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // AlertGroupRuleSetEventHandlers sets event handlers for an alert group rule.
 func (s *Service) AlertGroupRuleSetEventHandlers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -535,6 +563,16 @@ func (s *Service) validateAlertGroupKapacitor(ctx context.Context, orgID, kapaci
 }
 
 func validateAlertGroupRuleInput(rule *cloudhub.AlertGroupRule) error {
+	target := strings.TrimSpace(strings.ToLower(rule.TargetType))
+	if target == "" {
+		rule.TargetType = "host"
+	} else if target != "host" && target != "url" {
+		return fmt.Errorf("invalid targetType: %s", target)
+	} else {
+		rule.TargetType = target
+	}
+
+
 	for _, spec := range rule.Specs {
 		if strings.TrimSpace(spec.Database) == "" {
 			return fmt.Errorf("database is required in spec")
