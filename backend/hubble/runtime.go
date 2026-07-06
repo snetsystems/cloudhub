@@ -44,13 +44,14 @@ const (
 // NewClusterRuntime creates a ClusterRuntime. Call Start or startWithFlowChan
 // to begin processing.
 func NewClusterRuntime(cfg RuntimeConfig, logger cloudhub.Logger) *ClusterRuntime {
+	resolver := NewEndpointResolver()
 	rt := &ClusterRuntime{
 		cfg:     cfg,
 		logger:  logger,
 		fanout:  NewFanOut(4096),
-		overall: NewOverviewAggregator(cfg.Window, cfg.Bucket, cfg.MaxEdges),
-		wload:   NewWorkloadAggregator(cfg.Window, cfg.Bucket, cfg.MaxEdges),
-		flowBuf: NewFlowBuffer(defaultFlowBufferMaxEdges, defaultFlowBufferPerEdgeCap),
+		overall: NewOverviewAggregatorWithResolver(cfg.Window, cfg.Bucket, cfg.MaxEdges, resolver),
+		wload:   NewWorkloadAggregatorWithResolver(cfg.Window, cfg.Bucket, cfg.MaxEdges, resolver),
+		flowBuf: NewFlowBufferWithResolver(defaultFlowBufferMaxEdges, defaultFlowBufferPerEdgeCap, resolver),
 	}
 	if cfg.ExcludedPatterns != nil {
 		rt.overall.SetSystemFunc(cfg.ExcludedPatterns.IsSystem)

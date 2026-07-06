@@ -3,6 +3,7 @@ package server
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestNewCustomLinks(t *testing.T) {
@@ -56,5 +57,32 @@ func TestNewCustomLinks(t *testing.T) {
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%q. NewCustomLinks() = %v, want %v", tt.name, got, tt.want)
 		}
+	}
+}
+
+func TestNewHubbleConfig_ExcludedNSDefaults(t *testing.T) {
+	// No patterns given → sensible defaults so "Hide system NS" works
+	// out of the box.
+	cfg, err := NewHubbleConfig(
+		5*time.Minute, 10*time.Second, 2*time.Second, 300, nil, "",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"kube-system", "kube-public", "kube-node-lease"}
+	if !reflect.DeepEqual(cfg.ExcludedNamespaceGlobs, want) {
+		t.Errorf("default ExcludedNamespaceGlobs = %v, want %v", cfg.ExcludedNamespaceGlobs, want)
+	}
+
+	// Explicit patterns override the defaults untouched.
+	custom := []string{"longhorn-*"}
+	cfg, err = NewHubbleConfig(
+		5*time.Minute, 10*time.Second, 2*time.Second, 300, custom, "",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(cfg.ExcludedNamespaceGlobs, custom) {
+		t.Errorf("custom ExcludedNamespaceGlobs = %v, want %v", cfg.ExcludedNamespaceGlobs, custom)
 	}
 }

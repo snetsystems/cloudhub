@@ -1,13 +1,23 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {CardPosition} from 'src/hubble/utils/cardLayout'
+import {
+  DragOffset,
+  loadCardOffsets,
+  saveCardOffset,
+  clearCardOffsets,
+} from 'src/hubble/utils/cardOffsetsStorage'
 
-export interface DragOffset {
-  x: number
-  y: number
-}
-
-export const useCardDrag = (layoutKey: string, getScale: () => number) => {
-  const [offsets, setOffsets] = useState<Map<string, DragOffset>>(new Map())
+// viewKey identifies which map the offsets belong to ('overview' or the
+// drilldown namespace); dragged positions are persisted per view so a
+// hand-arranged map survives reloads.
+export const useCardDrag = (
+  layoutKey: string,
+  getScale: () => number,
+  viewKey: string
+) => {
+  const [offsets, setOffsets] = useState<Map<string, DragOffset>>(() =>
+    loadCardOffsets(viewKey)
+  )
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null)
   const [dragTick, setDragTick] = useState(0)
   const liveOffsetsRef = useRef<Map<string, DragOffset>>(new Map())
@@ -22,7 +32,9 @@ export const useCardDrag = (layoutKey: string, getScale: () => number) => {
   const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
-    setOffsets(new Map())
+    // Layout changed: drop in-memory drag state but restore persisted
+    // positions so user-pinned cards stay where they were put.
+    setOffsets(loadCardOffsets(viewKey))
     liveOffsetsRef.current = new Map()
     setDraggingNodeId(null)
     setDragTick(0)
@@ -32,7 +44,7 @@ export const useCardDrag = (layoutKey: string, getScale: () => number) => {
       cancelAnimationFrame(rafRef.current)
       rafRef.current = null
     }
-  }, [layoutKey])
+  }, [layoutKey, viewKey])
 
   const applyPositions = useCallback(
     (base: CardPosition[]): CardPosition[] =>
@@ -104,6 +116,7 @@ export const useCardDrag = (layoutKey: string, getScale: () => number) => {
             next.set(drag.nodeId, live)
             return next
           })
+          saveCardOffset(viewKey, drag.nodeId, live)
         }
       }
       dragRef.current = null
@@ -116,7 +129,7 @@ export const useCardDrag = (layoutKey: string, getScale: () => number) => {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
     }
-  }, [draggingNodeId, getScale, scheduleDragRender])
+  }, [draggingNodeId, getScale, scheduleDragRender, viewKey])
 
   useEffect(() => {
     if (!draggingNodeId) return
@@ -131,6 +144,7 @@ export const useCardDrag = (layoutKey: string, getScale: () => number) => {
   }, [])
 
   const resetOffsets = useCallback(() => {
+    clearCardOffsets(viewKey)
     setOffsets(new Map())
     liveOffsetsRef.current = new Map()
     setDraggingNodeId(null)
@@ -141,7 +155,7 @@ export const useCardDrag = (layoutKey: string, getScale: () => number) => {
       cancelAnimationFrame(rafRef.current)
       rafRef.current = null
     }
-  }, [])
+  }, [viewKey])
 
   return {
     applyPositions,

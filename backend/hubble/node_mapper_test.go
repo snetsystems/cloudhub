@@ -64,7 +64,7 @@ func TestMapFlow_ExternalFQDN(t *testing.T) {
 	}
 }
 
-func TestMapFlow_ExternalUnknown(t *testing.T) {
+func TestMapFlow_WorldWithoutDNSIsGenericExternal(t *testing.T) {
 	f := &flow.Flow{
 		Source:      &flow.Endpoint{Namespace: "default", Workloads: []*flow.Workload{{Name: "api"}}},
 		Destination: &flow.Endpoint{Identity: 2}, // world, no DNS name
@@ -84,7 +84,7 @@ func TestMapFlow_WorkloadFallbackToPod(t *testing.T) {
 		},
 	}
 	src, _ := MapFlow(f, LevelWorkload)
-	if src != "wl:default/Unknown Workload" {
-		t.Errorf("src got %q, want wl:default/Unknown Workload", src)
+	if src != "wl:default/loose-pod-xyz" {
+		t.Errorf("src got %q, want wl:default/loose-pod-xyz", src)
 	}
 }

@@ -1,9 +1,11 @@
 import React, {useEffect, useState} from 'react'
 import {HubbleSnapshot} from 'src/hubble/types'
+import {formatWindowDuration} from 'src/hubble/utils/time'
 
 interface Props {
   snapshot: HubbleSnapshot | null
   wsConnected: boolean
+  onHelp?: () => void
 }
 
 // formatFlowAge renders the time since the most recent flow as a short label.
@@ -33,28 +35,10 @@ const flowAgeWarn = (lastFlowAt: string | undefined): boolean => {
   return Date.now() - t > 30000
 }
 
-// formatWindowDuration converts the snapshot window's start/end timestamps into
-// a short human label ("5m", "30s") so the operator knows how far back the map
-// looks. Nodes/edges outside this window are not displayed.
-const formatWindowDuration = (
-  start?: string,
-  end?: string
-): string | null => {
-  if (!start || !end) return null
-  const s = Date.parse(start)
-  const e = Date.parse(end)
-  if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return null
-  const sec = Math.round((e - s) / 1000)
-  if (sec < 60) return `${sec}s`
-  const min = Math.round(sec / 60)
-  if (min < 60) return `${min}m`
-  return `${Math.round(min / 60)}h`
-}
-
 // StatusBar surfaces the signals the user needs to trust the data:
 // relay connection, WS push freshness, window fill, edge cap, and the
 // age of the last received flow (so quiet stream != broken stream).
-const StatusBar: React.FC<Props> = ({snapshot, wsConnected}) => {
+const StatusBar: React.FC<Props> = ({snapshot, wsConnected, onHelp}) => {
   const status = snapshot?.status
   const snapWindow = snapshot?.window
   const relay = !!status?.relayConnected
@@ -96,8 +80,11 @@ const StatusBar: React.FC<Props> = ({snapshot, wsConnected}) => {
           <span className="hubble-status-window-label">&nbsp;· {windowLabel}</span>
         )}
       </span>
-      <span className="hubble-status-item">
-        Flows&nbsp;
+      <span
+        className="hubble-status-item"
+        title="Hubble 관측 지점을 지난 flow '이벤트' 누적 수 — 패킷/바이트/트래픽 양이 아닙니다. 자잘한 통신(DNS 등)이 과대, 대용량 전송이 과소 대표될 수 있습니다."
+      >
+        Flow events&nbsp;
         <strong>{status?.flowsReceived ?? 0}</strong>
       </span>
       <span className="hubble-status-item">
@@ -122,6 +109,17 @@ const StatusBar: React.FC<Props> = ({snapshot, wsConnected}) => {
       </span>
       {status?.error && (
         <span className="hubble-status-error">{status.error}</span>
+      )}
+      {onHelp && (
+        <button
+          type="button"
+          className="hubble-side-tabs-help"
+          title="헤더의 각 항목이 무엇인지 예시와 함께 단계별로 설명합니다"
+          aria-label="Open header tutorial"
+          onClick={onHelp}
+        >
+          ?
+        </button>
       )}
     </div>
   )

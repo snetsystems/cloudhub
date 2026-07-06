@@ -27,6 +27,111 @@ func newFlow(ts time.Time, srcNs, dstNs, verdict string) *flow.Flow {
 	}
 }
 
+// newHTTPFlow builds a FORWARDED flow with a full 5-tuple and an HTTP L7
+// record carrying a response latency, for connection/latency aggregation tests.
+func newHTTPFlow(ts time.Time, srcPort uint32, latencyMs uint64) *flow.Flow {
+	f := newFlow(ts, "default", "backend", "FORWARDED")
+	f.IP = &flow.IP{Source: "10.0.0.1", Destination: "10.0.0.2"}
+	f.L4 = &flow.Layer4{Protocol: &flow.Layer4_TCP{
+		TCP: &flow.TCP{SourcePort: srcPort, DestinationPort: 8080},
+	}}
+	f.L7 = &flow.Layer7{
+		Record:    &flow.Layer7_Http{Http: &flow.HTTP{Method: "GET", Url: "/api"}},
+		LatencyNs: latencyMs * 1_000_000,
+	}
+	return f
+}
+
+func TestAggregator_EdgeActiveConnsAndL7Metrics(t *testing.T) {
+	now := time.Now()
+	a := NewOverviewAggregator(5*time.Minute, 10*time.Second, 1000)
+	a.SetClockFunc(func() time.Time { return now })
+
+	a.Add(newHTTPFlow(now, 51000, 4))
+	a.Add(newHTTPFlow(now, 51000, 8)) // same connection
+	a.Add(newHTTPFlow(now, 51002, 6)) // second connection
+
+	snap := a.Snapshot("test-cluster")
+	if len(snap.Edges) != 1 {
+		t.Fatalf("expected 1 edge, got %d", len(snap.Edges))
+	}
+	e := snap.Edges[0]
+	if e.ActiveConns != 2 {
+		t.Fatalf("ActiveConns got %d, want 2", e.ActiveConns)
+	}
+	if len(e.L7Metrics) != 1 {
+		t.Fatalf("L7Metrics got %+v, want one HTTP entry", e.L7Metrics)
+	}
+	m := e.L7Metrics[0]
+	if m.Type != "HTTP" || m.Count != 3 {
+		t.Fatalf("L7Metrics[0] got %+v, want Type=HTTP Count=3", m)
+	}
+	if m.AvgLatencyMs != 6 || m.MaxLatencyMs != 8 {
+		t.Fatalf("latency got avg=%v max=%v, want avg=6 max=8", m.AvgLatencyMs, m.MaxLatencyMs)
+	}
+}
+
+// newExternalFlow builds a flow from an in-cluster namespace to an external
+// destination that Hubble cannot resolve (no endpoint → ext:unknown).
+func newExternalFlow(ts time.Time, dstIP string) *flow.Flow {
+	f := newFlow(ts, "default", "ignored", "FORWARDED")
+	f.Destination = nil
+	f.IP = &flow.IP{Source: "10.0.0.1", Destination: dstIP}
+	return f
+}
+
+func TestAggregator_EdgeTopExternalIPs(t *testing.T) {
+	now := time.Now()
+	a := NewOverviewAggregator(5*time.Minute, 10*time.Second, 1000)
+	a.SetClockFunc(func() time.Time { return now })
+
+	a.Add(newExternalFlow(now, "203.0.113.9"))
+	a.Add(newExternalFlow(now, "203.0.113.9"))
+	a.Add(newExternalFlow(now, "198.51.100.7"))
+
+	snap := a.Snapshot("test-cluster")
+	if len(snap.Edges) != 1 {
+		t.Fatalf("expected 1 edge, got %d", len(snap.Edges))
+	}
+	e := snap.Edges[0]
+	if e.Dst != "ext:unknown" {
+		t.Fatalf("Dst got %q, want ext:unknown", e.Dst)
+	}
+	if len(e.TopExternalIPs) != 2 {
+		t.Fatalf("TopExternalIPs got %+v, want 2 entries", e.TopExternalIPs)
+	}
+	if e.TopExternalIPs[0].Name != "203.0.113.9" || e.TopExternalIPs[0].Count != 2 {
+		t.Fatalf("TopExternalIPs[0] got %+v, want 203.0.113.9:2", e.TopExternalIPs[0])
+	}
+}
+
+func TestAggregator_ExternalNodeTopIPs(t *testing.T) {
+	now := time.Now()
+	a := NewOverviewAggregator(5*time.Minute, 10*time.Second, 1000)
+	a.SetClockFunc(func() time.Time { return now })
+
+	a.Add(newExternalFlow(now, "203.0.113.9"))
+	a.Add(newExternalFlow(now, "203.0.113.9"))
+	a.Add(newExternalFlow(now, "198.51.100.7"))
+
+	snap := a.Snapshot("test-cluster")
+	var extNode *SnapshotNode
+	for i := range snap.Nodes {
+		if snap.Nodes[i].ID == "ext:unknown" {
+			extNode = &snap.Nodes[i]
+		}
+	}
+	if extNode == nil {
+		t.Fatal("ext:unknown node not found")
+	}
+	if len(extNode.TopExternalIPs) != 2 {
+		t.Fatalf("node TopExternalIPs got %+v, want 2 entries", extNode.TopExternalIPs)
+	}
+	if extNode.TopExternalIPs[0].Name != "203.0.113.9" || extNode.TopExternalIPs[0].Count != 2 {
+		t.Fatalf("node TopExternalIPs[0] got %+v, want 203.0.113.9:2", extNode.TopExternalIPs[0])
+	}
+}
+
 func TestAggregator_AddFlowsAccumulate(t *testing.T) {
 	now := time.Now()
 	a := NewOverviewAggregator(5*time.Minute, 10*time.Second, 1000)
@@ -48,6 +153,38 @@ func TestAggregator_AddFlowsAccumulate(t *testing.T) {
 	}
 	if e.VerdictCounts["FORWARDED"] != 3 || e.VerdictCounts["DROPPED"] != 1 {
 		t.Fatalf("VerdictCounts got %v, want FORWARDED:3 DROPPED:1", e.VerdictCounts)
+	}
+}
+
+func TestWorkloadAggregator_ReusesCanonicalEndpointAfterCacheWarmup(t *testing.T) {
+	now := time.Now()
+	resolver := NewEndpointResolver()
+	a := NewWorkloadAggregatorWithResolver(5*time.Minute, 10*time.Second, 1000, resolver)
+	a.SetClockFunc(func() time.Time { return now })
+
+	canonical := newFlow(now, "cloudhub", "cloudhub", "FORWARDED")
+	canonical.Source = &flow.Endpoint{
+		Identity:  12619,
+		Namespace: "cloudhub",
+		Labels:    []string{"k8s:app.kubernetes.io/name=postgresql"},
+	}
+	canonical.Destination.Identity = 200
+	sparse := newFlow(now, "cloudhub", "cloudhub", "FORWARDED")
+	sparse.Source = &flow.Endpoint{Identity: 12619, Namespace: "cloudhub"}
+	sparse.Destination.Identity = 200
+
+	a.Add(canonical)
+	a.Add(sparse)
+
+	snap := a.Snapshot("test-cluster")
+	if len(snap.Edges) != 1 {
+		t.Fatalf("edges = %+v, want one canonical edge after cache warm-up", snap.Edges)
+	}
+	if snap.Edges[0].Src != "wl:cloudhub/postgresql" {
+		t.Fatalf("source = %q, want wl:cloudhub/postgresql", snap.Edges[0].Src)
+	}
+	if snap.Edges[0].FlowCount != 2 {
+		t.Fatalf("flow count = %d, want 2", snap.Edges[0].FlowCount)
 	}
 }
 

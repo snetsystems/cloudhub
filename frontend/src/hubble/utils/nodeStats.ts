@@ -9,6 +9,8 @@ export interface NodeTrafficStats {
   outFlows: number
   internalFlows: number
   deniedFlows: number
+  ingressDeniedFlows: number
+  egressDeniedFlows: number
   ingressDenied: boolean
   egressDenied: boolean
   // hadRecentDeny is true when at least one incident-or-recovered edge touches
@@ -22,6 +24,8 @@ const emptyStats = (): NodeTrafficStats => ({
   outFlows: 0,
   internalFlows: 0,
   deniedFlows: 0,
+  ingressDeniedFlows: 0,
+  egressDeniedFlows: 0,
   ingressDenied: false,
   egressDenied: false,
   hadRecentDeny: false,
@@ -54,6 +58,8 @@ export const buildNodeStats = (
       s.internalFlows += edge.flowCount
       s.deniedFlows += denied
       if (denied > 0) {
+        s.ingressDeniedFlows += denied
+        s.egressDeniedFlows += denied
         s.ingressDenied = true
         s.egressDenied = true
       }
@@ -64,12 +70,14 @@ export const buildNodeStats = (
     const src = get(edge.src)
     src.outFlows += edge.flowCount
     src.deniedFlows += denied
+    src.egressDeniedFlows += denied
     if (denied > 0) src.egressDenied = true
     if (hadDeny) src.hadRecentDeny = true
 
     const dst = get(edge.dst)
     dst.inFlows += edge.flowCount
     dst.deniedFlows += denied
+    dst.ingressDeniedFlows += denied
     if (denied > 0) dst.ingressDenied = true
     if (hadDeny) dst.hadRecentDeny = true
   }

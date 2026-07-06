@@ -26,11 +26,19 @@ type baseAggregator struct {
 	edgeElement   map[EdgeKey]*list.Element
 	edgeCapHit    bool
 	isSystem      SystemNamespaceFunc
+	resolver      *EndpointResolver
 }
 
 func newBase(window, bucketDur time.Duration, maxEdges int, lvl Level) *baseAggregator {
+	return newBaseWithResolver(window, bucketDur, maxEdges, lvl, NewEndpointResolver())
+}
+
+func newBaseWithResolver(window, bucketDur time.Duration, maxEdges int, lvl Level, resolver *EndpointResolver) *baseAggregator {
 	if bucketDur <= 0 {
 		bucketDur = 10 * time.Second
+	}
+	if resolver == nil {
+		resolver = NewEndpointResolver()
 	}
 	bucketCount := int(window / bucketDur)
 	if bucketCount < 1 {
@@ -46,6 +54,7 @@ func newBase(window, bucketDur time.Duration, maxEdges int, lvl Level) *baseAggr
 		edgeOrder:   list.New(),
 		edgeElement: map[EdgeKey]*list.Element{},
 		streamStart: time.Now(),
+		resolver:    resolver,
 	}
 }
 
@@ -63,7 +72,7 @@ func (b *baseAggregator) Add(f *flow.Flow) {
 	b.ensureCurrentBucket(now)
 	bucket := b.buckets[len(b.buckets)-1]
 
-	src, dst := MapFlow(f, b.level)
+	src, dst := b.resolver.MapFlow(f, b.level)
 	if src == "" || dst == "" {
 		return
 	}
@@ -100,8 +109,16 @@ func (b *baseAggregator) Add(f *flow.Flow) {
 	// Hubble flow proto is event-based and does not carry payload byte
 	// counts. We only track flow counts here; byte-level aggregation is
 	// out of scope for this data source (use conntrack/Prometheus instead).
+	// As network-shaped proxies we derive: distinct 5-tuple hashes
+	// (≈ active connections) and per-L7-type response latency.
 	l7Sig := l7Signature(f.GetL7())
-	bucket.Add(key, now, denyReason, allowed, denied, l7Sig)
+	extras := FlowExtras{
+		ConnHash:   connectionHash(f),
+		L7Type:     l7TypeName(f.GetL7()),
+		LatencyNs:  int64(f.GetL7().GetLatencyNs()),
+		ExternalIP: unresolvedExternalIP(f, src, dst),
+	}
+	bucket.Add(key, now, denyReason, allowed, denied, l7Sig, extras)
 	recordFlowMeta(bucket, f, src, dst, verdict)
 	b.flowsReceived++
 	b.lastFlowAt = now
@@ -167,9 +184,17 @@ func NewOverviewAggregator(window, bucketDur time.Duration, maxEdges int) *Overv
 	return &OverviewAggregator{newBase(window, bucketDur, maxEdges, LevelNamespace)}
 }
 
+func NewOverviewAggregatorWithResolver(window, bucketDur time.Duration, maxEdges int, resolver *EndpointResolver) *OverviewAggregator {
+	return &OverviewAggregator{newBaseWithResolver(window, bucketDur, maxEdges, LevelNamespace, resolver)}
+}
+
 // WorkloadAggregator buckets at workload level.
 type WorkloadAggregator struct{ *baseAggregator }
 
 func NewWorkloadAggregator(window, bucketDur time.Duration, maxEdges int) *WorkloadAggregator {
 	return &WorkloadAggregator{newBase(window, bucketDur, maxEdges, LevelWorkload)}
+}
+
+func NewWorkloadAggregatorWithResolver(window, bucketDur time.Duration, maxEdges int, resolver *EndpointResolver) *WorkloadAggregator {
+	return &WorkloadAggregator{newBaseWithResolver(window, bucketDur, maxEdges, LevelWorkload, resolver)}
 }

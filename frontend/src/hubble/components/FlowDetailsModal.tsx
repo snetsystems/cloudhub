@@ -21,7 +21,7 @@ const FlowDetailsModal: React.FC<Props> = ({flow, cluster, onClose}) => {
   return (
     <div className="hubble-flow-modal-backdrop" onClick={onClose}>
       <div
-        className="hubble-flow-modal"
+        className="hubble-flow-modal hubble-flow-details-modal"
         role="dialog"
         aria-label="Flow Details"
         onClick={e => e.stopPropagation()}

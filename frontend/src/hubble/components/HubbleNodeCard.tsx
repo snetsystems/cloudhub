@@ -4,21 +4,21 @@ import {NodeTrafficStats} from 'src/hubble/utils/nodeStats'
 import {CARD_WIDTH} from 'src/hubble/utils/cardLayout'
 import {
   NodeShareDisplay,
-  shareTooltipSuffix,
 } from 'src/hubble/utils/trafficShare'
 
 interface Props {
   node: HubbleNode
   stats: NodeTrafficStats
   shareDisplay: NodeShareDisplay
+  windowLabel: string | null
   x: number
   y: number
   height: number
   isSelected: boolean
   isNeighbor: boolean
   isDimmed: boolean
-  // isFocusNs marks workloads living in the active drilldown namespace —
-  // applies a subtle accent so the operator's scope is visually obvious.
+  // isFocusNs marks workloads inside the labeled namespace region, where the
+  // namespace subtitle would be redundant.
   isFocusNs?: boolean
   // isCrossNs is only set when CrossNsMode === 'dim'. Renders the card at
   // reduced opacity (Hubble UI's style for out-of-scope peers).
@@ -43,29 +43,22 @@ const nodeTitle = (node: HubbleNode): string => {
   return node.name || node.label || node.id
 }
 
-const nodeSubtitle = (node: HubbleNode): string | null => {
+const nodeSubtitle = (node: HubbleNode, title: string): string | null => {
   if (node.kind === 'external') return null
   if (node.groupedKind === 'namespace-group') {
     const count = node.groupedMemberCount || 0
     return `${count} workload${count === 1 ? '' : 's'} (grouped)`
   }
-  return node.namespace || node.name || null
+  const subtitle = node.namespace || node.name || null
+  // Namespace cards resolve title and subtitle to the same namespace name;
+  // showing it twice is noise, so drop the redundant subtitle.
+  return subtitle && subtitle !== title ? subtitle : null
 }
-
-const ingressTooltip = (denied?: boolean): string =>
-  denied
-    ? '들어오는(Ingress) 트래픽 중 일부가 Cilium 정책 등으로 차단되었습니다.'
-    : '들어오는(Ingress) 트래픽: 다른 노드에서 이 대상으로 들어오는 연결입니다. 현재 구간에서 차단된 flow가 없습니다.'
-
-const egressTooltip = (denied?: boolean): string =>
-  denied
-    ? '나가는(Egress) 트래픽 중 일부가 Cilium 정책 등으로 차단되었습니다.'
-    : '나가는(Egress) 트래픽: 이 대상에서 밖으로 나가는 연결입니다. 현재 구간에서 차단된 flow가 없습니다.'
 
 const HubbleNodeCard: React.FC<Props> = ({
   node,
   stats,
-  shareDisplay,
+  windowLabel,
   x,
   y,
   height,
@@ -80,21 +73,17 @@ const HubbleNodeCard: React.FC<Props> = ({
   onDrillDown,
   onDragStart,
 }) => {
-  const inFlows = stats.inFlows + stats.internalFlows
+  const inFlows = stats.inFlows
   const outFlows = stats.outFlows
-  const displayInFlows = shareDisplay.inValue ?? inFlows
-  const displayOutFlows = shareDisplay.outValue ?? outFlows
   const hasDenied = stats.deniedFlows > 0
   // "Recovered" = an edge attached to this node had DROPPED flows within the
   // 5m window, but the recent short interval is clean. We only surface this
   // when there is no live deny so the two badges don't overlap.
   const hasRecovered = stats.hadRecentDeny && !hasDenied
-  const hasInternal = stats.internalFlows > 0
-  const subtitle = nodeSubtitle(node)
-  const topPort = node.topPorts?.[0]
-  const labelChips = node.labels?.slice(0, 4) ?? []
-  const inShare = shareDisplay.inShare
-  const outShare = shareDisplay.outShare
+  const title = nodeTitle(node)
+  const subtitle = nodeSubtitle(node, title)
+  const topInPort = node.topInPorts?.[0]
+  const topOutPort = node.topOutPorts?.[0]
 
   const classNames = [
     'hubble-node-card',
@@ -161,7 +150,7 @@ const HubbleNodeCard: React.FC<Props> = ({
                 className="hubble-node-card-badge hubble-node-card-badge--denied"
                 title="이 노드와 연결된 flow 중 정책에 의해 차단(deny)된 것이 있습니다"
               >
-                deny
+                Dropped {formatFlows(stats.deniedFlows)}
               </span>
             )}
             {hasRecovered && (
@@ -173,10 +162,10 @@ const HubbleNodeCard: React.FC<Props> = ({
               </span>
             )}
           </div>
-          <div className="hubble-node-card-title" title={nodeTitle(node)}>
-            {nodeTitle(node)}
+          <div className="hubble-node-card-title" title={title}>
+            {title}
           </div>
-          {subtitle && (
+          {subtitle && !isFocusNs && (
             <div
               className="hubble-node-card-subtitle"
               title="Kubernetes 네임스페이스"
@@ -185,71 +174,34 @@ const HubbleNodeCard: React.FC<Props> = ({
             </div>
           )}
 
-          <div className="hubble-node-card-directions">
-            <span
-              className={[
-                'hubble-node-card-direction',
-                stats.ingressDenied ? 'is-denied' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              title={ingressTooltip(stats.ingressDenied)}
-            >
-              <span
-                className="hubble-node-card-lock"
-                aria-hidden="true"
-                title={
-                  stats.ingressDenied ? '수신 차단 flow 있음' : '수신 차단 없음'
-                }
-              >
-                {stats.ingressDenied ? '🔒' : '🔓'}
-              </span>
-              → Ingress
-            </span>
-            <span
-              className={[
-                'hubble-node-card-direction',
-                stats.egressDenied ? 'is-denied' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              title={egressTooltip(stats.egressDenied)}
-            >
-              Egress →
-              <span
-                className="hubble-node-card-lock"
-                aria-hidden="true"
-                title={
-                  stats.egressDenied ? '송신 차단 flow 있음' : '송신 차단 없음'
-                }
-              >
-                {stats.egressDenied ? '🔒' : '🔓'}
-              </span>
-            </span>
-          </div>
-
-          {topPort && (
+          {topInPort && (
             <div
-              className="hubble-node-card-port"
-              title={`가장 많이 관측된 포트·프로토콜 (${topPort.count.toLocaleString()} flows). L4/L7 flow에서 집계됩니다.`}
+              className="hubble-node-card-port hubble-node-card-port--in"
+              title={`이 노드가 수신(서비스)하는 포트 — 들어온 flow의 목적지 포트 기준 (${topInPort.count.toLocaleString()} flows)`}
             >
-              {topPort.name}
+              <span className="hubble-node-card-port-dir">⬇</span>
+              {topInPort.name}
+            </div>
+          )}
+          {topOutPort && (
+            <div
+              className="hubble-node-card-port hubble-node-card-port--out"
+              title={`이 노드가 나가서 접속하는 상대 포트 — 나간 flow의 목적지 포트 기준 (${topOutPort.count.toLocaleString()} flows)`}
+            >
+              <span className="hubble-node-card-port-dir">⬆</span>
+              {topOutPort.name}
             </div>
           )}
 
-          {labelChips.length > 0 && (
+          {(node.topExternalIPs?.length ?? 0) > 0 && (
             <div
-              className="hubble-node-card-labels"
-              title="Cilium/Kubernetes endpoint identity 라벨 (flow에서 수집)"
+              className="hubble-node-card-ext-ips"
+              title="이 Unknown External 뒤에 숨은 실제 외부 IP 상위 목록 (엣지 클릭 → Edge 탭에서 상세 확인). DNS visibility를 켜면 도메인 이름으로 분해됩니다."
             >
-              {labelChips.map(label => (
-                <span
-                  key={label}
-                  className="hubble-node-card-label"
-                  title={label}
-                >
-                  {label}
-                </span>
+              {node.topExternalIPs!.map(ip => (
+                <div className="hubble-node-card-ext-ip" key={ip.name}>
+                  {ip.name}
+                </div>
               ))}
             </div>
           )}
@@ -257,65 +209,36 @@ const HubbleNodeCard: React.FC<Props> = ({
           <div className="hubble-node-card-metrics">
             <span
               className="hubble-node-card-metric"
-              title={`들어오는 flow 수 (내부 loopback 포함)${shareTooltipSuffix(
-                inShare,
-                shareDisplay,
-                'in'
-              )}`}
+              title="현재 집계 윈도우에서 다른 노드로부터 들어온 flow 이벤트 수 (관측 이벤트 기준 — 패킷/바이트 양이 아님)"
             >
               <span className="hubble-node-card-metric-label">In</span>
               <span className="hubble-node-card-metric-value">
-                {formatFlows(displayInFlows)}
+                {formatFlows(inFlows)}
               </span>
-              {inShare && (
-                <span
-                  className={[
-                    'hubble-node-card-metric-share',
-                    inShare === '기준'
-                      ? 'hubble-node-card-metric-share--reference'
-                      : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {inShare}
-                </span>
-              )}
             </span>
             <span
               className="hubble-node-card-metric"
-              title={`나가는 flow 수${shareTooltipSuffix(
-                outShare,
-                shareDisplay,
-                'out'
-              )}`}
+              title="현재 집계 윈도우에서 다른 노드로 나간 flow 이벤트 수 (관측 이벤트 기준 — 패킷/바이트 양이 아님)"
             >
               <span className="hubble-node-card-metric-label">Out</span>
               <span className="hubble-node-card-metric-value">
-                {formatFlows(displayOutFlows)}
+                {formatFlows(outFlows)}
               </span>
-              {outShare && (
-                <span
-                  className={[
-                    'hubble-node-card-metric-share',
-                    outShare === '기준'
-                      ? 'hubble-node-card-metric-share--reference'
-                      : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {outShare}
-                </span>
-              )}
             </span>
           </div>
-          {hasInternal && (
-            <div
-              className="hubble-node-card-internal"
-              title="같은 노드 내부에서 발생한 flow (In/Out과 별도 표시)"
-            >
-              ↻ {formatFlows(stats.internalFlows)} internal
+          <div className="hubble-node-card-window">
+            flow events / {windowLabel || 'window'}
+          </div>
+          {hasDenied && (
+            <div className="hubble-node-card-drops">
+              {stats.ingressDeniedFlows > 0 && (
+                <span>
+                  Ingress drop {formatFlows(stats.ingressDeniedFlows)}
+                </span>
+              )}
+              {stats.egressDeniedFlows > 0 && (
+                <span>Egress drop {formatFlows(stats.egressDeniedFlows)}</span>
+              )}
             </div>
           )}
         </div>

@@ -12,6 +12,7 @@ const wheelCaptureOptions: AddEventListenerOptions = {
 
 const MIN_ZOOM = 0.25
 const MAX_ZOOM = 2.5
+const ZOOM_IDLE_MS = 150
 
 const normalizeWheelDelta = (
   e: WheelEvent,
@@ -38,6 +39,8 @@ export const useTransformPan = (enabled: boolean) => {
   const [pan, setPanState] = useState<PanOffset>({x: 0, y: 0})
   const [scale, setScaleState] = useState(1)
   const [isPanning, setIsPanning] = useState(false)
+  const [isZooming, setIsZooming] = useState(false)
+  const zoomEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const panDragRef = useRef<{
     startX: number
     startY: number
@@ -57,6 +60,17 @@ export const useTransformPan = (enabled: boolean) => {
   const setScale = useCallback((next: number) => {
     scaleRef.current = next
     setScaleState(next)
+  }, [])
+
+  const markZooming = useCallback(() => {
+    setIsZooming(true)
+    if (zoomEndTimerRef.current !== null) {
+      clearTimeout(zoomEndTimerRef.current)
+    }
+    zoomEndTimerRef.current = setTimeout(() => {
+      setIsZooming(false)
+      zoomEndTimerRef.current = null
+    }, ZOOM_IDLE_MS)
   }, [])
 
   const onWheel = useCallback(
@@ -90,8 +104,9 @@ export const useTransformPan = (enabled: boolean) => {
         x: mouseX - worldX * nextScale,
         y: mouseY - worldY * nextScale,
       })
+      markZooming()
     },
-    [enabled, setPan, setScale]
+    [enabled, markZooming, setPan, setScale]
   )
 
   const attachWheel = useCallback(
@@ -197,6 +212,14 @@ export const useTransformPan = (enabled: boolean) => {
     return () => document.body.classList.remove('hubble-is-panning')
   }, [isPanning])
 
+  useEffect(() => {
+    return () => {
+      if (zoomEndTimerRef.current !== null) {
+        clearTimeout(zoomEndTimerRef.current)
+      }
+    }
+  }, [])
+
   const consumeDidPan = useCallback(() => {
     const moved = didPanRef.current
     didPanRef.current = false
@@ -279,13 +302,17 @@ export const useTransformPan = (enabled: boolean) => {
 
   const getScale = useCallback(() => scaleRef.current, [])
 
+  const isTransforming = isPanning || isZooming
+
   return {
     setViewportRef,
+    viewportRef,
     pan,
     scale,
     getScale,
     handleMouseDownCapture,
     isPanning,
+    isTransforming,
     consumeDidPan,
     centerOnContent,
     fitContentTop,

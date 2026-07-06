@@ -159,6 +159,14 @@ type hubbleClustersFile struct {
 	Clusters []cloudhub.HubbleClusterConfig `json:"clusters"`
 }
 
+// defaultHubbleExcludedNSGlobs marks the canonical Kubernetes system
+// namespaces so the UI's "Hide system NS" filter works without configuration.
+var defaultHubbleExcludedNSGlobs = []string{
+	"kube-system",
+	"kube-public",
+	"kube-node-lease",
+}
+
 // NewHubbleConfig builds a HubbleConfig from the parsed flags. If clustersFile
 // is non-empty it is read and its "clusters" array is loaded. Errors reading
 // the file are returned so the caller can decide whether to fail or warn.
@@ -168,6 +176,9 @@ func NewHubbleConfig(
 	excludedGlobs []string,
 	clustersFile string,
 ) (cloudhub.HubbleConfig, error) {
+	if len(excludedGlobs) == 0 {
+		excludedGlobs = defaultHubbleExcludedNSGlobs
+	}
 	cfg := cloudhub.HubbleConfig{
 		Window:                 window,
 		Bucket:                 bucket,

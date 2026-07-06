@@ -4,7 +4,7 @@ import './i18n' // I18N initialization
 import React, {PureComponent} from 'react'
 import {render} from 'react-dom'
 import {Provider as ReduxProvider} from 'react-redux'
-import {Router, Route, useRouterHistory} from 'react-router'
+import {Redirect, Router, Route, useRouterHistory} from 'react-router'
 import {createHistory, Pathname} from 'history'
 import {syncHistoryWithStore} from 'react-router-redux'
 import {bindActionCreators} from 'redux'
@@ -103,6 +103,11 @@ import AlertGroupRulePage from 'src/alert_group/containers/AlertGroupRulePage'
 import AppPerformanceMonitoringPage from 'src/app_monitoring/containers/AppPerformanceMonitoringPage'
 import KubernetesRouter from 'src/clouds/containers/KubernetesRouter'
 import HubblePage from 'src/hubble/containers/HubblePage'
+import {
+  KUBERNETES_NETWORK_ROUTE,
+  KUBERNETES_OVERVIEW_ROUTE,
+  LEGACY_HUBBLE_ROUTE,
+} from 'src/hubble/navigation'
 import OpenStackRouter from 'src/clouds/containers/OpenStackRouter'
 import VMHostRouter from './clouds/containers/VMHostRouter'
 import NutanixPage from './nutanix/containers/NutanixPage'
@@ -355,10 +360,18 @@ class Root extends PureComponent<Record<string, never>, State> {
                 />
 
                 {/* kubernetes */}
-                <Route path="kubernetes" component={KubernetesRouter} />
-
-                {/* hubble (Cilium network observability) */}
-                <Route path="hubble" component={HubblePage} />
+                <Route
+                  path={KUBERNETES_NETWORK_ROUTE}
+                  component={HubblePage}
+                />
+                <Route
+                  path={KUBERNETES_OVERVIEW_ROUTE}
+                  component={KubernetesRouter}
+                />
+                <Redirect
+                  from={LEGACY_HUBBLE_ROUTE}
+                  to={KUBERNETES_NETWORK_ROUTE}
+                />
 
                 {/* openstack */}
                 <Route path="openstack" component={OpenStackRouter} />

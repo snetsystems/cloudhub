@@ -12,30 +12,30 @@ import (
 // not hold onto the original *flow.Flow proto because it carries a lot of
 // nested fields we never read.
 type FlowRecord struct {
-	Time             time.Time `json:"time"`
-	Verdict          string    `json:"verdict"`
-	TrafficDirection string    `json:"trafficDirection,omitempty"`
-	ObservationPoint string    `json:"observationPoint,omitempty"`
-	SrcID            string    `json:"srcId"`
-	DstID            string    `json:"dstId"`
-	SrcNamespace     string    `json:"srcNamespace,omitempty"`
-	DstNamespace     string    `json:"dstNamespace,omitempty"`
-	SrcWorkload      string    `json:"srcWorkload,omitempty"`
-	DstWorkload      string    `json:"dstWorkload,omitempty"`
-	SrcPod           string    `json:"srcPod,omitempty"`
-	DstPod           string    `json:"dstPod,omitempty"`
-	SrcIdentity      uint32    `json:"srcIdentity,omitempty"`
-	DstIdentity      uint32    `json:"dstIdentity,omitempty"`
-	SrcLabels        []string  `json:"srcLabels,omitempty"`
-	DstLabels        []string  `json:"dstLabels,omitempty"`
-	SrcIP            string    `json:"srcIp,omitempty"`
-	DstIP            string    `json:"dstIp,omitempty"`
-	Protocol         string    `json:"protocol,omitempty"`
-	SrcPort          uint32    `json:"srcPort,omitempty"`
-	DstPort          uint32    `json:"dstPort,omitempty"`
-	TCPFlags         []string  `json:"tcpFlags,omitempty"`
-	L7               string    `json:"l7,omitempty"`
-	DropReason       string    `json:"dropReason,omitempty"`
+	Time             time.Time   `json:"time"`
+	Verdict          string      `json:"verdict"`
+	TrafficDirection string      `json:"trafficDirection,omitempty"`
+	ObservationPoint string      `json:"observationPoint,omitempty"`
+	SrcID            string      `json:"srcId"`
+	DstID            string      `json:"dstId"`
+	SrcNamespace     string      `json:"srcNamespace,omitempty"`
+	DstNamespace     string      `json:"dstNamespace,omitempty"`
+	SrcWorkload      string      `json:"srcWorkload,omitempty"`
+	DstWorkload      string      `json:"dstWorkload,omitempty"`
+	SrcPod           string      `json:"srcPod,omitempty"`
+	DstPod           string      `json:"dstPod,omitempty"`
+	SrcIdentity      uint32      `json:"srcIdentity,omitempty"`
+	DstIdentity      uint32      `json:"dstIdentity,omitempty"`
+	SrcLabels        []string    `json:"srcLabels,omitempty"`
+	DstLabels        []string    `json:"dstLabels,omitempty"`
+	SrcIP            string      `json:"srcIp,omitempty"`
+	DstIP            string      `json:"dstIp,omitempty"`
+	Protocol         string      `json:"protocol,omitempty"`
+	SrcPort          uint32      `json:"srcPort,omitempty"`
+	DstPort          uint32      `json:"dstPort,omitempty"`
+	TCPFlags         []string    `json:"tcpFlags,omitempty"`
+	L7               string      `json:"l7,omitempty"`
+	DropReason       string      `json:"dropReason,omitempty"`
 	AllowedBy        []PolicyRef `json:"allowedBy,omitempty"`
 	DeniedBy         []PolicyRef `json:"deniedBy,omitempty"`
 }
@@ -52,16 +52,24 @@ type FlowBuffer struct {
 	rings      map[string]*flowRing
 	order      *list.List
 	elements   map[string]*list.Element
+	resolver   *EndpointResolver
 }
 
 // NewFlowBuffer returns a FlowBuffer that holds at most perEdgeCap records
 // per edge and at most maxEdges distinct edges.
 func NewFlowBuffer(maxEdges, perEdgeCap int) *FlowBuffer {
+	return NewFlowBufferWithResolver(maxEdges, perEdgeCap, NewEndpointResolver())
+}
+
+func NewFlowBufferWithResolver(maxEdges, perEdgeCap int, resolver *EndpointResolver) *FlowBuffer {
 	if maxEdges <= 0 {
 		maxEdges = 500
 	}
 	if perEdgeCap <= 0 {
 		perEdgeCap = 50
+	}
+	if resolver == nil {
+		resolver = NewEndpointResolver()
 	}
 	return &FlowBuffer{
 		maxEdges:   maxEdges,
@@ -70,13 +78,14 @@ func NewFlowBuffer(maxEdges, perEdgeCap int) *FlowBuffer {
 		rings:      map[string]*flowRing{},
 		order:      list.New(),
 		elements:   map[string]*list.Element{},
+		resolver:   resolver,
 	}
 }
 
 // Add ingests one flow. Returns false if the flow could not be mapped to a
 // usable source/destination pair.
 func (b *FlowBuffer) Add(f *flow.Flow) bool {
-	rec, keys, ok := extractFlowRecord(f)
+	rec, keys, ok := extractFlowRecordWithResolver(f, b.resolver)
 	if !ok {
 		return false
 	}
@@ -181,8 +190,17 @@ func (r *flowRing) snapshotNewestFirst() []FlowRecord {
 }
 
 func extractFlowRecord(f *flow.Flow) (FlowRecord, []string, bool) {
-	nsSrc, nsDst := MapFlow(f, LevelNamespace)
-	wlSrc, wlDst := MapFlow(f, LevelWorkload)
+	return extractFlowRecordWithResolver(f, NewEndpointResolver())
+}
+
+func extractFlowRecordWithResolver(f *flow.Flow, resolver *EndpointResolver) (FlowRecord, []string, bool) {
+	if resolver == nil {
+		resolver = NewEndpointResolver()
+	}
+	src := resolver.ResolveEndpoint(f.GetSource(), f.GetSourceNames())
+	dst := resolver.ResolveEndpoint(f.GetDestination(), f.GetDestinationNames())
+	nsSrc, nsDst := src.ID(LevelNamespace), dst.ID(LevelNamespace)
+	wlSrc, wlDst := src.ID(LevelWorkload), dst.ID(LevelWorkload)
 	if wlSrc == "" || wlDst == "" {
 		return FlowRecord{}, nil, false
 	}
@@ -195,28 +213,24 @@ func extractFlowRecord(f *flow.Flow) (FlowRecord, []string, bool) {
 		SrcID:            wlSrc,
 		DstID:            wlDst,
 		L7:               l7Signature(f.GetL7()),
+		SrcNamespace:     src.namespace,
+		DstNamespace:     dst.namespace,
+		SrcWorkload:      src.workload,
+		DstWorkload:      dst.workload,
 	}
 
 	if ep := f.GetSource(); ep != nil {
-		rec.SrcNamespace = ep.GetNamespace()
 		rec.SrcPod = ep.GetPodName()
 		rec.SrcIdentity = ep.GetIdentity()
 		if labels := ep.GetLabels(); len(labels) > 0 {
 			rec.SrcLabels = append([]string(nil), labels...)
 		}
-		if wls := ep.GetWorkloads(); len(wls) > 0 {
-			rec.SrcWorkload = wls[0].GetName()
-		}
 	}
 	if ep := f.GetDestination(); ep != nil {
-		rec.DstNamespace = ep.GetNamespace()
 		rec.DstPod = ep.GetPodName()
 		rec.DstIdentity = ep.GetIdentity()
 		if labels := ep.GetLabels(); len(labels) > 0 {
 			rec.DstLabels = append([]string(nil), labels...)
-		}
-		if wls := ep.GetWorkloads(); len(wls) > 0 {
-			rec.DstWorkload = wls[0].GetName()
 		}
 	}
 

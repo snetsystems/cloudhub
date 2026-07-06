@@ -7,6 +7,49 @@ export const TOP_EDGES_LIMIT = 20
 // only (no DROPPED). 'all' applies no verdict filter.
 export type VerdictFilter = 'all' | 'denied' | 'allowed'
 
+export interface TopologyNoiseFilters {
+  hideDNS: boolean
+  hideHostNode: boolean
+  hideMonitoring: boolean
+}
+
+export const DEFAULT_TOPOLOGY_NOISE_FILTERS: TopologyNoiseFilters = {
+  hideDNS: false,
+  hideHostNode: false,
+  hideMonitoring: false,
+}
+
+const searchableNodeText = (node: HubbleNode): string =>
+  [node.id, node.name, node.label, ...(node.labels || [])]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+const hasToken = (text: string, tokens: string[]): boolean =>
+  new RegExp(`(^|[^a-z0-9])(?:${tokens.join('|')})($|[^a-z0-9])`).test(text)
+
+export const isDnsInfrastructureNode = (node: HubbleNode): boolean =>
+  node.namespace === 'kube-system' &&
+  hasToken(searchableNodeText(node), ['coredns', 'kube-dns', 'node-local-dns'])
+
+export const isHostNodeInfrastructure = (node: HubbleNode): boolean =>
+  node.id === 'ext:reserved:host' || node.id === 'ext:reserved:remote-node'
+
+export const isMonitoringInfrastructureNode = (node: HubbleNode): boolean =>
+  hasToken(searchableNodeText(node), [
+    'prometheus',
+    'kube-prometheus',
+    'prometheus-server',
+  ])
+
+const isHiddenByNoiseFilter = (
+  node: HubbleNode,
+  filters: TopologyNoiseFilters
+): boolean =>
+  (filters.hideDNS && isDnsInfrastructureNode(node)) ||
+  (filters.hideHostNode && isHostNodeInfrastructure(node)) ||
+  (filters.hideMonitoring && isMonitoringInfrastructureNode(node))
+
 export const isSelfLoop = (edge: HubbleEdge): boolean => edge.src === edge.dst
 
 const hasDenied = (edge: HubbleEdge): boolean =>
@@ -14,9 +57,14 @@ const hasDenied = (edge: HubbleEdge): boolean =>
 
 export const visibleNodes = (
   nodes: HubbleNode[],
-  hideSystemNodes: boolean
+  hideSystemNodes: boolean,
+  noiseFilters: TopologyNoiseFilters = DEFAULT_TOPOLOGY_NOISE_FILTERS
 ): HubbleNode[] =>
-  hideSystemNodes ? nodes.filter(n => !n.system) : nodes
+  nodes.filter(
+    node =>
+      (!hideSystemNodes || !node.system) &&
+      !isHiddenByNoiseFilter(node, noiseFilters)
+  )
 
 export const filterDisplayEdges = (
   edges: HubbleEdge[],

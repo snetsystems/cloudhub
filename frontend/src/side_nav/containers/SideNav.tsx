@@ -28,6 +28,7 @@ import {Params, Location, Me} from 'src/types/sideNav'
 import {Source, Links, Shells, Env} from 'src/types'
 
 import {openShell, closeShell} from 'src/shared/actions/shell'
+import {buildKubernetesNavItems} from 'src/hubble/navigation'
 
 interface Props {
   sources: Source[]
@@ -90,6 +91,7 @@ class SideNav extends PureComponent<Props> {
     const defaultSource = sources.find(s => s.default)
     const id = sourceID || _.get(defaultSource, 'id', 0)
     const sourcePrefix = `/sources/${id}`
+    const kubernetesNavItems = buildKubernetesNavItems(sourcePrefix)
     const isDefaultPage = location.split('/').includes(DEFAULT_HOME_PAGE)
     const isUsing128T = this.isExistInLinks(AddonType.router128T)
     const isUsingVMware = this.isExistInLinks(AddonType.vsphere)
@@ -230,24 +232,23 @@ class SideNav extends PureComponent<Props> {
             />
           </NavBlock>
 
-          {/* Kubernetes  */}
+          {/* Kubernetes */}
           <NavBlock
             highlightWhen={['kubernetes']}
             icon="kubernetes"
-            link={`${sourcePrefix}/kubernetes`}
+            link={kubernetesNavItems[0].link}
             location={location}
           >
-            <NavHeader link={`${sourcePrefix}/kubernetes`} title="Kubernetes" />
-          </NavBlock>
-
-          {/* Hubble (Cilium network observability) */}
-          <NavBlock
-            highlightWhen={['hubble']}
-            icon="git-merge"
-            link={`${sourcePrefix}/hubble`}
-            location={location}
-          >
-            <NavHeader link={`${sourcePrefix}/hubble`} title="Network (Hubble)" />
+            <NavHeader link={kubernetesNavItems[0].link} title="Kubernetes" />
+            {kubernetesNavItems.map(item => (
+              <NavListItem
+                key={item.link}
+                link={item.link}
+                exact={item.exact}
+              >
+                {item.label}
+              </NavListItem>
+            ))}
           </NavBlock>
 
           {/* OpenStack  */}

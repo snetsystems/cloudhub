@@ -13,6 +13,7 @@ interface NavListItemProps {
   location?: string
   useAnchor?: boolean
   isExternal?: boolean
+  exact?: boolean
   children?: ReactNode
 }
 
@@ -22,8 +23,9 @@ const NavListItem: FunctionComponent<NavListItemProps> = ({
   location,
   useAnchor,
   isExternal,
+  exact,
 }) => {
-  const isActive = location.startsWith(link)
+  const isActive = exact ? location === link : location.startsWith(link)
   return useAnchor ? (
     <a
       className={classnames('sidebar-menu--item', {active: isActive})}

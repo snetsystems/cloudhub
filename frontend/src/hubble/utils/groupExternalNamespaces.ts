@@ -53,6 +53,7 @@ export const groupExternalNamespaces = (
 
   const remap = new Map<string, string>()
   const memberCounts = new Map<string, number>()
+  const memberAllSystem = new Map<string, boolean>()
 
   for (const node of snapshot.nodes) {
     if (node.kind !== 'workload') continue
@@ -62,6 +63,10 @@ export const groupExternalNamespaces = (
     const newId = groupNodeId(ns)
     remap.set(node.id, newId)
     memberCounts.set(newId, (memberCounts.get(newId) || 0) + 1)
+    memberAllSystem.set(
+      newId,
+      (memberAllSystem.get(newId) ?? true) && !!node.system
+    )
   }
 
   if (remap.size === 0) return snapshot
@@ -75,6 +80,9 @@ export const groupExternalNamespaces = (
       name: ns,
       label: ns,
       namespace: ns,
+      // Preserve the backend's system-namespace marker so "Hide system NS"
+      // also hides grouped foreign namespaces.
+      ...(memberAllSystem.get(newId) ? {system: true} : {}),
       groupedKind: 'namespace-group',
       groupedMemberCount: count,
     })

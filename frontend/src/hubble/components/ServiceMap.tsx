@@ -5,19 +5,19 @@ import MapSelectionBar from 'src/hubble/components/MapSelectionBar'
 import {useCardDrag} from 'src/hubble/hooks/useCardDrag'
 import {useTransformPan} from 'src/hubble/hooks/useTransformPan'
 import {
-  CANVAS_PADDING,
   computeContentBounds,
+  computeNamespaceRegion,
   ContentBounds,
   expandContentBounds,
   cardHeightForNode,
-  columnLabel,
-  columnSlotX,
   layoutCards,
+  partitionMapRegionNodeIds,
   toRenderPosition,
 } from 'src/hubble/utils/cardLayout'
 import {
   filterDisplayEdges,
   TOP_EDGES_LIMIT,
+  TopologyNoiseFilters,
   VerdictFilter,
   visibleNodes,
 } from 'src/hubble/utils/filterEdges'
@@ -29,19 +29,30 @@ import {
 import {buildEdgePath, computeEdgeAnchors} from 'src/hubble/utils/edgeAnchors'
 import {buildNodeStats} from 'src/hubble/utils/nodeStats'
 import {buildNodeShareMap} from 'src/hubble/utils/trafficShare'
+import {formatWindowDuration} from 'src/hubble/utils/time'
 
 interface Props {
   snapshot: HubbleSnapshot | null
   hideSystemNodes: boolean
   simplifiedView: boolean
   verdictFilter: VerdictFilter
+  noiseFilters: TopologyNoiseFilters
   crossNsMode: CrossNsMode
   drilldown: string | null
   detailEdgeId: string | null
   onNodeDrillDown?: (nodeId: string) => void
   onEdgeDetails?: (edgeId: string) => void
   onClearEdgeDetails?: () => void
+  onHelp?: () => void
 }
+
+// During drilldown the Applications region wraps the focus Namespace region.
+// Because both regions share their topmost cards, we lift the Applications
+// header above the Namespace header (extra top) and pad the sides/bottom so
+// the nesting reads like Hubble UI. DRILLDOWN_TOP_RESERVE adds matching room
+// at the top of the content so the raised Applications header isn't clipped.
+const DRILLDOWN_TOP_RESERVE = 34
+const APPLICATIONS_DRILLDOWN_PADDING = {top: 34, side: 16, bottom: 16}
 
 const edgeWidth = (value: number, max: number): number => {
   if (!max || max <= 0) return 1.5
@@ -58,7 +69,7 @@ const renderRecoveredBadge = (
   to: {x: number; y: number},
   edge: HubbleEdge,
   dimmed: boolean,
-  onClick: (e: React.MouseEvent) => void
+  onClick?: (e: React.MouseEvent) => void
 ) => {
   const cx = (from.x + to.x) / 2
   const cy = (from.y + to.y) / 2
@@ -66,10 +77,7 @@ const renderRecoveredBadge = (
   const title = `최근 5분 윈도우 내 ${droppedTotal.toLocaleString()}건 drop 발생 — 현재 짧은 구간(기본 10초)에서는 정상 트래픽 흐름`
   return (
     <g
-      className={[
-        'hubble-edge-recovered-badge',
-        dimmed ? 'is-dimmed' : '',
-      ]
+      className={['hubble-edge-recovered-badge', dimmed ? 'is-dimmed' : '']
         .filter(Boolean)
         .join(' ')}
       transform={`translate(${cx}, ${cy})`}
@@ -101,7 +109,7 @@ const formatEdgeLabel = (
 ): string => {
   const base = `${shortNodeId(src)} → ${shortNodeId(
     dst
-  )} (${flowCount.toLocaleString()} flows`
+  )} (${flowCount.toLocaleString()} flow events`
   return deniedCount > 0
     ? `${base}, ${deniedCount.toLocaleString()} denied)`
     : `${base})`
@@ -120,12 +128,14 @@ const ServiceMap: React.FC<Props> = ({
   hideSystemNodes,
   simplifiedView,
   verdictFilter,
+  noiseFilters,
   crossNsMode,
   drilldown,
   detailEdgeId,
   onNodeDrillDown,
   onEdgeDetails,
   onClearEdgeDetails,
+  onHelp,
 }) => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
@@ -133,8 +143,8 @@ const ServiceMap: React.FC<Props> = ({
   // systemFilteredNodes: nodes after the "Hide system NS" filter. Verdict
   // filter is applied on top by trimming orphans from this set further down.
   const systemFilteredNodes = useMemo(
-    () => visibleNodes(snapshot?.nodes || [], hideSystemNodes),
-    [snapshot, hideSystemNodes]
+    () => visibleNodes(snapshot?.nodes || [], hideSystemNodes, noiseFilters),
+    [snapshot, hideSystemNodes, noiseFilters]
   )
 
   const systemFilteredNodeIds = useMemo(
@@ -183,6 +193,11 @@ const ServiceMap: React.FC<Props> = ({
     [snapshot]
   )
 
+  const windowLabel = useMemo(
+    () => formatWindowDuration(snapshot?.window.start, snapshot?.window.end),
+    [snapshot]
+  )
+
   const visibleNodeIds = useMemo(() => new Set(nodes.map(n => n.id)), [nodes])
 
   const edgesForShare = useMemo(
@@ -223,35 +238,69 @@ const ServiceMap: React.FC<Props> = ({
     return map
   }, [nodes, nodeStats])
 
-  const basePositions = useMemo(() => layoutCards(nodes, cardHeights), [
-    nodes,
-    cardHeights,
-  ])
+  const focusNamespaceNodeIds = useMemo(() => {
+    if (!drilldown) return new Set<string>()
+    const prefix = `wl:${drilldown}/`
+    return new Set(
+      nodes.filter(node => node.id.startsWith(prefix)).map(node => node.id)
+    )
+  }, [nodes, drilldown])
+
+  const {
+    setViewportRef,
+    viewportRef,
+    pan,
+    scale,
+    getScale,
+    handleMouseDownCapture,
+    isPanning,
+    isTransforming,
+    consumeDidPan,
+    centerOnContent,
+    fitToViewport,
+  } = useTransformPan(!!snapshot)
+
+  // Viewport width/height ratio, quantized to 0.25 steps so minor resizes
+  // don't reshuffle the layout. Drives how wide the applications grid grows
+  // (up to one row per block on wide screens).
+  const [viewportAspect, setViewportAspect] = useState<number | null>(null)
+  const hasSnapshot = !!snapshot
+
+  useEffect(() => {
+    const el = viewportRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const update = () => {
+      const w = el.clientWidth
+      const h = el.clientHeight
+      if (w > 50 && h > 50) {
+        setViewportAspect(Math.round((w / h) * 4) / 4)
+      }
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [viewportRef, hasSnapshot])
+
+  const basePositions = useMemo(
+    () =>
+      layoutCards(nodes, cardHeights, focusNamespaceNodeIds, viewportAspect),
+    [nodes, cardHeights, focusNamespaceNodeIds, viewportAspect]
+  )
 
   const layoutKey = useMemo(
     () =>
       [
         drilldown ?? 'overview',
         hideSystemNodes ? 'hide-sys' : 'show-sys',
+        String(viewportAspect ?? 'na'),
         nodes
           .map(n => n.id)
           .sort()
           .join('|'),
       ].join('::'),
-    [nodes, drilldown, hideSystemNodes]
+    [nodes, drilldown, hideSystemNodes, viewportAspect]
   )
-
-  const {
-    setViewportRef,
-    pan,
-    scale,
-    getScale,
-    handleMouseDownCapture,
-    isPanning,
-    consumeDidPan,
-    centerOnContent,
-    fitToViewport,
-  } = useTransformPan(!!snapshot)
 
   const {
     applyPositions,
@@ -259,7 +308,7 @@ const ServiceMap: React.FC<Props> = ({
     draggingNodeId,
     consumeDidDrag,
     resetOffsets,
-  } = useCardDrag(layoutKey, getScale)
+  } = useCardDrag(layoutKey, getScale, drilldown ?? 'overview')
 
   const positions = applyPositions(basePositions)
 
@@ -273,10 +322,18 @@ const ServiceMap: React.FC<Props> = ({
     const current = computeContentBounds(positions)
     const next = expandContentBounds(sessionBoundsRef.current, current)
     sessionBoundsRef.current = next
-    return next
-  }, [positions])
+    if (!drilldown) return next
+    // Reserve top space so the outer Applications header (lifted above the
+    // Namespace header) stays inside the canvas after fit-to-viewport.
+    return {
+      ...next,
+      minY: next.minY - DRILLDOWN_TOP_RESERVE,
+      height: next.height + DRILLDOWN_TOP_RESERVE,
+      offsetY: next.offsetY + DRILLDOWN_TOP_RESERVE,
+    }
+  }, [positions, drilldown])
 
-  const {width, height, minX} = contentBounds
+  const {width, height} = contentBounds
 
   const renderPositionById = useMemo(() => {
     const map = new Map<string, typeof positions[0]>()
@@ -285,6 +342,47 @@ const ServiceMap: React.FC<Props> = ({
     }
     return map
   }, [positions, contentBounds])
+
+  const focusNamespaceRegion = useMemo(
+    () =>
+      computeNamespaceRegion(
+        Array.from(renderPositionById.values()),
+        focusNamespaceNodeIds
+      ),
+    [renderPositionById, focusNamespaceNodeIds]
+  )
+
+  const mapRegionNodeIds = useMemo(() => partitionMapRegionNodeIds(nodes), [
+    nodes,
+  ])
+
+  const externalMapRegion = useMemo(
+    () =>
+      computeNamespaceRegion(
+        Array.from(renderPositionById.values()),
+        mapRegionNodeIds.external
+      ),
+    [renderPositionById, mapRegionNodeIds]
+  )
+
+  const applicationsMapRegion = useMemo(
+    () =>
+      computeNamespaceRegion(
+        Array.from(renderPositionById.values()),
+        mapRegionNodeIds.applications,
+        drilldown ? APPLICATIONS_DRILLDOWN_PADDING : undefined
+      ),
+    [renderPositionById, mapRegionNodeIds, drilldown]
+  )
+
+  const systemMapRegion = useMemo(
+    () =>
+      computeNamespaceRegion(
+        Array.from(renderPositionById.values()),
+        mapRegionNodeIds.system
+      ),
+    [renderPositionById, mapRegionNodeIds]
+  )
 
   const positionById = useMemo(() => {
     const map = new Map<string, typeof positions[0]>()
@@ -318,20 +416,6 @@ const ServiceMap: React.FC<Props> = ({
       ),
     [displayEdges]
   )
-
-  const hasCustomLayout = useMemo(
-    () =>
-      basePositions.some(b => {
-        const p = positions.find(x => x.id === b.id)
-        return p != null && (Math.abs(p.x - b.x) > 1 || Math.abs(p.y - b.y) > 1)
-      }),
-    [basePositions, positions]
-  )
-
-  const columnsPresent = useMemo(() => {
-    const cols = new Set(positions.map(p => p.column))
-    return [0, 1, 2].filter(c => cols.has(c))
-  }, [positions])
 
   const hiddenEdgeCount = useMemo(() => {
     if (!snapshot || !simplifiedView) return 0
@@ -462,6 +546,17 @@ const ServiceMap: React.FC<Props> = ({
           >
             Reset layout
           </button>
+          {onHelp && (
+            <button
+              type="button"
+              className="hubble-side-tabs-help"
+              title="맵의 카드와 연결선을 읽는 방법을 예시와 함께 설명합니다"
+              aria-label="Open map tutorial"
+              onClick={onHelp}
+            >
+              ?
+            </button>
+          )}
         </div>
       </div>
       <div
@@ -471,7 +566,9 @@ const ServiceMap: React.FC<Props> = ({
         onClick={handleViewportClick}
       >
         <div
-          className="hubble-map-world"
+          className={`hubble-map-world${
+            isTransforming ? ' is-transforming' : ''
+          }`}
           style={{
             width,
             height,
@@ -485,33 +582,80 @@ const ServiceMap: React.FC<Props> = ({
               style={{width, height}}
               aria-hidden="true"
             />
-            {!hasCustomLayout && (
-              <div className="hubble-map-columns">
-                {columnsPresent.map(col => {
-                  // In drilldown, replace the generic "Applications" label on
-                  // column 1 with the focus namespace name so operators see
-                  // at a glance which scope the bright cards belong to.
-                  const isFocusCol = col === 1 && !!drilldown
-                  return (
-                    <div
-                      key={col}
-                      className={[
-                        'hubble-map-column-label',
-                        isFocusCol ? 'hubble-map-column-label--focus' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                      style={{left: columnSlotX(col) - minX + CANVAS_PADDING}}
-                      title={
-                        isFocusCol
-                          ? `현재 drilldown focus: ${drilldown}`
-                          : undefined
-                      }
-                    >
-                      {isFocusCol ? `📦 ${drilldown}` : columnLabel(col)}
-                    </div>
-                  )
-                })}
+            {externalMapRegion && (
+              <div
+                className="hubble-map-region hubble-map-region--external"
+                style={{
+                  left: externalMapRegion.x,
+                  top: externalMapRegion.y,
+                  width: externalMapRegion.width,
+                  height: externalMapRegion.height,
+                }}
+                aria-label={`External or unresolved, ${externalMapRegion.memberCount} nodes`}
+              >
+                <div className="hubble-map-region-header">
+                  <strong>External / Unresolved</strong>
+                  <span>{externalMapRegion.memberCount.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+            {applicationsMapRegion && (
+              <div
+                className="hubble-map-region hubble-map-region--applications"
+                style={{
+                  left: applicationsMapRegion.x,
+                  top: applicationsMapRegion.y,
+                  width: applicationsMapRegion.width,
+                  height: applicationsMapRegion.height,
+                }}
+                aria-label={`Applications, ${applicationsMapRegion.memberCount} nodes`}
+              >
+                <div className="hubble-map-region-header">
+                  <strong>Applications</strong>
+                  <span>
+                    {applicationsMapRegion.memberCount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
+            {systemMapRegion && (
+              <div
+                className="hubble-map-region hubble-map-region--system"
+                style={{
+                  left: systemMapRegion.x,
+                  top: systemMapRegion.y,
+                  width: systemMapRegion.width,
+                  height: systemMapRegion.height,
+                }}
+                aria-label={`System namespaces, ${systemMapRegion.memberCount} nodes`}
+              >
+                <div className="hubble-map-region-header">
+                  <strong>System</strong>
+                  <span>{systemMapRegion.memberCount.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+            {drilldown && focusNamespaceRegion && (
+              <div
+                className="hubble-namespace-region"
+                style={{
+                  left: focusNamespaceRegion.x,
+                  top: focusNamespaceRegion.y,
+                  width: focusNamespaceRegion.width,
+                  height: focusNamespaceRegion.height,
+                }}
+                aria-label={`Namespace ${drilldown}, ${focusNamespaceRegion.memberCount} visible workloads`}
+              >
+                <div className="hubble-namespace-region-header">
+                  <span className="hubble-namespace-region-kind">
+                    Namespace
+                  </span>
+                  <strong>{drilldown}</strong>
+                  <span>
+                    {focusNamespaceRegion.memberCount.toLocaleString()}{' '}
+                    workloads
+                  </span>
+                </div>
               </div>
             )}
 
@@ -545,8 +689,14 @@ const ServiceMap: React.FC<Props> = ({
                   // the panel has the full breakdown.
                   onEdgeDetails && onEdgeDetails(id)
                 }
+                const edgeClickHandler = dimmed ? undefined : handleEdgeClick
                 return (
-                  <g key={id} className="hubble-edge-group">
+                  <g
+                    key={id}
+                    className={['hubble-edge-group', dimmed ? 'is-dimmed' : '']
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
                     {/* Invisible wide hit area — SVG paths with fill="none"
                         only register clicks on the painted stroke, so a thin
                         line is nearly unclickable. This transparent stroke
@@ -557,7 +707,7 @@ const ServiceMap: React.FC<Props> = ({
                       stroke="transparent"
                       strokeWidth={14}
                       className="hubble-edge-hit"
-                      onClick={handleEdgeClick}
+                      onClick={edgeClickHandler}
                     />
                     <path
                       d={d}
@@ -576,7 +726,7 @@ const ServiceMap: React.FC<Props> = ({
                       ]
                         .filter(Boolean)
                         .join(' ')}
-                      onClick={handleEdgeClick}
+                      onClick={edgeClickHandler}
                     />
                     {verdict === 'recovered' &&
                       renderRecoveredBadge(
@@ -584,7 +734,7 @@ const ServiceMap: React.FC<Props> = ({
                         anchors.to,
                         edge,
                         dimmed,
-                        handleEdgeClick
+                        edgeClickHandler
                       )}
                   </g>
                 )
@@ -601,6 +751,8 @@ const ServiceMap: React.FC<Props> = ({
                 outFlows: 0,
                 internalFlows: 0,
                 deniedFlows: 0,
+                ingressDeniedFlows: 0,
+                egressDeniedFlows: 0,
                 ingressDenied: false,
                 egressDenied: false,
                 hadRecentDeny: false,
@@ -629,6 +781,7 @@ const ServiceMap: React.FC<Props> = ({
                       outShare: null,
                     }
                   }
+                  windowLabel={windowLabel}
                   x={pos.x}
                   y={pos.y}
                   height={pos.height}

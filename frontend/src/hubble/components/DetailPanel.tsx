@@ -112,10 +112,25 @@ const DetailPanel: React.FC<Props> = ({
         <span className="hubble-detail-key">To</span>
         <span className="hubble-detail-value">{edge.dst}</span>
       </div>
-      <div className="hubble-detail-row">
-        <span className="hubble-detail-key">Flows</span>
+      <div
+        className="hubble-detail-row"
+        title="Hubble 관측 지점을 지난 flow '이벤트' 수 — 패킷/바이트/트래픽 양이 아닙니다."
+      >
+        <span className="hubble-detail-key">Flow events</span>
         <span className="hubble-detail-value">{edge.flowCount}</span>
       </div>
+      {(edge.activeConns ?? 0) > 0 && (
+        <div
+          className="hubble-detail-row"
+          title="윈도우 내 고유 5-tuple(src IP:port → dst IP:port, protocol) 수 — 실제 연결 수의 근사치. '+' 표시는 추적 상한 도달로 실제는 더 많음을 의미."
+        >
+          <span className="hubble-detail-key">Active conns</span>
+          <span className="hubble-detail-value">
+            {edge.activeConns.toLocaleString()}
+            {edge.activeConnsCapped ? '+' : ''}
+          </span>
+        </div>
+      )}
       {(edge.verdictCounts?.DROPPED ?? 0) > 0 && (
         <div className="hubble-detail-row hubble-detail-denied-summary">
           <span className="hubble-detail-key">Denied</span>
@@ -148,6 +163,44 @@ const DetailPanel: React.FC<Props> = ({
           )
         })}
       </div>
+      {(edge.topExternalIPs?.length ?? 0) > 0 && (
+        <div className="hubble-detail-section">
+          <div
+            className="hubble-detail-subtitle"
+            title="Unknown External 뒤에 숨은 실제 외부 IP 상위 목록. DNS visibility(L7 정책)를 켜면 FQDN 노드로 분해되어 이 목록 대신 도메인 이름으로 표시됩니다."
+          >
+            External peers (top IPs)
+          </div>
+          {edge.topExternalIPs!.map((ip, i) => (
+            <div className="hubble-detail-row" key={i}>
+              <span className="hubble-detail-l7-name" title={ip.name}>
+                {ip.name || '—'}
+              </span>
+              <span className="hubble-detail-value">{ip.count}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {(edge.l7Metrics?.length ?? 0) > 0 && (
+        <div className="hubble-detail-section">
+          <div
+            className="hubble-detail-subtitle"
+            title="L7 프로토콜별 요청 빈도와 응답 지연시간 (Hubble flow의 latency 필드 기반). 지연시간은 응답 레코드가 있는 요청에서만 집계됩니다."
+          >
+            L7 performance
+          </div>
+          {edge.l7Metrics!.map(m => (
+            <div className="hubble-detail-row" key={m.type}>
+              <span>{m.type}</span>
+              <span className="hubble-detail-value">
+                {formatL7Rate(m.count, snapshot)}
+                {m.avgLatencyMs ? ` · avg ${m.avgLatencyMs}ms` : ''}
+                {m.maxLatencyMs ? ` · max ${m.maxLatencyMs}ms` : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
       {(edge.topL7Denied?.length ?? 0) > 0 && (
         <div className="hubble-detail-section hubble-detail-section--denied">
           <div
@@ -288,6 +341,22 @@ const PolicyRow: React.FC<{
       </span>
     </div>
   )
+}
+
+// formatL7Rate renders request frequency as req/s over the snapshot window.
+// Falls back to a raw count when the window duration is unknown.
+const formatL7Rate = (
+  count: number,
+  snapshot: HubbleSnapshot | null
+): string => {
+  const start = snapshot?.window?.start ? Date.parse(snapshot.window.start) : NaN
+  const end = snapshot?.window?.end ? Date.parse(snapshot.window.end) : NaN
+  const seconds = (end - start) / 1000
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return `${count.toLocaleString()} req`
+  }
+  const rate = count / seconds
+  return `${rate >= 10 ? Math.round(rate) : rate.toFixed(1)} req/s`
 }
 
 const policyKindShort = (kind: string): string => {

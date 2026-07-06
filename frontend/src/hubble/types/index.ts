@@ -41,12 +41,17 @@ export interface HubbleNode {
   label?: string
   system?: boolean
   namespace?: string
-  topPorts?: HubbleNamedPort[]
+  // topInPorts: ports this node serves on (flow destination side).
+  // topOutPorts: peer ports this node connects out to (flow source side).
+  topInPorts?: HubbleNamedPort[]
+  topOutPorts?: HubbleNamedPort[]
   labels?: string[]
   ingressOpen?: boolean
   egressOpen?: boolean
   ingressDenied?: boolean
   egressDenied?: boolean
+  // Raw peer IPs aggregated into the "ext:unknown" node (preview, top 3).
+  topExternalIPs?: HubbleNamedCount[]
   // Client-only marker. Set by groupExternalNamespaces when collapsing
   // multiple cross-namespace workloads into a single synthetic node during
   // drilldown. Backend never emits this.
@@ -72,6 +77,21 @@ export interface HubbleEdge {
   topL7?: HubbleNamedCount[]
   // DROPPED-verdict L7 signatures only — what specifically was blocked.
   topL7Denied?: HubbleNamedCount[]
+  // Approximate distinct connections (5-tuples) in the window. When capped
+  // is true the count is a lower bound (backend tracking cap was hit).
+  activeConns?: number
+  activeConnsCapped?: boolean
+  l7Metrics?: HubbleL7Metric[]
+  // Raw peer IPs behind an "ext:unknown" endpoint on this edge.
+  topExternalIPs?: HubbleNamedCount[]
+}
+
+// Per-L7-protocol request volume and response latency for one edge.
+export interface HubbleL7Metric {
+  type: string
+  count: number
+  avgLatencyMs?: number
+  maxLatencyMs?: number
 }
 
 export interface HubbleNamedCount {

@@ -232,12 +232,10 @@ const FlowTable: React.FC<Props> = ({
                     <input
                       type="checkbox"
                       checked={!!visible[c.id]}
-                      onChange={e =>
-                        setVisible(prev => ({
-                          ...prev,
-                          [c.id]: e.target.checked,
-                        }))
-                      }
+                      onChange={e => {
+                        const checked = e.currentTarget.checked
+                        setVisible(prev => ({...prev, [c.id]: checked}))
+                      }}
                     />
                     {c.label}
                   </label>

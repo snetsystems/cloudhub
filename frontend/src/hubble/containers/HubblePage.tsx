@@ -9,6 +9,9 @@ import DetailPanel from 'src/hubble/components/DetailPanel'
 import MapViewOptions from 'src/hubble/components/MapViewOptions'
 import FlowTable from 'src/hubble/components/FlowTable'
 import FlowDetailsModal from 'src/hubble/components/FlowDetailsModal'
+import SidePanelTutorial, {
+  TutorialTab,
+} from 'src/hubble/components/SidePanelTutorial'
 import PolicyImpactPanel from 'src/hubble/components/PolicyImpactPanel'
 import PodConnectionsPanel from 'src/hubble/components/PodConnectionsPanel'
 import {getHubbleClusters} from 'src/hubble/apis'
@@ -20,7 +23,10 @@ import {
   HubbleFlowRecord,
   PolicyImpactBaseline,
 } from 'src/hubble/types'
-import {VerdictFilter} from 'src/hubble/utils/filterEdges'
+import {
+  DEFAULT_TOPOLOGY_NOISE_FILTERS,
+  VerdictFilter,
+} from 'src/hubble/utils/filterEdges'
 import {formatHubbleError} from 'src/hubble/utils/errors'
 import {
   buildPolicyBaseline,
@@ -46,6 +52,9 @@ const HubblePage: React.FC = () => {
   const [hideSystemNodes, setHideSystemNodes] = useState(true)
   const [simplifiedView, setSimplifiedView] = useState(true)
   const [verdictFilter, setVerdictFilter] = useState<VerdictFilter>('all')
+  const [noiseFilters, setNoiseFilters] = useState(
+    DEFAULT_TOPOLOGY_NOISE_FILTERS
+  )
   const [flowModal, setFlowModal] = useState<HubbleFlowRecord | null>(null)
   const [flowFilters, setFlowFilters] = useState<HubbleFlowFilters>({})
   const [
@@ -54,6 +63,12 @@ const HubblePage: React.FC = () => {
   ] = useState<PolicyImpactBaseline | null>(null)
   const [detailEdgeId, setDetailEdgeId] = useState<string | null>(null)
   const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>('talkers')
+  // Which tutorial modal is open. Each "?" button scopes the modal to the
+  // guides for its own screen area (header / map nodes / side panel tabs).
+  const [tutorial, setTutorial] = useState<{
+    initial: TutorialTab
+    tabs: TutorialTab[]
+  } | null>(null)
   const [crossNsMode, setCrossNsMode] = useState<CrossNsMode>('group')
   const [clusterListError, setClusterListError] = useState<string>('')
 
@@ -226,12 +241,14 @@ const HubblePage: React.FC = () => {
         hideSystemNodes={hideSystemNodes}
         simplifiedView={simplifiedView}
         verdictFilter={verdictFilter}
+        noiseFilters={noiseFilters}
         crossNsMode={crossNsMode}
         drilldown={drilldown}
         detailEdgeId={detailEdgeId}
         onNodeDrillDown={handleNodeDrillDown}
         onEdgeDetails={handleEdgeDetails}
         onClearEdgeDetails={handleClearEdgeDetails}
+        onHelp={() => setTutorial({initial: 'nodes', tabs: ['nodes']})}
       />
     </div>
   )
@@ -269,6 +286,20 @@ const HubblePage: React.FC = () => {
           active={sidePanelTab === 'edge'}
           onClick={setSidePanelTab}
         />
+        <button
+          type="button"
+          className="hubble-side-tabs-help"
+          title="이 패널의 각 항목이 무엇인지 예시 데이터와 함께 단계별로 설명합니다"
+          aria-label="Open panel tutorial"
+          onClick={() =>
+            setTutorial({
+              initial: sidePanelTab,
+              tabs: ['talkers', 'policy', 'pods', 'edge'],
+            })
+          }
+        >
+          ?
+        </button>
       </div>
       <div className="hubble-side-panel-content">
         {sidePanelTab === 'talkers' && <TopTalkersPanel snapshot={snapshot} />}
@@ -312,7 +343,7 @@ const HubblePage: React.FC = () => {
     <Page className="hubble-page">
       <Page.Header>
         <Page.Header.Left>
-          <Page.Title title="Network (Hubble)" />
+          <Page.Title title="Network Observability" />
           {drilldown && (
             <button className="hubble-back-button" onClick={exitDrilldown}>
               ← Overview
@@ -329,11 +360,13 @@ const HubblePage: React.FC = () => {
             hideSystemNodes={hideSystemNodes}
             simplifiedView={simplifiedView}
             verdictFilter={verdictFilter}
+            noiseFilters={noiseFilters}
             crossNsMode={crossNsMode}
             drilldownActive={!!drilldown}
             onHideSystemChange={setHideSystemNodes}
             onSimplifiedViewChange={setSimplifiedView}
             onVerdictFilterChange={setVerdictFilter}
+            onNoiseFiltersChange={setNoiseFilters}
             onCrossNsModeChange={setCrossNsMode}
           />
           <button
@@ -367,7 +400,11 @@ const HubblePage: React.FC = () => {
       <Page.Contents fullWidth={true} scrollable={false}>
         <div className="hubble-page-content">
           {clusters.length > 0 && (
-            <StatusBar snapshot={snapshot} wsConnected={connected} />
+            <StatusBar
+              snapshot={snapshot}
+              wsConnected={connected}
+              onHelp={() => setTutorial({initial: 'header', tabs: ['header']})}
+            />
           )}
           {displayError && <div className="hubble-error">{displayError}</div>}
           {clusters.length === 0 && !clusterListError && (
@@ -404,6 +441,13 @@ const HubblePage: React.FC = () => {
             cluster={cluster}
             onClose={() => setFlowModal(null)}
           />
+          {tutorial && (
+            <SidePanelTutorial
+              initialTab={tutorial.initial}
+              tabs={tutorial.tabs}
+              onClose={() => setTutorial(null)}
+            />
+          )}
         </div>
       </Page.Contents>
     </Page>
