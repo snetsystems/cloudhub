@@ -18,11 +18,15 @@ func TestAlertRuleStore_AddAndGet(t *testing.T) {
 	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
 		OrgID:       "org1",
 		Name:        "CPU",
-		Measurement: "cpu",
-		Field:       "usage_user",
-		Conditions: []cloudhub.AlertRuleCondition{
-			{Level: "warning", Value: 70, Enabled: true},
-			{Level: "critical", Value: 90, Enabled: true},
+		Specs: []cloudhub.AlertRuleSpec{
+			{
+				Measurement: "cpu",
+				Field:       "usage_user",
+				Conditions: []cloudhub.AlertRuleCondition{
+					{Level: "warning", Value: 70, Enabled: true},
+					{Level: "critical", Value: 90, Enabled: true},
+				},
+			},
 		},
 		TaskType:        "stream",
 		OccurrenceCount: 1,
@@ -47,8 +51,8 @@ func TestAlertRuleStore_AddAndGet(t *testing.T) {
 	if got.Name != "CPU" {
 		t.Errorf("Name = %q, want %q", got.Name, "CPU")
 	}
-	if len(got.Conditions) != 2 {
-		t.Errorf("Conditions len = %d, want 2", len(got.Conditions))
+	if len(got.Specs[0].Conditions) != 2 {
+		t.Errorf("Conditions len = %d, want 2", len(got.Specs[0].Conditions))
 	}
 	if len(got.Hostnames) != 2 {
 		t.Errorf("Hostnames len = %d, want 2", len(got.Hostnames))
@@ -93,11 +97,15 @@ func TestAlertRuleStore_TriggerValues(t *testing.T) {
 	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
 		OrgID:   "org1",
 		Name:    "relative cpu",
-		Trigger: cloudhub.AlertGroupRuleTriggerRelative,
-		TriggerValues: cloudhub.TriggerValues{
-			Change:   "change",
-			Shift:    "2m",
-			Operator: "greater than",
+		Specs: []cloudhub.AlertRuleSpec{
+			{
+				Trigger: cloudhub.AlertGroupRuleTriggerRelative,
+				TriggerValues: &cloudhub.TriggerValues{
+					Change:   "change",
+					Shift:    "2m",
+					Operator: "greater than",
+				},
+			},
 		},
 		Active: true,
 	})
@@ -109,12 +117,12 @@ func TestAlertRuleStore_TriggerValues(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	if got.TriggerValues.Change != "change" || got.TriggerValues.Shift != "2m" || got.TriggerValues.Operator != "greater than" {
-		t.Fatalf("TriggerValues not hydrated: %+v", got.TriggerValues)
+	if got.Specs[0].TriggerValues.Change != "change" || got.Specs[0].TriggerValues.Shift != "2m" || got.Specs[0].TriggerValues.Operator != "greater than" {
+		t.Fatalf("TriggerValues not hydrated: %+v", got.Specs[0].TriggerValues)
 	}
 
-	got.Trigger = cloudhub.AlertGroupRuleTriggerDeadman
-	got.TriggerValues = cloudhub.TriggerValues{Period: "3m"}
+	got.Specs[0].Trigger = cloudhub.AlertGroupRuleTriggerDeadman
+	got.Specs[0].TriggerValues = &cloudhub.TriggerValues{Period: "3m"}
 	if err := ruleStore.Update(ctx, got); err != nil {
 		t.Fatalf("Update: %v", err)
 	}
@@ -122,8 +130,8 @@ func TestAlertRuleStore_TriggerValues(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get after update: %v", err)
 	}
-	if got.TriggerValues.Period != "3m" || got.TriggerValues.Shift != "" {
-		t.Fatalf("TriggerValues not replaced on update: %+v", got.TriggerValues)
+	if got.Specs[0].TriggerValues.Period != "3m" || got.Specs[0].TriggerValues.Shift != "" {
+		t.Fatalf("TriggerValues not replaced on update: %+v", got.Specs[0].TriggerValues)
 	}
 }
 
@@ -321,12 +329,16 @@ func TestAlertRuleStore_ConditionsRoundTrip(t *testing.T) {
 	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
 		OrgID:       "org4",
 		Name:        "thresh",
-		Measurement: "cpu",
-		Field:       "usage_user",
-		Conditions: []cloudhub.AlertRuleCondition{
-			{Level: "info", Value: 50, Enabled: true},
-			{Level: "warning", Value: 70, Enabled: true},
-			{Level: "critical", Value: 90, Enabled: false},
+		Specs: []cloudhub.AlertRuleSpec{
+			{
+				Measurement: "cpu",
+				Field:       "usage_user",
+				Conditions: []cloudhub.AlertRuleCondition{
+					{Level: "info", Value: 50, Enabled: true},
+					{Level: "warning", Value: 70, Enabled: true},
+					{Level: "critical", Value: 90, Enabled: false},
+				},
+			},
 		},
 		Active: true,
 	})
@@ -334,23 +346,30 @@ func TestAlertRuleStore_ConditionsRoundTrip(t *testing.T) {
 		t.Fatalf("Add: %v", err)
 	}
 
-	got, err := ruleStore.ConditionsByRule(ctx, r.ID)
+	gotRule, err := ruleStore.Get(ctx, r.ID)
 	if err != nil {
-		t.Fatalf("ConditionsByRule: %v", err)
+		t.Fatalf("Get: %v", err)
 	}
+	got := gotRule.Specs[0].Conditions
 	if len(got) != 3 {
 		t.Fatalf("want 3 conditions, got %d", len(got))
 	}
 
-	// SetConditions replaces previous rows.
-	if err := ruleStore.SetConditions(ctx, r.ID, []cloudhub.AlertRuleCondition{
-		{Level: "critical", Value: 95, Enabled: true},
+	// SetSpecs replaces previous rows.
+	if err := ruleStore.SetSpecs(ctx, r.ID, []cloudhub.AlertRuleSpec{
+		{
+			Measurement: "cpu",
+			Field:       "usage_user",
+			Conditions: []cloudhub.AlertRuleCondition{
+				{Level: "critical", Value: 95, Enabled: true},
+			},
+		},
 	}); err != nil {
-		t.Fatalf("SetConditions: %v", err)
+		t.Fatalf("SetSpecs: %v", err)
 	}
-	got, _ = ruleStore.ConditionsByRule(ctx, r.ID)
-	if len(got) != 1 || got[0].Level != "critical" || got[0].Value != 95 {
-		t.Fatalf("after SetConditions want [critical=95], got %+v", got)
+	gotRule2, _ := ruleStore.Get(ctx, r.ID)
+	if len(gotRule2.Specs) != 1 || gotRule2.Specs[0].Conditions[0].Level != "critical" || gotRule2.Specs[0].Conditions[0].Value != 95 {
+		t.Fatalf("after SetSpecs want [critical=95], got %+v", gotRule2.Specs)
 	}
 }
 
@@ -363,8 +382,12 @@ func TestAlertRuleStore_DerivativeRoundTrip(t *testing.T) {
 	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
 		OrgID:       "org5",
 		Name:        "net bps",
-		Measurement: "net",
-		Field:       "bytes_recv",
+		Specs: []cloudhub.AlertRuleSpec{
+			{
+				Measurement: "net",
+				Field:       "bytes_recv",
+			},
+		},
 		Derivative: &cloudhub.DerivativeConfig{
 			Enabled:     true,
 			NonNegative: true,
@@ -403,8 +426,12 @@ func TestAlertRuleStore_EvalRoundTrip(t *testing.T) {
 	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
 		OrgID:       "org6",
 		Name:        "disk inode",
-		Measurement: "disk",
-		Field:       "inodes_used",
+		Specs: []cloudhub.AlertRuleSpec{
+			{
+				Measurement: "disk",
+				Field:       "inodes_used",
+			},
+		},
 		Eval: &cloudhub.EvalConfig{
 			Expression: `float("inodes_used") / float("inodes_total") * 100.0`,
 			As:         "inodes_used_percent",
@@ -442,8 +469,12 @@ func TestAlertRuleStore_DerivativeAndEvalCoexist(t *testing.T) {
 	r, err := ruleStore.Add(ctx, cloudhub.AlertGroupRule{
 		OrgID:       "org7",
 		Name:        "mixed",
-		Measurement: "disk",
-		Field:       "inodes_used",
+		Specs: []cloudhub.AlertRuleSpec{
+			{
+				Measurement: "disk",
+				Field:       "inodes_used",
+			},
+		},
 		Eval: &cloudhub.EvalConfig{
 			Expression: `float("inodes_used") / float("inodes_total") * 100.0`,
 			As:         "inodes_used_percent",
