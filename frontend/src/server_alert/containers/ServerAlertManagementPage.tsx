@@ -14,6 +14,9 @@ import {
   Page,
 } from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
+import AlertSeverityFilter, {
+  AlertSeverityFilterValue,
+} from 'src/shared/components/AlertSeverityFilter'
 import {
   ColumnInfo,
   AlertGroupRule,
@@ -38,9 +41,9 @@ const getOperatorSymbol = (op: string): string => {
 function ServerAlertManagementPage({router, location, notify}: any) {
   const {t} = useTranslation()
   const [data, setData] = useState<AlertGroupRule[]>([])
-  const [activeFilter, setActiveFilter] = useState<
-    'all' | 'warning' | 'critical'
-  >('all')
+  const [activeFilter, setActiveFilter] = useState<AlertSeverityFilterValue>(
+    'all'
+  )
 
   // 데이터 가져오기
   const fetchData = async () => {
@@ -131,35 +134,13 @@ function ServerAlertManagementPage({router, location, notify}: any) {
   }, [data, activeFilter])
 
   const renderTopLeft = () => (
-    <div className="server-alert-filter-group">
-      {/* Ocean Color */}
-      <div
-        className={`server-alert-filter-item server-alert-filter-item--ocean ${
-          activeFilter === 'all' ? 'active' : ''
-        }`}
-        onClick={() => setActiveFilter('all')}
-      >
-        {t('server_alert.all', '전체')} ({totalCount})
-      </div>
-      {/* Warning Color (Yellow/Orange) */}
-      <div
-        className={`server-alert-filter-item server-alert-filter-item--warning ${
-          activeFilter === 'warning' ? 'active' : ''
-        }`}
-        onClick={() => setActiveFilter('warning')}
-      >
-        {t('server_alert.warning', '경고')} ({warningCount})
-      </div>
-      {/* Danger Color (Red) */}
-      <div
-        className={`server-alert-filter-item server-alert-filter-item--critical ${
-          activeFilter === 'critical' ? 'active' : ''
-        }`}
-        onClick={() => setActiveFilter('critical')}
-      >
-        {t('server_alert.critical', '위험')} ({criticalCount})
-      </div>
-    </div>
+    <AlertSeverityFilter
+      activeFilter={activeFilter}
+      onChange={setActiveFilter}
+      totalCount={totalCount}
+      warningCount={warningCount}
+      criticalCount={criticalCount}
+    />
   )
 
   const renderTopRight = () => (

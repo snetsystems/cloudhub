@@ -36,12 +36,3 @@ export interface URLAlertStatusBadge {
   kind: URLAlertStatusKind
   label: string
 }
-
-export interface URLAlertListItem {
-  id: string
-  name: string | string[]
-  urls: string[]
-  alertStatuses: URLAlertStatusBadge[]
-  elapsedTimeEnabled: boolean
-  elapsedTimeMs?: number | null
-}

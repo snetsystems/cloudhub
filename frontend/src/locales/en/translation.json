@@ -96,6 +96,15 @@
     "amt_change": "change",
     "update_failed": "Failed to update state."
   },
+  "url_alert": {
+    "add_event": "Add Event",
+    "event_name": "Event Name",
+    "status": "Status",
+    "table_title": "URL Alerts",
+    "edit": "Edit",
+    "click_to_view_urls": "Click to view URLs",
+    "and_n_more": "and {{num}} more"
+  },
   "button": {
     "edit": "Edit",
     "delete": "Delete",
