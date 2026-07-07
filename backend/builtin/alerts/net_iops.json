@@ -3,28 +3,50 @@
   "name": "Network IOPS 알림",
   "description": "초당 수신 패킷 수가 임계치를 초과하면 알림",
   "category": "server-monitoring",
-  "tags": ["network", "throughput"],
-  "database": "",
-  "retentionPolicy": "",
-  "measurement": "net",
-  "field": "packets_recv",
+  "tags": [
+    "network",
+    "throughput"
+  ],
   "derivative": {
     "enabled": true,
     "nonNegative": true,
     "unit": "1s"
   },
-  "trigger": "threshold",
   "taskType": "stream",
-  "every": "30s",
   "occurrenceType": "consecutive",
   "occurrenceCount": 2,
   "occurrenceWindow": "5m",
   "pauseSeconds": 0,
   "notifyRecovery": true,
   "message": "{{ index .Tags \"host\" }} Network IOPS {{ .Level }} ({{ index .Fields \"packets_recv\" }} pps)",
-  "conditions": [
-    { "level": "critical", "value": 100000, "operator": "greater", "enabled": true },
-    { "level": "warning",  "value": 50000, "operator": "greater", "enabled": true },
-    { "level": "info",     "value": 0, "operator": "greater", "enabled": false }
+  "specs": [
+    {
+      "database": "",
+      "retentionPolicy": "",
+      "measurement": "net",
+      "field": "packets_recv",
+      "trigger": "threshold",
+      "every": "30s",
+      "conditions": [
+        {
+          "level": "critical",
+          "value": 100000,
+          "operator": "greater",
+          "enabled": true
+        },
+        {
+          "level": "warning",
+          "value": 50000,
+          "operator": "greater",
+          "enabled": true
+        },
+        {
+          "level": "info",
+          "value": 0,
+          "operator": "greater",
+          "enabled": false
+        }
+      ]
+    }
   ]
 }
