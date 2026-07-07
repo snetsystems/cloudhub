@@ -195,7 +195,8 @@ type Server struct {
 	PgsqlDatabase string `long:"pgsql-database" description:"PostgreSQL database name" env:"CLOUDHUB_PGSQL_DATABASE" default:""`
 	PgsqlSSLMode  string `long:"pgsql-sslmode" description:"PostgreSQL SSL mode (disable|require|verify-ca|verify-full)" env:"CLOUDHUB_PGSQL_SSLMODE" default:"disable"`
 
-	HubbleWindow           time.Duration `long:"hubble-window" description:"Hubble aggregation window (sliding) per cluster" env:"CLOUDHUB_HUBBLE_WINDOW_DURATION" default:"5m"`
+	Hubble                 map[string]string `long:"hubble" description:"Hubble Relay connection for one cluster. '--hubble=cluster:{name} --hubble=relay-url:{host:port} --hubble=plaintext:{true|false} --hubble=insecure-skip-verify:{true|false} --hubble=tls-ca:{path} --hubble=tls-cert:{path} --hubble=tls-key:{path} --hubble=tls-server-name:{name}'. E.g. via environment variable" env:"HUBBLE" env-delim:","`
+	HubbleWindow           time.Duration     `long:"hubble-window" description:"Hubble aggregation window (sliding) per cluster" env:"CLOUDHUB_HUBBLE_WINDOW_DURATION" default:"5m"`
 	HubbleBucket           time.Duration `long:"hubble-bucket" description:"Hubble bucket size within the aggregation window" env:"CLOUDHUB_HUBBLE_BUCKET_DURATION" default:"10s"`
 	HubbleSnapshotInterval time.Duration `long:"hubble-snapshot-interval" description:"Hubble snapshot publish interval (push to WS)" env:"CLOUDHUB_HUBBLE_SNAPSHOT_INTERVAL" default:"2s"`
 	HubbleMaxEdges         int           `long:"hubble-max-edges" description:"Max edges per cluster (LRU eviction beyond cap)" env:"CLOUDHUB_HUBBLE_MAX_EDGES_PER_CLUSTER" default:"10000"`
@@ -651,13 +652,12 @@ func (s *Server) Serve(ctx context.Context) {
 	kubernetesConfig := NewKubernetesConfig(s.Kubernetes)
 	hubbleConfig, err := NewHubbleConfig(
 		s.HubbleWindow, s.HubbleBucket, s.HubbleSnapshotInterval,
-		s.HubbleMaxEdges, s.HubbleExcludedNS, s.HubbleClustersFile,
+		s.HubbleMaxEdges, s.HubbleExcludedNS, s.Hubble, s.HubbleClustersFile,
 	)
 	if err != nil {
 		logger.
 			WithField("component", "server").
-			WithField("hubble-clusters-file", s.HubbleClustersFile).
-			Error("failed to load hubble clusters file: ", err)
+			Error("failed to load hubble config: ", err)
 	}
 	kubernetesConfig.CollectorAuthToken = s.CollectorAuthToken
 

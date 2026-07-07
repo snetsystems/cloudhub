@@ -36,6 +36,10 @@ import {
   CrossNsMode,
   groupExternalNamespaces,
 } from 'src/hubble/utils/groupExternalNamespaces'
+import {
+  edgeDetailFilters,
+  nodeFocusFilters,
+} from 'src/hubble/utils/edgeFocusFilters'
 
 // drillNamespace extracts the namespace name from a "ns:<name>" node id.
 const drillNamespace = (nodeId: string): string | null => {
@@ -62,6 +66,7 @@ const HubblePage: React.FC = () => {
     setPolicyBaseline,
   ] = useState<PolicyImpactBaseline | null>(null)
   const [detailEdgeId, setDetailEdgeId] = useState<string | null>(null)
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(null)
   const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>('talkers')
   // Which tutorial modal is open. Each "?" button scopes the modal to the
   // guides for its own screen area (header / map nodes / side panel tabs).
@@ -104,6 +109,8 @@ const HubblePage: React.FC = () => {
   useEffect(() => {
     setDrilldown(null)
     setDetailEdgeId(null)
+    setActiveNodeId(null)
+    setFlowFilters({})
     setPolicyBaseline(null)
     setSidePanelTab('talkers')
   }, [cluster])
@@ -134,6 +141,16 @@ const HubblePage: React.FC = () => {
 
   // Bottom flow stream. Overview is cluster-wide; drilldown is namespace-scoped.
   // Keep it alive in drilldown because PodConnectionsPanel also depends on it.
+  const listViewNamespace = useMemo(
+    () =>
+      !detailEdgeId && activeNodeId
+        ? nodeFocusFilters(activeNodeId).namespace
+        : null,
+    [detailEdgeId, activeNodeId]
+  )
+
+  const effectiveNamespace = drilldown || listViewNamespace
+
   const {
     flows: allFlows,
     connected: flowsConnected,
@@ -143,7 +160,7 @@ const HubblePage: React.FC = () => {
     cluster,
     200,
     !!cluster && (!flowTableHidden || !!drilldown),
-    drilldown,
+    effectiveNamespace,
     flowFilters
   )
 
@@ -171,23 +188,45 @@ const HubblePage: React.FC = () => {
       if (ns) {
         setDrilldown(ns)
         setDetailEdgeId(null)
+        setActiveNodeId(null)
+        setFlowFilters({})
       }
     },
     [drilldown]
   )
 
-  const handleEdgeDetails = useCallback((edgeId: string) => {
-    setDetailEdgeId(edgeId)
-    setSidePanelTab('edge')
+  const handleNodeSelect = useCallback((nodeId: string) => {
+    setActiveNodeId(nodeId)
+    setDetailEdgeId(null)
+    setFlowFilters(nodeFocusFilters(nodeId).filters)
   }, [])
 
-  const handleClearEdgeDetails = useCallback(() => {
+  const handleEdgeDetails = useCallback(
+    (edgeId: string, src: string, dst: string) => {
+      setDetailEdgeId(edgeId)
+      setSidePanelTab('edge')
+      setActiveNodeId(prev => prev ?? src)
+      setFlowFilters(edgeDetailFilters(src, dst))
+    },
+    []
+  )
+
+  const handleBackToEdgeList = useCallback(() => {
     setDetailEdgeId(null)
+    setFlowFilters(activeNodeId ? nodeFocusFilters(activeNodeId).filters : {})
+  }, [activeNodeId])
+
+  const handleClearSelection = useCallback(() => {
+    setActiveNodeId(null)
+    setDetailEdgeId(null)
+    setFlowFilters({})
   }, [])
 
   const exitDrilldown = useCallback(() => {
     setDrilldown(null)
     setDetailEdgeId(null)
+    setActiveNodeId(null)
+    setFlowFilters({})
     setSidePanelTab(tab => (tab === 'pods' ? 'talkers' : tab))
   }, [])
 
@@ -246,8 +285,9 @@ const HubblePage: React.FC = () => {
         drilldown={drilldown}
         detailEdgeId={detailEdgeId}
         onNodeDrillDown={handleNodeDrillDown}
+        onNodeSelect={handleNodeSelect}
         onEdgeDetails={handleEdgeDetails}
-        onClearEdgeDetails={handleClearEdgeDetails}
+        onClearSelection={handleClearSelection}
         onHelp={() => setTutorial({initial: 'nodes', tabs: ['nodes']})}
       />
     </div>
@@ -320,7 +360,10 @@ const HubblePage: React.FC = () => {
             cluster={cluster}
             snapshot={snapshot}
             selectedEdgeId={detailEdgeId}
-            onClose={() => setDetailEdgeId(null)}
+            activeNodeId={activeNodeId}
+            onSelectEdge={handleEdgeDetails}
+            onBack={handleBackToEdgeList}
+            onClose={handleClearSelection}
           />
         )}
       </div>

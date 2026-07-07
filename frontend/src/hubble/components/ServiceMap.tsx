@@ -41,8 +41,9 @@ interface Props {
   drilldown: string | null
   detailEdgeId: string | null
   onNodeDrillDown?: (nodeId: string) => void
-  onEdgeDetails?: (edgeId: string) => void
-  onClearEdgeDetails?: () => void
+  onNodeSelect?: (nodeId: string) => void
+  onEdgeDetails?: (edgeId: string, src: string, dst: string) => void
+  onClearSelection?: () => void
   onHelp?: () => void
 }
 
@@ -133,8 +134,9 @@ const ServiceMap: React.FC<Props> = ({
   drilldown,
   detailEdgeId,
   onNodeDrillDown,
+  onNodeSelect,
   onEdgeDetails,
-  onClearEdgeDetails,
+  onClearSelection,
   onHelp,
 }) => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
@@ -471,7 +473,7 @@ const ServiceMap: React.FC<Props> = ({
   const handleCanvasClick = () => {
     setSelectedNodeId(null)
     setSelectedEdgeId(null)
-    onClearEdgeDetails && onClearEdgeDetails()
+    onClearSelection && onClearSelection()
   }
 
   const handleViewportClick = (e: React.MouseEvent) => {
@@ -687,7 +689,7 @@ const ServiceMap: React.FC<Props> = ({
                   // One-click: edge selection drives the DetailPanel
                   // directly. The selection bar shows a short summary,
                   // the panel has the full breakdown.
-                  onEdgeDetails && onEdgeDetails(id)
+                  onEdgeDetails && onEdgeDetails(id, edge.src, edge.dst)
                 }
                 const edgeClickHandler = dimmed ? undefined : handleEdgeClick
                 return (
@@ -798,7 +800,7 @@ const ServiceMap: React.FC<Props> = ({
                     if (consumeDidDrag()) return
                     setSelectedNodeId(node.id)
                     setSelectedEdgeId(null)
-                    onClearEdgeDetails && onClearEdgeDetails()
+                    onNodeSelect && onNodeSelect(node.id)
                   }}
                   onDragStart={(clientX, clientY) =>
                     startDrag(

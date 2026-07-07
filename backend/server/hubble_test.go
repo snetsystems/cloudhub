@@ -177,3 +177,24 @@ func TestFilterHubbleFlows_ExternalOnlyMatchesExternalEndpoint(t *testing.T) {
 		t.Fatalf("filtered = %+v, want flows touching external endpoints", got)
 	}
 }
+
+func TestFilterHubbleFlows_MatchesSrcDstNamespace(t *testing.T) {
+	flows := []hubble.FlowRecord{
+		{SrcNamespace: "cloudhub", DstNamespace: "harbor", SrcPod: "a"},
+		{SrcNamespace: "harbor", DstNamespace: "cloudhub", SrcPod: "b"},
+		{SrcNamespace: "cloudhub", DstNamespace: "cloudhub", SrcPod: "c"},
+	}
+
+	filter := hubbleFlowFilter{
+		SrcNamespace: "cloud",
+		DstNamespace: "harbor",
+	}
+
+	got := filterHubbleFlows(flows, filter)
+	if len(got) != 1 {
+		t.Fatalf("len(filtered) = %d, want 1: %+v", len(got), got)
+	}
+	if got[0].SrcPod != "a" {
+		t.Fatalf("filtered = %+v, want the cloudhub->harbor flow only", got)
+	}
+}

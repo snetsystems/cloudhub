@@ -1203,6 +1203,53 @@ $hubble-fancy-scroll-gutter: 20px;
   color: #f0f1f4;
 }
 
+.hubble-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.hubble-panel-back {
+  background: transparent;
+  border: 0;
+  color: #8e91a1;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.hubble-panel-back:hover {
+  color: #f0f1f4;
+}
+
+.hubble-panel-subtitle {
+  color: #8e91a1;
+  font-weight: 400;
+}
+
+.hubble-edge-list-row {
+  cursor: pointer;
+}
+
+.hubble-edge-list-row:hover {
+  color: #f0f1f4;
+}
+
+.hubble-edge-list-search {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 0;
+}
+
+.hubble-edge-list-search .hubble-flow-filter-input {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
 .hubble-panel-empty {
   color: #545667;
   font-style: italic;

@@ -182,6 +182,8 @@ export interface HubbleEdgeFlowsResponse {
 export interface HubbleFlowFilters {
   srcWorkload?: string
   dstWorkload?: string
+  srcNamespace?: string
+  dstNamespace?: string
   verdict?: string
   dropReason?: string
   protocol?: string

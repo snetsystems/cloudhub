@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {
   HubbleEdge,
@@ -15,6 +15,9 @@ interface Props {
   cluster: string
   snapshot: HubbleSnapshot | null
   selectedEdgeId: string | null
+  activeNodeId: string | null
+  onSelectEdge: (edgeId: string, src: string, dst: string) => void
+  onBack: () => void
   onClose: () => void
 }
 
@@ -27,6 +30,11 @@ const parseEdgeId = (
   return {src: edgeId.slice(0, sep), dst: edgeId.slice(sep + 1)}
 }
 
+const edgeId = (src: string, dst: string): string => `${src}|${dst}`
+
+const shortNodeId = (id: string): string =>
+  id.replace(/^(nsgrp:|ns:|wl:|ext:)/, '')
+
 // DetailPanel is shown when the user taps an edge. It surfaces the
 // Cilium-specific data: per-verdict counts, top deny reasons, matched
 // policies, and the most-recent raw flows. Empty when nothing is selected.
@@ -34,6 +42,9 @@ const DetailPanel: React.FC<Props> = ({
   cluster,
   snapshot,
   selectedEdgeId,
+  activeNodeId,
+  onSelectEdge,
+  onBack,
   onClose,
 }) => {
   const edge = findEdge(snapshot, selectedEdgeId)
@@ -44,8 +55,38 @@ const DetailPanel: React.FC<Props> = ({
   const [selectedPolicy, setSelectedPolicy] = useState<HubblePolicyRef | null>(
     null
   )
+  const [edgeSrcSearch, setEdgeSrcSearch] = useState('')
+  const [edgeDstSearch, setEdgeDstSearch] = useState('')
+
+  // Reset the connection-list search whenever the active node changes, so a
+  // stale query from the previous node doesn't hide the new node's edges.
+  useEffect(() => {
+    setEdgeSrcSearch('')
+    setEdgeDstSearch('')
+  }, [activeNodeId])
 
   if (!edge) {
+    if (activeNodeId) {
+      // Called directly (not as JSX) so its output is inlined into this
+      // component's own render tree rather than a nested component
+      // boundary — keeps it visible to shallow rendering in tests.
+      // WARNING: EdgeListView is typed/defined as React.FC but invoked as a
+      // plain function here. It MUST NEVER have hooks (useState, useEffect,
+      // useMemo, etc.) added to it. Hook calls would attach to DetailPanel's
+      // fiber instead of a distinct component instance; since this call is
+      // conditional, this silently violates the Rules of Hooks. If hooks are
+      // needed, convert this to JSX invocation: <EdgeListView ... />
+      return EdgeListView({
+        snapshot,
+        activeNodeId,
+        onSelectEdge,
+        onClose,
+        srcSearch: edgeSrcSearch,
+        dstSearch: edgeDstSearch,
+        onSrcSearchChange: setEdgeSrcSearch,
+        onDstSearchChange: setEdgeDstSearch,
+      })
+    }
     return (
       <div className="hubble-panel hubble-detail-panel is-empty">
         <h4 className="hubble-panel-title">Edge details</h4>
@@ -99,9 +140,20 @@ const DetailPanel: React.FC<Props> = ({
     <div className="hubble-panel hubble-detail-panel">
       <div className="hubble-panel-header">
         <h4 className="hubble-panel-title">Edge details</h4>
-        <button className="hubble-panel-close" onClick={onClose} title="Close">
-          ×
-        </button>
+        <div className="hubble-panel-header-actions">
+          {activeNodeId && (
+            <button
+              className="hubble-panel-back"
+              onClick={onBack}
+              title="Back to connection list"
+            >
+              ← Back
+            </button>
+          )}
+          <button className="hubble-panel-close" onClick={onClose} title="Close">
+            ×
+          </button>
+        </div>
       </div>
       <FancyScrollbar autoHide={true} className="hubble-detail-scroll">
       <div className="hubble-detail-scroll-content">
@@ -317,6 +369,128 @@ const DetailPanel: React.FC<Props> = ({
         policy={selectedPolicy}
         onClose={() => setSelectedPolicy(null)}
       />
+    </div>
+  )
+}
+
+const EdgeListView: React.FC<{
+  snapshot: HubbleSnapshot | null
+  activeNodeId: string
+  onSelectEdge: (edgeId: string, src: string, dst: string) => void
+  onClose: () => void
+  srcSearch: string
+  dstSearch: string
+  onSrcSearchChange: (value: string) => void
+  onDstSearchChange: (value: string) => void
+}> = ({
+  snapshot,
+  activeNodeId,
+  onSelectEdge,
+  onClose,
+  srcSearch,
+  dstSearch,
+  onSrcSearchChange,
+  onDstSearchChange,
+}) => {
+  const activeNode = snapshot?.nodes.find(n => n.id === activeNodeId) ?? null
+  const activeNodeLabel = activeNode
+    ? activeNode.name || activeNode.label || shortNodeId(activeNodeId)
+    : shortNodeId(activeNodeId)
+
+  const allEdges = (snapshot?.edges ?? [])
+    .filter(e => e.src === activeNodeId || e.dst === activeNodeId)
+    .slice()
+    .sort((a, b) => b.flowCount - a.flowCount)
+
+  const srcQuery = srcSearch.trim().toLowerCase()
+  const dstQuery = dstSearch.trim().toLowerCase()
+  const hasQuery = !!srcQuery || !!dstQuery
+  const edges = hasQuery
+    ? allEdges.filter(
+        e =>
+          (!srcQuery || shortNodeId(e.src).toLowerCase().includes(srcQuery)) &&
+          (!dstQuery || shortNodeId(e.dst).toLowerCase().includes(dstQuery))
+      )
+    : allEdges
+
+  return (
+    <div className="hubble-panel hubble-detail-panel">
+      <div className="hubble-panel-header">
+        <h4 className="hubble-panel-title">
+          Edge details
+          <span className="hubble-panel-subtitle"> — {activeNodeLabel}</span>
+        </h4>
+        <button className="hubble-panel-close" onClick={onClose} title="Close">
+          ×
+        </button>
+      </div>
+      <div className="hubble-edge-list-search">
+        <input
+          className="hubble-flow-filter-input"
+          value={srcSearch}
+          onChange={e => onSrcSearchChange(e.target.value)}
+          placeholder="Source"
+          aria-label="Filter connections by source"
+        />
+        <input
+          className="hubble-flow-filter-input"
+          value={dstSearch}
+          onChange={e => onDstSearchChange(e.target.value)}
+          placeholder="Destination"
+          aria-label="Filter connections by destination"
+        />
+      </div>
+      <FancyScrollbar autoHide={true} className="hubble-detail-scroll">
+        <div className="hubble-detail-scroll-content">
+          {edges.length === 0 && (
+            <div className="hubble-panel-empty">
+              {hasQuery
+                ? 'No connections match this filter'
+                : 'No connections for this node in the current window'}
+            </div>
+          )}
+          <ul className="hubble-top-talkers-list">
+            {edges.map(e => {
+              const denied = e.verdictCounts?.DROPPED ?? 0
+              const id = edgeId(e.src, e.dst)
+              return (
+                <li
+                  className="hubble-top-talkers-row hubble-edge-list-row"
+                  key={id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectEdge(id, e.src, e.dst)}
+                  onKeyDown={ev => {
+                    if (ev.key === 'Enter' || ev.key === ' ') {
+                      ev.preventDefault()
+                      onSelectEdge(id, e.src, e.dst)
+                    }
+                  }}
+                >
+                  <span className="hubble-edge-label">
+                    <span className="hubble-edge-src">
+                      {shortNodeId(e.src)}
+                    </span>
+                    <span className="hubble-edge-arrow">→</span>
+                    <span className="hubble-edge-dst">
+                      {shortNodeId(e.dst)}
+                    </span>
+                  </span>
+                  <span>
+                    <strong>{e.flowCount.toLocaleString()}</strong>
+                    {denied > 0 && (
+                      <span className="hubble-verdict-dropped">
+                        {' '}
+                        ({denied.toLocaleString()} denied)
+                      </span>
+                    )}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </FancyScrollbar>
     </div>
   )
 }

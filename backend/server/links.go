@@ -167,13 +167,36 @@ var defaultHubbleExcludedNSGlobs = []string{
 	"kube-node-lease",
 }
 
-// NewHubbleConfig builds a HubbleConfig from the parsed flags. If clustersFile
-// is non-empty it is read and its "clusters" array is loaded. Errors reading
-// the file are returned so the caller can decide whether to fail or warn.
+// hubbleClusterFromMap builds a single-cluster config from --hubble key-value flags.
+func hubbleClusterFromMap(m map[string]string) (cloudhub.HubbleClusterConfig, bool) {
+	relayURL := m["relay-url"]
+	if relayURL == "" {
+		return cloudhub.HubbleClusterConfig{}, false
+	}
+	name := m["cluster"]
+	if name == "" {
+		name = "default"
+	}
+	return cloudhub.HubbleClusterConfig{
+		Name:               name,
+		RelayURL:           relayURL,
+		TLSCA:              m["tls-ca"],
+		TLSCert:            m["tls-cert"],
+		TLSKey:             m["tls-key"],
+		TLSServerName:      m["tls-server-name"],
+		InsecureSkipVerify: m["insecure-skip-verify"] == "true",
+		Plaintext:          m["plaintext"] == "true",
+	}, true
+}
+
+// NewHubbleConfig builds a HubbleConfig from the parsed flags. A single cluster
+// can be configured via --hubble=relay-url:… (and related keys). If clustersFile
+// is non-empty its "clusters" array is appended for multi-cluster setups.
 func NewHubbleConfig(
 	window, bucket, snapshotInterval time.Duration,
 	maxEdges int,
 	excludedGlobs []string,
+	hubble map[string]string,
 	clustersFile string,
 ) (cloudhub.HubbleConfig, error) {
 	if len(excludedGlobs) == 0 {
@@ -186,6 +209,9 @@ func NewHubbleConfig(
 		MaxEdgesPerCluster:     maxEdges,
 		ExcludedNamespaceGlobs: excludedGlobs,
 	}
+	if cluster, ok := hubbleClusterFromMap(hubble); ok {
+		cfg.Clusters = append(cfg.Clusters, cluster)
+	}
 	if clustersFile == "" {
 		return cfg, nil
 	}
@@ -197,6 +223,6 @@ func NewHubbleConfig(
 	if err := json.Unmarshal(raw, &parsed); err != nil {
 		return cfg, fmt.Errorf("hubble clusters file: %w", err)
 	}
-	cfg.Clusters = parsed.Clusters
+	cfg.Clusters = append(cfg.Clusters, parsed.Clusters...)
 	return cfg, nil
 }
