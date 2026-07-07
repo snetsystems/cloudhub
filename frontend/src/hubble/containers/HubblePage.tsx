@@ -12,6 +12,7 @@ import FlowDetailsModal from 'src/hubble/components/FlowDetailsModal'
 import SidePanelTutorial, {
   TutorialTab,
 } from 'src/hubble/components/SidePanelTutorial'
+import HubbleBetaBadge from 'src/hubble/components/HubbleBetaBadge'
 import PolicyImpactPanel from 'src/hubble/components/PolicyImpactPanel'
 import PodConnectionsPanel from 'src/hubble/components/PodConnectionsPanel'
 import {getHubbleClusters} from 'src/hubble/apis'
@@ -386,7 +387,10 @@ const HubblePage: React.FC = () => {
     <Page className="hubble-page">
       <Page.Header>
         <Page.Header.Left>
-          <Page.Title title="Cilium(beta)" />
+          <div className="hubble-page-title">
+            <Page.Title title="Cilium" />
+            <HubbleBetaBadge />
+          </div>
           {drilldown && (
             <button className="hubble-back-button" onClick={exitDrilldown}>
               ← Overview

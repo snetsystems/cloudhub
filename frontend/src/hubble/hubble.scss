@@ -12,6 +12,29 @@
   }
 }
 
+.hubble-beta-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: $c-comet;
+  background: rgba($c-comet, 0.15);
+  border: 1px solid rgba($c-comet, 0.35);
+}
+
+.hubble-page-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .hubble-page-content {
   position: relative;
   flex: 1 1 auto;

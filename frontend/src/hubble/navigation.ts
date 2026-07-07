@@ -17,7 +17,7 @@ export const buildKubernetesNavItems = (
     exact: true,
   },
   {
-    label: 'Cilium(beta)',
+    label: 'Cilium',
     link: `${sourcePrefix}/${KUBERNETES_NETWORK_ROUTE}`,
   },
 ]
