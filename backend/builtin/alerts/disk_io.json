@@ -3,28 +3,50 @@
   "name": "Disk I/O 부하 알림",
   "description": "디스크가 I/O에 보낸 시간(busy %)이 임계치를 초과하면 알림. io_time(ms 누적)을 초당 변화량으로 환산: 1000 ms/s = 100% busy",
   "category": "server-monitoring",
-  "tags": ["disk", "io"],
-  "database": "",
-  "retentionPolicy": "",
-  "measurement": "diskio",
-  "field": "io_time",
+  "tags": [
+    "disk",
+    "io"
+  ],
   "derivative": {
     "enabled": true,
     "nonNegative": true,
     "unit": "1s"
   },
-  "trigger": "threshold",
   "taskType": "stream",
-  "every": "30s",
   "occurrenceType": "consecutive",
   "occurrenceCount": 2,
   "occurrenceWindow": "5m",
   "pauseSeconds": 0,
   "notifyRecovery": true,
   "message": "{{ index .Tags \"host\" }} Disk I/O 부하 {{ .Level }} ({{ index .Fields \"io_time\" }} ms/s)",
-  "conditions": [
-    { "level": "critical", "value": 800, "operator": "greater", "enabled": true },
-    { "level": "warning",  "value": 500, "operator": "greater", "enabled": true },
-    { "level": "info",     "value": 0, "operator": "greater", "enabled": false }
+  "specs": [
+    {
+      "database": "",
+      "retentionPolicy": "",
+      "measurement": "diskio",
+      "field": "io_time",
+      "trigger": "threshold",
+      "every": "30s",
+      "conditions": [
+        {
+          "level": "critical",
+          "value": 800,
+          "operator": "greater",
+          "enabled": true
+        },
+        {
+          "level": "warning",
+          "value": 500,
+          "operator": "greater",
+          "enabled": true
+        },
+        {
+          "level": "info",
+          "value": 0,
+          "operator": "greater",
+          "enabled": false
+        }
+      ]
+    }
   ]
 }

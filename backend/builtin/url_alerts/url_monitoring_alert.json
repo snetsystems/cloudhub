@@ -17,7 +17,7 @@
       "database": "",
       "retentionPolicy": "",
       "measurement": "http_response",
-      "field": "http_response_code",
+      "field": "response_time",
       "trigger": "threshold",
       "urlErrorConfig": {
         "check4xx": true,
@@ -27,29 +27,17 @@
       "conditions": [
         {
           "level": "critical",
-          "value": 0,
-          "operator": "greaterEqual",
-          "enabled": false
+          "value": 5.0,
+          "operator": "greater",
+          "enabled": true
         },
         {
           "level": "warning",
-          "value": 0,
+          "value": 3.0,
           "operator": "greater",
-          "enabled": false
+          "enabled": true
         },
         {"level": "info", "value": 0, "operator": "greater", "enabled": false}
-      ]
-    },
-    {
-      "database": "",
-      "retentionPolicy": "",
-      "measurement": "http_response",
-      "field": "response_time",
-      "trigger": "threshold",
-      "conditions": [
-        { "level": "critical", "value": 5.0, "operator": "greater", "enabled": true },
-        { "level": "warning",  "value": 2.0, "operator": "greater", "enabled": true },
-        { "level": "info",     "value": 0,   "operator": "greater", "enabled": false }
       ]
     }
   ]

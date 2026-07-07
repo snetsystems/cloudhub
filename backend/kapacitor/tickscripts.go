@@ -233,7 +233,7 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 		recent := recentOccurrenceParams{}
 		switch {
 		case recentEnabled:
-			recent = buildRecentOccurrenceParams(rule, spec, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit)
+			recent = buildRecentOccurrenceParams(rule, spec, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit, i)
 			info, warn, crit = recent.infoCountLambda, recent.warnCountLambda, recent.critCountLambda
 			emailInfo, emailWarn, emailCrit = recent.emailInfoCountLambda, recent.emailWarnCountLambda, recent.emailCritCountLambda
 		case consecutiveEnabled:
@@ -267,7 +267,7 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 			TriggerType:       triggerType,
 			SourceVar:         sourceVar,
 			RelativeEnabled:   triggerType == cloudhub.AlertGroupRuleTriggerRelative,
-			RelativeBlock:     buildRelativeBlock(rule, spec),
+			RelativeBlock:     buildRelativeBlock(rule, spec, i),
 			DeadmanEnabled:    triggerType == cloudhub.AlertGroupRuleTriggerDeadman,
 			DeadmanPeriod:     deadmanPeriod(spec),
 			OccurrenceEnabled: consecutiveEnabled,
@@ -468,7 +468,7 @@ type recentCountSpec struct {
 	countField string
 }
 
-func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit string) recentOccurrenceParams {
+func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec, sourceVar, info, warn, crit, emailInfo, emailWarn, emailCrit string, index int) recentOccurrenceParams {
 	var specs []recentCountSpec
 	add := func(expr, name, countField string) string {
 		if expr == "" {
@@ -485,13 +485,14 @@ func buildRecentOccurrenceParams(rule cloudhub.AlertGroupRule, spec cloudhub.Ale
 	p.emailInfoCountLambda = add(emailInfo, "email_info", "email_info_count")
 	p.emailWarnCountLambda = add(emailWarn, "email_warn", "email_warn_count")
 	p.emailCritCountLambda = add(emailCrit, "email_crit", "email_crit_count")
-	p.block = buildRecentOccurrenceBlock(rule, spec, sourceVar, specs)
+	p.block = buildRecentOccurrenceBlock(rule, spec, sourceVar, specs, index)
 	return p
 }
 
-func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec, sourceVar string, specs []recentCountSpec) string {
+func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec, sourceVar string, specs []recentCountSpec, index int) string {
+	sv := fmt.Sprintf("%s_%d", sourceVar, index)
 	if len(specs) == 0 {
-		return "var processed = " + sourceVar
+		return fmt.Sprintf("var processed_%d = %s", index, sv)
 	}
 	window := occurrenceWindow(rule.OccurrenceWindow)
 	every := strings.TrimSpace(spec.Every)
@@ -501,7 +502,7 @@ func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, spec cloudhub.Aler
 
 	var b strings.Builder
 	for _, s := range specs {
-		fmt.Fprintf(&b, `var recent_%s = %s
+		fmt.Fprintf(&b, `var recent_%s_%d = %s
     |eval(lambda: if(%s, 1, 0))
         .as('%s_hit')
     |window()
@@ -511,20 +512,20 @@ func buildRecentOccurrenceBlock(rule cloudhub.AlertGroupRule, spec cloudhub.Aler
     |sum('%s_hit')
         .as('%s')
 
-`, s.name, sourceVar, s.expr, s.name, window, every, s.name, s.countField)
+`, s.name, index, sv, s.expr, s.name, window, every, s.name, s.countField)
 	}
 	if len(specs) == 1 {
-		fmt.Fprintf(&b, "var processed = recent_%s", specs[0].name)
+		fmt.Fprintf(&b, "var processed_%d = recent_%s_%d", index, specs[0].name, index)
 		return b.String()
 	}
 
-	fmt.Fprintf(&b, "var processed = recent_%s\n", specs[0].name)
+	fmt.Fprintf(&b, "var processed_%d = recent_%s_%d\n", index, specs[0].name, index)
 	fmt.Fprint(&b, "    |join(")
 	for i, s := range specs[1:] {
 		if i > 0 {
 			fmt.Fprint(&b, ", ")
 		}
-		fmt.Fprintf(&b, "recent_%s", s.name)
+		fmt.Fprintf(&b, "recent_%s_%d", s.name, index)
 	}
 	fmt.Fprint(&b, ")\n        .as(")
 	for i, s := range specs {
@@ -576,7 +577,7 @@ func occurrenceWindow(w string) string {
 	return w
 }
 
-func buildRelativeBlock(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec) string {
+func buildRelativeBlock(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec, index int) string {
 	if spec.TriggerValues == nil {
 		return ""
 	}
@@ -594,19 +595,19 @@ func buildRelativeBlock(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpe
 	default:
 		expr = fmt.Sprintf(`float("current.%s" - "past.%s")`, spec.Field, spec.Field)
 	}
-	return fmt.Sprintf(`var past = src
+	return fmt.Sprintf(`var past_%d = src_%d
     |shift(%s)
 
-var current = src
+var current_%d = src_%d
 
-var relative_src = past
-    |join(current)
+var relative_src_%d = past_%d
+    |join(current_%d)
         .as('past', 'current')
         .tolerance(2s)
 %s
     |eval(lambda: %s)
         .keep()
-        .as('relative_value')`, shift, zeroGuard, expr)
+        .as('relative_value')`, index, index, shift, index, index, index, index, index, zeroGuard, expr)
 }
 
 // buildHostFilters returns the host filter expressions for stream (TICKscript

@@ -3,23 +3,45 @@
   "name": "Process CPU 사용률 알림",
   "description": "특정 프로세스의 CPU 사용률이 임계치를 초과하면 알림. telegraf procstat 플러그인이 필요합니다",
   "category": "server-monitoring",
-  "tags": ["process", "cpu"],
-  "database": "",
-  "retentionPolicy": "",
-  "measurement": "procstat",
-  "field": "cpu_usage",
-  "trigger": "threshold",
+  "tags": [
+    "process",
+    "cpu"
+  ],
   "taskType": "stream",
-  "every": "30s",
   "occurrenceType": "consecutive",
   "occurrenceCount": 2,
   "occurrenceWindow": "5m",
   "pauseSeconds": 0,
   "notifyRecovery": true,
   "message": "{{ index .Tags \"host\" }} Process CPU {{ .Level }} ({{ index .Fields \"cpu_usage\" }}%)",
-  "conditions": [
-    { "level": "critical", "value": 90, "operator": "greater", "enabled": true },
-    { "level": "warning",  "value": 70, "operator": "greater", "enabled": true },
-    { "level": "info",     "value": 0, "operator": "greater", "enabled": false }
+  "specs": [
+    {
+      "database": "",
+      "retentionPolicy": "",
+      "measurement": "procstat",
+      "field": "cpu_usage",
+      "trigger": "threshold",
+      "every": "30s",
+      "conditions": [
+        {
+          "level": "critical",
+          "value": 90,
+          "operator": "greater",
+          "enabled": true
+        },
+        {
+          "level": "warning",
+          "value": 70,
+          "operator": "greater",
+          "enabled": true
+        },
+        {
+          "level": "info",
+          "value": 0,
+          "operator": "greater",
+          "enabled": false
+        }
+      ]
+    }
   ]
 }
