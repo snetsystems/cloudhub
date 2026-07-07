@@ -221,6 +221,10 @@ import {
 } from './devicesMapping'
 import {RecipientMember, GroupInfo} from './recipientGroups'
 import {
+  normalizeAlertConditionOperator,
+  normalizeAlertConditions,
+} from 'src/alert_group/utils/alertGroupRulePayload'
+import {
   AlertConditionOperator,
   AlertConditionLevel,
   LEVEL_LABELS,
@@ -235,10 +239,11 @@ import {
   DEFAULT_URL_STATUS_FILTERS,
   urlErrorConfigToStatusFilters,
   statusFiltersToUrlErrorConfig,
-  normalizeAlertConditionOperator,
-  normalizeAlertConditions,
   AlertTemplateTarget,
+  AlertRuleSpec,
   AlertGroupRule,
+  TargetSelectorItem,
+  TargetSelectorText,
   AlertRuleEventHandler,
   AlertKapacitor,
   AlertGroupTestNotificationRequest,
@@ -481,7 +486,10 @@ export {
   normalizeAlertConditionOperator,
   normalizeAlertConditions,
   AlertTemplateTarget,
+  AlertRuleSpec,
   AlertGroupRule,
+  TargetSelectorItem,
+  TargetSelectorText,
   AlertRuleEventHandler,
   AlertKapacitor,
   AlertGroupTestNotificationRequest,

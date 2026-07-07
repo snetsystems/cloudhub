@@ -52,35 +52,10 @@ export interface AlertConditionApi {
   enabled: boolean
 }
 
-export const normalizeAlertConditionOperator = (
-  operator?: AlertConditionOperatorApi
-): AlertConditionOperator => {
-  switch (operator) {
-    case 'greaterEqual':
-      return 'greater_equal'
-    case 'lessEqual':
-      return 'less_equal'
-    case 'notEqual':
-      return 'not_equal'
-    default:
-      return (operator as AlertConditionOperator) || 'greater'
-  }
-}
-
-export const normalizeAlertConditions = (
-  conditions?: AlertConditionApi[]
-): AlertCondition[] =>
-  (conditions ?? []).map(condition => ({
-    level: condition.level,
-    value: String(condition.value),
-    operator: normalizeAlertConditionOperator(condition.operator),
-    enabled: condition.enabled,
-  }))
-
 export interface UrlErrorConfig {
   check4xx: boolean
   check5xx: boolean
-  checkUnknown: boolean
+  unknown: boolean
 }
 
 export interface UrlAlertStatusFilters {
@@ -94,7 +69,7 @@ export const urlErrorConfigToStatusFilters = (
 ): UrlAlertStatusFilters => ({
   client4xx: config.check4xx,
   server5xx: config.check5xx,
-  unknown: config.checkUnknown,
+  unknown: config.unknown,
 })
 
 export const statusFiltersToUrlErrorConfig = (
@@ -102,7 +77,7 @@ export const statusFiltersToUrlErrorConfig = (
 ): UrlErrorConfig => ({
   check4xx: filters.client4xx,
   check5xx: filters.server5xx,
-  checkUnknown: filters.unknown,
+  unknown: filters.unknown,
 })
 
 export const DEFAULT_URL_STATUS_FILTERS: UrlAlertStatusFilters = {
@@ -143,6 +118,20 @@ export interface EvalConfig {
   as: string
 }
 
+export interface AlertRuleSpec {
+  id?: string
+  alertRuleId?: string
+  database: string
+  retentionPolicy: string
+  measurement: string
+  field: string
+  trigger?: 'threshold' | 'relative' | 'deadman'
+  every?: string
+  urlErrorConfig?: UrlErrorConfig
+  conditions?: AlertConditionApi[]
+  values?: AlertGroupRule['values']
+}
+
 export interface AlertGroupRule {
   id?: string
   name: string
@@ -167,6 +156,8 @@ export interface AlertGroupRule {
   }
   active: boolean
   kapacitorId: string
+  targetType?: 'host' | 'url'
+  specs?: AlertRuleSpec[]
   hostnames: string[]
   recipientGroupIds: string[]
   eventHandlers?: AlertRuleEventHandler[]
@@ -186,6 +177,18 @@ export interface AlertGroupRule {
   urlTargetIds?: string[]
   /** Composite URL templates: status + latency targets from the blueprint. */
   targets?: AlertTemplateTarget[]
+}
+
+export interface TargetSelectorItem {
+  id: string
+  label: string
+}
+
+export interface TargetSelectorText {
+  searchPlaceholder?: string
+  selectedCountText?: string
+  emptyText?: string
+  emptySearchText?: string
 }
 
 export interface AlertRuleEventHandler {

@@ -5,11 +5,14 @@ import classnames from 'classnames'
 import {ComponentColor, ComponentSize, ComponentStatus} from 'src/reusable_ui'
 import DropdownButton from 'src/reusable_ui/components/dropdowns/DropdownButton'
 import {ClickOutside} from 'src/shared/components/ClickOutside'
-import TargetSelector, {
+import TargetSelector from 'src/shared/components/TargetSelector'
+import {
+  AlertGroupRule,
+  RemoteDataState,
+  Source,
   TargetSelectorItem,
   TargetSelectorText,
-} from 'src/shared/components/TargetSelector'
-import {AlertGroupRule, RemoteDataState, Source} from 'src/types'
+} from 'src/types'
 import {proxy} from 'src/utils/queryUrlGenerator'
 import {getDeep} from 'src/utils/wrappers'
 import {getURLMonitoring} from 'src/url_monitoring/apis'
