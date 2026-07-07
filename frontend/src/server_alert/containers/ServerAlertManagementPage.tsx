@@ -146,7 +146,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
   const renderTopRight = () => (
     <Button
       text={t('server_alert.add_event', '이벤트 추가')}
-      icon={IconFont.Plus}
+      icon={IconFont.BellAdd}
       size={ComponentSize.Small}
       color={ComponentColor.Primary}
       onClick={() => {
