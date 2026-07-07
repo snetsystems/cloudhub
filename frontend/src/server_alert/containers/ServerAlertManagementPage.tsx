@@ -48,7 +48,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
   // 데이터 가져오기
   const fetchData = async () => {
     try {
-      const rules = await getAlertGroupRules()
+      const rules = await getAlertGroupRules({targetType: 'server'})
       if (rules.length > 0) {
         setData(rules)
       }

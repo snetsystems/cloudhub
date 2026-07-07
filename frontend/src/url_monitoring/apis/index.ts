@@ -270,42 +270,6 @@ export const getUrlAlertTemplates = async (): Promise<AlertTemplate[]> => {
   return [...URL_ALERT_BUILTIN_TEMPLATES, ...customFromApi]
 }
 
-// Mock URL monitoring targets used to populate the "Request / URL" column
-// while the backend list API is not connected. Rule.urlTargetIds reference
-// these ids.
-const MOCK_URL_MONITORING_TARGETS: URLMonitoringTarget[] = [
-  {
-    id: 'mock-url-target-1',
-    name: '인증 서버',
-    url: 'https://auth.example.com/oauth2/authorize',
-    interval: '1m',
-  },
-  {
-    id: 'mock-url-target-2',
-    name: 'API 게이트웨이',
-    url: 'https://api.example.com/v1/health',
-    interval: '1m',
-  },
-  {
-    id: 'mock-url-target-3',
-    name: '주문 서비스',
-    url: 'https://order.example.com/health',
-    interval: '1m',
-  },
-  {
-    id: 'mock-url-target-4',
-    name: 'CRM 포털',
-    url: 'https://crm.example.com/login',
-    interval: '2m',
-  },
-  {
-    id: 'mock-url-target-5',
-    name: 'CDN 정적 자원',
-    url: 'https://cdn.example.com/static/main.js',
-    interval: '5m',
-  },
-]
-
 interface MockUrlAlertRuleInput {
   id: string
   name: string
@@ -376,7 +340,12 @@ const makeMockUrlAlertRule = (input: MockUrlAlertRuleInput): AlertGroupRule => {
         trigger: 'threshold',
         urlErrorConfig: status,
         conditions: [
-          {level: 'critical', value: 0, operator: 'greaterEqual', enabled: false},
+          {
+            level: 'critical',
+            value: 0,
+            operator: 'greaterEqual',
+            enabled: false,
+          },
           {level: 'warning', value: 0, operator: 'greater', enabled: false},
           {level: 'info', value: 0, operator: 'greater', enabled: false},
         ],
@@ -407,41 +376,6 @@ const makeMockUrlAlertRule = (input: MockUrlAlertRuleInput): AlertGroupRule => {
   }
 }
 
-const MOCK_URL_ALERT_RULES: AlertGroupRule[] = [
-  makeMockUrlAlertRule({
-    id: 'mock-url-alert-1',
-    name: '인증 서버 응답 지연',
-    active: true,
-    urlTargetIds: ['mock-url-target-1'],
-    status: {check4xx: true, check5xx: true, checkUnknown: true},
-    latency: {critical: 5, warning: 2},
-  }),
-  makeMockUrlAlertRule({
-    id: 'mock-url-alert-2',
-    name: 'API/주문 서비스 HTTP 오류',
-    active: false,
-    urlTargetIds: ['mock-url-target-2', 'mock-url-target-3'],
-    status: {check4xx: true, check5xx: true, checkUnknown: false},
-    latency: {critical: 3, warning: 1.5},
-    occurrenceCount: 3,
-    pauseSeconds: 300,
-  }),
-  makeMockUrlAlertRule({
-    id: 'mock-url-alert-3',
-    name: 'CRM/CDN 종합 모니터링',
-    active: true,
-    urlTargetIds: [
-      'mock-url-target-3',
-      'mock-url-target-4',
-      'mock-url-target-5',
-    ],
-    status: {check4xx: true, check5xx: false, checkUnknown: false},
-    latency: {critical: 2, warning: 1},
-    occurrenceCount: 1,
-    pauseSeconds: 60,
-  }),
-]
-
 const isUrlAlertRule = (rule: AlertGroupRule): boolean =>
   rule.measurement === 'http_response'
 
@@ -455,22 +389,14 @@ export interface UrlAlertListData {
 // sourced together — real API when URL alert rules exist, otherwise the mock
 // bundle — so that rule.urlTargetIds always match the returned target ids.
 export const getUrlAlertListData = async (): Promise<UrlAlertListData> => {
-  // NOTE: 실제 API 연동 코드는 임시로 주석 처리하고 목데이터를 반환한다.
-  // try {
-  //   const [rules, config] = await Promise.all([
-  //     getAlertGroupRules(),
-  //     getURLMonitoring().catch(() => null),
-  //   ])
-  //   const urlRules = rules.filter(isUrlAlertRule)
-  //   if (urlRules.length > 0) {
-  //     return {rules: urlRules, targets: config?.targets ?? []}
-  //   }
-  // } catch {
-  //   // fall through to mock
-  // }
+  const [rules, config] = await Promise.all([
+    getAlertGroupRules({targetType: 'url'}), // 중요: 기본값 'server'가 아님
+    getURLMonitoring().catch(() => null),
+  ])
+  console.log('rules', rules)
   return {
-    rules: MOCK_URL_ALERT_RULES.map(rule => ({...rule})),
-    targets: MOCK_URL_MONITORING_TARGETS.map(target => ({...target})),
+    rules: rules.filter(isUrlAlertRule),
+    targets: config?.targets ?? [],
   }
 }
 
@@ -483,11 +409,5 @@ export const isMockUrlAlertRuleId = (id: string): boolean =>
   id.startsWith('mock-url-alert-')
 
 export const getUrlAlertRule = async (id: string): Promise<AlertGroupRule> => {
-  const mockRule = MOCK_URL_ALERT_RULES.find(rule => rule.id === id)
-  if (mockRule) {
-    return {...mockRule}
-  }
-  // NOTE: 실제 API 연동 코드는 임시로 주석 처리하고 목데이터를 반환한다.
-  // return getAlertGroupRule(id)
-  return {...MOCK_URL_ALERT_RULES[0], id}
+  return getAlertGroupRule(id)
 }
