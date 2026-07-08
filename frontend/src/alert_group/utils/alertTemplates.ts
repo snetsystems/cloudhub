@@ -3,20 +3,31 @@ import {
   AlertRuleEventHandler,
   AlertTemplate,
 } from 'src/types'
+import {
+  getRuleSpec,
+  patchRuleSpec,
+} from 'src/alert_group/utils/alertRuleSpecs'
 
 export const findSelectedAlertTemplate = (
   templates: AlertTemplate[] = [],
-  rule: Pick<AlertGroupRule, 'measurement' | 'field'>
-): AlertTemplate | undefined =>
-  templates.find(
-    template =>
-      template.measurement === rule.measurement && template.field === rule.field
-  )
+  rule: Pick<AlertGroupRule, 'specs'>
+): AlertTemplate | undefined => {
+  const ruleSpec = getRuleSpec(rule)
+  return templates.find(template => {
+    const templateSpec = getRuleSpec({specs: template.specs})
+    return (
+      templateSpec.measurement === ruleSpec.measurement &&
+      templateSpec.field === ruleSpec.field
+    )
+  })
+}
 
 export const applyAlertTemplateToRule = (
   rule: AlertGroupRule,
   template: AlertTemplate
 ): AlertGroupRule => {
+  const templateSpec = getRuleSpec({specs: template.specs})
+
   const eventHandlers = Array.isArray(rule.eventHandlers)
     ? rule.eventHandlers
     : []
@@ -28,8 +39,7 @@ export const applyAlertTemplateToRule = (
     ...(emailHandler || {}),
     type: 'email',
     enabled: emailHandler?.enabled ?? true,
-    recipientGroupIds:
-      emailHandler?.recipientGroupIds || rule.recipientGroupIds || [],
+    recipientGroupIds: emailHandler?.recipientGroupIds || [],
     configJson: {
       ...(emailHandler?.configJson || {to: []}),
       body:
@@ -39,14 +49,8 @@ export const applyAlertTemplateToRule = (
     },
   }
 
-  const nextTrigger = template.trigger || 'threshold'
-  let nextConditions =
-    template.conditions && template.conditions.length > 0
-      ? template.conditions.map(condition => ({
-          ...condition,
-          operator: condition.operator || 'greater',
-        }))
-      : rule.conditions
+  const nextTrigger = templateSpec.trigger || 'threshold'
+  let nextConditions = templateSpec.conditions || getRuleSpec(rule).conditions!
 
   if (nextTrigger === 'deadman') {
     nextConditions = nextConditions.map(condition => ({
@@ -55,31 +59,37 @@ export const applyAlertTemplateToRule = (
     }))
   }
 
+  const currentSpec = getRuleSpec(rule)
+
   return {
     ...rule,
-    database: template.database || rule.database,
-    retentionPolicy: template.retentionPolicy || rule.retentionPolicy,
-    measurement: template.measurement,
-    field: template.field,
+    ...patchRuleSpec(rule, {
+      database: templateSpec.database || currentSpec.database,
+      retentionPolicy: templateSpec.retentionPolicy || currentSpec.retentionPolicy,
+      measurement: templateSpec.measurement,
+      field: templateSpec.field,
+      trigger: nextTrigger,
+      every: template.every || templateSpec.every,
+      values: {
+        change: 'change',
+        shift: '1m',
+        period: '10m',
+        ...currentSpec.values,
+        ...templateSpec.values,
+      },
+      conditions: nextConditions,
+      urlErrorConfig: templateSpec.urlErrorConfig,
+    }),
+    templateKey: template.id,
     derivative: template.derivative,
     eval: template.eval,
-    trigger: nextTrigger,
-    values: {
-      change: 'change',
-      shift: '1m',
-      period: '10m',
-      ...rule.values,
-      ...(template.values || {}),
-    },
     taskType: template.taskType,
-    every: template.every,
     occurrenceType: template.occurrenceType,
     occurrenceCount: template.occurrenceCount,
     occurrenceWindow: template.occurrenceWindow,
     pauseSeconds: template.pauseSeconds,
     notifyRecovery: template.notifyRecovery,
     message: template.message,
-    conditions: nextConditions,
     eventHandlers: [...nonEmailHandlers, nextEmailHandler],
   }
 }

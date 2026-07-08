@@ -4,7 +4,6 @@ import {proxy} from 'src/utils/queryUrlGenerator'
 import {Source} from 'src/types'
 import {
   AlertGroupRule,
-  AlertRuleEventHandler,
   AlertKapacitor,
   AlertTemplate,
   DEFAULT_RULE,
@@ -18,6 +17,11 @@ import {
   UserGroupMember,
   OrganizationUserListItem,
 } from 'src/types'
+import {
+  buildAlertGroupRuleRequest,
+  ensureRuleFromApi,
+  normalizeAlertTemplate,
+} from 'src/alert_group/utils/alertRuleSpecs'
 
 interface AlertGroupRulesResponse {
   alertGroupRules: AlertGroupRule[]
@@ -29,104 +33,27 @@ interface RecipientGroupsResponse {
 const normalizeAlertGroupRule = (
   rule: Partial<AlertGroupRule> | null | undefined
 ): AlertGroupRule => {
-  const emailHandler = Array.isArray(rule?.eventHandlers)
-    ? rule?.eventHandlers.find(handler => handler.type === 'email')
-    : undefined
-  const recipientGroupIds = Array.isArray(emailHandler?.recipientGroupIds)
-    ? emailHandler?.recipientGroupIds || []
-    : Array.isArray(rule?.recipientGroupIds)
-    ? rule.recipientGroupIds
-    : []
+  const rawRule = rule || {}
+  const normalized = ensureRuleFromApi(rawRule)
 
   return {
     ...DEFAULT_RULE,
-    ...(rule || {}),
-    values: {
-      ...DEFAULT_RULE.values,
-      ...(rule?.values || {}),
-    },
-    conditions: Array.isArray(rule?.conditions)
-      ? rule.conditions.map(condition => ({
-          ...condition,
-          value: String(condition.value),
-          operator: condition.operator || 'greater',
-        }))
-      : DEFAULT_RULE.conditions,
-    hostnames: Array.isArray(rule?.hostnames) ? rule.hostnames : [],
-    urlTargetIds: Array.isArray(rule?.urlTargetIds) ? rule.urlTargetIds : [],
-    recipientGroupIds,
-    eventHandlers: Array.isArray(rule?.eventHandlers) ? rule.eventHandlers : [],
-  }
-}
-
-const toEmailEventHandlers = (
-  recipientGroupIds: string[],
-  existingEmailHandler?: AlertRuleEventHandler
-): AlertRuleEventHandler[] => [
-  {
-    ...(existingEmailHandler || {}),
-    type: 'email',
-    enabled: existingEmailHandler?.enabled ?? true,
-    recipientGroupIds: recipientGroupIds || [],
-    configJson: existingEmailHandler?.configJson || {to: [], body: ''},
-  },
-]
-
-const toAlertRuleEventHandlers = (rule: AlertGroupRule) => {
-  const nonEmailHandlers = Array.isArray(rule.eventHandlers)
-    ? rule.eventHandlers.filter(handler => handler.type !== 'email')
-    : []
-  const emailHandler = Array.isArray(rule.eventHandlers)
-    ? rule.eventHandlers.find(handler => handler.type === 'email')
-    : undefined
-
-  if (!emailHandler) {
-    return nonEmailHandlers
-  }
-
-  return [
-    ...nonEmailHandlers,
-    ...toEmailEventHandlers(rule.recipientGroupIds, emailHandler),
-  ]
-}
-
-const toAlertGroupRuleRequest = (rule: AlertGroupRule) => {
-  const {recipientGroupIds, eventHandlers, ...rest} = rule
-
-  let cleanedValues: AlertGroupRule['values'] = {}
-  if (rule.trigger === 'relative') {
-    cleanedValues = {
-      change: rule.values?.change || 'change',
-      shift: rule.values?.shift || '1m',
-    }
-  } else if (rule.trigger === 'deadman') {
-    cleanedValues = {
-      period: rule.values?.period || '10m',
-    }
-  } else {
-    cleanedValues = {}
-  }
-
-  return {
-    ...rest,
-    values: cleanedValues,
-    eventHandlers: toAlertRuleEventHandlers(rule),
-    conditions: (rule.conditions || []).map(condition => ({
-      ...condition,
-      value: Number(condition.value),
-    })),
+    ...normalized,
+    hostnames: Array.isArray(rawRule.hostnames) ? rawRule.hostnames : [],
+    urlTargetIds: Array.isArray(rawRule.urlTargetIds) ? rawRule.urlTargetIds : [],
+    eventHandlers: Array.isArray(rawRule.eventHandlers) ? rawRule.eventHandlers : [],
   }
 }
 
 // Alert Group Rules
 export const getAlertGroupRules = async ({
-  targetType,
+  targetType = 'host',
 }: {
-  targetType?: string
-}) => {
+  targetType?: 'host' | 'url'
+} = {}) => {
   const {data} = await AJAX({
     method: 'GET',
-    url: `/cloudhub/v2/alert-group-rules?targetType=${targetType ?? 'server'}`,
+    url: `/cloudhub/v2/alert-group-rules?targetType=${targetType}`,
   })
   const rules = (data as AlertGroupRulesResponse).alertGroupRules || []
   return rules.map(normalizeAlertGroupRule)
@@ -147,7 +74,7 @@ export const createAlertGroupRule = async (
   const {data} = await AJAX({
     method: 'POST',
     url: '/cloudhub/v2/alert-group-rules',
-    data: toAlertGroupRuleRequest(rule),
+    data: buildAlertGroupRuleRequest(rule),
   })
   return normalizeAlertGroupRule(data as Partial<AlertGroupRule>)
 }
@@ -159,7 +86,7 @@ export const updateAlertGroupRule = async (
   const {data} = await AJAX({
     method: 'PATCH',
     url: `/cloudhub/v2/alert-group-rules/${id}`,
-    data: toAlertGroupRuleRequest(rule),
+    data: buildAlertGroupRuleRequest(rule),
   })
   return normalizeAlertGroupRule(data as Partial<AlertGroupRule>)
 }
@@ -201,7 +128,7 @@ export const deleteAlertGroupRuleAndFetch = async (
   id: string
 ): Promise<AlertGroupRule[]> => {
   await deleteAlertGroupRule(id)
-  return await getAlertGroupRules({targetType: 'server'})
+  return await getAlertGroupRules({targetType: 'host'})
 }
 
 // Alert Rule event handlers
@@ -212,7 +139,16 @@ export const setAlertRuleRecipientGroups = async (
   await AJAX({
     method: 'PUT',
     url: `/cloudhub/v2/alert-group-rules/${ruleId}/event-handlers`,
-    data: {eventHandlers: toEmailEventHandlers(recipientGroupIds)},
+    data: {
+      eventHandlers: [
+        {
+          type: 'email',
+          enabled: true,
+          recipientGroupIds,
+          configJson: {to: [], body: ''},
+        },
+      ],
+    },
   })
 }
 
@@ -503,12 +439,19 @@ interface AlertTemplatesResponse {
   alertTemplates: AlertTemplate[]
 }
 
-export const getAlertTemplates = async (): Promise<AlertTemplate[]> => {
+export const getAlertTemplates = async ({
+  targetType,
+}: {
+  targetType?: 'host' | 'url'
+} = {}): Promise<AlertTemplate[]> => {
+  const query = targetType ? `?targetType=${targetType}` : ''
   const {data} = await AJAX({
     method: 'GET',
-    url: '/cloudhub/v2/alert-templates',
+    url: `/cloudhub/v2/alert-templates${query}`,
   })
-  return (data as AlertTemplatesResponse | undefined)?.alertTemplates || []
+  return (
+    (data as AlertTemplatesResponse | undefined)?.alertTemplates || []
+  ).map(normalizeAlertTemplate)
 }
 
 // fetchAvailableMeasurements runs `SHOW MEASUREMENTS` against the source's
